@@ -29,7 +29,10 @@ SourceFiles
     fvMeshDirectionalRefiner.C
 
 Description
-    A fvMesh with run-time load balancing.
+    Mesh refiner that refines in one direction (x, y, or z) using the
+    undoableMeshCutter mesh refiner. This is a simplified implementation of
+    the refinemMesh utility. Currently there is no ability to unrefine the
+    mesh
 
 \*---------------------------------------------------------------------------*/
 
@@ -38,19 +41,6 @@ Description
 
 #include "fvMeshRefiner.H"
 #include "newCellCuts.H"
-#include "topoCellLooper.H"
-
-#include "hashedWordList.H"
-#include "fvc.H"
-#include "PtrMap.H"
-
-#include "searchablePlane.H"
-#include "searchableSurfacesQueries.H"
-
-#include "ListOps.H"
-#include "cellModeller.H"
-#include "RefineBalanceMeshObject.H"
-
 #include "refineCell.H"
 #include "undoableMeshCutter.H"
 #include "hexCellLooper.H"

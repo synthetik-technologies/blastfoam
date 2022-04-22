@@ -47,6 +47,7 @@ License
 #include "refinementData.H"
 #include "refinementDistanceData.H"
 #include "degenerateMatcher.H"
+#include "dynMeshTools.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -379,7 +380,7 @@ Foam::label Foam::hexRef2D::storeMidPointInfo
                 neiPt = mesh_.points()[anchorPointi];
             }
 
-            checkInternalOrientation
+            meshTools::checkInternalOrientation
             (
                 meshMod,
                 celli,
@@ -390,9 +391,10 @@ Foam::label Foam::hexRef2D::storeMidPointInfo
             );
         }
 
-        return addInternalFace
+        return meshTools::addInternalFace
         (
             meshMod,
+            mesh_,
             facei,
             anchorPointi,
             newFace,
@@ -812,7 +814,6 @@ Foam::labelListList Foam::hexRef2D::setRefinement
         cellMidPoint[celli] = 1234567890;    // mark need for splitting
     }
 
-
     boolList isDivisibleFace(mesh_.nFaces(), false);
     boolList isDivisibleEdge(mesh_.nEdges(), false);
 
@@ -1080,7 +1081,8 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                  || newNeiLevel[i] > faceAnchorLevel[facei]
                 )
                 {
-                    faceMidPoint[facei] = 1234567890;    // mark to be split (not really nice way)
+                    // mark to be split (not really nice way)
+                    faceMidPoint[facei] = 1234567890;
                 }
             }
         }
@@ -1099,7 +1101,6 @@ Foam::labelListList Foam::hexRef2D::setRefinement
 
     // Introduce face points
     // ~~~~~~~~~~~~~~~~~~~~~
-
     {
         // Phase 1: determine mid points and sync. See comment for edgeMids
         // above
@@ -1455,42 +1456,38 @@ Foam::labelListList Foam::hexRef2D::setRefinement
 
                         if (debug)
                         {
-                            if (mesh_.isInternalFace(facei))
-                            {
-                                label oldOwn = mesh_.faceOwner()[facei];
-                                label oldNei = mesh_.faceNeighbour()[facei];
-                                checkInternalOrientation
-                                (
-                                    meshMod,
-                                    oldOwn,
-                                    facei,
-                                    mesh_.cellCentres()[oldOwn],
-                                    mesh_.cellCentres()[oldNei],
-                                    newFace
-                                );
-                            }
-                            else
-                            {
-                                label oldOwn = mesh_.faceOwner()[facei];
-                                checkBoundaryOrientation
-                                (
-                                    meshMod,
-                                    oldOwn,
-                                    facei,
-                                    mesh_.cellCentres()[oldOwn],
-                                    mesh_.faceCentres()[facei],
-                                    newFace
-                                );
-                            }
+                            meshTools::checkFaceOrientation
+                            (
+                                meshMod,
+                                mesh_,
+                                facei,
+                                newFace
+                            );
                         }
                         if (!modifiedFace)
                         {
                             modifiedFace = true;
-                            modFace(meshMod, facei, newFace, own, nei);
+                            meshTools::modifyFace
+                            (
+                                meshMod,
+                                mesh_,
+                                facei,
+                                newFace,
+                                own,
+                                nei
+                            );
                         }
                         else
                         {
-                            addFace(meshMod, facei, newFace, own, nei);
+                            meshTools::addFace
+                            (
+                                meshMod,
+                                mesh_,
+                                facei,
+                                newFace,
+                                own,
+                                nei
+                            );
                         }
                     }
                 }
@@ -1502,7 +1499,8 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                 {
                     label pointi = f[fp];
                     label nextpointi = f[f.fcIndex(fp)];
-                    label edgeI = meshTools::findEdge (mesh_, pointi, nextpointi);
+                    label edgeI =
+                        meshTools::findEdge(mesh_, pointi, nextpointi);
                     if (edgeMidPoint[edgeI] >=0)
                     {
                         DynamicList<label> faceVerts(4);
@@ -1541,42 +1539,38 @@ Foam::labelListList Foam::hexRef2D::setRefinement
 
                         if (debug)
                         {
-                            if (mesh_.isInternalFace(facei))
-                            {
-                                label oldOwn = mesh_.faceOwner()[facei];
-                                label oldNei = mesh_.faceNeighbour()[facei];
-                                checkInternalOrientation
-                                (
-                                    meshMod,
-                                    oldOwn,
-                                    facei,
-                                    mesh_.cellCentres()[oldOwn],
-                                    mesh_.cellCentres()[oldNei],
-                                    newFace
-                                );
-                            }
-                            else
-                            {
-                                label oldOwn = mesh_.faceOwner()[facei];
-                                checkBoundaryOrientation
-                                (
-                                    meshMod,
-                                    oldOwn,
-                                    facei,
-                                    mesh_.cellCentres()[oldOwn],
-                                    mesh_.faceCentres()[facei],
-                                    newFace
-                                );
-                            }
+                            meshTools::checkFaceOrientation
+                            (
+                                meshMod,
+                                mesh_,
+                                facei,
+                                newFace
+                            );
                         }
                         if (!modifiedFace)
                         {
                             modifiedFace = true;
-                            modFace(meshMod, facei, newFace, own, nei);
+                            meshTools::modifyFace
+                            (
+                                meshMod,
+                                mesh_,
+                                facei,
+                                newFace,
+                                own,
+                                nei
+                            );
                         }
                         else
                         {
-                            addFace(meshMod, facei, newFace, own, nei);
+                            meshTools::addFace
+                            (
+                                meshMod,
+                                mesh_,
+                                facei,
+                                newFace,
+                                own,
+                                nei
+                            );
                         }
                     }
                 }
@@ -1660,38 +1654,24 @@ Foam::labelListList Foam::hexRef2D::setRefinement
 
                     if (debug)
                     {
-                        if (mesh_.isInternalFace(facei))
-                        {
-                            label oldOwn = mesh_.faceOwner()[facei];
-                            label oldNei = mesh_.faceNeighbour()[facei];
-
-                            checkInternalOrientation
-                            (
-                                meshMod,
-                                oldOwn,
-                                facei,
-                                mesh_.cellCentres()[oldOwn],
-                                mesh_.cellCentres()[oldNei],
-                                newFace
-                            );
-                        }
-                        else
-                        {
-                            label oldOwn = mesh_.faceOwner()[facei];
-
-                            checkBoundaryOrientation
-                            (
-                                meshMod,
-                                oldOwn,
-                                facei,
-                                mesh_.cellCentres()[oldOwn],
-                                mesh_.faceCentres()[facei],
-                                newFace
-                            );
-                        }
+                        meshTools::checkFaceOrientation
+                        (
+                            meshMod,
+                            mesh_,
+                            facei,
+                            newFace
+                        );
                     }
 
-                    modFace(meshMod, facei, newFace, own, nei);
+                    meshTools::modifyFace
+                    (
+                        meshMod,
+                        mesh_,
+                        facei,
+                        newFace,
+                        own,
+                        nei
+                    );
 
                     // Mark face as having been handled
                     affectedFace.unset(facei);
@@ -1733,7 +1713,15 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                 nei
             );
 
-            modFace(meshMod, facei, f, own, nei);
+            meshTools::modifyFace
+            (
+                meshMod,
+                mesh_,
+                facei,
+                f,
+                own,
+                nei
+            );
 
             // Mark face as having been handled
             affectedFace.unset(facei);

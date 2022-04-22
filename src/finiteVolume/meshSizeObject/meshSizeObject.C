@@ -64,68 +64,70 @@ bool Foam::meshSizeObject::movePoints()
 
 void Foam::meshSizeObject::calcDx() const
 {
-    const fvMesh& mesh(dynamicCast<const fvMesh&>(this->mesh_));
-    dxPtr_.set
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "dx",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            dimensionedScalar(dimLength, 0.0),
-            extrapolatedCalculatedFvPatchScalarField::typeName
-        )
-    );
-    volScalarField& dx = dxPtr_();
-
-    if (mesh.nGeometricD() != 3)
+    if (dxPtr_.valid())
     {
+        FatalErrorInFunction
+            <<"dX already set"
+            << abort(FatalError);
+    }
 
-        const labelList& own = mesh.faceOwner();
-        labelList nFaces(dxPtr_->size(), 0);
+    dxPtr_.set(new scalarField(mesh_.nCells()));
+    scalarField& dx = dxPtr_();
+    const Vector<label>& geoD = mesh_.geometricD();
 
-        forAll(mesh.boundaryMesh(), patchi)
+    if (mesh_.nGeometricD() != 3)
+    {
+        const Vector<label>& solD = mesh_.solutionD();
+        vector validD(Zero);
+        forAll(solD, cmpti)
         {
-            const polyPatch& patch = mesh.boundaryMesh()[patchi];
-            if (isA<wedgePolyPatch>(patch) || isA<emptyPolyPatch>(patch))
+            if (geoD[cmpti] < 0)
             {
-                forAll(patch, fi)
-                {
-                    const label facei = patch.start() + fi;
-                    dx[own[facei]] += sqrt(mesh.magFaceAreas()[facei]);
-
-                    nFaces[own[facei]]++;
-                }
+                validD[cmpti] = 1.0;
             }
         }
+
+        const vectorField& Sf = mesh_.faceAreas();
+        const scalarField& magSf = mesh_.magFaceAreas();
+        const labelList& own = mesh_.faceOwner();
+        const labelList& nei = mesh_.faceNeighbour();
+        labelList nFaces(dxPtr_->size(), 0);
+
+        for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+        {
+            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
+            {
+                dx[own[facei]] += magSf[facei];
+                dx[nei[facei]] += magSf[facei];
+
+                nFaces[own[facei]]++;
+                nFaces[own[facei]]++;
+            }
+        }
+
+        for
+        (
+            label facei = mesh_.nInternalFaces();
+            facei < mesh_.nFaces();
+            facei++
+        )
+        {
+            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
+            {
+                dx[own[facei]] += magSf[facei];
+                nFaces[own[facei]]++;
+            }
+        }
+
         forAll(dx, celli)
         {
-            dx[celli] /= scalar(nFaces[celli]);
-        }
-        forAll(mesh.magSf().boundaryField(), patchi)
-        {
-            dx.boundaryFieldRef()[patchi] =
-                dx.boundaryField()[patchi].patchInternalField();
+            dx[celli] = sqrt(dx[celli]/scalar(nFaces[celli]));
         }
     }
     else
     {
-        dx.primitiveFieldRef() = cbrt(mesh_.cellVolumes());
+        dx = cbrt(mesh_.cellVolumes());
     }
-
-    forAll(mesh.magSf().boundaryField(), patchi)
-    {
-        dx.boundaryFieldRef()[patchi] =
-            sqrt(mesh.magSf().boundaryField()[patchi]);
-    }
-    dx.correctBoundaryConditions();
 }
 
 
@@ -133,38 +135,71 @@ void Foam::meshSizeObject::calcDX() const
 {
     if (dXPtr_.valid())
     {
-        FatalErrorInFunction<<"dX already set" << abort(FatalError);
+        FatalErrorInFunction
+            <<"dX already set"
+            << abort(FatalError);
     }
-    dXPtr_.set
-    (
-        new volVectorField
-        (
-            IOobject
-            (
-                "dX",
-                this->mesh_.time().timeName(),
-                this->mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            dynamicCast<const fvMesh&>(this->mesh_),
-            dimensionedVector(dimLength, Zero),
-            extrapolatedCalculatedFvPatchScalarField::typeName
-        )
-    );
-    volVectorField& dX = dXPtr_();
+    dXPtr_.set(new vectorField(mesh_.nCells(), vector::one));
+    vectorField& dX = dXPtr_();
+
+    const cellList& cells = mesh_.cells();
+    const scalarField& V = mesh_.cellVolumes();
+    const vectorField& Sf = mesh_.faceAreas();
 
     forAll(dX, celli)
     {
-        dX[celli] = boundBox
-        (
-            this->mesh_.points(),
-            this->mesh_.cellPoints()[celli],
-            false
-        ).span();
+        const cell& c = cells[celli];
+        vector sumMagSf(Zero);
+        dX[celli] *= 2.0*V[celli];
+        forAll(c, fi)
+        {
+            sumMagSf += cmptMag(Sf[c[fi]]);
+        }
+        dX[celli] = cmptDivide(dX[celli], sumMagSf);
     }
-    dX.correctBoundaryConditions();
 }
+
+
+Foam::tmp<Foam::volScalarField> Foam::meshSizeObject::volDx
+(
+    const fvMesh& mesh
+) const
+{
+    tmp<volScalarField> tdx
+    (
+        volScalarField::New
+        (
+            "dx",
+            mesh,
+            dimLength,
+            extrapolatedCalculatedFvPatchScalarField::typeName
+        )
+    );
+    tdx.ref().primitiveFieldRef() = dx();
+    tdx.ref().correctBoundaryConditions();
+    return tdx;
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::meshSizeObject::volDX
+(
+    const fvMesh& mesh
+) const
+{
+    tmp<volVectorField> tdX
+    (
+        volVectorField::New
+        (
+            "dX",
+            mesh,
+            dimLength,
+            extrapolatedCalculatedFvPatchVectorField::typeName
+        )
+    );
+    tdX.ref().primitiveFieldRef() = dX();
+    tdX.ref().correctBoundaryConditions();
+    return tdX;
+}
+
 
 // ************************************************************************* //

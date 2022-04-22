@@ -64,10 +64,10 @@ public:
     // Private Data
 
         //- Mesh size (scalar)
-        mutable autoPtr<volScalarField> dxPtr_;
+        mutable autoPtr<scalarField> dxPtr_;
 
         //- Mesh size (vector)
-        mutable autoPtr<volVectorField> dXPtr_;
+        mutable autoPtr<vectorField> dXPtr_;
 
         //- Update the mesh size
         void calcDx() const;
@@ -95,7 +95,7 @@ public:
         virtual bool movePoints();
 
         //- Return the mesh size
-        inline const volScalarField& dx() const
+        inline const scalarField& dx() const
         {
             if (!dxPtr_.valid())
             {
@@ -105,7 +105,7 @@ public:
         }
 
         //- Return the mesh size
-        inline const volVectorField& dX() const
+        inline const vectorField& dX() const
         {
             if (!dXPtr_.valid())
             {
@@ -113,6 +113,12 @@ public:
             }
             return dXPtr_();
         }
+
+        //- Return the mesh size as a volScalarField
+        tmp<volScalarField> volDx(const fvMesh&) const;
+
+        //- Return the mesh size as a volVectorField
+        tmp<volVectorField> volDX(const fvMesh&) const;
 
         virtual bool writeData(Ostream&) const
         {

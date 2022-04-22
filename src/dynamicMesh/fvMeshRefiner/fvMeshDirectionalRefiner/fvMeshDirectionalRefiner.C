@@ -29,6 +29,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fvMeshDirectionalRefiner.H"
+#include "RefineBalanceMeshObject.H"
 #include "newRefinementIterator.H"
 #include "parcelCloud.H"
 #include "hexRef.H"

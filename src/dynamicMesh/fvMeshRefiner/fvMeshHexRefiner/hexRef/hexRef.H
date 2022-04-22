@@ -127,47 +127,6 @@ protected:
 
     // Protected Member Functions
 
-        //- Get patch and zone info
-        void getFaceInfo
-        (
-            const label facei,
-            label& patchID,
-            label& zoneID,
-            label& zoneFlip
-        ) const;
-
-        //- Adds a face on top of existing facei. Reverses if necessary.
-        label addFace
-        (
-            polyTopoChange& meshMod,
-            const label facei,
-            const face& newFace,
-            const label own,
-            const label nei
-        ) const;
-
-        //- Adds internal face from point. No checks on reversal.
-        label addInternalFace
-        (
-            polyTopoChange& meshMod,
-            const label meshFacei,
-            const label meshPointi,
-            const face& newFace,
-            const label own,
-            const label nei
-        ) const;
-
-        //- Modifies existing facei for either new owner/neighbour or new face
-        //  points. Reverses if necessary.
-        void modFace
-        (
-            polyTopoChange& meshMod,
-            const label facei,
-            const face& newFace,
-            const label own,
-            const label nei
-        ) const;
-
         scalar getLevel0EdgeLength() const;
 
         //- Get cell added to point of celli (if any)
@@ -214,28 +173,6 @@ protected:
 
         ////- Print levels of list of points.
         //void printLevels(Ostream&, const labelList&) const;
-
-        //- debug:check orientation of added internal face
-        static void checkInternalOrientation
-        (
-            polyTopoChange& meshMod,
-            const label celli,
-            const label facei,
-            const point& ownPt,
-            const point& neiPt,
-            const face& newFace
-        );
-
-        //- debug:check orientation of new boundary face
-        static void checkBoundaryOrientation
-        (
-            polyTopoChange& meshMod,
-            const label celli,
-            const label facei,
-            const point& ownPt,
-            const point& boundaryPt,
-            const face& newFace
-        );
 
         //- If p0 and p1 are existing vertices check if edge is split and insert
         // splitPoint.

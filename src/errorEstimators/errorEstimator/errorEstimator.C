@@ -166,7 +166,7 @@ void Foam::errorEstimator::read(const dictionary& dict)
     {
         FatalIOErrorInFunction(dict)
             << "Either maxRefinement or minDx must be specified" << endl
-            << abort(FatalError);
+            << abort(FatalIOError);
     }
 }
 
@@ -259,10 +259,7 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
             validD[cmpti] = great;
         }
     }
-    const volScalarField& dx
-    (
-        meshSizeObject::New(mesh_).dx()
-    );
+    const scalarField& dx(meshSizeObject::New(mesh_).dx());
 
     forAll(dx, celli)
     {
@@ -300,8 +297,8 @@ bool Foam::errorEstimator::writeData(Ostream&) const
         {
             const meshSizeObject& mso = meshSizeObject::New(mesh_);
             const_cast<meshSizeObject&>(mso).movePoints();
-            mso.dx().write();
-            mso.dX().write();
+            mso.volDx(mesh_)().write();
+            mso.volDX(mesh_)().write();
         }
 
         return error_.write();

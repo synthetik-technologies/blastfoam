@@ -408,9 +408,7 @@ void Foam::meshTools::checkFaceOrientation
     const face& newFace
 )
 {
-    // Get mesh cell centres
-    const vectorField& meshCellCentres = mesh.cellCentres();
-
+    const vectorField& C = mesh.cellCentres();
     if (mesh.isInternalFace(faceI))
     {
         // Get old owner/neighbour indices
@@ -422,15 +420,15 @@ void Foam::meshTools::checkFaceOrientation
             meshMod,
             own,
             faceI,
-            meshCellCentres[own],
-            meshCellCentres[nei],
+            C[own],
+            C[nei],
             newFace
         );
     }
     else
     {
         // Get face centres and old owner
-        const vectorField& meshFaceCentres = mesh.faceCentres();
+        const vectorField& Cf = mesh.faceCentres();
         const label own = mesh.faceOwner()[faceI];
 
         meshTools::checkBoundaryOrientation
@@ -438,8 +436,8 @@ void Foam::meshTools::checkFaceOrientation
             meshMod,
             own,
             faceI,
-            meshCellCentres[own],
-            meshFaceCentres[faceI],
+            C[own],
+            Cf[faceI],
             newFace
         );
     }
