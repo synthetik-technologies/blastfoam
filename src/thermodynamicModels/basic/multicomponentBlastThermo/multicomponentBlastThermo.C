@@ -232,8 +232,7 @@ void Foam::multicomponentBlastThermo::solve()
             volScalarField::New
             (
                 IOobject::groupName("Yt", phaseName_),
-                Y_[0],
-                calculatedFvPatchScalarField::typeName
+                Y_[0]
             )
         );
         volScalarField& Yt = tYt.ref();
@@ -243,7 +242,7 @@ void Foam::multicomponentBlastThermo::solve()
             Yt += Y_[i];
         }
 
-        if (max(Yt).value() < small)
+        if (min(Yt.primitiveField()) < small)
         {
             FatalErrorInFunction
                 << "Sum of mass fractions is zero for species " << species()
@@ -253,6 +252,7 @@ void Foam::multicomponentBlastThermo::solve()
         forAll(Y_, i)
         {
             Y_[i] /= Yt;
+            Y_[i].correctBoundaryConditions();
         }
     }
 }
@@ -268,8 +268,7 @@ void Foam::multicomponentBlastThermo::postUpdate()
             volScalarField::New
             (
                 IOobject::groupName("Yt", phaseName_),
-                Y_[0],
-                calculatedFvPatchScalarField::typeName
+                Y_[0]
             )
         );
         volScalarField& Yt = tYt.ref();
@@ -279,7 +278,7 @@ void Foam::multicomponentBlastThermo::postUpdate()
             Yt += Y_[i];
         }
 
-        if (mag(max(Yt).value()) < rootVSmall)
+        if (min(Yt.primitiveField()) < small)
         {
             FatalErrorInFunction
                 << "Sum of mass fractions is zero for species " << species()
@@ -289,6 +288,7 @@ void Foam::multicomponentBlastThermo::postUpdate()
         forAll(Y_, i)
         {
             Y_[i] /= Yt;
+            Y_[i].correctBoundaryConditions();
         }
     }
 }
