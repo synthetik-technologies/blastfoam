@@ -15,6 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Refiner type
+// refiner polyRefiner;
+
 // Included parameters file
 #include "$FOAM_CASE/parameters";
 
@@ -210,14 +213,14 @@ regions
             }
         );
 
-//         cellZones
-//         (
-//             {
-//                 // Create a new cellZone
-//                 name cells;
-//                 action new;
-//             }
-//         );
+        cellZones
+        (
+            {
+                // Create a new cellZone
+                name cells;
+                action new;
+            }
+        );
 
         // Set region values with options
         // If boundaries are changed in a set they should also be set in
@@ -254,18 +257,18 @@ regions
         // option
         // The "Copy data to cell zones" can be used to view fields in
         // these zones
-//         cellZones
-//         (
-//             {
-//                 // Subset cells from the cells cellZone, aka only cells
-//                 // in both zones
-//                 name subsetCells;
-//
-//                 action subset;
-//
-//                 source cells;
-//             }
-//         );
+        cellSet
+        (
+            {
+                // Subset cells from the cells cellZone, aka only cells
+                // in both zones
+                name subsetCells;
+
+                action subset;
+
+                source cells;
+            }
+        );
 
         // Create a subset faceZone from "faces"
         faceZones

@@ -4,11 +4,54 @@ cd ${0%/*} || exit 1    # run from this directory
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
+# -- Check if the polyRefiner has been specified
+tets=0
+
+# -- Read keywords from setFields dict to check for the refiner
+declare -a keys=$(foamDictionary system/setFieldsDict -keywords)
+
+for key in ${keys[@]};
+do
+
+# -- Since the refiner is not required we need to make sure its found befor we
+#    check the value of the entry
+    if [ "$key" = "refiner" ];
+    then
+
+# -- Read and compare the refiner type
+        type=$(foamDictionary system/setFieldsDict -entry $key -value)
+        if [ "$type" = "polyRefiner" ];
+        then
+        echo "tets"
+            tets=1
+        fi
+    fi
+done
+
+
 # -- Create paraview file
 paraFoam -builtin -touch
 
 # -- Create the mesh
-runApplication blockMesh
+if [ $tets -eq 1 ]; then
+
+# -- Convert GMSH file to OpenFOAM mesh
+    runApplication gmshToFoam tets.msh
+
+# -- Remove cell zones creates by gmshToFoam
+    runApplication removeZones -clear
+
+# -- Set the correct boundary type
+    runApplication foamDictionary \
+        constant/polyMesh/boundary \
+        -entry entry0/defaultFaces/type \
+        -set empty
+
+else
+
+# -- Create hex mesh
+    runApplication blockMesh
+fi
 
 # -- run the calc
 # the debug flag writes each intermediate refinement set
