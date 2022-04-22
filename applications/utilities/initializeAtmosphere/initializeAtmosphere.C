@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
     argList::addOption("pRef", "Reference pressure [Pa]");
     argList::addOption("hRef", "Height of the lowest point [m]");
     argList::addOption("phase", "Name of the phase");
-    argList::addOption("phases", "List of phases");
     argList::addOption("zone", "Cell zone to set");
     argList::addOption("type", "Model used to set the fields");
 
@@ -61,50 +60,25 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createNamedMesh.H"
 
-    IOobject atmospherePropertiesIO
+    IOdictionary atmosphereProperties
     (
-        "atmosphereProperties",
-        mesh.time().system(),
-        mesh,
-        IOobject::MUST_READ
+        IOobject
+        (
+            "atmosphereProperties",
+            mesh.time().system(),
+            mesh,
+            IOobject::READ_IF_PRESENT
+        )
     );
-    autoPtr<IOdictionary> atmospherePropertiesPtr;
-    if (!atmospherePropertiesIO.typeHeaderOk<IOdictionary>(true))
-    {
-        atmospherePropertiesIO.readOpt() = IOobject::NO_READ;
-        atmospherePropertiesPtr.set
-        (
-            new IOdictionary(atmospherePropertiesIO)
-        );
 
-        atmospherePropertiesPtr->set
-        (
-            "type",
-            atmosphereModels::hydrostatic::typeName
-        );
-        atmospherePropertiesPtr->set
-        (
-            "pRef",
-            args.optionLookupOrDefault<scalar>
-            (
-                "pRef",
-                Foam::constant::thermodynamic::Pstd
-            )
-        );
-        atmospherePropertiesPtr->set
-        (
-            "hRef",
-            args.optionLookupOrDefault<scalar>("hRef", 0.0)
-        );
-    }
-    else
+    if (args.optionFound("pRef"))
     {
-        atmospherePropertiesPtr.set
-        (
-            new IOdictionary(atmospherePropertiesIO)
-        );
+        atmosphereProperties.set("pRef", args.optionRead<scalar>("pRef"));
     }
-    const dictionary& atmosphereProperties = atmospherePropertiesPtr();
+    if (args.optionFound("hRef"))
+    {
+        atmosphereProperties.set("hRef", args.optionRead<scalar>("hRef"));
+    }
 
     label zoneID = -1;
     if (args.optionFound("zone"))
@@ -147,17 +121,9 @@ int main(int argc, char *argv[])
             phaseName = phases[0];
         }
     }
-    else if (args.optionFound("phases"))
-    {
-        phases = args.optionRead<wordList>("phases");
-    }
     else if (atmosphereProperties.found("phase"))
     {
         phases = atmosphereProperties.lookup<word>("phase");
-    }
-    else if (atmosphereProperties.found("phases"))
-    {
-        phases = atmosphereProperties.lookup<wordList>("phases");
     }
     else if (phaseProperties.found("phases"))
     {
