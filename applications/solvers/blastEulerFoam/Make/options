@@ -37,5 +37,4 @@ EXE_LIBS = \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate \
-    -lblastFunctionObjects \
-    $(BLAST_ADDITIONAL_LIBS)
+    -lblastFunctionObjects
