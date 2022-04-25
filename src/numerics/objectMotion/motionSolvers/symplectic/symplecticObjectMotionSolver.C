@@ -42,6 +42,18 @@ namespace objectMotionSolvers
 
 Foam::objectMotionSolvers::symplectic::symplectic
 (
+    const symplectic& solver,
+    movingObject& body,
+    objectMotionState& state,
+    objectMotionState& state0
+)
+:
+    objectMotionSolver(body, state, state0)
+{}
+
+
+Foam::objectMotionSolvers::symplectic::symplectic
+(
     const dictionary& dict,
     movingObject& body,
     objectMotionState& state,

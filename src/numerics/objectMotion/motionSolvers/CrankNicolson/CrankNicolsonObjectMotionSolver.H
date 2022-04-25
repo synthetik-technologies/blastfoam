@@ -88,6 +88,15 @@ public:
 
     // Constructors
 
+        //- Construct from the body
+        CrankNicolson
+        (
+            const CrankNicolson& solver,
+            movingObject& body,
+            objectMotionState& state,
+            objectMotionState& state0
+        );
+
         //- Construct from a dictionary and the body
         CrankNicolson
         (
@@ -97,6 +106,19 @@ public:
             objectMotionState& state0
         );
 
+        // Construct for given body
+        autoPtr<objectMotionSolver> clone
+        (
+            movingObject& body,
+            objectMotionState& state,
+            objectMotionState& state0
+        ) const
+        {
+            return autoPtr<objectMotionSolver>
+            (
+                new CrankNicolson(*this, body, state, state0)
+            );
+        }
 
     //- Destructor
     virtual ~CrankNicolson();

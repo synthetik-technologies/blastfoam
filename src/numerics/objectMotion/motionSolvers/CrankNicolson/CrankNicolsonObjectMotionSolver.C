@@ -42,6 +42,20 @@ namespace objectMotionSolvers
 
 Foam::objectMotionSolvers::CrankNicolson::CrankNicolson
 (
+    const CrankNicolson& solver,
+    movingObject& body,
+    objectMotionState& state,
+    objectMotionState& state0
+)
+:
+    objectMotionSolver(body, state, state0),
+    aoc_(solver.aoc_),
+    voc_(solver.voc_)
+{}
+
+
+Foam::objectMotionSolvers::CrankNicolson::CrankNicolson
+(
     const dictionary& dict,
     movingObject& body,
     objectMotionState& state,

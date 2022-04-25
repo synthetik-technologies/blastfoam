@@ -69,6 +69,15 @@ public:
 
     // Constructors
 
+        //- Construct from the body
+        Euler
+        (
+            const Euler& solver,
+            movingObject& body,
+            objectMotionState& state,
+            objectMotionState& state0
+        );
+
         //- Construct from a dictionary and the body
         Euler
         (
@@ -77,6 +86,17 @@ public:
             objectMotionState& state,
             objectMotionState& state0
         );
+
+        // Construct for given body
+        autoPtr<objectMotionSolver> clone
+        (
+            movingObject& body,
+            objectMotionState& state,
+            objectMotionState& state0
+        ) const
+        {
+            return autoPtr<objectMotionSolver>(new Euler(*this, body, state, state0));
+        }
 
 
     //- Destructor

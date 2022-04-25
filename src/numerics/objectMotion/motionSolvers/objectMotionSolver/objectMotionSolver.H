@@ -158,6 +158,18 @@ public:
             objectMotionState& state0
         );
 
+        // Construct for given body
+        autoPtr<objectMotionSolver> clone
+        (
+            movingObject& body,
+            objectMotionState& state,
+            objectMotionState& state0
+        ) const
+        {
+            NotImplemented;
+            return autoPtr<objectMotionSolver>();
+        }
+
 
     //- Destructor
     virtual ~objectMotionSolver();

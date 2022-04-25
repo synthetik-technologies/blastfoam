@@ -42,6 +42,18 @@ namespace objectMotionSolvers
 
 Foam::objectMotionSolvers::Euler::Euler
 (
+    const Euler& solver,
+    movingObject& body,
+    objectMotionState& state,
+    objectMotionState& state0
+)
+:
+    objectMotionSolver(body, state, state0)
+{}
+
+
+Foam::objectMotionSolvers::Euler::Euler
+(
     const dictionary& dict,
     movingObject& body,
     objectMotionState& state,

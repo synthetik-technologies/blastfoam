@@ -42,6 +42,20 @@ namespace objectMotionSolvers
 
 Foam::objectMotionSolvers::Newmark::Newmark
 (
+    const Newmark& solver,
+    movingObject& body,
+    objectMotionState& state,
+    objectMotionState& state0
+)
+:
+    objectMotionSolver(body, state, state0),
+    gamma_(solver.gamma_),
+    beta_(solver.beta_)
+{}
+
+
+Foam::objectMotionSolvers::Newmark::Newmark
+(
     const dictionary& dict,
     movingObject& body,
     objectMotionState& state,

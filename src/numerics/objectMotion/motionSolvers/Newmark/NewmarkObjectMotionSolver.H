@@ -86,6 +86,15 @@ public:
 
     // Constructors
 
+        //- Construct from the body
+        Newmark
+        (
+            const Newmark& solver,
+            movingObject& body,
+            objectMotionState& state,
+            objectMotionState& state0
+        );
+
         //- Construct from a dictionary and the body
         Newmark
         (
@@ -94,6 +103,17 @@ public:
             objectMotionState& state,
             objectMotionState& state0
         );
+
+        // Construct for given body
+        autoPtr<objectMotionSolver> clone
+        (
+            movingObject& body,
+            objectMotionState& state,
+            objectMotionState& state0
+        ) const
+        {
+            return autoPtr<objectMotionSolver>(new Newmark(*this, body, state, state0));
+        }
 
 
     //- Destructor
