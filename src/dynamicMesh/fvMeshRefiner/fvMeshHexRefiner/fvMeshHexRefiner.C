@@ -1462,6 +1462,7 @@ bool Foam::fvMeshHexRefiner::refine
     const scalar unrefineLevel
 )
 {
+    readDict(this->dict_);
     bool hasChanged = false;
 
     if (preUpdate())

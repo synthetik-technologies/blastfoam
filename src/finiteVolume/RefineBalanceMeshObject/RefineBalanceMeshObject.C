@@ -28,6 +28,46 @@ License
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
 template<class Mesh>
+void Foam::blastMeshObject::preDistribute
+(
+    objectRegistry& obr
+)
+{
+    HashTable<DistributeableMeshObject<Mesh>*> meshObjects
+    (
+        obr.lookupClass<DistributeableMeshObject<Mesh>>()
+    );
+
+    if (meshObject::debug)
+    {
+        Pout<< "meshObject::preDistribute(objectRegistry&,"
+            << "mapDistributePolyMesh&): updating " << Mesh::typeName
+            << " meshObjects for region " << obr.name() << endl;
+    }
+
+    forAllIter
+    (
+        typename HashTable<DistributeableMeshObject<Mesh>*>,
+        meshObjects,
+        iter
+    )
+    {
+        if (isA<DistributeableMeshObject<Mesh>>(*iter()))
+        {
+            if (meshObject::debug)
+            {
+                Pout<< "    Updating " << iter()->name() << endl;
+            }
+            dynamic_cast<DistributeableMeshObject<Mesh>*>
+            (
+                iter()
+            )->preDistribute();
+        }
+    }
+}
+
+
+template<class Mesh>
 void Foam::blastMeshObject::distribute
 (
     objectRegistry& obr,
@@ -41,7 +81,7 @@ void Foam::blastMeshObject::distribute
 
     if (meshObject::debug)
     {
-        Pout<< "meshObject::preDistribute(objectRegistry&,"
+        Pout<< "meshObject::distribute(objectRegistry&,"
             << "mapDistributePolyMesh&): updating " << Mesh::typeName
             << " meshObjects for region " << obr.name() << endl;
     }

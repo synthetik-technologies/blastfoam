@@ -596,10 +596,9 @@ void Foam::fvMeshRefiner::readDict(const dictionary& dict)
 
 bool Foam::fvMeshRefiner::balance()
 {
-    //Part 1 - Call normal update from dynamicRefineBlastFvMesh
+    //Part 1 - Reread the balance dictionary
     const dictionary& balanceDict(dict_.optionalSubDict("loadBalance"));
     balancer_.read(balanceDict);
-
 
     // Part 2 - Load Balancing
     if (canBalance(true))
@@ -680,7 +679,7 @@ void Foam::fvMeshRefiner::distribute
     const mapDistributePolyMesh& map
 )
 {
-    Info<< "Distribute the map ..." << endl;
+    Info<< "Distributing ..." << endl;
 
     //- The volume has been updated, so now we copy back
     //  This also calls V() which will construct the volume

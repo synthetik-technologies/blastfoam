@@ -308,6 +308,7 @@ bool Foam::fvMeshPolyRefiner::refine
     const scalar unrefineLevel
 )
 {
+    readDict(this->dict_);
     bool hasChanged = false;
 
     if (preUpdate())

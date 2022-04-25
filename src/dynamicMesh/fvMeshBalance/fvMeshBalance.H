@@ -52,6 +52,12 @@ class decompositionMethod;
 
 class fvMeshBalance
 {
+public:
+
+    // Global flag if the mesh is being balanced
+    static bool balancing;
+
+
 protected:
 
         //- Reference to the mesh
@@ -182,6 +188,12 @@ public:
 
         //- Disallow default bitwise assignment
         void operator=(const fvMeshBalance&) = delete;
+
+
+    // Return is the mesh is being balanced
+
+        static bool isBalancing();
+        static bool isBalancing(const polyMesh&);
 };
 
 

@@ -40,6 +40,29 @@ using namespace Foam::decompositionConstraints;
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshBalance, 0);
+
+bool fvMeshBalance::balancing = false;
+}
+
+bool Foam::fvMeshBalance::isBalancing()
+{
+    return balancing;
+}
+
+bool Foam::fvMeshBalance::isBalancing(const polyMesh& mesh)
+{
+    if (balancing)
+    {
+        if (!mesh.db().foundObject<polyMesh>(mesh.name()))
+        {
+            return false;
+        }
+        if (&mesh == &mesh.db().lookupObject<polyMesh>(mesh.name()))
+        {
+            return !Pstream::parRun();
+        }
+    }
+    return false;
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -222,11 +245,7 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
     );
     decompositionDict_.set("method", method);
 
-    if (balanceDict.found("allowableImbalance"))
-    {
-        allowableImbalance_ =
-            balanceDict.lookup<scalar>("allowableImbalance");
-    }
+    balanceDict.readIfPresent("allowableImbalance", allowableImbalance_);
 }
 
 
@@ -491,13 +510,16 @@ bool Foam::fvMeshBalance::canBalance() const
     (
         scalar(sum(procLoadNew))/scalar(Pstream::nProcs())
     );
-    scalar maxDevNew(max(mag(procLoadNew - averageLoadNew)));
+    scalar maxDevNew(max(mag(procLoadNew - averageLoadNew))/averageLoadNew);
 
     if (maxDevNew > maxImbalanceRatio*0.99)
     {
-        DebugInfo
+        Info
             << "    Not balancing because the new distribution does" << nl
-            << "    not improve the load. Skipping" << endl;
+            << "    not improve the load. Skipping" << nl
+            << "    old imbalance: " << maxImbalanceRatio << nl
+            << "    new imbalance: " << maxDevNew << nl
+            << endl;
         return false;
     }
 
@@ -521,11 +543,13 @@ Foam::fvMeshBalance::distribute()
     correctBoundaries<pointSymmTensorField>();
     correctBoundaries<pointTensorField>();
 
-
+    blastMeshObject::preDistribute<fvMesh>(mesh_);
 
     Info<< "Distributing the mesh ..." << endl;
+    balancing = true;
     autoPtr<mapDistributePolyMesh> map =
         distributor_.distribute(distribution_);
+    balancing = false;
 
     Info << "Successfully distributed mesh" << endl;
     label procLoadNew(mesh_.nCells());
