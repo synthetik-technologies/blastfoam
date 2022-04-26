@@ -131,45 +131,39 @@ void Foam::speciesMixtureField<ThermoType>::updatePatches
 )
 {
     label i = 0;
-    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
-    start_.resize(pbm.size());
-    forAll(pbm, patchi)
+    const fvBoundaryMesh& bm = mesh_.boundary();
+    start_.resize(bm.size());
+    forAll(bm, patchi)
     {
         start_[patchi] = i;
-        if (!isA<emptyPolyPatch>(pbm[patchi]))
-        {
-            i += pbm[patchi].size();
-        }
+        i += bm[patchi].size();
     }
 
     //- Resize boundary
     faceMixtures_.resize(nBoundaryFaces());
 
     //- Update boundaries that were previously allocated
-    forAll(pbm, patchi)
+    forAll(bm, patchi)
     {
-        if (!isA<emptyPolyPatch>(pbm[patchi]))
+        forAll(bm[patchi], facei)
         {
-            forAll(pbm[patchi], facei)
+            label pfi = patchFaceIndex(patchi, facei);
+            if (faceMixtures_.set(pfi))
             {
-                label pfi = patchFaceIndex(patchi, facei);
-                if (faceMixtures_.set(pfi))
-                {
-                    faceMixtures_[pfi] =
-                        validBoundary
-                      ? patchFaceMixture(patchi, facei)
-                      : mixture_;
-                }
-                else
-                {
-                    faceMixtures_.set
-                    (
-                        pfi,
-                        validBoundary
-                      ? new ThermoType(patchFaceMixture(patchi, facei))
-                      : new ThermoType(mixture_)
-                    );
-                }
+                faceMixtures_[pfi] =
+                    validBoundary
+                  ? patchFaceMixture(patchi, facei)
+                  : mixture_;
+            }
+            else
+            {
+                faceMixtures_.set
+                (
+                    pfi,
+                    validBoundary
+                  ? new ThermoType(patchFaceMixture(patchi, facei))
+                  : new ThermoType(mixture_)
+                );
             }
         }
     }

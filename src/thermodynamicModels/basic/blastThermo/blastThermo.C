@@ -127,7 +127,11 @@ Foam::wordList Foam::blastThermo::heBoundaryTypes()
             hbt[patchi] = energyJumpAMIFvPatchScalarField::typeName;
         }
 
-        if (T().mesh().boundary()[patchi].type() == "immersed")
+        if
+        (
+            T().mesh().boundary()[patchi].type() == "immersed"
+         && T().boundaryField()[patchi].type() != "immersed"
+        )
         {
             hbt[patchi] = "immersed" + hbt[patchi].capitalise();
         }

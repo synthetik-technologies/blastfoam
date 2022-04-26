@@ -45,7 +45,6 @@ SourceFiles
 #include "volFields.H"
 #include "RefineBalanceMeshObject.H"
 #include "PtrList.H"
-#include "emptyPolyPatch.H"
 
 namespace Foam
 {
@@ -96,13 +95,10 @@ class speciesMixtureField
     label nBoundaryFaces() const
     {
         label nf = 0;
-        const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
-        forAll(pbm, patchi)
+        const fvBoundaryMesh& bm = mesh_.boundary();
+        forAll(bm, patchi)
         {
-            if (!isA<emptyPolyPatch>(pbm[patchi]))
-            {
-                nf += pbm[patchi].size();
-            }
+            nf += bm[patchi].size();
         }
         return nf;
     }
