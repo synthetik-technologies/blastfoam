@@ -92,8 +92,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D
 (
-    const Field<scalar>& x,
-    const Field<Type>& data,
+    const List<scalar>& x,
+    const List<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -119,7 +119,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D
 (
-    const Field<scalar>& x,
+    const List<scalar>& x,
     const word& xMod,
     const word& interpolationScheme,
     const bool isReal
@@ -162,8 +162,8 @@ Foam::lookupTable1D<Type>::~lookupTable1D()
 template<class Type>
 void Foam::lookupTable1D<Type>::set
 (
-    const Field<scalar>& x,
-    const Field<Type>& data,
+    const List<scalar>& x,
+    const List<Type>& data,
     const bool isReal
 )
 {
@@ -175,8 +175,8 @@ void Foam::lookupTable1D<Type>::set
 template<class Type>
 void Foam::lookupTable1D<Type>::set
 (
-    const Field<scalar>& x,
-    const Field<Type>& data,
+    const List<scalar>& x,
+    const List<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -194,7 +194,7 @@ void Foam::lookupTable1D<Type>::set
 template<class Type>
 void Foam::lookupTable1D<Type>::setX
 (
-    const Field<scalar>& x,
+    const List<scalar>& x,
     const bool isReal
 )
 {
@@ -239,7 +239,7 @@ void Foam::lookupTable1D<Type>::setX
 template<class Type>
 void Foam::lookupTable1D<Type>::setX
 (
-    const Field<scalar>& x,
+    const List<scalar>& x,
     const word& xMod,
     const bool isReal
 )
@@ -252,7 +252,7 @@ void Foam::lookupTable1D<Type>::setX
 template<class Type>
 void Foam::lookupTable1D<Type>::setData
 (
-    const Field<Type>& data,
+    const List<Type>& data,
     const bool isReal
 )
 {
@@ -290,7 +290,7 @@ void Foam::lookupTable1D<Type>::setData
 template<class Type>
 void Foam::lookupTable1D<Type>::setData
 (
-    const Field<Type>& data,
+    const List<Type>& data,
     const word& mod,
     const bool isReal
 )

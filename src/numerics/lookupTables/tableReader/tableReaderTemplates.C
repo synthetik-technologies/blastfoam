@@ -174,6 +174,10 @@ bool Foam::readComponent
             values = parentDict.lookup<Field<Type>>(name);
         }
 
+        if (parentDict.found(name + "Scale"))
+        {
+            scale = parentDict.lookup<scalar>(name + "Scale");
+        }
         modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
         if (modType != "none")
         {

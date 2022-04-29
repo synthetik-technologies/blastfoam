@@ -177,11 +177,12 @@ public:
         );
 
         //- Construct from data
+        template<template<class> class ListType>
         lookupTable2D
         (
-            const Field<scalar>& x,
-            const Field<scalar>& y,
-            const Field<Field<Type>>& data,
+            const List<scalar>& x,
+            const List<scalar>& y,
+            const ListType<ListType<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
@@ -350,18 +351,20 @@ public:
     // Edit functions
 
         //- Set data, x, and y
-        virtual void set
+        template<template<class> class ListType>
+        void set
         (
-            const Field<scalar>& x,
-            const Field<scalar>& y,
-            const Field<Field<Type>>& data,
+            const List<scalar>& x,
+            const List<scalar>& y,
+            const ListType<ListType<Type>>& data,
             const bool isReal = true
         );
-        virtual void set
+        template<template<class> class ListType>
+        void set
         (
-            const Field<scalar>& x,
-            const Field<scalar>& y,
-            const Field<Field<Type>>& data,
+            const List<scalar>& x,
+            const List<scalar>& y,
+            const ListType<ListType<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
@@ -371,47 +374,49 @@ public:
         );
 
         //- Set x
-        virtual void setX
+        void setX
         (
-            const Field<scalar>& x,
+            const List<scalar>& x,
             const bool isReal = true
         );
-        virtual void setX
+        void setX
         (
-            const Field<scalar>& x,
+            const List<scalar>& x,
             const word& xMod,
             const bool isReal = true
         );
 
         //- Set y
-        virtual void setY
+        void setY
         (
-            const Field<scalar>& y,
+            const List<scalar>& y,
             const bool isReal = true
         );
-        virtual void setY
+        void setY
         (
-            const Field<scalar>& y,
+            const List<scalar>& y,
             const word& yMod,
             const bool isReal = true
         );
 
         //- Set data
-        virtual void setData
+        template<template<class> class ListType>
+        void setData
         (
-            const Field<Field<Type>>& data,
+            const ListType<ListType<Type>>& data,
             const bool isReal = true
         );
-        virtual void setData
+        template<template<class> class ListType>
+        void setData
         (
-            const Field<Field<Type>>& data,
+            const ListType<ListType<Type>>& data,
             const word& mod,
             const bool isReal = true
         );
 
 
         //- Read from a given dictionary
-        virtual void read
+        void read
         (
             const dictionary& dict,
             const word& xName,

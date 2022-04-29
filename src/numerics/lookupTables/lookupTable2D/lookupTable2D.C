@@ -146,11 +146,12 @@ Foam::lookupTable2D<Type>::lookupTable2D
 
 
 template<class Type>
+template<template<class> class ListType>
 Foam::lookupTable2D<Type>::lookupTable2D
 (
-    const Field<scalar>& x,
-    const Field<scalar>& y,
-    const Field<Field<Type>>& data,
+    const List<scalar>& x,
+    const List<scalar>& y,
+    const ListType<ListType<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -213,11 +214,12 @@ Foam::lookupTable2D<Type>::~lookupTable2D()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
+template<template<class> class ListType>
 void Foam::lookupTable2D<Type>::set
 (
-    const Field<scalar>& x,
-    const Field<scalar>& y,
-    const Field<Field<Type>>& data,
+    const List<scalar>& x,
+    const List<scalar>& y,
+    const ListType<ListType<Type>>& data,
     const bool isReal
 )
 {
@@ -228,11 +230,12 @@ void Foam::lookupTable2D<Type>::set
 
 
 template<class Type>
+template<template<class> class ListType>
 void Foam::lookupTable2D<Type>::set
 (
-    const Field<scalar>& x,
-    const Field<scalar>& y,
-    const Field<Field<Type>>& data,
+    const List<scalar>& x,
+    const List<scalar>& y,
+    const ListType<ListType<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -258,7 +261,7 @@ void Foam::lookupTable2D<Type>::set
 template<class Type>
 void Foam::lookupTable2D<Type>::setX
 (
-    const Field<scalar>& x,
+    const List<scalar>& x,
     const word& modX,
     const bool isReal
 )
@@ -271,7 +274,7 @@ void Foam::lookupTable2D<Type>::setX
 template<class Type>
 void Foam::lookupTable2D<Type>::setX
 (
-    const Field<scalar>& x,
+    const List<scalar>& x,
     const bool isReal
 )
 {
@@ -316,7 +319,7 @@ void Foam::lookupTable2D<Type>::setX
 template<class Type>
 void Foam::lookupTable2D<Type>::setY
 (
-    const Field<scalar>& y,
+    const List<scalar>& y,
     const word& modY,
     const bool isReal
 )
@@ -329,7 +332,7 @@ void Foam::lookupTable2D<Type>::setY
 template<class Type>
 void Foam::lookupTable2D<Type>::setY
 (
-    const Field<scalar>& y,
+    const List<scalar>& y,
     const bool isReal
 )
 {
@@ -372,9 +375,10 @@ void Foam::lookupTable2D<Type>::setY
 
 
 template<class Type>
+template<template<class> class ListType>
 void Foam::lookupTable2D<Type>::setData
 (
-    const Field<Field<Type>>& data,
+    const ListType<ListType<Type>>& data,
     const bool isReal
 )
 {
@@ -417,9 +421,10 @@ void Foam::lookupTable2D<Type>::setData
 
 
 template<class Type>
+template<template<class> class ListType>
 void Foam::lookupTable2D<Type>::setData
 (
-    const Field<Field<Type>>& data,
+    const ListType<ListType<Type>>& data,
     const word& mod,
     const bool isReal
 )

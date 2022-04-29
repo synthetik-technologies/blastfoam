@@ -509,7 +509,10 @@ Foam::fvMeshRefiner::~fvMeshRefiner()
 
 void Foam::fvMeshRefiner::readDict(const dictionary& dict)
 {
-    dict_ = dict;
+    if (&dict_ != &dict)
+    {
+        dict_ = dict;
+    }
 
     maxCells_ = dict_.lookupOrDefault("maxCells", labelMax);
     if (maxCells_ <= 0)

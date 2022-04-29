@@ -143,8 +143,8 @@ public:
         //  x can be in real or xMod space
         lookupTable1D
         (
-            const Field<scalar>& x,
-            const Field<Type>& data,
+            const List<scalar>& x,
+            const List<Type>& data,
             const word& xMod = "none",
             const word& mod = "none",
             const word& interpolationScheme  = "linearClamp",
@@ -154,7 +154,7 @@ public:
         //- Construct from interpolator from only x values, no data is stored
         lookupTable1D
         (
-            const Field<scalar>& x,
+            const List<scalar>& x,
             const word& xMod,
             const word& interpolationScheme,
             const bool isReal = true
@@ -265,14 +265,14 @@ public:
         //- Set x and data
         void set
         (
-            const Field<scalar>& x,
-            const Field<Type>& data,
+            const List<scalar>& x,
+            const List<Type>& data,
             const bool isReal
         );
         void set
         (
-            const Field<scalar>& x,
-            const Field<Type>& data,
+            const List<scalar>& x,
+            const List<Type>& data,
             const word& mod,
             const word& xMod,
             const word& interpolationScheme,
@@ -280,25 +280,25 @@ public:
         );
 
         //- Set x
-        void setX(const Field<scalar>& x, const bool isReal = true);
+        void setX(const List<scalar>& x, const bool isReal = true);
         void setX
         (
-            const Field<scalar>& x,
+            const List<scalar>& x,
             const word& xMod,
             const bool isReal = true
         );
 
         //- Set data
-        void setData(const Field<Type>& data, const bool isReal = true);
+        void setData(const List<Type>& data, const bool isReal = true);
         void setData
         (
-            const Field<Type>& data,
+            const List<Type>& data,
             const word& mod,
             const bool isReal = true
         );
 
     //- Read from a given dictionary
-    virtual void read
+    void read
     (
         const dictionary& dict,
         const word& xName,
