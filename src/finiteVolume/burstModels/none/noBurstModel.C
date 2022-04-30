@@ -47,9 +47,15 @@ Foam::burstModels::none::none(const dictionary& dict)
 {}
 
 
+Foam::burstModels::none::none()
+:
+    burstModel()
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::burstModels::impulse::~impulse()
+Foam::burstModels::none::~none()
 {}
 
 

@@ -72,6 +72,12 @@ Foam::burstModel::burstModel(const dictionary& dict)
 {}
 
 
+Foam::burstModel::burstModel()
+:
+    partialBurst_(false),
+    burst_(false)
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::burstModel::~burstModel()

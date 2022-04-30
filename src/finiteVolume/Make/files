@@ -52,6 +52,7 @@ meshSizeObject/meshSizeObject.C
 calcAngleFraction/calcAngleFraction.C
 
 burstModels/burstModel/burstModel.C
+burstModels/none/noBurstModel.C
 burstModels/pressure/pressureBurstModel.C
 burstModels/impulse/impulseBurstModel.C
 burstModels/pressureImpulse/pressureImpulseBurstModel.C

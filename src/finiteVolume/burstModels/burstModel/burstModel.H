@@ -81,6 +81,7 @@ public:
 
     // Constructor
     burstModel(const dictionary& dict);
+    burstModel();
 
 
     //- Destructor
