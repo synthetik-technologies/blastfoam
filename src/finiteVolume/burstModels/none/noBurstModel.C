@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,49 +23,41 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "noBurstModel.H"
 #include "burstFvPatchFieldBase.H"
-#include "volFields.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(burstFvPatchFieldBase, 0);
+namespace burstModels
+{
+    defineTypeNameAndDebug(none, 0);
+    addToRunTimeSelectionTable(burstModel, none, dictionary);
 }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::burstFvPatchFieldBase::burstFvPatchFieldBase
-(
-    const fvPatch& p
-)
+Foam::burstModels::none::none(const dictionary& dict)
 :
-    burstFvPatch_
-    (
-        const_cast<burstFvPatchBase&>
-        (
-            dynamicCast<const burstFvPatchBase>(p)
-        )
-    ),
-    burstPolyPatch_(burstFvPatch_.burstPolyPatch()),
-
-    // Default to unblocked (i.e. for temporary fields)
-    unblock_(false),
-    block_(false)
+    burstModel(dict)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::burstFvPatchFieldBase::~burstFvPatchFieldBase()
+Foam::burstModels::impulse::~impulse()
 {}
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Public Functions  * * * * * * * * * * * * * //
 
-void Foam::burstFvPatchFieldBase::update()
+void Foam::burstModels::none::writeData(Ostream& os) const
 {
-    burstFvPatch_.update();
+    writeEntry(os, "burstModel", type());
 }
 
 // ************************************************************************* //

@@ -140,6 +140,9 @@ protected:
         //- Reference to the parent
         burstFvPatchParent& parent_;
 
+        //- Current time index
+        mutable label curTimeIndex_;
+
         //- Update the mesh weights and deltas
         void updateDeltas();
 
@@ -169,7 +172,8 @@ public:
             parent_
             (
                 burstFvPatchParent::New(patch_.boundaryMesh().mesh())
-            )
+            ),
+            curTimeIndex_(patch.boundaryMesh().mesh().time().timeIndex())
         {}
 
         burstFvPatchBase(const burstFvPatchBase&) = delete;
@@ -200,11 +204,7 @@ public:
 
         //- Update the intact field and update mesh weight and deltas if
         //  a change happens
-        void update
-        (
-            const scalarField& p,
-            const scalarField& impulse
-        );
+        void update();
 };
 
 

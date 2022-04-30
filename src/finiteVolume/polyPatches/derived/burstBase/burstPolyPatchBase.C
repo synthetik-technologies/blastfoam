@@ -25,6 +25,7 @@ License
 
 #include "burstPolyPatchBase.H"
 #include "globalMeshData.H"
+#include "noBurstModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -85,15 +86,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 :
     patch_(p),
     intact_(nullptr),
-    usePressure_(false),
-    pName_("p"),
-    pBurst_(great),
-    pRef_(0.0),
-    useImpulse_(false),
-    impulseName_("impulse"),
-    impulseBurst_(great),
-    partialBurst_(false),
-    curTimeIndex_(-1)
+    burst_(new burstModels::none())
 {}
 
 
@@ -105,29 +98,8 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 :
     patch_(p),
     intact_(nullptr),
-    usePressure_(dict.lookupOrDefault("usePressure", true)),
-    pName_(dict.lookupOrDefault<word>("pName", "p")),
-    pBurst_(great),
-    pRef_(0.0),
-    useImpulse_(dict.lookupOrDefault("useImpulse", false)),
-    impulseName_(dict.lookupOrDefault<word>("impulseName", "impulse")),
-    impulseBurst_(great),
-    partialBurst_(dict.lookupOrDefault("partialBurst", false)),
-    curTimeIndex_(-1)
-{
-    if (usePressure_)
-    {
-        pBurst_ = dict.lookup<scalar>("pBurst");
-        if (dict.found("pRef"))
-        {
-            pRef_ = dict.lookup<scalar>("pRef");
-        }
-    }
-    if (useImpulse_)
-    {
-        impulseBurst_ = dict.lookup<scalar>("impulseBurst");
-    }
-}
+    burst_(burstModel::New(dict))
+{}
 
 
 Foam::burstPolyPatchBase::burstPolyPatchBase
@@ -138,15 +110,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 :
     patch_(p),
     intact_(nullptr),
-    usePressure_(bppb.usePressure_),
-    pName_(bppb.pName_),
-    pBurst_(bppb.pBurst_),
-    pRef_(bppb.pRef_),
-    useImpulse_(bppb.useImpulse_),
-    impulseName_(bppb.impulseName_),
-    impulseBurst_(bppb.impulseBurst_),
-    partialBurst_(bppb.partialBurst_),
-    curTimeIndex_(-1)
+    burst_(bppb.burst_->clone())
 {}
 
 
@@ -160,15 +124,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 :
     patch_(p),
     intact_(nullptr),
-    usePressure_(bppb.usePressure_),
-    pName_(bppb.pName_),
-    pBurst_(bppb.pBurst_),
-    pRef_(bppb.pRef_),
-    useImpulse_(bppb.useImpulse_),
-    impulseName_(bppb.impulseName_),
-    impulseBurst_(bppb.impulseBurst_),
-    partialBurst_(bppb.partialBurst_),
-    curTimeIndex_(-1)
+    burst_(bppb.burst_->clone())
 {}
 
 
@@ -181,15 +137,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 :
     patch_(p),
     intact_(nullptr),
-    usePressure_(bppb.usePressure_),
-    pName_(bppb.pName_),
-    pBurst_(bppb.pBurst_),
-    pRef_(bppb.pRef_),
-    useImpulse_(bppb.useImpulse_),
-    impulseName_(bppb.impulseName_),
-    impulseBurst_(bppb.impulseBurst_),
-    partialBurst_(bppb.partialBurst_),
-    curTimeIndex_(-1)
+    burst_(bppb.burst_->clone())
 {}
 
 
@@ -204,54 +152,11 @@ Foam::burstPolyPatchBase::~burstPolyPatchBase()
 
 bool Foam::burstPolyPatchBase::update
 (
-    const scalarField& p,
-    const scalarField& impulse,
+    const fvPatch& p,
     scalarField& intact
 ) const
 {
-    bool burst = false;
-    if (partialBurst_)
-    {
-        scalarField burstP(intact.size(), -great);
-        scalarField burstImp(intact.size(), -great);
-        if (usePressure_)
-        {
-            burstP = p - pBurst_;
-        }
-        if (useImpulse_)
-        {
-            burstImp = impulse - impulseBurst_;
-        }
-        forAll(intact, facei)
-        {
-            if (intact[facei] > 0.5)
-            {
-                intact[facei] = burstP[facei] < 0 && burstImp[facei] < 0;
-                if (!intact[facei])
-                {
-                    burst = true;
-                }
-            }
-
-        }
-    }
-    else
-    {
-        // Patch has already burst
-        if (gMin(intact) > 0)
-        {
-            if (usePressure_)
-            {
-                burst = burst || gMax(p) > pBurst_;
-            }
-            if (useImpulse_)
-            {
-                burst = burst || gMax(impulse) > impulseBurst_;
-            }
-            intact = !burst;
-        }
-    }
-    return returnReduce(burst, orOp<bool>());
+    return returnReduce(burst_->update(p, intact), orOp<bool>());
 }
 
 
@@ -268,28 +173,7 @@ Foam::burstPolyPatchBase::pointIntact() const
 
 void Foam::burstPolyPatchBase::write(Ostream& os) const
 {
-    writeEntry<Switch>(os, "partialBurst", partialBurst_);
-
-    writeEntry<Switch>(os, "usePressure", usePressure_);
-    if (usePressure_)
-    {
-        writeEntryIfDifferent<word>(os, "pName", "p", pName_);
-        writeEntry(os, "pBurst", pBurst_);
-        writeEntry(os, "pRef", pRef_);
-    }
-
-    writeEntry(os, "useImpulse", useImpulse_);
-    if (useImpulse_)
-    {
-        writeEntryIfDifferent<word>
-        (
-            os,
-            "impulseName",
-            "impulse",
-            impulseName_
-        );
-        writeEntry(os, "impulseBurst", impulseBurst_);
-    }
+    burst_->writeData(os);
 }
 
 

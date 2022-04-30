@@ -40,13 +40,14 @@ SourceFiles
 #include "polyBoundaryMesh.H"
 #include "Time.H"
 #include "UautoPtr.H"
-#include "UPtrList.H"
+#include "burstModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
+class fvPatch;
 
 /*---------------------------------------------------------------------------*\
                        Class burstPolyPatchBase Declaration
@@ -64,35 +65,11 @@ protected:
         //- Intact field
         UautoPtr<const scalarField> intact_;
 
-        //- Is pressure used
-        bool usePressure_;
-
-        //- Name of the pressure field
-        word pName_;
-
-        //- Burst pressure
-        scalar pBurst_;
-
-        //- Reference pressure
-        scalar pRef_;
-
-        //- bool impulse used
-        bool useImpulse_;
-
-        //- Name of the impulse field
-        word impulseName_;
-
-        //- Burst impulse
-        scalar impulseBurst_;
-
-        //- Do individual faces burst
-        bool partialBurst_;
+        //- Burst model
+        autoPtr<burstModel> burst_;
 
         //- Intact points
         mutable autoPtr<scalarField> pointIntact_;
-
-        //- Current time index
-        mutable label curTimeIndex_;
 
         //- Make the pointIntact field
         void makePointIntact() const;
@@ -170,78 +147,13 @@ public:
             //- Return the interpolated intact field
             const Field<scalar>& pointIntact() const;
 
-            //- Return if pressure is used
-            bool usePressure() const
-            {
-                return usePressure_;
-            }
-
-            //- Return the name of the pressure field
-            const word& pName() const
-            {
-                return pName_;
-            }
-
-            //- Return burst pressure
-            scalar pBurst() const
-            {
-                return pBurst_;
-            }
-
-            //- Return reference pressure
-            scalar pRef() const
-            {
-                return pRef_;
-            }
-
-            //- Return if impulse is used
-            bool useImpulse() const
-            {
-                return useImpulse_;
-            }
-
-            //- Return the name of the impulse field
-            const word& impulseName() const
-            {
-                return impulseName_;
-            }
-
-            //- Return burst impulse
-            scalar impulseBurst() const
-            {
-                return impulseBurst_;
-            }
-
-            //- Return if individual faces burst
-            bool partialBurst() const
-            {
-                return partialBurst_;
-            }
-
-            //- Return if the patch is up to date
-            bool uptoDate(const bool update) const
-            {
-                label curTimeIndex =
-                   patch_.boundaryMesh().mesh().time().timeIndex();
-
-                if (curTimeIndex_ == curTimeIndex)
-                {
-                    return true;
-                }
-                if (update)
-                {
-                    curTimeIndex_ = curTimeIndex;
-                }
-                return false;
-            }
 
         // Edit Functions
 
             //- Update the intact field
             bool update
             (
-                const scalarField& p,
-                const scalarField& impulse,
+                const fvPatch& p,
                 scalarField& intact
             ) const;
 

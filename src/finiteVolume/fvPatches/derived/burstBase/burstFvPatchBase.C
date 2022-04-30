@@ -176,15 +176,25 @@ void Foam::burstFvPatchBase::updateDeltas()
 }
 
 
-void Foam::burstFvPatchBase::update
-(
-    const scalarField& p,
-    const scalarField& impulse
-)
+void Foam::burstFvPatchBase::update()
 {
-    scalarField intact(this->intact());
-    if (burstPolyPatch_.update(p, impulse, intact))
+    if (patch_.boundaryMesh().mesh().time().timeIndex() == curTimeIndex_)
     {
+        return;
+    }
+    curTimeIndex_ = patch_.boundaryMesh().mesh().time().timeIndex();
+    scalarField intact(this->intact());
+
+    if (burstPolyPatch_.update(patch_, intact))
+    {
+        // Reset partially intact faces
+        forAll(intact, i)
+        {
+            if (intact[i] > 0.01)
+            {
+                intact[i] = 1;
+            }
+        }
         parent_.update(patch_.index(), intact);
         updateDeltas();
     }

@@ -67,8 +67,8 @@ baffles
         patchPairs
         {
             type            burstCyclicAMI;
+            burstModel      pressureImpulse;
             partialBurst    yes;
-            useImpulse      yes;
             impulseBurst    10000;
             pBurst          4e7;
         }

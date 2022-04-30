@@ -51,6 +51,11 @@ meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C
 
+burstModels/burstModel/burstModel.C
+burstModels/pressure/pressureBurstModel.C
+burstModels/impulse/impulseBurstModel.C
+burstModels/pressureImpulse/pressureImpulseBurstModel.C
+
 polyPatches/derived/burstBase/burstPolyPatchBase.C
 polyPatches/derived/burst/burstPolyPatch.C
 polyPatches/derived/burstCyclic/burstCyclicPolyPatch.C
