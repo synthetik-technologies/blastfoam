@@ -1079,6 +1079,7 @@ void Foam::phaseSystem::decode()
             phase.p() = p_;
         }
     }
+    encode();
 }
 
 
