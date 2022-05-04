@@ -472,7 +472,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
-Foam::topoSetList::topoSetList(const fvMesh& mesh)
+Foam::topoSetList::topoSetList(const polyMesh& mesh)
 :
     TopoSetList
     (
@@ -1234,7 +1234,7 @@ void Foam::topoSetList::transferZones(const bool remove)
         {
             Info << "Adding pointZones " << pointZones_ << endl;
         }
-        fvMesh& mesh = const_cast<fvMesh&>(mesh_);
+        polyMesh& mesh = const_cast<polyMesh&>(mesh_);
         mesh.pointZones().clear();
         mesh.faceZones().clear();
         mesh.cellZones().clear();
@@ -1350,7 +1350,7 @@ bool Foam::topoSetList::writeSets() const
         {
             Info << "Adding pointZones " << pointZones_ << endl;
         }
-        fvMesh& mesh = const_cast<fvMesh&>(mesh_);
+        polyMesh& mesh = const_cast<polyMesh&>(mesh_);
         mesh.pointZones().clear();
         mesh.faceZones().clear();
         mesh.cellZones().clear();

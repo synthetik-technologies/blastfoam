@@ -35,7 +35,7 @@ SourceFiles
 #ifndef topoSetList_H
 #define topoSetList_H
 
-#include "fvMesh.H"
+#include "polyMesh.H"
 #include "HashPtrTable.H"
 #include "topoSet.H"
 #include "cellZoneSet.H"
@@ -53,7 +53,7 @@ namespace Foam
 class topoSetList;
 typedef MeshObject
 <
-    fvMesh,
+    polyMesh,
     DistributeableMeshObject,
     topoSetList
 > TopoSetList;
@@ -104,7 +104,7 @@ public:
     TypeName("topoSetList");
 
     //- Constructor
-    topoSetList(const fvMesh& mesh);
+    topoSetList(const polyMesh& mesh);
 
     //- Destructor
     virtual ~topoSetList();
