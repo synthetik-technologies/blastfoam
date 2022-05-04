@@ -227,7 +227,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
     Map<label> procPointMap(mesh_.nPoints());
 
     // Collect all points and faces
-    forAll (procPatchPoints, procI)
+    forAll(procPatchPoints, procI)
     {
         // Add points from all processors except self
         const pointList& curProcPoints = procPatchPoints[procI];
@@ -236,7 +236,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
         labelList pointMap(curProcPoints.size());
 
         // Add points from all processors
-        forAll (curProcPoints, pointI)
+        forAll(curProcPoints, pointI)
         {
             // Note: possible removal of duplicate points here
             // HJ, 28/Dec/2016
@@ -248,10 +248,8 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
             // Current point
             const point& curPoint = curProcPoints[pointI];
 
-            if (gIndex.isLocal(procI, ownerPoint[procI][pointI]))
+            if (procPointMap.insert(ownerPoint[procI][pointI], nCurPoints))
             {
-                procPointMap.insert(ownerPoint[procI][pointI], nCurPoints);
-
                 // Add the point
                 zonePoints[nCurPoints] = curPoint;
 
