@@ -229,6 +229,7 @@ Foam::levelSetModel::calcH(const volScalarField& ls) const
                 << abort(FatalError);
         }
     }
+    return ls;
 }
 
 Foam::tmp<Foam::volScalarField>
@@ -251,6 +252,7 @@ Foam::levelSetModel::calcLevelSet(const volScalarField& H) const
                 << abort(FatalError);
         }
     }
+    return H;
 }
 
 
