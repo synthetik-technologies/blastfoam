@@ -1423,24 +1423,24 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
     const phaseModel& phase2
 ) const
 {
+    volScalarField hc(phase1.thermo().hc() - phase2.thermo().hc());
+    volScalarField mD21(max(mD, zeroMDot));
+    volScalarField mD12(min(mD, zeroMDot));
+
     tmp<volScalarField> tmDotEi
     (
         volScalarField::New
         (
             IOobject::groupName("mDotE", phase1.name()),
-            mesh_,
-            dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
+            mD21*phase2.thermo().hs()
+          + mD12*phase1.thermo().hs()
+          + mD21*hc
         )
     );
-    volScalarField& mDotEi = tmDotEi.ref();
-
-    volScalarField hc(phase1.thermo().hc() - phase2.thermo().hc());
-    volScalarField mD21(max(mD, zeroMDot));
-    volScalarField mD12(min(mD, zeroMDot));
-    mDotEi += mD21*phase2.he() + mD12*phase1.he() + mD21*hc;
 
     if (phase1.totalEnergy())
     {
+        volScalarField& mDotEi = tmDotEi.ref();
         volScalarField K1(0.5*magSqr(phase1.U()));
         volScalarField K2(0.5*magSqr(phase2.U()));
 
