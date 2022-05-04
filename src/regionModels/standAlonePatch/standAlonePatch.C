@@ -120,21 +120,113 @@ void Foam::standAlonePatch::movePoints
 }
 
 
-void Foam::standAlonePatch::writeVTK(const word& name) const
+void Foam::standAlonePatch::writeVTK(const fileName& name) const
 {
+    const fileName file(name + ".vtk");
 
-    Info<<"writing "<< name << ".vtk" << endl;
-    vtkWritePolyData::write
-    (
-        name + ".vtk",
-        name,
-        false,
-        points(),
-        labelList(),
-        edgeList(),
-        *this
-    );
+    Info<<"writing "<< file.name() << endl;
+    // Open the file
+    std::ofstream os(file, std::ios::binary);
+
+    // Write header
+    os  << "# vtk DataFile Version 2.0" << nl
+        << name.name(true) << nl
+        << "ASCII" << nl
+        << "DATASET POLYDATA"
+        << nl;
+
+    const pointField& ps = points();
+
+    os  << "POINTS " << ps.size() << " float" << nl;
+
+    // Write vertex coords
+    forAll(ps, pointi)
+    {
+        if (pointi > 0 && (pointi % 10) == 0)
+        {
+            os  << nl;
+        }
+        else
+        {
+            os  << ' ';
+        }
+        os  << ps[pointi].x() << ' '
+            << ps[pointi].y() << ' '
+            << ps[pointi].z();
+    }
+    os  << nl << nl;
+
+    label ne = 0;
+    forAll(*this, facei)
+    {
+        ne += (*this)[facei].size() + 1;
+    }
+
+    os  << "POLYGONS " << size() << ' ' << ne << nl;
+    forAll(*this, facei)
+    {
+        os  << (*this)[facei].size() << ' ';
+        forAll((*this)[facei], pi)
+        {
+            os  << operator[](facei)[pi] << ' ';
+        }
+        os  << nl;
+    }
+    os  << nl;
 }
+
+
+Foam::standAlonePatch Foam::standAlonePatch::createGlobalPatch() const
+{
+    if (!Pstream::parRun())
+    {
+        return *this;
+    }
+
+    List<List<point>> gPoints(Pstream::nProcs());
+    faceListList gFaces(Pstream::nProcs());
+
+    // Insert my points
+    gPoints[Pstream::myProcNo()] = this->points();
+
+    // Insert my faces
+    gFaces[Pstream::myProcNo()] = (*this);
+
+    // Communicate points
+    Pstream::gatherList(gPoints);
+    Pstream::scatterList(gPoints);
+
+    // Communicate faces
+    Pstream::gatherList(gFaces);
+    Pstream::scatterList(gFaces);
+
+    label nPoints = 0;
+    label nFaces = 0;
+    forAll(gPoints, proci)
+    {
+        nPoints += gPoints[proci].size();
+        nFaces += gFaces[proci].size();
+    }
+    pointField ps(nPoints);
+    faceList fs(nFaces);
+
+    label pi = 0;
+    label fi = 0;
+    forAll(gPoints, proci)
+    {
+
+        forAll(gPoints[proci], pj)
+        {
+            ps[pi++] = gPoints[proci][pj];
+        }
+        forAll(gFaces[proci], fj)
+        {
+            fs[fi++] = gFaces[proci][fj];
+        }
+    }
+    return standAlonePatch(move(fs), move(ps));
+}
+
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 

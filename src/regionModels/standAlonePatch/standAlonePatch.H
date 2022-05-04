@@ -142,7 +142,9 @@ public:
             pointsRef_ = move(pp.points());
         }
 
-    void writeVTK(const word&) const;
+    void writeVTK(const fileName&) const;
+
+    standAlonePatch createGlobalPatch() const;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
