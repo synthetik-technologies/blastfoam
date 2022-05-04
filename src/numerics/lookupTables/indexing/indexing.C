@@ -107,7 +107,7 @@ Foam::label Foam::indexers::nonuniform::findIndex
     const scalar x
 ) const
 {
-    if (x < xs_[0])
+    if (x <= xs_[0])
     {
         return 0;
     }
