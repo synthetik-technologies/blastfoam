@@ -158,7 +158,7 @@ namespace meshTools
         // Add an empty patch given a mesh, name, group, and dictionary
         label addPatch
         (
-            fvMesh& mesh,
+            polyMesh& mesh,
             const word& patchName,
             const wordList& groupNames,
             const dictionary& patchDict
@@ -166,7 +166,7 @@ namespace meshTools
 
         label addPatch
         (
-            fvMesh& mesh,
+            polyMesh& mesh,
             const word& patchName,
             const word& group,
             const dictionary& patchDict
@@ -237,7 +237,7 @@ namespace meshTools
         //- Remove empty patches
         void filterPatches
         (
-            fvMesh& mesh,
+            polyMesh& mesh,
             const HashSet<word>& addedPatchNames
         );
 } // End namespace foamSyncTools

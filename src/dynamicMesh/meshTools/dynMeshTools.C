@@ -446,7 +446,7 @@ void Foam::meshTools::checkFaceOrientation
 
 Foam::label Foam::meshTools::addPatch
 (
-    fvMesh& mesh,
+    polyMesh& mesh,
     const word& patchName,
     const wordList& groupNames,
     const dictionary& patchDict
@@ -478,9 +478,9 @@ Foam::label Foam::meshTools::addPatch
 
 
         // Add patch, create calculated everywhere
-        fvMeshTools::addPatch
+        mesh.addPatch
         (
-            mesh,
+            pbm.size(),
             pp,
             dictionary(),   // do not set specialised patchFields
             calculatedFvPatchField<scalar>::typeName,
@@ -501,7 +501,7 @@ Foam::label Foam::meshTools::addPatch
 
 Foam::label Foam::meshTools::addPatch
 (
-    fvMesh& mesh,
+    polyMesh& mesh,
     const word& patchName,
     const word& groupName,
     const dictionary& patchDict
@@ -923,7 +923,7 @@ void Foam::meshTools::readAndStoreFields(const fvMesh& mesh)
 
 void Foam::meshTools::filterPatches
 (
-    fvMesh& mesh,
+    polyMesh& mesh,
     const HashSet<word>& addedPatchNames
 )
 {
@@ -987,7 +987,7 @@ void Foam::meshTools::filterPatches
         }
         Info<< decrIndent;
 
-        fvMeshTools::reorderPatches(mesh, oldToNew, nKeepPatches, true);
+        mesh.reorderPatches(oldToNew, true);
         Info<< endl;
     }
 }
