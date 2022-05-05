@@ -37,7 +37,22 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
+    timeSelector::addOptions(true, false);
+
+    argList::addBoolOption
+    (
+        "relative",
+        "Create the VTK series using relative file paths."
+    );
+
     #include "setRootCase.H"
+    #include "createTime.H"
+
+    //- Select time
+    runTime.functionObjects().off();
+    instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
+
+    bool relativePath = args.optionFound("relative");
 
     // Create the processor databases
     fileName postProcessDir
@@ -141,6 +156,12 @@ int main(int argc, char *argv[])
                /fileName(dirs[diri])
                /fileName(timeDirs[timeI].name())
             );
+            fileName relDir
+            (
+                fileName("../postProcessing")
+               /fileName(dirs[diri])
+               /fileName(timeDirs[timeI].name())
+            );
             wordList files
             (
                 readDir
@@ -171,7 +192,11 @@ int main(int argc, char *argv[])
                         << nl
                         << "    { "
                         << "\"name\" : "
-                        << "\"" << word(timeDir/fileName(files[i])) << "\" ,"
+                        << "\"" <<
+                            (relativePath ?
+                            word(relDir/fileName(files[i])) :
+                            word(timeDir/fileName(files[i])))
+                        << "\" ,"
                         << "\"time\" : "
                         << timeDirs[timeI].value()
                         << " }";
