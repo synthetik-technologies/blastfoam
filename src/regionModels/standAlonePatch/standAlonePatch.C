@@ -214,14 +214,20 @@ Foam::standAlonePatch Foam::standAlonePatch::createGlobalPatch() const
     label fi = 0;
     forAll(gPoints, proci)
     {
-
+        const label start = pi;
         forAll(gPoints[proci], pj)
         {
             ps[pi++] = gPoints[proci][pj];
         }
         forAll(gFaces[proci], fj)
         {
-            fs[fi++] = gFaces[proci][fj];
+            fs[fi] = gFaces[proci][fj];
+            face& f = fs[fi];
+            forAll(f, fpi)
+            {
+                f[fpi] = gFaces[proci][fj][fpi] + start;
+            }
+            fi++;
         }
     }
     return standAlonePatch(move(fs), move(ps));
