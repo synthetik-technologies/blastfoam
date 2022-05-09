@@ -5,6 +5,8 @@ conservedQuantities/conservedQuantities.C
 blastProbes/blastProbes.C
 blastProbes/blastPatchProbes.C
 blastProbes/blastProbesGrouping.C
+vtkTimeSeries/vtkTimeSeries/vtkTimeSeries.C
+vtkTimeSeries/vtkTimeSeriesWriter/vtkTimeSeriesSurfaceWriter.C
 
 # Blast specific
 impulse/impulse.C
