@@ -44,10 +44,15 @@ Foam::vtkTimeSeries::vtkTimeSeries(const fileName& path, const label nRemove)
     nRemove_(nRemove),
     path_()
 {
+    fileName casePath(getEnv("FOAM_CASE"));
+    wordList caseCmpts(casePath.components());
     wordList cmpts(path.components());
     for (label i = 0; i < cmpts.size() - nRemove_; i++)
     {
-        path_  +=  '/' + cmpts[i];
+        if (caseCmpts[i] != cmpts[i])
+        {
+            path_ =  path_ / cmpts[i];
+        }
     }
 
     fileNameList dirs(readDir(path_, fileType::directory, true, false));
@@ -100,7 +105,7 @@ bool Foam::vtkTimeSeries::writeTimeSeries
         os  << nl
             << "    { "
             << string("name") << " : "
-            << fileName(path / name + ".vtk") << " ,"
+            << fileName(Foam::name(times[i]) / name + ".vtk") << " ,"
             << string("time") << " : " << times[i]
             << " }";
 
