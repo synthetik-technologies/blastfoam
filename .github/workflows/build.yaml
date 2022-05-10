@@ -6,9 +6,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    name: Add Repo
+    name: Build openFOAM
     steps:
-      - run: |
+      - name: Add Repo
+        run: |
           sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
           sudo add-apt-repository http://dl.openfoam.org/ubuntu
+          sudo apt-get update
+      - name: Install openFOAM
+        run: sudo apt-get -y install openfoam9
 
