@@ -16,12 +16,14 @@ jobs:
       - name: Install openFOAM
         run: sudo apt-get -y install openfoam9
       - name: Create OpenFOAM directory
-        run: mkdir -p OpenFOAM
+        run: mkdir -p OpenFOAM && cd OpenFOAM
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
           path: 'OpenFOAM/'
-      - name: Check install
-        run: cd OpenFOAM && ls -la
+      - name: Add blastFoam to Bashrc
+        run: |
+          source ~/OpenFOAM/blastfoam/etc/bashrc
+          source ~/.bashrc
 
 
