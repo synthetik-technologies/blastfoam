@@ -294,13 +294,16 @@ void Foam::phaseModel::solveD()
 void Foam::phaseModel::solveAlphaRho()
 {
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
-    forAll(fluid_.phases(), phasei)
+    if (fluid_.hasMassTransfer(*this))
     {
-        const phaseModel& otherPhase = fluid_.phases()[phasei];
-        if (&otherPhase != this)
-        {
-            deltaAlphaRho -= fluid_.mDot(*this, otherPhase);
-        }
+	forAll(fluid_.phases(), phasei)
+	{
+	    const phaseModel& otherPhase = fluid_.phases()[phasei];
+	    if (&otherPhase != this)
+	    {
+		deltaAlphaRho -= fluid_.mDot(*this, otherPhase);
+	    }
+	}
     }
 
     this->storeAndBlendDelta(deltaAlphaRho);
@@ -346,20 +349,23 @@ void Foam::phaseModel::solve()
       - (alphaRhoU_ & fluid_.g())
     );
 
-    forAll(fluid_.phases(), phasei)
+    if (fluid_.hasMassTransfer(*this))
     {
-        const phaseModel& otherPhase = fluid_.phases()[phasei];
-        if (&otherPhase != this)
-        {
-            volScalarField mD(fluid_.mDot(*this, otherPhase));
-            if (solveAlpha_)
-            {
-                deltaAlpha.ref() -=
-                    fluid_.mDotByRho(mD, *this, otherPhase);
-            }
-            deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
-            deltaAlphaRhoE -= fluid_.mDotE(mD, *this, otherPhase);
-        }
+	forAll(fluid_.phases(), phasei)
+	{
+	    const phaseModel& otherPhase = fluid_.phases()[phasei];
+	    if (&otherPhase != this && fluid_.hasMassTransfer(*this, otherPhase))
+	    {
+		volScalarField mD(fluid_.mDot(*this, otherPhase));
+		if (solveAlpha_)
+		{
+		    deltaAlpha.ref() -=
+			fluid_.mDotByRho(mD, *this, otherPhase);
+		}
+		deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
+		deltaAlphaRhoE -= fluid_.mDotE(mD, *this, otherPhase);
+	    }
+	}
     }
     this->storeAndBlendDelta(deltaAlphaRhoU);
     this->storeAndBlendDelta(deltaAlphaRhoE);

@@ -122,19 +122,22 @@ void Foam::granularPhaseModel::solve()
         fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_)
     );
 
-    forAll(fluid_.phases(), phasei)
+    if (fluid_.hasMassTransfer(*this))
     {
-        const phaseModel& otherPhase = fluid_.phases()[phasei];
-        if (&otherPhase != this)
-        {
-            if (!otherPhase.slavePressure())
-            {
-                deltaAlphaRhoU += (*this)*otherPhase.gradP();
-            }
-            deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
-            deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
-            deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, otherPhase);
-        }
+	forAll(fluid_.phases(), phasei)
+	{
+	    const phaseModel& otherPhase = fluid_.phases()[phasei];
+	    if (&otherPhase != this && fluid_.hasMassTransfer(*this, otherPhase))
+	    {
+		if (!otherPhase.slavePressure())
+		{
+		    deltaAlphaRhoU += (*this)*otherPhase.gradP();
+		}
+		deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
+		deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
+		deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, otherPhase);
+	    }
+	}
     }
 
     //- Solve phase mass transport
