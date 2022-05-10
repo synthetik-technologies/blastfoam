@@ -15,4 +15,11 @@ jobs:
           sudo apt-get update
       - name: Install openFOAM
         run: sudo apt-get -y install openfoam9
+      - name: Create OpenFOAM directory
+        run: mkdir -p OpenFOAM
+      - name: Checkout blastFOAM
+        uses: actions/checkout@v3
+        with:
+          path: 'OpenFOAM/'
+
 
