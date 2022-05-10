@@ -1,0 +1,14 @@
+name: Build blastFOAM
+
+on:
+  push
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    name: Add Repo
+    steps:
+      - run: |
+          sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
+          sudo add-apt-repository http://dl.openfoam.org/ubuntu
+
