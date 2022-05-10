@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-20.04
     name: Build openFOAM
     steps:
-      - name: Add Repo
+      - name: Add openFOAM Repo
         run: |
           sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
           sudo add-apt-repository http://dl.openfoam.org/ubuntu
@@ -20,10 +20,13 @@ jobs:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
-          path: 'OpenFOAM/'
-      - name: Add blastFoam to Bashrc
+          path: '${{ github.workspace }}/OpenFOAM/blastfoam'
+      - name: Make blastFOAM
+        shell: bash -l {0}
         run: |
-          source ~/OpenFOAM/blastfoam/etc/bashrc
-          source ~/.bashrc
+          cd ${{ github.workspace }}/OpenFOAM/blastfoam
+          source /opt/openfoam9/etc/bashrc
+          source ${{ github.workspace }}/OpenFOAM/blastfoam/etc/bashrc
+          ./Allwmake -j
 
 
