@@ -5,26 +5,21 @@ createDEps()
     echo "creating wall velocity plot"
     gnuplot<<EOF
 
-    D(x)=-(x/($3/$4))
-    ms(t)=$4*t*1000.0;
     set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
         dl 8.0
-    set output "blastFoam_wallD_validation.eps"
-    set xlabel "Time [{/Symbol t} ms]"
-    set ylabel "Normalized deflection [ {/Symbol d} / th ]"
+    set output "blastFoam_beamD_validation.eps"
+    set xlabel "Time [{/Symbol t} s]"
+    set ylabel "Deflection [ m ]"
     set grid
-    set key left bottom center
+    set key right top box
     set size 2,2
-    set autoscale
+#     set autoscale
 #     set xrange [0:4]
-#     set yrange [0:9]
-    set mxtic 4
-    set mytic 4
-    plot    '$2/D.csv' using 1:2 title 'Neuberg et al', \
-            '<sed -e "s/[(,)]//g" $2/D_implicit' using (ms(\$1)):(D(\$3)) \
-                title 'Implicit' with lines lt 1 linewidth 2 lc rgb 'red', \
-            '<sed -e "s/[(,)]//g" $1/D' using (ms(\$1)):(D(\$3)) \
-                title 'blastFoam' with lines lt 1 linewidth 2 lc rgb 'black'
+#     set yrange [0:2.2]
+#     set mxtic 4
+#     set mytic 4
+    plot '<sed -e "s/[(,)]//g" $1/D' using 1:6 title 'blastFoam' \
+        with lines lt 1 linewidth 2 lc rgb 'black'
 
 
 EOF
@@ -65,14 +60,9 @@ then
     exit 1
 fi
 
-BLASTFOAM="../postProcessing/plateProbes/0"
-VALIDATION="validationData"
+BLASTFOAM="../postProcessing/probes/0"
 
-th=$(foamDictionary ../properties -entry th0 -value)
-S=$(foamDictionary ../properties -entry S -value)
-
-echo $th $S
-createDEps $BLASTFOAM $VALIDATION $th $S
+createDEps $BLASTFOAM
 # createDEps $BLASTFOAM $VALIDATION
 
 echo Done

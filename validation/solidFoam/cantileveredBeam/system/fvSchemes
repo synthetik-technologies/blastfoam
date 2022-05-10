@@ -10,28 +10,48 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "constant";
-    object      mechanicalProperties;
+    location    "system";
+    object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-#include "$FOAM_CASE/properties"
 
-planeStress off;
+d2dt2Schemes
+{
+    default                 Euler;
+}
 
-mechanical
-(
-    steel
-    {
-        type            nonLinearJohnsonCookPlastic;
-        E               210e9;
-        nu              0.28;
-        A #calc "$thOpt == 0 ? 950e6 : ( $thOpt == 1 ? 900e6 : 850e6 )";
-        B #calc "$thOpt == 0 ? 560e6 : ( $thOpt == 1 ? 545e6 : 355e6 )";
-        C               0.014;
-        n               0.26;
+ddtSchemes
+{
+    default                 Euler;
+    timeIntegrator          RK2SSP 3;
+}
 
-        solvePressureEqn no;
-    }
-);
+gradSchemes
+{
+    default                 extendedLeastSquares 0;
+}
+
+divSchemes
+{
+    default                 none;
+    div(sigma)              Gauss linear;
+}
+
+laplacianSchemes
+{
+    default                 none;
+    laplacian(DU,U)         Gauss linear corrected;
+}
+
+snGradSchemes
+{
+    default                 corrected;
+}
+
+interpolationSchemes
+{
+    default                 linear;
+}
+
 
 // ************************************************************************* //

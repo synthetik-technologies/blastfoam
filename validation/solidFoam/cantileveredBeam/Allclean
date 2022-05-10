@@ -4,3 +4,4 @@
 . $WM_PROJECT_DIR/bin/tools/CleanFunctions
 
 cleanCase
+rm -f validation/*.eps

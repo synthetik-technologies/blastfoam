@@ -17,27 +17,21 @@ FoamFile
 
 convertToMeters 1;
 
-nL -1.5;
-L 1.5;
-nw -0.3;
-w 0;
-nt -0.05;
-t  0.05;
 vertices
 (
-    ($nL $nw $nt)
-    ($L  $nw $nt)
-    ($L  $w  $nt)
-    ($nL $w  $nt)
-    ($nL $nw $t)
-    ($L  $nw $t)
-    ($L  $w  $t)
-    ($nL $w  $t)
+    (0 -0.5 -0.5)
+    (10 -0.5 -0.5)
+    (10 0.5 -0.5)
+    (0 0.5 -0.5)
+    (0 -0.5 0.5)
+    (10 -0.5 0.5)
+    (10 0.5 0.5)
+    (0 0.5 0.5)
 );
 
 blocks
 (
-    hex (0 1 2 3 4 5 6 7) (50 10 1) simpleGrading (1 1 1)
+    hex (0 1 2 3 4 5 6 7) (25 5 1) simpleGrading (1 1 1)
 );
 
 edges
@@ -45,13 +39,17 @@ edges
 
 patches
 (
-    patch free
+    patch wall
+    (
+        (0 3 7 4)
+    )
+    patch bottom
     (
         (0 1 5 4)
-        (0 3 7 4)
+    )
+    patch tip
+    (
         (1 2 6 5)
-// //         (0 1 2 3)
-//         (4 5 6 7)
     )
     patch top
     (
