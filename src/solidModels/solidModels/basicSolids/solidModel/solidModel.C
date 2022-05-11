@@ -626,7 +626,7 @@ Foam::solidModel::solidModel
             "D",
             mesh.time().timeName(),
             mesh,
-            incremental ? IOobject::NO_READ : IOobject::READ_IF_PRESENT,
+            IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         mesh,

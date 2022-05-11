@@ -190,7 +190,7 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
                 (
                     (
                         mesh().Sf()
-                      & fvc::interpolate(J_*Finv_ & sigma())
+                      & fvc::interpolate(J_*(Finv_ & sigma()))
                     )
                   + mesh().Sf()*energies_.viscousPressure
                     (

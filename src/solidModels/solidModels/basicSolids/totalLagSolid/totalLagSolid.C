@@ -52,11 +52,11 @@ void totalLagSolid<IncrementalModel>::update(const bool correctSigma)
         F_ = I + this->gradD().T();
     }
 
-    // Relative deformation gradient
-    relF_ = F_ & Finv_.oldTime();
-
     // Inverse of the deformation gradient
     Finv_ = inv(F_);
+
+    // Relative deformation gradient
+    relF_ = F_ & Finv_.oldTime();
 
     // Inverse relative deformation gradient
     relFinv_ = inv(relF_);
