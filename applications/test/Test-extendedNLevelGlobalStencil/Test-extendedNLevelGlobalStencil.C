@@ -15,13 +15,13 @@ void setCells
 )
 {
     levels == -1.0;
-    for (label leveli = 0; leveli <= nLevels; leveli++)
+    const Map<cellStencil>& cellCells(stencil.cellCellMap());
+    if (cellCells.found(gCelli))
     {
-        const Map<cellStencil>& cellCells(stencil.cellCellMap());
-        if (cellCells.found(gCelli))
-        {
-            const cellStencil& cs = cellCells[gCelli];
-            const labelList& ls = cs.localStencil(leveli);
+	const cellStencil& cs = cellCells[gCelli];
+	for (label leveli = 0; leveli <= nLevels; leveli++)
+	{
+            const SubList<label> ls = cs.localStencil(leveli);
             forAll(ls, i)
             {
                 levels[ls[i]] = leveli;
@@ -78,46 +78,73 @@ int main(int argc, char *argv[])
         -1.0
     );
 
+    const globalIndex gIndex(mesh.nCells());
+
     Random ranGen(123);
     const label nCells = returnReduce(mesh.nCells(), sumOp<label>());
     const label nSamples = min(25, nCells);
 
-    const label nLevels = 10;
-    extendedNLevelCFCCellToCellStencil stencilF(mesh, nLevels);
-    extendedNLevelCECCellToCellStencil stencilE(mesh, nLevels);
-    extendedNLevelCPCCellToCellStencil stencilP(mesh, nLevels);
-
-
-    const globalIndex gIndex(mesh.nCells());
+    labelList samples(nSamples, -1);
     labelHashSet used;
-    label gCelli = 0;
-    do
+    forAll(samples, i)
     {
-        if (Pstream::master())
-        {
-            while (used.found(gCelli))
-            {
-                gCelli = ranGen.sampleAB(label(0), nCells);
-            }
-        }
-        else
-        {
-            gCelli = -1;
-        }
-        reduce(gCelli, maxOp<label>());
-        used.insert(gCelli);
-        setCells(gCelli, nLevels, stencilF, CFC);
-        setCells(gCelli, nLevels, stencilE, CEC);
-        setCells(gCelli, nLevels, stencilP, CPC);
+	label gCelli = -1;
+	if (Pstream::master())
+	{
+	    do
+	    {
+		gCelli = ranGen.sampleAB(label(0), nCells);
+	    } while (used.found(gCelli));
+	}
+	reduce(gCelli, maxOp<label>());
+	samples[i] = gCelli;
+	used.insert(gCelli);
+    }
 
-        runTime.write();
-        runTime++;
-    } while (runTime.timeIndex() < nSamples);
+    scalar t0 = runTime.elapsedCpuTime();
+    scalar t = t0;
+    for (label nLevels = 0; nLevels < 6; nLevels++)
+    {
+	Info<< nl << nl << nLevels << " levels" << nl << endl;
+	runTime.setTime(1, 1);
+    	extendedNLevelCFCCellToCellStencil stencilF(mesh, nLevels);
+	forAll(samples, i)
+	{
+	    setCells(samples[i], nLevels, stencilF, CFC);
+	    CFC.write();
+	    runTime++;
+	}
+	t = runTime.elapsedCpuTime();
+	Info<< "Face stencil: " << t - t0 << " s" << endl;
+	t0 = t;
 
-    Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-            << "  ClockTime = " << runTime.elapsedClockTime() << " s"
-            << nl << endl;
-    Info<<"done"<<endl;
 
+	runTime.setTime(1, 1);
+	extendedNLevelCECCellToCellStencil stencilE(mesh, nLevels);
+	forAll(samples, i)
+	{
+	    setCells(samples[i], nLevels, stencilE, CEC);
+	    CEC.write();
+	    runTime++;
+	}
+
+	t = runTime.elapsedCpuTime();
+	Info<< "Edge stencil: " << t - t0 << " s" << endl;
+	t0 = t;
+
+	runTime.setTime(1, 1);
+	extendedNLevelCPCCellToCellStencil stencilP(mesh, nLevels);
+	forAll(samples, i)
+	{
+	    setCells(samples[i], nLevels, stencilP, CPC);
+	    CPC.write();
+	    runTime++;
+	}
+	t = runTime.elapsedCpuTime();
+	Info<< "Point stencil: " << t - t0 << " s" << endl;
+	t0 = t;
+    }
+
+    Info<< nl << "done" <<endl;
     return 0;
 }

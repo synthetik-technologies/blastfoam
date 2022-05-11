@@ -151,7 +151,7 @@ extendedNLevelGlobalCellToCellStencil
     MeshObject
     <
         polyMesh,
-        PatchMeshObject,
+        UpdateableMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >(mesh),
     mesh_(mesh),
@@ -175,8 +175,6 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::
 template<class StencilType>
 bool Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::movePoints()
 {
-    mapPtr_.clear();
-    gIndexPtr_.clear();
     return true;
 }
 
@@ -187,32 +185,6 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateMesh
     const mapPolyMesh& mpm
 )
 {
-    mapPtr_.clear();
-    gIndexPtr_.clear();
-}
-
-
-template<class StencilType>
-void
-Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reorderPatches
-(
-    const labelUList& newToOld,
-    const bool validBoundary
-)
-{
-    // Assuming balancing
-    mapPtr_.clear();
-    gIndexPtr_.clear();
-}
-
-
-template<class StencilType>
-void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addPatch
-(
-    const label patchi
-)
-{
-    // Assuming balancing
     mapPtr_.clear();
     gIndexPtr_.clear();
 }
@@ -429,7 +401,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
             cellStencil
             (
                 gCelli,
-                move(neighbors),
+                neighbors,
                 levels,
                 mesh_.cellCentres()[celli]
             )

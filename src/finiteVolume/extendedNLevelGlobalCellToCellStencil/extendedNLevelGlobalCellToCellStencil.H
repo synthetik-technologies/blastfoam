@@ -60,7 +60,7 @@ class extendedNLevelGlobalCellToCellStencil
     public MeshObject
     <
         polyMesh,
-        PatchMeshObject,
+        UpdateableMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >
 {
@@ -149,17 +149,6 @@ public:
         virtual bool movePoints();
 
         virtual void updateMesh(const mapPolyMesh& mpm);
-
-        //- Reordered/removed trailing patches. If validBoundary call is parallel
-        //  synced and all add the same patch with same settings
-        virtual void reorderPatches
-        (
-            const labelUList& newToOld,
-            const bool validBoundary
-        );
-
-        //- Inserted patch at patchi
-        virtual void addPatch(const label patchi);
 
         inline const globalIndex& globalNumbering() const
         {
