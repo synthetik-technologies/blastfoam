@@ -967,6 +967,11 @@ Foam::phaseSystem::phaseSystem
         }
     }
 
+    hasMassTransfer_.setSize
+    (
+        phaseModels_.size(),
+        boolList(phaseModels_.size(), false)
+    );
     forAllConstIter
     (
         massTransferModelTable,
@@ -975,8 +980,10 @@ Foam::phaseSystem::phaseSystem
     )
     {
         const phasePair& pair(this->phasePairs_[massTransferIter.key()]);
-	hasMassTransfer_[pair.phase1().index()] = true;
-    	hasMassTransfer_[pair.phase2().index()] = true;
+        hasMassTransfer_[pair.phase1().index()][pair.phase1().index()] = true;
+        hasMassTransfer_[pair.phase2().index()][pair.phase2().index()] = true;
+        hasMassTransfer_[pair.phase1().index()][pair.phase2().index()] = true;
+    	hasMassTransfer_[pair.phase1().index()][pair.phase2().index()] = true;
 
         mDots_.insert
         (
@@ -1340,7 +1347,7 @@ Foam::phaseSystem::cellE
 
 bool Foam::phaseSystem::hasMassTransfer(const phaseModel& phase) const
 {
-    return hasMassTransfer_[phase.index()];
+    return hasMassTransfer_[phase.index()][phase.index()];
 }
 
 
@@ -1350,14 +1357,9 @@ bool Foam::phaseSystem::hasMassTransfer
     const phaseModel& phase2
 ) const
 {
-    if (hasMassTransfer_[phase1.index()] && hasMassTransfer_[phase2.index()]);
-    {
-	phasePairKey key1(phase1.name(), phase2.name(), true);
-	phasePairKey key2(phase2.name(), phase1.name(), true);
-
-	return mDots_.found(key1) || mDots_.found(key2);
-    }
-    return false;
+    return
+        hasMassTransfer_[phase1.index()][phase2.index()]
+     || hasMassTransfer_[phase2.index()][phase1.index()];
 }
 
 

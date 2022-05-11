@@ -304,7 +304,7 @@ protected:
 
             //- Mass transfer models
             massTransferModelTable massTransferModels_;
-	    boolList hasMassTransfer_;
+	        List<List<bool>> hasMassTransfer_;
 
             //- Interfacial pressure models
             interfacialPressureModelTable interfacialPressureModels_;
