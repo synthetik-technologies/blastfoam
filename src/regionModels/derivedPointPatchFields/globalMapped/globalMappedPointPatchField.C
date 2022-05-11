@@ -154,6 +154,7 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
         (
             nbrName_
         ).boundaryField()[samplePatchi];
+
     Field<Type>::operator=
     (
         samplePatch.pointInterpolate(nbr.patchInternalField())

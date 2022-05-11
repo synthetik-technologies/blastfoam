@@ -70,6 +70,126 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectData
 
 
 template<class StencilType>
+template<class Type>
+void
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
+(
+    const Field<Type>& fld,
+    const label level,
+    Map<Type>& mapFld
+) const
+{
+    // Create the requests for new cell neighbours
+    labelHashSet neededCells(fld.size());
+    forAllConstIter
+    (
+        Map<cellStencil>,
+        cellCellMap(),
+        iter
+    )
+    {
+        if (!iter().isLocal())
+        {
+            neededCells.insert(iter().owner());
+        }
+        else
+        {
+            mapFld.insert(iter().owner(), fld[iter().localOwner()]);
+        }
+    }
+    if (!Pstream::parRun())
+    {
+        return;
+    }
+
+    List<label> requests(neededCells.size());
+    List<label> requestedCells(neededCells.size());
+    label ci = 0;
+    forAllConstIter(labelHashSet, neededCells, iter)
+    {
+        requests[ci] = gIndexPtr_->whichProcID(iter.key());
+        requestedCells[ci] = iter.key();
+        ci++;
+    }
+
+    // Needed for reverseDistribute
+    label constructSize = requests.size();
+
+    // make the map
+    autoPtr<mapDistribute> map(buildMap(requests));
+
+    // Send requests
+    labelList sendCells(requestedCells);
+    map().distribute(sendCells);
+
+    // Add neighbours to be sent using the ordering provided
+    List<Type> sendData(sendCells.size());
+    forAll(sendCells, i)
+    {
+        sendData[i] = fld[gIndexPtr_->toLocal(sendCells[i])];
+    }
+
+    // Send the data back
+    map().reverseDistribute(constructSize, sendData);
+
+    forAll(requestedCells, i)
+    {
+        mapFld.insert(requestedCells[i], sendData[i]);
+    }
+}
+
+
+template<class StencilType>
+template<class Type, class BinaryOp>
+void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
+(
+    const Map<Type>& mapFld,
+    List<Type>& fld,
+    const BinaryOp& bop
+) const
+{
+    if (!Pstream::parRun())
+    {
+        return;
+    }
+
+    // Create the requests for new cell neighbours
+    DynamicList<label> requests(fld.size());
+    DynamicList<label> sendCells(fld.size());
+    DynamicList<label> sendData(fld.size());
+    forAllConstIter
+    (
+        Map<cellStencil>,
+        cellCellMap(),
+        iter
+    )
+    {
+        if (!iter().isLocal())
+        {
+            const label proci = gIndexPtr_->whichProcID(iter().owner());
+            requests.append(proci);
+            sendCells.append(gIndexPtr_->toLocal(proci, iter().owner()));
+            sendData.append(mapFld[iter().owner()]);
+        }
+    }
+
+    // make the map
+    autoPtr<mapDistribute> map(buildMap(requests));
+
+    // Send requests
+    map().distribute(sendCells);
+    map().distribute(sendData);
+
+    // Add neighbours to be sent using the ordering provided
+    forAll(sendCells, i)
+    {
+        const label celli = sendCells[i];
+        fld[celli] = bop(fld[celli], sendData[i]);
+    }
+}
+
+
+template<class StencilType>
 template<class Type, class WeightType>
 Foam::tmp
 <

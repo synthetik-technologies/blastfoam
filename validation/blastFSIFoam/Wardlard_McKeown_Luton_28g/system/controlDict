@@ -72,13 +72,6 @@ functions
         );
         fields (D U);
     }
-    conservedQuantities
-    {
-        type    conservedQuantities;
-        fields  (rhoE);
-        region  fluid;
-        writeControl timeStep;
-    }
 }
 
 

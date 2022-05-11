@@ -185,6 +185,24 @@ public:
             List<List<Type>>& stencilFld
         ) const;
 
+        //- Collect data from the master cell
+        template<class Type>
+        void collectOwnerData
+        (
+            const Field<Type>& fld,
+            const label level,
+            Map<Type>& mapFld
+        ) const;
+
+        //- Reduce data data from the master cell
+        template<class Type, class BinaryOp>
+        void reduce
+        (
+            const Map<Type>& mapFld,
+            List<Type>& fld,
+            const BinaryOp& bop
+        ) const;
+
         //- Sum surface field contributions to create cell values
         template<class Type, class WeightType>
         tmp

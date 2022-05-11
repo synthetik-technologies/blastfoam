@@ -130,6 +130,12 @@ public:
                return centre_;
             }
 
+            //- Return the offsets
+            inline const labelList& offsets() const
+            {
+                return offets_;
+            }
+
             //- Return the full local stencil
             const labelList& localStencil() const
             {

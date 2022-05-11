@@ -8,9 +8,9 @@
 FoamFile
 {
     version     2.0;
-    format      binary;
+    format      ascii;
     class       dictionary;
-    location    "system/ground";
+    location    "system/walls";
     object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -22,7 +22,7 @@ d2dt2Schemes
 
 ddtSchemes
 {
-    default Euler;
+    default         Euler;
 }
 
 divSchemes
@@ -41,21 +41,17 @@ gradSchemes
 
 laplacianSchemes
 {
-    default none;
-    laplacian(DDD,DD) Gauss linear corrected;
-    laplacian(DD,D) Gauss linear corrected;
-    laplacian(DT,T) Gauss linear corrected;
-    laplacian(DU,U) Gauss linear corrected;
+    default         Gauss linear corrected;
 }
 
 interpolationSchemes
 {
-    default linear;
+    default         linear;
 }
 
 snGradSchemes
 {
-    default corrected;
+    default         corrected;
 }
 
 
