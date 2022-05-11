@@ -35,5 +35,11 @@ jobs:
           ./Allwmake -j
           cd ${{ env.container-workspace }}/OpenFOAM/blastfoam/validation/blastFoam/shockTube_twoFluids
           ./Allrun
-
+      - name: Run Validation
+        shell: bash -l {0}
+        run: |
+          source /opt/openfoam9/etc/bashrc
+          source ${{ env.container-workspace }}/OpenFOAM/blastfoam/etc/bashrc
+          cd ${{ env.container-workspace }}/OpenFOAM/blastfoam/validation/blastFoam/shockTube_twoFluids
+          ./Allrun
 
