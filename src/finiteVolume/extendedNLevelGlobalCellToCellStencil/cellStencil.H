@@ -133,7 +133,7 @@ public:
             //- Return the offsets
             inline const labelList& offsets() const
             {
-                return offets_;
+                return offsets_;
             }
 
             //- Return the full local stencil

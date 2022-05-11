@@ -194,7 +194,7 @@ public:
             Map<Type>& mapFld
         ) const;
 
-        //- Reduce data data from the master cell
+        //- Reduce data data to the master cell
         template<class Type, class BinaryOp>
         void reduce
         (
