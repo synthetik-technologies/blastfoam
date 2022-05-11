@@ -28,5 +28,7 @@ jobs:
           source /opt/openfoam9/etc/bashrc
           source ${{ github.workspace }}/OpenFOAM/blastfoam/etc/bashrc
           ./Allwmake -j
+          cd validation/blastFoam/shockTube_twoFluid
+          ./Allrun
 
 
