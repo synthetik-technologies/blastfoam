@@ -5,30 +5,35 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    container: ubuntu:18.04
+    runs-on: ['self-hosted', X64]
     name: Build openFOAM
+    env:
+      container-workspace: "/__w/blastfoam-dev/blastfoam-dev"
     steps:
       - name: Add openFOAM Repo
         run: |
-          sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
-          sudo add-apt-repository http://dl.openfoam.org/ubuntu
-          sudo apt-get update
+          apt-get update
+          apt-get install -y gnupg2 wget software-properties-common
+          sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
+          add-apt-repository http://dl.openfoam.org/ubuntu
+          apt-get update
       - name: Install openFOAM
-        run: sudo apt-get -y install openfoam9
+        run: apt-get -y install openfoam9
       - name: Create OpenFOAM directory
         run: mkdir -p OpenFOAM && cd OpenFOAM
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
-          path: '${{ github.workspace }}/OpenFOAM/blastfoam'
+          path: '${{ env.container-workspace }}/OpenFOAM/blastfoam'
       - name: Make blastFOAM
         shell: bash -l {0}
         run: |
-          cd ${{ github.workspace }}/OpenFOAM/blastfoam
+          cd ${{ env.container-workspace }}/OpenFOAM/blastfoam
           source /opt/openfoam9/etc/bashrc
-          source ${{ github.workspace }}/OpenFOAM/blastfoam/etc/bashrc
+          source ${{ env.container-workspace }}/OpenFOAM/blastfoam/etc/bashrc
           ./Allwmake -j
-          cd validation/blastFoam/shockTube_twoFluid
+          cd ${{ env.container-workspace }}/OpenFOAM/blastfoam/validation/blastFoam/shockTube_twoFluids
           ./Allrun
 
 
