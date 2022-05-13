@@ -24,5 +24,5 @@ COPY --from=openfoam /opt/openfoam9 /opt/openfoam9
 COPY --from=build /app /app
 # RUN touch .bashrc \
 RUN echo "source /opt/openfoam9/etc/bashrc" >> ~/.bashrc \
-  && echo "source /app/OpenFOAM/blastfoam/etc/bashrc" >> .bashrc
+  && echo "source /app/OpenFOAM/blastfoam/etc/bashrc" >> ~/.bashrc
 WORKDIR /app/OpenFOAM/blastfoam

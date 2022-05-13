@@ -2,8 +2,6 @@ name: Docker Image Build
 
 on:
   push:
-    paths-ignore:
-      - docker/**
 
 jobs:
   build:
