@@ -1,7 +1,11 @@
 name: Build blastFOAM
 
 on:
-  push
+  # push:
+  #   paths-ignore:
+  #     - docker/**
+  workflow_dispatch: # ! pause this execution
+    
 
 jobs:
   build:

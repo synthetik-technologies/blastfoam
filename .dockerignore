@@ -1,0 +1,6 @@
+docker/**
+snap/**
+.github/**
+.gitignore
+*.snap
+*.zip
