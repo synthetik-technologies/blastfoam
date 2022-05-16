@@ -21,7 +21,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
         with:
           install: true
-      - name: Build Image
+      - name: Build and Push Image
         uses: docker/build-push-action@v3
         with:
           context: .

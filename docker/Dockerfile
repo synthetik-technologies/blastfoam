@@ -20,9 +20,9 @@ RUN source /opt/openfoam9/etc/bashrc \
 FROM ubuntu:18.04 as run
 SHELL [ "/bin/bash", "-c" ]
 RUN apt-get update && apt-get install -y gnuplot libopenmpi-dev
-COPY --from=openfoam /opt/openfoam9 /opt/openfoam9
+COPY --from=build /opt/openfoam9 /opt/openfoam9
 COPY --from=build /app /app
-# RUN touch .bashrc \
+COPY --from=build /root /root
 RUN echo "source /opt/openfoam9/etc/bashrc" >> ~/.bashrc \
   && echo "source /app/OpenFOAM/blastfoam/etc/bashrc" >> ~/.bashrc
 WORKDIR /app/OpenFOAM/blastfoam
