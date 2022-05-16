@@ -308,6 +308,11 @@ public:
 };
 
 
+// Specilizations of scalar functions
+template<>
+scalar lookupTable1D<scalar>::reverseLookup(const scalar& fin) const;
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

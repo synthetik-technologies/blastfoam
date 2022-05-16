@@ -67,6 +67,9 @@ public:
     virtual bool needMod() const = 0;
 };
 
+// Specilization of scalar modifier
+template<>
+autoPtr<Modifier<scalar>> Modifier<scalar>::New(const word& mod);
 
 /*---------------------------------------------------------------------------*\
                         Templated modifiers Declaration

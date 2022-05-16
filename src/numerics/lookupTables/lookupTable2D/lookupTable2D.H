@@ -426,6 +426,32 @@ public:
         );
 };
 
+// Specilizations of scalar functions
+template<>
+Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundi
+(
+    const scalar& f
+) const;
+
+template<>
+Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundj
+(
+    const scalar& f
+) const;
+
+template<>
+Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupX
+(
+    const scalar& fin,
+    const scalar y
+) const;
+
+template<>
+Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
+(
+    const scalar& fin,
+    const scalar x
+) const;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
