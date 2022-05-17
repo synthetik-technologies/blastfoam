@@ -61,7 +61,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
     const pointPatchFieldMapper& mapper
 )
 :
-    fixedValuePointPatchField<Type>(p, iF),
+    fixedValuePointPatchField<Type>(ptf, p, iF, mapper),
     globalBoundary_
     (
         globalPolyBoundaryMesh::New
@@ -73,14 +73,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(ptf.nbrName_)
-{
-    // For unmapped faces set to internal field value (zero-gradient)
-    if (notNull(iF) && mapper.hasUnmapped())
-    {
-        pointPatchField<Type>::operator=(this->patchInternalField());
-    }
-    mapper(*this, ptf);
-}
+{}
 
 
 template<class Type>
@@ -91,7 +84,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
     const dictionary& dict
 )
 :
-    fixedValuePointPatchField<Type>(p, iF, dict, false),
+    fixedValuePointPatchField<Type>(p, iF, dict),
     globalBoundary_
     (
         globalPolyBoundaryMesh::New

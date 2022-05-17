@@ -66,7 +66,7 @@ Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
     const dictionary& dict
 )
 :
-    fixedValueFvPatchField<Type>(p, iF, dict, false),
+    fixedValueFvPatchField<Type>(p, iF, dict),
     globalBoundary_(globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())),
     nbrName_(dict.lookup<word>("nbrName"))
 {

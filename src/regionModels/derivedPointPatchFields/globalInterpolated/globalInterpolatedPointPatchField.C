@@ -56,43 +56,12 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
 template<class Type>
 Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
 (
-    const globalInterpolatedPointPatchField<Type>& ptf,
-    const pointPatch& p,
-    const DimensionedField<Type, pointMesh>& iF,
-    const pointPatchFieldMapper& mapper
-)
-:
-    fixedValuePointPatchField<Type>(p, iF),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New
-        (
-            dynamicCast<const polyMesh>
-            (
-                p.boundaryMesh().mesh().thisDb()
-            )
-        )
-    ),
-    nbrName_(ptf.nbrName_)
-{
-    // For unmapped faces set to internal field value (zero-gradient)
-    if (notNull(iF) && mapper.hasUnmapped())
-    {
-        pointPatchField<Type>::operator=(this->patchInternalField());
-    }
-    mapper(*this, ptf);
-}
-
-
-template<class Type>
-Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
-(
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
     const dictionary& dict
 )
 :
-    fixedValuePointPatchField<Type>(p, iF, dict, false),
+    fixedValuePointPatchField<Type>(p, iF, dict),
     globalBoundary_
     (
         globalPolyBoundaryMesh::New
@@ -111,6 +80,31 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             word(iF.name()).replaceAll("point", word::null)
         )
     )
+{}
+
+
+
+template<class Type>
+Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
+(
+    const globalInterpolatedPointPatchField<Type>& ptf,
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const pointPatchFieldMapper& mapper
+)
+:
+    fixedValuePointPatchField<Type>(ptf, p, iF, mapper),
+    globalBoundary_
+    (
+        globalPolyBoundaryMesh::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )
+    ),
+    nbrName_(ptf.nbrName_)
 {}
 
 
