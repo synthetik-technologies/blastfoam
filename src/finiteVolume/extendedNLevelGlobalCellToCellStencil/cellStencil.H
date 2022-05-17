@@ -139,10 +139,10 @@ public:
             //- Return the full local stencil
             const labelList& localStencil() const
             {
-            return
-                Pstream::parRun()
-              ? localStencil_
-              : static_cast<const labelList&>(*this);
+                return
+                    Pstream::parRun()
+                  ? localStencil_
+                  : static_cast<const labelList&>(*this);
             }
 
             //- Return the local stencil up to the given level
@@ -151,7 +151,7 @@ public:
             //- Return the local stencil between two levels
             SubList<label> localStencil
             (
-            const label level0,
+                const label level0,
                 const label level1
             ) const;
 
