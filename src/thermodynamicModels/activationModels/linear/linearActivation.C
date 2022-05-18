@@ -65,22 +65,20 @@ Foam::activationModels::linearActivation::linearActivation
 {
     // Are delays used to calculate ignition time
     // if no, the closest point is used
-    Switch useDelay(dict.lookupOrDefault("delayOffset", true));
-
+    Switch useDelay(dict.lookupOrDefault("delayOffset", false));
+    scalarField tIgn(mesh.nCells(), great);
     forAll(this->detonationPoints_, pointi)
     {
         const detonationPoint& dp = this->detonationPoints_[pointi];
-        if (!dp.activated())
+        forAll(tIgn_, celli)
         {
-            forAll(tIgn_, celli)
+            scalar t =
+                (useDelay ? dp.delay() : 0.0)
+              + mag(this->mesh().C()[celli] - dp)/vDet_.value();
+            if (t < tIgn[celli])
             {
-                tIgn_[celli] =
-                    min
-                    (
-                        tIgn_[celli],
-                        (useDelay ? dp.delay() : 0.0)
-                      + mag(this->mesh().C()[celli] - dp)/vDet_.value()
-                    );
+                tIgn_[celli] = dp.delay() + t;
+                tIgn[celli] = t;
             }
         }
     }
