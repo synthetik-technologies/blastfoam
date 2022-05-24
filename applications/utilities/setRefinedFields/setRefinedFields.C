@@ -109,6 +109,63 @@ void calcFaceDiff
     }
 }
 
+template<class GeoField>
+void updateProcessorBoundaries(GeoField& fld)
+{
+    const fvMesh& mesh = fld.mesh();
+
+    //mimic "evaluate" but only for coupled patches (processor or cyclic)
+    // and only for blocking or nonBlocking comms (no scheduled comms)
+    if
+    (
+        Pstream::defaultCommsType == Pstream::commsTypes::blocking
+     || Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+    )
+    {
+        label nReq = Pstream::nRequests();
+
+        forAll(fld.boundaryField(), patchi)
+        {
+            if (isA<processorPolyPatch>(mesh.boundaryMesh()[patchi]))
+            {
+                fld.boundaryFieldRef()[patchi].initEvaluate
+                (
+                    Pstream::defaultCommsType
+                );
+            }
+        }
+
+        // Block for any outstanding requests
+        if
+        (
+            Pstream::parRun()
+         && Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+        )
+        {
+            Pstream::waitRequests(nReq);
+        }
+
+        forAll(fld.boundaryField(), patchi)
+        {
+            if (isA<processorPolyPatch>(mesh.boundaryMesh()[patchi]))
+            {
+                fld.boundaryFieldRef()[patchi].evaluate
+                (
+                    Pstream::defaultCommsType
+                );
+            }
+        }
+    }
+    else
+    {
+        //Scheduled patch updates not supported
+        FatalErrorInFunction
+            << "Unsuported communications type "
+            << Pstream::commsTypeNames[Pstream::defaultCommsType]
+            << exit(FatalError);
+    }
+}
+
 
 enum GeoType
 {
@@ -920,10 +977,10 @@ int main(int argc, char *argv[])
         topoSets.transferZones(false);
 
         // Update boundary conditions of fields used for refinement
-//         forAll(fields, fieldi)
-//         {
-//             fields[fieldi].correctBoundaryConditions();
-//         }
+        forAll(fields, fieldi)
+        {
+            updateProcessorBoundaries(fields[fieldi]);
+        }
 
         // Update error and mesh if not the final iteration
         if (refine)
