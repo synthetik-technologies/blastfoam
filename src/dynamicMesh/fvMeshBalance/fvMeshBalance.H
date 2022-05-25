@@ -150,7 +150,7 @@ public:
         // Decomposition constraints
 
             //- Add a constraint
-            void addConstraint(const dictionary& dict);
+            void addConstraint(const word& dictName, const dictionary& dict);
 
             //- Preserve a faceZone
             void preserveFaceZone(const wordRe& zoneName);

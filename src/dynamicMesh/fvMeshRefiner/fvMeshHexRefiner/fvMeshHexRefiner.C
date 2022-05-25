@@ -585,7 +585,7 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner(fvMesh& mesh)
             "type",
             hexRefRefinementHistoryConstraint::typeName
         );
-        balancer_.addConstraint(refinementHistoryDict);
+        balancer_.addConstraint("refinementHistory", refinementHistoryDict);
     }
 
     nProtected_ = 0;
@@ -1022,13 +1022,13 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner
     // Added refinement history decomposition constraint to keep all
     // cells with the same parent together
     {
-        dictionary refinementHistoryDict("refinementHistory");
+        dictionary refinementHistoryDict;
         refinementHistoryDict.add
         (
             "type",
             hexRefRefinementHistoryConstraint::typeName
         );
-        balancer_.addConstraint(refinementHistoryDict);
+        balancer_.addConstraint("refinementHistory", refinementHistoryDict);
     }
 
     // Read static part of dictionary

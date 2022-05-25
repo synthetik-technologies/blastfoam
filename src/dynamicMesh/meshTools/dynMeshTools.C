@@ -315,12 +315,16 @@ void Foam::meshTools::checkInternalOrientation
     if ((dir & n) < 0)
     {
         FatalErrorInFunction
-            << "cell:" << cellI << nl
-            << "face:" << faceI << nl
-            << "newFace:" << newFace << nl
-            << "coords:" << compactPoints << nl
-            << "ownPt:" << ownPt << nl
-            << "neiPt:" << neiPt << nl
+            << incrIndent
+            << indent << "Incorrect face orientation" << nl
+            << indent << "cell:" << cellI << nl
+            << indent << "face:" << faceI << nl
+            << indent << "newFace:" << newFace << nl
+            << indent << "coords:" << compactPoints << nl
+            << indent << "normal:" << n << nl
+            << indent << "ownPt:" << ownPt << nl
+            << indent << "neiPt:" << neiPt << nl
+            << decrIndent
             << abort(FatalError);
     }
 
@@ -335,14 +339,17 @@ void Foam::meshTools::checkInternalOrientation
     if (s > severeNonOrthogonalityThreshold)
     {
         WarningInFunction
-            << "Detected severely non-orthogonal face with non-orthogonality: "
-            << acos(s)/constant::mathematical::pi*180.0 << nl
-            << "cell:" << cellI << " old face:" << faceI << nl
-            << "newFace: " << newFace << nl
-            << "coords: " << compactPoints << nl
-            << "ownPt: " << ownPt << nl
-            << "neiPt: " << neiPt << nl
-            << "s: " << s << nl
+            << incrIndent
+            << indent << "Detected severely non-orthogonal face with non-orthogonality: "
+            << indent << acos(s)/constant::mathematical::pi*180.0 << nl
+            << indent << "cell:" << cellI << " old face:" << faceI << nl
+            << indent << "newFace: " << newFace << nl
+            << indent << "coords: " << compactPoints << nl
+            << indent << "normal:" << n << nl
+            << indent << "ownPt: " << ownPt << nl
+            << indent << "neiPt: " << neiPt << nl
+            << indent << "s: " << s << nl
+            << decrIndent
             << endl;
     }
 }
@@ -368,11 +375,15 @@ void Foam::meshTools::checkBoundaryOrientation
     if ((dir & n) < 0)
     {
         FatalErrorInFunction
-            << "cell:" << cellI << " old face:" << faceI
-            << " newFace:" << newFace
-            << " coords:" << compactPoints
-            << " ownPt:" << ownPt
-            << " boundaryPt:" << boundaryPt
+            << incrIndent
+            << indent << "Incorrect face orientation" << nl
+            << indent << "cell:" << cellI << " old face:" << faceI
+            << indent << "newFace:" << newFace
+            << indent << "coords:" << compactPoints
+            << indent << "normal:" << n << nl
+            << indent << "ownPt:" << ownPt
+            << indent << "boundaryPt:" << boundaryPt
+            << decrIndent
             << abort(FatalError);
     }
 
@@ -387,14 +398,17 @@ void Foam::meshTools::checkBoundaryOrientation
     if (s > severeNonOrthogonalityThreshold)
     {
         WarningInFunction
-            << "Detected severely non-orthogonal face with non-orthogonality: "
-            << acos(s)/constant::mathematical::pi*180.0
-            << "cell:" << cellI << " old face:" << faceI
-            << " newFace:" << newFace
-            << " coords:" << compactPoints
-            << " ownPt:" << ownPt
-            << " boundaryPt:" << boundaryPt
-            << " s:" << s
+            << incrIndent
+            << indent << "Detected severely non-orthogonal face with non-orthogonality: "
+            << indent << acos(s)/constant::mathematical::pi*180.0
+            << indent << "cell:" << cellI << " old face:" << faceI
+            << indent << "newFace:" << newFace
+            << indent << "coords:" << compactPoints
+            << indent << "normal:" << n << nl
+            << indent << "ownPt:" << ownPt
+            << indent << "boundaryPt:" << boundaryPt
+            << indent << "s:" << s
+            << decrIndent
             << endl;
     }
 }

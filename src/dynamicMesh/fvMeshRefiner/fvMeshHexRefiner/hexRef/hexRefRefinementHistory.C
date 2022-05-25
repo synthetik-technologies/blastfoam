@@ -463,7 +463,6 @@ void Foam::hexRefRefinementHistory::add
 
 
     // Unblock all faces inbetween same cluster
-
     label nUnblocked = 0;
 
     forAll(mesh.faceNeighbour(), faceI)

@@ -609,7 +609,9 @@ Foam::label Foam::refinement::getCellClusters(labelList& clusters) const
     forAll(parentCells_, ci)
     {
         const label celli = parentCells_[ci];
-        if (!count.found(celli))
+        if (parentCells_[ci] == -1)
+        {}
+        else if (!count.found(celli))
         {
             count.insert(celli, 1);
         }
@@ -631,7 +633,7 @@ Foam::label Foam::refinement::getCellClusters(labelList& clusters) const
     }
 
     // Return the list of clusters and their children cells
-    clusters.setSize(parentCells_.size(), -1);
+    clusters.setSize(mesh_.nCells(), -1);
     forAll(parentCells_, celli)
     {
         if (map.found(parentCells_[celli]))
@@ -766,7 +768,7 @@ Foam::labelList Foam::refinement::consistentRefinement
     {
         // Check for 2:1 face based consistent refinement. Updates cellsToRefine
         // and returns number of cells added in this iteration
-        nChanged = faceConsistentRefinement(refineCell, maxSet);
+        nChanged = 0;
 
         if (edgeBasedConsistency_)
         {
@@ -774,6 +776,7 @@ Foam::labelList Foam::refinement::consistentRefinement
             // cellsToRefine and returns number of cells added in this iteration
             nChanged += edgeConsistentRefinement(refineCell, maxSet);
         }
+        nChanged += faceConsistentRefinement(refineCell, maxSet);;
 
         // Global reduction
         reduce(nChanged, sumOp<label>());
@@ -849,6 +852,19 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
         InfoInFunction
             << "Updating cell and point levels."
             << endl;
+
+        Pout<< "hexRef::updateMesh :"
+            << " reverseCellMap:" << map.reverseCellMap().size()
+            << " cellMap:" << map.cellMap().size()
+            << " nCells:" << mesh_.nCells()
+            << " nOldCells:" << map.nOldCells()
+            << " cellLevel_:" << cellLevel_.size()
+            << " reversePointMap:" << map.reversePointMap().size()
+            << " pointMap:" << map.pointMap().size()
+            << " nPoints:" << mesh_.nPoints()
+            << " nOldPoints:" << map.nOldPoints()
+            << " pointLevel_:" << pointLevel_.size()
+            << endl;
     }
 
     // Mesh has changed topologically, we need to update cell and point levels
@@ -868,7 +884,10 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
             // Map data
             const labelList& cellMap = map.cellMap();
 
+            label newParentIndex = gMax(parentCells_)+1;
+
             labelList newCellLevel(cellMap.size());
+            labelList newParentCells(cellMap.size(), -1);
             forAll(cellMap, newCelli)
             {
                 label oldCelli = cellMap[newCelli];
@@ -876,18 +895,24 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
                 if (oldCelli == -1)
                 {
                     newCellLevel[newCelli] = -1;
+                    newParentCells[newCelli] = newParentIndex++;
                 }
                 else
                 {
                     newCellLevel[newCelli] = cellLevel_[oldCelli];
+                    newParentCells[newCelli] = parentCells_[oldCelli];
                 }
             }
             cellLevel_.transfer(newCellLevel);
+            parentCells_.transfer(newParentCells);
         }
+
+        // Update the parent cells
         {
             // Map data
             const labelList& cellMap = map.cellMap();
-            label newParentIndex = gMax(parentCells_);
+
+            label newParentIndex = gMax(parentCells_)+1;
 
             labelList newParentCells(cellMap.size(), -1);
             forAll(cellMap, newCelli)
@@ -896,7 +921,7 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
 
                 if (oldCelli == -1)
                 {
-                    newParentCells[newCelli] = ++newParentIndex;
+                    newParentCells[newCelli] = newParentIndex++;
                 }
                 else
                 {
@@ -905,49 +930,6 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
             }
             parentCells_.transfer(newParentCells);
         }
-//         {
-//             labelList newParentCells(mesh_.nCells(), -1);
-//
-//             forAll(parentCells_, i)
-//             {
-//                 label newI = reverseCellMap[i];
-//
-//                 if (newI >= mesh_.nCells())
-//                 {
-//                 }
-//
-//                 if (newI >= 0)
-//                 {
-//                     newParentCells[newI] = reverseCellMap[parentCells_[i]];
-//                 }
-//                 if (newParentCells[newI] > mesh_.nCells())
-//                 {
-//                     Pout<<parentCells_[i]<<" "<<newParentCells[newI]<<endl;
-//                 }
-//
-//             }
-//             const labelList& cellMap = map.cellMap();
-//
-//             forAll(cellMap, newCelli)
-//             {
-//                 label oldCelli = cellMap[newCelli];
-//                 if (newParentCells[newCelli] < 0)
-//                 {
-//
-//                     if (oldCelli == -1)
-//                     {
-//                         newParentCells[newCelli] = newCelli;
-//                     }
-//                     else
-//                     {
-//                         newParentCells[newCelli] = parentCells_[oldCelli];
-//                     }
-//                 }
-//             }
-//             Pout<<"max "<<map.nOldCells()<<" "<<parentCells_.size()<<" "<<max(cellMap)<<endl;
-//
-//             parentCells_.transfer(newParentCells);
-//         }
 
         const labelList& reversePointMap = map.reversePointMap();
         if (reversePointMap.size() == pointLevel_.size())
@@ -968,13 +950,13 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
 
                 if (oldPointi == -1)
                 {
-                    //FatalErrorInFunction
-                    //    << "Problem : point " << newPointi
-                    //    << " at " << mesh_.points()[newPointi]
-                    //    << " does not originate from another point"
-                    //    << " (i.e. is inflated)." << nl
-                    //    << "Hence we cannot determine the new pointLevel"
-                    //    << " for it." << abort(FatalError);
+                    FatalErrorInFunction
+                       << "Problem : point " << newPointi
+                       << " at " << mesh_.points()[newPointi]
+                       << " does not originate from another point"
+                       << " (i.e. is inflated)." << nl
+                       << "Hence we cannot determine the new pointLevel"
+                       << " for it." << abort(FatalError);
                     newPointLevel[newPointi] = -1;
                 }
                 else
@@ -1009,14 +991,6 @@ void Foam::refinement::distribute(const mapDistributePolyMesh& map)
     // Update pointlevel
     map.distributePointData(pointLevel_);
 
-    syncTools::syncPointList
-    (
-        mesh_,
-        pointLevel_,
-        maxEqOp<label>(),
-        labelMin
-    );
-
     // Distribute the parent cells;
     map.distributeCellData(parentCells_);
 
@@ -1025,7 +999,6 @@ void Foam::refinement::distribute(const mapDistributePolyMesh& map)
 
     // Mark files as changed
     setInstance(mesh_.facesInstance());
-
 }
 
 
@@ -1051,7 +1024,7 @@ void Foam::refinement::add
         label ownCluster = cellToCluster[mesh_.faceOwner()[faceI]];
         label neiCluster = cellToCluster[mesh_.faceNeighbour()[faceI]];
 
-        if (ownCluster != mesh_.faceOwner()[faceI] && ownCluster == neiCluster)
+        if (ownCluster != -1 && ownCluster == neiCluster)
         {
             if (blockedFace[faceI])
             {

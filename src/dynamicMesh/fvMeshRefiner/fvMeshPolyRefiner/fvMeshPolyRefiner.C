@@ -104,13 +104,13 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner(fvMesh& mesh)
     // Added refinement history decomposition constraint to keep all
     // cells with the same parent together
     {
-        dictionary refinementHistoryDict("refinementHistory");
+        dictionary refinementHistoryDict;
         refinementHistoryDict.add
         (
             "type",
             polyRefinementConstraint::typeName
         );
-        balancer_.addConstraint(refinementHistoryDict);
+        balancer_.addConstraint("refinementHistory", refinementHistoryDict);
     }
 
     // Get number of valid geometric dimensions
@@ -187,7 +187,7 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner
             "type",
             polyRefinementConstraint::typeName
         );
-        balancer_.addConstraint(refinementHistoryDict);
+        balancer_.addConstraint("refinementHistory", refinementHistoryDict);
     }
 
     readDict(dict);
@@ -467,10 +467,10 @@ bool Foam::fvMeshPolyRefiner::refine
         }
 
         reduce(hasChanged, orOp<bool>());
-//         if (balance())
-//         {
-//             hasChanged = true;
-//         }
+        if (balance())
+        {
+            hasChanged = true;
+        }
         mesh_.topoChanging(hasChanged);
 
         if (hasChanged)
@@ -511,7 +511,7 @@ bool Foam::fvMeshPolyRefiner::writeObject
     const bool write
 ) const
 {
-    if (debug)
+    if (debug && mesh_.time().timeIndex() != 0 && write)
     {
         volScalarField clusters
         (
@@ -522,11 +522,12 @@ bool Foam::fvMeshPolyRefiner::writeObject
                 dimensionedScalar(dimless, 0)
             )
         );
-        labelList cellClusters;
-        refiner_->getCellClusters(cellClusters);
+        // labelList cellClusters;
+        // refiner_->getCellClusters(cellClusters);
         forAll(clusters, celli)
         {
-            clusters[celli] = cellClusters[celli];
+            clusters[celli] = refiner_->parentCells()[celli];
+            // clusters[celli] = cellClusters[celli];
         }
         clusters.write();
     }

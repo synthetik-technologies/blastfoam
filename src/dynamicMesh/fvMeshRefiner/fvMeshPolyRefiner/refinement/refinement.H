@@ -254,6 +254,12 @@ public:
                 return locationMapper_;
             }
 
+            //- Return parent cells
+            const labelIOList& parentCells() const
+            {
+                return parentCells_;
+            }
+
         // Edit
 
             //- Set cells to refine given a list of refinement

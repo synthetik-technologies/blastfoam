@@ -249,14 +249,14 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
 }
 
 
-void Foam::fvMeshBalance::addConstraint(const dictionary& dict)
+void Foam::fvMeshBalance::addConstraint(const word& dictName, const dictionary& dict)
 {
     // Add constraints dictionary
-    if (!constraintsDict_->found(dict.name()))
+    if (!constraintsDict_->found(dictName))
     {
         modified_ = true;
 
-        constraintsDict_->set(word(dict.name()), dict);
+        constraintsDict_->set(dictName, dict);
 
         // We need to apply the updated constraints, and this can only
         // be done when the decomposer is created
@@ -593,7 +593,11 @@ Foam::fvMeshBalance::distribute()
 
 bool Foam::fvMeshBalance::write(const bool write) const
 {
-    if (balance_ && modified_ && write)
+    if
+    (
+        balance_ && modified_ && write &&
+        decompositionDict_.lookupOrDefault("writeDecomposeDict", false)
+    )
     {
         modified_ = false;
         IOdictionary decomposeParDict
@@ -601,7 +605,7 @@ bool Foam::fvMeshBalance::write(const bool write) const
             IOobject
             (
                 "decomposeParDict",
-                mesh_.time().system(),
+                mesh_.time().caseSystem(),
                 mesh_.time(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
