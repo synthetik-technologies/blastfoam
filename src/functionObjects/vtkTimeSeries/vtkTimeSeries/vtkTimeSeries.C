@@ -58,7 +58,7 @@ Foam::vtkTimeSeries::vtkTimeSeries(const fileName& path, const label nRemove)
     fileNameList dirs(readDir(path_, fileType::directory, true, false));
     forAll(dirs, i)
     {
-        IStringStream is(word(dirs[i]));
+        IStringStream is((word(dirs[i])));
         token t(is);
         if (t.isNumber())
         {
