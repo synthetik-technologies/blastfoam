@@ -19,8 +19,8 @@ type        basic;
 thermoType
 {
     transport const;
-    thermo      tabulated;
-    equationOfState tabulated;
+    thermo      eTabulated;
+    equationOfState tabulatedMG;
 }
 
 specie
