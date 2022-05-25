@@ -94,11 +94,7 @@ Foam::label Foam::indexers::uniform::findIndex
 ) const
 {
     scalar ij = (x - xs_[0])/(xs_[1] - xs_[0]);
-    if (ij <= 0)
-    {
-        return 0;
-    }
-    return min(floor(ij), xs_.size() - 2);
+    return max(min(floor(ij), xs_.size() - 2), 0);
 }
 
 

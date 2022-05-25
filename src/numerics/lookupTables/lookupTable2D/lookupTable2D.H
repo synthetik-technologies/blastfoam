@@ -102,10 +102,14 @@ protected:
 
     //- Current indexes (used to access location in list after lookup)
     mutable labelVector2D ij_;
-    mutable List<labelVector2D> indices_;
+    mutable DynamicList<label> is_;
+    mutable DynamicList<label> js_;
+    mutable DynamicList<labelVector2D> indices_;
 
     //- Current interpolation weights
-    mutable scalarList weights_;
+    mutable DynamicList<scalar> weights_;
+    mutable DynamicList<scalar> wxs_;
+    mutable DynamicList<scalar> wys_;
 
 
 

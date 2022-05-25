@@ -87,10 +87,10 @@ protected:
     mutable label index_;
 
     //- List of interpolation indices
-    mutable labelList indices_;
+    mutable DynamicList<label> indices_;
 
     //- Current interpolation weight
-    mutable scalarList weights_;
+    mutable DynamicList<scalar> weights_;
 
 
     // Protected member functions

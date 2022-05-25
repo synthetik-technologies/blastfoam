@@ -455,24 +455,21 @@ void Foam::lookupTable2D<Type>::update(const scalar x, const scalar y) const
     ij_.x() = xIndexing_->findIndex(xMod);
     ij_.y() = yIndexing_->findIndex(yMod);
 
-    labelList is, js;
-    scalarList wxs, wys;
+    xInterpolator_->updateWeights(xMod, ij_[0], is_, wxs_);
+    yInterpolator_->updateWeights(yMod, ij_[1], js_, wys_);
 
-    xInterpolator_->updateWeights(xMod, ij_[0], is, wxs);
-    yInterpolator_->updateWeights(yMod, ij_[1], js, wys);
-
-    indices_.setSize(is.size()*js.size());
+    indices_.setSize(is_.size()*js_.size());
     weights_.setSize(indices_.size());
 
     label n = 0;
-    forAll(is, i)
+    forAll(is_, i)
     {
-        forAll(js, j)
+        forAll(js_, j)
         {
-            indices_[n].x() = is[i];
-            indices_[n].y() = js[j];
+            indices_[n].x() = is_[i];
+            indices_[n].y() = js_[j];
 
-            weights_[n] = wxs[i]*wys[j];
+            weights_[n] = wxs_[i]*wys_[j];
             n++;
         }
     }
@@ -532,15 +529,13 @@ Type Foam::lookupTable2D<Type>::dFdX(const scalar x, const scalar y) const
 
     ij_.y() = yIndexing_->findIndex(yMod);
 
-    labelList js;
-    scalarList ws;
-    yInterpolator_->updateWeights(yMod, ij_.y(), js, ws);
-    Type fm(data_[i][js[0]]*ws[0]);
-    Type fp(data_[i+1][js[0]]*ws[0]);
-    for (label j = 1; j < js.size(); j++)
+    yInterpolator_->updateWeights(yMod, ij_.y(), js_, wys_);
+    Type fm(data_[i][js_[0]]*wys_[0]);
+    Type fp(data_[i+1][js_[0]]*wys_[0]);
+    for (label j = 1; j < js_.size(); j++)
     {
-        fm += data_[i][js[j]]*ws[j];
-        fp += data_[i+1][js[j]]*ws[j];
+        fm += data_[i][js_[j]]*wys_[j];
+        fp += data_[i+1][js_[j]]*wys_[j];
     }
 
     return
@@ -556,15 +551,13 @@ Type Foam::lookupTable2D<Type>::dFdY(const scalar x, const scalar y) const
     ij_.y() = yIndexing_->findIndex(modY_()(y));
     const label j = ij_.y();
 
-    labelList is;
-    scalarList ws;
-    xInterpolator_->updateWeights(xMod, ij_.x(), is, ws);
-    Type fm(data_[is[0]][j]*ws[0]);
-    Type fp(data_[is[0]][j+1]*ws[0]);
-    for (label i = 1; i < is.size(); i++)
+    xInterpolator_->updateWeights(xMod, ij_.x(), is_, wxs_);
+    Type fm(data_[is_[0]][j]*wxs_[0]);
+    Type fp(data_[is_[0]][j+1]*wxs_[0]);
+    for (label i = 1; i < is_.size(); i++)
     {
-        fm += data_[is[i]][j]*ws[i];
-        fp += data_[is[i]][j+1]*ws[i];
+        fm += data_[is_[i]][j]*wxs_[i];
+        fp += data_[is_[i]][j+1]*wxs_[i];
     }
 
     return (mod_->inv(fp) - mod_->inv(fm))/(yValues()[j+1] - yValues()[j]);
@@ -580,21 +573,19 @@ Type Foam::lookupTable2D<Type>::d2FdX2(const scalar x, const scalar y) const
 
     ij_.y() = yIndexing_->findIndex(yMod);
 
-    labelList js;
-    scalarList ws;
-    yInterpolator_->updateWeights(yMod, ij_.y(), js, ws);
+    yInterpolator_->updateWeights(yMod, ij_.y(), js_, wys_);
 
     const scalar dxm(xValues()[i] - xValues()[i-1]);
     const scalar dxp(xValues()[i+1] - xValues()[i]);
 
-    Type fm(data_[i-1][js[0]]*ws[0]);
-    Type f(data_[i][js[0]]*ws[0]);
-    Type fp(data_[i+1][js[0]]*ws[0]);
-    for (label j = 1; j < js.size(); j++)
+    Type fm(data_[i-1][js_[0]]*wys_[0]);
+    Type f(data_[i][js_[0]]*wys_[0]);
+    Type fp(data_[i+1][js_[0]]*wys_[0]);
+    for (label j = 1; j < js_.size(); j++)
     {
-        fm += data_[i-1][js[j]]*ws[j];
-        f += data_[i][js[j]]*ws[j];
-        fp += data_[i+1][js[j]]*ws[j];
+        fm += data_[i-1][js_[j]]*wys_[j];
+        f += data_[i][js_[j]]*wys_[j];
+        fp += data_[i+1][js_[j]]*wys_[j];
     }
     fm = mod_->inv(fm);
     f = mod_->inv(f);
@@ -611,21 +602,18 @@ Type Foam::lookupTable2D<Type>::d2FdY2(const scalar x, const scalar y) const
     ij_.y() = yIndexing_->findIndex(modY_()(y));
     const label j = max(ij_.y(), 1);
 
-    labelList is;
-    scalarList ws;
-
     const scalar dym(yValues()[j] - yValues()[j-1]);
     const scalar dyp(yValues()[j+1] - yValues()[j]);
 
-    xInterpolator_->updateWeights(xMod, ij_.x(), is, ws);
-    Type fm(data_[is[0]][j-1]*ws[0]);
-    Type f(data_[is[0]][j]*ws[0]);
-    Type fp(data_[is[0]][j+1]*ws[0]);
-    for (label i = 1; i < is.size(); i++)
+    xInterpolator_->updateWeights(xMod, ij_.x(), is_, wxs_);
+    Type fm(data_[is_[0]][j-1]*wxs_[0]);
+    Type f(data_[is_[0]][j]*wxs_[0]);
+    Type fp(data_[is_[0]][j+1]*wxs_[0]);
+    for (label i = 1; i < is_.size(); i++)
     {
-        fm += data_[is[i]][j-1]*ws[i];
-        f += data_[is[i]][j]*ws[i];
-        fp += data_[is[i]][j+1]*ws[i];
+        fm += data_[is_[i]][j-1]*wxs_[i];
+        f += data_[is_[i]][j]*wxs_[i];
+        fp += data_[is_[i]][j+1]*wxs_[i];
     }
 
     fm = mod_->inv(fm);
