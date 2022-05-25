@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2020-2021 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,83 +22,52 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::tabulatedTransport
+    Foam::tabulatedIsoSolidTransport
 
 Description
-    Transport properties package using uniformly-spaced tabulated data for
-    viscosity and thermal conductivity vs density and temperature.
-
-Usage
-    \table
-        Property        | Description
-        mu              | Dynamic viscosity vs density and temperature table
-        kappa           | Thermal conductivity vs density and temperature table
-    \endtable
-
-    Example of the specification of the transport properties:
-    \verbatim
-    transport
-    {
-        muCoeffs
-        {
-            rho ( ... );
-            T ( ... );
-            mu ( ... );
-        }
-
-        kappa
-        {
-            rho ( ... );
-            T ( ... );
-            kappa ( ... );
-        }
-    }
-    \endverbatim
+    Constant properties Transport package.
+    Templated into a given thermodynamics package (needed for thermal
+    conductivity).
 
 SourceFiles
-    tabulatedTransportI.H
-    tabulatedTransport.C
-
-See also
-    Foam::lookupTable2D
+    tabulatedIsoSolidTransportI.H
+    tabulatedIsoSolidTransport.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef tabulatedTransport_H
-#define tabulatedTransport_H
+#ifndef tabulatedIsoSolidTransport_H
+#define tabulatedIsoSolidTransport_H
 
-#include "lookupTables2D.H"
+#include "lookupTables1D.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-// Forward declaration of friend functions and operators
-
-template<class Thermo> class tabulatedTransport;
+template<class Thermo> class tabulatedIsoSolidTransport;
 
 template<class Thermo>
-Ostream& operator<<(Ostream&, const tabulatedTransport<Thermo>&);
+Ostream& operator<<
+(
+    Ostream&,
+    const tabulatedIsoSolidTransport<Thermo>&
+);
 
 
 /*---------------------------------------------------------------------------*\
-                     Class tabulatedTransport Declaration
+                   Class tabulatedIsoSolidTransport Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
-class tabulatedTransport
+class tabulatedIsoSolidTransport
 :
     public Thermo
 {
-
     // Private Data
 
-        //- Dynamic viscosity table [Pa.s]
-        scalarLookupTable2D mu_;
-
-        //- Thermal conductivity table [W/m/K]
-        scalarLookupTable2D kappa_;
+        //- Lookup table for thermal conductivity
+        scalarLookupTable1D kappaTable_;
 
 
 public:
@@ -106,13 +75,16 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        tabulatedTransport(const dictionary& dict);
+        tabulatedIsoSolidTransport(const dictionary& dict);
 
         //- Construct and return a clone
-        inline autoPtr<tabulatedTransport> clone() const;
+        inline autoPtr<tabulatedIsoSolidTransport> clone() const;
 
         // Selector from dictionary
-        inline static autoPtr<tabulatedTransport> New(const dictionary& dict);
+        inline static autoPtr<tabulatedIsoSolidTransport> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -120,19 +92,30 @@ public:
         //- Return the instantiated type name
         static word typeName()
         {
-            return "tabulated<" + Thermo::typeName() + '>';
+            return "tabulatedIso<" + Thermo::typeName() + '>';
         }
 
-        //- Dynamic viscosity [kg/m/s]
-        inline scalar mu
+        //- Is the thermal conductivity isotropic
+        static const bool isotropic = true;
+
+        //- Isotropic thermal conductivity [W/m/K]
+        inline scalar kappa
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Thermal conductivity [W/m/K]
-        inline scalar kappa
+        //- Un-isotropic thermal conductivity [W/m/K]
+        inline vector Kappa
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Dynamic viscosity [kg/m/s]
+        inline scalar mu
         (
             const scalar rho,
             const scalar e,
@@ -148,7 +131,7 @@ public:
         friend Ostream& operator<< <Thermo>
         (
             Ostream&,
-            const tabulatedTransport&
+            const tabulatedIsoSolidTransport&
         );
 };
 
@@ -159,10 +142,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "tabulatedTransportI.H"
+#include "tabulatedIsoSolidTransportI.H"
 
 #ifdef NoRepository
-    #include "tabulatedTransport.C"
+    #include "tabulatedIsoSolidTransport.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

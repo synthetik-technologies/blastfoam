@@ -151,7 +151,7 @@ Foam::lookupTable2D<Type>::lookupTable2D
 (
     const List<scalar>& x,
     const List<scalar>& y,
-    const ListType<ListType<Type>>& data,
+    const List<ListType<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -219,7 +219,7 @@ void Foam::lookupTable2D<Type>::set
 (
     const List<scalar>& x,
     const List<scalar>& y,
-    const ListType<ListType<Type>>& data,
+    const List<ListType<Type>>& data,
     const bool isReal
 )
 {
@@ -235,7 +235,7 @@ void Foam::lookupTable2D<Type>::set
 (
     const List<scalar>& x,
     const List<scalar>& y,
-    const ListType<ListType<Type>>& data,
+    const List<ListType<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -378,7 +378,7 @@ template<class Type>
 template<template<class> class ListType>
 void Foam::lookupTable2D<Type>::setData
 (
-    const ListType<ListType<Type>>& data,
+    const List<ListType<Type>>& data,
     const bool isReal
 )
 {
@@ -386,17 +386,19 @@ void Foam::lookupTable2D<Type>::setData
     {
         deleteDemandDrivenData(realDataPtr_);
     }
+    data_.setSize(data.size());
+    forAll(data, i)
+    {
+        data_[i] = data[i];
+    }
 
     if (!mod_->needMod())
     {
-        data_ = data;
         realDataPtr_ = &data_;
         return;
     }
 
-    realDataPtr_ = new Field<Field<Type>>(data);
-    data_ = data;
-
+    realDataPtr_ = new Field<Field<Type>>(data_);
     if (isReal)
     {
         forAll(data, i)
@@ -424,7 +426,7 @@ template<class Type>
 template<template<class> class ListType>
 void Foam::lookupTable2D<Type>::setData
 (
-    const ListType<ListType<Type>>& data,
+    const List<ListType<Type>>& data,
     const word& mod,
     const bool isReal
 )
@@ -701,27 +703,80 @@ void Foam::lookupTable2D<Type>::read
     );
     yInterpolator_->validate();
 
-    const dictionary& fDict(dict.subDict(name + "Coeffs"));
-    word modType = fDict.lookupOrDefault<word>("mod", "none");
-    if (modType != "none")
-    {
-        isReal = fDict.lookup<Switch>("isReal");
-    }
-
-    fileName file(fDict.lookup<word>("file"));
-    Field<Field<Type>> data
+    List<List<Type>> data
     (
         xModValues_.size(),
-        Field<Type>(yModValues_.size())
+        List<Type>(yModValues_.size())
     );
-    read2DTable
+
+    word modType = "none";
+    if (dict.found(name))
+    {
+        dict.readIfPresent(name, data);
+        dict.readIfPresent(name + "Mod", modType);
+        if (modType != "none")
+        {
+            isReal = dict.lookup<bool>("isReal");
+        }
+    }
+    else if (dict.isDict(name + "Coeffs"))
+    {
+        const dictionary& fDict(dict.subDict(name + "Coeffs"));
+        fDict.readIfPresent("mod", modType);
+        if (modType != "none")
+        {
+            isReal = fDict.lookup<bool>("isReal");
+        }
+
+        if (fDict.found(name))
+        {
+            fDict.readIfPresent(name, data);
+        }
+        else if (fDict.found("file"))
+        {
+            fileName file(fDict.lookup<word>("file"));
+
+            read2DTable
+            (
+                file,
+                fDict.lookupOrDefault<string>("delim", ","),
+                data,
+                fDict.lookupOrDefault<Switch>("flipTable", false),
+                !canRead
+            );
+        }
+        else
+        {
+            FatalIOErrorInFunction(fDict)
+                << "Neither the entry \"" << name << "\", "
+                << " or a file was provided for construction" << endl
+                << abort(FatalIOError);
+        }
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Neither the entry \"" << name << "\", "
+            << " or the \""
+            << name << "Coeffs\" subDictionary was found" << endl
+            << abort(FatalIOError);
+    }
+
+    if
     (
-        file,
-        fDict.lookupOrDefault<string>("delim", ","),
-        data,
-        fDict.lookupOrDefault<Switch>("flipTable", false),
-        !canRead
-    );
+        data.size() != xModValues_.size()
+     || data[0].size() != yModValues_.size()
+    )
+    {
+        FatalIOErrorInFunction(dict)
+            << "Incompatible dimensions for table" << nl
+            << "table size: "
+            << data.size() << " x " << data[0].size() << nl
+            << "x and y size: "
+            << xModValues_.size() << " x " << yModValues_.size() << nl
+            << abort(FatalIOError);
+    }
+
     setData(data, modType, isReal);
 }
 

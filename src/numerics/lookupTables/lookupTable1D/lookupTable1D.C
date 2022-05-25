@@ -357,7 +357,7 @@ Type Foam::lookupTable1D<Type>::dFdX(const scalar x) const
     }
 #endif
 
-    update(x);
+    updateIndex(x);
 
     return
         (f()[index_ + 1] - f()[index_])
@@ -377,7 +377,7 @@ Type Foam::lookupTable1D<Type>::d2FdX2(const scalar x) const
     }
 #endif
 
-    update(x);
+    updateIndex(x);
     if (index_ == 0)
     {
         index_++;

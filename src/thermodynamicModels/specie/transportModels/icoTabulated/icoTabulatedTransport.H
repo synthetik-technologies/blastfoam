@@ -22,17 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::tabulatedTransport
+    Foam::icoTabulatedTransport
 
 Description
     Transport properties package using uniformly-spaced tabulated data for
-    viscosity and thermal conductivity vs density and temperature.
+    viscosity and thermal conductivity vs pressure and temperature.
 
 Usage
     \table
         Property        | Description
-        mu              | Dynamic viscosity vs density and temperature table
-        kappa           | Thermal conductivity vs density and temperature table
+        mu              | Dynamic viscosity vs pressure and temperature table
+        kappa           | Thermal conductivity vs pressure and temperature table
     \endtable
 
     Example of the specification of the transport properties:
@@ -41,33 +41,33 @@ Usage
     {
         muCoeffs
         {
-            rho ( ... );
             T ( ... );
             mu ( ... );
         }
 
-        kappa
+        kappaCoeffs
         {
-            rho ( ... );
             T ( ... );
             kappa ( ... );
         }
     }
     \endverbatim
 
+    See also tutorials/resources/thermoData/wallBoiling*
+
 SourceFiles
-    tabulatedTransportI.H
-    tabulatedTransport.C
+    icoTabulatedTransportI.H
+    icoTabulatedTransport.C
 
 See also
-    Foam::lookupTable2D
+    Foam::Function2s::uniformTable
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef tabulatedTransport_H
-#define tabulatedTransport_H
+#ifndef icoTabulatedTransport_H
+#define icoTabulatedTransport_H
 
-#include "lookupTables2D.H"
+#include "lookupTables1D.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -76,18 +76,18 @@ namespace Foam
 
 // Forward declaration of friend functions and operators
 
-template<class Thermo> class tabulatedTransport;
+template<class Thermo> class icoTabulatedTransport;
 
 template<class Thermo>
-Ostream& operator<<(Ostream&, const tabulatedTransport<Thermo>&);
+Ostream& operator<<(Ostream&, const icoTabulatedTransport<Thermo>&);
 
 
 /*---------------------------------------------------------------------------*\
-                     Class tabulatedTransport Declaration
+                     Class icoTabulatedTransport Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
-class tabulatedTransport
+class icoTabulatedTransport
 :
     public Thermo
 {
@@ -95,24 +95,38 @@ class tabulatedTransport
     // Private Data
 
         //- Dynamic viscosity table [Pa.s]
-        scalarLookupTable2D mu_;
+        scalarLookupTable1D mu_;
 
         //- Thermal conductivity table [W/m/K]
-        scalarLookupTable2D kappa_;
+        scalarLookupTable1D kappa_;
+
+
+    // Private Member Functions
+
+        //- Construct from components
+        inline icoTabulatedTransport
+        (
+            const Thermo& t,
+            const scalarLookupTable1D& muPoly,
+            const scalarLookupTable1D& kappaPoly
+        );
 
 
 public:
 
     // Constructors
 
+        //- Construct as named copy
+        inline icoTabulatedTransport(const word&, const icoTabulatedTransport&);
+
         //- Construct from dictionary
-        tabulatedTransport(const dictionary& dict);
+        icoTabulatedTransport(const dictionary& dict);
 
         //- Construct and return a clone
-        inline autoPtr<tabulatedTransport> clone() const;
+        inline autoPtr<icoTabulatedTransport> clone() const;
 
         // Selector from dictionary
-        inline static autoPtr<tabulatedTransport> New(const dictionary& dict);
+        inline static autoPtr<icoTabulatedTransport> New(const dictionary& dict);
 
 
     // Member Functions
@@ -120,7 +134,7 @@ public:
         //- Return the instantiated type name
         static word typeName()
         {
-            return "tabulated<" + Thermo::typeName() + '>';
+            return "icoTabulated<" + Thermo::typeName() + '>';
         }
 
         //- Dynamic viscosity [kg/m/s]
@@ -148,7 +162,7 @@ public:
         friend Ostream& operator<< <Thermo>
         (
             Ostream&,
-            const tabulatedTransport&
+            const icoTabulatedTransport&
         );
 };
 
@@ -159,10 +173,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "tabulatedTransportI.H"
+#include "icoTabulatedTransportI.H"
 
 #ifdef NoRepository
-    #include "tabulatedTransport.C"
+    #include "icoTabulatedTransport.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

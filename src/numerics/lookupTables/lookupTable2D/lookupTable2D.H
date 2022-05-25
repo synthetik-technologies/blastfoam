@@ -186,7 +186,7 @@ public:
         (
             const List<scalar>& x,
             const List<scalar>& y,
-            const ListType<ListType<Type>>& data,
+            const List<ListType<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
@@ -311,26 +311,16 @@ public:
         scalar reverseLookupY(const Type& fin, const scalar x) const;
 
         //- Interpolate value using the current index and weight
-        template
-        <
-            template<class> class ListType1,
-            template<class> class ListType2,
-            class fType
-        >
-        fType interpolate(const ListType1<ListType2<fType>>&) const;
+        template<template<class> class ListType, class fType>
+        fType interpolate(const List<ListType<fType>>&) const;
 
         //- Interpolate value using the current index and weight
-        template
-        <
-            template<class> class ListType1,
-            template<class> class ListType2,
-            class fType
-        >
+        template<template<class> class ListType, class fType>
         fType interpolate
         (
             const scalar,
             const scalar,
-            const ListType1<ListType2<fType>>&
+            const List<ListType<fType>>&
         ) const;
 
         //- Return first derivative w.r.t. x
@@ -360,7 +350,7 @@ public:
         (
             const List<scalar>& x,
             const List<scalar>& y,
-            const ListType<ListType<Type>>& data,
+            const List<ListType<Type>>& data,
             const bool isReal = true
         );
         template<template<class> class ListType>
@@ -368,7 +358,7 @@ public:
         (
             const List<scalar>& x,
             const List<scalar>& y,
-            const ListType<ListType<Type>>& data,
+            const List<ListType<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
@@ -407,13 +397,13 @@ public:
         template<template<class> class ListType>
         void setData
         (
-            const ListType<ListType<Type>>& data,
+            const List<ListType<Type>>& data,
             const bool isReal = true
         );
         template<template<class> class ListType>
         void setData
         (
-            const ListType<ListType<Type>>& data,
+            const List<ListType<Type>>& data,
             const word& mod,
             const bool isReal = true
         );

@@ -29,10 +29,10 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class EquationOfState>
-inline Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
+inline Foam::eIcoTabulatedThermo<EquationOfState>::eIcoTabulatedThermo
 (
     const EquationOfState& st,
-    const scalarLookupTable2D& eTable,
+    const scalarLookupTable1D& eTable,
     const scalar Hf
 )
 :
@@ -46,7 +46,7 @@ inline Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::limit
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::limit
 (
     const scalar T,
     const scalar Told
@@ -59,12 +59,12 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::limit
 
     if
     (
-        eTabulatedThermo<EquationOfState>::debug
+        eIcoTabulatedThermo<EquationOfState>::debug
      && (T < Tlow_ || T > Thigh_)
     )
     {
         WarningInFunction
-            << "attempt to use eTabulatedThermo<EquationOfState>"
+            << "attempt to use eIcoTabulatedThermo<EquationOfState>"
                " out of temperature range "
             << Tlow_ << " -> " << Thigh_ << ";  T = " << T
             << endl;
@@ -74,43 +74,43 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::limit
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Cv
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::Cv
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    return eTable_.dFdY(rho, T);
+    return eTable_.dFdX(T) + EquationOfState::Cv(rho, e, T);
 }
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Es
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::Es
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    return eTable_.lookup(rho, T);
+    return eTable_.lookup(T) + EquationOfState::E(rho, e, T);
 }
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Ets
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::Ets
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    return eTable_.lookup(rho, T);
+    return eTable_.lookup(T);
 }
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Ea
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::Ea
 (
     const scalar rho,
     const scalar e,
@@ -122,7 +122,7 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Ea
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Eta
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::Eta
 (
     const scalar rho,
     const scalar e,
@@ -134,14 +134,14 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Eta
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Hf() const
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::Hf() const
 {
     return Hf_;
 }
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::flameT() const
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::flameT() const
 {
     NotImplemented;
     return 0.0;
@@ -149,7 +149,7 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::flameT() const
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::S
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::S
 (
     const scalar p,
     const scalar rho,
@@ -163,7 +163,7 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::S
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dGdT
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::dGdT
 (
     const scalar p,
     const scalar T
@@ -175,7 +175,7 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dGdT
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCpdT
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::dCpdT
 (
     const scalar p,
     const scalar T
@@ -187,7 +187,7 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCpdT
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCpdT
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::dCpdT
 (
     const scalar rho,
     const scalar e,
@@ -200,14 +200,14 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCpdT
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCvdT
+inline Foam::scalar Foam::eIcoTabulatedThermo<EquationOfState>::dCvdT
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    return eTable_.d2FdY2(rho, T);
+    return eTable_.d2FdX2(T);
 }
 
 // ************************************************************************* //

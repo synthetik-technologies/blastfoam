@@ -26,20 +26,20 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "eTabulatedBlastThermo.H"
+#include "hTabulatedBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class EquationOfState>
-Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
+Foam::hIcoTabulatedThermo<EquationOfState>::hIcoTabulatedThermo
 (
     const dictionary& dict
 )
 :
     EquationOfState(dict),
-    eTable_(dict.subDict("thermodynamics"), "rho", "T", "e"),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x())),
+    hTable_(dict.subDict("thermodynamics"), "T", "h"),
+    Tlow_(min(hTable_.x())),
+    Thigh_(max(hTable_.x())),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf"))
 {}
 
@@ -50,10 +50,10 @@ template<class EquationOfState>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const eTabulatedThermo<EquationOfState>& et
+    const hIcoTabulatedThermo<EquationOfState>& ht
 )
 {
-    et.write(os);
+    ht.write(os);
     return os;
 }
 

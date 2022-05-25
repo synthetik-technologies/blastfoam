@@ -149,13 +149,13 @@ Foam::lookupTable3D<Type>::lookupTable3D
 
 
 template<class Type>
-template<template<class> class ListType>
+template<template<class> class ListType1, template<class> class ListType2>
 Foam::lookupTable3D<Type>::lookupTable3D
 (
     const List<scalar>& x,
     const List<scalar>& y,
     const List<scalar>& z,
-    const ListType<ListType<ListType<Type>>>& data,
+    const List<ListType1<ListType2<Type>>>& data,
     const word& modXType,
     const word& modYType,
     const word& modZType,
@@ -228,13 +228,13 @@ Foam::lookupTable3D<Type>::~lookupTable3D()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-template<template<class> class ListType>
+template<template<class> class ListType1, template<class> class ListType2>
 void Foam::lookupTable3D<Type>::set
 (
     const List<scalar>& x,
     const List<scalar>& y,
     const List<scalar>& z,
-    const ListType<ListType<ListType<Type>>>& data,
+    const List<ListType1<ListType2<Type>>>& data,
     const bool isReal
 )
 {
@@ -246,13 +246,13 @@ void Foam::lookupTable3D<Type>::set
 
 
 template<class Type>
-template<template<class> class ListType>
+template<template<class> class ListType1, template<class> class ListType2>
 void Foam::lookupTable3D<Type>::set
 (
     const List<scalar>& x,
     const List<scalar>& y,
     const List<scalar>& z,
-    const ListType<ListType<ListType<Type>>>& data,
+    const List<ListType1<ListType2<Type>>>& data,
     const word& modXType,
     const word& modYType,
     const word& modZType,
@@ -457,10 +457,10 @@ void Foam::lookupTable3D<Type>::setZ
 
 
 template<class Type>
-template<template<class> class ListType>
+template<template<class> class ListType1, template<class> class ListType2>
 void Foam::lookupTable3D<Type>::setData
 (
-    const ListType<ListType<ListType<Type>>>& data,
+    const List<ListType1<ListType2<Type>>>& data,
     const bool isReal
 )
 {
@@ -469,15 +469,23 @@ void Foam::lookupTable3D<Type>::setData
         deleteDemandDrivenData(realDataPtr_);
     }
 
+    data_.setSize(data.size());
+    forAll(data, i)
+    {
+        data_[i].setSize(data[i].size());
+        forAll(data[i], j)
+        {
+            data_[i][j] = data[i][j];
+        }
+    }
+
     if (!mod_->needMod())
     {
-        data_ = data;
         realDataPtr_ = &data_;
         return;
     }
 
-    realDataPtr_ = new Field<Field<Field<Type>>>(data);
-    data_ = data;
+    realDataPtr_ = new Field<Field<Field<Type>>>(data_);
 
     if (isReal)
     {
@@ -509,10 +517,10 @@ void Foam::lookupTable3D<Type>::setData
 
 
 template<class Type>
-template<template<class> class ListType>
+template<template<class> class ListType1, template<class> class ListType2>
 void Foam::lookupTable3D<Type>::setData
 (
-    const ListType<ListType<ListType<Type>>>& data,
+    const List<ListType1<ListType2<Type>>>& data,
     const word& mod,
     const bool isReal
 )
@@ -1093,30 +1101,90 @@ void Foam::lookupTable3D<Type>::read
     );
     zInterpolator_->validate();
 
-    const dictionary& fDict(dict.optionalSubDict(name + "Coeffs"));
-
-    word modType = fDict.lookupOrDefault<word>("mod", "none");
-    isReal = fDict.lookupOrDefault<Switch>("isReal", true);
-
-    fileName file(fDict.lookup<word>("file"));
-    Field<Field<Field<Type>>> data
+    List<List<List<Type>>> data
     (
         xModValues_.size(),
-        Field<Field<Type>>
+        List<List<Type>>
         (
             yModValues_.size(),
-            Field<Type>(zModValues_.size())
+            List<Type>(zModValues_.size())
         )
     );
-    read3DTable
+
+    word modType = "none";
+    if (dict.found(name))
+    {
+        dict.readIfPresent(name, data);
+        dict.readIfPresent(name + "Mod", modType);
+        if (modType != "none")
+        {
+            isReal = dict.lookup<bool>("isReal");
+        }
+    }
+    else if (dict.isDict(name + "Coeffs"))
+    {
+        const dictionary& fDict(dict.subDict(name + "Coeffs"));
+        fDict.readIfPresent("mod", modType);
+        if (modType != "none")
+        {
+            isReal = fDict.lookup<bool>("isReal");
+        }
+
+        if (fDict.found(name))
+        {
+            fDict.readIfPresent(name, data);
+        }
+        else if (fDict.found("file"))
+        {
+            fileName file(fDict.lookup<word>("file"));
+
+            read3DTable
+            (
+                file,
+                dict.lookupOrDefault<string>("delim", ","),
+                dict.lookupOrDefault<string>("rowDelim", ";"),
+                data,
+                dict.lookupOrDefault<Switch>("flipTable", true),
+                !canRead
+            );
+        }
+        else
+        {
+            FatalIOErrorInFunction(fDict)
+                << "Neither the entry \"" << name << "\", "
+                << " or a file was provided for construction" << endl
+                << abort(FatalIOError);
+        }
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Neither the entry \"" << name << "\", "
+            << " or the \""
+            << name << "Coeffs\" subDictionary was found" << endl
+            << abort(FatalIOError);
+    }
+
+    if
     (
-        file,
-        dict.lookupOrDefault<string>("delim", ","),
-        dict.lookupOrDefault<string>("rowDelim", ";"),
-        data,
-        dict.lookupOrDefault<Switch>("flipTable", true),
-        !canRead
-    );
+        data.size() != xModValues_.size()
+     || data[0].size() != yModValues_.size()
+     || data[0][0].size() != zModValues_.size()
+    )
+    {
+        FatalIOErrorInFunction(dict)
+            << "Incompatible dimensions for table" << nl
+            << "table size: "
+            << data.size() << " x "
+            << data[0].size() << " x "
+            << data[0][0].size() << nl
+            << "x and y size: "
+            << xModValues_.size() << " x "
+            << yModValues_.size() << " z "
+            << yModValues_.size() << nl
+            << abort(FatalIOError);
+    }
+
     setData(data, modType, isReal);
 }
 

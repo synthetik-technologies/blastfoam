@@ -28,33 +28,6 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
-inline Foam::tabulatedTransport<Thermo>::tabulatedTransport
-(
-    const Thermo& t,
-    const scalarLookupTable1D& mu,
-    const scalarLookupTable1D& kappa
-)
-:
-    Thermo(t),
-    mu_(mu),
-    kappa_(kappa)
-{}
-
-
-template<class Thermo>
-inline Foam::tabulatedTransport<Thermo>::tabulatedTransport
-(
-    const word& name,
-    const tabulatedTransport& pt
-)
-:
-    Thermo(name, pt),
-    mu_(pt.mu_),
-    kappa_(pt.kappa_)
-{}
-
-
-template<class Thermo>
 inline Foam::autoPtr<Foam::tabulatedTransport<Thermo>>
 Foam::tabulatedTransport<Thermo>::clone() const
 {
@@ -86,7 +59,7 @@ inline Foam::scalar Foam::tabulatedTransport<Thermo>::mu
     const scalar T
 ) const
 {
-    return mu_.lookup(T);
+    return mu_.lookup(rho, T);
 }
 
 
@@ -98,7 +71,7 @@ inline Foam::scalar Foam::tabulatedTransport<Thermo>::kappa
     const scalar T
 ) const
 {
-    return kappa_.lookup(T);
+    return kappa_.lookup(rho, T);
 }
 
 

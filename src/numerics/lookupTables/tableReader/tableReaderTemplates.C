@@ -268,12 +268,12 @@ void Foam::read1DTable
 }
 
 
-template<class Type>
+template<class Type, template<class> class ListType>
 void Foam::read2DTable
 (
     const fileName& file,
     const string& delim,
-    Field<Field<Type>>& data,
+    List<ListType<Type>>& data,
     const bool flip,
     const bool determineSize
 )
@@ -295,7 +295,7 @@ void Foam::read2DTable
 
     label ny = -1;
     label nx = 0;
-    Field<Field<Type>> tdata;
+    DynamicList<ListType<Type>> tdata(10);
     while (is.good())
     {
         string line;
@@ -407,13 +407,13 @@ Foam::List<Type> Foam::readColumn
 }
 
 
-template<class Type>
+template<class Type, template<class> class ListType1, template<class> class ListType2>
 void Foam::read3DTable
 (
     const fileName& file,
     const string& delim,
     const string& rowDelim,
-    Field<Field<Field<Type>>>& data,
+    List<ListType1<ListType2<Type>>>& data,
     const bool flip,
     const bool determineSize
 )
@@ -433,7 +433,7 @@ void Foam::read3DTable
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    Field<Field<Field<Type>>> tdata;
+    List<ListType1<ListType2<Type>>> tdata;
     label nx = 0;
     label ny = -1;
     label nz = -1;
@@ -468,7 +468,7 @@ void Foam::read3DTable
                 << abort(FatalError);
         }
 
-        Field<Field<Type>> yzvals(strings.size());
+        ListType1<ListType2<Type>> yzvals(strings.size());
         forAll(strings, j)
         {
             string lineEntry = strings[j];
@@ -476,7 +476,7 @@ void Foam::read3DTable
             lineEntry = '(' + lineEntry + ')';
             IStringStream iss(lineEntry);
 
-            Field<Type> zvals(iss);
+            ListType2<Type> zvals(iss);
             if (!yzvals.size())
             {
                 continue;

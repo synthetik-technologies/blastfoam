@@ -2,14 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -26,35 +23,61 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "eTabulatedBlastThermo.H"
+#include "icoTabulatedTransport.H"
+#include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class EquationOfState>
-Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
+template<class Thermo>
+Foam::icoTabulatedTransport<Thermo>::icoTabulatedTransport
 (
     const dictionary& dict
 )
 :
-    EquationOfState(dict),
-    eTable_(dict.subDict("thermodynamics"), "rho", "T", "e"),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x())),
-    Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf"))
+    Thermo(dict),
+    mu_(dict.subDict("transport"), "T", "mu"),
+    kappa_(dict.subDict("transport"), "T", "kappa")
 {}
 
 
-// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class EquationOfState>
+template<class Thermo>
+void Foam::icoTabulatedTransport<Thermo>::write(Ostream& os) const
+{
+    os  << this->specieName() << endl;
+    os  << token::BEGIN_BLOCK << incrIndent << nl;
+
+    Thermo::write(os);
+
+    dictionary dict("transport");
+
+//     dictionary muDict("mu");
+//     muDict.add("values", mu_.values());
+//     dict.add("mu", muDict);
+
+//     dictionary kappaDict("kappa");
+//     kappaDict.add("values", kappa_.values());
+//     dict.add("kappa", kappaDict);
+
+    os  << indent << dict.dictName() << dict;
+
+    os  << decrIndent << token::END_BLOCK << nl;
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+
+template<class Thermo>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const eTabulatedThermo<EquationOfState>& et
+    const icoTabulatedTransport<Thermo>& pt
 )
 {
-    et.write(os);
+    pt.write(os);
     return os;
 }
+
 
 // ************************************************************************* //

@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::hTabulatedThermo
+    Foam::eIcoTabulatedThermo
 
 Description
     Thermodynamic model that uses a table based on density and internal energy
@@ -33,46 +33,46 @@ Description
     additional quantities such as specific heats
 
 SourceFiles
-    hTabulatedThermo.C
+    eIcoTabulatedThermo.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef hTabulatedThermoBlast_H
-#define hTabulatedThermoBlast_H
+#ifndef eIcoTabulatedThermoBlast_H
+#define eIcoTabulatedThermoBlast_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "lookupTables2D.H"
+#include "lookupTables1D.H"
 
 namespace Foam
 {
 
 // Forward declaration of friend functions and operators
 
-template<class EquationOfState> class hTabulatedThermo;
+template<class EquationOfState> class eIcoTabulatedThermo;
 
 template<class EquationOfState>
 Ostream& operator<<
 (
     Ostream&,
-    const hTabulatedThermo<EquationOfState>&
+    const eIcoTabulatedThermo<EquationOfState>&
 );
 
 
 /*---------------------------------------------------------------------------*\
-                        Class hTabulatedThermo Declaration
+                        Class eIcoTabulatedThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class EquationOfState>
-class hTabulatedThermo
+class eIcoTabulatedThermo
 :
     public EquationOfState
 {
 // Private data
 
-    //- Enthalpy lookup table
-    scalarLookupTable2D hTable_;
+    //- Internal energy lookup table
+    scalarLookupTable1D eTable_;
 
     //- Temperature bounds
     scalar Tlow_;
@@ -81,13 +81,11 @@ class hTabulatedThermo
     //- Heat of formation
     scalar Hf_;
 
-
-
     //- Construct from components
-    inline hTabulatedThermo
+    inline eIcoTabulatedThermo
     (
         const EquationOfState& st,
-        const scalarLookupTable2D& hTable,
+        const scalarLookupTable1D& eTable,
         const scalar Hf
     );
 
@@ -98,18 +96,18 @@ public:
         static word typeName()
         {
             return
-                "hTabulated<"
+                "eIcoTabulated<"
               + word(EquationOfState::typeName()) + ">";
         }
 
     // Constructors
 
-        hTabulatedThermo(const dictionary& dict);
+        eIcoTabulatedThermo(const dictionary& dict);
 
         //- Return the energy type
         static bool enthalpy()
         {
-            return true;
+            return false;
         }
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
@@ -118,47 +116,47 @@ public:
 
     // Member Functions
 
-        //- Heat capacity at constant pressure of mixture [J/kg/K]
-        inline scalar Cp
+        //- Heat capacity at constant volume of mixture [J/kg/K]
+        inline scalar Cv
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Sensible enthalpy [J/kg]
-        inline scalar Hs
+        //- Sensible internal energy [J/kg]
+        inline scalar Es
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Sensible thermal enthalpy [J/kg]
-        inline scalar Hts
+        //- Sensible thermal internal energy [J/kg]
+        inline scalar Ets
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Absolute enthalpy [J/kg]
-        inline scalar Ha
+        //- Absolute internal energy [J/kg]
+        inline scalar Ea
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Absolute thermal enthalpy [J/kg]
-        inline scalar Hta
+        //- Absolute thermal internal energy [J/kg]
+        inline scalar Eta
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        #include "HtoEFuncs.H"
+        #include "EtoHFuncs.H"
 
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
@@ -203,7 +201,7 @@ public:
         friend Ostream& operator<< <EquationOfState>
         (
             Ostream&,
-            const hTabulatedThermo&
+            const eIcoTabulatedThermo&
         );
 };
 
@@ -214,10 +212,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "hTabulatedBlastThermoI.H"
+#include "eIcoTabulatedBlastThermoI.H"
 
 #ifdef NoRepository
-    #include "hTabulatedBlastThermo.C"
+    #include "eIcoTabulatedBlastThermo.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

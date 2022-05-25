@@ -25,54 +25,54 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::hTabulatedThermo
+    Foam::hIcoTabulatedThermo
 
 Description
-    Thermodynamic model that uses a table based on density and internal energy
+    Thermodynamic model that uses a table based on internal energy
     to return temperature. Numerical derivatives are used to approximate
     additional quantities such as specific heats
 
 SourceFiles
-    hTabulatedThermo.C
+    hIcoTabulatedThermo.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef hTabulatedThermoBlast_H
-#define hTabulatedThermoBlast_H
+#ifndef hIcoTabulatedThermoBlast_H
+#define hIcoTabulatedThermoBlast_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "lookupTables2D.H"
+#include "lookupTables1D.H"
 
 namespace Foam
 {
 
 // Forward declaration of friend functions and operators
 
-template<class EquationOfState> class hTabulatedThermo;
+template<class EquationOfState> class hIcoTabulatedThermo;
 
 template<class EquationOfState>
 Ostream& operator<<
 (
     Ostream&,
-    const hTabulatedThermo<EquationOfState>&
+    const hIcoTabulatedThermo<EquationOfState>&
 );
 
 
 /*---------------------------------------------------------------------------*\
-                        Class hTabulatedThermo Declaration
+                        Class hIcoTabulatedThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class EquationOfState>
-class hTabulatedThermo
+class hIcoTabulatedThermo
 :
     public EquationOfState
 {
 // Private data
 
     //- Enthalpy lookup table
-    scalarLookupTable2D hTable_;
+    scalarLookupTable1D hTable_;
 
     //- Temperature bounds
     scalar Tlow_;
@@ -82,12 +82,11 @@ class hTabulatedThermo
     scalar Hf_;
 
 
-
     //- Construct from components
-    inline hTabulatedThermo
+    inline hIcoTabulatedThermo
     (
         const EquationOfState& st,
-        const scalarLookupTable2D& hTable,
+        const scalarLookupTable1D& hTable,
         const scalar Hf
     );
 
@@ -98,13 +97,13 @@ public:
         static word typeName()
         {
             return
-                "hTabulated<"
+                "hIcoTabulated<"
               + word(EquationOfState::typeName()) + ">";
         }
 
     // Constructors
 
-        hTabulatedThermo(const dictionary& dict);
+        hIcoTabulatedThermo(const dictionary& dict);
 
         //- Return the energy type
         static bool enthalpy()
@@ -203,7 +202,7 @@ public:
         friend Ostream& operator<< <EquationOfState>
         (
             Ostream&,
-            const hTabulatedThermo&
+            const hIcoTabulatedThermo&
         );
 };
 
@@ -214,10 +213,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "hTabulatedBlastThermoI.H"
+#include "hIcoTabulatedBlastThermoI.H"
 
 #ifdef NoRepository
-    #include "hTabulatedBlastThermo.C"
+    #include "hIcoTabulatedBlastThermo.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

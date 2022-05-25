@@ -5,11 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -26,35 +23,69 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "eTabulatedBlastThermo.H"
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class EquationOfState>
-Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
+template<class Thermo>
+inline Foam::autoPtr<Foam::tabulatedIsoSolidTransport<Thermo>>
+Foam::tabulatedIsoSolidTransport<Thermo>::clone() const
+{
+    return autoPtr<tabulatedIsoSolidTransport<Thermo>>
+    (
+        new tabulatedIsoSolidTransport<Thermo>(*this)
+    );
+}
+
+
+template<class Thermo>
+inline Foam::autoPtr<Foam::tabulatedIsoSolidTransport<Thermo>>
+Foam::tabulatedIsoSolidTransport<Thermo>::New
 (
     const dictionary& dict
 )
-:
-    EquationOfState(dict),
-    eTable_(dict.subDict("thermodynamics"), "rho", "T", "e"),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x())),
-    Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf"))
-{}
-
-
-// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
-
-template<class EquationOfState>
-Foam::Ostream& Foam::operator<<
-(
-    Ostream& os,
-    const eTabulatedThermo<EquationOfState>& et
-)
 {
-    et.write(os);
-    return os;
+    return autoPtr<tabulatedIsoSolidTransport<Thermo>>
+    (
+        new tabulatedIsoSolidTransport<Thermo>(dict)
+    );
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+inline Foam::scalar Foam::tabulatedIsoSolidTransport<Thermo>::kappa
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return kappaTable_.lookup(T);
+}
+
+template<class Thermo>
+inline Foam::vector Foam::tabulatedIsoSolidTransport<Thermo>::Kappa
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    const scalar k(kappa(rho, e, T));
+    return vector(k, k, k);
+}
+
+
+template<class Thermo>
+inline Foam::scalar Foam::tabulatedIsoSolidTransport<Thermo>::mu
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return scalar(0);
 }
 
 // ************************************************************************* //

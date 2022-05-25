@@ -2,14 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -26,35 +23,50 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "eTabulatedBlastThermo.H"
+#include "tabulatedAnIsoSolidTransport.H"
+#include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class EquationOfState>
-Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
+template<class Thermo>
+Foam::tabulatedAnIsoSolidTransport<Thermo>::tabulatedAnIsoSolidTransport
 (
     const dictionary& dict
 )
 :
-    EquationOfState(dict),
-    eTable_(dict.subDict("thermodynamics"), "rho", "T", "e"),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x())),
-    Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf"))
+    Thermo(dict),
+    kappaTable_(dict.subDict("transport"), "T", "kappa")
 {}
 
 
-// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class EquationOfState>
+template<class Thermo>
+void Foam::tabulatedAnIsoSolidTransport<Thermo>::tabulatedAnIsoSolidTransport::write
+(
+    Ostream& os
+) const
+{
+    Thermo::write(os);
+
+    dictionary dict("transport");
+    // dict.add("kappa", kappa_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+
+template<class Thermo>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const eTabulatedThermo<EquationOfState>& et
+    const tabulatedAnIsoSolidTransport<Thermo>& ct
 )
 {
-    et.write(os);
+    ct.write(os);
     return os;
 }
+
 
 // ************************************************************************* //

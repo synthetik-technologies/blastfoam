@@ -31,13 +31,13 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class EquationOfState>
-Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
+Foam::eIcoTabulatedThermo<EquationOfState>::eIcoTabulatedThermo
 (
     const dictionary& dict
 )
 :
     EquationOfState(dict),
-    eTable_(dict.subDict("thermodynamics"), "rho", "T", "e"),
+    eTable_(dict.subDict("thermodynamics"), "T", "e"),
     Tlow_(min(eTable_.x())),
     Thigh_(max(eTable_.x())),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf"))
@@ -50,7 +50,7 @@ template<class EquationOfState>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const eTabulatedThermo<EquationOfState>& et
+    const eIcoTabulatedThermo<EquationOfState>& et
 )
 {
     et.write(os);

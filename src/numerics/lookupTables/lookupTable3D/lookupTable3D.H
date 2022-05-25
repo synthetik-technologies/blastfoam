@@ -195,13 +195,13 @@ public:
         );
 
         //- Construct from data
-        template<template<class> class ListType>
+        template<template<class> class ListType1, template<class> class ListType2>
         lookupTable3D
         (
             const List<scalar>& x,
             const List<scalar>& y,
             const List<scalar>& z,
-            const ListType<ListType<ListType<Type>>>& data,
+            const List<ListType1<ListType2<Type>>>& data,
             const word& xMod,
             const word& yMod,
             const word& zMod,
@@ -387,54 +387,42 @@ public:
         ) const;
 
         //- Interpolate value using the current index and weight
-        template
-        <
-            template<class> class ListType1,
-            template<class> class ListType2,
-            template<class> class ListType3,
-            class fType
-        >
+        template<class fType, template<class> class ListType1, template<class> class ListType2>
         fType interpolate
         (
-            const ListType1<ListType2<ListType3<fType>>>&
+            const List<ListType1<ListType2<fType>>>&
         ) const;
 
         //- Interpolate value using the current index and weight
-        template
-        <
-            template<class> class ListType1,
-            template<class> class ListType2,
-            template<class> class ListType3,
-            class fType
-        >
+        template<class fType, template<class> class ListType1, template<class> class ListType2>
         fType interpolate
         (
             const scalar,
             const scalar,
             const scalar,
-            const ListType1<ListType2<ListType3<fType>>>&
+            const List<ListType1<ListType2<fType>>>&
         ) const;
 
 
     // Edit functions
 
         //- Set data, x, and y
-        template<template<class> class ListType>
+        template<template<class> class ListType1, template<class> class ListType2>
         void set
         (
             const List<scalar>& x,
             const List<scalar>& y,
             const List<scalar>& z,
-            const ListType<ListType<ListType<Type>>>& data,
+            const List<ListType1<ListType2<Type>>>& data,
             const bool isReal = true
         );
-        template<template<class> class ListType>
+        template<template<class> class ListType1, template<class> class ListType2>
         void set
         (
             const List<scalar>& x,
             const List<scalar>& y,
             const List<scalar>& z,
-            const ListType<ListType<ListType<Type>>>& data,
+            const List<ListType1<ListType2<Type>>>& data,
             const word& xMod,
             const word& yMod,
             const word& zMod,
@@ -485,16 +473,16 @@ public:
         );
 
         //- Set data
-        template<template<class> class ListType>
+        template<template<class> class ListType1, template<class> class ListType2>
         void setData
         (
-            const ListType<ListType<ListType<Type>>>& data,
+            const List<ListType1<ListType2<Type>>>& data,
             const bool isReal = true
         );
-        template<template<class> class ListType>
+        template<template<class> class ListType1, template<class> class ListType2>
         void setData
         (
-            const ListType<ListType<ListType<Type>>>& data,
+            const List<ListType1<ListType2<Type>>>& data,
             const word& mod,
             const bool isReal = true
         );

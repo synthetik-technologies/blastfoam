@@ -73,12 +73,12 @@ void read1DTable
 
 
 //- Read a 2D table
-template<class Type>
+template<class Type, template<class> class ListType>
 void read2DTable
 (
     const fileName& file,
     const string& delim,
-    Field<Field<Type>>& data,
+    List<ListType<Type>>& data,
     const bool flip,
     const bool determineSize = false
 );
@@ -101,13 +101,13 @@ List<Type> readColumn
 );
 
 //- Read a 3D table
-template<class Type>
+template<class Type, template<class> class ListType1, template<class> class ListType2>
 void read3DTable
 (
     const fileName& file,
     const string& delim,
     const string& rowDelim,
-    Field<Field<Field<Type>>>& data,
+    List<ListType1<ListType2<Type>>>& data,
     const bool flip,
     const bool determineSize = false
 );

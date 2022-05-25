@@ -29,15 +29,10 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-template
-<
-    template<class> class ListType1,
-    template<class> class ListType2,
-    class fType
->
+template<template<class> class ListType, class fType>
 fType Foam::lookupTable2D<Type>::interpolate
 (
-    const ListType1<ListType2<fType>>& fs
+    const List<ListType<fType>>& fs
 ) const
 {
     fType modf = weights_[0]*fs[indices_[0].x()][indices_[0].y()];
@@ -50,17 +45,12 @@ fType Foam::lookupTable2D<Type>::interpolate
 
 
 template<class Type>
-template
-<
-    template<class> class ListType1,
-    template<class> class ListType2,
-    class fType
->
+template<template<class> class ListType, class fType>
 fType Foam::lookupTable2D<Type>::interpolate
 (
     const scalar x,
     const scalar y,
-    const ListType1<ListType2<fType>>& fs
+    const List<ListType<fType>>& fs
 ) const
 {
     update(x, y);

@@ -31,14 +31,13 @@ License
 template<class Type>
 template
 <
+    class fType,
     template<class> class ListType1,
-    template<class> class ListType2,
-    template<class> class ListType3,
-    class fType
+    template<class> class ListType2
 >
 fType Foam::lookupTable3D<Type>::interpolate
 (
-    const ListType1<ListType2<ListType3<fType>>>& fs
+    const List<ListType1<ListType2<fType>>>& fs
 ) const
 {
     fType modf =
@@ -57,17 +56,16 @@ fType Foam::lookupTable3D<Type>::interpolate
 template<class Type>
 template
 <
+    class fType,
     template<class> class ListType1,
-    template<class> class ListType2,
-    template<class> class ListType3,
-    class fType
+    template<class> class ListType2
 >
 fType Foam::lookupTable3D<Type>::interpolate
 (
     const scalar x,
     const scalar y,
     const scalar z,
-    const ListType1<ListType2<ListType3<fType>>>& fs
+    const List<ListType1<ListType2<fType>>>& fs
 ) const
 {
     update(x, y, z);

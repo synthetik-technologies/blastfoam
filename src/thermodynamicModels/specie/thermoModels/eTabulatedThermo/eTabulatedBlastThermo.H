@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "lookupTables1D.H"
+#include "lookupTables2D.H"
 
 namespace Foam
 {
@@ -72,18 +72,22 @@ class eTabulatedThermo
 // Private data
 
     //- Internal energy lookup table
-    scalarLookupTable1D eTable_;
+    scalarLookupTable2D eTable_;
 
     //- Temperature bounds
     scalar Tlow_;
     scalar Thigh_;
+
+    //- Heat of formation
+    scalar Hf_;
 
 
     //- Construct from components
     inline eTabulatedThermo
     (
         const EquationOfState& st,
-        const scalarLookupTable1D& eTable
+        const scalarLookupTable2D& eTable,
+        const scalar Hf
     );
 
 

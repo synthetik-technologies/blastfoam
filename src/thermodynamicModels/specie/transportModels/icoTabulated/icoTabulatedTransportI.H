@@ -23,60 +23,82 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "tabulatedTransport.H"
-#include "IOstreams.H"
+#include "specieBlast.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
-Foam::tabulatedTransport<Thermo>::tabulatedTransport
+inline Foam::icoTabulatedTransport<Thermo>::icoTabulatedTransport
 (
-    const dictionary& dict
+    const Thermo& t,
+    const scalarLookupTable1D& mu,
+    const scalarLookupTable1D& kappa
 )
 :
-    Thermo(dict),
-    mu_(dict.subDict("transport"), "rho", "T", "mu"),
-    kappa_(dict.subDict("transport"), "rho", "T", "kappa")
+    Thermo(t),
+    mu_(mu),
+    kappa_(kappa)
 {}
+
+
+template<class Thermo>
+inline Foam::icoTabulatedTransport<Thermo>::icoTabulatedTransport
+(
+    const word& name,
+    const icoTabulatedTransport& pt
+)
+:
+    Thermo(name, pt),
+    mu_(pt.mu_),
+    kappa_(pt.kappa_)
+{}
+
+
+template<class Thermo>
+inline Foam::autoPtr<Foam::icoTabulatedTransport<Thermo>>
+Foam::icoTabulatedTransport<Thermo>::clone() const
+{
+    return autoPtr<icoTabulatedTransport<Thermo>>
+    (
+        new icoTabulatedTransport<Thermo>(*this)
+    );
+}
+
+
+template<class Thermo>
+inline Foam::autoPtr<Foam::icoTabulatedTransport<Thermo>>
+Foam::icoTabulatedTransport<Thermo>::New(const dictionary& dict)
+{
+    return autoPtr<icoTabulatedTransport<Thermo>>
+    (
+        new icoTabulatedTransport<Thermo>(dict)
+    );
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo>
-void Foam::tabulatedTransport<Thermo>::write(Ostream& os) const
+inline Foam::scalar Foam::icoTabulatedTransport<Thermo>::mu
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
 {
-    os  << this->specieName() << endl;
-    os  << token::BEGIN_BLOCK << incrIndent << nl;
-
-    Thermo::write(os);
-
-    dictionary dict("transport");
-
-//     dictionary muDict("mu");
-//     muDict.add("values", mu_.values());
-//     dict.add("mu", muDict);
-
-//     dictionary kappaDict("kappa");
-//     kappaDict.add("values", kappa_.values());
-//     dict.add("kappa", kappaDict);
-
-    os  << indent << dict.dictName() << dict;
-
-    os  << decrIndent << token::END_BLOCK << nl;
+    return mu_.lookup(T);
 }
 
 
-// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
-
 template<class Thermo>
-Foam::Ostream& Foam::operator<<
+inline Foam::scalar Foam::icoTabulatedTransport<Thermo>::kappa
 (
-    Ostream& os,
-    const tabulatedTransport<Thermo>& pt
-)
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
 {
-    pt.write(os);
-    return os;
+    return kappa_.lookup(T);
 }
 
 

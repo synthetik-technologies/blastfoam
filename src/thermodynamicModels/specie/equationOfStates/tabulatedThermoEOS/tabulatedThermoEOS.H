@@ -130,7 +130,7 @@ public:
         static word typeName()
         {
             return
-                "tabulated<tabulated<"
+                "eTabulated<tabulatedMG<"
               + word(Specie::typeName_()) + ">>";
         }
 

@@ -26,35 +26,47 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "eTabulatedBlastThermo.H"
+#include "tabulatedEOS.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class EquationOfState>
-Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
+template<class Specie>
+Foam::tabulatedEOS<Specie>::tabulatedEOS
 (
     const dictionary& dict
 )
 :
-    EquationOfState(dict),
-    eTable_(dict.subDict("thermodynamics"), "rho", "T", "e"),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x())),
-    Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf"))
+    Specie(dict),
+    pTable_(dict.subDict("equationOfState"), "rho", "T", "p")
 {}
+
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::tabulatedEOS<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+
+    os  << indent << dict.dictName() << dict;
+}
 
 
 // * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
 
-template<class EquationOfState>
+template<class Specie>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const eTabulatedThermo<EquationOfState>& et
+    const tabulatedEOS<Specie>& tabulatedEOS
 )
 {
-    et.write(os);
+    tabulatedEOS.write(os);
     return os;
 }
+
 
 // ************************************************************************* //
