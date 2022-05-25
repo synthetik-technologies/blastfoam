@@ -20,6 +20,7 @@ uTransport
     polynomial
     logPolynomial
     WLF
+    icoTabulated
     tabulated
 );
 
@@ -30,6 +31,7 @@ rTransport
     polynomial
     logPolynomial
     WLF
+    icoTabulated
     tabulated
 );
 
@@ -39,9 +41,11 @@ uThermo
     hConst
     ePower
     ePolynomial
+    eIcoTabulated
     eTabulated
     hPower
     hPolynomial
+    hIcoTabulated
     hTabulated
     janaf
 );
@@ -52,9 +56,11 @@ rThermo
     hConst
     ePower
     ePolynomial
+    eIcoTabulated
     eTabulated
     hPower
     hPolynomial
+    hIcoTabulated
     hTabulated
     janaf
 );
@@ -66,6 +72,7 @@ uEquationOfState
     BirchMurnaghan2
     BirchMurnaghan3
     solidJWL
+    tabulatedEOS
 );
 
 rEquationOfState
@@ -84,6 +91,7 @@ rEquationOfState
     BWR
     linearTillotson
     Tillotson
+    tabulatedEOS
 );
 
 specie

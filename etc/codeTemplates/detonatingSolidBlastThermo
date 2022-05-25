@@ -19,6 +19,8 @@ uTransport
     constAnIso
     polynomial
     exponential
+    tabulatedIso
+    tabulatedAnIso
 );
 
 rTransport
@@ -27,6 +29,8 @@ rTransport
     constAnIso
     polynomial
     exponential
+    tabulatedIso
+    tabulatedAnIso
 );
 
 uThermo
@@ -35,9 +39,11 @@ uThermo
     hConst
     ePower
     ePolynomial
+    eIcoTabulated
     eTabulated
     hPower
     hPolynomial
+    hIcoTabulated
     hTabulated
 );
 
@@ -47,9 +53,11 @@ rThermo
     hConst
     ePower
     ePolynomial
+    eIcoTabulated
     eTabulated
     hPower
     hPolynomial
+    hIcoTabulated
     hTabulated
 );
 
