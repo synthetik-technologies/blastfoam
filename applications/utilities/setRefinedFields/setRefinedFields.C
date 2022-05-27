@@ -605,7 +605,7 @@ int main(int argc, char *argv[])
 
     #include "createNamedMesh.H"
 
-    const dictionary setFieldsDict(systemDict("setFieldsDict", args, mesh));
+    dictionary setFieldsDict(systemDict("setFieldsDict", args, mesh));
 
     // Update All fields in the current time folder
     // Resizes to make sure all fields are consistent with the mesh
@@ -640,13 +640,39 @@ int main(int argc, char *argv[])
     autoPtr<fvMeshRefiner> refiner;
     if (!noRefine)
     {
-        dictionary refineDict
+        dictionary& refineDict
         (
-            setFieldsDict.optionalSubDict
-            (
-                "refinerCoeffs"
-            )
+            setFieldsDict.isDict("refinerCoeffs")
+          ? setFieldsDict.subDict("refinerCoeffs")
+          : setFieldsDict
         );
+        if (!refineDict.found("refiner"))
+        {
+            IOobject dynamicMeshDictIO
+            (
+                "dynamicMeshDict",
+                runTime.constant(),
+                runTime,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            );
+            if (dynamicMeshDictIO.typeHeaderOk<IOdictionary>(true))
+            {
+                dynamicMeshDictIO.readOpt() = IOobject::MUST_READ;
+                IOdictionary dynamicMeshDict(dynamicMeshDictIO);
+                const word type(dynamicMeshDict.lookup("dynamicFvMesh"));
+                const dictionary& coeffsDict(dynamicMeshDict.optionalSubDict(type + "Coeffs"));
+                if (coeffsDict.found("refiner"))
+                {
+                    refineDict.set
+                    (
+                        "refiner",
+                        coeffsDict.lookup<word>("refiner")
+                    );
+                }
+            }
+        }
         if (args.optionFound("forceHex8"))
         {
             refineDict.set("forceHex8", true);
