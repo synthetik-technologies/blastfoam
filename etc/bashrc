@@ -46,11 +46,12 @@ export FOAM_EXTRA_CXXFLAGS="-DCOMPAT_OPENFOAM_ORG"
 export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
 
 # Export location of libraries and executables
-export BLAST_LIBBIN="$FOAM_USER_LIBBIN"
-export BLAST_APPBIN="$FOAM_USER_APPBIN"
+export BLAST_LIBBIN="$BLAST_DIR/lib"
+export BLAST_APPBIN="$BLAST_DIR/bin"
 #export BLAST_LIBBIN="$FOAM_SITE_LIBBIN"
 #export BLAST_APPBIN="$FOAM_SITE_APPBIN"
 
 export FOAM_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
-
+PATH=$PATH:$BLAST_APPBIN:$BLAST_LIBBIN
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BLAST_LIBBIN
 #------------------------------------------------------------------------------
