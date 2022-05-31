@@ -36,18 +36,22 @@ fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
 
 pointPatchFields/derived/fixedSlip/fixedSlipPointPatchFields.C
 
-MUSCLReconstruction/MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
-MUSCLReconstruction/none/noneMUSCLReconstructionSchemes.C
-MUSCLReconstruction/standard/standardMUSCLReconstructionSchemes.C
-MUSCLReconstruction/upwind/upwindMUSCLReconstructionSchemes.C
-MUSCLReconstruction/linear/linearMUSCLReconstructionSchemes.C
-MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
+reconstruction/reconstructionScheme/ReconstructionSchemes.C
+reconstruction/none/NoneReconstructionSchemes.C
+reconstruction/standard/StandardReconstructionSchemes.C
+reconstruction/upwindMUSCL/UpwindMUSCLReconstructionSchemes.C
+reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
+reconstruction/quadraticMUSCL/QuadraticMUSCLReconstructionSchemes.C
 
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
 extendedNLevelGlobalCellToCellStencil/cellStencil.C
 extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencils.C
 meshSizeObject/meshSizeObject.C
+
+finiteVolume/interpolationSchemes/CICSAM/CICSAM.C
+finiteVolume/interpolationSchemes/HRIC/HRIC.C
+finiteVolume/interpolationSchemes/mHRIC/mHRIC.C
 
 calcAngleFraction/calcAngleFraction.C
 
@@ -83,9 +87,6 @@ fvPatchFields/derived/burstCyclic/burstCyclicFvPatchFields.C
 fvPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicFvPatchFields.C
 fvPatchFields/derived/burstCyclicAMI/burstCyclicAMIFvPatchFields.C
 fvPatchFields/derived/burstCyclicACMI/burstCyclicACMIFvPatchFields.C
-
-fvPatchFields/derived/hole/holePatchField.C
-fvPatchFields/derived/holeVelocityCyclic/holeVelocityCyclicFvPatchVectorField.C
 
 fvsPatchFields/derived/burst/burstFvsPatchFields.C
 fvsPatchFields/derived/burstCyclic/burstCyclicFvsPatchFields.C

@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluxSchemeBase.H"
-#include "MUSCLReconstructionScheme.H"
+#include "ReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -120,13 +120,14 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
 
-    autoPtr<MUSCLReconstructionScheme<Type>> fLimiter
+    autoPtr<ReconstructionScheme<Type>> fLimiter
     (
-        MUSCLReconstructionScheme<Type>::New(f, name)
+        ReconstructionScheme<Type>::New(f, name)
     );
 
-    tmp<fieldType> tfOwn(fLimiter->interpolateOwn());
-    tmp<fieldType> tfNei(fLimiter->interpolateNei());
+    tmp<fieldType> tfOwn;
+    tmp<fieldType> tfNei;
+    fLimiter->interpolateOwnNei(tfOwn, tfNei);
 
     return interpolate(tfOwn(), tfNei(), name);
 }

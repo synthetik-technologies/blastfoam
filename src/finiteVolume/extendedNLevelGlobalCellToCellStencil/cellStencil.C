@@ -30,103 +30,49 @@ License
 Foam::cellStencil::cellStencil()
 :
     labelList(0),
-    owner_(-1),
-    maxLevel_(0),
+    localOwner_(-1),
     centre_(Zero),
-    offsets_(0)
+    localStencil_()
 {}
 
 Foam::cellStencil::cellStencil(const cellStencil& stencil)
 :
     labelList(stencil),
-    owner_(stencil.owner_),
-    maxLevel_(stencil.maxLevel_),
+    localOwner_(stencil.localOwner_),
     centre_(stencil.centre_),
-    offsets_(stencil.offsets_)
+    localStencil_()
 {}
 
 Foam::cellStencil::cellStencil
 (
     const label own,
     const labelList& stencil,
-    const labelList& levels,
     const vector& centre
 )
 :
-    labelList(stencil.size(), -1),
-    owner_(own),
-    maxLevel_(0),
+    labelList(stencil),
+    localOwner_(own),
     centre_(centre),
-    offsets_(stencil.size(), -1),
-    localStencil_(),
-    localOffsets_()
+    localStencil_()
 {
     if (stencil.size())
     {
-    maxLevel_ = max(levels);
-        offsets_.setSize(maxLevel_ + 2, -1);
-
-    label ci = 0;
-    for (label leveli = 0; leveli <= maxLevel_; leveli++)
-    {
-        offsets_[leveli] = ci;
-        forAll(levels, i)
+        if (stencil[0] != own)
         {
-        if (levels[i] == leveli)
-        {
-            operator[](ci++) = stencil[i];
+            label i = 0;
+            this->setSize(stencil.size() + 1);
+            operator[](i++) = own;
+            forAll(stencil, si)
+            {
+                operator[](i++) = stencil[si];
+            }
         }
-        }
-    }
-    }
-    offsets_.last() = stencil.size();
-}
-
-Foam::cellStencil::cellStencil
-(
-    const label own,
-    const labelList& stencil,
-    const Map<label>& levelMap,
-    const vector& centre
-)
-:
-    labelList(stencil.size(), -1),
-    owner_(own),
-    maxLevel_(-1),
-    centre_(centre),
-    offsets_(stencil.size(), -1),
-    localStencil_(),
-    localOffsets_()
-{
-    if (stencil.size())
-    {
-    labelList levels(stencil.size(), 0);
-    forAll(stencil, i)
-    {
-        levels[i] = levelMap[stencil[i]];
-    }
-
-    maxLevel_ = max(levels);
-    offsets_.setSize(maxLevel_ + 2, -1);
-    label ci = 0;
-    for (label leveli = 0; leveli <= maxLevel_; leveli++)
-    {
-        offsets_[leveli] = ci;
-        forAll(levels, i)
-        {
-        if (levels[i] == leveli)
-        {
-            operator[](ci++) = stencil[i];
-        }
-        }
-    }
-    offsets_.last() = stencil.size();
     }
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::cellStencil::updateLocalStencil
+void Foam::cellStencil::update
 (
     const globalIndex& idx
 )
@@ -138,132 +84,36 @@ void Foam::cellStencil::updateLocalStencil
 
     const labelList& stencil(*this);
     localStencil_.setSize(stencil.size(), -1);
-    localOffsets_.setSize(offsets_.size(), -1);
+
+    if (!this->size())
+    {
+        localOwner_ = -1;
+        return;
+    }
+
+    if (idx.isLocal(this->first()))
+    {
+        localOwner_ = idx.toLocal(this->first());
+    }
+    else
+    {
+        localOwner_ = -1;
+    }
 
     if (!stencil.size())
     {
         return;
     }
 
-    if (idx.isLocal(this->first()))
+    label li = 0;
+    forAll(*this, i)
     {
-        owner_ = idx.toLocal(this->first());
-    }
-    else
-    {
-        owner_ = -1;
-    }
-
-    label ni = 0;
-    for (label leveli = 0; leveli <= maxLevel_; leveli++)
-    {
-    bool offsetSet = false;
-    for (label i = offsets_[leveli]; i < offsets_[leveli+1]; i++)
-    {
-        if (idx.isLocal(stencil[i]))
+        if (idx.isLocal(labelList::operator[](i)))
         {
-        localStencil_[ni] = idx.toLocal(stencil[i]);
-            if (!offsetSet)
-            {
-            localOffsets_[leveli] = ni;
-            offsetSet = true;
-        }
-        ni++;
+            localStencil_[li++] = idx.toLocal(labelList::operator[](i));
         }
     }
-
-        if (!offsetSet)
-    {
-        localOffsets_[leveli] = ni;
-    }
-    }
-
-    localStencil_.resize(ni);
-    localOffsets_.last() = ni;
-}
-
-
-Foam::SubList<Foam::label> Foam::cellStencil::operator()
-(
-    const label level
-) const
-{
-    if (level > maxLevel_)
-    {
-    return SubList<label>(*this, 0, 0);
-    }
-    return SubList<label>
-    (
-    *this,
-        offsets_[level+1] - offsets_[level],
-    offsets_[level]
-    );
-}
-
-
-Foam::SubList<Foam::label> Foam::cellStencil::operator()
-(
-    const label level0,
-    const label level1
-) const
-{
-    if (level0 > maxLevel_)
-    {
-    return SubList<label>(*this, 0, 0);
-    }
-
-    return SubList<label>
-    (
-    *this,
-        offsets_[max(level1, maxLevel_) + 1] - offsets_[level0],
-    offsets_[level0]
-    );
-}
-
-
-Foam::SubList<Foam::label> Foam::cellStencil::localStencil
-(
-    const label level
-) const
-{
-    if (!Pstream::parRun())
-    {
-    return operator()(level);
-    }
-    else if (level > maxLevel_ + 1)
-    {
-    return SubList<label>(localStencil_, 0, 0);
-    }
-
-    return SubList<label>
-    (
-    localStencil_,
-        localOffsets_[level+1] - localOffsets_[level],
-    localOffsets_[level]
-    );
-}
-
-
-Foam::SubList<Foam::label> Foam::cellStencil::localStencil
-(
-    const label level0,
-    const label level1
-) const
-{
-    if (!Pstream::parRun())
-    {
-    return operator()(level0, level1);
-    }
-    else if (level0 > maxLevel_)
-    {
-    return SubList<label>(localStencil_, 0, 0);
-    }
-    return SubList<label>
-    (
-    localStencil_,
-        localOffsets_[max(level1, maxLevel_) + 1] - localOffsets_[level0],
-    localOffsets_[level0]
-    );
+    localStencil_.resize(li);
 }
 
 
@@ -271,9 +121,7 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const cellStencil& c)
 {
     const labelList& lst(c);
     os  << lst << " "
-        << c.owner_ << " "
-    << c.maxLevel_ << " "
-        << c.offsets_ << " "
+        << c.localOwner_ << " "
         << c.centre_ << " ";
     return os;
 }
@@ -283,9 +131,7 @@ Foam::Istream& Foam::operator>>(Istream& is, cellStencil& c)
 {
     labelList& lst(c);
     is >> lst;
-    is >> c.owner_;
-    is >> c.maxLevel_;
-    is >> c.offsets_;
+    is >> c.localOwner_;
     is >> c.centre_;
     return is;
 }

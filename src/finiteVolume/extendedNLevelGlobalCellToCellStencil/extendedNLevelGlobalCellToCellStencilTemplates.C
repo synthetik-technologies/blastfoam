@@ -28,20 +28,20 @@ License
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 template<class StencilType>
-template<class Type>
+template<class Type, template<class> class ListType>
 void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectData
 (
-    const Field<Type>& fld,
-    List<List<Type>>& stencilFld
+    const UList<Type>& fld,
+    List<ListType<Type>>& stencilFld
 ) const
 {
     if (!mapPtr_.valid())
     {
-        updateStencil();
+        update();
     }
 
     // 1. Construct cell data in compact addressing
-    List<Type> flatFld(mapPtr_->constructSize(), Zero);
+    List<Type> flatFld(map().constructSize(), Zero);
 
     // Insert my internal values
     forAll(fld, celli)
@@ -50,7 +50,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectData
     }
 
     // Do all swapping
-    mapPtr_->distribute(flatFld);
+    map().distribute(flatFld);
 
     // 2. Pull to stencil
     stencilFld.setSize(cellCells_.size());
@@ -74,42 +74,21 @@ template<class Type>
 void
 Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
 (
-    const Field<Type>& fld,
-    const label level,
+    const UList<Type>& fld,
     Map<Type>& mapFld
 ) const
 {
-    // Create the requests for new cell neighbours
-    labelHashSet neededCells(fld.size());
-    forAllConstIter
-    (
-        Map<cellStencil>,
-        cellCellMap(),
-        iter
-    )
-    {
-        if (!iter().isLocal())
-        {
-            neededCells.insert(iter().owner());
-        }
-        else
-        {
-            mapFld.insert(iter().owner(), fld[iter().localOwner()]);
-        }
-    }
     if (!Pstream::parRun())
     {
         return;
     }
 
-    List<label> requests(neededCells.size());
-    List<label> requestedCells(neededCells.size());
-    label ci = 0;
-    forAllConstIter(labelHashSet, neededCells, iter)
+    DynamicList<label> requests(nonlocalOwners_.size());
+    DynamicList<label> requestedCells(nonlocalOwners_.size());
+    forAllConstIter(Map<label>, nonlocalOwners_, iter)
     {
-        requests[ci] = gIndexPtr_->whichProcID(iter.key());
-        requestedCells[ci] = iter.key();
-        ci++;
+        requests.append(iter());
+        requestedCells.append(iter.key());
     }
 
     // Needed for reverseDistribute
@@ -140,11 +119,97 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
 
 
 template<class StencilType>
+template<class Type>
+void
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
+(
+    Map<Type>& mapFld
+) const
+{
+    DynamicList<label> requests(nonlocalOwners_.size());
+    DynamicList<label> requestedCells(nonlocalOwners_.size());
+    forAllConstIter(Map<label>, nonlocalOwners_, iter)
+    {
+        requests.append(iter());
+        requestedCells.append(iter.key());
+    }
+
+    // Needed for reverseDistribute
+    label constructSize = requests.size();
+
+    // make the map
+    autoPtr<mapDistribute> map(buildMap(requests));
+
+    // Send requests
+    labelList sendCells(requestedCells);
+    map().distribute(sendCells);
+
+    // Add neighbours to be sent using the ordering provided
+    List<Type> sendData(sendCells.size());
+    forAll(sendCells, i)
+    {
+        sendData[i] = mapFld[sendCells[i]];
+    }
+
+    // Send the data back
+    map().reverseDistribute(constructSize, sendData);
+
+    forAll(requestedCells, i)
+    {
+        mapFld.insert(requestedCells[i], sendData[i]);
+    }
+}
+
+
+template<class StencilType>
+template<class Type>
+void
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectNbrData
+(
+    Map<Type>& mapFld
+) const
+{
+    DynamicList<label> requests(nonlocalCells_.size());
+    DynamicList<label> requestedCells(nonlocalCells_.size());
+    forAllConstIter(Map<label>, nonlocalCells_, iter)
+    {
+        requests.append(iter());
+        requestedCells.append(iter.key());
+    }
+
+    // Needed for reverseDistribute
+    label constructSize = requests.size();
+
+    // make the map
+    autoPtr<mapDistribute> map(buildMap(requests));
+
+    // Send requests
+    labelList sendCells(requestedCells);
+    map().distribute(sendCells);
+
+    // Add neighbours to be sent using the ordering provided
+    List<Type> sendData(sendCells.size());
+    forAll(sendCells, i)
+    {
+        sendData[i] = mapFld[sendCells[i]];
+    }
+
+    // Send the data back
+    map().reverseDistribute(constructSize, sendData);
+
+    forAll(requestedCells, i)
+    {
+        mapFld.insert(requestedCells[i], sendData[i]);
+    }
+}
+
+
+template<class StencilType>
 template<class Type, class BinaryOp>
 void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
 (
     const Map<Type>& mapFld,
-    List<Type>& fld,
+    UList<Type>& fld,
     const BinaryOp& bop
 ) const
 {
@@ -156,7 +221,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
     // Create the requests for new cell neighbours
     DynamicList<label> requests(fld.size());
     DynamicList<label> sendCells(fld.size());
-    DynamicList<label> sendData(fld.size());
+    DynamicList<Type> sendData(fld.size());
     forAllConstIter
     (
         Map<cellStencil>,
@@ -190,7 +255,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
 
 
 template<class StencilType>
-template<class Type, class WeightType>
+template<class Type, class WeightType, template<class> class ListType>
 Foam::tmp
 <
     Foam::GeometricField
@@ -202,7 +267,7 @@ Foam::tmp
 > Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::weightedSum
 (
     const GeometricField<Type, fvPatchField, volMesh>& fld,
-    const List<List<WeightType>>& stencilWeights
+    const UList<ListType<WeightType>>& stencilWeights
 ) const
 {
     typedef typename outerProduct<WeightType, Type>::type WeightedType;

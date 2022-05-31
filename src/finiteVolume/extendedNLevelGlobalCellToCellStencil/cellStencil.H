@@ -55,23 +55,16 @@ class cellStencil
 :
     public labelList
 {
-    //- Owner cell (local)
-    label owner_;
+protected:
 
-    //- Current max level
-    label maxLevel_;
+    //- Owner cell (local)
+    label localOwner_;
 
     //- Location of cell centre
     vector centre_;
 
-    //- Start of each level
-    labelList offsets_;
-
     //- Local cells
-    mutable labelList localStencil_;
-
-    //- Local levels
-    mutable labelList localOffsets_;
+    labelList localStencil_;
 
 
 public:
@@ -79,28 +72,23 @@ public:
     // Constructors
 
         //- Construct null
-    cellStencil();
+        cellStencil();
 
         //- Copy constructor
-    cellStencil(const cellStencil& stencil);
+        cellStencil(const cellStencil& stencil);
 
         //- Construct given inputs
-    cellStencil
-    (
-        const label own,
-        const labelList& stencil,
-        const labelList& levels,
-        const vector& centre
-    );
+        cellStencil
+        (
+            const label own,
+            const labelList& stencil,
+            const vector& centre
+        );
 
-        //- Construct will inputs and level map
-    cellStencil
-    (
-        const label own,
-        const labelList& stencil,
-        const Map<label>& levelMap,
-        const vector& centre
-    );
+
+    //- Destructor
+
+        virtual ~cellStencil(){}
 
     // Member functions
 
@@ -109,7 +97,7 @@ public:
             //- Return if the owner is local
             bool isLocal() const
             {
-                return owner_ >= 0;
+                return localOwner_ >= 0;
             }
 
             //- Return the owner index (global)
@@ -121,19 +109,13 @@ public:
             //- Return the owner index (local)
             inline label localOwner() const
             {
-                return owner_;
+                return localOwner_;
             }
 
             //- Return the centre point
             inline const vector& centre() const
             {
                return centre_;
-            }
-
-            //- Return the offsets
-            inline const labelList& offsets() const
-            {
-                return offsets_;
             }
 
             //- Return the full local stencil
@@ -145,21 +127,10 @@ public:
                   : static_cast<const labelList&>(*this);
             }
 
-            //- Return the local stencil up to the given level
-            SubList<label> localStencil(const label level) const;
-
-            //- Return the local stencil between two levels
-            SubList<label> localStencil
-            (
-                const label level0,
-                const label level1
-            ) const;
-
-
     // Edit
 
-        //- Update the local stencil
-        void updateLocalStencil(const globalIndex&);
+        //- Update the local and nonlocal stencils
+        void update(const globalIndex&);
 
 
    // Operators
@@ -168,27 +139,17 @@ public:
     void operator=(const cellStencil& stencil)
     {
         labelList::operator=(stencil);
-        owner_ = stencil.owner_;
-        maxLevel_ = stencil.maxLevel_;
+        localOwner_ = stencil.localOwner_;
         centre_ = stencil.centre_;
-        offsets_ = stencil.offsets_;
         localStencil_ = stencil.localStencil_;
-        localOffsets_ = stencil.localOffsets_;
     }
 
-        //- Return the stencil up to the given level
-    SubList<label> operator()(const label level) const;
-
-        //- Return the stencil between two levels
-    SubList<label> operator()(const label level0, const label level1) const;
-
-        // Output
+    // Output
     friend Ostream& operator<<(Ostream& os, const cellStencil&);
 
-        // Input
+    // Input
     friend Istream& operator>>(Istream& is, cellStencil&);
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

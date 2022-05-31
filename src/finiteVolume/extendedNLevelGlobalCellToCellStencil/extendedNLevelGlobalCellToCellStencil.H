@@ -54,6 +54,9 @@ namespace Foam
         Class extendedNLevelGlobalCellToCellStencil Declaration
 \*---------------------------------------------------------------------------*/
 
+template<class Type>
+using PairMap = HashTable<Type, labelPair, Hash<labelPair>>;
+
 template<class StencilType>
 class extendedNLevelGlobalCellToCellStencil
 :
@@ -72,7 +75,10 @@ public:
         const polyMesh& mesh_;
 
         //- Number of time to extend neighbour list
-        mutable label nLevels_;
+        label nLevels_;
+
+        //- Minimum number of cell neighbours
+        labelList nNbrs_;
 
         //- Global indexing
         mutable autoPtr<globalIndex> gIndexPtr_;
@@ -86,14 +92,31 @@ public:
 
         mutable autoPtr<mapDistribute> mapPtr_;
 
+        //- Non local stencil cells
+        mutable Map<label> nonlocalCells_;
+
+        //- Non local stencil owners
+        mutable Map<label> nonlocalOwners_;
+
         //- Calculate the cells neighbours up to the kth level
         void addCellNeighbours
         (
             const Map<labelList>& cellCells,
             const label celli,
-            Map<label>& visited,
-            DynamicList<label>& neighbours,
-            const label level = 0
+            const label level,
+            const label maxLevel,
+            labelHashSet& neighbours,
+            labelHashSet& added,
+            DynamicList<label>& nbrs
+        ) const;
+
+        //- Calculate the cells neighbours up to the kth level
+        labelList addCellNeighbours
+        (
+            const Map<labelList>& cellCells,
+            const label celli,
+            labelHashSet& neighbours,
+            DynamicList<label>& nbrs
         ) const;
 
         void makeGlobal
@@ -102,13 +125,8 @@ public:
             labelList& indices
         ) const;
 
-        //- Combine operator for labelLists
-        class unionEqOp
-        {
-            public:
-            void operator()(labelList& x, const labelList& y) const;
-        };
-
+        void createMap() const;
+        const mapDistribute& map() const;
 
 public:
 
@@ -122,7 +140,14 @@ public:
         extendedNLevelGlobalCellToCellStencil
         (
             const polyMesh&,
-            const label level = 1
+            const label level
+        );
+
+        //- Construct from polyMesh and dictionary
+        extendedNLevelGlobalCellToCellStencil
+        (
+            const polyMesh&,
+            const labelList& nNbrs
         );
 
     //- Destructor
@@ -135,76 +160,108 @@ public:
         static autoPtr<mapDistribute> buildMap(const List<label>& toProc);
 
         //- Update after refining and balancing
-        virtual void updateStencil() const;
+        virtual void calcStencil() const;
+
+        //- Update local/nonlocal indices and send
+        void update() const;
 
         //- Set the size of the stencil to build
         //  The largest need stencil will be build, but a smaller stencil
         // can be accessed
-        virtual void setNLevel(const label n) const
+        virtual void setNLevel(const label n)
         {
             nLevels_ = max(nLevels_, n);
+            nNbrs_.clear();
         }
+
+        virtual void setNNbrs(const labelList& nNbrs)
+        {
+            nNbrs_ = nNbrs;
+            nLevels_ = -1;
+        }
+
 
         //- Callback for geometry motion
         virtual bool movePoints();
 
         virtual void updateMesh(const mapPolyMesh& mpm);
 
-        inline const globalIndex& globalNumbering() const
+        inline const globalIndex& gIndex() const
         {
             if (!gIndexPtr_.valid())
             {
-                updateStencil();
+                calcStencil();
             }
             return gIndexPtr_();
         }
 
         inline const Map<cellStencil>& cellCellMap() const
         {
-            if (!mapPtr_.valid())
+            if (!gIndexPtr_.valid())
             {
-                updateStencil();
+                calcStencil();
+            }
+            return stencilMap_;
+        }
+
+        inline Map<cellStencil>& cellCellMapRef()
+        {
+            mapPtr_.clear();
+            if (!gIndexPtr_.valid())
+            {
+                calcStencil();
             }
             return stencilMap_;
         }
 
         inline const cellStencil& cellCell(const label celli) const
         {
-            if (!mapPtr_.valid())
+            if (!gIndexPtr_.valid())
             {
-                updateStencil();
+                calcStencil();
             }
             return stencilMap_[gIndexPtr_->toGlobal(celli)];
         }
 
         //- Collect data across all processors
-        template<class Type>
+        template<class Type, template<class> class ListType>
         void collectData
         (
-            const Field<Type>& fld,
-            List<List<Type>>& stencilFld
+            const UList<Type>& fld,
+            List<ListType<Type> >& stencilFld
+        ) const;
+
+        //- Collect data across all processors
+        template<class Type, template<class> class ListType>
+        void collectData
+        (
+            const PairMap<Type>& mapFld,
+            List<ListType<Type> >& stencilFld
         ) const;
 
         //- Collect data from the master cell
         template<class Type>
-        void collectOwnerData
-        (
-            const Field<Type>& fld,
-            const label level,
-            Map<Type>& mapFld
-        ) const;
+        void collectOwnerData(const UList<Type>& fld, Map<Type>& mapFld) const;
+
+        //- Collect data from the master cell
+        template<class Type>
+        void collectOwnerData(Map<Type>& mapFld) const;
+
+        //- Collect data from the master cell
+        template<class Type>
+        void collectNbrData(Map<Type>& mapFld) const;
 
         //- Reduce data data to the master cell
         template<class Type, class BinaryOp>
         void reduce
         (
             const Map<Type>& mapFld,
-            List<Type>& fld,
+            UList<Type>& fld,
             const BinaryOp& bop
         ) const;
 
         //- Sum surface field contributions to create cell values
-        template<class Type, class WeightType>
+        template<class Type, class WeightType, template<class> class ListType>
         tmp
         <
             GeometricField
@@ -216,7 +273,7 @@ public:
         > weightedSum
         (
             const GeometricField<Type, fvPatchField, volMesh>& fld,
-            const List<List<WeightType>>& stencilWeights
+            const UList<ListType<WeightType>>& stencilWeights
         ) const;
 
         virtual bool writeData(Ostream&) const
