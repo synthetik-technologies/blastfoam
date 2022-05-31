@@ -8,7 +8,7 @@ EXE_INC= \
 EXE_LIBS = \
     -lfluidThermophysicalModels \
     -lsolidThermo \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastThermodynamics \
     -lsimpleBlastThermo
