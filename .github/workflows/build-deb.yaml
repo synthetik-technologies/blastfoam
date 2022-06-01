@@ -1,0 +1,18 @@
+name: Build blastFOAM Debian Package
+
+on:
+  push:
+    branches:
+      - "packaging/debian"
+
+jobs:
+  build:
+    runs-on: ['self-hosted', 'deb', 'openfoam']
+    name: Build openfoam
+    steps:
+      - name: Checkout blastFOAM
+        uses: actions/checkout@v3
+        with:
+          path: '${{ env.container-workspace }}/blastfoam'
+      - name: Build from makefile
+        run: debuild -rsudo --no-lintian -i -nc -us -uc -b --jobs=10
