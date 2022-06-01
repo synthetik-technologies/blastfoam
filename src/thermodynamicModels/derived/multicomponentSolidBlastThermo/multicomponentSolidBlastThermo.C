@@ -251,22 +251,6 @@ Foam::multicomponentSolidBlastThermo<Thermo>::calce() const
 
 
 template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::multicomponentSolidBlastThermo<Thermo>::kappa() const
-{
-    return this->volScalarFieldProperty
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        &Thermo::thermoType::kappa,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class Thermo>
 Foam::tmp<Foam::volVectorField>
 Foam::multicomponentSolidBlastThermo<Thermo>::Kappa() const
 {
@@ -351,6 +335,115 @@ Foam::multicomponentSolidBlastThermo<Thermo>::Kappa(const label patchi) const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::cellp(const label celli) const
+{
+    return this->mixture_[celli].pRhoT
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::p
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].pRhoT(rho, e, T);
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentSolidBlastThermo<Thermo>::p
+(
+    const label speciei,
+    const volScalarField& rho,
+    const volScalarField& e,
+    const volScalarField& T
+) const
+{
+    return this->volScalarFieldSpecieProperty
+    (
+        speciei,
+        "p",
+        dimPressure,
+        &Thermo::thermoType::pRhoT,
+        rho,
+        e,
+        T
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::dpdRho
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return
+      - this->speciesData_[speciei].dpdv(rho, e, T)
+       /sqr(max(rho, this->residualRho_.value()));
+}
+
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::dpdT
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].dpdT(rho, e, T);
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].mu(rho, e, T);
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentSolidBlastThermo<Thermo>::mu
 (
@@ -359,21 +452,31 @@ Foam::multicomponentSolidBlastThermo<Thermo>::mu
     const volScalarField& T
 ) const
 {
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "mu",
-                this->rho_.mesh().time().timeName(),
-                this->rho_.mesh()
-            ),
-            this->rho_.mesh(),
-            dimensionedScalar("0", dimensionSet(1, -1, -1, 0, 0), 0.0)
-        )
-    );
+    NotImplemented;
+    return p;
 }
 
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentSolidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const volScalarField& rho,
+    const volScalarField& e,
+    const volScalarField& T
+) const
+{
+    return this->volScalarFieldSpecieProperty
+    (
+        speciei,
+        "mu",
+        dimensionSet(1, -1, -1, 0, 0),
+        &Thermo::thermoType::mu,
+        rho,
+        e,
+        T
+    );
+}
 
 // ************************************************************************* //

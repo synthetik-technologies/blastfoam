@@ -73,7 +73,7 @@ public:
     // Constructor
     multicomponentFluidBlastThermo
     (
-        const HashPtrTable<Thermo, word, string::hash>& thermoData,
+        const HashPtrTable<typename Thermo::thermoType, word, string::hash>& thermoData,
         const fvMesh& mesh,
         const dictionary& dict,
         const word& phaseName,
@@ -137,6 +137,8 @@ public:
 
     //- Thermodynamic and transport functions
 
+        using Thermo::updateRho;
+
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
 
@@ -179,13 +181,88 @@ public:
         virtual tmp<volScalarField> calcSpeedOfSound() const;
 
 
-    // Access to transport state variables
+        // Specie thermo properties
+
+            using Thermo::baseThermo::p;
+
+            //- Return the pressure for cell [Pa]
+            virtual scalar cellp(const label celli) const
+            {
+                return this->p_[celli];
+            }
+
+            //- Pressure [kg/m/s^2]
+            virtual scalar p
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Density [kg/m^3]
+            virtual tmp<volScalarField> p
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
+                const volScalarField& T
+            ) const;
+
+            //- Return derivative of pressure w.r.t. density
+            virtual scalar dpdRho
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Return derivative of pressure w.r.t. Temperature
+            virtual scalar dpdT
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+
+        // Specie transport properties
+
+            using Thermo::baseThermo::mu;
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual scalar mu
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual scalar mu
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
 
             //- Dynamic viscosity [kg/m/s]
             virtual tmp<volScalarField> mu
             (
                 const label speciei,
                 const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual tmp<volScalarField> mu
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
                 const volScalarField& T
             ) const;
 };

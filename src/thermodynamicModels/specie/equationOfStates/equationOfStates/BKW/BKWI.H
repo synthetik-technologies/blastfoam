@@ -119,6 +119,18 @@ Foam::scalar Foam::BKW<Specie>::pRhoT
 
 
 template<class Specie>
+Foam::scalar Foam::BKW<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BKW<Specie>::Gamma
 (
     const scalar rho,
@@ -274,10 +286,10 @@ template<class Specie>
 Foam::scalar Foam::BKW<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
+    NotImplemented;
     return 0.0;
 }
 

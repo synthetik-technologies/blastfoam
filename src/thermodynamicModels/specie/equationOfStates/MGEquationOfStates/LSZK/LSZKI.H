@@ -127,6 +127,18 @@ Foam::scalar Foam::LSZK<Specie>::p
 
 
 template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::Gamma
 (
     const scalar rho,
@@ -256,11 +268,10 @@ template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    // check
+    NotImplemented;
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
 

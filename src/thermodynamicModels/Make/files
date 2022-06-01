@@ -1,5 +1,7 @@
 specie/specie/specieBlast.C
 specie/specie/rspecieBlast.C
+reaction/specieCoeffs/specieCoeffs.C
+reaction/reaction/reaction.C
 
 basic/phaseBlastThermo/phaseBlastThermo.C
 basic/phaseFluidBlastThermo/phaseFluidBlastThermo.C
@@ -8,6 +10,7 @@ basic/blastThermo/blastThermo.C
 basic/fluidBlastThermo/fluidBlastThermo.C
 basic/solidBlastThermo/solidBlastThermo.C
 
+basic/basicSpecieBlastMixture/basicSpecieBlastMixture.C
 basic/multicomponentBlastThermo/multicomponentBlastThermo.C
 
 derived/twoPhaseFluidBlastThermo/twoPhaseFluidBlastThermo.C
@@ -23,6 +26,18 @@ derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
 derived/multicomponentFluidBlastThermo/multicomponentPhaseFluidBlastThermos.C
 derived/multicomponentSolidBlastThermo/multicomponentSolidBlastThermos.C
+derived/reactingFluidBlastThermo/reactingFluidBlastThermos.C
+derived/reactingSolidBlastThermo/reactingSolidBlastThermos.C
+
+chemistryModel/chemistryModel/basicBlastChemistryModel/basicBlastChemistryModel.C
+chemistryModel/chemistryModel/basicBlastChemistryModel/basicBlastChemistryModelNew.C
+
+chemistryModel/chemistrySolver/chemistrySolver/blastChemistrySolvers.C
+chemistryModel/chemistrySolver/none/noBlastChemistrySolvers.C
+chemistryModel/chemistrySolver/EulerImplicit/EulerImplicitBlastChemistrySolvers.C
+chemistryModel/chemistrySolver/ode/odeBlastChemistrySolvers.C
+
+chemistryModel/reactions/makeReactions.C
 
 activationModels/activationModel/activationModel.C
 activationModels/activationModel/newActivationModel.C

@@ -110,6 +110,18 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::p
 
 
 template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdv
 (
     const scalar rho,
@@ -303,6 +315,18 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::CpByCv
 ) const
 {
     return Cp(rho, e, T)/Cv(rho, e, T);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::S
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

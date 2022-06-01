@@ -83,6 +83,20 @@ protected:
                 return rho_;
             }
 
+            //- Thermal diffusivity for temperature of mixture [W/m/K]
+            virtual tmp<volScalarField> kappa() const
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Dynamic viscosity of mixture [kg/m/s]
+            virtual tmp<volScalarField> mu() const
+            {
+                NotImplemented;
+                return rho_;
+            }
+
 public:
 
     //- Runtime type information

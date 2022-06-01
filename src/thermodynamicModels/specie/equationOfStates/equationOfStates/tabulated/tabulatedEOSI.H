@@ -80,6 +80,18 @@ Foam::scalar Foam::tabulatedEOS<Specie>::pRhoT
 
 
 template<class Specie>
+Foam::scalar Foam::tabulatedEOS<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::tabulatedEOS<Specie>::Gamma
 (
     const scalar rho,
@@ -214,7 +226,6 @@ template<class Specie>
 Foam::scalar Foam::tabulatedEOS<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {

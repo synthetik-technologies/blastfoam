@@ -152,6 +152,8 @@ public:
 
     //- Thermodynamic and transport functions
 
+        using Thermo::updateRho;
+
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
 

@@ -148,6 +148,9 @@ public:
             const scalar T
         ) const;
 
+        //- Return density given temperature and pressure
+        inline scalar rho(const scalar p, const scalar T) const;
+
         //- Gamma function
         inline scalar Gamma
         (

@@ -208,6 +208,9 @@ public:
             const bool limit = true
         ) const;
 
+        //- Return density given temperature and pressure
+        inline scalar rho(const scalar p, const scalar T) const;
+
         //- Return the MieGruniesen coefficient
         inline scalar Gamma
         (
@@ -292,11 +295,10 @@ public:
             const scalar CpCv
         ) const;
 
-        //- Heat capacity at constant volume of mixture [J/kg/K]
+        //- Entropy of mixture [J/kg/K]
         inline scalar S
         (
             const scalar p,
-            const scalar rho,
             const scalar T
         ) const;
 

@@ -152,8 +152,6 @@ template<class EquationOfState>
 inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::S
 (
     const scalar p,
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
@@ -163,21 +161,8 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::S
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dGdT
+inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Gstd
 (
-    const scalar p,
-    const scalar T
-) const
-{
-    NotImplemented;
-    return 0;
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCpdT
-(
-    const scalar p,
     const scalar T
 ) const
 {
@@ -198,16 +183,5 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCpdT
     return 0.0;
 }
 
-
-template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::dCvdT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return eTable_.d2FdY2(rho, T);
-}
 
 // ************************************************************************* //

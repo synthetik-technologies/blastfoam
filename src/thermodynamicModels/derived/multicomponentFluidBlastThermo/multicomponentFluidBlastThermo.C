@@ -286,7 +286,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::multicomponentFluidBlastThermo
 template<class Thermo>
 Foam::multicomponentFluidBlastThermo<Thermo>::multicomponentFluidBlastThermo
 (
-    const HashPtrTable<Thermo, word, string::hash>& thermoData,
+    const HashPtrTable<typename Thermo::thermoType, word, string::hash>& thermoData,
     const fvMesh& mesh,
     const dictionary& dict,
     const word& phaseName,
@@ -578,11 +578,122 @@ Foam::multicomponentFluidBlastThermo<Thermo>::calcSpeedOfSound() const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::p
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].pRhoT(rho, e, T);
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentFluidBlastThermo<Thermo>::p
+(
+    const label speciei,
+    const volScalarField& rho,
+    const volScalarField& e,
+    const volScalarField& T
+) const
+{
+    return this->volScalarFieldSpecieProperty
+    (
+        speciei,
+        "p",
+        dimPressure,
+        &Thermo::thermoType::pRhoT,
+        rho,
+        e,
+        T
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::dpdRho
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return
+      - this->speciesData_[speciei].dpdv(rho, e, T)
+       /sqr(max(rho, this->residualRho_.value()));
+}
+
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::dpdT
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].dpdT(rho, e, T);
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].mu(rho, e, T);
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidBlastThermo<Thermo>::mu
 (
     const label speciei,
     const volScalarField& p,
+    const volScalarField& T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentFluidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const volScalarField& rho,
+    const volScalarField& e,
     const volScalarField& T
 ) const
 {
@@ -592,11 +703,10 @@ Foam::multicomponentFluidBlastThermo<Thermo>::mu
         "mu",
         dimensionSet(1, -1, -1, 0, 0),
         &Thermo::thermoType::mu,
-        this->rho_,
-        this->e_,
+        rho,
+        e,
         T
     );
 }
-
 
 // ************************************************************************* //

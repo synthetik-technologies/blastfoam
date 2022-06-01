@@ -40,13 +40,14 @@ Foam::multicomponentBlastThermo::multicomponentBlastThermo
     const word& masterName
 )
 :
-    basicSpecieMixture
+    basicSpecieBlastMixture
     (
         dict,
         dict.lookup<wordList>("species"),
         mesh,
         phaseName
     ),
+    mesh_(mesh),
     masterName_(masterName),
     massTransferRates_(this->species_.size()),
     implicitSources_(this->species_.size())
@@ -82,13 +83,14 @@ Foam::multicomponentBlastThermo::multicomponentBlastThermo
     const word& masterName
 )
 :
-    basicSpecieMixture
+    basicSpecieBlastMixture
     (
         dict,
         species,
         mesh,
         phaseName
     ),
+    mesh_(mesh),
     masterName_(masterName),
     massTransferRates_(this->species_.size()),
     implicitSources_(this->species_.size())
@@ -224,73 +226,14 @@ void Foam::multicomponentBlastThermo::update()
 void Foam::multicomponentBlastThermo::solve()
 {
     integratorPtr_->solve();
-
-    if (species_.size())
-    {
-        tmp<volScalarField> tYt
-        (
-            volScalarField::New
-            (
-                IOobject::groupName("Yt", phaseName_),
-                Y_[0]
-            )
-        );
-        volScalarField& Yt = tYt.ref();
-
-        for (label i=1; i<Y_.size(); i++)
-        {
-            Yt += Y_[i];
-        }
-
-        if (min(Yt.primitiveField()) < small)
-        {
-            FatalErrorInFunction
-                << "Sum of mass fractions is zero for species " << species()
-                << exit(FatalError);
-        }
-
-        forAll(Y_, i)
-        {
-            Y_[i] /= Yt;
-            Y_[i].correctBoundaryConditions();
-        }
-    }
+    this->normalise();
 }
 
 
 void Foam::multicomponentBlastThermo::postUpdate()
 {
     integratorPtr_->postUpdate();
-    if (species_.size())
-    {
-        tmp<volScalarField> tYt
-        (
-            volScalarField::New
-            (
-                IOobject::groupName("Yt", phaseName_),
-                Y_[0]
-            )
-        );
-        volScalarField& Yt = tYt.ref();
-
-        for (label i=1; i<Y_.size(); i++)
-        {
-            Yt += Y_[i];
-        }
-
-        if (min(Yt.primitiveField()) < small)
-        {
-            FatalErrorInFunction
-                << "Sum of mass fractions is zero for species " << species()
-                << exit(FatalError);
-        }
-
-        forAll(Y_, i)
-        {
-            Y_[i] /= Yt;
-            Y_[i].correctBoundaryConditions();
-        }
-    }
+    this->normalise();
 }
 
 
@@ -303,7 +246,19 @@ void Foam::multicomponentBlastThermo::addDelta
     if (massTransferRates_.found(name))
     {
         massTransferRates_[name] += delta;
-        return;
+    }
+}
+
+
+void Foam::multicomponentBlastThermo::addDelta
+(
+    const word& name,
+    const volScalarField::Internal& delta
+)
+{
+    if (massTransferRates_.found(name))
+    {
+        massTransferRates_[name].ref() += delta;
     }
 }
 
@@ -346,11 +301,6 @@ void Foam::multicomponentBlastThermo::integrator::solve()
     {
         if (active_[i])
         {
-            volScalarField YOld(Y_[i]);
-
-            // Not conservative, but alphaRhoYi is
-            this->storeAndBlendOld(YOld, false);
-
             volScalarField deltaAlphaRhoY
             (
                 fvc::div
@@ -359,13 +309,16 @@ void Foam::multicomponentBlastThermo::integrator::solve()
                     Y_[i],
                     "div(" + alphaRhoPhi_.name() + ",Yi)"
                 )
-              + massTransferRates_[i]
+              - massTransferRates_[i]
             );
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
+            // Not conservative, but alphaRhoYi is
+            this->storeAndBlendOld(Y_[i], false);
+
             Y_[i] =
                 (
-                    alphaRho_.prevIter()*YOld - dT*deltaAlphaRhoY
+                    alphaRho_.prevIter()*Y_[i] - dT*deltaAlphaRhoY
                 )/max(residualAlphaRho, alphaRho_);
             Y_[i].max(0.0);
             Y_[i].correctBoundaryConditions();

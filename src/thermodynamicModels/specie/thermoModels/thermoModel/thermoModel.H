@@ -219,7 +219,6 @@ public:
             inline scalar G
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -227,7 +226,6 @@ public:
             inline scalar A
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -239,7 +237,6 @@ public:
             inline scalar K
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -249,7 +246,6 @@ public:
             inline scalar Kp
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -260,7 +256,6 @@ public:
             inline scalar Kc
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -270,7 +265,6 @@ public:
             inline scalar Kx
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -280,7 +274,6 @@ public:
             inline scalar Kn
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T,
                 const scalar n
             ) const;
@@ -318,8 +311,6 @@ public:
             inline scalar s
             (
                 const scalar p,
-                const scalar rho,
-                const scalar e,
                 const scalar T
             ) const;
 
@@ -359,7 +350,6 @@ public:
             inline scalar g
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -367,7 +357,6 @@ public:
             inline scalar a
             (
                 const scalar p,
-                const scalar rho,
                 const scalar T
             ) const;
 
@@ -378,7 +367,7 @@ public:
             inline scalar dKcdTbyKc(const scalar p, const scalar T) const;
 
             //- Derivative of cp w.r.t. temperature
-            inline scalar dcpdT(const scalar p, const scalar T) const;
+            inline scalar dcpdT(const scalar rho, const scalar e, const scalar T) const;
 
 
     // Energy->temperature  inversion functions
