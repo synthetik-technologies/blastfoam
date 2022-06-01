@@ -1,0 +1,6 @@
+blastfoam (5.0-1) UNRELEASED; urgency=low
+
+  * Initial release. Closes: #nnnn
+    <nnnn is the bug number of your ITP>
+
+ -- Ubuntu <>  Mon, 30 May 2022 19:17:29 +0000
