@@ -12,7 +12,5 @@ jobs:
     steps:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
-        with:
-          path: '${{ env.container-workspace }}/blastfoam'
       - name: Build from makefile
         run: debuild -rsudo --no-lintian -i -nc -us -uc -b --jobs=10
