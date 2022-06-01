@@ -23,4 +23,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: blastfoam-untested.deb
-          path: ${{ github.workspace }}/blastfoam-*.deb
+          path: ${{ github.workspace }}/blastfoam_*.deb
