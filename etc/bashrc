@@ -51,7 +51,8 @@ export BLAST_APPBIN="$BLAST_DIR/bin"
 #export BLAST_LIBBIN="$FOAM_SITE_LIBBIN"
 #export BLAST_APPBIN="$FOAM_SITE_APPBIN"
 
-export FOAM_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
+export BLAST_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
+# export FOAM_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
 PATH=$PATH:$BLAST_APPBIN:$BLAST_LIBBIN
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BLAST_LIBBIN
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BLAST_LIBBIN:$BLAST_APPBIN
 #------------------------------------------------------------------------------
