@@ -8,17 +8,19 @@ on:
 jobs:
   build:
     runs-on: ['self-hosted', 'deb', 'openfoam']
-    name: Build openfoam
+    name: Build BlastFoam
     defaults:
       run:
-        working-directory: ./blastfoam-src
+        working-directory: blastfoam-src
     steps:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
+        with:
+          path: 'blastfoam-src'
       - name: Build from makefile
         run: debuild -rsudo --no-lintian -i -nc -us -uc -b --jobs=10
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
         with:
           name: blastfoam-untested.deb
-          path: ${{ github.workspace }}/blastfoam-*.deb
+          path: ${{ github.workspace }}/blastfoam_*.deb
