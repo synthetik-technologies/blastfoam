@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
+        with:
+          path: 'blastfoam-src'
       - name: Build from makefile
         run: debuild -rsudo --no-lintian -i -nc -us -uc -b --jobs=10
       - name: Output Debian Package
