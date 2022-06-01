@@ -1,0 +1,24 @@
+name: Build blastFOAM Debian Package
+
+on:
+  push:
+    branches:
+      - "packaging/debian"
+
+jobs:
+  build:
+    runs-on: ['self-hosted', 'deb', 'openfoam']
+    name: Build openfoam
+    defaults:
+      run:
+        working-directory: ./blastfoam-src
+    steps:
+      - name: Checkout blastFOAM
+        uses: actions/checkout@v3
+      - name: Build from makefile
+        run: debuild -rsudo --no-lintian -i -nc -us -uc -b --jobs=10
+      - name: Output Debian Package
+        uses: actions/upload-artifact@v3
+        with:
+          name: blastfoam-untested.deb
+          path: ${{ github.workspace }}/blastfoam-*.deb
