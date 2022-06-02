@@ -237,16 +237,14 @@ public:
             virtual scalar S
             (
                 const scalar p,
-                const scalar rho,
-                const scalar e,
                 const scalar T
             ) const = 0;
 
             //- Derivative of Gibbs free energy w.r.t. temperature
-            virtual scalar dGdT(const scalar p, const scalar T) const = 0;
+            virtual scalar Gstd(const scalar T) const = 0;
 
             //- Temperature derivative of heat capacity at constant pressure
-            virtual scalar dCpdT(const scalar p, const scalar T) const = 0;
+            virtual scalar dCpdT(const scalar rho, const scalar e, const scalar T) const = 0;
 
 
         //- Master thermo class
@@ -562,24 +560,22 @@ public:
             virtual scalar S
             (
                 const scalar p,
-                const scalar rho,
-                const scalar e,
                 const scalar T
             ) const
             {
-                return ThermoType::S(p, rho, e, T);
+                return ThermoType::S(p, T);
             }
 
             //- Derivative of Gibbs free energy w.r.t. temperature
-            virtual scalar dGdT(const scalar p, const scalar T) const
+            virtual scalar Gstd(const scalar T) const
             {
-                return ThermoType::dGdT(p, T);
+                return ThermoType::Gstd(T);
             }
 
             //- Temperature derivative of heat capacity at constant pressure
-            virtual scalar dCpdT(const scalar p, const scalar T) const
+            virtual scalar dCpdT(const scalar rho, const scalar e, const scalar T) const
             {
-                return ThermoType::dCpdT(p, T);
+                return ThermoType::dCpdT(rho, e, T);
             }
 
 
