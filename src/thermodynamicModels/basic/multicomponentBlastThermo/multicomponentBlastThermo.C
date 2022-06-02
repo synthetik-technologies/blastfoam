@@ -226,14 +226,72 @@ void Foam::multicomponentBlastThermo::update()
 void Foam::multicomponentBlastThermo::solve()
 {
     integratorPtr_->solve();
-    this->normalise();
+    if (species_.size())
+    {
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", phaseName_),
+                Y_[0]
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+
+        for (label i=1; i<Y_.size(); i++)
+        {
+            Yt += Y_[i];
+        }
+
+        if (min(Yt.primitiveField()) < small)
+        {
+            FatalErrorInFunction
+                << "Sum of mass fractions is zero for species " << species()
+                << exit(FatalError);
+        }
+
+        forAll(Y_, i)
+        {
+            Y_[i] /= Yt;
+            Y_[i].correctBoundaryConditions();
+        }
+    }
 }
 
 
 void Foam::multicomponentBlastThermo::postUpdate()
 {
     integratorPtr_->postUpdate();
-    this->normalise();
+    if (species_.size())
+    {
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", phaseName_),
+                Y_[0]
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+
+        for (label i=1; i<Y_.size(); i++)
+        {
+            Yt += Y_[i];
+        }
+
+        if (min(Yt.primitiveField()) < small)
+        {
+            FatalErrorInFunction
+                << "Sum of mass fractions is zero for species " << species()
+                << exit(FatalError);
+        }
+
+        forAll(Y_, i)
+        {
+            Y_[i] /= Yt;
+            Y_[i].correctBoundaryConditions();
+        }
+    }
 }
 
 
@@ -301,6 +359,11 @@ void Foam::multicomponentBlastThermo::integrator::solve()
     {
         if (active_[i])
         {
+            volScalarField YOld(Y_[i]);
+
+            // Not conservative, but alphaRhoYi is
+            this->storeAndBlendOld(YOld, false);
+
             volScalarField deltaAlphaRhoY
             (
                 fvc::div
@@ -313,12 +376,9 @@ void Foam::multicomponentBlastThermo::integrator::solve()
             );
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
-            // Not conservative, but alphaRhoYi is
-            this->storeAndBlendOld(Y_[i], false);
-
             Y_[i] =
                 (
-                    alphaRho_.prevIter()*Y_[i] - dT*deltaAlphaRhoY
+                    alphaRho_.prevIter()*YOld - dT*deltaAlphaRhoY
                 )/max(residualAlphaRho, alphaRho_);
             Y_[i].max(0.0);
             Y_[i].correctBoundaryConditions();
