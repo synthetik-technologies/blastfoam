@@ -18,7 +18,7 @@ jobs:
         with:
           path: 'blastfoam-src'
       - name: Build Tar for Cache
-        run: tar -czf cache-check.tar.gz Makefile applications debian etc src
+        run: tar --mtime='1970-01-01' -czf cache-check.tar.gz Makefile applications debian etc src
       - name: Check Cache
         id: check-cache
         uses: actions/cache@v3
@@ -34,6 +34,7 @@ jobs:
         with:
           name: blastfoam-untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
+          retention-days: 7
 
   install-and-validate:
     strategy:
@@ -65,5 +66,6 @@ jobs:
       - name: Upload Validation Results
         uses: actions/upload-artifact@v3
         with:
-          name: validation-results
+          name: validation-results-${{ matrix.validationScenario}}
           path: blastfoam-src/validation/${{ matrix.validationScenario }}
+          retention-days: 30
