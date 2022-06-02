@@ -1,5 +1,5 @@
-DESTDIR = /opt
-prefix = /blastfoam
+# DESTDIR = /opt
+prefix = /opt/blastfoam
 
 build: SHELL:=bash
 build:
