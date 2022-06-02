@@ -25,6 +25,7 @@ jobs:
         with:
           path: blastfoam_*.deb
           key: ${{ hashFiles('blastfoam-src/cache-check.tar.gz') }}
+      - run: echo ${{ steps.check-cache.outputs.cache-hit }}
       - name: Build from makefile
         if: ${{ steps.check-cache.outputs.cache-hit == 'false' }}
         run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
