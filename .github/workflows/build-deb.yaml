@@ -24,3 +24,16 @@ jobs:
         with:
           name: blastfoam-untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
+
+  test:
+    runs-on: ['self-hosted', 'deb', 'openfoam']
+    name: Run Validation Tests
+    needs:
+      - build
+    steps:
+      - name: Download Debian Package
+        uses: actions/download-artifact@v3
+        with:
+          name: blastfoam-untested.deb
+          path: ${{ github.workspace }}
+      - run: ls -la
