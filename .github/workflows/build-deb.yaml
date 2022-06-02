@@ -38,7 +38,7 @@ jobs:
   install-and-validate:
     strategy:
       matrix:
-        validationScenario: ['blastFoam/SodShockTube', 'blastFoam/solidImpact']
+        validationScenario: ['blastFoam/Sod_shockTube', 'blastFoam/solidImpact']
     runs-on: ['self-hosted', 'deb', 'openfoam']
     name: Validate BlastFoam
     needs:
