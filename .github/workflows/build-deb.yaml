@@ -34,7 +34,7 @@ jobs:
           name: blastfoam-untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
 
-  install:
+  install-and-validate:
     runs-on: ['self-hosted', 'deb', 'openfoam']
     name: Install BlastFoam
     needs:
@@ -48,3 +48,15 @@ jobs:
       - name: Install Debian Package
         run: sudo dpkg -i ${{ github.workspace }}/blastfoam_*.deb
       - run: ls -la /opt
+      - name: Checkout blastFOAM
+        uses: actions/checkout@v3
+      - shell: bash -l {0}
+        run: |
+          source /opt/openfoam9/etc/bashrc
+          source /opt/blastfoam/etc/bashrc
+          ./validation/blastFoam/shockTube_twoFluids/Allrun
+      - name: Upload Validation Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-results
+          path: validation/blastFoam/shockTube_twoFluids
