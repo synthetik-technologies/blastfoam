@@ -17,14 +17,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: 'blastfoam-src'
-      - name: Build Tar for Cache
-        run: tar --mtime='1970-01-01' -czf cache-check.tar.gz Makefile applications debian etc src
+      # - name: Build Tar for Cache
+      #   run: tar --mtime='1970-01-01' -czf cache-check.tar.gz Makefile applications debian etc src
       - name: Check Cache
         id: check-cache
         uses: actions/cache@v3
         with:
           path: blastfoam_*.deb
-          key: ${{ hashFiles('blastfoam-src/cache-check.tar.gz') }}
+          key: ${{ hashFiles('blastfoam-src/Makefile', 'blastfoam-src/applications/**', 'blastfoam-src/debian/**', 'blastfoam-src/etc/**', 'blastfoam-src/src/**') }}
       - run: echo ${{ steps.check-cache.outputs.cache-hit }}
       - name: Build from makefile
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
