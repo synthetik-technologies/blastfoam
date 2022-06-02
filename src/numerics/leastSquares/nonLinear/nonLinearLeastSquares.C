@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "nonLinearLeastSquares.H"
-#include "CoefficientsFwd.H"
+#include "coefficientsFwd.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

@@ -23,32 +23,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef CoefficientsFwd_H
-#define CoefficientsFwd_H
-
-#include "Coefficients.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-typedef Coefficients<scalar> scalarCoefficients;
-typedef Coefficients<vector> vectorCoefficients;
-typedef Coefficients<symmTensor> symmTensorCoefficients;
-typedef Coefficients<sphericalTensor>
-    sphericalTensorCoefficients;
-typedef Coefficients<tensor> tensorCoefficients;
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-}
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
+#include "coefficientEquationsFwd.H"
 
 // ************************************************************************* //

@@ -36,7 +36,7 @@ SourceFiles
 #define nonLinearLeastSquares_H
 
 #include "UnivariateEquationsFwd.H"
-#include "CoefficientEquationsFwd.H"
+#include "coefficientEquationsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

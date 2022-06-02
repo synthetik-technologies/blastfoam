@@ -9,8 +9,8 @@ lookupTables/lookupTable3D/lookupTables3D.C
 
 equations/adaptiveTypes.C
 equations/equationBase/equationBase.C
-equations/coefficients/Coefficients.C
-equations/coefficients/CoefficientEquations.C
+equations/coefficients/coefficients.C
+equations/coefficients/coefficientEquations.C
 equations/equation/Equations.C
 equations/univariate/UnivariateEquations.C
 equations/multivariate/MultivariateEquations.C

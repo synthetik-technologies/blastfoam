@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "linearLeastSquares.H"
-#include "CoefficientsFwd.H"
+#include "coefficientsFwd.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
