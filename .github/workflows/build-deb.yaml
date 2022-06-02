@@ -17,7 +17,17 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: 'blastfoam-src'
+      - name: Build Tar for Cache
+        run: tar -czf cache-check.tar.gz Makefile applications debian etc src
+      - name: Check Cache
+        id: check-cache
+        uses: actions/cache@v3
+        with:
+          name: Debian Package Cache
+          path: blastfoam_*.deb
+          key: ${{ md5sum blastfoam-src/cache-check.tar.gz }}
       - name: Build from makefile
+        if: ${{ steps.check.cache.outputs.cache-hit == 'false' }}
         run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
