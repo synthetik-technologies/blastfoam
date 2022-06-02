@@ -25,9 +25,9 @@ jobs:
           name: blastfoam-untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
 
-  test:
+  install:
     runs-on: ['self-hosted', 'deb', 'openfoam']
-    name: Run Validation Tests
+    name: Install BlastFoam
     needs:
       - build
     steps:
@@ -36,4 +36,6 @@ jobs:
         with:
           name: blastfoam-untested.deb
           path: ${{ github.workspace }}
-      - run: ls -la
+      - name: Install Debian Package
+        run: sudo dpkg -i ${{ github.workspace }}/blastfoam_*.deb
+      - run: ls -la /opt
