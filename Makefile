@@ -18,8 +18,8 @@ install:
 		bin/*
 	install --target-directory $(DESTDIR)$(prefix)/lib -D \
 		lib/*
-	install -D etc/bashrc /etc$(DESTDIR)$(prefix)/bashrc
+	install --target-directory $(DESTDIR)$(prefix)/etc -D \
+		etc/* #* temporary, find better placement later
 
 uninstall:
 	rm -rf $(DESTDIR)$(prefix)
-	rm -rf /etc$(DESTDIR)$(prefix)
