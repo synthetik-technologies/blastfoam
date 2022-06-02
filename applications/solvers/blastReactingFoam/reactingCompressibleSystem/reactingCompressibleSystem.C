@@ -227,13 +227,6 @@ void Foam::reactingCompressibleSystem::postUpdate()
       + models().source(rho_, e_)
     );
 
-    // Solve energy equation
-    constraints().constrain(eEqn);
-    eEqn.solve();
-    constraints().constrain(e_);
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-
-
     if (reaction_.valid())
     {
         Info<< "Solving reactions" << endl;
@@ -270,6 +263,12 @@ void Foam::reactingCompressibleSystem::postUpdate()
         }
         composition.normalise();
     }
+
+    // Solve energy equation
+    constraints().constrain(eEqn);
+    eEqn.solve();
+    constraints().constrain(e_);
+    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
     // Update thermo
     thermo_->correct();
