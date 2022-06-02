@@ -66,6 +66,8 @@ jobs:
       - name: Upload Validation Results
         uses: actions/upload-artifact@v3
         with:
-          name: validation-results-${{ matrix.validationScenario}}
-          path: blastfoam-src/validation/${{ matrix.validationScenario }}
+          name: validation-results
+          path: blastfoam-src/validation
           retention-days: 30
+      - name: Uninstall Debian Package
+        run: sudo dpkg -r blastfoam
