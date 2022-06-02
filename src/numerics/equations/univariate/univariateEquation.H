@@ -53,6 +53,8 @@ class univariateEquation
 {
 public:
 
+    typedef Type EqnType;
+
     // Constructors
 
         //- Null constructor

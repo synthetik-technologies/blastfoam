@@ -54,7 +54,6 @@ public:
     // Public typedef
     typedef multivariateEquation<Type> BaseEquation;
 
-
 protected:
     // Protected data
 
@@ -90,21 +89,21 @@ public:
 
     // Constructors
 
-        //- Construct with number of equations and limits
+        //- Construct with number of equations and number of variabels
         MultivariateEquation
         (
             const label nEqns,
-            const scalarList& lowerLimits,
-            const scalarList& upperLimits
+            const label nVar,
+            const List<string>& eqnString = List<string>()
         );
 
         //- Construct with number of equations, limits, and name
         MultivariateEquation
         (
-            const List<string>& eqnString,
             const label nEqns,
             const scalarList& lowerLimits,
-            const scalarList& upperLimits
+            const scalarList& upperLimits,
+            const List<string>& eqnString = List<string>()
         );
 
         //- Construct from dictionary

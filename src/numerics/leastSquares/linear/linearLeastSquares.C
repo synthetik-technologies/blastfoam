@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "linearLeastSquares.H"
+#include "CoefficientsFwd.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -42,15 +43,15 @@ Foam::linearLeastSquares::linearLeastSquares()
 
 void Foam::linearLeastSquares::findCoeffs
 (
-    const scalarUnivariateEquation& eqns,
+    scalarUnivariateEquation& eqns,
     const List<scalarList>& x,
     const scalarList& y,
     const label li
 ) const
 {
-    const coefficients<scalar, scalar>& coeffs
+    scalarCoefficients& coeffs
     (
-        dynamicCast<const coefficients<scalar, scalar>>(eqns)
+        dynamicCast<scalarCoefficients>(eqns)
     );
 
     RectangularMatrix<scalar> M(x.size(), eqns.nVar()+1);
@@ -69,16 +70,16 @@ void Foam::linearLeastSquares::findCoeffs
 
 void Foam::linearLeastSquares::findCoeffs
 (
-    const scalarUnivariateEquation& eqns,
+    scalarUnivariateEquation& eqns,
     const List<scalarList>& x,
     const scalarList& y,
     const scalarList& w,
     const label li
 ) const
 {
-    const coefficients<scalar, scalar>& coeffs
+    scalarCoefficients& coeffs
     (
-        dynamicCast<const coefficients<scalar, scalar>>(eqns)
+        dynamicCast<scalarCoefficients>(eqns)
     );
 
     RectangularMatrix<scalar> M(x.size(), eqns.nVar()+1);

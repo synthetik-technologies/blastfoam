@@ -35,8 +35,8 @@ SourceFiles
 #ifndef nonLinearLeastSquares_H
 #define nonLinearLeastSquares_H
 
-#include "coefficients.H"
 #include "UnivariateEquationsFwd.H"
+#include "CoefficientEquationsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -79,19 +79,21 @@ public:
 
     // Member Functions
 
-        //- Find the root of the equation between xHigh and xLow
+        //- Update the coefficients of the given equations given
+        //  a list of x and y values
         virtual void findCoeffs
         (
-            const scalarUnivariateEquation& eqns,
+            scalarUnivariateEquation& eqns,
             const List<scalarList>& x,
             const scalarList& y,
             const label li = 0
         ) const;
 
-        //- Find the root of the equation between xHigh and xLow
+        //- Update the coefficients of the given equations given
+        //  a list of x and y values and associated weights
         void findCoeffs
         (
-            const scalarUnivariateEquation& eqn,
+            scalarUnivariateEquation& eqn,
             const List<scalarList>& x,
             const scalarList& y,
             const scalarList& w,

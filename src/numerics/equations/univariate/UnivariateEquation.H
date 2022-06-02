@@ -84,19 +84,15 @@ public:
 
     // Constructors
 
-        //- Construct given bounds
-        UnivariateEquation
-        (
-            const scalarList& lowerLimit,
-            const scalarList& upperLimit
-        );
+        //- Construct given number of equations
+        UnivariateEquation(const label nVar, const string& eqnString = string::null);
 
         //- Construct given an equation string and bounds
         UnivariateEquation
         (
-            const string& eqnString,
             const scalarList& lowerLimit,
-            const scalarList& upperLimit
+            const scalarList& upperLimit,
+            const string& eqnString = string::null
         );
 
         //- Construct from dictionary

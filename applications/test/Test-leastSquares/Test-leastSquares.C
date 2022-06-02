@@ -1,6 +1,7 @@
 #include "dictionary.H"
 #include "linearLeastSquares.H"
 #include "nonLinearLeastSquares.H"
+#include "CoefficientEquationsFwd.H"
 #include "createEquations.H"
 #include "UnivariateEquationsFwd.H"
 #include "argList.H"
@@ -10,15 +11,13 @@ using namespace Foam;
 
 class eqn1
 :
-    public ScalarUnivariateEquation,
-    public coefficients<scalar, scalar>
+    public ScalarUnivariateCoefficientEquation
 {
 public:
 
     eqn1()
     :
-        ScalarUnivariateEquation(2, {-great, -great}, {great, great}),
-        coefficients<scalar, scalar>(3)
+        ScalarUnivariateCoefficientEquation(2, 3)
     {}
 
     label nDerivatives() const 
@@ -38,15 +37,13 @@ public:
 };
 class eqn2
 :
-    public ScalarUnivariateEquation,
-    public coefficients<scalar, scalar>
+    public ScalarUnivariateCoefficientEquation
 {
 public:
 
     eqn2()
     :
-        ScalarUnivariateEquation(2, {-great, -great}, {great, great}),
-        coefficients<scalar, scalar>(6)
+        ScalarUnivariateCoefficientEquation(2, 6)
     {}
 
     label nDerivatives() const 

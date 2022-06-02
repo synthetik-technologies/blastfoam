@@ -53,6 +53,10 @@ class multivariateEquation
 {
 public:
 
+    typedef List<scalar> VarType;
+    typedef List<Type> EqnType;
+    typedef Type CmptType;
+
     //- Constructors
 
         //- Null constructor

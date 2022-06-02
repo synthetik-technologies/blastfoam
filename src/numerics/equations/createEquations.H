@@ -60,7 +60,7 @@ class Name                                                                     \
     public Equation<Type>                                                      \
 {                                                                              \
 public:                                                                        \
-    Name() : Equation<Type>(FuncName, Min, Max) {}                             \
+    Name() : Equation<Type>(Min, Max, FuncName) {}                             \
                                                                                \
     virtual ~Name() {}                                                         \
                                                                                \
@@ -77,7 +77,7 @@ class Name                                                                     \
     public UnivariateEquation<Type>                                            \
 {                                                                              \
 public:                                                                        \
-    Name() : UnivariateEquation<Type>(FuncName, Min, Max) {}                   \
+    Name() : UnivariateEquation<Type>(Min, Max, FuncName) {}                   \
                                                                                \
     virtual ~Name() {}                                                         \
                                                                                \

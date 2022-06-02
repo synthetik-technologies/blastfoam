@@ -52,6 +52,8 @@ class equation
 {
 public:
 
+    typedef scalar VarType;
+
     // Constructors
 
         //- Construct null

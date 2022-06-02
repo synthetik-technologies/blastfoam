@@ -9,6 +9,8 @@ lookupTables/lookupTable3D/lookupTables3D.C
 
 equations/adaptiveTypes.C
 equations/equationBase/equationBase.C
+equations/coefficients/Coefficients.C
+equations/coefficients/CoefficientEquations.C
 equations/equation/Equations.C
 equations/univariate/UnivariateEquations.C
 equations/multivariate/MultivariateEquations.C
@@ -57,6 +59,8 @@ minimizationSchemes/Fibonacci/FibonacciUnivariateMinimizationScheme.C
 minimizationSchemes/NewtonRaphson/NewtonRaphsonUnivariateMinimizationScheme.C
 #minimizationSchemes/ShubertPiyavskii/ShubertPiyavskiiMinimizationScheme.C
 
+leastSquares/linear/linearLeastSquares.C
+leastSquares/nonLinear/nonLinearLeastSquares.C
 
 algorithms/polygon/clipping/SutherlandHodgman.C
 algorithms/polygon/pointInPolygon/HormannAgathos.C

@@ -29,14 +29,11 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::Equation<Type>::Equation
-(
-    const scalar lower,
-    const scalar upper
-)
+Foam::Equation<Type>::Equation(const string& eqnString)
 :
-    lower_(lower),
-    upper_(upper),
+    equation<Type>(eqnString),
+    lower_(-great),
+    upper_(great),
     dx_(1e-6)
 {}
 
@@ -44,9 +41,9 @@ Foam::Equation<Type>::Equation
 template<class Type>
 Foam::Equation<Type>::Equation
 (
-    const string& eqnString,
     const scalar lower,
-    const scalar upper
+    const scalar upper,
+    const string& eqnString
 )
 :
     equation<Type>(eqnString),

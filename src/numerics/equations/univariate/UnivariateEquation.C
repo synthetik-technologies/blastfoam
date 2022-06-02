@@ -31,13 +31,13 @@ License
 template<class Type>
 Foam::UnivariateEquation<Type>::UnivariateEquation
 (
-    const scalarList& lowerLimits,
-    const scalarList& upperLimits
+    const label nVar,
+    const string& eqnString
 )
 :
-    lowerLimits_(lowerLimits),
-    upperLimits_(upperLimits),
-    nVar_(lowerLimits.size()),
+    lowerLimits_(nVar, -great),
+    upperLimits_(nVar, great),
+    nVar_(nVar),
     dX_(nVar_, 1e-6)
 {}
 
@@ -45,9 +45,9 @@ Foam::UnivariateEquation<Type>::UnivariateEquation
 template<class Type>
 Foam::UnivariateEquation<Type>::UnivariateEquation
 (
-    const string& eqnString,
     const scalarList& lowerLimits,
-    const scalarList& upperLimits
+    const scalarList& upperLimits,
+    const string& eqnString
 )
 :
     univariateEquation<Type>(eqnString),

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "nonLinearLeastSquares.H"
+#include "CoefficientsFwd.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -49,15 +50,15 @@ Foam::nonLinearLeastSquares::nonLinearLeastSquares
 
 void Foam::nonLinearLeastSquares::findCoeffs
 (
-    const scalarUnivariateEquation& eqns,
+    scalarUnivariateEquation& eqns,
     const List<scalarList>& x,
     const scalarList& y,
     const label li
 ) const
 {
-    const coefficients<scalar, scalar>& coeffs
+    scalarCoefficients& coeffs
     (
-        dynamicCast<const coefficients<scalar, scalar>>(eqns)
+        dynamicCast<scalarCoefficients>(eqns)
     );
     RectangularMatrix<scalar> J(x.size(), coeffs.n());
     RectangularMatrix<scalar> JT(J.T());
@@ -88,16 +89,16 @@ void Foam::nonLinearLeastSquares::findCoeffs
 
 void Foam::nonLinearLeastSquares::findCoeffs
 (
-    const scalarUnivariateEquation& eqns,
+    scalarUnivariateEquation& eqns,
     const List<scalarList>& x,
     const scalarList& y,
     const scalarList& w,
     const label li
 ) const
 {
-    const coefficients<scalar, scalar>& coeffs
+    scalarCoefficients& coeffs
     (
-        dynamicCast<const coefficients<scalar, scalar>>(eqns)
+        dynamicCast<scalarCoefficients>(eqns)
     );
     RectangularMatrix<scalar> J(x.size(), coeffs.n());
     RectangularMatrix<scalar> JT(J.T());

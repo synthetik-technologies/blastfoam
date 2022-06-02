@@ -58,13 +58,14 @@ template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation
 (
     const label nEqns,
-    const scalarList& lowerLimits,
-    const scalarList& upperLimits
+    const label nVar,
+    const List<string>& eqnStrings
 )
 :
-    lowerLimits_(lowerLimits),
-    upperLimits_(upperLimits),
-    nVar_(lowerLimits.size()),
+    multivariateEquation<Type>(eqnStrings),
+    lowerLimits_(nVar, -great),
+    upperLimits_(nVar, great),
+    nVar_(nVar),
     nEqns_(nEqns),
     dX_(nVar_, 1e-6)
 {}
@@ -73,10 +74,10 @@ Foam::MultivariateEquation<Type>::MultivariateEquation
 template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation
 (
-    const List<string>& eqnStrings,
     const label nEqns,
     const scalarList& lowerLimits,
-    const scalarList& upperLimits
+    const scalarList& upperLimits,
+    const List<string>& eqnStrings
 )
 :
     multivariateEquation<Type>(eqnStrings),

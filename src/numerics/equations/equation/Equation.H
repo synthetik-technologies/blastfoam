@@ -75,15 +75,15 @@ public:
 
     // Constructors
 
-        //- Construct given bounds
-        Equation(const scalar lower, const scalar upper);
+        //- Construct null
+        Equation(const string& eqnString = string::null);
 
         //- Construct given bounds and name
         Equation
         (
-            const string& eqnString,
             const scalar lower,
-            const scalar upper
+            const scalar upper,
+            const string& eqnString = string::null
         );
 
          //- Construct from dictionary
