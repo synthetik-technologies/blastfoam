@@ -27,7 +27,7 @@ jobs:
           key: ${{ hashFiles('blastfoam-src/cache-check.tar.gz') }}
       - run: echo ${{ steps.check-cache.outputs.cache-hit }}
       - name: Build from makefile
-        if: ${{ steps.check-cache.outputs.cache-hit == 'false' }}
+        if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
