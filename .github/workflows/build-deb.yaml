@@ -25,7 +25,7 @@ jobs:
         with:
           name: Debian Package Cache
           path: blastfoam_*.deb
-          key: ${{ md5sum blastfoam-src/cache-check.tar.gz }}
+          key: $(md5sum blastfoam-src/cache-check.tar.gz)
       - name: Build from makefile
         if: ${{ steps.check.cache.outputs.cache-hit == 'false' }}
         run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
