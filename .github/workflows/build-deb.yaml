@@ -18,7 +18,7 @@ jobs:
         with:
           path: 'blastfoam-src'
       - name: Build from makefile
-        run: debuild -rsudo --no-lintian -i -nc -us -uc -b --jobs=10
+        run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
         with:
