@@ -36,6 +36,9 @@ jobs:
           path: ${{ github.workspace }}/blastfoam_*.deb
 
   install-and-validate:
+    strategy:
+      matrix:
+        validationScenario: ['blastFoam/SodShockTube', 'blastFoam/solidImpact']
     runs-on: ['self-hosted', 'deb', 'openfoam']
     name: Validate BlastFoam
     needs:
@@ -58,9 +61,9 @@ jobs:
         run: |
           source /opt/openfoam9/etc/bashrc
           source /opt/blastfoam/etc/bashrc
-          ./blastfoam-src/validation/blastFoam/shockTube_twoFluids/Allrun
+          ./blastfoam-src/validation/${{ matrix.validationScenario }}/Allrun
       - name: Upload Validation Results
         uses: actions/upload-artifact@v3
         with:
           name: validation-results
-          path: blastfoam-src/validation/blastFoam/shockTube_twoFluids
+          path: blastfoam-src/validation/${{ matrix.validationScenario }}
