@@ -1170,7 +1170,7 @@ void Foam::phaseSystem::update()
                 {
                     tmp<volScalarField> YmDot
                     (
-                        -massTransferIter()->dispersedYi(specieName)*mDot
+                        massTransferIter()->dispersedYi(specieName)*mDot
                     );
                     thermo.addDelta
                     (
@@ -1187,7 +1187,7 @@ void Foam::phaseSystem::update()
                 {
                     tmp<volScalarField> YmDot
                     (
-                        massTransferIter()->continuousYi(specieName)*mDot
+                        -massTransferIter()->continuousYi(specieName)*mDot
                     );
                     thermo.addDelta
                     (

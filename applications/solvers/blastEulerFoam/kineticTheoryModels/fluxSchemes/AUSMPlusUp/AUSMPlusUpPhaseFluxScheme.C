@@ -123,9 +123,9 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
         ktName = this->group();
     }
 
-    autoPtr<MUSCLReconstructionScheme<scalar>> alphapLimiter
+    autoPtr<ReconstructionScheme<scalar>> alphapLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(alphap, "alpha")
+        ReconstructionScheme<scalar>::New(alphap, "alpha")
     );
 
     alphapOwn_ = alphapLimiter->interpolateOwn();
