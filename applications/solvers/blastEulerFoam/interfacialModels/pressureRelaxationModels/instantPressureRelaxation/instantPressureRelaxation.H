@@ -122,14 +122,14 @@ public:
 
             virtual void FX
             (
-                const scalarList& x,
+                const UList<scalar>& x,
                 const label li,
                 scalarList& fx
             ) const;
 
             virtual void jacobian
             (
-                const scalarList& x,
+                const UList<scalar>& x,
                 const label li,
                 scalarList& fx,
                 RectangularMatrix<scalar>& J

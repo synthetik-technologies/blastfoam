@@ -117,7 +117,7 @@ public:
         //- Return the function value
         virtual inline void FX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx
         ) const
@@ -128,7 +128,7 @@ public:
         //- Return the function value
         virtual void jacobian
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J

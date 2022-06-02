@@ -52,7 +52,7 @@ License
     virtual Type FuncName(const scalar, const label) const;
 
 #define defineUnivariateEquation(Type, FuncName)                               \
-    virtual Type FuncName(const scalarList&, const label) const;
+    virtual Type FuncName(const UList<scalar>&, const label) const;
 
 #define defineEquationClass(Name, FuncName, Type, Min, Max, ...)               \
 class Name                                                                     \
@@ -154,7 +154,7 @@ addEquationFunc(Name, Type, d3fdx3, d3FdX3)
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define addUnivariateEquationFunc(Name, Type, FuncName, Func)                  \
-Type Name::FuncName(const scalarList& x, const label li) const {return Func;}
+Type Name::FuncName(const UList<scalar>& x, const label li) const {return Func;}
 
 #define addUnivariateEquation0Funcs(Name, Type, FX)                            \
 addUnivariateEquationFunc(Name, Type, fX, FX)

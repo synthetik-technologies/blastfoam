@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     Info<<nl<<"1D table:" << endl;
     scalarLookupTable1D table1(dict.subDict("table1D"), "x", "f");
     scalarLookupTable1D table11(table1);
-    Info<< "f: " << table11.lookup(xTest)
+    Info<< "f: " << table1.lookup(xTest)
         << ", answer: " << func1(xTest) << endl
         << "dfdx: " << table1.dFdX(xTest)
         << ", answer: " << dfunc1dx(xTest) << endl

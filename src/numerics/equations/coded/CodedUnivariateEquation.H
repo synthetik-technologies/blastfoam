@@ -112,7 +112,7 @@ public:
         //- Return the function value
         virtual inline Type fX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li
         ) const
         {
@@ -122,7 +122,7 @@ public:
         //- Return the function value
         virtual void dfdX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& dfdx
         ) const

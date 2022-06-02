@@ -38,13 +38,13 @@ public:
     :
         ScalarMultivariateEquation
         (
+            2,
+            {0.0, 0.0},
+            {2.0, 2.0},
             {
                 "f1(x1, x2) = x1^2 + x2^2 - 4.0",
                 "f2(x1, x2) = x1^2 - x2 + 1.0"
-            },
-            2,
-            {0.0, 0.0},
-            {2.0, 2.0}
+            }
         )
     {}
 
@@ -62,7 +62,7 @@ public:
     }
     virtual void FX
     (
-        const scalarList& x,
+        const UList<scalar>& x,
         const label li,
         scalarList& fx
     ) const
@@ -72,7 +72,7 @@ public:
     }
     virtual void jacobian
     (
-        const scalarList& x,
+        const UList<scalar>& x,
         const label li,
         scalarList& fx,
         RectangularMatrix<scalar>& dfdx
@@ -97,13 +97,13 @@ public:
     :
         ScalarMultivariateEquation
         (
+            2,
+            {-10.0, -10.0},
+            {10.0, 10.0},
             {
                 "f1(x1, x2) = x2^2 + x1^2 + x1",
                 "f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0"
-            },
-            2,
-            {-10.0, -10.0},
-            {10.0, 10.0}
+            }
         )
     {}
 
@@ -121,7 +121,7 @@ public:
     }
     virtual void FX
     (
-        const scalarList& x,
+        const UList<scalar>& x,
         const label li,
         scalarList& fx
     ) const
@@ -131,7 +131,7 @@ public:
     }
     virtual void jacobian
     (
-        const scalarList& x,
+        const UList<scalar>& x,
         const label li,
         scalarList& fx,
         RectangularMatrix<scalar>& J

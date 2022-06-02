@@ -78,7 +78,7 @@ Foam::instantPressureRelaxation::~instantPressureRelaxation()
 
 void Foam::instantPressureRelaxation::FX
 (
-     const scalarList& rhoPI,
+     const UList<scalar>& rhoPI,
     const label li,
     scalarList& fx
 ) const
@@ -109,7 +109,7 @@ void Foam::instantPressureRelaxation::FX
 
 void Foam::instantPressureRelaxation::jacobian
 (
-    const scalarList& rhoPI,
+    const UList<scalar>& rhoPI,
     const label li,
     scalarList& fx,
     RectangularMatrix<scalar>& J

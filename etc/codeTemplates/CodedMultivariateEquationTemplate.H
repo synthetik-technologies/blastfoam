@@ -84,7 +84,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual void FX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<${TemplateType}>& fx
         ) const
@@ -97,7 +97,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual void jacobian
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<${TemplateType}>& fx,
             RectangularMatrix<${TemplateType}>& J

@@ -83,7 +83,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual ${TemplateType} fX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li
         ) const
         {
@@ -95,7 +95,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual void dfdX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<${TemplateType}>& dfdx
         ) const
