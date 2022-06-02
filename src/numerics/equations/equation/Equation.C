@@ -75,7 +75,7 @@ Foam::Equation<Type>::~Equation()
 template<class Type>
 Type Foam::Equation<Type>::fX
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li
 ) const
 {
@@ -86,7 +86,7 @@ Type Foam::Equation<Type>::fX
 template<class Type>
 void Foam::Equation<Type>::FX
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li,
     List<Type>& fx
 ) const
@@ -98,7 +98,7 @@ void Foam::Equation<Type>::FX
 template<class Type>
 void Foam::Equation<Type>::dfdX
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li,
     List<Type>& dfdx
 ) const
@@ -110,7 +110,7 @@ void Foam::Equation<Type>::dfdX
 template<class Type>
 void Foam::Equation<Type>::jacobian
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J
@@ -161,8 +161,8 @@ bool Foam::Equation<Type>::containsRoot
 template<class Type>
 bool Foam::Equation<Type>::containsRoot
 (
-    const List<Type>& y0s,
-    const List<Type>& y1s
+    const UList<Type>& y0s,
+    const UList<Type>& y1s
 ) const
 {
     return containsRoot(y0s[0], y1s[0]);

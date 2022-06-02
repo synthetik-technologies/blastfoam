@@ -74,7 +74,7 @@ protected:
     //- Calculate the gradient using a finite difference
     void calculateGradient
     (
-        const scalarList& x0,
+        const UList<scalar>& x0,
         const label li,
         List<Type>& grad
     ) const;
@@ -163,7 +163,7 @@ public:
         //- Calculate the gradient
         virtual void dfdX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& dfdx
         ) const;
@@ -171,7 +171,7 @@ public:
         //- Calculate the gradient
         virtual void FX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx
         ) const;
@@ -179,7 +179,7 @@ public:
         //- Calculate the jacobian
         virtual void jacobian
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J
@@ -188,8 +188,8 @@ public:
         //- Check if the solution is bracketed
         virtual bool containsRoot
         (
-            const List<Type>& y0s,
-            const List<Type>& y1s
+            const UList<Type>& y0s,
+            const UList<Type>& y1s
         ) const;
 
         //- Check if the solution is bracketed (compute bounds)

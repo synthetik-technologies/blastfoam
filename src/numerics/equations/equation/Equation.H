@@ -193,14 +193,14 @@ public:
         //- Calulate the function at a point
         virtual Type fX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li
         ) const;
 
         //- Calulate the function at a point
         virtual void FX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx
         ) const;
@@ -208,7 +208,7 @@ public:
         //- Calulate the gradient
         virtual void dfdX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& dfdx
         ) const;
@@ -216,7 +216,7 @@ public:
         //- Calulate the Jacobian (dfdx)
         virtual void jacobian
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J
@@ -227,8 +227,8 @@ public:
         virtual bool containsRoot(const Type& y0, const Type& y1) const;
         virtual bool containsRoot
         (
-            const List<Type>& y0s,
-            const List<Type>& y1s
+            const UList<Type>& y0s,
+            const UList<Type>& y1s
         ) const;
 };
 

@@ -53,7 +53,7 @@ class multivariateEquation
 {
 public:
 
-    typedef List<scalar> VarType;
+    typedef UList<scalar> VarType;
     typedef List<Type> EqnType;
     typedef Type CmptType;
 
@@ -124,7 +124,7 @@ public:
         //- Return the function value
         virtual void FX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx
         ) const = 0;
@@ -132,7 +132,7 @@ public:
         //- Return the function value
         virtual void jacobian
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J
@@ -141,8 +141,8 @@ public:
         //- Check if the solution is bracketed
         virtual bool containsRoot
         (
-            const List<Type>& y0s,
-            const List<Type>& y1s
+            const UList<Type>& y0s,
+            const UList<Type>& y1s
         ) const = 0;
 
         //- Check if the solution is bracketed (compute bounds)

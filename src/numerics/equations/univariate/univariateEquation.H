@@ -86,14 +86,14 @@ public:
         //- Return the function value
         virtual Type fX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li
         ) const = 0;
 
         //- Return the function value
         virtual void dfdX
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& dfdx
         ) const = 0;

@@ -31,7 +31,7 @@ License
 template<class Type>
 void Foam::MultivariateEquation<Type>::calculateJacobian
 (
-    const scalarList& x0,
+    const UList<scalar>& x0,
     const label li,
     const List<Type>& f0,
     RectangularMatrix<Type>& J
@@ -113,7 +113,7 @@ Foam::MultivariateEquation<Type>::~MultivariateEquation()
 template<class Type>
 void Foam::MultivariateEquation<Type>::jacobian
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J
@@ -128,8 +128,8 @@ void Foam::MultivariateEquation<Type>::jacobian
 template<class Type>
 bool Foam::MultivariateEquation<Type>::containsRoot
 (
-    const List<Type>& y0s,
-    const List<Type>& y1s
+    const UList<Type>& y0s,
+    const UList<Type>& y1s
 ) const
 {
     forAll(y0s, i)

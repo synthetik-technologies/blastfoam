@@ -78,7 +78,7 @@ protected:
         //- Create a Jacobian matrix given a list of dx
         void calculateJacobian
         (
-            const scalarList& x0,
+            const UList<scalar>& x0,
             const label li,
             const List<Type>& f0,
             RectangularMatrix<Type>& J
@@ -173,7 +173,7 @@ public:
         //- Calculate the Jacobian of the equation
         virtual void jacobian
         (
-            const scalarList& x,
+            const UList<scalar>& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J
@@ -182,8 +182,8 @@ public:
         //- Check if the solution is bracketed
         virtual bool containsRoot
         (
-            const List<Type>& y0s,
-            const List<Type>& y1s
+            const UList<Type>& y0s,
+            const UList<Type>& y1s
         ) const;
 
         //- Check if the solution is bracketed (compute bounds)

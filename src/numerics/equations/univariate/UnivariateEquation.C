@@ -81,7 +81,7 @@ Foam::UnivariateEquation<Type>::~UnivariateEquation()
 template<class Type>
 void Foam::UnivariateEquation<Type>::calculateGradient
 (
-    const scalarList& x0,
+    const UList<scalar>& x0,
     const label li,
     List<Type>& grad
 ) const
@@ -100,7 +100,7 @@ void Foam::UnivariateEquation<Type>::calculateGradient
 template<class Type>
 void Foam::UnivariateEquation<Type>::FX
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li,
     List<Type>& fx
 ) const
@@ -112,7 +112,7 @@ void Foam::UnivariateEquation<Type>::FX
 template<class Type>
 void Foam::UnivariateEquation<Type>::dfdX
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li,
     List<Type>& dfdx
 ) const
@@ -124,7 +124,7 @@ void Foam::UnivariateEquation<Type>::dfdX
 template<class Type>
 void Foam::UnivariateEquation<Type>::jacobian
 (
-    const scalarList& x,
+    const UList<scalar>& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J
@@ -146,8 +146,8 @@ void Foam::UnivariateEquation<Type>::jacobian
 template<class Type>
 bool Foam::UnivariateEquation<Type>::containsRoot
 (
-    const List<Type>& y0s,
-    const List<Type>& y1s
+    const UList<Type>& y0s,
+    const UList<Type>& y1s
 ) const
 {
     for (label cmpti = 0; cmpti < this->nVar(); cmpti++)

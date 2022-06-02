@@ -11,30 +11,42 @@ using namespace Foam;
 
 class eqn1
 :
-    public ScalarUnivariateCoefficientEquation
+    public ScalarCoefficientEquation
 {
 public:
 
     eqn1()
     :
-        ScalarUnivariateCoefficientEquation(2, 3)
+        ScalarCoefficientEquation(3)
     {}
 
-    label nDerivatives() const 
+    label nDerivatives() const
     {
         return 0;
     }
 
-    scalar fX(const scalarList& x, const label li) const
+    scalar fx(const scalar x, const label li) const
     {
-        scalar res = coeffs_[0];
-        forAll(x, i)
-        {
-            res += coeffs_[i+1]*x[i];
-        }
-        return res;
+        return
+            coeffs_[0]
+          + coeffs_[1]*x
+          + coeffs_[2]*sqr(x);
+    }
+
+    virtual void coeffJ
+    (
+        const XType& x,
+        const label i,
+        RectangularMatrix<scalar>& J,
+        const label li
+    ) const
+    {
+        J(i, 0) = -1.0;
+        J(i, 1) = -x[0];
+        J(i, 2) = -sqr(x[0]);
     }
 };
+
 class eqn2
 :
     public ScalarUnivariateCoefficientEquation
@@ -51,7 +63,7 @@ public:
         return 0;
     }
 
-    scalar fX(const scalarList& x, const label li) const
+    scalar fX(const VarType& x, const label li) const
     {
         return 
             coeffs_[0]
@@ -64,21 +76,18 @@ public:
 
     virtual void coeffJ
     (
-        const List<scalarList>& x,
-        const label li,
-        RectangularMatrix<scalar>& J
+        const XType& x,
+        const label i,
+        RectangularMatrix<scalar>& J,
+        const label li
     ) const
     {
-        J.setSize(x.size(), 6);
-        forAll(x, i)
-        {
-            J(i, 0) = -1.0;
-            J(i, 1) = -x[i][0];
-            J(i, 2) = -x[i][1];
-            J(i, 3) = -sqr(x[i][0]);
-            J(i, 4) = -x[i][0]*x[i][1];
-            J(i, 5) = -sqr(x[i][1]);
-        }
+        J(i, 0) = -1.0;
+        J(i, 1) = -x[0];
+        J(i, 2) = -x[1];
+        J(i, 3) = -sqr(x[0]);
+        J(i, 4) = -x[0]*x[1];
+        J(i, 5) = -sqr(x[1]);
     }
 };
 
@@ -87,33 +96,56 @@ int main(int argc, char *argv[])
     Random rand(0);
     const label n = 100;
     const scalar xMax = 20.0;
-    List<scalarList> x(n, scalarList(2));
-    scalarList y(n);
-    forAll(x, i)
+    List<scalar> x1(n);
+    List<vector2D> x2(n);
+    scalarField y1(n);
+    scalarField y2(n);
+    scalarField y3(n);
+    scalarField y4(n);
+    forAll(x1, i)
     {
-        x[i][0] = rand.scalarAB(0, xMax);
-        x[i][1] = rand.scalarAB(0, xMax);
-        y[i] = 
-            x[i][1]*(x[i][0])*1.7
-          - sqr(x[i][1] - 5.0)
-          + rand.scalarAB(-xMax, xMax);
+        x1[i] = rand.scalarAB(0, xMax);
+        y1[i] = 0.5 + x1[i]*1.7;
+
+        x2[i][0] = x1[i];
+        x2[i][1] = rand.scalarAB(0, xMax);
+        y2[i] =
+            y1[i]
+          - x2[i][1]*3.5;
+
+        y3[i] = y1[i] - 0.5*sqr(x1[i]);
+
+        y4[i] =
+            y2[i]
+          + sqr(x2[i][0])*1.5
+          + x2[i][0]*x2[i][1]*4.2
+          - sqr(x2[i][1])*3.5;
     }
 
     dictionary dict;
     Info<< nl << "leastSquares:" << endl;
 
     {
-        eqn1 eqn;
+        ScalarLinearEquation eqn;
         linearLeastSquares solver;
-        solver.findCoeffs(eqn, x, y);
+        solver.findCoeffs(eqn, x1, y1);
         Info<<eqn.coeffs()<<endl;
     }
-    Info<<nl;
-
+    {
+        linearLeastSquares solver;
+        autoPtr<scalarUnivariateEquation> eqn(solver.createEquation(x2, y2));
+        Info<<dynamic_cast<const scalarCoefficients&>(eqn()).coeffs()<<endl;
+    }
+    {
+        eqn1 eqn;
+        nonLinearLeastSquares solver;
+        solver.findCoeffs(eqn, x2, y3);
+        Info<<eqn.coeffs()<<endl;
+    }
     {
         eqn2 eqn;
         nonLinearLeastSquares solver;
-        solver.findCoeffs(eqn, x, y);
+        solver.findCoeffs(eqn, x2, y4);
         Info<<eqn.coeffs()<<endl;
     }
     Info<<nl;

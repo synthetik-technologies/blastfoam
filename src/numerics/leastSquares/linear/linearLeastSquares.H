@@ -49,6 +49,11 @@ namespace Foam
 
 class linearLeastSquares
 {
+
+    //- Return a UList to the necessary data
+    template<class VarType>
+    static void setData(const VarType& x, UList<scalar>& xi);
+
 public:
 
     //- Runtime type information
@@ -63,24 +68,46 @@ public:
 
     // Member Functions
 
+
+        //- Return a linear equations given a list of x and y values
+        template<class VarType>
+        autoPtr<scalarUnivariateEquation> createEquation
+        (
+            const UList<VarType>& x,
+            const scalarField& y,
+            const label li = 0
+        ) const;
+
         //- Update the coefficients of the given equations given
         //  a list of x and y values
+        template<class VarType>
         void findCoeffs
         (
             scalarUnivariateEquation& eqn,
-            const List<scalarList>& x,
-            const scalarList& y,
+            const UList<VarType>& x,
+            const scalarField& y,
+            const label li = 0
+        ) const;
+
+        //- Return a linear equations given a list of x and y values and assiciated weights
+        template<class VarType>
+        autoPtr<scalarUnivariateEquation> createEquation
+        (
+            const UList<VarType>& x,
+            const scalarField& y,
+            const scalarField& w,
             const label li = 0
         ) const;
 
         //- Update the coefficients of the given equations given
         //  a list of x and y values and associated weights
+        template<class VarType>
         void findCoeffs
         (
             scalarUnivariateEquation& eqn,
-            const List<scalarList>& x,
-            const scalarList& y,
-            const scalarList& w,
+            const UList<VarType>& x,
+            const scalarField& y,
+            const scalarField& w,
             const label li = 0
         ) const;
 };
@@ -89,6 +116,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "linearLeastSquaresTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
