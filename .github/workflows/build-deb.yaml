@@ -26,8 +26,8 @@ jobs:
       #     path: blastfoam_*.deb
       #     key: ${{ hashFiles('blastfoam-src/Makefile', 'blastfoam-src/applications/**', 'blastfoam-src/debian/**', 'blastfoam-src/etc/**', 'blastfoam-src/src/**') }}
       # - run: echo ${{ steps.check-cache.outputs.cache-hit }}
-      # - name: Build from makefile
-        if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
+      - name: Build from makefile
+        # if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
