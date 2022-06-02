@@ -50,7 +50,8 @@ jobs:
       - run: ls -la /opt
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
-      - run: |
+      - shell: bash -l {0}
+        run: |
           source /opt/openfoam9/etc/bashrc
           source /opt/blastfoam/etc/bashrc
           ./validation/blastFoam/shockTube_twoFluids/Allrun
