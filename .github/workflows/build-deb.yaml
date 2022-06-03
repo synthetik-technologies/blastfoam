@@ -97,11 +97,11 @@ jobs:
           if [ -e ${{ matrix.validation }} ]; then
             ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.validation }}/Allrun
             echo "TYPE=validation" >> $GITHUB_ENV
-            echo "SCENARIO=${{ matrix.validation }}" >> $GITHUB_ENV
+            echo 'SCENARIO=${{ matrix.validation }}' >> $GITHUB_ENV
           else
            ./blastfoam-src/tutorials/${{ matrix.solver }}/${{ matrix.tutorial }}/Allrun
            echo "TYPE=tutorials" >> $GITHUB_ENV
-           echo "SCENARIO=${{ matrix.tutorial }}" >> $GITHUB_ENV
+           echo 'SCENARIO=${{ matrix.tutorial }}' >> $GITHUB_ENV
           fi
           
       - name: Upload Validation Results
