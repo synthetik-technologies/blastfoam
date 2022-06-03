@@ -18,6 +18,7 @@ install:
 		bin/*
 	install --target-directory $(DESTDIR)$(prefix)/lib -D \
 		lib/*
+	cp -r src $(DESTDIR)$(prefix)/src
 	# * find better install location later
 	install --target-directory $(DESTDIR)$(prefix)/etc -D \
 		etc/bashrc
