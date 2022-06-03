@@ -96,11 +96,11 @@ jobs:
           echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
           if [ -e ${{ matrix.validation }} ]; then
             ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.validation }}/Allrun
-            echo "TYPE=VALIDATION" >> $GITHUB_ENV
+            echo "TYPE=validation" >> $GITHUB_ENV
             echo "SCENARIO=${{ matrix.validation }}" >> $GITHUB_ENV
           else
-           ./blastfoam-src/tutorial/${{ matrix.solver }}/${{ matrix.tutorial }}/Allrun
-           echo "TYPE=TUTORIAL" >> $GITHUB_ENV
+           ./blastfoam-src/tutorials/${{ matrix.solver }}/${{ matrix.tutorial }}/Allrun
+           echo "TYPE=tutorials" >> $GITHUB_ENV
            echo "SCENARIO=${{ matrix.tutorial }}" >> $GITHUB_ENV
           fi
           
