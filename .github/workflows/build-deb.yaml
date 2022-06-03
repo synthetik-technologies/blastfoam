@@ -40,7 +40,11 @@ jobs:
   install-and-validate:
     strategy:
       matrix:
-        validationScenario: ['blastFoam/Sod_shockTube', 'blastFoam/solidImpact']
+        include:
+          - solver: blastFoam
+            scenario: Sod_shockTube
+          - solver: blastFoam
+            scenario: solidImpact
     runs-on: ['self-hosted', 'deb', 'openfoam']
     name: Validate BlastFoam
     needs:
@@ -63,11 +67,11 @@ jobs:
         run: |
           source /opt/openfoam9/etc/bashrc
           source /opt/blastfoam/etc/bashrc
-          ./blastfoam-src/validation/${{ matrix.validationScenario }}/Allrun
+          ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario }}/Allrun
       - name: Upload Validation Results
         uses: actions/upload-artifact@v3
         with:
-          name: validation-results
+          name: validation-results-${{ matrix.scenario }}
           path: blastfoam-src/validation
           retention-days: 30
       - name: Uninstall Debian Package
