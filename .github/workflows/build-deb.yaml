@@ -20,13 +20,12 @@ jobs:
       - name: Build Tar for Cache
         run: | 
           tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
-          echo 'checksum=$(sha1sum checksum.tar.gz)' >> GITHUB_ENV
       - name: Check Cache
         id: check-cache
         uses: actions/cache@v3
         with:
           path: blastfoam_*.deb
-          key: ${{ env.checksum }}
+          key: ${{ hashFiles(checksum.tar.gz) }}
       - run: echo ${{ steps.check-cache.outputs.cache-hit }}
       - name: Build from makefile
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
