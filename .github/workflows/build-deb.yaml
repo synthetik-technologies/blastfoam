@@ -74,7 +74,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: validation-results
-          path: blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario }}
+          path: |
+            blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario }}
+            blastfoam-src/validation/run-on-gh.txt
           retention-days: 30
       - name: Uninstall Debian Package
         run: sudo dpkg -r blastfoam
