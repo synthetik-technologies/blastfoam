@@ -44,7 +44,7 @@ jobs:
           - solver: blastFoam
             scenario: Sod_shockTube
           - solver: blastFoam
-            scenario: solidImpact
+            scenario: solidImpact #* uses code templates
           - solver: blastFoam
             scenario: shockTube_twoFluids
     runs-on: ['self-hosted', 'deb', 'openfoam']
