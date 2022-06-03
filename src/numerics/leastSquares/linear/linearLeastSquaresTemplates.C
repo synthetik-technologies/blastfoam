@@ -28,8 +28,11 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+namespace Foam
+{
+
 template<class VarType>
-void Foam::linearLeastSquares::setData
+void linearLeastSquares::setData
 (
     const VarType& x,
     UList<scalar>& xi
@@ -46,7 +49,7 @@ void Foam::linearLeastSquares::setData
 }
 
 template<>
-void Foam::linearLeastSquares::setData
+void linearLeastSquares::setData
 (
     const scalar& x,
     UList<scalar>& xi
@@ -63,7 +66,7 @@ void Foam::linearLeastSquares::setData
 }
 
 template<>
-void Foam::linearLeastSquares::setData
+void linearLeastSquares::setData
 (
     const UList<scalar>& x,
     UList<scalar>& xi
@@ -71,6 +74,8 @@ void Foam::linearLeastSquares::setData
 {
     xi.shallowCopy(x);
 }
+
+} // End namespace foam
 
 
 template<class VarType>
