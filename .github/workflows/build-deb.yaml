@@ -19,7 +19,7 @@ jobs:
           path: 'blastfoam-src'
       - name: Build Tar for Cache
         run: | 
-          tar -cfz checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
+          tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
           echo 'checksum=$(sha1sum checksum.tar.gz)' >> GITHUB_ENV
       - name: Check Cache
         id: check-cache
