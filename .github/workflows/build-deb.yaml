@@ -69,7 +69,7 @@ jobs:
           source /opt/openfoam9/etc/bashrc
           source /opt/blastfoam/etc/bashrc
           ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario }}/Allrun
-          touch ./blastfoam-src/validation/run-on-gh.txt
+          echo "Run on GH" >> blastfoam-src/validation/run-on-gh.txt
       - name: Upload Validation Results
         uses: actions/upload-artifact@v3
         with:
