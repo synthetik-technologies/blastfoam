@@ -38,6 +38,7 @@ jobs:
 
   install-and-validate:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - solver: blastFoam
@@ -45,7 +46,19 @@ jobs:
           - solver: blastFoam
             scenario: solidImpact #* uses code templates
           - solver: blastFoam
-            scenario: shockTube_twoFluids
+            scenario: 'Sedov/Sedov_2D'
+          - solver: blastFoam
+            scenario: 'Sedov/Sedov_3D'
+          - solver: blastFoam
+            scenario: 'KingeryBulmash/KingeryBulmash_wedge'
+          - solver: blastFoam
+            scenario: 'rateStick/rateStick_1D'
+          - solver: blastEulerFoam
+            scenario: shockTube_dilute
+          - solver: blastEulerFoam
+            scenario: shockTube_dense
+          - solver: blastEulerFoam
+            scenario: shockTube_bidisperse
     runs-on: ['self-hosted', 'deb', 'openfoam']
     name: Validate BlastFoam
     needs:
