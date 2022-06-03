@@ -48,8 +48,8 @@ typename Table::iterator Foam::simpleBlastThermo::lookupCstrIter
     {
         const word compileType("simpleBlastThermo");
         const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
-        const fileName BLAST_DIR(getEnv("BLAST_DIR"));
-        setEnv("FOAM_CODE_TEMPLATES", BLAST_DIR/"etc/codeTemplates", true);
+        const fileName BLAST_CODE_TEMPLATES(getEnv("BLAST_CODE_TEMPLATES"));
+        setEnv("FOAM_CODE_TEMPLATES", BLAST_CODE_TEMPLATES, true);
 
         if
         (
