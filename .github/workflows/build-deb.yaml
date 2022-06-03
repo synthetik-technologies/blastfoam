@@ -45,6 +45,8 @@ jobs:
             scenario: Sod_shockTube
           - solver: blastFoam
             scenario: solidImpact
+          - solver: blastFoam
+            scenario: shockTube_twoFluids
     runs-on: ['self-hosted', 'deb', 'openfoam']
     name: Validate BlastFoam
     needs:
