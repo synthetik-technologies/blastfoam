@@ -109,7 +109,8 @@ jobs:
         with:
           name: validation-results
           path: |
-            blastfoam-src/**/*
+            blastfoam-src/validation/**/*
+            blastfoam-src/tutorials/**/*
           retention-days: 7
       - name: Upload Validation Plots
         uses: actions/upload-artifact@v3
