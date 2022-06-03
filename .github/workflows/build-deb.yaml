@@ -42,23 +42,35 @@ jobs:
       matrix:
         include:
           - solver: blastFoam
-            scenario: Sod_shockTube
+            validation: Sod_shockTube
           - solver: blastFoam
-            scenario: solidImpact #* uses code templates
+            validation: solidImpact #* uses code templates
           - solver: blastFoam
-            scenario: 'Sedov/Sedov_2D'
+            validation: 'Sedov/Sedov_2D'
           - solver: blastFoam
-            scenario: 'Sedov/Sedov_3D'
+            validation: 'Sedov/Sedov_3D'
           - solver: blastFoam
-            scenario: 'KingeryBulmash/KingeryBulmash_wedge'
+            validation: 'KingeryBulmash/KingeryBulmash_wedge'
           - solver: blastFoam
-            scenario: 'rateStick/rateStick_1D'
+            validation: 'rateStick'
           - solver: blastEulerFoam
-            scenario: shockTube_dilute
+            validation: shockTube_dilute
           - solver: blastEulerFoam
-            scenario: shockTube_dense
+            validation: shockTube_dense
           - solver: blastEulerFoam
-            scenario: shockTube_bidisperse
+            validation: shockTube_bidisperse
+          - solver: blastFoam
+            tutorial: building3DWorkshop
+          - solver: blastFoam
+            tutorial: delayedDetonation
+          - solver: blastFoam
+            tutorial: movingCrane
+          - solver: blastFoam
+            tutorial: shockTubeTabulated
+          - solver: blastReactingFoam
+            tutorial: obliqueShock
+          - solver: setRefinedFields
+            tutorial: .
     runs-on: ['self-hosted', 'deb', 'openfoam']
     name: Validate BlastFoam
     needs:
@@ -71,7 +83,6 @@ jobs:
           path: ${{ github.workspace }}
       - name: Install Debian Package
         run: sudo dpkg -i blastfoam_*.deb
-      - run: ls -la /opt
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
@@ -82,15 +93,27 @@ jobs:
         run: |
           source /opt/openfoam9/etc/bashrc
           source /opt/blastfoam/etc/bashrc
-          ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario }}/Allrun
+          if [ -e ${{ matrix.validation }} ]; then
+            type='validation'
+          else
+           type='tutorial'
+          fi
+          ./blastfoam-src/$type/${{ matrix.solver }}/${{ matrix.validation }}/Allrun
           echo "Run on GH" >> blastfoam-src/validation/run-on-gh.txt
       - name: Upload Validation Results
         uses: actions/upload-artifact@v3
         with:
           name: validation-results
           path: |
-            blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario }}
+            blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.validation }}
             blastfoam-src/validation/run-on-gh.txt
+          retention-days: 7
+      - name: Upload Validation Plots
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-plots
+          path: |
+            blastfoam-src/validation/**/*.eps
           retention-days: 30
       - name: Uninstall Debian Package
         run: sudo dpkg -r blastfoam
