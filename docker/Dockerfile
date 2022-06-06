@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 AS openfoam
+FROM ubuntu:20.04 AS openfoam
 RUN apt-get update \
   && apt-get install -y wget software-properties-common \
   && sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -" \
@@ -6,7 +6,7 @@ RUN apt-get update \
   && apt-get update
 RUN apt-get -y install openfoam9
 
-FROM ubuntu:18.04 as prod
+FROM ubuntu:20.04 as prod
 SHELL [ "/bin/bash", "-c" ]
 COPY --from=openfoam /opt/openfoam9 /opt/openfoam9
 COPY blastfoam_*.deb .
