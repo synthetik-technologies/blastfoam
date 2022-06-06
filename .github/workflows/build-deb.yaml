@@ -42,6 +42,13 @@ jobs:
       - build
     runs-on: 'ubuntu-latest'
     steps:
+      - name: Checkout blastFOAM
+        uses: actions/checkout@v3
+      - name: Download Debian Package
+        uses: actions/download-artifact@v3
+        with:
+          name: blastfoam-untested.deb
+          path: ${{ github.workspace }}
       - uses: docker/login-action@v2
         with:
           registry: ghcr.io
