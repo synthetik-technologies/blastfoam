@@ -147,14 +147,6 @@ jobs:
            echo "TYPE=tutorials" >> $GITHUB_ENV
            echo "SCENARIO=${{ matrix.tutorial }}" >> $GITHUB_ENV
           fi
-      # - name: Upload Validation Results
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: validation-results
-      #     path: |
-      #       blastfoam-src/validation/**/*
-      #       blastfoam-src/tutorials/**/*
-      #     retention-days: 7
       - name: Upload Validation Plots
         if: env.TYPE == 'validation'
         uses: actions/upload-artifact@v3
