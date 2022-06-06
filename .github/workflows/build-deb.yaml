@@ -5,6 +5,10 @@ on:
     branches:
       - "packaging/debian"
 
+concurrency:
+  group: blastfoam
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ['self-hosted', 'deb', 'openfoam']
