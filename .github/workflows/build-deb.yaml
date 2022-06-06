@@ -112,6 +112,7 @@ jobs:
       #       blastfoam-src/tutorials/**/*
       #     retention-days: 7
       - name: Upload Validation Plots
+        if: env.TYPE == 'validation'
         uses: actions/upload-artifact@v3
         with:
           name: validation-plots
