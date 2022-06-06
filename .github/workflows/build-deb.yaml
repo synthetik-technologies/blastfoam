@@ -52,7 +52,15 @@ jobs:
           - solver: blastFoam
             validation: 'KingeryBulmash/KingeryBulmash_wedge'
           - solver: blastFoam
-            validation: 'rateStick'
+            validation: 'rateStick/rateStick_1D'
+          - solver: blastFoam
+            validation: 'rateStick/rateStick_6'
+          - solver: blastFoam
+            validation: 'rateStick/rateStick_8'
+          - solver: blastFoam
+            validation: 'rateStick/rateStick_12_5'
+          - solver: blastFoam
+            validation: 'rateStick/rateStick_20'
           - solver: blastEulerFoam
             validation: shockTube_dilute
           - solver: blastEulerFoam
