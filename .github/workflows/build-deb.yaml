@@ -94,30 +94,29 @@ jobs:
           source /opt/openfoam9/etc/bashrc
           source /opt/blastfoam/etc/bashrc
           echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
-          if [ -e ${{ matrix.validation }} ]; then
+          if [ -n ${{ matrix.validation }} ]; then
             ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.validation }}/Allrun
             echo "TYPE=validation" >> $GITHUB_ENV
-            echo "SCENARIO=${{ toJSON(matrix.validation) }}" >> $GITHUB_ENV
+            echo "SCENARIO=${{ matrix.validation }}" >> $GITHUB_ENV
           else
            ./blastfoam-src/tutorials/${{ matrix.solver }}/${{ matrix.tutorial }}/Allrun
            echo "TYPE=tutorials" >> $GITHUB_ENV
-           echo "SCENARIO=${{ toJSON(matrix.tutorial) }}" >> $GITHUB_ENV
+           echo "SCENARIO=${{ matrix.tutorial }}" >> $GITHUB_ENV
           fi
-          
-      - name: Upload Validation Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: validation-results
-          path: |
-            blastfoam-src/validation/**/*
-            blastfoam-src/tutorials/**/*
-          retention-days: 7
+      # - name: Upload Validation Results
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: validation-results
+      #     path: |
+      #       blastfoam-src/validation/**/*
+      #       blastfoam-src/tutorials/**/*
+      #     retention-days: 7
       - name: Upload Validation Plots
         uses: actions/upload-artifact@v3
         with:
           name: validation-plots
           path: |
-            blastfoam-src/${{ env.TYPE }}/${{ env.SOLVER }}/${{ fromJSON(env.SCENARIO) }}/referencePlots/*.eps
+            blastfoam-src/${{ env.TYPE }}/${{ env.SOLVER }}/${{ env.SCENARIO }}/referencePlots/*.eps
           retention-days: 30
       - name: Uninstall Debian Package
         run: sudo dpkg -r blastfoam
