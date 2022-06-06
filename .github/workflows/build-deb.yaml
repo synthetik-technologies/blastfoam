@@ -35,6 +35,28 @@ jobs:
           name: blastfoam-untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 7
+  
+  build-docker:
+    runs-on: 'ubuntu-latest'
+    steps:
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          install: true
+      - name: Build and Push Image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/synthetik-technologies/blastfoam-dev:latest
+          file: docker/Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha, mode=max
 
   install-and-validate:
     strategy:
@@ -80,7 +102,7 @@ jobs:
           - solver: setRefinedFields
             tutorial: .
     runs-on: ['self-hosted', 'deb', 'openfoam']
-    name: Validate ${{ matrix.solver }}
+    name: Validate ${{ matrix.solver }} on ${{ matrix.validation }} ${{ matrix.tutorial }}
     needs:
       - build
     steps:
