@@ -97,11 +97,11 @@ jobs:
           if [ -e ${{ matrix.validation }} ]; then
             ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.validation }}/Allrun
             echo "TYPE=validation" >> $GITHUB_ENV
-            echo "TEST_SCENARIO=${{ matrix.validation }}" >> $GITHUB_ENV
+            echo 'SCENARIO=${{ toJSON(matrix.validation) }}' >> $GITHUB_ENV
           else
            ./blastfoam-src/tutorials/${{ matrix.solver }}/${{ matrix.tutorial }}/Allrun
            echo "TYPE=tutorials" >> $GITHUB_ENV
-           echo "TEST_SCENARIO=${{ matrix.tutorial }}" >> $GITHUB_ENV
+           echo 'SCENARIO=${{ toJSON(matrix.tutorial) }}' >> $GITHUB_ENV
           fi
           
       - name: Upload Validation Results
@@ -117,7 +117,7 @@ jobs:
         with:
           name: validation-plots
           path: |
-            blastfoam-src/${{ env.TYPE }}/${{ env.SOLVER }}/${{ env.TEST_SCENARIO }}/referencePlots/*.eps
+            blastfoam-src/${{ env.TYPE }}/${{ env.SOLVER }}/${{ fromJSON(env.SCENARIO) }}/referencePlots/*.eps
           retention-days: 30
       - name: Uninstall Debian Package
         run: sudo dpkg -r blastfoam
