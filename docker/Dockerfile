@@ -8,6 +8,7 @@ RUN apt-get -y install openfoam9
 
 FROM ubuntu:20.04 as prod
 SHELL [ "/bin/bash", "-c" ]
+ARG DEBIAN_FRONTEND=noninteractive
 COPY --from=openfoam /opt/openfoam9 /opt/openfoam9
 COPY blastfoam_*.deb .
 RUN apt-get update && apt-get install -y gnuplot libopenmpi-dev
