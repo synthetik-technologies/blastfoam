@@ -560,7 +560,7 @@ void Foam::phaseFluxScheme::update
         );
         tmp<surfaceScalarField> trhoIOwn;
         tmp<surfaceScalarField> trhoINei;
-        alphaLimiter->interpolateOwnNei(trhoIOwn, trhoINei);
+        rhoLimiter->interpolateOwnNei(trhoIOwn, trhoINei);
         rhosOwn.set(phasei, trhoIOwn);
         rhosNei.set(phasei, trhoINei);
 
