@@ -673,21 +673,32 @@ int main(int argc, char *argv[])
                 }
             }
         }
+
         if (args.optionFound("forceHex8"))
         {
             refineDict.set("forceHex8", true);
             refiner.set(new fvMeshHexRefiner(mesh, refineDict, true));
         }
-        else
+        else if (refineDict.found("refiner") || mesh.nGeometricD() > 1)
         {
             refiner = fvMeshRefiner::New(mesh, refineDict, true);
         }
-
-        if (Pstream::parRun())
+        else
         {
-            balance = refiner->balancer().balance();
+            IOWarningInFunction(refineDict)
+                << "A default refiner is no specified for " << mesh.nGeometricD()
+                << " geometricD so a refiner must be explicitily specified using the "
+                << "\"refiner\" keyword." << nl << endl;
         }
-        refiner->setForce(true);
+
+        if (refiner.valid())
+        {
+            if (Pstream::parRun())
+            {
+                balance = refiner->balancer().balance();
+            }
+            refiner->setForce(true);
+        }
     }
     bool refine = refiner.valid();
 
