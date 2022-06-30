@@ -52,8 +52,8 @@ bool Foam::readComponent
     }
     bool readFromTable = table.size();
 
-    label col = 0;
-    label scale = 1.0;
+    label col = -1;
+    label scale = 1;
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
@@ -174,10 +174,6 @@ bool Foam::readComponent
             values = parentDict.lookup<Field<Type>>(name);
         }
 
-        if (parentDict.found(name + "Scale"))
-        {
-            scale = parentDict.lookup<scalar>(name + "Scale");
-        }
         modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
         if (modType != "none")
         {

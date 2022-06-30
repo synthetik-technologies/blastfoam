@@ -425,6 +425,7 @@ void Foam::lookupTable1D<Type>::read
         x,
         table
     );
+
     setX(x, modXType, isReal);
     interpolator_ =
         interpolationWeight1D::New
