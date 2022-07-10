@@ -76,40 +76,7 @@ bool Foam::burstModels::pressure::update
     {
         const volScalarField& p =
             mesh.lookupObject<volScalarField>(pName_);
-        const fvPatchField<scalar>& pp =
-            p.boundaryField()[patch.index()];
-        scalarField deltaP(pp);
-
-        if (pp.coupled())
-        {
-            // Unblock the patch so that the coupled
-            // boundary type is used to find the neighbour field
-            if (isA<burstFvPatchFieldBase>(pp))
-            {
-                dynamicCast<const burstFvPatchFieldBase>
-                (
-                    pp
-                ).unblock(true);
-            }
-            deltaP =
-                mag
-                (
-                    pp.patchInternalField()
-                  - pp.patchNeighbourField()
-                );
-            if (isA<burstFvPatchFieldBase>(pp))
-            {
-                // Reset the unblock flag
-                dynamicCast<const burstFvPatchFieldBase>
-                (
-                    pp
-                ).unblock(false);
-            }
-        }
-        else
-        {
-            deltaP -= pRef_;
-        }
+        scalarField deltaP(this->patchField(p.boundaryField()[patch.index()]));
 
         if (partialBurst_)
         {
@@ -117,7 +84,7 @@ bool Foam::burstModels::pressure::update
             {
                 if (deltaP[facei] > pBurst_)
                 {
-                    intact[facei] = 0.0;
+                    intact[facei] = 0;
                     burst = true;
                 }
             }
@@ -134,9 +101,8 @@ bool Foam::burstModels::pressure::update
     else
     {
         FatalErrorInFunction
-            << "Could not find " << pName_ << " field" << nl
-            << "You should be using the impulse functionObject with this " << nl
-            << "model" << endl
+            << "Could not find " << pName_ << " field"
+            << ", neglecting pressure" << endl
             << abort(FatalError);
     }
     return returnReduce(burst, orOp<bool>());

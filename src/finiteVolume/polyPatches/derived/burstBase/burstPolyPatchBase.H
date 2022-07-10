@@ -40,7 +40,6 @@ SourceFiles
 #include "polyBoundaryMesh.H"
 #include "Time.H"
 #include "UautoPtr.H"
-#include "burstModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,6 +47,7 @@ namespace Foam
 {
 
 class fvPatch;
+class burstModel;
 
 /*---------------------------------------------------------------------------*\
                        Class burstPolyPatchBase Declaration

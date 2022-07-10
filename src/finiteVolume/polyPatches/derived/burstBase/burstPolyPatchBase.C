@@ -26,6 +26,7 @@ License
 #include "burstPolyPatchBase.H"
 #include "globalMeshData.H"
 #include "noBurstModel.H"
+#include "burstModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

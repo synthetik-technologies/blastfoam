@@ -39,7 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "runTimeSelectionTables.H"
-#include "fvPatchFields.H"
+#include "burstFvPatchFields.H"
 
 
 namespace Foam
@@ -58,9 +58,64 @@ protected:
     //- Is a partial burst used
     bool partialBurst_;
 
+    //- Is the delta across coupled patches used
+    bool useDelta_;
+
     //- Has the patch completely burst
     mutable bool burst_;
 
+    //- Return the patch value
+    template<class Type>
+    tmp<Field<Type>> patchField(const fvPatchField<Type>& pf) const
+    {
+        tmp<Field<Type>> tdelta(new Field<Type>(pf.size(), Zero));
+        Field<Type>& delta = tdelta.ref();
+        if (pf.coupled())
+        {
+            // Unblock the patch so that the coupled
+            // boundary type is used to find the neighbour field
+            if (isA<burstFvPatchFieldBase>(pf))
+            {
+                dynamicCast<const burstFvPatchFieldBase>
+                (
+                    pf
+                ).unblock(true);
+            }
+
+            if (useDelta_)
+            {
+                delta =
+                    mag
+                    (
+                        pf.patchInternalField()
+                    - pf.patchNeighbourField()
+                    );
+            }
+            else
+            {
+                delta =
+                    max
+                    (
+                        pf.patchInternalField(),
+                        pf.patchNeighbourField()
+                    );
+            }
+            
+            if (isA<burstFvPatchFieldBase>(pf))
+            {
+                // Reset the unblock flag
+                dynamicCast<const burstFvPatchFieldBase>
+                (
+                    pf
+                ).unblock(false);
+            }
+        }
+        else 
+        {
+            delta = pf;
+        }
+        return tdelta;
+    }
 
 public:
 

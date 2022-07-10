@@ -190,10 +190,7 @@ void Foam::burstFvPatchBase::update()
         // Reset partially intact faces
         forAll(intact, i)
         {
-            if (intact[i] > 0.01)
-            {
-                intact[i] = 1;
-            }
+            intact[i] = round(intact[i]);
         }
         parent_.update(patch_.index(), intact);
         updateDeltas();

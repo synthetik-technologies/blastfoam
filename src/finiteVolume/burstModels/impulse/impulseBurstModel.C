@@ -76,34 +76,7 @@ bool Foam::burstModels::impulse::update
             mesh.lookupObject<volScalarField>(impulseName_);
         const fvPatchField<scalar>& pimp =
             impulse.boundaryField()[patch.index()];
-        scalarField deltaImp(pimp);
-
-        if (pimp.coupled())
-        {
-            // Unblock the patch so that the coupled
-            // boundary type is used to find the neighbour field
-            if (isA<burstFvPatchFieldBase>(pimp))
-            {
-                dynamicCast<const burstFvPatchFieldBase>
-                (
-                    pimp
-                ).unblock(true);
-            }
-            deltaImp =
-                mag
-                (
-                    pimp.patchInternalField()
-                  - pimp.patchNeighbourField()
-                );
-            if (isA<burstFvPatchFieldBase>(pimp))
-            {
-                // Reset the unblock flag
-                dynamicCast<const burstFvPatchFieldBase>
-                (
-                    pimp
-                ).unblock(false);
-            }
-        }
+        scalarField deltaImp(this->patchField(pimp));
 
         if (partialBurst_)
         {
@@ -111,7 +84,7 @@ bool Foam::burstModels::impulse::update
             {
                 if (deltaImp[facei] > impulseBurst_)
                 {
-                    intact[facei] = 0.0;
+                    intact[facei] = 0;
                     burst = true;
                 }
             }
@@ -129,7 +102,7 @@ bool Foam::burstModels::impulse::update
     {
         WarningInFunction
             << "Could not find " << impulseName_
-            << ", neglecting pressure. " << endl;
+            << ", neglecting impulse. " << endl;
     }
     return returnReduce(burst, orOp<bool>());
 }

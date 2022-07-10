@@ -37,6 +37,7 @@ baffles
             burstModel      pressure;
             partialBurst    yes;
             pBurst          5e6;
+            useDelta        no;
         }
     }
 }
