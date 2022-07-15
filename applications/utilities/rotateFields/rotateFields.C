@@ -40,6 +40,8 @@ Description
 #include "HashSet.H"
 #include "UautoPtr.H"
 #include "genericFvPatchField.H"
+#include "indexedOctree.H"
+#include "treeDataCell.H"
 
 #include "fvMeshRefiner.H"
 #include "errorEstimator.H"
@@ -238,6 +240,7 @@ void mapFields
     const bool store = false
 )
 {
+    Info<< "Mapping fields" << endl;
     IOobjectList objects(sourceMesh, sourceMesh.time().timeName());
 
     mapVolFields<scalar>
@@ -295,6 +298,7 @@ void mapFields
         additionalFields,
         store
     );
+    Info<< endl;
 }
 
 
@@ -356,6 +360,7 @@ Foam::vector calculateCentre(const fvMesh& mesh)
 
 void calcMapAndR
 (
+    const indexedOctree<treeDataCell>& ico,
     const fvMesh& sourceMesh,
     const fvMesh& targetMesh,
     const scalar& maxR,
@@ -368,6 +373,7 @@ void calcMapAndR
     tensorField& R
 )
 {
+    Info<< "Calulating map and rotation tensors" << endl;
     label nSourceD = sourceMesh.nGeometricD();
     vector targetD(targetMesh.geometricD());
 
@@ -409,13 +415,13 @@ void calcMapAndR
         vector ptSource = nSource + sourceCentre;
 
         // Map from the source mesh to the target mesh
-        cellMap[celli] = sourceMesh.findCell(ptSource);
+        cellMap[celli] = ico.findInside(ptSource);
         extendedCellMap[celli] = cellMap[celli];
 
         // Extend radius is the target point is outside of the source mesh
         if (cellMap[celli] < 0)
         {
-            extendedCellMap[celli] = sourceMesh.findNearestCell(ptSource);
+            extendedCellMap[celli] = ico.findNearest(ptSource, great).index();
             if (r < maxR)
             {
                 cellMap[celli] = extendedCellMap[celli];
@@ -443,6 +449,7 @@ void calcMapAndR
         }
         R[celli] = rotationTensor(nSource, nTarget);
     }
+    Info<< endl;
 }
 
 
@@ -547,6 +554,7 @@ void readAllFields(const fvMesh& mesh)
 
 void refine
 (
+    const indexedOctree<treeDataCell>& ico,
     const fvMesh& sourceMesh,
     fvMesh& targetMesh,
     const scalar maxR,
@@ -648,9 +656,9 @@ void refine
         labelList extendedCellMap(targetMesh.nCells(), -1);
         tensorField R(targetMesh.nCells(), tensor::I);
 
-        Info<< "Calulating map and rotation tensors" << endl;
         calcMapAndR
         (
+            ico,
             sourceMesh,
             targetMesh,
             maxR,
@@ -664,7 +672,6 @@ void refine
         );
 
         // Map fields from the source mesh to the target mesh
-        Info<< "Mapping fields" << endl;
         mapFields
         (
             sourceMesh,
@@ -682,6 +689,10 @@ void refine
             lastIter =
                 !refiner->refine(error->error(), error->maxRefinement());
         }
+
+        Info<< "ExecutionTime = " << targetMesh.time().elapsedCpuTime() << " s"
+            << "  ClockTime = " << targetMesh.time().elapsedClockTime() << " s"
+            << nl << endl;
     }
     refiner->write();
 
@@ -762,6 +773,11 @@ int main(int argc, char *argv[])
         "refine",
         "Iteratively map, rotate and refine the mesh"
     );
+    argList::addBoolOption
+    (
+        "tets",
+        "Use cell tet decomposition"
+    );
 
     #include "addRegionOption.H"
 
@@ -838,6 +854,9 @@ int main(int argc, char *argv[])
     );
     setEnv("FOAM_CASE", caseDirOrig, true);
     setEnv("FOAM_CASENAME", caseNameOrig, true);
+
+    const polyMesh::cellDecomposition decompMode =
+        args.optionFound("tets") ? polyMesh::CELL_TETS : polyMesh::FACE_DIAG_TRIS;
 
 //     if (parallelSource)
 //     {
@@ -975,6 +994,26 @@ int main(int argc, char *argv[])
         vector rotationAxis = sourceAxis[1] - targetAxis[1];
         vector rAxis = sourceAxis[0];
 
+        treeBoundBox meshBb(sourceMesh.bounds());
+
+        // Calculate typical cell related size to shift bb by.
+        scalar typDim = meshBb.avgDim()/(2.0*Foam::cbrt(scalar(sourceMesh.nCells())));
+
+        treeBoundBox shiftedBb
+        (
+            meshBb.min(),
+            meshBb.max() + vector(typDim, typDim, typDim)
+        );
+
+        indexedOctree<treeDataCell> ico
+        (
+            treeDataCell(true, sourceMesh, decompMode),
+            shiftedBb,
+            10,         // maxLevel
+            100,        // leafsize
+            10.0        // duplicity
+        );
+
         if (!args.optionFound("refine"))
         {
             Info<< "Source mesh size: " << sourceMesh.nCells() << tab
@@ -985,9 +1024,9 @@ int main(int argc, char *argv[])
             labelList extendedCellMap(targetMesh.nCells(), -1);
             tensorField R(targetMesh.nCells(), tensor::I);
 
-            Info<< "Calulating map and rotation tensors" << endl;
             calcMapAndR
             (
+                ico,
                 sourceMesh,
                 targetMesh,
                 maxR,
@@ -1001,7 +1040,6 @@ int main(int argc, char *argv[])
             );
 
             // Map fields from the source mesh to the target mesh
-            Info<< "Mapping field" << endl;
             mapFields
             (
                 sourceMesh,
@@ -1016,6 +1054,7 @@ int main(int argc, char *argv[])
         {
             refine
             (
+                ico,
                 sourceMesh,
                 targetMesh,
                 maxR,
@@ -1058,6 +1097,10 @@ int main(int argc, char *argv[])
             }
         }
     }
+
+    Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+        << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+        << nl << endl;
 
     Info<< "\nEnd\n" << endl;
 
