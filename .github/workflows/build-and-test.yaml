@@ -72,7 +72,7 @@ jobs:
       - name: Build and Push Image
         uses: synthetik-technologies/actions/composites/docker-build-push@8-add-actions-for-blastfoam
         with:
-          ssh-key-needed: false
+          ssh-key-needed: "false"
           image: blastfoam-dev
           image-registry: ghcr.io/synthetik-technologies
           version: ${{ needs.version.outputs.version }}
