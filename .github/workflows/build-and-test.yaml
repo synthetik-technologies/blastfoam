@@ -70,7 +70,7 @@ jobs:
         with:
           install: true
       - name: Build and Push Image
-        uses: synthetik-technologies/actions/composites/docker-build-push:v1.1.1
+        uses: synthetik-technologies/actions/composites/docker-build-push@v1.1.1
         with:
           image: blastfoam-dev
           image-registry: ghcr.io/synthetik-technologies
