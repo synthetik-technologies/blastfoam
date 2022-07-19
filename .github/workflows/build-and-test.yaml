@@ -69,6 +69,8 @@ jobs:
         uses: docker/setup-buildx-action@v1
         with:
           install: true
+      - name: Set SSH Key
+        uses: webfactory/ssh-agent@v0.5.4
       - name: Build and Push Image
         uses: synthetik-technologies/actions/composites/docker-build-push@v1.1.1
         with:
