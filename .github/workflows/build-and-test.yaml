@@ -65,10 +65,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          install: true
       - name: Build and Push Image
         uses: synthetik-technologies/actions/composites/docker-build-push@8-add-actions-for-blastfoam
         with:
