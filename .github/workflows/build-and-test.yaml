@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Get Short SHA
         id: get-short-sha
-        uses: synthetik-technologies/actions/composites/sha-versioning@v1.1.1
+        uses: synthetik-technologies/actions/composites/sha-versioning@8-add-actions-for-blastfoam
     outputs:
       version: ${{ steps.get-short-sha.outputs.version }}
 
