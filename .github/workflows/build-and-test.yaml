@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ['self-hosted', 'deb', 'openfoam']
+    runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
     defaults:
       run:
@@ -20,10 +20,9 @@ jobs:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
-          path: 'blastfoam-src'
+          path: blastfoam-src
       - name: Build Tar for Cache
-        run: | 
-          tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
+        run: tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
       - name: Check Cache
         id: check-cache
         uses: actions/cache@v3
@@ -39,15 +38,23 @@ jobs:
           name: blastfoam-untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 7
-  
+  version:
+    name: Shorten SHA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Short SHA
+        id: get-short-sha
+        uses: synthetik-technologies/actions/composites/sha-versioning@v1.1.1
+    outputs:
+      version: ${{ steps.get-short-sha.outputs.version }}
+
   build-docker:
     name: Build Docker Image
     needs:
       - build
-    runs-on: 'ubuntu-latest'
+      - version
+    runs-on: "ubuntu-latest"
     steps:
-      - name: Checkout blastFOAM
-        uses: actions/checkout@v3
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
@@ -63,14 +70,11 @@ jobs:
         with:
           install: true
       - name: Build and Push Image
-        uses: docker/build-push-action@v3
+        uses: synthetik-technologies/actions/composites/docker-build-push:v1.1.1
         with:
-          context: .
-          push: true
-          tags: ghcr.io/synthetik-technologies/blastfoam-dev:latest
-          file: docker/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha, mode=max
+          image: blastfoam-dev
+          image-registry: ghcr.io/synthetik-technologies
+          version: ${{ needs.version.outputs.version }}
 
   install-and-validate:
     strategy:
@@ -78,17 +82,17 @@ jobs:
       matrix:
         include:
           - solver: blastFoam
-            validation: 'rateStick'
+            validation: "rateStick"
           - solver: blastFoam
             validation: Sod_shockTube
           - solver: blastFoam
             validation: solidImpact #* uses code templates
           - solver: blastFoam
-            validation: 'Sedov/Sedov_2D'
+            validation: "Sedov/Sedov_2D"
           - solver: blastFoam
-            validation: 'Sedov/Sedov_3D'
+            validation: "Sedov/Sedov_3D"
           - solver: blastFoam
-            validation: 'KingeryBulmash/KingeryBulmash_wedge'
+            validation: "KingeryBulmash/KingeryBulmash_wedge"
           - solver: blastEulerFoam
             validation: shockTube_dilute
           - solver: blastEulerFoam
@@ -107,7 +111,7 @@ jobs:
             tutorial: obliqueShock
           - solver: setRefinedFields
             tutorial: .
-    runs-on: ['self-hosted', 'deb', 'openfoam']
+    runs-on: ["self-hosted", "deb", "openfoam"]
     name: Validate ${{ matrix.solver }} on ${{ matrix.validation }} ${{ matrix.tutorial }}
     needs:
       - build
@@ -122,8 +126,7 @@ jobs:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
-          path:
-            blastfoam-src
+          path: blastfoam-src
       - name: Run ${{ matrix.solver }}
         shell: bash -l {0}
         run: |
