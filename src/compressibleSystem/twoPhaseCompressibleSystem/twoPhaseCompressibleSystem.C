@@ -45,6 +45,20 @@ namespace Foam
 void Foam::twoPhaseCompressibleSystem::setModels()
 {
     compressibleBlastSystem::setModels();
+
+    if (this->found("sigma"))
+    {
+        interfacePtr_.set
+        (
+            new interfaceProperties
+            (
+                alpha1_,
+                alpha2_,
+                U_,
+                *this
+            )
+        );
+    }
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -163,6 +177,11 @@ void Foam::twoPhaseCompressibleSystem::update()
         rhoEPhi_
     );
     thermo_.update();
+
+    if (interfacePtr_.valid())
+    {
+        interfacePtr_->correct();
+    }
 }
 
 
@@ -221,6 +240,20 @@ void Foam::twoPhaseCompressibleSystem::solve()
       - ESource()
       - (rhoU_ & g_)
     );
+
+    if (interfacePtr_.valid())
+    {
+        volVectorField sTF
+        (
+            fvc::reconstruct
+            (
+                interfacePtr_->surfaceTensionForce()
+               *rho_.mesh().magSf()
+            )
+        );
+        deltaRhoU += sTF;
+        deltaRhoE += (U_ & sTF);
+    }
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);
