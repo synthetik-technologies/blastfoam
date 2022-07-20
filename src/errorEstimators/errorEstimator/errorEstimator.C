@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -297,8 +297,8 @@ bool Foam::errorEstimator::writeData(Ostream&) const
         {
             const meshSizeObject& mso = meshSizeObject::New(mesh_);
             const_cast<meshSizeObject&>(mso).movePoints();
-            mso.volDx(mesh_)().write();
-            mso.volDX(mesh_)().write();
+            mso.dx(mesh_)().write();
+            mso.dX(mesh_)().write();
         }
 
         return error_.write();

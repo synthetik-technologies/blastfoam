@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -49,8 +49,12 @@ Foam::errorEstimators::scaledDelta::scaledDelta
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_(dict.lookup("scaledDeltaField")),
-    minVal_(dict.lookupOrDefault<scalar>("minValue", small))
+    fieldName_
+    (
+        dict.lookupBackwardsCompatible({"scaledDeltaField", "field"})
+    ),
+    minVal_(dict.lookupOrDefault<scalar>("minValue", small)),
+    offset_(dict.lookupOrDefault<scalar>("offset", 0.0))
 {
     this->read(dict);
 }
@@ -83,6 +87,10 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
         0.0
     );
     this->getFieldValue(fieldName_, x);
+    if (mag(offset_) > small)
+    {
+        x -= offset_;
+    }
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();

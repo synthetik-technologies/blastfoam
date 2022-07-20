@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -50,7 +50,10 @@ Foam::errorEstimators::Lohner::Lohner
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_(dict.lookup("deltaField")),
+    fieldName_
+    (
+        dict.lookupBackwardsCompatible({"deltaField", "field"})
+    ),
     epsilon_(readScalar(dict.lookup("epsilon")))
 {
     this->read(dict);

@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -48,7 +48,10 @@ Foam::errorEstimators::fieldValue::fieldValue
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_(dict.lookup("fieldName"))
+    fieldName_
+    (
+        dict.lookupBackwardsCompatible({"fieldName", "field"})
+    )
 {
     this->read(dict);
 }
