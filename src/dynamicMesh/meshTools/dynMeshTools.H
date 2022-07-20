@@ -26,10 +26,11 @@ Namespace
     Foam::dynMeshTools
 
 Description
-    Collection of static functions to do various simple mesh related things.
+    Collection of functions to do various modifications to the mesh
 
 SourceFiles
     dynMeshTools.C
+    dynMeshToolsTemplates.C
 
 \*---------------------------------------------------------------------------*/
 

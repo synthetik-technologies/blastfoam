@@ -2,11 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2015-2016 OpenFOAM Foundation
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applies Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -27,10 +27,11 @@ Class
 Description
     Class for handeling the mapping of locations after refinement. This must
     be modified by the mesh refiner due to the fact that determining the group
-    of averaged points that new face cente
+    of averaged points that new face centre
 
 SourceFiles
     locationMapper.C
+    locationMapperTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
