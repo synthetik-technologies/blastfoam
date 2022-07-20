@@ -55,6 +55,9 @@ class fluxScheme
 {
 protected:
 
+    //- Dictionary for fluxScheme
+    const dictionary& dict_;
+
     //- Saved interpolated U field
     tmp<surfaceVectorField> Uf_;
 

@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -39,7 +39,9 @@ namespace fluxSchemes
 
 Foam::fluxSchemes::AUSMPlus::AUSMPlus(const fvMesh& mesh)
 :
-    fluxScheme(mesh)
+    fluxScheme(mesh),
+    alpha_(dict_.lookupOrDefault("alpha", 3.0/16.0)),
+    beta_(dict_.lookupOrDefault("beta", 0.125))
 {}
 
 
@@ -143,28 +145,20 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
 
     this->save(facei, patchi, phi, phi_);
 
-    scalar p;
     if (Ma12 >= 0)
     {
         this->save(facei, patchi, UOwn, Uf_);
-        rhoPhi = rhoOwn;
-        rhoUPhi = rhoOwn*UOwn;
-        rhoEPhi = rhoOwn*HOwn;
-        p = pOwn;
+        rhoPhi = rhoOwn*phi;
+        rhoUPhi = rhoOwn*UOwn*phi + P12*Sf;
+        rhoEPhi = rhoOwn*HOwn*phi + vMesh*magSf*P12;
     }
     else
     {
         this->save(facei, patchi, UNei, Uf_);
-        rhoPhi = rhoNei;
-        rhoUPhi = rhoNei*UNei;
-        rhoEPhi = rhoNei*HNei;
-        p = pNei;
+        rhoPhi = rhoNei*phi;
+        rhoUPhi = rhoNei*UNei*phi + P12*Sf;
+        rhoEPhi = rhoNei*HNei*phi + vMesh*magSf*P12;
     }
-    rhoPhi *= phi;
-    rhoUPhi *= phi;
-    rhoUPhi += P12*Sf;
-    rhoEPhi *= phi;
-    rhoEPhi += vMesh*magSf*p;
 }
 
 

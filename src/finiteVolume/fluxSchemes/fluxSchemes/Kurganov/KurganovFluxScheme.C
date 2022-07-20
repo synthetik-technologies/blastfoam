@@ -381,11 +381,9 @@ Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
     const label facei, const label patchi
 ) const
 {
-    scalar aOwn = getValue(facei, patchi, aOwn_);
-    scalar aNei = getValue(facei, patchi, aNei_);
-    return aOwn*fOwn + aNei*fNei;
-//     scalar f = getValue(facei, patchi, f_);
-//     return f*fOwn + (1.0 - f)*fNei;
+    return
+        getValue(facei, patchi, aOwn_)*fOwn
+      + getValue(facei, patchi, aNei_)*fNei;
 }
 
 // ************************************************************************* //

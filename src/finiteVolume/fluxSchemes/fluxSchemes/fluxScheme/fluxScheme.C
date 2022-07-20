@@ -41,7 +41,8 @@ namespace Foam
 
 Foam::fluxScheme::fluxScheme(const fvMesh& mesh)
 :
-    fluxSchemeBase(mesh)
+    fluxSchemeBase(mesh),
+    dict_(mesh.schemesDict().optionalSubDict("fluxSchemeCoeffs"))
 {}
 
 

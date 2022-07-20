@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -43,7 +43,13 @@ namespace fluxSchemes
 
 Foam::fluxSchemes::AUSMPlusUp::AUSMPlusUp(const fvMesh& mesh)
 :
-    fluxScheme(mesh)
+    fluxScheme(mesh),
+    beta_(dict_.lookupOrDefault("beta", 0.125)),
+    Kp_(dict_.lookupOrDefault("Kp", 0.25)),
+    Ku_(dict_.lookupOrDefault("Ku", 0.75)),
+    sigma_(dict_.lookupOrDefault("sigma", 1.0)),
+    fa_(dict_.lookupOrDefault("fa", 1.0)),
+    alpha_(dict_.lookupOrDefault("alpha", 3.0/16.0*(5.0*sqr(fa_) - 4.0)))
 {}
 
 

@@ -28,9 +28,9 @@ Description
 
     References:
     \verbatim
-        Toro, E.F., Spruce, M., Speares, W.  (1993).
-        Restoration of the contact surface in the HLL-Riemann solver.
-        Shock Waves, 4, 25-34.
+        Roe, P. L.  (1981).
+        Approximate Riemann solvers, parameter vectors, and difference schemes.
+        Journal of Computational Physics, 43(2), 357-372.
     \endverbatim
 
 SourceFiles
