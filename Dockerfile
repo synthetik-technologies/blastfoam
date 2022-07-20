@@ -12,7 +12,7 @@ SHELL [ "/bin/bash", "-c" ]
 ARG DEBIAN_FRONTEND=noninteractive
 COPY --from=openfoam /opt/openfoam9 /opt/openfoam9
 COPY blastfoam_*.deb .
-RUN apt-get update && apt-get install -y gnuplot libopenmpi-dev
+RUN apt-get -q update && apt-get -q install -y gnuplot libopenmpi-dev
 RUN dpkg -i blastfoam_*.deb
 RUN echo "source /opt/openfoam9/etc/bashrc" >> ~/.bashrc \
   && echo "source /opt/blastfoam/etc/bashrc" >> ~/.bashrc \
