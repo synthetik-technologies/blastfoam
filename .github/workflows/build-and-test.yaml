@@ -35,7 +35,7 @@ jobs:
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
         with:
-          name: blastfoam-untested.deb
+          name: blastfoam_untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 7
   version:
@@ -58,7 +58,7 @@ jobs:
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
-          name: blastfoam-untested.deb
+          name: blastfoam_untested.deb
           # path: ${{ github.workspace }}
       - uses: docker/login-action@v2
         with:
@@ -117,7 +117,7 @@ jobs:
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
-          name: blastfoam-untested.deb
+          name: blastfoam_untested.deb
           path: ${{ github.workspace }}
       - name: Install Debian Package
         run: sudo dpkg -i blastfoam_*.deb
