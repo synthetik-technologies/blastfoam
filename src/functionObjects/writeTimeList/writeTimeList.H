@@ -44,7 +44,7 @@ Description
 Usage
     \table
         Property          | Description               | Required | Default
-        time              | List of times to write at |yes
+        times             | List of times to write at |yes
     \endtable
 
 
