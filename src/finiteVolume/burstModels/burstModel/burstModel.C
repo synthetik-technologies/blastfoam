@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -68,7 +68,7 @@ Foam::autoPtr<Foam::burstModel> Foam::burstModel::New
 Foam::burstModel::burstModel(const dictionary& dict)
 :
     partialBurst_(dict.lookup<bool>("partialBurst")),
-    useDelta_(dict.lookup<bool>("useDelta")),
+    useDelta_(dict.lookupOrDefault<bool>("useDelta", true)),
     burst_(false)
 {}
 
