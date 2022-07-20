@@ -59,7 +59,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: blastfoam-untested.deb
-          path: ${{ github.workspace }}
+          # path: ${{ github.workspace }}
       - uses: docker/login-action@v2
         with:
           registry: ghcr.io
