@@ -761,18 +761,12 @@ int main(int argc, char *argv[])
             regions[regionI].dict().lookupOrDefault("level", 0);
     }
 
-    label maxLevel =
-    (
-        levels.size() && !setFieldsDict.found("maxRefinement")
-      ? max(levels)
-      : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
-    );
-
     // Error fields is the same since it is looked up
     autoPtr<errorEstimator> EE;
     if (setFieldsDict.found("errorEstimator"))
     {
         EE = errorEstimator::New(mesh, setFieldsDict);
+        EE->setForce(true);
     }
     else
     {
@@ -793,6 +787,19 @@ int main(int argc, char *argv[])
         errorPtr->store(errorPtr);
     };
     volScalarField& error = mesh.lookupObjectRef<volScalarField>("error");
+
+    label maxLevel =
+    (
+        levels.size() && !setFieldsDict.found("maxRefinement")
+      ? max(levels)
+      : (
+            EE.valid()
+          ? EE->maxLevel()
+          : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
+        )
+    );
+
+
 
     // Maximum number of iterations
     label iter = 0;
