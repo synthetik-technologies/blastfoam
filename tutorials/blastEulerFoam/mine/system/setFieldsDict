@@ -30,7 +30,7 @@ regions
     boxToCell
     {
         level 1;
-        box (-25 -25 -0.1) (25 10 0.1);
+        box (-25 -25 -0.1) (25 0 0.1);
 
         fieldValues
         (
