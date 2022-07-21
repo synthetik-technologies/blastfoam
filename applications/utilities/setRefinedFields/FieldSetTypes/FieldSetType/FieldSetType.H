@@ -96,15 +96,15 @@ protected:
     virtual void setField() = 0;
 
     //- Return the mesh used to construct fields
-    const fvMesh& mesh
+    const fvMesh& getMesh
     (
         const UautoPtr<GeometricField<Type, fvPatchField, volMesh>>&
     ) const;
-    const fvMesh& mesh
+    const fvMesh& getMesh
     (
         const UautoPtr<GeometricField<Type, fvsPatchField, surfaceMesh>>&
     ) const;
-    const pointMesh& mesh
+    const pointMesh& getMesh
     (
         const UautoPtr<GeometricField<Type, pointPatchField, pointMesh>>&
     ) const;
@@ -228,6 +228,12 @@ protected:
         const GeometricField<Type, fvPatchField, volMesh>&
     ) const;
 
+    const fvMesh& getMesh() const
+    {
+        return this->mesh_;
+    }
+
+
 public:
 
     // Constructor
@@ -274,6 +280,11 @@ protected:
         const label,
         const GeometricField<Type, fvsPatchField, surfaceMesh>&
     ) const;
+
+    const fvMesh& getMesh() const
+    {
+        return this->mesh_;
+    }
 
 
 public:
@@ -323,6 +334,10 @@ protected:
         const GeometricField<Type, pointPatchField, pointMesh>&
     ) const;
 
+    const pointMesh& getMesh() const
+    {
+        return pointMesh::New(this->mesh_);
+    }
 
 public:
 

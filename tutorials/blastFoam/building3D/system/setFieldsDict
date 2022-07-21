@@ -38,7 +38,7 @@ regions
         {
             centre (0 0 0.5);
             L (0 0 0.5);
-            radius 0.75;
+            radius 1;
         }
         refineInternal yes;
         level 5;

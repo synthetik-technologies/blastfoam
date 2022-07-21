@@ -17,6 +17,7 @@ FoamFile
 
 fields (alpha.c4);
 nBufferLayers 2;
+balance no;
 
 defaultFieldValues
 (
@@ -26,19 +27,23 @@ defaultFieldValues
 
 regions
 (
-    cylinderToCell // Use cylinder for 3D
+    sphericalMassToCell // Use cylinder for 3D
     {
+        centre (0 0 0.5);
         p1 (0 0 0.25);
         p2 (0 0 0.75);
         radius 0.1;
+        mass 10;
+        rho 1601;
         backup
         {
+            centre (0 0 0.5);
             p1 (0 0 0.0);
             p2 (0 0 1.0);
             radius 0.75;
         }
         refineInternal yes;
-        level 5;
+        level 3;
 
         fieldValues
         (
@@ -46,12 +51,12 @@ regions
         );
     }
 
-    patchToFace // Refine walls
-    {
-        name wall;
-        level 3;
-        refineFaces yes;
-    }
+    // patchToFace // Refine walls
+    // {
+    //     name wall;
+    //     level 3;
+    //     refineFaces yes;
+    // }
 );
 
 

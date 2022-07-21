@@ -250,7 +250,7 @@ Foam::PointFieldSetType<Type>::~PointFieldSetType()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class Patch, class Mesh>
-const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::mesh
+const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::getMesh
 (
     const UautoPtr<GeometricField<Type, fvPatchField, volMesh>>&
 ) const
@@ -260,7 +260,7 @@ const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::mesh
 
 
 template<class Type, template<class> class Patch, class Mesh>
-const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::mesh
+const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::getMesh
 (
     const UautoPtr<GeometricField<Type, fvsPatchField, surfaceMesh>>&
 ) const
@@ -270,7 +270,7 @@ const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::mesh
 
 
 template<class Type, template<class> class Patch, class Mesh>
-const Foam::pointMesh& Foam::FieldSetType<Type, Patch, Mesh>::mesh
+const Foam::pointMesh& Foam::FieldSetType<Type, Patch, Mesh>::getMesh
 (
     const UautoPtr<GeometricField<Type, pointPatchField, pointMesh>>&
 ) const
@@ -315,7 +315,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
     {
         FieldType* fPtr
         (
-            new FieldType(fieldHeader, mesh(fieldPtr_))
+            new FieldType(fieldHeader, getMesh(fieldPtr_))
         );
         fPtr->store(fPtr);
         return &mesh_.lookupObjectRef<FieldType>(fieldName);

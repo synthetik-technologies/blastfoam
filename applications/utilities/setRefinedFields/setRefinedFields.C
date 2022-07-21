@@ -553,6 +553,69 @@ void readAndAddAllFields(const fvMesh& mesh)
     readPointFields<tensor>(mesh, objects);
 }
 
+
+template<class GeoField>
+void correctBoundaries(fvMesh& mesh)
+{
+    HashTable<GeoField*> flds(mesh.lookupClass<GeoField>());
+
+    forAllIter(typename HashTable<GeoField*>, flds, iter)
+    {
+        GeoField& fld = *iter();
+
+        //mimic "evaluate" but only for coupled patches (processor or cyclic)
+        // and only for blocking or nonBlocking comms (no scheduled comms)
+        if
+        (
+            Pstream::defaultCommsType == Pstream::commsTypes::blocking
+         || Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+        )
+        {
+            label nReq = Pstream::nRequests();
+
+            forAll(fld.boundaryField(), patchi)
+            {
+                if (fld.boundaryField()[patchi].coupled())
+                {
+                    fld.boundaryFieldRef()[patchi].initEvaluate
+                    (
+                        Pstream::defaultCommsType
+                    );
+                }
+            }
+
+            // Block for any outstanding requests
+            if
+            (
+                Pstream::parRun()
+             && Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+            )
+            {
+                Pstream::waitRequests(nReq);
+            }
+
+            forAll(fld.boundaryField(), patchi)
+            {
+                if (fld.boundaryField()[patchi].coupled())
+                {
+                    fld.boundaryFieldRef()[patchi].evaluate
+                    (
+                        Pstream::defaultCommsType
+                    );
+                }
+            }
+        }
+        else
+        {
+            //Scheduled patch updates not supported
+            FatalErrorInFunction
+                << "Unsuported communications type "
+                << Pstream::commsTypeNames[Pstream::defaultCommsType]
+                << exit(FatalError);
+        }
+    }
+}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])

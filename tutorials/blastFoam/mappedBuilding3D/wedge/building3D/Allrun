@@ -20,14 +20,9 @@ runApplication decomposePar -copyZero
 runParallel snappyHexMesh -overwrite
 
 # -- Set the initial conditions for the fluid
-for i in 1 2
-do
-    runParallel -s $i rotateFields ../axisymmetricCharge -sourceTime 1e-4 -additionalFields '(rho lambda.c4)'
-
-    runParallel -s $i setRefinedFields -updateAll
-done
-
-runParallel rotateFields ../axisymmetricCharge -sourceTime 1e-4 -additionalFields '(rho lambda.c4)' -uniform
+runParallel rotateFields ../axisymmetricCharge \
+    -sourceTime 1e-4 -additionalFields '(rho lambda.c4)' -uniform \
+    -refine -parallelSource
 
 #- Run the calc
 runParallel $(getApplication)

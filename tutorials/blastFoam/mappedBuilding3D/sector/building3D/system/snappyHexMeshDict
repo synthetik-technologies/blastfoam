@@ -73,17 +73,17 @@ castellatedMeshControls
     {
         walls
         {
-            level (1 1);
+            level (0 0);
             patchInfo { type wall; }
         }
-        cylinder
-        {
-            level (2 2);
-            patchInfo
-            {
-                type patch;
-            }
-        }
+        // cylinder
+        // {
+        //     level (2 2);
+        //     patchInfo
+        //     {
+        //         type patch;
+        //     }
+        // }
     }
 
 

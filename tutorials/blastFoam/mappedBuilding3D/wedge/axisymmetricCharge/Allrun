@@ -10,10 +10,11 @@ paraFoam -builtin -touch
 # -- Create base mesh
 runApplication blockMesh
 
+runApplication decomposePar
 # -- Set the charge
-runApplication setRefinedFields
+runParallel setRefinedFields
 
 # -- Run calculation
-runApplication $(getApplication)
+runParallel $(getApplication)
 
 # ----------------------------------------------------------------- end-of-file

@@ -26,12 +26,6 @@ geometry
         file "building.stl";
         scale 0.001;
     }
-    windows
-    {
-        type searchableBox;
-        min (1.125 -2.375 -1);
-        max (5.875 2.375 3.875);
-    }
 };
 
 castellatedMeshControls
@@ -90,11 +84,6 @@ castellatedMeshControls
 
     refinementRegions
     {
-        windows
-        {
-            mode distance;
-            levels ((0.25 2));
-        }
     }
 
     locationInMesh (0 1 1.5);

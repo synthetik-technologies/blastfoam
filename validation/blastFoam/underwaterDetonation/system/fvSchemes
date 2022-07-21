@@ -15,32 +15,32 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      HLLC;
+fluxScheme              HLLC;
 
 ddtSchemes
 {
-    default         Euler;
-    timeIntegrator  RK2SSP;
+    default             Euler;
+    timeIntegrator      RK2SSP;
 }
 
 gradSchemes
 {
-    default         cellMDLimited Gauss linear 1;
+    default             cellMDLimited Gauss linear 1;
 }
 
 divSchemes
 {
-    default         none;
+    default             none;
 }
 
 laplacianSchemes
 {
-    default         Gauss linear corrected;
+    default             Gauss linear corrected;
 }
 
 interpolationSchemes
 {
-    default             cubic;
+    default             linear;
     reconstruct(alpha)  vanLeer;
     reconstruct(rho)    vanLeer;
     reconstruct(U)      vanLeerV;

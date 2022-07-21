@@ -245,6 +245,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
         0.0
     );
     rho_ == Zero;
+
     forAll(phases_, phasei)
     {
         word phaseIName = phases_[phasei];

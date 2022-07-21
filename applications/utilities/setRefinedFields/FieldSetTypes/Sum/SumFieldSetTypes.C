@@ -44,8 +44,8 @@ using SumVol = Sum<Type, VolFieldSetType>;
 template<class Type>
 using SumSurface = Sum<Type, SurfaceFieldSetType>;
 
-// template<class Type>
-// using SumPoint = Sum<Type, PointFieldSetType>;
+template<class Type>
+using SumPoint = Sum<Type, PointFieldSetType>;
 }
 
 makeFieldSetTypeType(SumVol, scalar, VolFieldSetType);
@@ -60,11 +60,11 @@ makeFieldSetTypeType(SumSurface, sphericalTensor, SurfaceFieldSetType);
 makeFieldSetTypeType(SumSurface, symmTensor, SurfaceFieldSetType);
 makeFieldSetTypeType(SumSurface, tensor, SurfaceFieldSetType);
 
-// makeFieldSetTypeType(SumPoint, scalar, PointFieldSetType);
-// makeFieldSetTypeType(SumPoint, vector, PointFieldSetType);
-// makeFieldSetTypeType(SumPoint, sphericalTensor, PointFieldSetType);
-// makeFieldSetTypeType(SumPoint, symmTensor, PointFieldSetType);
-// makeFieldSetTypeType(SumPoint, tensor, PointFieldSetType);
+makeFieldSetTypeType(SumPoint, scalar, PointFieldSetType);
+makeFieldSetTypeType(SumPoint, vector, PointFieldSetType);
+makeFieldSetTypeType(SumPoint, sphericalTensor, PointFieldSetType);
+makeFieldSetTypeType(SumPoint, symmTensor, PointFieldSetType);
+makeFieldSetTypeType(SumPoint, tensor, PointFieldSetType);
 }
 
 // ************************************************************************* //

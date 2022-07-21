@@ -24,7 +24,7 @@ refineInterval  2;
 
 loadBalance
 {
-    balance yes;
+    balance no;
     balanceInterval 10;
     allowableImbalance 0.15;
     method scotch;

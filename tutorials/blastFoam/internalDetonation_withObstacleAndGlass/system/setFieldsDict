@@ -26,7 +26,7 @@ defaultFieldValues
 
 regions
 (
-    sphereToCell // Use cylinder for 3D
+    sphereToCell
     {
         refineInternal yes;
         level 5;
@@ -45,7 +45,7 @@ regions
             volScalarFieldValue alpha.c4    1
         );
     }
-    boxToCell // Use cylinder for 3D
+    boxToCell
     {
         boxes
         (
@@ -75,7 +75,7 @@ regions
             }
         );
     }
-    boxToPoint // Use cylinder for 3D
+    boxToPoint
     {
         boxes
         (

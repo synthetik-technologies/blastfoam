@@ -38,14 +38,16 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
+limiter quadraticMUSCL Minmod;
+//limiter WENOUpwindFit 6 1;
 interpolationSchemes
 {
-    default             cubic;
-    reconstruct(rho)    vanLeer;
-    reconstruct(U)      vanLeerV;
-    reconstruct(e)      vanLeer;
-    reconstruct(p)      vanLeer;
-    reconstruct(speedOfSound)      vanLeer;
+    default             linear;
+    reconstruct(rho)    $limiter;
+    reconstruct(U)      $limiter;
+    reconstruct(e)      $limiter;
+    reconstruct(p)      $limiter;
+    reconstruct(speedOfSound)      $limiter;
 }
 
 snGradSchemes
@@ -53,5 +55,9 @@ snGradSchemes
     default         corrected;
 }
 
+WENO
+{
+p 6;
+}
 
 // ************************************************************************* //

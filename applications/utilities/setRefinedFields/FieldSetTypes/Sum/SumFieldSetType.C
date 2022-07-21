@@ -82,7 +82,7 @@ Foam::FieldSetTypes::Sum<Type, FSType>::Sum
                         mesh.time().timeName(),
                         mesh
                     ),
-                    mesh,
+                    this->getMesh(),
                     dimensioned<Type>
                     (
                         this->fieldPtr_->dimensions(),
