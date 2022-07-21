@@ -7,7 +7,7 @@
 
 
 
-# blastFoam Version 5.0
+# blastFoam Version 6.0
 
 blastFoam is a library for single and multiphase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
@@ -153,18 +153,18 @@ BiBTex:
 ## User Guide
 To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf).:
 ```
-J. Heylmun, P. Vonk, and T. Brewer, "blastFoam 5.0 User Guide", Synthetik Applied Technologies, LLC., 06-Oct-2020.
+J. Heylmun, P. Vonk, and T. Brewer, "blastFoam 6.0 User Guide", Synthetik Applied Technologies, LLC., 06-Aug-2020.
 ```
 BiBTex:
 ```
 @misc{heylmun_blastfoamguide_2021,
-	title = {{blastFoam version 5.0} {User} {Guide} },
+	title = {{blastFoam version 6.0} {User} {Guide} },
 	url = {https://github.com/synthetik-technologies/blastfoam},
 	language = {English},
 	publisher = {Synthetik Applied Technologies, LLC.},
 	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
-	month = nov,
-	year = {2021}
+	month = aug,
+	year = {2022}
 }
 ```
 
@@ -186,6 +186,24 @@ BiBTex:
 
 
 
+### blastFoam Version 6.0 Release Notes and Features
+blastFoam 6.0 greatly improves the numerics library to include multivariate root finding, minimisation/optimisation, and numerical integration. The equation structure has also been improved and generalised. Lookup tables have also been greatly improved by adding support for mixed order interpolation and more general file readers. 3D lookup tables have also been implemented.
+
+Additional thermodynamic and transport models including power law and  tabulated. Two and multiphase temperature calculations have been expanded to now solve a coupled root finding method that incorperate all phase contributions of energy and density.
+
+Improved and additional refinement methods including polyhedral refinement from foam-extend with the support for 3D, 2D, and 2D axisymmetric refinement with dynamic load balancing.
+
+Improvements for the rotateFields utility now allow for iterative refinement based on the methods provided in dynamicMeshDict.
+
+Burst patches have been added to allow for the breaking of internal faces based on a given criteria.
+
+The setRefinedField utility has been expanded to include the option to set zones and sets based on the given regions.
+
+Time integration now supports restarting of time steps which is useful for FSI cases.
+
+
+### Previous Releases
+
 ### blastFoam Version 5.0 Release Notes and Features
 blastFoam 5.0 greatly improves compatibility of blastFoam thermodynamics with that of standard OpenFOAM. This results in the ability to use most standard OpenFOAM functionObjects and fvModels and constraints. This also includes the ability to compile new combinations of thermodynamic models at run-time. Additional thermodynamic models have been added including ePower, ePolynomial, eTabulated, hPower, hPolynomial, and hTabulated. Additional fluid transport models have been added including polynomial, logPolynomial, sutherland, WLF, and tabulated. Additional sold transport models have been added including exponential and polynomial.
 
@@ -198,9 +216,6 @@ A large selection of numerical methods have also been added including univariate
 New methods to initialize non-uniform fields have been added to the setRefinedFields utility such as calculatedDensity, function, and massIntegrate. New cell set types have also been added and include boxMassToCell, cylindericalMassToCell, and sphericalMassToCell.
 
 Because the output of lagrangian particles is not compatible with the builtin paraview reader, the convertLagrangianPositions utility has been added to convert the standard lagrangian format to one that paraview can read, allowing the viewing of parallel largrangian cases, without the need to reconstruct cases.
-
-
-### Previous Releases
 
 ### blastFoam Version 4.0 Release Notes and Features
 blastFoam 4.0 introduces particle solvers. This includes Eulerian multi-fluid methods (blastEulerFoam), Lagrangian (blastParcelFoam), and possible coupling to OpenQBMM for number-density function transport coupling (blastPbeTransportFoam, blastUncoupledVdfTransportFoam, and blastVdfTransportFoam).
