@@ -39,12 +39,12 @@ laplacianSchemes
 }
 
 limiter quadraticMUSCL Minmod;
-//limiter WENOUpwindFit 6 1;
+limiterV quadraticMUSCL Minmod;
 interpolationSchemes
 {
     default             linear;
     reconstruct(rho)    $limiter;
-    reconstruct(U)      $limiter;
+    reconstruct(U)      $limiterV;
     reconstruct(e)      $limiter;
     reconstruct(p)      $limiter;
     reconstruct(speedOfSound)      $limiter;
@@ -53,11 +53,6 @@ interpolationSchemes
 snGradSchemes
 {
     default         corrected;
-}
-
-WENO
-{
-p 6;
 }
 
 // ************************************************************************* //
