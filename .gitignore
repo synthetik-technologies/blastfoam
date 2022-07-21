@@ -1,41 +1,86 @@
-# Prerequisites
-*.d
+# git-ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# Editor and misc backup files - anywhere
+*~
+.*~
+.*.swp
+*.bak
+*.bak[0-9][0-9]
+\#*\#
 
-# Precompiled Headers
-*.gch
-*.pch
+# File-browser settings - anywhere
+.directory
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+# CVS recovered versions - anywhere
+.#*
 
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
+# Objects and archives - anywhere
+*.[oa]
 *.la
-*.a
-*.lib
+*.so
 
-# Executables
-*.exe
-*.out
-*.app
+# Derived files
+lex.yy.c
 
-\#*
+# Corefiles
+core
 
-# the html preview file
-*.html
+# Dependency files - anywhere
+*.dep
 
-.DS_Store
-darwin64Clang**
-lnInclude**
+# lnInclude (symlink) directories - anywhere
+lnInclude
+
+# Build directories - anywhere
+linux*Clang*/
+linux*Gcc*/
+linux*Icc*/
+solaris*Gcc*/
+SunOS*Gcc*/
+platforms/
+
+# Reinstate wmake/rules that might look like build directories
+!wmake/rules/*/
+
+# doxygen generated documentation
+doc/Doxygen/html
+doc/Doxygen/latex
+doc/Doxygen/man
+doc/Doxygen/DTAGS
+
+# Generated files in the main directory (e.g. ReleaseNotes-?.?.html)
+# and in the doc directory
+/*.html
+/doc/*.html
+
+# Untracked configuration files
+/etc/prefs.csh
+/etc/prefs.sh
+/etc/config.csh/prefs.csh
+/etc/config.sh/prefs.sh
+
+# Source packages - anywhere
+*.tar.bz2
+*.tar.gz
+*.tar
+*.tgz
+*.gtgz
+
+# Ignore the persistent .build tag in the main directory
+/.build
+
+# Ignore .timeStamp in the main directory
+/.timeStamp
+
+# Ignore .tags in the main directory
+/.tags
+
+# Ignore project files in the main directory
+/.cproject
+/.project
+/.dir-locals.el
+/.ycm*
+
+# Ignore the test directory
+/tutorialsTest
