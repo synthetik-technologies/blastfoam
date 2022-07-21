@@ -2,11 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright held by original author
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the

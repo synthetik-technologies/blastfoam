@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,12 +22,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::equation
+    Foam::regEquation
 
 Description
-    Scalar equation with a single input. Derived from both scalarEquation
-    and multivariateEquation so that a scalar equation can be cast in either
-    form.
+    Equation that is registered within a datatbase and includes a runtime
+    selection table
 
 \*---------------------------------------------------------------------------*/
 

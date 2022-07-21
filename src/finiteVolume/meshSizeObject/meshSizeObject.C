@@ -160,7 +160,7 @@ void Foam::meshSizeObject::calcDX() const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::meshSizeObject::volDx
+Foam::tmp<Foam::volScalarField> Foam::meshSizeObject::dx
 (
     const fvMesh& mesh
 ) const
@@ -181,7 +181,7 @@ Foam::tmp<Foam::volScalarField> Foam::meshSizeObject::volDx
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::meshSizeObject::volDX
+Foam::tmp<Foam::volVectorField> Foam::meshSizeObject::dX
 (
     const fvMesh& mesh
 ) const

@@ -2,11 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright held by original author
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -26,17 +26,7 @@ Class
     linSolid
 
 Description
-    Mathematical model where linear geometry is assumed i.e. small strains and
-    small rotations are assumed.
-
-    The stress is calculated by the run-time selectable mechanical law.
-
-    "uns" in the class name refers to the "unstructured" and indicates that
-    the face tangential gradient are calculated using a face-Gauss approach.
-
-Author
-    Zeljko Tukovic, FSB Zagreb.  All rights reserved.
-    Philip Cardiff, UCD.  All rights reserved.
+    Base Class for linear solid models
 
 SourceFiles
     linSolid.C

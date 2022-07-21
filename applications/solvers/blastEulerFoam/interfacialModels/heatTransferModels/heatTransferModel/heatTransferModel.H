@@ -28,6 +28,7 @@ Description
 
 SourceFiles
     heatTransferModel.C
+    heatTransferModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

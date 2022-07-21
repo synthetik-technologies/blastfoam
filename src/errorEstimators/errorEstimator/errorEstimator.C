@@ -88,6 +88,10 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
 
 bool Foam::errorEstimator::updateCurTimeIndex(const bool unset) const
 {
+    if (force_)
+    {
+        return false;
+    }
     if (unset)
     {
         curTimeIndex_--;
@@ -133,6 +137,7 @@ Foam::errorEstimator::errorEstimator
     maxLevel_(-1),
     minDx_(-1),
     refineProbes_(dict.lookupOrDefault("refineProbes", true)),
+    force_(false),
     curTimeIndex_(-1)
 {}
 
@@ -293,7 +298,7 @@ bool Foam::errorEstimator::writeData(Ostream&) const
         }
         maxLevel.write();
 
-        if (minDx_ > 0)
+        // if (minDx_ > 0)
         {
             const meshSizeObject& mso = meshSizeObject::New(mesh_);
             const_cast<meshSizeObject&>(mso).movePoints();

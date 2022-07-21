@@ -26,6 +26,7 @@ Class
 
 SourceFiles
     frictionalStressModel.C
+    frictionalStressModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

@@ -26,7 +26,8 @@ Application
 
 Description
     Multiphase compressible solver that uses Riemann solver to construct
-    hyperbolic fluxes. Phases have unique velocities, internal energies and pressures.
+    hyperbolic fluxes. Phases have unique velocities, internal energies
+    and pressures.
 
 
 \*---------------------------------------------------------------------------*/

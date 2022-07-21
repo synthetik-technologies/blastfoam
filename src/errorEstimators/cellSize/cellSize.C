@@ -43,7 +43,7 @@ const char* Foam::NamedEnum<Foam::errorEstimators::cellSize::SizeType, 4>::names
 {
     "volume",
     "cmpt",
-    "avg",
+    "characteristic",
     "mag"
 };
 
@@ -61,7 +61,7 @@ Foam::errorEstimators::cellSize::cellSize
 )
 :
     errorEstimator(mesh, dict, name),
-    sizeType_(AVG),
+    sizeType_(CHARACTERISTIC),
     cmpts_()
 {
     this->read(dict);
@@ -145,7 +145,7 @@ void Foam::errorEstimators::cellSize::update(const bool scale)
     {
         errorCells = mesh_.V();
     }
-    else if (sizeType_ == AVG)
+    else if (sizeType_ == CHARACTERISTIC)
     {
         errorCells = meshSizeObject::New(mesh_).dx();
     }

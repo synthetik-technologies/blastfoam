@@ -26,6 +26,7 @@ Class
 
 SourceFiles
     packingLimitModel.C
+    packingLimitModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

@@ -34,13 +34,11 @@ fluxSchemes/phaseFluxSchemes/HLLC/HLLCPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Kurganov/KurganovPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
 
-pointPatchFields/derived/fixedSlip/fixedSlipPointPatchFields.C
-
 reconstruction/reconstructionScheme/ReconstructionSchemes.C
 reconstruction/none/NoneReconstructionSchemes.C
 reconstruction/standard/StandardReconstructionSchemes.C
 reconstruction/upwindMUSCL/UpwindMUSCLReconstructionSchemes.C
-reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
+# reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
 reconstruction/quadraticMUSCL/QuadraticMUSCLReconstructionSchemes.C
 
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C
@@ -60,46 +58,35 @@ burstModels/none/noBurstModel.C
 burstModels/pressure/pressureBurstModel.C
 burstModels/impulse/impulseBurstModel.C
 burstModels/pressureImpulse/pressureImpulseBurstModel.C
+burstModels/field/fieldBurstModel.C
 
 polyPatches/derived/burstBase/burstPolyPatchBase.C
 polyPatches/derived/burst/burstPolyPatch.C
 polyPatches/derived/burstCyclic/burstCyclicPolyPatch.C
-polyPatches/derived/burstProcessorCyclic/burstProcessorCyclicPolyPatch.C
 polyPatches/derived/burstCyclicAMI/burstCyclicAMIPolyPatch.C
-polyPatches/derived/burstCyclicACMI/burstCyclicACMIPolyPatch.C
 
 pointPatches/derived/burst/burstPointPatch.C
 pointPatches/derived/burstCyclic/burstCyclicPointPatch.C
-pointPatches/derived/burstProcessorCyclic/burstProcessorCyclicPointPatch.C
 pointPatches/derived/burstCyclicAMI/burstCyclicAMIPointPatch.C
-pointPatches/derived/burstCyclicACMI/burstCyclicACMIPointPatch.C
 
 fvPatches/derived/burstBase/burstFvPatchBase.C
 fvPatches/derived/burst/burstFvPatch.C
 fvPatches/derived/burstCyclic/burstCyclicFvPatch.C
-fvPatches/derived/burstProcessorCyclic/burstProcessorCyclicFvPatch.C
 fvPatches/derived/burstCyclicAMI/burstCyclicAMIFvPatch.C
-fvPatches/derived/burstCyclicACMI/burstCyclicACMIFvPatch.C
 
 fvPatchFields/derived/burstBase/burstFvPatchFieldBase.C
 fvPatchFields/derived/burst/burstFvPatchFields.C
 fvPatchFields/derived/burstCyclic/burstCyclicFvPatchFields.C
-fvPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicFvPatchFields.C
 fvPatchFields/derived/burstCyclicAMI/burstCyclicAMIFvPatchFields.C
-fvPatchFields/derived/burstCyclicACMI/burstCyclicACMIFvPatchFields.C
 
 fvsPatchFields/derived/burst/burstFvsPatchFields.C
 fvsPatchFields/derived/burstCyclic/burstCyclicFvsPatchFields.C
-fvsPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicFvsPatchFields.C
 fvsPatchFields/derived/burstCyclicAMI/burstCyclicAMIFvsPatchFields.C
-fvsPatchFields/derived/burstCyclicACMI/burstCyclicACMIFvsPatchFields.C
 
 pointPatchFields/derived/burstBase/burstPointPatchFieldBase.C
 pointPatchFields/derived/burst/burstPointPatchFields.C
 pointPatchFields/derived/burstCyclic/burstCyclicPointPatchFields.C
-pointPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicPointPatchFields.C
 pointPatchFields/derived/burstCyclicAMI/burstCyclicAMIPointPatchFields.C
-pointPatchFields/derived/burstCyclicACMI/burstCyclicACMIPointPatchFields.C
 
 sets/cellSources/cylinderListToCell/cylinderListToCell.C
 sets/cellSources/sphereListToCell/sphereListToCell.C

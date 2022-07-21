@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-21-10-2019  Jeff Heylmun:   Added refinement to setFields utility
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -24,8 +22,9 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Set values on a selected set of cells/patchfaces through a dictionary and
-    refines using hexRef method.
+    Utility for evaluating and interrogating equations. Equations can either
+    be univariate or multivariate and can either be defined though the
+    command line or through a dictionary.
 
 \*---------------------------------------------------------------------------*/
 
@@ -48,8 +47,6 @@ Description
 #include "CodedMultivariateEquation.H"
 
 #include "Time.H"
-
-
 
 namespace Foam
 {
@@ -818,13 +815,14 @@ int main(int argc, char *argv[])
             );
             forAll(xs, i)
             {
-                Info<<"f(" << print(xs[i]) << ") = "
+                Info<< name << "(" << print(xs[i]) << ") = "
                     << eqn.fX(xs[i], 0) << endl;
                 if (nDerivatives > 0)
                 {
                     scalarList dfdx(xs[i].size());
                     eqn.dfdX(xs[i], 0, dfdx);
-                    Info<<"dfdx(" << print(xs[i]) << ") = " << dfdx << endl;
+                    Info<<"d" << name << "dx(" << print(xs[i]) << ") = "
+                        << dfdx << endl;
                 }
                 Info<< endl;
             }
@@ -844,7 +842,7 @@ int main(int argc, char *argv[])
             (
                 MultivariateIntegrator<scalar>::New(eqn, integrationDict)
             );
-            Info<<"integral from " << bounds[0] << " to " << bounds[1] << " = "
+            Info<<"Integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl
                 << nl << endl;
         }
@@ -899,7 +897,7 @@ int main(int argc, char *argv[])
         if (eqn.name() != "undefined")
         {
             Info<< "************************************" << nl
-                << name << "(x) = " << eqn.name() << nl
+                << name << "(x) = " << eqn.eqnString() << nl
                 << "************************************" << nl
                 << endl;
         }
@@ -915,20 +913,21 @@ int main(int argc, char *argv[])
             List<scalar> xs(readSingleX(evaluationDict.lookup("x")));
             forAll(xs, i)
             {
-                Info<<"f(" << xs[i] << ") = " << eqn.fx(xs[i], 0) << endl;
+                Info<< name << "(" << xs[i] << ") = "
+                    << eqn.fx(xs[i], 0) << endl;
                 if (nDerivatives > 0)
                 {
-                    Info<<"dfdx(" << xs[i] << ") = "
+                    Info<< "d" << name << "dx(" << xs[i] << ") = "
                         << eqn.dfdx(xs[i], 0) << endl;
                 }
                 if (nDerivatives > 1)
                 {
-                    Info<<"d2fdx2(" << xs[i] << ") = "
+                    Info<< "d2" << name << "dx2(" << xs[i] << ") = "
                         << eqn.d2fdx2(xs[i], 0) << endl;
                 }
                 if (nDerivatives > 2)
                 {
-                    Info<<"d3fdx3(" << xs[i] << ") = "
+                    Info<< "d3" << name << "dx3(" << xs[i] << ") = "
                         << eqn.d3fdx3(xs[i], 0) << endl;
                 }
             }
@@ -1003,7 +1002,7 @@ int main(int argc, char *argv[])
             (
                 Integrator<scalar>::New(eqn, dictPtr())
             );
-            Info<<"integral from " << bounds[0] << " to " << bounds[1] << " = "
+            Info<< "Integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl
                 << endl;
         }

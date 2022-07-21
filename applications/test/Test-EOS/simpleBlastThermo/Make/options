@@ -1,4 +1,5 @@
 EXE_INC= \
+    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \

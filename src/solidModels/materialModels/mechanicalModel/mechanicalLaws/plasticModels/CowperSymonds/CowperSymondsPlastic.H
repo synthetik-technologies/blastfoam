@@ -5,8 +5,10 @@
     \\  /    A nd           | For copyright notice see file Copyright
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+31-03-2022 Synthetik Applied Technologies: Added CowperSymondsPlastic
+-------------------------------------------------------------------------------
 License
-    This file is part of foam-extend.
+    This file is a derivative work of foam-extend.
 
     foam-extend is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -25,12 +27,11 @@ Class
     CowperSymondsPlastic
 
 Description
-    Johnson-Cook plastic mechanical law:
-
-        \sigma = (K*[\epsilon + (\frac{E}{K})^{1/(n-1)}]^n*[1 + \dot{\epsilon}/C]^{1/p}*(1 - T^{*n})^m
+    Cowper-Symonds plastic mechanical law.
 
 SourceFiles
     CowperSymondsPlastic.C
+    CowperSymondsPlastics.C
 
 
 \*---------------------------------------------------------------------------*/

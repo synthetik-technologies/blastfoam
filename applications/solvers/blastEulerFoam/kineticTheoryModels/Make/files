@@ -2,13 +2,13 @@ kineticTheoryModel/kineticTheoryModel.C
 kineticTheorySystem/kineticTheorySystem.C
 
 packingLimitModel/packingLimitModel/packingLimitModel.C
-packingLimitModel/packingLimitModel/newPackingLimitModel.C
+packingLimitModel/packingLimitModel/packingLimitModelNew.C
 packingLimitModel/constant/constantPackingLimit.C
 packingLimitModel/FedorsLandel/FedorsLandelPackingLimit.C
 packingLimitModel/YuStandish/YuStandishPackingLimit.C
 
 viscosityModel/viscosityModel/kineticTheoryViscosityModel.C
-viscosityModel/viscosityModel/newKineticTheoryViscosityModel.C
+viscosityModel/viscosityModel/kineticTheoryViscosityModelNew.C
 viscosityModel/Gidaspow/GidaspowViscosity.C
 viscosityModel/Syamlal/SyamlalViscosity.C
 viscosityModel/HrenyaSinclair/HrenyaSinclairViscosity.C
@@ -16,14 +16,14 @@ viscosityModel/Princeton/PrincetonViscosity.C
 viscosityModel/none/noneViscosity.C
 
 conductivityModel/conductivityModel/conductivityModel.C
-conductivityModel/conductivityModel/newConductivityModel.C
+conductivityModel/conductivityModel/conductivityModelNew.C
 conductivityModel/Gidaspow/GidaspowConductivity.C
 conductivityModel/Syamlal/SyamlalConductivity.C
 conductivityModel/Chao/ChaoConductivity.C
 conductivityModel/Princeton/PrincetonConductivity.C
 
 radialModel/radialModel/radialModel.C
-radialModel/radialModel/newRadialModel.C
+radialModel/radialModel/radialModelNew.C
 radialModel/Lebowitz/LebowitzRadial.C
 radialModel/Gao/GaoRadial.C
 radialModel/CarnahanStarling/CarnahanStarlingRadial.C
@@ -31,12 +31,12 @@ radialModel/LunSavage/LunSavageRadial.C
 radialModel/SinclairJackson/SinclairJacksonRadial.C
 
 granularPressureModel/granularPressureModel/granularPressureModel.C
-granularPressureModel/granularPressureModel/newGranularPressureModel.C
+granularPressureModel/granularPressureModel/granularPressureModelNew.C
 granularPressureModel/Lun/LunPressure.C
 granularPressureModel/Huilin/HuilinPressure.C
 
 frictionalStressModel/frictionalStressModel/frictionalStressModel.C
-frictionalStressModel/frictionalStressModel/newFrictionalStressModel.C
+frictionalStressModel/frictionalStressModel/frictionalStressModelNew.C
 frictionalStressModel/JohnsonJackson/JohnsonJacksonFrictionalStress.C
 frictionalStressModel/Schaeffer/SchaefferFrictionalStress.C
 frictionalStressModel/JohnsonJacksonSchaeffer/JohnsonJacksonSchaefferFrictionalStress.C

@@ -1,9 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,7 +22,8 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Simple application to remove zones
+    Simple application to remove zones. Useful for removing the zones created
+    by gmshToFoam
 
 \*---------------------------------------------------------------------------*/
 

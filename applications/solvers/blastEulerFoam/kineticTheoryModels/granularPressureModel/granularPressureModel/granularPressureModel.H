@@ -25,6 +25,7 @@ Class
 
 SourceFiles
     granularPressureModel.C
+    granularPressureModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

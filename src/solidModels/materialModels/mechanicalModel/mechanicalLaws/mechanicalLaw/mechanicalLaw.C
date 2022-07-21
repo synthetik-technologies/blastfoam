@@ -5,8 +5,11 @@
     \\  /    A nd           | For copyright notice see file Copyright
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+31-03-2022 Synthetik Applied Technologies:  Generalized functions and added
+                                            Macros for easier construction
+-------------------------------------------------------------------------------
 License
-    This file is part of foam-extend.
+    This file is a derivative work of foam-extend.
 
     foam-extend is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the

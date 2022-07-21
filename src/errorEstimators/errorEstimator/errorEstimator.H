@@ -89,6 +89,7 @@ protected:
         //- Are probes refined
         Switch refineProbes_;
 
+        bool force_;
         mutable label curTimeIndex_;
 
 
@@ -161,6 +162,12 @@ public:
 
 
     // Member Functions
+
+        //- Force updating
+        void setForce(const bool force = true)
+        {
+            force_ = force;
+        }
 
         //- Update
         virtual void update(const bool scale = true) = 0;

@@ -16,13 +16,13 @@ int main(int argc, char *argv[])
 
     //- Read state parameters
 
-    scalar T = 300.0;
+    scalar T = 300;
 
     autoPtr<simpleBlastThermo> eosPtr(simpleBlastThermo::New(dict));
     simpleBlastThermo& eos = eosPtr();
 
-    scalar p = 1e5;
-    scalar rho = eos.rhoPT(1.0, p, T);//1.225;
+    scalar p = 101325;
+    scalar rho = eos.rhoPT(0.1, p, T);//1.225;
     scalar e = eos.Es(rho, 0, T);
 
 //     label n = 1000;

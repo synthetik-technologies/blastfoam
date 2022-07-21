@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-21-10-2019  Jeff Heylmun:   Added refinement to setFields utility
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -24,8 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Set values on a selected set of cells/patchfaces through a dictionary and
-    refines using hexRef method.
+    Iteratively set fields and refine the mesh based on a given criteria. The
+    default is to check for any differences across a face, but errorEstimators
+    can also be used. Selected sets can also be used to determine refinement
+    zones.
+
+    In addition to uniform values, fields can also be set using the runTime
+    selectable FieldSetTypes which can be used to set non-uniform fields.
+    There is no restriction on the field types that can be set
+    (i.e vol/surface/point and scalar/vector/tensor/...)
+
+    Zones and sets can also be created an modified from the region entries.
 
 \*---------------------------------------------------------------------------*/
 

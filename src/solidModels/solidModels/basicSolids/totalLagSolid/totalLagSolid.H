@@ -2,11 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright held by original author
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -26,18 +26,7 @@ Class
     totalLagSolid
 
 Description
-    Mathematical model for finite strains and rotations, where a total
-    Lagrangian and total displacement approach is employed.
-
-    The stress is calculated by the run-time selectable mechanical law.
-
-    More details in:
-    P. Cardiff, Z. Tukovic, P. De Jaeger, M. Clancy and A. Ivankovic. A
-    Lagrangian cell-centred finite volume method for metal forming simulation,
-    doi=10.1002/nme.5345.
-
-Author
-    Philip Cardiff, UCD.  All rights reserved.
+    Base class for total Lagrangian solid models
 
 SourceFiles
     totalLagSolid.C

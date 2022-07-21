@@ -25,9 +25,11 @@ Class
     Foam::interfacialPressureModel
 
 Description
+    Model for describing interfacial pressure between two phases
 
 SourceFiles
     interfacialPressureModel.C
+    interfacialPressureModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

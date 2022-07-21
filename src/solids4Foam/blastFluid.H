@@ -5,8 +5,11 @@
     \\  /    A nd           | Copyright held by original author
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+31-03-2022 Synthetik Appplied Technologies: Added blastFoam based fluidModel
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the

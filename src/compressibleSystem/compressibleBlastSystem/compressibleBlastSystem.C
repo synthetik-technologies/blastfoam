@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -161,9 +161,6 @@ void Foam::compressibleBlastSystem::postUpdate()
                 e_,
                 this->thermo().Cv()
             );
-
-        // Update internal energy
-        e_ = rhoE_/rho() - 0.5*magSqr(U_);
     }
 
     if (needSolve(U_.name()) || turbulence_.valid())
@@ -199,9 +196,13 @@ void Foam::compressibleBlastSystem::postUpdate()
         constraints().constrain(U_);
 
         rhoU_ = rho()*U_;
+    }
 
-        //- Update internal energy
-        he() = rhoE_/rho() - 0.5*magSqr(U_);
+    //- Update internal energy
+    if (updateE)
+    {
+        e_ = rhoE_/rho() - 0.5*magSqr(U_);
+        e_.correctBoundaryConditions();
     }
 
     // Solve thermal energy diffusion

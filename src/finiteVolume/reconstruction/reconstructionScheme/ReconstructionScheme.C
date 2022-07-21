@@ -84,11 +84,10 @@ Foam::ReconstructionScheme<Type>::New
         ).found(name)
     )
     {
-        //- Default to lookup of density scheme
+        // Default to lookup of density scheme
         if
         (
-            debug
-         || !phi.mesh().schemesDict().subDict
+            !phi.mesh().schemesDict().subDict
             (
                 "interpolationSchemes"
             ).found("reconstruct(rho)")

@@ -30,7 +30,7 @@ Description
 
 SourceFiles
     liftModel.C
-    newLiftModel.C
+    liftModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

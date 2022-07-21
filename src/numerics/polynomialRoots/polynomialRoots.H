@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2012-2019 Alberto Passalacqua
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,20 +22,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::eigenSolver
+    Foam::polynomialRoots
 
 Description
     Solve the roots of a polynomial
-
-Acknowledgments
-    This implementation derives almost completely from TNT/JAMA, a public-domain
-    library developed at NIST, available at http://math.nist.gov/tnt/index.html
-    Their implementation was based upon EISPACK.
-
-    The tridiagonaliseSymmMatrix, symmTridiagQL, Hessemberg and realSchur
-    methods are based on the Algol procedures tred2 by Bowdler, Martin, Reinsch,
-    and Wilkinson, Handbook for Auto. Comp., Vol. II-Linear Algebra, and the
-    corresponding FORTRAN subroutine in EISPACK.
 
 SourceFiles
     polynomialRoots.C
@@ -55,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class eigenSolver Declaration
+                    Class polynomialRoots Declaration
 \*---------------------------------------------------------------------------*/
 
 class polynomialRoots

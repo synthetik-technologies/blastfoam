@@ -59,7 +59,7 @@ public:
     {
         VOLUME,
         CMPT,
-        AVG,
+        CHARACTERISTIC,
         MAG
     };
     static const NamedEnum<SizeType, 4> sizeTypeNames;

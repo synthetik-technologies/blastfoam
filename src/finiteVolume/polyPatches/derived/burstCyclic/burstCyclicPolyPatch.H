@@ -142,6 +142,8 @@ public:
             const label newStart
         ) const
         {
+            OStringStream os;
+            static_cast<const cyclicPolyPatch&>(*this).write(os);
             return autoPtr<polyPatch>
             (
                 new burstCyclicPolyPatch
@@ -151,7 +153,10 @@ public:
                     index,
                     newSize,
                     newStart,
-                    word::null
+                    dictionary
+                    (
+                        (IStringStream(os.str()))()
+                    ).lookupOrDefault<word>("neighbourPatch", word::null)
                 )
             );
         }

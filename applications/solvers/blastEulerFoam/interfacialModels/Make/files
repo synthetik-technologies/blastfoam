@@ -1,5 +1,5 @@
 dragModels/dragModel/dragModel.C
-dragModels/dragModel/newDragModel.C
+dragModels/dragModel/dragModelNew.C
 dragModels/segregated/segregated.C
 dragModels/Ergun/Ergun.C
 dragModels/Gibilaro/Gibilaro.C
@@ -17,14 +17,14 @@ dragModels/IshiiZuber/IshiiZuber.C
 dragModels/dragODE/dragODE.C
 
 heatTransferModels/heatTransferModel/heatTransferModel.C
-heatTransferModels/heatTransferModel/newHeatTransferModel.C
+heatTransferModels/heatTransferModel/heatTransferModelNew.C
 heatTransferModels/sphericalHeatTransfer/sphericalHeatTransfer.C
 heatTransferModels/NuHeatTransfer/NuHeatTransfer.C
 heatTransferModels/noneNu/noneNu.C
 heatTransferModels/RanzMarshall/RanzMarshall.C
 
 heatTransferModels/NusseltNumberModels/NusseltNumberModel/NusseltNumberModel.C
-heatTransferModels/NusseltNumberModels/NusseltNumberModel/newNusseltNumberModel.C
+heatTransferModels/NusseltNumberModels/NusseltNumberModel/NusseltNumberModelNew.C
 heatTransferModels/NusseltNumberModels/constant/constantNusseltNumberModel.C
 heatTransferModels/NusseltNumberModels/sphere/sphereNusseltNumberModel.C
 heatTransferModels/NusseltNumberModels/RanzMarshall/RanzMarshallNusseltNumberModel.C
@@ -33,12 +33,12 @@ heatTransferModels/NusseltNumberModels/duct/ductNusseltNumberModel.C
 heatTransferModels/NusseltNumberModels/GelperinEinstein/GelperinEinsteinNusseltNumberModel.C
 
 swarmCorrections/swarmCorrection/swarmCorrection.C
-swarmCorrections/swarmCorrection/newSwarmCorrection.C
+swarmCorrections/swarmCorrection/swarmCorrectionNew.C
 swarmCorrections/noSwarm/noSwarm.C
 swarmCorrections/TomiyamaSwarm/TomiyamaSwarm.C
 
 liftModels/liftModel/liftModel.C
-liftModels/liftModel/newLiftModel.C
+liftModels/liftModel/liftModelNew.C
 liftModels/noLift/noLift.C
 liftModels/constantLiftCoefficient/constantLiftCoefficient.C
 liftModels/Moraga/Moraga.C
@@ -46,32 +46,32 @@ liftModels/LegendreMagnaudet/LegendreMagnaudet.C
 liftModels/TomiyamaLift/TomiyamaLift.C
 
 virtualMassModels/virtualMassModel/virtualMassModel.C
-virtualMassModels/virtualMassModel/newVirtualMassModel.C
+virtualMassModels/virtualMassModel/virtualMassModelNew.C
 virtualMassModels/noVirtualMass/noVirtualMass.C
 virtualMassModels/constantVirtualMassCoefficient/constantVirtualMassCoefficient.C
 virtualMassModels/Lamb/Lamb.C
 virtualMassModels/Zuber/Zuber.C
 
 wallLubricationModels/wallLubricationModel/wallLubricationModel.C
-wallLubricationModels/wallLubricationModel/newWallLubricationModel.C
+wallLubricationModels/wallLubricationModel/wallLubricationModelNew.C
 wallLubricationModels/noWallLubrication/noWallLubrication.C
 wallLubricationModels/Antal/Antal.C
 wallLubricationModels/Frank/Frank.C
 wallLubricationModels/TomiyamaWallLubrication/TomiyamaWallLubrication.C
 
 turbulentDispersionModels/turbulentDispersionModel/turbulentDispersionModel.C
-turbulentDispersionModels/turbulentDispersionModel/newTurbulentDispersionModel.C
+turbulentDispersionModels/turbulentDispersionModel/turbulentDispersionModelNew.C
 turbulentDispersionModels/noTurbulentDispersion/noTurbulentDispersion.C
 turbulentDispersionModels/Davidson/Davidson.C
 turbulentDispersionModels/Panicker/Panicker.C
 
 massTransferModels/massTransferModel/massTransferModel.C
-massTransferModels/massTransferModel/newMassTransferModel.C
+massTransferModels/massTransferModel/massTransferModelNew.C
 massTransferModels/noMassTransfer/noMassTransfer.C
 massTransferModels/reactingParticleMassTransfer/reactingParticleMassTransfer.C
 
 aspectRatioModels/aspectRatioModel/aspectRatioModel.C
-aspectRatioModels/aspectRatioModel/newAspectRatioModel.C
+aspectRatioModels/aspectRatioModel/aspectRatioModelNew.C
 aspectRatioModels/constantAspectRatio/constantAspectRatio.C
 aspectRatioModels/TomiyamaAspectRatio/TomiyamaAspectRatio.C
 aspectRatioModels/VakhrushevEfremov/VakhrushevEfremov.C
@@ -80,20 +80,19 @@ aspectRatioModels/Wellek/Wellek.C
 wallDependentModel/wallDependentModel.C
 
 interfacialPressure/interfacialPressure/interfacialPressureModel.C
-interfacialPressure/interfacialPressure/newInterfacialPressureModel.C
+interfacialPressure/interfacialPressure/interfacialPressureModelNew.C
 interfacialPressure/single/singleInterfacialPressureModel.C
 interfacialPressure/volumeAveraged/volumeAveragedInterfacialPressureModel.C
 interfacialPressure/totalPressure/totalPressureInterfacialPressureModel.C
 
 interfacialVelocity/interfacialVelocity/interfacialVelocityModel.C
-interfacialVelocity/interfacialVelocity/newInterfacialVelocityModel.C
+interfacialVelocity/interfacialVelocity/interfacialVelocityModelNew.C
 interfacialVelocity/single/singleInterfacialVelocityModel.C
 interfacialVelocity/massAveraged/massAveragedInterfacialVelocityModel.C
 
 pressureRelaxationModels/pressureRelaxationModel/pressureRelaxationModel.C
-pressureRelaxationModels/pressureRelaxationModel/newPressureRelaxationModel.C
+pressureRelaxationModels/pressureRelaxationModel/pressureRelaxationModelNew.C
 pressureRelaxationModels/constant/constantPressureRelaxationModel.C
-
 pressureRelaxationModels/pressureRelaxationSolver/pressureRelaxationSolver.C
 pressureRelaxationModels/pressureRelaxationODE/pressureRelaxationODE.C
 pressureRelaxationModels/instantPressureRelaxation/instantPressureRelaxation.C

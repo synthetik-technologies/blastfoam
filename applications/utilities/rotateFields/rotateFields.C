@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-10-29-2020 Jeff Heylmun     | Specialized mapFields to rotate axisymmetric cases
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | SYnthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -27,8 +25,10 @@ Application
     rotateFields
 
 Description
-    Rotate mesh and fields from 1-D to 2-D or 2-D to 3-D. Only for
-    axisymmetric cases. Mapping from parallel cases is not currently supported
+    Rotate fields from 1-D to 2-D or 2-D to 3-D. Only for
+    axisymmetric cases. Currently mapping is not conservative so only the
+    nearest cell value (based on cell centres) will be used. Optionally,
+    refinement can be used.
 
 \*---------------------------------------------------------------------------*/
 
@@ -662,6 +662,7 @@ void refine
     (
         errorEstimator::New(targetMesh, refineDict)
     );
+    error->setForce(true);
     autoPtr<fvMeshRefiner> refiner
     (
         fvMeshRefiner::New

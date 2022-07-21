@@ -5,8 +5,10 @@
     \\  /    A nd           | For copyright notice see file Copyright
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+31-03-2022 Synthetik Applied Technologies: Added base plasticModel
+-------------------------------------------------------------------------------
 License
-    This file is part of foam-extend.
+    This file is a derivative work of foam-extend.
 
     foam-extend is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -22,32 +24,14 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    neoHookeanElasticMisesPlastic
+    nonLinearPlasticModel
 
 Description
-    Hyper-elasto-plastic mechanical law as described by Simo & Hughes (1998)
-    in Box 9.1.
-
-    Neo-Hookean elasticity with Mises/J2 plasticity.
-
-    For elastic parameters, the user can specify:
-        - Young's modulus (E) and Poisson's ratio (nu)
-    or
-        - Shear modulus (mu) and bulk modulus (K)
-
-    More details found in:
-
-    Simo & Hughes, Computational Inelasticity, 1998, Springer.
-
-    P. Cardiff, Z. Tukovic, P. De Jaeger, M. Clancy and A. Ivankovic. A
-    Lagrangian cell-centred finite volume method for metal forming simulation,
-    doi=10.1002/nme.5345.
+    Base class for plastic models with nonLinear-elastic strain
 
 SourceFiles
-    nonLinearPlastic.C
-
-Author
-    Philip Cardiff, UCD. All rights reserved.
+    nonLinearPlasticModel.C
+    nonLinearPlasticModelTemplates.C
 
 \*---------------------------------------------------------------------------*/
 

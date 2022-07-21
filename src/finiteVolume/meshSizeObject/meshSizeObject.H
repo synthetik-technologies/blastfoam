@@ -115,10 +115,10 @@ public:
         }
 
         //- Return the mesh size as a volScalarField
-        tmp<volScalarField> volDx(const fvMesh&) const;
+        tmp<volScalarField> dx(const fvMesh&) const;
 
         //- Return the mesh size as a volVectorField
-        tmp<volVectorField> volDX(const fvMesh&) const;
+        tmp<volVectorField> dX(const fvMesh&) const;
 
         virtual bool writeData(Ostream&) const
         {
