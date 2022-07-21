@@ -10,7 +10,9 @@ paraFoam -builtin -touch
 # -- Create base mesh
 runApplication blockMesh
 
+# -- Decompose the case
 runApplication decomposePar
+
 # -- Set the charge
 runParallel setRefinedFields
 

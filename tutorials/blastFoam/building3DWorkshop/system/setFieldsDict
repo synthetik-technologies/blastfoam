@@ -17,7 +17,6 @@ FoamFile
 
 fields (alpha.c4);
 nBufferLayers 2;
-balance no;
 
 defaultFieldValues
 (
