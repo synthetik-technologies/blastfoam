@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "multicomponentBlastThermo.H"
+#include "thermophysicalTransportModel.H"
 #include "fvc.H"
 #include "fvm.H"
 
@@ -262,7 +263,12 @@ void Foam::multicomponentBlastThermo::solve()
 void Foam::multicomponentBlastThermo::postUpdate()
 {
     integratorPtr_->postUpdate();
-    if (species_.size())
+    if (!species_.size())
+    {
+        return;
+    }
+
+    if (phaseName_ != word::null)
     {
         tmp<volScalarField> tYt
         (
@@ -291,6 +297,10 @@ void Foam::multicomponentBlastThermo::postUpdate()
             Y_[i] /= Yt;
             Y_[i].correctBoundaryConditions();
         }
+    }
+    else
+    {
+        this->normalise();
     }
 }
 
@@ -359,11 +369,6 @@ void Foam::multicomponentBlastThermo::integrator::solve()
     {
         if (active_[i])
         {
-            volScalarField YOld(Y_[i]);
-
-            // Not conservative, but alphaRhoYi is
-            this->storeAndBlendOld(YOld, false);
-
             volScalarField deltaAlphaRhoY
             (
                 fvc::div
@@ -374,19 +379,20 @@ void Foam::multicomponentBlastThermo::integrator::solve()
                 )
               - massTransferRates_[i]
             );
+
+            // Not conservative, but alphaRhoYi is
+            this->storeAndBlendOld(Y_[i], false);
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
             Y_[i] =
                 (
-                    alphaRho_.prevIter()*YOld - dT*deltaAlphaRhoY
+                    alphaRho_.prevIter()*Y_[i] - dT*deltaAlphaRhoY
                 )/max(residualAlphaRho, alphaRho_);
             Y_[i].max(0.0);
             Y_[i].correctBoundaryConditions();
 
-
-
             // Clear mass transfer after adding
-            massTransferRates_[i] = Zero;
+            massTransferRates_[i] == Zero;
         }
     }
 }
@@ -396,6 +402,26 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
 {
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
 
+    bool isPhase = alphaRho_.group() != word::null;
+
+    UautoPtr<const thermophysicalTransportModel> thermophysicalTransportPtr;
+    if
+    (
+        mesh_.foundObject<thermophysicalTransportModel>
+        (
+            IOobject::groupName("thermophysicalTransport", alphaRho_.group())
+        )
+    )
+    {
+        thermophysicalTransportPtr.set
+        (
+            &mesh_.lookupObject<thermophysicalTransportModel>
+            (
+                IOobject::groupName("thermophysicalTransport", alphaRho_.group())
+            )
+        );
+    }
+
     forAll(Y_, i)
     {
         volScalarField& Yi(Y_[i]);
@@ -403,8 +429,12 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
         bool needUpdate =
             (
                 active_[i]
-            && implicitSources_.PtrList<fvScalarMatrix>::set(i)
+             && (
+                    implicitSources_.PtrList<fvScalarMatrix>::set(i)
+                 || thermophysicalTransportPtr.valid()
+                )
             )
+
          || this->needSolve(Yi.name());
 
         if (needUpdate)
@@ -413,18 +443,26 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
             (
                 fvm::ddt(alphaRho_, Yi)
               - fvc::ddt(alphaRho_, Yi)
-              + fvc::ddt(residualAlphaRho, Yi)
-              - fvm::ddt(residualAlphaRho, Yi)
              ==
                 models().source(alphaRho_, Yi)
             );
+            if (isPhase)
+            {
+                YEqn +=
+                    fvc::ddt(residualAlphaRho, Yi)
+                  - fvm::ddt(residualAlphaRho, Yi);
+            }
+
             if (implicitSources_.PtrList<fvScalarMatrix>::set(i))
             {
                 YEqn -= implicitSources_[i];
                 implicitSources_[i].negate();
             }
 
-            YEqn.relax();
+            if (thermophysicalTransportPtr.valid())
+            {
+                YEqn -= thermophysicalTransportPtr->divj(Yi);
+            }
 
             constraints().constrain(YEqn);
             YEqn.solve("Yi");

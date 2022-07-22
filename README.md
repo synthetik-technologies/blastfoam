@@ -197,7 +197,7 @@ Improvements for the rotateFields utility now allow for iterative refinement bas
 
 Burst patches have been added to allow for the breaking of internal faces based on a given criteria.
 
-The setRefinedField utility has been expanded to include the option to set zones and sets based on the given regions.
+The setRefinedField utility has been expanded to include the option to set zones and sets based on the given regions. All field types are now able to be set using defaultValues and regions.
 
 Time integration now supports restarting of time steps which is useful for FSI cases.
 

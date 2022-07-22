@@ -171,9 +171,9 @@ void Foam::reactingCompressibleSystem::solve()
                 (
                     fvc::div(fluxScheme_->interpolate(Ys[i], "Yi")*rhoPhi_)
                 );
-                this->storeAndBlendDelta(deltaRhoY);
 
-                this->storeAndBlendOld(Ys[i]);
+                this->storeAndBlendOld(Ys[i], false);
+                this->storeAndBlendDelta(deltaRhoY);
 
                 Ys[i] = (Ys[i]*rho_.prevIter() - dT*deltaRhoY)/rho_;
                 Ys[i].correctBoundaryConditions();
@@ -237,7 +237,6 @@ void Foam::reactingCompressibleSystem::postUpdate()
         eEqn -= reaction_->Qdot();
 
         PtrList<volScalarField>& Y = composition.Y();
-        volScalarField Yt(0.0*Y[0]);
         forAll(Y, i)
         {
             if (composition.solve(i))
@@ -258,7 +257,6 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 constraints().constrain(Yi);
 
                 Yi.max(0.0);
-                Yt += Yi;
             }
         }
         composition.normalise();

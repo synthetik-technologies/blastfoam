@@ -229,14 +229,14 @@ void Foam::compressibleBlastSystem::postUpdate()
         rhoE_ = rho()*(e_ + 0.5*magSqr(U_));
     }
 
+    this->thermo().postUpdate();
+    this->thermo().correct();
+    constraints().constrain(p_);
+
     if (turbulence_.valid())
     {
         turbulence_->correct();
     }
-
-    this->thermo().postUpdate();
-    this->thermo().correct();
-    constraints().constrain(p_);
 }
 
 
