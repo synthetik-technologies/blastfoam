@@ -68,16 +68,16 @@ Foam::autoPtr<Foam::burstModel> Foam::burstModel::New
 Foam::burstModel::burstModel(const dictionary& dict)
 :
     partialBurst_(dict.lookup<bool>("partialBurst")),
-    burst_(false),
-    useDelta_(dict.lookupOrDefault<bool>("useDelta", true))
+    useDelta_(dict.lookupOrDefault<bool>("useDelta", true)),
+    burst_(false)
 {}
 
 
 Foam::burstModel::burstModel()
 :
     partialBurst_(false),
-    burst_(false),
-    useDelta_(true)
+    useDelta_(true),
+    burst_(false)
 {}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

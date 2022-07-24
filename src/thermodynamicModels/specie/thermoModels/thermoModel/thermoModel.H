@@ -178,6 +178,14 @@ public:
             const scalar T
         ) const;
 
+        //- Return derivative of pressure w.r.t temperature
+        inline scalar dpdT
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
         //- Return speed of sound
         inline scalar cSqr
         (

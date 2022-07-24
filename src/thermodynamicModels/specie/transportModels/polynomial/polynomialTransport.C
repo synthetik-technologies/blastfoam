@@ -57,7 +57,7 @@ Foam::polynomialTransport<Thermo, PolySize>::polynomialTransport
 template<class Thermo, int PolySize>
 void Foam::polynomialTransport<Thermo, PolySize>::write(Ostream& os) const
 {
-    os  << this->specieName() << endl;
+    os  << this->name() << endl;
     os  << token::BEGIN_BLOCK << incrIndent << nl;
 
     Thermo::write(os);

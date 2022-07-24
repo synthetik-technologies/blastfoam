@@ -9,7 +9,7 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    object      basicPhaseFluidBlastThermo;
+    object      reactingFluidBlastThermo;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -20,8 +20,6 @@ transport
     polynomial
     logPolynomial
     WLF
-    icoTabulated
-    tabulated
 );
 
 thermo
@@ -30,12 +28,8 @@ thermo
     hConst
     ePower
     ePolynomial
-    eIcoTabulated
-    eTabulated
     hPower
     hPolynomial
-    hIcoTabulated
-    hTabulated
     janaf
 );
 
@@ -43,25 +37,9 @@ equationOfState
 (
     perfectGas
     AbelNobel
-    JWLC
-    idealGas
-    stiffenedGas
-    vanderWaals
-    JWL
-    LSZK
     BKW
-    DoanNickel
-    CochranChan
-    Murnaghan
-    BirchMurnaghan2
-    BirchMurnaghan3
-    solidJWL
-    Tait
-    BWR
-    linearTillotson
-    Tillotson
-    tabulatedEOS
     VanderWaals
+    PengRobinson
 );
 
 specie
@@ -72,10 +50,14 @@ specie
 codeOptions
 #{
 EXE_INC = \
+    -DFULLDEBUG -g -O0 \
+    -I$(LIB_SRC)/ODE/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/thermophysicalProperties/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/reactionThermo/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude

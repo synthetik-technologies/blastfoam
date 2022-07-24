@@ -79,7 +79,7 @@ public:
     {}
 
     //- Return the number of derivatives
-    virtual label nDerivatives() const
+    inline label nDerivatives() const
     {
         return 1;
     }
@@ -98,17 +98,91 @@ public:
     }
 
     //- Return the difference between the calulcated pressure and the current
-    virtual scalar fx(const scalar e, const label li) const
+    inline scalar fx(const scalar e, const label li) const
     {
         (*e_)[li] = e;
         return thermo_.cellpRhoT(li, false) - p_;
     }
 
     //- Return the derivative of pressure w.r.t. energy
-    virtual scalar dfdx(const scalar e, const label li) const
+    inline scalar dfdx(const scalar e, const label li) const
     {
         (*e_)[li] = e;
         return thermo_.celldpde(li);
+    }
+};
+
+
+/*---------------------------------------------------------------------------*\
+                        Class fluidTEquation Declaration
+\*---------------------------------------------------------------------------*/
+
+class fluidTEquation
+:
+    public ScalarEquation
+{
+    //- Constant reference to the fluidBlastThermo
+    const fluidBlastThermo& thermo_;
+
+    //- Non-constant reference to the temperature
+    //  A pointer is used so it can be mutable
+    mutable volScalarField* e_;
+    mutable volScalarField* T_;
+
+    //- Saved old temperature
+    scalar eOld_;
+    scalar TOld_;
+
+    //- Current pressure
+    scalar p_;
+
+public:
+    fluidTEquation(fluidBlastThermo& thermo)
+    :
+        ScalarEquation(-great, great),
+        thermo_(thermo),
+        e_(&thermo.he()),
+        T_(&thermo.T()),
+        eOld_(0.0),
+        TOld_(0.0),
+        p_(0.0)
+    {}
+
+    //- Return the number of derivatives
+    inline label nDerivatives() const
+    {
+        return 1;
+    }
+
+    // Save the old energy
+    void save(const scalar p, const label li)
+    {
+        TOld_ = (*T_)[li];
+        eOld_ = (*e_)[li];
+        p_ = p;
+    }
+
+    // Revert to the old energy
+    void reset(const label li)
+    {
+        (*T_)[li] = TOld_;
+        (*e_)[li] = eOld_;
+    }
+
+    //- Return the difference between the calulcated pressure and the current
+    inline scalar fx(const scalar T, const label li) const
+    {
+        (*T_)[li] = T;
+        (*e_)[li] = thermo_.cellHE(T, li);
+        return thermo_.cellpRhoT(li, false) - p_;
+    }
+
+    //- Return the derivative of pressure w.r.t. energy
+    inline scalar dfdx(const scalar T, const label li) const
+    {
+        (*T_)[li] = T;
+        (*e_)[li] = thermo_.cellHE(T, li);
+        return thermo_.celldpdT(li);
     }
 };
 
@@ -145,7 +219,7 @@ public:
     {}
 
     //- Return the number of derivatives
-    virtual label nDerivatives() const
+    inline label nDerivatives() const
     {
         return 1;
     }
@@ -164,7 +238,7 @@ public:
 
     //- Return the difference between the calculated internal energy and the
     //  current
-    virtual scalar fx(const scalar T, const label li) const
+    inline scalar fx(const scalar T, const label li) const
     {
         return
             patchi_ == -1
@@ -174,7 +248,7 @@ public:
     }
 
     //- Return the derivative of temperature w.r.t. internal energy
-    virtual scalar dfdx(const scalar T, const label li) const
+    inline scalar dfdx(const scalar T, const label li) const
     {
         return
             patchi_ == -1

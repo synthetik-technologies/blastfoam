@@ -80,16 +80,12 @@ class twoPhaseFluidBlastThermo
         //- Equation of state for phase 2
         autoPtr<phaseFluidBlastThermo> thermo2_;
 
-        //- Energy equation
-        mutable fluidEEquation EEqn_;
+        //- Solve temperature given pressure
+        mutable fluidTEquation TEqn_;
+        autoPtr<univariateRootSolver> TSolver_;
 
-        //- Root solver for the energy Equation
-        autoPtr<univariateRootSolver> ESolver_;
-
-        //- Energy equation
+        //- Solve temperature given interneral energy
         mutable THEEquation THEEqn_;
-
-        //- Root solver for the energy Equation
         autoPtr<univariateRootSolver> THESolver_;
 
 
@@ -203,6 +199,15 @@ public:
 
             //- Derivative of pressure w.r.t internal energy for cell
             virtual scalar celldpde(const label celli) const;
+
+            //- Derivative of pressure w.r.t temperature for cell
+            virtual scalar celldpdT(const label celli) const;
+
+            //- Is the equation of state temperature based
+            virtual bool temperatureBased() const
+            {
+                return thermo1_->temperatureBased();
+            }
 
             //- Recompute the density
             virtual void updateRho(const volScalarField&);

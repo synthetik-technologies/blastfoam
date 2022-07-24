@@ -176,8 +176,8 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     thermos_(phases_.size()),
     alphaRhos_(phases_.size()),
     sumVfPtr_(nullptr),
-    EEqn_(*this),
-    ESolver_(nullptr),
+    TEqn_(*this),
+    TSolver_(nullptr),
     THEEqn_(*this, this->TLow_),
     THESolver_(nullptr)
 
@@ -186,7 +186,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     if (dict.isDict("eSolverCoeffs"))
     {
         const dictionary& eDict(dict.subDict("eSolverCoeffs"));
-        ESolver_ =
+        TSolver_ =
             univariateRootSolver::New
             (
                 eDict.lookupOrDefault
@@ -194,17 +194,17 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
                     "solver",
                     NewtonRaphsonUnivariateRootSolver::typeName
                 ),
-                EEqn_,
+                TEqn_,
                 eDict
             );
     }
     else
     {
-        ESolver_ =
+        TSolver_ =
             univariateRootSolver::New
             (
                 NewtonRaphsonUnivariateRootSolver::typeName,
-                EEqn_,
+                TEqn_,
                 dict
             );
     }
@@ -418,20 +418,17 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
 {
     tmp<volScalarField> eInitTmp(volScalarField::New("eInit", e_));
     volScalarField& eInit(eInitTmp.ref());
-    volScalarField& e(const_cast<volScalarField&>(e_));
 
     forAll(eInit, celli)
     {
-        if (mag(celldpde(celli)) < small)
+        scalar Tinit = this->T_[celli];
+        if (mag(celldpdT(celli)) > small)
         {
-            eInit[celli] = cellHE(T_[celli], celli);
+            TEqn_.save(p[celli], celli);
+            Tinit = TSolver_->solve(T_[celli], celli);
+            TEqn_.reset(celli);
         }
-        else
-        {
-            EEqn_.save(this->p_[celli], celli);
-            eInit[celli] = ESolver_->solve(e[celli], celli);
-            EEqn_.reset(celli);
-        }
+        eInit[celli] = cellHE(Tinit, celli);
     }
     forAll(volumeFractions_, phasei)
     {
@@ -448,18 +445,14 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::calcCelle
     const label celli
 ) const
 {
-    scalar e;
-    if (mag(celldpde(celli)) < small)
+    scalar Tinit = this->T_[celli];
+    if (mag(celldpdT(celli)) > small)
     {
-        e = cellHE(T_[celli], celli);
+        TEqn_.save(p, celli);
+        Tinit = TSolver_->solve(T_[celli], celli);
+        TEqn_.reset(celli);
     }
-    else
-    {
-        EEqn_.save(p, celli);
-        e = ESolver_->solve(this->e_[celli], celli);
-        EEqn_.reset(celli);
-    }
-    return e;
+    return cellHE(Tinit, celli);
 }
 
 
@@ -531,6 +524,23 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::celldpde(const label celli) const
     return dpde/max(rGamma, residualAlpha_.value());
 }
 
+
+Foam::scalar Foam::multiphaseFluidBlastThermo::celldpdT(const label celli) const
+{
+    scalar rGamma = 0.0;
+    scalar dpdT = 0.0;
+    forAll(thermos_, phasei)
+    {
+        scalar alphai(volumeFractions_[phasei][celli]);
+        if (alphai > residualAlpha_.value())
+        {
+            scalar Xi(alphai/(thermos_[phasei].cellGamma(celli) - 1.0));
+            rGamma += Xi;
+            dpdT += Xi*thermos_[phasei].celldpdT(celli);
+        }
+    }
+    return dpdT/max(rGamma, residualAlpha_.value());
+}
 
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseFluidBlastThermo::he

@@ -219,6 +219,22 @@ Foam::scalar Foam::thermoModel<ThermoType>::dpde
 
 
 template<class ThermoType>
+Foam::scalar Foam::thermoModel<ThermoType>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (ThermoType::temperatureBased())
+    {
+        return ThermoType::dpdT(rho, e, T);
+    }
+    return ThermoType::dpde(rho, e, T)*ThermoType::Cv(rho, e, T);
+}
+
+
+template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::cSqr
 (
     const scalar p,
@@ -535,32 +551,40 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
     if (ThermoType::temperatureBased())
     {
-        return Eest;
+        if (mag(ThermoType::dpdT(rho, e, T)) < small)
+        {
+            return Eest;
+        }
     }
-
-    if (mag(ThermoType::dpde(rho, e, T)) < small)
+    else
     {
-        return Eest;
+        if (mag(ThermoType::dpde(rho, e, T)) < small)
+        {
+            return Eest;
+        }
     }
 
     scalar Enew = Eest;
     scalar pNew;
+    scalar Test = T;
     int    iter = 0;
     do
     {
         Eest = Enew;
-        pNew = ThermoType::p(rho, Eest, T, false); // Do not limit p
-        Enew -=
-            (pNew - p)/stabilise(ThermoType::dpde(rho, Eest, T), small);
-
-        if (iter++ > 100)
+        pNew = ThermoType::p(rho, Eest, Test, false); // Do not limit p
+        Enew -= (pNew - p)/stabilise(dpde(rho, Eest, T), small);
+        if (ThermoType::temperatureBased())
+        {
+            Test = TRhoE(Test, rho, Enew);
+        }
+        if (iter++ > maxIter_)
         {
             FatalErrorInFunction
-                << "Maximum number of iterations exceeded: " << 100
+                << "Maximum number of iterations exceeded: " << maxIter_
                 << abort(FatalError);
         }
 
-    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
+    } while (mag((pNew - p)/p) > relTol_);
     return Enew;
 }
 

@@ -26,21 +26,56 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseFluidBlastThermo.H"
-#include "reactingFluidBlastThermo.H"
-#include "mixtureBlastThermo.H"
-#include "forBlastGases.H"
-#include "makeBlastThermo.H"
-#include "addToRunTimeSelectionTable.H"
+#include "PengRobinson.H"
 
-namespace Foam
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::PengRobinson<Specie>::PengRobinson
+(
+    const dictionary& dict
+)
+:
+    Specie(dict),
+    Tc_(dict.subDict("equationOfState").lookup<scalar>("Tc")),
+    Vc_(dict.subDict("equationOfState").lookup<scalar>("Vc")),
+    Pc_(dict.subDict("equationOfState").lookup<scalar>("Pc")),
+    omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
+    Zc_(Pc_*Vc_/(RR*Tc_)),
+    a_(0.45724*sqr(RR*Tc_)/Pc_),
+    b_(0.07780*RR*Tc_/Pc_),
+    kappa_(0.37464 + 1.54226*omega_ - 0.26992*sqr(omega_))
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::PengRobinson<Specie>::write(Ostream& os) const
 {
-    forCoeffGases
-    (
-        makeThermo,
-        phaseFluidBlastThermo,
-        reactingFluidBlastThermo,
-        mixtureBlastThermo
-    );
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("Tc", Tc_);
+    dict.add("Vc", Vc_);
+    dict.add("Pc", Pc_);
+    dict.add("omega", omega_);
+    os  << indent << dict.dictName() << dict;
 }
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const PengRobinson<Specie>& pr
+)
+{
+    pr.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

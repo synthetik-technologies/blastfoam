@@ -94,7 +94,6 @@ void Foam::fluidBlastThermo::initializeFields()
         //- Calculate internal energy if it was not read
         e_ == this->calce(p_);
     }
-
     correct();
 }
 

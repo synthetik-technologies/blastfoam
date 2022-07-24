@@ -26,6 +26,7 @@ derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
 derived/multicomponentFluidBlastThermo/multicomponentPhaseFluidBlastThermos.C
 derived/multicomponentSolidBlastThermo/multicomponentSolidBlastThermos.C
+
 derived/reactingFluidBlastThermo/reactingFluidBlastThermos.C
 derived/reactingSolidBlastThermo/reactingSolidBlastThermos.C
 

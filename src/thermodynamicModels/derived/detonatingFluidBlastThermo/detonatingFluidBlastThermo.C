@@ -781,6 +781,29 @@ Foam::detonatingFluidBlastThermo<Thermo>::celldpde(const label celli) const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::detonatingFluidBlastThermo<Thermo>::celldpdT(const label celli) const
+{
+    const scalar& x = this->cellx(celli);
+    const scalar rho = this->rho_[celli];
+    const scalar e = this->e_[celli];
+    const scalar T = this->T_[celli];
+    if (x < small)
+    {
+        return Thermo::thermoType1::dpdT(rho, e, T);
+    }
+    else if ((1.0 - x) < small)
+    {
+        return Thermo::thermoType2::dpdT(rho, e, T);
+    }
+
+    return
+        Thermo::thermoType2::dpdT(rho, e, T)*x
+      + Thermo::thermoType1::dpdT(rho, e, T)*(1.0 - x);
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
 {

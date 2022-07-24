@@ -502,6 +502,19 @@ Foam::multicomponentFluidBlastThermo<Thermo>::celldpde(const label celli) const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::celldpdT(const label celli) const
+{
+    return this->mixture_[celli].dpdT
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidBlastThermo<Thermo>::calce
 (

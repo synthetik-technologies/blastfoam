@@ -183,6 +183,15 @@ public:
         //- Derivative of pressure w.r.t internal energy for cell
         virtual scalar celldpde(const label celli) const;
 
+        //- Derivative of pressure w.r.t temperature for cell
+        virtual scalar celldpdT(const label celli) const;
+
+        //- Is the equation of state temperature based
+        virtual bool temperatureBased() const
+        {
+            return Thermo::thermoType1::temperatureBased();
+        }
+
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
 

@@ -465,6 +465,18 @@ Foam::basicFluidBlastThermo<Thermo>::celldpde(const label celli) const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::basicFluidBlastThermo<Thermo>::celldpdT(const label celli) const
+{
+    return Thermo::thermoType::dpdT
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::basicFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
 {

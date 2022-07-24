@@ -61,6 +61,8 @@ equationOfState
     linearTillotson
     Tillotson
     tabulatedEOS
+    VanderWaals
+    PengRobinson
 );
 
 specie
