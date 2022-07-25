@@ -248,7 +248,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
 
     forAll(phases_, phasei)
     {
-        word phaseIName = phases_[phasei];
+        const word& phaseIName = phases_[phasei];
         volumeFractions_.set
         (
             phasei,

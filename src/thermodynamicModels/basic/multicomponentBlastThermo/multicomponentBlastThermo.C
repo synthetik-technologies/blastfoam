@@ -155,6 +155,50 @@ Foam::multicomponentBlastThermo::integrator::~integrator()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::multicomponentBlastThermo::correct()
+{
+    if (!species_.size())
+    {
+        return;
+    }
+
+    if (basicSpecieMixture::phaseName_ != word::null)
+    {
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", phaseName_),
+                Y_[0]
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+
+        for (label i=1; i<Y_.size(); i++)
+        {
+            Yt += Y_[i];
+        }
+
+        if (min(Yt).value() < small)
+        {
+            FatalErrorInFunction
+                << "Sum of mass fractions is zero for species " << species()
+                << exit(FatalError);
+        }
+
+        forAll(Y_, i)
+        {
+            Y_[i] /= Yt;
+            Y_[i].correctBoundaryConditions();
+        }
+    }
+    else
+    {
+        this->normalise();
+    }
+}
+
+
 void Foam::multicomponentBlastThermo::initializeModels()
 {
     const fvMesh& mesh = Y_[0].mesh();
@@ -227,81 +271,13 @@ void Foam::multicomponentBlastThermo::update()
 void Foam::multicomponentBlastThermo::solve()
 {
     integratorPtr_->solve();
-    if (species_.size())
-    {
-        tmp<volScalarField> tYt
-        (
-            volScalarField::New
-            (
-                IOobject::groupName("Yt", phaseName_),
-                Y_[0]
-            )
-        );
-        volScalarField& Yt = tYt.ref();
-
-        for (label i=1; i<Y_.size(); i++)
-        {
-            Yt += Y_[i];
-        }
-
-        if (min(Yt.primitiveField()) < small)
-        {
-            FatalErrorInFunction
-                << "Sum of mass fractions is zero for species " << species()
-                << exit(FatalError);
-        }
-
-        forAll(Y_, i)
-        {
-            Y_[i] /= Yt;
-            Y_[i].correctBoundaryConditions();
-        }
-    }
 }
 
 
 void Foam::multicomponentBlastThermo::postUpdate()
 {
     integratorPtr_->postUpdate();
-    if (!species_.size())
-    {
-        return;
-    }
-
-    if (phaseName_ != word::null)
-    {
-        tmp<volScalarField> tYt
-        (
-            volScalarField::New
-            (
-                IOobject::groupName("Yt", phaseName_),
-                Y_[0]
-            )
-        );
-        volScalarField& Yt = tYt.ref();
-
-        for (label i=1; i<Y_.size(); i++)
-        {
-            Yt += Y_[i];
-        }
-
-        if (min(Yt.primitiveField()) < small)
-        {
-            FatalErrorInFunction
-                << "Sum of mass fractions is zero for species " << species()
-                << exit(FatalError);
-        }
-
-        forAll(Y_, i)
-        {
-            Y_[i] /= Yt;
-            Y_[i].correctBoundaryConditions();
-        }
-    }
-    else
-    {
-        this->normalise();
-    }
+    correct();
 }
 
 

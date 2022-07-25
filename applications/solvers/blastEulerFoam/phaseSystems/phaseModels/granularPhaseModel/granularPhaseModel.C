@@ -57,7 +57,7 @@ Foam::granularPhaseModel::granularPhaseModel
         (
             fluid.mesh(),
             phaseDict_,
-            phaseName
+            phaseModel::name_
         )
     ),
     rho_(thermoPtr_->rho()),

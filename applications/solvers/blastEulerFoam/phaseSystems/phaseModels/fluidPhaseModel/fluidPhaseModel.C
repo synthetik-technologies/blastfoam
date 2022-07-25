@@ -61,7 +61,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
             nPhases,
             fluid.mesh(),
             phaseDict_,
-            phaseName
+            this->name_
         )
     ),
     rho_(thermoPtr_->rho()),

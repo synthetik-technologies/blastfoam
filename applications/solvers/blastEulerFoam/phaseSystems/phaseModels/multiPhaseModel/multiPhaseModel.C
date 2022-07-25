@@ -61,7 +61,7 @@ Foam::multiPhaseModel::multiPhaseModel
     fluidPhaseModel
     (
         fluid,
-        phaseName,
+        phaseModel::name_,
         index,
         3 // This is just used to force the multiphase thermo
     ),

@@ -63,9 +63,6 @@ class multicomponentBlastThermo
 
     const fvMesh& mesh_;
 
-    //- Name of the phase
-    word phaseName_;
-
     //- Name of master thermo class
     word masterName_;
 
@@ -131,6 +128,9 @@ protected:
         return alphaRhoPhiPtr_();
     }
 
+    //- Correct mass fractions
+    void correct();
+
 
 
 public:
@@ -162,11 +162,6 @@ public:
     const fvMesh& mesh() const
     {
         return mesh_;
-    }
-
-    virtual const word& phaseName() const
-    {
-        return phaseName_;
     }
 
     //- ODE functions
