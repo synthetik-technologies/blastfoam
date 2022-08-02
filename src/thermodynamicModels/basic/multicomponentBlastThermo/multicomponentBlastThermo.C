@@ -442,6 +442,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
 
             constraints().constrain(YEqn);
             YEqn.solve("Yi");
+            Yi.max(0.0);
             constraints().constrain(Yi);
         }
     }

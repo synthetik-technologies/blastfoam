@@ -1205,6 +1205,7 @@ void Foam::phaseSystem::solve()
 {
     forAll(phaseModels_, phasei)
     {
+        // Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].solve();
     }
 }
@@ -1215,7 +1216,7 @@ void Foam::phaseSystem::postUpdate()
     decode();
     forAll(phaseModels_, phasei)
     {
-        Info<< "Solving: " << phaseModels_[phasei].name() << ":" << endl;
+        // Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].postUpdate();
         Info<< endl;
     }
