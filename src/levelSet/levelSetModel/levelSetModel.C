@@ -132,7 +132,8 @@ Foam::levelSetModel::levelSetModel
             mesh_
         ),
         mesh_,
-        dimensionedScalar(dimLength, 0)
+        dimensionedScalar(dimLength, 0),
+        extrapolatedCalculatedFvPatchScalarField::typeName
     ),
     useDistributed_(dict.lookupOrDefault("useDistributed", true)),
     filterType_
@@ -205,7 +206,14 @@ Foam::levelSetModel::~levelSetModel()
 
 void Foam::levelSetModel::updateEpsilon()
 {
-    epsilon_ = min(meshSizeObject::New(mesh_).dx())*epsilon0_;
+    epsilon_ =
+        dimensionedScalar
+        (
+            "dx",
+            dimLength,
+            min(meshSizeObject::New(mesh_).dx())
+        )*epsilon0_;
+    epsilon_.correctBoundaryConditions();
 }
 
 
