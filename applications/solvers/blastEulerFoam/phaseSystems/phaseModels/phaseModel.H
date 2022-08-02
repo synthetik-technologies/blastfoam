@@ -32,7 +32,7 @@ Description
 
 SourceFiles
     phaseModel.C
-    newPhaseModel.C
+    phaseModelNew.C
     phaseModels.C
 
 \*---------------------------------------------------------------------------*/
