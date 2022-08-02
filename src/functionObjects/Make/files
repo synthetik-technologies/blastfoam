@@ -7,6 +7,7 @@ blastProbes/blastPatchProbes.C
 blastProbes/blastProbesGrouping.C
 vtkTimeSeries/vtkTimeSeries/vtkTimeSeries.C
 vtkTimeSeries/vtkTimeSeriesWriter/vtkTimeSeriesSurfaceWriter.C
+procDistribution/procDistribution.C
 
 # Blast specific
 impulse/impulse.C
