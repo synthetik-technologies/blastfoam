@@ -262,6 +262,12 @@ void Foam::reactingCompressibleSystem::postUpdate()
         composition.normalise();
     }
 
+    // Solve momentum equation
+    constraints().constrain(UEqn);
+    UEqn.solve();
+    constraints().constrain(U_);
+    rhoU_ = rho_*U_;
+
     // Solve energy equation
     constraints().constrain(eEqn);
     eEqn.solve();
