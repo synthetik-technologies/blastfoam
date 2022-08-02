@@ -25,6 +25,7 @@ particles
     {
         d 1e-3;
         reactionRate pressureBased;
+        offset 1;
         pScale      1e-6;
         pExponent   0.9;
         pCoeff      0.009;
