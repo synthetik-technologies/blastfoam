@@ -365,6 +365,8 @@ public:
                 const scalar e,
                 const scalar T
             ) const = 0;
+
+        virtual void write(Ostream&) const = 0;
 };
 
 
@@ -736,11 +738,16 @@ public:
             {
                 return ThermoType::kappa(rho, e, T);
             }
+
+            virtual void write(Ostream& os) const
+            {
+                ThermoType::write(os);
+            }
 };
 
 
 #define addSimpleEoS(Transport, Thermo, EoS)                               \
-    typedef SimpleBlastThermo<Transport##Thermo##EoS##blastSpecie>                 \
+    typedef SimpleBlastThermo<Transport##Thermo##EoS##blastSpecie>         \
         simple##Transport##Thermo##EoS;                                    \
                                                                            \
     defineTemplateTypeNameAndDebugWithName                                 \
