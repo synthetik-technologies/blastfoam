@@ -230,20 +230,23 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
     }
 
     // Change decomposition method if entry is present
-    word method
-    (
-        balanceDict.lookupOrDefaultBackwardsCompatible
-        (
-            {"method"},
-//             {"decomposer", "method"},
-            decompositionDict_.lookupBackwardsCompatible<word>
+    if (balanceDict.found("method"))// || balanceDict.found("decomposer"))
+    {
+        word method = balanceDict.lookupBackwardsCompatible
             (
-//                 {"decomposer", "method"}
                 {"method"}
-            )
-        )
-    );
-    decompositionDict_.set("method", method);
+    //             {"decomposer", "method"},
+            );
+        decompositionDict_.set("method", method);
+
+        // Remove optional coeffs dictionary since it would override entries and
+        // not necessarily be overridden
+        if (decompositionDict_.isDict(method + "Coeffs"))
+        {
+            decompositionDict_.remove(method + "Coeffs");
+        }
+    }
+    decompositionDict_ <<= balanceDict;
 
     balanceDict.readIfPresent("allowableImbalance", allowableImbalance_);
 }
@@ -430,12 +433,10 @@ void Foam::fvMeshBalance::makeDecomposer() const
     returnReduce(1, maxOp<label>());
     if (!decomposer_->parallelAware())
     {
-        FatalErrorInFunction
+        WarningInFunction
             << "You have selected decomposition method "
             << decomposer_->typeName
-            << " which is not parallel aware." << endl
-            << "Please select one that is (hierarchical, ptscotch)"
-            << exit(FatalError);
+            << " which is not parallel aware." << endl;
     }
 }
 
