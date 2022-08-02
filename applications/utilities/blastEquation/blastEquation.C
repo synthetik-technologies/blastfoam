@@ -943,9 +943,26 @@ int main(int argc, char *argv[])
             if (P.size())
             {
                 polynomialRoots PRoots(P);
-                Info<< "Real roots = " << PRoots.rootsRe() << nl
-                    << "Imaginary roots = " << PRoots.rootsIm() << nl
-                    << endl;
+                const List<scalar>& reRoots(PRoots.rootsRe());
+                const List<scalar>& imRoots(PRoots.rootsIm());
+                Info<< "Roots:" << incrIndent << endl;
+                forAll(reRoots, i)
+                {
+                    Info<< indent << reRoots[i];
+                    if (imRoots[i] > small)
+                    {
+                        Info<< " + " << imRoots[i] << "i" << endl;
+                    }
+                    else if (imRoots[i] < -small)
+                    {
+                        Info<< " - " << mag(imRoots[i]) << "i" << endl;
+                    }
+                    else
+                    {
+                        Info<< endl;
+                    }
+                }
+                Info<< decrIndent << endl;
             }
             else
             {
@@ -1053,7 +1070,7 @@ int main(int argc, char *argv[])
         rmDir("./dynamicCode");
     }
 
-    Info<< "done" << endl;
+    Info<< nl << "Finished" << nl << endl;
     return 0;
 }
 
