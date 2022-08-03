@@ -4,33 +4,41 @@ cd ${0%/*} || exit 1    # run from this directory
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
-# -- Check if the polyRefiner has been specified
+# -- Polyhedral refinement flag
 tets=0
 
-# -- Read keywords from setFields dict to check for the refiner
-declare -a keys=$(foamDictionary system/setFieldsDict -keywords)
+# -- Parallel run flag
+parallel=0
 
-for key in ${keys[@]};
+
+# Parse options
+while [ "$#" -gt 0 ]
 do
-
-# -- Since the refiner is not required we need to make sure its found befor we
-#    check the value of the entry
-    if [ "$key" = "refiner" ];
-    then
-
-# -- Read and compare the refiner type
-        type=$(foamDictionary system/setFieldsDict -entry $key -value)
-        if [ "$type" = "polyRefiner" ];
-        then
-        echo "tets"
-            tets=1
-        fi
-    fi
+   case "$1" in
+   -t | -tets)
+      tets=1
+      shift
+      ;;
+   -j | -parallel)
+      parallel=1
+      shift
+      ;;
+   -*)
+      echo "invalid option '$1'"
+      exit 1
+      ;;
+   *)
+      break
+      ;;
+   esac
 done
 
 
 # -- Create paraview file
 paraFoam -builtin -touch
+
+# -- Copy the setFieldDict
+cp system/setFieldsDict system/setFieldsDict_mod
 
 # -- Create the mesh
 if [ $tets -eq 1 ]; then
@@ -42,17 +50,42 @@ if [ $tets -eq 1 ]; then
     runApplication removeZones -clear
 
 # -- Set the correct boundary type
-    runApplication foamDictionary \
+    runApplication -s boundary foamDictionary \
         constant/polyMesh/boundary \
         -entry entry0/defaultFaces/type \
         -set empty
+
+# -- Set the correct refinement type in system/setFieldsDict
+    runApplication -s refiner foamDictionary \
+        system/setFieldsDict_mod \
+        -entry refiner \
+        -set polyRefiner
 
 else
 
 # -- Create hex mesh
     runApplication blockMesh
+
+# -- Set the correct refinement type in system/setFieldsDict
+    runApplication -s refiner foamDictionary \
+        system/setFieldsDict_mod \
+        -entry refiner \
+        -set hexRefiner
 fi
 
+# -- Run in parallel
+if [ $parallel -eq 1 ]; then
+
+# -- Decompose the mesh
+    runApplication decomposePar
+
+# -- Run the case
+# the debug flag writes each intermediate refinement set
+    runParallel $(getApplication) -debug -dict system/setFieldsDict_mod
+
+else
 # -- run the calc
 # the debug flag writes each intermediate refinement set
-runApplication $(getApplication) -debug
+    runApplication $(getApplication) -debug -dict system/setFieldsDict_mod
+
+fi
