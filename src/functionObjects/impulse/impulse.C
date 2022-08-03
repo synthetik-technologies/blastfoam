@@ -66,8 +66,7 @@ Foam::functionObjects::impulse::createImpulseField
                 IOobject::NO_WRITE
             ),
             p_.mesh(),
-            dimensionedScalar("0", dimPressure*dimTime, 0.0),
-            "zeroGradient"
+            dimensionedScalar("0", dimPressure*dimTime, 0.0)
         )
     );
     impulsePtr->store(impulsePtr);
@@ -130,7 +129,7 @@ bool Foam::functionObjects::impulse::read(const dictionary& dict)
 
 bool Foam::functionObjects::impulse::execute()
 {
-    impulse_ += (p_ - pRef_)*obr_.time().deltaT();
+    impulse_ = impulse_.oldTime() + (p_ - pRef_)*obr_.time().deltaT();
     return true;
 }
 
