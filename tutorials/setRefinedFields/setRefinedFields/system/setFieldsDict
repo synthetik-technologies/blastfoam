@@ -15,8 +15,8 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Refiner type
-// refiner polyRefiner;
+// Refiner type (hexRefiner or polyRefiner)
+refiner polyRefiner;
 
 // Included parameters file
 #include "$FOAM_CASE/parameters";
