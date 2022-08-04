@@ -50,7 +50,12 @@ Foam::functionObjects::procDistribution::procDistribution
 :
     fvMeshFunctionObject(name, runTime, dict),
     distributionName_(dict.lookupOrDefault<word>("distributionName", "procDistribution"))
-{}
+{
+    if (!dict.lookupOrDefault("executeAtStart", false))
+    {
+        executeAtStart_ = false;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -81,7 +86,7 @@ bool Foam::functionObjects::procDistribution::execute()
 
 bool Foam::functionObjects::procDistribution::write()
 {
-    tmp<volScalarField>
+    return tmp<volScalarField>
     (
         volScalarField::New
         (
@@ -90,8 +95,6 @@ bool Foam::functionObjects::procDistribution::write()
             Pstream::myProcNo()
         )
     )().write();
-
-    return true;
 }
 
 

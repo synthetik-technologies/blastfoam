@@ -33,6 +33,7 @@ Description
 
 SourceFiles
     vtkTimeSeriesSurfaceWriter.C
+    vtkTimeSeries.C
 
 \*---------------------------------------------------------------------------*/
 

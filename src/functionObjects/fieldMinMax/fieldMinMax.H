@@ -136,20 +136,7 @@ protected:
         autoPtr<labelList> rCellMap_;
 
         //- Old field values
-        HashPtrTable<volScalarField> vScalarFields_;
-        HashPtrTable<volVectorField> vVectorFields_;
-        HashPtrTable<volSphericalTensorField>
-            vSphericalTensorFields_;
-        HashPtrTable<volSymmTensorField> vSymmTensorFields_;
-        HashPtrTable<volTensorField> vTensorFields_;
-
-        HashPtrTable<surfaceScalarField> sScalarFields_;
-        HashPtrTable<surfaceVectorField> sVectorFields_;
-        HashPtrTable<surfaceSphericalTensorField>
-            sSphericalTensorFields_;
-        HashPtrTable<surfaceSymmTensorField> sSymmTensorFields_;
-        HashPtrTable<surfaceTensorField> sTensorFields_;
-
+        HashPtrTable<regIOobject> oldFields_;
 
         //- Return the computed name of the min/max field
         word computedName(const word& fName) const
@@ -162,32 +149,23 @@ protected:
 
         //- Store old fields
         template<class FieldType>
-        void map
+        bool map
         (
             const word& fName,
-            const mapPolyMesh&,
-            const HashPtrTable<FieldType>& old
+            const mapPolyMesh&
         );
 
         //- Update field max
         template<class FieldType>
-        void createMinMax(const word& fieldName);
+        bool createMinMax(const word& fieldName);
 
         //- Create old field
         template<class FieldType>
-        void createOld
-        (
-            const word& fieldName,
-            HashPtrTable<FieldType>& old
-        );
+        bool createOld(const word& fieldName);
 
         //- Update field max
         template<class FieldType>
-        void update
-        (
-            const word& fieldName,
-            const HashPtrTable<FieldType>& old
-        );
+        bool update(const word& fieldName);
 
         //- Compute the min/max using the mode
         template<class Type>
@@ -201,10 +179,6 @@ protected:
             const FieldType& a,
             const FieldType& b
         ) const;
-
-        //- Write field max
-        template<class type>
-        void writeField(const word& fieldName);
 
         //- Set all old fields and cell maps
         void setOldFields(const mapPolyMesh& mpm);

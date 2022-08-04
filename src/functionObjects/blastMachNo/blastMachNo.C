@@ -54,7 +54,12 @@ Foam::functionObjects::blastMachNo::blastMachNo
     systemName_(IOobject::groupName(basicThermo::dictName, phaseName_)),
     resultName_(IOobject::groupName("Ma", phaseName_)),
     UName_(IOobject::groupName("U", phaseName_))
-{}
+{
+    if (!dict.lookupOrDefault("executeAtStart", false))
+    {
+        executeAtStart_ = false;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -109,12 +114,8 @@ bool Foam::functionObjects::blastMachNo::execute()
 
 bool Foam::functionObjects::blastMachNo::write()
 {
-    if (this->mesh_.time().timeIndex() > 0)
-    {
-        writeObject(resultName_);
-        return true;
-    }
-    return false;
+    writeObject(resultName_);
+    return true;
 }
 
 

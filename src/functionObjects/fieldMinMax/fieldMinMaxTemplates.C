@@ -82,7 +82,7 @@ void Foam::functionObjects::fieldMinMax::compute
 
 
 template<class FieldType>
-void Foam::functionObjects::fieldMinMax::createMinMax
+bool Foam::functionObjects::fieldMinMax::createMinMax
 (
     const word& fieldName
 )
@@ -90,53 +90,43 @@ void Foam::functionObjects::fieldMinMax::createMinMax
     const word computeFieldName(computedName(fieldName));
     if (obr_.foundObject<FieldType>(computeFieldName))
     {
-        return;
+        return true;
     }
     if (!obr_.foundObject<FieldType>(fieldName))
     {
-        return;
+        return false;
     }
 
     Log << "    Reading/initialising field " << computeFieldName << endl;
+    const FieldType& baseField = obr_.lookupObject<FieldType>(fieldName);
 
-    if (obr_.found(computeFieldName))
-    {
-        Log << "    Cannot allocate average field " << computeFieldName
-            << " since an object with that name already exists."
-            << " Disabling averaging for field." << endl;
-    }
-    else if (obr_.found(fieldName))
-    {
-        const FieldType& baseField = obr_.lookupObject<FieldType>(fieldName);
-
-        // Store on registry
-        obr_.store
+    // Store on registry
+    obr_.store
+    (
+        new FieldType
         (
-            new FieldType
+            IOobject
             (
-                IOobject
-                (
-                    computeFieldName,
-                    obr_.time().timeName(obr_.time().startTime().value()),
-                    obr_,
-                    restartOnRestart_
-                  ? IOobject::NO_READ
-                  : IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE
-                ),
-                baseField,
-                baseField.boundaryField()
-            )
-        );
-    }
+                computeFieldName,
+                obr_.time().timeName(obr_.time().startTime().value()),
+                obr_,
+                restartOnRestart_
+              ? IOobject::NO_READ
+              : IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            ),
+            baseField,
+            baseField.boundaryField()
+        )
+    );
+    return true;
 }
 
 
 template<class FieldType>
-void Foam::functionObjects::fieldMinMax::createOld
+bool Foam::functionObjects::fieldMinMax::createOld
 (
-    const word& fieldName,
-    HashPtrTable<FieldType>& old
+    const word& fieldName
 )
 {
     const word computeFieldName(computedName(fieldName));
@@ -145,7 +135,7 @@ void Foam::functionObjects::fieldMinMax::createOld
         const FieldType& f = obr_.lookupObject<FieldType>(computeFieldName);
 
         // Store unregistered fields so fields are not updated with refinement
-        old.insert
+        oldFields_.insert
         (
             computeFieldName,
             new FieldType
@@ -162,25 +152,26 @@ void Foam::functionObjects::fieldMinMax::createOld
                 f
             )
         );
+        return true;
     }
+    return false;
 }
 
 
 template<class FieldType>
-void Foam::functionObjects::fieldMinMax::update
+bool Foam::functionObjects::fieldMinMax::update
 (
-    const word& fieldName,
-    const HashPtrTable<FieldType>& old
+    const word& fieldName
 )
 {
-    const word computeFieldName(computedName(fieldName));
-    if (!old.found(computeFieldName))
-    {
-        createMinMax<FieldType>(fieldName);
-    }
-
     if (obr_.foundObject<FieldType>(fieldName))
     {
+        const word computeFieldName(computedName(fieldName));
+        if (!oldFields_.found(computeFieldName))
+        {
+            createMinMax<FieldType>(fieldName);
+        }
+
         const FieldType& baseField = obr_.lookupObject<FieldType>(fieldName);
         FieldType& field = obr_.lookupObjectRef<FieldType>(computeFieldName);
         compute
@@ -204,7 +195,8 @@ void Foam::functionObjects::fieldMinMax::update
             const labelList& cellMap = cellMap_();
             const labelList& rCellMap = rCellMap_();
 
-            const FieldType& fOld = *old[computeFieldName];
+            const FieldType& fOld =
+                *dynamic_cast<const FieldType*>(oldFields_[computeFieldName]);
 
             forAll(cellMap, i)
             {
@@ -226,16 +218,17 @@ void Foam::functionObjects::fieldMinMax::update
                 }
             }
         }
+        return true;
     }
+    return false;
 }
 
 
 template<class FieldType>
-void Foam::functionObjects::fieldMinMax::map
+bool Foam::functionObjects::fieldMinMax::map
 (
     const word& fieldName,
-    const mapPolyMesh& meshMap,
-    const HashPtrTable<FieldType>& old
+    const mapPolyMesh& meshMap
 )
 {
     const word computeFieldName(computedName(fieldName));
@@ -248,7 +241,8 @@ void Foam::functionObjects::fieldMinMax::map
             const labelList& cellMap = cellMap_();
             const labelList& rCellMap = rCellMap_();
 
-            const FieldType& fOld = *old[computeFieldName];
+            const FieldType& fOld =
+                *dynamic_cast<const FieldType*>(oldFields_[computeFieldName]);
             forAll(cellMap, i)
             {
                 label celli = cellMap[i];
@@ -269,18 +263,10 @@ void Foam::functionObjects::fieldMinMax::map
                 }
             }
         }
+        return true;
     }
+    return false;
 }
 
-
-template<class FieldType>
-void Foam::functionObjects::fieldMinMax::writeField(const word& fieldName)
-{
-    const word computeFieldName(computedName(fieldName));
-    if (obr_.foundObject<FieldType>(computeFieldName))
-    {
-        writeObject(computeFieldName);
-    }
-}
 
 // ************************************************************************* //

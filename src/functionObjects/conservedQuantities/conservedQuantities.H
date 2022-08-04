@@ -84,25 +84,75 @@ protected:
         //- Name of conserved field names
         wordList fields_;
 
+        template<class Type>
+        HashTable<dimensioned<Type>>& vals0()
+        {
+            NotImplemented;
+            return NullObjectRef<HashTable<dimensioned<Type>>>();
+        }
+        template<class Type>
+        const HashTable<dimensioned<Type>>& vals0() const
+        {
+            NotImplemented;
+            return NullObjectRef<HashTable<dimensioned<Type>>>();
+        }
+
+        template<class Type>
+        HashTable<dimensioned<Type>>& vals()
+        {
+            NotImplemented;
+            return NullObjectRef<HashTable<dimensioned<Type>>>();
+        }
+        template<class Type>
+        const HashTable<dimensioned<Type>>& vals() const
+        {
+            NotImplemented;
+            return NullObjectRef<HashTable<dimensioned<Type>>>();
+        }
+
+        #define ReturnTypeTables(Type, null)            \
+        template<>                                      \
+        HashTable<dimensioned<Type>>& vals0()           \
+        {                                               \
+            return Type##0s_;                           \
+        }                                               \
+        template<>                                      \
+        const HashTable<dimensioned<Type>>& vals0() const\
+        {                                               \
+            return Type##0s_;                           \
+        }                                               \
+        template<>                                      \
+        HashTable<dimensioned<Type>>& vals()            \
+        {                                               \
+            return Type##s_;                            \
+        }                                               \
+        template<>                                      \
+        const HashTable<dimensioned<Type>>& vals() const\
+        {                                               \
+            return Type##s_;                            \
+        }
+
         //- Scalar fields
         HashTable<dimensionedScalar> scalar0s_;
         HashTable<dimensionedScalar> scalars_;
 
         //- Vector fields
-        HashTable<dimensionedVector> vectors_;
         HashTable<dimensionedVector> vector0s_;
+        HashTable<dimensionedVector> vectors_;
 
         //- Symm tensor fields
         HashTable<dimensionedSymmTensor> symmTensor0s_;
         HashTable<dimensionedSymmTensor> symmTensors_;
 
         //- Spherical tensor fields
-        HashTable<dimensionedSphericalTensor> sphTensor0s_;
-        HashTable<dimensionedSphericalTensor> sphTensors_;
+        HashTable<dimensionedSphericalTensor> sphericalTensor0s_;
+        HashTable<dimensionedSphericalTensor> sphericalTensors_;
 
         //- Tensor fields
         HashTable<dimensionedTensor> tensor0s_;
         HashTable<dimensionedTensor> tensors_;
+
+        FOR_ALL_FIELD_TYPES(ReturnTypeTables);
 
 public:
 
