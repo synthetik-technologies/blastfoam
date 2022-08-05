@@ -67,6 +67,8 @@ int main(int argc, char *argv[])
 {
     #include "postProcess.H"
 
+    fluxSchemeBase::needEnergyFlux = true;
+
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMesh.H"
