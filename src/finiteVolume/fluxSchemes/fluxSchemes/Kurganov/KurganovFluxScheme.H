@@ -61,7 +61,6 @@ class Kurganov
         tmp<surfaceScalarField> aOwn_;
         tmp<surfaceScalarField> aNei_;
         tmp<surfaceScalarField> aSf_;
-        tmp<surfaceScalarField> f_;
 
 
     // Private functions

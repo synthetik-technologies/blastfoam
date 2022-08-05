@@ -68,7 +68,6 @@ void Foam::fluxSchemes::Kurganov::clear()
     aOwn_.clear();
     aNei_.clear();
     aSf_.clear();
-    f_.clear();
 }
 
 
@@ -108,7 +107,6 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
         )
     );
-
     aOwn_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
@@ -137,6 +135,12 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             dimensionedScalar("0", dimless, 0.0)
         )
     );
+
+    if (!needEnergyFlux)
+    {
+        return;
+    }
+
     aSf_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
@@ -149,20 +153,6 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             ),
             mesh_,
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-        )
-    );
-    f_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "Kurganov::f",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimless, 0.0)
         )
     );
 }
@@ -221,17 +211,21 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aphivNei, aPhivNei_);
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
-    this->save(facei, patchi, aSf, aSf_);
+
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
+
+    phi = aphivOwn + aphivNei;
     this->save
     (
         facei,
         patchi,
-        aphivOwn/stabilise(aphivOwn + aphivNei, small),
-        f_
+        (aOwn*UOwn + aNei*UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
     );
-
-    this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
-    phi = aphivOwn + aphivNei;
     rhoPhi = aphivOwn*rhoOwn + aphivNei*rhoNei;
 
     rhoUPhi =
@@ -306,18 +300,20 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aphivNei, aPhivNei_);
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
-    this->save(facei, patchi, aSf, aSf_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
+
+    phi = aphivOwn + aphivNei;
     this->save
     (
         facei,
         patchi,
-        aphivOwn/stabilise(aphivOwn + aphivNei, small),
-        f_
+        (aOwn*UOwn + aNei*UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
     );
-
-    this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
-
-    phi = aphivOwn + aphivNei;
 
     forAll(alphasOwn, phasei)
     {
@@ -369,7 +365,7 @@ Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + meshPhi(facei, patchi)*(aOwn*pOwn + aNei*pNei)
+      + meshPhi(facei, patchi)/mag(Sf)*(aOwn*pOwn + aNei*pNei)
     );
 }
 
@@ -381,6 +377,13 @@ Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
     const label facei, const label patchi
 ) const
 {
+    const scalar aphivOwn(getValue(facei, patchi, aPhivOwn_));
+    const scalar aphivNei(getValue(facei, patchi, aPhivNei_));
+    const scalar phi(aphivOwn + aphivNei);
+    if (mag(phi) > small)
+    {
+        return (fOwn*aphivOwn + fNei*aphivNei)/phi;
+    }
     return
         getValue(facei, patchi, aOwn_)*fOwn
       + getValue(facei, patchi, aNei_)*fNei;

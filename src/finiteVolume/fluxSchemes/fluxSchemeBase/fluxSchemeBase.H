@@ -55,6 +55,10 @@ class fluxSchemeBase
 :
     public regIOobject
 {
+public:
+
+    static bool needEnergyFlux;
+
 protected:
     // Protected data
 

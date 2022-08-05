@@ -66,7 +66,6 @@ void Foam::fluxSchemes::Tadmor::clear()
     aPhivOwn_.clear();
     aPhivNei_.clear();
     aSf_.clear();
-    f_.clear();
 }
 
 
@@ -106,6 +105,10 @@ void Foam::fluxSchemes::Tadmor::createSavedFields()
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
         )
     );
+    if (!needEnergyFlux)
+    {
+        return;
+    }
     aSf_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
@@ -118,20 +121,6 @@ void Foam::fluxSchemes::Tadmor::createSavedFields()
             ),
             mesh_,
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-        )
-    );
-    f_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "Kurganov::f",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimless, 0.0)
         )
     );
 }
@@ -178,15 +167,24 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 
     scalar aphivOwn(phivOwn - aSf);
     scalar aphivNei(phivNei + aSf);
-    scalar f = aphivOwn/stabilise(aphivOwn + aphivNei, small);
 
     this->save(facei, patchi, aphivOwn, aPhivOwn_);
     this->save(facei, patchi, aphivNei, aPhivNei_);
-    this->save(facei, patchi, aSf, aSf_);
-    this->save(facei, patchi, f, f_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
 
-    this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
     phi = aphivOwn + aphivNei;
+    this->save
+    (
+        facei,
+        patchi,
+        0.5*(UOwn + UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
+    );
+
     rhoPhi = aphivOwn*rhoOwn + aphivNei*rhoNei;
 
     rhoUPhi =
@@ -200,7 +198,7 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + vMesh*0.5*(pOwn + pNei)
+      + vMesh*0.5*(pOwn + pNei)*magSf
     );
 }
 
@@ -249,16 +247,23 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 
     scalar aphivOwn(phivOwn - aSf);
     scalar aphivNei(phivNei + aSf);
-    scalar f = aphivOwn/stabilise(aphivOwn + aphivNei, small);
 
     this->save(facei, patchi, aphivOwn, aPhivOwn_);
     this->save(facei, patchi, aphivNei, aPhivNei_);
-    this->save(facei, patchi, aSf, aSf_);
-    this->save(facei, patchi, f, f_);
-
-    this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
 
     phi = aphivOwn + aphivNei;
+    this->save
+    (
+        facei,
+        patchi,
+        0.5*(UOwn + UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
+    );
 
     forAll(alphasOwn, phasei)
     {
@@ -280,7 +285,7 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + vMesh*0.5*(pOwn + pNei)
+      + vMesh*0.5*(pOwn + pNei)*magSf
     );
 }
 
@@ -319,8 +324,13 @@ Foam::scalar Foam::fluxSchemes::Tadmor::interpolate
     const label facei, const label patchi
 ) const
 {
-//     scalar f = getValue(facei, patchi, f_);
-//     return f*fOwn + (1.0 - f)*fNei;
+    const scalar aphivOwn(getValue(facei, patchi, aPhivOwn_));
+    const scalar aphivNei(getValue(facei, patchi, aPhivNei_));
+    const scalar aphiv(aphivOwn + aphivNei);
+    if (mag(aphiv) > small)
+    {
+        return (fOwn*aphivOwn + fNei*aphivNei)/aphiv;
+    }
     return 0.5*(fOwn + fNei);
 }
 

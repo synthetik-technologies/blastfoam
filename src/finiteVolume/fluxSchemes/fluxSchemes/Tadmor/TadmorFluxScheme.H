@@ -60,7 +60,6 @@ class Tadmor
         tmp<surfaceScalarField> aPhivOwn_;
         tmp<surfaceScalarField> aPhivNei_;
         tmp<surfaceScalarField> aSf_;
-        tmp<surfaceScalarField> f_;
 
 
     // Private functions

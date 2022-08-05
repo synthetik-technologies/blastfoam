@@ -31,6 +31,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fluxSchemeBase, 0);
+    bool fluxSchemeBase::needEnergyFlux = false;
 }
 
 
