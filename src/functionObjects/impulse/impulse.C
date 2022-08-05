@@ -68,10 +68,7 @@ Foam::functionObjects::impulse::impulse
         dimensionedScalar("0", dimPressure*dimTime, 0.0)
     )
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
+    executeAtStart_ = false;
     read(dict);
 }
 
