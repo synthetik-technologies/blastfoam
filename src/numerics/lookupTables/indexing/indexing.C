@@ -110,7 +110,7 @@ Foam::label Foam::indexers::nonuniform::findIndex
 
     for (label ij = 0; ij < xs_.size() - 1; ij++)
     {
-        if (x > xs_[ij] && x < xs_[ij+1])
+        if (x >= xs_[ij] && x < xs_[ij+1])
         {
             return ij;
         }
