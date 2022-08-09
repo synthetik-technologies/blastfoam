@@ -39,30 +39,38 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::vtkTimeSeries::vtkTimeSeries(const fileName& path, const label nRemove)
+Foam::vtkTimeSeries::vtkTimeSeries
+(
+    const fileName& path,
+    const bool nRemove,
+    const bool read
+)
 :
-    nRemove_(nRemove),
-    path_()
+    outputDir_()
 {
     fileName casePath(getEnv("FOAM_CASE"));
     wordList caseCmpts(casePath.components());
     wordList cmpts(path.components());
-    for (label i = 0; i < cmpts.size() - nRemove_; i++)
+
+    for (label i = 0; i < cmpts.size() - nRemove; i++)
     {
         if (caseCmpts[i] != cmpts[i])
         {
-            path_ =  path_ / cmpts[i];
+            outputDir_ =  outputDir_ / cmpts[i];
         }
     }
 
-    fileNameList dirs(readDir(path_, fileType::directory, true, false));
-    forAll(dirs, i)
+    if (read)
     {
-        IStringStream is((word(dirs[i])));
-        token t(is);
-        if (t.isNumber())
+        fileNameList dirs(readDir(outputDir_, fileType::directory, true, false));
+        forAll(dirs, i)
         {
-            this->insert(t.number());
+            IStringStream is((word(dirs[i])));
+            token t(is);
+            if (t.isNumber())
+            {
+                this->insert(t.number());
+            }
         }
     }
 }
@@ -76,22 +84,22 @@ Foam::vtkTimeSeries::~vtkTimeSeries()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::vtkTimeSeries::insertFromPath(const fileName& path, const label nRemove)
+{
+    wordList cmpts(path.components());
+    return this->insert
+    (
+        readScalar((IStringStream(cmpts[cmpts.size() - nRemove]))())
+    );
+}
+
+
 bool Foam::vtkTimeSeries::writeTimeSeries
 (
-    const fileName& path,
     const fileName& name
 ) const
 {
-
-    OFstream os(path_ / name +".vtk.series");
-    wordList cmpts(path.components());
-    const_cast<scalarHashSet&>
-    (
-        dynamicCast<const scalarHashSet&>(*this)
-    ).insert
-    (
-        readScalar((IStringStream(cmpts[cmpts.size() - nRemove_]))())
-    );
+    OFstream os(outputDir_ / name +".vtk.series");
 
     // Header
     os
@@ -105,7 +113,7 @@ bool Foam::vtkTimeSeries::writeTimeSeries
         os  << nl
             << "    { "
             << string("name") << " : "
-            << fileName(Foam::name(times[i]) / name + ".vtk") << " ,"
+            << fileName(Time::timeName(times[i]) / name + ".vtk") << " ,"
             << string("time") << " : " << times[i]
             << " }";
 

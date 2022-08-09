@@ -53,7 +53,7 @@ class standAlonePatch
 
 
 public:
-    //- Construct from components
+        //- Construct from components
         standAlonePatch
         (
             const faceList& faces,
@@ -145,11 +145,20 @@ public:
     void writeVTK(const fileName&) const;
 
     standAlonePatch createGlobalPatch() const;
+
+    template<class Patch>
+    static standAlonePatch createGlobalPatch(const Patch& patch);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "standAlonePatchTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

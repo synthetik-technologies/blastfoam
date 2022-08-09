@@ -51,10 +51,10 @@ class vtkTimeSeries
 :
     public HashSet<scalar, Hash<scalar>>
 {
-    label nRemove_;
-    fileName path_;
-
     typedef HashSet<scalar, Hash<scalar>> scalarHashSet;
+
+    // Directory the *.vtk.series is written to
+    fileName outputDir_;
 
 public:
 
@@ -64,8 +64,13 @@ public:
 
     // Constructors
 
-        //- Construct from polyMesh
-        vtkTimeSeries(const fileName& path, const label nRemove = 0);
+        //- Construct and read
+        vtkTimeSeries
+        (
+            const fileName& path,
+            const bool nRemove,
+            const bool read
+        );
 
 
     //- Destructor
@@ -74,8 +79,15 @@ public:
 
     // Member Functions
 
-        //- Write the updated time series file for a given field
-        bool writeTimeSeries(const fileName& path, const fileName& name) const;
+        //- Insert a new entry by parsing the given path
+        //  Optionally remove components
+        bool insertFromPath(const fileName& path, const label nRemove = 0);
+
+        //- Write the updated time series file
+        bool writeTimeSeries
+        (
+            const fileName& name
+        ) const;
 };
 
 

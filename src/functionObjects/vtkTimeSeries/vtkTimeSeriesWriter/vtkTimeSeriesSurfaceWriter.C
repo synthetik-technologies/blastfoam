@@ -61,7 +61,7 @@ void Foam::vtkTimeSeriesSurfaceWriter::Write
 
     if (!timeSeries_.valid())
     {
-        timeSeries_.set(new vtkTimeSeries(outputDir, 1));
+        timeSeries_.set(new vtkTimeSeries(outputDir, 1, true)); // Read
     }
 
     vtkWritePolyData::write
@@ -77,7 +77,10 @@ void Foam::vtkTimeSeriesSurfaceWriter::Write
         isNodeValues,
         values
     );
-    timeSeries_->writeTimeSeries(outputDir, fieldName + '_' + surfaceName);
+
+    // Remove 1 level from the end of the path
+    timeSeries_->insertFromPath(outputDir, 1);
+    timeSeries_->writeTimeSeries(fieldName + '_' + surfaceName);
 }
 
 
