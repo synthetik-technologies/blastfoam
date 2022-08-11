@@ -5,10 +5,11 @@
     \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-03-08-2022 Synthetik Applied Technologies : Create a new mesh for every time
+11-08-2022 Synthetik Applied Technologies : Reload processor meshes on topo
+                                            changes
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -31,10 +32,8 @@ Description
     execution of OpenFOAM.
 
     The only difference between this application and the standard
-    reconstructPar is that rather than re-reading the mesh, which requires the
-    boundary fields for be the same (same number of patches), a new mesh is
-    constructed for each time. This allows cases with dynamic load balancing
-    to be reconstructed.
+    reconstructPar is that when topological changes to the mesh occurs, all
+    processor meshes will be reloaded.
 
 \*---------------------------------------------------------------------------*/
 
