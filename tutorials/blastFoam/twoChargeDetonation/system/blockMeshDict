@@ -16,7 +16,7 @@ FoamFile
 
 convertToMeters 1;
 
-R 2.0;
+R 1.0;
 x #calc "0.9961946981 * $R";
 z #calc "0.0871557427 * $R";
 nz #calc "-0.0871557427 * $R";
