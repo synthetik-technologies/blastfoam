@@ -51,6 +51,7 @@ Foam::diameterModels::constantDiameter::constantDiameter
 {
     dimensionedScalar d("d", dimLength, dict);
     this->d_ = d;
+    this->d_.writeOpt() = IOobject::NO_WRITE;
 }
 
 
