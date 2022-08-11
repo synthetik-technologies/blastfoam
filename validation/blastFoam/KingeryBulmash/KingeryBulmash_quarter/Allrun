@@ -20,7 +20,7 @@ runParallel setRefinedFields
 runParallel $(getApplication)
 
 # -- Sample the fields
-runParallel postProcess -func sampleDict -latestTime
+runParallel -o postProcess -func sampleDict -latestTime
 
 # -- Create graphs
 ( cd validation && ./createGraphs )

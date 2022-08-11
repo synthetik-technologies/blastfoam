@@ -83,7 +83,7 @@ tnt
         }
     }
 
-    activationModel none;
+    activationModel linear;
     initiation
     {
         E0          7.0e9;
@@ -92,7 +92,6 @@ tnt
             (0 0 0)
         );
         vDet       6985; //7850;
-        Pcj 18.46e9;
         advection yes;              // The reaction progress variable is allowed
                                     // to move with the explosive mass
     }
