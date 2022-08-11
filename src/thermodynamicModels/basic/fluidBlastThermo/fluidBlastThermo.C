@@ -77,9 +77,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
         (
             phasePropertyName("speedOfSound", phaseName),
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         mesh,
         dimensionedScalar(dimVelocity, 0.0)
