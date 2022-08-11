@@ -43,16 +43,16 @@ SourceFiles
 namespace Foam
 {
 
+typedef HashSet<scalar, Hash<scalar>> scalarHashSet;
+
 /*---------------------------------------------------------------------------*\
         Class vtkTimeSeries Declaration
 \*---------------------------------------------------------------------------*/
 
 class vtkTimeSeries
 :
-    public HashSet<scalar, Hash<scalar>>
+    public scalarHashSet
 {
-    typedef HashSet<scalar, Hash<scalar>> scalarHashSet;
-
     // Directory the *.vtk.series is written to
     fileName outputDir_;
 
