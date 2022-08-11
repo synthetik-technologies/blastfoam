@@ -187,7 +187,7 @@ tmp
             const edgeList& curFaceEdges = curFace.edges();
 
             gradI[faceI] = pTraits<GradType>::zero;
-            scalar faceArea = 0;
+            // scalar faceArea = 0;
 
             forAll(curFaceEdges, edgeI)
             {
@@ -215,10 +215,10 @@ tmp
                 // Area
                 vector Re = curEdge.centre(points) - Rf;
                 Re -= nI[faceI]*(nI[faceI]&Re);
-                faceArea += (Le&Re);
+                // faceArea += (Le&Re);
             }
 
-            faceArea /= 2.0;
+            // faceArea /= 2.0;
 
             gradI[faceI] /= mag; // faceArea; // mag
         }
@@ -243,7 +243,7 @@ tmp
                 const edgeList& curFaceEdges = curFace.edges();
 
                 patchGrad[faceI] = pTraits<GradType>::zero;
-                scalar faceArea = 0;
+                // scalar faceArea = 0;
 
                 forAll(curFaceEdges, edgeI)
                 {
@@ -271,10 +271,10 @@ tmp
                     // Area
                     vector Re = curEdge.centre(points) - Rf;
                     Re -= patchN[faceI]*(patchN[faceI]&Re);
-                    faceArea += (Le&Re);
+                    // faceArea += (Le&Re);
                 }
 
-                faceArea /= 2.0;
+                // faceArea /= 2.0;
 
                 patchGrad[faceI] /= mag; //faceArea; //mag
             }
@@ -362,7 +362,7 @@ tmp<Field<typename outerProduct<vector, Type>::type> > fGrad
 
         const edgeList curFaceEdges = curFace.edges();
 
-        scalar faceArea = 0;
+        // scalar faceArea = 0;
 
         forAll(curFaceEdges, edgeI)
         {
@@ -390,10 +390,10 @@ tmp<Field<typename outerProduct<vector, Type>::type> > fGrad
             // Area
             vector Re = curEdge.centre(points) - Rf;
             Re -= n*(n&Re);
-            faceArea += (Le&Re);
+            // faceArea += (Le&Re);
         }
 
-        faceArea /= 2.0;
+        // faceArea /= 2.0;
 
         grad[faceI] /= mag; //faceArea;
     }

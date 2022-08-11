@@ -308,14 +308,18 @@ void Foam::crackerFvMesh::makeGlobalCrackFaceCentresAndSizes() const
 
 //     const vectorField& crackCf =
 //         boundaryMesh()[crackPatchID_.index()].faceCentres();
-    const vectorField::subField crackCf =
-        boundaryMesh()[crackPatchID_.index()].faceCentres();
+    const vectorField crackCf
+    (
+        boundaryMesh()[crackPatchID_.index()].faceCentres()
+    );
 
     // Calc face sizes
 //     const vectorField& crackSf =
 //         boundaryMesh()[crackPatchID_.index()].faceAreas();
-    const vectorField::subField crackSf =
-        boundaryMesh()[crackPatchID_.index()].faceAreas();
+    const vectorField crackSf
+    (
+        boundaryMesh()[crackPatchID_.index()].faceAreas()
+    );
 
     scalarField delta(crackSf.size(), 0);
 
