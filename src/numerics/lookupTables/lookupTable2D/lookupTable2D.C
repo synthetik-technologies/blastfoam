@@ -734,7 +734,7 @@ void Foam::lookupTable2D<Type>::read
         }
         else if (fDict.found("file"))
         {
-            fileName file(fDict.lookup<word>("file"));
+            fileName file(fDict.lookup<fileName>("file"));
 
             read2DTable
             (
