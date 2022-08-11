@@ -15,35 +15,14 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 16; // this is number of proc
-method         simple; // automatic
-
-simpleCoeffs // not auto
-{
-    n               (4 4 1);
-    delta           0.001;
-}
+numberOfSubdomains 4; // this is number of proc
+method         hierarchical; // automatic
 
 hierarchicalCoeffs
 {
-    n               ( 4 3 2 );
+    n               ( 2 2 1 );
     delta           0.001;
     order           xyz;
 }
-
-metisCoeffs
-{
-    // processorWeights ( 1 1 1 1 1 1 );
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
-
 
 // ************************************************************************* //
