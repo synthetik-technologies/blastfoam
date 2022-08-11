@@ -89,7 +89,7 @@ functions
         writeInterval       1e-4;
         interpolate         false;
         interpolationScheme cellPointFace;
-        surfaceFormat       vtk;
+        surfaceFormat       vtkTimeSeries;
         fields ( p );
         surfaces
         (
