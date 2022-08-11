@@ -6,7 +6,7 @@
 
     label minFaceIndex = labelMax;
 
-    PtrList<labelIOList>& faceProcAddressing = procMeshes.faceProcAddressing();
+    PtrList<labelIOList>& faceProcAddressing = procMeshesPtr().faceProcAddressing();
 
     forAll(faceProcAddressing, proci)
     {

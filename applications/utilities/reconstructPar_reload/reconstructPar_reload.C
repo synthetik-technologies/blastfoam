@@ -53,7 +53,7 @@ Description
 #include "faceSet.H"
 #include "pointSet.H"
 
-#include "hexRef8Data.H"
+#include "hexRefData.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -269,6 +269,25 @@ int main(int argc, char *argv[])
         Info<< "\n\nReconstructing fields for mesh " << regionName << nl
             << endl;
 
+        fvMesh mesh
+        (
+            IOobject
+            (
+                regionName,
+                runTime.timeName(),
+                runTime,
+                IOobject::MUST_READ
+            )
+        );
+        autoPtr<processorMeshes> procMeshesPtr
+        (
+            new processorMeshes(databases, regionName)
+        );
+
+        // Check face addressing for meshes that have been decomposed
+        // with a very old foam version
+        #include "checkFaceAddressingComp.H"
+
         // Loop over all times
         forAll(timeDirs, timei)
         {
@@ -291,28 +310,52 @@ int main(int argc, char *argv[])
                 databases[proci].setTime(timeDirs[timei], timei);
             }
 
+            //- Check if the mesh and processorMeshes need to be reset
+            //  so that processorMeshes.readUpdate() does not fail
+            fvMesh::readUpdateState stat = mesh.readUpdate();
+            fvMesh::readUpdateState procStat = fvMesh::UNCHANGED;
+            bool needReset = false;
+            forAll(databases, proci)
+            {
+                // Check if any new meshes need to be read.
+                procStat = procMeshesPtr->meshes()[proci].readUpdate();
 
-            // Read in the mesh
-            fvMesh mesh
-            (
-                IOobject
+                // Combine into overall mesh change status
+                if (stat != procStat)
+                {
+                    needReset = true;
+                }
+            }
+
+            // Already reread meshes so the will not change and addressing will
+            // not be updated so force a reset
+            if (stat == fvMesh::TOPO_CHANGE || stat == fvMesh::TOPO_PATCH_CHANGE)
+            {
+                needReset = true;
+            }
+
+            // Addressing needs to change so reset the processor meshes
+            if (needReset)
+            {
+                Info<<"Resetting processor meshes due to boundaryMesh change"<<endl;
+                procMeshesPtr.reset
                 (
-                    regionName,
-                    runTime.timeName(),
-                    runTime,
-                    IOobject::MUST_READ
-                )
-            );
+                    new processorMeshes(databases, regionName)
+                );
 
+                // Check face addressing for meshes that have been decomposed
+                // with a very old foam version
+                #include "checkFaceAddressingComp.H"
+            }
 
-            // Read all meshes and addressing to reconstructed mesh
-            processorMeshes procMeshes(databases, regionName);
+            // Reconstruct points for mesh motion
+            if (procStat == fvMesh::POINTS_MOVED)
+            {
+                procMeshesPtr->reconstructPoints(mesh);
+            }
 
-
-            // Check face addressing for meshes that have been decomposed
-            // with a very old foam version
-            #include "checkFaceAddressingComp.H"
-
+            // Get references to the processor meshes
+            processorMeshes& procMeshes = procMeshesPtr();
 
             // Get list of objects from processor0 database
             IOobjectList objects
@@ -870,7 +913,7 @@ int main(int argc, char *argv[])
 
             // Reconstruct refinement data
             {
-                PtrList<hexRef8Data> procData(procMeshes.meshes().size());
+                PtrList<hexRefData> procData(procMeshes.meshes().size());
 
                 forAll(procMeshes.meshes(), procI)
                 {
@@ -879,7 +922,7 @@ int main(int argc, char *argv[])
                     procData.set
                     (
                         procI,
-                        new hexRef8Data
+                        new hexRefData
                         (
                             IOobject
                             (
@@ -915,13 +958,13 @@ int main(int argc, char *argv[])
                     pointMaps.set(i, &pointAddr[i]);
                 }
 
-                UPtrList<const hexRef8Data> procRefs(procData.size());
+                UPtrList<const hexRefData> procRefs(procData.size());
                 forAll(procData, i)
                 {
                     procRefs.set(i, &procData[i]);
                 }
 
-                hexRef8Data
+                hexRefData
                 (
                     IOobject
                     (
