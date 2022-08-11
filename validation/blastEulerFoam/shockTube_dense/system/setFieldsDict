@@ -19,7 +19,6 @@ defaultFieldValues
 (
     volScalarFieldValue p               10129800
     volScalarFieldValue alpha.particles 0
-    volScalarFieldValue rho.gas         117.5696379
 );
 
 regions
@@ -32,7 +31,6 @@ regions
         (
             volScalarFieldValue p               101298
             volScalarFieldValue alpha.particles 0.4
-            volScalarFieldValue rho.gas         1.175696379
         );
     }
  );
