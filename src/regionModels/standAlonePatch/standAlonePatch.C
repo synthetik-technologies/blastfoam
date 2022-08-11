@@ -120,59 +120,79 @@ void Foam::standAlonePatch::movePoints
 }
 
 
-void Foam::standAlonePatch::writeVTK(const fileName& name) const
+void Foam::standAlonePatch::writeVTK(const fileName& name, const bool reduce) const
 {
-    const fileName file(name + ".vtk");
-
-    Info<<"writing "<< file.name() << endl;
-    // Open the file
-    std::ofstream os(file, std::ios::binary);
-
-    // Write header
-    os  << "# vtk DataFile Version 2.0" << nl
-        << name.name(true) << nl
-        << "ASCII" << nl
-        << "DATASET POLYDATA"
-        << nl;
-
-    const pointField& ps = points();
-
-    os  << "POINTS " << ps.size() << " float" << nl;
-
-    // Write vertex coords
-    forAll(ps, pointi)
+    if (Pstream::parRun() && reduce)
     {
-        if (pointi > 0 && (pointi % 10) == 0)
+        writeVTK(name, createGlobalPatch());
+    }
+    else
+    {
+        writeVTK(name, *this);
+    }
+}
+
+void Foam::standAlonePatch::writeVTK
+(
+    const fileName& name,
+    const standAlonePatch& p
+)
+{
+    if (Pstream::master())
+    {
+        const fileName file(name + ".vtk");
+
+        Info<<"writing "<< file.name() << endl;
+
+        // Open the file
+        std::ofstream os(file, std::ios::binary);
+
+        // Write header
+        os  << "# vtk DataFile Version 2.0" << nl
+            << name.name(true) << nl
+            << "ASCII" << nl
+            << "DATASET POLYDATA"
+            << nl;
+
+        const pointField& ps = p.points();
+
+        os  << "POINTS " << ps.size() << " float" << nl;
+
+        // Write vertex coords
+        forAll(ps, pointi)
         {
+            if (pointi > 0 && (pointi % 10) == 0)
+            {
+                os  << nl;
+            }
+            else
+            {
+                os  << ' ';
+            }
+            os  << ps[pointi].x() << ' '
+                << ps[pointi].y() << ' '
+                << ps[pointi].z();
+        }
+        os  << nl << nl;
+
+        label ne = 0;
+        forAll(p, facei)
+        {
+            ne += p[facei].size() + 1;
+        }
+
+        os  << "POLYGONS " << p.size() << ' ' << ne << nl;
+        forAll(p, facei)
+        {
+            os  << p[facei].size() << ' ';
+            forAll(p[facei], pi)
+            {
+                os  << p[facei][pi] << ' ';
+            }
             os  << nl;
-        }
-        else
-        {
-            os  << ' ';
-        }
-        os  << ps[pointi].x() << ' '
-            << ps[pointi].y() << ' '
-            << ps[pointi].z();
-    }
-    os  << nl << nl;
-
-    label ne = 0;
-    forAll(*this, facei)
-    {
-        ne += (*this)[facei].size() + 1;
-    }
-
-    os  << "POLYGONS " << size() << ' ' << ne << nl;
-    forAll(*this, facei)
-    {
-        os  << (*this)[facei].size() << ' ';
-        forAll((*this)[facei], pi)
-        {
-            os  << operator[](facei)[pi] << ' ';
         }
         os  << nl;
     }
-    os  << nl;
 }
 
 

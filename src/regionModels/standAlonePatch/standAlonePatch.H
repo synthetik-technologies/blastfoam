@@ -109,11 +109,17 @@ public:
 
         using PrimitivePatch<faceList, pointField>::points;
 
+        //- Non-const reference to points
+        inline pointField& pointsRef()
+        {
+            return pointsRef_;
+        }
 
-        // Edit
+        //- Combine patches across processors
+        standAlonePatch createGlobalPatch() const;
 
-            //- Correct patch after moving points
-            virtual void movePoints(const pointField&);
+        //- Correct patch after moving points
+        virtual void movePoints(const pointField&);
 
 
     // Member Operators
@@ -142,12 +148,20 @@ public:
             pointsRef_ = move(pp.points());
         }
 
-    void writeVTK(const fileName&) const;
+    // IO
 
-    standAlonePatch createGlobalPatch() const;
+        //- Write to a VTK file
+        void writeVTK(const fileName&, const bool reduce = true) const;
 
-    template<class Patch>
-    static standAlonePatch createGlobalPatch(const Patch& patch);
+
+    // Static member functions
+
+        //- Create a global patch given a patch
+        template<class Patch>
+        static standAlonePatch createGlobalPatch(const Patch& patch);
+
+        //- Write a standalone patch as a VTK
+        static void writeVTK(const fileName&, const standAlonePatch&);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
