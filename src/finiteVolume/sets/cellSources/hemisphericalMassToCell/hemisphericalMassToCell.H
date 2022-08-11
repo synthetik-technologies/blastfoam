@@ -22,22 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::cylindericalMassToCell
+    Foam::sphericalMassToCell
 
 Description
-    Set a cylinderCellSet given a mass
+    Set a hemispherical cellSet given a mass
 
 SourceFiles
-    cylindericalMassToCell.C
+    hemisphericalMassToCell.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cylindericalMassToCell_H
-#define cylindericalMassToCell_H
+#ifndef hemisphericalMassToCell_H
+#define hemisphericalMassToCell_H
 
-#include "cylinderToCell.H"
-#include "massToCell.H"
-#include "mathematicalConstants.H"
+#include "sphericalMassToCell.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,80 +43,41 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class cylindericalMassToCell Declaration
+                       Class hemisphericalMassToCell Declaration
 \*---------------------------------------------------------------------------*/
 
-class cylindericalMassToCell
+class hemisphericalMassToCell
 :
     public massToCell,
-    public cylinderToCell
+    public sphereToCell
 {
-    // Private data
-    scalar r_;
-    scalar L_;
-    vector dir_;
 
     // Private Member Functions
 
-        void read(const dictionary& dict)
+        scalar R(const dictionary& dict) const
         {
-            if (read_)
-            {
-                return;
-            }
-
             if (mustRead() || volume() > small)
             {
-                scalar LbyD(dict.lookup<scalar>("LbyD"));
-                vector dir(dict.lookup<vector>("direction"));
-                r_ =
+                return
                     cbrt
                     (
-                        volume()/(2.0*LbyD*Foam::constant::mathematical::pi)
+                        volume()*6.0/4.0/Foam::constant::mathematical::pi
                     );
-                L_ = 2.0*r_*LbyD;
-                dir_ = dir;
             }
-            else
-            {
-                r_ = dict.lookup<scalar>("radius");
-                vector L(dict.lookup<vector>("L"));
-                L_ = mag(L);
-                dir_ = cmptMag(L)/L_;
-            }
+            return dict.lookup<scalar>("radius");
         }
 
-        //- Return the radius
-        vector p1(const dictionary& dict)
-        {
-            read(dict);
-
-            return centre() - dir_*L_/2.0;
-        }
-
-        vector p2(const dictionary& dict)
-        {
-            read(dict);
-
-            return centre() + dir_*L_/2.0;
-        }
-
-        scalar R(const dictionary& dict)
-        {
-            read(dict);
-            return r_;
-        }
 
 public:
 
     //- Runtime type information
-    TypeName("cylindericalMassToCell");
+    TypeName("hemisphericalMassToCell");
 
 
     // Constructors
 
         //- Construct from dictionary
-        cylindericalMassToCell
+        hemisphericalMassToCell
         (
             const polyMesh& mesh,
             const dictionary& dict
@@ -126,7 +85,8 @@ public:
 
 
     //- Destructor
-    virtual ~cylindericalMassToCell();
+    virtual ~hemisphericalMassToCell();
+
 
     // Member Functions
 

@@ -35,7 +35,8 @@ SourceFiles
 #ifndef massToCell_H
 #define massToCell_H
 
-#include "volFields.H"
+#include "polyMesh.H"
+#include "topoSet.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -73,6 +74,9 @@ protected:
 
     // has the dictionary been read
     mutable bool read_;
+
+    // check the volume to mass to make sure it is within 5%
+    void checkMass(const labelHashSet& set, const polyMesh& mesh) const;
 
 public:
 

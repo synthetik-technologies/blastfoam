@@ -61,4 +61,23 @@ Foam::cylindericalMassToCell::~cylindericalMassToCell()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::cylindericalMassToCell::applyToSet
+(
+    const topoSetSource::setAction action,
+    topoSet& set
+) const
+{
+    labelHashSet oldSet(set);
+    cylinderToCell::applyToSet(action, set);
+
+    checkMass
+    (
+        action == topoSetSource::REMOVE
+      ? oldSet ^ set
+      : (action == topoSetSource::ADD ? set ^ oldSet : set),
+        mesh_
+    );
+}
+
+
 // ************************************************************************* //

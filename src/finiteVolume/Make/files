@@ -91,6 +91,7 @@ sets/cellSources/cylinderListToCell/cylinderListToCell.C
 sets/cellSources/sphereListToCell/sphereListToCell.C
 sets/cellSources/massToCell/massToCell.C
 sets/cellSources/sphericalMassToCell/sphericalMassToCell.C
+sets/cellSources/hemisphericalMassToCell/hemisphericalMassToCell.C
 sets/cellSources/cylindericalMassToCell/cylindericalMassToCell.C
 sets/cellSources/boxMassToCell/boxMassToCell.C
 sets/cellSources/surfacesToCell/surfacesToCell.C

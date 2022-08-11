@@ -54,7 +54,7 @@ class sphericalMassToCell
     public sphereToCell
 {
 
-    // Private Member Functions
+    // Protected Member Functions
 
         //- Return the radius
         scalar R(const dictionary& dict) const
@@ -89,6 +89,14 @@ public:
 
     //- Destructor
     virtual ~sphericalMassToCell();
+
+    // Member Functions
+
+        virtual void applyToSet
+        (
+            const topoSetSource::setAction action,
+            topoSet&
+        ) const;
 };
 
 

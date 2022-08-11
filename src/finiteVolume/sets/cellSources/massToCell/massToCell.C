@@ -25,8 +25,38 @@ License
 
 #include "massToCell.H"
 #include "polyMesh.H"
+#include "calcAngleFraction.H"
 #include "addToRunTimeSelectionTable.H"
 
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::massToCell::checkMass
+(
+    const labelHashSet& set,
+    const polyMesh& mesh
+) const
+{
+    if (mass_ < small)
+    {
+        return;
+    }
+    scalar sumV = 0.0;
+    forAllConstIter(labelHashSet, set, iter)
+    {
+        sumV += mesh.cellVolumes()[iter.key()];
+    }
+    reduce(sumV, sumOp<scalar>());
+    scalar actualMass = sumV*rho_/calcAngleFraction(mesh);
+    if (mag(actualMass - mass_)/mass_ > 0.1)
+    {
+        WarningInFunction
+            << "Requested mass is " << mass_
+            << " but set mass is " << actualMass
+            << ", " << mag(actualMass - mass_)/mass_*100.0 << "% different"
+            << nl << endl;
+    }
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 

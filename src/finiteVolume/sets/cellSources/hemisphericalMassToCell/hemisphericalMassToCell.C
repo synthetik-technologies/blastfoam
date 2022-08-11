@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "sphericalMassToCell.H"
+#include "hemisphericalMassToCell.H"
 #include "polyMesh.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -31,13 +31,13 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(sphericalMassToCell, 0);
-    addToRunTimeSelectionTable(topoSetSource, sphericalMassToCell, word);
+    defineTypeNameAndDebug(hemisphericalMassToCell, 0);
+    addToRunTimeSelectionTable(topoSetSource, hemisphericalMassToCell, word);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::sphericalMassToCell::sphericalMassToCell
+Foam::hemisphericalMassToCell::hemisphericalMassToCell
 (
     const polyMesh& mesh,
     const dictionary& dict
@@ -55,13 +55,13 @@ Foam::sphericalMassToCell::sphericalMassToCell
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::sphericalMassToCell::~sphericalMassToCell()
+Foam::hemisphericalMassToCell::~hemisphericalMassToCell()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::sphericalMassToCell::applyToSet
+void Foam::hemisphericalMassToCell::applyToSet
 (
     const topoSetSource::setAction action,
     topoSet& set
