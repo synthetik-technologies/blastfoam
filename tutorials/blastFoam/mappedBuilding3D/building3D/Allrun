@@ -19,10 +19,17 @@ runApplication decomposePar -copyZero
 # -- Cut out the stl
 runParallel snappyHexMesh -overwrite
 
+sourceCase="../axisymmetricCharge"
+if [ -d "$sourceCase/processor0" ];
+then
+    parSource="-parallelSource"
+fi
+
 # -- Set the initial conditions for the fluid
-runParallel rotateFields ../axisymmetricCharge \
+#    rho is mapped for use with AMR
+runParallel rotateFields $sourceCase \
     -sourceTime 1e-4 -additionalFields '(rho lambda.c4)' -uniform \
-    -refine -parallelSource
+    -refine $parSource
 
 #- Run the calc
 runParallel $(getApplication)

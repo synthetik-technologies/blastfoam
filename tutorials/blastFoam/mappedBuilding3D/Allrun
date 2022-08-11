@@ -1,0 +1,68 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+error() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    usage
+    exit 1
+}
+
+usage() {
+    cat<<USAGE
+Usage: ./Allrun [OPTION]
+
+options:
+  -tets     | -t    Quiet mode (does not echo commands)
+  -parallel | -j    Run in parallel
+  -help     | -h    Print the usage
+
+
+USAGE
+}
+
+# -- Polyhedral refinement flag
+startCase="sector"
+
+# -- Parallel run flag
+parallel=0
+
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+        -h | -help)
+            usage && exit 0
+            ;;
+        -s | -sector)
+            startCase="sector"
+            shift
+            ;;
+        -w | -wedge)
+            startCase="wedge"
+            shift
+            ;;
+        -*)
+            error "invalid option '$1'"
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+   esac
+done
+
+# -- Create link to "axisymmetricCharge"
+ln -sfn $startCase "axisymmetricCharge"
+
+# -- Run the 1D/2D case
+echo "Running $startCase to initilize building3D"
+$startCase/Allrun
+
+# -- Run the 3D case
+echo "Running building3D"
+building3D/Allrun
