@@ -20,7 +20,7 @@ runApplication subsetMesh -overwrite c0 -patch walls
 runApplication decomposePar
 
 # -- Set the initial conditions
-runParallel setFields
+runParallel setRefinedFields -noRefine
 
 # -- Run the calc
 runParallel blastXiFoam
