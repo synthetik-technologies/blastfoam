@@ -87,7 +87,8 @@ public:
             const word& name,
             const Time& runTime,
             const dictionary& dict,
-            const word& type
+            const word& type,
+            const word& defaultFieldName = word::null
         );
 
 

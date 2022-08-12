@@ -78,7 +78,7 @@ Foam::functionObjects::Schlieren::Schlieren
     const dictionary& dict
 )
 :
-    fieldExpression(name, runTime, dict, typeName)
+    fieldExpression(name, runTime, dict, typeName, "rho")
 {
     // Make sure the field name was read
     dict.lookup("field");

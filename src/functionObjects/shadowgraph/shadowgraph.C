@@ -43,7 +43,7 @@ Foam::functionObjects::shadowgraph::shadowgraph
     const dictionary& dict
 )
 :
-    laplacian(name, runTime, dict, typeName)
+    laplacian(name, runTime, dict, typeName, "rho")
 {}
 
 

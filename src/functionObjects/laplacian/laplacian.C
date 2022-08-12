@@ -79,10 +79,11 @@ Foam::functionObjects::laplacian::laplacian
     const word& name,
     const Time& runTime,
     const dictionary& dict,
-    const word& type
+    const word& type,
+    const word& defaultFieldName
 )
 :
-    fieldExpression(name, runTime, dict, type)
+    fieldExpression(name, runTime, dict, type, defaultFieldName)
 {
     // Make sure the field name was read
     dict.lookup("field");
