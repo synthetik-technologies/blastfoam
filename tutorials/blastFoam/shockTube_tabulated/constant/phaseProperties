@@ -36,7 +36,7 @@ equationOfState
 {
     pCoeffs
     {
-        file       "p.csv";
+        file       "constant/p.csv";
         mod         ln;
         delim       ";";
         isReal      false;
@@ -66,7 +66,7 @@ thermodynamics
 {
     TCoeffs
     {
-        file        "T.csv";
+        file        "constant/T.csv";
         mod          ln;
         delim       ";";
         isReal      false;

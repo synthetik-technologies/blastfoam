@@ -75,6 +75,7 @@ gas
     }
 
     type basic;
+    calculateDensity yes;
     thermoType
     {
         transport   const;

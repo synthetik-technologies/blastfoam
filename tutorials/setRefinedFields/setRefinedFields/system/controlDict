@@ -39,7 +39,7 @@ writePrecision  6;
 
 writeCompression off;
 
-timeFormat      general; // fixed; // using precision below --- better for paraview
+timeFormat      general;
 
 timePrecision   12;
 
@@ -51,44 +51,4 @@ maxCo           0.5;
 
 maxDeltaT       1;
 
-// ************************************************************************* //
-x1  0.6858;
-x2  1.3716;
-x3  2.0574;
-x4  2.7432;
-x5  4.1148;
-x6  5.4864;
-
-functions
-{
-    pressureProbes
-    {
-        type            probes;
-        functionObjectLibs ("libsampling.so");
-        writeControl    timeStep;
-        writeInterval   1;
-        interpolate     true;
-        interpolationScheme cellPointFace;
-        probeLocations
-        (
-            ($x1    0   0)
-            ($x2    0   0)
-            ($x3    0   0)
-            ($x4    0   0)
-            ($x5    0   0)
-            ($x6    0   0)
-            ($x1    $x1 0)
-            ($x2    $x1 0)
-            ($x3    $x1 0)
-            ($x4    $x1 0)
-            ($x5    $x1 0)
-            ($x6    $x2 0)
-        );
-        fields
-        (
-            p
-        );
-    }
-}
-}
 // ************************************************************************* //
