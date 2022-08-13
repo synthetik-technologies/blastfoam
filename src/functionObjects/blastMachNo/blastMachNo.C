@@ -119,7 +119,7 @@ Foam::functionObjects::blastMachNo::blastMachNo
         runTime,
         dict,
         IOobject::groupName("Ma", dict.lookupOrDefault("phaseName", word::null)),
-        "U"
+        IOobject::groupName("U", dict.lookupOrDefault("phaseName", word::null))
     ),
     phaseName_(dict.lookupOrDefault("phaseName", word::null)),
     systemName_
