@@ -16,13 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (air water);
-systemType interface;
-epsilon 0.25;
-sigma
-{
-    type constant;
-    sigma 0.07;
-}
+
 air
 {
     type basic;
