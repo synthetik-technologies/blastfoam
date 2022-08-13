@@ -748,7 +748,7 @@ int main(int argc, char *argv[])
     //- Add options
     argList::addNote
     (
-        "Rotational extrusion and map volume fields from one mesh to another"
+        "Rotational extrusion and map volume fields from one mesh to another\n"
     );
     argList::validArgs.append("sourceCase");
 
@@ -758,7 +758,6 @@ int main(int argc, char *argv[])
         "scalar|'latestTime'",
         "specify the source time"
     );
-
     argList::addOption
     (
         "sourceRegion",
