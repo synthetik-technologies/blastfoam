@@ -39,6 +39,40 @@ namespace functionObjects
 }
 }
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+// Specialize returning of tables
+#define SpecializeTables(Type, null)                        \
+template<>                                                  \
+Foam::HashTable<Foam::dimensioned<Foam::Type>>&             \
+Foam::functionObjects::conservedQuantities::vals0()         \
+{                                                           \
+    return Type##0s_;                                       \
+}                                                           \
+                                                            \
+template<>                                                  \
+const Foam::HashTable<Foam::dimensioned<Foam::Type>>&       \
+Foam::functionObjects::conservedQuantities::vals0() const   \
+{                                                           \
+    return Type##0s_;                                       \
+}                                                           \
+                                                            \
+template<>                                                  \
+Foam::HashTable<Foam::dimensioned<Foam::Type>>&             \
+Foam::functionObjects::conservedQuantities::vals()          \
+{                                                           \
+    return Type##s_;                                        \
+}                                                           \
+                                                            \
+template<>                                                  \
+const Foam::HashTable<Foam::dimensioned<Foam::Type>>&       \
+Foam::functionObjects::conservedQuantities::vals() const    \
+{                                                           \
+    return Type##s_;                                        \
+}
+
+FOR_ALL_FIELD_TYPES(SpecializeTables);
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 

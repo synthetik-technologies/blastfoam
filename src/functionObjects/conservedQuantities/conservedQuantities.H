@@ -77,60 +77,10 @@ class conservedQuantities
 :
     public fvMeshFunctionObject
 {
-protected:
-
-    // Protected data
+    // Private data
 
         //- Name of conserved field names
         wordList fields_;
-
-        template<class Type>
-        HashTable<dimensioned<Type>>& vals0()
-        {
-            NotImplemented;
-            return NullObjectRef<HashTable<dimensioned<Type>>>();
-        }
-        template<class Type>
-        const HashTable<dimensioned<Type>>& vals0() const
-        {
-            NotImplemented;
-            return NullObjectRef<HashTable<dimensioned<Type>>>();
-        }
-
-        template<class Type>
-        HashTable<dimensioned<Type>>& vals()
-        {
-            NotImplemented;
-            return NullObjectRef<HashTable<dimensioned<Type>>>();
-        }
-        template<class Type>
-        const HashTable<dimensioned<Type>>& vals() const
-        {
-            NotImplemented;
-            return NullObjectRef<HashTable<dimensioned<Type>>>();
-        }
-
-        #define ReturnTypeTables(Type, null)            \
-        template<>                                      \
-        HashTable<dimensioned<Type>>& vals0()           \
-        {                                               \
-            return Type##0s_;                           \
-        }                                               \
-        template<>                                      \
-        const HashTable<dimensioned<Type>>& vals0() const\
-        {                                               \
-            return Type##0s_;                           \
-        }                                               \
-        template<>                                      \
-        HashTable<dimensioned<Type>>& vals()            \
-        {                                               \
-            return Type##s_;                            \
-        }                                               \
-        template<>                                      \
-        const HashTable<dimensioned<Type>>& vals() const\
-        {                                               \
-            return Type##s_;                            \
-        }
 
         //- Scalar fields
         HashTable<dimensionedScalar> scalar0s_;
@@ -152,7 +102,42 @@ protected:
         HashTable<dimensionedTensor> tensor0s_;
         HashTable<dimensionedTensor> tensors_;
 
-        FOR_ALL_FIELD_TYPES(ReturnTypeTables);
+
+    // Private member functions 
+
+        //- Functions to return the given table types
+        //  these are later specified for all standard types
+        template<class Type>
+        const HashTable<dimensioned<Type>>& vals0() const
+        {
+            NotImplemented;
+            return NullObjectRef<HashTable<dimensioned<Type>>>();
+        }
+        
+        template<class Type>
+        HashTable<dimensioned<Type>>& vals0()
+        {
+            NotImplemented;
+            return const_cast<HashTable<dimensioned<Type>>&>
+            (
+                NullObjectRef<HashTable<dimensioned<Type>>>()
+            );
+        }
+
+        template<class Type>
+        const HashTable<dimensioned<Type>>& vals() const
+        {
+            NotImplemented;
+            return NullObjectRef<HashTable<dimensioned<Type>>>();
+        }
+
+        template<class Type>
+        HashTable<dimensioned<Type>>& vals()
+        {
+            NotImplemented;
+            return NullObjectRef<HashTable<dimensioned<Type>>>();
+        }
+
 
 public:
 
@@ -195,7 +180,6 @@ public:
         //- Disallow default bitwise assignment
         void operator=(const conservedQuantities&) = delete;
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
