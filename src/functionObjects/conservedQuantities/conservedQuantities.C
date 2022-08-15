@@ -39,41 +39,6 @@ namespace functionObjects
 }
 }
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-// Specialize returning of tables
-#define SpecializeTables(Type, null)                        \
-template<>                                                  \
-Foam::HashTable<Foam::dimensioned<Foam::Type>>&             \
-Foam::functionObjects::conservedQuantities::vals0()         \
-{                                                           \
-    return Type##0s_;                                       \
-}                                                           \
-                                                            \
-template<>                                                  \
-const Foam::HashTable<Foam::dimensioned<Foam::Type>>&       \
-Foam::functionObjects::conservedQuantities::vals0() const   \
-{                                                           \
-    return Type##0s_;                                       \
-}                                                           \
-                                                            \
-template<>                                                  \
-Foam::HashTable<Foam::dimensioned<Foam::Type>>&             \
-Foam::functionObjects::conservedQuantities::vals()          \
-{                                                           \
-    return Type##s_;                                        \
-}                                                           \
-                                                            \
-template<>                                                  \
-const Foam::HashTable<Foam::dimensioned<Foam::Type>>&       \
-Foam::functionObjects::conservedQuantities::vals() const    \
-{                                                           \
-    return Type##s_;                                        \
-}
-
-FOR_ALL_FIELD_TYPES(SpecializeTables);
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::conservedQuantities::conservedQuantities
@@ -109,8 +74,8 @@ Foam::functionObjects::conservedQuantities::conservedQuantities
                     GeometricField<Type, fvPatchField, volMesh>         \
                 >(name);                                                \
             dimensioned<Type> fV(sum(f()*V));                           \
-            vals0<Type>().insert(name, fV);                             \
-            vals<Type>().insert(name, fV);                              \
+            Type##sOrig_.insert(name, fV);                              \
+            Type##s_.insert(name, fV);                                  \
             found = true;                                               \
         }
 
@@ -171,16 +136,16 @@ bool Foam::functionObjects::conservedQuantities::execute()
                     GeometricField<Type, fvPatchField, volMesh>         \
                 >(name);                                                \
                                                                         \
-            dimensioned<Type>& fV = vals<Type>()[name];                 \
+            dimensioned<Type>& fV = Type##s_[name];                     \
             fV = sum(f()*V);                                            \
-            const Type& val0 = vals0<Type>()[name].value();             \
+            const Type& valOrig = Type##sOrig_[name].value();           \
             const Type& val = fV.value();                               \
                                                                         \
             Info<< name << " " << f.dimensions() << " :" << nl          \
-                << "    Original = " << val0 << nl                      \
+                << "    Original = " << valOrig << nl                   \
                 << "    Current = " << val << nl                        \
-                << "    difference (abs/rel) = " << (val - val0)        \
-                << ", "  << mag(val - val0)/max(mag(val0), small)       \
+                << "    difference (abs/rel) = " << (val - valOrig)     \
+                << ", "  << mag(val - valOrig)/max(mag(valOrig), small) \
                 << endl;                                                \
                                                                         \
             found = true;                                               \

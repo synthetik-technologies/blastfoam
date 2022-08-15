@@ -83,60 +83,24 @@ class conservedQuantities
         wordList fields_;
 
         //- Scalar fields
-        HashTable<dimensionedScalar> scalar0s_;
+        HashTable<dimensionedScalar> scalarsOrig_;
         HashTable<dimensionedScalar> scalars_;
 
         //- Vector fields
-        HashTable<dimensionedVector> vector0s_;
+        HashTable<dimensionedVector> vectorsOrig_;
         HashTable<dimensionedVector> vectors_;
 
         //- Symm tensor fields
-        HashTable<dimensionedSymmTensor> symmTensor0s_;
+        HashTable<dimensionedSymmTensor> symmTensorsOrig_;
         HashTable<dimensionedSymmTensor> symmTensors_;
 
         //- Spherical tensor fields
-        HashTable<dimensionedSphericalTensor> sphericalTensor0s_;
+        HashTable<dimensionedSphericalTensor> sphericalTensorsOrig_;
         HashTable<dimensionedSphericalTensor> sphericalTensors_;
 
         //- Tensor fields
-        HashTable<dimensionedTensor> tensor0s_;
+        HashTable<dimensionedTensor> tensorsOrig_;
         HashTable<dimensionedTensor> tensors_;
-
-
-    // Private member functions 
-
-        //- Functions to return the given table types
-        //  these are later specified for all standard types
-        template<class Type>
-        const HashTable<dimensioned<Type>>& vals0() const
-        {
-            NotImplemented;
-            return NullObjectRef<HashTable<dimensioned<Type>>>();
-        }
-        
-        template<class Type>
-        HashTable<dimensioned<Type>>& vals0()
-        {
-            NotImplemented;
-            return const_cast<HashTable<dimensioned<Type>>&>
-            (
-                NullObjectRef<HashTable<dimensioned<Type>>>()
-            );
-        }
-
-        template<class Type>
-        const HashTable<dimensioned<Type>>& vals() const
-        {
-            NotImplemented;
-            return NullObjectRef<HashTable<dimensioned<Type>>>();
-        }
-
-        template<class Type>
-        HashTable<dimensioned<Type>>& vals()
-        {
-            NotImplemented;
-            return NullObjectRef<HashTable<dimensioned<Type>>>();
-        }
 
 
 public:
