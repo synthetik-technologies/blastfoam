@@ -4,8 +4,8 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 #------------------------------------------------------------------------------
 
-src/Allwmake $targetType $*
-
-applications/Allwmake $targetType $*
+wmake -all $targetType utilities
+wmake -all $targetType solvers
 
 # -----------------------------------------------------------------------------
+
