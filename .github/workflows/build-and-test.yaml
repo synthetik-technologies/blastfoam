@@ -6,6 +6,7 @@ on:
       - "packaging/debian"
 
 concurrency:
+  #* Only run one run at a time
   group: blastfoam
   cancel-in-progress: true
 
@@ -22,6 +23,8 @@ jobs:
         with:
           path: blastfoam-src
       - name: Build Tar for Cache
+        #* This creates a cache tarball that can be used to skip builds
+        #* in the next step if the files remain unchanged.
         run: tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
       - name: Check Cache
         id: check-cache
@@ -32,6 +35,14 @@ jobs:
       - name: Build from makefile
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
+        #* Flags
+        #* --no-lintian: Do not run lintian on the package
+        #* -i: Install the package
+        #* nc: Do not clean the build directory (this removes '.orig' files from tests)
+        #* -us: Do not sign the package
+        #* -uc: Do not sign the changes file
+        #* -b: Build binary package
+        #* --jobs=10: Run 10 jobs in parallel
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
         with:
