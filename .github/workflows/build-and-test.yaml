@@ -38,7 +38,7 @@ jobs:
         #* Flags
         #* --no-lintian: Do not run lintian on the package
         #* -i: Install the package
-        #* nc: Do not clean the build directory (this removes '.orig' files from tests)
+        #* -nc: Do not clean the build directory (this removes '.orig' files from tests)
         #* -us: Do not sign the package
         #* -uc: Do not sign the changes file
         #* -b: Build binary package
