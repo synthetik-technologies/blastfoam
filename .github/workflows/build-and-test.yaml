@@ -78,8 +78,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Debug
         run: |
-          echo ls -la
-          echo pwd
+          echo $(ls -la)
+          echo $pwd
       - name: Build and Push Image
         uses: synthetik-technologies/actions/composites/docker-build-push@8-add-actions-for-blastfoam
         with:
