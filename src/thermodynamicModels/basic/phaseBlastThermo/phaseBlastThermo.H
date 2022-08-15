@@ -182,7 +182,7 @@ public:
         // Directory to compile from
         static fileName templateDir()
         {
-            return getEnv("BLAST_DIR")/"etc/codeTemplates";
+            return getEnv("BLAST_CODE_TEMPLATES");
         }
 
         //- Return the thermodynamic type name

@@ -2,5 +2,5 @@ EXE_INC= \
     -I$(BLAST_DIR)/src/numerics/lnInclude
 
 EXE_LIBS = \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lblastNumerics

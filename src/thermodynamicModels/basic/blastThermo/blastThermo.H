@@ -169,7 +169,7 @@ public:
         // Directory to compile from
         static fileName templateDir()
         {
-            return getEnv("BLAST_DIR")/"etc/codeTemplates";
+            return getEnv("BLAST_CODE_TEMPLATES");
         }
 
         //- Return the thermo type name given a dictionary
