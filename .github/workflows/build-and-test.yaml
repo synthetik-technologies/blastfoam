@@ -27,15 +27,17 @@ jobs:
         #* in the next step if the files remain unchanged.
         run: tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
       - name: Check Cache
+        #* Checks the cache tarball and only rebuilds if there were changes
         id: check-cache
         uses: actions/cache@v3
         with:
           path: blastfoam_*.deb
           key: ${{ hashFiles('blastfoam-src/checksum.tar.gz') }}
       - name: Build from makefile
+        #* This builds the package from the makefile ONLY if the cache tarball is changed.
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
-        #* Flags
+        #* Debuild Flags
         #* --no-lintian: Do not run lintian on the package
         #* -i: Install the package
         #* -nc: Do not clean the build directory (this removes '.orig' files from tests)
@@ -78,10 +80,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Debug
-        run: |
-          echo $(ls -la)
-          echo $pwd
       - name: Build and Push Image
         uses: synthetik-technologies/actions/composites/docker-build-push@8-add-actions-for-blastfoam
         with:
