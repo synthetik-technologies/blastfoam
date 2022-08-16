@@ -122,14 +122,6 @@ Foam::functionObjects::blastMachNo::blastMachNo
         IOobject::groupName("U", dict.lookupOrDefault("phaseName", word::null))
     ),
     phaseName_(dict.lookupOrDefault("phaseName", word::null)),
-    systemName_
-    (
-        dict.lookupOrDefault
-        (
-            "systemName",
-            IOobject::groupName(basicThermo::dictName, phaseName_)
-        )
-    ),
     UName_(dict.lookupOrDefault("UName", IOobject::groupName("U", phaseName_)))
 {
     if (!dict.lookupOrDefault("executeAtStart", false))

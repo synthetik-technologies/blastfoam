@@ -64,9 +64,6 @@ class blastMachNo
         //- Name of phase
         word phaseName_;
 
-        //- Name of looked up system
-        word systemName_;
-
         //- Name of velocity field
         word UName_;
 
