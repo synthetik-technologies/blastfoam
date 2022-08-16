@@ -7,7 +7,6 @@ blastProbes/blastPatchProbes.C
 blastProbes/blastProbesGrouping.C
 vtkTimeSeries/vtkTimeSeries/vtkTimeSeries.C
 vtkTimeSeries/vtkTimeSeriesWriter/vtkTimeSeriesSurfaceWriter.C
-procDistribution/procDistribution.C
 laplacian/laplacian.C
 Schlieren/Schlieren.C
 shadowgraph/shadowgraph.C
