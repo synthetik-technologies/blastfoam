@@ -66,6 +66,8 @@ jobs:
       - version
     runs-on: "ubuntu-latest"
     steps:
+      - name: Checkout blastFOAM
+        uses: actions/checkout@v3
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
