@@ -42,6 +42,7 @@ Usage:
 #include "vtkTimeSeries.H"
 #include "IFstream.H"
 #include "PatchTools.H"
+#include "IOobjectList.H"
 
 #include "volFields.H"
 #include "surfaceFields.H"
@@ -138,13 +139,12 @@ bool foundGeoField
             meshes[0],
             IOobject::MUST_READ
         );
-        if (!io.typeHeaderOk<GeoField>(false))
-        {
-            good = false;
-            break;
-        }
-        IFstream is(io.objectPath());
-        io.readHeader(is);
+        fileHandler().readHeader
+        (
+            io,
+            io.objectPath(),
+            GeoField::typeName
+        );
         if (io.headerClassName() != GeoField::typeName)
         {
             good = false;
@@ -327,7 +327,6 @@ bool writePointField
         }
 
         Field<Type> piField(fld.boundaryField()[patchID].patchInternalField());
-        label nPoints(piField.size());
         if (Pstream::parRun())
         {
             // Collect values from all processors
@@ -349,8 +348,12 @@ bool writePointField
 
                 // Renumber (point data) to correspond to merged points
                 inplaceReorder(pointMaps[i], allValues);
-                allValues.setSize(nPoints);
+                allValues.setSize(size);
                 piField.transfer(allValues);
+            }
+            else
+            {
+                continue;
             }
         }
         if (interps.set(i))
@@ -362,14 +365,18 @@ bool writePointField
             pFld += weights[i]*piField;
         }
     }
-    pFld /= sum(weights);
-    writeField
-    (
-        os,
-        binary,
-        fieldName,
-        pFld
-    );
+
+    if (Pstream::master())
+    {
+        pFld /= sum(weights);
+        writeField
+        (
+            os,
+            binary,
+            fieldName,
+            pFld
+        );
+    }
     return true;
 }
 
@@ -435,8 +442,8 @@ int main(int argc, char *argv[])
 
     argList::addBoolOption
     (
-        "binary",
-        "Write VTK in binary"
+        "ascii",
+        "Write VTK in ASCII"
     );
     argList::addOption
     (
@@ -464,20 +471,12 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
     #include "createTime.H"
 
-    const bool binary = args.optionFound("binary");
+    const bool binary = !args.optionFound("ascii");
 
     const word regionName =
         args.optionLookupOrDefault("region", polyMesh::defaultRegion);
     word patchName(args.argRead<word>(1));
-    wordList fieldNames = args.optionRead<wordList>("fields");
-
     Info<< "Creating samples on " << string(patchName) << endl;
-    Info<< "Sampling fields:" << endl << incrIndent;
-    forAll(fieldNames, fieldi)
-    {
-        Info<< indent << fieldNames[fieldi] << endl;
-    }
-    Info<< decrIndent << endl;
 
     instantList timeDirs = timeSelector::select0
     (
@@ -491,11 +490,20 @@ int main(int argc, char *argv[])
         times[ti] = timeDirs[ti].value();
     }
 
+    if (!times.size())
+    {
+        WarningInFunction
+            << "No time were selected. Exiting" << endl;
+        return 0;
+    }
+
     lookupTable1D<scalar> table
     (
         times,
         "none",
-        args.optionLookupOrDefault<word>("interpolationScheme", "linearClamp")
+        times.size() > 1
+      ? args.optionLookupOrDefault<word>("interpolationScheme", "linearClamp")
+      : "floor"
     );
     table.update(runTime.value());
 
@@ -534,6 +542,54 @@ int main(int argc, char *argv[])
             )
         )
     );
+
+    wordList fieldNames;
+    if (args.optionFound("fields"))
+    {
+        fieldNames = args.optionRead<wordList>("fields");
+    }
+    else
+    {
+        // Get list of objects from processor0 database
+        IOobjectList objects
+        (
+            meshes[0],
+            timeDirs[0].name()
+        );
+        forAllConstIter(IOobjectList, objects, iter)
+        {
+            if
+            (
+                iter()->headerClassName() == volScalarField::typeName
+             || iter()->headerClassName() == volVectorField::typeName
+             || iter()->headerClassName() == volSymmTensorField::typeName
+             || iter()->headerClassName() == volSphericalTensorField::typeName
+             || iter()->headerClassName() == volTensorField::typeName
+
+             || iter()->headerClassName() == surfaceScalarField::typeName
+             || iter()->headerClassName() == surfaceVectorField::typeName
+             || iter()->headerClassName() == surfaceSymmTensorField::typeName
+             || iter()->headerClassName() == surfaceSphericalTensorField::typeName
+             || iter()->headerClassName() == surfaceTensorField::typeName
+
+             || iter()->headerClassName() == pointScalarField::typeName
+             || iter()->headerClassName() == pointVectorField::typeName
+             || iter()->headerClassName() == pointSymmTensorField::typeName
+             || iter()->headerClassName() == pointSphericalTensorField::typeName
+             || iter()->headerClassName() == pointTensorField::typeName
+            )
+            {
+                fieldNames.append(iter.key());
+            }
+        }
+    }
+    Info<< "Sampling fields:" << endl << incrIndent;
+    forAll(fieldNames, fieldi)
+    {
+        Info<< indent << fieldNames[fieldi] << endl;
+    }
+    Info<< decrIndent << endl;
+
 
     label patchID = meshes[0].boundaryMesh().findPatchID(patchName);
     if (patchID < 0)
@@ -664,7 +720,15 @@ int main(int argc, char *argv[])
                 PatchTools::gatherAndMerge
                 (
                     1e-6,
-                    patches[surfacei],
+                    primitivePatch
+                    (
+                        SubList<face>
+                        (
+                            patches[surfacei].localFaces(),
+                            patches[surfacei].size()
+                        ),
+                        patches[surfacei].localPoints()
+                    ),
                     points,
                     faces,
                     pointMaps[surfacei]
@@ -672,8 +736,8 @@ int main(int argc, char *argv[])
             }
             else
             {
-                points = patches[surfacei].points();
-                faces = patches[surfacei];
+                points = patches[surfacei].localPoints();
+                faces = patches[surfacei].localFaces();
                 pointMaps[surfacei] = identity(points.size());
             }
             surfaces.set
@@ -738,7 +802,7 @@ int main(int argc, char *argv[])
             os,                                 \
             binary,                             \
             meshes,                             \
-            size,                               \
+            nFaces,                             \
             fieldName,                          \
             patchID,                            \
             ws,                                 \
@@ -750,7 +814,7 @@ int main(int argc, char *argv[])
             os,                                 \
             binary,                             \
             meshes,                             \
-            size,                               \
+            nPoints,                            \
             fieldName,                          \
             patchID,                            \
             ws,                                 \
@@ -797,7 +861,6 @@ int main(int argc, char *argv[])
                 << nFaces << nl
                 << "FIELD attributes " << faceFields.size() << nl;
         }
-        label size = nFaces;
         forAll(faceFields, fieldi)
         {
             const word& fieldName = faceFields[fieldi];
