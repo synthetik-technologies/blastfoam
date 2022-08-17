@@ -517,17 +517,13 @@ Foam::label Foam::blastProbes::prepare()
                     << endl;
             }
 
-            fout<< '#' << setw(IOstream::defaultPrecision() + 6)
-                << "Probe";
 
+            fout<< '#' << setw(w) << "Time";
             forAll(*this, probei)
             {
                 fout<< ' ' << setw(w) << probei;
             }
             fout<< endl;
-
-            fout<< '#' << setw(IOstream::defaultPrecision() + 6)
-                << "Time" << endl;
 
             // Add old values to new output
             if (oldValues.size())
