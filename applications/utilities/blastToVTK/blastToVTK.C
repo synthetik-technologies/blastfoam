@@ -79,32 +79,6 @@ void writeField
     vtkWriteOps::write(os, binary, data);
 }
 
-template<class Type, template<class> class GeoField>
-void transfer
-(
-    GeoField<Type>& fld,
-    GeoField<Type>& newFld
-)
-{
-    typename GeoField<Type>::Boundary& bfld = fld.boundaryFieldRef();
-    typename GeoField<Type>::Boundary& bnewFld = newFld.boundaryFieldRef();
-
-    bfld.clear();
-    bfld.setSize(bnewFld.size());
-
-    fld.setSize(newFld.size());
-    fld.transfer(newFld.ref());
-
-    forAll(bnewFld, patchi)
-    {
-        bfld.set
-        (
-            patchi,
-            bnewFld[patchi].clone(fld)
-        );
-    }
-}
-
 template<class Mesh>
 const Mesh& getMesh(const fvMesh& mesh)
 {
@@ -119,62 +93,29 @@ const pointMesh& getMesh(const fvMesh& mesh)
 template<class GeoField>
 bool foundGeoField
 (
-    const PtrList<fvMesh>& meshes,
-    const word& fieldName,
-    const label nI
+    const fvMesh& mesh,
+    const word& fieldName
 )
 {
-    if (!meshes.size())
-    {
-        return false;
-    }
-
     bool good = true;
-    for (label i = 0; i < nI; i++)
-    {
-        IOobject io
-        (
-            fieldName,
-            meshes[0].time().timeName(),
-            meshes[0],
-            IOobject::MUST_READ
-        );
-        fileHandler().readHeader
-        (
-            io,
-            io.objectPath(),
-            GeoField::typeName
-        );
-        if (io.headerClassName() != GeoField::typeName)
-        {
-            good = false;
-            break;
-        }
-    }
+    IOobject io
+    (
+        fieldName,
+        mesh.time().timeName(),
+        mesh,
+        IOobject::MUST_READ
+    );
+    fileHandler().readHeader
+    (
+        io,
+        io.objectPath(),
+        GeoField::typeName
+    );
+    good = io.headerClassName() == GeoField::typeName;
 
     if (!returnReduce(good, andOp<bool>()))
     {
         return false;
-    }
-
-    for (label i = 0; i < nI; i++)
-    {
-        const fvMesh& mesh = meshes[i];
-        if (!mesh.foundObject<GeoField>(fieldName))
-        {
-            GeoField* fld = new GeoField
-            (
-                IOobject
-                (
-                    fieldName,
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::MUST_READ
-                ),
-                getMesh<typename GeoField::Mesh>(meshes[i])
-            );
-            fld->store(fld);
-        }
     }
     return true;
 }
@@ -189,7 +130,8 @@ bool writeGeoField
     const word& fieldName,
     const label patchID,
     const scalarList& weights,
-    const PtrList<standAlonePatchToPatchInterpolation>& interps
+    const PtrList<standAlonePatchToPatchInterpolation>& interps,
+    const PtrList<standAlonePatch>& surfaces
 )
 {
     if (!interps.size())
@@ -202,28 +144,23 @@ bool writeGeoField
     {
         // Check if the field has been registered
         const fvMesh& mesh = meshes[i];
-        if (!mesh.foundObject<GeoField<Type>>(fieldName))
+
+        if (!foundGeoField<GeoField<Type>>(mesh, fieldName))
         {
             return false;
         }
 
-        // Update the field by re-reading if the instance in not up to date
-        const GeoField<Type>& fld = mesh.lookupObject<GeoField<Type>>(fieldName);
-        if (fld.instance() != mesh.facesInstance())
-        {
-            GeoField<Type> newFld
+        GeoField<Type> fld
+        (
+            IOobject
             (
-                IOobject
-                (
-                    fieldName,
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::MUST_READ
-                ),
-                mesh
-            );
-            transfer<Type, GeoField>(const_cast<GeoField<Type>&>(fld), newFld);
-        }
+                fieldName,
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ
+            ),
+            getMesh<typename GeoField<Type>::Mesh>(meshes[i])
+        );
 
         // Reduce the field to the master processor
         Field<Type> piField(fld.boundaryField()[patchID]);
@@ -246,6 +183,7 @@ bool writeGeoField
                     )
                 );
                 piField.transfer(allValues);
+                piField.setSize(surfaces[i].size());
             }
             else
             {
@@ -267,7 +205,7 @@ bool writeGeoField
     // Write
     if (Pstream::master())
     {
-        pFld /= sum(weights);
+        // pFld /= sum(weights);
         writeField
         (
             os,
@@ -290,6 +228,7 @@ bool writePointField
     const label patchID,
     const scalarList& weights,
     const PtrList<standAlonePatchToPatchInterpolation>& interps,
+    const PtrList<standAlonePatch>& surfaces,
     const List<labelList>& pointMaps
 )
 {
@@ -303,28 +242,22 @@ bool writePointField
     {
         // Check if the field has been registered
         const fvMesh& mesh = meshes[i];
-        if (!mesh.foundObject<PointField<Type>>(fieldName))
+        if (!foundGeoField<PointField<Type>>(mesh, fieldName))
         {
             return false;
         }
 
-        // Update the field by re-reading if the instance in not up to date
-        const PointField<Type>& fld = mesh.lookupObject<PointField<Type>>(fieldName);
-        if (fld.instance() != mesh.facesInstance())
-        {
-            PointField<Type> newFld
+        PointField<Type> fld
+        (
+            IOobject
             (
-                IOobject
-                (
-                    fieldName,
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::MUST_READ
-                ),
-                pointMesh::New(mesh)
-            );
-            transfer<Type, PointField>(const_cast<PointField<Type>&>(fld), newFld);
-        }
+                fieldName,
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ
+            ),
+            getMesh<typename PointField<Type>::Mesh>(meshes[i])
+        );
 
         Field<Type> piField(fld.boundaryField()[patchID].patchInternalField());
         if (Pstream::parRun())
@@ -348,7 +281,7 @@ bool writePointField
 
                 // Renumber (point data) to correspond to merged points
                 inplaceReorder(pointMaps[i], allValues);
-                allValues.setSize(size);
+                allValues.setSize(surfaces[i].nPoints());
                 piField.transfer(allValues);
             }
             else
@@ -634,7 +567,7 @@ int main(int argc, char *argv[])
         label I = 0;
         forAll(weights, i)
         {
-            if (mag(weights[i]) > small)
+            if (mag(weights[i]) > 1e-10)
             {
                 Is.append(indices[i]);
                 ws.append(weights[i]);
@@ -751,16 +684,16 @@ int main(int argc, char *argv[])
         label nFaces = masterSurface.size();
         label nPoints = masterSurface.points().size();
         PtrList<standAlonePatchToPatchInterpolation> interps(Is.size());
-        forAll(interps, tj)
+        forAll(interps, surfacei)
         {
-            if (tj != masterID)
+            if (surfacei != masterID)
             {
                 interps.set
                 (
-                    tj,
+                    surfacei,
                     new standAlonePatchToPatchInterpolation
                     (
-                        surfaces[tj],
+                        surfaces[surfacei],
                         masterSurface,
                         intersection::algorithm::halfRay
                         // intersection::direction::contactSphere
@@ -787,14 +720,16 @@ int main(int argc, char *argv[])
         }
 
         #define FoundGeoField(Type, GeoField)   \
-        found =                                 \
-            found                               \
-         || foundGeoField<GeoField<Type>>       \
-            (                                   \
-                meshes,                         \
-                fieldNames[fieldi],             \
-                Is.size()                       \
-            );
+        forAll(surfaces, i)                     \
+        {                                       \
+            found =                             \
+                found                           \
+             || foundGeoField<GeoField<Type>>   \
+                (                               \
+                    meshes[i],                  \
+                    fieldNames[fieldi]          \
+                );                              \
+        }
 
         #define WriteGeoField(Type, GeoField)   \
         writeGeoField<Type, GeoField>           \
@@ -806,7 +741,8 @@ int main(int argc, char *argv[])
             fieldName,                          \
             patchID,                            \
             ws,                                 \
-            interps                             \
+            interps,                            \
+            surfaces                            \
         );
         #define WritePointField(Type, null)     \
         writePointField<Type>                   \
@@ -819,6 +755,7 @@ int main(int argc, char *argv[])
             patchID,                            \
             ws,                                 \
             interps,                            \
+            surfaces,                           \
             pointMaps                           \
         );
 
