@@ -35,6 +35,63 @@ Description
 
 using namespace Foam;
 
+fileName findProbeDir(const fileName& dir, const word& pName)
+{
+    if (isFile(dir/pName))
+    {
+        return dir;
+    }
+
+
+    fileNameList timeDirs(readDir(dir, fileType::directory));
+
+    scalar minTime = great;
+    fileName minTimeName;
+    forAll(timeDirs, ti)
+    {
+        token t((IStringStream(timeDirs[ti]))());
+        if (t.isNumber() && isFile(dir/timeDirs[ti]/pName))
+        {
+            if (t.number() < minTime)
+            {
+                minTime = t.number();
+                minTimeName = timeDirs[ti];
+            }
+        }
+    }
+
+    if (!minTimeName.empty())
+    {
+        return dir/minTimeName;
+    }
+    return fileName::null;
+}
+
+fileNameList collectFiles(const fileName& dir)
+{
+    HashSet<fileName> collectedFiles
+    (
+        readDir(dir, fileType::file)
+    );
+
+    fileNameList timeDirs(readDir(dir, fileType::directory));
+
+    forAll(timeDirs, ti)
+    {
+        token t((IStringStream(timeDirs[ti]))());
+        if (t.isNumber())
+        {
+            collectedFiles.insert
+            (
+                readDir(dir/timeDirs[ti], fileType::file)
+            );
+        }
+    }
+
+    return collectedFiles.toc();
+}
+
+
 int main(int argc, char *argv[])
 {
     argList::noParallel();
@@ -68,51 +125,54 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
 
     fileName probeDirName(args.argRead<fileName>(1));
-    fileName probeDir
-    (
-        fileName("postProcessing")/probeDirName
-    );
-
-
-    // Read all available probed fields
-    fileNameList probeFields(readDir(probeDir, fileType::file));
+    fileName probeDir("postProcessing"/probeDirName);
 
     // Default pressure name
-    fileName defaultPName("p");
-    forAll(probeFields, i)
+    fileName pName;
+    if (args.optionFound("p"))
     {
-        // Use overpressre as the defalt if it exists
-        if (probeFields[i] == "overpressure")
-        {
-            defaultPName = probeFields[i];
-            break;
-        }
+        pName = args.optionRead<fileName>("p");
+        fileName newProbeDir = findProbeDir(probeDir, pName);
 
-        // Phase specific overpressure
-        else if (IOobject::member(probeFields[i]) == "overpressure")
+        if (newProbeDir.empty())
         {
-            defaultPName = probeFields[i];
+            // Read all available probed fields
+            fileNameList probeFields(collectFiles(probeDir));
+
+            FatalErrorInFunction
+                << pName << " was not found in " << probeDir << nl
+                << "valid probe fields are:" << nl
+                << probeFields << endl
+                << abort(FatalError);
+        }
+        probeDir = newProbeDir;
+    }
+    else
+    {
+        fileName newProbeDir = findProbeDir(probeDir, "overpressure");
+        if (!newProbeDir.empty())
+        {
+            pName = "overpressure";
+            probeDir = newProbeDir;
+        }
+        else
+        {
+            newProbeDir = findProbeDir(probeDir, "p");
+            if (!newProbeDir.empty())
+            {
+                pName = "p";
+                probeDir = newProbeDir;
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "Could not detemine a pressure field to calulate impulse with." << nl
+                    << "please specify a field using \'-p pName\'" << endl
+                    << abort(FatalError);
+            }
         }
     }
-    fileName pName(args.optionLookupOrDefault("p", defaultPName));
-
-    scalar pRef =
-        (IOobject::member(pName) != "overpressure")
-      ? args.optionRead<scalar>("pRef")
-      : args.optionLookupOrDefault<scalar>("pRef", 0.0);
-
     Info<< "Using " << string(pName) << " in " << probeDir << endl;
-    Info<< "Using reference pressure of " << pRef << " Pa" << endl;
-
-    fileName pFile(probeDir/pName);
-    if (!isFile(pFile))
-    {
-        FatalErrorInFunction
-            << pName << " Was not found in " << probeDir << nl
-            << "valid probe fields are:" << nl
-            << probeFields << endl
-            << abort(FatalError);
-    }
 
     fileName impulseName
     (
@@ -151,11 +211,11 @@ int main(int argc, char *argv[])
     OFstream impulseStream(probeDir/impulseName);
 
     // Read the pressure probes and check if it exists
-    IFstream pstream(pFile);
+    IFstream pstream(probeDir/pName);
     if (!pstream.good())
     {
         FatalIOErrorInFunction(pstream)
-            << "Could not find " << pFile << endl
+            << "Could not find " << probeDir/pName << endl
             << abort(FatalIOError);
     }
 
@@ -193,6 +253,23 @@ int main(int argc, char *argv[])
     scalar tOld(t);
     scalarField pOld(p);
     scalarField impulse(nProbes, 0.0);
+
+    // Set reference pressure
+    scalar pRef;
+    if (args.optionFound("pRef"))
+    {
+        pRef = args.optionRead<scalar>("pRef");
+    }
+    else
+    {
+        scalar pAvg = 0;
+        forAll(pOld, i)
+        {
+            pAvg += pOld[i];
+        }
+        pRef = pAvg/scalar(pOld.size());
+    }
+    Info<< "Using reference pressure of " << pRef << " Pa" << endl;
 
     // Initial time
     scalar t0 = t;
