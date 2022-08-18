@@ -38,10 +38,10 @@ namespace patchToPatchMappings
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTypeNameAndDebug(ggiPatchToPatchMapping, 0);
-addToRunTimeSelectionTable
-(
-    patchToPatchMapping, ggiPatchToPatchMapping, dictionary
-);
+// addToRunTimeSelectionTable
+// (
+//     patchToPatchMapping, ggiPatchToPatchMapping, dictionary
+// );
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

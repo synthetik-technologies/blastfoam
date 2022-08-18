@@ -172,6 +172,9 @@ public:
 
         // Edit
 
+            using patchToPatchMapping::transferFaces;
+            using patchToPatchMapping::transferPoints;
+
             //- Transfer/map/interpolate from one zone faces to another zone
             //  faces for scalars
             virtual void transferFaces

@@ -14,7 +14,7 @@ $(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
 $(AMI)/amiPatchToPatchMapping.C
 
 GGI = $(patchToPatchMappings)/ggi
-#$(GGI)/ggiPatchToPatchMapping.C
+$(GGI)/ggiPatchToPatchMapping.C
 $(GGI)/GGIInterpolation/GGIInterpolationName.C
 
 #RBF = $(patchToPatchMappings)/rbf

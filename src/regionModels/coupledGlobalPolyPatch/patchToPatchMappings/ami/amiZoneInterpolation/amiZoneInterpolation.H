@@ -60,10 +60,10 @@ class amiZoneInterpolation
     // Private Data
 
         //- Const reference to source patch
-        const standAlonePatch sourcePatch_;
+        const standAlonePatch& sourcePatch_;
 
         //- Const reference to target patch
-        const standAlonePatch targetPatch_;
+        const standAlonePatch& targetPatch_;
 
         //- Source patch interpolator
         PrimitivePatchInterpolation<standAlonePatch>
