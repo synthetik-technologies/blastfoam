@@ -57,6 +57,14 @@ void resetParRun()
     Pstream::parRun() = parRun;
 }
 
+struct cellInfo
+{
+    label proc;
+    label cellID;
+    scalar weight;
+};
+typedef DynamicList<cellInfo> cellInfoList;
+
 template<class Type>
 wordList createBoundaryTypes
 (
@@ -114,8 +122,8 @@ void mapVolFields
 (
     const PtrList<fvMesh>& sourceMeshes,
     const fvMesh& targetMesh,
-    const List<labelPair>& cellMap,
-    const List<labelPair>& extendedCellMap,
+    const List<cellInfoList>& cellMap,
+    const List<cellInfoList>& extendedCellMap,
     const IOobjectList& objects,
     const tensorField& R,
     const HashSet<word>& mapFields,
@@ -160,7 +168,7 @@ void mapVolFields
         resetParRun();
 
         autoPtr<fieldType> fieldTargetPtr;
-        UautoPtr<const List<labelPair>> mapPtr;
+        UautoPtr<const List<cellInfoList>> mapPtr;
         bool exists = false;
         if (targetMesh.foundObject<fieldType>(fieldIter()->name()))
         {
@@ -221,15 +229,22 @@ void mapVolFields
             // Read fieldTarget
             fieldType& fieldTarget = fieldTargetPtr();
 
-            const List<labelPair>& map = mapPtr();
+            const List<cellInfoList>& map = mapPtr();
 
             forAll(map, celli)
             {
-                labelPair cellProcj = map[celli];
-                if (cellProcj.second() != -1)
+                if (map[celli].size())
                 {
-                    const Type& v = fieldSources[cellProcj.first()][cellProcj.second()];
-                    fieldTarget[celli] = transform(R[celli], v);
+                    fieldTarget[celli] = Zero;
+                    Type vSum = Zero;
+                    scalar sumW = 0.0;
+                    forAll(map[celli], j)
+                    {
+                        const cellInfo& info = map[celli][j];
+                        vSum += info.weight*fieldSources[info.proc][info.cellID];
+                        sumW += info.weight;
+                    }
+                    fieldTarget[celli] = transform(R[celli], vSum/sumW);
                 }
             }
             forAll(fieldTarget.boundaryField(), patchi)
@@ -248,6 +263,7 @@ void mapVolFields
                 fieldTargetPtr.ptr();
             }
         }
+
 #ifdef FULLDEBUG
         else
         {
@@ -264,8 +280,8 @@ void mapFields
 (
     const PtrList<fvMesh>& sourceMeshes,
     const fvMesh& targetMesh,
-    const List<labelPair>& cellMap,
-    const List<labelPair>& extendedCellMap,
+    const List<cellInfoList>& cellMap,
+    const List<cellInfoList>& extendedCellMap,
     const tensorField& R,
     const HashSet<word>& additionalFields,
     const bool store = false
@@ -385,19 +401,57 @@ void calcMapAndR
     const vector& targetCentre,
     const vector& rotationAxis,
     const vector& rAxis,
-    List<labelPair>& cellMap,
-    List<labelPair>& extendedCellMap,
+    List<cellInfoList>& cellMap,
+    List<cellInfoList>& extendedCellMap,
     tensorField& R
 )
 {
     Info<< "Calulating map and rotation tensors" << endl;
     label nSourceD = sourceMeshes[0].nGeometricD();
+    vector sourceD(sourceMeshes[0].geometricD());
     vector targetD(targetMesh.geometricD());
+
+    pointField transformedPoints(targetMesh.points());
+    forAll(transformedPoints, pointi)
+    {
+        // Get the position on the target mesh
+        vector ptTarget =
+            cmptMultiply
+            (
+                targetMesh.points()[pointi],
+                targetD
+            );
+
+        // Offset from the center of the source mesh
+        vector nTarget = (ptTarget - targetCentre);
+
+        // Radius
+        scalar r = mag(nTarget);
+
+        // Offset from the source mesh center (only solved directions)
+        vector nSource(Zero);
+        if (nSourceD == 1)
+        {
+            nSource = r*rAxis;
+        }
+        else
+        {
+            scalar y = nTarget & rotationAxis;
+            scalar x = mag((nTarget - y*rotationAxis));
+            nSource = y*rotationAxis + x*rAxis;
+        }
+
+        // Actual point on the source mesh
+        transformedPoints[pointi] = nSource + sourceCentre;
+    }
+
 
     forAll(cellMap, celli)
     {
+        const cell& c = targetMesh.cells()[celli];
+
         // Mapping has already been set
-        if (cellMap[celli].second() >= 0)
+        if (cellMap[celli].size())
         {
             continue;
         }
@@ -432,40 +486,70 @@ void calcMapAndR
         vector ptSource = nSource + sourceCentre;
 
         // Map from the source mesh to the target mesh
-        bool set = false;
+        // Keep track of the maximum volume (weight) for extended cell
+        scalar maxV = -great;
+        label eCellI = -1;
+        scalar sumV = 0.0;
+        cellInfoList& infos = cellMap[celli];
         forAll(sourceMeshes, proci)
         {
             if (targetMesh.bounds().overlaps(sourceMeshes[proci].bounds()))
             {
-                label sCelli = icos[proci].findInside(ptSource);
-                if (sCelli >= 0)
+                treeBoundBox bb(c.points(targetMesh.faces(), transformedPoints));
+                forAll(sourceD, cmpti)
                 {
-                    cellMap[celli] = {proci, sCelli};
-                    extendedCellMap[celli] = cellMap[celli];
-                    set = true;
-                    break;
+                    if (sourceD[cmpti] < 0)
+                    {
+                        bb.min()[cmpti] = -great;
+                        bb.max()[cmpti] = great;
+                    }
+                }
+
+                // Find all cells in the transformed bound box and weight based
+                // on cell volume
+                // NOTE: Ideally this would be overlap volume but that requires more
+                // work
+                labelList sCells(icos[proci].findBox(bb));
+                forAll(sCells, cj)
+                {
+                    const label cellj = sCells[cj];
+                    const scalar V = sourceMeshes[proci].V()[cellj];
+                    sumV += V;
+                    infos.append({proci, cellj, V});
+
+                    if (V > maxV)
+                    {
+                        maxV = V;
+                        eCellI = cj;
+                    }
                 }
             }
         }
 
-        // Extend radius is the target point is outside of the source mesh
-        if (!set)
+        // normalize weights
+        if (sumV > 0)
         {
-            scalar dist = great;
-            forAll(sourceMeshes, proci)
+            forAll(infos, cj)
             {
-                pointIndexHit pIH = icos[proci].findNearest(ptSource, great);
-                scalar curDist = mag(pIH.hitPoint() - ptSource);
-                if (curDist < dist)
-                {
-                    dist = curDist;
-                    extendedCellMap[celli] = {proci, pIH.index()};
-                    if (r < maxR)
-                    {
-                        cellMap[celli] = extendedCellMap[celli];
-                    }
-                }
+                infos[cj].weight /= sumV;
             }
+        }
+
+        // Extend radius is the target point is outside of the source mesh
+        scalar dist = great;
+        forAll(sourceMeshes, proci)
+        {
+            pointIndexHit pIH = icos[proci].findNearest(ptSource, great);
+            scalar curDist = mag(pIH.hitPoint() - ptSource);
+            if (curDist < dist)
+            {
+                dist = curDist;
+                extendedCellMap[celli](0) = {proci, pIH.index(), 1.0};
+            }
+        }
+        if (r < maxR && !cellMap[celli].size())
+        {
+            cellMap[celli](0) = extendedCellMap[celli][0];
         }
 
         //- If mapping from a 2D case then there is only 1 rotation axis
@@ -693,8 +777,8 @@ void refine
 
         Info<<"Iteration " << iter << endl;
 
-        List<labelPair> cellMap(targetMesh.nCells(), {-1, -1});
-        List<labelPair> extendedCellMap(targetMesh.nCells(), {-1, -1});
+        List<cellInfoList> cellMap(targetMesh.nCells());
+        List<cellInfoList> extendedCellMap(targetMesh.nCells());
         tensorField R(targetMesh.nCells(), tensor::I);
 
         calcMapAndR
@@ -775,7 +859,6 @@ int main(int argc, char *argv[])
         "parallelSource",
         "the source is decomposed"
     );
-
     argList::addBoolOption
     (
         "extend",
@@ -826,7 +909,7 @@ int main(int argc, char *argv[])
     const fileName rootDirSource = casePath.path().toAbsolute();
     const fileName caseDirSource = casePath.name();
 
-    Info<< "Source: " << rootDirSource << " " << caseDirSource << endl;
+    Info<< "Source: " << casePath << " " << caseDirSource << endl;
     word sourceRegion = fvMesh::defaultRegion;
     if (args.optionFound("sourceRegion"))
     {
@@ -1040,8 +1123,8 @@ int main(int argc, char *argv[])
     if (!args.optionFound("refine"))
     {
         Info<< "Target mesh size: " << targetMesh.nCells() << nl << endl;
-        List<labelPair> cellMap(targetMesh.nCells(), {-1, -1});
-        List<labelPair> extendedCellMap(targetMesh.nCells(), {-1, -1});
+        List<cellInfoList> cellMap(targetMesh.nCells());
+        List<cellInfoList> extendedCellMap(targetMesh.nCells());
         tensorField R(targetMesh.nCells(), tensor::I);
 
         calcMapAndR
