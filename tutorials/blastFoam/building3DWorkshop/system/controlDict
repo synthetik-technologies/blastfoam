@@ -159,7 +159,6 @@ functions
         fields
         (
             p
-            impulse
         );
     }
 };

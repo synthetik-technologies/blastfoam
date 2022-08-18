@@ -1,3 +1,0 @@
-reconstructPar_reload.C
-
-EXE = $(BLAST_APPBIN)/reconstructPar_reload
