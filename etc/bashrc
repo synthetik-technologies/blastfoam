@@ -57,11 +57,11 @@ export BLAST_APPBIN="$FOAM_USER_APPBIN"
 
 # Add BLAST_APPBIN to the PATH if it isn't already on it
 if [[ ":$PATH:" != *":$BLAST_APPBIN:"* ]]; then
-    $PATH:$BLAST_APPBIN
+    PATH=$PATH:$BLAST_APPBIN
 fi
 # Add BLAST_LIBBIN to the LD_LIBRARY_PATH if it isn't already on it
 if [[ ":$LD_LIBRARY_PATH:" != *":$BLAST_LIBBIN:"* ]]; then
-    $LD_LIBRARY_PATH:$BLAST_LIBBIN
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BLAST_LIBBIN
 fi
 
 export BLAST_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
