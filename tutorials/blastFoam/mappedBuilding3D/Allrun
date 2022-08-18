@@ -16,10 +16,9 @@ usage() {
 Usage: ./Allrun [OPTION]
 
 options:
-  -tets     | -t    Quiet mode (does not echo commands)
-  -parallel | -j    Run in parallel
+  -sector   | -s    Run sector case
+  -wedge    | -w    Run wedge case
   -help     | -h    Print the usage
-
 
 USAGE
 }
