@@ -40,4 +40,6 @@
 darwin64Clang**
 lnInclude**
 .vscode
-docker/Dockerfile-old
+node_modules
+package.json
+package-lock.json

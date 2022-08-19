@@ -5,6 +5,10 @@
     {
       "name": "develop",
       "prerelease": true
+    },
+    {
+      "name": "staging",
+      "prerelease": true
     }
   ],
   "plugins": [
