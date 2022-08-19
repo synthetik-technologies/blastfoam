@@ -57,7 +57,7 @@ jobs:
     steps:
       - name: Get Short SHA
         id: get-short-sha
-        uses: synthetik-technologies/actions/composites/sha-versioning@8-add-actions-for-blastfoam
+        uses: synthetik-technologies/actions/composites/sha-versioning@v1.2.0
     outputs:
       version: ${{ steps.get-short-sha.outputs.version }}
 
@@ -81,7 +81,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push Image
-        uses: synthetik-technologies/actions/composites/docker-build-push@8-add-actions-for-blastfoam
+        uses: synthetik-technologies/actions/composites/docker-build-push@v1.2.0
         with:
           ssh-key-needed: "false"
           image: blastfoam-dev
