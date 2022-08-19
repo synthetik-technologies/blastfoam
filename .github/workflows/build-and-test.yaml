@@ -36,7 +36,7 @@ jobs:
       - name: Build from makefile
         #* This builds the package from the makefile ONLY if the cache tarball is changed.
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
-        run: debuild --no-lintian -i -nc -us -uc -b --jobs=10
+        run: debuild --no-lintian -i -nc -us -uc -b --jobs=auto
         #* Debuild Flags
         #* --no-lintian: Do not run lintian on the package
         #* -i: Install the package
