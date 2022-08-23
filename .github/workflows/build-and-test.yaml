@@ -2,8 +2,6 @@ name: Build and Test
 
 on:
   push:
-    branches:
-      - "packaging/debian"
 
 concurrency:
   #* Only run one run at a time
