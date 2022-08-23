@@ -5,8 +5,6 @@ on:
 
 jobs:
   build:
-    if: ${{ false }} #* disable for now
-
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
     defaults:
