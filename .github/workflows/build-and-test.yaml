@@ -34,7 +34,9 @@ jobs:
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
         #* in the next step if the files remain unchanged.
-        run: tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 --numeric-owner --sort=name Makefile applications debian etc src
+        run: |
+          tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 \
+            --numeric-owner --sort=name Makefile applications debian etc src
       - name: Check Cache
         #* Checks the cache tarball and only rebuilds if there were changes
         id: check-cache
