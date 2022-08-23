@@ -11,6 +11,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  version:
+    name: Short SHA Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Short SHA
+        id: get-short-sha
+        uses: synthetik-technologies/actions/composites/sha-versioning@v1.2.0
+    outputs:
+      version: ${{ steps.get-short-sha.outputs.version }}
   build:
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
@@ -51,15 +60,6 @@ jobs:
           name: blastfoam_untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 7
-  version:
-    name: Shorten SHA
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get Short SHA
-        id: get-short-sha
-        uses: synthetik-technologies/actions/composites/sha-versioning@v1.2.0
-    outputs:
-      version: ${{ steps.get-short-sha.outputs.version }}
 
   build-docker:
     name: Build Docker Image
