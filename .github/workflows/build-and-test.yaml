@@ -14,17 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Version
-        uses: synthetik-technologies/actions/composites/semantic-versioning@v1.20
+        uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      # name: Short SHA Version
-      # runs-on: ubuntu-latest
-      # steps:
-      #   - name: Get Short SHA
-      #     id: get-short-sha
-      #     uses: synthetik-technologies/actions/composites/sha-versioning@v1.2.0
-      # outputs:
-      # version: ${{ steps.get-short-sha.outputs.version }}
 
   build:
     if: ${{ false }} #* disable for now
