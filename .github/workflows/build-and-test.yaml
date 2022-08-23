@@ -12,15 +12,25 @@ concurrency:
 
 jobs:
   version:
-    name: Short SHA Version
+    name: Semantic Version
     runs-on: ubuntu-latest
     steps:
-      - name: Get Short SHA
-        id: get-short-sha
-        uses: synthetik-technologies/actions/composites/sha-versioning@v1.2.0
-    outputs:
-      version: ${{ steps.get-short-sha.outputs.version }}
+      - name: Version
+        uses: synthetik-technologies/actions/composites/semantic-versioning@15-use-semantic-release-for-all-versioning
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      # name: Short SHA Version
+      # runs-on: ubuntu-latest
+      # steps:
+      #   - name: Get Short SHA
+      #     id: get-short-sha
+      #     uses: synthetik-technologies/actions/composites/sha-versioning@v1.2.0
+      # outputs:
+      # version: ${{ steps.get-short-sha.outputs.version }}
+
   build:
+    if: ${{ false }} #* disable for now
+
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
     defaults:
