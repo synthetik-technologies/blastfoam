@@ -74,6 +74,8 @@ jobs:
           retention-days: 7
 
   build-docker:
+    if: ${{ false }} #* disable for now
+
     name: Build Docker Image
     needs:
       - build
