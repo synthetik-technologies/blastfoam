@@ -1,4 +1,4 @@
-name: Build blastFOAM Debian Package
+name: Build and Test
 
 on:
   push:
