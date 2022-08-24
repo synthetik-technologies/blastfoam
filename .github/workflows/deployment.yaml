@@ -26,6 +26,7 @@ jobs:
   build:
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
+    needs: [version]
     defaults:
       run:
         working-directory: blastfoam-src
