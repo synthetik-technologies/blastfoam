@@ -22,10 +22,9 @@ jobs:
     steps:
       - name: Version
         id: version
-        uses: synthetik-technologies/actions/composites/semantic-versioning@v15-use-semantic-release-for-all-versioning
+        uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          dry_run: "true"
       - name: Update Debian Control
         run: sed -i "s/Version:.*/Version:\ ${{ env.RELEASE }}/" debian/blastfoam/DEBIAN/control
       - name: Commit Version Change
