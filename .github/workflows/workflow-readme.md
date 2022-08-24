@@ -34,9 +34,10 @@ _This is deprecated and replaced with the below_
 
 ```mermaid
   stateDiagram-v2
-  [*] --> CacheHit
-  CacheHit --> Build: false
-  Build --> Validation
-  CacheHit --> Validation: true
-  Validation --> [*]
+  state "cache hit" as ch
+  [*] --> ch
+  ch --> build: false
+  build --> validation
+  ch --> validation: true
+  validation --> [*]
 ```
