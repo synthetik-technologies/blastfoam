@@ -1,0 +1,1 @@
+sed -i "s/Version:.*/Version: ${{ nextRelease.version }}/ debian/blastfoam/DEBIAN/control"
