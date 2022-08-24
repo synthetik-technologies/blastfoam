@@ -14,34 +14,7 @@
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",
-    [
-      "@google/semantic-release-replace-plugin",
-      {
-        "replacements": [
-          {
-            "files": [
-              "debian/blastfoam/DEBIAN/control"
-            ],
-            "from": "Version: .*",
-            "to": "Version: ${nextRelease.version}",
-            "results": [
-              {
-                "file": "debian/blastfoam/DEBIAN/control",
-                "hasChanged": true,
-                "numMatches": 1,
-                "numReplacements": 1
-              }
-            ],
-            "countMatches": true
-          }
-        ]
-      }
-    ],
     "@semantic-release/release-notes-generator",
-    "@semantic-release/git",
-    {
-      "assets": "debian/blastfoam/DEBIAN/control"
-    },
     "@semantic-release/github",
     [
       "@semantic-release/exec",
