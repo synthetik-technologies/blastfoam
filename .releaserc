@@ -19,14 +19,15 @@
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV && ./.updateDeb.sh ${nextRelease.version}"
+        "prepareCmd": "./.updateDeb.sh ${nextRelease.version}",
+        "publishCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV"
       }
     ],
     [
       "@semantic-release/git",
       {
         "assets": [
-          "debian/blastfoam/DEBIAN/control"
+          "debian/blastfoam/DEBIAN/*"
         ]
       }
     ]
