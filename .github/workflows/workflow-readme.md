@@ -1,6 +1,7 @@
 # Actions README
 
 Note: Each step requires the previous step(s) to complete (unless otherwise noted).
+_This is deprecated and replaced with the below_
 
 ```mermaid
   flowchart TB
@@ -27,4 +28,15 @@ Note: Each step requires the previous step(s) to complete (unless otherwise note
     dd[Upload Debian Package to Private Repo]
 
     end
+```
+
+## On pull request build/merge/sync
+
+```mermaid
+  stateDiagram-v2
+  [*] --> CacheHit
+  CacheHit --> Build: false
+  Build --> Validation
+  CacheHit --> Validation: true
+  Validation --> [*]
 ```
