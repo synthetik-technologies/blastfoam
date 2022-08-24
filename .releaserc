@@ -38,6 +38,10 @@
       }
     ],
     "@semantic-release/release-notes-generator",
+    "@semantic-release/git",
+    {
+      "assets": "debian/blastfoam/DEBIAN/control"
+    },
     "@semantic-release/github",
     [
       "@semantic-release/exec",
