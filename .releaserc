@@ -14,6 +14,16 @@
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",
+    [
+      "@google/semantic-release-replace-plugin",
+      {
+        "files": [
+          "debian/blastfoam/DEBIAN/control"
+        ],
+        "from": "Version: .*",
+        "to": "Version: ${nextRelease.version}"
+      }
+    ],
     "@semantic-release/release-notes-generator",
     "@semantic-release/github",
     [

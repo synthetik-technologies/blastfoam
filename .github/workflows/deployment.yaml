@@ -19,13 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Version
-        uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.0
+        uses: synthetik-technologies/actions/composites/semantic-versioning@15-use-semantic-release-for-all-versioning
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
+    needs: [version]
     defaults:
       run:
         working-directory: blastfoam-src
