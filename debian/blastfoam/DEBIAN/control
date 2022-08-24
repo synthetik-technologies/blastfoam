@@ -1,5 +1,5 @@
 Package: blastfoam
-Version: 
+Version: 5.2.0-develop.13
 Architecture: amd64
 Maintainer: Ubuntu <>
 Installed-Size: 265
