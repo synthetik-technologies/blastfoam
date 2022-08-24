@@ -19,7 +19,8 @@
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "echo RELEASE=${nextRelease.version} >> $GITHUB_ENV"
+        "prepareCmd": "echo RELEASE=${nextRelease.version} >> $GITHUB_ENV",
+        "publishCmd": "sed -i 's/Version:.*/Version: ${{ env.RELEASE }}/' debian/blastfoam/DEBIAN/control"
       }
     ]
   ]
