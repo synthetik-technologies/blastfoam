@@ -1,0 +1,26 @@
+{
+  "branches": [
+    "+([0-9])?(.{+([0-9]),x}).x",
+    "main",
+    "master",
+    {
+      "name": "develop",
+      "prerelease": true
+    },
+    {
+      "name": "staging",
+      "prerelease": true
+    }
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/github",
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "echo RELEASE=${nextRelease.version} >> $GITHUB_ENV"
+      }
+    ]
+  ]
+}

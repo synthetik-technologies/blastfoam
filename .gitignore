@@ -39,3 +39,7 @@
 .DS_Store
 darwin64Clang**
 lnInclude**
+.vscode
+node_modules
+package.json
+package-lock.json
