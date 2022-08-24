@@ -25,8 +25,6 @@ jobs:
         uses: synthetik-technologies/actions/composites/semantic-versioning@10-fix-semantic-version-output
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Check
-        run: echo ${{ env.VERSION }}
 
   debian_release:
     name: Debian Release
