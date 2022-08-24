@@ -19,8 +19,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV",
-        "publishCmd": "./.updateDeb.sh ${nextRelease.version}"
+        "publishCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV && ./.updateDeb.sh ${nextRelease.version}"
       }
     ]
   ]
