@@ -24,8 +24,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   build:
-    if: ${{ false }} #* disable for now
-
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
     defaults:
@@ -69,8 +67,6 @@ jobs:
           retention-days: 7
 
   build-docker:
-    if: ${{ false }} #* disable for now
-
     name: Build Docker Image
     needs:
       - build

@@ -41,3 +41,33 @@ _This is deprecated and replaced with the below_
   ch --> validation: true
   validation --> [*]
 ```
+
+## Continuous Distribution
+
+_Run on push to staging, master, dev_
+
+```mermaid
+  stateDiagram-v2
+
+  state "build debian package" as deb
+  state "build docker image" as doc
+  state "private github prerelease" as pre
+  state "public github release" as pub
+  state "push docker image" as docPush
+  state "push debian package" as debPush
+
+  [*] --> version
+  version --> deb
+  deb --> doc
+  doc --> pre: staging
+  pre --> [*]
+
+  doc --> pub: main
+  pub --> debPush
+  debPush --> docPush
+  docPush --> [*]
+
+
+
+
+```
