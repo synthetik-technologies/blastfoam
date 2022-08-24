@@ -33,7 +33,7 @@ jobs:
           add: "debian/blastfoam/DEBIAN/control"
           author_name: Synthetik Bot
           author_email: support@synthetik-technologies.com
-          message: "ci: bumped Debian package version"
+          message: "ci: bumped Debian package version to ${{ steps.version.outputs.version }}"
           push: true
 
   build:
