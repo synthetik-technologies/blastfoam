@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Version
-        uses: synthetik-technologies/actions/composites/semantic-versioning@15-use-semantic-release-for-all-versioning
+        uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
