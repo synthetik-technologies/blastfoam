@@ -22,6 +22,20 @@ jobs:
         uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout Head Branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Update Debian Control
+        run: sed -i "s/Version.*/Version ${{ env.RELEASE }}/" debian/blastfoam/DEBIAN/control
+      - name: Commit Version Change
+        uses: EndBug/add-and-commit
+        with:
+          add: "debian/blastfoam/DEBIAN/control"
+          author_name: Synthetik Bot
+          author_email: support@synthetik-technologies.com
+          message: "ci: bumped Debian package version"
+          push: true
 
   build:
     runs-on: ["self-hosted", "deb", "openfoam"]
