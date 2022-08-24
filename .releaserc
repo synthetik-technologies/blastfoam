@@ -22,6 +22,13 @@
         "publishCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV && ./.updateDeb.sh ${nextRelease.version}"
       }
     ],
-    "@semantic-release/git"
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "debian/blastfoam/DEBIAN/control"
+        ]
+      }
+    ]
   ]
 }
