@@ -23,7 +23,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Update Debian Control
-        run: sed -i 's/Version.*/Version ${{ env.RELEASE }}/' debian/blastfoam/DEBIAN/control
+        run: sed -i "s/Version:.*/Version:\ ${{ env.RELEASE }}/" debian/blastfoam/DEBIAN/control
       - name: Commit Version Change
         uses: EndBug/add-and-commit@v9
         with:
