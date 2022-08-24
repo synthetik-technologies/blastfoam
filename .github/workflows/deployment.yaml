@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Version
         id: version
-        uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.0
+        uses: synthetik-technologies/actions/composites/semantic-versioning@10-fix-semantic-version-output
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -30,7 +30,7 @@ jobs:
     name: Debian Release
     runs-on: ubuntu-latest
     needs: [version]
-    if: needs.version.outputs.version != ''
+    if: ${{needs.version.outputs.version != ''}}
     steps:
       - name: Update Debian Control
         run: sed -i "s/Version:.*/Version:\ ${{ needs.version.outputs.version }}/" debian/blastfoam/DEBIAN/control
