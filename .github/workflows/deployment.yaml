@@ -25,28 +25,21 @@ jobs:
         uses: synthetik-technologies/actions/composites/semantic-versioning@10-fix-semantic-version-output
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
-  debian_release:
-    name: Debian Release
-    runs-on: ubuntu-latest
-    needs: [version]
-    if: ${{needs.version.outputs.version != ''}}
-    steps:
-      - name: Update Debian Control
-        run: sed -i "s/Version:.*/Version:\ ${{ needs.version.outputs.version }}/" debian/blastfoam/DEBIAN/control
-      - name: Commit Version Change
+      - name: Commit Version Release
+        if: ${{ env.VERSION != ''}}
         uses: EndBug/add-and-commit@v9
         with:
           add: "debian/blastfoam/DEBIAN/control"
           author_name: Synthetik Bot
           author_email: support@synthetik-technologies.com
-          message: "ci: bumped Debian package version to ${{ needs.version.outputs.version }}"
+          message: "ci: bumped Debian package version to ${{ env.VERSION }}"
           push: true
 
   build:
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
-    needs: [debian_release]
+    needs: [version]
+    if: ${{ needs.version.outputs.version != '' }}
     defaults:
       run:
         working-directory: blastfoam-src
