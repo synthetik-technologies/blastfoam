@@ -1,3 +1,4 @@
 #! /bin/bash
 
-sed -i "s/Version:.*/Version: $1/g" debian/blastfoam/DEBIAN/control
+version="Version: $1"
+sed -i "s/Version:.*/$version/g" debian/blastfoam/DEBIAN/control
