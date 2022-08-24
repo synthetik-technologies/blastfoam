@@ -17,20 +17,24 @@
     [
       "@google/semantic-release-replace-plugin",
       {
-        "files": [
-          "debian/blastfoam/DEBIAN/control"
-        ],
-        "from": "Version: .*",
-        "to": "Version: ${nextRelease.version}",
-        "results": [
+        "replacements": [
           {
-            "file": "debian/blastfoam/DEBIAN/control",
-            "hasChanged": true,
-            "numMatches": 1,
-            "numReplacements": 1
+            "files": [
+              "debian/blastfoam/DEBIAN/control"
+            ],
+            "from": "Version: .*",
+            "to": "Version: ${nextRelease.version}",
+            "results": [
+              {
+                "file": "debian/blastfoam/DEBIAN/control",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1
+              }
+            ],
+            "countMatches": true
           }
-        ],
-        "countMatches": true
+        ]
       }
     ],
     "@semantic-release/release-notes-generator",
