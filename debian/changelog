@@ -1,6 +1,10 @@
-blastfoam (5.0-1) UNRELEASED; urgency=low
+blastfoam (5.2.0-7-upload-debian-package-with-release.5) UNRELEASED; urgency=low
 
+  [ Ubuntu ]
   * Initial release. Closes: #nnnn
     <nnnn is the bug number of your ITP>
 
- -- Ubuntu <>  Mon, 30 May 2022 19:17:29 +0000
+  [  ]
+  *
+
+ --  <runner@fv-az397-760.digkgshymtuujfwfpq2czj2vug.jx.internal.cloudapp.net>  Thu, 25 Aug 2022 18:19:17 +0000
