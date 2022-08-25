@@ -82,7 +82,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: blastfoam-package
-      - run: gh release upload "${{ needs.version.outputs.version }}" blastfoam_*.deb
+      - run: gh release upload "v${{ needs.version.outputs.version }}" blastfoam_*.deb
 
   build-docker:
     name: Build Docker Image
@@ -96,7 +96,7 @@ jobs:
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
-          name: blastfoam_untested.deb
+          name: blastfoam-package
           path: ${{ github.workspace }}
       - uses: docker/login-action@v2
         with:
