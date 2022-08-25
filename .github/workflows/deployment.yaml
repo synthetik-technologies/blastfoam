@@ -16,6 +16,8 @@ jobs:
     outputs:
       version: ${{ env.VERSION }}
     steps:
+      - name: Install DevScripts
+        run: sudo apt install devscripts
       - name: Version
         id: version
         uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.1
