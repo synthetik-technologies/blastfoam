@@ -36,6 +36,7 @@ jobs:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
+          depth: 0
           path: blastfoam-src
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
@@ -62,12 +63,26 @@ jobs:
         #* -uc: Do not sign the changes file
         #* -b: Build binary package
         #* --jobs=10: Run 10 jobs in parallel
+
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
         with:
-          name: blastfoam_untested.deb
+          name: blastfoam-package
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 7
+
+  release-deb:
+    name: Add Debian Package to Release
+    needs:
+      - build
+      - version
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: blastfoam-package
+      - run: gh release upload "${{ needs.version.outputs.version }}" blastfoam_*.deb
 
   build-docker:
     name: Build Docker Image
