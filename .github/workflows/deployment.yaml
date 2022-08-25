@@ -6,7 +6,7 @@ on:
 
 concurrency:
   #* Only run one run at a time
-  group: blastfoam
+  group: blastfoam-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

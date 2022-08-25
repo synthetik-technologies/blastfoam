@@ -42,7 +42,7 @@
       "@semantic-release/git",
       {
         "assets": [
-          "debian/*"
+          "debian"
         ]
       }
     ]
