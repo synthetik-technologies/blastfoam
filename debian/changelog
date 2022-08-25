@@ -1,4 +1,4 @@
-blastfoam (5.2.0-7-upload-debian-package-with-release.7) UNRELEASED; urgency=low
+blastfoam (5.2.0-7-upload-debian-package-with-release.8) UNRELEASED; urgency=low
 
   [ Ubuntu ]
   * Initial release. Closes: #nnnn
@@ -13,4 +13,7 @@ blastfoam (5.2.0-7-upload-debian-package-with-release.7) UNRELEASED; urgency=low
   [  ]
   * Automated Release
 
- --  <runner@fv-az28-593.ycjfjujedjyu5lezsnvlijijec.cx.internal.cloudapp.net>  Thu, 25 Aug 2022 20:20:26 +0000
+  [  ]
+  * Automated Release
+
+ --  <runner@fv-az39-260.yumyzuo2tp0ejekjjwodrrku4b.bx.internal.cloudapp.net>  Thu, 25 Aug 2022 20:34:24 +0000
