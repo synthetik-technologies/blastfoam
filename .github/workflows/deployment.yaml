@@ -1,8 +1,6 @@
 name: Deployment
 
-on:
-  push:
-    branches:
+on: push
 
 concurrency:
   #* Only run one run at a time
@@ -77,6 +75,8 @@ jobs:
       - build
       - version
     runs-on: "ubuntu-latest"
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
