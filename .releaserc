@@ -14,22 +14,21 @@
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",
-    [
-      "@google/semantic-release-replace-plugin",
-      {
-        "files": [
-          "debian/blastfoam/DEBIAN/control"
-        ],
-        "from": "Version: .*",
-        "to": "Version: ${nextRelease.version}"
-      }
-    ],
     "@semantic-release/release-notes-generator",
     "@semantic-release/github",
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "echo RELEASE=${nextRelease.version} >> $GITHUB_ENV"
+        "prepareCmd": "./.updateDeb.sh ${nextRelease.version}",
+        "publishCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "debian/blastfoam/DEBIAN/*"
+        ]
       }
     ]
   ]
