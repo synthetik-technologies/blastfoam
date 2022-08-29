@@ -34,8 +34,8 @@ jobs:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
           path: blastfoam-src
+          ref: ${{ github.ref }}
       - run: git log -n 1
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
