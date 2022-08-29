@@ -34,7 +34,7 @@ jobs:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
-          depth: 0
+          fetch-depth: 0
           path: blastfoam-src
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: blastfoam-package
-          path: ${{ github.workspace }}/blastfoam_*.deb
+          path: ${{ github.workspace }}/blastfoam_${{ needs.version.outputs.version }}_amd64.deb
           retention-days: 7
 
   release-deb:
