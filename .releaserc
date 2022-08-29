@@ -19,7 +19,19 @@
         "preset": "angular",
         "releaseRules": [
           {
-            "type": "ci",
+            "type": "DEV",
+            "release": "minor"
+          },
+          {
+            "type": "PRJ",
+            "release": false
+          },
+          {
+            "type": "ENH",
+            "release": "minor"
+          },
+          {
+            "type": "BUG",
             "release": "patch"
           }
         ]
