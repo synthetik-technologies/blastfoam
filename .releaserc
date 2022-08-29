@@ -28,7 +28,7 @@
           },
           {
             "type": "ENH",
-            "release": "patch"
+            "release": "minor"
           },
           {
             "type": "BUG",
