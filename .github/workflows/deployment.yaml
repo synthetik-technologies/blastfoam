@@ -36,6 +36,7 @@ jobs:
         with:
           fetch-depth: 0
           path: blastfoam-src
+      - run: git log -n 1
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
         #* in the next step if the files remain unchanged.
