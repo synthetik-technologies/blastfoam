@@ -10,7 +10,7 @@ on:
 
 concurrency:
   #* Only run one run at a time
-  group: blastfoam
+  group: blastfoam-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -20,6 +20,8 @@ jobs:
     outputs:
       version: ${{ env.VERSION }}
     steps:
+      - name: Install DevScripts
+        run: sudo apt install devscripts
       - name: Version
         id: version
         uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.1
@@ -39,6 +41,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: blastfoam-src
+          ref: ${{ github.ref }}
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
         #* in the next step if the files remain unchanged.
@@ -64,12 +67,28 @@ jobs:
         #* -uc: Do not sign the changes file
         #* -b: Build binary package
         #* --jobs=10: Run 10 jobs in parallel
+
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
         with:
-          name: blastfoam_untested.deb
+          name: blastfoam-package
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 7
+
+  release-deb:
+    name: Add Debian Package to Release
+    needs:
+      - build
+      - version
+    runs-on: "ubuntu-latest"
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: blastfoam-package
+      - run: gh release upload "v${{ needs.version.outputs.version }}" blastfoam_*.deb
 
   build-docker:
     name: Build Docker Image
@@ -83,7 +102,7 @@ jobs:
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
-          name: blastfoam_untested.deb
+          name: blastfoam-package
           path: ${{ github.workspace }}
       - uses: docker/login-action@v2
         with:
