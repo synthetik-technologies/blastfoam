@@ -10,10 +10,6 @@
     {
       "name": "staging",
       "prerelease": true
-    },
-    {
-      "name": "7-upload-debian-package-with-release",
-      "prerelease": true
     }
   ],
   "plugins": [

@@ -1,6 +1,12 @@
 name: Deployment
 
-on: push
+on:
+  push:
+    branches:
+      - "main"
+      - "master"
+      - "staging"
+      - "develop"
 
 concurrency:
   #* Only run one run at a time
