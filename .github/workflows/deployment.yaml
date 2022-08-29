@@ -36,8 +36,6 @@ jobs:
         with:
           path: blastfoam-src
           ref: ${{ github.ref }}
-      - run: git log -n 1
-      - run: ${{ github.ref }}
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
         #* in the next step if the files remain unchanged.
