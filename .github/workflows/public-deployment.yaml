@@ -58,3 +58,10 @@ jobs:
           docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_LATEST_IMAGE }}
           docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_IMAGE }}
           docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_LATEST_IMAGE }}
+
+      - name: Push Images
+        run: |
+          docker push ${{ env.GHCR_PROD_IMAGE }}
+          docker push ${{ env.GHCR_PROD_LATEST_IMAGE }}
+          docker push ${{ env.DH_PROD_IMAGE }}
+          docker push ${{ env.DH_PROD_LATEST_IMAGE }}
