@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -73,9 +73,10 @@ namespace Function3s
 {
 
 /*---------------------------------------------------------------------------*\
-                           A templated Function3
+                    Helper functions to construct a Function1
 \*---------------------------------------------------------------------------*/
 
+// Helper functions to make using exisiting functions easier
 #define Func10(Name)                                    \
     Function1<${TemplateType}>::New                     \
     (                                                   \
@@ -99,6 +100,10 @@ namespace Function3s
     GET_FUNC1_MACRO(__VA_ARGS__, Func11, Func10)(__VA_ARGS__)
 
 
+/*---------------------------------------------------------------------------*\
+                    Helper functions to construct a Function2
+\*---------------------------------------------------------------------------*/
+
 #define Func20(Name)                                    \
     Function2<${TemplateType}>::New                     \
     (                                                   \
@@ -121,6 +126,10 @@ namespace Function3s
 #define Func2(...) \
         GET_FUNC2_MACRO(__VA_ARGS__, Func21, Func20)(__VA_ARGS__)
 
+
+/*---------------------------------------------------------------------------*\
+                           A templated Function3
+\*---------------------------------------------------------------------------*/
 
 class ${typeName}Function3${TemplateType}
 :
