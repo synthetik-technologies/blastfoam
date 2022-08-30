@@ -50,8 +50,14 @@ export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
 # export BLAST_DIR="$( cd $(dirname $0)/../ && pwd )"
 
 # Export location of libraries and executables
-export BLAST_LIBBIN="$FOAM_USER_LIBBIN"
-export BLAST_APPBIN="$FOAM_USER_APPBIN"
+if [[ $BLAST_DIR == /opt/* ]]
+then
+    export BLAST_LIBBIN="${BLAST_DIR}/platforms/${WM_OPTIONS}/bin"
+    export BLAST_APPBIN="${BLAST_DIR}/platforms/${WM_OPTIONS}/bin"
+else
+    export BLAST_LIBBIN="$FOAM_USER_LIBBIN"
+    export BLAST_APPBIN="$FOAM_USER_APPBIN"
+fi
 #export BLAST_LIBBIN="$FOAM_SITE_LIBBIN"
 #export BLAST_APPBIN="$FOAM_SITE_APPBIN"
 
