@@ -58,8 +58,8 @@ jobs:
         with:
           username: jacobhoehler
           password: ${{ secrets.DOCKERHUB_JH }}
-      - name: Construct Dev Tag
-        run: echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ inputs.tag }}" >> $GITHUB_ENV
+      # - name: Construct Dev Tag
+      #   run: echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ inputs.tag }}" >> $GITHUB_ENV
 
       - name: Download Debian Package
         uses: actions/download-artifact@v3
