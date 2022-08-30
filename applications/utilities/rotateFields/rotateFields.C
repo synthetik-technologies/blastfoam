@@ -491,36 +491,39 @@ void calcMapAndR
         label eCellI = -1;
         scalar sumV = 0.0;
         cellInfoList& infos = cellMap[celli];
-        forAll(sourceMeshes, proci)
+        if (r < maxR || maxR < 0)
         {
-            if (targetMesh.bounds().overlaps(sourceMeshes[proci].bounds()))
+            forAll(sourceMeshes, proci)
             {
-                treeBoundBox bb(c.points(targetMesh.faces(), transformedPoints));
-                forAll(sourceD, cmpti)
+                if (targetMesh.bounds().overlaps(sourceMeshes[proci].bounds()))
                 {
-                    if (sourceD[cmpti] < 0)
+                    treeBoundBox bb(c.points(targetMesh.faces(), transformedPoints));
+                    forAll(sourceD, cmpti)
                     {
-                        bb.min()[cmpti] = -great;
-                        bb.max()[cmpti] = great;
+                        if (sourceD[cmpti] < 0)
+                        {
+                            bb.min()[cmpti] = -great;
+                            bb.max()[cmpti] = great;
+                        }
                     }
-                }
 
-                // Find all cells in the transformed bound box and weight based
-                // on cell volume
-                // NOTE: Ideally this would be overlap volume but that requires more
-                // work
-                labelList sCells(icos[proci].findBox(bb));
-                forAll(sCells, cj)
-                {
-                    const label cellj = sCells[cj];
-                    const scalar V = sourceMeshes[proci].V()[cellj];
-                    sumV += V;
-                    infos.append({proci, cellj, V});
-
-                    if (V > maxV)
+                    // Find all cells in the transformed bound box and weight based
+                    // on cell volume
+                    // NOTE: Ideally this would be overlap volume but that requires more
+                    // work
+                    labelList sCells(icos[proci].findBox(bb));
+                    forAll(sCells, cj)
                     {
-                        maxV = V;
-                        eCellI = cj;
+                        const label cellj = sCells[cj];
+                        const scalar V = sourceMeshes[proci].V()[cellj];
+                        sumV += V;
+                        infos.append({proci, cellj, V});
+
+                        if (V > maxV)
+                        {
+                            maxV = V;
+                            eCellI = cj;
+                        }
                     }
                 }
             }
@@ -961,7 +964,7 @@ int main(int argc, char *argv[])
             targetRegion,
             targetRunTime.timeName(),
             targetRunTime,
-            IOobject::READ_IF_PRESENT
+            IOobject::MUST_READ
         )
     );
     Info<<"Created target mesh"<<endl;
