@@ -39,6 +39,13 @@ jobs:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.SYN_BOT_READ_WRITE }}
+          ref: ${{ github.ref }}
+          repository: ${{ inputs.prod_repo }}
+
       - name: Login to GitHub Registry
         uses: docker/login-action@v2
         with:
@@ -54,26 +61,37 @@ jobs:
       - name: Construct Dev Tag
         run: echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ inputs.tag }}" >> $GITHUB_ENV
 
-      - name: Pull Image
-        run: docker pull "${{ env.DEV_IMAGE }}"
+      - name: Download Debian Package
+        uses: actions/download-artifact@v3
+        with:
+          name: blastfoam-package
+          path: ${{ github.workspace }}
 
-      - name: Create Image Tags
-        run: |
-          echo "GHCR_PROD_IMAGE=ghcr.io/${{ inputs.prod_repo }}:${{ inputs.tag }}" >> $GITHUB_ENV
-          echo "GHCR_PROD_LATEST_IMAGE=ghcr.io/${{ inputs.prod_repo }}:latest" >> $GITHUB_ENV
-          echo "DH_PROD_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
-          echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:${{ inputs.tag }}" >> $GITHUB_ENV
+      - name: Build and Push Image
+        uses: synthetik-technologies/actions/composites/docker-build-push@v1.2.0
+        with:
+          ssh-key-needed: "false"
+          image: ${{ inputs.prod_repo }}
+          image-registry: ghcr.io
+          version: ${{ inputs.tag }}
 
-      - name: Tag Images
-        run: |
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_IMAGE }}
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_LATEST_IMAGE }}
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_IMAGE }}
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_LATEST_IMAGE }}
+      # - name: Create Image Tags
+      #   run: |
+      #     echo "GHCR_PROD_IMAGE=ghcr.io/${{ inputs.prod_repo }}:${{ inputs.tag }}" >> $GITHUB_ENV
+      #     echo "GHCR_PROD_LATEST_IMAGE=ghcr.io/${{ inputs.prod_repo }}:latest" >> $GITHUB_ENV
+      #     echo "DH_PROD_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
+      #     echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:${{ inputs.tag }}" >> $GITHUB_ENV
 
-      - name: Push Images
-        run: |
-          docker push ${{ env.GHCR_PROD_IMAGE }}
-          docker push ${{ env.GHCR_PROD_LATEST_IMAGE }}
-          docker push ${{ env.DH_PROD_IMAGE }}
-          docker push ${{ env.DH_PROD_LATEST_IMAGE }}
+      # - name: Tag Images
+      #   run: |
+      #     docker tag blastfoam:latest ${{ env.GHCR_PROD_IMAGE }}
+      #     docker tag blastfoam:latest ${{ env.GHCR_PROD_LATEST_IMAGE }}
+      #     docker tag blastfoam:latest ${{ env.DH_PROD_IMAGE }}
+      #     docker tag blastfoam:latest ${{ env.DH_PROD_LATEST_IMAGE }}
+
+      # - name: Push Images
+      #   run: |
+      #     docker push ${{ env.GHCR_PROD_IMAGE }}
+      #     docker push ${{ env.GHCR_PROD_LATEST_IMAGE }}
+      #     docker push ${{ env.DH_PROD_IMAGE }}
+      #     docker push ${{ env.DH_PROD_LATEST_IMAGE }}
