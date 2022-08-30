@@ -2,11 +2,13 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 3030-3031 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2020-2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+03-12-2021 Synthetik Applied Technologies : Added Function3
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -28,7 +30,6 @@ License
 #include "ZeroConstant3.H"
 #include "OneConstant3.H"
 #include "Scale3.H"
-// #include "UniformTable3.H"
 #include "CodedFunction3.H"
 
 #include "fieldTypes.H"

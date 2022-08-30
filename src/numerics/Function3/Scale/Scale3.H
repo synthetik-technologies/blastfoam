@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+03-12-2021 Synthetik Applied Technologies : Added Function3
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -26,8 +28,8 @@ Class
 
 Description
     Function3 which scales a given 'value' function by a 'scale' scalar function
-    and scales the 'x' and 'y' arguments of the 'value' and 'scale' functions
-    by the optional 'xScale' and 'yScale' scalar functions.
+    and scales the 'x','y', and 'z' arguments of the 'value' and 'scale' functions
+    by the optional 'xScale', 'yScale', and 'zScale' scalar functions.
 
 SourceFiles
     Scale.C

@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+03-12-2021 Synthetik Applied Technologies : Added Function3
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,7 +27,7 @@ Class
     Foam::Function3s::Constant
 
 Description
-    Templated function of two variables that returns a constant value.
+    Templated function of three variables that returns a constant value.
 
     Usage - for entry \<name\> returning the value <value>:
     \verbatim
