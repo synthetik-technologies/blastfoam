@@ -25,6 +25,12 @@ jobs:
           git push --force "https://github.com/${{ env.PROD_REPO }}" HEAD:master
           git push --force "https://github.com/${{ env.PROD_REPO }}" v${{ env.TEST_TAG }}
 
+      - name: Copy Release Publically
+        run: |
+          gh release download v${{ env.TEST_TAG }} -p '*.deb'
+          ls -la
+          gh release create -R ${{ env.PROD_REPO }} ${{ env.TEST_TAG }}
+          gh release upload -R ${( env.PROD_REPO )} ${{ env.TEST_TAG }} *.deb
   docker:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
