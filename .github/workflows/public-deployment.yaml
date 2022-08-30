@@ -33,12 +33,11 @@ jobs:
         run: |
           gh release download v${{ inputs.tag }} -p '*.deb'
           ls -la
-          gh release view -R "${{ inputs.prod_repo }}" || gh release create -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} #* View the release; if it doesn't exist create it
+          gh release view -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} || gh release create -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} #* View the release; if it doesn't exist create it
           gh release upload -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} *.deb
   docker:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Login to GitHub Registry
         uses: docker/login-action@v2
