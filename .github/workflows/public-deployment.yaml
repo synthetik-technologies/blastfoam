@@ -26,11 +26,13 @@ jobs:
           git push --force "https://github.com/${{ env.PROD_REPO }}" v${{ env.TEST_TAG }}
 
       - name: Copy Release Publically
+        env:
+          GH_TOKEN: ${{ secrets.SYN_BOT_READ_WRITE }}
         run: |
           gh release download v${{ env.TEST_TAG }} -p '*.deb'
           ls -la
-          gh release create -R ${{ env.PROD_REPO }} ${{ env.TEST_TAG }}
-          gh release upload -R ${( env.PROD_REPO )} ${{ env.TEST_TAG }} *.deb
+          gh release view -R "${{ env.PROD_REPO }}" || gh release create -R "${{ env.PROD_REPO }}" ${{ env.TEST_TAG }} #* View the release; if it doesn't exist create it
+          gh release upload -R "${{ env.PROD_REPO }}" ${{ env.TEST_TAG }} *.deb
   docker:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
