@@ -21,7 +21,9 @@ jobs:
           token: ${{ secrets.SYN_BOT_READ_WRITE }}
 
       - name: Push Code Publically
-        run: git push --force "https://github.com/${{ env.PROD_REPO }}" HEAD:master
+        run: |
+          git push --force "https://github.com/${{ env.PROD_REPO }}" HEAD:master
+          git push --force "https://github.com/${{ env.PROD_REPO }}" v${{ env.TEST_TAG }}
 
   docker:
     name: Deploy Docker Image
