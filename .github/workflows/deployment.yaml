@@ -7,6 +7,7 @@ on:
       - "master"
       - "staging"
       - "develop"
+      - "9-push-main-to-public-repo"
 
 concurrency:
   #* Only run one run at a time
