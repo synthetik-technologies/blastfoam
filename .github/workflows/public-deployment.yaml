@@ -20,6 +20,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.SYN_BOT_READ_WRITE }}
+          ref: ${{ github.ref }}
 
       - name: Push Code Publically
         run: |

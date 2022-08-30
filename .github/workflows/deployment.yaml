@@ -86,6 +86,8 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
       - uses: actions/download-artifact@v3
         with:
           name: blastfoam-package
@@ -100,6 +102,8 @@ jobs:
     steps:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
