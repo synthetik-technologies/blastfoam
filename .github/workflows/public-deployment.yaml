@@ -6,7 +6,7 @@ on:
       - "9-push-main-to-public-repo"
 
 env:
-  PROD_REPO: "https://github.com/synthetik-technologies/blastfoam-public-test.git"
+  PROD_REPO: "synthetik-technologies/blastfoam-public-test"
   TEST_TAG: "5.2.0-develop.3"
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
           token: ${{ secrets.SYN_BOT_READ_WRITE }}
 
       - name: Push Code Publically
-        run: git push --force "${{ env.PROD_REPO }}" HEAD:master
+        run: git push --force "https://github.com/${{ env.PROD_REPO }}" HEAD:master
 
   docker:
     name: Deploy Docker Code
