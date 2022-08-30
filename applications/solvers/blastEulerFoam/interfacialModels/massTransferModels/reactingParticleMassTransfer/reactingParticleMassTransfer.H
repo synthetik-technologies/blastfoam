@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@ Class
     Foam::massTransferModels::reactingParticleMassTransfer
 
 Description
-    One phase is used to determine the interfacial Velocity
+    The change in volume of the diameterModel is used to determine mass
+    transfer. Particles are assumed to be incompresssible.
 
 SourceFiles
     reactingParticleMassTransfer.C
@@ -51,7 +52,7 @@ namespace massTransferModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class reactingParticleMassTransfer Declaration
+                   Class reactingParticleMassTransfer Declaration
 \*---------------------------------------------------------------------------*/
 
 class reactingParticleMassTransfer

@@ -1,0 +1,114 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+error() {
+    exec 1>&2
+    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
+    usage
+    exit 1
+}
+
+usage() {
+    cat<<USAGE
+Usage: ./Allrun [OPTION]
+
+options:
+  -tets     | -t    Quiet mode (does not echo commands)
+  -parallel | -j    Run in parallel
+  -help     | -h    Print the usage
+
+
+USAGE
+}
+
+# -- Polyhedral refinement flag
+tets=0
+
+# -- Parallel run flag
+parallel=0
+
+
+# Parse options
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+        -h | -help)
+            usage && exit 0
+            ;;
+        -t | -tets)
+            tets=1
+            shift
+            ;;
+        -j | -parallel)
+            parallel=1
+            shift
+            ;;
+        -*)
+            error "invalid option '$1'"
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+   esac
+done
+
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Copy the setFieldDict
+cp system/setFieldsDict system/setFieldsDict_mod
+
+# -- Create the mesh
+if [ $tets -eq 1 ]; then
+
+# -- Convert GMSH file to OpenFOAM mesh
+    runApplication gmshToFoam tets.msh
+
+# -- Remove cell zones creates by gmshToFoam
+    runApplication removeZones -clear
+
+# -- Set the correct boundary type
+    runApplication -s boundary foamDictionary \
+        constant/polyMesh/boundary \
+        -entry entry0/defaultFaces/type \
+        -set empty
+
+# -- Set the correct refinement type in system/setFieldsDict
+    runApplication -s refiner foamDictionary \
+        system/setFieldsDict_mod \
+        -entry refiner \
+        -set polyRefiner
+
+else
+
+# -- Create hex mesh
+    runApplication blockMesh
+
+# -- Set the correct refinement type in system/setFieldsDict
+    runApplication foamDictionary \
+        system/setFieldsDict_mod \
+        -entry refiner \
+        -set hexRefiner
+fi
+
+# -- Run in parallel
+if [ $parallel -eq 1 ]; then
+
+# -- Decompose the mesh
+    runApplication decomposePar
+
+# -- Run the case
+# the debug flag writes each intermediate refinement set
+    runParallel $(getApplication) -debug -dict system/setFieldsDict_mod
+
+else
+# -- run the calc
+# the debug flag writes each intermediate refinement set
+    runApplication $(getApplication) -debug -dict system/setFieldsDict_mod
+
+fi

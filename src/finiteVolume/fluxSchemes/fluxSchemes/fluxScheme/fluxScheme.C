@@ -24,14 +24,16 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluxScheme.H"
-#include "MUSCLReconstructionScheme.H"
+#include "ReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(fluxScheme, 0);
-    defineRunTimeSelectionTable(fluxScheme, dictionary);
+    defineRunTimeSelectionTable(fluxScheme, singlePhase);
+    defineRunTimeSelectionTable(fluxScheme, multiphase);
+    defineRunTimeSelectionTable(fluxScheme, interface);
 }
 
 
@@ -39,7 +41,8 @@ namespace Foam
 
 Foam::fluxScheme::fluxScheme(const fvMesh& mesh)
 :
-    fluxSchemeBase(mesh)
+    fluxSchemeBase(mesh),
+    dict_(mesh.schemesDict().optionalSubDict("fluxSchemeCoeffs"))
 {}
 
 
@@ -92,6 +95,120 @@ Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::Uf() const
 }
 
 
+Foam::tmp<Foam::surfaceScalarField>
+Foam::fluxScheme::AD(const volScalarField& alpha) const
+{
+    return mag((this->Uf_() & alpha.mesh().Sf())/alpha.mesh().magSf());
+}
+
+
+Foam::tmp<Foam::surfaceScalarField>
+Foam::fluxScheme::snGradAlpha
+(
+    const volScalarField& alpha
+) const
+{
+    const fvMesh& mesh = alpha.mesh();
+    const labelList& own = mesh.owner();
+    const labelList& nei = mesh.neighbour();
+    const surfaceVectorField& Sf = mesh.Sf();
+    const surfaceScalarField& magSf = mesh.magSf();
+    surfaceVectorField n(Sf/magSf);
+
+    surfaceScalarField alphaf
+    (
+        surfaceInterpolationScheme<scalar>::New
+        (
+            mesh,
+            IStringStream("linear vanLeer")()
+        )->interpolate(alpha)
+    );
+    volVectorField gradAlpha(fvc::grad(alphaf));
+    tmp<surfaceScalarField> tsnGradAlpha
+    (
+        surfaceScalarField::New
+        (
+            IOobject::groupName("snGradAlpha", alpha.group()),
+            fvc::snGrad(alpha)
+        )
+    );
+    surfaceScalarField& snGradAlpha = tsnGradAlpha.ref();
+    forAll(alphaf, facei)
+    {
+        if
+        (
+            ((gradAlpha[own[facei]] & n[facei])*snGradAlpha[facei]) > 0
+         && mag(gradAlpha[own[facei]] & n[facei])
+          < mag(snGradAlpha[facei])
+        )
+        {
+            alphaf[facei] = alpha[nei[facei]];
+        }
+        else if
+        (
+            mag
+            (
+                mag(gradAlpha[own[facei]] & n[facei])
+              - mag(snGradAlpha[facei])
+            ) < small
+        )
+        {
+            alphaf[facei] = 0.5*(alpha[own[facei]] + alpha[nei[facei]]);
+        }
+        else
+        {
+            alphaf[facei] = alpha[own[facei]];
+        }
+    }
+    gradAlpha = fvc::grad(alphaf);
+
+    forAll(snGradAlpha, facei)
+    {
+        snGradAlpha[facei] =
+            minMagSqrOp<vector>()
+            (
+                gradAlpha[own[facei]],
+                gradAlpha[nei[facei]]
+            ) & Sf[facei];
+    }
+    surfaceScalarField::Boundary& bsnGradAlpha
+    (
+        snGradAlpha.boundaryFieldRef()
+    );
+    forAll(bsnGradAlpha, patchi)
+    {
+        const fvPatch& patch = mesh.boundary()[patchi];
+        const fvPatchField<vector>& pgradAlpha
+        (
+            gradAlpha.boundaryField()[patchi]
+        );
+        const vectorField& pSf(Sf.boundaryField()[patchi]);
+        scalarField& psnGradAlpha(bsnGradAlpha[patchi]);
+
+        if (patch.coupled())
+        {
+            vectorField gradAlphaOwn(pgradAlpha.patchInternalField());
+            vectorField gradAlphaNei(pgradAlpha.patchNeighbourField());
+            forAll(gradAlphaOwn, facei)
+            {
+                snGradAlpha[facei] =
+                    minMagSqrOp<vector>()
+                    (
+                        gradAlphaOwn[facei],
+                        gradAlphaNei[facei]
+                    ) & pSf[facei];
+            }
+        }
+        else
+        {
+            psnGradAlpha = pgradAlpha & pSf;
+        }
+    }
+    snGradAlpha.dimensions().reset(snGradAlpha.dimensions()*dimVolume);
+    return tsnGradAlpha;
+}
+
+
 void Foam::fluxScheme::update
 (
     const volScalarField& rho,
@@ -107,49 +224,52 @@ void Foam::fluxScheme::update
 {
     createSavedFields();
 
-    autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
+    autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(rho, "rho")
+        ReconstructionScheme<scalar>::New(rho, "rho")
     );
-    autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
+    autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        MUSCLReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> eLimiter
+    autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> pLimiter
+    autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> cLimiter
+    autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound")
+        ReconstructionScheme<scalar>::New(c, "speedOfSound")
     );
 
-    tmp<surfaceScalarField> trhoOwn(rhoLimiter->interpolateOwn());
-    tmp<surfaceScalarField> trhoNei(rhoLimiter->interpolateNei());
+    tmp<surfaceScalarField> trhoOwn, trhoNei;
+    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
     const surfaceScalarField& rhoOwn = trhoOwn();
     const surfaceScalarField& rhoNei = trhoNei();
 
-    tmp<surfaceVectorField> tUOwn(ULimiter->interpolateOwn());
-    tmp<surfaceVectorField> tUNei(ULimiter->interpolateNei());
+    tmp<surfaceVectorField> tUOwn, tUNei;
+    ULimiter->interpolateOwnNei(tUOwn, tUNei);
     const surfaceVectorField& UOwn = tUOwn();
     const surfaceVectorField& UNei = tUNei();
 
-    tmp<surfaceScalarField> teOwn(eLimiter->interpolateOwn());
-    tmp<surfaceScalarField> teNei(eLimiter->interpolateNei());
+    tmp<surfaceScalarField> teOwn;
+    tmp<surfaceScalarField> teNei;
+    eLimiter->interpolateOwnNei(teOwn, teNei);
     const surfaceScalarField& eOwn = teOwn();
     const surfaceScalarField& eNei = teNei();
 
-    tmp<surfaceScalarField> tpOwn(pLimiter->interpolateOwn());
-    tmp<surfaceScalarField> tpNei(pLimiter->interpolateNei());
+    tmp<surfaceScalarField> tpOwn;
+    tmp<surfaceScalarField> tpNei;
+    pLimiter->interpolateOwnNei(tpOwn, tpNei);
     const surfaceScalarField& pOwn = tpOwn();
     const surfaceScalarField& pNei = tpNei();
 
-    tmp<surfaceScalarField> tcOwn(cLimiter->interpolateOwn());
-    tmp<surfaceScalarField> tcNei(cLimiter->interpolateNei());
+    tmp<surfaceScalarField> tcOwn;
+    tmp<surfaceScalarField> tcNei;
+    cLimiter->interpolateOwnNei(tcOwn, tcNei);
     const surfaceScalarField& cOwn = tcOwn();
     const surfaceScalarField& cNei = tcNei();
 
@@ -254,72 +374,79 @@ void Foam::fluxScheme::update
 
     forAll(alphas, phasei)
     {
-        autoPtr<MUSCLReconstructionScheme<scalar>> alphaLimiter
+        const word phaseName(alphas[phasei].group());
+        autoPtr<ReconstructionScheme<scalar>> alphaLimiter
         (
-            MUSCLReconstructionScheme<scalar>::New(alphas[phasei], "alpha")
+            ReconstructionScheme<scalar>::New
+            (
+                alphas[phasei],
+                "alpha",
+                phaseName
+            )
         );
-        autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
+        tmp<surfaceScalarField> talphaOwn;
+        tmp<surfaceScalarField> talphaNei;
+        alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
+        alphasOwn.set(phasei, talphaOwn);
+        alphasNei.set(phasei, talphaNei);
+
+        autoPtr<ReconstructionScheme<scalar>> rhoLimiter
         (
-            MUSCLReconstructionScheme<scalar>::New(rhos[phasei], "rho")
+            ReconstructionScheme<scalar>::New
+            (
+                rhos[phasei],
+                "rho",
+                phaseName
+            )
         );
-        alphasOwn.set
-        (
-            phasei,
-            alphaLimiter->interpolateOwn()
-        );
-        alphasNei.set
-        (
-            phasei,
-            alphaLimiter->interpolateNei()
-        );
-        rhosOwn.set
-        (
-            phasei,
-            rhoLimiter->interpolateOwn()
-        );
-        rhosNei.set
-        (
-            phasei,
-            rhoLimiter->interpolateNei()
-        );
+        tmp<surfaceScalarField> trhoIOwn;
+        tmp<surfaceScalarField> trhoINei;
+        rhoLimiter->interpolateOwnNei(trhoIOwn, trhoINei);
+        rhosOwn.set(phasei, trhoIOwn);
+        rhosNei.set(phasei, trhoINei);
+
         rhoOwn += alphasOwn[phasei]*rhosOwn[phasei];
         rhoNei += alphasNei[phasei]*rhosNei[phasei];
     }
 
-    autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
+    autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        MUSCLReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> eLimiter
+    autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> pLimiter
+    autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> cLimiter
+    autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound")
+        ReconstructionScheme<scalar>::New(c, "speedOfSound")
     );
 
-    tmp<surfaceVectorField> tUOwn(ULimiter->interpolateOwn());
-    tmp<surfaceVectorField> tUNei(ULimiter->interpolateNei());
+    tmp<surfaceVectorField> tUOwn;
+    tmp<surfaceVectorField> tUNei;
+    ULimiter->interpolateOwnNei(tUOwn, tUNei);
     const surfaceVectorField& UOwn = tUOwn();
     const surfaceVectorField& UNei = tUNei();
 
-    tmp<surfaceScalarField> teOwn(eLimiter->interpolateOwn());
-    tmp<surfaceScalarField> teNei(eLimiter->interpolateNei());
+    tmp<surfaceScalarField> teOwn;
+    tmp<surfaceScalarField> teNei;
+    eLimiter->interpolateOwnNei(teOwn, teNei);
     const surfaceScalarField& eOwn = teOwn();
     const surfaceScalarField& eNei = teNei();
 
-    tmp<surfaceScalarField> tpOwn(pLimiter->interpolateOwn());
-    tmp<surfaceScalarField> tpNei(pLimiter->interpolateNei());
+    tmp<surfaceScalarField> tpOwn;
+    tmp<surfaceScalarField> tpNei;
+    pLimiter->interpolateOwnNei(tpOwn, tpNei);
     const surfaceScalarField& pOwn = tpOwn();
     const surfaceScalarField& pNei = tpNei();
 
-    tmp<surfaceScalarField> tcOwn(cLimiter->interpolateOwn());
-    tmp<surfaceScalarField> tcNei(cLimiter->interpolateNei());
+    tmp<surfaceScalarField> tcOwn;
+    tmp<surfaceScalarField> tcNei;
+    cLimiter->interpolateOwnNei(tcOwn, tcNei);
     const surfaceScalarField& cOwn = tcOwn();
     const surfaceScalarField& cNei = tcNei();
 
@@ -445,37 +572,38 @@ void Foam::fluxScheme::update
     createSavedFields();
 
     // Interpolate fields
-    autoPtr<MUSCLReconstructionScheme<scalar>> alpha1Limiter
+    autoPtr<ReconstructionScheme<scalar>> alpha1Limiter
     (
-        MUSCLReconstructionScheme<scalar>::New(alpha1, "alpha")
+        ReconstructionScheme<scalar>::New(alpha1, "alpha", alpha1.group())
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> rho1Limiter
+    autoPtr<ReconstructionScheme<scalar>> rho1Limiter
     (
-        MUSCLReconstructionScheme<scalar>::New(rho1, "rho")
+        ReconstructionScheme<scalar>::New(rho1, "rho", rho1.group())
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> rho2Limiter
+    autoPtr<ReconstructionScheme<scalar>> rho2Limiter
     (
-        MUSCLReconstructionScheme<scalar>::New(rho2, "rho")
+        ReconstructionScheme<scalar>::New(rho2, "rho", rho2.group())
     );
-    autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
+    autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        MUSCLReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> eLimiter
+    autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> pLimiter
+    autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> cLimiter
+    autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound")
+        ReconstructionScheme<scalar>::New(c, "speedOfSound")
     );
 
-    tmp<surfaceScalarField> talpha1Own(alpha1Limiter->interpolateOwn());
-    tmp<surfaceScalarField> talpha1Nei(alpha1Limiter->interpolateNei());
+    tmp<surfaceScalarField> talpha1Own;
+    tmp<surfaceScalarField> talpha1Nei;
+    alpha1Limiter->interpolateOwnNei(talpha1Own, talpha1Nei);
     const surfaceScalarField& alpha1Own = talpha1Own();
     const surfaceScalarField& alpha1Nei = talpha1Nei();
 
@@ -484,33 +612,39 @@ void Foam::fluxScheme::update
     const surfaceScalarField& alpha2Own = talpha2Own();
     const surfaceScalarField& alpha2Nei = talpha2Nei();
 
-    tmp<surfaceScalarField> trho1Own(rho1Limiter->interpolateOwn());
-    tmp<surfaceScalarField> trho1Nei(rho1Limiter->interpolateNei());
+    tmp<surfaceScalarField> trho1Own;
+    tmp<surfaceScalarField> trho1Nei;
+    rho1Limiter->interpolateOwnNei(trho1Own, trho1Nei);
     const surfaceScalarField& rho1Own = trho1Own();
     const surfaceScalarField& rho1Nei = trho1Nei();
 
-    tmp<surfaceScalarField> trho2Own(rho2Limiter->interpolateOwn());
-    tmp<surfaceScalarField> trho2Nei(rho2Limiter->interpolateNei());
+    tmp<surfaceScalarField> trho2Own;
+    tmp<surfaceScalarField> trho2Nei;
+    rho2Limiter->interpolateOwnNei(trho2Own, trho2Nei);
     const surfaceScalarField& rho2Own = trho2Own();
     const surfaceScalarField& rho2Nei = trho2Nei();
 
-    tmp<surfaceVectorField> tUOwn(ULimiter->interpolateOwn());
-    tmp<surfaceVectorField> tUNei(ULimiter->interpolateNei());
+    tmp<surfaceVectorField> tUOwn;
+    tmp<surfaceVectorField> tUNei;
+    ULimiter->interpolateOwnNei(tUOwn, tUNei);
     const surfaceVectorField& UOwn = tUOwn();
     const surfaceVectorField& UNei = tUNei();
 
-    tmp<surfaceScalarField> teOwn(eLimiter->interpolateOwn());
-    tmp<surfaceScalarField> teNei(eLimiter->interpolateNei());
+    tmp<surfaceScalarField> teOwn;
+    tmp<surfaceScalarField> teNei;
+    eLimiter->interpolateOwnNei(teOwn, teNei);
     const surfaceScalarField& eOwn = teOwn();
     const surfaceScalarField& eNei = teNei();
 
-    tmp<surfaceScalarField> tpOwn(pLimiter->interpolateOwn());
-    tmp<surfaceScalarField> tpNei(pLimiter->interpolateNei());
+    tmp<surfaceScalarField> tpOwn;
+    tmp<surfaceScalarField> tpNei;
+    pLimiter->interpolateOwnNei(tpOwn, tpNei);
     const surfaceScalarField& pOwn = tpOwn();
     const surfaceScalarField& pNei = tpNei();
 
-    tmp<surfaceScalarField> tcOwn(cLimiter->interpolateOwn());
-    tmp<surfaceScalarField> tcNei(cLimiter->interpolateNei());
+    tmp<surfaceScalarField> tcOwn;
+    tmp<surfaceScalarField> tcNei;
+    cLimiter->interpolateOwnNei(tcOwn, tcNei);
     const surfaceScalarField& cOwn = tcOwn();
     const surfaceScalarField& cNei = tcNei();
 
@@ -617,41 +751,45 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     const volScalarField& p
 ) const
 {
-    autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
+    autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(rho, "rho")
+        ReconstructionScheme<scalar>::New(rho, "rho")
     );
-    tmp<surfaceScalarField> trhoOwn(rhoLimiter->interpolateOwn());
-    tmp<surfaceScalarField> trhoNei(rhoLimiter->interpolateNei());
+    tmp<surfaceScalarField> trhoOwn;
+    tmp<surfaceScalarField> trhoNei;
+    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
     surfaceScalarField& rhoOwn = trhoOwn.ref();
     surfaceScalarField& rhoNei = trhoNei.ref();
 
     // Interpolate fields
-    autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
+    autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        MUSCLReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> eLimiter
+    autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e")
     );
-    autoPtr<MUSCLReconstructionScheme<scalar>> pLimiter
+    autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p")
     );
 
-    tmp<surfaceVectorField> tUOwn(ULimiter->interpolateOwn());
-    tmp<surfaceVectorField> tUNei(ULimiter->interpolateNei());
+    tmp<surfaceVectorField> tUOwn;
+    tmp<surfaceVectorField> tUNei;
+    ULimiter->interpolateOwnNei(tUOwn, tUNei);
     const surfaceVectorField& UOwn = tUOwn();
     const surfaceVectorField& UNei = tUNei();
 
-    tmp<surfaceScalarField> teOwn(eLimiter->interpolateOwn());
-    tmp<surfaceScalarField> teNei(eLimiter->interpolateNei());
+    tmp<surfaceScalarField> teOwn;
+    tmp<surfaceScalarField> teNei;
+    eLimiter->interpolateOwnNei(teOwn, teNei);
     const surfaceScalarField& eOwn = teOwn();
     const surfaceScalarField& eNei = teNei();
 
-    tmp<surfaceScalarField> tpOwn(pLimiter->interpolateOwn());
-    tmp<surfaceScalarField> tpNei(pLimiter->interpolateNei());
+    tmp<surfaceScalarField> tpOwn;
+    tmp<surfaceScalarField> tpNei;
+    pLimiter->interpolateOwnNei(tpOwn, tpNei);
     const surfaceScalarField& pOwn = tpOwn();
     const surfaceScalarField& pNei = tpNei();
 

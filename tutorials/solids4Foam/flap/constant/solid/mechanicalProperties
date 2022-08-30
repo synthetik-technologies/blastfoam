@@ -1,0 +1,30 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     3.0                                |
+|   \\  /    A nd           | Web:         http://www.extend-project.de       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      mechanicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+planeStress no;
+
+mechanical
+(
+    rubber
+    {
+        type        linearElastic;
+        rho         rho [1 -3 0 0 0 0 0] 7850;
+        E           E [1 -1 -2 0 0 0 0] 190e9;
+        nu          nu [0 0 0 0 0 0 0] 0.3;
+    }
+);
+
+// ************************************************************************* //

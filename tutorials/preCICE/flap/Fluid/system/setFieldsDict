@@ -30,13 +30,13 @@ regions
     cylinderToCell
     {
         points ((-1 0.15 0.5));
-        p1 (-1 -1 0.5);
-        p2 (-1 1 0.5);
+        p1 (-1 0.5 -1);
+        p2 (-1 0.5 1);
         radius 0.025;
         backup
         {
-            p1 (-1 -1 0.5);
-            p2 (-1 1 0.5);
+            p1 (-1 0.5 -1);
+            p2 (-1 0.5 1);
             radius 0.25;
         }
         refineInternal yes;

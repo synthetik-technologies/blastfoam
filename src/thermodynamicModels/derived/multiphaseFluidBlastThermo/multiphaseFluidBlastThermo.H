@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::multiphaseFluidTherm
+    Foam::multiphaseFluidThermo
 
 Description
     Class to calculate mixture properties of a collection of more than two
@@ -51,6 +51,8 @@ SourceFiles
 
 #include "phaseFluidBlastThermo.H"
 #include "fluidBlastThermo.H"
+#include "thermoEquations.H"
+#include "univariateRootSolver.H"
 
 namespace Foam
 {
@@ -79,11 +81,16 @@ class multiphaseFluidBlastThermo
         //- Volume weighted density of phases
         PtrList<volScalarField> alphaRhos_;
 
-        //- Residual volume fraction
-        dimensionedScalar residualAlpha_;
-
         //- Pointer to total volume fraction field
         UautoPtr<const volScalarField> sumVfPtr_;
+
+        //- Solve temperature given pressure
+        mutable fluidTEquation TEqn_;
+        autoPtr<univariateRootSolver> TSolver_;
+
+        //- Solve temperature given interneral energy
+        mutable THEEquation THEEqn_;
+        autoPtr<univariateRootSolver> THESolver_;
 
 
     // Private member functions
@@ -214,6 +221,9 @@ public:
         //- Calculate internal energy
         virtual tmp<volScalarField> calce(const volScalarField&) const;
 
+        //- Calculate internal energy for a cell
+        virtual scalar calcCelle(const scalar p, const label) const;
+
         //- Return the thermo name
         virtual word thermoName() const
         {
@@ -284,6 +294,15 @@ public:
 
             //- Derivative of pressure w.r.t internal energy for cell
             virtual scalar celldpde(const label celli) const;
+
+            //- Derivative of pressure w.r.t temperature for cell
+            virtual scalar celldpdT(const label celli) const;
+
+            //- Is the equation of state temperature based
+            virtual bool temperatureBased() const
+            {
+                return thermos_[0].temperatureBased();
+            }
 
 
         //- Thermodynamic and transport functions

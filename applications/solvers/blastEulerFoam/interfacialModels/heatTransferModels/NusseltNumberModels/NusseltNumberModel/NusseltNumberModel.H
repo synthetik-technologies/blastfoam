@@ -27,6 +27,8 @@ Class
 Description
 
 SourceFiles
+    NusseltNumberModel.C
+    NusseltNumberModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

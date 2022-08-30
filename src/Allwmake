@@ -18,7 +18,14 @@ wmake $targetType errorEstimators
 wmake $targetType dynamicFvMesh
 
 wmake $targetType atmosphereModels
+
+wmake $targetType regionModels
 wmake $targetType solidModels
+
+wmake $targetType levelSet
+
+# -- Optional library for use with solids4foam
+solids4Foam/Allwmake
 
 # -----------------------------------------------------------------------------
 

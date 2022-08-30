@@ -41,7 +41,7 @@ SourceFiles
 #ifndef functionObjects_blastMachNo_H
 #define functionObjects_blastMachNo_H
 
-#include "fvMeshFunctionObject.H"
+#include "fieldExpression.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -57,21 +57,20 @@ namespace functionObjects
 
 class blastMachNo
 :
-    public fvMeshFunctionObject
+    public fieldExpression
 {
     // Private Member data
 
         //- Name of phase
         word phaseName_;
 
-        //- Name of looked up system
-        word systemName_;
-
-        //- Name of Result field
-        word resultName_;
-
         //- Name of velocity field
         word UName_;
+
+
+    // Protected member functions
+
+        virtual bool calc();
 
 
 public:
@@ -96,21 +95,6 @@ public:
 
     //- Destructor
     virtual ~blastMachNo();
-
-
-    // Member Functions
-
-        //- Read the field average data
-        virtual bool read(const dictionary&);
-
-        //- Calculate the field averages
-        virtual bool execute();
-
-        //- Write the field averages
-        virtual bool write();
-
-        //- Clear the result field from the objectRegistry
-        virtual bool clear();
 
 
     // Member Operators

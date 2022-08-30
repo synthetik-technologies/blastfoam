@@ -110,7 +110,28 @@ void Foam::timeIntegrator::insertDeltaList
 
 
 template<class FieldType>
-void Foam::timeIntegrator::clearFields
+void Foam::timeIntegrator::clearOldFields
+(
+    HashPtrTable<PtrList<FieldType>>& table
+)
+{
+    forAllIter
+    (
+        typename HashPtrTable<PtrList<FieldType>>,
+        table,
+        iter
+    )
+    {
+        savedOldFields_.insert(iter.key());
+        label size = iter()->size();
+        iter()->clear();
+        iter()->resize(size);
+    }
+}
+
+
+template<class FieldType>
+void Foam::timeIntegrator::clearDeltaFields
 (
     HashPtrTable<PtrList<FieldType>>& table
 )
@@ -129,5 +150,17 @@ void Foam::timeIntegrator::clearFields
 }
 
 
+template<class FieldType>
+void Foam::timeIntegrator::resetFields()
+{
+    forAllConstIter(wordHashSet, savedOldFields_, iter)
+    {
+        if (mesh_.foundObject<FieldType>(iter.key()))
+        {
+            FieldType& f = mesh_.lookupObjectRef<FieldType>(iter.key());
+            f == f.oldTime();
+        }
+    }
+}
 
 // ************************************************************************* //

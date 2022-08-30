@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-10-29-2020 Jeff Heylmun     | Specialized mapFields to rotate axisymmetric cases
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | SYnthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -27,21 +25,45 @@ Application
     rotateFields
 
 Description
-    Rotate mesh and fields from 1-D to 2-D or 2-D to 3-D. Only for
-    axisymmetric cases. Mapping from parallel cases is not currently supported
+    Rotate fields from 1-D to 2-D or 2-D to 3-D. Only for
+    axisymmetric cases. Currently mapping is not conservative so only the
+    nearest cell value (based on cell centres) will be used. Optionally,
+    refinement can be used.
 
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "timeSelector.H"
 #include "labelVector.H"
 #include "wedgeFvPatch.H"
 #include "IOobjectList.H"
 #include "HashSet.H"
 #include "UautoPtr.H"
 #include "genericFvPatchField.H"
+#include "indexedOctree.H"
+#include "treeDataCell.H"
+
+#include "fvMeshRefiner.H"
+#include "errorEstimator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+bool parRun = false;
+void setParRun(const bool par)
+{
+    Pstream::parRun() = par;
+}
+void resetParRun()
+{
+    Pstream::parRun() = parRun;
+}
+
+struct cellInfo
+{
+    label proc;
+    label cellID;
+    scalar weight;
+};
+typedef DynamicList<cellInfo> cellInfoList;
 
 template<class Type>
 wordList createBoundaryTypes
@@ -98,13 +120,14 @@ wordList createBoundaryTypes
 template<class Type>
 void mapVolFields
 (
-    const fvMesh& sourceMesh,
+    const PtrList<fvMesh>& sourceMeshes,
     const fvMesh& targetMesh,
-    const labelList& cellMap,
-    const labelList& extendedCellMap,
+    const List<cellInfoList>& cellMap,
+    const List<cellInfoList>& extendedCellMap,
     const IOobjectList& objects,
     const tensorField& R,
-    const HashSet<word>& mapFields
+    const HashSet<word>& mapFields,
+    const bool store = false
 )
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
@@ -121,10 +144,46 @@ void mapVolFields
         );
 
         bool mapField = false;
-        fieldType fieldSource(*fieldIter(), sourceMesh);
+
+        setParRun(false);
+        PtrList<fieldType> fieldSources(sourceMeshes.size());
+        forAll(sourceMeshes, proci)
+        {
+            fieldSources.set
+            (
+                proci,
+                new fieldType
+                (
+                    IOobject
+                    (
+                        fieldIter()->name(),
+                        sourceMeshes[proci].time().timeName(),
+                        sourceMeshes[proci],
+                        IOobject::MUST_READ
+                    ),
+                    sourceMeshes[proci]
+                )
+            );
+        }
+        resetParRun();
+
         autoPtr<fieldType> fieldTargetPtr;
-        UautoPtr<const labelList> mapPtr;
-        if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
+        UautoPtr<const List<cellInfoList>> mapPtr;
+        bool exists = false;
+        if (targetMesh.foundObject<fieldType>(fieldIter()->name()))
+        {
+            mapField = true;
+            fieldTargetPtr.set
+            (
+                &targetMesh.lookupObjectRef<fieldType>
+                (
+                    fieldIter()->name()
+                )
+            );
+            mapPtr.set(&cellMap);
+            exists = true;
+        }
+        else if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
         {
             mapField = true;
             fieldTargetPtr.set
@@ -141,8 +200,7 @@ void mapVolFields
         {
             mapField = true;
             fieldTargetIOobject.readOpt() = IOobject::NO_READ;
-            fieldTargetPtr.set
-            (
+            fieldType* fieldPtr =
                 new fieldType
                 (
                     fieldTargetIOobject,
@@ -150,12 +208,17 @@ void mapVolFields
                     dimensioned<Type>
                     (
                         "0",
-                        fieldSource.dimensions(),
+                        fieldSources[0].dimensions(),
                         pTraits<Type>::zero
                     ),
-                    createBoundaryTypes<Type>(fieldSource, targetMesh)
-                )
-            );
+                    createBoundaryTypes<Type>(fieldSources[0], targetMesh)
+                );
+            if (store)
+            {
+                fieldPtr->store(fieldPtr);
+                exists = true;
+            }
+            fieldTargetPtr.set(fieldPtr);
             mapPtr.set(&extendedCellMap);
         }
 
@@ -166,15 +229,22 @@ void mapVolFields
             // Read fieldTarget
             fieldType& fieldTarget = fieldTargetPtr();
 
-            const labelList& map = mapPtr();
+            const List<cellInfoList>& map = mapPtr();
 
             forAll(map, celli)
             {
-                label cellj = map[celli];
-                if (cellj != -1)
+                if (map[celli].size())
                 {
-                    Type v = fieldSource[cellj];
-                    fieldTarget[celli] = transform(R[celli], v);
+                    fieldTarget[celli] = Zero;
+                    Type vSum = Zero;
+                    scalar sumW = 0.0;
+                    forAll(map[celli], j)
+                    {
+                        const cellInfo& info = map[celli][j];
+                        vSum += info.weight*fieldSources[info.proc][info.cellID];
+                        sumW += info.weight;
+                    }
+                    fieldTarget[celli] = transform(R[celli], vSum/sumW);
                 }
             }
             forAll(fieldTarget.boundaryField(), patchi)
@@ -182,8 +252,18 @@ void mapVolFields
                 fieldTarget.boundaryFieldRef()[patchi] =
                     fieldTarget.boundaryField()[patchi].patchInternalField();
             }
-            fieldTarget.write();
+            if (!exists)
+            {
+                fieldTarget.write();
+            }
+            else
+            {
+                // Remove the pointer because it should not be deleted
+                // here
+                fieldTargetPtr.ptr();
+            }
         }
+
 #ifdef FULLDEBUG
         else
         {
@@ -198,66 +278,74 @@ void mapVolFields
 
 void mapFields
 (
-    const fvMesh& sourceMesh,
+    const PtrList<fvMesh>& sourceMeshes,
     const fvMesh& targetMesh,
-    const labelList& cellMap,
-    const labelList& extendedCellMap,
+    const List<cellInfoList>& cellMap,
+    const List<cellInfoList>& extendedCellMap,
     const tensorField& R,
-    const HashSet<word>& additionalFields
+    const HashSet<word>& additionalFields,
+    const bool store = false
 )
 {
-    IOobjectList objects(sourceMesh, sourceMesh.time().timeName());
+    Info<< "Mapping fields" << endl;
+    IOobjectList objects(sourceMeshes[0], sourceMeshes[0].time().timeName());
 
     mapVolFields<scalar>
     (
-        sourceMesh,
+        sourceMeshes,
         targetMesh,
         cellMap,
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<vector>
     (
-        sourceMesh,
+        sourceMeshes,
         targetMesh,
         cellMap,
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<sphericalTensor>
     (
-        sourceMesh,
+        sourceMeshes,
         targetMesh,
         cellMap,
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<symmTensor>
     (
-        sourceMesh,
+        sourceMeshes,
         targetMesh,
         cellMap,
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<tensor>
     (
-        sourceMesh,
+        sourceMeshes,
         targetMesh,
         cellMap,
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
+    Info<< endl;
 }
 
 
@@ -303,39 +391,70 @@ Foam::Pair<Foam::vector> calculateAxis(const fvMesh& mesh)
 }
 
 
-Foam::vector calculateCentre(const fvMesh& mesh)
-{
-    return
-        gSum
-        (
-            cmptMultiply
-            (
-                mesh.C().primitiveField()*mesh.V().field(),
-                calculateAxis(mesh)[1]
-            )
-        )/gSum(mesh.V().field());
-}
-
-
 void calcMapAndR
 (
-    const fvMesh& sourceMesh,
+    const PtrList<indexedOctree<treeDataCell>>& icos,
+    const PtrList<fvMesh>& sourceMeshes,
     const fvMesh& targetMesh,
     const scalar& maxR,
     const vector& sourceCentre,
     const vector& targetCentre,
     const vector& rotationAxis,
     const vector& rAxis,
-    labelList& cellMap,
-    labelList& extendedCellMap,
+    List<cellInfoList>& cellMap,
+    List<cellInfoList>& extendedCellMap,
     tensorField& R
 )
 {
-    label nSourceD = sourceMesh.nGeometricD();
+    Info<< "Calulating map and rotation tensors" << endl;
+    label nSourceD = sourceMeshes[0].nGeometricD();
+    vector sourceD(sourceMeshes[0].geometricD());
     vector targetD(targetMesh.geometricD());
+
+    pointField transformedPoints(targetMesh.points());
+    forAll(transformedPoints, pointi)
+    {
+        // Get the position on the target mesh
+        vector ptTarget =
+            cmptMultiply
+            (
+                targetMesh.points()[pointi],
+                targetD
+            );
+
+        // Offset from the center of the source mesh
+        vector nTarget = (ptTarget - targetCentre);
+
+        // Radius
+        scalar r = mag(nTarget);
+
+        // Offset from the source mesh center (only solved directions)
+        vector nSource(Zero);
+        if (nSourceD == 1)
+        {
+            nSource = r*rAxis;
+        }
+        else
+        {
+            scalar y = nTarget & rotationAxis;
+            scalar x = mag((nTarget - y*rotationAxis));
+            nSource = y*rotationAxis + x*rAxis;
+        }
+
+        // Actual point on the source mesh
+        transformedPoints[pointi] = nSource + sourceCentre;
+    }
+
 
     forAll(cellMap, celli)
     {
+        const cell& c = targetMesh.cells()[celli];
+
+        // Mapping has already been set
+        if (cellMap[celli].size())
+        {
+            continue;
+        }
         // Get the position on the target mesh
         vector ptTarget =
             cmptMultiply
@@ -363,22 +482,74 @@ void calcMapAndR
             nSource = y*rotationAxis + x*rAxis;
         }
 
-
         // Actual point on the source mesh
         vector ptSource = nSource + sourceCentre;
 
         // Map from the source mesh to the target mesh
-        cellMap[celli] = sourceMesh.findCell(ptSource);
-        extendedCellMap[celli] = cellMap[celli];
+        // Keep track of the maximum volume (weight) for extended cell
+        scalar maxV = -great;
+        label eCellI = -1;
+        scalar sumV = 0.0;
+        cellInfoList& infos = cellMap[celli];
+        forAll(sourceMeshes, proci)
+        {
+            if (targetMesh.bounds().overlaps(sourceMeshes[proci].bounds()))
+            {
+                treeBoundBox bb(c.points(targetMesh.faces(), transformedPoints));
+                forAll(sourceD, cmpti)
+                {
+                    if (sourceD[cmpti] < 0)
+                    {
+                        bb.min()[cmpti] = -great;
+                        bb.max()[cmpti] = great;
+                    }
+                }
+
+                // Find all cells in the transformed bound box and weight based
+                // on cell volume
+                // NOTE: Ideally this would be overlap volume but that requires more
+                // work
+                labelList sCells(icos[proci].findBox(bb));
+                forAll(sCells, cj)
+                {
+                    const label cellj = sCells[cj];
+                    const scalar V = sourceMeshes[proci].V()[cellj];
+                    sumV += V;
+                    infos.append({proci, cellj, V});
+
+                    if (V > maxV)
+                    {
+                        maxV = V;
+                        eCellI = cj;
+                    }
+                }
+            }
+        }
+
+        // normalize weights
+        if (sumV > 0)
+        {
+            forAll(infos, cj)
+            {
+                infos[cj].weight /= sumV;
+            }
+        }
 
         // Extend radius is the target point is outside of the source mesh
-        if (cellMap[celli] < 0)
+        scalar dist = great;
+        forAll(sourceMeshes, proci)
         {
-            extendedCellMap[celli] = sourceMesh.findNearestCell(ptSource);
-            if (r < maxR)
+            pointIndexHit pIH = icos[proci].findNearest(ptSource, great);
+            scalar curDist = mag(pIH.hitPoint() - ptSource);
+            if (curDist < dist)
             {
-                cellMap[celli] = extendedCellMap[celli];
+                dist = curDist;
+                extendedCellMap[celli](0) = {proci, pIH.index(), 1.0};
             }
+        }
+        if (r < maxR && !cellMap[celli].size())
+        {
+            cellMap[celli](0) = extendedCellMap[celli][0];
         }
 
         //- If mapping from a 2D case then there is only 1 rotation axis
@@ -392,10 +563,265 @@ void calcMapAndR
         }
 
         // Normalise directions
-        nTarget /= max(mag(nTarget), small);
-        nSource /= max(mag(nSource), small);
+        if (mag(nTarget) > small)
+        {
+            nTarget = nTarget/mag(nTarget);
+        }
+        if (mag(nSource) > small)
+        {
+            nSource = nSource/mag(nSource);
+        }
         R[celli] = rotationTensor(nSource, nTarget);
     }
+    Info<< endl;
+}
+
+
+//- Read and add fields to the database
+template<class Type, template<class> class Patch, class Mesh>
+void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
+{
+    typedef GeometricField<Type, Patch, Mesh> FieldType;
+
+    IOobjectList fields = objects.lookupClass(FieldType::typeName);
+    forAllIter(IOobjectList, fields, fieldIter)
+    {
+        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        {
+            IOobject fieldTargetIOobject
+            (
+                fieldIter()->name(),
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            );
+
+            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            {
+                FieldType* fPtr
+                (
+                    new FieldType
+                    (
+                        fieldTargetIOobject,
+                        mesh
+                    )
+                );
+                fPtr->store(fPtr);
+            }
+        }
+    }
+}
+
+
+//- Read and add fields to the database
+template<class Type>
+void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
+{
+    typedef GeometricField<Type, pointPatchField, pointMesh> FieldType;
+    IOobjectList fields = objects.lookupClass(FieldType::typeName);
+    forAllIter(IOobjectList, fields, fieldIter)
+    {
+        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        {
+            IOobject fieldTargetIOobject
+            (
+                fieldIter()->name(),
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            );
+
+            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            {
+                FieldType* fPtr
+                (
+                    new FieldType
+                    (
+                        fieldTargetIOobject,
+                        pointMesh::New(mesh)
+                    )
+                );
+                fPtr->store(fPtr);
+            }
+        }
+    }
+}
+
+
+//- Read and add all fields to the database
+void readAllFields(const fvMesh& mesh)
+{
+    // Get all fields present at the current time
+    IOobjectList objects(mesh, mesh.time().timeName());
+
+    readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<tensor, fvPatchField, volMesh>(mesh, objects);
+
+    readGeoFields<scalar, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<vector, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<tensor, fvsPatchField, surfaceMesh>(mesh, objects);
+
+    readPointFields<scalar>(mesh, objects);
+    readPointFields<vector>(mesh, objects);
+    readPointFields<symmTensor>(mesh, objects);
+    readPointFields<sphericalTensor>(mesh, objects);
+    readPointFields<tensor>(mesh, objects);
+}
+
+
+void refine
+(
+    const PtrList<indexedOctree<treeDataCell>>& icos,
+    const PtrList<fvMesh>& sourceMeshes,
+    fvMesh& targetMesh,
+    const scalar maxR,
+    const vector& sourceCentre,
+    const vector& targetCentre,
+    const vector& rotationAxis,
+    const vector& rAxis,
+    const wordList& additionalFieldNames
+)
+{
+    labelList cellMap(targetMesh.nCells(), -1);
+    labelList extendedCellMap(targetMesh.nCells(), -1);
+    tensorField R(targetMesh.nCells(), tensor::I);
+
+    autoPtr<IOdictionary> refineDictPtr;
+    {
+        IOobject dynamicMeshDictIO
+        (
+            IOobject
+            (
+                "dynamicMeshDict",
+                targetMesh.time().constant(),
+                targetMesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            )
+        );
+        IOobject rotateFieldsDictIO
+        (
+            IOobject
+            (
+                "rotateFieldsDict",
+                targetMesh.time().system(),
+                targetMesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            )
+        );
+        if (dynamicMeshDictIO.typeHeaderOk<IOdictionary>(true))
+        {
+            refineDictPtr.set(new IOdictionary(dynamicMeshDictIO));
+        }
+        else
+        {
+            if (rotateFieldsDictIO.typeHeaderOk<IOdictionary>(true))
+            {
+                refineDictPtr.set(new IOdictionary(rotateFieldsDictIO));
+            }
+        }
+
+        if (!refineDictPtr.valid())
+        {
+            WarningInFunction
+                << "Refinement was specified, but neither " << nl
+                << dynamicMeshDictIO.objectPath() << nl << " or " << nl
+                << rotateFieldsDictIO.objectPath() << nl << " was found."
+                << "Skipping." << endl;
+
+            return;
+        }
+    }
+    const IOdictionary& refineDict(refineDictPtr());
+
+    autoPtr<errorEstimator> error
+    (
+        errorEstimator::New(targetMesh, refineDict)
+    );
+    error->setForce(true);
+    autoPtr<fvMeshRefiner> refiner
+    (
+        fvMeshRefiner::New
+        (
+            targetMesh,
+            refineDict,
+            true
+        )
+    );
+
+    readAllFields(targetMesh);
+
+    Info<< "Begining refinement iterations" << nl << endl;
+    bool good = true;
+    bool lastIter = false;
+    label iter = 0;
+    while (good)
+    {
+        if (iter++ > 10)
+        {
+            lastIter = true;
+        }
+
+        if (lastIter)
+        {
+            good = false;
+        }
+
+        Info<<"Iteration " << iter << endl;
+
+        List<cellInfoList> cellMap(targetMesh.nCells());
+        List<cellInfoList> extendedCellMap(targetMesh.nCells());
+        tensorField R(targetMesh.nCells(), tensor::I);
+
+        calcMapAndR
+        (
+            icos,
+            sourceMeshes,
+            targetMesh,
+            maxR,
+            sourceCentre,
+            targetCentre,
+            rotationAxis,
+            rAxis,
+            cellMap,
+            extendedCellMap,
+            R
+        );
+
+        // Map fields from the source mesh to the target mesh
+        mapFields
+        (
+            sourceMeshes,
+            targetMesh,
+            cellMap,
+            extendedCellMap,
+            R,
+            additionalFieldNames,
+            true
+        );
+        if (!lastIter)
+        {
+            error->update();
+            lastIter =
+                !refiner->refine(error->error(), error->maxRefinement());
+        }
+
+        Info<< "ExecutionTime = " << targetMesh.time().elapsedCpuTime() << " s"
+            << "  ClockTime = " << targetMesh.time().elapsedClockTime() << " s"
+            << nl << endl;
+    }
+    refiner->write();
+
+    Info<< "Final target mesh size: " << targetMesh.nCells() << nl
+        << endl;
 }
 
 
@@ -404,11 +830,9 @@ void calcMapAndR
 int main(int argc, char *argv[])
 {
     //- Add options
-    timeSelector::addOptions(true, false);
-
     argList::addNote
     (
-        "map volume fields from one mesh to another"
+        "Rotational extrusion and map volume fields from one mesh to another\n"
     );
     argList::validArgs.append("sourceCase");
 
@@ -418,7 +842,6 @@ int main(int argc, char *argv[])
         "scalar|'latestTime'",
         "specify the source time"
     );
-
     argList::addOption
     (
         "sourceRegion",
@@ -431,12 +854,11 @@ int main(int argc, char *argv[])
         "word",
         "specify the target region"
     );
-//     argList::addBoolOption
-//     (
-//         "parallelSource",
-//         "the source is decomposed"
-//     );
-
+    argList::addBoolOption
+    (
+        "parallelSource",
+        "the source is decomposed"
+    );
     argList::addBoolOption
     (
         "extend",
@@ -465,18 +887,20 @@ int main(int argc, char *argv[])
         "uniform",
         "Copy uniform objects (not time)"
     );
-
+    argList::addBoolOption
+    (
+        "refine",
+        "Iteratively map, rotate and refine the mesh"
+    );
+    argList::addBoolOption
+    (
+        "tets",
+        "Use cell tet decomposition"
+    );
     #include "addRegionOption.H"
 
     #include "setRootCase.H"
-    #include "createTime.H"
-
-    //- Select time
-    runTime.functionObjects().off();
-    instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
-
-
-    #include "createNamedMesh.H"
+    parRun = Pstream::parRun();
 
     fileName rootDirTarget(args.rootPath());
     fileName caseDirTarget(args.globalCaseName());
@@ -485,7 +909,7 @@ int main(int argc, char *argv[])
     const fileName rootDirSource = casePath.path().toAbsolute();
     const fileName caseDirSource = casePath.name();
 
-    Info<< "Source: " << rootDirSource << " " << caseDirSource << endl;
+    Info<< "Source: " << casePath << " " << caseDirSource << endl;
     word sourceRegion = fvMesh::defaultRegion;
     if (args.optionFound("sourceRegion"))
     {
@@ -501,7 +925,7 @@ int main(int argc, char *argv[])
         Info<< "Target region: " << targetRegion << endl;
     }
 
-//     const bool parallelSource = args.optionFound("parallelSource");
+    const bool parallelSource = args.optionFound("parallelSource");
 
     scalar maxR(-1);
     if (args.optionFound("maxR"))
@@ -515,179 +939,198 @@ int main(int argc, char *argv[])
         Info<< "Extending mapping to the edge of the domain" << endl;
     }
 
-
-    wordList additionalFieldsNames;
+    wordList additionalFieldNames;
     if (args.optionFound("additionalFields"))
     {
-        additionalFieldsNames = args.optionRead<wordList>("additionalFields");
+        additionalFieldNames =
+            args.optionRead<wordList>("additionalFields");
     }
-    HashSet<word> additionalFields(additionalFieldsNames);
+    HashSet<word> additionalFields(additionalFieldNames);
 
     bool copyUniform = args.optionFound("uniform");
 
-    fvMesh& targetMesh = mesh;
-    Time& runTimeTarget = runTime;
 
     const string caseDirOrig = getEnv("FOAM_CASE");
     const string caseNameOrig = getEnv("FOAM_CASENAME");
-    setEnv("FOAM_CASE", rootDirSource/caseDirSource, true);
-    setEnv("FOAM_CASENAME", caseDirSource, true);
-    Time runTimeSource
+
+    Time targetRunTime(Foam::Time::controlDictName, args);
+    fvMesh targetMesh
     (
-        Time::controlDictName,
-        rootDirSource,
-        caseDirSource
+        IOobject
+        (
+            targetRegion,
+            targetRunTime.timeName(),
+            targetRunTime,
+            IOobject::READ_IF_PRESENT
+        )
     );
+    Info<<"Created target mesh"<<endl;
+
+    const polyMesh::cellDecomposition decompMode =
+        args.optionFound("tets") ? polyMesh::CELL_TETS : polyMesh::FACE_DIAG_TRIS;
+
+    PtrList<Time> sourceRunTimes;
+    PtrList<fvMesh> sourceMeshes;
+    label nSourceCells = 0;
+
+    // Create source case argList
+    argList sourceArgs(args);
+    const_cast<ParRunControl&>(sourceArgs.parRunControl()) = ParRunControl();
+
+    if (parallelSource)
+    {
+        label nProcs = fileHandler().nProcs(rootDirSource/caseDirSource);
+        reduce(nProcs, maxOp<label>());
+
+        setParRun(false);
+        sourceRunTimes.setSize(nProcs);
+        sourceMeshes.setSize(nProcs);
+
+        setEnv("FOAM_CASE", rootDirSource/caseDirSource, true);
+        setEnv("FOAM_CASENAME", caseDirSource, true);
+        for (int proci=0; proci < nProcs; proci++)
+        {
+            sourceRunTimes.set
+            (
+                proci,
+                new Time
+                (
+                    rootDirSource,
+                    caseDirSource/fileName(word("processor") + name(proci))
+                )
+            );
+            Time& runTimeSource = sourceRunTimes[proci];
+            const_cast<dictionary&>(runTimeSource.controlDict()) =
+                targetRunTime.controlDict();
+            #include "setTimeIndex.H"
+
+            sourceMeshes.set
+            (
+                proci,
+                new fvMesh
+                (
+                    IOobject
+                    (
+                        sourceRegion,
+                        runTimeSource.timeName(),
+                        runTimeSource
+                    )
+                )
+            );
+            nSourceCells += sourceMeshes[proci].nCells();
+        }
+        resetParRun();
+
+        Info<< nl << "Read " << nProcs << " source processor meshes" << endl;
+    }
+    else
+    {
+        sourceRunTimes.setSize(1);
+        sourceMeshes.setSize(1);
+
+        sourceRunTimes.set
+        (
+            0,
+            new Time
+            (
+                Time::controlDictName,
+                rootDirSource,
+                caseDirSource
+            )
+        );
+        Time& runTimeSource = sourceRunTimes[0];
+        #include "setTimeIndex.H"
+
+        sourceMeshes.set
+        (
+            0,
+            new fvMesh
+            (
+                IOobject
+                (
+                    sourceRegion,
+                    runTimeSource.timeName(),
+                    runTimeSource
+                )
+            )
+        );
+        Info<< "Created source mesh\n" << endl;
+        nSourceCells += sourceMeshes[0].nCells();
+    }
     setEnv("FOAM_CASE", caseDirOrig, true);
     setEnv("FOAM_CASENAME", caseNameOrig, true);
 
-//     if (parallelSource)
-//     {
-//         IOdictionary decompositionDict
-//         (
-//             IOobject
-//             (
-//                 "decomposeParDict",
-//                 runTimeSource.system(),
-//                 runTimeSource,
-//                 IOobject::MUST_READ_IF_MODIFIED,
-//                 IOobject::NO_WRITE
-//             )
-//         );
-//         label nProcs = readInt(decompositionDict.lookup("numberOfSubdomains"));
-//
-//         Info<< "Create target mesh\n" << endl;
-//         Info<< "Target mesh size: " << meshTarget.nCells() << endl;
-//
-//         for (int proci=0; proci<nProcs; proci++)
-//         {
-//             Info<< nl << "Source processor " << proci << endl;
-//             fileName parCaseDirSource
-//             (
-//                 caseDirSource/fileName(word("processor") + name(proci))
-//             );
-//             Info<<rootDirSource<<endl;
-//
-//             Time runTimeSource
-//             (
-//                 Time::controlDictName,
-//                 rootDirSource,
-//                 caseDirSource/fileName(word("processor") + name(proci))
-//             );
-//             Pout<<"time"<<endl;
-//
-//             #include "setTimeIndex.H"
-//
-//             fvMesh meshSource
-//             (
-//                 IOobject
-//                 (
-//                     sourceRegion,
-//                     runTimeSource.timeName(),
-//                     runTimeSource
-//                 )
-//             );
-//             Info<< "Source mesh size: " << meshSource.nCells() << tab
-//                 << "Target mesh size: " << meshTarget.nCells() << nl << endl;
-//
-//             Vector<label> sourceGeoD(meshSource.geometricD());
-//             Vector<label> sourceSolD(meshSource.solutionD());
-//             Vector<label> sourceD(0, 0, 0);
-//             forAll(sourceGeoD, i)
-//             {
-//                 if (sourceGeoD[i] == sourceSolD[i])
-//                 {
-//                     sourceD[i] = 1;
-//                 }
-//             }
-//
-//             vector rotDir(0.0, 0.0, 0.0);
-//             forAll(sourceD, i)
-//             {
-//                 if (sourceD[i] != targetD[i])
-//                 {
-//                     rotDir[i] = 1.0;
-//                 }
-//             }
-//             vector solDir(0.0, 0.0, 0.0);
-//             forAll(sourceD, i)
-//             {
-//                 if (sourceD[i] == 1 && targetD[i] == 1)
-//                 {
-//                     solDir[i] = 1.0;
-//                 }
-//             }
-//
-//             vector centre(sum(cmptMultiply(meshSource.cellCentres(), rotDir)));
-//             centre = cmptMultiply(centre, rotDir);
-//
-//             // Create map
-//             labelList cellMap(meshTarget.nCells(), -1);
-//             vectorField n(meshTarget.nCells(), Zero);
-//             forAll(cellMap, celli)
-//             {
-//                 vector ptTarget =
-//                     cmptMultiply(meshTarget.C()[celli], solDir)
-//                   + cmptMultiply(meshTarget.C()[celli], rotDir);
-//                 scalar r = mag(ptTarget);
-//                 vector ptSource(r*solDir + centre);
-//                 cellMap[celli] = meshSource.findCell(ptSource);
-//                 n[celli] =
-//                     ((ptSource - centre) & (solDir + rotDir))
-//                    *(solDir + rotDir);
-//             }
-//
-//
-//             mapFields(meshSource, meshTarget, cellMap, n);
-//         }
-//     }
-//     else
+    Info<< "\nSource time: " << sourceRunTimes[0].value()
+        << "\nTarget time: " << targetRunTime.value()
+        << nl << endl;
+
+    vector sourceSumCV = Zero;
+    scalar sourceSumV = 0.0;
+    PtrList<indexedOctree<treeDataCell>> icos(sourceMeshes.size());
+    setParRun(false);
+
+    forAll(sourceMeshes, proci)
     {
-        Time runTimeSource
+        const fvMesh& sourceMesh = sourceMeshes[proci];
+        sourceSumCV += sum(sourceMesh.C()*sourceMesh.V()).value();
+        sourceSumV += sum(sourceMesh.V()).value();
+
+        treeBoundBox meshBb(sourceMesh.bounds());
+
+        // Calculate typical cell related size to shift bb by.
+        scalar typDim = meshBb.avgDim()/(2.0*Foam::cbrt(scalar(sourceMesh.nCells())));
+
+        treeBoundBox shiftedBb
         (
-            Time::controlDictName,
-            rootDirSource,
-            caseDirSource
+            meshBb.min(),
+            meshBb.max() + vector(typDim, typDim, typDim)
         );
-        #include "setTimeIndex.H"
 
-        Info<< "Create meshes\n" << endl;
-
-        fvMesh sourceMesh
+        icos.set
         (
-            IOobject
+            proci,
+            new indexedOctree<treeDataCell>
             (
-                sourceRegion,
-                runTimeSource.timeName(),
-                runTimeSource
+                treeDataCell(true, sourceMesh, decompMode),
+                shiftedBb,
+                10,         // maxLevel
+                100,        // leafsize
+                10.0        // duplicity
             )
         );
+        sourceMesh.tetBasePtIs();
+    }
+    resetParRun();
+    Info<< "created source meshes" << nl << endl;
 
-        vector sourceCentre(calculateCentre(sourceMesh));
-        vector targetCentre(sourceCentre);
-        if (args.optionFound("centre"))
-        {
-            targetCentre = args.optionRead<vector>("centre");
-        }
-        Info<< "Source centre: " << sourceCentre << nl
-            << "Target centre: " << targetCentre << endl;
+    Pair<vector> sourceAxis(calculateAxis(sourceMeshes[0]));
+    Pair<vector> targetAxis(calculateAxis(targetMesh));
+    vector rotationAxis = sourceAxis[1] - targetAxis[1];
+    vector rAxis = sourceAxis[0];
 
-        Pair<vector> sourceAxis(calculateAxis(sourceMesh));
-        Pair<vector> targetAxis(calculateAxis(targetMesh));
-        vector rotationAxis = sourceAxis[1] - targetAxis[1];
-        vector rAxis = sourceAxis[0];
+    vector sourceCentre = cmptMultiply(sourceSumCV, sourceAxis[1])/sourceSumV;
+    vector targetCentre(sourceCentre);
+    if (args.optionFound("centre"))
+    {
+        targetCentre = args.optionRead<vector>("centre");
+    }
 
-        Info<< "Source mesh size: " << sourceMesh.nCells() << tab
-            << "Target mesh size: " << targetMesh.nCells() << nl << endl;
+    Info<< "Source centre: " << sourceCentre << nl
+        << "Target centre: " << targetCentre << endl;
 
-        labelList cellMap(targetMesh.nCells(), -1);
-        labelList extendedCellMap(targetMesh.nCells(), -1);
+    Info<< "Source mesh size: " << nSourceCells << endl;
+
+    if (!args.optionFound("refine"))
+    {
+        Info<< "Target mesh size: " << targetMesh.nCells() << nl << endl;
+        List<cellInfoList> cellMap(targetMesh.nCells());
+        List<cellInfoList> extendedCellMap(targetMesh.nCells());
         tensorField R(targetMesh.nCells(), tensor::I);
 
-        Info<< "Calulating map and rotation tensors" << endl;
         calcMapAndR
         (
-            sourceMesh,
+            icos,
+            sourceMeshes,
             targetMesh,
             maxR,
             sourceCentre,
@@ -700,49 +1143,66 @@ int main(int argc, char *argv[])
         );
 
         // Map fields from the source mesh to the target mesh
-        Info<< "Mapping field" << endl;
         mapFields
         (
-            sourceMesh,
+            sourceMeshes,
             targetMesh,
             cellMap,
             extendedCellMap,
             R,
-            additionalFieldsNames
+            additionalFieldNames
         );
+    }
+    else
+    {
+        refine
+        (
+            icos,
+            sourceMeshes,
+            targetMesh,
+            maxR,
+            sourceCentre,
+            targetCentre,
+            rotationAxis,
+            rAxis,
+            additionalFieldNames
+        );
+        targetRunTime.writeNow();
+    }
 
-        if (copyUniform)
+    if (copyUniform)
+    {
+        fileName local = "uniform";
+        fileName path = targetMesh.time().timePath();
+
+        IOobjectList uniformObjects
+        (
+            sourceMeshes[0],
+            sourceRunTimes[0].timeName()/local
+        );
+        forAllConstIter
+        (
+            IOobjectList,
+            uniformObjects,
+            iter
+        )
         {
-            fileName local = "uniform";
-            fileName path = targetMesh.time().timePath();
-
-            IOobjectList uniformObjects
-            (
-                sourceMesh,
-                sourceMesh.time().timeName()/local
-            );
-            forAllConstIter
-            (
-                IOobjectList,
-                uniformObjects,
-                iter
-            )
+            fileName name = iter()->name();
+            if (name != "time")
             {
-                fileName name = iter()->name();
-                if (name != "time")
-                {
-                    fileName srcPath = iter()->objectPath();
-                    cp
-                    (
-                        iter()->objectPath(),
-                        path/local/name
-                    );
-                }
+                fileName srcPath = iter()->objectPath();
+                cp
+                (
+                    iter()->objectPath(),
+                    path/local/name
+                );
             }
         }
     }
-
-    Info<< "\nEnd\n" << endl;
+    Info<< nl << "Finished" << endl
+        << "ExecutionTime = " << targetRunTime.elapsedCpuTime() << " s"
+        << "  ClockTime = " << targetRunTime.elapsedClockTime() << " s" << nl
+        << endl;
 
     return 0;
 }

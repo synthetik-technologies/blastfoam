@@ -106,6 +106,21 @@ protected:
             const Args& ... args
         ) const;
 
+        //- Return a scalarField of the given property on a patch for a specie
+        tmp<scalarField> fieldSpecieProperty
+        (
+            const label speciei,
+            scalar (ThermoType::*psiMethod)
+            (
+                const scalar,
+                const scalar,
+                const scalar
+            ) const,
+            const scalarField& rho,
+            const scalarField& e,
+            const scalarField& T
+        ) const;
+
         //- Return a scalarField of the given property on a cell set
         template<class Method, class ... Args>
         tmp<scalarField> cellSetProperty
@@ -156,13 +171,13 @@ public:
         virtual void postUpdate();
 
         //- Return the composition of the multi-component mixture
-        virtual basicSpecieMixture& composition()
+        virtual basicSpecieBlastMixture& composition()
         {
             return *this;
         }
 
         //- Return the composition of the multi-component mixture
-        virtual const basicSpecieMixture& composition() const
+        virtual const basicSpecieBlastMixture& composition() const
         {
             return *this;
         }
@@ -170,6 +185,7 @@ public:
         //- Thermodynamic and transport functions
 
             using BasicThermo::he;
+
             //- Enthalpy/Internal energy
             //  for given pressure and temperature [J/kg]
             virtual tmp<volScalarField> he
@@ -322,6 +338,8 @@ public:
             //- Heat capacity at constant volume for a cell [J/kg/K]
             virtual scalar cellCv(const scalar, const label) const;
 
+            using BasicThermo::Cpv;
+
             //- Heat capacity at constant pressure/volume for patch [J/kg/K]
             virtual tmp<scalarField> Cpv
             (
@@ -370,6 +388,8 @@ public:
 
         // Specie thermo properties
 
+            using BasicThermo::rho;
+
             //- Density [kg/m^3]
             virtual scalar rho
             (
@@ -395,10 +415,28 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure [J/kg/K]
+            virtual scalar Cp
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Heat capacity at constant pressure [J/kg/K]
             virtual tmp<volScalarField> Cp
             (
                 const label speciei,
                 const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+            //- Heat capacity at constant pressure [J/kg/K]
+            virtual tmp<volScalarField> Cp
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
                 const volScalarField& T
             ) const;
 
@@ -411,6 +449,15 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
+            virtual scalar HE
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Enthalpy/Internal energy [J/kg]
             virtual tmp<scalarField> HE
             (
                 const label speciei,
@@ -419,10 +466,28 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<scalarField> HE
+            (
+                const label speciei,
+                const scalarField& rho,
+                const scalarField& e,
+                const scalarField& T
+            ) const;
+
+            //- Enthalpy/Internal energy [J/kg]
             virtual tmp<volScalarField> HE
             (
                 const label speciei,
                 const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<volScalarField> HE
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
                 const volScalarField& T
             ) const;
 
@@ -435,10 +500,28 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
+            virtual scalar Hs
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Sensible enthalpy [J/kg]
             virtual tmp<scalarField> Hs
             (
                 const label speciei,
                 const scalarField& p,
+                const scalarField& T
+            ) const;
+
+            //- Sensible enthalpy [J/kg]
+            virtual tmp<scalarField> Hs
+            (
+                const label speciei,
+                const scalarField& rho,
+                const scalarField& e,
                 const scalarField& T
             ) const;
 
@@ -450,11 +533,29 @@ public:
                 const volScalarField& T
             ) const;
 
+            //- Sensible enthalpy [J/kg]
+            virtual tmp<volScalarField> Hs
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
+                const volScalarField& T
+            ) const;
+
             //- Absolute enthalpy [J/kg]
             virtual scalar Ha
             (
                 const label speciei,
                 const scalar p,
+                const scalar T
+            ) const;
+
+            //- Absolute enthalpy [J/kg]
+            virtual scalar Ha
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
                 const scalar T
             ) const;
 
@@ -466,6 +567,15 @@ public:
                 const scalarField& T
             ) const;
 
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<scalarField> Ha
+            (
+                const label speciei,
+                const scalarField& rho,
+                const scalarField& e,
+                const scalarField& T
+            ) const;
+
             //- Absolute enthalpy [J/kg]
             virtual tmp<volScalarField> Ha
             (
@@ -474,16 +584,19 @@ public:
                 const volScalarField& T
             ) const;
 
+            //- Absolute enthalpy [J/kg]
+            virtual tmp<volScalarField> Ha
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
+                const volScalarField& T
+            ) const;
+
 
         // Specie transport properties
 
-            //- Dynamic viscosity [kg/m/s]
-            virtual scalar mu
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const;
+            using BasicThermo::kappa;
 
             //- Thermal conductivity [W/m/K]
             virtual scalar kappa
@@ -494,10 +607,28 @@ public:
             ) const;
 
             //- Thermal conductivity [W/m/K]
+            virtual scalar kappa
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Thermal conductivity [W/m/K]
             virtual tmp<volScalarField> kappa
             (
                 const label speciei,
                 const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+            //- Thermal conductivity [W/m/K]
+            virtual tmp<volScalarField> kappa
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
                 const volScalarField& T
             ) const;
 
@@ -511,7 +642,7 @@ public:
         }
 
         //- Return the table of thermos
-        inline const PtrList<ThermoType>& speciesData() const;
+        inline const PtrList<ThermoType>& specieThermos() const;
 };
 
 

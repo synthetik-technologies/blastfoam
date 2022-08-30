@@ -162,37 +162,21 @@ inline Foam::scalar
 Foam::hPolynomialThermo<EquationOfState, PolySize>::S
 (
     const scalar p,
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return sCoeffs_.value(T) + EquationOfState::S(p, rho, T);
+    return sCoeffs_.value(T) + EquationOfState::S(p, T);
 }
 
 
 template<class EquationOfState, int PolySize>
 inline Foam::scalar
-Foam::hPolynomialThermo<EquationOfState, PolySize>::dGdT
+Foam::hPolynomialThermo<EquationOfState, PolySize>::Gstd
 (
-    const scalar p,
     const scalar T
 ) const
 {
-    NotImplemented;
-    return 0;
-}
-
-
-template<class EquationOfState, int PolySize>
-inline Foam::scalar
-Foam::hPolynomialThermo<EquationOfState, PolySize>::dCpdT
-(
-    const scalar p,
-    const scalar T
-) const
-{
-    return CpCoeffs_.derivative(T);
+    return hCoeffs_.value(T) - sCoeffs_.value(T)*T;
 }
 
 
@@ -205,20 +189,6 @@ Foam::hPolynomialThermo<EquationOfState, PolySize>::dCpdT
     const scalar T
 ) const
 {
-    return CpCoeffs_.derivative(T);
-}
-
-
-template<class EquationOfState, int PolySize>
-inline Foam::scalar
-Foam::hPolynomialThermo<EquationOfState, PolySize>::dCvdT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    NotImplemented;
     return CpCoeffs_.derivative(T);
 }
 

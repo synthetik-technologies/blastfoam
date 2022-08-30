@@ -25,9 +25,11 @@ Class
     Foam::interfacialPressureModel
 
 Description
+    Model for describing interfacial pressure between two phases
 
 SourceFiles
     interfacialPressureModel.C
+    interfacialPressureModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -106,6 +108,12 @@ public:
 
 
     // Member Functions
+
+        //- Return the phase pair
+        const phasePair& pair() const
+        {
+            return pair_;
+        }
 
         //- Return the interfacial pressure
         virtual tmp<volScalarField> PI() const = 0;

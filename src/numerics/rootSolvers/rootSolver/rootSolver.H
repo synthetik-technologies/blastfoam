@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ Class
     Foam::rootSolver
 
 Description
-    Abstract base-class for root system solvers
+    Generic class for finding the roots of a multivariate system
 
 SourceFiles
     rootSolver.C
@@ -35,7 +35,7 @@ SourceFiles
 #ifndef rootSolver_H
 #define rootSolver_H
 
-#include "scalarEquation.H"
+#include "MultivariateEquationsFwd.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -55,11 +55,20 @@ protected:
 
     // Protected data
 
-        //- Reference to scalarEquation
-        const scalarEquation& eqn_;
+        //- Reference to scalarMultivariateEquation
+        const scalarMultivariateEquation& eqns_;
 
-        //- Convergence tolerance
-        scalar tolerance_;
+        //- Position convergence tolerance
+        scalarField xTols_;
+
+        //- Function convergence tolerance
+        scalarField yTols_;
+
+        //- Absolute position convergence tolerances
+        scalarField xAbsTols_;
+
+        //- Normalised position convergence tolerances
+        mutable scalarField xRelTols_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -67,11 +76,38 @@ protected:
         //- Current step number
         mutable label stepi_;
 
-        //- Current error
-        mutable scalar error_;
+        //- Current x errors
+        mutable scalarField xErrors_;
+
+        //- Current y errors
+        mutable scalarField yErrors_;
+
+
+    // Protected member function
+
+        //- Normalise x tolerance
+        void initialise(const scalarList& x) const;
 
         //- Is the solution converged
-        bool converged(const scalar error) const;
+        bool converged
+        (
+            const scalarList& dx,
+            const scalarList& y
+        ) const;
+
+        //- Is the solution converged
+        bool converged
+        (
+            const scalarList& x0,
+            const scalarList& x1,
+            const scalarList& y
+        ) const;
+
+        //- Print information about the current step
+        void printStepInformation(const scalarList& vals) const;
+
+        //- Print information about the current step
+        void printFinalInformation(const scalarList& vals) const;
 
 
 public:
@@ -85,109 +121,129 @@ public:
         (
             autoPtr,
             rootSolver,
+            dictionaryUnivariate,
+            (const scalarMultivariateEquation& eqns, const dictionary& dict),
+            (eqns, dict)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            rootSolver,
             dictionaryZero,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const scalarMultivariateEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
         declareRunTimeSelectionTable
         (
             autoPtr,
             rootSolver,
             dictionaryOne,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
-        );
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            rootSolver,
-            dictionaryTwo,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const scalarMultivariateEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
 
 
     // Constructors
 
         //- Construct for given rootSolver
-        rootSolver(const scalarEquation& eqn, const dictionary& dict);
+        rootSolver
+        (
+            const scalarMultivariateEquation& eqns,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
         rootSolver(const rootSolver&) = delete;
-
 
     // Selectors
 
         //- Select null constructed
         static autoPtr<rootSolver> New
         (
-            const scalarEquation& eqn,
+            const scalarMultivariateEquation& eqns,
+            const dictionary& dict
+        );
+
+        //- Select null constructed
+        static autoPtr<rootSolver> New
+        (
+            const word& rootSolverType,
+            const scalarMultivariateEquation& eqns,
             const dictionary& dict
         );
 
 
     //- Destructor
-    virtual ~rootSolver()
-    {}
+    virtual ~rootSolver();
 
 
     // Member Functions
 
-        //- Return access to the tolerance
-        inline scalar& tolerance();
+        //- Return the tolerances
+        inline const scalarField& xTols() const;
+
+        //- Access the tolerances
+        inline scalarField& xTols();
+
+        //- Return the absolute tolerances
+        inline const scalarField& xAbsTols() const;
+
+        //- Access the absolute tolerances
+        inline scalarField& xAbsTols();
+
+        //- Return the relative tolerances
+        inline const scalarField& yTols() const;
+
+        //- Access the relative tolerances
+        inline scalarField& yTols();
 
         //- Return the step number
         inline label nSteps() const;
 
-        //- Return the error
-        inline scalar error() const;
+        //- Return the x errors
+        inline const scalarList& xErrors() const;
 
-        //- Find the root of the equation
-        virtual scalar solve() const;
+        //- Return the y errors
+        inline const scalarList& yErrors() const;
 
-        //- Find the root of the equation
-        virtual scalar solve(const scalar x0) const;
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve() const;
 
-        //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve(const scalarList& x0) const;
+
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh
         ) const;
 
-        //- Find the root of the equation
-        virtual scalar solve
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
+            const scalarList& x0,
             const label li
         ) const;
 
-        //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const;
 
-        //- Find the root of the equation between xHigh and xLow
-        virtual scalar findRoot
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> findRoots
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const = 0;
-
-        //- Print failure
-        virtual void printNoConvergence() const;
-
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const rootSolver&) = delete;
 };
 
 

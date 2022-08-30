@@ -17,6 +17,6 @@ runApplication decomposePar
 runParallel $(getApplication)
 
 # -- Convert the lagrangian positions to view in paraview
-runParallel convertLagrangianPositions
+runParallel -o convertLagrangianPositions
 
 # ----------------------------------------------------------------- end-of-file

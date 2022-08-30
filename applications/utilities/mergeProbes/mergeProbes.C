@@ -1,9 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -37,6 +37,13 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
+    argList::noParallel();
+    argList::addNote
+    (
+        "Merges probe file started from different times\n\n"
+    );
+
+    argList::validArgs.append("probeDir");
     argList::addBoolOption
     (
         "force",
@@ -47,22 +54,17 @@ int main(int argc, char *argv[])
         "probeName",
         "Name of probe to merge"
     );
-    argList::addOption
-    (
-        "probeDir",
-        "Name of probe directory"
-    );
 
     #include "setRootCase.H"
 
     bool force(args.optionFound("force"));
     wordList probeNames(args.optionLookupOrDefault("probeNames", wordList()));
-    word probeDirName(args.option("probeDir"));
+    word probeDirName(args.argRead<fileName>(1));
 
     // Create the processor databases
     fileName postProcessDir
     (
-        args.caseName()/fileName(word("postProcessing"))
+        args.caseName()/fileName("postProcessing")
     );
     fileName probesDir(args.rootPath()/postProcessDir/probeDirName);
     wordList times(readDir(probesDir, fileType::directory));
@@ -84,7 +86,7 @@ int main(int argc, char *argv[])
     }
     sTimes.append(great);
 
-    // Get list of probes
+    // Get full list of probes
     if (!args.optionFound("probeNames"))
     {
         fileName probeDir(probesDir/times[0]);

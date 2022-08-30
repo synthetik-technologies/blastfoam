@@ -73,21 +73,11 @@ bool Foam::functionObjects::writeTimeList::read
     writeTimes_ = dict.lookup<scalarList>("times");
     writeTimes_.append(great);
 
-    // Sort times from smallest to largest
-    scalarList sortedTimes(writeTimes_);
-    sort(sortedTimes);
+    // Hash read time to remove potential duplicates
+    HashSet<scalar, Hash<scalar>> hashedTimes(writeTimes_);
 
-    // Remove duplicate entries
-    label j = 0;
-    forAll(sortedTimes, i)
-    {
-        while (sortedTimes[i] == sortedTimes[i+1])
-        {
-            i++;
-        }
-        writeTimes_[j++] = sortedTimes[i];
-    }
-    writeTimes_.resize(j);
+    // Return sorted times
+    writeTimes_ = hashedTimes.sortedToc();
 
     // Get current location
     forAll(writeTimes_, ti)

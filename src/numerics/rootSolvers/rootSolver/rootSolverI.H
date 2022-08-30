@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,9 +23,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalar& Foam::rootSolver::tolerance()
+inline const Foam::scalarField& Foam::rootSolver::xTols() const
 {
-    return tolerance_;
+    return xTols_;
+}
+
+
+inline Foam::scalarField& Foam::rootSolver::xTols()
+{
+    return xTols_;
+}
+
+
+inline const Foam::scalarField& Foam::rootSolver::xAbsTols() const
+{
+    return xAbsTols_;
+}
+
+
+inline Foam::scalarField& Foam::rootSolver::xAbsTols()
+{
+    return xAbsTols_;
+}
+
+
+inline const Foam::scalarField& Foam::rootSolver::yTols() const
+{
+    return yTols_;
+}
+
+
+inline Foam::scalarField& Foam::rootSolver::yTols()
+{
+    return yTols_;
 }
 
 
@@ -35,9 +65,15 @@ inline Foam::label Foam::rootSolver::nSteps() const
 }
 
 
-inline Foam::scalar Foam::rootSolver::error() const
+inline const Foam::scalarList& Foam::rootSolver::xErrors() const
 {
-    return error_;
+    return xErrors_;
+}
+
+
+inline const Foam::scalarList& Foam::rootSolver::yErrors() const
+{
+    return yErrors_;
 }
 
 

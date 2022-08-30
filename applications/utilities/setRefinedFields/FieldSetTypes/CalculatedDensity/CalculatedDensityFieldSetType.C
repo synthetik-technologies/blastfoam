@@ -29,25 +29,34 @@ License
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::CalculatedDensity<Type, Patch, Mesh>::CalculatedDensity
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::CalculatedDensity
 (
     const fvMesh& mesh,
+    const dictionary& dict,
     const word& fieldName,
-    const labelList& selectedCells,
+    const labelList& selectedIndices,
     Istream& is,
     const bool write
 )
 :
-    FieldSetType<Type, Patch, Mesh>(mesh, fieldName, selectedCells, is, write),
+    FSType<Type>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    ),
     volInt_(pTraits<Type>(is))
 {
     if (this->good_)
     {
         scalar V = 0.0;
-        forAll(selectedCells, i)
+        forAll(selectedIndices, i)
         {
-            V += mesh.V()[selectedCells[i]];
+            V += mesh.V()[selectedIndices[i]];
         }
         reduce(V, sumOp<scalar>());
         V /= calcAngleFraction(mesh);
@@ -55,34 +64,42 @@ Foam::FieldSetTypes::CalculatedDensity<Type, Patch, Mesh>::CalculatedDensity
         {
             this->good_ = true;
             density_ = volInt_/V;
-            setField();
+            this->setField();
         }
     }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::CalculatedDensity<Type, Patch, Mesh>::~CalculatedDensity()
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::~CalculatedDensity()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetTypes::CalculatedDensity<Type, Patch, Mesh>::setField()
+template<class Type, template<class> class FSType>
+void
+Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::getInternalField
+(
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
 {
-    if (this->selectedCells_.size() == this->mesh_.nCells())
-    {
-        (*this->fieldPtr_).primitiveFieldRef() = density_;
-    }
-    else
-    {
-        forAll(this->selectedCells_, i)
-        {
-            (*this->fieldPtr_)[this->selectedCells_[i]] = density_;
-        }
-    }
-    FieldSetType<Type, Patch, Mesh>::setField();
+    f = density_;
 }
 
+
+template<class Type, template<class> class FSType>
+void
+Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::getBoundaryField
+(
+    const label patchi,
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{
+    f = density_;
+}

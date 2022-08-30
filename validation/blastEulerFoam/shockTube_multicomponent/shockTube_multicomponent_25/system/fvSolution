@@ -22,7 +22,7 @@ solvers
         solver          diagonal;
     }
 
-    "(U|e).*"
+    "(U|e|Yi).*"
     {
         solver          PBiCGStab;
         preconditioner  DIC;

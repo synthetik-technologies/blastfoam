@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -29,7 +29,7 @@ Description
 
 SourceFiles
     errorEstimator.C
-    newErrorEstimator.C
+    errorEstimatorNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -53,6 +53,8 @@ class probes;
 \*---------------------------------------------------------------------------*/
 
 class errorEstimator
+:
+    public regIOobject
 {
 protected:
     // Protected data
@@ -87,6 +89,9 @@ protected:
         //- Are probes refined
         Switch refineProbes_;
 
+        bool force_;
+        mutable label curTimeIndex_;
+
 
         //- Create or lookup error field
         //  Useful when multiple error estimators are used
@@ -107,6 +112,9 @@ protected:
         //- Lookup and return the scalar value of the field
         template<class Type>
         void getFieldValueType(const word& name, volScalarField& f) const;
+
+        //- Update the time index
+        bool updateCurTimeIndex(const bool unset) const;
 
 
 public:
@@ -155,6 +163,12 @@ public:
 
     // Member Functions
 
+        //- Force updating
+        void setForce(const bool force = true)
+        {
+            force_ = force;
+        }
+
         //- Update
         virtual void update(const bool scale = true) = 0;
 
@@ -180,6 +194,16 @@ public:
 
         //- Read level values
         virtual void read(const dictionary& dict);
+
+        //- regIOobject read
+        virtual bool read()
+        {
+            return true;
+        }
+
+        //- Write error field if in debug
+        virtual bool writeData(Ostream&) const;
+
 };
 
 

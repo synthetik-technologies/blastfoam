@@ -37,13 +37,13 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
-order quadraticMUSCL;
+order limitWith quadraticUpwindFit 1;
 interpolationSchemes
 {
     default             linear;
 
     reconstruct(rho)    $order Minmod;
-    reconstruct(U)      $order Minmod;
+    reconstruct(U)      $order MinmodV;
     reconstruct(e)      $order Minmod;
     reconstruct(p)      $order Minmod;
     reconstruct(speedOfSound) $order Minmod;

@@ -59,6 +59,14 @@ sets
         start       (1e-4 1e-4 0);
         end         (1e-4 1e-4 16);
     }
+    Centerline
+    {
+        type        lineCell;
+        axis        distance;
+
+        start       (0 0 0);
+        end         (16 16 16);
+    }
 );
 
 

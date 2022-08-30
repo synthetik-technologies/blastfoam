@@ -33,7 +33,7 @@ writeInterval   5e-5;
 
 cycleWrite      0;
 
-writeFormat     binary;
+writeFormat     ascii;
 
 writePrecision  6;
 
@@ -89,7 +89,7 @@ functions
         writeInterval       1e-4;
         interpolate         false;
         interpolationScheme cellPointFace;
-        surfaceFormat       vtk;
+        surfaceFormat       vtkTimeSeries;
         fields ( p );
         surfaces
         (
@@ -159,7 +159,6 @@ functions
         fields
         (
             p
-            impulse
         );
     }
 };

@@ -39,6 +39,38 @@ namespace functionObjects
 }
 }
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::functionObjects::dynamicPressure::calc()
+{
+    bool good = true;
+    if (!foundObject<volScalarField>(rhoName_))
+    {
+        cannotFindObject(rhoName_);
+        good = false;
+    }
+    if (!foundObject<volVectorField>(UName_))
+    {
+        cannotFindObject(UName_);
+        good = false;
+    }
+
+    if (!good)
+    {
+        return false;
+    }
+
+    const volScalarField& rho = lookupObject<volScalarField>(rhoName_);
+    const volVectorField& U = lookupObject<volVectorField>(UName_);
+
+    return store
+    (
+        resultName_,
+        0.5*rho*mag(U)*U
+    );
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::dynamicPressure::dynamicPressure
@@ -48,32 +80,11 @@ Foam::functionObjects::dynamicPressure::dynamicPressure
     const dictionary& dict
 )
 :
-    fvMeshFunctionObject(name, runTime, dict),
+    fieldExpression(name, runTime, dict, typeName, "dynamicP"),
     rhoName_(dict.lookupOrDefault("rhoName", word("rho"))),
-    UName_(dict.lookupOrDefault("UName", word("U"))),
-    resultName_(dict.lookupOrDefault("name", word("dynamicP"))),
-    store_(dict.lookupOrDefault("store", false))
+    UName_(dict.lookupOrDefault("UName", word("U")))
 {
-    if (store_)
-    {
-        obr_.store
-        (
-            new volVectorField
-            (
-                IOobject
-                (
-                    resultName_,
-                    obr_.time().timeName(),
-                    obr_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                this->mesh_,
-                dimensionedVector("0", dimPressure, Zero),
-                "zeroGradient"
-            )
-        );
-    }
+    read(dict);
 }
 
 
@@ -81,110 +92,5 @@ Foam::functionObjects::dynamicPressure::dynamicPressure
 
 Foam::functionObjects::dynamicPressure::~dynamicPressure()
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::functionObjects::dynamicPressure::read
-(
-    const dictionary& dict
-)
-{
-    fvMeshFunctionObject::read(dict);
-
-    dict.readIfPresent("rhoName", rhoName_);
-    dict.readIfPresent("UName", UName_);
-
-    word origName = resultName_;
-    bool origStore = store_;
-    dict.readIfPresent("name", resultName_);
-    dict.readIfPresent("store", store_);
-
-    bool change = false;
-    if ((origName != resultName_ && origStore) || (origStore && !store_))
-    {
-        change = true;
-        clearObject(origName);
-    }
-
-    if (store_ && change)
-    {
-        obr_.store
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    resultName_,
-                    obr_.time().timeName(),
-                    obr_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                this->mesh_,
-                dimensionedScalar("0", dimVelocity, Zero),
-                "zeroGradient"
-            )
-        );
-    }
-
-    return true;
-}
-
-
-bool Foam::functionObjects::dynamicPressure::execute()
-{
-    if
-    (
-        foundObject<volScalarField>(rhoName_)
-     && foundObject<volVectorField>(UName_)
-    )
-    {
-        const volScalarField& rho = lookupObject<volScalarField>(rhoName_);
-        const volVectorField& U = lookupObject<volVectorField>(UName_);
-
-        if (store_)
-        {
-            lookupObjectRef<volVectorField>(resultName_) =
-                0.5*rho*mag(U)*U;
-            return true;
-        }
-
-        return store
-        (
-            resultName_,
-            0.5*rho*mag(U)*U
-        );
-    }
-    else
-    {
-        Warning
-            << "    functionObjects::" << type() << " " << name()
-            << " failed to execute." << endl;
-
-        return false;
-    }
-}
-
-
-bool Foam::functionObjects::dynamicPressure::write()
-{
-    if (this->mesh_.time().timeIndex() > 0)
-    {
-        writeObject(resultName_);
-        return true;
-    }
-    return false;
-}
-
-
-bool Foam::functionObjects::dynamicPressure::clear()
-{
-    if (!store_)
-    {
-        return clearObject(resultName_);
-    }
-    return true;
-}
 
 // ************************************************************************* //

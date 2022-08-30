@@ -26,6 +26,7 @@ Class
 
 SourceFiles
     conductivityModel.C
+    conductivityModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

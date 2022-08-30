@@ -26,6 +26,7 @@ Class
 
 SourceFiles
     radialModel.C
+    radialModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

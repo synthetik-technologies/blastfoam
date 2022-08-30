@@ -46,7 +46,7 @@ namespace Foam
 class meshSizeObject;
 typedef MeshObject
 <
-    fvMesh,
+    polyMesh,
     Foam::MoveableMeshObject,
     meshSizeObject
 > MeshSizeObject;
@@ -63,14 +63,15 @@ public:
 
     // Private Data
 
-        //- Const reference to the mesh
-        const fvMesh& mesh_;
+        //- Mesh size (scalar)
+        mutable autoPtr<scalarField> dxPtr_;
 
-        //- Mesh size
-        mutable autoPtr<volScalarField> dxPtr_;
+        //- Mesh size (vector)
+        mutable autoPtr<vectorField> dXPtr_;
 
         //- Update the mesh size
-        void updateMeshSize() const;
+        void calcDx() const;
+        void calcDX() const;
 
 
 public:
@@ -81,8 +82,8 @@ public:
 
     // Constructors
 
-        //- Construct from fvMesh and dictionary
-        meshSizeObject(const fvMesh&);
+        //- Construct from polyMesh
+        meshSizeObject(const polyMesh&);
 
     //- Destructor
     virtual ~meshSizeObject();
@@ -91,25 +92,37 @@ public:
     // Member Functions
 
         //- Callback for geometry motion
-        virtual bool movePoints()
-        {
-            dxPtr_.clear();
-            return true;
-        }
+        virtual bool movePoints();
 
         //- Return the mesh size
-        inline const volScalarField& dx() const
+        inline const scalarField& dx() const
         {
             if (!dxPtr_.valid())
             {
-                updateMeshSize();
+                calcDx();
             }
             return dxPtr_();
         }
 
+        //- Return the mesh size
+        inline const vectorField& dX() const
+        {
+            if (!dXPtr_.valid())
+            {
+                calcDX();
+            }
+            return dXPtr_();
+        }
+
+        //- Return the mesh size as a volScalarField
+        tmp<volScalarField> dx(const fvMesh&) const;
+
+        //- Return the mesh size as a volVectorField
+        tmp<volVectorField> dX(const fvMesh&) const;
+
         virtual bool writeData(Ostream&) const
         {
-            return false;
+            return true;
         }
 };
 

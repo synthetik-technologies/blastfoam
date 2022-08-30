@@ -39,11 +39,10 @@ namespace FieldSetTypes
 {
 
 template<class Type>
-using MassIntegratedVol = MassIntegrated<Type, fvPatchField, volMesh>;
+using MassIntegratedVol = MassIntegrated<Type, VolFieldSetType>;
 
-template<class Type>
-using MassIntegratedSurface = MassIntegrated<Type, fvsPatchField, surfaceMesh>;
 }
+
 makeFieldSetTypeType(MassIntegratedVol, scalar, VolFieldSetType);
 makeFieldSetTypeType(MassIntegratedVol, vector, VolFieldSetType);
 makeFieldSetTypeType(MassIntegratedVol, sphericalTensor, VolFieldSetType);

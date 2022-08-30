@@ -31,7 +31,7 @@ Description
     to the database.
 
 See also
-    Foam::functionObjects::fvMeshFunctionObject
+    Foam::functionObjects::fieldExpression
 
 SourceFiles
     dynamicPressure.C
@@ -41,7 +41,7 @@ SourceFiles
 #ifndef functionObjects_dynamicPressure_H
 #define functionObjects_dynamicPressure_H
 
-#include "fvMeshFunctionObject.H"
+#include "fieldExpression.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -57,7 +57,7 @@ namespace functionObjects
 
 class dynamicPressure
 :
-    public fvMeshFunctionObject
+    public fieldExpression
 {
     // Private Member data
 
@@ -67,11 +67,10 @@ class dynamicPressure
         //- Name of velocity field
         word UName_;
 
-        //- Name of Result field
-        word resultName_;
 
-        //- Is the field stored in the database
-        Switch store_;
+    // Protected member functions
+
+        virtual bool calc();
 
 
 public:
@@ -96,21 +95,6 @@ public:
 
     //- Destructor
     virtual ~dynamicPressure();
-
-
-    // Member Functions
-
-        //- Read the field average data
-        virtual bool read(const dictionary&);
-
-        //- Calculate the field averages
-        virtual bool execute();
-
-        //- Write the field averages
-        virtual bool write();
-
-        //- Clear the result field from the objectRegistry
-        virtual bool clear();
 
 
     // Member Operators

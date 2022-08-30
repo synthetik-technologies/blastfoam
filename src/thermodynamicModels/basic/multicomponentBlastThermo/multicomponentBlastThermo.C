@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "multicomponentBlastThermo.H"
+#include "thermophysicalTransportModel.H"
 #include "fvc.H"
 #include "fvm.H"
 
@@ -40,13 +41,14 @@ Foam::multicomponentBlastThermo::multicomponentBlastThermo
     const word& masterName
 )
 :
-    basicSpecieMixture
+    basicSpecieBlastMixture
     (
         dict,
         dict.lookup<wordList>("species"),
         mesh,
         phaseName
     ),
+    mesh_(mesh),
     masterName_(masterName),
     massTransferRates_(this->species_.size()),
     implicitSources_(this->species_.size())
@@ -82,13 +84,14 @@ Foam::multicomponentBlastThermo::multicomponentBlastThermo
     const word& masterName
 )
 :
-    basicSpecieMixture
+    basicSpecieBlastMixture
     (
         dict,
         species,
         mesh,
         phaseName
     ),
+    mesh_(mesh),
     masterName_(masterName),
     massTransferRates_(this->species_.size()),
     implicitSources_(this->species_.size())
@@ -137,9 +140,7 @@ Foam::multicomponentBlastThermo::integrator::integrator
     implicitSources_(implicitSources),
     active_(active),
     alphaRho_(mesh_.lookupObject<volScalarField>(alphaRhoName)),
-    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName)),
-    models_(fvModels::New(mesh)),
-    constraints_(fvConstraints::New(mesh))
+    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName))
 {}
 
 
@@ -153,6 +154,50 @@ Foam::multicomponentBlastThermo::integrator::~integrator()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::multicomponentBlastThermo::correct()
+{
+    if (!species_.size())
+    {
+        return;
+    }
+
+    if (basicSpecieMixture::phaseName_ != word::null)
+    {
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", phaseName_),
+                Y_[0]
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+
+        for (label i=1; i<Y_.size(); i++)
+        {
+            Yt += Y_[i];
+        }
+
+        if (min(Yt).value() < small)
+        {
+            FatalErrorInFunction
+                << "Sum of mass fractions is zero for species " << species()
+                << exit(FatalError);
+        }
+
+        forAll(Y_, i)
+        {
+            Y_[i] /= Yt;
+            Y_[i].correctBoundaryConditions();
+        }
+    }
+    else
+    {
+        this->normalise();
+    }
+}
+
 
 void Foam::multicomponentBlastThermo::initializeModels()
 {
@@ -232,6 +277,7 @@ void Foam::multicomponentBlastThermo::solve()
 void Foam::multicomponentBlastThermo::postUpdate()
 {
     integratorPtr_->postUpdate();
+    correct();
 }
 
 
@@ -244,7 +290,19 @@ void Foam::multicomponentBlastThermo::addDelta
     if (massTransferRates_.found(name))
     {
         massTransferRates_[name] += delta;
-        return;
+    }
+}
+
+
+void Foam::multicomponentBlastThermo::addDelta
+(
+    const word& name,
+    const volScalarField::Internal& delta
+)
+{
+    if (massTransferRates_.found(name))
+    {
+        massTransferRates_[name].ref() += delta;
     }
 }
 
@@ -287,9 +345,6 @@ void Foam::multicomponentBlastThermo::integrator::solve()
     {
         if (active_[i])
         {
-            volScalarField YOld(Y_[i]);
-            this->storeAndBlendOld(YOld);
-
             volScalarField deltaAlphaRhoY
             (
                 fvc::div
@@ -298,21 +353,22 @@ void Foam::multicomponentBlastThermo::integrator::solve()
                     Y_[i],
                     "div(" + alphaRhoPhi_.name() + ",Yi)"
                 )
-              + massTransferRates_[i]
+              - massTransferRates_[i]
             );
+
+            // Not conservative, but alphaRhoYi is
+            this->storeAndBlendOld(Y_[i], false);
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
             Y_[i] =
                 (
-                    alphaRho_.prevIter()*YOld - dT*deltaAlphaRhoY
+                    alphaRho_.prevIter()*Y_[i] - dT*deltaAlphaRhoY
                 )/max(residualAlphaRho, alphaRho_);
             Y_[i].max(0.0);
             Y_[i].correctBoundaryConditions();
 
-
-
             // Clear mass transfer after adding
-            massTransferRates_[i] = Zero;
+            massTransferRates_[i] == Zero;
         }
     }
 }
@@ -320,33 +376,74 @@ void Foam::multicomponentBlastThermo::integrator::solve()
 
 void Foam::multicomponentBlastThermo::integrator::postUpdate()
 {
-    const dimensionedScalar& dT(mesh_.time().deltaT());
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
+
+    bool isPhase = alphaRho_.group() != word::null;
+
+    UautoPtr<const thermophysicalTransportModel> thermophysicalTransportPtr;
+    if
+    (
+        mesh_.foundObject<thermophysicalTransportModel>
+        (
+            IOobject::groupName("thermophysicalTransport", alphaRho_.group())
+        )
+    )
+    {
+        thermophysicalTransportPtr.set
+        (
+            &mesh_.lookupObject<thermophysicalTransportModel>
+            (
+                IOobject::groupName("thermophysicalTransport", alphaRho_.group())
+            )
+        );
+    }
 
     forAll(Y_, i)
     {
-        if (active_[i] && implicitSources_.PtrList<fvScalarMatrix>::set(i))
+        volScalarField& Yi(Y_[i]);
+
+        bool needUpdate =
+            (
+                active_[i]
+             && (
+                    implicitSources_.PtrList<fvScalarMatrix>::set(i)
+                 || thermophysicalTransportPtr.valid()
+                )
+            )
+
+         || this->needSolve(Yi.name());
+
+        if (needUpdate)
         {
-            volScalarField& Yi(Y_[i]);
             fvScalarMatrix YEqn
             (
                 fvm::ddt(alphaRho_, Yi)
               - fvc::ddt(alphaRho_, Yi)
-              + fvc::ddt(residualAlphaRho, Yi)
-              - fvm::ddt(residualAlphaRho, Yi)
              ==
-                implicitSources_[i]
-              + models_.source(alphaRho_, Yi)
+                models().source(alphaRho_, Yi)
             );
+            if (isPhase)
+            {
+                YEqn +=
+                    fvc::ddt(residualAlphaRho, Yi)
+                  - fvm::ddt(residualAlphaRho, Yi);
+            }
 
-            YEqn.relax();
+            if (implicitSources_.PtrList<fvScalarMatrix>::set(i))
+            {
+                YEqn -= implicitSources_[i];
+                implicitSources_[i].negate();
+            }
 
-            constraints_.constrain(YEqn);
+            if (thermophysicalTransportPtr.valid())
+            {
+                YEqn -= thermophysicalTransportPtr->divj(Yi);
+            }
 
+            constraints().constrain(YEqn);
             YEqn.solve("Yi");
-            implicitSources_[i].negate();
-
-            constraints_.constrain(Yi);
+            Yi.max(0.0);
+            constraints().constrain(Yi);
         }
     }
 }

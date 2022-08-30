@@ -53,14 +53,14 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default cubic;
-    reconstruct(alpha)  quadraticMUSCL vanAlbada;
-    reconstruct(rho)    quadraticMUSCL vanAlbada;
-    reconstruct(U)      quadraticMUSCL vanAlbada;
-    reconstruct(e)      quadraticMUSCL vanAlbada;
-    reconstruct(p)      quadraticMUSCL vanAlbada;
-    reconstruct(speedOfSound) quadraticMUSCL vanAlbada;
-    reconstruct(Theta)  quadraticMUSCL vanAlbada;
+    default linear;
+    reconstruct(alpha)  vanAlbada;
+    reconstruct(rho)    vanAlbada;
+    reconstruct(U)      vanAlbadaV;
+    reconstruct(e)      vanAlbada;
+    reconstruct(p)      vanAlbada;
+    reconstruct(speedOfSound) vanAlbada;
+    reconstruct(Theta)  vanAlbada;
 }
 
 snGradSchemes

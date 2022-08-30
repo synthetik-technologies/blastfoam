@@ -1,3 +1,0 @@
-Test-multivariateRootFinding.C
-
-EXE = $(BLAST_APPBIN)/Test-multivariateRootFinding

@@ -50,7 +50,8 @@ Foam::reactionRates::pressureBased::pressureBased
     reactionRate(mesh, dict),
     pScale_(dict.lookup<scalar>("pScale")),
     pExponent_("pExponent", dimless, dict),
-    pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict)
+    pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict),
+    offset_("offset", dimLength/dimTime, dict.lookupOrDefault<scalar>("offset", 0.0))
 {}
 
 
@@ -74,7 +75,7 @@ Foam::scalar Foam::reactionRates::pressureBased::k
     {
         K *= pow(p*pScale_, pExponent_.value());
     }
-    return K;
+    return offset_.value() + K;
 }
 
 
@@ -105,6 +106,10 @@ Foam::tmp<Foam::volScalarField> Foam::reactionRates::pressureBased::k
     if (mag(pExponent_.value()) > vSmall)
     {
         K *= pow(p*pScale_, pExponent_);
+    }
+    if (offset_.value() > vSmall)
+    {
+        K += offset_;
     }
     return tmpk;
 }

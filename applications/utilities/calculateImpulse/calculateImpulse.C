@@ -1,9 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -35,118 +35,283 @@ Description
 
 using namespace Foam;
 
+fileName findProbeDir(const fileName& dir, const word& pName)
+{
+    if (isFile(dir/pName))
+    {
+        return dir;
+    }
+
+
+    fileNameList timeDirs(readDir(dir, fileType::directory));
+
+    scalar minTime = great;
+    fileName minTimeName;
+    forAll(timeDirs, ti)
+    {
+        token t((IStringStream(timeDirs[ti]))());
+        if (t.isNumber() && isFile(dir/timeDirs[ti]/pName))
+        {
+            if (t.number() < minTime)
+            {
+                minTime = t.number();
+                minTimeName = timeDirs[ti];
+            }
+        }
+    }
+
+    if (!minTimeName.empty())
+    {
+        return dir/minTimeName;
+    }
+    return fileName::null;
+}
+
+fileNameList collectFiles(const fileName& dir)
+{
+    HashSet<fileName> collectedFiles
+    (
+        readDir(dir, fileType::file)
+    );
+
+    fileNameList timeDirs(readDir(dir, fileType::directory));
+
+    forAll(timeDirs, ti)
+    {
+        token t((IStringStream(timeDirs[ti]))());
+        if (t.isNumber())
+        {
+            collectedFiles.insert
+            (
+                readDir(dir/timeDirs[ti], fileType::file)
+            );
+        }
+    }
+
+    return collectedFiles.toc();
+}
+
+
 int main(int argc, char *argv[])
 {
+    argList::noParallel();
+    argList::addNote
+    (
+        "Calculates impulse based on pressure from probe files\n\n"
+    );
+
+    argList::validArgs.append("probeDir");
     argList::addOption
     (
-        "probeDir",
-        "Name of probe directory"
+        "p",
+        "Name of pressure file"
     );
     argList::addOption
     (
-        "name",
-        "Name of pressure field"
+        "impulse",
+        "Name of impulse file"
     );
     argList::addOption
     (
         "pRef",
         "Reference pressure [Pa]"
     );
+    argList::addBoolOption
+    (
+        "force",
+        "overwrite exisiting impulse file"
+    );
 
     #include "setRootCase.H"
 
-    word name(args.optionLookupOrDefault("name", word("p")));
-    word probeName(args.option("probeDir"));
-    IStringStream pRefStream(IStringStream(args.option("pRef")));
-    scalar pRef(readScalar(pRefStream));
-    fileName probeDir
+    fileName probeDirName(args.argRead<fileName>(1));
+    fileName probeDir("postProcessing"/probeDirName);
+
+    // Default pressure name
+    fileName pName;
+    if (args.optionFound("p"))
+    {
+        pName = args.optionRead<fileName>("p");
+        fileName newProbeDir = findProbeDir(probeDir, pName);
+
+        if (newProbeDir.empty())
+        {
+            // Read all available probed fields
+            fileNameList probeFields(collectFiles(probeDir));
+
+            FatalErrorInFunction
+                << pName << " was not found in " << probeDir << nl
+                << "valid probe fields are:" << nl
+                << probeFields << endl
+                << abort(FatalError);
+        }
+        probeDir = newProbeDir;
+    }
+    else
+    {
+        fileName newProbeDir = findProbeDir(probeDir, "overpressure");
+        if (!newProbeDir.empty())
+        {
+            pName = "overpressure";
+            probeDir = newProbeDir;
+        }
+        else
+        {
+            newProbeDir = findProbeDir(probeDir, "p");
+            if (!newProbeDir.empty())
+            {
+                pName = "p";
+                probeDir = newProbeDir;
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "Could not detemine a pressure field to calulate impulse with." << nl
+                    << "please specify a field using \'-p pName\'" << endl
+                    << abort(FatalError);
+            }
+        }
+    }
+    Info<< "Using " << string(pName) << " in " << probeDir << endl;
+
+    fileName impulseName
     (
-        args.rootPath()/args.caseName()/fileName(word("postProcessing"))/probeName
+        args.optionLookupOrDefault
+        (
+            "impulse",
+            IOobject::groupName("impulse", IOobject::group(pName))
+        )
     );
 
-    fileName pFile(probeDir);
-    if (!isFile(probeDir/name))
+    // Check if the file exists
+    if (isFile(probeDir/impulseName))
     {
-        if (isDir(probeDir/"0"))
+        // Overwrite
+        if (args.optionFound("force"))
         {
-            probeDir = probeDir/"0";
+            Info<< "Overwriting " << (probeDir/impulseName) << endl;
+        }
+
+        // Return since not overwriting
+        else
+        {
+            WarningInFunction
+                << (probeDir/impulseName) << " already exisits." << nl
+                << "    Use \'-force\' to overwrite" << nl << endl;
+
+            return 0;
         }
     }
-
-    pFile = probeDir/name;
-    if (!isFile(pFile))
+    else
     {
-        FatalErrorInFunction
-            << name << " Was not found in " << probeDir << "."
-            << abort(FatalError);
+        Info<< "Writing " << impulseName << " to " << probeDir << endl;
     }
-    Info<<pFile<<endl;
 
-    bool header = true;
-    scalar t = 0;
-    scalar tOld = 0;
-    scalarField p;
-    scalarField pOld;
+    // Open ofstream
+    OFstream impulseStream(probeDir/impulseName);
 
-    scalarField impulse;
-    OFstream impulseStream(probeDir/"impulse");
+    // Read the pressure probes and check if it exists
+    IFstream pstream(probeDir/pName);
+    if (!pstream.good())
+    {
+        FatalIOErrorInFunction(pstream)
+            << "Could not find " << probeDir/pName << endl
+            << abort(FatalIOError);
+    }
 
-    // Get number of probes
+
+    string line;
+
+    // Read the header and determine the number of probes
     label nProbes = 0;
+    pstream.getLine(line);
+    while (line[0] == '#')
     {
-        IFstream pstream(pFile);
-        while (pstream.good())
-        {
-            string line;
-            pstream.getLine(line);
-
-            if (line[0] == '#')
-            {
-                if (header)
-                {
-                    impulseStream << word(line) << nl;
-                }
-                continue;
-            }
-            if (header)
-            {
-                IStringStream is(line);
-                while (is.good())
-                {
-                    readScalar(is);
-                    nProbes++;
-                }
-                pstream.rewind();
-                nProbes--;
-                header = false;
-                p.resize(nProbes);
-                p = pRef;
-                pOld.resize(nProbes);
-                impulse.resize(nProbes);
-                impulse = 0;
-            }
-
-            IStringStream is(line);
-            tOld = t;
-            is >> t;
-            scalar dt = t - tOld;
-
-            pOld = p;
-            label i = 0;
-            while (is.good())
-            {
-                is >> p[i];
-                i++;
-            }
-            impulse += (0.5*(p + pOld) - pRef)*dt;
-            impulseStream << t << " ";
-            for (label i = 0; i  < nProbes; i++)
-            {
-                impulseStream<< impulse[i] << " ";
-            }
-            impulseStream << endl;
-        }
+        nProbes++;
+        impulseStream << word(line) << nl;
+        pstream.getLine(line);
     }
 
-    Info<< nl << "Done." << endl;
+    // Last commented line is
+    // # time p0 p1 p2 ...
+    nProbes--;
+
+    // Read the first line
+    IStringStream is(line);
+
+    // Read the time
+    scalar t(readScalar(is));
+
+    // Read the pressures
+    scalarField p(nProbes);
+    forAll(p, i)
+    {
+        is >> p[i];
+    }
+
+    // Old values
+    scalar tOld(t);
+    scalarField pOld(p);
+    scalarField impulse(nProbes, 0.0);
+
+    // Set reference pressure
+    scalar pRef;
+    if (args.optionFound("pRef"))
+    {
+        pRef = args.optionRead<scalar>("pRef");
+    }
+    else
+    {
+        scalar pAvg = 0;
+        forAll(pOld, i)
+        {
+            pAvg += pOld[i];
+        }
+        pRef = pAvg/scalar(pOld.size());
+    }
+    Info<< "Using reference pressure of " << pRef << " Pa" << endl;
+
+    // Initial time
+    scalar t0 = t;
+
+    while (pstream.good())
+    {
+        pstream.getLine(line);
+        IStringStream is(line);
+
+        // Save old time and pressure
+        tOld = t;
+        pOld = p;
+
+        // Read next time
+        is >> t;
+
+        // Skip dts less than small
+        if (mag(t - tOld) < small)
+        {
+            continue;
+        }
+        scalar dt = t - tOld;
+
+        // Read pressures
+        forAll(p, i)
+        {
+            is >> p[i];
+        }
+
+        // Update impulse with average pressure
+        impulse += (0.5*(p + pOld) - pRef)*dt;
+
+        // Write to the output
+        impulseStream << t << " ";
+        forAll(p, i)
+        {
+            impulseStream<< impulse[i] << " ";
+        }
+        impulseStream << endl;
+    }
+
+    Info<< nl << "Integrated from "
+        << t0 << " s to " << t << " s" << nl
+        << nl << "Done." << endl;
 }

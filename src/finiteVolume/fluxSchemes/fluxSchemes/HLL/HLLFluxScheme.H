@@ -144,6 +144,12 @@ public:
 
         //- Allocate saved fields
         virtual void createSavedFields();
+
+        //- Return Anti-diffustion coefficient for a given volume fraction
+        virtual tmp<surfaceScalarField> AD
+        (
+            const volScalarField& alpha
+        ) const;
 };
 
 

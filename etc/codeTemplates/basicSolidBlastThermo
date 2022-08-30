@@ -19,6 +19,8 @@ transport
     constAnIso
     polynomial
     exponential
+    tabulatedIso
+    tabulatedAnIso
 );
 
 thermo
@@ -27,10 +29,10 @@ thermo
     hConst
     ePower
     ePolynomial
-    eTabulated
+    eIcoTabulated
     hPower
     hPolynomial
-    hTabulated
+    hIcoTabulated
 );
 
 equationOfState

@@ -103,8 +103,8 @@ void Foam::diameterModels::reactingDiameterModel::solve
     );
     this->storeAndBlendOld(VOld);
 
-    volScalarField dOld(this->d_);
-    this->storeAndBlendOld(dOld);
+    const volScalarField dOld(this->d_);
+    this->storeAndBlendOld(this->d_);
 
     volScalarField dDdt(-2.0*rate_->k(pi, T));
     this->blendDelta(dDdt);
@@ -112,7 +112,7 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const dimensionedScalar& dT(this->d_.time().deltaT());
 
     //- Change dRdt to dDdt
-    this->d_ = dOld + dT*dDdt;
+    this->d_ += dT*dDdt;
     this->d_.max(1e-10);
 
     dVdt_ = (this->V() - VOld)/dT;

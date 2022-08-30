@@ -121,6 +121,18 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::pRhoT
 
 
 template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BirchMurnaghan3<Specie>::Gamma
 (
     const scalar rho,
@@ -289,10 +301,11 @@ template<class Specie>
 Foam::scalar Foam::BirchMurnaghan3<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
+
+    NotImplemented;
     return 0;
 }
 

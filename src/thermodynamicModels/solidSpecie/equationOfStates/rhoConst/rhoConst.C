@@ -39,7 +39,7 @@ Foam::rhoConst<Specie>::rhoConst
 :
     Specie(dict),
     rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
-    pRef_(dict.subDict("equationOfState").lookupOrDefault("pRef", Pstd))
+    pRef_(dict.subDict("equationOfState").lookupOrDefault("pRef", 0.0))
 {}
 
 // ************************************************************************* //

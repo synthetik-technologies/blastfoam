@@ -64,8 +64,7 @@ water
     equationOfState
     {
         gamma           7.0;
-//         a               0;
-        a               3.0e8;
+        a               3e8;
     }
     specie
     {

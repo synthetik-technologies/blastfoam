@@ -37,7 +37,7 @@ SourceFiles
 #define RanzMarshall_H
 
 #include "heatTransferModel.H"
-#include "NusseltNumberModel.H"
+#include "NuHeatTransfer.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,13 +55,8 @@ namespace heatTransferModels
 
 class RanzMarshall
 :
-    public heatTransferModel
+    public NuHeatTransfer
 {
-// Private data
-
-    //- Nusselt number model
-    autoPtr<NusseltNumberModel> NuModel_;
-
 
 public:
 
@@ -91,12 +86,6 @@ public:
             const label nodei = -1,
             const label nodej = -1
         ) const;
-
-        //- Function to return Nusselt number model
-        const NusseltNumberModel& NusseltNo() const
-        {
-            return NuModel_(); //parantheses to return data in the autoPtr
-        };
 };
 
 

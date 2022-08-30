@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -31,16 +31,32 @@ License
 template<class Type>
 Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 {
-    word integratorTypeName
+    return New
     (
-        dict.lookupOrDefault("integrator", Simpson13Integrator<Type>::typeName)
+        dict.lookupOrDefault<word>
+        (
+            "integrator",
+            Simpson13Integrator<Type>::typeName
+        ),
+        eqn,
+        dict
     );
-    Info<< "Selecting integrator " << integratorTypeName << endl;
+}
 
+
+template<class Type>
+Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+(
+    const word& integratorTypeName,
+    const equationType& eqn,
+    const dictionary& dict
+)
+{
+    Info<< "Selecting integrator: " << integratorTypeName << endl;
     typename dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(integratorTypeName);
 
@@ -61,24 +77,24 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 template<class Type>
 Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 (
-    const Equation<Type>& eqn,
-    const word& integratorTypeName
+    const equationType& eqn,
+    const integrator& inter
 )
 {
-    typename dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(integratorTypeName);
+    typename inputsConstructorTable::iterator cstrIter =
+        inputsConstructorTablePtr_->find(inter.type());
 
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    if (cstrIter == inputsConstructorTablePtr_->end())
     {
         FatalErrorInFunction
             << "Unknown integrator type "
-            << integratorTypeName << nl << nl
+            << inter.type() << nl << nl
             << "Valid integrators are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
+            << inputsConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<Integrator<Type>>(cstrIter()(eqn, dictionary()));
+    return autoPtr<Integrator<Type>>(cstrIter()(eqn, inter));
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -86,17 +102,24 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 template<class Type>
 Foam::Integrator<Type>::Integrator
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 :
-    eqnPtr_(&eqn),
-    nSteps_(dict.lookupOrDefault<label>("nSteps", 10)),
-    nIntervals_(nSteps_)
+    integrator(dict),
+    eqnPtr_(&eqn)
 {}
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
+template<class Type>
+Foam::Integrator<Type>::Integrator
+(
+    const equationType& eqn,
+    const integrator& inter
+)
+:
+    integrator(inter),
+    eqnPtr_(&eqn)
+{}
 
 // ************************************************************************* //

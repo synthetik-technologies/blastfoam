@@ -32,7 +32,7 @@ Description
 
 SourceFiles
     phaseModel.C
-    newPhaseModel.C
+    phaseModelNew.C
     phaseModels.C
 
 \*---------------------------------------------------------------------------*/
@@ -181,18 +181,6 @@ protected:
         //- Solution vector
         vector solutionDs_;
 
-        //- fvModels
-        UautoPtr<const fvModels> modelsPtr_;
-
-        //- fvConstraints
-        UautoPtr<const fvConstraints> constraintsPtr_;
-
-        //- List of fields that have models or constraints
-        hashedWordList solveFields_;
-
-        //- Does postUpdate need to be calles
-        bool needPostUpdate_;
-
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;
 
@@ -278,9 +266,6 @@ public:
     //- Initialize models
     virtual void initializeModels();
 
-    //- Set fvModels and fvConstraints
-    void setFvModelsConstraints();
-
 
     //- Destructor
     virtual ~phaseModel();
@@ -359,6 +344,24 @@ public:
 
         //- Access the flux scheme
         virtual phaseFluxScheme& flux() = 0;
+
+        //- Turbulence model
+        const phaseCompressible::momentumTransportModel& turbulence() const
+        {
+            return turbulence_();
+        }
+
+        //- Thermophysical transport model
+        const
+            PhaseThermophysicalTransportModel
+            <
+                phaseCompressible::momentumTransportModel,
+                transportThermoModel
+            >&
+        thermophysicalTransport() const
+        {
+            return thermophysicalTransport_();
+        }
 
         //- Return the residual phase-fraction for given phase
         virtual dimensionedScalar residualAlpha() const

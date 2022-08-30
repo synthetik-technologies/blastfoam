@@ -38,28 +38,29 @@ forAll(fluidRegions, i)
     timeIntegrators[i].addSystem(fluids[i]);
     fluids[i].update();
 
-    //- Store viscous stresses to pass to other regions
-    devRhoReffs.set
-    (
-        i,
-        new volSymmTensorField
-        (
-            IOobject
-            (
-                "devRhoReff",
-                runTime.timeName(),
-                fluidRegions[i],
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            fluidRegions[i],
-            dimensionedSymmTensor
-            (
-                "Zero",
-                dimensionSet(1,1,-2,0,0,0,0),
-                Zero
-            )
-        )
-    );
+//     //- Store viscous stresses to pass to other regions
+//     devRhoReffs.set
+//     (
+//         i,
+//         new volSymmTensorField
+//         (
+//             IOobject
+//             (
+//                 "devRhoReff",
+//                 runTime.timeName(),
+//                 fluidRegions[i],
+//                 IOobject::NO_READ,
+//                 IOobject::NO_WRITE
+//             ),
+//             fluidRegions[i],
+//             dimensionedSymmTensor
+//             (
+//                 "Zero",
+//                 dimensionSet(1,1,-2,0,0,0,0),
+//                 Zero
+//             ),
+//             "zeroGradient"
+//         )
+//     );
 
 }

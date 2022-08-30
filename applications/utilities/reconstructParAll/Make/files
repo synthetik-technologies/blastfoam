@@ -1,0 +1,3 @@
+reconstructParAll.C
+
+EXE = $(BLAST_APPBIN)/reconstructParAll

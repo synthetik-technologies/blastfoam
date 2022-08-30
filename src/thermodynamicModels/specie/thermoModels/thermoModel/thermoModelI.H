@@ -167,6 +167,18 @@ inline Foam::thermoModel<ThermoType>::thermoModel
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class ThermoType>
+Foam::scalar Foam::thermoModel<ThermoType>::pRhoT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return ThermoType::p(rho, e, T, true);
+}
+
+
+template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::Gamma
 (
     const scalar rho,
@@ -207,6 +219,22 @@ Foam::scalar Foam::thermoModel<ThermoType>::dpde
 
 
 template<class ThermoType>
+Foam::scalar Foam::thermoModel<ThermoType>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (ThermoType::temperatureBased())
+    {
+        return ThermoType::dpdT(rho, e, T);
+    }
+    return ThermoType::dpde(rho, e, T)*ThermoType::Cv(rho, e, T);
+}
+
+
+template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::cSqr
 (
     const scalar p,
@@ -235,12 +263,11 @@ template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::G
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    scalar e = this->Es(rho, 1000.0, T);
-    return this->Ha(rho, e, T) - T*this->S(p, rho, e, T);
+    const scalar rho(this->rho(p, T));
+    return this->Ha(rho, T, T) - T*this->S(p, T);
 }
 
 
@@ -248,12 +275,11 @@ template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::A
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    scalar e = this->Es(rho, 1000.0, T);
-    return this->Ea(rho, e, T) - T*this->S(p, rho, e, T);
+    const scalar rho(this->rho(p, T));
+    return this->Ea(rho, T, T) - T*this->S(p, T);
 }
 
 
@@ -262,11 +288,10 @@ inline Foam::scalar
 Foam::thermoModel<ThermoType>::K
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    scalar arg = -this->Y()*this->G(Pstd, rho, T)/(RR*T);
+    scalar arg = -this->Y()*this->G(Pstd, T)/(RR*T);
 
     if (arg < 600)
     {
@@ -284,11 +309,10 @@ inline Foam::scalar
 Foam::thermoModel<ThermoType>::Kp
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    return K(p, rho, T);
+    return K(p, T);
 }
 
 
@@ -297,7 +321,6 @@ inline Foam::scalar
 Foam::thermoModel<ThermoType>::Kc
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
@@ -305,11 +328,11 @@ Foam::thermoModel<ThermoType>::Kc
 
     if (equal(nm, small))
     {
-        return Kp(p, rho, T);
+        return Kp(p, T);
     }
     else
     {
-        return Kp(p, rho, T)*pow(Pstd/(RR*T), nm);
+        return Kp(p, T)*pow(Pstd/(RR*T), nm);
     }
 }
 
@@ -318,7 +341,6 @@ template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::Kx
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
@@ -326,11 +348,11 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::Kx
 
     if (equal(nm, small))
     {
-        return Kp(p, rho, T);
+        return Kp(p, T);
     }
     else
     {
-        return Kp(p, rho, T)*pow(Pstd/p, nm);
+        return Kp(p, T)*pow(Pstd/p, nm);
     }
 }
 
@@ -339,7 +361,6 @@ template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::Kn
 (
     const scalar p,
-    const scalar rho,
     const scalar T,
     const scalar n
 ) const
@@ -352,7 +373,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::Kn
     }
     else
     {
-        return Kp(p, rho, T)*pow(n*Pstd/p, nm);
+        return Kp(p, T)*pow(n*Pstd/p, nm);
     }
 }
 
@@ -404,12 +425,10 @@ template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::s
 (
     const scalar p,
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return this->S(p, rho, e, T)*this->W();
+    return this->S(p, T)*this->W();
 }
 
 
@@ -465,11 +484,10 @@ template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::g
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    return this->G(p, rho, T)*this->W();
+    return this->G(p, T)*this->W();
 }
 
 
@@ -477,11 +495,10 @@ template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::a
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    return this->A(p, rho, T)*this->W();
+    return this->A(p, T)*this->W();
 }
 
 
@@ -493,23 +510,26 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::dKcdTbyKc
     const scalar T
 ) const
 {
-    const scalar nm = this->Y()/this->W();
+    const scalar dKcdTbyKc =
+        (this->S(Pstd, T) + this->Gstd(T)/T)*this->Y()/(RR*T);
 
+    const scalar nm = this->Y()/this->W();
     if (equal(nm, small))
     {
-        return -this->dGdT(Pstd, T)*this->Y()/RR;
+        return dKcdTbyKc;
     }
     else
     {
-        return -(nm/T + this->dGdT(Pstd, T)*this->Y()/RR);
+        return dKcdTbyKc - nm/T;
     }
 }
 
+
 template<class ThermoType>
 inline Foam::scalar
-Foam::thermoModel<ThermoType>::dcpdT(const scalar p, const scalar T) const
+Foam::thermoModel<ThermoType>::dcpdT(const scalar rho, const scalar e, const scalar T) const
 {
-    return this->dCpdT(p, T)*this->W();
+    return this->dCpdT(rho, e, T)*this->W();
 }
 
 
@@ -531,32 +551,40 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
     if (ThermoType::temperatureBased())
     {
-        return Eest;
+        if (mag(ThermoType::dpdT(rho, e, T)) < small)
+        {
+            return Eest;
+        }
     }
-
-    if (mag(ThermoType::dpde(rho, e, T)) < small)
+    else
     {
-        return Eest;
+        if (mag(ThermoType::dpde(rho, e, T)) < small)
+        {
+            return Eest;
+        }
     }
 
     scalar Enew = Eest;
     scalar pNew;
+    scalar Test = T;
     int    iter = 0;
     do
     {
         Eest = Enew;
-        pNew = ThermoType::p(rho, Eest, T, false); // Do not limit p
-        Enew -=
-            (pNew - p)/stabilise(ThermoType::dpde(rho, Eest, T), small);
-
-        if (iter++ > 100)
+        pNew = ThermoType::p(rho, Eest, Test, false); // Do not limit p
+        Enew -= (pNew - p)/stabilise(dpde(rho, Eest, T), small);
+        if (ThermoType::temperatureBased())
+        {
+            Test = TRhoE(Test, rho, Enew);
+        }
+        if (iter++ > maxIter_)
         {
             FatalErrorInFunction
-                << "Maximum number of iterations exceeded: " << 100
+                << "Maximum number of iterations exceeded: " << maxIter_
                 << abort(FatalError);
         }
 
-    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
+    } while (mag((pNew - p)/p) > relTol_);
     return Enew;
 }
 
@@ -564,6 +592,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 template<class ThermoType>
 inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
 (
+    const scalar rho,
     const scalar p,
     const scalar T
 ) const
@@ -571,7 +600,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
     //- Simple method to calculate initial density
     //  Should be modified to solve the 2D problem for
     //  density and internal energy
-    scalar Rhoest = 1.0;
+    scalar Rhoest = rho;
     scalar Rhonew = Rhoest;
     scalar pNew = p;
     scalar E = T; //- Initial guess
@@ -583,6 +612,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
     {
         E *= ThermoType::Cv(Rhoest, 0.0, T);
     }
+    E = ThermoType::Es(Rhoest, E, T);
 
     int    iter = 0;
     do

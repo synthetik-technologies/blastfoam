@@ -20,7 +20,7 @@ fluxScheme          Kurganov;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP 3;
+    timeIntegrator  RK2SSP;
 }
 
 gradSchemes
@@ -39,7 +39,7 @@ laplacianSchemes
 {
     default         Gauss linear corrected;
 
-    laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
+    laplacian(diffusivity,cellMotionU) Gauss linear uncorrected;
 }
 
 interpolationSchemes

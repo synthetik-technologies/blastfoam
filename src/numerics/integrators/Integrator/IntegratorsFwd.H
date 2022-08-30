@@ -26,7 +26,9 @@ License
 #ifndef IntegratorsFwd_H
 #define IntegratorsFwd_H
 
+#include "adaptiveTypesFwd.H"
 #include "Integrator.H"
+#include "EquationsFwd.H"
 #include "vector.H"
 #include "symmTensor.H"
 #include "sphericalTensor.H"
@@ -36,11 +38,17 @@ License
 
 namespace Foam
 {
-    typedef Integrator<scalar> scalarIntegrator;
-    typedef Integrator<vector> vectorIntegrator;
-    typedef Integrator<symmTensor> symmTensorIntegrator;
-    typedef Integrator<sphericalTensor> sphericalTensorIntegrator;
-    typedef Integrator<tensor> tensorIntegrator;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+typedef Integrator<scalar> scalarIntegrator;
+typedef Integrator<vector> vectorIntegrator;
+typedef Integrator<symmTensor> symmTensorIntegrator;
+typedef Integrator<sphericalTensor> sphericalTensorIntegrator;
+typedef Integrator<tensor> tensorIntegrator;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

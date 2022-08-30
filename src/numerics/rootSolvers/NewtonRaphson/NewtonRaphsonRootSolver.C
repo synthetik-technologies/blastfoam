@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "NewtonRaphsonRootSolver.H"
+#include "SVD.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -37,12 +38,6 @@ namespace Foam
         NewtonRaphsonRootSolver,
         dictionaryOne
     );
-    addToRunTimeSelectionTable
-    (
-        rootSolver,
-        NewtonRaphsonRootSolver,
-        dictionaryTwo
-    );
 }
 
 
@@ -50,41 +45,65 @@ namespace Foam
 
 Foam::NewtonRaphsonRootSolver::NewtonRaphsonRootSolver
 (
-    const scalarEquation& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :
-    rootSolver(eqn, dict)
+    rootSolver(eqn, dict),
+    beta_(dict.lookupOrDefault<scalar>("beta", 1.0))
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::NewtonRaphsonRootSolver::~NewtonRaphsonRootSolver()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::NewtonRaphsonRootSolver::findRoot
+Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonRootSolver::findRoots
 (
-    const scalar x0,
-    const scalar x1,
-    const scalar x2,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {
-    scalar xOld = x0;
-    scalar xNew = x0;
+    initialise(x0);
+    scalarField xOld(x0);
+    tmp<scalarField> xNewTmp(new scalarField(x0));
+    scalarField& xNew = xNewTmp.ref();
+    scalarField f(xNew.size());
+    RectangularMatrix<scalar> J(xNew.size());
+    eqns_.jacobian(xOld, li, f, J);
+
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xNew = xOld - eqn_.f(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
-        eqn_.limit(xNew);
-        if (converged(xNew - xOld))
+        scalarField delta(-(SVDinv(J)*f));
+
+        if (converged(delta, f))
         {
-            return xNew;
+            break;
         }
 
+        // Relax delta
+        if (beta_ != 1.0)
+        {
+            delta *= 1.0/(1.0 + beta_*sum(magSqr(delta)));
+        }
+
+        xNew = xOld + delta;
+        eqns_.limit(xNew);
+
         xOld = xNew;
+        eqns_.jacobian(xOld, li, f, J);
 
+        printStepInformation(xNew);
     }
-    printNoConvergence();
+    printFinalInformation(xNew);
 
-    return xNew;
+    return xNewTmp;
 }
 
 // ************************************************************************* //

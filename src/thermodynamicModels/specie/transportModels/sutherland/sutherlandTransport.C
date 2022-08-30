@@ -68,7 +68,7 @@ Foam::sutherlandTransport<Thermo>::sutherlandTransport
 template<class Thermo>
 void Foam::sutherlandTransport<Thermo>::write(Ostream& os) const
 {
-    os  << this->specieName() << endl
+    os  << this->name() << endl
         << token::BEGIN_BLOCK  << incrIndent << nl;
 
     Thermo::write(os);

@@ -42,7 +42,7 @@ SourceFiles
 
 #include "timeIntegrationSystem.H"
 #include "PtrListDictionary.H"
-#include "basicSpecieMixture.H"
+#include "basicSpecieBlastMixture.H"
 #include "fvScalarMatrix.H"
 #include "speciesTable.H"
 #include "fvModels.H"
@@ -57,12 +57,11 @@ namespace Foam
 
 class multicomponentBlastThermo
 :
-    public basicSpecieMixture
+    public basicSpecieBlastMixture
 {
 //- Private data
 
-    //- Name of the phase
-    word phaseName_;
+    const fvMesh& mesh_;
 
     //- Name of master thermo class
     word masterName_;
@@ -77,10 +76,10 @@ protected:
     //- Sources to solve implicitly
     PtrListDictionary<fvScalarMatrix> implicitSources_;
 
-    //- Name of flux
+    //- Mass flux
     UautoPtr<const surfaceScalarField> alphaRhoPhiPtr_;
 
-    //- Name of mass
+    //- Mass
     UautoPtr<const volScalarField> alphaRhoPtr_;
 
     class integrator
@@ -95,8 +94,6 @@ protected:
         const List<bool>& active_;
         const volScalarField& alphaRho_;
         const surfaceScalarField& alphaRhoPhi_;
-        const fvModels& models_;
-        const fvConstraints& constraints_;
 
     public:
         integrator
@@ -118,6 +115,21 @@ protected:
     };
 
     autoPtr<integrator> integratorPtr_;
+
+    // Return the mass field
+    const volScalarField& alphaRho() const
+    {
+        return alphaRhoPtr_();
+    }
+
+    //- Return the mass flux
+    const surfaceScalarField& alphaRhoPhi() const
+    {
+        return alphaRhoPhiPtr_();
+    }
+
+    //- Correct mass fractions
+    void correct();
 
 
 
@@ -147,15 +159,18 @@ public:
     virtual ~multicomponentBlastThermo();
 
 
-    virtual const word& phaseName() const
+    const fvMesh& mesh() const
     {
-        return phaseName_;
+        return mesh_;
     }
 
     //- ODE functions
 
         //- Initialize models
         virtual void initializeModels();
+
+        //- Update the mixtures
+        virtual void updateMixture() = 0;
 
         //- Pre update step
         virtual void update();
@@ -172,163 +187,65 @@ public:
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
+        virtual void addDelta(const word& name, const volScalarField::Internal& delta);
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
         virtual void addSource(const word& name, tmp<fvScalarMatrix>& source);
 
 
-    // Access
+     // Access
 
-        // Specie properties
+        //- Return the composition of the multi-component mixture
+        virtual basicSpecieBlastMixture& composition() = 0;
 
-            //- Molecular weight of the given specie [kg/kmol]
-            virtual scalar Wi(const label speciei) const = 0;
+        //- Return the composition of the multi-component mixture
+        virtual const basicSpecieBlastMixture& composition() const = 0;
 
-            //- Enthalpy of formation [J/kg]
-            virtual scalar Hf(const label speciei) const = 0;
+        //- Flame temperature [K]
+        virtual scalar flameT(const label speciei) const = 0;
 
-            //- Flame temperature [K]
-            virtual scalar flameT(const label speciei) const = 0;
+        //- Return the pressure of a cell
+        virtual scalar cellp(const label celli) const = 0;
 
+        //- Pressure [kg/m/s^2]
+        virtual scalar p
+        (
+            const label speciei,
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
 
-        // Specie thermo properties
+        //- Density [kg/m^3]
+        virtual tmp<volScalarField> p
+        (
+            const label speciei,
+            const volScalarField& rho,
+            const volScalarField& e,
+            const volScalarField& T
+        ) const = 0;
 
-            //- Density [kg/m^3]
-            virtual scalar rho
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const = 0;
+        //- Return derivative of pressure w.r.t. density
+        virtual scalar dpdRho
+        (
+            const label speciei,
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
 
-            //- Density [kg/m^3]
-            virtual tmp<volScalarField> rho
-            (
-                const label speciei,
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
+        //- Return derivative of pressure w.r.t. Temperature
+        virtual scalar dpdT
+        (
+            const label speciei,
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
 
-            //- Heat capacity at constant pressure [J/kg/K]
-            virtual scalar Cp
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const = 0;
-
-            //- Heat capacity at constant pressure [J/kg/K]
-            virtual tmp<volScalarField> Cp
-            (
-                const label speciei,
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
-
-            //- Enthalpy/Internal energy [J/kg]
-            virtual scalar HE
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const = 0;
-
-            //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<scalarField> HE
-            (
-                const label speciei,
-                const scalarField& p,
-                const scalarField& T
-            ) const = 0;
-
-            //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<volScalarField> HE
-            (
-                const label speciei,
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
-
-            //- Sensible enthalpy [J/kg]
-            virtual scalar Hs
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const = 0;
-
-            //- Sensible enthalpy [J/kg]
-            virtual tmp<scalarField> Hs
-            (
-                const label speciei,
-                const scalarField& p,
-                const scalarField& T
-            ) const = 0;
-
-            //- Sensible enthalpy [J/kg]
-            virtual tmp<volScalarField> Hs
-            (
-                const label speciei,
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
-
-            //- Absolute enthalpy [J/kg]
-            virtual scalar Ha
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const = 0;
-
-            //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<scalarField> Ha
-            (
-                const label speciei,
-                const scalarField& p,
-                const scalarField& T
-            ) const = 0;
-
-            //- Absolute enthalpy [J/kg]
-            virtual tmp<volScalarField> Ha
-            (
-                const label speciei,
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
-
-
-        // Specie transport properties
-
-            //- Dynamic viscosity [kg/m/s]
-            virtual scalar mu
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const = 0;
-
-            //- Dynamic viscosity [kg/m/s]
-            virtual tmp<volScalarField> mu
-            (
-                const label speciei,
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
-
-            //- Thermal conductivity [W/m/K]
-            virtual scalar kappa
-            (
-                const label speciei,
-                const scalar p,
-                const scalar T
-            ) const = 0;
-
-            //- Thermal conductivity [W/m/K]
-            virtual tmp<volScalarField> kappa
-            (
-                const label speciei,
-                const volScalarField& p,
-                const volScalarField& T
-            ) const = 0;
+        //- Return the name of the thermo physics
+        virtual word thermoName() const = 0;
 };
 
 

@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -44,24 +44,21 @@ namespace atmosphereModels
 Foam::atmosphereModels::table::table
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const label zoneID
 )
 :
-    atmosphereModel(mesh, dict),
-    pTable_
+    atmosphereModel(mesh, dict, zoneID),
+    pTable_(dict_.subDict("pTable"), "h", "p"),
+    TTable_(dict_.subDict("TTable"), "h", "T"),
+    correct_(dict_.lookupOrDefault("correct", false))
+{
+    const_cast<dictionary&>(dict_).set
     (
-        dict_.subDict("pTable").lookup<fileName>("file"),
-        dict_.subDict("pTable").lookupOrDefault<word>("pMod", "none"),
-        dict_.subDict("pTable").lookupOrDefault<word>("hMod", "none")
-    ),
-    TTable_
-    (
-        dict_.subDict("TTable").lookup<fileName>("file"),
-        dict_.subDict("TTable").lookupOrDefault<word>("TMod", "none"),
-        dict_.subDict("TTable").lookupOrDefault<word>("hMod", "none")
-    ),
-    W_(dict_.lookupOrDefault("W", 28.97))
-{}
+        "pRef",
+        pTable_.lookup(gMin(h_))
+    );
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -77,19 +74,60 @@ void Foam::atmosphereModels::table::createAtmosphere
     fluidBlastThermo& thermo
 ) const
 {
-    forAll(thermo.p(), celli)
+    volScalarField& p = thermo.p();
+    volScalarField& T = thermo.T();
+
+    // Optional setting of only some cells
+    labelList cells
+    (
+        zoneID_ >= 0
+      ? labelList(mesh_.cellZones()[zoneID_])
+      : identity(mesh_.nCells())
+    );
+
+    // Create a hash set for easier searching of selected cells
+    labelHashSet cSet(cells);
+
+    // Set the internal values
+    forAll(cells, i)
     {
-        thermo.p()[celli] = pTable_.lookup(h_[celli]);
-        thermo.T()[celli] = TTable_.lookup(h_[celli]);
+        p[cells[i]] = pTable_.lookup(h_[cells[i]]);
+        T[cells[i]] = TTable_.lookup(h_[cells[i]]);
     }
 
-    thermo.calce(thermo.p());
-    thermo.updateRho();
-    hydrostaticInitialisation
-    (
-        thermo,
-        dimensionedScalar(dimPressure, pTable_.lookup(gMin(h_)))
-    );
+    // The the boundary values that have their owner face included in the set
+    volScalarField::Boundary& bp = p.boundaryFieldRef();
+    volScalarField::Boundary& bT = T.boundaryFieldRef();
+    forAll(bp, patchi)
+    {
+        const labelList& fCells = bp[patchi].patch().faceCells();
+        forAll(fCells, facei)
+        {
+            if (cSet.found(fCells[facei]))
+            {
+                bp[patchi][facei] =
+                    pTable_.lookup(h_.boundaryField()[patchi][facei]);
+                bT[patchi][facei] =
+                    TTable_.lookup(h_.boundaryField()[patchi][facei]);
+            }
+        }
+    }
+
+    // Correct boundary conditions
+    p.correctBoundaryConditions();
+    T.correctBoundaryConditions();
+
+    // Correct density
+    thermo.updateRho(p);
+
+    // Correct of thermodynamic variables
+    thermo.correct();
+
+    // Equalibriate the pressure field
+    if (correct_)
+    {
+        hydrostaticInitialisation(thermo);
+    }
 }
 
 // ************************************************************************* //

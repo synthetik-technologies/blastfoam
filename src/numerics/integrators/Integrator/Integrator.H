@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,7 +25,7 @@ Class
     Foam::Integrator
 
 Description
-    Abstract base-class for a integrator
+    Generic class for integrating a given univariate equation.
 
 SourceFiles
     Integrator.C
@@ -35,6 +35,7 @@ SourceFiles
 #ifndef Integrator_H
 #define Integrator_H
 
+#include "integrator.H"
 #include "Equation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -51,20 +52,40 @@ namespace Foam
 
 template<class Type>
 class Integrator
+:
+    public integrator
 {
-
 protected:
 
     // Protected data
 
+        typedef Equation<Type> equationType;
+
         //- Reference to Equation
-        UautoPtr<const Equation<Type>> eqnPtr_;
+        UautoPtr<const equationType> eqnPtr_;
 
-        //- Number of steps to integrate with
-        label nSteps_;
+        // Return the error give two values and spacing
+        bool converged
+        (
+            const Type& t1,
+            const Type& t2,
+            const scalar dx,
+            const scalar tol
+        ) const
+        {
+            if (mag(dx) < minDx_)
+            {
+                return true;
+            }
+            else if (!adaptive())
+            {
+                return false;
+            }
+            return
+                adaptiveError::error<Type>(t1, t2)
+              < max(adaptiveError::mag<Type>(t1), absTolerance_)*tol;
+        }
 
-        //- Number of intervals
-        label nIntervals_;
 
 public:
 
@@ -78,15 +99,33 @@ public:
             autoPtr,
             Integrator,
             dictionary,
-            (const Equation<Type>& eqn, const dictionary& dict),
+            (const equationType& eqn, const dictionary& dict),
             (eqn, dict)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            Integrator,
+            inputs,
+            (
+                const equationType& eqn,
+                const integrator& inter
+            ),
+            (eqn, inter)
         );
 
 
     // Constructors
 
         //- Construct for given Integrator
-        Integrator(const Equation<Type>& eqn, const dictionary& dict);
+        Integrator(const equationType& eqn, const dictionary& dict);
+
+        //- Copy constructor with a new equation
+        Integrator
+        (
+            const equationType& eqn,
+            const integrator& inter
+        );
 
         //- Disallow default bitwise copy construction
         Integrator(const Integrator<Type>&) = delete;
@@ -94,18 +133,26 @@ public:
 
     // Selectors
 
-        //- Select null constructed
+        //- Construct from dictionary
         static autoPtr<Integrator<Type>> New
         (
-            const Equation<Type>& eqn,
+            const equationType& eqn,
+            const dictionary& dict
+        );
+
+        //- Construct from dictionary with a given type
+        static autoPtr<Integrator<Type>> New
+        (
+            const word& integratorTypeName,
+            const equationType& eqn,
             const dictionary& dict
         );
 
         //- Select null constructed
         static autoPtr<Integrator<Type>> New
         (
-            const Equation<Type>& eqn,
-            const word& intType
+            const equationType& eqn,
+            const integrator& inter
         );
 
 
@@ -116,27 +163,14 @@ public:
 
     // Member Functions
 
-        //- Return the number of steps
-        label nSteps() const
+        //- Return if the integration is adaptive
+        inline bool adaptive() const
         {
-            return nSteps_;
-        }
-
-        //- Return the number of intervals
-        label nIntervals() const
-        {
-            return nIntervals_;
-        }
-
-        //- Access the number of steps
-        virtual void setNIntervals(const label nIntervals)
-        {
-            nSteps_ = nIntervals;
-            nIntervals_ = nIntervals;
+            return adaptiveError::adaptive<Type>(adaptive_);
         }
 
         //- Set the equation to integrate
-        void setEqn(const Equation<Type>& eqn)
+        void setEqn(const equationType& eqn)
         {
             eqnPtr_.reset(&eqn);
         }
@@ -148,6 +182,7 @@ public:
             const scalar x1,
             const label li = -1
         ) const = 0;
+
 
     // Member Operators
 
@@ -171,14 +206,18 @@ public:
 #define makeIntegrator(Type)                                                   \
     defineNamedTemplateTypeNameAndDebug(Integrator<Type>, 0);                  \
                                                                                \
-    defineTemplateRunTimeSelectionTable(Integrator<Type>, dictionary);
+    defineTemplateRunTimeSelectionTable(Integrator<Type>, dictionary);         \
+    defineTemplateRunTimeSelectionTable(Integrator<Type>, inputs);
 
 
 #define makeIntegratorType(IntegratorType, Type)                               \
     defineNamedTemplateTypeNameAndDebug(IntegratorType<Type>, 0);              \
                                                                                \
     Integrator<Type>::adddictionaryConstructorToTable<IntegratorType<Type>>    \
-    addIntegrator##IntegratorType##Type##ConstructorToTable_;
+    add##IntegratorType##Type##dictinoary##ConstructorToTable_;                \
+                                                                               \
+    Integrator<Type>::addinputsConstructorToTable<IntegratorType<Type>>        \
+    add##IntegratorType##Type##inputs##ConstructorToTable_;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -27,48 +27,63 @@ License
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::Uniform<Type, Patch, Mesh>::Uniform
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::Uniform<Type, FSType>::Uniform
 (
     const fvMesh& mesh,
+    const dictionary& dict,
     const word& fieldName,
-    const labelList& selectedCells,
+    const labelList& selectedIndices,
     Istream& is,
     const bool write
 )
 :
-    FieldSetType<Type, Patch, Mesh>(mesh, fieldName, selectedCells, is, write),
+    FSType<Type>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    ),
     value_(pTraits<Type>(is))
 {
     if (this->good_)
     {
-        setField();
+        this->setField();
     }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::Uniform<Type, Patch, Mesh>::~Uniform()
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::Uniform<Type, FSType>::~Uniform()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetTypes::Uniform<Type, Patch, Mesh>::setField()
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::Uniform<Type, FSType>::getInternalField
+(
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
 {
-    if (this->selectedCells_.size() == this->mesh_.nCells())
-    {
-        (*this->fieldPtr_).primitiveFieldRef() = value_;
-    }
-    else
-    {
-        forAll(this->selectedCells_, i)
-        {
-            (*this->fieldPtr_)[this->selectedCells_[i]] = value_;
-        }
-    }
-    FieldSetType<Type, Patch, Mesh>::setField();
+    f = value_;
 }
 
+
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::Uniform<Type, FSType>::getBoundaryField
+(
+    const label patchi,
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{
+    f = value_;
+}

@@ -80,6 +80,19 @@ Foam::tabulatedThermoEOS<Specie>::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::pRhoT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return p(rho, e, T, true);
+}
+
+
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::p
 (
@@ -93,6 +106,18 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::p
         limit
       ? max(pTable_.lookup(rho, e), 0.0)
       : pTable_.lookup(rho, e);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
 }
 
 
@@ -294,6 +319,18 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::CpByCv
 
 
 template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::S
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::TRhoE
 (
     const scalar T0,
@@ -320,6 +357,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::initializeEnergy
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::rhoPT
 (
+    const scalar rho,
     const scalar p,
     const scalar T
 ) const

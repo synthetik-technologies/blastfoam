@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -29,14 +29,18 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-template<class fType>
+template<template<class> class ListType, class fType>
 fType Foam::lookupTable1D<Type>::interpolate
 (
-    const fType& fm,
-    const fType& fp
+    const ListType<fType>& fs
 ) const
 {
-    return f_ == 0 ? fm : (f_ == 1 ? fp : (1.0 - f_)*fm + f_*fp);
+    fType modf = weights_[0]*fs[indices_[0]];
+    for (label i = 1; i < indices_.size(); i++)
+    {
+        modf += weights_[i]*fs[indices_[i]];
+    }
+    return modf;
 }
 
 
@@ -49,13 +53,13 @@ fType Foam::lookupTable1D<Type>::interpolate
 ) const
 {
     update(x);
-    return
-        f_ == 0 ? fs[index_]
-      : (
-            f_ == 1
-          ? fs[index_ + 1]
-          : (1.0 - f_)*fs[index_] + f_*fs[index_ + 1]
-        );
+
+    fType modf = weights_[0]*fs[indices_[0]];
+    for (label i = 1; i < indices_.size(); i++)
+    {
+        modf += weights_[i]*fs[indices_[i]];
+    }
+    return modf;
 }
 
 // ************************************************************************* //

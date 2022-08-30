@@ -1,15 +1,39 @@
-hexRef = hexRef
+newCellCuts/newCellCuts.C
+newRefinementIterator/newRefinementIterator.C
+
+locationMapper/locationMapper.C
+
+fvMeshBalance/fvMeshBalance.C
+fvMeshRefiner/fvMeshRefiner.C
+fvMeshRefiner/fvMeshRefinerNew.C
+
+# Directional refinement
+fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
+
+
+# Hex refinement
+fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
+hexRef = fvMeshRefiner/fvMeshHexRefiner/hexRef
+
+$(hexRef)/hexRefRefinementHistory.C
+$(hexRef)/hexRefRefinementHistoryConstraint.C
+$(hexRef)/hexRefData.C
 
 $(hexRef)/hexRef.C
-$(hexRef)/hexRefData.C
-$(hexRef)/hexRefRefinementHistory.C
 $(hexRef)/hexRefNew.C
-
 $(hexRef)/hexRef3D/hexRef3D.C
 $(hexRef)/hexRef2D/hexRef2D.C
 $(hexRef)/hexRef2DAxi/hexRef2DAxi.C
 
-#fvMeshDistribute/blastFvMeshDistribute.C
-#fvMeshSubset/blastFvMeshSubset.C
+
+# Polyhedral refinement
+fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C
+
+fvMeshRefiner/fvMeshPolyRefiner/polyhedralRefinement/polyhedralRefinement.C
+fvMeshRefiner/fvMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
+fvMeshRefiner/fvMeshPolyRefiner/refinement/refinement.C
+fvMeshRefiner/fvMeshPolyRefiner/polyRefinementConstraint.C
+
+meshTools/dynMeshTools.C
 
 LIB = $(BLAST_LIBBIN)/libblastDynamicMesh

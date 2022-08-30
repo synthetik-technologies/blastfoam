@@ -61,8 +61,10 @@ class turbulentDispersionModel;
 class massTransferModel;
 class interfacialPressureModel;
 class interfacialVelocityModel;
+class pressureRelaxationModel;
 class dragModel;
 class dragODE;
+class pressureRelaxationSolver;
 class kineticTheorySystem;
 
 class blendingMethod;
@@ -152,6 +154,13 @@ public:
             phasePairKey::hash
         > interfacialVelocityModelTable;
 
+        typedef HashTable
+        <
+            autoPtr<pressureRelaxationModel>,
+            phasePairKey,
+            phasePairKey::hash
+        > pressureRelaxationModelTable;
+
         // Coefficient tables
         typedef HashPtrTable
         <
@@ -187,6 +196,8 @@ public:
             phasePairKey,
             phasePairKey::hash
         > UiTable;
+
+        static const dimensionedScalar zeroMDot;
 
 
 protected:
@@ -234,20 +245,20 @@ protected:
         //- Mixture temperature
         volScalarField T_;
 
+        //- Mixture thermal diffusivity
+        volScalarField kappa_;
+
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
-
-        //- fvModels
-        UautoPtr<fvModels> fvModelsPtr_;
-
-        //- fvConstraints
-        UautoPtr<const fvConstraints> fvConstraintsPtr_;
 
         //- Phase models
         phaseModelList phaseModels_;
 
         //- Fluid phase phase models
         UPtrList<phaseModel> fluidPhaseModels_;
+
+        //- Slave phase phase models
+        UPtrList<phaseModel> slavePhaseModels_;
 
         //- Pointer to kinetic theory system
         UautoPtr<kineticTheorySystem> kineticTheoryPtr_;
@@ -260,6 +271,9 @@ protected:
 
         //- Ode system and solver for solving the  drag system
         autoPtr<dragODE> dragODE_;
+
+        //- Ode system and solver for solving the  drag system
+        autoPtr<pressureRelaxationSolver> pressureSolver_;
 
 
         // Sub Models
@@ -290,12 +304,16 @@ protected:
 
             //- Mass transfer models
             massTransferModelTable massTransferModels_;
+	        List<List<bool>> hasMassTransfer_;
 
             //- Interfacial pressure models
             interfacialPressureModelTable interfacialPressureModels_;
 
             //- Interfacial velocity models
             interfacialVelocityModelTable interfacialVelocityModels_;
+
+            //- Pressure relaxation models
+            pressureRelaxationModelTable pressureRelaxationModels_;
 
 
         //- Stored coefficients
@@ -378,6 +396,9 @@ protected:
         //- Solve heat transfer between phases
         void relaxTemperature(const dimensionedScalar& deltaT);
 
+        //- Relax pressure between phases
+        void relaxPressure(const dimensionedScalar& deltaT);
+
 
 public:
 
@@ -413,8 +434,11 @@ public:
         //- Solve viscous terms
         virtual void postUpdate();
 
+        //- Clear flux schemes
+        virtual void clear();
+
         //- Print statistics
-        virtual void printInfo();
+        virtual void printInfo() const;
 
         //- Return the mixture density
         const volScalarField& rho() const
@@ -469,9 +493,34 @@ public:
         //- Return the aspect-ratio for a pair
         tmp<volScalarField> E(const phasePairKey& key) const;
 
+    	//- Return is mas transfer is used for a phase
+	bool hasMassTransfer(const phaseModel& phase) const;
+
+    	//- Return is mas transfer is used for a phase
+	bool hasMassTransfer
+    	(
+    	    const phaseModel& phase1, 
+    	    const phaseModel& phase2
+	) const;
+
         //- Return the mass transfer for a pair
         tmp<volScalarField> mDot
         (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the volume fraction source due to mass transfer for a pair
+        tmp<volScalarField> mDotByRho
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the volume fraction source due to mass transfer for a pair
+        tmp<volScalarField> mDotByRho
+        (
+            const volScalarField& mD,
             const phaseModel& phase1,
             const phaseModel& phase2
         ) const;
@@ -483,8 +532,32 @@ public:
             const phaseModel& phase2
         ) const;
 
+        //- Return the momentum change due to mass transfer for a pair
+        tmp<volVectorField> mDotU
+        (
+            const volScalarField& mD,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
         //- Return the energy change due to mass transfer for a pair
         tmp<volScalarField> mDotE
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the energy change due to mass transfer for a pair
+        tmp<volScalarField> mDotE
+        (
+            const volScalarField& mD,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the pseudo thermal energy change due to
+        //  mass transfer for a pair
+        tmp<volScalarField> mDotPTE
         (
             const phaseModel& phase1,
             const phaseModel& phase2
@@ -494,6 +567,7 @@ public:
         //  mass transfer for a pair
         tmp<volScalarField> mDotPTE
         (
+            const volScalarField& mD,
             const phaseModel& phase1,
             const phaseModel& phase2
         ) const;
@@ -561,12 +635,6 @@ public:
             //- Return the phase not given as an argument in a two-phase system
             //  An error is generated if the system is not two-phase
             inline const phaseModel& otherPhase(const phaseModel& phase) const;
-
-            //- Return fvOptions
-            inline const fvModels& models() const;
-
-            //- Return fvOptions
-            inline const fvConstraints& constraints() const;
 };
 
 

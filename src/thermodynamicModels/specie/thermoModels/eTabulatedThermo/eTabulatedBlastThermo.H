@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "scalarLookupTable1D.H"
+#include "lookupTables2D.H"
 
 namespace Foam
 {
@@ -72,18 +72,22 @@ class eTabulatedThermo
 // Private data
 
     //- Internal energy lookup table
-    scalarLookupTable1D eTable_;
+    scalarLookupTable2D eTable_;
 
     //- Temperature bounds
     scalar Tlow_;
     scalar Thigh_;
+
+    //- Heat of formation
+    scalar Hf_;
 
 
     //- Construct from components
     inline eTabulatedThermo
     (
         const EquationOfState& st,
-        const scalarLookupTable1D& eTable
+        const scalarLookupTable2D& eTable,
+        const scalar Hf
     );
 
 
@@ -162,30 +166,13 @@ public:
         inline scalar flameT() const;
 
         //- Entropy [J/kg/K]
-        inline scalar S
-        (
-            const scalar p,
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+        inline scalar S(const scalar p, const scalar T) const;
 
-        //- Derivative of Gibbs free energy w.r.t. temperature
-        inline scalar dGdT(const scalar p, const scalar T) const;
-
-        //- Temperature derivative of heat capacity at constant pressure
-        inline scalar dCpdT(const scalar p, const scalar T) const;
+        //- Gibbs free energy of the mixture in the standard state [J/kg]
+        inline scalar Gstd(const scalar T) const;
 
         //- Temperature derivative of heat capacity at constant pressure
         inline scalar dCpdT
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
-
-        //- Temperature derivative of heat capacity at constant volume
-        inline scalar dCvdT
         (
             const scalar rho,
             const scalar e,

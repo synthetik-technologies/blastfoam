@@ -28,8 +28,6 @@ SourceFiles
 
 #include "CalculatedDensityFieldSetType.H"
 #include "FieldSetTypesFwd.H"
-#include "volFields.H"
-#include "surfaceFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,10 +37,13 @@ namespace FieldSetTypes
 {
 
 template<class Type>
-using CalculatedDensityVol = CalculatedDensity<Type, fvPatchField, volMesh>;
+using CalculatedDensityVol = CalculatedDensity<Type, VolFieldSetType>;
 
 template<class Type>
-using CalculatedDensitySurface = CalculatedDensity<Type, fvsPatchField, surfaceMesh>;
+using CalculatedDensitySurface = CalculatedDensity<Type, SurfaceFieldSetType>;
+
+template<class Type>
+using CalculatedDensityPoint = CalculatedDensity<Type, PointFieldSetType>;
 }
 makeFieldSetTypeType(CalculatedDensityVol, scalar, VolFieldSetType);
 makeFieldSetTypeType(CalculatedDensityVol, vector, VolFieldSetType);

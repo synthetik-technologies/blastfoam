@@ -63,6 +63,8 @@ class pressureBased
     //- Pressure coefficient
     dimensionedScalar pCoeff_;
 
+    //- Rate offset
+    dimensionedScalar offset_;
 
 public:
 

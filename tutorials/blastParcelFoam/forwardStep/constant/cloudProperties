@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type    collidingCloud;
+type    thermoCloud;
 
 solution
 {
@@ -39,15 +39,13 @@ solution
 
     interpolationSchemes
     {
-        rho             cell;
-        U               cellPoint;
-        thermo:mu       cell;
-        T               cell;
-        Cp              cell;
-        kappa           cell;
-        p               cell;
-        mu              cell;
-        continuousVolumeFraction            cell;
+        alphaRho            cell;
+        U                   cellPoint;
+        thermo:mu           cell;
+        p                   cell;
+        T                   cell;
+        Cp                  cell;
+        kappa               cell;
     }
 
     integrationSchemes
@@ -62,12 +60,10 @@ constantProperties
 {
     rho0            2500;
     T0              1000;
-    Cp0             1000;
+    Cp0             400;
 
     poissonsRatio 1.0;
     youngsModulus 7e10;
-
-    constantVolume  true;
 }
 
 
@@ -95,10 +91,6 @@ subModels
             sizeDistribution
             {
                 type        general;
-                fixedValueDistribution
-                {
-                    value 1e-4;
-                }
                 generalDistribution
                 {
                     distribution
@@ -148,11 +140,11 @@ subModels
 
     patchInteractionModel standardWallInteraction;
 
-    heatTransferModel RanzMarshall;
+    heatTransferModel none;
 
-    compositionModel singleMixtureFraction;
+    compositionModel singlePhaseMixture;
 
-    phaseChangeModel liquidEvaporation;
+    phaseChangeModel none;
 
     devolatilisationModel none;
 
@@ -219,31 +211,18 @@ subModels
         BirdCorrection  off;
     }
 
-    singleMixtureFractionCoeffs
+    singlePhaseMixtureCoeffs
     {
         phases
         (
-            gas
-            {
-            }
-            liquid
-            {
-                H2O         1;
-            }
             solid
             {
+                C 1;
             }
         );
-        YGasTot0        0;
-        YLiquidTot0     1;
-        YSolidTot0      0;
-    }
-
-    liquidEvaporationCoeffs
-    {
-        enthalpyTransfer enthalpyDifference;
-
-        activeLiquids   ( H2O );
+//         YGasTot0        0;
+//         YLiquidTot0     1;
+//         YSolidTot0      0;
     }
 }
 

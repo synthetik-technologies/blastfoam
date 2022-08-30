@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,8 +25,7 @@ License
 
 #include "errorEstimator.H"
 #include "coupledMaxErrorFvPatchScalarField.H"
-#include "mappedWallFvPatch.H"
-#include "mappedMovingWallFvPatch.H"
+#include "mappedPatchBase.H"
 #include "timeControlFunctionObject.H"
 #include "probes.H"
 #include "blastProbes.H"
@@ -41,7 +40,7 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Protected Member Function * * * * * * * * * * * //
 
 Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
 (
@@ -57,8 +56,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
         {
             if
             (
-                isA<mappedWallFvPatch>(mesh.boundary()[patchi])
-            || isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi])
+                isA<mappedPatchBase>(mesh.boundary()[patchi])
             )
             {
                 boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
@@ -77,9 +75,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
                 (
                     errorName,
                     mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
+                    mesh
                 ),
                 mesh,
                 0.0,
@@ -90,6 +86,27 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
     return mesh.lookupObjectRef<volScalarField>(errorName);
 }
 
+bool Foam::errorEstimator::updateCurTimeIndex(const bool unset) const
+{
+    if (force_)
+    {
+        return false;
+    }
+    if (unset)
+    {
+        curTimeIndex_--;
+        return false;
+    }
+    if (curTimeIndex_ != mesh_.time().timeIndex())
+    {
+        curTimeIndex_ = mesh_.time().timeIndex();
+        return false;
+    }
+    return true;
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::errorEstimator::errorEstimator
 (
@@ -98,6 +115,18 @@ Foam::errorEstimator::errorEstimator
     const word& name
 )
 :
+    regIOobject
+    (
+        IOobject
+        (
+            IOobject::groupName(typeName, name),
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE,
+            name == word::null ? true : false
+        )
+    ),
     mesh_(mesh),
     name_(name),
     error_(lookupOrConstructError(mesh)),
@@ -107,7 +136,9 @@ Foam::errorEstimator::errorEstimator
     upperUnrefine_(0.0),
     maxLevel_(-1),
     minDx_(-1),
-    refineProbes_(dict.lookupOrDefault("refineProbes", true))
+    refineProbes_(dict.lookupOrDefault("refineProbes", true)),
+    force_(false),
+    curTimeIndex_(-1)
 {}
 
 
@@ -131,10 +162,16 @@ void Foam::errorEstimator::read(const dictionary& dict)
         maxLevel_ = dict.lookup<label>("maxRefinement");
         minDx_ = -1;
     }
-    else
+    else if (dict.found("minDx"))
     {
         minDx_ = dict.lookup<scalar>("minDx");
         maxLevel_ = -1;
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Either maxRefinement or minDx must be specified" << endl
+            << abort(FatalIOError);
     }
 }
 
@@ -209,23 +246,69 @@ void Foam::errorEstimator::normalize(volScalarField& error)
 
 Foam::labelList Foam::errorEstimator::maxRefinement() const
 {
-    if (maxLevel_ > 0 || !mesh_.foundObject<labelIOList>("cellLevel"))
+    if (maxLevel_ >= 0 || !mesh_.foundObject<labelIOList>("cellLevel"))
     {
         return labelList(mesh_.nCells(), maxLevel_);
     }
 
-    const labelIOList& cellLevel(mesh_.lookupObject<labelIOList>("cellLevel"));
-    labelList maxLevel(mesh_.nCells(), 0);
-    const volScalarField& dx = meshSizeObject::New(mesh_).dx();
+    const labelIOList& cellLevel
+    (
+        mesh_.lookupObject<labelIOList>("cellLevel")
+    );
+    labelList maxLevel(cellLevel);
+    vector validD(mesh_.geometricD());
+    for (label cmpti = 0; cmpti < 3; cmpti++)
+    {
+        if (validD[cmpti] < 0)
+        {
+            validD[cmpti] = great;
+        }
+    }
+    const scalarField& dx(meshSizeObject::New(mesh_).dx());
+
     forAll(dx, celli)
     {
-        if (dx[celli] > minDx_)
+        if (dx[celli] > minDx_ && error_[celli] > 0)
         {
-            maxLevel[celli] = cellLevel[celli] + 1;
+            maxLevel[celli]++;
         }
     };
     return maxLevel;
 }
 
+
+bool Foam::errorEstimator::writeData(Ostream&) const
+{
+    if (debug)
+    {
+        const_cast<errorEstimator&>(*this).update();
+        volScalarField maxLevel
+        (
+            volScalarField::New
+            (
+                "maxLevel",
+                mesh_,
+                0.0
+            )
+        );
+        labelList mr(maxRefinement());
+        forAll(mr, celli)
+        {
+            maxLevel[celli] = mr[celli];
+        }
+        maxLevel.write();
+
+        // if (minDx_ > 0)
+        {
+            const meshSizeObject& mso = meshSizeObject::New(mesh_);
+            const_cast<meshSizeObject&>(mso).movePoints();
+            mso.dx(mesh_)().write();
+            mso.dX(mesh_)().write();
+        }
+
+        return error_.write();
+    }
+    return true;
+}
 
 // ************************************************************************* //

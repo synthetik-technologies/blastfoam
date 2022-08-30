@@ -1,0 +1,31 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. "${WM_PROJECT_DIR:?}"/wmake/scripts/AllwmakeParseArguments
+
+#------------------------------------------------------------------------------
+
+if [ ! -z "$SOLIDS_4_FOAM_DIR" ]
+then
+    if test -f "${FOAM_USER_LIBBIN}/libsolids4FoamModels.so"
+    then
+        echo "Making blast fluid model for solid4foam"
+        wmake $targetType
+    else
+        echo
+        echo "SOLIDS_4_FOAM_DIR has been set but the"
+        echo "\"libsolids4FoamModels.so\" library was not found in"
+        echo "${FOAM_USER_LIBBIN}/."
+        echo "Have you complied solids4Foam?"
+        echo
+    fi
+else
+    echo
+    echo "Not compiling solids4foam module"
+    echo "    Download and compile solids4foam and add"
+    echo "    \"export SOLIDS_4_FOAM_DIR=YOUR_PATH\" to your ~/.bashrc"
+    echo "    add \"libs (\"libblastSolids4Foam.so\"); to a case"
+    echo "    controlDict to use"
+    echo
+fi
+# -----------------------------------------------------------------------------
+

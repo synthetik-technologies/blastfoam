@@ -59,7 +59,6 @@ namespace Foam
 
 class compressibleSystem
 :
-    public IOdictionary,
     public timeIntegrationSystem
 {
 protected:
@@ -107,18 +106,6 @@ protected:
         //- Solution directions
         vector solutionDs_;
 
-        //- FvModels
-        UautoPtr<const fvModels> modelsPtr_;
-
-        //- fvConstraints
-        UautoPtr<const fvConstraints> constraintsPtr_;
-
-        //- List of fields that have models or constraints
-        hashedWordList solveFields_;
-
-        //- Does postUpdate need to be calles
-        bool needPostUpdate_;
-
         //- Allocate models
         virtual void setModels();
 
@@ -132,7 +119,27 @@ public:
         (
             autoPtr,
             compressibleSystem,
-            dictionary,
+            singlePhase,
+            (
+                const fvMesh& mesh
+            ),
+            (mesh)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            compressibleSystem,
+            twoPhase,
+            (
+                const fvMesh& mesh
+            ),
+            (mesh)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            compressibleSystem,
+            multiphase,
             (
                 const fvMesh& mesh
             ),
@@ -146,6 +153,15 @@ public:
     // Selector
         static autoPtr<compressibleSystem> New(const fvMesh& mesh);
 
+        template<class SelectionTable>
+        static autoPtr<compressibleSystem> New
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const word& defaultType,
+            SelectionTable* table
+        );
+
     //- Destructor
     virtual ~compressibleSystem();
 
@@ -155,16 +171,23 @@ public:
         //- Return the flux scheme
         inline const fluxScheme& flux() const;
 
-        //- Access the flux scheme
-        inline fluxScheme& flux();
-
     // Member Access Functions
 
-        //- Return turbulence class
-        inline const momentumTransportModel& turbulence() const;
+        //- Return if the system is inviscid
+        inline bool inviscid() const;
 
         //- Return turbulence class
-        inline momentumTransportModel& turbulence();
+        inline const compressible::momentumTransportModel& turbulence() const;
+
+        //- Return turbulence class
+        inline compressible::momentumTransportModel& turbulence();
+
+        //- Const access to fluidThermophysicalTransportModel model
+        inline const fluidThermophysicalTransportModel&
+        thermophysicalTransport() const;
+
+        //- Non-const access to fluidThermophysicalTransportModel model
+        inline fluidThermophysicalTransportModel& thermophysicalTransport();
 
         //- Const access to thermo model
         virtual const fluidThermo& thermo() const = 0;
@@ -217,14 +240,11 @@ public:
         //- Post update
         virtual void postUpdate();
 
+        //- Clear the flux scheme
+        virtual void clear();
+
         //- Return the maximum Courant number
         virtual scalar CoNum() const;
-
-        //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const;
-
-        //- Read phaseProperties
-        virtual bool read();
 };
 
 
@@ -235,6 +255,10 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "compressibleSystemI.H"
+
+#ifdef NoRepository
+#include "compressibleSystemTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

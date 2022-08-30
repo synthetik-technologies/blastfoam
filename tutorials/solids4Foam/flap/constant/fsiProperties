@@ -1,0 +1,70 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     3.0                                |
+|   \\  /    A nd           | Web:         http://www.extend-project.de       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fsiProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fluidSolidInterface    weakCoupling;
+
+weakCouplingCoeffs
+{
+    // Solid interface patch list
+    solidPatch interface;
+
+    // Fluid interface patch list
+    fluidPatch interface;
+
+    // Maximum number of outer FSI loop correctors within each time-step
+    nOuterCorr 20;
+
+    // Enable/disable coupling from the start
+    coupled yes;
+
+    // Method for transferring information between the interfaces
+    interfaceTransferMethod AMI;
+
+}
+
+"fixedRelaxationCoeffs|AitkenCoeffs|IQNILSCoeffs"
+{
+    // Solid interface patch list
+    solidPatch interface;
+
+    // Fluid interface patch list
+    fluidPatch interface;
+
+    // Under-relaxation factor for passing the solid interface
+    // displacement/velocity to the fluid interface
+    // For fixedRelaxation, this value is used for all iterations
+    // For Aitken, this value is used for the first iteration each time-step,
+    // then it adaptively changes
+    // For IQNILS, this value is used for the first two iterations each
+    // time-step, then the IQNILS procedure is used
+    relaxationFactor 0.4;
+
+    // Tolerance for the FSI loop within each time-step
+    outerCorrTolerance 1e-3;
+
+    // Maximum number of outer FSI loop correctors within each time-step
+    nOuterCorr 5;
+
+    // Optional (defaults to off) Aitken setting to perform extra fluid mesh
+    // motion step after the FSI loop in each time-step
+    //additionalMeshCorrection yes;
+
+    // Enable/disable coupling from the start
+    coupled yes;
+
+//     couplingStartTime 5e-5;
+}
+// ************************************************************************* //

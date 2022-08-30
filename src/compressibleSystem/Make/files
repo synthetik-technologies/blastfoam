@@ -1,5 +1,5 @@
 compressibleSystem/compressibleSystem.C
-compressibleSystem/newCompressibleSystem.C
+compressibleSystem/compressibleSystemNew.C
 
 compressibleBlastSystem/compressibleBlastSystem.C
 singlePhaseCompressibleSystem/singlePhaseCompressibleSystem.C

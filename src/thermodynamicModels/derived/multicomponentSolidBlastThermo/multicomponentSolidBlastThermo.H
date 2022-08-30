@@ -101,7 +101,9 @@ public:
 
         //- Pre update step
         virtual void update()
-        {}
+        {
+            multicomponentBlastThermo::update();
+        }
 
         //- Solve sub-step stepi
         virtual void solve()
@@ -111,23 +113,72 @@ public:
 
         //- Post update
         virtual void postUpdate()
-        {}
+        {
+            multicomponentBlastThermo::postUpdate();
+        }
+
+    // Specie thermo properties
+
+            //- Return the pressure for cell [Pa]
+            virtual scalar cellp(const label celli) const;
+
+            //- Pressure [kg/m/s^2]
+            virtual scalar p
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Density [kg/m^3]
+            virtual tmp<volScalarField> p
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
+                const volScalarField& T
+            ) const;
+
+            //- Return derivative of pressure w.r.t. density
+            virtual scalar dpdRho
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Return derivative of pressure w.r.t. Temperature
+            virtual scalar dpdT
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
 
     //- Thermodynamic and transport functions
 
         //- Calculate density
         virtual void updateRho();
 
-        //- Thermal conductivity [W/m/K]
-        virtual tmp<volScalarField> kappa() const;
-
-        //- Thermal conductivity [W/m/K]
-        virtual tmp<volVectorField> Kappa() const;
-
-        //- Anisotropic thermal conductivity [W/m/K]
-        virtual tmp<vectorField> Kappa
+        //- Dynamic viscosity [kg/m/s]
+        virtual scalar mu
         (
-            const label patchi
+            const label speciei,
+            const scalar p,
+            const scalar T
+        ) const;
+
+        //- Dynamic viscosity [kg/m/s]
+        virtual scalar mu
+        (
+            const label speciei,
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Dynamic viscosity [kg/m/s]
@@ -136,6 +187,24 @@ public:
             const label speciei,
             const volScalarField& p,
             const volScalarField& T
+        ) const;
+
+        //- Dynamic viscosity [kg/m/s]
+        virtual tmp<volScalarField> mu
+        (
+            const label speciei,
+            const volScalarField& rho,
+            const volScalarField& e,
+            const volScalarField& T
+        ) const;
+
+        //- Thermal conductivity [W/m/K]
+        virtual tmp<volVectorField> Kappa() const;
+
+        //- Anisotropic thermal conductivity [W/m/K]
+        virtual tmp<vectorField> Kappa
+        (
+            const label patchi
         ) const;
 
         //- Return true if thermal conductivity is isotropic

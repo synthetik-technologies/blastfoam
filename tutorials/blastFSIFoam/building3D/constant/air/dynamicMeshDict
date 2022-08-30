@@ -16,21 +16,15 @@ FoamFile
 
 dynamicFvMesh   movingAdaptiveFvMesh;
 
-balance no;
-
 errorEstimator densityGradient;      // Model used to estimate error
 
-motionSolver   displacementLaplacian;
+motionSolver      velocityLaplacian;
+diffusivity quadratic inverseDistance (air_to_building);
 
-displacementLaplacianCoeffs
-{
-    diffusivity quadratic inverseDistance (air_to_building);
-}
-
-beginUnrefine 1e-5;
+// beginUnrefine 1e-5;
 
 // How often to refine
-refineInterval  3;
+refineInterval  1;
 
 // Refine field in between lower..upper (varies based on errorEstimator)
 lowerRefineLevel 0.01;
@@ -42,7 +36,7 @@ unrefineLevel   0.01;
 nBufferLayers   3;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   2;
+maxRefinement   1;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

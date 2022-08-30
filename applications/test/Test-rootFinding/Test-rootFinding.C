@@ -1,69 +1,148 @@
 #include "dictionary.H"
-#include "rootSolver.H"
+#include "univariateRootSolver.H"
 #include "argList.H"
+#include "createEquations.H"
 
 using namespace Foam;
 
 
-class testEqn1
+createNamedEquation2
+(
+    testEqn1,
+    "f(x) = cos(x) - x^3",
+    scalar,
+    0.01, 1.0,
+    Foam::cos(x) - Foam::pow3(x),
+    -Foam::sin(x) - 3.0*Foam::sqr(x),
+    -Foam::cos(x) - 6.0*x
+);
+
+createNamedEquation2
+(
+    testEqn2,
+    "f(x) = exp(x) - 10*x",
+    scalar,
+    0.01, 1.0,
+    Foam::exp(x) - 10.0*x,
+    Foam::exp(x) - 10.0,
+    Foam::exp(x)
+);
+
+class testEqn3
 :
-    public scalarEquation
+    public ScalarMultivariateEquation
 {
 public:
-    testEqn1(const scalar xMin, const scalar xMax)
+    // Constructors
+    testEqn3()
     :
-        scalarEquation(xMin, xMax)
+        ScalarMultivariateEquation
+        (
+            2,
+            {0.0, 0.0},
+            {2.0, 2.0},
+            {
+                "f1(x1, x2) = x1^2 + x2^2 - 4.0",
+                "f2(x1, x2) = x1^2 - x2 + 1.0"
+            }
+        )
     {}
 
-    virtual ~testEqn1()
+    //- Destructor
+    virtual ~testEqn3()
     {}
 
-    virtual label nDerivatives() const
+    virtual label nEqns() const
     {
         return 2;
     }
-    virtual scalar f(const scalar x, const label li) const
+    virtual label nDerivatives() const
     {
-        return Foam::cos(x) - Foam::pow3(x);
+        return 1;
     }
-    virtual scalar dfdx(const scalar x, const label li) const
+    virtual void FX
+    (
+        const UList<scalar>& x,
+        const label li,
+        scalarList& fx
+    ) const
     {
-        return -Foam::sin(x) - 3.0*Foam::sqr(x);
+        fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
+        fx[1] = sqr(x[0]) - x[1] + 1.0;
     }
-    virtual scalar d2fdx2(const scalar x, const label li) const
+    virtual void jacobian
+    (
+        const UList<scalar>& x,
+        const label li,
+        scalarList& fx,
+        RectangularMatrix<scalar>& dfdx
+    ) const
     {
-        return -Foam::cos(x) - 6.0*x;
+        FX(x, li, fx);
+        dfdx(0, 0) = stabilise(2.0*x[0], small);
+        dfdx(0, 1) = 2.0*x[1];
+        dfdx(1, 0) = 2.0*x[0];
+        dfdx(1, 1) = -1.0;
     }
 };
 
-class testEqn2
+
+class testEqn4
 :
-    public scalarEquation
+    public ScalarMultivariateEquation
 {
 public:
-    testEqn2(const scalar xMin, const scalar xMax)
+    // Constructors
+    testEqn4()
     :
-        scalarEquation(xMin, xMax)
+        ScalarMultivariateEquation
+        (
+            2,
+            {-10.0, -10.0},
+            {10.0, 10.0},
+            {
+                "f1(x1, x2) = x2^2 + x1^2 + x1",
+                "f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0"
+            }
+        )
     {}
 
-    virtual ~testEqn2()
+    //- Destructor
+    virtual ~testEqn4()
     {}
 
-    virtual label nDerivatives() const
+    virtual label nEqns() const
     {
         return 2;
     }
-    virtual scalar f(const scalar x, const label li) const
+    virtual label nDerivatives() const
     {
-        return Foam::exp(x) - 10.0*x;
+        return 1;
     }
-    virtual scalar dfdx(const scalar x, const label li) const
+    virtual void FX
+    (
+        const UList<scalar>& x,
+        const label li,
+        scalarList& fx
+    ) const
     {
-        return Foam::exp(x) - 10.0;
+        fx[0] = x[1] - sqr(x[0]) + x[0];
+        fx[1] = sqr(x[0])/16.0 + sqr(x[1]) - 1.0;
     }
-    virtual scalar d2fdx2(const scalar x, const label li) const
+    virtual void jacobian
+    (
+        const UList<scalar>& x,
+        const label li,
+        scalarList& fx,
+        RectangularMatrix<scalar>& J
+    ) const
     {
-        return Foam::exp(x);
+        FX(x, li, fx);
+
+        J(0, 0) = stabilise(-2.0*x[0] + 1.0, small);
+        J(0, 1) = 1.0;
+        J(1, 0) = 2.0*x[0]/16.0;
+        J(1, 1) = stabilise(2.0*x[1], small);
     }
 };
 
@@ -71,29 +150,72 @@ public:
 int main(int argc, char *argv[])
 {
 
-    PtrList<scalarEquation> uniEqns(2);
-    wordList uniEqnStrs(2);
-    uniEqns.set(0, new testEqn1(0.0, 1.0));
-    uniEqnStrs[0] = "f(x) = cos(x) - x^3";
-    uniEqns.set(1, new testEqn2(0.0, 1.0));
-    uniEqnStrs[1] = "f(x) = exp(x) - 10*x";
+    PtrList<scalarMultivariateEquation> eqns(4);
+    eqns.set(0, new testEqn1());
+    eqns.set(1, new testEqn2());
+    eqns.set(2, new testEqn3());
+    eqns.set(3, new testEqn4());
 
     dictionary dict;
 
-    Info<< endl;
-    Info<< "Univariate root finding" << endl;
-    wordList methods(rootSolver::dictionaryTwoConstructorTablePtr_->toc());
-    forAll(uniEqns, eqni)
+    Info<< "*****************************************" << nl
+        << "Testing root finders" << nl
+        << "*****************************************" << nl << endl;
+    List<wordList> methods =
     {
-        Info<< "Solving " << uniEqnStrs[eqni] << endl;
-        const scalarEquation& eqn = uniEqns[eqni];
-        forAll(methods, i)
+        univariateRootSolver::dictionaryTwoConstructorTablePtr_->toc(),
+        univariateRootSolver::dictionaryTwoConstructorTablePtr_->toc(),
+        rootSolver::dictionaryOneConstructorTablePtr_->toc(),
+        rootSolver::dictionaryOneConstructorTablePtr_->toc()
+    };
+    List<scalarField> x0 =
+    {
+        scalarField(1, 0.5),
+        scalarField(1, 0.5),
+        scalarField(2, 0.1),
+        scalarField(scalarList({-0.1, 0.1}))
+    };
+
+    List<scalarList> roots =
+    {
+        {0.865474033101615},
+        {0.111832559158963},
+        {0.889543928069176, 1.791287856740247},
+        {-0.612743189209448, 0.988197405130338}
+    };
+
+    rootSolver::debug = 2;
+    forAll(eqns, eqni)
+    {
+        Info<< "*****************************************" << nl
+            << "Solving:" << nl << eqns[eqni].eqnString() << nl;
+        if (roots[eqni].size() > 1)
         {
-            dict.set("solver", methods[i]);
-            autoPtr<rootSolver> solver(rootSolver::New(eqn, dict));
-            Info<<"    root=" << solver->solve(0.5, 0)
-                << ", nSteps=" << solver->nSteps()
-                << ", error=" << solver->error() << nl << endl;
+            Info<< "roots=" << roots[eqni] <<nl;
+        }
+        else
+        {
+            Info<< "root=" << roots[eqni][0] <<nl;
+        }
+        Info<< "*****************************************" << endl;
+        const scalarMultivariateEquation& eqn = eqns[eqni];
+        forAll(methods[eqni], i)
+        {
+            autoPtr<rootSolver> solver
+            (
+                rootSolver::New(methods[eqni][i], eqn, dict)
+            );
+            incrIndent(Info);
+            scalarField r(solver->solve(x0[eqni], 0));
+            if (roots[eqni].size() > 1)
+            {
+                Info<< indent << "error=" << mag(r-roots[eqni]) <<nl;
+            }
+            else
+            {
+                Info<< indent<< "error=" << mag(r[0]-roots[eqni][0]) <<nl;
+            }
+            Info << decrIndent << endl;
         }
     }
 

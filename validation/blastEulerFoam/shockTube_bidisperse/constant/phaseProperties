@@ -244,12 +244,12 @@ lift
 (
     (particles0 in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
     (particles1 in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
 );

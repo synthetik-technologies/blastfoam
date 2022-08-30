@@ -27,6 +27,7 @@ License
 #include "fvc.H"
 #include "wedgePolyPatch.H"
 #include "emptyPolyPatch.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -37,11 +38,11 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::meshSizeObject::meshSizeObject(const fvMesh& mesh)
+Foam::meshSizeObject::meshSizeObject(const polyMesh& mesh)
 :
     MeshSizeObject(mesh),
-    mesh_(mesh),
-    dxPtr_(nullptr)
+    dxPtr_(nullptr),
+    dXPtr_(nullptr)
 {}
 
 
@@ -53,68 +54,151 @@ Foam::meshSizeObject::~meshSizeObject()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::meshSizeObject::updateMeshSize() const
+bool Foam::meshSizeObject::movePoints()
 {
-    dxPtr_.set
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "meshCellSize",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            dimensionedScalar(dimLength, 0.0)
-        )
-    );
-    volScalarField& dx = dxPtr_();
+    dxPtr_.clear();
+    dXPtr_.clear();
+    return true;
+}
+
+
+void Foam::meshSizeObject::calcDx() const
+{
+    if (dxPtr_.valid())
+    {
+        FatalErrorInFunction
+            <<"dX already set"
+            << abort(FatalError);
+    }
+
+    dxPtr_.set(new scalarField(mesh_.nCells(), 0.0));
+    scalarField& dx = dxPtr_();
+    const Vector<label>& geoD = mesh_.geometricD();
 
     if (mesh_.nGeometricD() != 3)
     {
-
-        scalarField faceLength(sqrt(mesh_.magFaceAreas()));
-        const labelList& own = mesh_.faceOwner();
-        labelList nFaces(dxPtr_->size(), 0);
-
-        forAll(mesh_.boundaryMesh(), patchi)
+        const Vector<label>& solD = mesh_.solutionD();
+        vector validD(Zero);
+        forAll(solD, cmpti)
         {
-            const polyPatch& patch = mesh_.boundaryMesh()[patchi];
-            if (isA<wedgePolyPatch>(patch) || isA<emptyPolyPatch>(patch))
+            if (geoD[cmpti] < 0)
             {
-                forAll(patch, fi)
-                {
-                    const label facei = patch.start() + fi;
-                    dx[own[facei]] += faceLength[facei];
-
-                    nFaces[own[facei]]++;
-                }
+                validD[cmpti] = 1.0;
             }
         }
+
+        const vectorField& Sf = mesh_.faceAreas();
+        const scalarField& magSf = mesh_.magFaceAreas();
+        const labelList& own = mesh_.faceOwner();
+        const labelList& nei = mesh_.faceNeighbour();
+        labelList nFaces(dxPtr_->size(), 0);
+
+        for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+        {
+            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
+            {
+                dx[own[facei]] += magSf[facei];
+                dx[nei[facei]] += magSf[facei];
+
+                nFaces[own[facei]]++;
+                nFaces[own[facei]]++;
+            }
+        }
+
+        for
+        (
+            label facei = mesh_.nInternalFaces();
+            facei < mesh_.nFaces();
+            facei++
+        )
+        {
+            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
+            {
+                dx[own[facei]] += magSf[facei];
+                nFaces[own[facei]]++;
+            }
+        }
+
         forAll(dx, celli)
         {
-            dx[celli] /= scalar(nFaces[celli]);
-        }
-        forAll(mesh_.magSf().boundaryField(), patchi)
-        {
-            dx.boundaryFieldRef()[patchi] =
-                dx.boundaryField()[patchi].patchInternalField();
+            dx[celli] = sqrt(dx[celli]/scalar(nFaces[celli]));
         }
     }
     else
     {
-        dx.primitiveFieldRef() = fvc::surfaceSum(mesh_.magSf())/mesh_.V();
+        dx = cbrt(mesh_.cellVolumes());
     }
+}
 
-    forAll(mesh_.magSf().boundaryField(), patchi)
+
+void Foam::meshSizeObject::calcDX() const
+{
+    if (dXPtr_.valid())
     {
-        dx.boundaryFieldRef()[patchi] =
-            sqrt(mesh_.magSf().boundaryField()[patchi]);
+        FatalErrorInFunction
+            <<"dX already set"
+            << abort(FatalError);
     }
+    dXPtr_.set(new vectorField(mesh_.nCells(), vector::one));
+    vectorField& dX = dXPtr_();
+
+    const cellList& cells = mesh_.cells();
+    const scalarField& V = mesh_.cellVolumes();
+    const vectorField& Sf = mesh_.faceAreas();
+
+    forAll(dX, celli)
+    {
+        const cell& c = cells[celli];
+        vector sumMagSf(Zero);
+        dX[celli] *= 2.0*V[celli];
+        forAll(c, fi)
+        {
+            sumMagSf += cmptMag(Sf[c[fi]]);
+        }
+        dX[celli] = cmptDivide(dX[celli], sumMagSf);
+    }
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::meshSizeObject::dx
+(
+    const fvMesh& mesh
+) const
+{
+    tmp<volScalarField> tdx
+    (
+        volScalarField::New
+        (
+            "dx",
+            mesh,
+            dimLength,
+            extrapolatedCalculatedFvPatchScalarField::typeName
+        )
+    );
+    tdx.ref().primitiveFieldRef() = dx();
+    tdx.ref().correctBoundaryConditions();
+    return tdx;
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::meshSizeObject::dX
+(
+    const fvMesh& mesh
+) const
+{
+    tmp<volVectorField> tdX
+    (
+        volVectorField::New
+        (
+            "dX",
+            mesh,
+            dimLength,
+            extrapolatedCalculatedFvPatchVectorField::typeName
+        )
+    );
+    tdX.ref().primitiveFieldRef() = dX();
+    tdX.ref().correctBoundaryConditions();
+    return tdX;
 }
 
 

@@ -1,0 +1,37 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Pre-process the stl
+runApplication surfaceFeatures
+
+# -- Create the mesh for the fluid
+runApplication blockMesh
+
+# -- Decompose the mesh
+runApplication decomposePar -copyZero
+
+# -- Cut out the stl
+runParallel snappyHexMesh -overwrite
+
+sourceCase="../axisymmetricCharge"
+if [ -d "$sourceCase/processor0" ];
+then
+    parSource="-parallelSource"
+fi
+
+# -- Set the initial conditions for the fluid
+#    rho is mapped for use with AMR
+runParallel rotateFields $sourceCase \
+    -sourceTime 1e-4 -additionalFields '(rho lambda.c4)' -uniform \
+    -refine $parSource
+
+#- Run the calc
+runParallel $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file

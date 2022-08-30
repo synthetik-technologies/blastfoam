@@ -45,6 +45,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "afterburnModel.H"
+#include "HashTable.H"
 
 namespace Foam
 {
@@ -59,6 +60,14 @@ class MillerAfterburn
 :
     public afterburnModel
 {
+public:
+
+    // Static unit conversions
+    static const HashTable<label> pUnits;
+    static const HashTable<label> tUnits;
+
+
+private:
     // Private data
 
         //- Activation ratio

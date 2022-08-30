@@ -29,7 +29,7 @@ License
 
 template<class BasicThermo, class ThermoType>
 inline const Foam::PtrList<ThermoType>&
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::speciesData() const
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieThermos() const
 {
     return speciesData_;
 }

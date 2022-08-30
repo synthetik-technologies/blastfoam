@@ -66,9 +66,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
         (
             phasePropertyName("thermo:mu", phaseName),
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            mesh
         ),
         mesh,
         dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), 0.0)
@@ -94,7 +92,6 @@ void Foam::fluidBlastThermo::initializeFields()
         //- Calculate internal energy if it was not read
         e_ == this->calce(p_);
     }
-
     correct();
 }
 
@@ -114,7 +111,9 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
         return blastThermo::New<fluidBlastThermo>
         (
             mesh,
-            dict.optionalSubDict("mixture"),
+            (dict.isDict(phaseName) && phaseName != word::null)
+          ? dict.subDict(phaseName)
+          : dict.optionalSubDict("mixture"),
             phaseName,
             phaseName
         );

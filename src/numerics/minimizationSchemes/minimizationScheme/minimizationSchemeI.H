@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,22 +23,21 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalar& Foam::minimizationScheme::tolerance()
-{
-    return tolerance_;
-}
-
-
 inline Foam::label Foam::minimizationScheme::nSteps() const
 {
     return stepi_;
 }
 
 
-inline Foam::scalar Foam::minimizationScheme::error() const
+inline Foam::scalarList& Foam::minimizationScheme::xErrors() const
 {
-    return error_;
+    return xErrors_;
 }
 
+
+inline Foam::scalarList& Foam::minimizationScheme::yErrors() const
+{
+    return yErrors_;
+}
 
 // ************************************************************************* //

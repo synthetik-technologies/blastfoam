@@ -35,7 +35,8 @@ namespace Foam
 namespace fluxSchemes
 {
     defineTypeNameAndDebug(Kurganov, 0);
-    addToRunTimeSelectionTable(fluxScheme, Kurganov, dictionary);
+    addToRunTimeSelectionTable(fluxScheme, Kurganov, singlePhase);
+    addToRunTimeSelectionTable(fluxScheme, Kurganov, multiphase);
 }
 }
 
@@ -106,7 +107,6 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
         )
     );
-
     aOwn_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
@@ -135,6 +135,12 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             dimensionedScalar("0", dimless, 0.0)
         )
     );
+
+    if (!needEnergyFlux)
+    {
+        return;
+    }
+
     aSf_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
@@ -205,10 +211,21 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aphivNei, aPhivNei_);
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
-    this->save(facei, patchi, aSf, aSf_);
 
-    this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
+
     phi = aphivOwn + aphivNei;
+    this->save
+    (
+        facei,
+        patchi,
+        (aOwn*UOwn + aNei*UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
+    );
     rhoPhi = aphivOwn*rhoOwn + aphivNei*rhoNei;
 
     rhoUPhi =
@@ -283,11 +300,20 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aphivNei, aPhivNei_);
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
-    this->save(facei, patchi, aSf, aSf_);
-
-    this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
 
     phi = aphivOwn + aphivNei;
+    this->save
+    (
+        facei,
+        patchi,
+        (aOwn*UOwn + aNei*UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
+    );
 
     forAll(alphasOwn, phasei)
     {
@@ -339,7 +365,7 @@ Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + meshPhi(facei, patchi)*(aOwn*pOwn + aNei*pNei)
+      + meshPhi(facei, patchi)/mag(Sf)*(aOwn*pOwn + aNei*pNei)
     );
 }
 
@@ -351,10 +377,16 @@ Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
     const label facei, const label patchi
 ) const
 {
-    scalar aOwn = getValue(facei, patchi, aOwn_);
-    scalar aNei = getValue(facei, patchi, aNei_);
-
-   return aOwn*fOwn + aNei*fNei;
+    const scalar aphivOwn(getValue(facei, patchi, aPhivOwn_));
+    const scalar aphivNei(getValue(facei, patchi, aPhivNei_));
+    const scalar phi(aphivOwn + aphivNei);
+    if (mag(phi) > small)
+    {
+        return (fOwn*aphivOwn + fNei*aphivNei)/phi;
+    }
+    return
+        getValue(facei, patchi, aOwn_)*fOwn
+      + getValue(facei, patchi, aNei_)*fNei;
 }
 
 // ************************************************************************* //

@@ -83,6 +83,20 @@ protected:
                 return rho_;
             }
 
+            //- Thermal diffusivity for temperature of mixture [W/m/K]
+            virtual tmp<volScalarField> kappa() const
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Dynamic viscosity of mixture [kg/m/s]
+            virtual tmp<volScalarField> mu() const
+            {
+                NotImplemented;
+                return rho_;
+            }
+
 public:
 
     //- Runtime type information
@@ -160,10 +174,30 @@ public:
         // Access to derived thermodynamic variables
 
             //- Calculate density
-            virtual void updateRho(const volScalarField&) = 0;
+            virtual void updateRho
+            (
+                const volScalarField& alpha,
+                const volScalarField& p
+            ) = 0;
 
             //- Calculate internal energy given a pressure
             virtual tmp<volScalarField> calce(const volScalarField&) const = 0;
+
+            //- Calculate internal energy for a cell
+            virtual scalar calcCelle
+            (
+                const scalar p,
+                const label celli
+            ) const = 0;
+
+            //- Calculate Gamma = dpde
+            virtual tmp<volScalarField> Gamma() const = 0;
+
+            //- Calculate the pressure
+            virtual tmp<volScalarField> calcp() const = 0;
+
+            //- Calculate the speed of sound
+            virtual tmp<volScalarField> calcSpeedOfSound() const = 0;
 
             //- Pressure [Pa]
             const volScalarField& p() const;
@@ -183,6 +217,12 @@ public:
 
             //- Derivative of pressure w.r.t internal energy for cell
             virtual scalar celldpde(const label celli) const = 0;
+
+            //- Derivative of pressure w.r.t temperature for cell
+            virtual scalar celldpdT(const label celli) const = 0;
+
+            //- Is the equation of state temperature based
+            virtual bool temperatureBased() const = 0;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

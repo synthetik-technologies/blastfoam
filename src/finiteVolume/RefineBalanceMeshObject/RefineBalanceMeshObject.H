@@ -40,89 +40,68 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fvMesh.H"
-#include "regIOobject.H"
+#include "MeshObject.H"
+#include "mapDistributePolyMesh.H"
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class RefineMeshObject Declaration
+                   Class DistributeableMeshObject Declaration
 \*---------------------------------------------------------------------------*/
 
-class BalanceMeshObject
-:
-    public regIOobject
+class blastMeshObject
 {
+public:
+    template<class Mesh>
+    static void preDistribute
+    (
+        objectRegistry& obr
+    );
 
+    template<class Mesh>
+    static void distribute
+    (
+        objectRegistry& obr,
+        const mapDistributePolyMesh& map
+    );
+};
+
+template<class Mesh>
+class DistributeableMeshObject
+:
+    public PatchMeshObject<Mesh>
+{
 public:
 
-    // Declare name of the class and its debug switch
-    ClassName("BalanceMeshObject");
-
-    // Constructor
-    BalanceMeshObject
-    (
-        const word& typeName,
-        const objectRegistry& obr,
-        const IOobject::readOption read = IOobject::NO_READ,
-        const IOobject::writeOption write = IOobject::NO_WRITE
-    )
+    DistributeableMeshObject(const word& typeName, const objectRegistry& obr)
     :
-        regIOobject
-        (
-            IOobject
-            (
-                typeName,
-                obr.instance(),
-                obr,
-                read,
-                write
-            )
-        )
+        PatchMeshObject<Mesh>(typeName, obr)
     {}
 
-    virtual void updateObject() = 0;
+    DistributeableMeshObject(const word& typeName, const IOobject& io)
+    :
+        PatchMeshObject<Mesh>(typeName, io)
+    {}
 
-    static void updateObjects(objectRegistry&);
+    virtual void preDistribute()
+    {}
+
+    virtual void distribute(const mapDistributePolyMesh& map) = 0;
 };
 
 
-class RefineMeshObject
-:
-    public BalanceMeshObject
-{
-
-public:
-
-    // Declare name of the class and its debug switch
-    ClassName("RefineMeshObject");
-
-    // Constructor
-    RefineMeshObject
-    (
-        const word& typeName,
-        const objectRegistry& obr,
-        const IOobject::readOption read = IOobject::NO_READ,
-        const IOobject::writeOption write = IOobject::NO_WRITE
-    )
-    :
-        BalanceMeshObject
-        (
-            typeName,
-            obr,
-            read,
-            write
-        )
-    {}
-
-    virtual void updateObject() = 0;
-
-    static void updateObjects(objectRegistry&);
-};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+#include "RefineBalanceMeshObject.C"
+#endif
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

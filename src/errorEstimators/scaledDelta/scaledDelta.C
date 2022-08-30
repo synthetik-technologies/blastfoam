@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -49,8 +49,12 @@ Foam::errorEstimators::scaledDelta::scaledDelta
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_(dict.lookup("scaledDeltaField")),
-    minVal_(dict.lookupOrDefault<scalar>("minValue", small))
+    fieldName_
+    (
+        dict.lookupBackwardsCompatible({"scaledDeltaField", "field"})
+    ),
+    minVal_(dict.lookupOrDefault<scalar>("minValue", small)),
+    offset_(dict.lookupOrDefault<scalar>("offset", 0.0))
 {
     this->read(dict);
 }
@@ -66,6 +70,11 @@ Foam::errorEstimators::scaledDelta::~scaledDelta()
 
 void Foam::errorEstimators::scaledDelta::update(const bool scale)
 {
+    if (updateCurTimeIndex(!scale))
+    {
+        return;
+    }
+
     volScalarField x
     (
         IOobject
@@ -78,6 +87,10 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
         0.0
     );
     this->getFieldValue(fieldName_, x);
+    if (mag(offset_) > small)
+    {
+        x -= offset_;
+    }
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
@@ -89,12 +102,10 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
         label own = owner[facei];
         label nei = neighbour[facei];
 
-        if (x[own] > minVal_ || x[nei] > minVal_)
-        {
-            scalar eT = mag(x[own] - x[nei])/max(min(x[own], x[nei]), small);
-            error_[own] = max(error_[own], eT);
-            error_[nei] = max(error_[nei], eT);
-        }
+        scalar eT =
+            mag(x[own] - x[nei])/max(min(x[own], x[nei]), minVal_);
+        error_[own] = max(error_[own], eT);
+        error_[nei] = max(error_[nei], eT);
     }
 
     // Boundary faces
@@ -114,14 +125,11 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
 
             forAll(faceCells, facei)
             {
-                if (fn[facei] > minVal_ || fp[facei] > minVal_)
-                {
-                    scalar eT =
-                        mag(fp[facei] - fn[facei])
-                       /max(min(fp[facei], fn[facei]), small);
-                    error_[faceCells[facei]]=
-                        max(error_[faceCells[facei]], eT);
-                }
+                scalar eT =
+                    mag(fp[facei] - fn[facei])
+                   /max(min(fp[facei], fn[facei]), minVal_);
+                error_[faceCells[facei]] =
+                    max(error_[faceCells[facei]], eT);
             }
         }
     }

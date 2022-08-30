@@ -170,8 +170,15 @@ public:
 
         // Fields derived from thermodynamic state variables
 
-            //- Calclate internal energy [J/kg]
+            //- Calculate internal energy [J/kg]
             virtual tmp<volScalarField> calce(const volScalarField&) const = 0;
+
+            //- Calculate internal energy for a cell
+            virtual scalar calcCelle
+            (
+                const scalar p,
+                const label celli
+            ) const = 0;
 
             //- Recompute the density
             virtual void updateRho();
@@ -291,6 +298,12 @@ public:
 
             //- Derivative of pressure w.r.t internal energy for cell
             virtual scalar celldpde(const label celli) const = 0;
+
+            //- Derivative of pressure w.r.t temperature for cell
+            virtual scalar celldpdT(const label celli) const = 0;
+
+            //- Is the equation of state temperature based
+            virtual bool temperatureBased() const = 0;
 
 
         // Access to transport state variables

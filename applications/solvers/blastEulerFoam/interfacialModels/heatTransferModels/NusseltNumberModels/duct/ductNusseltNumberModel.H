@@ -25,7 +25,14 @@ Class
     Foam::NusseltNumberModels::duct
 
 Description
-    Nusselt number correlation of duct
+    Nusselt number correlation of Dittus–Boelter
+
+    \verbatim
+        "Heat transfer in automobile radiators of the tubular type"
+        Dittus, F.W., Boelter, L.M.K.,
+        University of California press, Berkeley, Calif,
+        1930
+    \endverbatim
 
 SourceFiles
     ductNusseltNumberModel.C

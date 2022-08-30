@@ -39,7 +39,6 @@ namespace functionObjects
 }
 }
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::conservedQuantities::conservedQuantities
@@ -53,6 +52,42 @@ Foam::functionObjects::conservedQuantities::conservedQuantities
     fields_(dict.lookup("fields"))
 {
     read(dict);
+
+    const volScalarField::Internal& V(this->mesh_.V());
+    forAll(fields_, i)
+    {
+        const word& name = fields_[i];
+
+        bool found = false;
+        #define CreateConservedVariables(Type, none)                    \
+        if                                                              \
+        (                                                               \
+            obr_.foundObject                                            \
+            <                                                           \
+                GeometricField<Type, fvPatchField, volMesh>             \
+            >(name)                                                     \
+        )                                                               \
+        {                                                               \
+            const GeometricField<Type, fvPatchField, volMesh>& f =      \
+                obr_.lookupObject                                       \
+                <                                                       \
+                    GeometricField<Type, fvPatchField, volMesh>         \
+                >(name);                                                \
+            dimensioned<Type> fV(sum(f()*V));                           \
+            Type##sOrig_.insert(name, fV);                              \
+            Type##s_.insert(name, fV);                                  \
+            found = true;                                               \
+        }
+
+        FOR_ALL_FIELD_TYPES(CreateConservedVariables);
+
+        #undef CreateConservedVariables
+
+        if (!found)
+        {
+            cannotFindObject(name);
+        }
+    }
 }
 
 
@@ -72,58 +107,6 @@ bool Foam::functionObjects::conservedQuantities::read(const dictionary& dict)
 
     fields_ = wordList(dict.lookup("fields"));
 
-    const volScalarField::Internal& V(this->mesh_.V());
-    forAll(fields_, i)
-    {
-        const word& name = fields_[i];
-        if (obr_.foundObject<volScalarField>(name))
-        {
-            const volScalarField& f = obr_.lookupObject<volScalarField>(name);
-            scalars_.insert(name, (sum(f()*V)));
-            scalar0s_.insert(name, (sum(f()*V)));
-        }
-        else if (obr_.foundObject<volVectorField>(name))
-        {
-            const volVectorField& f = obr_.lookupObject<volVectorField>(name);
-            vectors_.insert(name, (sum(f()*V)));
-            vector0s_.insert(name, (sum(f()*V)));
-        }
-        else if (obr_.foundObject<volSymmTensorField>(name) )
-        {
-            const volSymmTensorField& f =
-                obr_.lookupObject<volSymmTensorField>(name);
-            symmTensors_.insert(name, (sum(f()*V)));
-            symmTensor0s_.insert(name, (sum(f()*V)));
-        }
-        else if (obr_.foundObject<volSphericalTensorField>(name) )
-        {
-            const volSphericalTensorField& f =
-                obr_.lookupObject<volSphericalTensorField>(name);
-            sphTensors_.insert
-            (
-                name,
-                (sum(f()*V))
-            );
-            sphTensor0s_.insert
-            (
-                name,
-                sum(f()*V)
-            );
-        }
-        else if (obr_.foundObject<volTensorField>(name) )
-        {
-            const volTensorField& f =
-                obr_.lookupObject<volTensorField>(name);
-            tensors_.insert(name, (sum(f()*V)));
-            tensor0s_.insert(name, (sum(f()*V)));
-        }
-        else
-        {
-            WarningInFunction
-                << name << " was not found. Skipping" << endl;
-        }
-    }
-
     Log << endl;
 
     return true;
@@ -136,73 +119,45 @@ bool Foam::functionObjects::conservedQuantities::execute()
     forAll(fields_, i)
     {
         const word& name = fields_[i];
-        if (obr_.foundObject<volScalarField>(name))
-        {
-            const volScalarField& f = obr_.lookupObject<volScalarField>(name);
-            scalars_[name] = sum(f()*V);
-            scalar s = scalars_[name].value();
-            scalar s0 = scalar0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
-                <<"    Original = " << s0 << nl
-                <<"    Current = " << s << nl
-                <<"    difference (abs/rel) = " << (s - s0) << ", "
-                << mag(s - s0)/s0
-                << endl;
+
+        bool found = false;
+        #define UpdateConservedVariables(Type, none)                    \
+        if                                                              \
+        (                                                               \
+            obr_.foundObject                                            \
+            <                                                           \
+                GeometricField<Type, fvPatchField, volMesh>             \
+            >(name)                                                     \
+        )                                                               \
+        {                                                               \
+            const GeometricField<Type, fvPatchField, volMesh>& f =      \
+                obr_.lookupObject                                       \
+                <                                                       \
+                    GeometricField<Type, fvPatchField, volMesh>         \
+                >(name);                                                \
+                                                                        \
+            dimensioned<Type>& fV = Type##s_[name];                     \
+            fV = sum(f()*V);                                            \
+            const Type& valOrig = Type##sOrig_[name].value();           \
+            const Type& val = fV.value();                               \
+                                                                        \
+            Info<< name << " " << f.dimensions() << " :" << nl          \
+                << "    Original = " << valOrig << nl                   \
+                << "    Current = " << val << nl                        \
+                << "    difference (abs/rel) = " << (val - valOrig)     \
+                << ", "  << mag(val - valOrig)/max(mag(valOrig), small) \
+                << endl;                                                \
+                                                                        \
+            found = true;                                               \
         }
-        else if (obr_.foundObject<volVectorField>(name))
+
+        FOR_ALL_FIELD_TYPES(UpdateConservedVariables);
+
+        #undef UpdateConservedVariables
+
+        if (!found)
         {
-            const volVectorField& f = obr_.lookupObject<volVectorField>(name);
-            vectors_[name] = sum(f()*V);
-            vector v = vectors_[name].value();
-            vector v0 = vector0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
-                <<"    Original = " << v0 << nl
-                <<"    Current = " << v << nl
-                <<"    difference (abs/rel) = "<< (v - v0) << ", "
-                << mag(v - v0)/mag(v0)
-                << endl;
-        }
-        else if (obr_.foundObject<volSymmTensorField>(name) )
-        {
-            const volSymmTensorField& f =
-                obr_.lookupObject<volSymmTensorField>(name);
-            symmTensors_[name] = sum(f()*V);
-            symmTensor st = symmTensors_[name].value();
-            symmTensor st0 = symmTensor0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
-                <<"    Original = " << st0 << nl
-                <<"    Current = " << st << nl
-                <<"    difference (abs/rel) = " << (st - st0) << ", "
-                << mag(st - st0)/mag(st0)
-                << endl;
-        }
-        else if (obr_.foundObject<volSphericalTensorField>(name) )
-        {
-            const volSphericalTensorField& f =
-                obr_.lookupObject<volSphericalTensorField>(name);
-            sphTensors_[name] = sum(f()*V);
-            symmTensor st = sphTensors_[name].value();
-            symmTensor st0 = sphTensor0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
-                <<"    Original = " << st0 << nl
-                <<"    Current = " << st << nl
-                <<"    difference (abs/rel) = " << (st - st0) << ", "
-                << mag(st - st0)/mag(st0)
-                << endl;
-        }
-        else if (obr_.foundObject<volTensorField>(name) )
-        {
-            const volTensorField& f =
-                obr_.lookupObject<volTensorField>(name);
-            tensors_[name] = sum(f()*V);
-            tensor t = tensors_[name].value();
-            tensor t0 = tensor0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
-                <<"    Original = " << t0 << nl
-                <<"    Current = " << t << nl
-                <<"    difference (abs/rel) = " << (t - t0) << ", "
-                << mag(t - t0)/mag(t0)
-                << endl;
+            cannotFindObject(name);
         }
     }
     return true;

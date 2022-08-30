@@ -136,6 +136,18 @@ Foam::scalar Foam::stiffenedGas<Specie>::p
 
 
 template<class Specie>
+Foam::scalar Foam::stiffenedGas<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::Gamma
 (
     const scalar rho,
@@ -245,7 +257,7 @@ Foam::scalar Foam::stiffenedGas<Specie>::E
     const scalar T
 ) const
 {
-    return a_/max(rho, 1.0e-10);
+    return a_/max(rho, minRho_);
 }
 
 
@@ -265,10 +277,11 @@ template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
+    NotImplemented;
+    scalar rho((p - gamma_*a_)/this->R()*T);
     scalar rho0((Pstd - gamma_*a_)/this->R()*Tstd);
     return this->R()*(log(rho0) - log(rho));
 }

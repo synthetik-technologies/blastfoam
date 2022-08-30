@@ -8,7 +8,7 @@
 
 specie
 {
-    molWeight 18.01;
+    molWeight 28.97;//16.042;
 }
 
 // thermodynamics
@@ -26,27 +26,27 @@ thermoType
 {
     transport const;
     thermo      eConst;
-    equationOfState DoanNickel;
+    equationOfState perfectGas;
 }
 
 thermodynamics
 {
-    Cv 718;
-    Hf 0;
+    Cv      718;
+    Hf      -55528000;
 
-    file        "T.csv";
-    nRho        7;
-    ne          40;
-    minRho      -3.0;
-    mine        11.8748;
-    dRho        1.0;
-    de          1.0;
-
-    mod         ln;
-    TMod        ln;
+//     file        "T.csv";
+//     nRho        7;
+//     ne          40;
+//     minRho      -3.0;
+//     mine        11.8748;
+//     dRho        1.0;
+//     de          1.0;
+//
+//     mod         ln;
+//     TMod        ln;
 }
-// equationOfState
-// {
+equationOfState
+{
 // //     b 0.001;
 // // Shock
 // //     rho0    1000;
@@ -80,8 +80,20 @@ thermodynamics
 // //     C       14.57e9;
 // //     pCav    5000;
 //
-// // Stiffened gas
-// //     a 3309;
-// //     b 0;
-// //     gamma 7.15;
-// }
+// Stiffened gas
+    // a 3e8;
+    // b 0;
+    // gamma 7.15;
+
+
+// Peng robinson
+    //Tc        190.55;
+    //Vc        0.0285;
+    //Pc        4.595e6;
+    //omega     0.0115;
+
+    a               5.0;//895.506;
+    b               1e-3;//0.00268664;
+    c 0;
+    gamma 1.4;
+}
