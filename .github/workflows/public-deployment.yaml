@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.SYN_BOT_READ_WRITE }}
-          ref: ${{ github.ref }}
+          ref: master
           repository: ${{ inputs.prod_repo }}
 
       - name: Login to GitHub Registry
