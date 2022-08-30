@@ -40,6 +40,9 @@ jobs:
           username: jacobhoehler
           password: ${{ secrets.DOCKERHUB_JH }}
 
+      - name: Pull Image
+        run: docker pull "${{ env.DEV_IMAGE }}"
+
       - name: Create Image Tags
         run: |
           echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ env.TEST_TAG }}" >> $GITHUB_ENV
