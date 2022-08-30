@@ -47,9 +47,13 @@ jobs:
         run: |
           echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ env.TEST_TAG }}" >> $GITHUB_ENV
           echo "GHCR_PROD_IMAGE=ghcr.io/${{ env.PROD_REPO }}:${{ env.TEST_TAG }}" >> $GITHUB_ENV
+          echo "GHCR_PROD_LATEST_IMAGE=ghcr.io/${{ env.PROD_REPO }}:latest" >> $GITHUB_ENV
+          echo "DH_PROD_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
+          echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:${{ env.TEST_TAG }}" >> $GITHUB_ENV
 
-      - name: Pull Image
-        run: docker pull "${{ env.DEV_IMAGE }}"
-
-      - name: Rename Image
-        run: docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_IMAGE }}
+      - name: Tag Images
+        run: |
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_IMAGE }}
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_LATEST_IMAGE }}
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_IMAGE }}
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_LATEST_IMAGE }}
