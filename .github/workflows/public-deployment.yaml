@@ -1,13 +1,14 @@
 name: Public Deployment
 
 on:
-  push:
-    branches:
-      - "9-push-main-to-public-repo"
-
-env:
-  PROD_REPO: "synthetik-technologies/blastfoam-public-test"
-  TEST_TAG: "5.2.0-develop.3"
+  workflow_call:
+    inputs:
+      prod_repo:
+        required: true
+        type: string
+      tag:
+        required: true
+        type: string
 
 jobs:
   code:
@@ -22,20 +23,21 @@ jobs:
 
       - name: Push Code Publically
         run: |
-          git push --force "https://github.com/${{ env.PROD_REPO }}" HEAD:master
-          git push --force "https://github.com/${{ env.PROD_REPO }}" v${{ env.TEST_TAG }}
+          git push --force "https://github.com/${{ inputs.prod_repo }}" HEAD:master
+          git push --force "https://github.com/${{ inputs.prod_repo }}" v${{ inputs.tag }}
 
       - name: Copy Release Publically
         env:
           GH_TOKEN: ${{ secrets.SYN_BOT_READ_WRITE }}
         run: |
-          gh release download v${{ env.TEST_TAG }} -p '*.deb'
+          gh release download v${{ inputs.tag }} -p '*.deb'
           ls -la
-          gh release view -R "${{ env.PROD_REPO }}" || gh release create -R "${{ env.PROD_REPO }}" ${{ env.TEST_TAG }} #* View the release; if it doesn't exist create it
-          gh release upload -R "${{ env.PROD_REPO }}" ${{ env.TEST_TAG }} *.deb
+          gh release view -R "${{ inputs.prod_repo }}" || gh release create -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} #* View the release; if it doesn't exist create it
+          gh release upload -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} *.deb
   docker:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Login to GitHub Registry
         uses: docker/login-action@v2
@@ -50,17 +52,17 @@ jobs:
           username: jacobhoehler
           password: ${{ secrets.DOCKERHUB_JH }}
       - name: Construct Dev Tag
-        run: echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ env.TEST_TAG }}" >> $GITHUB_ENV
+        run: echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ inputs.tag }}" >> $GITHUB_ENV
 
       - name: Pull Image
         run: docker pull "${{ env.DEV_IMAGE }}"
 
       - name: Create Image Tags
         run: |
-          echo "GHCR_PROD_IMAGE=ghcr.io/${{ env.PROD_REPO }}:${{ env.TEST_TAG }}" >> $GITHUB_ENV
-          echo "GHCR_PROD_LATEST_IMAGE=ghcr.io/${{ env.PROD_REPO }}:latest" >> $GITHUB_ENV
+          echo "GHCR_PROD_IMAGE=ghcr.io/${{ inputs.prod_repo }}:${{ inputs.tag }}" >> $GITHUB_ENV
+          echo "GHCR_PROD_LATEST_IMAGE=ghcr.io/${{ inputs.prod_repo }}:latest" >> $GITHUB_ENV
           echo "DH_PROD_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
-          echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:${{ env.TEST_TAG }}" >> $GITHUB_ENV
+          echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:${{ inputs.tag }}" >> $GITHUB_ENV
 
       - name: Tag Images
         run: |
