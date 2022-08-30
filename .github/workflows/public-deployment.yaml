@@ -1,0 +1,27 @@
+name: Public Deployment
+
+on:
+  push:
+    branches:
+      - "9-push-main-to-public-repo"
+
+env:
+  PROD_REPO: "github.com/synthetik-technologies/blastfoam-public-test"
+
+jobs:
+  public-deployment:
+    name: Public Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Dev Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Log into GH
+        run: |
+          git config --local user.email "support@synthetik-technologies.com"
+          git config --local user.name "Synthetik Bot"
+
+      - name: Push code
+        run: |
+          git push --force-with-lease "${{ secrets.SYN_BOT_READ_WRITE }}@${{ env.PROD_REPO }}" HEAD:master
