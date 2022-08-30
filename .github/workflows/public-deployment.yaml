@@ -6,7 +6,7 @@ on:
       - "9-push-main-to-public-repo"
 
 env:
-  PROD_REPO: "github.com/synthetik-technologies/blastfoam-public-test.git"
+  PROD_REPO: "https://github.com/synthetik-technologies/blastfoam-public-test.git"
 
 jobs:
   public-deployment:
@@ -17,6 +17,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          token: ${{ secrets.SYN_BOT_READ_WRITE }}
+
       - name: Log into GH
         run: |
           git config --local user.email "support@synthetik-technologies.com"
@@ -24,4 +26,4 @@ jobs:
 
       - name: Push code
         run: |
-          git push --force-with-lease "https://${{ secrets.SYN_BOT_READ_WRITE }}@${{ env.PROD_REPO }}" HEAD:master
+          git push --force-with-lease "${{ env.PROD_REPO }}" HEAD:master
