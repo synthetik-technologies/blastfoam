@@ -85,6 +85,8 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
       - uses: actions/download-artifact@v3
         with:
           name: blastfoam-package
@@ -99,6 +101,8 @@ jobs:
     steps:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
       - name: Download Debian Package
         uses: actions/download-artifact@v3
         with:
@@ -116,3 +120,16 @@ jobs:
           image: blastfoam-dev
           image-registry: ghcr.io/synthetik-technologies
           version: ${{ needs.version.outputs.version }}
+
+  push-public-release:
+    needs:
+      - version
+      - build
+      - build-docker
+      - release-deb
+    uses: ./.github/workflows/public-deployment.yaml
+    if: github.ref_name == "main" #* only run on main
+    with:
+      prod_repo: synthetik-technologies/blastfoam-public-test
+      tag: ${{ needs.version.outputs.version }}
+    secrets: inherit
