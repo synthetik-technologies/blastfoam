@@ -26,4 +26,4 @@ jobs:
 
       - name: Push code
         run: |
-          git push --force-with-lease "${{ env.PROD_REPO }}" HEAD:master
+          git push --force "${{ env.PROD_REPO }}" HEAD:master
