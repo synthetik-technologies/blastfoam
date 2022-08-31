@@ -13,6 +13,7 @@ clean:
 	source etc/bashrc  && \
 	./Allwclean
 
+install: SHELL:=bash
 install:
 	+ source /opt/openfoam9/etc/bashrc && \
 	source etc/bashrc
