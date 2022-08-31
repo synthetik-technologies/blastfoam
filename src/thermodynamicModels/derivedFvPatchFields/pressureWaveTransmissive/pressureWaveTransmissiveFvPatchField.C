@@ -95,11 +95,24 @@ template<class Type>
 Foam::tmp<Foam::scalarField>
 Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
 {
-    scalarField phip
+    scalarField phip(this->size(), 0.0);
+    if
     (
-        this->patch().template
-            lookupPatchField<surfaceScalarField, scalar>(this->phiName_)
-    );
+        this->patch().boundaryMesh().mesh().template foundObject
+        <
+            surfaceScalarField
+        >(this->phiName_)
+    )
+    {
+        phip =
+            this->patch().template
+                lookupPatchField<surfaceScalarField, scalar>(this->phiName_);
+    }
+    else
+    {
+        WarningInFunction
+            << this->phiName_ << " was not found" << endl;
+    }
 
     const Field<scalar> cp(this->speedOfSound());
 

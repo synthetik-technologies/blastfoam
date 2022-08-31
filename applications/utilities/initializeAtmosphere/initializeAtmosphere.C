@@ -53,6 +53,9 @@ int main(int argc, char *argv[])
     argList::addOption("phase", "Name of the phase");
     argList::addOption("zone", "Cell zone to set");
     argList::addOption("type", "Model used to set the fields");
+    argList::addOption("fixedPatches", "patches to fix pressure on");
+    argList::addOption("refCell", "Reference cell");
+    argList::addOption("refPoint", "Reference point");
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -70,14 +73,34 @@ int main(int argc, char *argv[])
             IOobject::READ_IF_PRESENT
         )
     );
-
-    if (args.optionFound("pRef"))
+    word type = atmosphereModels::hydrostatic::typeName;
+    if (atmosphereProperties.headerOk())
     {
-        atmosphereProperties.set("pRef", args.optionRead<scalar>("pRef"));
+        type = atmosphereProperties.lookup<word>("type");
     }
+    else if (args.optionFound("type"))
+    {
+        type = args.optionRead<word>("type");
+    }
+
     if (args.optionFound("hRef"))
     {
         atmosphereProperties.set("hRef", args.optionRead<scalar>("hRef"));
+    }
+    else if (!atmosphereProperties.found("hRef"))
+    {
+        WarningInFunction << "hRef was not provided, using 0" << endl;
+    }
+
+    label refSet = 0;
+    if (args.optionFound("fixedPatches"))
+    {
+        refSet = 2;
+        atmosphereProperties.set
+        (
+            "fixedPatches",
+            args.optionRead<wordReList>("fixedPatches")
+        );
     }
 
     label zoneID = -1;
@@ -89,11 +112,7 @@ int main(int argc, char *argv[])
     (
         atmosphereModel::New
         (
-            (
-                args.optionFound("type")
-              ? args.optionRead<word>("type")
-              : atmosphereProperties.lookup<word>("type")
-            ),
+            type,
             mesh,
             atmosphereProperties,
             zoneID
@@ -140,6 +159,49 @@ int main(int argc, char *argv[])
             phaseName
         )
     );
+
+    if (thermo->p().needReference())
+    {
+        if (args.optionFound("pRef"))
+        {
+            atmosphereProperties.set("pRefValue", args.optionRead<scalar>("pRef"));
+            refSet++;
+        }
+        else if (atmosphereProperties.found("pRef"))
+        {
+            refSet++;
+        }
+
+        if (args.optionFound("refCell"))
+        {
+            atmosphereProperties.set("pRefCell", args.optionRead<int>("refCell"));
+            refSet++;
+        }
+        else if (args.optionFound("refPoint"))
+        {
+            atmosphereProperties.set("pRefPoint", args.optionRead<vector>("refPoint"));
+            refSet++;
+        }
+        else if
+        (
+            atmosphereProperties.found("pRef")
+         || atmosphereProperties.found("pRefCell")
+        )
+        {
+            refSet++;
+        }
+
+        Info<<atmosphereProperties<<endl;
+
+        if (refSet < 2)
+        {
+            FatalErrorInFunction
+                << "Could not determine reference pressure state" << nl
+                << "please provide pRef and refCell/pRefCell or refPoint/pRefPoint" << nl
+                << " or provide fixed pressure patches" << endl
+                << abort(FatalError);
+        }
+    }
 
     Info<< "Initializing atmosphere." << endl;
     atmosphere->createAtmosphere(thermo());
