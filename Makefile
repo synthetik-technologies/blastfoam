@@ -1,5 +1,5 @@
 # DESTDIR = /opt
-prefix = /opt/blastfoam
+prefix = /opt/${BLAST_DIR}/platforms/${WM_OPTIONS}
 
 build: SHELL:=bash
 build:
