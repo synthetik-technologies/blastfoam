@@ -22,7 +22,6 @@ install:
 	install --target-directory $(DESTDIR)$(prefix)/${BLAST_DIR}/platforms/${WM_OPTIONS}/lib -D \
 		lib/* && \
 	cp -r src $(DESTDIR)$(prefix)/src && \
-	# * find better install location later
 	install --target-directory $(DESTDIR)$(prefix)/${BLAST_DIR}/platforms/${WM_OPTIONS}/etc -D \
 		etc/bashrc && \
 	install --target-directory $(DESTDIR)$(prefix)/${BLAST_DIR}/platforms/${WM_OPTIONS}/etc/codeTemplates -D \
