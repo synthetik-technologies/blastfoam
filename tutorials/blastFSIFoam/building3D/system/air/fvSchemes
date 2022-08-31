@@ -26,7 +26,7 @@ ddtSchemes
 gradSchemes
 {
     default         cellMDLimited leastSquares 1.0;
-    grad(cellDisplacement) Gauss linear;
+    grad(cellMotionU) Gauss linear;
 }
 
 divSchemes
@@ -41,19 +41,20 @@ divSchemes
 laplacianSchemes
 {
     default         Gauss linear corrected;
-    laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
+    laplacian(diffusivity,cellMotionU) Gauss linear uncorrected;
 }
 
 interpolationSchemes
 {
     default         linear;
-    reconstruct(alpha)  quadraticMUSCL Minmod;
-    reconstruct(rho)    quadraticMUSCL Minmod;
-    reconstruct(U)      quadraticMUSCL Minmod;
-    reconstruct(e)      quadraticMUSCL Minmod;
-    reconstruct(p)      quadraticMUSCL Minmod;
-    reconstruct(speedOfSound) quadraticMUSCL Minmod;
-    "reconstruct(.*)"   quadraticMUSCL Minmod;
+    reconstruct(alpha)  upwindMUSCL Minmod;
+    reconstruct(rho)    upwindMUSCL Minmod;
+    reconstruct(U)      upwindMUSCL Minmod;
+    reconstruct(e)      upwindMUSCL Minmod;
+    reconstruct(p)      upwindMUSCL Minmod;
+    reconstruct(speedOfSound) upwindMUSCL Minmod;
+
+    "reconstruct(.*)"   upwindMUSCL Minmod;
 }
 
 snGradSchemes

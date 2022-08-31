@@ -75,6 +75,7 @@ gas
     }
 
     type basic;
+    calculateDensity yes;
     thermoType
     {
         transport   const;
@@ -166,7 +167,7 @@ lift
 (
     (particles in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
 );

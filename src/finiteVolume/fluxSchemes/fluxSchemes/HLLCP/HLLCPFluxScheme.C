@@ -33,7 +33,7 @@ namespace Foam
 namespace fluxSchemes
 {
     defineTypeNameAndDebug(HLLCP, 0);
-    addToRunTimeSelectionTable(fluxScheme, HLLCP, dictionary);
+    addToRunTimeSelectionTable(fluxScheme, HLLCP, singlePhase);
 }
 }
 

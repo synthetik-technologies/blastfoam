@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,7 +25,8 @@ Class
     Foam::errorEstimators::scaledDelta
 
 Description
-    Error is defined by the relative difference of a field over a face
+    Error is defined by the relative difference of a field over a face with
+    an optional offset
 
 SourceFiles
     scaledDelta.C
@@ -59,6 +60,9 @@ class scaledDelta
 
         //- Minimum value to consider
         const scalar minVal_;
+
+        //- Offset value
+        scalar offset_;
 
 
 public:

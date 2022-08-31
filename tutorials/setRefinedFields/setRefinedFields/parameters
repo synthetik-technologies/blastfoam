@@ -1,0 +1,11 @@
+s 1.0;
+t0 1.0;
+v1 (2 1 1);
+
+//- Boundary Layer properties
+uRef       1.45;
+zRef       2.0;
+z0         0.0005;  // 0.5 mm
+zg         0.0;
+uDir       (0 1 0);
+zDir       (0 0 1);

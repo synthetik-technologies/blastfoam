@@ -92,7 +92,6 @@ tnt
             (0 0 0)
         );
         vDet       6985; //7850;
-        Pcj 18.46e9;
         advection yes;              // The reaction progress variable is allowed
                                     // to move with the explosive mass
     }

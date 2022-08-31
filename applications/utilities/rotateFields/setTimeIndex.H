@@ -20,12 +20,8 @@
         sourceTimeIndex = Time::findClosestTimeIndex
         (
             sourceTimes,
-            runTimeTarget.time().value()
+            targetRunTime.time().value()
         );
     }
 
     runTimeSource.setTime(sourceTimes[sourceTimeIndex], sourceTimeIndex);
-
-    Info<< "\nSource time: " << runTimeSource.value()
-        << "\nTarget time: " << runTimeTarget.value()
-        << nl << endl;

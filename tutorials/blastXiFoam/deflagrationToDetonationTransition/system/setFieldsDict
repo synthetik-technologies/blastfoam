@@ -20,6 +20,79 @@ defaultFieldValues
     volScalarFieldValue T 293
     volScalarFieldValue Tu 293
     volScalarFieldValue b 1
+    volScalarFieldFunction ft
+    {
+        type coded;
+
+        code
+        #{
+            const scalar H2molf = 0.25;
+
+            const scalar MH2 = 1.00784*2.0;
+            const scalar MN2 = 14.0067*2.0;
+            const scalar MO2 = 15.9988*2.0;
+
+            scalar yRel = y - 0.03;
+            scalar _10H2 =
+              - 3.50957e+04*pow5(yRel)
+              - 3.26065e+04*pow4(yRel)
+              - 5.25765e+03*pow3(yRel)
+              - 2.62149e+02*sqr(yRel)
+              - 3.84660e-01*yRel
+              + 1.99094e-01;
+
+            scalar _20H2 =
+                1.84717e+05*pow5(yRel)
+              - 1.40719e+04*pow4(yRel)
+              - 6.78365e+03*pow3(yRel)
+              - 4.17966e+02*sqr(yRel)
+              - 6.09813e-01*yRel
+              + 3.77362e-01;
+
+            scalar _30H2 =
+                3.70457e+05*pow5(yRel)
+              + 1.89256e+04*pow4(yRel)
+              - 5.74215e+03*pow3(yRel)
+              - 4.60436e+02*sqr(yRel)
+              - 4.98623e-01*yRel
+              + 5.26445e-01;
+
+            scalar _40H2 =
+                5.69961e+05*pow5(yRel)
+              + 6.66643e+04*pow4(yRel)
+              - 2.62118e+03*pow3(yRel)
+              - 4.11878e+02*sqr(yRel)
+              - 1.79756e-01*yRel
+              + 6.48390e-01;
+
+            scalar xH2;
+            if(H2molf < 0.10)
+            {
+                xH2 = H2molf/0.10*_10H2;
+            }
+            else if (H2molf < 0.20)
+            {
+                xH2 = _10H2 + (H2molf - 0.10)/0.10*(_20H2 - _10H2);
+            }
+            else if (H2molf < 0.30)
+            {
+                xH2 = _20H2 + (H2molf - 0.20)/0.10*(_30H2-_20H2);
+            }
+            else if (H2molf <= 0.40)
+            {
+                xH2 = _30H2 + (H2molf - 0.30)/0.10*(_40H2 - _30H2);
+            }
+            else
+            {
+                Info<<"\n Error: molar H2 fraction above 0.40 \n";
+            }
+
+            scalar xO2 = (1.0 - xH2)*0.21;
+            scalar xN2 = 1.0 - xH2 - xO2;
+
+            return xH2*MH2/(xN2*MN2 + xH2*MH2 + xO2*MO2);
+        #};
+    }
 );
 
 regions

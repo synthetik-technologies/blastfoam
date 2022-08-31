@@ -3,6 +3,32 @@
 # Results taken from:
 # Woodward, Paul, and Phillip Colella. “The Numerical Simulation of Two-Dimensional Fluid Flow with Strong Shocks.” Journal of Computational Physics 54, no. 1 (1984): 115–173.
 
+createRhoU()
+{
+echo $1 $2 $3
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_woodward_colella_validation_rho_u_$5.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Density [kg/m^3]"
+    set y2label "Velocity [m/s]"
+    set grid
+    set key $6 top
+    set size 2,2
+    set autoscale
+    set xrange [0:1]
+    plot    "$1" using 1:2 title 'Woodward \& Colella' \
+                with points linewidth 8 linecolor rgb 'black', \
+            "$2" using 1:3 title 'blastFOAM' \
+                with lines lt 1 linewidth 2 linecolor rgb 'black', \
+            "$3" using 1:2 title 'Woodward \& Colella' axes x1y2\
+                with points linewidth 8 linecolor rgb 'red', \
+            "$4" using 1:2 title 'blastFOAM' axes x1y2\
+                with lines lt 1 linewidth 2 linecolor rgb 'red'
+EOF
+}
+
 createU()
 {
 
@@ -66,6 +92,22 @@ VALIDATIONDATAROOT=./validationData
 declare -a times=("0.01" "0.016" "0.026" "0.028" "0.03" "0.032" "0.034" "0.038")
 
 declare -a positions=(right left left left left left left left)
+
+
+
+## now loop through the above array
+# for i in "${!times[@]}"
+# do
+#     echo "Creating U at time: ${times[i]}"
+#     uVal="$VALIDATIONDATAROOT/u_${times[i]}.csv"
+#     UBlastFOAM="../postProcessing/sampleDict/${times[i]}/Centerline_U*"
+#
+#     rhoVal="$VALIDATIONDATAROOT/rho_${times[i]}.csv"
+#     rhoBlastFOAM="../postProcessing/sampleDict/${times[i]}/Centerline_p*"
+#
+#     createRhoU $rhoVal $rhoBlastFOAM $uVal $UBlastFOAM ${times[i]} ${positions[i]}
+#     # or do whatever with individual element of the array
+# done
 
 ## now loop through the above array
 for i in "${!times[@]}"

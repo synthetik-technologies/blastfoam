@@ -30,7 +30,7 @@ defaultFieldValues
     volScalarFieldValue p              $p1
     volScalarFieldValue alpha.fluid    1
     volScalarFieldValue rho.fluid      $rho1
-    volScalarFieldValue rho.gas        $rho1
+    volScalarFieldValue rho.gas        $rho2
 );
 
 regions
@@ -43,8 +43,6 @@ regions
         (
             volScalarFieldValue p           $p2
             volScalarFieldValue alpha.fluid 0.0
-            volScalarFieldValue rho.fluid   $rho2
-            volScalarFieldValue rho.gas     $rho2
         );
     }
  );

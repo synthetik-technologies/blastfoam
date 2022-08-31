@@ -24,6 +24,11 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "FieldSetType.H"
+#include "volFields.H"
+#include "surfaceFields.H"
+#include "pointFields.H"
+#include "valuePointPatchField.H"
+#include "fieldSetOptions.H"
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
@@ -31,33 +36,194 @@ template<class Type, template<class> class Patch, class Mesh>
 Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
 (
     const fvMesh& mesh,
+    const dictionary& dict,
     const word& fieldName,
-    const labelList& selectedCells,
+    const labelList& selectedIndices,
     Istream& is,
     const bool write
 )
 :
     mesh_(mesh),
+    dict_(dict),
+    fName_(fieldName),
     fieldPtr_(lookupOrRead(fieldName)),
-    selectedCells_(selectedCells),
+    selectedIndices_(selectedIndices),
+    noInternal_(false),
+    evaluateBoundaries_(false),
     write_(write),
     good_(fieldPtr_.valid())
-{}
+{
+    token t;
+    while (true)
+    {
+        t = token(is);
+        if (!t.isPunctuation())
+        {
+            break;
+        }
+        if (t.pToken() != '-')
+        {
+            break;
+        }
+        fieldSetOptions::options opt = fieldSetOptions::optionNames[word(is)];
+        switch (opt)
+        {
+            case fieldSetOptions::SetBoundaries:
+                boundaries_ = wordHashSet(is);
+                break;
+            case fieldSetOptions::SetAllBoundaries:
+                boundaries_ = wordHashSet(mesh_.boundaryMesh().names());
+                break;
+            case fieldSetOptions::NoInternal:
+                noInternal_ = true;
+                break;
+            case fieldSetOptions::EvaluateBoundaries:
+                evaluateBoundaries_ = true;
+                break;
+            default:
+                FatalErrorInFunction
+                    << "Unknown option \"" << opt << "\""<< nl
+                    << "valid options are " << nl
+                    << fieldSetOptions::optionNames.toc() << endl
+                    << abort(FatalError);
+        }
+        if (noInternal_ && !boundaries_.size())
+        {
+            FatalErrorInFunction
+                << "Internal field is not set and no boundaries were "
+                << "specified" << endl
+                << abort(FatalError);
+        }
+    }
+    is.putBack(t);
+
+}
 
 
 template<class Type, template<class> class Patch, class Mesh>
 Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
 (
     const fvMesh& mesh,
-    const labelList& selectedCells
+    const dictionary& dict,
+    const labelList& selectedIndices
 )
 :
     mesh_(mesh),
+    dict_(dict),
+    fName_(word::null),
     fieldPtr_(nullptr),
-    selectedCells_(selectedCells),
+    selectedIndices_(selectedIndices),
+    noInternal_(false),
+    evaluateBoundaries_(false),
     write_(false),
     good_(false)
 {}
+
+
+template<class Type>
+Foam::VolFieldSetType<Type>::VolFieldSetType
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& fieldName,
+    const labelList& selectedIndices,
+    Istream& is,
+    const bool write
+)
+:
+    FieldSetType<Type, fvPatchField, volMesh>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    )
+{}
+
+
+template<class Type>
+Foam::VolFieldSetType<Type>::VolFieldSetType
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const labelList& selectedIndices
+)
+:
+    FieldSetType<Type, fvPatchField, volMesh>(mesh, dict, selectedIndices)
+{}
+
+
+template<class Type>
+Foam::SurfaceFieldSetType<Type>::SurfaceFieldSetType
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& fieldName,
+    const labelList& selectedIndices,
+    Istream& is,
+    const bool write
+)
+:
+    FieldSetType<Type, fvsPatchField, surfaceMesh>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    )
+{}
+
+
+template<class Type>
+Foam::SurfaceFieldSetType<Type>::SurfaceFieldSetType
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const labelList& selectedIndices
+)
+:
+    FieldSetType<Type, fvsPatchField, surfaceMesh>(mesh, dict, selectedIndices)
+{}
+
+
+template<class Type>
+Foam::PointFieldSetType<Type>::PointFieldSetType
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& fieldName,
+    const labelList& selectedIndices,
+    Istream& is,
+    const bool write
+)
+:
+    FieldSetType<Type, pointPatchField, pointMesh>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    )
+{}
+
+
+template<class Type>
+Foam::PointFieldSetType<Type>::PointFieldSetType
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const labelList& selectedIndices
+)
+:
+    FieldSetType<Type, pointPatchField, pointMesh>(mesh, dict, selectedIndices)
+{}
+
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -66,7 +232,52 @@ Foam::FieldSetType<Type, Patch, Mesh>::~FieldSetType()
 {}
 
 
+template<class Type>
+Foam::VolFieldSetType<Type>::~VolFieldSetType()
+{}
+
+
+template<class Type>
+Foam::SurfaceFieldSetType<Type>::~SurfaceFieldSetType()
+{}
+
+
+template<class Type>
+Foam::PointFieldSetType<Type>::~PointFieldSetType()
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type, template<class> class Patch, class Mesh>
+const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::getMesh
+(
+    const UautoPtr<GeometricField<Type, fvPatchField, volMesh>>&
+) const
+{
+    return mesh_;
+}
+
+
+template<class Type, template<class> class Patch, class Mesh>
+const Foam::fvMesh& Foam::FieldSetType<Type, Patch, Mesh>::getMesh
+(
+    const UautoPtr<GeometricField<Type, fvsPatchField, surfaceMesh>>&
+) const
+{
+    return mesh_;
+}
+
+
+template<class Type, template<class> class Patch, class Mesh>
+const Foam::pointMesh& Foam::FieldSetType<Type, Patch, Mesh>::getMesh
+(
+    const UautoPtr<GeometricField<Type, pointPatchField, pointMesh>>&
+) const
+{
+    return pointMesh::New(mesh_);
+}
+
 
 template<class Type, template<class> class Patch, class Mesh>
 typename Foam::FieldSetType<Type, Patch, Mesh>::FieldType*
@@ -104,7 +315,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
     {
         FieldType* fPtr
         (
-            new FieldType(fieldHeader, mesh_)
+            new FieldType(fieldHeader, getMesh(fieldPtr_))
         );
         fPtr->store(fPtr);
         return &mesh_.lookupObjectRef<FieldType>(fieldName);
@@ -114,21 +325,256 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
 
 
 template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetType<Type, Patch, Mesh>::setField()
+void Foam::FieldSetType<Type, Patch, Mesh>::getInternalField
+(
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{}
+
+
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::FieldSetType<Type, Patch, Mesh>::getBoundaryField
+(
+    const label patchi,
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::VolFieldSetType<Type>::getBoundary
+(
+    const label patchi,
+    const GeometricField<Type, fvPatchField, volMesh>& f
+) const
 {
-    typename GeometricField<Type, Patch, Mesh>::
-        Boundary& fieldBf = fieldPtr_->boundaryFieldRef();
-    forAll(fieldPtr_->boundaryField(), patchi)
+    return f.boundaryField()[patchi];
+}
+
+
+template<class Type>
+void Foam::VolFieldSetType<Type>::setField()
+{
+    if (!this->noInternal_)
     {
-        fieldBf[patchi] = fieldBf[patchi].patchInternalField();
+        const UIndirectList<vector> CInt(this->mesh_.C(), this->selectedIndices_);
+        UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
+        this->getInternalField(this->selectedIndices_, CInt, fInt);
     }
 
-    if (write_)
+    labelHashSet cells(this->selectedIndices_);
+
+    typename GeometricField<Type, fvPatchField, volMesh>::
+        Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
+    forAll(this->fieldPtr_->boundaryField(), patchi)
     {
-        if (!fieldPtr_->write())
+        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
+        if (this->boundaries_.found(p.name()) && fieldBf[patchi].fixesValue())
+        {
+            const labelList& fCells = p.faceCells();
+            labelHashSet faces;
+            forAll(fCells, fi)
+            {
+                if (cells.found(fCells[fi]))
+                {
+                    faces.insert(fi);
+                }
+            }
+            labelList indices(faces.toc());
+            const UIndirectList<vector> pC
+            (
+                this->mesh_.C().boundaryField()[patchi],
+                indices
+            );
+            UIndirectList<Type> pf(fieldBf[patchi], indices);
+            this->getBoundaryField(patchi, indices, pC, pf);
+        }
+        this->fieldPtr_->boundaryFieldRef()[patchi] =
+            this->fieldPtr_->boundaryField()[patchi].patchInternalField();
+    }
+
+    if (this->evaluateBoundaries_)
+    {
+        this->fieldPtr_->correctBoundaryConditions();
+    }
+
+    if (this->write_)
+    {
+        if (!this->fieldPtr_->write())
         {
             FatalErrorInFunction
-                << "Failed writing field " << fieldPtr_->name() << endl
+                << "Failed writing field " << this->fieldPtr_->name() << endl
+                << exit(FatalError);
+        }
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::SurfaceFieldSetType<Type>::getBoundary
+(
+    const label patchi,
+    const GeometricField<Type, fvsPatchField, surfaceMesh>& f
+) const
+{
+    return f.boundaryField()[patchi];
+}
+
+
+template<class Type>
+void Foam::SurfaceFieldSetType<Type>::setField()
+{
+    labelHashSet faces(this->selectedIndices_);
+    labelList indices(this->selectedIndices_);
+    label I = 0;
+    forAll(indices, i)
+    {
+        if (indices[i] < this->mesh_.nInternalFaces())
+        {
+            indices[I++] = indices[i];
+        }
+    }
+    indices.resize(I);
+
+    if (!this->noInternal_)
+    {
+        const UIndirectList<vector> CfInt(this->mesh_.Cf(), indices);
+        UIndirectList<Type> fInt(this->fieldPtr_(), indices);
+        this->getInternalField(indices, CfInt, fInt);
+    }
+
+    typename GeometricField<Type, fvsPatchField, surfaceMesh>::
+        Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
+
+    forAll(this->fieldPtr_->boundaryField(), patchi)
+    {
+        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
+        if (this->boundaries_.found(p.name()) && fieldBf[patchi].fixesValue())
+        {
+            indices = identity(p.size());
+            I = 0;
+            forAll(p, fi)
+            {
+                if (faces.found(fi + p.start()))
+                {
+                    indices[I++] = fi;
+                }
+            }
+            if (!I)
+            {
+                continue;
+            }
+            indices.resize(I);
+            const UIndirectList<vector> pC
+            (
+                this->mesh_.Cf().boundaryField()[patchi],
+                indices
+            );
+            UIndirectList<Type> pf(fieldBf[patchi], indices);
+            this->getBoundaryField(patchi, indices, pC, pf);
+        }
+    }
+
+    if (this->write_)
+    {
+        if (!this->fieldPtr_->write())
+        {
+            FatalErrorInFunction
+                << "Failed writing field " << this->fieldPtr_->name() << endl
+                << exit(FatalError);
+        }
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::PointFieldSetType<Type>::getBoundary
+(
+    const label patchi,
+    const GeometricField<Type, pointPatchField, pointMesh>& f
+) const
+{
+    if (isA<valuePointPatchField<Type>>(f.boundaryField()[patchi]))
+    {
+        return dynamicCast<const valuePointPatchField<Type>>
+        (
+            f.boundaryField()[patchi]
+        );
+    }
+    return f.boundaryField()[patchi].patchInternalField();
+}
+
+
+template<class Type>
+void Foam::PointFieldSetType<Type>::setField()
+{
+    if (!this->noInternal_)
+    {
+        const UIndirectList<vector> pts
+        (
+            this->mesh_.points(),
+            this->selectedIndices_
+        );
+        UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
+        this->getInternalField(this->selectedIndices_, pts, fInt);
+    }
+
+    labelHashSet points(this->selectedIndices_);
+
+    typename GeometricField<Type, pointPatchField, pointMesh>::
+        Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
+
+    forAll(this->fieldPtr_->boundaryField(), patchi)
+    {
+        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
+        if
+        (
+            this->boundaries_.found(p.name())
+         && isA<valuePointPatchField<Type>>(fieldBf[patchi])
+        )
+        {
+            const labelList& meshPoints = p.meshPoints();
+            labelList indices(meshPoints.size(), -1);
+            labelList gIndices(meshPoints.size(), -1);
+            label I = 0;
+            forAll(meshPoints, pi)
+            {
+                if (points.found(meshPoints[pi]))
+                {
+                    gIndices[I] = meshPoints[pi];
+                    indices[I++] = pi;
+                }
+            }
+            indices.resize(I);
+            const UIndirectList<vector> pC
+            (
+                this->mesh_.points(),
+                gIndices
+            );
+            UIndirectList<Type> pf
+            (
+                dynamicCast<valuePointPatchField<Type>>(fieldBf[patchi]),
+                indices
+            );
+            this->getBoundaryField(patchi, indices, pC, pf);
+        }
+    }
+
+    if (this->evaluateBoundaries_)
+    {
+        this->fieldPtr_->correctBoundaryConditions();
+    }
+
+    if (this->write_)
+    {
+        if (!this->fieldPtr_->write())
+        {
+            FatalErrorInFunction
+                << "Failed writing field " << this->fieldPtr_->name() << endl
                 << exit(FatalError);
         }
     }

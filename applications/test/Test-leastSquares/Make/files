@@ -1,0 +1,3 @@
+Test-leastSquares.C
+
+EXE = $(BLAST_APPBIN)/Test-leastSquares

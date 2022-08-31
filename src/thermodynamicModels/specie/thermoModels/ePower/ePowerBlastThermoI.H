@@ -189,56 +189,31 @@ template<class EquationOfState>
 inline Foam::scalar Foam::ePowerThermo<EquationOfState>::S
 (
     const scalar p,
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
     return
         c0_*(pow(T, n0_) - pow(Tstd, n0_))/(pow(Tref_, n0_)*n0_)
-      + EquationOfState::S(p, rho, T);
+      + EquationOfState::S(p, T);
 }
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::ePowerThermo<EquationOfState>::dGdT
+inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Gstd
 (
     const scalar p,
     const scalar T
 ) const
 {
-    NotImplemented;
-    return 0;
+    return
+        c0_*(pow(T, n0_ + 1) - pow(Tstd, n0_ + 1))/(pow(Tref_, n0_)*(n0_ + 1))
+      + Hf() + Pstd/EquationOfState::rho(Pstd, T)
+      - S(Pstd, T)*T;
 }
 
 
 template<class EquationOfState>
 inline Foam::scalar Foam::ePowerThermo<EquationOfState>::dCpdT
-(
-    const scalar p,
-    const scalar T
-) const
-{
-    NotImplemented;
-    return 0;
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::ePowerThermo<EquationOfState>::dCpdT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    NotImplemented;
-    return 0.0;
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::ePowerThermo<EquationOfState>::dCvdT
 (
     const scalar rho,
     const scalar e,

@@ -121,12 +121,16 @@ inline void Foam::constIsoSolidTransport<Thermo>::operator+=
 )
 {
     scalar Y1 = this->Y();
+
     Thermo::operator+=(ct);
 
-    Y1 /= this->Y();
-    scalar Y2 = ct.Y()/this->Y();
+    if (mag(this->Y()) > small)
+    {
+        Y1 /= this->Y();
+        scalar Y2 = ct.Y()/this->Y();
 
-    kappa_ = Y1*kappa_ + Y2*ct.kappa_;
+        kappa_ = Y1*kappa_ + Y2*ct.kappa_;
+    }
 }
 
 

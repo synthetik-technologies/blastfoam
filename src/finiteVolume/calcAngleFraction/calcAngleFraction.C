@@ -58,7 +58,7 @@ Foam::scalar Foam::calcAngleFraction(const polyMesh& mesh)
             vector axis = cmptMag(wedge.axis());
             forAll(axes, i)
             {
-                if (mag(axis - axes[i]) < small)
+                if (mag(axis - axes[i]) < 1e-6)
                 {
                     found = true;
                 }

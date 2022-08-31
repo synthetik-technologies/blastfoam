@@ -35,8 +35,8 @@ Foam::tabulatedTransport<Thermo>::tabulatedTransport
 )
 :
     Thermo(dict),
-    mu_(dict.subDict("mu"), "T", "mu"),
-    kappa_(dict.subDict("kappa"), "T", "kappa")
+    mu_(dict.subDict("transport"), "rho", "T", "mu"),
+    kappa_(dict.subDict("transport"), "rho", "T", "kappa")
 {}
 
 
@@ -45,7 +45,7 @@ Foam::tabulatedTransport<Thermo>::tabulatedTransport
 template<class Thermo>
 void Foam::tabulatedTransport<Thermo>::write(Ostream& os) const
 {
-    os  << this->specieName() << endl;
+    os  << this->name() << endl;
     os  << token::BEGIN_BLOCK << incrIndent << nl;
 
     Thermo::write(os);

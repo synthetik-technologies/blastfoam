@@ -67,6 +67,8 @@ int main(int argc, char *argv[])
 {
     #include "postProcess.H"
 
+    fluxSchemeBase::needEnergyFlux = true;
+
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMesh.H"
@@ -75,7 +77,8 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createFieldRefs.H"
     #include "createTimeControls.H"
-    #include "eigenCourantNo.H"
+
+    scalar CoNum = fluid.CoNum();
     #include "setInitialDeltaT.H"
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -84,8 +87,8 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        CoNum = fluid.CoNum();
         #include "readTimeControls.H"
-        #include "eigenCourantNo.H"
         #include "setDeltaT.H"
 
         runTime++;
@@ -97,10 +100,7 @@ int main(int argc, char *argv[])
         #include "ftEqn.H"
         #include "bEqn.H"
 
-        integrator->clearODEFields();
-
-        //- Clear the flux scheme
-        fluid.flux().clear();
+        integrator->clear();
 
         runTime.write();
 

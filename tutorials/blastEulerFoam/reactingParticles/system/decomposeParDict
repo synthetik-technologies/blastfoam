@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 4; // this is number of proc
+numberOfSubdomains 36; // this is number of proc
 
 // preservePatches (patch0 patch1 patch2);
 

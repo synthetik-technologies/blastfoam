@@ -1,0 +1,141 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      diffusionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+name diffusionOpt;
+lowerBound  1e-6;
+upperBound  1.0;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ // Additional folders to include
+codeOptions
+#{
+    -I$(FOAM_SRC)/finiteVolume/lnInclude \
+    -I$(FOAM_SRC)/meshTools/lnInclude
+#};
+
+// Additional libraries to include
+codeLibs
+#{
+    -lfiniteVolume
+#};
+
+// Headers to include
+codeInclude
+#{
+#include "Time.H"
+#include "fvCFD.H"
+#include "lookupTables1D.H"
+#};
+
+fx_code
+#{
+    // Cast the object registry to Time
+    Time& runTime
+    (
+        const_cast<Time&>(dynamicCast<const Time>(this->obr_))
+    );
+
+    // Reset the time to 0
+    runTime.setTime(0.0, 0);
+
+    // Create the mesh
+    fvMesh mesh
+    (
+        IOobject
+        (
+            fvMesh::defaultRegion,
+            runTime.timeName(),
+            runTime,
+            IOobject::MUST_READ
+        )
+    );
+
+    // Read in the concentration field
+    volScalarField c
+    (
+        IOobject
+        (
+            "c",
+            runTime.timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh
+    );
+
+    // Read in the concentration field
+    volScalarField error
+    (
+        IOobject
+        (
+            "error",
+            runTime.timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimless, 0.0),
+        "zeroGradient"
+    );
+
+    // Create the diffusion coefficient
+    dimensionedScalar D("D", dimVelocity*dimLength, x);
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    // Solve the transient diffusion problem
+    SolverPerformance<scalar>::debug = 0;
+    while (runTime.loop())
+    {
+        Foam::solve(fvm::ddt(c) - fvm::laplacian(D, c));
+    }
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    // Compute the error
+    static lookupTable1D<scalar> solution
+    (
+        dictionary(IFstream("./diffusionProperties")()).subDict("solution"),
+        "x",
+        "c"
+    );
+
+    scalar e = 0.0;
+    forAll(c, celli)
+    {
+        scalar Cexp = solution.lookup(mesh.C()[celli].x());
+        error[celli] = c[celli] - Cexp;
+        e += magSqr((c[celli] - Cexp)/Cexp);
+    }
+    error.correctBoundaryConditions();
+
+    reduce(e, sumOp<scalar>());
+    e = sqrt(e/returnReduce(c.size(), sumOp<label>()));
+
+    // Write the concentration field
+    c.write();
+    error.write();
+
+    // Output the diffusion coefficient and error to a file
+    static OFstream os("D_vs_error");
+    os << x << " " << e << endl;
+
+    return e;
+#};
+
+// ************************************************************************* //

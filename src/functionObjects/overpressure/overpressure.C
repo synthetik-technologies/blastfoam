@@ -54,6 +54,10 @@ Foam::functionObjects::overpressure::overpressure
     pRef_("pRef", dimPressure, dict),
     store_(dict.lookupOrDefault("store", false))
 {
+    if (!dict.lookupOrDefault("executeAtStart", false))
+    {
+        executeAtStart_ = false;
+    }
     if (store_)
     {
         obr_.store
@@ -64,13 +68,10 @@ Foam::functionObjects::overpressure::overpressure
                 (
                     resultName_,
                     obr_.time().timeName(),
-                    obr_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    obr_
                 ),
                 this->mesh_,
-                dimensionedScalar("0", dimPressure, Zero),
-                "zeroGradient"
+                dimensionedScalar("0", dimPressure, Zero)
             )
         );
     }
@@ -114,13 +115,10 @@ bool Foam::functionObjects::overpressure::read
                 (
                     resultName_,
                     obr_.time().timeName(),
-                    obr_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    obr_
                 ),
                 this->mesh_,
-                dimensionedScalar("0", dimPressure, Zero),
-                "zeroGradient"
+                dimensionedScalar("0", dimPressure, Zero)
             )
         );
     }
@@ -149,7 +147,7 @@ bool Foam::functionObjects::overpressure::execute()
     }
     else
     {
-        Warning
+        WarningInFunction
             << "    functionObjects::" << type() << " " << name()
             << " failed to execute." << endl;
 
@@ -160,12 +158,7 @@ bool Foam::functionObjects::overpressure::execute()
 
 bool Foam::functionObjects::overpressure::write()
 {
-    if (this->mesh_.time().timeIndex() > 0)
-    {
-        writeObject(resultName_);
-        return true;
-    }
-    return false;
+    return writeObject(resultName_);
 }
 
 

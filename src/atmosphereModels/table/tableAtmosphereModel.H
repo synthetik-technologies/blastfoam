@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -26,7 +26,7 @@ Class
 
 Description
     Initialize atmosphere using pressure and temperature tables based on
-    height. An ideal gas is assumed.
+    height.
 
 SourceFiles
     tableAtmosphereModel.C
@@ -38,7 +38,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "scalarLookupTable1D.H"
+#include "lookupTable1D.H"
 #include "atmosphereModel.H"
 
 namespace Foam
@@ -57,13 +57,13 @@ class table
 // Private data
 
     //- Pressure table
-    scalarLookupTable1D pTable_;
+    lookupTable1D<scalar> pTable_;
 
     //- Temperature table
-    scalarLookupTable1D TTable_;
+    lookupTable1D<scalar> TTable_;
 
-    //- Molecular weight
-    scalar W_;
+    //- Is the pressure field corrected
+    bool correct_;
 
 
 public:
@@ -72,7 +72,7 @@ public:
     TypeName("table");
 
     // Constructor
-    table(const fvMesh& mesh, const dictionary& dict);
+    table(const fvMesh&, const dictionary&, const label);
 
 
     //- Destructor

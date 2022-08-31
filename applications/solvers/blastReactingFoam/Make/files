@@ -1,7 +1,3 @@
-BCs/mixedFixedValueSlip/mixedFixedValueSlipFvPatchFields.C
-BCs/U/maxwellSlipUFvPatchVectorField.C
-BCs/T/smoluchowskiJumpTFvPatchScalarField.C
-
 reactingCompressibleSystem/reactingCompressibleSystem.C
 blastReactingFoam.C
 

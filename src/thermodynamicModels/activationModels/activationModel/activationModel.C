@@ -276,7 +276,12 @@ Foam::activationModel::activationModel
         (
             "rho0",
             dimDensity,
-            dict.parent().subDict("products").subDict("equationOfState")
+            dict.parent().subDict("products").subDict
+            (
+                "equationOfState"
+            ).found("rho0")
+          ? dict.parent().subDict("products").subDict("equationOfState")
+          : dict.parent().subDict("reactants").subDict("equationOfState")
         )
       : dimensionedScalar("e0", dimEnergy/dimMass, dict)
     ),
@@ -322,6 +327,20 @@ Foam::activationModel::readDetonationPoints
     const bool needDetonationPoints
 ) const
 {
+    {
+        IOobject detPointsHeader
+        (
+            IOobject::groupName("detonationPoints", alpha.group()),
+            alpha.mesh().time().timeName(),
+            "uniform",
+            alpha.mesh()
+        );
+        if (detPointsHeader.typeHeaderOk<IOPtrList<detonationPoint>>(true))
+        {
+            return PtrList<detonationPoint>();
+        }
+    }
+
     Switch useCOM(dict.lookupOrDefault("useCOM", false));
     List<vector> points
     (
@@ -397,15 +416,30 @@ void Foam::activationModel::initializeModels()
       ? "rhoPhi"
       : IOobject::groupName("alphaRhoPhi", phaseName);
 
-    alphaRhoPtr_.set(&lambda_.mesh().lookupObject<volScalarField>(alphaRhoName));
-    alphaRhoPhiPtr_.set
-    (
-        &lambda_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName)
-    );
-
-    forAll(detonationPoints_, i)
+    if (lambda_.mesh().foundObject<volScalarField>(alphaRhoName))
     {
-        detonationPoints_[i].check(alphaRhoPtr_());
+        alphaRhoPtr_.set
+        (
+            &lambda_.mesh().lookupObject<volScalarField>
+            (
+                alphaRhoName
+            )
+        );
+
+        forAll(detonationPoints_, i)
+        {
+            detonationPoints_[i].check(alphaRhoPtr_());
+        }
+    }
+    if (lambda_.mesh().foundObject<surfaceScalarField>(alphaRhoPhiName))
+    {
+        alphaRhoPhiPtr_.set
+        (
+            &lambda_.mesh().lookupObject<surfaceScalarField>
+            (
+                alphaRhoPhiName
+            )
+        );
     }
 }
 
@@ -417,6 +451,7 @@ Foam::vector Foam::activationModel::centerOfMass
     const fvMesh& mesh = alpha.mesh();
     scalarField Vtot(mesh.V()*alpha.primitiveField());
     vectorField m1(Vtot*mesh.C().primitiveField());
+
     scalar V(gSum(Vtot));
     if (V < small)
     {
@@ -431,19 +466,23 @@ Foam::vector Foam::activationModel::centerOfMass
 
 void Foam::activationModel::solve()
 {
-    // Store old value of lambda, old value of alphaRho is stored in the
-    // phaseCompressible system
-    volScalarField lambdaOld(lambda_);
-    this->storeAndBlendOld(lambdaOld, false);
-
     dimensionedScalar dT(this->mesh().time().deltaT());
     dimensionedScalar smallRho("small", dimDensity, 1e-10);
+
+    // Calculate the deltas using the current value
+    volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhiPtr_(), lambda_));
+    this->storeAndBlendDelta(deltaAlphaRhoLambda);
 
     volScalarField deltaLambda(this->delta());
     deltaLambda.max(0.0);
     this->storeDelta(deltaLambda);
 
-    lambda_ = lambdaOld + deltaLambda*dT;
+    // Store old value of lambda, old value of alphaRho is stored in the
+    // phaseCompressible system
+    this->storeAndBlendOld(lambda_, false);
+    const volScalarField lambdaOld(lambda_);
+
+    lambda_ += deltaLambda*dT;
 
     // Activate points that are delayed
     forAll(detonationPoints_, pointi)
@@ -461,16 +500,12 @@ void Foam::activationModel::solve()
     // Compute the limited change in lambda
     ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
     volScalarField& ddtLambda = ddtLambda_.ref();
-    volScalarField ddtLambdaLimited(ddtLambda);
-
-    volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhiPtr_(), lambda_));
-    this->storeAndBlendDelta(deltaAlphaRhoLambda);
 
     //- Solve advection
     lambda_ =
         (
             lambdaOld*alphaRhoPtr_().prevIter()
-          - dT*(deltaAlphaRhoLambda - ddtLambdaLimited*alphaRhoPtr_())
+          - dT*(deltaAlphaRhoLambda - ddtLambda*alphaRhoPtr_())
         )/max(alphaRhoPtr_(), smallRho);
 
     //- Compute actual delta for the time step knowing the blended

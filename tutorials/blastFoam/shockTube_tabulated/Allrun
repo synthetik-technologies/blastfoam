@@ -11,7 +11,7 @@ paraFoam -builtin -touch
 runApplication blockMesh
 
 # -- Set the initial conditions for the fluid
-runApplication setRefinedFields
+runApplication setFields
 
 #- Run the calc
 runApplication $(getApplication)

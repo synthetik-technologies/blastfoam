@@ -25,9 +25,11 @@ Class
     Foam::interfacialVelocityModel
 
 Description
+    Model for describing interfacial velocity between two phases
 
 SourceFiles
     interfacialVelocityModel.C
+    interfacialVelocityModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

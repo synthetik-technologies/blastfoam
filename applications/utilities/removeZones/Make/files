@@ -1,0 +1,3 @@
+removeZones.C
+
+EXE = $(BLAST_APPBIN)/removeZones

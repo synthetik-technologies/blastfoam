@@ -1,0 +1,3 @@
+Test-polynomialRoots.C
+
+EXE = $(BLAST_APPBIN)/Test-polynomialRoots

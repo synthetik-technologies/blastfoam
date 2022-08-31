@@ -27,6 +27,14 @@ Class
 Description
     Nusselt number correlation of Gunn
 
+    \verbatim
+        "Transfer of heat or mass to particles in fixed and fluidised beds"
+        Gunn, D.,
+        International Journal of Heat and Mass Transfer
+        Volume 21, 1978, pp. 467-476
+    \endverbatim
+
+
 SourceFiles
     GunnNusseltNumberModel.C
 

@@ -125,6 +125,18 @@ Foam::scalar Foam::JWLC<Specie>::pRhoT
 
 
 template<class Specie>
+Foam::scalar Foam::JWLC<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::Gamma
 (
     const scalar rho,
@@ -280,10 +292,10 @@ template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
+    NotImplemented;
     return 0.0;
 }
 

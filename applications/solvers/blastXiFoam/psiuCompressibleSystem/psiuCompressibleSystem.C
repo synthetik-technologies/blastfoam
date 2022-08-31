@@ -40,7 +40,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     const fvMesh& mesh
 )
 :
-    timeIntegrationSystem("phaseCompressibleSystem", mesh),
+    compressibleSystem(mesh),
     thermo_(psiuReactionThermo::New(mesh)),
     rho_
     (
@@ -54,48 +54,10 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
         ),
         thermo_->rho()
     ),
-    U_
-    (
-        IOobject
-        (
-            "U",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    ),
     p_(thermo_->p()),
     T_(thermo_->T()),
     e_(thermo_->he()),
     eu_(thermo_->heu()),
-    rhoU_
-    (
-        IOobject
-        (
-            "rhoU",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        rho_*U_,
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
-    ),
-    rhoE_
-    (
-        IOobject
-        (
-            "rhoE",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
-    ),
     rhoEu_
     (
         IOobject
@@ -105,80 +67,29 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             mesh
         ),
         eu_*rho_
-    ),
-    phi_
-    (
-        IOobject
-        (
-            "phi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-    ),
-    rhoPhi_
-    (
-        IOobject
-        (
-            "rhoPhi",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*dimVelocity*dimArea, 0.0)
-    ),
-    rhoUPhi_
-    (
-        IOobject
-        (
-            "rhoUPhi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedVector("0", dimDensity*sqr(dimVelocity)*dimArea, Zero)
-    ),
-    rhoEPhi_
-    (
-        IOobject
-        (
-            "rhoEPhi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
-    ),
-    fluxScheme_(fluxScheme::New(mesh)),
-    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
+    )
 {
     thermo_->validate("psiuCompressibleSystem", "ea");
 
     if (min(thermo_->mu()).value() > small)
     {
-        turbulence_.set
-        (
+        turbulence_ =
             compressible::momentumTransportModel::New
             (
                 rho_,
                 U_,
                 rhoPhi_,
                 thermo_()
-            ).ptr()
-        );
-        thermophysicalTransport_.set
-        (
+            );
+        thermophysicalTransport_ =
             fluidThermophysicalTransportModel::New
             (
                 turbulence_(),
                 thermo_()
-            ).ptr()
-        );
+            );
     }
 
+    fluxScheme_ = fluxScheme::NewSingle(mesh);
     encode();
 }
 
@@ -192,17 +103,6 @@ Foam::psiuCompressibleSystem::~psiuCompressibleSystem()
 
 void Foam::psiuCompressibleSystem::solve()
 {
-    volScalarField rhoOld(rho_);
-    volVectorField rhoUOld(rhoU_);
-    volScalarField rhoEOld(rhoE_);
-    volScalarField rhoEuOld(rhoEu_);
-
-    //- Store old values
-    this->storeAndBlendOld(rhoOld);
-    this->storeAndBlendOld(rhoUOld);
-    this->storeAndBlendOld(rhoEOld);
-    this->storeAndBlendOld(rhoEuOld);
-
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
@@ -222,14 +122,20 @@ void Foam::psiuCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoE);
     this->storeAndBlendDelta(deltaRhoEu);
 
+    //- Store old values
+    this->storeAndBlendOld(rho_);
+    this->storeAndBlendOld(rhoU_);
+    this->storeAndBlendOld(rhoE_);
+    this->storeAndBlendOld(rhoEu_);
+
     dimensionedScalar dT = rho_.time().deltaT();
-    rho_ = rhoOld - dT*deltaRho;
+    rho_ -= dT*deltaRho;
     rho_.correctBoundaryConditions();
 
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
-    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
-    rhoE_ = rhoEOld - dT*deltaRhoE;
-    rhoEu_ = rhoEuOld - dT*deltaRhoEu;
+    rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs);
+    rhoE_ -= dT*deltaRhoE;
+    rhoEu_ -= dT*deltaRhoEu;
 }
 
 
@@ -368,7 +274,7 @@ Foam::psiuCompressibleSystem::speedOfSound() const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::psiuCompressibleSystem::rho() const
+const Foam::volScalarField& Foam::psiuCompressibleSystem::rho() const
 {
     return rho_;
 }
@@ -377,12 +283,6 @@ Foam::tmp<Foam::volScalarField> Foam::psiuCompressibleSystem::rho() const
 Foam::tmp<Foam::volScalarField> Foam::psiuCompressibleSystem::rhou() const
 {
     return thermo_->rhou();
-}
-
-
-Foam::tmp<Foam::volVectorField> Foam::psiuCompressibleSystem::U() const
-{
-    return U_;
 }
 
 

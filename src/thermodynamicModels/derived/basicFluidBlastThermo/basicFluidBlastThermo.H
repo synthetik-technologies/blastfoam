@@ -130,8 +130,17 @@ public:
 
     //- Thermodynamic and transport functions
 
+        using Thermo::updateRho;
+
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
+
+        //- Calculate density
+        virtual void updateRho
+        (
+            const volScalarField& alpha,
+            const volScalarField& p
+        );
 
         //- Calculate pressure for cell [Pa]
         virtual scalar cellpRhoT
@@ -139,6 +148,9 @@ public:
             const label celli,
             const bool limit = true
         ) const;
+
+        //- Calculate Gamma = dpde
+        virtual tmp<volScalarField> Gamma() const;
 
         //- Gamma = dpde for cell []
         virtual scalar cellGamma(const label celli) const;
@@ -149,8 +161,27 @@ public:
         //- Derivative of pressure w.r.t internal energy for cell
         virtual scalar celldpde(const label celli) const;
 
+        //- Derivative of pressure w.r.t temperature for cell
+        virtual scalar celldpdT(const label celli) const;
+
+        //- Is the equation of state temperature based
+        virtual bool temperatureBased() const
+        {
+            return Thermo::thermoType::temperatureBased();
+        }
+
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
+
+        //- Calculate internal energy for a cell
+        virtual scalar calcCelle(const scalar p, const label) const;
+
+        //- Calculate the pressure
+        virtual tmp<volScalarField> calcp() const;
+
+        //- Calculate the speed of sound
+        virtual tmp<volScalarField> calcSpeedOfSound() const;
+
 };
 
 

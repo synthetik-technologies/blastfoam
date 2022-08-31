@@ -28,6 +28,7 @@ Description
 
 SourceFiles
     kineticTheoryViscosityModel.C
+    kineticTheoryViscosityModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "scalarLookupTable2D.H"
+#include "lookupTables2D.H"
 
 namespace Foam
 {
@@ -130,7 +130,7 @@ public:
         static word typeName()
         {
             return
-                "tabulated<tabulated<"
+                "eTabulated<tabulatedMG<"
               + word(Specie::typeName_()) + ">>";
         }
 
@@ -145,8 +145,16 @@ public:
 
         // Equation of state functions
 
+            //- Return limited pressure
+            inline scalar pRhoT
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
             //- Return pressure
-            scalar p
+            inline scalar p
             (
                 const scalar rho,
                 const scalar e,
@@ -154,8 +162,11 @@ public:
                 const bool limit = true
             ) const;
 
+            //- Return density given temperature and pressure
+            inline scalar rho(const scalar p, const scalar T) const;
+
             //- Return derivative of pressure w.r.t. specific volume
-            scalar dpdv
+            inline scalar dpdv
             (
                 const scalar rho,
                 const scalar e,
@@ -163,7 +174,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. specific density
-            scalar dpdRho
+            inline scalar dpdRho
             (
                 const scalar rho,
                 const scalar e,
@@ -171,7 +182,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. Temperature
-            scalar dpdT
+            inline scalar dpdT
             (
                 const scalar rho,
                 const scalar e,
@@ -179,7 +190,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. internal energy
-            scalar dpde
+            inline scalar dpde
             (
                 const scalar rho,
                 const scalar e,
@@ -189,7 +200,7 @@ public:
         // Thermodynamic functions
 
             //- Return Mie Gruniesen coefficient
-            scalar Gamma
+            inline scalar Gamma
             (
                 const scalar rho,
                 const scalar e,
@@ -197,7 +208,7 @@ public:
             ) const;
 
             //- Return speed of sound
-            scalar cSqr
+            inline scalar cSqr
             (
                 const scalar p,
                 const scalar rho,
@@ -206,7 +217,7 @@ public:
             ) const;
 
             //- Heat capacity at constant volume [J/kg/K]
-            scalar Cv
+            inline scalar Cv
             (
                 const scalar rho,
                 const scalar e,
@@ -214,7 +225,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure [J/kg/K]
-            scalar Cp
+            inline scalar Cp
             (
                 const scalar rho,
                 const scalar e,
@@ -222,7 +233,7 @@ public:
             ) const;
 
             //- Heat capacity difference [J/kg/K]
-            scalar CpMCv
+            inline scalar CpMCv
             (
                 const scalar rho,
                 const scalar e,
@@ -231,7 +242,7 @@ public:
             ) const;
 
             //- Return specific heat ratio
-            scalar CpByCv
+            inline scalar CpByCv
             (
                 const scalar rho,
                 const scalar e,
@@ -239,7 +250,7 @@ public:
             ) const;
 
             //- Sensible internal energy [J/kg]
-            scalar Es
+            inline scalar Es
             (
                 const scalar rho,
                 const scalar e,
@@ -247,7 +258,7 @@ public:
             ) const;
 
             //- Absolute internal energy [J/kg]
-            scalar Ea
+            inline scalar Ea
             (
                 const scalar rho,
                 const scalar e,
@@ -255,7 +266,7 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
-            scalar Hs
+            inline scalar Hs
             (
                 const scalar rho,
                 const scalar e,
@@ -263,7 +274,7 @@ public:
             ) const;
 
             //- Absolute enthalpy [J/kg]
-            scalar Ha
+            inline scalar Ha
             (
                 const scalar rho,
                 const scalar e,
@@ -271,22 +282,20 @@ public:
             ) const;
 
             //- Heat of formation [J/kg]
-            scalar Hf() const;
+            inline scalar Hf() const;
 
             //- Flame temperature [K]
-            scalar flameT() const;
+            inline scalar flameT() const;
 
             //- Entropy [J/kg/K]
-            scalar S
+            inline scalar S
             (
                 const scalar p,
-                const scalar rho,
-                const scalar e,
                 const scalar T
             ) const;
 
             //- Return temperature
-            scalar TRhoE
+            inline scalar TRhoE
             (
                 const scalar T0,
                 const scalar rho,
@@ -294,7 +303,7 @@ public:
             ) const;
 
             //- Initialize internal energy
-            scalar initializeEnergy
+            inline scalar initializeEnergy
             (
                 const scalar p,
                 const scalar rho,
@@ -303,8 +312,9 @@ public:
             ) const;
 
             //- Initialize internal energy
-            scalar rhoPT
+            inline scalar rhoPT
             (
+                const scalar rho,
                 const scalar p,
                 const scalar T
             ) const;

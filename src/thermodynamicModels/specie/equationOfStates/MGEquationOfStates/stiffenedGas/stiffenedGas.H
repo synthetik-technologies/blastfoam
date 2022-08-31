@@ -103,6 +103,9 @@ class stiffenedGas
         //- Specific heat ratio
         scalar gamma_;
 
+        //- Minimum density used for internal energy contribution
+        scalar minRho_;
+
 
         //- Return deviation from ideal gas pressure
         inline scalar Pi
@@ -199,6 +202,9 @@ public:
             const scalar Cv
         ) const;
 
+        //- Return density given temperature and pressure
+        inline scalar rho(const scalar p, const scalar T) const;
+
         //- Return the speed of sound
         inline scalar cSqr
         (
@@ -274,11 +280,10 @@ public:
             const scalar CpCv
         ) const;
 
-        //- Heat capacity at constant volume of mixture [J/kg/K]
+        //- ENtropy of mixture [J/kg/K]
         inline scalar S
         (
             const scalar p,
-            const scalar rho,
             const scalar T
         ) const;
 

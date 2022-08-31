@@ -25,7 +25,7 @@ Class
     Foam::NusseltNumberModels::sphere
 
 Description
-    Nusselt number correlation of sphere
+    Nusselt number correlation for sphere
 
 SourceFiles
     sphereNusseltNumberModel.C

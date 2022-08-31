@@ -36,12 +36,20 @@ template<class Thermo>
 void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 {
     this->updateMixture();
+
+    const scalarField& rhoCells = this->rho_.primitiveFieldRef();
+    scalarField& heCells = this->heRef();
+    scalarField& TCells = this->TRef().primitiveFieldRef();
+    scalarField& CpCells = this->CpRef().primitiveFieldRef();
+    scalarField& CvCells = this->CvRef().primitiveFieldRef();
+    scalarField& alphaCells = this->alphaRef().primitiveFieldRef();
+
     forAll(this->rho_, celli)
     {
         const typename Thermo::thermoType& t(this->mixture_[celli]);
-        const scalar& rhoi(this->rho_[celli]);
-        scalar& ei(this->heRef()[celli]);
-        scalar& Ti = this->TRef()[celli];
+        const scalar& rhoi(rhoCells[celli]);
+        scalar& ei(heCells[celli]);
+        scalar& Ti = TCells[celli];
 
         // Update temperature
         Ti = t.TRhoE(Ti, rhoi, ei);
@@ -52,41 +60,76 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
         }
 
         scalar Cpi = t.Cp(rhoi, ei, Ti);
-        this->CpRef()[celli] = Cpi;
-        this->CvRef()[celli] = t.Cv(rhoi, ei, Ti);
-        this->alphaRef()[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
+        CpCells[celli] = Cpi;
+        CvCells[celli] = t.Cv(rhoi, ei, Ti);
+        alphaCells[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
     }
 
-    this->TRef().correctBoundaryConditions();
-    this->heRef().correctBoundaryConditions();
+    const volScalarField::Boundary& rhoBf =
+        this->rho_.boundaryFieldRef();
+
+    volScalarField::Boundary& heBf = this->heRef().boundaryFieldRef();
+    volScalarField::Boundary& TBf = this->TRef().boundaryFieldRef();
+
+    volScalarField::Boundary& CpBf = this->CpRef().boundaryFieldRef();
+    volScalarField::Boundary& CvBf = this->CvRef().boundaryFieldRef();
+    volScalarField::Boundary& alphaBf =
+        this->alphaRef().boundaryFieldRef();
 
     forAll(this->rho_.boundaryField(), patchi)
     {
-        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT =
-            this->TRef().boundaryField()[patchi];
-        const fvPatchScalarField& phe =
-            this->heRef().boundaryField()[patchi];
+        const fvPatchScalarField& prho = rhoBf[patchi];
+        fvPatchScalarField& pT = TBf[patchi];
+        fvPatchScalarField& phe = heBf[patchi];
 
-        fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& palpha =
-            this->alphaRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& pCp = CpBf[patchi];
+        fvPatchScalarField& pCv = CvBf[patchi];
+        fvPatchScalarField& palpha = alphaBf[patchi];
 
-        forAll(prho, facei)
+        if (pT.fixesValue())
         {
-            const typename Thermo::thermoType& t
-            (
-                this->mixture_.boundary(patchi, facei)
-            );
-            const scalar rhoi(prho[facei]);
-            const scalar ei(phe[facei]);
-            const scalar Ti(pT[facei]);
+            forAll(prho, facei)
+            {
+                const typename Thermo::thermoType& t
+                (
+                    this->mixture_.boundary(patchi, facei)
+                );
+                const scalar rhoi(prho[facei]);
+                scalar& ei(phe[facei]);
+                const scalar Ti(pT[facei]);
 
-            const scalar Cpi = t.Cp(rhoi, ei, Ti);
-            pCp[facei] = Cpi;
-            pCv[facei] = t.Cv(rhoi, ei, Ti);
-            palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+                ei = t.Es(rhoi, ei, Ti);
+
+                const scalar Cpi = t.Cp(rhoi, ei, Ti);
+                pCp[facei] = Cpi;
+                pCv[facei] = t.Cv(rhoi, ei, Ti);
+                palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+            }
+        }
+        else
+        {
+            forAll(prho, facei)
+            {
+                const typename Thermo::thermoType& t
+                (
+                    this->mixture_.boundary(patchi, facei)
+                );
+                const scalar rhoi(prho[facei]);
+                scalar& ei(phe[facei]);
+                scalar& Ti(pT[facei]);
+
+                Ti = t.TRhoE(Ti, rhoi, ei);
+                if (Ti < this->TLow_)
+                {
+                    ei = t.Es(rhoi, ei, this->TLow_);
+                    Ti = this->TLow_;
+                }
+
+                const scalar Cpi = t.Cp(rhoi, ei, Ti);
+                pCp[facei] = Cpi;
+                pCv[facei] = t.Cv(rhoi, ei, Ti);
+                palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+            }
         }
     }
 }
@@ -208,22 +251,6 @@ Foam::multicomponentSolidBlastThermo<Thermo>::calce() const
 
 
 template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::multicomponentSolidBlastThermo<Thermo>::kappa() const
-{
-    return this->volScalarFieldProperty
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        &Thermo::thermoType::kappa,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class Thermo>
 Foam::tmp<Foam::volVectorField>
 Foam::multicomponentSolidBlastThermo<Thermo>::Kappa() const
 {
@@ -308,6 +335,115 @@ Foam::multicomponentSolidBlastThermo<Thermo>::Kappa(const label patchi) const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::cellp(const label celli) const
+{
+    return this->mixture_[celli].pRhoT
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::p
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].pRhoT(rho, e, T);
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentSolidBlastThermo<Thermo>::p
+(
+    const label speciei,
+    const volScalarField& rho,
+    const volScalarField& e,
+    const volScalarField& T
+) const
+{
+    return this->volScalarFieldSpecieProperty
+    (
+        speciei,
+        "p",
+        dimPressure,
+        &Thermo::thermoType::pRhoT,
+        rho,
+        e,
+        T
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::dpdRho
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return
+      - this->speciesData_[speciei].dpdv(rho, e, T)
+       /sqr(max(rho, this->residualRho_.value()));
+}
+
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::dpdT
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].dpdT(rho, e, T);
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentSolidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->speciesData_[speciei].mu(rho, e, T);
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentSolidBlastThermo<Thermo>::mu
 (
@@ -316,21 +452,31 @@ Foam::multicomponentSolidBlastThermo<Thermo>::mu
     const volScalarField& T
 ) const
 {
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "mu",
-                this->rho_.mesh().time().timeName(),
-                this->rho_.mesh()
-            ),
-            this->rho_.mesh(),
-            dimensionedScalar("0", dimensionSet(1, -1, -1, 0, 0), 0.0)
-        )
-    );
+    NotImplemented;
+    return p;
 }
 
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentSolidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const volScalarField& rho,
+    const volScalarField& e,
+    const volScalarField& T
+) const
+{
+    return this->volScalarFieldSpecieProperty
+    (
+        speciei,
+        "mu",
+        dimensionSet(1, -1, -1, 0, 0),
+        &Thermo::thermoType::mu,
+        rho,
+        e,
+        T
+    );
+}
 
 // ************************************************************************* //

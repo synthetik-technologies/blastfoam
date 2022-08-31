@@ -6,7 +6,7 @@ This case uses a single granular phases within a continuous air phase. This a de
 
 Original plots were digitized using WebPlotDigitizer: https://github.com/ankitrohatgi/WebPlotDigitizer/releases The quality of the plots in the original publication (below) was not ideal for reproduction, but we have made an effort to reproduce them as faithfully as possible, and the points are found in the "validation/validationData" directory.
 
-The calculation took approx. 3 min to run on a single core laptop at the reference resolution (e.g. 1200 cells). Reference solution and plots from this run are in the "validation/referencePlots" directory. Plots will be automatically created using the postProcess and createGraphs utilities for subsequent runs.
+The calculation took approx. 1 min to run on a single core laptop at the reference resolution (e.g. 1200 cells). Reference solution and plots from this run are in the "validation/referencePlots" directory. Plots will be automatically created using the postProcess and createGraphs utilities for subsequent runs.
 
 ## Reference
 

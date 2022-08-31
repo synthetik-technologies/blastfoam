@@ -517,17 +517,13 @@ Foam::label Foam::blastProbes::prepare()
                     << endl;
             }
 
-            fout<< '#' << setw(IOstream::defaultPrecision() + 6)
-                << "Probe";
 
+            fout<< '#' << setw(w) << "Time";
             forAll(*this, probei)
             {
                 fout<< ' ' << setw(w) << probei;
             }
             fout<< endl;
-
-            fout<< '#' << setw(IOstream::defaultPrecision() + 6)
-                << "Time" << endl;
 
             // Add old values to new output
             if (oldValues.size())
@@ -577,7 +573,7 @@ Foam::blastProbes::blastProbes
     ),
     loadFromFiles_(false),
     fieldSelection_(),
-    fixedLocations_(true),
+    fixedLocations_(false),
     interpolationScheme_("cell"),
     append_(false)
 {
@@ -598,7 +594,7 @@ Foam::blastProbes::blastProbes
     mesh_(refCast<const fvMesh>(obr)),
     loadFromFiles_(loadFromFiles),
     fieldSelection_(),
-    fixedLocations_(true),
+    fixedLocations_(false),
     interpolationScheme_("cell"),
     append_(false)
 {
@@ -640,17 +636,20 @@ bool Foam::blastProbes::read(const dictionary& dict)
     }
 
     dict.readIfPresent("append", append_);
-    elementLocations_.clear();
-    elementLocations_.setSize(size());
-    elementLocations_ = Zero;
+    if (!elementLocations_.size() || !fixedLocations_)
+    {
+        elementLocations_.clear();
+        elementLocations_.setSize(size());
+        elementLocations_ = Zero;
 
-    // Initialise cells to sample from supplied locations
-    findElements
-    (
-        mesh_,
-        true,
-        dict.lookupOrDefault("adjustLocations", false)
-    );
+        // Initialise cells to sample from supplied locations
+        findElements
+        (
+            mesh_,
+            true,
+            dict.lookupOrDefault("adjustLocations", false)
+        );
+    }
     prepare();
 
     Switch writeVTK(dict.lookupOrDefault("writeVTK", false));
@@ -737,7 +736,7 @@ void Foam::blastProbes::updateMesh(const mapPolyMesh& mpm)
         return;
     }
 
-    if (fixedLocations_)
+    if (!fixedLocations_)
     {
         needUpdate_ = true;
     }
@@ -811,7 +810,7 @@ void Foam::blastProbes::movePoints(const polyMesh& mesh)
 {
     DebugInfo<< "blastProbes: movePoints" << endl;
 
-    if (fixedLocations_ && &mesh == &mesh_)
+    if (!fixedLocations_ && &mesh == &mesh_)
     {
         needUpdate_ = true;
     }

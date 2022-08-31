@@ -33,7 +33,7 @@ writeInterval   1e-5;
 
 cycleWrite      0;
 
-writeFormat     binary;
+writeFormat     ascii;
 
 writePrecision  6;
 

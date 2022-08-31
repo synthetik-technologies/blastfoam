@@ -103,6 +103,17 @@ Foam::scalar Foam::perfectGas<Specie>::pRhoT
 
 
 template<class Specie>
+Foam::scalar Foam::perfectGas<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    return p/(this->R()*T);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::Gamma
 (
     const scalar rho,
@@ -231,11 +242,10 @@ template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    return 0.0;
+    return -this->R()*log(p/Pstd);
 }
 
 

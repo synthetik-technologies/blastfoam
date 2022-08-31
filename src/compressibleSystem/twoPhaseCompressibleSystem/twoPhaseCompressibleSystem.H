@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -91,10 +91,12 @@ class twoPhaseCompressibleSystem
         surfaceScalarField alphaRhoPhi1_;
 
         //- Phase 2 mass flux
-        surfaceScalarField alphaRhoPhi2_;
+        surfaceScalarField alphaRhoPhi2_;\
+
 
     //- Surface tension model
-    autoPtr<interfaceProperties> interfacePropertiesPtr_;
+    autoPtr<interfaceProperties> interfacePtr_;
+
 
     //- Allocate models
     virtual void setModels();

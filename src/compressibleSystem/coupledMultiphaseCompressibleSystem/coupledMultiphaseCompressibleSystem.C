@@ -36,7 +36,7 @@ namespace Foam
     (
         compressibleSystem,
         coupledMultiphaseCompressibleSystem,
-        dictionary
+        multiphase
     );
 }
 
@@ -47,7 +47,7 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    multiphaseCompressibleSystem(mesh),
+    multiphaseCompressibleSystem(mesh, false),
     volumeFraction_
     (
         IOobject
@@ -78,6 +78,11 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
     (
         thermoPtr_()
     ).setTotalVolumeFractionPtr(volumeFraction_);
+
+    thermoPtr_->initializeModels();
+    this->setModels();
+
+    encode();
 }
 
 
@@ -91,13 +96,6 @@ Foam::coupledMultiphaseCompressibleSystem::~coupledMultiphaseCompressibleSystem(
 
 void Foam::coupledMultiphaseCompressibleSystem::solve()
 {
-    if (this->step() == 1)
-    {
-        rho_.oldTime();
-        U_.oldTime();
-        e_.oldTime();
-    }
-
     dimensionedScalar dT = rho_.time().deltaT();
 
     surfaceScalarField alphaf
@@ -175,37 +173,16 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
 void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
 {
-    if (!needPostUpdate_)
-    {
-        compressibleBlastSystem::postUpdate();
-        return;
-    }
-
     this->decode();
 
-    //- Store value of density so volume fraction can be included
-    volScalarField rho(rho_);
-    rho_ = alphaRho_;
+    alphaRho_.storePrevIter();
 
     compressibleBlastSystem::postUpdate();
-
-    //- Reset density to the correct field
-    rho_ = rho;
 }
 
 
-void Foam::coupledMultiphaseCompressibleSystem::update()
-{
-    multiphaseCompressibleSystem::update();
-    surfaceScalarField alphaf
-    (
-        fluxScheme_->interpolate(volumeFraction_, "alpha")
-    );
-
-    rhoPhi_ *= alphaf;
-    rhoUPhi_ *= alphaf;
-    rhoEPhi_ *= alphaf;
-}
+void Foam::coupledMultiphaseCompressibleSystem::calcAlphas()
+{}
 
 
 void Foam::coupledMultiphaseCompressibleSystem::decode()

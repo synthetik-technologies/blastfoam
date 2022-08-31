@@ -56,10 +56,10 @@ namespace FieldSetTypes
                           Class MassIntegrated Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type, template<class> class Patch, class Mesh>
+template<class Type, template<class> class FSType>
 class MassIntegrated
 :
-    public FieldSetType<Type, Patch, Mesh>
+    public FSType<Type>
 {
     //- Name of the thermo phase
     word phaseName_;
@@ -73,8 +73,6 @@ class MassIntegrated
     //- Thermodynamic model
     const blastThermo& thermo_;
 
-    //- Set the selected cells
-    virtual void setField();
 
     //- Read the phase name of the field
     word readPhaseName(Istream& is, const word& fieldName) const;
@@ -89,6 +87,23 @@ class MassIntegrated
         const word& phaseName
     ) const;
 
+    //- Return the subset of values given indices and positions
+    virtual void getInternalField
+    (
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
+
+    //- Return the subset of values given indices and positions
+    virtual void getBoundaryField
+    (
+        const label patchi,
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
+
 
 public:
 
@@ -98,6 +113,7 @@ public:
     MassIntegrated
     (
         const fvMesh& mesh,
+        const dictionary& dict,
         const word& fieldName,
         const labelList& selectedCells,
         Istream& is,
@@ -113,9 +129,14 @@ public:
 } // End namespace FieldSetTypes
 } // End namespace Foam
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #ifdef NoRepository
     #include "MassIntegratedFieldSetType.C"
 #endif
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #endif
+
 // ************************************************************************* //

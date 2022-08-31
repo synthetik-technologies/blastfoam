@@ -124,17 +124,22 @@ inline Foam::scalar Foam::exponentialSolidTransport<Thermo>::mu
 template<class Thermo>
 inline void Foam::exponentialSolidTransport<Thermo>::operator+=
 (
-    const exponentialSolidTransport<Thermo>& ct
+    const exponentialSolidTransport<Thermo>& et
 )
 {
     scalar Y1 = this->Y();
 
-    Y1 /= this->Y();
-    scalar Y2 = ct.Y()/this->Y();
+    Thermo::operator+=(et);
 
-    kappa0_ = Y1*kappa0_ + Y2*ct.kappa0_;
-    n0_ = (Y1*n0_ + Y2*ct.n0_);
-    Tref_ = (Y1*Tref_ + Y2*ct.Tref_);
+    if (mag(this->Y()) > small)
+    {
+        Y1 /= this->Y();
+        scalar Y2 = et.Y()/this->Y();
+
+        kappa0_ = Y1*kappa0_ + Y2*et.kappa0_;
+        n0_ = (Y1*n0_ + Y2*et.n0_);
+        Tref_ = (Y1*Tref_ + Y2*et.Tref_);
+    }
 }
 
 

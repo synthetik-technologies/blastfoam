@@ -23,5 +23,4 @@ integrator->addSystem(fluid());
 const volScalarField& p = fluid->p();
 const volScalarField& T = fluid->T();
 fluid->update();
-
-fvModels& models(fvModels::New(mesh));
+integrator->clear();

@@ -30,6 +30,7 @@ SourceFiles
 #include "FieldSetTypesFwd.H"
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "pointFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,24 +40,33 @@ namespace FieldSetTypes
 {
 
 template<class Type>
-using UniformVol = Uniform<Type, fvPatchField, volMesh>;
+using UniformVol = Uniform<Type, VolFieldSetType>;
 
 template<class Type>
-using UniformSurface = Uniform<Type, fvsPatchField, surfaceMesh>;
+using UniformSurface = Uniform<Type, SurfaceFieldSetType>;
+
+template<class Type>
+using UniformPoint = Uniform<Type, PointFieldSetType>;
 }
+
 makeFieldSetTypeType(UniformVol, scalar, VolFieldSetType);
 makeFieldSetTypeType(UniformVol, vector, VolFieldSetType);
 makeFieldSetTypeType(UniformVol, sphericalTensor, VolFieldSetType);
 makeFieldSetTypeType(UniformVol, symmTensor, VolFieldSetType);
 makeFieldSetTypeType(UniformVol, tensor, VolFieldSetType);
 
-// makeFieldSetTypeType(UniformSurface, scalar, SurfaceFieldSetType);
-// makeFieldSetTypeType(UniformSurface, vector, SurfaceFieldSetType);
-// makeFieldSetTypeType(UniformSurface, sphericalTensor, SurfaceFieldSetType);
-// makeFieldSetTypeType(UniformSurface, symmTensor, SurfaceFieldSetType);
-// makeFieldSetTypeType(UniformSurface, tensor, SurfaceFieldSetType);
+makeFieldSetTypeType(UniformSurface, scalar, SurfaceFieldSetType);
+makeFieldSetTypeType(UniformSurface, vector, SurfaceFieldSetType);
+makeFieldSetTypeType(UniformSurface, sphericalTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(UniformSurface, symmTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(UniformSurface, tensor, SurfaceFieldSetType);
 
-// }
+makeFieldSetTypeType(UniformPoint, scalar, PointFieldSetType);
+makeFieldSetTypeType(UniformPoint, vector, PointFieldSetType);
+makeFieldSetTypeType(UniformPoint, sphericalTensor, PointFieldSetType);
+makeFieldSetTypeType(UniformPoint, symmTensor, PointFieldSetType);
+makeFieldSetTypeType(UniformPoint, tensor, PointFieldSetType);
+
 }
 // ************************************************************************* //
 

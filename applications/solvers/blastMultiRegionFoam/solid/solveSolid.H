@@ -19,15 +19,22 @@ do
         fvModels.source(rho, e)
     );
 
+
+
     if (!lastIter)
     {
-        e.storePrevIter();
-        e.relax();
+        eEqn.relax();
     }
 
     fvConstraints.constrain(eEqn);
 
     converged = eEqn.solve().initialResidual() < tolerance;
+
+    if (!lastIter)
+    {
+        e.storePrevIter();
+        e.relax();
+    }
 
     fvConstraints.constrain(e);
 

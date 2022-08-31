@@ -92,6 +92,9 @@ public:
     // Constructor
     multiphaseCompressibleSystem(const fvMesh& mesh);
 
+    // Constructor
+    multiphaseCompressibleSystem(const fvMesh& mesh, const bool);
+
 
     //- Destructor
     ~multiphaseCompressibleSystem();

@@ -51,13 +51,14 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
-limiter quadraticMUSCL vanAlbada;
+limiter vanAlbada;
+limiterV vanAlbadaV;
 interpolationSchemes
 {
     default             linear;
     "reconstruct\(alpha.*\)"        $limiter;
     "reconstruct\(rho.*\)"          $limiter;
-    "reconstruct\(U.*\)"            $limiter;
+    "reconstruct\(U.*\)"            $limiterV;
     "reconstruct\(e.*\)"            $limiter;
     "reconstruct\(p.*\)"            $limiter;
     "reconstruct\(speedOfSound.*\)" $limiter;

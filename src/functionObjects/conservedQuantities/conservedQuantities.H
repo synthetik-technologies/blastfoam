@@ -77,32 +77,31 @@ class conservedQuantities
 :
     public fvMeshFunctionObject
 {
-protected:
-
-    // Protected data
+    // Private data
 
         //- Name of conserved field names
         wordList fields_;
 
         //- Scalar fields
-        HashTable<dimensionedScalar> scalar0s_;
+        HashTable<dimensionedScalar> scalarsOrig_;
         HashTable<dimensionedScalar> scalars_;
 
         //- Vector fields
+        HashTable<dimensionedVector> vectorsOrig_;
         HashTable<dimensionedVector> vectors_;
-        HashTable<dimensionedVector> vector0s_;
 
         //- Symm tensor fields
-        HashTable<dimensionedSymmTensor> symmTensor0s_;
+        HashTable<dimensionedSymmTensor> symmTensorsOrig_;
         HashTable<dimensionedSymmTensor> symmTensors_;
 
         //- Spherical tensor fields
-        HashTable<dimensionedSphericalTensor> sphTensor0s_;
-        HashTable<dimensionedSphericalTensor> sphTensors_;
+        HashTable<dimensionedSphericalTensor> sphericalTensorsOrig_;
+        HashTable<dimensionedSphericalTensor> sphericalTensors_;
 
         //- Tensor fields
-        HashTable<dimensionedTensor> tensor0s_;
+        HashTable<dimensionedTensor> tensorsOrig_;
         HashTable<dimensionedTensor> tensors_;
+
 
 public:
 
@@ -145,7 +144,6 @@ public:
         //- Disallow default bitwise assignment
         void operator=(const conservedQuantities&) = delete;
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

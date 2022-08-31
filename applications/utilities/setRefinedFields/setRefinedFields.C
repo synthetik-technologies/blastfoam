@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-21-10-2019  Jeff Heylmun:   Added refinement to setFields utility
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -24,8 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Set values on a selected set of cells/patchfaces through a dictionary and
-    refines using hexRef method.
+    Iteratively set fields and refine the mesh based on a given criteria. The
+    default is to check for any differences across a face, but errorEstimators
+    can also be used. Selected sets can also be used to determine refinement
+    zones.
+
+    In addition to uniform values, fields can also be set using the runTime
+    selectable FieldSetTypes which can be used to set non-uniform fields.
+    There is no restriction on the field types that can be set
+    (i.e vol/surface/point and scalar/vector/tensor/...)
+
+    Zones and sets can also be created an modified from the region entries.
 
 \*---------------------------------------------------------------------------*/
 
@@ -33,316 +40,426 @@ Description
 #include "Time.H"
 #include "timeSelector.H"
 #include "fvMesh.H"
-#include "topoSetSource.H"
-#include "cellSet.H"
-#include "faceSet.H"
+#include "backupTopoSetSource.H"
+#include "topoSetList.H"
 #include "volFields.H"
 #include "systemDict.H"
 
-#include "hexRef.H"
-#include "hexRef3D.H"
+#include "fvMeshHexRefiner.H"
 #include "mapPolyMesh.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
 #include "wedgePolyPatch.H"
 #include "errorEstimator.H"
-
+#include "extrapolatedCalculatedFvPatchField.H"
+#include "calcAngleFraction.H"
 #include "IOobjectList.H"
 #include "FieldSetType.H"
 
 using namespace Foam;
 
-#include "refineFunctions.H"
 
-template<class Type>
-bool setCellFieldType
+void calcFaceDiff
 (
-    const word& fieldTypeDesc,
-    const fvMesh& mesh,
-    const labelList& selectedCells,
-    Istream& fieldValueStream,
-    const bool write
+    volScalarField& error,
+    const PtrList<volScalarField>& fields
 )
 {
-    return FieldSetType<Type, fvPatchField, volMesh>::New
+    volScalarField errorOrig(error);
+    const labelUList& owner = error.mesh().owner();
+    const labelUList& neighbour = error.mesh().neighbour();
+    const label nInternalFaces = error.mesh().nInternalFaces();
+
+    forAll(fields, fieldi)
+    {
+        const volScalarField& field = fields[fieldi];
+        for (label facei = 0; facei < nInternalFaces; facei++)
+        {
+            label own = owner[facei];
+            label nei = neighbour[facei];
+            scalar e =
+                pos0(mag(field[own] - field[nei]) - 1e-6)
+              - neg(mag(field[own] - field[nei]) - 1e-6);
+
+            error[own] = max(error[own], e);
+            error[nei] = max(error[nei], e);
+        }
+
+        // Boundary faces
+        forAll(error.boundaryField(), patchi)
+        {
+            if (error.boundaryField()[patchi].coupled())
+            {
+                const fvPatch& p = field.boundaryField()[patchi].patch();
+
+                const labelUList& faceCells = p.faceCells();
+                scalarField fp
+                (
+                    field.boundaryField()[patchi].patchInternalField()
+                );
+
+                scalarField fn
+                (
+                    field.boundaryField()[patchi].patchNeighbourField()
+                );
+
+                forAll(faceCells, facei)
+                {
+                    scalar e =
+                        pos0(mag(fp[facei] - fn[facei]) - 1e-6)
+                      - neg(mag(fp[facei] - fn[facei]) - 1e-6);
+                    error[faceCells[facei]] =
+                        max(error[faceCells[facei]], e);
+                }
+            }
+        }
+    }
+}
+
+template<class GeoField>
+void updateProcessorBoundaries(GeoField& fld)
+{
+    const fvMesh& mesh = fld.mesh();
+
+    //mimic "evaluate" but only for coupled patches (processor or cyclic)
+    // and only for blocking or nonBlocking comms (no scheduled comms)
+    if
     (
-        fieldTypeDesc,
-        mesh,
-        selectedCells,
-        fieldValueStream,
-        write
-    )->good();
+        Pstream::defaultCommsType == Pstream::commsTypes::blocking
+     || Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+    )
+    {
+        label nReq = Pstream::nRequests();
+
+        forAll(fld.boundaryField(), patchi)
+        {
+            if (isA<processorPolyPatch>(mesh.boundaryMesh()[patchi]))
+            {
+                fld.boundaryFieldRef()[patchi].initEvaluate
+                (
+                    Pstream::defaultCommsType
+                );
+            }
+        }
+
+        // Block for any outstanding requests
+        if
+        (
+            Pstream::parRun()
+         && Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+        )
+        {
+            Pstream::waitRequests(nReq);
+        }
+
+        forAll(fld.boundaryField(), patchi)
+        {
+            if (isA<processorPolyPatch>(mesh.boundaryMesh()[patchi]))
+            {
+                fld.boundaryFieldRef()[patchi].evaluate
+                (
+                    Pstream::defaultCommsType
+                );
+            }
+        }
+    }
+    else
+    {
+        //Scheduled patch updates not supported
+        FatalErrorInFunction
+            << "Unsuported communications type "
+            << Pstream::commsTypeNames[Pstream::defaultCommsType]
+            << exit(FatalError);
+    }
 }
 
 
-class setCellField
+enum GeoType
+{
+    VOL,
+    SURFACE,
+    POINT,
+    UNKNOWN_GEO
+};
+HashTable<GeoType> geoTypeNames
+(
+    {
+        {"vol", VOL},
+        {"surface", SURFACE},
+        {"point", POINT}
+    }
+);
+HashTable<word, GeoType, Hash<label>> geoEnumTypes
+(
+    {
+        {VOL, "vol"},
+        {SURFACE, "surface"},
+        {POINT, "point"}
+    }
+);
+
+
+enum PrimitiveType
+{
+    SCALAR,
+    VECTOR,
+    SPHERICALTENSOR,
+    SYMMTENSOR,
+    TENSOR,
+    UNKNOWN_PRIM
+};
+HashTable<PrimitiveType> primitiveTypeNames
+(
+    {
+        {"Scalar", SCALAR},
+        {"Vector", VECTOR},
+        {"SymmTensor", SYMMTENSOR},
+        {"SphericalTensor", SPHERICALTENSOR},
+        {"Tensor", TENSOR}
+    }
+);
+HashTable<word, PrimitiveType, Hash<label>> primitiveEnumTypes
+(
+    {
+        {SCALAR, "vol"},
+        {VECTOR, "surface"},
+        {SYMMTENSOR, "SymmTensor"},
+        {SPHERICALTENSOR, "SphericalTensor"},
+        {TENSOR, "Tensor"}
+    }
+);
+
+GeoType getGeoType(const word& type)
+{
+    forAllConstIter(HashTable<GeoType>, geoTypeNames, iter)
+    {
+        if (label(type.find(iter.key())) >= 0)
+        {
+            return iter();
+        }
+    }
+    FatalErrorInFunction
+        << "Could not determine geometry type from " << type << endl
+        << abort(FatalError);
+    return UNKNOWN_GEO;
+}
+
+
+PrimitiveType getPrimitiveType(const word& type)
+{
+    forAllConstIter(HashTable<PrimitiveType>, primitiveTypeNames, iter)
+    {
+        if (label(type.find(iter.key())) >= 0)
+        {
+            return iter();
+        }
+    }
+    FatalErrorInFunction
+        << "Could not determine primitive type from " << type << endl
+        << abort(FatalError);
+    return UNKNOWN_PRIM;
+}
+
+
+class fieldSetList
 {
 
 public:
 
-    setCellField()
+    fieldSetList()
     {}
 
-    autoPtr<setCellField> clone() const
+    autoPtr<fieldSetList> clone() const
     {
-        return autoPtr<setCellField>(new setCellField());
+        return autoPtr<fieldSetList>(new fieldSetList());
     }
 
     class iNew
     {
         const fvMesh& mesh_;
-        const labelList& selectedCells_;
+        const dictionary& dict_;
+        const labelList selectedCells_;
+        const labelList selectedFaces_;
+        const labelList selectedPoints_;
         const bool write_;
+        const bool force_;
 
-    public:
-
-        iNew(const fvMesh& mesh, const labelList& selectedCells, const bool write)
-        :
-            mesh_(mesh),
-            selectedCells_(selectedCells),
-            write_(write)
-        {}
-
-        autoPtr<setCellField> operator()(Istream& fieldValues) const
+        template<class Type, template<class> class Patch, class Mesh>
+        void createTopoSetType
+        (
+            const word& fieldSetTypeDesc,
+            const labelList& elms,
+            Istream& is
+        ) const
         {
-            word fieldType(fieldValues);
-            word fieldName (fieldValues);
-            fieldValues.putBack(fieldName);
-
-            if
+            const word fieldName(is);
+            autoPtr<FieldSetType<Type, Patch, Mesh>> fieldSet
             (
-               !(
-                    setCellFieldType<scalar>
-                        (fieldType, mesh_, selectedCells_, fieldValues, write_)
-                 || setCellFieldType<vector>
-                        (fieldType, mesh_, selectedCells_, fieldValues, write_)
-                 || setCellFieldType<sphericalTensor>
-                        (fieldType, mesh_, selectedCells_, fieldValues, write_)
-                 || setCellFieldType<symmTensor>
-                        (fieldType, mesh_, selectedCells_, fieldValues, write_)
-                 || setCellFieldType<tensor>
-                        (fieldType, mesh_, selectedCells_, fieldValues, write_)
+                FieldSetType<Type, Patch, Mesh>::New
+                (
+                    fieldSetTypeDesc,
+                    fieldName,
+                    mesh_,
+                    dict_,
+                    elms,
+                    is,
+                    write_
                 )
-            )
+            );
+            if (fieldSet->good())
+            {
+                Info<< "    Setting " << fieldName << endl;
+            }
+            else
             {
                 WarningInFunction
                     << "Field " << fieldName << " not found" << endl;
             }
-
-            return autoPtr<setCellField>(new setCellField());
         }
-    };
-};
 
-
-template<class Type>
-bool setFaceFieldType
-(
-    const word& fieldTypeDesc,
-    const fvMesh& mesh,
-    const labelList& selectedFaces,
-    Istream& fieldValueStream,
-    const bool write
-)
-{
-    typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
-
-    if (fieldTypeDesc != fieldType::typeName + "Value")
-    {
-        return false;
-    }
-
-    word fieldName(fieldValueStream);
-    fieldType* field = 0;
-    if (mesh.foundObject<fieldType>(fieldName))
-    {
-        field =  &mesh.lookupObjectRef<fieldType>(fieldName);
-    }
-    else
-    {
-        // Check the current time directory
-        IOobject fieldHeader
+        template<template<class> class Patch, class Mesh>
+        void createTopoSet
         (
-            fieldName,
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ
-        );
-
-        // Check the "constant" directory
-        if (!fieldHeader.typeHeaderOk<fieldType>(true))
+            const word& fieldSetType,
+            const labelList& elms,
+            Istream& is
+        ) const
         {
-            fieldHeader = IOobject
-            (
-                fieldName,
-                mesh.time().constant(),
-                mesh,
-                IOobject::MUST_READ
-            );
-        }
-    }
-    if (field)
-    {
-        Info<< "    Setting internal values of "
-            << field->headerClassName()
-            << " " << fieldName << endl;
-    }
-    else
-    {
-        WarningInFunction
-            << "Field " << fieldName << " not found" << endl;
-
-        // Consume value
-        (void)pTraits<Type>(fieldValueStream);
-    }
-
-    Info<< "    Setting patchField values of "
-        << field->headerClassName()
-        << " " << fieldName << endl;
-
-    const Type& value = pTraits<Type>(fieldValueStream);
-
-    // Create flat list of selected faces and their value.
-    Field<Type> allBoundaryValues(mesh.nFaces()-mesh.nInternalFaces());
-    forAll(field->boundaryField(), patchi)
-    {
-        SubField<Type>
-        (
-            allBoundaryValues,
-            field->boundaryField()[patchi].size(),
-            field->boundaryField()[patchi].patch().start()
-          - mesh.nInternalFaces()
-        ) = field->boundaryField()[patchi];
-    }
-
-    // Override
-    bool hasWarned = false;
-    labelList nChanged
-    (
-        returnReduce(field->boundaryField().size(), maxOp<label>()),
-        0
-    );
-    forAll(selectedFaces, i)
-    {
-        label facei = selectedFaces[i];
-        if (mesh.isInternalFace(facei))
-        {
-            if (!hasWarned)
+            if (!returnReduce(elms.size(), sumOp<label>()) && !force_)
             {
-                hasWarned = true;
-                WarningInFunction
-                    << "Ignoring internal face " << facei
-                    << ". Suppressing further warnings." << endl;
+                return;
+            }
+
+            PrimitiveType prim(getPrimitiveType(fieldSetType));
+            switch (prim)
+            {
+                case SCALAR:
+                    createTopoSetType<scalar, Patch, Mesh>
+                    (
+                        fieldSetType,
+                        elms,
+                        is
+                    );
+                    break;
+                case VECTOR:
+                    createTopoSetType<vector, Patch, Mesh>
+                    (
+                        fieldSetType,
+                        elms,
+                        is
+                    );
+                    break;
+                case SYMMTENSOR:
+                    createTopoSetType<symmTensor, Patch, Mesh>
+                    (
+                        fieldSetType,
+                        elms,
+                        is
+                    );
+                    break;
+                case SPHERICALTENSOR:
+                    createTopoSetType<sphericalTensor, Patch, Mesh>
+                    (
+                        fieldSetType,
+                        elms,
+                        is
+                    );
+                    break;
+                case TENSOR:
+                    createTopoSetType<tensor, Patch, Mesh>
+                    (
+                        fieldSetType,
+                        elms,
+                        is
+                    );
+                    break;
+                default:
+                    break;
             }
         }
-        else
-        {
-            label bFacei = facei-mesh.nInternalFaces();
-            allBoundaryValues[bFacei] = value;
-            nChanged[mesh.boundaryMesh().patchID()[bFacei]]++;
-        }
-    }
 
-    Pstream::listCombineGather(nChanged, plusEqOp<label>());
-    Pstream::listCombineScatter(nChanged);
-
-    typename GeometricField<Type, fvPatchField, volMesh>::
-        Boundary& fieldBf = field->boundaryFieldRef();
-
-    // Reassign.
-    forAll(field->boundaryField(), patchi)
-    {
-        if (nChanged[patchi] > 0)
-        {
-            Info<< "    On patch "
-                << field->boundaryField()[patchi].patch().name()
-                << " set " << nChanged[patchi] << " values" << endl;
-            fieldBf[patchi] == SubField<Type>
-            (
-                allBoundaryValues,
-                fieldBf[patchi].size(),
-                fieldBf[patchi].patch().start()
-              - mesh.nInternalFaces()
-            );
-        }
-    }
-
-    if (field->name() != "error" && write)
-    {
-        if (!field->write())
-        {
-            FatalErrorInFunction
-                << "Failed writing field " << field->name() << exit(FatalError);
-        }
-    }
-
-    return true;
-}
-
-
-class setFaceField
-{
-
-public:
-
-    setFaceField()
-    {}
-
-    autoPtr<setFaceField> clone() const
-    {
-        return autoPtr<setFaceField>(new setFaceField());
-    }
-
-    class iNew
-    {
-        const fvMesh& mesh_;
-        const labelList& selectedFaces_;
-        const bool write_;
 
     public:
 
-        iNew(const fvMesh& mesh, const labelList& selectedFaces, const bool write)
+        iNew
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const bool force = true
+        )
         :
             mesh_(mesh),
-            selectedFaces_(selectedFaces),
-            write_(write)
+            dict_(dict),
+            write_(false),
+            force_(force)
         {}
 
-        autoPtr<setFaceField> operator()(Istream& fieldValues) const
-        {
-            word fieldType(fieldValues);
+        iNew
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const labelList& selectedCells,
+            const labelList& selectedFaces,
+            const labelList& selectedPoints,
+            const bool write,
+            const bool force = false
+        )
+        :
+            mesh_(mesh),
+            dict_(dict),
+            selectedCells_(selectedCells),
+            selectedFaces_(selectedFaces),
+            selectedPoints_(selectedPoints),
+            write_(write),
+            force_(force)
+        {}
 
-            if
-            (
-               !(
-                    setFaceFieldType<scalar>
-                        (fieldType, mesh_, selectedFaces_, fieldValues, write_)
-                 || setFaceFieldType<vector>
-                        (fieldType, mesh_, selectedFaces_, fieldValues, write_)
-                 || setFaceFieldType<sphericalTensor>
-                        (fieldType, mesh_, selectedFaces_, fieldValues, write_)
-                 || setFaceFieldType<symmTensor>
-                        (fieldType, mesh_, selectedFaces_, fieldValues, write_)
-                 || setFaceFieldType<tensor>
-                        (fieldType, mesh_, selectedFaces_, fieldValues, write_)
-                )
-            )
+        autoPtr<fieldSetList> operator()(Istream& is) const
+        {
+            word fieldSetType(is);
+            GeoType geo(getGeoType(fieldSetType));
+
+            switch (geo)
             {
-                WarningInFunction
-                    << "field type " << fieldType << " not currently supported"
-                    << endl;
+                case VOL:
+                    createTopoSet<fvPatchField, volMesh>
+                    (
+                        fieldSetType,
+                        selectedCells_,
+                        is
+                    );
+                    break;
+                case SURFACE:
+                    createTopoSet<fvsPatchField, surfaceMesh>
+                    (
+                        fieldSetType,
+                        selectedFaces_,
+                        is
+                    );
+                    break;
+                case POINT:
+                    createTopoSet<pointPatchField, pointMesh>
+                    (
+                        fieldSetType,
+                        selectedPoints_,
+                        is
+                    );
+                    break;
+                default:
+                    break;
             }
 
-            return autoPtr<setFaceField>(new setFaceField());
+            return autoPtr<fieldSetList>(new fieldSetList());
         }
     };
 };
 
 
 //- Read and add fields to the database
-template<class FieldType>
-void readAndAddFields(const fvMesh& mesh, const IOobjectList& objects)
+template<class Type, template<class> class Patch, class Mesh>
+void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
 {
+    typedef GeometricField<Type, Patch, Mesh> FieldType;
 
     IOobjectList fields = objects.lookupClass(FieldType::typeName);
     forAllIter(IOobjectList, fields, fieldIter)
@@ -375,17 +492,65 @@ void readAndAddFields(const fvMesh& mesh, const IOobjectList& objects)
 }
 
 
+//- Read and add fields to the database
+template<class Type>
+void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
+{
+    typedef GeometricField<Type, pointPatchField, pointMesh> FieldType;
+    IOobjectList fields = objects.lookupClass(FieldType::typeName);
+    forAllIter(IOobjectList, fields, fieldIter)
+    {
+        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        {
+            IOobject fieldTargetIOobject
+            (
+                fieldIter()->name(),
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            );
+
+            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            {
+                FieldType* fPtr
+                (
+                    new FieldType
+                    (
+                        fieldTargetIOobject,
+                        pointMesh::New(mesh)
+                    )
+                );
+                fPtr->store(fPtr);
+            }
+        }
+    }
+}
+
+
 //- Read and add all fields to the database
 void readAndAddAllFields(const fvMesh& mesh)
 {
     // Get all fields present at the current time
     IOobjectList objects(mesh, mesh.time().timeName());
 
-    readAndAddFields<volScalarField>(mesh, objects);
-    readAndAddFields<volVectorField>(mesh, objects);
-    readAndAddFields<volSphericalTensorField>(mesh, objects);
-    readAndAddFields<volSymmTensorField>(mesh, objects);
-    readAndAddFields<volTensorField>(mesh, objects);
+    readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<tensor, fvPatchField, volMesh>(mesh, objects);
+
+    readGeoFields<scalar, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<vector, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<tensor, fvsPatchField, surfaceMesh>(mesh, objects);
+
+    readPointFields<scalar>(mesh, objects);
+    readPointFields<vector>(mesh, objects);
+    readPointFields<symmTensor>(mesh, objects);
+    readPointFields<sphericalTensor>(mesh, objects);
+    readPointFields<tensor>(mesh, objects);
 }
 
 
@@ -470,8 +635,33 @@ int main(int argc, char *argv[])
     );
     argList::addBoolOption
     (
-        "force3D",
-        "Force 3-D refinement"
+        "forceHex8",
+        "Force use of standard OpenFOAM hexRef8 refinement"
+    );
+    argList::addBoolOption
+    (
+        "noWrite",
+        "Do not write fields"
+    );
+    argList::addBoolOption
+    (
+        "noFields",
+        "Do set fields"
+    );
+    argList::addBoolOption
+    (
+        "noRefine",
+        "Do not refine"
+    );
+    argList::addBoolOption
+    (
+        "overwrite",
+        "Write the mesh to constant"
+    );
+    argList::addBoolOption
+    (
+        "noHistory",
+        "Do not write the history"
     );
 
     #include "addDictOption.H"
@@ -485,50 +675,108 @@ int main(int argc, char *argv[])
 
     #include "createNamedMesh.H"
 
-    const dictionary setFieldsDict(systemDict("setFieldsDict", args, mesh));
+    dictionary setFieldsDict(systemDict("setFieldsDict", args, mesh));
 
     // Update All fields in the current time folder
     // Resizes to make sure all fields are consistent with the mesh
     bool updateAll(args.optionFound("updateAll"));
 
-    autoPtr<hexRef> meshCutter;
-    bool refine = true;
-    if (args.optionFound("force3D"))
-    {
-        meshCutter.set(new hexRef3D(mesh));
-    }
-    else if (mesh.nGeometricD() > 1)
-    {
-        meshCutter = hexRef::New(mesh);
-    }
-    else
-    {
-        // 1D so do not refine
-        refine = false;
-    }
+    // Do not write fields
+    // Usefull if a refined mesh is needed before mesh manipulation
+    bool noFields(args.optionFound("noFields"));
 
-    Switch debug(args.optionFound("debug"));
+    // Do not write fields
+    // Usefull if a refined mesh is needed before mesh manipulation
+    bool noWrite(args.optionFound("noWrite") || noFields);
 
-    label nBufferLayers(setFieldsDict.lookupOrDefault("nBufferLayers", 0));
+    bool noRefine(args.optionFound("noRefine"));
+    bool overwrite(args.optionFound("overwrite"));
+    bool noHistory(args.optionFound("noHistory"));
+    bool debug(args.optionFound("debug"));
 
-    PackedBoolList protectedCell(mesh.nCells(), 0);
-    if (refine)
+    if (overwrite && debug)
     {
-        initialize(mesh, protectedCell, meshCutter());
+        FatalErrorInFunction
+            << "Cannot overwrite mesh in debug mode" << endl
+            << abort(FatalError);
+    }
+    if (overwrite)
+    {
+        mesh.setInstance(runTime.constant());
     }
 
-    volScalarField error
-    (
-        IOobject
+    //- Is the mesh balanced
+    bool balance = false;
+    autoPtr<fvMeshRefiner> refiner;
+    if (!noRefine)
+    {
+        dictionary& refineDict
         (
-            "error",
-            runTime.timeName(),
-            mesh
-        ),
-        mesh,
-        0.0
-    );
-    wordList fieldNames(setFieldsDict.lookupOrDefault("fields", wordList()));
+            setFieldsDict.isDict("refinerCoeffs")
+          ? setFieldsDict.subDict("refinerCoeffs")
+          : setFieldsDict
+        );
+        if (!refineDict.found("refiner"))
+        {
+            IOobject dynamicMeshDictIO
+            (
+                "dynamicMeshDict",
+                runTime.constant(),
+                runTime,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            );
+            if (dynamicMeshDictIO.typeHeaderOk<IOdictionary>(true))
+            {
+                dynamicMeshDictIO.readOpt() = IOobject::MUST_READ;
+                IOdictionary dynamicMeshDict(dynamicMeshDictIO);
+                const word type(dynamicMeshDict.lookup("dynamicFvMesh"));
+                const dictionary& coeffsDict(dynamicMeshDict.optionalSubDict(type + "Coeffs"));
+                if (coeffsDict.found("refiner"))
+                {
+                    refineDict.set
+                    (
+                        "refiner",
+                        coeffsDict.lookup<word>("refiner")
+                    );
+                }
+            }
+        }
+
+        if (args.optionFound("forceHex8"))
+        {
+            refineDict.set("forceHex8", true);
+            refiner.set(new fvMeshHexRefiner(mesh, refineDict, true));
+        }
+        else if (refineDict.found("refiner") || mesh.nGeometricD() > 1)
+        {
+            refiner = fvMeshRefiner::New(mesh, refineDict, true);
+        }
+        else
+        {
+            IOWarningInFunction(refineDict)
+                << "A default refiner is no specified for " << mesh.nGeometricD()
+                << " geometricD so a refiner must be explicitily specified using the "
+                << "\"refiner\" keyword." << nl << endl;
+        }
+
+        if (refiner.valid())
+        {
+            if (Pstream::parRun())
+            {
+                balance = refiner->balancer().balance();
+            }
+            refiner->setForce(true);
+        }
+    }
+    bool refine = refiner.valid();
+
+    wordList fieldNames;
+    if (!noFields)
+    {
+        fieldNames = setFieldsDict.lookupOrDefault("fields", wordList());
+    }
     PtrList<volScalarField> fields(fieldNames.size());
     label fi = 0;
     forAll(fields, fieldi)
@@ -539,7 +787,8 @@ int main(int argc, char *argv[])
             fieldNames[fieldi],
             runTime.timeName(),
             mesh,
-            IOobject::MUST_READ
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
         );
 
         if (fieldHeader.typeHeaderOk<volScalarField>(true))
@@ -547,18 +796,7 @@ int main(int argc, char *argv[])
             fields.set
             (
                 fi++,
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        fieldNames[fieldi],
-                        runTime.timeName(),
-                        mesh,
-                        IOobject::MUST_READ,
-                        IOobject::AUTO_WRITE
-                    ),
-                    mesh
-                )
+                new volScalarField(fieldHeader, mesh)
             );
         }
         else
@@ -569,63 +807,69 @@ int main(int argc, char *argv[])
         }
     }
     fields.resize(fi);
+    const scalar angleFraction = calcAngleFraction(mesh);
 
     // Read in all fields to allow resizing
-    if (updateAll)
+    if (updateAll || balance)
     {
         readAndAddAllFields(mesh);
     }
 
-    // Regions to refine based on a field
-    PtrList<entry> regions(setFieldsDict.lookup("regions"));
-
     //- List of sources (and backups if present)
     // Stored to reduce the number of reads
-    PtrList<topoSetSource> sources(regions.size());
-    PtrList<topoSetSource> backupSources(regions.size());
+    PtrList<backupTopoSetSource> regions
+    (
+        setFieldsDict.lookup("regions"),
+        backupTopoSetSource::iNew(mesh)
+    );
+    topoSetList topoSets(mesh);
+
     labelList levels(regions.size(), 0);
     forAll(regions, regionI)
     {
-        sources.set
-        (
-            regionI,
-            topoSetSource::New
-            (
-                regions[regionI].keyword(),
-                mesh,
-                regions[regionI].dict()
-            ).ptr()
-        );
-        if (regions[regionI].dict().found("backup"))
-        {
-            backupSources.set
-            (
-                regionI,
-                topoSetSource::New
-                (
-                    regions[regionI].keyword(),
-                    mesh,
-                    regions[regionI].dict().subDict("backup")
-                ).ptr()
-            );
-        }
         levels[regionI] =
             regions[regionI].dict().lookupOrDefault("level", 0);
     }
-
-    label maxLevel =
-    (
-        levels.size() && !setFieldsDict.found("maxRefinement")
-      ? max(levels)
-      : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
-    );
 
     // Error fields is the same since it is looked up
     autoPtr<errorEstimator> EE;
     if (setFieldsDict.found("errorEstimator"))
     {
         EE = errorEstimator::New(mesh, setFieldsDict);
+        EE->setForce(true);
     }
+    else
+    {
+        volScalarField* errorPtr
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    "error",
+                    runTime.timeName(),
+                    mesh
+                ),
+                mesh,
+                0.0
+            )
+        );
+        errorPtr->store(errorPtr);
+    };
+    volScalarField& error = mesh.lookupObjectRef<volScalarField>("error");
+
+    label maxLevel =
+    (
+        levels.size() && !setFieldsDict.found("maxRefinement")
+      ? max(levels)
+      : (
+            EE.valid()
+          ? EE->maxLevel()
+          : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
+        )
+    );
+
+
 
     // Maximum number of iterations
     label iter = 0;
@@ -636,43 +880,39 @@ int main(int argc, char *argv[])
             max
             (
                 1,
-                max
+                setFieldsDict.lookupOrDefault
                 (
-                    setFieldsDict.lookupOrDefault("maxIter", 2*maxLevel),
-                    gMax(meshCutter->cellLevel())*2
+                    "maxIter",
+                    max
+                    (
+                        2*maxLevel,
+                        gMax(refiner->cellLevel())*2
+                    )
                 )
             );
     }
 
     // If debugging read in all to the necessary fields
-    if (debug)
+    if (debug && !noFields)
     {
         // Read default values and set fields
         if (setFieldsDict.found("defaultFieldValues"))
         {
-            PtrList<setCellField> defaultFieldValues
+            PtrList<fieldSetList>
             (
                 setFieldsDict.lookup("defaultFieldValues"),
-                setCellField::iNew(mesh, labelList(), false)
+                fieldSetList::iNew(mesh, setFieldsDict)
             );
         }
 
         forAll(regions, regionI)
         {
-            if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
+            if (regions[regionI].dict().found("fieldValues"))
             {
-                PtrList<setCellField> fieldValues
+                PtrList<fieldSetList>
                 (
                     regions[regionI].dict().lookup("fieldValues"),
-                    setCellField::iNew(mesh, labelList(), false)
-                );
-            }
-            else if (sources[regionI].setType() == topoSetSource::FACESETSOURCE)
-            {
-                PtrList<setFaceField> fieldValues
-                (
-                    regions[regionI].dict().lookup("fieldValues"),
-                    setFaceField::iNew(mesh, labelList(), false)
+                    fieldSetList::iNew(mesh, setFieldsDict)
                 );
             }
         }
@@ -689,11 +929,13 @@ int main(int argc, char *argv[])
         if (debug)
         {
             runTime++;
+            Info<< "Time = " << runTime.timeName() << nl << endl;
         }
 
         if (maxIter <= iter)
         {
             prepareToStop = true;
+            WarningInFunction << "Reach maximum number of iteration" << endl;
         }
 
         error = -1.0;
@@ -704,164 +946,158 @@ int main(int argc, char *argv[])
             end = true;
         }
 
+        bool write = !noWrite && (end || debug);
+
         // Read default values and set fields
-        if (setFieldsDict.found("defaultFieldValues"))
+        if (setFieldsDict.found("defaultFieldValues") && !noFields)
         {
             Info<< "Setting field default values" << endl;
-            labelList cells(mesh.nCells());
-            forAll(cells, i)
-            {
-                cells[i] = i;
-            }
-            PtrList<setCellField> defaultFieldValues
+            PtrList<fieldSetList>
             (
                 setFieldsDict.lookup("defaultFieldValues"),
-                setCellField::iNew(mesh, cells, end || debug)
+                fieldSetList::iNew
+                (
+                    mesh,
+                    setFieldsDict,
+                    identity(mesh.nCells()),
+                    identity(mesh.nFaces()),
+                    identity(mesh.nPoints()),
+                    write
+                )
             );
+
             Info<< endl;
         }
 
         // List of saved cells (per cell set)
-        labelListList savedCells;
+        labelListList savedCells(regions.size());
+        labelListList savedFaces(regions.size());
+        boolListList savedFlipMaps(regions.size());
+        labelListList savedPoints(regions.size());
 
         Info<< "Setting field region values" << endl;
         forAll(regions, regionI)
         {
-            // Cell sets
-            if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
+            const dictionary& regionDict =  regions[regionI].dict();
+            regions[regionI].allowBackup(!end);
+            regions[regionI].updateSets();
+
+            const labelList& selectedCells = regions[regionI].selectedCells();
+            const labelList& selectedFaces = regions[regionI].selectedFaces();
+            const boolList& selectedFlipMaps = regions[regionI].flipMap();
+            const labelList& selectedPoints = regions[regionI].selectedPoints();
+
+            if
+            (
+                regions[regionI].isCell()
+             && !returnReduce(selectedCells.size(), sumOp<label>())
+            )
             {
-                cellSet selectedCellSet
-                (
-                    mesh,
-                    "cellSet",
-                    mesh.nCells()/10+1  // Reasonable size estimate.
-                );
-
-                sources[regionI].applyToSet
-                (
-                    topoSetSource::NEW,
-                    selectedCellSet
-                );
-
-                labelList cells = selectedCellSet.toc();
-
-                // Set to the actual cell set if at least one cells is found
-                if
-                (
-                    returnReduce
-                    (
-                        selectedCellSet.toc().size(), sumOp<label>()
-                    ) > 0
-                )
-                {
-
-                    // Print the volume of the cells set
-                    scalar V = 0;
-                    forAll(cells, celli)
-                    {
-                        V += mesh.V()[cells[celli]];
-                    }
-                    Info<< "    Set volume of cell: "
-                        << returnReduce(V, sumOp<scalar>()) << " m^3"
-                        << endl;
-                }
-                // Use the backup region to expand search area
-                else if (!end && backupSources.set(regionI))
-                {
-                    Info<< nl
-                        << "    Expanding refinement region" << endl;
-                    cellSet backupCellSet
-                    (
-                        mesh,
-                        "cellSet",
-                        mesh.nCells()/10+1  // Reasonable size estimate.
-                    );
-
-                    backupSources[regionI].applyToSet
-                    (
-                        topoSetSource::NEW,
-                        backupCellSet
-                    );
-                    cells = backupCellSet.toc();
-                }
-
-                // Set field values
-                if (regions[regionI].dict().found("fieldValues"))
-                {
-                    PtrList<setCellField> fieldValues
-                    (
-                        regions[regionI].dict().lookup("fieldValues"),
-                        setCellField::iNew(mesh, cells, end || debug)
-                    );
-                }
-
-                if (!returnReduce(cells.size(), sumOp<label>()))
-                {
-                    WarningInFunction
-                        << "No cells were selected for using " << nl
-                        << regions[regionI].name()
-                        << regions[regionI].dict()
-                        << "To expand searchable region add backup " << nl
-                        << "Region or expand backup region." << endl;
-                }
-
-                // Save the number of cells in the set
-                savedCells.append(cells);
-
+                WarningInFunction
+                    << "No cells were selected for using " << nl
+                    << regionDict
+                    << "To expand searchable region add backup " << nl
+                    << "Region or expand backup region." << endl;
             }
-            // Face sets
-            else if (sources[regionI].setType() == topoSetSource::FACESETSOURCE)
+            else if
+            (
+                regions[regionI].isFace()
+             && !returnReduce(selectedFaces.size(), sumOp<label>())
+            )
             {
-                faceSet selectedFaceSet
-                (
-                    mesh,
-                    "faceSet",
-                    (mesh.nFaces()-mesh.nInternalFaces())/10+1
-                );
+                WarningInFunction
+                    << "No faces were selected for using " << nl
+                    << regionDict
+                    << "To expand searchable region add backup " << nl
+                    << "Region or expand backup region." << endl;
+            }
+            else if
+            (
+                regions[regionI].isPoint()
+             && !returnReduce(selectedPoints.size(), sumOp<label>())
+            )
+            {
+                WarningInFunction
+                    << "No points were selected for using " << nl
+                    << regionDict
+                    << "To expand searchable region add backup " << nl
+                    << "Region or expand backup region." << endl;
+            }
 
-                sources[regionI].applyToSet
-                (
-                    topoSetSource::NEW,
-                    selectedFaceSet
-                );
+            savedCells[regionI] = selectedCells;
+            savedFaces[regionI] = selectedFaces;
+            savedFlipMaps[regionI] = selectedFlipMaps;
+            savedPoints[regionI] = selectedPoints;
 
-                labelList selectedFaces(selectedFaceSet.toc());
-                if (regions[regionI].dict().found("fieldValues"))
+            bool set =
+                selectedCells.size()
+             || selectedFaces.size()
+             || selectedPoints.size();
+            reduce(set, orOp<bool>());
+
+            if (set)
+            {
+                Info<< "    Selected "
+                    << returnReduce(selectedCells.size(), sumOp<label>())
+                    << " cells, "
+                    << returnReduce(selectedFaces.size(), sumOp<label>())
+                    << " faces, "
+                    << returnReduce(selectedPoints.size(), sumOp<label>())
+                    << " points" << endl;
+
+                // Print the volume of the cells set
+                scalar V = 0.0;
+                forAll(selectedCells, celli)
                 {
-                    PtrList<setFaceField> fieldValues
+                    V += mesh.V()[selectedCells[celli]];
+                }
+                reduce(V, sumOp<scalar>());
+                Info<< "    Set volume of cell: "
+                    << V << " m^3";
+                if (angleFraction != 1.0)
+                {
+                    Info<< " (" << V/angleFraction << " actual)";
+                }
+                Info<< endl;
+
+                if (regionDict.found("fieldValues") && !noFields)
+                {
+                    PtrList<fieldSetList>
                     (
-                        regions[regionI].dict().lookup("fieldValues"),
-                        setFaceField::iNew(mesh, selectedFaces, end || debug)
+                        regionDict.lookup("fieldValues"),
+                        fieldSetList::iNew
+                        (
+                            mesh,
+                            setFieldsDict,
+                            selectedCells,
+                            selectedFaces,
+                            selectedPoints,
+                            end || debug
+                        )
                     );
                 }
-
-                // Set owner and neighbor cells of the selected faces
-                labelList faceCells(selectedFaces.size()*2);
-                label nFaces = 0;
-                forAll(selectedFaces, i)
-                {
-                    label facei = selectedFaces[i];
-                    faceCells[nFaces] = mesh.faceOwner()[facei];
-                    nFaces++;
-                    if (mesh.isInternalFace(facei))
-                    {
-                        faceCells[nFaces] = mesh.faceNeighbour()[facei];
-                        nFaces++;
-                    }
-                }
-                faceCells.resize(nFaces);
-                savedCells.append(faceCells);
             }
+
+            topoSets.update
+            (
+                regionDict,
+                selectedCells,
+                selectedFaces,
+                selectedFlipMaps,
+                selectedPoints
+            );
+            Info<< endl;
         }
+        topoSets.transferZones(false);
 
         // Update boundary conditions of fields used for refinement
         forAll(fields, fieldi)
         {
-            fields[fieldi].correctBoundaryConditions();
+            updateProcessorBoundaries(fields[fieldi]);
         }
 
         // Update error and mesh if not the final iteration
-        if (!end && refine)
+        if (refine)
         {
             // Use error estimator to calculate error
             if (EE.valid())
@@ -876,20 +1112,69 @@ int main(int argc, char *argv[])
             labelList maxCellLevel(mesh.nCells(), -1);
             forAll(regions, regionI)
             {
-                // Set keyword to lookup for refinement
-                word refineKeyword;
-                if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
+                // Set specified cells to be refined
+                labelList refineCells;
+                labelList refineFaces;
+                labelList refinePoints;
+                if
+                (
+                    regions[regionI].dict().lookupOrDefault
+                    (
+                        "refineInternal",
+                        false
+                    )
+                )
                 {
-                    refineKeyword = "refineInternal";
+                    refineCells = savedCells[regionI];
                 }
-                else
+                else if
+                (
+                    regions[regionI].dict().lookupOrDefault
+                    (
+                        "refineInterface",
+                        false
+                    )
+                )
                 {
-                    refineKeyword = "refineFaces";
+                    refineCells =
+                        topoSets.extractInterfaceCells(savedCells[regionI]);
+                }
+                if
+                (
+                    regions[regionI].dict().lookupOrDefault
+                    (
+                        "refineFaces",
+                        false
+                    )
+                )
+                {
+                    refineFaces = topoSets.extractSelectedFaces
+                    (
+                        regions[regionI].dict(),
+                        savedFaces[regionI],
+                        true
+                    );
+                }
+                if
+                (
+                    regions[regionI].dict().lookupOrDefault
+                    (
+                        "refinePoints",
+                        false
+                    )
+                )
+                {
+                    refinePoints = topoSets.extractSelectedPoints
+                    (
+                        regions[regionI].dict(),
+                        savedPoints[regionI],
+                        true
+                    );
                 }
 
                 // Do not use the max level, use current
                 // Order is important in the definitions of regions
-                Switch overwrite =
+                Switch overwriteLevel =
                     regions[regionI].dict().lookupOrDefault<Switch>
                     (
                         "overwriteLevel",
@@ -897,49 +1182,119 @@ int main(int argc, char *argv[])
                     );
 
                 // Set actual max cell level
-                forAll(savedCells[regionI], celli)
+                const labelList& owner = mesh.faceOwner();
+                const labelList& neighbour = mesh.faceNeighbour();
+                const labelListList& pointCells = mesh.pointCells();
+                if (overwriteLevel)
                 {
-                    if (overwrite)
+                    forAll(refineCells, celli)
                     {
-                        maxCellLevel[savedCells[regionI][celli]] = levels[regionI];
+                        maxCellLevel[refineCells[celli]] = levels[regionI];
                     }
-                    else
+
+                    forAll(refineFaces, fi)
                     {
-                        maxCellLevel[savedCells[regionI][celli]] =
+                        const label facei = refineFaces[fi];
+                        maxCellLevel[owner[facei]] = levels[regionI];
+                        if (facei < mesh.nInternalFaces())
+                        {
+                            maxCellLevel[neighbour[facei]] = levels[regionI];
+                        }
+                    }
+                    forAll(refinePoints, pi)
+                    {
+                        const label pointi = refinePoints[pi];
+                        const labelList& pc = pointCells[pointi];
+                        forAll(pc, ci)
+                        {
+                            maxCellLevel[pc[ci]] = levels[regionI];
+                        }
+                    }
+                }
+                else
+                {
+                    forAll(refineCells, celli)
+                    {
+                        maxCellLevel[refineCells[celli]] =
                             max
                             (
-                                maxCellLevel[savedCells[regionI][celli]],
+                                maxCellLevel[refineCells[celli]],
                                 levels[regionI]
                             );
                     }
+                    forAll(refineFaces, fi)
+                    {
+                        const label facei = refineFaces[fi];
+                        maxCellLevel[owner[facei]] =
+                            max
+                            (
+                                maxCellLevel[owner[facei]],
+                                levels[regionI]
+                            );
+                        if (facei < mesh.nInternalFaces())
+                        {
+                            maxCellLevel[neighbour[facei]] =
+                                max
+                                (
+                                    maxCellLevel[neighbour[facei]],
+                                    levels[regionI]
+                                );
+                        }
+                    }
+                    forAll(refinePoints, pi)
+                    {
+                        const label pointi = refinePoints[pi];
+                        const labelList& pc = pointCells[pointi];
+                        forAll(pc, ci)
+                        {
+                            maxCellLevel[pc[ci]] =
+                                max
+                                (
+                                    maxCellLevel[pc[ci]],
+                                    levels[regionI]
+                                );
+                        }
+                    }
                 }
 
-                // Set specified cells to be refined
-                if
-                (
-                    regions[regionI].dict().lookupOrDefault<Switch>
-                    (
-                        refineKeyword,
-                        false
-                    ) && !EE.valid()
-                )
+                forAll(refineCells, celli)
                 {
-                    forAll(savedCells[regionI], celli)
+                    error[refineCells[celli]] = 1.0;
+                }
+                forAll(refineFaces, fi)
+                {
+                    const label facei = refineFaces[fi];
+                    error[owner[facei]] = 1.0;
+
+                    if (facei < mesh.nInternalFaces())
                     {
-                        error[savedCells[regionI][celli]] = 1.0;
+                        error[neighbour[facei]] = 1.0;
+                    }
+                }
+                forAll(refinePoints, pi)
+                {
+                    const label pointi = refinePoints[pi];
+                    const labelList& pc = pointCells[pointi];
+                    forAll(pc, ci)
+                    {
+                        error[pc[ci]] = 1.0;
                     }
                 }
 
                 // Extend refinement by nBufferLayers
-                for (label i = 0; i < nBufferLayers; i++)
+                for
+                (
+                    label i = 0;
+                    i < refiner->nRefinementBufferLayers() + 1;
+                    i++
+                )
                 {
-                    extendMaxCellLevel
+                    fvMeshRefiner::extendMaxCellLevel
                     (
                         mesh,
                         savedCells[regionI],
                         maxCellLevel,
-                        levels[regionI],
-                        i == 0
+                        levels[regionI]
                     );
                 }
             }
@@ -960,9 +1315,14 @@ int main(int argc, char *argv[])
             }
 
             // Mark cells greater than the max cell level for unrefinment
+            const labelList& cellLevel = refiner->cellLevel();
             forAll(error, celli)
             {
-                if (meshCutter->cellLevel()[celli] > maxCellLevel[celli])
+                if (cellLevel[celli] == maxCellLevel[celli])
+                {
+                    error[celli] = 0.0;
+                }
+                else if (cellLevel[celli] > maxCellLevel[celli])
                 {
                     error[celli] = -1.0;
                 }
@@ -971,119 +1331,53 @@ int main(int argc, char *argv[])
             // Write fields and mesh if using debug
             if (debug)
             {
-                bool writeOk = (mesh.write() && meshCutter->write());
-                volScalarField scalarCellLevel
-                (
-                    IOobject
-                    (
-                        "cellLevel",
-                        runTime.timeName(),
-                        mesh,
-                        IOobject::NO_READ,
-                        IOobject::AUTO_WRITE,
-                        false
-                    ),
-                    mesh,
-                    dimensionedScalar(dimless, 0)
-                );
+                mesh.setInstance(runTime.timeName());
+                bool writeOk = (mesh.write() && refiner->write());
                 volScalarField scalarMaxCellLevel
                 (
-                    IOobject
+                    volScalarField::New
                     (
                         "maxCellLevel",
-                        runTime.timeName(),
                         mesh,
-                        IOobject::NO_READ,
-                        IOobject::AUTO_WRITE,
-                        false
-                    ),
-                    mesh,
-                    dimensionedScalar(dimless, 0)
+                        dimensionedScalar(dimless, 0),
+                        extrapolatedCalculatedFvPatchField<scalar>::typeName
+                    )
                 );
-
-                const labelList& cellLevel = meshCutter->cellLevel();
 
                 forAll(cellLevel, celli)
                 {
-                    scalarCellLevel[celli] = cellLevel[celli];
                     scalarMaxCellLevel[celli] = maxCellLevel[celli];
                 }
-                writeOk = writeOk && scalarCellLevel.write();
-                error.write();
-                scalarMaxCellLevel.write();
+                scalarMaxCellLevel.correctBoundaryConditions();
+                writeOk =
+                    writeOk
+                 && scalarMaxCellLevel.write()
+                 && error.write();
+
+                Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+                    << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+                    << nl << endl;
             }
 
             // Update mesh (return if mesh changes)
-            Info<< nl << "Updating mesh" << endl;
-            prepareToStop =
-               !update
-                (
-                    mesh,
-                    error,
-                    setFieldsDict,
-                    meshCutter(),
-                    protectedCell,
-                    maxCellLevel
-                );
-            // Force refinement data to go to the current time directory.
-            meshCutter->setInstance(runTime.timeName());
+            if (!end)
+            {
+                prepareToStop = !refiner->refine(error, maxCellLevel);
+            }
         }
         iter++;
     }
+    topoSets.transferZones(false);
 
-    if (Pstream::parRun())
+    bool writeMesh = topoSets.writeSets();
+
+    if (refine && !debug)
     {
-        correctBoundaries<volScalarField>(mesh);
-        correctBoundaries<volVectorField>(mesh);
-        correctBoundaries<volSphericalTensorField>(mesh);
-        correctBoundaries<volSymmTensorField>(mesh);
-        correctBoundaries<volTensorField>(mesh);
-    }
-
-    // Write all fields
-    if (updateAll)
-    {
-        runTime.write();
-    }
-
-    if (refine)
-    {
-        // Handle cell level (as volScalarField) explicitly
-        // Important when using mapFields or rotateFields
-        const labelIOList& cellLevel = meshCutter->cellLevel();
-        if (mesh.foundObject<volScalarField>("cellLevel"))
-        {
-            volScalarField& scalarCellLevel =
-                mesh.lookupObjectRef<volScalarField>("cellLevel");
-            forAll(cellLevel, celli)
-            {
-                scalarCellLevel[celli] = cellLevel[celli];
-            }
-            scalarCellLevel.write();
-        }
-        else if (debug)
-        {
-            volScalarField scalarCellLevel
-            (
-                IOobject
-                (
-                    "cellLevel",
-                    runTime.timeName(),
-                    mesh
-                ),
-                mesh,
-                dimensionedScalar(dimless, 0)
-            );
-            forAll(cellLevel, celli)
-            {
-                scalarCellLevel[celli] = cellLevel[celli];
-            }
-            scalarCellLevel.write();
-        }
-
         // Write mesh and cell levels
-        meshCutter->write();
-        mesh.write();
+        if (overwrite)
+        {
+            mesh.setInstance(runTime.constant());
+        }
 
         //- Write points0 field to time directory
         pointIOField points0
@@ -1091,17 +1385,35 @@ int main(int argc, char *argv[])
             IOobject
             (
                 "points0",
-                runTime.timeName(),
+                overwrite ? runTime.constant() : runTime.timeName(),
                 polyMesh::meshSubDir,
                 mesh
             ),
             mesh.points()
         );
         points0.write();
-
+        writeMesh = true;
     }
 
-    Info<< "\nEnd\n" << endl;
+    if (noHistory)
+    {
+        refiner.clear();
+    }
+
+    // Write all fields
+    if (updateAll)
+    {
+        runTime.write();
+    }
+    if (writeMesh)
+    {
+        mesh.write();
+    }
+
+    Info<< "\nEnd\n" << nl
+        << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+        << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+        << nl << endl;
 
     return 0;
 }

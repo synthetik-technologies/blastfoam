@@ -33,19 +33,24 @@ boundaryField
 
     upperWall
     {
-        type            fixedValue;
+        type            slip;
         value           uniform (0 0 0);
     }
 
     lowerWall
     {
-        type            fixedValue;
+        type            slip;
         value           uniform (0 0 0);
     }
 
     frontAndBack
     {
         type            empty;
+    }
+
+    processor
+    {
+        type            processor;
     }
 }
 

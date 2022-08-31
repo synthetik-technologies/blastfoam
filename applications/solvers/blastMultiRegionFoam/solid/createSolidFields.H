@@ -1,6 +1,6 @@
 
 // Initialise solid field pointer lists
-PtrList<solidThermo> thermoSolid(solidRegions.size());
+PtrList<solidBlastThermo> thermoSolid(solidRegions.size());
 PtrList<Foam::fvModels> fvModelsSolid(solidRegions.size());
 PtrList<fvConstraints> fvConstraintsSolid(solidRegions.size());
 
@@ -11,7 +11,26 @@ forAll(solidRegions, i)
         << solidRegions[i].name() << nl << endl;
 
     Info<< "    Adding to thermoSolid\n" << endl;
-    thermoSolid.set(i, solidThermo::New(solidRegions[i]));
+    thermoSolid.set
+    (
+        i,
+        solidBlastThermo::New
+        (
+            solidRegions[i],
+            IOdictionary
+            (
+                IOobject
+                (
+                    "thermophysicalProperties",
+                    runTime.constant(),
+                    solidRegions[i],
+                    IOobject::MUST_READ,
+                    IOobject::NO_WRITE,
+                    false
+                )
+            )
+        )
+    );
 
     Info<< "    Adding to fvModelsSolid\n" << endl;
     fvModelsSolid.set

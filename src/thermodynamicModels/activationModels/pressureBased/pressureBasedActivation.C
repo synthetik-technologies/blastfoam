@@ -93,7 +93,24 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
         b_ = dict.lookup<scalar>("b");
         x_ = dict.lookup<scalar>("x");
         maxLambdaI_ = dict.lookup<scalar>("maxLambdaI");
-        rho0_.read(dict.parent().subDict("reactants").subDict("equationOfState"));
+        const dictionary& rDict(dict.parent().subDict("reactants"));
+        const dictionary& pDict(dict.parent().subDict("products"));
+        if (rDict.subDict("equationOfState").found(rho0_.name()))
+        {
+            Info<<"reactants"<<endl;
+            rho0_.read(rDict.subDict("equationOfState"));
+        }
+        else if (pDict.subDict("equationOfState").found(rho0_.name()))
+        {
+            Info<<"products"<<endl;
+            rho0_.read(pDict.subDict("equationOfState"));
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "'rho0' was not found if products or reactants" << endl
+                << abort(FatalError);
+        }
         needI_ = true;
     }
 

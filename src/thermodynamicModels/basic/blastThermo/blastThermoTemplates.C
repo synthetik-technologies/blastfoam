@@ -51,6 +51,10 @@ typename Table::iterator Foam::blastThermo::lookupCstrIter
     {
         const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
         fileName tempDir(Thermo::templateDir());
+        if (thermoDict.found("templateDir"))
+        {
+            tempDir = thermoDict.lookup<fileName>("templateDir");
+        }
         setEnv("FOAM_CODE_TEMPLATES", tempDir, true);
 
         const word type(thermoDict.lookup("type"));

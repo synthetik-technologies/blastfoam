@@ -29,16 +29,15 @@ Description
 
 SourceFiles
     FieldSetType.C
-    newFieldSetType.C
+    FieldSetTypeNew.C
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef FieldSetType_H
 #define FieldSetType_H
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #include "fvMesh.H"
+#include "pointMesh.H"
 #include "Time.H"
 #include "UautoPtr.H"
 
@@ -56,16 +55,33 @@ class FieldSetType
 {
 protected:
 
+    typedef Patch<Type> PatchType;
+    typedef Mesh MeshType;
     typedef GeometricField<Type, Patch, Mesh> FieldType;
 
-    //- Constant referenc to the mesh
+    //- Constant reference to the mesh
     const fvMesh& mesh_;
+
+    //- Reference to the parent dictionary
+    const dictionary& dict_;
+
+    //- Name of the field to set
+    const word fName_;
 
     //- Pointer to the field to be set
     UautoPtr<FieldType> fieldPtr_;
 
-    //- Cells to set
-    const labelList& selectedCells_;
+    //- Indices to set
+    const labelList& selectedIndices_;
+
+    //- Only set patch values
+    bool noInternal_;
+
+    //- Evaluate boundaries
+    bool evaluateBoundaries_;
+
+    //- Boundaries to set
+    wordHashSet boundaries_;
 
     //- Write after setting fields
     bool write_;
@@ -77,7 +93,45 @@ protected:
     FieldType* lookupOrRead(const word& fieldName) const;
 
     //- Set the selected cells
-    virtual void setField();
+    virtual void setField() = 0;
+
+    //- Return the mesh used to construct fields
+    const fvMesh& getMesh
+    (
+        const UautoPtr<GeometricField<Type, fvPatchField, volMesh>>&
+    ) const;
+    const fvMesh& getMesh
+    (
+        const UautoPtr<GeometricField<Type, fvsPatchField, surfaceMesh>>&
+    ) const;
+    const pointMesh& getMesh
+    (
+        const UautoPtr<GeometricField<Type, pointPatchField, pointMesh>>&
+    ) const;
+
+    //- Return the subset of values given indices and positions
+    virtual void getInternalField
+    (
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
+
+    //- Return the subset of values given indices and positions
+    virtual void getBoundaryField
+    (
+        const label patchi,
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
+
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const FieldType&
+    ) const = 0;
 
 
 public:
@@ -93,20 +147,22 @@ public:
             dictionary,
             (
                 const fvMesh& mesh,
+                const dictionary& dict,
                 const word& fieldName,
-                const labelList& selectedCells,
+                const labelList& selectedIndices,
                 Istream& is,
                 const bool write
             ),
-            (mesh, fieldName, selectedCells, is, write)
+            (mesh, dict, fieldName, selectedIndices, is, write)
         );
 
     // Constructor
     FieldSetType
     (
         const fvMesh& mesh,
+        const dictionary& dict,
         const word& fieldName,
-        const labelList& selectedCells,
+        const labelList& selectedIndices,
         Istream& is,
         const bool write
     );
@@ -115,16 +171,20 @@ public:
     FieldSetType
     (
         const fvMesh& mesh,
-        const labelList& selectedCells
+        const dictionary& dict,
+        const labelList& selectedIndices
     );
 
 
-    // Selector
+    // Selectors
+
         static autoPtr<FieldSetType> New
         (
             const word& fieldDesc,
+            const word& fieldName,
             const fvMesh& mesh,
-            const labelList& selectedCells,
+            const dictionary& dict,
+            const labelList& selectedIndices,
             Istream& is,
             const bool write
         );
@@ -137,7 +197,173 @@ public:
     {
         return good_;
     }
+
+    //- Return the field to set
+    const word& fieldName() const
+    {
+        return fName_;
+    }
 };
+
+
+/*---------------------------------------------------------------------------*\
+                          Class VolFieldSetType Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class Type>
+class VolFieldSetType
+:
+    public FieldSetType<Type, fvPatchField, volMesh>
+{
+protected:
+
+
+    //- Set the selected cells
+    virtual void setField();
+
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const GeometricField<Type, fvPatchField, volMesh>&
+    ) const;
+
+    const fvMesh& getMesh() const
+    {
+        return this->mesh_;
+    }
+
+
+public:
+
+    // Constructor
+    VolFieldSetType
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& fieldName,
+        const labelList& selectedIndices,
+        Istream& is,
+        const bool write
+    );
+
+    // Constructor
+    VolFieldSetType
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const labelList& selectedIndices
+    );
+
+    //- Destructor
+    virtual ~VolFieldSetType();
+};
+
+
+/*---------------------------------------------------------------------------*\
+                          Class SurfaceFieldSetType Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class Type>
+class SurfaceFieldSetType
+:
+    public FieldSetType<Type, fvsPatchField, surfaceMesh>
+{
+protected:
+
+    //- Set the selected cells
+    virtual void setField();
+
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const GeometricField<Type, fvsPatchField, surfaceMesh>&
+    ) const;
+
+    const fvMesh& getMesh() const
+    {
+        return this->mesh_;
+    }
+
+
+public:
+
+    // Constructor
+    SurfaceFieldSetType
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& fieldName,
+        const labelList& selectedIndices,
+        Istream& is,
+        const bool write
+    );
+
+    // Constructor
+    SurfaceFieldSetType
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const labelList& selectedIndices
+    );
+
+    //- Destructor
+    virtual ~SurfaceFieldSetType();
+};
+
+
+/*---------------------------------------------------------------------------*\
+                    Class PointFieldSetType Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class Type>
+class PointFieldSetType
+:
+    public FieldSetType<Type, pointPatchField, pointMesh>
+{
+protected:
+
+    //- Set the selected cells
+    virtual void setField();
+
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const GeometricField<Type, pointPatchField, pointMesh>&
+    ) const;
+
+    const pointMesh& getMesh() const
+    {
+        return pointMesh::New(this->mesh_);
+    }
+
+public:
+
+    // Constructor
+    PointFieldSetType
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& fieldName,
+        const labelList& selectedIndices,
+        Istream& is,
+        const bool write
+    );
+
+    // Constructor
+    PointFieldSetType
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const labelList& selectedIndices
+    );
+
+    //- Destructor
+    virtual ~PointFieldSetType();
+};
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -145,19 +371,17 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define makeFieldSetType(Type, FieldSet)                                       \
+#define makeFieldSetType(FieldSet)                                             \
                                                                                \
-    defineNamedTemplateTypeNameAndDebug(Type##FieldSet, 0);                    \
+    defineNamedTemplateTypeNameAndDebug(FieldSet, 0);                          \
                                                                                \
     defineTemplateRunTimeSelectionTable                                        \
     (                                                                          \
-        Type##FieldSet,                                                        \
+        FieldSet,                                                              \
         dictionary                                                             \
     );
 
-
 #define makeFieldSetTypeType(SS, Type, FieldSet)                               \
-                                                                               \
                                                                                \
     defineNamedTemplateTypeNameAndDebug                                        \
     (                                                                          \
@@ -176,7 +400,11 @@ public:
 
 #ifdef NoRepository
     #include "FieldSetType.C"
-    #include "newFieldSetType.C"
+    #include "FieldSetTypeNew.C"
 #endif
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #endif
+
+// ************************************************************************* //

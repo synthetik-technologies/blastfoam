@@ -1,5 +1,5 @@
 atmosphereModel/atmosphereModel.C
-atmosphereModel/newAtmosphereModel.C
+atmosphereModel/atmosphereModelNew.C
 hydrostatic/hydrostaticAtmosphereModel.C
 table/tableAtmosphereModel.C
 

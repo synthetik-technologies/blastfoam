@@ -45,15 +45,12 @@ Description
         w_p     | patch wave speed
         \phi_p  | patch face flux
         Sf      | patch face area vector
-        c       | speed of sound
     \endvartable
 
 Usage
     \table
         Property     | Description             | Required    | Default value
         phi          | flux field name         | no          | phi
-        rho          | density field name      | no          | rho
-        phaseName    | phase name              | no          | word::null
     \endtable
 
     Example of the boundary condition specification:
@@ -77,6 +74,7 @@ SourceFiles
 #define pressureWaveTransmissiveFvPatchField_H
 
 #include "advectiveFvPatchFields.H"
+#include "thermoBasePatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -90,15 +88,9 @@ namespace Foam
 template<class Type>
 class pressureWaveTransmissiveFvPatchField
 :
-    public advectiveFvPatchField<Type>
+    public advectiveFvPatchField<Type>,
+    public thermoBasePatchField
 {
-
-    // Private Data
-
-        //- Name of the phase
-        word phaseName_;
-
-
 public:
 
     //- Runtime type information

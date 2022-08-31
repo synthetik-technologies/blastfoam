@@ -1,0 +1,30 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Copy 0.orig
+cp -r 0.orig 0
+
+# -- Create mesh
+runApplication blockMesh
+runApplication snappyHexMesh -overwrite
+runApplication createPatch -overwrite
+
+# -- Set initial conditions
+runApplication setRefinedFields
+
+# -- Initialize the pressure in the water region
+runApplication -s water initializeAtmosphere -zone waterRegion -type hydrostatic
+
+# -- Initialize the pressure in the air region
+runApplication -s air initializeAtmosphere -zone airRegion -type table
+
+# -- Set initial conditions (reset left region)
+# runApplication setRefinedFields
+
+# ----------------------------------------------------------------- end-of-file

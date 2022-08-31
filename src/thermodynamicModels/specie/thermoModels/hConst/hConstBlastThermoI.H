@@ -178,19 +178,16 @@ template<class EquationOfState>
 inline Foam::scalar Foam::hConstThermo<EquationOfState>::S
 (
     const scalar p,
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Cp_*log(T/Tstd) + EquationOfState::S(p, rho, T);
+    return Cp_*log(T/Tstd) + EquationOfState::S(p, T);
 }
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hConstThermo<EquationOfState>::dGdT
+inline Foam::scalar Foam::hConstThermo<EquationOfState>::Gstd
 (
-    const scalar p,
     const scalar T
 ) const
 {
@@ -200,29 +197,6 @@ inline Foam::scalar Foam::hConstThermo<EquationOfState>::dGdT
 
 template<class EquationOfState>
 inline Foam::scalar Foam::hConstThermo<EquationOfState>::dCpdT
-(
-    const scalar p,
-    const scalar T
-) const
-{
-    return 0;
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::hConstThermo<EquationOfState>::dCpdT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return 0.0;
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::hConstThermo<EquationOfState>::dCvdT
 (
     const scalar rho,
     const scalar e,
@@ -255,9 +229,9 @@ inline void Foam::hConstThermo<EquationOfState>::operator+=
         {
             FatalErrorInFunction
                 << "Tref " << Tref_ << " for "
-                << (this->specieName().size() ? this->specieName() : "others")
+                << (this->name().size() ? this->name() : "others")
                 << " != " << ct.Tref_ << " for "
-                << (ct.specieName().size() ? ct.specieName() : "others")
+                << (ct.name().size() ? ct.name() : "others")
                 << exit(FatalError);
         }
 
@@ -309,9 +283,9 @@ inline Foam::hConstThermo<EquationOfState> Foam::operator+
         {
             FatalErrorInFunction
                 << "Tref " << ct1.Tref_ << " for "
-                << (ct1.specieName().size() ? ct1.specieName() : "others")
+                << (ct1.name().size() ? ct1.name() : "others")
                 << " != " << ct2.Tref_ << " for "
-                << (ct2.specieName().size() ? ct2.specieName() : "others")
+                << (ct2.name().size() ? ct2.name() : "others")
                 << exit(FatalError);
         }
 
@@ -372,9 +346,9 @@ inline Foam::hConstThermo<EquationOfState> Foam::operator==
     {
         FatalErrorInFunction
             << "Tref " << ct1.Tref_ << " for "
-            << (ct1.specieName().size() ? ct1.specieName() : "others")
+            << (ct1.name().size() ? ct1.name() : "others")
             << " != " << ct2.Tref_ << " for "
-            << (ct2.specieName().size() ? ct2.specieName() : "others")
+            << (ct2.name().size() ? ct2.name() : "others")
             << exit(FatalError);
     }
 

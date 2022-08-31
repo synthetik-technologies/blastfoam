@@ -1,0 +1,3 @@
+levelSetModel/levelSetModel.C
+
+LIB = $(BLAST_LIBBIN)/liblevelSet

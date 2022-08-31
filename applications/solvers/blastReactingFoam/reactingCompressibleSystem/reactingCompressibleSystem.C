@@ -41,7 +41,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     const fvMesh& mesh
 )
 :
-    timeIntegrationSystem("phaseCompressibleSystem", mesh),
+    compressibleSystem(mesh),
     thermo_(fluidReactionThermo::New(mesh)),
     rho_
     (
@@ -56,94 +56,9 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         mesh,
         dimensionedScalar("rho", dimDensity, 0.0)
     ),
-    U_
-    (
-        IOobject
-        (
-            "U",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    ),
     p_(thermo_->p()),
     T_(thermo_->T()),
-    e_(thermo_->he()),
-    rhoU_
-    (
-        IOobject
-        (
-            "rhoU",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        rho_*U_
-    ),
-    rhoE_
-    (
-        IOobject
-        (
-            "rhoE",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
-    ),
-    phi_
-    (
-        IOobject
-        (
-            "phi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-    ),
-    rhoPhi_
-    (
-        IOobject
-        (
-            "rhoPhi",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*dimVelocity*dimArea, 0.0)
-    ),
-    rhoUPhi_
-    (
-        IOobject
-        (
-            "rhoUPhi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedVector("0", dimDensity*sqr(dimVelocity)*dimArea, Zero)
-    ),
-    rhoEPhi_
-    (
-        IOobject
-        (
-            "rhoEPhi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
-    ),
-    fluxScheme_(fluxScheme::New(mesh)),
-    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
+    e_(thermo_->he())
 {
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
@@ -163,7 +78,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
             thermo_()
         ).ptr()
     );
-    thermophysicalTransport_.set
+    reactionThermophysicalTransport_.set
     (
         fluidReactionThermophysicalTransportModel::New
         (
@@ -201,9 +116,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         radiation_ = radiationModel::New(radDict, T_);
     }
 
-    modelsPtr_.set(&fvModels::New(mesh));
-    constraintsPtr_.set(&fvConstraints::New(mesh));
-
+    fluxScheme_ = fluxScheme::NewSingle(mesh);
     encode();
 }
 
@@ -217,15 +130,6 @@ Foam::reactingCompressibleSystem::~reactingCompressibleSystem()
 
 void Foam::reactingCompressibleSystem::solve()
 {
-    volScalarField rhoOld(rho_);
-    volVectorField rhoUOld(rhoU_);
-    volScalarField rhoEOld(rhoE_);
-
-    //- Store old values
-    this->storeAndBlendOld(rhoOld);
-    this->storeAndBlendOld(rhoUOld);
-    this->storeAndBlendOld(rhoEOld);
-
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
@@ -239,13 +143,20 @@ void Foam::reactingCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoU);
     this->storeAndBlendDelta(deltaRhoE);
 
+    //- Store old values
+    this->storeAndBlendOld(rho_);
+    rho_.storePrevIter();
+
+    this->storeAndBlendOld(rhoU_);
+    this->storeAndBlendOld(rhoE_);
+
 
     dimensionedScalar dT = rho_.time().deltaT();
-    rho_ = rhoOld - dT*deltaRho;
+    rho_ -= dT*deltaRho;
     rho_.correctBoundaryConditions();
 
-    rhoU_ = rhoUOld - dT*deltaRhoU;
-    rhoE_ = rhoEOld - dT*deltaRhoE;
+    rhoU_ -= dT*deltaRhoU;
+    rhoE_ -= dT*deltaRhoE;
 
     if (reaction_.valid())
     {
@@ -254,23 +165,17 @@ void Foam::reactingCompressibleSystem::solve()
         volScalarField Yt(0.0*Ys[0]);
         forAll(Ys, i)
         {
-            if (this->step() == 1)
-            {
-                Ys[i].storeOldTime();
-            }
-
             if (composition.solve(i))
             {
-                volScalarField YOld(Ys[i]);
-                this->storeAndBlendOld(YOld);
-
                 volScalarField deltaRhoY
                 (
                     fvc::div(fluxScheme_->interpolate(Ys[i], "Yi")*rhoPhi_)
                 );
+
+                this->storeAndBlendOld(Ys[i], false);
                 this->storeAndBlendDelta(deltaRhoY);
 
-                Ys[i] = (YOld*rhoOld - dT*deltaRhoY)/rho_;
+                Ys[i] = (Ys[i]*rho_.prevIter() - dT*deltaRhoY)/rho_;
                 Ys[i].correctBoundaryConditions();
 
                 Ys[i].max(0.0);
@@ -288,18 +193,19 @@ void Foam::reactingCompressibleSystem::postUpdate()
 
     // Solve mass
     rho_.storePrevIter();
-    fvScalarMatrix rhoEqn
-    (
-        fvm::ddt(rho_) - fvc::ddt(rho_)
-     ==
-        modelsPtr_->source(rho_)
-    );
+    if (needSolve(rho_.name()))
+    {
+        fvScalarMatrix rhoEqn
+        (
+            fvm::ddt(rho_) - fvc::ddt(rho_)
+        ==
+            models().source(rho_)
+        );
 
-    constraintsPtr_->constrain(rhoEqn);
-
-    rhoEqn.solve();
-
-    constraintsPtr_->constrain(rho_);
+        constraints().constrain(rhoEqn);
+        rhoEqn.solve();
+        constraints().constrain(rho_);
+    }
 
     // Update internal energy
     e_ = rhoE_/rho_ - 0.5*magSqr(U_);
@@ -310,16 +216,15 @@ void Foam::reactingCompressibleSystem::postUpdate()
         fvm::ddt(rho_, U_) - fvc::ddt(rhoU_)
      ==
         turbulence_->divDevTau(U_)
-      + modelsPtr_->source(rho_, U_)
+      + models().source(rho_, U_)
     );
 
-    // Solve thermal energy
     fvScalarMatrix eEqn
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_.prevIter(), e_)
      ==
-        thermophysicalTransport_->divq(e_)
-      + modelsPtr_->source(rho_, e_)
+        reactionThermophysicalTransport_->divq(e_)
+      + models().source(rho_, e_)
     );
 
     if (reaction_.valid())
@@ -332,7 +237,6 @@ void Foam::reactingCompressibleSystem::postUpdate()
         eEqn -= reaction_->Qdot();
 
         PtrList<volScalarField>& Y = composition.Y();
-        volScalarField Yt(0.0*Y[0]);
         forAll(Y, i)
         {
             if (composition.solve(i))
@@ -342,44 +246,39 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 (
                     fvm::ddt(rho_, Yi)
                   - fvc::ddt(rho_.prevIter(), Yi)
-                  + thermophysicalTransport_->divj(Yi)
+                  + reactionThermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
-                  + modelsPtr_->source(rho_, Yi)
+                  + models().source(rho_, Yi)
                 );
 
-                constraintsPtr_->constrain(YiEqn);
+                constraints().constrain(YiEqn);
                 YiEqn.solve("Yi");
-                constraintsPtr_->constrain(Yi);
+                constraints().constrain(Yi);
 
                 Yi.max(0.0);
-                Yt += Yi;
             }
         }
         composition.normalise();
     }
 
     // Solve momentum equation
-    constraintsPtr_->constrain(UEqn);
+    constraints().constrain(UEqn);
     UEqn.solve();
-    constraintsPtr_->constrain(U_);
+    constraints().constrain(U_);
+    rhoU_ = rho_*U_;
 
     // Solve energy equation
-    constraintsPtr_->constrain(eEqn);
+    constraints().constrain(eEqn);
     eEqn.solve();
-    constraintsPtr_->constrain(e_);
-
-    // Update conserved quantities
-    rhoU_ = rho_*U_;
+    constraints().constrain(e_);
     rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
     // Update thermo
     thermo_->correct();
+
     p_.ref() = rho_()/thermo_->psi()();
-    if (constraintsPtr_->constrainsField(p_.name()))
-    {
-        constraintsPtr_->constrain(p_);
-    }
+    constraints().constrain(p_);
     p_.correctBoundaryConditions();
 
     // Update density boundary conditions

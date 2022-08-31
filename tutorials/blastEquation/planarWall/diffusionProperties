@@ -1,0 +1,39 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      diffusionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+minimizationCoeffs
+{
+    //coeffs (10.07 -11.55 11.55 -9.935e-15 0); // Assuming L = 1m, D = 0.05, Time = 3 s, u0 = 10.
+    solver      goldenRatio;
+    maxSteps    200;
+    tolerance   1e-12;
+    nParticles  10;
+    cLocal      0.1;
+    cGlobal     0.1;
+    vWeight     0.8;
+    x0          0.1;
+}
+
+solution
+{
+    interpolationScheme cubicClamp;
+    x (0.0 0.1111 0.2222 0.3333  0.4444 0.5556 0.6667 0.7778  0.8889  1.0000);
+    c (10.0 9.0091 8.1378 7.4910 7.1469 7.1469 7.4910 8.1378 9.0091
+        10.0);
+}
+
+// ************************************************************************* //

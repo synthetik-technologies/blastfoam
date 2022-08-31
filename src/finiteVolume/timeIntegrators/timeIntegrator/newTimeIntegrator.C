@@ -62,4 +62,18 @@ Foam::autoPtr<Foam::timeIntegrator> Foam::timeIntegrator::New
 }
 
 
+Foam::timeIntegrator& Foam::timeIntegrator::NewRef
+(
+    const fvMesh& mesh
+)
+{
+    if (mesh.foundObject<timeIntegrator>(timeIntegrator::typeName))
+    {
+        return mesh.lookupObjectRef<timeIntegrator>(timeIntegrator::typeName);
+    }
+
+    autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
+    return integrator->regIOobject::store(integrator.ptr());
+}
+
 // ************************************************************************* //

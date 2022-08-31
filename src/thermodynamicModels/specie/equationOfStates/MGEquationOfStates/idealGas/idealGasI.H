@@ -98,6 +98,18 @@ Foam::scalar Foam::idealGas<Specie>::p
 
 
 template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::Gamma
 (
     const scalar rho,
@@ -226,7 +238,6 @@ template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {

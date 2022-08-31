@@ -57,7 +57,13 @@ template<class ThermoType>
 class speciesMixtureField
 :
     public PtrList<ThermoType>,
-    public RefineMeshObject
+    public MeshObject
+    <
+        fvMesh,
+        DistributeableMeshObject,
+        speciesMixtureField<ThermoType>
+    >
+
 {
 // Private data
 
@@ -89,12 +95,17 @@ class speciesMixtureField
     label nBoundaryFaces() const
     {
         label nf = 0;
-        forAll(Ys_[0].boundaryField(), patchi)
+        const fvBoundaryMesh& bm = mesh_.boundary();
+        forAll(bm, patchi)
         {
-            nf += Ys_[0].boundaryField()[patchi].size();
+            nf += bm[patchi].size();
         }
         return nf;
     }
+
+    //- Update size of fields
+    void updateCells();
+    void updatePatches(const bool validBoundary);
 
 
 public:
@@ -126,15 +137,6 @@ public:
 
         //- Update all mixtures
         void updateMixture();
-
-        //- Update size of fields
-        virtual void updateObject();
-
-        //- Update size of fields
-        virtual bool movePoints()
-        {
-            return true;
-        }
 
 
     // Access functions
@@ -173,6 +175,44 @@ public:
         virtual bool writeData(Ostream&) const
         {
             return true;
+        }
+
+    // Mesh object functions
+
+        virtual bool movePoints()
+        {
+            return false;
+        }
+
+        virtual void reorderPatches
+        (
+            const labelUList& newToOld,
+            const bool validBoundary
+        )
+        {
+            updatePatches(validBoundary);
+        }
+        virtual void addPatch(const label patchi)
+        {
+            updatePatches(true);
+        }
+
+        //- Save the intact field so it can be mapped after the mesh is distributed
+        virtual void preDistribute()
+        {}
+
+        //- Distribute the intact field
+        virtual void distribute(const mapDistributePolyMesh&)
+        {
+            updateCells();
+            updatePatches(true);
+        }
+
+        //- Update the intact field after mapping
+        virtual void updateMesh(const mapPolyMesh& mpm)
+        {
+            updateCells();
+            updatePatches(true);
         }
 };
 

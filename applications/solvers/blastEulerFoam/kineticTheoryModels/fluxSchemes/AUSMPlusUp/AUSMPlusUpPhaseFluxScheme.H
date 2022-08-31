@@ -84,8 +84,8 @@ class AUSMPlusUp
         //- Residual phasic density
         scalar residualAlphaRho_;
 
-        //- Minimum velocity
-        scalar residualU_;
+        //- Minimum speed of sound
+        scalar residualC_;
 
         //- Saved flux
         tmp<surfaceScalarField> phi_;

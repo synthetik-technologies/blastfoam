@@ -47,24 +47,25 @@ int main(int argc, char *argv[])
 
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createDynamicBlastFvMesh.H"
+    #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
 
+    scalar CoNum = fluid.CoNum();
+    #include "setInitialDeltaT.H"
+
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
     Info<< "\nStarting time loop\n" << endl;
-
-
-
     while (runTime.run())
     {
+        integrator->preUpdateMesh();
+
         //- Refine the mesh
-        mesh.refine();
+        refineMesh(mesh);
 
         //- Set the new time step and advance
-        #include "eigenvalueCourantNo.H"
+        CoNum = fluid.CoNum();
         #include "readTimeControls.H"
         #include "setDeltaT.H"
 
@@ -75,13 +76,8 @@ int main(int argc, char *argv[])
         mesh.update();
 
         integrator->integrate();
-        integrator->clearODEFields();
 
-        //- Clear the flux scheme
-        fluid.flux().clear();
-
-        //- Update the fvModels
-        models.correct();
+        integrator->clear();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

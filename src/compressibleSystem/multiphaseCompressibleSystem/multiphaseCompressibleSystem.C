@@ -36,7 +36,7 @@ namespace Foam
     (
         compressibleSystem,
         multiphaseCompressibleSystem,
-        dictionary
+        multiphase
     );
 }
 
@@ -55,8 +55,14 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
 {
+    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+
     forAll(alphas_, phasei)
     {
+        // Ensure boundaries are updated
+        alphas_[phasei].correctBoundaryConditions();
+        rhos_[phasei].correctBoundaryConditions();
+
         word phaseName = alphas_[phasei].group();
         alphaRhos_.set
         (
@@ -109,6 +115,78 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     this->setModels();
 
     encode();
+}
+
+
+Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
+(
+    const fvMesh& mesh,
+    const bool
+)
+:
+    compressibleBlastSystem(3, mesh),
+    thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
+    alphas_(thermo_.volumeFractions()),
+    rhos_(thermo_.rhos()),
+    alphaRhos_(alphas_.size()),
+    alphaPhis_(alphas_.size()),
+    alphaRhoPhis_(alphas_.size())
+{
+    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+
+    forAll(alphas_, phasei)
+    {
+        // Ensure boundaries are updated
+        alphas_[phasei].correctBoundaryConditions();
+        rhos_[phasei].correctBoundaryConditions();
+
+        word phaseName = alphas_[phasei].group();
+        alphaRhos_.set
+        (
+            phasei,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alphaRho", phaseName),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                alphas_[phasei]*rhos_[phasei],
+                rhos_[phasei].boundaryField().types()
+            )
+        );
+        alphaPhis_.set
+        (
+            phasei,
+            new surfaceScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alphaPhi", phaseName),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar("0", dimensionSet(0, 3, -1, 0, 0), 0.0)
+            )
+        );
+        alphaRhoPhis_.set
+        (
+            phasei,
+            new surfaceScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alphaRhoPhi", phaseName),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
+            )
+        );
+    }
 }
 
 
@@ -187,28 +265,22 @@ void Foam::multiphaseCompressibleSystem::solve()
 
 void Foam::multiphaseCompressibleSystem::postUpdate()
 {
-    if (!needPostUpdate_)
-    {
-        compressibleBlastSystem::postUpdate();
-        return;
-    }
-
     // Solve volume fraction and phase mass transports
     bool needUpdate = false;
     forAll(alphas_, phasei)
     {
-        if (solveFields_.found(alphas_[phasei].name()))
+        if (needSolve(alphas_[phasei].name()))
         {
             needUpdate = true;
             fvScalarMatrix alphaEqn
             (
                 fvm::ddt(alphas_[phasei]) - fvc::ddt(alphas_[phasei])
              ==
-                modelsPtr_->source(alphas_[phasei])
+                models().source(alphas_[phasei])
             );
-            constraintsPtr_->constrain(alphaEqn);
+            constraints().constrain(alphaEqn);
             alphaEqn.solve();
-            constraintsPtr_->constrain(alphas_[phasei]);
+            constraints().constrain(alphas_[phasei]);
         }
     }
     if (needUpdate)
@@ -220,24 +292,25 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
     this->decode();
 
     // Solve phase 1 mass
+    rho_.storePrevIter();
     rho_ = dimensionedScalar(dimDensity, 0.0);
     forAll(rhos_, phasei)
     {
         volScalarField& rho(rhos_[phasei]);
-        if (solveFields_.found(rho.name()))
+        if (needSolve(rho.name()))
         {
             const volScalarField& alpha(alphas_[phasei]);
             dimensionedScalar rAlpha(thermo_.thermo(phasei).residualAlpha());
             fvScalarMatrix alphaRhoEqn
             (
-                fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
+                fvm::ddt(alpha, rho) - fvc::ddt(alphaRhos_[phasei])
             + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
             ==
-                modelsPtr_->source(alpha, rho)
+                models().source(alpha, rho)
             );
-            constraintsPtr_->constrain(alphaRhoEqn);
+            constraints().constrain(alphaRhoEqn);
             alphaRhoEqn.solve();
-            constraintsPtr_->constrain(rho);
+            constraints().constrain(rho);
 
             alphaRhos_[phasei] = alpha*rho;
         }

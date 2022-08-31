@@ -1,6 +1,6 @@
     const wordList fluidNames(rp["fluid"]);
 
-    PtrList<dynamicBlastFvMesh> fluidRegions(fluidNames.size());
+    PtrList<dynamicFvMesh> fluidRegions(fluidNames.size());
 
     forAll(fluidNames, i)
     {
@@ -10,7 +10,7 @@
         fluidRegions.set
         (
             i,
-            dynamicBlastFvMesh::New
+            dynamicFvMesh::New
             (
                 IOobject
                 (

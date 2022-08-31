@@ -35,7 +35,8 @@ namespace Foam
 namespace fluxSchemes
 {
     defineTypeNameAndDebug(Tadmor, 0);
-    addToRunTimeSelectionTable(fluxScheme, Tadmor, dictionary);
+    addToRunTimeSelectionTable(fluxScheme, Tadmor, singlePhase);
+    addToRunTimeSelectionTable(fluxScheme, Tadmor, multiphase);
 }
 }
 
@@ -104,6 +105,10 @@ void Foam::fluxSchemes::Tadmor::createSavedFields()
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
         )
     );
+    if (!needEnergyFlux)
+    {
+        return;
+    }
     aSf_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
@@ -165,10 +170,21 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 
     this->save(facei, patchi, aphivOwn, aPhivOwn_);
     this->save(facei, patchi, aphivNei, aPhivNei_);
-    this->save(facei, patchi, aSf, aSf_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
 
-    this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
     phi = aphivOwn + aphivNei;
+    this->save
+    (
+        facei,
+        patchi,
+        0.5*(UOwn + UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
+    );
+
     rhoPhi = aphivOwn*rhoOwn + aphivNei*rhoNei;
 
     rhoUPhi =
@@ -182,7 +198,7 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + vMesh*0.5*(pOwn + pNei)
+      + vMesh*0.5*(pOwn + pNei)*magSf
     );
 }
 
@@ -234,11 +250,20 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 
     this->save(facei, patchi, aphivOwn, aPhivOwn_);
     this->save(facei, patchi, aphivNei, aPhivNei_);
-    this->save(facei, patchi, aSf, aSf_);
-
-    this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, aSf, aSf_);
+    }
 
     phi = aphivOwn + aphivNei;
+    this->save
+    (
+        facei,
+        patchi,
+        0.5*(UOwn + UNei),
+        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
+        Uf_
+    );
 
     forAll(alphasOwn, phasei)
     {
@@ -260,7 +285,7 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + vMesh*0.5*(pOwn + pNei)
+      + vMesh*0.5*(pOwn + pNei)*magSf
     );
 }
 
@@ -299,6 +324,13 @@ Foam::scalar Foam::fluxSchemes::Tadmor::interpolate
     const label facei, const label patchi
 ) const
 {
+    const scalar aphivOwn(getValue(facei, patchi, aPhivOwn_));
+    const scalar aphivNei(getValue(facei, patchi, aPhivNei_));
+    const scalar aphiv(aphivOwn + aphivNei);
+    if (mag(aphiv) > small)
+    {
+        return (fOwn*aphivOwn + fNei*aphivNei)/aphiv;
+    }
     return 0.5*(fOwn + fNei);
 }
 

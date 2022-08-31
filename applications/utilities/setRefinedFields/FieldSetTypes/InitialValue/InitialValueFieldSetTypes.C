@@ -39,23 +39,32 @@ namespace FieldSetTypes
 {
 
 template<class Type>
-using InitialValueVol = InitialValue<Type, fvPatchField, volMesh>;
+using InitialValueVol = InitialValue<Type, VolFieldSetType>;
 
 template<class Type>
-using InitialValueSurface = InitialValue<Type, fvsPatchField, surfaceMesh>;
+using InitialValueSurface = InitialValue<Type, SurfaceFieldSetType>;
+
+template<class Type>
+using InitialValuePoint = InitialValue<Type, PointFieldSetType>;
 }
+
 makeFieldSetTypeType(InitialValueVol, scalar, VolFieldSetType);
 makeFieldSetTypeType(InitialValueVol, vector, VolFieldSetType);
 makeFieldSetTypeType(InitialValueVol, sphericalTensor, VolFieldSetType);
 makeFieldSetTypeType(InitialValueVol, symmTensor, VolFieldSetType);
 makeFieldSetTypeType(InitialValueVol, tensor, VolFieldSetType);
 
-// makeFieldSetTypeType(InitialValueSurface, scalar, SurfaceFieldSetType);
-// makeFieldSetTypeType(InitialValueSurface, vector, SurfaceFieldSetType);
-// makeFieldSetTypeType(InitialValueSurface, sphericalTensor, SurfaceFieldSetType);
-// makeFieldSetTypeType(InitialValueSurface, symmTensor, SurfaceFieldSetType);
-// makeFieldSetTypeType(InitialValueSurface, tensor, SurfaceFieldSetType);
+makeFieldSetTypeType(InitialValueSurface, scalar, SurfaceFieldSetType);
+makeFieldSetTypeType(InitialValueSurface, vector, SurfaceFieldSetType);
+makeFieldSetTypeType(InitialValueSurface, sphericalTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(InitialValueSurface, symmTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(InitialValueSurface, tensor, SurfaceFieldSetType);
 
+makeFieldSetTypeType(InitialValuePoint, scalar, PointFieldSetType);
+makeFieldSetTypeType(InitialValuePoint, vector, PointFieldSetType);
+makeFieldSetTypeType(InitialValuePoint, sphericalTensor, PointFieldSetType);
+makeFieldSetTypeType(InitialValuePoint, symmTensor, PointFieldSetType);
+makeFieldSetTypeType(InitialValuePoint, tensor, PointFieldSetType);
 }
 // ************************************************************************* //
 

@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -62,12 +62,12 @@ class AUSMPlusUp
     // Private Data
 
         //- Coefficients
-        scalar beta_ = 0.125;
-        scalar Kp_ = 0.25;
-        scalar Ku_ = 0.75;
-        scalar sigma_ = 1.0;
-        scalar fa_ = 1.0;
-        scalar alpha_ = 3.0/16.0*(5.0*sqr(fa_) - 4.0);
+        scalar beta_;
+        scalar Kp_;
+        scalar Ku_;
+        scalar sigma_;
+        scalar fa_;
+        scalar alpha_;
 
         //- Saved flux
         tmp<surfaceScalarField> phi_;

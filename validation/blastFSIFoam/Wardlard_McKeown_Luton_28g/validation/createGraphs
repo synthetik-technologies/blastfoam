@@ -1,0 +1,71 @@
+#!/bin/bash
+#
+createUEps()
+{
+    echo "creating wall velocity plot"
+    gnuplot<<EOF
+
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_wallU_validation.eps"
+    set xlabel "Time [ms]"
+    set ylabel "Velocity [m/s]"
+    set grid
+    set key center top box
+    set size 2,2
+    set autoscale
+    set xrange [0:0.4]
+    set mxtic 4
+    plot '$2/exp_U.csv' using (\$1*1000):2 title 'Experiment' \
+        with points pt 7 ps 2 lc rgb 'red', \
+        '$2/sim_U.csv' using (\$1*1000):2 title 'Wardlaw et al' \
+        with points pt 5 ps 2 lc rgb 'blue', \
+        '<sed -e "s/[(,)]//g" $1/U' using (\$1*1000):2 title 'blastFoam' \
+        with lines lt 1 linewidth 2 lc rgb 'black', \
+
+
+EOF
+}
+
+createDEps()
+{
+    echo "creating wall displacement plot"
+    gnuplot<<EOF
+
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_wallD_validation.eps"
+    set xlabel "Time [ms]"
+    set ylabel "Displacement [mm]"
+    set grid
+    set key bottom right box
+    set size 2,2
+    set autoscale
+    set xrange [0:0.4]
+    set yrange [0:6]
+    plot '$2/exp_D.csv' using (\$1*1000):(\$2*1000) title 'Experiment' \
+        with points pt 7 ps 2 lc rgb 'red', \
+        '$2/sim_D.csv' using (\$1*1000):(\$2*1000) title 'Wardlaw et al' \
+        with points pt 5 ps 2 lc rgb 'blue', \
+        '<sed -e "s/[(,)]//g" $1/D' using (\$1*1000):(\$2*1000) title 'blastFoam' \
+        with lines lt 1 linewidth 2 lc rgb 'black', \
+
+
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+BLASTFOAM="../postProcessing/solidProbes/walls/0"
+VALIDATION="validationData"
+
+
+createUEps $BLASTFOAM $VALIDATION
+createDEps $BLASTFOAM $VALIDATION
+
+echo Done

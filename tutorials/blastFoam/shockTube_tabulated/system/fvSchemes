@@ -38,20 +38,21 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
+limiter quadraticMUSCL Minmod;
+limiterV quadraticMUSCL Minmod;
 interpolationSchemes
 {
-    default             cubic;
-    reconstruct(rho)    vanLeer;
-    reconstruct(U)      vanLeerV;
-    reconstruct(e)      vanLeer;
-    reconstruct(p)      vanLeer;
-    reconstruct(speedOfSound)      vanLeer;
+    default             linear;
+    reconstruct(rho)    $limiter;
+    reconstruct(U)      $limiterV;
+    reconstruct(e)      $limiter;
+    reconstruct(p)      $limiter;
+    reconstruct(speedOfSound)      $limiter;
 }
 
 snGradSchemes
 {
     default         corrected;
 }
-
 
 // ************************************************************************* //

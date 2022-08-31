@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -29,7 +29,7 @@ Description
 
 SourceFiles
     atmosphereModel.C
-    newAtmosphereModel.C
+    atmosphereModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -56,7 +56,7 @@ class atmosphereModel
 protected:
 
     //- Reference to atmosphereProperties
-    const dictionary& dict_;
+    dictionary dict_;
 
     //- Const reference to mesh
     const fvMesh& mesh_;
@@ -68,16 +68,18 @@ protected:
     vector normal_;
 
     //- Elevation of lowest point in mesh
-    dimensionedScalar groundElevation_;
+    uniformDimensionedScalarField baseElevation_;
 
     //- Height field
     volScalarField h_;
 
+    //- Saved zoneID to set
+    const label zoneID_;
+
     //- Stabilize fields
     void hydrostaticInitialisation
     (
-        fluidBlastThermo& thermo,
-        const dimensionedScalar& pRef
+        fluidBlastThermo& thermo
     ) const;
 
 public:
@@ -95,13 +97,14 @@ public:
             dictionary,
             (
                 const fvMesh& mesh,
-                const dictionary& dict
+                const dictionary& dict,
+                const label zoneID
             ),
-            (mesh, dict)
+            (mesh, dict, zoneID)
         );
 
     // Constructor
-    atmosphereModel(const fvMesh& mesh, const dictionary& dict);
+    atmosphereModel(const fvMesh&, const dictionary&, const label);
 
 
     //- Destructor
@@ -110,10 +113,21 @@ public:
 
     // Selectors
 
+        // Construct from dictionary
         static autoPtr<atmosphereModel> New
         (
             const fvMesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            const label zoneID = -1
+        );
+
+        //- COnstruct given a model type and dictionary
+        static autoPtr<atmosphereModel> New
+        (
+            const word& atmosphereModelType,
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const label zoneID = -1
         );
 
 

@@ -1,6 +1,7 @@
 errorEstimator/errorEstimator.C
-errorEstimator/newErrorEstimator.C
+errorEstimator/errorEstimatorNew.C
 
+cellSize/cellSize.C
 fieldValue/fieldValue.C
 densityGradient/densityGradient.C
 delta/delta.C

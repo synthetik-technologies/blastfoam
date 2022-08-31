@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -43,12 +43,11 @@ namespace atmosphereModels
 Foam::atmosphereModels::hydrostatic::hydrostatic
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const label zoneID
 )
 :
-    atmosphereModel(mesh, dict),
-    rhoRef_("rhoRef", dimDensity, dict_),
-    pRef_("pRef", dimPressure, dict_)
+    atmosphereModel(mesh, dict, zoneID)
 {}
 
 
@@ -65,7 +64,7 @@ void Foam::atmosphereModels::hydrostatic::createAtmosphere
     fluidBlastThermo& thermo
 ) const
 {
-    hydrostaticInitialisation(thermo, pRef_);
+    hydrostaticInitialisation(thermo);
 }
 
 // ************************************************************************* //

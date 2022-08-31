@@ -113,8 +113,8 @@ ugVal="$VALIDATIONDATAROOT/U_g.csv"
 upVal="$VALIDATIONDATAROOT/U_p.csv"
 TgVal="$VALIDATIONDATAROOT/T_g.csv"
 TpVal="$VALIDATIONDATAROOT/T_p.csv"
-blastFOAM="../postProcessing/sampleDict/*/Centerline_p*"
-blastFOAMU="../postProcessing/sampleDict/*/Centerline_U*"
+blastFOAM="../postProcessing/sampleDict/0.0001/Centerline_p*"
+blastFOAMU="../postProcessing/sampleDict/0.0001/Centerline_U*"
 
 createEpsP $pVal $blastFOAM
 createEpsRho $rhopVal $rhogVal $blastFOAM

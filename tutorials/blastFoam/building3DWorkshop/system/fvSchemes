@@ -41,7 +41,7 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             cubic;
+    default             linear;
     reconstruct(alpha)  vanAlbada;
     reconstruct(rho)    vanAlbada;
     reconstruct(U)      vanAlbadaV;

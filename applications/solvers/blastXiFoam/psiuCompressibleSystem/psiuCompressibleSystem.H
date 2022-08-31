@@ -38,11 +38,9 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "timeIntegrationSystem.H"
+#include "compressibleSystem.H"
 #include "fluxScheme.H"
 #include "psiuReactionThermo.H"
-#include "dynamicMomentumTransportModel.H"
-#include "fluidThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 
 namespace Foam
@@ -54,7 +52,7 @@ namespace Foam
 
 class psiuCompressibleSystem
 :
-    public timeIntegrationSystem
+    public compressibleSystem
 {
 protected:
 // Protected data
@@ -66,9 +64,6 @@ protected:
 
         //- Total mass
         volScalarField rho_;
-
-        //- Velocity
-        volVectorField U_;
 
         //- Pressure
         volScalarField& p_;
@@ -84,42 +79,8 @@ protected:
 
     //- Conserved variables
 
-        //- Momentum
-        volVectorField rhoU_;
-
-        //- Energy
-        volScalarField rhoE_;
-
         //- Total unbunrt energy
         volScalarField rhoEu_;
-
-
-    //- Fluxes
-
-        //- Volumetric flux
-        surfaceScalarField phi_;
-
-        //- Total mass flux
-        surfaceScalarField rhoPhi_;
-
-        //- Momentum flux
-        surfaceVectorField rhoUPhi_;
-
-        //- Energy flux
-        surfaceScalarField rhoEPhi_;
-
-        //- Flux scheme
-        autoPtr<fluxScheme> fluxScheme_;
-
-        //- Turbulence model
-        autoPtr<compressible::momentumTransportModel> turbulence_;
-
-        //- Thermo turbulence model
-        autoPtr<fluidThermophysicalTransportModel> thermophysicalTransport_;
-
-
-        //- Gravitational acceleration
-        const uniformDimensionedVectorField& g_;
 
 
 public:
@@ -136,13 +97,25 @@ public:
     // Member functions
 
         //- Non-const reference to thermo
-        psiuReactionThermo& thermo()
+        fluidThermo& thermo()
         {
             return thermo_();
         }
 
         //- Const reference to thermo
-        const psiuReactionThermo& thermo() const
+        const fluidThermo& thermo() const
+        {
+            return thermo_();
+        }
+
+        //- Non-const reference to reaction thermo
+        psiuReactionThermo& rThermo()
+        {
+            return thermo_();
+        }
+
+        //- Const reference to reaction thermo
+        const psiuReactionThermo& rThermo() const
         {
             return thermo_();
         }
@@ -165,67 +138,19 @@ public:
 
     // Member Access Functions
 
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const
-        {
-            return fluxScheme_();
-        }
-
-        //- Access the flux scheme
-        virtual fluxScheme& flux()
-        {
-            return fluxScheme_();
-        }
-
-        //- Const access to turbulence model
-        const compressible::momentumTransportModel& turbulence() const
-        {
-            return turbulence_();
-        }
-
-        //- Non-const access to turbulence model
-        compressible::momentumTransportModel& turbulence()
-        {
-            return turbulence_();
-        }
-
-        //- Const access to fluidThermophysicalTransportModel model
-        const fluidThermophysicalTransportModel& thermophysicalTransport() const
-        {
-            return thermophysicalTransport_();
-        }
-
-        //- Non-const access to fluidThermophysicalTransportModel model
-        fluidThermophysicalTransportModel& thermophysicalTransport()
-        {
-            return thermophysicalTransport_();
-        }
-
-        //- Velocity
-        virtual tmp<volVectorField> U() const;
+        //- Density of mixture [kg/m^3]
+        virtual const volScalarField& rho() const;
 
         //- Const access to internal energy
-        virtual const volScalarField& e() const
+        virtual const volScalarField& he() const
         {
             return e_;
         }
 
         //- Non-const access to internal energy
-        virtual volScalarField& e()
+        virtual volScalarField& he()
         {
             return e_;
-        }
-
-        //- Return volumetric flux
-        const surfaceScalarField& phi() const
-        {
-            return phi_;
-        }
-
-        //- Return mass flux
-        const surfaceScalarField& rhoPhi() const
-        {
-            return rhoPhi_;
         }
 
         //- Return thermodynamic pressure
@@ -245,9 +170,6 @@ public:
 
 
     //- Return functions for transport model
-
-        //- Density of mixture [kg/m^3]
-        virtual tmp<volScalarField> rho() const;
 
         //- Density of unburnt mixture [kg/m^3]
         virtual tmp<volScalarField> rhou() const;

@@ -1,0 +1,4 @@
+Test-points0.C
+
+EXE = $(BLAST_APPBIN)/Test-points0
+

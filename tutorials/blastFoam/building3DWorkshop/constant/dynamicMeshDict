@@ -17,7 +17,7 @@ FoamFile
 dynamicFvMesh   adaptiveFvMesh;
 errorEstimator  densityGradient;
 
-protectedPatches (walls);
+// protectedPatches (walls);
 
 // How often to refine
 refineInterval  2;

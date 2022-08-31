@@ -26,7 +26,8 @@ Application
 
 Description
     Multiphase compressible solver that uses Riemann solver to construct
-    hyperbolic fluxes. Phases have unique velocities, internal energies and pressures.
+    hyperbolic fluxes. Phases have unique velocities, internal energies
+    and pressures.
 
 
 \*---------------------------------------------------------------------------*/
@@ -46,7 +47,7 @@ int main(int argc, char *argv[])
 
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createDynamicBlastFvMesh.H"
+    #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
     #include "EigenCourantNos.H"
@@ -57,8 +58,10 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
     while (runTime.run())
     {
+        integrator->preUpdateMesh();
+
         //- Refine mesh
-        mesh.refine();
+       refineMesh(mesh);
 
         #include "readTimeControls.H"
         #include "EigenCourantNos.H"
@@ -75,7 +78,7 @@ int main(int argc, char *argv[])
 
         fluid.printInfo();
 
-        integrator->clearODEFields();
+        integrator->clear();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"

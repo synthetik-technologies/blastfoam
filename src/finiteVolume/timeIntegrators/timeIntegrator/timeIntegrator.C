@@ -25,6 +25,8 @@ License
 
 #include "timeIntegrator.H"
 #include "timeIntegrationSystem.H"
+#include "pointFields.H"
+#include "surfaceFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -50,8 +52,10 @@ void Foam::timeIntegrator::postUpdateAll()
 {
     forAll(systems_, i)
     {
+        Info<< "Post-updating " << systems_[i].name() << ":" << endl;
         systems_[i].postUpdate();
     }
+    Info<< endl;
 }
 
 
@@ -73,7 +77,25 @@ Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh, const label)
     mesh_(mesh),
     stepi_(0),
     f_(0),
-    f0_(0)
+    f0_(0),
+    V0byV_
+    (
+        volScalarField::Internal
+        (
+            IOobject
+            (
+                "V0byV",
+                mesh.time().timeName(),
+                mesh
+            ),
+            mesh,
+            1.0
+        )
+    ),
+    curTimeIndex_(-1),
+    modelsPtr_(nullptr),
+    constraintsPtr_(nullptr),
+    solveFields_()
 {}
 
 
@@ -139,7 +161,6 @@ void Foam::timeIntegrator::initialize()
         f_[0] = sum(bs_[0]);
         for (label stepi = 2; stepi <= nSteps(); stepi++)
         {
-            f_[stepi-1] = sum(bs_[stepi-1]);
             scalarList ts(stepi+1, 0.0);
             scalarList dts(stepi, 0.0);
             forAll(dts, i)
@@ -157,6 +178,7 @@ void Foam::timeIntegrator::initialize()
                 ts[i+1] += dts[i];
             }
             f0_[stepi-1] = ts.last() - dts.last();
+            f_[stepi-1] = f0_[stepi-1] + sum(bs_[stepi-1]);
         }
     }
 }
@@ -169,39 +191,131 @@ void Foam::timeIntegrator::addSystem(timeIntegrationSystem& system)
 }
 
 
+void Foam::timeIntegrator::createModels() const
+{
+    modelsPtr_.set(&fvModels::New(const_cast<fvMesh&>(mesh_)));
+    constraintsPtr_.set(&fvConstraints::New(mesh_));
+
+    const PtrList<fvModel>& models(modelsPtr_());
+    forAll(models, modeli)
+    {
+        wordList fields(models[modeli].addSupFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+
+    const PtrList<fvConstraint>& constraints(constraintsPtr_());
+    forAll(constraints, modeli)
+    {
+        wordList fields(constraints[modeli].constrainedFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+}
+
+
+void Foam::timeIntegrator::preUpdateMesh()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].preUpdateMesh();
+    }
+
+    if (modelsPtr_.valid())
+    {
+        modelsPtr_->preUpdateMesh();
+    }
+}
+
+
 void Foam::timeIntegrator::integrate()
 {
+    if (mesh_.time().timeIndex() == curTimeIndex_)
+    {
+        reset();
+    }
+    curTimeIndex_ = mesh_.time().timeIndex();
+
     // Update and store original fields
     for (stepi_ = 1; stepi_ <= as_.size(); stepi_++)
     {
-        Info<< nl << this->type() << ": step " << stepi_ << endl;
+        Info<< this->type() << ": step " << stepi_ << endl;
+
+        // Set use a linear change in volume
+        // All fields are scaled according to the true volume
+        if (mesh_.moving())
+        {
+            V0byV_ = (mesh_.V0()*(1.0 - f0()) + f0()*mesh_.V())/mesh_.V();
+        }
+
         this->updateAll();
         forAll(systems_, i)
         {
             Info<< "Solving " << systems_[i].name() << ":" << endl;
             systems_[i].solve();
+            Info<< endl;
         }
     }
-    Info<< endl;
-
 
     this->postUpdateAll();
+    if (modelsPtr_.valid())
+    {
+        modelsPtr_->correct();
+    }
     stepi_ = 0;
 }
 
 
-void Foam::timeIntegrator::clearODEFields()
+void Foam::timeIntegrator::clear()
 {
-    clearFields(oldScalarFields_);
-    clearFields(oldVectorFields_);
-    clearFields(oldSphTensorFields_);
-    clearFields(oldSymmTensorFields_);
-    clearFields(oldTensorFields_);
-    clearFields(deltaScalarFields_);
-    clearFields(deltaVectorFields_);
-    clearFields(deltaSphTensorFields_);
-    clearFields(deltaSymmTensorFields_);
-    clearFields(deltaTensorFields_);
+    forAll(systems_, i)
+    {
+        systems_[i].clear();
+    }
+
+    clearOldFields(oldScalarFields_);
+    clearOldFields(oldVectorFields_);
+    clearOldFields(oldSphTensorFields_);
+    clearOldFields(oldSymmTensorFields_);
+    clearOldFields(oldTensorFields_);
+    clearDeltaFields(deltaScalarFields_);
+    clearDeltaFields(deltaVectorFields_);
+    clearDeltaFields(deltaSphTensorFields_);
+    clearDeltaFields(deltaSymmTensorFields_);
+    clearDeltaFields(deltaTensorFields_);
+}
+
+
+void Foam::timeIntegrator::reset()
+{
+    DebugInfo<<"Resetting fields to old time"<<endl;
+    resetFields<volScalarField>();
+    resetFields<volVectorField>();
+    resetFields<volSymmTensorField>();
+    resetFields<volSphericalTensorField>();
+    resetFields<volTensorField>();
+
+    resetFields<surfaceScalarField>();
+    resetFields<surfaceVectorField>();
+    resetFields<surfaceSymmTensorField>();
+    resetFields<surfaceSphericalTensorField>();
+    resetFields<surfaceTensorField>();
+
+    resetFields<pointScalarField>();
+    resetFields<pointVectorField>();
+    resetFields<pointSymmTensorField>();
+    resetFields<pointSphericalTensorField>();
+    resetFields<pointTensorField>();
 }
 
 

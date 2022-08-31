@@ -34,11 +34,20 @@ template<class Thermo>
 void Foam::basicFluidBlastThermo<Thermo>::calculate()
 {
     const typename Thermo::thermoType& t(*this);
+    scalarField& eI = this->heRef().primitiveFieldRef();
+    scalarField& TI = this->TRef().primitiveFieldRef();
+    scalarField& pI = this->pRef().primitiveFieldRef();
+    scalarField& CpI = this->CpRef().primitiveFieldRef();
+    scalarField& CvI = this->CvRef().primitiveFieldRef();
+    scalarField& muI = this->muRef().primitiveFieldRef();
+    scalarField& alphaI = this->alphaRef().primitiveFieldRef();
+    scalarField& speedOfSoundI = this->speedOfSoundRef().primitiveFieldRef();
+
     forAll(this->rho_, celli)
     {
         const scalar& rhoi(this->rho_[celli]);
-        scalar& ei(this->heRef()[celli]);
-        scalar& Ti = this->TRef()[celli];
+        scalar& ei(eI[celli]);
+        scalar& Ti = TI[celli];
 
         // Update temperature
         Ti = t.TRhoE(Ti, rhoi, ei);
@@ -50,36 +59,37 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
 
         scalar pi = t.p(rhoi, ei, Ti);
         scalar Cpi = t.Cp(rhoi, ei, Ti);
-        this->pRef()[celli] = pi;
-        this->CpRef()[celli] = Cpi;
-        this->CvRef()[celli] = t.Cv(rhoi, ei, Ti);
-        this->muRef()[celli] = t.mu(rhoi, ei, Ti);
-        this->alphaRef()[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
-        this->speedOfSoundRef()[celli] =
-            sqrt(max(t.cSqr(pi, rhoi, ei, Ti), small));
+        pI[celli] = pi;
+        CpI[celli] = Cpi;
+        CvI[celli] = t.Cv(rhoi, ei, Ti);
+        muI[celli] = t.mu(rhoi, ei, Ti);
+        alphaI[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
+        speedOfSoundI[celli] = sqrt(max(t.cSqr(pi, rhoi, ei, Ti), small));
     }
 
     this->TRef().correctBoundaryConditions();
     this->heRef().correctBoundaryConditions();
     this->pRef().correctBoundaryConditions();
 
+    volScalarField::Boundary& bCp = this->CpRef().boundaryFieldRef();
+    volScalarField::Boundary& bCv = this->CvRef().boundaryFieldRef();
+    volScalarField::Boundary& bmu = this->muRef().boundaryFieldRef();
+    volScalarField::Boundary& balpha = this->alphaRef().boundaryFieldRef();
+    volScalarField::Boundary& bspeedOfSound =
+        this->speedOfSoundRef().boundaryFieldRef();
+
     forAll(this->rho_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT =
-            this->TRef().boundaryField()[patchi];
-        const fvPatchScalarField& phe =
-            this->heRef().boundaryField()[patchi];
-        const fvPatchScalarField& pp =
-            this->pRef().boundaryField()[patchi];
+        const fvPatchScalarField& pT = this->TRef().boundaryField()[patchi];
+        const fvPatchScalarField& phe = this->heRef().boundaryField()[patchi];
+        const fvPatchScalarField& pp = this->pRef().boundaryField()[patchi];
 
-        fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pmu = this->muRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& palpha =
-            this->alphaRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pc =
-            this->speedOfSoundRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& pCp = bCp[patchi];
+        fvPatchScalarField& pCv = bCv[patchi];
+        fvPatchScalarField& pmu = bmu[patchi];
+        fvPatchScalarField& palpha = balpha[patchi];
+        fvPatchScalarField& pspeedOfSound = bspeedOfSound[patchi];
 
         forAll(prho, facei)
         {
@@ -92,7 +102,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
             pCv[facei] = t.Cv(rhoi, ei, Ti);
             pmu[facei] = t.mu(rhoi, ei, Ti);
             palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
-            pc[facei] =
+            pspeedOfSound[facei] =
                 sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
         }
     }
@@ -135,6 +145,13 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate
         }
     }
 
+    volScalarField::Boundary& balphaCp = alphaCp.boundaryFieldRef();
+    volScalarField::Boundary& balphaCv = alphaCv.boundaryFieldRef();
+    volScalarField::Boundary& balphaMu = alphaMu.boundaryFieldRef();
+    volScalarField::Boundary& balphaAlphah = alphaAlphah.boundaryFieldRef();
+    volScalarField::Boundary& bpXiSum = pXiSum.boundaryFieldRef();
+    volScalarField::Boundary& bxiSum = XiSum.boundaryFieldRef();
+
     forAll(alpha.boundaryField(), patchi)
     {
         const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
@@ -142,13 +159,12 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate
         const fvPatchScalarField& pT = T.boundaryField()[patchi];
         const fvPatchScalarField& phe = he.boundaryField()[patchi];
 
-        fvPatchScalarField& palphaCp = alphaCp.boundaryFieldRef()[patchi];
-        fvPatchScalarField& palphaCv = alphaCv.boundaryFieldRef()[patchi];
-        fvPatchScalarField& palphaMu = alphaMu.boundaryFieldRef()[patchi];
-        fvPatchScalarField& palphaAlphah =
-            alphaAlphah.boundaryFieldRef()[patchi];
-        fvPatchScalarField& ppXiSum = pXiSum.boundaryFieldRef()[patchi];
-        fvPatchScalarField& pxiSum = XiSum.boundaryFieldRef()[patchi];
+        fvPatchScalarField& palphaCp = balphaCp[patchi];
+        fvPatchScalarField& palphaCv = balphaCv[patchi];
+        fvPatchScalarField& palphaMu = balphaMu[patchi];
+        fvPatchScalarField& palphaAlphah = balphaAlphah[patchi];
+        fvPatchScalarField& ppXiSum = bpXiSum[patchi];
+        fvPatchScalarField& pxiSum = bxiSum[patchi];
 
         forAll(palpha, facei)
         {
@@ -207,6 +223,8 @@ void Foam::basicFluidBlastThermo<Thermo>::calculateSpeedOfSound
         }
     }
 
+    volScalarField::Boundary& bcSqrRhoXiSum = cSqrRhoXiSum.boundaryFieldRef();
+
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
@@ -214,8 +232,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculateSpeedOfSound
         const fvPatchScalarField& pT = this->T_.boundaryField()[patchi];
         const fvPatchScalarField& phe = this->e_.boundaryField()[patchi];
         const fvPatchScalarField& pp = this->p_.boundaryField()[patchi];
-        fvPatchScalarField& pcSqrRhoXiSum =
-            cSqrRhoXiSum.boundaryFieldRef()[patchi];
+        fvPatchScalarField& pcSqrRhoXiSum = bcSqrRhoXiSum[patchi];
 
         forAll(pT, facei)
         {
@@ -299,9 +316,47 @@ void Foam::basicFluidBlastThermo<Thermo>::updateRho(const volScalarField& p)
         "rho",
         dimDensity,
         &Thermo::thermoType::rhoPT,
+        this->rho_,
         p,
         this->T_
     );
+}
+
+
+template<class Thermo>
+void Foam::basicFluidBlastThermo<Thermo>::updateRho
+(
+    const volScalarField& alpha,
+    const volScalarField& p
+)
+{
+    const typename Thermo::thermoType& t(*this);
+    scalarField& rhoI = this->rho_.primitiveFieldRef();
+    forAll(rhoI, celli)
+    {
+        if (alpha[celli] > this->residualAlpha_.value())
+        {
+            rhoI[celli] = t.rhoPT(rhoI[celli], p[celli], this->T_[celli]);
+        }
+    }
+
+    volScalarField::Boundary& brho = this->rho_.boundaryFieldRef();
+
+    forAll(this->rho_.boundaryField(), patchi)
+    {
+        scalarField& prho = brho[patchi];
+        const scalarField& palpha = alpha.boundaryField()[patchi];
+        const scalarField& pT = this->T_.boundaryField()[patchi];
+        const scalarField& pp = p.boundaryField()[patchi];
+
+        forAll(prho, facei)
+        {
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                prho[facei] = t.rhoPT(prho[facei], pp[facei], pT[facei]);
+            }
+        }
+    }
 }
 
 
@@ -333,6 +388,22 @@ Foam::basicFluidBlastThermo<Thermo>::initESource() const
             this->rho_.mesh(),
             dimensionedScalar("0", dimEnergy/dimMass, 0.0)
         )
+    );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::Gamma() const
+{
+    return Thermo::volScalarFieldProperty
+    (
+        "Gamma",
+        dimless,
+        &Thermo::thermoType::Gamma,
+        this->rho_,
+        this->e_,
+        this->T_
     );
 }
 
@@ -394,6 +465,18 @@ Foam::basicFluidBlastThermo<Thermo>::celldpde(const label celli) const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::basicFluidBlastThermo<Thermo>::celldpdT(const label celli) const
+{
+    return Thermo::thermoType::dpdT
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::basicFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
 {
@@ -401,12 +484,69 @@ Foam::basicFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
     (
         "e",
         dimEnergy/dimMass,
-        &Thermo::initializeEnergy,
+        &Thermo::thermoType::initializeEnergy,
         p,
         this->rho_,
         this->e_,
         this->T_
     );
 }
+
+
+template<class Thermo>
+Foam::scalar
+Foam::basicFluidBlastThermo<Thermo>::calcCelle
+(
+    const scalar p,
+    const label celli
+) const
+{
+    return Thermo::thermoType::initializeEnergy
+    (
+        p,
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::calcp() const
+{
+    return Thermo::volScalarFieldProperty
+    (
+        "p",
+        dimPressure,
+        &Thermo::thermoType::pRhoT,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::calcSpeedOfSound() const
+{
+    tmp<volScalarField> tcSqr
+    (
+        Thermo::volScalarFieldProperty
+        (
+            "cSqr",
+            sqr(dimVelocity),
+            &Thermo::thermoType::cSqr,
+            this->p_,
+            this->rho_,
+            this->e_,
+            this->T_
+        )
+    );
+    tcSqr.ref().max(small);
+    return sqrt(tcSqr);
+}
+
 
 // ************************************************************************* //

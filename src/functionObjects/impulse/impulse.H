@@ -92,16 +92,13 @@ protected:
         Switch restartOnRestart_;
 
         //- Name of pressure field
-        const volScalarField& p_;
+        word pName_;
 
         //- Reference pressure
         dimensionedScalar pRef_;
 
-        //- Saved impulse field
-        volScalarField& impulse_;
-
-        //- Create impulse field and add to object registry
-        volScalarField& createImpulseField(const word& name);
+        //- Impulse field
+        volScalarField impulse_;
 
 public:
 
