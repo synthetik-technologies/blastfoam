@@ -16,15 +16,15 @@ clean:
 install: SHELL:=bash
 install:
 	+ source /opt/openfoam9/etc/bashrc && \
-	source etc/bashrc
+	source etc/bashrc && \
 	install --target-directory $(DESTDIR)$(prefix)/${BLAST_DIR}/platforms/${WM_OPTIONS}/bin -D \
-		bin/*
+		bin/* && \
 	install --target-directory $(DESTDIR)$(prefix)/${BLAST_DIR}/platforms/${WM_OPTIONS}/lib -D \
-		lib/*
-	cp -r src $(DESTDIR)$(prefix)/src
+		lib/* && \
+	cp -r src $(DESTDIR)$(prefix)/src && \
 	# * find better install location later
 	install --target-directory $(DESTDIR)$(prefix)/${BLAST_DIR}/platforms/${WM_OPTIONS}/etc -D \
-		etc/bashrc
+		etc/bashrc && \
 	install --target-directory $(DESTDIR)$(prefix)/${BLAST_DIR}/platforms/${WM_OPTIONS}/etc/codeTemplates -D \
 		etc/codeTemplates/*
 
