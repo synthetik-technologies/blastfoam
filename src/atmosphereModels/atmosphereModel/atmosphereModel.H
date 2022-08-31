@@ -56,7 +56,7 @@ class atmosphereModel
 protected:
 
     //- Reference to atmosphereProperties
-    dictionary dict_;
+    const dictionary& dict_;
 
     //- Const reference to mesh
     const fvMesh& mesh_;
@@ -75,6 +75,9 @@ protected:
 
     //- Saved zoneID to set
     const label zoneID_;
+
+    //- Fixed pressure patches
+    wordReList fixedPatches_;
 
     //- Stabilize fields
     void hydrostaticInitialisation

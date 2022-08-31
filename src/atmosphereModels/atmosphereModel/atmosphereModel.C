@@ -24,6 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "atmosphereModel.H"
+#include "pressureReference.H"
+#include "findRefCell.H"
 #include "fluidThermo.H"
 #include "fvmLaplacian.H"
 #include "fvcDiv.H"
@@ -75,10 +77,13 @@ Foam::atmosphereModel::atmosphereModel
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
-        dimensionedScalar("hRef", dimLength, dict_)
+        dict_.found("hRef")
+      ? dimensionedScalar("hRef", dimLength, dict_)
+      : dimensionedScalar("hRef", dimLength, 0.0)
     ),
     h_("h", normal_ & mesh.C()),
-    zoneID_(zoneID)
+    zoneID_(zoneID),
+    fixedPatches_(dict.lookupOrDefault("fixedPatches", wordReList()))
 {
     h_ += baseElevation_ - min(h_);
 }
@@ -108,6 +113,16 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     {
         if (p.boundaryField()[patchi].fixesValue())
         {
+            ph_rghBcs[patchi] = "fixedValue";
+        }
+    }
+    if (fixedPatches_.size())
+    {
+        Info<< "Fixing " << fixedPatches_ << endl;
+        labelHashSet fixedPatchIDs(mesh.boundaryMesh().patchSet(fixedPatches_));
+        forAllConstIter(labelHashSet, fixedPatchIDs, iter)
+        {
+            const label patchi = iter.key();
             ph_rghBcs[patchi] = "fixedValue";
         }
     }
@@ -150,24 +165,14 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         dimensionedScalar("ph_rgh", dimPressure, 0.0),
         ph_rghBcs
     );
+    ph_rgh.rename("p");
 
-    // Reference pressure
-    uniformDimensionedScalarField pRef
+    pressureReference pressureReference
     (
-        IOobject
-        (
-            "pRef",
-            mesh_.time().constant(),
-            mesh_,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        dimensionedScalar("pRef", dimPressure, 0.0)
+        ph_rgh,
+        dict_,
+        ph_rgh.needReference()
     );
-    if (ph_rgh.needReference())
-    {
-        pRef = dimensionedScalar("pRef", dimPressure, dict_);
-    }
 
     label nCorr
     (
@@ -176,7 +181,8 @@ void Foam::atmosphereModel::hydrostaticInitialisation
 
     // Create a simple solver dictionary
     dictionary solverDict;
-    solverDict.add("solver", "GAMG");
+    solverDict.add("solver", "PCG");
+    solverDict.add("preconditioner", "DIC");
     solverDict.add("smoother", "GaussSeidel");
     solverDict.add("tolerance", 1e-6);
     solverDict.add("relTol", 0);
@@ -186,7 +192,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     {
         Info<< nl << "Hydrostatic iteration " << i << endl;
 
-        ph_rgh == p - rho*gh - pRef;
+        ph_rgh == p - rho*gh;
 
         surfaceScalarField rhof("rhof", fvc::interpolate(rho));
         surfaceScalarField phig
@@ -202,12 +208,28 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         (
             fvm::laplacian(rhof, ph_rgh) == fvc::div(phig)
         );
+        ph_rghEqn.setReference
+        (
+            pressureReference.refCell(),
+            getRefCellValue(ph_rgh, pressureReference.refCell())
+        );
 
         ph_rghEqn.solve(solverDict);
 
 
         scalar residual = (max(ph_rgh()) - min(ph_rgh())).value();
-        p = ph_rgh + rho*gh + pRef;
+        p = ph_rgh + rho*gh;
+        if (ph_rgh.needReference())
+        {
+            p += dimensionedScalar
+            (
+                "pRef",
+                p.dimensions(),
+                pressureReference.refValue()
+              - getRefCellValue(p, pressureReference.refCell())
+            );
+        }
+
         Info<< "Hydrostatic pressure variation "<< residual << endl;
 
         // Correct density and thermodynamic quantities
