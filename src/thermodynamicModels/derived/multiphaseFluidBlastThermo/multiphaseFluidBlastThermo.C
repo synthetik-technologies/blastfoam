@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "multiphaseFluidBlastThermo.H"
-#include "equation.H"
+#include "Equation.H"
 #include "NewtonRaphsonUnivariateRootSolver.H"
 #include "addToRunTimeSelectionTable.H"
 
