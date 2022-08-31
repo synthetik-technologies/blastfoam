@@ -14,6 +14,8 @@ clean:
 	./Allwclean
 
 install:
+	+ source /opt/openfoam9/etc/bashrc && \
+	source etc/bashrc
 	install --target-directory $(DESTDIR)$(prefix)/bin -D \
 		bin/*
 	install --target-directory $(DESTDIR)$(prefix)/lib -D \
