@@ -100,6 +100,14 @@ List<Type> readColumn
     const label col
 );
 
+//- Read a row of a table
+template<class Type>
+List<Type> readRow
+(
+    const List<List<string>>& entries,
+    const label col
+);
+
 //- Read a 3D table
 template<class Type, template<class> class ListType1, template<class> class ListType2>
 void read3DTable

@@ -53,6 +53,7 @@ bool Foam::readComponent
     bool readFromTable = table.size();
 
     label col = -1;
+    label row = -1;
     label scale = 1;
     if (parentDict.found(name + "Coeffs"))
     {
@@ -74,6 +75,10 @@ bool Foam::readComponent
             {
                 col = dict.lookup<label>("col");
             }
+            else if (dict.found("row"))
+            {
+                row = dict.lookup<label>("row");
+            }
         }
         else if (dict.found(name))
         {
@@ -88,10 +93,34 @@ bool Foam::readComponent
                 dict.lookupOrDefault<label>("startRow", 0),
                 dict.lookupOrDefault<Switch>("flipTable", false)
             );
-            if (table[0].size() > 1)
+
+            if (table.size() == 1)
             {
-                col = dict.lookup<label>("col");
+                row = 0;
             }
+            else if (table[0].size() == 1)
+            {
+                col = 0;
+            }
+            else
+            {
+                if (dict.found("col"))
+                {
+                    col = dict.lookup<label>("col");
+                }
+                else if (dict.found("row"))
+                {
+                    row = dict.lookup<label>("row");
+                }
+                else
+                {
+                    FatalIOErrorInFunction(dict)
+                        << "Looking up a component of a 2D table requires either" << nl
+                        << "a row (\"row\") or column (\"col\") to be specified" << endl
+                        << abort(FatalIOError);
+                }
+            }
+
             readFromTable = true;
         }
         else if (dict.found("n"))
@@ -125,7 +154,7 @@ bool Foam::readComponent
             FatalIOErrorInFunction(dict)
                 << "Could not determine construction method of " << name << nl
                 << "Pease provide a file to read from or (n, min, delta/max)" << endl
-                << abort(FatalError);
+                << abort(FatalIOError);
         }
     }
     else if (parentDict.found("n" + name.capitalise()))
@@ -196,11 +225,53 @@ bool Foam::readComponent
 
     if (readFromTable)
     {
-        values = readColumn<Type>
-        (
-            table,
-            col < 0 ? parentDict.lookup<label>(name + "Col") : col
-        );
+        if (col >= 0 || row >= 0)
+        {}
+        else if (table.size() == 1)
+        {
+            row = 0;
+        }
+        else if (table[0].size() == 1)
+        {
+            col = 0;
+        }
+        else
+        {
+            string colName(name + "Col");
+            string rowName(name + "Row");
+            if (parentDict.found(colName))
+            {
+                col = parentDict.lookup<label>(colName);
+            }
+            else if (parentDict.found(rowName))
+            {
+                row = parentDict.lookup<label>(rowName);
+            }
+            else
+            {
+                FatalIOErrorInFunction(parentDict)
+                    << "Looking up a component of a 2D table requires either" << nl
+                    << "a row (" << rowName << ") or column (" << colName << ")" << nl
+                    << " to be specified" << endl
+                    << abort(FatalIOError);
+            }
+        }
+
+        if (col >= 0)
+        {
+            values = readColumn<Type>(table, col);
+        }
+        else if (row >= 0)
+        {
+            values = readRow<Type>(table, row);
+        }
+        else
+        {
+            FatalIOErrorInFunction(parentDict)
+                << "Could not determine how to read table" << endl
+                << abort(FatalIOError);
+        }
+
     }
 
     if (scale != 1.0)
@@ -384,11 +455,11 @@ Foam::List<Type> Foam::readColumn
             << "Trying to read from a table but no data was read." << endl
             << abort(FatalError);
     }
-    if (col > entries.first().size())
+    if (col >= entries.first().size())
     {
         FatalErrorInFunction
-            << "Only " << entries.first().size() << " columns were read, " << nl
-            << " but column " << col << " was requested" << endl
+            << "Only " << entries.first().size() << " columns were read, "
+            << "but column " << col << " was requested" << endl
             << abort(FatalError);
     }
 
@@ -398,6 +469,38 @@ Foam::List<Type> Foam::readColumn
     {
         IStringStream(entries[i][col])() >> v;
         vals[i] = v;
+    }
+    return vals;
+}
+
+
+template<class Type>
+Foam::List<Type> Foam::readRow
+(
+    const List<List<string>>& entries,
+    const label row
+)
+{
+    if (!entries.size())
+    {
+        FatalErrorInFunction
+            << "Trying to read from a table but no data was read." << endl
+            << abort(FatalError);
+    }
+    if (row >= entries.size())
+    {
+        FatalErrorInFunction
+            << "Only " << entries.size() << " columns were read, "
+            << " but row " << row << " was requested" << endl
+            << abort(FatalError);
+    }
+
+    List<Type> vals(entries[row].size());
+    Type v;
+    forAll(entries[row], j)
+    {
+        IStringStream(entries[row][j])() >> v;
+        vals[j] = v;
     }
     return vals;
 }
