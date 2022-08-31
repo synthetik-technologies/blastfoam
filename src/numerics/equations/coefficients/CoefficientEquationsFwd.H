@@ -23,11 +23,11 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coefficientEquationsFwd_H
-#define coefficientEquationsFwd_H
+#ifndef CoefficientEquationsFwd_H
+#define CoefficientEquationsFwd_H
 
 #include "Coefficients.H"
-#include "coefficientsFwd.H"
+#include "CoefficientsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

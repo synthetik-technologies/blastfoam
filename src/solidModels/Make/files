@@ -105,6 +105,7 @@ fvPatchFields/solidDirectionMixed/solidDirectionMixedFvPatchVectorField.C
 fvPatchFields/thermalConvection/thermalConvectionFvPatchScalarField.C
 fvPatchFields/convectiveFlux/convectiveFluxFvPatchScalarField.C
 fvPatchFields/displacementVelocity/displacementVelocityFvPatchVectorField.C
+fvPatchFields/hydrostaticPressure/hydrostaticPressureFvPatchVectorField.C
 
 
 fvPatchFields/solidContact/solidContactFvPatchVectorField.C

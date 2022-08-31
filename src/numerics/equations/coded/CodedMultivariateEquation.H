@@ -35,7 +35,7 @@ Description
 #define CodedMultvariateEquation_H
 
 #include "regEquation.H"
-#include "multivariateEquation.H"
+#include "MultivariateEquation.H"
 #include "scalarField.H"
 #include "dictionary.H"
 

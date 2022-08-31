@@ -27,13 +27,21 @@ License
 #define UnivariateEquationsFwd_H
 
 #include "UnivariateEquation.H"
-#include "univariateEquationsFwd.H"
 #include "adaptiveTypesFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+typedef univariateEquation<scalar> scalarUnivariateEquation;
+typedef univariateEquation<vector> vectorUnivariateEquation;
+typedef univariateEquation<symmTensor> symmTensorUnivariateEquation;
+typedef univariateEquation<sphericalTensor>
+    sphericalTensorUnivariateEquation;
+typedef univariateEquation<tensor> tensorUnivariateEquation;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

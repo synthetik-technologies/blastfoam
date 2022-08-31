@@ -26,7 +26,6 @@ License
 #ifndef EquationsFwd_H
 #define EquationsFwd_H
 
-#include "equationsFwd.H"
 #include "Equation.H"
 #include "adaptiveTypesFwd.H"
 
@@ -34,6 +33,15 @@ License
 
 namespace Foam
 {
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+typedef equation<scalar> scalarEquation;
+typedef equation<vector> vectorEquation;
+typedef equation<symmTensor> symmTensorEquation;
+typedef equation<sphericalTensor> sphericalTensorEquation;
+typedef equation<tensor> tensorEquation;
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
