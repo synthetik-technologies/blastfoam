@@ -22,6 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
+    Foam::multivariateIntegrator
     Foam::MultivariateIntegrator
 
 Description
@@ -35,8 +36,8 @@ SourceFiles
 #ifndef MultivariateIntegrator_H
 #define MultivariateIntegrator_H
 
-#include "multivariateIntegrator.H"
-#include "univariateEquation.H"
+#include "integratorBase.H"
+#include "UnivariateEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 #include "UautoPtr.H"
@@ -45,6 +46,71 @@ SourceFiles
 
 namespace Foam
 {
+
+/*---------------------------------------------------------------------------*\
+                          Class multivariateIntegrator Declaration
+\*---------------------------------------------------------------------------*/
+
+class multivariateIntegrator
+:
+    public integratorBase
+{
+protected:
+    // Protected data
+
+        //- Tolerance
+        Field<scalar> tolerance_;
+
+        //- Absolute tolerances
+        Field<scalar> absTolerance_;
+
+        //- Maximum number of domain splits
+        List<label> maxSplits_;
+
+        //- Number of intervals
+        List<label> nIntervals_;
+
+        mutable List<label> intervals_;
+        mutable List<scalar> minDx_;
+
+        //- Reset counters and minimum spacing
+        void reset(const List<scalar>& dx) const;
+
+
+public:
+
+    //- Runtime type information
+    TypeName("multivariateIntegrator");
+
+    // Constructors
+
+        //- Construct for from dictinoary
+        multivariateIntegrator(const label n, const dictionary& dict);
+
+
+    //- Destructor
+    virtual ~multivariateIntegrator()
+    {}
+
+
+    // Member Functions
+
+        //- Return if the integration is adaptive
+        virtual bool adaptive() const = 0;
+
+        //- Return the number of intervals
+        List<label> nIntervals() const
+        {
+            return adaptive() ? intervals_ : nIntervals_;
+        }
+
+        //- Access the number of intervals to use
+        virtual void setNIntervals(const List<label> nIntervals)
+        {
+            adaptive_ = false;
+            nIntervals_ = nIntervals;
+        }
+};
 
 /*---------------------------------------------------------------------------*\
                     Class MultivariateIntegrator Declaration
@@ -248,7 +314,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "MultivariateIntegrator.C"
+    #include "MultivariateIntegratorTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

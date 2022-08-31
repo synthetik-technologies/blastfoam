@@ -32,7 +32,8 @@ Description
 #ifndef MultivariateEquation_H
 #define MultivariateEquation_H
 
-#include "multivariateEquation.H"
+
+#include "equationBase.H"
 #include "scalarField.H"
 #include "RectangularMatrix.H"
 
@@ -40,6 +41,114 @@ Description
 
 namespace Foam
 {
+
+/*---------------------------------------------------------------------------*\
+                        Class multivariateEquation Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class Type>
+class multivariateEquation
+:
+    public equationBase
+{
+public:
+
+    typedef UList<scalar> VarType;
+    typedef List<Type> EqnType;
+    typedef Type CmptType;
+
+    //- Constructors
+
+        //- Null constructor
+        multivariateEquation()
+        :
+            equationBase()
+        {}
+
+        //- Construct from equation string
+        multivariateEquation(const string& eqnString)
+        :
+            equationBase(eqnString)
+        {}
+
+        //- Construct from a list of equation strings
+        multivariateEquation(const List<string>& eqnStrings)
+        :
+            equationBase(eqnStrings)
+        {}
+
+        //- Construct from dictionary
+        multivariateEquation(const dictionary& dict)
+        :
+            equationBase(dict)
+        {}
+
+
+    //- Destructor
+    virtual ~multivariateEquation()
+    {}
+
+
+    //- Public member functions
+
+        //- Return the number of input variables
+        virtual label nVar() const = 0;
+
+        //- Return the number of equations
+        virtual label nEqns() const = 0;
+
+        //- Return the lower limit
+        virtual tmp<scalarField> lowerLimits() const = 0;
+
+        //- Set the lower limit
+        virtual void setLowerLimits(const scalarList&) = 0;
+
+        //- Return the upper limit
+        virtual tmp<scalarField> upperLimits() const = 0;
+
+        //- Set the upper limit
+        virtual void setUpperLimits(const scalarList&) = 0;
+
+        //- Return the finite difference step size
+        virtual tmp<scalarField> dX() const = 0;
+
+        //- Return the finite difference step size
+        virtual void setDX(const scalarList& newDx) const = 0;
+
+        //- Limit the value of x to the range of the equation
+        virtual void limit(scalarField& x) const
+        {
+            x = max(lowerLimits(), min(x, upperLimits()));
+        }
+
+        //- Return the function value
+        virtual void FX
+        (
+            const UList<scalar>& x,
+            const label li,
+            List<Type>& fx
+        ) const = 0;
+
+        //- Return the function value
+        virtual void jacobian
+        (
+            const UList<scalar>& x,
+            const label li,
+            List<Type>& fx,
+            RectangularMatrix<Type>& J
+        ) const = 0;
+
+        //- Check if the solution is bracketed
+        virtual bool containsRoot
+        (
+            const UList<Type>& y0s,
+            const UList<Type>& y1s
+        ) const = 0;
+
+        //- Check if the solution is bracketed (compute bounds)
+        virtual bool containsRoot(const label li) const = 0;
+};
+
 
 /*---------------------------------------------------------------------------*\
                           Class MultivariateEquation Declaration

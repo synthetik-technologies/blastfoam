@@ -9,11 +9,6 @@ lookupTables/lookupTable3D/lookupTables3D.C
 
 equations/adaptiveTypes.C
 equations/equationBase/equationBase.C
-equations/coefficients/coefficients.C
-equations/coefficients/coefficientEquations.C
-equations/equation/Equations.C
-equations/univariate/UnivariateEquations.C
-equations/multivariate/MultivariateEquations.C
 
 equations/regEquation/regEquations.C
 
@@ -38,9 +33,9 @@ rootSolvers/badBroyden/badBroydenRootSolver.C
 
 integrators/integratorBase.C
 integrators/Gaussian/GaussianWeights.C
-integrators/Integrator/integrator.C
+integrators/Integrator/Integrator.C
 integrators/Integrator/Integrators.C
-integrators/MultivariateIntegrator/multivariateIntegrator.C
+integrators/MultivariateIntegrator/MultivariateIntegrator.C
 integrators/MultivariateIntegrator/MultivariateIntegrators.C
 
 minimizationSchemes/minimizationScheme/minimizationScheme.C

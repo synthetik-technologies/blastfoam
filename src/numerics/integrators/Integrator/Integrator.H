@@ -35,7 +35,7 @@ SourceFiles
 #ifndef Integrator_H
 #define Integrator_H
 
-#include "integrator.H"
+#include "integratorBase.H"
 #include "Equation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -45,6 +45,71 @@ SourceFiles
 
 namespace Foam
 {
+
+/*---------------------------------------------------------------------------*\
+                          Class integrator Declaration
+\*---------------------------------------------------------------------------*/
+
+class integrator
+:
+    public integratorBase
+{
+protected:
+    // Protected data
+
+        //- Tolerance
+        scalar tolerance_;
+
+        //- Absolute tolerance
+        scalar absTolerance_;
+
+        //- Maximum number of domain splits
+        label maxSplits_;
+
+        //- Number of intervals
+        label nIntervals_;
+
+        mutable label intervals_;
+        mutable scalar minDx_;
+
+        //- Reset counters and minimum spacing
+        void reset(const scalar dx) const;
+
+
+public:
+
+    //- Runtime type information
+    TypeName("integrator");
+
+    // Constructors
+
+        //- Construct for from dictinoary
+        integrator(const dictionary& dict);
+
+
+    //- Destructor
+    virtual ~integrator()
+    {}
+
+
+    // Member Functions
+
+        //- Return if the integration is adaptive
+        virtual bool adaptive() const = 0;
+
+        //- Return the number of intervals
+        label nIntervals() const
+        {
+            return adaptive() ? intervals_ : nIntervals_;
+        }
+
+        //- Access the number of intervals to use
+        virtual void setNIntervals(const label nIntervals)
+        {
+            adaptive_ = false;
+            nIntervals_ = nIntervals;
+        }
+};
 
 /*---------------------------------------------------------------------------*\
                           Class Integrator Declaration
@@ -198,7 +263,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "Integrator.C"
+    #include "IntegratorTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

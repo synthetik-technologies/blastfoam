@@ -1,7 +1,7 @@
 #include "dictionary.H"
 #include "linearLeastSquares.H"
 #include "nonLinearLeastSquares.H"
-#include "coefficientEquationsFwd.H"
+#include "CoefficientEquationsFwd.H"
 #include "createEquations.H"
 #include "UnivariateEquationsFwd.H"
 #include "argList.H"

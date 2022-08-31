@@ -35,7 +35,7 @@ Description
 #define CodedUnivariateEquation_H
 
 #include "regEquation.H"
-#include "univariateEquation.H"
+#include "UnivariateEquation.H"
 #include "scalarField.H"
 #include "dictionary.H"
 

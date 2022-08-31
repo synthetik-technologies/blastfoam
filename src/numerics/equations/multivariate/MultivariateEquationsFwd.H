@@ -27,13 +27,22 @@ License
 #define MultivariateEquationsFwd_H
 
 #include "MultivariateEquation.H"
-#include "multivariateEquationsFwd.H"
 #include "adaptiveTypesFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+typedef multivariateEquation<scalar> scalarMultivariateEquation;
+typedef multivariateEquation<vector> vectorMultivariateEquation;
+typedef multivariateEquation<symmTensor> symmTensorMultivariateEquation;
+typedef multivariateEquation<sphericalTensor>
+    sphericalTensorMultivariateEquation;
+typedef multivariateEquation<tensor> tensorMultivariateEquation;
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

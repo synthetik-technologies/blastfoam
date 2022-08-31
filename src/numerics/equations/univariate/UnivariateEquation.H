@@ -32,8 +32,7 @@ Description
 #ifndef UnivariateEquation_H
 #define UnivariateEquation_H
 
-#include "univariateEquation.H"
-#include "multivariateEquation.H"
+#include "MultivariateEquation.H"
 #include "scalarField.H"
 #include "dictionary.H"
 
@@ -41,6 +40,64 @@ Description
 
 namespace Foam
 {
+
+/*---------------------------------------------------------------------------*\
+                          Class univariateEquation Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class Type>
+class univariateEquation
+:
+    public multivariateEquation<Type>
+{
+public:
+
+    typedef Type EqnType;
+
+    // Constructors
+
+        //- Null constructor
+        univariateEquation()
+        :
+            multivariateEquation<Type>()
+        {}
+
+        //- Construct given name
+        univariateEquation(const string& eqnString)
+        :
+            multivariateEquation<Type>(eqnString)
+        {}
+
+        //- Construct from dictionary
+        univariateEquation(const dictionary& dict)
+        :
+            multivariateEquation<Type>(dict)
+        {}
+
+
+    //- Destructor
+    virtual ~univariateEquation()
+    {}
+
+
+    //- Public member functions
+
+        //- Return the function value
+        virtual Type fX
+        (
+            const UList<scalar>& x,
+            const label li
+        ) const = 0;
+
+        //- Return the function value
+        virtual void dfdX
+        (
+            const UList<scalar>& x,
+            const label li,
+            List<Type>& dfdx
+        ) const = 0;
+};
+
 
 /*---------------------------------------------------------------------------*\
                           Class UnivariateEquation Declaration

@@ -36,7 +36,7 @@ SourceFiles
 #define linearLeastSquares_H
 
 #include "UnivariateEquationsFwd.H"
-#include "coefficientEquationsFwd.H"
+#include "CoefficientEquationsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
