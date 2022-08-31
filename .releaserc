@@ -1,0 +1,58 @@
+{
+  "branches": [
+    "+([0-9])?(.{+([0-9]),x}).x",
+    "main",
+    "master",
+    {
+      "name": "develop",
+      "prerelease": true
+    },
+    {
+      "name": "staging",
+      "prerelease": true
+    }
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "angular",
+        "releaseRules": [
+          {
+            "type": "DEV",
+            "release": "minor"
+          },
+          {
+            "type": "PRJ",
+            "release": false
+          },
+          {
+            "type": "ENH",
+            "release": "minor"
+          },
+          {
+            "type": "BUG",
+            "release": "patch"
+          }
+        ]
+      }
+    ],
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/github",
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "./.updateDeb.sh ${nextRelease.version}",
+        "publishCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "debian"
+        ]
+      }
+    ]
+  ]
+}

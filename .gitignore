@@ -42,6 +42,13 @@ platforms/
 
 # Reinstate wmake/rules that might look like build directories
 !wmake/rules/*/
+.DS_Store
+darwin64Clang**
+lnInclude**
+.vscode
+node_modules
+package.json
+package-lock.json
 
 # doxygen generated documentation
 doc/Doxygen/html
