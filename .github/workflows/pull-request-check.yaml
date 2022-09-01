@@ -1,7 +1,6 @@
-name: Build and Test
+name: Testing
 
-on:
-  pull_request:
+on: pull_request
 
 jobs:
   build:
