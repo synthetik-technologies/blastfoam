@@ -50,7 +50,7 @@ export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
 # export BLAST_DIR="$( cd $(dirname $0)/../ && pwd )"
 
 # Export location of libraries and executables
-if [[ $MAKE = True ]]
+if [[ $MAKE = True || -d "/opt/blastfoam"]]
 then
     export BLAST_LIBBIN="${BLAST_DIR}/lib"
     export BLAST_APPBIN="${BLAST_DIR}/bin"
