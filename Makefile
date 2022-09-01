@@ -1,6 +1,6 @@
 # DESTDIR = /opt
 prefix = /opt/blastfoam
-
+export MAKE=True
 build: SHELL:=bash
 build:
 	+ source /opt/openfoam9/etc/bashrc && \
@@ -19,7 +19,6 @@ install:
 	install --target-directory $(DESTDIR)$(prefix)/lib -D \
 		lib/*
 	cp -r src $(DESTDIR)$(prefix)/src
-	# * find better install location later
 	install --target-directory $(DESTDIR)$(prefix)/etc -D \
 		etc/bashrc
 	install --target-directory $(DESTDIR)$(prefix)/etc/codeTemplates -D \
