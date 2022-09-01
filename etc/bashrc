@@ -44,13 +44,13 @@ export FOAM_EXTRA_CXXFLAGS="-DCOMPAT_OPENFOAM_ORG"
 # Set to one directory level higher than the current by default
 
 # For linux
-export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
 
+export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
 # For mac
 # export BLAST_DIR="$( cd $(dirname $0)/../ && pwd )"
 
 # Export location of libraries and executables
-if [[ $BLAST_DIR == /opt/* ]]
+if [[ $MAKE = True ]]
 then
     export BLAST_LIBBIN="${BLAST_DIR}/lib"
     export BLAST_APPBIN="${BLAST_DIR}/bin"
