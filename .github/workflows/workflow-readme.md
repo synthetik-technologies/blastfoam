@@ -20,6 +20,7 @@
   %% Jobs
   val: run-validation-tests
   state build {
+    Direction LR
     [*] --> cbf
     cbf --> tar
     tar --> cc
@@ -31,6 +32,7 @@
     cc --> [*]: true
   }
   state val {
+    Direction LR
     [*] --> da
     da --> inst
     inst --> cbf2
@@ -57,30 +59,101 @@ _Run on push to staging, master, dev_
 ```mermaid
   stateDiagram-v2
 
-  state "deployment.yaml" as dep
-  state "public-deployment.yaml" as pdep
-  state "build debian package" as deb
-  state "build docker image" as doc
-  state "private github prerelease" as pre
-  state "public github release" as pub
-  state "push docker image" as docPush
-  state "push debian package" as debPush
-  state new_release <<choice>>
+%% Steps
+dep: Install dependencies
+vers: Version (actions/composites/semantic-versioning)
 
+cbf: Checkout blastFOAM
+tar: Build Tar for Cache
+cc: Check Cache for Match
+make: Build from Makefile
+art: Create Artifact
+
+cbf2: Checkout blastFOAM
+da: Download Artifact
+rel: Add Artifact to Versioned Release
+
+cbf3: Checkout blastFOAM
+da2: Download Artifact
+dl: Docker Login to GHCR
+bpi: Docker Build and Push Image
+
+
+%% Jobs
+state version{
+  [*] --> dep
+  dep --> vers
+  vers --> [*]
+}
+state build {
+    [*] --> cbf
+    cbf --> tar
+    tar --> cc
+
+    cc --> make: false
+    make --> art
+    art --> [*]
+
+    cc --> [*]: true
+  }
+state release_deb {
+  [*] --> cbf2
+  cbf2 --> da
+  da --> rel
+  rel --> [*]
+}
+state build_docker {
+  [*] --> cbf3
+  cbf3 --> da2
+  da2 --> dl
+  dl --> bpi
+  bpi --> [*]
+}
+%% Workflows
+state deployment {
+  direction LR
   [*] --> version
-  version --> new_release
-  new_release --> deb: new release
-  new_release --> [*]: no new release
-  deb --> doc
-  doc --> pre: staging
-  pre --> [*]
+  version --> build: New Version
+  build --> release_deb
+  release_deb --> build_docker
+  build_docker --> [*]
+  version --> [*]: No New Version
+}
 
-  doc --> pub: main
-  pub --> debPush
-  debPush --> docPush
-  docPush --> [*]
+state public_deployment {
+  direction LR
+  state code {
+    cbf4: Checkout blastFOAM
+    pcp: Push Code Publically
+    crp: Push Release Publically
+    [*] --> cbf4
+    cbf4 --> pcp
+    pcp --> crp
+    crp --> [*]
+  }
+  state docker {
+    ghcr: Login to GitHub Registry
+    dh: Login to DockerHub
+    dt: Construct Dev Tag
+    pdi: Pull Docker Image
+    tags: Create Tags
+    ti: Tag Images
+    pi: Push Images
 
-
-
-
+    [*]--> ghcr
+    ghcr --> dh
+    dh --> dt
+    dt --> pdi
+    pdi --> tags
+    tags --> ti
+    ti --> pi
+    pi --> [*]
+  }
+  [*] --> code
+  code --> docker
+  docker --> [*]
+}
+[*] --> deployment
+deployment --> public_deployment
+public_deployment --> [*]
 ```
