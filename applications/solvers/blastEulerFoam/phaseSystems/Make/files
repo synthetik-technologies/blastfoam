@@ -1,7 +1,7 @@
 phaseSystem/phaseSystem.C
 
 phaseModels/phaseModel.C
-phaseModels/newPhaseModel.C
+phaseModels/phaseModelNew.C
 
 phaseModels/fluidPhaseModel/fluidPhaseModel.C
 phaseModels/multiPhaseModel/multiPhaseModel.C

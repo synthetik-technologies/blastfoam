@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -44,6 +44,10 @@ SourceFiles
 #include "IOList.H"
 #include "fileName.H"
 
+#include "Modifier.H"
+#include "indexing.H"
+#include "interpolationWeights1D.H"
+
 namespace Foam
 {
 
@@ -57,41 +61,63 @@ class lookupTable1D
 protected:
 // Protected data
 
-    //- Include definition of modifying functions
-    #include "tableFuncs.H"
-
-    modFuncType modFunc_;
-    modFuncType invModFunc_;
-
-    modFuncType modXFunc_;
-    modFuncType invModXFunc_;
-
-    //- Interpolation type
-    interp1DFuncType interpFunc_;
-
-    //- List of x values in real space
-    Field<scalar> xValues_;
-
-    //- List of x values in the given space
-    Field<scalar> xModValues_;
+    //- Modifiers
+    autoPtr<Modifier<Type>> mod_;
+    autoPtr<Modifier<scalar>> modX_;
 
     //- Data
     Field<Type> data_;
 
+    //- List of x values in the given space
+    Field<scalar> xModValues_;
+
+    //- Lookup indexes
+    autoPtr<indexer> indexing_;
+
+    //- Interpolation scheme
+    autoPtr<interpolationWeight1D> interpolator_;
+
+    //- Real data
+    Field<Type>* realDataPtr_;
+
+    //- List of x values in real space
+    Field<scalar>* xValuesPtr_;
+
     //- Current index (used to access location in list after lookup)
     mutable label index_;
 
-    //- Current interpolation weight
-    mutable scalar f_;
+    //- List of interpolation indices
+    mutable DynamicList<label> indices_;
 
-    //- Read the table
-    void readTable
-    (
-        const fileName& file,
-        const string& delim,
-        const label xi,
-        const label yi
-    );
+    //- Current interpolation weight
+    mutable DynamicList<scalar> weights_;
+
+
+    // Protected member functions
+
+        // Return the real data
+        inline const Field<scalar>& fValues() const
+        {
+            return *realDataPtr_;
+        }
+
+        // Access the real data values
+        inline Field<scalar>& fValues()
+        {
+            return *realDataPtr_;
+        }
+
+        // Return the real x values
+        inline const Field<scalar>& xValues() const
+        {
+            return *xValuesPtr_;
+        }
+
+        // Access the real x values
+        inline Field<scalar>& xValues()
+        {
+            return *xValuesPtr_;
+        }
 
 
 public:
@@ -101,30 +127,34 @@ public:
         //- Empty constructor
         lookupTable1D();
 
+        //- Copy constructor
+        lookupTable1D(const lookupTable1D&);
+
         //- Construct from file
         lookupTable1D
         (
             const dictionary& dict,
             const word& xName,
-            const word& name
+            const word& name,
+            bool canRead = true
         );
 
         //- Construct from data given list of x and data
         //  x can be in real or xMod space
         lookupTable1D
         (
-            const Field<scalar>& x,
-            const Field<Type>& data,
-            const word& xMod,
-            const word& mod,
-            const word& interpolationScheme,
+            const List<scalar>& x,
+            const List<Type>& data,
+            const word& xMod = "none",
+            const word& mod = "none",
+            const word& interpolationScheme  = "linearClamp",
             const bool isReal = true
         );
 
         //- Construct from interpolator from only x values, no data is stored
         lookupTable1D
         (
-            const Field<scalar>& x,
+            const List<scalar>& x,
             const word& xMod,
             const word& interpolationScheme,
             const bool isReal = true
@@ -145,40 +175,34 @@ public:
                 return index_;
             }
 
-            //- Access current interpolation weight
-            scalar f() const
+            //- Access current interpolation indices
+            const labelList& indices() const
             {
-                return f_;
+                return indices_;
             }
 
-            //- Modify by modType
-            Type mod(const Type& f) const
+            //- Access current interpolation indices
+            const scalarList& weights() const
             {
-                return modFunc_(f);
+                return weights_;
             }
 
-            //- Modify by invModType
-            Type invMod(const Type& f) const
+            //- Return the modifier
+            const Modifier<Type>& mod() const
             {
-                return invModFunc_(f);
+                return mod_();
             }
 
-            //- Modify by modXType
-            scalar modX(const scalar f) const
+            //- Return the x-modifier
+            const Modifier<scalar>& modX() const
             {
-                return modXFunc_(f);
-            }
-
-            //- Modify by invModXType
-            scalar invModX(const scalar f) const
-            {
-                return modXFunc_(f);
+                return modX_();
             }
 
             //- Const access to real x values
             const Field<scalar>& x() const
             {
-                return xValues_;
+                return xValues();
             }
 
             //- Const access to modified x values
@@ -188,16 +212,28 @@ public:
             }
 
             //- Const access to modified data values
-            const Field<Type>& data() const
+            const Field<Type>& fMod() const
             {
                 return data_;
             }
 
             //- Return the real data
-            tmp<Field<Type>> realData() const;
+            const Field<Type>& f() const
+            {
+                return fValues();
+            }
+
+            //- Return the interpolation scheme type name
+            const interpolationWeight1D& interpolator() const
+            {
+                return interpolator_();
+            }
 
 
     // Public functions
+
+        //- Update index
+        void updateIndex(const scalar x) const;
 
         //- Update index and weight
         void update(const scalar x) const;
@@ -205,9 +241,16 @@ public:
         //- Lookup value
         Type lookup(const scalar x) const;
 
+        //- Lookup x given f
+        scalar reverseLookup(const Type& fin) const
+        {
+            NotImplemented;
+            return 0.0;
+        }
+
         //- Interpolate value using the current index and weight
-        template<class fType>
-        fType interpolate(const fType&, const fType&) const;
+        template<template<class> class ListType, class fType>
+        fType interpolate(const ListType<fType>&) const;
 
         //- Interpolate value using the current index and weight
         template<template<class> class ListType, class fType>
@@ -222,14 +265,14 @@ public:
         //- Set x and data
         void set
         (
-            const Field<scalar>& x,
-            const Field<Type>& data,
+            const List<scalar>& x,
+            const List<Type>& data,
             const bool isReal
         );
         void set
         (
-            const Field<scalar>& x,
-            const Field<Type>& data,
+            const List<scalar>& x,
+            const List<Type>& data,
             const word& mod,
             const word& xMod,
             const word& interpolationScheme,
@@ -237,32 +280,37 @@ public:
         );
 
         //- Set x
-        void setX(const Field<scalar>& x, const bool isReal = true);
+        void setX(const List<scalar>& x, const bool isReal = true);
         void setX
         (
-            const Field<scalar>& x,
+            const List<scalar>& x,
             const word& xMod,
-            const word& interpolationScheme,
             const bool isReal = true
         );
 
         //- Set data
-        void setData(const Field<Type>& data, const bool isReal = true);
+        void setData(const List<Type>& data, const bool isReal = true);
         void setData
         (
-            const Field<Type>& data,
+            const List<Type>& data,
             const word& mod,
             const bool isReal = true
         );
 
     //- Read from a given dictionary
-    virtual void read
+    void read
     (
         const dictionary& dict,
         const word& xName,
-        const word& yName
+        const word& yName,
+        const bool canRead = true
     );
 };
+
+
+// Specilizations of scalar functions
+template<>
+scalar lookupTable1D<scalar>::reverseLookup(const scalar& fin) const;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

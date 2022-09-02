@@ -31,17 +31,26 @@ License
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::MassIntegrated
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::MassIntegrated
 (
     const fvMesh& mesh,
+    const dictionary& dict,
     const word& fieldName,
-    const labelList& selectedCells,
+    const labelList& selectedIndices,
     Istream& is,
     const bool write
 )
 :
-    FieldSetType<Type, Patch, Mesh>(mesh, fieldName, selectedCells, is, write),
+    FSType<Type>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    ),
     phaseName_(readPhaseName(is, fieldName)),
     value_(pTraits<Type>(is)),
     thermo_(lookupOrConstructThermo(mesh, phaseName_))
@@ -50,31 +59,31 @@ Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::MassIntegrated
     {
         const volScalarField& rho(thermo_.rho());
         scalar mass(0.0);
-        forAll(selectedCells, i)
+        forAll(selectedIndices, i)
         {
-            label celli = selectedCells[i];
+            label celli = selectedIndices[i];
             mass += rho[celli]*mesh.V()[celli];
         }
         mass /= calcAngleFraction(mesh);
 
         this->value_ = this->value_/mass;
 
-        setField();
+        this->setField();
     }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::~MassIntegrated()
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::~MassIntegrated()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
+template<class Type, template<class> class FSType>
 Foam::word
-Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::readPhaseName
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::readPhaseName
 (
     Istream& is,
     const word& fieldName
@@ -94,9 +103,9 @@ Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::readPhaseName
 }
 
 
-template<class Type, template<class> class Patch, class Mesh>
+template<class Type, template<class> class FSType>
 Foam::dictionary
-Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::thermoDict
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::thermoDict
 (
     const fvMesh& mesh,
     const word& phaseName
@@ -155,10 +164,9 @@ Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::thermoDict
 }
 
 
-template<class Type, template<class> class Patch, class Mesh>
+template<class Type, template<class> class FSType>
 const Foam::blastThermo&
-Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::
-lookupOrConstructThermo
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::lookupOrConstructThermo
 (
     const fvMesh& mesh,
     const word& phaseName
@@ -232,22 +240,30 @@ lookupOrConstructThermo
 }
 
 
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetTypes::MassIntegrated<Type, Patch, Mesh>::setField()
+template<class Type, template<class> class FSType>
+void
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::getInternalField
+(
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
 {
-    if (this->selectedCells_.size() == this->mesh_.nCells())
-    {
-        (*this->fieldPtr_).primitiveFieldRef() = value_;
-    }
-    else
-    {
-        forAll(this->selectedCells_, i)
-        {
-            (*this->fieldPtr_)[this->selectedCells_[i]] = value_;
-        }
-    }
-    FieldSetType<Type, Patch, Mesh>::setField();
+    f = value_;
 }
 
+
+template<class Type, template<class> class FSType>
+void
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::getBoundaryField
+(
+    const label patchi,
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{
+    f = value_;
+}
 
 // ************************************************************************* //

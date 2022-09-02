@@ -19,8 +19,8 @@ type        basic;
 thermoType
 {
     transport const;
-    thermo      tabulated;
-    equationOfState tabulated;
+    thermo      eTabulated;
+    equationOfState tabulatedMG;
 }
 
 specie
@@ -34,10 +34,14 @@ transport
 }
 equationOfState
 {
-    file        "p.csv";
-    mod          ln;
-    delim       ";";
-    isReal      false;
+    pCoeffs
+    {
+        file       "constant/p.csv";
+        mod         ln;
+        delim       ";";
+        isReal      false;
+        flipTable   false;
+    }
 
     rhoCoeffs
     {
@@ -46,6 +50,7 @@ equationOfState
         n           7;
         delta       1.0;
         min         -3.0;
+        isReal      false;
     }
     eCoeffs
     {
@@ -54,30 +59,35 @@ equationOfState
         n           40;
         min         11.8748;
         delta       1.0;
+        isReal      false;
     }
 }
 thermodynamics
 {
-    file        "T.csv";
-    mod          ln;
-    delim       ";";
-    isReal      false;
+    TCoeffs
+    {
+        file        "constant/T.csv";
+        mod          ln;
+        delim       ";";
+        isReal      false;
+        flipTable   false;
+    }
 
     rhoCoeffs
     {
         mod         log10;
-
         n           7;
         delta       1.0;
         min         -3.0;
+        isReal      false;
     }
     eCoeffs
     {
         mod         ln;
-
         n           40;
         min         11.8748;
         delta       1.0;
+        isReal      false;
     }
 }
 

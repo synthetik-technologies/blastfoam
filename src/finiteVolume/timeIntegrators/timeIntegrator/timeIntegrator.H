@@ -42,6 +42,10 @@ SourceFiles
 #include "PtrList.H"
 #include "HashPtrTable.H"
 #include "volFields.H"
+#include "UautoPtr.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
+#include "hashedWordList.H"
 
 
 namespace Foam
@@ -96,7 +100,23 @@ protected:
     //- Number of stored deltas
     label nDelta_;
 
+    //- Current step V0/V
+    volScalarField::Internal V0byV_;
+
+    //- Current time index
+    label curTimeIndex_;
+
+    //- FvModels
+    mutable UautoPtr<fvModels> modelsPtr_;
+
+    //- fvConstraints
+    mutable UautoPtr<const fvConstraints> constraintsPtr_;
+
+    //- List of fields that have models or constraints
+    mutable hashedWordList solveFields_;
+
     //- Stored old fields
+    mutable wordHashSet savedOldFields_;
     mutable HashPtrTable<PtrList<volScalarField>> oldScalarFields_;
     mutable HashPtrTable<PtrList<volVectorField>> oldVectorFields_;
     mutable HashPtrTable<PtrList<volSphericalTensorField>>
@@ -112,67 +132,76 @@ protected:
     mutable HashPtrTable<PtrList<volSymmTensorField>> deltaSymmTensorFields_;
     mutable HashPtrTable<PtrList<volTensorField>> deltaTensorFields_;
 
-    //- Update all stored systems
-    void updateAll();
 
-    //- Post update of all stored systems
-    void postUpdateAll();
+    // Private member functions
 
-    //- Initialize ODE sizes
-    void initialize();
+        //- Update all stored systems
+        void updateAll();
 
-            //- Insert a list of old fields into the given hash table
-            template<class FieldType>
-            void insertOldList
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Post update of all stored systems
+        void postUpdateAll();
 
-            //- Insert a list of delta fields into the given hash table
-            template<class FieldType>
-            void insertDeltaList
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Initialize ODE sizes
+        void initialize();
 
-            //- Return the List of old fields
-            template<class FieldType>
-            const PtrList<FieldType>& lookupOld
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Insert a list of old fields into the given hash table
+        template<class FieldType>
+        void insertOldList
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
-            //- Return the List of old fields
-            template<class FieldType>
-            PtrList<FieldType>& lookupOld
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            );
+        //- Insert a list of delta fields into the given hash table
+        template<class FieldType>
+        void insertDeltaList
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
-            //- Return the List of delta fields
-            template<class FieldType>
-            const PtrList<FieldType>& lookupDelta
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Return the List of old fields
+        template<class FieldType>
+        const PtrList<FieldType>& lookupOld
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
-            //- Return the List of delta fields
-            template<class FieldType>
-            PtrList<FieldType>& lookupDelta
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            );
+        //- Return the List of old fields
+        template<class FieldType>
+        PtrList<FieldType>& lookupOld
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        );
 
-            //- Clear and resize stored old fields
-            template<class FieldType>
-            void clearFields(HashPtrTable<PtrList<FieldType>>& table);
+        //- Return the List of delta fields
+        template<class FieldType>
+        const PtrList<FieldType>& lookupDelta
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
+        //- Return the List of delta fields
+        template<class FieldType>
+        PtrList<FieldType>& lookupDelta
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        );
+
+        //- Clear and resize stored old fields
+        template<class FieldType>
+        void clearOldFields(HashPtrTable<PtrList<FieldType>>& table);
+
+        template<class FieldType>
+        void clearDeltaFields(HashPtrTable<PtrList<FieldType>>& table);
+
+        //- Reset all fields of the given type to the oldTime
+        template<class FieldType>
+        void resetFields();
 
 public:
 
@@ -199,8 +228,13 @@ public:
     virtual ~timeIntegrator();
 
 
-    // Selector
-    static autoPtr<timeIntegrator> New(const fvMesh& mesh);
+    // Selectors
+
+        //- Return a new timeIntegrator object
+        static autoPtr<timeIntegrator> New(const fvMesh& mesh);
+
+        //- Return a reference to a timeIntegrator object
+        static timeIntegrator& NewRef(const fvMesh& mesh);
 
 
     // Member Functions
@@ -208,57 +242,106 @@ public:
         //- Add a system to the
         void addSystem(timeIntegrationSystem& system);
 
+        //- Update anything that needs to be done before mesh updates
+        void preUpdateMesh();
+
         //- Integrate fluxes in time
         virtual void integrate();
 
         //- Clear all ODE fields (old/delta)
-        void clearODEFields();
+        void clear();
+
+        //- Reset fields to the old time
+        void reset();
+
+        //- Create/lookup fvModels/fvConstraints
+        void createModels() const;
+
+        //- Return the fvModels
+        inline const fvModels& models() const
+        {
+            if (!modelsPtr_.valid())
+            {
+                createModels();
+            }
+            return modelsPtr_();
+        }
+
+        //- Access the fvModels
+        inline fvModels& models()
+        {
+            if (!modelsPtr_.valid())
+            {
+                createModels();
+            }
+            return modelsPtr_();
+        }
+
+        //- Return the fvConstraints
+        inline const fvConstraints& constraints() const
+        {
+            if (!constraintsPtr_.valid())
+            {
+                createModels();
+            }
+            return constraintsPtr_();
+        }
+
+        //- Is a field modified by fvModels or fvConstraints
+        inline bool needSolve(const word& field) const
+        {
+            if (!modelsPtr_.valid())
+            {
+                createModels();
+            }
+            return solveFields_.found(field);
+        }
 
         //- Return old coefficients for the current step
-        scalarList a() const
+        inline scalarList a() const
         {
             return as_[stepi_ - 1];
         }
 
         //- Return delta coefficients for the current step
-        scalarList b() const
+        inline scalarList b() const
         {
             return bs_[stepi_ - 1];
         }
 
 
         //- Return the number of steps
-        label nSteps() const
+        inline label nSteps() const
         {
             return as_.size();
         }
 
         //- Return old field indexes
-        const labelList& oldIs() const
+        inline const labelList& oldIs() const
         {
             return oldIs_;
         }
 
         //- Return number of stored fields
-        label nOld() const
+        inline label nOld() const
         {
             return nOld_;
         }
 
         //- Return stored delta indexes
-        const labelList& deltaIs() const
+        inline const labelList& deltaIs() const
         {
             return deltaIs_;
         }
 
         //- Return number of stored deltas
-        label nDelta() const
+        inline label nDelta() const
         {
             return nDelta_;
         }
 
         //- Return current step
-        label step() const
+        inline label step() const
         {
             return stepi_;
         }
@@ -271,6 +354,12 @@ public:
 
         //- Is the current step the last
         bool finalStep() const;
+
+        //- Return current step VbyV0
+        const volScalarField::Internal& V0byV() const
+        {
+            return V0byV_;
+        }
 
         //- Add old field to saved fields
         inline void addOldField(const volScalarField& f) const;

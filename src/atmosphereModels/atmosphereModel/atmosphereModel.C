@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -24,10 +24,13 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "atmosphereModel.H"
+#include "pressureReference.H"
+#include "findRefCell.H"
 #include "fluidThermo.H"
 #include "fvmLaplacian.H"
 #include "fvcDiv.H"
 #include "fvcSnGrad.H"
+#include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "constrainPressure.H"
 #include "uniformDimensionedFields.H"
@@ -46,7 +49,8 @@ namespace Foam
 Foam::atmosphereModel::atmosphereModel
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const label zoneID
 )
 :
     dict_(dict),
@@ -63,10 +67,25 @@ Foam::atmosphereModel::atmosphereModel
         )
     ),
     normal_(-g_.value()/max(mag(g_).value(), small)),
-    groundElevation_("groundElevation", dimLength, dict_),
-    h_("h", normal_ & mesh.C())
+    baseElevation_
+    (
+        IOobject
+        (
+            "hRef",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dict_.found("hRef")
+      ? dimensionedScalar("hRef", dimLength, dict_)
+      : dimensionedScalar("hRef", dimLength, 0.0)
+    ),
+    h_("h", normal_ & mesh.C()),
+    zoneID_(zoneID),
+    fixedPatches_(dict.lookupOrDefault("fixedPatches", wordReList()))
 {
-    h_ += groundElevation_ - min(h_);
+    h_ += baseElevation_ - min(h_);
 }
 
 
@@ -77,40 +96,60 @@ Foam::atmosphereModel::~atmosphereModel()
 
 void Foam::atmosphereModel::hydrostaticInitialisation
 (
-    fluidBlastThermo& thermo,
-    const dimensionedScalar& pRef
+    fluidBlastThermo& thermo
 ) const
 {
-    volScalarField& p(thermo.p());
-    volScalarField& rho(thermo.rho());
+    volScalarField p(thermo.p());
+
+    const volScalarField& rho(thermo.rho());
     const fvMesh& mesh = p.mesh();
 
     volScalarField gh("gh", (g_ & normal_)*h_);
     surfaceScalarField ghf("ghf", fvc::interpolate(gh));
 
-    volScalarField p_rgh
-    (
-        IOobject
-        (
-            "p_rgh",
-            mesh.time().timeName(),
-            mesh
-        ),
-        p - rho*gh - pRef,
-        "fixedFluxPressure"
-    );
+    // Set the default boundary conditions for ph_rgh
+    wordList ph_rghBcs(p.boundaryField().size(), "fixedFluxPressure");
+    forAll(ph_rghBcs, patchi)
+    {
+        if (p.boundaryField()[patchi].fixesValue())
+        {
+            ph_rghBcs[patchi] = "fixedValue";
+        }
+    }
+    if (fixedPatches_.size())
+    {
+        Info<< "Fixing " << fixedPatches_ << endl;
+        labelHashSet fixedPatchIDs(mesh.boundaryMesh().patchSet(fixedPatches_));
+        forAllConstIter(labelHashSet, fixedPatchIDs, iter)
+        {
+            const label patchi = iter.key();
+            ph_rghBcs[patchi] = "fixedValue";
+        }
+    }
 
+    // Optionally read in some fields
     volVectorField U
     (
         IOobject
         (
             "U",
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::READ_IF_PRESENT
         ),
         mesh,
         dimensionedVector(dimVelocity, Zero),
-        "noSlip"
+        "fixedValue"
+    );
+    surfaceScalarField phi
+    (
+        IOobject
+        (
+            "phi",
+            mesh.time().timeName(),
+            mesh
+        ),
+        fvc::flux(U)
     );
 
     volScalarField ph_rgh
@@ -118,28 +157,44 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         IOobject
         (
             "ph_rgh",
-            mesh
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT
         ),
-        mesh,
-        dimensionedScalar(dimensionSet(1, -1, -2, 0, 0, 0, 0), 0.0),
-        "fixedFluxPressure"
+        mesh_,
+        dimensionedScalar("ph_rgh", dimPressure, 0.0),
+        ph_rghBcs
+    );
+    ph_rgh.rename("p");
+
+    pressureReference pressureReference
+    (
+        ph_rgh,
+        dict_,
+        ph_rgh.needReference()
     );
 
     label nCorr
     (
-        dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 5)
+        dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 10)
     );
 
+    // Create a simple solver dictionary
     dictionary solverDict;
     solverDict.add("solver", "PCG");
     solverDict.add("preconditioner", "DIC");
+    solverDict.add("smoother", "GaussSeidel");
     solverDict.add("tolerance", 1e-6);
     solverDict.add("relTol", 0);
+    solverDict.add("minIter", 1);
 
     for (label i=0; i<nCorr; i++)
     {
-        surfaceScalarField rhof("rhof", fvc::interpolate(rho));
+        Info<< nl << "Hydrostatic iteration " << i << endl;
 
+        ph_rgh == p - rho*gh;
+
+        surfaceScalarField rhof("rhof", fvc::interpolate(rho));
         surfaceScalarField phig
         (
             "phig",
@@ -153,15 +208,46 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         (
             fvm::laplacian(rhof, ph_rgh) == fvc::div(phig)
         );
+        ph_rghEqn.setReference
+        (
+            pressureReference.refCell(),
+            getRefCellValue(ph_rgh, pressureReference.refCell())
+        );
 
         ph_rghEqn.solve(solverDict);
 
-        p = ph_rgh + rho*gh + pRef;
-        thermo.updateRho();
-        thermo.calce(p);
 
-        Info<< "Hydrostatic pressure variation "
-            << (max(ph_rgh) - min(ph_rgh)).value() << endl;
+        scalar residual = (max(ph_rgh()) - min(ph_rgh())).value();
+        p = ph_rgh + rho*gh;
+        if (ph_rgh.needReference())
+        {
+            p += dimensionedScalar
+            (
+                "pRef",
+                p.dimensions(),
+                pressureReference.refValue()
+              - getRefCellValue(p, pressureReference.refCell())
+            );
+        }
+
+        Info<< "Hydrostatic pressure variation "<< residual << endl;
+
+        // Correct density and thermodynamic quantities
+        p.correctBoundaryConditions();
+        thermo.updateRho(p);
+        thermo.he() = thermo.calce(thermo.p());
+    }
+
+    if (zoneID_ >= 0)
+    {
+        const cellZone& cz = mesh_.cellZones()[zoneID_];
+        UIndirectList<scalar>(thermo.p(), cz) = UIndirectList<scalar>(p, cz);
+        thermo.p().correctBoundaryConditions();
+
+        // Correct density and thermodynamic quantities
+        thermo.updateRho(thermo.p());
+        thermo.he() = thermo.calce(thermo.p());
+        thermo.correct();
     }
 }
 

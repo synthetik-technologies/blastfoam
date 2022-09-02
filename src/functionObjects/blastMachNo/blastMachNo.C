@@ -40,6 +40,70 @@ namespace functionObjects
     addToRunTimeSelectionTable(functionObject, blastMachNo, dictionary);
 }
 }
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::functionObjects::blastMachNo::calc()
+{
+    if (!foundObject<volVectorField>(UName_))
+    {
+        return false;
+    }
+    const volVectorField& U = lookupObject<volVectorField>(UName_);
+
+    if
+    (
+        foundObject<fluidBlastThermo>
+        (
+            IOobject::groupName(fluidBlastThermo::typeName, phaseName_)
+        )
+    )
+    {
+        tmp<volScalarField> speedOfSound
+        (
+            lookupObject<fluidBlastThermo>
+            (
+                IOobject::groupName(fluidBlastThermo::typeName, phaseName_)
+            ).speedOfSound()
+        );
+
+        return store
+        (
+            resultName_,
+            mag(U)/max(speedOfSound, dimensionedScalar(dimVelocity, small))
+        );
+    }
+    else if
+    (
+        foundObject<fluidThermo>
+        (
+            IOobject::groupName(fluidThermo::typeName, phaseName_)
+        )
+    )
+    {
+        const fluidThermo& thermo
+        (
+            lookupObject<fluidThermo>
+            (
+                IOobject::groupName(fluidThermo::typeName, phaseName_)
+            )
+        );
+        tmp<volScalarField> speedOfSound
+        (
+            sqrt(thermo.Cp()/thermo.Cv()/thermo.psi())
+        );
+
+        return store
+        (
+            resultName_,
+            mag(U)/max(speedOfSound, dimensionedScalar(dimVelocity, small))
+        );
+    }
+    return false;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::blastMachNo::blastMachNo
@@ -49,12 +113,22 @@ Foam::functionObjects::blastMachNo::blastMachNo
     const dictionary& dict
 )
 :
-    fvMeshFunctionObject(name, runTime, dict),
+    fieldExpression
+    (
+        name,
+        runTime,
+        dict,
+        IOobject::groupName("Ma", dict.lookupOrDefault("phaseName", word::null)),
+        IOobject::groupName("U", dict.lookupOrDefault("phaseName", word::null))
+    ),
     phaseName_(dict.lookupOrDefault("phaseName", word::null)),
-    systemName_(IOobject::groupName(basicThermo::dictName, phaseName_)),
-    resultName_(IOobject::groupName("Ma", phaseName_)),
-    UName_(IOobject::groupName("U", phaseName_))
-{}
+    UName_(dict.lookupOrDefault("UName", IOobject::groupName("U", phaseName_)))
+{
+    if (!dict.lookupOrDefault("executeAtStart", false))
+    {
+        executeAtStart_ = false;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -62,65 +136,5 @@ Foam::functionObjects::blastMachNo::blastMachNo
 Foam::functionObjects::blastMachNo::~blastMachNo()
 {}
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::functionObjects::blastMachNo::read
-(
-    const dictionary& dict
-)
-{
-    return true;
-}
-
-
-bool Foam::functionObjects::blastMachNo::execute()
-{
-    if
-    (
-        foundObject<volVectorField>(UName_)
-     && foundObject<fluidBlastThermo>(systemName_)
-    )
-    {
-        tmp<volScalarField> speedOfSound
-        (
-            lookupObject<fluidBlastThermo>(systemName_).speedOfSound()
-        );
-        speedOfSound.ref().max(small);
-
-        const volVectorField& U = lookupObject<volVectorField>(UName_);
-
-        return store
-        (
-            resultName_,
-            mag(U)/speedOfSound
-        );
-    }
-    else
-    {
-        Warning
-            << "    functionObjects::" << type() << " " << name()
-            << " failed to execute." << endl;
-
-        return false;
-    }
-}
-
-
-bool Foam::functionObjects::blastMachNo::write()
-{
-    if (this->mesh_.time().timeIndex() > 0)
-    {
-        writeObject(resultName_);
-        return true;
-    }
-    return false;
-}
-
-
-bool Foam::functionObjects::blastMachNo::clear()
-{
-    return clearObject(resultName_);
-}
 
 // ************************************************************************* //

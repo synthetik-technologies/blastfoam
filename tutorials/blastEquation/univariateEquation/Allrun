@@ -1,0 +1,11 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# -- run the calc
+# the debug flag writes each intermediate refinement set
+blastEquation \
+    -fx "sqr(1 - x[0]) + 5*sqr(x[1] - sqr(x[0]))" \
+    -eval "((1 2) (-1 0) (0 0))" \
+    -integrate "((0 0) (1 1))" \
+    -minimize "((-10 -10) (10 10) (0.1 0.3))" > log.function
+

@@ -35,9 +35,28 @@ namespace afterburnModels
 {
     defineTypeNameAndDebug(MillerAfterburn, 0);
     addToRunTimeSelectionTable(afterburnModel, MillerAfterburn, dictionary);
-}
-}
 
+
+    const HashTable<label> MillerAfterburn::pUnits
+    (
+        {
+            Tuple2<word, label>("Pa", 1),
+            Tuple2<word, label>("kPa", 3),
+            Tuple2<word, label>("bar", 5),
+            Tuple2<word, label>("MPa", 6),
+            Tuple2<word, label>("Mbar", 11)
+        }
+    );
+    const HashTable<label> MillerAfterburn::tUnits
+    (
+        {
+            Tuple2<word, label>("us", -6),
+            Tuple2<word, label>("ms", -3),
+            Tuple2<word, label>("s", 1),
+        }
+    );
+}
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -73,7 +92,16 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
     n_(readScalar(dict.lookup("n"))),
     a_("a", pow(dimPressure, -n_)/dimTime, dict_),
     pMin_("pMin", dimPressure, dict_)
-{}
+{
+    if (dict.found("tUnits"))
+    {
+        a_.value() *= pow(10.0, -tUnits[dict.lookup<word>("tUnits")]);
+    }
+    if (dict.found("pUnits") && !dict.found("pScale"))
+    {
+        pScale_ = pow(10.0, -pUnits[dict.lookup<word>("pUnits")]);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

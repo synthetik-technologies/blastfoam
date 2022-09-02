@@ -27,14 +27,15 @@ ddtSchemes
 
 divSchemes
 {
-    default none;
-    div(sigmaD)     Gauss linear;
+    default             none;
+    div(sigma)          Gauss linear;
+    div((impK*grad(D))) Gauss linear;
 }
 
 gradSchemes
 {
     default         extendedLeastSquares 0;
-    grad(T)         leastSquares;
+    grad(T)         Gauss linear;
 }
 
 laplacianSchemes

@@ -52,7 +52,8 @@ class blastRadiationModel;
 
 class compressibleBlastSystem
 :
-    public compressibleSystem
+    public compressibleSystem,
+    public IOdictionary
 {
 protected:
 // Protected data
@@ -197,6 +198,12 @@ public:
                 "speedOfSound",
                 thermoPtr_->speedOfSound()
             );
+        }
+
+        //- Dummy write for regIOobject
+        bool writeData(Ostream& os) const
+        {
+            return true;
         }
 };
 

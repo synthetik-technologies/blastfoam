@@ -1,0 +1,31 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create mesh
+runApplication blockMesh
+
+# -- Decompose the case
+runApplication decomposePar
+
+# -- Set initial conditions
+runParallel setRefinedFields
+
+# -- run the calc
+runParallel $(getApplication)
+
+# -- Sample
+runParallel -o postProcess -func sampleDict -time 0.0001
+runParallel -o postProcess -func sampleDict -time 0.0002
+runParallel -o postProcess -func sampleDict -time 0.0003
+runParallel -o postProcess -func sampleDict -time 0.0004
+
+# -- Create graphs
+( cd validation && ./createGraphs )
+
+# ----------------------------------------------------------------- end-of-file

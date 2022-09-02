@@ -2,7 +2,7 @@
 
 ## Notes
 
-This was the example case used throughout the May 13th, 2020 blastFoam workshop (thank you to everyone who attended!). This case is designed to show a simple 3-D case setup using an STL file with snappyHexMesh and adaptive mesh refinement. The a c-4 charge placed inside a L-Shaped building. The c-4 is activated using the linear activation model.
+This was the example case used throughout the May 13th, 2020 blastFoam workshop (thank you to everyone who attended!). This case is designed to show a simple 3-D case setup using an STL file with snappyHexMesh and adaptive mesh refinement. A c-4 charge placed inside a L-Shaped building, and the c-4 is activated using the linear activation model.
 
 The case takes approximately 5 min to run on a four-core desktop. Some additional notes:
 

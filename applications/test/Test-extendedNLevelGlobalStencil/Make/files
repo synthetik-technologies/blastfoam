@@ -1,0 +1,3 @@
+Test-extendedNLevelGlobalStencil.C
+
+EXE = $(BLAST_APPBIN)/Test-extendedNLevelGlobalStencil

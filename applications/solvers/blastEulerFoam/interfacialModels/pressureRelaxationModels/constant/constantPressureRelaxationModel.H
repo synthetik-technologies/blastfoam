@@ -2,13 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-2017-05-18 Jeff Heylmun:    Added support of polydisperse phase models
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Syntyhetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivitive work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -27,10 +25,10 @@ Class
     Foam::pressureRelaxationModels::constant
 
 Description
-    Length based pressureRelaxation model.
+    Constant rate pressure relaxation
 
 SourceFiles
-    constant.C
+    constantPressureRelaxationModel.C
 
 \*---------------------------------------------------------------------------*/
 

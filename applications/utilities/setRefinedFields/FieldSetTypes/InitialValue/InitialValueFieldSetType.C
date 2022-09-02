@@ -24,28 +24,43 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "InitialValueFieldSetType.H"
+#include "FieldSetTypesFwd.H"
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::InitialValue<Type, Patch, Mesh>::InitialValue
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::InitialValue<Type, FSType>::InitialValue
 (
     const fvMesh& mesh,
+    const dictionary& dict,
     const word& fieldName,
-    const labelList& selectedCells,
+    const labelList& selectedIndices,
     Istream& is,
     const bool write
 )
 :
-    FieldSetType<Type, Patch, Mesh>(mesh, fieldName, selectedCells, is, write),
+    FSType<Type>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    ),
     origFieldPtr_
     (
-        this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
+        mesh.foundObject<typename FSType<Type>::FieldType>
+        (
+            IOobject::groupName(fieldName, "orig")
+        )
+      ? this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
+      : nullptr
     )
 {
     if (!origFieldPtr_.valid())
     {
-        typedef GeometricField<Type, Patch, Mesh> FieldType;
+        typedef typename FSType<Type>::FieldType FieldType;
         FieldType* origFieldPtr
         (
             new FieldType
@@ -63,35 +78,46 @@ Foam::FieldSetTypes::InitialValue<Type, Patch, Mesh>::InitialValue
     }
     if (this->good_)
     {
-        setField();
+        this->setField();
     }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::InitialValue<Type, Patch, Mesh>::~InitialValue()
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::InitialValue<Type, FSType>::~InitialValue()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetTypes::InitialValue<Type, Patch, Mesh>::setField()
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::InitialValue<Type, FSType>::getInternalField
+(
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
 {
-    if (this->selectedCells_.size() == this->mesh_.nCells())
+    forAll(indices, i)
     {
-        (*this->fieldPtr_).primitiveFieldRef() =
-            (*origFieldPtr_).primitiveField();
+        f[i] = origFieldPtr_()[indices[i]];
     }
-    else
-    {
-        forAll(this->selectedCells_, i)
-        {
-            (*this->fieldPtr_)[this->selectedCells_[i]] =
-                (*origFieldPtr_)[this->selectedCells_[i]];
-        }
-    }
-    FieldSetType<Type, Patch, Mesh>::setField();
 }
 
+
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::InitialValue<Type, FSType>::getBoundaryField
+(
+    const label patchi,
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{
+    Field<Type> pOrig(this->getBoundary(patchi, origFieldPtr_()));
+    forAll(indices, i)
+    {
+        f[i] = pOrig[indices[i]];
+    }
+}

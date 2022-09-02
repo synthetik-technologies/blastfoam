@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createDynamicBlastFvMesh.H"
+    #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
 
@@ -54,13 +54,13 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        models.preUpdateMesh();
+        integrator->preUpdateMesh();
 
         //- Refine the mesh
-        mesh.refine();
+        refineMesh(mesh);
 
         //- Set the new time step and advance
-        #include "eigenvalueCourantNo.H"
+        scalar CoNum = fluid->CoNum();
         #include "readTimeControls.H"
         #include "setDeltaT.H"
 
@@ -72,14 +72,6 @@ int main(int argc, char *argv[])
 
         Info<< "Calculating Fluxes" << endl;
         integrator->integrate();
-
-        //- Decode to get new values of non-conservative variables
-        fluid->decode();
-
-        models.correct();
-
-        //- Clear the flux scheme
-        fluid->flux().clear();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
@@ -93,7 +85,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-        integrator->clearODEFields();
+        integrator->clear();
     }
 
     Info<< "End\n" << endl;

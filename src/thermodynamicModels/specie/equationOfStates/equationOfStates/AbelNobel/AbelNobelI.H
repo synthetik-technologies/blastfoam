@@ -106,6 +106,17 @@ Foam::scalar Foam::AbelNobel<Specie>::pRhoT
 
 
 template<class Specie>
+Foam::scalar Foam::AbelNobel<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    return p/(this->R()*T + p*b_);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::dpdv
 (
     const scalar rho,
@@ -236,7 +247,6 @@ template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {

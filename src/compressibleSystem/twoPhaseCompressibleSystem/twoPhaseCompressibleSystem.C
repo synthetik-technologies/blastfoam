@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -35,7 +35,7 @@ namespace Foam
     (
         compressibleSystem,
         twoPhaseCompressibleSystem,
-        dictionary
+        twoPhase
     );
 }
 
@@ -44,9 +44,11 @@ namespace Foam
 
 void Foam::twoPhaseCompressibleSystem::setModels()
 {
-    if (this->isDict("sigma"))
+    compressibleBlastSystem::setModels();
+
+    if (this->found("sigma"))
     {
-        interfacePropertiesPtr_.set
+        interfacePtr_.set
         (
             new interfaceProperties
             (
@@ -57,7 +59,6 @@ void Foam::twoPhaseCompressibleSystem::setModels()
             )
         );
     }
-    compressibleBlastSystem::setModels();
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -130,11 +131,19 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
     )
 {
+    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+
     rho_ = alphaRho1_ + alphaRho2_;
 
     thermo_.initializeModels();
     this->setModels();
 
+    alpha1_.oldTime();
+    alpha2_.oldTime();
+    rho1_.oldTime();
+    rho2_.oldTime();
+    U_.oldTime();
+    e_.oldTime();
     encode();
 }
 
@@ -150,6 +159,7 @@ Foam::twoPhaseCompressibleSystem::~twoPhaseCompressibleSystem()
 void Foam::twoPhaseCompressibleSystem::update()
 {
     decode();
+    phi_ = fvc::flux(U_);
     fluxScheme_->update
     (
         alpha1_,
@@ -168,6 +178,11 @@ void Foam::twoPhaseCompressibleSystem::update()
         rhoEPhi_
     );
     thermo_.update();
+
+    if (interfacePtr_.valid())
+    {
+        interfacePtr_->correct();
+    }
 }
 
 
@@ -227,19 +242,18 @@ void Foam::twoPhaseCompressibleSystem::solve()
       - (rhoU_ & g_)
     );
 
-    // Add surface tension force
-    if (interfacePropertiesPtr_.valid())
+    if (interfacePtr_.valid())
     {
         volVectorField sTF
         (
             fvc::reconstruct
             (
-                interfacePropertiesPtr_->surfaceTensionForce()
-              * rho_.mesh().magSf()
+                interfacePtr_->surfaceTensionForce()
+               *rho_.mesh().magSf()
             )
         );
         deltaRhoU += sTF;
-        deltaRhoE += U_ & sTF;
+        deltaRhoE += (U_ & sTF);
     }
 
     //- Store old values
@@ -258,65 +272,77 @@ void Foam::twoPhaseCompressibleSystem::solve()
 
 void Foam::twoPhaseCompressibleSystem::postUpdate()
 {
-    if (!needPostUpdate_)
-    {
-        compressibleBlastSystem::postUpdate();
-        return;
-    }
-
     this->decode();
 
+    bool updateRho = false;
+
     // Solve volume fraction
-    if (solveFields_.found(alpha1_.name()))
+    if (needSolve(alpha1_.name()))
     {
         fvScalarMatrix alphaEqn
         (
             fvm::ddt(alpha1_) - fvc::ddt(alpha1_)
         ==
-            modelsPtr_->source(alpha1_)
+            models().source(alpha1_)
         );
-        constraintsPtr_->constrain(alphaEqn);
+        constraints().constrain(alphaEqn);
         alphaEqn.solve();
-        constraintsPtr_->constrain(alpha1_);
+        constraints().constrain(alpha1_);
 
         alpha1_.maxMin(0.0, 1.0);
         alpha2_ = 1.0 - alpha1_;
+
+        alphaRho1_ = alpha1_*rho1_;
+        alphaRho2_ = alpha2_*rho2_;
+
+        updateRho = true;
     }
     // Solve phase 1 mass
-    if (solveFields_.found(rho1_.name()))
+    if (needSolve(rho1_.name()))
     {
         fvScalarMatrix alphaRho1Eqn
         (
-            fvm::ddt(alpha1_, rho1_) - fvc::ddt(alpha1_, rho1_)
+            fvm::ddt(alpha1_, rho1_) - fvc::ddt(alphaRho1_)
           + fvm::ddt(thermoPtr_->residualAlpha(), rho1_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho1_)
         ==
-            modelsPtr_->source(alpha1_, rho1_)
+            models().source(alpha1_, rho1_)
         );
-        constraintsPtr_->constrain(alphaRho1Eqn);
+        constraints().constrain(alphaRho1Eqn);
         alphaRho1Eqn.solve();
-        constraintsPtr_->constrain(rho1_);
+        constraints().constrain(rho1_);
+
+        alphaRho1_ = alpha1_*rho1_;
+
+        updateRho = true;
+
     }
     // Solve phase 2 mass
-    if (solveFields_.found(rho2_.name()))
+    if (needSolve(rho2_.name()))
     {
         fvScalarMatrix alphaRho2Eqn
         (
-            fvm::ddt(alpha2_, rho2_) - fvc::ddt(alpha2_, rho2_)
+            fvm::ddt(alpha2_, rho2_) - fvc::ddt(alphaRho2_)
           + fvm::ddt(thermoPtr_->residualAlpha(), rho2_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho2_)
         ==
-            modelsPtr_->source(alpha2_, rho2_)
+            models().source(alpha2_, rho2_)
         );
-        constraintsPtr_->constrain(alphaRho2Eqn);
+        constraints().constrain(alphaRho2Eqn);
         alphaRho2Eqn.solve();
-        constraintsPtr_->constrain(rho2_);
+        constraints().constrain(rho2_);
+
+        alphaRho2_ = alpha2_*rho2_;
+
+        updateRho = true;
     }
 
     // Update phase masses
-    alphaRho1_ = alpha1_*rho1_;
-    alphaRho2_ = alpha2_*rho2_;
-    rho_ = alphaRho1_ + alphaRho2_;
+    if (updateRho)
+    {
+        rho_.storePrevIter();
+        rho_ = alphaRho1_ + alphaRho2_;
+    }
 
     compressibleBlastSystem::postUpdate();
 }
@@ -351,7 +377,6 @@ void Foam::twoPhaseCompressibleSystem::decode()
     alphaRho2_.boundaryFieldRef() = alpha2_.boundaryField()*rho2_.boundaryField();
 
     rho_ = alphaRho1_ + alphaRho2_;
-
     compressibleBlastSystem::decode();
 }
 

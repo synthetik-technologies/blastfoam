@@ -30,7 +30,7 @@ Description
 
 SourceFiles
     wallDampingModel.C
-    newWallDampingModel.C
+    wallDampingModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

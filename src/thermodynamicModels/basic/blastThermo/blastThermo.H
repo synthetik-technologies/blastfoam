@@ -122,6 +122,16 @@ protected:
             }
 
 
+    // Protected Member Functions
+
+        //- Return the enthalpy/internal energy field boundary types
+        //  by interrogating the temperature field boundary types
+        wordList heBoundaryTypes();
+
+        //- Return the enthalpy/internal energy field boundary base types
+        //  by interrogating the temperature field boundary types
+        wordList heBoundaryBaseTypes();
+
 
 public:
 
@@ -159,7 +169,7 @@ public:
         // Directory to compile from
         static fileName templateDir()
         {
-            return getEnv("BLAST_DIR")/"etc/codeTemplates";
+            return getEnv("BLAST_CODE_TEMPLATES");
         }
 
         //- Return the thermo type name given a dictionary
@@ -238,6 +248,11 @@ public:
         virtual dimensionedScalar residualRho() const
         {
             return residualRho_;
+        }
+
+        virtual dimensionedScalar residualAlphaRho() const
+        {
+            return residualAlpha()*residualRho();
         }
 
         // Access functions

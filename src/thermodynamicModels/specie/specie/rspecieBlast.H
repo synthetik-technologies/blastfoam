@@ -115,7 +115,7 @@ public:
         // Access
 
             //- Name
-            inline const word& specieName() const;
+            inline const word& name() const;
 
             //- Molecular weight [kg/kmol]
             inline scalar W() const;

@@ -3,8 +3,10 @@ EXE_INC = \
     -I./fluid \
     -I./solid \
     -I./include \
+    -I$(LIB_SRC)/fileFormats/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
@@ -16,19 +18,23 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
-    -I$(BLAST_DIR)/src/solidModels/lnInclude
+    -I$(BLAST_DIR)/src/solidModels/lnInclude \
+    -I$(BLAST_DIR)/src/regionModels/lnInclude
 
 
 EXE_LIBS = \
     -lfiniteVolume \
+    -lfileFormats \
     -lmeshTools \
     -lmomentumTransportModels \
     -lcompressibleMomentumTransportModels \
     -lregionModels \
+    -ldynamicFvMesh \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastThermodynamics \
     -lcompressibleSystems \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
-    -lblastSolidModels
+    -lblastSolidModels \
+    -lblastRegionModels

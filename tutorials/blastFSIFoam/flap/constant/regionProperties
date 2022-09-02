@@ -21,4 +21,27 @@ regions
     solid       (flap)
 );
 
+interfaces
+(
+    air
+    {
+        air_to_flap
+        {
+            sampleRegion    flap;
+            samplePatch     flap_to_air;
+            mappingType     AMI;
+            interpolationMethod faceAreaWeight;
+        }
+    }
+    flap
+    {
+        flap_to_air
+        {
+            sampleRegion    air;
+            samplePatch     air_to_flap;
+            displacementField D;
+        }
+    }
+);
+
 // ************************************************************************* //

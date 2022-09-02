@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ Class
     Foam::minimizationScheme
 
 Description
-    Abstract base-class for root system solvers
+    General class for minimizing multivariate, scalar equations
 
 SourceFiles
     minimizationScheme.C
@@ -35,7 +35,8 @@ SourceFiles
 #ifndef minimizationScheme_H
 #define minimizationScheme_H
 
-#include "scalarEquation.H"
+#include "UnivariateEquationsFwd.H"
+#include "Switch.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -45,7 +46,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class minimizationScheme Declaration
+                Class minimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
 class minimizationScheme
@@ -56,10 +57,19 @@ protected:
     // Protected data
 
         //- Reference to scalarEquation
-        const scalarEquation& eqn_;
+        const scalarUnivariateEquation& eqns_;
 
-        //- Convergence tolerance
-        scalar tolerance_;
+        //- Absolute convergence tolerances for x
+        scalarField xTolerances_;
+
+        //- Relative convergence tolerances for x
+        scalarField xRelTolerances_;
+
+        //- Absolute convergence tolerances for y
+        scalarField yTolerances_;
+
+        //- Relative convergence tolerances for y
+        scalarField yRelTolerances_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -67,49 +77,142 @@ protected:
         //- Current step number
         mutable label stepi_;
 
-        //- Current error
-        mutable scalar error_;
+        //- Current absolute x errors
+        mutable scalarList xErrors_;
 
-        //- Is the solution converged
-        bool converged(const scalar error) const;
+        //- Current relative x errors
+        mutable scalarList xRelErrors_;
+
+        //- Current absolute delta y errors
+        mutable scalarList yErrors_;
+
+        //- Current relative delta y errors
+        mutable scalarList yRelErrors_;
+
+        //- Number of pre-samples in each direction
+        labelList nSamples_;
+
+        //- Is the error normalized
+        Switch normalize_;
+
+        //- Line search reduction coefficient
+        scalar tau_;
+
+        //- In convergence in the delta checked
+        bool checkY_;
+
+
+        //- Initial line search parameter
+        virtual scalar alpha
+        (
+            const scalarList& grad,
+            const scalarList& gradOld
+        ) const;
+
+        //- Line search
+        scalar lineSearch
+        (
+            const scalarList& x0,
+            const scalarList& grad,
+            const scalarList& gradOld,
+            const label li,
+            scalar& fx
+        ) const;
+
+        //- Line search
+        scalar lineSearch
+        (
+            const scalarList& x0,
+            const scalarList& grad,
+            const label li,
+            scalar& fx
+        ) const;
+
+        //- Return the L2 norm the given list
+        scalar norm(const scalarList& lst) const;
+
+        //- Return lst^T * lst
+        scalar inner(const scalarList& lst1, const scalarList& lst2) const;
+
+        //- Is the solution converged in w.r.t x
+        bool convergedXScale
+        (
+            const scalarList& error,
+            const scalarList& s
+        ) const;
+
+        bool converged
+        (
+            const scalarList& absErrors,
+            const scalarList& relErrors,
+            const scalarList& absTols,
+            const scalarList& relTols
+        ) const;
+
+        //- Is the solution converged in w.r.t x
+        bool convergedX(const scalarList& x1, const scalarList& x2) const;
+
+        //- Is the solution converged in w.r.t y
+        bool convergedYScale
+        (
+            const scalarList& error,
+            const scalarList& s
+        ) const;
+
+        //- Is the solution converged in w.r.t y
+        bool convergedY(const scalarList& y1, const scalarList& y2) const;
+
+        //- Print information about the current step
+        void printStepInformation(const scalarList& vals) const;
+
+        //- Print information about the current step
+        void printFinalInformation(const scalarList& vals) const;
+
+        //- Sample and return the interval with the smallest value
+        void sample
+        (
+            scalarList&,
+            scalarList&,
+            labelList& xBest,
+            scalar& yBest,
+            labelList& indicies,
+            const label,
+            const label diri
+        ) const;
+
 
 public:
 
     //- Runtime type information
     TypeName("minimizationScheme");
 
-    // Declare run-time constructor selection table
-
+    // Declare run-time constructor selection tables
         declareRunTimeSelectionTable
         (
             autoPtr,
             minimizationScheme,
-            dictionaryZero,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
+            dictionaryUnivariate,
+            (const scalarUnivariateEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
         declareRunTimeSelectionTable
         (
             autoPtr,
             minimizationScheme,
-            dictionaryOne,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
-        );
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            minimizationScheme,
-            dictionaryTwo,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
+            dictionaryMultivariate,
+            (const scalarUnivariateEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
 
 
     // Constructors
 
         //- Construct for given minimizationScheme
-        minimizationScheme(const scalarEquation& eqn, const dictionary& dict);
+        minimizationScheme
+        (
+            const scalarUnivariateEquation& eqns,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
         minimizationScheme(const minimizationScheme&) = delete;
@@ -120,7 +223,7 @@ public:
         //- Select null constructed
         static autoPtr<minimizationScheme> New
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
@@ -132,47 +235,59 @@ public:
 
     // Member Functions
 
-        //- Return access to the tolerance
-        inline scalar& tolerance();
-
         //- Return the step number
         inline label nSteps() const;
 
-        //- Return the error
-        inline scalar error() const;
+        //- Return the absolute x errors
+        inline scalarList& xErrors() const;
+
+        //- Return the relative x errors
+        inline scalarList& xRelErrors() const;
+
+        //- Return the absolute y errors
+        inline scalarList& yErrors() const;
+
+        //- Return the relative y errors
+        inline scalarList& yRelErrors() const;
 
         //- Find the root of the equation
-        virtual scalar solve() const;
+        virtual tmp<scalarField> solve() const;
 
         //- Find the root of the equation
-        virtual scalar solve(const scalar x0) const;
+        virtual tmp<scalarField> solve(const scalarList& x0) const;
 
         //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh
         ) const;
 
         //- Find the root of the equation
-        virtual scalar solve
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
+            const scalarList& x0,
             const label li
         ) const;
 
         //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
+            const label li
+        ) const;
+
+        //- Find the root of the equation between xHigh and xLow
+        virtual tmp<scalarField> minimize
+        (
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const = 0;
-
-        //- Print failure
-        virtual void printNoConvergence() const;
 
 
     // Member Operators

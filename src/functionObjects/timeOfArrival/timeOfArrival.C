@@ -90,6 +90,22 @@ Foam::functionObjects::timeOfArrival::timeOfArrival
 :
     fvMeshFunctionObject(name, runTime, dict),
     pName_(dict.lookupOrDefault("pName", word("p"))),
+    timeOfArrival_
+    (
+        IOobject
+        (
+            IOobject::groupName
+            (
+                "timeOfArrival",
+                IOobject::group(pName_)
+            ),
+            runTime.timeName(),
+            mesh_,
+            IOobject::READ_IF_PRESENT
+        ),
+        mesh_,
+        runTime.startTime()
+    ),
     pMax_
     (
         lookupOrCreate
@@ -102,20 +118,13 @@ Foam::functionObjects::timeOfArrival::timeOfArrival
             ),
             dimPressure
         )
-    ),
-    timeOfArrival_
-    (
-        lookupOrCreate
-        (
-            IOobject::groupName
-            (
-                "timeOfArrival",
-                IOobject::group(pName_)
-            ),
-            dimTime
-        )
     )
-{}
+{
+    if (!dict.lookupOrDefault("executeAtStart", false))
+    {
+        executeAtStart_ = false;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -174,13 +183,7 @@ bool Foam::functionObjects::timeOfArrival::execute()
 
 bool Foam::functionObjects::timeOfArrival::write()
 {
-    if (this->mesh_.time().timeIndex() > 0)
-    {
-        pMax_.write();
-        timeOfArrival_.write();
-        return true;
-    }
-    return false;
+    return pMax_.write() && timeOfArrival_.write();
 }
 
 

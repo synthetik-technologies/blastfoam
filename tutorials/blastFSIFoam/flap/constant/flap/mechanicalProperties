@@ -11,24 +11,32 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      mechanicProperties;
+    object      mechanicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 planeStress off;
-thermalStress off;
-compactNormalStress off;
 
-E
-{
-    type    uniform;
-    value   200e9;
-}
-nu
-{
-    type    uniform;
-    value   0.3;
-}
+mechanical
+(
+    steel
+    {
+        type            linearJohnsonCookPlastic;
+        E               195e9;
+        nu              0.3;
+        A               410e6;
+        B               1902e6;
+        C               0.024;
+        n               0.82;
+        m               1.03;
 
+        epsilonPDot0    0.001;
+
+        Tref            296;
+        Tm              1700;
+
+        solvePressureEqn no;
+    }
+);
 
 // ************************************************************************* //

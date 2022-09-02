@@ -14,6 +14,10 @@ wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
 wclean $targetType functionObjects
 wclean $targetType atmosphereModels
+wclean $targetType regionModels
 wclean $targetType solidModels
+wclean $targetType levelSet
+
+wclean $targetType solids4fFoam
 
 #------------------------------------------------------------------------------

@@ -36,6 +36,9 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "tabulatedThermoEOS.H"
 
+#include "tabulatedTransport.H"
+#include "icoTabulatedTransport.H"
+
 namespace Foam
 {
     forGases
@@ -54,7 +57,7 @@ namespace Foam
         eBlastThermo
     );
 
-     typedef constTransport<tabulatedThermoEOS<specieBlast>>
+    typedef constTransport<tabulatedThermoEOS<specieBlast>>
         constTransporttabulatedtabulatedspecieBlast;
     makeThermo
     (
@@ -62,6 +65,26 @@ namespace Foam
         basicFluidBlastThermo,
         eBlastThermo,
         constTransporttabulatedtabulatedspecieBlast
+    );
+
+    typedef icoTabulatedTransport<tabulatedThermoEOS<specieBlast>>
+        icoTabulatedTransporttabulatedtabulatedspecieBlast;
+    makeThermo
+    (
+        fluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo,
+        icoTabulatedTransporttabulatedtabulatedspecieBlast
+    );
+
+    typedef tabulatedTransport<tabulatedThermoEOS<specieBlast>>
+        tabulatedTransporttabulatedtabulatedspecieBlast;
+    makeThermo
+    (
+        fluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo,
+        tabulatedTransporttabulatedtabulatedspecieBlast
     );
 }
 // ************************************************************************* //

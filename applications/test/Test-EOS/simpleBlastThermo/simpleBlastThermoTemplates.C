@@ -43,13 +43,13 @@ typename Table::iterator Foam::simpleBlastThermo::lookupCstrIter
     typename Table::iterator cstrIter =
         tablePtr->find(thermoTypeName);
 
-        // Print error message if package not found in the table
+    // Print error message if package not found in the table
     if (cstrIter == tablePtr->end())
     {
         const word compileType("simpleBlastThermo");
         const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
-        const fileName BLAST_DIR(getEnv("BLAST_DIR"));
-        setEnv("FOAM_CODE_TEMPLATES", BLAST_DIR/"etc/codeTemplates", true);
+        const fileName BLAST_CODE_TEMPLATES(getEnv("BLAST_CODE_TEMPLATES"));
+        setEnv("FOAM_CODE_TEMPLATES", BLAST_CODE_TEMPLATES, true);
 
         if
         (

@@ -1,6 +1,6 @@
-*INCLUDE, INPUT=Solid/all.msh
-*INCLUDE, INPUT=Solid/fix1_beam.nam
-*INCLUDE, INPUT=Solid/interface_beam.nam
+*INCLUDE, INPUT=all.msh
+*INCLUDE, INPUT=fix1_beam.nam
+*INCLUDE, INPUT=interface_beam.nam
 *MATERIAL, Name=EL
 *ELASTIC
  30e9, 0.2
@@ -9,16 +9,14 @@
 *SOLID SECTION, Elset=Eall, Material=EL
 *STEP, NLGEOM, INC=1000000
 *DYNAMIC, DIRECT
-1.E-5, 10.0
+2E-5, 10.0
 
 ** fix on the lower boundary from x to z.
 *BOUNDARY
 Nfix1, 1, 3
 ** fix on all nodes for translation in y-dir, rotation about x- and z-axis
 *BOUNDARY
-Nall, 2, 2, 0
-Nall, 4, 4, 0
-Nall, 6, 6, 0
+Nall, 3
 *CLOAD
  Nsurface, 1, 0.0
  Nsurface, 2, 0.0

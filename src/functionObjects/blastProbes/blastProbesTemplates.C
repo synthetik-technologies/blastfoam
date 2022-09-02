@@ -195,6 +195,14 @@ Foam::blastProbes::sample
 
     Field<Type>& values = tValues.ref();
 
+    // Set probes outside of the mesh to Zero
+    forAll(*this, probei)
+    {
+        if (returnReduce(elementList_[probei], maxOp<label>()) < 0)
+        {
+            values[probei] = Zero;
+        }
+    }
     if (fixedLocations_)
     {
         autoPtr<interpolation<Type>> interpolator
@@ -264,12 +272,18 @@ Foam::blastProbes::sample
     );
 
     Field<Type>& values = tValues.ref();
-
     forAll(*this, probei)
     {
+        bool set = false;
         if (faceList_[probei] >= 0)
         {
             values[probei] = sField[faceList_[probei]];
+            set = true;
+        }
+
+        if (!returnReduce(set, orOp<bool>()))
+        {
+            values[probei] = Zero;
         }
     }
 

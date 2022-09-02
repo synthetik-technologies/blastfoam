@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -54,23 +54,13 @@ class hydrostatic
 :
     public atmosphereModel
 {
-// Private data
-
-    //- Density value
-    dimensionedScalar rhoRef_;
-
-    //- Pressure at reference height
-    dimensionedScalar pRef_;
-
-
 public:
 
     //- Runtime type information
     TypeName("hydrostatic");
 
     // Constructor
-    hydrostatic(const fvMesh& mesh, const dictionary& dict);
-
+    hydrostatic(const fvMesh&, const dictionary&, const label);
 
     //- Destructor
     virtual ~hydrostatic();

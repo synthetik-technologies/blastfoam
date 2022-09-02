@@ -27,7 +27,7 @@ License
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::New
+Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewSingle
 (
     const fvMesh& mesh
 )
@@ -36,16 +36,68 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::New
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(fluxSchemeType);
+    singlePhaseConstructorTable::iterator cstrIter =
+        singlePhaseConstructorTablePtr_->find(fluxSchemeType);
 
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    if (cstrIter == singlePhaseConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown fluxScheme type "
+            << "Unknown singlePhase fluxScheme type "
             << fluxSchemeType << endl << endl
             << "Valid fluxScheme types are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
+            << singlePhaseConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(mesh);
+}
+
+
+Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewMulti
+(
+    const fvMesh& mesh
+)
+{
+    word fluxSchemeType(mesh.schemesDict().lookup<word>("fluxScheme"));
+
+    Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
+
+    multiphaseConstructorTable::iterator cstrIter =
+        multiphaseConstructorTablePtr_->find(fluxSchemeType);
+
+    if (cstrIter == multiphaseConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown multiphase fluxScheme type "
+            << fluxSchemeType << endl << endl
+            << "Valid fluxScheme types are : " << endl
+            << multiphaseConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(mesh);
+}
+
+
+Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewInterface
+(
+    const fvMesh& mesh
+)
+{
+    word fluxSchemeType(mesh.schemesDict().lookup<word>("fluxScheme"));
+
+    Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
+
+    interfaceConstructorTable::iterator cstrIter =
+        interfaceConstructorTablePtr_->find(fluxSchemeType);
+
+    if (cstrIter == interfaceConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown interface fluxScheme type "
+            << fluxSchemeType << endl << endl
+            << "Valid fluxScheme types are : " << endl
+            << interfaceConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 

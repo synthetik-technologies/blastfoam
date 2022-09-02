@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -53,6 +53,30 @@ class Simpson13Integrator
 :
     public Integrator<Type>
 {
+    typedef Equation<Type> equationType;
+
+        //- Basic integration method
+        virtual Type integrate_
+        (
+            const scalar dx,
+            const Type& f0,
+            const Type& fm,
+            const Type& f1
+        ) const;
+
+        //- Solve the root
+        virtual Type integrate_
+        (
+            const Type& Q,
+            const scalar x0,
+            const scalar x1,
+            const Type& f0,
+            const Type& fm,
+            const Type& f1,
+            const scalar tol,
+            const label li
+        ) const;
+
 public:
 
     //- Runtime type information
@@ -63,8 +87,15 @@ public:
         //- Construct for given Equation
         Simpson13Integrator
         (
-            const Equation<Type>& eqn,
+            const equationType& eqn,
             const dictionary& dict
+        );
+
+        //- Construct for given Equation
+        Simpson13Integrator
+        (
+            const equationType& eqn,
+            const integrator& inter
         );
 
         //- Disallow default bitwise copy construction
@@ -75,25 +106,15 @@ public:
     virtual ~Simpson13Integrator()
     {}
 
+    // Member Operators
 
-    // Member Functions
-
-        //- Solve the root
+        //- Integrate the equation
         virtual Type integrate
         (
             const scalar x0,
             const scalar x1,
             const label li
         ) const;
-
-    // Member Operators
-
-        //- Access the number of steps
-        virtual void setNIntervals(const label nIntervals)
-        {
-            this->nSteps_ = nIntervals*2.0;
-            this->nIntervals_ = nIntervals;
-        }
 
         //- Disallow default bitwise assignment
         void operator=(const Simpson13Integrator<Type>&) = delete;

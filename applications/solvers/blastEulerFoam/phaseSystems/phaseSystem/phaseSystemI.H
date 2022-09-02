@@ -80,15 +80,4 @@ Foam::phaseSystem::otherPhase(const phaseModel& phase) const
 }
 
 
-inline const Foam::fvModels& Foam::phaseSystem::models() const
-{
-    return fvModelsPtr_();
-}
-
-inline const Foam::fvConstraints& Foam::phaseSystem::constraints() const
-{
-    return fvConstraintsPtr_();
-}
-
-
 // ************************************************************************* //

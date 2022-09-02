@@ -51,6 +51,8 @@ SourceFiles
 #include "fluidBlastThermo.H"
 #include "phaseFluidBlastThermo.H"
 #include "twoPhaseMixture.H"
+#include "thermoEquations.H"
+#include "univariateRootSolver.H"
 
 namespace Foam
 {
@@ -77,6 +79,14 @@ class twoPhaseFluidBlastThermo
 
         //- Equation of state for phase 2
         autoPtr<phaseFluidBlastThermo> thermo2_;
+
+        //- Solve temperature given pressure
+        mutable fluidTEquation TEqn_;
+        autoPtr<univariateRootSolver> TSolver_;
+
+        //- Solve temperature given interneral energy
+        mutable THEEquation THEEqn_;
+        autoPtr<univariateRootSolver> THESolver_;
 
 
         //- Correct thermodynamic fields
@@ -121,6 +131,9 @@ public:
 
         //- Calculate internal energy
         virtual tmp<volScalarField> calce(const volScalarField&) const;
+
+        //- Calculate internal energy for a cell
+        virtual scalar calcCelle(const scalar p, const label) const;
 
         //- Return the thermo name
         virtual word thermoName() const
@@ -186,6 +199,15 @@ public:
 
             //- Derivative of pressure w.r.t internal energy for cell
             virtual scalar celldpde(const label celli) const;
+
+            //- Derivative of pressure w.r.t temperature for cell
+            virtual scalar celldpdT(const label celli) const;
+
+            //- Is the equation of state temperature based
+            virtual bool temperatureBased() const
+            {
+                return thermo1_->temperatureBased();
+            }
 
             //- Recompute the density
             virtual void updateRho(const volScalarField&);

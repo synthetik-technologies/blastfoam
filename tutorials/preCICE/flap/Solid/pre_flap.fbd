@@ -6,33 +6,33 @@ valu dy 0.3
 valu nd 0.05
 
 pnt p1 -0.05 0 0
-pnt p2 -0.05 dy
+pnt p2  0.05 0 0
 line l1 p1 p2 1
 seta fix1 all
-swep fix1 fix1 tra h 0 0 1
+swep fix1 fix1 tra 0 1 0 1
 seta fix1 all
 comp fix1 do
 
-swep all wing tra 0 0 1 1
+swep all wing tra 0 0 1
 seta surface s A002 A003 A004
 comp surface do
-
-
+#
+#
 seta length l L00A L00B L008 L009
 seta width l L002 L003 L006 L007
-
+#
 div length auto nd
 div width auto nd
 elty all he8
 mesh all
-
+#
 
 
 send all abq
 send fix1 abq nam
 send surface abq nam
 
-view elem
+view surface
 # #rot z
 #rot r 50
 #rot u 50

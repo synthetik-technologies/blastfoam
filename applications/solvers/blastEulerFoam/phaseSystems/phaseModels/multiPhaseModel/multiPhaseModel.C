@@ -199,56 +199,67 @@ void Foam::multiPhaseModel::solve()
 
 void Foam::multiPhaseModel::postUpdate()
 {
-    // Solve volume fraction and phase mass transports
+    // Solve phase mass
     bool needUpdate = false;
-    forAll(alphas_, phasei)
+    alphaRho_.storePrevIter();
+    forAll(rhos_, phasei)
     {
-        if (solveFields_.found(alphas_[phasei].name()))
+        bool alphaRhoUpdate = false;
+        volScalarField& alpha(alphas_[phasei]);
+        if (needSolve(alpha.name()))
         {
-            needUpdate = true;
+            //- Solve momentum equation (implicit stresses)
             fvScalarMatrix alphaEqn
             (
-                fvm::ddt(alphas_[phasei]) - fvc::ddt(alphas_[phasei])
-                ==
-                modelsPtr_->source(alphas_[phasei])
+                fvm::ddt(alpha) - fvc::ddt(alpha)
+             ==
+                models().source(alpha)
             );
-            constraintsPtr_->constrain(alphaEqn);
+            constraints().constrain(alphaEqn);
             alphaEqn.solve();
-            constraintsPtr_->constrain(alphas_[phasei]);
+            constraints().constrain(alpha);
+
+            alphaRhoUpdate = true;
+        }
+
+        volScalarField& rho(rhos_[phasei]);
+        if (needSolve(rho.name()))
+        {
+            dimensionedScalar rAlpha
+            (
+                thermo_.thermo(phasei).residualAlpha()
+            );
+            //- Solve momentum equation (implicit stresses)
+            fvScalarMatrix rhoEqn
+            (
+                fvm::ddt(alpha, rho) - fvc::ddt(alphaRhos_[phasei])
+              + fvm::ddt(rAlpha, rho)
+              - fvc::ddt(rAlpha, rho)
+             ==
+                models().source(alpha, rho)
+            );
+            constraints().constrain(rhoEqn);
+            rhoEqn.solve();
+            constraints().constrain(rho);
+
+            alphaRhoUpdate = true;
+        }
+        if (alphaRhoUpdate)
+        {
+            alphaRhos_[phasei] = alpha*rho;
+            needUpdate = true;
         }
     }
     if (needUpdate)
     {
-        correctVolumeFraction();
-    }
-
-    // Solve phase mass
-    rho_ = dimensionedScalar(dimDensity, 0.0);
-    forAll(rhos_, phasei)
-    {
-        volScalarField& rho(rhos_[phasei]);
-        if (solveFields_.found(rho.name()))
+        alphaRho_ = alphaRhos_[0];
+        for (label phasei = 1; phasei < alphaRhos_.size(); phasei++)
         {
-            const volScalarField& alpha(alphas_[phasei]);
-            dimensionedScalar rAlpha(thermo_.thermo(phasei).residualAlpha());
-            fvScalarMatrix alphaRhoEqn
-            (
-                fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
-              + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
-             ==
-                modelsPtr_->source(alpha, rho)
-            );
-            constraintsPtr_->constrain(alphaRhoEqn);
-            alphaRhoEqn.solve();
-            constraintsPtr_->constrain(rho);
-
-            alphaRhos_[phasei] = alpha*rho;
+            alphaRho_ += alphaRhos_[phasei];
         }
-        rho_ += alphaRhos_[phasei];
+        rho_ = alphaRho_/Foam::max(*this, residualAlpha());
     }
-
     phaseModel::postUpdate();
-    thermoPtr_->postUpdate();
 }
 
 

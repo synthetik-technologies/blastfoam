@@ -1,3 +1,0 @@
-createVTKTimeSeries.C
-
-EXE = $(BLAST_APPBIN)/createVTKTimeSeries

@@ -18,7 +18,7 @@ autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 psiuCompressibleSystem fluid(mesh);
 integrator->addSystem(fluid);
 
-psiuReactionThermo& thermo = fluid.thermo();
+psiuReactionThermo& thermo = fluid.rThermo();
 basicCombustionMixture& composition = thermo.composition();
 compressible::momentumTransportModel& turbulence = fluid.turbulence();
 fluidThermophysicalTransportModel& thermophysicalTransport =

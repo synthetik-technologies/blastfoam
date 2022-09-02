@@ -47,8 +47,7 @@ Foam::heatTransferModels::RanzMarshall::RanzMarshall
     const phasePair& pair
 )
 :
-    heatTransferModel(dict, pair),
-    NuModel_(NusseltNumberModel::New(dict, pair))
+    NuHeatTransfer(dict, pair)
 {}
 
 
@@ -71,7 +70,7 @@ Foam::heatTransferModels::RanzMarshall::K
         6.0
        *max(pair_.dispersed().volumeFraction(nodei), residualAlpha_)
        *pair_.continuous().kappa()
-       *NuModel_->Nu(nodei, nodej)
+       *this->NuModel_->Nu(nodei, nodej)
        /sqr(pair_.dispersed().d(nodei));
 }
 

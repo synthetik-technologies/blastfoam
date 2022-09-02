@@ -61,6 +61,8 @@ class coupledMultiphaseCompressibleSystem
         //- Phasic density
         volScalarField alphaRho_;
 
+        //- Calculate new alpha and rho fields
+        virtual void calcAlphas();
 
 public:
 
@@ -95,11 +97,14 @@ public:
             return volumeFraction_;
         }
 
+        //- Const access to total mass
+        virtual const volScalarField& rho() const
+        {
+            return alphaRho_;
+        }
+
         //- Decode primative variables
         virtual void decode();
-
-        //- Update fluxes
-        virtual void update();
 
         //- Encode conserved variables
         virtual void encode();

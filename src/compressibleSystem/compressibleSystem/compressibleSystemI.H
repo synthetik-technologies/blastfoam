@@ -31,23 +31,37 @@ const Foam::fluxScheme& Foam::compressibleSystem::flux() const
 }
 
 
-Foam::fluxScheme& Foam::compressibleSystem::flux()
+bool Foam::compressibleSystem::inviscid() const
 {
-    return fluxScheme_();
+    return !turbulence_.valid();
 }
 
 
-const Foam::momentumTransportModel&
+const Foam::compressible::momentumTransportModel&
 Foam::compressibleSystem::turbulence() const
 {
     return turbulence_();
 }
 
 
-Foam::momentumTransportModel&
+Foam::compressible::momentumTransportModel&
 Foam::compressibleSystem::turbulence()
 {
     return turbulence_();
+}
+
+
+const Foam::fluidThermophysicalTransportModel&
+Foam::compressibleSystem::thermophysicalTransport() const
+{
+    return thermophysicalTransport_();
+}
+
+
+Foam::fluidThermophysicalTransportModel&
+Foam::compressibleSystem::thermophysicalTransport()
+{
+    return thermophysicalTransport_();
 }
 
 

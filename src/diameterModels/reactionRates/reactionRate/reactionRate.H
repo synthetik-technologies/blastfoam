@@ -95,6 +95,14 @@ public:
         virtual void initializeModels()
         {}
 
+        //- Optional update of necessary fields before calculating k
+        virtual void update
+        (
+            const volScalarField& p,
+            const volScalarField& T
+        )
+        {}
+
         //- Cell based reaction rate
         virtual scalar k
         (

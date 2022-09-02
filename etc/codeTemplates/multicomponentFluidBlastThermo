@@ -44,6 +44,8 @@ equationOfState
     BKW
     Tait
     BWR
+    VanderWaals
+    PengRobinson
 );
 
 specie

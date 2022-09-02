@@ -519,32 +519,32 @@ lift
 (
     (coal in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
     (particles0 in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
     (particles1 in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
     (particles2 in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
     (particles3 in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
     (particles4 in gas)
     {
-        type constantCoefficient;
+        type constant;
         Cl 0.5;
     }
 );

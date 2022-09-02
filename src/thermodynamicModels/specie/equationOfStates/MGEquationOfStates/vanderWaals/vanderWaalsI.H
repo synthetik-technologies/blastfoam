@@ -153,6 +153,18 @@ Foam::scalar Foam::vanderWaals<Specie>::p
 
 
 template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::rho
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::Gamma
 (
     const scalar rho,
@@ -311,11 +323,10 @@ template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::S
 (
     const scalar p,
-    const scalar rho,
     const scalar T
 ) const
 {
-    // Check
+    NotImplemented;
     return 0;
 }
 

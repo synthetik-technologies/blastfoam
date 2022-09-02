@@ -33,7 +33,9 @@ namespace Foam
 namespace fluxSchemes
 {
     defineTypeNameAndDebug(HLL, 0);
-    addToRunTimeSelectionTable(fluxScheme, HLL, dictionary);
+    addToRunTimeSelectionTable(fluxScheme, HLL, singlePhase);
+    addToRunTimeSelectionTable(fluxScheme, HLL, multiphase);
+    addToRunTimeSelectionTable(fluxScheme, HLL, interface);
 }
 }
 
@@ -138,6 +140,67 @@ void Foam::fluxSchemes::HLL::createSavedFields()
 }
 
 
+Foam::tmp<Foam::surfaceScalarField>
+Foam::fluxSchemes::HLL::AD
+(
+    const volScalarField& alpha
+) const
+{
+    const labelList& own = alpha.mesh().owner();
+    const labelList& nei = alpha.mesh().neighbour();
+
+    tmp<surfaceScalarField> tD
+    (
+        surfaceScalarField::New
+        (
+            IOobject::groupName("fluxScheme::AD", alpha.group()),
+            alpha.mesh(),
+            dimensionedScalar(dimVelocity, 0.0)
+        )
+    );
+    const surfaceScalarField& SOwn(SOwn_());
+    const surfaceScalarField& SNei(SNei_());
+    surfaceScalarField& D = tD.ref();
+
+    forAll(D, facei)
+    {
+        D[facei] =
+            mag
+            (
+                SOwn[facei]*SNei[facei]
+               *(alpha[nei[facei]] - alpha[own[facei]])
+               /(SNei[facei] - SOwn[facei])
+            );
+    }
+    surfaceScalarField::Boundary& bD(D.boundaryFieldRef());
+    forAll(D.boundaryField(), patchi)
+    {
+        const fvPatch& patch = D.mesh().boundary()[patchi];
+        scalarField& pD(bD[patchi]);
+        const fvPatchField<scalar>& palpha(alpha.boundaryField()[patchi]);
+        const scalarField& pSOwn(SOwn.boundaryField()[patchi]);
+        const scalarField& pSNei(SNei.boundaryField()[patchi]);
+
+        if (patch.coupled())
+        {
+            scalarField alphaOwn(palpha.patchInternalField());
+            scalarField alphaNei(palpha.patchNeighbourField());
+            forAll(pD, facei)
+            {
+                pD[facei] =
+                    mag
+                    (
+                        pSOwn[facei]*pSNei[facei]
+                       *(alphaNei[facei] - alphaOwn[facei])
+                       /(pSNei[facei] - pSOwn[facei])
+                    );
+            }
+        }
+    }
+    return tD;
+}
+
+
 void Foam::fluxSchemes::HLL::calculateFluxes
 (
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -166,14 +229,8 @@ void Foam::fluxSchemes::HLL::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar wOwn(sqrt(rhoOwn)/(sqrt(rhoOwn) + sqrt(rhoNei)));
-    scalar wNei(1.0 - wOwn);
-
-    scalar cTilde(cOwn*wOwn + cNei*wNei);
-    scalar UvTilde(UvOwn*wOwn + UvNei*wNei);
-
-    scalar SOwn(min(UvOwn - cOwn, UvTilde - cTilde));
-    scalar SNei(max(UvNei + cNei, UvTilde + cTilde));
+    scalar SOwn(min(UvOwn - cOwn, UvNei - cNei));
+    scalar SNei(max(UvOwn + cOwn, UvNei + cNei));
 
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
@@ -223,11 +280,7 @@ void Foam::fluxSchemes::HLL::calculateFluxes
             (
                 SNei*rhoOwn*HOwn*UvOwn
               - SOwn*rhoNei*HNei*UvNei
-              + SOwn*SNei
-               *(
-                    rhoNei*ENei
-                  - rhoOwn*EOwn
-                )
+              + SOwn*SNei*(rhoNei*ENei- rhoOwn*EOwn)
             )/(SNei - SOwn);
         p = (SNei*pOwn - SOwn*pNei)/(SNei - SOwn);
     }
@@ -269,23 +322,14 @@ void Foam::fluxSchemes::HLL::calculateFluxes
     vector normal = Sf/magSf;
 
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
-    scalar HOwn(EOwn + pOwn/rhoOwn);
-
     scalar ENei = eNei + 0.5*magSqr(UNei);
-    scalar HNei(ENei + pNei/rhoNei);
 
     const scalar vMesh(meshPhi(facei, patchi)/magSf);
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar wOwn(sqrt(rhoOwn)/(sqrt(rhoOwn) + sqrt(rhoNei)));
-    scalar wNei(1.0 - wOwn);
-
-    scalar cTilde(cOwn*wOwn + cNei*wNei);
-    scalar UvTilde(UvOwn*wOwn + UvNei*wNei);
-
-    scalar SOwn(min(UvOwn - cOwn, UvTilde - cTilde));
-    scalar SNei(max(UvNei + cNei, UvTilde + cTilde));
+    scalar SOwn(min(UvOwn - cOwn, UvNei - cNei));
+    scalar SNei(max(UvOwn + cOwn, UvNei + cNei));
 
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
@@ -297,7 +341,7 @@ void Foam::fluxSchemes::HLL::calculateFluxes
     {
         phi = this->save(facei, patchi, UOwn, Uf_) & normal;
         rhoUPhi = UOwn*rhoOwn*UvOwn + pOwn*normal;
-        rhoEPhi = UvOwn*rhoOwn*HOwn;
+        rhoEPhi = UvOwn*(rhoOwn*EOwn + pOwn);
         p = pOwn;
 
         forAll(alphasOwn, phasei)
@@ -306,7 +350,7 @@ void Foam::fluxSchemes::HLL::calculateFluxes
             alphaRhoPhis[phasei] = alphasOwn[phasei]*rhosOwn[phasei]*UvOwn;
         }
     }
-    else if (SOwn < 0 && SNei >= 0)
+    else if (SOwn <= 0 && SNei >= 0)
     {
         vector rhoUOwn = rhoOwn*UOwn;
         vector rhoUNei = rhoNei*UNei;
@@ -314,15 +358,14 @@ void Foam::fluxSchemes::HLL::calculateFluxes
         scalar rhoPhiNei = rhoNei*UvNei;
         vector rhoUPhiOwn = rhoUOwn*UvOwn + pOwn*normal;
         vector rhoUPhiNei = rhoUNei*UvNei + pNei*normal;
-        phi =
-            this->save
-            (
-                facei,
-                patchi,
-                (SNei*rhoUNei - SOwn*rhoUOwn + rhoUPhiOwn - rhoUPhiNei)
-               /(SNei*rhoNei - SOwn*rhoOwn + rhoPhiOwn - rhoPhiNei),
-                Uf_
-            ) & normal;
+        this->save
+        (
+            facei,
+            patchi,
+            (SNei*rhoUNei - SOwn*rhoUOwn + rhoUPhiOwn - rhoUPhiNei)
+            /(SNei*rhoNei - SOwn*rhoOwn + rhoPhiOwn - rhoPhiNei),
+            Uf_
+        );
 
         rhoUPhi =
             (
@@ -334,15 +377,12 @@ void Foam::fluxSchemes::HLL::calculateFluxes
 
         rhoEPhi =
             (
-                SNei*rhoOwn*HOwn*UvOwn
-              - SOwn*rhoNei*HNei*UvNei
-              + SOwn*SNei
-               *(
-                    rhoNei*ENei
-                  - rhoOwn*EOwn
-                )
+                SNei*(rhoOwn*EOwn + pOwn)*UvOwn
+              - SOwn*(rhoNei*ENei + pNei)*UvNei
+              + SOwn*SNei*(rhoNei*ENei - rhoOwn*EOwn)
             )/(SNei - SOwn);
 
+        phi = 0;
         forAll(alphasOwn, phasei)
         {
             alphaPhis[phasei] =
@@ -350,6 +390,7 @@ void Foam::fluxSchemes::HLL::calculateFluxes
                 SNei*alphasOwn[phasei]*UvOwn - SOwn*alphasNei[phasei]*UvNei
               + SOwn*SNei*(alphasNei[phasei] - alphasOwn[phasei])
             )/(SNei - SOwn);
+            phi += alphaPhis[phasei];
 
             scalar alphaRhoOwn = alphasOwn[phasei]*rhosOwn[phasei];
             scalar alphaRhoNei = alphasNei[phasei]*rhosNei[phasei];
@@ -364,7 +405,7 @@ void Foam::fluxSchemes::HLL::calculateFluxes
     {
         phi = this->save(facei, patchi, UNei, Uf_) & normal;
         rhoUPhi = UNei*rhoNei*UvNei + pNei*normal;
-        rhoEPhi = rhoNei*HNei*UvNei;
+        rhoEPhi = (rhoNei*ENei + pNei)*UvNei;
         p = pNei;
 
         forAll(alphasOwn, phasei)
@@ -455,7 +496,7 @@ Foam::scalar Foam::fluxSchemes::HLL::interpolate
     else if (SOwn < 0 && SNei >= 0)
     {
         return
-            (SNei*fNei - SOwn*fOwn + fOwn*UvOwn + fNei*UvNei)/(SNei - SOwn);
+            (SNei*fNei - SOwn*fOwn + fOwn*UvOwn - fNei*UvNei)/(SNei - SOwn);
     }
     else
     {

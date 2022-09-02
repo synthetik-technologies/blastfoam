@@ -87,6 +87,12 @@ functions
 
                 write = false;
             }
+
+            reduce(write, andOp<bool>());
+            if (!write)
+            {
+                const_cast<Time&>(mesh().time()).stopAt(Time::stopAtControl::nextWrite);
+            }
         #};
     }
 }

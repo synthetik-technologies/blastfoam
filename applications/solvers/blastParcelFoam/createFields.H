@@ -21,8 +21,8 @@ parcelCloudList clouds
 (
     fluid.rho(),
     fluid.U(),
-    fluid.thermo().mu(),
-    g
+    g,
+    fluid.thermo()
 );
 volScalarField theta
 (

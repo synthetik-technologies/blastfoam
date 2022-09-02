@@ -3,9 +3,10 @@
 createEps()
 {
     echo "creating $1 plot"
-    clx=$(ls $3/Centerlinex*)
-    cly=$(ls $3/Centerliney*)
-    clz=$(ls $3/Centerlinez*)
+    clx="$3/Centerlinex_overpressureMax_impulseMax_timeOfArrival.xy"
+    cly="$3/Centerliney_overpressureMax_impulseMax_timeOfArrival.xy"
+    clz="$3/Centerlinez_overpressureMax_impulseMax_timeOfArrival.xy"
+    cl="$3/Centerline_overpressureMax_impulseMax_timeOfArrival.xy"
     gnuplot<<EOF
 
     set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
@@ -20,12 +21,14 @@ createEps()
     set xrange [1:10]
     plot    "$6" using 1:(\$$7) title 'Swisdak (1994)'\
                 with points pt 5 ps 2 lc rgb 'blue',\
-            "$clx" using 1:(\$$4*$5) every 2 title 'blastFoam (x)'\
+            "$cl" using 1:(\$$4*$5) every 1 title 'blastFoam (xyz)'\
                 with lines lt 1 linewidth 2 lc rgb 'black', \
-            "$cly" using 1:(\$$4*$5) every 2 title 'blastFoam (y)'\
-                with lines dt 2 linewidth 2 lc rgb 'red', \
-            "$clz" using 1:(\$$4*$5) every 2 title 'blastFoam (z)'\
-                with lines dt 2 linewidth 2 lc rgb 'green'
+            "$clx" using 1:(\$$4*$5) every 1 title 'blastFoam (x)'\
+                with lines dt 2 linewidth 2 lc rgb 'green', \
+            "$cly" using 1:(\$$4*$5) every 1 title 'blastFoam (y)'\
+                with lines dt 3 linewidth 2 lc rgb 'red', \
+            "$clz" using 1:(\$$4*$5) every 1 title 'blastFoam (z)'\
+                with lines dt 4 linewidth 2 lc rgb 'magenta'
 
 EOF
 }
@@ -36,14 +39,12 @@ then
     echo "gnuplot not found - skipping graph creation" >&2
     exit 1
 fi
-
-time=$(foamListTimes -latestTime -case ../ -processor)
-BLASTFOAM_cl="../postProcessing/sampleDict/$time"
+time=$(foamListTimes -latestTime -processor -case ..)
+BLASTFOAM_DIR="../postProcessing/sampleDict/$time"
 Swisdak="validationData/SwisdakData.csv"
 
-
-createEps "Maximum Overpressure" "kPa" $BLASTFOAM_cl 2 0.001 $Swisdak 2 "overpressure"
-createEps "Maximum Impulse" "kPa ms" $BLASTFOAM_cl 3 1.0 $Swisdak 3 "impulse"
-createEps "Time of arrival" "ms" $BLASTFOAM_cl 4 1000 $Swisdak 4 "toa"
+createEps "Maximum Overpressure" "kPa" $BLASTFOAM_DIR 2 0.001 $Swisdak 2 "overpressure"
+createEps "Maximum Impulse" "kPa ms" $BLASTFOAM_DIR 3 1.0 $Swisdak 3 "impulse"
+createEps "Time of arrival" "ms" $BLASTFOAM_DIR 4 1000 $Swisdak 4 "toa"
 
 echo Done

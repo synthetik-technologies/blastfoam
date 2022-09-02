@@ -37,8 +37,6 @@ SourceFiles
 #ifndef InitialValueFieldSetType_H
 #define InitialValueFieldSetType_H
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #include "FieldSetType.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -51,16 +49,30 @@ namespace FieldSetTypes
                           Class InitialValue Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type, template<class> class Patch, class Mesh>
+template<class Type, template<class> class FSType>
 class InitialValue
 :
-    public FieldSetType<Type, Patch, Mesh>
+    public FSType<Type>
 {
     //- Value to set
-    UautoPtr<GeometricField<Type, Patch, Mesh>> origFieldPtr_;
+    UautoPtr<typename FSType<Type>::FieldType> origFieldPtr_;
 
-    //- Set the selected cells
-    virtual void setField();
+    //- Return the subset of values given indices and positions
+    virtual void getInternalField
+    (
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
+
+    //- Return the subset of values given indices and positions
+    virtual void getBoundaryField
+    (
+        const label patchi,
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
 
 
 public:
@@ -71,8 +83,9 @@ public:
     InitialValue
     (
         const fvMesh& mesh,
+        const dictionary& dict,
         const word& fieldName,
-        const labelList& selectedCells,
+        const labelList& selectedIndices,
         Istream& is,
         const bool write
     );
@@ -86,9 +99,14 @@ public:
 } // End namespace FieldSetTypes
 } // End namespace Foam
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #ifdef NoRepository
     #include "InitialValueFieldSetType.C"
 #endif
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #endif
+
 // ************************************************************************* //

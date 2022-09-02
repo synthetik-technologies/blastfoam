@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -31,60 +31,162 @@ License
 template<class Type>
 Foam::Simpson38Integrator<Type>::Simpson38Integrator
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 :
     Integrator<Type>(eqn, dict)
-{
-    this->setNIntervals(this->nIntervals_);
-}
+{}
+
+
+template<class Type>
+Foam::Simpson38Integrator<Type>::Simpson38Integrator
+(
+    const equationType& eqn,
+    const integrator& inter
+)
+:
+    Integrator<Type>(eqn, inter)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-Type Foam::Simpson38Integrator<Type>::integrate
+Type Foam::Simpson38Integrator<Type>::integrate_
 (
+    const scalar dx,
+    const Type& f0,
+    const Type& f13,
+    const Type& f23,
+    const Type& f1
+) const
+{
+    return dx/8.0*(f0 + 3.0*(f13 + f23) + f1);
+}
+
+
+template<class Type>
+Type Foam::Simpson38Integrator<Type>::integrate_
+(
+    const Type& Q,
     const scalar x0,
     const scalar x1,
+    const Type& f0,
+    const Type& f13,
+    const Type& f23,
+    const Type& f1,
+    const scalar tol,
     const label li
 ) const
 {
-    scalar dx = x1 - x0;
-    if (mag(dx) < small)
+    const scalar dx(x1 - x0);
+    if (mag(dx) <= this->minDx_)
     {
-        return dx*this->eqnPtr_->f(x0, li);
+        return Q;
     }
-    if (this->nSteps_ <= 1)
+
+    this->intervals_++;
+    const scalar x16 = x0 + 1.0/6.0*dx;
+    const scalar x12 = x0 + 0.5*dx;
+    const scalar x56 = x0 + 5.0/6.0*dx;
+
+    const Type f16(this->eqnPtr_->fx(x16, li));
+    const Type f12(this->eqnPtr_->fx(x12, li));
+    const Type f56(this->eqnPtr_->fx(x56, li));
+    this->evals_ += 3;
+
+    const Type fx0(integrate_(x12 - x0, f0, f16, f13, f12));
+    const Type fx1(integrate_(x1 - x12, f12, f23, f56, f1));
+    const Type fx(fx0 + fx1);
+    if (this->converged(fx, Q, dx, tol))
+    {
+        return fx;
+    }
+    else
     {
         return
-            dx/8.0
-           *(
-                this->eqnPtr_->f(x0, li)
-              + 3.0*this->eqnPtr_->f((2.0*x0 + x1)/3.0, li)
-              + 3.0*this->eqnPtr_->f((x0 + 2.0*x1)/3.0, li)
-              + this->eqnPtr_->f(x1, li)
-            );
+            integrate_(fx0, x0, x12, f0, f16, f13, f12, tol/2.0, li)
+          + integrate_(fx1, x12, x1, f12, f23, f56, f1, tol/2.0, li);
     }
-    dx /= scalar(this->nSteps_);
+}
 
-    Type res(this->eqnPtr_->f(x0, li) + this->eqnPtr_->f(x1, li));
-    for (label i = 1; i <= this->nIntervals_; i++)
+
+template<class Type>
+Type Foam::Simpson38Integrator<Type>::integrate
+(
+    const scalar X0,
+    const scalar X1,
+    const label li
+) const
+{
+    scalar dx(X1 - X0);
+    if (mag(dx) < small)
     {
-        res +=
-            3.0
-           *(
-                this->eqnPtr_->f(x0 + dx*(3*i-2), li)
-              + this->eqnPtr_->f(x0 + dx*(3*i-1), li)
-            );
+        return dx*this->eqnPtr_->fx(X0, li);
     }
+
+    this->reset(dx);
+
+    if (this->adaptive())
+    {
+        const Type f0(this->eqnPtr_->fx(X0, li));
+        const Type f13(this->eqnPtr_->fx(X0 + dx/3.0, li));
+        const Type f23(this->eqnPtr_->fx(X0 + 2.0*dx/3.0, li));
+        const Type f1(this->eqnPtr_->fx(X1, li));
+        const Type Q(integrate_(dx, f0, f13, f23, f1));
+
+        this->evals_ = 4;
+        return integrate_
+        (
+            Q,
+            X0, X1,
+            f0, f13, f23, f1,
+            this->tolerance_,
+            li
+        );
+    }
+
+    dx /= scalar(this->nIntervals_);
+    scalar x13 = X0 + dx/3.0;
+    scalar x23 = X0 + 2.0*dx/3.0;
+    scalar x1 = X0 + dx;
+
+    Type f0(this->eqnPtr_->fx(X0, li));
+    Type f1(this->eqnPtr_->fx(x1, li));
+
+    Type res
+    (
+        integrate_
+        (
+            dx,
+            f0,
+            this->eqnPtr_->fx(x13, li),
+            this->eqnPtr_->fx(x23, li),
+            f1
+        )
+    );
     for (label i = 1; i < this->nIntervals_; i++)
     {
-        res += 2.0*this->eqnPtr_->f(x0 + i*dx*3.0, li);
-    }
+        x13 += dx;
+        x23 += dx;
+        x1 += dx;
 
-    return dx*3.0/8.0*res;
+        f0 = f1;
+        f1 = this->eqnPtr_->fx(x1, li);
+
+        res = res
+          + integrate_
+            (
+                dx,
+                f0,
+                this->eqnPtr_->fx(x13, li),
+                this->eqnPtr_->fx(x23, li),
+                f1
+            );
+    }
+    this->evals_ = 3*this->nIntervals_ + 1;
+    return res;
 }
 
 // ************************************************************************* //

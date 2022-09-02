@@ -31,28 +31,9 @@ Description
 
 Usage:
      volScalarFieldFunction p
-    "-a(x) + b(y)*c(z)*d(x) - d(y)"
     {
-        a
-        {
-            type uniform;
-            value 1;
-        }
-        b
-        {
-            type uniform;
-            value 0.5;
-        }
-        c
-        {
-            type uniform;
-            value 1;
-        }
-        d
-        {
-            type uniform;
-            value 0.5;
-        }
+        type constant;
+        value 1.0
     }
 
 
@@ -65,10 +46,8 @@ SourceFiles
 #ifndef FunctionFieldSetType_H
 #define FunctionFieldSetType_H
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #include "FieldSetType.H"
-#include "Function1.H"
+#include "Function3.H"
 #include "PtrListDictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -76,80 +55,36 @@ SourceFiles
 namespace Foam
 {
 
-/*---------------------------------------------------------------------------*\
-                          Class Function Declaration
-\*---------------------------------------------------------------------------*/
-
-template<class Type>
-class directionalFunction1
-{
-    //- Reference to Function1
-    const Function1<Type>& func_;
-
-    //- Component
-    label cmpt_;
-
-
-public:
-
-    // Constructor
-    directionalFunction1(const Function1<Type>& f, const label cmpt)
-    :
-        func_(f),
-        cmpt_(cmpt)
-    {}
-
-    //- Destructor
-    virtual ~directionalFunction1()
-    {}
-
-
-    // Public member functions
-
-        //- Evaluate the function at a position
-        Type value(const vector& xyz) const
-        {
-            return func_.value(xyz[cmpt_]);
-        }
-
-        //- Evaluate the function at a list of positions
-        tmp<Field<Type>> value(const Field<vector>& xyz) const
-        {
-            tmp<Field<Type>> tmpf(new Field<Type>(xyz.size(), Zero));
-            Field<Type>& f = tmpf.ref();
-            forAll(f, i)
-            {
-                f[i] = func_.value(xyz[i][cmpt_]);
-            }
-            return tmpf;
-        }
-};
-
-
 namespace FieldSetTypes
 {
 /*---------------------------------------------------------------------------*\
                           Class Function Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type, template<class> class Patch, class Mesh>
+template<class Type, template<class> class FSType>
 class Function
 :
-    public FieldSetType<Type, Patch, Mesh>
+    public FSType<Type>
 {
-    //- Stored components of the equation
-    //  Split by variables and operators
-    tokenList equation_;
-
     //- List of Function1s, indexed by the coefficient name
-    PtrListDictionary<Function1<Type>> Func1s_;
+    autoPtr<Function3<Type>> func_;
 
-    //- List of functions and their corresponding components
-    //  indexed by the coefficient name + the component, i.e. ax
-    PtrListDictionary<directionalFunction1<Type>> funcs_;
+    //- Return the subset of values given indices and positions
+    virtual void getInternalField
+    (
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
 
-    //- Set the selected cells
-    virtual void setField();
+    //- Return the subset of values given indices and positions
+    virtual void getBoundaryField
+    (
+        const label patchi,
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
 
 
 public:
@@ -160,8 +95,9 @@ public:
     Function
     (
         const fvMesh& mesh,
+        const dictionary& dict,
         const word& fieldName,
-        const labelList& selectedCells,
+        const labelList& selectedIndices,
         Istream& is,
         const bool write
     );
@@ -175,9 +111,14 @@ public:
 } // End namespace FieldSetTypes
 } // End namespace Foam
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #ifdef NoRepository
     #include "FunctionFieldSetType.C"
 #endif
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #endif
+
 // ************************************************************************* //

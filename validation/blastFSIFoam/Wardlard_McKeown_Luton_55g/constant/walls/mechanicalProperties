@@ -1,0 +1,44 @@
+
+
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant/solid";
+    object      mechanicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+planeStress off;
+
+mechanical
+(
+    aluminum
+    {
+        // Aluminum 5086
+        // Yield strength: 131e6 Pa
+        // Ultimate yield strength: 305e6
+        // Elongation: 22%
+        // Strain hardening exponent and strength coefficient calculated using
+        // Ramberg-Osgood equations
+
+        type            nonLinearPowerLawPlastic;
+
+        E               71e9;
+        nu              0.33;
+        k               319087034;
+        n               0.0788;
+        sigmaY          210e6;
+
+        solvePressureEqn no;
+    }
+);
+// ************************************************************************* //

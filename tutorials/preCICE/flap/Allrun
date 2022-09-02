@@ -22,37 +22,15 @@ fi
 # =============== Participant 1: Fluid ===========================
 Participant1="Fluid"
 
-    # Prepare
-    echo "Preparing the ${Participant1} participant..."
-
-    echo "  Preparing the mesh..."
-    blockMesh -case ${Participant1} > ${Participant1}_blockMesh.log 2>&1
-    checkMesh -case ${Participant1} > ${Participant1}_checkMesh.log 2>&1
-
-    # get application information
-    cd ${Participant1}
-        Solver1=$(getApplication)    # solver
-        echo "  ${Participant1} Solver: ${Solver1}."
-    cd ..
-
-    # Run and get the process id
+    # Run
+    echo "Starting the ${Participant1} participant..."
+    # Parallel
     if [ $parallel -eq 1 ]; then
-        echo "  Decomposing the case..."
-        decomposePar -force -case ${Participant1} > ${Participant1}_decomposePar.log 2>&1
+        ( cd ${Participant1} && ./Allrun -parallel > ../${Participant1}.log 2>&1 &)
 
-        cd ${Participant1}
-            nproc=$(getNumberOfProcessors)
-        cd ..
-
-        mpirun -np ${nproc} setRefinedFields -case ${Participant1} -parallel > ${Participant1}_setRefinedFields.log 2>&1
-
-        echo "  Starting the ${Participant1} participant in parallel..."
-        mpirun -np ${nproc} ${Solver1} -parallel -case ${Participant1} > ${Participant1}.log 2>&1 &
-
+    # Serial
     else
-        setRefinedFields -case ${Participant1} > ${Participant1}_setRefinedFields.log 2>&1
-        echo "  Starting the ${Participant1} participant in serial..."
-        ${Solver1} -case ${Participant1} > ${Participant1}.log 2>&1 &
+        ( cd ${Participant1} && ./Allrun > ../${Participant1}.log 2>&1 &)
     fi
     PIDParticipant1=$!
 
@@ -60,18 +38,9 @@ Participant1="Fluid"
 Participant2="Solid"
 Solver2="ccx_preCICE"
 
-    # Prepare in silent mode
-    echo "Preparing the ${Participant2} participant..."
-    # Create mesh using cgx (mesh is provided to reduce the number of compiles required)
-#     cd ${Participant2}
-#         # We use CalculiX CGX to setup the structural simulation
-#         echo "  Executing cgx (provided by CalculiX, make sure this exists)..."
-#         cgx -bg pre_flap.fbd > prepare_flap.log 2>&1
-#     cd ..
-
     # Run
     echo "  Starting the ${Participant2} participant..."
-    ${Solver2} -i ${Participant2}/flap -precice-participant Calculix > ${Participant2}.log  2>&1 &
+    ( cd ${Participant2} && ./Allrun > ../${Participant2}.log 2>&1 & )
     PIDParticipant2=$!
 
 

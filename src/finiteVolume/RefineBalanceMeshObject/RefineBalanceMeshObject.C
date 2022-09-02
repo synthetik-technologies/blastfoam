@@ -27,75 +27,239 @@ License
 
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
-namespace Foam
+template<class Mesh>
+void Foam::blastMeshObject::preDistribute
+(
+    objectRegistry& obr
+)
 {
-    defineTypeNameAndDebug(RefineMeshObject, 0);
-    defineTypeNameAndDebug(BalanceMeshObject, 0);
-}
-
-// * * * * * * * * * * * * * * * Static Functions  * * * * * * * * * * * * * //
-
-void Foam::RefineMeshObject::updateObjects(objectRegistry& obr)
-{
-    HashTable<RefineMeshObject*> meshObjects
+    HashTable<DistributeableMeshObject<Mesh>*> meshObjects
     (
-        obr.lookupClass<RefineMeshObject>()
+        obr.lookupClass<DistributeableMeshObject<Mesh>>()
     );
 
-    if (debug)
+    if (meshObject::debug)
     {
-        Pout<< "RefineMeshObject::updateMesh(objectRegistry&): updating" << nl
+        Pout<< "meshObject::preDistribute(objectRegistry&,"
+            << "mapDistributePolyMesh&): updating " << Mesh::typeName
             << " meshObjects for region " << obr.name() << endl;
     }
 
     forAllIter
     (
-        typename HashTable<RefineMeshObject*>,
+        typename HashTable<DistributeableMeshObject<Mesh>*>,
         meshObjects,
         iter
     )
     {
-        if (isA<RefineMeshObject>(*iter()))
+        if (isA<DistributeableMeshObject<Mesh>>(*iter()))
         {
-            if (debug)
+            if (meshObject::debug)
             {
                 Pout<< "    Updating " << iter()->name() << endl;
             }
-            dynamic_cast<RefineMeshObject*>(iter())->updateObject();
+            dynamic_cast<DistributeableMeshObject<Mesh>*>
+            (
+                iter()
+            )->preDistribute();
         }
     }
 }
 
 
-void Foam::BalanceMeshObject::updateObjects(objectRegistry& obr)
+template<class Mesh>
+void Foam::blastMeshObject::distribute
+(
+    objectRegistry& obr,
+    const mapDistributePolyMesh& map
+)
 {
-    HashTable<BalanceMeshObject*> meshObjects
+    HashTable<DistributeableMeshObject<Mesh>*> meshObjects
     (
-        obr.lookupClass<BalanceMeshObject>()
+        obr.lookupClass<DistributeableMeshObject<Mesh>>()
     );
 
-    if (debug)
+    if (meshObject::debug)
     {
-        Pout<< "BalanceMeshObject::updateMesh(objectRegistry&): updating" << nl
+        Pout<< "meshObject::distribute(objectRegistry&,"
+            << "mapDistributePolyMesh&): updating " << Mesh::typeName
             << " meshObjects for region " << obr.name() << endl;
     }
 
     forAllIter
     (
-        typename HashTable<BalanceMeshObject*>,
+        typename HashTable<DistributeableMeshObject<Mesh>*>,
         meshObjects,
         iter
     )
     {
-        if (isA<BalanceMeshObject>(*iter()))
+        if (isA<DistributeableMeshObject<Mesh>>(*iter()))
         {
-            if (debug)
+            if (meshObject::debug)
             {
                 Pout<< "    Updating " << iter()->name() << endl;
             }
-            dynamic_cast<BalanceMeshObject*>(iter())->updateObject();
+            dynamic_cast<DistributeableMeshObject<Mesh>*>
+            (
+                iter()
+            )->distribute(map);
         }
     }
 }
+
+
+// namespace Foam
+// {
+//     defineTypeNameAndDebug(RefineMeshObject, 0);
+//     defineTypeNameAndDebug(BalanceMeshObject, 0);
+// }
+//
+// // * * * * * * * * * * * * * * * Static Functions  * * * * * * * * * * * * * //
+//
+// void Foam::RefineMeshObject::updateObjects(const objectRegistry& obr)
+// {
+//
+//     HashTable<RefineMeshObject*> meshObjects
+//     (
+//         const_cast<objectRegistry&>
+//         (
+//             obr
+//         ).lookupClass<RefineMeshObject>()
+//     );
+//
+//     if (debug)
+//     {
+//         Pout<< FUNCTION_NAME << ": updating" << nl
+//             << " meshObjects for region " << obr.name() << endl;
+//     }
+//
+//     forAllIter
+//     (
+//         typename HashTable<RefineMeshObject*>,
+//         meshObjects,
+//         iter
+//     )
+//     {
+//         if (isA<RefineMeshObject>(*iter()))
+//         {
+//             if (debug)
+//             {
+//                 Pout<< "    Updating " << iter()->name() << endl;
+//             }
+//             dynamic_cast<RefineMeshObject*>(iter())->updateObject();
+//         }
+//     }
+// }
+//
+//
+// void Foam::BalanceMeshObject::preDistribute(const objectRegistry& obr)
+// {
+//     HashTable<BalanceMeshObject*> meshObjects
+//     (
+//         const_cast<objectRegistry&>
+//         (
+//             obr
+//         ).lookupClass<BalanceMeshObject>()
+//     );
+//
+//     if (debug)
+//     {
+//         Pout<< FUNCTION_NAME << ": updating"
+//             << nl
+//             << " meshObjects for region " << obr.name() << endl;
+//     }
+//
+//     forAllIter
+//     (
+//         typename HashTable<BalanceMeshObject*>,
+//         meshObjects,
+//         iter
+//     )
+//     {
+//         if (isA<BalanceMeshObject>(*iter()))
+//         {
+//             if (debug)
+//             {
+//                 Pout<< "    preDistributing " << iter()->name() << endl;
+//             }
+//             dynamic_cast<BalanceMeshObject*>(iter())->preDistribute();
+//         }
+//     }
+// }
+//
+//
+// void Foam::BalanceMeshObject::updateObjects(const objectRegistry& obr)
+// {
+//     HashTable<BalanceMeshObject*> meshObjects
+//     (
+//         const_cast<objectRegistry&>
+//         (
+//             obr
+//         ).lookupClass<BalanceMeshObject>()
+//     );
+//
+//     if (debug)
+//     {
+//         Pout<< FUNCTION_NAME << ": updating" << nl
+//             << " meshObjects for region " << obr.name() << endl;
+//     }
+//
+//     forAllIter
+//     (
+//         typename HashTable<BalanceMeshObject*>,
+//         meshObjects,
+//         iter
+//     )
+//     {
+//         if (isA<BalanceMeshObject>(*iter()))
+//         {
+//             if (debug)
+//             {
+//                 Pout<< "    Updating " << iter()->name() << endl;
+//             }
+//             dynamic_cast<BalanceMeshObject*>(iter())->updateObject();
+//         }
+//     }
+// }
+//
+//
+// void Foam::BalanceMeshObject::distribute
+// (
+//     const objectRegistry& obr,
+//     const mapDistributePolyMesh& map
+// )
+// {
+//     HashTable<BalanceMeshObject*> meshObjects
+//     (
+//         const_cast<objectRegistry&>
+//         (
+//             obr
+//         ).lookupClass<BalanceMeshObject>()
+//     );
+//
+//     if (debug)
+//     {
+//         Pout<< FUNCTION_NAME << ": updating" << nl
+//             << " meshObjects for region " << obr.name() << endl;
+//     }
+//
+//     forAllIter
+//     (
+//         typename HashTable<BalanceMeshObject*>,
+//         meshObjects,
+//         iter
+//     )
+//     {
+//         if (isA<BalanceMeshObject>(*iter()))
+//         {
+//             if (debug)
+//             {
+//                 Pout<< "    Updating " << iter()->name() << endl;
+//             }
+//             dynamic_cast<BalanceMeshObject*>(iter())->distribute(map);
+//         }
+//     }
+// }
+
 
 // ************************************************************************* //

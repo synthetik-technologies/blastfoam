@@ -20,6 +20,7 @@ transport
     polynomial
     logPolynomial
     WLF
+    icoTabulated
     tabulated
 );
 
@@ -29,9 +30,11 @@ thermo
     hConst
     ePower
     ePolynomial
+    eIcoTabulated
     eTabulated
     hPower
     hPolynomial
+    hIcoTabulated
     hTabulated
     janaf
 );
@@ -57,6 +60,9 @@ equationOfState
     BWR
     linearTillotson
     Tillotson
+    tabulated
+    VanderWaals
+    PengRobinson
 );
 
 specie

@@ -38,7 +38,15 @@ Foam::stiffenedGas<Specie>::stiffenedGas
 :
     Specie(dict),
     a_(dict.subDict("equationOfState").lookup<scalar>("a")),
-    gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma"))
+    gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma")),
+    minRho_
+    (
+        dict.subDict("equationOfState").lookupOrDefault<scalar>
+        (
+            "minRho",
+            1e-6
+        )
+    )
 {
     if (gamma_ <= 1.0)
     {

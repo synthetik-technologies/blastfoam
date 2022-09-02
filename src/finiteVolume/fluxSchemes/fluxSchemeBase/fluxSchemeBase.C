@@ -24,13 +24,14 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluxSchemeBase.H"
-#include "MUSCLReconstructionScheme.H"
+#include "ReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(fluxSchemeBase, 0);
+    bool fluxSchemeBase::needEnergyFlux = false;
 }
 
 
@@ -64,18 +65,19 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
     const word& fName
 ) const
 {
-    autoPtr<MUSCLReconstructionScheme<scalar>> fLimiter
+    autoPtr<ReconstructionScheme<scalar>> fLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(f, fName)
+        ReconstructionScheme<scalar>::New(f, fName)
     );
 
-    tmp<surfaceScalarField> fOwnTmp(fLimiter->interpolateOwn());
-    tmp<surfaceScalarField> fNeiTmp(fLimiter->interpolateNei());
+    tmp<surfaceScalarField> tfOwn;
+    tmp<surfaceScalarField> tfNei;
+    fLimiter->interpolateOwnNei(tfOwn, tfNei);
 
-    const surfaceScalarField& fOwn = fOwnTmp();
-    const surfaceScalarField& fNei = fNeiTmp();
+    const surfaceScalarField& fOwn = tfOwn();
+    const surfaceScalarField& fNei = tfNei();
 
-    tmp<surfaceScalarField> tmpff
+    tmp<surfaceScalarField> tff
     (
         surfaceScalarField::New
         (
@@ -84,7 +86,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
             dimensioned<scalar>("0", f.dimensions(), Zero)
         )
     );
-    surfaceScalarField& ff = tmpff.ref();
+    surfaceScalarField& ff = tff.ref();
     const bool isDensity = (f.dimensions() == dimDensity);
 
     forAll(fOwn, facei)
@@ -110,7 +112,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
                 );
         }
     }
-    return tmpff;
+    return tff;
 }
 
 

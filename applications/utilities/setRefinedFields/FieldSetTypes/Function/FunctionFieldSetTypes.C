@@ -28,8 +28,6 @@ SourceFiles
 
 #include "FunctionFieldSetType.H"
 #include "FieldSetTypesFwd.H"
-#include "volFields.H"
-#include "surfaceFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,18 +37,34 @@ namespace FieldSetTypes
 {
 
 template<class Type>
-using FunctionVol = Function<Type, fvPatchField, volMesh>;
+using FunctionVol = Function<Type, VolFieldSetType>;
 
 template<class Type>
-using FunctionSurface = Function<Type, fvsPatchField, surfaceMesh>;
+using FunctionSurface = Function<Type, SurfaceFieldSetType>;
+
+template<class Type>
+using FunctionPoint = Function<Type, PointFieldSetType>;
 }
+
 makeFieldSetTypeType(FunctionVol, scalar, VolFieldSetType);
 makeFieldSetTypeType(FunctionVol, vector, VolFieldSetType);
 makeFieldSetTypeType(FunctionVol, sphericalTensor, VolFieldSetType);
 makeFieldSetTypeType(FunctionVol, symmTensor, VolFieldSetType);
 makeFieldSetTypeType(FunctionVol, tensor, VolFieldSetType);
 
-// }
+makeFieldSetTypeType(FunctionSurface, scalar, SurfaceFieldSetType);
+makeFieldSetTypeType(FunctionSurface, vector, SurfaceFieldSetType);
+makeFieldSetTypeType(FunctionSurface, sphericalTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(FunctionSurface, symmTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(FunctionSurface, tensor, SurfaceFieldSetType);
+
+makeFieldSetTypeType(FunctionPoint, scalar, PointFieldSetType);
+makeFieldSetTypeType(FunctionPoint, vector, PointFieldSetType);
+makeFieldSetTypeType(FunctionPoint, sphericalTensor, PointFieldSetType);
+makeFieldSetTypeType(FunctionPoint, symmTensor, PointFieldSetType);
+makeFieldSetTypeType(FunctionPoint, tensor, PointFieldSetType);
+
 }
+
 // ************************************************************************* //
 

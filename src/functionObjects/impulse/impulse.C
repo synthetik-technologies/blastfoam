@@ -39,44 +39,6 @@ namespace functionObjects
 }
 }
 
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-Foam::volScalarField&
-Foam::functionObjects::impulse::createImpulseField
-(
-    const word& impulseName
-)
-{
-    Log << "    Reading/initialising field " << impulseName << endl;
-
-    // Store on registry
-    volScalarField* impulsePtr
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                impulseName,
-                obr_.time().timeName(),
-                obr_,
-                restartOnRestart_
-                ? IOobject::NO_READ
-                : IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
-            ),
-            p_.mesh(),
-            dimensionedScalar("0", dimPressure*dimTime, 0.0),
-            "zeroGradient"
-        )
-    );
-    impulsePtr->store(impulsePtr);
-
-    return *impulsePtr;
-}
-
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::impulse::impulse
@@ -88,19 +50,25 @@ Foam::functionObjects::impulse::impulse
 :
     fvMeshFunctionObject(name, runTime, dict),
     restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
-    p_
-    (
-        obr_.lookupObject<volScalarField>
-        (
-            dict.lookupOrDefault("pName", word("p"))
-        )
-    ),
+    pName_(dict.lookupOrDefault("pName", word("p"))),
     pRef_("pRef", dimPressure, dict),
     impulse_
     (
-        createImpulseField(IOobject::groupName("impulse", p_.group()))
+        IOobject
+        (
+            IOobject::groupName("impulse", IOobject::group(pName_)),
+            runTime.timeName(),
+            mesh_,
+            restartOnRestart_
+          ? IOobject::NO_READ
+          : IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar("0", dimPressure*dimTime, 0.0)
     )
 {
+    executeAtStart_ = false;
     read(dict);
 }
 
@@ -115,9 +83,8 @@ Foam::functionObjects::impulse::~impulse()
 
 bool Foam::functionObjects::impulse::read(const dictionary& dict)
 {
-    fvMeshFunctionObject::read(dict);
-
     Log << type() << " " << name() << ":" << nl;
+    fvMeshFunctionObject::read(dict);
 
     dict.readIfPresent("restartOnRestart", restartOnRestart_);
     pRef_.read(dict);
@@ -130,19 +97,18 @@ bool Foam::functionObjects::impulse::read(const dictionary& dict)
 
 bool Foam::functionObjects::impulse::execute()
 {
-    impulse_ += (p_ - pRef_)*obr_.time().deltaT();
+    const volScalarField& p =
+        mesh_.lookupObject<volScalarField>(pName_);
+
+    impulse_ = impulse_.oldTime() + (p - pRef_)*obr_.time().deltaT();
+
     return true;
 }
 
 
 bool Foam::functionObjects::impulse::write()
 {
-    if (this->mesh_.time().timeIndex() > 0)
-    {
-        impulse_.write();
-        return true;
-    }
-    return false;
+    return impulse_.write();
 }
 
 

@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+createEps()
+{
+    caseName=$(cd ../ && basename $(pwd))
+    fieldName="$1"
+    yTitle="$2"
+    time="$3"
+    ShyueData="validationData/Shyue1999_${fieldName}_${3}.csv"
+    ZhengData="validationData/Zheng2008_${fieldName}_${3}.csv"
+    foamTime="0.000${time}"
+    blastFoamData="../postProcessing/sampleDict/${foamTime}/centreLine_p_rho.xy"
+    index=$4
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_${caseName}_validation_${fieldName}_${time}.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "${yTitle}"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:1.2]
+    set yrange [$5:$6]
+    plot    "$ShyueData" using 1:2 title 'Shyue 1999'\
+                with points pt 5 ps 3 linecolor rgb 'blue',\
+            "$ZhengData" using 1:2 title 'Zheng 2008'\
+                with points pt 9 ps 3 linecolor rgb 'red', \
+            "${blastFoamData}" using 1:${index} title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+createEps "rho" "{/Symbol r} [kg/m^3]" 1 3 -200 1600
+createEps "rho" "{/Symbol r} [kg/m^3]" 2 3 -200 1600
+createEps "rho" "{/Symbol r} [kg/m^3]" 3 3 -200 1600
+createEps "rho" "{/Symbol r} [kg/m^3]" 4 3 -200 1600
+
+createEps "p" "Pressure [Pa]" 1 2 0 3e9
+createEps "p" "Pressure [Pa]" 2 2 0 3e9
+createEps "p" "Pressure [Pa]" 3 2 0 3e9
+createEps "p" "Pressure [Pa]" 4 2 0 3e9
+
+echo Done

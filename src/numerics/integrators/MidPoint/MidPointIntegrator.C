@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -31,7 +31,7 @@ License
 template<class Type>
 Foam::MidPointIntegrator<Type>::MidPointIntegrator
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 :
@@ -39,33 +39,96 @@ Foam::MidPointIntegrator<Type>::MidPointIntegrator
 {}
 
 
+template<class Type>
+Foam::MidPointIntegrator<Type>::MidPointIntegrator
+(
+    const equationType& eqn,
+    const integrator& inter
+)
+:
+    Integrator<Type>(eqn, inter)
+{}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+Type Foam::MidPointIntegrator<Type>::integrate_
+(
+    const Type& Q,
+    const scalar x0,
+    const scalar x1,
+    const scalar tol,
+    const label li
+) const
+{
+    const scalar dx(x1 - x0);
+    if (mag(dx) <= this->minDx_)
+    {
+        return Q;
+    }
+
+    this->intervals_++;
+    const scalar xm = 0.5*(x1 + x0);
+    const scalar x0m = 0.5*(x0 + xm);
+    const Type fx0((xm - x0)*this->eqnPtr_->fx(x0m, li));
+
+    const scalar xm1 = 0.5*(xm + x1);
+    const Type fx1((x1 - xm)*this->eqnPtr_->fx(xm1, li));
+    this->evals_ += 2;
+
+    const Type fx(fx0 + fx1);
+    if (this->converged(fx, Q, dx, tol))
+    {
+        return fx;
+    }
+    else
+    {
+        return
+            integrate_(fx0, x0, xm, tol/2.0, li)
+          + integrate_(fx1, xm, x1, tol/2.0, li);
+    }
+}
+
 
 template<class Type>
 Type Foam::MidPointIntegrator<Type>::integrate
 (
-    const scalar x0,
-    const scalar x1,
+    const scalar X0,
+    const scalar X1,
     const label li
 ) const
 {
-    scalar dx = x1 - x0;
+    scalar dx(X1 - X0);
     if (mag(dx) < small)
     {
-        return dx*this->eqnPtr_->f(x0, li);
+        return dx*this->eqnPtr_->fx(X0, li);
     }
-    dx /= scalar(this->nSteps_);
 
-    scalar a = x0;
-    scalar b = a + dx;
-    Type res(this->eqnPtr_->f(0.5*(a + b), li));
-    for (label i = 1; i < this->nSteps_; i++)
+    this->reset(dx);
+
+    if (this->adaptive())
     {
-        a += dx;
-        b += dx;
-        res += this->eqnPtr_->f(0.5*(a + b), li);
+        this->evals_ = 1;
+        return integrate_
+        (
+            dx*this->eqnPtr_->fx(0.5*(X0 + X1), li),
+            X0,
+            X1,
+            this->tolerance_,
+            li
+        );
     }
-    return dx*res;
-}
 
+    dx /= scalar(this->nIntervals_);
+    scalar x12 = X0 + dx/2.0;
+    Type res(dx*this->eqnPtr_->fx(x12, li));
+
+    for (label i = 1; i < this->nIntervals_; i++)
+    {
+        x12 += dx;
+        res = res + dx*this->eqnPtr_->fx(x12, li);
+    }
+    this->evals_ = this->nIntervals_;
+    return res;
+}
 // ************************************************************************* //

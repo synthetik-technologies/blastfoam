@@ -1,0 +1,10 @@
+participants:
+
+    Solid:
+        interfaces:
+        - nodes-mesh: Solid-Mesh
+          patch: surface
+          read-data: [Force]
+          write-data: [Displacement]
+
+precice-config-file: ../precice-config.xml

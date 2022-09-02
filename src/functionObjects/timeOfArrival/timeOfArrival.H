@@ -63,11 +63,11 @@ class timeOfArrival
         //- Name of pressure field
         word pName_;
 
+        //- Time of arrival field
+        volScalarField timeOfArrival_;
+
         //- Max pressure field
         volScalarField& pMax_;
-
-        //- Time of arrival field
-        volScalarField& timeOfArrival_;
 
         //- Return the given field or create
         volScalarField& lookupOrCreate

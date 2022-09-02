@@ -2,14 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-2017-05-18 Jeff Heylmun:    Added support of polydisperse phase models
-2017-05-24 Jeff Heylmun:    Added return functions for acceleration
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Syntyhetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivitive work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -28,6 +25,7 @@ Class
     Foam::pressureRelaxationModel
 
 Description
+    Model for determining pressure relaxation time between two phases
 
 SourceFiles
     pressureRelaxationModel.C
@@ -126,6 +124,12 @@ public:
 
 
     // Member Functions
+
+        //- Return the phase pair
+        const phasePair& pair() const
+        {
+            return pair_;
+        }
 
         //- Return the pressure relaxation coefficient
         virtual tmp<volScalarField> K

@@ -6,6 +6,6 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 src/Allwmake $targetType $*
 
-wmake all applications
+applications/Allwmake $targetType $*
 
 # -----------------------------------------------------------------------------

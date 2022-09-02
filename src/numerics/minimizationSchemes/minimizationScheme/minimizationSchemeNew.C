@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -24,66 +24,48 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "minimizationScheme.H"
+#include "univariateMinimizationScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::minimizationScheme> Foam::minimizationScheme::New
+Foam::autoPtr<Foam::minimizationScheme>
+Foam::minimizationScheme::New
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 {
-    word minimizationSchemeTypeName(dict.lookup("solver"));
-    label nDeriv = eqn.nDerivatives();
-    Info<< "Selecting root solver " << minimizationSchemeTypeName << endl;
-
-    if (debug)
+    word minimizationSchemeType(dict.lookup("solver"));
+    Info
+        << "Selecting minimization scheme: " << minimizationSchemeType << endl;
+    if (isA<scalarEquation>(eqn))
     {
-        Info<< "    detected " << nDeriv << " implemented derivatives" << endl;
-    }
 
-    if (nDeriv <= 0)
-    {
-        dictionaryZeroConstructorTable::iterator cstrIter =
-            dictionaryZeroConstructorTablePtr_->find(minimizationSchemeTypeName);
+        dictionaryUnivariateConstructorTable::iterator cstrIter =
+            dictionaryUnivariateConstructorTablePtr_->find(minimizationSchemeType);
 
-        if (cstrIter == dictionaryZeroConstructorTablePtr_->end())
+        if (cstrIter == dictionaryUnivariateConstructorTablePtr_->end())
         {
             FatalErrorInFunction
-                << "Unknown minimizationScheme type "
-                << minimizationSchemeTypeName << nl << nl
-                << "Valid minimizationSchemes for no derivatives are : " << endl
-                << dictionaryZeroConstructorTablePtr_->sortedToc()
+                << "Unknown univariate minimization scheme type "
+                << minimizationSchemeType << nl << nl
+                << "Valid univariate minimization schemes are : " << endl
+                << dictionaryUnivariateConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
         return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
     }
-    else if (nDeriv == 1)
-    {
-        dictionaryOneConstructorTable::iterator cstrIter =
-            dictionaryOneConstructorTablePtr_->find(minimizationSchemeTypeName);
 
-        if (cstrIter == dictionaryOneConstructorTablePtr_->end())
-        {
-            FatalErrorInFunction
-                << "Unknown minimizationScheme type "
-                << minimizationSchemeTypeName << nl << nl
-                << "Valid minimizationSchemes for one derivative are : " << endl
-                << dictionaryOneConstructorTablePtr_->sortedToc()
-                << exit(FatalError);
-        }
-        return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
-    }
-    dictionaryTwoConstructorTable::iterator cstrIter =
-        dictionaryTwoConstructorTablePtr_->find(minimizationSchemeTypeName);
+    dictionaryMultivariateConstructorTable::iterator cstrIter =
+        dictionaryMultivariateConstructorTablePtr_->find(minimizationSchemeType);
 
-    if (cstrIter == dictionaryTwoConstructorTablePtr_->end())
+    if (cstrIter == dictionaryMultivariateConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown minimizationScheme type "
-            << minimizationSchemeTypeName << nl << nl
-            << "Valid minimizationSchemes for are : " << endl
-            << dictionaryTwoConstructorTablePtr_->sortedToc()
+            << "Unknown multivariate minimization scheme type "
+            << minimizationSchemeType << nl << nl
+            << "Valid multivariate minimization schemes : " << endl
+            << dictionaryMultivariateConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
     return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));

@@ -34,7 +34,9 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(compressibleSystem, 0);
-    defineRunTimeSelectionTable(compressibleSystem, dictionary);
+    defineRunTimeSelectionTable(compressibleSystem, singlePhase);
+    defineRunTimeSelectionTable(compressibleSystem, twoPhase);
+    defineRunTimeSelectionTable(compressibleSystem, multiphase);
 }
 
 
@@ -44,7 +46,6 @@ void Foam::compressibleSystem::setModels()
 {
     if (Foam::max(this->thermo().mu()).value() > small)
     {
-        needPostUpdate_ = true;
         turbulence_ =
         (
             compressible::momentumTransportModel::New
@@ -66,37 +67,6 @@ void Foam::compressibleSystem::setModels()
             ).ptr()
         );
     }
-
-
-    modelsPtr_.set(&fvModels::New(mesh()));
-    constraintsPtr_.set(&fvConstraints::New(mesh()));
-
-    const PtrList<fvModel>& models(modelsPtr_());
-    forAll(models, modeli)
-    {
-        wordList fields(models[modeli].addSupFields());
-        forAll(fields, fieldi)
-        {
-            if (!solveFields_.found(fields[fieldi]))
-            {
-                solveFields_.append(fields[fieldi]);
-            }
-        }
-    }
-
-    const PtrList<fvConstraint>& constraints(constraintsPtr_());
-    forAll(constraints, modeli)
-    {
-        wordList fields(constraints[modeli].constrainedFields());
-        forAll(fields, fieldi)
-        {
-            if (!solveFields_.found(fields[fieldi]))
-            {
-                solveFields_.append(fields[fieldi]);
-            }
-        }
-    }
-    needPostUpdate_ = solveFields_.size();
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -106,17 +76,6 @@ Foam::compressibleSystem::compressibleSystem
     const fvMesh& mesh
 )
 :
-    IOdictionary
-    (
-        IOobject
-        (
-            "phaseProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
-        )
-    ),
     timeIntegrationSystem("compressibleSystem", mesh),
     U_
     (
@@ -163,7 +122,9 @@ Foam::compressibleSystem::compressibleSystem
         (
             "phi",
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar("0", dimVelocity*dimArea, 0.0)
@@ -201,11 +162,8 @@ Foam::compressibleSystem::compressibleSystem
         mesh,
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
-    fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
-    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0),
-    solveFields_(),
-    needPostUpdate_(false)
+    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {
     scalar emptyDirV
     (
@@ -286,13 +244,13 @@ void Foam::compressibleSystem::solve()
 void Foam::compressibleSystem::postUpdate()
 {
     // Solve momentum
-    if (solveFields_.found(U_.name()) || turbulence_.valid())
+    if (needSolve(U_.name()) || turbulence_.valid())
     {
         fvVectorMatrix UEqn
         (
-            fvm::ddt(rho(), U_) - fvc::ddt(rho(), U_)
+            fvm::ddt(rho(), U_) - fvc::ddt(rhoU_)
         ==
-            modelsPtr_->source(rho(), U_)
+            models().source(rho(), U_)
         );
         if (turbulence_.valid())
         {
@@ -302,42 +260,52 @@ void Foam::compressibleSystem::postUpdate()
                 *fvc::div
                 (
                     fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
-                    & fluxScheme_->Uf()
+                  & fluxScheme_->Uf()
                 );
         }
-        constraintsPtr_->constrain(UEqn);
+        constraints().constrain(UEqn);
         UEqn.solve();
-        constraintsPtr_->constrain(U_);
+        constraints().constrain(U_);
+
+        rhoU_ = rho()*U_;
 
         //- Update internal energy
         he() = rhoE_/rho() - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
-    if (solveFields_.found(he().name()) || turbulence_.valid())
+    if (needSolve(he().name()) || turbulence_.valid())
     {
         fvScalarMatrix eEqn
         (
-            fvm::ddt(rho(), he()) - fvc::ddt(rho(), he())
+            fvm::ddt(rho(), he()) - fvc::ddt(rho().prevIter(), he())
         ==
-            modelsPtr_->source(rho(), he())
+            models().source(rho(), he())
         );
         if (turbulence_.valid())
         {
             eEqn += thermophysicalTransport_->divq(he());
         }
-        constraintsPtr_->constrain(eEqn);
+        constraints().constrain(eEqn);
         eEqn.solve();
-        constraintsPtr_->constrain(he());
+        constraints().constrain(he());
+
+        rhoE_ = rho()*(he() + 0.5*magSqr(U_));
     }
 
     if (turbulence_.valid())
     {
         turbulence_->correct();
     }
-
-    encode();
     this->thermo().correct();
+    constraints().constrain(thermo().p());
+    thermo().p().correctBoundaryConditions();
+}
+
+
+void Foam::compressibleSystem::clear()
+{
+    fluxScheme_->clear();
 }
 
 
@@ -352,7 +320,7 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
     {
         if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
         {
-            amaxSf.boundaryFieldRef() = Zero;
+            amaxSf.boundaryFieldRef()[patchi] = Zero;
         }
     }
     amaxSf += mag(fvc::flux(U()));
@@ -362,19 +330,23 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
 
-    return 0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
-}
+    scalar CoNum =
+        0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
 
+    scalar meanCoNum =
+        0.5
+       *(
+            gSum(sumAmaxSf)/gSum(mesh().V().field())
+        )*mesh().time().deltaTValue();
 
-bool Foam::compressibleSystem::writeData(Ostream& os) const
-{
-    return os.good();
-}
-
-
-bool Foam::compressibleSystem::read()
-{
-    return regIOobject::read();
+    Info<< "Courant Number ";
+    if (mesh().name() != polyMesh::defaultRegion)
+    {
+        Info<< "for region " << mesh().name() << " ";
+    }
+    Info<< "Mean/Max = "
+        << meanCoNum << ", "<< CoNum << endl;
+    return CoNum;
 }
 
 // ************************************************************************* //

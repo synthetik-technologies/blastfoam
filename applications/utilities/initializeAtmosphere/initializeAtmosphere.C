@@ -36,8 +36,10 @@ Description
 #include "fvMesh.H"
 #include "volFields.H"
 #include "atmosphereModel.H"
+#include "hydrostaticAtmosphereModel.H"
 #include "fvc.H"
 #include "fluidBlastThermo.H"
+#include "thermodynamicConstants.H"
 
 
 using namespace Foam;
@@ -46,6 +48,14 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
+    argList::addOption("pRef", "Reference pressure [Pa]");
+    argList::addOption("hRef", "Height of the lowest point [m]");
+    argList::addOption("phase", "Name of the phase");
+    argList::addOption("zone", "Cell zone to set");
+    argList::addOption("type", "Model used to set the fields");
+    argList::addOption("fixedPatches", "patches to fix pressure on");
+    argList::addOption("refCell", "Reference cell");
+    argList::addOption("refPoint", "Reference point");
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -60,13 +70,53 @@ int main(int argc, char *argv[])
             "atmosphereProperties",
             mesh.time().system(),
             mesh,
-            IOobject::MUST_READ
+            IOobject::READ_IF_PRESENT
         )
     );
+    word type = atmosphereModels::hydrostatic::typeName;
+    if (atmosphereProperties.headerOk())
+    {
+        type = atmosphereProperties.lookup<word>("type");
+    }
+    else if (args.optionFound("type"))
+    {
+        type = args.optionRead<word>("type");
+    }
 
+    if (args.optionFound("hRef"))
+    {
+        atmosphereProperties.set("hRef", args.optionRead<scalar>("hRef"));
+    }
+    else if (!atmosphereProperties.found("hRef"))
+    {
+        WarningInFunction << "hRef was not provided, using 0" << endl;
+    }
+
+    label refSet = 0;
+    if (args.optionFound("fixedPatches"))
+    {
+        refSet = 2;
+        atmosphereProperties.set
+        (
+            "fixedPatches",
+            args.optionRead<wordReList>("fixedPatches")
+        );
+    }
+
+    label zoneID = -1;
+    if (args.optionFound("zone"))
+    {
+        zoneID = mesh.cellZones()[args.optionRead<word>("zone")].index();
+    }
     autoPtr<atmosphereModel> atmosphere
     (
-        atmosphereModel::New(mesh, atmosphereProperties)
+        atmosphereModel::New
+        (
+            type,
+            mesh,
+            atmosphereProperties,
+            zoneID
+        )
     );
 
     IOdictionary phaseProperties
@@ -80,44 +130,83 @@ int main(int argc, char *argv[])
         )
     );
 
-    //- Name of phase (Default = word::null)
-    word phaseName
-    (
-        atmosphereProperties.lookupOrDefault("phaseName", word::null)
-    );
+    word phaseName = word::null;
+    wordList phases(1, word::null);
+    if (args.optionFound("phase"))
+    {
+        phases = args.optionRead<word>("phase");
+        if (phaseProperties.found("phases"))
+        {
+            phaseName = phases[0];
+        }
+    }
+    else if (atmosphereProperties.found("phase"))
+    {
+        phases = atmosphereProperties.lookup<word>("phase");
+    }
+    else if (phaseProperties.found("phases"))
+    {
+        phases = phaseProperties.lookup<wordList>("phases");
+    }
 
-    //- Shared switches
-    Switch sharedPressure
-    (
-        atmosphereProperties.lookupOrDefault("sharedPressure", true)
-    );
-    Switch sharedTemperature
-    (
-        atmosphereProperties.lookupOrDefault("sharedTemperature", true)
-    );
-
-    wordList phases(phaseProperties.lookupOrDefault("phases", wordList(1,word::null)));
     autoPtr<fluidBlastThermo> thermo
     (
         fluidBlastThermo::New
         (
             phases.size(),
             mesh,
-            phaseProperties
+            phaseProperties,
+            phaseName
         )
     );
+
+    if (thermo->p().needReference())
+    {
+        if (args.optionFound("pRef"))
+        {
+            atmosphereProperties.set("pRefValue", args.optionRead<scalar>("pRef"));
+            refSet++;
+        }
+        else if (atmosphereProperties.found("pRef"))
+        {
+            refSet++;
+        }
+
+        if (args.optionFound("refCell"))
+        {
+            atmosphereProperties.set("pRefCell", args.optionRead<int>("refCell"));
+            refSet++;
+        }
+        else if (args.optionFound("refPoint"))
+        {
+            atmosphereProperties.set("pRefPoint", args.optionRead<vector>("refPoint"));
+            refSet++;
+        }
+        else if
+        (
+            atmosphereProperties.found("pRef")
+         || atmosphereProperties.found("pRefCell")
+        )
+        {
+            refSet++;
+        }
+
+        Info<<atmosphereProperties<<endl;
+
+        if (refSet < 2)
+        {
+            FatalErrorInFunction
+                << "Could not determine reference pressure state" << nl
+                << "please provide pRef and refCell/pRefCell or refPoint/pRefPoint" << nl
+                << " or provide fixed pressure patches" << endl
+                << abort(FatalError);
+        }
+    }
 
     Info<< "Initializing atmosphere." << endl;
     atmosphere->createAtmosphere(thermo());
 
-    forAll(thermo->p().boundaryField(), patchi)
-    {
-        thermo->p().boundaryFieldRef()[patchi] =
-            thermo->p().boundaryField()[patchi].patchInternalField();
-    }
-    thermo->T().write();
-    thermo->rho().write();
-    thermo->p().write();
+    runTime.writeNow();
 
     Info<< "Done" << nl << endl;
 }

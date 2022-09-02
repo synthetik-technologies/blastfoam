@@ -35,9 +35,7 @@ SourceFiles
 #ifndef coupledMaxErrorFvPatchScalarField_H
 #define coupledMaxErrorFvPatchScalarField_H
 
-#include "Random.H"
 #include "fixedValueFvPatchFields.H"
-#include "mappedPatchSelector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,19 +43,13 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class coupledCellMotionFvPatchVectorField Declaration
+            Class coupledMaxErrorFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
 class coupledMaxErrorFvPatchScalarField
 :
     public fixedValueFvPatchField<scalar>
 {
-// Private Data
-
-    //- Selector for mapped patch type
-    mappedPatchSelector mpp_;
-
-
 public:
 
     //- Runtime type information

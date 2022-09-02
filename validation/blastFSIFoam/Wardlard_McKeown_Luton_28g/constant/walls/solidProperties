@@ -1,0 +1,48 @@
+
+
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant/solid";
+    object      solidProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solidModel explicitNonLinearTotalLagrangian;
+
+explicitNonLinearTotalLagrangianCoeffs
+{
+    incompressiblilityCoefficient   1.0;
+    angularMomentumConservation     yes;
+}
+
+
+nonLinearTotalLagrangianCoeffs
+{
+    // Maximum number of momentum correctors
+    nCorrectors             2000;
+
+    // Solution tolerance for displacement
+    solutionTolerance       1e-06;
+
+    // Alternative solution tolerance for displacement
+    alternativeTolerance    1e-06;
+
+    // Material law solution tolerance
+    materialTolerance       1e-06;
+
+    // Write frequency for the residuals
+    infoFrequency           100;
+}
+
+
+// ************************************************************************* //

@@ -42,15 +42,33 @@ export FOAM_EXTRA_CXXFLAGS="-DCOMPAT_OPENFOAM_ORG"
 # BLAST_DIR is the location of the blastfoam installation which defaults to
 # the directory containing this file if sourced by a bash shell.
 # Set to one directory level higher than the current by default
-#
+
+# For linux
+
 export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
+# For mac
+# export BLAST_DIR="$( cd $(dirname $0)/../ && pwd )"
 
 # Export location of libraries and executables
-export BLAST_LIBBIN="$FOAM_USER_LIBBIN"
-export BLAST_APPBIN="$FOAM_USER_APPBIN"
+if [[ $MAKE = True || -d "/opt/blastfoam" ]]
+then
+    export BLAST_LIBBIN="${BLAST_DIR}/lib"
+    export BLAST_APPBIN="${BLAST_DIR}/bin"
+else
+    export BLAST_LIBBIN="$FOAM_USER_LIBBIN"
+    export BLAST_APPBIN="$FOAM_USER_APPBIN"
+fi
 #export BLAST_LIBBIN="$FOAM_SITE_LIBBIN"
 #export BLAST_APPBIN="$FOAM_SITE_APPBIN"
 
-export FOAM_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
+# Add BLAST_APPBIN to the PATH if it isn't already on it
+if [[ ":$PATH:" != *":$BLAST_APPBIN:"* ]]; then
+    PATH=$PATH:$BLAST_APPBIN
+fi
+# Add BLAST_LIBBIN to the LD_LIBRARY_PATH if it isn't already on it
+if [[ ":$LD_LIBRARY_PATH:" != *":$BLAST_LIBBIN:"* ]]; then
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BLAST_LIBBIN
+fi
 
+export BLAST_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
 #------------------------------------------------------------------------------

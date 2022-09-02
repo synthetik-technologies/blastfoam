@@ -127,10 +127,13 @@ inline void Foam::polynomialSolidTransport<Thermo, PolySize>::operator+=
 
     Thermo::operator+=(pt);
 
-    Y1 /= this->Y();
-    scalar Y2 = pt.Y()/this->Y();
+    if (mag(this->Y()) > small)
+    {
+        Y1 /= this->Y();
+        scalar Y2 = pt.Y()/this->Y();
 
-    kappaCoeffs_ = Y1*kappaCoeffs_ + Y2*pt.kappaCoeffs_;
+        kappaCoeffs_ = Y1*kappaCoeffs_ + Y2*pt.kappaCoeffs_;
+    }
 }
 
 

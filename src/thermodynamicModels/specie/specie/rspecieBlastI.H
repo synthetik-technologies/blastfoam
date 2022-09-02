@@ -74,7 +74,7 @@ inline rspecieBlast::rspecieBlast(const word& name, const rspecieBlast& st)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline const word& rspecieBlast::specieName() const
+inline const word& rspecieBlast::name() const
 {
     return specieName_;
 }

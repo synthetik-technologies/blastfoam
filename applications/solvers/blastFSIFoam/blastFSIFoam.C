@@ -47,24 +47,30 @@ Description
 #include "fvConstraints.H"
 #include "fvModels.H"
 
-#include "mappedPatchSelector.H"
-#include "mappedPointPatchSelector.H"
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
-    #define NO_CONTROL
-    #define CREATE_MESH createMeshesPostProcess.H
-    #include "postProcess.H"
-
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMeshes.H"
     #include "createFields.H"
     #include "createTimeControls.H"
-    #include "compressibleMultiRegionCourantNo.H"
+
+    scalar CoNum = 0.0;
+    forAll(fluidRegions, regionI)
+    {
+        CoNum = max(fluids[regionI].CoNum(), CoNum);
+    }
+    forAll(solidRegions, regionI)
+    {
+        scalar regionCoNum = solidModels[regionI].CoNum();
+        Info<< "Cournant Number for region "
+            << solidRegions[regionI].name()
+            << " Mean/Max = " << regionCoNum << endl;
+        CoNum = max(CoNum, regionCoNum);
+    }
     #include "setInitialMultiRegionDeltaT.H"
 
     while (runTime.run())
@@ -73,7 +79,20 @@ int main(int argc, char *argv[])
 
         #include "readTimeControls.H"
 
-        #include "compressibleMultiRegionCourantNo.H"
+        Info<< nl;
+        scalar CoNum = 0.0;
+        forAll(fluidRegions, regionI)
+        {
+            CoNum = max(fluids[regionI].CoNum(), CoNum);
+        }
+        forAll(solidRegions, regionI)
+        {
+            scalar regionCoNum = solidModels[regionI].CoNum();
+            Info<< "Cournant Number for region "
+                << solidRegions[regionI].name()
+                << " Mean/Max = " << regionCoNum << endl;
+            CoNum = max(CoNum, regionCoNum);
+        }
         #include "setMultiRegionDeltaT.H"
 
         runTime++;

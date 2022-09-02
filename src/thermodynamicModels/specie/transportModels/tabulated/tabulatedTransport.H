@@ -26,74 +26,48 @@ Class
 
 Description
     Transport properties package using uniformly-spaced tabulated data for
-    viscosity and thermal conductivity vs pressure and temperature.
+    viscosity and thermal conductivity vs density and temperature.
 
 Usage
     \table
         Property        | Description
-        mu              | Dynamic viscosity vs pressure and temperature table
-        kappa           | Thermal conductivity vs pressure and temperature table
+        mu              | Dynamic viscosity vs density and temperature table
+        kappa           | Thermal conductivity vs density and temperature table
     \endtable
 
     Example of the specification of the transport properties:
     \verbatim
     transport
     {
-        mu
+        muCoeffs
         {
-            pLow    1e3;
-            pHigh   1e6;
-
-            Tlow    200;
-            Thigh   1500;
-
-            values
-            <m> <n>
-            (
-                (..........)
-                .
-                .
-                .
-                (..........)
-            );
+            rho ( ... );
+            T ( ... );
+            mu ( ... );
         }
 
         kappa
         {
-            pLow    1e3;
-            pHigh   1e6;
-
-            Tlow    200;
-            Thigh   1500;
-
-            values
-            <m> <n>
-            (
-                (..........)
-                .
-                .
-                .
-                (..........)
-            );
+            rho ( ... );
+            T ( ... );
+            kappa ( ... );
         }
     }
     \endverbatim
-
-    See also tutorials/resources/thermoData/wallBoiling*
 
 SourceFiles
     tabulatedTransportI.H
     tabulatedTransport.C
 
 See also
-    Foam::Function2s::uniformTable
+    Foam::lookupTable2D
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef tabulatedTransport_H
 #define tabulatedTransport_H
 
-#include "scalarLookupTable1D.H"
+#include "lookupTables2D.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -121,29 +95,15 @@ class tabulatedTransport
     // Private Data
 
         //- Dynamic viscosity table [Pa.s]
-        scalarLookupTable1D mu_;
+        scalarLookupTable2D mu_;
 
         //- Thermal conductivity table [W/m/K]
-        scalarLookupTable1D kappa_;
-
-
-    // Private Member Functions
-
-        //- Construct from components
-        inline tabulatedTransport
-        (
-            const Thermo& t,
-            const scalarLookupTable1D& muPoly,
-            const scalarLookupTable1D& kappaPoly
-        );
+        scalarLookupTable2D kappa_;
 
 
 public:
 
     // Constructors
-
-        //- Construct as named copy
-        inline tabulatedTransport(const word&, const tabulatedTransport&);
 
         //- Construct from dictionary
         tabulatedTransport(const dictionary& dict);

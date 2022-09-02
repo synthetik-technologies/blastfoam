@@ -73,7 +73,7 @@ public:
     // Constructor
     multicomponentFluidBlastThermo
     (
-        const HashPtrTable<Thermo, word, string::hash>& thermoData,
+        const HashPtrTable<typename Thermo::thermoType, word, string::hash>& thermoData,
         const fvMesh& mesh,
         const dictionary& dict,
         const word& phaseName,
@@ -112,7 +112,9 @@ public:
 
         //- Pre update step
         virtual void update()
-        {}
+        {
+            multicomponentBlastThermo::update();
+        }
 
         //- Solve sub-step stepi
         virtual void solve()
@@ -122,7 +124,9 @@ public:
 
         //- Post update
         virtual void postUpdate()
-        {}
+        {
+            multicomponentBlastThermo::postUpdate();
+        }
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
@@ -133,8 +137,17 @@ public:
 
     //- Thermodynamic and transport functions
 
+        using Thermo::updateRho;
+
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
+
+        //- Calculate density
+        virtual void updateRho
+        (
+            const volScalarField& alpha,
+            const volScalarField& p
+        );
 
         //- Calculate pressure for cell [Pa]
         virtual scalar cellpRhoT
@@ -142,6 +155,9 @@ public:
             const label celli,
             const bool limit = true
         ) const;
+
+        //- Calculate Gamma = dpde
+        virtual tmp<volScalarField> Gamma() const;
 
         //- Gamma = dpde for cell []
         virtual scalar cellGamma(const label celli) const;
@@ -152,16 +168,110 @@ public:
         //- Derivative of pressure w.r.t internal energy for cell
         virtual scalar celldpde(const label celli) const;
 
+        //- Derivative of pressure w.r.t temperature for cell
+        virtual scalar celldpdT(const label celli) const;
+
+        //- Is the equation of state temperature based
+        virtual bool temperatureBased() const
+        {
+            return Thermo::thermoType::temperatureBased();
+        }
+
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
 
-    // Access to transport state variables
+        //- Calculate internal energy for a cell
+        virtual scalar calcCelle(const scalar p, const label) const;
+
+        //- Calculate the pressure
+        virtual tmp<volScalarField> calcp() const;
+
+        //- Calculate the speed of sound
+        virtual tmp<volScalarField> calcSpeedOfSound() const;
+
+
+        // Specie thermo properties
+
+            using Thermo::baseThermo::p;
+
+            //- Return the pressure for cell [Pa]
+            virtual scalar cellp(const label celli) const
+            {
+                return this->p_[celli];
+            }
+
+            //- Pressure [kg/m/s^2]
+            virtual scalar p
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Density [kg/m^3]
+            virtual tmp<volScalarField> p
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
+                const volScalarField& T
+            ) const;
+
+            //- Return derivative of pressure w.r.t. density
+            virtual scalar dpdRho
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Return derivative of pressure w.r.t. Temperature
+            virtual scalar dpdT
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+
+        // Specie transport properties
+
+            using Thermo::baseThermo::mu;
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual scalar mu
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual scalar mu
+            (
+                const label speciei,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
 
             //- Dynamic viscosity [kg/m/s]
             virtual tmp<volScalarField> mu
             (
                 const label speciei,
                 const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual tmp<volScalarField> mu
+            (
+                const label speciei,
+                const volScalarField& rho,
+                const volScalarField& e,
                 const volScalarField& T
             ) const;
 };

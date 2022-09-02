@@ -32,13 +32,15 @@ template<class EquationOfState>
 inline Foam::hTabulatedThermo<EquationOfState>::hTabulatedThermo
 (
     const EquationOfState& st,
-    const scalarLookupTable1D& hTable
+    const scalarLookupTable2D& hTable,
+    const scalar Hf
 )
 :
     EquationOfState(st),
     hTable_(hTable),
     Tlow_(min(hTable_.x())),
-    Thigh_(max(hTable_.x()))
+    Thigh_(max(hTable_.x())),
+    Hf_(Hf)
 {}
 
 
@@ -76,7 +78,7 @@ inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::Cp
     const scalar T
 ) const
 {
-    return hTable_.dFdX(T) + EquationOfState::Cv(rho, e, T);
+    return hTable_.dFdY(rho, T);
 }
 
 
@@ -88,7 +90,7 @@ inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::Hs
     const scalar T
 ) const
 {
-    return hTable_.lookup(T) + EquationOfState::H(rho, e, T);
+    return hTable_.lookup(rho, T) + EquationOfState::H(rho, e, T);
 }
 
 
@@ -100,7 +102,7 @@ inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::Hts
     const scalar T
 ) const
 {
-    return hTable_.lookup(T);
+    return hTable_.lookup(rho, T);
 }
 
 
@@ -112,7 +114,7 @@ inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::Ha
     const scalar T
 ) const
 {
-    return Hs(rho, e, T) + Hf();
+    return Hs(rho, e, T) + Hf_;
 }
 
 
@@ -124,15 +126,14 @@ inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::Hta
     const scalar T
 ) const
 {
-    return Hts(rho, e, T) + Hf();
+    return Hts(rho, e, T) + Hf_;
 }
 
 
 template<class EquationOfState>
 inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::Hf() const
 {
-    NotImplemented;
-    return 0.0;
+    return Hf_;
 }
 
 
@@ -148,19 +149,6 @@ template<class EquationOfState>
 inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::S
 (
     const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return Cp(rho, e, T)*log(T/Tstd) + EquationOfState::S(p, rho, T);
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::dGdT
-(
-    const scalar p,
     const scalar T
 ) const
 {
@@ -170,9 +158,8 @@ inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::dGdT
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::dCpdT
+inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::Gstd
 (
-    const scalar p,
     const scalar T
 ) const
 {
@@ -189,20 +176,8 @@ inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::dCpdT
     const scalar T
 ) const
 {
-    return hTable_.d2FdX2(T);
+    return hTable_.d2FdX2(rho, T);
 }
 
-
-template<class EquationOfState>
-inline Foam::scalar Foam::hTabulatedThermo<EquationOfState>::dCvdT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    NotImplemented;
-    return 0.0;
-}
 
 // ************************************************************************* //

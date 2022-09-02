@@ -25,15 +25,7 @@ Class
     Foam::errorEstimators::multicomponent
 
 Description
-    Error is defined by a modified density gradient
-
-    References:
-    \verbatim
-        Zheng, H.W., Shu, C., Chew, Y.T., Qin, N.  (2011).
-        A solution adaptive simulation of compressible multi-fluid flows
-        with general equation of state.
-        International Journal for Numerical Methods in Fluids, 67, 616-637.
-    \endverbatim
+    Error is defined by multiple errorEstimators
 
 SourceFiles
     multicomponent.C

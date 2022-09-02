@@ -1,51 +1,69 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-7-2-2019 Jeff Heylmun:      Added pressureRelaxation terms
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
+
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
+
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 \*---------------------------------------------------------------------------*/
 
 #include "pressureRelaxationODE.H"
+#include "addToRunTimeSelectionTable.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineTypeNameAndDebug(pressureRelaxationODE, 0);
+    addToRunTimeSelectionTable
+    (
+        pressureRelaxationSolver,
+        pressureRelaxationODE,
+        dictionary
+    );
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::pressureRelaxationODE::pressureRelaxationODE(phaseSystem& fluid, pressureRelaxationModelTable& pressureRelaxationModels)
+Foam::pressureRelaxationODE::pressureRelaxationODE
+(
+    phaseSystem& fluid,
+    interfacialPressureModelTable& interfacialPressureModels,
+    pressureRelaxationModelTable& pressureRelaxationModels
+)
 :
+    pressureRelaxationSolver
+    (
+        fluid,
+        interfacialPressureModels,
+        pressureRelaxationModels,
+        true,
+        true
+    ),
     ODESystem(),
-    dict_(fluid.subDict("pressureODECoeffs")),
-    solvePressureRelaxation_(dict_.lookupOrDefault("solveODE", true)),
-    fluid_(fluid),
-    phaseModels_(0),
-    phaseIndicies_(fluid.phases().size(), -1),
-    thermos_(0),
-    interfacialPressureModels_(pressureRelaxationModels.size()),
-    pressureRelaxationModels_(pressureRelaxationModels.size()),
-    phasePairs_(pressureRelaxationModels.size()),
-    nEqns_(0),
-    q_(0),
-    dqdt_(0),
+    dict_(fluid.subDict("pressureSolverCoeffs")),
+    q_(),
+    dqdt_(),
     deltaT_
     (
         IOobject
         (
-            "pressureRelaxationODE",
+            typeName + ":deltaT",
             fluid.mesh().time().timeName(),
             fluid.mesh()
         ),
@@ -53,80 +71,31 @@ Foam::pressureRelaxationODE::pressureRelaxationODE(phaseSystem& fluid, pressureR
         fluid.mesh().time().deltaT()
     )
 {
-    label nFluids = 0;
-    forAll(fluid.phases(), phasei)
-    {
-        if (!fluid.phases()[phasei].slavePressure())
-        {
-            phaseIndicies_[phasei] = nFluids;
-            nFluids++;
-        }
-    }
-    nEqns_ = 2*nFluids; // alpha and internal energy
+    nEqns_ = phaseModels_.size()*2;
     q_.resize(nEqns_);
     dqdt_.resize(nEqns_);
 
-    if (nFluids <= 1)
+    if (pressureRelaxationModels_.size() != interfacialPressureModels_.size())
     {
-        solvePressureRelaxation_ = false;
+        FatalErrorInFunction
+            << "Different number of pressureRelaxationModels and "
+            << "interfacialPressureModels" << endl
+            << abort(FatalError);
     }
-
-    phaseModels_.resize(nFluids);
-    thermos_.resize(nFluids);
-    label i = 0;
-    forAll(fluid.phases(), phasei)
+    forAll(pressureRelaxationModels_, i)
     {
-        const phaseModel& phase = fluid.phases()[phasei];
-        if (!phase.slavePressure())
+        if
+        (
+            &pressureRelaxationModels_[i].pair()
+         != &interfacialPressureModels_[i].pair()
+        )
         {
-            phaseModels_.set
-            (
-                i,
-                &fluid.mesh().lookupObjectRef<phaseModel>
-                (
-                    IOobject::groupName("alpha", phase.name())
-                )
-            );
-            thermos_.set
-            (
-                i,
-                &fluid.mesh().lookupObjectRef<fluidBlastThermo>
-                (
-                    IOobject::groupName(basicThermo::dictName, phase.group())
-                )
-            );
-            i++;
+
+            FatalErrorInFunction
+                << "Mismatched pairs" << endl
+                << abort(FatalError);
         }
     }
-
-    //- Add unorded phase pairs with vaild pressureRelaxation models
-    i = 0;
-
-    forAllIter
-    (
-        pressureRelaxationModelTable,
-        pressureRelaxationModels,
-        pressureRelaxationModelIter
-    )
-    {
-        const phasePair& pair(fluid.phasePairs()[pressureRelaxationModelIter.key()]);
-        const phasePairKey key(pair.first(), pair.second());
-
-        phasePairs_.set(i, new phasePair(pair));
-        interfacialPressureModels_.set
-        (
-            i,
-            &const_cast<interfacialPressureModel&>
-            (
-                fluid.lookupSubModel<interfacialPressureModel>(pair)
-            )
-        );
-        pressureRelaxationModels_.set(i, &pressureRelaxationModelIter()());
-        i++;
-    }
-    phasePairs_.resize(i);
-    interfacialPressureModels_.resize(i);
-    pressureRelaxationModels_.resize(i);
 
     odeSolver_ = ODESolver::New(*this, dict_);
 }
@@ -150,13 +119,19 @@ void Foam::pressureRelaxationODE::derivatives
 ) const
 {
     dqdt = scalarField(nEqns_, 0.0);
-    forAll(phasePairs_, pairi)
+    forAll(thermos_, phasei)
     {
-        const phasePair& pair(phasePairs_[pairi]);
-        const phaseModel& phase1(pair.phase1());
-        const phaseModel& phase2(pair.phase2());
+        thermos_[phasei].rho()[li] =
+            phaseModels_[phasei].alphaRho()[li]
+           /max(phaseModels_[phasei][li], 1e-10);
+    }
+    forAll(interfacialPressureModels_, pairi)
+    {
         const interfacialPressureModel& ip =
             interfacialPressureModels_[pairi];
+        const phasePair& pair(ip.pair());
+        const phaseModel& phase1(pair.phase1());
+        const phaseModel& phase2(pair.phase2());
 
         const label a1i = phaseIndicies_[phase1.index()];
         const label e1i = phaseModels_.size() + a1i;
@@ -173,16 +148,12 @@ void Foam::pressureRelaxationODE::derivatives
             continue;
         }
         const scalar PI = ip.cellPI(li);
-
-        const scalar alphaRho1 = phase1.alphaRho()[li];
-        const scalar alphaRho2 = phase2.alphaRho()[li];
-
         const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
 
         dqdt[a1i] += mu*(p1 - p2);
-        dqdt[e1i] += PI*mu*(p2 - p1)/alphaRho1;
-        dqdt[a2i] -= mu*(p1 - p2);
-        dqdt[e2i] -= PI*mu*(p2 - p1)/alphaRho2;
+        dqdt[e1i] += PI*mu*(p2 - p1)/phase1.alphaRho()[li];
+        dqdt[a2i] += mu*(p2 - p1);
+        dqdt[e2i] += PI*mu*(p1 - p2)/phase2.alphaRho()[li];
     }
 }
 
@@ -198,13 +169,20 @@ void Foam::pressureRelaxationODE::jacobian
 {
     dqdt = 0.0;
     J = scalarSquareMatrix(nEqns_, 0.0);
-    forAll(phasePairs_, pairi)
+    forAll(thermos_, phasei)
     {
-        const phasePair& pair(phasePairs_[pairi]);
-        const phaseModel& phase1(pair.phase1());
-        const phaseModel& phase2(pair.phase2());
+        thermos_[phasei].rho()[li] =
+            phaseModels_[phasei].alphaRho()[li]
+           /max(phaseModels_[phasei][li], 1e-10);
+    }
+    forAll(interfacialPressureModels_, pairi)
+    {
         const interfacialPressureModel& ip =
             interfacialPressureModels_[pairi];
+        const phasePair& pair(ip.pair());
+        const phaseModel& phase1(pair.phase1());
+        const phaseModel& phase2(pair.phase2());
+
         const label a1i = phaseIndicies_[phase1.index()];
         const label e1i = phaseModels_.size() + a1i;
         const label a2i = phaseIndicies_[phase2.index()];
@@ -212,61 +190,52 @@ void Foam::pressureRelaxationODE::jacobian
         const scalar p1 = thermos_[a1i].cellpRhoT(li);
         const scalar p2 = thermos_[a2i].cellpRhoT(li);
 
-        const scalar& rho1 = phase1.rho()[li];
-        const scalar& rho2 = phase2.rho()[li];
-
-        if
-        (
-            phase1.alphaRho()[li] < 1e-10
-         || phase2.alphaRho()[li] < 1e-10
-        )
+        if (phase1[li] < 1e-10 || phase2[li] < 1e-10)
         {
             continue;
         }
-        const scalar PI = ip.cellPI(li);
 
         const scalar alphaRho1 = phase1.alphaRho()[li];
         const scalar alphaRho2 = phase2.alphaRho()[li];
 
-        const scalar dPidAlpha1 = ip.celldPIdAlpha(li, phase1.index());
-        const scalar dPidAlpha2 = ip.celldPIdAlpha(li, phase2.index());
-        const scalar dPide1 = ip.celldPIde(li, phase1.index());
-        const scalar dPide2 = ip.celldPIde(li, phase2.index());
+        const scalar dPIdAlpha1 = ip.celldPIdAlpha(li, phase1.index());
+        const scalar dPIdAlpha2 = ip.celldPIdAlpha(li, phase2.index());
+        const scalar dPIde1 = ip.celldPIde(li, phase1.index());
+        const scalar dPIde2 = ip.celldPIde(li, phase2.index());
         const scalar dp1de1 = thermos_[a1i].celldpde(li);
         const scalar dp2de2 = thermos_[a2i].celldpde(li);
 
+        const scalar PI = ip.cellPI(li);
         const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
 
         dqdt[a1i] += mu*(p1 - p2);
         dqdt[e1i] += PI*mu*(p2 - p1)/alphaRho1;
-        dqdt[a2i] -= mu*(p1 - p2);
-        dqdt[e2i] -= PI*mu*(p2 - p1)/alphaRho2;
+        dqdt[a2i] += mu*(p2 - p1);
+        dqdt[e2i] += PI*mu*(p1 - p2)/alphaRho2;
 
-        J[a1i][a1i] += 0.0;
-        J[e1i][a1i] +=
-            (dPidAlpha1 - rho1*PI/alphaRho1)*mu*(p2 - p1)/alphaRho1;
+//         J[a1i][a1i] += 0.0;
+        J[e1i][a1i] += mu*dPIdAlpha1*(p2 - p1)/alphaRho1;
 
-        J[a1i][a2i] += 0.0;
-        J[e1i][a2i] += dPidAlpha2*mu*(p2 - p1)/alphaRho1;
+//         J[a1i][a2i] += 0.0;
+        J[e1i][a2i] += mu*dPIdAlpha2*(p2 - p1)/alphaRho1;
 
-        J[a1i][e1i] += mu*dPide1;
-        J[e1i][e1i] += mu/alphaRho1*((p2 - p1)*dPide1 - PI*dp1de1);
+        J[a1i][e1i] += mu*dp1de1;
+        J[e1i][e1i] += mu*(dPIde1*(p2 - p1) - PI*dp1de1)/alphaRho1;
 
-        J[a1i][e2i] += -mu*dPide2;
-        J[e1i][e2i] += mu/alphaRho1*((p2 - p1)*dPide2 + PI*dp2de2);
+        J[a1i][e2i] -= mu*dp2de2;
+        J[e1i][e2i] += mu*(dPIde2*(p2 - p1) + PI*dp2de2)/alphaRho1;
 
-        J[a2i][a2i] -= 0.0;
-        J[e2i][a2i] -=
-            (dPidAlpha2 - rho2*PI/alphaRho2)*mu*(p2 - p1)/alphaRho2;
+//         J[a2i][a2i] -= 0.0;
+        J[e2i][a2i] += mu*dPIdAlpha2*(p1 - p2)/alphaRho2;
 
-        J[a2i][a1i] -= 0.0;
-        J[e2i][a1i] -= dPidAlpha1*mu*(p2 - p1)/alphaRho2;
+//         J[a2i][a1i] -= 0.0;
+        J[e2i][a1i] += dPIdAlpha1*mu*(p1 - p2)/alphaRho2;
 
-        J[a2i][e2i] -= mu*dPide2;
-        J[e2i][e2i] -= mu/alphaRho2*((p2 - p1)*dPide2 + PI*dp2de2);
+        J[a2i][e2i] += mu*dp2de2;
+        J[e2i][e2i] += mu*(dPIde2*(p1 - p2) - PI*dp2de2)/alphaRho2;
 
-        J[a2i][e1i] -= -mu*dPide1;
-        J[e2i][e1i] -= mu/alphaRho2*((p2 - p1)*dPide1 - PI*dp1de1);
+        J[a2i][e1i] -= mu*dp1de1;
+        J[e2i][e1i] += mu*(dPIde1*(p1 - p2) + PI*dp1de1)/alphaRho2;
     }
 }
 
@@ -281,7 +250,7 @@ Foam::scalar Foam::pressureRelaxationODE::solve
         forAll(phaseModels_, phasei)
         {
             const phaseModel& phase = phaseModels_[phasei];
-            const label ai = phaseIndicies_[phase.index()];
+            const label ai = phaseIndicies_[phasei];
             const label ei = phaseModels_.size() + ai;
             q_[ai] = max(min(phase[celli], 1.0), 0.0);
             q_[ei] = phase.he()[celli];
@@ -306,7 +275,10 @@ Foam::scalar Foam::pressureRelaxationODE::solve
                 phase.he()[celli] = q_[ei];
             }
         }
-
+    }
+    forAll(thermos_, phasei)
+    {
+        thermos_[phasei].correct();
     }
     return min(deltaT_).value();
 }

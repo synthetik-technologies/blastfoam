@@ -109,7 +109,7 @@ c4
 
         pMin            101360;  // Above this pressure activation is                                    // "turned on" [Pa]
 
-        points     ((-1 0.15 0.5));     // Detonation points
+        points     ((-1 0.5 0.5));     // Detonation points
         vDet       7850;            // Detonation velocity [m/s]
 
         ALow        6.25e10;

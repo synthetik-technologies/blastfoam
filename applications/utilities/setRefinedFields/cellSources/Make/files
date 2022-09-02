@@ -1,9 +1,0 @@
-cylinderListToCell/cylinderListToCell.C
-sphereListToCell/sphereListToCell.C
-
-massToCell/massToCell.C
-sphericalMassToCell/sphericalMassToCell.C
-cylindericalMassToCell/cylindericalMassToCell.C
-boxMassToCell/boxMassToCell.C
-
-LIB = $(BLAST_LIBBIN)/libcellSources

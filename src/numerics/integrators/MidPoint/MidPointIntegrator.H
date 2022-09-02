@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -53,6 +53,19 @@ class MidPointIntegrator
 :
     public Integrator<Type>
 {
+    typedef Equation<Type> equationType;
+
+    //- Recursive integration
+    virtual Type integrate_
+    (
+        const Type& Q,
+        const scalar x0,
+        const scalar x1,
+        const scalar tol,
+        const label li
+    ) const;
+
+
 public:
 
     //- Runtime type information
@@ -63,8 +76,15 @@ public:
         //- Construct for given Equation
         MidPointIntegrator
         (
-            const Equation<Type>& eqn,
+            const equationType& eqn,
             const dictionary& dict
+        );
+
+        //- Construct for given Equation
+        MidPointIntegrator
+        (
+            const equationType& eqn,
+            const integrator& inter
         );
 
         //- Disallow default bitwise copy construction
@@ -78,7 +98,7 @@ public:
 
     // Member Functions
 
-        //- Solve the root
+        //- Integrate the equation
         virtual Type integrate
         (
             const scalar x0,
