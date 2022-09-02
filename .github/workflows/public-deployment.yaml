@@ -39,13 +39,6 @@ jobs:
     name: Deploy Docker Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.SYN_BOT_READ_WRITE }}
-          ref: master
-          repository: ${{ inputs.prod_repo }}
-
       - name: Login to GitHub Registry
         uses: docker/login-action@v2
         with:
@@ -61,6 +54,9 @@ jobs:
 
       - name: Construct Dev Tag
         run: echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ inputs.tag }}" >> $GITHUB_ENV
+
+      - name: Pull Docker Image
+        run: docker pull ${{ env.DEV_IMAGE }}
 
       - name: Create Image Tags
         run: |
