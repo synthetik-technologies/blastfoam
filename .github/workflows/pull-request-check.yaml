@@ -46,7 +46,7 @@ jobs:
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 31
 
-  install-and-validate:
+  run-validation-tests:
     strategy:
       fail-fast: false
       matrix:
