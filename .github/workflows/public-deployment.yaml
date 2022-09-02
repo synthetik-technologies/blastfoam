@@ -66,15 +66,15 @@ jobs:
         run: |
           echo "GHCR_PROD_IMAGE=ghcr.io/${{ inputs.prod_repo }}:${{ inputs.tag }}" >> $GITHUB_ENV
           echo "GHCR_PROD_LATEST_IMAGE=ghcr.io/${{ inputs.prod_repo }}:latest" >> $GITHUB_ENV
-          echo "DH_PROD_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
-          echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:${{ inputs.tag }}" >> $GITHUB_ENV
+          echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
+          echo "DH_PROD_IMAGE=synthetik/blastfoam:${{ inputs.tag }}" >> $GITHUB_ENV
 
       - name: Tag Images
         run: |
-          docker tag blastfoam:latest ${{ env.GHCR_PROD_IMAGE }}
-          docker tag blastfoam:latest ${{ env.GHCR_PROD_LATEST_IMAGE }}
-          docker tag blastfoam:latest ${{ env.DH_PROD_IMAGE }}
-          docker tag blastfoam:latest ${{ env.DH_PROD_LATEST_IMAGE }}
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_IMAGE }}
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_LATEST_IMAGE }}
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_IMAGE }}
+          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_LATEST_IMAGE }}
 
       - name: Push Images
         run: |
