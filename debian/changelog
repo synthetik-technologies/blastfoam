@@ -1,4 +1,4 @@
-blastfoam (5.2.0-staging.10) UNRELEASED; urgency=low
+blastfoam (6.0.0-staging.1) UNRELEASED; urgency=low
 
   [ Ubuntu ]
   * Initial release. Closes: #nnnn
@@ -49,4 +49,7 @@ blastfoam (5.2.0-staging.10) UNRELEASED; urgency=low
   [  ]
   * Automated Release
 
- --  <runner@fv-az550-692.qithejtrr10ubpvvucuf4evp0f.bx.internal.cloudapp.net>  Fri, 02 Sep 2022 18:34:37 +0000
+  [  ]
+  * Automated Release
+
+ --  <runner@fv-az264-119.ca02foy5wcnuvlrvrz2wi3p2og.dx.internal.cloudapp.net>  Fri, 02 Sep 2022 19:53:37 +0000
