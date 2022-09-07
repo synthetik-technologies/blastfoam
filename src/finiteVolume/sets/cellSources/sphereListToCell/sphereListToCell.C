@@ -97,7 +97,7 @@ Foam::sphereListToCell::sphereListToCell
     (
         dict.found("radii")
       ? dict.lookup("radii")
-      : List<scalar>(readScalar(dict.lookup("radius")), centres_.size())
+      : List<scalar>(centres_.size(), readScalar(dict.lookup("radius")))
     )
 {}
 
