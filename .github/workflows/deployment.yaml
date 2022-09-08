@@ -26,7 +26,7 @@ jobs:
         id: version
         uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.SYN_BOT_READ_WRITE }}
 
   build:
     runs-on: ["self-hosted", "deb", "openfoam"]
