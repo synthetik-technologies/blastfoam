@@ -249,6 +249,10 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         thermo.he() = thermo.calce(thermo.p());
         thermo.correct();
     }
+    else
+    {
+        thermo.p() = p;
+    }
 }
 
 // ************************************************************************* //

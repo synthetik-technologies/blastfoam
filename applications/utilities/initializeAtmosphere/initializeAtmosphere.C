@@ -191,8 +191,6 @@ int main(int argc, char *argv[])
             refSet++;
         }
 
-        Info<<atmosphereProperties<<endl;
-
         if (refSet < 2)
         {
             FatalErrorInFunction
