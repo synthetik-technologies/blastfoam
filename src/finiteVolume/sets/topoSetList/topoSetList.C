@@ -261,6 +261,14 @@ void Foam::topoSetList::extractSelectedFaces
         {
             const label patchi =
                 mesh.boundaryMesh().findIndex(patchNames[i]);
+            if (patchi < 0)
+            {
+                FatalErrorInFunction
+                    << patchNames[i] << " is not a valid patch" << nl
+                    << "Valid patches are:" << nl
+                    << mesh.boundaryMesh().names() << endl
+                    << abort(FatalError);
+            }
             const polyPatch& pp = mesh.boundaryMesh()[patchi];
 
             forAll(pp, fi)
