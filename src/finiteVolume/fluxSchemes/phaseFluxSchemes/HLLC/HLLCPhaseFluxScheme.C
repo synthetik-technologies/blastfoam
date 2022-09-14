@@ -227,8 +227,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     else if (SStar > 0)
     {
         alpha = alphaOwn;
-        rho = rhoOwn*(SOwn - UvOwn)/(SOwn - SStar);
-        phi = SStar;
+        rho = rhoOwn;
+        phi = SStar*(SOwn - UvOwn)/(SOwn - SStar);
         U = (UOwn - UvOwn*normal) + SStar*normal;
         E = EOwn + (pStar*SStar - pOwn*UvOwn)/(rhoOwn*(SOwn - UvOwn));
         p = pStar;
@@ -236,8 +236,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     else if (SNei > 0)
     {
         alpha = alphaNei;
-        rho = rhoNei*(SNei - UvNei)/(SNei - SStar);
-        phi = SStar;
+        rho = rhoNei;
+        phi = SStar*(SNei - UvNei)/(SNei - SStar);
         U = (UNei - UvNei*normal) + SStar*normal;
         E = ENei + (pStar*SStar - pNei*UvNei)/(rhoNei*(SNei - UvNei));
         p = pStar;
@@ -351,27 +351,27 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     {
         scalar f = (SOwn - UvOwn)/(SOwn - SStar);
         alpha = alphaOwn;
-        rho = rhoOwn*f;
-        phi = SStar;
+        rho = rhoOwn;
+        phi = SStar*f;
         U = (UOwn - UvOwn*normal) + SStar*normal;
         E = EOwn + (pStar*SStar - pOwn*UvOwn)/(rhoOwn*(SOwn - UvOwn));
         p = pStar;
 
         alphas = alphasOwn;
-        rhos = rhosOwn*f;
+        rhos = rhosOwn;
     }
     else if (SNei > 0)
     {
         scalar f = (SNei - UvNei)/(SNei - SStar);
         alpha = alphaNei;
-        rho = rhoNei*f;
-        phi = SStar;
+        rho = rhoNei;
+        phi = SStar*f;
         U = (UNei - UvNei*normal) + SStar*normal;
         E = ENei + (pStar*SStar - pNei*UvNei)/(rhoNei*(SNei - UvNei));
         p = pStar;
 
         alphas = alphasNei;
-        rhos = rhosNei*f;
+        rhos = rhosNei;
     }
     else
     {
@@ -412,25 +412,6 @@ Foam::scalar Foam::phaseFluxSchemes::HLLC::interpolate
     scalar SOwn = getValue(facei, patchi, SOwn_());
     scalar SStar = getValue(facei, patchi, SStar_());
 
-    if (rho)
-    {
-        scalar SNei = getValue(facei, patchi, SNei_);
-        scalar UvOwn = getValue(facei, patchi, UvOwn_);
-        scalar UvNei = getValue(facei, patchi, UvNei_);
-        if (SOwn > 0)
-        {
-            return fOwn;
-        }
-        else if (SStar > 0)
-        {
-            return fOwn*(SOwn - UvOwn)/(SOwn - SStar);
-        }
-        else if (SNei > 0)
-        {
-            return fNei*(SNei - UvNei)/(SNei - SStar);
-        }
-        return fNei;
-    }
     if (SOwn > 0 || SStar > 0)
     {
         return fOwn;
