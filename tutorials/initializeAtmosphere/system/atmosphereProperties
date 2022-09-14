@@ -27,7 +27,7 @@ hydrostaticCoeffs
 
 tableCoeffs
 {
-    hRef            -10;        // Minimum point where h = 0
+    hRef            0;          // Use (mesh.C() & g)/mag(g)
     correct         false;      // Use hydrostatic initialization after
                                 // setting table values
     pTable
