@@ -67,9 +67,6 @@ incrementalSolid::incrementalSolid
     solidModel(type, mesh, nonLinear, incremental(), isSolid)
 {
     DDisRequired(type);
-
-    // For consistent restarts, we will calculate the gradient field
-    mechanical().grad(DD(), gradDD());
 }
 
 

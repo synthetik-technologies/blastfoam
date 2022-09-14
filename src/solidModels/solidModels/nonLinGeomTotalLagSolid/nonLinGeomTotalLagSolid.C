@@ -132,10 +132,10 @@ bool nonLinGeomTotalLagSolid::evolve()
         // Update impKf to improve convergence
         // Note: impK and rImpK are not updated as they are used for traction
         // boundaries
-        // if (iCorr % 10 == 0)
-        // {
-        //     impKf_ = mechanical().impKf();
-        // }
+        if (iCorr % 10 == 0)
+        {
+            impKf_ = mechanical().impKf();
+        }
     }
     while
     (
