@@ -51,6 +51,7 @@ Foam::reactionRates::pressureBased::pressureBased
     pScale_(dict.lookup<scalar>("pScale")),
     pExponent_("pExponent", dimless, dict),
     pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict),
+    pMin_("pMin", dimPressure, dict.lookupOrDefault<scalar>("pMin", 0.0)),
     offset_("offset", dimLength/dimTime, dict.lookupOrDefault<scalar>("offset", 0.0))
 {}
 
@@ -70,6 +71,10 @@ Foam::scalar Foam::reactionRates::pressureBased::k
     const label
 ) const
 {
+    if (p < pMin_.value())
+    {
+        return 0.0;
+    }
     scalar K = pCoeff_.value();
     if (mag(pExponent_.value()) > vSmall)
     {
@@ -111,7 +116,7 @@ Foam::tmp<Foam::volScalarField> Foam::reactionRates::pressureBased::k
     {
         K += offset_;
     }
-    return tmpk;
+    return tmpk*pos(p - pMin_);
 }
 
 // ************************************************************************* //

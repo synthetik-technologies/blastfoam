@@ -63,6 +63,9 @@ class pressureBased
     //- Pressure coefficient
     dimensionedScalar pCoeff_;
 
+    //- Minimum pressure
+    dimensionedScalar pMin_;
+
     //- Rate offset
     dimensionedScalar offset_;
 
