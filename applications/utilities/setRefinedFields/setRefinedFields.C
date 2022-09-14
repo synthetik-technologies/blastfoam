@@ -663,6 +663,11 @@ int main(int argc, char *argv[])
         "noHistory",
         "Do not write the history"
     );
+    argList::addBoolOption
+    (
+        "points0",
+        "Write the points0 field for moving meshes"
+    );
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -674,6 +679,8 @@ int main(int argc, char *argv[])
     instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
 
     #include "createNamedMesh.H"
+
+    const word oldFacesInstance = mesh.facesInstance();
 
     dictionary setFieldsDict(systemDict("setFieldsDict", args, mesh));
 
@@ -1367,32 +1374,35 @@ int main(int argc, char *argv[])
         }
         iter++;
     }
+
+    // Transfer zones to the mesh
     topoSets.transferZones(false);
 
+    // Write sets
     bool writeMesh = topoSets.writeSets();
 
-    if (refine && !debug)
+    // Write mesh and cell levels
+    if (overwrite)
     {
-        // Write mesh and cell levels
-        if (overwrite)
-        {
-            mesh.setInstance(runTime.constant());
-        }
+        mesh.setInstance(oldFacesInstance);
+    }
 
-        //- Write points0 field to time directory
+    // Write points0 field to time directory
+    if (args.optionFound("points0"))
+    {
+        writeMesh = true;
         pointIOField points0
         (
             IOobject
             (
                 "points0",
-                overwrite ? runTime.constant() : runTime.timeName(),
+                mesh.facesInstance(),
                 polyMesh::meshSubDir,
                 mesh
             ),
             mesh.points()
         );
         points0.write();
-        writeMesh = true;
     }
 
     if (noHistory)
@@ -1405,7 +1415,7 @@ int main(int argc, char *argv[])
     {
         runTime.write();
     }
-    if (writeMesh)
+    if (refine || writeMesh)
     {
         mesh.write();
     }

@@ -488,7 +488,6 @@ void calcMapAndR
         // Map from the source mesh to the target mesh
         // Keep track of the maximum volume (weight) for extended cell
         scalar maxV = -great;
-        label eCellI = -1;
         scalar sumV = 0.0;
         cellInfoList& infos = cellMap[celli];
         if (r < maxR || maxR < 0)
@@ -522,7 +521,6 @@ void calcMapAndR
                         if (V > maxV)
                         {
                             maxV = V;
-                            eCellI = cj;
                         }
                     }
                 }
@@ -692,10 +690,6 @@ void refine
     const wordList& additionalFieldNames
 )
 {
-    labelList cellMap(targetMesh.nCells(), -1);
-    labelList extendedCellMap(targetMesh.nCells(), -1);
-    tensorField R(targetMesh.nCells(), tensor::I);
-
     autoPtr<IOdictionary> refineDictPtr;
     {
         IOobject dynamicMeshDictIO
@@ -899,6 +893,11 @@ int main(int argc, char *argv[])
     (
         "tets",
         "Use cell tet decomposition"
+    );
+    argList::addBoolOption
+    (
+        "points0",
+        "Write points0 field for moving meshes"
     );
     #include "addRegionOption.H"
 
@@ -1202,6 +1201,24 @@ int main(int argc, char *argv[])
             }
         }
     }
+
+    // Write points0 field to time directory
+    if (args.optionFound("points0"))
+    {
+        Info<< "Writing points0" << endl;
+        pointIOField
+        (
+            IOobject
+            (
+                "points0",
+                targetMesh.facesInstance(),
+                polyMesh::meshSubDir,
+                targetMesh
+            ),
+            targetMesh.points()
+        ).write();
+    }
+
     Info<< nl << "Finished" << endl
         << "ExecutionTime = " << targetRunTime.elapsedCpuTime() << " s"
         << "  ClockTime = " << targetRunTime.elapsedClockTime() << " s" << nl
