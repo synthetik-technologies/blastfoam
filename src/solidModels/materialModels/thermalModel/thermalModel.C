@@ -99,12 +99,12 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
             (
                 fluidBlastThermo::New
                 (
-                    1,
                     mesh,
                     thermophysicalProperties.subDict
                     (
                         subMeshes[0].subMesh().name()
-                    )
+                    ),
+                    word::null
                 ).ptr()
             );
         }
@@ -147,12 +147,12 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
                     i,
                     fluidBlastThermo::New
                     (
-                        1,
                         subMeshes[i].subMesh(),
                         thermophysicalProperties.subDict
                         (
                             subMeshes[i].subMesh().name()
-                        )
+                        ),
+                        word::null
                     ).ptr()
                 );
             }
@@ -176,9 +176,9 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
         (
             fluidBlastThermo::New
             (
-                1,
                 mesh,
-                thermophysicalProperties
+                thermophysicalProperties,
+                word::null
             ).ptr()
         );
     }
