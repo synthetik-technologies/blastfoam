@@ -171,6 +171,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
 :
     fluidBlastThermo(mesh, dict, phaseName),
     phases_(dict.lookup("phases")),
+    truePhases_(phases_),
     volumeFractions_(phases_.size()),
     rhos_(phases_.size()),
     thermos_(phases_.size()),
@@ -248,7 +249,8 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
 
     forAll(phases_, phasei)
     {
-        const word& phaseIName = phases_[phasei];
+        truePhases_[phasei] = IOobject::groupName(phases_[phasei], phaseName);
+        const word& phaseIName = truePhases_[phasei];
         volumeFractions_.set
         (
             phasei,
@@ -256,7 +258,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
             (
                 IOobject
                 (
-                    IOobject::groupName("alpha", phases_[phasei]),
+                    IOobject::groupName("alpha", phaseIName),
                     mesh.time().timeName(),
                     mesh,
                     IOobject::MUST_READ,
@@ -272,7 +274,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
             (
                 IOobject
                 (
-                    IOobject::groupName("rho", phases_[phasei]),
+                    IOobject::groupName("rho", phaseIName),
                     mesh.time().timeName(),
                     mesh,
                     IOobject::MUST_READ,
@@ -287,13 +289,13 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
             phaseFluidBlastThermo::New
             (
                 mesh,
-                dict.subDict(phaseIName),
+                dict.subDict(phases_[phasei]),
                 phaseIName,
                 phaseName
             ).ptr()
         );
 
-        thermos_[phasei].read(dict.subDict(phaseIName));
+        thermos_[phasei].read(dict.subDict(phases_[phasei]));
         this->residualAlpha_ =
             max(thermos_[phasei].residualAlpha(), this->residualAlpha_);
         this->residualRho_ =
@@ -343,7 +345,7 @@ bool Foam::multiphaseFluidBlastThermo::read()
 {
     forAll(thermos_, phasei)
     {
-        thermos_[phasei].read(this->subDict(thermos_[phasei].phaseName()));
+        thermos_[phasei].read(this->subDict(phases_[phasei]));
         this->residualAlpha_ =
             max(this->residualAlpha_, thermos_[phasei].residualAlpha());
         this->residualRho_ =
@@ -399,6 +401,69 @@ void Foam::multiphaseFluidBlastThermo::updateRho(const volScalarField& p)
         rho_ += volumeFractions_[phasei]*thermos_[phasei].rho();
     }
     normalise(rho_);
+}
+
+
+bool Foam::multiphaseFluidBlastThermo::contains(const word& specieName) const
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(specieName))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Foam::multiphaseFluidBlastThermo::addDelta
+(
+    const word& name,
+    tmp<volScalarField>& delta
+)
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(name))
+        {
+            thermos_[i].addDelta(name, delta);
+            return;
+        }
+    }
+}
+
+
+void Foam::multiphaseFluidBlastThermo::addDelta
+(
+    const word& name,
+    const volScalarField::Internal& delta
+)
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(name))
+        {
+            thermos_[i].addDelta(name, delta);
+            return;
+        }
+    }
+}
+
+
+void Foam::multiphaseFluidBlastThermo::addSource
+(
+    const word& name,
+    tmp<fvScalarMatrix>& source
+)
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(name))
+        {
+            thermos_[i].addSource(name, source);
+            return;
+        }
+    }
 }
 
 

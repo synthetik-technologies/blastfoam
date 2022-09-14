@@ -95,7 +95,7 @@ public:
         const phaseSystem& fluid,
         const word& phaseName,
         const label index,
-        const label nPhases = 1
+        const word& thermoType = word::null
     );
 
 

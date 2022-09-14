@@ -212,6 +212,21 @@ public:
             //- Recompute the density
             virtual void updateRho(const volScalarField&);
 
+            //- Does the mixture include this specie?
+            virtual bool contains(const word& specieName) const;
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, tmp<volScalarField>& delta);
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, const volScalarField::Internal& delta);
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addSource(const word& name, tmp<fvScalarMatrix>& source);
+
 
         //- Thermodynamic and transport functions
 

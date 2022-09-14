@@ -176,29 +176,31 @@ void Foam::phaseFluxScheme::update
 {
     createSavedFields();
 
+    const word phaseName(U.group());
+
     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
     (
-        ReconstructionScheme<scalar>::New(alpha, "alpha")
+        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName)
     );
     autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        ReconstructionScheme<scalar>::New(rho, "rho")
+        ReconstructionScheme<scalar>::New(rho, "rho", phaseName)
     );
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U", phaseName)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e", phaseName)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p", phaseName)
     );
     autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound")
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName)
     );
 
     tmp<surfaceScalarField> talphaOwn;
@@ -531,14 +533,21 @@ void Foam::phaseFluxScheme::update
 
     forAll(alphas, phasei)
     {
-        const word phaseNamei(alphas[phasei].group());
+        const word phasePhaseName
+        (
+            IOobject::groupName
+            (
+                IOobject::group(alphas[phasei].member()),
+                phaseName
+            )
+        );
         autoPtr<ReconstructionScheme<scalar>> alphaLimiter
         (
             ReconstructionScheme<scalar>::New
             (
                 alphas[phasei],
                 "alpha",
-                phaseNamei
+                phasePhaseName
             )
         );
         tmp<surfaceScalarField> talphaOwn;
@@ -555,7 +564,7 @@ void Foam::phaseFluxScheme::update
             (
                 rhos[phasei],
                 "rho",
-                phaseNamei
+                phasePhaseName
             )
         );
         tmp<surfaceScalarField> trhoIOwn;

@@ -159,6 +159,34 @@ public:
             ) const;
 
 
+        // Mass Transfer
+
+            //- Does the mixture include this specie?
+            inline bool contains(const word& specieName) const
+            {
+                return multicomponentBlastThermo::contains(specieName);
+            }
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, tmp<volScalarField>& delta)
+            {
+                multicomponentBlastThermo::addDelta(name, delta);
+            }
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, const volScalarField::Internal& delta)
+            {
+                multicomponentBlastThermo::addDelta(name, delta);
+            }
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addSource(const word& name, tmp<fvScalarMatrix>& source)
+            {
+                multicomponentBlastThermo::addSource(name, source);
+            }
+
     //- Thermodynamic and transport functions
 
         //- Calculate density

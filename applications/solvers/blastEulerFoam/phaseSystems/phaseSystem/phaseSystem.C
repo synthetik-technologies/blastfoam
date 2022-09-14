@@ -1162,39 +1162,29 @@ void Foam::phaseSystem::update()
         forAll(species, i)
         {
             const word& specieName(species[i]);
-            if (isA<multicomponentBlastThermo>(dispersedThermo))
+            if (dispersedThermo.contains(specieName))
             {
-                multicomponentBlastThermo& thermo =
-                    dynamicCast<multicomponentBlastThermo>(dispersedThermo);
-                if (thermo.contains(specieName))
-                {
-                    tmp<volScalarField> YmDot
-                    (
-                        massTransferIter()->dispersedYi(specieName)*mDot
-                    );
-                    thermo.addDelta
-                    (
-                        specieName,
-                        YmDot
-                    );
-                }
+                tmp<volScalarField> YmDot
+                (
+                    massTransferIter()->dispersedYi(specieName)*mDot
+                );
+                dispersedThermo.addDelta
+                (
+                    specieName,
+                    YmDot
+                );
             }
-            if (isA<multicomponentBlastThermo>(continuousThermo))
+            if (continuousThermo.contains(specieName))
             {
-                multicomponentBlastThermo& thermo =
-                    dynamicCast<multicomponentBlastThermo>(continuousThermo);
-                if (thermo.contains(specieName))
-                {
-                    tmp<volScalarField> YmDot
-                    (
-                        -massTransferIter()->continuousYi(specieName)*mDot
-                    );
-                    thermo.addDelta
-                    (
-                        specieName,
-                        YmDot
-                    );
-                }
+                tmp<volScalarField> YmDot
+                (
+                    -massTransferIter()->continuousYi(specieName)*mDot
+                );
+                continuousThermo.addDelta
+                (
+                    specieName,
+                    YmDot
+                );
             }
         }
     }

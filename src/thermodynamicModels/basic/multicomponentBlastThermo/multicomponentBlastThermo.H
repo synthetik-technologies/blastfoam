@@ -66,6 +66,8 @@ class multicomponentBlastThermo
     //- Name of master thermo class
     word masterName_;
 
+    //- Are the mass fractions normalized
+    bool normalise_;
 
 protected:
 //- Protected data
@@ -181,6 +183,11 @@ public:
         //- Post update
         virtual void postUpdate();
 
+        //- Does the mixture include this specie?
+        inline bool contains(const word& specieName) const
+        {
+            return basicSpecieMixture::contains(specieName);
+        }
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
         virtual void addDelta(const word& name, tmp<volScalarField>& delta);
@@ -195,6 +202,18 @@ public:
 
 
      // Access
+
+        //- Return if the composition is normalised
+        bool normalise() const
+        {
+            return normalise_;
+        }
+
+        //- Access if the composition is normalised
+        bool& normalise()
+        {
+            return normalise_;
+        }
 
         //- Return the composition of the multi-component mixture
         virtual basicSpecieBlastMixture& composition() = 0;

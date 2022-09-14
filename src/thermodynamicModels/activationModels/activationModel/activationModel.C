@@ -233,6 +233,7 @@ Foam::activationModel::activationModel
         IOobject::groupName("activationModel", phaseName),
         mesh
     ),
+    phaseName_(phaseName),
     lambda_
     (
         IOobject
@@ -330,7 +331,7 @@ Foam::activationModel::readDetonationPoints
     {
         IOobject detPointsHeader
         (
-            IOobject::groupName("detonationPoints", alpha.group()),
+            IOobject::groupName("detonationPoints", phaseName_),
             alpha.mesh().time().timeName(),
             "uniform",
             alpha.mesh()
@@ -406,17 +407,16 @@ Foam::activationModel::readDetonationPoints
 
 void Foam::activationModel::initializeModels()
 {
-    word phaseName = lambda_.group();
     word alphaRhoName =
-        phaseName == word::null
+        phaseName_ == word::null
       ? "rho"
-      : IOobject::groupName("alphaRho", phaseName);
+      : IOobject::groupName("alphaRho", phaseName_);
     word alphaRhoPhiName =
-        phaseName == word::null
+        phaseName_ == word::null
       ? "rhoPhi"
-      : IOobject::groupName("alphaRhoPhi", phaseName);
+      : IOobject::groupName("alphaRhoPhi", phaseName_);
 
-    if (lambda_.mesh().foundObject<volScalarField>(alphaRhoName))
+    // if (lambda_.mesh().foundObject<volScalarField>(alphaRhoName))
     {
         alphaRhoPtr_.set
         (
@@ -431,7 +431,7 @@ void Foam::activationModel::initializeModels()
             detonationPoints_[i].check(alphaRhoPtr_());
         }
     }
-    if (lambda_.mesh().foundObject<surfaceScalarField>(alphaRhoPhiName))
+    // if (lambda_.mesh().foundObject<surfaceScalarField>(alphaRhoPhiName))
     {
         alphaRhoPhiPtr_.set
         (

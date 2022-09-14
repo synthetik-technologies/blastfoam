@@ -145,9 +145,9 @@ public:
         //- Standard selection based on fvMesh
         static autoPtr<fluidBlastThermo> New
         (
-            const label,
             const fvMesh&,
             const dictionary&,
+            const word& thermoType,
             const word& phaseName = word::null
         );
 

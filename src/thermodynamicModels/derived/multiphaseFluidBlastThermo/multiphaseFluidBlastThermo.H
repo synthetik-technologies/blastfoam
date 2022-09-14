@@ -64,10 +64,14 @@ class multiphaseFluidBlastThermo
 :
     public fluidBlastThermo
 {
-// Private data
+protected:
+// Protected data
 
         //- Names of phases
         wordList phases_;
+
+        //- Names of actual phases (phaseName.masterPhaseName)
+        wordList truePhases_;
 
         //- Volume fraction of phases
         PtrList<volScalarField> volumeFractions_;
@@ -179,7 +183,6 @@ class multiphaseFluidBlastThermo
             }
         }
 
-
 public:
 
     TypeName("multiphaseFluid");
@@ -231,6 +234,12 @@ public:
         }
 
     // Access functions
+
+        //- Return the phase names
+        const wordList& phaseNames() const
+        {
+            return phases_;
+        }
 
         //- Non-const access to volume fractions
         PtrList<volScalarField>& volumeFractions()
@@ -303,6 +312,21 @@ public:
             {
                 return thermos_[0].temperatureBased();
             }
+
+            //- Does the mixture include this specie?
+            virtual bool contains(const word& specieName) const;
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, tmp<volScalarField>& delta);
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, const volScalarField::Internal& delta);
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addSource(const word& name, tmp<fvScalarMatrix>& source);
 
 
         //- Thermodynamic and transport functions

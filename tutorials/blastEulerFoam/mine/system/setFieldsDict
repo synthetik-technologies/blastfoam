@@ -21,8 +21,8 @@ defaultFieldValues
 (
     volScalarFieldValue p               101298
     volScalarFieldValue alpha.particles 0
-    volScalarFieldValue alpha.c4        0
-    volScalarFieldValue alpha.air       1
+    volScalarFieldValue alpha.c4.gas    0
+    volScalarFieldValue alpha.air.gas   1
 );
 
 regions
@@ -35,6 +35,8 @@ regions
         fieldValues
         (
             volScalarFieldValue alpha.particles 0.55
+            volScalarFieldValue alpha.air.gas   0.45
+            volScalarFieldValue alpha.c4.gas    0
         );
     }
     sphereToCell
@@ -53,8 +55,8 @@ regions
         fieldValues
         (
             volScalarFieldValue alpha.particles 0
-            volScalarFieldValue alpha.c4        1
-            volScalarFieldValue alpha.air       0
+            volScalarFieldValue alpha.c4.gas    1
+            volScalarFieldValue alpha.air.gas   0
         );
     }
 );

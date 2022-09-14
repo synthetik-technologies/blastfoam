@@ -63,7 +63,7 @@ Foam::multiPhaseModel::multiPhaseModel
         fluid,
         phaseName,
         index,
-        3 // This is just used to force the multiphase thermo
+        multiphaseFluidBlastThermo::typeName
     ),
     thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
     alphas_(thermo_.volumeFractions()),
@@ -91,9 +91,9 @@ Foam::multiPhaseModel::multiPhaseModel
     wordList phaseNames(alphas_.size());
     forAll(alphas_, phasei)
     {
-        phaseNames[phasei] = alphas_[phasei].group();
+        phaseNames[phasei] = IOobject::groupName(thermo_.phaseNames()[phasei], this->name());
         sumAlpha += alphas_[phasei];
-        word phaseName = alphas_[phasei].group();
+        word phaseName = phaseNames[phasei];
         alphaRhos_.set
         (
             phasei,

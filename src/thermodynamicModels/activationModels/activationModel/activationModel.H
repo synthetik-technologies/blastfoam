@@ -151,6 +151,9 @@ public:
 
 protected:
 
+        //- Phase name
+        word phaseName_;
+
         //- Progress variable
         volScalarField lambda_;
 

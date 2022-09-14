@@ -361,6 +361,62 @@ void Foam::twoPhaseFluidBlastThermo::updateRho(const volScalarField& p)
 }
 
 
+bool Foam::twoPhaseFluidBlastThermo::contains(const word& specieName) const
+{
+    return thermo1_->contains(specieName) || thermo2_->contains(specieName);
+}
+
+void Foam::twoPhaseFluidBlastThermo::addDelta
+(
+    const word& name,
+    tmp<volScalarField>& delta
+)
+{
+    if (thermo1_->contains(name))
+    {
+        thermo1_->addDelta(name, delta);
+    }
+    else if (thermo2_->contains(name))
+    {
+        thermo2_->addDelta(name, delta);
+    }
+}
+
+
+void Foam::twoPhaseFluidBlastThermo::addDelta
+(
+    const word& name,
+    const volScalarField::Internal& delta
+)
+{
+    if (thermo1_->contains(name))
+    {
+        thermo1_->addDelta(name, delta);
+    }
+    else if (thermo2_->contains(name))
+    {
+        thermo2_->addDelta(name, delta);
+    }
+}
+
+
+void Foam::twoPhaseFluidBlastThermo::addSource
+(
+    const word& name,
+    tmp<fvScalarMatrix>& source
+)
+{
+    if (thermo1_->contains(name))
+    {
+        thermo1_->addSource(name, source);
+    }
+    else if (thermo2_->contains(name))
+    {
+        thermo2_->addSource(name, source);
+    }
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::twoPhaseFluidBlastThermo::ESource() const
 {

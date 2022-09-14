@@ -50,6 +50,7 @@ Foam::multicomponentBlastThermo::multicomponentBlastThermo
     ),
     mesh_(mesh),
     masterName_(masterName),
+    normalise_(true),
     massTransferRates_(this->species_.size()),
     implicitSources_(this->species_.size())
 {
@@ -93,6 +94,7 @@ Foam::multicomponentBlastThermo::multicomponentBlastThermo
     ),
     mesh_(mesh),
     masterName_(masterName),
+    normalise_(true),
     massTransferRates_(this->species_.size()),
     implicitSources_(this->species_.size())
 {
@@ -157,7 +159,7 @@ Foam::multicomponentBlastThermo::integrator::~integrator()
 
 void Foam::multicomponentBlastThermo::correct()
 {
-    if (!species_.size())
+    if (!species_.size() || !normalise_)
     {
         return;
     }
@@ -179,8 +181,11 @@ void Foam::multicomponentBlastThermo::correct()
             Yt += Y_[i];
         }
 
+        // bool fix = false;
         if (min(Yt).value() < small)
         {
+            // fix = true;
+            // Yt.max(small);
             FatalErrorInFunction
                 << "Sum of mass fractions is zero for species " << species()
                 << exit(FatalError);
@@ -191,6 +196,10 @@ void Foam::multicomponentBlastThermo::correct()
             Y_[i] /= Yt;
             Y_[i].correctBoundaryConditions();
         }
+        // if (fix)
+        // {
+        //     basicSpecieMixture::normalise();
+        // }
     }
     else
     {
@@ -356,7 +365,7 @@ void Foam::multicomponentBlastThermo::integrator::solve()
               - massTransferRates_[i]
             );
 
-            // Not conservative, but alphaRhoYi is
+            // Not conservative, but alphaRho*Yi is
             this->storeAndBlendOld(Y_[i], false);
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
@@ -410,8 +419,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
                  || thermophysicalTransportPtr.valid()
                 )
             )
-
-         || this->needSolve(Yi.name());
+          || this->needSolve(Yi.name());
 
         if (needUpdate)
         {

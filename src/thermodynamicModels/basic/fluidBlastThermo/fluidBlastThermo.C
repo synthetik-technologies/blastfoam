@@ -100,13 +100,13 @@ void Foam::fluidBlastThermo::initializeFields()
 
 Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
 (
-    const label nPhases,
     const fvMesh& mesh,
     const dictionary& dict,
+    const word& thermoType,
     const word& phaseName
 )
 {
-    if (nPhases <= 1)
+    if (thermoType == word::null)
     {
         return blastThermo::New<fluidBlastThermo>
         (
@@ -119,19 +119,13 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
         );
     }
 
-    word fluidType("twoPhaseFluid");
-    if (nPhases > 2)
-    {
-        fluidType = "multiphaseFluid";
-    }
-
     phaseConstructorTable::iterator cstrIter =
-        phaseConstructorTablePtr_->find(fluidType);
+        phaseConstructorTablePtr_->find(thermoType);
 
     if (cstrIter == phaseConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown number of fluids " << endl
+            << "Unknown fluidThermo type " << endl
             << phaseConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }

@@ -50,7 +50,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
     const phaseSystem& fluid,
     const word& phaseName,
     const label index,
-    const label nPhases
+    const word& thermoType
 )
 :
     phaseModel(fluid, phaseName, index),
@@ -58,9 +58,9 @@ Foam::fluidPhaseModel::fluidPhaseModel
     (
         fluidBlastThermo::New
         (
-            nPhases,
             fluid.mesh(),
             phaseDict_,
+            thermoType,
             this->name_
         )
     ),
