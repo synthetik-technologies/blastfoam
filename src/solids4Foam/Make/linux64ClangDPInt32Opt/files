@@ -1,4 +1,0 @@
-
-SOURCE += blastFluid.C
-
-LIB = $(BLAST_LIBBIN)/libblastSolids4Foam
