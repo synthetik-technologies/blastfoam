@@ -639,7 +639,7 @@ Foam::solidModel::solidModel
             "DD",
             mesh.time().timeName(),
             mesh,
-            !incremental ? IOobject::NO_READ : IOobject::READ_IF_PRESENT,
+            IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         mesh,
@@ -826,10 +826,10 @@ Foam::solidModel::solidModel
     ),
     globalPatches_(globalPolyBoundaryMesh::New(mesh))
 {
-    if (nonlinear != nonLinearGeometry::UPDATED_LAGRANGIAN)
-    {
-        globalPatches_.setDisplacementField(mesh.name(), "D");
-    }
+    globalPatches_.setDisplacementField(mesh_.name(), "none");
+
+    mechanical().volToPoint().interpolate(D_, pointD_);
+    mechanical().volToPoint().interpolate(DD_, pointDD_);
 
     // Print out the relaxation factor
     Info<< "    under-relaxation method: " << relaxationMethod_ << endl;
@@ -886,6 +886,14 @@ Foam::solidModel::~solidModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::solidModel::initialize()
+{
+    if (nonLinGeom() != nonLinearGeometry::UPDATED_LAGRANGIAN)
+    {
+        globalPatches_.setDisplacementField(mesh_.name(), "D");
+    }
+}
 
 const Foam::volScalarField& Foam::solidModel::rho() const
 {

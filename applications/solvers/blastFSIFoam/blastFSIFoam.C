@@ -52,11 +52,55 @@ Description
 
 int main(int argc, char *argv[])
 {
+    argList::addBoolOption
+    (
+        "initialiseDisplacement",
+        "Move fluid regions to initial solid displacement"
+    );
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMeshes.H"
+
+    //- Move meshes to the initial locations
+    if (args.optionFound("initialiseDisplacement"))
+    {
+        {
+            #include "createFields.H"
+            forAll(fluidRegions, i)
+            {
+                Info<<"Moving " << fluidRegions[i].name() << endl;
+                fluidRegions[i].update();
+                fluidRegions[i].update();
+                if (fluidRegions[i].moving())
+                {
+                    surfaceScalarField& meshPhi =
+                        const_cast<surfaceScalarField&>(fluidRegions[i].phi());
+                    meshPhi = Zero;
+                }
+            }
+            forAll(solidModels, i)
+            {
+                solidModels[i].pointD().write();
+            }
+        }
+        forAll(fluidRegions, i)
+        {
+            if (fluidRegions[i].moving())
+            {
+                fluidRegions[i].write();
+            }
+        }
+        Info<< nl << "Finished moving meshes" << endl;
+        return 0;
+    }
+
     #include "createFields.H"
     #include "createTimeControls.H"
+
+    forAll(fluidRegions, i)
+    {
+        solidModels[i].initialize();
+    }
 
     scalar CoNum = 0.0;
     forAll(fluidRegions, regionI)
@@ -99,6 +143,8 @@ int main(int argc, char *argv[])
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
+        // for (label iter = 0; iter < 5; iter++)
+        {
         #include "updateMeshes.H"
 
         // Solve
@@ -115,6 +161,7 @@ int main(int argc, char *argv[])
                 << solidRegions[i].name() << endl;
 
             #include "solveSolid.H"
+        }
         }
 
         runTime.write();

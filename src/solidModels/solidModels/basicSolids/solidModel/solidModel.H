@@ -408,6 +408,8 @@ public:
                 return globalPatches_;
             }
 
+            // Initialize global poly patch displacement
+            void initialize();
 
             //- Return const-reference to the density
             const volScalarField& rho() const;
