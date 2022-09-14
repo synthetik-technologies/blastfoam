@@ -52,13 +52,7 @@ Foam::atmosphereModels::table::table
     pTable_(dict_.subDict("pTable"), "h", "p"),
     TTable_(dict_.subDict("TTable"), "h", "T"),
     correct_(dict_.lookupOrDefault("correct", false))
-{
-    const_cast<dictionary&>(dict_).set
-    (
-        "pRef",
-        pTable_.lookup(gMin(h_))
-    );
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -74,6 +68,8 @@ void Foam::atmosphereModels::table::createAtmosphere
     fluidBlastThermo& thermo
 ) const
 {
+    volScalarField h("h", -(g_ & mesh_.C())/mag(g_) + hRef_);
+
     volScalarField& p = thermo.p();
     volScalarField& T = thermo.T();
 
@@ -91,8 +87,8 @@ void Foam::atmosphereModels::table::createAtmosphere
     // Set the internal values
     forAll(cells, i)
     {
-        p[cells[i]] = pTable_.lookup(h_[cells[i]]);
-        T[cells[i]] = TTable_.lookup(h_[cells[i]]);
+        p[cells[i]] = pTable_.lookup(h[cells[i]]);
+        T[cells[i]] = TTable_.lookup(h[cells[i]]);
     }
 
     // The the boundary values that have their owner face included in the set
@@ -106,9 +102,9 @@ void Foam::atmosphereModels::table::createAtmosphere
             if (cSet.found(fCells[facei]))
             {
                 bp[patchi][facei] =
-                    pTable_.lookup(h_.boundaryField()[patchi][facei]);
+                    pTable_.lookup(h.boundaryField()[patchi][facei]);
                 bT[patchi][facei] =
-                    TTable_.lookup(h_.boundaryField()[patchi][facei]);
+                    TTable_.lookup(h.boundaryField()[patchi][facei]);
             }
         }
     }
@@ -122,10 +118,15 @@ void Foam::atmosphereModels::table::createAtmosphere
 
     // Correct of thermodynamic variables
     thermo.correct();
-
+h.write();
     // Equalibriate the pressure field
     if (correct_)
     {
+        const_cast<dictionary&>(dict_).set
+        (
+            "pRef",
+            pTable_.lookup(min(h).value())
+        );
         hydrostaticInitialisation(thermo);
     }
 }

@@ -64,20 +64,11 @@ protected:
     //- Gravitational acceleration
     uniformDimensionedVectorField g_;
 
-    //- Normal vector for gravitational acceleration
-    vector normal_;
-
     //- Elevation of lowest point in mesh
-    uniformDimensionedScalarField baseElevation_;
-
-    //- Height field
-    volScalarField h_;
+    uniformDimensionedScalarField hRef_;
 
     //- Saved zoneID to set
     const label zoneID_;
-
-    //- Fixed pressure patches
-    wordReList fixedPatches_;
 
     //- Stabilize fields
     void hydrostaticInitialisation
@@ -135,6 +126,12 @@ public:
 
 
     // Member Functions
+
+        //- Return the coefficient dictionary
+        const dictionary& dict() const
+        {
+            return dict_;
+        }
 
         virtual void createAtmosphere(fluidBlastThermo& thermo) const = 0;
 };

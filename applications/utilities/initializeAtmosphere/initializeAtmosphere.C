@@ -90,10 +90,6 @@ int main(int argc, char *argv[])
     {
         atmosphereProperties.set("hRef", args.optionRead<scalar>("hRef"));
     }
-    else if (!atmosphereProperties.found("hRef"))
-    {
-        WarningInFunction << "hRef was not provided, using 0" << endl;
-    }
 
     label refSet = 0;
     if (args.optionFound("fixedPatches"))
@@ -170,6 +166,8 @@ int main(int argc, char *argv[])
 
     if (thermo->p().needReference())
     {
+        const dictionary& coeffsDict = atmosphere->dict();
+
         if (args.optionFound("pRef"))
         {
             atmosphereProperties.set("pRefValue", args.optionRead<scalar>("pRef"));
@@ -192,8 +190,8 @@ int main(int argc, char *argv[])
         }
         else if
         (
-            atmosphereProperties.found("pRef")
-         || atmosphereProperties.found("pRefCell")
+            coeffsDict.found("pRef")
+         || coeffsDict.found("pRefCell")
         )
         {
             refSet++;
