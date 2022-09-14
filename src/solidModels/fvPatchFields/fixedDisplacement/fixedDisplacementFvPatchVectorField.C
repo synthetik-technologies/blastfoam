@@ -151,10 +151,11 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
 )
 :
     fixedValueFvPatchVectorField(p, iF, dict),
-    totalDisp_("value", dict, p.size()),
+    totalDisp_(p.size()),
     dispSeries_(),
     interpPtr_()
 {
+    totalDisp_ = *this;
     Info<< "Creating " << type() << " boundary condition" << endl;
 
     // Check if displacement is time-varying
