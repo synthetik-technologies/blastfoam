@@ -401,6 +401,7 @@ void Foam::multiphaseFluidBlastThermo::updateRho(const volScalarField& p)
         rho_ += volumeFractions_[phasei]*thermos_[phasei].rho();
     }
     normalise(rho_);
+    rho_.correctBoundaryConditions();
 }
 
 
