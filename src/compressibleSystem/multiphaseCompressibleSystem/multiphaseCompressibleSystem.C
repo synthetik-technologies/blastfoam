@@ -47,7 +47,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    compressibleBlastSystem(3, mesh),
+    compressibleBlastSystem(mesh, multiphaseFluidBlastThermo::typeName),
     thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
@@ -124,7 +124,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     const bool
 )
 :
-    compressibleBlastSystem(3, mesh),
+    compressibleBlastSystem(mesh, multiphaseFluidBlastThermo::typeName),
     thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),

@@ -53,8 +53,8 @@ void Foam::compressibleBlastSystem::setModels()
 
 Foam::compressibleBlastSystem::compressibleBlastSystem
 (
-    const label nPhases,
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const word& thermoType
 )
 :
     compressibleSystem(mesh),
@@ -71,7 +71,7 @@ Foam::compressibleBlastSystem::compressibleBlastSystem
     ),
     thermoPtr_
     (
-        fluidBlastThermo::New(nPhases, mesh, *this)
+        fluidBlastThermo::New(mesh, *this, thermoType)
     ),
     rho_(thermoPtr_->rho()),
     p_(thermoPtr_->p()),

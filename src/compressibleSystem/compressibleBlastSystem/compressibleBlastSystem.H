@@ -95,7 +95,7 @@ protected:
 public:
 
     // Constructor
-    compressibleBlastSystem(const label, const fvMesh& mesh);
+    compressibleBlastSystem(const fvMesh& mesh, const word& thermoType);
 
     //- Destructor
     virtual ~compressibleBlastSystem();

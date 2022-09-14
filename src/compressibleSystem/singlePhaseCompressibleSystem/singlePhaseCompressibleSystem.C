@@ -46,7 +46,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    compressibleBlastSystem(1, mesh)
+    compressibleBlastSystem(mesh, word::null)
 {
     this->fluxScheme_ = fluxScheme::NewSingle(mesh);
 

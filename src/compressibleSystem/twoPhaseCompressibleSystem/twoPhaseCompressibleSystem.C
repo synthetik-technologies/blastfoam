@@ -68,7 +68,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    compressibleBlastSystem(2, mesh),
+    compressibleBlastSystem(mesh, twoPhaseFluidBlastThermo::typeName),
     thermo_
     (
         refCast<twoPhaseFluidBlastThermo>(thermoPtr_())

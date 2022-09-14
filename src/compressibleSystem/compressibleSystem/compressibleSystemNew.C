@@ -84,4 +84,48 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 }
 
 
+Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
+(
+    const word& type,
+    const fvMesh& mesh
+)
+{
+    Info<< "Selecting " << type << " compressibleSystem" << endl;
+    {
+        typename singlePhaseConstructorTable::iterator cstrIter =
+            singlePhaseConstructorTablePtr_->find(type);
+        if (cstrIter != singlePhaseConstructorTablePtr_->cend())
+        {
+            return cstrIter()(mesh);
+        }
+    }
+    {
+        typename twoPhaseConstructorTable::iterator cstrIter =
+            twoPhaseConstructorTablePtr_->find(type);
+        if (cstrIter != twoPhaseConstructorTablePtr_->cend())
+        {
+            return cstrIter()(mesh);
+        }
+    }
+    {
+        typename multiphaseConstructorTable::iterator cstrIter =
+            multiphaseConstructorTablePtr_->find(type);
+        if (cstrIter != multiphaseConstructorTablePtr_->cend())
+        {
+            return cstrIter()(mesh);
+        }
+    }
+
+
+    FatalErrorInFunction
+        << "Unknown compressibleSystem type " << type << endl << endl
+        << "Valid compressibleSystem types are : " << endl
+        << singlePhaseConstructorTablePtr_->sortedToc() << nl
+        << twoPhaseConstructorTablePtr_->sortedToc() << nl
+        << multiphaseConstructorTablePtr_->sortedToc() << nl
+        << exit(FatalError);
+
+    return singlePhaseConstructorTablePtr_->find(type)()(mesh);
+}
+
 // ************************************************************************* //

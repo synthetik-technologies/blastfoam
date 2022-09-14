@@ -152,6 +152,7 @@ public:
 
     // Selector
         static autoPtr<compressibleSystem> New(const fvMesh& mesh);
+        static autoPtr<compressibleSystem> New(const word& type, const fvMesh& mesh);
 
         template<class SelectionTable>
         static autoPtr<compressibleSystem> New
