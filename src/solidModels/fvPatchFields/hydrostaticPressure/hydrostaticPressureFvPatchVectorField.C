@@ -149,10 +149,19 @@ void hydrostaticPressureFvPatchVectorField::updateCoeffs()
         x += this->patch().lookupPatchField<volVectorField, vector>("DD");
     }
 
-    scalarField gh((x + dir*hRef_) & g.value());
+    scalarField gh((x & g.value()) + mag(g)*hRef_);
     this->pressure() = pRef_ + rho_*gh;
 
     solidTractionFvPatchVectorField::updateCoeffs();
+}
+
+
+void Foam::hydrostaticPressureFvPatchVectorField::write(Ostream& os) const
+{
+    solidTractionFvPatchVectorField::write(os);
+    writeEntry(os, "pRef", pRef_);
+    writeEntry(os, "hRef", hRef_);
+    writeEntry(os, "rho", rho_);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
