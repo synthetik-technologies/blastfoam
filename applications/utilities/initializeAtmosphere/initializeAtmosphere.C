@@ -41,6 +41,9 @@ Description
 #include "fluidBlastThermo.H"
 #include "thermodynamicConstants.H"
 
+#include "twoPhaseFluidBlastThermo.H"
+#include "multiphaseFluidBlastThermo.H"
+
 
 using namespace Foam;
 
@@ -132,13 +135,10 @@ int main(int argc, char *argv[])
 
     word phaseName = word::null;
     wordList phases(1, word::null);
+    word thermoType = word::null;
     if (args.optionFound("phase"))
     {
         phases = args.optionRead<word>("phase");
-        if (phaseProperties.found("phases"))
-        {
-            phaseName = phases[0];
-        }
     }
     else if (atmosphereProperties.found("phase"))
     {
@@ -147,15 +147,23 @@ int main(int argc, char *argv[])
     else if (phaseProperties.found("phases"))
     {
         phases = phaseProperties.lookup<wordList>("phases");
+        if (phases.size() == 2)
+        {
+            thermoType = twoPhaseFluidBlastThermo::typeName;
+        }
+        else if (phases.size() > 2)
+        {
+            thermoType = multiphaseFluidBlastThermo::typeName;
+        }
     }
 
     autoPtr<fluidBlastThermo> thermo
     (
         fluidBlastThermo::New
         (
-            phases.size(),
             mesh,
             phaseProperties,
+            thermoType,
             phaseName
         )
     );
@@ -191,7 +199,6 @@ int main(int argc, char *argv[])
             refSet++;
         }
 
-        Info<<atmosphereProperties<<endl;
 
         if (refSet < 2)
         {

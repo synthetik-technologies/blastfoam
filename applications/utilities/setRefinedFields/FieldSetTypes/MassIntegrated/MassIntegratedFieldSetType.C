@@ -212,9 +212,9 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::lookupOrConstructThermo
         thermoPtr =
             fluidBlastThermo::New
             (
-                1,
                 mesh,
                 dict,
+                word::null,
                 phaseName
             ).ptr();
     }
