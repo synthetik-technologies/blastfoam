@@ -295,7 +295,7 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     scalarField nbrP(volNbrP.boundaryField()[samplePatchi] - pRef_);
     if (volNbrP.dimensions() != dimPressure)
     {
-        nbrP /= rho(nbrMesh, sampleFvPatch);
+        nbrP *= rho(nbrMesh, sampleFvPatch);
     }
 
     this->pressure() = samplePatch.faceInterpolate(nbrP);
