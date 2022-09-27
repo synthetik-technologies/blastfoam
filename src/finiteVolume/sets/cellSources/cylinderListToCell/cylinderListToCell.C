@@ -109,7 +109,7 @@ Foam::cylinderListToCell::cylinderListToCell
     (
         dict.found("radii")
       ? dict.lookup("radii")
-      : List<scalar>(readScalar(dict.lookup("radius")), p1s_.size())
+      : List<scalar>(p1s_.size(), readScalar(dict.lookup("radius")))
     )
 {}
 
