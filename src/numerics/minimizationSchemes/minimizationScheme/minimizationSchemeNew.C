@@ -31,11 +31,11 @@ License
 Foam::autoPtr<Foam::minimizationScheme>
 Foam::minimizationScheme::New
 (
+    const word& minimizationSchemeType,
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 {
-    word minimizationSchemeType(dict.lookup("solver"));
     Info
         << "Selecting minimization scheme: " << minimizationSchemeType << endl;
     if (isA<scalarEquation>(eqn))
@@ -71,5 +71,13 @@ Foam::minimizationScheme::New
     return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
 }
 
-
+Foam::autoPtr<Foam::minimizationScheme>
+Foam::minimizationScheme::New
+(
+    const scalarUnivariateEquation& eqn,
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("solver"), eqn, dict);
+}
 // ************************************************************************* //

@@ -136,6 +136,14 @@ public:
         //- Select null constructed
         static autoPtr<univariateMinimizationScheme> New
         (
+            const word& type,
+            const scalarUnivariateEquation& eqn,
+            const dictionary& dict
+        );
+
+        //- Select null constructed
+        static autoPtr<univariateMinimizationScheme> New
+        (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );

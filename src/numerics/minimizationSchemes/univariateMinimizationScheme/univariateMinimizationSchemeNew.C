@@ -29,11 +29,11 @@ License
 
 Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationScheme::New
 (
+    const word& univariateMinimizationSchemeTypeName,
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 {
-    word univariateMinimizationSchemeTypeName(dict.lookup("solver"));
     label nDeriv = eqn.nDerivatives();
     DebugInfo
         << "Selecting root solver "
@@ -89,5 +89,14 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
     return autoPtr<univariateMinimizationScheme>(cstrIter()(eqn, dict));
 }
 
+
+Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationScheme::New
+(
+    const scalarUnivariateEquation& eqn,
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("solver"), eqn, dict);
+}
 
 // ************************************************************************* //
