@@ -48,6 +48,11 @@ SourceFiles
 #include "indexing.H"
 #include "interpolationWeights1D.H"
 
+#include "EquationsFwd.H"
+#include "univariateRootSolver.H"
+#include "NewtonRaphsonUnivariateRootSolver.H"
+
+
 namespace Foam
 {
 
@@ -92,6 +97,90 @@ protected:
     //- Current interpolation weight
     mutable DynamicList<scalar> weights_;
 
+
+    // Equation to evaulate the table
+    class equation1D
+    :
+        public Equation<Type>
+    {
+        const lookupTable1D<Type>& table_;
+
+    public:
+
+        equation1D(const lookupTable1D<Type>& table)
+        :
+            Equation<Type>(2),
+            table_(table)
+        {}
+
+        label nDerivatives() const
+        {
+            return 1;
+        }
+
+        inline Type fx(const scalar x, const label li) const
+        {
+            return table_.lookup(x);
+        }
+
+        inline Type dfdx(const scalar x, const label li) const
+        {
+            return table_.dFdX(x);
+        }
+        inline Type d2fdx2(const scalar x, const label li) const
+        {
+            return table_.d2FdX2(x);
+        }
+    };
+
+    // Equation to used to find a give component
+    class errorEquation
+    :
+        public Equation<Type>
+    {
+        const lookupTable1D<Type>& table_;
+        Type f_;
+
+    public:
+
+        errorEquation(const lookupTable1D<Type>& table)
+        :
+            Equation<Type>(),
+            table_(table)
+        {
+            this->setLower(min(table_.x()));
+            this->setUpper(max(table_.x()));
+        }
+
+        void set(const Type& f)
+        {
+            f_ = f;
+        }
+        label nDerivatives() const
+        {
+            return 2;
+        }
+
+        virtual Type fx(const scalar x, const label li) const
+        {
+            return table_.lookup(x) - f_;
+        }
+        virtual Type dfdx(const scalar x, const label li) const
+        {
+            return table_.dFdX(x);
+        }
+        virtual Type d2fdx2(const scalar x, const label li) const
+        {
+            return table_.d2FdX2(x);
+        }
+    };
+
+
+    //- Error equation
+    mutable autoPtr<errorEquation> error_;
+
+    //- Root solver
+    mutable autoPtr<univariateRootSolver> solver_;
 
     // Protected member functions
 
@@ -296,6 +385,53 @@ public:
             const word& mod,
             const bool isReal = true
         );
+
+        //- Return an equation using the table
+        autoPtr<equation<Type>> eqn() const
+        {
+            return autoPtr<equation<Type>>(new equation1D(*this));
+        }
+
+        //- Return an equation using the table
+        errorEquation& error() const
+        {
+            if (!error_.valid())
+            {
+                error_.set(new errorEquation(*this));
+            }
+            return error_();
+        }
+
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
+            const dictionary& dict = dictionary()
+        ) const
+        {
+            if (!solver_.valid())
+            {
+                solver_ = univariateRootSolver::New
+                (
+                    type,
+                    error(),
+                    dict
+                );
+            }
+            return solver_();
+        }
+
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const Type& fin,
+            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
+            const dictionary& dict = dictionary()
+        ) const
+        {
+            error().set(fin);
+            return solver(type, dict);
+        }
 
     //- Read from a given dictionary
     void read

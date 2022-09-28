@@ -49,6 +49,11 @@ SourceFiles
 #include "interpolationWeights1D.H"
 #include "indexing.H"
 
+#include "EquationsFwd.H"
+#include "UnivariateEquationsFwd.H"
+#include "univariateRootSolver.H"
+#include "NewtonRaphsonUnivariateRootSolver.H"
+
 
 namespace Foam
 {
@@ -118,9 +123,205 @@ protected:
     //- Current interpolation weights
     mutable scalarList weights_;
 
-    //- Check if spacing in a list is uniform
-    bool checkUniform(const List<scalar>& xyz) const;
 
+    // Equation to evaulate the table
+    class equation3D
+    :
+        public UnivariateEquation<Type>
+    {
+        const lookupTable3D<Type>& table_;
+
+    public:
+
+        equation3D(const lookupTable3D<Type>& table)
+        :
+            UnivariateEquation<Type>(3),
+            table_(table)
+        {
+            this->setLowerLimits
+            (
+                {
+                    min(table_.xValues()),
+                    min(table_.yValues()),
+                    min(table_.zValues())
+                }
+            );
+            this->setUpperLimits
+            (
+                {
+                    max(table_.xValues()),
+                    max(table_.yValues()),
+                    max(table_.zValues())
+                }
+            );
+        }
+
+        label nDerivatives() const
+        {
+            return 1;
+        }
+
+        inline Type fx
+        (
+            const typename UnivariateEquation<Type>::XType& x,
+            const label li
+        ) const
+        {
+            return table_.lookup(x[0], x[1], x[2]);
+        }
+
+        inline void dfdX
+        (
+            const typename UnivariateEquation<Type>::XType& x,
+            const label li,
+            List<Type>& dfdx
+        ) const
+        {
+            dfdx[0] = table_.dFdX(x[0], x[1], x[2]);
+            dfdx[1] = table_.dFdY(x[0], x[1], x[2]);
+            dfdx[2] = table_.dFdZ(x[0], x[1], x[2]);
+        }
+    };
+
+    // Equation to used to find a give component
+    class errorEquation
+    :
+        public Equation<Type>
+    {
+        const lookupTable3D<Type>& table_;
+        label dir_;
+        scalar y_;
+        scalar z_;
+        Type f_;
+
+    public:
+
+        errorEquation(const lookupTable3D<Type>& table)
+        :
+            Equation<Type>(),
+            table_(table),
+            dir_(-1)
+        {}
+
+        void setDir(const label dir)
+        {
+            if (dir == dir_)
+            {
+                return;
+            }
+            dir_ = dir;
+            if (dir == 0)
+            {
+                this->setLower(min(table_.xValues()));
+                this->setUpper(max(table_.xValues()));
+            }
+            else if (dir == 1)
+            {
+                this->setLower(min(table_.yValues()));
+                this->setUpper(max(table_.yValues()));
+            }
+            else if (dir == 2)
+            {
+                this->setLower(min(table_.zValues()));
+                this->setUpper(max(table_.zValues()));
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "Table has 3 dimensions, but trying to find dimension "
+                    << dir+1 << endl
+                    << abort(FatalError);
+            }
+        }
+
+        void set(const label dir, const Type& f, const scalar y, const scalar z)
+        {
+            y_ = y;
+            z_ = z;
+            f_ = f;
+            setDir(dir);
+        }
+        label nDerivatives() const
+        {
+            return 2;
+        }
+
+        virtual scalar fx(const scalar x, const label li) const
+        {
+            if (dir_ == 0)
+            {
+                return table_.lookup(x, y_, z_) - f_;
+            }
+            else if (dir_ == 1)
+            {
+                return table_.lookup(y_, x, z_) - f_;
+            }
+            else if (dir_ == 2)
+            {
+                return table_.lookup(y_, z_, x) - f_;
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "direction has not been set" << endl
+                    << abort(FatalError);
+            }
+            return 0.0;
+        }
+
+        virtual scalar dfdx(const scalar x, const label li) const
+        {
+            if (dir_ == 0)
+            {
+                return table_.dFdX(x, y_, z_);
+            }
+            else if (dir_ == 1)
+            {
+                return table_.dFdY(y_, x, z_);
+            }
+            else if (dir_ == 2)
+            {
+                return table_.dFdZ(y_, z_, x);
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "direction has not been set" << endl
+                    << abort(FatalError);
+            }
+            return 0.0;
+        }
+
+        virtual scalar d2fdx2(const scalar x, const label li) const
+        {
+            if (dir_ == 0)
+            {
+                return table_.d2FdX2(x, y_, z_);
+            }
+            else if (dir_ == 1)
+            {
+                return table_.d2FdY2(y_, x, z_);
+            }
+            else if (dir_ == 2)
+            {
+                return table_.d2FdZ2(y_, z_, x);
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "direction has not been set" << endl
+                    << abort(FatalError);
+            }
+            return 0.0;
+        }
+    };
+
+
+    //- Error equation
+    mutable autoPtr<errorEquation> error_;
+
+    //- Root solver
+    mutable autoPtr<univariateRootSolver> solver_;
 
     // Protected member functions
 
@@ -351,6 +552,15 @@ public:
         //- Lookup value
         Type lookup(const scalar x, const scalar y, const scalar z) const;
 
+        //- Lookup x given f and y and z
+        scalar reverseLookupX(const Type& fin, const scalar y, const scalar z) const;
+
+        //- Lookup y given f and z and z
+        scalar reverseLookupY(const Type& fin, const scalar x, const scalar z) const;
+
+        //- Lookup z given f and x and y
+        scalar reverseLookupZ(const Type& fin, const scalar x, const scalar y) const;
+
         //- Return first derivative w.r.t.. x
         Type dFdX(const scalar x, const scalar y, const scalar z) const;
 
@@ -487,6 +697,59 @@ public:
             const bool isReal = true
         );
 
+        //- Return an equation using the table
+        autoPtr<univariateEquation<Type>> eqn() const
+        {
+            return autoPtr<univariateEquation<Type>>(new equation3D(*this));
+        }
+
+        //- Return an equation using the table
+        errorEquation& error(const label dir = -1) const
+        {
+            if (!error_.valid())
+            {
+                error_.set(new errorEquation(*this));
+            }
+            if (dir != -1)
+            {
+                error_->setDir(dir);
+            }
+            return error_();
+        }
+
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
+            const dictionary& dict = dictionary()
+        ) const
+        {
+            if (!solver_.valid())
+            {
+                solver_ = univariateRootSolver::New
+                (
+                    type,
+                    error(),
+                    dict
+                );
+            }
+            return solver_();
+        }
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const label dir,
+            const Type& f,
+            const scalar y,
+            const scalar z,
+            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
+            const dictionary& dict = dictionary()
+        ) const
+        {
+            error().set(dir, f, y, z);
+            return solver(type, dict);
+        }
+
 
         //- Read from a given dictionary
         void read
@@ -504,6 +767,32 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+template<>
+Foam::scalar Foam::lookupTable3D<Foam::scalar>::reverseLookupX
+(
+    const scalar& fin,
+    const scalar y,
+    const scalar z
+) const;
+
+template<>
+Foam::scalar Foam::lookupTable3D<Foam::scalar>::reverseLookupY
+(
+    const scalar& fin,
+    const scalar x,
+    const scalar y
+) const;
+
+template<>
+Foam::scalar Foam::lookupTable3D<Foam::scalar>::reverseLookupZ
+(
+    const scalar& fin,
+    const scalar y,
+    const scalar z
+) const;
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

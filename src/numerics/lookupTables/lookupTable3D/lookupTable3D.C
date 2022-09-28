@@ -618,6 +618,45 @@ Type Foam::lookupTable3D<Type>::lookup
 
 
 template<class Type>
+Foam::scalar Foam::lookupTable3D<Type>::reverseLookupX
+(
+    const Type& fin,
+    const scalar y,
+    const scalar z
+) const
+{
+    NotImplemented;
+    return z;
+}
+
+
+template<class Type>
+Foam::scalar Foam::lookupTable3D<Type>::reverseLookupY
+(
+    const Type& fin,
+    const scalar x,
+    const scalar z
+) const
+{
+    NotImplemented;
+    return z;
+}
+
+
+template<class Type>
+Foam::scalar Foam::lookupTable3D<Type>::reverseLookupZ
+(
+    const Type& fin,
+    const scalar x,
+    const scalar y
+) const
+{
+    NotImplemented;
+    return z;
+}
+
+
+template<class Type>
 Type Foam::lookupTable3D<Type>::dFdX
 (
     const scalar x,
@@ -751,7 +790,7 @@ Type Foam::lookupTable3D<Type>::d2FdX2
     scalar zMod(modZ_()(z));
 
     ijk_.x() = xIndexing_->findIndex(modX_()(x));
-    const label i = ijk_.x();
+    const label i = max(ijk_.x(), 1);
 
     ijk_.y() = yIndexing_->findIndex(yMod);
     ijk_.z() = zIndexing_->findIndex(zMod);
@@ -801,7 +840,7 @@ Type Foam::lookupTable3D<Type>::d2FdY2
     scalar zMod(modZ_()(z));
 
     ijk_.y() = yIndexing_->findIndex(modY_()(y));
-    const label j = ijk_.y();
+    const label j = max(ijk_.y(), 1);
 
     ijk_.x() = xIndexing_->findIndex(xMod);
     ijk_.z() = zIndexing_->findIndex(zMod);
@@ -849,7 +888,7 @@ Type Foam::lookupTable3D<Type>::d2FdZ2
     scalar yMod(modY_()(y));
 
     ijk_.z() = zIndexing_->findIndex(modZ_()(z));
-    const label k = ijk_.z();
+    const label k = max(ijk_.z(), 1);
 
     ijk_.x() = xIndexing_->findIndex(xMod);
     ijk_.y() = yIndexing_->findIndex(yMod);
@@ -1186,6 +1225,15 @@ void Foam::lookupTable3D<Type>::read
     }
 
     setData(data, modType, isReal);
+
+    if (dict.found("rootSolver"))
+    {
+        this->solver
+        (
+            dict.lookup<word>("rootSolver"),
+            dict
+        );
+    }
 }
 
 // ************************************************************************* //

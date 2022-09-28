@@ -130,7 +130,7 @@ bool Foam::interpolationWeight1D::validate(const bool fail) const
     if (n > 3)
     {
         validSchemes.append("cubicClamp");
-        validSchemes.append("cibicExtrapolated");
+        validSchemes.append("cubicExtrapolated");
     }
 
     if (!validSchemes.found(this->type()))

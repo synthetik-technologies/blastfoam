@@ -27,4 +27,40 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+template<>
+Foam::scalar Foam::lookupTable3D<Foam::scalar>::reverseLookupX
+(
+    const scalar& fin,
+    const scalar y,
+    const scalar z
+) const
+{
+    return solver(0, fin, y, z).solveUni();
+}
+
+
+template<>
+Foam::scalar Foam::lookupTable3D<Foam::scalar>::reverseLookupY
+(
+    const scalar& fin,
+    const scalar x,
+    const scalar z
+) const
+{
+    return solver(1, fin, x, z).solveUni();
+}
+
+
+template<>
+Foam::scalar Foam::lookupTable3D<Foam::scalar>::reverseLookupZ
+(
+    const scalar& fin,
+    const scalar x,
+    const scalar y
+) const
+{
+
+    return solver(2, fin, x, y).solveUni();
+}
+
 // ************************************************************************* //

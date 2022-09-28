@@ -186,6 +186,9 @@ public:
         using rootSolver::solve;
 
         //- Find the root of the equation
+        virtual scalar solveUni() const;
+
+        //- Find the root of the equation
         virtual scalar solve(const scalar x0) const;
 
         //- Find the root of the equation between xHigh and xLow

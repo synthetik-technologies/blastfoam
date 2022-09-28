@@ -143,6 +143,11 @@ Foam::univariateRootSolver::~univariateRootSolver()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::scalar Foam::univariateRootSolver::solveUni() const
+{
+    return solve(0.5*(eqn_.lower() + eqn_.upper()), eqn_.lower(), eqn_.upper(), 0);
+}
+
 Foam::scalar Foam::univariateRootSolver::solve(const scalar x0) const
 {
     return solve(x0, eqn_.lower(), eqn_.upper(), 0);

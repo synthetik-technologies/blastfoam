@@ -48,6 +48,11 @@ SourceFiles
 #include "interpolationWeights1D.H"
 #include "indexing.H"
 
+#include "EquationsFwd.H"
+#include "UnivariateEquationsFwd.H"
+#include "univariateRootSolver.H"
+#include "NewtonRaphsonUnivariateRootSolver.H"
+
 namespace Foam
 {
 
@@ -61,6 +66,7 @@ class lookupTable2D
 public:
 
     typedef Vector2D<label> labelVector2D;
+
 
 protected:
 // Protected data
@@ -111,7 +117,167 @@ protected:
     mutable DynamicList<scalar> wxs_;
     mutable DynamicList<scalar> wys_;
 
+    // Equation to evaulate the table
+    class equation2D
+    :
+        public UnivariateEquation<Type>
+    {
+        const lookupTable2D<Type>& table_;
 
+    public:
+
+        equation2D(const lookupTable2D<Type>& table)
+        :
+            UnivariateEquation<Type>(2),
+            table_(table)
+        {}
+
+        label nDerivatives() const
+        {
+            return 1;
+        }
+
+        inline Type fx
+        (
+            const typename UnivariateEquation<Type>::XType& x,
+            const label li
+        ) const
+        {
+            return table_.lookup(x[0], x[1]);
+        }
+
+        inline void dfdX
+        (
+            const typename UnivariateEquation<Type>::XType& x,
+            const label li,
+            List<Type>& dfdx
+        ) const
+        {
+            dfdx[0] = table_.dFdX(x[0], x[1]);
+            dfdx[1] = table_.dFdY(x[0], x[1]);
+        }
+    };
+
+    // Equation to used to find a give component
+    class errorEquation
+    :
+        public Equation<Type>
+    {
+        const lookupTable2D<Type>& table_;
+        label dir_;
+        scalar y_;
+        Type f_;
+
+    public:
+
+        errorEquation(const lookupTable2D<Type>& table)
+        :
+            Equation<Type>(),
+            table_(table),
+            dir_(-1)
+        {}
+
+        void setDir(const label dir)
+        {
+            if (dir == dir_)
+            {
+                return;
+            }
+            dir_ = dir;
+            if (dir == 0)
+            {
+                this->setLower(min(table_.xValues()));
+                this->setUpper(max(table_.xValues()));
+            }
+            else if (dir == 1)
+            {
+                this->setLower(min(table_.yValues()));
+                this->setUpper(max(table_.yValues()));
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "Table has 2 dimensions, but trying to find dimension "
+                    << dir+1 << endl
+                    << abort(FatalError);
+            }
+        }
+
+        void set(const label dir, const Type& f, const scalar y)
+        {
+            y_ = y;
+            f_ = f;
+            setDir(dir);
+        }
+        label nDerivatives() const
+        {
+            return 2;
+        }
+
+        virtual scalar fx(const scalar x, const label li) const
+        {
+            if (dir_ == 0)
+            {
+                return table_.lookup(x, y_) - f_;
+            }
+            else if (dir_ == 1)
+            {
+                return table_.lookup(y_, x) - f_;
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "direction has not been set" << endl
+                    << abort(FatalError);
+            }
+            return 0.0;
+        }
+
+        virtual scalar dfdx(const scalar x, const label li) const
+        {
+            if (dir_ == 0)
+            {
+                return table_.dFdX(x, y_);
+            }
+            else if (dir_ == 1)
+            {
+                return table_.dFdY(y_, x);
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "direction has not been set" << endl
+                    << abort(FatalError);
+            }
+            return 0.0;
+        }
+
+        virtual scalar d2fdx2(const scalar x, const label li) const
+        {
+            if (dir_ == 0)
+            {
+                return table_.d2FdX2(x, y_);
+            }
+            else if (dir_ == 1)
+            {
+                return table_.d2FdY2(y_, x);
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "direction has not been set" << endl
+                    << abort(FatalError);
+            }
+            return 0.0;
+        }
+    };
+
+
+    //- Error equation
+    mutable autoPtr<errorEquation> error_;
+
+    //- Root solver
+    mutable autoPtr<univariateRootSolver> solver_;
 
     // Protected member functions
 
@@ -150,14 +316,6 @@ protected:
         {
             return *yValuesPtr_;
         }
-
-        //- Find bottom of interpolation region, return index and weight
-        //  between i and i+1
-        labelList boundi(const Type& f) const;
-
-        //- Find bottom of interpolation region, return index and weight
-        //  between j and j+1
-        labelList boundj(const Type& f) const;
 
 
 public:
@@ -408,6 +566,57 @@ public:
             const bool isReal = true
         );
 
+        //- Return an equation using the table
+        autoPtr<univariateEquation<Type>> eqn() const
+        {
+            return autoPtr<univariateEquation<Type>>(new equation2D(*this));
+        }
+
+        //- Return an equation using the table
+        errorEquation& error(const label dir = -1) const
+        {
+            if (!error_.valid())
+            {
+                error_.set(new errorEquation(*this));
+            }
+            if (dir != -1)
+            {
+                error_->setDir(dir);
+            }
+            return error_();
+        }
+
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
+            const dictionary& dict = dictionary()
+        ) const
+        {
+            if (!solver_.valid())
+            {
+                solver_ = univariateRootSolver::New
+                (
+                    type,
+                    error(),
+                    dict
+                );
+            }
+            return solver_();
+        }
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const label dir,
+            const Type& f,
+            const scalar y,
+            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
+            const dictionary& dict = dictionary()
+        ) const
+        {
+            error().set(dir, f, y);
+            return solver(type, dict);
+        }
 
         //- Read from a given dictionary
         void read
@@ -420,18 +629,10 @@ public:
         );
 };
 
-// Specilizations of scalar functions
-template<>
-Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundi
-(
-    const scalar& f
-) const;
 
-template<>
-Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundj
-(
-    const scalar& f
-) const;
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
 
 template<>
 Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupX
@@ -446,10 +647,6 @@ Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
     const scalar& fin,
     const scalar x
 ) const;
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

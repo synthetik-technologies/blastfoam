@@ -32,46 +32,7 @@ template<>
 Foam::scalar
 Foam::lookupTable1D<Foam::scalar>::reverseLookup(const scalar& fin) const
 {
-#ifdef FULL_DEBUG
-    if (!mod_.valid())
-    {
-        FatalErrorInFunction
-            << "Try to interpolate data that has not been set."
-            << abort(FatalError);
-    }
-#endif
-
-    scalar f(mod_()(fin));
-    if (f < data_[0])
-    {
-        index_ = 0;
-    }
-    if (f > data_.last())
-    {
-        index_ = data_.size() - 2;
-    }
-    else
-    {
-        for (index_ = 0; index_ < data_.size(); index_++)
-        {
-            if (f < data_[index_])
-            {
-                index_--;
-                break;
-            }
-        }
-    }
-
-    const scalar& fm(data_[index_]);
-    const scalar& fp(data_[index_+1]);
-
-    scalar w = interpolationWeight1D::linearWeight(f, fm, fp);
-
-    return modX_->inv
-    (
-        xModValues_[index_]
-      + w*(xModValues_[index_+1] - xModValues_[index_])
-    );
+    return solver(fin).solveUni();
 }
 
 // ************************************************************************* //

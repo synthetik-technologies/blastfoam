@@ -45,20 +45,6 @@ Type Foam::lookupTable2D<Type>::getValue
     return xy[ij] + f*(xy[ij+1] - xy[ij]);
 }
 
-template<class Type>
-Foam::labelList Foam::lookupTable2D<Type>::boundi(const Type& f) const
-{
-    NotImplemented;
-    return labelList();
-}
-
-template<class Type>
-Foam::labelList Foam::lookupTable2D<Type>::boundj(const Type& f) const
-{
-    NotImplemented;
-    return labelList();
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -505,8 +491,8 @@ Foam::scalar Foam::lookupTable2D<Type>::reverseLookupX
     const scalar y
 ) const
 {
-    NotImplemented;
-    return 0.0;
+    NotImplemented
+    return y;
 }
 
 
@@ -518,7 +504,7 @@ Foam::scalar Foam::lookupTable2D<Type>::reverseLookupY
 ) const
 {
     NotImplemented;
-    return 0.0;
+    return x;
 }
 
 
@@ -778,6 +764,15 @@ void Foam::lookupTable2D<Type>::read
     }
 
     setData(data, modType, isReal);
+
+    if (dict.found("rootSolver"))
+    {
+        this->solver
+        (
+            dict.lookup<word>("rootSolver"),
+            dict
+        );
+    }
 }
 
 // ************************************************************************* //
