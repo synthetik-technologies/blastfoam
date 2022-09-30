@@ -166,6 +166,10 @@ bool Foam::movingAdaptiveFvMesh::update()
 {
     // Get the new points solving for displacement
     pointField pointsNew(motionPtr_->newPoints());
+    if (pointsInstance() == time().timeName())
+    {
+        pointsNew += oldPoints() - points();
+    }
 
     //- Sync points across boundaries
 //     if (Pstream::parRun())
