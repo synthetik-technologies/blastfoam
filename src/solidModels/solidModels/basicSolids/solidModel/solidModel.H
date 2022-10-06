@@ -164,7 +164,7 @@ class solidModel
 
         //- Under-relaxation method
         //  It can be 'fixed', 'Aitken' or 'QuasiNewton'
-        const word relaxationMethod_;
+        word relaxationMethod_;
 
         //- Aitken's under-relaxation factor field
         volScalarField aitkenAlpha_;
@@ -173,7 +173,7 @@ class solidModel
         volVectorField aitkenResidual_;
 
         //- Restart frequency for the Quasi-Newton method
-        const int QuasiNewtonRestartFreq_;
+        int QuasiNewtonRestartFreq_;
 
         //- Quasi-Newton method input vector field
         DynamicList<vectorField> QuasiNewtonV_;
@@ -214,8 +214,6 @@ class solidModel
         //- Make setCellDisplacements
         void makeSetCellDisps() const;
 
-        //- Return a reference to setCellDisplacements
-        const setCellDisplacements& setCellDisps() const;
 
         //- Disallow default bitwise copy construct
         solidModel(const solidModel&);
@@ -309,6 +307,11 @@ protected:
 
         //- Return boundary types for pointD/pointDD fields
         wordList pointDBoundaryTypes(const volVectorField& D) const;
+
+        virtual void readDict();
+
+        //- Return a reference to setCellDisplacements
+        const setCellDisplacements& setCellDisps() const;
 
 public:
 
@@ -644,15 +647,6 @@ public:
 
             //- End of the program
             virtual void end();
-
-            //- Read object
-            virtual void readIfPresent();
-
-            //- Write function must be defined for regIOobjects
-            virtual bool writeData(Ostream&) const
-            {
-                return false;
-            }
 };
 
 

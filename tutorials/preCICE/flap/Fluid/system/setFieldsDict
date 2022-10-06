@@ -52,6 +52,15 @@ regions
         name flap;
         level 3;
         refineFaces yes;
+
+        faceZones
+        (
+            {
+                action new;
+                name protectedFaces;
+                selectionMode all;
+            }
+        );
     }
 );
 

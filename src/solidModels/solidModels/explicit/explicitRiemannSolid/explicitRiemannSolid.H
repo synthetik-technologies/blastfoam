@@ -168,14 +168,17 @@ class explicitRiemannSolid
         surfaceVectorField tractionOwn_;
         surfaceVectorField tractionNei_;
 
-        // Scale factor for Jameson-Schmidt-Turkel smoothing term
-        const scalar JSTScaleFactor_;
+        //- Include stabilisation terms
+        bool useStabilisation_;
+
+        //- Include bulk viscosity
+        bool useBulkViscosity_;
 
         //- Energy calculation
         mechanicalEnergies energies_;
 
         //- Stored impK
-        volScalarField impK_;
+        surfaceScalarField impKf_;
 
 
 

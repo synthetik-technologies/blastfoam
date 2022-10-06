@@ -92,16 +92,14 @@ displacementOrTractionFvPatchVectorField
     // Check if displacement is time-varying
     if (dict.found("displacementSeries") && dict.found("constantDisplacement"))
     {
-        FatalErrorIn
-        (
-            "displacementOrTractionFvPatchVectorField::"
-            "displacementOrTractionFvPatchVectorField"
-        )   << "constantDisplacement or displacementSeries can be specified, "
+        FatalErrorInFunction
+            << "constantDisplacement or displacementSeries can be specified, "
             << "not both!" << abort(FatalError);
     }
     else if (dict.found("displacementSeries"))
     {
-        Info<< type() << ": " << patch().name()
+        DebugInfo
+            << type() << ": " << patch().name()
             << " displacement is time-varying" << endl;
         displacementSeries_ =
             Function1<vector>::New("displacementSeries", dict);
@@ -114,16 +112,14 @@ displacementOrTractionFvPatchVectorField
     // Check if traction is time-varying
     if (dict.found("tractionSeries") && dict.found("constantTraction"))
     {
-        FatalErrorIn
-        (
-            "displacementOrTractionFvPatchVectorField::"
-            "displacementOrTractionFvPatchVectorField"
-        )   << "constantTraction or tractionSeries can be specified, "
+        FatalErrorInFunction
+            << "constantTraction or tractionSeries can be specified, "
             << "not both!" << abort(FatalError);
     }
     else if (dict.found("tractionSeries"))
     {
-        Info<< type() << ": " << patch().name()
+        DebugInfo
+            << type() << ": " << patch().name()
             << " traction is time-varying" << endl;
         tractionSeries_ =
             Function1<vector>::New("tractionSeries", dict);
@@ -151,11 +147,8 @@ displacementOrTractionFvPatchVectorField
     }
     else
     {
-        FatalErrorIn
-        (
-            "displacementOrTractionFvPatchVectorField::"
-            "displacementOrTractionFvPatchVectorField"
-        )   << "value or refValue entry must be specified for patch "
+        FatalErrorInFunction
+            << "value or refValue entry must be specified for patch "
             << patch().name() << abort(FatalError);
     }
 
@@ -222,11 +215,8 @@ displacementOrTractionFvPatchVectorField
         }
         else if (specifyNormalDirection_[faceI] != 0)
         {
-            FatalErrorIn
-            (
-                "displacementOrTractionFvPatchVectorField::"
-                "displacementOrTractionFvPatchVectorField() "
-            )   << "specifyNormalDirection can only be -1, 0 or 1"
+            FatalErrorInFunction
+                << "specifyNormalDirection can only be -1, 0 or 1"
                 << abort(FatalError);
         }
     }

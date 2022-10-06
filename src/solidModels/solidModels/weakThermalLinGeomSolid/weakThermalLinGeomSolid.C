@@ -155,6 +155,13 @@ bool weakThermalLinGeomSolid::converged
 }
 
 
+void weakThermalLinGeomSolid::readDict()
+{
+    solidModel::readDict();
+    solidModelDict().readIfPresent("absoluteTemperatureTolerance", absTTol_);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 weakThermalLinGeomSolid::weakThermalLinGeomSolid(dynamicFvMesh& mesh)
@@ -206,6 +213,7 @@ weakThermalLinGeomSolid::weakThermalLinGeomSolid(dynamicFvMesh& mesh)
 bool weakThermalLinGeomSolid::evolve()
 {
     Info << "Evolving thermal solid solver" << endl;
+    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<scalar> solverPerfT;

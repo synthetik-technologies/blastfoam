@@ -24,13 +24,26 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "momentumStabilisation.H"
-#include "fvc.H"
+#include "hashedWordList.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(momentumStabilisation, 0);
+
+template<>
+const char* NamedEnum<momentumStabilisation::Method, 4>::names[] =
+{
+    "none",
+    "RhieChow",
+    "Laplacian",
+    "JST"
+};
+
+const NamedEnum<momentumStabilisation::Method, 4>
+    momentumStabilisation::stabilisationMethods;
+
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -40,10 +53,86 @@ Foam::momentumStabilisation::momentumStabilisation
     const dictionary& dict
 )
 :
-    dict_(dict)
+    dict_(dict.optionalSubDict("stabilisation"))
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::momentumStabilisation::setMethods(const Method defaultMethod) const
+{
+    setMethods(defaultMethod, dict_);
+}
+
+void Foam::momentumStabilisation::setMethods
+(
+    const Method defaultMethod,
+    const dictionary& dict
+) const
+{
+    const hashedWordList methods
+    (
+        dict.found("methods")
+      ? dict.lookup<wordList>("methods")
+      : wordList
+        (
+            1,
+            dict.lookupOrDefault<word>("method", stabilisationMethods[defaultMethod])
+        )
+    );
+    forAll(methods, i)
+    {
+        stabilisationMethods[methods[i]];
+    }
+
+    methods_.clear();
+
+    // Calculate stabilisation term
+    if (methods.found(stabilisationMethods[RHIE_CHOW]))
+    {
+        methods_.insert
+        (
+            RHIE_CHOW,
+            dict.lookupOrDefault
+            (
+                word(stabilisationMethods[RHIE_CHOW]) + "ScaleFactor",
+                0.1
+            )
+        );
+    }
+    if (methods.found(stabilisationMethods[LAPLACIAN]))
+    {
+        methods_.insert
+        (
+            LAPLACIAN,
+            dict.lookupOrDefault
+            (
+                word(stabilisationMethods[LAPLACIAN]) + "ScaleFactor",
+                0.01
+            )
+        );
+    }
+    if (methods.found(stabilisationMethods[JST]))
+    {
+        methods_.insert
+        (
+            JST,
+            dict.lookupOrDefault
+            (
+                word(stabilisationMethods[JST]) + "ScaleFactor",
+                0.001
+            )
+        );
+    }
+    if (methods.found(stabilisationMethods[NONE]))
+    {
+        methods_.insert
+        (
+            NONE,
+            0.0
+        );
+    }
+
+}
 
 Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
 (
@@ -52,19 +141,18 @@ Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
     const volScalarField& gamma
 ) const
 {
+    // Lookup method
+    if (!methods_.size())
+    {
+        setMethods(RHIE_CHOW);
+    }
+
     tmp<volVectorField> tresult
     (
-        new volVectorField
+        volVectorField::New
         (
-            IOobject
-            (
-                word(type() + "Field"),
-                vf.mesh().time().timeName(),
-                vf.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            vf.mesh(),
+           word(type() + "Field"),
+           vf.mesh(),
             dimensionedVector
             (
                 "zero",
@@ -73,50 +161,71 @@ Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
             )
         )
     );
-    volVectorField& result = tresult.ref();
-
-    // Lookup method
-    const word method = word(dict_.lookup("type"));
 
     // Calculate stabilisation term
-    if (method == "RhieChow")
+    if (methods_.found(RHIE_CHOW))
     {
-        const scalar scaleFactor = readScalar(dict_.lookup("scaleFactor"));
-
-        result = scaleFactor
-       *(
-           fvc::laplacian(gamma, vf, "laplacian(DD,D)") - fvc::div(gamma*gradVf)
-        );
+        tresult.ref() += RhieChow(methods_[RHIE_CHOW], vf, gradVf, gamma);
     }
-    else if (method == "JamesonSchmidtTurkel")
+    if (methods_.found(LAPLACIAN))
     {
-        const scalar scaleFactor = readScalar(dict_.lookup("scaleFactor"));
-
-        result = -scaleFactor*fvc::laplacian
-        (
-            vf.mesh().magSf(),
-            //1.0/(vf.mesh().deltaCoeffs()*vf.mesh().deltaCoeffs()),
-            fvc::laplacian(gamma, vf, "JSTinner"),
-            "JSTouter"
-        );
+        tresult.ref() += Laplacian(methods_[LAPLACIAN], vf, gamma);
     }
-    else if (method == "Laplacian")
+    if (methods_.found(JST))
     {
-        const scalar scaleFactor = readScalar(dict_.lookup("scaleFactor"));
-
-        result = scaleFactor*fvc::laplacian(gamma, vf);
-    }
-    else if (method != "none")
-    {
-        FatalErrorIn(type() + "::stabilisation() const")
-            << "Unknown method = " << method << nl
-            << "Methods are: none, RhieChow, JamesonSchmidtTurkel and Laplacian"
-            <<  abort(FatalError);
+        tresult.ref() += JamesonSchmidtTurkel(methods_[JST], vf, gamma);
     }
 
     return tresult;
 }
 
+
+Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
+(
+    const volVectorField& vf,
+    const volTensorField& gradVf,
+    const surfaceScalarField& gamma
+) const
+{
+    // Lookup method
+    if (!methods_.size())
+    {
+        setMethods(JST);
+    }
+
+    tmp<volVectorField> tresult
+    (
+        volVectorField::New
+        (
+           word(type() + "Field"),
+           vf.mesh(),
+            dimensionedVector
+            (
+                "zero",
+                gamma.dimensions()*vf.dimensions()/sqr(dimLength),
+                vector::zero
+            )
+        )
+    );
+
+    // Calculate stabilisation term
+    if (methods_.found(RHIE_CHOW))
+    {
+        // WarningInFunction
+            // << "Not implemented for velocity" << endl;
+        tresult.ref() += RhieChow(methods_[RHIE_CHOW], vf, gradVf, gamma);
+    }
+    if (methods_.found(LAPLACIAN))
+    {
+        tresult.ref() += Laplacian(methods_[LAPLACIAN], vf, gamma);
+    }
+    if (methods_.found(JST))
+    {
+        tresult.ref() += JamesonSchmidtTurkel(methods_[JST], vf, gamma);
+    }
+
+    return tresult;
+}
 
 
 // ************************************************************************* //

@@ -53,15 +53,26 @@ mechanicalEnergies::mechanicalEnergies
     internalEnergy_(0.0),
     internalEnergyOldTime_(0.0),
     kineticEnergy_(0.0),
-    laplacianSmoothingEnergy_(0.0),
-    laplacianSmoothingEnergyOldTime_(0.0),
-    linearBulkViscosityEnergy_(0.0),
-    linearBulkViscosityEnergyOldTime_(0.0),
+    smoothingEnergy_(0.0),
+    smoothingEnergyOldTime_(0.0),
+    bulkViscosityEnergy_(0.0),
+    bulkViscosityEnergyOldTime_(0.0),
     linearBulkViscosityCoeff_
     (
+        "linearBulkViscosityCoeff",
+        dimless,
         dict.lookupOrDefault<scalar>
         (
             "linearBulkViscosityCoeff", 0.06
+        )
+    ),
+    quadraticBulkViscosityCoeff_
+    (
+        "quadraticBulkViscosityCoeff",
+        dimless,//sqr(dimVelocity),
+        dict.lookupOrDefault<scalar>
+        (
+            "quadraticBulkViscosityCoeff", 1.2
         )
     ),
     viscousPressurePtr_(),
@@ -120,10 +131,16 @@ const surfaceScalarField& mechanicalEnergies::viscousPressure
         );
     }
 
-    viscousPressurePtr_() = linearBulkViscosityCoeff_*fvc::interpolate
-    (
-        rho*fvc::ddt(epsilonVol(gradD))
-    )*waveSpeed/mesh_.deltaCoeffs();
+    const surfaceScalarField L(1.0/mesh_.deltaCoeffs());
+    surfaceScalarField rhof(fvc::interpolate(rho));
+    surfaceScalarField epsilonDotf(fvc::interpolate(fvc::ddt(epsilonVol(gradD))));
+
+    viscousPressurePtr_() =
+        rhof
+       *(
+            linearBulkViscosityCoeff_*epsilonDotf*waveSpeed*L
+          + sqr(quadraticBulkViscosityCoeff_*epsilonDotf*L)
+        );
 
     return viscousPressurePtr_();
 }
@@ -169,10 +186,8 @@ void mechanicalEnergies::checkEnergies
     const volSymmTensorField& sigma,
     const volTensorField& gradD,
     const volTensorField& gradDD,
-    const surfaceScalarField& waveSpeed,
-    const dimensionedVector& g,
-    const scalar laplacianSmoothCoeff,
-    const surfaceScalarField& impKf
+    const volVectorField& stabilisation,
+    const dimensionedVector& g
 )
 {
     if (curTimeIndex_ != mesh_.time().timeIndex())
@@ -182,8 +197,8 @@ void mechanicalEnergies::checkEnergies
         // Update old time values
         externalWorkOldTime_ = externalWork_;
         internalEnergyOldTime_ = internalEnergy_;
-        laplacianSmoothingEnergyOldTime_ = laplacianSmoothingEnergy_;
-        linearBulkViscosityEnergyOldTime_ = linearBulkViscosityEnergy_;
+        smoothingEnergyOldTime_ = smoothingEnergy_;
+        bulkViscosityEnergyOldTime_ = bulkViscosityEnergy_;
     }
 
     // Calculate kinetic energy
@@ -237,8 +252,8 @@ void mechanicalEnergies::checkEnergies
     // Integrate linear bulk viscosity energy using the trapezoidal rule
     if (viscousPressurePtr_.valid())
     {
-        linearBulkViscosityEnergy_ =
-            linearBulkViscosityEnergyOldTime_
+        bulkViscosityEnergy_ =
+            bulkViscosityEnergyOldTime_
           + gSum
             (
                 DimensionedField<scalar, volMesh>
@@ -255,25 +270,25 @@ void mechanicalEnergies::checkEnergies
             );
     }
 
-    // Integrate energy dissipated due to Laplacian (Lax-Friedrichs) smoothing
-    // term
-    const dimensionedScalar& deltaT = mesh_.time().deltaT();
-    const dimensionedScalar& deltaT0 = mesh_.time().deltaT0();
-    laplacianSmoothingEnergy_ =
-        laplacianSmoothingEnergyOldTime_
-      + gSum
-        (
-            DimensionedField<scalar, volMesh>
-            (
-                fvc::reconstruct
-                (
-                    laplacianSmoothCoeff*0.5*(deltaT + deltaT0)*impKf
-                   *(
-                        fvc::snGrad(U) + fvc::snGrad(U.oldTime())
-                    )*mesh_.magSf()
-                )().internalField() && gradDD.internalField()*mesh_.V()
-            )
-        );
+    // // Integrate energy dissipated due to Laplacian (Lax-Friedrichs) smoothing
+    // // term
+    // const dimensionedScalar& deltaT = mesh_.time().deltaT();
+    // const dimensionedScalar& deltaT0 = mesh_.time().deltaT0();
+    // smoothingEnergy_ =
+    //     smoothingEnergyOldTime_
+    //   + gSum
+    //     (
+    //         DimensionedField<scalar, volMesh>
+    //         (
+    //             fvc::reconstruct
+    //             (
+    //                 laplacianSmoothCoeff*0.5*(deltaT + deltaT0)*impKf
+    //                *(
+    //                     fvc::snGrad(U) + fvc::snGrad(U.oldTime())
+    //                 )*mesh_.magSf()
+    //             )().internalField() && gradDD.internalField()*mesh_.V()
+    //         )
+    //     );
 
     // Check the energy imbalance
     // Ideally this should stay less than 1% of the max energy component
@@ -282,8 +297,8 @@ void mechanicalEnergies::checkEnergies
         externalWork_
       - internalEnergy_
       - kineticEnergy_
-      - laplacianSmoothingEnergy_
-      - linearBulkViscosityEnergy_;
+      // - smoothingEnergy_
+      - bulkViscosityEnergy_;
 
     const scalar energyImbalancePercent =
         100.0*mag(energyImbalance)/max
@@ -294,11 +309,8 @@ void mechanicalEnergies::checkEnergies
     Info<< "External work = " << externalWork_ << " J" << nl
         << "Internal energy = " << internalEnergy_ << " J" << nl
         << "Kinetic energy = " << kineticEnergy_ << " J" << nl
-        << "laplacian smoothing energy = "
-        << laplacianSmoothingEnergy_ << " J"
-        << nl
-        << "Bulk viscosity energy = " << linearBulkViscosityEnergy_ << " J"
-        << nl
+        // << "Smoothing energy = " << smoothingEnergy_ << " J" << nl
+        << "Bulk viscosity energy = " << bulkViscosityEnergy_ << " J" << nl
         << "Energy imbalance (% of max) = " << energyImbalancePercent << " %"
         << endl;
 
@@ -316,8 +328,8 @@ void mechanicalEnergies::checkEnergies
             << externalWork_ << " "
             << internalEnergy_ << " "
             << kineticEnergy_ << " "
-            << laplacianSmoothingEnergy_ << " "
-            << linearBulkViscosityEnergy_
+            // << smoothingEnergy_ << " "
+            << bulkViscosityEnergy_
             << endl;
     }
 }

@@ -75,7 +75,7 @@ Foam::ALEFvMotionSolver::curPoints() const
             "pU",
             pointMesh::New(fvMesh_),
             dimensionedVector(dimVelocity, Zero),
-            U.boundaryField().types()
+            wordList(U.boundaryField().size(), "slip")
         )
     );
     volPointInterpolation::New(fvMesh_).interpolate(U, pU);

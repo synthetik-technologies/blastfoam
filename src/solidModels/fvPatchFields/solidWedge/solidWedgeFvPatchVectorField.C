@@ -57,16 +57,8 @@ solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 {
     if (!isType<wedgeFvPatch>(this->patch()))
     {
-        FatalErrorIn
-        (
-            "solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField\n"
-            "(\n"
-            "    const solidWedgeFvPatchVectorField& ptf,\n"
-            "    const fvPatch& p,\n"
-            "    const DimensionedField<vector, volMesh>& iF,\n"
-            "    const fvPatchFieldMapper& mapper\n"
-            ")\n"
-        )   << "\n    patch type '" << p.type()
+        FatalErrorInFunction
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << this->internalField().name()
@@ -87,16 +79,8 @@ solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 {
     if (!isType<wedgeFvPatch>(p))
     {
-        FatalIOErrorIn
-        (
-            "solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField\n"
-            "(\n"
-            "    const fvPatch& p,\n"
-            "    const Field<vector>& field,\n"
-            "    dictionary& dict\n"
-            ")\n",
-            dict
-        )   << "\n    patch type '" << p.type()
+        FatalIOErrorInFunction(dict)
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << this->internalField().name()

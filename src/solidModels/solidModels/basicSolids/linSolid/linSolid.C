@@ -55,8 +55,8 @@ linSolid<IncrementalModel>::linSolid
 )
 :
     IncrementalModel(type, mesh, nonLinGeom(), isSolid),
-    impK_("impK", this->mechanical().elasticModulus()),
-    impKf_("impKf", fvc::interpolate(impK_))
+    impK_("impK", this->mechanical().impK()),
+    impKf_("impKf", this->mechanical().impKf())
 {}
 
 

@@ -79,7 +79,7 @@ protected:
         //  The value of this term only affects convergence and not the
         //  answer. In the case of Hookean elasticity, (2*mu + lambda)
         //  is the optimum
-        const volScalarField impK_;
+        volScalarField impK_;
 
         //- Implicit stiffness surface field
         surfaceScalarField impKf_;

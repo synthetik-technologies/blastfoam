@@ -73,6 +73,8 @@ void unsTotalLagSolid<IncrementalModel>::update
     if (correctSigma)
     {
         this->mechanical().correct(this->sigmaf_);
+        this->impK_ = this->mechanical().impK();
+        this->impKf_ = this->mechanical().impKf();
     }
 }
 

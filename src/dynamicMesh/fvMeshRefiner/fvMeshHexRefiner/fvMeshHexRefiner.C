@@ -269,16 +269,15 @@ Foam::fvMeshHexRefiner::unrefine
 
 
     // Change mesh and generate map.
-    //autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh_, true);
     autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh_, false);
+
+    // Update fields
+    mesh_.updateMesh(map);
 
     Info<< "Unrefined from "
         << returnReduce(map().nOldCells(), sumOp<label>())
         << " to " << mesh_.globalData().nTotalCells() << " cells."
         << endl;
-
-    // Update fields
-    mesh_.updateMesh(map);
 
     // Update numbering of protectedCell_
     if (protectedCell_.size())
@@ -1569,7 +1568,6 @@ bool Foam::fvMeshHexRefiner::refine
                 isRefining_ = false;
             }
         }
-
 
         if (canUnrefine(true))
         {

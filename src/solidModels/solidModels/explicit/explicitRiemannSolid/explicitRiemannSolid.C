@@ -61,9 +61,9 @@ void explicitRiemannSolid::updateStress()
 {
     // Calculate the stress using run-time selectable mechanical law
     mechanical().correct(sigma());
-    impK_ = mechanical().impK();
+    impKf_ = mechanical().impKf();
 
-    P_ = mech_.J()*(sigma() & mech_.invF().T());
+    P_ = mech_.J()*(mech_.invF() & sigma());
 }
 
 
@@ -77,21 +77,6 @@ void explicitRiemannSolid::solveGEqns
 
     // Compute right hand sides
     rhoURHS = fvc::surfaceIntegrate(tractionC_*mesh().magSf());
-    if (JSTScaleFactor_ > 0)
-    {
-        rhoURHS -=
-            JSTScaleFactor_*fvc::laplacian
-            (
-                mesh().magSf(),
-                fvc::laplacian
-                (
-                    deltaT*mechanical().impKf(),
-                    U_,
-                    "laplacian(DU,U)"
-                ),
-                "laplacian(DU,U)"
-            );
-    }
     if (angularMomentumConservation_)
     {
         volVectorField rhsRhoUAM
@@ -99,6 +84,33 @@ void explicitRiemannSolid::solveGEqns
             fvc::div(((Df_ + mesh().Cf()) ^ tractionC_)*mesh().magSf())
         );
         am_.AMconservation(x_, rhoU_, rhoURHS, rhsRhoUAM, stage);
+    }
+    if (useBulkViscosity_)
+    {
+        rhoURHS +=
+            fvc::div
+            (
+                mesh().Sf()*energies_.viscousPressure
+                (
+                    rho(), fvc::interpolate(pWaveSpeed_), gradD()
+                )
+            );
+    }
+    if (useStabilisation_)
+    {
+        rhoURHS +=
+            stabilisation().stabilisation
+            (
+                U(),
+                fvc::grad(U())(),
+                (deltaT*impKf_)()
+            );
+    }
+
+    if (mesh().relaxField(D_.name()))
+    {
+        scalar fac = mesh().fieldRelaxationFactor(D_.name());
+        rhoURHS *= fac;
     }
 
     surfaceScalarField rhof(fvc::interpolate(rho_));
@@ -115,7 +127,7 @@ void explicitRiemannSolid::solveGEqns
         Df_ += deltaT*rhoUC_/rhof;
         pointD_ += deltaT*pointRhoU_/mechanical().volToPoint().interpolate(rho_);
 
-//         mechanical().interpolate(D_, pointD_);
+        // mechanical().interpolate(D_, pointD_);
         mechanical().grad(D_, gradD_);
 
         DD_ = D_ - prevD;
@@ -220,21 +232,7 @@ void explicitRiemannSolid::updateFluxes()
         const vectorField pN(N.boundaryField()[patchi]);
 
         // Riemann solver for inter-processor boundaries
-        if (pD.fixesValue() || U_.boundaryField()[patchi].fixesValue())
-        {
-            rhoUCBf[patchi] = pRhoU[patchi];
-
-            tractionCBf[patchi] =
-                tractionOwn_.boundaryField()[patchi]
-              + (
-                    stabRhoU.boundaryField()[patchi]
-                  & (
-                        rhoUCBf[patchi]
-                      - rhoUOwn_.boundaryField()[patchi]
-                    )
-                );
-        }
-        else if (isA<solidTractionFvPatchVectorField>(pD))
+        if (isA<solidTractionFvPatchVectorField>(pD))
         {
             const solidTractionFvPatchVectorField& stD =
                 dynamicCast<const solidTractionFvPatchVectorField>(pD);
@@ -402,6 +400,20 @@ void explicitRiemannSolid::updateFluxes()
                   + 0.5*(stabTractioni & ((PNeii - POwni) & Ni));
             }
         }
+        else if (pD.fixesValue() || U_.boundaryField()[patchi].fixesValue())
+        {
+            rhoUCBf[patchi] = pRhoU[patchi];
+
+            tractionCBf[patchi] =
+                tractionOwn_.boundaryField()[patchi]
+              + (
+                    stabRhoU.boundaryField()[patchi]
+                  & (
+                        rhoUCBf[patchi]
+                      - rhoUOwn_.boundaryField()[patchi]
+                    )
+                );
+        }
         else if
         (
             isA<symmetryPolyPatch>(p)
@@ -447,12 +459,12 @@ void explicitRiemannSolid::updateFluxes()
     // Average linear momentum
     volVectorField rhoUAvg
     (
-//         fvc::average(rhoUC_)
-        interpSchemes_.surfaceToVol(rhoUC_, pointRhoU_)
+        fvc::average(rhoUC_)
+        // interpSchemes_.surfaceToVol(rhoUC_, pointRhoU_)
     );
     volTensorField gradRhoUAvg
     (
-//         fvc::grad(rhoUAvg)
+        // fvc::grad(rhoUAvg)
         gradSchemes_.localGradient(rhoUAvg, rhoUC_, pointRhoU_)
     );
 
@@ -513,14 +525,15 @@ explicitRiemannSolid::explicitRiemannSolid
     ops_(mesh),
     beta_
     (
-        solidModelDict().lookup<scalar>
+        solidModelDict().lookupOrDefault<scalar>
         (
-            "incompressiblilityCoefficient"
+            "incompressiblilityCoefficient",
+            1.0
         )
      ),
     angularMomentumConservation_
     (
-        solidModelDict().lookup("angularMomentumConservation")
+        solidModelDict().lookupOrDefault("angularMomentumConservation", true)
     ),
     D_(this->D()),
     DD_(this->DD()),
@@ -635,14 +648,18 @@ explicitRiemannSolid::explicitRiemannSolid
     rhoUNei_("rhoUNei", rhoUC_),
     tractionOwn_("tractionOwn", tractionC_),
     tractionNei_("tractionNei", tractionC_),
-    JSTScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>("JSTScaleFactor", 0.0)
-    ),
+
+    useStabilisation_(solidModelDict().lookupOrDefault("useStabilisation", true)),
+    useBulkViscosity_(solidModelDict().lookupOrDefault("useBulkViscosity", true)),
+
     energies_(mesh, solidModelDict()),
-    impK_(mechanical().impK())
+    impKf_(mechanical().impKf())
 {
     DisRequired(type);
+    if (!useStabilisation_)
+    {
+        stabilisation().setMethods(momentumStabilisation::NONE, dictionary());
+    }
 }
 
 
@@ -747,7 +764,7 @@ tmp<vectorField> explicitRiemannSolid::tractionBoundarySnGrad
     const label patchID = patch.index();
 
     // Patch mechanical property
-    const scalarField& impK(impK_.boundaryField()[patch.index()]);
+    const scalarField& impK(impKf_.boundaryField()[patch.index()]);
 
     // Patch gradient
     const tensorField& pGradD = gradD_.boundaryField()[patchID];

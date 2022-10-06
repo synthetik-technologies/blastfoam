@@ -82,15 +82,6 @@ class explicitLinGeomTotalDispSolid
 {
     // Private data
 
-        //- Scale factor for Rhie-Chow smoothing term
-        //const scalar RhieChowScaleFactor_;
-
-        // Scale factor for Lax-Lax–Friedrichs smoothing term
-        const scalar LFScaleFactor_;
-
-        // Scale factor for Jameson-Schmidt-Turkel smoothing term
-        const scalar JSTScaleFactor_;
-
         //- Wave speed field
         surfaceScalarField waveSpeed_;
 

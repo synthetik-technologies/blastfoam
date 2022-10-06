@@ -60,7 +60,7 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
                 solMod.solidModelDict().lookup("snGradLimitCoeff")
             );
 
-        Info<< "snGradLimitCoeff: " << limitCoeff_ << endl;
+        DebugInfo<< "snGradLimitCoeff: " << limitCoeff_ << endl;
     }
 }
 
@@ -88,7 +88,8 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
     directionMixedFvPatchVectorField(p, iF, dict),
     limitCoeff_(dict.lookupOrDefault<scalar>("limitCoeff", 1.0))
 {
-    Info<< "Creating " << type() << " boundary condition" << endl;
+    DebugInfo
+        << "Creating " << type() << " boundary condition" << endl;
     directionMixedFvPatchVectorField::evaluate();
 
     // Lookup the solidModel object
@@ -102,10 +103,10 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
                 solMod.solidModelDict().lookup("snGradLimitCoeff")
             );
 
-        Info<< "snGradLimitCoeff: " << limitCoeff_ << endl;
+        DebugInfo<< "snGradLimitCoeff: " << limitCoeff_ << endl;
     }
 
-    Info<< "Limiter coefficient: " << limitCoeff_ << endl;
+    DebugInfo<< "Limiter coefficient: " << limitCoeff_ << endl;
 }
 
 solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField

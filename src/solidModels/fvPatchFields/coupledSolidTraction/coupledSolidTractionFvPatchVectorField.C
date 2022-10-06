@@ -78,8 +78,8 @@ Foam::coupledSolidTractionFvPatchVectorField::viscousStress
 
         return
             (
-                turb.devSigma()().boundaryField()[patch.index()]
-              & patch.nf()
+                patch.nf()
+              & turb.devSigma()().boundaryField()[patch.index()]
             )*rho(mesh, patch);
     }
     else
@@ -288,22 +288,36 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
 
     //- Lookup viscous stress and pressure fields
-    vectorField nbrViscous(viscousStress(nbrMesh, sampleFvPatch));
+    vectorField viscousNbr(viscousStress(nbrMesh, sampleFvPatch));
 
-    const volScalarField& volNbrP =
+
+    const volScalarField& pNbr =
         nbrMesh.lookupObject<volScalarField>(pName_);
-    scalarField nbrP(volNbrP.boundaryField()[samplePatchi] - pRef_);
-    if (volNbrP.dimensions() != dimPressure)
+    scalarField ppNbr(pNbr.boundaryField()[samplePatchi] + pRef_);
+    if (pNbr.dimensions() != dimPressure)
     {
-        nbrP *= rho(nbrMesh, sampleFvPatch);
+        ppNbr *= rho(nbrMesh, sampleFvPatch);
     }
 
-    this->pressure() = samplePatch.faceInterpolate(nbrP);
+    vector forceNbr(gSum(ppNbr*sampleFvPatch.Sf() + viscousNbr*sampleFvPatch.magSf()));
+
+    this->pressure() = samplePatch.faceInterpolate(ppNbr);
 
     // Flip sign since the boundary normal is opposite and the stress is dotted
     // with the neighbor boundary then mapped
-    this->traction() = -samplePatch.faceInterpolate(nbrViscous);
+    this->traction() = -samplePatch.faceInterpolate(viscousNbr);
 
+    vector force
+    (
+        gSum
+        (
+            this->pressure()*this->patch().Sf()
+          + this->traction()*this->patch().magSf()
+        )
+    );
+
+    Info<< "Force acting on " << this->patch().name() << " (fluid/interpolated): "
+        << force << ", " << forceNbr << endl;
     solidTractionFvPatchVectorField::updateCoeffs();
 }
 

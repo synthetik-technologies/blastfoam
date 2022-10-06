@@ -133,23 +133,18 @@ void hydrostaticPressureFvPatchVectorField::updateCoeffs()
         <
             uniformDimensionedVectorField
         >("g");
-    vector dir(g.value()/mag(g.value()));
 
     vectorField x(this->patch().Cf());
     if (!lookupSolidModel(this->patch().boundaryMesh().mesh()).movingMesh())
     {
         x += this->patch().lookupPatchField<volVectorField, vector>("D");
-        if (internalField().name() == "DD")
-        {
-            x += this->patch().lookupPatchField<volVectorField, vector>("DD");
-        }
     }
     else
     {
         x += this->patch().lookupPatchField<volVectorField, vector>("DD");
     }
 
-    scalarField gh((x & g.value()) + mag(g)*hRef_);
+    scalarField gh((x & g.value()) + mag(g.value())*hRef_);
     this->pressure() = pRef_ + rho_*gh;
 
     solidTractionFvPatchVectorField::updateCoeffs();

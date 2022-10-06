@@ -79,7 +79,7 @@ class solidTractionFvPatchVectorField
         scalar limitCoeff_;
 
         //- Optional: under-relaxation factor
-        scalar relaxFac_;
+        autoPtr<Function1<scalar>> relaxFac_;
 
 
 public:

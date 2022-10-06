@@ -436,11 +436,9 @@ Foam::solidContactFvPatchVectorField::solidContactFvPatchVectorField
     {
         rigidMaster_ = Switch(dict.lookup("rigidMaster"));
 
-        if (debug)
-        {
-            Info<< "    writePointDistanceFields: " << writePointDistanceFields_
-                << endl;
-        }
+        DebugInfo
+            << "    writePointDistanceFields: " << writePointDistanceFields_
+            << endl;
 
         if (scaleFaceTractionsNearDownstreamPatch_)
         {

@@ -58,9 +58,8 @@ addToRunTimeSelectionTable
 
 void explicitNonLinGeomTotalLagSolid::updateStress()
 {
-    this->update();
-
-//     waveSpeed_ = sqrt(this->impKf_/fvc::interpolate(rho()));
+    totalLagSolid<totalDispSolid>::update();
+    waveSpeed_ = sqrt(this->impKf_/fvc::interpolate(rho()));
 }
 
 
@@ -72,20 +71,6 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
 )
 :
     totalLagSolid<totalDispSolid>(typeName, mesh),
-    LFScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>
-        (
-            "LFScaleFactor", 0.001
-        )
-    ),
-    JSTScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>
-        (
-            "JSTScaleFactor", 0.01
-        )
-    ),
     waveSpeed_
     (
         IOobject
@@ -113,7 +98,8 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
         dimensionedVector
         (
             "zero", dimVelocity/dimTime, vector::zero
-        )
+        ),
+        "zeroGradient"
     )
 {
     // Update stress
@@ -167,12 +153,29 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         const dimensionedScalar& deltaT = time().deltaT();
         const dimensionedScalar& deltaT0 = time().deltaT0();
 
+        scalar f = 1.0;
+        if (mesh().relaxField(D().name()))
+        {
+            f = mesh().fieldRelaxationFactor(D().name());
+        }
+
         // Compute the velocity
         // Note: this is the velocity at the middle of the time-step
-        U() = U().oldTime() + 0.5*(deltaT + deltaT0)*a_.oldTime();
+        U() = U().oldTime() + f*0.5*(deltaT + deltaT0)*a_.oldTime();
+        U().correctBoundaryConditions();
 
         // Compute displacement
         D() = D().oldTime() + deltaT*U();
+
+        // Enforce any cell displacements
+        if (setCellDisps().cellIDs().size())
+        {
+            UIndirectList<vector>
+            (
+                D(),
+                setCellDisps().cellIDs()
+            ) = setCellDisps().cellDisps();
+        }
 
         // Enforce boundary conditions on the displacement field
         D().correctBoundaryConditions();
@@ -184,13 +187,24 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         // Note the inclusion of a linear bulk viscosity pressure term to
         // dissipate high frequency energies, and a Rhie-Chow term to
         // avoid checker-boarding
+        tmp<volVectorField> stab
+        (
+            stabilisation().stabilisation
+            (
+                U(),
+                fvc::grad(U())(),
+                (0.5*(deltaT + deltaT0)*impKf_)()
+            )
+        );
+
+        volSymmTensorField stress(sigma());
         a_ =
             (
                 fvc::div
                 (
                     (
                         mesh().Sf()
-                      & fvc::interpolate(J_*(Finv_ & sigma()))
+                      & (fvc::interpolate((J_*Finv_) & stress))
                     )
                   + mesh().Sf()*energies_.viscousPressure
                     (
@@ -198,40 +212,8 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
                     )
                 )
 
-//               + rho()*fvc::grad
-//                 (
-//                     (
-//                         0.06*fvc::laplacian
-//                         (
-//                             waveSpeed_*mesh().magSf(),
-//                             U(), "laplacian(DU,U)"
-//                         ) & vector::one
-//                     )
-//
-//                   + magSqr
-//                     (
-//                         1.2
-//                        *fvc::laplacian(mesh().magSf(), U(), "laplacian(DU,U)")
-//                     )
-//                 )
                 // This corresponds to Lax–Friedrichs smoothing
-              + LFScaleFactor_*fvc::laplacian
-                (
-                    0.5*(deltaT + deltaT0)*impKf_,
-                    U(),
-                    "laplacian(DU,U)"
-                )
-              - JSTScaleFactor_*fvc::laplacian
-                (
-                    mesh().magSf(),
-                    fvc::laplacian
-                    (
-                        0.5*(deltaT + deltaT0)*impKf_,
-                        U(),
-                        "laplacian(DU,U)"
-                    ),
-                    "laplacian(DU,U)"
-                )
+              + stab()
             )/rho()
           + g();
         a_.correctBoundaryConditions();
@@ -246,11 +228,10 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
             sigma(),
             gradD(),
             gradDD(),
-            waveSpeed_,
-            g(),
-            LFScaleFactor_,
-            impKf_
+            stab(),
+            g()
         );
+
     }
     while (mesh().update());
 

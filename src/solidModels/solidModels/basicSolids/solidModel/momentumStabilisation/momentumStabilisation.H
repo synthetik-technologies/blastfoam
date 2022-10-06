@@ -41,6 +41,8 @@ SourceFiles
 
 #include "dictionary.H"
 #include "volFields.H"
+#include "fvc.H"
+#include "NamedEnum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,12 +55,106 @@ namespace Foam
 
 class momentumStabilisation
 {
+public:
+    enum Method
+    {
+        NONE,
+        RHIE_CHOW,
+        LAPLACIAN,
+        JST,
+        INVALID
+    };
+    static const NamedEnum<Method, 4> stabilisationMethods;
+
+private:
     // Private data
 
         //- Copy of settings dict
-        const dictionary dict_;
+        const dictionary& dict_;
+
+        mutable Map<scalar> methods_;
+
 
     // Private Member Functions
+
+        template<class GammaField>
+        tmp<volVectorField> RhieChow
+        (
+            const scalar scale,
+            const volVectorField& vf,
+            const volTensorField& gradVf,
+            const GammaField& gamma
+        ) const
+        {
+            return
+                scale
+               *(
+                   fvc::laplacian
+                   (
+                        gamma,
+                        vf,
+                        "laplacian(D" + vf.name() +"," + vf.name() + ")"
+                    )
+                  - fvc::div(gamma*gradVf)
+                );
+        }
+        template<>
+        tmp<volVectorField> RhieChow
+        (
+            const scalar scale,
+            const volVectorField& vf,
+            const volTensorField& gradVf,
+            const surfaceScalarField& gamma
+        ) const
+        {
+            return
+                scale
+               *(
+                   fvc::laplacian
+                   (
+                        gamma,
+                        vf,
+                        "laplacian(D" + vf.name() +"," + vf.name() + ")"
+                    )
+                  - fvc::div
+                    (
+                        gamma
+                       *(
+                            fvc::interpolate(gradVf) & vf.mesh().Sf()
+                        )
+                    )
+                );
+        }
+
+        template<class GammaField>
+        tmp<volVectorField> JamesonSchmidtTurkel
+        (
+            const scalar scale,
+            const volVectorField& vf,
+            const GammaField& gamma
+        ) const
+        {
+            const word scheme("laplacian(D" + vf.name() +"," + vf.name() + ")");
+            return
+              - scale
+               *fvc::laplacian
+                (
+                    vf.mesh().magSf(),
+                    //1.0/(vf.mesh().deltaCoeffs()*vf.mesh().deltaCoeffs()),
+                    fvc::laplacian(gamma, vf, scheme),
+                    scheme
+            );
+        }
+        template<class GammaField>
+        tmp<volVectorField> Laplacian
+        (
+            const scalar scale,
+            const volVectorField& vf,
+            const GammaField& gamma
+        ) const
+        {
+            return scale*fvc::laplacian(gamma, vf);
+        }
 
         //- Disallow default bitwise copy construct
         momentumStabilisation(const momentumStabilisation&);
@@ -89,6 +185,10 @@ public:
 
     // Member Functions
 
+        //- Set the stabilisation methods
+        void setMethods(const Method defaultMethod) const;
+        void setMethods(const Method defaultMethod, const dictionary& dict) const;
+
         // Evaluation
 
             //- Stabilisation term
@@ -97,6 +197,14 @@ public:
                 const volVectorField& vf,
                 const volTensorField& gradVf,
                 const volScalarField& gamma
+            ) const;
+
+            //- Stabilisation term
+            tmp<volVectorField> stabilisation
+            (
+                const volVectorField& vf,
+                const volTensorField& gradVf,
+                const surfaceScalarField& gamma
             ) const;
 };
 

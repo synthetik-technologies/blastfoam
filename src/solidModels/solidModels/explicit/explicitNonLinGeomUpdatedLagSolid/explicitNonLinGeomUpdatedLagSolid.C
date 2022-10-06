@@ -58,37 +58,8 @@ addToRunTimeSelectionTable
 
 void explicitNonLinGeomUpdatedLagSolid::updateStress()
 {
-    // Update the total displacement
-    DD() = D() - D().oldTime();
-
-    // Interpolate DD to pointDD
-    mechanical().interpolate(DD(), pointDD(), false);
-
-    // Update gradient of displacement increment
-    mechanical().grad(DD(), pointDD(), gradDD());
-
-    // Update the gradient of total displacement
-    gradD() = gradD().oldTime() + gradDD();
-
-    // Relative deformation gradient
-    relF_ = I + gradDD().T();
-
-    // Inverse relative deformation gradient
-    relFinv_ = inv(relF_);
-
-    // Total deformation gradient
-    F_ = relF_ & F_.oldTime();
-
-    // Relative Jacobian
-    relJ_ = det(relF_);
-
-    // Jacobian of deformation gradient
-    J_ = relJ_*J_.oldTime();
-
-    // Calculate the stress using run-time selectable mechanical law
-    mechanical().correct(sigma());
-
-    waveSpeed_ = fvc::interpolate(sqrt(mechanical().impK()/rho()));
+    this->update();
+    waveSpeed_ = sqrt(impKf_/fvc::interpolate(rho()));
 }
 
 
@@ -100,29 +71,13 @@ explicitNonLinGeomUpdatedLagSolid::explicitNonLinGeomUpdatedLagSolid
 )
 :
     updatedLagSolid<incrementalSolid>(typeName, mesh),
-    LFScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>
-        (
-            "LFScaleFactor", 0.001
-        )
-    ),
-    JSTScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>
-        (
-            "JSTScaleFactor", 0.01
-        )
-    ),
     waveSpeed_
     (
         IOobject
         (
             "waveSpeed",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            mesh
         ),
         fvc::interpolate(Foam::sqrt(this->impK_/rho()))
     ),
@@ -138,11 +93,7 @@ explicitNonLinGeomUpdatedLagSolid::explicitNonLinGeomUpdatedLagSolid
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector
-        (
-            "zero", dimVelocity/dimTime, vector::zero
-        ),
-        "zeroGradient"
+        dimensionedVector("0", dimAcceleration, vector::zero)
     )
 {
     a_.oldTime();
@@ -159,32 +110,6 @@ explicitNonLinGeomUpdatedLagSolid::explicitNonLinGeomUpdatedLagSolid
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void explicitNonLinGeomUpdatedLagSolid::setDeltaT(Time& runTime)
-{
-    // waveSpeed = cellWidth/deltaT
-    // So, deltaT = cellWidth/waveVelocity == (1.0/deltaCoeff)/waveSpeed
-    // In the current discretisation, information can move two cells per
-    // time-step. This means that we use 1/(2*d) == 0.5*deltaCoeff when
-    // calculating the required stable time-step
-    // i.e.e deltaT = (1.0/(0.5*deltaCoeff)/waveSpeed
-    // For safety, we should use a time-step smaller than this e.g. Abaqus uses
-    // 1/sqrt(2)*stableTimeStep: we will default to this value
-    const scalar requiredDeltaT =
-        1.0/max(mesh().surfaceInterpolation::deltaCoeffs()*waveSpeed_).value();
-
-    // Lookup the desired Courant number
-    const scalar maxCo =
-        runTime.controlDict().lookupOrDefault<scalar>("maxCo", 0.7071);
-
-    const scalar newDeltaT = maxCo*requiredDeltaT;
-
-    Info<< "maxCo = " << maxCo << nl
-        << "deltaT = " << newDeltaT << nl << endl;
-
-    runTime.setDeltaT(newDeltaT);
-}
-
-
 bool explicitNonLinGeomUpdatedLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
@@ -192,7 +117,7 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
     // Mesh update loop
     do
     {
-        Info<< "Solving the momentum equation for D" << endl;
+        Info<< "Solving the momentum equation for DD" << endl;
 
         // Central difference scheme
 
@@ -201,16 +126,32 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
 
         // Compute the velocity
         // Note: this is the velocity at the middle of the time-step
-        U() = U().oldTime() + 0.5*(deltaT + deltaT0)*a_.oldTime();
+        const scalar fac
+        (
+            mesh().relaxField(D().name())
+          ? mesh().fieldRelaxationFactor(D().name())
+          : 1.0
+        );
+        U() = U().oldTime() + fac*0.5*(deltaT*a_ + deltaT0*a_.oldTime());
 
         // Compute displacement
-        D() = D().oldTime() + deltaT*U();
+        DD() = deltaT*U();
 
         // Enforce boundary conditions on the displacement field
-        D().correctBoundaryConditions();
+        DD().correctBoundaryConditions();
 
         // Update the stress field based on the latest D field
         updateStress();
+
+        tmp<volVectorField> stab
+        (
+            stabilisation().stabilisation
+            (
+                U(),
+                fvc::grad(U())(),
+                (0.5*(deltaT + deltaT0)*impKf_)()
+            )
+        );
 
         // Compute acceleration
         // Note the inclusion of a linear bulk viscosity pressure term to
@@ -218,55 +159,16 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
         // avoid checker-boarding
         a_ =
             (
-                fvc::div
+                fvc::div(relJ_*relFinv_ & sigma(), "div(sigma)")
+              + fvc::div
                 (
-                    (
-                        mesh().Sf()
-                      & fvc::interpolate
-                        (
-                            relJ_*relFinv_ & sigma()
-                        )
-                    )
-                  + mesh().Sf()*energies_.viscousPressure
+                    mesh().Sf()*energies_.viscousPressure
                     (
                         rho(), waveSpeed_, gradD()
                     )
                 )
 
-//               + rho()*fvc::grad
-//                 (
-//                     (
-//                         0.06*fvc::laplacian
-//                         (
-//                             waveSpeed_*mesh().magSf(),
-//                             U(), "laplacian(DU,U)"
-//                         ) & vector::one
-//                     )
-//
-//                   + magSqr
-//                     (
-//                         1.2
-//                        *fvc::laplacian(mesh().magSf(), U(), "laplacian(DU,U)")
-//                     )
-//                 )
-                // This corresponds to Lax–Friedrichs smoothing
-              + LFScaleFactor_*fvc::laplacian
-                (
-                    0.5*(deltaT + deltaT0)*impKf_,
-                    U(),
-                    "laplacian(DU,U)"
-                )
-              - JSTScaleFactor_*fvc::laplacian
-                (
-                    mesh().magSf(),
-                    fvc::laplacian
-                    (
-                        0.5*(deltaT + deltaT0)*impKf_,
-                        U(),
-                        "laplacian(DU,U)"
-                    ),
-                    "laplacian(DU,U)"
-                )
+              + stab()
             )/rho()
           + g();
         a_.correctBoundaryConditions();
@@ -281,10 +183,8 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
             sigma(),
             gradD(),
             gradDD(),
-            waveSpeed_,
-            g(),
-            0.0,
-            impKf_
+            stab(),
+            g()
         );
     }
     while (mesh().update());

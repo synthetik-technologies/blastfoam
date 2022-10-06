@@ -71,7 +71,7 @@ Foam::thermalConvectionFvPatchScalarField::thermalConvectionFvPatchScalarField
     alpha_("alpha", dict, p.size()),
     Tinf_("Tinf", dimTemperature, readScalar(dict.lookup("Tinf")))
 {
-    Info<< patch().name() << ": thermalConvection" << endl;
+    DebugInfo<< patch().name() << ": thermalConvection" << endl;
 
     fvPatchField<scalar>::operator=(patchInternalField());
 }

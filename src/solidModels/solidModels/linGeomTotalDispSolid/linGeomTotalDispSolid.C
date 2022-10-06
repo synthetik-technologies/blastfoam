@@ -98,6 +98,7 @@ linGeomTotalDispSolid::linGeomTotalDispSolid(dynamicFvMesh& mesh)
 bool linGeomTotalDispSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    this->readDict();
 
     if (predictor_)
     {

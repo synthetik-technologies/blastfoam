@@ -110,6 +110,7 @@ linGeomPressureDisplacementSolid::linGeomPressureDisplacementSolid
 bool linGeomPressureDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    this->readDict();
 
     // Mesh update loop
     do

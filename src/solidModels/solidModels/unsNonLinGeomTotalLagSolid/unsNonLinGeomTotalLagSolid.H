@@ -76,7 +76,7 @@ class unsNonLinGeomTotalLagSolid
         const dimensionedScalar K_;
 
         //- Relative tolerance
-        const scalar relativeTol_;
+        scalar relativeTol_;
 
     // Private Member Functions
 
@@ -88,6 +88,8 @@ class unsNonLinGeomTotalLagSolid
 
         //- Disallow default bitwise assignment
         void operator=(const unsNonLinGeomTotalLagSolid&);
+
+        virtual void readDict();
 
 
 public:

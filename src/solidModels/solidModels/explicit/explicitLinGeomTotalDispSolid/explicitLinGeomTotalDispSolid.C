@@ -71,20 +71,6 @@ explicitLinGeomTotalDispSolid::explicitLinGeomTotalDispSolid
 )
 :
     linSolid<totalDispSolid>(typeName, mesh),
-    LFScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>
-        (
-            "LFScaleFactor", 0.001
-        )
-    ),
-    JSTScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>
-        (
-            "JSTScaleFactor", 0.01
-        )
-    ),
     waveSpeed_
     (
         IOobject
@@ -185,6 +171,16 @@ bool explicitLinGeomTotalDispSolid::evolve()
         // Update the stress field based on the latest D field
         updateStress();
 
+        tmp<volVectorField> stab
+        (
+            stabilisation().stabilisation
+            (
+                U(),
+                fvc::grad(U())(),
+                (0.5*(deltaT + deltaT0)*impKf_)()
+            )
+        );
+
         // Compute acceleration
         // Note the inclusion of a linear bulk viscosity pressure term to
         // dissipate high frequency energies, and a Rhie-Chow term to
@@ -217,23 +213,7 @@ bool explicitLinGeomTotalDispSolid::evolve()
 //                     )
 //                 )
                 // This corresponds to Lax–Friedrichs smoothing
-              + LFScaleFactor_*fvc::laplacian
-                (
-                    0.5*(deltaT + deltaT0)*impKf_,
-                    U(),
-                    "laplacian(DU,U)"
-                )
-              - JSTScaleFactor_*fvc::laplacian
-                (
-                    mesh().magSf(),
-                    fvc::laplacian
-                    (
-                        0.5*(deltaT + deltaT0)*impKf_,
-                        U(),
-                        "laplacian(DU,U)"
-                    ),
-                    "laplacian(DU,U)"
-                )
+              + stab()
             )/rho()
           + g();
         a_.correctBoundaryConditions();
@@ -248,10 +228,8 @@ bool explicitLinGeomTotalDispSolid::evolve()
             sigma(),
             gradD(),
             gradDD(),
-            waveSpeed_,
-            g(),
-            LFScaleFactor_,
-            impKf_
+            stab(),
+            g()
         );
     }
     while (mesh().update());

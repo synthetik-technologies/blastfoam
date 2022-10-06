@@ -82,15 +82,6 @@ class explicitNonLinGeomUpdatedLagSolid
 {
     // Private data
 
-        //- Scale factor for Rhie-Chow smoothing term
-        //const scalar RhieChowScaleFactor_;
-
-        // Scale factor for Lax-Lax–Friedrichs smoothing term
-        const scalar LFScaleFactor_;
-
-        // Scale factor for Jameson-Schmidt-Turkel smoothing term
-        const scalar JSTScaleFactor_;
-
         //- Wave speed field
         surfaceScalarField waveSpeed_;
 
@@ -105,12 +96,6 @@ class explicitNonLinGeomUpdatedLagSolid
 
         //- Update the stress field
         void updateStress();
-
-        //- Smooth the hydrostatic pressure field
-        void smoothPressure();
-
-        //- Return smoothed U old time based on Lax-Friedlichs method
-        tmp<volVectorField> smoothUOldTime();
 
         //- Disallow default bitwise copy construct
         explicitNonLinGeomUpdatedLagSolid
@@ -140,9 +125,6 @@ public:
     // Member Functions
 
         // Edit
-
-            //- Update the size of the time-step
-            virtual void setDeltaT(Time& runTime);
 
             //- Evolve the solid solver and solve the mathematical model
             virtual bool evolve();

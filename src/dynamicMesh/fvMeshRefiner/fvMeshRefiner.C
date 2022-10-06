@@ -652,6 +652,7 @@ bool Foam::fvMeshRefiner::balance()
 
 void Foam::fvMeshRefiner::updateMesh(const mapPolyMesh& mpm)
 {
+
     if
     (
         mesh_.foundObject<volScalarField::Internal>("V0_Old")
@@ -669,10 +670,6 @@ void Foam::fvMeshRefiner::updateMesh(const mapPolyMesh& mpm)
         //  THIS IS A PRIVATE FUNCTION OF fvMesh,
         //  but we use a MACRO hack to make it accessible
         mesh_.clearGeom();
-    }
-    else
-    {
-        mesh_.clearGeomNotOldVol();
     }
 }
 

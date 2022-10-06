@@ -46,7 +46,16 @@
 
     <m2n:sockets from="Fluid" to="Solid" exchange-directory=".." />
 
-    <coupling-scheme:parallel-implicit>
+    <coupling-scheme:parallel-explicit>
+      <time-window-size value="1e-5" />
+      <max-time value="5e-3" />
+      <participants first="Fluid" second="Solid" />
+      <exchange data="Force" mesh="Solid-Mesh" from="Fluid" to="Solid" />
+      <exchange data="Displacement" mesh="Solid-Mesh" from="Solid" to="Fluid" />
+
+    </coupling-scheme:parallel-explicit>
+
+    <!-- <coupling-scheme:parallel-implicit>
       <time-window-size value="1e-5" />
       <max-time value="5e-3" />
       <participants first="Fluid" second="Solid" />
@@ -56,7 +65,7 @@
       <relative-convergence-measure limit="5e-3" data="Displacement" mesh="Solid-Mesh" />
       <relative-convergence-measure limit="5e-3" data="Force" mesh="Solid-Mesh" />
 
-    </coupling-scheme:parallel-implicit>
+    </coupling-scheme:parallel-implicit> -->
 
     </solver-interface>
 

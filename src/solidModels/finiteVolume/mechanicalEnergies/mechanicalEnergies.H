@@ -47,6 +47,7 @@ SourceFiles
 #define mechanicalEnergies_H
 
 #include "volFields.H"
+#include "momentumStabilisation.H"
 #include "OFstream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -80,21 +81,26 @@ class mechanicalEnergies
         scalar kineticEnergy_;
 
         //- Accumulated energy dissipated due to Laplacian smoothing term
-        scalar laplacianSmoothingEnergy_;
+        scalar smoothingEnergy_;
 
         //- Accumulated energy dissipated due to Laplacian smoothing term old
         //  time
-        scalar laplacianSmoothingEnergyOldTime_;
+        scalar smoothingEnergyOldTime_;
 
         //- Linear bulk viscosity energy
-        scalar linearBulkViscosityEnergy_;
+        scalar bulkViscosityEnergy_;
 
         //- Linear bulk viscosity energy old time
-        scalar linearBulkViscosityEnergyOldTime_;
+        scalar bulkViscosityEnergyOldTime_;
 
         //- Linear bulk viscosity coefficient
         //  Defaults to 0.06, as in Abaqus
-        const scalar linearBulkViscosityCoeff_;
+        dimensionedScalar linearBulkViscosityCoeff_;
+
+        //- Quadratic bulk viscosity coefficient
+        //  Defaults to 1.2, as in Abaqus
+        dimensionedScalar quadraticBulkViscosityCoeff_;
+
 
         //- Bulk viscosity stablisation pressure
         autoPtr<surfaceScalarField> viscousPressurePtr_;
@@ -163,10 +169,8 @@ public:
             const volSymmTensorField& sigma,
             const volTensorField& gradD,
             const volTensorField& gradDD,
-            const surfaceScalarField& waveSpeed,
-            const dimensionedVector& g,
-            const scalar, // laplacianSmoothCoeff,
-            const surfaceScalarField& impKf
+            const volVectorField& stabilisation,
+            const dimensionedVector& g
         );
 };
 

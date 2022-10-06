@@ -156,12 +156,14 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
     interpPtr_()
 {
     totalDisp_ = *this;
-    Info<< "Creating " << type() << " boundary condition" << endl;
+    DebugInfo
+        << "Creating " << type() << " boundary condition" << endl;
 
     // Check if displacement is time-varying
     if (dict.found("displacementSeries"))
     {
-        Info<< "    displacement is time-varying" << endl;
+        DebugInfo
+            << "    displacement is time-varying" << endl;
         dispSeries_ =
             Function1<vector>::New
             (
@@ -234,31 +236,31 @@ void fixedDisplacementFvPatchVectorField::updateCoeffs()
         return;
     }
 
-    vectorField disp(totalDisp_);
-
     if (dispSeries_.valid())
     {
-        disp = dispSeries_->value(this->db().time().value());
+        vectorField disp
+        (
+            this->size(),
+            dispSeries_->value(this->db().time().value())
+        );
+        if (internalField().name() == "DD")
+        {
+            // Incremental approach, so we wil set the increment of displacement
+            // Lookup the old displacement field and subtract it from the total
+            // displacement
+            const volVectorField& Dold =
+                db().lookupObject<volVectorField>("D").oldTime();
+
+            disp -= Dold.boundaryField()[patch().index()];
+        }
+        Field<vector>::operator=(disp);
     }
-
-    if (internalField().name() == "DD")
-    {
-        // Incremental approach, so we wil set the increment of displacement
-        // Lookup the old displacement field and subtract it from the total
-        // displacement
-        const volVectorField& Dold =
-            db().lookupObject<volVectorField>("D").oldTime();
-
-        disp -= Dold.boundaryField()[patch().index()];
-    }
-
-    Field<vector>::operator=(disp);
 
     fixedValueFvPatchVectorField::updateCoeffs();
 
     // If the corresponding point displacement field has a fixedValue type
     // boundary condition, then we wil update it
-    setPointDisplacement(disp);
+    setPointDisplacement(*this);
 }
 
 

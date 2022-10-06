@@ -50,7 +50,7 @@ solidTractionFvPatchVectorField
     pressureSeries_(),
     secondOrder_(false),
     limitCoeff_(1.0),
-    relaxFac_(1.0)
+    relaxFac_()
 {
     fvPatchVectorField::operator=(patchInternalField());
     gradient() = vector::zero;
@@ -72,9 +72,10 @@ solidTractionFvPatchVectorField
     pressureSeries_(),
     secondOrder_(dict.lookupOrDefault<Switch>("secondOrder", false)),
     limitCoeff_(dict.lookupOrDefault<scalar>("limitCoeff", 1.0)),
-    relaxFac_(dict.lookupOrDefault<scalar>("relaxationFactor", 1.0))
+    relaxFac_()
 {
-    Info<< "Creating " << type() << " boundary condition" << endl;
+    DebugInfo
+        << "Creating " << type() << " boundary condition" << endl;
 
     if (dict.found("gradient"))
     {
@@ -97,7 +98,7 @@ solidTractionFvPatchVectorField
     // Check if traction is time-varying
     if (dict.found("tractionSeries"))
     {
-        Info<< "    traction is time-varying" << endl;
+        DebugInfo<< "    traction is time-varying" << endl;
         tractionSeries_ = Function1<vector>::New("tractionSeries", dict);
         traction_ = tractionSeries_->value(this->db().time().value());
     }
@@ -109,7 +110,7 @@ solidTractionFvPatchVectorField
     // Check if pressure is time-varying
     if (dict.found("pressureSeries"))
     {
-        Info<< "    pressure is time-varying" << endl;
+        DebugInfo<< "    pressure is time-varying" << endl;
         pressureSeries_ = Function1<scalar>::New("pressureSeries", dict);
         pressure_ = pressureSeries_->value(this->db().time().value());
     }
@@ -117,20 +118,20 @@ solidTractionFvPatchVectorField
     {
         pressure_ = scalarField("pressure", dict, p.size());
     }
+    if (dict.found("relaxationFactor"))
+    {
+        DebugInfo<< "    Using relaxationFactor" << endl;
+        relaxFac_ = Function1<scalar>::New("relaxationFactor", dict);
+    }
 
     if (secondOrder_)
     {
-        Info<< "    second order correction" << endl;
+        DebugInfo<< "    second order correction" << endl;
     }
 
     if (limitCoeff_)
     {
-        Info<< "    limiter coefficient: " << limitCoeff_ << endl;
-    }
-
-    if (relaxFac_ < 1.0)
-    {
-        Info<< "    relaxation factor: " << relaxFac_ << endl;
+        DebugInfo<< "    limiter coefficient: " << limitCoeff_ << endl;
     }
 }
 
@@ -151,7 +152,7 @@ solidTractionFvPatchVectorField
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
     limitCoeff_(stpvf.limitCoeff_),
-    relaxFac_(stpvf.relaxFac_)
+    relaxFac_(stpvf.relaxFac_, false)
 {}
 
 
@@ -169,7 +170,7 @@ solidTractionFvPatchVectorField
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
     limitCoeff_(stpvf.limitCoeff_),
-    relaxFac_(stpvf.relaxFac_)
+    relaxFac_(stpvf.relaxFac_, false)
 {}
 
 
@@ -226,12 +227,17 @@ void solidTractionFvPatchVectorField::updateCoeffs()
 
     // Set surface-normal gradient on the patch corresponding to the desired
     // traction
+    scalar relaxFac = 1.0;
+    if (relaxFac_.valid())
+    {
+        relaxFac = relaxFac_->value(this->db().time().value());
+    }
     gradient() =
-        relaxFac_*solMod.tractionBoundarySnGrad
+        relaxFac*solMod.tractionBoundarySnGrad
         (
             traction_, pressure_, patch()
-        );
-    gradient() += (1.0 - relaxFac_)*gradient();
+        )
+      + (1.0 - relaxFac)*gradient();
 
     fixedGradientFvPatchVectorField::updateCoeffs();
 }
@@ -302,22 +308,17 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
     {
         writeEntry(os, tractionSeries_());
     }
-    else
-    {
-        writeEntry(os, "traction", traction_);
-    }
-
     if (pressureSeries_.valid())
     {
         writeEntry(os, pressureSeries_());
     }
-    else
+    if (relaxFac_.valid())
     {
-        writeEntry(os, "pressure", pressure_);
+        writeEntry(os, relaxFac_());
     }
+
     writeEntry(os, "secondOrder", secondOrder_);
     writeEntry(os, "limitCoeff", limitCoeff_);
-    writeEntry(os, "relaxFac", relaxFac_);
     writeEntry(os, "value", *this);
 }
 

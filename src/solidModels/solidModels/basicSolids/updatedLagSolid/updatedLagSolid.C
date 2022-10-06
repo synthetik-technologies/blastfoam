@@ -50,25 +50,13 @@ void updatedLagSolid<IncrementalModel>::update
     const bool correctSigma
 )
 {
-    if (this->incremental())
-    {
-        // Update the total displacement
-        this->D() = this->D().oldTime() + this->DD();
-    }
-    else
-    {
-        // Update the displacement increment
-        this->DD() = this->D() - this->D().oldTime();
-    }
-
-    // Interpolate DD to pointDD
-    this->mechanical().interpolate(this->DD(), this->pointDD(), false);
+    IncrementalModel::updateDisplacement();
 
     // Update gradient of displacement increment
-    this->mechanical().grad(this->DD(), this->pointDD(), this->gradDD());
+    // this->mechanical().grad(this->DD(), this->pointDD(), this->gradDD());
 
     // Update the gradient of total displacement
-    this->gradD() = this->gradD().oldTime() + this->gradDD();
+    // this->gradD() = this->gradD().oldTime() + this->gradDD();
 
     // Relative deformation gradient
     relF_ = I + this->gradDD().T();
@@ -85,14 +73,15 @@ void updatedLagSolid<IncrementalModel>::update
     // Jacobian of deformation gradient
     J_ = relJ_*J_.oldTime();
 
+    // Update velocity
+    this->U() = fvc::ddt(this->D());
+
     if (correctSigma)
     {
         this->mechanical().correct(this->sigma());
+        impK_ = this->mechanical().impK();
+        impKf_ = this->mechanical().impKf();
     }
-
-    impK_ = this->mechanical().impK();
-    impKf_ = this->mechanical().impKf();
-
 }
 
 

@@ -67,6 +67,7 @@ nonLinGeomUpdatedLagSolid::nonLinGeomUpdatedLagSolid(dynamicFvMesh& mesh)
 bool nonLinGeomUpdatedLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfDD;

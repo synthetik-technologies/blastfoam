@@ -142,20 +142,6 @@ explicitUnsNonLinGeomTotalLagTotalDispSolid::explicitUnsNonLinGeomTotalLagTotalD
     impK_(mechanical().impK()),
     impKf_(mechanical().impKf()),
     rImpK_(1.0/impK_),
-    // RhieChowScaleFactor_
-    // (
-    //     solidModelDict().lookupOrDefault<scalar>
-    //     (
-    //         "RhieChowScale", 0.0
-    //     )
-    // ),
-    JSTScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>
-        (
-            "JSTScaleFactor", 0.01
-        )
-    ),
     waveSpeed_
     (
         IOobject
@@ -264,11 +250,21 @@ bool explicitUnsNonLinGeomTotalLagTotalDispSolid::evolve()
         // Update the stress field based on the latest D field
         updateStress();
 
+        tmp<volVectorField> stab
+        (
+            stabilisation().stabilisation
+            (
+                U(),
+                fvc::grad(U())(),
+                (0.5*(deltaT + deltaT0)*impKf_)()
+            )
+        );
+
         // Compute acceleration
         // Note the inclusion of a linear bulk viscosity pressure term to
         // dissipate high frequency energies, and a Rhie-Chow term to avoid
         // checker-boarding
-        a_.primitiveFieldRef() =
+        a_ =
             (
                 fvc::div
                 (
@@ -277,26 +273,16 @@ bool explicitUnsNonLinGeomTotalLagTotalDispSolid::evolve()
                     (
                         rho(), waveSpeed_, gradD()
                     )
-                )().primitiveField()
-              - JSTScaleFactor_*fvc::laplacian
-                (
-                    mesh().magSf(),
-                    fvc::laplacian
-                    (
-                        0.5*(deltaT + deltaT0)*impKf_, U(),
-                        "laplacian(DU,U)"
-                    ),
-                    "laplacian(DU,U)"
-                )().primitiveField()
-            )/rho().primitiveField()
-          + g().value();
+                )
+              + stab()
+            )/rho()
+          + g();
         a_.correctBoundaryConditions();
 
         // Check energies
         energies_.checkEnergies
         (
-            rho(), U(), D(), DD(), sigma(), gradD(), gradDD(), waveSpeed_, g(),
-            0.0, impKf_
+            rho(), U(), D(), DD(), sigma(), gradD(), gradDD(), stab(), g()
         );
     }
     while (mesh().update());

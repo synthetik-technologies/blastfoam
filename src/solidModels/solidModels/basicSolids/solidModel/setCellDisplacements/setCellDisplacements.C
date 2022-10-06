@@ -41,143 +41,83 @@ void Foam::setCellDisplacements::readDict()
     Info<< type() << ": reading cellDisplacements" << endl;
 
     // Lookup the names of each cell displacement
-    const wordList cellDispNames = dict_.toc();
+    PtrList<entry> cellDisps(dict_.lookup("cellDisplacements"));
 
     // Initialise fields
-    cellIDs_.setSize(cellDispNames.size(), -1);
-    constantDisps_.setSize(cellDispNames.size(), vector::zero);
-    timeVaryingDisps_.setSize(cellDispNames.size());
-    currentCellDisps_.setSize(cellDispNames.size(), vector::zero);
+    cellIDs_.setSize(cellDisps.size(), -1);
+    disps_.setSize(cellDisps.size());
 
     // Initialise settings for each cell
-    forAll(cellDispNames, cellNameI)
+    forAll(cellDisps, cellDispI)
     {
-        const dictionary& curCellDict =
-            dict_.subDict(cellDispNames[cellNameI]);
+        const dictionary& curCellDict = cellDisps[cellDispI].dict();
 
         // Check if displacements are time-varying or constant
-        if (curCellDict.found("timeVaryingDisplacement"))
-        {
-            timeVaryingDisps_.set
+        disps_.set
+        (
+            cellDispI,
+            Function1<vector>::New
             (
-                cellNameI,
-                new Function1s::Table<vector>
-                (
-                    "timeVaryingDisplacement",
-                    curCellDict
-                )
-            );
-        }
-        else
-        {
-            constantDisps_[cellNameI] = vector
-            (
-                curCellDict.lookup("displacement")
-            );
-        }
+                "displacement",
+                curCellDict
+            ).ptr()
+        );
 
         // Lookup the approximate cell coordinate
-        const vector coord = vector
-        (
-            curCellDict.lookup("approximateCoordinate")
-        );
+        vector coord(curCellDict.lookup("point"));
 
         // Find the closest cells in the mesh
         // This cell should only exist on one processor
-
-        scalar dist = GREAT;
-        const vectorField& C = mesh_.C().internalField();
-
-        forAll(C, cellI)
+        label cellI = mesh_.findNearestCell(coord);
+        scalar error = mag(mesh_.C()[cellI] - coord);
+        scalar minError = returnReduce(error, minOp<scalar>());
+        if (error != minError)
         {
-            const scalar newDist = mag(C[cellI] - coord);
-
-            if (newDist < dist)
-            {
-                dist = newDist;
-                cellIDs_[cellNameI] = cellI;
-            }
+            cellI = -1;
+            coord = -great*vector::one;
         }
+        reduce(coord, maxOp<vector>());
 
-        // Find the closest cell globally
-        const scalar minDist = returnReduce(dist, minOp<scalar>());
-        label procID = int(GREAT);
-        if (mag(minDist - dist) > SMALL)
-        {
-            // -1 signifies that the current proc does not have the closest
-            // cell
-            cellIDs_[cellNameI] = -1;
-        }
-        else
-        {
-            procID = Pstream::myProcNo();
-        }
-
-        // If there is more than one processor with the closest cell (could
-        // happen if point is specified on a process patch) then we will take
-        // the processor with the lowest proc number
-        if (Pstream::myProcNo() != returnReduce(procID, minOp<int>()))
-        {
-            cellIDs_[cellNameI] = -1;
-        }
-
-        if (cellIDs_[cellNameI] != -1)
+        if (cellI != -1)
         {
             Pout<< type() << ": desired coordinate = " << coord
-                << ", using cell " <<  cellIDs_[cellNameI]
-                << " with cell-centre = " << C[cellIDs_[cellNameI]] << endl;
+                << ", using cell " <<  cellI
+                << " with cell-centre = " << mesh_.C()[cellI] << endl;
         }
+        cellIDs_[cellDispI] = cellI;
     }
 
-    // In parallel, we will remove cellIDs not on this proc
-    if (Pstream::parRun())
+    // Initialise settings for each cell
+    label cellDispI = 0;
+    forAll(cellDisps, cellDispi)
     {
-        // Count cellIDs that are on this proc (index is not -1)
-        int i = 0;
-        forAll(cellIDs_, cI)
+        const label cellI = cellIDs_[cellDispi];
+        if (cellI != -1)
         {
-            if (cellIDs_[cI] != -1)
+            if (cellDispI != cellDispi)
             {
-                i++;
+                disps_.set(cellDispI, disps_[cellDispi].clone().ptr());
+                cellIDs_[cellDispI] = cellI;
             }
+            cellDispI++;
         }
-
-        // Create new lists
-        labelList newCellIDs(i, label(-1));
-        vectorField newConstantDisps(i, vector::zero);
-        PtrList< Function1s::Table<vector> > newTimeVaryingDisps(i);
-        vectorField newCurrentCellDisps(i, vector::zero);
-
-        // Copy over cell data
-        i = 0;
-        forAll(cellIDs_, cI)
-        {
-            if (cellIDs_[cI] != -1)
-            {
-                newCellIDs[i] = cellIDs_[cI];
-                newConstantDisps[i] = constantDisps_[cI];
-                newTimeVaryingDisps.set
-                (
-                    i,
-                    new Function1s::Table<vector>(timeVaryingDisps_[cI])
-                );
-                newCurrentCellDisps[i] = currentCellDisps_[cI];
-                i++;
-            }
-        }
-
-        // Reset fields
-        cellIDs_ = newCellIDs;
-        constantDisps_ = newConstantDisps;
-        timeVaryingDisps_.transfer(newTimeVaryingDisps);
-        currentCellDisps_ = newCurrentCellDisps;
-
-        Pout<< type() << ": proc " << Pstream::myProcNo() << " has "
-            << cellIDs_.size() << " cells with setDisplacements" << endl;
     }
+    cellIDs_.setSize(cellDispI);
+    disps_.setSize(cellDispI);
+    currentCellDisps_.setSize(cellDispI, vector::zero);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::setCellDisplacements::setCellDisplacements(const fvMesh& mesh)
+:
+    mesh_(mesh),
+    dict_(),
+    cellIDs_(),
+    disps_(),
+    currentCellDisps_(),
+    curTimeIndex_(-1)
+{}
 
 Foam::setCellDisplacements::setCellDisplacements
 (
@@ -188,8 +128,7 @@ Foam::setCellDisplacements::setCellDisplacements
     mesh_(mesh),
     dict_(dict),
     cellIDs_(),
-    constantDisps_(),
-    timeVaryingDisps_(),
+    disps_(),
     currentCellDisps_(),
     curTimeIndex_(-1)
 {
@@ -212,19 +151,11 @@ const Foam::vectorField& Foam::setCellDisplacements::cellDisps() const
 
             if (curCellID != -1)
             {
-                if (timeVaryingDisps_.set(cI))
-                {
-                    // Time-varying
-                    currentCellDisps_[cI] = timeVaryingDisps_[cI].value
-                    (
-                        mesh_.time().timeOutputValue()
-                    );
-                }
-                else
-                {
-                    // Constant in time
-                    currentCellDisps_[cI] = constantDisps_[cI];
-                }
+                // Time-varying
+                currentCellDisps_[cI] = disps_[cI].value
+                (
+                    mesh_.time().timeOutputValue()
+                );
             }
         }
     }

@@ -145,11 +145,8 @@ fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
      && fieldName != "D_0_0_0" && fieldName != "DD_0_0_0"
     )
     {
-        FatalErrorIn
-        (
-            "fixedRotationFvPatchVectorField::"
-            "fixedRotationFvPatchVectorField(...)"
-        )   << "The displacement field should be D or DD"
+        FatalErrorInFunction
+            << "The displacement field should be D or DD"
             << ": current name is " << fieldName
             << abort(FatalError);
     }

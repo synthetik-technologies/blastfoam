@@ -79,7 +79,7 @@ class weakThermalLinGeomSolid
         volVectorField gradT_;
 
         //- Absolute temperature tolerance (in degrees)
-        const scalar absTTol_;
+        scalar absTTol_;
 
     // Private Member Functions
 
@@ -96,6 +96,8 @@ class weakThermalLinGeomSolid
 
         //- Disallow default bitwise assignment
         void operator=(const weakThermalLinGeomSolid&);
+
+        virtual void readDict();
 
 
 protected:

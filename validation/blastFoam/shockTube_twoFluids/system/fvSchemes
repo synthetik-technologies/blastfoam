@@ -41,12 +41,12 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  quadraticMUSCL SuperBee;
-    reconstruct(rho)    quadraticMUSCL SuperBee;
-    reconstruct(U)      quadraticMUSCL SuperBee;
-    reconstruct(e)      quadraticMUSCL SuperBee;
-    reconstruct(p)      quadraticMUSCL SuperBee;
-    reconstruct(speedOfSound) quadraticMUSCL SuperBee;
+    reconstruct(alpha)  Minmod;
+    reconstruct(rho)    Minmod;
+    reconstruct(U)      Minmod;
+    reconstruct(e)      Minmod;
+    reconstruct(p)      Minmod;
+    reconstruct(speedOfSound) Minmod;
 }
 
 snGradSchemes

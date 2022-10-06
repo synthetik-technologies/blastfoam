@@ -9,7 +9,7 @@ FoamFile
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh dynamicMotionSolverFvMesh;
+dynamicFvMesh movingAdaptiveFvMesh;
 
 
 protectedPatches (flap);

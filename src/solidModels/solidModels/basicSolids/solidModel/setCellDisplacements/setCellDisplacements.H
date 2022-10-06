@@ -70,11 +70,8 @@ class setCellDisplacements
         //- List of cell indices to be set
         labelList cellIDs_;
 
-        //- Constant displacements for the cells
-        vectorField constantDisps_;
-
-        //- Time-varying displacements for the cells
-        PtrList<Function1s::Table<vector> > timeVaryingDisps_;
+        //- Displacements for the cells
+        PtrList<Function1<vector>> disps_;
 
         //- Current cell displacements
         mutable vectorField currentCellDisps_;
@@ -101,6 +98,9 @@ public:
 
 
     // Constructors
+
+        //- Construct null
+        setCellDisplacements(const fvMesh& mesh);
 
         //- Construct from dictionary
         setCellDisplacements

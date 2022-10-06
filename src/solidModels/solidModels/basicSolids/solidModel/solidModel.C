@@ -203,24 +203,21 @@ void Foam::solidModel::makeSetCellDisps() const
 {
     if (setCellDispsPtr_.valid())
     {
-        FatalErrorIn(type() + "::makeSetCellDisps() const")
-            << "pointer already set!" << abort(FatalError);
+        FatalErrorInFunction
+            << "pointer already set!"
+            << abort(FatalError);
     }
 
-    if (solidModelDict().found("cellDisplacements"))
+    if (this->found("cellDisplacements"))
     {
         setCellDispsPtr_.set
         (
-            new setCellDisplacements
-            (
-                mesh(), solidModelDict().subDict("cellDisplacements")
-            )
+            new setCellDisplacements(mesh(), *this)
         );
     }
     else
     {
-        dictionary dict;
-        setCellDispsPtr_.set(new setCellDisplacements(mesh(), dict));
+        setCellDispsPtr_.set(new setCellDisplacements(mesh()));
     }
 }
 
@@ -540,13 +537,13 @@ Foam::wordList Foam::solidModel::pointDBoundaryTypes
     wordList bTypes
     (
         D.boundaryField().size(),
-        calculatedPointPatchVectorField::typeName
+        valuePointPatchVectorField::typeName
     );
     forAll(D.boundaryField(), patchi)
     {
         if (isA<fixedValueFvPatchVectorField>(D.boundaryField()[patchi]))
         {
-            bTypes[patchi] = fixedValuePointPatchVectorField::typeName;
+            bTypes[patchi] = valuePointPatchVectorField::typeName;
         }
     }
     return bTypes;
@@ -589,6 +586,22 @@ void Foam::solidModel::displacementFromVelocity
         );
     }
 }
+
+void Foam::solidModel::readDict()
+{
+    solidModelDict().readIfPresent("relaxationMethod", relaxationMethod_);
+    solidModelDict().readIfPresent("QuasiNewtonRestartFrequency", QuasiNewtonRestartFreq_);
+
+    solidModelDict().readIfPresent("solutionTolerance", solutionTol_);
+    solidModelDict().readIfPresent("alternativeTolerance", alternativeTol_);
+    solidModelDict().readIfPresent("materialTolerance", materialTol_);
+    solidModelDict().readIfPresent("infoFrequency", infoFrequency_);
+    solidModelDict().readIfPresent("nCorrectors", nCorr_);
+    solidModelDict().readIfPresent("minCorrectors", minCorr_);
+
+    solidModelDict().readIfPresent("minCorrectors", minCorr_);
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -670,8 +683,7 @@ Foam::solidModel::solidModel
             IOobject::AUTO_WRITE
         ),
         pMesh(),
-        dimensionedVector("0", dimLength, Zero),
-        pointDBoundaryTypes(D_)
+        dimensionedVector("0", dimLength, Zero)
     ),
     pointDD_
     (
@@ -684,8 +696,7 @@ Foam::solidModel::solidModel
             IOobject::AUTO_WRITE
         ),
         pMesh(),
-        dimensionedVector("0", dimLength, Zero),
-        pointDBoundaryTypes(DD_)
+        dimensionedVector("0", dimLength, Zero)
     ),
     gradD_
     (
@@ -853,23 +864,7 @@ Foam::solidModel::solidModel
 
     // Create stabilisation object
 
-    if (!solidModelDict().found("stabilisation"))
-    {
-        // If the stabilisation sub-dict is not found, we will add it with
-        // default settings
-        dictionary stabDict;
-        stabDict.add("type", "RhieChow");
-        stabDict.add("scaleFactor", 0.1);
-        solidModelDict().add("stabilisation", stabDict);
-    }
-
-    stabilisationPtr_.set
-    (
-        new momentumStabilisation
-        (
-            solidModelDict().subDict("stabilisation")
-        )
-    );
+    stabilisationPtr_.set(new momentumStabilisation(solidModelDict()));
 
     // If the case is axisymmetric, we will disable solving in the out-of-plane
     // direction
@@ -1347,17 +1342,5 @@ const Foam::dictionary& Foam::solidModel::solidModelDict() const
     return this->subDict(type_ + "Coeffs");
 }
 
-
-void Foam::solidModel::readIfPresent()
-{
-    const dictionary& dict = solidModelDict();
-    dict.readIfPresent("solutionTolerance", solutionTol_);
-    dict.readIfPresent("alternativeTolerance", alternativeTol_);
-    dict.readIfPresent("materialTolerance", materialTol_);
-    dict.readIfPresent("infoFrequency", infoFrequency_);
-    dict.readIfPresent("nCorrectors", nCorr_);
-    dict.readIfPresent("minCorrectors", minCorr_);
-    dict.readIfPresent("writeResidualField", writeResidualField_);
-}
 
 // ************************************************************************* //

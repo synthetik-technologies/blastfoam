@@ -19,4 +19,6 @@ runParallel setRefinedFields
 # -- Run calculation
 runParallel $(getApplication)
 
+runParallel -o postProcess -func sampleDict -latestTime
+
 # ----------------------------------------------------------------- end-of-file

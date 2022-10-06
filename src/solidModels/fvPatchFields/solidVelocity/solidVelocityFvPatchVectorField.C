@@ -44,10 +44,8 @@ void solidVelocityFvPatchVectorField::makeInterp() const
 {
     if (interpPtr_.valid())
     {
-        FatalErrorIn
-        (
-            "void solidVelocityFvPatchVectorField::makeInterp() const"
-        ) << "pointer already set" << abort(FatalError);
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
     }
 
     interpPtr_.set(new primitivePatchInterpolation(patch().patch()));
@@ -153,7 +151,8 @@ solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
     velocitySeries_(),
     interpPtr_(NULL)
 {
-    Info<< "Creating " << type() << " boundary condition" << endl;
+    DebugInfo
+        << "Creating " << type() << " boundary condition" << endl;
 
     // Read velocity
     if (dict.found("velocity"))
@@ -162,7 +161,7 @@ solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
     }
     else if (dict.found("velocitySeries"))
     {
-        Info<< "    velocity is time-varying" << endl;
+        DebugInfo<< "    velocity is time-varying" << endl;
         velocitySeries_ = Function1<vector>::New("velocitySeries", dict);
 
         fvPatchField<vector>::operator==
@@ -172,7 +171,7 @@ solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
     }
     else
     {
-        FatalErrorIn(type() + "::solidVelocityFvPatchVectorField(...)")
+        FatalErrorInFunction
             << "Either 'velocity' or 'velocitySeries' should be specified!"
             << abort(FatalError);
     }

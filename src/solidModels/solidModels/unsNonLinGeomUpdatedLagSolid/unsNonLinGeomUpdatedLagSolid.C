@@ -223,6 +223,7 @@ unsNonLinGeomUpdatedLagSolid::unsNonLinGeomUpdatedLagSolid(dynamicFvMesh& mesh)
 bool unsNonLinGeomUpdatedLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfDD;

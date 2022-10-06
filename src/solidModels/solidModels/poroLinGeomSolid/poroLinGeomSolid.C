@@ -230,6 +230,7 @@ poroLinGeomSolid::poroLinGeomSolid(dynamicFvMesh& mesh)
 bool poroLinGeomSolid::evolve()
 {
     Info << "Evolving poro solid solver" << endl;
+    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfD;

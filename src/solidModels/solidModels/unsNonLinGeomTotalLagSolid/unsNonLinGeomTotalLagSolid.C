@@ -80,6 +80,13 @@ scalar unsNonLinGeomTotalLagSolid::residual(const volVectorField& D) const
 }
 
 
+void unsNonLinGeomTotalLagSolid::readDict()
+{
+    solidModel::readDict();
+    solidModelDict().readIfPresent("solutionTolerance", relativeTol_);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 unsNonLinGeomTotalLagSolid::unsNonLinGeomTotalLagSolid(dynamicFvMesh& mesh)
@@ -110,6 +117,7 @@ unsNonLinGeomTotalLagSolid::unsNonLinGeomTotalLagSolid(dynamicFvMesh& mesh)
 bool unsNonLinGeomTotalLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    this->readDict();
 
     int iCorr = 0;
     scalar initialResidual = 0;

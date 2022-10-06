@@ -59,17 +59,8 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 {
     if (!isType<symmetryFvPatch>(this->patch()))
     {
-        FatalErrorIn
-        (
-            "solidSymmetryFvPatchVectorField::"
-            "solidSymmetryFvPatchVectorField\n"
-            "(\n"
-            "    const solidSymmetryFvPatchVectorField& ptf,\n"
-            "    const fvPatch& p,\n"
-            "    const DimensionedField<vector, volMesh>& iF,\n"
-            "    const fvPatchFieldMapper& mapper\n"
-            ")\n"
-        )   << "\n    patch type '" << p.type()
+        FatalErrorInFunction
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << internalField().name()
@@ -89,28 +80,20 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
     symmetryFvPatchField<vector>(p, iF, dict),
     secondOrder_(false)
 {
-    Info << "Symmetry boundary condition with non-orthogonal correction"
+    DebugInfo
+        << "Symmetry boundary condition with non-orthogonal correction"
         << endl;
 
     if (dict.found("secondOrder"))
     {
         secondOrder_ = Switch(dict.lookup("secondOrder"));
-        Info<< "Second order correction: " << secondOrder_ << endl;
+        DebugInfo<< "Second order correction: " << secondOrder_ << endl;
     }
 
     if (!isType<symmetryFvPatch>(p))
     {
-        FatalIOErrorIn
-        (
-            "solidSymmetryFvPatchVectorField::"
-            "solidSymmetryFvPatchVectorField\n"
-            "(\n"
-            "    const fvPatch& p,\n"
-            "    const Field<vector>& field,\n"
-            "    const dictionary& dict\n"
-            ")\n",
-            dict
-        )   << "\n    patch type '" << p.type()
+        FatalIOErrorInFunction(dict)
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << internalField().name()

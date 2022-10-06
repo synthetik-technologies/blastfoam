@@ -99,12 +99,6 @@ class explicitUnsLinGeomTotalDispSolid
         //  will store the reciprocal for effficiency
         const volScalarField rImpK_;
 
-        //- Scale factor for Rhie-Chow smoothing term
-        //const scalar RhieChowScaleFactor_;
-
-        // Scale factor for Jameson-Schmidt-Turkel smoothing term
-        const scalar JSTScaleFactor_;
-
         //- Wave speed field
         surfaceScalarField waveSpeed_;
 

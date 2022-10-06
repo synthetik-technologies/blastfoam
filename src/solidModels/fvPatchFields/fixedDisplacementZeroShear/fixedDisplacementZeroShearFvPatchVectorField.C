@@ -89,7 +89,8 @@ fixedDisplacementZeroShearFvPatchVectorField
     // Check if displacement is time-varying
     if (dict.found("displacementSeries"))
     {
-        Info<< "    displacement is time-varying" << endl;
+        DebugInfo
+            << "    displacement is time-varying" << endl;
         dispSeries_ =
             Function1<vector>::New("displacementSeries", dict);
 
@@ -101,11 +102,8 @@ fixedDisplacementZeroShearFvPatchVectorField
     }
     else
     {
-        FatalErrorIn
-        (
-            "fixedDisplacementZeroShearFvPatchVectorField::"
-            "fixedDisplacementZeroShearFvPatchVectorField"
-        )   << "value entry not found for patch " << patch().name()
+        FatalErrorInFunction
+            << "value entry not found for patch " << patch().name()
             << abort(FatalError);
     }
 

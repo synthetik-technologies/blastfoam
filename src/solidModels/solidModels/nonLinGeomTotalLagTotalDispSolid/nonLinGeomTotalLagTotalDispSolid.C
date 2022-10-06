@@ -60,7 +60,7 @@ void nonLinGeomTotalLagTotalDispSolid::predict()
     // Predict D using the velocity field
     // Note: the case may be steady-state but U can still be calculated using a
     // transient method
-    D() = D().oldTime() + U()*runTime().deltaT();
+    D() = D().oldTime() + DD()*runTime().deltaT();
 
     // Update gradient of displacement
     mechanical().grad(D(), gradD());
@@ -112,6 +112,7 @@ nonLinGeomTotalLagTotalDispSolid::nonLinGeomTotalLagTotalDispSolid
 bool nonLinGeomTotalLagTotalDispSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    this->readDict();
 
     if (predictor_)
     {
@@ -154,6 +155,7 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
         // Fixed or adaptive field under-relaxation
         relaxField(D(), iCorr);
 
+
         // Update the momentum equation inverse diagonal field
         // This may be used by the mechanical law when calculating the
         // hydrostatic pressure
@@ -166,6 +168,12 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
         if (!enforceLinear())
         {
             checkEnforceLinear(J_);
+        }
+
+        if (iCorr % 10 == 0)
+        {
+            impK_ = mechanical().impK();
+            impKf_ = mechanical().impKf();
         }
 
     }

@@ -41,16 +41,16 @@ void totalLagSolid<IncrementalModel>::update(const bool correctSigma)
 {
     IncrementalModel::updateDisplacement();
 
-    if (this->incremental())
+    // if (this->incremental())
     {
         // Total deformation gradient
         F_ = F_.oldTime() + this->gradDD().T();
     }
-    else
-    {
-        // Total deformation gradient
-        F_ = I + this->gradD().T();
-    }
+    // else
+    // {
+    //     // Total deformation gradient
+    //     F_ = I + this->gradD().T();
+    // }
 
     // Inverse of the deformation gradient
     Finv_ = inv(F_);
@@ -71,6 +71,8 @@ void totalLagSolid<IncrementalModel>::update(const bool correctSigma)
     if (correctSigma)
     {
         this->mechanical().correct(this->sigma());
+        impK_ = this->mechanical().impK();
+        impKf_ = this->mechanical().impKf();
     }
 }
 
@@ -105,9 +107,7 @@ totalLagSolid<IncrementalModel>::totalLagSolid
         (
             "relF",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         I + this->gradDD().T()
     ),
@@ -117,9 +117,7 @@ totalLagSolid<IncrementalModel>::totalLagSolid
         (
             "Finv",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            mesh
         ),
         inv(F_)
     ),
@@ -129,9 +127,7 @@ totalLagSolid<IncrementalModel>::totalLagSolid
         (
             "relFinv",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            mesh
         ),
         inv(relF_)
     ),
@@ -141,9 +137,7 @@ totalLagSolid<IncrementalModel>::totalLagSolid
         (
             "J",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         det(F_)
     ),
@@ -153,14 +147,12 @@ totalLagSolid<IncrementalModel>::totalLagSolid
         (
             "relJ",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         det(relF_)
     ),
-    impK_("impK", this->mechanical().elasticModulus()),
-    impKf_("impKf", fvc::interpolate(impK_))
+    impK_("impK", this->mechanical().impK()),
+    impKf_("impKf", this->mechanical().impKf())
 {}
 
 

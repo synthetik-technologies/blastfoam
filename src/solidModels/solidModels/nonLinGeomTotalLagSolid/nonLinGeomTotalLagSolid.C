@@ -49,7 +49,9 @@ namespace solidModels
 defineTypeNameAndDebug(nonLinGeomTotalLagSolid, 0);
 addToRunTimeSelectionTable
 (
-    solidModel, nonLinGeomTotalLagSolid, dictionary
+    solidModel,
+    nonLinGeomTotalLagSolid,
+    dictionary
 );
 
 
@@ -70,6 +72,7 @@ nonLinGeomTotalLagSolid::nonLinGeomTotalLagSolid(dynamicFvMesh& mesh)
 bool nonLinGeomTotalLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfDD;
@@ -134,6 +137,7 @@ bool nonLinGeomTotalLagSolid::evolve()
         // boundaries
         if (iCorr % 10 == 0)
         {
+            impK_ = mechanical().impK();
             impKf_ = mechanical().impKf();
         }
     }

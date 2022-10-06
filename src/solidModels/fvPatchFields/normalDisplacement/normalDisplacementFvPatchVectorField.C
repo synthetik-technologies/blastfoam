@@ -77,7 +77,8 @@ normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
     // Check if displacement is time-varying
     if (dict.found("displacementSeries"))
     {
-        Info<< "    normal displacement is time-varying" << endl;
+        DebugInfo
+            << "    normal displacement is time-varying" << endl;
         dispSeries_ = Function1<scalar>::New("displacementSeries", dict);
 
         fvPatchField<vector>::operator==
