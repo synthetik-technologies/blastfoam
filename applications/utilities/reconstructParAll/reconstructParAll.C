@@ -331,6 +331,11 @@ int main(int argc, char *argv[])
         "write cell distribution as a labelList - for use with 'manual' "
         "decomposition method or as a volScalarField for post-processing."
     );
+    argList::addBoolOption
+    (
+        "mesh",
+        "only reconstruct the mesh"
+    );
 
     #include "setRootCase.H"
     #include "createTime.H"
@@ -341,15 +346,15 @@ int main(int argc, char *argv[])
         args.optionLookup("fields")() >> selectedFields;
     }
 
-    const bool noFields = args.optionFound("noFields");
-
+    const bool meshOnly = args.optionFound("mesh");
+    const bool noFields = meshOnly || args.optionFound("noFields");
     if (noFields)
     {
         Info<< "Skipping reconstructing fields"
             << nl << endl;
     }
 
-    const bool noLagrangian = args.optionFound("noLagrangian");
+    const bool noLagrangian = meshOnly || args.optionFound("noLagrangian");
 
     if (noLagrangian)
     {
