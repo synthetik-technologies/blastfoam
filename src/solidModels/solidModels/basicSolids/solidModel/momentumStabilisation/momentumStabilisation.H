@@ -98,33 +98,6 @@ private:
                   - fvc::div(gamma*gradVf)
                 );
         }
-        template<>
-        tmp<volVectorField> RhieChow
-        (
-            const scalar scale,
-            const volVectorField& vf,
-            const volTensorField& gradVf,
-            const surfaceScalarField& gamma
-        ) const
-        {
-            return
-                scale
-               *(
-                   fvc::laplacian
-                   (
-                        gamma,
-                        vf,
-                        "laplacian(D" + vf.name() +"," + vf.name() + ")"
-                    )
-                  - fvc::div
-                    (
-                        gamma
-                       *(
-                            fvc::interpolate(gradVf) & vf.mesh().Sf()
-                        )
-                    )
-                );
-        }
 
         template<class GammaField>
         tmp<volVectorField> JamesonSchmidtTurkel
@@ -207,6 +180,15 @@ public:
                 const surfaceScalarField& gamma
             ) const;
 };
+
+template<>
+tmp<volVectorField> momentumStabilisation::RhieChow
+(
+    const scalar scale,
+    const volVectorField& vf,
+    const volTensorField& gradVf,
+    const surfaceScalarField& gamma
+) const;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

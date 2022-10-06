@@ -228,4 +228,32 @@ Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
 }
 
 
+template<>
+Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::RhieChow
+(
+    const scalar scale,
+    const volVectorField& vf,
+    const volTensorField& gradVf,
+    const surfaceScalarField& gamma
+) const
+{
+    return
+        scale
+       *(
+           fvc::laplacian
+           (
+                gamma,
+                vf,
+                "laplacian(D" + vf.name() +"," + vf.name() + ")"
+            )
+          - fvc::div
+            (
+                gamma
+               *(
+                    fvc::interpolate(gradVf) & vf.mesh().Sf()
+                )
+            )
+        );
+}
+
 // ************************************************************************* //
