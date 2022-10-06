@@ -178,11 +178,19 @@ void Foam::errorEstimator::read(const dictionary& dict)
 
 void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
 {
-    this->getFieldValueType<scalar>(name, f);
-    this->getFieldValueType<vector>(name, f);
-    this->getFieldValueType<symmTensor>(name, f);
-    this->getFieldValueType<sphericalTensor>(name, f);
-    this->getFieldValueType<tensor>(name, f);
+    bool found = false;
+    found = found || this->getFieldValueType<scalar>(name, f);
+    found = found || this->getFieldValueType<vector>(name, f);
+    found = found || this->getFieldValueType<symmTensor>(name, f);
+    found = found || this->getFieldValueType<sphericalTensor>(name, f);
+    found = found || this->getFieldValueType<tensor>(name, f);
+
+    if (!found && f.time().timeIndex() > 0)
+    {
+        FatalErrorInFunction
+            << name << " is not a registered field" << endl
+            << abort(FatalError);
+    }
 }
 
 

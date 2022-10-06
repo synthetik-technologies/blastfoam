@@ -28,7 +28,7 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::errorEstimator::getFieldValueType
+bool Foam::errorEstimator::getFieldValueType
 (
     const word& name,
     volScalarField& f
@@ -41,8 +41,9 @@ void Foam::errorEstimator::getFieldValueType
         const thisType& x = mesh_.lookupObject<thisType>(name);
         f.primitiveFieldRef() =  mag(x.primitiveField());
         f.boundaryFieldRef() = mag(x.boundaryField());
+        return true;
     }
-    return;
+    return false;
 }
 
 // ************************************************************************* //

@@ -111,7 +111,7 @@ protected:
 
         //- Lookup and return the scalar value of the field
         template<class Type>
-        void getFieldValueType(const word& name, volScalarField& f) const;
+        bool getFieldValueType(const word& name, volScalarField& f) const;
 
         //- Update the time index
         bool updateCurTimeIndex(const bool unset) const;
