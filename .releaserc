@@ -53,6 +53,12 @@
         "prepareCmd": "./.updateDeb.sh ${nextRelease.version}",
         "publishCmd": "echo VERSION=${nextRelease.version} >> $GITHUB_ENV"
       }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": false
+      }
     ]
   ]
 }
