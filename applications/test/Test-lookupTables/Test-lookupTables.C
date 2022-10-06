@@ -4,6 +4,10 @@
 #include "lookupTables3D.H"
 #include "OFstream.H"
 #include "IFstream.H"
+
+#include "univariateRootSolver.H"
+#include "EquationsFwd.H"
+
 #include "argList.H"
 
 using namespace Foam;
@@ -104,13 +108,13 @@ int main(int argc, char *argv[])
     scalar dy = (yMax - yMin)/scalar(ny);
     scalar dz = (zMax - zMin)/scalar(nz);
 
-    scalarField x(nx);
-    scalarField y(ny);
-    scalarField z(nz);
+    scalarField x(nx+1);
+    scalarField y(ny+1);
+    scalarField z(nz+1);
 
     {
         OFstream outX("x.csv");
-        for (label i = 0; i < nx; i++)
+        for (label i = 0; i <= nx; i++)
         {
             x[i] =  xMin + dx*scalar(i);
             outX << x[i] << ";";
@@ -118,7 +122,7 @@ int main(int argc, char *argv[])
     }
     {
         OFstream outY("y.csv");
-        for (label j = 0; j < ny; j++)
+        for (label j = 0; j <= ny; j++)
         {
             y[j] =  yMin + dy*scalar(j);
             outY << y[j] << ";\n";
@@ -127,7 +131,7 @@ int main(int argc, char *argv[])
     {
         OFstream outZ("z.csv");
         outZ << "# abc"<<endl;
-        for (label k = 0; k < nz; k++)
+        for (label k = 0; k <= nz; k++)
         {
             z[k] =  zMin + dz*scalar(k);
             outZ << z[k] << "\n";
@@ -136,10 +140,10 @@ int main(int argc, char *argv[])
 
     {
         OFstream out1D("table1D.csv");
-        for (label i = 0; i < nx; i++)
+        for (label i = 0; i <= nx; i++)
         {
             out1D << func1(x[i]);
-            if ( i != nx-1)
+            if ( i != nx)
             {
                 out1D << ",";
             }
@@ -147,12 +151,12 @@ int main(int argc, char *argv[])
     }
     {
         OFstream out2D("table2D.csv");
-        for (label j = 0; j < ny; j++)
+        for (label i = 0; i <= nx; i++)
         {
-            for (label i = 0; i < nx; i++)
+            for (label j = 0; j <= ny; j++)
             {
                 out2D << func2(x[i], y[j]);
-                if ( i != nx-1)
+                if ( j != ny)
                 {
                     out2D << ",";
                 }
@@ -162,14 +166,14 @@ int main(int argc, char *argv[])
     }
     {
         OFstream out3D("table3D.csv");
-        for (label k = 0; k < nz; k++)
+        for (label k = 0; k <= nz; k++)
         {
-            for (label j = 0; j < ny; j++)
+            for (label j = 0; j <= ny; j++)
             {
-                for (label i = 0; i < nx; i++)
+                for (label i = 0; i <= nx; i++)
                 {
                     out3D << func3(x[i], y[j], z[k]);
-                    if ( i != nx-1)
+                    if ( i != nx)
                     {
                         out3D << ",";
                     }
@@ -191,16 +195,20 @@ int main(int argc, char *argv[])
     Info<<nl<<"1D table:" << endl;
     scalarLookupTable1D table1(dict.subDict("table1D"), "x", "f");
     scalarLookupTable1D table11(table1);
+    scalar xFound = table1.reverseLookup(table1.lookup(xTest));
     Info<< "f: " << table1.lookup(xTest)
         << ", answer: " << func1(xTest) << endl
         << "dfdx: " << table1.dFdX(xTest)
         << ", answer: " << dfunc1dx(xTest) << endl
         << "d2fdx2: " << table1.d2FdX2(xTest)
-        << ", answer: " << d2func1dx2(xTest) << endl;
+        << ", answer: " << d2func1dx2(xTest) << endl
+        << "reverse: " << xFound << ", answer: " << xTest <<endl;
 
     Info<<nl<<"2D table:" << endl;
     lookupTable2D<scalar> table2(dict.subDict("table2D"), "x", "y", "f");
     scalarLookupTable2D table21(table2);
+    xFound = table2.reverseLookupX(table2.lookup(xTest, yTest), yTest);
+    scalar yFound = table2.reverseLookupY(table2.lookup(xTest, yTest), xTest);
     Info<< "f: " << table2.lookup(xTest, yTest)
         << ", answer: " << func2(xTest, yTest) << endl
         << "dfdx: " << table2.dFdX(xTest, yTest)
@@ -213,12 +221,15 @@ int main(int argc, char *argv[])
         << ", answer: " << d2func2dy2(xTest, yTest) << endl
         << "d2fdxdy: " << table2.d2FdXdY(xTest, yTest)
         << ", answer: " << d2func2dxdy(xTest, yTest) << endl
-        << "reverseX: "<< table2.reverseLookupX(table2.lookup(xTest, yTest), yTest)<< ", answer: "<<xTest<<endl
-        << "reverseY: "<< table2.reverseLookupY(table2.lookup(xTest, yTest), xTest)<< ", answer: "<<yTest<<endl;
+        << "reverseX: " << xFound << ", answer: " << xTest <<endl
+        << "reverseY: " << yFound << ", answer: " << yTest <<endl;
 
     Info<<nl<<"3D table" << endl;
     scalarLookupTable3D table3(dict.subDict("table3D"), "x", "y", "z", "f");
     scalarLookupTable3D table31(table3);
+    xFound = table3.reverseLookupX(table3.lookup(xTest, yTest, zTest), yTest, zTest);
+    yFound = table3.reverseLookupY(table3.lookup(xTest, yTest, zTest), xTest, zTest);
+    scalar zFound = table3.reverseLookupZ(table3.lookup(xTest, yTest, zTest), xTest, yTest);
     Info<< "f: " << table3.lookup(xTest, yTest, zTest)
         << ", answer: " << func3(xTest, yTest, zTest) << endl
         << "dfdx: " << table3.dFdX(xTest, yTest, zTest)
@@ -238,7 +249,11 @@ int main(int argc, char *argv[])
         << "d2fdxdz: " << table3.d2FdXdZ(xTest, yTest, zTest)
         << ", answer: " << d2func3dxdz(xTest, yTest, zTest) << endl
         << "d2fdydz: " << table3.d2FdYdZ(xTest, yTest, zTest)
-        << ", answer: " << d2func3dydz(xTest, yTest, zTest) << endl;
+        << ", answer: " << d2func3dydz(xTest, yTest, zTest) << endl
+        << "reverseX: " << xFound << ", answer: " << xTest << endl
+        << "reverseY: " << yFound << ", answer: " << yTest << endl
+        << "reverseZ: " << zFound << ", answer: " << zTest << endl;
+
 
     Info<< nl << "Finished" << nl << endl;
     return 0;
