@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: blastfoam-package
-          path: ${{ github.workspace }}/blastfoam_v*.deb
+          path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 7
 
   release-deb:
