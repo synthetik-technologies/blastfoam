@@ -10,10 +10,6 @@
     {
       "name": "staging",
       "prerelease": true
-    },
-    {
-      "name": "37-two-tags-created-on-public-repo",
-      "prerelease": true
     }
   ],
   "plugins": [
@@ -36,10 +32,6 @@
           },
           {
             "type": "BUG",
-            "release": "patch"
-          },
-          {
-            "type": "ci",
             "release": "patch"
           }
         ]

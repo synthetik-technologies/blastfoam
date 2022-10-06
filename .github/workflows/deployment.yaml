@@ -7,7 +7,6 @@ on:
       - "master"
       - "staging"
       - "develop"
-      - "37-two-tags-created-on-public-repo"
 
 concurrency:
   #* Only run one run at a time
@@ -129,8 +128,8 @@ jobs:
       - build-docker
       - release-deb
     uses: ./.github/workflows/public-deployment.yaml
-    # if: github.ref_name == 'main' #* only run on main
+    if: github.ref_name == 'main' #* only run on main
     with:
-      prod_repo: synthetik-technologies/blastfoam-public-test
+      prod_repo: synthetik-technologies/blastfoam
       tag: ${{ needs.version.outputs.version }}
     secrets: inherit
