@@ -33,6 +33,10 @@
           {
             "type": "BUG",
             "release": "patch"
+          },
+          {
+            "type": "ci",
+            "release": "patch"
           }
         ]
       }

@@ -7,6 +7,7 @@ on:
       - "master"
       - "staging"
       - "develop"
+      - "37-two-tags-created-on-public-repo"
 
 concurrency:
   #* Only run one run at a time
@@ -130,6 +131,6 @@ jobs:
     uses: ./.github/workflows/public-deployment.yaml
     if: github.ref_name == 'main' #* only run on main
     with:
-      prod_repo: synthetik-technologies/blastfoam
+      prod_repo: synthetik-technologies/blastfoam-public-test
       tag: ${{ needs.version.outputs.version }}
     secrets: inherit
