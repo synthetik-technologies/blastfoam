@@ -273,11 +273,9 @@ void Foam::fluxScheme::update
     const surfaceScalarField& cOwn = tcOwn();
     const surfaceScalarField& cNei = tcNei();
 
-
     preUpdate(p);
     forAll(UOwn, facei)
     {
-
         calculateFluxes
         (
             rhoOwn[facei], rhoNei[facei],
