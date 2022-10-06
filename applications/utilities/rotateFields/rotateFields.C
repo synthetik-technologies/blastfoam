@@ -760,9 +760,10 @@ void refine
     bool good = true;
     bool lastIter = false;
     label iter = 0;
+    label maxIter = refineDict.lookupOrDefault("maxRotateRefineIter", 5);
     while (good)
     {
-        if (iter++ > 10)
+        if (++iter > maxIter)
         {
             lastIter = true;
         }
