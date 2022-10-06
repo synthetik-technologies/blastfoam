@@ -487,14 +487,7 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
 
     forAll(eInit, celli)
     {
-        scalar Tinit = this->T_[celli];
-        if (mag(celldpdT(celli)) > small)
-        {
-            TEqn_.save(p[celli], celli);
-            Tinit = TSolver_->solve(T_[celli], celli);
-            TEqn_.reset(celli);
-        }
-        eInit[celli] = cellHE(Tinit, celli);
+        eInit[celli] = calcCelle(p[celli], celli);
     }
     forAll(volumeFractions_, phasei)
     {
