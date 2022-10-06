@@ -18,7 +18,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
-    -I$(BLAST_DIR)/src/regionModels/lnInclude
+    -I$(BLAST_DIR)/src/regionModels/lnInclude \
 
 
 EXE_LIBS = \
@@ -36,4 +36,6 @@ EXE_LIBS = \
     -lcompressibleSystems \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
-    -lblastRegionModels
+    -lblastRegionModels \
+    -lblastRegionSolvers \
+    -lblastFoamModels

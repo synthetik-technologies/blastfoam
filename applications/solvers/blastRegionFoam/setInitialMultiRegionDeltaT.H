@@ -22,13 +22,26 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Global
-    readSolidTimeControls
+    setInitialMultiRegionDeltaT
 
 Description
-    Read the control parameters used in the solid
+    Set the initial timestep for the CHT MultiRegion solver.
 
 \*---------------------------------------------------------------------------*/
 
-scalar maxDi = runTime.controlDict().lookupOrDefault<scalar>("maxDi", 10.0);
+if (adjustTimeStep)
+{
+    if ((runTime.timeIndex() == 0) && (CoNum > small))
+    {
+        runTime.setDeltaT
+        (
+            min
+            (
+                maxCo*runTime.deltaTValue()/CoNum,
+                min(runTime.deltaTValue(), maxDeltaT)
+            )
+        );
+    }
+}
 
 // ************************************************************************* //

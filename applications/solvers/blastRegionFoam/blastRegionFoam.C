@@ -39,14 +39,14 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
-#include "timeIntegrator.H"
-#include "compressibleSystem.H"
-#include "solidModel.H"
+#include "regionSolver.H"
 #include "regionProperties.H"
-#include "fvConstraints.H"
-#include "fvModels.H"
 
+#define forAllRegions(cmd)  \
+forAll(regions, i)          \
+{                           \
+    regions[i].cmd();       \
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,113 +55,63 @@ int main(int argc, char *argv[])
     argList::addBoolOption
     (
         "initialiseDisplacement",
-        "Move fluid regions to initial solid displacement"
+        "Initialise meshes using relavant information and exit"
     );
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createMeshes.H"
+    #include "createMesh.H"
+    #include "createFields.H"
 
     //- Move meshes to the initial locations
     if (args.optionFound("initialiseDisplacement"))
     {
+        forAllRegions(initialiseMesh);
+        forAll(regions, i)
         {
-            #include "createFields.H"
-            forAll(fluidRegions, i)
+            if (regions[i].mesh().moving())
             {
-                Info<<"Moving " << fluidRegions[i].name() << endl;
-                fluidRegions[i].update();
-                fluidRegions[i].update();
-                if (fluidRegions[i].moving())
-                {
-                    surfaceScalarField& meshPhi =
-                        const_cast<surfaceScalarField&>(fluidRegions[i].phi());
-                    meshPhi = Zero;
-                }
-            }
-            forAll(solidModels, i)
-            {
-                solidModels[i].pointD().write();
-            }
-        }
-        forAll(fluidRegions, i)
-        {
-            if (fluidRegions[i].moving())
-            {
-                fluidRegions[i].write();
+                regions[i].mesh().write();
             }
         }
         Info<< nl << "Finished moving meshes" << endl;
         return 0;
     }
 
-    #include "createFields.H"
     #include "createTimeControls.H"
-
-    forAll(fluidRegions, i)
-    {
-        solidModels[i].initialize();
-    }
+    forAllRegions(initialise)
 
     scalar CoNum = 0.0;
-    forAll(fluidRegions, regionI)
+    forAll(regions, regionI)
     {
-        CoNum = max(fluids[regionI].CoNum(), CoNum);
+        CoNum = max(regions[regionI].CoNum(), CoNum);
     }
-    forAll(solidRegions, regionI)
-    {
-        scalar regionCoNum = solidModels[regionI].CoNum();
-        Info<< "Cournant Number for region "
-            << solidRegions[regionI].name()
-            << " Mean/Max = " << regionCoNum << endl;
-        CoNum = max(CoNum, regionCoNum);
-    }
+
     #include "setInitialMultiRegionDeltaT.H"
 
     while (runTime.run())
     {
-        #include "refineMeshes.H"
+        forAllRegions(change);
 
         #include "readTimeControls.H"
 
         Info<< nl;
-        scalar CoNum = 0.0;
-        forAll(fluidRegions, regionI)
+        CoNum = 0.0;
+        forAll(regions, regionI)
         {
-            CoNum = max(fluids[regionI].CoNum(), CoNum);
-        }
-        forAll(solidRegions, regionI)
-        {
-            scalar regionCoNum = solidModels[regionI].CoNum();
-            Info<< "Cournant Number for region "
-                << solidRegions[regionI].name()
-                << " Mean/Max = " << regionCoNum << endl;
-            CoNum = max(CoNum, regionCoNum);
+            CoNum = max(regions[regionI].CoNum(), CoNum);
         }
         #include "setMultiRegionDeltaT.H"
 
         runTime++;
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
-
-        // for (label iter = 0; iter < 5; iter++)
+        label nOuterCorrector = regionPropertiesDict.lookup<label>("nOuterCorrectors");
+        for (label iter = 0; iter < nOuterCorrector; iter++)
         {
-        #include "updateMeshes.H"
+            forAllRegions(moveMesh);
 
-        // Solve
-        forAll(fluidRegions, i)
-        {
-            Info<< "\nSolving for fluid region "
-                << fluidRegions[i].name() << endl;
-            #include "solveFluid.H"
-        }
-
-        forAll(solidRegions, i)
-        {
-            Info<< "\nSolving for solid region "
-                << solidRegions[i].name() << endl;
-
-            #include "solveSolid.H"
-        }
+            // Solve
+            forAllRegions(solve);
         }
 
         runTime.write();
