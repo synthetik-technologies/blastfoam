@@ -1,4 +1,3 @@
-# DESTDIR = /opt
 prefix = /opt/blastfoam
 export MAKE=True
 build: SHELL:=bash
