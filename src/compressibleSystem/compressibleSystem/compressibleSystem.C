@@ -97,7 +97,7 @@ Foam::compressibleSystem::compressibleSystem
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh,
         dimensionedVector("0", dimDensity*dimVelocity, Zero),
@@ -111,7 +111,7 @@ Foam::compressibleSystem::compressibleSystem
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh,
         dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
