@@ -57,7 +57,9 @@
     [
       "@semantic-release/git",
       {
-        "assets": false
+        "assets": [
+          "README.md"
+        ]
       }
     ]
   ]
