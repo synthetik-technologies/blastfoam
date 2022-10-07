@@ -482,8 +482,8 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::alpha() const
         }
         case truncation::CUTOFF:
         {
-            volScalarField cond(pos(mag(levelSet_) - sqrt(2.0)/2.0*epsilon_));
-            tH = cond*sign(levelSet_) + (1.0 - cond)*levelSet_;
+            volScalarField cond(pos(mag(H_) - cutOff_));
+            tH = cond*sign(H_) + (1.0 - cond)*H_;
             break;
         }
         case truncation::TANH:
