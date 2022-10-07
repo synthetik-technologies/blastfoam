@@ -1,6 +1,6 @@
 #! /bin/bash
 
-version="v$1"
+version="$1"
 versionString="Version: $1" 
 sed -i "s/Version:.*/$versionString/g" debian/blastfoam/DEBIAN/control
 dch -b -v $version "Automated Release"
