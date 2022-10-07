@@ -58,7 +58,7 @@
       "@semantic-release/git",
       {
         "assets": [
-          "README.md"
+          "debian/**"
         ]
       }
     ]
