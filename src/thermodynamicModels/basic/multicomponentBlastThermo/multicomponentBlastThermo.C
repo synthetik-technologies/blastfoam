@@ -171,7 +171,8 @@ void Foam::multicomponentBlastThermo::correct()
             volScalarField::New
             (
                 IOobject::groupName("Yt", phaseName_),
-                Y_[0]
+                Y_[0],
+                calculatedFvPatchScalarField::typeName
             )
         );
         volScalarField& Yt = tYt.ref();
