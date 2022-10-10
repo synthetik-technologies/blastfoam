@@ -3,22 +3,18 @@ newRefinementIterator/newRefinementIterator.C
 
 locationMapper/locationMapper.C
 
-fvMeshBalance/fvMeshBalance.C
-fvMeshRefiner/fvMeshRefiner.C
-fvMeshRefiner/fvMeshRefinerNew.C
+polyMeshRefiner/polyMeshRefiner.C
+polyMeshRefiner/polyMeshRefinerNew.C
 
 # Directional refinement
-fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
+polyMeshRefiner/polyMeshDirectionalRefiner/polyMeshDirectionalRefiner.C
 
 
 # Hex refinement
-fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
-hexRef = fvMeshRefiner/fvMeshHexRefiner/hexRef
-
+polyMeshRefiner/polyMeshHexRefiner/polyMeshHexRefiner.C
+hexRef = polyMeshRefiner/polyMeshHexRefiner/hexRef
 $(hexRef)/hexRefRefinementHistory.C
-$(hexRef)/hexRefRefinementHistoryConstraint.C
 $(hexRef)/hexRefData.C
-
 $(hexRef)/hexRef.C
 $(hexRef)/hexRefNew.C
 $(hexRef)/hexRef3D/hexRef3D.C
@@ -27,12 +23,21 @@ $(hexRef)/hexRef2DAxi/hexRef2DAxi.C
 
 
 # Polyhedral refinement
-fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C
+polyMeshRefiner/polyMeshPolyRefiner/polyMeshPolyRefiner.C
+polyMeshRefiner/polyMeshPolyRefiner/polyhedralRefinement/polyhedralRefinement.C
+polyMeshRefiner/polyMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
+polyMeshRefiner/polyMeshPolyRefiner/refinement/refinement.C
 
-fvMeshRefiner/fvMeshPolyRefiner/polyhedralRefinement/polyhedralRefinement.C
-fvMeshRefiner/fvMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
-fvMeshRefiner/fvMeshPolyRefiner/refinement/refinement.C
+# fvMesh refinement
+fvMeshRefiner/fvMeshRefiner.C
+fvMeshRefiner/fvMeshRefinerNew.C
+fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
+fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
+fvMeshRefiner/fvMeshHexRefiner/hexRefRefinementHistoryConstraint.C
+fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C
 fvMeshRefiner/fvMeshPolyRefiner/polyRefinementConstraint.C
+
+fvMeshBalance/fvMeshBalance.C
 
 meshTools/dynMeshTools.C
 

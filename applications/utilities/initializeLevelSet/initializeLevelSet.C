@@ -317,7 +317,7 @@ void setPhase
                     i++
                 )
                 {
-                    fvMeshRefiner::extendMaxCellLevel
+                    polyMeshRefiner::extendMaxCellLevel
                     (
                         mesh,
                         savedCells[regionI],

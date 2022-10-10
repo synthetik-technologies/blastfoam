@@ -290,6 +290,7 @@ void Foam::meshTools::changePatchFace
             zoneFlip                // face flip in zone
         )
     );
+    Info<<newPatchID<<endl;
 }
 
 

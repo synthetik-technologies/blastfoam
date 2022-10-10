@@ -37,7 +37,7 @@ Description
 #define fvMeshPolyRefiner_H
 
 #include "fvMeshRefiner.H"
-#include "refinement.H"
+#include "polyMeshPolyRefiner.H"
 #include "polyTopoChanger.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -53,24 +53,11 @@ class fvMeshPolyRefiner
 :
     public fvMeshRefiner
 {
-    //- Refiner
-    autoPtr<refinement> refiner_;
-
-    // Private member functions
-
-        //- Select points to unrefine
-        labelList selectUnrefinePoints
-        (
-            const scalar unrefineLevel,
-            const PackedBoolList& markedCell,
-            const scalarField& vFld
-        ) const;
-
 
 public:
 
     //- Runtime type information
-    TypeName("polyRefiner");
+    TypeName(polyMeshPolyRefiner::typeName_());
 
 
     // Constructors
@@ -93,67 +80,6 @@ public:
 
     //- Destructor
     virtual ~fvMeshPolyRefiner();
-
-
-    // Member Functions
-
-        // Access
-
-            //- Return the cell level
-            virtual const labelList& cellLevel() const
-            {
-                return refiner_->cellLevel();
-            }
-
-            //- Return the point level
-            virtual const labelList& pointLevel() const
-            {
-                return refiner_->pointLevel();
-            }
-
-            //- Return the refiner
-            const refinement& refiner() const
-            {
-                return refiner_();
-            }
-
-            //- Return the location mapper
-            virtual const locationMapper& locMapper() const
-            {
-                return refiner_->locMapper();
-            }
-
-
-        //- Read the projection parameters from dictionary
-        void readDict(const dictionary& parentDict);
-
-        //- Refine the mesh
-        virtual bool refine
-        (
-            const scalarField& error,
-            const labelList& maxCellLevel = labelList(),
-            const scalar lowerRefineLevel = small,
-            const scalar upperRefineLevel = great,
-            const scalar unrefineLevel = -small
-        );
-
-        //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
-
-        //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
-
-
-    // Writing
-
-        //- Write using given format, version and compression
-        virtual bool writeObject
-        (
-            IOstream::streamFormat fmt,
-            IOstream::versionNumber ver,
-            IOstream::compressionType cmp,
-            const bool write = true
-        ) const;
 
 
     // Member Operators

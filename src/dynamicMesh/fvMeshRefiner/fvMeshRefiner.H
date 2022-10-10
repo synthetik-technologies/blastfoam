@@ -36,9 +36,7 @@ Description
 #ifndef fvMeshRefiner_H
 #define fvMeshRefiner_H
 
-#include "hexRef.H"
-#include "PackedBoolList.H"
-#include "Switch.H"
+#include "polyMeshRefiner.H"
 #include "mapDistributePolyMesh.H"
 #include "fvMeshBalance.H"
 #include "MeshObject.H"
@@ -69,98 +67,26 @@ protected:
         //- Reference to the mesh
         fvMesh& mesh_;
 
-        //- Dictionary used to read parameters
-        dictionary dict_;
+        //- polyMesh refiner
+        autoPtr<polyMeshRefiner> refiner_;
 
         //- Balancer
         fvMeshBalance balancer_;
 
-        // Track number of times refinement/unrefinement/balancing is done
-
-            //- Number of refinement steps done so far.
-            mutable label nRefinementIterations_;
-
-            //- Number of unrefinement steps done so far.
-            mutable label nUnrefinementIterations_;
-
-            //- Number of balance steps done so far
-            mutable label nBalanceIterations_;
-
-
-        //- Is refinement/unrefinement/balancing forced, i.e. for a meshing
-        // process
-        bool force_;
-
-        //- Does refinement occur
-        bool refine_;
-
-        //- Does unrefinement occur
-        bool unrefine_;
-
-        //- Does balancing occur
-        // Handled in fvMeshBalance
-        // bool balance_;
-
-
-        //- Refinement interval
-        label refineInterval_;
-
-        //- Unrefinement interval
-        label unrefineInterval_;
+        //- Number of balance steps done so far
+        mutable label nBalanceIterations_;
 
         //- Balancing interval
         label balanceInterval_;
 
-
-        //- When refinement starts
-        scalar beginRefine_;
-
-        //- When unrefinement starts
-        scalar beginUnrefine_;
-
         //- When balancing starts
         scalar beginBalance_;
-
-
-        //- When refinement ends
-        scalar endRefine_;
-
-        //- When unrefinement ends
-        scalar endUnrefine_;
 
         //- When balancing ends
         scalar endBalance_;
 
-
-        //- Maximum number of cells
-        label maxCells_;
-
-        //- Number of buffer layers for refinement
-        label nRefinementBufferLayers_;
-
-        //- Number of buffer layers for refinement
-        label nUnrefinementBufferLayers_;
-
-        //- Protected patches
-        wordList protectedPatches_;
-
-
         //- Dump cellLevel for postprocessing
         Switch dumpLevel_;
-
-
-
-
-        // Track the state of the refiner
-
-            //- Is the mesh in the process of being refined
-            mutable bool isRefining_;
-
-            //- Is the mesh in the process of being unrefined
-            mutable bool isUnrefining_;
-
-            //- Is the mesh in the process of being balanced
-            mutable bool isBalancing_;
 
 
         // Saved fields for mapping
@@ -172,52 +98,8 @@ protected:
 
     // Protected Member Functions
 
-        //- Count set/unset elements in packedlist.
-        static label count(const PackedBoolList&, const unsigned int);
-
-        //- Select candidate cells for refinement
-        virtual void selectRefineCandidates
-        (
-            const scalar lowerRefineLevel,
-            const scalar upperRefineLevel,
-            const scalarField& vFld,
-            PackedBoolList& candidateCell
-        ) const;
-
-        //- Subset candidate cells for refinement
-        virtual labelList selectRefineCells
-        (
-            const label maxCells,
-            const labelList& maxRefinement,
-            const PackedBoolList& candidateCell
-        ) const;
-
-        //- Get per cell max of connected point
-        scalarField maxPointField(const scalarField&) const;
-
-        //- Get point max of connected cell
-        scalarField maxCellField(const scalarField&) const;
-
-        scalarField cellToPoint(const scalarField& vFld) const;
-
-        scalarField error
-        (
-            const scalarField& fld,
-            const scalar minLevel,
-            const scalar maxLevel
-        ) const;
-
         //- Preupdate by checking if refinement or unrefinement can occur
         bool preUpdate();
-
-        //- Set the maximum cell level
-        void setMaxCellLevel(labelList& maxCellLevel) const;
-
-        //- Check if refinement should happen
-        virtual bool canRefine(const bool incr = false) const;
-
-        //- Check if unrefinement should happen
-        virtual bool canUnrefine(const bool incr = false) const;
 
         //- Check if balancing should happen
         virtual bool canBalance(const bool incr = false) const;
@@ -290,66 +172,87 @@ public:
         // Access
 
             //- Is the mesh refining
-            bool isRefining() const
+            inline bool isRefining() const
             {
-                return isRefining_;
+                return refiner_->isRefining();
             }
 
             //- Is the mesh unrefining
-            bool isUnrefining() const
+            inline bool isUnrefining() const
             {
-                return isUnrefining_;
+                return refiner_->isUnrefining();
             }
 
             //- Is the mesh being balanced
-            bool isBalancing() const
+            inline bool isBalancing() const
             {
-                return isBalancing_;
-            }
-
-            //- Return the number of buffer layers
-            label nRefinementBufferLayers() const
-            {
-                return nRefinementBufferLayers_;
-            }
-
-            //- Return the number of buffer layers
-            label nUnrefinementBufferLayers() const
-            {
-                return nUnrefinementBufferLayers_;
-            }
-
-            //- Force refinement/unrefinement
-            void setForce(const bool force)
-            {
-                force_ = force;
-            }
-
-            //- Return the cell level
-            virtual const labelList& cellLevel() const = 0;
-
-            //- Return the point level
-            virtual const labelList& pointLevel() const = 0;
-
-            //- Return the location mapper
-            virtual const locationMapper& locMapper() const = 0;
-
-            //- Tell the location mapper to store data
-            void needLocationMap(const bool needMap = true) const
-            {
-                locMapper().needMap(needMap);
+                return refiner_->isBalancing();
             }
 
             //- Return the fvMeshBalancer
-            const fvMeshBalance& balancer() const
+            inline const fvMeshBalance& balancer() const
             {
                 return balancer_;
             }
 
             //- Access the fvMeshBalancer
-            fvMeshBalance& balancer()
+            inline fvMeshBalance& balancer()
             {
                 return balancer_;
+            }
+
+            //- Return the polyMeshRefiner
+            inline const polyMeshRefiner& refiner() const
+            {
+                return refiner_();
+            }
+
+            //- Access the polyMeshRefiner
+            inline polyMeshRefiner& refiner()
+            {
+                return refiner_();
+            }
+
+            //- Return the number of buffer layers
+            inline label nRefinementBufferLayers() const
+            {
+                return refiner_->nRefinementBufferLayers_;
+            }
+
+            //- Return the number of buffer layers
+            inline label nUnrefinementBufferLayers() const
+            {
+                return refiner_->nUnrefinementBufferLayers_;
+            }
+
+            //- Force refinement/unrefinement
+            inline void setForce(const bool force)
+            {
+                refiner_->setForce(force);
+            }
+
+            //- Return the cell level
+            inline const labelList& cellLevel() const
+            {
+                return refiner_->cellLevel();
+            }
+
+            //- Return the point level
+            inline const labelList& pointLevel() const
+            {
+                return refiner_->pointLevel();
+            }
+
+            //- Return the location mapper
+            inline const locationMapper& locMapper() const
+            {
+                return refiner_->locMapper();
+            }
+
+            //- Tell the location mapper to store data
+            inline void needLocationMap(const bool needMap = true) const
+            {
+                locMapper().needMap(needMap);
             }
 
 
@@ -364,7 +267,7 @@ public:
             const scalar lowerRefineLevel = sqrt(small),
             const scalar upperRefineLevel = great,
             const scalar unrefineLevel = -sqrt(small)
-        ) = 0;
+        );
 
         //- Balance the mesh
         virtual bool balance();
@@ -380,36 +283,6 @@ public:
 
         //- Distribute additional information
         virtual void distribute(const mapDistributePolyMesh& map);
-
-        static void extendMaxCellLevel
-        (
-            const polyMesh& mesh,
-            labelList& cells,
-            labelList& maxCellLevel,
-            const label level
-        );
-
-        void extendMarkedCells
-        (
-            PackedBoolList& markedCells,
-            const labelList& maxCellLevel,
-            const bool isTop,
-            const bool force
-        );
-
-        //- Extend marked cells across faces given a bool list of already marked
-        //  cells
-        void extendMarkedCellsAcrossFaces
-        (
-            PackedBoolList& markedCells
-        );
-
-        //- Extend marked cells across points given a bool list of already
-        //  marked cells
-        void extendMarkedCellsAcrossPoints
-        (
-            PackedBoolList& markedCells
-        );
 
 
     // Writing
@@ -428,18 +301,6 @@ public:
 
         //- Disallow default bitwise assignment
         void operator=(const fvMeshRefiner&) = delete;
-};
-
-
-// Helper class for accessing max cell level of faces accross processor patches
-template<class Type>
-class combineMaxOp
-{
-    public:
-    void operator()(Type& x, const Type& y) const
-    {
-        x = max(x, y);
-    }
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

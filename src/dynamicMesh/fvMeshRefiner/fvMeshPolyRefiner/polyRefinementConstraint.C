@@ -125,7 +125,7 @@ void Foam::polyRefinementConstraint::add
     );
 
     // refinement itself implements decompositionConstraint
-    ref.refiner().add
+    dynamicCast<const polyMeshPolyRefiner>(ref.refiner()).refiner().add
     (
         blockedFace,
         specifiedProcessorFaces,
@@ -186,7 +186,7 @@ void Foam::polyRefinementConstraint::apply
     );
 
     // refinement itself implements decompositionConstraint
-    ref.refiner().apply
+    dynamicCast<const polyMeshPolyRefiner>(ref.refiner()).refiner().apply
     (
         blockedFace,
         specifiedProcessorFaces,

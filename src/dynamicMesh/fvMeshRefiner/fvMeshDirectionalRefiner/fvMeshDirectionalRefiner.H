@@ -40,12 +40,7 @@ Description
 #define fvMeshDirectionalRefiner_H
 
 #include "fvMeshRefiner.H"
-#include "newCellCuts.H"
-#include "refineCell.H"
-#include "undoableMeshCutter.H"
-#include "hexCellLooper.H"
-#include "geomCellLooper.H"
-#include "locationMapper.H"
+#include "polyMeshDirectionalRefiner.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -60,74 +55,11 @@ class fvMeshDirectionalRefiner
 :
     public fvMeshRefiner
 {
-public:
-    // Public static functions
-
-        //- Given map from original to added cell set the refineCell for
-        //  the added cells to be equal to the one on the original cells.
-        static void addCells(const Map<label>&, List<refineCell>&);
-
-        //- Given map from original to added cell set the vectorField for
-        //  the added cells to be equal to the one on the original cells.
-        static void update(const Map<label>&, vectorField&);
-
-        //- Given map from original to added cell add the added cell to the
-        //  list of labels
-        static void addCells(const Map<label>&, labelList& labels);
-
-        //- Return a direction given a word
-        static vector getDirection(const word& d);
-
-
-private:
-    // Private data
-
-        //- Cell level
-        labelIOList cellLevel_;
-
-        //- Point level
-        labelIOList pointLevel_;
-
-        //- Directions to refine
-        vector refinementDirection_;
-
-        //- Cell walker
-        autoPtr<cellLooper> cellWalker_;
-
-        // Construct undoable refinement topology modifier.
-        // Note: undoability switched off.
-        // Might want to reconsider if needs to be possible. But then can always
-        // use other constructor.
-        autoPtr<undoableMeshCutter> cutter_;
-
-        //- Location mapper
-        locationMapper locationMapper_;
-
-
-    // Private Member Functions
-
-        //- Add new cells from map to overall list (addedCells_).
-        void addCells
-        (
-            const Map<label>&,
-            labelListList&
-        );
-
-        //- Refine cells in cellLabels_ in directions mentioned.
-        labelListList refineDirections
-        (
-            List<vectorField>& cellDirections,
-            List<labelList>& cellsToRefine
-        );
-
-        //- Refine the given cells
-        labelListList refine(const labelList& origCellsToRefine);
-
 
 public:
 
     //- Runtime type information
-    TypeName("directionalRefiner");
+    TypeName(polyMeshDirectionalRefiner::typeName_());
 
 
     // Constructors
@@ -150,67 +82,6 @@ public:
 
     //- Destructor
     virtual ~fvMeshDirectionalRefiner();
-
-
-    // Member Functions
-
-        // Access
-
-            //- Return the cell level
-            virtual const labelList& cellLevel() const
-            {
-                return cellLevel_;
-            }
-
-            //- Return the point level
-            virtual const labelList& pointLevel() const
-            {
-                return pointLevel_;
-            }
-
-            //- Return the location mapper
-            virtual const locationMapper& locMapper() const
-            {
-                return locationMapper_;
-            }
-
-            //- Access the location mapper
-            virtual locationMapper& locMapper()
-            {
-                return locationMapper_;
-            }
-
-
-        //- Read the projection parameters from dictionary
-        void readDict(const dictionary& parentDict);
-
-        //- Refine the mesh
-        virtual bool refine
-        (
-            const scalarField& error,
-            const labelList& maxCellLevel = labelList(),
-            const scalar lowerRefineLevel = small,
-            const scalar upperRefineLevel = great,
-            const scalar unrefineLevel = -small
-        );
-
-        //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
-
-        //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
-
-
-    // Writing
-
-        //- Write using given format, version and compression
-        virtual bool writeObject
-        (
-            IOstream::streamFormat fmt,
-            IOstream::versionNumber ver,
-            IOstream::compressionType cmp,
-            const bool write = true
-        ) const;
 
 
     // Member Operators
