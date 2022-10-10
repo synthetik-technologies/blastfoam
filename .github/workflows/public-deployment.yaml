@@ -33,7 +33,7 @@ jobs:
         run: |
           gh release download v${{ inputs.tag }} -p '*.deb'
           ls -la
-          gh release view -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} || gh release create -R "${{ inputs.prod_repo }}" v${{ inputs.tag }} #* View the release; if it doesn't exist create it
+          gh release view -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} || gh release create -R "${{ inputs.prod_repo }}" -t v${{ inputs.tag }} v${{ inputs.tag }} #* View the release; if it doesn't exist create it
           gh release upload -R "${{ inputs.prod_repo }}" v${{ inputs.tag }} *.deb
   docker:
     name: Deploy Docker Image
