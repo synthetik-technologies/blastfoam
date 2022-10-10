@@ -129,7 +129,7 @@ jobs:
       - build-docker
       - release-deb
     uses: ./.github/workflows/public-deployment.yaml
-    if: github.ref_name == 'main' #* only run on main
+    # if: github.ref_name == 'main' #* only run on main
     with:
       prod_repo: synthetik-technologies/blastfoam-public-test
       tag: ${{ needs.version.outputs.version }}
