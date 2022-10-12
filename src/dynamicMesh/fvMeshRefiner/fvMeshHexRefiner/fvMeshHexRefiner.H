@@ -97,50 +97,6 @@ class fvMeshHexRefiner
 :
     public fvMeshRefiner
 {
-protected:
-
-        //- Mesh cutting engine
-        autoPtr<hexRef> meshCutter_;
-
-        //- Number of protected cells
-        label nProtected_;
-
-        //- Protected cells (usually since not hexes)
-        PackedBoolList protectedCell_;
-
-
-    // Protected Member Functions
-
-        //- Calculate cells that cannot be refined since would trigger
-        //  refinement of protectedCell_ (since 2:1 refinement cascade)
-        void calculateProtectedCells(PackedBoolList& unrefineableCell) const;
-
-
-        //- Refine cells. Update mesh and fields.
-        autoPtr<mapPolyMesh> refine(const labelList&);
-
-        //- Unrefine cells. Gets passed in centre points of cells to combine.
-        autoPtr<mapPolyMesh> unrefine(const labelList&);
-
-        //- Subset candidate cells for refinement
-        virtual labelList selectRefineCells
-        (
-            const label maxCells,
-            const labelList& maxRefinement,
-            const PackedBoolList& candidateCell
-        ) const;
-
-        //- Check all cells have 8 anchor points
-        void checkEightAnchorPoints
-        (
-            PackedBoolList& protectedCell,
-            label& nProtected
-        ) const;
-
-        //- Set protected cells
-        void setProtectedCells();
-
-
 public:
 
     //- Runtime type information
@@ -170,68 +126,6 @@ public:
 
     //- Destructor
     virtual ~fvMeshHexRefiner();
-
-
-    // Member Functions
-
-        //- Direct access to the refinement engine
-        const hexRef& meshCutter() const
-        {
-            return meshCutter_();
-        }
-
-        //- Direct access to the refinement engine
-        hexRef& meshCutter()
-        {
-            return meshCutter_();
-        }
-
-        //- Return the cell level
-        virtual const labelList& cellLevel() const
-        {
-            return meshCutter_->cellLevel();
-        }
-
-        //- Return the point level
-        virtual const labelList& pointLevel() const
-        {
-            return meshCutter_->pointLevel();
-        }
-
-        //- Return the location mapper
-        virtual const locationMapper& locMapper() const
-        {
-            return meshCutter_->locMapper();
-        }
-
-
-        //- Refine the mesh
-        virtual bool refine
-        (
-            const scalarField& error,
-            const labelList& maxCellLevel = labelList(),
-            const scalar lowerRefineLevel = small,
-            const scalar upperRefineLevel = great,
-            const scalar unrefineLevel = -small
-        );
-
-        //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
-
-        //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
-
-
-    // Writing
-
-        //- Write using given format, version and compression
-        virtual bool writeObject
-        (
-            IOstream::streamFormat fmt,
-            IOstream::versionNumber ver,
-            IOstream::compressionType cmp,
-            const bool write = true
-        ) const;
 
 
     // Member Operators

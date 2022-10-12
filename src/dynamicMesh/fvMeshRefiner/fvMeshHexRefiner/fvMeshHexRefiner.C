@@ -104,5 +104,4 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner
 Foam::fvMeshHexRefiner::~fvMeshHexRefiner()
 {}
 
-
 // ************************************************************************* //

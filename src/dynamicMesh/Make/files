@@ -41,4 +41,7 @@ fvMeshBalance/fvMeshBalance.C
 
 meshTools/dynMeshTools.C
 
+MeshFields/MeshField/MeshFields.C
+MeshFields/MeshFieldUpdater/MeshFieldUpdaters.C
+
 LIB = $(BLAST_LIBBIN)/libblastDynamicMesh

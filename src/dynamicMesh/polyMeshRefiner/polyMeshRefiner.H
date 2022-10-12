@@ -41,7 +41,7 @@ Description
 #include "PackedBoolList.H"
 #include "Switch.H"
 #include "mapDistributePolyMesh.H"
-#include "MeshObject.H"
+#include "RefineBalanceMeshObject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,7 +54,7 @@ class polyMeshRefiner;
 typedef MeshObject
 <
     polyMesh,
-    UpdateableMeshObject,
+    DistributeableMeshObject,
     polyMeshRefiner
 > PolyMeshRefiner;
 
@@ -323,6 +323,19 @@ public:
 
         //- Overload update mesh to include other methods
         virtual void updateMesh(const mapPolyMesh& mpm)
+        {}
+
+        //- Reordered/removed trailing patches. If validBoundary call is parallel
+        //  synced and all add the same patch with same settings
+        virtual void reorderPatches
+        (
+            const labelUList& newToOld,
+            const bool validBoundary
+        )
+        {}
+
+        //- Inserted patch at patchi
+        virtual void addPatch(const label patchi)
         {}
 
         //- Move points

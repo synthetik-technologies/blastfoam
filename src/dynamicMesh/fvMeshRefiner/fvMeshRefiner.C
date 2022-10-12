@@ -157,7 +157,7 @@ Foam::fvMeshRefiner::fvMeshRefiner
     ),
 
     mesh_(mesh),
-    refiner_(polyMeshRefiner::New(mesh, dict)),
+    refiner_(polyMeshRefiner::New(mesh, dict, force, read)),
 
     balancer_
     (
@@ -330,8 +330,6 @@ void Foam::fvMeshRefiner::distribute
     const mapDistributePolyMesh& map
 )
 {
-    Info<< "Distributing ..." << endl;
-
     //- The volume has been updated, so now we copy back
     //  This also calls V() which will construct the volume
     //  field.

@@ -544,6 +544,7 @@ Foam::fvMeshBalance::distribute()
     correctBoundaries<pointSymmTensorField>();
     correctBoundaries<pointTensorField>();
 
+    blastMeshObject::preDistribute<polyMesh>(mesh_);
     blastMeshObject::preDistribute<fvMesh>(mesh_);
 
     Info<< "Distributing the mesh ..." << endl;
@@ -573,6 +574,7 @@ Foam::fvMeshBalance::distribute()
              << endl;
     }
 
+    blastMeshObject::distribute<polyMesh>(mesh_, map());
     blastMeshObject::distribute<fvMesh>(mesh_, map());
 
 

@@ -525,6 +525,12 @@ void Foam::polyMeshHexRefiner::setProtectedCells()
 void Foam::polyMeshHexRefiner::updateMesh(const mapPolyMesh& mpm)
 {
     polyMeshRefiner::updateMesh(mpm);
+
+    // Do not update hexMesh since it is handled in the distribute function
+    if (!this->isBalancing_)
+    {
+        meshCutter_->updateMesh(mpm);
+    }
 }
 
 
@@ -1533,7 +1539,7 @@ bool Foam::polyMeshHexRefiner::refine
             }
         }
 
-        if (canUnrefine(true))
+        if (canUnrefine(true) && meshCutter_->history().active())
         {
             // Extend with a buffer layer to prevent neighbouring points
             // being unrefined.
