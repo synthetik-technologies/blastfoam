@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 {
     // Create some tables
     label nx = 20;
-    label ny = 20;
+    label ny = 30;
     label nz = 30;
     scalar xMin = 1.0;
     scalar yMin = 0.1;
@@ -194,7 +194,6 @@ int main(int argc, char *argv[])
 
     Info<<nl<<"1D table:" << endl;
     scalarLookupTable1D table1(dict.subDict("table1D"), "x", "f");
-    scalarLookupTable1D table11(table1);
     scalar xFound = table1.reverseLookup(table1.lookup(xTest));
     Info<< "f: " << table1.lookup(xTest)
         << ", answer: " << func1(xTest) << endl
@@ -206,7 +205,6 @@ int main(int argc, char *argv[])
 
     Info<<nl<<"2D table:" << endl;
     lookupTable2D<scalar> table2(dict.subDict("table2D"), "x", "y", "f");
-    scalarLookupTable2D table21(table2);
     xFound = table2.reverseLookupX(table2.lookup(xTest, yTest), yTest);
     scalar yFound = table2.reverseLookupY(table2.lookup(xTest, yTest), xTest);
     Info<< "f: " << table2.lookup(xTest, yTest)
@@ -226,7 +224,6 @@ int main(int argc, char *argv[])
 
     Info<<nl<<"3D table" << endl;
     scalarLookupTable3D table3(dict.subDict("table3D"), "x", "y", "z", "f");
-    scalarLookupTable3D table31(table3);
     xFound = table3.reverseLookupX(table3.lookup(xTest, yTest, zTest), yTest, zTest);
     yFound = table3.reverseLookupY(table3.lookup(xTest, yTest, zTest), xTest, zTest);
     scalar zFound = table3.reverseLookupZ(table3.lookup(xTest, yTest, zTest), xTest, yTest);
@@ -254,6 +251,11 @@ int main(int argc, char *argv[])
         << "reverseY: " << yFound << ", answer: " << yTest << endl
         << "reverseZ: " << zFound << ", answer: " << zTest << endl;
 
+
+OFstream os("testDict");
+writeEntry(os, "table1", table1);
+writeEntry(os, "table2", table2);
+writeEntry(os, "table3", table3);
 
     Info<< nl << "Finished" << nl << endl;
     return 0;
