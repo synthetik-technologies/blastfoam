@@ -1159,7 +1159,7 @@ int main(int argc, char *argv[])
                     (
                         regions[regionI].dict(),
                         savedFaces[regionI],
-                        true
+                        topoSetList::ALL
                     );
                 }
                 if
@@ -1175,7 +1175,7 @@ int main(int argc, char *argv[])
                     (
                         regions[regionI].dict(),
                         savedPoints[regionI],
-                        true
+                        topoSetList::ALL
                     );
                 }
 

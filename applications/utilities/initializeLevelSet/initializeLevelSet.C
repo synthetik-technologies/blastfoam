@@ -236,8 +236,7 @@ void setPhase
                     (
                         mesh,
                         dict,
-                        selectedPoints,
-                        false
+                        selectedPoints
                     );
                 }
 

@@ -115,12 +115,12 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
     const polyMesh& mesh,
     const dictionary& dict,
     const topoSet& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     labelHashSet facesToKeep
     (
-        extractSelectedFaces(mesh, dict, faces.toc(), defaultAll)
+        extractSelectedFaces(mesh, dict, faces.toc(), defaultType)
     );
 
     autoPtr<topoSet> selectedFaces
@@ -146,7 +146,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
             origFzs.flipMap(),
             fzs.addressing(),
             fzs.flipMap(),
-            defaultAll
+            defaultType
         );
         fzs.updateSet();
     }
@@ -159,7 +159,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
             mesh,
             dict,
             faces.toc(),
-            defaultAll
+            defaultType
         );
         static_cast<labelHashSet&>(selectedFaces()) = labelHashSet(addressing);
         selectedFaces->sync(mesh);
@@ -173,7 +173,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
     const polyMesh& mesh,
     const dictionary& dict,
     const labelList& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     labelList newFaces;
@@ -186,7 +186,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
         boolList(faces.size(), false),
         newFaces,
         flipMap,
-        defaultAll
+        defaultType
     );
     return newFaces;
 }
@@ -200,12 +200,19 @@ void Foam::topoSetList::extractSelectedFaces
     const boolList& flipMap,
     labelList& newFaces,
     boolList& newFlipMap,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     const SelectionType sType =
-        defaultAll
-      ? selectionNames[dict.lookupOrDefault<word>("selectionMode", "all")]
+        defaultType != UNKNOWN
+      ? selectionNames
+        [
+            dict.lookupOrDefault<word>
+            (
+                "selectionMode",
+                selectionNames[defaultType]
+            )
+        ]
       : selectionNames[dict.lookup<word>("selectionMode")];
 
     // Return if the selection is empty of all faces are selected
@@ -345,12 +352,19 @@ Foam::labelList Foam::topoSetList::extractSelectedPoints
     const polyMesh& mesh,
     const dictionary& dict,
     const labelList& points,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     const SelectionType sType =
-        defaultAll
-      ? selectionNames[dict.lookupOrDefault<word>("selectionMode", "all")]
+        defaultType != UNKNOWN
+      ? selectionNames
+        [
+            dict.lookupOrDefault<word>
+            (
+                "selectionMode",
+                selectionNames[defaultType]
+            )
+        ]
       : selectionNames[dict.lookup("selectionMode")];
 
     // Return if the selection is empty of all points are selected
@@ -456,7 +470,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
     const polyMesh& mesh,
     const dictionary& dict,
     const topoSet& points,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     autoPtr<topoSet> selectedPoints
@@ -471,7 +485,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
     );
     selectedPoints->set
     (
-        extractSelectedPoints(mesh, dict, points.toc(), defaultAll)
+        extractSelectedPoints(mesh, dict, points.toc(), defaultType)
     );
     selectedPoints->sync(mesh);
     return selectedPoints;
@@ -655,7 +669,7 @@ void Foam::topoSetList::updateFaces
             (
                 setDicts[seti],
                 selectedFaceSet(),
-                false
+                UNKNOWN
             )(),
             setDicts[seti]
         );
@@ -701,7 +715,7 @@ void Foam::topoSetList::updatePoints
             (
                 setDicts[seti],
                 selectedPointSet(),
-                false
+                UNKNOWN
             )(),
             setDicts[seti]
         );
@@ -967,10 +981,10 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
 (
     const dictionary& dict,
     const topoSet& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
-    return extractSelectedFaces(mesh_, dict, faces, defaultAll);
+    return extractSelectedFaces(mesh_, dict, faces, defaultType);
 }
 
 
@@ -982,7 +996,7 @@ void Foam::topoSetList::extractSelectedFaces
     const boolList& flipMap,
     labelList& newFaces,
     boolList& newFlipMap,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
     extractSelectedFaces
@@ -993,7 +1007,7 @@ void Foam::topoSetList::extractSelectedFaces
         flipMap,
         newFaces,
         newFlipMap,
-        defaultAll
+        defaultType
     );
 }
 
@@ -1003,7 +1017,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
 (
     const dictionary& dict,
     const labelList& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
     return extractSelectedFaces
@@ -1011,7 +1025,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
         mesh_,
         dict,
         faces,
-        defaultAll
+        defaultType
     );
 }
 
@@ -1020,10 +1034,10 @@ Foam::labelList Foam::topoSetList::extractSelectedPoints
 (
     const dictionary& dict,
     const labelList& points,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
-    return extractSelectedPoints(mesh_, dict, points, defaultAll);
+    return extractSelectedPoints(mesh_, dict, points, defaultType);
 }
 
 
@@ -1031,10 +1045,10 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
 (
     const dictionary& dict,
     const topoSet& points,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
-    return extractSelectedPoints(mesh_, dict, points, defaultAll);
+    return extractSelectedPoints(mesh_, dict, points, defaultType);
 }
 
 
