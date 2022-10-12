@@ -51,6 +51,9 @@ Type Foam::lookupTable2D<Type>::getValue
 template<class Type>
 Foam::lookupTable2D<Type>::lookupTable2D()
 :
+    xName_("x"),
+    yName_("y"),
+    fName_("f"),
     mod_(nullptr),
     modX_(nullptr),
     modY_(nullptr),
@@ -73,6 +76,9 @@ Foam::lookupTable2D<Type>::lookupTable2D()
 template<class Type>
 Foam::lookupTable2D<Type>::lookupTable2D(const lookupTable2D<Type>& table)
 :
+    xName_(table.xName_),
+    yName_(table.yName_),
+    fName_(table.fName_),
     mod_(table.mod_->clone()),
     modX_(table.modX_->clone()),
     modY_(table.modY_->clone()),
@@ -110,6 +116,9 @@ Foam::lookupTable2D<Type>::lookupTable2D
     const bool canRead
 )
 :
+    xName_(xName),
+    yName_(yName),
+    fName_(name),
     mod_(nullptr),
     modX_(nullptr),
     modY_(nullptr),
@@ -146,6 +155,9 @@ Foam::lookupTable2D<Type>::lookupTable2D
     const bool isReal
 )
 :
+    xName_("x"),
+    yName_("y"),
+    fName_("f"),
     mod_(Modifier<Type>::New(modType)),
     modX_(Modifier<scalar>::New(modXType)),
     modY_(Modifier<scalar>::New(modYType)),
@@ -642,6 +654,8 @@ void Foam::lookupTable2D<Type>::read
     const bool canRead
 )
 {
+    xName_ = xName;
+    yName_ = yName;
     const word scheme
     (
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
@@ -773,6 +787,106 @@ void Foam::lookupTable2D<Type>::read
             dict
         );
     }
+}
+
+template<class Type>
+void  Foam::lookupTable2D<Type>::write(Ostream& os) const
+{
+    os << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+    if (solver_.valid())
+    {
+        writeEntry(os, "rootSolver", solver_->type());
+    }
+
+    writeEntry(os, word(xName_ + "InterpolationScheme"), xInterpolator_->type());
+    writeEntry(os, word(yName_ + "InterpolationScheme"), yInterpolator_->type());
+
+    writeKeyword(os, word(xName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry<bool>(os, "isReal", true);
+        writeEntry(os, "mod", modX_->type());
+        writeEntry(os, xName_, static_cast<const scalarList&>(x()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    writeKeyword(os, word(yName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry<bool>(os, "isReal", true);
+        writeEntry(os, "mod", modY_->type());
+        writeEntry(os, yName_, static_cast<const scalarList&>(y()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+
+    writeKeyword(os, word(fName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry<bool>(os, "isReal", true);
+        writeEntry(os, "mod", mod_->type());
+        const Field<Field<Type>>& f(this->f());
+        writeKeyword(os, fName_)
+            << nl << indent << f.size() << token::SPACE
+            << token::BEGIN_LIST << nl << incrIndent;
+        forAll(f, i)
+        {
+            os  << indent << static_cast<const List<Type>&>(f[i]) << nl;
+        }
+        os  << decrIndent << indent << token::END_LIST << token::END_STATEMENT << endl;
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+}
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::lookupTable2D<Type>::operator=(const lookupTable2D<Type>& table)
+{
+    xName_ = table.xName_;
+    yName_ = table.yName_;
+    fName_ = table.fName_;
+
+    mod_ = table.mod_->clone();
+    modX_ = table.modX_->clone();
+    modY_ = table.modY_->clone();
+
+    xInterpolator_ = table.xInterpolator_->clone(xModValues_);
+    yInterpolator_ = table.yInterpolator_->clone(yModValues_);
+    set(table.xModValues_, table.yModValues_, table.data_, false);
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Functions  * * * * * * * * * * * * //
+
+template<class Type>
+void  Foam::writeEntry(Ostream& os, const lookupTable2D<Type>& table)
+{
+    table.write(os);
+}
+
+
+// * * * * * * * * * * * * * *  IOStream operators * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const lookupTable2D<Type>& table
+)
+{
+    // Check state of Ostream
+    os.check
+    (
+        "Ostream& operator<<(Ostream&, const lookupTable2D<Type>&)"
+    );
+
+    table.write(os);
+
+    return os;
 }
 
 // ************************************************************************* //

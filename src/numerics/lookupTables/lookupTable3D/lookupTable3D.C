@@ -51,6 +51,10 @@ Type Foam::lookupTable3D<Type>::getValue
 template<class Type>
 Foam::lookupTable3D<Type>::lookupTable3D()
 :
+    xName_("x"),
+    yName_("y"),
+    zName_("z"),
+    fName_("f"),
     mod_(nullptr),
     modX_(nullptr),
     modY_(nullptr),
@@ -78,6 +82,10 @@ Foam::lookupTable3D<Type>::lookupTable3D()
 template<class Type>
 Foam::lookupTable3D<Type>::lookupTable3D(const lookupTable3D<Type>& table)
 :
+    xName_(table.xName_),
+    yName_(table.yName_),
+    zName_(table.zName_),
+    fName_(table.fName_),
     mod_(table.mod_->clone()),
     modX_(table.modX_->clone()),
     modY_(table.modY_->clone()),
@@ -122,6 +130,10 @@ Foam::lookupTable3D<Type>::lookupTable3D
     const bool canRead
 )
 :
+    xName_(xName),
+    yName_(yName),
+    zName_(zName),
+    fName_(name),
     mod_(nullptr),
     modX_(nullptr),
     modY_(nullptr),
@@ -166,6 +178,10 @@ Foam::lookupTable3D<Type>::lookupTable3D
     const bool isReal
 )
 :
+    xName_("x"),
+    yName_("y"),
+    zName_("z"),
+    fName_("f"),
     mod_(Modifier<Type>::New(modType)),
     modX_(Modifier<scalar>::New(modXType)),
     modY_(Modifier<scalar>::New(modYType)),
@@ -1074,6 +1090,11 @@ void Foam::lookupTable3D<Type>::read
     const bool canRead
 )
 {
+    xName_ = xName;
+    yName_ = yName;
+    zName_ = zName;
+    fName_ = name;
+
     const word scheme
     (
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
@@ -1234,6 +1255,132 @@ void Foam::lookupTable3D<Type>::read
             dict
         );
     }
+}
+
+
+template<class Type>
+void  Foam::lookupTable3D<Type>::write(Ostream& os) const
+{
+    os << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+    if (solver_.valid())
+    {
+        writeEntry(os, "rootSolver", solver_->type());
+    }
+
+    writeEntry(os, word(xName_ + "InterpolationScheme"), xInterpolator_->type());
+    writeEntry(os, word(yName_ + "InterpolationScheme"), yInterpolator_->type());
+    writeEntry(os, word(zName_ + "InterpolationScheme"), zInterpolator_->type());
+
+    writeKeyword(os, word(xName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry<bool>(os, "isReal", true);
+        writeEntry(os, "mod", modX_->type());
+        writeEntry(os, xName_, static_cast<const scalarList&>(x()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    writeKeyword(os, word(yName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry<bool>(os, "isReal", true);
+        writeEntry(os, "mod", modY_->type());
+        writeEntry(os, yName_, static_cast<const scalarList&>(y()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    writeKeyword(os, word(zName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry<bool>(os, "isReal", true);
+        writeEntry(os, "mod", modZ_->type());
+        writeEntry(os, zName_, static_cast<const scalarList&>(z()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+
+    writeKeyword(os, word(fName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry<bool>(os, "isReal", true);
+        writeEntry(os, "mod", mod_->type());
+        const Field<Field<Field<Type>>>& f(this->f());
+        writeKeyword(os, fName_)
+            << nl << indent
+            << f.size() << token::SPACE
+            << token::BEGIN_LIST << nl << incrIndent;
+        forAll(f, i)
+        {
+            os  << nl << indent << f[i].size() << token::SPACE
+                << token::BEGIN_LIST << nl << incrIndent;
+            forAll(f[i], j)
+            {
+                os  << indent << static_cast<const List<Type>&>(f[i][j]) << nl;
+            }
+            os  << decrIndent << indent << token::END_LIST << endl;
+        }
+        os  << decrIndent << indent << token::END_LIST << token::END_STATEMENT << endl;
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+}
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::lookupTable3D<Type>::operator=(const lookupTable3D<Type>& table)
+{
+    xName_ = table.xName_;
+    yName_ = table.yName_;
+    zName_ = table.zName_;
+    fName_ = table.fName_;
+
+    mod_ = table.mod_->clone();
+    modX_ = table.modX_->clone();
+    modY_ = table.modY_->clone();
+    modZ_ = table.modZ_->clone();
+
+    xInterpolator_ = table.xInterpolator_->clone(xModValues_);
+    yInterpolator_ = table.yInterpolator_->clone(yModValues_);
+    zInterpolator_ = table.zInterpolator_->clone(zModValues_);
+    set
+    (
+        table.xModValues_,
+        table.yModValues_,
+        table.zModValues_,
+        table.data_,
+        false
+    );
+}
+
+// * * * * * * * * * * * * * * * IOstream Functions  * * * * * * * * * * * * //
+
+template<class Type>
+void  Foam::writeEntry(Ostream& os, const lookupTable3D<Type>& table)
+{
+    table.write(os);
+}
+
+// * * * * * * * * * * * * * *  IOStream operators * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const lookupTable3D<Type>& table
+)
+{
+    // Check state of Ostream
+    os.check
+    (
+        "Ostream& operator<<(Ostream&, const lookupTable3D<Type>&)"
+    );
+
+    table.write(os);
+
+    return os;
 }
 
 // ************************************************************************* //

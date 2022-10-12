@@ -32,6 +32,8 @@ License
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D()
 :
+    xName_("x"),
+    fName_("f"),
     mod_(Modifier<Type>::New("none")),
     modX_(Modifier<scalar>::New("none")),
     data_(),
@@ -49,6 +51,8 @@ Foam::lookupTable1D<Type>::lookupTable1D()
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D(const lookupTable1D<Type>& table)
 :
+    xName_(table.xName_),
+    fName_(table.fName_),
     mod_(table.mod_->clone()),
     modX_(table.modX_->clone()),
     data_(),
@@ -73,6 +77,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
     bool canRead
 )
 :
+    xName_(xName),
+    fName_(name),
     mod_(nullptr),
     modX_(nullptr),
     data_(),
@@ -100,6 +106,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
     const bool isReal
 )
 :
+    xName_("x"),
+    fName_("f"),
     mod_(Modifier<Type>::New(mod)),
     modX_(Modifier<scalar>::New(xMod)),
     data_(data),
@@ -125,6 +133,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
     const bool isReal
 )
 :
+    xName_("x"),
+    fName_("f"),
     mod_(Modifier<Type>::New("none")),
     modX_(Modifier<scalar>::New(xMod)),
     data_(),
@@ -403,6 +413,9 @@ void Foam::lookupTable1D<Type>::read
     const bool canRead
 )
 {
+    xName_ = xName;
+    fName_ = name;
+
     List<List<string>> table;
     if (dict.found("file"))
     {
@@ -446,6 +459,98 @@ void Foam::lookupTable1D<Type>::read
         table
     );
     setData(data, modType, isReal);
+
+    if (dict.found("rootSolver"))
+    {
+        this->solver
+        (
+            dict.lookup<word>("rootSolver"),
+            dict
+        );
+    }
+}
+
+template<class Type>
+void  Foam::lookupTable1D<Type>::write(Ostream& os) const
+{
+    os << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+    if (solver_.valid())
+    {
+        writeEntry(os, "rootSolver", solver_->type());
+    }
+
+    writeEntry(os, "interpolationScheme", interpolator_->type());
+
+    writeKeyword(os, word(xName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry(os, "mod", modX_->type());
+        writeEntry(os, xName_, static_cast<const scalarList&>(x()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    writeKeyword(os, word(fName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry(os, "mod", mod_->type());
+        writeEntry(os, fName_, static_cast<const List<Type>&>(f()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+}
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::lookupTable1D<Type>::operator=(const lookupTable1D<Type>& table)
+{
+    if (this == &table)
+    {
+        FatalErrorInFunction
+            << "attempted assignment to self"
+            << abort(FatalError);
+    }
+
+    xName_ = table.xName_;
+    fName_ = table.fName_;
+
+    mod_ = table.mod_->clone();
+    modX_ = table.modX_->clone();
+
+    interpolator_ = table.interpolator_->clone(xModValues_);
+    set(table.xModValues_, table.data_, false);
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Functions  * * * * * * * * * * * * //
+
+template<class Type>
+void  Foam::writeEntry(Ostream& os, const lookupTable1D<Type>& table)
+{
+    table.write(os);
+}
+
+
+// * * * * * * * * * * * * * *  IOStream operators * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const lookupTable1D<Type>& f1
+)
+{
+    // Check state of Ostream
+    os.check
+    (
+        "Ostream& operator<<(Ostream&, const lookupTable1D<Type>&)"
+    );
+
+    f1.write(os);
+
+    return os;
 }
 
 // ************************************************************************* //

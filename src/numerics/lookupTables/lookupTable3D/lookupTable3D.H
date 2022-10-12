@@ -58,6 +58,11 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+template<class Type> class lookupTable3D;
+template<class Type> Ostream& operator<<(Ostream&, const lookupTable3D<Type>&);
+
+
 /*---------------------------------------------------------------------------*\
                            Class lookupTable3D Declaration
 \*---------------------------------------------------------------------------*/
@@ -67,6 +72,12 @@ class lookupTable3D
 {
 protected:
 // Protected data
+
+    //- Names of components
+    word xName_;
+    word yName_;
+    word zName_;
+    word fName_;
 
     //- Modifiers
     autoPtr<Modifier<Type>> mod_;
@@ -418,284 +429,335 @@ public:
     //- Destructor
     virtual ~lookupTable3D();
 
-    //- Access to data
 
-        //- Access current index (x)
-        label i() const
-        {
-            return ijk_.x();
-        }
+    // Member functions
 
-        //- Access current index (y)
-        label j() const
-        {
-            return ijk_.y();
-        }
+        // Access
 
-        //- Access current index (z)
-        label k() const
-        {
-            return ijk_.z();
-        }
+            //- Return x name
+            const word& xName() const
+            {
+                return xName_;
+            }
 
-        //- Access current interpolation indices
-        const List<labelVector>& indices() const
-        {
-            return indices_;
-        }
+            //- Access x name
+            word& xName()
+            {
+                return xName_;
+            }
 
-        //- Access current interpolation indices
-        const scalarList& weights() const
-        {
-            return weights_;
-        }
+            //- Return y name
+            const word& yName() const
+            {
+                return yName_;
+            }
 
-        //- Return the modifier
-        const Modifier<Type>& mod() const
-        {
-            return mod_();
-        }
+            //- Access y name
+            word& yName()
+            {
+                return yName_;
+            }
 
-        //- Return the x-modifier
-        const Modifier<scalar>& modX() const
-        {
-            return modX_();
-        }
+            //- Return z name
+            const word& zName() const
+            {
+                return zName_;
+            }
 
-        //- Return the y-modifier
-        const Modifier<scalar>& modY() const
-        {
-            return modY_();
-        }
+            //- Access z name
+            word& zName()
+            {
+                return zName_;
+            }
 
-        //- Return the z-modifier
-        const Modifier<scalar>& modZ() const
-        {
-            return modZ_();
-        }
+            //- Return f name
+            const word& fName() const
+            {
+                return fName_;
+            }
 
-        //- Const access to real x values
-        const Field<scalar>& x() const
-        {
-            return xValues();
-        }
+            //- Access f name
+            word& fName()
+            {
+                return fName_;
+            }
 
-        //- Const access to real y values
-        const Field<scalar>& y() const
-        {
-            return yValues();
-        }
+            //- Return current index (x)
+            label i() const
+            {
+                return ijk_.x();
+            }
 
-        //- Const access to real z values
-        const Field<scalar>& z() const
-        {
-            return zValues();
-        }
+            //- Return current index (y)
+            label j() const
+            {
+                return ijk_.y();
+            }
 
-        //- Const access to modified x values
-        const Field<scalar>& xMod() const
-        {
-            return xModValues_;
-        }
+            //- Return current index (z)
+            label k() const
+            {
+                return ijk_.z();
+            }
 
-        //- Const access to modified y values
-        const Field<scalar>& yMod() const
-        {
-            return yModValues_;
-        }
+            //- Return current interpolation indices
+            const List<labelVector>& indices() const
+            {
+                return indices_;
+            }
 
-        //- Const access to modified z values
-        const Field<scalar>& zMod() const
-        {
-            return zModValues_;
-        }
+            //- Return current interpolation indices
+            const scalarList& weights() const
+            {
+                return weights_;
+            }
 
-        //- Const access to modified data values
-        const Field<Field<Field<Type>>>& fMod() const
-        {
-            return data_;
-        }
+            //- Return the modifier
+            const Modifier<Type>& mod() const
+            {
+                return mod_();
+            }
 
-        //- Return real data values
-        const Field<Field<Field<Type>>>& f() const
-        {
-            return fValues();
-        }
+            //- Return the x-modifier
+            const Modifier<scalar>& modX() const
+            {
+                return modX_();
+            }
 
-        //- Return the interpolation scheme for x
-        const interpolationWeight1D& xInterpolator() const
-        {
-            return xInterpolator_();
-        }
+            //- Return the y-modifier
+            const Modifier<scalar>& modY() const
+            {
+                return modY_();
+            }
 
-        //- Return the interpolation scheme for y
-        const interpolationWeight1D& yInterpolator() const
-        {
-            return yInterpolator_();
-        }
+            //- Return the z-modifier
+            const Modifier<scalar>& modZ() const
+            {
+                return modZ_();
+            }
 
-        //- Return the interpolation scheme for z
-        const interpolationWeight1D& zInterpolator() const
-        {
-            return zInterpolator_();
-        }
+            //- Return to real x values
+            const Field<scalar>& x() const
+            {
+                return xValues();
+            }
 
+            //- Return to real y values
+            const Field<scalar>& y() const
+            {
+                return yValues();
+            }
 
-    // Member Functions
+            //- Return to real z values
+            const Field<scalar>& z() const
+            {
+                return zValues();
+            }
 
-        //- Update indexes
-        void updateIndex(const scalar x, const scalar y, const scalar z) const;
+            //- Return to modified x values
+            const Field<scalar>& xMod() const
+            {
+                return xModValues_;
+            }
 
-        //- Update indexes and weights
-        void update(const scalar x, const scalar y, const scalar z) const;
+            //- Return to modified y values
+            const Field<scalar>& yMod() const
+            {
+                return yModValues_;
+            }
 
-        //- Lookup value
-        Type lookup(const scalar x, const scalar y, const scalar z) const;
+            //- Return to modified z values
+            const Field<scalar>& zMod() const
+            {
+                return zModValues_;
+            }
 
-        //- Lookup x given f and y and z
-        scalar reverseLookupX(const Type& fin, const scalar y, const scalar z) const;
+            //- Return to modified data values
+            const Field<Field<Field<Type>>>& fMod() const
+            {
+                return data_;
+            }
 
-        //- Lookup y given f and z and z
-        scalar reverseLookupY(const Type& fin, const scalar x, const scalar z) const;
+            //- Return real data values
+            const Field<Field<Field<Type>>>& f() const
+            {
+                return fValues();
+            }
 
-        //- Lookup z given f and x and y
-        scalar reverseLookupZ(const Type& fin, const scalar x, const scalar y) const;
+            //- Return the interpolation scheme for x
+            const interpolationWeight1D& xInterpolator() const
+            {
+                return xInterpolator_();
+            }
 
-        //- Return first derivative w.r.t.. x
-        Type dFdX(const scalar x, const scalar y, const scalar z) const;
+            //- Return the interpolation scheme for y
+            const interpolationWeight1D& yInterpolator() const
+            {
+                return yInterpolator_();
+            }
 
-        //- Return first derivative w.r.t. y
-        Type dFdY(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return first derivative w.r.t. z
-        Type dFdZ(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return second derivative w.r.t. x
-        Type d2FdX2(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return second derivative w.r.t. y
-        Type d2FdY2(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return second derivative w.r.t. z
-        Type d2FdZ2(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return mixed second derivative w.r.t. x and y
-        Type d2FdXdY(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return mixed second derivative  w.r.t. x and z
-        Type d2FdXdZ(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return mixed second derivative  w.r.t. y and z
-        Type d2FdYdZ(const scalar x, const scalar y, const scalar z) const;
-
-        //- Return value from a given list from lower index and weight
-        Type getValue
-        (
-            const label ijk,
-            const scalar f,
-            const List<Type>& xyz
-        ) const;
-
-        //- Interpolate value using the current index and weight
-        template<class fType, template<class> class ListType1, template<class> class ListType2>
-        fType interpolate
-        (
-            const List<ListType1<ListType2<fType>>>&
-        ) const;
-
-        //- Interpolate value using the current index and weight
-        template<class fType, template<class> class ListType1, template<class> class ListType2>
-        fType interpolate
-        (
-            const scalar,
-            const scalar,
-            const scalar,
-            const List<ListType1<ListType2<fType>>>&
-        ) const;
+            //- Return the interpolation scheme for z
+            const interpolationWeight1D& zInterpolator() const
+            {
+                return zInterpolator_();
+            }
 
 
-    // Edit functions
+        // Lookup Functions
 
-        //- Set data, x, and y
-        template<template<class> class ListType1, template<class> class ListType2>
-        void set
-        (
-            const List<scalar>& x,
-            const List<scalar>& y,
-            const List<scalar>& z,
-            const List<ListType1<ListType2<Type>>>& data,
-            const bool isReal = true
-        );
-        template<template<class> class ListType1, template<class> class ListType2>
-        void set
-        (
-            const List<scalar>& x,
-            const List<scalar>& y,
-            const List<scalar>& z,
-            const List<ListType1<ListType2<Type>>>& data,
-            const word& xMod,
-            const word& yMod,
-            const word& zMod,
-            const word& mod,
-            const word& xInterpolationScheme,
-            const word& yInterpolationScheme,
-            const word& zInterpolationScheme,
-            const bool isReal = true
-        );
+            //- Update indexes
+            void updateIndex(const scalar x, const scalar y, const scalar z) const;
 
-        //- Set x
-        void setX
-        (
-            const List<scalar>& x,
-            const bool isReal = true
-        );
-        void setX
-        (
-            const List<scalar>& x,
-            const word& xMod,
-            const bool isReal = true
-        );
+            //- Update indexes and weights
+            void update(const scalar x, const scalar y, const scalar z) const;
 
-        //- Set y
-        void setY
-        (
-            const List<scalar>& y,
-            const bool isReal = true
-        );
-        void setY
-        (
-            const List<scalar>& y,
-            const word& yMod,
-            const bool isReal = true
-        );
+            //- Lookup value
+            Type lookup(const scalar x, const scalar y, const scalar z) const;
 
-        //- Set z
-        void setZ
-        (
-            const List<scalar>& z,
-            const bool isReal = true
-        );
-        void setZ
-        (
-            const List<scalar>& z,
-            const word& zMod,
-            const bool isReal = true
-        );
+            //- Lookup x given f and y and z
+            scalar reverseLookupX(const Type& fin, const scalar y, const scalar z) const;
 
-        //- Set data
-        template<template<class> class ListType1, template<class> class ListType2>
-        void setData
-        (
-            const List<ListType1<ListType2<Type>>>& data,
-            const bool isReal = true
-        );
-        template<template<class> class ListType1, template<class> class ListType2>
-        void setData
-        (
-            const List<ListType1<ListType2<Type>>>& data,
-            const word& mod,
-            const bool isReal = true
-        );
+            //- Lookup y given f and z and z
+            scalar reverseLookupY(const Type& fin, const scalar x, const scalar z) const;
+
+            //- Lookup z given f and x and y
+            scalar reverseLookupZ(const Type& fin, const scalar x, const scalar y) const;
+
+            //- Return first derivative w.r.t.. x
+            Type dFdX(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return first derivative w.r.t. y
+            Type dFdY(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return first derivative w.r.t. z
+            Type dFdZ(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return second derivative w.r.t. x
+            Type d2FdX2(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return second derivative w.r.t. y
+            Type d2FdY2(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return second derivative w.r.t. z
+            Type d2FdZ2(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return mixed second derivative w.r.t. x and y
+            Type d2FdXdY(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return mixed second derivative  w.r.t. x and z
+            Type d2FdXdZ(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return mixed second derivative  w.r.t. y and z
+            Type d2FdYdZ(const scalar x, const scalar y, const scalar z) const;
+
+            //- Return value from a given list from lower index and weight
+            Type getValue
+            (
+                const label ijk,
+                const scalar f,
+                const List<Type>& xyz
+            ) const;
+
+            //- Interpolate value using the current index and weight
+            template<class fType, template<class> class ListType1, template<class> class ListType2>
+            fType interpolate
+            (
+                const List<ListType1<ListType2<fType>>>&
+            ) const;
+
+            //- Interpolate value using the current index and weight
+            template<class fType, template<class> class ListType1, template<class> class ListType2>
+            fType interpolate
+            (
+                const scalar,
+                const scalar,
+                const scalar,
+                const List<ListType1<ListType2<fType>>>&
+            ) const;
+
+
+        // Edit functions
+
+            //- Set data, x, and y
+            template<template<class> class ListType1, template<class> class ListType2>
+            void set
+            (
+                const List<scalar>& x,
+                const List<scalar>& y,
+                const List<scalar>& z,
+                const List<ListType1<ListType2<Type>>>& data,
+                const bool isReal = true
+            );
+            template<template<class> class ListType1, template<class> class ListType2>
+            void set
+            (
+                const List<scalar>& x,
+                const List<scalar>& y,
+                const List<scalar>& z,
+                const List<ListType1<ListType2<Type>>>& data,
+                const word& xMod,
+                const word& yMod,
+                const word& zMod,
+                const word& mod,
+                const word& xInterpolationScheme,
+                const word& yInterpolationScheme,
+                const word& zInterpolationScheme,
+                const bool isReal = true
+            );
+
+            //- Set x
+            void setX
+            (
+                const List<scalar>& x,
+                const bool isReal = true
+            );
+            void setX
+            (
+                const List<scalar>& x,
+                const word& xMod,
+                const bool isReal = true
+            );
+
+            //- Set y
+            void setY
+            (
+                const List<scalar>& y,
+                const bool isReal = true
+            );
+            void setY
+            (
+                const List<scalar>& y,
+                const word& yMod,
+                const bool isReal = true
+            );
+
+            //- Set z
+            void setZ
+            (
+                const List<scalar>& z,
+                const bool isReal = true
+            );
+            void setZ
+            (
+                const List<scalar>& z,
+                const word& zMod,
+                const bool isReal = true
+            );
+
+            //- Set data
+            template<template<class> class ListType1, template<class> class ListType2>
+            void setData
+            (
+                const List<ListType1<ListType2<Type>>>& data,
+                const bool isReal = true
+            );
+            template<template<class> class ListType1, template<class> class ListType2>
+            void setData
+            (
+                const List<ListType1<ListType2<Type>>>& data,
+                const word& mod,
+                const bool isReal = true
+            );
 
         //- Return an equation using the table
         autoPtr<univariateEquation<Type>> eqn() const
@@ -761,8 +823,30 @@ public:
             const word& name,
             const bool canRead = true
         );
+
+    //- Write data to dictionary stream
+    virtual void write(Ostream& os) const;
+
+
+    // Member Operators
+
+        //- Assignment
+        void operator=(const lookupTable3D<Type>&);
+
+
+    // IOstream Operators
+
+        //- Ostream Operator
+        friend Ostream& operator<< <Type>
+        (
+            Ostream& os,
+            const lookupTable3D<Type>& table
+        );
 };
 
+
+template<class Type>
+void writeEntry(Ostream& os, const lookupTable3D<Type>& table);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -56,6 +56,10 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+template<class Type> class lookupTable1D;
+template<class Type> Ostream& operator<<(Ostream&, const lookupTable1D<Type>&);
+
 /*---------------------------------------------------------------------------*\
                            Class lookupTable1D Declaration
 \*---------------------------------------------------------------------------*/
@@ -65,6 +69,10 @@ class lookupTable1D
 {
 protected:
 // Protected data
+
+    //- Names of components
+    word xName_;
+    word fName_;
 
     //- Modifiers
     autoPtr<Modifier<Type>> mod_;
@@ -258,19 +266,43 @@ public:
 
         // Access data
 
-            //- Access current index
+            //- Return x name
+            const word& xName() const
+            {
+                return xName_;
+            }
+
+            //- Access x name
+            word& xName()
+            {
+                return xName_;
+            }
+
+            //- Return f name
+            const word& fName() const
+            {
+                return fName_;
+            }
+
+            //- Access f name
+            word& fName()
+            {
+                return fName_;
+            }
+
+            //- Return current index
             label index() const
             {
                 return index_;
             }
 
-            //- Access current interpolation indices
+            //- Return current interpolation indices
             const labelList& indices() const
             {
                 return indices_;
             }
 
-            //- Access current interpolation indices
+            //- Return current interpolation indices
             const scalarList& weights() const
             {
                 return weights_;
@@ -288,19 +320,19 @@ public:
                 return modX_();
             }
 
-            //- Const access to real x values
+            //- Return to real x values
             const Field<scalar>& x() const
             {
                 return xValues();
             }
 
-            //- Const access to modified x values
+            //- Return to modified x values
             const Field<scalar>& xMod() const
             {
                 return xModValues_;
             }
 
-            //- Const access to modified data values
+            //- Return to modified data values
             const Field<Type>& fMod() const
             {
                 return data_;
@@ -441,8 +473,29 @@ public:
         const word& yName,
         const bool canRead = true
     );
+
+    //- Write data to dictionary stream
+    virtual void write(Ostream& os) const;
+
+
+    // Member Operators
+
+        //- Assignment
+        void operator=(const lookupTable1D<Type>&);
+
+
+    // IOstream Operators
+
+            //- Ostream Operator
+            friend Ostream& operator<< <Type>
+            (
+                Ostream& os,
+                const lookupTable1D<Type>& table
+            );
 };
 
+template<class Type>
+void writeEntry(Ostream& os, const lookupTable1D<Type>& table);
 
 // Specilizations of scalar functions
 template<>
