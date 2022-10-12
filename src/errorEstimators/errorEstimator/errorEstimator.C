@@ -306,7 +306,7 @@ bool Foam::errorEstimator::writeData(Ostream&) const
         }
         maxLevel.write();
 
-        // if (minDx_ > 0)
+        if (minDx_ > 0)
         {
             const meshSizeObject& mso = meshSizeObject::New(mesh_);
             const_cast<meshSizeObject&>(mso).movePoints();

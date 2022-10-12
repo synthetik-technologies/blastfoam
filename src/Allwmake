@@ -22,6 +22,7 @@ wmake $targetType atmosphereModels
 wmake $targetType regionModels
 wmake $targetType solidModels
 wmake $targetType blastRegionSolvers
+wmake $targetType foamModels
 
 wmake $targetType levelSet
 
