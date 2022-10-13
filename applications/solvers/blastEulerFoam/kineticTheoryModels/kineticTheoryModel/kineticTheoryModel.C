@@ -43,7 +43,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
 )
 :
     phase_(phase),
-    kineticTheorySystem_(kineticTheorySystem::New(phase.fluid())),
+    kineticTheorySystem_(masterSystem::New<kineticTheorySystem>(phase.fluid())),
 
     maxNut_
     (
@@ -204,9 +204,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
     ),
     es_(dict.lookup<scalar>("e"))
-{
-    kineticTheorySystem_.addPhase(*this);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

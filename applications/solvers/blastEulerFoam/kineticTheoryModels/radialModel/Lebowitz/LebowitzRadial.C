@@ -80,7 +80,7 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0
     const phaseModel& phase2
 ) const
 {
-    const volScalarField& alphap = kt_.alphap();
+    const volScalarField& alphap = kt_.alpha();
     volScalarField alphag(1.0 - alphap);
     volScalarField alphard
     (
@@ -118,7 +118,7 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0prime
     const phaseModel& phase2
 ) const
 {
-    const volScalarField& alphap = kt_.alphap();
+    const volScalarField& alphap = kt_.alpha();
     volScalarField alphag(1.0 - alphap);
     volScalarField alphard
     (

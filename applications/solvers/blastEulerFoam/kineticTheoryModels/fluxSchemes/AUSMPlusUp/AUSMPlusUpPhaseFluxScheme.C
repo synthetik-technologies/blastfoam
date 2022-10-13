@@ -112,7 +112,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
         )
     );
 
-    const volScalarField& alphap(kt.alphap());
+    const volScalarField& alphap(kt.alpha());
     word ktName;
     if (kt.polydisperse())
     {

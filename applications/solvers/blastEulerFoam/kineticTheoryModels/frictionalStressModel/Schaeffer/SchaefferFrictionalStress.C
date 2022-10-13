@@ -51,17 +51,17 @@ namespace frictionalStressModels
 
 Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::Schaeffer
 (
-    const dictionary& dict
+    const dictionary& dict,
+    const kineticTheorySystem& kt
 )
 :
-    frictionalStressModel(dict),
-    coeffDict_(dict.optionalSubDict(typeName + "Coeffs")),
-    phi_("phi", dimless, coeffDict_),
+    frictionalStressModel(dict, kt),
+    phi_("phi", dimless, coeffDict()),
     alphaMinFrictionByAlphap_
     (
         "alphaMinFrictionByAlphap",
         dimless,
-        coeffDict_
+        coeffDict()
     )
 {
     phi_ *= constant::mathematical::pi/180.0;
@@ -122,19 +122,11 @@ Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::nu
 
     tmp<volScalarField> tnu
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                "Schaeffer:nu",
-                phase.mesh().time().timeName(),
-                phase.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            word(typeName + ":nu"),
             phase.mesh(),
-            dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
+            dimensionedScalar("nu", dimensionSet(0, 2, -1, 0, 0), 0.0)
         )
     );
 
@@ -193,11 +185,9 @@ alphaMinFriction
 
 bool Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::read()
 {
-    coeffDict_ <<= dict_.optionalSubDict(typeName + "Coeffs");
-
-    phi_.read(coeffDict_);
+    phi_.read(coeffDict());
     phi_ *= constant::mathematical::pi/180.0;
-    alphaMinFrictionByAlphap_.read(coeffDict_);
+    alphaMinFrictionByAlphap_.read(coeffDict());
 
     return true;
 }

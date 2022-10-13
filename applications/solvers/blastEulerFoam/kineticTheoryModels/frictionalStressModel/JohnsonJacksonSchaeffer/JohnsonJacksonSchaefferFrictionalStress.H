@@ -55,8 +55,6 @@ class JohnsonJacksonSchaeffer
 {
     // Private Data
 
-        dictionary coeffDict_;
-
         //- Material constant for frictional normal stress
         dimensionedScalar Fr_;
 
@@ -89,7 +87,7 @@ public:
     // Constructors
 
         //- Construct from components
-        JohnsonJacksonSchaeffer(const dictionary& dict);
+        JohnsonJacksonSchaeffer(const dictionary& dict, const kineticTheorySystem& kt);
 
 
     //- Destructor

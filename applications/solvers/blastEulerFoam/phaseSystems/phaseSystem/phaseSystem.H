@@ -47,6 +47,7 @@ SourceFiles
 #include "HashPtrTable.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
+#include "masterSystemList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,7 +66,6 @@ class pressureRelaxationModel;
 class dragModel;
 class dragODE;
 class pressureRelaxationSolver;
-class kineticTheorySystem;
 
 class blendingMethod;
 template<class modelType>
@@ -261,10 +261,7 @@ protected:
         UPtrList<phaseModel> slavePhaseModels_;
 
         //- Pointer to kinetic theory system
-        UautoPtr<kineticTheorySystem> kineticTheoryPtr_;
-
-        //- Is the kinetic theory polydisperse
-        bool polydisperseKineticTheory_;
+        masterSystemList& master_;
 
         //- Phase pairs
         phasePairTable phasePairs_;

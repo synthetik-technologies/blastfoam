@@ -51,8 +51,6 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class kineticTheoryModel
-:
-    public tmp<kineticTheoryModel>::refCount
 {
 private:
     // Private Data

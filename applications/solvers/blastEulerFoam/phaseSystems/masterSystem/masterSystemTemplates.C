@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,43 +23,31 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "frictionalStressModel.H"
+#include "masterSystem.H"
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-namespace Foam
-{
-namespace kineticTheoryModels
-{
-    defineTypeNameAndDebug(frictionalStressModel, 0);
-
-    defineRunTimeSelectionTable(frictionalStressModel, dictionary);
-}
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::kineticTheoryModels::frictionalStressModel::frictionalStressModel
+template<class System>
+System& Foam::masterSystem::New
 (
-    const dictionary& dict,
-    const kineticTheorySystem& kt
+    const phaseSystem& fluid
 )
-:
-    timeIntegrationSystem
-    (
-        typeName,
-        kt.fluid().mesh()
-    ),
-    dict_(dict),
-    kt_(kt)
-{}
+{
+    const fvMesh& mesh = fluid.mesh();
+    if (!mesh.foundObject<System>(System::typeName))
+    {
+        System* systemPtr
+        (
+            new System(fluid)
+        );
 
+        // Transfer ownership of this object to the objectRegistry
+        systemPtr->store(systemPtr);
+    }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::kineticTheoryModels::frictionalStressModel::~frictionalStressModel()
-{}
+    return mesh.lookupObjectRef<System>(System::typeName);
+}
 
 
 // ************************************************************************* //

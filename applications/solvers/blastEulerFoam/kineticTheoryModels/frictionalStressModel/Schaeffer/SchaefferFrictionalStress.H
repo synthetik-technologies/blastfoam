@@ -55,8 +55,6 @@ class Schaeffer
 {
     // Private Data
 
-        dictionary coeffDict_;
-
         //- Angle of internal friction
         dimensionedScalar phi_;
 
@@ -74,7 +72,7 @@ public:
     // Constructors
 
         //- Construct from components
-        Schaeffer(const dictionary& dict);
+        Schaeffer(const dictionary& dict, const kineticTheorySystem& kt);
 
 
     //- Destructor

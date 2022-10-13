@@ -75,14 +75,14 @@ Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
     const scalarList& ds
 ) const
 {
-    scalar alphap = kt_.alphap()[celli];
+    scalar alphap = kt_.alpha()[celli];
 
     if(alphap < kt_.residualAlpha().value())
     {
         return kt_.minAlphaMax();
     }
 
-    const UPtrList<const phaseModel>& phases(kt_.packingPhases());
+    const UPtrList<phaseModel>& phases(kt_.phases());
 
     scalar maxAlpha = 1.0;
 

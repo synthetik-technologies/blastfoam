@@ -748,8 +748,7 @@ Foam::phaseSystem::phaseSystem
 
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
 
-    kineticTheoryPtr_(nullptr),
-    polydisperseKineticTheory_(false),
+    master_(masterSystemList::New(mesh)),
 
     dragODE_(nullptr)
 {
@@ -939,33 +938,8 @@ Foam::phaseSystem::phaseSystem
     }
     encode();
 
-    // Check if a granular phase is used and store at pointer if it is
-    if
-    (
-        mesh_.foundObject<kineticTheorySystem>
-        (
-            kineticTheorySystem::typeName
-        )
-    )
-    {
-        kineticTheoryPtr_.set
-        (
-            &mesh_.lookupObjectRef<kineticTheorySystem>
-            (
-                kineticTheorySystem::typeName
-            )
-        );
-
-        // Initialize fields after all granular phases are initialized
-        kineticTheoryPtr_->correct();
-
-        //- If only one granular phase is used, the multiphase limiting is not
-        //  needed so it is skipped
-        if (kineticTheoryPtr_->polydisperse())
-        {
-            polydisperseKineticTheory_ = true;
-        }
-    }
+    // Initialize master systems
+    master_.initialize();
 
     hasMassTransfer_.setSize
     (
@@ -1073,10 +1047,7 @@ void Foam::phaseSystem::decode()
         }
     }
 
-    if (kineticTheoryPtr_.valid())
-    {
-        kineticTheoryPtr_->correct();
-    }
+    master_.update();
 
     calcMixtureVariables();
 
@@ -1198,6 +1169,8 @@ void Foam::phaseSystem::solve()
         // Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].solve();
     }
+
+    master_.solve();
 }
 
 
@@ -1217,6 +1190,8 @@ void Foam::phaseSystem::postUpdate()
     relaxVelocity(deltaT);
     relaxTemperature(deltaT);
 
+    master_.postUpdate();
+
     decode();
 
     relaxPressure(deltaT);
@@ -1230,6 +1205,7 @@ void Foam::phaseSystem::clear()
     {
         phaseModels_[phasei].flux().clear();
     }
+    master_.clear();
 }
 
 
@@ -1274,19 +1250,19 @@ void Foam::phaseSystem::printInfo() const
         }
         Info<< endl << decrIndent;
     }
-    if (kineticTheoryPtr_.valid())
-    {
-        if (kineticTheoryPtr_->polydisperse())
-        {
-            const volScalarField& alpha(kineticTheoryPtr_->alphap());
-            Info<< nl
-                << indent << alpha.name() << " fraction, max, min = "
-                << alpha.weightedAverage(mesh_.V()).value()
-                << ' ' << max(alpha).value()
-                << ' ' << min(alpha).value()
-                << endl;
-        }
-    }
+    // if (kineticTheoryPtr_.valid())
+    // {
+    //     if (kineticTheoryPtr_->polydisperse())
+    //     {
+    //         const volScalarField& alpha(kineticTheoryPtr_->alpha());
+    //         Info<< nl
+    //             << indent << alpha.name() << " fraction, max, min = "
+    //             << alpha.weightedAverage(mesh_.V()).value()
+    //             << ' ' << max(alpha).value()
+    //             << ' ' << min(alpha).value()
+    //             << endl;
+    //     }
+    // }
     Info<< decrIndent;
 
 }

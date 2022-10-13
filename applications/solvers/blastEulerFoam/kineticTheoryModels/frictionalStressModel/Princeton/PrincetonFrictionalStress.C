@@ -54,27 +54,27 @@ namespace frictionalStressModels
 Foam::kineticTheoryModels::frictionalStressModels::Princeton::
 Princeton
 (
-    const dictionary& dict
+    const dictionary& dict,
+    const kineticTheorySystem& kt
 )
 :
-    frictionalStressModel(dict),
-    coeffDict_(dict.optionalSubDict(typeName + "Coeffs")),
-    Fr_("Fr", dimensionSet(1, -1, -2, 0, 0), coeffDict_),
-    eta_("eta", dimless, coeffDict_),
-    p_("p", dimless, coeffDict_),
-    phi_("phi", dimless, coeffDict_),
-    alphaDeltaMin_("alphaDeltaMin", dimless, coeffDict_),
+    frictionalStressModel(dict, kt),
+    Fr_("Fr", dimensionSet(1, -1, -2, 0, 0), coeffDict()),
+    eta_("eta", dimless, coeffDict()),
+    p_("p", dimless, coeffDict()),
+    phi_("phi", dimless, coeffDict()),
+    alphaDeltaMin_("alphaDeltaMin", dimless, coeffDict()),
     alphaMinFriction_
     (
         "alphaMinFriction",
         dimless,
-        coeffDict_
+        coeffDict()
     ),
     alphaMinFrictionByAlphap_
     (
         "alphaMinFrictionByAlphap",
         dimless,
-        coeffDict_
+        coeffDict()
     )
 {
     phi_ *= constant::mathematical::pi/180.0;
@@ -152,19 +152,11 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
 
     tmp<volScalarField> tnu
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                "Schaeffer:nu",
-             phase.mesh().time().timeName(),
-             phase.mesh(),
-             IOobject::NO_READ,
-             IOobject::NO_WRITE,
-             false
-            ),
-         phase.mesh(),
-         dimensionedScalar("nu", dimensionSet(0, 2, -1, 0, 0), 0.0)
+            word(typeName + ":nu"),
+            phase.mesh(),
+            dimensionedScalar("nu", dimensionSet(0, 2, -1, 0, 0), 0.0)
         )
     );
     volScalarField& nuf = tnu.ref();
@@ -256,17 +248,15 @@ alphaMinFriction
 
 bool Foam::kineticTheoryModels::frictionalStressModels::Princeton::read()
 {
-    coeffDict_ <<= dict_.optionalSubDict(typeName + "Coeffs");
+    Fr_.read(coeffDict());
+    eta_.read(coeffDict());
+    p_.read(coeffDict());
 
-    Fr_.read(coeffDict_);
-    eta_.read(coeffDict_);
-    p_.read(coeffDict_);
-
-    phi_.read(coeffDict_);
+    phi_.read(coeffDict());
     phi_ *= constant::mathematical::pi/180.0;
 
-    alphaDeltaMin_.read(coeffDict_);
-    alphaMinFriction_.read(coeffDict_);
+    alphaDeltaMin_.read(coeffDict());
+    alphaMinFriction_.read(coeffDict());
 
     return true;
 }

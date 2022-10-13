@@ -122,7 +122,7 @@ Foam::kineticTheoryModels::viscosityModels::Princeton::nu
         if
         (
             pair.contains(phase)
-         && !kt_.found(pair.otherPhase(phase).name())
+         && !kt_.contains(pair.otherPhase(phase))
         )
         {
             if

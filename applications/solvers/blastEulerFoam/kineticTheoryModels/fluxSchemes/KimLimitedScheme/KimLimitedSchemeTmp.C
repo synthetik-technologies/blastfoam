@@ -50,12 +50,12 @@ void Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::calcLimiter
     const GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh>&
         gradc = tgradc();
 
-    volScalarField alphap(kineticTheory_.alphap());
+    volScalarField alphap(kineticTheory_.alpha());
     volScalarField alphaMinFriction(kineticTheory_.alphaMinFriction());
     volScalarField alphaMax(kineticTheory_.alphaMax());
     (
-        (kineticTheory_.alphap() - kineticTheory_.alphaMinFriction())
-       /(kineticTheory_.alphaMax() - kineticTheory_.alphaMinFriction())
+        (alphap - alphaMinFriction)
+       /(alphaMax - alphaMinFriction)
     );
 
     const surfaceScalarField& CDweights = mesh.surfaceInterpolation::weights();

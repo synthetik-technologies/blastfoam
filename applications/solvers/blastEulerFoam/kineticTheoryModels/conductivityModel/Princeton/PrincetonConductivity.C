@@ -134,7 +134,7 @@ Foam::kineticTheoryModels::conductivityModels::Princeton::kappa
         if
         (
             pair.contains(phase)
-         && !kt_.found(pair.otherPhase(phase).name())
+         && !kt_.contains(pair.otherPhase(phase))
         )
         {
             if

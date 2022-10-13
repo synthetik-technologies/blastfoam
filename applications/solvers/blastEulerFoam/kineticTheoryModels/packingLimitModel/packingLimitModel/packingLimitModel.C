@@ -67,7 +67,7 @@ Foam::kineticTheoryModels::packingLimitModel::~packingLimitModel()
 Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::packingLimitModel::alphaMax() const
 {
-    const UPtrList<const phaseModel>& phases(kt_.packingPhases());
+    const UPtrList<phaseModel>& phases(kt_.phases());
     tmp<volScalarField> tmpAlphaMax
     (
         new volScalarField

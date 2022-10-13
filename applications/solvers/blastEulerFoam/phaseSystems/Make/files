@@ -1,4 +1,6 @@
 phaseSystem/phaseSystem.C
+masterSystem/masterSystem.C
+masterSystem/masterSystemList.C
 
 phaseModels/phaseModel.C
 phaseModels/phaseModelNew.C

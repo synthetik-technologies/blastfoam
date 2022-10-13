@@ -39,6 +39,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "phaseModel.H"
 #include "kineticTheorySystem.H"
+#include "timeIntegrationSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,6 +53,8 @@ namespace kineticTheoryModels
 \*---------------------------------------------------------------------------*/
 
 class frictionalStressModel
+:
+    public timeIntegrationSystem
 {
 protected:
 
@@ -59,6 +62,15 @@ protected:
 
         //- Reference to higher-level dictionary for re-read
         const dictionary& dict_;
+
+        //- Reference to the kinetic theory system
+        const kineticTheorySystem& kt_;
+
+        //- Return to coefficient dictionary
+        const dictionary& coeffDict() const
+        {
+            return dict_.subDict(this->type() + "Coeffs");
+        }
 
 
 public:
@@ -73,9 +85,10 @@ public:
         frictionalStressModel,
         dictionary,
         (
-            const dictionary& dict
+            const dictionary& dict,
+            const kineticTheorySystem& kt
         ),
-        (dict)
+        (dict, kt)
     );
 
 
@@ -84,7 +97,8 @@ public:
         //- Construct from components
         frictionalStressModel
         (
-            const dictionary& dict
+            const dictionary& dict,
+            const kineticTheorySystem& kt
         );
 
         //- Disallow default bitwise copy construction
@@ -95,7 +109,8 @@ public:
 
         static autoPtr<frictionalStressModel> New
         (
-            const dictionary& dict
+            const dictionary& dict,
+            const kineticTheorySystem& kt
         );
 
 
@@ -131,6 +146,18 @@ public:
             const volScalarField& alphap,
             const volScalarField& alphaMax
         ) const = 0;
+
+        virtual void update()
+        {}
+
+        virtual void postUpdate()
+        {}
+
+        virtual void solve()
+        {}
+
+        virtual void clear()
+        {}
 
         virtual bool read() = 0;
 

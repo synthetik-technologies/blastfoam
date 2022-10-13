@@ -62,8 +62,6 @@ class Princeton
 {
     // Private data
 
-        dictionary coeffDict_;
-
         //- Material constant for frictional normal stress
         dimensionedScalar Fr_;
 
@@ -95,7 +93,7 @@ public:
     // Constructors
 
         //- Construct from components
-        Princeton(const dictionary& dict);
+        Princeton(const dictionary& dict, const kineticTheorySystem& kt);
 
 
     //- Destructor

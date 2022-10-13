@@ -45,6 +45,7 @@ SourceFiles
 #ifndef kineticTheorySystem_H
 #define kineticTheorySystem_H
 
+#include "masterSystem.H"
 #include "phaseSystem.H"
 #include "phaseModel.H"
 #include "phasePair.H"
@@ -75,47 +76,24 @@ namespace kineticTheoryModels
 
 class kineticTheorySystem
 :
-    public regIOobject
+    public masterSystem
 {
     // Private data
-
-        //- Const refrence to multiphaseSystem
-        const phaseSystem& fluid_;
 
         //- Kinetic theory dictionary
         const dictionary& dict_;
 
-        //- Name of total partical phase
-        const word name_;
-
         //- Write the total granular phase
         Switch writeTotal_;
 
-        // Total granualr fields
-
-            //- Total granular phase-fraction
-            autoPtr<volScalarField> alphapPtr_;
-
-            //- Phase averaged velocity
-            autoPtr<volVectorField> UpPtr_;
-
-            //- Phase averaged granular temperature
-            autoPtr<volScalarField> ThetapPtr_;
-
-        //- List of phases that use kinetic theory
-        UPtrList<const phaseModel> ktPhases_;
-
-        //- List of phases that contribute to packing
-        UPtrList<const phaseModel> packingPhases_;
+        //- Phase averaged granular temperature
+        autoPtr<volScalarField> ThetapPtr_;
 
         //- PtrList of kinetic theory models
         UPtrList<kineticTheoryModel> kineticTheoryModels_;
 
         //- PtrList of granular temperatures
         UPtrList<volScalarField> Thetas_;
-
-        //- List of granular phase indexes
-        labelList phaseIndexes_;
 
         //- Table of granular pairs
         List<phasePairKey> pairs_;
@@ -159,9 +137,6 @@ class kineticTheorySystem
             //- Volume fraction that frictional stressed are turned on
             volScalarField alphaMinFriction_;
 
-            //- Residual phase fraction
-            dimensionedScalar residualAlpha_;
-
 
         // Stored tables of coefficients
 
@@ -196,9 +171,6 @@ public:
         //- Construct from components
         kineticTheorySystem(const phaseSystem&);
 
-    //- Lookup or construct kineticTheorySystem
-    static kineticTheorySystem& New(const phaseSystem&);
-
     //- Destructor
     ~kineticTheorySystem();
 
@@ -208,61 +180,20 @@ public:
 
     // Member Functions
 
-        //- Return total particle phase name
-        const word& name() const
-        {
-            return name_;
-        }
-
-        //- Return if granular system is polydiserse
-        bool polydisperse() const;
-
         //- Return true if viscosity is included
         bool includeViscosity() const
         {
             return includeViscosity_;
         }
 
-        //- Re-read model coefficients if they have changed
-        virtual bool read();
-
-        virtual bool readIfModified();
-
-        //- Return fluid
-        const phaseSystem& fluid() const
-        {
-            return fluid_;
-        }
-
-        //- Const refrence to list of granular indexes
-        const labelList& phaseIndexes() const;
-
         //- Add phase to list of kinetic theory phases.
-        void addPhase(kineticTheoryModel&);
-
-        //- Add phase to list of packing phases
-        void addPackingPhase(const phaseModel&);
-
-        //- Return true if phase is granular
-        bool found(const word&) const;
-
-        //- Return residual alpha
-        const dimensionedScalar& residualAlpha() const
-        {
-            return residualAlpha_;
-        }
+        virtual void addPhase(phaseModel&);
 
         //- Return the minimum max alpha
         scalar minAlphaMax() const
         {
             return minAlphaMax_;
         }
-
-        //- Return total granular phase volume fraction
-        const volScalarField& alphap() const;
-
-        //- Return phase averaged velocity
-        const volVectorField& Up() const;
 
         //- Return maximum volume fraction
         const volScalarField& alphaMax() const
@@ -282,12 +213,6 @@ public:
 
         //- coefficients of friction between granular phases
         scalar Cf(const phasePairKey& pair) const;
-
-        //- Return the list of packing phases
-        const UPtrList<const phaseModel>& packingPhases() const
-        {
-            return packingPhases_;
-        }
 
         //- Return the list of granular temperatures
         const UPtrList<volScalarField>& Thetas() const
@@ -355,16 +280,20 @@ public:
         //- Return the frictional-viscosity'
         const volScalarField& nuFrictional() const;
 
-        //- Solve the kinetic theory equations and correct the viscosity
-        void correct();
+        //- Initialize the model after everything is constructed
+        virtual void initialize();
 
-        //- Correct volume fraction total
-        void correctAlphap();
+        //- Update
+        virtual void update();
 
-        virtual bool writeData(Ostream&) const
-        {
-            return true;
-        }
+        //- Solve sub-step stepi
+        virtual void solve();
+
+        //- Post update
+        virtual void postUpdate();
+
+        //- Remove stored fields
+        virtual void clear();
 
 
     // Member Operators

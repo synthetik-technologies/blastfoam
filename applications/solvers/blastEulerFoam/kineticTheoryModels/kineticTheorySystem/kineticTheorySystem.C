@@ -45,27 +45,6 @@ namespace Foam
     defineTypeNameAndDebug(kineticTheorySystem, 0);
 }
 
-
-Foam::kineticTheorySystem& Foam::kineticTheorySystem::New
-(
-    const phaseSystem& fluid
-)
-{
-    const fvMesh& mesh = fluid.mesh();
-    if (!mesh.foundObject<kineticTheorySystem>(kineticTheorySystem::typeName))
-    {
-        kineticTheorySystem* ktPtr
-        (
-            new kineticTheorySystem(fluid)
-        );
-
-        // Transfer ownership of this object to the objectRegistry
-        ktPtr->store(ktPtr);
-    }
-
-    return mesh.lookupObjectRef<kineticTheorySystem>(kineticTheorySystem::typeName);
-}
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::kineticTheorySystem::kineticTheorySystem
@@ -73,31 +52,18 @@ Foam::kineticTheorySystem::kineticTheorySystem
     const phaseSystem& fluid
 )
 :
-    regIOobject
+    masterSystem
     (
-        IOobject
-        (
-            "kineticTheorySystem",
-            fluid.mesh().time().constant(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            true
-        )
-    ),
-    fluid_(fluid),
-    dict_(fluid.subDict("kineticTheory")),
-    name_
-    (
-        dict_.lookupOrDefault<word>
+        typeName,
+        fluid.subDict("kineticTheory").lookupOrDefault<word>
         (
             "name",
             "kineticTheoryTotal"
-        )
+        ),
+        fluid
     ),
+    dict_(fluid.subDict("kineticTheory")),
     writeTotal_(dict_.lookupOrDefault("writeTotal", false)),
-    alphapPtr_(nullptr),
-    UpPtr_(nullptr),
     ThetapPtr_(nullptr),
     kineticTheoryModels_(0),
     Thetas_(0),
@@ -135,7 +101,7 @@ Foam::kineticTheorySystem::kineticTheorySystem
     ),
     frictionalStressModel_
     (
-        kineticTheoryModels::frictionalStressModel::New(dict_)
+        kineticTheoryModels::frictionalStressModel::New(dict_, *this)
     ),
     eTable_(dict_.lookupOrDefault("e", phasePair::scalarTable())),
     CfTable_(dict_.lookupOrDefault("Cf", phasePair::scalarTable())),
@@ -143,7 +109,7 @@ Foam::kineticTheorySystem::kineticTheorySystem
     (
         IOobject
         (
-            IOobject::groupName("alphaMax", name_),
+            IOobject::groupName("alphaMax", group_),
             fluid.mesh().time().timeName(),
             fluid.mesh(),
             IOobject::NO_READ,
@@ -158,7 +124,7 @@ Foam::kineticTheorySystem::kineticTheorySystem
     (
         IOobject
         (
-            IOobject::groupName("alphaMinFriction_", name_),
+            IOobject::groupName("alphaMinFriction_", group_),
             fluid.mesh().time().timeName(),
             fluid.mesh(),
             IOobject::NO_READ,
@@ -168,12 +134,11 @@ Foam::kineticTheorySystem::kineticTheorySystem
         dimensionedScalar("one", dimless, 0.0),
         zeroGradientFvPatchScalarField::typeName
     ),
-    residualAlpha_("residualAlpha", dimless, dict_),
     Pfr_
     (
         IOobject
         (
-            IOobject::groupName("Pfr", name_),
+            IOobject::groupName("Pfr", group_),
             fluid.mesh().time().timeName(),
             fluid.mesh(),
             IOobject::NO_READ,
@@ -187,7 +152,7 @@ Foam::kineticTheorySystem::kineticTheorySystem
     (
         IOobject
         (
-            IOobject::groupName("PfrPrime", name_),
+            IOobject::groupName("PfrPrime", group_),
             fluid.mesh().time().timeName(),
             fluid.mesh(),
             IOobject::NO_READ,
@@ -201,7 +166,7 @@ Foam::kineticTheorySystem::kineticTheorySystem
     (
         IOobject
         (
-            IOobject::groupName("nuFric", name_),
+            IOobject::groupName("nuFric", group_),
             fluid.mesh().time().timeName(),
             fluid.mesh(),
             IOobject::NO_READ,
@@ -234,63 +199,6 @@ Foam::kineticTheorySystem::~kineticTheorySystem()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::kineticTheorySystem::read()
-{
-    residualAlpha_.readIfPresent(dict_);
-
-    radialModel_->read();
-    viscosityModel_->read();
-    frictionalStressModel_->read();
-    granularPressureModel_->read();
-    conductivityModel_->read();
-
-    writeTotal_ = dict_.lookupOrDefault("writeTotal", false);
-
-    if (alphapPtr_.valid())
-    {
-        if (writeTotal_)
-        {
-            alphapPtr_->writeOpt() = AUTO_WRITE;
-            UpPtr_->writeOpt() = AUTO_WRITE;
-            ThetapPtr_->writeOpt() = AUTO_WRITE;
-            alphaMax_.writeOpt() = AUTO_WRITE;
-        }
-        else
-        {
-            alphapPtr_->writeOpt() = NO_WRITE;
-            UpPtr_->writeOpt() = NO_WRITE;
-            ThetapPtr_->writeOpt() = NO_WRITE;
-            alphaMax_.writeOpt() = NO_WRITE;
-        }
-    }
-
-    return true;
-}
-
-bool Foam::kineticTheorySystem::readIfModified()
-{
-    return true;
-}
-
-
-bool Foam::kineticTheorySystem::polydisperse() const
-{
-    return (phaseIndexes_.size() > 1);
-}
-
-
-const Foam::volScalarField& Foam::kineticTheorySystem::alphap() const
-{
-    return alphapPtr_.valid() ? alphapPtr_() : packingPhases_[0];
-}
-
-
-const Foam::volVectorField& Foam::kineticTheorySystem::Up() const
-{
-    return UpPtr_.valid() ? UpPtr_() : packingPhases_[0].U();
-}
-
 
 Foam::scalar Foam::kineticTheorySystem::es(const phasePairKey& pair) const
 {
@@ -381,9 +289,9 @@ Foam::kineticTheorySystem::Ps(const phaseModel& phase) const
     );
     volScalarField& ps = tmpPs.ref();
 
-    forAll(ktPhases_, phasej)
+    forAll(phases_, phasej)
     {
-        const phaseModel& phase2 = ktPhases_[phasej];
+        const phaseModel& phase2 = phases_[phasej];
         phasePairKey key(phase.name(), phase2.name(), false);
 
         ps += granularPressureModel_->granularPressure
@@ -436,7 +344,7 @@ Foam::kineticTheorySystem::dPsdAlpha(const phaseModel& phase) const
 
     forAll(phaseIndexes_, phasej)
     {
-        const phaseModel& phase2 = ktPhases_[phasej];
+        const phaseModel& phase2 = phases_[phasej];
         phasePairKey key(phase.name(), phase2.name(), false);
 
         dPsdAlpha += granularPressureModel_->granularPressureByAlpha
@@ -467,9 +375,9 @@ Foam::kineticTheorySystem::dPsdTheta(const phaseModel& phase) const
     );
     volScalarField& dPsdTheta = tmpdPsdTheta.ref();
 
-    forAll(ktPhases_, phasej)
+    forAll(phases_, phasej)
     {
-        const phaseModel& phase2 = ktPhases_[phasej];
+        const phaseModel& phase2 = phases_[phasej];
         phasePairKey key(phase.name(), phase2.name(), false);
 
         dPsdTheta += granularPressureModel_->granularPressureByTheta
@@ -534,9 +442,9 @@ Foam::kineticTheorySystem::lambda
     scalar pi = Foam::constant::mathematical::pi;
     volScalarField m1(phase.rho()*pi*pow3(phase.d())/6.0);
     const volScalarField& Theta1 = phase.Theta();
-    forAll(ktPhases_, phasej)
+    forAll(phases_, phasej)
     {
-        const phaseModel& phase2 = ktPhases_[phasej];
+        const phaseModel& phase2 = phases_[phasej];
         volScalarField m2(phase2.rho()*pi*pow3(phase2.d())/6.0);
         const volScalarField& Theta2 = phase2.Theta();
         volScalarField Psij(Ps(phase, phase2));
@@ -579,17 +487,20 @@ const Foam::volScalarField& Foam::kineticTheorySystem::nuFrictional() const
 }
 
 
-const Foam::labelList& Foam::kineticTheorySystem::phaseIndexes() const
+void Foam::kineticTheorySystem::addPhase
+(
+    phaseModel& phase
+)
 {
-    return phaseIndexes_;
-}
+    const label phasei = phases_.size();
+    const word& phaseName = phase.name();
+    masterSystem::addPhase(phase);
+    kineticTheoryModels_.resize(phasei + 1);
+    Thetas_.resize(phasei + 1);
 
-
-void Foam::kineticTheorySystem::addPackingPhase(const phaseModel& phase)
-{
-    label phasei = packingPhases_.size();
-    packingPhases_.resize(phasei + 1);
-    packingPhases_.set(phasei, &phase);
+    kineticTheoryModel& kt = dynamicCast<kineticTheoryModel>(phase);
+    kineticTheoryModels_.set(phasei, &kt);
+    Thetas_.set(phasei, &kt.Theta());
 
     minAlphaMax_ = min(minAlphaMax_, phase.alphaMax());
 
@@ -605,82 +516,20 @@ void Foam::kineticTheorySystem::addPackingPhase(const phaseModel& phase)
         );
     }
 
-    if (packingPhases_.size() > 1 && !alphapPtr_.valid())
-    {
-        IOobject::writeOption writeOpt =
-            writeTotal_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE;
-
-        alphapPtr_.set
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    IOobject::groupName("alpha", name_),
-                    fluid_.mesh().time().timeName(),
-                    fluid_.mesh(),
-                    IOobject::NO_READ,
-                    writeOpt
-                ),
-                fluid_.mesh(),
-                dimensionedScalar("0", dimless, 0.0)
-            )
-        );
-        UpPtr_.set
-        (
-            new volVectorField
-            (
-                IOobject
-                (
-                    IOobject::groupName("U", name_),
-                    fluid_.mesh().time().timeName(),
-                    fluid_.mesh(),
-                    IOobject::NO_READ,
-                    writeOpt
-                ),
-                fluid_.mesh(),
-                dimensionedVector("0", dimVelocity, Zero)
-            )
-        );
-        alphaMax_.writeOpt() = writeOpt;
-    }
-}
-
-
-void Foam::kineticTheorySystem::addPhase
-(
-    kineticTheoryModel& kt
-)
-{
-    const phaseModel& phase = kt.phase();
-    addPackingPhase(phase);
-    word phaseName(phase.name());
-    label phasei = kineticTheoryModels_.size();
-    kineticTheoryModels_.resize(phasei + 1);
-    ktPhases_.resize(phasei + 1);
-    Thetas_.resize(phasei + 1);
-
-    ktPhases_.set(phasei, &phase);
-    kineticTheoryModels_.set(phasei, &kt);
-    Thetas_.set(phasei, &kt.Theta());
-    phaseIndexes_.append(phase.index());
-
     // Print granular quantities only if more than 1 phase is present
-    if (ktPhases_.size() > 1 && !ThetapPtr_.valid())
+    if (phases_.size() > 1 && !ThetapPtr_.valid())
     {
-        IOobject::writeOption writeOpt =
-            writeTotal_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE;
         ThetapPtr_.set
         (
             new volScalarField
             (
                 IOobject
                 (
-                    IOobject::groupName("Theta", name_),
+                    IOobject::groupName("Theta", group_),
                     fluid_.mesh().time().timeName(),
                     fluid_.mesh(),
                     IOobject::NO_READ,
-                    writeOpt
+                    this->writeOpt()
                 ),
                 fluid_.mesh(),
                 dimensionedScalar("0", sqr(dimVelocity), 0.0)
@@ -688,9 +537,9 @@ void Foam::kineticTheorySystem::addPhase
         );
     }
 
-    forAll(ktPhases_, phasej)
+    forAll(phases_, phasej)
     {
-        word otherPhaseName = ktPhases_[phasej].name();
+        word otherPhaseName = phases_[phasej].name();
         phasePairKey key
         (
             phaseName,
@@ -709,69 +558,35 @@ void Foam::kineticTheorySystem::addPhase
     }
 }
 
-
-bool Foam::kineticTheorySystem::found(const word& phaseName) const
+void Foam::kineticTheorySystem::initialize()
 {
-    forAll(ktPhases_, phasei)
-    {
-        if (ktPhases_[phasei].name() == phaseName)
-        {
-            return true;
-        }
-    }
-    return false;
+    update();
 }
 
-
-void Foam::kineticTheorySystem::correct()
+void Foam::kineticTheorySystem::update()
 {
-    if (alphapPtr_.valid())
+    masterSystem::update();
+    if (ThetapPtr_.valid())
     {
-        volScalarField& alphap = alphapPtr_();
-        volVectorField& Up = UpPtr_();
-
-        alphap = Zero;
-        Up = Zero;
-
-        forAll(packingPhases_, phasei)
+        volScalarField& Thetap = ThetapPtr_();
+        Thetap = phases_[0]*Thetas_[0];
+        for (label phasei = 1; phasei < phases_.size(); phasei++)
         {
-            const phaseModel& phase = packingPhases_[phasei];
-            const volScalarField& alpha = phase;
-
-            alphap += alpha;
-            Up += alpha*phase.U();
+            Thetap +=  phases_[phasei]*Thetas_[phasei];
         }
-        Up /= max(alphap, residualAlpha_);
+        Thetap /= max(alpha(), residualAlpha_);
     }
+
     alphaMax_ = packingLimitModel_->alphaMax();
     alphaMax_.correctBoundaryConditions();
 
-    if (!ktPhases_.size())
-    {
-        return;
-    }
 
-    if (ThetapPtr_.valid())
-    {
-        volScalarField sumAlpha(ktPhases_[0]);
-        volScalarField& Thetap = ThetapPtr_();
-        Thetap = Thetas_[0];
-
-        for (label phasei = 0; phasei < ktPhases_.size(); phasei++)
-        {
-            const phaseModel& phase = ktPhases_[phasei];
-            const volScalarField& alpha = phase;
-            Thetap +=  alpha*Thetas_[phasei];
-            sumAlpha += alpha;
-        }
-        Thetap /= max(sumAlpha, residualAlpha_);
-    }
-
-    const volScalarField& alpha = this->alphap();
+    const volScalarField& alpha = this->alpha();
 
     alphaMinFriction_ =
         frictionalStressModel_->alphaMinFriction(alpha, alphaMax_);
 
+    frictionalStressModel_->update();
     Pfr_ = frictionalStressModel_->frictionalPressure
     (
         alpha,
@@ -805,18 +620,21 @@ void Foam::kineticTheorySystem::correct()
 }
 
 
-void Foam::kineticTheorySystem::correctAlphap()
+void Foam::kineticTheorySystem::solve()
 {
-    if (!alphapPtr_.valid())
-    {
-        return;
-    }
-
-    alphapPtr_() = 0.0;
-    forAll(packingPhases_, phasei)
-    {
-        alphapPtr_() += packingPhases_[phasei];
-    }
-    alphapPtr_().correctBoundaryConditions();
+    frictionalStressModel_->solve();
 }
+
+
+void Foam::kineticTheorySystem::postUpdate()
+{
+    frictionalStressModel_->postUpdate();
+}
+
+
+void Foam::kineticTheorySystem::clear()
+{
+    frictionalStressModel_->clear();
+}
+
 // ************************************************************************* //

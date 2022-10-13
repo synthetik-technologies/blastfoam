@@ -83,9 +83,9 @@ Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::alphaMax
             << exit(FatalError);
     }
 
-     scalar alphap = kt_.alphap()[celli];
+     scalar alphap = kt_.alpha()[celli];
 
-    const UPtrList<const phaseModel>& phases(kt_.packingPhases());
+    const UPtrList<phaseModel>& phases(kt_.phases());
 
     if (alphap < phases[0].residualAlpha().value())
     {
