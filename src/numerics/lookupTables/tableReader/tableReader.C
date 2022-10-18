@@ -37,7 +37,7 @@ void Foam::removeComments(string& line)
 }
 
 
-Foam::List<Foam::List<Foam::string>> Foam::read2DTable
+Foam::List2D<Foam::string> Foam::read2DTable
 (
     const fileName& file,
     const string& delim,
@@ -130,14 +130,14 @@ Foam::List<Foam::List<Foam::string>> Foam::read2DTable
 
     if (!f)
     {
-        return move(tentries);
+        return move(List2D<string>(tentries));
     }
-    List<List<string>> entries(nx, List<string>(ny));
+    List2D<string> entries(nx, ny);
     forAll(entries, i)
     {
         forAll(entries[i], j)
         {
-            entries[i][j] = tentries[j][i];
+            entries(i, j) = tentries[j][i];
         }
     }
     return entries;

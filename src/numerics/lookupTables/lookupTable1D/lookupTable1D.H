@@ -79,10 +79,10 @@ protected:
     autoPtr<Modifier<scalar>> modX_;
 
     //- Data
-    Field<Type> data_;
+    List<Type> data_;
 
     //- List of x values in the given space
-    Field<scalar> xModValues_;
+    List<scalar> xModValues_;
 
     //- Lookup indexes
     autoPtr<indexer> indexing_;
@@ -91,10 +91,10 @@ protected:
     autoPtr<interpolationWeight1D> interpolator_;
 
     //- Real data
-    Field<Type>* realDataPtr_;
+    List<Type>* realDataPtr_;
 
     //- List of x values in real space
-    Field<scalar>* xValuesPtr_;
+    List<scalar>* xValuesPtr_;
 
     //- Current index (used to access location in list after lookup)
     mutable label index_;
@@ -193,25 +193,25 @@ protected:
     // Protected member functions
 
         // Return the real data
-        inline const Field<scalar>& fValues() const
+        inline const List<scalar>& fValues() const
         {
             return *realDataPtr_;
         }
 
         // Access the real data values
-        inline Field<scalar>& fValues()
+        inline List<scalar>& fValues()
         {
             return *realDataPtr_;
         }
 
         // Return the real x values
-        inline const Field<scalar>& xValues() const
+        inline const List<scalar>& xValues() const
         {
             return *xValuesPtr_;
         }
 
         // Access the real x values
-        inline Field<scalar>& xValues()
+        inline List<scalar>& xValues()
         {
             return *xValuesPtr_;
         }
@@ -321,25 +321,25 @@ public:
             }
 
             //- Return to real x values
-            const Field<scalar>& x() const
+            const List<scalar>& x() const
             {
                 return xValues();
             }
 
             //- Return to modified x values
-            const Field<scalar>& xMod() const
+            const List<scalar>& xMod() const
             {
                 return xModValues_;
             }
 
             //- Return to modified data values
-            const Field<Type>& fMod() const
+            const List<Type>& fMod() const
             {
                 return data_;
             }
 
             //- Return the real data
-            const Field<Type>& f() const
+            const List<Type>& f() const
             {
                 return fValues();
             }

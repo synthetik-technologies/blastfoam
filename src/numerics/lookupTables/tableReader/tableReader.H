@@ -39,7 +39,8 @@ SourceFiles
 
 #include "fileOperation.H"
 #include "stringOps.H"
-#include "Field.H"
+#include "List2D.H"
+#include "List3D.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -57,8 +58,8 @@ bool readComponent
     const dictionary& parentDict,
     const word& name,
     word& modType,
-    Field<Type>& values,
-    const List<List<string>>& table = List<List<string>>()
+    List<Type>& values,
+    const List2D<string>& table = List2D<string>()
 );
 
 //- Read a 1D table from a file
@@ -67,24 +68,24 @@ void read1DTable
 (
     const fileName& file,
     const string& delim,
-    Field<Type>& values,
+    List<Type>& values,
     const bool determineSize = true
 );
 
 
 //- Read a 2D table
-template<class Type, template<class> class ListType>
+template<class Type>
 void read2DTable
 (
     const fileName& file,
     const string& delim,
-    List<ListType<Type>>& data,
+    List2D<Type>& data,
     const bool flip,
     const bool determineSize = false
 );
 
 
-List<List<string>> read2DTable
+List2D<string> read2DTable
 (
     const fileName& file,
     const string& delim,
@@ -96,7 +97,7 @@ List<List<string>> read2DTable
 template<class Type>
 List<Type> readColumn
 (
-    const List<List<string>>& entries,
+    const List2D<string>& entries,
     const label col
 );
 
@@ -104,18 +105,18 @@ List<Type> readColumn
 template<class Type>
 List<Type> readRow
 (
-    const List<List<string>>& entries,
+    const List2D<string>& entries,
     const label col
 );
 
 //- Read a 3D table
-template<class Type, template<class> class ListType1, template<class> class ListType2>
+template<class Type>
 void read3DTable
 (
     const fileName& file,
     const string& delim,
     const string& rowDelim,
-    List<ListType1<ListType2<Type>>>& data,
+    List3D<Type>& data,
     const bool flip,
     const bool determineSize = false
 );

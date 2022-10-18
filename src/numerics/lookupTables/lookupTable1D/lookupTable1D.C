@@ -25,6 +25,7 @@ License
 
 #include "lookupTable1D.H"
 #include "tableReader.H"
+#include "List2D.H"
 #include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -220,7 +221,7 @@ void Foam::lookupTable1D<Type>::setX
     }
     else
     {
-        xValuesPtr_ = new scalarField(x);
+        xValuesPtr_ = new scalarList(x);
         xModValues_ = x;
 
         if (isReal)
@@ -278,7 +279,7 @@ void Foam::lookupTable1D<Type>::setData
         return;
     }
 
-    realDataPtr_ = new Field<Type>(data);
+    realDataPtr_ = new List<Type>(data);
     data_ = data;
     if (isReal)
     {
@@ -416,7 +417,7 @@ void Foam::lookupTable1D<Type>::read
     xName_ = xName;
     fName_ = name;
 
-    List<List<string>> table;
+    List2D<string> table;
     if (dict.found("file"))
     {
         table = read2DTable
@@ -426,9 +427,10 @@ void Foam::lookupTable1D<Type>::read
             dict.lookupOrDefault<label>("startRow", 0),
             dict.lookupOrDefault<Switch>("flipTable", false)
         );
+        Info<<table<<endl;
     }
 
-    scalarField x;
+    scalarList x;
     word modXType;
     bool isReal = readComponent<scalar>
     (
@@ -448,7 +450,7 @@ void Foam::lookupTable1D<Type>::read
         );
     interpolator_->validate();
 
-    Field<Type> data;
+    List<Type> data;
     word modType;
     isReal = readComponent<Type>
     (

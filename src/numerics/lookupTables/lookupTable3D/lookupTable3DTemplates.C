@@ -32,12 +32,11 @@ template<class Type>
 template
 <
     class fType,
-    template<class> class ListType1,
-    template<class> class ListType2
+    template<class> class ListListList
 >
 fType Foam::lookupTable3D<Type>::interpolate
 (
-    const List<ListType1<ListType2<fType>>>& fs
+    const ListListList<fType>& fs
 ) const
 {
     fType modf =
@@ -57,15 +56,14 @@ template<class Type>
 template
 <
     class fType,
-    template<class> class ListType1,
-    template<class> class ListType2
+    template<class> class ListListList
 >
 fType Foam::lookupTable3D<Type>::interpolate
 (
     const scalar x,
     const scalar y,
     const scalar z,
-    const List<ListType1<ListType2<fType>>>& fs
+    const ListListList<fType>& fs
 ) const
 {
     update(x, y, z);

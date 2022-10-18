@@ -38,10 +38,9 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
-#include "Field.H"
+#include "List3D.H"
 #include "IOstreams.H"
 #include "Switch.H"
-#include "Field.H"
 #include "fileName.H"
 #include "labelVector.H"
 
@@ -86,16 +85,16 @@ protected:
     autoPtr<Modifier<scalar>> modZ_;
 
     //- Data
-    Field<Field<Field<Type>>> data_;
+    List3D<Type> data_;
 
     //- Modified x field values
-    Field<scalar> xModValues_;
+    List<scalar> xModValues_;
 
     //- Modified y field values
-    Field<scalar> yModValues_;
+    List<scalar> yModValues_;
 
     //- Modified z field values
-    Field<scalar> zModValues_;
+    List<scalar> zModValues_;
 
     //- Lookup indexes in the x direction
     autoPtr<indexer> xIndexing_;
@@ -116,23 +115,29 @@ protected:
     autoPtr<interpolationWeight1D> zInterpolator_;
 
     //- Stored real data
-    Field<Field<Field<Type>>>* realDataPtr_;
+    List3D<Type>* realDataPtr_;
 
     //- Stored real x values
-    Field<scalar>* xValuesPtr_;
+    List<scalar>* xValuesPtr_;
 
     //- Stored real y values
-    Field<scalar>* yValuesPtr_;
+    List<scalar>* yValuesPtr_;
 
     //- Stored real z values
-    Field<scalar>* zValuesPtr_;
+    List<scalar>* zValuesPtr_;
 
     //- Current indexes (used to access location in list after lookup)
     mutable labelVector ijk_;
-    mutable List<labelVector> indices_;
+    mutable DynamicList<label> is_;
+    mutable DynamicList<label> js_;
+    mutable DynamicList<label> ks_;
+    mutable DynamicList<labelVector> indices_;
 
     //- Current interpolation weights
-    mutable scalarList weights_;
+    mutable DynamicList<scalar> wxs_;
+    mutable DynamicList<scalar> wys_;
+    mutable DynamicList<scalar> wzs_;
+    mutable DynamicList<scalar> weights_;
 
 
     // Equation to evaulate the table
@@ -337,49 +342,49 @@ protected:
     // Protected member functions
 
         //- Return the real data
-        inline const Field<Field<Field<scalar>>>& fValues() const
+        inline const List3D<scalar>& fValues() const
         {
             return *realDataPtr_;
         }
 
         //- Access the real data values
-        inline Field<Field<Field<scalar>>>& fValues()
+        inline List3D<scalar>& fValues()
         {
             return *realDataPtr_;
         }
 
         //- Return the real x values
-        inline const Field<scalar>& xValues() const
+        inline const List<scalar>& xValues() const
         {
             return *xValuesPtr_;
         }
 
         //- Access the real x values
-        inline Field<scalar>& xValues()
+        inline List<scalar>& xValues()
         {
             return *xValuesPtr_;
         }
 
         //- Return the real y values
-        inline const Field<scalar>& yValues() const
+        inline const List<scalar>& yValues() const
         {
             return *yValuesPtr_;
         }
 
         //- Access the real y values
-        inline Field<scalar>& yValues()
+        inline List<scalar>& yValues()
         {
             return *yValuesPtr_;
         }
 
         //- Return the real z values
-        inline const Field<scalar>& zValues() const
+        inline const List<scalar>& zValues() const
         {
             return *zValuesPtr_;
         }
 
         //- Access the real z values
-        inline Field<scalar>& zValues()
+        inline List<scalar>& zValues()
         {
             return *zValuesPtr_;
         }
@@ -407,13 +412,13 @@ public:
         );
 
         //- Construct from data
-        template<template<class> class ListType1, template<class> class ListType2>
+        template<class ListListListType>
         lookupTable3D
         (
             const List<scalar>& x,
             const List<scalar>& y,
             const List<scalar>& z,
-            const List<ListType1<ListType2<Type>>>& data,
+            const ListListListType& data,
             const word& xMod,
             const word& yMod,
             const word& zMod,
@@ -537,49 +542,49 @@ public:
             }
 
             //- Return to real x values
-            const Field<scalar>& x() const
+            const List<scalar>& x() const
             {
                 return xValues();
             }
 
             //- Return to real y values
-            const Field<scalar>& y() const
+            const List<scalar>& y() const
             {
                 return yValues();
             }
 
             //- Return to real z values
-            const Field<scalar>& z() const
+            const List<scalar>& z() const
             {
                 return zValues();
             }
 
             //- Return to modified x values
-            const Field<scalar>& xMod() const
+            const List<scalar>& xMod() const
             {
                 return xModValues_;
             }
 
             //- Return to modified y values
-            const Field<scalar>& yMod() const
+            const List<scalar>& yMod() const
             {
                 return yModValues_;
             }
 
             //- Return to modified z values
-            const Field<scalar>& zMod() const
+            const List<scalar>& zMod() const
             {
                 return zModValues_;
             }
 
             //- Return to modified data values
-            const Field<Field<Field<Type>>>& fMod() const
+            const List3D<Type>& fMod() const
             {
                 return data_;
             }
 
             //- Return real data values
-            const Field<Field<Field<Type>>>& f() const
+            const List3D<Type>& f() const
             {
                 return fValues();
             }
@@ -659,42 +664,39 @@ public:
             ) const;
 
             //- Interpolate value using the current index and weight
-            template<class fType, template<class> class ListType1, template<class> class ListType2>
-            fType interpolate
-            (
-                const List<ListType1<ListType2<fType>>>&
-            ) const;
+            template<class fType, template<class> class ListListList>
+            fType interpolate(const ListListList<fType>&) const;
 
             //- Interpolate value using the current index and weight
-            template<class fType, template<class> class ListType1, template<class> class ListType2>
+            template<class fType, template<class> class ListListList>
             fType interpolate
             (
                 const scalar,
                 const scalar,
                 const scalar,
-                const List<ListType1<ListType2<fType>>>&
+                const ListListList<fType>&
             ) const;
 
 
         // Edit functions
 
             //- Set data, x, and y
-            template<template<class> class ListType1, template<class> class ListType2>
+            template<class ListListListType>
             void set
             (
                 const List<scalar>& x,
                 const List<scalar>& y,
                 const List<scalar>& z,
-                const List<ListType1<ListType2<Type>>>& data,
+                const ListListListType& data,
                 const bool isReal = true
             );
-            template<template<class> class ListType1, template<class> class ListType2>
+            template<class ListListListType>
             void set
             (
                 const List<scalar>& x,
                 const List<scalar>& y,
                 const List<scalar>& z,
-                const List<ListType1<ListType2<Type>>>& data,
+                const ListListListType& data,
                 const word& xMod,
                 const word& yMod,
                 const word& zMod,
@@ -745,16 +747,16 @@ public:
             );
 
             //- Set data
-            template<template<class> class ListType1, template<class> class ListType2>
+            template<class ListListListType>
             void setData
             (
-                const List<ListType1<ListType2<Type>>>& data,
+                const ListListListType& data,
                 const bool isReal = true
             );
-            template<template<class> class ListType1, template<class> class ListType2>
+            template<class ListListListType>
             void setData
             (
-                const List<ListType1<ListType2<Type>>>& data,
+                const ListListListType& data,
                 const word& mod,
                 const bool isReal = true
             );

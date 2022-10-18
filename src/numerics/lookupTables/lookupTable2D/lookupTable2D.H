@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
-#include "Field.H"
+#include "List2D.H"
 #include "IOstreams.H"
 #include "Switch.H"
 #include "Field.H"
@@ -85,13 +85,13 @@ protected:
     autoPtr<Modifier<scalar>> modY_;
 
     //- Data
-    Field<Field<Type>> data_;
+    List2D<Type> data_;
 
     //- Modified x field values
-    Field<scalar> xModValues_;
+    List<scalar> xModValues_;
 
     //- Modified y field values
-    Field<scalar> yModValues_;
+    List<scalar> yModValues_;
 
     //- Lookup indexes in the x direction
     autoPtr<indexer> xIndexing_;
@@ -106,13 +106,13 @@ protected:
     autoPtr<interpolationWeight1D> yInterpolator_;
 
     //- Stored real data
-    Field<Field<Type>>* realDataPtr_;
+    List2D<Type>* realDataPtr_;
 
     //- Stored real x values
-    Field<scalar>* xValuesPtr_;
+    List<scalar>* xValuesPtr_;
 
     //- Stored real y values
-    Field<scalar>* yValuesPtr_;
+    List<scalar>* yValuesPtr_;
 
     //- Current indexes (used to access location in list after lookup)
     mutable labelVector2D ij_;
@@ -290,37 +290,37 @@ protected:
     // Protected member functions
 
         //- Return the real data
-        inline const Field<Field<scalar>>& fValues() const
+        inline const List2D<scalar>& fValues() const
         {
             return *realDataPtr_;
         }
 
         //- Access the real data values
-        inline Field<Field<scalar>>& fValues()
+        inline List2D<scalar>& fValues()
         {
             return *realDataPtr_;
         }
 
         //- Return the real x values
-        inline const Field<scalar>& xValues() const
+        inline const List<scalar>& xValues() const
         {
             return *xValuesPtr_;
         }
 
         //- Access the real x values
-        inline Field<scalar>& xValues()
+        inline List<scalar>& xValues()
         {
             return *xValuesPtr_;
         }
 
         //- Return the real y values
-        inline const Field<scalar>& yValues() const
+        inline const List<scalar>& yValues() const
         {
             return *yValuesPtr_;
         }
 
         //- Access the real y values
-        inline Field<scalar>& yValues()
+        inline List<scalar>& yValues()
         {
             return *yValuesPtr_;
         }
@@ -347,12 +347,12 @@ public:
         );
 
         //- Construct from data
-        template<template<class> class ListType>
+        template<template<class> class ListListType>
         lookupTable2D
         (
             const List<scalar>& x,
             const List<scalar>& y,
-            const List<ListType<Type>>& data,
+            const ListListType<Type>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
@@ -449,37 +449,37 @@ public:
             }
 
             //- Return to real x values
-            const Field<scalar>& x() const
+            const List<scalar>& x() const
             {
                 return xValues();
             }
 
             //- Return to real y values
-            const Field<scalar>& y() const
+            const List<scalar>& y() const
             {
                 return yValues();
             }
 
             //- Return to modified x values
-            const Field<scalar>& xMod() const
+            const List<scalar>& xMod() const
             {
                 return xModValues_;
             }
 
             //- Return to modified y values
-            const Field<scalar>& yMod() const
+            const List<scalar>& yMod() const
             {
                 return yModValues_;
             }
 
             //- Return to modified data values
-            const Field<Field<Type>>& fMod() const
+            const List2D<Type>& fMod() const
             {
                 return data_;
             }
 
             //- Return real data values
-            const Field<Field<Type>>& f() const
+            const List2D<Type>& f() const
             {
                 return fValues();
             }
@@ -515,16 +515,16 @@ public:
             scalar reverseLookupY(const Type& fin, const scalar x) const;
 
             //- Interpolate value using the current index and weight
-            template<template<class> class ListType, class fType>
-            fType interpolate(const List<ListType<fType>>&) const;
+            template<template<class> class ListListType, class fType>
+            fType interpolate(const ListListType<fType>&) const;
 
             //- Interpolate value using the current index and weight
-            template<template<class> class ListType, class fType>
+            template<template<class> class ListListType, class fType>
             fType interpolate
             (
                 const scalar,
                 const scalar,
-                const List<ListType<fType>>&
+                const ListListType<fType>&
             ) const;
 
             //- Return first derivative w.r.t. x
@@ -543,24 +543,24 @@ public:
             Type d2FdY2(const scalar x, const scalar y) const;
 
             //- Return value from a given list from lower index and weight
-            Type getValue(const label ij, const scalar f, const List<Type>& xy) const;
+            Type getValue(const label ij, const scalar f, const UList<Type>& xy) const;
 
 
             //- Set data, x, and y
-            template<template<class> class ListType>
+            template<template<class> class ListListType>
             void set
             (
                 const List<scalar>& x,
                 const List<scalar>& y,
-                const List<ListType<Type>>& data,
+                const ListListType<Type>& data,
                 const bool isReal = true
             );
-            template<template<class> class ListType>
+            template<template<class> class ListListType>
             void set
             (
                 const List<scalar>& x,
                 const List<scalar>& y,
-                const List<ListType<Type>>& data,
+                const ListListType<Type>& data,
                 const word& xMod,
                 const word& yMod,
                 const word& mod,
@@ -596,16 +596,16 @@ public:
             );
 
             //- Set data
-            template<template<class> class ListType>
+            template<template<class> class ListListType>
             void setData
             (
-                const List<ListType<Type>>& data,
+                const ListListType<Type>& data,
                 const bool isReal = true
             );
-            template<template<class> class ListType>
+            template<template<class> class ListListType>
             void setData
             (
-                const List<ListType<Type>>& data,
+                const ListListType<Type>& data,
                 const word& mod,
                 const bool isReal = true
             );

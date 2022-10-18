@@ -1,4 +1,3 @@
-
 table1D
 {
     interpolationScheme linearClamp;

@@ -8,6 +8,9 @@
 #include "univariateRootSolver.H"
 #include "EquationsFwd.H"
 
+#include "List2D.H"
+#include "List3D.H"
+
 #include "argList.H"
 
 using namespace Foam;
@@ -94,6 +97,9 @@ scalar d2func3dydz(const scalar x, const scalar y, const scalar z)
 
 int main(int argc, char *argv[])
 {
+    IFstream is("tableDict");
+    dictionary dict(is);
+
     // Create some tables
     label nx = 20;
     label ny = 30;
@@ -184,16 +190,13 @@ int main(int argc, char *argv[])
         }
     }
 
-
-    IFstream is("tableDict");
-    dictionary dict(is);
-
     scalar xTest = 1.435;
     scalar yTest = 1.3346;
     scalar zTest = 2.5676;
 
     Info<<nl<<"1D table:" << endl;
     scalarLookupTable1D table1(dict.subDict("table1D"), "x", "f");
+    table1.update(xTest);
     scalar xFound = table1.reverseLookup(table1.lookup(xTest));
     Info<< "f: " << table1.lookup(xTest)
         << ", answer: " << func1(xTest) << endl

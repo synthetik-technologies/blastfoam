@@ -33,13 +33,13 @@ bool Foam::readComponent
     const dictionary& parentDict,
     const word& name,
     word& modType,
-    Field<Type>& values,
-    const List<List<string>>& Table
+    List<Type>& values,
+    const List2D<string>& Table
 )
 {
     Switch isReal = true;
 
-    List<List<string>> table(Table);
+    List2D<string> table(Table);
     if (parentDict.found(name + "File"))
     {
         table = read2DTable
@@ -82,7 +82,7 @@ bool Foam::readComponent
         }
         else if (dict.found(name))
         {
-            values = dict.lookup<Field<Type>>(name);
+            values = dict.lookup<List<Type>>(name);
         }
         else if (dict.found("file"))
         {
@@ -94,11 +94,11 @@ bool Foam::readComponent
                 dict.lookupOrDefault<Switch>("flipTable", false)
             );
 
-            if (table.size() == 1)
+            if (table.m() == 1)
             {
                 row = 0;
             }
-            else if (table[0].size() == 1)
+            else if (table.n() == 1)
             {
                 col = 0;
             }
@@ -114,6 +114,7 @@ bool Foam::readComponent
                 }
                 else
                 {
+                    Info<<table.m()<<" "<<table.n()<<endl;
                     FatalIOErrorInFunction(dict)
                         << "Looking up a component of a 2D table requires either" << nl
                         << "a row (\"row\") or column (\"col\") to be specified" << endl
@@ -200,7 +201,7 @@ bool Foam::readComponent
         {}
         else
         {
-            values = parentDict.lookup<Field<Type>>(name);
+            values = parentDict.lookup<List<Type>>(name);
         }
 
         modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
@@ -287,7 +288,7 @@ void Foam::read1DTable
 (
     const fileName& file,
     const string& delim,
-    Field<Type>& values,
+    List<Type>& values,
     const bool determineSize
 )
 {
@@ -335,12 +336,12 @@ void Foam::read1DTable
 }
 
 
-template<class Type, template<class> class ListType>
+template<class Type>
 void Foam::read2DTable
 (
     const fileName& file,
     const string& delim,
-    List<ListType<Type>>& data,
+    List2D<Type>& data,
     const bool flip,
     const bool determineSize
 )
@@ -362,7 +363,7 @@ void Foam::read2DTable
 
     label ny = -1;
     label nx = 0;
-    DynamicList<ListType<Type>> tdata(10);
+    DynamicList<List<Type>> tdata(10);
     while (is.good())
     {
         string line;
@@ -374,7 +375,7 @@ void Foam::read2DTable
         lineEntry = '(' + lineEntry + ')';
         IStringStream iss(lineEntry);
 
-        Field<Type> lineVals(iss);
+        List<Type> lineVals(iss);
 
         if (!lineVals.size())
         {
@@ -405,7 +406,7 @@ void Foam::read2DTable
 
     if (!determineSize)
     {
-        if (data.size() != nx)
+        if (data.m() != nx)
         {
             FatalErrorInFunction
                 << file << ":" << nl
@@ -415,7 +416,7 @@ void Foam::read2DTable
                 << "    Read: " << nx << nl
                 << abort(FatalError);
         }
-        if (data[0].size() != ny)
+        if (data.n() != ny)
         {
             FatalErrorInFunction
                 << file << ":" << nl
@@ -429,14 +430,15 @@ void Foam::read2DTable
 
     if (!flip)
     {
-        data.transfer(tdata);
+        data = tdata;
         return;
     }
-    forAll(data, i)
+    data.resize(nx, ny);
+    for (label i = 0; i < data.m(); i++)
     {
-        forAll(data[i], j)
+        for (label j = 0; j < data.n(); j++)
         {
-            data[i][j] = tdata[j][i];
+            data(i, j) = tdata[j][i];
         }
     }
 }
@@ -445,7 +447,7 @@ void Foam::read2DTable
 template<class Type>
 Foam::List<Type> Foam::readColumn
 (
-    const List<List<string>>& entries,
+    const List2D<string>& entries,
     const label col
 )
 {
@@ -455,19 +457,19 @@ Foam::List<Type> Foam::readColumn
             << "Trying to read from a table but no data was read." << endl
             << abort(FatalError);
     }
-    if (col >= entries.first().size())
+    if (col >= entries.n())
     {
         FatalErrorInFunction
-            << "Only " << entries.first().size() << " columns were read, "
+            << "Only " << entries.n() << " columns were read, "
             << "but column " << col << " was requested" << endl
             << abort(FatalError);
     }
 
-    List<Type> vals(entries.size());
+    List<Type> vals(entries.m());
     Type v;
-    forAll(entries, i)
+    forAll(vals, i)
     {
-        IStringStream(entries[i][col])() >> v;
+        IStringStream(entries(i, col))() >> v;
         vals[i] = v;
     }
     return vals;
@@ -477,7 +479,7 @@ Foam::List<Type> Foam::readColumn
 template<class Type>
 Foam::List<Type> Foam::readRow
 (
-    const List<List<string>>& entries,
+    const List2D<string>& entries,
     const label row
 )
 {
@@ -487,32 +489,32 @@ Foam::List<Type> Foam::readRow
             << "Trying to read from a table but no data was read." << endl
             << abort(FatalError);
     }
-    if (row >= entries.size())
+    if (row >= entries.m())
     {
         FatalErrorInFunction
-            << "Only " << entries.size() << " columns were read, "
+            << "Only " << entries.m() << " columns were read, "
             << " but row " << row << " was requested" << endl
             << abort(FatalError);
     }
 
-    List<Type> vals(entries[row].size());
+    List<Type> vals(entries.n());
     Type v;
-    forAll(entries[row], j)
+    forAll(vals, j)
     {
-        IStringStream(entries[row][j])() >> v;
+        IStringStream(entries(row, j))() >> v;
         vals[j] = v;
     }
     return vals;
 }
 
 
-template<class Type, template<class> class ListType1, template<class> class ListType2>
+template<class Type>
 void Foam::read3DTable
 (
     const fileName& file,
     const string& delim,
     const string& rowDelim,
-    List<ListType1<ListType2<Type>>>& data,
+    List3D<Type>& data,
     const bool flip,
     const bool determineSize
 )
@@ -532,7 +534,7 @@ void Foam::read3DTable
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    List<ListType1<ListType2<Type>>> tdata;
+    List<List<List<Type>>> tdata;
     label nx = 0;
     label ny = -1;
     label nz = -1;
@@ -567,7 +569,7 @@ void Foam::read3DTable
                 << abort(FatalError);
         }
 
-        ListType1<ListType2<Type>> yzvals(strings.size());
+        List<List<Type>> yzvals(strings.size());
         forAll(strings, j)
         {
             string lineEntry = strings[j];
@@ -575,7 +577,7 @@ void Foam::read3DTable
             lineEntry = '(' + lineEntry + ')';
             IStringStream iss(lineEntry);
 
-            ListType2<Type> zvals(iss);
+            List<Type> zvals(iss);
             if (!yzvals.size())
             {
                 continue;
@@ -608,65 +610,57 @@ void Foam::read3DTable
 
     if (!determineSize)
     {
-        if (data.size() != nx)
+        if (data.m() != nx)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the x direction." << nl
-                << "    Input: " << data.size() << nl
+                << "    Input: " << data.m() << nl
                 << "    Read: " << nx << nl
                 << abort(FatalError);
         }
-        if (data[0].size() != ny)
+        if (data.n() != ny)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the y direction." << nl
-                << "    Input: " << data[0].size() << nl
+                << "    Input: " << data.n() << nl
                 << "    Read: " << ny << nl
                 << abort(FatalError);
         }
-        if (data[0][0].size() != nz)
+        if (data.l() != nz)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the z direction." << nl
-                << "    Input: " << data[0][0].size() << nl
+                << "    Input: " << data.l() << nl
                 << "    Read: " << nz << nl
                 << abort(FatalError);
         }
     }
     else
     {
-        data.resize(nx);
-        forAll(data, i)
-        {
-            data[i].resize(ny);
-            forAll(data[i], j)
-            {
-                data[i][j].resize(nz);
-            }
-        }
+        data.resize(nx, ny, nz);
     }
 
     if (!flip)
     {
-        data.transfer(tdata);
+        data = tdata;
         return;
     }
 
 
     // Data needs to be correctly allocated before reading
-    forAll(data, i)
+    for (label i = 0; i < data.m(); i++)
     {
-        forAll(data[i], j)
+        for (label j = 0; j < data.n(); j++)
         {
-            forAll(data[i][j], k)
+            for (label k = 0; k < data.l(); k++)
             {
-                data[i][j][k] = tdata[k][j][i];
+                data(i, j, k) = tdata[k][j][i];
             }
         }
     }

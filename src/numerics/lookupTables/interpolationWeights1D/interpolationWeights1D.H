@@ -45,7 +45,7 @@ SourceFiles
 #define interpolationWeights1D_H
 
 #include "scalar.H"
-#include "List.H"
+#include "DynamicList.H"
 #include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -98,8 +98,8 @@ public:
     (
         const scalar x,
         const label i,
-        List<label>& indices,
-        List<scalar>& weights
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
     ) const = 0;
 };
 
@@ -130,8 +130,8 @@ public:
     (
         const scalar x,
         const label i,
-        List<label>& indices,
-        List<scalar>& weights
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
     ) const
     {
         if (x < this->xs_[0])
@@ -189,8 +189,8 @@ public:
     (
         const scalar x,
         const label i,
-        List<label>& indices,
-        List<scalar>& weights
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
     ) const;
 };
 
@@ -227,8 +227,8 @@ public:
     (
         const scalar x,
         const label i,
-        List<label>& indices,
-        List<scalar>& weights
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
     ) const;
 };
 
@@ -265,8 +265,8 @@ public:
     (
         const scalar x,
         const label i,
-        List<label>& indices,
-        List<scalar>& weights
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
     ) const;
 };
 
@@ -329,8 +329,8 @@ public:
     (
         const scalar x,
         const label i,
-        List<label>& indices,
-        List<scalar>& weights
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
     ) const;
 };
 
@@ -394,8 +394,8 @@ public:
     (
         const scalar x,
         const label i,
-        List<label>& indices,
-        List<scalar>& weights
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
     ) const;
 };
 

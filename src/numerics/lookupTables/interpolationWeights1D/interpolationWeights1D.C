@@ -157,8 +157,8 @@ void Foam::interpolationWeights1D::floor::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     indices.setSize(1);
@@ -173,8 +173,8 @@ void Foam::interpolationWeights1D::ceil::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     indices.setSize(1);
@@ -189,8 +189,8 @@ void Foam::interpolationWeights1D::linearExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     label lo = max(i, 0);
@@ -211,8 +211,8 @@ void Foam::interpolationWeights1D::quadraticExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     label lo = max(i-1, 0);
@@ -240,8 +240,8 @@ void Foam::interpolationWeights1D::cubicExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     label lo = max(i - 1, 0);
