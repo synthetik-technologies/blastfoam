@@ -12,6 +12,7 @@
 #include "List3D.H"
 
 #include "argList.H"
+#include "IOmanip.H"
 
 using namespace Foam;
 
@@ -95,6 +96,13 @@ scalar d2func3dydz(const scalar x, const scalar y, const scalar z)
     return 3.0*x*x + 4.0*y*z;
 }
 
+template<class Type>
+void print(const word& name, const Type& x, const Type& ans)
+{
+    Info<< name << " (calc/true): " << x <<  "/" << Foam::name(ans)
+        << ", error (abs, rel): " << mag(x - ans) << '/' << mag(x - ans)/mag(ans)
+        << endl;
+}
 int main(int argc, char *argv[])
 {
     IFstream is("tableDict");
@@ -196,63 +204,43 @@ int main(int argc, char *argv[])
 
     Info<<nl<<"1D table:" << endl;
     scalarLookupTable1D table1(dict.subDict("table1D"), "x", "f");
-    table1.update(xTest);
     scalar xFound = table1.reverseLookup(table1.lookup(xTest));
-    Info<< "f: " << table1.lookup(xTest)
-        << ", answer: " << func1(xTest) << endl
-        << "dfdx: " << table1.dFdX(xTest)
-        << ", answer: " << dfunc1dx(xTest) << endl
-        << "d2fdx2: " << table1.d2FdX2(xTest)
-        << ", answer: " << d2func1dx2(xTest) << endl
-        << "reverse: " << xFound << ", answer: " << xTest <<endl;
+    print("f", table1.lookup(xTest), func1(xTest));
+    print("dfdx", table1.dFdX(xTest), dfunc1dx(xTest));
+    print("d2fdx2", table1.d2FdX2(xTest), d2func1dx2(xTest));
+    print("reverse", xFound, xTest);
 
     Info<<nl<<"2D table:" << endl;
     lookupTable2D<scalar> table2(dict.subDict("table2D"), "x", "y", "f");
     xFound = table2.reverseLookupX(table2.lookup(xTest, yTest), yTest);
     scalar yFound = table2.reverseLookupY(table2.lookup(xTest, yTest), xTest);
-    Info<< "f: " << table2.lookup(xTest, yTest)
-        << ", answer: " << func2(xTest, yTest) << endl
-        << "dfdx: " << table2.dFdX(xTest, yTest)
-        << ", answer: " << dfunc2dx(xTest, yTest) << endl
-        << "dfdy: " << table2.dFdY(xTest, yTest)
-        << ", answer: " << dfunc2dy(xTest, yTest) << endl
-        << "d2fdx2: " << table2.d2FdX2(xTest, yTest)
-        << ", answer: " << d2func2dx2(xTest, yTest) << endl
-        << "d2fdy2: " << table2.d2FdY2(xTest, yTest)
-        << ", answer: " << d2func2dy2(xTest, yTest) << endl
-        << "d2fdxdy: " << table2.d2FdXdY(xTest, yTest)
-        << ", answer: " << d2func2dxdy(xTest, yTest) << endl
-        << "reverseX: " << xFound << ", answer: " << xTest <<endl
-        << "reverseY: " << yFound << ", answer: " << yTest <<endl;
+    print("f", table2.lookup(xTest, yTest), func2(xTest, yTest));
+    print("dfdx", table2.dFdX(xTest, yTest), dfunc2dx(xTest, yTest));
+    print("dfdy", table2.dFdY(xTest, yTest), dfunc2dy(xTest, yTest));
+    print("d2fdx2", table2.d2FdX2(xTest, yTest), d2func2dx2(xTest, yTest));
+    print("d2fdy2", table2.d2FdY2(xTest, yTest), d2func2dy2(xTest, yTest));
+    print("d2fdxdy", table2.d2FdXdY(xTest, yTest), d2func2dxdy(xTest, yTest));
+    print("reverseX", xFound, xTest);
+    print("reverseY", yFound, yTest);
 
     Info<<nl<<"3D table" << endl;
     scalarLookupTable3D table3(dict.subDict("table3D"), "x", "y", "z", "f");
     xFound = table3.reverseLookupX(table3.lookup(xTest, yTest, zTest), yTest, zTest);
     yFound = table3.reverseLookupY(table3.lookup(xTest, yTest, zTest), xTest, zTest);
     scalar zFound = table3.reverseLookupZ(table3.lookup(xTest, yTest, zTest), xTest, yTest);
-    Info<< "f: " << table3.lookup(xTest, yTest, zTest)
-        << ", answer: " << func3(xTest, yTest, zTest) << endl
-        << "dfdx: " << table3.dFdX(xTest, yTest, zTest)
-        << ", answer: " << dfunc3dx(xTest, yTest, zTest) << endl
-        << "dfdy: " << table3.dFdY(xTest, yTest, zTest)
-        << ", answer: " << dfunc3dy(xTest, yTest, zTest) << endl
-        << "dfdz: " << table3.dFdZ(xTest, yTest, zTest)
-        << ", answer: " << dfunc3dz(xTest, yTest, zTest) << endl
-        << "d2fdx2: " << table3.d2FdX2(xTest, yTest, zTest)
-        << ", answer: " << d2func3dx2(xTest, yTest, zTest) << endl
-        << "d2fdy2: " << table3.d2FdY2(xTest, yTest, zTest)
-        << ", answer: " << d2func3dy2(xTest, yTest, zTest) << endl
-        << "d2fdz2: " << table3.d2FdZ2(xTest, yTest, zTest)
-        << ", answer: " << d2func3dz2(xTest, yTest, zTest) << endl
-        << "d2fdxdy: " << table3.d2FdXdY(xTest, yTest, zTest)
-        << ", answer: " << d2func3dxdy(xTest, yTest, zTest) << endl
-        << "d2fdxdz: " << table3.d2FdXdZ(xTest, yTest, zTest)
-        << ", answer: " << d2func3dxdz(xTest, yTest, zTest) << endl
-        << "d2fdydz: " << table3.d2FdYdZ(xTest, yTest, zTest)
-        << ", answer: " << d2func3dydz(xTest, yTest, zTest) << endl
-        << "reverseX: " << xFound << ", answer: " << xTest << endl
-        << "reverseY: " << yFound << ", answer: " << yTest << endl
-        << "reverseZ: " << zFound << ", answer: " << zTest << endl;
+    print("f", table3.lookup(xTest, yTest, zTest), func3(xTest, yTest, zTest));
+    print("dfdx", table3.dFdX(xTest, yTest, zTest), dfunc3dx(xTest, yTest, zTest));
+    print("dfdy", table3.dFdY(xTest, yTest, zTest), dfunc3dy(xTest, yTest, zTest));
+    print("dfdz", table3.dFdZ(xTest, yTest, zTest), dfunc3dz(xTest, yTest, zTest));
+    print("d2fdx2", table3.d2FdX2(xTest, yTest, zTest), d2func3dx2(xTest, yTest, zTest));
+    print("d2fdy2", table3.d2FdY2(xTest, yTest, zTest), d2func3dy2(xTest, yTest, zTest));
+    print("d2fdz2", table3.d2FdZ2(xTest, yTest, zTest), d2func3dz2(xTest, yTest, zTest));
+    print("d2fdxdy", table3.d2FdXdY(xTest, yTest, zTest), d2func3dxdy(xTest, yTest, zTest));
+    print("d2fdxdz", table3.d2FdXdZ(xTest, yTest, zTest), d2func3dxdz(xTest, yTest, zTest));
+    print("d2fdydz", table3.d2FdYdZ(xTest, yTest, zTest), d2func3dydz(xTest, yTest, zTest));
+    print("reverseX", xFound, xTest);
+    print("reverseY", yFound, yTest);
+    print("reverseZ", zFound, zTest);
 
 
 OFstream os("testDict");
