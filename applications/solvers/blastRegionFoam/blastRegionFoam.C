@@ -42,16 +42,49 @@ Description
 #include "regionSolver.H"
 #include "regionProperties.H"
 
-#define forAllRegions(cmd)  \
-forAll(regions, i)          \
-{                           \
-    regions[i].cmd();       \
+#define forAllRegions(cmd)                  \
+forAll(regions, i)                          \
+{                                           \
+    regions[i].cmd();                       \
+}
+
+#define checkForAllRegions(cmd, flags)      \
+forAll(regions, i)                          \
+{                                           \
+    flags[i] = regions[i].cmd();            \
+}
+
+#define checkOrForAllRegions(cmd, flags)    \
+forAll(regions, i)                          \
+{                                           \
+    flags[i] = flags[i] || regions[i].cmd();\
+}
+
+#define forAllConditionRegions(cmd, flags)  \
+forAll(regions, i)                          \
+{                                           \
+    if (flags[i])                           \
+    {                                       \
+        regions[i].cmd();                   \
+    }                                       \
+}
+
+#define forAllNotConditionRegions(cmd, flags)  \
+forAll(regions, i)                          \
+{                                           \
+    if (!flags[i])                          \
+    {                                       \
+        regions[i].cmd();                   \
+    }                                       \
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
+    // Do not remap on motion
+    globalPolyBoundaryMesh::clearOnMovement = false;
+
     argList::addBoolOption
     (
         "initialiseDisplacement",
@@ -90,7 +123,9 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        forAllRegions(change);
+        // Apply topological changes to the mesh
+        boolList updated(regions.size());
+        checkForAllRegions(changeMesh, updated);
 
         #include "readTimeControls.H"
 
@@ -104,14 +139,47 @@ int main(int argc, char *argv[])
 
         runTime++;
 
-        Info<< "Time = " << runTime.timeName() << nl << endl;
-        label nOuterCorrector = regionPropertiesDict.lookup<label>("nOuterCorrectors");
-        for (label iter = 0; iter < nOuterCorrector; iter++)
+        // Update global patches
+        bool needUpdate = false;
+        forAll(updated, i)
         {
-            forAllRegions(moveMesh);
+            needUpdate = updated[i] || needUpdate;
+        }
+        if (needUpdate)
+        {
+            forAllNotConditionRegions(update, updated);
+        }
+
+        updated = false;
+
+        label nOuterCorrectors = regionPropertiesDict.lookup<label>("nOuterCorrectors");
+        for (label iter = 0; iter < nOuterCorrectors; iter++)
+        {
+            Info<< "Outer iteration: " << iter<<endl;
+            Info<< "Time = " << runTime.timeName() << nl << endl;
+
+            // Apply mesh motion
+            forAll(regions, i)
+            {
+                updated[i] = regions[i].moveMesh(iter == nOuterCorrectors-1);
+            }
+            // checkOrForAllRegions(moveMesh, updated);
 
             // Solve
             forAllRegions(solve);
+            runTime.write();
+        }
+
+        // Update global patches if any motion has occurred
+        // since mapping does not happen on mesh motion
+        needUpdate = false;
+        forAll(updated, i)
+        {
+            needUpdate = updated[i] || needUpdate;
+        }
+        if (needUpdate)
+        {
+            forAllRegions(update);
         }
 
         runTime.write();

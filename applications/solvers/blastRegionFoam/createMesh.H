@@ -26,6 +26,7 @@ PtrList<dynamicFvMesh> regionMeshes(regionTypes.size());
     label regioni = 0;
     forAllConstIter(HashTable<word>, regionTypes, iter)
     {
+        Info<<"Creating mesh for region " << iter.key() << endl;
         regionMeshes.set
         (
             regioni++,
