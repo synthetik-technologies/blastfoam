@@ -83,6 +83,14 @@ public:
             const dictionary&
         );
 
+        //- Construct from patch, internal field and neighbour field name
+        globalInterpolatedPointPatchField
+        (
+            const pointPatch&,
+            const DimensionedField<Type, pointMesh>&,
+            const word&
+        );
+
         //- Construct by mapping given globalInterpolatedPointPatchField
         //  onto a new patch
         globalInterpolatedPointPatchField

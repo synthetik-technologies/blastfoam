@@ -23,49 +23,38 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "regionSolver.H"
-#include "dynamicBlastFvMesh.H"
+#include "reactingRegionSolver.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(regionSolver, 0);
-    defineRunTimeSelectionTable(regionSolver, dictionary);
+namespace regionSolvers
+{
+    defineTypeNameAndDebug(reacting, 0);
+    addToRunTimeSelectionTable(regionSolver, reacting, dictionary);
+}
 }
 
 
-// * * * * * * * * * * * * Private Members Functions * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionSolver::regionSolver
+Foam::regionSolvers::reacting::reacting
 (
-    dynamicFvMesh& mesh
+    const word& region,
+    const Time& runTime,
+    const dictionary& dict
 )
 :
-    runTime_(mesh.time()),
-    dynMesh_(mesh),
-    mesh_(dynMesh_)
+    blast(region, runTime, dict, reactingCompressibleSystem::typeName)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::regionSolver::~regionSolver()
+Foam::regionSolvers::reacting::~reacting()
 {}
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::regionSolver::change()
-{
-    return refineMesh(dynMesh_);
-}
-
-
-bool Foam::regionSolver::moveMesh()
-{
-    return dynMesh_.update();
-}
 
 // ************************************************************************* //

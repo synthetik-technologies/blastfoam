@@ -35,6 +35,7 @@ License
 #include "calculatedPointPatchFields.H"
 #include "fixedValuePointPatchFields.H"
 #include "fixedValueFvPatchFields.H"
+#include "globalPolyBoundaryMesh.H"
 #include "fvm.H"
 
 #include "fvcGradf.H"
@@ -1126,7 +1127,7 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const volScalarField& J)
 
     if ((minJ < 0.01) || (maxJ > 100))
     {
-        Info<< "Enforcing linear geometry: "
+        DebugInfo<< "Enforcing linear geometry: "
             << "minJ: " << minJ << ", maxJ: " << maxJ << endl;
 
         // Enable enforce linear to try improve convergence
@@ -1147,7 +1148,7 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const surfaceScalarField& J)
 
     if ((minJ < 0.01) || (maxJ > 100))
     {
-        Info<< "Enforcing linear geometry: "
+        DebugInfo<< "Enforcing linear geometry: "
             << "minJ: " << minJ << ", maxJ: " << maxJ << endl;
 
         // Enable enforce linear to try improve convergence

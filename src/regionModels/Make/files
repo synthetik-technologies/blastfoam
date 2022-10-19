@@ -27,9 +27,4 @@ derivedFvPatchFields/globalTemperatureCoupled/globalTemperatureCoupledFvPatchSca
 derivedPointPatchFields/globalInterpolated/globalInterpolatedPointPatchFields.C
 derivedPointPatchFields/globalMapped/globalMappedPointPatchFields.C
 
-
-regionSolvers/regionSolver/regionSolver.C
-regionSolvers/regionSolver/regionSolverNew.C
-regionSolvers/fluidRegionSolver/fluidRegionSolver.C
-
 LIB = $(BLAST_LIBBIN)/libblastRegionModels

@@ -27,7 +27,9 @@ Class
 Description
     Class for handeling the mapping of locations after refinement. This must
     be modified by the mesh refiner due to the fact that determining the group
-    of averaged points that new face centre
+    of averaged points that new face centre. This is necessary due to the way
+    pointFields are mapped are not consistent with the mapping necessary for
+    locations
 
 SourceFiles
     locationMapper.C
@@ -53,6 +55,8 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class locationMapper
+:
+    public regIOobject
 {
 
 private:
@@ -107,6 +111,8 @@ private:
 
 public:
 
+    TypeName("locationMaper");
+
     //- Construct from mesh
     locationMapper(const polyMesh& mesh);
 
@@ -140,6 +146,11 @@ public:
 
         //- Clear the mapping
         void clearOut() const;
+
+        virtual bool writeData(Ostream&) const
+        {
+            return true;
+        }
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

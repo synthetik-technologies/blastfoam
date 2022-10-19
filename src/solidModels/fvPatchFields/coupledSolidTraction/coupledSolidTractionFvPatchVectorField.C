@@ -84,6 +84,7 @@ Foam::coupledSolidTractionFvPatchVectorField::viscousStress
     }
     else
     {
+        NotImplemented;
         // For laminar flows get the velocity
         const fvPatchVectorField& Up
         (
@@ -293,11 +294,11 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
 
     const volScalarField& pNbr =
         nbrMesh.lookupObject<volScalarField>(pName_);
-    scalarField ppNbr(pNbr.boundaryField()[samplePatchi] + pRef_);
-    if (pNbr.dimensions() != dimPressure)
-    {
-        ppNbr *= rho(nbrMesh, sampleFvPatch);
-    }
+    scalarField ppNbr(pNbr.boundaryField()[samplePatchi] - pRef_);
+    // if (pNbr.dimensions() != dimPressure)
+    // {
+    //     ppNbr *= rho(nbrMesh, sampleFvPatch);
+    // }
 
     vector forceNbr(gSum(ppNbr*sampleFvPatch.Sf() + viscousNbr*sampleFvPatch.magSf()));
 
@@ -316,8 +317,13 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
         )
     );
 
-    Info<< "Force acting on " << this->patch().name() << " (fluid/interpolated): "
-        << force << ", " << forceNbr << endl;
+    static label index = -1;
+    // if (index != this->db().time().timeIndex())
+    {
+        index = this->db().time().timeIndex();
+        Info<< "Force acting on " << this->patch().name() << " (solid/fluid): "
+            << force << "/" << forceNbr << endl;
+    }
     solidTractionFvPatchVectorField::updateCoeffs();
 }
 

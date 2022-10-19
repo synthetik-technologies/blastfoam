@@ -73,6 +73,8 @@ void updatedLagSolid<IncrementalModel>::update
     // Jacobian of deformation gradient
     J_ = relJ_*J_.oldTime();
 
+    this->checkEnforceLinear(J_);
+
     // Update velocity
     this->U() = fvc::ddt(this->D());
 
@@ -117,7 +119,7 @@ updatedLagSolid<IncrementalModel>::updatedLagSolid
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         det(F_)
     ),

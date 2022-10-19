@@ -96,7 +96,8 @@ bool nonLinGeomTotalLagSolid::evolve()
         (
             fvm::d2dt2(rho(), DD())
           + fvc::d2dt2(rho().oldTime(), D().oldTime())
-         == fvm::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
+         ==
+            fvm::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
           - fvc::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
           + fvc::div(J_*Finv_ & sigma(), "div(sigma)")
           + rho()*g()

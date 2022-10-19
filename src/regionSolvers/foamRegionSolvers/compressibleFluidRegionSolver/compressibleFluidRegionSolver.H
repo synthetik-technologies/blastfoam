@@ -22,25 +22,36 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::regionSolvers::blast
+    Foam::regionSolvers::compressibleFluid
 
 Description
-    Solver for a compressible phase using blastFoam libraries
+    Solver for a compressible phase using compressibleFluidFoam libraries
 
 SourceFiles
-    blastRegionSolver.C
+    compressibleFluidRegionSolver.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef blastRegionSolver_H
-#define blastRegionSolver_H
+#ifndef compressibleFluidRegionSolver_H
+#define compressibleFluidRegionSolver_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "regionSolver.H"
 #include "fluidRegionSolver.H"
-#include "compressibleSystem.H"
+#include "fvCFD.H"
+#include "pimpleControl.H"
+#include "fluidThermo.H"
 #include "uniformDimensionedFields.H"
+#include "dynamicMomentumTransportModel.H"
+#include "fluidThermophysicalTransportModel.H"
+#include "pimpleControl.H"
+#include "pressureReference.H"
+#include "CorrectPhi.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
+#include "localEulerDdtScheme.H"
+#include "fvcSmooth.H"
 
 namespace Foam
 {
@@ -48,52 +59,65 @@ namespace regionSolvers
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class blastRegionSolver Declaration
+                           Class compressibleFluidRegionSolver Declaration
 \*---------------------------------------------------------------------------*/
 
-class blast
+class compressibleFluid
 :
     public fluid
 {
 protected:
 // Protected data
 
+        pimpleControl pimple_;
+
         //- Gravity
         uniformDimensionedVectorField g_;
 
-        //- Time integrator
-        autoPtr<timeIntegrator> integrator_;
+        autoPtr<fluidThermo> thermo_;
+        volScalarField rho;
+        volVectorField U;
+        surfaceScalarField phi;
+        volScalarField& p;
+        const volScalarField& psi;
+        pressureReference pressureReference_;
+        autoPtr<compressible::momentumTransportModel> turbulence_;
+        autoPtr<fluidThermophysicalTransportModel> thermophysicalTransport_;
+        volScalarField dpdt;
+        volScalarField K;
 
-        //- Compressible system
-        autoPtr<compressibleSystem> fluid_;
+        dimensionedScalar initialMass_;
+
+        autoPtr<volScalarField> divRhoU_;
+        autoPtr<surfaceVectorField> rhoUf;
+        mutable tmp<fvVectorMatrix> tUEqn;
+
+        scalar cumulativeContErr;
+
+        IOMRFZoneList MRF;
+        Foam::fvModels& fvModels;
+        Foam::fvConstraints& fvConstraints;
+
+        void solveU();
+        void solvep();
+        void solveE();
+        void correctPhi();
 
 
 public:
 
-    TypeName("blast");
+    TypeName("compressibleFluid");
 
-    // Constructors
-
-        // Lookup compressible system type
-        blast(dynamicFvMesh& mesh);
-
-        //- Construct with a given compressibleSystemType
-        blast
-        (
-            dynamicFvMesh& mesh,
-            const word& type
-        );
+    // Constructor
+    compressibleFluid(dynamicFvMesh& mesh);
 
     //- Destructor
-    virtual ~blast();
+    virtual ~compressibleFluid();
 
 
     // Member functions
 
         // Edit
-
-            //- Apply topological changes
-            virtual bool change();
 
             //- Solve the model
             virtual void solve();

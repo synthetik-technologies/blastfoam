@@ -67,6 +67,12 @@ class globalPolyBoundaryMesh
 :
     public GlobalPolyBoundaryMesh
 {
+public:
+
+    // Flag if all patches should be cleared when moving the mesh
+    static bool clearOnMovement;
+
+private:
 // Private member data
 
     HashTable<dictionary> interfaceDicts_;
@@ -97,24 +103,40 @@ public:
     virtual ~globalPolyBoundaryMesh();
 
 
-    // Move points
-    virtual bool movePoints();
+    // Member functions
 
-    //- Update mesh
-    virtual void updateMesh(const mapPolyMesh& mpm);
+        // Access
 
-    //- Reorder patches
-    virtual void reorderPatches
-    (
-        const labelUList& newToOld,
-        const bool validBoundary
-    );
+            //- Does the patch have an associated global patch
+            bool isGlobal(const polyPatch&) const;
 
-    //- Set the displacement field name for a region
-    void setDisplacementField(const word&, const word&);
+            //- Is the given patch coupled to another region
+            bool isCoupled(const polyPatch&) const;
 
-    //- Inserted patch at patchi
-    virtual void addPatch(const label patchi);
+        // Edit
+
+            // Force update of mapping
+            void update();
+
+            // Move points
+            virtual bool movePoints();
+
+            //- Update mesh
+            virtual void updateMesh(const mapPolyMesh& mpm);
+
+            //- Reorder patches
+            virtual void reorderPatches
+            (
+                const labelUList& newToOld,
+                const bool validBoundary
+            );
+
+            //- Set the displacement field name for a region
+            void setDisplacementField(const word&, const word&);
+
+            //- Inserted patch at patchi
+            virtual void addPatch(const label patchi);
+
 
     // Operators
 

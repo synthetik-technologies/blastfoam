@@ -77,6 +77,22 @@ Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
 template<class Type>
 Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
 (
+    const fvPatch& p,
+    const DimensionedField<Type, volMesh>& iF,
+    const word& nbrName
+)
+:
+    fixedValueFvPatchField<Type>(p, iF),
+    globalBoundary_(globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())),
+    nbrName_(nbrName)
+{
+    fvPatchField<Type>::operator==(this->patchInternalField());
+}
+
+
+template<class Type>
+Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
+(
     const globalMappedFvPatchField<Type>& ptf,
     const DimensionedField<Type, volMesh>& iF
 )

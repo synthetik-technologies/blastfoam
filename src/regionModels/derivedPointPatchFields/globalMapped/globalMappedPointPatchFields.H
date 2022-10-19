@@ -36,8 +36,8 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-typedef globalMappedPointPatchField<scalar> coupleMotionPointPatchScalarField;
-typedef globalMappedPointPatchField<vector> coupleMotionPointPatchVectorField;
+typedef globalMappedPointPatchField<scalar> globalMappedPointPatchScalarField;
+typedef globalMappedPointPatchField<vector> globalMappedPointPatchVectorField;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

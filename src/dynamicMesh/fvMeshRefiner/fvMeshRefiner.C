@@ -322,6 +322,10 @@ void Foam::fvMeshRefiner::updateMesh(const mapPolyMesh& mpm)
         //  but we use a MACRO hack to make it accessible
         mesh_.clearGeom();
     }
+    // else
+    // {
+    //     mesh_.clearGeomNotOldVol();
+    // }
 }
 
 

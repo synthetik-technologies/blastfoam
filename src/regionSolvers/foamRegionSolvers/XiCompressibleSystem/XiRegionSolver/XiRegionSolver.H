@@ -22,39 +22,50 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::regionSolvers::fluid
+    Foam::regionSolvers::blast
 
 Description
-    Base class for a fluid region solver
+    Solver for a compressible phase using blastFoam libraries
 
 SourceFiles
-    fluidRegionSolver.C
+    blastRegionSolver.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fluidRegionSolver_H
-#define fluidRegionSolver_H
+#ifndef blastRegionSolver_H
+#define blastRegionSolver_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "regionSolver.H"
-#include "volFields.H"
-
+#include "fluidRegionSolver.H"
+#include "compressibleSystem.H"
+#include "uniformDimensionedFields.H"
 
 namespace Foam
 {
 namespace regionSolvers
 {
+
 /*---------------------------------------------------------------------------*\
-                           Class fluidRegionSolver Declaration
+                           Class blastRegionSolver Declaration
 \*---------------------------------------------------------------------------*/
 
-class fluid
+class blast
 :
-    public regionSolver
+    public fluid
 {
 protected:
 // Protected data
+
+        //- Gravity
+        uniformDimensionedVectorField g_;
+
+        //- Time integrator
+        autoPtr<timeIntegrator> integrator_;
+
+        //- Compressible system
+        autoPtr<compressibleSystem> fluid_;
 
         //- Viscous stresses
         volSymmTensorField devRhoReff_;
@@ -62,25 +73,30 @@ protected:
 
 public:
 
-    TypeName("fluid");
+    TypeName("blast");
 
     // Constructor
-    fluid(dynamicFvMesh& mesh);
-
+    blast(const word& region, const Time& runTime, const dictionary& dict);
 
     //- Destructor
-    virtual ~fluid();
+    virtual ~blast();
 
 
     // Member functions
 
         // Edit
 
-            //- Initialise the mesh
-            virtual void initialiseMesh();
+            //- Apply topological changes
+            virtual bool change();
 
-            //- Initialise the solver
-            virtual void initialise();
+            //- Solve the model
+            virtual void solve();
+
+            //- Return the Courant number
+            virtual scalar CoNum() const;
+
+            //- Return the maximum Courant number
+            virtual scalar maxCo() const;
 };
 
 

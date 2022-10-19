@@ -1,0 +1,5 @@
+regionSolver/regionSolver.C
+regionSolver/regionSolverNew.C
+fluidRegionSolver/fluidRegionSolver.C
+
+LIB = $(BLAST_LIBBIN)/libregionSolvers

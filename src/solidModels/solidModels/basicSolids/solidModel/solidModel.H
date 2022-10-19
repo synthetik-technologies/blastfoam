@@ -54,12 +54,13 @@ SourceFiles
 #include "setCellDisplacements.H"
 #include "OFstream.H"
 #include "fvMatricesFwd.H"
-#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+class globalPolyBoundaryMesh;
 
 /*---------------------------------------------------------------------------*\
                            Class solidModel Declaration

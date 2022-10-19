@@ -39,6 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dynamicFvMesh.H"
+#include "globalPolyBoundaryMesh.H"
 #include "runTimeSelectionTables.H"
 
 
@@ -57,9 +58,14 @@ protected:
         // Time
         const Time& runTime_;
 
-        // Dynamic mesh
+        //- Dynamic mesh
         dynamicFvMesh& dynMesh_;
+
+        //- fvMesh
         fvMesh& mesh_;
+
+        //- Global polyBoundaryMesh
+        globalPolyBoundaryMesh& globalBoundary_;
 
 public:
 
@@ -113,8 +119,11 @@ public:
 
         // Edit
 
+            //- Update global patches
+            virtual void update();
+
             //- Apply topological changes
-            virtual bool change();
+            virtual bool changeMesh();
 
             //- Initialise the mesh
             virtual void initialiseMesh() = 0;
@@ -123,7 +132,7 @@ public:
             virtual void initialise() = 0;
 
             //- Move the mesh
-            virtual bool moveMesh();
+            virtual bool moveMesh(const bool finalIter);
 
             //- Solve the model
             virtual void solve() = 0;

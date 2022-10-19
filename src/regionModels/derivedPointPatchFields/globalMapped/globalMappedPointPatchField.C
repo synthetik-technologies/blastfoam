@@ -55,6 +55,54 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
 template<class Type>
 Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
 (
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const dictionary& dict
+)
+:
+    fixedValuePointPatchField<Type>(p, iF, dict),
+    globalBoundary_
+    (
+        globalPolyBoundaryMesh::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )
+    ),
+    nbrName_(dict.lookup<word>("nbrName"))
+{}
+
+
+template<class Type>
+Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
+(
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const word& nbrName
+)
+:
+    fixedValuePointPatchField<Type>(p, iF),
+    globalBoundary_
+    (
+        globalPolyBoundaryMesh::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )
+    ),
+    nbrName_(nbrName)
+{
+    Field<Type>::operator=(this->patchInternalField());
+}
+
+
+template<class Type>
+Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
+(
     const globalMappedPointPatchField<Type>& ptf,
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
@@ -73,29 +121,6 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(ptf.nbrName_)
-{}
-
-
-template<class Type>
-Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
-(
-    const pointPatch& p,
-    const DimensionedField<Type, pointMesh>& iF,
-    const dictionary& dict
-)
-:
-    fixedValuePointPatchField<Type>(p, iF, dict),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New
-        (
-            dynamicCast<const polyMesh>
-            (
-                p.boundaryMesh().mesh().thisDb()
-            )
-        )
-    ),
-    nbrName_(dict.lookup<word>("nbrName"))
 {}
 
 

@@ -36,6 +36,7 @@ namespace Foam
     defineTypeNameAndDebug(globalPolyBoundaryMesh, 0);
 }
 
+bool Foam::globalPolyBoundaryMesh::clearOnMovement = true;
 
 // * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
 
@@ -78,7 +79,24 @@ Foam::globalPolyBoundaryMesh::~globalPolyBoundaryMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::globalPolyBoundaryMesh::movePoints()
+bool Foam::globalPolyBoundaryMesh::isGlobal(const polyPatch& pp) const
+{
+    return patches_.found(pp.name());
+}
+
+
+bool Foam::globalPolyBoundaryMesh::isCoupled(const polyPatch& pp) const
+{
+    const polyMesh& mesh = pp.boundaryMesh().mesh();
+    if (!interfaceDicts_.found(mesh.name()))
+    {
+        return false;
+    }
+    return interfaceDicts_[mesh.name()].found(pp.name());
+}
+
+
+void Foam::globalPolyBoundaryMesh::update()
 {
     forAllIter
     (
@@ -89,6 +107,16 @@ bool Foam::globalPolyBoundaryMesh::movePoints()
     {
         iter()->movePoints();
     }
+}
+
+bool Foam::globalPolyBoundaryMesh::movePoints()
+{
+    // Mapping stays the same
+    if (!clearOnMovement)
+    {
+        return false;
+    }
+    update();
     return true;
 }
 

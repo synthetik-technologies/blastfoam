@@ -41,16 +41,16 @@ void totalLagSolid<IncrementalModel>::update(const bool correctSigma)
 {
     IncrementalModel::updateDisplacement();
 
-    // if (this->incremental())
+    if (this->incremental())
     {
         // Total deformation gradient
         F_ = F_.oldTime() + this->gradDD().T();
     }
-    // else
-    // {
-    //     // Total deformation gradient
-    //     F_ = I + this->gradD().T();
-    // }
+    else
+    {
+        // Total deformation gradient
+        F_ = I + this->gradD().T();
+    }
 
     // Inverse of the deformation gradient
     Finv_ = inv(F_);
@@ -66,6 +66,8 @@ void totalLagSolid<IncrementalModel>::update(const bool correctSigma)
 
     // Relative Jacobian (Jacobian of relative deformation gradient)
     relJ_ = det(relF_);
+
+    this->checkEnforceLinear(J_);
 
     // Update stress
     if (correctSigma)

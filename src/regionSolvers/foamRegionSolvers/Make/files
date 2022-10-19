@@ -1,0 +1,7 @@
+#XiCompressibleSystem/XiCompressibleSystem.C
+#reactingCompressibleSystem/reactingCompressibleSystem.C
+
+compressibleFluidRegionSolver/compressibleFluidRegionSolver.C
+vofRegionSolver/vofRegionSolver.C
+
+LIB = $(BLAST_LIBBIN)/libfoamRegionSolvers

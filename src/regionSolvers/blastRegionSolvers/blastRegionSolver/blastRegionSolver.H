@@ -22,23 +22,25 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::regionSolvers::solid
+    Foam::regionSolvers::blast
 
 Description
-    Solver for a solid region solver
+    Solver for a compressible phase using blastFoam libraries
 
 SourceFiles
-    solidRegionSolver.C
+    blastRegionSolver.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef solidRegionSolver_H
-#define solidRegionSolver_H
+#ifndef blastRegionSolver_H
+#define blastRegionSolver_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "regionSolver.H"
-#include "solidModel.H"
+#include "fluidRegionSolver.H"
+#include "compressibleSystem.H"
+#include "uniformDimensionedFields.H"
 
 namespace Foam
 {
@@ -46,39 +48,52 @@ namespace regionSolvers
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class regionSolver Declaration
+                           Class blastRegionSolver Declaration
 \*---------------------------------------------------------------------------*/
 
-class solid
+class blast
 :
-    public regionSolver
+    public fluid
 {
 protected:
 // Protected data
 
-        //- Solid model
-        autoPtr<solidModel> solid_;
+        //- Gravity
+        uniformDimensionedVectorField g_;
+
+        //- Time integrator
+        autoPtr<timeIntegrator> integrator_;
+
+        //- Compressible system
+        autoPtr<compressibleSystem> fluid_;
+
 
 public:
 
-    TypeName("solid");
+    TypeName("blast");
 
-    // Constructor
-    solid(dynamicFvMesh& mesh);
+    // Constructors
+
+        // Lookup compressible system type
+        blast(dynamicFvMesh& mesh);
+
+        //- Construct with a given compressibleSystemType
+        blast
+        (
+            dynamicFvMesh& mesh,
+            const word& type
+        );
 
     //- Destructor
-    virtual ~solid();
+    virtual ~blast();
 
 
     // Member functions
 
         // Edit
 
-            //- Initialise the mesh
-            virtual void initialiseMesh();
-
-            //- Initialise the solver
-            virtual void initialise();
+            //- Apply topological changes
+            virtual bool changeMesh();
 
             //- Solve the model
             virtual void solve();

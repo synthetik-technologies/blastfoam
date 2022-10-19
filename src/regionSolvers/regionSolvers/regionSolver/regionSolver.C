@@ -23,63 +23,56 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fluidRegionSolver.H"
-#include "surfaceFields.H"
+#include "regionSolver.H"
+#include "dynamicBlastFvMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace regionSolvers
-{
-    defineTypeNameAndDebug(fluid, 0);
+    defineTypeNameAndDebug(regionSolver, 0);
+    defineRunTimeSelectionTable(regionSolver, dictionary);
 }
-}
+
+
+// * * * * * * * * * * * * Private Members Functions * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionSolvers::fluid::fluid(dynamicFvMesh& mesh)
+Foam::regionSolver::regionSolver
+(
+    dynamicFvMesh& mesh
+)
 :
-    regionSolver(mesh),
-    devRhoReff_
-    (
-        IOobject
-        (
-            "devRhoReff",
-            runTime_.timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedSymmTensor
-        (
-            "Zero",
-            dimensionSet(1,1,-2,0,0,0,0),
-            Zero
-        )
-    )
+    runTime_(mesh.time()),
+    dynMesh_(mesh),
+    mesh_(dynMesh_),
+    globalBoundary_(globalPolyBoundaryMesh::New(mesh))
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::regionSolvers::fluid::~fluid()
+Foam::regionSolver::~regionSolver()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::regionSolvers::fluid::initialiseMesh()
+void Foam::regionSolver::update()
 {
-    dynMesh_.update();
-    if (mesh_.moving())
-    {
-        const_cast<surfaceScalarField&>(mesh_.phi()) == Zero;
-    }
+    globalBoundary_.update();
 }
 
 
-void Foam::regionSolvers::fluid::initialise()
-{}
+bool Foam::regionSolver::changeMesh()
+{
+    return refineMesh(dynMesh_);
+}
+
+
+bool Foam::regionSolver::moveMesh(const bool finalIter)
+{
+    return dynMesh_.update();
+}
 
 // ************************************************************************* //

@@ -57,17 +57,23 @@ Foam::regionSolvers::solid::~solid()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-//- Initialise the mesh
 void Foam::regionSolvers::solid::initialiseMesh()
 {}
 
-//- Initialise the solver
+
 void Foam::regionSolvers::solid::initialise()
 {
     solid_->initialize();
 }
 
-//- Solve the model
+
+bool Foam::regionSolvers::solid::moveMesh(const bool finalIter)
+{
+    regionSolver::moveMesh(finalIter);
+    return max(mag(solid_->DD())).value() > small;
+}
+
+
 void Foam::regionSolvers::solid::solve()
 {
     SolverPerformance<vector>::debug = 0;
@@ -82,13 +88,13 @@ void Foam::regionSolvers::solid::solve()
     globalPolyBoundaryMesh::New(mesh_).movePoints();
 }
 
-//- Return the Courant number
+
 Foam::scalar Foam::regionSolvers::solid::CoNum() const
 {
     return solid_->CoNum();
 }
 
-//- Return the maximum Courant number
+
 Foam::scalar Foam::regionSolvers::solid::maxCo() const
 {
     return solid_->maxCoNum();

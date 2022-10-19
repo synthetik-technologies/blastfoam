@@ -24,11 +24,28 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "locationMapper.H"
+#include "Time.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineTypeNameAndDebug(locationMapper, 0);
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::locationMapper::locationMapper(const polyMesh& mesh)
 :
+    regIOobject
+    (
+        IOobject
+        (
+            typeName,
+            mesh.time().timeName(),
+            mesh
+        )
+    ),
     mesh_(mesh),
     constructMap_(false),
 

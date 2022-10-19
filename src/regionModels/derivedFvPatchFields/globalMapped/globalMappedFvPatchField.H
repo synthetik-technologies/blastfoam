@@ -86,6 +86,14 @@ public:
             const dictionary&
         );
 
+        //- Construct from patch, internal field and name of displacement field
+        globalMappedFvPatchField
+        (
+            const fvPatch&,
+            const DimensionedField<Type, volMesh>&,
+            const word&
+        );
+
         //- Construct by mapping given globalMappedFvPatchField
         //  onto a new patch
         globalMappedFvPatchField

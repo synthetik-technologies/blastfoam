@@ -20,7 +20,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "standAlonePatch.H"
-#include "vtkWritePolyData.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 

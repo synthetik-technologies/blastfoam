@@ -21,10 +21,10 @@ wmake $targetType atmosphereModels
 
 wmake $targetType regionModels
 wmake $targetType solidModels
-wmake $targetType blastRegionSolvers
-wmake $targetType foamModels
-
 wmake $targetType levelSet
+
+# -- Region models and
+regionSolvers/Allwmake
 
 # -- Optional library for use with solids4foam
 solids4Foam/Allwmake

@@ -639,9 +639,12 @@ bool Foam::mechanicalLaw::updateF
 
     if (enforceLinear())
     {
-        WarningInFunction
-            << "Material linearity enforced for stability!"
-            << endl;
+        if (solidModel::debug)
+        {
+            WarningInFunction
+                << "Material linearity enforced for stability!"
+                << endl;
+        }
 
         // Check if the mathematical model is in total or updated
         // Lagrangian form
@@ -723,9 +726,12 @@ bool Foam::mechanicalLaw::updateFf
 
     if (enforceLinear())
     {
-        WarningInFunction
-            << "Material linearity enforced for stability!"
-            << endl;
+        if (solidModel::debug)
+        {
+            WarningInFunction
+                << "Material linearity enforced for stability!"
+                << endl;
+        }
 
         // Check if the mathematical model is in total or updated
         // Lagrangian form

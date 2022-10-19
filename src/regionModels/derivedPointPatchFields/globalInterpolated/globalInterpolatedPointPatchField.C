@@ -72,16 +72,33 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
-    nbrName_
-    (
-        dict.lookupOrDefault<word>
-        (
-            "nbrName",
-            word(iF.name()).replaceAll("point", word::null)
-        )
-    )
+    nbrName_(dict.lookup<word>("nbrName"))
 {}
 
+
+template<class Type>
+Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
+(
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const word& nbrName
+)
+:
+    fixedValuePointPatchField<Type>(p, iF),
+    globalBoundary_
+    (
+        globalPolyBoundaryMesh::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )
+    ),
+    nbrName_(nbrName)
+{
+    Field<Type>::operator=(this->patchInternalField());
+}
 
 
 template<class Type>

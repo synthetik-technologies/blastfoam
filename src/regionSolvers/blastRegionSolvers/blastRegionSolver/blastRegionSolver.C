@@ -92,10 +92,10 @@ Foam::regionSolvers::blast::~blast()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::regionSolvers::blast::change()
+bool Foam::regionSolvers::blast::changeMesh()
 {
     integrator_->preUpdateMesh();
-    return fluid::change();
+    return fluid::changeMesh();
 }
 
 
