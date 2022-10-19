@@ -90,6 +90,9 @@ class AUSMPlusUp
         //- Saved flux
         tmp<surfaceScalarField> phi_;
 
+        //- Are the fluxes limited
+        bool limit_;
+
 
     // Private functions
 

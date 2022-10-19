@@ -151,7 +151,7 @@ const Foam::surfaceScalarField& Foam::masterSystem::phi() const
 }
 
 
-const Foam::surfaceScalarField& Foam::masterSystem::alphaPhi() const
+Foam::tmp<Foam::surfaceScalarField> Foam::masterSystem::alphaPhi() const
 {
     if (phases_.size() == 1)
     {
@@ -248,6 +248,34 @@ bool Foam::masterSystem::contains(const phaseModel& phase) const
     return false;
 }
 
+
+bool Foam::masterSystem::contains(const word& phaseName) const
+{
+    forAll(phases_, phasei)
+    {
+        if (phases_[phasei].name() == phaseName)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::masterSystem::alphaMax() const
+{
+    scalar minAlphaMax = 1.0;
+    forAll(phases_, phasei)
+    {
+        minAlphaMax = min(minAlphaMax, phases_[phasei].alphaMax());
+    }
+    return volScalarField::New
+    (
+        IOobject::groupName("alphaMax", group_),
+        fluid_.mesh(),
+        minAlphaMax
+    );
+}
 
 void Foam::masterSystem::update()
 {

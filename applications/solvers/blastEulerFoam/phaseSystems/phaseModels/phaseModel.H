@@ -314,6 +314,12 @@ public:
             return name_;
         }
 
+        //- Return the phase dictinoary
+        const dictionary& dict() const
+        {
+            return phaseDict_;
+        }
+
         //- Return phase index
         label index() const
         {

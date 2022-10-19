@@ -37,16 +37,23 @@ System& Foam::masterSystem::New
     const fvMesh& mesh = fluid.mesh();
     if (!mesh.foundObject<System>(System::typeName))
     {
-        System* systemPtr
-        (
-            new System(fluid)
-        );
+        autoPtr<System> systemPtr(masterSystem::NewPtr<System>(fluid));
 
         // Transfer ownership of this object to the objectRegistry
-        systemPtr->store(systemPtr);
+        systemPtr->store(systemPtr.ptr());
     }
 
     return mesh.lookupObjectRef<System>(System::typeName);
+}
+
+
+template<class System>
+Foam::autoPtr<System> Foam::masterSystem::NewPtr
+(
+    const phaseSystem& fluid
+)
+{
+    return autoPtr<System>(new System(fluid));
 }
 
 

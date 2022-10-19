@@ -104,11 +104,16 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::postUpdate()
 
 void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
 {
+    if (!mesh_.foundObject<kineticTheorySystem>(kineticTheorySystem::typeName))
+    {
+        limit_ = false;
+        return;
+    }
     const kineticTheorySystem& kt =
     (
         mesh_.lookupObject<kineticTheorySystem>
         (
-            "kineticTheorySystem"
+            kineticTheorySystem::typeName
         )
     );
 
@@ -134,6 +139,8 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
     alphaMaxf_ = fvc::interpolate(kt.alphaMax());
     alphaMinFrictionf_ =
         fvc::interpolate(kt.alphaMinFriction());
+
+    limit_ = true;
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -150,7 +157,8 @@ Foam::phaseFluxSchemes::AUSMPlusUp::AUSMPlusUp
     D_(dict_.lookupOrDefault("D", 1.0)),
     cutOffMa_(dict_.lookupOrDefault("cutOffMa", 1e-10)),
     residualAlphaRho_(dict_.lookupOrDefault("residualAlphaRho", 1e-6)),
-    residualC_(dict_.lookupOrDefault("residualC", 1e-3))
+    residualC_(dict_.lookupOrDefault("residualC", 1e-3)),
+    limit_(true)
 {}
 
 
@@ -166,6 +174,10 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::clear()
 {
     phaseFluxScheme::clear();
     phi_.clear();
+    alphapOwn_.clear();
+    alphapNei_.clear();
+    alphaMaxf_.clear();
+    alphaMinFrictionf_.clear();
 }
 
 void Foam::phaseFluxSchemes::AUSMPlusUp::createSavedFields()
@@ -241,15 +253,29 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
     scalar Ma4Own(M4(MaOwn, 1, beta_));
     scalar Ma4Nei(M4(MaNei, -1, beta_));
 
-    scalar alphaMax(getValue(facei, patchi, alphaMaxf_()));
-    scalar alphaMinFriction(getValue(facei, patchi, alphaMinFrictionf_()));
+    scalar alphaMax
+    (
+        limit_
+      ? getValue(facei, patchi, alphaMaxf_())
+      : 1.0
+    );
+    scalar alphaMinFriction
+    (
+        limit_
+      ? getValue(facei, patchi, alphaMinFrictionf_())
+      : 0.0
+    );
 
-    scalar alphaP =
-        max
+    scalar alphaP
+    (
+        limit_
+      ? max
         (
             getValue(facei, patchi, alphapOwn_()),
             getValue(facei, patchi, alphapNei_())
-        );
+        )
+      : max(alphaOwn, alphaNei)
+    );
 
     scalar zeta
     (
@@ -276,6 +302,14 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
         )
     );
 
+    scalar F
+    (
+        c12
+       *(1.0 + mag(Ma12)*(1.0 - G/2.0))
+       *alphaP
+       *(alphaOwn*rhoOwn - alphaNei*rhoNei)/(2.0*alphaMax)
+    );
+
     scalar p5Own(P5(MaOwn, 1, xi));
     scalar p5Nei(P5(MaNei, -1, xi));
 
@@ -289,13 +323,6 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
           + p5Own*pOwn + p5Nei*pNei,
             pf_
         );
-    scalar F
-    (
-        c12
-       *(1.0 + mag(Ma12)*(1.0 - G/2.0))
-       *alphaP
-       *(alphaOwn*rhoOwn - alphaNei*rhoNei)/(2.0*alphaMax)
-    );
 
     alphaRhoPhi =
         (

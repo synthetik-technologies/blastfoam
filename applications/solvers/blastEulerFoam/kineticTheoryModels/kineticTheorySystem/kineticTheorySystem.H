@@ -196,7 +196,7 @@ public:
         }
 
         //- Return maximum volume fraction
-        const volScalarField& alphaMax() const
+        virtual tmp<volScalarField> alphaMax() const
         {
             return alphaMax_;
         }

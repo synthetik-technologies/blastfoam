@@ -100,6 +100,9 @@ public:
     template<class System>
     static System& New(const phaseSystem&);
 
+    //- Return a new object pointer
+    template<class System>
+    static autoPtr<System> NewPtr(const phaseSystem&);
 
     //- Destructor
     ~masterSystem();
@@ -128,6 +131,12 @@ public:
             return phases_.size() > 1;
         }
 
+        //- Return the list of phases
+        const UPtrList<phaseModel>& phases() const
+        {
+            return phases_;
+        }
+
         //- Const refrence to list of granular indexes
         const labelList& phaseIndexes() const;
 
@@ -136,6 +145,9 @@ public:
 
         //- Return true if phase is in the system
         bool contains(const phaseModel&) const;
+
+        //- Return true if phase name is in the system
+        bool contains(const word&) const;
 
         //- Return residual alpha
         const dimensionedScalar& residualAlpha() const
@@ -156,13 +168,10 @@ public:
         const surfaceScalarField& phi() const;
 
         //- Return total volume fraction flux
-        const surfaceScalarField& alphaPhi() const;
+        tmp<surfaceScalarField> alphaPhi() const;
 
-        //- Return the list of phases
-        const UPtrList<phaseModel>& phases() const
-        {
-            return phases_;
-        }
+        //- Return the maximum volume fraction of the system
+        virtual tmp<volScalarField> alphaMax() const;
 
         //- Initialize the model after everything is constructed
         virtual void initialize()
