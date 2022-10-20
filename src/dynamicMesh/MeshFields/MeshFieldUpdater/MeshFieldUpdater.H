@@ -37,10 +37,10 @@ Description
 #ifndef MeshFieldUpdater_H
 #define MeshFieldUpdater_H
 
-#include "MeshObject.H"
-#include "polyTopoChangeMap.H"
+#include "RefineBalanceMeshObject.H"
+#include "mapPolyMesh.H"
 #include "pointMesh.H"
-#include "polyDistributionMap.H"
+#include "mapDistributePolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -85,10 +85,7 @@ public:
             return false;
         }
 
-        virtual void mapMesh(const polyMeshMap&)
-        {}
-
-        virtual void topoChange(const polyTopoChangeMap& map)
+        virtual void updateMesh(const mapPolyMesh& map)
         {
             NotImplemented;
         }
@@ -103,7 +100,7 @@ public:
         )
         {}
 
-        virtual void distribute(const polyDistributionMap& map);
+        virtual void distribute(const mapDistributePolyMesh& map);
 };
 
 #define updateFields(Type, GeoMesh)                                            \

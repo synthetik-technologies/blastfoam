@@ -39,14 +39,14 @@ namespace Foam
 defineTemplateTypeNameAndDebug(cellMeshFieldUpdater, 0);
 
 template<>
-void cellMeshFieldUpdater::topoChange(const polyTopoChangeMap& mpm)
+void cellMeshFieldUpdater::updateMesh(const mapPolyMesh& mpm)
 {
     cellMapper mapper(mpm);
     FOR_ALL_FIELD_TYPES(updateFields, cellGeoMesh);
 }
 
 template<>
-void cellMeshFieldUpdater::distribute(const polyDistributionMap& mdpm)
+void cellMeshFieldUpdater::distribute(const mapDistributePolyMesh& mdpm)
 {
     FOR_ALL_FIELD_TYPES(distributeFields, cellGeoMesh, distributeCellData);
 }
@@ -56,14 +56,14 @@ void cellMeshFieldUpdater::distribute(const polyDistributionMap& mdpm)
 defineTemplateTypeNameAndDebug(faceMeshFieldUpdater, 0);
 
 template<>
-void faceMeshFieldUpdater::topoChange(const polyTopoChangeMap& mpm)
+void faceMeshFieldUpdater::updateMesh(const mapPolyMesh& mpm)
 {
     faceMapper mapper(mpm);
     FOR_ALL_FIELD_TYPES(updateFields, faceGeoMesh);
 }
 
 template<>
-void faceMeshFieldUpdater::distribute(const polyDistributionMap& mdpm)
+void faceMeshFieldUpdater::distribute(const mapDistributePolyMesh& mdpm)
 {
     FOR_ALL_FIELD_TYPES(distributeFields, faceGeoMesh, distributeFaceData);
 }
@@ -73,14 +73,14 @@ void faceMeshFieldUpdater::distribute(const polyDistributionMap& mdpm)
 defineTemplateTypeNameAndDebug(pointMeshFieldUpdater, 0);
 
 template<>
-void pointMeshFieldUpdater::topoChange(const polyTopoChangeMap& mpm)
+void pointMeshFieldUpdater::updateMesh(const mapPolyMesh& mpm)
 {
     pointMapper mapper(pointMesh::New(mesh_), mpm);
     FOR_ALL_FIELD_TYPES(updateFields, pointGeoMesh);
 }
 
 template<>
-void pointMeshFieldUpdater::distribute(const polyDistributionMap& mdpm)
+void pointMeshFieldUpdater::distribute(const mapDistributePolyMesh& mdpm)
 {
     FOR_ALL_FIELD_TYPES(distributeFields, pointGeoMesh, distributePointData);
 }
