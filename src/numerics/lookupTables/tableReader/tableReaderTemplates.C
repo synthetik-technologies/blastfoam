@@ -114,7 +114,6 @@ bool Foam::readComponent
                 }
                 else
                 {
-                    Info<<table.m()<<" "<<table.n()<<endl;
                     FatalIOErrorInFunction(dict)
                         << "Looking up a component of a 2D table requires either" << nl
                         << "a row (\"row\") or column (\"col\") to be specified" << endl

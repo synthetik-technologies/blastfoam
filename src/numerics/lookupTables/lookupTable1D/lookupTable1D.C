@@ -427,7 +427,6 @@ void Foam::lookupTable1D<Type>::read
             dict.lookupOrDefault<label>("startRow", 0),
             dict.lookupOrDefault<Switch>("flipTable", false)
         );
-        Info<<table<<endl;
     }
 
     scalarList x;

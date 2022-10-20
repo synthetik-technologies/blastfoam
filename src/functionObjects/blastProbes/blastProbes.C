@@ -82,7 +82,7 @@ void Foam::blastProbes::findElements
     {
         const vector& location = operator[](probei);
 
-        const label celli = mesh.findCell(location, polyMesh::FACE_CENTRE_TRIS);
+        const label celli = mesh.findCell(location, polyMesh::FACE_PLANES);
 
         elementList_[probei] = celli;
         faceList_[probei] = findFaceIndex(mesh, celli, location);
