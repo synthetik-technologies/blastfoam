@@ -49,7 +49,7 @@ Foam::regionSolvers::vof::vof
 )
 :
     fluid(mesh),
-    pimple_(mesh_),
+    pimple(mesh_),
 
     p_rgh
     (
@@ -89,13 +89,15 @@ Foam::regionSolvers::vof::vof
         fvc::flux(U)
     ),
 
-    mixture_(U, phi),
+    mixture(U, phi),
 
-    phaseChange_(twoPhaseChangeModel::New(mixture_)),
-    alpha1(mixture_.alpha1()),
-    alpha2(mixture_.alpha2()),
-    rho1(mixture_.rho1()),
-    rho2(mixture_.rho2()),
+    // phaseChangePtr(twoPhaseChangeModel::New(mixture_)),
+    // phaseChange(phaseChangePtr()),
+
+    alpha1(mixture.alpha1()),
+    alpha2(mixture.alpha2()),
+    rho1(mixture.rho1()),
+    rho2(mixture.rho2()),
 
     rho
     (
@@ -136,13 +138,13 @@ Foam::regionSolvers::vof::vof
         fvc::interpolate(rho)*phi
     ),
 
-    turbulence_
+    turbulence
     (
         incompressible::momentumTransportModel::New
         (
             U,
             phi,
-            mixture_
+            mixture
         )
     ),
 
@@ -169,9 +171,9 @@ Foam::regionSolvers::vof::vof
         ),
         dimensionedScalar(dimLength, Zero)
     ),
-    ghRef(-mag(g)*hRef),
-    gh("gh", (g & mesh_.C()) - ghRef),
-    ghf("ghf", (g & mesh_.Cf()) - ghRef),
+    ghRef(mag(g)*hRef),
+    gh("gh", (g & mesh_.C()) + ghRef),
+    ghf("ghf", (g & mesh_.Cf()) + ghRef),
     p
     (
         IOobject
@@ -185,14 +187,14 @@ Foam::regionSolvers::vof::vof
         p_rgh + rho*gh
     ),
 
-    pressureReference_
+    pressureReference
     (
         p,
         p_rgh,
-        pimple_.dict()
+        pimple.dict()
     ),
 
-    correctPhi(pimple_.dict().lookupOrDefault("correctPhi", true)),
+    correctPhi(pimple.dict().lookupOrDefault("correctPhi", true)),
     cumulativeContErr(0.0),
 
     MRF(mesh_),
@@ -212,8 +214,8 @@ Foam::regionSolvers::vof::vof
         (
             "p",
             p.dimensions(),
-            pressureReference_.refValue()
-          - getRefCellValue(p, pressureReference_.refCell())
+            pressureReference.refValue()
+          - getRefCellValue(p, pressureReference.refCell())
         );
         p_rgh = p - rho*gh;
     }
@@ -243,7 +245,7 @@ Foam::regionSolvers::vof::vof
     if
     (
         !runTime_.restart()
-     || isType<twoPhaseChangeModels::noPhaseChange>(phaseChange_())
+     // || isType<twoPhaseChangeModels::noPhaseChange>(phaseChange)
     )
     {
         if (correctPhi)
@@ -271,8 +273,8 @@ Foam::regionSolvers::vof::vof
                 p_rgh,
                 surfaceScalarField("rAUf", fvc::interpolate(rAU())),
                 geometricZeroField(),
-                pressureReference_,
-                pimple_
+                pressureReference,
+                pimple
             );
         }
         else
@@ -286,8 +288,8 @@ Foam::regionSolvers::vof::vof
                 p_rgh,
                 dimensionedScalar(dimTime/rho.dimensions(), 1),
                 geometricZeroField(),
-                pressureReference_,
-                pimple_
+                pressureReference,
+                pimple
             );
         }
     }
@@ -308,7 +310,7 @@ bool Foam::regionSolvers::vof::moveMesh(const bool finalIter)
     if
     (
         correctPhi
-     && !isType<twoPhaseChangeModels::noPhaseChange>(phaseChange_())
+     // && !isType<twoPhaseChangeModels::noPhaseChange>(phaseChange)
     )
     {
         divU = new volScalarField
@@ -329,8 +331,8 @@ bool Foam::regionSolvers::vof::moveMesh(const bool finalIter)
             talphaPhi1Corr0.clear();
         }
 
-        gh = (g & mesh_.C()) - ghRef;
-        ghf = (g & mesh_.Cf()) - ghRef;
+        gh = (g & mesh_.C()) + ghRef;
+        ghf = (g & mesh_.Cf()) + ghRef;
 
         MRF.update();
 
@@ -339,7 +341,7 @@ bool Foam::regionSolvers::vof::moveMesh(const bool finalIter)
             correctPhiField();
         }
 
-        mixture_.correct();
+        mixture.correct();
 
         // if (checkMeshCourantNo)
         {
@@ -358,28 +360,27 @@ void Foam::regionSolvers::vof::solve()
     bool LTS = false;
     fvMesh& mesh = mesh_;
     const Time& runTime = runTime_;
-    immiscibleIncompressibleTwoPhaseMixture& mixture = mixture_;
 
     // --- Pressure-velocity PIMPLE corrector loop
-    while (pimple_.loop())
+    while (pimple.loop())
     {
         fvModels.correct();
 
         #include "alphaControls.H"
         #include "alphaEqnSubCycle.H"
 
-        mixture_.correct();
+        mixture.correct();
 
         solveU();
 
-        while (pimple_.correct())
+        while (pimple.correct())
         {
             solvep();
         }
 
-        if (pimple_.turbCorr())
+        if (pimple.turbCorr())
         {
-            turbulence_->correct();
+            turbulence->correct();
         }
     }
 }
@@ -405,8 +406,8 @@ void Foam::regionSolvers::vof::correctPhiField()
             p_rgh,
             surfaceScalarField("rAUf", fvc::interpolate(rAU())),
             divU(),
-            pressureReference_,
-            pimple_
+            pressureReference,
+            pimple
         );
     }
     else
@@ -418,8 +419,8 @@ void Foam::regionSolvers::vof::correctPhiField()
             p_rgh,
             surfaceScalarField("rAUf", fvc::interpolate(rAU())),
             geometricZeroField(),
-            pressureReference_,
-            pimple_
+            pressureReference,
+            pimple
         );
     }
 
@@ -438,10 +439,10 @@ void Foam::regionSolvers::vof::solveU()
     (
         fvm::ddt(rho, U) + fvm::div(rhoPhi, U)
       + MRF.DDt(rho, U)
-      + turbulence_->divDevTau(rho, U)
+      + turbulence->divDevTau(rho, U)
      ==
-        phaseChange_->SU(rho, rhoPhi, U)
-      + fvModels.source(rho, U)
+        fvModels.source(rho, U)
+      // + phaseChange.SU(rho, rhoPhi, U)
     );
     fvVectorMatrix& UEqn = tUEqn.ref();
 
@@ -449,7 +450,7 @@ void Foam::regionSolvers::vof::solveU()
 
     fvConstraints.constrain(UEqn);
 
-    if (pimple_.momentumPredictor())
+    if (pimple.momentumPredictor())
     {
         ::Foam::solve
         (
@@ -458,7 +459,7 @@ void Foam::regionSolvers::vof::solveU()
             fvc::reconstruct
             (
                 (
-                    mixture_.surfaceTensionForce()
+                    mixture.surfaceTensionForce()
                   - ghf*fvc::snGrad(rho)
                   - fvc::snGrad(p_rgh)
                 ) * mesh_.magSf()
@@ -505,7 +506,7 @@ void Foam::regionSolvers::vof::solvep()
     surfaceScalarField phig
     (
         (
-            mixture_.surfaceTensionForce()
+            mixture.surfaceTensionForce()
           - ghf*fvc::snGrad(rho)
         )*rAUf*mesh_.magSf()
     );
@@ -516,25 +517,25 @@ void Foam::regionSolvers::vof::solvep()
     constrainPressure(p_rgh, U, phiHbyA, rAUf, MRF);
 
     // Cache the phase change pressure source
-    fvScalarMatrix Sp_rgh(phaseChange_->Sp_rgh(rho, gh, p_rgh));
+    // fvScalarMatrix Sp_rgh(phaseChange.Sp_rgh(rho, gh, p_rgh));
 
-    while (pimple_.correctNonOrthogonal())
+    while (pimple.correctNonOrthogonal())
     {
         fvScalarMatrix p_rghEqn
         (
             fvc::div(phiHbyA) - fvm::laplacian(rAUf, p_rgh)
-         == Sp_rgh
+         // == Sp_rgh
         );
 
         p_rghEqn.setReference
         (
-            pressureReference_.refCell(),
-            getRefCellValue(p_rgh, pressureReference_.refCell())
+            pressureReference.refCell(),
+            getRefCellValue(p_rgh, pressureReference.refCell())
         );
 
         p_rghEqn.solve();
 
-        if (pimple_.finalNonOrthogonalIter())
+        if (pimple.finalNonOrthogonalIter())
         {
             phi = phiHbyA + p_rghEqn.flux();
 
@@ -562,8 +563,8 @@ void Foam::regionSolvers::vof::solvep()
         (
             "p",
             p.dimensions(),
-            pressureReference_.refValue()
-          - getRefCellValue(p, pressureReference_.refCell())
+            pressureReference.refValue()
+          - getRefCellValue(p, pressureReference.refCell())
         );
         p_rgh = p - rho*gh;
     }
@@ -577,10 +578,20 @@ void Foam::regionSolvers::vof::solvep()
 
 Foam::scalar Foam::regionSolvers::vof::CoNum() const
 {
-    const fvMesh& mesh = mesh_;
-    const Time& runTime = runTime_;
-    const immiscibleIncompressibleTwoPhaseMixture& mixture = mixture_;
-    #include "CourantNo.H"
+
+    scalarField sumPhi
+    (
+        fvc::surfaceSum(mag(phi))().primitiveField()
+    );
+
+    scalar CoNum = 0.5*gMax(sumPhi/mesh_.V().field())*runTime_.deltaTValue();
+
+    scalar meanCoNum =
+        0.5*(gSum(sumPhi)/gSum(mesh_.V().field()))*runTime_.deltaTValue();
+
+    Info<< mesh_.name() << ": Courant Number mean: " << meanCoNum
+        << " max: " << CoNum << endl;
+
 
     // scalar alphaCoNum = 0.0;
     // scalar meanAlphaCoNum = 0.0;
@@ -608,7 +619,12 @@ Foam::scalar Foam::regionSolvers::vof::CoNum() const
 
 Foam::scalar Foam::regionSolvers::vof::maxCo() const
 {
-    return 1.0;//runTime.controlDict().lookup<scalar>("maxAlphaCo");
+    return
+        max
+        (
+            runTime_.controlDict().lookup<scalar>("maxCo"),
+            runTime_.controlDict().lookup<scalar>("maxAlphaCo")
+        );
 }
 
 // ************************************************************************* //

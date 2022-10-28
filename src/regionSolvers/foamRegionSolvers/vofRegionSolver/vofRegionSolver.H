@@ -74,14 +74,15 @@ class vof
 protected:
 // Protected data
 
-        pimpleControl pimple_;
+        pimpleControl pimple;
 
         volScalarField p_rgh;
         volVectorField U;
         surfaceScalarField phi;
 
-        immiscibleIncompressibleTwoPhaseMixture mixture_;
-        autoPtr<twoPhaseChangeModel> phaseChange_;
+        immiscibleIncompressibleTwoPhaseMixture mixture;
+        // autoPtr<twoPhaseChangeModel> phaseChangePtr;
+        // twoPhaseChangeModel& phaseChange;
         volScalarField& alpha1;
         volScalarField& alpha2;
 
@@ -95,7 +96,7 @@ protected:
         tmp<surfaceScalarField> talphaPhi1Corr0;
         surfaceScalarField rhoPhi;
 
-        autoPtr<incompressible::momentumTransportModel> turbulence_;
+        autoPtr<incompressible::momentumTransportModel> turbulence;
 
         //- Gravity
         uniformDimensionedVectorField g;
@@ -106,7 +107,7 @@ protected:
 
         volScalarField p;
 
-        pressureReference pressureReference_;
+        Foam::pressureReference pressureReference;
 
         mutable autoPtr<volScalarField> divU;
         mutable autoPtr<surfaceVectorField> Uf;

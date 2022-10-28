@@ -1,4 +1,7 @@
+CompressibleInterFoam = $(WM_PROJECT_DIR)/applications/solvers/multiphase/compressibleInterFoam
+
 EXE_INC = \
+    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/engine/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
@@ -7,6 +10,7 @@ EXE_INC = \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/incompressible/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/phaseCompressible/lnInclude \
     -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/laminarFlameSpeed/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/chemistryModel/lnInclude \
@@ -17,7 +21,6 @@ EXE_INC = \
     -I$(LIB_SRC)/twoPhaseModels/interfaceProperties/lnInclude \
     -I$(LIB_SRC)/twoPhaseModels/incompressibleTwoPhaseMixture/lnInclude \
     -I$(LIB_SRC)/twoPhaseModels/immiscibleIncompressibleTwoPhaseMixture/lnInclude \
-    -I$(LIB_SRC)/twoPhaseModels/twoPhaseChange/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/sampling/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
@@ -26,6 +29,9 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/regionModels/lnInclude \
     -I$(BLAST_DIR)/src/regionSolvers/lnInclude \
+    -I$(CompressibleInterFoam)/twoPhaseMixtureThermo/lnInclude \
+    -I$(CompressibleInterFoam)/twoPhaseChange/lnInclude \
+    -I$(CompressibleInterFoam)/compressibleInterPhaseTransportModel/lnInclude
 
 LIB_LIBS = \
     -lengine \
@@ -41,7 +47,6 @@ LIB_LIBS = \
     -llaminarFlameSpeedModels \
     -ltwoPhaseMixture \
     -limmiscibleIncompressibleTwoPhaseMixture \
-    -ltwoPhaseChangeModels \
     -lmomentumTransportModels \
     -lincompressibleMomentumTransportModels \
     -lfiniteVolume \
@@ -50,6 +55,10 @@ LIB_LIBS = \
     -lfvConstraints \
     -lsampling \
     -lmeshTools \
+    -lcompressibleInterPhaseTransportModel \
+    -lcompressibleTwoPhaseChangeModels \
+    -ltwoPhaseMixtureThermo \
+    -ltwoPhaseSurfaceTension \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lcompressibleSystems \

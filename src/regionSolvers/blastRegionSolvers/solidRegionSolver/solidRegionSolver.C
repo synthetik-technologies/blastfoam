@@ -26,6 +26,10 @@ License
 #include "solidRegionSolver.H"
 #include "globalPolyBoundaryMesh.H"
 #include "SolverPerformance.H"
+
+#include "coupledSolidTractionFvPatchVectorField.H"
+#include "solidTractionFvPatchVectorField.H"
+
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -81,17 +85,42 @@ void Foam::regionSolvers::solid::solve()
     solid_->evolve();
     solid_->updateTotalFields();
 
+    const volVectorField& D = solid_->solutionD();
+    vector forceSum = Zero;
+    Info<< "External forces:" << incrIndent << endl;
+    forAll(D.boundaryField(), patchi)
+    {
+        const fvPatchVectorField& pD = D.boundaryField()[patchi];
+        if (isA<coupledSolidTractionFvPatchVectorField>(pD))
+        {
+            const coupledSolidTractionFvPatchVectorField& cst =
+                dynamicCast<const coupledSolidTractionFvPatchVectorField>(pD);
+            forceSum += cst.force();
+            Info<< indent << pD.patch().name() << ":" << nl << incrIndent
+                << indent << "solid = " << cst.force() << nl
+                << indent << "fluid = " << cst.forceNbr() << decrIndent << endl;
+        }
+        else if (isA<solidTractionFvPatchVectorField>(pD))
+        {
+            const solidTractionFvPatchVectorField& st =
+                dynamicCast<const solidTractionFvPatchVectorField>(pD);
+            forceSum += st.force();
+            Info<< indent << pD.patch().name() << ": "
+                << st.force() << endl;
+        }
+    }
+    Info<< indent << "Total: " << forceSum << decrIndent << endl;
+
     // Turn solver information back on
     SolverPerformance<vector>::debug = 1;
-
-    //- Clear global Patches since displacement may have changed
-    globalPolyBoundaryMesh::New(mesh_).movePoints();
 }
 
 
 Foam::scalar Foam::regionSolvers::solid::CoNum() const
 {
-    return solid_->CoNum();
+    scalar CoNum = solid_->CoNum();
+    Info<< mesh_.name() << ": Courant Number max: " << CoNum << endl;
+    return CoNum;
 }
 
 

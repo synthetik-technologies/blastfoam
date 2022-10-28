@@ -1,7 +1,12 @@
 #XiCompressibleSystem/XiCompressibleSystem.C
 #reactingCompressibleSystem/reactingCompressibleSystem.C
 
+incompressibleFluidRegionSolver/incompressibleFluidRegionSolver.C
 compressibleFluidRegionSolver/compressibleFluidRegionSolver.C
 vofRegionSolver/vofRegionSolver.C
+
+CompressibleInterFoam = $(WM_PROJECT_DIR)/applications/solvers/multiphase/compressibleInterFoam
+compressibleVofRegionSolver/compressibleVofRegionSolver.C
+$(CompressibleInterFoam)/VoFSolidificationMeltingSource/VoFSolidificationMeltingSource.C
 
 LIB = $(BLAST_LIBBIN)/libfoamRegionSolvers
