@@ -41,12 +41,9 @@ namespace fluxSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fluxSchemes::Roe::Roe
-(
-    const fvMesh& mesh
-)
+Foam::fluxSchemes::Roe::Roe(const surfaceScalarField& phi)
 :
-    fluxScheme(mesh)
+    fluxScheme(phi)
 {}
 
 
@@ -212,25 +209,15 @@ void Foam::fluxSchemes::Roe::calculateFluxes
 }
 
 
-void Foam::fluxSchemes::Roe::calculateFluxes
+Foam::scalar Foam::fluxSchemes::Roe::calculateFlux
 (
-    const scalarList& alphasOwn, const scalarList& alphasNei,
-    const scalarList& rhosOwn, const scalarList& rhosNei,
-    const scalar& rhoOwn, const scalar& rhoNei,
-    const vector& UOwn, const vector& UNei,
-    const scalar& eOwn, const scalar& eNei,
-    const scalar& pOwn, const scalar& pNei,
-    const scalar& cOwn, const scalar& cNei,
-    const vector& Sf,
-    scalar& phi,
-    scalarList& alphaPhis,
-    scalarList& alphaRhoPhis,
-    vector& rhoUPhi,
-    scalar& rhoEPhi,
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
     const label facei, const label patchi
-)
+) const
 {
-   NotImplemented;
+    NotImplemented;
+    return fOwn;
 }
 
 

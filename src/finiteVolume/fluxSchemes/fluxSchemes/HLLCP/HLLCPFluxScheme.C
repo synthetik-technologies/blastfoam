@@ -40,12 +40,9 @@ namespace fluxSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fluxSchemes::HLLCP::HLLCP
-(
-    const fvMesh& mesh
-)
+Foam::fluxSchemes::HLLCP::HLLCP(const surfaceScalarField& phi)
 :
-    fluxScheme(mesh)
+    fluxScheme(phi)
 {}
 
 
@@ -391,208 +388,20 @@ void Foam::fluxSchemes::HLLCP::calculateFluxes
 }
 
 
-void Foam::fluxSchemes::HLLCP::calculateFluxes
+Foam::scalar Foam::fluxSchemes::HLLCP::calculateFlux
 (
-    const scalarList& alphasOwn, const scalarList& alphasNei,
-    const scalarList& rhosOwn, const scalarList& rhosNei,
-    const scalar& rhoOwn, const scalar& rhoNei,
-    const vector& UOwn, const vector& UNei,
-    const scalar& eOwn, const scalar& eNei,
-    const scalar& pOwn, const scalar& pNei,
-    const scalar& cOwn, const scalar& cNei,
-    const vector& Sf,
-    scalar& phi,
-    scalarList& alphaPhis,
-    scalarList& alphaRhoPhis,
-    vector& rhoUPhi,
-    scalar& rhoEPhi,
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
     const label facei, const label patchi
-)
+) const
 {
-    NotImplemented;
-
-    scalar magSf = mag(Sf);
-    vector normal = Sf/magSf;
-
-    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
-    scalar ENei = eNei + 0.5*magSqr(UNei);
-
-    const scalar vMesh(meshPhi(facei, patchi)/magSf);
-    scalar UvOwn((UOwn & normal) - vMesh);
-    scalar UvNei((UNei & normal) - vMesh);
-
-    scalar MaOwn(UvOwn/cOwn);
-    scalar MaNei(UvNei/cNei);
-
-    scalar wOwn(sqrt(rhoOwn)/(sqrt(rhoOwn) + sqrt(rhoNei)));
-    scalar wNei(sqrt(rhoNei)/(sqrt(rhoOwn) + sqrt(rhoNei)));
-    scalar MaTilde(wOwn*MaOwn + wNei*MaNei);
-    vector UTilde(wOwn*UOwn + wNei*UNei);
-    scalar UvTilde(wOwn*UvOwn + wNei*UvNei);
-    scalar cTilde(wOwn*cOwn + wNei*cNei);
-
-    scalar SOwn(min(UvOwn - cOwn, UvTilde - cTilde));
-    scalar SNei(max(UvNei + cNei, UvTilde + cTilde));
-
-    scalar aOwn(rhoOwn*(SOwn - UvOwn));
-    scalar aNei(rhoNei*(SNei - UvNei));
-
-    scalar SStar((aNei*UvNei - aOwn*UvOwn + pOwn - pNei)/(aNei - aOwn));
-    scalar pStar
-    (
+    return
         (
-            aNei*pOwn - aOwn*pNei - aOwn*aNei*(UvOwn - UvNei)
-        )/(aNei - aOwn)
-    );
-
-    scalar theta(min(max(mag(MaOwn), mag(MaNei)), 1.0));
-    scalar pAvg(0.5*(pOwn + pNei));
-    scalar pStarStar(pStar*theta + (1.0 - theta)*pAvg);
-
-    scalar f(f_()[facei]);
-    scalar pStarStarStar(f*pStarStar + (1.0 - f)*pStar);
-
-    scalar phip =
-        (f - 1.0)
-       *SOwn*SNei/(SNei - SOwn)
-       /(1.0 + mag(MaTilde))
-       *(pNei - pOwn)/sqr(cTilde);
-
-    this->save(facei, patchi, SOwn, SOwn_);
-    this->save(facei, patchi, SNei, SNei_);
-    this->save(facei, patchi, SStar, SStar_);
-    this->save(facei, patchi, pStar, pStar_);
-    this->save(facei, patchi, phip, phip_);
-    this->save(facei, patchi, UTilde, UTilde_);
-    this->save(facei, patchi, UvOwn, UvOwn_);
-    this->save(facei, patchi, UvNei, UvNei_);
-
-    // Owner values
-    const vector rhoUOwn = rhoOwn*UOwn;
-    const scalar rhoEOwn = rhoOwn*EOwn;
-
-    const vector rhoUPhiOwn = rhoUOwn*UvOwn + pOwn*normal;
-    const scalar rhoEPhiOwn = (rhoEOwn + pOwn)*UvOwn;
-
-    // Neighbour values
-    const vector rhoUNei = rhoNei*UNei;
-    const scalar rhoENei = rhoNei*ENei;
-
-    const vector rhoUPhiNei = rhoUNei*UvNei + pNei*normal;
-    const scalar rhoEPhiNei = (rhoENei + pNei)*UvNei;
-
-    scalar p;
-    if (SOwn > 0)
-    {
-        this->save(facei, patchi, UOwn, Uf_);
-        phi = UvOwn;
-        rhoUPhi = rhoUPhiOwn;
-        rhoEPhi = rhoEPhiOwn;
-        p = pOwn;
-
-        forAll(alphasOwn, phasei)
-        {
-            alphaPhis[phasei] = alphasOwn[phasei]*phi;
-            alphaRhoPhis[phasei] = alphaPhis[phasei]*rhosOwn[phasei];
-        }
-    }
-    else if (SStar > 0)
-    {
-        const scalar dS = SOwn - SStar;
-
-        this->save
-        (
-            facei,
-            patchi,
-            (SOwn*rhoUOwn - rhoUPhiOwn + pStarStarStar*normal)
-           /(rhoOwn*(SOwn - UvOwn)),
-            Uf_
-        );
-
-        scalar f = (SOwn - UvOwn)/dS;
-        phi = SStar*f;
-
-        rhoUPhi =
-            (
-                SStar*(SOwn*rhoUOwn - rhoUPhiOwn) + SOwn*pStarStarStar*normal
-            )/dS
-          + phip*UTilde;
-        rhoEPhi =
-            SStar*(SOwn*rhoEOwn - rhoEPhiOwn + SOwn*pStar)/dS
-          + 0.5*phip*magSqr(UTilde);
-        p = pStar;
-
-        scalar phipByRho = phip/rhoOwn;
-
-        forAll(alphasOwn, phasei)
-        {
-            alphaPhis[phasei] = alphasOwn[phasei]*(phi + phipByRho);
-            alphaRhoPhis[phasei] =
-                alphasOwn[phasei]*rhosOwn[phasei]
-               *(phi + alphasOwn[phasei]*rhosOwn[phasei]*phipByRho);
-        }
-    }
-    else if (SNei > 0)
-    {
-        const scalar dS = SNei - SStar;
-
-        this->save
-        (
-            facei,
-            patchi,
-            (SNei*rhoUNei - rhoUPhiNei + pStarStarStar*normal)
-           /(rhoNei*(SNei - UvNei)),
-            Uf_
-        );
-
-        scalar f = (SNei - UvNei)/dS;
-        phi = SStar*f;
-
-        rhoUPhi =
-            (
-                SStar*(SNei*rhoUNei - rhoUPhiNei) + SNei*pStarStarStar*normal
-            )/dS
-          + phip*UTilde;
-        rhoEPhi =
-            SStar*(SNei*rhoENei - rhoEPhiNei + SNei*pStar)/dS
-          + 0.5*phip*magSqr(UTilde);
-        p = pStar;
-
-        scalar phipByRho = phip/rhoNei;
-
-        forAll(alphasOwn, phasei)
-        {
-            alphaPhis[phasei] =
-                alphasNei[phasei]*(phi + phipByRho);
-            alphaRhoPhis[phasei] =
-                alphasNei[phasei]*rhosNei[phasei]
-               *(phi + alphasNei[phasei]*rhosNei[phasei]*phipByRho);
-        }
-    }
-    else
-    {
-        this->save(facei, patchi, UNei, Uf_);
-        phi = UvNei;
-        rhoUPhi = rhoUPhiNei;
-        rhoEPhi = rhoEPhiNei;
-        p = pNei;
-
-        forAll(alphasOwn, phasei)
-        {
-            alphaPhis[phasei] = alphasNei[phasei]*phi;
-            alphaRhoPhis[phasei] = alphaPhis[phasei]*rhosNei[phasei];
-        }
-    }
-
-    phi *= magSf;
-    rhoUPhi *= magSf;
-    rhoEPhi *= magSf;
-    rhoEPhi += meshPhi(facei, patchi)*p;
-    forAll(alphasOwn, phasei)
-    {
-        alphaPhis[phasei] *= magSf;
-        alphaRhoPhis[phasei] *= magSf;
-    }
+            getValue(facei, patchi, SOwn_) > 0
+         || getValue(facei, patchi, SStar_) > 0
+          ? fOwn
+          : fNei
+        )*phi;
 }
 
 

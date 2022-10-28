@@ -267,8 +267,8 @@ void Foam::multiPhaseModel::update()
 {
     fluxScheme_->update
     (
-        alphas_,
-        rhos_,
+        *this,
+        rho_,
         U_,
         e_,
         p_,
@@ -276,12 +276,27 @@ void Foam::multiPhaseModel::update()
         phi_,
         alphaPhiPtr_(),
         alphaRhoPhi_,
-        alphaPhis_,
-        alphaRhoPhis_,
         alphaRhoUPhi_,
         alphaRhoEPhi_
     );
 
+    forAll(alphaRhoPhis_, phasei)
+    {
+        autoPtr<ReconstructionScheme<scalar>> alphaLimiter
+        (
+            ReconstructionScheme<scalar>::New
+            (
+                alphas_[phasei],
+                "alpha",
+                alphas_[phasei].group()
+            )
+        );
+        surfaceScalarField alphaOwn(alphaLimiter->interpolateOwn());
+        surfaceScalarField alphaNei(alphaLimiter->interpolateNei());
+
+        alphaPhis_[phasei] = fluxScheme_->flux(alphaOwn, alphaNei, phi_);
+        alphaRhoPhis_[phasei] = fluxScheme_->flux(rhos_[phasei], alphaOwn, alphaNei, phi_);
+    }
     phaseModel::update();
     thermoPtr_->update();
 }

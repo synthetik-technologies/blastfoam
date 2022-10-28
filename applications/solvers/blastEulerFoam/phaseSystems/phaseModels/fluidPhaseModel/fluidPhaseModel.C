@@ -68,7 +68,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
     e_(thermoPtr_->he()),
     T_(thermoPtr_->T()),
     p_(thermoPtr_->p()),
-    fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
+    fluxScheme_(phaseFluxScheme::New(phi_))
 {
     thermoPtr_->read();
 

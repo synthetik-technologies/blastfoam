@@ -166,11 +166,18 @@ public:
 
     // Member Functions
 
+        //- Return the name of the owner field
+        word ownName() const;
+
+        //- Return the name of the neighbour field
+        word neiName() const;
+
         //- Return the owner and neighbor interpolated fields
         virtual void interpolateOwnNei
         (
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>&,
-            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>&
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>&,
+            const bool overwrite = true
         ) const;
 
         //- Return the owner interpolated field

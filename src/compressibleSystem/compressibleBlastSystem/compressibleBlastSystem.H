@@ -88,8 +88,14 @@ protected:
         //- Drag matrix
         tmp<fvVectorMatrix> dragSource_;
 
+
+    // Protected member function
+
         //- Allocate models
         virtual void setModels();
+
+        //- Return energy source term
+        virtual tmp<volScalarField> rhoESource() const;
 
 
 public:
@@ -114,12 +120,6 @@ public:
 
         //- Post update
         virtual void postUpdate();
-
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const
-        {
-            return thermoPtr_->ESource();
-        }
 
         //- Add external energy source
         tmp<fvScalarMatrix>& eSource()

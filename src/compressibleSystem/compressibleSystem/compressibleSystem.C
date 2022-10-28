@@ -69,6 +69,19 @@ void Foam::compressibleSystem::setModels()
     }
 }
 
+
+Foam::tmp<Foam::volVectorField> Foam::compressibleSystem::rhoUSource() const
+{
+    return g_*rho();
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::compressibleSystem::rhoESource() const
+{
+    return rhoU_ & g_;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::compressibleSystem::compressibleSystem

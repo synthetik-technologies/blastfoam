@@ -54,7 +54,7 @@ Foam::UpwindMUSCLReconstructionScheme<Type>::interpolateOwn() const
     (
         GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            this->phi_.name() + "Own",
+            this->ownName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
@@ -94,7 +94,7 @@ Foam::UpwindMUSCLReconstructionScheme<Type>::interpolateNei() const
     (
         GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            this->phi_.name() + "Nei",
+            this->neiName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )

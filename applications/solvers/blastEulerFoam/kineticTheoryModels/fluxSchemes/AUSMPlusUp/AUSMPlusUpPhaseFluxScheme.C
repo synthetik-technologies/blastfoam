@@ -147,11 +147,10 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
 
 Foam::phaseFluxSchemes::AUSMPlusUp::AUSMPlusUp
 (
-    const fvMesh& mesh,
-    const word& name
+    const surfaceScalarField& phi
 )
 :
-    phaseFluxScheme(mesh, name),
+    phaseFluxScheme(phi),
     beta_(dict_.lookupOrDefault("beta", 0.125)),
     fa_(dict_.lookupOrDefault("fa", 1.0)),
     D_(dict_.lookupOrDefault("D", 1.0)),
@@ -368,6 +367,18 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
     alphaRhoUPhi = alphaRhoPhi*U + pf*Sf;
     alphaRhoEPhi = alphaRhoPhi*e;
 }
+
+
+Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::calculateFlux
+(
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
+    const label facei, const label patchi
+) const
+{
+    return (phi >= 0 ? fOwn : fNei)*phi;
+}
+
 
 
 Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::interpolate

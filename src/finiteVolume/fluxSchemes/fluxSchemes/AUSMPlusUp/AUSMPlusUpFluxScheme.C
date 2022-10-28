@@ -41,9 +41,9 @@ namespace fluxSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fluxSchemes::AUSMPlusUp::AUSMPlusUp(const fvMesh& mesh)
+Foam::fluxSchemes::AUSMPlusUp::AUSMPlusUp(const surfaceScalarField& phi)
 :
-    fluxScheme(mesh),
+    fluxScheme(phi),
     beta_(dict_.lookupOrDefault("beta", 0.125)),
     Kp_(dict_.lookupOrDefault("Kp", 0.25)),
     Ku_(dict_.lookupOrDefault("Ku", 0.75)),
@@ -175,100 +175,14 @@ void Foam::fluxSchemes::AUSMPlusUp::calculateFluxes
 }
 
 
-void Foam::fluxSchemes::AUSMPlusUp::calculateFluxes
+Foam::scalar Foam::fluxSchemes::AUSMPlusUp::calculateFlux
 (
-    const scalarList& alphasOwn, const scalarList& alphasNei,
-    const scalarList& rhosOwn, const scalarList& rhosNei,
-    const scalar& rhoOwn, const scalar& rhoNei,
-    const vector& UOwn, const vector& UNei,
-    const scalar& eOwn, const scalar& eNei,
-    const scalar& pOwn, const scalar& pNei,
-    const scalar& cOwn, const scalar& cNei,
-    const vector& Sf,
-    scalar& phi,
-    scalarList& alphaPhis,
-    scalarList& alphaRhoPhis,
-    vector& rhoUPhi,
-    scalar& rhoEPhi,
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
     const label facei, const label patchi
-)
+) const
 {
-    scalar magSf = mag(Sf);
-    vector normal = Sf/magSf;
-
-    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
-    scalar ENei = eNei + 0.5*magSqr(UNei);
-
-    const scalar vMesh(meshPhi(facei, patchi)/magSf);
-    scalar UvOwn((UOwn & normal) - vMesh);
-    scalar UvNei((UNei & normal) - vMesh);
-
-    scalar c12(sqrt((sqr(cOwn) + sqr(cNei))/2.0));
-
-    // Compute split Mach numbers
-    scalar MaOwn(UvOwn/c12);
-    scalar MaNei(UvNei/c12);
-
-    scalar MaBarSqr((sqr(UvOwn) + sqr(UvNei))/(2.0*sqr(c12)));
-
-    scalar Ma12
-    (
-        M4(MaOwn, 1)
-      + M4(MaNei, -1)
-      - 2.0*Kp_/fa_*max(1.0 - sigma_*MaBarSqr, 0.0)*(pNei - pOwn)
-       /((rhoOwn + rhoNei)*sqr(c12))
-    );
-
-    scalar P5Own = P5(MaOwn, 1);
-    scalar P5Nei = P5(MaNei, -1);
-
-    scalar P12
-    (
-        P5Own*pOwn
-      + P5Nei*pNei
-      - Ku_*fa_*c12*P5Own*P5Nei
-       *(rhoOwn + rhoNei)*(UvNei - UvOwn)
-    );
-
-    phi = magSf*c12*Ma12;
-
-    this->save(facei, patchi, phi, phi_);
-
-    scalar p;
-    if (Ma12 >= 0)
-    {
-        this->save(facei, patchi, UOwn, Uf_);
-        rhoUPhi = rhoOwn*UOwn;
-        rhoEPhi = rhoOwn*EOwn + pOwn;
-        p = pOwn;
-        forAll(alphasOwn, phasei)
-        {
-            alphaPhis[phasei] = alphasOwn[phasei];
-            alphaRhoPhis[phasei] = alphasOwn[phasei]*rhosOwn[phasei];
-        }
-    }
-    else
-    {
-        this->save(facei, patchi, UNei, Uf_);
-        rhoUPhi = rhoNei*UNei;
-        rhoEPhi = rhoNei*ENei + pNei;
-        p = pNei;
-        forAll(alphasNei, phasei)
-        {
-            alphaPhis[phasei] = alphasNei[phasei];
-            alphaRhoPhis[phasei] = alphasNei[phasei]*rhosNei[phasei];
-        }
-    }
-    rhoUPhi *= phi;
-    rhoUPhi += P12*Sf;
-    rhoEPhi *= phi;
-    rhoEPhi += vMesh*magSf*p;
-
-    forAll(alphasOwn, phasei)
-    {
-        alphaPhis[phasei] *= phi;
-        alphaRhoPhis[phasei] *= phi;
-    }
+    return (phi >= 0 ? fOwn : fNei)*phi;
 }
 
 

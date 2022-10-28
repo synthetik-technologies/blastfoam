@@ -83,7 +83,7 @@ Foam::granularPhaseModel::granularPhaseModel
         ),
         1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
     ),
-    fluxScheme_(phaseFluxScheme::NewSolid(fluid.mesh(), phaseName))
+    fluxScheme_(phaseFluxScheme::NewSolid(phi_))
 {
     kineticTheorySystem_.addPhase(*this);
     thermoPtr_->read();
@@ -332,7 +332,7 @@ void Foam::granularPhaseModel::update()
     //- Calculate PTE flux by using Riemann flux scheme to interpolate
     //  granular energy
     alphaRhoPTEPhi_ =
-        1.5*alphaRhoPhi_*fluxScheme_->interpolate(Theta_, "Theta");
+        1.5*fluxScheme_->flux(Theta_, alphaRho_, phi_);
 
     thermoPtr_->update();
     phaseModel::update();

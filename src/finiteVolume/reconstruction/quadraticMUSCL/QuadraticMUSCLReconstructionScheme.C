@@ -99,7 +99,7 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
     (
         GeoField::New
         (
-            this->phi_.name() + "Own",
+            this->ownName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
@@ -220,7 +220,7 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateNei() const
     (
         GeoField::New
         (
-            this->phi_.name() + "Nei",
+            this->neiName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )

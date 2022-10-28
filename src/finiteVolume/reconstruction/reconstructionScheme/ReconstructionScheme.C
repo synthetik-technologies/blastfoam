@@ -30,17 +30,72 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
+Foam::word Foam::ReconstructionScheme<Type>::ownName() const
+{
+    return IOobject::groupName(phi_.member() + "Own", phi_.group());
+}
+
+
+template<class Type>
+Foam::word Foam::ReconstructionScheme<Type>::neiName() const
+{
+    return IOobject::groupName(phi_.member() + "Nei", phi_.group());
+}
+
+template<class Type>
 void
 Foam::ReconstructionScheme<Type>::interpolateOwnNei
 (
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& tphiOwn,
-    tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& tphiNei
+    tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& tphiNei,
+    bool overwrite
 ) const
 {
     tphiOwn.clear();
-    tphiOwn = interpolateOwn();
+    if
+    (
+        !overwrite
+     && phi_.mesh().template foundObject
+        <
+            GeometricField<Type, fvsPatchField, surfaceMesh>
+        >(ownName())
+    )
+    {
+        tphiOwn = tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        (
+            phi_.mesh().template lookupObject
+            <
+                GeometricField<Type, fvsPatchField, surfaceMesh>
+            >(ownName())
+        );
+    }
+    else
+    {
+        tphiOwn = interpolateOwn();
+    }
+
     tphiNei.clear();
-    tphiNei = interpolateNei();
+    if
+    (
+        !overwrite
+     && phi_.mesh().template foundObject
+        <
+            GeometricField<Type, fvsPatchField, surfaceMesh>
+        >(neiName())
+    )
+    {
+        tphiNei = tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        (
+            phi_.mesh().template lookupObject
+            <
+                GeometricField<Type, fvsPatchField, surfaceMesh>
+            >(neiName())
+        );
+    }
+    else
+    {
+        tphiNei = interpolateNei();
+    }
 }
 
 

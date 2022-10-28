@@ -43,12 +43,9 @@ namespace fluxSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fluxSchemes::Tadmor::Tadmor
-(
-    const fvMesh& mesh
-)
+Foam::fluxSchemes::Tadmor::Tadmor(const surfaceScalarField& phi)
 :
-    fluxScheme(mesh)
+    fluxScheme(phi)
 {}
 
 
@@ -203,90 +200,16 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 }
 
 
-void Foam::fluxSchemes::Tadmor::calculateFluxes
+Foam::scalar Foam::fluxSchemes::Tadmor::calculateFlux
 (
-    const scalarList& alphasOwn, const scalarList& alphasNei,
-    const scalarList& rhosOwn, const scalarList& rhosNei,
-    const scalar& rhoOwn, const scalar& rhoNei,
-    const vector& UOwn, const vector& UNei,
-    const scalar& eOwn, const scalar& eNei,
-    const scalar& pOwn, const scalar& pNei,
-    const scalar& cOwn, const scalar& cNei,
-    const vector& Sf,
-    scalar& phi,
-    scalarList& alphaPhis,
-    scalarList& alphaRhoPhis,
-    vector& rhoUPhi,
-    scalar& rhoEPhi,
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
     const label facei, const label patchi
-)
+) const
 {
-    scalar magSf = mag(Sf);
-
-    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
-    scalar ENei = eNei + 0.5*magSqr(UNei);
-
-    scalar phivOwn(UOwn & Sf);
-    scalar phivNei(UNei & Sf);
-
-    scalar cSfOwn(cOwn*magSf);
-    scalar cSfNei(cNei*magSf);
-
-    const scalar vMesh(meshPhi(facei, patchi));
-    phivOwn -= vMesh;
-    phivNei -= vMesh;
-
-    scalar aOwn(max(max(phivOwn + cSfOwn, phivNei + cSfNei), 0.0));
-    scalar aNei(min(min(phivOwn - cSfOwn, phivNei - cSfNei), 0.0));
-
-    scalar amaxSf(max(mag(aNei), mag(aOwn)));
-    scalar aSf(-0.5*amaxSf);
-
-    phivOwn *= 0.5;
-    phivNei *= 0.5;
-
-    scalar aphivOwn(phivOwn - aSf);
-    scalar aphivNei(phivNei + aSf);
-
-    this->save(facei, patchi, aphivOwn, aPhivOwn_);
-    this->save(facei, patchi, aphivNei, aPhivNei_);
-    if (needEnergyFlux)
-    {
-        this->save(facei, patchi, aSf, aSf_);
-    }
-
-    phi = aphivOwn + aphivNei;
-    this->save
-    (
-        facei,
-        patchi,
-        0.5*(UOwn + UNei),
-        // (aphivOwn*UOwn + aphivNei*UNei)/stabilise(phi, small),
-        Uf_
-    );
-
-    forAll(alphasOwn, phasei)
-    {
-        alphaPhis[phasei] =
-            aphivOwn*alphasOwn[phasei] + aphivNei*alphasNei[phasei];
-        alphaRhoPhis[phasei] =
-            aphivOwn*alphasOwn[phasei]*rhosOwn[phasei]
-          + aphivNei*alphasNei[phasei]*rhosNei[phasei];
-    }
-
-    rhoUPhi =
-    (
-        (aphivOwn*rhoOwn*UOwn + aphivNei*rhoNei*UNei)
-      + 0.5*(pOwn + pNei)*Sf
-    );
-
-    rhoEPhi =
-    (
-        aphivOwn*(rhoOwn*EOwn + pOwn)
-      + aphivNei*(rhoNei*ENei + pNei)
-      + aSf*pOwn - aSf*pNei
-      + vMesh*0.5*(pOwn + pNei)*magSf
-    );
+    return
+        getValue(facei, patchi, aPhivOwn_)*fOwn
+      + getValue(facei, patchi, aPhivNei_)*fNei;
 }
 
 

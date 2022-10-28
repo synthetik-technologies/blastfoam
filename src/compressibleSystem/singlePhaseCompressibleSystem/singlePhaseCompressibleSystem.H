@@ -52,7 +52,7 @@ class singlePhaseCompressibleSystem
 {
 public:
 
-    TypeName("singlePhaseCompressibleSystem");
+    TypeName("singlePhase");
 
     // Constructor
     singlePhaseCompressibleSystem(const fvMesh& mesh);

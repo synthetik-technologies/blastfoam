@@ -24,6 +24,10 @@ License
 
 #include "compressibleSystem.H"
 
+#include "singlePhaseCompressibleSystem.H"
+#include "twoPhaseCompressibleSystem.H"
+#include "multiphaseCompressibleSystem.H"
+
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
@@ -54,13 +58,22 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
         phaseProperties.lookupOrDefault("phases", wordList())
     );
 
+    word ext = word::null;
+    if (phaseProperties.found("sigma"))
+    {
+        if (phaseProperties.lookupOrDefault("useInterface", true))
+        {
+            ext = "Interface";
+        }
+    }
+
     if (phases.size() < 2)
     {
         return New
         (
             mesh,
             phaseProperties,
-            "singlePhaseCompressibleSystem",
+            singlePhaseCompressibleSystem::typeName,
             singlePhaseConstructorTablePtr_
         );
     }
@@ -70,7 +83,7 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
         (
             mesh,
             phaseProperties,
-            "multiphaseCompressibleSystem",
+            multiphaseCompressibleSystem::typeName + ext,
             multiphaseConstructorTablePtr_
         );
     }
@@ -78,7 +91,7 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
         (
             mesh,
             phaseProperties,
-            "twoPhaseCompressibleSystem",
+            twoPhaseCompressibleSystem::typeName + ext,
             twoPhaseConstructorTablePtr_
         );
 }

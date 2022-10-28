@@ -58,9 +58,6 @@ class Kurganov
 
         tmp<surfaceScalarField> aPhivOwn_;
         tmp<surfaceScalarField> aPhivNei_;
-        tmp<surfaceScalarField> aOwn_;
-        tmp<surfaceScalarField> aNei_;
-        tmp<surfaceScalarField> aSf_;
 
 
     // Private functions
@@ -82,25 +79,13 @@ class Kurganov
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
+        //- Calcualte flux given own/nei values
+        virtual scalar calculateFlux
         (
-            const scalar& alphaOwn, const scalar& alphaNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& alphaRhoUPhi,
-            scalar& alphaRhoEPhi,
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
             const label facei, const label patchi = -1
-        );
+        ) const;
 
         //- Interpolate field
         virtual scalar interpolate
@@ -117,7 +102,7 @@ public:
     TypeName("Kurganov");
 
     // Constructor
-    Kurganov(const fvMesh& mesh, const word& name);
+    Kurganov(const surfaceScalarField& phi);
 
 
     //- Destructor

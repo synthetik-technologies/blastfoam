@@ -25,6 +25,9 @@ License
 
 #include "twoPhaseCompressibleSystem.H"
 #include "addToRunTimeSelectionTable.H"
+#include "MULES.C"
+#include "EulerDdtScheme.H"
+#include "gaussConvectionScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -45,21 +48,8 @@ namespace Foam
 void Foam::twoPhaseCompressibleSystem::setModels()
 {
     compressibleBlastSystem::setModels();
-
-    if (this->found("sigma"))
-    {
-        interfacePtr_.set
-        (
-            new interfaceProperties
-            (
-                alpha1_,
-                alpha2_,
-                U_,
-                *this
-            )
-        );
-    }
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -131,7 +121,9 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
     )
 {
-    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+    this->fluxScheme_ = fluxScheme::NewMulti(phi_);
+    fluxScheme_->phases().insert(alpha1_.group());
+    fluxScheme_->phases().insert(alpha2_.group());
 
     rho_ = alphaRho1_ + alphaRho2_;
 
@@ -162,27 +154,28 @@ void Foam::twoPhaseCompressibleSystem::update()
     phi_ = fvc::flux(U_);
     fluxScheme_->update
     (
-        alpha1_,
-        rho1_,
-        rho2_,
+        rho_,
         U_,
         e_,
         p_,
         speedOfSound()(),
         phi_,
-        alphaPhi_,
-        alphaRhoPhi1_,
-        alphaRhoPhi2_,
         rhoPhi_,
         rhoUPhi_,
         rhoEPhi_
     );
-    thermo_.update();
 
-    if (interfacePtr_.valid())
-    {
-        interfacePtr_->correct();
-    }
+    autoPtr<ReconstructionScheme<scalar>> alphaLimiter
+    (
+        ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group())
+    );
+    surfaceScalarField alpha1Own(alphaLimiter->interpolateOwn());
+    surfaceScalarField alpha1Nei(alphaLimiter->interpolateNei());
+
+    alphaPhi_ = fluxScheme_->flux(alpha1Own, alpha1Nei, phi_);
+    alphaRhoPhi1_ = fluxScheme_->flux(rho1_, alpha1Own, alpha1Nei, phi_);
+    alphaRhoPhi2_ = fluxScheme_->flux(rho2_, 1.0 - alpha1Own, 1.0 - alpha1Nei, phi_);
+    thermo_.update();
 }
 
 
@@ -231,30 +224,16 @@ void Foam::twoPhaseCompressibleSystem::solve()
     volVectorField deltaRhoU
     (
         "deltaRhoU",
-        fvc::div(rhoUPhi_) - g_*rho_
+        fvc::div(rhoUPhi_)
+      - rhoUSource()
     );
 
     volScalarField deltaRhoE
     (
         "deltaRhoE",
         fvc::div(rhoEPhi_)
-      - ESource()
-      - (rhoU_ & g_)
+      - rhoESource()
     );
-
-    if (interfacePtr_.valid())
-    {
-        volVectorField sTF
-        (
-            fvc::reconstruct
-            (
-                interfacePtr_->surfaceTensionForce()
-               *rho_.mesh().magSf()
-            )
-        );
-        deltaRhoU += sTF;
-        deltaRhoE += (U_ & sTF);
-    }
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);

@@ -158,7 +158,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
     thermoPtr_->solve();
 
-    deltaRhoE -= ESource();
+    deltaRhoE -= thermoPtr_->ESource();
 
     this->storeAndBlendDelta(deltaRhoU);
     this->storeAndBlendDelta(deltaRhoE);

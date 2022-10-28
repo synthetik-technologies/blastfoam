@@ -87,24 +87,13 @@ class HLLC
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
+        //- Calcualte flux given own/nei values
+        virtual scalar calculateFlux
         (
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
             const label facei, const label patchi = -1
-        );
+        ) const;
 
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux
@@ -132,7 +121,7 @@ public:
     TypeName("HLLC");
 
     // Constructor
-    HLLC(const fvMesh& mesh);
+    HLLC(const surfaceScalarField& phi);
 
 
     //- Destructor

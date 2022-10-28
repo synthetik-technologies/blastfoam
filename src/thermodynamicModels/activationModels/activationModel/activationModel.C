@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "activationModel.H"
+#include "fluxSchemeBase.H"
 #include "fvc.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -470,7 +471,11 @@ void Foam::activationModel::solve()
     dimensionedScalar smallRho("small", dimDensity, 1e-10);
 
     // Calculate the deltas using the current value
-    volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhiPtr_(), lambda_));
+    const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
+    volScalarField deltaAlphaRhoLambda
+    (
+        fvc::div(flux.flux(alphaRhoPtr_(), lambda_, flux.phi(), false))
+    );
     this->storeAndBlendDelta(deltaAlphaRhoLambda);
 
     volScalarField deltaLambda(this->delta());

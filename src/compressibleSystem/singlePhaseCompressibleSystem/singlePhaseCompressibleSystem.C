@@ -48,7 +48,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 :
     compressibleBlastSystem(mesh, word::null)
 {
-    this->fluxScheme_ = fluxScheme::NewSingle(mesh);
+    this->fluxScheme_ = fluxScheme::NewSingle(phi_);
 
     thermoPtr_->initializeModels();
     this->setModels();

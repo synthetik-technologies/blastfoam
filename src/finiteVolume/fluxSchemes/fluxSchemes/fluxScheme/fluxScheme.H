@@ -80,25 +80,6 @@ protected:
             const label facei, const label patchi = -1
         ) = 0;
 
-        //- Update
-        virtual void calculateFluxes
-        (
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhosPhis,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
-            const label facei, const label patchi = -1
-        ) = 0;
-
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux
         (
@@ -132,8 +113,8 @@ public:
             autoPtr,
             fluxScheme,
             singlePhase,
-            (const fvMesh& mesh),
-            (mesh)
+            (const surfaceScalarField& phi),
+            (phi)
         );
 
         declareRunTimeSelectionTable
@@ -141,8 +122,8 @@ public:
             autoPtr,
             fluxScheme,
             multiphase,
-            (const fvMesh& mesh),
-            (mesh)
+            (const surfaceScalarField& phi),
+            (phi)
         );
 
         declareRunTimeSelectionTable
@@ -150,12 +131,12 @@ public:
             autoPtr,
             fluxScheme,
             interface,
-            (const fvMesh& mesh),
-            (mesh)
+            (const surfaceScalarField& phi),
+            (phi)
         );
 
     // Constructor
-    fluxScheme(const fvMesh& mesh);
+    fluxScheme(const surfaceScalarField& phi);
 
 
     //- Destructor
@@ -164,9 +145,9 @@ public:
 
     // Selectors
 
-        static autoPtr<fluxScheme> NewSingle(const fvMesh& mesh);
-        static autoPtr<fluxScheme> NewMulti(const fvMesh& mesh);
-        static autoPtr<fluxScheme> NewInterface(const fvMesh& mesh);
+        static autoPtr<fluxScheme> NewSingle(const surfaceScalarField& phi);
+        static autoPtr<fluxScheme> NewMulti(const surfaceScalarField& phi);
+        static autoPtr<fluxScheme> NewInterface(const surfaceScalarField& phi);
 
 
     // Member Functions
@@ -187,42 +168,6 @@ public:
             const volScalarField& c,
             surfaceScalarField& phi,
             surfaceScalarField& rhoPhi,
-            surfaceVectorField& rhoUPhi,
-            surfaceScalarField& rhoEPhi
-        );
-
-        //- Multiphase fluxes
-        void update
-        (
-            const PtrList<volScalarField>& alphas,
-            const UPtrList<volScalarField>& rhos,
-            const volVectorField& U,
-            const volScalarField& e,
-            const volScalarField& p,
-            const volScalarField& c,
-            surfaceScalarField& phi,
-            PtrList<surfaceScalarField>& alphaPhis,
-            PtrList<surfaceScalarField>& alphaRhoPhis,
-            surfaceScalarField& rhoPhi,
-            surfaceVectorField& rhoUPhi,
-            surfaceScalarField& rhoEPhi
-        );
-
-        //- Two phase fluxes
-        void update
-        (
-            const volScalarField& alpha,
-            const volScalarField& rho1,
-            const volScalarField& rho2,
-            const volVectorField& U,
-            const volScalarField& e,
-            const volScalarField& p,
-            const volScalarField& c,
-            surfaceScalarField& phi,
-            surfaceScalarField& alphaPhi,
-            surfaceScalarField& alphaRhoPhi1,
-            surfaceScalarField& alphaRhoPhi2,
-            surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& rhoUPhi,
             surfaceScalarField& rhoEPhi
         );

@@ -116,7 +116,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         radiation_ = radiationModel::New(radDict, T_);
     }
 
-    fluxScheme_ = fluxScheme::NewSingle(mesh);
+    fluxScheme_ = fluxScheme::NewSingle(phi_);
     encode();
 }
 

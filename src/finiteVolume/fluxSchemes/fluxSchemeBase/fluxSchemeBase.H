@@ -59,12 +59,23 @@ public:
 
     static bool needEnergyFlux;
 
+    //- Return the mast flux scheme
+    static const fluxSchemeBase& findFluxScheme
+    (
+        const surfaceScalarField& phi
+    );
+
 protected:
     // Protected data
 
         //- Const reference to mesh
         const fvMesh& mesh_;
 
+        //- Volumetric flux
+        const surfaceScalarField& phi_;
+
+        //- Phases belonging to this flux scheme
+        wordHashSet phases_;
 
     // Protected member functions
 
@@ -136,6 +147,14 @@ protected:
               : xf().boundaryField()[patchi][facei];
         }
 
+        virtual scalar calculateFlux
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
+            const label facei, const label patchi = -1
+        ) const = 0;
+
+
         //- Interpolate component of a field
         virtual scalar interpolate
         (
@@ -151,7 +170,7 @@ public:
     TypeName("fluxScheme");
 
     // Constructor
-    fluxSchemeBase(const fvMesh& mesh, const word& phaseName = word::null);
+    fluxSchemeBase(const surfaceScalarField& phi);
 
 
     //- Destructor
@@ -160,56 +179,92 @@ public:
 
     // Member Functions
 
-        //- Interpolation functions
-        virtual tmp<surfaceScalarField> interpolate
-        (
-            const volScalarField& f,
-            const word& fName
-        ) const;
-        virtual tmp<surfaceVectorField> interpolate
-        (
-            const volVectorField& f,
-            const word& fName
-        ) const;
-        virtual tmp<surfaceSymmTensorField> interpolate
-        (
-            const volSymmTensorField& f,
-            const word& fName
-        ) const;
-        virtual tmp<surfaceSphericalTensorField> interpolate
-        (
-            const volSphericalTensorField& f,
-            const word& fName
-        ) const;
-        virtual tmp<surfaceTensorField> interpolate
-        (
-            const volTensorField& f,
-            const word& fName
-        ) const;
+        //- Return the volumetric flux
+        const surfaceScalarField& phi() const
+        {
+            return phi_;
+        }
 
-        //- Templated interpolation
-        template<class Type>
-        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
-        (
-            const GeometricField<Type, fvPatchField, volMesh>& f
-        ) const;
+        //- Return the slave phases
+        const wordHashSet& phases() const
+        {
+            return phases_;
+        }
 
-        //- Templated interpolation
-        template<class Type>
-        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
-        (
-            const GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
-            const GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
-            const word& name
-        ) const;
+        wordHashSet& phases()
+        {
+            return phases_;
+        }
 
-        //- Templated interpolation
-        template<class Type>
-        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolateField
-        (
-            const GeometricField<Type, fvPatchField, volMesh>& f,
-            const word& fName
-        ) const;
+        // Interpolation functions
+
+            //- Templated interpolation
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
+            (
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const bool overwrite = true
+            ) const;
+
+            //- Templated interpolation
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
+            (
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
+                const word& name
+            ) const;
+
+            //- Templated interpolation
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
+            (
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const word& fName,
+                const bool overwrite = true
+            ) const;
+
+
+        // Fluxes
+
+            //- Own/nei interpolation of f
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> flux
+            (
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const surfaceScalarField& phi,
+                const bool overwrite = true
+            ) const;
+
+            //- Own/nei interpolation of f and alphaRho
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> flux
+            (
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const volScalarField& alphaRho,
+                const surfaceScalarField& phi,
+                const bool overwrite = true
+            ) const;
+
+            //- Own/nei interpolation of f
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> flux
+            (
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const surfaceScalarField& alphaRhoOwn,
+                const surfaceScalarField& alphaRhoNei,
+                const surfaceScalarField& phi,
+                const bool overwrite = true
+            ) const;
+
+            //- Own/nei interpolation of f
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> flux
+            (
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
+                const surfaceScalarField& phi
+            ) const;
 
 
         //- Dummy write for regIOobject

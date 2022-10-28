@@ -61,7 +61,65 @@ RiemannConvectionScheme<Type>::flux
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-    return faceFlux*interpolate(faceFlux, vf);
+    if (&faceFlux == &(fluxSchemePtr_->phi()))
+    {
+        return fluxSchemePtr_->flux(vf, faceFlux);
+    }
+    else if
+    (
+        faceFlux.mesh().template foundObject<volScalarField>
+        (
+            IOobject::groupName("alphaRho", vf.group())
+        )
+    )
+    {
+        return fluxSchemePtr_->flux
+        (
+            vf,
+            faceFlux.mesh().template lookupObject<volScalarField>
+            (
+                IOobject::groupName("alphaRho", vf.group())
+            ),
+            fluxSchemePtr_->phi(),
+            false
+        );
+    }
+    else if
+    (
+        faceFlux.mesh().template foundObject<volScalarField>
+        (
+            IOobject::groupName("rho", vf.group())
+        )
+    )
+    {
+        return fluxSchemePtr_->flux
+        (
+            vf,
+            faceFlux.mesh().template lookupObject<volScalarField>
+            (
+                IOobject::groupName("rho", vf.group())
+            ),
+            fluxSchemePtr_->phi(),
+            false
+        );
+    }
+    else
+    {
+        return faceFlux*interpolate(faceFlux, vf);
+    }
+}
+
+
+template<class Type>
+tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+RiemannConvectionScheme<Type>::flux
+(
+    const surfaceScalarField& faceFlux,
+    const GeometricField<Type, fvPatchField, volMesh>& vf,
+    const volScalarField& alphaRho
+) const
+{
+    return fluxSchemePtr_->flux(vf, alphaRho, faceFlux);
 }
 
 

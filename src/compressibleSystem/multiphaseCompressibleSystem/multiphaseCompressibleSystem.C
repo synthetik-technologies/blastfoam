@@ -55,7 +55,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
 {
-    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+    this->fluxScheme_ = fluxScheme::NewMulti(phi_);
 
     forAll(alphas_, phasei)
     {
@@ -132,7 +132,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
 {
-    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+    this->fluxScheme_ = fluxScheme::NewMulti(phi_);
 
     forAll(alphas_, phasei)
     {
@@ -203,25 +203,42 @@ void Foam::multiphaseCompressibleSystem::update()
     decode();
     fluxScheme_->update
     (
-        alphas_,
-        rhos_,
+        rho_,
         U_,
         e_,
         p_,
         speedOfSound()(),
         phi_,
-        alphaPhis_,
-        alphaRhoPhis_,
         rhoPhi_,
         rhoUPhi_,
         rhoEPhi_
     );
+    forAll(alphaRhoPhis_, phasei)
+    {
+        autoPtr<ReconstructionScheme<scalar>> alphaLimiter
+        (
+            ReconstructionScheme<scalar>::New
+            (
+                alphas_[phasei],
+                "alpha",
+                alphas_[phasei].group()
+            )
+        );
+        surfaceScalarField alphaOwn(alphaLimiter->interpolateOwn());
+        surfaceScalarField alphaNei(alphaLimiter->interpolateNei());
+
+        alphaPhis_[phasei] = fluxScheme_->flux(alphaOwn, alphaNei, phi_);
+        alphaRhoPhis_[phasei] = fluxScheme_->flux(rhos_[phasei], alphaOwn, alphaNei, phi_);
+    }
     thermo_.update();
 }
 
 
 void Foam::multiphaseCompressibleSystem::solve()
 {
+
+    compressibleBlastSystem::solve();
+
     dimensionedScalar dT = rho_.time().deltaT();
     rho_ = dimensionedScalar("0", dimDensity, 0.0);
     forAll(alphas_, phasei)
@@ -247,6 +264,7 @@ void Foam::multiphaseCompressibleSystem::solve()
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
     }
+    calcAlphas();
 
     //- Store "old" total density
     rho_.storePrevIter();
@@ -259,7 +277,6 @@ void Foam::multiphaseCompressibleSystem::solve()
     }
 
     thermoPtr_->solve();
-    compressibleBlastSystem::solve();
 }
 
 

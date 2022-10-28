@@ -86,25 +86,13 @@ class HLL
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
+        //- Calcualte flux given own/nei values
+        virtual scalar calculateFlux
         (
-            const scalar& alphaOwn, const scalar& alphaNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& alphaRhoUPhi,
-            scalar& alphaRhoEPhi,
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
             const label facei, const label patchi = -1
-        );
+        ) const;
 
         //- Interpolate field
         virtual scalar interpolate
@@ -121,7 +109,7 @@ public:
     TypeName("HLL");
 
     // Constructor
-    HLL(const fvMesh& mesh, const word& name);
+    HLL(const surfaceScalarField& phi);
 
 
     //- Destructor

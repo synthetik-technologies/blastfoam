@@ -89,7 +89,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             );
     }
 
-    fluxScheme_ = fluxScheme::NewSingle(mesh);
+    fluxScheme_ = fluxScheme::NewSingle(phi_);
     encode();
 }
 

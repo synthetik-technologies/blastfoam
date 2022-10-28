@@ -106,8 +106,17 @@ protected:
         //- Solution directions
         vector solutionDs_;
 
-        //- Allocate models
-        virtual void setModels();
+
+        // Protected member functions
+
+            //- Allocate models
+            virtual void setModels();
+
+            //- Return momentum source term
+            virtual tmp<volVectorField> rhoUSource() const;
+
+            //- Return energy source term
+            virtual tmp<volScalarField> rhoESource() const;
 
 public:
 

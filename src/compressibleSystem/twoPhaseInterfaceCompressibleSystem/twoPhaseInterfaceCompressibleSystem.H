@@ -22,110 +22,65 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::twoPhaseCompressibleSystem
+    Foam::twoPhaseInterfaceCompressibleSystem
 
 Description
     Compressible system contataining two equation of states.
 
 SourceFiles
-    twoPhaseCompressibleSystem.C
+    twoPhaseInterfaceCompressibleSystem.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef twoPhaseCompressibleSystem_H
-#define twoPhaseCompressibleSystem_H
+#ifndef twoPhaseInterfaceCompressibleSystem_H
+#define twoPhaseInterfaceCompressibleSystem_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "compressibleBlastSystem.H"
-#include "twoPhaseFluidBlastThermo.H"
+#include "twoPhaseCompressibleSystem.H"
+#include "interfaceProperties.H"
 
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class twoPhaseCompressibleSystem Declaration
+                           Class twoPhaseInterfaceCompressibleSystem Declaration
 \*---------------------------------------------------------------------------*/
 
-class twoPhaseCompressibleSystem
+class twoPhaseInterfaceCompressibleSystem
 :
-    public compressibleBlastSystem
+    public twoPhaseCompressibleSystem
 {
-protected:
-// Protected data
+// Private data
 
-    //- Primitative variables
-
-        //- Equation of state
-        twoPhaseFluidBlastThermo& thermo_;
-
-        //- Volume fraction of phase 1
-        volScalarField& alpha1_;
-
-        //- Phase 1 density
-        volScalarField& rho1_;
-
-        //- Volume fraction of phase 2
-        volScalarField& alpha2_;
-
-        //- Phase 2 density
-        volScalarField& rho2_;
+    //- Surface tension model
+    autoPtr<interfaceProperties> interfacePtr_;
 
 
-    //- Conserved variables
+    //- Momentum source
+    virtual tmp<volVectorField> rhoUSource() const;
 
-        //- Phase 1 mass
-        volScalarField alphaRho1_;
-
-        //- phase 2 mass
-        volScalarField alphaRho2_;
-
-
-    //- Fluxes
-
-        //- Volume fraction flux
-        surfaceScalarField alphaPhi_;
-
-        //- Phase 1 mass flux
-        surfaceScalarField alphaRhoPhi1_;
-
-        //- Phase 2 mass flux
-        surfaceScalarField alphaRhoPhi2_;
-
-
-    //- Allocate models
-    virtual void setModels();
+    //- Total energy source
+    virtual tmp<volScalarField> rhoESource() const;
 
 
 public:
 
-    TypeName("twoPhase");
+    TypeName("twoPhaseInterface");
 
     // Constructor
-    twoPhaseCompressibleSystem(const fvMesh& mesh);
+    twoPhaseInterfaceCompressibleSystem(const fvMesh& mesh);
 
 
     //- Destructor
-    ~twoPhaseCompressibleSystem();
+    ~twoPhaseInterfaceCompressibleSystem();
 
 
     // Member functions
 
-        //- Decode primative variables
-        void decode();
-
-        //- Encode conserved variables
-        void encode();
-
         //- Update fluxes
         void update();
-
-        //- Solve sub-step stepi
-        virtual void solve();
-
-        //- Solve implicit terms
-        virtual void postUpdate();
 };
 
 

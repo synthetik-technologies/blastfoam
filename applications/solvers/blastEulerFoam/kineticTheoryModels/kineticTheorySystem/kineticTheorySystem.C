@@ -124,7 +124,7 @@ Foam::kineticTheorySystem::kineticTheorySystem
     (
         IOobject
         (
-            IOobject::groupName("alphaMinFriction_", group_),
+            IOobject::groupName("alphaMinFriction", group_),
             fluid.mesh().time().timeName(),
             fluid.mesh(),
             IOobject::NO_READ,
