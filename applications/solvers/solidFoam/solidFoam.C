@@ -49,9 +49,29 @@ Author
 
 int main(int argc, char *argv[])
 {
+    #include "addRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+
+    Info<< "Create mesh for time = "
+        << runTime.timeName() << nl << endl;
+
+    autoPtr<dynamicFvMesh> meshPtr
+    (
+        dynamicFvMesh::New
+        (
+            IOobject
+            (
+                args.optionLookupOrDefault("region", dynamicFvMesh::defaultRegion),
+                runTime.timeName(),
+                runTime,
+                IOobject::MUST_READ
+            )
+        )
+    );
+
+    dynamicFvMesh& mesh = meshPtr();
+
     #include "createFields.H"
     #include "createTimeControls.H"
     {
