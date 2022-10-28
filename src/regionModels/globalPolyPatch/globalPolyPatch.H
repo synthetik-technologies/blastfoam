@@ -285,6 +285,9 @@ public:
             ) const;
 
 
+        //- Force updat
+        virtual void update();
+
         //- Correct patch after moving points
         virtual void movePoints();
 

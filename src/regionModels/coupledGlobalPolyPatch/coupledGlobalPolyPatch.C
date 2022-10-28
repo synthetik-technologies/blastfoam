@@ -278,6 +278,13 @@ Foam::coupledGlobalPolyPatch::patchToPatchInterpolator() const
 }
 
 
+void Foam::coupledGlobalPolyPatch::update()
+{
+    globalPolyPatch::update();
+    patchToPatchInterpolator();
+}
+
+
 void Foam::coupledGlobalPolyPatch::movePoints()
 {
     clearOut();

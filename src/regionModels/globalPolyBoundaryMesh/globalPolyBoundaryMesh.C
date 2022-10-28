@@ -105,7 +105,7 @@ void Foam::globalPolyBoundaryMesh::update()
         iter
     )
     {
-        iter()->movePoints();
+        iter()->update();
     }
 }
 
@@ -116,7 +116,15 @@ bool Foam::globalPolyBoundaryMesh::movePoints()
     {
         return false;
     }
-    update();
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->movePoints();
+    }
     return true;
 }
 
@@ -162,7 +170,35 @@ void Foam::globalPolyBoundaryMesh::setDisplacementField
     {
         displacementFields_.insert(region, name);
     }
+
+    // Update any patches that have already been added
+    polyMesh& mesh = this->db().time().lookupObjectRef<polyMesh>(region);
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        if (isGlobal(mesh.boundaryMesh()[patchi]))
+        {
+            patches_
+            [
+                mesh.boundaryMesh()[patchi].name()
+            ]->setDisplacementField(name);
+        }
+    }
 }
+
+
+void Foam::globalPolyBoundaryMesh::clearOut()
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->clearOut();
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * //
 

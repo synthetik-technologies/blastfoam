@@ -118,6 +118,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
 
         // Insert my points
         pointField pts(patch.localPoints());
+
         if (displacementField_ != "none")
         {
             if (this->mesh_.foundObject<volVectorField>(displacementField_))
@@ -696,6 +697,12 @@ Foam::globalPolyPatch::globalMasterToCurrentProcPointAddr() const
 }
 
 
+void Foam::globalPolyPatch::update()
+{
+    globalPatch();
+}
+
+
 void Foam::globalPolyPatch::updateMesh()
 {
     clearOut();
@@ -704,7 +711,11 @@ void Foam::globalPolyPatch::updateMesh()
 
 void Foam::globalPolyPatch::movePoints()
 {
-    if (globalPatchPtr_.valid())
+    if (displacementField_ != "none")
+    {
+        clearOut();
+    }
+    else if (globalPatchPtr_.valid())
     {
         globalPatchPtr_->movePoints(patch_.points());
     }

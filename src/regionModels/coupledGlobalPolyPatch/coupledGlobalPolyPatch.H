@@ -248,6 +248,10 @@ public:
                 const tmp<Field<Type>>& tunmapped
             ) const;
 
+
+        //- Force update of global patch
+        virtual void update();
+
         //- Correct patch after moving points
         virtual void movePoints();
 

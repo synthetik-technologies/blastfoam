@@ -137,6 +137,9 @@ public:
             //- Inserted patch at patchi
             virtual void addPatch(const label patchi);
 
+            //- Clear mappings
+            void clearOut();
+
 
     // Operators
 
