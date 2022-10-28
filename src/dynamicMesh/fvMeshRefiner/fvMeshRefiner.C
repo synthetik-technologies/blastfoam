@@ -373,7 +373,7 @@ bool Foam::fvMeshRefiner::writeObject
     const bool write
 ) const
 {
-    bool writeOK = balancer_.write(write);
+    bool writeOK = balancer_.write(write) && refiner_->write(write);
 
     if (dumpLevel_ && write)
     {
