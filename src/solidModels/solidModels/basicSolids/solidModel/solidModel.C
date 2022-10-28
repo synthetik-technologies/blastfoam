@@ -640,7 +640,7 @@ Foam::solidModel::solidModel
             "D",
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            incremental ? IOobject::NO_READ : IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         mesh,
@@ -653,7 +653,7 @@ Foam::solidModel::solidModel
             "DD",
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            incremental ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         mesh,
@@ -887,7 +887,8 @@ void Foam::solidModel::initialize()
 {
     if (nonLinGeom() != nonLinearGeometry::UPDATED_LAGRANGIAN)
     {
-        globalPatches_.setDisplacementField(mesh_.name(), "D");
+        globalPatches_.setDisplacementField(mesh_.name(), "pointD");
+        globalPatches_.update();
     }
 }
 
@@ -1120,11 +1121,7 @@ Foam::autoPtr<Foam::solidModel> Foam::solidModel::NewLU(dynamicFvMesh& mesh)
 Foam::Switch& Foam::solidModel::checkEnforceLinear(const volScalarField& J)
 {
     scalar minJ = min(J).value();
-    reduce(minJ, minOp<scalar>());
-
     scalar maxJ = max(J).value();
-    reduce(maxJ, maxOp<scalar>());
-
     if ((minJ < 0.01) || (maxJ > 100))
     {
         DebugInfo<< "Enforcing linear geometry: "
@@ -1141,11 +1138,7 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const volScalarField& J)
 Foam::Switch& Foam::solidModel::checkEnforceLinear(const surfaceScalarField& J)
 {
     scalar minJ = min(J).value();
-    reduce(minJ, minOp<scalar>());
-
     scalar maxJ = max(J).value();
-    reduce(maxJ, maxOp<scalar>());
-
     if ((minJ < 0.01) || (maxJ > 100))
     {
         DebugInfo<< "Enforcing linear geometry: "

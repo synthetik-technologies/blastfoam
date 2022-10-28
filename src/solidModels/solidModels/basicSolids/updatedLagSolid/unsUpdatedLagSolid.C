@@ -61,9 +61,6 @@ void unsUpdatedLagSolid<IncrementalModel>::update
     // Relative deformation gradient
     relFf_ = I + this->gradDD_.T();
 
-    // Inverse relative deformation gradient
-    relFinvf_ = inv(relFf_);
-
     // Total deformation gradient
     Ff_ = relFf_ & Ff_.oldTime();
 
@@ -169,6 +166,61 @@ unsUpdatedLagSolid<IncrementalModel>::unsUpdatedLagSolid
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class IncrementalModel>
+tmp<surfaceTensorField> unsUpdatedLagSolid<IncrementalModel>::relPf() const
+{
+    tmp<surfaceTensorField> tPiolaf
+    (
+        surfaceTensorField::New
+        (
+            "Pf",
+            this->mesh(),
+            dimensionedTensor(this->sigma().dimensions(), Zero)
+        )
+    );
+    surfaceTensorField& Piolaf = tPiolaf.ref();
+    const surfaceSymmTensorField& sigmaf = this->sigmaf_;
+
+    if (this->enforceLinear())
+    {
+        forAll(Piolaf, facei)
+        {
+            Piolaf[facei] = sigmaf[facei];
+        }
+        surfaceTensorField::Boundary& bPiolaf = Piolaf.boundaryFieldRef();
+        forAll(bPiolaf, patchi)
+        {
+            fvsPatchTensorField& pPiolaf = bPiolaf[patchi];
+            const fvsPatchSymmTensorField& psigmaf = sigmaf.boundaryField()[patchi];
+            forAll(pPiolaf, facei)
+            {
+                pPiolaf[facei] = psigmaf[facei];
+            }
+        }
+        return tPiola;
+    }
+
+    forAll(Piolaf, facei)
+    {
+        Piolaf[facei] = relJf_[facei]*(inv(relFf_[facei]) & tensor(sigmaf[facei]));
+    }
+    surfaceTensorField::Boundary& bPiolaf = Piolaf.boundaryFieldRef();
+    forAll(bPiolaf, patchi)
+    {
+        fvsPatchTensorField& pPiolaf = bPiolaf[patchi];
+        const fvsPatchSymmTensorField& psigmaf = sigmaf.boundaryField()[patchi];
+        const fvsPatchScalarField& prelJf = relJf_.boundaryField()[patchi];
+        const fvsPatchTensorField& prelFf = relFf_.boundaryField()[patchi];
+        forAll(pPiolaf, facei)
+        {
+            pPiolaf[facei] = prelJf[facei]*(inv(prelFf[facei]) & tensor(psigmaf[facei]));
+        }
+    }
+
+    return tPiola;
+}
+
+
+template<class IncrementalModel>
 tmp<vectorField> unsUpdatedLagSolid<IncrementalModel>::tractionBoundarySnGrad
 (
     const vectorField& traction,
@@ -190,17 +242,19 @@ tmp<vectorField> unsUpdatedLagSolid<IncrementalModel>::tractionBoundarySnGrad
     const symmTensorField& psigma =
         this->sigmaf_.boundaryField()[patchID];
 
-    // Patch relative deformation gradient inverse
-    const tensorField& prelFinv = relFinvf_.boundaryField()[patchID];
-
-    // Patch relative Jacobian
-    const scalarField& prelJ = relJf_.boundaryField()[patchID];
 
     // Patch unit normals (updated configuration)
-    const vectorField n(patch.nf());
+    vectorField n(patch.nf());
 
-    // Patch unit normals (deformed configuration)
-    const vectorField nCurrent(prelJ*prelFinv.T() & n);
+    if (!this->enforceLinear())
+    {
+        // Patch relative deformation gradient inverse
+        tmp<tensorField> pRelFinvT(inv(relFf_.boundaryField()[patchID])().T());
+
+        // Patch unit normals (deformed configuration)
+        n = pRelFinvT & n;
+        n /= mag(n);
+    }
 
     // Return patch snGrad
     return tmp<vectorField>
@@ -209,8 +263,8 @@ tmp<vectorField> unsUpdatedLagSolid<IncrementalModel>::tractionBoundarySnGrad
         (
             (
                 (traction - n*pressure)
-              - (nCurrent & psigma)
-              + (n & (pimpK*pgradDD))
+              - (n & psigma)
+              + (patch.nf() & (pimpK*pgradDD))
             )/pimpK
         )
     );

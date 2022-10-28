@@ -165,13 +165,13 @@ void mechanics::correctDeformation(const bool useOldTime)
         ops_.eigenStructure(C[celli]);
         stretch_[celli] = sqrt(cmptMin(ops_.eigenValue()));
     }
-    const volTensorField::Boundary& pC(C.boundaryField());
+    const volTensorField::Boundary& bC(C.boundaryField());
     volScalarField::Boundary& pstretch = stretch_.boundaryFieldRef();
-    forAll(pC, patchi)
+    forAll(bC, patchi)
     {
-        forAll(pC[patchi], facei)
+        forAll(bC[patchi], facei)
         {
-            ops_.eigenStructure(pC[patchi][facei]);
+            ops_.eigenStructure(bC[patchi][facei]);
             pstretch[patchi][facei] = sqrt(cmptMin(ops_.eigenValue()));
         }
     }

@@ -55,17 +55,11 @@ void unsTotalLagSolid<IncrementalModel>::update
         Ff_ = I + this->solutionGradDf().T();
     }
 
-    // Inverse of the deformation gradient
-    Finvf_ = inv(Ff_);
-
-    // Relative deformation gradient
-    relFf_ = Ff_ & Finvf_.oldTime();
-
-    // Inverse relative deformation gradient
-    relFinvf_ = inv(relFf_);
-
     // Jacobian of the deformation gradient
     Jf_ = det(Ff_);
+
+    // Relative deformation gradient
+    relFf_ = Ff_ & inv(Ff_.oldTime());
 
     // Relative Jacobian (Jacobian of relative deformation gradient)
     relJf_ = det(relFf_);
@@ -114,30 +108,6 @@ unsTotalLagSolid<IncrementalModel>::unsTotalLagSolid
         ),
         fvc::interpolate(this->relF_)
     ),
-    Finvf_
-    (
-        IOobject
-        (
-            "Finvf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fvc::interpolate(this->Finv_)
-    ),
-    relFinvf_
-    (
-        IOobject
-        (
-            "relFinvf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fvc::interpolate(this->relF_)
-    ),
     Jf_
     (
         IOobject
@@ -168,6 +138,61 @@ unsTotalLagSolid<IncrementalModel>::unsTotalLagSolid
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class IncrementalModel>
+tmp<surfaceTensorField> unsTotalLagSolid<IncrementalModel>::Pf() const
+{
+    tmp<surfaceTensorField> tPiolaf
+    (
+        surfaceTensorField::New
+        (
+            "Pf",
+            this->mesh(),
+            dimensionedTensor(this->sigma().dimensions(), Zero)
+        )
+    );
+    surfaceTensorField& Piolaf = tPiolaf.ref();
+    const surfaceSymmTensorField& sigmaf = this->sigmaf_;
+
+    if (this->enforceLinear())
+    {
+        forAll(Piolaf, facei)
+        {
+            Piolaf[facei] = sigmaf[facei];
+        }
+        surfaceTensorField::Boundary& bPiolaf = Piolaf.boundaryFieldRef();
+        forAll(bPiolaf, patchi)
+        {
+            fvsPatchTensorField& pPiolaf = bPiolaf[patchi];
+            const fvsPatchSymmTensorField& psigmaf = sigmaf.boundaryField()[patchi];
+            forAll(pPiolaf, facei)
+            {
+                pPiolaf[facei] = psigmaf[facei];
+            }
+        }
+        return tPiolaf;
+    }
+
+    forAll(Piolaf, facei)
+    {
+        Piolaf[facei] = Jf_[facei]*(inv(Ff_[facei]) & tensor(sigmaf[facei]));
+    }
+    surfaceTensorField::Boundary& bPiolaf = Piolaf.boundaryFieldRef();
+    forAll(bPiolaf, patchi)
+    {
+        fvsPatchTensorField& pPiolaf = bPiolaf[patchi];
+        const fvsPatchSymmTensorField& psigmaf = sigmaf.boundaryField()[patchi];
+        const fvsPatchScalarField& pJf = Jf_.boundaryField()[patchi];
+        const fvsPatchTensorField& pFf = Ff_.boundaryField()[patchi];
+        forAll(pPiolaf, facei)
+        {
+            pPiolaf[facei] = pJf[facei]*(inv(pFf[facei]) & tensor(psigmaf[facei]));
+        }
+    }
+
+    return tPiolaf;
+}
+
+
+template<class IncrementalModel>
 tmp<vectorField> unsTotalLagSolid<IncrementalModel>::tractionBoundarySnGrad
 (
     const vectorField& traction,
@@ -188,15 +213,18 @@ tmp<vectorField> unsTotalLagSolid<IncrementalModel>::tractionBoundarySnGrad
     // Patch Cauchy stress
     const symmTensorField& pSigma = this->sigmaf_.boundaryField()[patchID];
 
-    // Patch total deformation gradient inverse
-    const tensorField& pFinv = Finvf_.boundaryField()[patchID];
-
     // Patch unit normals (initial configuration)
-    const vectorField n(patch.nf());
+    vectorField n(patch.nf());
 
-    // Patch unit normals (deformed configuration)
-    vectorField nCurrent(pFinv.T() & n);
-    nCurrent /= mag(nCurrent);
+    if (!this->enforceLinear())
+    {
+        // Patch total deformation gradient inverse
+        tmp<tensorField> pFinvT(inv(Ff_.boundaryField()[patchID])().T());
+
+        // Patch unit normals (deformed configuration)
+        n = pFinvT & n;
+        n /= mag(n);
+    }
 
     // Return patch snGrad
     return tmp<vectorField>
@@ -204,8 +232,8 @@ tmp<vectorField> unsTotalLagSolid<IncrementalModel>::tractionBoundarySnGrad
         new vectorField
         (
             (
-                (traction - nCurrent*pressure)
-              - (nCurrent & pSigma)
+                (traction - n*pressure)
+              - (n & pSigma)
               + pimpK*(n & pGradD)
             )/pimpK
         )

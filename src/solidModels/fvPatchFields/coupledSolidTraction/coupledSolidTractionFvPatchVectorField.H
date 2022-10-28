@@ -38,7 +38,6 @@ SourceFiles
 #define coupledSolidTractionFvPatchVectorField_H
 
 #include "solidTractionFvPatchVectorField.H"
-#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,14 +54,14 @@ class coupledSolidTractionFvPatchVectorField
 {
     // Private Data
 
-        //- Selector for mapped patch type
-        const globalPolyBoundaryMesh& globalBoundary_;
-
         //- Name of neighbour pressure field
         const word pName_;
 
         //- Reference pressure
         scalar pRef_;
+
+        //- Integrated force (neighbour)
+        vector forceNbr_;
 
 
     // Private functions
@@ -136,6 +135,12 @@ public:
 
 
     // Member Functions
+
+        //- Return integrated force on neighbour patch
+        const vector& forceNbr() const
+        {
+            return forceNbr_;
+        }
 
         //- Map (and resize as needed) from self given a mapping object
         //  Used to update fields following mesh topology change

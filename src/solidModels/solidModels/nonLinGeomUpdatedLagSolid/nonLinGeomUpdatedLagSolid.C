@@ -76,6 +76,8 @@ bool nonLinGeomUpdatedLagSolid::evolve()
     Info<< "Solving the updated Lagrangian form of the momentum equation for DD"
         << endl;
 
+    enforceLinear() = false;
+
     // Momentum equation loop
     surfaceScalarField impKf(fvc::interpolate(impK_));
     do
@@ -90,7 +92,7 @@ bool nonLinGeomUpdatedLagSolid::evolve()
           + fvc::d2dt2(rho().oldTime(), D().oldTime())
          == fvm::laplacian(impKf, DD(), "laplacian(DDD,DD)")
           - fvc::laplacian(impKf, DD(), "laplacian(DDD,DD)")
-          + fvc::div(relJ_*relFinv_ & sigma(), "div(sigma)")
+          + fvc::div(this->relP(), "div(sigma)")
           + rho()*g()
           + stabilisation().stabilisation(DD(), gradDD(), impK_)
         );

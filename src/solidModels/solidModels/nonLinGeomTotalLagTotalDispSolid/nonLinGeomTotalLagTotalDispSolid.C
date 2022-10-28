@@ -68,9 +68,6 @@ void nonLinGeomTotalLagTotalDispSolid::predict()
     // Total deformation gradient
     F_ = I + gradD().T();
 
-    // Inverse of the deformation gradient
-    Finv_ = inv(F_);
-
     // Jacobian of the deformation gradient
     J_ = det(F_);
 
@@ -126,6 +123,7 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
     Info<< "Solving the total Lagrangian form of the momentum equation for D"
         << endl;
 
+    enforceLinear() = false;
     // Momentum equation loop
     do
     {
@@ -136,9 +134,10 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
         fvVectorMatrix DEqn
         (
             rho()*fvm::d2dt2(D())
-         == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
+         ==
+            fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
           - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
-          + fvc::div(J_*Finv_ & sigma(), "div(sigma)")
+          + fvc::div(this->P(), "div(sigma)")
           + rho()*g()
           + stabilisation().stabilisation(DD(), gradDD(), impK_)
         );
@@ -165,10 +164,7 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
         update();
 
         // Check if outer loops are diverging
-        if (!enforceLinear())
-        {
-            checkEnforceLinear(J_);
-        }
+        checkEnforceLinear(J_);
 
         if (iCorr % 10 == 0)
         {

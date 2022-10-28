@@ -63,12 +63,6 @@ protected:
         //- Relative deformation gradient
         volTensorField relF_;
 
-        //- Inverse of the total deformation gradient
-        volTensorField Finv_;
-
-        //- Relative Jacobian: Jacobian of the relative deformation gradient
-        volTensorField relFinv_;
-
         //- Jacobian of total deformation gradient
         volScalarField J_;
 
@@ -116,6 +110,9 @@ public:
 
 
     // Member Functions
+
+        //- Return first Piola tensor
+        virtual tmp<volTensorField> P() const;
 
         //- Traction boundary surface normal gradient
         virtual tmp<vectorField> tractionBoundarySnGrad

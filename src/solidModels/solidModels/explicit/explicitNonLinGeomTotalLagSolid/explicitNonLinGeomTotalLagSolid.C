@@ -29,6 +29,7 @@ License
 #include "fvc.H"
 #include "fvMatrices.H"
 #include "addToRunTimeSelectionTable.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 #include "wedgeFvPatch.H"
 
 #include "operations.H"
@@ -58,7 +59,8 @@ addToRunTimeSelectionTable
 
 void explicitNonLinGeomTotalLagSolid::updateStress()
 {
-    totalLagSolid<totalDispSolid>::update();
+    totalLagSolid<totalDispSolid>::update(true);
+
     waveSpeed_ = sqrt(this->impKf_/fvc::interpolate(rho()));
 }
 
@@ -95,11 +97,8 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector
-        (
-            "zero", dimVelocity/dimTime, vector::zero
-        ),
-        "zeroGradient"
+        dimensionedVector(dimVelocity/dimTime, Zero),
+        extrapolatedCalculatedFvPatchScalarField::typeName
     )
 {
     // Update stress
@@ -143,6 +142,8 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
 
+    enforceLinear() = false;
+
     // Mesh update loop
     do
     {
@@ -151,7 +152,7 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         // Central difference scheme
 
         const dimensionedScalar& deltaT = time().deltaT();
-        const dimensionedScalar& deltaT0 = time().deltaT0();
+        const dimensionedScalar deltaT01(0.5*(deltaT + time().deltaT0()));
 
         scalar f = 1.0;
         if (mesh().relaxField(D().name()))
@@ -161,8 +162,7 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
 
         // Compute the velocity
         // Note: this is the velocity at the middle of the time-step
-        U() = U().oldTime() + f*0.5*(deltaT + deltaT0)*a_.oldTime();
-        U().correctBoundaryConditions();
+        U() = U().oldTime() + f*deltaT01*a_.oldTime();
 
         // Compute displacement
         D() = D().oldTime() + deltaT*U();
@@ -180,6 +180,8 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         // Enforce boundary conditions on the displacement field
         D().correctBoundaryConditions();
 
+        U() = (D() - D().oldTime())/deltaT;
+
         // Update the stress field based on the latest D field
         updateStress();
 
@@ -193,20 +195,16 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
             (
                 U(),
                 fvc::grad(U())(),
-                (0.5*(deltaT + deltaT0)*impKf_)()
+               (deltaT01*impKf_)()
             )
         );
 
-        volSymmTensorField stress(sigma());
         a_ =
             (
-                fvc::div
+                fvc::div(this->P(), "div(sigma)")
+              + fvc::div
                 (
-                    (
-                        mesh().Sf()
-                      & (fvc::interpolate((J_*Finv_) & stress))
-                    )
-                  + mesh().Sf()*energies_.viscousPressure
+                    mesh().Sf()*energies_.viscousPressure
                     (
                         rho(), waveSpeed_, gradD()
                     )
@@ -225,15 +223,14 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
             U(),
             D(),
             DD(),
-            sigma(),
+            this->sigma(),
             gradD(),
             gradDD(),
             stab(),
             g()
         );
 
-    }
-    while (mesh().update());
+    } while (mesh().update());
 
     return true;
 }

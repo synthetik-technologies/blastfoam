@@ -172,7 +172,7 @@ void Foam::neoHookeanElastic::correct(volSymmTensorField& sigma)
     const volSymmTensorField s(mu_*dev(bEbar));
 
     // Calculate the Cauchy stress
-    sigma = (1.0/J)*(0.5*K_*(sqr(J) - 1.0)*I + s);
+    sigma = (0.5*K_*(sqr(J) - 1.0)*I + s)/J;
 }
 
 
@@ -196,7 +196,7 @@ void Foam::neoHookeanElastic::correct(surfaceSymmTensorField& sigma)
     const surfaceSymmTensorField s(mu_*dev(bEbar));
 
     // Calculate the Cauchy stress
-    sigma = (1.0/J)*(0.5*K_*(sqr(J) - 1.0)*I + s);
+    sigma = (0.5*K_*(sqr(J) - 1.0)*I + s)/J;
 }
 
 

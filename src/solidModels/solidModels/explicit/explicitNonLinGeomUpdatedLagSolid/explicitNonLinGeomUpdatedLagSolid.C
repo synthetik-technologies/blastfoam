@@ -159,7 +159,11 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
         // avoid checker-boarding
         a_ =
             (
-                fvc::div(relJ_*relFinv_ & sigma(), "div(sigma)")
+                (
+                    enforceLinear()
+                  ? fvc::div(sigma())
+                  : fvc::div(relJ_*inv(relF_) & sigma(), "div(sigma)")
+                )
               + fvc::div
                 (
                     mesh().Sf()*energies_.viscousPressure

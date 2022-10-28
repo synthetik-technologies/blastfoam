@@ -99,20 +99,10 @@ bool nonLinGeomTotalLagSolid::evolve()
          ==
             fvm::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
           - fvc::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
-          + fvc::div(J_*Finv_ & sigma(), "div(sigma)")
+          + fvc::div(this->P(), "div(sigma)")
           + rho()*g()
           + stabilisation().stabilisation(DD(), gradDD(), impK_)
         );
-
-        // Enforce linear to improve convergence
-        if (enforceLinear())
-        {
-            // Replace nonlinear terms with linear
-            // Note: the mechanical law could still be nonlinear
-            DDEqn +=
-                fvc::div(J_*Finv_ & sigma(), "div(sigma)")
-              - fvc::div(sigma());
-        }
 
         // Under-relax the linear system
         DDEqn.relax();
@@ -165,68 +155,6 @@ bool nonLinGeomTotalLagSolid::evolve()
     U() = fvc::ddt(D());
 
     return true;
-}
-
-
-tmp<vectorField> nonLinGeomTotalLagSolid::tractionBoundarySnGrad
-(
-    const vectorField& traction,
-    const scalarField& pressure,
-    const fvPatch& patch
-) const
-{
-    // Patch index
-    const label patchID = patch.index();
-
-    // Patch implicit stiffness field
-    const scalarField& pimpK = impK_.boundaryField()[patchID];
-
-    // Patch gradient
-    const tensorField& pGradDD = gradDD().boundaryField()[patchID];
-
-    // Patch Cauchy stress
-    const symmTensorField& pSigma = sigma().boundaryField()[patchID];
-
-    // Patch unit normals (initial configuration)
-    const vectorField n(patch.nf());
-
-    if (enforceLinear())
-    {
-        // Return patch snGrad
-        return tmp<vectorField>
-        (
-            new vectorField
-            (
-                (
-                    (traction - n*pressure)
-                  - (n & pSigma)
-                  + pimpK*(n & pGradDD)
-                )/pimpK
-            )
-        );
-    }
-    else
-    {
-        // Patch total deformation gradient inverse
-        const tensorField& Finv = Finv_.boundaryField()[patchID];
-
-        // Patch unit normals (deformed configuration)
-        vectorField nCurrent(Finv.T() & n);
-        nCurrent /= mag(nCurrent);
-
-        // Return patch snGrad
-        return tmp<vectorField>
-        (
-            new vectorField
-            (
-                (
-                    (traction - nCurrent*pressure)
-                  - (nCurrent & pSigma)
-                  + pimpK*(n & pGradDD)
-                )/pimpK
-            )
-        );
-    }
 }
 
 

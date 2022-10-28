@@ -98,14 +98,6 @@ public:
 
         //- Evolve the solid solver and solve the mathematical model
         virtual bool evolve();
-
-        //- Traction boundary surface normal gradient
-        virtual tmp<vectorField> tractionBoundarySnGrad
-        (
-            const vectorField& traction,
-            const scalarField& pressure,
-            const fvPatch& patch
-        ) const;
 };
 
 

@@ -149,7 +149,7 @@ class gradientSchemes
                     dimensioned<Type>("pLimiter", dimless, pTraits<Type>::one)
                 )
             );
-// //             return tphiLimiter;
+            return tphiLimiter;
             GeoFieldType& phiLimiter(tphiLimiter.ref());
 
             // Collect min and max values from neighbourhood

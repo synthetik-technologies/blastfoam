@@ -147,9 +147,10 @@ bool unsNonLinGeomTotalLagSolid::evolve()
         fvVectorMatrix DEqn
         (
             rho()*fvm::d2dt2(D())
-         == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
+         ==
+            fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
           - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
-          + fvc::div((Jf_*Finvf_.T() & mesh().Sf()) & sigmaf_)
+          + fvc::div(mesh().Sf() & this->Pf())
           + rho()*g()
         );
 
@@ -157,16 +158,6 @@ bool unsNonLinGeomTotalLagSolid::evolve()
         if (K_.value() > SMALL)
         {
             DEqn += K_*rho()*fvm::ddt(D());
-        }
-
-        // Enforce linear to improve convergence
-        if (enforceLinear())
-        {
-            // Replace nonlinear terms with linear
-            // Note: the mechanical law could still be nonlinear
-            DEqn +=
-                fvc::div((Jf_*Finvf_.T() & mesh().Sf()) & sigmaf_)
-              - fvc::div(mesh().Sf() & sigmaf_);
         }
 
         // Under-relax the linear system

@@ -196,23 +196,7 @@ bool explicitLinGeomTotalDispSolid::evolve()
                     )
                 )
 
-//               + rho()*fvc::grad
-//                 (
-//                     (
-//                         0.06*fvc::laplacian
-//                         (
-//                             waveSpeed_*mesh().magSf(),
-//                             U(), "laplacian(DU,U)"
-//                         ) & vector::one
-//                     )
-//
-//                   + magSqr
-//                     (
-//                         1.2
-//                        *fvc::laplacian(mesh().magSf(), U(), "laplacian(DU,U)")
-//                     )
-//                 )
-                // This corresponds to Lax–Friedrichs smoothing
+                // Stabilisation
               + stab()
             )/rho()
           + g();

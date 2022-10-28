@@ -131,7 +131,12 @@ void Foam::momentumStabilisation::setMethods
             0.0
         );
     }
-
+    Info<< "stabilisationMethods:" << incrIndent << endl;
+    forAllConstIter(Map<scalar>, methods_, iter)
+    {
+        Method method = static_cast<Method>(iter.key());
+        Info<< indent << stabilisationMethods[method] << ": " << iter() << endl;
+    }
 }
 
 Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation

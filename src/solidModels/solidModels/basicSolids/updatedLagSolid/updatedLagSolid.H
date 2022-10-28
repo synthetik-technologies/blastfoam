@@ -68,10 +68,6 @@ protected:
 
         //- Relative Jacobian: Jacobian of the relative deformation
         //  gradient
-        volTensorField relFinv_;
-
-        //- Relative Jacobian: Jacobian of the relative deformation
-        //  gradient
         volScalarField relJ_;
 
         //- Implicit stiffness; coefficient of the Laplacian term
@@ -133,6 +129,10 @@ public:
 
 
         // Edit
+
+            //- Return first Piola tensor (relative deformation)
+            virtual tmp<volTensorField> relP() const;
+
             //- Traction boundary surface normal gradient
             virtual tmp<vectorField> tractionBoundarySnGrad
             (

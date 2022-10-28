@@ -29,6 +29,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "compressibleMomentumTransportModel.H"
 #include "incompressibleMomentumTransportModel.H"
+#include "globalPolyBoundaryMesh.H"
 #include "coupledGlobalPolyPatch.H"
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
@@ -84,14 +85,15 @@ Foam::coupledSolidTractionFvPatchVectorField::viscousStress
     }
     else
     {
-        NotImplemented;
+        // NotImplemented;
         // For laminar flows get the velocity
-        const fvPatchVectorField& Up
-        (
-            patch.lookupPatchField<volVectorField, vector>("U")
-        );
+        // const fvPatchVectorField& Up
+        // (
+        //     patch.lookupPatchField<volVectorField, vector>("U")
+        // );
 
-        return mu(mesh, patch)*Up.snGrad();
+        // return mu(mesh, patch)*Up.snGrad();
+        return tmp<vectorField>(new vectorField(patch.size(), Zero));
     }
 }
 
@@ -183,10 +185,6 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(p, iF),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())
-    ),
     pName_("p"),
     pRef_(0.0)
 {}
@@ -201,10 +199,6 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(p, iF),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())
-    ),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     pRef_(dict.lookup<scalar>("pRef"))
 {}
@@ -220,10 +214,6 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(tdpvf, p, iF, mapper),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())
-    ),
     pName_(tdpvf.pName_),
     pRef_(tdpvf.pRef_)
 {}
@@ -237,10 +227,6 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(tdpvf, iF),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(tdpvf.patch().boundaryMesh().mesh())
-    ),
     pName_(tdpvf.pName_),
     pRef_(tdpvf.pRef_)
 {}
@@ -280,7 +266,10 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
 
     // Get the coupling information from the mappedPatchBase
     const coupledGlobalPolyPatch& cgpp =
-        globalBoundary_(this->patch().patch());
+        globalPolyBoundaryMesh::New(this->patch().boundaryMesh().mesh())
+        (
+            this->patch().patch()
+        );
     const polyMesh& nbrMesh = cgpp.sampleMesh();
     const coupledGlobalPolyPatch& samplePatch =
         globalPolyBoundaryMesh::New(nbrMesh)(cgpp.samplePatch().patch());
@@ -291,16 +280,19 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     //- Lookup viscous stress and pressure fields
     vectorField viscousNbr(viscousStress(nbrMesh, sampleFvPatch));
 
-
     const volScalarField& pNbr =
         nbrMesh.lookupObject<volScalarField>(pName_);
-    scalarField ppNbr(pNbr.boundaryField()[samplePatchi] - pRef_);
-    // if (pNbr.dimensions() != dimPressure)
-    // {
-    //     ppNbr *= rho(nbrMesh, sampleFvPatch);
-    // }
+    scalarField ppNbr(pNbr.boundaryField()[samplePatchi]);
 
-    vector forceNbr(gSum(ppNbr*sampleFvPatch.Sf() + viscousNbr*sampleFvPatch.magSf()));
+    if (pNbr.dimensions() != dimPressure)
+    {
+        ppNbr *= rho(nbrMesh, sampleFvPatch);
+    }
+
+    if (mag(pRef_) > small)
+    {
+        ppNbr -= pRef_;
+    }
 
     this->pressure() = samplePatch.faceInterpolate(ppNbr);
 
@@ -308,22 +300,8 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     // with the neighbor boundary then mapped
     this->traction() = -samplePatch.faceInterpolate(viscousNbr);
 
-    vector force
-    (
-        gSum
-        (
-            this->pressure()*this->patch().Sf()
-          + this->traction()*this->patch().magSf()
-        )
-    );
-
-    static label index = -1;
-    // if (index != this->db().time().timeIndex())
-    {
-        index = this->db().time().timeIndex();
-        Info<< "Force acting on " << this->patch().name() << " (solid/fluid): "
-            << force << "/" << forceNbr << endl;
-    }
+    // Integratre forces
+    forceNbr_ = gSum(ppNbr*sampleFvPatch.Sf() + viscousNbr*sampleFvPatch.magSf());
     solidTractionFvPatchVectorField::updateCoeffs();
 }
 

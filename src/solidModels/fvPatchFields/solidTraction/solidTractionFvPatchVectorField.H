@@ -75,11 +75,11 @@ class solidTractionFvPatchVectorField
         //- Second order accuracy correction
         Switch secondOrder_;
 
-        //- Limiter coefficient for snGrad correction
-        scalar limitCoeff_;
-
         //- Optional: under-relaxation factor
         autoPtr<Function1<scalar>> relaxFac_;
+
+        //- Integrated force (neighbour)
+        vector force_;
 
 
 public:
@@ -145,6 +145,12 @@ public:
     // Member functions
 
         // Access
+
+            //- Return integrated force
+            const vector& force() const
+            {
+                return force_;
+            }
 
             virtual const vectorField& traction() const
             {

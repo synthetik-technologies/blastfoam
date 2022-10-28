@@ -49,8 +49,8 @@ solidTractionFvPatchVectorField
     tractionSeries_(),
     pressureSeries_(),
     secondOrder_(false),
-    limitCoeff_(1.0),
-    relaxFac_()
+    relaxFac_(),
+    force_(Zero)
 {
     fvPatchVectorField::operator=(patchInternalField());
     gradient() = vector::zero;
@@ -71,8 +71,8 @@ solidTractionFvPatchVectorField
     tractionSeries_(),
     pressureSeries_(),
     secondOrder_(dict.lookupOrDefault<Switch>("secondOrder", false)),
-    limitCoeff_(dict.lookupOrDefault<scalar>("limitCoeff", 1.0)),
-    relaxFac_()
+    relaxFac_(),
+    force_(Zero)
 {
     DebugInfo
         << "Creating " << type() << " boundary condition" << endl;
@@ -128,11 +128,6 @@ solidTractionFvPatchVectorField
     {
         DebugInfo<< "    second order correction" << endl;
     }
-
-    if (limitCoeff_)
-    {
-        DebugInfo<< "    limiter coefficient: " << limitCoeff_ << endl;
-    }
 }
 
 
@@ -151,8 +146,8 @@ solidTractionFvPatchVectorField
     tractionSeries_(stpvf.tractionSeries_, false),
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
-    limitCoeff_(stpvf.limitCoeff_),
-    relaxFac_(stpvf.relaxFac_, false)
+    relaxFac_(stpvf.relaxFac_, false),
+    force_(Zero)
 {}
 
 
@@ -169,8 +164,8 @@ solidTractionFvPatchVectorField
     tractionSeries_(stpvf.tractionSeries_, false),
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
-    limitCoeff_(stpvf.limitCoeff_),
-    relaxFac_(stpvf.relaxFac_, false)
+    relaxFac_(stpvf.relaxFac_, false),
+    force_(Zero)
 {}
 
 
@@ -222,22 +217,37 @@ void solidTractionFvPatchVectorField::updateCoeffs()
         pressure_ = pressureSeries_->value(this->db().time().value());
     }
 
+    force_ =
+        gSum
+        (
+            this->pressure()*this->patch().Sf()
+          + this->traction()*this->patch().magSf()
+        );
+
     // Lookup the solidModel object
     const solidModel& solMod = lookupSolidModel(patch().boundaryMesh().mesh());
 
     // Set surface-normal gradient on the patch corresponding to the desired
     // traction
-    scalar relaxFac = 1.0;
     if (relaxFac_.valid())
     {
-        relaxFac = relaxFac_->value(this->db().time().value());
+        scalar relaxFac = relaxFac_->value(this->db().time().value());
+        gradient() =
+            relaxFac*solMod.tractionBoundarySnGrad
+            (
+                traction_, pressure_, patch()
+            )
+          + (1.0 - relaxFac)*gradient();
     }
-    gradient() =
-        relaxFac*solMod.tractionBoundarySnGrad
-        (
-            traction_, pressure_, patch()
-        )
-      + (1.0 - relaxFac)*gradient();
+    else
+    {
+        gradient() =
+            solMod.tractionBoundarySnGrad
+            (
+                traction_, pressure_, patch()
+            );
+    }
+
 
     fixedGradientFvPatchVectorField::updateCoeffs();
 }
@@ -261,13 +271,13 @@ void solidTractionFvPatchVectorField::evaluate
         );
 
     // Face unit normals
-    const vectorField n(patch().nf());
+    const vectorField n(this->patch().nf());
 
     // Delta vectors
     const vectorField delta(patch().delta());
 
     // Non-orthogonal correction vectors
-    const vectorField k((I - sqr(n)) & delta);
+    const vectorField k((tensor::I - sqr(n)) & delta);
 
     if (secondOrder_)
     {
@@ -326,7 +336,6 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
     }
 
     writeEntry(os, "secondOrder", secondOrder_);
-    writeEntry(os, "limitCoeff", limitCoeff_);
     writeEntry(os, "value", *this);
 }
 

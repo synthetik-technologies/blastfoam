@@ -25,6 +25,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "totalLagSolid.H"
+#include "transformGeometricField.H"
 #include "fvc.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -51,23 +52,23 @@ void totalLagSolid<IncrementalModel>::update(const bool correctSigma)
         // Total deformation gradient
         F_ = I + this->gradD().T();
     }
-
-    // Inverse of the deformation gradient
-    Finv_ = inv(F_);
-
-    // Relative deformation gradient
-    relF_ = F_ & Finv_.oldTime();
-
-    // Inverse relative deformation gradient
-    relFinv_ = inv(relF_);
+    F_.correctBoundaryConditions();
 
     // Jacobian of the deformation gradient
     J_ = det(F_);
 
-    // Relative Jacobian (Jacobian of relative deformation gradient)
-    relJ_ = det(relF_);
-
     this->checkEnforceLinear(J_);
+
+    if (!this->enforceLinear())
+    {
+        // Relative deformation gradient
+        relF_ = F_ & inv(F_.oldTime());
+        relF_.correctBoundaryConditions();
+
+        // Relative Jacobian (Jacobian of relative deformation gradient)
+        relJ_ = det(relF_);
+    }
+
 
     // Update stress
     if (correctSigma)
@@ -113,33 +114,15 @@ totalLagSolid<IncrementalModel>::totalLagSolid
         ),
         I + this->gradDD().T()
     ),
-    Finv_
-    (
-        IOobject
-        (
-            "Finv",
-            mesh.time().timeName(),
-            mesh
-        ),
-        inv(F_)
-    ),
-    relFinv_
-    (
-        IOobject
-        (
-            "relFinv",
-            mesh.time().timeName(),
-            mesh
-        ),
-        inv(relF_)
-    ),
     J_
     (
         IOobject
         (
             "J",
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
         ),
         det(F_)
     ),
@@ -159,6 +142,61 @@ totalLagSolid<IncrementalModel>::totalLagSolid
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class IncrementalModel>
+tmp<volTensorField> totalLagSolid<IncrementalModel>::P() const
+{
+    tmp<volTensorField> tPiola
+    (
+        volTensorField::New
+        (
+            "P",
+            this->mesh(),
+            dimensionedTensor(this->sigma().dimensions(), Zero)
+        )
+    );
+    volTensorField& Piola = tPiola.ref();
+    const volSymmTensorField& sigma = this->sigma();
+
+    if (this->enforceLinear())
+    {
+        forAll(Piola, celli)
+        {
+            Piola[celli] = sigma[celli];
+        }
+        volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+        forAll(bPiola, patchi)
+        {
+            fvPatchTensorField& pPiola = bPiola[patchi];
+            const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+            forAll(pPiola, facei)
+            {
+                pPiola[facei] = psigma[facei];
+            }
+        }
+        return tPiola;
+    }
+
+    forAll(Piola, celli)
+    {
+        Piola[celli] = J_[celli]*(inv(F_[celli]) & tensor(sigma[celli]));
+    }
+    volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+    forAll(bPiola, patchi)
+    {
+        fvPatchTensorField& pPiola = bPiola[patchi];
+        const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+        const fvPatchScalarField& pJ = J_.boundaryField()[patchi];
+        const fvPatchTensorField& pF = F_.boundaryField()[patchi];
+        forAll(pPiola, facei)
+        {
+            pPiola[facei] = pJ[facei]*(inv(pF[facei]) & tensor(psigma[facei]));
+        }
+    }
+
+    return tPiola;
+}
+
 
 template<class IncrementalModel>
 tmp<vectorField> totalLagSolid<IncrementalModel>::tractionBoundarySnGrad
@@ -181,15 +219,18 @@ tmp<vectorField> totalLagSolid<IncrementalModel>::tractionBoundarySnGrad
     // Patch Cauchy stress
     const symmTensorField& pSigma = this->sigma().boundaryField()[patchID];
 
-    // Patch total deformation gradient inverse
-    const tensorField& pFinv = Finv_.boundaryField()[patchID];
-
     // Patch unit normals (initial configuration)
-    const vectorField n(patch.nf());
+    vectorField nCurrent(patch.nf());
 
-    // Patch unit normals (deformed configuration)
-    vectorField nCurrent(pFinv.T() & n);
-    nCurrent /= mag(nCurrent);
+    if (!this->enforceLinear())
+    {
+        // Patch total deformation gradient inverse
+        const tensorField pFinv(inv(F_.boundaryField()[patchID]));
+
+        // Patch unit normals (deformed configuration)
+        nCurrent = pFinv.T() & nCurrent;
+        nCurrent /= mag(nCurrent);
+    }
 
     // Return patch snGrad
     return tmp<vectorField>
@@ -199,7 +240,7 @@ tmp<vectorField> totalLagSolid<IncrementalModel>::tractionBoundarySnGrad
             (
                 (traction - nCurrent*pressure)
               - (nCurrent & pSigma)
-              + pimpK*(n & pGradD)
+              + pimpK*(patch.nf() & pGradD)
             )/pimpK
         )
     );
