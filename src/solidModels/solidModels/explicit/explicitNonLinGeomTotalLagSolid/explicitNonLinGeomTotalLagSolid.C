@@ -154,15 +154,9 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         const dimensionedScalar& deltaT = time().deltaT();
         const dimensionedScalar deltaT01(0.5*(deltaT + time().deltaT0()));
 
-        scalar f = 1.0;
-        if (mesh().relaxField(D().name()))
-        {
-            f = mesh().fieldRelaxationFactor(D().name());
-        }
-
         // Compute the velocity
         // Note: this is the velocity at the middle of the time-step
-        U() = U().oldTime() + f*deltaT01*a_.oldTime();
+        U() = U().oldTime() + deltaT01*a_.oldTime();
 
         // Compute displacement
         D() = D().oldTime() + deltaT*U();
@@ -181,6 +175,11 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         D().correctBoundaryConditions();
 
         U() = (D() - D().oldTime())/deltaT;
+
+        if (mesh().relaxField(U().name()))
+        {
+            U() *= mesh().fieldRelaxationFactor(U().name());
+        }
 
         // Update the stress field based on the latest D field
         updateStress();
