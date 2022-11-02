@@ -151,7 +151,6 @@ Foam::twoPhaseCompressibleSystem::~twoPhaseCompressibleSystem()
 void Foam::twoPhaseCompressibleSystem::update()
 {
     decode();
-    phi_ = fvc::flux(U_);
     fluxScheme_->update
     (
         rho_,
@@ -173,8 +172,56 @@ void Foam::twoPhaseCompressibleSystem::update()
     surfaceScalarField alpha1Nei(alphaLimiter->interpolateNei());
 
     alphaPhi_ = fluxScheme_->flux(alpha1Own, alpha1Nei, phi_);
-    alphaRhoPhi1_ = fluxScheme_->flux(rho1_, alpha1Own, alpha1Nei, phi_);
-    alphaRhoPhi2_ = fluxScheme_->flux(rho2_, 1.0 - alpha1Own, 1.0 - alpha1Nei, phi_);
+
+    tmp<surfaceScalarField> talphaRho1Own, talphaRho1Nei;
+    tmp<surfaceScalarField> talphaRho2Own, talphaRho2Nei;
+    {
+        tmp<surfaceScalarField> trho1Own, trho1Nei;
+        autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+        (
+            ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group())
+        );
+        rho1Limiter->interpolateOwnNei(trho1Own, trho1Nei);
+
+        tmp<surfaceScalarField> trho2Own, trho2Nei;
+        autoPtr<ReconstructionScheme<scalar>> rho2Limiter
+        (
+            ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group())
+        );
+        rho2Limiter->interpolateOwnNei(trho2Own, trho2Nei);
+
+        talphaRho1Own = surfaceScalarField::New
+        (
+            rho1Limiter->ownName(alphaRho1_.name()),
+            alpha1Own*trho1Own
+        );
+        talphaRho1Nei = surfaceScalarField::New
+        (
+            rho1Limiter->neiName(alphaRho1_.name()),
+            alpha1Nei*trho1Nei
+        );
+
+        talphaRho2Own = surfaceScalarField::New
+        (
+            rho2Limiter->ownName(alphaRho2_.name()),
+            (1.0 - alpha1Own)*trho2Own
+        );
+        talphaRho2Nei = surfaceScalarField::New
+        (
+            rho2Limiter->ownName(alphaRho2_.name()),
+            (1.0 - alpha1Nei)*trho2Nei
+        );
+        static bool cached = false;
+        if (!cached)
+        {
+            mesh().addTemporaryObject(talphaRho1Own().name());
+            mesh().addTemporaryObject(talphaRho1Nei().name());
+            mesh().addTemporaryObject(talphaRho2Own().name());
+            mesh().addTemporaryObject(talphaRho2Nei().name());
+        }
+    }
+    alphaRhoPhi1_ = fluxScheme_->flux(talphaRho1Own(), talphaRho1Nei(), phi_);
+    alphaRhoPhi2_ = fluxScheme_->flux(talphaRho2Own(), talphaRho2Nei(), phi_);
     thermo_.update();
 }
 

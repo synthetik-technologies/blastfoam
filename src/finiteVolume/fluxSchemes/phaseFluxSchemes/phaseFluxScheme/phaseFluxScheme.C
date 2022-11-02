@@ -72,7 +72,7 @@ void Foam::phaseFluxScheme::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("fluxScheme::Uf", phaseName_),
+                fieldName("Uf"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -86,7 +86,7 @@ void Foam::phaseFluxScheme::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("fluxScheme::pf", phaseName_),
+                fieldName("pf"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -100,7 +100,7 @@ void Foam::phaseFluxScheme::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("phaseFluxScheme::alphaf", phaseName_),
+                fieldName("alphaf"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -117,7 +117,7 @@ Foam::tmp<Foam::surfaceVectorField> Foam::phaseFluxScheme::Uf() const
         return Uf_();
     }
     FatalErrorInFunction
-        << IOobject::groupName("phaseFluxScheme::Uf", phaseName_)
+        << fieldName("Uf")
         << " has not been set." << nl
         << abort(FatalError);
 
@@ -132,7 +132,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::pf() const
         return pf_();
     }
     FatalErrorInFunction
-        << IOobject::groupName("phaseFluxScheme::pf", phaseName_)
+        << fieldName("pf")
         << " has not been set." << nl
         << abort(FatalError);
 
@@ -147,7 +147,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::alphaf() const
         return alphaf_();
     }
     FatalErrorInFunction
-        << IOobject::groupName("phaseFluxScheme::alphaf", phaseName_)
+        << fieldName("alphaf")
         << " has not been set." << nl
         << abort(FatalError);
 

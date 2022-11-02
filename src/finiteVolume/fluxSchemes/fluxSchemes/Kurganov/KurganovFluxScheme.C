@@ -45,7 +45,7 @@ namespace fluxSchemes
 
 Foam::fluxSchemes::Kurganov::Kurganov(const surfaceScalarField& phi)
 :
-    fluxScheme(phi)
+    Tadmor(phi)
 {}
 
 
@@ -59,58 +59,26 @@ Foam::fluxSchemes::Kurganov::~Kurganov()
 
 void Foam::fluxSchemes::Kurganov::clear()
 {
-    fluxScheme::clear();
-    aPhivOwn_.clear();
-    aPhivNei_.clear();
+    Tadmor::clear();
     aOwn_.clear();
     aNei_.clear();
-    aSf_.clear();
 }
 
 
 void Foam::fluxSchemes::Kurganov::createSavedFields()
 {
-    fluxScheme::createSavedFields();
-    if (aPhivOwn_.valid())
+    Tadmor::createSavedFields();
+    if (aOwn_.valid())
     {
         return;
     }
-
-    aPhivOwn_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "Kurganov::aPhivOwn",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-        )
-    );
-    aPhivNei_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "Kurganov::aPhivNei",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-        )
-    );
     aOwn_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
         (
             IOobject
             (
-                "Kurganov::aOwn",
+                fieldName("aOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -124,32 +92,12 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
         (
             IOobject
             (
-                "Kurganov::aNei",
+                fieldName("aNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
             mesh_,
             dimensionedScalar("0", dimless, 0.0)
-        )
-    );
-
-    if (!needEnergyFlux)
-    {
-        return;
-    }
-
-    aSf_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "Kurganov::aSf",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
         )
     );
 }
@@ -240,19 +188,6 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
 }
 
 
-Foam::scalar Foam::fluxSchemes::Kurganov::calculateFlux
-(
-    const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
-    const label facei, const label patchi
-) const
-{
-    return
-        getValue(facei, patchi, aPhivOwn_)*fOwn
-      + getValue(facei, patchi, aPhivNei_)*fNei;
-}
-
-
 Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
 (
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -290,13 +225,6 @@ Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
     const label facei, const label patchi
 ) const
 {
-    const scalar aphivOwn(getValue(facei, patchi, aPhivOwn_));
-    const scalar aphivNei(getValue(facei, patchi, aPhivNei_));
-    const scalar phi(aphivOwn + aphivNei);
-    if (mag(phi) > small)
-    {
-        return (fOwn*aphivOwn + fNei*aphivNei)/phi;
-    }
     return
         getValue(facei, patchi, aOwn_)*fOwn
       + getValue(facei, patchi, aNei_)*fNei;

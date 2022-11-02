@@ -75,7 +75,7 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLLC::SOwn", phaseName_),
+                fieldName("SOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -89,7 +89,7 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLLC::SNei", phaseName_),
+                fieldName("SNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -103,7 +103,7 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLLC::SStar", phaseName_),
+                fieldName("SStar"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -232,6 +232,20 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
 }
 
 
+Foam::scalar Foam::phaseFluxSchemes::HLLC::interpolate
+(
+    const scalar& fOwn, const scalar& fNei,
+    const label facei, const label patchi
+) const
+{
+    return
+            getValue(facei, patchi, SOwn_) > 0
+         || getValue(facei, patchi, SStar_) > 0
+          ? fOwn
+          : fNei;
+}
+
+
 Foam::scalar Foam::phaseFluxSchemes::HLLC::calculateFlux
 (
     const scalar& fOwn, const scalar& fNei,
@@ -248,19 +262,5 @@ Foam::scalar Foam::phaseFluxSchemes::HLLC::calculateFlux
         )*phi;
 }
 
-
-Foam::scalar Foam::phaseFluxSchemes::HLLC::interpolate
-(
-    const scalar& fOwn, const scalar& fNei,
-    const bool rho,
-    const label facei, const label patchi
-) const
-{
-    return
-            getValue(facei, patchi, SOwn_) > 0
-         || getValue(facei, patchi, SStar_) > 0
-          ? fOwn
-          : fNei;
-}
 
 // ************************************************************************* //

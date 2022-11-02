@@ -39,6 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fluxScheme.H"
+#include "TadmorFluxScheme.H"
 
 namespace Foam
 {
@@ -51,16 +52,13 @@ namespace fluxSchemes
 
 class Kurganov
 :
-    public fluxScheme
+    public Tadmor
 {
 
     // Saved variables
 
-        tmp<surfaceScalarField> aPhivOwn_;
-        tmp<surfaceScalarField> aPhivNei_;
         tmp<surfaceScalarField> aOwn_;
         tmp<surfaceScalarField> aNei_;
-        tmp<surfaceScalarField> aSf_;
 
 
     // Private functions
@@ -80,14 +78,6 @@ class Kurganov
             scalar& rhoEPhi,
             const label facei, const label patchi = -1
         );
-
-        //- Calcualte flux given own/nei values
-        virtual scalar calculateFlux
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const scalar& phi,
-            const label facei, const label patchi = -1
-        ) const;
 
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux

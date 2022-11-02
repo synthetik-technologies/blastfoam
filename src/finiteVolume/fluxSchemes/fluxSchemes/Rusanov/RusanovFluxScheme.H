@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2022 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,24 +22,24 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fluxSchemes::HLL
+    Foam::fluxSchemes::Rusanov
 
 Description
 
     References:
     \verbatim
-        Toro, E.F., Spruce, M., Speares, W.  (1993).
-        Restoration of the contact surface in the HLL-Riemann solver.
-        Shock Waves, 4, 25-34.
+        Rusanov, P. L.  (1981).
+        Approximate Riemann solvers, parameter vectors, and difference schemes.
+        Journal of Computational Physics, 43(2), 357-372.
     \endverbatim
 
 SourceFiles
-    HLLFluxScheme.C
+    RusanovFluxScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef HLLFluxScheme_H
-#define HLLFluxScheme_H
+#ifndef RusanovFluxScheme_H
+#define RusanovFluxScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,20 +51,18 @@ namespace fluxSchemes
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class HLL Declaration
+                           Class Rusanov Declaration
 \*---------------------------------------------------------------------------*/
 
-class HLL
+class Rusanov
 :
     public fluxScheme
 {
 
     // Saved variables
-
-        tmp<surfaceScalarField> SOwn_;
-        tmp<surfaceScalarField> SNei_;
-        tmp<surfaceScalarField> UvOwn_;
-        tmp<surfaceScalarField> UvNei_;
+    tmp<surfaceScalarField> phivOwn_;
+    tmp<surfaceScalarField> phivNei_;
+    tmp<surfaceScalarField> lambda_;
 
 
     // Private functions
@@ -115,14 +113,14 @@ class HLL
 public:
 
     //- Runtime type information
-    TypeName("HLL");
+    TypeName("Rusanov");
 
     // Constructor
-    HLL(const surfaceScalarField& phi);
+    Rusanov(const surfaceScalarField& phi);
 
 
     //- Destructor
-    virtual ~HLL();
+    virtual ~Rusanov();
 
 
     // Member Functions
@@ -132,12 +130,6 @@ public:
 
         //- Allocate saved fields
         virtual void createSavedFields();
-
-        //- Return Anti-diffustion coefficient for a given volume fraction
-        virtual tmp<surfaceScalarField> AD
-        (
-            const volScalarField& alpha
-        ) const;
 };
 
 

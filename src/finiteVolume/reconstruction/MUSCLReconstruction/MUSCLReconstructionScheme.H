@@ -81,10 +81,11 @@ public:
         MUSCLReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         )
         :
-            MUSCLType(phi, is),
+            MUSCLType(phi, is, overwrite),
             Limiter(is)
         {}
 

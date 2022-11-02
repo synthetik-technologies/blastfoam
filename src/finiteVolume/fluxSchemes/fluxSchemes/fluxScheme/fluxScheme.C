@@ -70,7 +70,7 @@ void Foam::fluxScheme::createSavedFields()
         (
             IOobject
             (
-                "fluxScheme::Uf",
+                fieldName("Uf"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -88,124 +88,10 @@ Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::Uf() const
     }
     return surfaceVectorField::New
     (
-        "fluxScheme::Uf",
+       fieldName("Uf"),
         mesh_,
         dimensionedVector("0", dimVelocity, Zero)
     );
-}
-
-
-Foam::tmp<Foam::surfaceScalarField>
-Foam::fluxScheme::AD(const volScalarField& alpha) const
-{
-    return mag((this->Uf_() & alpha.mesh().Sf())/alpha.mesh().magSf());
-}
-
-
-Foam::tmp<Foam::surfaceScalarField>
-Foam::fluxScheme::snGradAlpha
-(
-    const volScalarField& alpha
-) const
-{
-    const fvMesh& mesh = alpha.mesh();
-    const labelList& own = mesh.owner();
-    const labelList& nei = mesh.neighbour();
-    const surfaceVectorField& Sf = mesh.Sf();
-    const surfaceScalarField& magSf = mesh.magSf();
-    surfaceVectorField n(Sf/magSf);
-
-    surfaceScalarField alphaf
-    (
-        surfaceInterpolationScheme<scalar>::New
-        (
-            mesh,
-            IStringStream("linear vanLeer")()
-        )->interpolate(alpha)
-    );
-    volVectorField gradAlpha(fvc::grad(alphaf));
-    tmp<surfaceScalarField> tsnGradAlpha
-    (
-        surfaceScalarField::New
-        (
-            IOobject::groupName("snGradAlpha", alpha.group()),
-            fvc::snGrad(alpha)
-        )
-    );
-    surfaceScalarField& snGradAlpha = tsnGradAlpha.ref();
-    forAll(alphaf, facei)
-    {
-        if
-        (
-            ((gradAlpha[own[facei]] & n[facei])*snGradAlpha[facei]) > 0
-         && mag(gradAlpha[own[facei]] & n[facei])
-          < mag(snGradAlpha[facei])
-        )
-        {
-            alphaf[facei] = alpha[nei[facei]];
-        }
-        else if
-        (
-            mag
-            (
-                mag(gradAlpha[own[facei]] & n[facei])
-              - mag(snGradAlpha[facei])
-            ) < small
-        )
-        {
-            alphaf[facei] = 0.5*(alpha[own[facei]] + alpha[nei[facei]]);
-        }
-        else
-        {
-            alphaf[facei] = alpha[own[facei]];
-        }
-    }
-    gradAlpha = fvc::grad(alphaf);
-
-    forAll(snGradAlpha, facei)
-    {
-        snGradAlpha[facei] =
-            minMagSqrOp<vector>()
-            (
-                gradAlpha[own[facei]],
-                gradAlpha[nei[facei]]
-            ) & Sf[facei];
-    }
-    surfaceScalarField::Boundary& bsnGradAlpha
-    (
-        snGradAlpha.boundaryFieldRef()
-    );
-    forAll(bsnGradAlpha, patchi)
-    {
-        const fvPatch& patch = mesh.boundary()[patchi];
-        const fvPatchField<vector>& pgradAlpha
-        (
-            gradAlpha.boundaryField()[patchi]
-        );
-        const vectorField& pSf(Sf.boundaryField()[patchi]);
-        scalarField& psnGradAlpha(bsnGradAlpha[patchi]);
-
-        if (patch.coupled())
-        {
-            vectorField gradAlphaOwn(pgradAlpha.patchInternalField());
-            vectorField gradAlphaNei(pgradAlpha.patchNeighbourField());
-            forAll(gradAlphaOwn, facei)
-            {
-                snGradAlpha[facei] =
-                    minMagSqrOp<vector>()
-                    (
-                        gradAlphaOwn[facei],
-                        gradAlphaNei[facei]
-                    ) & pSf[facei];
-            }
-        }
-        else
-        {
-            psnGradAlpha = pgradAlpha & pSf;
-        }
-    }
-    snGradAlpha.dimensions().reset(snGradAlpha.dimensions()*dimVolume);
-    return tsnGradAlpha;
 }
 
 
@@ -249,6 +135,14 @@ void Foam::fluxScheme::update
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
     const surfaceScalarField& rhoOwn = trhoOwn();
     const surfaceScalarField& rhoNei = trhoNei();
+
+    static bool cached = false;
+    if (!cached)
+    {
+        cached = true;
+        mesh_.addTemporaryObject(rhoOwn.name());
+        mesh_.addTemporaryObject(rhoNei.name());
+    }
 
     tmp<surfaceVectorField> tUOwn, tUNei;
     ULimiter->interpolateOwnNei(tUOwn, tUNei);
@@ -333,12 +227,11 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     const volScalarField& p
 ) const
 {
+    tmp<surfaceScalarField> trhoOwn, trhoNei;
     autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        ReconstructionScheme<scalar>::New(rho, "rho")
+        ReconstructionScheme<scalar>::New(rho, "rho", false)
     );
-    tmp<surfaceScalarField> trhoOwn;
-    tmp<surfaceScalarField> trhoNei;
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
     surfaceScalarField& rhoOwn = trhoOwn.ref();
     surfaceScalarField& rhoNei = trhoNei.ref();
@@ -346,7 +239,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     // Interpolate fields
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U", false)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
@@ -354,26 +247,37 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p", false)
     );
 
-    tmp<surfaceVectorField> tUOwn;
-    tmp<surfaceVectorField> tUNei;
+    tmp<surfaceVectorField> tUOwn, tUNei;
     ULimiter->interpolateOwnNei(tUOwn, tUNei);
     const surfaceVectorField& UOwn = tUOwn();
     const surfaceVectorField& UNei = tUNei();
 
-    tmp<surfaceScalarField> teOwn;
-    tmp<surfaceScalarField> teNei;
+    tmp<surfaceScalarField> teOwn, teNei;
     eLimiter->interpolateOwnNei(teOwn, teNei);
     const surfaceScalarField& eOwn = teOwn();
     const surfaceScalarField& eNei = teNei();
 
-    tmp<surfaceScalarField> tpOwn;
-    tmp<surfaceScalarField> tpNei;
+    tmp<surfaceScalarField> tpOwn, tpNei;
     pLimiter->interpolateOwnNei(tpOwn, tpNei);
     const surfaceScalarField& pOwn = tpOwn();
     const surfaceScalarField& pNei = tpNei();
+
+    static bool cached = false;
+    if (!cached)
+    {
+        cached = true;
+        mesh_.addTemporaryObject(rhoOwn.name());
+        mesh_.addTemporaryObject(rhoNei.name());
+        mesh_.addTemporaryObject(UOwn.name());
+        mesh_.addTemporaryObject(UNei.name());
+        mesh_.addTemporaryObject(eOwn.name());
+        mesh_.addTemporaryObject(eNei.name());
+        mesh_.addTemporaryObject(pOwn.name());
+        mesh_.addTemporaryObject(pNei.name());
+    }
 
     tmp<surfaceScalarField> tmpPhi
     (

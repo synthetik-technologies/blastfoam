@@ -86,19 +86,18 @@ class HLL
             const label facei, const label patchi = -1
         );
 
+        //- Interpolate field
+        virtual scalar interpolate
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const label facei, const label patchi = -1
+        ) const;
+
         //- Calcualte flux given own/nei values
         virtual scalar calculateFlux
         (
             const scalar& fOwn, const scalar& fNei,
             const scalar& phi,
-            const label facei, const label patchi = -1
-        ) const;
-
-        //- Interpolate field
-        virtual scalar interpolate
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const bool rho,
             const label facei, const label patchi = -1
         ) const;
 

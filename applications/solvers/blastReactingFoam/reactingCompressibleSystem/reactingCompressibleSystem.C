@@ -169,7 +169,7 @@ void Foam::reactingCompressibleSystem::solve()
             {
                 volScalarField deltaRhoY
                 (
-                    fvc::div(fluxScheme_->interpolate(Ys[i], "Yi")*rhoPhi_)
+                    fvc::div(fluxScheme_->flux(Ys[i], rho_, phi_, false))
                 );
 
                 this->storeAndBlendOld(Ys[i], false);

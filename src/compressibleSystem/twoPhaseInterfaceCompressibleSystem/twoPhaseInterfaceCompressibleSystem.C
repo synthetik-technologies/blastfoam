@@ -97,7 +97,6 @@ Foam::twoPhaseInterfaceCompressibleSystem::~twoPhaseInterfaceCompressibleSystem(
 void Foam::twoPhaseInterfaceCompressibleSystem::update()
 {
     decode();
-    phi_ = fvc::flux(U_);
     fluxScheme_->update
     (
         rho_,
@@ -115,11 +114,56 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
     (
         fvc::interpolate(alpha1_, phi_, "reconstruct(alpha)")
     );
-    surfaceScalarField alpha2f(1.0 - alpha1f);
 
+    tmp<surfaceScalarField> talphaRho1Own, talphaRho1Nei;
+    tmp<surfaceScalarField> talphaRho2Own, talphaRho2Nei;
+    {
+        autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+        (
+            ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group())
+        );
+
+        autoPtr<ReconstructionScheme<scalar>> rho2Limiter
+        (
+            ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group())
+        );
+
+        talphaRho1Own = surfaceScalarField::New
+        (
+            rho1Limiter->ownName(alphaRho1_.name()),
+            alpha1f*rho1Limiter->interpolateOwn()
+        );
+        talphaRho1Nei = surfaceScalarField::New
+        (
+            rho1Limiter->neiName(alphaRho1_.name()),
+            alpha1f*rho1Limiter->interpolateNei()
+        );
+
+        surfaceScalarField alpha2f(1.0 - alpha1f);
+        talphaRho2Own = surfaceScalarField::New
+        (
+            rho2Limiter->ownName(alphaRho2_.name()),
+            alpha2f*rho2Limiter->interpolateOwn()
+        );
+        talphaRho2Nei = surfaceScalarField::New
+        (
+            rho2Limiter->ownName(alphaRho2_.name()),
+            alpha2f*rho2Limiter->interpolateNei()
+        );
+        static bool cached = false;
+        if (!cached)
+        {
+            mesh().addTemporaryObject(talphaRho1Own().name());
+            mesh().addTemporaryObject(talphaRho1Nei().name());
+            mesh().addTemporaryObject(talphaRho2Own().name());
+            mesh().addTemporaryObject(talphaRho2Nei().name());
+        }
+    }
     alphaPhi_ = alpha1f*phi_;
-    alphaRhoPhi1_ = fluxScheme_->flux(rho1_, alpha1f, alpha1f, phi_);
-    alphaRhoPhi2_ = rhoPhi_ - alphaRhoPhi1_;
+    alphaRhoPhi1_ =// phi_*(pos0(phi_)*talphaRho1Own + neg(phi_)*talphaRho1Nei);
+        fluxScheme_->flux(talphaRho1Own(), talphaRho1Nei(), phi_);
+    alphaRhoPhi2_ =// rhoPhi_ - alphaRhoPhi1_;
+        fluxScheme_->flux(talphaRho2Own(), talphaRho2Nei(), phi_);
     thermo_.update();
 
     interfacePtr_->correct();

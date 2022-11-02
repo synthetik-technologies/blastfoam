@@ -143,19 +143,18 @@ class AUSMPlusUp
             const label facei, const label patchi = -1
         );
 
-        virtual scalar calculateFlux
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const scalar& phi,
-            const label facei, const label patchi = -1
-        ) const;
-
-
         //- Interpolate field
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool rho,
+            const label facei, const label patchi = -1
+        ) const;
+
+        //- Compute flux using own/nei values
+        virtual scalar calculateFlux
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
             const label facei, const label patchi = -1
         ) const;
 

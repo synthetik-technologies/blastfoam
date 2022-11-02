@@ -44,7 +44,7 @@ namespace phaseFluxSchemes
 
 Foam::phaseFluxSchemes::Kurganov::Kurganov(const surfaceScalarField& phi)
 :
-    phaseFluxScheme(phi)
+    Tadmor(phi)
 {}
 
 
@@ -58,45 +58,46 @@ Foam::phaseFluxSchemes::Kurganov::~Kurganov()
 
 void Foam::phaseFluxSchemes::Kurganov::clear()
 {
-    phaseFluxScheme::clear();
-    aPhivOwn_.clear();
-    aPhivNei_.clear();
+    Tadmor::clear();
+    aOwn_.clear();
+    aNei_.clear();
 }
 
 
 void Foam::phaseFluxSchemes::Kurganov::createSavedFields()
 {
-    phaseFluxScheme::createSavedFields();
-    if (aPhivOwn_.valid())
+    Tadmor::createSavedFields();
+    if (aOwn_.valid())
     {
         return;
     }
-    aPhivOwn_ = tmp<surfaceScalarField>
+
+    aOwn_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
         (
             IOobject
             (
-                "Kurganov::aPhivOwn",
+                fieldName("aOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
             mesh_,
-            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+            dimensionedScalar("0", dimless, 0.0)
         )
     );
-    aPhivNei_ = tmp<surfaceScalarField>
+    aNei_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
         (
             IOobject
             (
-                "Kurganov::aPhivNei",
+                fieldName("aNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
             mesh_,
-            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+            dimensionedScalar("0", dimless, 0.0)
         )
     );
 }
@@ -154,6 +155,8 @@ void Foam::phaseFluxSchemes::Kurganov::calculateFluxes
 
     this->save(facei, patchi, aphivOwn, aPhivOwn_);
     this->save(facei, patchi, aphivNei, aPhivNei_);
+    this->save(facei, patchi, aOwn, aOwn_);
+    this->save(facei, patchi, aNei, aNei_);
 
     this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
 
@@ -179,34 +182,15 @@ void Foam::phaseFluxSchemes::Kurganov::calculateFluxes
 }
 
 
-Foam::scalar Foam::phaseFluxSchemes::Kurganov::calculateFlux
+Foam::scalar Foam::phaseFluxSchemes::Kurganov::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
     const label facei, const label patchi
 ) const
 {
     return
-        getValue(facei, patchi, aPhivOwn_)*fOwn
-      + getValue(facei, patchi, aPhivNei_)*fNei;
-}
-
-
-Foam::scalar Foam::phaseFluxSchemes::Kurganov::interpolate
-(
-    const scalar& fOwn, const scalar& fNei,
-    const bool rho,
-    const label facei, const label patchi
-) const
-{
-    const scalar aphivOwn(getValue(facei, patchi, aPhivOwn_));
-    const scalar aphivNei(getValue(facei, patchi, aPhivNei_));
-    const scalar phi(aphivOwn + aphivNei);
-    if (mag(phi) > small)
-    {
-        return (fOwn*aphivOwn + fNei*aphivNei)/phi;
-    }
-    return 0.5*(fOwn + fNei);
+        getValue(facei, patchi, aOwn_)*fOwn
+      + getValue(facei, patchi, aNei_)*fNei;
 }
 
 // ************************************************************************* //

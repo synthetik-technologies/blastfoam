@@ -42,7 +42,7 @@ namespace fluxSchemes
 
 Foam::fluxSchemes::HLLCP::HLLCP(const surfaceScalarField& phi)
 :
-    fluxScheme(phi)
+    HLLC(phi)
 {}
 
 
@@ -56,84 +56,25 @@ Foam::fluxSchemes::HLLCP::~HLLCP()
 
 void Foam::fluxSchemes::HLLCP::clear()
 {
-    fluxScheme::clear();
-    SOwn_.clear();
-    SNei_.clear();
-    SStar_.clear();
-    UvOwn_.clear();
-    UvNei_.clear();
+    HLLC::clear();
+    phip_.clear();
+    UTilde_.clear();
 }
 
 void Foam::fluxSchemes::HLLCP::createSavedFields()
 {
-    fluxScheme::createSavedFields();
+    HLLC::createSavedFields();
     if (SOwn_.valid())
     {
         return;
     }
-    SOwn_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "HLLCP::SOwn",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity, 0.0)
-        )
-    );
-    SNei_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "HLLCP::SNei",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity, 0.0)
-        )
-    );
-    SStar_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "HLLCP::SStar",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity, 0.0)
-        )
-    );
-    pStar_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "HLLCP::pStar",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimPressure, 0.0)
-        )
-    );
     phip_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
         (
             IOobject
             (
-                "HLLCP::phip",
+                fieldName("phip"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -147,40 +88,12 @@ void Foam::fluxSchemes::HLLCP::createSavedFields()
         (
             IOobject
             (
-                "HLLCP::UTilde",
+                fieldName("UTilde"),
                 mesh_.time().timeName(),
                 mesh_
             ),
             mesh_,
             dimensionedVector("0", dimVelocity, Zero)
-        )
-    );
-    UvOwn_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "HLLCP::UvOwn",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity, 0.0)
-        )
-    );
-    UvNei_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "HLLCP::UvNei",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity, 0.0)
         )
     );
 }
@@ -191,7 +104,7 @@ void Foam::fluxSchemes::HLLCP::preUpdate(const volScalarField& p)
     (
         IOobject
         (
-            "fCells",
+            fieldName("fCells"),
             p.time().timeName(),
             mesh_
         ),
@@ -291,11 +204,15 @@ void Foam::fluxSchemes::HLLCP::calculateFluxes
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
     this->save(facei, patchi, SStar, SStar_);
-    this->save(facei, patchi, pStar, pStar_);
-    this->save(facei, patchi, phip, phip_);
-    this->save(facei, patchi, UTilde, UTilde_);
-    this->save(facei, patchi, UvOwn, UvOwn_);
-    this->save(facei, patchi, UvNei, UvNei_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, pStar, pStarOwn_);
+        this->save(facei, patchi, pStar, pStarNei_);
+        this->save(facei, patchi, phip, phip_);
+        this->save(facei, patchi, UTilde, UTilde_);
+        this->save(facei, patchi, UvOwn, UvOwn_);
+        this->save(facei, patchi, UvNei, UvNei_);
+    }
 
     // Owner values
     const vector rhoUOwn = rhoOwn*UOwn;
@@ -388,23 +305,6 @@ void Foam::fluxSchemes::HLLCP::calculateFluxes
 }
 
 
-Foam::scalar Foam::fluxSchemes::HLLCP::calculateFlux
-(
-    const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
-    const label facei, const label patchi
-) const
-{
-    return
-        (
-            getValue(facei, patchi, SOwn_) > 0
-         || getValue(facei, patchi, SStar_) > 0
-          ? fOwn
-          : fNei
-        )*phi;
-}
-
-
 Foam::scalar Foam::fluxSchemes::HLLCP::energyFlux
 (
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -418,7 +318,7 @@ Foam::scalar Foam::fluxSchemes::HLLCP::energyFlux
     scalar SOwn = getValue(facei, patchi, SOwn_);
     scalar SNei = getValue(facei, patchi, SNei_);
     scalar SStar = getValue(facei, patchi, SStar_);
-    scalar pStar = getValue(facei, patchi, pStar_);
+    scalar pStar = getValue(facei, patchi, pStarOwn_);
     scalar phip = getValue(facei, patchi, phip_);
     vector UTilde = getValue(facei, patchi, UTilde_);
     scalar UvOwn = getValue(facei, patchi, UvOwn_);
@@ -461,28 +361,6 @@ Foam::scalar Foam::fluxSchemes::HLLCP::energyFlux
     }
 
     return rhoEPhi*magSf + meshPhi(facei, patchi)*p;
-}
-
-
-Foam::scalar Foam::fluxSchemes::HLLCP::interpolate
-(
-    const scalar& fOwn, const scalar& fNei,
-    const bool isDensity,
-    const label facei, const label patchi
-) const
-{
-    scalar SOwn = getValue(facei, patchi, SOwn_);
-    scalar SStar = getValue(facei, patchi, SStar_);
-
-    if (SOwn > 0 || SStar > 0)
-    {
-        return fOwn;
-    }
-    else
-    {
-        return fNei;
-    }
-
 }
 
 // ************************************************************************* //

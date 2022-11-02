@@ -77,7 +77,7 @@ void Foam::phaseFluxSchemes::Tadmor::createSavedFields()
         (
             IOobject
             (
-                "Tadmor::aPhivOwn",
+                fieldName("aPhivOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -91,7 +91,7 @@ void Foam::phaseFluxSchemes::Tadmor::createSavedFields()
         (
             IOobject
             (
-                "Tadmor::aPhivNei",
+                fieldName("aPhivNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -191,17 +191,9 @@ Foam::scalar Foam::phaseFluxSchemes::Tadmor::calculateFlux
 Foam::scalar Foam::phaseFluxSchemes::Tadmor::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool rho,
     const label facei, const label patchi
 ) const
 {
-    const scalar aphivOwn(getValue(facei, patchi, aPhivOwn_));
-    const scalar aphivNei(getValue(facei, patchi, aPhivNei_));
-    const scalar aphiv(aphivOwn + aphivNei);
-    if (mag(aphiv) > small)
-    {
-        return (fOwn*aphivOwn + fNei*aphivNei)/aphiv;
-    }
     return 0.5*(fOwn + fNei);
 }
 

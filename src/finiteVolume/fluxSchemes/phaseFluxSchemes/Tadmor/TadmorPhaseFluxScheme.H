@@ -54,6 +54,7 @@ class Tadmor
 :
     public phaseFluxScheme
 {
+protected:
     // Saved variables
 
         tmp<surfaceScalarField> aPhivOwn_;
@@ -91,7 +92,6 @@ class Tadmor
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool rho,
             const label facei, const label patchi = -1
         ) const;
 

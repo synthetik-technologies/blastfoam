@@ -114,8 +114,7 @@ template<>
 Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
 (
     const volScalarField& f,
-    const word& fName,
-    const bool overwrite
+    const word& fName
 ) const
 {
     autoPtr<ReconstructionScheme<scalar>> fLimiter
@@ -125,7 +124,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
 
     tmp<surfaceScalarField> tfOwn;
     tmp<surfaceScalarField> tfNei;
-    fLimiter->interpolateOwnNei(tfOwn, tfNei, overwrite);
+    fLimiter->interpolateOwnNei(tfOwn, tfNei);
 
     const surfaceScalarField& fOwn = tfOwn();
     const surfaceScalarField& fNei = tfNei();
@@ -140,12 +139,10 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
         )
     );
     surfaceScalarField& ff = tff.ref();
-    const bool isDensity = (f.dimensions() == dimDensity);
 
     forAll(fOwn, facei)
     {
-        ff[facei] =
-            interpolate(fOwn[facei], fNei[facei], isDensity, facei);
+        ff[facei] = interpolate(fOwn[facei], fNei[facei], facei);
     }
 
     forAll(ff.boundaryField(), patchi)
@@ -158,9 +155,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
             pff[facei] =
                 interpolate
                 (
-                    pfOwn[facei],
-                    pfNei[facei],
-                    isDensity,
+                    pfOwn[facei], pfNei[facei],
                     facei, patchi
                 );
         }

@@ -39,6 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseFluxScheme.H"
+#include "TadmorPhaseFluxScheme.H"
 
 namespace Foam
 {
@@ -51,13 +52,13 @@ namespace phaseFluxSchemes
 
 class Kurganov
 :
-    public phaseFluxScheme
+    public Tadmor
 {
 
     // Saved variables
 
-        tmp<surfaceScalarField> aPhivOwn_;
-        tmp<surfaceScalarField> aPhivNei_;
+        tmp<surfaceScalarField> aOwn_;
+        tmp<surfaceScalarField> aNei_;
 
 
     // Private functions
@@ -79,19 +80,10 @@ class Kurganov
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte flux given own/nei values
-        virtual scalar calculateFlux
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const scalar& phi,
-            const label facei, const label patchi = -1
-        ) const;
-
         //- Interpolate field
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool rho,
             const label facei, const label patchi = -1
         ) const;
 

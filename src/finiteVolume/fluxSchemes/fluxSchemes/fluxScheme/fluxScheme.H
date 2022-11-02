@@ -59,7 +59,7 @@ protected:
     const dictionary& dict_;
 
     //- Saved interpolated U field
-    tmp<surfaceVectorField> Uf_;
+    mutable tmp<surfaceVectorField> Uf_;
 
 
     // Protected Functions
@@ -98,6 +98,13 @@ protected:
         //- Correct fluxes
         virtual void postUpdate()
         {}
+
+
+        //- Return the name of a give field
+        word fieldName(const word& name) const
+        {
+            return type() + ":" + name;
+        }
 
 
 public:
@@ -183,19 +190,6 @@ public:
 
         //- Return interpolated U field
         tmp<surfaceVectorField> Uf() const;
-
-        //- Return Anti-diffustion coefficient for a given volume fraction
-        //  and update anti-diffusion flux
-        virtual tmp<surfaceScalarField> snGradAlpha
-        (
-            const volScalarField& alpha
-        ) const;
-
-        //- Return Anti-diffustion coefficient for a given volume fraction
-        virtual tmp<surfaceScalarField> AD
-        (
-            const volScalarField& alpha
-        ) const;
 };
 
 

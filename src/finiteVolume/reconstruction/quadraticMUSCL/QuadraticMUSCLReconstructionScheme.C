@@ -33,51 +33,54 @@ template<class Type>
 Foam::QuadraticMUSCLReconstructionScheme<Type>::QuadraticMUSCLReconstructionScheme
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
+    Istream& is,
+    const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is),
-    gradPhis_(pTraits<Type>::nComponents),
-    hessPhis_(pTraits<Type>::nComponents)
+    ReconstructionScheme<Type>(phi, is, overwrite),
+    gradPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0),
+    hessPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0)
 {
-    tmp<fv::gradScheme<scalar>> lgradientScheme
-    (
-        fv::gradScheme<scalar>::New
-        (
-            this->mesh_,
-            this->mesh_.gradScheme("limitedGradMUSCL")
-        )
-    );
-    tmp<fv::gradScheme<vector>> hgradientScheme
-    (
-        fv::gradScheme<vector>::New
-        (
-            this->mesh_,
-            this->mesh_.gradScheme("limitedHessMUSCL")
-        )
-    );
-    for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
+    if (this->overwrite_)
     {
-        tmp<volScalarField> phiCmpt
+        tmp<fv::gradScheme<scalar>> lgradientScheme
         (
-            volScalarField::New
+            fv::gradScheme<scalar>::New
             (
-                this->phi_.name() + "_" + Foam::name(cmpti),
-                this->phi_.component(cmpti)
+                this->mesh_,
+                this->mesh_.gradScheme("limitedGradMUSCL")
             )
         );
-        gradPhis_.set
+        tmp<fv::gradScheme<vector>> hgradientScheme
         (
-            cmpti,
-            lgradientScheme().grad(phiCmpt)
+            fv::gradScheme<vector>::New
+            (
+                this->mesh_,
+                this->mesh_.gradScheme("limitedHessMUSCL")
+            )
         );
-        hessPhis_.set
-        (
-            cmpti,
-            hgradientScheme().grad(gradPhis_[cmpti])
-        );
+        for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
+        {
+            tmp<volScalarField> phiCmpt
+            (
+                volScalarField::New
+                (
+                    this->phi_.name() + "_" + Foam::name(cmpti),
+                    this->phi_.component(cmpti)
+                )
+            );
+            gradPhis_.set
+            (
+                cmpti,
+                lgradientScheme().grad(phiCmpt)
+            );
+            hessPhis_.set
+            (
+                cmpti,
+                hgradientScheme().grad(gradPhis_[cmpti])
+            );
+        }
     }
-
 }
 
 

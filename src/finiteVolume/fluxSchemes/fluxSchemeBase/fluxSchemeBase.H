@@ -147,19 +147,20 @@ protected:
               : xf().boundaryField()[patchi][facei];
         }
 
-        virtual scalar calculateFlux
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const scalar& phi,
-            const label facei, const label patchi = -1
-        ) const = 0;
-
 
         //- Interpolate component of a field
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool rho,
+            const label facei, const label patchi = -1
+        ) const = 0;
+
+        //- Compute Riemann flux of a given variable
+        //  assumed to be a slave variable
+        virtual scalar calculateFlux
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
             const label facei, const label patchi = -1
         ) const = 0;
 
@@ -202,8 +203,7 @@ public:
             template<class Type>
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
             (
-                const GeometricField<Type, fvPatchField, volMesh>& f,
-                const bool overwrite = true
+                const GeometricField<Type, fvPatchField, volMesh>& f
             ) const;
 
             //- Templated interpolation
@@ -220,8 +220,7 @@ public:
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
             (
                 const GeometricField<Type, fvPatchField, volMesh>& f,
-                const word& fName,
-                const bool overwrite = true
+                const word& fName
             ) const;
 
 
@@ -253,8 +252,7 @@ public:
                 const GeometricField<Type, fvPatchField, volMesh>& f,
                 const surfaceScalarField& alphaRhoOwn,
                 const surfaceScalarField& alphaRhoNei,
-                const surfaceScalarField& phi,
-                const bool overwrite = true
+                const surfaceScalarField& phi
             ) const;
 
             //- Own/nei interpolation of f

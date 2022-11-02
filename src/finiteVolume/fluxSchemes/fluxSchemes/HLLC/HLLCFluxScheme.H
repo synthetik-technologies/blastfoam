@@ -58,7 +58,7 @@ class HLLC
 :
     public fluxScheme
 {
-
+protected:
     // Saved variables
 
         tmp<surfaceScalarField> SOwn_;
@@ -87,14 +87,6 @@ class HLLC
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte flux given own/nei values
-        virtual scalar calculateFlux
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const scalar& phi,
-            const label facei, const label patchi = -1
-        ) const;
-
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux
         (
@@ -110,7 +102,14 @@ class HLLC
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool isDensity,
+            const label facei, const label patchi = -1
+        ) const;
+
+        //- Calcualte flux given own/nei values
+        virtual scalar calculateFlux
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
             const label facei, const label patchi = -1
         ) const;
 

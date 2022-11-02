@@ -99,6 +99,12 @@ protected:
         virtual void postUpdate()
         {}
 
+        //- Return the name of a give field
+        word fieldName(const word& name) const
+        {
+            return IOobject::groupName(type() + ":" + name, phaseName_);
+        }
+
 
 public:
 

@@ -84,7 +84,7 @@ void Foam::fluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                "HLL::SOwn",
+                fieldName("SOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -98,7 +98,7 @@ void Foam::fluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                "HLL::SNei",
+                fieldName("SNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -112,7 +112,7 @@ void Foam::fluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                "HLL::UvOwn",
+                fieldName("UvOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -126,7 +126,7 @@ void Foam::fluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                "HLL::UvNei",
+                fieldName("UvNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -297,38 +297,6 @@ void Foam::fluxSchemes::HLL::calculateFluxes
 }
 
 
-Foam::scalar Foam::fluxSchemes::HLL::calculateFlux
-(
-    const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
-    const label facei, const label patchi
-) const
-{
-    scalar SOwn = getValue(facei, patchi, SOwn_);
-    scalar SNei = getValue(facei, patchi, SNei_);
-
-    if (SOwn >= 0)
-    {
-        return fOwn*phi;
-    }
-    else if (SOwn <= 0 && SNei >= 0)
-    {
-        scalar UvOwn = getValue(facei, patchi, UvOwn_);
-        scalar UvNei = getValue(facei, patchi, UvNei_);
-        return
-            (
-                SNei*fOwn*UvOwn
-              - SOwn*fNei*UvNei
-              + SOwn*SNei*(fNei - fOwn)
-            )/(SNei - SOwn)*getValue(facei, patchi, mesh_.magSf());
-    }
-    else
-    {
-        return fNei*phi;
-    }
-}
-
-
 Foam::scalar Foam::fluxSchemes::HLL::energyFlux
 (
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -383,7 +351,6 @@ Foam::scalar Foam::fluxSchemes::HLL::energyFlux
 Foam::scalar Foam::fluxSchemes::HLL::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool isDensity,
     const label facei, const label patchi
 ) const
 {
@@ -404,6 +371,38 @@ Foam::scalar Foam::fluxSchemes::HLL::interpolate
     else
     {
         return fNei;
+    }
+}
+
+
+Foam::scalar Foam::fluxSchemes::HLL::calculateFlux
+(
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
+    const label facei, const label patchi
+) const
+{
+    scalar SOwn = getValue(facei, patchi, SOwn_);
+    scalar SNei = getValue(facei, patchi, SNei_);
+
+    if (SOwn >= 0)
+    {
+        return fOwn*phi;
+    }
+    else if (SOwn <= 0 && SNei >= 0)
+    {
+        scalar UvOwn = getValue(facei, patchi, UvOwn_);
+        scalar UvNei = getValue(facei, patchi, UvNei_);
+        return
+            (
+                SNei*fOwn*UvOwn
+              - SOwn*fNei*UvNei
+              + SOwn*SNei*(fNei - fOwn)
+            )/(SNei - SOwn)*getValue(facei, patchi, mesh_.magSf());
+    }
+    else
+    {
+        return fNei*phi;
     }
 }
 

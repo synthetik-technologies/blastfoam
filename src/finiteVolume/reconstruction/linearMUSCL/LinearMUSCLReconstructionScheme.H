@@ -73,7 +73,8 @@ public:
         LinearMUSCLReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         );
 
     //- Destructor

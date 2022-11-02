@@ -70,10 +70,11 @@ template<class Type>
 Foam::StandardReconstructionScheme<Type>::StandardReconstructionScheme
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
+    Istream& is,
+    const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is),
+    ReconstructionScheme<Type>(phi, is, overwrite),
     name_(is),
     own_(lookupOrConstruct("MUSCL:own", 1.0)),
     nei_(lookupOrConstruct("MUSCL:nei", -1.0))

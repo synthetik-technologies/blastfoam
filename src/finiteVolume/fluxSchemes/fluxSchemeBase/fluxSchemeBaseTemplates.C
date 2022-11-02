@@ -36,11 +36,10 @@ namespace Foam
 template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolate
 (
-    const GeometricField<Type, fvPatchField, volMesh>& f,
-    const bool overwrite
+    const GeometricField<Type, fvPatchField, volMesh>& f
 ) const
 {
-    return interpolate<Type>(f, f.name(), overwrite);
+    return interpolate<Type>(f, f.name());
 }
 
 
@@ -65,7 +64,6 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
         )
     );
     fieldType& ff = tmpf.ref();
-    const bool isDensity = (fOwn.dimensions() == dimDensity);
 
     forAll(fOwn, facei)
     {
@@ -76,9 +74,7 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
         {
             setComponent(fi, i) = interpolate
             (
-                component(fiOwn, i),
-                component(fiNei, i),
-                isDensity,
+                component(fiOwn, i), component(fiNei, i),
                 facei
             );
         }
@@ -100,9 +96,7 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
                 setComponent(fi, i) =
                     interpolate
                     (
-                        component(fiOwn, i),
-                        component(fiNei, i),
-                        isDensity,
+                        component(fiOwn, i), component(fiNei, i),
                         facei, patchi
                     );
             }
@@ -116,8 +110,7 @@ template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolate
 (
     const GeometricField<Type, fvPatchField, volMesh>& f,
-    const word& name,
-    const bool overwrite
+    const word& name
 ) const
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
@@ -127,9 +120,8 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
         ReconstructionScheme<Type>::New(f, name)
     );
 
-    tmp<fieldType> tfOwn;
-    tmp<fieldType> tfNei;
-    fLimiter->interpolateOwnNei(tfOwn, tfNei, overwrite);
+    tmp<fieldType> tfOwn, tfNei;
+    fLimiter->interpolateOwnNei(tfOwn, tfNei);
 
     return interpolate(tfOwn(), tfNei(), name);
 }
@@ -147,13 +139,12 @@ Foam::fluxSchemeBase::flux
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
 
-    tmp<fieldType> tfOwn;
-    tmp<fieldType> tfNei;
+    tmp<fieldType> tfOwn, tfNei;
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
-        ReconstructionScheme<Type>::New(f, f.member(), f.group())
+        ReconstructionScheme<Type>::New(f, f.member(), f.group(), overwrite)
     );
-    fLimiter->interpolateOwnNei(tfOwn, tfNei, overwrite);
+    fLimiter->interpolateOwnNei(tfOwn, tfNei);
 
     return flux(tfOwn(), tfNei(), phi);
 }
@@ -171,26 +162,25 @@ Foam::fluxSchemeBase::flux
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
 
-    tmp<surfaceScalarField> talphaRhoOwn;
-    tmp<surfaceScalarField> talphaRhoNei;
+    tmp<surfaceScalarField> talphaRhoOwn, talphaRhoNei;
     autoPtr<ReconstructionScheme<scalar>> alphaRhoLimiter
     (
         ReconstructionScheme<scalar>::New
         (
             alphaRho,
             alphaRho.member(),
-            alphaRho.group()
+            alphaRho.group(),
+            overwrite
         )
     );
-    alphaRhoLimiter->interpolateOwnNei(talphaRhoOwn, talphaRhoNei, overwrite);
+    alphaRhoLimiter->interpolateOwnNei(talphaRhoOwn, talphaRhoNei);
 
-    tmp<fieldType> tfOwn;
-    tmp<fieldType> tfNei;
+    tmp<fieldType> tfOwn, tfNei;
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
         ReconstructionScheme<Type>::New(f, f.member(), f.group())
     );
-    fLimiter->interpolateOwnNei(tfOwn, tfNei, overwrite);
+    fLimiter->interpolateOwnNei(tfOwn, tfNei);
     tmp<fieldType> talphaRhofOwn(tfOwn*talphaRhoOwn);
     tmp<fieldType> talphaRhofNei(tfNei*talphaRhoNei);
 
@@ -205,14 +195,12 @@ Foam::fluxSchemeBase::flux
     const GeometricField<Type, fvPatchField, volMesh>& f,
     const surfaceScalarField& alphaRhoOwn,
     const surfaceScalarField& alphaRhoNei,
-    const surfaceScalarField& phi,
-    const bool overwrite
+    const surfaceScalarField& phi
 ) const
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
 
-    tmp<fieldType> tfOwn;
-    tmp<fieldType> tfNei;
+    tmp<fieldType> tfOwn, tfNei;
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
         ReconstructionScheme<Type>::New(f, f.member(), f.group())

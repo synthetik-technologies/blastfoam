@@ -45,6 +45,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fluxScheme.H"
+#include "HLLCFluxScheme.H"
 
 namespace Foam
 {
@@ -57,20 +58,13 @@ namespace fluxSchemes
 
 class HLLCP
 :
-    public fluxScheme
+    public HLLC
 {
 
     // Saved variables
 
-        tmp<surfaceScalarField> SOwn_;
-        tmp<surfaceScalarField> SNei_;
-        tmp<surfaceScalarField> SStar_;
-        tmp<surfaceScalarField> pStar_;
         tmp<surfaceScalarField> phip_;
         tmp<surfaceVectorField> UTilde_;
-        tmp<surfaceScalarField> UvOwn_;
-        tmp<surfaceScalarField> UvNei_;
-
         tmp<surfaceScalarField> f_;
 
     // Private functions
@@ -91,14 +85,6 @@ class HLLCP
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte flux given own/nei values
-        virtual scalar calculateFlux
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const scalar& phi,
-            const label facei, const label patchi = -1
-        ) const;
-
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux
         (
@@ -107,14 +93,6 @@ class HLLCP
             const scalar& eOwn, const scalar& eNei,
             const scalar& pOwn, const scalar& pNei,
             const vector& Sf,
-            const label facei, const label patchi = -1
-        ) const;
-
-        //- Interpolate field
-        virtual scalar interpolate
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const bool isDensity,
             const label facei, const label patchi = -1
         ) const;
 

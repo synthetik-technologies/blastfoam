@@ -192,7 +192,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("AUSMPlusUp::phi", this->group()),
+                fieldName("phi"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -369,22 +369,9 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
 }
 
 
-Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::calculateFlux
-(
-    const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
-    const label facei, const label patchi
-) const
-{
-    return (phi >= 0 ? fOwn : fNei)*phi;
-}
-
-
-
 Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool rho,
     const label facei, const label patchi
 ) const
 {
@@ -397,4 +384,15 @@ Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::interpolate
     {
         return fNei;
     }
+}
+
+
+Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::calculateFlux
+(
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
+    const label facei, const label patchi
+) const
+{
+    return (phi >= 0 ? fOwn : fNei)*phi;
 }

@@ -474,7 +474,7 @@ void Foam::activationModel::solve()
     const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
     volScalarField deltaAlphaRhoLambda
     (
-        fvc::div(flux.flux(alphaRhoPtr_(), lambda_, flux.phi(), false))
+        fvc::div(flux.flux(lambda_, alphaRhoPtr_(), flux.phi(), false))
     );
     this->storeAndBlendDelta(deltaAlphaRhoLambda);
 

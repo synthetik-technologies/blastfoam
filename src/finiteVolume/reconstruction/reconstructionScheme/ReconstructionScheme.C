@@ -27,19 +27,106 @@ License
 #include "StandardReconstructionScheme.H"
 #include "fvc.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::word Foam::ReconstructionScheme<Type>::scheme(const word& name)
+{
+    return "reconstruct(" + name + ")";
+}
+
+
+template<class Type>
+Foam::word Foam::ReconstructionScheme<Type>::scheme
+(
+    const word& name,
+    const fvMesh& mesh,
+    const bool fail
+)
+{
+    return scheme(name, word::null, mesh, fail);
+}
+
+
+template<class Type>
+Foam::word Foam::ReconstructionScheme<Type>::scheme
+(
+    const word& baseName,
+    const word& phaseName,
+    const fvMesh& mesh,
+    const bool fail
+)
+{
+    const word name(IOobject::groupName(name, phaseName));
+    word baseScheme(scheme(baseName));
+    word nameScheme(scheme(name));
+
+    if (mesh.schemesDict().subDict("interpolationSchemes").found(nameScheme))
+    {
+        return nameScheme;
+    }
+    else if (mesh.schemesDict().subDict("interpolationSchemes").found(baseScheme))
+    {
+        return baseScheme;
+    }
+    else if (fail)
+    {
+        FatalErrorInFunction
+            << "Riemann fluxes are used, but no limiter is " << nl
+            << "specified for " << name << "." << nl
+            << "Please specify " << string(nameScheme)
+            << " or " << string(baseScheme) << endl
+            << "This may result in unstable solutions." << endl;
+    }
+    else
+    {
+        WarningInFunction
+            << "Riemann fluxes are used, but no limiter is " << nl
+            << "specified for " << name << "." << nl
+            << "This may result in unstable solutions." << nl
+            << "Please specify " << string(nameScheme)
+            << " or " << string(baseScheme) << endl;
+
+    }
+    return nameScheme;
+}
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
 Foam::word Foam::ReconstructionScheme<Type>::ownName() const
 {
-    return IOobject::groupName(phi_.member() + "Own", phi_.group());
+    return ownName(phi_.name());
+}
+
+
+template<class Type>
+Foam::word Foam::ReconstructionScheme<Type>::ownName(const word& name) const
+{
+    return
+        IOobject::groupName
+        (
+            IOobject::member(name) + "Own",
+            IOobject::group(name)
+        );
 }
 
 
 template<class Type>
 Foam::word Foam::ReconstructionScheme<Type>::neiName() const
 {
-    return IOobject::groupName(phi_.member() + "Nei", phi_.group());
+    return neiName(phi_.name());
+}
+
+template<class Type>
+Foam::word Foam::ReconstructionScheme<Type>::neiName(const word& name) const
+{
+    return
+        IOobject::groupName
+        (
+            IOobject::member(name) + "Nei",
+            IOobject::group(name)
+        );
 }
 
 template<class Type>
@@ -47,20 +134,20 @@ void
 Foam::ReconstructionScheme<Type>::interpolateOwnNei
 (
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& tphiOwn,
-    tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& tphiNei,
-    bool overwrite
+    tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& tphiNei
 ) const
 {
     tphiOwn.clear();
     if
     (
-        !overwrite
+        !overwrite_
      && phi_.mesh().template foundObject
         <
             GeometricField<Type, fvsPatchField, surfaceMesh>
         >(ownName())
     )
     {
+        DebugInfo << "Reading " << ownName() << " from cache" << endl;
         tphiOwn = tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
         (
             phi_.mesh().template lookupObject
@@ -71,19 +158,21 @@ Foam::ReconstructionScheme<Type>::interpolateOwnNei
     }
     else
     {
+        DebugInfo << "Recomputing " << ownName() << endl;
         tphiOwn = interpolateOwn();
     }
 
     tphiNei.clear();
     if
     (
-        !overwrite
+        !overwrite_
      && phi_.mesh().template foundObject
         <
             GeometricField<Type, fvsPatchField, surfaceMesh>
         >(neiName())
     )
     {
+        DebugInfo << "Reading " << neiName() << " from cache" << endl;
         tphiNei = tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
         (
             phi_.mesh().template lookupObject
@@ -94,6 +183,7 @@ Foam::ReconstructionScheme<Type>::interpolateOwnNei
     }
     else
     {
+        DebugInfo << "Recomputing " << neiName() <<" "<<overwrite_<< endl;
         tphiNei = interpolateNei();
     }
 }
@@ -105,7 +195,21 @@ Foam::ReconstructionScheme<Type>::New
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
     const word& fieldName,
-    const word& phaseName
+    const bool overwrite
+)
+{
+    return New(phi, fieldName, word::null, overwrite);
+}
+
+
+template<class Type>
+Foam::autoPtr<Foam::ReconstructionScheme<Type>>
+Foam::ReconstructionScheme<Type>::New
+(
+    const GeometricField<Type, fvPatchField, volMesh>& phi,
+    const word& fieldName,
+    const word& phaseName,
+    const bool overwrite
 )
 {
     word name
@@ -171,7 +275,8 @@ Foam::ReconstructionScheme<Type>::New
             new StandardReconstructionScheme<Type>
             (
                 phi,
-                IStringStream(name)()
+                IStringStream(name)(),
+                overwrite
             )
         );
     }
@@ -206,7 +311,7 @@ Foam::ReconstructionScheme<Type>::New
             << abort(FatalIOError);
     }
 
-    return cstrIter()(phi, is);
+    return cstrIter()(phi, is, overwrite);
 }
 
 

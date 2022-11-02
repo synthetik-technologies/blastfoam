@@ -33,17 +33,20 @@ template<class Type>
 Foam::NoneReconstructionScheme<Type>::NoneReconstructionScheme
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
+    Istream& is,
+    const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is),
+    ReconstructionScheme<Type>(phi, is, overwrite),
     interp_
     (
-        surfaceInterpolationScheme<Type>::New
+        this->overwrite_
+      ? surfaceInterpolationScheme<Type>::New
         (
             phi.mesh(),
             is
         )
+      : tmp<surfaceInterpolationScheme<Type>>()
     )
 {}
 

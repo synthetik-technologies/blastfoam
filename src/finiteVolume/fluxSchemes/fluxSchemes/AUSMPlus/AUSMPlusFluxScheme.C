@@ -72,7 +72,7 @@ void Foam::fluxSchemes::AUSMPlus::createSavedFields()
         (
             IOobject
             (
-                "AUSMPlus::phi",
+                fieldName("phi"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -162,17 +162,6 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
 }
 
 
-Foam::scalar Foam::fluxSchemes::AUSMPlus::calculateFlux
-(
-    const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
-    const label facei, const label patchi
-) const
-{
-    return (phi >= 0 ? fOwn : fNei)*phi;
-}
-
-
 Foam::scalar Foam::fluxSchemes::AUSMPlus::energyFlux
 (
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -202,7 +191,6 @@ Foam::scalar Foam::fluxSchemes::AUSMPlus::energyFlux
 Foam::scalar Foam::fluxSchemes::AUSMPlus::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool isDensity,
     const label facei, const label patchi
 ) const
 {
@@ -215,4 +203,15 @@ Foam::scalar Foam::fluxSchemes::AUSMPlus::interpolate
     {
         return fNei;
     }
+}
+
+
+Foam::scalar Foam::fluxSchemes::AUSMPlus::calculateFlux
+(
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
+    const label facei, const label patchi
+) const
+{
+    return (phi >= 0 ? fOwn : fNei)*phi;
 }

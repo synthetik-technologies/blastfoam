@@ -209,18 +209,6 @@ void Foam::fluxSchemes::Roe::calculateFluxes
 }
 
 
-Foam::scalar Foam::fluxSchemes::Roe::calculateFlux
-(
-    const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
-    const label facei, const label patchi
-) const
-{
-    NotImplemented;
-    return fOwn;
-}
-
-
 Foam::scalar Foam::fluxSchemes::Roe::energyFlux
 (
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -239,12 +227,23 @@ Foam::scalar Foam::fluxSchemes::Roe::energyFlux
 Foam::scalar Foam::fluxSchemes::Roe::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool isDensity,
     const label facei, const label patchi
 ) const
 {
     NotImplemented;
     return 0.0;
+}
+
+
+Foam::scalar Foam::fluxSchemes::Roe::calculateFlux
+(
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
+    const label facei, const label patchi
+) const
+{
+    NotImplemented;
+    return fOwn;
 }
 
 

@@ -84,6 +84,9 @@ protected:
     //- Reference to fields to interpolate
     const GeometricField<Type, fvPatchField, volMesh>& phi_;
 
+    //- Overwrite existing data
+    bool overwrite_;
+
     //- Calculate the limiter
     virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
     calcLimiter(const scalar& dir) const = 0;
@@ -102,9 +105,10 @@ public:
             dictionary,
             (
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
-                Istream& is
+                Istream& is,
+                const bool overwrite
             ),
-            (phi, is)
+            (phi, is, overwrite)
         );
 
         declareRunTimeSelectionTable
@@ -114,9 +118,10 @@ public:
             LinearMesh,
             (
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
-                Istream& is
+                Istream& is,
+                const bool overwrite
             ),
-            (phi, is)
+            (phi, is, overwrite)
         );
 
         declareRunTimeSelectionTable
@@ -126,9 +131,10 @@ public:
             QuadraticMesh,
             (
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
-                Istream& is
+                Istream& is,
+                const bool overwrite
             ),
-            (phi, is)
+            (phi, is, overwrite)
         );
 
 
@@ -139,12 +145,47 @@ public:
         ReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         )
         :
             mesh_(phi.mesh()),
-            phi_(phi)
-        {}
+            phi_(phi),
+            overwrite_
+            (
+                overwrite
+             || !phi.mesh().template foundObject
+                <
+                    GeometricField<Type, fvsPatchField, surfaceMesh>
+                >(ownName())
+             || !phi.mesh().template foundObject
+                <
+                    GeometricField<Type, fvsPatchField, surfaceMesh>
+                >(neiName())
+            )
+        {
+            if (overwrite != overwrite_)
+            {
+                DebugInfo
+                    << "Attempt to used cached field, but "
+                    <<  (
+                            !phi.mesh().template foundObject
+                            <
+                                GeometricField<Type, fvsPatchField, surfaceMesh>
+                            >(ownName())
+                          ? word(ownName() + " not found")
+                          : word::null
+                        )
+                    <<  (
+                            !phi.mesh().template foundObject
+                            <
+                                GeometricField<Type, fvsPatchField, surfaceMesh>
+                            >(neiName())
+                          ? word(neiName() + " not found")
+                          : word::null
+                        ) << endl;
+            }
+        }
 
 
     // Selectors
@@ -154,7 +195,15 @@ public:
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             const word& name,
-            const word& phaseName = word::null
+            const bool overwrite = true
+        );
+
+        static autoPtr<ReconstructionScheme<Type>> New
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& phi,
+            const word& name,
+            const word& phaseName,
+            const bool overwrite = true
         );
 
         //- Disallow default bitwise copy construction
@@ -169,15 +218,20 @@ public:
         //- Return the name of the owner field
         word ownName() const;
 
+        //- Return the name of the owner field
+        word ownName(const word&) const;
+
         //- Return the name of the neighbour field
         word neiName() const;
+
+        //- Return the name of the neighbour field
+        word neiName(const word&) const;
 
         //- Return the owner and neighbor interpolated fields
         virtual void interpolateOwnNei
         (
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>&,
-            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>&,
-            const bool overwrite = true
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>&
         ) const;
 
         //- Return the owner interpolated field
@@ -187,6 +241,22 @@ public:
         //- Return the neighbor interpolated field
         virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
         interpolateNei() const = 0;
+
+        //- Return the reconstruction scheme name
+        static word scheme(const word&);
+        static word scheme
+        (
+            const word&,
+            const fvMesh&,
+            const bool fail = true
+        );
+        static word scheme
+        (
+            const word&,
+            const word&,
+            const fvMesh&,
+            const bool fail = true
+        );
 
 
     // Member Operators

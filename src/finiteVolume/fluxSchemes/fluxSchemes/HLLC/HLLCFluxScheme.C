@@ -80,7 +80,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                "HLLC::SOwn",
+                fieldName("SOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -94,7 +94,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                "HLLC::SNei",
+                fieldName("SNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -108,7 +108,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                "HLLC::SStar",
+                fieldName("SStar"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -116,13 +116,19 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             dimensionedScalar("0", dimVelocity, 0.0)
         )
     );
+
+    if (!needEnergyFlux)
+    {
+        return;
+    }
+
     pStarOwn_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
         (
             IOobject
             (
-                "HLLC::pStarOwn",
+                fieldName("pStarOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -136,7 +142,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                "HLLC::pStarNei",
+                fieldName("pStarNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -150,7 +156,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                "HLLC::UvOwn",
+                fieldName("UvOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -164,7 +170,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
         (
             IOobject
             (
-                "HLLC::UvNei",
+                fieldName("UvNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -225,10 +231,13 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
     this->save(facei, patchi, SStar, SStar_);
-    this->save(facei, patchi, pStarOwn, pStarOwn_);
-    this->save(facei, patchi, pStarNei, pStarNei_);
-    this->save(facei, patchi, UvOwn, UvOwn_);
-    this->save(facei, patchi, UvNei, UvNei_);
+    if (needEnergyFlux)
+    {
+        this->save(facei, patchi, pStarOwn, pStarOwn_);
+        this->save(facei, patchi, pStarNei, pStarNei_);
+        this->save(facei, patchi, UvOwn, UvOwn_);
+        this->save(facei, patchi, UvNei, UvNei_);
+    }
 
     // Owner values
     const vector rhoUOwn = rhoOwn*UOwn;
@@ -320,23 +329,6 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
 }
 
 
-Foam::scalar Foam::fluxSchemes::HLLC::calculateFlux
-(
-    const scalar& fOwn, const scalar& fNei,
-    const scalar& phi,
-    const label facei, const label patchi
-) const
-{
-    return
-        (
-            getValue(facei, patchi, SOwn_) > 0
-         || getValue(facei, patchi, SStar_) > 0
-          ? fOwn
-          : fNei
-        )*phi;
-}
-
-
 Foam::scalar Foam::fluxSchemes::HLLC::energyFlux
 (
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -395,7 +387,6 @@ Foam::scalar Foam::fluxSchemes::HLLC::energyFlux
 Foam::scalar Foam::fluxSchemes::HLLC::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool isDensity,
     const label facei, const label patchi
 ) const
 {
@@ -404,6 +395,23 @@ Foam::scalar Foam::fluxSchemes::HLLC::interpolate
      || getValue(facei, patchi, SStar_) > 0
       ? fOwn
       : fNei;
+}
+
+
+Foam::scalar Foam::fluxSchemes::HLLC::calculateFlux
+(
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
+    const label facei, const label patchi
+) const
+{
+    return
+        (
+            getValue(facei, patchi, SOwn_) > 0
+         || getValue(facei, patchi, SStar_) > 0
+          ? fOwn
+          : fNei
+        )*phi;
 }
 
 

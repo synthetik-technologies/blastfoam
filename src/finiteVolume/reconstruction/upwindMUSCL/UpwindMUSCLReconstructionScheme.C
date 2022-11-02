@@ -31,10 +31,11 @@ template<class Type>
 Foam::UpwindMUSCLReconstructionScheme<Type>::UpwindMUSCLReconstructionScheme
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
+    Istream& is,
+    const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is)
+    ReconstructionScheme<Type>(phi, is, overwrite)
 {}
 
 

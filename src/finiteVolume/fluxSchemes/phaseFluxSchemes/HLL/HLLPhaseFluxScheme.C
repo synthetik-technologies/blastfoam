@@ -76,7 +76,7 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::SOwn", this->group()),
+                fieldName("SOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -90,7 +90,7 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::SNei", this->group()),
+                fieldName("SNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -104,7 +104,7 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::UvOwn", this->group()),
+                fieldName("UvOwn"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -118,7 +118,7 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::UvNei", this->group()),
+                fieldName("UvNei"),
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -273,6 +273,33 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
 }
 
 
+Foam::scalar Foam::phaseFluxSchemes::HLL::interpolate
+(
+    const scalar& fOwn, const scalar& fNei,
+    const label facei, const label patchi
+) const
+{
+    scalar SOwn = getValue(facei, patchi, SOwn_());
+    scalar SNei = getValue(facei, patchi, SNei_());
+
+    if (SOwn >= 0)
+    {
+        return fOwn;
+    }
+    else if (SOwn < 0 && SNei >= 0)
+    {
+        scalar UvOwn = getValue(facei, patchi, UvOwn_());
+        scalar UvNei = getValue(facei, patchi, UvNei_());
+        return
+            (SNei*fNei - SOwn*fOwn + fOwn*UvOwn - fNei*UvNei)/(SNei - SOwn);
+    }
+    else
+    {
+        return fNei;
+    }
+}
+
+
 Foam::scalar Foam::phaseFluxSchemes::HLL::calculateFlux
 (
     const scalar& fOwn, const scalar& fNei,
@@ -301,32 +328,5 @@ Foam::scalar Foam::phaseFluxSchemes::HLL::calculateFlux
     }
 }
 
-
-Foam::scalar Foam::phaseFluxSchemes::HLL::interpolate
-(
-    const scalar& fOwn, const scalar& fNei,
-    const bool rho,
-    const label facei, const label patchi
-) const
-{
-    scalar SOwn = getValue(facei, patchi, SOwn_());
-    scalar SNei = getValue(facei, patchi, SNei_());
-
-    if (SOwn >= 0)
-    {
-        return fOwn;
-    }
-    else if (SOwn < 0 && SNei >= 0)
-    {
-        scalar UvOwn = getValue(facei, patchi, UvOwn_());
-        scalar UvNei = getValue(facei, patchi, UvNei_());
-        return
-            (SNei*fNei - SOwn*fOwn + fOwn*UvOwn - fNei*UvNei)/(SNei - SOwn);
-    }
-    else
-    {
-        return fNei;
-    }
-}
 
 // ************************************************************************* //
