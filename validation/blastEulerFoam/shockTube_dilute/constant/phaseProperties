@@ -16,7 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (particles gas);
-pRef 1e5;
+
 particles
 {
     phaseType        granular;

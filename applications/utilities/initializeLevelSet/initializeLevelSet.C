@@ -59,7 +59,7 @@ void setPhase
     // Stored to reduce the number of reads
     PtrList<backupSearchableSurface> regions
     (
-        dict.lookup("initialRegions"),
+        dict.lookup("regions"),
         backupSearchableSurface::iNew(mesh)
     );
 
@@ -196,6 +196,7 @@ void setPhase
         if (refiner.valid())
         {
             LSModel.levelSet() = LSModel.calcLevelSet(alpha, surfaces);
+            LSModel.correct();
             alpha = LSModel.alpha();
 
             forAll(error, celli)
@@ -360,6 +361,7 @@ void setPhase
     }
 
     LSModel.levelSet() = LSModel.calcLevelSet(alpha, surfaces);
+    LSModel.correct();
     alpha = LSModel.alpha();
 }
 
@@ -382,6 +384,11 @@ int main(int argc, char *argv[])
     );
     argList::addBoolOption
     (
+        "points0",
+        "Write points0 fields"
+    );
+    argList::addBoolOption
+    (
         "noRefine",
         "Do not refine"
     );
@@ -394,6 +401,11 @@ int main(int argc, char *argv[])
     (
         "noHistory",
         "Do not write the history"
+    );
+    argList::addBoolOption
+    (
+        "writeAll",
+        "write level set fields"
     );
 
     #include "addDictOption.H"
@@ -450,52 +462,35 @@ int main(int argc, char *argv[])
 
     PtrList<volScalarField> alphas(phases.size());
     PtrList<levelSetModel> LSModels(phases.size());
-    label phaseI = 0;
     forAll(phases, phasei)
     {
-        IOobject alphaIO
+        alphas.set
         (
-            IOobject::groupName("alpha", phases[phasei]),
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            phasei,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alpha", phases[phasei]),
+                    runTime.timeName(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                mesh
+            )
         );
-        if (alphaIO.typeHeaderOk<volScalarField>(true))
-        {
-            alphas.set
+        LSModels.set
+        (
+            phasei,
+            new levelSetModel
             (
-                phaseI,
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        IOobject::groupName("alpha", phases[phasei]),
-                        runTime.timeName(),
-                        mesh,
-                        IOobject::MUST_READ,
-                        IOobject::AUTO_WRITE
-                    ),
-                    mesh
-                )
-            );
-            LSModels.set
-            (
-                phaseI,
-                new levelSetModel
-                (
-                    alphas[phasei],
-                    levelSetProperties.subDict(phases[phasei]),
-                    false
-                )
-            );
-            phases[phaseI] = phases[phasei];
-            phaseI++;
-        }
+                alphas[phasei],
+                levelSetProperties.subDict(phases[phasei]),
+                false
+            )
+        );
     }
-    alphas.resize(phaseI);
-    LSModels.resize(phaseI);
-    phases.resize(phaseI);
 
     // Read in all fields to allow resizing
     if (updateAll)
@@ -524,8 +519,7 @@ int main(int argc, char *argv[])
         mesh.setInstance(oldFacesInstance);
     }
 
-    bool writeMesh = false;
-    if (refiner.valid())
+    if (refiner.valid() && args.optionFound("points0"))
     {
         //- Write points0 field to time directory
         pointIOField points0
@@ -540,7 +534,6 @@ int main(int argc, char *argv[])
             mesh.points()
         );
         points0.write();
-        writeMesh = true;
     }
 
     if (noHistory)
@@ -548,12 +541,13 @@ int main(int argc, char *argv[])
         refiner.clear();
     }
 
-    // Write all fields
-    runTime.write();
-    if (writeMesh)
+    if (!args.optionFound("writeAll"))
     {
-        mesh.write();
+        LSModels.clear();
     }
+
+    // Write all fields
+    runTime.writeNow();
 
     Info<< "\nEnd\n" << nl
         << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"

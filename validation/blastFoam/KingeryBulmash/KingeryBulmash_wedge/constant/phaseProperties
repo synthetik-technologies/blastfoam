@@ -83,7 +83,7 @@ tnt
         }
     }
 
-    activationModel linear;
+    activationModel none;
     initiation
     {
         E0          7.0e9;

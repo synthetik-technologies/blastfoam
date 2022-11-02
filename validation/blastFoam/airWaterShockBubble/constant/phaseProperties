@@ -16,7 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (air water);
-
+//sigma  0.07;
 air
 {
     type basic;
@@ -56,30 +56,37 @@ water
     {
         transport   const;
         thermo      eConst;
-        equationOfState stiffenedGas;
+        equationOfState linearTillotson;
     }
     equationOfState
     {
-        gamma           4.4;
-        a               6e8;
+        p0      1e5;
+        rho0    1000.0;
+        e0      3.542e5;
+        omega   0.28;
+        A       2.2e9;
+        B       9.94e9;
+        C       14.57e9;
+        pCav    5000;
     }
     specie
     {
-        molWeight       90.885;
+        molWeight       18;
     }
     transport
     {
-        mu              0;              // Viscosity
-        Pr              1;              // Prandtl number
+        mu              0;
+        Pr              1;
     }
     thermodynamics
     {
-        Cv              4182;           // Heat capacity
-        Hf              0.0;
+        type        eConst;
+        Cv          2400; // Give correct reference temperature
+        Hf          0;
     }
 
     residualRho     1e-6;
-    residualAlpha   1e-6;
+    residualAlpha   1e-10;
 }
 
 

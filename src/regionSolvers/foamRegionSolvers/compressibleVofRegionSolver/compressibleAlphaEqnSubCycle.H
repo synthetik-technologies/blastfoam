@@ -1,0 +1,64 @@
+fvModels.source(alpha1, mixture.thermo1().rho());
+
+talphaPhi1 = alphaPhi10;
+
+if (nAlphaSubCycles > 1)
+{
+    dimensionedScalar totalDeltaT = runTime.deltaT();
+
+    talphaPhi1 = new surfaceScalarField
+    (
+        IOobject
+        (
+            "alphaPhi1",
+            runTime.timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(alphaPhi10.dimensions(), 0)
+    );
+
+    surfaceScalarField rhoPhiSum
+    (
+        IOobject
+        (
+            "rhoPhiSum",
+            runTime.timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(rhoPhi.dimensions(), 0)
+    );
+
+    tmp<volScalarField> trSubDeltaT;
+
+    if (LTS)
+    {
+        trSubDeltaT =
+            fv::localEulerDdt::localRSubDeltaT(mesh, nAlphaSubCycles);
+    }
+
+    for
+    (
+        subCycle<volScalarField> alphaSubCycle(alpha1, nAlphaSubCycles);
+        !(++alphaSubCycle).end();
+    )
+    {
+        #include "alphaEqn.H"
+        talphaPhi1.ref() += (runTime.deltaT()/totalDeltaT)*alphaPhi10;
+        rhoPhiSum += (runTime.deltaT()/totalDeltaT)*rhoPhi;
+    }
+
+    rhoPhi = rhoPhiSum;
+}
+else
+{
+    #include "alphaEqn.H"
+}
+
+contErr =
+    (
+        fvc::ddt(rho) + fvc::div(rhoPhi)
+      - (fvModels.source(alpha1, mixture.thermo1().rho())&rho1)
+      - (fvModels.source(alpha2, mixture.thermo2().rho())&rho2)
+    )();
