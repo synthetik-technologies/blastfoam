@@ -15,8 +15,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/regionModels/lnInclude \
-    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/sampling/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude
 
 LIB_LIBS = \
     -lfileFormats \
