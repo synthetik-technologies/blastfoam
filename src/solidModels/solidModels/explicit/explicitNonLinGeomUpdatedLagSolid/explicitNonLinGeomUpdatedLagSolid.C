@@ -126,13 +126,7 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
 
         // Compute the velocity
         // Note: this is the velocity at the middle of the time-step
-        const scalar fac
-        (
-            mesh().relaxField(D().name())
-          ? mesh().fieldRelaxationFactor(D().name())
-          : 1.0
-        );
-        U() = U().oldTime() + fac*0.5*(deltaT*a_ + deltaT0*a_.oldTime());
+        U() = U().oldTime() + 0.5*(deltaT*a_ + deltaT0*a_.oldTime());
 
         // Compute displacement
         DD() = deltaT*U();
@@ -159,11 +153,7 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
         // avoid checker-boarding
         a_ =
             (
-                (
-                    enforceLinear()
-                  ? fvc::div(sigma())
-                  : fvc::div(relJ_*inv(relF_) & sigma(), "div(sigma)")
-                )
+                fvc::div(this->relP(), "div(sigma)")
               + fvc::div
                 (
                     mesh().Sf()*energies_.viscousPressure
@@ -192,6 +182,14 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
         );
     }
     while (mesh().update());
+
+    if (this->solidModelDict().lookupOrDefault("dynamicRelaxation", false))
+    {
+        if (energies_.kineticEnergy() < energies_.kineticEnergyOldTime())
+        {
+            U() = Zero;
+        }
+    }
 
     return true;
 }

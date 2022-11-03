@@ -68,10 +68,10 @@ protected:
         autoPtr<pointField> pointsOldPtr_;
 
         //- Cell velocity
-        autoPtr<volVectorField> cellDDPtr_;
+        autoPtr<volVectorField> cellDPtr_;
 
         //- Point velocity
-        autoPtr<pointVectorField> pointDDPtr_;
+        autoPtr<pointVectorField> pointDPtr_;
 
         //- Motion diffusivity
         autoPtr<motionDiffusivity> diffusivityPtr_;

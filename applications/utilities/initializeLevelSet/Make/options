@@ -19,5 +19,5 @@ EXE_LIBS = \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastDynamicMesh \
-    -lerrorEstimate \
+    -lerrorEstimators \
     -llevelSet

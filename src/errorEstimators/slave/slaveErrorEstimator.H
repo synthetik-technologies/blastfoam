@@ -60,6 +60,8 @@ public:
     // Constructor
     slave(const fvMesh& mesh, const dictionary& dict, const word& name);
 
+    slave(const fvMesh& mesh);
+
 
     //- Destructor
     virtual ~slave();

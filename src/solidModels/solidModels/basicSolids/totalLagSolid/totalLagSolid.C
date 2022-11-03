@@ -179,7 +179,7 @@ tmp<volTensorField> totalLagSolid<IncrementalModel>::P() const
 
     forAll(Piola, celli)
     {
-        Piola[celli] = J_[celli]*(inv(F_[celli]) & tensor(sigma[celli]));
+        Piola[celli] = J_[celli]*(inv(F_[celli]) & sigma[celli]);
     }
     volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
     forAll(bPiola, patchi)
@@ -190,7 +190,7 @@ tmp<volTensorField> totalLagSolid<IncrementalModel>::P() const
         const fvPatchTensorField& pF = F_.boundaryField()[patchi];
         forAll(pPiola, facei)
         {
-            pPiola[facei] = pJ[facei]*(inv(pF[facei]) & tensor(psigma[facei]));
+            pPiola[facei] = pJ[facei]*(inv(pF[facei]) & psigma[facei]);
         }
     }
 
@@ -220,16 +220,20 @@ tmp<vectorField> totalLagSolid<IncrementalModel>::tractionBoundarySnGrad
     const symmTensorField& pSigma = this->sigma().boundaryField()[patchID];
 
     // Patch unit normals (initial configuration)
-    vectorField nCurrent(patch.nf());
-
+    vectorField n(patch.nf());
+    tmp<vectorField> nCurrent;
     if (!this->enforceLinear())
     {
         // Patch total deformation gradient inverse
         const tensorField pFinv(inv(F_.boundaryField()[patchID]));
 
         // Patch unit normals (deformed configuration)
-        nCurrent = pFinv.T() & nCurrent;
-        nCurrent /= mag(nCurrent);
+        nCurrent = pFinv.T() & n;
+        nCurrent.ref() /= mag(nCurrent());
+    }
+    else
+    {
+        nCurrent = tmp<vectorField>(n);
     }
 
     // Return patch snGrad
@@ -238,9 +242,9 @@ tmp<vectorField> totalLagSolid<IncrementalModel>::tractionBoundarySnGrad
         new vectorField
         (
             (
-                (traction - nCurrent*pressure)
-              - (nCurrent & pSigma)
-              + pimpK*(patch.nf() & pGradD)
+                (traction - nCurrent()*pressure)
+              - (nCurrent() & pSigma)
+              + pimpK*(n & pGradD)
             )/pimpK
         )
     );

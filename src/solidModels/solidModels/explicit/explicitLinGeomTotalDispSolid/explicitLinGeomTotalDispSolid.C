@@ -215,8 +215,15 @@ bool explicitLinGeomTotalDispSolid::evolve()
             stab(),
             g()
         );
+    } while (mesh().update());
+
+    if (this->solidModelDict().lookupOrDefault("dynamicRelaxation", false))
+    {
+        if (energies_.kineticEnergy() < energies_.kineticEnergyOldTime())
+        {
+            U() = Zero;
+        }
     }
-    while (mesh().update());
 
     return true;
 }

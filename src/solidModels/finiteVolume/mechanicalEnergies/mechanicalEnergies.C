@@ -53,6 +53,7 @@ mechanicalEnergies::mechanicalEnergies
     internalEnergy_(0.0),
     internalEnergyOldTime_(0.0),
     kineticEnergy_(0.0),
+    kineticEnergyOldTime_(0.0),
     smoothingEnergy_(0.0),
     smoothingEnergyOldTime_(0.0),
     bulkViscosityEnergy_(0.0),
@@ -194,9 +195,10 @@ void mechanicalEnergies::checkEnergies
     {
         curTimeIndex_ = mesh_.time().timeIndex();
 
-        // Update old time values
+        // Update old time value
         externalWorkOldTime_ = externalWork_;
         internalEnergyOldTime_ = internalEnergy_;
+        kineticEnergyOldTime_ = kineticEnergy_;
         smoothingEnergyOldTime_ = smoothingEnergy_;
         bulkViscosityEnergyOldTime_ = bulkViscosityEnergy_;
     }

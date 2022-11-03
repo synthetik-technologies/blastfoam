@@ -12,4 +12,4 @@ slave/slaveErrorEstimator.C
 
 fvPatchFields/derived/coupledMaxError/coupledMaxErrorFvPatchScalarField.C
 
-LIB = $(BLAST_LIBBIN)/liberrorEstimate
+LIB = $(BLAST_LIBBIN)/liberrorEstimators

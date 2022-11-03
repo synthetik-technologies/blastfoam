@@ -80,6 +80,9 @@ class mechanicalEnergies
         //- Kinetic energy
         scalar kineticEnergy_;
 
+        //- Kinetic energy at the previous time
+        scalar kineticEnergyOldTime_;
+
         //- Accumulated energy dissipated due to Laplacian smoothing term
         scalar smoothingEnergy_;
 
@@ -172,6 +175,67 @@ public:
             const volVectorField& stabilisation,
             const dimensionedVector& g
         );
+
+        //- Return accumulated external work
+        scalar externalWork() const
+        {
+            return externalWork_;
+        }
+
+        //- Return accumulated external work old time
+        scalar externalWorkOldTime() const
+        {
+            return externalWorkOldTime_;
+        }
+
+        //- Return accumulated internal energy
+        scalar internalEnergy() const
+        {
+            return internalEnergy_;
+        }
+
+        //- Return accumulated internal energy old time
+        scalar internalEnergyOldTime() const
+        {
+            return internalEnergyOldTime_;
+        }
+
+        //- Return kinetic energy
+        scalar kineticEnergy() const
+        {
+            return kineticEnergy_;
+        }
+
+        //- Return Kinetic energy at the previous time
+        scalar kineticEnergyOldTime() const
+        {
+            return kineticEnergyOldTime_;
+        }
+
+        //- Return accumulated energy dissipated due to Laplacian smoothing term
+        scalar smoothingEnergy() const
+        {
+            return smoothingEnergy_;
+        }
+
+        //- Return accumulated energy dissipated due to Laplacian smoothing term old
+        //  time
+        scalar smoothingEnergyOldTime() const
+        {
+            return smoothingEnergyOldTime_;
+        }
+
+        //- Return Linear bulk viscosity energy
+        scalar bulkViscosityEnergy() const
+        {
+            return bulkViscosityEnergy_;
+        }
+
+        //- Return Linear bulk viscosity energy old time
+        scalar bulkViscosityEnergyOldTime() const
+        {
+            return bulkViscosityEnergyOldTime_;
+        }
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

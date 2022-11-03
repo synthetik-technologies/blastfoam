@@ -51,6 +51,11 @@ Foam::errorEstimators::slave::slave
 {}
 
 
+Foam::errorEstimators::slave::slave(const fvMesh& mesh)
+:
+    errorEstimator(mesh, dictionary(), word::null)
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::errorEstimators::slave::~slave()

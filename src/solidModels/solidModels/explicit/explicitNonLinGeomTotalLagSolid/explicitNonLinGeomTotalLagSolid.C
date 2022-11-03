@@ -176,10 +176,10 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
 
         U() = (D() - D().oldTime())/deltaT;
 
-        if (mesh().relaxField(U().name()))
-        {
-            U() *= mesh().fieldRelaxationFactor(U().name());
-        }
+        // if (mesh().relaxField(U().name()))
+        // {
+        //     U() *= mesh().fieldRelaxationFactor(U().name());
+        // }
 
         // Update the stress field based on the latest D field
         updateStress();
@@ -230,6 +230,14 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         );
 
     } while (mesh().update());
+
+    if (this->solidModelDict().lookupOrDefault("dynamicRelaxation", false))
+    {
+        if (energies_.kineticEnergy() < energies_.kineticEnergyOldTime())
+        {
+            U() = Zero;
+        }
+    }
 
     return true;
 }
