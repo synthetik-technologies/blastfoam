@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multicomponent.H"
+#include "multicomponentErrorEstimator.H"
 #include "fvc.H"
 #include "addToRunTimeSelectionTable.H"
 

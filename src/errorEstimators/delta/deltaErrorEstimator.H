@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2020
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,23 +22,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::fieldValue
+    Foam::errorEstimators::delta
 
 Description
-    Error is the value of the given field
+    Error is defined by the difference of a field over a face
 
 SourceFiles
-    fieldValue.C
+    deltaErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fieldValue_H
-#define fieldValue_H
+#ifndef deltaErrorEstimator_H
+#define deltaErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "errorEstimator.H"
-#include "NamedEnum.H"
 
 namespace Foam
 {
@@ -46,60 +45,41 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class cellSize Declaration
+                           Class delta Declaration
 \*---------------------------------------------------------------------------*/
 
-class cellSize
+class delta
 :
     public errorEstimator
 {
-public:
-
-    enum SizeType
-    {
-        VOLUME,
-        CMPT,
-        CHARACTERISTIC,
-        MAG
-    };
-    static const NamedEnum<SizeType, 4> sizeTypeNames;
-
-
-private:
 // Private data
 
-    //- Parameters
-    SizeType sizeType_;
-    labelList cmpts_;
-    vector minDX_;
-    vector maxDX_;
+        //- Field name
+        const word fieldName_;
 
-    //- Read components
-    labelList readCmpts(Istream& is) const;
 
 public:
 
     //- Runtime type information
-    TypeName("cellSize");
+    TypeName("delta");
 
     // Constructor
-    cellSize(const fvMesh& mesh, const dictionary& dict, const word& name);
+    delta
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
 
 
     //- Destructor
-    virtual ~cellSize();
+    virtual ~delta();
 
 
     // Member Functions
 
-        //- Update error
+        //- Gamma function
         virtual void update(const bool scale = true);
-
-        //- Return non constant reference to error field
-        virtual labelList maxRefinement() const;
-
-        //- Read parameters
-        virtual void read(const dictionary& dict);
 };
 
 
@@ -107,7 +87,6 @@ public:
 
 } // End namespace errorEstimators
 } // End namespace Foam
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

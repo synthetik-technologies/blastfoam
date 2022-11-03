@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "delta.H"
+#include "deltaErrorEstimator.H"
 #include "fvc.H"
 #include "addToRunTimeSelectionTable.H"
 

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2021
+    \\  /    A nd           | Copyright (C) 2019-2020
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,18 +22,26 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::multicomponent
+    Foam::errorEstimators::Lohner
 
 Description
-    Error is defined by multiple errorEstimators
+    Estimates error based on second derivative of a specified field
+
+    References:
+    \verbatim
+        R. Löhner (1987).
+        An adaptive finite element scheme for transient problems in
+ CFD
+        Computer Methods in Applied Mechanics and Engineering, 61, 323-338.
+    \endverbatim
 
 SourceFiles
-    multicomponent.C
+    LohnerErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef multicomponent_H
-#define multicomponent_H
+#ifndef LohnerErrorEstimator_H
+#define LohnerErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,31 +53,29 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class multicomponent Declaration
+                           Class Lohner Declaration
 \*---------------------------------------------------------------------------*/
 
-class multicomponent
+class Lohner
 :
     public errorEstimator
 {
+// Private data
 
-    //- Names of error estimators
-    wordList names_;
+        //- Field name
+        const word fieldName_;
 
-    //- List of error estimators
-    PtrList<errorEstimator> errors_;
-
-    //- Maximum refinement level for the estimator
-    mutable labelList maxRefinement_;
+        //- Coefficient
+        const scalar epsilon_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("multicomponent");
+    TypeName("Lohner");
 
     // Constructor
-    multicomponent
+    Lohner
     (
         const fvMesh& mesh,
         const dictionary& dict,
@@ -78,19 +84,13 @@ public:
 
 
     //- Destructor
-    virtual ~multicomponent();
+    virtual ~Lohner();
 
 
     // Member Functions
 
         //- Update error
         virtual void update(const bool scale = true);
-
-        //- Return non constant reference to error field
-        virtual labelList maxRefinement() const;
-
-        //- Read level values
-        virtual void read(const dictionary& dict);
 };
 
 

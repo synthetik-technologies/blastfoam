@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -23,27 +23,43 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "errorEstimator.H"
+#include "slaveErrorEstimator.H"
+#include "addToRunTimeSelectionTable.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace errorEstimators
+{
+    defineTypeNameAndDebug(slave, 0);
+    addToRunTimeSelectionTable(errorEstimator, slave, dictionary);
+}
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::errorEstimators::slave::slave
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& name
+)
+:
+    errorEstimator(mesh, dict, name)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::errorEstimators::slave::~slave()
+{}
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-bool Foam::errorEstimator::getFieldValueType
-(
-    const word& name,
-    volScalarField& f
-) const
-{
-    typedef GeometricField<Type, fvPatchField, volMesh> thisType;
-
-    if (mesh_.foundObject<thisType>(name))
-    {
-        const thisType& x = mesh_.lookupObject<thisType>(name);
-        f.primitiveFieldRef() =  mag(x.primitiveField());
-        f.boundaryFieldRef() = mag(x.boundaryField());
-        return true;
-    }
-    return false;
-}
+void Foam::errorEstimators::slave::update(const bool scale)
+{}
 
 // ************************************************************************* //

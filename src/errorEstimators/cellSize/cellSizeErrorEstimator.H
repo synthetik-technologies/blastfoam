@@ -22,22 +22,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::fieldValue
+    Foam::errorEstimators::cellSize
 
 Description
     Error is the value of the given field
 
 SourceFiles
-    fieldValue.C
+    cellSizeErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fieldValue_H
-#define fieldValue_H
+#ifndef cellSizeErrorEstimator_H
+#define cellSizeErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "errorEstimator.H"
+#include "NamedEnum.H"
 
 namespace Foam
 {
@@ -45,35 +46,60 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class fieldValue Declaration
+                           Class cellSize Declaration
 \*---------------------------------------------------------------------------*/
 
-class fieldValue
+class cellSize
 :
     public errorEstimator
 {
+public:
+
+    enum SizeType
+    {
+        VOLUME,
+        CMPT,
+        CHARACTERISTIC,
+        MAG
+    };
+    static const NamedEnum<SizeType, 4> sizeTypeNames;
+
+
+private:
 // Private data
 
-        //- Field name
-        const word fieldName_;
+    //- Parameters
+    SizeType sizeType_;
+    labelList cmpts_;
+    vector minDX_;
+    vector maxDX_;
+
+    //- Read components
+    labelList readCmpts(Istream& is) const;
 
 public:
 
     //- Runtime type information
-    TypeName("fieldValue");
+    TypeName("cellSize");
 
     // Constructor
-    fieldValue(const fvMesh& mesh, const dictionary& dict, const word& name);
+    cellSize(const fvMesh& mesh, const dictionary& dict, const word& name);
 
 
     //- Destructor
-    virtual ~fieldValue();
+    virtual ~cellSize();
 
 
     // Member Functions
 
         //- Update error
         virtual void update(const bool scale = true);
+
+        //- Return non constant reference to error field
+        virtual labelList maxRefinement() const;
+
+        //- Read parameters
+        virtual void read(const dictionary& dict);
 };
 
 

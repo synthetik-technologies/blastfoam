@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
+    \\  /    A nd           | Copyright (C) 2019-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,26 +22,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::Lohner
+    Foam::errorEstimators::scaledDelta
 
 Description
-    Estimates error based on second derivative of a specified field
-
-    References:
-    \verbatim
-        R. Löhner (1987).
-        An adaptive finite element scheme for transient problems in
- CFD
-        Computer Methods in Applied Mechanics and Engineering, 61, 323-338.
-    \endverbatim
+    Error is defined by the relative difference of a field over a face with
+    an optional offset
 
 SourceFiles
-    Lohner.C
+    scaledDeltaErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Lohner_H
-#define Lohner_H
+#ifndef scaledDeltaErrorEstimator_H
+#define scaledDeltaErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,10 +46,10 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class Lohner Declaration
+                           Class scaledDelta Declaration
 \*---------------------------------------------------------------------------*/
 
-class Lohner
+class scaledDelta
 :
     public errorEstimator
 {
@@ -65,26 +58,24 @@ class Lohner
         //- Field name
         const word fieldName_;
 
-        //- Coefficient
-        const scalar epsilon_;
+        //- Minimum value to consider
+        const scalar minVal_;
+
+        //- Offset value
+        scalar offset_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("Lohner");
+    ClassName("scaledDelta");
 
     // Constructor
-    Lohner
-    (
-        const fvMesh& mesh,
-        const dictionary& dict,
-        const word& name
-    );
+    scaledDelta(const fvMesh& mesh, const dictionary& dict, const word& name);
 
 
     //- Destructor
-    virtual ~Lohner();
+    virtual ~scaledDelta();
 
 
     // Member Functions

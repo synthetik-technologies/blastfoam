@@ -36,12 +36,12 @@ Description
     \endverbatim
 
 SourceFiles
-    densityGradient.C
+    densityGradientErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef densityGradient_H
-#define densityGradient_H
+#ifndef densityGradientErrorEstimator_H
+#define densityGradientErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

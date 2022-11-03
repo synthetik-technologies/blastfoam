@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "Lohner.H"
+#include "LohnerErrorEstimator.H"
 #include "fvc.H"
 #include "cubic.H"
 #include "addToRunTimeSelectionTable.H"

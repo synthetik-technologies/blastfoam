@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
-     \\/     M anipulation  | Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::delta
+    Foam::errorEstimators::fieldValue
 
 Description
-    Error is defined by the difference of a field over a face
+    Error is the value of the given field
 
 SourceFiles
-    delta.C
+    fieldValueErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef delta_H
-#define delta_H
+#ifndef fieldValueErrorEstimator_H
+#define fieldValueErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,10 +45,10 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class delta Declaration
+                           Class fieldValue Declaration
 \*---------------------------------------------------------------------------*/
 
-class delta
+class fieldValue
 :
     public errorEstimator
 {
@@ -57,28 +57,22 @@ class delta
         //- Field name
         const word fieldName_;
 
-
 public:
 
     //- Runtime type information
-    TypeName("delta");
+    TypeName("fieldValue");
 
     // Constructor
-    delta
-    (
-        const fvMesh& mesh,
-        const dictionary& dict,
-        const word& name
-    );
+    fieldValue(const fvMesh& mesh, const dictionary& dict, const word& name);
 
 
     //- Destructor
-    virtual ~delta();
+    virtual ~fieldValue();
 
 
     // Member Functions
 
-        //- Gamma function
+        //- Update error
         virtual void update(const bool scale = true);
 };
 
@@ -87,6 +81,7 @@ public:
 
 } // End namespace errorEstimators
 } // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

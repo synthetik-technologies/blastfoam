@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2022
+    \\  /    A nd           | Copyright (C) 2020-2021
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,19 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::scaledDelta
+    Foam::errorEstimators::multicomponent
 
 Description
-    Error is defined by the relative difference of a field over a face with
-    an optional offset
+    Error is defined by multiple errorEstimators
 
 SourceFiles
-    scaledDelta.C
+    multicomponentErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef scaledDelta_H
-#define scaledDelta_H
+#ifndef multicomponentErrorEstimator_H
+#define multicomponentErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,42 +45,52 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class scaledDelta Declaration
+                           Class multicomponent Declaration
 \*---------------------------------------------------------------------------*/
 
-class scaledDelta
+class multicomponent
 :
     public errorEstimator
 {
-// Private data
 
-        //- Field name
-        const word fieldName_;
+    //- Names of error estimators
+    wordList names_;
 
-        //- Minimum value to consider
-        const scalar minVal_;
+    //- List of error estimators
+    PtrList<errorEstimator> errors_;
 
-        //- Offset value
-        scalar offset_;
+    //- Maximum refinement level for the estimator
+    mutable labelList maxRefinement_;
 
 
 public:
 
     //- Runtime type information
-    ClassName("scaledDelta");
+    TypeName("multicomponent");
 
     // Constructor
-    scaledDelta(const fvMesh& mesh, const dictionary& dict, const word& name);
+    multicomponent
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
 
 
     //- Destructor
-    virtual ~scaledDelta();
+    virtual ~multicomponent();
 
 
     // Member Functions
 
         //- Update error
         virtual void update(const bool scale = true);
+
+        //- Return non constant reference to error field
+        virtual labelList maxRefinement() const;
+
+        //- Read level values
+        virtual void read(const dictionary& dict);
 };
 
 

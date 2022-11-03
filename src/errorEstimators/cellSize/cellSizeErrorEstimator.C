@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "cellSize.H"
+#include "cellSizeErrorEstimator.H"
 #include "meshSizeObject.H"
 #include "addToRunTimeSelectionTable.H"
 

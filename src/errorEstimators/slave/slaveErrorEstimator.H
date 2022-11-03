@@ -21,29 +21,65 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::errorEstimators::slave
+
+Description
+    Error is the value of the given field
+
+SourceFiles
+    slave.C
+
 \*---------------------------------------------------------------------------*/
+
+#ifndef slave_H
+#define slave_H
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "errorEstimator.H"
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-template<class Type>
-bool Foam::errorEstimator::getFieldValueType
-(
-    const word& name,
-    volScalarField& f
-) const
+namespace Foam
 {
-    typedef GeometricField<Type, fvPatchField, volMesh> thisType;
+namespace errorEstimators
+{
 
-    if (mesh_.foundObject<thisType>(name))
-    {
-        const thisType& x = mesh_.lookupObject<thisType>(name);
-        f.primitiveFieldRef() =  mag(x.primitiveField());
-        f.boundaryFieldRef() = mag(x.boundaryField());
-        return true;
-    }
-    return false;
-}
+/*---------------------------------------------------------------------------*\
+                           Class slave Declaration
+\*---------------------------------------------------------------------------*/
+
+class slave
+:
+    public errorEstimator
+{
+public:
+
+    //- Runtime type information
+    TypeName("slave");
+
+    // Constructor
+    slave(const fvMesh& mesh, const dictionary& dict, const word& name);
+
+
+    //- Destructor
+    virtual ~slave();
+
+
+    // Member Functions
+
+        //- Update error
+        virtual void update(const bool scale = true);
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace errorEstimators
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

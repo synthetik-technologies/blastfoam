@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "densityGradient.H"
+#include "densityGradientErrorEstimator.H"
 #include "fvc.H"
 #include "meshSizeObject.H"
 #include "addToRunTimeSelectionTable.H"
