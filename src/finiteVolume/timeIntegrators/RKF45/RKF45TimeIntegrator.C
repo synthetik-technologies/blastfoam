@@ -39,10 +39,10 @@ namespace timeIntegrators
 Foam::timeIntegrators::RKF45::RKF45
 (
     const fvMesh& mesh,
-    const label nSteps
+    Istream& is
 )
 :
-    timeIntegrator(mesh, nSteps)
+    timeIntegrator(mesh)
 {
     this->as_ =
     {

@@ -59,7 +59,7 @@ public:
     TypeName("RK4");
 
     // Constructor
-    RK4(const fvMesh& mesh, const label nSteps);
+    RK4(const fvMesh& mesh, Istream& is);
 
 
     //- Destructor

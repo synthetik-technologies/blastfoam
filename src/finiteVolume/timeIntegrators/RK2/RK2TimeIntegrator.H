@@ -37,7 +37,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "timeIntegrator.H"
+#include "genericRK2TimeIntegrator.H"
 
 namespace Foam
 {
@@ -50,7 +50,7 @@ namespace timeIntegrators
 
 class RK2
 :
-    public timeIntegrator
+    public genericRK2
 {
 
 public:
@@ -59,7 +59,7 @@ public:
     TypeName("RK2");
 
     // Constructor
-    RK2(const fvMesh& mesh, const label nSteps);
+    RK2(const fvMesh& mesh, Istream& is);
 
 
     //- Destructor

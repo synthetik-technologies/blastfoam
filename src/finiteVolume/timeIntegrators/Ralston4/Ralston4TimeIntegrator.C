@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RK4TimeIntegrator.H"
+#include "Ralston4TimeIntegrator.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,15 +32,15 @@ namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(RK4, 0);
-    addToRunTimeSelectionTable(timeIntegrator, RK4, dictionary);
+    defineTypeNameAndDebug(Ralston4, 0);
+    addToRunTimeSelectionTable(timeIntegrator, Ralston4, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::RK4::RK4
+Foam::timeIntegrators::Ralston4::Ralston4
 (
     const fvMesh& mesh,
     Istream& is
@@ -57,10 +57,10 @@ Foam::timeIntegrators::RK4::RK4
     };
     this->bs_ =
     {
-        {0.5},
-        {0.0, 0.5},
-        {0.0, 0.0, 1.0},
-        {1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0}
+        {0.4},
+        {0.29697761, 0.15875964},
+        {0.21810040, -3.05096516, 3.8328676},
+        {0.17476028, -0.55148066, 1.20553560, 0.17118478}
     };
     initialize();
 }
@@ -68,8 +68,6 @@ Foam::timeIntegrators::RK4::RK4
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::RK4::~RK4()
+Foam::timeIntegrators::Ralston4::~Ralston4()
 {}
-
-
 // ************************************************************************* //

@@ -43,10 +43,10 @@ namespace timeIntegrators
 Foam::timeIntegrators::Euler::Euler
 (
     const fvMesh& mesh,
-    const label nSteps
+    Istream& is
 )
 :
-    timeIntegrator(mesh, nSteps)
+    timeIntegrator(mesh)
 {
     this->as_ = {{1.0}};
     this->bs_ = {{1.0}};

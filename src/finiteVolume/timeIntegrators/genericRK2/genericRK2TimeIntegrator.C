@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RK4TimeIntegrator.H"
+#include "genericRK2TimeIntegrator.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,15 +32,15 @@ namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(RK4, 0);
-    addToRunTimeSelectionTable(timeIntegrator, RK4, dictionary);
+    defineTypeNameAndDebug(genericRK2, 0);
+    addToRunTimeSelectionTable(timeIntegrator, genericRK2, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::RK4::RK4
+Foam::timeIntegrators::genericRK2::genericRK2
 (
     const fvMesh& mesh,
     Istream& is
@@ -48,28 +48,30 @@ Foam::timeIntegrators::RK4::RK4
 :
     timeIntegrator(mesh)
 {
-    this->as_ =
-    {
-        {1.0},
-        {1.0, 0.0},
-        {1.0, 0.0, 0.0},
-        {1.0, 0.0, 0.0, 0.0}
-    };
-    this->bs_ =
-    {
-        {0.5},
-        {0.0, 0.5},
-        {0.0, 0.0, 1.0},
-        {1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0}
-    };
+    scalar alpha(readScalar(is));
+
+    this->as_ = {{1.0}, {alpha, 0.0}};
+    this->bs_ = {{0.5}, {1.0 - 1.0/(2.0*alpha), 1.0/(2.0*alpha)}};
+    initialize();
+}
+
+
+Foam::timeIntegrators::genericRK2::genericRK2
+(
+    const fvMesh& mesh,
+    const scalar alpha
+)
+:
+    timeIntegrator(mesh)
+{
+    this->as_ = {{1.0}, {alpha, 0.0}};
+    this->bs_ = {{0.5}, {1.0 - 1.0/(2.0*alpha), 1.0/(2.0*alpha)}};
     initialize();
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::RK4::~RK4()
+Foam::timeIntegrators::genericRK2::~genericRK2()
 {}
-
-
 // ************************************************************************* //

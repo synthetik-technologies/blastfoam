@@ -61,7 +61,7 @@ void Foam::timeIntegrator::postUpdateAll()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh, const label)
+Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh)
 :
     regIOobject
     (

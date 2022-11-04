@@ -43,15 +43,11 @@ namespace timeIntegrators
 Foam::timeIntegrators::RK2::RK2
 (
     const fvMesh& mesh,
-    const label nSteps
+    Istream& is
 )
 :
-    timeIntegrator(mesh, nSteps)
-{
-    this->as_ = {{1.0}, {1.0, 0.0}};
-    this->bs_ = {{0.5}, {0.5, 0.5}};
-    initialize();
-}
+    genericRK2(mesh, 0.5)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

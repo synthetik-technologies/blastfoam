@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RK4TimeIntegrator.H"
+#include "RK6TimeIntegrator.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,15 +32,15 @@ namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(RK4, 0);
-    addToRunTimeSelectionTable(timeIntegrator, RK4, dictionary);
+    defineTypeNameAndDebug(RK6, 0);
+    addToRunTimeSelectionTable(timeIntegrator, RK6, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::RK4::RK4
+Foam::timeIntegrators::RK6::RK6
 (
     const fvMesh& mesh,
     Istream& is
@@ -48,28 +48,33 @@ Foam::timeIntegrators::RK4::RK4
 :
     timeIntegrator(mesh)
 {
+    // 3rd Choice: c2=c3=1/4, c4 = 2/4, c5=c6=3/4, c7=4/4
     this->as_ =
     {
         {1.0},
         {1.0, 0.0},
         {1.0, 0.0, 0.0},
-        {1.0, 0.0, 0.0, 0.0}
+        {1.0, 0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
     };
     this->bs_ =
     {
-        {0.5},
-        {0.0, 0.5},
-        {0.0, 0.0, 1.0},
-        {1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0}
+        {0.25},
+        {0.125, 0.125},
+        {0.0, -5.0/6.0, 8.0/6.0},
+        {0.125, 0.125, 0.0, 0.5},
+        {0.0, 0.375, 0.25, -0.125, 0.25},
+        {1.0/7.0, -2.0/7.0, 4.0/7.0, 0.0, 0.0, 4.0/7.0},
+        {7.0/90.0, 0.0, 32.0/90.0, 12.0/90.0, 16.0/90.0, 16.0/90.0, 7.0/90.0}
     };
-    initialize();
+    this->initialize();
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::RK4::~RK4()
+Foam::timeIntegrators::RK6::~RK6()
 {}
-
-
 // ************************************************************************* //

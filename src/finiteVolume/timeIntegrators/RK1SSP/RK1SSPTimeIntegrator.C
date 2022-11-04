@@ -43,11 +43,17 @@ namespace timeIntegrators
 Foam::timeIntegrators::RK1SSP::RK1SSP
 (
     const fvMesh& mesh,
-    const label nSteps
+    Istream& is
 )
 :
-    timeIntegrator(mesh, nSteps)
+    timeIntegrator(mesh)
 {
+    label nSteps = 1;
+    if (!is.eof())
+    {
+        is >> nSteps;
+    }
+
     if (nSteps <= 1)
     {
         this->as_ = {{1.0}};
