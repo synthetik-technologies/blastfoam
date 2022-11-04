@@ -1,0 +1,165 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2013-2020 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::hUInletVelocityFvPatchVectorField
+
+Description
+    Inlet velocity in which the actual interstitial velocity is calculated
+    by dividing the specified inletVelocity field with the local phase-fraction.
+
+    Example of the boundary condition specification:
+    \verbatim
+    inlet
+    {
+        type              hUInletVelocity;
+        inletValue        uniform (0 0.2 0);// Non-interstitial inlet velocity
+        h                 h;  // Name of the height field
+        value             uniform (0 0 0);
+    }
+    \endverbatim
+
+SourceFiles
+    hUInletVelocityFvPatchVectorField.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef hUInletVelocityFvPatchVectorField_H
+#define hUInletVelocityFvPatchVectorField_H
+
+#include "fixedValueFvPatchFields.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+/*---------------------------------------------------------------------------*\
+              Class hUInletVelocityFvPatch Declaration
+\*---------------------------------------------------------------------------*/
+
+class hUInletVelocityFvPatchVectorField
+:
+    public fixedValueFvPatchVectorField
+{
+    // Private Data
+
+        //- Inlet velocity*h
+        vectorField inletValue_;
+
+        //- Name of the height field
+        word hName_;
+
+
+public:
+
+   //- Runtime type information
+   TypeName("hUInletVelocity");
+
+
+   // Constructors
+
+        //- Construct from patch and internal field
+        hUInletVelocityFvPatchVectorField
+        (
+            const fvPatch&,
+            const DimensionedField<vector, volMesh>&
+        );
+
+        //- Construct from patch, internal field and dictionary
+        hUInletVelocityFvPatchVectorField
+        (
+            const fvPatch&,
+            const DimensionedField<vector, volMesh>&,
+            const dictionary&
+        );
+
+        //- Construct by mapping given
+        //  hUInletVelocityFvPatchVectorField
+        //  onto a new patch
+        hUInletVelocityFvPatchVectorField
+        (
+            const hUInletVelocityFvPatchVectorField&,
+            const fvPatch&,
+            const DimensionedField<vector, volMesh>&,
+            const fvPatchFieldMapper&
+        );
+
+        //- Disallow copy without setting internal field reference
+        hUInletVelocityFvPatchVectorField
+        (
+            const hUInletVelocityFvPatchVectorField&
+        ) = delete;
+
+        //- Copy constructor setting internal field reference
+        hUInletVelocityFvPatchVectorField
+        (
+            const hUInletVelocityFvPatchVectorField&,
+            const DimensionedField<vector, volMesh>&
+        );
+
+        //- Construct and return a clone setting internal field reference
+        virtual tmp<fvPatchVectorField> clone
+        (
+            const DimensionedField<vector, volMesh>& iF
+        ) const
+        {
+            return tmp<fvPatchVectorField>
+            (
+                new hUInletVelocityFvPatchVectorField(*this, iF)
+            );
+        }
+
+
+    // Member Functions
+
+        // Mapping functions
+
+            //- Map (and resize as needed) from self given a mapping object
+            //  Used to update fields following mesh topology change
+            virtual void autoMap(const fvPatchFieldMapper&);
+
+            //- Reverse map the given fvPatchField onto this fvPatchField
+            //  Used to reconstruct fields
+            virtual void rmap(const fvPatchVectorField&, const labelList&);
+
+
+        // Evaluation functions
+
+            //- Update the coefficients associated with the patch field
+            virtual void updateCoeffs();
+
+        //- Write
+        virtual void write(Ostream&) const;
+
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //

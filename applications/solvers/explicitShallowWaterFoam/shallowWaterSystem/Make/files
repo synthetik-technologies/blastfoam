@@ -1,0 +1,6 @@
+shallowWaterSystem.C
+BCs/hWaveTransmissive/hWaveTransmissiveFvPatchFields.C
+BCs/subcriticalFixed/subcriticalFixedFvPatchFields.C
+BCs/hUInletVelocity/hUInletVelocityFvPatchVectorField.C
+
+LIB = $(BLAST_LIBBIN)/libshallowWaterSystem
