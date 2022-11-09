@@ -159,7 +159,7 @@ public:
     TypeName("shallow");
 
     // Constructor
-    shallowWaterSystem(const fvMesh& mesh);
+    shallowWaterSystem(const fvMesh& mesh, const bool read = true);
 
     //- Destructor
     virtual ~shallowWaterSystem();

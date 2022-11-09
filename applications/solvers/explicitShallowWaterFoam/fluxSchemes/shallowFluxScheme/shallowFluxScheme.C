@@ -98,16 +98,16 @@ void Foam::shallowFluxScheme::update
     const surfaceVectorField& UOwn = tUOwn();
     const surfaceVectorField& UNei = tUNei();
 
-    if (!th0Own_.valid())
-    {
-        autoPtr<ReconstructionScheme<scalar>> h0Limiter
-        (
-            ReconstructionScheme<scalar>::New(h0, "h0")
-        );
-        h0Limiter->interpolateOwnNei(th0Own_, th0Nei_);
-    }
-    const surfaceScalarField& h0Own = th0Own_();
-    const surfaceScalarField& h0Nei = th0Nei_();
+    // if (!th0Own_.valid())
+    // {
+    //     autoPtr<ReconstructionScheme<scalar>> h0Limiter
+    //     (
+    //         ReconstructionScheme<scalar>::New(h0, "h0")
+    //     );
+    //     h0Limiter->interpolateOwnNei(th0Own_, th0Nei_);
+    // }
+    // const surfaceScalarField& h0Own = th0Own_();
+    // const surfaceScalarField& h0Nei = th0Nei_();
 
     scalarField& phiI = phi_.primitiveFieldRef();
     scalarField& hPhiI = hPhi_.primitiveFieldRef();
@@ -120,7 +120,6 @@ void Foam::shallowFluxScheme::update
             calculateFluxes
             (
                 hOwn[facei], hNei[facei],
-                h0Own[facei], h0Nei[facei],
                 UOwn[facei], UNei[facei],
                 mesh_.Sf()[facei],
                 phiI[facei],
@@ -157,8 +156,6 @@ void Foam::shallowFluxScheme::update
                     (
                         hOwn.boundaryField()[patchi][facei],
                         hNei.boundaryField()[patchi][facei],
-                        h0Own.boundaryField()[patchi][facei],
-                        h0Nei.boundaryField()[patchi][facei],
                         UOwn.boundaryField()[patchi][facei],
                         UNei.boundaryField()[patchi][facei],
                         pSf[facei],

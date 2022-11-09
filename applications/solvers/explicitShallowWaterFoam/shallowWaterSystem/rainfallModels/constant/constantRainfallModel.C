@@ -66,7 +66,7 @@ Foam::tmp<Foam::volScalarField> Foam::rainfallModels::constant::R0() const
     (
         typeName + ":R0",
         mesh_,
-        (t >= start_ && t >= end_)*R_
+        (t >= start_ && t <= end_)*R_
     );
 }
 

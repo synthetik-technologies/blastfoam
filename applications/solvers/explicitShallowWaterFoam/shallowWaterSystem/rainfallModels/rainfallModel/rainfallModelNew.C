@@ -36,6 +36,8 @@ Foam::autoPtr<Foam::rainfallModel> Foam::rainfallModel::New
 {
     if (dict.found("R") && !dict.found("rainfallModel"))
     {
+        Info<< "Selecting rainfallModel: "
+            << rainfallModels::constant::typeName << endl;
         return autoPtr<rainfallModel>
         (
             new rainfallModels::constant(mesh, dict)

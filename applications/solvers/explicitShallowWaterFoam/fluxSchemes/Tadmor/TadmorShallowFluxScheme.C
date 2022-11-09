@@ -77,7 +77,6 @@ void Foam::shallowFluxSchemes::Tadmor::createSavedFields()
 void Foam::shallowFluxSchemes::Tadmor::calculateFluxes
 (
     const scalar& hOwn, const scalar& hNei,
-    const scalar& h0Own, const scalar& h0Nei,
     const vector& UOwn, const vector& UNei,
     const vector& Sf,
     scalar& phi,

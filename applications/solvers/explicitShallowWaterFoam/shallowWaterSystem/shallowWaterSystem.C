@@ -50,7 +50,8 @@ namespace Foam
 
 Foam::shallowWaterSystem::shallowWaterSystem
 (
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const bool read
 )
 :
     timeIntegrationSystem(typeName, mesh),
@@ -190,7 +191,7 @@ Foam::shallowWaterSystem::shallowWaterSystem
 {
 
     h0_.correctBoundaryConditions();
-    if (!mesh.time().restart())
+    if (!mesh.time().restart() && read)
     {
         IOobject hTotalHeader
         (
@@ -224,7 +225,7 @@ Foam::shallowWaterSystem::shallowWaterSystem
                 IOobject::NO_WRITE
             );
 
-            if (!nHeader.typeHeaderOk<volScalarField>() && !dict_.found("n"))
+            if (!nHeader.typeHeaderOk<volScalarField>() && !dict_.found("n") && read)
             {
                 FatalErrorInFunction
                     << "Friction is turned on, but " << string("n") << " was not" << nl
@@ -246,7 +247,9 @@ Foam::shallowWaterSystem::shallowWaterSystem
                     )
                 )
             );
-            nHeader.instance() = mesh.time().timeName();
+
+            // Reset dimensions since fractional dimensions are not supported
+            nPtr_->dimensions().reset(dimensionSet(0, -1.0/3.0, 1, 0, 0, 0, 0));
             break;
         }
         case DarcyWeisbach:
@@ -260,7 +263,7 @@ Foam::shallowWaterSystem::shallowWaterSystem
                 IOobject::NO_WRITE
             );
 
-            if (!fHeader.typeHeaderOk<volScalarField>() && !dict_.found("f"))
+            if (!fHeader.typeHeaderOk<volScalarField>() && !dict_.found("f") && read)
             {
                 FatalErrorInFunction
                     << "Friction is turned on, but " << string("f") << " was not" << nl
@@ -281,7 +284,6 @@ Foam::shallowWaterSystem::shallowWaterSystem
                     )
                 )
             );
-            fHeader.instance() = mesh.time().timeName();
             break;
         }
         default:
@@ -409,7 +411,7 @@ void Foam::shallowWaterSystem::postUpdate()
             {
                 K = fPtr_()/((mag(g_)*8.0)*max(h_, hMin_));
             }
-            SfByU += mag(g_)*K*mag(U_);
+            SfByU += mag(g_)*K()*mag(U_);
         }
         if (viscous_)
         {
