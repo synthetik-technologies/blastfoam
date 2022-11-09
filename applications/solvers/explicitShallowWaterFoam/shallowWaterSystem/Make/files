@@ -1,6 +1,14 @@
 shallowWaterSystem.C
+
 BCs/hWaveTransmissive/hWaveTransmissiveFvPatchFields.C
 BCs/subcriticalFixed/subcriticalFixedFvPatchFields.C
 BCs/hUInletVelocity/hUInletVelocityFvPatchVectorField.C
+
+rainfallModels/rainfallModel/rainfallModel.C
+rainfallModels/rainfallModel/rainfallModelNew.C
+rainfallModels/constant/constantRainfallModel.C
+rainfallModels/none/noneRainfallModel.C
+rainfallModels/table/tableRainfallModel.C
+rainfallModels/function/functionRainfallModel.C
 
 LIB = $(BLAST_LIBBIN)/libshallowWaterSystem

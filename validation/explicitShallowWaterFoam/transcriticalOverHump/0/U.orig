@@ -23,7 +23,6 @@ boundaryField
     inlet
     {
         type            hUInletVelocity;
-        alpha           h;
         inletValue      uniform (1.53 0 0);
         value           uniform (0 0 0);
     }

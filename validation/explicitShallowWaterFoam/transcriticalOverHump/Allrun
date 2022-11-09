@@ -11,3 +11,7 @@ runApplication setRefinedFields
 
 # -- run the calc
 runApplication $(getApplication)
+
+runApplication -o postProcess -func sampleDict -latestTime
+
+( cd validation && ./createGraphs )

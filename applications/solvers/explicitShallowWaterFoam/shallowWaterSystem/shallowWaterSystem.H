@@ -39,8 +39,10 @@ SourceFiles
 
 #include "timeIntegrationSystem.H"
 #include "shallowFluxScheme.H"
+#include "rainfallModel.H"
 #include "uniformDimensionedFields.H"
 #include "Function3Fwd.H"
+#include "NamedEnum.H"
 
 namespace Foam
 {
@@ -53,6 +55,17 @@ class shallowWaterSystem
 :
     public timeIntegrationSystem
 {
+public:
+    // Public enumeration
+    enum Friction
+    {
+        none,
+        Manning,
+        DarcyWeisbach
+    };
+
+    static const NamedEnum<Friction, 3> frictionTypes;
+
 protected:
 // Protected data
 
@@ -101,9 +114,37 @@ protected:
 
     //- Is friction included
     bool friction_;
+    Friction frictionType_;
 
     //- Manning's coefficient (friction)
     autoPtr<volScalarField> nPtr_;
+
+    //- Coefficient of friction
+    autoPtr<volScalarField> fPtr_;
+
+    //- Viscous dissipation
+    bool viscous_;
+
+    //- Turbulent diffusion
+    bool turbulence_;
+
+    //- Horizontal eddy viscosity
+    dimensionedScalar muh_;
+
+    //- Vertical eddy viscosity
+    dimensionedScalar muv_;
+
+    //- Laminar friction coefficient
+    dimensionedScalar kl_;
+
+    //- Turbulent friction coefficient
+    dimensionedScalar kt_;
+
+    //- Is rain included
+    bool rain_;
+
+    //- Rainfall model
+    autoPtr<rainfallModel> rainfall_;
 
 
     //- Flux scheme

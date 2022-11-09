@@ -132,6 +132,12 @@ public:
 
     // Member Functions
 
+        //- Return the inlet value
+        const vectorField& inletValue() const
+        {
+            return inletValue_;
+        }
+
         // Mapping functions
 
             //- Map (and resize as needed) from self given a mapping object

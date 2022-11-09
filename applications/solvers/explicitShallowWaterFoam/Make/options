@@ -6,7 +6,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -IfluxSchemes/lnInclude \
-    -IshallowWaterSystem
+    -IshallowWaterSystem/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \

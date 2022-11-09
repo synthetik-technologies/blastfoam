@@ -122,8 +122,9 @@ void Foam::hUInletVelocityFvPatchVectorField::updateCoeffs()
 
     const fvPatchField<scalar>& ph =
         patch().lookupPatchField<volScalarField, scalar>(hName_);
+    const_cast<fvPatchField<scalar>&>(ph).updateCoeffs();
 
-    operator==(inletValue_/ph);
+    operator==(inletValue_/max(ph, 1e-10));
 
     fixedValueFvPatchVectorField::updateCoeffs();
 }

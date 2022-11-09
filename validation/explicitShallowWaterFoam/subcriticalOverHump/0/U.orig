@@ -16,23 +16,19 @@ FoamFile
 
 dimensions      [0 1 -1 0 0 0 0];
 
-internalField   uniform (2.21 0 0);
+internalField   uniform (0 0 0);
 
 boundaryField
 {
     inlet
     {
-        type            interstitialInletVelocity;
-        alpha           h;
-        inletVelocity   $internalField;
-        value           $internalField;
+        type            hUInletVelocity;
+        inletValue      uniform (4.42 0 0);
+        value           uniform (0 0 0);
     }
     outlet
     {
         type            zeroGradient;
-        inletValue      uniform (0 0 0);
-        outletValue      uniform (0 0 0);
-        value           $internalField;
     }
     frontAndBack
     {

@@ -1,0 +1,139 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  dev                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2.0;
+    format          ascii;
+    class           dictionary;
+    location        system;
+    object          sampleDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type coded;
+libs ("libutilityFunctionObjects.so");
+
+codeOptions
+#{
+    -I$(BLAST_DIR)/src/numerics/lnInclude
+#};
+codeLibs
+#{
+    -L$(BLAST_LIBBIN) -lblastNumerics
+#};
+codeInclude
+#{
+    #include "volFields.H"
+    #include "univariateRootSolver.H"
+    #include "createEquations.H"
+
+    namespace Foam
+    {
+    class hEqn
+    :
+        public ScalarEquation
+    {
+        scalar x_, hl_, hc_, q0_, g_, bM_;
+
+        scalar b(const scalar x) const
+        {
+            return
+                ( x > 8 && x < 12)
+              ? 0.2 - 0.05*sqr(x - 10.0)
+              : 0.0;
+        }
+        scalar dbdx(const scalar x) const
+        {
+            return
+                ( x > 8 && x < 12)
+              ? - 2.0*0.05*(x - 10.0)
+              : 0.0;
+        }
+    public:
+
+        hEqn
+        (
+            const scalar hl,
+            const scalar hc,
+            const scalar q0,
+            const scalar g
+        )
+        :
+            ScalarEquation(0, 10),
+            hl_(hl),
+            hc_(hc),
+            q0_(q0),
+            g_(g),
+            bM_(0.2)
+        {}
+
+        scalar& x() { return x_; }
+        label nDerivatives() const
+        {
+            return 1;
+        }
+
+        scalar fx(const scalar x, const label li) const
+        {
+            return
+                pow3(x)
+              + (b(x_) - sqr(q0_)/2.0/g_/sqr(hc_) - hc_ - bM_)*sqr(x)
+              + sqr(q0_)/2.0/g_;
+        }
+        scalar dfdx(const scalar x, const label li) const
+        {
+            return
+                3.0*sqr(x)
+              + 2.0*x*(b(x_) - sqr(q0_)/2.0/g_/sqr(hc_) - hc_ - bM_)
+              + dbdx(x_)*sqr(x);
+        }
+    };
+    }
+#};
+codeWrite
+#{
+    const fvMesh& mesh = this->mesh();
+    const scalarField x(mesh.cellCentres().component(0));
+    volScalarField h
+    (
+        IOobject
+        (
+            "h",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh
+    );
+
+    const scalar hl = 0.66;
+    const scalar q0 = 1.53;
+    const scalar g = 9.81;
+    const scalar hc = cbrt(sqr(q0)/g);
+
+    hEqn eqn(hl, hc, q0, g);
+    autoPtr<univariateRootSolver> solver
+    (
+        univariateRootSolver::New("NewtonRaphson", eqn, dictionary())
+    );
+
+    OFstream os("h");
+    forAll(x, i)
+    {
+        eqn.x() = x[i];
+        os  << x[i] << " "
+            << solver->solve(x[i] < 10 ? 1.0 : 0.4)
+            << " " << h[i] << endl;
+    }
+
+#};
+
+// *********************************************************************** //

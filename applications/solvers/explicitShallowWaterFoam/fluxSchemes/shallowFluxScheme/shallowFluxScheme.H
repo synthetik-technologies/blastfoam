@@ -73,6 +73,10 @@ protected:
     //- Magnitude of graviational acceleration
     const scalar magg_;
 
+    //- Saved h0Own/h0Nei fields
+    tmp<surfaceScalarField> th0Own_;
+    tmp<surfaceScalarField> th0Nei_;
+
     // Protected Functions
 
         //- Return wavespeed
@@ -85,6 +89,7 @@ protected:
         virtual void calculateFluxes
         (
             const scalar& hOwn, const scalar& hNei,
+            const scalar& h0Own, const scalar& h0Nei,
             const vector& UOwn, const vector& UNei,
             const vector& Sf,
             scalar& phi,
@@ -192,8 +197,18 @@ public:
         void update
         (
             const volScalarField& h,
-            const volVectorField& U
+            const volScalarField& h0,
+            const volVectorField& U,
+            const volVectorField& hU
         );
+
+        //- Return the elevation source
+        virtual tmp<volVectorField> ghGradH0
+        (
+            const dimensionedVector& g,
+            const volScalarField& h,
+            const volScalarField& h0
+        ) const;
 };
 
 

@@ -1,0 +1,176 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  dev                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2.0;
+    format          ascii;
+    class           dictionary;
+    location        system;
+    object          sampleDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type coded;
+libs ("libutilityFunctionObjects.so");
+
+codeOptions
+#{
+    -I$(BLAST_DIR)/src/numerics/lnInclude
+#};
+codeLibs
+#{
+    -L$(BLAST_LIBBIN) -lblastNumerics
+#};
+codeInclude
+#{
+    #include "volFields.H"
+    #include "univariateRootSolver.H"
+    #include "createEquations.H"
+
+    namespace Foam
+    {
+    class cmEqn
+    :
+        public ScalarEquation
+    {
+        scalar hl_, hr_, L_, x0_, g_;
+    public:
+
+        cmEqn
+        (
+            const scalar hl,
+            const scalar hr,
+            const scalar L,
+            const scalar x0,
+            const scalar g
+        )
+        :
+            ScalarEquation(1, 3.0),
+            hl_(hl),
+            hr_(hr),
+            L_(L),
+            x0_(x0),
+            g_(g)
+        {}
+
+        label nDerivatives() const
+        {
+            return 1;
+        }
+
+        scalar fx(const scalar x, const label li) const
+        {
+            return
+              - 8.0*g_*hr_*sqr(x)*sqr(sqrt(g_*hl_) - x)
+              + sqr(sqr(x) - g_*hr_)*(sqr(x) + g_*hr_);
+        }
+        scalar dfdx(const scalar x, const label li) const
+        {
+            return
+              - 8.0*g_*hr_
+               *(
+                    2.0*x*sqr(sqrt(g_*hl_) - x)
+                  - 2.0*sqr(x)*(sqrt(g_*hl_) - x)
+                )
+              + (
+                    2.0*2.0*x*(sqr(x) - g_*hr_)*(sqr(x) + g_*hr_)
+                  + 2.0*x*sqr(sqr(x) - g_*hr_)
+                );
+        }
+    };
+    }
+#};
+codeWrite
+#{
+    const fvMesh& mesh = this->mesh();
+    const scalarField x(mesh.cellCentres().component(0));
+    volScalarField H
+    (
+        IOobject
+        (
+            "h",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh
+    );
+    volVectorField U
+    (
+        IOobject
+        (
+            "U",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh
+    );
+    const scalar t = max(mesh.time().value(), small);
+
+    const scalar x0 = 0.5;
+    const scalar L = 1.0;
+    const scalar hl = 1.0;
+    const scalar hr = 0.5;
+    const scalar g = 9.81;
+
+    cmEqn eqn(hl, hr, L, x0, g);
+    autoPtr<univariateRootSolver> solver
+    (
+        univariateRootSolver::New("NewtonRaphson", eqn, dictionary())
+    );
+    scalar cm = solver->solve(2.62, 0);
+
+    const scalar xA = x0 - t*sqrt(g*hl);
+    const scalar xB = x0 + t*(2.0*sqrt(g*hl) - 3.0*cm);
+    const scalar xC =
+        x0
+      + t
+       *(2.0*sqr(cm)*(sqrt(g*hl) - cm))
+       /(sqr(cm) - g*hr);
+Info<<eqn.fx(2.6, 0)<<endl;
+Info<<eqn.fx(2.75, 0)<<endl;
+   Info<< xA<<" "<<xB<<" "<<xC<<" "<<cm<<endl;
+
+    scalarField h(x.size(), 0.0);
+    scalarField u(x.size(), 0.0);
+    OFstream hos("h");
+    OFstream uos("u");
+    forAll(x, i)
+    {
+        if (x[i] <= xA)
+        {
+            h[i] = hl;
+            u[i] = 0.0;
+        }
+        else if (x[i] < xB)
+        {
+            h[i] = 4.0/9.0/g*sqr(sqrt(g*hl) - (x[i] - x0)/2.0/t);
+            u[i] = 2.0/3.0*((x[i] - x0)/t + sqrt(g*hl));
+        }
+        else if (x[i] < xC)
+        {
+            h[i] = sqr(cm)/g;
+            u[i] = 2.0*(sqrt(g*hl) - cm);
+        }
+        else //if (xC <= x[i])
+        {
+            h[i] = hr;
+            u[i] = 0.0;
+        }
+        hos << x[i] << " " << h[i] << " " << H[i] << endl;
+        uos << x[i] << " " << u[i] << " " << U[i].x() << endl;
+    }
+
+#};
+
+// *********************************************************************** //

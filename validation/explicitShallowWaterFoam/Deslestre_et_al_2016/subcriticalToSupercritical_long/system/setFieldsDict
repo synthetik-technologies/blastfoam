@@ -1,0 +1,69 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+defaultFieldValues
+(
+    volScalarFieldValue h0  0
+);
+
+regions
+(
+    boxToCell
+    {
+        box (-1 0 0) (2000 10 1);
+
+        fieldValues
+        (
+            volScalarFieldFunction h0 -setAllBoundaries
+            {
+                type coded;
+                codeOptions
+                #{
+                    -DFULLDEBUG -g -O0
+                #};
+                codeInclude
+                #{
+                    #include "../../../MacDonald.H"
+
+                    scalar S0Eqn::h(const scalar x) const
+                    {
+                        return
+                            cbrt(4.0/g_)
+                           *(
+                                x < 500
+                              ? (1.0 - tanh(3.0*(x/1000.0 - 0.5))/3.0)
+                              : (1.0 - tanh(6.0*(x/1000.0 - 0.5))/6.0)
+                            );
+                    }
+                    scalar S0Eqn::dhdx(const scalar x) const
+                    {
+                        return
+                            cbrt(4.0/g_)/1000.0
+                           *sqr(tanh((x < 500 ? 3.0 : 6.0)*sqr(x/1000.0 - 0.5)));
+                    }
+                #};
+                code
+                #{
+                    static S0Eqn eqn;
+                    return eqn.h0(x);
+                #};
+            }
+        );
+    }
+
+
+);
+
+// ************************************************************************* //

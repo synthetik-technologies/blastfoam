@@ -77,6 +77,7 @@ void Foam::shallowFluxSchemes::HLLC::createSavedFields()
 void Foam::shallowFluxSchemes::HLLC::calculateFluxes
 (
     const scalar& hOwn, const scalar& hNei,
+    const scalar& h0Own, const scalar& h0Nei,
     const vector& UOwn, const vector& UNei,
     const vector& Sf,
     scalar& phi,
@@ -89,6 +90,7 @@ void Foam::shallowFluxSchemes::HLLC::calculateFluxes
     vector normal = Sf/magSf;
 
     const scalar vMesh(meshPhi(facei, patchi)/magSf);
+
     scalar UvOwn = (UOwn & normal) - vMesh;
     scalar UvNei = (UNei & normal) - vMesh;
 
@@ -114,6 +116,19 @@ void Foam::shallowFluxSchemes::HLLC::calculateFluxes
         0.5*(UvOwn + UvNei)
       - 0.25*(hNei - hOwn)*(cOwn + cNei)/(hOwn + hNei);
 
+    scalar hHLLC =
+        (SNei*hNei - SOwn*hOwn - (hNei*UvNei - hOwn*UvOwn))
+       /(SNei - SOwn);
+
+    scalar qHLLC =
+        (
+            SNei*hNei*UvNei
+          - SOwn*hOwn*UvOwn
+          - (hNei*sqr(UvNei) + 0.5*magg_*sqr(hNei))
+          + (hOwn*sqr(UvOwn) + 0.5*magg_*sqr(hOwn))
+        )/(SNei - SOwn);
+
+    scalar dh0 = h0Nei - h0Own;
     if (SOwn >= 0)
     {
         phi = UvOwn;

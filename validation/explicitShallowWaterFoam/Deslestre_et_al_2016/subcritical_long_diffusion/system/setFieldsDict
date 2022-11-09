@@ -1,0 +1,71 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+defaultFieldValues
+(
+    volScalarFieldValue h0  0
+);
+
+regions
+(
+    boxToCell
+    {
+        box (-1 0 0) (2000 10 1);
+
+        fieldValues
+        (
+            volScalarFieldFunction h0 -setAllBoundaries
+            {
+                type coded;
+                codeInclude
+                #{
+                    #define d2dt2
+                    #include "../../../MacDonald.H"
+
+                    scalar S0Eqn::h(const scalar x) const
+                    {
+                        scalar z = x/1000.0 - 0.5;
+                        return
+                            cbrt(4.0/g_)
+                           *(1.0 + 0.5*exp(-16.0*sqr(z)));
+                    }
+                    scalar S0Eqn::dhdx(const scalar x) const
+                    {
+                        scalar z = x/1000.0 - 0.5;
+                        scalar dzdx = 1.0/1000.0;
+                        return -16.0*cbrt(4.0/g_)*z*dzdx*exp(-16*sqr(z));
+                    }
+                    scalar S0Eqn::d2hdx2(const scalar x) const
+                    {
+                        scalar z = x/1000.0 - 0.5;
+                        scalar dzdx = 1.0/1000.0;
+                        return
+                            cbrt(4.0/g_)*exp(-16.0*sqr(z))
+                           *(512.0*sqr(z) - 16.0)*sqr(dzdx);
+                    }
+                #};
+                code
+                #{
+                    static S0Eqn eqn;
+                    return eqn.h0(x);
+                #};
+            }
+        );
+    }
+
+
+);
+
+// ************************************************************************* //

@@ -13,11 +13,11 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme HLL;
+fluxScheme HLLC;
 ddtSchemes
 {
     default         backward;
-    timeIntegrator  RK2SSP 3;
+    timeIntegrator  RK6;
 }
 
 gradSchemes

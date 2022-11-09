@@ -25,7 +25,7 @@ License
 
 #include "shallowWaterSystem.H"
 #include "fvm.H"
-#include "triSurfaceMesh.H"
+#include "hUInletVelocityFvPatchVectorField.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
@@ -33,6 +33,17 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(shallowWaterSystem, 0);
+
+    template<>
+    const char* Foam::NamedEnum<shallowWaterSystem::Friction, 3>::names[] =
+    {
+        "none",
+        "Manning",
+        "DarcyWeisbach"
+    };
+
+    const Foam::NamedEnum<shallowWaterSystem::Friction, 3>
+        shallowWaterSystem::frictionTypes;
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -154,12 +165,31 @@ Foam::shallowWaterSystem::shallowWaterSystem
     ),
 
     friction_(dict_.lookup<bool>("friction")),
+    frictionType_
+    (
+        friction_
+      ? frictionTypes.read(dict_.lookup("frictionType"))
+      : none
+    ),
+
     nPtr_(nullptr),
+    fPtr_(nullptr),
+
+    viscous_(dict_.lookupOrDefault<bool>("viscous", false)),
+    turbulence_(viscous_ ? dict_.lookup<bool>("turbulence") : false),
+    muh_("muh", dimensionSet(0, 2, -1, 0, 0, 0, 0), 0.0),
+    muv_("muv", dimensionSet(0, 2, -1, 0, 0, 0, 0), 0.0),
+    kl_("kl", dimensionSet(0, 1, -1, 0, 0, 0, 0), 0.0),
+    kt_("kt", dimensionSet(0, -1, 0, 0, 0, 0, 0), 0.0),
+
+    rain_(dict_.lookupOrDefault<bool>("rain", false)),
+    rainfall_(nullptr),
 
     flux_(shallowFluxScheme::New(phi_, hPhi_, hUPhi_, g_)),
     hMin_("hMin", dimLength, dict_.lookupOrDefault<scalar>("hMin", 1e-6))
 {
 
+    h0_.correctBoundaryConditions();
     if (!mesh.time().restart())
     {
         IOobject hTotalHeader
@@ -181,52 +211,120 @@ Foam::shallowWaterSystem::shallowWaterSystem
         }
     }
 
-    if (friction_)
+    switch (frictionType_)
     {
-        IOobject nHeader
-        (
-            "n",
-            mesh.time().constant(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        );
-
-        if (!nHeader.typeHeaderOk<volScalarField>())
+        case Manning:
         {
+            IOobject nHeader
+            (
+                "n",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            );
+
+            if (!nHeader.typeHeaderOk<volScalarField>() && !dict_.found("n"))
+            {
+                FatalErrorInFunction
+                    << "Friction is turned on, but " << string("n") << " was not" << nl
+                    << "provided. " << endl
+                    << abort(FatalError);
+            }
+
+            nPtr_.set
+            (
+                new volScalarField
+                (
+                    nHeader,
+                    mesh,
+                    dimensionedScalar
+                    (
+                        "n",
+                        dimensionSet(0, -1.0/3.0, 1, 0, 0, 0, 0),
+                        dict_.lookupOrDefault<scalar>("n", 1.0)
+                    )
+                )
+            );
             nHeader.instance() = mesh.time().timeName();
+            break;
         }
-
-        if (nHeader.typeHeaderOk<volScalarField>())
-        {}
-        else if (dict_.found("n"))
+        case DarcyWeisbach:
         {
-            nHeader.readOpt() = IOobject::NO_READ;
+            IOobject fHeader
+            (
+                "f",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            );
+
+            if (!fHeader.typeHeaderOk<volScalarField>() && !dict_.found("f"))
+            {
+                FatalErrorInFunction
+                    << "Friction is turned on, but " << string("f") << " was not" << nl
+                    << "provided. " << endl
+                    << abort(FatalError);
+            }
+            fPtr_.set
+            (
+                new volScalarField
+                (
+                    fHeader,
+                    mesh,
+                    dimensionedScalar
+                    (
+                        "f",
+                        dimless,
+                        dict_.lookupOrDefault<scalar>("f", 1.0)
+                    )
+                )
+            );
+            fHeader.instance() = mesh.time().timeName();
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    if (viscous_)
+    {
+        if (dict_.found("mu"))
+        {
+            muh_.value() = dict_.lookup<scalar>("mu")/4.0;
+        }
+        else if (dict_.found("muh"))
+        {
+            muh_.read(dict_);
         }
         else
         {
-            FatalErrorInFunction
-                << "Friction is turned on, but " << string("n") << " was not" << nl
-                << "provided. " << endl
-                << abort(FatalError);
+            FatalIOErrorInFunction(dict_)
+                << "Viscosity is turned on, but neither " << string("mu")
+                << " or " << string("muh") << " was found" << endl
+                << abort(FatalIOError);
         }
 
-        nPtr_.set
-        (
-            new volScalarField
-            (
-                nHeader,
-                mesh,
-                dimensionedScalar
-                (
-                    "n",
-                    dimensionSet(0, -1.0/3.0, 1, 0, 0, 0, 0),
-                    dict_.lookupOrDefault<scalar>("n", 1.0)
-                )
-            )
-        );
-        nHeader.instance() = mesh.time().timeName();
+        if (turbulence_)
+        {
+            muv_.read(dict_);
+            kl_.read(dict_);
+            kt_.read(dict_);
+        }
+        else
+        {
+            kl_.readIfPresent(dict_);
+        }
     }
+
+    if (rain_)
+    {
+        rainfall_ = rainfallModel::New(mesh, dict_);
+    }
+
     encode();
 }
 
@@ -244,11 +342,15 @@ void Foam::shallowWaterSystem::solve()
     volVectorField hUDelta
     (
         "hUDelta",
-        fvc::div(hUPhi_) + mag(g_)*h_*fvc::grad(h0_)
+        fvc::div(hUPhi_) + flux_->ghGradH0(g_, h_, h0_)
     );
     if (rotating_)
     {
         hUDelta += (F_ ^ hU_);
+    }
+    if (rain_)
+    {
+        hDelta -= rainfall_->R0();
     }
 
     //- Store changed in mass, momentum and energy
@@ -284,17 +386,48 @@ void Foam::shallowWaterSystem::postUpdate()
         constraints().constrain(h_);
     }
 
-    if (friction_)
+    if (friction_ || viscous_)
     {
-        volScalarField K
+        volScalarField SfByU
         (
             volScalarField::New
             (
-                "K",
-                sqr(nPtr_())*mag(U_)/pow(max(h_, hMin_), 4.0/3.0)
+                "SfByU",
+                mesh(),
+                dimensionedScalar(inv(dimTime), 0.0)
             )
         );
-        U_ = U_/(1.0 + mag(g_)*mesh().time().deltaT()*K);
+        volVectorField UStar(U_);
+        if (friction_)
+        {
+            tmp<volScalarField> K;
+            if (frictionType_ == Manning)
+            {
+                K = sqr(nPtr_())/pow(max(h_, hMin_), 4.0/3.0);
+            }
+            else if (frictionType_ == DarcyWeisbach)
+            {
+                K = fPtr_()/((mag(g_)*8.0)*max(h_, hMin_));
+            }
+            SfByU += mag(g_)*K*mag(U_);
+        }
+        if (viscous_)
+        {
+            volScalarField hValid(pos(h_ - hMin_));
+            volScalarField hs(max(h_, hMin_));
+            if (kl_.value() > 0)
+            {
+                SfByU += kl_/(1.0 + kl_*h_/(3.0*muv_))*hValid/hs;
+            }
+            if (turbulence_)
+            {
+                SfByU += mag(U_)*kt_/sqr(1.0 + kl_*h_/(3.0*muv_));
+            }
+            UStar += mesh().time().deltaT()*(muh_*4.0)*fvc::laplacian(h_, U_)*hValid/hs;
+        }
+
+        U_ = UStar/(1.0 + mesh().time().deltaT()*SfByU);
+        U_.correctBoundaryConditions();
         hU_ = h_*U_;
     }
 
@@ -323,7 +456,9 @@ void Foam::shallowWaterSystem::update()
     flux_->update
     (
         h_,
-        U_
+        h0_,
+        U_,
+        hU_
     );
 }
 
@@ -336,7 +471,6 @@ void Foam::shallowWaterSystem::decode()
     U_.ref() = hU_()/max(h_(), hMin_);
     U_.correctBoundaryConditions();
     hU_ = h_*U_;
-    // hU_.boundaryFieldRef() = U_.boundaryField()*h_.boundaryField();
 }
 
 
