@@ -110,21 +110,36 @@ protected:
     ) const;
 
     //- Return the subset of values given indices and positions
-    virtual void getInternalField
+    virtual void setGeoField
+    (
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f,
+        const label patch
+    ) = 0;
+
+    //- Return the subset of values given indices and positions
+    virtual void setInternalField
     (
         const labelList& indices,
         const UIndirectList<vector>& pts,
         UIndirectList<Type>& f
-    );
+    )
+    {
+        setGeoField(indices, pts, f, -1);
+    }
 
     //- Return the subset of values given indices and positions
-    virtual void getBoundaryField
+    virtual void setBoundaryField
     (
         const label patchi,
         const labelList& indices,
         const UIndirectList<vector>& pts,
         UIndirectList<Type>& f
-    );
+    )
+    {
+        setGeoField(indices, pts, f, patchi);
+    }
 
     //- Return the boundary field value of a field
     virtual tmp<Field<Type>> getBoundary

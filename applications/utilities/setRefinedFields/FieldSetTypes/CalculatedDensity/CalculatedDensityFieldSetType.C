@@ -80,26 +80,16 @@ Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::~CalculatedDensity()
 
 template<class Type, template<class> class FSType>
 void
-Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::getInternalField
+Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::setGeoField
 (
     const labelList& indices,
     const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
+    UIndirectList<Type>& f,
+    const label patchi
 )
 {
     f = density_;
 }
 
 
-template<class Type, template<class> class FSType>
-void
-Foam::FieldSetTypes::CalculatedDensity<Type, FSType>::getBoundaryField
-(
-    const label patchi,
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{
-    f = density_;
-}
+// ************************************************************************* //

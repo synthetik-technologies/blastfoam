@@ -121,50 +121,38 @@ Foam::FieldSetTypes::Sum<Type, FSType>::~Sum()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::Sum<Type, FSType>::getInternalField
+void Foam::FieldSetTypes::Sum<Type, FSType>::setGeoField
 (
     const labelList& indices,
     const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
+    UIndirectList<Type>& f,
+    const label patchi
 )
 {
-    forAll(indices, i)
+    if (patchi < 0)
     {
-        label celli = indices[i];
-        Type res(sumFld_()[celli]);
+        forAll(indices, i)
+        {
+            label celli = indices[i];
+            Type res(sumFld_()[celli]);
+            forAll(flds_, fldi)
+            {
+                res -= flds_[fldi][celli];
+            }
+            f[i] = res;
+        }
+    }
+    else
+    {
+        Field<Type> psum(this->getBoundary(patchi, sumFld_()));
         forAll(flds_, fldi)
         {
-            res -= flds_[fldi][celli];
+            psum -= this->getBoundary(patchi, flds_[fldi]);
         }
-        f[i] = res;
-    }
-}
-
-
-template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::Sum<Type, FSType>::getBoundaryField
-(
-    const label patchi,
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{
-    Field<Type> psum(this->getBoundary(patchi, sumFld_()));
-    List<List<Type>> pflds(flds_.size());
-    forAll(flds_, fldi)
-    {
-        pflds[fldi] = this->getBoundary(patchi, flds_[fldi]);
-    }
-    forAll(indices, i)
-    {
-        label facei = indices[i];
-        Type res(psum[facei]);
-        forAll(flds_, fldi)
+        forAll(indices, i)
         {
-            res -= pflds[fldi][facei];
+            f[i] = psum[indices[i]];
         }
-        f[i] = res;
     }
 }
 

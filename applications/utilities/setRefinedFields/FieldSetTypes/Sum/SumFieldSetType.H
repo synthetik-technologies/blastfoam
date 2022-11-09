@@ -78,20 +78,12 @@ class Sum
     UPtrList<const FieldType> flds_;
 
     //- Return the subset of values given indices and positions
-    virtual void getInternalField
+    virtual void setGeoField
     (
         const labelList& indices,
         const UIndirectList<vector>& pts,
-        UIndirectList<Type>& f
-    );
-
-    //- Return the subset of values given indices and positions
-    virtual void getBoundaryField
-    (
-        const label patchi,
-        const labelList& indices,
-        const UIndirectList<vector>& pts,
-        UIndirectList<Type>& f
+        UIndirectList<Type>& f,
+        const label patchi
     );
 
 

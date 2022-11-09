@@ -324,27 +324,6 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
 }
 
 
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetType<Type, Patch, Mesh>::getInternalField
-(
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{}
-
-
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetType<Type, Patch, Mesh>::getBoundaryField
-(
-    const label patchi,
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{}
-
-
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::VolFieldSetType<Type>::getBoundary
 (
@@ -363,7 +342,7 @@ void Foam::VolFieldSetType<Type>::setField()
     {
         const UIndirectList<vector> CInt(this->mesh_.C(), this->selectedIndices_);
         UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
-        this->getInternalField(this->selectedIndices_, CInt, fInt);
+        this->setInternalField(this->selectedIndices_, CInt, fInt);
     }
 
     labelHashSet cells(this->selectedIndices_);
@@ -372,8 +351,8 @@ void Foam::VolFieldSetType<Type>::setField()
         Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
     forAll(this->fieldPtr_->boundaryField(), patchi)
     {
-        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
-        if (this->boundaries_.found(p.name()) && fieldBf[patchi].fixesValue())
+        const fvPatch& p = this->mesh_.boundary()[patchi];
+        if (this->boundaries_.found(p.name()) && p.size())
         {
             const labelList& fCells = p.faceCells();
             labelHashSet faces;
@@ -391,10 +370,13 @@ void Foam::VolFieldSetType<Type>::setField()
                 indices
             );
             UIndirectList<Type> pf(fieldBf[patchi], indices);
-            this->getBoundaryField(patchi, indices, pC, pf);
+            this->setBoundaryField(patchi, indices, pC, pf);
         }
-        this->fieldPtr_->boundaryFieldRef()[patchi] =
-            this->fieldPtr_->boundaryField()[patchi].patchInternalField();
+        else
+        {
+            this->fieldPtr_->boundaryFieldRef()[patchi] =
+                this->fieldPtr_->boundaryField()[patchi].patchInternalField();
+        }
     }
 
     if (this->evaluateBoundaries_)
@@ -444,7 +426,7 @@ void Foam::SurfaceFieldSetType<Type>::setField()
     {
         const UIndirectList<vector> CfInt(this->mesh_.Cf(), indices);
         UIndirectList<Type> fInt(this->fieldPtr_(), indices);
-        this->getInternalField(indices, CfInt, fInt);
+        this->setInternalField(indices, CfInt, fInt);
     }
 
     typename GeometricField<Type, fvsPatchField, surfaceMesh>::
@@ -475,7 +457,7 @@ void Foam::SurfaceFieldSetType<Type>::setField()
                 indices
             );
             UIndirectList<Type> pf(fieldBf[patchi], indices);
-            this->getBoundaryField(patchi, indices, pC, pf);
+            this->setBoundaryField(patchi, indices, pC, pf);
         }
     }
 
@@ -520,7 +502,7 @@ void Foam::PointFieldSetType<Type>::setField()
             this->selectedIndices_
         );
         UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
-        this->getInternalField(this->selectedIndices_, pts, fInt);
+        this->setInternalField(this->selectedIndices_, pts, fInt);
     }
 
     labelHashSet points(this->selectedIndices_);
@@ -560,7 +542,7 @@ void Foam::PointFieldSetType<Type>::setField()
                 dynamicCast<valuePointPatchField<Type>>(fieldBf[patchi]),
                 indices
             );
-            this->getBoundaryField(patchi, indices, pC, pf);
+            this->setBoundaryField(patchi, indices, pC, pf);
         }
     }
 

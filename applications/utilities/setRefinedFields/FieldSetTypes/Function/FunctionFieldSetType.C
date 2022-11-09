@@ -71,33 +71,12 @@ Foam::FieldSetTypes::Function<Type, FSType>::~Function()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::Function<Type, FSType>::getInternalField
+void Foam::FieldSetTypes::Function<Type, FSType>::setGeoField
 (
     const labelList& indices,
     const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{
-    forAll(indices, i)
-    {
-        f[i] =
-            func_->value
-            (
-                pts[i].x(),
-                pts[i].y(),
-                pts[i].z()
-            );
-    }
-}
-
-
-template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::Function<Type, FSType>::getBoundaryField
-(
-    const label patchi,
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
+    UIndirectList<Type>& f,
+    const label patchi
 )
 {
     forAll(indices, i)

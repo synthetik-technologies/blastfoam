@@ -242,28 +242,16 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::lookupOrConstructThermo
 
 template<class Type, template<class> class FSType>
 void
-Foam::FieldSetTypes::MassIntegrated<Type, FSType>::getInternalField
+Foam::FieldSetTypes::MassIntegrated<Type, FSType>::setGeoField
 (
     const labelList& indices,
     const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
+    UIndirectList<Type>& f,
+    const label patchi
 )
 {
     f = value_;
 }
 
-
-template<class Type, template<class> class FSType>
-void
-Foam::FieldSetTypes::MassIntegrated<Type, FSType>::getBoundaryField
-(
-    const label patchi,
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{
-    f = value_;
-}
 
 // ************************************************************************* //

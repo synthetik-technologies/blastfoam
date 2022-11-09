@@ -65,25 +65,16 @@ Foam::FieldSetTypes::Uniform<Type, FSType>::~Uniform()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::Uniform<Type, FSType>::getInternalField
+void Foam::FieldSetTypes::Uniform<Type, FSType>::setGeoField
 (
     const labelList& indices,
     const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
+    UIndirectList<Type>& f,
+    const label patchi
 )
 {
     f = value_;
 }
 
 
-template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::Uniform<Type, FSType>::getBoundaryField
-(
-    const label patchi,
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{
-    f = value_;
-}
+// ************************************************************************* //

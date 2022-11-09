@@ -36,5 +36,4 @@ EXE_LIBS = \
     -lblastPhaseCompressibleMomentumTransportModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
-    -lerrorEstimate \
     -lblastFunctionObjects

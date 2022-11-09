@@ -92,32 +92,28 @@ Foam::FieldSetTypes::InitialValue<Type, FSType>::~InitialValue()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::InitialValue<Type, FSType>::getInternalField
+void Foam::FieldSetTypes::InitialValue<Type, FSType>::setGeoField
 (
     const labelList& indices,
     const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
+    UIndirectList<Type>& f,
+    const label patchi
 )
 {
-    forAll(indices, i)
+    if (patchi < 0)
     {
-        f[i] = origFieldPtr_()[indices[i]];
+        tmp<Field<Type>> tpOrig(this->getBoundary(patchi, origFieldPtr_()));
+        const Field<Type>& pOrig = tpOrig();
+        forAll(indices, i)
+        {
+            f[i] = pOrig[indices[i]];
+        }
     }
-}
-
-
-template<class Type, template<class> class FSType>
-void Foam::FieldSetTypes::InitialValue<Type, FSType>::getBoundaryField
-(
-    const label patchi,
-    const labelList& indices,
-    const UIndirectList<vector>& pts,
-    UIndirectList<Type>& f
-)
-{
-    Field<Type> pOrig(this->getBoundary(patchi, origFieldPtr_()));
-    forAll(indices, i)
+    else
     {
-        f[i] = pOrig[indices[i]];
+        forAll(indices, i)
+        {
+            f[i] = origFieldPtr_()[indices[i]];
+        }
     }
 }
