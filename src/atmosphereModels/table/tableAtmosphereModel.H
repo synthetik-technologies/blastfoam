@@ -60,6 +60,7 @@ class table
     lookupTable1D<scalar> pTable_;
 
     //- Temperature table
+    bool setT_;
     lookupTable1D<scalar> TTable_;
 
     //- Is the pressure field corrected
@@ -83,6 +84,12 @@ public:
 
         //- Create atmosphere
         virtual void createAtmosphere(fluidBlastThermo& thermo) const;
+
+
+        virtual bool needReference() const
+        {
+            return correct_ && !dict_.found("fixedPatches");
+        }
 };
 
 

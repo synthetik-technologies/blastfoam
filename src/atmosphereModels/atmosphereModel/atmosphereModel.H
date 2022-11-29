@@ -134,6 +134,8 @@ public:
         }
 
         virtual void createAtmosphere(fluidBlastThermo& thermo) const = 0;
+
+        virtual bool needReference() const = 0;
 };
 
 

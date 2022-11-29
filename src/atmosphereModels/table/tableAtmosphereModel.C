@@ -50,7 +50,14 @@ Foam::atmosphereModels::table::table
 :
     atmosphereModel(mesh, dict, zoneID),
     pTable_(dict_.subDict("pTable"), "h", "p"),
-    TTable_(dict_.subDict("TTable"), "h", "T"),
+    setT_(dict_.lookupOrDefault("setT", dict.isDict("TTable"))),
+    TTable_
+    (
+        setT_ ? dict_.subDict("TTable") : dict_.optionalSubDict("TTable"),
+        "h",
+        "T",
+        setT_
+    ),
     correct_(dict_.lookupOrDefault("correct", false))
 {}
 
@@ -88,12 +95,10 @@ void Foam::atmosphereModels::table::createAtmosphere
     forAll(cells, i)
     {
         p[cells[i]] = pTable_.lookup(h[cells[i]]);
-        T[cells[i]] = TTable_.lookup(h[cells[i]]);
     }
 
     // The the boundary values that have their owner face included in the set
     volScalarField::Boundary& bp = p.boundaryFieldRef();
-    volScalarField::Boundary& bT = T.boundaryFieldRef();
     forAll(bp, patchi)
     {
         const labelList& fCells = bp[patchi].patch().faceCells();
@@ -103,22 +108,49 @@ void Foam::atmosphereModels::table::createAtmosphere
             {
                 bp[patchi][facei] =
                     pTable_.lookup(h.boundaryField()[patchi][facei]);
-                bT[patchi][facei] =
-                    TTable_.lookup(h.boundaryField()[patchi][facei]);
+            }
+        }
+    }
+
+    if (setT_)
+    {
+        forAll(cells, i)
+        {
+            T[cells[i]] = TTable_.lookup(h[cells[i]]);
+        }
+
+        // The the boundary values that have their owner face included in the set
+        volScalarField::Boundary& bT = T.boundaryFieldRef();
+        forAll(bp, patchi)
+        {
+            const labelList& fCells = bp[patchi].patch().faceCells();
+            forAll(fCells, facei)
+            {
+                if (cSet.found(fCells[facei]))
+                {
+                    bT[patchi][facei] =
+                        TTable_.lookup(h.boundaryField()[patchi][facei]);
+                }
             }
         }
     }
 
     // Correct boundary conditions
     p.correctBoundaryConditions();
-    T.correctBoundaryConditions();
 
-    // Correct density
-    thermo.updateRho(p);
+    if (setT_)
+    {
+        T.correctBoundaryConditions();
+        thermo.updateRho(p);
+    }
+    else
+    {
+        thermo.he() = thermo.calce(p);
+    }
 
     // Correct of thermodynamic variables
     thermo.correct();
-h.write();
+
     // Equalibriate the pressure field
     if (correct_)
     {

@@ -175,6 +175,10 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     (
         dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 10)
     );
+    bool correctRho
+    (
+        dict_.lookupOrDefault<bool>("correctRho", false)
+    );
     scalar tolerance(dict_.lookupOrDefault<scalar>("tolerance", 1e-6));
     scalar relTol(dict_.lookupOrDefault<scalar>("relTol", 1e-6));
 
@@ -183,7 +187,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     solverDict.add("solver", "PCG");
     solverDict.add("preconditioner", "DIC");
     solverDict.add("smoother", "GaussSeidel");
-    solverDict.add("tolerance", 1e-6);
+    solverDict.add("tolerance", 1e-8);
     solverDict.add("relTol", 0);
     solverDict.add("minIter", 1);
 
@@ -235,7 +239,10 @@ void Foam::atmosphereModel::hydrostaticInitialisation
 
         // Correct density and thermodynamic quantities
         p.correctBoundaryConditions();
-        thermo.updateRho(p);
+        if (correctRho)
+        {
+            thermo.updateRho(p);
+        }
         thermo.he() = thermo.calce(thermo.p());
 
         Info<< "Hydrostatic pressure variation "<< residual << endl;

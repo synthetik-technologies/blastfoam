@@ -70,6 +70,11 @@ public:
 
         //- Create atmosphere
         virtual void createAtmosphere(fluidBlastThermo& thermo) const;
+
+        virtual bool needReference() const
+        {
+            return !dict_.found("fixedPatches");
+        }
 };
 
 
