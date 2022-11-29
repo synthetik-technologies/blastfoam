@@ -154,7 +154,6 @@ Foam::Istream& Foam::operator>>
 
     if (firstToken.isCompound())
     {
-        Info<<"here"<<endl;
         L.transfer
         (
             dynamicCast<token::Compound<List2D<Type>>>

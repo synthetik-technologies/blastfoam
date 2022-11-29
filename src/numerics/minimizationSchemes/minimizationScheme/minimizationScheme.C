@@ -36,7 +36,7 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::minimizationScheme::converged
+bool Foam::minimizationScheme::checkConvergence
 (
     const scalarList& absErrors,
     const scalarList& relErrors,
@@ -76,7 +76,7 @@ bool Foam::minimizationScheme::convergedXScale
         xErrors_[i] = mag(errors[i]);
         xRelErrors_[i] = xErrors_[i]/stabilise(mag(s[i]), small);
     }
-    return converged(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
+    return checkConvergence(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
 }
 
 
@@ -92,7 +92,7 @@ bool Foam::minimizationScheme::convergedX
         xRelErrors_[i] =
             xErrors_[i]/stabilise(min(mag(x1[i]), mag(x2[i])), small);
     }
-    return converged(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
+    return checkConvergence(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
 }
 
 
@@ -107,7 +107,7 @@ bool Foam::minimizationScheme::convergedYScale
         yErrors_[i] = mag(errors[i]);
         yRelErrors_[i] = yErrors_[i]/stabilise(mag(s[i]), small);
     }
-    return converged(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
+    return checkConvergence(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
 }
 
 
@@ -124,7 +124,36 @@ bool Foam::minimizationScheme::convergedY
         yRelErrors_[i] =
             yErrors_[i]/stabilise(min(mag(y1[i]), mag(y2[i])), small);
     }
-    return converged(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
+    return checkConvergence(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
+}
+
+
+bool Foam::minimizationScheme::convergedScale
+(
+    const scalarList& xError,
+    const scalarList& xS,
+    const scalarList& yError,
+    const scalarList& yS
+) const
+{
+    bool xGood = convergedXScale(xError, xS);
+    bool yGood = convergedYScale(yError, yS);
+    return xGood && yGood;
+}
+
+
+
+bool Foam::minimizationScheme::converged
+(
+    const scalarList& x1,
+    const scalarList& x2,
+    const scalarList& y1,
+    const scalarList& y2
+) const
+{
+    bool xGood = convergedX(x1, x2);
+    bool yGood = convergedY(y1, y2);
+    return xGood && yGood;
 }
 
 

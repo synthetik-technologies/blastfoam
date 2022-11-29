@@ -122,11 +122,7 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::minimize
         P_prev = intersection(P_prev, P);
         P_next = intersection(P, P_next);
 
-        if
-        (
-            convergedX(P_next.x(), P_prev.x())
-         && convergedY(P_next.y(), P_prev.y())
-        )
+        if (converged(P_next.x(), P_prev.x(), P_next.y(), P_prev.y()))
         {
             break;
         }

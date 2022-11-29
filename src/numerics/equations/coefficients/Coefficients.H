@@ -230,6 +230,14 @@ public:
         {
             return this->coeffs_[1];
         }
+
+        virtual void FX
+        (
+            const typename CoefficientEquation<Type>::VarType& x,
+            const label li,
+            List<Type>& fx
+        ) const
+        {}
 };
 
 

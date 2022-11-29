@@ -49,7 +49,7 @@ void Foam::integrator::reset(const scalar dx) const
 {
     if (adaptive())
     {
-        minDx_ = mag(dx)/scalar(pow(2, maxSplits_));
+        minDx_ = mag(dx)/scalar(pow(label(2), maxSplits_));
         intervals_ = 1;
     }
     else

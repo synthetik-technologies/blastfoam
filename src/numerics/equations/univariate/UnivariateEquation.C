@@ -26,6 +26,44 @@ License
 #include "UnivariateEquation.H"
 #include "adaptiveTypes.H"
 
+// * * * * * * * * * * * * * * Static Data Functions * * * * * * * * * * * * //
+
+template<class Type>
+Foam::autoPtr<Foam::univariateEquation<Type>>
+Foam::univariateEquation<Type>::New
+(
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("type"), dict);
+}
+
+template<class Type>
+Foam::autoPtr<Foam::univariateEquation<Type>>
+Foam::univariateEquation<Type>::New
+(
+    const word& type,
+    const dictionary& dict
+)
+{
+
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(type);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown " << typeName << " type "
+            << type <<  nl << nl
+            << "Valid " << typeName << " types are:" << nl
+            << dictionaryConstructorTablePtr_->sortedToc() << nl
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -81,7 +119,7 @@ Foam::UnivariateEquation<Type>::~UnivariateEquation()
 template<class Type>
 void Foam::UnivariateEquation<Type>::calculateGradient
 (
-    const UList<scalar>& x0,
+    const typename univariateEquation<Type>::VarType& x0,
     const label li,
     List<Type>& grad
 ) const
@@ -100,7 +138,7 @@ void Foam::UnivariateEquation<Type>::calculateGradient
 template<class Type>
 void Foam::UnivariateEquation<Type>::FX
 (
-    const UList<scalar>& x,
+    const typename univariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx
 ) const
@@ -112,7 +150,7 @@ void Foam::UnivariateEquation<Type>::FX
 template<class Type>
 void Foam::UnivariateEquation<Type>::dfdX
 (
-    const UList<scalar>& x,
+    const typename univariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& dfdx
 ) const
@@ -124,7 +162,7 @@ void Foam::UnivariateEquation<Type>::dfdX
 template<class Type>
 void Foam::UnivariateEquation<Type>::jacobian
 (
-    const UList<scalar>& x,
+    const typename univariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J

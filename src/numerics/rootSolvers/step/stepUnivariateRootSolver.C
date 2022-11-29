@@ -118,6 +118,7 @@ Foam::scalar Foam::stepUnivariateRootSolver::findRoot
         {
             x += dx;
         }
+        eqn_.limit(x);
         if (converged(dx, y))
         {
             break;

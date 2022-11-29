@@ -25,6 +25,61 @@ License
 
 #include "tableReader.H"
 
+
+Foam::HashTable<Foam::entryTable> Foam::readTables;
+
+const char* const Foam::pTraits<char>::typeName = "char";
+
+Foam::pTraits<char>::pTraits(const char& p)
+:
+    p_(p)
+{}
+
+Foam::pTraits<char>::pTraits(Istream& is)
+{
+    is >> p_;
+}
+
+
+Foam::Istream& Foam::operator>>(Istream& is, char& i)
+{
+    token t(is);
+
+    if (!t.good())
+    {
+        is.setBad();
+        return is;
+    }
+
+    if (t.isString())
+    {
+        i = char(t.stringToken()[0]);
+    }
+    else
+    {
+        is.setBad();
+        FatalIOErrorInFunction(is)
+            << "wrong token type - expected char, found " << t.info()
+            << exit(FatalIOError);
+
+        return is;
+    }
+
+    // Check state of Istream
+    is.check("Istream& operator>>(Istream&, char&)");
+
+    return is;
+}
+
+
+char Foam::readChar(Istream& is)
+{
+    char val;
+    is >> val;
+
+    return val;
+}
+
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
 void Foam::removeComments(string& line)
@@ -37,14 +92,19 @@ void Foam::removeComments(string& line)
 }
 
 
-Foam::List2D<Foam::string> Foam::read2DTable
+const Foam::entryTable& Foam::read2DTable
 (
     const fileName& file,
-    const string& delim,
+    const char delim,
     const label startLine,
     const bool flip
 )
 {
+    if (readTables.found(file))
+    {
+        return readTables[file];
+    }
+
     fileName fNameExpanded(file);
     fNameExpanded.expand();
 
@@ -64,34 +124,63 @@ Foam::List2D<Foam::string> Foam::read2DTable
     label nx = 0;
     label lineI = 0;
 
-    word line;
-    DynamicList<List<string>> tentries;
+    DynamicList<List<List<token>>> tentries;
+    token t(is);
     while (is.good())
     {
-        is.getLine(line);
         if (lineI++ < startLine)
         {
             continue;
         }
-        removeComments(line);
-
-        DynamicList<word> lineVals(line.size());
-        label stringi = 0;
-        for
+        if
         (
-            string::const_iterator iter = line.begin();
-            iter != line.end();
-            ++iter
+            (t.isPunctuation() && t.pToken() == token::HASH)
+         || t.isFunctionName()
         )
         {
-            if (*iter != delim[0])
+            do
             {
-                lineVals(stringi) = lineVals(stringi) + *iter;
-            }
-            else
+                is >> t;
+            } while ((t.isPunctuation() && t.pToken() != token::NL) || !t.good());
+        }
+
+        DynamicList<DynamicList<token>> lineVals;
+        label cmpti = 0;
+        label lineNo = t.lineNumber();
+        label oldLineNo = lineNo;
+        while (is.good())
+        {
+            bool add = true;
+            lineNo = t.lineNumber();
+            if (!t.good())
             {
-                stringi++;
+                break;
             }
+            else if (lineNo != oldLineNo)
+            {
+                oldLineNo = lineNo;
+                break;
+            }
+            if (t.isPunctuation())
+            {
+                if (t.pToken() == token::NL)
+                {
+                    break;
+                }
+                if (t.pToken() == delim)
+                {
+                    if (lineVals(cmpti).size())
+                    {
+                        cmpti++;
+                    }
+                    add = false;
+                }
+            }
+            if (add && t.good())
+            {
+                lineVals(cmpti).append(t);
+            }
+            is>> t;
         }
 
         if (!lineVals.size())
@@ -106,13 +195,12 @@ Foam::List2D<Foam::string> Foam::read2DTable
         {
             FatalErrorInFunction
                 << "Incompatible table rows" << endl
-                << line
                 << abort(FatalError);
         }
-        tentries.append(List<string>(lineVals.size()));
+        tentries.append(List<List<token>>(lineVals.size()));
         forAll(lineVals, i)
         {
-            tentries[nx][i] = lineVals[i];
+            tentries[nx][i].transfer(lineVals[i]);
         }
         nx++;
     }
@@ -127,19 +215,30 @@ Foam::List2D<Foam::string> Foam::read2DTable
         ny = t;
     }
 
-
+    entryTable& entries = readTables(file);
+    entries.setSize(nx, ny);
+    Info<<tentries.size()<<" "<<tentries[0].size()<<" "<<nx<<" "<<ny<<endl;
     if (!f)
     {
-        return move(List2D<string>(tentries));
-    }
-    List2D<string> entries(nx, ny);
-    forAll(entries, i)
-    {
-        forAll(entries[i], j)
+        forAll(tentries, i)
         {
-            entries(i, j) = tentries[j][i];
+            forAll(tentries[i], j)
+            {
+                entries(i, j).transfer(tentries[i][j]);
+            }
         }
     }
+    else
+    {
+        forAll(tentries, j)
+        {
+            forAll(tentries[j], i)
+            {
+                entries(i, j).transfer(tentries[j][i]);
+            }
+        }
+    }
+
     return entries;
 }
 

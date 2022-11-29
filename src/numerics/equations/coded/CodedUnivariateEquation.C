@@ -96,10 +96,9 @@ Foam::autoPtr<Foam::univariateEquation<Type>>
 Foam::CodedUnivariateEquation<Type>::compileNew()
 {
     this->updateLibrary();
-    return regEquation<Type, UnivariateEquation>::New
+    return UnivariateEquation<Type>::New
     (
         codeName(),
-        this->obr_,
         codeDict()
     );
 }
@@ -134,11 +133,10 @@ Foam::CodedUnivariateEquation<Type>::expandCodeDict
 template<class Type>
 Foam::CodedUnivariateEquation<Type>::CodedUnivariateEquation
 (
-    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    regEquation<Type, UnivariateEquation>(obr, dict),
+    UnivariateEquation<Type>(dict),
     codedBase("test", expandCodeDict(dict)),
     nDerivatives_(dict.lookup<label>("nDerivatives"))
 {
@@ -152,6 +150,20 @@ Foam::CodedUnivariateEquation<Type>::CodedUnivariateEquation
     {
         setEnv("FOAM_CODE_TEMPLATES", origCODE_TEMPLATE_DIR, true);
     }
+}
+
+
+template<class Type>
+Foam::CodedUnivariateEquation<Type>::CodedUnivariateEquation
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
+:
+    CodedUnivariateEquation<Type>(dict)
+{
+    this->setObr(obr);
+    redirectEquationPtr_->setObr(obr);
 }
 
 

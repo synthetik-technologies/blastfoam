@@ -150,6 +150,12 @@ public:
             const scalarField& z
         ) const;
 
+        //- Return value as a function of two scalar fields
+        virtual tmp<Field<Type>> value
+        (
+            const Field<vector>& X
+        ) const;
+
         //- Write data to dictionary stream
         virtual void write(Ostream& os) const;
 

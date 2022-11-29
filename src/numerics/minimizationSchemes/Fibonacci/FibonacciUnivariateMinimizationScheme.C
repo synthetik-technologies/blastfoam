@@ -112,7 +112,7 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
         eqn_.limit(c);
         yc = eqn_.fx(c, li);
 
-        if (convergedX(a, b) && convergedY(yc, yd))
+        if (converged(a, b, yc, yd))
         {
             break;
         }

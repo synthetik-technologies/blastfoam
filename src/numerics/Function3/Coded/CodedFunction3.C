@@ -202,6 +202,15 @@ Foam::tmp<Foam::Field<Type>> Foam::Function3s::Coded<Type>::value
 
 
 template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::Function3s::Coded<Type>::value
+(
+    const Field<vector>& X
+) const
+{
+    return redirectFunction3Ptr_->value(X);
+}
+
+template<class Type>
 void Foam::Function3s::Coded<Type>::write(Ostream& os) const
 {
     writeCode(os);

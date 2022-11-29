@@ -25,6 +25,21 @@ License
 
 #include "indexing.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+defineTypeNameAndDebug(indexer, 0);
+
+namespace indexers
+{
+    defineTypeNameAndDebug(null, 0);
+    defineTypeNameAndDebug(uniform, 0);
+    defineTypeNameAndDebug(nonuniform, 0);
+}
+}
+
+
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::indexer> Foam::indexer::New
@@ -86,6 +101,29 @@ Foam::autoPtr<Foam::indexer> Foam::indexer::New
 }
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::indexer::indexer(const List<scalar>& xs)
+:
+    xs_(xs)
+{
+    bool ordered = true;
+    for (label i = 0; i < xs.size()-1; i++)
+    {
+        if (xs[i+1] < xs[i])
+        {
+            ordered = false;
+            break;
+        }
+    }
+    if (!ordered)
+    {
+        FatalErrorInFunction
+            << "coordinates are not ordered in ascending order" << nl
+            << xs << endl
+            << abort(FatalError);
+    }
+}
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::label Foam::indexers::uniform::findIndex

@@ -101,12 +101,12 @@ Foam::autoPtr<Foam::equation<Type>>
 Foam::CodedEquation<Type>::compileNew()
 {
     this->updateLibrary();
-    return regEquation<Type, Equation>::New
-    (
-        codeName(),
-        this->obr_,
-        codeDict()
-    );
+    return
+        Equation<Type>::New
+        (
+            codeName(),
+            codeDict()
+        );
 }
 
 
@@ -139,13 +139,9 @@ Foam::CodedEquation<Type>::expandCodeDict
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::CodedEquation<Type>::CodedEquation
-(
-    const objectRegistry& obr,
-    const dictionary& dict
-)
+Foam::CodedEquation<Type>::CodedEquation(const dictionary& dict)
 :
-    regEquation<Type, Equation>(obr, dict),
+    Equation<Type>(dict),
     codedBase("test", expandCodeDict(dict)),
     nDerivatives_(dict.lookup<label>("nDerivatives"))
 {
@@ -159,6 +155,19 @@ Foam::CodedEquation<Type>::CodedEquation
     {
         setEnv("FOAM_CODE_TEMPLATES", origCODE_TEMPLATE_DIR, true);
     }
+}
+
+template<class Type>
+Foam::CodedEquation<Type>::CodedEquation
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
+:
+    CodedEquation<Type>(dict)
+{
+    this->setObr(obr);
+    redirectEquationPtr_->setObr(obr);
 }
 
 

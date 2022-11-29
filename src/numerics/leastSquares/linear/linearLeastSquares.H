@@ -63,7 +63,7 @@ public:
     linearLeastSquares();
 
     //- Destructor
-    virtual ~linearLeastSquares() 
+    virtual ~linearLeastSquares()
     {}
 
     // Member Functions

@@ -222,7 +222,7 @@ protected:
             return 2;
         }
 
-        virtual scalar fx(const scalar x, const label li) const
+        virtual Type fx(const scalar x, const label li) const
         {
             if (dir_ == 0)
             {
@@ -238,10 +238,10 @@ protected:
                     << "direction has not been set" << endl
                     << abort(FatalError);
             }
-            return 0.0;
+            return Zero;
         }
 
-        virtual scalar dfdx(const scalar x, const label li) const
+        virtual Type dfdx(const scalar x, const label li) const
         {
             if (dir_ == 0)
             {
@@ -257,10 +257,10 @@ protected:
                     << "direction has not been set" << endl
                     << abort(FatalError);
             }
-            return 0.0;
+            return Zero;
         }
 
-        virtual scalar d2fdx2(const scalar x, const label li) const
+        virtual Type d2fdx2(const scalar x, const label li) const
         {
             if (dir_ == 0)
             {
@@ -276,7 +276,7 @@ protected:
                     << "direction has not been set" << endl
                     << abort(FatalError);
             }
-            return 0.0;
+            return Zero;
         }
     };
 
@@ -290,13 +290,13 @@ protected:
     // Protected member functions
 
         //- Return the real data
-        inline const List2D<scalar>& fValues() const
+        inline const List2D<Type>& fValues() const
         {
             return *realDataPtr_;
         }
 
         //- Access the real data values
-        inline List2D<scalar>& fValues()
+        inline List2D<Type>& fValues()
         {
             return *realDataPtr_;
         }
@@ -713,6 +713,16 @@ Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
     const scalar& fin,
     const scalar x
 ) const;
+
+template<>
+void Foam::lookupTable2D<Foam::scalar>::read
+(
+    const dictionary& dict,
+    const word& xName,
+    const word& yName,
+    const word& name,
+    const bool canRead
+);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

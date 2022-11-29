@@ -96,8 +96,8 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
     {
         if
         (
-            (convergedX(a, b) && convergedY(ya, yb))
-         || (convergedX(b, c) && convergedY(yb, yc))
+            (converged(a, b, ya, yb))
+         || (converged(b, c, yb, yc))
         )
         {
             break;

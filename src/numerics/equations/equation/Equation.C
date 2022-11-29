@@ -26,6 +26,41 @@ License
 #include "Equation.H"
 #include "adaptiveTypes.H"
 
+// * * * * * * * * * * * * * * Static Data Functions * * * * * * * * * * * * //
+
+template<class Type>
+Foam::autoPtr<Foam::equation<Type>> Foam::equation<Type>::New
+(
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("type"), dict);
+}
+
+template<class Type>
+Foam::autoPtr<Foam::equation<Type>> Foam::equation<Type>::New
+(
+    const word& type,
+    const dictionary& dict
+)
+{
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(type);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown " << typeName << " type "
+            << type <<  nl << nl
+            << "Valid " << typeName << " types are:" << nl
+            << dictionaryConstructorTablePtr_->sortedToc() << nl
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -75,7 +110,7 @@ Foam::Equation<Type>::~Equation()
 template<class Type>
 Type Foam::Equation<Type>::fX
 (
-    const UList<scalar>& x,
+    const typename UnivariateEquation<Type>::VarType& x,
     const label li
 ) const
 {
@@ -86,7 +121,7 @@ Type Foam::Equation<Type>::fX
 template<class Type>
 void Foam::Equation<Type>::FX
 (
-    const UList<scalar>& x,
+    const typename MultivariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx
 ) const
@@ -98,7 +133,7 @@ void Foam::Equation<Type>::FX
 template<class Type>
 void Foam::Equation<Type>::dfdX
 (
-    const UList<scalar>& x,
+    const typename UnivariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& dfdx
 ) const
@@ -110,7 +145,7 @@ void Foam::Equation<Type>::dfdX
 template<class Type>
 void Foam::Equation<Type>::jacobian
 (
-    const UList<scalar>& x,
+    const typename MultivariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J

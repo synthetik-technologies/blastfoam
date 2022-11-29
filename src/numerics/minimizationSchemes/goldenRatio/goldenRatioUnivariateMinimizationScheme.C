@@ -122,7 +122,7 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
             yd = eqn_.fx(d, li);
         }
 
-        if (convergedX(a, b) && convergedY(yc, yd))
+        if (converged(a, b, yc, yd))
         {
             break;
         }

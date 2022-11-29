@@ -45,6 +45,7 @@ SourceFiles
 #include "tmp.H"
 #include "typeInfo.H"
 #include "Field.H"
+#include "vector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -139,6 +140,9 @@ public:
             const scalarField& z
         ) const = 0;
 
+        //- Return value as a function of two scalar fields
+        virtual tmp<Field<Type>> value(const Field<vector>& X) const = 0;
+
         //- Write in dictionary format
         virtual void write(Ostream& os) const = 0;
 
@@ -206,6 +210,9 @@ public:
             const scalarField& y,
             const scalarField& z
         ) const;
+
+        //- Return value as a function of two scalar fields
+        virtual tmp<Field<Type>> value(const Field<vector>& X) const;
 };
 
 

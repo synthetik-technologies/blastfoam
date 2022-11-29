@@ -417,49 +417,43 @@ void Foam::lookupTable1D<Type>::read
     xName_ = xName;
     fName_ = name;
 
-    List2D<string> table;
-    if (dict.found("file"))
     {
-        table = read2DTable
+        scalarList x;
+        const dictionary& xDict = readComponent<scalar>
         (
-            dict.lookup<fileName>("file"),
-            dict.lookupOrDefault<string>("delim", ","),
-            dict.lookupOrDefault<label>("startRow", 0),
-            dict.lookupOrDefault<Switch>("flipTable", false)
+            dict,
+            xName,
+            modX_,
+            x,
+            canRead
         );
+        setX(x, true);
+
+        interpolator_ =
+            interpolationWeight1D::New
+            (
+                xDict.found("interpolationScheme")
+              ? xDict.lookup<word>("interpolationScheme")
+              : dict.lookupOrDefault<word>("interpolationScheme", "linearClamp"),
+                xModValues_,
+                canRead
+            );
+        if (canRead)
+        {
+            interpolator_->validate();
+        }
     }
 
-    scalarList x;
-    word modXType;
-    bool isReal = readComponent<scalar>
-    (
-        dict,
-        xName,
-        modXType,
-        x,
-        table
-    );
-
-    setX(x, modXType, isReal);
-    interpolator_ =
-        interpolationWeight1D::New
-        (
-            dict.lookupOrDefault<word>("interpolationScheme", "linearClamp"),
-            xModValues_
-        );
-    interpolator_->validate();
-
     List<Type> data;
-    word modType;
-    isReal = readComponent<Type>
+    readComponent<Type>
     (
         dict,
         name,
-        modType,
+        mod_,
         data,
-        table
+        canRead
     );
-    setData(data, modType, isReal);
+    setData(data, true);
 
     if (dict.found("rootSolver"))
     {

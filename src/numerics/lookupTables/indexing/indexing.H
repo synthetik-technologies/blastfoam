@@ -58,12 +58,9 @@ protected:
 
 public:
 
-    virtual word type() const = 0;
+    TypeName("indexer");
 
-    indexer(const List<scalar>& xs)
-    :
-        xs_(xs)
-    {}
+    indexer(const List<scalar>& xs);
 
     virtual ~indexer()
     {}
@@ -89,17 +86,14 @@ class null
 {
 public:
 
+    TypeName("null");
+
     null(const List<scalar>& xs)
     :
         indexer(xs)
     {}
     virtual ~null()
     {}
-
-    virtual word type() const
-    {
-        return "null";
-    }
 
     virtual autoPtr<indexer> clone() const
     {
@@ -123,6 +117,8 @@ class uniform
 {
 public:
 
+    TypeName("uniform");
+
     uniform(const List<scalar>& xs)
     :
         indexer(xs)
@@ -130,11 +126,6 @@ public:
 
     virtual ~uniform()
     {}
-
-    virtual word type() const
-    {
-        return "uniform";
-    }
 
     virtual autoPtr<indexer> clone() const
     {
@@ -156,6 +147,8 @@ class nonuniform
 {
 public:
 
+    TypeName("nonuniform");
+
     nonuniform(const List<scalar>& xs)
     :
         indexer(xs)
@@ -163,11 +156,6 @@ public:
 
     virtual ~nonuniform()
     {}
-
-    virtual word type() const
-    {
-        return "nonuniform";
-    }
 
     virtual autoPtr<indexer> clone() const
     {

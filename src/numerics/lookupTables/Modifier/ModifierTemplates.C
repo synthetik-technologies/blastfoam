@@ -28,21 +28,77 @@ License
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::autoPtr<Foam::Modifier<Type>> Foam::Modifier<Type>::New(const word& mod)
+Foam::autoPtr<Foam::Modifier<Type>> Foam::Modifier<Type>::New
+(
+    const word& modifierType
+)
 {
-    if (mod == "none")
-    {
-        return autoPtr<Modifier<Type>>(new modifiers::None<Type>());
-    }
-    else
+    DebugInfo
+        << "Selecting " << pTraits<Type>::typeName
+        << " modifier: " << modifierType << endl;
+
+    typename nullConstructorTable::iterator cstrIter =
+        nullConstructorTablePtr_->find(modifierType);
+
+    if (cstrIter == nullConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << mod << " is not a valid mod scheme" << nl
-            << "Options are: " << nl
-            << "    none" << nl
-            << abort(FatalError);
+            << "Unknown " << Modifier<Type>::typeName << " type "
+            << modifierType << nl << nl
+            << "Valid " << Modifier<Type>::typeName << " types are : " << endl
+            << nullConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
     }
-    return autoPtr<Modifier<Type>>();
+    return autoPtr<Modifier<Type>>(cstrIter()());
+}
+
+
+template<class Type>
+Foam::autoPtr<Foam::Modifier<Type>> Foam::Modifier<Type>::New
+(
+    const word& modifierType,
+    const dictionary& dict
+)
+{
+    DebugInfo
+        << "Selecting " << pTraits<Type>::typeName
+        << " modifier: " << modifierType << endl;
+
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(modifierType);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown " << Modifier<Type>::typeName << " type "
+            << modifierType << nl << nl
+            << "Valid " << Modifier<Type>::typeName << " types are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+    return autoPtr<Modifier<Type>>(cstrIter()(dict));
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::Modifier<Type>::Mod(UList<Type>& f) const
+{
+    forAll(f, i)
+    {
+        f[i] = this->operator()(f[i]);
+    }
+}
+
+
+template<class Type>
+void Foam::Modifier<Type>::Inv(UList<Type>& f) const
+{
+    forAll(f, i)
+    {
+        f[i] = this->inv(f[i]);
+    }
 }
 
 // ************************************************************************* //

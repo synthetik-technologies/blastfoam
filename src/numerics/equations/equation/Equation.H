@@ -55,6 +55,8 @@ class equation
 {
 public:
 
+    TypeName(pTraits<Type>::typeName + "Equation");
+
     typedef scalar VarType;
 
     // Constructors
@@ -76,6 +78,34 @@ public:
         :
             univariateEquation<Type>(dict)
         {}
+
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        equation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
+    // Selectors
+
+        //- Select equation type from the constructing dictionary
+        static autoPtr<equation<Type>> New
+        (
+            const dictionary& dict
+        );
+
+        //- Select using given equation type
+        static autoPtr<equation<Type>> New
+        (
+            const word& type,
+            const dictionary& dict
+        );
 
 
     //- Destructor
@@ -292,14 +322,14 @@ public:
         //- Calulate the function at a point
         virtual Type fX
         (
-            const UList<scalar>& x,
+            const typename UnivariateEquation<Type>::VarType& x,
             const label li
         ) const;
 
         //- Calulate the function at a point
         virtual void FX
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& fx
         ) const;
@@ -307,7 +337,7 @@ public:
         //- Calulate the gradient
         virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename UnivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& dfdx
         ) const;
@@ -315,7 +345,7 @@ public:
         //- Calulate the Jacobian (dfdx)
         virtual void jacobian
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J

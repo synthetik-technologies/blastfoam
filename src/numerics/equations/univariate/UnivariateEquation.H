@@ -54,6 +54,8 @@ public:
 
     typedef Type EqnType;
 
+    TypeName(pTraits<Type>::typeName + "UnivariateEquation");
+
     // Constructors
 
         //- Null constructor
@@ -75,6 +77,34 @@ public:
         {}
 
 
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        univariateEquation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
+    // Selectors
+
+        //- Select equation type from the constructing dictionary
+        static autoPtr<univariateEquation<Type>> New
+        (
+            const dictionary& dict
+        );
+
+        //- Select using given equation type
+        static autoPtr<univariateEquation<Type>> New
+        (
+            const word& type,
+            const dictionary& dict
+        );
+
+
     //- Destructor
     virtual ~univariateEquation()
     {}
@@ -85,14 +115,14 @@ public:
         //- Return the function value
         virtual Type fX
         (
-            const UList<scalar>& x,
+            const typename multivariateEquation<Type>::VarType& x,
             const label li
         ) const = 0;
 
         //- Return the function value
         virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename multivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& dfdx
         ) const = 0;
@@ -131,7 +161,7 @@ protected:
     //- Calculate the gradient using a finite difference
     void calculateGradient
     (
-        const UList<scalar>& x0,
+        const typename univariateEquation<Type>::VarType& x0,
         const label li,
         List<Type>& grad
     ) const;
@@ -220,7 +250,7 @@ public:
         //- Calculate the gradient
         virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename BaseEquation::VarType& x,
             const label li,
             List<Type>& dfdx
         ) const;
@@ -228,7 +258,7 @@ public:
         //- Calculate the gradient
         virtual void FX
         (
-            const UList<scalar>& x,
+            const typename BaseEquation::VarType& x,
             const label li,
             List<Type>& fx
         ) const;
@@ -236,7 +266,7 @@ public:
         //- Calculate the jacobian
         virtual void jacobian
         (
-            const UList<scalar>& x,
+            const typename BaseEquation::VarType& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J

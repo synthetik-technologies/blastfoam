@@ -96,10 +96,9 @@ Foam::autoPtr<Foam::multivariateEquation<Type>>
 Foam::CodedMultivariateEquation<Type>::compileNew()
 {
     this->updateLibrary();
-    return regEquation<Type, MultivariateEquation>::New
+    return MultivariateEquation<Type>::New
     (
         codeName(),
-        this->obr_,
         codeDict()
     );
 }
@@ -134,11 +133,10 @@ Foam::CodedMultivariateEquation<Type>::expandCodeDict
 template<class Type>
 Foam::CodedMultivariateEquation<Type>::CodedMultivariateEquation
 (
-    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    regEquation<Type, MultivariateEquation>(obr, dict),
+    MultivariateEquation<Type>(dict),
     codedBase("test", expandCodeDict(dict)),
     nDerivatives_(dict.lookup<label>("nDerivatives"))
 {
@@ -152,6 +150,20 @@ Foam::CodedMultivariateEquation<Type>::CodedMultivariateEquation
     {
         setEnv("FOAM_CODE_TEMPLATES", origCODE_TEMPLATE_DIR, true);
     }
+}
+
+
+template<class Type>
+Foam::CodedMultivariateEquation<Type>::CodedMultivariateEquation
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
+:
+    CodedMultivariateEquation<Type>(dict)
+{
+    this->setObr(obr);
+    redirectEquationPtr_->setObr(obr);
 }
 
 

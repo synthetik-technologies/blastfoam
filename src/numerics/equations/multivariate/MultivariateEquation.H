@@ -36,6 +36,7 @@ Description
 #include "equationBase.H"
 #include "scalarField.H"
 #include "RectangularMatrix.H"
+#include "objectRegistry.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,7 +54,9 @@ class multivariateEquation
 {
 public:
 
-    typedef UList<scalar> VarType;
+    TypeName(pTraits<Type>::typeName + "MultivariateEquation");
+
+    typedef List<scalar> VarType;
     typedef List<Type> EqnType;
     typedef Type CmptType;
 
@@ -82,6 +85,33 @@ public:
         :
             equationBase(dict)
         {}
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        multivariateEquation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
+    // Selectors
+
+        //- Select equation type from the constructing dictionary
+        static autoPtr<multivariateEquation<Type>> New
+        (
+            const dictionary& dict
+        );
+
+        //- Select using given equation type
+        static autoPtr<multivariateEquation<Type>> New
+        (
+            const word& type,
+            const dictionary& dict
+        );
 
 
     //- Destructor
@@ -124,7 +154,7 @@ public:
         //- Return the function value
         virtual void FX
         (
-            const UList<scalar>& x,
+            const VarType& x,
             const label li,
             List<Type>& fx
         ) const = 0;
@@ -132,7 +162,7 @@ public:
         //- Return the function value
         virtual void jacobian
         (
-            const UList<scalar>& x,
+            const VarType& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J
@@ -187,7 +217,7 @@ protected:
         //- Create a Jacobian matrix given a list of dx
         void calculateJacobian
         (
-            const UList<scalar>& x0,
+            const typename multivariateEquation<Type>::VarType& x0,
             const label li,
             const List<Type>& f0,
             RectangularMatrix<Type>& J
@@ -282,7 +312,7 @@ public:
         //- Calculate the Jacobian of the equation
         virtual void jacobian
         (
-            const UList<scalar>& x,
+            const typename multivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J

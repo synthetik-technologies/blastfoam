@@ -129,7 +129,7 @@ Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
         eqn_.limit(xUpper);
         yUpper = eqn_.fx(xUpper, li);
 
-        if (convergedX(xLower, xUpper) && convergedY(yLower, yUpper))
+        if (converged(xLower, xUpper, yLower, yUpper))
         {
             break;
         }

@@ -41,6 +41,8 @@ SourceFiles
 #include "stringOps.H"
 #include "List2D.H"
 #include "List3D.H"
+#include "PtrList2D.H"
+#include "Modifier.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,17 +51,20 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+typedef List2D<List<token>> entryTable;
+extern HashTable<entryTable> readTables;
+
 //- Remove comments from a line
 void removeComments(string& line);
 
 template<class Type>
-bool readComponent
+const dictionary& readComponent
 (
     const dictionary& parentDict,
     const word& name,
-    word& modType,
+    autoPtr<Modifier<Type>>& mod,
     List<Type>& values,
-    const List2D<string>& table = List2D<string>()
+    const bool canRead
 );
 
 //- Read a 1D table from a file
@@ -67,7 +72,7 @@ template<class Type>
 void read1DTable
 (
     const fileName& file,
-    const string& delim,
+    const char delim,
     List<Type>& values,
     const bool determineSize = true
 );
@@ -78,17 +83,17 @@ template<class Type>
 void read2DTable
 (
     const fileName& file,
-    const string& delim,
+    const char delim,
     List2D<Type>& data,
     const bool flip,
     const bool determineSize = false
 );
 
 
-List2D<string> read2DTable
+const entryTable& read2DTable
 (
     const fileName& file,
-    const string& delim,
+    const char delim,
     const label startRow = 0,
     const bool flip = false
 );
@@ -97,7 +102,7 @@ List2D<string> read2DTable
 template<class Type>
 List<Type> readColumn
 (
-    const List2D<string>& entries,
+    const entryTable& entries,
     const label col
 );
 
@@ -105,7 +110,7 @@ List<Type> readColumn
 template<class Type>
 List<Type> readRow
 (
-    const List2D<string>& entries,
+    const entryTable& entries,
     const label col
 );
 
@@ -114,12 +119,54 @@ template<class Type>
 void read3DTable
 (
     const fileName& file,
-    const string& delim,
-    const string& rowDelim,
+    const char delim,
+    const char rowDelim,
     List3D<Type>& data,
     const bool flip,
     const bool determineSize = false
 );
+
+//- Template specialisation for pTraits<char>
+char readChar(Istream&);
+Istream& operator>>(Istream&, char&);
+
+template<>
+class pTraits<char>
+{
+    char p_;
+
+public:
+
+    //- Component type
+    typedef char cmptType;
+
+
+    // Static Data Members
+
+        static const char* const typeName;
+
+    // Constructors
+
+        //- Construct from primitive
+        explicit pTraits(const char&);
+
+        //- Construct from Istream
+        pTraits(Istream&);
+
+    // Member Functions
+
+        //- Access to the char value
+        operator char() const
+        {
+            return p_;
+        }
+
+        //- Access to the char value
+        operator char&()
+        {
+            return p_;
+        }
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

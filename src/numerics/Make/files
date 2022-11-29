@@ -10,7 +10,11 @@ lookupTables/lookupTable3D/lookupTables3D.C
 equations/adaptiveTypes.C
 equations/equationBase/equationBase.C
 
-equations/regEquation/regEquations.C
+equations/equation/equations.C
+equations/univariate/univariateEquations.C
+equations/multivariate/multivariateEquations.C
+
+equations/coded/codedEquations.C
 
 rootSolvers/rootSolver/rootSolver.C
 rootSolvers/rootSolver/rootSolverNew.C

@@ -110,6 +110,29 @@ Foam::tmp<Foam::Field<Type>> Foam::FieldFunction3<Type, Function3Type>::value
 }
 
 
+template<class Type, class Function3Type>
+Foam::tmp<Foam::Field<Type>> Foam::FieldFunction3<Type, Function3Type>::value
+(
+    const Field<vector>& X
+) const
+{
+    tmp<Field<Type>> tfld(new Field<Type>(X.size()));
+    Field<Type>& fld = tfld.ref();
+
+    forAll(X, i)
+    {
+        fld[i] =
+            refCast<const Function3Type>(*this).value
+            (
+                X[i].z(),
+                X[i].y(),
+                X[i].z()
+            );
+    }
+
+    return tfld;
+}
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>

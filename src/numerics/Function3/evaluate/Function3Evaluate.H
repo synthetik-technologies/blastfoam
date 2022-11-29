@@ -51,9 +51,17 @@ void evaluate
 (
     GeometricField<Type, PatchField, GeoMesh>& result,
     const Function3<Type>& func,
-    const GeometricField<Type, PatchField, GeoMesh>& x,
-    const GeometricField<Type, PatchField, GeoMesh>& y,
-    const GeometricField<Type, PatchField, GeoMesh>& z
+    const GeometricField<scalar, PatchField, GeoMesh>& x,
+    const GeometricField<scalar, PatchField, GeoMesh>& y,
+    const GeometricField<scalar, PatchField, GeoMesh>& z
+);
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void evaluate
+(
+    GeometricField<Type, PatchField, GeoMesh>& result,
+    const Function3<Type>& func,
+    const GeometricField<vector, PatchField, GeoMesh>& X
 );
 
 template<class Type, template<class> class PatchField, class GeoMesh>
@@ -61,9 +69,17 @@ tmp<GeometricField<Type, PatchField, GeoMesh>> evaluate
 (
     const Function3<Type>& func,
     const dimensionSet& dims,
-    const GeometricField<Type, PatchField, GeoMesh>& x,
-    const GeometricField<Type, PatchField, GeoMesh>& y,
-    const GeometricField<Type, PatchField, GeoMesh>& z
+    const GeometricField<scalar, PatchField, GeoMesh>& x,
+    const GeometricField<scalar, PatchField, GeoMesh>& y,
+    const GeometricField<scalar, PatchField, GeoMesh>& z
+);
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+tmp<GeometricField<Type, PatchField, GeoMesh>> evaluate
+(
+    const Function3<Type>& func,
+    const dimensionSet& dims,
+    const GeometricField<vector, PatchField, GeoMesh>& X
 );
 
 

@@ -316,17 +316,11 @@ void Foam::lookupTable3D<Type>::setX
 
         if (isReal)
         {
-            forAll(x, i)
-            {
-                xModValues_[i] = modX_()(x[i]);
-            }
+            modX_->Mod(xModValues_);
         }
         else
         {
-            forAll(x, i)
-            {
-                (*xValuesPtr_)[i] = modX_->inv(x[i]);
-            }
+            modX_->Inv(*xValuesPtr_);
         }
     }
     xIndexing_ = indexer::New(xModValues_);
@@ -374,17 +368,11 @@ void Foam::lookupTable3D<Type>::setY
 
         if (isReal)
         {
-            forAll(y, i)
-            {
-                yModValues_[i] = modY_()(y[i]);
-            }
+            modY_->Mod(yModValues_);
         }
         else
         {
-            forAll(y, i)
-            {
-                (*yValuesPtr_)[i] = modY_->inv(y[i]);
-            }
+            modY_->Inv(*yValuesPtr_);
         }
     }
     yIndexing_ = indexer::New(yModValues_);
@@ -432,17 +420,11 @@ void Foam::lookupTable3D<Type>::setZ
 
         if (isReal)
         {
-            forAll(z, i)
-            {
-                zModValues_[i] = modZ_()(z[i]);
-            }
+            modZ_->Mod(zModValues_);
         }
         else
         {
-            forAll(z, i)
-            {
-                (*zValuesPtr_)[i] = modZ_->inv(z[i]);
-            }
+            modZ_->Inv(*zValuesPtr_);
         }
     }
     zIndexing_ = indexer::New(zModValues_);
@@ -1042,66 +1024,83 @@ void Foam::lookupTable3D<Type>::read
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
     );
 
-    scalarField x, y, z;
-    word modXType;
-    bool isReal = readComponent
-    (
-        dict,
-        xName,
-        modXType,
-        x
-    );
-    setX(x, modXType, isReal);
-    xInterpolator_ = interpolationWeight1D::New
-    (
-        dict.lookupOrDefault<word>
+    scalarField x;
+    {
+        const dictionary& xDict = readComponent
         (
-            xName + "InterpolationScheme",
-            scheme
-        ),
-        xModValues_
-    );
-    xInterpolator_->validate();
+            dict,
+            xName,
+            modX_,
+            x,
+            canRead
+        );
+        setX(x, true);
+        xInterpolator_ = interpolationWeight1D::New
+        (
+            xDict.found("interpolationScheme")
+          ? xDict.lookup<word>("interpolationScheme")
+          : dict.lookupOrDefault<word>
+            (
+                xName + "InterpolationScheme",
+                scheme
+            ),
+            xModValues_,
+            canRead
+        );
+        xInterpolator_->validate();
+    }
 
-    word modYType;
-    isReal = readComponent
-    (
-        dict,
-        yName,
-        modYType,
-        y
-    );
-    setY(y, modYType, isReal);
-    yInterpolator_ = interpolationWeight1D::New
-    (
-        dict.lookupOrDefault<word>
+    scalarField y;
+    {
+        const dictionary& yDict = readComponent
         (
-            yName + "InterpolationScheme",
-            scheme
-        ),
-        yModValues_
-    );
-    yInterpolator_->validate();
+            dict,
+            yName,
+            modY_,
+            y,
+            canRead
+        );
+        setY(y, true);
+        yInterpolator_ = interpolationWeight1D::New
+        (
+            yDict.found("interpolationScheme")
+          ? yDict.lookup<word>("interpolationScheme")
+          : dict.lookupOrDefault<word>
+            (
+                yName + "InterpolationScheme",
+                scheme
+            ),
+            yModValues_,
+            canRead
+        );
+        yInterpolator_->validate();
+    }
 
-    word modZType;
-    isReal = readComponent
-    (
-        dict,
-        zName,
-        modZType,
-        z
-    );
-    setZ(z, modZType, isReal);
-    zInterpolator_ = interpolationWeight1D::New
-    (
-        dict.lookupOrDefault<word>
+    scalarField z;
+    {
+        const dictionary& zDict = readComponent
         (
-            zName + "InterpolationScheme",
-            scheme
-        ),
-        zModValues_
-    );
-    zInterpolator_->validate();
+            dict,
+            zName,
+            modZ_,
+            z,
+            canRead
+        );
+        setZ(z, true);
+        zInterpolator_ = interpolationWeight1D::New
+        (
+            zDict.found("interpolationScheme")
+          ? zDict.lookup<word>("interpolationScheme")
+          : dict.lookupOrDefault<word>
+            (
+                zName + "InterpolationScheme",
+                scheme
+            ),
+            zModValues_,
+            canRead
+        );
+        zInterpolator_->validate();
+    }
 
     List3D<Type> data
     (
@@ -1110,24 +1109,21 @@ void Foam::lookupTable3D<Type>::read
         zModValues_.size()
     );
 
-    word modType = "none";
     if (dict.found(name))
     {
         dict.readIfPresent(name, data);
-        dict.readIfPresent(name + "Mod", modType);
-        if (modType != "none")
-        {
-            isReal = dict.lookup<bool>("isReal");
-        }
+        mod_ = Modifier<Type>::New
+        (
+            dict.lookup<word>(name + "Mod"),
+            dict
+        );
+        mod_->readReal(dict, name + "IsReal");
     }
     else if (dict.isDict(name + "Coeffs"))
     {
         const dictionary& fDict(dict.subDict(name + "Coeffs"));
-        fDict.readIfPresent("mod", modType);
-        if (modType != "none")
-        {
-            isReal = fDict.lookup<bool>("isReal");
-        }
+        mod_ = Modifier<Type>::New(fDict.lookup<word>("mod"), fDict);
+        mod_->readReal(fDict, "isReal");
 
         if (fDict.found(name))
         {
@@ -1135,13 +1131,11 @@ void Foam::lookupTable3D<Type>::read
         }
         else if (fDict.found("file"))
         {
-            fileName file(fDict.lookup<fileName>("file"));
-
             read3DTable
             (
-                file,
-                dict.lookupOrDefault<string>("delim", ","),
-                dict.lookupOrDefault<string>("rowDelim", ";"),
+                fDict.lookup<fileName>("file"),
+                dict.lookupOrDefault<char>("delim", ','),
+                dict.lookupOrDefault<char>("rowDelim", ';'),
                 data,
                 dict.lookupOrDefault<Switch>("flipTable", true),
                 !canRead
@@ -1183,8 +1177,12 @@ void Foam::lookupTable3D<Type>::read
             << yModValues_.size() << nl
             << abort(FatalIOError);
     }
-
-    setData(data, modType, isReal);
+    if (!mod_->isReal())
+    {
+        mod_->Inv(data);
+        mod_->setReal();
+    }
+    setData(data, true);
 
     if (dict.found("rootSolver"))
     {

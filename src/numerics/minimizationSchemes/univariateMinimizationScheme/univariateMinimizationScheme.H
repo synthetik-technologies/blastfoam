@@ -76,6 +76,24 @@ protected:
         //- Is the solution converged in y
         bool convergedY(const scalar y1, const scalar y2) const;
 
+        //- Is the solution converged in x and y
+        bool convergedScale
+        (
+            const scalar xError,
+            const scalar xS,
+            const scalar yError,
+            const scalar yS
+        ) const;
+
+        //- Is the solution converged in x and y
+        bool converged
+        (
+            const scalar x1,
+            const scalar x2,
+            const scalar y1,
+            const scalar y2
+        ) const;
+
         //- Print information about the current step
         void printStepInformation(const scalar val) const;
 

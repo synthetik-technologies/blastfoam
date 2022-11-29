@@ -34,7 +34,6 @@ Description
 #ifndef CodedMultvariateEquation_H
 #define CodedMultvariateEquation_H
 
-#include "regEquation.H"
 #include "MultivariateEquation.H"
 #include "scalarField.H"
 #include "dictionary.H"
@@ -57,7 +56,7 @@ namespace Foam
 template<class Type>
 class CodedMultivariateEquation
 :
-    public regEquation<Type, MultivariateEquation>,
+    public MultivariateEquation<Type>,
     public codedBase
 {
     // Private Data
@@ -93,9 +92,14 @@ class CodedMultivariateEquation
 
 public:
 
+    TypeName("coded");
+
     // Constructors
 
         //- Construct from name and dictionary
+        CodedMultivariateEquation(const dictionary& dict);
+
+        //- Construct from dictionary and object registry
         CodedMultivariateEquation
         (
             const objectRegistry& obr,
@@ -117,7 +121,7 @@ public:
         //- Return the function value
         virtual inline void FX
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& fx
         ) const
@@ -128,7 +132,7 @@ public:
         //- Return the function value
         virtual void jacobian
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J
@@ -137,8 +141,14 @@ public:
             redirectEquationPtr_->jacobian(x, li, fx, J);
         }
 
+        //- Set the pointer to the object registry
+        virtual void setObr(const objectRegistry& obr)
+        {
+            MultivariateEquation<Type>::setObr(obr);
+            redirectEquationPtr_->setObr(obr);
+        }
+
         //- Write data to dictionary stream
-        using regIOobject::write;
         virtual void write(Ostream& os) const
         {
             writeCode(os);

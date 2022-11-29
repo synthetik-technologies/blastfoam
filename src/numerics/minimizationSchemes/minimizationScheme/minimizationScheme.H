@@ -141,7 +141,7 @@ protected:
             const scalarList& s
         ) const;
 
-        bool converged
+        bool checkConvergence
         (
             const scalarList& absErrors,
             const scalarList& relErrors,
@@ -161,6 +161,24 @@ protected:
 
         //- Is the solution converged in w.r.t y
         bool convergedY(const scalarList& y1, const scalarList& y2) const;
+
+        //- Is the solution converged in x and y
+        bool convergedScale
+        (
+            const scalarList& xError,
+            const scalarList& xS,
+            const scalarList& yError,
+            const scalarList& yS
+        ) const;
+
+        //- Is the solution converged in x and y
+        bool converged
+        (
+            const scalarList& x1,
+            const scalarList& x2,
+            const scalarList& y1,
+            const scalarList& y2
+        ) const;
 
         //- Print information about the current step
         void printStepInformation(const scalarList& vals) const;

@@ -43,26 +43,39 @@ Foam::string Foam::equationBase::mergeStrings(const List<string>& eqns) const
 
 Foam::equationBase::equationBase()
 :
-    eqnString_(string::null)
+    equationBase(string::null)
 {}
 
 
 Foam::equationBase::equationBase(const string& eqnString)
 :
+    logFile_(fileName::null),
+    append_(false),
+    logPtr_(nullptr),
     eqnString_(eqnString)
 {}
 
 
 Foam::equationBase::equationBase(const List<string>& eqnStrings)
 :
-    eqnString_(mergeStrings(eqnStrings))
+    equationBase(mergeStrings(eqnStrings))
 {}
 
 
 Foam::equationBase::equationBase(const dictionary& dict)
 :
+    log_(dict.lookupOrDefault("log", false)),
+    logFile_(fileName::null),
+    append_(false),
+    logPtr_(nullptr),
     eqnString_(dict.lookupOrDefault<string>("eqnString", string::null))
-{}
+{
+    if (log_)
+    {
+        logFile_ = dict.lookup<fileName>("logFile");
+        dict.readIfPresent("append", append_);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -73,5 +86,62 @@ Foam::equationBase::~equationBase()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+const Foam::objectRegistry& Foam::equationBase::obr() const
+{
+    if (!obrPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "Trying to access equation objectRegistry, but it has not been set"
+            << endl
+            << abort(FatalError);
+    }
+    return obrPtr_();
+}
+
+
+void Foam::equationBase::setLog(const fileName& logFile, const bool log)
+{
+    log_ = log;
+    if (logPtr_.valid() && logPtr_->name() != logFile)
+    {
+        logPtr_.clear();
+    }
+    logFile_ = logFile;
+}
+
+
+Foam::OFstream& Foam::equationBase::logStream() const
+{
+    if (!logPtr_.valid())
+    {
+        logPtr_.set
+        (
+            new OFstream
+            (
+                logFile_,
+                OFstream::ASCII,
+                OFstream::currentVersion,
+                OFstream::UNCOMPRESSED,
+                append_
+            )
+        );
+    }
+    return logPtr_();
+}
+
+void Foam::equationBase::read(const dictionary& dict)
+{
+    dict.readIfPresent("log", log_);
+    dict.readIfPresent("eqnString", eqnString_);
+
+    if (log_)
+    {
+        if (dict.found("logFile") || logFile_.empty())
+        {
+            logFile_ = dict.lookup<fileName>("logFile");
+        }
+        dict.readIfPresent("append", append_);
+    }
+}
 
 // ************************************************************************* //

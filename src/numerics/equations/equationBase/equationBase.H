@@ -34,6 +34,9 @@ Description
 #define equationBase_H
 
 #include "dictionary.H"
+#include "objectRegistry.H"
+#include "OFstream.H"
+#include "UautoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,14 +49,33 @@ namespace Foam
 
 class equationBase
 {
+    // Private data
+
+        //- Optional pointer to object registry
+        UautoPtr<const objectRegistry> obrPtr_;
+
+        //- Optional log file
+        bool log_;
+        fileName logFile_;
+        bool append_;
+        mutable autoPtr<OFstream> logPtr_;
+
+
 protected:
     // Protected data
 
         //- Equation as a string
         word eqnString_;
 
-        // Merge list of strings
+        //- Merge list of strings
         string mergeStrings(const List<string>& eqns) const;
+
+        //- Return the object registry
+        const objectRegistry& obr() const;
+
+        //- Return the log stream
+        OFstream& logStream() const;
+
 
 public:
 
@@ -90,10 +112,39 @@ public:
             return eqnString_;
         }
 
+        //- Set the object registry
+        virtual void setObr(const objectRegistry& obr)
+        {
+            obrPtr_.reset(&obr);
+        }
+
+        //- Return if logging is wanted
+        bool log() const
+        {
+            return log_;
+        }
+
+        //- Set the log name
+        void setLog(const fileName&, const bool log = true);
+
+        //- Set the append flag for logging
+        void setAppend(const bool append = true)
+        {
+            append_ = append;
+        }
+
         //- Return the number of derivatives
         virtual label nDerivatives() const = 0;
+
+        //- Read logging information
+        virtual void read(const dictionary&);
 };
 
+#define defineEquationTypeNameAndDebug(Eqn, Debug, Type) \
+defineTemplateTypeNameAndDebug(Eqn<Type>, Debug);
+
+#define defineEquationTypeName(Eqn, Type) \
+defineTemplateTypeName(Eqn<Type>);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

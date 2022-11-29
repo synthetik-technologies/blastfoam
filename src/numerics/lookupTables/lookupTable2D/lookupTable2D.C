@@ -632,82 +632,100 @@ void Foam::lookupTable2D<Type>::read
     );
 
     scalarField x;
-    word modXType;
-    bool isReal = readComponent
-    (
-        dict,
-        xName,
-        modXType,
-        x
-    );
-    setX(x, modXType, isReal);
-    xInterpolator_ = interpolationWeight1D::New
-    (
-        dict.lookupOrDefault<word>
+    {
+        const dictionary& xDict = readComponent
         (
-            xName + "InterpolationScheme",
-            scheme
-        ),
-        xModValues_
-    );
-    xInterpolator_->validate();
+            dict,
+            xName,
+            modX_,
+            x,
+            canRead
+        );
+        setX(x, true);
+        xInterpolator_ = interpolationWeight1D::New
+        (
+            xDict.found("interpolationScheme")
+          ? xDict.lookup<word>("interpolationScheme")
+          : dict.lookupOrDefault<word>
+            (
+                xName + "InterpolationScheme",
+                scheme
+            ),
+            xModValues_,
+            canRead
+        );
+        if (canRead)
+        {
+            xInterpolator_->validate();
+        }
+    }
 
     scalarField y;
-    word modYType;
-    isReal = readComponent
-    (
-        dict,
-        yName,
-        modYType,
-        y
-    );
-    setY(y, modYType, isReal);
-    yInterpolator_ = interpolationWeight1D::New
-    (
-        dict.lookupOrDefault<word>
+    {
+        const dictionary& yDict = readComponent
         (
-            yName + "InterpolationScheme",
-            scheme
-        ),
-        yModValues_
-    );
-    yInterpolator_->validate();
+            dict,
+            yName,
+            modY_,
+            y,
+            canRead
+        );
+        setY(y, true);
+        yInterpolator_ = interpolationWeight1D::New
+        (
+            yDict.found("interpolationScheme")
+          ? yDict.lookup<word>("interpolationScheme")
+          : dict.lookupOrDefault<word>
+            (
+                yName + "InterpolationScheme",
+                scheme
+            ),
+            yModValues_,
+            canRead
+        );
+        if (canRead)
+        {
+            yInterpolator_->validate();
+        }
+    }
 
     List2D<Type> data(xModValues_.size(), yModValues_.size());
 
-    word modType = "none";
     if (dict.found(name))
     {
-        dict.readIfPresent(name, data);
-        dict.readIfPresent(name + "Mod", modType);
-        if (modType != "none")
+        if (canRead)
         {
-            isReal = dict.lookup<bool>("isReal");
+            dict.readIfPresent(name, data);
         }
+        mod_ = Modifier<scalar>::New
+        (
+            dict.lookupOrDefault<word>(name + "Mod", "none"),
+            dict
+        );
     }
     else if (dict.isDict(name + "Coeffs"))
     {
         const dictionary& fDict(dict.subDict(name + "Coeffs"));
-        fDict.readIfPresent("mod", modType);
-        if (modType != "none")
-        {
-            isReal = fDict.lookup<bool>("isReal");
-        }
+        mod_ = Modifier<scalar>::New
+        (
+            fDict.lookupOrDefault<word>("mod", "none"),
+            fDict
+        );
 
-        if (fDict.found(name))
+        if (!canRead)
+        {}
+        else if (fDict.found(name))
         {
             fDict.readIfPresent(name, data);
         }
         else if (fDict.found("file"))
         {
-            fileName file(fDict.lookup<fileName>("file"));
-
             read2DTable
             (
-                file,
-                fDict.lookupOrDefault<string>("delim", ","),
+                fDict.lookup<fileName>("file"),
+                fDict.lookupOrDefault<char>("delim", ','),
                 data,
-                fDict.lookupOrDefault<Switch>("flipTable", false),
+                fDict.lookupOrDefault<bool>("flipTable", false),
                 !canRead
             );
         }
@@ -719,7 +737,7 @@ void Foam::lookupTable2D<Type>::read
                 << abort(FatalIOError);
         }
     }
-    else
+    else if (canRead)
     {
         FatalIOErrorInFunction(dict)
             << "Neither the entry \"" << name << "\", "
@@ -742,8 +760,12 @@ void Foam::lookupTable2D<Type>::read
             << xModValues_.size() << " x " << yModValues_.size() << nl
             << abort(FatalIOError);
     }
-
-    setData(data, modType, isReal);
+    if (!mod_->isReal())
+    {
+        mod_->Inv(data);
+        mod_->setReal();
+    }
+    setData(data, true);
 
     if (dict.found("rootSolver"))
     {

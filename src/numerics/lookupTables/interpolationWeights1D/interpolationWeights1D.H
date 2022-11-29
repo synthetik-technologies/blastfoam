@@ -45,6 +45,7 @@ SourceFiles
 #define interpolationWeights1D_H
 
 #include "scalar.H"
+#include "runTimeSelectionTables.H"
 #include "DynamicList.H"
 #include "autoPtr.H"
 
@@ -65,12 +66,38 @@ protected:
 
 public:
 
-    virtual word type() const = 0;
+    TypeName("interpolationWeight1D");
 
     interpolationWeight1D(const List<scalar>& xs)
     :
         xs_(xs)
     {}
+    interpolationWeight1D(const dictionary& dict, const List<scalar>& xs)
+    :
+        xs_(xs)
+    {}
+
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        interpolationWeight1D,
+        null,
+        (
+            const List<scalar>& xs
+        ),
+        (xs)
+    );
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        interpolationWeight1D,
+        dictionary,
+        (
+            const dictionary& dict,
+            const List<scalar>& xs
+        ),
+        (dict, xs)
+    );
 
     virtual ~interpolationWeight1D()
     {}
@@ -78,11 +105,20 @@ public:
     static autoPtr<interpolationWeight1D> New
     (
         const word&,
-        const List<scalar>&
+        const List<scalar>&,
+        const bool finalData = true
+    );
+    static autoPtr<interpolationWeight1D> New
+    (
+        const word&,
+        const dictionary& dict,
+        const List<scalar>&,
+        const bool finalData = true
     );
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const = 0;
 
     virtual bool validate(const bool fail = true) const;
+    virtual label nRequired() const = 0;
 
     static scalar linearWeight
     (
@@ -122,9 +158,18 @@ public:
     :
         Interp(xs)
     {}
+    Clamp(const dictionary& dict, const List<scalar>& xs)
+    :
+        Interp(dict, xs)
+    {}
 
     virtual ~Clamp()
     {}
+
+    virtual label nRequired() const
+    {
+        return Interp::nRequired();
+    }
 
     virtual void updateWeights
     (
@@ -167,22 +212,28 @@ class floor
 {
 public:
 
+    TypeName("floor");
+
     floor(const List<scalar>& xs)
     :
         interpolationWeight1D(xs)
+    {}
+    floor(const dictionary& dict, const List<scalar>& xs)
+    :
+        interpolationWeight1D(dict, xs)
     {}
 
     virtual ~floor()
     {}
 
-    virtual word type() const
-    {
-        return "floor";
-    }
-
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
         return autoPtr<interpolationWeight1D>(new floor(xs));
+    }
+
+    virtual label nRequired() const
+    {
+        return 1;
     }
 
     virtual void updateWeights
@@ -205,22 +256,28 @@ class ceil
 {
 public:
 
+    TypeName("ceil");
+
     ceil(const List<scalar>& xs)
     :
         interpolationWeight1D(xs)
+    {}
+    ceil(const dictionary& dict, const List<scalar>& xs)
+    :
+        interpolationWeight1D(dict, xs)
     {}
 
     virtual ~ceil()
     {}
 
-    virtual word type() const
-    {
-        return "ceil";
-    }
-
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
         return autoPtr<interpolationWeight1D>(new ceil(xs));
+    }
+
+    virtual label nRequired() const
+    {
+        return 1;
     }
 
     virtual void updateWeights
@@ -234,7 +291,7 @@ public:
 
 
 /*---------------------------------------------------------------------------*\
-                        linear interpolation Declaration
+                linearExtrapolated interpolation Declaration
 \*---------------------------------------------------------------------------*/\
 
 class linearExtrapolated
@@ -243,22 +300,28 @@ class linearExtrapolated
 {
 public:
 
+    TypeName("linearExtrapolated");
+
     linearExtrapolated(const List<scalar>& xs)
     :
         interpolationWeight1D(xs)
+    {}
+    linearExtrapolated(const dictionary& dict, const List<scalar>& xs)
+    :
+        interpolationWeight1D(dict, xs)
     {}
 
     virtual ~linearExtrapolated()
     {}
 
-    virtual word type() const
-    {
-        return "linearExtrapolated";
-    }
-
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
         return autoPtr<interpolationWeight1D>(new linearExtrapolated(xs));
+    }
+
+    virtual label nRequired() const
+    {
+        return 2;
     }
 
     virtual void updateWeights
@@ -277,18 +340,19 @@ class linearClamp
 {
 public:
 
+    TypeName("linearClamp");
+
     linearClamp(const List<scalar>& xs)
     :
         Clamp<linearExtrapolated>(xs)
     {}
+    linearClamp(const dictionary& dict, const List<scalar>& xs)
+    :
+        Clamp<linearExtrapolated>(dict, xs)
+    {}
 
     virtual ~linearClamp()
     {}
-
-    virtual word type() const
-    {
-        return "linearClamp";
-    }
 
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
@@ -307,22 +371,28 @@ class quadraticExtrapolated
 {
 public:
 
+    TypeName("quadraticExtrapolated");
+
     quadraticExtrapolated(const List<scalar>& xs)
     :
         interpolationWeight1D(xs)
+    {}
+    quadraticExtrapolated(const dictionary& dict, const List<scalar>& xs)
+    :
+        interpolationWeight1D(dict, xs)
     {}
 
     virtual ~quadraticExtrapolated()
     {}
 
-    virtual word type() const
-    {
-        return "quadraticExtrapolated";
-    }
-
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
         return autoPtr<interpolationWeight1D>(new quadraticExtrapolated(xs));
+    }
+
+    virtual label nRequired() const
+    {
+        return 3;
     }
 
     virtual void updateWeights
@@ -341,18 +411,19 @@ class quadraticClamp
 {
 public:
 
+    TypeName("quadraticClamp");
+
     quadraticClamp(const List<scalar>& xs)
     :
         Clamp<quadraticExtrapolated>(xs)
     {}
+    quadraticClamp(const dictionary& dict, const List<scalar>& xs)
+    :
+        Clamp<quadraticExtrapolated>(dict, xs)
+    {}
 
     virtual ~quadraticClamp()
     {}
-
-    virtual word type() const
-    {
-        return "quadraticClamp";
-    }
 
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
@@ -372,22 +443,28 @@ class cubicExtrapolated
 {
 public:
 
+    TypeName("cubicExtrapolated");
+
     cubicExtrapolated(const List<scalar>& xs)
     :
         interpolationWeight1D(xs)
+    {}
+    cubicExtrapolated(const dictionary& dict, const List<scalar>& xs)
+    :
+        interpolationWeight1D(dict, xs)
     {}
 
     virtual ~cubicExtrapolated()
     {}
 
-    virtual word type() const
-    {
-        return "cubicExtrapolated";
-    }
-
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
         return autoPtr<interpolationWeight1D>(new cubicExtrapolated(xs));
+    }
+
+    virtual label nRequired() const
+    {
+        return 4;
     }
 
     virtual void updateWeights
@@ -406,18 +483,19 @@ class cubicClamp
 {
 public:
 
+    TypeName("cubicClamp");
+
     cubicClamp(const List<scalar>& xs)
     :
         Clamp<cubicExtrapolated>(xs)
     {}
+    cubicClamp(const dictionary& dict, const List<scalar>& xs)
+    :
+        Clamp<cubicExtrapolated>(dict, xs)
+    {}
 
     virtual ~cubicClamp()
     {}
-
-    virtual word type() const
-    {
-        return "cubicClamp";
-    }
 
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
