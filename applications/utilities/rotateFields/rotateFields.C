@@ -912,6 +912,13 @@ int main(int argc, char *argv[])
     const fileName rootDirSource = casePath.path().toAbsolute();
     const fileName caseDirSource = casePath.name();
 
+    if (!isDir(casePath))
+    {
+        FatalErrorInFunction
+            << casePath << " is not a valid directory" << endl
+            << abort(FatalError);
+    }
+
     Info<< "Source: " << casePath << " " << caseDirSource << endl;
     word sourceRegion = fvMesh::defaultRegion;
     if (args.optionFound("sourceRegion"))
@@ -984,6 +991,14 @@ int main(int argc, char *argv[])
     {
         label nProcs = fileHandler().nProcs(rootDirSource/caseDirSource);
         reduce(nProcs, maxOp<label>());
+        if (nProcs < 1)
+        {
+            FatalErrorInFunction
+                << "Trying to map from a parallel case, but no processor" << nl
+                << "directories were found. remove the \"parallelSource\"" << nl
+                << "for serial cases." << endl
+                << abort(FatalError);
+        }
 
         setParRun(false);
         sourceRunTimes.setSize(nProcs);

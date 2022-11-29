@@ -16,5 +16,5 @@ EXE_LIBS = \
     -lgenericPatchFields \
     -ldynamicMesh \
     -L$(BLAST_LIBBIN) \
-    -lerrorEstimate \
+    -lerrorEstimators \
     -lblastDynamicMesh
