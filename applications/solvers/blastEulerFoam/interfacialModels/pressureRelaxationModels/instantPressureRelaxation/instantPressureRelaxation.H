@@ -125,14 +125,14 @@ public:
 
             virtual void FX
             (
-                const UList<scalar>& x,
+                const ScalarMultivariateEquation::VarType& x,
                 const label li,
                 scalarList& fx
             ) const;
 
             virtual void jacobian
             (
-                const UList<scalar>& x,
+                const ScalarMultivariateEquation::VarType& x,
                 const label li,
                 scalarList& fx,
                 RectangularMatrix<scalar>& J
