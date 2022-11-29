@@ -50,8 +50,8 @@ Foam::timeIntegrators::genericRK2::genericRK2
 {
     scalar alpha(readScalar(is));
 
-    this->as_ = {{1.0}, {alpha, 0.0}};
-    this->bs_ = {{0.5}, {1.0 - 1.0/(2.0*alpha), 1.0/(2.0*alpha)}};
+    this->as_ = {{1.0}, {1.0, 0.0}};
+    this->bs_ = {{alpha}, {1.0 - 1.0/(2.0*alpha), 1.0/(2.0*alpha)}};
     initialize();
 }
 
@@ -64,8 +64,8 @@ Foam::timeIntegrators::genericRK2::genericRK2
 :
     timeIntegrator(mesh)
 {
-    this->as_ = {{1.0}, {alpha, 0.0}};
-    this->bs_ = {{0.5}, {1.0 - 1.0/(2.0*alpha), 1.0/(2.0*alpha)}};
+    this->as_ = {{1.0}, {1.0, 0.0}};
+    this->bs_ = {{alpha}, {1.0 - 1.0/(2.0*alpha), 1.0/(2.0*alpha)}};
     initialize();
 }
 
