@@ -233,8 +233,8 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
         ReconstructionScheme<scalar>::New(rho, "rho", false)
     );
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
-    surfaceScalarField& rhoOwn = trhoOwn.ref();
-    surfaceScalarField& rhoNei = trhoNei.ref();
+    const surfaceScalarField& rhoOwn = trhoOwn();
+    const surfaceScalarField& rhoNei = trhoNei();
 
     // Interpolate fields
     autoPtr<ReconstructionScheme<vector>> ULimiter
