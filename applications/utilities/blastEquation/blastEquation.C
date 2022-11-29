@@ -894,13 +894,10 @@ int main(int argc, char *argv[])
         CodedEquation<scalar> eqn(runTime, funcDictPtr());
         Info << nl << endl;
 
-        if (eqn.name() != "undefined")
-        {
-            Info<< "************************************" << nl
-                << name << "(x) = " << eqn.eqnString() << nl
-                << "************************************" << nl
-                << endl;
-        }
+        Info<< "************************************" << nl
+            << name << "(x) = " << eqn.eqnString() << nl
+            << "************************************" << nl
+            << endl;
 
         if (dict.lookupOrDefault("evaluate", false))
         {
@@ -916,7 +913,8 @@ int main(int argc, char *argv[])
                 Info<< name << "(" << xs[i] << ") = "
                     << eqn.fx(xs[i], 0) << endl;
                 if (nDerivatives > 0)
-                {
+                {        eqn.setObr(runTime);
+
                     Info<< "d" << name << "dx(" << xs[i] << ") = "
                         << eqn.dfdx(xs[i], 0) << endl;
                 }
