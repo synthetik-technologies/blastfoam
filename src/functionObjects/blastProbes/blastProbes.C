@@ -78,11 +78,14 @@ void Foam::blastProbes::findElements
     boolList foundList(size(), false);
     label nBadProbes = 0;
 
+    // Make sure the tetBasePtIs is created before entering loop
+    mesh.tetBasePtIs();
+
     forAll(*this, probei)
     {
         const vector& location = operator[](probei);
 
-        const label celli = mesh.findCell(location, polyMesh::FACE_PLANES);
+        const label celli = mesh.findCell(location);
 
         elementList_[probei] = celli;
         faceList_[probei] = findFaceIndex(mesh, celli, location);
@@ -574,6 +577,7 @@ Foam::blastProbes::blastProbes
     loadFromFiles_(false),
     fieldSelection_(),
     fixedLocations_(false),
+    adjustLocations_(false),
     interpolationScheme_("cell"),
     append_(false)
 {
@@ -595,6 +599,7 @@ Foam::blastProbes::blastProbes
     loadFromFiles_(loadFromFiles),
     fieldSelection_(),
     fixedLocations_(false),
+    adjustLocations_(false),
     interpolationScheme_("cell"),
     append_(false)
 {
@@ -617,6 +622,7 @@ bool Foam::blastProbes::read(const dictionary& dict)
 
 
     dict.readIfPresent("fixedLocations", fixedLocations_);
+    dict.readIfPresent("adjustLocations", adjustLocations_);
     if
     (
         dict.readIfPresent
@@ -647,7 +653,7 @@ bool Foam::blastProbes::read(const dictionary& dict)
         (
             mesh_,
             true,
-            dict.lookupOrDefault("adjustLocations", false)
+            adjustLocations_
         );
     }
     prepare();
@@ -706,7 +712,7 @@ bool Foam::blastProbes::write()
 {
     if (needUpdate_)
     {
-        findElements(mesh_, true);
+        findElements(mesh_, true, adjustLocations_);
     }
     if (size() && prepare())
     {

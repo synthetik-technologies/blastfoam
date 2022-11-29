@@ -149,6 +149,9 @@ protected:
             //        should move with the mesh
             bool fixedLocations_;
 
+            //- Adjust locations
+            bool adjustLocations_;
+
             //- Interpolation scheme name
             //  Note: only possible when fixedLocations_ is true
             word interpolationScheme_;
