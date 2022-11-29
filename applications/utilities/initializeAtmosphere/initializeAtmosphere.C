@@ -166,44 +166,50 @@ int main(int argc, char *argv[])
 
     if (thermo->p().needReference())
     {
-        const dictionary& coeffsDict = atmosphere->dict();
+        dictionary& coeffsDict = const_cast<dictionary&>(atmosphere->dict());
 
         if (args.optionFound("pRef"))
         {
-            atmosphereProperties.set("pRefValue", args.optionRead<scalar>("pRef"));
-            refSet++;
+            coeffsDict.set
+            (
+                "pRefValue",
+                args.optionRead<scalar>("pRef")
+            );
         }
-        else if (atmosphereProperties.found("pRef"))
+        else if (coeffsDict.found("pRefValue"))
         {
-            refSet++;
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "A reference pressure is required using pRef/pRefValue" << endl
+                << abort(FatalError);
         }
 
         if (args.optionFound("refCell"))
         {
-            atmosphereProperties.set("pRefCell", args.optionRead<int>("refCell"));
-            refSet++;
+            coeffsDict.set
+            (
+                "pRefCell",
+                args.optionRead<label>("refCell")
+            );
         }
         else if (args.optionFound("refPoint"))
         {
-            atmosphereProperties.set("pRefPoint", args.optionRead<vector>("refPoint"));
-            refSet++;
+            coeffsDict.set
+            (
+                "pRefPoint",
+                args.optionRead<vector>("refPoint")
+            );
         }
-        else if
-        (
-            coeffsDict.found("pRef")
-         || coeffsDict.found("pRefCell")
-        )
+        else if (coeffsDict.found("pRefCell") || coeffsDict.found("pRefPoint"))
         {
-            refSet++;
         }
-
-
-        if (refSet < 2)
+        else
         {
             FatalErrorInFunction
-                << "Could not determine reference pressure state" << nl
-                << "please provide pRef and refCell/pRefCell or refPoint/pRefPoint" << nl
-                << " or provide fixed pressure patches" << endl
+                << "A reference location is required using refCell/pRefCell" << nl
+                << " or refPoint/pRefPoint" << endl
                 << abort(FatalError);
         }
     }
