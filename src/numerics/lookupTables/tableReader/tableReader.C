@@ -217,7 +217,6 @@ const Foam::entryTable& Foam::read2DTable
 
     entryTable& entries = readTables(file);
     entries.setSize(nx, ny);
-    Info<<tentries.size()<<" "<<tentries[0].size()<<" "<<nx<<" "<<ny<<endl;
     if (!f)
     {
         forAll(tentries, i)
