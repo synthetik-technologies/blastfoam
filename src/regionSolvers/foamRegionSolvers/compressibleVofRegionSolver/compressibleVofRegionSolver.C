@@ -304,7 +304,7 @@ bool Foam::regionSolvers::compressibleVof::moveMesh(const bool finalIter)
 }
 
 
-void Foam::regionSolvers::compressibleVof::solve()
+bool Foam::regionSolvers::compressibleVof::solve()
 {
     bool LTS = false;
     fvMesh& mesh = mesh_;
@@ -333,6 +333,7 @@ void Foam::regionSolvers::compressibleVof::solve()
             turbulence.correct();
         }
     }
+    return false;
 }
 
 

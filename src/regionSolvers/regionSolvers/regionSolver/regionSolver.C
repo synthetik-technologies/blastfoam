@@ -60,6 +60,7 @@ Foam::regionSolver::~regionSolver()
 
 void Foam::regionSolver::update()
 {
+    globalBoundary_.clearOut();
     globalBoundary_.update();
 }
 

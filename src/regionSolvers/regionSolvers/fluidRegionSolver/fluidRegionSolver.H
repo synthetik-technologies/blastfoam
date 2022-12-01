@@ -97,7 +97,7 @@ public:
         // Edit
 
             //- Initialise the mesh
-            virtual void initialiseMesh();
+            virtual bool initialiseMesh(const bool firstIter);
 
             //- Initialise the solver
             virtual void initialise();

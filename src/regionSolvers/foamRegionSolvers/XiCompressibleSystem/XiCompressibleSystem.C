@@ -149,7 +149,7 @@ Foam::XiCompressibleSystem::~XiCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::XiCompressibleSystem::solve()
+bool Foam::XiCompressibleSystem::solve()
 {
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
@@ -205,6 +205,8 @@ void Foam::XiCompressibleSystem::solve()
 
         ft = (ft*rho_.prevIter() - dT*deltaft)/rho_;
     }
+
+    return false;
 }
 
 

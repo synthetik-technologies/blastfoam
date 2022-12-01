@@ -147,7 +147,7 @@ public:
         virtual void update();
 
         //- Solve sub-step stepi
-        virtual void solve();
+        virtual bool solve();
 
         //- Set old lists and fluxes (initialization of fields)
         virtual void postUpdate();

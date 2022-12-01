@@ -194,14 +194,64 @@ Foam::regionSolvers::fluid::~fluid()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::regionSolvers::fluid::initialiseMesh()
+bool Foam::regionSolvers::fluid::initialiseMesh(const bool firstIter)
 {
-    pointsOldPtr_.reset(new pointField(mesh_.points()));
+    if (firstIter)
+    {
+        pointDPtr_().primitiveFieldRef() = Zero;
+        forAll(pointDPtr_->boundaryField(), patchi)
+        {
+            if
+            (
+                isA<valuePointPatchVectorField>
+                (
+                    pointDPtr_->boundaryField()[patchi]
+                )
+            )
+            {
+                dynamicCast<valuePointPatchVectorField>
+                (
+                    pointDPtr_->boundaryFieldRef()[patchi]
+                ) == Zero;
+            }
+        }
+
+        if (mesh_.pointsInstance() != mesh_.facesInstance())
+        {
+            pointsOldPtr_.reset
+            (
+                new pointField
+                (
+                    pointIOField
+                    (
+                        IOobject
+                        (
+                            "points",
+                            mesh_.facesInstance(),
+                            polyMesh::meshSubDir,
+                            mesh_,
+                            IOobject::MUST_READ,
+                            IOobject::NO_WRITE,
+                            false
+                        )
+                    )
+                )
+            );
+        }
+        else
+        {
+            pointsOldPtr_.reset(new pointField(mesh_.points()));
+        }
+    }
+
     moveMesh(true);
+
     if (mesh_.moving())
     {
         const_cast<surfaceScalarField&>(mesh_.phi()) == Zero;
     }
+
+    return false;
 }
 
 
@@ -233,13 +283,14 @@ bool Foam::regionSolvers::fluid::moveMesh(const bool finalIter)
 {
     regionSolver::moveMesh(finalIter);
 
+    pointDPtr_->oldTime();
     pointDPtr_->storePrevIter();
 
     // Solve point motion
 
     // The points have moved so before interpolation update
     // the fvMotionSolver accordingly
-    mesh_.movePoints(pointField(mesh_.points()));
+    mesh_.movePoints(pointsOldPtr_());
 
     diffusivityPtr_->correct();
     pointDPtr_->boundaryFieldRef().updateCoeffs();

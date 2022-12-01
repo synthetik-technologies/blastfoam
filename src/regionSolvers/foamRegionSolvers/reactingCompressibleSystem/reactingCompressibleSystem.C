@@ -134,7 +134,7 @@ Foam::reactingCompressibleSystem::~reactingCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::reactingCompressibleSystem::solve()
+bool Foam::reactingCompressibleSystem::solve()
 {
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
@@ -190,6 +190,7 @@ void Foam::reactingCompressibleSystem::solve()
         }
         composition.normalise();
     }
+    return false;
 }
 
 

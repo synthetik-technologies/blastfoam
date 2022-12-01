@@ -85,13 +85,13 @@ public:
         // Edit
 
             //- Initialise the mesh
-            virtual void initialiseMesh();
+            virtual bool initialiseMesh(const bool firstIter);
 
             //- Initialise the solver
             virtual void initialise();
 
             //- Solve the model
-            virtual void solve();
+            virtual bool solve();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

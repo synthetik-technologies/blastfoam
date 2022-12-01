@@ -96,7 +96,7 @@ public:
             virtual bool changeMesh();
 
             //- Solve the model
-            virtual void solve();
+            virtual bool solve();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

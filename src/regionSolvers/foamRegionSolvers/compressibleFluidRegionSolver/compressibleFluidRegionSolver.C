@@ -161,7 +161,7 @@ Foam::regionSolvers::compressibleFluid::~compressibleFluid()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
-void Foam::regionSolvers::compressibleFluid::solve()
+bool Foam::regionSolvers::compressibleFluid::solve()
 {
     // --- Pressure-velocity PIMPLE corrector loop
     while (pimple_.loop())
@@ -245,6 +245,7 @@ void Foam::regionSolvers::compressibleFluid::solve()
     {
         rho = thermo_->rho();
     }
+    return false;
 }
 
 

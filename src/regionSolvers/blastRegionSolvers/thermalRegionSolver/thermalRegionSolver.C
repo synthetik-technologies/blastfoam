@@ -74,21 +74,24 @@ Foam::regionSolvers::thermal::~thermal()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::regionSolvers::thermal::initialiseMesh()
+bool Foam::regionSolvers::thermal::initialiseMesh(const bool firstIter)
 {
     dynMesh_.update();
     if (mesh_.moving())
     {
         const_cast<surfaceScalarField&>(mesh_.phi()) == Zero;
     }
+    return mesh_.moving();
 }
 
 
 void Foam::regionSolvers::thermal::initialise()
 {}
 
-void Foam::regionSolvers::thermal::solve()
+bool Foam::regionSolvers::thermal::solve()
 {
+    const volScalarField TOld(thermo_->T());
+
     tmp<volScalarField> trho = thermo_->rho();
     const volScalarField& rho = trho();
     volScalarField& e = thermo_->he();
@@ -146,6 +149,16 @@ void Foam::regionSolvers::thermal::solve()
 
     Info<< "Min/max T:" << min(thermo_->T()).value() << ' '
         << max(thermo_->T()).value() << endl;
+
+    scalar error =
+        sqrt
+        (
+            sum(magSqr(TOld - thermo_->T())).value()
+           /returnReduce(thermo_->T().size(), sumOp<scalar>())
+        );
+    Info<< TOld.name() << " error for region " << this->name() << ": "
+        << error << endl;
+    return error < 1e-3;
 
 }
 

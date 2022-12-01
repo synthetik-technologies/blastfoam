@@ -116,6 +116,12 @@ public:
                 return mesh_;
             }
 
+            //- Return the name of the region
+            inline const word& name() const
+            {
+                return mesh_.name();
+            }
+
 
         // Edit
 
@@ -126,7 +132,7 @@ public:
             virtual bool changeMesh();
 
             //- Initialise the mesh
-            virtual void initialiseMesh() = 0;
+            virtual bool initialiseMesh(const bool firstIter) = 0;
 
             //- Initialise the solver
             virtual void initialise() = 0;
@@ -135,7 +141,7 @@ public:
             virtual bool moveMesh(const bool finalIter);
 
             //- Solve the model
-            virtual void solve() = 0;
+            virtual bool solve() = 0;
 
             //- Return the Courant number
             virtual scalar CoNum() const = 0;

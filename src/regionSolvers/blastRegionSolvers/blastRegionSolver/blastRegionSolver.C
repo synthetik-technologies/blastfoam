@@ -99,15 +99,26 @@ bool Foam::regionSolvers::blast::changeMesh()
 }
 
 
-void Foam::regionSolvers::blast::solve()
+bool Foam::regionSolvers::blast::solve()
 {
     Info<< "Calculating Fluxes" << endl;
+    const volScalarField pOld(fluid_->p());
     integrator_->integrate();
 
     Info<< "max(p): " << max(fluid_->p()).value()
         << ", min(p): " << min(fluid_->p()).value() << endl;
     Info<< "max(T): " << max(fluid_->T()).value()
         << ", min(T): " << min(fluid_->T()).value() << endl;
+
+    scalar error =
+        sqrt
+        (
+            sum(magSqr(pOld - fluid_->p())).value()
+           /returnReduce(fluid_->p().size(), sumOp<scalar>())
+        );
+    Info<< pOld.name() << " error for region " << this->name() << ": "
+        << error << endl;
+    return error < 1e-3;
 }
 
 

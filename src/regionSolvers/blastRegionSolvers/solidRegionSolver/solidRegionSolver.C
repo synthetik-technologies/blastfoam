@@ -61,8 +61,10 @@ Foam::regionSolvers::solid::~solid()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::regionSolvers::solid::initialiseMesh()
-{}
+bool Foam::regionSolvers::solid::initialiseMesh(const bool firstIter)
+{
+    return true;
+}
 
 
 void Foam::regionSolvers::solid::initialise()
@@ -78,14 +80,17 @@ bool Foam::regionSolvers::solid::moveMesh(const bool finalIter)
 }
 
 
-void Foam::regionSolvers::solid::solve()
+bool Foam::regionSolvers::solid::solve()
 {
+    const volVectorField DOld(solid_->solutionD());
+
     SolverPerformance<vector>::debug = 0;
 
     solid_->evolve();
     solid_->updateTotalFields();
 
     const volVectorField& D = solid_->solutionD();
+
     vector forceSum = Zero;
     Info<< "External forces:" << incrIndent << endl;
     forAll(D.boundaryField(), patchi)
@@ -113,6 +118,16 @@ void Foam::regionSolvers::solid::solve()
 
     // Turn solver information back on
     SolverPerformance<vector>::debug = 1;
+
+    scalar error =
+        sqrt
+        (
+            sum(magSqr(DOld - solid_->solutionD())).value()
+           /returnReduce(DOld.size(), sumOp<scalar>())
+        );
+    Info<< DOld.name() << " error for region " << this->name() << ": "
+        << error << endl;
+    return error < 1e-3;
 }
 
 

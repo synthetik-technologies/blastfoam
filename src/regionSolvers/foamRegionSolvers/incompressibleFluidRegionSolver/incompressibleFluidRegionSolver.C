@@ -179,7 +179,7 @@ bool Foam::regionSolvers::incompressibleFluid::move(const bool finalIter)
 }
 
 
-void Foam::regionSolvers::incompressibleFluid::solve()
+bool Foam::regionSolvers::incompressibleFluid::solve()
 {
     // --- Pressure-velocity PIMPLE corrector loop
     while (pimple_.loop())
@@ -200,6 +200,7 @@ void Foam::regionSolvers::incompressibleFluid::solve()
             turbulence_->correct();
         }
     }
+    return false;
 }
 
 
