@@ -41,7 +41,6 @@ SourceFiles
 #include "stringOps.H"
 #include "List2D.H"
 #include "List3D.H"
-#include "PtrList2D.H"
 #include "Modifier.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

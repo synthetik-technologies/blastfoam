@@ -14,7 +14,6 @@
 
 #include "argList.H"
 #include "IOmanip.H"
-#include "PtrList2D.H"
 
 using namespace Foam;
 
