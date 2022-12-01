@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "CodedMultivariateEquationTemplate.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -34,9 +35,12 @@ namespace Foam
         ${typeName}_${TemplateType}MultivariateEquation,
         0
     );
-    regEquation<${TemplateType}, MultivariateEquation>::
-    adddictionaryConstructorToTable<${typeName}_${TemplateType}MultivariateEquation>
-        ${typeName}_${TemplateType}RegMultivariateEquationConstructorToTable_;
+    addToRunTimeSelectionTable
+    (
+        ${TemplateType}MultivariateEquation,
+        ${typeName}_${TemplateType}MultivariateEquation,
+        dictionary
+    );
 }
 
 
@@ -68,11 +72,10 @@ extern "C"
 Foam::${typeName}_${TemplateType}MultivariateEquation::
 ${typeName}_${TemplateType}MultivariateEquation
 (
-    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    regEquation<${TemplateType}, MultivariateEquation>(obr, dict)
+    MultivariateEquation<${TemplateType}>(dict)
 {
     if (${verbose:-false})
     {

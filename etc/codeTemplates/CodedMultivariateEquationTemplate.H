@@ -33,7 +33,6 @@ SourceFiles
 #define CodedMultivariateTemplate_H
 
 #include "MultivariateEquationsFwd.H"
-#include "regEquation.H"
 
 //{{{ begin codeInclude
 ${codeInclude}
@@ -50,7 +49,7 @@ namespace Foam
 
 class ${typeName}_${TemplateType}MultivariateEquation
 :
-    public regEquation<${TemplateType}, MultivariateEquation>
+    public MultivariateEquation<${TemplateType}>
 {
 public:
 
@@ -63,7 +62,6 @@ public:
         //- Construct from entry name and dictionary
         ${typeName}_${TemplateType}MultivariateEquation
         (
-            const objectRegistry&,
             const dictionary&
         );
 
@@ -84,7 +82,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual void FX
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<${TemplateType}>& fx
         ) const
@@ -97,7 +95,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual void jacobian
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<${TemplateType}>& fx,
             RectangularMatrix<${TemplateType}>& J

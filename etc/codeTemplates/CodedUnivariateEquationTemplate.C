@@ -24,16 +24,19 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "CodedUnivariateEquationTemplate.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(${typeName}_${TemplateType}UnivariateEquation, 0);
-
-    regEquation<${TemplateType}, UnivariateEquation>::
-    adddictionaryConstructorToTable<${typeName}_${TemplateType}UnivariateEquation>
-        ${typeName}_${TemplateType}RegUnivariateEquationConstructorToTable_;
+    addToRunTimeSelectionTable
+    (
+        ${TemplateType}UnivariateEquation,
+        ${typeName}_${TemplateType}UnivariateEquation,
+        dictionary
+    );
 }
 
 
@@ -65,11 +68,10 @@ extern "C"
 Foam::${typeName}_${TemplateType}UnivariateEquation::
 ${typeName}_${TemplateType}UnivariateEquation
 (
-    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    regEquation<${TemplateType}, UnivariateEquation>(obr, dict)
+    UnivariateEquation<${TemplateType}>(dict)
 {
     if (${verbose:-false})
     {
