@@ -4,6 +4,7 @@
 #include "lookupTables3D.H"
 #include "OFstream.H"
 #include "IFstream.H"
+#include "Random.H"
 
 #include "univariateRootSolver.H"
 #include "EquationsFwd.H"
@@ -13,6 +14,7 @@
 
 #include "argList.H"
 #include "IOmanip.H"
+#include "PtrList2D.H"
 
 using namespace Foam;
 
@@ -100,22 +102,25 @@ template<class Type>
 void print(const word& name, const Type& x, const Type& ans)
 {
     Info<< name << " (calc/true): " << x <<  "/" << Foam::name(ans)
-        << ", error (abs, rel): " << mag(x - ans) << '/' << mag(x - ans)/mag(ans)
+        << ", error (abs, rel): " << mag(x - ans) << '/' << mag(x - ans)/max(mag(ans), small)
         << endl;
 }
 int main(int argc, char *argv[])
 {
+    #include "setRootCase.H"
     IFstream is("tableDict");
     dictionary dict(is);
 
+    vectorLookupTable3D t3;
+    vectorLookupTable2D t2;
     // Create some tables
-    label nx = 20;
-    label ny = 30;
-    label nz = 30;
-    scalar xMin = 1.0;
+    label nx = dict.subDict("table1D").lookup<label>("nX");
+    label ny = 35;
+    label nz = 25;
+    scalar xMin = dict.subDict("table1D").lookup<scalar>("minX");
     scalar yMin = 0.1;
     scalar zMin = 0.001;
-    scalar xMax = 2.0;
+    scalar xMax = dict.subDict("table1D").lookup<scalar>("maxX");
     scalar yMax = 3.0;
     scalar zMax = 4.0;
     scalar dx = (xMax - xMin)/scalar(nx);
@@ -198,6 +203,30 @@ int main(int argc, char *argv[])
         }
     }
 
+    {
+        Random rand(0);
+        label nSamples = 10000;
+
+        OFstream outX("sparseX.csv");
+        OFstream outY("sparseY.csv");
+        OFstream outZ("sparseZ.csv");
+        OFstream outF2("sparseF2.csv");
+        OFstream outF3("sparseF3.csv");
+        for (label i = 0; i < nSamples; i++)
+        {
+            scalar x = rand.scalarAB(xMin, xMax);
+            scalar y = rand.scalarAB(yMin, yMax);
+            scalar z =  rand.scalarAB(zMin, zMax);
+            outX << x << endl;
+            outY << y << endl;
+            outZ << z << endl;
+            outF2 << func2(x, y) << endl;
+            outF3 << func3(x, y, z) << endl;
+        }
+    }
+
+
+
     scalar xTest = 1.435;
     scalar yTest = 1.3346;
     scalar zTest = 2.5676;
@@ -223,6 +252,19 @@ int main(int argc, char *argv[])
     print("reverseX", xFound, xTest);
     print("reverseY", yFound, yTest);
 
+    Info<<nl<<"2D table from least squares:" << endl;
+    lookupTable2D<scalar> table2_ls(dict.subDict("table2D_ls"), "x", "y", "f");
+    xFound = table2.reverseLookupX(table2_ls.lookup(xTest, yTest), yTest);
+    yFound = table2_ls.reverseLookupY(table2_ls.lookup(xTest, yTest), xTest);
+    print("f", table2_ls.lookup(xTest, yTest), func2(xTest, yTest));
+    print("dfdx", table2_ls.dFdX(xTest, yTest), dfunc2dx(xTest, yTest));
+    print("dfdy", table2_ls.dFdY(xTest, yTest), dfunc2dy(xTest, yTest));
+    print("d2fdx2", table2_ls.d2FdX2(xTest, yTest), d2func2dx2(xTest, yTest));
+    print("d2fdy2", table2_ls.d2FdY2(xTest, yTest), d2func2dy2(xTest, yTest));
+    print("d2fdxdy", table2_ls.d2FdXdY(xTest, yTest), d2func2dxdy(xTest, yTest));
+    print("reverseX", xFound, xTest);
+    print("reverseY", yFound, yTest);
+
     Info<<nl<<"3D table" << endl;
     scalarLookupTable3D table3(dict.subDict("table3D"), "x", "y", "z", "f");
     xFound = table3.reverseLookupX(table3.lookup(xTest, yTest, zTest), yTest, zTest);
@@ -242,11 +284,24 @@ int main(int argc, char *argv[])
     print("reverseY", yFound, yTest);
     print("reverseZ", zFound, zTest);
 
-
-OFstream os("testDict");
-writeEntry(os, "table1", table1);
-writeEntry(os, "table2", table2);
-writeEntry(os, "table3", table3);
+    Info<<nl<<"3D table from least squares" << endl;
+    scalarLookupTable3D table3_ls(dict.subDict("table3D_ls"), "x", "y", "z", "f");
+    xFound = table3_ls.reverseLookupX(table3_ls.lookup(xTest, yTest, zTest), yTest, zTest);
+    yFound = table3_ls.reverseLookupY(table3_ls.lookup(xTest, yTest, zTest), xTest, zTest);
+    zFound = table3_ls.reverseLookupZ(table3_ls.lookup(xTest, yTest, zTest), xTest, yTest);
+    print("f", table3_ls.lookup(xTest, yTest, zTest), func3(xTest, yTest, zTest));
+    print("dfdx", table3_ls.dFdX(xTest, yTest, zTest), dfunc3dx(xTest, yTest, zTest));
+    print("dfdy", table3_ls.dFdY(xTest, yTest, zTest), dfunc3dy(xTest, yTest, zTest));
+    print("dfdz", table3_ls.dFdZ(xTest, yTest, zTest), dfunc3dz(xTest, yTest, zTest));
+    print("d2fdx2", table3_ls.d2FdX2(xTest, yTest, zTest), d2func3dx2(xTest, yTest, zTest));
+    print("d2fdy2", table3_ls.d2FdY2(xTest, yTest, zTest), d2func3dy2(xTest, yTest, zTest));
+    print("d2fdz2", table3_ls.d2FdZ2(xTest, yTest, zTest), d2func3dz2(xTest, yTest, zTest));
+    print("d2fdxdy", table3_ls.d2FdXdY(xTest, yTest, zTest), d2func3dxdy(xTest, yTest, zTest));
+    print("d2fdxdz", table3_ls.d2FdXdZ(xTest, yTest, zTest), d2func3dxdz(xTest, yTest, zTest));
+    print("d2fdydz", table3_ls.d2FdYdZ(xTest, yTest, zTest), d2func3dydz(xTest, yTest, zTest));
+    print("reverseX", xFound, xTest);
+    print("reverseY", yFound, yTest);
+    print("reverseZ", zFound, zTest);
 
     Info<< nl << "Finished" << nl << endl;
     return 0;

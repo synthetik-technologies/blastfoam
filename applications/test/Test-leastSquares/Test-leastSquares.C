@@ -58,18 +58,18 @@ public:
         ScalarUnivariateCoefficientEquation(2, 6)
     {}
 
-    label nDerivatives() const 
+    label nDerivatives() const
     {
         return 0;
     }
 
     scalar fX(const VarType& x, const label li) const
     {
-        return 
+        return
             coeffs_[0]
-          + coeffs_[1]*x[0] 
+          + coeffs_[1]*x[0]
           + coeffs_[2]*x[1]
-          + coeffs_[3]*sqr(x[0]) 
+          + coeffs_[3]*sqr(x[0])
           + coeffs_[4]*x[0]*x[1]
           + coeffs_[5]*sqr(x[1]);
     }
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     const label n = 100;
     const scalar xMax = 20.0;
     List<scalar> x1(n);
-    List<vector2D> x2(n);
+    List<List<scalar>> x2(n, scalarList(2));
     scalarField y1(n);
     scalarField y2(n);
     scalarField y3(n);
@@ -130,23 +130,47 @@ int main(int argc, char *argv[])
         linearLeastSquares solver;
         solver.findCoeffs(eqn, x1, y1);
         Info<<eqn.coeffs()<<endl;
+        scalar residual = 0;
+        forAll(x1, i)
+        {
+            residual += magSqr(eqn.fx(x1[i], 0) - y1[i]);
+        }
+        Info<< "Residual=" << Foam::sqrt(residual/scalar(x1.size())) << nl << endl;
     }
     {
         linearLeastSquares solver;
         autoPtr<scalarUnivariateEquation> eqn(solver.createEquation(x2, y2));
         Info<<dynamic_cast<const scalarCoefficients&>(eqn()).coeffs()<<endl;
+        scalar residual = 0;
+        forAll(x2, i)
+        {
+            residual += magSqr(eqn->fX(x2[i], 0) - y2[i]);
+        }
+        Info<< "Residual=" << Foam::sqrt(residual/scalar(x2.size())) << nl << endl;
     }
     {
         eqn1 eqn;
         nonLinearLeastSquares solver;
         solver.findCoeffs(eqn, x2, y3);
         Info<<eqn.coeffs()<<endl;
+        scalar residual = 0;
+        forAll(x2, i)
+        {
+            residual += magSqr(eqn.fX(x2[i], 0) - y3[i]);
+        }
+        Info<< "Residual=" << Foam::sqrt(residual/scalar(x2.size())) << nl << endl;
     }
     {
         eqn2 eqn;
         nonLinearLeastSquares solver;
         solver.findCoeffs(eqn, x2, y4);
         Info<<eqn.coeffs()<<endl;
+        scalar residual = 0;
+        forAll(x2, i)
+        {
+            residual += magSqr(eqn.fX(x2[i], 0) - y4[i]);
+        }
+        Info<< "Residual=" << Foam::sqrt(residual/scalar(x2.size())) << nl << endl;
     }
     Info<<nl;
 
