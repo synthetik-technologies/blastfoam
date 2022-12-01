@@ -42,10 +42,10 @@ Description
 #include "regionSolver.H"
 #include "regionProperties.H"
 
-#define forAllRegions(cmd)                  \
+#define forAllRegions(cmd, ...)                  \
 forAll(regions, i)                          \
 {                                           \
-    regions[i].cmd();                       \
+    regions[i].cmd(__VA_ARGS__);                       \
 }
 
 #define checkForAllRegions(cmd, flags)      \
@@ -98,20 +98,14 @@ int main(int argc, char *argv[])
     //- Move meshes to the initial locations
     if (args.optionFound("initialiseDisplacement"))
     {
-        forAllRegions(initialiseMesh);
-        forAll(regions, i)
-        {
-            if (regions[i].mesh().moving())
-            {
-                regions[i].mesh().write();
-            }
-        }
+        forAllRegions(initialiseMesh, true);
         Info<< nl << "Finished moving meshes" << endl;
         return 0;
     }
 
     #include "createTimeControls.H"
-    forAllRegions(initialise)
+    forAllRegions(initialise);
+    forAllRegions(update);
 
     scalar CoNum = 0.0;
     forAll(regions, regionI)
@@ -163,23 +157,24 @@ int main(int argc, char *argv[])
             {
                 updated[i] = regions[i].moveMesh(iter == nOuterCorrectors-1);
             }
-            // checkOrForAllRegions(moveMesh, updated);
 
             // Solve
             forAllRegions(solve);
-            runTime.write();
         }
 
         // Update global patches if any motion has occurred
         // since mapping does not happen on mesh motion
         needUpdate = false;
-        forAll(updated, i)
+        if (!fixedMapping)
         {
-            needUpdate = updated[i] || needUpdate;
-        }
-        if (needUpdate)
-        {
-            forAllRegions(update);
+            forAll(updated, i)
+            {
+                needUpdate = updated[i] || needUpdate;
+            }
+            if (needUpdate)
+            {
+                forAllRegions(update);
+            }
         }
 
         runTime.write();

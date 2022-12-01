@@ -25,6 +25,7 @@ License
 
 #include "shallowWaterSystem.H"
 #include "fvm.H"
+#include "Function3Evaluate.H"
 #include "hUInletVelocityFvPatchVectorField.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -76,9 +77,10 @@ Foam::shallowWaterSystem::shallowWaterSystem
         ),
         dimensionedVector("g", dimAcceleration, dict_)
     ),
-    rotating_(dict_.lookup<bool>("rotating")),
+    magg_(mag(g_)),
+    rotating_(dict_.lookupOrDefault<bool>("rotating", false)),
     omega_("omega", inv(dimTime), dict_.lookupOrDefault("omega", vector::zero)),
-    F_("F", ((2.0*omega_ & g_)*g_/magSqr(g_))),
+    F_("F", ((2.0*omega_ & g_)*g_/sqr(magg_))),
 
     h_
     (
@@ -185,6 +187,7 @@ Foam::shallowWaterSystem::shallowWaterSystem
 
     rain_(dict_.lookupOrDefault<bool>("rain", false)),
     rainfall_(nullptr),
+    S0Ptr_(nullptr),
 
     flux_(shallowFluxScheme::New(phi_, hPhi_, hUPhi_, g_)),
     hMin_("hMin", dimLength, dict_.lookupOrDefault<scalar>("hMin", 1e-6))
@@ -327,6 +330,12 @@ Foam::shallowWaterSystem::shallowWaterSystem
         rainfall_ = rainfallModel::New(mesh, dict_);
     }
 
+    if (dict_.found("S0"))
+    {
+        Info<< "Using geometric gradient source for hU" << endl;
+        S0Ptr_ = Function3<vector>::New("S0", dict_);
+    }
+
     encode();
 }
 
@@ -349,6 +358,17 @@ void Foam::shallowWaterSystem::solve()
     if (rotating_)
     {
         hUDelta += (F_ ^ hU_);
+    }
+    if (S0Ptr_.valid())
+    {
+        hUDelta -=
+            magg_*h_
+           *evaluate
+            (
+                S0Ptr_(),
+                dimless,
+                mesh().C()
+            );
     }
     if (rain_)
     {
@@ -409,9 +429,9 @@ void Foam::shallowWaterSystem::postUpdate()
             }
             else if (frictionType_ == DarcyWeisbach)
             {
-                K = fPtr_()/((mag(g_)*8.0)*max(h_, hMin_));
+                K = fPtr_()/((magg_*8.0)*max(h_, hMin_));
             }
-            SfByU += mag(g_)*K()*mag(U_);
+            SfByU += magg_*K()*mag(U_);
         }
         if (viscous_)
         {
@@ -494,7 +514,7 @@ Foam::scalar Foam::shallowWaterSystem::CoNum() const
         const scalarField& V = mesh.V();
         const scalar& deltaT = mesh.time().deltaTValue();
 
-        surfaceScalarField ws(sqrt(fvc::interpolate(h_)*mag(g_)));
+        surfaceScalarField ws(sqrt(fvc::interpolate(h_)*magg_));
 
         scalarField sumPhi
         (

@@ -75,6 +75,9 @@ protected:
     //- Gravitational acceleration
     uniformDimensionedVectorField g_;
 
+    //- Gravitational acceleration magnitude
+    dimensionedScalar magg_;
+
     //- Are rotational effects included
     bool rotating_;
 
@@ -145,6 +148,9 @@ protected:
 
     //- Rainfall model
     autoPtr<rainfallModel> rainfall_;
+
+    //- Momentum source (geometric)
+    autoPtr<Function3<vector>> S0Ptr_;
 
 
     //- Flux scheme

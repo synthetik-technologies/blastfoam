@@ -1,13 +1,13 @@
-PtrList<regionSolver> regions(regionTypes.size());
-forAll(regionMeshes, i)
+PtrList<regionSolver> regions(regionMeshes.size());
+forAll(regionMeshes, regioni)
 {
     regions.set
     (
-        i,
+        regioni,
         regionSolver::New
         (
-            regionTypes[regionMeshes[i].name()],
-            regionMeshes[i]
+            regionTypes[regioni].second(),
+            regionMeshes[regioni]
         ).ptr()
     );
 }

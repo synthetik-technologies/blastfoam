@@ -11,30 +11,35 @@ IOdictionary regionPropertiesDict
     )
 );
 
-HashTable<word> regionTypes;
+bool fixedMapping
+(
+    regionPropertiesDict.lookupOrDefault<bool>("fixedMapping", false)
+);
+
+List<Pair<word>> regionTypes;
 forAllConstIter(HashTable<wordList>, regionProperties, iter)
 {
     const wordList& regionNames(iter());
-    forAll(regionNames, i)
+    forAll(regionNames, regioni)
     {
-        regionTypes.insert(regionNames[i], iter.key());
+        regionTypes.append({regionNames[regioni], iter.key()});
     }
 }
 
 PtrList<dynamicFvMesh> regionMeshes(regionTypes.size());
 {
-    label regioni = 0;
-    forAllConstIter(HashTable<word>, regionTypes, iter)
+    forAll(regionTypes, regioni)
     {
-        Info<<"Creating mesh for region " << iter.key() << endl;
+        Info<<"Creating mesh for region "
+            << regionTypes[regioni].first() << endl;
         regionMeshes.set
         (
-            regioni++,
+            regioni,
             dynamicFvMesh::New
             (
                 IOobject
                 (
-                    iter.key(),
+                    regionTypes[regioni].first(),
                     runTime.timeName(),
                     runTime,
                     IOobject::MUST_READ
