@@ -270,11 +270,25 @@ void Foam::lookupTable2D<Foam::scalar>::read
     List2D<scalar> data(xModValues_.size(), yModValues_.size());
 
     bool useLeastSquares = dict.lookupOrDefault("leastSquaresFit", false);
-    if (dict.found(name))
+    if (dict.found(name) || dict.found(name + "File"))
     {
         if (!useLeastSquares && canRead)
         {
-            dict.readIfPresent(name, data);
+            if (dict.found(name))
+            {
+                dict.readIfPresent(name, data);
+            }
+            else
+            {
+                read2DTable
+                (
+                    dict.lookup<fileName>(name + "File"),
+                    dict.lookupOrDefault<char>(name + "Delim", ','),
+                    data,
+                    dict.lookupOrDefault<bool>(name + "FlipTable", false),
+                    !canRead
+                );
+            }
         }
         mod_ = Modifier<scalar>::New
         (

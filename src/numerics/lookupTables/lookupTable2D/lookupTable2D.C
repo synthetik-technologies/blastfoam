@@ -690,18 +690,32 @@ void Foam::lookupTable2D<Type>::read
     }
 
     List2D<Type> data(xModValues_.size(), yModValues_.size());
-
-    if (dict.found(name))
+    if (dict.found(name) || dict.found(name + "File"))
     {
         if (canRead)
         {
-            dict.readIfPresent(name, data);
+            if (dict.found(name))
+            {
+                dict.readIfPresent(name, data);
+            }
+            else
+            {
+                read2DTable
+                (
+                    dict.lookup<fileName>(name + "File"),
+                    dict.lookupOrDefault<char>(name + "Delim", ','),
+                    data,
+                    dict.lookupOrDefault<bool>(name + "FlipTable", false),
+                    !canRead
+                );
+            }
         }
         mod_ = Modifier<scalar>::New
         (
             dict.lookupOrDefault<word>(name + "Mod", "none"),
             dict
         );
+        mod_->readReal(dict, name + "IsReal");
     }
     else if (dict.isDict(name + "Coeffs"))
     {
@@ -711,6 +725,7 @@ void Foam::lookupTable2D<Type>::read
             fDict.lookupOrDefault<word>("mod", "none"),
             fDict
         );
+        mod_->readReal(fDict, "isReal");
 
         if (!canRead)
         {}

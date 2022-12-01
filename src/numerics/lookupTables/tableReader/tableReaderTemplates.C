@@ -91,24 +91,14 @@ const Foam::dictionary& Foam::readComponent
 
         if (!canRead)
         {}
-        else if (readFromTable)
-        {
-            if (dict.found("col"))
-            {
-                col = dict.lookup<label>("col");
-            }
-            else if (dict.found("row"))
-            {
-                row = dict.lookup<label>("row");
-            }
-        }
         else if (dict.found(name))
         {
             values = dict.lookup<List<Type>>(name);
+            readFromTable = false;
         }
         else if (dict.found("file"))
         {
-            tablePtr.set
+            tablePtr.reset
             (
                 &read2DTable
                 (
@@ -175,13 +165,26 @@ const Foam::dictionary& Foam::readComponent
             {
                 values[j] = miny + dy*j;
             }
+            readFromTable = false;
         }
-        else
+        else if (!readFromTable)
         {
             FatalIOErrorInFunction(dict)
                 << "Could not determine construction method of " << name << nl
                 << "Pease provide a file to read from or (n, min, delta/max)" << endl
                 << abort(FatalIOError);
+        }
+
+        if (readFromTable && col < 0 && row < 0)
+        {
+            if (dict.found("col"))
+            {
+                col = dict.lookup<label>("col");
+            }
+            else if (dict.found("row"))
+            {
+                row = dict.lookup<label>("row");
+            }
         }
     }
     else if (parentDict.found("n" + name.capitalise()))
@@ -223,15 +226,15 @@ const Foam::dictionary& Foam::readComponent
             {
                 values[j] = miny + dy*j;
             }
+            readFromTable = false;
         }
     }
     else if (parentDict.found(name) || readFromTable || !canRead)
     {
-        if (readFromTable || !canRead)
-        {}
-        else
+        if (parentDict.found(name))
         {
             values = parentDict.lookup<List<Type>>(name);
+            readFromTable = false;
         }
 
         mod = Modifier<Type>::New

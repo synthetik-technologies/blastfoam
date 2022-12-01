@@ -49,6 +49,7 @@ Foam::equationBase::equationBase()
 
 Foam::equationBase::equationBase(const string& eqnString)
 :
+    log_(false),
     logFile_(fileName::null),
     append_(false),
     logPtr_(nullptr),
