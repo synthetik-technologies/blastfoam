@@ -98,7 +98,7 @@ protected:
         );
 
         //- Incremental change of plastic strain
-        defineVolSurfaceFieldTypeFuncs
+        defineVolSurfaceFieldTypeFuncsNoWrite
         (
             DEpsilonP,
             symmTensor,
@@ -106,7 +106,7 @@ protected:
         );
 
         //- Equivalent plastic strain increment
-        defineVolSurfaceFieldTypeFuncs
+        defineVolSurfaceFieldTypeFuncsNoWrite
         (
             DEpsilonPEq,
             scalar,
@@ -114,7 +114,7 @@ protected:
         );
 
         //- Plastic multiplier increment - plastric strain scaled by sqrt(2/3)
-        defineVolSurfaceFieldTypeFuncs
+        defineVolSurfaceFieldTypeFuncsNoWrite
         (
             DLambda,
             scalar,

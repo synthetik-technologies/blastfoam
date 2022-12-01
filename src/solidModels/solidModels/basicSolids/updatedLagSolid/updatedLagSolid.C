@@ -34,6 +34,7 @@ License
 #include "twoDPointCorrector.H"
 #include "solidTractionFvPatchVectorField.H"
 #include "fvcGradf.H"
+#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,12 +53,6 @@ void updatedLagSolid<IncrementalModel>::update
 {
     IncrementalModel::updateDisplacement();
 
-    // Update gradient of displacement increment
-    // this->mechanical().grad(this->DD(), this->pointDD(), this->gradDD());
-
-    // Update the gradient of total displacement
-    // this->gradD() = this->gradD().oldTime() + this->gradDD();
-
     // Relative deformation gradient
     relF_ = I + this->gradDD().T();
 
@@ -71,9 +66,6 @@ void updatedLagSolid<IncrementalModel>::update
     J_ = relJ_*J_.oldTime();
 
     this->checkEnforceLinear(J_);
-
-    // Update velocity
-    this->U() = fvc::ddt(this->D());
 
     if (correctSigma)
     {
@@ -146,7 +138,10 @@ updatedLagSolid<IncrementalModel>::updatedLagSolid
     ),
     impK_(this->mechanical().impK()),
     impKf_(this->mechanical().impKf())
-{}
+{
+    this->globalPatches().setDisplacementField(this->mesh().name(), "pointD");
+    this->globalPatches().setInverseDisplacement(this->mesh().name(), true);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -248,8 +243,8 @@ tmp<vectorField> updatedLagSolid<IncrementalModel>::tractionBoundarySnGrad
             (
                 (traction - n*pressure)
               - (n & psigma)
-              + (patch.nf() & (pimpK*pgradDD))
             )/pimpK
+          + (patch.nf() & pgradDD)
         )
     );
 }

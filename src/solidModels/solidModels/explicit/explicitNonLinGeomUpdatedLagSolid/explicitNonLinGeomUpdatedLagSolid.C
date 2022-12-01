@@ -58,7 +58,8 @@ addToRunTimeSelectionTable
 
 void explicitNonLinGeomUpdatedLagSolid::updateStress()
 {
-    this->update();
+    updatedLagSolid<totalDispSolid>::update(true);
+
     waveSpeed_ = sqrt(impKf_/fvc::interpolate(rho()));
 }
 
@@ -70,7 +71,7 @@ explicitNonLinGeomUpdatedLagSolid::explicitNonLinGeomUpdatedLagSolid
     dynamicFvMesh& mesh
 )
 :
-    updatedLagSolid<incrementalSolid>(typeName, mesh),
+    updatedLagSolid<totalDispSolid>(typeName, mesh),
     waveSpeed_
     (
         IOobject
@@ -93,12 +94,11 @@ explicitNonLinGeomUpdatedLagSolid::explicitNonLinGeomUpdatedLagSolid
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector("0", dimAcceleration, vector::zero)
-    )
+        dimensionedVector("0", dimAcceleration, vector::zero),
+        extrapolatedCalculatedFvPatchScalarField::typeName
+    ),
+    relaxation_(solidModelDict().optionalSubDict("relaxation"))
 {
-    a_.oldTime();
-    U().oldTime();
-
     // Update stress
     updateStress();
 
@@ -114,36 +114,55 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
 
+    relaxation_.read(solidModelDict().optionalSubDict("relaxation"));
+
+    this->enforceLinear() = false;
+
     // Mesh update loop
     do
     {
         Info<< "Solving the momentum equation for DD" << endl;
 
         // Central difference scheme
-
         const dimensionedScalar& deltaT = time().deltaT();
-        const dimensionedScalar& deltaT0 = time().deltaT0();
+        const dimensionedScalar deltaT01(0.5*(deltaT + time().deltaT0()));
 
         // Compute the velocity
         // Note: this is the velocity at the middle of the time-step
-        U() = U().oldTime() + 0.5*(deltaT*a_ + deltaT0*a_.oldTime());
+        U() = U().oldTime() + deltaT01*a_.oldTime();
 
         // Compute displacement
-        DD() = deltaT*U();
+        D() = D().oldTime() + deltaT*U();
+
+        // Enforce any cell displacements
+        if (setCellDisps().cellIDs().size())
+        {
+            UIndirectList<vector>
+            (
+                D(),
+                setCellDisps().cellIDs()
+            ) = setCellDisps().cellDisps();
+        }
 
         // Enforce boundary conditions on the displacement field
-        DD().correctBoundaryConditions();
+        D().correctBoundaryConditions();
+
+        U() = (D() - D().oldTime())/deltaT;
 
         // Update the stress field based on the latest D field
         updateStress();
 
+        // Compute acceleration
+        // Note the inclusion of a linear bulk viscosity pressure term to
+        // dissipate high frequency energies, and a Rhie-Chow term to
+        // avoid checker-boarding
         tmp<volVectorField> stab
         (
             stabilisation().stabilisation
             (
                 U(),
                 fvc::grad(U())(),
-                (0.5*(deltaT + deltaT0)*impKf_)()
+               (deltaT01*impKf_)()
             )
         );
 
@@ -174,22 +193,15 @@ bool explicitNonLinGeomUpdatedLagSolid::evolve()
             U(),
             D(),
             DD(),
-            sigma(),
+            this->sigma(),
             gradD(),
             gradDD(),
             stab(),
             g()
         );
-    }
-    while (mesh().update());
+    } while (mesh().update());
 
-    if (this->solidModelDict().lookupOrDefault("dynamicRelaxation", false))
-    {
-        if (energies_.kineticEnergy() < energies_.kineticEnergyOldTime())
-        {
-            U() = Zero;
-        }
-    }
+    relaxation_.relax(U(), rho());
 
     return true;
 }

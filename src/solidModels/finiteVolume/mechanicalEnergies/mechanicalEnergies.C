@@ -70,7 +70,7 @@ mechanicalEnergies::mechanicalEnergies
     quadraticBulkViscosityCoeff_
     (
         "quadraticBulkViscosityCoeff",
-        dimless,//sqr(dimVelocity),
+        dimless,
         dict.lookupOrDefault<scalar>
         (
             "quadraticBulkViscosityCoeff", 1.2
@@ -137,11 +137,10 @@ const surfaceScalarField& mechanicalEnergies::viscousPressure
     surfaceScalarField epsilonDotf(fvc::interpolate(fvc::ddt(epsilonVol(gradD))));
 
     viscousPressurePtr_() =
-        rhof
-       *(
-            linearBulkViscosityCoeff_*epsilonDotf*waveSpeed*L
-          + sqr(quadraticBulkViscosityCoeff_*epsilonDotf*L)
-        );
+        rhof*linearBulkViscosityCoeff_*epsilonDotf*waveSpeed*L;
+    epsilonDotf.max(0);
+    viscousPressurePtr_() +=
+        rhof*sqr(quadraticBulkViscosityCoeff_*epsilonDotf*L);
 
     return viscousPressurePtr_();
 }
@@ -267,7 +266,7 @@ void mechanicalEnergies::checkEnergies
                            viscousPressurePtr_()
                          + viscousPressurePtr_().oldTime()
                         )*mesh_.Sf()
-                    )().internalField() && gradDD.internalField()*mesh_.V()
+                    )().internalField() && (gradDD.internalField()*mesh_.V())
                 )
             );
     }

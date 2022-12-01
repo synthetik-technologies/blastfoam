@@ -99,8 +99,10 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
         mesh,
         dimensionedVector(dimVelocity/dimTime, Zero),
         extrapolatedCalculatedFvPatchScalarField::typeName
-    )
+    ),
+    relaxation_(solidModelDict().optionalSubDict("relaxation"))
 {
+    D().correctBoundaryConditions();
     // Update stress
     updateStress();
 
@@ -142,6 +144,8 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
 
+    relaxation_.read(solidModelDict().optionalSubDict("relaxation"));
+
     enforceLinear() = false;
 
     // Mesh update loop
@@ -150,7 +154,6 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         Info<< "Solving the momentum equation for D" << endl;
 
         // Central difference scheme
-
         const dimensionedScalar& deltaT = time().deltaT();
         const dimensionedScalar deltaT01(0.5*(deltaT + time().deltaT0()));
 
@@ -175,11 +178,6 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
         D().correctBoundaryConditions();
 
         U() = (D() - D().oldTime())/deltaT;
-
-        // if (mesh().relaxField(U().name()))
-        // {
-        //     U() *= mesh().fieldRelaxationFactor(U().name());
-        // }
 
         // Update the stress field based on the latest D field
         updateStress();
@@ -231,13 +229,7 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
 
     } while (mesh().update());
 
-    if (this->solidModelDict().lookupOrDefault("dynamicRelaxation", false))
-    {
-        if (energies_.kineticEnergy() < energies_.kineticEnergyOldTime())
-        {
-            U() = Zero;
-        }
-    }
+    relaxation_.relax(U(), rho());
 
     return true;
 }

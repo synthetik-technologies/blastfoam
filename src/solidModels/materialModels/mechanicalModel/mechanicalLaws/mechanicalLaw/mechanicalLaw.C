@@ -190,7 +190,7 @@ void Foam::mechanicalLaw::makeSigmaHyd() const
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                solvePressureEqn_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
             ),
             mesh_,
             dimensionedScalar("zero", dimPressure, 0.0),
@@ -218,7 +218,7 @@ void Foam::mechanicalLaw::makeSigmaHydf() const
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                solvePressureEqn_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
             ),
             mesh_,
             dimensionedScalar("zero", dimPressure, 0.0)

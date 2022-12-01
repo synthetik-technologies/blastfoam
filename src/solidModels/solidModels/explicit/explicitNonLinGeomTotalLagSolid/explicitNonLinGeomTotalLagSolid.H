@@ -61,6 +61,7 @@ SourceFiles
 #include "pointFields.H"
 #include "uniformDimensionedFields.H"
 #include "mechanicalEnergies.H"
+#include "dynamicRelaxation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -90,6 +91,9 @@ class explicitNonLinGeomTotalLagSolid
 
         //- Acceleration
         volVectorField a_;
+
+        //- Dynamic relaxation
+        dynamicRelaxation relaxation_;
 
 
     // Private Member Functions

@@ -412,6 +412,12 @@ public:
                 return globalPatches_;
             }
 
+            //- Access the global polyPatches
+            globalPolyBoundaryMesh& globalPatches()
+            {
+                return globalPatches_;
+            }
+
             // Initialize global poly patch displacement
             void initialize();
 

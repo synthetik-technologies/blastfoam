@@ -149,6 +149,31 @@ namespace Foam
         IOobject::READ_IF_PRESENT,                                             \
         IOobject::AUTO_WRITE                                                   \
     );
+
+#define defineVolSurfaceFieldFuncsNoWrite(fieldName, Type, dimType)            \
+    defineVolSurfaceField(fieldName, Type);                                    \
+    volSurfaceFieldFuncs                                                       \
+    (                                                                          \
+        fieldName,                                                             \
+        makeField,                                                             \
+        Type,                                                                  \
+        dimType,                                                               \
+        IOobject::NO_READ,                                                     \
+        IOobject::NO_WRITE                                                     \
+    );
+
+#define defineVolSurfaceFieldTypeFuncsNoWrite(fieldName, Type, dimType)        \
+    defineVolSurfaceField(fieldName, Type);                                    \
+    volSurfaceFieldFuncs                                                       \
+    (                                                                          \
+        fieldName,                                                             \
+        makeTypeField,                                                         \
+        Type,                                                                  \
+        dimType,                                                               \
+        IOobject::NO_READ,                                                     \
+        IOobject::NO_WRITE                                                     \
+    );
+
 /*---------------------------------------------------------------------------*\
                          Class mechanicalLaw Declaration
 \*---------------------------------------------------------------------------*/

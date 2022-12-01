@@ -55,12 +55,13 @@ SourceFiles
 
 #include "solidModel.H"
 #include "updatedLagSolid.H"
-#include "incrementalSolid.H"
+#include "totalDispSolid.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "pointFields.H"
 #include "uniformDimensionedFields.H"
 #include "mechanicalEnergies.H"
+#include "dynamicRelaxation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -78,7 +79,7 @@ namespace solidModels
 
 class explicitNonLinGeomUpdatedLagSolid
 :
-    public updatedLagSolid<incrementalSolid>
+    public updatedLagSolid<totalDispSolid>
 {
     // Private data
 
@@ -90,6 +91,10 @@ class explicitNonLinGeomUpdatedLagSolid
 
         //- Acceleration
         volVectorField a_;
+
+        //- Dynamic relaxation
+        dynamicRelaxation relaxation_;
+
 
 
     // Private Member Functions

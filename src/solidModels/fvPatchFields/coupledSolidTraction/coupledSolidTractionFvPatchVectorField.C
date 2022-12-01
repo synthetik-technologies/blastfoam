@@ -31,6 +31,8 @@ License
 #include "incompressibleMomentumTransportModel.H"
 #include "globalPolyBoundaryMesh.H"
 #include "coupledGlobalPolyPatch.H"
+#include "vtkWritePolyData.H"
+#include "OSspecific.H"
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
@@ -292,6 +294,73 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     if (mag(pRef_) > small)
     {
         ppNbr -= pRef_;
+    }
+
+    if (debug)
+    {
+        vectorField tractionGlobal(samplePatch.patchFaceToGlobal(viscousNbr));
+        vectorField tractionInterp
+        (
+            cgpp.patchToPatchInterpolator().transferFaces
+            (
+                samplePatch.globalPatch(),
+                tractionGlobal
+            )
+        );
+
+        scalarField pGlobal(samplePatch.patchFaceToGlobal(ppNbr));
+        scalarField pInterp
+        (
+            cgpp.patchToPatchInterpolator().transferFaces
+            (
+                samplePatch.globalPatch(),
+                pGlobal
+            )
+        );
+
+        if (Pstream::master())
+        {
+            fileName path
+            (
+                this->db().time().globalPath()
+               /"VTK"
+               /this->db().time().timeName()
+            );
+            mkDir(path);
+            vtkWritePolyData::write
+            (
+                path/"p_traction_interpolated.vtk",
+                "p_traction_interpolated",
+                true,
+                cgpp.globalPatch().points(),
+                labelList(),
+                edgeList(),
+                cgpp.globalPatch(),
+                "p",
+                false,
+                pInterp,
+                "traction",
+                false,
+                tractionInterp
+
+            );
+            vtkWritePolyData::write
+            (
+                path/"p_traction_actual.vtk",
+                "p_traction_actual",
+                true,
+                samplePatch.globalPatch().points(),
+                labelList(),
+                edgeList(),
+                samplePatch.globalPatch(),
+                "p",
+                false,
+                pGlobal,
+                "traction",
+                false,
+                tractionGlobal
+            );
+        }
     }
 
     this->pressure() = samplePatch.faceInterpolate(ppNbr);
