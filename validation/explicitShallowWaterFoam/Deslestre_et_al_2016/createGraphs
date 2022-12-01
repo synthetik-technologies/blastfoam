@@ -12,7 +12,7 @@ createEps()
     set key right top
     set size 2,2
     set autoscale
-    plot    "$1" using 1:3 title 'blastFOAM' \
+    plot    "$1" using 1:3 title 'blastFoam' \
                 with lines lt 1 linewidth 2 linecolor rgb 'red', \
             "validationData/${2}.csv" using 1:2 title 'Exact' \
                 with points linewidth 8 linecolor rgb 'black', \

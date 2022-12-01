@@ -31,7 +31,7 @@ regions
                 type coded;
                 codeInclude
                 #{
-                    #define d2dt2
+                    #define d2dx2
                     #include "../../../MacDonald.H"
 
                     scalar S0Eqn::h(const scalar x) const
