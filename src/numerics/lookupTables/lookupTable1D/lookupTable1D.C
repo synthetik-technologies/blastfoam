@@ -139,7 +139,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
     mod_(Modifier<Type>::New("none")),
     modX_(Modifier<scalar>::New(xMod)),
     data_(),
-    xModValues_(),
+    xModValues_(x),
     indexing_(nullptr),
     interpolator_(interpolationWeight1D::New(interpolationScheme, xModValues_)),
     realDataPtr_(nullptr),
