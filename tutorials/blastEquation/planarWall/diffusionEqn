@@ -47,7 +47,7 @@ fx_code
     // Cast the object registry to Time
     Time& runTime
     (
-        const_cast<Time&>(dynamicCast<const Time>(this->obr_))
+        const_cast<Time&>(dynamicCast<const Time>(this->obr()))
     );
 
     // Reset the time to 0
