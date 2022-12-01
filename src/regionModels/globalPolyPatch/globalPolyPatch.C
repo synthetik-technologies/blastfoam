@@ -118,16 +118,16 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
 
         // Insert my points
         pointField pts(patch.localPoints());
-
         if (displacementField_ != "none")
         {
+            tmp<vectorField> tdisplacement;
             if (this->mesh_.foundObject<volVectorField>(displacementField_))
             {
                 PrimitivePatchInterpolation<polyPatch> patchInterp
                 (
                     this->patch_
                 );
-                pts +=
+                tdisplacement =
                     patchInterp.faceToPointInterpolate
                     (
                         this->mesh_.lookupObject<volVectorField>
@@ -135,6 +135,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
                             displacementField_
                         ).boundaryField()[this->patch_.index()]
                     );
+
             }
             else if
             (
@@ -148,12 +149,14 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
                     ).boundaryField()[this->patch_.index()];
                 if (isA<valuePointPatchVectorField>(disp))
                 {
-                    pts +=
-                        dynamicCast<const valuePointPatchVectorField>(disp);
+                    tdisplacement = tmp<vectorField>
+                    (
+                        dynamicCast<const valuePointPatchVectorField>(disp)
+                    );
                 }
                 else
                 {
-                    pts += disp.patchInternalField();
+                    tdisplacement = disp.patchInternalField();
                 }
             }
             else
@@ -162,6 +165,15 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
                     << "Could not find " << displacementField_
                     << "in " << mesh_.name() << " region." << endl
                     << abort(FatalError);
+            }
+
+            if (inverseDisplacement_)
+            {
+                pts -= tdisplacement;
+            }
+            else
+            {
+                pts += tdisplacement;
             }
         }
 
@@ -546,6 +558,7 @@ Foam::globalPolyPatch::globalPolyPatch
     (
         dict.lookupOrDefault<word>("displacementField", "none")
     ),
+    inverseDisplacement_(false),
     globalPatchPtr_(NULL),
     pointToGlobalAddrPtr_(NULL),
     faceToGlobalAddrPtr_(NULL),
@@ -567,6 +580,7 @@ Foam::globalPolyPatch::globalPolyPatch
     patchName_(patch.name()),
     patch_(mesh_.boundaryMesh()[mesh_.boundaryMesh().findPatchID(patchName_)]),
     displacementField_(displacementField),
+    inverseDisplacement_(false),
     globalPatchPtr_(NULL),
     pointToGlobalAddrPtr_(NULL),
     faceToGlobalAddrPtr_(NULL),

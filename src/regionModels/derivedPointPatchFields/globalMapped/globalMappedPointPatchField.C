@@ -27,7 +27,8 @@ License
 #include "pointMesh.H"
 #include "pointFields.H"
 #include "coupledGlobalPolyPatch.H"
-
+#include "vtkWritePolyData.H"
+#include "OSspecific.H"
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -167,15 +168,75 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
     const coupledGlobalPolyPatch& samplePatch = cgpp.samplePatch();
     const label samplePatchi = samplePatch.patch().index();
 
-    const pointPatchField<Type>& nbr =
+    const pointPatchField<Type>& pfNbr =
         nbrMesh.lookupObject<GeometricField<Type, pointPatchField, pointMesh>>
         (
             nbrName_
         ).boundaryField()[samplePatchi];
+    Field<Type> nbr;
+    if (isA<valuePointPatchField<Type>>(pfNbr))
+    {
+        nbr = dynamicCast<const valuePointPatchField<Type>>(pfNbr);
+    }
+    else
+    {
+        nbr = pfNbr.patchInternalField();
+    }
+
+    if (debug)
+    {
+        Field<Type> pfGlobal(samplePatch.patchPointToGlobal(nbr));
+        Field<Type> pfInterp
+        (
+            cgpp.patchToPatchInterpolator().transferPoints
+            (
+                samplePatch.globalPatch(),
+                pfGlobal
+            )
+        );
+
+        if (Pstream::master())
+        {
+            fileName path
+            (
+                this->db().time().globalPath()
+               /"VTK"
+               /this->db().time().timeName()
+            );
+            mkDir(path);
+            vtkWritePolyData::write
+            (
+                path/(this->internalField().name() + "_interpolated.vtk"),
+                this->internalField().name(),
+                true,
+                cgpp.globalPatch().points(),
+                labelList(),
+                edgeList(),
+                cgpp.globalPatch(),
+                this->internalField().name(),
+                true,
+                pfInterp
+
+            );
+            vtkWritePolyData::write
+            (
+                path/(nbrName_ + "_actual.vtk"),
+                nbrName_,
+                true,
+                samplePatch.globalPatch().points(),
+                labelList(),
+                edgeList(),
+                samplePatch.globalPatch(),
+                nbrName_,
+                true,
+                pfGlobal
+            );
+        }
+    }
 
     Field<Type>::operator=
     (
-        samplePatch.pointInterpolate(nbr.patchInternalField())
+        samplePatch.pointInterpolate(nbr)
     );
     fixedValuePointPatchField<Type>::updateCoeffs();
 

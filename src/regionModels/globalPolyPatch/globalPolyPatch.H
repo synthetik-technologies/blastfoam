@@ -73,6 +73,9 @@ protected:
         //- Optional displacement field
         word displacementField_;
 
+        //- Use inverse displacement
+        bool inverseDisplacement_;
+
         // Demand-driven private data
 
             //- Primitive patch made out of faces from parallel decomposition
@@ -180,6 +183,12 @@ public:
         void setDisplacementField(const word& f)
         {
             displacementField_ = f;
+        }
+
+        //- Set inverse displacement flag
+        void setInverseDisplacement(const bool inv)
+        {
+            inverseDisplacement_ = inv;
         }
 
         //- Return reference to global patch

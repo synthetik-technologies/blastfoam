@@ -186,6 +186,36 @@ void Foam::globalPolyBoundaryMesh::setDisplacementField
 }
 
 
+void Foam::globalPolyBoundaryMesh::setInverseDisplacement
+(
+    const word& region,
+    const bool inv
+)
+{
+    if (inverseDisplacement_.found(region))
+    {
+        inverseDisplacement_[region] = inv;
+    }
+    else
+    {
+        inverseDisplacement_.insert(region, inv);
+    }
+
+    // Update any patches that have already been added
+    polyMesh& mesh = this->db().time().lookupObjectRef<polyMesh>(region);
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        if (isGlobal(mesh.boundaryMesh()[patchi]))
+        {
+            patches_
+            [
+                mesh.boundaryMesh()[patchi].name()
+            ]->setInverseDisplacement(inv);
+        }
+    }
+}
+
+
 void Foam::globalPolyBoundaryMesh::clearOut()
 {
     forAllIter
@@ -238,6 +268,14 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
             pp.name(),
             globalPolyPatch::New(dict, pp).ptr()
         );
+
+        if (inverseDisplacement_.found(mesh_.name()))
+        {
+            patches_[pp.name()]->setInverseDisplacement
+            (
+                inverseDisplacement_[mesh_.name()]
+            );
+        }
     }
 
     return *patches_[pp.name()];
@@ -330,6 +368,13 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
             pp.name(),
             new coupledGlobalPolyPatch(dict, pp)
         );
+        if (inverseDisplacement_.found(mesh_.name()))
+        {
+            patches_[pp.name()]->setInverseDisplacement
+            (
+                inverseDisplacement_[mesh_.name()]
+            );
+        }
     }
 
 

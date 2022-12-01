@@ -6,6 +6,7 @@ globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
 patchToPatchMappings = coupledGlobalPolyPatch/patchToPatchMappings
 $(patchToPatchMappings)/patchToPatchMapping/patchToPatchMapping.C
 $(patchToPatchMappings)/primitive/primitivePatchToPatchMapping.C
+$(patchToPatchMappings)/mapNearest/mapNearestPatchToPatchMapping.C
 $(patchToPatchMappings)/directMap/directMapPatchToPatchMapping.C
 
 AMI = $(patchToPatchMappings)/ami
@@ -13,13 +14,13 @@ $(AMI)/newAMIInterpolation/newAMIInterpolationName.C
 $(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
 $(AMI)/amiPatchToPatchMapping.C
 
-GGI = $(patchToPatchMappings)/ggi
-$(GGI)/ggiPatchToPatchMapping.C
-$(GGI)/GGIInterpolation/GGIInterpolationName.C
+# GGI = $(patchToPatchMappings)/ggi
+# $(GGI)/ggiPatchToPatchMapping.C
+# $(GGI)/GGIInterpolation/GGIInterpolationName.C
 
-#RBF = $(patchToPatchMappings)/rbf
-#$(RBF)/RBFInterpolation/RBFInterpolation.C
-#$(RBF)/rbfPatchToPatchMapping.C
+# RBF = $(patchToPatchMappings)/rbf
+# $(RBF)/RBFInterpolation/RBFInterpolation.C
+# $(RBF)/rbfPatchToPatchMapping.C
 
 derivedFvPatchFields/globalMapped/globalMappedFvPatchFields.C
 derivedFvPatchFields/globalTemperatureCoupled/globalTemperatureCoupledFvPatchScalarField.C

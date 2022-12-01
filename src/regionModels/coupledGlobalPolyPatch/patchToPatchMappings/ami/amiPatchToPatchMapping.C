@@ -68,7 +68,7 @@ void amiPatchToPatchMapping::makeInterpolator() const
         (
             zoneA(),
             zoneB(),
-            faceAreaIntersect::tmMesh, // triMode
+            faceAreaIntersect::tmFan, // triMode
             this->requireMatch_,   // requireMatch
             newAMIInterpolation<standAlonePatch, standAlonePatch>::
             interpolationMethodNames_

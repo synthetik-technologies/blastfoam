@@ -83,6 +83,9 @@ private:
     //- Displacement Field names
     HashTable<word> displacementFields_;
 
+    //- Inverse displacement flags
+    HashTable<bool> inverseDisplacement_;
+
 
 public:
 
@@ -133,6 +136,9 @@ public:
 
             //- Set the displacement field name for a region
             void setDisplacementField(const word&, const word&);
+
+            //- Set the inverse displacement flag for a region
+            void setInverseDisplacement(const word&, const bool);
 
             //- Inserted patch at patchi
             virtual void addPatch(const label patchi);
