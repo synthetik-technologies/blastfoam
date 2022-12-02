@@ -338,17 +338,21 @@ class linearClamp
 :
     public Clamp<linearExtrapolated>
 {
+    bool singular_;
+
 public:
 
     TypeName("linearClamp");
 
     linearClamp(const List<scalar>& xs)
     :
-        Clamp<linearExtrapolated>(xs)
+        Clamp<linearExtrapolated>(xs),
+        singular_(xs.size() < 2)
     {}
     linearClamp(const dictionary& dict, const List<scalar>& xs)
     :
-        Clamp<linearExtrapolated>(dict, xs)
+        Clamp<linearExtrapolated>(dict, xs),
+        singular_(xs.size() < 2)
     {}
 
     virtual ~linearClamp()
@@ -357,6 +361,31 @@ public:
     virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
         return autoPtr<interpolationWeight1D>(new linearClamp(xs));
+    }
+
+    // This is a special case
+    virtual label nRequired() const
+    {
+        return 1;
+    }
+
+    virtual void updateWeights
+    (
+        const scalar x,
+        const label i,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights
+    ) const
+    {
+        if (singular_)
+        {
+            indices(0) = 0;
+            weights(0) = 1.0;
+        }
+        else
+        {
+            Clamp<linearExtrapolated>::updateWeights(x, i, indices, weights);
+        }
     }
 };
 
