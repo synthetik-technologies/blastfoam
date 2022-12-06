@@ -122,14 +122,15 @@ const Foam::entryTable& Foam::read2DTable
 
     label ny = -1;
     label nx = 0;
-    label lineI = 0;
 
     DynamicList<List<List<token>>> tentries;
     token t(is);
+
     while (is.good())
     {
-        if (lineI++ < startLine)
+        if (t.lineNumber() <= startLine)
         {
+            is >> t;
             continue;
         }
         if
@@ -237,6 +238,7 @@ const Foam::entryTable& Foam::read2DTable
             }
         }
     }
+    Info<<entries<<endl;
 
     return entries;
 }

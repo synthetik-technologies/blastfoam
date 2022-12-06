@@ -61,9 +61,9 @@ const Foam::dictionary& Foam::readComponent
             &read2DTable
             (
                 parentDict.lookup<fileName>("file"),
-                parentDict.lookupOrDefault<char>(name + "Delim", ','),
-                parentDict.lookupOrDefault<label>(name + "StartRow", 0),
-                parentDict.lookupOrDefault<Switch>(name + "FlipTable", false)
+                parentDict.lookupOrDefault<char>("delim", ','),
+                parentDict.lookupOrDefault<label>("startRow", 0),
+                parentDict.lookupOrDefault<Switch>("flipTable", false)
             )
         );
     }
