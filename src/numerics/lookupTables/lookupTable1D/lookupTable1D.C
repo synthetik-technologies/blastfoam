@@ -198,6 +198,7 @@ void Foam::lookupTable1D<Type>::set
     setData(data, mod, isReal);
     interpolator_ =
         interpolationWeight1D::New(interpolationScheme, xModValues_);
+    interpolator_->validate();
 
 }
 
@@ -243,6 +244,7 @@ void Foam::lookupTable1D<Type>::setX
     if (interpolator_.valid())
     {
         interpolator_->validate();
+        interpolator_->update();
     }
 }
 

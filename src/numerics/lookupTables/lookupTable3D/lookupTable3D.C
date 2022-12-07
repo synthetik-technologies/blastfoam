@@ -327,6 +327,7 @@ void Foam::lookupTable3D<Type>::setX
     if (xInterpolator_.valid())
     {
         xInterpolator_->validate();
+        xInterpolator_->update();
     }
 }
 
@@ -379,6 +380,7 @@ void Foam::lookupTable3D<Type>::setY
     if (yInterpolator_.valid())
     {
         yInterpolator_->validate();
+        yInterpolator_->update();
     }
 }
 
@@ -431,6 +433,7 @@ void Foam::lookupTable3D<Type>::setZ
     if (zInterpolator_.valid())
     {
         zInterpolator_->validate();
+        zInterpolator_->update();
     }
 }
 

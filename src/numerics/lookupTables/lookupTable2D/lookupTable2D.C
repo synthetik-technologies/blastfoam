@@ -292,6 +292,7 @@ void Foam::lookupTable2D<Type>::setX
     if (xInterpolator_.valid())
     {
         xInterpolator_->validate();
+        xInterpolator_->update();
     }
 }
 
@@ -350,6 +351,7 @@ void Foam::lookupTable2D<Type>::setY
     if (yInterpolator_.valid())
     {
         yInterpolator_->validate();
+        yInterpolator_->update();
     }
 }
 

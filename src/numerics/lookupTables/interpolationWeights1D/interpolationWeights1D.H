@@ -119,6 +119,8 @@ public:
 
     virtual bool validate(const bool fail = true) const;
     virtual label nRequired() const = 0;
+    virtual void update()
+    {}
 
     static scalar linearWeight
     (
@@ -367,6 +369,11 @@ public:
     virtual label nRequired() const
     {
         return 1;
+    }
+
+    virtual void update()
+    {
+        singular_ = xs_.size() < 2;
     }
 
     virtual void updateWeights
