@@ -102,7 +102,7 @@ public:
     TypeName("incompressibleFluid");
 
     // Constructor
-    incompressibleFluid(dynamicFvMesh& mesh);
+    incompressibleFluid(dynamicFvMesh& mesh, const regionSolverList& regions);
 
     //- Destructor
     virtual ~incompressibleFluid();
@@ -113,10 +113,10 @@ public:
         // Edit
 
             //- Move the mesh
-            virtual bool move(const bool finalIter);
+            virtual bool moveMesh(const IterType iter);
 
             //- Solve the model
-            virtual bool solve();
+            virtual void solve();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

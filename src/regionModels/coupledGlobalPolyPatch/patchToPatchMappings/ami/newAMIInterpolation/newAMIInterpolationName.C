@@ -34,14 +34,16 @@ namespace Foam
 
     template<>
     const char*
-    Foam::NamedEnum<Foam::newAMIInterpolationName::interpolationMethod, 3>::names[] =
+    Foam::NamedEnum<Foam::newAMIInterpolationName::interpolationMethod, 5>::names[] =
     {
+        "direct",
+        "mapNearest",
         "faceAreaWeight",
         "partialFaceAreaWeight",
         "sweptFaceAreaWeight"
     };
 
-    const Foam::NamedEnum<Foam::newAMIInterpolationName::interpolationMethod, 3>
+    const Foam::NamedEnum<Foam::newAMIInterpolationName::interpolationMethod, 5>
     Foam::newAMIInterpolationName::interpolationMethodNames_;
 }
 

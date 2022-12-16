@@ -200,7 +200,7 @@ coupledSolidTractionFvPatchVectorField
     const dictionary& dict
 )
 :
-    solidTractionFvPatchVectorField(p, iF),
+    solidTractionFvPatchVectorField(p, iF, dict),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     pRef_(dict.lookup<scalar>("pRef"))
 {}
@@ -296,7 +296,7 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
         ppNbr -= pRef_;
     }
 
-    if (debug)
+    if (debug == 2 || (debug && this->db().time().outputTime()))
     {
         vectorField tractionGlobal(samplePatch.patchFaceToGlobal(viscousNbr));
         vectorField tractionInterp
@@ -331,7 +331,7 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
             (
                 path/"p_traction_interpolated.vtk",
                 "p_traction_interpolated",
-                true,
+                false,
                 cgpp.globalPatch().points(),
                 labelList(),
                 edgeList(),
@@ -348,7 +348,7 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
             (
                 path/"p_traction_actual.vtk",
                 "p_traction_actual",
-                true,
+                false,
                 samplePatch.globalPatch().points(),
                 labelList(),
                 edgeList(),

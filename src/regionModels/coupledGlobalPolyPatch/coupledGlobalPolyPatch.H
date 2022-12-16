@@ -253,7 +253,7 @@ public:
         virtual void update();
 
         //- Correct patch after moving points
-        virtual void movePoints();
+        virtual void movePoints(const bool clear);
 
         //- Update for changes in topology
         virtual void updateMesh();

@@ -42,10 +42,7 @@ void amiPatchToPatchMapping::transferFaces
     Field<Type>& toField             // to field
 ) const
 {
-    if (debug)
-    {
-        Info<< "Interpolating face values using AMI" << endl;
-    }
+    DebugInfo<< "Interpolating face values using AMI" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes
@@ -81,10 +78,7 @@ void amiPatchToPatchMapping::transferPoints
     Field<Type>& toField             // to field
 ) const
 {
-    if (debug)
-    {
-        Info<< "Interpolating point values using AMI" << endl;
-    }
+    DebugInfo<< "Interpolating point values using AMI" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes

@@ -33,6 +33,7 @@ Description
 
 if (adjustTimeStep)
 {
+    maxCo = regions.maxCo();
     scalar maxDeltaTFact = maxCo/(CoNum + small);
     scalar deltaTFact = min(min(maxDeltaTFact, 1.0 + 0.1*maxDeltaTFact), 1.2);
 

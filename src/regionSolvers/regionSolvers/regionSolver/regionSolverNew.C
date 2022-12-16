@@ -29,11 +29,12 @@ License
 Foam::autoPtr<Foam::regionSolver> Foam::regionSolver::New
 (
     const word& type,
-    dynamicFvMesh& mesh
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
 )
 {
     Info<< "Selecting regionSolver: " << type
-        << "for region " << mesh.name() << endl;
+        << " for region " << mesh.name() << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(type);
@@ -48,7 +49,7 @@ Foam::autoPtr<Foam::regionSolver> Foam::regionSolver::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh);
+    return cstrIter()(mesh, regions);
 }
 
 

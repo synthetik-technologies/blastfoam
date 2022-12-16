@@ -42,7 +42,7 @@ void rbfPatchToPatchMapping::transferFaces
     Field<Type>& toField             // to field
 ) const
 {
-    Info<< "Interpolating face values using RBF" << endl;
+    DebugInfo<< "Interpolating face values using RBF" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes
@@ -78,7 +78,7 @@ void rbfPatchToPatchMapping::transferPoints
     Field<Type>& toField             // to field
 ) const
 {
-    Info<< "Interpolating point values using RBF" << endl;
+    DebugInfo<< "Interpolating point values using RBF" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes

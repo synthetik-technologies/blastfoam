@@ -39,6 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dynamicFvMesh.H"
+#include "regionSolverList.H"
 #include "globalPolyBoundaryMesh.H"
 #include "runTimeSelectionTables.H"
 
@@ -58,6 +59,9 @@ protected:
         // Time
         const Time& runTime_;
 
+        //- Reference to the region solver list
+        const regionSolverList& regions_;
+
         //- Dynamic mesh
         dynamicFvMesh& dynMesh_;
 
@@ -66,6 +70,16 @@ protected:
 
         //- Global polyBoundaryMesh
         globalPolyBoundaryMesh& globalBoundary_;
+
+
+        //- Read controls
+        bool readControls
+        (
+            const word& name,
+            scalar& tol,
+            scalar& relTol
+        ) const;
+
 
 public:
 
@@ -79,20 +93,22 @@ public:
             regionSolver,
             dictionary,
             (
-                dynamicFvMesh& mesh
+                dynamicFvMesh& mesh,
+                const regionSolverList& regions
             ),
-            (mesh)
+            (mesh, regions)
         );
 
     // Constructor
-    regionSolver(dynamicFvMesh& mesh);
+    regionSolver(dynamicFvMesh& mesh, const regionSolverList& regions);
 
 
     // Selector
         static autoPtr<regionSolver> New
         (
             const word& type,
-            dynamicFvMesh& mesh
+            dynamicFvMesh& mesh,
+            const regionSolverList& regions
         );
 
 
@@ -103,6 +119,12 @@ public:
     // Member functions
 
         // Access Functions
+
+            //- Return if the region solver is solid
+            virtual bool isSolid() const
+            {
+                return false;
+            }
 
             //- Return the mesh
             inline const fvMesh& mesh() const
@@ -125,6 +147,15 @@ public:
 
         // Edit
 
+            //- Return if the step converged
+            virtual Convergence converged() const
+            {
+                return UNKNOWN_CONVERGENCE;
+            }
+
+            //- Initial update to fields
+            virtual void initialiseFields();
+
             //- Update global patches
             virtual void update();
 
@@ -132,28 +163,48 @@ public:
             virtual bool changeMesh();
 
             //- Initialise the mesh
-            virtual bool initialiseMesh(const bool firstIter) = 0;
+            virtual void initialiseMesh(const IterType iter) = 0;
 
             //- Initialise the solver
             virtual void initialise() = 0;
 
             //- Move the mesh
-            virtual bool moveMesh(const bool finalIter);
+            virtual bool moveMesh(const IterType iter);
 
             //- Solve the model
-            virtual bool solve() = 0;
+            virtual void solve() = 0;
+
+            //- Clear the model
+            virtual void clear();
 
             //- Return the Courant number
             virtual scalar CoNum() const = 0;
 
             //- Return the maximum Courant number
             virtual scalar maxCo() const = 0;
+
+
+    // Static functions
+
+        //- Return error
+        template<class FieldType>
+        static scalar residual
+        (
+            const FieldType& f,
+            const FieldType& fOld
+        );
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "regionSolverTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

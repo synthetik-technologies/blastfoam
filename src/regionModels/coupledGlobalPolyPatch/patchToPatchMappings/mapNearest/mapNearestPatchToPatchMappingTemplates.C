@@ -43,7 +43,7 @@ void mapNearestPatchToPatchMapping::transferFaces
     Field<Type>& toField             // to field
 ) const
 {
-    Info<< "Mapping face values using mapNearest" << endl;
+    DebugInfo<< "Mapping face values using mapNearest" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes
@@ -87,7 +87,7 @@ void mapNearestPatchToPatchMapping::transferPoints
     Field<Type>& toField             // to field
 ) const
 {
-    Info<< "Mapping point values using mapNearest" << endl;
+    DebugInfo<< "Mapping point values using mapNearest" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes

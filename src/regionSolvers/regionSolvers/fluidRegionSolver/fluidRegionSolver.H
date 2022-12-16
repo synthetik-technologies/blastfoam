@@ -38,6 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "regionSolver.H"
+#include "displacementRelaxation.H"
 #include "volFields.H"
 #include "pointFields.H"
 
@@ -76,8 +77,15 @@ protected:
         //- Motion diffusivity
         autoPtr<motionDiffusivity> diffusivityPtr_;
 
+        //- Relaxation
+        autoPtr<displacementRelaxation> relaxation_;
+
         //- Velocity field names
         wordList velocityFields_;
+
+        //- Tolerances
+        scalar tolerance_;
+        scalar relTol_;
 
 
 public:
@@ -85,7 +93,7 @@ public:
     TypeName("fluid");
 
     // Constructor
-    fluid(dynamicFvMesh& mesh);
+    fluid(dynamicFvMesh& mesh, const regionSolverList& regions);
 
 
     //- Destructor
@@ -96,8 +104,26 @@ public:
 
         // Edit
 
+            //- Return if the solver converged
+            virtual Convergence converged() const
+            {
+                if (tolerance_ < 0)
+                {
+                    return UNKNOWN_CONVERGENCE;
+                }
+                else if
+                (
+                    relaxation_->error() < tolerance_
+                 || relaxation_->relError() < relTol_
+                )
+                {
+                    return CONVERGED;
+                }
+                return NOT_CONVERGED;
+            }
+
             //- Initialise the mesh
-            virtual bool initialiseMesh(const bool firstIter);
+            virtual void initialiseMesh(const IterType iter);
 
             //- Initialise the solver
             virtual void initialise();
@@ -106,7 +132,7 @@ public:
             virtual bool changeMesh();
 
             //- Move the mesh
-            virtual bool moveMesh(const bool finalIter);
+            virtual bool moveMesh(const IterType iter);
 };
 
 

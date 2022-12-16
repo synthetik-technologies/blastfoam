@@ -298,10 +298,10 @@ public:
         virtual void update();
 
         //- Correct patch after moving points
-        virtual void movePoints();
+        virtual void movePoints(const bool clear);
 
         //- Move points
-        virtual void movePoints(const pointField& pts);
+        virtual void movePoints(const pointField& pts, const bool clear = true);
 
         //- Update for changes in topology
         virtual void updateMesh();

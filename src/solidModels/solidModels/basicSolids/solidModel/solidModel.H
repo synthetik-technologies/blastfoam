@@ -543,7 +543,11 @@ public:
 
             //- Each solidModel must indicate whether D or DD is the primary
             //  solution variable
-            virtual volVectorField& solutionD() = 0;
+            virtual const volVectorField& solutionD() const = 0;
+
+             //- Each solidModel must indicate whether gradD or gradDD
+            //  is the primary solution variable
+            virtual const volTensorField& solutionGradD() const = 0;
 
             //- Face zone point displacement increment
             virtual tmp<vectorField> faceZonePointDisplacementIncrement
@@ -610,6 +614,9 @@ public:
 
         // Edit
 
+            //- Update fields
+            virtual void update(const bool correctSigma = true) = 0;
+
             //- Check if solid model is diverging using the Jacobian field
             virtual Switch& checkEnforceLinear(const volScalarField& J);
 
@@ -624,22 +631,28 @@ public:
             virtual bool evolve() = 0;
 
             //- Traction boundary surface normal gradient
-            //  Given the user-specified boundary patch traction, this function
-            //  should return the surface normal gradient
-            //  This function is used by traction-type boundary conditions to
-            //  set the boundary gradient
+            //  uses tractionBoundary for boundary traction
             virtual tmp<Foam::vectorField> tractionBoundarySnGrad
             (
                 const vectorField& traction,
                 const scalarField& pressure,
                 const fvPatch& patch
-            ) const = 0;
+            ) const;
+
+            //- Boundary traction
+            virtual tmp<Foam::vectorField> nf(const fvPatch& patch) const = 0;
+
+            //- Return the patch implicit stiffness
+            virtual const scalarField& impK(const fvPatch& patch) const = 0;
+
+            //- Return the patch stress
+            virtual const symmTensorField& sigma(const fvPatch& patch) const
+            {
+                return sigma_.boundaryField()[patch.index()];
+            }
 
             //- Update total accumulated fields
             virtual void updateTotalFields();
-
-            //- Write fields
-            virtual void writeFields(const Time& runTime);
 
             //- Return the desired new time-step size
             virtual scalar newDeltaT();
@@ -652,8 +665,13 @@ public:
                 pointVectorField& pointDD
             );
 
-            //- End of the program
-            virtual void end();
+            //- Write all associated fields
+            //  Force write so this should only be used when not
+            //  writing at a standard time
+            virtual void writeNecessaryFields() const;
+
+            //- Write fields
+            virtual void writeFields() const;
 };
 
 

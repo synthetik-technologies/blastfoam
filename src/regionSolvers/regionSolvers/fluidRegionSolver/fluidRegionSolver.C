@@ -27,14 +27,17 @@ License
 #include "surfaceFields.H"
 
 #include "wallPolyPatch.H"
+#include "calculatedPointPatchFields.H"
+#include "fixedValuePointPatchFields.H"
 #include "globalInterpolatedPointPatchFields.H"
-#include "globalMappedPointPatchFields.H"
+#include "globalMappedPositionPointPatchVectorField.H"
 #include "slipPointPatchFields.H"
 #include "fixedValuePointPatchFields.H"
 #include "cellMotionFvPatchFields.H"
 #include "motionDiffusivity.H"
 
-#include "fvmLaplacian.H"
+#include "fvm.H"
+#include "fvc.H"
 #include "twoDPointCorrector.H"
 #include "volPointInterpolation.H"
 
@@ -50,9 +53,13 @@ namespace regionSolvers
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionSolvers::fluid::fluid(dynamicFvMesh& mesh)
+Foam::regionSolvers::fluid::fluid
+(
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
+)
 :
-    regionSolver(mesh),
+    regionSolver(mesh, regions),
     devRhoReff_
     (
         IOobject
@@ -71,8 +78,13 @@ Foam::regionSolvers::fluid::fluid(dynamicFvMesh& mesh)
             Zero
         )
     ),
-    velocityFields_(1, "U")
+    relaxation_(displacementRelaxation::New(mesh_, regions_.solutionControls())),
+    velocityFields_(1, "U"),
+    tolerance_(-great),
+    relTol_(-great)
 {
+    this->readControls("pointD", tolerance_, relTol_);
+
     const pointMesh& pMesh = pointMesh::New(mesh_);
     pointDPtr_.set
     (
@@ -127,6 +139,7 @@ Foam::regionSolvers::fluid::fluid(dynamicFvMesh& mesh)
             }
         }
     }
+    pointDPtr_->storeOldTimes();
 
     const pointVectorField::Boundary& bpointD =
             pointDPtr_->boundaryField();
@@ -163,12 +176,13 @@ Foam::regionSolvers::fluid::fluid(dynamicFvMesh& mesh)
             cellDBCs
         )
     );
+    cellDPtr_->oldTime();
 
     const dictionary& dynMeshDict = dynMesh_.dynamicMeshDict();
     if (!dynMeshDict.found("diffusivity"))
     {
         OStringStream os;
-        os  << "quadratic" << token::SPACE << "inverseDistance"
+        os  <<  token::SPACE << "inverseDistance"
             << token::SPACE << token::BEGIN_LIST;
 
         forAll(mesh_.boundary(), patchi)
@@ -184,6 +198,8 @@ Foam::regionSolvers::fluid::fluid(dynamicFvMesh& mesh)
     }
     diffusivityPtr_ =
         motionDiffusivity::New(mesh_, dynMeshDict.lookup("diffusivity"));
+
+    pointsOldPtr_.reset(new pointField(mesh_.points()));
 }
 
 
@@ -194,28 +210,10 @@ Foam::regionSolvers::fluid::~fluid()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::regionSolvers::fluid::initialiseMesh(const bool firstIter)
+void Foam::regionSolvers::fluid::initialiseMesh(const IterType iter)
 {
-    if (firstIter)
+    if (iter == FIRST_ITER)
     {
-        pointDPtr_().primitiveFieldRef() = Zero;
-        forAll(pointDPtr_->boundaryField(), patchi)
-        {
-            if
-            (
-                isA<valuePointPatchVectorField>
-                (
-                    pointDPtr_->boundaryField()[patchi]
-                )
-            )
-            {
-                dynamicCast<valuePointPatchVectorField>
-                (
-                    pointDPtr_->boundaryFieldRef()[patchi]
-                ) == Zero;
-            }
-        }
-
         if (mesh_.pointsInstance() != mesh_.facesInstance())
         {
             pointsOldPtr_.reset
@@ -237,33 +235,74 @@ bool Foam::regionSolvers::fluid::initialiseMesh(const bool firstIter)
                     )
                 )
             );
-        }
-        else
-        {
-            pointsOldPtr_.reset(new pointField(mesh_.points()));
+            const_cast<pointField&>(mesh_.oldPoints()) = pointsOldPtr_();
+            mesh_.movePoints(pointsOldPtr_());
+
+
+            //- If the mesh is stored in constant, no motion has occurred
+            //  So check if there is a version of pointD there
+            IOobject pointDIO
+            (
+                pointDPtr_->name(),
+                mesh_.facesInstance(),
+                mesh_,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE,
+                false
+            );
+            if (pointDIO.typeHeaderOk<pointVectorField>(true))
+            {
+                pointDPtr_() ==
+                    pointVectorField
+                    (
+                        pointDIO,
+                        pointMesh::New(mesh_)
+                    );
+                pointDPtr_->instance() = mesh_.time().timeName();
+                pointDPtr_->storeOldTimes();
+            }
+            pointDPtr_() == Zero;
         }
     }
 
-    moveMesh(true);
+    moveMesh(FINAL_ITER);
+
+    relaxation_->clear();
 
     if (mesh_.moving())
     {
         const_cast<surfaceScalarField&>(mesh_.phi()) == Zero;
+        forAll(velocityFields_, i)
+        {
+            if (mesh_.foundObject<volVectorField>(velocityFields_[i]))
+            {
+                mesh_.lookupObjectRef<volVectorField>
+                (
+                    velocityFields_[i]
+                ).correctBoundaryConditions();
+            }
+        }
     }
 
-    return false;
+    if (iter == FINAL_ITER)
+    {
+        pointDPtr_->write();
+        mesh_.lookupObject<pointIOField>("points").write();
+    }
 }
 
 
 void Foam::regionSolvers::fluid::initialise()
-{}
+{
+    moveMesh(FINAL_ITER);
+    moveMesh(FINAL_ITER);
+}
 
 
 bool Foam::regionSolvers::fluid::changeMesh()
 {
     bool changed = regionSolver::changeMesh();
-    pointsOldPtr_.reset(nullptr);
-    pointsOldPtr_.set(new pointField(mesh_.points()));
+    pointsOldPtr_.reset(new pointField(mesh_.points()));
 
     if (changed)
     {
@@ -279,9 +318,10 @@ bool Foam::regionSolvers::fluid::changeMesh()
 }
 
 
-bool Foam::regionSolvers::fluid::moveMesh(const bool finalIter)
+bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
 {
-    regionSolver::moveMesh(finalIter);
+    // return true;
+    regionSolver::moveMesh(iter);
 
     pointDPtr_->oldTime();
     pointDPtr_->storePrevIter();
@@ -293,7 +333,25 @@ bool Foam::regionSolvers::fluid::moveMesh(const bool finalIter)
     mesh_.movePoints(pointsOldPtr_());
 
     diffusivityPtr_->correct();
-    pointDPtr_->boundaryFieldRef().updateCoeffs();
+    pointDPtr_->correctBoundaryConditions();
+
+    if (iter != FINAL_ITER)
+    {
+        relaxation_->relax(regions_.iterNo(), pointDPtr_());
+    }
+    else
+    {
+        relaxation_->updateError(pointDPtr_());
+    }
+
+    //- Save boundary values
+    pointVectorField::Boundary bpRelaxed
+    (
+        pointDPtr_->mesh().boundary(),
+        pointDPtr_(),
+        valuePointPatchVectorField::typeName
+    );
+    bpRelaxed = pointDPtr_->boundaryField();
 
     Foam::solve
     (
@@ -305,23 +363,82 @@ bool Foam::regionSolvers::fluid::moveMesh(const bool finalIter)
         )
     );
 
+    // surfaceScalarField Df(diffusivityPtr_->operator()());
+    // volTensorField gradCd("gradCd", fvc::grad(cellDPtr_()));
+    //
+    // Foam::solve
+    // (
+    //     fvm::laplacian
+    //     (
+    //         2*Df,
+    //         cellDPtr_(),
+    //         "laplacian(diffusivity,cellD)"
+    //     )
+    //
+    //   + fvc::div
+    //     (
+    //         Df
+    //        *(
+    //            fvc::dotInterpolate
+    //            (
+    //                mesh_.Sf(),
+    //                gradCd.T() - gradCd
+    //            )
+    //
+    //            // Solid-body rotation "lambda" term
+    //          - mesh_.Sf()*fvc::interpolate(tr(gradCd))
+    //         )
+    //     )
+    //
+    //
+    //   // - fvc::laplacian
+    //   //   (
+    //   //       2*Df,
+    //   //       cellDPtr_(),
+    //   //       "laplacian(diffusivity,cellD)"
+    //   //   )
+    //   // + fvc::div
+    //   //   (
+    //   //       Df
+    //   //      *(
+    //   //          fvc::dotInterpolate
+    //   //          (
+    //   //              mesh_.Sf(),
+    //   //              gradCd + gradCd.T()
+    //   //          )
+    //   //          // Solid-body rotation "lambda" term
+    //   //        - mesh_.Sf()*fvc::interpolate(tr(gradCd))
+    //   //      )
+    //   //   )
+    //
+    // );
+
 
     // Update point displacement
-    volPointInterpolation::New(mesh_).interpolate
-    (
-        cellDPtr_(),
-        pointDPtr_()
-    );
-
-    if (gMax(mag(pointDPtr_->primitiveField())) < small)
     {
-        return false;
-    }
+        volPointInterpolation::New(mesh_).interpolate
+        (
+            cellDPtr_(),
+            pointDPtr_()
+        );
 
-    if (!finalIter && mesh().relaxField(cellDPtr_->name()))
-    {
-        scalar f = mesh().fieldRelaxationFactor(cellDPtr_->name());
-        pointDPtr_() == pointDPtr_().prevIter()*(1.0 - f) + f*pointDPtr_();
+        // Copy non-fixed values
+        pointVectorField::Boundary& bp = pointDPtr_->boundaryFieldRef();
+        forAll(bp, patchi)
+        {
+            if (isA<valuePointPatchVectorField>(bp[patchi]))
+            {
+                valuePointPatchVectorField& pp =
+                    dynamicCast<valuePointPatchVectorField>(bp[patchi]);
+                const valuePointPatchVectorField& ppRelaxed =
+                    dynamicCast<const valuePointPatchVectorField>
+                    (
+                        bpRelaxed[patchi]
+                    );
+                pp == ppRelaxed;
+                pp.setInInternalField(pointDPtr_(), pp);
+            }
+        }
     }
 
     tmp<pointField> tcurPoints
@@ -329,9 +446,44 @@ bool Foam::regionSolvers::fluid::moveMesh(const bool finalIter)
         pointsOldPtr_()
       + (pointDPtr_->primitiveField() - pointDPtr_->oldTime().primitiveField())
     );
-
     twoDPointCorrector::New(mesh_).correctPoints(tcurPoints.ref());
-    mesh_.movePoints(tcurPoints);
+
+    pointConstraints::syncUntransformedData
+    (
+        mesh_,
+        tcurPoints.ref(),
+        plusEqOp<vector>()
+    );
+    {
+        scalarField one(tcurPoints().size(), 1.0);
+        pointConstraints::syncUntransformedData
+        (
+            mesh_,
+            one,
+            plusEqOp<scalar>()
+        );
+        tcurPoints.ref() /= one;
+    }
+    mesh_.movePoints(tcurPoints());
+
+    Info<<"Max mesh boundary velocity = "
+        << gMax(mag(mesh_.phi().boundaryField()/mesh_.magSf().boundaryField())) <<endl;
+    forAll(mesh_.boundary(), patchi)
+    {
+        if (!mesh_.boundary()[patchi].coupled())
+        {
+            Info<<mesh_.boundary()[patchi].name()<<": "
+                <<gMax(mag(mesh_.phi().boundaryField()[patchi]/mesh_.magSf().boundaryField()[patchi]))<<endl;
+        }
+    }
+    Info<<"Displacement error (abs/rel) = "
+        << relaxation_->error() << ", "
+        << relaxation_->relError() <<endl;
+
+    // if (!finalIter)
+    // {
+    //     relaxation_->relax(pointDPtr_());
+    // }
 
     forAll(velocityFields_, i)
     {
@@ -343,7 +495,8 @@ bool Foam::regionSolvers::fluid::moveMesh(const bool finalIter)
             ).correctBoundaryConditions();
         }
     }
-    return true;
+
+    return gMax(mag(pointDPtr_->primitiveField())) > small;
 }
 
 // ************************************************************************* //

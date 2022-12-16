@@ -75,13 +75,14 @@ public:
     // Constructors
 
         // Lookup compressible system type
-        blast(dynamicFvMesh& mesh);
+        blast(dynamicFvMesh& mesh, const regionSolverList& regions);
 
         //- Construct with a given compressibleSystemType
         blast
         (
             dynamicFvMesh& mesh,
-            const word& type
+            const word& type,
+            const regionSolverList& regions
         );
 
     //- Destructor
@@ -96,7 +97,7 @@ public:
             virtual bool changeMesh();
 
             //- Solve the model
-            virtual bool solve();
+            virtual void solve();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

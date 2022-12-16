@@ -74,7 +74,7 @@ Foam::autoPtr<Foam::patchToPatchMapping>    Foam::patchToPatchMapping::New
 )
 {
     const word type(dict.lookup("mappingType"));
-    Info<< "Selecting patchToPatchMapping " << type << endl;
+    DebugInfo<< "Selecting patchToPatchMapping " << type << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(type);

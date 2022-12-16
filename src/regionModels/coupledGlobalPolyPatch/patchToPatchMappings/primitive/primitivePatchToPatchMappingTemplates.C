@@ -42,10 +42,7 @@ void primitivePatchToPatchMapping::transferFaces
     Field<Type>& toField             // to field
 ) const
 {
-    if (debug)
-    {
-        Info<< "Interpolating face values using PatchToPatchInterpolation" << endl;
-    }
+    DebugInfo<< "Interpolating face values using primitive mapping" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes
@@ -81,10 +78,7 @@ void primitivePatchToPatchMapping::transferPoints
     Field<Type>& toField             // to field
 ) const
 {
-    if (debug)
-    {
-        Info<< "Interpolating point values using PatchToPatchInterpolation" << endl;
-    }
+    DebugInfo<< "Interpolating point values using primitive mapping" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes

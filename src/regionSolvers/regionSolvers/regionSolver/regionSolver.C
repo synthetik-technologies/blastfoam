@@ -41,10 +41,12 @@ namespace Foam
 
 Foam::regionSolver::regionSolver
 (
-    dynamicFvMesh& mesh
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
 )
 :
     runTime_(mesh.time()),
+    regions_(regions),
     dynMesh_(mesh),
     mesh_(dynMesh_),
     globalBoundary_(globalPolyBoundaryMesh::New(mesh))
@@ -58,6 +60,33 @@ Foam::regionSolver::~regionSolver()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam ::regionSolver::readControls
+(
+    const word& name,
+    scalar& tol,
+    scalar& relTol
+) const
+{
+    if (!regions_.solutionControls().isDict(mesh_.name()))
+    {
+        return false;
+    }
+    const dictionary& regionDict =
+        regions_.solutionControls().subDict(mesh_.name());
+    if (regionDict.isDict(name))
+    {
+        regionDict.subDict(name).lookup("tolerance") >> tol;
+        regionDict.subDict(name).lookup("relTol") >> relTol;
+        return true;
+    }
+    return false;
+}
+
+
+void Foam::regionSolver::initialiseFields()
+{}
+
+
 void Foam::regionSolver::update()
 {
     globalBoundary_.clearOut();
@@ -67,13 +96,19 @@ void Foam::regionSolver::update()
 
 bool Foam::regionSolver::changeMesh()
 {
+    DebugInfo<< "Changing " << mesh_.name() << " mesh" << endl;
     return refineMesh(dynMesh_);
 }
 
 
-bool Foam::regionSolver::moveMesh(const bool finalIter)
+bool Foam::regionSolver::moveMesh(const IterType iter)
 {
+    DebugInfo<< "Moving " << mesh_.name() << " mesh" << endl;
     return dynMesh_.update();
 }
+
+
+void Foam::regionSolver::clear()
+{}
 
 // ************************************************************************* //

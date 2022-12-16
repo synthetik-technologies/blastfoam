@@ -229,7 +229,7 @@ void solidTractionFvPatchVectorField::updateCoeffs()
 
     // Set surface-normal gradient on the patch corresponding to the desired
     // traction
-    if (relaxFac_.valid())
+    if (relaxFac_.valid() && canRelax)
     {
         scalar relaxFac = relaxFac_->value(this->db().time().value());
         gradient() =
@@ -293,7 +293,6 @@ void solidTractionFvPatchVectorField::evaluate
     }
     else
     {
-
         Field<vector>::operator=
         (
             patchInternalField()
@@ -343,6 +342,7 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makePatchTypeField(fvPatchVectorField, solidTractionFvPatchVectorField);
+bool solidTractionFvPatchVectorField::canRelax = true;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -58,6 +58,11 @@ class solidTractionFvPatchVectorField
 :
     public fixedGradientFvPatchVectorField
 {
+public:
+    //- Static data
+    static bool canRelax;
+
+private:
     // Private Data
 
         //- Traction
@@ -170,6 +175,11 @@ public:
             virtual scalarField& pressure()
             {
                 return pressure_;
+            }
+
+            inline bool secondOrder() const
+            {
+                return secondOrder_;
             }
 
 

@@ -42,10 +42,7 @@ void ggiPatchToPatchMapping::transferFaces
     Field<Type>& toField             // to field
 ) const
 {
-    if (debug)
-    {
-        Info<< "Interpolating face values using GGI" << endl;
-    }
+    DebugInfo<< "Interpolating face values using GGI" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes
@@ -82,10 +79,7 @@ void ggiPatchToPatchMapping::transferPoints
     Field<Type>& toField             // to field
 ) const
 {
-    if (debug)
-    {
-        Info<< "Interpolating point values using GGI" << endl;
-    }
+    DebugInfo<< "Interpolating point values using GGI" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes

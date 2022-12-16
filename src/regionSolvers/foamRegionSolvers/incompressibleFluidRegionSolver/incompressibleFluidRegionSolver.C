@@ -43,10 +43,11 @@ namespace regionSolvers
 
 Foam::regionSolvers::incompressibleFluid::incompressibleFluid
 (
-    dynamicFvMesh& mesh
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
 )
 :
-    fluid(mesh),
+    fluid(mesh, regions),
     pimple_(mesh_),
     g_
     (
@@ -131,13 +132,13 @@ Foam::regionSolvers::incompressibleFluid::~incompressibleFluid()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::regionSolvers::incompressibleFluid::move(const bool finalIter)
+bool Foam::regionSolvers::incompressibleFluid::moveMesh(const IterType iter)
 {
     const fvMesh& mesh = mesh_;
     const Time& runTime = runTime_;
     fvModels.preUpdateMesh();
 
-    bool changing = fluid::moveMesh(finalIter);
+    bool changing = fluid::moveMesh(iter);
 
     if (mesh_.changing())
     {
@@ -179,7 +180,7 @@ bool Foam::regionSolvers::incompressibleFluid::move(const bool finalIter)
 }
 
 
-bool Foam::regionSolvers::incompressibleFluid::solve()
+void Foam::regionSolvers::incompressibleFluid::solve()
 {
     // --- Pressure-velocity PIMPLE corrector loop
     while (pimple_.loop())
@@ -200,7 +201,6 @@ bool Foam::regionSolvers::incompressibleFluid::solve()
             turbulence_->correct();
         }
     }
-    return false;
 }
 
 

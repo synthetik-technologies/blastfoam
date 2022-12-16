@@ -77,6 +77,8 @@ public:
         //- Enumeration specifying interpolation method
         enum interpolationMethod
         {
+            imDirect,
+            imMapNearest,
             imFaceAreaWeight,
             imPartialFaceAreaWeight,
             imSweptFaceAreaWeight
@@ -88,7 +90,7 @@ public:
         ClassName("newAMIInterpolation");
 
         //- Interpolation method names
-        static const NamedEnum<interpolationMethod, 3>
+        static const NamedEnum<interpolationMethod, 5>
             interpolationMethodNames_;
 
 

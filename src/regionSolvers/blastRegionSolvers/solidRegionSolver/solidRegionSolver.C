@@ -47,11 +47,21 @@ namespace regionSolvers
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionSolvers::solid::solid(dynamicFvMesh& mesh)
+Foam::regionSolvers::solid::solid
+(
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
+)
 :
-    regionSolver(mesh),
-    solid_(solidModel::New(dynMesh_))
-{}
+    regionSolver(mesh, regions),
+    solid_(solidModel::New(dynMesh_)),
+    initialError_(-1),
+    error_(great),
+    tolerance_(-great),
+    relTol_(-great)
+{
+    this->readControls("D", tolerance_, relTol_);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -61,28 +71,55 @@ Foam::regionSolvers::solid::~solid()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::regionSolvers::solid::initialiseMesh(const bool firstIter)
+void Foam::regionSolvers::solid::initialiseMesh(const IterType)
+{}
+
+
+void Foam::regionSolvers::solid::initialiseFields()
 {
-    return true;
+    solidTractionFvPatchVectorField::canRelax = false;
+
+    const_cast<volVectorField&>
+    (
+        solid_->solutionD()
+    ).correctBoundaryConditions();
+    solid_->update();
 }
 
 
 void Foam::regionSolvers::solid::initialise()
 {
+    solidTractionFvPatchVectorField::canRelax = false;
+
     solid_->initialize();
+
+    const_cast<volVectorField&>
+    (
+        solid_->solutionD()
+    ).correctBoundaryConditions();
+    solid_->update();
 }
 
 
-bool Foam::regionSolvers::solid::moveMesh(const bool finalIter)
+bool Foam::regionSolvers::solid::moveMesh(const IterType iter)
 {
-    regionSolver::moveMesh(finalIter);
+    if (iter == FINAL_ITER)
+    {
+        solidTractionFvPatchVectorField::canRelax = false;
+    }
+    else
+    {
+        solidTractionFvPatchVectorField::canRelax = true;
+    }
+
+    regionSolver::moveMesh(iter);
     return max(mag(solid_->DD())).value() > small;
 }
 
 
-bool Foam::regionSolvers::solid::solve()
+void Foam::regionSolvers::solid::solve()
 {
-    const volVectorField DOld(solid_->solutionD());
+    const volVectorField DOld(solid_->D());
 
     SolverPerformance<vector>::debug = 0;
 
@@ -119,15 +156,22 @@ bool Foam::regionSolvers::solid::solve()
     // Turn solver information back on
     SolverPerformance<vector>::debug = 1;
 
-    scalar error =
-        sqrt
-        (
-            sum(magSqr(DOld - solid_->solutionD())).value()
-           /returnReduce(DOld.size(), sumOp<scalar>())
-        );
-    Info<< DOld.name() << " error for region " << this->name() << ": "
-        << error << endl;
-    return error < 1e-3;
+    error_ = residual(solid_->D(), DOld);
+    if (initialError_ < 0)
+    {
+        initialError_ = error_;
+    }
+
+    Info<<"Displacement error (abs/rel) = "
+        << error_ << ", "
+        << error_/(initialError_+small) <<endl;
+}
+
+
+void Foam::regionSolvers::solid::clear()
+{
+    solidTractionFvPatchVectorField::canRelax = true;
+    initialError_ = -1;
 }
 
 

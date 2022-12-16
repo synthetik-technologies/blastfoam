@@ -1,5 +1,14 @@
 regionSolver/regionSolver.C
 regionSolver/regionSolverNew.C
+
+regionSolverList/regionSolverList.C
+
+
 fluidRegionSolver/fluidRegionSolver.C
+fluidRegionSolver/displacementRelaxation/displacementRelaxation.C
+fluidRegionSolver/displacementRelaxation/displacementRelaxationNew.C
+fluidRegionSolver/displacementRelaxation/fixed/fixedDisplacementRelaxation.C
+fluidRegionSolver/displacementRelaxation/Aitken/AitkenDisplacementRelaxation.C
+fluidRegionSolver/displacementRelaxation/IQNILS/IQNILSDisplacementRelaxation.C
 
 LIB = $(BLAST_LIBBIN)/libregionSolvers

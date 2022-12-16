@@ -38,15 +38,15 @@ namespace regionSolvers
 }
 
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::regionSolvers::compressibleFluid::compressibleFluid
 (
-    dynamicFvMesh& mesh
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
 )
 :
-    fluid(mesh),
+    fluid(mesh, regions),
     pimple_(mesh_),
     g_
     (
@@ -161,7 +161,7 @@ Foam::regionSolvers::compressibleFluid::~compressibleFluid()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
-bool Foam::regionSolvers::compressibleFluid::solve()
+void Foam::regionSolvers::compressibleFluid::solve()
 {
     // --- Pressure-velocity PIMPLE corrector loop
     while (pimple_.loop())
@@ -245,7 +245,6 @@ bool Foam::regionSolvers::compressibleFluid::solve()
     {
         rho = thermo_->rho();
     }
-    return false;
 }
 
 

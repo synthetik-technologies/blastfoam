@@ -11,11 +11,6 @@ IOdictionary regionPropertiesDict
     )
 );
 
-bool fixedMapping
-(
-    regionPropertiesDict.lookupOrDefault<bool>("fixedMapping", false)
-);
-
 List<Pair<word>> regionTypes;
 forAllConstIter(HashTable<wordList>, regionProperties, iter)
 {

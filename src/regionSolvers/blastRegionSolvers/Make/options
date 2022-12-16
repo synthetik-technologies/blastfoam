@@ -1,4 +1,5 @@
 EXE_INC = \
+    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/fileFormats/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
@@ -18,6 +19,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/regionModels/lnInclude \
     -I$(BLAST_DIR)/src/regionSolvers/regionSolvers/lnInclude \
     -I$(BLAST_DIR)/src/solidModels/lnInclude \
+    -I$(BLAST_DIR)/src/atmosphereModels/lnInclude \
 
 LIB_LIBS = \
     -lmeshTools \
@@ -31,3 +33,4 @@ LIB_LIBS = \
     -lblastRegionModels \
     -lblastRegionSolvers \
     -lblastSolidModels \
+    -latmosphereModels

@@ -41,9 +41,13 @@ namespace regionSolvers
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionSolvers::blast::blast(dynamicFvMesh& mesh)
+Foam::regionSolvers::blast::blast
+(
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
+)
 :
-    fluid(mesh),
+    fluid(mesh, regions),
     g_
     (
         IOobject
@@ -66,10 +70,11 @@ Foam::regionSolvers::blast::blast(dynamicFvMesh& mesh)
 Foam::regionSolvers::blast::blast
 (
     dynamicFvMesh& mesh,
-    const word& type
+    const word& type,
+    const regionSolverList& regions
 )
 :
-    fluid(mesh),
+    fluid(mesh, regions),
     g_
     (
         IOobject
@@ -84,7 +89,11 @@ Foam::regionSolvers::blast::blast
     ),
     integrator_(timeIntegrator::New(mesh_)),
     fluid_(compressibleSystem::New(type, mesh_))
-{}
+{
+    fluid_->decode();
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::regionSolvers::blast::~blast()
@@ -99,10 +108,9 @@ bool Foam::regionSolvers::blast::changeMesh()
 }
 
 
-bool Foam::regionSolvers::blast::solve()
+void Foam::regionSolvers::blast::solve()
 {
     Info<< "Calculating Fluxes" << endl;
-    const volScalarField pOld(fluid_->p());
     integrator_->integrate();
 
     Info<< "max(p): " << max(fluid_->p()).value()
@@ -110,15 +118,7 @@ bool Foam::regionSolvers::blast::solve()
     Info<< "max(T): " << max(fluid_->T()).value()
         << ", min(T): " << min(fluid_->T()).value() << endl;
 
-    scalar error =
-        sqrt
-        (
-            sum(magSqr(pOld - fluid_->p())).value()
-           /returnReduce(fluid_->p().size(), sumOp<scalar>())
-        );
-    Info<< pOld.name() << " error for region " << this->name() << ": "
-        << error << endl;
-    return error < 1e-3;
+    integrator_->clear();
 }
 
 

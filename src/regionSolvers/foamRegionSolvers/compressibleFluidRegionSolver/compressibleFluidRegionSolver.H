@@ -109,7 +109,7 @@ public:
     TypeName("compressibleFluid");
 
     // Constructor
-    compressibleFluid(dynamicFvMesh& mesh);
+    compressibleFluid(dynamicFvMesh& mesh, const regionSolverList& regions);
 
     //- Destructor
     virtual ~compressibleFluid();
@@ -120,7 +120,7 @@ public:
         // Edit
 
             //- Solve the model
-            virtual bool solve();
+            virtual void solve();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

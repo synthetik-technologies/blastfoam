@@ -183,7 +183,7 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
         nbr = pfNbr.patchInternalField();
     }
 
-    if (debug)
+    if (debug > 1 || (debug && this->db().time().outputTime()))
     {
         Field<Type> pfGlobal(samplePatch.patchPointToGlobal(nbr));
         Field<Type> pfInterp

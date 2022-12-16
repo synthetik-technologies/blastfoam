@@ -131,7 +131,7 @@ public:
     TypeName("vof");
 
     // Constructor
-    vof(dynamicFvMesh& mesh);
+    vof(dynamicFvMesh& mesh, const regionSolverList& regions);
 
     //- Destructor
     virtual ~vof();
@@ -142,10 +142,10 @@ public:
         // Edit
 
             //- Move the mesh
-            virtual bool moveMesh(const bool finalIter);
+            virtual bool moveMesh(const IterType iter);
 
             //- Solve the model
-            virtual bool solve();
+            virtual void solve();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

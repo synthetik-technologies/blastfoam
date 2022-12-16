@@ -25,6 +25,8 @@ License
 
 #include "amiZoneInterpolation.H"
 #include "newAMIMethod.H"
+#include "newDirectAMI.H"
+#include "newMapNearestAMI.H"
 #include "newFaceAreaWeightAMI.H"
 #include "newPartialFaceAreaWeightAMI.H"
 #include "newSweptFaceAreaWeightAMI.H"
@@ -35,6 +37,8 @@ namespace Foam
 {
     defineTypeNameAndDebug(amiZoneInterpolation, 0);
     makeAMIMethod(amiZoneInterpolation);
+    makeAMIMethodType(amiZoneInterpolation, newDirectAMI);
+    makeAMIMethodType(amiZoneInterpolation, newMapNearestAMI);
     makeAMIMethodType(amiZoneInterpolation, newFaceAreaWeightAMI);
     makeAMIMethodType(amiZoneInterpolation, newPartialFaceAreaWeightAMI);
     makeAMIMethodType(amiZoneInterpolation, newSweptFaceAreaWeightAMI);

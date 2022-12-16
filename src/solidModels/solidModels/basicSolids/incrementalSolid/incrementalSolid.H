@@ -54,6 +54,15 @@ class incrementalSolid
     public solidModel
 {
 protected:
+    // Protected data
+
+        //- Implicit stiffness
+        const volScalarField impK_;
+
+        //- Implicit stiffness surface field
+        surfaceScalarField impKf_;
+
+
     // Protected member functions
 
         //- Update displacement fields
@@ -92,14 +101,6 @@ public:
 
             //- Each solidModel must indicate whether D or DD is the
             //  primary solution variable
-            virtual volVectorField& solutionD()
-            {
-                // This model solves for DD
-                return DD();
-            }
-
-            //- Each solidModel must indicate whether D or DD is the
-            //  primary solution variable
             virtual const volVectorField& solutionD() const
             {
                 // This model solves for DD
@@ -112,6 +113,12 @@ public:
             {
                 // This model solves for DD
                 return gradDD();
+            }
+
+            //- Return the patch implicit stiffness
+            virtual const scalarField& impK(const fvPatch& patch) const
+            {
+                return impK_.boundaryField()[patch.index()];
             }
 };
 

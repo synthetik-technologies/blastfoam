@@ -1,5 +1,4 @@
 finiteVolume/fvc/fvcCellLimitedGrad.C
-finiteVolume/mechanicalEnergies/mechanicalEnergies.C
 finiteVolume/backwardD2dt2Scheme/backwardD2dt2Schemes.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
@@ -13,21 +12,29 @@ finiteVolume/logExpVolFields/logVolFields.C
 basicSolids=solidModels/basicSolids
 $(basicSolids)/solidModel/solidModel.C
 $(basicSolids)/solidModel/lookupSolidModel.C
-$(basicSolids)/solidModel/momentumStabilisation/momentumStabilisation.C
-$(basicSolids)/solidModel/relaxation/dynamicRelaxation/dynamicRelaxation.C
-$(basicSolids)/solidModel/setCellDisplacements/setCellDisplacements.C
+$(basicSolids)/solidModel/solidModelNew.C
+$(basicSolids)/solidModel/unsSolidModel.C
+$(basicSolids)/explicitSolids/explicitSolid.C
+$(basicSolids)/explicitSolids/unsExplicitSolid.C
+$(basicSolids)/explicitSolids/explicitNonLinearSolid.C
+$(basicSolids)/explicitSolids/unsExplicitNonLinearSolid.C
+$(basicSolids)/momentumStabilisation/momentumStabilisation.C
+$(basicSolids)/dynamicRelaxation/dynamicRelaxation.C
+$(basicSolids)/setCellDisplacements/setCellDisplacements.C
+$(basicSolids)/mechanicalEnergies/mechanicalEnergies.C
 
 $(basicSolids)/incrementalSolid/incrementalSolid.C
 $(basicSolids)/incrementalSolid/unsIncrementalSolid.C
-$(basicSolids)/totalDispSolid/totalDispSolid.C
-$(basicSolids)/totalDispSolid/unsTotalDispSolid.C
+$(basicSolids)/totalDisplacementSolid/totalDisplacementSolid.C
+$(basicSolids)/totalDisplacementSolid/unsTotalDisplacementSolid.C
 
 explicit=solidModels/explicit
-$(explicit)/explicitLinGeomTotalDispSolid/explicitLinGeomTotalDispSolid.C
-$(explicit)/explicitUnsLinGeomTotalDispSolid/explicitUnsLinGeomTotalDispSolid.C
-$(explicit)/explicitUnsNonLinGeomTotalLagTotalDispSolid/explicitUnsNonLinGeomTotalLagTotalDispSolid.C
-$(explicit)/explicitNonLinGeomUpdatedLagSolid/explicitNonLinGeomUpdatedLagSolid.C
-$(explicit)/explicitNonLinGeomTotalLagSolid/explicitNonLinGeomTotalLagSolid.C
+$(explicit)/explicitLinearSolid/explicitLinearSolid.C
+$(explicit)/unsExplicitLinearSolid/unsExplicitLinearSolid.C
+$(explicit)/explicitTotalLagrangianSolid/explicitTotalLagrangianSolid.C
+$(explicit)/unsExplicitTotalLagrangianSolid/unsExplicitTotalLagrangianSolid.C
+$(explicit)/explicitUpdatedLagrangianSolid/explicitUpdatedLagrangianSolid.C
+
 
 explicitRiemann=$(explicit)/explicitRiemannSolid
 $(explicitRiemann)/angularMomentum/angularMomentum.C
@@ -36,21 +43,21 @@ $(explicitRiemann)/interpolationSchemes/interpolationSchemes.C
 $(explicitRiemann)/mechanics/mechanics.C
 $(explicitRiemann)/operations/operations.C
 $(explicitRiemann)/explicitRiemannSolid.C
-$(explicitRiemann)/explicitLinRiemannSolid/explicitLinRiemannSolid.C
-$(explicitRiemann)/explicitNonLinRiemannSolid/explicitNonLinRiemannSolid.C
+$(explicitRiemann)/explicitLinearRiemannSolid/explicitLinearRiemannSolid.C
+$(explicitRiemann)/explicitNonLinearRiemannSolid/explicitNonLinearRiemannSolid.C
 
-solidModels/linGeomSolid/linGeomSolid.C
-solidModels/linGeomTotalDispSolid/linGeomTotalDispSolid.C
-solidModels/linGeomPressureDisplacementSolid/linGeomPressureDisplacementSolid.C
-solidModels/nonLinGeomUpdatedLagSolid/nonLinGeomUpdatedLagSolid.C
-solidModels/nonLinGeomTotalLagSolid/nonLinGeomTotalLagSolid.C
-solidModels/nonLinGeomTotalLagTotalDispSolid/nonLinGeomTotalLagTotalDispSolid.C
-solidModels/poroLinGeomSolid/poroLinGeomSolid.C
-solidModels/thermalLinGeomSolid/thermalLinGeomSolid.C
-solidModels/unsLinGeomSolid/unsLinGeomSolid.C
-solidModels/unsNonLinGeomUpdatedLagSolid/unsNonLinGeomUpdatedLagSolid.C
-solidModels/unsNonLinGeomTotalLagSolid/unsNonLinGeomTotalLagSolid.C
-solidModels/weakThermalLinGeomSolid/weakThermalLinGeomSolid.C
+solidModels/linearSolid/linearSolid.C
+solidModels/linearTotalDisplacementSolid/linearTotalDisplacementSolid.C
+solidModels/linearPressureDisplacementSolid/linearPressureDisplacementSolid.C
+solidModels/updatedLagrangianSolid/updatedLagrangianSolid.C
+solidModels/totalLagrangianSolid/totalLagrangianSolid.C
+solidModels/totalLagrangianTotalDisplacementSolid/totalLagrangianTotalDisplacementSolid.C
+solidModels/poroLinearSolid/poroLinearSolid.C
+solidModels/thermalLinearSolid/thermalLinearSolid.C
+solidModels/unsLinearTotalDisplacementSolid/unsLinearTotalDisplacementSolid.C
+solidModels/unsUpdatedLagrangianSolid/unsUpdatedLagrangianSolid.C
+solidModels/unsTotalLagrangianTotalDisplacementSolid/unsTotalLagrangianTotalDisplacementSolid.C
+solidModels/weakThermalLinearSolid/weakThermalLinearSolid.C
 
 materialModels/mechanicalModel/mechanicalModel.C
 materialModels/mechanicalModel/solidSubMeshes/solidSubMeshes.C

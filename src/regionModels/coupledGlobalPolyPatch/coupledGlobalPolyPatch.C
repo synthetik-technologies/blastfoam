@@ -285,9 +285,16 @@ void Foam::coupledGlobalPolyPatch::update()
 }
 
 
-void Foam::coupledGlobalPolyPatch::movePoints()
+void Foam::coupledGlobalPolyPatch::movePoints(const bool clear)
 {
-    clearOut();
+    if (clear)
+    {
+        clearOut();
+    }
+    else
+    {
+        globalPolyPatch::movePoints(clear);
+    }
 }
 
 

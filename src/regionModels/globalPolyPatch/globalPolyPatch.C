@@ -723,25 +723,26 @@ void Foam::globalPolyPatch::updateMesh()
 }
 
 
-void Foam::globalPolyPatch::movePoints()
+void Foam::globalPolyPatch::movePoints(const bool clear)
 {
-    if (displacementField_ != "none")
+    if (clear)// if (displacementField_ != "none")
     {
-        clearOut();
+        globalPolyPatch::clearOut();
     }
-    else if (globalPatchPtr_.valid())
-    {
-        globalPatchPtr_->movePoints(patch_.points());
-    }
+    // else if (globalPatchPtr_.valid())
+    // {
+    //     globalPatchPtr_->movePoints(patch_.points());
+    // }
 }
 
 
-void Foam::globalPolyPatch::movePoints(const pointField& pts)
+void Foam::globalPolyPatch::movePoints(const pointField& pts, const bool clear)
 {
-    if (globalPatchPtr_.valid())
-    {
-        globalPatchPtr_->movePoints(pts);
-    }
+    globalPolyPatch::clearOut();
+    // if (globalPatchPtr_.valid())
+    // {
+    //     globalPatchPtr_->movePoints(pts);
+    // }
 }
 
 

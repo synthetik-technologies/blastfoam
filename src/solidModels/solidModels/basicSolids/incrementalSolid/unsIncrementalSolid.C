@@ -45,11 +45,11 @@ void unsIncrementalSolid::updateDisplacement()
 
     // Update gradient of displacement increment
     mechanical().grad(DD(), pointDD(), gradDD());
-    mechanical().grad(DD(), pointDD(), gradDDf_);
+    mechanical().grad(DD(), pointDD(), gradDDf());
 
     // Update gradient of total displacement
     gradD() = gradD().oldTime() + gradDD();
-    gradDf_ = gradDf_.oldTime() + gradDDf_;
+    gradDf() = gradDf().oldTime() + gradDDf();
 
     pointD() = pointD().oldTime() + pointDD();
 }
@@ -65,51 +65,9 @@ unsIncrementalSolid::unsIncrementalSolid
     const bool isSolid
 )
 :
-    incrementalSolid(type, mesh, nonLinear, isSolid),
-    sigmaf_
-    (
-        IOobject
-        (
-            "sigmaf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
-    ),
-    gradDf_
-    (
-        IOobject
-        (
-            "grad(" + D().name() + ")f",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedTensor("0", dimless, tensor::zero)
-    ),
-    gradDDf_
-    (
-        IOobject
-        (
-            "grad(" + DD().name() + ")f",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedTensor("0", dimless, tensor::zero)
-    )
-{
-    // For consistent restarts, we will calculate the gradient field
-    mechanical().grad(D(), pointD(), gradD(), gradDf_);
-    mechanical().grad(DD(), pointDD(), gradDD(), gradDDf_);
-}
+    unsSolidModel(type, mesh, nonLinear, incremental(), isSolid),
+    impKf_("impKf", this->mechanical().impKf())
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

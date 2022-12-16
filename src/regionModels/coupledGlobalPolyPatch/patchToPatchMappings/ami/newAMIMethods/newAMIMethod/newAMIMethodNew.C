@@ -39,10 +39,7 @@ Foam::newAMIMethod<SourcePatch, TargetPatch>::New
     const bool requireMatch
 )
 {
-    if (debug)
-    {
-        Info<< "Selecting newAMIMethod " << methodName << endl;
-    }
+    DebugInfo<< "Selecting newAMIMethod " << methodName << endl;
 
     typename componentsConstructorTable::iterator cstrIter =
         componentsConstructorTablePtr_->find(methodName);

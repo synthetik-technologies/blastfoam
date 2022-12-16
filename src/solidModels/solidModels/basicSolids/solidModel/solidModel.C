@@ -838,6 +838,9 @@ Foam::solidModel::solidModel
     ),
     globalPatches_(globalPolyBoundaryMesh::New(mesh))
 {
+    D_.oldTime();
+    DD_.oldTime();
+
     globalPatches_.setDisplacementField(mesh_.name(), "none");
 
     if (!pointD_.headerOk())
@@ -928,7 +931,8 @@ void Foam::solidModel::DisRequired(const word& type)
             << type << " requires the 'D' field to be specified!"
             << abort(FatalError);
     }
-    displacementFromVelocity(D_, DD_);
+
+    // displacementFromVelocity(D_, DD_);
 }
 
 
@@ -940,7 +944,7 @@ void Foam::solidModel::DDisRequired(const word& type)
             << type << " requires the 'DD' field to be specified!"
             << abort(FatalError);
     }
-    displacementFromVelocity(D_, DD_);
+    // displacementFromVelocity(D_, DD_);
 }
 
 
@@ -1026,106 +1030,21 @@ void Foam::solidModel::updateTotalFields()
 }
 
 
-void Foam::solidModel::end()
+Foam::tmp<Foam::vectorField> Foam::solidModel::tractionBoundarySnGrad
+(
+    const vectorField& traction,
+    const scalarField& pressure,
+    const fvPatch& patch
+) const
 {
-    if (maxIterReached_ > 0)
-    {
-        WarningIn(type() + "::end()")
-            << "The maximum momentum correctors were reached in "
-            << maxIterReached_ << " time-steps" << nl << endl;
-    }
-    else
-    {
-        Info<< "The momentum equation converged in all time-steps"
-            << nl << endl;
-    }
-}
+    const scalarField& pimpK = this->impK(patch);
+    const symmTensorField& psigma = this->sigma(patch);
+    vectorField n(this->nf(patch));
 
-
-Foam::autoPtr<Foam::solidModel> Foam::solidModel::New(dynamicFvMesh& mesh)
-{
-    word solidModelTypeName;
-
-    // Enclose the creation of the dictionary to ensure it is
-    // deleted before the fluid model is created, otherwise the dictionary
-    // is entered in the database twice
-    {
-        IOdictionary solidProperties
-        (
-            IOobject
-            (
-                "solidProperties",
-                mesh.time().constant(),
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE
-            )
-        );
-
-        solidProperties.lookup("solidModel")
-            >> solidModelTypeName;
-    }
-
-    Info<< "Selecting solidModel " << solidModelTypeName << endl;
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(solidModelTypeName);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
-    {
-        FatalErrorInFunction
-            << "Unknown solidModel " << solidModelTypeName << endl << endl
-            << "Valid solidModel types are :" << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    return autoPtr<solidModel>(cstrIter()(mesh));
-}
-
-
-Foam::autoPtr<Foam::solidModel> Foam::solidModel::NewLU(dynamicFvMesh& mesh)
-{
-    word solidModelTypeName;
-
-    // Enclose the creation of the dictionary to ensure it is
-    // deleted before the fluid model is created, otherwise the dictionary
-    // is entered in the database twice
-    {
-        IOdictionary solidProperties
-        (
-            IOobject
-            (
-                "solidProperties",
-                mesh.time().constant(),
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE
-            )
-        );
-
-        solidProperties.lookup("solidModel")
-            >> solidModelTypeName;
-    }
-
-    Info<< "Selecting solidModel " << solidModelTypeName << endl;
-
-    lagrangianConstructorTable::iterator cstrIter =
-        lagrangianConstructorTablePtr_->find(solidModelTypeName);
-
-    if (cstrIter == lagrangianConstructorTablePtr_->end())
-    {
-        FatalErrorIn
-        (
-            "solidModel::NewLU(Time&, const word&)"
-        )   << "Unknown lagrangian solidModel type " << solidModelTypeName
-            << endl << endl
-            << "Valid lagrangian solidModel types are :" << endl
-            << lagrangianConstructorTablePtr_->toc()
-            << exit(FatalError);
-    }
-
-    return autoPtr<solidModel>(cstrIter()(mesh));
+    // Return patch snGrad
+    return
+        (traction - n*pressure - (n & psigma))/pimpK
+      + (patch.nf() & (this->solutionGradD().boundaryField()[patch.index()]));
 }
 
 
@@ -1162,8 +1081,13 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const surfaceScalarField& J)
     return enforceLinear();
 }
 
+void Foam::solidModel::writeNecessaryFields() const
+{
+    this->solutionD().write();
+}
 
-void Foam::solidModel::writeFields(const Time& runTime)
+
+void Foam::solidModel::writeFields() const
 {
     // Write strain fields
     // Currently only defined for linear geometry
@@ -1193,7 +1117,7 @@ void Foam::solidModel::writeFields(const Time& runTime)
     Info<< "Max sigmaEq (von Mises stress) = " << gMax(sigmaEq) << endl;
 
     // If asked, write the residual field
-    if (writeResidualField_)
+    if (writeResidualField_ || debug)
     {
         const volVectorField& D = solutionD();
         scalar denom =
@@ -1212,8 +1136,6 @@ void Foam::solidModel::writeFields(const Time& runTime)
         Info<< "Writing residualD field" << endl;
         residualD.write();
     }
-
-//     physicsModel::writeFields(runTime);
 }
 
 

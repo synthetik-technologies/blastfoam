@@ -96,6 +96,25 @@ bool Foam::globalPolyBoundaryMesh::isCoupled(const polyPatch& pp) const
 }
 
 
+Foam::labelList Foam::globalPolyBoundaryMesh::coupledPatches() const
+{
+    if (!interfaceDicts_.found(this->mesh().name()))
+    {
+        return labelList();
+    }
+    const dictionary& dict = interfaceDicts_[this->mesh().name()];
+    DynamicList<label> patches(this->mesh().boundaryMesh().size());
+    forAll(this->mesh().boundaryMesh(), patchi)
+    {
+        if (dict.isDict(this->mesh().boundaryMesh()[patchi].name()))
+        {
+            patches.append(this->mesh().boundaryMesh()[patchi].index());
+        }
+    }
+    return patches;
+}
+
+
 void Foam::globalPolyBoundaryMesh::update()
 {
     forAllIter
@@ -109,13 +128,9 @@ void Foam::globalPolyBoundaryMesh::update()
     }
 }
 
+
 bool Foam::globalPolyBoundaryMesh::movePoints()
 {
-    // Mapping stays the same
-    if (!clearOnMovement)
-    {
-        return false;
-    }
     forAllIter
     (
         HashPtrTable<globalPolyPatch>,
@@ -123,7 +138,7 @@ bool Foam::globalPolyBoundaryMesh::movePoints()
         iter
     )
     {
-        iter()->movePoints();
+        iter()->movePoints(clearOnMovement);
     }
     return true;
 }

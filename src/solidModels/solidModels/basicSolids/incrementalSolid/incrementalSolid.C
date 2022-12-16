@@ -39,7 +39,6 @@ void incrementalSolid::updateDisplacement()
 {
     // Update the total displacement
     D() = D().oldTime() + DD();
-    // D().correctBoundaryConditions();
 
     // Interpolate DD to pointDD
     mechanical().interpolate(DD(), pointDD(), false);
@@ -65,7 +64,9 @@ incrementalSolid::incrementalSolid
     const bool isSolid
 )
 :
-    solidModel(type, mesh, nonLinear, incremental(), isSolid)
+    solidModel(type, mesh, nonLinear, incremental(), isSolid),
+    impK_("impK", this->mechanical().impK()),
+    impKf_("impKf", this->mechanical().impKf())
 {
     DDisRequired(type);
 }

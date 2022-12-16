@@ -333,7 +333,7 @@ const Foam::dimensionedScalar& Foam::linearElastic::lambda() const
 
 void Foam::linearElastic::correct(volSymmTensorField& sigma)
 {
-     // Calculate total strain
+    // Calculate total strain
     if (incremental())
     {
         // Lookup gradient of displacement increment
@@ -380,10 +380,46 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
 }
 
 
-void Foam::linearElastic::correct(surfaceSymmTensorField& sigma)
+void Foam::linearElastic::correct(surfaceSymmTensorField& sigmaf)
 {
     // Calculate total strain
-    updateEpsilon(epsilonfRef(), nu_/E_, sigma);
+    if (incremental())
+    {
+        // Lookup gradient of displacement increment
+        const surfaceTensorField& gradDDf =
+            mesh().lookupObject<surfaceTensorField>("grad(DD)f");
+
+        epsilonfRef() = epsilonf().oldTime() + symm(gradDDf);
+    }
+    else
+    {
+        // Lookup gradient of displacement
+        const surfaceTensorField& gradDf =
+            mesh().lookupObject<surfaceTensorField>("grad(D)f");
+
+        epsilonfRef() = symm(gradDf);
+    }
+    // For planeStress, correct strain in the out of plane direction
+    if (planeStress())
+    {
+        if (mesh().solutionD()[vector::Z] > -1)
+        {
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
+                << "direction is the Z direction!"
+                << abort(FatalError);
+        }
+
+        epsilonfRef().replace
+        (
+            symmTensor::ZZ,
+           -(nu_/E_)
+           *(sigmaf.component(symmTensor::XX) + sigmaf.component(symmTensor::YY))
+        );
+    }
+
+    // Calculate total strain
+    // updateEpsilon(epsilonfRef(), nu_/E_, sigma);
 
     // Hooke's law : standard form
     //sigma = 2.0*mu_*epsilonf_ + lambda_*tr(epsilonf_)*I + sigma0f();
@@ -391,7 +427,7 @@ void Foam::linearElastic::correct(surfaceSymmTensorField& sigma)
     // Hooke's law : partitioned deviatoric and dilation form
     const surfaceScalarField trEpsilon(tr(epsilonf()));
     calculateHydrostaticStress(sigmaHydfRef(), trEpsilon);
-    sigma = 2.0*mu_*dev(epsilonf()) + sigmaHydf()*I + sigma0f();
+    sigmaf = 2.0*mu_*dev(epsilonf()) + sigmaHydf()*I + sigma0f();
 }
 
 

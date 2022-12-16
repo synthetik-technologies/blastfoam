@@ -39,57 +39,21 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "regionSolver.H"
+#include "regionSolverList.H"
 #include "regionProperties.H"
-
-#define forAllRegions(cmd, ...)                  \
-forAll(regions, i)                          \
-{                                           \
-    regions[i].cmd(__VA_ARGS__);                       \
-}
-
-#define checkForAllRegions(cmd, flags)      \
-forAll(regions, i)                          \
-{                                           \
-    flags[i] = regions[i].cmd();            \
-}
-
-#define checkOrForAllRegions(cmd, flags)    \
-forAll(regions, i)                          \
-{                                           \
-    flags[i] = flags[i] || regions[i].cmd();\
-}
-
-#define forAllConditionRegions(cmd, flags)  \
-forAll(regions, i)                          \
-{                                           \
-    if (flags[i])                           \
-    {                                       \
-        regions[i].cmd();                   \
-    }                                       \
-}
-
-#define forAllNotConditionRegions(cmd, flags)  \
-forAll(regions, i)                          \
-{                                           \
-    if (!flags[i])                          \
-    {                                       \
-        regions[i].cmd();                   \
-    }                                       \
-}
+#include "systemDict.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
-    // Do not remap on motion
-    globalPolyBoundaryMesh::clearOnMovement = false;
-
     argList::addBoolOption
     (
         "initialiseDisplacement",
         "Initialise meshes using relavant information and exit"
     );
+    #include "addDictOption.H"
+
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMesh.H"
@@ -98,84 +62,37 @@ int main(int argc, char *argv[])
     //- Move meshes to the initial locations
     if (args.optionFound("initialiseDisplacement"))
     {
-        forAllRegions(initialiseMesh, true);
+        regions.initialiseDisplacement();
+
         Info<< nl << "Finished moving meshes" << endl;
         return 0;
     }
 
     #include "createTimeControls.H"
-    forAllRegions(initialise);
-    forAllRegions(update);
 
-    scalar CoNum = 0.0;
-    forAll(regions, regionI)
-    {
-        CoNum = max(regions[regionI].CoNum(), CoNum);
-    }
+    // Initialise the regions
+    regions.initialise();
+
+    scalar CoNum = regions.CoNum();
 
     #include "setInitialMultiRegionDeltaT.H"
 
     while (runTime.run())
     {
         // Apply topological changes to the mesh
-        boolList updated(regions.size());
-        checkForAllRegions(changeMesh, updated);
+        regions.changeMesh();
 
         #include "readTimeControls.H"
 
         Info<< nl;
-        CoNum = 0.0;
-        forAll(regions, regionI)
-        {
-            CoNum = max(regions[regionI].CoNum(), CoNum);
-        }
+        CoNum = regions.CoNum();
         #include "setMultiRegionDeltaT.H"
 
         runTime++;
 
-        // Update global patches
-        bool needUpdate = false;
-        forAll(updated, i)
-        {
-            needUpdate = updated[i] || needUpdate;
-        }
-        if (needUpdate)
-        {
-            forAllNotConditionRegions(update, updated);
-        }
+        //- Solve all regions
+        regions.solve();
 
-        updated = false;
-
-        label nOuterCorrectors = regionPropertiesDict.lookup<label>("nOuterCorrectors");
-        for (label iter = 0; iter < nOuterCorrectors; iter++)
-        {
-            Info<< "Outer iteration: " << iter<<endl;
-            Info<< "Time = " << runTime.timeName() << nl << endl;
-
-            // Apply mesh motion
-            forAll(regions, i)
-            {
-                updated[i] = regions[i].moveMesh(iter == nOuterCorrectors-1);
-            }
-
-            // Solve
-            forAllRegions(solve);
-        }
-
-        // Update global patches if any motion has occurred
-        // since mapping does not happen on mesh motion
-        needUpdate = false;
-        if (!fixedMapping)
-        {
-            forAll(updated, i)
-            {
-                needUpdate = updated[i] || needUpdate;
-            }
-            if (needUpdate)
-            {
-                forAllRegions(update);
-            }
-        }
 
         runTime.write();
 

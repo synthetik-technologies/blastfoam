@@ -19,7 +19,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/regionModels/lnInclude \
-    -I$(BLAST_DIR)/src/regionSolvers/lnInclude \
+    -I$(BLAST_DIR)/src/regionSolvers/regionSolvers/lnInclude \
 
 
 EXE_LIBS = \

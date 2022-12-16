@@ -73,7 +73,7 @@ public:
     TypeName("thermal");
 
     // Constructor
-    thermal(dynamicFvMesh& mesh);
+    thermal(dynamicFvMesh& mesh, const regionSolverList& regions);
 
 
     //- Destructor
@@ -84,14 +84,20 @@ public:
 
         // Edit
 
+            //- Return the region is solid
+            virtual bool isSolid() const
+            {
+                return true;
+            }
+
             //- Initialise the mesh
-            virtual bool initialiseMesh(const bool firstIter);
+            virtual void initialiseMesh(const IterType firstIter);
 
             //- Initialise the solver
             virtual void initialise();
 
             //- Solve the model
-            virtual bool solve();
+            virtual void solve();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

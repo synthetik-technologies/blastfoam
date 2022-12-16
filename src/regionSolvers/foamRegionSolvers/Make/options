@@ -28,7 +28,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/regionModels/lnInclude \
-    -I$(BLAST_DIR)/src/regionSolvers/lnInclude \
+    -I$(BLAST_DIR)/src/regionSolvers/regionSolvers/lnInclude \
     -I$(CompressibleInterFoam)/twoPhaseMixtureThermo/lnInclude \
     -I$(CompressibleInterFoam)/twoPhaseChange/lnInclude \
     -I$(CompressibleInterFoam)/compressibleInterPhaseTransportModel/lnInclude

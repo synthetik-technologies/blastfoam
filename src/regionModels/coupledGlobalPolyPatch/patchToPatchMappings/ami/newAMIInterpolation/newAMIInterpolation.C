@@ -84,10 +84,7 @@ projectPointsToSurface
     pointField& pts
 ) const
 {
-    if (debug)
-    {
-        Info<< "AMI: projecting points to surface" << endl;
-    }
+    DebugInfo<< "AMI: projecting points to surface" << endl;
 
     List<pointIndexHit> nearInfo;
 
@@ -870,6 +867,7 @@ void Foam::newAMIInterpolation<SourcePatch, TargetPatch>::update
             << "AMI: using globalPolyPatch" << endl;
         singlePatchProc_ = Pstream::myProcNo();
     }
+
 
     if (singlePatchProc_ == -1)
     {

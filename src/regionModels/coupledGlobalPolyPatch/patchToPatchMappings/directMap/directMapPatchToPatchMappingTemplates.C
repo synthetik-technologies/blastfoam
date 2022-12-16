@@ -43,7 +43,7 @@ void directMapPatchToPatchMapping::transferFaces
     Field<Type>& toField             // to field
 ) const
 {
-    Info<< "Mapping face values using directMap" << endl;
+    DebugInfo<< "Mapping face values using directMap" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes
@@ -87,7 +87,7 @@ void directMapPatchToPatchMapping::transferPoints
     Field<Type>& toField             // to field
 ) const
 {
-    Info<< "Mapping point values using directMap" << endl;
+    DebugInfo<< "Mapping point values using directMap" << endl;
 
     // Check field sizes are correct
     patchToPatchMapping::checkFieldSizes

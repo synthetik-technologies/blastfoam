@@ -59,12 +59,18 @@ protected:
         //- Solid model
         autoPtr<solidModel> solid_;
 
+        //- Tolerances
+        scalar initialError_;
+        scalar error_;
+        scalar tolerance_;
+        scalar relTol_;
+
 public:
 
     TypeName("solid");
 
     // Constructor
-    solid(dynamicFvMesh& mesh);
+    solid(dynamicFvMesh& mesh, const regionSolverList& regions);
 
     //- Destructor
     virtual ~solid();
@@ -72,19 +78,52 @@ public:
 
     // Member functions
 
+        // Access
+
+            //- Return if the region solver is solid
+            inline bool isSolid() const
+            {
+                return true;
+            }
+
+            //- Return if the solver converged
+            virtual Convergence converged() const
+            {
+                if (tolerance_ < 0)
+                {
+                    return UNKNOWN_CONVERGENCE;
+                }
+                else if
+                (
+                    error_< tolerance_
+                 || (error_/(initialError_ + small)) < relTol_
+                )
+                {
+                    return CONVERGED;
+                }
+                return NOT_CONVERGED;
+            }
+
+
         // Edit
 
             //- Initialise the mesh
-            virtual bool initialiseMesh(const bool firstIter);
+            virtual void initialiseMesh(const IterType firstIter);
+
+            //- Initialise fields
+            virtual void initialiseFields();
 
             //- Initialise the solver
             virtual void initialise();
 
             //- Move the mesh
-            virtual bool moveMesh(const bool finalIter);
+            virtual bool moveMesh(const IterType iter);
 
             //- Solve the model
-            virtual bool solve();
+            virtual void solve();
+
+            //- Clear the solver
+            virtual void clear();
 
             //- Return the Courant number
             virtual scalar CoNum() const;

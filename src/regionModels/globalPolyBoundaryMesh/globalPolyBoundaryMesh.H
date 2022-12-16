@@ -116,6 +116,10 @@ public:
             //- Is the given patch coupled to another region
             bool isCoupled(const polyPatch&) const;
 
+            //- Return coupled patch indices
+            labelList coupledPatches() const;
+
+
         // Edit
 
             // Force update of mapping

@@ -47,10 +47,11 @@ namespace regionSolvers
 
 Foam::regionSolvers::compressibleVof::compressibleVof
 (
-    dynamicFvMesh& mesh
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
 )
 :
-    fluid(mesh),
+    fluid(mesh, regions),
     pimple(mesh_),
 
     p_rgh
@@ -258,7 +259,7 @@ Foam::regionSolvers::compressibleVof::~compressibleVof()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::regionSolvers::compressibleVof::moveMesh(const bool finalIter)
+bool Foam::regionSolvers::compressibleVof::moveMesh(const IterType iter)
 {
     if (correctPhi)
     {
@@ -271,7 +272,7 @@ bool Foam::regionSolvers::compressibleVof::moveMesh(const bool finalIter)
 
     fvModels.preUpdateMesh();
 
-    bool changing = fluid::moveMesh(finalIter);
+    bool changing = fluid::moveMesh(iter);
 
     if (mesh_.changing())
     {
@@ -304,7 +305,7 @@ bool Foam::regionSolvers::compressibleVof::moveMesh(const bool finalIter)
 }
 
 
-bool Foam::regionSolvers::compressibleVof::solve()
+void Foam::regionSolvers::compressibleVof::solve()
 {
     bool LTS = false;
     fvMesh& mesh = mesh_;
@@ -333,7 +334,6 @@ bool Foam::regionSolvers::compressibleVof::solve()
             turbulence.correct();
         }
     }
-    return false;
 }
 
 

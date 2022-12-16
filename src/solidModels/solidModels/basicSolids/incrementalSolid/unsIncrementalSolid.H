@@ -37,6 +37,7 @@ SourceFiles
 #define unsIncrementalSolid_H
 
 #include "incrementalSolid.H"
+#include "unsSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,19 +52,13 @@ namespace solidModels
 
 class unsIncrementalSolid
 :
-    public incrementalSolid
+    public unsSolidModel
 {
 protected:
     // Protected data
 
-        //- Cauchy (true) stress surface field
-        surfaceSymmTensorField sigmaf_;
-
-        //- Surface displacement gradient
-        surfaceTensorField gradDf_;
-
-        //- Surface displacement increment gradient
-        surfaceTensorField gradDDf_;
+        //- Implicit stiffness surface field
+        surfaceScalarField impKf_;
 
 
     // Protected member functions
@@ -96,12 +91,40 @@ public:
 
         // Access
 
-            //- Each solidModel must indicate whether gradD or gradDD
-            //  is the primary solution variable
-            virtual surfaceTensorField& solutionGradDf()
+            //- This solid model solves for DD instead of D
+            virtual bool incremental() const
+            {
+                return true;
+            }
+
+            //- Each solidModel must indicate whether D or DD is the
+            //  primary solution variable
+            virtual const volVectorField& solutionD() const
             {
                 // This model solves for DD
-                return gradDDf_;
+                return DD();
+            }
+
+            //- Each solidModel must indicate whether gradD or gradDD
+            //  is the primary solution variable
+            virtual const volTensorField& solutionGradD() const
+            {
+                // This model solves for DD
+                return gradDD();
+            }
+
+            //- Each solidModel must indicate whether gradDf or gradDDf
+            //  is the primary solution variable
+            virtual const surfaceTensorField& solutionGradDf() const
+            {
+                // This model solves for DD
+                return gradDDf();
+            }
+
+            //- Return the patch implicit stiffness
+            virtual const scalarField& impK(const fvPatch& patch) const
+            {
+                return impKf_.boundaryField()[patch.index()];
             }
 };
 

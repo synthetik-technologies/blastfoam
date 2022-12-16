@@ -40,9 +40,13 @@ namespace regionSolvers
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionSolvers::thermal::thermal(dynamicFvMesh& mesh)
+Foam::regionSolvers::thermal::thermal
+(
+    dynamicFvMesh& mesh,
+    const regionSolverList& regions
+)
 :
-    regionSolver(mesh),
+    regionSolver(mesh, regions),
     thermo_
     (
         solidBlastThermo::New
@@ -74,21 +78,20 @@ Foam::regionSolvers::thermal::~thermal()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::regionSolvers::thermal::initialiseMesh(const bool firstIter)
+void Foam::regionSolvers::thermal::initialiseMesh(const IterType)
 {
     dynMesh_.update();
     if (mesh_.moving())
     {
         const_cast<surfaceScalarField&>(mesh_.phi()) == Zero;
     }
-    return mesh_.moving();
 }
 
 
 void Foam::regionSolvers::thermal::initialise()
 {}
 
-bool Foam::regionSolvers::thermal::solve()
+void Foam::regionSolvers::thermal::solve()
 {
     const volScalarField TOld(thermo_->T());
 
@@ -150,15 +153,14 @@ bool Foam::regionSolvers::thermal::solve()
     Info<< "Min/max T:" << min(thermo_->T()).value() << ' '
         << max(thermo_->T()).value() << endl;
 
-    scalar error =
-        sqrt
-        (
-            sum(magSqr(TOld - thermo_->T())).value()
-           /returnReduce(thermo_->T().size(), sumOp<scalar>())
-        );
-    Info<< TOld.name() << " error for region " << this->name() << ": "
-        << error << endl;
-    return error < 1e-3;
+    // scalar error =
+    //     sqrt
+    //     (
+    //         sum(magSqr(TOld - thermo_->T())).value()
+    //        /returnReduce(thermo_->T().size(), sumOp<scalar>())
+    //     );
+    // Info<< TOld.name() << " error for region " << this->name() << ": "
+    //     << error << endl;
 
 }
 

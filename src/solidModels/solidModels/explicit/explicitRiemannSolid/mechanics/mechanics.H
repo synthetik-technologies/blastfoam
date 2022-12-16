@@ -154,7 +154,7 @@ public:
             }
 
             //- Return the stretch
-            const volScalarField stretch() const
+            const volScalarField& stretch() const
             {
                 return stretch_;
             }
