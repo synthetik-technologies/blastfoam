@@ -1,4 +1,4 @@
-blastfoam (6.0.1-staging.2) UNRELEASED; urgency=low
+blastfoam (6.0.2-37-two-tags-created-on-public-repo.9) UNRELEASED; urgency=low
 
 
   [ Ubuntu ]
@@ -62,4 +62,19 @@ blastfoam (6.0.1-staging.2) UNRELEASED; urgency=low
   [  ]
   * Automated Release
 
- --  <runner@fv-az214-559.1aolvm3ja0pufmfb1mjwo52tze.gx.internal.cloudapp.net>  Fri, 09 Sep 2022 18:49:45 +0000
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+ --  <runner@fv-az340-799.mxmdpgug4gjexmnafy00atesae.gx.internal.cloudapp.net>  Mon, 10 Oct 2022 15:47:49 +0000
