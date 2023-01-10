@@ -1,4 +1,4 @@
-blastfoam (6.0.2-37-two-tags-created-on-public-repo.9) UNRELEASED; urgency=low
+blastfoam (6.0.2-staging.1) UNRELEASED; urgency=low
 
 
   [ Ubuntu ]
@@ -77,4 +77,7 @@ blastfoam (6.0.2-37-two-tags-created-on-public-repo.9) UNRELEASED; urgency=low
   [  ]
   * Automated Release
 
- --  <runner@fv-az340-799.mxmdpgug4gjexmnafy00atesae.gx.internal.cloudapp.net>  Mon, 10 Oct 2022 15:47:49 +0000
+  [ Synthetik Technologies ]
+  * Automated Release
+
+ -- Synthetik Technologies <support@synthetik-technologies.com>  Tue, 10 Jan 2023 15:28:09 +0000
