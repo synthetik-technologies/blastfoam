@@ -163,7 +163,12 @@ void Foam::compressibleBlastSystem::postUpdate()
             );
     }
 
-    if (needSolve(U_.name()) || turbulence_.valid())
+    if
+    (
+        needSolve(U_.name())
+     || turbulence_.valid()
+     || dragSource_.valid()
+    )
     {
         updateE = true;
 
@@ -206,7 +211,12 @@ void Foam::compressibleBlastSystem::postUpdate()
     }
 
     // Solve thermal energy diffusion
-    if (needSolve(e_.name()) || turbulence_.valid())
+    if
+    (
+        needSolve(e_.name())
+     || turbulence_.valid()
+     || extESource_.valid()
+    )
     {
         fvScalarMatrix eEqn
         (
