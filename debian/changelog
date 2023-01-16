@@ -1,4 +1,4 @@
-blastfoam (6.0.2-staging.2) UNRELEASED; urgency=low
+blastfoam (6.0.2) UNRELEASED; urgency=low
 
 
   [ Ubuntu ]
@@ -80,5 +80,6 @@ blastfoam (6.0.2-staging.2) UNRELEASED; urgency=low
   [ Synthetik Technologies ]
   * Automated Release
   * Automated Release
+  * Automated Release
 
- -- Synthetik Technologies <support@synthetik-technologies.com>  Wed, 11 Jan 2023 17:10:30 +0000
+ -- Synthetik Technologies <support@synthetik-technologies.com>  Mon, 16 Jan 2023 15:55:30 +0000
