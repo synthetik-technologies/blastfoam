@@ -158,7 +158,7 @@ Foam::scalar Foam::Murnaghan<Specie>::cSqr
     const scalar cv
 ) const
 {
-    return pow(rho/rho0_, n_ - 1.0)/(rho0_*n_*kappa_);
+    return pow(rho/rho0_, n_ - 1.0)/(rho0_*kappa_);
 }
 
 

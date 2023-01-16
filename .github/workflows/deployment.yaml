@@ -90,7 +90,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: blastfoam-package
-      - run: gh release upload "v${{ needs.version.outputs.version }}" blastfoam_*.deb
+      - run: gh release upload "v${{ needs.version.outputs.version }}" blastfoam_${{ needs.version.outputs.version }}*.deb
 
   build-docker:
     name: Build Docker Image

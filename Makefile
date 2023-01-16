@@ -1,6 +1,6 @@
-# DESTDIR = /opt
 prefix = /opt/blastfoam
 export MAKE=True
+
 build: SHELL:=bash
 build:
 	+ source /opt/openfoam9/etc/bashrc && \
