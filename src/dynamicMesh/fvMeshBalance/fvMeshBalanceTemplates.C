@@ -29,6 +29,35 @@ License
 #include "processorPolyPatch.H"
 
 
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::fvMeshBalance::fvPatchResizer::resizePatchFields
+(
+    fvMesh& mesh,
+    const labelList& patchSizes
+)
+{
+    typedef GeometricField<Type, Patch, Mesh> GeoField;
+
+    HashTable<GeoField*> flds(mesh.lookupClass<GeoField>());
+
+    forAllIter(typename HashTable<GeoField*>, flds, iter)
+    {
+        GeoField& fld = *iter();
+        forAll(fld.boundaryField(), patchi)
+        {
+            // Use a const_cast so the previous state is not save on accident
+            // If the new patchSize is bigger than the old, there may be
+            // un-initialized values
+            const_cast<Patch<Type>&>(fld.boundaryField()[patchi]).setSize
+            (
+                patchSizes[patchi],
+                Zero
+            );
+        }
+    }
+}
+
+
 template<class GeoField>
 void Foam::fvMeshBalance::correctBoundaries()
 {

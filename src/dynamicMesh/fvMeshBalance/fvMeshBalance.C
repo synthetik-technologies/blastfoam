@@ -40,8 +40,9 @@ using namespace Foam::decompositionConstraints;
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshBalance, 0);
+    defineTypeNameAndDebug(fvMeshBalance::fvPatchResizer, 0);
 
-bool fvMeshBalance::balancing = false;
+    bool fvMeshBalance::balancing = false;
 }
 
 bool Foam::fvMeshBalance::isBalancing()
@@ -211,6 +212,8 @@ Foam::fvMeshBalance::fvMeshBalance
 Foam::fvMeshBalance::~fvMeshBalance()
 {}
 
+Foam::fvMeshBalance::fvPatchResizer::~fvPatchResizer()
+{}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -546,6 +549,9 @@ Foam::fvMeshBalance::distribute()
 
     blastMeshObject::preDistribute<fvMesh>(mesh_);
 
+    // Create class to hook in before fvMesh::updateMesh is called
+    fvPatchResizer resizer(mesh_);
+
     Info<< "Distributing the mesh ..." << endl;
     balancing = true;
     autoPtr<mapDistributePolyMesh> map =
@@ -617,6 +623,40 @@ bool Foam::fvMeshBalance::write(const bool write) const
         return decomposeParDict.regIOobject::write();
     }
     return true;
+}
+
+
+// Problems can occur when mapping patchFields since the new size maybe bigger
+// than the previous size which leads to uninitialized values and can result
+// in crashes due to writing NaN
+// Current fix:
+//      After the polyMesh is updated, but before fields are mapped, set all
+//      patch sizes to the maximum size, and initialize to Zero. PointPatchFields
+//      are only updated if they are a valuePointPatchField
+void Foam::fvMeshBalance::fvPatchResizer::updateMesh(const mapPolyMesh& map)
+{
+    labelList newPatchSizes(map.oldPatchSizes());
+    forAll(mesh_.boundary(), patchi)
+    {
+        newPatchSizes[patchi] =
+            max(newPatchSizes[patchi], mesh_.boundary()[patchi].size());
+    }
+
+    #define resizePatchFieldType(Type, mesh, sizes)                            \
+        resizePatchFields<Type, fvPatchField, volMesh>                         \
+        (                                                                      \
+            mesh,                                                              \
+            sizes                                                              \
+        );                                                                     \
+        resizePatchFields<Type, fvsPatchField, surfaceMesh>                    \
+        (                                                                      \
+            mesh,                                                              \
+            sizes                                                              \
+        );
+
+    FOR_ALL_FIELD_TYPES(resizePatchFieldType, mesh_, newPatchSizes);
+
+    #undef resizePatchFieldType
 }
 
 
