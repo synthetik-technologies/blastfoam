@@ -831,11 +831,11 @@ int main(int argc, char *argv[])
     );
     topoSetList topoSets(mesh);
 
-    labelList levels(regions.size(), 0);
+    labelList levels(regions.size(), -1);
     forAll(regions, regionI)
     {
         levels[regionI] =
-            regions[regionI].dict().lookupOrDefault("level", 0);
+            regions[regionI].dict().lookupOrDefault("level", -1);
     }
 
     // Error fields is the same since it is looked up
@@ -865,17 +865,27 @@ int main(int argc, char *argv[])
     };
     volScalarField& error = mesh.lookupObjectRef<volScalarField>("error");
 
-    label maxLevel =
-    (
-        levels.size() && !setFieldsDict.found("maxRefinement")
-      ? max(levels)
-      : (
-            EE.valid()
-          ? EE->maxLevel()
-          : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
-        )
-    );
-
+    label maxLevel = -1;
+    if (setFieldsDict.found("maxRefinement"))
+    {
+        maxLevel = setFieldsDict.lookup<label>("maxRefinement");
+    }
+    else if (max(levels) > 0)
+    {
+        maxLevel = max(levels);
+    }
+    else if (EE.valid())
+    {
+        maxLevel = EE->maxLevel();
+    }
+    else if (!args.optionFound("noRefine"))
+    {
+        FatalIOErrorInFunction(setFieldsDict)
+            << "maximum refinement could not be determined. Please " << nl
+            << "provide levels inside regions, a global \"maxRefinement\"" << nl
+            << "or an errorEstimator" << endl
+            << abort(FatalIOError);
+    }
 
 
     // Maximum number of iterations
