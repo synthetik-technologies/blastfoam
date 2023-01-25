@@ -38,6 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "twoPhaseCompressibleSystem.H"
+#include "interfaceSystem.H"
 #include "interfaceProperties.H"
 
 
@@ -50,12 +51,25 @@ namespace Foam
 
 class twoPhaseInterfaceCompressibleSystem
 :
-    public twoPhaseCompressibleSystem
+    public twoPhaseCompressibleSystem,
+    public interfaceSystem
 {
 // Private data
 
-    //- Surface tension model
-    autoPtr<interfaceProperties> interfacePtr_;
+    //- Interface properties
+    interfaceProperties interface_;
+
+    //- Level set function
+    volScalarField psi_;
+
+    //- Interface normal
+    surfaceScalarField nHatf_;
+
+    //- Default dictionary for GFM solve
+    static dictionary GFMSolverDict_;
+    //
+    // //- Surface tension
+    // autoPtr<surfaceTensionModel> surfaceTensionModel_;
 
 
     //- Momentum source
@@ -78,6 +92,12 @@ public:
 
 
     // Member functions
+
+        //- Decode primative variables
+        void decode();
+
+        //- Solve
+        void solve();
 
         //- Update fluxes
         void update();

@@ -81,13 +81,16 @@ protected:
         PtrList<surfaceScalarField> alphaRhoPhis_;
 
 
+    //- Transport phase densities
+    bool transportPhaseDensity_;
+
         //- Calculate new alpha and rho fields
         virtual void calcAlphas();
 
 
 public:
 
-    TypeName("multiphaseCompressibleSystem");
+    TypeName("multiphase");
 
     // Constructor
     multiphaseCompressibleSystem(const fvMesh& mesh);

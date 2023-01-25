@@ -66,6 +66,10 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
             ext = "Interface";
         }
     }
+    else if (phaseProperties.lookupOrDefault("useInterface", false))
+    {
+        ext = "Interface";
+    }
 
     if (phases.size() < 2)
     {

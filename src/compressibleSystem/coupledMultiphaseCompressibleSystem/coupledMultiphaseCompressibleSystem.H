@@ -66,7 +66,7 @@ class coupledMultiphaseCompressibleSystem
 
 public:
 
-    TypeName("coupledMultiphaseCompressibleSystem");
+    TypeName("coupledMultiphase");
 
     // Constructor
     coupledMultiphaseCompressibleSystem(const fvMesh& mesh);

@@ -26,6 +26,7 @@ License
 #include "multiphaseCompressibleSystem.H"
 #include "addToRunTimeSelectionTable.H"
 #include "SortableList.H"
+#include "MULES.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -53,7 +54,8 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
-    alphaRhoPhis_(alphas_.size())
+    alphaRhoPhis_(alphas_.size()),
+    transportPhaseDensity_(this->lookupOrDefault("transportPhaseDensity", false))
 {
     this->fluxScheme_ = fluxScheme::NewMulti(phi_);
 
@@ -130,7 +132,8 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
-    alphaRhoPhis_(alphas_.size())
+    alphaRhoPhis_(alphas_.size()),
+    transportPhaseDensity_(this->lookupOrDefault("transportPhaseDensity", false))
 {
     this->fluxScheme_ = fluxScheme::NewMulti(phi_);
 
@@ -249,7 +252,7 @@ void Foam::multiphaseCompressibleSystem::update()
             surfaceScalarField::New
             (
                 rhoLimiter->ownName(alphaRhos_[phasei].name()),
-                talphaOwn*trhoOwn
+                talphaOwn*trhoOwn()
             )
         );
         tmp<surfaceScalarField> talphaRhoNei
@@ -257,7 +260,7 @@ void Foam::multiphaseCompressibleSystem::update()
             surfaceScalarField::New
             (
                 rhoLimiter->neiName(alphaRhos_[phasei].name()),
-                talphaNei*trhoNei
+                talphaNei*trhoNei()
             )
         );
         if (!cached[phasei])
@@ -265,6 +268,12 @@ void Foam::multiphaseCompressibleSystem::update()
             cached[phasei] = true;
             mesh().addTemporaryObject(talphaRhoOwn().name());
             mesh().addTemporaryObject(talphaRhoNei().name());
+
+            if (transportPhaseDensity_)
+            {
+                mesh().addTemporaryObject(trhoOwn().name());
+                mesh().addTemporaryObject(trhoNei().name());
+            }
         }
         alphaRhoPhis_[phasei] = fluxScheme_->flux(talphaRhoOwn(), talphaRhoNei(), phi_);
     }
@@ -276,11 +285,13 @@ void Foam::multiphaseCompressibleSystem::solve()
 {
     dimensionedScalar dT = rho_.time().deltaT();
     rho_ = dimensionedScalar("0", dimDensity, 0.0);
+
+    volScalarField divPhi(fvc::div(phi_));
     forAll(alphas_, phasei)
     {
         volScalarField deltaAlpha
         (
-            fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
+            fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*divPhi
         );
         this->storeAndBlendDelta(deltaAlpha);
         this->storeAndBlendOld(alphas_[phasei], false);
@@ -298,8 +309,24 @@ void Foam::multiphaseCompressibleSystem::solve()
         alphaRhos_[phasei].storePrevIter();
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
+
+        if (transportPhaseDensity_)
+        {
+            volScalarField deltaRho
+            (
+                IOobject::groupName("deltaRho", rhos_[phasei].group()),
+                fvc::div(fluxScheme_->flux(rhos_[phasei], phi_))
+              - rhos_[phasei]*divPhi
+            );
+
+            this->storeAndBlendDelta(deltaRho);
+            this->storeAndBlendOld(rhos_[phasei], false);
+
+            //- Solve volume fraction
+            rhos_[phasei] -= dT*deltaRho;
+            rhos_[phasei].correctBoundaryConditions();
+        }
     }
-    calcAlphas();
 
     //- Store "old" total density
     rho_.storePrevIter();
@@ -358,7 +385,7 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
             fvScalarMatrix alphaRhoEqn
             (
                 fvm::ddt(alpha, rho) - fvc::ddt(alphaRhos_[phasei])
-            + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
+              + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
             ==
                 models().source(alpha, rho)
             );
@@ -406,19 +433,40 @@ void Foam::multiphaseCompressibleSystem::calcAlphas()
 
 void Foam::multiphaseCompressibleSystem::decode()
 {
+    calcAlphas();
+
     // Calculate densities
     rho_ = dimensionedScalar("0", dimDensity, 0.0);
 
     forAll(alphas_, phasei)
     {
-        alphaRhos_[phasei].max(0);
-        rhos_[phasei] =
-            alphaRhos_[phasei]
-           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
+        volScalarField& alpha = alphas_[phasei];
+        volScalarField& rho = rhos_[phasei];
+        volScalarField& alphaRho = alphaRhos_[phasei];
+        const scalar rAlpha = thermo_.thermo(phasei).residualAlpha().value();
 
-        rhos_[phasei].correctBoundaryConditions();
+        alphaRho.max(0);
+        if (transportPhaseDensity_)
+        {
+            // Only update cells that have a valid volume fraction
+            // other cell densities are handled by transport of density
+            forAll(alpha, celli)
+            {
+                const scalar alphai = alpha[celli];
+                if (alphai > rAlpha)
+                {
+                    rho[celli] = alphaRho[celli]/alphai;
+                }
+            }
+        }
+        else
+        {
+            rho.ref() = alphaRho()/max(alpha(), rAlpha);
+        }
 
-        alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
+        rho.correctBoundaryConditions();
+
+        alphaRho.boundaryFieldRef() = alpha.boundaryField()*rho.boundaryField();
 
         rho_ += alphaRhos_[phasei];
     }

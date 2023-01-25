@@ -26,6 +26,7 @@ License
 #include "compressibleSystem.H"
 #include "uniformDimensionedFields.H"
 #include "fvm.H"
+#include "fvcMeshPhi.H"
 #include "wedgeFvPatch.H"
 #include "blastRadiationModel.H"
 
@@ -336,7 +337,7 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
             amaxSf.boundaryFieldRef()[patchi] = Zero;
         }
     }
-    amaxSf += mag(fvc::flux(U()));
+    amaxSf += mag(fvc::relative(fvc::flux(U()), U()));
 
     scalarField sumAmaxSf
     (

@@ -27,6 +27,9 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "EulerDdtScheme.H"
 #include "gaussConvectionScheme.H"
+#include "CMULES.H"
+#include "extendedNLevelGlobalCellToCellStencils.H"
+#include "CICSAM.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -49,7 +52,7 @@ Foam::twoPhaseInterfaceCompressibleSystem::rhoUSource() const
 {
     return
         compressibleBlastSystem::rhoUSource()
-      + fvc::reconstruct(interfacePtr_->surfaceTensionForce()*mesh().magSf());
+      + fvc::reconstruct(interface_.surfaceTensionForce()*mesh().magSf());
 }
 
 
@@ -59,7 +62,7 @@ Foam::twoPhaseInterfaceCompressibleSystem::rhoESource() const
     return
         compressibleBlastSystem::rhoESource()
       + (
-            fvc::reconstruct(interfacePtr_->surfaceTensionForce()*mesh().magSf())
+            fvc::reconstruct(interface_.surfaceTensionForce()*mesh().magSf())
           & U()
         );
 }
@@ -73,16 +76,32 @@ Foam::twoPhaseInterfaceCompressibleSystem::twoPhaseInterfaceCompressibleSystem
 )
 :
     twoPhaseCompressibleSystem(mesh),
-    interfacePtr_
+    interfaceSystem(U_, *this),
+    interface_(alpha1_, alpha2_, U_, *this),
+    psi_
     (
-        new interfaceProperties
+        IOobject
         (
-            alpha1_,
-            alpha2_,
-            U_,
-            *this
-        )
+            IOobject::groupName("levelSet", alpha1_.group()),
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        this->levelSet(alpha1_)
+    ),
+    nHatf_
+    (
+        IOobject
+        (
+            "nHatf",
+            mesh.time().timeName(),
+            mesh
+        ),
+        (fvc::interpolate(fvc::grad(psi_)) & mesh_.Sf())
+       /(mag(fvc::interpolate(fvc::grad(psi_))) + small)
     )
+    // surfaceTension_(surfaceTensionModel::New(*this, mesh))
 {}
 
 
@@ -96,10 +115,105 @@ Foam::twoPhaseInterfaceCompressibleSystem::~twoPhaseInterfaceCompressibleSystem(
 
 void Foam::twoPhaseInterfaceCompressibleSystem::update()
 {
+    // Decode primitives
     decode();
+
+    tmp<surfaceScalarField> talpha1Own, talpha1Nei;
+    autoPtr<ReconstructionScheme<scalar>> alpha1Limiter
+    (
+        ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group())
+    );
+    alpha1Limiter->interpolateOwnNei(talpha1Own, talpha1Nei);
+    const surfaceScalarField& alpha1Own = talpha1Own();
+    const surfaceScalarField& alpha1Nei = talpha1Nei();
+
+    surfaceScalarField alpha2Own(1.0 - alpha1Own);
+    surfaceScalarField alpha2Nei(1.0 - alpha1Nei);
+
+
+    tmp<surfaceScalarField> trho1Own, trho1Nei;
+    autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+    (
+        ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group())
+    );
+    rho1Limiter->interpolateOwnNei(trho1Own, trho1Nei);
+    // correctInterfaceField
+    // (
+    //     "interfaceRho",
+    //     alpha1_,
+    //     rho1_,
+    //     (-1.0*nHatf_)(),
+    //     trho1Own.ref(),
+    //     trho1Nei.ref()
+    // );
+
+
+    tmp<surfaceScalarField> trho2Own, trho2Nei;
+    autoPtr<ReconstructionScheme<scalar>> rho2Limiter
+    (
+        ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group())
+    );
+    rho2Limiter->interpolateOwnNei(trho2Own, trho2Nei);
+    // correctInterfaceField
+    // (
+    //     "interfaceRho",
+    //     alpha2_,
+    //     rho2_,
+    //     (1.0*nHatf_)(),
+    //     trho2Own.ref(),
+    //     trho2Nei.ref()
+    // );
+
+
+    // Compute total phase masses
+    tmp<surfaceScalarField> talphaRho1Own = surfaceScalarField::New
+    (
+        rho1Limiter->ownName(alphaRho1_.name()),
+        alpha1Own*trho1Own()
+    );
+    tmp<surfaceScalarField> talphaRho1Nei = surfaceScalarField::New
+    (
+        rho1Limiter->neiName(alphaRho1_.name()),
+        alpha1Nei*trho1Nei()
+    );
+    tmp<surfaceScalarField> talphaRho2Own = surfaceScalarField::New
+    (
+        rho2Limiter->ownName(alphaRho2_.name()),
+        alpha2Own*trho2Own()
+    );
+    tmp<surfaceScalarField> talphaRho2Nei = surfaceScalarField::New
+    (
+        rho2Limiter->ownName(alphaRho2_.name()),
+        alpha2Nei*trho2Nei()
+    );
+
+    surfaceScalarField rhoOwn
+    (
+        reconstruction::ownName(rho_.name()),
+        talphaRho1Own() + talphaRho2Own()
+    );
+    surfaceScalarField rhoNei
+    (
+        reconstruction::neiName(rho_.name()),
+        talphaRho1Nei() + talphaRho2Nei()
+    );
+
+    static bool cached = false;
+    if (!cached)
+    {
+        mesh().addTemporaryObject(talphaRho1Own().name());
+        mesh().addTemporaryObject(talphaRho1Nei().name());
+        mesh().addTemporaryObject(talphaRho2Own().name());
+        mesh().addTemporaryObject(talphaRho2Nei().name());
+
+        mesh().addTemporaryObject(rhoOwn.name());
+        mesh().addTemporaryObject(rhoNei.name());
+    }
+
     fluxScheme_->update
     (
-        rho_,
+        rhoOwn,
+        rhoNei,
         U_,
         e_,
         p_,
@@ -110,63 +224,209 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         rhoEPhi_
     );
 
-    surfaceScalarField alpha1f
-    (
-        fvc::interpolate(alpha1_, phi_, "reconstruct(alpha)")
-    );
+    // Interface fields
+    interface_.correct();
 
-    tmp<surfaceScalarField> talphaRho1Own, talphaRho1Nei;
-    tmp<surfaceScalarField> talphaRho2Own, talphaRho2Nei;
+    // Limit volume fraction flux
     {
-        autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+        // Interface fluxes
+        // surfaceScalarField phic(mag(phi_)/mesh().magSf());
+        // phic = min(interfacePtr_->cAlpha()*phic, max(phic));
+        // surfaceScalarField phir("phir", phic*interface_.nHatf());
+
+        // Create copy of alpha to blend and set old time for MULES correction
+        volScalarField alpha1Old(alpha1_);
+        this->blendOld(alpha1Old);
+        alpha1Old.storeOldTime();
+
+        // surfaceScalarField alpha2Phir
+        // (
+        //     "alphaPhir",
+        //     // fvc::flux(-phir, alpha2_, "div(phirb,alpha)")
+        //  fluxScheme_->flux((1.0 - alpha1Own)(), (1.0 - alpha1Nei)(), (-phir)())
+        // );
+
+        // Blend fluxes for ODE solver
+        alphaPhi_ =
         (
-            ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group())
+            fluxScheme_->flux(alpha1Own, alpha1Nei, phi_)
+          // + fluxScheme_->flux(alpha1Own, alpha1Nei, (-alpha2Phir)())
+            // alpha1f*phi_
+          // + fvc::flux
+          //   (
+          //       -alpha2Phir,
+          //       alpha1_,
+          //       "div(phirb,alpha)"
+          //   )
+        );
+        this->storeAndBlendDelta(alphaPhi_);
+
+        surfaceScalarField phi(phi_);
+        this->storeAndBlendDelta(phi);
+
+        // Limit volume fraction flux to ensure boundedness
+        MULES::limit
+        (
+            1.0/mesh().time().deltaT().value(),
+            geometricOneField(),
+            alpha1Old,
+            phi,
+            alphaPhi_,
+            zeroField(),
+            (alpha1_.v()*fvc::div(phi_)().v())(),//zeroField(),
+            oneField(),
+            zeroField(),
+            false
         );
 
-        autoPtr<ReconstructionScheme<scalar>> rho2Limiter
-        (
-            ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group())
-        );
-
-        talphaRho1Own = surfaceScalarField::New
-        (
-            rho1Limiter->ownName(alphaRho1_.name()),
-            alpha1f*rho1Limiter->interpolateOwn()
-        );
-        talphaRho1Nei = surfaceScalarField::New
-        (
-            rho1Limiter->neiName(alphaRho1_.name()),
-            alpha1f*rho1Limiter->interpolateNei()
-        );
-
-        surfaceScalarField alpha2f(1.0 - alpha1f);
-        talphaRho2Own = surfaceScalarField::New
-        (
-            rho2Limiter->ownName(alphaRho2_.name()),
-            alpha2f*rho2Limiter->interpolateOwn()
-        );
-        talphaRho2Nei = surfaceScalarField::New
-        (
-            rho2Limiter->ownName(alphaRho2_.name()),
-            alpha2f*rho2Limiter->interpolateNei()
-        );
-        static bool cached = false;
-        if (!cached)
-        {
-            mesh().addTemporaryObject(talphaRho1Own().name());
-            mesh().addTemporaryObject(talphaRho1Nei().name());
-            mesh().addTemporaryObject(talphaRho2Own().name());
-            mesh().addTemporaryObject(talphaRho2Nei().name());
-        }
+        // Using the total field, un-blend volume fraction flux
+        alphaPhi_ = this->calcAndStoreDelta(alphaPhi_);
     }
-    alphaPhi_ = alpha1f*phi_;
-    alphaRhoPhi1_ =// phi_*(pos0(phi_)*talphaRho1Own + neg(phi_)*talphaRho1Nei);
-        fluxScheme_->flux(talphaRho1Own(), talphaRho1Nei(), phi_);
-    alphaRhoPhi2_ =// rhoPhi_ - alphaRhoPhi1_;
-        fluxScheme_->flux(talphaRho2Own(), talphaRho2Nei(), phi_);
-    thermo_.update();
 
-    interfacePtr_->correct();
+    // Update phase mass fluxes
+    alphaRhoPhi1_ = fluxScheme_->flux(trho1Own(), trho1Nei(), alphaPhi_);
+    alphaRhoPhi2_ = rhoPhi_ - alphaRhoPhi1_;
+
+    // Update thermo
+    thermo_.update();
 }
 
+
+void Foam::twoPhaseInterfaceCompressibleSystem::solve()
+{
+    twoPhaseCompressibleSystem::solve();
+
+    // Primitive transport of phase densities
+    volScalarField divU(fvc::div(phi_));
+    volScalarField deltaRho1
+    (
+        fvc::div(fluxScheme_->flux(rho1_, phi_)) - rho1_*divU
+    );
+    volScalarField deltaRho2
+    (
+        fvc::div(fluxScheme_->flux(rho2_, phi_)) - rho2_*divU
+    );
+
+    this->storeAndBlendOld(rho1_, false);
+    this->storeAndBlendOld(rho2_, false);
+    this->storeAndBlendDelta(deltaRho1);
+    this->storeAndBlendDelta(deltaRho2);
+
+    rho1_ -= mesh().time().deltaT()*deltaRho1;
+    rho2_ -= mesh().time().deltaT()*deltaRho2;
+}
+
+
+void Foam::twoPhaseInterfaceCompressibleSystem::decode()
+{
+    // Limit first phase volume fraction and calculate second phase volume fraction
+    alpha1_.maxMin(0.0, 1.0);
+    alpha2_ = 1.0 - alpha1_;
+
+    // Limit phase masses
+    alphaRho1_.max(0);
+    alphaRho2_.max(0);
+
+
+    // Only update cells that have a valid volume fraction
+    // other cell densities are handled by transport of density
+    const scalar rAlpha1 = thermo_.thermo(0).residualAlpha().value();
+    const scalar rAlpha2 = thermo_.thermo(1).residualAlpha().value();
+    forAll(alpha1_, celli)
+    {
+        const scalar alpha1 = alpha1_[celli];
+        if (alpha1 > rAlpha1)
+        {
+            rho1_[celli] = alphaRho1_[celli]/alpha1;
+        }
+        const scalar alpha2 = alpha2_[celli];
+        if (alpha2 > rAlpha2)
+        {
+            rho2_[celli] = alphaRho2_[celli]/alpha2_[celli];
+        }
+    }
+
+    // rho1_.ref() = alphaRho1_()/max(alpha1_(), rAlpha1);
+    // rho2_.ref() = alphaRho2_()/max(alpha2_(), rAlpha2);
+
+    // const extendedNLevelCFCCellToCellStencil& stencil
+    // (
+    //     extendedNLevelCFCCellToCellStencil::New(mesh(), 3)
+    // );
+    // List<List<scalar>> alpha1Nei(alpha1_.size());
+    // List<List<scalar>> rho1Nei(rho1_.size());
+    // List<List<scalar>> rho2Nei(rho2_.size());
+    //
+    // stencil.collectData(alpha1_, alpha1Nei);
+    // stencil.collectData(rho1_, rho1Nei);
+    // stencil.collectData(rho2_, rho2Nei);
+
+    // forAll(alpha1_, celli)
+    // {
+    //     const scalar alpha1 = alpha1_[celli];
+    //     if (alpha1 < 0.5)
+    //     {
+    //         scalar sumRhoW = 0.0;
+    //         scalar sumW = 0.0;
+    //         forAll(rho1Nei[celli], cj)
+    //         {
+    //             if (alpha1Nei[celli][cj] > 0.5)
+    //             {
+    //                 scalar w = 1.0/max(1.0 - alpha1Nei[celli][cj], rAlpha1);
+    //                 sumRhoW += rho1Nei[celli][cj]*w;
+    //                 sumW += w;
+    //             }
+    //         }
+    //         rho1_[celli] = sumRhoW/max(sumW, rAlpha1);
+    //         // alpha1_[celli] = alphaRho1_[celli]/max(rho1_[celli], rRho1);
+    //     }
+    //
+    //     const scalar alpha2 = alpha2_[celli];
+    //     if (alpha2 < 0.5)
+    //     {
+    //         scalar sumRhoW = 0.0;
+    //         scalar sumW = 0.0;
+    //         forAll(rho2Nei[celli], cj)
+    //         {
+    //             if (alpha1Nei[celli][cj] < 0.5)
+    //             {
+    //                 scalar w = 1.0/max(alpha1Nei[celli][cj], rAlpha2);
+    //                 sumRhoW += rho2Nei[celli][cj]*w;
+    //                 sumW += w;
+    //             }
+    //         }
+    //         rho2_[celli] = sumRhoW/max(sumW, rAlpha1);
+    //         // alpha2_[celli] = alphaRho2_[celli]/max(rho2_[celli], rRho2);
+    //     }
+    // }
+
+
+    // {
+    //     // Gradient of level set function
+    //     surfaceVectorField gradAlphaf(fvc::interpolate(fvc::grad(alpha1_)));
+    //
+    //     // Face unit interface normal
+    //     nHatf_ = (gradAlphaf & mesh_.Sf())/(mag(gradAlphaf) + deltaN_);
+    // }
+    // {
+    //     psi_ = this->levelSet(alpha1_);
+    //
+    //     // Gradient of level set function
+    //     surfaceVectorField gradPsif(fvc::interpolate(fvc::grad(psi_)));
+    //
+    //     // Face unit interface normal
+    //     nHatf_ = (gradPsif & mesh_.Sf())/max(mag(gradPsif), 1e-6);
+    // }
+
+    // this->GFMExtension(rho1_, -psi_);
+    // this->GFMExtension(rho2_, psi_, nHatf_, fvc::div(nHatf_)());
+
+    rho1_.correctBoundaryConditions();
+    rho2_.correctBoundaryConditions();
+    alphaRho1_.boundaryFieldRef() = alpha1_.boundaryField()*rho1_.boundaryField();
+    alphaRho2_.boundaryFieldRef() = alpha2_.boundaryField()*rho2_.boundaryField();
+
+    rho_ = alphaRho1_ + alphaRho2_;
+    compressibleBlastSystem::decode();
+}
 // ************************************************************************* //

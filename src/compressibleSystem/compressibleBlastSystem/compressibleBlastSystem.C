@@ -228,6 +228,12 @@ void Foam::compressibleBlastSystem::postUpdate()
         }
         if (turbulence_.valid())
         {
+            // eEqn -=
+            //     fvc::laplacian
+            //     (
+            //         thermophysicalTransport_->alphaEff(),
+            //         T_
+            //     )*this->thermo().Cv();
             eEqn += thermophysicalTransport_->divq(e_);
         }
         constraints().constrain(eEqn);

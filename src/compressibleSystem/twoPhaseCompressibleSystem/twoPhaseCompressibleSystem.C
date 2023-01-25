@@ -381,25 +381,18 @@ void Foam::twoPhaseCompressibleSystem::decode()
     alpha1_.correctBoundaryConditions();
     alpha2_ = 1.0 - alpha1_;
 
-    volScalarField alpha1
-    (
-        max(alpha1_, thermo_.thermo(0).residualAlpha())
-    );
-    volScalarField alpha2
-    (
-        max(alpha2_, thermo_.thermo(1).residualAlpha())
-    );
-
     alphaRho1_.max(0);
-    rho1_.ref() = alphaRho1_()/alpha1();
-    rho1_.max(small);
-    rho1_.correctBoundaryConditions();
-    alphaRho1_.boundaryFieldRef() = alpha1_.boundaryField()*rho1_.boundaryField();
-
     alphaRho2_.max(0);
-    rho2_.ref() = alphaRho2_()/alpha2();
-    rho2_.max(small);
+    const scalar rAlpha1(thermo_.thermo(0).residualAlpha().value());
+    const scalar rAlpha2(thermo_.thermo(1).residualAlpha().value());
+
+    rho1_.ref() = alphaRho1_()/max(alpha1_(), rAlpha1);
+    rho1_.correctBoundaryConditions();
+
+    rho2_.ref() = alphaRho2_()/max(alpha2_(), rAlpha2);
     rho2_.correctBoundaryConditions();
+
+    alphaRho1_.boundaryFieldRef() = alpha1_.boundaryField()*rho1_.boundaryField();
     alphaRho2_.boundaryFieldRef() = alpha2_.boundaryField()*rho2_.boundaryField();
 
     rho_ = alphaRho1_ + alphaRho2_;
