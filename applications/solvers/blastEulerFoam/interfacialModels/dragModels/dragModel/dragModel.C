@@ -89,14 +89,7 @@ Foam::dragModel::dragModel
         )
     ),
     pair_(pair),
-    swarmCorrection_
-    (
-        swarmCorrection::New
-        (
-            dict.subDict("swarmCorrection"),
-            pair
-        )
-    )
+    swarmCorrection_(swarmCorrection::New(dict, pair))
 {}
 
 
