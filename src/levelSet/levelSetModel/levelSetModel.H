@@ -35,8 +35,8 @@ SourceFiles
 #ifndef levelSetModel_H
 #define levelSetModel_H
 
+#include "timeIntegrationSystem.H"
 #include "volFields.H"
-#include "isoSurface.H"
 #include "NamedEnum.H"
 #include "surfaceFields.H"
 #include "searchableSurface.H"
@@ -46,11 +46,16 @@ SourceFiles
 namespace Foam
 {
 
+class isoSurface;
+
+
 /*---------------------------------------------------------------------------*\
                         Class levelSetModel Declaration
 \*---------------------------------------------------------------------------*/
 
 class levelSetModel
+:
+    public timeIntegrationSystem
 {
 public:
 
@@ -82,6 +87,9 @@ private:
         //- Reference to the volume fraction field
         volScalarField& alpha_;
 
+        //- Reference to the volumetric flux
+        UautoPtr<const surfaceScalarField> phiPtr_;
+
         //- Level set function
         volScalarField levelSet_;
 
@@ -98,13 +106,13 @@ private:
         dimensionedScalar epsilon0_;
 
         //- True interface thickness (dx*epsilon0)
-        volScalarField epsilon_;
+        dimensionedScalar epsilon_;
 
         //- Use distributed triSurface
         bool useDistributed_;
 
         //- Filtering method for contouring
-        isoSurface::filterType filterType_;
+        word filterType_;
 
         //- Method for computing level set function
         levelSetFunc lsFunc_;
@@ -114,6 +122,9 @@ private:
 
         //- Truncation cut off value
         scalar cutOff_;
+
+        //- Flag to solve the heavy side function transport
+        bool solveH_;
 
         //- Dictionary used to construct distributedTriSurfaceMesh
         mutable dictionary triMeshDict_;
@@ -126,6 +137,15 @@ public:
 
 
     // Constructors
+
+        //- Construct from volume fraction and dictionary
+        levelSetModel
+        (
+            volScalarField& alpha,
+            const surfaceScalarField& phi,
+            const dictionary& dict,
+            const bool mustRead = true
+        );
 
         //- Construct from volume fraction and dictionary
         levelSetModel
@@ -168,7 +188,7 @@ public:
             }
 
             //- Return the interface thickness parameter
-            const volScalarField& epsilon() const
+            const dimensionedScalar& epsilon() const
             {
                 return epsilon_;
             }
@@ -185,6 +205,18 @@ public:
                 return K_;
             }
 
+
+        //- Solve H
+        void solveH()
+        {
+            solveH_ = true;
+        }
+
+        //- Solve level set transport
+        void solveLS()
+        {
+            solveH_ = false;
+        }
 
         //- Update and optionally calculate distance
         void correct(const bool updateH = true);
@@ -226,6 +258,18 @@ public:
 
         //- Return the gradient of the volume fraction
         tmp<volVectorField> gradAlpha() const;
+
+
+    // ODE functions
+
+        //- Update fluxes
+        void update();
+
+        //- Explicit advection
+        void solve();
+
+        //- Implicit solves
+        void postUpdate();
 };
 
 
