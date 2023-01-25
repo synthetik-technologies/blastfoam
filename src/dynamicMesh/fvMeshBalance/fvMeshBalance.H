@@ -105,6 +105,49 @@ protected:
         void makeDecomposer() const;
 
 
+    // Class to set the size of patches during
+    class fvPatchResizer
+    :
+        public MeshObject
+        <
+            polyMesh,
+            UpdateableMeshObject,
+            fvPatchResizer
+        >
+    {
+        fvMesh& mesh_;
+    public:
+
+        TypeName("fvPatchResizer");
+
+        fvPatchResizer(fvMesh& mesh)
+        :
+            MeshObject
+            <
+                polyMesh,
+                UpdateableMeshObject,
+                fvPatchResizer
+            >(mesh),
+            mesh_(mesh)
+        {}
+
+        virtual ~fvPatchResizer();
+
+        //- Resize patchFields
+        template<class Type, template<class> class Patch, class Mesh>
+        void resizePatchFields(fvMesh& mesh, const labelList& patchSizes);
+
+        //- Overload update mesh to include other methods
+        virtual void updateMesh(const mapPolyMesh& mpm);
+
+        //- Move points
+        virtual bool movePoints()
+        {
+            return false;
+        }
+    };
+
+
 public:
 
     //- Runtime type information
