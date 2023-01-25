@@ -53,6 +53,20 @@ class fluxScheme
 :
     public fluxSchemeBase
 {
+public:
+
+    //- Return the flux scheme
+    static const fluxScheme& findFluxScheme
+    (
+        const surfaceScalarField& phi
+    )
+    {
+        return dynamicCast<const fluxScheme>
+        (
+            fluxSchemeBase::findFluxScheme(phi)
+        );
+    }
+
 protected:
 
     //- Dictionary for fluxScheme
@@ -164,6 +178,21 @@ public:
 
         //- Allocate saved fields
         virtual void createSavedFields();
+
+        //- Single phase flux
+        void update
+        (
+            const surfaceScalarField& rhoOwn,
+            const surfaceScalarField& rhoNei,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p,
+            const volScalarField& c,
+            surfaceScalarField& phi,
+            surfaceScalarField& rhoPhi,
+            surfaceVectorField& rhoUPhi,
+            surfaceScalarField& rhoEPhi
+        );
 
         //- Single phase flux
         void update

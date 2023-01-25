@@ -59,8 +59,14 @@ public:
 
     static bool needEnergyFlux;
 
-    //- Return the mast flux scheme
+    //- Return the flux scheme
     static const fluxSchemeBase& findFluxScheme
+    (
+        const surfaceScalarField& phi
+    );
+
+    //- Does the flux scheme exist
+    static bool foundFluxScheme
     (
         const surfaceScalarField& phi
     );
@@ -198,6 +204,9 @@ public:
         }
 
         // Interpolation functions
+
+            //- Return the upwind flux
+            tmp<surfaceScalarField> upwindFlux() const;
 
             //- Templated interpolation
             template<class Type>

@@ -108,12 +108,54 @@ void Foam::fluxScheme::update
     surfaceScalarField& rhoEPhi
 )
 {
-    createSavedFields();
-
     autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
         ReconstructionScheme<scalar>::New(rho, "rho")
     );
+
+    tmp<surfaceScalarField> trhoOwn, trhoNei;
+    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
+    const surfaceScalarField& rhoOwn = trhoOwn();
+    const surfaceScalarField& rhoNei = trhoNei();
+
+    static bool cached = false;
+    if (!cached)
+    {
+        cached = true;
+        mesh_.addTemporaryObject(rhoOwn.name());
+        mesh_.addTemporaryObject(rhoNei.name());
+    }
+
+    update
+    (
+        rhoOwn, rhoNei,
+        U,
+        e,
+        p,
+        c,
+        phi,
+        rhoPhi,
+        rhoUPhi,
+        rhoEPhi
+    );
+}
+
+void Foam::fluxScheme::update
+(
+    const surfaceScalarField& rhoOwn,
+    const surfaceScalarField& rhoNei,
+    const volVectorField& U,
+    const volScalarField& e,
+    const volScalarField& p,
+    const volScalarField& c,
+    surfaceScalarField& phi,
+    surfaceScalarField& rhoPhi,
+    surfaceVectorField& rhoUPhi,
+    surfaceScalarField& rhoEPhi
+)
+{
+    createSavedFields();
+
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
         ReconstructionScheme<vector>::New(U, "U")
@@ -130,19 +172,6 @@ void Foam::fluxScheme::update
     (
         ReconstructionScheme<scalar>::New(c, "speedOfSound")
     );
-
-    tmp<surfaceScalarField> trhoOwn, trhoNei;
-    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
-    const surfaceScalarField& rhoOwn = trhoOwn();
-    const surfaceScalarField& rhoNei = trhoNei();
-
-    static bool cached = false;
-    if (!cached)
-    {
-        cached = true;
-        mesh_.addTemporaryObject(rhoOwn.name());
-        mesh_.addTemporaryObject(rhoNei.name());
-    }
 
     tmp<surfaceVectorField> tUOwn, tUNei;
     ULimiter->interpolateOwnNei(tUOwn, tUNei);

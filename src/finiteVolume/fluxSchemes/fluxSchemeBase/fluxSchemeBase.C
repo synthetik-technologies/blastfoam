@@ -37,7 +37,6 @@ namespace Foam
 }
 
 
-//- Find the give flux scheme
 const Foam::fluxSchemeBase& Foam::fluxSchemeBase::findFluxScheme
 (
     const surfaceScalarField& phi
@@ -85,6 +84,49 @@ const Foam::fluxSchemeBase& Foam::fluxSchemeBase::findFluxScheme
 }
 
 
+bool Foam::fluxSchemeBase::foundFluxScheme
+(
+    const surfaceScalarField& phi
+)
+{
+    const fvMesh& mesh = phi.mesh();
+    const word phaseFluxName
+    (
+        IOobject::groupName(fluxSchemeBase::typeName, phi.group())
+    );
+    if (mesh.foundObject<fluxScheme>(fluxSchemeBase::typeName))
+    {
+        return true;
+    }
+    else if (mesh.foundObject<phaseFluxScheme>(phaseFluxName))
+    {
+        return true;
+    }
+    else
+    {
+        // If the phase name is not the primary phase
+        // check all of the included phases
+        HashTable<const fluxSchemeBase*> schemes
+        (
+            mesh.lookupClass<fluxSchemeBase>()
+        );
+        forAllConstIter
+        (
+            HashTable<const fluxSchemeBase*>,
+            schemes,
+            iter
+        )
+        {
+            if (iter()->phases().found(phi.group()))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::fluxSchemeBase::fluxSchemeBase(const surfaceScalarField& phi)
@@ -109,6 +151,36 @@ Foam::fluxSchemeBase::~fluxSchemeBase()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::upwindFlux() const
+{
+    tmp<surfaceScalarField> tuFlux
+    (
+        surfaceScalarField::New
+        (
+            IOobject::groupName("upwindFlux", phi_.group()),
+            phi_.mesh(),
+            dimensionedScalar(phi_.dimensions(), Zero)
+        )
+    );
+    surfaceScalarField& uFlux = tuFlux.ref();
+     forAll(uFlux , facei)
+    {
+        uFlux[facei] = this->interpolate(1.0, -1.0, facei);
+    }
+
+    surfaceScalarField::Boundary& buFlux = uFlux.boundaryFieldRef();
+    forAll(buFlux, patchi)
+    {
+        scalarField& puFlux = buFlux[patchi];
+        forAll(puFlux, facei)
+        {
+            puFlux[facei] = this->interpolate(1.0, -1.0, facei, patchi);
+        }
+    }
+    return tuFlux;
+}
+
 
 template<>
 Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate

@@ -53,6 +53,21 @@ class phaseFluxScheme
 :
     public fluxSchemeBase
 {
+public:
+
+    //- Return the flux scheme
+    static const phaseFluxScheme& findFluxScheme
+    (
+        const surfaceScalarField& phi
+    )
+    {
+        return dynamicCast<const phaseFluxScheme>
+        (
+            fluxSchemeBase::findFluxScheme(phi)
+        );
+    }
+
+
 protected:
 
     //- Phase name
