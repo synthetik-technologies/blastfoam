@@ -52,10 +52,10 @@ namespace radialModels
 Foam::kineticTheoryModels::radialModels::CarnahanStarling::CarnahanStarling
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    radialModel(dict, kt)
+    radialModel(dict, system)
 {}
 
 
@@ -91,6 +91,25 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::gs0
 }
 
 
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::CarnahanStarling::cellgs0
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1 != &phase2)
+    {
+        return 0.0;
+    }
+    return
+        1.0/(1 - phase1[celli])
+      + 3*phase1[celli]/(2*sqr(1 - phase1[celli]))
+      + sqr(phase1[celli])/(2*pow3(1 - phase1[celli]));
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::radialModels::CarnahanStarling::gs0prime
 (
@@ -113,6 +132,26 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::gs0prime
         2.5/sqr(1 - phase1)
       + 4*phase1/pow3(1 - phase1)
       + 1.5*sqr(phase1)/pow4(1 - phase1);
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::CarnahanStarling::cellgs0prime
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1 != &phase2)
+    {
+        return 0.0;
+    }
+
+    return
+        2.5/sqr(1 - phase1[celli])
+      + 4*phase1[celli]/pow3(1 - phase1[celli])
+      + 1.5*sqr(phase1[celli])/pow4(1 - phase1[celli]);
 }
 
 

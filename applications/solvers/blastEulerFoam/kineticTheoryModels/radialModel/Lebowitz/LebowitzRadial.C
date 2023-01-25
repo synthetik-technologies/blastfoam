@@ -52,10 +52,10 @@ namespace radialModels
 Foam::kineticTheoryModels::radialModels::Lebowitz::Lebowitz
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    radialModel(dict, kt),
+    radialModel(dict, system),
     residualAlpha_
     (
         "residualAlpha",
@@ -80,7 +80,7 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0
     const phaseModel& phase2
 ) const
 {
-    const volScalarField& alphap = kt_.alpha();
+    const volScalarField& alphap = system_.alpha();
     volScalarField alphag(1.0 - alphap);
     volScalarField alphard
     (
@@ -97,10 +97,10 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0
         dimensionedScalar("0", inv(dimLength), 0.0)
     );
 
-    forAll(kt_.phaseIndexes(), phaseI)
+    forAll(system_.phaseIndexes(), phaseI)
     {
         const phaseModel& phase =
-            kt_.fluid().phases()[kt_.phaseIndexes()[phaseI]];
+            system_.fluid().phases()[system_.phaseIndexes()[phaseI]];
         alphard += volScalarField(phase)/phase.d();
     }
 
@@ -111,6 +111,34 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0
 }
 
 
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::Lebowitz::cellgs0
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    const scalar alphap = system_.alpha()[celli];
+    scalar alphag(1.0 - alphap);
+    scalar alphard = 0.0;
+    forAll(system_.phaseIndexes(), phaseI)
+    {
+        const phaseModel& phase =
+            system_.fluid().phases()[system_.phaseIndexes()[phaseI]];
+        alphard += phase[celli]/phase.celld(celli);
+    }
+
+    return
+        1.0/max(alphag, residualAlpha_.value())
+      + 3.0*phase1.celld(celli)*phase2.celld(celli)*alphard
+       /(
+           sqr(max(alphag, residualAlpha_.value()))
+          *(phase1.celld(celli) + phase2.celld(celli))
+        );
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::radialModels::Lebowitz::gs0prime
 (
@@ -118,7 +146,7 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0prime
     const phaseModel& phase2
 ) const
 {
-    const volScalarField& alphap = kt_.alpha();
+    const volScalarField& alphap = system_.alpha();
     volScalarField alphag(1.0 - alphap);
     volScalarField alphard
     (
@@ -135,13 +163,13 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0prime
         dimensionedScalar("0", inv(dimLength), 0.0)
     );
 
-    forAll(kt_.phaseIndexes(), phaseI)
+    forAll(system_.phaseIndexes(), phaseI)
     {
         const phaseModel& phase =
-            kt_.fluid().phases()[kt_.phaseIndexes()[phaseI]];
+            system_.fluid().phases()[system_.phaseIndexes()[phaseI]];
         if (phase.name() != phase1.name())
         {
-            alphard += volScalarField(phase)/phase.d();
+            alphard += phase/phase.d();
         }
     }
 
@@ -153,6 +181,44 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0prime
             1.0
           + 3.0*d2/(d1 + d2)
            *(2.0/max(alphag, residualAlpha_)*(d1*alphard + phase1) + 1.0)
+        );
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::Lebowitz::cellgs0prime
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    const scalar alphap = system_.alpha()[celli];
+    scalar alphag(1.0 - alphap);
+    scalar alphard = 0.0;
+
+    forAll(system_.phaseIndexes(), phaseI)
+    {
+        const phaseModel& phase =
+            system_.fluid().phases()[system_.phaseIndexes()[phaseI]];
+        if (&phase != &phase1)
+        {
+            alphard += phase[celli]/phase.celld(celli);
+        }
+    }
+
+    scalar d1(phase1.celld(celli));
+    scalar d2(phase2.celld(celli));
+    return
+        1.0/max(sqr(alphag), residualAlpha_.value())
+       *(
+            1.0
+          + 3.0*d2/(d1 + d2)
+           *(
+               2.0/max(alphag, residualAlpha_.value())
+              *(d1*alphard + phase1[celli])
+             + 1.0
+            )
         );
 }
 

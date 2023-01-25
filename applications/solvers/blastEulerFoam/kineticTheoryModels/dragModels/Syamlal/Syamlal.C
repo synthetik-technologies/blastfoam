@@ -27,6 +27,7 @@ License
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 #include "kineticTheorySystem.H"
+#include "kineticTheoryModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -67,8 +68,8 @@ Foam::dragModels::Syamlal::Syamlal
             "kineticTheorySystem"
         )
     ),
-    e_(kineticTheorySystem_.es(pair_)),
-    Cf_(kineticTheorySystem_.Cf(pair_))
+    e_(dict.lookupOrDefault("e", kineticTheorySystem_.es(pair_))),
+    Cf_(dict.lookupOrDefault("Cf", kineticTheorySystem_.Cf(pair_)))
 {}
 
 
@@ -104,10 +105,12 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Syamlal::K
     const phaseModel& phase1 = pair_.phase1();
     const phaseModel& phase2 = pair_.phase2();
 
-    const volScalarField& Pfric = kineticTheorySystem_.frictionalPressure();
+    const volScalarField& Pfric =
+        dynamicCast<const kineticTheoryModel>(phase1).Pfr();
     scalar pi = Foam::constant::mathematical::pi;
 
     tmp<volScalarField> g0 = kineticTheorySystem_.gs0(phase1, phase2);
+
     return
         (
             3.0*(1.0 + e_)*(pi/2.0 + Cf_*sqr(pi)/8.0)
@@ -162,10 +165,11 @@ Foam::scalar Foam::dragModels::Syamlal::cellK
     const phaseModel& phase1 = pair_.phase1();
     const phaseModel& phase2 = pair_.phase2();
 
-    scalar Pfric = kineticTheorySystem_.frictionalPressure()()[celli];
+    scalar Pfric =
+        dynamicCast<const kineticTheoryModel>(phase1).Pfr()[celli];
     scalar pi = Foam::constant::mathematical::pi;
 
-    scalar g0 = kineticTheorySystem_.gs0(phase1, phase2)()[celli];
+    scalar g0 = kineticTheorySystem_.cellgs0(celli, phase1, phase2);
     return
         (
             3.0*(1.0 + e_)*(pi/2.0 + Cf_*sqr(pi)/8.0)

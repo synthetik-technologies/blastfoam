@@ -52,11 +52,13 @@ namespace radialModels
 Foam::kineticTheoryModels::radialModels::SinclairJackson::SinclairJackson
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    radialModel(dict, kt)
-{}
+    radialModel(dict, system)
+{
+    this->requireKineticTheory();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -79,7 +81,7 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::gs0
         return
             volScalarField::New
             (
-                "gs0prime",
+                "gs0",
                 phase1.mesh(),
                 dimensionedScalar(dimless, 0.0)
             );
@@ -88,7 +90,28 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::gs0
         1.0
        /(
            1.0
-         - cbrt(min(phase1, kt_.alphaMinFriction())/phase1.alphaMax())
+         - cbrt(min(phase1, kt_->alphaMinFriction())/phase1.alphaMax())
+        );
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::SinclairJackson::cellgs0
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1 != &phase2)
+    {
+        return 0.0;
+    }
+    return
+        1.0
+       /(
+           1.0
+         - cbrt(min(phase1[celli], kt_->alphaMinFriction()[celli])/phase1.alphaMax())
         );
 }
 
@@ -117,7 +140,35 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::gs0prime
             min
             (
                 max(phase1, scalar(1e-3)),
-                kt_.alphaMinFriction()
+                kt_->alphaMinFriction()
+            )/phase1.alphaMax()
+        )
+    );
+
+    return (1.0/(3*phase1.alphaMax()))/sqr(aByaMax - sqr(aByaMax));
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::SinclairJackson::cellgs0prime
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1 != &phase2)
+    {
+        return 0.0;
+    }
+    scalar aByaMax
+    (
+        cbrt
+        (
+            min
+            (
+                max(phase1[celli], scalar(1e-3)),
+                kt_->alphaMinFriction()[celli]
             )/phase1.alphaMax()
         )
     );

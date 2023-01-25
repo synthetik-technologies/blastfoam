@@ -94,7 +94,7 @@ public:
         virtual scalar alphaMax
         (
             const label celli,
-            const scalarList& ds
+            const SortableList<scalar>& ds
         ) const;
 
         //- Reread packing limit

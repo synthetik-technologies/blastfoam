@@ -87,6 +87,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::JohnsonJackson::
 frictionalPressure
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -101,6 +102,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::JohnsonJackson::
 frictionalPressurePrime
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -117,18 +119,17 @@ frictionalPressurePrime
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::kineticTheoryModels::frictionalStressModels::JohnsonJackson::nu
+Foam::kineticTheoryModels::frictionalStressModels::JohnsonJackson::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax,
-    const volScalarField& pf,
-    const volSymmTensorField& D
+    const volScalarField& pf
 ) const
 {
     return volScalarField::New
     (
-        word(typeName + ":nu"),
+        word(typeName + ":mu"),
         dimensionedScalar(dimTime, 0.5)*pf*sin(phi_)
     );
 }

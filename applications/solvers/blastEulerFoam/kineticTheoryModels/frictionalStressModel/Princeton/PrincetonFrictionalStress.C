@@ -94,6 +94,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::Princeton::
 frictionalPressure
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -113,6 +114,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::Princeton::
 frictionalPressurePrime
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -133,13 +135,12 @@ frictionalPressurePrime
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
+Foam::kineticTheoryModels::frictionalStressModels::Princeton::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax,
-    const volScalarField& Pc,
-    const volSymmTensorField& D
+    const volScalarField& Pc
 ) const
 {
     volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
@@ -150,19 +151,20 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
             IOobject::groupName("Theta", alphap.group())
         );
 
-    tmp<volScalarField> tnu
+    tmp<volScalarField> tmu
     (
         volScalarField::New
         (
-            word(typeName + ":nu"),
+            word(typeName + ":mu"),
             phase.mesh(),
-            dimensionedScalar("nu", dimensionSet(0, 2, -1, 0, 0), 0.0)
+            dimensionedScalar("mu", dimensionSet(1, -1, -1, 0, 0), 0.0)
         )
     );
-    volScalarField& nuf = tnu.ref();
+    volScalarField& muf = tmu.ref();
+
     volScalarField divU(fvc::div(phase.phi()));
-    tmp<volTensorField> S(D - 1.0/3.0*divU*tensor::I);
-    tmp<volScalarField> Sdd(S && S);
+    volSymmTensorField S(dev(symm(fvc::grad(phase.U()))));
+    volScalarField Sdd(S && S);
     volScalarField n
     (
         sqrt(3.0)/2.0*sin(phi_)*pos(divU)
@@ -179,7 +181,7 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
               - divU
                /max
                 (
-                    n*sqrt(2.0)*sin(phi_)*sqrt(Sdd() + Theta/sqr(da())),
+                    n*sqrt(2.0)*sin(phi_)*sqrt(Sdd + Theta/sqr(da())),
                     dimensionedScalar("small", divU.dimensions(), small)
                 ),
                 1e-6
@@ -191,13 +193,13 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
     PfByPc.ref().max(1e-10);
     tmp<volScalarField> Pf(PfByPc()*Pc);
 
-    forAll(D, celli)
+    forAll(Pc, celli)
     {
         if (alphap[celli] > alphaMinFriction[celli])
         {
-            nuf[celli] =
+            muf[celli] =
                 sqrt(2.0)*Pf()[celli]*sin(phi_.value())
-               /sqrt(Sdd()[celli] + Theta[celli]/sqr(da()[celli]))
+               /sqrt(Sdd[celli] + Theta[celli]/sqr(da()[celli]))
                *(
                     n[celli]
                   - (n[celli] - 1.0)
@@ -208,13 +210,13 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
 
     const fvPatchList& patches = phase.mesh().boundary();
 
-    volScalarField::Boundary& nufBf = nuf.boundaryFieldRef();
+    volScalarField::Boundary& mufBf = muf.boundaryFieldRef();
 
     forAll(patches, patchi)
     {
         if (!patches[patchi].coupled())
         {
-            nufBf[patchi] =
+            mufBf[patchi] =
             (
                 0.5
                *Pc.boundaryField()[patchi]
@@ -224,9 +226,9 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
     }
 
     // Correct coupled BCs
-    nuf.correctBoundaryConditions();
+    muf.correctBoundaryConditions();
 
-    return tnu;
+    return tmu;
 }
 
 

@@ -42,6 +42,11 @@ frictionalStressModel/Schaeffer/SchaefferFrictionalStress.C
 frictionalStressModel/JohnsonJacksonSchaeffer/JohnsonJacksonSchaefferFrictionalStress.C
 frictionalStressModel/Princeton/PrincetonFrictionalStress.C
 
+cohesionModel/cohesionModel/cohesionModel.C
+cohesionModel/cohesionModel/cohesionModelNew.C
+cohesionModel/Gu/GuCohesion.C
+cohesionModel/none/noneCohesion.C
+
 derivedFvPatchFields/JohnsonJacksonParticleTheta/JohnsonJacksonParticleThetaFvPatchScalarField.C
 derivedFvPatchFields/JohnsonJacksonParticleSlip/JohnsonJacksonParticleSlipFvPatchVectorField.C
 

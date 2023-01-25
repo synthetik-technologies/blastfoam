@@ -37,17 +37,35 @@ namespace kineticTheoryModels
 }
 }
 
+bool Foam::kineticTheoryModels::radialModel::requireKineticTheory() const
+{
+    if (kt_.valid())
+    {
+        return true;
+    }
+    FatalErrorInFunction
+        << "Trying to use a kinetic theory based model with a" << nl
+        << "non-kinetic theory based system." << endl
+        << abort(FatalError);
+    return false;
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::kineticTheoryModels::radialModel::radialModel
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
     dict_(dict),
-    kt_(kt)
+    system_(system),
+    kt_
+    (
+        isA<kineticTheorySystem>(system_)
+      ? &dynamicCast<const kineticTheorySystem>(system_)
+      : nullptr
+    )
 {}
 
 

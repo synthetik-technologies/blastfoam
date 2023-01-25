@@ -52,10 +52,10 @@ namespace radialModels
 Foam::kineticTheoryModels::radialModels::LunSavage::LunSavage
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    radialModel(dict, kt)
+    radialModel(dict, system)
 {}
 
 
@@ -79,12 +79,28 @@ Foam::kineticTheoryModels::radialModels::LunSavage::gs0
         return
             volScalarField::New
             (
-                "gs0prime",
+                "gs0",
                 phase1.mesh(),
                 dimensionedScalar(dimless, 0.0)
             );
     }
     return pow(1 - phase1/phase1.alphaMax(), -2.5*phase1.alphaMax());
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::LunSavage::cellgs0
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1 != &phase2)
+    {
+        return 0.0;
+    }
+    return pow(1 - phase1[celli]/phase1.alphaMax(), -2.5*phase1.alphaMax());
 }
 
 
@@ -106,6 +122,22 @@ Foam::kineticTheoryModels::radialModels::LunSavage::gs0prime
             );
     }
     return 2.5*pow(1 - phase1/phase1.alphaMax(), -2.5*phase1.alphaMax() - 1);
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::LunSavage::cellgs0prime
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1 != &phase2)
+    {
+        return 0.0;
+    }
+    return 2.5*pow(1 - phase1[celli]/phase1.alphaMax(), -2.5*phase1.alphaMax() - 1);
 }
 
 

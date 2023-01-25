@@ -80,6 +80,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::
 frictionalPressure
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -96,6 +97,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::
 frictionalPressurePrime
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -109,34 +111,34 @@ frictionalPressurePrime
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::nu
+Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax,
-    const volScalarField& pf,
-    const volSymmTensorField& D
+    const volScalarField& pf
 ) const
 {
     volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
 
-    tmp<volScalarField> tnu
+    tmp<volScalarField> tmu
     (
         volScalarField::New
         (
-            word(typeName + ":nu"),
+            word(typeName + ":mu"),
             phase.mesh(),
-            dimensionedScalar("nu", dimensionSet(0, 2, -1, 0, 0), 0.0)
+            dimensionedScalar("mu", dimensionSet(1, -1, -1, 0, 0), 0.0)
         )
     );
 
-    volScalarField& nuf = tnu.ref();
+    volScalarField& muf = tmu.ref();
 
+    volSymmTensorField D(symm(fvc::grad(phase.U())));
     forAll(D, celli)
     {
         if (alphap[celli] > alphaMinFriction[celli])
         {
-            nuf[celli] =
+            muf[celli] =
                 0.5*pf[celli]*sin(phi_.value())
                /(
                     sqrt((1.0/3.0)*sqr(tr(D[celli])) - invariantII(D[celli]))
@@ -148,13 +150,13 @@ Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::nu
     const fvPatchList& patches = phase.mesh().boundary();
     const volVectorField& U = phase.U();
 
-    volScalarField::Boundary& nufBf = nuf.boundaryFieldRef();
+    volScalarField::Boundary& mufBf = muf.boundaryFieldRef();
 
     forAll(patches, patchi)
     {
         if (!patches[patchi].coupled())
         {
-            nufBf[patchi] =
+            mufBf[patchi] =
                 (
                     pf.boundaryField()[patchi]*sin(phi_.value())
                    /(
@@ -166,9 +168,9 @@ Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::nu
     }
 
     // Correct coupled BCs
-    nuf.correctBoundaryConditions();
+    muf.correctBoundaryConditions();
 
-    return tnu;
+    return tmu;
 }
 
 

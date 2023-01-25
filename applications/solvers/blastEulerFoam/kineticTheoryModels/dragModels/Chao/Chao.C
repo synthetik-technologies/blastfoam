@@ -169,7 +169,7 @@ Foam::scalar Foam::dragModels::Chao::cellK
 
     const scalar pi(Foam::constant::mathematical::pi);
 
-    scalar gij(kineticTheorySystem_.gs0(phase1, phase2)()[celli]);
+    scalar gij(kineticTheorySystem_.cellgs0(celli, phase1, phase2));
     scalar dij
     (
         0.5*(phase1.celld(celli, nodei) + phase2.celld(celli, nodej))

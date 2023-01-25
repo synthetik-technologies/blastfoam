@@ -47,13 +47,11 @@ Foam::kineticTheoryModels::packingLimitModel::New
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalError
-            << "packingLimitModel::New(const dictionary&) : " << endl
-            << "    unknown packingLimitModelType type "
+        FatalErrorInFunction
+            << "Unknown packingLimitModelType type "
             << packingLimitModelType
-            << ", constructor not in hash table" << endl << endl
-            << "    Valid packingLimitModelType types are :" << endl;
-        Info<< dictionaryConstructorTablePtr_->sortedToc()
+            << " Valid packingLimitModelType types are :" << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
             << abort(FatalError);
     }
 

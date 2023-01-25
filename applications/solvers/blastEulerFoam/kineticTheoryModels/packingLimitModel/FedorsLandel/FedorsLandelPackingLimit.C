@@ -72,7 +72,7 @@ Foam::scalar
 Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::alphaMax
 (
     const label celli,
-    const scalarList& ds
+    const SortableList<scalar>& ds
 ) const
 {
     if (ds.size() != 2)

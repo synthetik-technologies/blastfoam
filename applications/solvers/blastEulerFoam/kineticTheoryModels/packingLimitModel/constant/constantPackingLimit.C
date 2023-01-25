@@ -26,6 +26,7 @@ License
 #include "constantPackingLimit.H"
 #include "addToRunTimeSelectionTable.H"
 #include "mathematicalConstants.H"
+#include "zeroGradientFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -62,7 +63,7 @@ Foam::kineticTheoryModels::packingLimitModels::constant::constant
         dict.lookupOrDefault
         (
             "alphaMax",
-            kt.minAlphaMax()
+            -1
         )
     )
 {}
@@ -76,13 +77,37 @@ Foam::kineticTheoryModels::packingLimitModels::constant::~constant()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::tmp<Foam::volScalarField>
+Foam::kineticTheoryModels::packingLimitModels::constant::alphaMax() const
+{
+    const UPtrList<phaseModel>& phases(kt_.phases());
+
+    scalar alphaMax = maxAlpha_;
+    if (alphaMax < 0)
+    {
+        forAll(phases, phasei)
+        {
+            alphaMax = max(phases[phasei].alphaMax(), alphaMax);
+        }
+    }
+    return
+        volScalarField::New
+        (
+            "alphaMax",
+            mesh_,
+            alphaMax,
+            zeroGradientFvPatchScalarField::typeName
+        );
+}
+
 Foam::scalar
 Foam::kineticTheoryModels::packingLimitModels::constant::alphaMax
 (
     const label celli,
-    const scalarList& ds
+    const SortableList<scalar>& ds
 ) const
 {
+    NotImplemented;
     return maxAlpha_;
 }
 

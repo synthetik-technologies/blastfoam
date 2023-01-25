@@ -39,7 +39,8 @@ SourceFiles
 #include "phasePairKey.H"
 #include "dragModel.H"
 #include "kineticTheorySystem.H"
-
+#include "cohesionModel.H"
+#include "frictionalStressModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -118,6 +119,13 @@ protected:
             //- Coefficient of restitution
             scalar es_;
 
+            //- Cohesion model
+            autoPtr<kineticTheoryModels::cohesionModel> cohesion_;
+
+            //- Optional phase specific frictional pressure model
+            autoPtr<kineticTheoryModels::frictionalStressModel>
+                frictionalStressModel_;
+
 
 
     // Private Member Functions
@@ -177,6 +185,9 @@ public:
         //- Return the phase-pressure'
         // (derivative of phase-pressure w.r.t. phase-fraction)
         virtual tmp<volScalarField> pPrime() const;
+
+        //- Return the phase-frictional pressure'
+        const volScalarField& Pfr() const;
 
         //- Solve the kinetic theory equations and correct the viscosity
         virtual void correct();

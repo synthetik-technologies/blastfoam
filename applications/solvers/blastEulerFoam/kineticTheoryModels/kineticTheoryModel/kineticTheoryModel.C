@@ -203,8 +203,20 @@ Foam::kineticTheoryModel::kineticTheoryModel
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
     ),
-    es_(dict.lookup<scalar>("e"))
-{}
+    es_(dict.lookup<scalar>("e")),
+
+    cohesion_(kineticTheoryModels::cohesionModel::New(dict, *this))
+{
+    if (dict.found("frictionalStressModel"))
+    {
+        frictionalStressModel_ =
+            kineticTheoryModels::frictionalStressModel::New
+            (
+                dict,
+                kineticTheorySystem_
+            );
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -261,13 +273,30 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheoryModel::pPrime() const
 {
     return
         kineticTheorySystem_.dPsdAlpha(phase_)
-      + phase_*kineticTheorySystem_.frictionalPressurePrime(phase_)
-      + kineticTheorySystem_.frictionalPressure();
+      + cohesion_->dPsdAlpha()
+      + (
+            frictionalStressModel_.valid()
+          ? frictionalStressModel_->frictionalPressurePrime
+            (
+                phase(),
+                kineticTheorySystem_.alpha(),
+                kineticTheorySystem_.alphaMax()()
+            )
+          : kineticTheorySystem_.frictionalPressurePrime(phase_)
+        );
+}
+
+
+const Foam::volScalarField& Foam::kineticTheoryModel::Pfr() const
+{
+    return Pfric_;
 }
 
 
 void Foam::kineticTheoryModel::correct()
 {
+    cohesion_->update();
+
     // Local references
     volScalarField alpha(max(phase_, scalar(0)));
 
@@ -280,22 +309,54 @@ void Foam::kineticTheoryModel::correct()
     gs0Prime_ = kineticTheorySystem_.gs0Prime(phase_, phase_, true);
 
     // Calculate the solid, frictional, and total pressures
-    Ps_ = kineticTheorySystem_.Ps(phase_);
-    Pfric_ = alpha*kineticTheorySystem_.frictionalPressure();
-    Ptot_ = Ps_ + Pfric_;
+    Ps_ =
+        kineticTheorySystem_.Ps(phase_)
+      + cohesion_->Ps();
 
     // Calculate the granular conductivity
     kappa_ = kineticTheorySystem_.kappa(phase_, Theta_);
 
-    // Particle viscosity
-    nut_ = kineticTheorySystem_.nu(phase_, Theta_);
-
     // Bulk viscosity
     lambda_ = kineticTheorySystem_.lambda(phase_);
 
-    // Limit viscosity and add frictional viscosity
+    // Particle viscosity
+    nut_ =
+        kineticTheorySystem_.nu(phase_, Theta_)
+      + cohesion_->nu();
     nut_.min(maxNut_);
-    nuFric_ = min(kineticTheorySystem_.nuFrictional(), maxNut_ - nut_);
+
+    if (frictionalStressModel_.valid())
+    {
+        Pfric_ = frictionalStressModel_->frictionalPressure
+        (
+            phase(),
+            kineticTheorySystem_.alpha(),
+            kineticTheorySystem_.alphaMax()()
+        );
+        nuFric_ =
+            min
+            (
+                frictionalStressModel_->mu
+                (
+                    phase(),
+                    kineticTheorySystem_.alpha(),
+                    kineticTheorySystem_.alphaMax()(),
+                    Pfric_
+                )/phase().rho(),
+                maxNut_ - nut_
+            );
+    }
+    else
+    {
+        Pfric_ = kineticTheorySystem_.frictionalPressure(phase());
+        nuFric_ =
+            min
+            (
+                kineticTheorySystem_.muFrictional(phase(), Pfric_)/phase().rho(),
+                maxNut_ - nut_
+            );
+    }
+    Ptot_ = Ps_ + Pfric_;
     nuTotal_ = nut_ + nuFric_;
 
     if (debug)

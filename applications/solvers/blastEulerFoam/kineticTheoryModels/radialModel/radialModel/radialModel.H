@@ -35,6 +35,8 @@ SourceFiles
 
 #include "dictionary.H"
 #include "volFields.H"
+#include "masterSystem.H"
+#include "UautoPtr.H"
 #include "kineticTheorySystem.H"
 #include "dimensionedTypes.H"
 #include "runTimeSelectionTables.H"
@@ -58,8 +60,15 @@ protected:
 
         const dictionary& dict_;
 
-        const kineticTheorySystem& kt_;
+        const masterSystem& system_;
 
+        UautoPtr<const kineticTheorySystem> kt_;
+
+
+    // Protected member functions
+
+        //- Make sure the master system is a kinetic theory system
+        bool requireKineticTheory() const;
 
 public:
 
@@ -74,9 +83,9 @@ public:
         dictionary,
         (
             const dictionary& dict,
-            const kineticTheorySystem& kt
+            const masterSystem& system
         ),
-        (dict, kt)
+        (dict, system)
     );
 
 
@@ -86,7 +95,7 @@ public:
         radialModel
         (
             const dictionary& dict,
-            const kineticTheorySystem& kt
+            const masterSystem& system
         );
 
         //- Disallow default bitwise copy construction
@@ -98,7 +107,7 @@ public:
         static autoPtr<radialModel> New
         (
             const dictionary& dict,
-            const kineticTheorySystem& kt
+            const masterSystem& system
         );
 
 
@@ -115,9 +124,25 @@ public:
             const phaseModel& phase2
         ) const = 0;
 
+        //- Radial distribution function for a cell
+        virtual scalar cellgs0
+        (
+            const label celli,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const = 0;
+
         //- Derivative of the radial distribution function
         virtual tmp<volScalarField> gs0prime
         (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const = 0;
+
+        //- Derivative of the radial distribution function for a cell
+        virtual scalar cellgs0prime
+        (
+            const label celli,
             const phaseModel& phase1,
             const phaseModel& phase2
         ) const = 0;

@@ -93,6 +93,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::
 JohnsonJacksonSchaeffer::frictionalPressure
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -107,6 +108,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::
 JohnsonJacksonSchaeffer::frictionalPressurePrime
 (
+    const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax
 ) const
@@ -122,34 +124,33 @@ JohnsonJacksonSchaeffer::frictionalPressurePrime
 
 Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::frictionalStressModels::
-JohnsonJacksonSchaeffer::nu
+JohnsonJacksonSchaeffer::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
     const volScalarField& alphaMax,
-    const volScalarField& pf,
-    const volSymmTensorField& D
+    const volScalarField& pf
 ) const
 {
     volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
 
-    tmp<volScalarField> tnu
+    tmp<volScalarField> tmu
     (
         volScalarField::New
         (
-            word(typeName + ":nu"),
+            word(typeName + ":mu"),
             phase.mesh(),
-            dimensionedScalar("nu", dimensionSet(0, 2, -1, 0, 0), 0.0)
+            dimensionedScalar("mu", dimensionSet(1, -1, -1, 0, 0), 0.0)
         )
     );
+    volScalarField& muf = tmu.ref();
 
-    volScalarField& nuf = tnu.ref();
-
+    volSymmTensorField D(symm(fvc::grad(phase.U())));
     forAll(D, celli)
     {
         if (alphap[celli] > alphaMinFriction[celli])
         {
-            nuf[celli] =
+            muf[celli] =
                 0.5*pf[celli]*sin(phi_.value())
                /(
                     sqrt((1.0/3.0)*sqr(tr(D[celli])) - invariantII(D[celli]))
@@ -161,13 +162,13 @@ JohnsonJacksonSchaeffer::nu
     const fvPatchList& patches = phase.mesh().boundary();
     const volVectorField& U = phase.U();
 
-    volScalarField::Boundary& nufBf = nuf.boundaryFieldRef();
+    volScalarField::Boundary& mufBf = muf.boundaryFieldRef();
 
     forAll(patches, patchi)
     {
         if (!patches[patchi].coupled())
         {
-            nufBf[patchi] =
+            mufBf[patchi] =
                 (
                     pf.boundaryField()[patchi]*sin(phi_.value())
                    /(
@@ -179,9 +180,9 @@ JohnsonJacksonSchaeffer::nu
     }
 
     // Correct coupled BCs
-    nuf.correctBoundaryConditions();
+    muf.correctBoundaryConditions();
 
-    return tnu;
+    return tmu;
 }
 
 

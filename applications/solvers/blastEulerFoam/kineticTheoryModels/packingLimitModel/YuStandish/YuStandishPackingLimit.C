@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "YuStandishPackingLimit.H"
+#include "SortableList.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -72,7 +73,7 @@ Foam::scalar
 Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
 (
     const label celli,
-    const scalarList& ds
+    const SortableList<scalar>& ds
 ) const
 {
     scalar alphap = kt_.alpha()[celli];
@@ -86,38 +87,41 @@ Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
 
     scalar maxAlpha = 1.0;
 
-    forAll(ds, phasei)
+    forAll(ds, i)
     {
+        const label phasei = ds.indices()[i];
         const phaseModel& phase1 = phases[phasei];
         scalar alpha1 = phase1[celli];
+        if (alpha1 < phase1.residualAlpha().value())
+        {
+            continue;
+        }
 
         scalar alphaMax1 = phase1.alphaMax();
-        scalar d1 = ds[phasei];
+        scalar d1 = ds[i];
 
         scalar cxi = alpha1/max(alphap, residualAlpha_);
 
         scalar sum = 0.0;
 
-        forAll(ds, phasej)
+        forAll(ds, j)
         {
-            if (phasej != phasei)
+            if (i != j)
             {
-                scalar d2 = ds[phasej];
+                const label phasej = ds.indices()[j];
+                const phaseModel& phase2 = phases[phasej];
+                if (phase2[celli] > phase2.residualAlpha().value())
+                {
+                    continue;
+                }
+                scalar d2 = ds[j];
 
-                scalar rij = d1/d2;
-                scalar Xij = 1.0;
+                scalar rij = i > j ? d1/d2 : d2/d1;
+                scalar Xij =
+                    i > j
+                  ? (1.0 - sqr(rij))/(2.0 - alphaMax1)
+                  : 1.0 - (1.0 - sqr(rij))/(2.0 - alphaMax1);
                 scalar pij = alphaMax1;
-
-                if (rij > 1)
-                {
-                    rij = 1.0/rij;
-                    Xij = (1.0 - sqr(rij))/(2.0 - alphaMax1);
-                }
-                else
-                {
-                    rij = d2/d1;
-                    Xij = 1.0 - (1.0 - sqr(rij))/(2.0 - alphaMax1);
-                }
 
                 if (rij <= 0.741)
                 {
@@ -132,7 +136,7 @@ Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
         maxAlpha = min(maxAlpha, alphaMax1/(1.0 - sum));
     }
 
-    return maxAlpha;
+    return maxAlpha == 1 ? kt_.minAlphaMax() : maxAlpha;
 }
 
 

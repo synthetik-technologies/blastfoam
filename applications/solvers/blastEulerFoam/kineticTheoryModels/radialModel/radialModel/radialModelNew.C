@@ -31,30 +31,28 @@ Foam::autoPtr<Foam::kineticTheoryModels::radialModel>
 Foam::kineticTheoryModels::radialModel::New
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 {
     word radialModelType(dict.lookup("radialModel"));
 
-    Info<< "Selecting radialModel "
-        << radialModelType << endl;
+    Info<< "Selecting radialModel " << radialModelType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(radialModelType);
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalError
-            << "radialModel::New(const dictionary&) : " << endl
+        FatalErrorInFunction
             << "    unknown radialModelType type "
             << radialModelType
             << ", constructor not in hash table" << endl << endl
-            << "    Valid radialModelType types are :" << endl;
-        Info<< dictionaryConstructorTablePtr_->sortedToc()
+            << "    Valid radialModelType types are :" << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
             << abort(FatalError);
     }
 
-    return autoPtr<radialModel>(cstrIter()(dict,kt));
+    return autoPtr<radialModel>(cstrIter()(dict, system));
 }
 
 

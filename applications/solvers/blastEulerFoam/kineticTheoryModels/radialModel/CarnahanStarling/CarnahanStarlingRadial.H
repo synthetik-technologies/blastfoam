@@ -66,7 +66,7 @@ public:
         CarnahanStarling
         (
             const dictionary& dict,
-            const kineticTheorySystem& kt
+            const masterSystem& system
         );
 
 
@@ -77,14 +77,32 @@ public:
     // Member Functions
 
 
-        tmp<volScalarField> gs0
+        //- Radial distribution function
+        virtual tmp<volScalarField> gs0
         (
             const phaseModel& phase1,
             const phaseModel& phase2
         ) const;
 
-        tmp<volScalarField> gs0prime
+        //- Radial distribution function for a cell
+        virtual scalar cellgs0
         (
+            const label celli,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Derivative of the radial distribution function
+        virtual tmp<volScalarField> gs0prime
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Derivative of the radial distribution function for a cell
+        virtual scalar cellgs0prime
+        (
+            const label celli,
             const phaseModel& phase1,
             const phaseModel& phase2
         ) const;

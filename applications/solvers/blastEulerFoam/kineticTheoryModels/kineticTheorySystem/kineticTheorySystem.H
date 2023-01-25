@@ -140,15 +140,6 @@ class kineticTheorySystem
 
         // Stored tables of coefficients
 
-            //- Frictional pressure
-            volScalarField Pfr_;
-
-            //- Frictional pressure prime
-            volScalarField PfrPrime_;
-
-            //- Frictional viscosity
-            volScalarField nuFric_;
-
             //- Minimum granular temperature
             dimensionedScalar minTheta_;
 
@@ -201,6 +192,12 @@ public:
             return alphaMax_;
         }
 
+        //- Return maximum volume fraction
+        virtual scalar alphaMax(const label celli) const
+        {
+            return alphaMax_[celli];
+        }
+
         //- Return the minimum volume fraction frictional stresses are
         //  present
         const volScalarField& alphaMinFriction() const
@@ -228,12 +225,28 @@ public:
             const bool calc = false
         ) const;
 
+        //- Return radial distribution function for a cell
+        scalar cellgs0
+        (
+            const label,
+            const phaseModel&,
+            const phaseModel&
+        ) const;
+
         //- Return radial distribution function
         tmp<volScalarField> gs0Prime
         (
             const phaseModel&,
             const phaseModel&,
             const bool calc = false
+        ) const;
+
+        //- Return radial distribution function for a cell
+        scalar cellgs0Prime
+        (
+            const label,
+            const phaseModel&,
+            const phaseModel&
         ) const;
 
         //- Return the viscosity
@@ -268,17 +281,36 @@ public:
         tmp<volScalarField> lambda(const phaseModel& phase) const;
 
         //- Return the fricitional-pressure
-        const volScalarField& frictionalPressure() const;
+        tmp<volScalarField> frictionalPressure(const phaseModel&) const;
 
         //- Return the frictional-pressure'
         // (derivative of frictional-pressure w.r.t. phase-fraction)
-        const volScalarField& frictionalPressurePrime
+        tmp<volScalarField> frictionalPressurePrime
         (
-            const volScalarField& alpha
+            const phaseModel&
         ) const;
 
         //- Return the frictional-viscosity'
-        const volScalarField& nuFrictional() const;
+        tmp<volScalarField> muFrictional
+        (
+            const phaseModel&,
+            const volScalarField&
+        ) const;
+
+        //- Return the PTE production
+        tmp<volScalarField> productionSource
+        (
+            const kineticTheoryModel&,
+            const phaseModel&
+        ) const;
+
+        //- Return the PTE dissipation rate
+        tmp<volScalarField> dissipationSource
+        (
+            const phaseModel&,
+            const phaseModel&,
+            const dimensionedScalar& deltaT
+        ) const;
 
         //- Initialize the model after everything is constructed
         virtual void initialize();

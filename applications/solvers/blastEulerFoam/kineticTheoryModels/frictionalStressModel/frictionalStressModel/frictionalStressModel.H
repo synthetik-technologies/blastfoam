@@ -122,23 +122,24 @@ public:
 
         virtual tmp<volScalarField> frictionalPressure
         (
+            const phaseModel& phase,
             const volScalarField& alphap,
             const volScalarField& alphaMax
         ) const = 0;
 
         virtual tmp<volScalarField> frictionalPressurePrime
         (
+            const phaseModel& phase,
             const volScalarField& alphap,
             const volScalarField& alphaMax
         ) const = 0;
 
-        virtual tmp<volScalarField> nu
+        virtual tmp<volScalarField> mu
         (
             const phaseModel& phase,
             const volScalarField& alphap,
             const volScalarField& alphaMax,
-            const volScalarField& pf,
-            const volSymmTensorField& D
+            const volScalarField& pf
         ) const = 0;
 
         virtual tmp<volScalarField> alphaMinFriction

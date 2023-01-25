@@ -82,11 +82,14 @@ public:
 
     // Member functions
 
+        //- Return the maximum packing limit
+        virtual tmp<volScalarField> alphaMax() const;
+
         //- Return packing limit
         virtual scalar alphaMax
         (
             const label celli,
-            const scalarList& ds
+            const SortableList<scalar>& ds
         ) const;
 
         //- Reread packing limit

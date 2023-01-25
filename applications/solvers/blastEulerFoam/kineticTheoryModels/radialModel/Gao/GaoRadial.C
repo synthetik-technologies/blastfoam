@@ -52,17 +52,19 @@ namespace radialModels
 Foam::kineticTheoryModels::radialModels::Gao::Gao
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    radialModel(dict, kt),
+    radialModel(dict, system),
     residualAlpha_
     (
         "residualAlpha",
         dimless,
         dict.lookup("residualAlpha")
     )
-{}
+{
+    requireKineticTheory();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -85,7 +87,7 @@ Foam::kineticTheoryModels::radialModels::Gao::gs0
         1.0
        /(
            1.0
-         - cbrt(min(phase1, kt_.alphaMinFriction())/phase1.alphaMax())
+         - cbrt(min(phase1, kt_->alphaMinFriction())/phase1.alphaMax())
         )
     );
     volScalarField g2
@@ -93,11 +95,42 @@ Foam::kineticTheoryModels::radialModels::Gao::gs0
         1.0
        /(
            1.0
-         - cbrt(min(phase2, kt_.alphaMinFriction())/phase2.alphaMax())
+         - cbrt(min(phase2, kt_->alphaMinFriction())/phase2.alphaMax())
         )
     );
 
     return (phase1.d()*g1 + phase2.d()*g2)/(phase1.d() + phase2.d());
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::Gao::cellgs0
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    scalar g1
+    (
+        1.0
+       /(
+           1.0
+         - cbrt(min(phase1[celli], kt_->alphaMinFriction()[celli])/phase1.alphaMax())
+        )
+    );
+    scalar g2
+    (
+        1.0
+       /(
+           1.0
+         - cbrt(min(phase2[celli], kt_->alphaMinFriction()[celli])/phase2.alphaMax())
+        )
+    );
+
+    return
+        (phase1.celld(celli)*g1 + phase2.celld(celli)*g2)
+       /(phase1.celld(celli) + phase2.celld(celli));
 }
 
 
@@ -110,12 +143,39 @@ Foam::kineticTheoryModels::radialModels::Gao::gs0prime
 {
     volScalarField aByaMax
     (
-        cbrt(min(max(phase1, scalar(1e-3))/phase1.alphaMax(), 0.999))
+        cbrt
+        (
+            min(max(phase1, scalar(1e-3)), kt_->alphaMinFriction())
+           /phase1.alphaMax()
+        )
     );
 
     return
         (1.0/(3.0*phase1.alphaMax()))/sqr(aByaMax - sqr(aByaMax))
        *phase1.d()/(phase1.d() + phase2.d());
+}
+
+
+Foam::scalar
+Foam::kineticTheoryModels::radialModels::Gao::cellgs0prime
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    scalar aByaMax
+    (
+        cbrt
+        (
+            min(max(phase1[celli], scalar(1e-3)), kt_->alphaMinFriction()[celli])
+           /phase1.alphaMax()
+        )
+    );
+
+    return
+        (1.0/(3.0*phase1.alphaMax()))/sqr(aByaMax - sqr(aByaMax))
+       *phase1.celld(celli)/(phase1.celld(celli) + phase2.celld(celli));
 }
 
 

@@ -39,6 +39,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "phaseModel.H"
 #include "kineticTheorySystem.H"
+#include "SortableList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -114,13 +115,13 @@ public:
     // Member Functions
 
         //- Return the maximum packing limit
-        tmp<volScalarField> alphaMax() const;
+        virtual tmp<volScalarField> alphaMax() const;
 
         // Return the packing limit for celli
         virtual scalar alphaMax
         (
             const label celli,
-            const scalarList& ds
+            const SortableList<scalar>& ds
         ) const = 0;
 
 

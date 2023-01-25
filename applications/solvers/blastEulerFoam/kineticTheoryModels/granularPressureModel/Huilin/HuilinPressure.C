@@ -202,13 +202,13 @@ granularPressureByTheta
     volScalarField m0(m1 + m2);
 
     volScalarField a(pi*(1.0 + e)*pow3(d12)*g0*n1*n2*m1*m2*m0/3.0);
-    tmp<volScalarField> d
+    volScalarField d
     (
         m1Sqr*Theta1*(Theta1 + Theta2) + m2Sqr*Theta2*(Theta1 + Theta2)
     );
     tmp<volScalarField> y
     (
-        sqr(m0)*Theta1*Theta2/d()
+        sqr(m0)*Theta1*Theta2/d
     );
     volScalarField Y
     (
@@ -243,13 +243,13 @@ granularPressureByTheta
 
     tmp<volScalarField> yPrime
     (
-        sqr(m0)*Theta2*(1.0/d() - Theta1*dPrime/sqr(d()))
+        sqr(m0)*Theta2*(1.0/d - Theta1*dPrime/sqr(d))
     );
     tmp<volScalarField> YPrime(1.5*yPrime*sqrt(y));
 
     tmp<volScalarField> n(m1*Theta1 - m2*Theta2);
     tmp<volScalarField> nPrime(m1);
-    d.clear();
+
     d =
         sqr(m1*Theta1) + sqr(m2*Theta2)
       + Theta1*Theta2*(m1Sqr + m2Sqr);
@@ -258,7 +258,7 @@ granularPressureByTheta
         2.0*m1Sqr*Theta1 + Theta2*(m1Sqr + m2Sqr);
     tmp<volScalarField> deltaPrime
     (
-        nPrime/sqrt(d()) - 0.5*n*dPrime()/pow(d(), 1.5)
+        nPrime/sqrt(d) - 0.5*n*dPrime()/pow(d, 1.5)
     );
     tmp<volScalarField> ZPrime
     (

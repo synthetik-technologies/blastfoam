@@ -134,47 +134,6 @@ Foam::kineticTheorySystem::kineticTheorySystem
         dimensionedScalar("one", dimless, 0.0),
         zeroGradientFvPatchScalarField::typeName
     ),
-    Pfr_
-    (
-        IOobject
-        (
-            IOobject::groupName("Pfr", group_),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fluid.mesh(),
-        dimensionedScalar("zero", dimPressure, 0.0)
-    ),
-
-    PfrPrime_
-    (
-        IOobject
-        (
-            IOobject::groupName("PfrPrime", group_),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fluid.mesh(),
-        dimensionedScalar("zero", dimPressure, 0.0)
-    ),
-
-    nuFric_
-    (
-        IOobject
-        (
-            IOobject::groupName("nuFric", group_),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fluid.mesh(),
-        dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
-    ),
     minTheta_
     (
         dimensionedScalar::lookupOrDefault
@@ -189,7 +148,12 @@ Foam::kineticTheorySystem::kineticTheorySystem
     (
         !isA<kineticTheoryModels::noneViscosity>(viscosityModel_())
     )
-{}
+{
+    if (writeTotal_)
+    {
+        this->writeOpt() = IOobject::AUTO_WRITE;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -222,7 +186,11 @@ Foam::scalar Foam::kineticTheorySystem::es(const phasePairKey& pair) const
 
 Foam::scalar Foam::kineticTheorySystem::Cf(const phasePairKey& pair) const
 {
-    return CfTable_[pair];
+    if (CfTable_.found(pair))
+    {
+        return CfTable_[pair];
+    }
+    return 0.0;
 }
 
 
@@ -241,6 +209,21 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::gs0
 }
 
 
+Foam::scalar Foam::kineticTheorySystem::cellgs0
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1  == &phase2)
+    {
+        return kineticTheoryModels_[phaseIndexes_[phase1.index()]].gs0()[celli];
+    }
+    return radialModel_->cellgs0(celli, phase1, phase2);
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::gs0Prime
 (
     const phaseModel& phase1,
@@ -253,6 +236,21 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::gs0Prime
         return kineticTheoryModels_[phaseIndexes_[phase1.index()]].gs0Prime();
     }
     return radialModel_->gs0prime(phase1, phase2);
+}
+
+
+Foam::scalar Foam::kineticTheorySystem::cellgs0Prime
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    if (&phase1  == &phase2)
+    {
+        return kineticTheoryModels_[phaseIndexes_[phase1.index()]].gs0Prime()[celli];
+    }
+    return radialModel_->cellgs0prime(celli, phase1, phase2);
 }
 
 
@@ -465,25 +463,146 @@ Foam::kineticTheorySystem::lambda
 }
 
 
-const Foam::volScalarField& Foam::kineticTheorySystem::frictionalPressure() const
-{
-    return Pfr_;
-}
-
-
-const Foam::volScalarField&
-Foam::kineticTheorySystem::frictionalPressurePrime
+Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::frictionalPressure
 (
-    const volScalarField& alpha
+    const phaseModel& phase
 ) const
 {
-    return PfrPrime_;
+    return frictionalStressModel_->frictionalPressure
+    (
+        phase,
+        this->alpha(),
+        alphaMax_
+    );
 }
 
 
-const Foam::volScalarField& Foam::kineticTheorySystem::nuFrictional() const
+Foam::tmp<Foam::volScalarField>
+Foam::kineticTheorySystem::frictionalPressurePrime
+(
+    const phaseModel& phase
+) const
 {
-    return nuFric_;
+    return frictionalStressModel_->frictionalPressurePrime
+    (
+        phase,
+        this->alpha(),
+        alphaMax_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::muFrictional
+(
+    const phaseModel& phase,
+    const volScalarField& Pfr
+) const
+{
+    return frictionalStressModel_->mu
+    (
+        phase,
+        this->alpha(),
+        alphaMax_,
+        Pfr
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::kineticTheorySystem::productionSource
+(
+    const kineticTheoryModel& kt,
+    const phaseModel& phase2
+) const
+{
+    const phaseModel& phase1 = kt.phase();
+
+    // Production of granular energy (Houim and Oran 2016, Eq. 3.49, Eq. B 66)
+    return tmp<volScalarField>
+    (
+        new volScalarField
+        (
+            81.0*phase1*sqr(phase2.mu())*magSqr(phase1.U() - phase2.U())
+           /(
+                kt.gs0()*pow3(phase1.d())
+               *phase1.rho()
+               *sqrt(Foam::constant::mathematical::pi)
+            )
+        )
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::kineticTheorySystem::dissipationSource
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2,
+    const dimensionedScalar& deltaT
+) const
+{
+    const scalar pi(Foam::constant::mathematical::pi);
+    if (Thetas_.size() == 1)
+    {
+        const kineticTheoryModel& kt = kineticTheoryModels_[0];
+        tmp<volScalarField> gammaCoeff
+        (
+            volScalarField::New
+            (
+                "gammaCoeff",
+                12.0
+               *(1.0 - sqr(kt.es()))
+               *kt.gs0()
+               *phase1*phase1.alphaRho()
+               /(phase1.d()*sqrt(pi))
+            )
+        );
+        tmp<volScalarField> ThetaStar
+        (
+            kt.Theta()
+           *sqr
+            (
+                3.0*phase1.alphaRho()
+               /(
+                    3.0*phase1.alphaRho()
+                  + deltaT*gammaCoeff*sqrt(kt.Theta())
+                  + phase1.residualAlphaRho()
+                )
+            )
+        );
+        return 1.5*phase1.alphaRho()*(ThetaStar - kt.Theta());
+    }
+    // Dissipation of granular energy (Huilin and Gidaspow 2003, Eq. 25)
+    volScalarField Theta1(phase1.Theta());
+    Theta1.max(1e-10);
+    volScalarField Theta2(phase2.Theta());
+    Theta2.max(1e-10);
+    phasePairKey key(phase1.name(), phase2.name(), false);
+
+    volScalarField m1(pi/6.0*pow3(phase1.d())*phase1.rho());
+    volScalarField m2(pi/6.0*pow3(phase2.d())*phase2.rho());
+    volScalarField m0(m1 + m2);
+    volScalarField m1Thetam2Theta(sqr(m1)*Theta1 + sqr(m2)*Theta2);
+
+    return volScalarField::New
+    (
+        "dissipationSource",
+      - (
+            (
+                3.0/phase1.d()
+               *sqrt
+                (
+                    2.0*sqr(m0)*phase1.Theta()*phase2.Theta()
+                   /(pi*m1Thetam2Theta)
+                )
+              - (3.0*m0*(m1*phase1.Theta() + m2*phase2.Theta()))
+               /(4.0*m1Thetam2Theta)
+               *fvc::div(this->phi())
+            )
+           *(1.0 - this->es(key))
+           *this->Ps(phase1, phase2)
+        )*deltaT
+    );
 }
 
 
@@ -519,6 +638,7 @@ void Foam::kineticTheorySystem::addPhase
     // Print granular quantities only if more than 1 phase is present
     if (phases_.size() > 1 && !ThetapPtr_.valid())
     {
+        alphaMax_.writeOpt() = this->writeOpt();
         ThetapPtr_.set
         (
             new volScalarField
@@ -577,46 +697,13 @@ void Foam::kineticTheorySystem::update()
         Thetap /= max(alpha(), residualAlpha_);
     }
 
-    alphaMax_ = packingLimitModel_->alphaMax();
+    alphaMax_ = max(minAlphaMax_, packingLimitModel_->alphaMax());
     alphaMax_.correctBoundaryConditions();
 
 
-    const volScalarField& alpha = this->alpha();
-
-    alphaMinFriction_ =
-        frictionalStressModel_->alphaMinFriction(alpha, alphaMax_);
-
     frictionalStressModel_->update();
-    Pfr_ = frictionalStressModel_->frictionalPressure
-    (
-        alpha,
-        alphaMax_
-    );
-
-    PfrPrime_ = frictionalStressModel_->frictionalPressurePrime
-    (
-        alpha,
-        alphaMax_
-    );
-
-    nuFric_ = dimensionedScalar("0", nuFric_.dimensions(), 0.0);
-    forAll(phaseIndexes_, phasei)
-    {
-        const phaseModel& phase = fluid_.phases()[phaseIndexes_[phasei]];
-        tmp<volTensorField> tgradU(fvc::grad(phase.U()));
-        const volTensorField& gradU(tgradU());
-        volSymmTensorField D(symm(gradU));
-
-        nuFric_ += frictionalStressModel_->nu
-        (
-            phase,
-            alpha,
-            alphaMax_,
-            phase*Pfr_/phase.rho(),
-            D
-        )*phase;
-    }
-    nuFric_ /= max(alpha, residualAlpha_);
+    alphaMinFriction_ =
+        frictionalStressModel_->alphaMinFriction(this->alpha(), alphaMax_);
 }
 
 
