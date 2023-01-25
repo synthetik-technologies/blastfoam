@@ -38,7 +38,9 @@ Foam::LinearMUSCLReconstructionScheme<Type>::LinearMUSCLReconstructionScheme
 )
 :
     ReconstructionScheme<Type>(phi, is, overwrite),
-    gradPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0)
+    gradPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0),
+    bound_(is.good() ? readBool(is) : true),
+    extrapolate_(is.good() ? readBool(is) : false)
 {
     if (this->overwrite_)
     {
@@ -87,7 +89,6 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateOwn() const
     GeometricField<Type, fvsPatchField, surfaceMesh>& phiOwn = tphiOwn.ref();
 
     const labelList& owner = this->mesh_.owner();
-    const labelList& neighbour = this->mesh_.neighbour();
     const vectorField& cc = this->mesh_.C();
     const vectorField& fc = this->mesh_.Cf();
 
@@ -100,11 +101,6 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateOwn() const
     forAll(owner, facei)
     {
         label own = owner[facei];
-        label nei = neighbour[facei];
-
-        Type minVal(min(this->phi_[own], this->phi_[nei]));
-        Type maxVal(max(this->phi_[own], this->phi_[nei]));
-
         vector drOwn(fc[facei] - cc[own]);
 
         for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
@@ -114,24 +110,40 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateOwn() const
               + component(limOwn[facei], cmpti)
                *(drOwn & this->gradPhis_[cmpti][own]);
         }
-
-        // Hard limit to min/max of owner/neighbour values
-        phiOwn[facei] = max(phiOwn[facei], minVal);
-        phiOwn[facei] = min(phiOwn[facei], maxVal);
+    }
+    if (bound_)
+    {
+        const labelList& neighbour = this->mesh_.neighbour();
+        forAll(owner, facei)
+        {
+            label own = owner[facei];
+            label nei = neighbour[facei];
+            phiOwn[facei] =
+                min
+                (
+                    phiOwn[facei],
+                    max(this->phi_[own], (this->phi_[nei]))
+                );
+            phiOwn[facei] =
+                max
+                (
+                    phiOwn[facei],
+                    min(this->phi_[own], (this->phi_[nei]))
+                );
+        }
     }
 
     forAll(this->phi_.boundaryField(), patchi)
     {
         const fvPatch& patch = this->mesh_.boundary()[patchi];
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
+        Field<Type>& pphiOwn = phiOwn.boundaryFieldRef()[patchi];
+
         if (pphi.coupled())
         {
             Field<Type>& pphiOwn = phiOwn.boundaryFieldRef()[patchi];
             Field<Type> pphipOwn(pphi.patchInternalField());
             Field<Type> pphipNei(pphi.patchNeighbourField());
-
-            Field<Type> minVal(min(pphipOwn, pphipNei));
-            Field<Type> maxVal(max(pphipOwn, pphipNei));
 
             const Field<Type>& plimOwn
             (
@@ -163,15 +175,53 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateOwn() const
                        *(pdeltaOwn[facei] & pgradPhiOwn[facei]);
                 }
             }
+            if (bound_)
+            {
+                forAll(pphipOwn, facei)
+                {
+                    pphiOwn[facei] =
+                        min
+                        (
+                            pphiOwn[facei],
+                            max(pphipOwn[facei], pphipNei[facei])
+                        );
+                    pphiOwn[facei] =
+                        max
+                        (
+                            pphiOwn[facei],
+                            min(pphipOwn[facei], pphipNei[facei])
+                        );
+                }
+            }
+        }
+        else if (!pphi.fixesValue() && extrapolate_)
+        {
+            Field<Type> pphiI(pphi.patchInternalField());
+            vectorField pdelta(patch.fvPatch::delta());
 
-            // Hard limit to min/max of owner/neighbour values
-            pphiOwn = max(minVal, phiOwn.boundaryField()[patchi]);
-            pphiOwn = min(maxVal, phiOwn.boundaryField()[patchi]);
+            for
+            (
+                direction cmpti = 0;
+                cmpti < pTraits<Type>::nComponents;
+                cmpti++
+            )
+            {
+                Field<vector> pgradPhi
+                (
+                    this->gradPhis_[cmpti].boundaryField()[patchi].patchInternalField()
+                );
+
+                forAll(pphi, facei)
+                {
+                    setComponent(pphiOwn[facei], cmpti) =
+                        component(pphiI[facei], cmpti)
+                      + (pdelta[facei] & pgradPhi[facei]);
+                }
+            }
         }
         else
         {
-            phiOwn.boundaryFieldRef()[patchi] =
-                this->phi_.boundaryField()[patchi];
+            pphiOwn = pphi;
         }
     }
 
@@ -193,7 +243,7 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateNei() const
     );
     GeometricField<Type, fvsPatchField, surfaceMesh>& phiNei = tphiNei.ref();
 
-    const labelList& owner = this->mesh_.owner();
+    // const labelList& owner = this->mesh_.owner();
     const labelList& neighbour = this->mesh_.neighbour();
     const vectorField& cc = this->mesh_.C();
     const vectorField& fc = this->mesh_.Cf();
@@ -206,13 +256,9 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateNei() const
 
     forAll(neighbour, facei)
     {
-        label own = owner[facei];
         label nei = neighbour[facei];
-
-        Type minVal(min(this->phi_[own], this->phi_[nei]));
-        Type maxVal(max(this->phi_[own], this->phi_[nei]));
-
         vector drNei(fc[facei] - cc[nei]);
+
         for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
         {
             setComponent(phiNei[facei], cmpti) =
@@ -220,24 +266,39 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateNei() const
               + component(limNei[facei], cmpti)
                *(drNei & this->gradPhis_[cmpti][nei]);
         }
-
-        // Hard limit to min/max of owner/neighbour values
-        phiNei[facei] = max(phiNei[facei], minVal);
-        phiNei[facei] = min(phiNei[facei], maxVal);
+    }
+    if (bound_)
+    {
+        const labelList& owner = this->mesh_.owner();
+        forAll(owner, facei)
+        {
+            label own = owner[facei];
+            label nei = neighbour[facei];
+            phiNei[facei] =
+                min
+                (
+                    phiNei[facei],
+                    max(this->phi_[own], (this->phi_[nei]))
+                );
+            phiNei[facei] =
+                max
+                (
+                    phiNei[facei],
+                    min(this->phi_[own], (this->phi_[nei]))
+                );
+        }
     }
 
     forAll(this->phi_.boundaryField(), patchi)
     {
         const fvPatch& patch = this->mesh_.boundary()[patchi];
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
+        Field<Type>& pphiNei = phiNei.boundaryFieldRef()[patchi];
+
         if (pphi.coupled())
         {
-            Field<Type>& pphiNei = phiNei.boundaryFieldRef()[patchi];
             Field<Type> pphipOwn(pphi.patchInternalField());
             Field<Type> pphipNei(pphi.patchNeighbourField());
-
-            Field<Type> minVal(min(pphipOwn, pphipNei));
-            Field<Type> maxVal(max(pphipOwn, pphipNei));
 
             const Field<Type>& plimNei
             (
@@ -268,16 +329,55 @@ Foam::LinearMUSCLReconstructionScheme<Type>::interpolateNei() const
                        *(pdeltaNei[facei] & pgradPhiNei[facei]);
                 }
             }
+            if (bound_)
+            {
+                forAll(pphipOwn, facei)
+                {
+                    pphiNei[facei] =
+                        min
+                        (
+                            pphiNei[facei],
+                            max(pphipOwn[facei], pphipNei[facei])
+                        );
+                    pphiNei[facei] =
+                        max
+                        (
+                            pphiNei[facei],
+                            min(pphipOwn[facei], pphipNei[facei])
+                        );
+                }
+            }
+        }
+        else if (!pphi.fixesValue() && extrapolate_)
+        {
+            Field<Type> pphiI(pphi.patchInternalField());
+            vectorField pdelta(patch.fvPatch::delta());
 
-            // Hard limit to min/max of owner/neighbour values
-            pphiNei = max(minVal, phiNei.boundaryField()[patchi]);
-            pphiNei = min(maxVal, phiNei.boundaryField()[patchi]);
+            for
+            (
+                direction cmpti = 0;
+                cmpti < pTraits<Type>::nComponents;
+                cmpti++
+            )
+            {
+                Field<vector> pgradPhi
+                (
+                    this->gradPhis_[cmpti].boundaryField()[patchi].patchInternalField()
+                );
+
+                forAll(pphi, facei)
+                {
+                    setComponent(pphiNei[facei], cmpti) =
+                        component(pphiI[facei], cmpti)
+                      + (pdelta[facei] & pgradPhi[facei]);
+                }
+            }
         }
         else
         {
-            phiNei.boundaryFieldRef()[patchi] =
-                this->phi_.boundaryField()[patchi];
+            pphiNei = pphi;
         }
+
     }
 
     return tphiNei;

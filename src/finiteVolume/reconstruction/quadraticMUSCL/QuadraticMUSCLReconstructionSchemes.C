@@ -58,6 +58,7 @@ defineReconstructionTable(Quadratic, QuadraticMUSCL, sphericalTensor)
 defineReconstructionTable(Quadratic, QuadraticMUSCL, tensor)
 
 // Define limiters
+makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", none, noneLimiter)
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", Gamma, GammaLimiter)
 makeLMUSCLReconstruction
 (
@@ -163,6 +164,16 @@ makeLMUSCLReconstruction
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", vanAlbada, vanAlbadaLimiter)
 
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", vanLeer, vanLeerLimiter)
+makeLMUSCLReconstruction
+(
+    Quadratic, "quadraticMUSCL",
+    vanLeer01,
+    Limited01Limiter,
+    vanLeerLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

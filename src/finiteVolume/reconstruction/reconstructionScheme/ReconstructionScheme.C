@@ -27,107 +27,21 @@ License
 #include "StandardReconstructionScheme.H"
 #include "fvc.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::word Foam::ReconstructionScheme<Type>::scheme(const word& name)
-{
-    return "reconstruct(" + name + ")";
-}
-
-
-template<class Type>
-Foam::word Foam::ReconstructionScheme<Type>::scheme
-(
-    const word& name,
-    const fvMesh& mesh,
-    const bool fail
-)
-{
-    return scheme(name, word::null, mesh, fail);
-}
-
-
-template<class Type>
-Foam::word Foam::ReconstructionScheme<Type>::scheme
-(
-    const word& baseName,
-    const word& phaseName,
-    const fvMesh& mesh,
-    const bool fail
-)
-{
-    const word name(IOobject::groupName(name, phaseName));
-    word baseScheme(scheme(baseName));
-    word nameScheme(scheme(name));
-
-    if (mesh.schemesDict().subDict("interpolationSchemes").found(nameScheme))
-    {
-        return nameScheme;
-    }
-    else if (mesh.schemesDict().subDict("interpolationSchemes").found(baseScheme))
-    {
-        return baseScheme;
-    }
-    else if (fail)
-    {
-        FatalErrorInFunction
-            << "Riemann fluxes are used, but no limiter is " << nl
-            << "specified for " << name << "." << nl
-            << "Please specify " << string(nameScheme)
-            << " or " << string(baseScheme) << endl
-            << "This may result in unstable solutions." << endl;
-    }
-    else
-    {
-        WarningInFunction
-            << "Riemann fluxes are used, but no limiter is " << nl
-            << "specified for " << name << "." << nl
-            << "This may result in unstable solutions." << nl
-            << "Please specify " << string(nameScheme)
-            << " or " << string(baseScheme) << endl;
-
-    }
-    return nameScheme;
-}
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
 Foam::word Foam::ReconstructionScheme<Type>::ownName() const
 {
-    return ownName(phi_.name());
-}
-
-
-template<class Type>
-Foam::word Foam::ReconstructionScheme<Type>::ownName(const word& name) const
-{
-    return
-        IOobject::groupName
-        (
-            IOobject::member(name) + "Own",
-            IOobject::group(name)
-        );
+    return this->ownName(phi_.name());
 }
 
 
 template<class Type>
 Foam::word Foam::ReconstructionScheme<Type>::neiName() const
 {
-    return neiName(phi_.name());
+    return this->neiName(phi_.name());
 }
 
-template<class Type>
-Foam::word Foam::ReconstructionScheme<Type>::neiName(const word& name) const
-{
-    return
-        IOobject::groupName
-        (
-            IOobject::member(name) + "Nei",
-            IOobject::group(name)
-        );
-}
 
 template<class Type>
 void
@@ -183,7 +97,7 @@ Foam::ReconstructionScheme<Type>::interpolateOwnNei
     }
     else
     {
-        DebugInfo << "Recomputing " << neiName() <<" "<<overwrite_<< endl;
+        DebugInfo << "Recomputing " << neiName() << endl;
         tphiNei = interpolateNei();
     }
 }
@@ -212,55 +126,8 @@ Foam::ReconstructionScheme<Type>::New
     const bool overwrite
 )
 {
-    word name
-    (
-        "reconstruct("
-      + fieldName
-      + ")"
-    );
-    word namePhase
-    (
-        "reconstruct("
-      + IOobject::groupName(fieldName, phaseName)
-      + ")"
-    );
-
-    if
-    (
-        phi.mesh().schemesDict().subDict
-        (
-            "interpolationSchemes"
-        ).found(namePhase)
-    )
-    {
-        name = namePhase;
-    }
-    else if
-    (
-        !phi.mesh().schemesDict().subDict
-        (
-            "interpolationSchemes"
-        ).found(name)
-    )
-    {
-        // Default to lookup of density scheme
-        if
-        (
-            !phi.mesh().schemesDict().subDict
-            (
-                "interpolationSchemes"
-            ).found("reconstruct(rho)")
-        )
-        {
-            WarningInFunction
-                << "Riemann fluxes are used, but no limiter is " << nl
-                << "specified for " << name << "." << nl
-                << "This may result in unstable solutions." << endl;
-        }
-        name = "reconstruct(rho)";
-    }
-
-    Istream& is(phi.mesh().interpolationScheme(name));
+    const word schemeKey(scheme(fieldName, phaseName, phi.mesh(), debug, overwrite));
+    Istream& is(phi.mesh().interpolationScheme(schemeKey));
     word order(is);
     word scheme(order);
     typedef surfaceInterpolationScheme<Type> sISType;
@@ -275,7 +142,7 @@ Foam::ReconstructionScheme<Type>::New
             new StandardReconstructionScheme<Type>
             (
                 phi,
-                IStringStream(name)(),
+                IStringStream(schemeKey)(),
                 overwrite
             )
         );
@@ -303,156 +170,16 @@ Foam::ReconstructionScheme<Type>::New
         (
             is
         )   << "Unknown discretisation scheme "
-            << scheme << " for " << name << nl << nl
-            << "Valid MUSCL schemes are :" << endl
+            << scheme << " for " << fieldName << nl << nl
+            << "Valid MUSCL schemes are :" << nl
             << dictionaryConstructorTablePtr_->sortedToc() << nl << nl
-            << "Valid OpenFOAM schemes are:" << endl
+            << "Valid OpenFOAM schemes are:" << nl
             << sISType::MeshFluxConstructorTablePtr_->sortedToc()
+            << endl
             << abort(FatalIOError);
     }
 
     return cstrIter()(phi, is, overwrite);
-}
-
-
-// template<class Type>
-// Foam::autoPtr<Foam::ReconstructionScheme<Type>>
-// Foam::ReconstructionScheme<Type>::New
-// (
-//     const GeometricField<Type, fvPatchField, volMesh>& phi,
-//     const word& fieldName,
-//     const word& phaseName
-// )
-// {
-//     word name
-//     (
-//         "reconstruct("
-//       + fieldName
-//       + ")"
-//     );
-//     word namePhase
-//     (
-//         "reconstruct("
-//       + IOobject::groupName(fieldName, phaseName)
-//       + ")"
-//     );
-//
-//     if
-//     (
-//         phi.mesh().schemesDict().subDict
-//         (
-//             "interpolationSchemes"
-//         ).found(namePhase)
-//     )
-//     {
-//         name = namePhase;
-//     }
-//     else if
-//     (
-//         !phi.mesh().schemesDict().subDict
-//         (
-//             "interpolationSchemes"
-//         ).found(name)
-//     )
-//     {
-//         //- Default to lookup of density scheme
-//         if
-//         (
-//             debug
-//          || !phi.mesh().schemesDict().subDict
-//             (
-//                 "interpolationSchemes"
-//             ).found("reconstruct(rho)")
-//         )
-//         {
-//             WarningInFunction
-//                 << "Riemann fluxes are used, but no limiter is " << nl
-//                 << "specified for " << name << "." << nl
-//                 << "This may result in unstable solutions." << endl;
-//         }
-//         name = "reconstruct(rho)";
-//     }
-//
-//     Istream& is(phi.mesh().interpolationScheme(name));
-//     word order(is);
-//
-//     if (debug)
-//     {
-//         Info<< "selecting " << order << " interpolation scheme "
-//             << "for " << phi.name() << endl;
-//     }
-//
-//
-//     // No upwinding scheme
-//     if (order == "none")
-//     {
-//         return autoPtr<ReconstructionScheme<Type>>
-//         (
-//             new noneMUSCLReconstructionScheme<Type>(phi, is)
-//         );
-//     }
-//
-//     // Upwind scheme
-//     if (order == "upwindMUSCL")
-//     {
-//         return autoPtr<ReconstructionScheme<Type>>
-//         (
-//             new upwindMUSCLReconstructionScheme<Type>(phi, is)
-//         );
-//     }
-//
-//     // Linear MUSCL
-//     if (order == "linearMUSCL")
-//     {
-//         word limiterName(is);
-//         typename linearMeshConstructorTable::iterator cstrIter =
-//             linearMeshConstructorTablePtr_->find(limiterName);
-//
-//         if (cstrIter == linearMeshConstructorTablePtr_->end())
-//         {
-//             FatalErrorInFunction
-//                 << "Unknown linear MUSCL limiter type "
-//                 << limiterName << " for " << phi.name() << endl << endl
-//                 << "Valid linear MUSCL limiters types are : " << endl
-//                 << linearMeshConstructorTablePtr_->sortedToc()
-//                 << exit(FatalError);
-//         }
-//
-//         return cstrIter()(phi, is);
-//     }
-//
-//     // Quadratic MUSCL
-//     if (order == "quadraticMUSCL")
-//     {
-//         word limiterName(is);
-//         typename quadraticMeshConstructorTable::iterator cstrIter =
-//             quadraticMeshConstructorTablePtr_->find(limiterName);
-//
-//         if (cstrIter == quadraticMeshConstructorTablePtr_->end())
-//         {
-//             FatalErrorInFunction
-//                 << "Unknown quadratic MUSCL limiter type "
-//                 << limiterName << " for " << phi.name() << endl << endl
-//                 << "Valid quadratic MUSCL limiters are : " << endl
-//                 << quadraticMeshConstructorTablePtr_->sortedToc()
-//                 << exit(FatalError);
-//         }
-//
-//         return cstrIter()(phi, is);
-//     }
-//
-//     if (debug)
-//     {
-//         Info<< "No MUSCL scheme named " << name << ". Using standard " << nl
-//             << "interpolation schemes instead." << endl;
-//     }
-//
-//     // Standard OpenFOAM interpolation
-//     IStringStream nameIS(name);
-//     return autoPtr<ReconstructionScheme<Type>>
-//     (
-//         new standardMUSCLReconstructionScheme<Type>(phi, nameIS)
-//     );
-// }
+}\
 
 // ************************************************************************* //

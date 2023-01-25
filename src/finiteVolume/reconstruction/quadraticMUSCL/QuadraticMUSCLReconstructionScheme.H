@@ -63,6 +63,21 @@ protected:
     //- Hessian of field
     PtrList<GeometricField<tensor, fvPatchField, volMesh>> hessPhis_;
 
+    //- Bound face values
+    bool bound_;
+
+    //- Extrapolate boundaries
+    bool extrapolate_;
+
+    inline tmp<volVectorField> gradient
+    (
+        const volScalarField&,
+        const label diri
+    ) const
+    {
+        return gradPhis_[diri];
+    }
+
 
 public:
 

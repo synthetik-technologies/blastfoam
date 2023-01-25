@@ -56,6 +56,7 @@ SourceFiles
 #ifndef ReconstructionScheme_H
 #define ReconstructionScheme_H
 
+#include "reconstruction.H"
 #include "fvMesh.H"
 #include "autoPtr.H"
 #include "volFieldsFwd.H"
@@ -75,6 +76,8 @@ namespace Foam
 
 template<class Type>
 class ReconstructionScheme
+:
+    public reconstruction
 {
 protected:
 
@@ -215,17 +218,14 @@ public:
 
     // Member Functions
 
+        using reconstruction::ownName;
+        using reconstruction::neiName;
+
         //- Return the name of the owner field
         word ownName() const;
 
-        //- Return the name of the owner field
-        word ownName(const word&) const;
-
         //- Return the name of the neighbour field
         word neiName() const;
-
-        //- Return the name of the neighbour field
-        word neiName(const word&) const;
 
         //- Return the owner and neighbor interpolated fields
         virtual void interpolateOwnNei
@@ -242,29 +242,39 @@ public:
         virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
         interpolateNei() const = 0;
 
-        //- Return the reconstruction scheme name
-        static word scheme(const word&);
-        static word scheme
-        (
-            const word&,
-            const fvMesh&,
-            const bool fail = true
-        );
-        static word scheme
-        (
-            const word&,
-            const word&,
-            const fvMesh&,
-            const bool fail = true
-        );
-
-
     // Member Operators
 
         //- Disallow default bitwise assignment
         void operator=(const ReconstructionScheme&) = delete;
 };
 
+
+template<class LimiterFunc>
+class noneLimiter
+:
+    public LimiterFunc
+{
+    scalar k_;
+
+public:
+
+    noneLimiter(Istream& is)
+    {}
+
+    scalar limiter
+    (
+        const scalar cdWeight,
+        const scalar faceFlux,
+        const typename LimiterFunc::phiType& phiP,
+        const typename LimiterFunc::phiType& phiN,
+        const typename LimiterFunc::gradPhiType& gradcP,
+        const typename LimiterFunc::gradPhiType& gradcN,
+        const vector& d
+    ) const
+    {
+        return 1;
+    }
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

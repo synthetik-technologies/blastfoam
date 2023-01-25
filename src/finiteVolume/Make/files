@@ -46,11 +46,12 @@ fluxSchemes/phaseFluxSchemes/HLLC/HLLCPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Kurganov/KurganovPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
 
+reconstruction/reconstructionScheme/reconstruction.C
 reconstruction/reconstructionScheme/ReconstructionSchemes.C
 reconstruction/none/NoneReconstructionSchemes.C
 reconstruction/standard/StandardReconstructionSchemes.C
 reconstruction/upwindMUSCL/UpwindMUSCLReconstructionSchemes.C
-# reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
+reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
 reconstruction/quadraticMUSCL/QuadraticMUSCLReconstructionSchemes.C
 
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C

@@ -60,6 +60,20 @@ protected:
     //  Treated as a PtrList to ensure grad<type> is defined
     PtrList<GeometricField<vector, fvPatchField, volMesh>> gradPhis_;
 
+    //- Bound face values
+    bool bound_;
+
+    //- Extrapolate boundaries
+    bool extrapolate_;
+
+    inline tmp<volVectorField> gradient
+    (
+        const volScalarField&,
+        const label diri
+    ) const
+    {
+        return gradPhis_[diri];
+    }
 
 public:
 

@@ -59,6 +59,7 @@ defineReconstructionTable(Linear, LinearMUSCL, sphericalTensor);
 defineReconstructionTable(Linear, LinearMUSCL, tensor);
 
 // Define limiters
+makeMUSCLReconstruction(Linear, "linearMUSCL", none, noneLimiter)
 makeMUSCLReconstruction(Linear, "linearMUSCL", Gamma, GammaLimiter);
 makeLMUSCLReconstruction
 (
