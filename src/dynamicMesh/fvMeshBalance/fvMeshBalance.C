@@ -32,6 +32,7 @@ License
 #include "singleProcessorFaceSetsConstraint.H"
 #include "preservePatchesConstraint.H"
 #include "preserveBafflesConstraint.H"
+#include "pointMeshMapper.H"
 
 using namespace Foam::decompositionConstraints;
 
@@ -40,6 +41,8 @@ using namespace Foam::decompositionConstraints;
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshBalance, 0);
+    defineTypeNameAndDebug(fvMeshBalance::fvPatchResizer, 0);
+    defineTypeNameAndDebug(fvMeshBalance::pointPatchResizer, 0);
 
 bool fvMeshBalance::balancing = false;
 }
@@ -547,11 +550,26 @@ Foam::fvMeshBalance::distribute()
     blastMeshObject::preDistribute<polyMesh>(mesh_);
     blastMeshObject::preDistribute<fvMesh>(mesh_);
 
+    // Create class to hook in before fvMesh::updateMesh is called
+    fvPatchResizer resizer(mesh_);
+    // autoPtr<pointPatchResizer> pResizer;
+    // if (mesh_.foundObject<pointMesh>(pointMesh::typeName))
+    // {
+    //     pResizer.set(new pointPatchResizer(pointMesh::New(mesh_)));
+    // }
+
     Info<< "Distributing the mesh ..." << endl;
     balancing = true;
     autoPtr<mapDistributePolyMesh> map =
         distributor_.distribute(distribution_);
     balancing = false;
+
+    if (!returnReduce(mesh_.nCells(), minOp<label>()))
+    {
+        FatalErrorInFunction
+            << "New distribution results in a processor with 0 cells" << endl
+            << abort(FatalError);
+    }
 
     Info << "Successfully distributed mesh" << endl;
     label procLoadNew(mesh_.nCells());
@@ -619,6 +637,99 @@ bool Foam::fvMeshBalance::write(const bool write) const
         return decomposeParDict.regIOobject::write();
     }
     return true;
+}
+
+
+// Problems can occur when mapping patchFields since the new size maybe bigger
+// than the previous size which leads to uninitialized values and can result
+// in crashes due to writing NaN
+// Current fix:
+//      After the polyMesh is updated, but before fields are mapped, set all
+//      patch sizes to the maximum size, and initialize to Zero. PointPatchFields
+//      are only updated if they are a valuePointPatchField
+void Foam::fvMeshBalance::fvPatchResizer::updateMesh(const mapPolyMesh& map)
+{
+    labelList newPatchSizes(map.oldPatchSizes());
+    forAll(mesh_.boundary(), patchi)
+    {
+        newPatchSizes[patchi] =
+            max(newPatchSizes[patchi], mesh_.boundary()[patchi].size());
+    }
+
+    #define resizePatchFieldType(Type, mesh, sizes)                            \
+        resizePatchFields<Type, fvPatchField, volMesh>                         \
+        (                                                                      \
+            mesh,                                                              \
+            sizes                                                              \
+        );                                                                     \
+        resizePatchFields<Type, fvsPatchField, surfaceMesh>                    \
+        (                                                                      \
+            mesh,                                                              \
+            sizes                                                              \
+        );
+
+    FOR_ALL_FIELD_TYPES(resizePatchFieldType, mesh_, newPatchSizes);
+
+    #undef resizePatchFieldType
+}
+
+
+void Foam::fvMeshBalance::pointPatchResizer::updateMesh(const mapPolyMesh& map)
+{
+    const polyMesh& mesh = mesh_.mesh();
+    labelListList nullPatchPoints(mesh.boundaryMesh().size());
+
+    const pointMeshMapper m(mesh_, map);
+
+    const pointBoundaryMeshMapper& bm(m.boundaryMap());
+
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        const pointPatchMapper& pm(bm[patchi]);
+        if (pm.hasUnmapped())
+        {
+            const polyPatch& p = mesh.boundaryMesh()[patchi];
+            DynamicList<label> nullPoints(p.meshPoints().size());
+            if (pm.direct())
+            {
+                const labelList& addr = pm.directAddressing();
+                forAll(addr, pi)
+                {
+                    if (addr[pi] < 0)
+                    {
+                        nullPoints.append(pi);
+                    }
+                }
+            }
+            else
+            {
+                const labelListList& addr = pm.addressing();
+                forAll(addr, pi)
+                {
+                    if (!addr[pi].size())
+                    {
+                        nullPoints.append(pi);
+                    }
+                }
+            }
+            nullPatchPoints[patchi].transfer(nullPoints);
+        }
+    }
+
+    #define zeroUnmappedPointPatchFieldTypes(Type, mesh, map)                  \
+        zeroUnmappedPointPatchFields<Type>                                     \
+        (                                                                      \
+            mesh,                                                              \
+            map                                                                \
+        );
+    FOR_ALL_FIELD_TYPES
+    (
+        zeroUnmappedPointPatchFieldTypes,
+        const_cast<objectRegistry&>(mesh_.thisDb()),
+        nullPatchPoints
+    );
+
+    #undef zeroUnmappedPointPatchFieldTypes
 }
 
 

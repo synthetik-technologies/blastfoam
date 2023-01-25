@@ -46,6 +46,7 @@ namespace Foam
 {
 
 class decompositionMethod;
+
 /*---------------------------------------------------------------------------*\
                      Class fvMeshBalance Declaration
 \*---------------------------------------------------------------------------*/
@@ -103,6 +104,89 @@ protected:
 
         //- Set the decomposer
         void makeDecomposer() const;
+
+
+    // Class to set the size of patches during
+    class fvPatchResizer
+    :
+        public MeshObject
+        <
+            polyMesh,
+            UpdateableMeshObject,
+            fvPatchResizer
+        >
+    {
+        fvMesh& mesh_;
+    public:
+
+        TypeName("fvPatchResizer");
+
+        fvPatchResizer(fvMesh& mesh)
+        :
+            MeshObject
+            <
+                polyMesh,
+                UpdateableMeshObject,
+                fvPatchResizer
+            >(mesh),
+            mesh_(mesh)
+        {}
+
+        //- Resize patchFields
+        template<class Type, template<class> class Patch, class Mesh>
+        void resizePatchFields(fvMesh& mesh, const labelList& patchSizes);
+
+        //- Overload update mesh to include other methods
+        virtual void updateMesh(const mapPolyMesh& mpm);
+
+        //- Move points
+        virtual bool movePoints()
+        {
+            return false;
+        }
+    };
+
+    class pointPatchResizer
+    :
+        public MeshObject
+        <
+            pointMesh,
+            UpdateableMeshObject,
+            pointPatchResizer
+        >
+    {
+    public:
+
+        TypeName("pointPatchResizer");
+
+        pointPatchResizer(pointMesh& mesh)
+        :
+            MeshObject
+            <
+                pointMesh,
+                UpdateableMeshObject,
+                pointPatchResizer
+            >(mesh)
+        {}
+
+        //- Resize patchFields
+        template<class Type>
+        void zeroUnmappedPointPatchFields
+        (
+            objectRegistry& obr,
+            const labelListList& nullPoints
+        );
+
+        //- Overload update mesh to include other methods
+        virtual void updateMesh(const mapPolyMesh& mpm);
+
+        //- Move points
+        virtual bool movePoints()
+        {
+            return false;
+        }
+    };
+
 
 
 public:

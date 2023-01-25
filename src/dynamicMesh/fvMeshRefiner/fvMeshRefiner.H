@@ -225,6 +225,12 @@ public:
                 return refiner_->nUnrefinementBufferLayers_;
             }
 
+            //- Return if refinement is forced
+            inline bool force() const
+            {
+                return refiner_->force();
+            }
+
             //- Force refinement/unrefinement
             inline void setForce(const bool force)
             {

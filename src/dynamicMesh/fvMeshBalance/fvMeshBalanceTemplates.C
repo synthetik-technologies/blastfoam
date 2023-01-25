@@ -25,8 +25,74 @@ License
 
 #include "volMesh.H"
 #include "fvPatchField.H"
+#include "valuePointPatchField.H"
 #include "surfaceFields.H"
 #include "processorPolyPatch.H"
+
+
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::fvMeshBalance::fvPatchResizer::resizePatchFields
+(
+    fvMesh& mesh,
+    const labelList& patchSizes
+)
+{
+    typedef GeometricField<Type, Patch, Mesh> GeoField;
+
+    HashTable<GeoField*> flds(mesh.lookupClass<GeoField>());
+
+    forAllIter(typename HashTable<GeoField*>, flds, iter)
+    {
+        GeoField& fld = *iter();
+        forAll(fld.boundaryField(), patchi)
+        {
+            // Use a const_cast so the previous state is not save on accident
+            // If the new patchSize is bigger than the old, there may be
+            // un-initialized values
+            const_cast<Patch<Type>&>(fld.boundaryField()[patchi]).setSize
+            (
+                patchSizes[patchi],
+                Zero
+            );
+        }
+    }
+}
+
+
+template<class Type>
+void Foam::fvMeshBalance::pointPatchResizer::zeroUnmappedPointPatchFields
+(
+    objectRegistry& obr,
+    const labelListList& nullPoints
+)
+{
+    typedef GeometricField<Type, pointPatchField, pointMesh> GeoField;
+
+    HashTable<GeoField*> flds(obr.lookupClass<GeoField>());
+
+    forAllIter(typename HashTable<GeoField*>, flds, iter)
+    {
+        GeoField& fld = *iter();
+        forAll(fld.boundaryField(), patchi)
+        {
+            const pointPatchField<Type>& pfld = fld.boundaryField()[patchi];
+            if (isA<valuePointPatchField<Type>>(pfld))
+            {
+                // Use a const_cast so the previous state is not save on accident
+                // If the new patchSize is bigger than the old, there may be
+                // un-initialized values
+                UIndirectList<Type>
+                (
+                    dynamicCast<valuePointPatchField<Type>>
+                    (
+                        const_cast<pointPatchField<Type>&>(pfld)
+                    ),
+                    nullPoints[patchi]
+                ) = Zero;
+            }
+        }
+    }
+}
 
 
 template<class GeoField>

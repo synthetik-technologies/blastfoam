@@ -286,6 +286,12 @@ public:
                 return nUnrefinementBufferLayers_;
             }
 
+            //- Return if refinement is forced
+            bool force() const
+            {
+                return force_;
+            }
+
             //- Force refinement/unrefinement
             void setForce(const bool force)
             {
