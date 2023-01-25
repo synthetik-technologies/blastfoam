@@ -55,5 +55,4 @@
     }
     Info<< endl << decrIndent;
     CoNum = max(phaseCoNums);//max(max(phaseCoNums), maxCoNum);
-    Info<<"CoNum "<<CoNum<<endl;
 }

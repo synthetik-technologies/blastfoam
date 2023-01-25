@@ -397,7 +397,7 @@ public:
 
         //- Return the PTE dissipation rate
         virtual tmp<volScalarField>
-        dissipationSource(const phaseModel&) const;
+        dissipationSource(const phaseModel&, const dimensionedScalar&) const;
 
         //- Correct
         virtual void correct()

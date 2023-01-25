@@ -173,6 +173,9 @@ public:
         //- Return the maximum volume fraction of the system
         virtual tmp<volScalarField> alphaMax() const;
 
+        //- Return the maximum volume fraction of the system
+        virtual scalar alphaMax(const label) const;
+
         //- Initialize the model after everything is constructed
         virtual void initialize()
         {}

@@ -123,24 +123,24 @@ void Foam::granularPhaseModel::solve()
         fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_)
     );
 
-	forAll(fluid_.phases(), phasei)
-	{
-	    const phaseModel& otherPhase = fluid_.phases()[phasei];
-	    if (&otherPhase != this)
-	    {
-    		if (!otherPhase.slavePressure())
-    		{
-    		    deltaAlphaRhoU += (*this)*otherPhase.gradP();
-    		}
+    forAll(fluid_.phases(), phasei)
+    {
+        const phaseModel& otherPhase = fluid_.phases()[phasei];
+        if (&otherPhase != this)
+        {
+            if (!otherPhase.slavePressure())
+            {
+                deltaAlphaRhoU += (*this)*otherPhase.gradP();
+            }
 
             if (fluid_.hasMassTransfer(*this, otherPhase))
             {
-        		deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
-        		deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
-        		deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, otherPhase);
+                deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
+                deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
+                deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, otherPhase);
             }
-	    }
-	}
+        }
+    }
 
     //- Solve phase mass transport
     phaseModel::solveAlphaRho();
@@ -332,7 +332,7 @@ void Foam::granularPhaseModel::update()
     //- Calculate PTE flux by using Riemann flux scheme to interpolate
     //  granular energy
     alphaRhoPTEPhi_ =
-        1.5*fluxScheme_->flux(Theta_, alphaRho_, phi_);
+        1.5*fluxScheme_->flux(Theta_, alphaRhoPhi_);
 
     thermoPtr_->update();
     phaseModel::update();
@@ -412,50 +412,22 @@ Foam::granularPhaseModel::gradAlpha() const
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::granularPhaseModel::dissipationSource(const phaseModel& phase2) const
+Foam::granularPhaseModel::dissipationSource
+(
+    const phaseModel& phase2,
+    const dimensionedScalar& deltaT
+) const
 {
-    // Dissipation of granular energy (Huilin and Gidaspow 2003, Eq. 25)
-    scalar pi(Foam::constant::mathematical::pi);
-    volScalarField Theta1(Theta_);
-    Theta1.max(1e-10);
-    volScalarField Theta2(phase2.Theta());
-    Theta2.max(1e-10);
-    phasePairKey key(name(), phase2.name(), false);
-
-    volScalarField m1(pi/6.0*pow3(this->d())*rho_);
-    volScalarField m2(pi/6.0*pow3(phase2.d())*phase2.rho());
-    volScalarField m0(m1 + m2);
-    volScalarField m1Thetam2Theta(sqr(m1)*Theta1 + sqr(m2)*Theta2);
-
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            (
-                3.0/this->d()
-               *sqrt(2.0*sqr(m0)*Theta_*phase2.Theta()/(pi*m1Thetam2Theta))
-              - (3.0*m0*(m1*Theta_ + m2*phase2.Theta()))/(4.0*m1Thetam2Theta)
-               *fvc::div(phi_)
-            )
-           *(1.0 - kineticTheorySystem_.es(key))
-           *kineticTheorySystem_.Ps(*this, phase2)
-        )
-    );
+    return
+        kineticTheorySystem_.dissipationSource(*this, phase2, deltaT)
+      + this->cohesion_->dissipationSource(deltaT);
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::productionSource(const phaseModel& phase) const
 {
-    // Production of granular energy (Houim and Oran 2016, Eq. 3.49, Eq. B 66)
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            81.0*(*this)*sqr(phase.mu())*magSqr(U_ - phase.U())
-           /(gs0_*pow3(d())*rho_*sqrt(Foam::constant::mathematical::pi))
-        )
-    );
+    return kineticTheorySystem_.productionSource(*this, phase);
 }
 
 
@@ -467,7 +439,12 @@ Foam::granularPhaseModel::speedOfSound() const
     tmp<volScalarField> cSqr
     (
         this->pPrime()/rho_
-      + 2.0/3.0*sqr(kineticTheorySystem_.dPsdTheta(*this))*Theta_
+      + 2.0/3.0
+       *sqr
+        (
+            kineticTheorySystem_.dPsdTheta(*this)
+          + cohesion_->dPsdTheta()
+        )*Theta_
        /sqr(Foam::max(*this, residualAlpha())*rho_)
     );
     cSqr.ref().max(small);

@@ -277,6 +277,17 @@ Foam::tmp<Foam::volScalarField> Foam::masterSystem::alphaMax() const
     );
 }
 
+
+Foam::scalar Foam::masterSystem::alphaMax(const label) const
+{
+    scalar minAlphaMax = 1.0;
+    forAll(phases_, phasei)
+    {
+        minAlphaMax = min(minAlphaMax, phases_[phasei].alphaMax());
+    }
+    return minAlphaMax;
+}
+
 void Foam::masterSystem::update()
 {
     correctAlpha();
@@ -328,7 +339,7 @@ void Foam::masterSystem::correctAlpha()
     }
 
     alphaPtr_() = phases_[0];
-    for (label phasei = 0; phasei < phases_.size(); phasei++)
+    for (label phasei = 1; phasei < phases_.size(); phasei++)
     {
         alphaPtr_() += phases_[phasei];
     }

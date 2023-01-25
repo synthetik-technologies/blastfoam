@@ -667,7 +667,7 @@ public:
 
         //- Return the PTE dissipation rate
         virtual tmp<volScalarField>
-        dissipationSource(const phaseModel&) const
+        dissipationSource(const phaseModel&, const dimensionedScalar&) const
         {
             NotImplemented;
             return *this;
