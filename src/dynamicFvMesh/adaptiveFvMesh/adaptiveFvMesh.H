@@ -107,6 +107,9 @@ protected:
         //- Fluxes to map
         HashTable<word> correctFluxes_;
 
+        //- Current time index
+        label curTimeIndex_;
+
 
         // Protected member functions
 

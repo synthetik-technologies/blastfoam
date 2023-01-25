@@ -69,6 +69,7 @@ Foam::movingAdaptiveFvMesh::~movingAdaptiveFvMesh()
 
 void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
+    adaptiveFvMesh::updateMesh(mpm);
     // Do not update while balancing this is handled in the
     // distribute function
     if (refiner_->isBalancing())
@@ -87,12 +88,12 @@ void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
             dispMS.points0()
         );
 
-//         if (Pstream::parRun())
-//         {
-//             this->pushUntransformedData(dispMS.points0());
-//         }
-//         dispMS.pointDisplacement().primitiveFieldRef() =
-//             this->points() - dispMS.points0();
+        if (Pstream::parRun())
+        {
+            fvMeshBalance::pushUntransformedData(*this, dispMS.points0());
+        }
+        dispMS.pointDisplacement().primitiveFieldRef() =
+            this->points() - dispMS.points0();
     }
 //     else if
 //     (
@@ -115,8 +116,6 @@ void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
     {
         motionPtr_->updateMesh(mpm);
     }
-
-    adaptiveFvMesh::updateMesh(mpm);
 }
 
 
@@ -172,10 +171,10 @@ bool Foam::movingAdaptiveFvMesh::update()
     }
 
     //- Sync points across boundaries
-//     if (Pstream::parRun())
-//     {
-//        this->pushUntransformedData(pointsNew);
-//     }
+    if (Pstream::parRun())
+    {
+       fvMeshBalance::pushUntransformedData(*this, pointsNew);
+    }
 
     //- Move mesh
     fvMesh::movePoints(pointsNew);

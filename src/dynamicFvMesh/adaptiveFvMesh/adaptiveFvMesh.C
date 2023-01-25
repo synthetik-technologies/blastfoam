@@ -79,7 +79,10 @@ void Foam::adaptiveFvMesh::readDict()
 
 void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& map)
 {
+    fvMesh::updateMesh(map);
+
     // Update fluxes
+    if (correctFluxes_.size())
     {
         const labelList& faceMap = map.faceMap();
         const labelList& reverseFaceMap = map.reverseFaceMap();
@@ -242,8 +245,6 @@ void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& map)
         }
     }
 
-    fvMesh::updateMesh(map);
-
     // Refiner is not updated because it is an UpdatableMeshObject
 }
 
@@ -264,7 +265,8 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
     dynamicFvMesh(io),
     dynamicBlastFvMesh(io),
     error_(errorEstimator::New(*this, dynamicMeshDict())),
-    refiner_(fvMeshRefiner::New(*this, dynamicMeshDict()))
+    refiner_(fvMeshRefiner::New(*this, dynamicMeshDict())),
+    curTimeIndex_(-1)
 {
     // Read static part of dictionary
     readDict();
@@ -304,6 +306,12 @@ bool Foam::adaptiveFvMesh::refine()
     // of time compared to actual refinement. Also very useful to be able
     // to modify on-the-fly.
     readDict();
+
+    if (curTimeIndex_ == this->time().timeIndex() && !refiner_->force())
+    {
+        return false;
+    }
+    curTimeIndex_ = this->time().timeIndex();
 
     //- Update error
     error_->update();
