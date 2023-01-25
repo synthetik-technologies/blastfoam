@@ -144,6 +144,9 @@ public:
             //- Return the maximum Courant number
             virtual scalar maxCo() const;
 
+            //- Return the new deltaT
+            virtual scalar newDeltaT() const;
+
             //- Return the current iteration index
             label iterNo() const
             {

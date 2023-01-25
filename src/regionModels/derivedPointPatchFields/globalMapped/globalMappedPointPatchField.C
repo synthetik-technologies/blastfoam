@@ -122,7 +122,9 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(ptf.nbrName_)
-{}
+{
+    Field<Type>::operator=(Zero);
+}
 
 
 template<class Type>
@@ -148,6 +150,24 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::globalMappedPointPatchField<Type>::autoMap(const pointPatchFieldMapper& mapper)
+{
+    fixedValuePointPatchField<Type>::autoMap(mapper);
+}
+
+
+template<class Type>
+void Foam::globalMappedPointPatchField<Type>::rmap
+(
+    const pointPatchField<Type>& ppf,
+    const labelList& addr
+)
+{
+    fixedValuePointPatchField<Type>::rmap(ppf, addr);
+}
+
 
 template<class Type>
 void Foam::globalMappedPointPatchField<Type>::updateCoeffs()

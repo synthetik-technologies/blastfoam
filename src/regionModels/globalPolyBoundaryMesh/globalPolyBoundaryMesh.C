@@ -315,6 +315,24 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
 {
     if (!interfaceDicts_.size())
     {
+        IOdictionary regionProperties
+        (
+            IOobject
+            (
+                "regionProperties",
+                mesh_.time().constant(),
+                mesh_.time(),
+                IOobject::MUST_READ
+            )
+        );
+        if (regionProperties.found("interfaces"))
+        {
+            interfaceDicts_ =
+                HashTable<dictionary>(regionProperties.lookup("interfaces"));
+        }
+    }
+    if (!interfaceDicts_.size())
+    {
         FatalErrorInFunction
             << "The interfaces is empty in regionProperties." << nl
             << "This is the default, but a list of" << nl
@@ -381,7 +399,7 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
         patches_.insert
         (
             pp.name(),
-            new coupledGlobalPolyPatch(dict, pp)
+            coupledGlobalPolyPatch::New(dict, pp).ptr()
         );
         if (inverseDisplacement_.found(mesh_.name()))
         {

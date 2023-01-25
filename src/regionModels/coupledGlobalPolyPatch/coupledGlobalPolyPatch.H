@@ -57,7 +57,7 @@ namespace Foam
 
 class coupledGlobalPolyPatch
 :
-    public globalPolyPatch
+    virtual public globalPolyPatch
 {
 private:
     // Private data
@@ -115,6 +115,25 @@ public:
             const dictionary& dict,
             const polyPatch& patch
         );
+
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        coupledGlobalPolyPatch,
+        patch,
+        (
+            const dictionary& dict,
+            const polyPatch& patch
+        ),
+        (dict, patch)
+    );
+
+    //- Return a new coupledGlobalPolyPatch
+    static autoPtr<coupledGlobalPolyPatch> New
+    (
+        const dictionary& dict,
+        const polyPatch& patch
+    );
 
 
     //- Destructor
@@ -254,6 +273,9 @@ public:
 
         //- Correct patch after moving points
         virtual void movePoints(const bool clear);
+
+        //- Move points
+        virtual void movePoints(const pointField& pts, const bool clear = true);
 
         //- Update for changes in topology
         virtual void updateMesh();

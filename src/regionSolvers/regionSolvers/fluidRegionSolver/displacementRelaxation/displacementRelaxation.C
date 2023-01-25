@@ -68,7 +68,10 @@ void Foam::displacementRelaxation::updateError
     {
         const label patchi = coupledPatches[pi];
         const pointPatchVectorField& pp = p.boundaryField()[patchi];
-        const pointPatchVectorField& ppPrev = p.prevIter().boundaryField()[patchi];
+        const pointPatchVectorField& ppPrev =
+            initialError_ < 0
+          ? p.oldTime().boundaryField()[patchi]
+          : p.prevIter().boundaryField()[patchi];
         if (isA<valuePointPatchVectorField>(pp))
         {
             error_ +=

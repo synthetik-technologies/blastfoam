@@ -128,9 +128,4 @@ Foam::scalar Foam::regionSolvers::blast::CoNum() const
 }
 
 
-Foam::scalar Foam::regionSolvers::blast::maxCo() const
-{
-    return 1.0;
-}
-
 // ************************************************************************* //

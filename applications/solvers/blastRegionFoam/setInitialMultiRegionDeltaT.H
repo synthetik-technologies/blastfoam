@@ -31,13 +31,13 @@ Description
 
 if (adjustTimeStep)
 {
-    if ((runTime.timeIndex() == 0) && (CoNum > small))
+    if ((runTime.timeIndex() == 0))
     {
         runTime.setDeltaT
         (
             min
             (
-                maxCo*runTime.deltaTValue()/CoNum,
+                regions.newDeltaT(),
                 min(runTime.deltaTValue(), maxDeltaT)
             )
         );

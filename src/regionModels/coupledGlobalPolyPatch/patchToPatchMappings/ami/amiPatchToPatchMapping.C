@@ -156,6 +156,8 @@ void amiPatchToPatchMapping::calcZoneAPointAddressing() const
 
     forAll(zoneAPointAddr, pointI)
     {
+        // Info<<globalPatchB().patch().localPoints()<<endl;
+        // Info<<globalPatchB().patch().boundaryMesh().mesh().name()<<" "<<zoneB().localPoints()<<endl;
         const point& P = zoneAPoints[pointI];
         labelHashSet possibleZoneBFacesSet;
         const labelList& curPointFaces = pointFaces[pointI];
@@ -367,16 +369,13 @@ void amiPatchToPatchMapping::calcZoneBPointAddressing() const
             const label curZoneAFace = possibleZoneAFaces[faceI];
             const face& f = zoneAFaces[curZoneAFace];
             const point ctr = Foam::average(f.points(zoneAPoints));
-            point nextPoint = ctr;
 
             for (label pI = 0; pI < f.size(); pI++)
             {
-                nextPoint = zoneAPoints[f.nextLabel(pI)];
-
                 const triPointRef t
                 (
                     zoneAPoints[f[pI]],
-                    nextPoint,
+                    zoneAPoints[f.nextLabel(pI)],
                     ctr
                 );
 

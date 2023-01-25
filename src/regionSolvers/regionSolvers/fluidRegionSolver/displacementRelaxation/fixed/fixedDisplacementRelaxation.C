@@ -46,7 +46,8 @@ Foam::displacementRelaxations::fixed::fixed
     const dictionary& dict
 )
 :
-    displacementRelaxation(mesh, dict)
+    displacementRelaxation(mesh, dict),
+    relaxationFactor_(coeffDict(dict).lookupOrDefault("relaxationFactor", 1.0))
 {}
 
 
@@ -64,9 +65,13 @@ void Foam::displacementRelaxations::fixed::relax
 )
 {
     updateError(p);
-    if (mesh_.relaxField(p.name()))
+    if (mesh_.relaxField(p.name()) || relaxationFactor_ < 1)
     {
-        scalar f = mesh_.fieldRelaxationFactor(p.name());
+        scalar f =
+            mesh_.relaxField(p.name())
+          ? mesh_.fieldRelaxationFactor(p.name())
+          : relaxationFactor_;
+
         pointVectorField::Boundary& bp = p.boundaryFieldRef();
         forAll(coupledPatches_, pi)
         {

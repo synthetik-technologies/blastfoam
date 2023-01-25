@@ -133,6 +133,9 @@ public:
 
             //- Move the mesh
             virtual bool moveMesh(const IterType iter);
+
+            //- Clear the model
+            virtual void clear();
 };
 
 

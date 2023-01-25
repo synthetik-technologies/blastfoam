@@ -132,6 +132,14 @@ public:
 
     // Member Functions
 
+        //- Map (and resize as needed) from self given a mapping object
+        //  Used to update fields following mesh topology change
+        virtual void autoMap(const pointPatchFieldMapper&);
+
+        //- Reverse map the given pointPatchField onto this pointPatchField
+        //  Used to reconstruct fields
+        virtual void rmap(const pointPatchField<Type>&, const labelList&);
+
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
 

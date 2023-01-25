@@ -185,7 +185,16 @@ Foam::scalar Foam::regionSolvers::solid::CoNum() const
 
 Foam::scalar Foam::regionSolvers::solid::maxCo() const
 {
-    return solid_->maxCoNum();
+    return
+        min
+        (
+            runTime_.controlDict().lookupOrDefault
+            (
+                mesh_.name() + "MaxCo",
+                runTime_.controlDict().lookup<scalar>("maxCo")
+            ),
+            solid_->maxCoNum()
+        );
 }
 
 // ************************************************************************* //

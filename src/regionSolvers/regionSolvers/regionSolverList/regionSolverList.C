@@ -140,7 +140,9 @@ void Foam::regionSolverList::initialiseDisplacement()
         << "Initial unrelaxed displacement iteration" << nl << endl;
     forAll(*this, regioni)
     {
+        Info<< operator[](regioni).name() << ": " << endl;
         operator[](regioni).initialiseMesh(FIRST_ITER);
+        Info<< endl;
     }
 
     // Set displacement field names
@@ -286,6 +288,7 @@ void Foam::regionSolverList::solve()
         solutionControls().lookup<label>("nOuterCorrectors");
     iterNo_ = 0;
     bool finished = false;
+    bool cleanup = false;
     do
     {
         Info<< endl;
@@ -296,10 +299,14 @@ void Foam::regionSolverList::solve()
         IterType iter =
             iterNo_ == 0 ? FIRST_ITER
           : (
-                (finished || iterNo_ == nOuterCorrectors-1)
+                (cleanup || iterNo_ == nOuterCorrectors-1)
               ? FINAL_ITER
               : MID_ITER
             );
+        if (cleanup)
+        {
+            finished = true;
+        }
 
         if (predictSolids_)
         {
@@ -349,7 +356,7 @@ void Foam::regionSolverList::solve()
 
         if (converged())
         {
-            finished = true;
+            cleanup = true;
         }
 
     } while (!finished && iterNo_ < nOuterCorrectors);
@@ -399,5 +406,16 @@ Foam::scalar Foam::regionSolverList::maxCo() const
     return co;
 }
 
+
+Foam::scalar Foam::regionSolverList::newDeltaT() const
+{
+    scalar deltaT = great;
+    forAll(*this, regioni)
+    {
+        deltaT = min(deltaT, operator[](regioni).newDeltaT());
+    }
+    Info<< "deltaT = " <<  deltaT << endl;
+    return deltaT;
+}
 
 // ************************************************************************* //

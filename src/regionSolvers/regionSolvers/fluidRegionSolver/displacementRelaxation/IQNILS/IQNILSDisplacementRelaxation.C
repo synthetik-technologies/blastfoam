@@ -48,8 +48,8 @@ Foam::displacementRelaxations::IQNILS::IQNILS
 :
     displacementRelaxation(mesh, dict),
 
-    relaxFactor_(dict.lookupOrDefault<scalar>("relaxationFactor", 0.01)),
-    couplingReuse_(dict.lookupOrDefault<label>("couplingReuse", 0)),
+    relaxFactor_(coeffDict(dict).lookupOrDefault<scalar>("relaxationFactor", 0.01)),
+    couplingReuse_(coeffDict(dict).lookupOrDefault<label>("couplingReuse", 0)),
 
     residuals_(coupledPatches_.size()),
     prevResiduals_(coupledPatches_.size()),
@@ -129,20 +129,13 @@ void Foam::displacementRelaxations::IQNILS::relax
             (
                 pOld.boundaryField()[patchi]
             );
-        if (iter == 1)
+        if (iter == 1 || oldResiduals_[pi].size() != residuals_[pi].size())
         {
             oldResiduals_[pi] = residuals_[pi];
         }
         else if (iter > 1)
         {
-            if (oldResiduals_[pi].size() == residuals_[pi].size())
-            {
-                pointsV_[pi].append(residuals_[pi] - oldResiduals_[pi]);
-            }
-            else
-            {
-                pointsV_[pi].append(residuals_[pi]);
-            }
+            pointsV_[pi].append(residuals_[pi] - oldResiduals_[pi]);
             pointsW_[pi].append(pp - ppOld);
             times_[pi].append(p.time().timeIndex());
         }
@@ -150,81 +143,80 @@ void Foam::displacementRelaxations::IQNILS::relax
         if (times_[pi].size() < 1)
         {
             pp == ppPrev + relaxFactor_*residuals_[pi];
-            pp.setInInternalField(p, pp);
-            continue;
         }
-
-        label n = pointsV_[pi].size();
-        scalarSquareMatrix R(n, 0.0);
-        scalarField C(n, 0.0);
-        scalarField RColSum(n, 0.0);
-        List<vectorField> Q(n);
-
-        for (label i = 0; i < n; i++)
+        else
         {
-            Q[i] = pointsV_[pi][n-1-i];
-        }
+            label n = pointsV_[pi].size();
+            scalarSquareMatrix R(n, 0.0);
+            scalarField C(n, 0.0);
+            scalarField RColSum(n, 0.0);
+            List<vectorField> Q(n);
 
-        for (label i = 0; i < n; i++)
-        {
-            R[i][i] = sqrt(gSum(magSqr(Q[i])));
-            Q[i] /= stabilise(R[i][i], small);
-
-            for (label j = i+1; j < n; j++)
+            for (label i = 0; i < n; i++)
             {
-                R[i][j] = gSum(Q[i] & Q[j]);
-                Q[j] -= R[i][j]*Q[i];
+                Q[i] = pointsV_[pi][n-1-i];
             }
 
-            C[i] = -gSum(Q[i] & residuals_[pi]);
-        }
-
-        for (label j = 0; j < n; j++)
-        {
-            RColSum[j] = 0.0;
-            for (label i = j+1; i < n; i++)
+            for (label i = 0; i < n; i++)
             {
-                RColSum[j] = mag(R[i][j]);
-            }
-        }
+                R[i][i] = sqrt(gSum(magSqr(Q[i])));
+                Q[i] /= stabilise(R[i][i], small);
 
-        scalar epsilon = 1e-10*max(RColSum);
-
-        for (label i = 0; i < n; i++)
-        {
-            if (mag(R[i][i]) > epsilon)
-            {
                 for (label j = i+1; j < n; j++)
                 {
-                    R[i][j] /= R[i][i];
+                    R[i][j] = gSum(magSqr(Q[j]));
+                    Q[j] -= R[i][j]*Q[i];
                 }
-                C[i] /= R[i][i];
-                R[i][i] = 1.0;
-            }
-        }
 
-        for (label j = n-1; j >= 0; j--)
-        {
-            if (mag(R[j][j]) > epsilon)
+                C[i] = -gSum(Q[i] & residuals_[pi]);
+            }
+
+            for (label j = 0; j < n; j++)
             {
-                for (label i = 0; i < j; i++)
+                RColSum[j] = 0.0;
+                for (label i = 0; i < j+1; i++)
                 {
-                    C[i] -= C[j]*R[i][j];
+                    RColSum[j] = mag(R[i][j]);
                 }
             }
-            else
+
+            scalar epsilon = 1e-10*max(RColSum);
+
+            for (label i = 0; i < n; i++)
             {
-                C[j] = 0.0;
+                if (mag(R[i][i]) > epsilon)
+                {
+                    for (label j = i+1; j < n; j++)
+                    {
+                        R[i][j] /= R[i][i];
+                    }
+                    C[i] /= R[i][i];
+                    R[i][i] = 1.0;
+                }
             }
-        }
 
-        vectorField residual(pointsW_[pi][0]*C[n-1]);
-        for (label i = 1; i < n; i++)
-        {
-            residual += pointsW_[pi][i]*C[n-1-i];
-        }
+            for (label j = n-1; j >= 0; j--)
+            {
+                if (mag(R[j][j]) > epsilon)
+                {
+                    for (label i = 0; i < j; i++)
+                    {
+                        C[i] -= C[j]*R[i][j];
+                    }
+                }
+                else
+                {
+                    C[j] = 0.0;
+                }
+            }
 
-        pp == ppPrev + residual;
+            vectorField newDisp(ppPrev);
+            forAll(pointsW_[pi], i)
+            {
+                newDisp += pointsW_[pi][i]*C[n-1-i];
+            }
+            pp == newDisp;
+        }
         pp.setInInternalField(p, pp);
     }
 }
@@ -238,26 +230,42 @@ void Foam::displacementRelaxations::IQNILS::clear()
         residuals_[pi] = Zero;
     }
 
+    if (!couplingReuse_)
+    {
+        forAll(times_, pi)
+        {
+            pointsV_[pi].clear();
+            pointsW_[pi].clear();
+            times_[pi].clear();
+        }
+        return;
+    }
+
     forAll(times_, pi)
     {
-        label startI = times_.size();
-        forAll(times_[pi], ti)
+        DynamicList<scalar>& times = times_[pi];
+        label startI = times.size();
+        forAll(times, ti)
         {
-            if (times_[pi][ti] < (mesh_.time().timeIndex() - couplingReuse_))
+            if (times[ti] < (mesh_.time().timeIndex() - couplingReuse_))
             {
                 break;
             }
             startI = ti;
         }
-        for (label ti = 0; ti < times_.size()-startI; ti++)
+        const label& oldSize = times.size();
+        if (startI > 0)
         {
-            pointsV_[pi][ti] = pointsV_[pi][ti+startI];
-            pointsW_[pi][ti] = pointsW_[pi][ti+startI];
-            times_[pi][ti] = times_[pi][ti+startI];
+            for (label ti = 0; ti < oldSize-startI; ti++)
+            {
+                pointsV_[pi][ti].transfer(pointsV_[pi][ti+startI]);
+                pointsW_[pi][ti].transfer(pointsW_[pi][ti+startI]);
+                times[ti] = times[ti+startI];
+            }
+            pointsV_[pi].setSize(oldSize-startI);
+            pointsW_[pi].setSize(oldSize-startI);
+            times.setSize(oldSize-startI);
         }
-        pointsV_[pi].setSize(times_.size()-startI);
-        pointsW_[pi].setSize(times_.size()-startI);
-        times_[pi].setSize(times_.size()-startI);
     }
 }
 

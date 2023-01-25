@@ -294,8 +294,8 @@ void Foam::regionSolvers::fluid::initialiseMesh(const IterType iter)
 
 void Foam::regionSolvers::fluid::initialise()
 {
-    moveMesh(FINAL_ITER);
-    moveMesh(FINAL_ITER);
+    // moveMesh(FINAL_ITER);
+    // moveMesh(FINAL_ITER);
 }
 
 
@@ -352,6 +352,7 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
         valuePointPatchVectorField::typeName
     );
     bpRelaxed = pointDPtr_->boundaryField();
+    cellDPtr_->correctBoundaryConditions();
 
     Foam::solve
     (
@@ -466,24 +467,22 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
     }
     mesh_.movePoints(tcurPoints());
 
-    Info<<"Max mesh boundary velocity = "
-        << gMax(mag(mesh_.phi().boundaryField()/mesh_.magSf().boundaryField())) <<endl;
-    forAll(mesh_.boundary(), patchi)
+    if (debug)
     {
-        if (!mesh_.boundary()[patchi].coupled())
+        Info<<"Max mesh boundary velocity = "
+            << gMax(mag(mesh_.phi().boundaryField()/mesh_.magSf().boundaryField())) <<endl;
+        forAll(mesh_.boundary(), patchi)
         {
-            Info<<mesh_.boundary()[patchi].name()<<": "
-                <<gMax(mag(mesh_.phi().boundaryField()[patchi]/mesh_.magSf().boundaryField()[patchi]))<<endl;
+            if (!mesh_.boundary()[patchi].coupled())
+            {
+                Info<<mesh_.boundary()[patchi].name()<<": "
+                    <<gMax(mag(mesh_.phi().boundaryField()[patchi]/mesh_.magSf().boundaryField()[patchi]))<<endl;
+            }
         }
     }
     Info<<"Displacement error (abs/rel) = "
         << relaxation_->error() << ", "
         << relaxation_->relError() <<endl;
-
-    // if (!finalIter)
-    // {
-    //     relaxation_->relax(pointDPtr_());
-    // }
 
     forAll(velocityFields_, i)
     {
@@ -498,5 +497,12 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
 
     return gMax(mag(pointDPtr_->primitiveField())) > small;
 }
+
+
+void Foam::regionSolvers::fluid::clear()
+{
+    relaxation_->clear();
+}
+
 
 // ************************************************************************* //

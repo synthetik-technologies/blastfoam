@@ -35,7 +35,7 @@ Foam::coupledGlobalPolyPatch::pointInterpolate
     const Field<Type>& pField
 ) const
 {
-    if (pField.size() == patch().localPoints().size())
+    if (pField.size() == this->nPatchPoints())
     {
         return samplePatch().globalPointToPatch
         (
@@ -50,7 +50,7 @@ Foam::coupledGlobalPolyPatch::pointInterpolate
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch points." << nl
-            << "Patch size: " << patch().localPoints().size() << nl
+            << "Patch size: " << this->nPatchPoints() << nl
             << "Field size: " << pField.size()
             << abort(FatalError);
         return tmp<Field<Type>>();
@@ -76,7 +76,7 @@ Foam::coupledGlobalPolyPatch::faceInterpolate
     const Field<Type>& fField
 ) const
 {
-    if (fField.size() == patch().size())
+    if (fField.size() == this->nPatchFaces())
     {
         return samplePatch().globalFaceToPatch
         (
@@ -90,8 +90,8 @@ Foam::coupledGlobalPolyPatch::faceInterpolate
     else
     {
         FatalErrorInFunction
-            << "Patch field does not correspond to patch points." << nl
-            << "Patch size: " << patch().size() << nl
+            << "Patch field does not correspond to patch faces." << nl
+            << "Patch size: " << this->nPatchFaces() << nl
             << "Field size: " << fField.size()
             << abort(FatalError);
         return tmp<Field<Type>>();
@@ -118,7 +118,7 @@ Foam::coupledGlobalPolyPatch::faceToPointInterpolate
     const Field<Type>& fField
 ) const
 {
-    if (fField.size() == patch().size())
+    if (fField.size() == this->nPatchFaces())
     {
         const globalPolyPatch& sPatch(samplePatch());
         return sPatch.globalPointToPatch
@@ -136,8 +136,8 @@ Foam::coupledGlobalPolyPatch::faceToPointInterpolate
     else
     {
         FatalErrorInFunction
-            << "Patch field does not correspond to patch points." << nl
-            << "Patch size: " << patch().size() << nl
+            << "Patch field does not correspond to patch faces." << nl
+            << "Patch size: " << this->nPatchFaces() << nl
             << "Field size: " << fField.size()
             << abort(FatalError);
         return tmp<Field<Type>>();
@@ -165,7 +165,7 @@ Foam::coupledGlobalPolyPatch::pointToFaceInterpolate
 ) const
 {
 
-    if (pField.size() == samplePatch().patch().localPoints().size())
+    if (pField.size() == this->nPatchPoints())
     {
         const globalPolyPatch& sPatch(samplePatch());
         return sPatch.globalFaceToPatch
@@ -184,7 +184,7 @@ Foam::coupledGlobalPolyPatch::pointToFaceInterpolate
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch points." << nl
-            << "Patch size: " << samplePatch().patch().localPoints().size() << nl
+            << "Patch size: " << this->nPatchPoints() << nl
             << "Field size: " << pField.size()
             << abort(FatalError);
         return tmp<Field<Type>>();

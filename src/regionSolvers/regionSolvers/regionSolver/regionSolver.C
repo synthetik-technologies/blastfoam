@@ -111,4 +111,24 @@ bool Foam::regionSolver::moveMesh(const IterType iter)
 void Foam::regionSolver::clear()
 {}
 
+
+Foam::scalar Foam::regionSolver::maxCo() const
+{
+    return runTime_.controlDict().lookupOrDefault
+        (
+            mesh_.name() + "MaxCo",
+            runTime_.controlDict().lookup<scalar>("maxCo")
+        );
+}
+
+Foam::scalar Foam::regionSolver::newDeltaT() const
+{
+    scalar maxDeltaTFact =
+        this->maxCo()/(this->CoNum() + small);
+    scalar deltaTFact =
+        min(min(maxDeltaTFact, 1.0 + 0.1*maxDeltaTFact), 1.2);
+
+    return deltaTFact*runTime_.deltaTValue();
+}
+
 // ************************************************************************* //

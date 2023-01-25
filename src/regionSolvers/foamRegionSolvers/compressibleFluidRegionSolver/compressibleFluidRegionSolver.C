@@ -526,10 +526,4 @@ Foam::scalar Foam::regionSolvers::compressibleFluid::CoNum() const
     return CoNum;
 }
 
-
-Foam::scalar Foam::regionSolvers::compressibleFluid::maxCo() const
-{
-    return 1.0;
-}
-
 // ************************************************************************* //

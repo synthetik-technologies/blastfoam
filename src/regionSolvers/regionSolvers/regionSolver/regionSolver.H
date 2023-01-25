@@ -181,7 +181,10 @@ public:
             virtual scalar CoNum() const = 0;
 
             //- Return the maximum Courant number
-            virtual scalar maxCo() const = 0;
+            virtual scalar maxCo() const;
+
+            //- Return the new deltaT
+            virtual scalar newDeltaT() const;
 
 
     // Static functions

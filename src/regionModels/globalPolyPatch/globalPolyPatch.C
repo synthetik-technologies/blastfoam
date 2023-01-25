@@ -32,12 +32,20 @@ License
 #include "globalPoints.H"
 #include "vtkWritePolyData.H"
 #include "OSspecific.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(globalPolyPatch, 0);
+    defineRunTimeSelectionTable(globalPolyPatch, patch);
+    addToRunTimeSelectionTable
+    (
+        globalPolyPatch,
+        globalPolyPatch,
+        patch
+    );
 }
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -289,7 +297,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
         // Label face map for the current processor
         labelList faceMap(curProcFaces.size());
 
-        forAll (curProcFaces, faceI)
+        forAll(curProcFaces, faceI)
         {
             // Renumber face into new points
             face curFace = curProcFaces[faceI];
@@ -314,6 +322,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
             faceToGlobalAddrPtr_.set(new labelList(faceMap));
         }
     }
+
 
     // Resize the points list
     zonePoints.resize(nCurPoints);
@@ -598,16 +607,16 @@ Foam::autoPtr<Foam::globalPolyPatch> Foam::globalPolyPatch::New
     const polyPatch& patch
 )
 {
-    if (!patch.coupled())
+    patchConstructorTable::iterator cstrIter =
+        patchConstructorTablePtr_->find(patch.type());
+
+    if (cstrIter != patchConstructorTablePtr_->end())
     {
-        return autoPtr<globalPolyPatch>
-        (
-            new globalPolyPatch(dict, patch)
-        );
+        return cstrIter()(dict, patch);
     }
     return autoPtr<globalPolyPatch>
     (
-        new coupledGlobalPolyPatch(dict.subDict(patch.name()), patch)
+        new globalPolyPatch(dict, patch)
     );
 }
 
@@ -738,11 +747,14 @@ void Foam::globalPolyPatch::movePoints(const bool clear)
 
 void Foam::globalPolyPatch::movePoints(const pointField& pts, const bool clear)
 {
-    globalPolyPatch::clearOut();
-    // if (globalPatchPtr_.valid())
-    // {
-    //     globalPatchPtr_->movePoints(pts);
-    // }
+    if (clear)
+    {
+        clearOut();
+    }
+    else if (globalPatchPtr_.valid())
+    {
+        globalPatchPtr_->movePoints(pts);
+    }
 }
 
 

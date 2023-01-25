@@ -75,7 +75,7 @@ public:
 private:
 // Private member data
 
-    HashTable<dictionary> interfaceDicts_;
+    mutable HashTable<dictionary> interfaceDicts_;
 
     // Table of mapped patch selectors
     mutable HashPtrTable<globalPolyPatch> patches_;
@@ -109,6 +109,18 @@ public:
     // Member functions
 
         // Access
+
+            //- Return patches
+            const HashPtrTable<globalPolyPatch>& patches() const
+            {
+                return patches_;
+            }
+
+            //- Access patches
+            HashPtrTable<globalPolyPatch>& patches()
+            {
+                return patches_;
+            }
 
             //- Does the patch have an associated global patch
             bool isGlobal(const polyPatch&) const;

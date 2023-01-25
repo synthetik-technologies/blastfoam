@@ -73,8 +73,6 @@ int main(int argc, char *argv[])
     // Initialise the regions
     regions.initialise();
 
-    scalar CoNum = regions.CoNum();
-
     #include "setInitialMultiRegionDeltaT.H"
 
     while (runTime.run())
@@ -85,7 +83,6 @@ int main(int argc, char *argv[])
         #include "readTimeControls.H"
 
         Info<< nl;
-        CoNum = regions.CoNum();
         #include "setMultiRegionDeltaT.H"
 
         runTime++;

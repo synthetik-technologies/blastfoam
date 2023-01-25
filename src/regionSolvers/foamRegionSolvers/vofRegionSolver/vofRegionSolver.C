@@ -621,11 +621,81 @@ Foam::scalar Foam::regionSolvers::vof::CoNum() const
 Foam::scalar Foam::regionSolvers::vof::maxCo() const
 {
     return
-        max
+        min
         (
-            runTime_.controlDict().lookup<scalar>("maxCo"),
+            runTime_.controlDict().lookupOrDefault
+            (
+                mesh_.name() + "MaxCo",
+                runTime_.controlDict().lookup<scalar>("maxCo")
+            ),
+            runTime_.controlDict().lookupOrDefault
+            (
+                mesh_.name() + "MaxAlphaCo",
+                runTime_.controlDict().lookup<scalar>("maxAlphaCo")
+            )
+        );
+}
+
+Foam::scalar Foam::regionSolvers::vof::newDeltaT() const
+{
+    scalar maxCo =
+        runTime_.controlDict().lookupOrDefault
+        (
+            mesh_.name() + "MaxCo",
+            runTime_.controlDict().lookup<scalar>("maxCo")
+        );
+    scalar maxAlphaCo =
+        runTime_.controlDict().lookupOrDefault
+        (
+            mesh_.name() + "MaxAlphaCo",
             runTime_.controlDict().lookup<scalar>("maxAlphaCo")
         );
+
+    // Courant number
+    scalarField sumPhi
+    (
+        fvc::surfaceSum(mag(phi))().primitiveField()
+    );
+
+    scalar CoNum = 0.5*gMax(sumPhi/mesh_.V().field())*runTime_.deltaTValue();
+
+    scalar meanCoNum =
+        0.5*(gSum(sumPhi)/gSum(mesh_.V().field()))*runTime_.deltaTValue();
+
+    Info<< mesh_.name() << ": Courant Number mean: " << meanCoNum
+        << " max: " << CoNum << endl;
+
+
+    scalar alphaCoNum = 0.0;
+    scalar meanAlphaCoNum = 0.0;
+
+    if (mesh_.nInternalFaces())
+    {
+        scalarField sumPhi
+        (
+            mixture.nearInterface()().primitiveField()
+           *fvc::surfaceSum(mag(phi))().primitiveField()
+        );
+
+        alphaCoNum = 0.5*gMax(sumPhi/mesh_.V().field())*runTime_.deltaTValue();
+
+        meanAlphaCoNum =
+            0.5*(gSum(sumPhi)/gSum(mesh_.V().field()))*runTime_.deltaTValue();
+    }
+
+    Info<< "Interface Courant Number mean: " << meanAlphaCoNum
+        << " max: " << alphaCoNum << endl;
+
+    scalar maxDeltaTFact =
+        min
+        (
+            maxCo/(CoNum + small),
+            maxAlphaCo/(alphaCoNum + small)
+        );
+    scalar deltaTFact =
+        min(min(maxDeltaTFact, 1.0 + 0.1*maxDeltaTFact), 1.2);
+
+    return deltaTFact*runTime_.deltaTValue();
 }
 
 // ************************************************************************* //

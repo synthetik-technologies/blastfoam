@@ -78,7 +78,8 @@ class globalTemperatureCoupledFvPatchScalarField
 :
     public mixedFvPatchScalarField
 {
-    // Private Data
+protected:
+    // Protected Data
 
         //- Reference to the global boundaryMesh
         const globalPolyBoundaryMesh& globalBoundary_;

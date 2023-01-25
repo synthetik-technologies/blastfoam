@@ -78,7 +78,6 @@ void mapNearestPatchToPatchMapping::calcZoneAToZoneBFaceMap() const
     // Perform N^2 search for corresponding faces
     // We will take 0.1% of the minEdgeLength as the exact match
     // relative tolerance
-
     treeBoundBox bbA(zoneA().localPoints());
     const scalar planarTol =
         indexedOctree<treeDataPrimitivePatch<standAlonePatch>>::

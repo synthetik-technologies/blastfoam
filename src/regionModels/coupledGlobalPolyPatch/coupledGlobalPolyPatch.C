@@ -26,12 +26,20 @@ License
 #include "coupledGlobalPolyPatch.H"
 #include "globalPolyBoundaryMesh.H"
 #include "Time.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(coupledGlobalPolyPatch, 0);
+    defineRunTimeSelectionTable(coupledGlobalPolyPatch, patch);
+    addToRunTimeSelectionTable
+    (
+        coupledGlobalPolyPatch,
+        coupledGlobalPolyPatch,
+        patch
+    );
 }
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -244,6 +252,25 @@ Foam::coupledGlobalPolyPatch::coupledGlobalPolyPatch
 {}
 
 
+Foam::autoPtr<Foam::coupledGlobalPolyPatch> Foam::coupledGlobalPolyPatch::New
+(
+    const dictionary& dict,
+    const polyPatch& patch
+)
+{
+    patchConstructorTable::iterator cstrIter =
+        patchConstructorTablePtr_->find(patch.type());
+
+    if (cstrIter != patchConstructorTablePtr_->end())
+    {
+        return cstrIter()(dict, patch);
+    }
+    return autoPtr<coupledGlobalPolyPatch>
+    (
+        new coupledGlobalPolyPatch(dict, patch)
+    );
+}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::coupledGlobalPolyPatch::~coupledGlobalPolyPatch()
@@ -281,7 +308,6 @@ Foam::coupledGlobalPolyPatch::patchToPatchInterpolator() const
 void Foam::coupledGlobalPolyPatch::update()
 {
     globalPolyPatch::update();
-    patchToPatchInterpolator();
 }
 
 
@@ -289,12 +315,23 @@ void Foam::coupledGlobalPolyPatch::movePoints(const bool clear)
 {
     if (clear)
     {
-        clearOut();
+        clearInterp();
     }
-    else
+    globalPolyPatch::movePoints(clear);
+}
+
+
+void Foam::coupledGlobalPolyPatch::movePoints
+(
+    const pointField& newPoints,
+    const bool clear
+)
+{
+    if (clear)
     {
-        globalPolyPatch::movePoints(clear);
+        clearInterp();
     }
+    globalPolyPatch::movePoints(newPoints, clear);
 }
 
 

@@ -164,7 +164,7 @@ void Foam::globalMappedFvPatchField<Type>::updateCoeffs()
 
     // Get the coupling information from the mappedPatchBase
     const coupledGlobalPolyPatch& cgpp =
-        globalBoundary_(this->patch().patch());
+        globalBoundary_(this->patch().name());
     const polyMesh& nbrMesh = cgpp.sampleMesh();
     const coupledGlobalPolyPatch& samplePatch = cgpp.samplePatch();
     const label samplePatchi = samplePatch.patch().index();

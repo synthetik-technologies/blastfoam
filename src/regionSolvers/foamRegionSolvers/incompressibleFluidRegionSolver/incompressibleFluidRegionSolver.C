@@ -319,10 +319,4 @@ Foam::scalar Foam::regionSolvers::incompressibleFluid::CoNum() const
     return CoNum;
 }
 
-
-Foam::scalar Foam::regionSolvers::incompressibleFluid::maxCo() const
-{
-    return 1.0;
-}
-
 // ************************************************************************* //

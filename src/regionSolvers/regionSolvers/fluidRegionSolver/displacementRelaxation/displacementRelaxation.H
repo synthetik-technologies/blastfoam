@@ -68,6 +68,12 @@ protected:
         //- Current residual
         scalar error_;
 
+        //- Return the coefficient dictionary
+        const dictionary& coeffDict(const dictionary& dict) const
+        {
+            return dict.optionalSubDict(this->type() + "Coeffs");
+        }
+
 
 public:
 

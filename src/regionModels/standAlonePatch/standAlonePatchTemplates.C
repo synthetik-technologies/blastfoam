@@ -20,6 +20,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "standAlonePatch.H"
+#include "PatchTools.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -31,57 +32,22 @@ Foam::standAlonePatch Foam::standAlonePatch::createGlobalPatch
 {
     if (!Pstream::parRun())
     {
-        return standAlonePatch(patch, patch.points());
+        return standAlonePatch(patch.localFaces(), patch.localPoints());
     }
 
-    List<List<point>> gPoints(Pstream::nProcs());
-    faceListList gFaces(Pstream::nProcs());
+    List<face> faces(patch.localFaces());
+    pointField points(patch.localPoints());
+    labelList pointMap;
 
-    // Insert my points
-    gPoints[Pstream::myProcNo()] = patch.points();
-
-    // Insert my faces
-    gFaces[Pstream::myProcNo()] = patch;
-
-    // Communicate points
-    Pstream::gatherList(gPoints);
-    Pstream::scatterList(gPoints);
-
-    // Communicate faces
-    Pstream::gatherList(gFaces);
-    Pstream::scatterList(gFaces);
-
-    label nPoints = 0;
-    label nFaces = 0;
-    forAll(gPoints, proci)
-    {
-        nPoints += gPoints[proci].size();
-        nFaces += gFaces[proci].size();
-    }
-    pointField ps(nPoints);
-    faceList fs(nFaces);
-
-    label pi = 0;
-    label fi = 0;
-    forAll(gPoints, proci)
-    {
-        const label start = pi;
-        forAll(gPoints[proci], pj)
-        {
-            ps[pi++] = gPoints[proci][pj];
-        }
-        forAll(gFaces[proci], fj)
-        {
-            fs[fi] = gFaces[proci][fj];
-            face& f = fs[fi];
-            forAll(f, fpi)
-            {
-                f[fpi] = gFaces[proci][fj][fpi] + start;
-            }
-            fi++;
-        }
-    }
-    return standAlonePatch(move(fs), move(ps));
+    PatchTools::gatherAndMerge
+    (
+        1e-6*boundBox(points).mag(),
+        patch,
+        points,
+        faces,
+        pointMap
+    );
+    return standAlonePatch(move(faces), move(points));
 }
 
 // ************************************************************************* //

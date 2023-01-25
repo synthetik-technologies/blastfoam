@@ -48,10 +48,10 @@ Foam::displacementRelaxations::Aitken::Aitken
 :
     displacementRelaxation(mesh, dict),
 
-    relaxFactor_(dict.lookupOrDefault<scalar>("relaxationFactor", 0.01)),
+    relaxFactor_(coeffDict(dict).lookupOrDefault<scalar>("relaxationFactor", 0.01)),
     maxRelaxFactor_
     (
-        dict.lookupOrDefault<scalar>("maxRelaxationFactor", 0.1)
+        coeffDict(dict).lookupOrDefault<scalar>("maxRelaxationFactor", 0.1)
     ),
     aitkenRelaxFactors_
     (
@@ -111,23 +111,23 @@ void Foam::displacementRelaxations::Aitken::relax
 
     if (iter < 1)
     {
-        // pointVectorField::Boundary& bp = p.boundaryFieldRef();
-        // forAll(coupledPatches_, pi)
-        // {
-        //     const label patchi = coupledPatches_[pi];
-        //     if (isA<valuePointPatchVectorField>(bp[patchi]))
-        //     {
-        //         valuePointPatchVectorField& pp =
-        //             dynamicCast<valuePointPatchVectorField>(bp[patchi]);
-        //         const valuePointPatchVectorField& ppPrev =
-        //             dynamicCast<const valuePointPatchVectorField>
-        //             (
-        //                 p.prevIter().boundaryField()[patchi]
-        //             );
-        //         pp == ppPrev + relaxFactor_*residuals_[pi];
-        //         pp.setInInternalField(p, pp);
-        //     }
-        // }
+        pointVectorField::Boundary& bp = p.boundaryFieldRef();
+        forAll(coupledPatches_, pi)
+        {
+            const label patchi = coupledPatches_[pi];
+            if (isA<valuePointPatchVectorField>(bp[patchi]))
+            {
+                valuePointPatchVectorField& pp =
+                    dynamicCast<valuePointPatchVectorField>(bp[patchi]);
+                const valuePointPatchVectorField& ppPrev =
+                    dynamicCast<const valuePointPatchVectorField>
+                    (
+                        p.prevIter().boundaryField()[patchi]
+                    );
+                pp == ppPrev + residuals_[pi];
+                pp.setInInternalField(p, pp);
+            }
+        }
         return;
     }
     forAll(aitkenRelaxFactors_, i)

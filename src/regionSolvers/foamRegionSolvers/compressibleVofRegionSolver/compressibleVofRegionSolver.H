@@ -186,6 +186,9 @@ public:
 
             //- Return the maximum Courant number
             virtual scalar maxCo() const;
+
+            //- Return the new time step
+            virtual scalar newDeltaT() const;
 };
 
 

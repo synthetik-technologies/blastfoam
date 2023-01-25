@@ -52,6 +52,7 @@ class fixed
 :
     public displacementRelaxation
 {
+    scalar relaxationFactor_;
 public:
 
     TypeName("fixed");

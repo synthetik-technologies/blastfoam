@@ -75,9 +75,7 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createTimeControls.H"
     {
-        scalar dTOld(runTime.deltaTValue());
-        solid.setDeltaT(runTime);
-        runTime.setDeltaT(min(runTime.deltaTValue(), dTOld));
+        runTime.setDeltaT(min(solid.newDeltaT(), runTime.deltaTValue()));
     }
     scalar CoNum = solid.CoNum();
 
@@ -95,8 +93,7 @@ int main(int argc, char *argv[])
         maxCo = min(maxCo, solid.maxCoNum());
         Info<< "Max Courant Number = " << CoNum << endl;
         #include "setDeltaT.H"
-//         solid.setDeltaT(runTime);
-//         #include "setDeltaT.H"
+
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 

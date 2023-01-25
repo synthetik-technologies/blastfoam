@@ -203,6 +203,10 @@ Foam::scalar Foam::regionSolvers::thermal::CoNum() const
 
 Foam::scalar Foam::regionSolvers::thermal::maxCo() const
 {
-    return great;
+    return runTime_.controlDict().lookupOrDefault
+        (
+            mesh_.name() + "MaxDi",
+            runTime_.controlDict().lookupOrDefault("maxDi", 2.0)
+        );
 }
 // ************************************************************************* //

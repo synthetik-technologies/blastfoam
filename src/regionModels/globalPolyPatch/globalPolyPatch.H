@@ -107,19 +107,19 @@ protected:
         void operator=(const globalPolyPatch&);
 
         //- Build global primitive patch
-        void calcGlobalPatch() const;
+        virtual void calcGlobalPatch() const;
 
         // Make globalMasterToCurrentProcPointAddr
-        void calcGlobalMasterToCurrentProcPointAddr() const;
+        virtual void calcGlobalMasterToCurrentProcPointAddr() const;
 
         //- Make the interpolator
-        void calcInterp() const;
+        virtual void calcInterp() const;
 
         //- Make the local interpolator
-        void calcLocalInterp() const;
+        virtual void calcLocalInterp() const;
 
         //- Check
-        void check() const;
+        virtual void check() const;
 
 
 public:
@@ -145,6 +145,18 @@ public:
         );
 
 
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        globalPolyPatch,
+        patch,
+        (
+            const dictionary& dict,
+            const polyPatch& patch
+        ),
+        (dict, patch)
+    );
+
     //- Return a new globalPolyPatch
     static autoPtr<globalPolyPatch> New
     (
@@ -163,6 +175,16 @@ public:
         const word& patchName() const
         {
             return patchName_;
+        }
+
+        virtual label nPatchFaces() const
+        {
+            return patch_.size();
+        }
+
+        virtual label nPatchPoints() const
+        {
+            return patch_.nPoints();
         }
 
         //- Return mesh reference
@@ -189,6 +211,12 @@ public:
         void setInverseDisplacement(const bool inv)
         {
             inverseDisplacement_ = inv;
+        }
+
+        //- Return if the global patch is currently set
+        bool valid() const
+        {
+            return globalPatchPtr_.valid();
         }
 
         //- Return reference to global patch

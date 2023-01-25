@@ -34,11 +34,11 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::patchPointToGlobal
     const Field<Type>& pField
 ) const
 {
-    if (pField.size() != patch().nPoints())
+    if (pField.size() != this->nPatchPoints())
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch points.  Patch size: "
-            << patch().nPoints() << " field size: " << pField.size()
+            << this->nPatchPoints() << " field size: " << pField.size()
             << abort(FatalError);
     }
 
@@ -131,11 +131,11 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::patchFaceToGlobal
     const Field<Type>& pField
 ) const
 {
-    if (pField.size() != patch().size())
+    if (pField.size() != this->nPatchFaces())
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch faces.  Patch size: "
-            << patch().size() << " field size: " << pField.size()
+            << this->nPatchFaces() << " field size: " << pField.size()
             << abort(FatalError);
     }
 
@@ -218,11 +218,11 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::faceToPoint
     const Field<Type>& fField
 ) const
 {
-    if (fField.size() != patch().size())
+    if (fField.size() != this->nPatchFaces())
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch faces.  Patch size: "
-            << patch().size() << " field size: " << fField.size()
+            << this->nPatchFaces() << " field size: " << fField.size()
             << abort(FatalError);
     }
 
@@ -257,11 +257,11 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::pointToFace
     const Field<Type>& pField
 ) const
 {
-    if (pField.size() != patch().nPoints())
+    if (pField.size() != this->nPatchPoints())
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch points.  Patch size: "
-            << patch().nPoints() << " field size: " << pField.size()
+            << this->nPatchPoints() << " field size: " << pField.size()
             << abort(FatalError);
     }
 
