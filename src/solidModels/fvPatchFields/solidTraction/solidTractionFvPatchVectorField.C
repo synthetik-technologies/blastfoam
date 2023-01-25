@@ -44,13 +44,11 @@ solidTractionFvPatchVectorField
 )
 :
     fixedGradientFvPatchVectorField(p, iF),
-    traction_(p.size(), vector::zero),
-    pressure_(p.size(), 0.0),
+    tractionBase(p),
     tractionSeries_(),
     pressureSeries_(),
     secondOrder_(false),
-    relaxFac_(),
-    force_(Zero)
+    relaxFac_()
 {
     fvPatchVectorField::operator=(patchInternalField());
     gradient() = vector::zero;
@@ -62,17 +60,16 @@ solidTractionFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const dictionary& dict
+    const dictionary& dict,
+    const bool mustRead
 )
 :
     fixedGradientFvPatchVectorField(p, iF),
-    traction_(p.size(), vector::zero),
-    pressure_(p.size(), 0.0),
+    tractionBase(p, dict, false),
     tractionSeries_(),
     pressureSeries_(),
     secondOrder_(dict.lookupOrDefault<Switch>("secondOrder", false)),
-    relaxFac_(),
-    force_(Zero)
+    relaxFac_()
 {
     DebugInfo
         << "Creating " << type() << " boundary condition" << endl;
@@ -100,11 +97,12 @@ solidTractionFvPatchVectorField
     {
         DebugInfo<< "    traction is time-varying" << endl;
         tractionSeries_ = Function1<vector>::New("tractionSeries", dict);
-        traction_ = tractionSeries_->value(this->db().time().value());
+        this->traction() =
+            tractionSeries_->value(this->db().time().value());
     }
-    else
+    else if (mustRead)
     {
-        traction_ = vectorField("traction", dict, p.size());
+        this->traction() = vectorField("traction", dict, p.size());
     }
 
     // Check if pressure is time-varying
@@ -112,12 +110,14 @@ solidTractionFvPatchVectorField
     {
         DebugInfo<< "    pressure is time-varying" << endl;
         pressureSeries_ = Function1<scalar>::New("pressureSeries", dict);
-        pressure_ = pressureSeries_->value(this->db().time().value());
+        this->pressure() =
+            pressureSeries_->value(this->db().time().value());
     }
-    else
+    else if (mustRead)
     {
-        pressure_ = scalarField("pressure", dict, p.size());
+        this->pressure() = scalarField("pressure", dict, p.size());
     }
+
     if (dict.found("relaxationFactor"))
     {
         DebugInfo<< "    Using relaxationFactor" << endl;
@@ -141,13 +141,11 @@ solidTractionFvPatchVectorField
 )
 :
     fixedGradientFvPatchVectorField(stpvf, p, iF, mapper),
-    traction_(mapper(stpvf.traction_)),
-    pressure_(mapper(stpvf.pressure_)),
+    tractionBase(stpvf, p, mapper),
     tractionSeries_(stpvf.tractionSeries_, false),
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
-    relaxFac_(stpvf.relaxFac_, false),
-    force_(Zero)
+    relaxFac_(stpvf.relaxFac_, false)
 {}
 
 
@@ -159,13 +157,11 @@ solidTractionFvPatchVectorField
 )
 :
     fixedGradientFvPatchVectorField(stpvf, iF),
-    traction_(stpvf.traction_),
-    pressure_(stpvf.pressure_),
+    tractionBase(stpvf, this->patch()),
     tractionSeries_(stpvf.tractionSeries_, false),
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
-    relaxFac_(stpvf.relaxFac_, false),
-    force_(Zero)
+    relaxFac_(stpvf.relaxFac_, false)
 {}
 
 
@@ -177,8 +173,7 @@ void solidTractionFvPatchVectorField::autoMap
 )
 {
     fixedGradientFvPatchVectorField::autoMap(m);
-    m(traction_, traction_);
-    m(pressure_, pressure_);
+    tractionBase::autoMap(m);
 }
 
 
@@ -193,9 +188,29 @@ void solidTractionFvPatchVectorField::rmap
 
     const solidTractionFvPatchVectorField& dmptf =
         refCast<const solidTractionFvPatchVectorField>(ptf);
+    tractionBase::rmap(dmptf, addr);
+}
 
-    traction_.rmap(dmptf.traction_, addr);
-    pressure_.rmap(dmptf.pressure_, addr);
+
+bool solidTractionFvPatchVectorField::updateFields()
+{
+    bool updateTraction = false;
+    if (tractionSeries_.valid())
+    {
+        this->traction() =
+            tractionSeries_->value(this->db().time().value());
+        updateTraction = true;
+    }
+
+    if (pressureSeries_.valid())
+    {
+        this->pressure() =
+            pressureSeries_->value(this->db().time().value());
+    }
+
+    updateForce();
+
+    return updateTraction;
 }
 
 
@@ -207,22 +222,7 @@ void solidTractionFvPatchVectorField::updateCoeffs()
         return;
     }
 
-    if (tractionSeries_.valid())
-    {
-        traction_ = tractionSeries_->value(this->db().time().value());
-    }
-
-    if (pressureSeries_.valid())
-    {
-        pressure_ = pressureSeries_->value(this->db().time().value());
-    }
-
-    force_ =
-        gSum
-        (
-            this->pressure()*this->patch().Sf()
-          + this->traction()*this->patch().magSf()
-        );
+    updateFields();
 
     // Lookup the solidModel object
     const solidModel& solMod = lookupSolidModel(patch().boundaryMesh().mesh());
@@ -235,7 +235,7 @@ void solidTractionFvPatchVectorField::updateCoeffs()
         gradient() =
             relaxFac*solMod.tractionBoundarySnGrad
             (
-                traction_, pressure_, patch()
+                this->traction(), this->pressure(), patch()
             )
           + (1.0 - relaxFac)*gradient();
     }
@@ -244,10 +244,9 @@ void solidTractionFvPatchVectorField::updateCoeffs()
         gradient() =
             solMod.tractionBoundarySnGrad
             (
-                traction_, pressure_, patch()
+                this->traction(), this->pressure(), patch()
             );
     }
-
 
     fixedGradientFvPatchVectorField::updateCoeffs();
 }
@@ -319,16 +318,18 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
     }
     else
     {
-        writeEntry(os, "traction", traction_);
+        writeEntry(os, "traction", this->traction());
     }
+
     if (pressureSeries_.valid())
     {
         writeEntry(os, pressureSeries_());
     }
     else
     {
-        writeEntry(os, "pressure", pressure_);
+        writeEntry(os, "pressure", this->pressure());
     }
+
     if (relaxFac_.valid())
     {
         writeEntry(os, relaxFac_());
@@ -342,7 +343,6 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makePatchTypeField(fvPatchVectorField, solidTractionFvPatchVectorField);
-bool solidTractionFvPatchVectorField::canRelax = true;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

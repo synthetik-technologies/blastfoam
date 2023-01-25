@@ -47,7 +47,7 @@ SourceFiles
 #define unsLinearTotalDisplacementSolid_H
 
 #include "UnsLinearGeomSolid.H"
-#include "unsTotalDisplacementSolid.H"
+#include "totalDisplacementSolids.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

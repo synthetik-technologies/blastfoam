@@ -149,6 +149,12 @@ public:
 
         //- Delete demand driven data
         virtual void clearOut() = 0;
+
+        //- Write
+        virtual bool write() const
+        {
+            return true;
+        }
 };
 
 

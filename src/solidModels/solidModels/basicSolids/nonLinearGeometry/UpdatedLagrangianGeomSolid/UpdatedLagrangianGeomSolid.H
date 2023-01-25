@@ -144,12 +144,6 @@ public:
 
             //- Update total accumulated fields
             virtual void updateTotalFields();
-
-
-        //- Write all associated fields
-        //  Force write so this should only be used when not
-        //  writing at a standard time
-        virtual void writeNecessaryFields() const;
 };
 
 

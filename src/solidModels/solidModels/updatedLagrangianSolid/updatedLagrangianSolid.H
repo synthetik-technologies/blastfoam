@@ -48,7 +48,7 @@ SourceFiles
 #define updatedLagrangianSolid_H
 
 #include "UpdatedLagrangianGeomSolid.H"
-#include "incrementalSolid.H"
+#include "incrementalSolids.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

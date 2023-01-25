@@ -48,7 +48,7 @@ namespace Foam
 
 class gradientSchemes
 :
-    public MeshObject<fvMesh, MoveableMeshObject, gradientSchemes>
+    public MeshObject<fvMesh, UpdateableMeshObject, gradientSchemes>
 {
     // Private data
 
@@ -60,21 +60,6 @@ class gradientSchemes
 
         //- Operations
         const operations ops_;
-
-        //- Cell owners
-        const labelUList& own_;
-
-        //- Cell neighbours
-        const labelUList& nei_;
-
-        // Cell centre coordinates
-        const volVectorField& C_;
-
-        // Face centre coordinates
-        const surfaceVectorField& Cf_;
-
-        //- Material nodal coordinates
-        const pointField& points_;
 
         //- Inverse of distance matrix
         tensorField Ainv_;
@@ -351,7 +336,7 @@ public:
             (
                 const volVectorField&,
                 const GeometricField<vector, fvsPatchField, surfaceMesh>&,
-                const GeometricField<vector, pointPatchField, pointMesh>&
+                const pointVectorField&
             ) const;
 
             //- Reconstruction of a volScalarField to surfaceScalarField
@@ -384,6 +369,7 @@ public:
             );
 
         virtual bool movePoints();
+        virtual void updateMesh(const mapPolyMesh&);
 
 };
 

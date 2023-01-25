@@ -21,14 +21,8 @@ License
     You should have received a copy of the GNU General Public License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
-InNamespace
-    Foam::fvc
-
-Description
-    Calculate the surface gradient of the given field.
-
 SourceFiles
-    fvcGradf.C
+    fvcInterpolate.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,19 +39,69 @@ SourceFiles
 namespace Foam
 {
 
-/*---------------------------------------------------------------------------*\
-                     Namespace fvc functions Declaration
-\*---------------------------------------------------------------------------*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace pointFieldOps
+{
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class Type>
+void pushUntransformedData(List<Type>& pointData, const polyMesh& mesh);
+
+template<class Type>
+void addSeparated(GeometricField<Type, pointPatchField, pointMesh>& pf) ;
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace pointFieldOps
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace fvc
 {
-    template<class Type>
-    tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
-    interpolate
-    (
-        const GeometricField<Type, fvPatchField, volMesh>& vf,
-        const GeometricField<Type, pointPatchField, pointMesh>& pf
-    );
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Volume to point interpolation with gradient reconstruction
+template<class Type>
+void volPointInterpolate
+(
+    const GeometricField<Type, fvPatchField, volMesh>&,
+    const GeometricField
+    <
+        typename outerProduct<vector, Type>::type,
+        fvPatchField,
+        volMesh
+    >&,
+    GeometricField<Type, pointPatchField, pointMesh>&,
+    const bool interpolateBoundary = false
+);
+
+//- Surface to volume interpolation
+template<class Type>
+tmp<GeometricField<Type, fvPatchField, volMesh>> surfVolInterpolate
+(
+    const GeometricField<Type, fvsPatchField, surfaceMesh>&
+);
+
+
+//- Point to surface interpolation
+template<class Type>
+tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> pointSurfInterpolate
+(
+    const GeometricField<Type, pointPatchField, pointMesh>&
+);
+
+
+//- Point to volume interpolation
+template<class Type>
+tmp<GeometricField<Type, fvPatchField, volMesh>> pointVolInterpolate
+(
+    const GeometricField<Type, pointPatchField, pointMesh>&
+);
+
 }
 
 

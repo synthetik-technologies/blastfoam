@@ -59,8 +59,8 @@ Foam::vector Foam::variableMixedModeCohesiveZoneModel::damageTractionN
        /(
             Foam::sqrt
             (
-                pow(faceDeltaN, 2)
-              + pow(faceDeltaS, 2)*pow(faceSigmaMax, 2)/pow(faceTauMax, 2)
+                sqr(faceDeltaN)
+              + sqr(faceDeltaS*faceSigmaMax/faceTauMax)
             )
         );
 }
@@ -83,9 +83,8 @@ Foam::vector Foam::variableMixedModeCohesiveZoneModel::damageTractionS
             /(
                 Foam::sqrt
                 (
-                    pow(faceDeltaS, 2)
-                    + pow(faceDeltaN, 2)
-                    *pow(faceTauMax, 2)/pow(faceSigmaMax, 2)
+                    sqr(faceDeltaS)
+                  + sqr(faceDeltaN*faceTauMax/faceSigmaMax)
                 )
             );
 
@@ -109,7 +108,7 @@ Foam::vector Foam::variableMixedModeCohesiveZoneModel::damageTractionS
 
 void Foam::variableMixedModeCohesiveZoneModel::calcPenaltyFactor() const
 {
-    if (patch().size())
+    if (returnReduce(patch().size(), sumOp<label>()))
     {
         // Calculate penalty factor similar to standardPenalty contact model
         // approx penaltyFactor from mechanical properties
@@ -121,11 +120,19 @@ void Foam::variableMixedModeCohesiveZoneModel::calcPenaltyFactor() const
         // Lookup the implicit stiffness as a measure of the mechanical
         // stiffness
         const scalar impK =
-            gAverage
+            mesh.foundObject<volScalarField>("impK")
+          ? gAverage
             (
                 mesh.lookupObject<volScalarField>
                 (
                     "impK"
+                ).boundaryField()[patchID]
+            )
+          : gAverage
+            (
+                mesh.lookupObject<surfaceScalarField>
+                (
+                    "impKf"
                 ).boundaryField()[patchID]
             );
 
@@ -143,7 +150,8 @@ void Foam::variableMixedModeCohesiveZoneModel::calcPenaltyFactor() const
         {
             cellVolume += V[faceCells[facei]];
         }
-        cellVolume /= patch().size();
+        reduce(cellVolume, sumOp<scalar>());
+        cellVolume /= returnReduce(patch().size(), sumOp<scalar>());
 
         // Approximate penalty factor based on:
         // Hallquist, Goudreau, Benson - 1985 - Sliding interfaces with
@@ -373,16 +381,26 @@ void Foam::variableMixedModeCohesiveZoneModel::autoMap
 
     // Only perform mapping if the number of faces on the patch has changed
 
-    if (nNewFaces > 0 && isA<directFvPatchFieldMapper>(m))
+    if
+    (
+        nNewFaces > 0
+     && (
+            isA<directFvPatchFieldMapper>(m)
+         || (
+                isA<generalFvPatchFieldMapper>(m)
+             && dynamicCast<const generalFvPatchFieldMapper&>(m).direct()
+            )
+        )
+
+    )
     {
-        // Reset values on new faces to zero
-        // Note: the method below is used to find which faces are new on the
-        // patch
-
-        const directFvPatchFieldMapper& dm =
-            dynamicCast<const directFvPatchFieldMapper&>(m);
-
-        const labelList& addressing = dm.addressing();
+        const labelList& addressing =
+            isA<directFvPatchFieldMapper>(m)
+          ? dynamicCast<const directFvPatchFieldMapper>(m).addressing()
+          : dynamicCast<const generalFvPatchFieldMapper&>
+            (
+                m
+            ).directAddressing();
         const label patchSize = patch().size();
 
         if (patchSize == 1 && nNewFaces == 1)
@@ -493,28 +511,28 @@ void Foam::variableMixedModeCohesiveZoneModel::autoMap
 
 void Foam::variableMixedModeCohesiveZoneModel::rmap
 (
-    const solidCohesiveFvPatchVectorField& sc,
+    const cohesiveZoneModel& czm,
     const labelList& addr
 )
 {
-    const variableMixedModeCohesiveZoneModel& czm =
-        refCast<const variableMixedModeCohesiveZoneModel>(sc.cohesiveZone());
+    const variableMixedModeCohesiveZoneModel& vmmczm =
+        refCast<const variableMixedModeCohesiveZoneModel>(czm);
 
-    cracked_.rmap(czm.cracked_, addr);
-    tractionN_.rmap(czm.tractionN_, addr);
-    oldTractionN_.rmap(czm.oldTractionN_, addr);
-    tractionS_.rmap(czm.tractionS_, addr);
-    oldTractionS_.rmap(czm.oldTractionS_, addr);
-    deltaN_.rmap(czm.deltaN_, addr);
-    oldDeltaN_.rmap(czm.oldDeltaN_, addr);
-    deltaS_.rmap(czm.deltaS_, addr);
-    oldDeltaS_.rmap(czm.oldDeltaS_, addr);
-    unloadingDeltaEff_.rmap(czm.unloadingDeltaEff_, addr);
-    deltaEff_.rmap(czm.deltaEff_, addr);
-    GI_.rmap(czm.GI_, addr);
-    oldGI_.rmap(czm.oldGI_, addr);
-    GII_.rmap(czm.GII_, addr);
-    oldGII_.rmap(czm.oldGII_, addr);
+    cracked_.rmap(vmmczm.cracked_, addr);
+    tractionN_.rmap(vmmczm.tractionN_, addr);
+    oldTractionN_.rmap(vmmczm.oldTractionN_, addr);
+    tractionS_.rmap(vmmczm.tractionS_, addr);
+    oldTractionS_.rmap(vmmczm.oldTractionS_, addr);
+    deltaN_.rmap(vmmczm.deltaN_, addr);
+    oldDeltaN_.rmap(vmmczm.oldDeltaN_, addr);
+    deltaS_.rmap(vmmczm.deltaS_, addr);
+    oldDeltaS_.rmap(vmmczm.oldDeltaS_, addr);
+    unloadingDeltaEff_.rmap(vmmczm.unloadingDeltaEff_, addr);
+    deltaEff_.rmap(vmmczm.deltaEff_, addr);
+    GI_.rmap(vmmczm.GI_, addr);
+    oldGI_.rmap(vmmczm.oldGI_, addr);
+    GII_.rmap(vmmczm.GII_, addr);
+    oldGII_.rmap(vmmczm.oldGII_, addr);
 }
 
 
@@ -542,7 +560,8 @@ void Foam::variableMixedModeCohesiveZoneModel::updateOldFields()
 void Foam::variableMixedModeCohesiveZoneModel::updateTraction
 (
     vectorField& traction,
-    const vectorField& delta
+    const vectorField& delta,
+    const bool updateInitTraction
 )
 {
     // Unit normal vectors
@@ -564,7 +583,7 @@ void Foam::variableMixedModeCohesiveZoneModel::updateTraction
     const scalar faceTauMax = tauMax_.value();
 
     // Set tractions for each face
-
+    label nCracked = 0;
     forAll(traction, faceI)
     {
         vector& faceTrac = traction[faceI];
@@ -584,8 +603,12 @@ void Foam::variableMixedModeCohesiveZoneModel::updateTraction
         // Check propagation criterion for new cracked faces
         if (!faceCracked && ((faceGI/faceGIc) + (faceGII/faceGIIc)) > 1.0)
         {
-            Pout<< "Face " << faceI << " is fully cracked" << endl;
+            if (debug)
+            {
+                Pout<< "Face " << faceI << " is fully cracked" << endl;
+            }
             faceCracked = true;
+            nCracked++;
         }
 
         // The phase can be in one of three phases:
@@ -612,7 +635,7 @@ void Foam::variableMixedModeCohesiveZoneModel::updateTraction
             // If the effective delta is greater than unloadingDeltaEff then
             // there is loading
 
-            if (faceDeltaN > 0.0)
+            if (faceDeltaN > small)
             {
                 // Face in loading damage phase which is not in contact
 
@@ -661,7 +684,7 @@ void Foam::variableMixedModeCohesiveZoneModel::updateTraction
         {
             // Unloading
 
-            if (faceDeltaN < 0.0)
+            if (faceDeltaN < small)
             {
                 // Face is damaged and in contact and has yet to dissipate any
                 // fracture energy i.e. the unloadingFaceDEff is zero
@@ -721,6 +744,11 @@ void Foam::variableMixedModeCohesiveZoneModel::updateTraction
                 }
             }
         }
+    }
+    reduce(nCracked, sumOp<label>());
+    if (nCracked)
+    {
+        Info<< "Cracked " << nCracked << " faces" << endl;
     }
 
     // Note: we do not under-relax the traction field because instead the

@@ -109,13 +109,7 @@ bool Foam::simpleCrackerFvMesh::update()
     }
 
     Info<< nl << "Breaking " << nFacesToBreak << " faces" << nl << endl;
-
-    if (time().outputTime())
-    {
-        polyMesh::write();
-    }
-
-    return bool(nFacesToBreak > 0);
+    return nFacesToBreak > 0;
 }
 
 

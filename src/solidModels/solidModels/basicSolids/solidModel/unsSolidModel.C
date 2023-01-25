@@ -50,7 +50,7 @@ unsSolidModel::unsSolidModel
     (
         IOobject
         (
-            "sigmaf",
+            "sigmafa",
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,

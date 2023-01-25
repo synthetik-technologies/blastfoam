@@ -23,20 +23,20 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    incrementalSolid
+    UnsTotalDisplacementSolid
 
 Description
-    Templated class for incremental solid models
+    Base class for unstructured total displacement solid models
 
 SourceFiles
-    incrementalSolid.C
+    UnsTotalDisplacementSolid.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef incrementalSolid_H
-#define incrementalSolid_H
+#ifndef UnsTotalDisplacementSolid_H
+#define UnsTotalDisplacementSolid_H
 
-#include "solidModel.H"
+#include "unsSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,27 +46,26 @@ namespace solidModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class linGeomSolid Declaration
+                        Class UnsTotalDisplacementSolid Declaration
 \*---------------------------------------------------------------------------*/
 
-class incrementalSolid
+template<class UnsSolidModel>
+class UnsTotalDisplacementSolid
 :
-    public solidModel
+    public UnsSolidModel
 {
 protected:
     // Protected data
-
-        //- Implicit stiffness
-        const volScalarField impK_;
 
         //- Implicit stiffness surface field
         surfaceScalarField impKf_;
 
 
-    // Protected member functions
+    // Protected Member Functions
 
-        //- Update displacement fields
-        virtual void updateDisplacement();
+        //- Predict the fields for the next time-step based on the
+        //  previous time-steps
+        void updateDisplacement();
 
 
 public:
@@ -74,7 +73,7 @@ public:
     // Constructors
 
         //- Construct from components
-        incrementalSolid
+        UnsTotalDisplacementSolid
         (
             const word& type,
             dynamicFvMesh& mesh,
@@ -82,10 +81,9 @@ public:
             const bool isSolid = true
         );
 
-
     // Destructor
 
-        virtual ~incrementalSolid()
+        virtual ~UnsTotalDisplacementSolid()
         {}
 
 
@@ -93,32 +91,40 @@ public:
 
         // Access
 
-            //- This solid model solves for DD instead of D
+            //- Return if incremental
             virtual bool incremental() const
             {
-                return true;
+                return false;
             }
 
             //- Each solidModel must indicate whether D or DD is the
             //  primary solution variable
             virtual const volVectorField& solutionD() const
             {
-                // This model solves for DD
-                return DD();
+                // This model solves for D
+                return this->D();
             }
 
             //- Each solidModel must indicate whether gradD or gradDD
-            //  is the primary solution variable
+            //  is the  primary gradient
             virtual const volTensorField& solutionGradD() const
             {
+                // This model solves for D
+                return this->gradD();
+            }
+
+            //- Each solidModel must indicate whether gradDf or gradDDf
+            //  is the primary solution variable
+            virtual const surfaceTensorField& solutionGradDf() const
+            {
                 // This model solves for DD
-                return gradDD();
+                return this->gradDf();
             }
 
             //- Return the patch implicit stiffness
             virtual const scalarField& impK(const fvPatch& patch) const
             {
-                return impK_.boundaryField()[patch.index()];
+                return this->impKf_.boundaryField()[patch.index()];
             }
 };
 
@@ -127,6 +133,12 @@ public:
 
 } // End namespace solidModel
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "UnsTotalDisplacementSolid.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -215,6 +215,18 @@ public:
 
         //- Return reference to the faceBreakerLaw
         faceBreakerLaw& faceBreaker();
+
+
+    // Writing
+
+        //- Write using given format, version and compression
+        virtual bool writeObject
+        (
+            IOstream::streamFormat fmt,
+            IOstream::versionNumber ver,
+            IOstream::compressionType cmp,
+            const bool write = true
+        ) const;
 };
 
 

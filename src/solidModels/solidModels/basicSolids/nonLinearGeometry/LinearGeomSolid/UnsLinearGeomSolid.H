@@ -36,6 +36,7 @@ SourceFiles
 #ifndef UnsLinearGeomSolid_H
 #define UnsLinearGeomSolid_H
 
+#include "LinearGeomSolid.H"
 #include "unsSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,7 +53,7 @@ namespace solidModels
 template<class IncrementalModel>
 class UnsLinearGeomSolid
 :
-    public IncrementalModel
+    public LinearGeomSolid<IncrementalModel>
 {
 protected:
     // Protected data
@@ -90,20 +91,8 @@ public:
 
     // Member Functions
 
-        //- Return nonlinear geometry enumerator
-        virtual nonLinearGeometry::nonLinearType nonLinGeom() const
-        {
-            return nonLinearGeometry::LINEAR_GEOMETRY;
-        }
-
         //- Update fields
         virtual void update(const bool correctSigma = true);
-
-        //- Boundary normal
-        virtual tmp<vectorField> nf(const fvPatch& patch) const
-        {
-            return patch.nf();
-        }
 };
 
 

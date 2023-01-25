@@ -39,6 +39,10 @@ namespace Foam
     (
         mechanicalLaw, linearElasticFromFile, linGeomMechLaw
     );
+    addToRunTimeSelectionTable
+    (
+        mechanicalLaw, linearElasticFromFile, nonLinGeomMechLaw
+    );
 }
 
 
@@ -186,6 +190,32 @@ void Foam::linearElasticFromFile::correct(surfaceSymmTensorField& sigma)
 
     // Calculate stress
     sigma = muf_*twoSymm(gradD) + lambdaf_*tr(gradD)*I;
+}
+
+
+Foam::tmp<Foam::volTensorField>
+Foam::linearElasticFromFile::P(const volSymmTensorField& sigma) const
+{
+    const volTensorField& F = relative() ? this->relF() : this->F();
+    return volTensorField::New
+    (
+        "P",
+        mu_*(F + F.T() - ((2.0/3.0)*tr(F)*tensor::I))
+      - (lambda_ + 2.0/3.0*mu_)*(tr(F) - 3.0)*tensor::I
+    );
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::linearElasticFromFile::P(const surfaceSymmTensorField& sigma) const
+{
+    const surfaceTensorField& F = relative() ? this->relFf() : this->Ff();
+    return surfaceTensorField::New
+    (
+        "P",
+        muf_*(F + F.T() - ((2.0/3.0)*tr(F)*tensor::I))
+      - (lambdaf_ + 2.0/3.0*muf_)*(tr(F) - 3.0)*tensor::I
+    );
 }
 
 

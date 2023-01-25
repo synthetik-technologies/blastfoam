@@ -104,10 +104,9 @@ void fixedDisplacementFvPatchVectorField::setPointDisplacement
                         pointD
                     ).boundaryFieldRef()[patch().index()]
                 );
-            Field<vector>& pD(patchPointD);
 
             // Interpolate face values to the points
-            pD = interp().faceToPointInterpolate(faceDisp);
+            patchPointD == interp().faceToPointInterpolate(faceDisp);
         }
     }
 }
@@ -209,7 +208,8 @@ void fixedDisplacementFvPatchVectorField::autoMap
 {
     fixedValueFvPatchVectorField::autoMap(m);
 
-    m(totalDisp_, totalDisp_);;
+    m(totalDisp_, totalDisp_);
+    interpPtr_.clear();
 }
 
 
@@ -226,6 +226,7 @@ void fixedDisplacementFvPatchVectorField::rmap
         refCast<const fixedDisplacementFvPatchVectorField>(ptf);
 
     totalDisp_.rmap(dmptf.totalDisp_, addr);
+    interpPtr_.clear();
 }
 
 
@@ -321,7 +322,7 @@ void fixedDisplacementFvPatchVectorField::write(Ostream& os) const
 {
     if (dispSeries_.valid())
     {
-        writeEntry(os, "displacementSeries", dispSeries_());
+        writeEntry(os, dispSeries_());
     }
 
     fixedValueFvPatchVectorField::write(os);

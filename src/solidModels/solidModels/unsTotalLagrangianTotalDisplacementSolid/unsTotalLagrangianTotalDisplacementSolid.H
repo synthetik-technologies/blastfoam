@@ -47,7 +47,7 @@ SourceFiles
 #define unsTotalLagrangianTotalDisplacementSolid_H
 
 #include "UnsTotalLagrangianGeomSolid.H"
-#include "unsTotalDisplacementSolid.H"
+#include "totalDisplacementSolids.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

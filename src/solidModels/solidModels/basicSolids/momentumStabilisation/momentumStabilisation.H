@@ -77,6 +77,7 @@ private:
 
     // Private Member Functions
 
+        // Stabilization terms
         template<class GammaField>
         tmp<volVectorField> RhieChow
         (
@@ -84,20 +85,7 @@ private:
             const volVectorField& vf,
             const volTensorField& gradVf,
             const GammaField& gamma
-        ) const
-        {
-            return
-                scale
-               *(
-                   fvc::laplacian
-                   (
-                        gamma,
-                        vf,
-                        "laplacian(D" + vf.name() +"," + vf.name() + ")"
-                    )
-                  - fvc::div(gamma*gradVf)
-                );
-        }
+        ) const;
 
         template<class GammaField>
         tmp<volVectorField> JamesonSchmidtTurkel
@@ -105,29 +93,41 @@ private:
             const scalar scale,
             const volVectorField& vf,
             const GammaField& gamma
-        ) const
-        {
-            const word scheme("laplacian(D" + vf.name() +"," + vf.name() + ")");
-            return
-              - scale
-               *fvc::laplacian
-                (
-                    vf.mesh().magSf(),
-                    //1.0/(vf.mesh().deltaCoeffs()*vf.mesh().deltaCoeffs()),
-                    fvc::laplacian(gamma, vf, scheme),
-                    scheme
-                );
-        }
+        ) const;
+
         template<class GammaField>
         tmp<volVectorField> Laplacian
         (
             const scalar scale,
             const volVectorField& vf,
             const GammaField& gamma
-        ) const
-        {
-            return scale*fvc::laplacian(gamma, vf);
-        }
+        ) const;
+
+        // Energies terms
+        template<class GammaField>
+        tmp<tensorField> RhieChowEnergy
+        (
+            const scalar scale,
+            const volVectorField& vf,
+            const volTensorField& gradVf,
+            const GammaField& gamma
+        ) const;
+
+        template<class GammaField>
+        tmp<tensorField> JamesonSchmidtTurkelEnergy
+        (
+            const scalar scale,
+            const volVectorField& vf,
+            const GammaField& gamma
+        ) const;
+
+        template<class GammaField>
+        tmp<tensorField> LaplacianEnergy
+        (
+            const scalar scale,
+            const volVectorField& vf,
+            const GammaField& gamma
+        ) const;
 
         //- Disallow default bitwise copy construct
         momentumStabilisation(const momentumStabilisation&);
@@ -158,6 +158,14 @@ public:
 
     // Member Functions
 
+        //- Is stabilisation used
+        inline bool inUse() const
+        {
+            return
+                methods_.size()
+             && !(methods_.size() == 1 && methods_.found(NONE));
+        }
+
         //- Set the stabilisation methods
         void setMethods(const Method defaultMethod) const;
         void setMethods(const Method defaultMethod, const dictionary& dict) const;
@@ -176,8 +184,24 @@ public:
             tmp<volVectorField> stabilisation
             (
                 const volVectorField& vf,
-                const volTensorField& gradVf,
                 const surfaceScalarField& gamma
+            ) const;
+
+            //- Return the energy
+            scalar energy
+            (
+                const volVectorField& vf,
+                const volTensorField& gradVf,
+                const volScalarField& gamma,
+                const volTensorField& gradDD
+            ) const;
+
+            //- Return the energy
+            scalar energy
+            (
+                const volVectorField& vf,
+                const surfaceScalarField& gamma,
+                const volTensorField& gradDD
             ) const;
 };
 
@@ -194,6 +218,12 @@ tmp<volVectorField> momentumStabilisation::RhieChow
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "momentumStabilisationTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

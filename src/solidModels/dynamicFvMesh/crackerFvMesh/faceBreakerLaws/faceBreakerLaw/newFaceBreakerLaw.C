@@ -41,7 +41,7 @@ autoPtr<faceBreakerLaw> faceBreakerLaw::New
     const dictionary& dict
 )
 {
-    word lawTypeName = dict.lookup("type");
+    word lawTypeName = dict.lookup("faceBreaker");
 
     Info<< "Selecting face breaker law: " << lawTypeName << endl;
 
@@ -50,15 +50,8 @@ autoPtr<faceBreakerLaw> faceBreakerLaw::New
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalIOErrorIn
-        (
-            "faceBreakerLaw::New(\n"
-            "    const word& name,\n"
-            "    const fvMesh& mesh,\n"
-            "    const dictionary& dict\n"
-            ")",
-            dict
-        )   << "Unknown faceBreakerLaw type "
+        FatalIOErrorInFunction(dict)
+            << "Unknown faceBreakerLaw type "
             << lawTypeName << endl << endl
             << "Valid  faceBreakerLaws are : " << endl
             << dictionaryConstructorTablePtr_->toc()

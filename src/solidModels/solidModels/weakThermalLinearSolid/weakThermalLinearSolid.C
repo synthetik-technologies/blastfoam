@@ -256,25 +256,29 @@ bool weakThermalLinearSolid::evolve()
 }
 
 
-void weakThermalLinearSolid::writeFields() const
+bool weakThermalLinearSolid::write(const bool write) const
 {
-    Info<< "Max T = " << max(T_).value() << nl
-        << "Min T = " << min(T_).value() << endl;
+    bool good = true;
+    if (write)
+    {
+        Info<< "Max T = " << max(T_).value() << nl
+            << "Min T = " << min(T_).value() << endl;
 
-    // Heat flux
-    volVectorField heatFlux
-    (
-        volVectorField::New
+        // Heat flux
+        volVectorField heatFlux
         (
-            "heatFlux",
-            -k_*gradT_
-        )
-    );
+            volVectorField::New
+            (
+                "heatFlux",
+                -k_*gradT_
+            )
+        );
+        good = heatFlux.write();
 
-    Info<< "Max magnitude of heat flux = " << max(mag(heatFlux)).value()
-        << endl;
-
-    linearTotalDisplacementSolid::writeFields();
+        DebugInfo<< "Max magnitude of heat flux = "
+            << max(mag(heatFlux)).value() << endl;
+    }
+    return good && linearTotalDisplacementSolid::write(write);
 }
 
 

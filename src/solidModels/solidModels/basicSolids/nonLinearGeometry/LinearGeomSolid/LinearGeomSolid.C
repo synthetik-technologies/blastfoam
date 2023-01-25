@@ -61,6 +61,30 @@ void LinearGeomSolid<IncrementalModel>::update(const bool correctSigma)
     }
 }
 
+
+template<class IncrementalModel>
+bool LinearGeomSolid<IncrementalModel>::write(const bool write) const
+{
+    bool good = true;
+    if (write)
+    {
+        // Write strain fields
+
+        // Total strain
+        volSymmTensorField epsilon("epsilon", symm(this->gradD()));
+
+        // Equivalent strain
+        volScalarField epsilonEq
+        (
+            "epsilonEq", sqrt((2.0/3.0)*magSqr(dev(epsilon)))
+        );
+        Info<< "Max epsilonEq = " << gMax(epsilonEq) << endl;
+
+        good = epsilon.write() && epsilonEq.write();
+    }
+    return good && IncrementalModel::write(write);
+}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace solidModels

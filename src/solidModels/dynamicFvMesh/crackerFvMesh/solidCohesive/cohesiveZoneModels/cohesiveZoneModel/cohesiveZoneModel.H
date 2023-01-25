@@ -58,9 +58,8 @@ SourceFiles
 
 namespace Foam
 {
-    // Class forward declaration
-    class solidCohesiveFvPatchVectorField;
 
+class cohesiveZoneModelMaster;
 /*---------------------------------------------------------------------------*\
                          Class cohesiveZoneModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -154,7 +153,7 @@ public:
             //- Reverse map the given fvPatchField onto this fvPatchField
             virtual void rmap
             (
-                const solidCohesiveFvPatchVectorField& sc,
+                const cohesiveZoneModel& czm,
                 const labelList& addr
             ) = 0;
 
@@ -198,7 +197,8 @@ public:
             virtual void updateTraction
             (
                 vectorField& traction,
-                const vectorField& delta
+                const vectorField& delta,
+                const bool updateInitTraction = false
             ) = 0;
 
             //- Return traction fraction for undamaged faces
@@ -213,6 +213,96 @@ public:
 
             //- Write dictionary
             virtual void write(Ostream&) const = 0;
+};
+
+
+/*---------------------------------------------------------------------------*\
+                    Class cohesiveZoneModelMaster Declaration
+\*---------------------------------------------------------------------------*/
+
+class cohesiveZoneModelMaster
+{
+protected:
+
+    // Protected Data
+
+        //- Run-time selectable cohesive zone model
+        mutable autoPtr<cohesiveZoneModel> cohesiveZoneModelPtr_;
+
+        //- Reference to patch
+        const fvPatch& patch_;
+
+        //- Constructing dictionary
+        const dictionary dict_;
+
+private:
+
+    // Private Member Functions
+
+        //- Set the cohesive zone model
+        void calcCohesiveZone() const;
+
+public:
+
+    //- Runtime type information
+    TypeName("cohesiveZoneModelMaster");
+
+
+    // Constructors
+
+        //- Construct null
+        cohesiveZoneModelMaster
+        (
+            const fvPatch& patch
+        );
+
+        //- Construct from dictionary
+        cohesiveZoneModelMaster
+        (
+            const fvPatch& patch,
+            const dictionary& dict
+        );
+
+        //- Copy constructor
+        cohesiveZoneModelMaster
+        (
+            const fvPatch& patch,
+            const cohesiveZoneModelMaster& czmm
+        );
+
+    // Destructor
+
+        virtual ~cohesiveZoneModelMaster()
+        {}
+
+
+    // Member Functions
+
+        // Access functions
+
+            //- Return const reference to cohesive zone model
+            const cohesiveZoneModel& cohesiveZone() const;
+
+            //- Return reference to cohesive zone model
+            cohesiveZoneModel& cohesiveZone();
+
+        // Mapping functions
+
+            //- Map (and resize as needed) from self given a mapping object
+            virtual void autoMap
+            (
+                const fvPatchFieldMapper& mapper
+            );
+
+            //- Reverse map the given fvPatchField onto this fvPatchField
+            virtual void rmap
+            (
+                const cohesiveZoneModelMaster& czm,
+                const labelList& addr
+            );
+
+    //- Write
+    void write(Ostream& os) const;
 };
 
 

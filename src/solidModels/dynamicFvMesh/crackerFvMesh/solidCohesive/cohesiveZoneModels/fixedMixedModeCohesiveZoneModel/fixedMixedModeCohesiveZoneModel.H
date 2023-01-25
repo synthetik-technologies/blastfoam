@@ -48,7 +48,6 @@ SourceFiles
 #define fixedMixedModeCohesiveZoneModel_H
 
 #include "cohesiveZoneModel.H"
-#include "solidCohesiveFvPatchVectorField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -201,7 +200,7 @@ public:
             //- Reverse map the given fvPatchField onto this fvPatchField
             virtual void rmap
             (
-                const solidCohesiveFvPatchVectorField& sc,
+                const cohesiveZoneModel& czm,
                 const labelList& addr
             );
 
@@ -221,7 +220,8 @@ public:
             virtual void updateTraction
             (
                 vectorField& traction,
-                const vectorField& delta
+                const vectorField& delta,
+                const bool updateInitTraction = false
             );
 
             //- Return traction fraction for undamaged faces

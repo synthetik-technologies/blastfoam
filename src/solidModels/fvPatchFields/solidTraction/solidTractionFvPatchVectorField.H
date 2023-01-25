@@ -42,6 +42,7 @@ SourceFiles
 
 #include "fvPatchFields.H"
 #include "fixedGradientFvPatchFields.H"
+#include "tractionBase.H"
 #include "Switch.H"
 #include "Function1.H"
 
@@ -56,20 +57,11 @@ namespace Foam
 
 class solidTractionFvPatchVectorField
 :
-    public fixedGradientFvPatchVectorField
+    public fixedGradientFvPatchVectorField,
+    public tractionBase
 {
-public:
-    //- Static data
-    static bool canRelax;
-
 private:
     // Private Data
-
-        //- Traction
-        vectorField traction_;
-
-        //- Pressure
-        scalarField pressure_;
 
         //- Traction time series
         autoPtr<Function1<vector>> tractionSeries_;
@@ -82,9 +74,6 @@ private:
 
         //- Optional: under-relaxation factor
         autoPtr<Function1<scalar>> relaxFac_;
-
-        //- Integrated force (neighbour)
-        vector force_;
 
 
 public:
@@ -107,7 +96,8 @@ public:
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const dictionary&
+            const dictionary&,
+            const bool mustRead = true
         );
 
         //- Construct by mapping given
@@ -151,32 +141,7 @@ public:
 
         // Access
 
-            //- Return integrated force
-            const vector& force() const
-            {
-                return force_;
-            }
-
-            virtual const vectorField& traction() const
-            {
-                return traction_;
-            }
-
-            virtual vectorField& traction()
-            {
-                return traction_;
-            }
-
-            virtual const scalarField& pressure() const
-            {
-                return pressure_;
-            }
-
-            virtual scalarField& pressure()
-            {
-                return pressure_;
-            }
-
+            //- Return if second order
             inline bool secondOrder() const
             {
                 return secondOrder_;
@@ -201,6 +166,9 @@ public:
 
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
+
+        //- Update pressure and traction
+        virtual bool updateFields();
 
         //- Evaluate the patch field
         virtual void evaluate

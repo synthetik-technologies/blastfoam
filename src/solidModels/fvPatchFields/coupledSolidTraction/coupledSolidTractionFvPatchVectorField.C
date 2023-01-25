@@ -188,7 +188,8 @@ coupledSolidTractionFvPatchVectorField
 :
     solidTractionFvPatchVectorField(p, iF),
     pName_("p"),
-    pRef_(0.0)
+    pRef_(0.0),
+    cutOffPressure_(0)
 {}
 
 
@@ -197,12 +198,14 @@ coupledSolidTractionFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const dictionary& dict
+    const dictionary& dict,
+    const bool mustRead
 )
 :
-    solidTractionFvPatchVectorField(p, iF, dict),
+    solidTractionFvPatchVectorField(p, iF, dict, false),
     pName_(dict.lookupOrDefault("pName", word("p"))),
-    pRef_(dict.lookup<scalar>("pRef"))
+    pRef_(dict.lookup<scalar>("pRef")),
+    cutOffPressure_(dict.lookupOrDefault("cutOffPressure", 0.0))
 {}
 
 
@@ -217,7 +220,8 @@ coupledSolidTractionFvPatchVectorField
 :
     solidTractionFvPatchVectorField(tdpvf, p, iF, mapper),
     pName_(tdpvf.pName_),
-    pRef_(tdpvf.pRef_)
+    pRef_(tdpvf.pRef_),
+    cutOffPressure_(tdpvf.cutOffPressure_)
 {}
 
 
@@ -230,7 +234,8 @@ coupledSolidTractionFvPatchVectorField
 :
     solidTractionFvPatchVectorField(tdpvf, iF),
     pName_(tdpvf.pName_),
-    pRef_(tdpvf.pRef_)
+    pRef_(tdpvf.pRef_),
+    cutOffPressure_(tdpvf.cutOffPressure_)
 {}
 
 
@@ -254,13 +259,8 @@ void Foam::coupledSolidTractionFvPatchVectorField::rmap
     solidTractionFvPatchVectorField::rmap(ptf, addr);
 }
 
-void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
+bool Foam::coupledSolidTractionFvPatchVectorField::updateFields()
 {
-    if (updated())
-    {
-        return;
-    }
-
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
     int oldTag = UPstream::msgType();
@@ -294,6 +294,17 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     if (mag(pRef_) > small)
     {
         ppNbr -= pRef_;
+    }
+
+    if (cutOffPressure_ > 0)
+    {
+        forAll(ppNbr, i)
+        {
+            if (mag(ppNbr[i]) < cutOffPressure_)
+            {
+                ppNbr[i] = 0.0;
+            }
+        }
     }
 
     if (debug == 2 || (debug && this->db().time().outputTime()))
@@ -367,11 +378,21 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
 
     // Flip sign since the boundary normal is opposite and the stress is dotted
     // with the neighbor boundary then mapped
-    this->traction() = -samplePatch.faceInterpolate(viscousNbr);
+    this->traction() = Zero;//-samplePatch.faceInterpolate(viscousNbr);
 
     // Integratre forces
-    forceNbr_ = gSum(ppNbr*sampleFvPatch.Sf() + viscousNbr*sampleFvPatch.magSf());
-    solidTractionFvPatchVectorField::updateCoeffs();
+    updateForce();
+
+    forceNbr_ =
+        gSum
+        (
+            ppNbr*sampleFvPatch.Sf()
+          + viscousNbr*sampleFvPatch.magSf()
+        );
+
+    UPstream::msgType() = oldTag;
+
+    return true;
 }
 
 
@@ -380,6 +401,7 @@ void Foam::coupledSolidTractionFvPatchVectorField::write(Ostream& os) const
     solidTractionFvPatchVectorField::write(os);
     writeEntry(os, "pName", pName_);
     writeEntry(os, "pRef", pRef_);
+    writeEntryIfDifferent(os, "cutOffPressure", cutOffPressure_, 0.0);
 }
 
 

@@ -189,6 +189,12 @@ public:
             //- Calculate the stress surfaceField
             void correct(surfaceSymmTensorField& sigma);
 
+            //- Return the Piola stress tensor
+            tmp<volTensorField> P(const volSymmTensorField& sigma) const;
+
+            //- Return the face Piola stress tensor
+            tmp<surfaceTensorField> P(const surfaceSymmTensorField& sigma) const;
+
             //- Update the gradient of displacement vol field
             void grad
             (

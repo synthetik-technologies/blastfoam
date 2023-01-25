@@ -46,7 +46,7 @@ SourceFiles
 #ifndef unsUpdatedLagrangianSolid_H
 #define unsUpdatedLagrangianSolid_H
 
-#include "unsIncrementalSolid.H"
+#include "incrementalSolids.H"
 #include "UnsUpdatedLagrangianGeomSolid.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

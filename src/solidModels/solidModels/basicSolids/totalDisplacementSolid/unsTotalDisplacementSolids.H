@@ -23,20 +23,20 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    totalDisplacementSolid
+    UnsTotalDisplacementSolid
 
 Description
-    Base class for total displacement solid models
+    Base class for unstructured total displacement solid models
 
 SourceFiles
-    totalDisplacementSolid.C
+    UnsTotalDisplacementSolid.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef totalDisplacementSolid_H
-#define totalDisplacementSolid_H
+#ifndef UnsTotalDisplacementSolid_H
+#define UnsTotalDisplacementSolid_H
 
-#include "solidModel.H"
+#include "unsSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,18 +46,16 @@ namespace solidModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class totalDisplacementSolid Declaration
+                        Class UnsTotalDisplacementSolid Declaration
 \*---------------------------------------------------------------------------*/
 
-class totalDisplacementSolid
+template<class UnsSolidModel>
+class UnsTotalDisplacementSolid
 :
-    public solidModel
+    public UnsSolidModel
 {
 protected:
     // Protected data
-
-        //- Implicit stiffness
-        const volScalarField impK_;
 
         //- Implicit stiffness surface field
         surfaceScalarField impKf_;
@@ -75,7 +73,7 @@ public:
     // Constructors
 
         //- Construct from components
-        totalDisplacementSolid
+        UnsTotalDisplacementSolid
         (
             const word& type,
             dynamicFvMesh& mesh,
@@ -85,7 +83,7 @@ public:
 
     // Destructor
 
-        virtual ~totalDisplacementSolid()
+        virtual ~UnsTotalDisplacementSolid()
         {}
 
 
@@ -104,7 +102,7 @@ public:
             virtual const volVectorField& solutionD() const
             {
                 // This model solves for D
-                return D();
+                return this->D();
             }
 
             //- Each solidModel must indicate whether gradD or gradDD
@@ -112,13 +110,21 @@ public:
             virtual const volTensorField& solutionGradD() const
             {
                 // This model solves for D
-                return gradD();
+                return this->gradD();
+            }
+
+            //- Each solidModel must indicate whether gradDf or gradDDf
+            //  is the primary solution variable
+            virtual const surfaceTensorField& solutionGradDf() const
+            {
+                // This model solves for DD
+                return this->gradDf();
             }
 
             //- Return the patch implicit stiffness
             virtual const scalarField& impK(const fvPatch& patch) const
             {
-                return this->impK_.boundaryField()[patch.index()];
+                return this->impKf_.boundaryField()[patch.index()];
             }
 };
 

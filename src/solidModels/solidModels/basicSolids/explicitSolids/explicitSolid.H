@@ -36,7 +36,7 @@ SourceFiles
 #ifndef explicitSolid_H
 #define explicitSolid_H
 
-#include "incrementalSolid.H"
+#include "IncrementalSolid.H"
 #include "ExplicitSolidBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,7 +52,7 @@ namespace solidModels
 
 class explicitSolid
 :
-    public ExplicitSolidBase<incrementalSolid>
+    public ExplicitSolidBase<IncrementalSolid<solidModel>>
 {
 protected:
 

@@ -24,7 +24,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "incrementalSolid.H"
+#ifndef incrementalSolids_H
+#define incrementalSolids_H
+
+#include "IncrementalSolid.H"
+#include "UnsIncrementalSolid.H"
+#include "iterativeSolidModels.H"
+#include "unsSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -32,51 +38,18 @@ namespace Foam
 {
 namespace solidModels
 {
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * *  Private Member Functions * * * * * * * * * * * * * //
-
-void incrementalSolid::updateDisplacement()
-{
-    // Update the total displacement
-    D() = D().oldTime() + DD();
-
-    // Interpolate DD to pointDD
-    mechanical().interpolate(DD(), pointDD(), false);
-
-    // Update gradient of displacement increment
-    mechanical().grad(DD(), gradDD());
-
-    // Update gradient of total displacement
-    gradD() = gradD().oldTime() + gradDD();
-
-    // Total displacement at points
-    pointD() = pointD().oldTime() + pointDD();
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-incrementalSolid::incrementalSolid
-(
-    const word& type,
-    dynamicFvMesh& mesh,
-    const nonLinearGeometry::nonLinearType nonLinear,
-    const bool isSolid
-)
-:
-    solidModel(type, mesh, nonLinear, incremental(), isSolid),
-    impK_("impK", this->mechanical().impK()),
-    impKf_("impKf", this->mechanical().impKf())
-{
-    DDisRequired(type);
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+typedef IncrementalSolid<iterativeSolid> incrementalSolid;
+typedef UnsIncrementalSolid<unsIterativeSolid> unsIncrementalSolid;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace solidModels
+} // End namespace solidModel
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

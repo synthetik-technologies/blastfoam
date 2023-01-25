@@ -43,12 +43,23 @@ mechanics::mechanics
     const operations& ops
 )
 :
-    MeshObject<fvMesh, MoveableMeshObject, mechanics>(F.mesh()),
+    MeshObject<fvMesh, UpdateableMeshObject, mechanics>(F.mesh()),
     mesh_(F.mesh()),
 
     ops_(ops),
 
     F_(F),
+
+    relF_
+    (
+        IOobject
+        (
+            "relF",
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        F_ & inv(F_.oldTime())
+    ),
 
     invF_
     (
@@ -72,6 +83,17 @@ mechanics::mechanics
             IOobject::AUTO_WRITE
         ),
         det(F_)
+    ),
+
+    relJ_
+    (
+        IOobject
+        (
+            "relJ",
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        det(relF_)
     ),
 
     N_("N", mesh_.Sf()/mesh_.magSf()),
@@ -141,10 +163,17 @@ bool mechanics::movePoints()
     return true;
 }
 
+
+void mechanics::updateMesh(const mapPolyMesh&)
+{
+    N_ = mesh_.Sf()/mesh_.magSf();
+}
+
+
 void mechanics::correctN()
 {
     surfaceTensorField invFf(fvc::interpolate(invF_));
-    n_ = (invFf.T() & N_)/(mag(invFf.T() & N_));
+    n_ = (invFf.T() & N_)/mag(invFf.T() & N_);
 }
 
 
@@ -157,6 +186,8 @@ void mechanics::correctDeformation(const bool useOldTime)
 
     J_ = det(F_);
     invF_ = inv(F_);
+    relF_ = F_ & invF_.oldTime();
+    relJ_ = det(relF_);
 
     // Stretch
     volTensorField C(F_.T() & F_);

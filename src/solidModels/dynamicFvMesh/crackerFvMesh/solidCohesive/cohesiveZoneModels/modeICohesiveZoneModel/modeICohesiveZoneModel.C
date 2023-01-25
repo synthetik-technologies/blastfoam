@@ -260,16 +260,26 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
 
     // Only perform mapping if the number of faces on the patch has changed
 
-   if (nNewFaces > 0 && isA<directFvPatchFieldMapper>(m))
+   if
+    (
+        nNewFaces > 0
+     && (
+            isA<directFvPatchFieldMapper>(m)
+         || (
+                isA<generalFvPatchFieldMapper>(m)
+             && dynamicCast<const generalFvPatchFieldMapper&>(m).direct()
+            )
+        )
+
+    )
     {
-        // Reset values on new faces to zero
-        // Note: the method below is used to find which faces are new on the
-        // patch
-
-        const directFvPatchFieldMapper& dm =
-            dynamicCast<const directFvPatchFieldMapper&>(m);
-
-        const labelList& addressing = dm.addressing();
+        const labelList& addressing =
+            isA<directFvPatchFieldMapper>(m)
+          ? dynamicCast<const directFvPatchFieldMapper>(m).addressing()
+          : dynamicCast<const generalFvPatchFieldMapper&>
+            (
+                m
+            ).directAddressing();
         const label patchSize = patch().size();
 
         if (patchSize == 1 && nNewFaces == 1)
@@ -350,22 +360,22 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
 
 void Foam::modeICohesiveZoneModel::rmap
 (
-    const solidCohesiveFvPatchVectorField& sc,
+    const cohesiveZoneModel& czm,
     const labelList& addr
 )
 {
-    const modeICohesiveZoneModel& czm =
-        refCast<const modeICohesiveZoneModel>(sc.cohesiveZone());
+    const modeICohesiveZoneModel& mIczm =
+        refCast<const modeICohesiveZoneModel>(czm);
 
-    cracked_.rmap(czm.cracked_, addr);
-    tractionN_.rmap(czm.tractionN_, addr);
-    oldTractionN_.rmap(czm.oldTractionN_, addr);
-    deltaN_.rmap(czm.deltaN_, addr);
-    oldDeltaN_.rmap(czm.oldDeltaN_, addr);
-    unloadingDeltaEff_.rmap(czm.unloadingDeltaEff_, addr);
-    deltaEff_.rmap(czm.deltaEff_, addr);
-    GI_.rmap(czm.GI_, addr);
-    oldGI_.rmap(czm.oldGI_, addr);
+    cracked_.rmap(mIczm.cracked_, addr);
+    tractionN_.rmap(mIczm.tractionN_, addr);
+    oldTractionN_.rmap(mIczm.oldTractionN_, addr);
+    deltaN_.rmap(mIczm.deltaN_, addr);
+    oldDeltaN_.rmap(mIczm.oldDeltaN_, addr);
+    unloadingDeltaEff_.rmap(mIczm.unloadingDeltaEff_, addr);
+    deltaEff_.rmap(mIczm.deltaEff_, addr);
+    GI_.rmap(mIczm.GI_, addr);
+    oldGI_.rmap(mIczm.oldGI_, addr);
 }
 
 
@@ -390,7 +400,8 @@ void Foam::modeICohesiveZoneModel::updateOldFields()
 void Foam::modeICohesiveZoneModel::updateTraction
 (
     vectorField& traction,
-    const vectorField& delta
+    const vectorField& delta,
+    const bool updateInitTraction
 )
 {
     // Unit normal vectors

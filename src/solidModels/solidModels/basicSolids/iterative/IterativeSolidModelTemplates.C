@@ -24,18 +24,17 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "solidModel.H"
-#include "volFields.H"
-
+#include "IterativeSolidModel.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+template<class SolidModel>
 template<class Type>
-bool Foam::solidModel::converged
+bool Foam::IterativeSolidModel<SolidModel>::converged
 (
-    const int iCorr,
+    const label iCorr,
     const scalar solverPerfInitRes,
-    const int solverPerfNIters,
+    const label solverPerfNIters,
     const GeometricField<Type, fvPatchField, volMesh>& vf,
     const bool writeResiduals
 )
@@ -67,7 +66,7 @@ bool Foam::solidModel::converged
     }
 
     // Calculate material residual
-    const scalar materialResidual = mechanical().residual();
+    const scalar materialResidual = this->mechanical().residual();
 
     // If one of the residuals has converged to an order of magnitude
     // less than the tolerance then consider the solution converged

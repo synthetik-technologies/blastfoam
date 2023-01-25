@@ -115,6 +115,8 @@ public:
                 new solidTractionFreeFvPatchVectorField(*this, iF)
             );
         }
+
+    virtual bool updateFields();
 };
 
 

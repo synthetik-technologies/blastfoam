@@ -48,7 +48,7 @@ SourceFiles
 #define totalLagrangianSolid_H
 
 #include "TotalLagrangianGeomSolid.H"
-#include "incrementalSolid.H"
+#include "incrementalSolids.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

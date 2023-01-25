@@ -36,7 +36,8 @@ SourceFiles
 #ifndef unsExplicitSolid_H
 #define unsExplicitSolid_H
 
-#include "unsIncrementalSolid.H"
+#include "UnsIncrementalSolid.H"
+#include "unsSolidModel.H"
 #include "ExplicitSolidBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,7 +53,7 @@ namespace solidModels
 
 class unsExplicitSolid
 :
-    public ExplicitSolidBase<unsIncrementalSolid>
+    public ExplicitSolidBase<UnsIncrementalSolid<unsSolidModel>>
 {
 protected:
     // Protected Member Functions

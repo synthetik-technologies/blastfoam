@@ -106,7 +106,10 @@ class mechanicalEnergies
 
 
         //- Bulk viscosity stablisation pressure
-        autoPtr<surfaceScalarField> viscousPressurePtr_;
+        autoPtr<surfaceScalarField> viscousPressurefPtr_;
+
+        //- Bulk viscosity stablisation pressure
+        autoPtr<volScalarField> viscousPressurePtr_;
 
         //- Volumetric strain used calculate the linear bulk viscosity pressure
         autoPtr<volScalarField> epsilonVolPtr_;
@@ -149,6 +152,14 @@ public:
     // Member Functions
 
         //- Viscous pressure
+        const volScalarField& viscousPressure
+        (
+            const volScalarField& rho,
+            const volScalarField& waveSpeed,
+            const volTensorField& gradD
+        );
+
+        //- Viscous pressure
         const surfaceScalarField& viscousPressure
         (
             const volScalarField& rho,
@@ -172,7 +183,7 @@ public:
             const volSymmTensorField& sigma,
             const volTensorField& gradD,
             const volTensorField& gradDD,
-            const volVectorField& stabilisation,
+            const momentumStabilisation& stabilisation,
             const dimensionedVector& g
         );
 
@@ -212,13 +223,13 @@ public:
             return kineticEnergyOldTime_;
         }
 
-        //- Return accumulated energy dissipated due to Laplacian smoothing term
+        //- Return accumulated energy dissipated due to smoothing term
         scalar smoothingEnergy() const
         {
             return smoothingEnergy_;
         }
 
-        //- Return accumulated energy dissipated due to Laplacian smoothing term old
+        //- Return accumulated energy dissipated due to smoothing term old
         //  time
         scalar smoothingEnergyOldTime() const
         {

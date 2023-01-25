@@ -36,6 +36,7 @@ Class
 namespace Foam
 {
     defineTypeNameAndDebug(cohesiveZoneModel, 0);
+    defineTypeNameAndDebug(cohesiveZoneModelMaster, 0);
     defineRunTimeSelectionTable(cohesiveZoneModel, dictionary);
 }
 
@@ -72,6 +73,46 @@ Foam::cohesiveZoneModel::cohesiveZoneModel(const cohesiveZoneModel& czm)
     patch_(czm.patch_),
     traction_(czm.traction_)
 {}
+
+
+Foam::cohesiveZoneModelMaster::cohesiveZoneModelMaster
+(
+    const fvPatch& p
+)
+:
+    patch_(p),
+    dict_(NULL)
+{}
+
+
+Foam::cohesiveZoneModelMaster::cohesiveZoneModelMaster
+(
+    const fvPatch& p,
+    const dictionary& dict
+)
+:
+    patch_(p),
+    dict_(dict)
+{}
+
+
+Foam::cohesiveZoneModelMaster::cohesiveZoneModelMaster
+(
+    const fvPatch& p,
+    const cohesiveZoneModelMaster& czm
+)
+:
+    patch_(p),
+    dict_(czm.dict_)
+{
+    if (czm.cohesiveZoneModelPtr_.valid())
+    {
+        cohesiveZoneModelPtr_.set
+        (
+            czm.cohesiveZoneModelPtr_->clone().ptr()
+        );
+    }
+}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
@@ -114,5 +155,79 @@ void Foam::cohesiveZoneModel::updateMeshTraction() const
     }
 }
 
+
+void Foam::cohesiveZoneModelMaster::calcCohesiveZone() const
+{
+    if (cohesiveZoneModelPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
+    }
+
+    cohesiveZoneModelPtr_ =
+        cohesiveZoneModel::New
+        (
+            "type", patch_, dict_.subDict("cohesiveZoneModel")
+        );
+}
+
+
+const Foam::cohesiveZoneModel&
+Foam::cohesiveZoneModelMaster::cohesiveZone() const
+{
+    if (!cohesiveZoneModelPtr_.valid())
+    {
+        calcCohesiveZone();
+    }
+
+    return cohesiveZoneModelPtr_();
+}
+
+
+Foam::cohesiveZoneModel&
+Foam::cohesiveZoneModelMaster::cohesiveZone()
+{
+    if (!cohesiveZoneModelPtr_.valid())
+    {
+        calcCohesiveZone();
+    }
+
+    return cohesiveZoneModelPtr_();
+}
+
+void Foam::cohesiveZoneModelMaster::autoMap
+(
+    const fvPatchFieldMapper& m
+)
+{
+    if (cohesiveZoneModelPtr_.valid())
+    {
+        cohesiveZoneModelPtr_->autoMap(m);
+    }
+}
+
+
+void Foam::cohesiveZoneModelMaster::rmap
+(
+    const cohesiveZoneModelMaster& czmm,
+    const labelList& addr
+)
+{
+    if (cohesiveZoneModelPtr_.valid())
+    {
+        cohesiveZoneModelPtr_->rmap(czmm.cohesiveZone(), addr);
+    }
+}
+
+void Foam::cohesiveZoneModelMaster::write(Ostream& os) const
+{
+    if (cohesiveZoneModelPtr_.valid())
+    {
+        os.writeKeyword("cohesiveZoneModel") << nl;
+        os << indent << token::BEGIN_BLOCK << nl;
+        cohesiveZone().write(os);
+        os << indent << token::END_BLOCK << nl;
+    }
+}
 
 // ************************************************************************* //

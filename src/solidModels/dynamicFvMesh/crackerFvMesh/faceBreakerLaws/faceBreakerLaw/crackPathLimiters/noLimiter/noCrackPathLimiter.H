@@ -22,19 +22,19 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    boundingBoxLimiter
+    Foam::crackPathLimiters::none
 
 Description
     Limit cracks to propagate inside specified bounding boxes.
 
     Usage:
     verbatim
-        crackPathLimiter
+        crackPathLimiterCoeffs
         {
             // Cracks may only propagate along faces within these boxes
             // This allows the crack path to be limited.
-            type            boundingBoxes;
-            boundingBoxes
+            crackPathLimiter    nonees;
+            nonees
             (
                 (0 -1e-5 0) (0.05 1e-5 1)
                 (0.05 1e-5 0) (0.05 2e-5 1)
@@ -46,12 +46,12 @@ Author
     Philip Cardif, UCD.  All rights reserved.
 
 SourceFiles
-    boundingBoxLimiter.C
+    noneCrackPathLimiter.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef boundingBoxLimiter_H
-#define boundingBoxLimiter_H
+#ifndef noneCrackPatchLimiter_H
+#define noneCrackPatchLimiter_H
 
 #include "crackPathLimiter.H"
 #include "boundBox.H"
@@ -61,40 +61,31 @@ SourceFiles
 
 namespace Foam
 {
+namespace crackPathLimiters
+{
 
 /*---------------------------------------------------------------------------*\
-                         Class boundingBoxLimiter Declaration
+                         Class none Declaration
 \*---------------------------------------------------------------------------*/
 
-class boundingBoxLimiter
+class none
 :
     public crackPathLimiter
 {
-    // Private data
-
-        // faces allowed to break: 1 is allowed, 0 is not allowed
-        mutable surfaceScalarField* facesAllowedToBreakPtr_;
-
-        // List of bounding boxes
-        List<boundBox> boundingBoxes_;
-
 
     // Private Member Functions
 
-        // Calculate faces allowed to break
-        void calcFacesAllowedToBreak() const;
-
         //- Disallow default bitwise copy construct
-        boundingBoxLimiter(const boundingBoxLimiter&);
+        none(const none&);
 
         //- Disallow default bitwise assignment
-        void operator=(const boundingBoxLimiter&);
+        void operator=(const none&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("boundingBoxes");
+    TypeName("none");
 
     // Static data members
 
@@ -102,7 +93,7 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        boundingBoxLimiter
+        none
         (
             const word& name,
             const fvMesh& mesh,
@@ -112,21 +103,25 @@ public:
 
     // Destructor
 
-        virtual ~boundingBoxLimiter();
+        virtual ~none();
 
 
     // Member Functions
 
         // Return list of faces allowed to break
-        virtual const surfaceScalarField& facesAllowedToBreak() const;
+        virtual tmp<surfaceScalarField> facesAllowedToBreak() const;
 
         //- Delete demand driven data
         virtual void clearOut();
+
+        //- Write
+        virtual bool write() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace crackPathLimiters
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

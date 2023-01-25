@@ -95,10 +95,8 @@ void Foam::crackerFvMesh::updateVolFieldBrokenFaces
             const_cast<GeometricField<Type, fvPatchField, volMesh>&>
             (*fieldIter());
 
-        if (debug)
-        {
-            Info<< "    volField " << fieldIter()->name() << endl;
-        }
+        DebugInfo
+            << "    volField " << fieldIter()->name() << endl;
 
         // Local crack field
         Field<Type> fieldpI
@@ -131,14 +129,11 @@ void Foam::crackerFvMesh::updateVolFieldBrokenFaces
                     >("interpolate(" + field.name() + ')')
                );
 
-            if (debug)
-            {
-                Info<< "    surfaceField " << surfaceFieldPtr->name() << endl;
-            }
+            DebugInfo
+                << "    surfaceField " << surfaceFieldPtr->name() << endl;
         }
 
         // Initialise field on new cohesive face
-
         const labelList& gcfa = mesh.globalCrackFaceAddressing();
 
         label globalIndex = mesh.localCrackStart();

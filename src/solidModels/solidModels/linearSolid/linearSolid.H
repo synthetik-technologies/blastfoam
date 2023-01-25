@@ -44,7 +44,7 @@ SourceFiles
 #define linearSolid_H
 
 #include "LinearGeomSolid.H"
-#include "incrementalSolid.H"
+#include "incrementalSolids.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

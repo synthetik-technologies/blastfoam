@@ -56,7 +56,11 @@ addToRunTimeSelectionTable
 
 totalLagrangianSolid::totalLagrangianSolid(dynamicFvMesh& mesh)
 :
-    TotalLagrangianGeomSolid<incrementalSolid>(typeName, mesh)
+    TotalLagrangianGeomSolid<incrementalSolid>
+    (
+        typeName,
+        mesh
+    )
 {
     //- Dummy Call to make sure the necessary old fields are initialized
     fvc::d2dt2(rho().oldTime(), D().oldTime());
@@ -82,9 +86,14 @@ bool totalLagrangianSolid::evolve()
     // Reset enforceLinear switch
     enforceLinear() = false;
 
+    bool changing = false;mesh().update();
+
     // Momentum equation loop
     do
     {
+        //- Update the mesh
+        // changing = mesh().update();
+
         // Store fields for under-relaxation and residual calculation
         DD().storePrevIter();
 
@@ -130,21 +139,24 @@ bool totalLagrangianSolid::evolve()
     }
     while
     (
-       !converged
         (
-            iCorr,
-            mag(solverPerfDD.initialResidual()),
-            max
+            !converged
             (
-                solverPerfDD.nIterations()[0],
+                iCorr,
+                mag(solverPerfDD.initialResidual()),
                 max
                 (
-                    solverPerfDD.nIterations()[1],
-                    solverPerfDD.nIterations()[2]
-                )
-            ),
-            DD()
-        ) && ++iCorr < nCorr()
+                    solverPerfDD.nIterations()[0],
+                    max
+                    (
+                        solverPerfDD.nIterations()[1],
+                        solverPerfDD.nIterations()[2]
+                    )
+                ),
+                DD()
+            )
+         && ++iCorr < nCorr()
+        ) || changing
     );
 
     // Velocity

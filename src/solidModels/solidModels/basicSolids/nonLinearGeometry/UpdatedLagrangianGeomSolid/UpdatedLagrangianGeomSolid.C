@@ -177,7 +177,7 @@ tmp<volTensorField> UpdatedLagrangianGeomSolid<IncrementalModel>::P() const
 
     forAll(Piola, celli)
     {
-        Piola[celli] = relJ_[celli]*(inv(relF_[celli]) & tensor(sigma[celli]));
+        Piola[celli] = relJ_[celli]*(tensor(sigma[celli]) & T(inv(relF_[celli])));
     }
     volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
     forAll(bPiola, patchi)
@@ -188,7 +188,8 @@ tmp<volTensorField> UpdatedLagrangianGeomSolid<IncrementalModel>::P() const
         const fvPatchTensorField& prelF = relF_.boundaryField()[patchi];
         forAll(pPiola, facei)
         {
-            pPiola[facei] = prelJ[facei]*(inv(prelF[facei]) & tensor(psigma[facei]));
+            pPiola[facei] =
+                prelJ[facei]*(tensor(psigma[facei]) & T(inv(prelF[facei])));
         }
     }
 
@@ -218,7 +219,7 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::P(const fvPatch& patch) const
 
     forAll(pPiola, facei)
     {
-        pPiola[facei] = prelJ[facei]*(inv(prelF[facei]) & psigma[facei]);
+        pPiola[facei] = prelJ[facei]*(psigma[facei] & T(inv(prelF[facei])));
     }
     return tpPiola;
 }
@@ -260,13 +261,6 @@ void UpdatedLagrangianGeomSolid<IncrementalModel>::updateTotalFields()
     IncrementalModel::updateTotalFields();
 }
 
-
-template<class IncrementalModel>
-void UpdatedLagrangianGeomSolid<IncrementalModel>::writeNecessaryFields() const
-{
-    IncrementalModel::writeNecessaryFields();
-    F_.write();
-}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

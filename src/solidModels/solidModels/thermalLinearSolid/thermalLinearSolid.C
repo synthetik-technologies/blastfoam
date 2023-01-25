@@ -341,25 +341,29 @@ bool thermalLinearSolid::evolve()
 }
 
 
-void thermalLinearSolid::writeFields() const
+bool thermalLinearSolid::write(const bool write) const
 {
-    Info<< "Max T = " << max(T_).value() << nl
-        << "Min T = " << min(T_).value() << endl;
+    bool good = true;
+    if (write)
+    {
+        Info<< "Max T = " << max(T_).value() << nl
+            << "Min T = " << min(T_).value() << endl;
 
-    // Heat flux
-    volVectorField heatFlux
-    (
-        volVectorField::New
+        // Heat flux
+        volVectorField heatFlux
         (
-            "heatFlux",
-            -k_*gradT_
-        )
-    );
+            volVectorField::New
+            (
+                "heatFlux",
+                -k_*gradT_
+            )
+        );
+        good = heatFlux.write();
 
-    Info<< "Max magnitude of heat flux = " << max(mag(heatFlux)).value()
-        << endl;
-
-    solidModel::writeFields();
+        Info<< "Max magnitude of heat flux = " << max(mag(heatFlux)).value()
+            << endl;
+    }
+    return good && LinearGeomSolid<totalDisplacementSolid>::write(write);
 }
 
 

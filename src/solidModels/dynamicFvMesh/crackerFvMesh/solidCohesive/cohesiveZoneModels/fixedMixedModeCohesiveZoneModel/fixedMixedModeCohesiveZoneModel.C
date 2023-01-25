@@ -25,7 +25,6 @@ License
 
 #include "fixedMixedModeCohesiveZoneModel.H"
 #include "addToRunTimeSelectionTable.H"
-#include "solidCohesiveFvPatchVectorField.H"
 #include "cohesiveZoneInitiation.H"
 #include "directFvPatchFieldMapper.H"
 #include "crackerFvMesh.H"
@@ -321,8 +320,28 @@ void Foam::fixedMixedModeCohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
     m(unloadingDeltaEff_, unloadingDeltaEff_);
 
     // Only perform mapping if the number of faces on the patch has changed
-    if (nNewFaces > 0 && isA<directFvPatchFieldMapper>(m))
+    if
+    (
+        nNewFaces > 0
+     && (
+            isA<directFvPatchFieldMapper>(m)
+         || (
+                isA<generalFvPatchFieldMapper>(m)
+             && dynamicCast<const generalFvPatchFieldMapper&>(m).direct()
+            )
+        )
+
+    )
     {
+        const labelList& addressing =
+            isA<directFvPatchFieldMapper>(m)
+          ? dynamicCast<const directFvPatchFieldMapper>(m).addressing()
+          : dynamicCast<const generalFvPatchFieldMapper&>
+            (
+                m
+            ).directAddressing();
+        const label patchSize = patch().size();
+
         // Lookup the faceBreaker law from the crackerFvMesh
         // Cast mesh to a crackerFvMesh
         const faceBreakerLaw& faceBreaker =
@@ -362,12 +381,6 @@ void Foam::fixedMixedModeCohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
         // Reset values on new faces to zero
         // Note: the method below is used to find which faces are new on the
         // patch
-
-        const directFvPatchFieldMapper& dm =
-            dynamicCast<const directFvPatchFieldMapper&>(m);
-
-        const labelList& addressing = dm.addressing();
-        const label patchSize = patch().size();
 
         if (patchSize == 1 && nNewFaces == 1)
         {
@@ -494,18 +507,18 @@ void Foam::fixedMixedModeCohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
 
 void Foam::fixedMixedModeCohesiveZoneModel::rmap
 (
-    const solidCohesiveFvPatchVectorField& sc,
+    const cohesiveZoneModel& czm,
     const labelList& addr
 )
 {
-    const fixedMixedModeCohesiveZoneModel& czm =
-        refCast<const fixedMixedModeCohesiveZoneModel>(sc.cohesiveZone());
+    const fixedMixedModeCohesiveZoneModel& fmmczm =
+        refCast<const fixedMixedModeCohesiveZoneModel>(czm);
 
-    cracked_.rmap(czm.cracked_, addr);
-    initTraction_.rmap(czm.initTraction_, addr);
-    deltaN_.rmap(czm.deltaN_, addr);
-    deltaS_.rmap(czm.deltaS_, addr);
-    unloadingDeltaEff_.rmap(czm.unloadingDeltaEff_, addr);
+    cracked_.rmap(fmmczm.cracked_, addr);
+    initTraction_.rmap(fmmczm.initTraction_, addr);
+    deltaN_.rmap(fmmczm.deltaN_, addr);
+    deltaS_.rmap(fmmczm.deltaS_, addr);
+    unloadingDeltaEff_.rmap(fmmczm.unloadingDeltaEff_, addr);
 }
 
 
@@ -564,9 +577,15 @@ void Foam::fixedMixedModeCohesiveZoneModel::updateOldFields()
 void Foam::fixedMixedModeCohesiveZoneModel::updateTraction
 (
     vectorField& traction,
-    const vectorField& delta
+    const vectorField& delta,
+    const bool updateInitTraction
 )
 {
+    if (updateInitTraction)
+    {
+        initTraction_ = traction;
+    }
+
     // Unit normal vectors
     const vectorField& n = patch().patch().faceNormals();
 

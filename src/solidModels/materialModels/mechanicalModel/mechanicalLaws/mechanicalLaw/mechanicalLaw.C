@@ -953,7 +953,14 @@ Foam::mechanicalLaw::mechanicalLaw
 
 Foam::tmp<Foam::surfaceScalarField> Foam::mechanicalLaw::impKf() const
 {
-    return fvc::interpolate(impK());
+    return tmp<surfaceScalarField>
+    (
+        surfaceScalarField::New
+        (
+            "impKf",
+            fvc::interpolate(impK())
+        )
+    );
 }
 
 
@@ -965,6 +972,118 @@ void Foam::mechanicalLaw::correct(surfaceSymmTensorField&)
         "The correct(surfaceSymmTensorField&) function is not implemented\n"
         " for the " + type() + " mechanical law"
     );
+}
+
+
+Foam::tmp<Foam::volTensorField>
+Foam::mechanicalLaw::P(const volSymmTensorField& sigma) const
+{
+    tmp<volTensorField> tPiola
+    (
+        volTensorField::New
+        (
+            "P",
+            mesh_,
+            dimensionedTensor(sigma.dimensions(), Zero)
+        )
+    );
+    volTensorField& Piola = tPiola.ref();
+
+    if (enforceLinear())
+    {
+        forAll(Piola, celli)
+        {
+            Piola[celli] = sigma[celli];
+        }
+        volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+        forAll(bPiola, patchi)
+        {
+            fvPatchTensorField& pPiola = bPiola[patchi];
+            const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+            forAll(pPiola, facei)
+            {
+                pPiola[facei] = psigma[facei];
+            }
+        }
+        return tPiola;
+    }
+
+    const volScalarField& J = relative() ? this->relJ() : this->J();
+    const volTensorField& F = relative() ? this->relF() : this->F();
+    forAll(Piola, celli)
+    {
+        Piola[celli] = J[celli]*(sigma[celli] & T(inv(F[celli])));
+    }
+    volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+    forAll(bPiola, patchi)
+    {
+        fvPatchTensorField& pPiola = bPiola[patchi];
+        const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+        const fvPatchScalarField& pJ = J.boundaryField()[patchi];
+        const fvPatchTensorField& pF = F.boundaryField()[patchi];
+        forAll(pPiola, facei)
+        {
+            pPiola[facei] = pJ[facei]*(psigma[facei] & T(inv(pF[facei])));
+        }
+    }
+
+    return tPiola;
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::mechanicalLaw::P(const surfaceSymmTensorField& sigma) const
+{
+    tmp<surfaceTensorField> tPiola
+    (
+        surfaceTensorField::New
+        (
+            "P",
+            mesh_,
+            dimensionedTensor(sigma.dimensions(), Zero)
+        )
+    );
+    surfaceTensorField& Piola = tPiola.ref();
+
+    if (enforceLinear())
+    {
+        forAll(Piola, facei)
+        {
+            Piola[facei] = sigma[facei];
+        }
+        surfaceTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+        forAll(bPiola, patchi)
+        {
+            fvsPatchTensorField& pPiola = bPiola[patchi];
+            const fvsPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+            forAll(pPiola, facei)
+            {
+                pPiola[facei] = psigma[facei];
+            }
+        }
+        return tPiola;
+    }
+
+    const surfaceScalarField& J = relative() ? this->relJf() : this->Jf();
+    const surfaceTensorField& F = relative() ? this->relFf() : this->Ff();
+    forAll(Piola, facei)
+    {
+        Piola[facei] = J[facei]*(sigma[facei] & T(inv(F[facei])));
+    }
+    surfaceTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+    forAll(bPiola, patchi)
+    {
+        fvsPatchTensorField& pPiola = bPiola[patchi];
+        const fvsPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+        const fvsPatchScalarField& pJ = J.boundaryField()[patchi];
+        const fvsPatchTensorField& pF = F.boundaryField()[patchi];
+        forAll(pPiola, facei)
+        {
+            pPiola[facei] = pJ[facei]*(psigma[facei] & T(inv(pF[facei])));
+        }
+    }
+
+    return tPiola;
 }
 
 

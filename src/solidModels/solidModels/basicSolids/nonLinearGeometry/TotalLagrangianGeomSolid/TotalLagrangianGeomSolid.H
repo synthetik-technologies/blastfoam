@@ -119,11 +119,6 @@ public:
 
         //- Boundary normal
         virtual tmp<vectorField> nf(const fvPatch& patch) const;
-
-        //- Write all associated fields
-        //  Force write so this should only be used when not
-        //  writing at a standard time
-        virtual void writeNecessaryFields() const;
 };
 
 

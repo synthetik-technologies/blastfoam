@@ -621,6 +621,63 @@ void Foam::mechanicalModel::correct(surfaceSymmTensorField& sigma)
 }
 
 
+Foam::tmp<Foam::volTensorField>
+Foam::mechanicalModel::P(const volSymmTensorField& sigma) const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    if (laws.size() == 1)
+    {
+        return laws[0].P(sigma);
+    }
+
+    NotImplemented;
+    return laws[0].P(sigma);
+    // // Accumulate data for all fields
+    // forAll(laws, lawI)
+    // {
+    //     laws[lawI].correct(solSubMeshes().subMeshSigma()[lawI]);
+    // }
+    //
+    // // Map subMesh fields to the base field
+    // solSubMeshes().mapSubMeshVolFields<symmTensor>
+    // (
+    //     solSubMeshes().subMeshSigma(), sigma
+    // );
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::mechanicalModel::P(const surfaceSymmTensorField& sigma) const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    if (laws.size() == 1)
+    {
+        return laws[0].P(sigma);
+    }
+
+    NotImplemented;
+    return laws[0].P(sigma);
+    // // Reset sigma before performing the accumulatation as interface values
+    // // will be added for each material
+    // // This is not necessary for volFields as they store no value on the
+    // // interface
+    // sigma = Zero;
+    //
+    // // Accumulate data for all fields
+    // forAll(laws, lawI)
+    // {
+    //     laws[lawI].correct(solSubMeshes().subMeshSigmaf()[lawI]);
+    // }
+    //
+    // // Map subMesh fields to the base field
+    // solSubMeshes().mapSubMeshSurfaceFields<symmTensor>
+    // (
+    //     solSubMeshes().subMeshSigmaf(), sigma
+    // );
+}
+
 void Foam::mechanicalModel::grad
 (
     const volVectorField& D,
@@ -844,10 +901,13 @@ void Foam::mechanicalModel::interpolate
 )
 {
     const PtrList<mechanicalLaw>& laws = *this;
+    const pointConstraints& pc =
+        pointConstraints::New(pointMesh::New(mesh()));
 
     if (laws.size() == 1)
     {
-        volToPoint().interpolateDisplacement(D, pointD);
+        pointD == volToPoint().interpolate(D);
+        pc.constrainDisplacement(pointD, true);
         pointD.correctBoundaryConditions();
         return;
     }
@@ -872,6 +932,7 @@ void Foam::mechanicalModel::interpolate
     (
         solSubMeshes().subMeshPointD(), pointD
     );
+    pc.setPatchFields(pointD);
 }
 
 

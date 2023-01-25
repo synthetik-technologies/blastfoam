@@ -15,7 +15,10 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/regionModels/lnInclude \
-    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
+    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
 
 LIB_LIBS = \
     -lfileFormats \
@@ -27,4 +30,7 @@ LIB_LIBS = \
     -ldynamicFvMesh \
     -ltopoChangerFvMesh \
     -L$(BLAST_LIBBIN) \
-    -lblastRegionModels
+    -lblastRegionModels \
+    -lblastDynamicMesh \
+    -lblastDynamicFvMesh \
+    -lerrorEstimators

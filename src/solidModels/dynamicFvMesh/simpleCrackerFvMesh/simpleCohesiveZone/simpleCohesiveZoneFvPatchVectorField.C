@@ -47,11 +47,8 @@ void simpleCohesiveZoneFvPatchVectorField::makeSimpleCohesiveZoneLaw() const
 {
     if (cohesiveLawPtr_.valid())
     {
-        FatalErrorIn
-        (
-            "void simpleCohesiveZoneFvPatchVectorField::"
-            "makeSimpleCohesiveZoneLaw() const"
-        )   << "Pointer already set!" << abort(FatalError);
+        FatalErrorInFunction
+            << "Pointer already set!" << abort(FatalError);
     }
 
     cohesiveLawPtr_.set
@@ -86,6 +83,7 @@ simpleCohesiveZoneFvPatchVectorField
 )
 :
     solidDirectionMixedFvPatchVectorField(p, iF),
+    tractionBase(p),
     dict_(),
     totRefValue_(p.size(), vector::zero),
     cohesiveLawPtr_(),
@@ -112,6 +110,7 @@ simpleCohesiveZoneFvPatchVectorField
 )
 :
     solidDirectionMixedFvPatchVectorField(ptf, p, iF, mapper),
+    tractionBase(ptf, p, mapper),
     dict_(ptf.dict_),
     totRefValue_(ptf.totRefValue_),
     cohesiveLawPtr_(ptf.cohesiveLawPtr_),
@@ -137,6 +136,7 @@ simpleCohesiveZoneFvPatchVectorField
 )
 :
     solidDirectionMixedFvPatchVectorField(p, iF),
+    tractionBase(p, dict, false),
     dict_(dict),
     totRefValue_(p.size(), vector::zero),
     cohesiveLawPtr_(),
@@ -152,7 +152,7 @@ simpleCohesiveZoneFvPatchVectorField
     ),
     curTimeIndex_(-1),
     initiationTraction_(p.size(), vector::zero),
-    breakOnlyOneFace_(dict.lookupOrDefault<Switch>("breakOnlyOneFace", true))
+    breakOnlyOneFace_(dict.lookupOrDefault<Switch>("breakOnlyOneFace", false))
 {
     if (!isA<simpleCrackerFvMesh>(patch().boundaryMesh().mesh()))
     {
@@ -252,6 +252,7 @@ simpleCohesiveZoneFvPatchVectorField
 )
 :
     solidDirectionMixedFvPatchVectorField(ptf, iF),
+    tractionBase(ptf, this->patch()),
     dict_(ptf.dict_),
     totRefValue_(ptf.totRefValue_),
     cohesiveLawPtr_(ptf.cohesiveLawPtr_),
@@ -276,14 +277,16 @@ void simpleCohesiveZoneFvPatchVectorField::autoMap
     const fvPatchFieldMapper& m
 )
 {
-    if (cohesiveLawPtr_.empty())
-    {
-        FatalErrorIn("simpleCohesiveZoneFvPatchVectorField::autoMap")
-            << "NULL cohesive law"
-            << abort(FatalError);
-    }
+    // if (cohesiveLawPtr_.empty())
+    // {
+    //     FatalErrorInFunction
+    //         << "NULL cohesive law"
+    //         << abort(FatalError);
+    // }
 
     solidDirectionMixedFvPatchVectorField::autoMap(m);
+    tractionBase::autoMap(m);
+
     m(totRefValue_, totRefValue_);
     m(crackIndicator_, crackIndicator_);
     m(damageIndicator_, damageIndicator_);
@@ -305,6 +308,7 @@ void simpleCohesiveZoneFvPatchVectorField::rmap
 
     const simpleCohesiveZoneFvPatchVectorField& dmptf =
         refCast<const simpleCohesiveZoneFvPatchVectorField>(ptf);
+    tractionBase::rmap(dmptf, addr);
 
     if (cohesiveLawPtr_.empty() && dmptf.cohesiveLawPtr_.valid())
     {
@@ -443,7 +447,9 @@ label simpleCohesiveZoneFvPatchVectorField::updateCrack()
     {
         const label faceID = facesToBreak[fI];
 
-        Info<< "Switching valueFraction to zero for face " << faceID << endl;
+        DebugInfo
+            << "Switching valueFraction to zero for face "
+            << faceID << endl;
 
         // Switch to full traction boundary condition
         valueFrac[faceID] = symmTensor::zero;
@@ -454,38 +460,40 @@ label simpleCohesiveZoneFvPatchVectorField::updateCrack()
 
         newTraction[faceID] = initiationTraction_[faceID];
 
-        Pout<< "Crack has started at face: " << faceID << nl
-            << "    normal traction: " << curNormalTraction[faceID] << nl
-            << "    tangential traction: "
-            << curTangentialTraction[faceID] << nl
-            << "    initiation traction: "
-            << initiationTraction_[faceID]
-            << endl;
+        if (debug)
+        {
+            Pout<< "Crack has started at face: " << faceID << nl
+                << "    normal traction: "
+                << curNormalTraction[faceID] << nl
+                << "    tangential traction: "
+                << curTangentialTraction[faceID] << nl
+                << "    initiation traction: "
+                << initiationTraction_[faceID]
+                << endl;
+        }
     }
 
+    this->traction() = newTraction;
+
     // Lookup the solidModel object
-    const solidModel& solMod = lookupSolidModel(patch().boundaryMesh().mesh());
+    const solidModel& solMod =
+        lookupSolidModel(this->patch().boundaryMesh().mesh());
 
     // Set traction on the patch
-    refGrad() =
+    this->refGrad() =
         solMod.tractionBoundarySnGrad
         (
-            newTraction,
-            scalarField(newTraction.size(), 0.0),
-            patch()
+            this->traction(),
+            this->pressure(),
+            this->patch()
         );
 
     return returnReduce(nFacesToBreak, sumOp<label>());
 }
 
 
-void simpleCohesiveZoneFvPatchVectorField::updateCoeffs()
+bool simpleCohesiveZoneFvPatchVectorField::updateFields()
 {
-    if (this->updated())
-    {
-        return;
-    }
-
     if (curTimeIndex_ != this->db().time().timeIndex())
     {
         const scalar deltaC = law().deltaC().value();
@@ -552,7 +560,7 @@ void simpleCohesiveZoneFvPatchVectorField::updateCoeffs()
     const scalarField curNormalTraction(n & (n & curSigma));
 
     // New traction to be set
-    vectorField newTraction(patch().size(), vector::zero);
+    vectorField newTraction(this->patch().size(), vector::zero);
 
     // Separation distance
     if (explicitSeparationDistance_)
@@ -566,7 +574,7 @@ void simpleCohesiveZoneFvPatchVectorField::updateCoeffs()
         // If this is a symmetryPlane type boundary, then we double the
         // displacement; this is because half of the energy is dissipated on the
         // other side of the symmetryPlane
-        if (patch().type() != wallFvPatch::typeName)
+        if (isA<wallFvPatch>(this->patch()))
         {
             // Double the delta for symmetryPlane patches
             newSeparationDistance += newSeparationDistance;
@@ -578,7 +586,11 @@ void simpleCohesiveZoneFvPatchVectorField::updateCoeffs()
     }
 
     // Check if the separation has become unreasonable
-    if (max(mag(separationDistance_)) > 1e6*Foam::sqrt(sum(patch().magSf())))
+    if
+    (
+        max(mag(separationDistance_))
+      > 1e6*sqrt(sum(this->patch().magSf()))
+    )
     {
         FatalErrorInFunction
             << "The separation distance has become very large!"
@@ -643,16 +655,32 @@ void simpleCohesiveZoneFvPatchVectorField::updateCoeffs()
         }
     }
 
+    this->traction() = newTraction;
+    this->pressure() = Zero;
+    return true;
+}
+
+
+void simpleCohesiveZoneFvPatchVectorField::updateCoeffs()
+{
+    if (this->updated())
+    {
+        return;
+    }
+
+   updateFields();
+
     // Lookup the solidModel object
-    const solidModel& solMod = lookupSolidModel(patch().boundaryMesh().mesh());
+    const solidModel& solMod =
+        lookupSolidModel(this->patch().boundaryMesh().mesh());
 
     // Set traction on the patch
     refGrad() =
         solMod.tractionBoundarySnGrad
         (
-            newTraction,
-            scalarField(newTraction.size(), 0.0),
-            patch()
+            this->traction(),
+            this->pressure(),
+            this->patch()
         );
 
     solidDirectionMixedFvPatchVectorField::updateCoeffs();

@@ -121,13 +121,8 @@ hydrostaticPressureFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void hydrostaticPressureFvPatchVectorField::updateCoeffs()
+bool hydrostaticPressureFvPatchVectorField::updateFields()
 {
-    if (updated())
-    {
-        return;
-    }
-
     const uniformDimensionedVectorField& g =
         this->patch().boundaryMesh().mesh().lookupObject
         <
@@ -147,7 +142,7 @@ void hydrostaticPressureFvPatchVectorField::updateCoeffs()
     scalarField gh((x & g.value()) + mag(g.value())*hRef_);
     this->pressure() = pRef_ + rho_*gh;
 
-    solidTractionFvPatchVectorField::updateCoeffs();
+    return false;
 }
 
 

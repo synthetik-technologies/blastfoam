@@ -24,42 +24,44 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "totalDisplacementSolid.H"
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace solidModels
-{
+#include "UnsTotalDisplacementSolid.H"
 
 // * * * * * * * * * * *  Private Member Functions * * * * * * * * * * * * * //
 
-
-void totalDisplacementSolid::updateDisplacement()
+template<class UnsSolidModel>
+void Foam::solidModels::UnsTotalDisplacementSolid<UnsSolidModel>::
+updateDisplacement()
 {
     // Update the total displacement
-    DD() = D() - D().oldTime();
-    DD().correctBoundaryConditions();
+    this->DD() = this->D() - this->D().oldTime();
 
-    // Update gradient of displacement increment
-    mechanical().grad(D(), gradD());
-
-    // Update gradient of total displacement
-    gradDD() = gradD() - gradD().oldTime();
-
-    // Interpolate cell displacements to vertices
-    mechanical().interpolate(D(), pointD());
+    // Interpolate D to pointD
+    this->mechanical().interpolate(this->D(), this->pointD(), false);
 
     // Increment of displacement
-    pointDD() = pointD() - pointD().oldTime();
+    this->pointDD() = this->pointD() - this->pointD().oldTime();
+
+    // Update gradient of displacement
+    // this->mechanical().grad(this->D(), this->pointD(), this->gradD());
+    this->mechanical().grad
+    (
+        this->D(),
+        this->pointD(),
+        this->gradD(),
+        this->gradDf()
+    );
+
+    // Update gradient of total displacement
+    this->gradDD() = this->gradD() - this->gradD().oldTime();
+    this->gradDDf() = this->gradDf() - this->gradDf().oldTime();
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-totalDisplacementSolid::totalDisplacementSolid
+template<class UnsSolidModel>
+Foam::solidModels::UnsTotalDisplacementSolid<UnsSolidModel>::
+UnsTotalDisplacementSolid
 (
     const word& type,
     dynamicFvMesh& mesh,
@@ -67,24 +69,25 @@ totalDisplacementSolid::totalDisplacementSolid
     const bool isSolid
 )
 :
-    solidModel(type, mesh, nonLinear, incremental(), isSolid),
-    impK_("impK", this->mechanical().impK()),
+    UnsSolidModel(type, mesh, nonLinear, incremental(), isSolid),
     impKf_("impKf", this->mechanical().impKf())
 {
-    DisRequired(type);
+    this->DisRequired(type);
+
+    // Interpolate D to pointD
+    this->mechanical().interpolate(this->D(), this->pointD(), false);
 
     // For consistent restarts, we will calculate the gradient field
-    mechanical().grad(D(), gradD());
+    this->mechanical().grad
+    (
+        this->D(),
+        this->pointD(),
+        this->gradD(),
+        this->gradDf()
+    );
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace solidModels
-
-} // End namespace Foam
 
 // ************************************************************************* //

@@ -62,9 +62,7 @@ unsExplicitLinearSolid::unsExplicitLinearSolid
     update();
 
     // Update initial acceleration
-    a_.primitiveFieldRef() =
-        fvc::div(sigma(), "div(sigma)")().internalField()
-       /(rho().internalField());
+    a_ = fvc::div(this->tractionSf())/rho();
     a_.correctBoundaryConditions();
 }
 

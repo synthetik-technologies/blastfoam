@@ -40,7 +40,10 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::relax()
     );
 
     //- Relax, if wanted
-    relaxation_.relax(this->U(), this->DD(), a_, this->rho());
+    relaxation_.relax(this->U(),this->rho());
+    relaxation_.relax(a_);
+    relaxation_.relax(this->DD());
+    this->DD().correctBoundaryConditions();
 }
 
 
@@ -155,11 +158,20 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
 
     this->enforceLinear() = false;
 
+    tmp<volVectorField> stab;
+
+    bool changing = false;
     do
     {
+        // changing = this->mesh().update();
+        this->mesh().update();
+
         // Central difference scheme
         const dimensionedScalar& deltaT = this->time().deltaT();
-        const dimensionedScalar deltaT01(0.5*(deltaT + this->time().deltaT0()));
+        const dimensionedScalar deltaT01
+        (
+            0.5*(deltaT + this->time().deltaT0())
+        );
 
         // Compute the velocity
         // Note: this is the velocity at the middle of the time-step
@@ -186,9 +198,9 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
             }
         }
         this->DD().correctBoundaryConditions();
-        this->U().boundaryFieldRef() =
+        this->U().boundaryFieldRef() ==
             this->DD().boundaryField()/deltaT.value();
-        this->correctUBCs(this->U());
+        // this->correctUBCs(this->U());
 
         relax();
 
@@ -202,39 +214,18 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
         // Note the inclusion of a linear bulk viscosity pressure term to
         // dissipate high frequency energies, and a Rhie-Chow term to
         // avoid checker-boarding
-        tmp<volVectorField> stab
+        stab =
         (
             this->stabilisation().stabilisation
             (
                 this->U(),
-                fvc::grad(this->U())(),
                (deltaT01*this->impKf_)()
             )
         );
 
-        surfaceVectorField tractionSf(this->tractionSf());
-        // surfaceVectorField::Boundary& btractionSf = tractionSf.boundaryFieldRef();
-        // const volVectorField::Boundary& bD = this->solutionD().boundaryField();
-        // forAll(btractionSf, patchi)
-        // {
-        //     if (isA<solidTractionFvPatchVectorField>(bD[patchi]))
-        //     {
-        //         const fvPatch& patch = this->mesh().boundary()[patchi];
-        //         const solidTractionFvPatchVectorField& pD =
-        //             dynamicCast<const solidTractionFvPatchVectorField>(bD[patchi]);
-        //
-        //         // Set boundary traction
-        //         btractionSf[patchi] =
-        //             (
-        //                 pD.traction() - this->nf(patch)*pD.pressure()
-        //               // + (this->nf(patch) & this->sigma(patch))
-        //             )*patch.magSf();
-        //     }
-        // }
         a_ =
             (
-                fvc::div(tractionSf)
-                // this->divStress()
+                fvc::div(this->tractionSf())
               + fvc::div
                 (
                     this->mesh().Sf()*energies_.viscousPressure
@@ -251,23 +242,23 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
           + this->g();
         a_.correctBoundaryConditions();
 
-        // Check energies
-        energies_.checkEnergies
-        (
-            this->rho(),
-            this->U(),
-            this->D(),
-            this->DD(),
-            this->sigma(),
-            this->gradD(),
-            this->gradDD(),
-            stab(),
-            this->g()
-        );
+    } while (changing);
 
-    } while (this->mesh().update());
+    // Check energies
+    energies_.checkEnergies
+    (
+        this->rho(),
+        this->U(),
+        this->D(),
+        this->DD(),
+        this->sigma(),
+        this->gradD(),
+        this->gradDD(),
+        this->stabilisation(),
+        this->g()
+    );
 
-    // Mesh update loop
+    // // Mesh update loop
     // do
     // {
     //     // Central difference scheme
@@ -343,7 +334,6 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
     //         this->stabilisation().stabilisation
     //         (
     //             this->U(),
-    //             fvc::grad(this->U())(),
     //            (deltaT01*this->impKf_)()
     //         )
     //     );
@@ -377,7 +367,7 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
     //         this->sigma(),
     //         this->gradD(),
     //         this->gradDD(),
-    //         stab(),
+    //         this->stabilisation(),
     //         this->g()
     //     );
     //

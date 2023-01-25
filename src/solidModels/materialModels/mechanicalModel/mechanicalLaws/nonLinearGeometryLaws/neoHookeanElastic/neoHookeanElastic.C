@@ -49,36 +49,58 @@ Foam::neoHookeanElastic::neoHookeanElastic
 )
 :
     mechanicalLaw(name, mesh, dict, nonLinGeom),
+    E_("E", dimPressure, 0.0),
+    nu_("nu", dimless, 0.0),
     mu_("mu", dimPressure, 0.0),
-    K_("K", dimPressure, 0.0)
+    K_("K", dimPressure, 0.0),
+    lambda_("lambda", dimPressure, 0.0)
 {
     // Read mechanical properties
     if (dict.found("E") && dict.found("nu"))
     {
-        const dimensionedScalar E("E", dimPressure, dict);
-        const dimensionedScalar nu("nu", dimless, dict);
+        E_.readIfPresent(dict);
+        nu_.readIfPresent(dict);
 
-        mu_ = (E/(2.0*(1.0 + nu)));
+        mu_ = (E_/(2.0*(1.0 + nu_)));
 
         if (planeStress())
         {
-            K_ = (nu*E/((1.0 + nu)*(1.0 - nu))) + (2.0/3.0)*mu_;
+            K_ = (nu_*E_/((1.0 + nu_)*(1.0 - nu_))) + (2.0/3.0)*mu_;
         }
         else
         {
-            K_ = (nu*E/((1.0 + nu)*(1.0 - 2.0*nu))) + (2.0/3.0)*mu_;
+            K_ = (nu_*E_/((1.0 + nu_)*(1.0 - 2.0*nu_))) + (2.0/3.0)*mu_;
         }
     }
     else if (dict.found("mu") && dict.found("K"))
     {
         mu_ = dimensionedScalar("mu", dimless, dict);
         K_ = dimensionedScalar("K", dimPressure, dict);
+        if (planeStress())
+        {
+            E_ = 4.0*K_*mu_/(K_ + mu_);
+            nu_ = (K_ - mu_)/(K_ + mu_);
+        }
+        else
+        {
+            E_ = 9.0*K_*mu_/(3.0*K_ + mu_);
+            nu_ = (3.0*K_ - 2.0*mu_)/(2.0*(3.0*K_ + mu_));
+        }
     }
     else
     {
         FatalErrorInFunction
             << "Either E and nu or mu and K should be specified"
             << abort(FatalError);
+    }
+
+    if (planeStress())
+    {
+        lambda_ = K_ - mu_;
+    }
+    else
+    {
+        lambda_ = K_ - 2.0*mu_/3.0;
     }
 }
 
@@ -197,6 +219,35 @@ void Foam::neoHookeanElastic::correct(surfaceSymmTensorField& sigma)
 
     // Calculate the Cauchy stress
     sigma = (0.5*K_*(sqr(J) - 1.0)*I + s)/J;
+}
+
+Foam::tmp<Foam::volTensorField>
+Foam::neoHookeanElastic::P(const volSymmTensorField& sigma) const
+{
+    const volScalarField& J = relative() ? this->relJ() : this->J();
+    const volTensorField& F = relative() ? this->relF() : this->F();
+    volTensorField H(J*T(inv(F)));
+    return volTensorField::New
+    (
+        "P",
+        mu_*pow(J, -2.0/3.0)*F
+      - ((mu_/3.0)*pow(J,(-5.0/3.0))*(F && F)*H) + K_*(J-1.0)*H
+    );
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::neoHookeanElastic::P(const surfaceSymmTensorField& sigma) const
+{
+    const surfaceScalarField& J = relative() ? this->relJf() : this->Jf();
+    const surfaceTensorField& F = relative() ? this->relFf() : this->Ff();
+    surfaceTensorField H(J*T(inv(F)));
+    return surfaceTensorField::New
+    (
+        "P",
+        mu_*pow(J, -2.0/3.0)*F
+      - ((mu_/3.0)*pow(J,(-5.0/3.0))*(F && F)*H) + K_*(J-1.0)*H
+    );
 }
 
 

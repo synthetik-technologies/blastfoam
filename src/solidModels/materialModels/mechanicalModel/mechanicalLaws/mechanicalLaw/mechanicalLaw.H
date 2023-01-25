@@ -493,6 +493,12 @@ protected:
             return nonLinGeom_;
         }
 
+        //- Return if relative deformation is used
+        bool relative() const
+        {
+            return nonLinGeom_ == nonLinearGeometry::UPDATED_LAGRANGIAN;
+        }
+
         //- Functions used to return autoPtrs to fields
         //  this replaces the makeFieldName functions
 
@@ -649,6 +655,12 @@ public:
 
         //- Calculate the stress
         virtual void correct(surfaceSymmTensorField& sigma);
+
+        //- Return the Piola stress tensor
+        virtual tmp<volTensorField> P(const volSymmTensorField& sigma) const;
+
+        //- Return the face Piola stress tensor
+        virtual tmp<surfaceTensorField> P(const surfaceSymmTensorField& sigma) const;
 
         //- Return material residual i.e. a measured of how convergence of
         //  the material model

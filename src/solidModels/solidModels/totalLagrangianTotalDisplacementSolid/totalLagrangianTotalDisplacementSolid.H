@@ -48,7 +48,7 @@ SourceFiles
 #define totalLagrangianTotalDisplacementSolid_H
 
 #include "TotalLagrangianGeomSolid.H"
-#include "totalDisplacementSolid.H"
+#include "totalDisplacementSolids.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

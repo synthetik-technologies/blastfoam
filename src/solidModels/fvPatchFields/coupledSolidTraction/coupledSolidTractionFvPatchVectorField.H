@@ -60,6 +60,9 @@ class coupledSolidTractionFvPatchVectorField
         //- Reference pressure
         scalar pRef_;
 
+        //- Cut off pressure
+        scalar cutOffPressure_;
+
         //- Integrated force (neighbour)
         vector forceNbr_;
 
@@ -95,7 +98,8 @@ public:
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const dictionary&
+            const dictionary&,
+            const bool mustRead = true
         );
 
         //- Construct by mapping given
@@ -150,8 +154,8 @@ public:
         //  Used to reconstruct fields
         virtual void rmap(const fvPatchVectorField&, const labelList&);
 
-        //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
+        //- Update pressure and traction
+        virtual bool updateFields();
 
         //- Write
         virtual void write(Ostream&) const;

@@ -46,7 +46,8 @@ Foam::dynamicRelaxation::dynamicRelaxation
     Ks_(0),
     scale_(0.0),
     useProbe_(false),
-    probe_(Zero)
+    probe_(Zero),
+    curScale_(1.0)
 {
     read(dict);
 }
@@ -72,17 +73,16 @@ void Foam::dynamicRelaxation::read(const dictionary& dict)
 }
 
 
-void Foam::dynamicRelaxation::relax
+bool Foam::dynamicRelaxation::relax
 (
     volVectorField& U,
-    volVectorField& DD,
-    volVectorField& a,
     const volScalarField& rho
 )
 {
     if (!relax_ || U.time().value() < start_)
     {
-        return;
+        curScale_ = 1.0;
+        return false;
     }
     if (curIndex_ != U.time().timeIndex())
     {
@@ -97,7 +97,7 @@ void Foam::dynamicRelaxation::relax
         curIndex_ = U.time().timeIndex();
     }
 
-    scalar K;
+    scalar K = 0.0;
     if (useProbe_)
     {
         label celli = U.mesh().findNearestCell(probe_);
@@ -107,6 +107,7 @@ void Foam::dynamicRelaxation::relax
         {
             K = 0.5*magSqr(U[celli])*rho[celli];
         }
+        reduce(K, maxOp<scalar>());
 
         if (returnReduce(celli, maxOp<label>()) == -1)
         {
@@ -129,7 +130,8 @@ void Foam::dynamicRelaxation::relax
 
     if (Ks_.size() < nSteps_)
     {
-        return;
+        curScale_ = 1.0;
+        return false;
     }
 
     bool limit = true;
@@ -143,12 +145,14 @@ void Foam::dynamicRelaxation::relax
     }
     if (limit)
     {
-        DD *= scale_;
-        DD.correctBoundaryConditions();
-        U *= scale_;
-        a *= scale_;
+        curScale_ = scale_;
+        U *= curScale_;
         Ks_.clear();
+        return true;
     }
+
+    curScale_ = 1.0;
+    return false;
 }
 
 // ************************************************************************* //

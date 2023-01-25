@@ -23,20 +23,22 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    unsTotalDisplacementSolid
+    UnsIncrementalSolid
 
 Description
-    Base class for unstructured total displacement solid models
+    Base class for unstructured incremental solid models
 
 SourceFiles
-    unsTotalDisplacementSolid.C
+    IncrementalSolid.C
+    UnsIncrementalSolid.C
+    unsSolidModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unsTotalDisplacementSolid_H
-#define unsTotalDisplacementSolid_H
+#ifndef UnsIncrementalSolid_H
+#define UnsIncrementalSolid_H
 
-#include "unsSolidModel.H"
+#include "IncrementalSolid.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,12 +48,13 @@ namespace solidModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class unsTotalDisplacementSolid Declaration
+                        Class linGeomSolid Declaration
 \*---------------------------------------------------------------------------*/
 
-class unsTotalDisplacementSolid
+template<class UnsSolidModel>
+class UnsIncrementalSolid
 :
-    public unsSolidModel
+    public UnsSolidModel
 {
 protected:
     // Protected data
@@ -60,11 +63,10 @@ protected:
         surfaceScalarField impKf_;
 
 
-    // Protected Member Functions
+    // Protected member functions
 
-        //- Predict the fields for the next time-step based on the
-        //  previous time-steps
-        void updateDisplacement();
+        //- Update displacement fields
+        virtual void updateDisplacement();
 
 
 public:
@@ -72,7 +74,7 @@ public:
     // Constructors
 
         //- Construct from components
-        unsTotalDisplacementSolid
+        UnsIncrementalSolid
         (
             const word& type,
             dynamicFvMesh& mesh,
@@ -80,9 +82,10 @@ public:
             const bool isSolid = true
         );
 
+
     // Destructor
 
-        virtual ~unsTotalDisplacementSolid()
+        virtual ~UnsIncrementalSolid()
         {}
 
 
@@ -90,26 +93,26 @@ public:
 
         // Access
 
-            //- Return if incremental
+            //- This solid model solves for DD instead of D
             virtual bool incremental() const
             {
-                return false;
+                return true;
             }
 
             //- Each solidModel must indicate whether D or DD is the
             //  primary solution variable
             virtual const volVectorField& solutionD() const
             {
-                // This model solves for D
-                return D();
+                // This model solves for DD
+                return this->DD();
             }
 
             //- Each solidModel must indicate whether gradD or gradDD
-            //  is the  primary gradient
+            //  is the primary solution variable
             virtual const volTensorField& solutionGradD() const
             {
-                // This model solves for D
-                return gradD();
+                // This model solves for DD
+                return this->gradDD();
             }
 
             //- Each solidModel must indicate whether gradDf or gradDDf
@@ -117,13 +120,13 @@ public:
             virtual const surfaceTensorField& solutionGradDf() const
             {
                 // This model solves for DD
-                return gradDf();
+                return this->gradDDf();
             }
 
             //- Return the patch implicit stiffness
             virtual const scalarField& impK(const fvPatch& patch) const
             {
-                return this->impKf_.boundaryField()[patch.index()];
+                return impKf_.boundaryField()[patch.index()];
             }
 };
 
@@ -132,6 +135,12 @@ public:
 
 } // End namespace solidModel
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "UnsIncrementalSolid.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

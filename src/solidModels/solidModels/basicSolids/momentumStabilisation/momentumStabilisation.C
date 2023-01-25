@@ -188,7 +188,6 @@ Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
 Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
 (
     const volVectorField& vf,
-    const volTensorField& gradVf,
     const surfaceScalarField& gamma
 ) const
 {
@@ -216,9 +215,11 @@ Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
     // Calculate stabilisation term
     if (methods_.found(RHIE_CHOW))
     {
-        // WarningInFunction
-            // << "Not implemented for velocity" << endl;
-        tresult.ref() += RhieChow(methods_[RHIE_CHOW], vf, gradVf, gamma);
+        FatalErrorInFunction
+            << "Not implemented for velocity" << endl
+            << abort(FatalError);
+        // tmp<volTensorField> gradVf(fvc::grad(vf));
+        // tresult.ref() += RhieChow(methods_[RHIE_CHOW], vf, gradVf(), gamma);
     }
     if (methods_.found(LAPLACIAN))
     {
@@ -230,6 +231,77 @@ Foam::tmp<Foam::volVectorField> Foam::momentumStabilisation::stabilisation
     }
 
     return tresult;
+}
+
+
+Foam::scalar Foam::momentumStabilisation::energy
+(
+    const volVectorField& vf,
+    const volTensorField& gradVf,
+    const volScalarField& gamma,
+    const volTensorField& gradDD
+) const
+{
+    NotImplemented;
+    // if (!inUse())
+    {
+        return 0.0;
+    }
+/*
+    tensorField smoothing(vf.mesh().nCells(), Zero);
+
+    // Calculate stabilisation term
+    if (methods_.found(RHIE_CHOW))
+    {
+        FatalErrorInFunction
+            << "Not implemented for velocity" << endl
+            << abort(FatalError);
+        // smoothing += RhieChowEnergy(methods_[RHIE_CHOW], vf, gradVf, gamma);
+    }
+    if (methods_.found(LAPLACIAN))
+    {
+        smoothing += LaplacianEnergy(methods_[LAPLACIAN], vf, gamma);
+    }
+    if (methods_.found(JST))
+    {
+        smoothing += JamesonSchmidtTurkelEnergy(methods_[JST], vf, gamma);
+    }
+
+    return gSum(smoothing && gradDD.primitiveField()*vf.mesh().V());*/
+}
+
+
+Foam::scalar Foam::momentumStabilisation::energy
+(
+    const volVectorField& vf,
+    const surfaceScalarField& gamma,
+    const volTensorField& gradDD
+) const
+{
+    if (!inUse())
+    {
+        return 0.0;
+    }
+
+    tensorField smoothing(vf.mesh().nCells(), Zero);
+
+    // Calculate stabilisation term
+    if (methods_.found(RHIE_CHOW))
+    {
+        // WarningInFunction
+            // << "Not implemented for velocity" << endl;
+        // smoothing += RhieChowEnergy(methods_[RHIE_CHOW], vf, gradVf, gamma);
+    }
+    if (methods_.found(LAPLACIAN))
+    {
+        smoothing += LaplacianEnergy(methods_[LAPLACIAN], vf, gamma);
+    }
+    if (methods_.found(JST))
+    {
+        smoothing += JamesonSchmidtTurkelEnergy(methods_[JST], vf, gamma);
+    }
+
+    return gSum(smoothing && gradDD.primitiveField()*vf.mesh().V());
 }
 
 

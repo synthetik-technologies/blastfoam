@@ -47,7 +47,7 @@ SourceFiles
 #define linearPressureDisplacementSolid_H
 
 #include "LinearGeomSolid.H"
-#include "totalDisplacementSolid.H"
+#include "totalDisplacementSolids.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -78,6 +78,9 @@ private:
         bool useProbe_;
         vector probe_;
 
+        //- Current scale coefficient
+        scalar curScale_;
+
         //- Disallow default bitwise copy construct
         dynamicRelaxation(const dynamicRelaxation&);
 
@@ -108,13 +111,21 @@ public:
         void read(const dictionary&);
 
         //- Relax U field
-        void relax
+        bool relax
         (
             volVectorField& U,
-            volVectorField& DD,
-            volVectorField& a,
             const volScalarField& rho
         );
+
+        //- Relax a given field
+        template<class FieldType>
+        void relax(FieldType& f)
+        {
+            if (curScale_ != 1.0)
+            {
+                f *= curScale_;
+            }
+        }
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -66,6 +66,7 @@ Also see:
 #include "gradientSchemes.H"
 #include "interpolationSchemes.H"
 #include "angularMomentum.H"
+#include "dynamicRelaxation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -113,9 +114,8 @@ class explicitRiemannSolid
 
         //- Material coordinates
         volVectorField x_;
-
-        //- Face displacement
-        surfaceVectorField Df_;
+        surfaceVectorField xf_;
+        pointVectorField xN_;
 
         //- Point displacement
         pointVectorField& pointD_;
@@ -153,6 +153,9 @@ class explicitRiemannSolid
         //- Angular momentum
         angularMomentum am_;
 
+        //- Dynamic relaxation
+        dynamicRelaxation relaxation_;
+
         //- Piola stress tensor
         volTensorField P_;
 
@@ -161,12 +164,6 @@ class explicitRiemannSolid
 
         //- Shear wave speed field
         volScalarField sWaveSpeed_;
-
-        //- Interpolated fields
-        surfaceVectorField rhoUOwn_;
-        surfaceVectorField rhoUNei_;
-        surfaceVectorField tractionOwn_;
-        surfaceVectorField tractionNei_;
 
         //- Include stabilisation terms
         bool useStabilisation_;
@@ -177,8 +174,18 @@ class explicitRiemannSolid
         //- Energy calculation
         mechanicalEnergies energies_;
 
+        //- Use the penalised-TOUCH correction
+        bool pTouch_;
+
+        //- Use filtering (aka solve nodal linear momentum)
+        bool filter_;
+
         //- Stored impK
+        volScalarField impK_;
         surfaceScalarField impKf_;
+
+        //- Current time index
+        label curIndex_;
 
 
 
@@ -207,7 +214,7 @@ class explicitRiemannSolid
 public:
 
     //- Runtime type information
-    TypeName("explicityRiemann");
+    ClassName("explicitRiemann");
 
     // Constructors
 
@@ -234,7 +241,7 @@ public:
             //  This defaults to false but can be overwritten
             virtual bool incremental() const
             {
-                return false;
+                return true;
             }
 
             //- Each solidModel must indicate whether D or DD is the primary
@@ -258,6 +265,9 @@ public:
             }
 
         // Edit
+
+            //- Decode
+            void decode();
 
             //- Update fields
             void update(const bool correctSigma = true);

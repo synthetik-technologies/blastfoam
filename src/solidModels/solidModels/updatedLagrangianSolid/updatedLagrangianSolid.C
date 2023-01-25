@@ -75,10 +75,13 @@ bool updatedLagrangianSolid::evolve()
 
     enforceLinear() = false;
 
+    bool changing = false;
+
     // Momentum equation loop
-    surfaceScalarField impKf(fvc::interpolate(impK_));
     do
     {
+        changing = mesh().update();
+
         // Store fields for under-relaxation and residual calculation
         DD().storePrevIter();
 
@@ -87,8 +90,8 @@ bool updatedLagrangianSolid::evolve()
         (
             fvm::d2dt2(rho(), DD())
           + fvc::d2dt2(rho().oldTime(), D().oldTime())
-         == fvm::laplacian(impKf, DD(), "laplacian(DDD,DD)")
-          - fvc::laplacian(impKf, DD(), "laplacian(DDD,DD)")
+         == fvm::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
+          - fvc::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
 
           //- Relative Piola (relative to current configuration)
           + fvc::div(this->P(), "div(sigma)")
@@ -118,22 +121,24 @@ bool updatedLagrangianSolid::evolve()
     }
     while
     (
-       !converged
         (
-            iCorr,
-            mag(solverPerfDD.initialResidual()),
-            max
+            !converged
             (
-                solverPerfDD.nIterations()[0],
+                iCorr,
+                mag(solverPerfDD.initialResidual()),
                 max
                 (
-                    solverPerfDD.nIterations()[1],
-                    solverPerfDD.nIterations()[2]
-                )
-            ),
-            DD()
-        )
-     && ++iCorr < nCorr()
+                    solverPerfDD.nIterations()[0],
+                    max
+                    (
+                        solverPerfDD.nIterations()[1],
+                        solverPerfDD.nIterations()[2]
+                    )
+                ),
+                DD()
+            )
+         && ++iCorr < nCorr()
+        ) || changing
     );
 
     // Total displacement at points

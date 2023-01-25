@@ -154,7 +154,7 @@ public:
 
 
         //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
+        virtual bool updateFields();
 
         //- Write
         virtual void write(Ostream&) const;

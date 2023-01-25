@@ -49,6 +49,7 @@ Author
 
 #include "fvPatchFields.H"
 #include "solidDirectionMixedFvPatchVectorField.H"
+#include "tractionBase.H"
 #include "simpleCohesiveZoneLaw.H"
 #include "Switch.H"
 
@@ -64,7 +65,8 @@ namespace Foam
 
 class simpleCohesiveZoneFvPatchVectorField
 :
-    public solidDirectionMixedFvPatchVectorField
+    public solidDirectionMixedFvPatchVectorField,
+    public tractionBase
 {
     // Private data
 
@@ -231,6 +233,9 @@ class simpleCohesiveZoneFvPatchVectorField
 
 
         // Evaluation functions
+
+            //- Update pressure and traction
+            virtual bool updateFields();
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();

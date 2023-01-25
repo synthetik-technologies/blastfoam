@@ -37,6 +37,10 @@ namespace Foam
     (
         mechanicalLaw, linearElastic, linGeomMechLaw
     );
+    addToRunTimeSelectionTable
+    (
+        mechanicalLaw, linearElastic, nonLinGeomMechLaw
+    );
 }
 
 
@@ -355,11 +359,8 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
     {
         if (mesh().solutionD()[vector::Z] > -1)
         {
-            FatalErrorIn
-            (
-                "void Foam::linearElasticMisesPlastic::"
-                "correct(volSymmTensorField& sigma)"
-            )   << "For planeStress, this material law assumes the empty "
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
                 << "direction is the Z direction!" << abort(FatalError);
         }
 
@@ -371,7 +372,7 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
         );
     }
 
-//     updateEpsilon(epsilonRef(), nu_/E_, sigma);
+    updateEpsilon(epsilonRef(), nu_/E_, sigma);
 
     // Hooke's law : partitioned deviatoric and dilation form
     const volScalarField trEpsilon(tr(epsilon()));
@@ -430,5 +431,30 @@ void Foam::linearElastic::correct(surfaceSymmTensorField& sigmaf)
     sigmaf = 2.0*mu_*dev(epsilonf()) + sigmaHydf()*I + sigma0f();
 }
 
+
+Foam::tmp<Foam::volTensorField>
+Foam::linearElastic::P(const volSymmTensorField& sigma) const
+{
+    const volTensorField& F = relative() ? this->relF() : this->F();
+    return volTensorField::New
+    (
+        "P",
+        mu_*(F + F.T() - ((2.0/3.0)*tr(F)*tensor::I))
+      + K_*(tr(F) - 3.0)*tensor::I
+    );
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::linearElastic::P(const surfaceSymmTensorField& sigma) const
+{
+    const surfaceTensorField& F = relative() ? this->relFf() : this->Ff();
+    return surfaceTensorField::New
+    (
+        "P",
+        mu_*(F + F.T() - ((2.0/3.0)*tr(F)*tensor::I))
+      + K_*(tr(F) - 3.0)*tensor::I
+    );
+}
 
 // ************************************************************************* //

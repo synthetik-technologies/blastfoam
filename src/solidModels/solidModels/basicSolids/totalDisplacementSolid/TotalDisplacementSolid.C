@@ -24,40 +24,35 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "unsIncrementalSolid.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace solidModels
-{
+#include "TotalDisplacementSolid.H"
 
 // * * * * * * * * * * *  Private Member Functions * * * * * * * * * * * * * //
 
-void unsIncrementalSolid::updateDisplacement()
+template<class SolidModel>
+void Foam::solidModels::TotalDisplacementSolid<SolidModel>::updateDisplacement()
 {
     // Update the total displacement
-    D() = D().oldTime() + DD();
-
-    // Interpolate DD to pointDD
-    mechanical().interpolate(DD(), pointDD(), false);
+    this->DD() = this->D() - this->D().oldTime();
+    this->DD().correctBoundaryConditions();
 
     // Update gradient of displacement increment
-    mechanical().grad(DD(), pointDD(), gradDD());
-    mechanical().grad(DD(), pointDD(), gradDDf());
+    this->mechanical().grad(this->D(), this->gradD());
 
     // Update gradient of total displacement
-    gradD() = gradD().oldTime() + gradDD();
-    gradDf() = gradDf().oldTime() + gradDDf();
+    this->gradDD() = this->gradD() - this->gradD().oldTime();
 
-    pointD() = pointD().oldTime() + pointDD();
+    // Interpolate cell displacements to vertices
+    this->mechanical().interpolate(this->D(), this->pointD());
+
+    // Increment of displacement
+    this->pointDD() = this->pointD() - this->pointD().oldTime();
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-unsIncrementalSolid::unsIncrementalSolid
+template<class SolidModel>
+Foam::solidModels::TotalDisplacementSolid<SolidModel>::TotalDisplacementSolid
 (
     const word& type,
     dynamicFvMesh& mesh,
@@ -65,16 +60,17 @@ unsIncrementalSolid::unsIncrementalSolid
     const bool isSolid
 )
 :
-    unsSolidModel(type, mesh, nonLinear, incremental(), isSolid),
+    SolidModel(type, mesh, nonLinear, incremental(), isSolid),
+    impK_("impK", this->mechanical().impK()),
     impKf_("impKf", this->mechanical().impKf())
-{}
+{
+    this->DisRequired(type);
+
+    // For consistent restarts, we will calculate the gradient field
+    this->mechanical().grad(this->D(), this->gradD());
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace solidModels
-} // End namespace Foam
 
 // ************************************************************************* //

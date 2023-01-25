@@ -137,7 +137,7 @@ public:
             virtual bool evolve();
 
             //- Write fields
-            virtual void writeFields() const;
+            virtual bool write(const bool write = true) const;
 };
 
 

@@ -88,6 +88,9 @@ public:
         {
             return patch.nf();
         }
+
+        //- Write
+        virtual bool write(const bool write = true) const;
 };
 
 

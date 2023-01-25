@@ -41,7 +41,7 @@ SourceFiles
 #define solidCohesiveFvPatchVectorField_H
 
 #include "fvPatchFields.H"
-#include "fixedGradientFvPatchFields.H"
+#include "solidTractionFvPatchVectorField.H"
 #include "cohesiveFvPatch.H"
 #include "Switch.H"
 #include "cohesiveZoneModel.H"
@@ -52,47 +52,31 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class solidCohesiveFvPatch Declaration
+                Class SolidCohesiveFvPatchVectorField Declaration
 \*---------------------------------------------------------------------------*/
 
-class solidCohesiveFvPatchVectorField
+template<class SolidTraction>
+class SolidCohesiveFvPatchVectorField
 :
-    public fixedGradientFvPatchVectorField
+    public SolidTraction,
+    public cohesiveZoneModelMaster
 {
 
     // Private Data
-
-        //- Name of the displacement field
-        const word fieldName_;
-
-        //- Run-time selectable cohesive zone model
-        mutable autoPtr<cohesiveZoneModel> cohesiveZoneModelPtr_;
-
-        //- Current traction field
-        vectorField traction_;
-
-        //- Current pressure field - this is used to represent pore-pressure
-        scalarField pressure_;
 
         //- Current face deltas
         //  The difference in displacement between a face and its shadow face
         vectorField delta_;
 
         //- Under-relaxation factor for deltas
-        const scalar relaxationFactor_;
+        const scalar relaxationFactorDelta_;
 
         //- Under-relaxation factor for tractions
-        const scalar relaxationFactorTrac_;
+        const scalar relaxationFactorTraction_;
 
         //- Current time index
         label curTimeIndex_;
 
-        //- Is the solevr using an incremental approach
-        //  Is it solving for DD instead of D
-        const bool incremental_;
-
-        // Copy of patch dictionary
-        const dictionary dict_;
 
 
     // Private Member Functions
@@ -100,27 +84,22 @@ class solidCohesiveFvPatchVectorField
         //- Update delta
         void updateDelta();
 
-        //- Set the cohesive zone model
-        void calcCohesiveZone() const;
-
 
 public:
 
-    //- Runtime type information
-    TypeName("solidCohesive");
-
+    TypeName("solidCohesiveTraction");
 
     // Constructors
 
         //- Construct from patch and internal field
-        solidCohesiveFvPatchVectorField
+        SolidCohesiveFvPatchVectorField
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        solidCohesiveFvPatchVectorField
+        SolidCohesiveFvPatchVectorField
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
@@ -128,25 +107,25 @@ public:
         );
 
         //- Construct by mapping given
-        //  solidCohesiveFvPatchVectorField onto a new patch
-        solidCohesiveFvPatchVectorField
+        //  SolidCohesiveFvPatchVectorField onto a new patch
+        SolidCohesiveFvPatchVectorField
         (
-            const solidCohesiveFvPatchVectorField&,
+            const SolidCohesiveFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Construct as copy
-        solidCohesiveFvPatchVectorField
+        SolidCohesiveFvPatchVectorField
         (
-            const solidCohesiveFvPatchVectorField&
+            const SolidCohesiveFvPatchVectorField&
         ) = delete;
 
         //- Construct as copy setting internal field reference
-        solidCohesiveFvPatchVectorField
+        SolidCohesiveFvPatchVectorField
         (
-            const solidCohesiveFvPatchVectorField&,
+            const SolidCohesiveFvPatchVectorField&,
             const DimensionedField<vector, volMesh>&
         );
 
@@ -158,7 +137,7 @@ public:
         {
             return tmp<fvPatchVectorField>
             (
-                new solidCohesiveFvPatchVectorField(*this, iF)
+                new SolidCohesiveFvPatchVectorField(*this, iF)
             );
         }
 
@@ -171,30 +150,6 @@ public:
             virtual bool fixesValue() const
             {
                 return false;
-            }
-
-            //- Return const reference to cohesive zone model
-            const cohesiveZoneModel& cohesiveZone() const;
-
-            //- Return reference to cohesive zone model
-            cohesiveZoneModel& cohesiveZone();
-
-            //- Return current traction
-            vectorField& traction()
-            {
-                return traction_;
-            }
-
-            //- Return const reference to pressure
-            const scalarField& pressure() const
-            {
-                return pressure_;
-            }
-
-            //- Return reference to pressure
-            scalarField& pressure()
-            {
-                return pressure_;
             }
 
             //- Return const reference to current deltas
@@ -227,14 +182,7 @@ public:
 
 
         //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
-
-        //- Evaluate the patch field
-        virtual void evaluate
-        (
-            const Pstream::commsTypes commsType =
-                Pstream::commsTypes::blocking
-        );
+        virtual bool updateFields();
 
         //- Write
         virtual void write(Ostream&) const;
@@ -250,6 +198,11 @@ public:
 
 } // End namespace Foam
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "solidCohesiveFvPatchVectorField.C"
+#endif
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif

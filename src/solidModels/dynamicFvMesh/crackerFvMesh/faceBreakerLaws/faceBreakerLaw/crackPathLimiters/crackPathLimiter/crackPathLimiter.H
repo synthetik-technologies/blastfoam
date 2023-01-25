@@ -146,10 +146,16 @@ public:
         }
 
         // Return list of faces allowed to break
-        virtual const surfaceScalarField& facesAllowedToBreak() const = 0;
+        virtual tmp<surfaceScalarField> facesAllowedToBreak() const = 0;
 
         //- Delete demand driven data
         virtual void clearOut() = 0;
+
+        //- Write
+        virtual bool write() const
+        {
+            return true;
+        }
 };
 
 

@@ -23,32 +23,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "boundingBoxLimiter.H"
+#include "boundingBoxCrackPathLimiter.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(boundingBoxLimiter, 0);
-    addToRunTimeSelectionTable
-    (
-        crackPathLimiter, boundingBoxLimiter, dictionary
-    );
+namespace crackPathLimiters
+{
+    defineTypeNameAndDebug(boundingBox, 0);
+    addToRunTimeSelectionTable(crackPathLimiter, boundingBox, dictionary);
+}
 }
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-
-void Foam::boundingBoxLimiter::calcFacesAllowedToBreak() const
+void Foam::crackPathLimiters::boundingBox::calcFacesAllowedToBreak() const
 {
     if (facesAllowedToBreakPtr_)
     {
-        FatalErrorIn
-        (
-            "void Foam::boundingBoxLimiter::calcFacesAllowedToBreak() const"
-        ) << "pointer already set" << abort(FatalError);
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
     }
 
     const fvMesh& mesh = this->mesh();
@@ -104,16 +101,67 @@ void Foam::boundingBoxLimiter::calcFacesAllowedToBreak() const
         }
     }
 
-    Info<< nl << "There are " << gSum(facesAllowedToBreak.internalField())
+    DebugInfo
+        << nl
+        << "There are " << gSum(facesAllowedToBreak.internalField())
         << " potential internal crack faces" << nl
         << "There are " << gSum(facesAllowedToBreak.boundaryField())/2
         << " potential coupled boundary crack faces" << endl;
+}
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+
+// Construct from dictionary
+Foam::crackPathLimiters::boundingBox::boundingBox
+(
+    const word& name,
+    const fvMesh& mesh,
+    const dictionary& dict
+)
+:
+    crackPathLimiter(name, mesh, dict),
+    facesAllowedToBreakPtr_(NULL),
+    boundingBoxes_(dict.lookup("boundingBoxes"))
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+
+Foam::crackPathLimiters::boundingBox::~boundingBox()
+{
+    clearOut();
+}
+
+
+// * * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * //
+
+Foam::tmp<Foam::surfaceScalarField>
+Foam::crackPathLimiters::boundingBox::facesAllowedToBreak() const
+{
+    if (!facesAllowedToBreakPtr_)
+    {
+        calcFacesAllowedToBreak();
+    }
+
+    return *facesAllowedToBreakPtr_;
+}
+
+
+void Foam::crackPathLimiters::boundingBox::clearOut()
+{
+    deleteDemandDrivenData(facesAllowedToBreakPtr_);
+}
+
+
+bool Foam::crackPathLimiters::boundingBox::write() const
+{
     // It is currently not possible to directly visualise surface fields in
     // ParaView, so we create a volume field to show cells adjacent to potential
     // cohesive faces
-
+    const fvMesh& mesh = this->mesh();
     volScalarField crackLimiterBoxes
     (
         IOobject
@@ -133,73 +181,29 @@ void Foam::boundingBoxLimiter::calcFacesAllowedToBreak() const
     const unallocLabelList& owner = mesh.owner();
     const unallocLabelList& neighbour = mesh.neighbour();
 
-    forAll(facesAllowedToBreakI, faceI)
+    const surfaceScalarField& facesAllowedToBreak =
+        this->facesAllowedToBreak();
+    forAll(facesAllowedToBreak, faceI)
     {
-        if (facesAllowedToBreakI[faceI] > SMALL)
+        if (facesAllowedToBreak[faceI] > SMALL)
         {
             crackLimiterBoxesI[owner[faceI]] = 1.0;
             crackLimiterBoxesI[neighbour[faceI]] = 1.0;
         }
     }
 
-    forAll(crackLimiterBoxes.boundaryField(), patchI)
+    volScalarField::Boundary& bcrackLimiterBoxes =
+        crackLimiterBoxes.boundaryFieldRef();
+    const surfaceScalarField::Boundary& bfacesAllowedToBreak =
+        facesAllowedToBreak.boundaryField();
+    forAll(bcrackLimiterBoxes, patchI)
     {
-        crackLimiterBoxes.boundaryFieldRef()[patchI] =
-            facesAllowedToBreak.boundaryField()[patchI];
+        bcrackLimiterBoxes[patchI] =
+            bfacesAllowedToBreak[patchI];
     }
 
-    if (mesh.time().outputTime())
-    {
-        Info<< "Writing cohesiveZone field" << endl;
-        crackLimiterBoxes.write();
-    }
+    DebugInfo<< "Writing cohesiveZone field" << endl;
+    return crackLimiterBoxes.write();
 }
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-
-// Construct from dictionary
-Foam::boundingBoxLimiter::boundingBoxLimiter
-(
-    const word& name,
-    const fvMesh& mesh,
-    const dictionary& dict
-)
-:
-    crackPathLimiter(name, mesh, dict),
-    facesAllowedToBreakPtr_(NULL),
-    boundingBoxes_(dict.lookup("boundingBoxes"))
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-
-Foam::boundingBoxLimiter::~boundingBoxLimiter()
-{
-    clearOut();
-}
-
-
-// * * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * //
-
-const Foam::surfaceScalarField&
-Foam::boundingBoxLimiter::facesAllowedToBreak() const
-{
-    if (!facesAllowedToBreakPtr_)
-    {
-        calcFacesAllowedToBreak();
-    }
-
-    return *facesAllowedToBreakPtr_;
-}
-
-
-void Foam::boundingBoxLimiter::clearOut()
-{
-    deleteDemandDrivenData(facesAllowedToBreakPtr_);
-}
-
 
 // ************************************************************************* //

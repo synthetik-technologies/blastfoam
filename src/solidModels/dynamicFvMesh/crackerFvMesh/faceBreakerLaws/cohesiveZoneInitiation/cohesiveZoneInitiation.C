@@ -49,10 +49,8 @@ void Foam::cohesiveZoneInitiation::calcCohesivePatchID() const
 {
     if (cohesivePatchIDPtr_)
     {
-        FatalErrorIn
-        (
-            "void Foam::cohesiveZoneInitiation::calcCohesivePatchID() const"
-        ) << "pointer already set" << abort(FatalError);
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
     }
 
     const fvMesh& mesh = this->mesh();
@@ -71,10 +69,9 @@ void Foam::cohesiveZoneInitiation::calcCohesivePatchID() const
 
     if (cohesivePatchID == -1)
     {
-        FatalErrorIn
-        (
-            "void Foam::cohesiveZoneInitiation::calcCohesivePatchID() const"
-        )   << "boundary patch of type cohesive not found" << abort(FatalError);
+        FatalErrorInFunction
+            << "boundary patch of type cohesive not found"
+            << abort(FatalError);
     }
 }
 
@@ -103,7 +100,7 @@ Foam::cohesiveZoneInitiation::cohesiveZone() const
     if (solMod.incremental())
     {
         return
-            refCast<const solidCohesiveFvPatchVectorField>
+            refCast<const cohesiveZoneModelMaster>
             (
                 mesh.lookupObject<volVectorField>
                 (
@@ -114,7 +111,7 @@ Foam::cohesiveZoneInitiation::cohesiveZone() const
     else
     {
         return
-            refCast<const solidCohesiveFvPatchVectorField>
+            refCast<const cohesiveZoneModelMaster>
             (
                 mesh.lookupObject<volVectorField>
                 (
@@ -129,10 +126,8 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
 {
     if (facesToBreakPtr_ || coupledFacesToBreakPtr_)
     {
-        FatalErrorIn
-        (
-            "void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const"
-        ) << "pointer already set" << abort(FatalError);
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
     }
 
     // First, we check if any internal faces need to be broken, then we will
@@ -150,7 +145,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
 
     if (!isA<crackerFvMesh>(this->mesh()))
     {
-        FatalErrorIn("Foam::label Foam::cohesiveZoneInitiation::updateMesh()")
+        FatalErrorInFunction
             << "Mesh should be of type: " << crackerFvMesh::typeName
             << abort(FatalError);
     }
@@ -178,7 +173,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
 
     const scalar maxTracFrac = gMax(tracFrac.internalField());
 
-    Info<< nl << "Max traction fraction: " << maxTracFrac << endl;
+    DebugInfo<< nl << "Max traction fraction: " << maxTracFrac << endl;
 
     label faceToBreakIndex = -1;
     scalar faceToBreakTracFrac = 0.0;
@@ -197,7 +192,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
             }
         }
 
-        if (faceToBreakIndex != -1)
+        if (faceToBreakIndex != -1 && debug)
         {
             Pout<< "    faceToBreakIndex: " << faceToBreakIndex << nl
                 << "    faceToBreakLocation: " << mesh.Cf()[faceToBreakIndex]
@@ -274,8 +269,9 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
         maxCoupledTracFrac =
             returnReduce(coupledFaceToBreakTracFrac, maxOp<scalar>());
 
-        Info<< "Max coupled traction fraction: " << maxCoupledTracFrac
-            << endl;
+        DebugInfo
+            << "Max coupled traction fraction: "
+            << maxCoupledTracFrac << endl;
 
         if (maxCoupledTracFrac > 1.0)
         {
@@ -348,7 +344,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
 
         if (patchID == -1)
         {
-            FatalErrorIn("cohesiveZoneInitiation::calcAllFacesToBreak()")
+            FatalErrorInFunction
                 << "something is wrong: patchID is -1 for coupled face"
                 << abort(FatalError);
         }
@@ -422,7 +418,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
 
     if (returnReduce(nCoupledFacesToBreak, sumOp<label>()) > 2)
     {
-        FatalErrorIn("cohesiveZoneInitiation::calcAllFacesToBreak()")
+        FatalErrorInFunction
             << "More than two processors are trying to break a coupled face"
             << abort(FatalError);
     }
@@ -560,7 +556,7 @@ Foam::cohesiveZoneInitiation::cohesiveZoneInitiation
 {
     if (!allowCoupledFaces_)
     {
-        WarningIn("cohesiveZoneInitiation::cohesiveZoneInitiation(...)")
+        WarningInFunction
             << name << ": allowCoupledFaces is false" << endl;
     }
 
@@ -570,7 +566,7 @@ Foam::cohesiveZoneInitiation::cohesiveZoneInitiation
         pathLimiterPtr_ =
             crackPathLimiter::New
             (
-                "law", mesh, dict.subDict("crackPathLimiter")
+                "law", mesh, dict.optionalSubDict(typeName + "Coeffs")
             );
     }
     else
@@ -659,6 +655,16 @@ Foam::cohesiveZoneInitiation::coupledFacesToBreakNormals() const
     }
 
     return *coupledFacesToBreakNormalsPtr_;
+}
+
+
+bool Foam::cohesiveZoneInitiation::write() const
+{
+    if (pathLimiterPtr_.valid())
+    {
+        return pathLimiterPtr_->write();
+    }
+    return true;
 }
 
 

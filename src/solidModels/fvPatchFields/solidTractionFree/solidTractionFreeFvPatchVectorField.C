@@ -112,6 +112,16 @@ solidTractionFreeFvPatchVectorField
     pressure() = 0.0;
 }
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool solidTractionFreeFvPatchVectorField::updateFields()
+{
+    traction() = Zero;
+    pressure() = Zero;
+    updateForce();
+
+    return false;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

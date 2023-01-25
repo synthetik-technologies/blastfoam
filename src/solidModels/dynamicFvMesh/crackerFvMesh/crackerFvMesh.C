@@ -45,7 +45,7 @@ void Foam::crackerFvMesh::removeZones()
 {
     if (debug)
     {
-        Info<< "void polyMesh::removeZones(): "
+        InfoInFunction
             << "Removing point, face and cell zones."
             << endl;
     }
@@ -425,7 +425,7 @@ void Foam::crackerFvMesh::makeFaceBreakerLaw() const
         (
             "law",
             *this,
-            dict_.subDict("law")
+            dict_.optionalSubDict(faceBreakerLaw::typeName + "Coeffs")
         );
 }
 
@@ -610,7 +610,7 @@ bool Foam::crackerFvMesh::update()
 
         const labelList& faceMap = topoChangeMap().faceMap();
 
-        Info<< "Updating field values on newly broken faces" << endl;
+        DebugInfo<< "Updating field values on newly broken faces" << endl;
 
         updateVolFieldBrokenFaces<scalar>
         (
@@ -657,7 +657,12 @@ bool Foam::crackerFvMesh::update()
         // required to set a reference to these dead cells in the solver after
         // or alternatively to delete them.
     }
-    return bool(nFacesToBreak || nCoupledFacesToBreak);
+    return
+        returnReduce
+        (
+            bool(nFacesToBreak || nCoupledFacesToBreak),
+            orOp<bool>()
+        );
 }
 
 
@@ -767,5 +772,18 @@ Foam::faceBreakerLaw& Foam::crackerFvMesh::faceBreaker()
     return lawPtr_();
 }
 
+
+bool Foam::crackerFvMesh::writeObject
+(
+    IOstream::streamFormat fmt,
+    IOstream::versionNumber ver,
+    IOstream::compressionType cmp,
+    const bool write
+) const
+{
+    return
+        topoChangerFvMesh::writeObject(fmt, ver, cmp, write)
+     && faceBreaker().write();
+}
 
 // ************************************************************************* //

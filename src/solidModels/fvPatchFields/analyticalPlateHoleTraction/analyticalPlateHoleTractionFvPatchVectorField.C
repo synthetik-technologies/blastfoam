@@ -164,13 +164,8 @@ void analyticalPlateHoleTractionFvPatchVectorField::rmap
 
 
 // Update the coefficients associated with the patch field
-void analyticalPlateHoleTractionFvPatchVectorField::updateCoeffs()
+bool analyticalPlateHoleTractionFvPatchVectorField::updateFields()
 {
-    if (updated())
-    {
-        return;
-    }
-
     // Patch unit normals
     vectorField n(patch().nf());
 
@@ -197,7 +192,7 @@ void analyticalPlateHoleTractionFvPatchVectorField::updateCoeffs()
         trac[faceI] = (n[faceI] & plateHoleSolution(curC));
     }
 
-    solidTractionFvPatchVectorField::updateCoeffs();
+    return true;
 }
 
 

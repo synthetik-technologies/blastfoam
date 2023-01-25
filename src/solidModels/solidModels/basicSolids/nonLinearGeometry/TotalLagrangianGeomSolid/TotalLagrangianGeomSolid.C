@@ -174,7 +174,7 @@ tmp<volTensorField> TotalLagrangianGeomSolid<IncrementalModel>::P() const
 
     forAll(Piola, celli)
     {
-        Piola[celli] = J_[celli]*(inv(F_[celli]) & sigma[celli]);
+        Piola[celli] = J_[celli]*(sigma[celli] & T(inv(F_[celli])));
     }
     volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
     forAll(bPiola, patchi)
@@ -185,7 +185,7 @@ tmp<volTensorField> TotalLagrangianGeomSolid<IncrementalModel>::P() const
         const fvPatchTensorField& pF = F_.boundaryField()[patchi];
         forAll(pPiola, facei)
         {
-            pPiola[facei] = pJ[facei]*(inv(pF[facei]) & psigma[facei]);
+            pPiola[facei] = pJ[facei]*(psigma[facei] & T(inv(pF[facei])));
         }
     }
 
@@ -215,7 +215,7 @@ TotalLagrangianGeomSolid<IncrementalModel>::P(const fvPatch& patch) const
 
     forAll(Piola, facei)
     {
-        Piola[facei] = J[facei]*(inv(F[facei]) & sigma[facei]);
+        Piola[facei] = J[facei]*(sigma[facei] & T(inv(F[facei])));
     }
     return tPiola;
 }
@@ -241,14 +241,6 @@ tmp<vectorField> TotalLagrangianGeomSolid<IncrementalModel>::nf
         n.ref() /= mag(n());
     }
     return n;
-}
-
-
-template<class IncrementalModel>
-void TotalLagrangianGeomSolid<IncrementalModel>::writeNecessaryFields() const
-{
-    IncrementalModel::writeNecessaryFields();
-    F_.write();
 }
 
 

@@ -43,7 +43,7 @@ UnsLinearGeomSolid<IncrementalModel>::UnsLinearGeomSolid
     const bool isSolid
 )
 :
-    IncrementalModel(type, mesh, nonLinGeom(), isSolid),
+    LinearGeomSolid<IncrementalModel>(type, mesh, isSolid),
     impKf_(this->mechanical().impKf())
 {}
 

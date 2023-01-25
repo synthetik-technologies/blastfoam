@@ -76,11 +76,20 @@ class neoHookeanElastic
 {
     // Private data
 
+        //- Young's modulus
+        dimensionedScalar E_;
+
+        //- Poisson ratio
+        dimensionedScalar nu_;
+
         // Shear modulus
         dimensionedScalar mu_;
 
         // Bulk modulus
         dimensionedScalar K_;
+
+        //- Lames first parameter
+        dimensionedScalar lambda_;
 
     // Private Member Functions
 
@@ -138,6 +147,12 @@ public:
 
         //- Calculate the stress
         virtual void correct(surfaceSymmTensorField& sigma);
+
+        //- Return the Piola stress tensor
+        virtual tmp<volTensorField> P(const volSymmTensorField& sigma) const;
+
+        //- Return the face Piola stress tensor
+        virtual tmp<surfaceTensorField> P(const surfaceSymmTensorField& sigma) const;
 };
 
 

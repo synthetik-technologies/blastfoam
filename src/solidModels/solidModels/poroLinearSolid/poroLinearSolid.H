@@ -62,7 +62,7 @@ SourceFiles
 #define poroLinGeomSolid_H
 
 #include "LinearGeomSolid.H"
-#include "totalDisplacementSolid.H"
+#include "totalDisplacementSolids.H"
 #include "SolverPerformance.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

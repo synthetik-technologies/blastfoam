@@ -23,21 +23,20 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    unsIncrementalSolid
+    IncrementalSolid
 
 Description
-    Base class for unstructured incremental solid models
+    Templated class for incremental solid models
 
 SourceFiles
-    unsIncrementalSolid.C
+    IncrementalSolid.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unsIncrementalSolid_H
-#define unsIncrementalSolid_H
+#ifndef IncrementalSolid_H
+#define IncrementalSolid_H
 
-#include "incrementalSolid.H"
-#include "unsSolidModel.H"
+#include "solidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,12 +49,16 @@ namespace solidModels
                         Class linGeomSolid Declaration
 \*---------------------------------------------------------------------------*/
 
-class unsIncrementalSolid
+template<class SolidModel>
+class IncrementalSolid
 :
-    public unsSolidModel
+    public SolidModel
 {
 protected:
     // Protected data
+
+        //- Implicit stiffness
+        const volScalarField impK_;
 
         //- Implicit stiffness surface field
         surfaceScalarField impKf_;
@@ -72,7 +75,7 @@ public:
     // Constructors
 
         //- Construct from components
-        unsIncrementalSolid
+        IncrementalSolid
         (
             const word& type,
             dynamicFvMesh& mesh,
@@ -83,7 +86,7 @@ public:
 
     // Destructor
 
-        virtual ~unsIncrementalSolid()
+        virtual ~IncrementalSolid()
         {}
 
 
@@ -102,7 +105,7 @@ public:
             virtual const volVectorField& solutionD() const
             {
                 // This model solves for DD
-                return DD();
+                return this->DD();
             }
 
             //- Each solidModel must indicate whether gradD or gradDD
@@ -110,21 +113,13 @@ public:
             virtual const volTensorField& solutionGradD() const
             {
                 // This model solves for DD
-                return gradDD();
-            }
-
-            //- Each solidModel must indicate whether gradDf or gradDDf
-            //  is the primary solution variable
-            virtual const surfaceTensorField& solutionGradDf() const
-            {
-                // This model solves for DD
-                return gradDDf();
+                return this->gradDD();
             }
 
             //- Return the patch implicit stiffness
             virtual const scalarField& impK(const fvPatch& patch) const
             {
-                return impKf_.boundaryField()[patch.index()];
+                return impK_.boundaryField()[patch.index()];
             }
 };
 
@@ -133,6 +128,12 @@ public:
 
 } // End namespace solidModel
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "IncrementalSolid.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

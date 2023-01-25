@@ -46,7 +46,7 @@ SourceFiles
 #define thermalLinearSolid_H
 
 #include "LinearGeomSolid.H"
-#include "totalDisplacementSolid.H"
+#include "totalDisplacementSolids.H"
 #include "thermalModel.H"
 #include "SolverPerformance.H"
 
@@ -143,7 +143,7 @@ public:
             virtual bool evolve();
 
             //- Write fields
-            virtual void writeFields() const;
+            virtual bool write(const bool write = true) const;
 };
 
 

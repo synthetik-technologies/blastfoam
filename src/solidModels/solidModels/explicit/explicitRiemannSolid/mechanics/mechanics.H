@@ -46,7 +46,7 @@ namespace Foam
 
 class mechanics
 :
-    public MeshObject<fvMesh, MoveableMeshObject, mechanics>
+    public MeshObject<fvMesh, UpdateableMeshObject, mechanics>
 {
     // Private data
 
@@ -59,11 +59,17 @@ class mechanics
         //- Deformation tensor
         const volTensorField& F_;
 
+        //- Relative deformation tensor
+        volTensorField relF_;
+
         //- Inverse of feformation tensor
         volTensorField invF_;
 
         //- Jacobian of total deformation gradient
         volScalarField J_;
+
+        //- Jacobian of relative deformation gradient
+        volScalarField relJ_;
 
         //- Material normal
         surfaceVectorField N_;
@@ -175,6 +181,8 @@ public:
             void correctDeformation(const bool useOldTime = false);
 
             virtual bool movePoints();
+
+            virtual void updateMesh(const mapPolyMesh&);
 
 };
 

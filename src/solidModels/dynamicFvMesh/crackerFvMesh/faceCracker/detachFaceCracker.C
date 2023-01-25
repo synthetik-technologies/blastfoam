@@ -105,7 +105,7 @@ void Foam::faceCracker::detachInternalFaces
             curFaceEdges = mesh.faceEdges()[faceToBreakID];
             faceCellID = faceOwn[faceToBreakID];
 
-            //if (debug)
+            if (debug)
             {
                 Pout<< "Breaking internal face : "
                     << mesh.faceCentres()[faceToBreakID] << endl;
@@ -1189,7 +1189,7 @@ void Foam::faceCracker::detachCoupledFaces
             procPatchID = mesh.boundaryMesh().whichPatch(faceToBreakID);
             faceCellID = faceOwn[faceToBreakID];
 
-            //if (debug)
+            if (debug)
             {
                 Pout<< "Breaking coupled face : "
                     << mesh.faceCentres()[faceToBreakID] << endl;

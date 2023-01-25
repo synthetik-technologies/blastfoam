@@ -185,7 +185,7 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::Pf() const
 
     forAll(Piolaf, facei)
     {
-        Piolaf[facei] = Jf_[facei]*(inv(Ff_[facei]) & tensor(sigmaf[facei]));
+        Piolaf[facei] = Jf_[facei]*(tensor(sigmaf[facei]) & T(inv(Ff_[facei])));
     }
     surfaceTensorField::Boundary& bPiolaf = Piolaf.boundaryFieldRef();
     forAll(bPiolaf, patchi)
@@ -196,7 +196,8 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::Pf() const
         const fvsPatchTensorField& pFf = Ff_.boundaryField()[patchi];
         forAll(pPiolaf, facei)
         {
-            pPiolaf[facei] = pJf[facei]*(inv(pFf[facei]) & tensor(psigmaf[facei]));
+            pPiolaf[facei] =
+                pJf[facei]*(tensor(psigmaf[facei]) & T(inv(pFf[facei])));
         }
     }
 
@@ -226,7 +227,7 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::Pf(const fvPatch& patch) const
 
     forAll(Piola, facei)
     {
-        Piola[facei] = J[facei]*(inv(F[facei]) & sigma[facei]);
+        Piola[facei] = J[facei]*(sigma[facei] & T(inv(F[facei])));
     }
     return tPiola;
 }
@@ -253,15 +254,6 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::nf
         n.ref() /= mag(n());
     }
     return n;
-}
-
-
-template<class IncrementalModel>
-void
-UnsTotalLagrangianGeomSolid<IncrementalModel>::writeNecessaryFields() const
-{
-    IncrementalModel::writeNecessaryFields();
-    Ff_.write();
 }
 
 
