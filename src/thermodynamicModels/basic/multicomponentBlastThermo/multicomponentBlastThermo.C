@@ -182,14 +182,14 @@ void Foam::multicomponentBlastThermo::correct()
             Yt += Y_[i];
         }
 
-        // bool fix = false;
+        bool fix = false;
         if (min(Yt).value() < small)
         {
-            // fix = true;
-            // Yt.max(small);
-            FatalErrorInFunction
-                << "Sum of mass fractions is zero for species " << species()
-                << exit(FatalError);
+            fix = true;
+            Yt.max(small);
+            // FatalErrorInFunction
+            //     << "Sum of mass fractions is zero for species " << species()
+            //     << exit(FatalError);
         }
 
         forAll(Y_, i)
@@ -197,10 +197,10 @@ void Foam::multicomponentBlastThermo::correct()
             Y_[i] /= Yt;
             Y_[i].correctBoundaryConditions();
         }
-        // if (fix)
-        // {
-        //     basicSpecieMixture::normalise();
-        // }
+        if (fix)
+        {
+            basicSpecieMixture::normalise();
+        }
     }
     else
     {
@@ -275,6 +275,7 @@ void Foam::multicomponentBlastThermo::initializeModels()
 void Foam::multicomponentBlastThermo::update()
 {
     integratorPtr_->update();
+    correct();
 }
 
 
@@ -372,7 +373,8 @@ void Foam::multicomponentBlastThermo::integrator::solve()
 
             Y_[i] =
                 (
-                    alphaRho_.prevIter()*Y_[i] - dT*deltaAlphaRhoY
+                    max(alphaRho_.prevIter(), residualAlphaRho)*Y_[i]
+                  - dT*deltaAlphaRhoY
                 )/max(residualAlphaRho, alphaRho_);
             Y_[i].max(0.0);
             Y_[i].correctBoundaryConditions();

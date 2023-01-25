@@ -431,19 +431,30 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
     tmp<volScalarField> eInitTmp(volScalarField::New("eInit", e_));
     volScalarField& eInit(eInitTmp.ref());
 
-    forAll(eInit, celli)
+    if (!this->rho_.time().restart())
     {
-        scalar Tinit = this->T_[celli];
-        if (mag(celldpdT(celli)) > small)
+        forAll(eInit, celli)
         {
-            TEqn_.save(p[celli], celli);
-            Tinit = TSolver_->solve(T_[celli], celli);
-            TEqn_.reset(celli);
+            scalar Tinit = this->T_[celli];
+            if (mag(celldpdT(celli)) > small)
+            {
+                TEqn_.save(p[celli], celli);
+                Tinit = TSolver_->solve(T_[celli], celli);
+                TEqn_.reset(celli);
+            }
+            eInit[celli] = cellHE(Tinit, celli);
         }
-        eInit[celli] = cellHE(Tinit, celli);
+        eInit +=
+            alpha1_*thermo1_->initESource() + alpha2_*thermo2_->initESource();
     }
-    eInit +=
-        alpha1_*thermo1_->initESource() + alpha2_*thermo2_->initESource();
+    else
+    {
+        forAll(eInit, celli)
+        {
+            eInit[celli] = cellHE(this->T_[celli], celli);
+        }
+    }
+    eInit.correctBoundaryConditions();
 
     return eInitTmp;
 }

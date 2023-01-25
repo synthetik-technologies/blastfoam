@@ -157,9 +157,10 @@ public:
     // Save the old energy
     void save(const scalar p, const label li)
     {
+        p_ = p;
         TOld_ = (*T_)[li];
         eOld_ = (*e_)[li];
-        p_ = p;
+        (*e_)[li] = thermo_.cellHE(TOld_, li);
     }
 
     // Revert to the old energy

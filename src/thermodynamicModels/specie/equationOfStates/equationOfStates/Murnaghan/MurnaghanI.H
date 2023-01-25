@@ -43,6 +43,7 @@ inline Foam::Murnaghan<Specie>::Murnaghan
 :
     Specie(sp),
     rho0_(rho0),
+    rhoMin_(pow(-pRef*kappa*n + 1.0, 1.0/n)),
     pRef_(pRef),
     K0_(K0),
     kappa_(kappa),
@@ -119,7 +120,7 @@ Foam::scalar Foam::Murnaghan<Specie>::pRhoT
     const scalar T
 ) const
 {
-    return pRef_ + (pow(rho/rho0_, n_) - 1.0)/(kappa_*n_);
+    return pRef_ + (pow(max(rho, rhoMin_)/rho0_, n_) - 1.0)/(kappa_*n_);
 }
 
 
@@ -158,7 +159,7 @@ Foam::scalar Foam::Murnaghan<Specie>::cSqr
     const scalar cv
 ) const
 {
-    return pow(rho/rho0_, n_ - 1.0)/(rho0_*n_*kappa_);
+    return pow(max(rho, rhoMin_)/rho0_, n_ - 1.0)/(rho0_*kappa_);
 }
 
 
@@ -170,7 +171,7 @@ Foam::scalar Foam::Murnaghan<Specie>::dpdv
     const scalar T
 ) const
 {
-    return -rho*pow(rho/rho0_, n_)/kappa_;
+    return -max(rho, rhoMin_)*pow(max(rho, rhoMin_)/rho0_, n_)/kappa_;
 }
 
 
@@ -207,7 +208,7 @@ Foam::scalar Foam::Murnaghan<Specie>::E
     const scalar T
 ) const
 {
-    scalar rhos(max(rho, 1e-10));
+    scalar rhos(max(rho, rhoMin_));
     return
        -pRef_/rhos
       + (pow(rho/rho0_, n_) - (n_ - 1.0))
@@ -235,7 +236,7 @@ Foam::scalar Foam::Murnaghan<Specie>::H
     const scalar T
 ) const
 {
-    return pow(rho/rho0_, n_ - 1.0)/(rho0_*kappa_*(n_ - 1.0));
+    return pow(max(rho, rhoMin_)/rho0_, n_ - 1.0)/(rho0_*kappa_*(n_ - 1.0));
 }
 
 
@@ -299,6 +300,8 @@ inline void Foam::Murnaghan<Specie>::operator+=
         K0Prime_ = Y1*K0Prime_ + Y2*pf.K0Prime_;
         n_ = Y1*n_ + Y2*pf.n_;
         Gamma_ = Y1*Gamma_ + Y2*pf.Gamma_;
+
+        rhoMin_ = pow(-pRef_*kappa_*n_ + 1.0, 1.0/n_);
     }
 }
 

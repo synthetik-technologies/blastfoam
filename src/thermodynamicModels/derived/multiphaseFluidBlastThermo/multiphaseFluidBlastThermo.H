@@ -92,7 +92,7 @@ protected:
         mutable fluidTEquation TEqn_;
         autoPtr<univariateRootSolver> TSolver_;
 
-        //- Solve temperature given interneral energy
+        //- Solve temperature given internal energy
         mutable THEEquation THEEqn_;
         autoPtr<univariateRootSolver> THESolver_;
 

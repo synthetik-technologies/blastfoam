@@ -292,24 +292,50 @@ Foam::activationModel::activationModel
     alphaRhoPhiPtr_(nullptr),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
 {
-    lambda_.storeOldTime();
     if (detonationPoints_.size())
     {
-        vectorField points(detonationPoints_.size());
-        scalarField delays(detonationPoints_.size());
-        scalarField radii(detonationPoints_.size());
+        DynamicList<vector> unactivatedPoints(detonationPoints_.size());
+        DynamicList<scalar> unactivatedDelays(detonationPoints_.size());
+        DynamicList<scalar> unactivatedRadii(detonationPoints_.size());
+
+        DynamicList<vector> activatedPoints(detonationPoints_.size());
+        DynamicList<scalar> activatedDelays(detonationPoints_.size());
+        DynamicList<scalar> activatedRadii(detonationPoints_.size());
+
         forAll(detonationPoints_, pti)
         {
-            points[pti] = detonationPoints_[pti];
-            delays[pti] = detonationPoints_[pti].delay();
-            radii[pti] = detonationPoints_[pti].radius();
+            if (!detonationPoints_[pti].activated())
+            {
+                unactivatedPoints.append(detonationPoints_[pti]);
+                unactivatedDelays.append(detonationPoints_[pti].delay());
+                unactivatedRadii.append(detonationPoints_[pti].radius());
+            }
+            else
+            {
+                activatedPoints.append(detonationPoints_[pti]);
+                activatedDelays.append(detonationPoints_[pti].delay());
+                activatedRadii.append(detonationPoints_[pti].radius());
+            }
         }
-        Info<< "Initiation Points: " << nl
-            << "    " << points << nl
-            << "Delays: " << nl
-            << "    " << delays << nl
-            << "Radii: " << nl
-            << "    " << radii << endl;
+        if (unactivatedPoints.size())
+        {
+            Info<< "Unactivated points: " << nl
+                << "    " << unactivatedPoints << nl
+                << "Delays: " << nl
+                << "    " << unactivatedDelays << nl
+                << "Radii: " << nl
+                << "    " << unactivatedRadii << endl;
+        }
+        if (activatedPoints.size())
+        {
+            Info<< "Previously activated points: " << nl
+                << "    " << activatedPoints << nl
+                << "Delays: " << nl
+                << "    " << activatedDelays << nl
+                << "Radii: " << nl
+                << "    " << activatedRadii << endl;
+        }
+        Info<< endl;
     }
 }
 
@@ -389,6 +415,8 @@ Foam::activationModel::readDetonationPoints
     }
 
     PtrList<detonationPoint> detPoints(points.size());
+    const scalar time = alpha.time().value();
+    const bool restart = alpha.time().restart();
     forAll(detPoints, i)
     {
         detPoints.set
@@ -401,6 +429,10 @@ Foam::activationModel::readDetonationPoints
                 radii[i]
             )
         );
+        if (delays[i] < time && restart)
+        {
+            detPoints[i].activated() = true;
+        }
     }
     return detPoints;
 }
@@ -441,6 +473,15 @@ void Foam::activationModel::initializeModels()
                 alphaRhoPhiName
             )
         );
+    }
+
+    if (alphaRhoPtr_().time().restart())
+    {
+        forAll(detonationPoints_, pointi)
+        {
+            detonationPoints_[pointi].setActivated(lambda_, true);
+        }
+        lambda_.storeOldTimes();
     }
 }
 

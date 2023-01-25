@@ -177,12 +177,15 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     thermos_(phases_.size()),
     alphaRhos_(phases_.size()),
     sumVfPtr_(nullptr),
+
     TEqn_(*this),
     TSolver_(nullptr),
+
     THEEqn_(*this, this->TLow_),
     THESolver_(nullptr)
 
 {
+
     // Select the solvers for energy and temperature
     if (dict.isDict("eSolverCoeffs"))
     {
@@ -482,19 +485,30 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidBlastThermo::ESource() cons
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
 {
-    tmp<volScalarField> eInitTmp(volScalarField::New("eInit", e_));
-    volScalarField& eInit(eInitTmp.ref());
+    tmp<volScalarField> teInit(volScalarField::New("eInit", e_));
+    volScalarField& eInit(teInit.ref());
 
-    forAll(eInit, celli)
+    if (!rho_.time().restart())
     {
-        eInit[celli] = calcCelle(p[celli], celli);
+        forAll(eInit, celli)
+        {
+            eInit[celli] = calcCelle(p[celli], celli);
+        }
+        forAll(volumeFractions_, phasei)
+        {
+            eInit += volumeFractions_[phasei]*thermos_[phasei].initESource();
+        }
     }
-    forAll(volumeFractions_, phasei)
+    else
     {
-        eInit += volumeFractions_[phasei]*thermos_[phasei].initESource();
+        forAll(eInit, celli)
+        {
+            eInit[celli] = this->cellHE(this->T_[celli], celli);
+        }
     }
+    eInit.correctBoundaryConditions();
 
-    return eInitTmp;
+    return teInit;
 }
 
 
@@ -504,14 +518,23 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::calcCelle
     const label celli
 ) const
 {
-    scalar Tinit = this->T_[celli];
+    scalar TNew = this->T_[celli];
     if (mag(celldpdT(celli)) > small)
     {
         TEqn_.save(p, celli);
-        Tinit = TSolver_->solve(T_[celli], celli);
+        TNew = TSolver_->solve(T_[celli], celli);
         TEqn_.reset(celli);
     }
-    return cellHE(Tinit, celli);
+    return cellHE(TNew, celli);
+
+    // scalar eNew = cellHE(this->T_[celli], celli);
+    // if (mag(celldpde(celli)) > small)
+    // {
+    //     eEqn_.save(p, celli);
+    //     eNew = eSolver_->solve(e_[celli], celli);
+    //     eEqn_.reset(celli);
+    // }
+    // return eNew;
 }
 
 

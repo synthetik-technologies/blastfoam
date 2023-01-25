@@ -96,6 +96,9 @@ class Murnaghan
     //- Reference density
     scalar rho0_;
 
+    //- Minimum density
+    scalar rhoMin_;
+
     //- Reference pressure
     scalar pRef_;
 
