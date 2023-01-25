@@ -38,7 +38,10 @@ void Foam::timeIntegrationSystem::storeOld
 {
     if (step() == 1)
     {
-        f.storeOldTimes();
+        if (!timeInt_->restart())
+        {
+            f.storeOldTimes();
+        }
 
         // Correct old field for mesh motion before storage
         if (meshPtr_->moving() && conservative)

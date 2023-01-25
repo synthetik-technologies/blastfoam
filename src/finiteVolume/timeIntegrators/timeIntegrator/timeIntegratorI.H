@@ -28,246 +28,59 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * Public Functions  * * * * * * * * * * * * * //
 
-// volScalarFields
-void timeIntegrator::addOldField(const volScalarField& f) const
-{
-    insertOldList(oldScalarFields_, f);
+#define defineAddFieldType(Type, Geo)                                          \
+void timeIntegrator::addOldField                                               \
+(                                                                              \
+    const FieldName(Geo, Type)& f                                              \
+) const                                                                        \
+{                                                                              \
+    insertOldList(OldFieldVarName(Geo, Type), f);                              \
+}                                                                              \
+                                                                               \
+void timeIntegrator::addDeltaField                                             \
+(                                                                              \
+    const FieldName(Geo, Type)& f                                              \
+) const                                                                        \
+{                                                                              \
+    insertDeltaList(DeltaFieldVarName(Geo, Type), f);                          \
 }
 
+FOR_ALL_FIELD_TYPES(defineAddFieldType, vol);
+FOR_ALL_FIELD_TYPES(defineAddFieldType, surface);
+FOR_ALL_FIELD_TYPES(defineAddFieldType, point);
 
-void timeIntegrator::addDeltaField(const volScalarField& f) const
-{
-    insertDeltaList(oldScalarFields_, f);
+#undef defineAddFieldType
+
+#define defineGetFieldType(Type, Geo)   \
+const PtrList<FieldName(Geo, Type)>&  \
+timeIntegrator::oldFields(const FieldName(Geo, Type)& f) const  \
+{   \
+    return lookupOld(OldFieldVarName(Geo, Type), f);   \
+}   \
+    \
+PtrList<FieldName(Geo, Type)>&    \
+timeIntegrator::oldFields(const FieldName(Geo, Type)& f)    \
+{   \
+    return lookupOld(OldFieldVarName(Geo, Type), f);   \
+}   \
+    \
+const PtrList<FieldName(Geo, Type)>&  \
+timeIntegrator::deltaFields(const FieldName(Geo, Type)& f) const    \
+{   \
+    return lookupDelta(DeltaFieldVarName(Geo, Type), f); \
+}   \
+    \
+PtrList<FieldName(Geo, Type)>&    \
+timeIntegrator::deltaFields(const FieldName(Geo, Type)& f)  \
+{   \
+    return lookupDelta(DeltaFieldVarName(Geo, Type), f); \
 }
 
+FOR_ALL_FIELD_TYPES(defineGetFieldType, vol);
+FOR_ALL_FIELD_TYPES(defineGetFieldType, surface);
+FOR_ALL_FIELD_TYPES(defineGetFieldType, point);
 
-const PtrList<volScalarField>& timeIntegrator::oldFields
-(
-    const volScalarField& f
-) const
-{
-    return lookupOld(oldScalarFields_, f);
-}
-
-
-PtrList<volScalarField>& timeIntegrator::oldFields
-(
-    const volScalarField& f
-)
-{
-    return lookupOld(oldScalarFields_, f);
-}
-
-
-const PtrList<volScalarField>& timeIntegrator::deltaFields
-(
-    const volScalarField& f
-) const
-{
-    return lookupDelta(deltaScalarFields_, f);
-}
-
-
-PtrList<volScalarField>& timeIntegrator::deltaFields
-(
-    const volScalarField& f
-)
-{
-    return lookupDelta(deltaScalarFields_, f);
-}
-
-
-// volVectorField
-void timeIntegrator::addOldField(const volVectorField& f) const
-{
-    insertOldList(oldVectorFields_, f);
-}
-
-
-void timeIntegrator::addDeltaField(const volVectorField& f) const
-{
-    insertDeltaList(deltaVectorFields_, f);
-}
-
-
-const PtrList<volVectorField>& timeIntegrator::oldFields
-(
-    const volVectorField& f
-) const
-{
-    return lookupOld(oldVectorFields_, f);
-}
-
-
-PtrList<volVectorField>& timeIntegrator::oldFields
-(
-    const volVectorField& f
-)
-{
-    return lookupOld(oldVectorFields_, f);
-}
-
-const PtrList<volVectorField>& timeIntegrator::deltaFields
-(
-    const volVectorField& f
-) const
-{
-    return lookupDelta(deltaVectorFields_, f);
-}
-
-
-PtrList<volVectorField>& timeIntegrator::deltaFields
-(
-    const volVectorField& f
-)
-{
-    return lookupDelta(deltaVectorFields_, f);
-}
-
-
-// volSphericalTensorField
-void timeIntegrator::addOldField(const volSphericalTensorField& f) const
-{
-    insertOldList(oldSphTensorFields_, f);
-}
-
-
-void timeIntegrator::addDeltaField(const volSphericalTensorField& f) const
-{
-    insertDeltaList(deltaSphTensorFields_, f);
-}
-
-
-const PtrList<volSphericalTensorField>& timeIntegrator::oldFields
-(
-    const volSphericalTensorField& f
-) const
-{
-    return lookupOld(oldSphTensorFields_, f);
-}
-
-
-PtrList<volSphericalTensorField>& timeIntegrator::oldFields
-(
-    const volSphericalTensorField& f
-)
-{
-    return lookupOld(oldSphTensorFields_, f);
-}
-
-const PtrList<volSphericalTensorField>& timeIntegrator::deltaFields
-(
-    const volSphericalTensorField& f
-) const
-{
-    return lookupDelta(deltaSphTensorFields_, f);
-}
-
-
-PtrList<volSphericalTensorField>& timeIntegrator::deltaFields
-(
-    const volSphericalTensorField& f
-)
-{
-    return lookupDelta(deltaSphTensorFields_, f);
-}
-
-
-// volSymmTensorField
-void timeIntegrator::addOldField(const volSymmTensorField& f) const
-{
-    insertOldList(oldSymmTensorFields_, f);
-}
-
-
-void timeIntegrator::addDeltaField(const volSymmTensorField& f) const
-{
-    insertDeltaList(deltaSymmTensorFields_, f);
-}
-
-
-const PtrList<volSymmTensorField>& timeIntegrator::oldFields
-(
-    const volSymmTensorField& f
-) const
-{
-    return lookupOld(oldSymmTensorFields_, f);
-}
-
-
-PtrList<volSymmTensorField>& timeIntegrator::oldFields
-(
-    const volSymmTensorField& f
-)
-{
-    return lookupOld(oldSymmTensorFields_, f);
-}
-
-
-const PtrList<volSymmTensorField>& timeIntegrator::deltaFields
-(
-    const volSymmTensorField& f
-) const
-{
-    return lookupDelta(deltaSymmTensorFields_, f);
-}
-
-
-PtrList<volSymmTensorField>& timeIntegrator::deltaFields
-(
-    const volSymmTensorField& f
-)
-{
-    return lookupDelta(deltaSymmTensorFields_, f);
-}
-
-
-// volTensorField
-void timeIntegrator::addOldField(const volTensorField& f) const
-{
-    insertOldList(oldTensorFields_, f);
-}
-
-
-void timeIntegrator::addDeltaField(const volTensorField& f) const
-{
-    insertDeltaList(deltaTensorFields_, f);
-}
-
-
-const PtrList<volTensorField>& timeIntegrator::oldFields
-(
-    const volTensorField& f
-) const
-{
-    return lookupOld(oldTensorFields_, f);
-}
-
-
-PtrList<volTensorField>& timeIntegrator::oldFields
-(
-    const volTensorField& f
-)
-{
-    return lookupOld(oldTensorFields_, f);
-}
-
-const PtrList<volTensorField>& timeIntegrator::deltaFields
-(
-    const volTensorField& f
-) const
-{
-    return lookupDelta(deltaTensorFields_, f);
-}
-
-
-PtrList<volTensorField>& timeIntegrator::deltaFields
-(
-    const volTensorField& f
-)
-{
-    return lookupDelta(deltaTensorFields_, f);
-}
+#undef defineGetFieldType
 
 } // End namespace Foam
 

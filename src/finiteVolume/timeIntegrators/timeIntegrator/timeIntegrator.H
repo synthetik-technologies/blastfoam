@@ -42,6 +42,8 @@ SourceFiles
 #include "PtrList.H"
 #include "HashPtrTable.H"
 #include "volFields.H"
+#include "surfaceFields.H"
+#include "pointFields.H"
 #include "UautoPtr.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
@@ -56,6 +58,16 @@ class timeIntegrationSystem;
 /*---------------------------------------------------------------------------*\
                            Class timeIntegrator Declaration
 \*---------------------------------------------------------------------------*/
+
+#define FieldName(Geo, Type) \
+    CAT3(Geo, CAPITALIZE(Type), Field)
+
+#define FieldVarName(Geo, Type, OD) \
+    CAT4(Geo, CAPITALIZE(Type), Fields, OD##_)
+
+#define OldFieldVarName(Geo, Type) FieldVarName(Geo, Type, Old)
+
+#define DeltaFieldVarName(Geo, Type) FieldVarName(Geo, Type, Delta)
 
 class timeIntegrator
 :
@@ -106,6 +118,9 @@ protected:
     //- Current time index
     label curTimeIndex_;
 
+    //- Is this a restarted time step
+    bool restart_;
+
     //- FvModels
     mutable UautoPtr<fvModels> modelsPtr_;
 
@@ -115,22 +130,35 @@ protected:
     //- List of fields that have models or constraints
     mutable hashedWordList solveFields_;
 
-    //- Stored old fields
     mutable wordHashSet savedOldFields_;
-    mutable HashPtrTable<PtrList<volScalarField>> oldScalarFields_;
-    mutable HashPtrTable<PtrList<volVectorField>> oldVectorFields_;
-    mutable HashPtrTable<PtrList<volSphericalTensorField>>
-        oldSphTensorFields_;
-    mutable HashPtrTable<PtrList<volSymmTensorField>> oldSymmTensorFields_;
-    mutable HashPtrTable<PtrList<volTensorField>> oldTensorFields_;
+
+    //- Stored old fields
+    #define decalareOldFieldTypeTable(Type, Geo)            \
+    mutable HashPtrTable                                    \
+    <                                                       \
+        PtrList<FieldName(Geo, Type)>                       \
+    > OldFieldVarName(Geo, Type);
+
+    FOR_ALL_FIELD_TYPES(decalareOldFieldTypeTable, vol);
+    FOR_ALL_FIELD_TYPES(decalareOldFieldTypeTable, surface);
+    FOR_ALL_FIELD_TYPES(decalareOldFieldTypeTable, point);
+
+    #undef decalareOldFieldTypeTable
+
 
     //- Stored delta fields
-    mutable HashPtrTable<PtrList<volScalarField>> deltaScalarFields_;
-    mutable HashPtrTable<PtrList<volVectorField>> deltaVectorFields_;
-    mutable HashPtrTable<PtrList<volSphericalTensorField>>
-        deltaSphTensorFields_;
-    mutable HashPtrTable<PtrList<volSymmTensorField>> deltaSymmTensorFields_;
-    mutable HashPtrTable<PtrList<volTensorField>> deltaTensorFields_;
+    #define decalareDeltaFieldTypeTable(Type, Geo)          \
+    mutable HashPtrTable                                    \
+    <                                                       \
+        PtrList<FieldName(Geo, Type)>                       \
+    > DeltaFieldVarName(Geo, Type);
+
+    FOR_ALL_FIELD_TYPES(decalareDeltaFieldTypeTable, vol);
+    FOR_ALL_FIELD_TYPES(decalareDeltaFieldTypeTable, surface);
+    FOR_ALL_FIELD_TYPES(decalareDeltaFieldTypeTable, point);
+
+    #undef decalareDeltaFieldTypeTable
+
 
 
     // Private member functions
@@ -297,6 +325,12 @@ public:
             return solveFields_.found(field);
         }
 
+        //- Return if on a restarted time step
+        bool restart() const
+        {
+            return restart_;
+        }
+
         //- Return old coefficients for the current step
         inline scalarList a() const
         {
@@ -361,89 +395,52 @@ public:
             return V0byV_;
         }
 
-        //- Add old field to saved fields
-        inline void addOldField(const volScalarField& f) const;
-        inline void addOldField(const volVectorField& f) const;
-        inline void addOldField(const volSphericalTensorField& f) const;
-        inline void addOldField(const volSymmTensorField& f) const;
-        inline void addOldField(const volTensorField& f) const;
+        //- Add fields to saved fields
+        #define decalareAddFieldType(Type, Geo)                 \
+        inline void addOldField                                 \
+        (                                                       \
+            const FieldName(Geo, Type)&                         \
+        ) const;                                                \
+        inline void addDeltaField                               \
+        (                                                       \
+            const FieldName(Geo, Type)&                         \
+        ) const;
+        FOR_ALL_FIELD_TYPES(decalareAddFieldType, vol);
+        FOR_ALL_FIELD_TYPES(decalareAddFieldType, surface);
+        FOR_ALL_FIELD_TYPES(decalareAddFieldType, point);
 
-        //- Add old field to saved fields
-        inline void addDeltaField(const volScalarField& f) const;
-        inline void addDeltaField(const volVectorField& f) const;
-        inline void addDeltaField(const volSphericalTensorField& f) const;
-        inline void addDeltaField(const volSymmTensorField& f) const;
-        inline void addDeltaField(const volTensorField& f) const;
+        #undef decalareAddFieldType
 
-        //- Lookup old fields (const)
-        inline const PtrList<volScalarField>& oldFields
-        (
-            const volScalarField& f
-        ) const;
-        inline const PtrList<volVectorField>& oldFields
-        (
-            const volVectorField& f
-        ) const;
-        inline const PtrList<volSphericalTensorField>& oldFields
-        (
-            const volSphericalTensorField& f
-        ) const;
-        inline const PtrList<volSymmTensorField>& oldFields
-        (
-            const volSymmTensorField& f
-        ) const;
-        inline const PtrList<volTensorField>& oldFields
-        (
-            const volTensorField& f
-        ) const;
-
-        //- Lookup old fields (non-const)
-        inline PtrList<volScalarField>& oldFields(const volScalarField& f);
-        inline PtrList<volVectorField>& oldFields(const volVectorField& f);
-        inline PtrList<volSphericalTensorField>& oldFields
-        (
-            const volSphericalTensorField& f
+        //- Lookup fields
+        #define decalareLookupFieldType(Type, Geo)              \
+        inline const PtrList<FieldName(Geo, Type)>&             \
+        oldFields                                               \
+        (                                                       \
+            const FieldName(Geo, Type)&                         \
+        ) const;                                                \
+                                                                \
+        inline PtrList<FieldName(Geo, Type)>&                   \
+        oldFields                                               \
+        (                                                       \
+            const FieldName(Geo, Type)&                         \
+        );                                                      \
+                                                                \
+        inline const PtrList<FieldName(Geo, Type)>&             \
+        deltaFields                                             \
+        (                                                       \
+            const FieldName(Geo, Type)&                         \
+        ) const;                                                \
+                                                                \
+        inline PtrList<FieldName(Geo, Type)>&                   \
+        deltaFields                                             \
+        (                                                       \
+            const FieldName(Geo, Type)&                         \
         );
-        inline PtrList<volSymmTensorField>& oldFields
-        (
-            const volSymmTensorField& f
-        );
-        inline PtrList<volTensorField>& oldFields(const volTensorField& f);
+        FOR_ALL_FIELD_TYPES(decalareLookupFieldType, vol);
+        FOR_ALL_FIELD_TYPES(decalareLookupFieldType, surface);
+        FOR_ALL_FIELD_TYPES(decalareLookupFieldType, point);
 
-        //- Lookup delta fields (const)
-        inline const PtrList<volScalarField>& deltaFields
-        (
-            const volScalarField& f
-        ) const;
-        inline const PtrList<volVectorField>& deltaFields
-        (
-            const volVectorField& f
-        ) const;
-        inline const PtrList<volSphericalTensorField>& deltaFields
-        (
-            const volSphericalTensorField& f
-        ) const;
-        inline const PtrList<volSymmTensorField>& deltaFields
-        (
-            const volSymmTensorField& f
-        ) const;
-        inline const PtrList<volTensorField>& deltaFields
-        (
-            const volTensorField& f
-        ) const;
-
-        //- Lookup delta fields (non-const)
-        inline PtrList<volScalarField>& deltaFields(const volScalarField& f);
-        inline PtrList<volVectorField>& deltaFields(const volVectorField& f);
-        inline PtrList<volSphericalTensorField>& deltaFields
-        (
-            const volSphericalTensorField& f
-        );
-        inline PtrList<volSymmTensorField>& deltaFields
-        (
-            const volSymmTensorField& f
-        );
-        inline PtrList<volTensorField>& deltaFields(const volTensorField& f);
+        #undef decalareLookupFieldType
 
 
         //- Dummy IO operations

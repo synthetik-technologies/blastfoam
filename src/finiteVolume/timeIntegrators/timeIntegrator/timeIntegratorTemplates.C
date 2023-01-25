@@ -123,9 +123,8 @@ void Foam::timeIntegrator::clearOldFields
     )
     {
         savedOldFields_.insert(iter.key());
-        label size = iter()->size();
         iter()->clear();
-        iter()->resize(size);
+        iter()->resize(nOld_);
     }
 }
 
@@ -143,9 +142,8 @@ void Foam::timeIntegrator::clearDeltaFields
         iter
     )
     {
-        label size = iter()->size();
         iter()->clear();
-        iter()->resize(size);
+        iter()->resize(nDelta_);
     }
 }
 
@@ -157,6 +155,7 @@ void Foam::timeIntegrator::resetFields()
     {
         if (mesh_.foundObject<FieldType>(iter.key()))
         {
+            DebugInfo<< "Resetting " << iter.key() << endl;
             FieldType& f = mesh_.lookupObjectRef<FieldType>(iter.key());
             f == f.oldTime();
         }

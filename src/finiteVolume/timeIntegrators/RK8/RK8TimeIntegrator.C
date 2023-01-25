@@ -86,9 +86,9 @@ Foam::timeIntegrators::RK8::RK8
     scalar c_6 = 0.5;
     scalar c_7 = (7.0 - sqrt21)/14.0;
     scalar c_8 = (7.0 - sqrt21)/14.0;
-    scalar c_9 = 0.5;
-    scalar c_10 = (7.0 + sqrt21)/14.0;
-    scalar c_11 = 1.0;
+    // scalar c_9 = 0.5;
+    // scalar c_10 = (7.0 + sqrt21)/14.0;
+    // scalar c_11 = 1.0;
 
     scalar b_2_1 = 0.5;
 

@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "burstCyclicFvPatchField.H"
-#include "extrapolatedCalculatedFvPatchField.H"
+#include "zeroGradientFvPatchField.H"
 #include "volFields.H"
 #include "burstCyclicFvPatch.H"
 #include "addToRunTimeSelectionTable.H"
@@ -42,7 +42,7 @@ Foam::burstCyclicFvPatchField<Type>::burstCyclicFvPatchField
     burstFvPatchFieldBase(p),
     intactPatchField_
     (
-        new calculatedFvPatchField<Type>
+        new zeroGradientFvPatchField<Type>
         (
             p,
             iF
