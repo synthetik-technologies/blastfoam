@@ -103,28 +103,39 @@ Foam::autoPtr<Foam::indexer> Foam::indexer::New
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::indexer::indexer(const List<scalar>& xs)
+Foam::indexer::indexer
+(
+    const List<scalar>& xs
+)
 :
     xs_(xs)
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::indexer::validate(bool fail) const
 {
     bool ordered = true;
-    for (label i = 0; i < xs.size()-1; i++)
+    scalar sign = xs_[1] - xs_[0];
+    for (label i = 1; i < xs_.size()-1; i++)
     {
-        if (xs[i+1] < xs[i])
+        if (sign*(xs_[i+1] - xs_[i]) < 0)
         {
             ordered = false;
             break;
         }
     }
-    if (!ordered)
+    if (!ordered & fail)
     {
         FatalErrorInFunction
-            << "coordinates are not ordered in ascending order" << nl
-            << xs << endl
+            << "coordinates are not ordered" << nl
+            << xs_ << endl
             << abort(FatalError);
     }
+    return ordered;
 }
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
 
 Foam::label Foam::indexers::uniform::findIndex
 (

@@ -54,22 +54,50 @@ namespace Foam
 class indexer
 {
 protected:
+
+    //- Reference to indexed data
     const List<scalar>& xs_;
+
 
 public:
 
+    //- Type information
     TypeName("indexer");
 
+    //- Constructor
     indexer(const List<scalar>& xs);
 
+    //- Clone the indexer
+    virtual autoPtr<indexer> clone() const = 0;
+
+
+    //- Destructor
     virtual ~indexer()
     {}
 
-    static autoPtr<indexer> New(const List<scalar>&);
-    static autoPtr<indexer> New(const word&, const List<scalar>&);
-    virtual autoPtr<indexer> clone() const = 0;
+    // Static Member Functions
 
-    virtual label findIndex(const scalar x) const = 0;
+        //- Selector based on the list
+        static autoPtr<indexer> New
+        (
+            const List<scalar>&
+        );
+
+        //- Select indexer based on the type
+        static autoPtr<indexer> New
+        (
+            const word&,
+            const List<scalar>&
+        );
+
+
+    // Public Member Functions
+
+        //- Find  the lower index given a position
+        virtual label findIndex(const scalar x) const = 0;
+
+        //- Validate the indexer
+        virtual bool validate(bool fail = true) const;
 };
 
 
@@ -86,24 +114,40 @@ class null
 {
 public:
 
+    //- Type information
     TypeName("null");
 
+    //- Constructor
     null(const List<scalar>& xs)
     :
         indexer(xs)
     {}
-    virtual ~null()
-    {}
 
+    //- Clone the indexer
     virtual autoPtr<indexer> clone() const
     {
         return autoPtr<indexer>(new null(xs_));
     }
 
-    virtual label findIndex(const scalar x) const
-    {
-        return 0;
-    }
+
+    //- Destructor
+    virtual ~null()
+    {}
+
+
+    // Public Member Functions
+
+        //- Find  the lower index given a position
+        inline label findIndex(const scalar x) const
+        {
+            return 0;
+        }
+
+        //- Validate the indexer
+        virtual bool validate(bool fail = true) const
+        {
+            return true;
+        }
 };
 
 
@@ -117,22 +161,31 @@ class uniform
 {
 public:
 
+    //- Type information
     TypeName("uniform");
 
+    //- Constructor
     uniform(const List<scalar>& xs)
     :
         indexer(xs)
     {}
 
-    virtual ~uniform()
-    {}
-
+    //- Clone the indexer
     virtual autoPtr<indexer> clone() const
     {
         return autoPtr<indexer>(new uniform(xs_));
     }
 
-    virtual label findIndex(const scalar x) const;
+
+    //- Destructor
+    virtual ~uniform()
+    {}
+
+
+    // Public Member Functions
+
+        //- Find  the lower index given a position
+        virtual label findIndex(const scalar x) const;
 };
 
 
@@ -145,24 +198,39 @@ class nonuniform
 :
     public indexer
 {
+// Private member data
+
+    //- Cached index
+    mutable label i_;
+
+
 public:
 
+    //- Type information
     TypeName("nonuniform");
 
+    //- Constructor
     nonuniform(const List<scalar>& xs)
     :
         indexer(xs)
     {}
 
-    virtual ~nonuniform()
-    {}
-
+    //- Clone the indexer
     virtual autoPtr<indexer> clone() const
     {
         return autoPtr<indexer>(new nonuniform(xs_));
     }
 
-    virtual label findIndex(const scalar xff) const;
+
+    //- Destructor
+    virtual ~nonuniform()
+    {}
+
+
+    // Public Member Functions
+
+        //- Find  the lower index given a position
+        virtual label findIndex(const scalar x) const;
 };
 
 
