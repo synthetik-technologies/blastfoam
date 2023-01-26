@@ -30,7 +30,7 @@ License
 #include "calculatedPointPatchFields.H"
 #include "fixedValuePointPatchFields.H"
 #include "globalInterpolatedPointPatchFields.H"
-#include "globalMappedPositionPointPatchVectorField.H"
+#include "globalMappedPointPatchFields.H"
 #include "slipPointPatchFields.H"
 #include "fixedValuePointPatchFields.H"
 #include "cellMotionFvPatchFields.H"
