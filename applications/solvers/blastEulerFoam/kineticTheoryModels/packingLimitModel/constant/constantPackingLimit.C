@@ -63,7 +63,7 @@ Foam::kineticTheoryModels::packingLimitModels::constant::constant
         dict.lookupOrDefault
         (
             "alphaMax",
-            -1
+            -1.0
         )
     )
 {}
