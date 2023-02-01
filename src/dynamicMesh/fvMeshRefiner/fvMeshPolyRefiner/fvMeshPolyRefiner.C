@@ -81,6 +81,7 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner
         );
         balancer_.addConstraint("refinementHistory", refinementHistoryDict);
     }
+    readDict(dict);
 }
 
 

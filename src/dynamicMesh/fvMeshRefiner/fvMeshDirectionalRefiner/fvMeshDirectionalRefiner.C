@@ -61,7 +61,9 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner
 )
 :
     fvMeshRefiner(mesh, dict, force, read)
-{}
+{
+    readDict(dict);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

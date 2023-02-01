@@ -96,6 +96,7 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner
         );
         balancer_.addConstraint("refinementHistory", refinementHistoryDict);
     }
+    readDict(dict);
 }
 
 
