@@ -81,6 +81,11 @@ void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& map)
 {
     fvMesh::updateMesh(map);
 
+    if (refiner_->isBalancing())
+    {
+        return;
+    }
+
     // Update fluxes
     if (correctFluxes_.size())
     {
