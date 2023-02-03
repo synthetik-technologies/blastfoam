@@ -26,6 +26,7 @@ License
 
 #include "mechanicalEnergies.H"
 #include "fvc.H"
+#include "meshSizeObject.H"
 
 #include "surfaceFields.H"
 
@@ -77,7 +78,6 @@ mechanicalEnergies::mechanicalEnergies
         )
     ),
     viscousPressurePtr_(),
-    epsilonVolPtr_(),
     energiesFilePtr_(),
     curTimeIndex_(-1)
 {
@@ -108,9 +108,9 @@ mechanicalEnergies::mechanicalEnergies
 const volScalarField& mechanicalEnergies::viscousPressure
 (
     const volScalarField& rho,
-    const volScalarField& waveSpeed,
+    const surfaceScalarField& waveSpeed,
     const volTensorField& gradD
-)
+) const
 {
     if (viscousPressurePtr_.empty())
     {
@@ -132,11 +132,11 @@ const volScalarField& mechanicalEnergies::viscousPressure
         );
     }
 
-    const volScalarField L(fvc::average(1.0/mesh_.deltaCoeffs()));
-    volScalarField epsilonDot(fvc::ddt(epsilonVol(gradD)));
+    const volScalarField& L(meshSizeObject::New(mesh_).dx(mesh_));
+    volScalarField epsilonDot(tr(fvc::ddt(gradD))/3.0);
 
     viscousPressurePtr_() =
-        rho*linearBulkViscosityCoeff_*epsilonDot*waveSpeed*L;
+        rho*linearBulkViscosityCoeff_*epsilonDot*fvc::average(waveSpeed)*L;
 
     epsilonDot.min(0);
     viscousPressurePtr_() +=
@@ -146,12 +146,12 @@ const volScalarField& mechanicalEnergies::viscousPressure
 }
 
 
-const surfaceScalarField& mechanicalEnergies::viscousPressure
+const surfaceScalarField& mechanicalEnergies::viscousPressuref
 (
     const volScalarField& rho,
     const surfaceScalarField& waveSpeed,
     const volTensorField& gradD
-)
+) const
 {
     if (viscousPressurefPtr_.empty())
     {
@@ -175,7 +175,7 @@ const surfaceScalarField& mechanicalEnergies::viscousPressure
 
     const surfaceScalarField L(1.0/mesh_.deltaCoeffs());
     surfaceScalarField rhof(fvc::interpolate(rho));
-    surfaceScalarField epsilonDotf(fvc::interpolate(fvc::ddt(epsilonVol(gradD))));
+    surfaceScalarField epsilonDotf(fvc::interpolate(tr(fvc::ddt(gradD))/3.0));
 
     viscousPressurefPtr_() =
         rhof*linearBulkViscosityCoeff_*epsilonDotf*waveSpeed*L;
@@ -185,37 +185,6 @@ const surfaceScalarField& mechanicalEnergies::viscousPressure
         rhof*sqr(quadraticBulkViscosityCoeff_*epsilonDotf*L);
 
     return viscousPressurefPtr_();
-}
-
-
-const volScalarField& mechanicalEnergies::epsilonVol
-(
-    const volTensorField& gradD
-)
-{
-    if (epsilonVolPtr_.empty())
-    {
-        epsilonVolPtr_.set
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "epsilonVol",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh_,
-                dimensionedScalar("zero", dimless, 0.0)
-            )
-        );
-    }
-
-    epsilonVolPtr_() = tr(gradD)/3.0;
-
-    return epsilonVolPtr_();
 }
 
 

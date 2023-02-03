@@ -85,6 +85,7 @@ void Foam::momentumStabilisation::setMethods
     }
 
     methods_.clear();
+    bool print = false;
 
     // Calculate stabilisation term
     if (methods.found(stabilisationMethods[RHIE_CHOW]))
@@ -98,6 +99,7 @@ void Foam::momentumStabilisation::setMethods
                 0.1
             )
         );
+        print = true;
     }
     if (methods.found(stabilisationMethods[LAPLACIAN]))
     {
@@ -110,6 +112,7 @@ void Foam::momentumStabilisation::setMethods
                 0.01
             )
         );
+        print = true;
     }
     if (methods.found(stabilisationMethods[JST]))
     {
@@ -122,6 +125,7 @@ void Foam::momentumStabilisation::setMethods
                 0.001
             )
         );
+        print = true;
     }
     if (methods.found(stabilisationMethods[NONE]))
     {
@@ -131,11 +135,14 @@ void Foam::momentumStabilisation::setMethods
             0.0
         );
     }
-    Info<< "stabilisationMethods:" << incrIndent << endl;
-    forAllConstIter(Map<scalar>, methods_, iter)
+    if (print)
     {
-        Method method = static_cast<Method>(iter.key());
-        Info<< indent << stabilisationMethods[method] << ": " << iter() << endl;
+        Info<< "stabilisationMethods:" << incrIndent << endl;
+        forAllConstIter(Map<scalar>, methods_, iter)
+        {
+            Method method = static_cast<Method>(iter.key());
+            Info<< indent << stabilisationMethods[method] << ": " << iter() << endl;
+        }
     }
 }
 

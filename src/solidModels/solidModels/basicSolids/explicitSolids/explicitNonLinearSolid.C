@@ -38,34 +38,34 @@ void Foam::solidModels::explicitNonLinearSolid::updateWavespeeds()
             sqrt(this->mechanical().shearModulus()/this->rho())
         );
 
-    vector eigVal;
-    tensor eigVec;
-
-    surfaceTensorField Ff(this->Ff());
-    surfaceTensorField Cf(Ff.T() & Ff);
-    forAll(Cf, facei)
-    {
-        eigenStructure(Cf[facei], eigVal, eigVec);
-        scalar s = sqrt(cmptMin(eigVal));
-        this->wavespeed_[facei] /= s;
-        this->sWavespeed_[facei] /= s;
-    }
-
-    const surfaceTensorField::Boundary& bCf(Cf.boundaryField());
-    surfaceScalarField::Boundary& bwavespeed =
-        this->wavespeed_.boundaryFieldRef();
-    surfaceScalarField::Boundary& bsWavespeed =
-        this->sWavespeed_.boundaryFieldRef();
-    forAll(bCf, patchi)
-    {
-        forAll(bCf[patchi], facei)
-        {
-            eigenStructure(bCf[patchi][facei], eigVal, eigVec);
-            scalar s = sqrt(cmptMin(eigVal));
-            bwavespeed[patchi][facei] /= s;
-            bsWavespeed[patchi][facei] /= s;
-        }
-    }
+    // vector eigVal;
+    // tensor eigVec;
+    //
+    // surfaceTensorField Ff(this->Ff());
+    // surfaceTensorField Cf(Ff.T() & Ff);
+    // forAll(Cf, facei)
+    // {
+    //     eigenStructure(Cf[facei], eigVal, eigVec);
+    //     scalar s = sqrt(cmptMin(eigVal));
+    //     this->wavespeed_[facei] /= s;
+    //     this->sWavespeed_[facei] /= s;
+    // }
+    //
+    // const surfaceTensorField::Boundary& bCf(Cf.boundaryField());
+    // surfaceScalarField::Boundary& bwavespeed =
+    //     this->wavespeed_.boundaryFieldRef();
+    // surfaceScalarField::Boundary& bsWavespeed =
+    //     this->sWavespeed_.boundaryFieldRef();
+    // forAll(bCf, patchi)
+    // {
+    //     forAll(bCf[patchi], facei)
+    //     {
+    //         eigenStructure(bCf[patchi][facei], eigVal, eigVec);
+    //         scalar s = sqrt(cmptMin(eigVal));
+    //         bwavespeed[patchi][facei] /= s;
+    //         bsWavespeed[patchi][facei] /= s;
+    //     }
+    // }
 }
 
 

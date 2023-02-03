@@ -40,6 +40,7 @@ SourceFiles
 #define hydrostaticPressureFvPatchVectorField_H
 
 #include "fvPatchFields.H"
+#include "Function1.H"
 #include "solidTractionFvPatchVectorField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -63,6 +64,10 @@ class hydrostaticPressureFvPatchVectorField
 
     //- Reference density
     scalar rho_;
+
+    //- Optional pressure vs height function
+    autoPtr<Function1<scalar>> phFunc_;
+
 
 public:
 

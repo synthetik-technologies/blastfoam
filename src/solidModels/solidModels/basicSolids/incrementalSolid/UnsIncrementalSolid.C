@@ -76,6 +76,15 @@ Foam::solidModels::UnsIncrementalSolid<UnsSolidModel>::UnsIncrementalSolid
         this->gradD(),
         this->gradDf()
     );
+
+    this->gradD().storePrevIter();
+    this->gradDf().storePrevIter();
+
+    this->pointDD() = Zero;
+    this->gradDD() = Zero;
+    this->gradDD().storePrevIter();
+    this->gradDDf() = Zero;
+    this->gradDDf().storePrevIter();
 }
 
 

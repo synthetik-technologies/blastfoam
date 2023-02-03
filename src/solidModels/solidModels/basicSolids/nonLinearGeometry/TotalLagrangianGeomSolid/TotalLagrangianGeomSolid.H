@@ -60,6 +60,9 @@ protected:
         //- Total deformation gradient
         volTensorField F_;
 
+        //- Total deformation gradient
+        volTensorField invF_;
+
         //- Relative deformation gradient
         volTensorField relF_;
 

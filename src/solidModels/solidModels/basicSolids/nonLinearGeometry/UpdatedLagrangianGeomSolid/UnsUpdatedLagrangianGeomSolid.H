@@ -63,6 +63,9 @@ protected:
         //- Relative deformation gradient
         surfaceTensorField relFf_;
 
+        //- Inverse of relative deformation gradient
+        surfaceTensorField invRelFf_;
+
         //- Jacobian of the deformation gradient
         surfaceScalarField Jf_;
 
@@ -124,6 +127,9 @@ public:
 
             //- Boundary normal
             virtual tmp<vectorField> nf(const fvPatch& patch) const;
+
+            //- Update total accumulated fields
+            virtual void updateTotalFields();
 };
 
 

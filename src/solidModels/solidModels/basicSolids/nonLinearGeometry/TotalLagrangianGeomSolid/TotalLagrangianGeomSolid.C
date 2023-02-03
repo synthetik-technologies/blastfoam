@@ -59,6 +59,16 @@ TotalLagrangianGeomSolid<IncrementalModel>::TotalLagrangianGeomSolid
         mesh,
         dimensionedTensor("I", dimless, I)
     ),
+    invF_
+    (
+        IOobject
+        (
+            "Finv",
+            mesh.time().timeName(),
+            mesh
+        ),
+        inv(F_)
+    ),
     relF_
     (
         IOobject
@@ -120,8 +130,10 @@ void TotalLagrangianGeomSolid<IncrementalModel>::update(const bool correctSigma)
 
     if (!this->enforceLinear())
     {
+        invF_ = inv(F_);
+
         // Relative deformation gradient
-        relF_ = F_ & inv(F_.oldTime());
+        relF_ = F_ & invF_.oldTime();
         relF_.correctBoundaryConditions();
 
         // Relative Jacobian (Jacobian of relative deformation gradient)
@@ -174,7 +186,7 @@ tmp<volTensorField> TotalLagrangianGeomSolid<IncrementalModel>::P() const
 
     forAll(Piola, celli)
     {
-        Piola[celli] = J_[celli]*(sigma[celli] & T(inv(F_[celli])));
+        Piola[celli] = J_[celli]*(sigma[celli] & T(invF_[celli]));
     }
     volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
     forAll(bPiola, patchi)
@@ -182,10 +194,10 @@ tmp<volTensorField> TotalLagrangianGeomSolid<IncrementalModel>::P() const
         fvPatchTensorField& pPiola = bPiola[patchi];
         const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
         const fvPatchScalarField& pJ = J_.boundaryField()[patchi];
-        const fvPatchTensorField& pF = F_.boundaryField()[patchi];
+        const fvPatchTensorField& pinvF = invF_.boundaryField()[patchi];
         forAll(pPiola, facei)
         {
-            pPiola[facei] = pJ[facei]*(psigma[facei] & T(inv(pF[facei])));
+            pPiola[facei] = pJ[facei]*(psigma[facei] & T(pinvF[facei]));
         }
     }
 
@@ -200,9 +212,8 @@ TotalLagrangianGeomSolid<IncrementalModel>::P(const fvPatch& patch) const
     const label patchi = patch.index();
     tmp<tensorField> tPiola(new tensorField(patch.size()));
     tensorField& Piola = tPiola.ref();
+
     const symmTensorField& sigma = this->sigma().boundaryField()[patchi];
-    const tensorField& F = this->F_.boundaryField()[patchi];
-    const scalarField& J = this->J_.boundaryField()[patchi];
 
     if (this->enforceLinear())
     {
@@ -213,9 +224,11 @@ TotalLagrangianGeomSolid<IncrementalModel>::P(const fvPatch& patch) const
         return tPiola;
     }
 
+    const tensorField& invF = this->invF_.boundaryField()[patchi];
+    const scalarField& J = this->J_.boundaryField()[patchi];
     forAll(Piola, facei)
     {
-        Piola[facei] = J[facei]*(sigma[facei] & T(inv(F[facei])));
+        Piola[facei] = J[facei]*(sigma[facei] & T(invF[facei]));
     }
     return tPiola;
 }
@@ -234,7 +247,7 @@ tmp<vectorField> TotalLagrangianGeomSolid<IncrementalModel>::nf
         const label patchID = patch.index();
 
         // Patch relative deformation gradient inverse
-        tmp<tensorField> pFinvT(inv(F_.boundaryField()[patchID])().T());
+        tmp<tensorField> pFinvT(invF_.boundaryField()[patchID].T());
 
         // Patch unit normals (deformed configuration)
         n.ref() = pFinvT & n();

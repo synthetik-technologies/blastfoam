@@ -25,6 +25,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UnsUpdatedLagrangianGeomSolid.H"
+#include "fvcInterpolate.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,8 +55,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        mesh,
-        dimensionedTensor("I", dimless, I)
+        I + this->gradDf().T()
     ),
     relFf_
     (
@@ -69,6 +69,18 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
         ),
         I + this->gradDDf().T()
     ),
+    invRelFf_
+    (
+        IOobject
+        (
+            "invRelFf",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        inv(relFf_)
+    ),
     Jf_
     (
         IOobject
@@ -76,7 +88,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
             "Jf",
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         det(Ff_)
@@ -126,6 +138,24 @@ void UnsUpdatedLagrangianGeomSolid<IncrementalModel>::update
     // Jacobian of deformation gradient
     Jf_ = relJf_*Jf_.oldTime();
 
+    this->checkEnforceLinear(Jf_);
+
+    if (this->enforceLinear())
+    {
+        // Relative deformation gradient
+        relFf_ = tensor::I;
+
+        // Relative Jacobian (Jacobian of relative deformation gradient)
+        relJf_ = det(relFf_);
+
+        invRelFf_ = tensor::I;
+    }
+    else
+    {
+        invRelFf_ = inv(relFf_);
+    }
+
+
     if (correctSigma)
     {
         this->mechanical().correct(this->sigmaf());
@@ -171,7 +201,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::Pf() const
     forAll(Piolaf, facei)
     {
         Piolaf[facei] =
-            relJf_[facei]*(tensor(sigmaf[facei]) & T(inv(relFf_[facei])));
+            relJf_[facei]*(tensor(sigmaf[facei]) & T(invRelFf_[facei]));
     }
     surfaceTensorField::Boundary& bPiolaf = Piolaf.boundaryFieldRef();
     forAll(bPiolaf, patchi)
@@ -179,11 +209,12 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::Pf() const
         fvsPatchTensorField& pPiolaf = bPiolaf[patchi];
         const fvsPatchSymmTensorField& psigmaf = sigmaf.boundaryField()[patchi];
         const fvsPatchScalarField& prelJf = relJf_.boundaryField()[patchi];
-        const fvsPatchTensorField& prelFf = relFf_.boundaryField()[patchi];
+        const fvsPatchTensorField& pinvRelFf =
+            invRelFf_.boundaryField()[patchi];
         forAll(pPiolaf, facei)
         {
             pPiolaf[facei] =
-                prelJf[facei]*(tensor(psigmaf[facei]) & T(inv(prelFf[facei])));
+                prelJf[facei]*(tensor(psigmaf[facei]) & T(pinvRelFf[facei]));
         }
     }
 
@@ -231,7 +262,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::nf(const fvPatch& patch) const
         const label patchID = patch.index();
 
         // Patch relative deformation gradient inverse
-        tmp<tensorField> pRelFinvT(inv(relFf_.boundaryField()[patchID])().T());
+        tmp<tensorField> pRelFinvT(invRelFf_.boundaryField()[patchID].T());
 
         // Patch unit normals (deformed configuration)
         n.ref() = pRelFinvT & n();
@@ -239,6 +270,21 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::nf(const fvPatch& patch) const
     }
     return n;
 }
+
+
+template<class IncrementalModel>
+void UnsUpdatedLagrangianGeomSolid<IncrementalModel>::updateTotalFields()
+{
+    // Density
+    this->rho() = this->rho().oldTime()/fvc::surfVolInterpolate(relJf_);
+
+    // Move the mesh to the deformed configuration
+    const vectorField oldPoints = this->mesh().points();
+    this->moveMesh(oldPoints, this->DD(), this->pointDD());
+
+    IncrementalModel::updateTotalFields();
+}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

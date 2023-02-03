@@ -65,7 +65,7 @@ mechanics::mechanics
     (
         IOobject
         (
-            "invF",
+            "Finv",
             mesh_.time().timeName(),
             mesh_
         ),

@@ -242,7 +242,7 @@ void explicitRiemannSolid::updateFluxes()
             brhoUC[patchi] = rhoUOwn.boundaryField()[patchi];
             btractionC[patchi] = tractionOwn.boundaryField()[patchi];
         }
-        // brhoU[patchi] == brhoUC[patchi];
+        brhoU[patchi] == brhoUC[patchi];
     }
 
     // Filter linear momentum
@@ -253,7 +253,7 @@ void explicitRiemannSolid::updateFluxes()
         (
             gradSchemes_.localGradient(rhoUAvg, rhoUC_, pointRhoU_)
         );
-        fvc::volPointInterpolate(rhoUAvg, rhoUGradLocal, pointRhoU_);
+        fvc::volPointInterpolate(rhoUAvg, rhoUGradLocal, pointRhoU_, true);
         pointRhoU_.correctBoundaryConditions();
 
         rhoUC_ = fvc::average(pointRhoU_);
@@ -516,7 +516,7 @@ void explicitRiemannSolid::decode()
     }
     else
     {
-        this->mechanical().volToPoint().interpolateDisplacement(D_, pointD_);
+        this->mechanical().volToPoint().interpolate(D_, pointD_);
         pointVectorField xNOld(xN_);
         xN_.primitiveFieldRef() = mesh().points() + pointD_.primitiveField();
         xN_.correctBoundaryConditions();
@@ -529,8 +529,8 @@ void explicitRiemannSolid::decode()
 void explicitRiemannSolid::update(const bool correctSigma)
 {
     //- Update gradients
-    // mechanical().grad(D_, gradD_);
-    gradD_ = F_ - tensor::I;
+    mechanical().grad(D_, gradD_);
+    // gradD_ = F_ - tensor::I;
     gradDD_ = gradD_ - gradD_.oldTime();
 
     //- Update wavespeeds

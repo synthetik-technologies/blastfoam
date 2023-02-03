@@ -47,7 +47,8 @@ hydrostaticPressureFvPatchVectorField
     solidTractionFvPatchVectorField(p, iF),
     pRef_(0.0),
     hRef_(0.0),
-    rho_(1.0)
+    rho_(1.0),
+    phFunc_(nullptr)
 {
     fvPatchVectorField::operator=(patchInternalField());
     gradient() = vector::zero;
@@ -65,10 +66,22 @@ hydrostaticPressureFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(p, iF),
-    pRef_(dict.lookup<scalar>("pRef")),
-    hRef_(dict.lookup<scalar>("hRef")),
-    rho_(dict.lookup<scalar>("rho"))
+    pRef_(0.0),
+    hRef_(0.0),
+    rho_(1.0),
+    phFunc_(nullptr)
 {
+    if (dict.found("phFunc"))
+    {
+        phFunc_ = Function1<scalar>::New("phFunc", dict);
+    }
+    else
+    {
+        dict.lookup("pRef") >> pRef_;
+        dict.lookup("hRef") >> hRef_;
+        dict.lookup("rho") >> rho_;
+    }
+
     if (dict.found("value"))
     {
         Field<vector>::operator=(vectorField("value", dict, p.size()));
@@ -95,7 +108,8 @@ hydrostaticPressureFvPatchVectorField
     solidTractionFvPatchVectorField(hpvf, p, iF, mapper),
     pRef_(hpvf.pRef_),
     hRef_(hpvf.hRef_),
-    rho_(hpvf.rho_)
+    rho_(hpvf.rho_),
+    phFunc_(hpvf.phFunc_, false)
 {
     traction() = vector::zero;
     pressure() = 0.0;
@@ -112,7 +126,8 @@ hydrostaticPressureFvPatchVectorField
     solidTractionFvPatchVectorField(hpvf, iF),
     pRef_(hpvf.pRef_),
     hRef_(hpvf.hRef_),
-    rho_(hpvf.rho_)
+    rho_(hpvf.rho_),
+    phFunc_(hpvf.phFunc_, false)
 {
     traction() = vector::zero;
     pressure() = 0.0;
@@ -139,8 +154,20 @@ bool hydrostaticPressureFvPatchVectorField::updateFields()
         x += this->patch().lookupPatchField<volVectorField, vector>("DD");
     }
 
-    scalarField gh((x & g.value()) + mag(g.value())*hRef_);
-    this->pressure() = pRef_ + rho_*gh;
+    if (phFunc_.valid())
+    {
+        scalarField h((x & g.value())/mag(g.value()) + hRef_);
+        forAll(h, i)
+        {
+            h[i] = phFunc_->value(h[i]);
+        }
+        this->pressure() = h;
+    }
+    else
+    {
+        scalarField gh((x & g.value()) + mag(g.value())*hRef_);
+        this->pressure() = pRef_ + rho_*gh;
+    }
 
     return false;
 }

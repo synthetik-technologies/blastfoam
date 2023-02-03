@@ -31,6 +31,7 @@ $(explicit)/unsExplicitLinearSolid/unsExplicitLinearSolid.C
 $(explicit)/explicitTotalLagrangianSolid/explicitTotalLagrangianSolid.C
 $(explicit)/unsExplicitTotalLagrangianSolid/unsExplicitTotalLagrangianSolid.C
 $(explicit)/explicitUpdatedLagrangianSolid/explicitUpdatedLagrangianSolid.C
+$(explicit)/unsExplicitUpdatedLagrangianSolid/unsExplicitUpdatedLagrangianSolid.C
 
 
 explicitRiemann=$(explicit)/explicitRiemannSolid

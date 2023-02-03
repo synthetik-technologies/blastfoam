@@ -67,6 +67,7 @@ Foam::solidModels::IncrementalSolid<SolidModel>::IncrementalSolid
 
     // For consistent restarts, we will calculate the gradient field
     this->mechanical().grad(this->D(), this->gradD());
+    this->gradD().storePrevIter();
 }
 
 

@@ -126,7 +126,7 @@ Foam::momentumStabilisation::JamesonSchmidtTurkelEnergy
       - scale
        *fvc::reconstruct
         (
-            0.5*vf.mesh().magSf()
+            0.5*sqr(vf.mesh().magSf())
            *(
                 fvc::snGrad(lapGammaVf)
               + fvc::snGrad(lapGammaVfOld)

@@ -60,6 +60,9 @@ protected:
         //- Total deformation gradient
         surfaceTensorField Ff_;
 
+        //- Inverse of total deformation gradient
+        surfaceTensorField invFf_;
+
         //- Relative deformation gradient
         surfaceTensorField relFf_;
 

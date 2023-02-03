@@ -106,16 +106,13 @@ class mechanicalEnergies
 
 
         //- Bulk viscosity stablisation pressure
-        autoPtr<surfaceScalarField> viscousPressurefPtr_;
+        mutable autoPtr<surfaceScalarField> viscousPressurefPtr_;
 
         //- Bulk viscosity stablisation pressure
-        autoPtr<volScalarField> viscousPressurePtr_;
-
-        //- Volumetric strain used calculate the linear bulk viscosity pressure
-        autoPtr<volScalarField> epsilonVolPtr_;
+        mutable autoPtr<volScalarField> viscousPressurePtr_;
 
         //- Output file for the energies
-        autoPtr<OFstream> energiesFilePtr_;
+        mutable autoPtr<OFstream> energiesFilePtr_;
 
         //- Time index to know when a new time step occurs
         label curTimeIndex_;
@@ -155,17 +152,17 @@ public:
         const volScalarField& viscousPressure
         (
             const volScalarField& rho,
-            const volScalarField& waveSpeed,
+            const surfaceScalarField& waveSpeed,
             const volTensorField& gradD
-        );
+        ) const;
 
         //- Viscous pressure
-        const surfaceScalarField& viscousPressure
+        const surfaceScalarField& viscousPressuref
         (
             const volScalarField& rho,
             const surfaceScalarField& waveSpeed,
             const volTensorField& gradD
-        );
+        ) const;
 
         //- Volumetric strain
         const volScalarField& epsilonVol

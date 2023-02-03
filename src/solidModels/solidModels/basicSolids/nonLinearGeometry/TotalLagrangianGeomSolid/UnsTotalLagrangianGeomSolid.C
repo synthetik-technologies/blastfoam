@@ -59,15 +59,23 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::UnsTotalLagrangianGeomSolid
         mesh,
         dimensionedTensor("I", dimless, I)
     ),
+    invFf_
+    (
+        IOobject
+        (
+            "Ffinv",
+            mesh.time().timeName(),
+            mesh
+        ),
+        inv(Ff_)
+    ),
     relFf_
     (
         IOobject
         (
             "relFf",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         I + this->gradDDf().T()
     ),
@@ -77,9 +85,7 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::UnsTotalLagrangianGeomSolid
         (
             "Jf",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         det(Ff_)
     ),
@@ -89,9 +95,7 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::UnsTotalLagrangianGeomSolid
         (
             "relJf",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         det(relFf_)
     )
@@ -126,8 +130,10 @@ void UnsTotalLagrangianGeomSolid<IncrementalModel>::update
 
     if (!this->enforceLinear())
     {
+        invFf_ = inv(Ff_);
+
         // Relative deformation gradient
-        relFf_ = Ff_ & inv(Ff_.oldTime());
+        relFf_ = Ff_ & invFf_.oldTime();
 
         // Relative Jacobian (Jacobian of relative deformation gradient)
         relJf_ = det(relFf_);
@@ -136,6 +142,7 @@ void UnsTotalLagrangianGeomSolid<IncrementalModel>::update
     {
         Ff_ = Ff_.oldTime();
         Jf_ = Jf_.oldTime();
+        invFf_ = invFf_.oldTime();
 
         relFf_ = tensor::I;
         relJf_ = 1.0;
@@ -185,7 +192,7 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::Pf() const
 
     forAll(Piolaf, facei)
     {
-        Piolaf[facei] = Jf_[facei]*(tensor(sigmaf[facei]) & T(inv(Ff_[facei])));
+        Piolaf[facei] = Jf_[facei]*(tensor(sigmaf[facei]) & T(invFf_[facei]));
     }
     surfaceTensorField::Boundary& bPiolaf = Piolaf.boundaryFieldRef();
     forAll(bPiolaf, patchi)
@@ -193,11 +200,11 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::Pf() const
         fvsPatchTensorField& pPiolaf = bPiolaf[patchi];
         const fvsPatchSymmTensorField& psigmaf = sigmaf.boundaryField()[patchi];
         const fvsPatchScalarField& pJf = Jf_.boundaryField()[patchi];
-        const fvsPatchTensorField& pFf = Ff_.boundaryField()[patchi];
+        const fvsPatchTensorField& pinvFf = invFf_.boundaryField()[patchi];
         forAll(pPiolaf, facei)
         {
             pPiolaf[facei] =
-                pJf[facei]*(tensor(psigmaf[facei]) & T(inv(pFf[facei])));
+                pJf[facei]*(tensor(psigmaf[facei]) & T(pinvFf[facei]));
         }
     }
 
@@ -212,9 +219,8 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::Pf(const fvPatch& patch) const
     const label patchi = patch.index();
     tmp<tensorField> tPiola(new tensorField(patch.size()));
     tensorField& Piola = tPiola.ref();
+
     const symmTensorField& sigma = this->sigmaf().boundaryField()[patchi];
-    const tensorField& F = this->Ff_.boundaryField()[patchi];
-    const scalarField& J = this->Jf_.boundaryField()[patchi];
 
     if (this->enforceLinear())
     {
@@ -225,9 +231,12 @@ UnsTotalLagrangianGeomSolid<IncrementalModel>::Pf(const fvPatch& patch) const
         return tPiola;
     }
 
+    const tensorField& invF = this->invFf_.boundaryField()[patchi];
+    const scalarField& J = this->Jf_.boundaryField()[patchi];
+
     forAll(Piola, facei)
     {
-        Piola[facei] = J[facei]*(sigma[facei] & T(inv(F[facei])));
+        Piola[facei] = J[facei]*(sigma[facei] & T(invF[facei]));
     }
     return tPiola;
 }

@@ -66,6 +66,9 @@ protected:
         //- Relative deformation gradient
         volTensorField relF_;
 
+        //- Inverse of relative deformation gradient
+        volTensorField invRelF_;
+
         //- Relative Jacobian: Jacobian of the relative deformation
         //  gradient
         volScalarField relJ_;

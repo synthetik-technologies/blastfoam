@@ -146,11 +146,14 @@ void volPointInterpolate
     labelHashSet fixedPoints;
     const typename GeometricField<Type, pointPatchField, pointMesh>::Boundary& bvpf =
         vpf.boundaryField();
-    forAll(bvpf, patchi)
+    if (boundary)
     {
-        if (bvpf[patchi].fixesValue())
+        forAll(bvpf, patchi)
         {
-            fixedPoints.insert(mesh.boundaryMesh()[patchi].meshPoints());
+            if (bvpf[patchi].fixesValue())
+            {
+                fixedPoints.insert(mesh.boundaryMesh()[patchi].meshPoints());
+            }
         }
     }
 
@@ -171,6 +174,11 @@ void volPointInterpolate
         forAll(points, pointi)
         {
             vpfI[pointi] = Zero;
+            if (fixedPoints.found(pointi))
+            {
+                continue;
+            }
+
             const labelList& pc = pointCells[pointi];
             forAll(pc, ci)
             {
@@ -198,7 +206,7 @@ void volPointInterpolate
                     forAll(f, pi)
                     {
                         const label pointi = f[pi];
-                        if (!fixedPoints.found(pointi))
+                        // if (!fixedPoints.found(pointi))
                         {
                             const vector d(points[pointi] - pC[fi]);
                             const scalar w = 1.0/mag(d);
@@ -228,6 +236,11 @@ void volPointInterpolate
         forAll(points, pointi)
         {
             vpfI[pointi] = Zero;
+            if (fixedPoints.found(pointi))
+            {
+                continue;
+            }
+
             const labelList& pc = pointCells[pointi];
             forAll(pc, ci)
             {
@@ -313,7 +326,8 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> surfVolInterpolate
 
     typename GeometricField<Type, fvPatchField, volMesh>::Boundary& bvf =
         vf.boundaryFieldRef();
-    const surfaceVectorField::Boundary& bvsf = vsf.boundaryField();
+    const typename GeometricField<Type, fvsPatchField, surfaceMesh>::Boundary&
+        bvsf = vsf.boundaryField();
     forAll(bvf, patchi)
     {
         const fvPatch& patch = vsf.mesh().boundary()[patchi];

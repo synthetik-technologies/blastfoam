@@ -91,6 +91,16 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::UpdatedLagrangianGeomSolid
         ),
         I + this->gradDD().T()
     ),
+    invRelF_
+    (
+        IOobject
+        (
+            "relFinv",
+            mesh.time().timeName(),
+            mesh
+        ),
+        inv(relF_)
+    ),
     relJ_
     (
         IOobject
@@ -132,6 +142,17 @@ void UpdatedLagrangianGeomSolid<IncrementalModel>::update
     J_ = relJ_*J_.oldTime();
 
     this->checkEnforceLinear(J_);
+
+    if (this->enforceLinear())
+    {
+        relF_ = tensor::I;
+        invRelF_ = tensor::I;
+        relJ_ = 1.0;
+    }
+    else
+    {
+        invRelF_ = inv(relF_);
+    }
 
     if (correctSigma)
     {
@@ -177,7 +198,7 @@ tmp<volTensorField> UpdatedLagrangianGeomSolid<IncrementalModel>::P() const
 
     forAll(Piola, celli)
     {
-        Piola[celli] = relJ_[celli]*(tensor(sigma[celli]) & T(inv(relF_[celli])));
+        Piola[celli] = relJ_[celli]*(tensor(sigma[celli]) & T(invRelF_[celli]));
     }
     volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
     forAll(bPiola, patchi)
@@ -185,11 +206,11 @@ tmp<volTensorField> UpdatedLagrangianGeomSolid<IncrementalModel>::P() const
         fvPatchTensorField& pPiola = bPiola[patchi];
         const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
         const fvPatchScalarField& prelJ = relJ_.boundaryField()[patchi];
-        const fvPatchTensorField& prelF = relF_.boundaryField()[patchi];
+        const fvPatchTensorField& pinvRelF = invRelF_.boundaryField()[patchi];
         forAll(pPiola, facei)
         {
             pPiola[facei] =
-                prelJ[facei]*(tensor(psigma[facei]) & T(inv(prelF[facei])));
+                prelJ[facei]*(tensor(psigma[facei]) & T(pinvRelF[facei]));
         }
     }
 
@@ -204,9 +225,8 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::P(const fvPatch& patch) const
     const label patchi = patch.index();
     tmp<tensorField> tpPiola(new tensorField(patch.size()));
     tensorField& pPiola = tpPiola.ref();
+
     const symmTensorField& psigma = this->sigma().boundaryField()[patchi];
-    const tensorField& prelF = this->relF_.boundaryField()[patchi];
-    const scalarField& prelJ = this->relJ_.boundaryField()[patchi];
 
     if (this->enforceLinear())
     {
@@ -217,9 +237,12 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::P(const fvPatch& patch) const
         return tpPiola;
     }
 
+    const tensorField& pinvRelF = this->invRelF_.boundaryField()[patchi];
+    const scalarField& prelJ = this->relJ_.boundaryField()[patchi];
+
     forAll(pPiola, facei)
     {
-        pPiola[facei] = prelJ[facei]*(psigma[facei] & T(inv(prelF[facei])));
+        pPiola[facei] = prelJ[facei]*(psigma[facei] & T(pinvRelF[facei]));
     }
     return tpPiola;
 }
@@ -238,7 +261,7 @@ tmp<vectorField> UpdatedLagrangianGeomSolid<IncrementalModel>::nf
         const label patchID = patch.index();
 
         // Patch relative deformation gradient inverse
-        tmp<tensorField> pRelFinvT(inv(relF_.boundaryField()[patchID])().T());
+        tmp<tensorField> pRelFinvT(invRelF_.boundaryField()[patchID].T());
 
         // Patch unit normals (deformed configuration)
         n.ref() = pRelFinvT & n();

@@ -222,13 +222,12 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
                (deltaT01*this->impKf_)()
             )
         );
-
         a_ =
             (
                 fvc::div(this->tractionSf())
               + fvc::div
                 (
-                    this->mesh().Sf()*energies_.viscousPressure
+                    this->mesh().Sf()*energies_.viscousPressuref
                     (
                         this->rho(),
                         wavespeed_,
@@ -257,121 +256,6 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
         this->stabilisation(),
         this->g()
     );
-
-    // // Mesh update loop
-    // do
-    // {
-    //     // Central difference scheme
-    //     const dimensionedScalar& deltaT = this->time().deltaT();
-    //     const dimensionedScalar deltaT01(0.5*(deltaT + this->time().deltaT0()));
-    //
-    //     // Compute the velocity
-    //     // Note: this is the velocity at the middle of the time-step
-    //     this->U() = this->U().oldTime() + deltaT01*a_.oldTime();
-    //
-    //     // Compute change in displacement
-    //     this->DD() = deltaT*this->U();
-    //
-    //     // Enforce any cell displacements
-    //     if (this->setCellDisps().cellIDs().size())
-    //     {
-    //         vectorField& DDI = this->DD();
-    //         vectorField& UI = this->U();
-    //         const vectorField& DOld = this->D().oldTime();
-    //
-    //         const labelList& cells = this->setCellDisps().cellIDs();
-    //         const vectorField& cellDs = this->setCellDisps().cellDisps();
-    //
-    //         forAll(cells, i)
-    //         {
-    //             const label celli = cells[i];
-    //             DDI[celli] = cellDs[i] - DOld[celli];
-    //             UI[celli] = DDI[celli]/deltaT.value();
-    //         }
-    //     }
-    //     this->DD().correctBoundaryConditions();
-    //     this->U().boundaryFieldRef() =
-    //         this->DD().boundaryField()/this->mesh().time().deltaTValue();
-    //     // this->correctUBCs(this->U());
-    //
-    //     relax();
-    //
-    //     // // Compute change in displacement
-    //     // this->DD() == deltaT*this->U();
-    //
-    //     // Update displacement
-    //     this->D() == this->D().oldTime() + this->DD();//*deltaT;
-    //
-    //     // Update the stress field based on the latest D field
-    //     this->update();
-    //
-    //     surfaceVectorField tractionSf(this->tractionSf());
-    //     surfaceVectorField::Boundary& btractionSf = tractionSf.boundaryFieldRef();
-    //     const volVectorField::Boundary& bD = this->solutionD().boundaryField();
-    //     forAll(btractionSf, patchi)
-    //     {
-    //         if (isA<solidTractionFvPatchVectorField>(bD[patchi]))
-    //         {
-    //             const fvPatch& patch = this->mesh().boundary()[patchi];
-    //             const solidTractionFvPatchVectorField& pD =
-    //                 dynamicCast<const solidTractionFvPatchVectorField>(bD[patchi]);
-    //
-    //             // Set boundary traction
-    //             btractionSf[patchi] =
-    //                 (
-    //                     pD.traction() - this->nf(patch)*pD.pressure()
-    //                   + (this->nf(patch) & this->sigma(patch))
-    //                 )*patch.magSf();
-    //         }
-    //     }
-    //
-    //     // Compute acceleration
-    //     // Note the inclusion of a linear bulk viscosity pressure term to
-    //     // dissipate high frequency energies, and a Rhie-Chow term to
-    //     // avoid checker-boarding
-    //     tmp<volVectorField> stab
-    //     (
-    //         this->stabilisation().stabilisation
-    //         (
-    //             this->U(),
-    //            (deltaT01*this->impKf_)()
-    //         )
-    //     );
-    //
-    //     a_ =
-    //         (
-    //             fvc::div(tractionSf)
-    //           + fvc::div
-    //             (
-    //                 this->mesh().Sf()*energies_.viscousPressure
-    //                 (
-    //                     this->rho(),
-    //                     wavespeed_,
-    //                     this->gradD()
-    //                 )
-    //             )
-    //
-    //             // This corresponds to Lax–Friedrichs smoothing
-    //           + stab()
-    //         )/this->rho()
-    //       + this->g();
-    //     a_.correctBoundaryConditions();
-    //
-    //     // Check energies
-    //     energies_.checkEnergies
-    //     (
-    //         this->rho(),
-    //         this->U(),
-    //         this->D(),
-    //         this->DD(),
-    //         this->sigma(),
-    //         this->gradD(),
-    //         this->gradDD(),
-    //         this->stabilisation(),
-    //         this->g()
-    //     );
-    //
-    // } while (this->mesh().update());
 }
 
 
