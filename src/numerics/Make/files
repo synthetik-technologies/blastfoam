@@ -78,19 +78,6 @@ $(octree)/octreeDataBoundBox.C
 $(octree)/treeNodeName.C
 $(octree)/treeLeafName.C
 
-RBFFunctions/RBFFunction/RBFFunction.C
-RBFFunctions/RBFFunction/RBFFunctionNew.C
-RBFFunctions/linear/linearRBFFunction.C
-RBFFunctions/W2/W2RBFFunction.C
-RBFFunctions/TPS/TPSRBFFunction.C
-RBFFunctions/IMQB/IMQBRBFFunction.C
-RBFFunctions/Gauss/GaussRBFFunction.C
-RBFFunctions/WendlandC0/WendlandC0RBFFunction.C
-RBFFunctions/WendlandC2/WendlandC2RBFFunction.C
-RBFFunctions/WendlandC4/WendlandC4RBFFunction.C
-RBFFunctions/WendlandC6/WendlandC6RBFFunction.C
-
-
 objectMotion/movingObject/movingObject.C
 objectMotion/objectMotionState/objectMotionState.C
 objectMotion/objectMotionState/objectMotionStateIO.C
