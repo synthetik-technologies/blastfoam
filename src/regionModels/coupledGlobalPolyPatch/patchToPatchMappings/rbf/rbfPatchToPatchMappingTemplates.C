@@ -54,12 +54,12 @@ void rbfPatchToPatchMapping::transferFaces
     if (&fromZone == &zoneA() && &toZone == &zoneB())
     {
         // fromZone is zoneA; toZone is zoneB
-        zoneAToZoneBInterpolator().interpolate(fromField, toField);
+        zoneAToZoneBFaceInterpolator().interpolate(fromField, toField);
     }
     else if (&toZone == &zoneA() && &fromZone == &zoneB())
     {
         // toZone is zoneA; fromZone is zoneB
-        zoneBToZoneAInterpolator().interpolate(fromField, toField);
+        zoneBToZoneAFaceInterpolator().interpolate(fromField, toField);
     }
     else
     {
@@ -91,12 +91,12 @@ void rbfPatchToPatchMapping::transferPoints
     if (&fromZone == &zoneA() && &toZone == &zoneB())
     {
         // fromZone is zoneA; toZone is zoneB
-        zoneAToZoneBInterpolator().interpolate(fromField, toField);
+        zoneAToZoneBPointInterpolator().interpolate(fromField, toField);
     }
     else if (&toZone == &zoneA() && &fromZone == &zoneB())
     {
         // toZone is zoneA; fromZone is zoneB
-        zoneBToZoneAInterpolator().interpolate(fromField, toField);
+        zoneBToZoneAPointInterpolator().interpolate(fromField, toField);
     }
     else
     {

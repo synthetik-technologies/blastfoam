@@ -35,6 +35,7 @@ License
 #include "fixedValuePointPatchFields.H"
 #include "cellMotionFvPatchFields.H"
 #include "motionDiffusivity.H"
+#include "syncTools.H"
 
 #include "fvm.H"
 #include "fvc.H"
@@ -294,8 +295,13 @@ void Foam::regionSolvers::fluid::initialiseMesh(const IterType iter)
 
 void Foam::regionSolvers::fluid::initialise()
 {
-    // moveMesh(FINAL_ITER);
-    // moveMesh(FINAL_ITER);
+    moveMesh(FINAL_ITER);
+    moveMesh(FINAL_ITER);
+    if (mesh_.moving())
+    {
+        mesh_.lookupObjectRef<surfaceScalarField>("meshPhi") == Zero;
+    }
+    mesh_.moving(false);
 }
 
 
@@ -303,6 +309,7 @@ bool Foam::regionSolvers::fluid::changeMesh()
 {
     bool changed = regionSolver::changeMesh();
     pointsOldPtr_.reset(new pointField(mesh_.points()));
+    pointDPtr_->storeOldTimes();
 
     if (changed)
     {
@@ -323,7 +330,6 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
     // return true;
     regionSolver::moveMesh(iter);
 
-    pointDPtr_->oldTime();
     pointDPtr_->storePrevIter();
 
     // Solve point motion
@@ -351,8 +357,7 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
         pointDPtr_(),
         valuePointPatchVectorField::typeName
     );
-    bpRelaxed = pointDPtr_->boundaryField();
-    cellDPtr_->correctBoundaryConditions();
+    bpRelaxed == pointDPtr_->boundaryField();
 
     Foam::solve
     (
@@ -449,34 +454,64 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
     );
     twoDPointCorrector::New(mesh_).correctPoints(tcurPoints.ref());
 
-    pointConstraints::syncUntransformedData
-    (
-        mesh_,
-        tcurPoints.ref(),
-        plusEqOp<vector>()
-    );
     {
         scalarField one(tcurPoints().size(), 1.0);
-        pointConstraints::syncUntransformedData
+        syncTools::syncPointList
+        (
+            mesh_,
+            tcurPoints.ref(),
+            plusEqOp<vector>(),
+            vector::zero
+        );
+        syncTools::syncPointList
         (
             mesh_,
             one,
-            plusEqOp<scalar>()
+            plusEqOp<scalar>(),
+            0.0
         );
         tcurPoints.ref() /= one;
+
+        pointConstraints::setPatchFields(pointDPtr_());
     }
     mesh_.movePoints(tcurPoints());
 
-    if (debug)
+    if (mesh_.moving())
     {
-        Info<<"Max mesh boundary velocity = "
-            << gMax(mag(mesh_.phi().boundaryField()/mesh_.magSf().boundaryField())) <<endl;
+        Info<<"Mesh boundary velocity (max/mean): " << endl;
         forAll(mesh_.boundary(), patchi)
         {
-            if (!mesh_.boundary()[patchi].coupled())
+            const fvPatch& p = mesh_.boundary()[patchi];
+            if (!p.coupled() && returnReduce(p.size(), sumOp<label>()))
             {
-                Info<<mesh_.boundary()[patchi].name()<<": "
-                    <<gMax(mag(mesh_.phi().boundaryField()[patchi]/mesh_.magSf().boundaryField()[patchi]))<<endl;
+                const polyPatch& pp = p.patch();
+                const pointField& oldPoints = mesh_.oldPoints();
+
+                vectorField oldFc(pp.size());
+                forAll(oldFc, i)
+                {
+                    oldFc[i] = pp[i].centre(oldPoints);
+                }
+
+                const scalar deltaT = mesh_.time().deltaTValue();
+
+                const vectorField Up((pp.faceCentres() - oldFc)/deltaT);
+
+                const volVectorField& U =
+                    mesh_.lookupObject<volVectorField>("U");
+
+                scalarField phip
+                (
+                    p.patchField<surfaceScalarField, scalar>(fvc::meshPhi(U))
+                );
+
+                const vectorField n(p.nf());
+                const scalarField& magSf = p.magSf();
+                tmp<scalarField> Un(phip/(magSf + vSmall));
+                const vectorField pU(Up + n*(Un - (n & Up)));
+
+                Info<< "    " << mesh_.boundary()[patchi].name()<<": "
+                    << gMaxMagSqr(pU) << "/" << gAverage(pU) << endl;
             }
         }
     }

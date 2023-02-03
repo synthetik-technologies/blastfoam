@@ -48,17 +48,26 @@ Foam::displacementRelaxations::IQNILS::IQNILS
 :
     displacementRelaxation(mesh, dict),
 
-    relaxFactor_(coeffDict(dict).lookupOrDefault<scalar>("relaxationFactor", 0.01)),
-    couplingReuse_(coeffDict(dict).lookupOrDefault<label>("couplingReuse", 0)),
+    initRelaxFactor_
+    (
+        coeffDict(dict).lookup<scalar>("initialRelaxationFactor")
+    ),
+    nOldTimes_(coeffDict(dict).lookup<label>("nCouplingTimes")),
 
     residuals_(coupledPatches_.size()),
     prevResiduals_(coupledPatches_.size()),
-    oldResiduals_(coupledPatches_.size()),
+
+    refResiduals_(coupledPatches_.size()),
+    refDisplacements_(coupledPatches_.size()),
 
     pointsV_(coupledPatches_.size()),
     pointsW_(coupledPatches_.size()),
     times_(coupledPatches_.size())
-{}
+{
+    Info<< "Using " << typeName  << " relaxation with:" << nl
+        << "initialRelaxationFactor: " << initRelaxFactor_ << nl
+        << "nCouplingTimes: " << nOldTimes_ << nl << endl;
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -106,10 +115,9 @@ void Foam::displacementRelaxations::IQNILS::relax
 {
     updateError(p);
 
-    const pointVectorField& pOld = p.oldTime();
     const pointVectorField& pPrev = p.prevIter();
-
     pointVectorField::Boundary& bp = p.boundaryFieldRef();
+
     forAll(coupledPatches_, pi)
     {
         const label patchi = coupledPatches_[pi];
@@ -124,28 +132,21 @@ void Foam::displacementRelaxations::IQNILS::relax
             (
                 pPrev.boundaryField()[patchi]
             );
-        const valuePointPatchVectorField& ppOld =
-            dynamicCast<const valuePointPatchVectorField>
-            (
-                pOld.boundaryField()[patchi]
-            );
-        if (iter == 1 || oldResiduals_[pi].size() != residuals_[pi].size())
-        {
-            oldResiduals_[pi] = residuals_[pi];
-        }
-        else if (iter > 1)
-        {
-            pointsV_[pi].append(residuals_[pi] - oldResiduals_[pi]);
-            pointsW_[pi].append(pp - ppOld);
-            times_[pi].append(p.time().timeIndex());
-        }
 
-        if (times_[pi].size() < 1)
+        if (iter == 0)
         {
-            pp == ppPrev + relaxFactor_*residuals_[pi];
+            refResiduals_[pi] = residuals_[pi];
+            refDisplacements_[pi] = pp;
+
+            pp == ppPrev + initRelaxFactor_*residuals_[pi];
+            pp.setInInternalField(p, pp);
         }
         else
         {
+            pointsV_[pi].append(residuals_[pi] - refResiduals_[pi]);
+            pointsW_[pi].append(pp - refDisplacements_[pi]);
+            times_[pi].append(p.time().timeIndex());
+
             label n = pointsV_[pi].size();
             scalarSquareMatrix R(n, 0.0);
             scalarField C(n, 0.0);
@@ -159,16 +160,16 @@ void Foam::displacementRelaxations::IQNILS::relax
 
             for (label i = 0; i < n; i++)
             {
-                R[i][i] = sqrt(gSum(magSqr(Q[i])));
-                Q[i] /= stabilise(R[i][i], small);
+                R[i][i] = sqrt(gSum(Q[i] & Q[i]));
+                Q[i] /= max(R[i][i], small);
 
                 for (label j = i+1; j < n; j++)
                 {
-                    R[i][j] = gSum(magSqr(Q[j]));
+                    R[i][j] = gSum(Q[i] & Q[j]);
                     Q[j] -= R[i][j]*Q[i];
                 }
 
-                C[i] = -gSum(Q[i] & residuals_[pi]);
+                C[i] = gSum(Q[i] & -residuals_[pi]);
             }
 
             for (label j = 0; j < n; j++)
@@ -209,15 +210,15 @@ void Foam::displacementRelaxations::IQNILS::relax
                     C[j] = 0.0;
                 }
             }
-
-            vectorField newDisp(ppPrev);
+            vectorField newDisp(pp);
             forAll(pointsW_[pi], i)
             {
                 newDisp += pointsW_[pi][i]*C[n-1-i];
             }
+            Info<<gMaxMagSqr(pp)<<" "<<gMaxMagSqr(newDisp)<<endl;
             pp == newDisp;
+            pp.setInInternalField(p, pp);
         }
-        pp.setInInternalField(p, pp);
     }
 }
 
@@ -230,7 +231,7 @@ void Foam::displacementRelaxations::IQNILS::clear()
         residuals_[pi] = Zero;
     }
 
-    if (!couplingReuse_)
+    if (!nOldTimes_)
     {
         forAll(times_, pi)
         {
@@ -244,16 +245,20 @@ void Foam::displacementRelaxations::IQNILS::clear()
     forAll(times_, pi)
     {
         DynamicList<scalar>& times = times_[pi];
+        Info<<"times: "<<times<<endl;
         label startI = times.size();
+
         forAll(times, ti)
         {
-            if (times[ti] < (mesh_.time().timeIndex() - couplingReuse_))
+            Info<<(mesh_.time().timeIndex() - times[ti])<<" "<<nOldTimes_<<endl;
+            if ((mesh_.time().timeIndex() - times[ti]) < nOldTimes_)
             {
+                startI = ti;
                 break;
             }
-            startI = ti;
         }
-        const label& oldSize = times.size();
+
+        const label oldSize = times.size();
         if (startI > 0)
         {
             for (label ti = 0; ti < oldSize-startI; ti++)
@@ -266,6 +271,7 @@ void Foam::displacementRelaxations::IQNILS::clear()
             pointsW_[pi].setSize(oldSize-startI);
             times.setSize(oldSize-startI);
         }
+        Info<<times<<endl<<endl;
     }
 }
 

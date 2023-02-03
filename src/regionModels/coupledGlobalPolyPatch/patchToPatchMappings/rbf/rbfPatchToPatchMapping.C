@@ -49,9 +49,9 @@ addToRunTimeSelectionTable
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void rbfPatchToPatchMapping::makeZoneAToZoneBInterpolator() const
+void rbfPatchToPatchMapping::makeZoneAToZoneBFaceInterpolator() const
 {
-    if (zoneAToZoneBInterpolatorPtr_.valid())
+    if (zoneAToZoneBFaceInterpolatorPtr_.valid())
     {
         FatalErrorInFunction
             << "Pointer already set!"
@@ -64,47 +64,51 @@ void rbfPatchToPatchMapping::makeZoneAToZoneBInterpolator() const
     const vectorField& zoneAFaceCentres = zoneA().faceCentres();
     const vectorField& zoneBFaceCentres = zoneB().faceCentres();
 
-    zoneAToZoneBInterpolatorPtr_ =
+    zoneAToZoneBFaceInterpolatorPtr_ =
         autoPtr<RBFInterpolation>
         (
             new RBFInterpolation
             (
-                RBFFunctions::TPS::typeName,
+                dict_.lookupOrDefault("RBFFunction", RBFFunctions::TPS::typeName),
                 dict_,
                 zoneAFaceCentres,
-                zoneBFaceCentres
+                zoneBFaceCentres,
+                false
             )
         );
 
-    // Check interpolation error
-    vectorField zoneAFaceCentresAtZoneB
-    (
-        zoneAToZoneBInterpolatorPtr_->interpolate(zoneAFaceCentres)
-    );
-    const scalar maxDist = gMax
-    (
-        mag(zoneAFaceCentresAtZoneB - zoneBFaceCentres)
-    );
+    if (debug)
+    {
+        // Check interpolation error
+        vectorField zoneAFaceCentresAtZoneB
+        (
+            zoneAToZoneBFaceInterpolatorPtr_->interpolate(zoneAFaceCentres)
+        );
+        const scalar maxDist = gMax
+        (
+            mag(zoneAFaceCentresAtZoneB - zoneBFaceCentres)
+        );
 
-    Info<< "    face interpolation error: " << maxDist << endl;
+        Info<< typeName << ": Face interpolation error= " << maxDist << endl;
+    }
 }
 
 
 const RBFInterpolation&
-rbfPatchToPatchMapping::zoneAToZoneBInterpolator() const
+rbfPatchToPatchMapping::zoneAToZoneBFaceInterpolator() const
 {
-    if (!zoneAToZoneBInterpolatorPtr_.valid())
+    if (!zoneAToZoneBFaceInterpolatorPtr_.valid())
     {
-        makeZoneAToZoneBInterpolator();
+        makeZoneAToZoneBFaceInterpolator();
     }
 
-    return zoneAToZoneBInterpolatorPtr_();
+    return zoneAToZoneBFaceInterpolatorPtr_();
 }
 
 
-void rbfPatchToPatchMapping::makeZoneBToZoneAInterpolator() const
+void rbfPatchToPatchMapping::makeZoneBToZoneAFaceInterpolator() const
 {
-    if (zoneBToZoneAInterpolatorPtr_.valid())
+    if (zoneBToZoneAFaceInterpolatorPtr_.valid())
     {
         FatalErrorInFunction
             << "Pointer already set!"
@@ -117,43 +121,160 @@ void rbfPatchToPatchMapping::makeZoneBToZoneAInterpolator() const
     const vectorField& zoneAFaceCentres = zoneA().faceCentres();
     const vectorField& zoneBFaceCentres = zoneB().faceCentres();
 
-    zoneBToZoneAInterpolatorPtr_ =
+    zoneBToZoneAFaceInterpolatorPtr_ =
         autoPtr<RBFInterpolation>
         (
             new RBFInterpolation
             (
-                RBFFunctions::TPS::typeName,
+                dict_.lookupOrDefault("RBFFunction", RBFFunctions::TPS::typeName),
                 dict_,
                 zoneBFaceCentres,
-                zoneAFaceCentres
+                zoneAFaceCentres,
+                false
             )
         );
 
-    // Check interpolation error
-    vectorField zoneBFaceCentresAtZoneA
-    (
-        zoneBToZoneAInterpolatorPtr_->interpolate(zoneBFaceCentres)
-    );
-    const scalar maxDist = gMax
-    (
-        mag(zoneBFaceCentresAtZoneA - zoneAFaceCentres)
-    );
+    if (debug)
+    {
+        // Check interpolation error
+        vectorField zoneBFaceCentresAtZoneA
+        (
+            zoneBToZoneAFaceInterpolatorPtr_->interpolate(zoneBFaceCentres)
+        );
+        const scalar maxDist = gMax
+        (
+            mag(zoneBFaceCentresAtZoneA - zoneAFaceCentres)
+        );
 
-    Info<< "    face interpolation error: " << maxDist << endl;
+        Info<< typeName << ": Face interpolation error= " << maxDist << endl;
+    }
 }
 
 
 const RBFInterpolation&
-rbfPatchToPatchMapping::zoneBToZoneAInterpolator() const
+rbfPatchToPatchMapping::zoneBToZoneAFaceInterpolator() const
 {
-    if (!zoneBToZoneAInterpolatorPtr_.valid())
+    if (!zoneBToZoneAFaceInterpolatorPtr_.valid())
     {
-        makeZoneBToZoneAInterpolator();
+        makeZoneBToZoneAFaceInterpolator();
     }
 
-    return zoneBToZoneAInterpolatorPtr_();
+    return zoneBToZoneAFaceInterpolatorPtr_();
 }
 
+
+void rbfPatchToPatchMapping::makeZoneAToZoneBPointInterpolator() const
+{
+    if (zoneAToZoneBPointInterpolatorPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "Pointer already set!"
+            << abort(FatalError);
+    }
+
+    Info<< "Create RBF interpolator from " << globalPatchA().patchName()
+        << " to " << globalPatchB().patchName() << endl;
+
+    const vectorField& zoneAPoints = zoneA().localPoints();
+    const vectorField& zoneBPoints = zoneB().localPoints();
+
+    zoneAToZoneBPointInterpolatorPtr_ =
+        autoPtr<RBFInterpolation>
+        (
+            new RBFInterpolation
+            (
+                dict_.lookupOrDefault("RBFFunction", RBFFunctions::TPS::typeName),
+                dict_,
+                zoneAPoints,
+                zoneBPoints,
+                true
+            )
+        );
+
+    if (debug)
+    {
+        // Check interpolation error
+        vectorField zoneAPointsAtZoneB
+        (
+            zoneAToZoneBPointInterpolatorPtr_->interpolate(zoneAPoints)
+        );
+        const scalar maxDist = gMax
+        (
+            mag(zoneAPointsAtZoneB - zoneBPoints)
+        );
+
+        Info<< typeName << ": Point interpolation error= " << maxDist << endl;
+    }
+}
+
+
+const RBFInterpolation&
+rbfPatchToPatchMapping::zoneAToZoneBPointInterpolator() const
+{
+    if (!zoneAToZoneBPointInterpolatorPtr_.valid())
+    {
+        makeZoneAToZoneBPointInterpolator();
+    }
+
+    return zoneAToZoneBPointInterpolatorPtr_();
+}
+
+
+void rbfPatchToPatchMapping::makeZoneBToZoneAPointInterpolator() const
+{
+    if (zoneBToZoneAPointInterpolatorPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "Pointer already set!"
+            << abort(FatalError);
+    }
+
+    Info<< "Create RBF interpolator from " << globalPatchB().patchName()
+        << " to " << globalPatchA().patchName() << endl;
+
+    const vectorField& zoneAPoints = zoneA().localPoints();
+    const vectorField& zoneBPoints = zoneB().localPoints();
+
+    zoneBToZoneAPointInterpolatorPtr_ =
+        autoPtr<RBFInterpolation>
+        (
+            new RBFInterpolation
+            (
+                dict_.lookupOrDefault("RBFFunction", RBFFunctions::TPS::typeName),
+                dict_,
+                zoneBPoints,
+                zoneAPoints,
+                true
+            )
+        );
+
+    if (debug)
+    {
+        // Check interpolation error
+        vectorField zoneBPointsAtZoneA
+        (
+            zoneBToZoneAPointInterpolatorPtr_->interpolate(zoneBPoints)
+        );
+        const scalar maxDist = gMax
+        (
+            mag(zoneBPointsAtZoneA - zoneAPoints)
+        );
+
+        Info<< typeName << ": Point interpolation error= " << maxDist << endl;
+    }
+}
+
+
+const RBFInterpolation&
+rbfPatchToPatchMapping::zoneBToZoneAPointInterpolator() const
+{
+    if (!zoneBToZoneAPointInterpolatorPtr_.valid())
+    {
+        makeZoneBToZoneAPointInterpolator();
+    }
+
+    return zoneBToZoneAPointInterpolatorPtr_();
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -171,8 +292,10 @@ rbfPatchToPatchMapping::rbfPatchToPatchMapping
         typeName_(), dict, patchA, patchB, globalPatchA, globalPatchB
     ),
     dict_(dict),
-    zoneAToZoneBInterpolatorPtr_(NULL),
-    zoneBToZoneAInterpolatorPtr_(NULL)
+    zoneAToZoneBFaceInterpolatorPtr_(NULL),
+    zoneBToZoneAFaceInterpolatorPtr_(NULL),
+    zoneAToZoneBPointInterpolatorPtr_(NULL),
+    zoneBToZoneAPointInterpolatorPtr_(NULL)
 {}
 
 

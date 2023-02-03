@@ -65,25 +65,43 @@ class rbfPatchToPatchMapping
         //- Dictionary
         const dictionary& dict_;
 
-        //- zoneA to zoneB interpolator
-        mutable autoPtr<RBFInterpolation> zoneAToZoneBInterpolatorPtr_;
+        //- zoneA to zoneB face interpolator
+        mutable autoPtr<RBFInterpolation> zoneAToZoneBFaceInterpolatorPtr_;
 
-        //- List of solid zone to fluid zone interpolators
-        mutable autoPtr<RBFInterpolation> zoneBToZoneAInterpolatorPtr_;
+        //- zoneB to zoneB face interpolator
+        mutable autoPtr<RBFInterpolation> zoneBToZoneAFaceInterpolatorPtr_;
+
+        //- zoneA to zoneB point interpolator
+        mutable autoPtr<RBFInterpolation> zoneAToZoneBPointInterpolatorPtr_;
+
+        //- zoneB to zoneB point interpolator
+        mutable autoPtr<RBFInterpolation> zoneBToZoneAPointInterpolatorPtr_;
 
     // Private Member Functions
 
         //- Make zoneA to zoneB interpolator
-        void makeZoneAToZoneBInterpolator() const;
+        void makeZoneAToZoneBFaceInterpolator() const;
 
         //- Return reference to zoneA to zoneB interpolator
-        const RBFInterpolation& zoneAToZoneBInterpolator() const;
+        const RBFInterpolation& zoneAToZoneBFaceInterpolator() const;
 
         //- Make zoneB to zoneA interpolator
-        void makeZoneBToZoneAInterpolator() const;
+        void makeZoneBToZoneAFaceInterpolator() const;
 
         //- Return reference to zoneB to zoneA interpolator
-        const RBFInterpolation& zoneBToZoneAInterpolator() const;
+        const RBFInterpolation& zoneBToZoneAFaceInterpolator() const;
+
+        //- Make zoneA to zoneB interpolator
+        void makeZoneAToZoneBPointInterpolator() const;
+
+        //- Return reference to zoneA to zoneB interpolator
+        const RBFInterpolation& zoneAToZoneBPointInterpolator() const;
+
+        //- Make zoneB to zoneA interpolator
+        void makeZoneBToZoneAPointInterpolator() const;
+
+        //- Return reference to zoneB to zoneA interpolator
+        const RBFInterpolation& zoneBToZoneAPointInterpolator() const;
 
         //- Transfer/map/interpolate from one zone faces to another zone
         //  faces for Type

@@ -46,11 +46,10 @@ Foam::regionSolverList::regionSolverList
     const List<Pair<word>>& regionTypes
 )
 :
-    PtrList<regionSolver>(regionMeshes.size()),
+    PtrListDictionary<regionSolver>(regionMeshes.size()),
     runTime_(runTime),
     regionProperties_(regionProperties),
     changed_(this->size(), true),
-    predictSolids_(solutionControls().lookupOrDefault("predictSolids", true)),
     fixedMapping_(regionProperties_.lookupOrDefault<bool>("fixedMapping", false)),
     iterNo_(0)
 {
@@ -61,6 +60,7 @@ Foam::regionSolverList::regionSolverList
         this->set
         (
             regioni,
+            regionMeshes[regioni].name(),
             regionSolver::New
             (
                 regionTypes[regioni].second(),
@@ -69,6 +69,42 @@ Foam::regionSolverList::regionSolverList
             ).ptr()
         );
     }
+
+    labelList map(identity(regionMeshes.size()));
+    if (regionProperties.found("order"))
+    {
+        wordList order(regionProperties.lookup("order"));
+        HashTable<label> rMap;
+        forAll(order, i)
+        {
+            rMap.insert(order[i], i);
+        }
+        forAll(regionMeshes, regioni)
+        {
+            map[regioni] = rMap[regionMeshes[regioni].name()];
+        }
+    }
+    else
+    {
+        bool predictSolids =
+            solutionControls().lookupOrDefault<bool>("predictSolids", true);
+        label regioni = 0;
+        forAll(regionMeshes, i)
+        {
+            if (operator[](i).isSolid() == predictSolids)
+            {
+                map[i] = regioni++;
+            }
+        }
+        forAll(regionMeshes, i)
+        {
+            if (operator[](i).isSolid() != predictSolids)
+            {
+                map[i] = regioni++;
+            }
+        }
+    }
+    this->reorder(map);
 }
 
 
@@ -147,6 +183,8 @@ void Foam::regionSolverList::initialiseDisplacement()
 
     // Set displacement field names
     initialise();
+
+    clear();
 
     label nInitialCorrectors =
         solutionControls().lookup<label>("nInitialCorrectors");
@@ -308,50 +346,15 @@ void Foam::regionSolverList::solve()
             finished = true;
         }
 
-        if (predictSolids_)
+
+        forAll(*this, regioni)
         {
-            forAll(*this, regioni)
-            {
-                if (operator[](regioni).isSolid())
-                {
-                    Info<< "Solving region "
-                        << operator[](regioni).mesh().name() << endl;
-                    operator[](regioni).solve();
-                }
-            }
-            forAll(*this, regioni)
-            {
-                if (!operator[](regioni).isSolid())
-                {
-                    Info<< "Solving region "
-                        << operator[](regioni).mesh().name() << endl;
-                    operator[](regioni).moveMesh(iter);
-                    operator[](regioni).solve();
-                }
-            }
+            Info<< "Solving region "
+                << operator[](regioni).mesh().name() << endl;
+            operator[](regioni).moveMesh(iter);
+            operator[](regioni).solve();
         }
-        else
-        {
-            forAll(*this, regioni)
-            {
-                if (!operator[](regioni).isSolid())
-                {
-                    Info<< "Solving region "
-                        << operator[](regioni).mesh().name() << endl;
-                    operator[](regioni).moveMesh(iter);
-                    operator[](regioni).solve();
-                }
-            }
-            forAll(*this, regioni)
-            {
-                if (operator[](regioni).isSolid())
-                {
-                    Info<< "Solving region "
-                        << operator[](regioni).mesh().name() << endl;
-                    operator[](regioni).solve();
-                }
-            }
-        }
+
         iterNo_++;
 
         if (converged())

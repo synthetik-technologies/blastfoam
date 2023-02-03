@@ -49,6 +49,8 @@ Author
     Dubravko Matijasevic, FSB Zagreb.
     Reorganisation by Hrvoje Jasak, Wikki Ltd.
 
+    David Blom, TU Delft. All rights reserved.
+
 SourceFiles
     RBFInterpolation.C
     RBFInterpolationTemplates.C
@@ -61,8 +63,15 @@ SourceFiles
 #include "dictionary.H"
 #include "RBFFunction.H"
 #include "point.H"
-#include "Switch.H"
-#include "simpleMatrix.H"
+
+#ifndef FULLDEBUG
+#define NDEBUG
+#endif
+
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Cholesky>
+#include <Eigen/QR>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -75,7 +84,43 @@ namespace Foam
 
 class RBFInterpolation
 {
+    typedef Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> Matrix;
+    typedef Eigen::FullPivLU<Matrix> LUMatrix;
+    typedef Eigen::LLT<Matrix> LLTMatrix;
+    typedef Eigen::ColPivHouseholderQR<Matrix> QRMatrix;
+
+    template<class Type>
+    using VectorMatrix =
+        Eigen::Map
+        <
+            Eigen::Matrix
+            <
+                scalar,
+                Eigen::Dynamic,
+                Eigen::Dynamic,
+                Eigen::RowMajor
+            >
+        >;
+
+    template<class Type>
+    using CVectorMatrix =
+        Eigen::Map
+        <
+            const Eigen::Matrix
+            <
+                scalar,
+                Eigen::Dynamic,
+                Eigen::Dynamic,
+                Eigen::RowMajor
+            >
+        >;
+
+    template<class Type>
+    using Block = Eigen::Block<Type>;
+
     // Private data
+
+        bool consistent_;
 
         //- Reference to control points
         const vectorField& controlPoints_;
@@ -83,42 +128,83 @@ class RBFInterpolation
         //- Reference to all points
         const vectorField& dataPoints_;
 
+        CVectorMatrix<vector> positions_;
+        CVectorMatrix<vector> positionsInterpolation_;
+
         //- RBF function
         autoPtr<RBFFunction> RBF_;
 
-        //- Interpolation matrix
-        mutable scalarSquareMatrix* BPtr_;
+        //- Evaluation matrix (output x input)
+        mutable Matrix* APtr_;
 
-        //- Focal point for cut-off radii
-        point focalPoint_;
+        //- Decomposition of the interpolation matrix
+        mutable LLTMatrix* decompLLTPtr_;
+        mutable QRMatrix* decompQRPtr_;
 
-        //- Inner cut-off radius
-        scalar innerRadius_;
+        //- Polynomial matrix of the input mesh (for separate polynomial)
+        mutable Matrix* QPtr_;
 
-        //- Outer cut-off radius
-        scalar outerRadius_;
+        //- Polynomial matrix of the output mesh (for separate polynomial)
+        mutable Matrix* VPtr_;
+
+        //- Decomposition of the polynomial (for separate polynomial)
+        mutable QRMatrix* QRPtr_;
+
+        bool separate_;
 
         //- Add polynomials to RBF matrix
-        Switch polynomials_;
+        bool polynomials_;
 
+        //- Dead directions
+        Vector<label> validDirs_;
+        label nDead_;
+
+        //- Polynomial size
+        label polySize_;
 
     // Private Member Functions
 
         //- Disallow default bitwise assignment
         void operator=(const RBFInterpolation&);
 
+        //- Fill polynomial entries in the given matrix
+        void fillPolynomialEntries
+        (
+            Matrix& m,
+            const label size,
+            const CVectorMatrix<vector>& pts
+        ) const;
 
-        //- Return interpolation matrix
-        const scalarSquareMatrix& B() const;
 
-        //- Calculate interpolation matrix
-        void calcB() const;
+        //- Calculate evaluation matrix
+        void calcA() const;
+
+        //- Return evaluation matrix
+        const Matrix& A() const;
+
+        //- Calculate interpolation matrices
+        void calc() const;
+
+        //- Return decomposition of the interpolation matrix
+        const LLTMatrix& decompLLT() const;
+        const QRMatrix& decompQR() const;
+
+        //- Polynomial matrix of the input mesh (for separate polynomial)
+        const Matrix& Q() const;
+
+        //- Polynomial matrix of the output mesh (for separate polynomial)
+        const Matrix& V() const;
+
+        //- Decomposition of the polynomial (for separate polynomial)
+        const QRMatrix& QR() const;
 
         //- Clear out
         void clearOut();
 
 
 public:
+
+    ClassName("RBFInterpolation");
 
     // Constructors
 
@@ -127,7 +213,8 @@ public:
         (
             const dictionary& dict,
             const vectorField& controlPoints,
-            const vectorField& dataPoints
+            const vectorField& dataPoints,
+            const bool consistent
         );
 
         //- Construct from components
@@ -136,7 +223,8 @@ public:
             const word& type,
             const dictionary& dict,
             const vectorField& controlPoints,
-            const vectorField& dataPoints
+            const vectorField& dataPoints,
+            const bool consistent
         );
 
         //- Construct as copy
@@ -145,7 +233,7 @@ public:
 
     // Destructor
 
-        ~RBFInterpolation();
+        virtual ~RBFInterpolation();
 
 
     // Member Functions
@@ -162,57 +250,49 @@ public:
             return dataPoints_;
         }
 
-        //- Return focalPoint
-        const point& focalPoint() const
-        {
-            return focalPoint_;
-        }
-
-        //- Access focalPoint
-        point& focalPoint()
-        {
-            return focalPoint_;
-        }
-
-        //- Return inner radius
-        scalar innerRadius() const
-        {
-            return innerRadius_;
-        }
-
-        //- Access inner radius
-        scalar& innerRadius()
-        {
-            return innerRadius_;
-        }
-
-        //- Return outer radius
-        scalar outerRadius() const
-        {
-            return outerRadius_;
-        }
-
-        //- Access outer radius
-        scalar& outerRadius()
-        {
-            return outerRadius_;
-        }
-
         //- Interpolate
         template<class Type>
-        tmp<Field<Type>> interpolate(const Field<Type>& ctrlField) const;
+        tmp<Field<Type>> interpolate(const Field<Type>& fromField) const;
+
+        // //- Interpolate
+        // template<class Type>
+        // tmp<Field<Type>> interpolate2(const Field<Type>& fromField) const;
 
         //- Interpolate
         template<class Type>
         void interpolate
         (
-            const Field<Type>& ctrlField,
-            Field<Type>& resField
+            const Field<Type>& fromField,
+            Field<Type>& toField
         ) const;
+
+        // //- Interpolate
+        // template<class Type>
+        // void interpolate2
+        // (
+        //     const Field<Type>& fromField,
+        //     Field<Type>& toField
+        // ) const;
 
         //- Move points
         void movePoints();
 };
+
+template<>
+void RBFInterpolation::interpolate
+(
+    const Field<scalar>& fromField,
+    Field<scalar>& toField
+) const;
+
+// //- Interpolate
+// template<>
+// void RBFInterpolation::interpolate2
+// (
+//     const Field<scalar>& fromField,
+//     Field<scalar>& toField
+// ) const;
+
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

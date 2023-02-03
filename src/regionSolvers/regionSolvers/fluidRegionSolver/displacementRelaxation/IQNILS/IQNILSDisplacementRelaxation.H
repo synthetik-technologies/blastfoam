@@ -52,12 +52,14 @@ class IQNILS
 :
     public displacementRelaxation
 {
-    scalar relaxFactor_;
-    label couplingReuse_;
+    scalar initRelaxFactor_;
+    label nOldTimes_;
 
     List<vectorField> residuals_;
     List<vectorField> prevResiduals_;
-    List<vectorField> oldResiduals_;
+
+    List<vectorField> refResiduals_;
+    List<vectorField> refDisplacements_;
 
     List<DynamicList<vectorField>> pointsV_;
     List<DynamicList<vectorField>> pointsW_;

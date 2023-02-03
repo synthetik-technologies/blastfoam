@@ -48,20 +48,26 @@ Foam::displacementRelaxations::Aitken::Aitken
 :
     displacementRelaxation(mesh, dict),
 
-    relaxFactor_(coeffDict(dict).lookupOrDefault<scalar>("relaxationFactor", 0.01)),
+    initRelaxFactor_
+    (
+        coeffDict(dict).lookup<scalar>("initialRelaxationFactor")),
     maxRelaxFactor_
     (
-        coeffDict(dict).lookupOrDefault<scalar>("maxRelaxationFactor", 0.1)
+        coeffDict(dict).lookup<scalar>("maxRelaxationFactor")
     ),
-    aitkenRelaxFactors_
+    aitkenFactors_
     (
         coupledPatches_.size(),
-        relaxFactor_
+        initRelaxFactor_
     ),
 
     residuals_(coupledPatches_.size()),
     prevResiduals_(coupledPatches_.size())
-{}
+{
+    Info<< "Using " << typeName  << " relaxation with:" << nl
+        << "initialRelaxationFactor: " << initRelaxFactor_ << nl
+        << "maxRelaxationFactor: " << maxRelaxFactor_ << nl << endl;
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -111,46 +117,30 @@ void Foam::displacementRelaxations::Aitken::relax
 
     if (iter < 1)
     {
-        pointVectorField::Boundary& bp = p.boundaryFieldRef();
-        forAll(coupledPatches_, pi)
-        {
-            const label patchi = coupledPatches_[pi];
-            if (isA<valuePointPatchVectorField>(bp[patchi]))
-            {
-                valuePointPatchVectorField& pp =
-                    dynamicCast<valuePointPatchVectorField>(bp[patchi]);
-                const valuePointPatchVectorField& ppPrev =
-                    dynamicCast<const valuePointPatchVectorField>
-                    (
-                        p.prevIter().boundaryField()[patchi]
-                    );
-                pp == ppPrev + residuals_[pi];
-                pp.setInInternalField(p, pp);
-            }
-        }
-        return;
+        aitkenFactors_ = initRelaxFactor_;
     }
-    forAll(aitkenRelaxFactors_, i)
+    else
     {
-        aitkenRelaxFactors_[i] =
-            mag
-            (
-                aitkenRelaxFactors_[i]
-               *(
-                    gSum(prevResiduals_[i] & (residuals_[i] - prevResiduals_[i]))
-                   /max
-                    (
-                        gSum(magSqr(residuals_[i] - prevResiduals_[i])),
-                        small
-                    )
-                )
-            );
-
-        reduce(aitkenRelaxFactors_[i], minOp<scalar>());
-
-        if (aitkenRelaxFactors_[i] > maxRelaxFactor_)
+        forAll(coupledPatches_, i)
         {
-            aitkenRelaxFactors_[i] = maxRelaxFactor_;
+            const scalar numerator =
+                gSum(prevResiduals_[i] & (residuals_[i] - prevResiduals_[i]));
+            const scalar denominator =
+                gSum(magSqr(residuals_[i] - prevResiduals_[i]));
+            if (denominator > small)
+            {
+                aitkenFactors_[i] =
+                    -aitkenFactors_[i]*numerator/denominator;
+            }
+            else
+            {
+                aitkenFactors_[i] = maxRelaxFactor_;
+            }
+
+            if (mag(aitkenFactors_[i]) > maxRelaxFactor_)
+            {
+                aitkenFactors_[i] = sign(aitkenFactors_[i])*maxRelaxFactor_;
+            }
         }
     }
 
@@ -167,7 +157,7 @@ void Foam::displacementRelaxations::Aitken::relax
                 (
                     p.prevIter().boundaryField()[patchi]
                 );
-            pp == ppPrev + aitkenRelaxFactors_[pi]*residuals_[pi];
+            pp == ppPrev + aitkenFactors_[pi]*residuals_[pi];
             pp.setInInternalField(p, pp);
         }
     }

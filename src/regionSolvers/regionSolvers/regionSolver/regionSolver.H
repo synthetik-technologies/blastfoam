@@ -144,6 +144,12 @@ public:
                 return mesh_.name();
             }
 
+            //- Return the name of the region
+            inline const word& keyword() const
+            {
+                return mesh_.name();
+            }
+
 
         // Edit
 

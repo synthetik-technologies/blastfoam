@@ -32,7 +32,7 @@ Foam::autoPtr<Foam::displacementRelaxation> Foam::displacementRelaxation::New
     const dictionary& dict
 )
 {
-    word relaxType("fixed");
+    word relaxType("none");
     if (dict.isDict(mesh.name())&& dict.subDict(mesh.name()).found("relaxation"))
     {
         dict.subDict(mesh.name()).lookup("relaxation") >> relaxType;

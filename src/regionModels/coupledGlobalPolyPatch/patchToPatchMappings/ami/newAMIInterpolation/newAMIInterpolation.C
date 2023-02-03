@@ -831,8 +831,15 @@ void Foam::newAMIInterpolation<SourcePatch, TargetPatch>::update
     const bool report
 )
 {
-    label srcTotalSize = returnReduce(srcPatch.size(), sumOp<label>());
-    label tgtTotalSize = returnReduce(tgtPatch.size(), sumOp<label>());
+    label srcTotalSize = srcPatch.size();
+    label tgtTotalSize = tgtPatch.size();
+
+    if (!useGlobalPolyPatch_)
+    {
+        reduce(srcTotalSize, sumOp<label>());
+        reduce(tgtTotalSize, sumOp<label>());
+    }
+
 
     if (srcTotalSize == 0)
     {

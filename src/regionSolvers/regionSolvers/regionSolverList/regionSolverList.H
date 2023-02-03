@@ -37,7 +37,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "PtrList.H"
+#include "PtrListDictionary.H"
 #include "Time.H"
 #include "dynamicFvMesh.H"
 
@@ -67,7 +67,7 @@ enum Convergence
 
 class regionSolverList
 :
-    public PtrList<regionSolver>
+    public PtrListDictionary<regionSolver>
 {
 protected:
 // Protected data
@@ -89,6 +89,9 @@ protected:
 
         //- Corrector index
         label iterNo_;
+
+        //- Solve order
+        Map<word> order_;
 
         //Has any region changed
         bool anyChanged() const

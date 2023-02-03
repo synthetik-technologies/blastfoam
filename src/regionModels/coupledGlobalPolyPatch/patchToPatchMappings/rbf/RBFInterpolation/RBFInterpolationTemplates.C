@@ -37,128 +37,214 @@ Author
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::RBFInterpolation::interpolate
 (
-    const Field<Type>& ctrlField
+    const Field<Type>& fromField
 ) const
 {
     tmp<Field<Type> > tresult
     (
         new Field<Type>(dataPoints_.size(), pTraits<Type>::zero)
     );
-    interpolate(ctrlField, tresult.ref());
+    interpolate(fromField, tresult.ref());
     return tresult;
 }
 
 
+// template<class Type>
+// Foam::tmp<Foam::Field<Type>> Foam::RBFInterpolation::interpolate2
+// (
+//     const Field<Type>& fromField
+// ) const
+// {
+//     tmp<Field<Type> > tresult
+//     (
+//         new Field<Type>(dataPoints_.size(), pTraits<Type>::zero)
+//     );
+//     interpolate2(fromField, tresult.ref());
+//     return tresult;
+// }
+
+
+/*
+* Compute interpolation matrix and directly interpolate the values.
+* The algorithms solves for the coefficients, and explicitly
+* uses the coefficients to interpolate the data to the new positions.
+*/
 template<class Type>
 void Foam::RBFInterpolation::interpolate
 (
-    const Field<Type>& ctrlField,
-    Field<Type>& result
+    const Field<Type> & fromField,
+    Field<Type> & toField
 ) const
 {
-    // HJ and FB (05 Jan 2009)
-    // Collect the values from ALL control points to all CPUs
-    // Then, each CPU will do interpolation only on local dataPoints_
+    const CVectorMatrix<Type> values
+    (
+        fromField.cdata()->v_,
+        fromField.size(),
+        pTraits<Type>::nComponents
+    );
+    VectorMatrix<Type> valuesInterpolation
+    (
+        toField.begin()->v_,
+        toField.size(),
+        pTraits<Type>::nComponents
+    );
 
-    if (ctrlField.size() != controlPoints_.size())
+    for (label cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
     {
-        FatalErrorInFunction
-            << "Incorrect size of source field.  Size = " << ctrlField.size()
-            << " nControlPoints = " << controlPoints_.size()
-            << abort(FatalError);
-    }
-
-
-    // FB 21-12-2008
-    // 1) Calculate alpha and beta coefficients using the Inverse
-    // 2) Calculate displacements of internal nodes using RBF values,
-    //    alpha's and beta's
-    // 3) Return displacements using tresult()
-
-    const label nControlPoints = controlPoints_.size();
-    const scalarSquareMatrix& mat = this->B();
-
-    // Determine interpolation coefficients
-    Field<Type> alpha(nControlPoints, pTraits<Type>::zero);
-    Field<Type> beta(4, pTraits<Type>::zero);
-
-    for (label row = 0; row < nControlPoints; row++)
-    {
-        for (label col = 0; col < nControlPoints; col++)
+        Eigen::VectorXd valuesI(fromField.size() + polySize_);
+        valuesI.setZero();
+        forAll(fromField, i)
         {
-            alpha[row] += mat[row][col]*ctrlField[col];
+            valuesI(i) = values(i, cmpti);
         }
-    }
 
-    if (polynomials_)
-    {
-        for
-        (
-            label row = nControlPoints;
-            row < nControlPoints + 4;
-            row++
-        )
+        if (consistent_)
         {
-            for (label col = 0; col < nControlPoints; col++)
+            auto valuesInterpolationI = valuesInterpolation.col(cmpti);
+
+            Eigen::VectorXd polynomialContribution;
+            // Solve polynomial QR and subtract it from the input data
+            if (separate_)
             {
-                beta[row - nControlPoints] += mat[row][col]*ctrlField[col];
-            }
-        }
-    }
-
-    // Evaluation
-    scalar t;
-
-    // Algorithmic improvement, Matteo Lombardi.  21/Mar/2011
-
-    forAll (dataPoints_, flPoint)
-    {
-        // Cut-off function to justify neglecting outer boundary points
-        t = (mag(dataPoints_[flPoint] - focalPoint_) - innerRadius_)/
-            (outerRadius_ - innerRadius_);
-
-        if (t >= 1)
-        {
-            // Increment is zero: w = 0
-            result[flPoint] = Zero;
-        }
-        else
-        {
-            // Full calculation of weights
-            scalarField weights
-            (
-                RBF_->weights(controlPoints_, dataPoints_[flPoint])
-            );
-
-            forAll (controlPoints_, i)
-            {
-                result[flPoint] += weights[i]*alpha[i];
+                polynomialContribution = QR().solve(valuesI);
+                valuesI -= (Q()*polynomialContribution);
             }
 
-            if (polynomials_)
+            // Integrated polynomial (and separated)
+            Eigen::VectorXd p;
+            if (RBF_->positiveDefinite())
             {
-                result[flPoint] +=
-                    beta[0]
-                  + beta[1]*dataPoints_[flPoint].x()
-                  + beta[2]*dataPoints_[flPoint].y()
-                  + beta[3]*dataPoints_[flPoint].z();
-            }
-
-            scalar w;
-
-            if (t <= 0)
-            {
-                w = 1.0;
+                p = decompLLT().solve(valuesI);
             }
             else
             {
-                w = 1.0 - sqr(t)*(3.0 - 2.0*t);
+                p = decompQR().solve(valuesI);
+            }
+            valuesInterpolationI = A()*p;
+
+            // Add the polynomial part again for separated polynomial
+            if (separate_)
+            {
+                valuesInterpolationI += (V()*polynomialContribution);
+            }
+        }
+        else
+        {
+            Eigen::VectorXd Au = A().transpose()*valuesI;
+            Eigen::VectorXd valuesInterpolationI;
+            if (RBF_->positiveDefinite())
+            {
+                valuesInterpolationI = decompLLT().solve(Au);
+            }
+            else
+            {
+                valuesInterpolationI = decompQR().solve(Au);
             }
 
-            result[flPoint] = w*result[flPoint];
+            if (separate_)
+            {
+                Eigen::VectorXd epsilon = V().transpose()*valuesI;
+
+                // epsilon = Q^T * mu - epsilon (tau in the PETSc impl)
+                epsilon -= Q().transpose()*valuesInterpolationI;
+
+                // out  = out - solveTranspose tau (sigma in the PETSc impl)
+                // Newer version of eigen provide the solve() for transpose()
+                // matrix decopmositions
+#if EIGEN_VERSION_AT_LEAST(3, 4, 0)
+                valuesInterpolationI -=
+                    static_cast<Eigen::VectorXd>(QR().transpose().solve(-epsilon));
+#else
+                // Backwards compatible version
+                Eigen::VectorXd sigma(Q().rows());
+                const Eigen::Index nonzeroPivots = QR().nonzeroPivots();
+
+                if (nonzeroPivots == 0)
+                {
+                    sigma.setZero();
+                }
+                else
+                {
+                    Eigen::VectorXd c
+                    (
+                        QR().colsPermutation().transpose()*(-epsilon)
+                    );
+
+                    QR().matrixQR().topLeftCorner
+                    (
+                        nonzeroPivots,
+                        nonzeroPivots
+                    ).template triangularView<Eigen::Upper>().transpose().conjugate().solveInPlace
+                    (
+                        c.topRows(nonzeroPivots)
+                    );
+
+                    sigma.topRows(nonzeroPivots) = c.topRows(nonzeroPivots);
+                    sigma.bottomRows(QR().rows() - nonzeroPivots).setZero();
+
+                    sigma.applyOnTheLeft(QR().householderQ().setLength(nonzeroPivots));
+                    valuesInterpolationI -= sigma;
+                }
+#endif
+                forAll(toField, i)
+                {
+                    valuesInterpolation(i, cmpti) = valuesInterpolationI(i);
+                }
+            }
         }
     }
 }
+
+
+// /*
+// * This function is only called by the RBFCoarsening class.
+// * It is assumed that the polynomial term is included in the
+// * interpolation, and that the fullPivLu decomposition is
+// * used to solve for the coefficients B.
+// */
+// template<class Type>
+// void Foam::RBFInterpolation::interpolate2
+// (
+//     const Field<Type>& fromField,
+//     Field<Type>& toField
+// ) const
+// {
+//     const CVectorMatrix<Type> values
+//     (
+//         fromField.cdata()->v_,
+//         fromField.size(),
+//         pTraits<Type>::nComponents
+//     );
+//     VectorMatrix<Type> valuesInterpolation
+//     (
+//         toField.begin()->v_,
+//         toField.size(),
+//         pTraits<Type>::nComponents
+//     );
+//
+//     for (label cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
+//     {
+//         auto valuesI = values.col(cmpti);
+//         auto valuesInterpolationI = valuesInterpolation.col(cmpti);
+//
+//         if (polynomials_)
+//         {
+//             Matrix valuesLU
+//             (
+//                 values.rows() + values.cols() + 1,
+//                 values.cols()
+//             );
+//             valuesLU.setZero(); // initialize all values zero
+//             valuesLU.topLeftCorner(values.rows(), values.cols()) = valuesI;
+//             valuesInterpolationI = Phi()*lu().solve(valuesLU);
+//         }
+//         else
+//         {
+//             valuesInterpolationI = Phi()*lu().solve(valuesI);
+//         }
+//     }
+// }
+
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

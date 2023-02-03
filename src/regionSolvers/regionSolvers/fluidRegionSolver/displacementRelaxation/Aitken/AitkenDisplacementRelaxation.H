@@ -52,9 +52,9 @@ class Aitken
 :
     public displacementRelaxation
 {
-    scalar relaxFactor_;
+    scalar initRelaxFactor_;
     scalar maxRelaxFactor_;
-    scalarList aitkenRelaxFactors_;
+    scalarList aitkenFactors_;
 
     List<vectorField> residuals_;
     List<vectorField> prevResiduals_;

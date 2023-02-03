@@ -28,139 +28,240 @@ Author
 \*---------------------------------------------------------------------------*/
 
 #include "RBFInterpolation.H"
+#include "QRMatrix.H"
 #include "demandDrivenData.H"
+#include "boundBox.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineTypeNameAndDebug(RBFInterpolation, 0);
+}
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-const Foam::scalarSquareMatrix& Foam::RBFInterpolation::B() const
+void Foam::RBFInterpolation::fillPolynomialEntries
+(
+    Matrix& M,
+    const label start,
+    const CVectorMatrix<vector>& pts
+) const
 {
-    if (!BPtr_)
+    for (label i = 0; i < pts.rows(); i++)
     {
-        calcB();
+        M(i, start) = 1.0;
+        label k = 0;
+        for (label cmpti = 0; cmpti < 3; cmpti++)
+        {
+            if (validDirs_[cmpti])
+            {
+                M(i, start + 1 + k) = pts(i, cmpti);
+                k++;
+            }
+        }
     }
-
-    return *BPtr_;
 }
 
 
-void Foam::RBFInterpolation::calcB() const
+void Foam::RBFInterpolation::calc() const
 {
-    // Determine inverse of boundary connectivity matrix
-    label polySize(4);
+    DebugInfo<< "Computing decomposition matricies"<<endl;
 
-    if (!polynomials_)
+    // Sizes
+    const label n = controlPoints_.size() + polySize_;
+
+    // Evaluate radial basis functions for matrix H
+    Matrix CLU(n, n);
+    CLU.setZero();
+
+    // RBF function evaluation
+    forAll(controlPoints_, i)
     {
-        polySize = 0;
-    }
-
-    // Fill Nb x Nb matrix
-    simpleMatrix<scalar> A(controlPoints_.size()+polySize);
-
-    const label nControlPoints = controlPoints_.size();
-    for (label i = 0; i < nControlPoints; i++)
-    {
-        scalarField weights(RBF_->weights(controlPoints_, controlPoints_[i]));
-
-        for (label col = 0; col < nControlPoints; col++)
+        for (label j = i; j < controlPoints_.size(); j++)
         {
-            A[i][col] = weights[col];
+            CLU(i, j) =
+                RBF_->evaluate(mag(controlPoints_[i] - controlPoints_[j]));
         }
     }
 
+    // Include polynomial contributions
     if (polynomials_)
     {
-        for
+        fillPolynomialEntries
         (
-            label row = nControlPoints;
-            row < nControlPoints + 1;
-            row++
-        )
-        {
-            for (label col = 0; col < nControlPoints; col++)
-            {
-                A[col][row] = 1.0;
-                A[row][col] = 1.0;
-            }
-        }
+            CLU,
+            controlPoints_.size(),
+            positions_
+        );
+    }
+    CLU.triangularView<Eigen::Lower>() = CLU.transpose();
 
-        // Fill in X components of polynomial part of matrix
-        for
-        (
-            label row = nControlPoints + 1;
-            row < nControlPoints + 2;
-            row++
-        )
-        {
-            for (label col = 0; col < nControlPoints; col++)
-            {
-                A[col][row] = controlPoints_[col].x();
-                A[row][col] = controlPoints_[col].x();
-            }
-        }
+    if (decompLLTPtr_ || decompQRPtr_)
+    {
+        FatalErrorInFunction
+            << " Decomposition matrix already set" << endl
+            << abort(FatalError);
+    }
 
-        // Fill in Y components of polynomial part of matrix
-        for
-        (
-            label row = nControlPoints + 2;
-            row < nControlPoints + 3;
-            row++
-        )
-        {
-            for (label col = 0; col < nControlPoints; col++)
-            {
-                A[col][row] = controlPoints_[col].y();
-                A[row][col] = controlPoints_[col].y();
-            }
-        }
-        // Fill in Z components of polynomial part of matrix
-        for
-        (
-            label row = nControlPoints + 3;
-            row < nControlPoints + 4;
-            row++
-        )
-        {
-            for (label col = 0; col < nControlPoints; col++)
-            {
-                A[col][row] = controlPoints_[col].z();
-                A[row][col] = controlPoints_[col].z();
-            }
-        }
+    bool sucessful = false;
+    if (RBF_->positiveDefinite())
+    {
+        decompLLTPtr_ = new LLTMatrix(CLU.llt());
+        sucessful =
+            decompLLTPtr_->info() == Eigen::ComputationInfo::Success;
+    }
+    else
+    {
+        decompQRPtr_ = new QRMatrix(CLU.colPivHouseholderQr());
+        sucessful = decompQRPtr_->isInvertible();
+    }
+    if (!sucessful)
+    {
+        FatalErrorInFunction
+             << "Interpolation matrix is not invertable" << endl
+             << abort(FatalError);
+    }
 
-        // Fill 4x4 zero part of matrix
-        for
-        (
-            label row = nControlPoints;
-            row < nControlPoints + 4;
-            row++
-        )
+    if (separate_)
+    {
+        if (QPtr_ || VPtr_ || QRPtr_)
         {
-            for
-            (
-                label col = nControlPoints;
-                col < nControlPoints + 4;
-                col++
-            )
-            {
-                A[row][col] = 0.0;
-            }
+            FatalErrorInFunction
+                << " Seperate matrices already set" << endl
+                << abort(FatalError);
+        }
+        QPtr_ = new Matrix(controlPoints_.size(), 4 - nDead_);
+        fillPolynomialEntries(*QPtr_, 0, positions_);
+
+        VPtr_ = new Matrix(dataPoints_.size(), 4 - nDead_);
+        fillPolynomialEntries(*VPtr_, 0, positionsInterpolation_);
+
+        QRPtr_ = new QRMatrix(QPtr_->colPivHouseholderQr());
+    }
+
+    DebugInfo<<" Done computing decomposition matrices" << endl;
+}
+
+
+void Foam::RBFInterpolation::calcA() const
+{
+    if (APtr_)
+    {
+        FatalErrorInFunction
+            << " A matrix already set" << endl
+            << abort(FatalError);
+    }
+    DebugInfo<< "Updating A matrix" << endl;
+
+    APtr_ =
+        new Matrix
+        (
+            dataPoints_.size(),
+            controlPoints_.size() + polySize_
+        );
+    Matrix& A = *APtr_;
+    A.setZero();
+
+    // Evaluate A which contains the evaluation of the radial basis function
+    forAll(dataPoints_, i)
+    {
+        forAll(controlPoints_, j)
+        {
+            A(i, j) =
+                RBF_->evaluate(mag(controlPoints_[j] - dataPoints_[i]));
         }
     }
 
-    // HJ and FB (05 Jan 2009)
-    // Collect ALL control points from ALL CPUs
-    // Create an identical inverse for all CPUs
-
-    Info<< "Inverting RBF motion matrix" << endl;
-
-//     BPtr_ = new scalarSquareMatrix(A.LUinvert());
-    BPtr_ = new scalarSquareMatrix(SVDinv(A));
+    // Include polynomial contributions in matrix A
+    if (polynomials_)
+    {
+        fillPolynomialEntries
+        (
+            A,
+            controlPoints_.size(),
+            positionsInterpolation_
+        );
+    }
+    DebugInfo<< "Finished computing A matrix" << endl;
 }
 
+
+const Foam::RBFInterpolation::Matrix& Foam::RBFInterpolation::A() const
+{
+    if (!APtr_)
+    {
+        calcA();
+    }
+
+    return *APtr_;
+}
+
+
+const Foam::RBFInterpolation::LLTMatrix&
+Foam::RBFInterpolation::decompLLT() const
+{
+    if (!decompLLTPtr_)
+    {
+        calc();
+    }
+
+    return *decompLLTPtr_;
+}
+
+
+const Foam::RBFInterpolation::QRMatrix&
+Foam::RBFInterpolation::decompQR() const
+{
+    if (!decompQRPtr_)
+    {
+        calc();
+    }
+
+    return *decompQRPtr_;
+}
+
+
+const Foam::RBFInterpolation::Matrix& Foam::RBFInterpolation::Q() const
+{
+    if (!QPtr_)
+    {
+        calc();
+    }
+
+    return *QPtr_;
+}
+
+
+const Foam::RBFInterpolation::Matrix& Foam::RBFInterpolation::V() const
+{
+    if (!VPtr_)
+    {
+        calc();
+    }
+
+    return *VPtr_;
+}
+
+
+const Foam::RBFInterpolation::QRMatrix& Foam::RBFInterpolation::QR() const
+{
+    if (!QRPtr_)
+    {
+        calc();
+    }
+
+    return *QRPtr_;
+}
 
 void Foam::RBFInterpolation::clearOut()
 {
-    deleteDemandDrivenData(BPtr_);
+    deleteDemandDrivenData(APtr_);
+    deleteDemandDrivenData(decompLLTPtr_);
+    deleteDemandDrivenData(decompQRPtr_);
+    deleteDemandDrivenData(QPtr_);
+    deleteDemandDrivenData(VPtr_);
+    deleteDemandDrivenData(QRPtr_);
 }
 
 
@@ -170,18 +271,58 @@ Foam::RBFInterpolation::RBFInterpolation
 (
     const dictionary& dict,
     const vectorField& controlPoints,
-    const vectorField& dataPoints
+    const vectorField& dataPoints,
+    const bool consistent
 )
 :
+    consistent_(true),
     controlPoints_(controlPoints),
     dataPoints_(dataPoints),
+    positions_
+    (
+        const_cast<scalar*>(controlPoints_.begin()->v_),
+        controlPoints_.size(),
+        vector::nComponents
+    ),
+    positionsInterpolation_
+    (
+        const_cast<scalar*>(dataPoints_.begin()->v_),
+        dataPoints_.size(),
+        vector::nComponents
+    ),
     RBF_(RBFFunction::New(dict)),
-    BPtr_(nullptr),
-    focalPoint_(dict.lookup("focalPoint")),
-    innerRadius_(readScalar(dict.lookup("innerRadius"))),
-    outerRadius_(readScalar(dict.lookup("outerRadius"))),
-    polynomials_(dict.lookup("polynomials"))
-{}
+    APtr_(nullptr),
+    decompLLTPtr_(nullptr),
+    decompQRPtr_(nullptr),
+    QPtr_(nullptr),
+    VPtr_(nullptr),
+    QRPtr_(nullptr),
+    separate_(dict.lookup<bool>("separate")),
+    polynomials_
+    (
+        RBF_->positiveDefinite() || separate_
+      ? false
+      : dict.lookup<bool>("polynomials")
+    ),
+    validDirs_(1, 1, 1),
+    nDead_(0),
+    polySize_(0)
+{
+    if (polynomials_)
+    {
+        polySize_ = 4;
+        boundBox bb(controlPoints_);
+        for (label cmpti = 0; cmpti < 3; cmpti++)
+        {
+            if (mag(bb.min()[cmpti] - bb.max()[cmpti]) < small)
+            {
+                validDirs_[cmpti] = 0;
+                nDead_++;
+                polySize_--;
+            }
+        }
+    }
+}
 
 
 Foam::RBFInterpolation::RBFInterpolation
@@ -189,18 +330,58 @@ Foam::RBFInterpolation::RBFInterpolation
     const word& type,
     const dictionary& dict,
     const vectorField& controlPoints,
-    const vectorField& dataPoints
+    const vectorField& dataPoints,
+    const bool consistent
 )
 :
+    consistent_(true),
     controlPoints_(controlPoints),
     dataPoints_(dataPoints),
+    positions_
+    (
+        const_cast<scalar*>(controlPoints_.begin()->v_),
+        controlPoints_.size(),
+        vector::nComponents
+    ),
+    positionsInterpolation_
+    (
+        const_cast<scalar*>(dataPoints_.begin()->v_),
+        dataPoints_.size(),
+        vector::nComponents
+    ),
     RBF_(RBFFunction::New(type, dict)),
-    BPtr_(nullptr),
-    focalPoint_(Zero),
-    innerRadius_(0.0),
-    outerRadius_(1.0),
-    polynomials_(true)
-{}
+    APtr_(nullptr),
+    decompLLTPtr_(nullptr),
+    decompQRPtr_(nullptr),
+    QPtr_(nullptr),
+    VPtr_(nullptr),
+    QRPtr_(nullptr),
+    separate_(dict.lookupOrDefault("separate", false)),
+    polynomials_
+    (
+        RBF_->positiveDefinite() || separate_
+      ? false
+      : dict.lookupOrDefault("polynomials", true)
+    ),
+    validDirs_(1, 1, 1),
+    nDead_(0),
+    polySize_(0)
+{
+    if (polynomials_)
+    {
+        polySize_ = 4;
+        boundBox bb(controlPoints_);
+        for (label cmpti = 0; cmpti < 3; cmpti++)
+        {
+            if (mag(bb.min()[cmpti] - bb.max()[cmpti]) < small)
+            {
+                validDirs_[cmpti] = 0;
+                nDead_++;
+                polySize_--;
+            }
+        }
+    }
+}
 
 
 Foam::RBFInterpolation::RBFInterpolation
@@ -208,15 +389,49 @@ Foam::RBFInterpolation::RBFInterpolation
     const RBFInterpolation& rbf
 )
 :
+    consistent_(rbf.consistent_),
     controlPoints_(rbf.controlPoints_),
     dataPoints_(rbf.dataPoints_),
+    positions_
+    (
+        const_cast<scalar*>(controlPoints_.begin()->v_),
+        controlPoints_.size(),
+        vector::nComponents
+    ),
+    positionsInterpolation_
+    (
+        const_cast<scalar*>(dataPoints_.begin()->v_),
+        dataPoints_.size(),
+        vector::nComponents
+    ),
     RBF_(rbf.RBF_->clone()),
-    BPtr_(nullptr),
-    focalPoint_(rbf.focalPoint_),
-    innerRadius_(rbf.innerRadius_),
-    outerRadius_(rbf.outerRadius_),
-    polynomials_(rbf.polynomials_)
-{}
+    APtr_(nullptr),
+    decompLLTPtr_(nullptr),
+    decompQRPtr_(nullptr),
+    QPtr_(nullptr),
+    VPtr_(nullptr),
+    QRPtr_(nullptr),
+    separate_(rbf.separate_),
+    polynomials_(rbf.polynomials_),
+    validDirs_(1, 1, 1),
+    nDead_(0),
+    polySize_(0)
+{
+    if (polynomials_)
+    {
+        polySize_ = 4;
+        boundBox bb(controlPoints_);
+        for (label cmpti = 0; cmpti < 3; cmpti++)
+        {
+            if (mag(bb.min()[cmpti] - bb.max()[cmpti]) < small)
+            {
+                validDirs_[cmpti] = 0;
+                nDead_++;
+                polySize_--;
+            }
+        }
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -234,5 +449,176 @@ void Foam::RBFInterpolation::movePoints()
     clearOut();
 }
 
+/*
+* Compute interpolation matrix and directly interpolate the values.
+* The algorithms solves for the coefficients, and explicitly
+* uses the coefficients to interpolate the data to the new positions.
+*/
+template<>
+void Foam::RBFInterpolation::interpolate
+(
+    const Field<scalar>& fromField,
+    Field<scalar>& toField
+) const
+{
+    if (consistent_)
+    {
+        const CVectorMatrix<scalar> values
+        (
+            fromField.cdata(),
+            fromField.size(),
+            1
+        );
+        Eigen::VectorXd valuesI(values.col(0));
+        VectorMatrix<scalar> valuesInterpolation
+        (
+            toField.data(),
+            toField.size(),
+            1
+        );
+        auto valuesInterpolationI = valuesInterpolation.col(0);
+
+        Eigen::VectorXd polynomialContribution;
+        // Solve polynomial QR and subtract it from the input data
+        if (separate_)
+        {
+            polynomialContribution = QR().solve(valuesI);
+            valuesI -= (Q()*polynomialContribution);
+        }
+
+        // Integrated polynomial (and separated)
+        Eigen::VectorXd p;
+        if (RBF_->positiveDefinite())
+        {
+            p = decompLLT().solve(valuesI);
+        }
+        else
+        {
+            p = decompQR().solve(valuesI);
+        }
+        valuesInterpolationI = A()*p;
+
+        // Add the polynomial part again for separated polynomial
+        if (separate_)
+        {
+            valuesInterpolationI += (V()*polynomialContribution);
+        }
+    }
+    else
+    {
+        Eigen::VectorXd valuesI(A().rows());
+        valuesI.setZero();
+        forAll(fromField, i)
+        {
+            valuesI(i) = fromField[i];
+        }
+
+        Eigen::VectorXd Au = A()*valuesI;
+        Eigen::VectorXd valuesInterpolationI;
+        if (RBF_->positiveDefinite())
+        {
+            valuesInterpolationI = decompLLT().solve(Au);
+        }
+        else
+        {
+            valuesInterpolationI = decompQR().solve(Au);
+        }
+
+        if (separate_)
+        {
+            Eigen::VectorXd epsilon = V().transpose()*valuesI;
+
+            // epsilon = Q^T * mu - epsilon (tau in the PETSc impl)
+            epsilon -= Q().transpose()*valuesInterpolationI;
+
+            // out  = out - solveTranspose tau (sigma in the PETSc impl)
+            // Newer version of eigen provide the solve() for transpose()
+            // matrix decopmositions
+#if EIGEN_VERSION_AT_LEAST(3, 4, 0)
+            valuesInterpolationI -=
+                static_cast<Eigen::VectorXd>(QR().transpose().solve(-epsilon));
+#else
+            // Backwards compatible version
+            Eigen::VectorXd sigma(Q().rows());
+            const Eigen::Index nonzeroPivots = QR().nonzeroPivots();
+
+            if (nonzeroPivots == 0)
+            {
+                sigma.setZero();
+            }
+            else
+            {
+                Eigen::VectorXd c
+                (
+                    QR().colsPermutation().transpose()*(-epsilon)
+                );
+
+                QR().matrixQR().topLeftCorner
+                (
+                    nonzeroPivots,
+                    nonzeroPivots
+                ).template triangularView<Eigen::Upper>().transpose().conjugate().solveInPlace
+                (
+                    c.topRows(nonzeroPivots)
+                );
+
+                sigma.topRows(nonzeroPivots) = c.topRows(nonzeroPivots);
+                sigma.bottomRows(QR().rows() - nonzeroPivots).setZero();
+
+                sigma.applyOnTheLeft(QR().householderQ().setLength(nonzeroPivots));
+                valuesInterpolationI -= sigma;
+            }
+#endif
+            forAll(toField, i)
+            {
+                toField[i] = valuesInterpolationI(i);
+            }
+        }
+    }
+}
+
+
+// /*
+// * This function is only called by the RBFCoarsening class.
+// * It is assumed that the polynomial term is included in the
+// * interpolation, and that the fullPivLu decomposition is
+// * used to solve for the coefficients B.
+// */
+// template<>
+// void Foam::RBFInterpolation::interpolate2
+// (
+//     const Field<scalar>& fromField,
+//     Field<scalar>& toField
+// ) const
+// {
+//     const CVectorMatrix<scalar> values
+//     (
+//         fromField.cdata(),
+//         fromField.size(),
+//         pTraits<scalar>::nComponents
+//     );
+//     VectorMatrix<scalar> valuesInterpolation
+//     (
+//         toField.data(),
+//         toField.size(),
+//         pTraits<scalar>::nComponents
+//     );
+//
+//     if (polynomials_)
+//     {
+//         Matrix valuesLU
+//         (
+//             values.rows() + values.cols() + 1,
+//             values.cols()
+//         );
+//         valuesLU.setZero(); // initialize all values zero
+//         valuesLU.topLeftCorner(values.rows(), values.cols()) = values;
+//         valuesInterpolation.noalias() = Phi()*lu().solve(valuesLU);
+//     }
+//     else
+//     {
+//         valuesInterpolation.noalias() = Phi()*lu().solve(values);
+//     }
+// }
 
 // ************************************************************************* //

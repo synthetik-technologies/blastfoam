@@ -124,7 +124,6 @@ void Foam::regionSolvers::solid::solve()
     SolverPerformance<vector>::debug = 0;
 
     solid_->evolve();
-    solid_->updateTotalFields();
 
     const volVectorField& D = solid_->solutionD();
 
@@ -170,6 +169,7 @@ void Foam::regionSolvers::solid::solve()
 
 void Foam::regionSolvers::solid::clear()
 {
+    solid_->updateTotalFields();
     solidTractionFvPatchVectorField::canRelax = true;
     initialError_ = -1;
 }

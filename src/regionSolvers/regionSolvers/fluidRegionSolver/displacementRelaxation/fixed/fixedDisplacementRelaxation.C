@@ -47,8 +47,11 @@ Foam::displacementRelaxations::fixed::fixed
 )
 :
     displacementRelaxation(mesh, dict),
-    relaxationFactor_(coeffDict(dict).lookupOrDefault("relaxationFactor", 1.0))
-{}
+    relaxationFactor_(coeffDict(dict).lookup<scalar>("relaxationFactor"))
+{
+    Info<< "Using " << typeName  << " relaxation with:" << nl
+        << "relaxationFactor: " << relaxationFactor_ << nl << endl;
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -65,7 +68,7 @@ void Foam::displacementRelaxations::fixed::relax
 )
 {
     updateError(p);
-    if (mesh_.relaxField(p.name()) || relaxationFactor_ < 1)
+    if (relaxationFactor_ < 1)
     {
         scalar f =
             mesh_.relaxField(p.name())
