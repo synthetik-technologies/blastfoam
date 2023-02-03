@@ -37,9 +37,6 @@ fvMeshRefiner/fvMeshHexRefiner/hexRefRefinementHistoryConstraint.C
 fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C
 fvMeshRefiner/fvMeshPolyRefiner/polyRefinementConstraint.C
 
-newFvMeshAdder/newFvMeshAdder.C
-newFvMeshSubset/newFvMeshSubset.C
-newFvMeshDistribute/newFvMeshDistribute.C
 fvMeshBalance/fvMeshBalance.C
 
 meshTools/dynMeshTools.C

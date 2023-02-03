@@ -1,0 +1,3 @@
+addEmptyPatch.C
+
+EXE = $(BLAST_APPBIN)/addEmptyPatch
