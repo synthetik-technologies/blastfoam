@@ -117,20 +117,23 @@ Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
                 scalar d2 = ds[j];
 
                 scalar rij = i > j ? d1/d2 : d2/d1;
-                scalar Xij =
-                    i > j
-                  ? (1.0 - sqr(rij))/(2.0 - alphaMax1)
-                  : 1.0 - (1.0 - sqr(rij))/(2.0 - alphaMax1);
-                scalar pij = alphaMax1;
-
-                if (rij <= 0.741)
+                if (mag(rij - 1.0) > small)
                 {
-                    pij +=
-                        alphaMax1
-                       *(1.0 - alphaMax1)
-                       *(1.0 - 2.35*rij + 1.35*sqr(rij));
+                    scalar Xij =
+                        i > j
+                    ? (1.0 - sqr(rij))/(2.0 - alphaMax1)
+                    : 1.0 - (1.0 - sqr(rij))/(2.0 - alphaMax1);
+                    scalar pij = alphaMax1;
+
+                    if (rij <= 0.741)
+                    {
+                        pij +=
+                            alphaMax1
+                        *(1.0 - alphaMax1)
+                        *(1.0 - 2.35*rij + 1.35*sqr(rij));
+                    }
+                    sum += (1.0 - alphaMax1/pij)*cxi/Xij;
                 }
-                sum += (1.0 - alphaMax1/pij)*cxi/Xij;
             }
         }
         maxAlpha = min(maxAlpha, alphaMax1/(1.0 - sum));

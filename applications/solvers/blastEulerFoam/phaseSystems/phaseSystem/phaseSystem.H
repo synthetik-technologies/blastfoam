@@ -490,15 +490,15 @@ public:
         //- Return the aspect-ratio for a pair
         tmp<volScalarField> E(const phasePairKey& key) const;
 
-    	//- Return is mas transfer is used for a phase
-	bool hasMassTransfer(const phaseModel& phase) const;
+        //- Return is mas transfer is used for a phase
+        bool hasMassTransfer(const phaseModel& phase) const;
 
-    	//- Return is mas transfer is used for a phase
-	bool hasMassTransfer
-    	(
-    	    const phaseModel& phase1, 
-    	    const phaseModel& phase2
-	) const;
+        //- Return is mas transfer is used for a phase
+        bool hasMassTransfer
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
 
         //- Return the mass transfer for a pair
         tmp<volScalarField> mDot

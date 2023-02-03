@@ -192,20 +192,16 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                         (phase1.U(nodei) - phase2.U(nodej))/XiD
                        *(1.0/(dragCoeff*XiD*deltaT + 1.0) - 1.0)
                     );
-Info<<"here"<<endl;
                     phase1.alphaRhoU(nodei) += deltaM;
                     if (phase1.totalEnergy())
                     {
-                        Info<<"phase1 "<<phase1.name()<<" "<<phase1.totalEnergy()<<endl;
                         phase1.alphaRhoE() += deltaM & (*Uis[pair]);
                     }
                     phase2.alphaRhoU(nodej) -= deltaM;
                     if (phase2.totalEnergy())
                     {
-                        Info<<"phase2 "<<phase2.name()<<endl;
                         phase2.alphaRhoE() -= deltaM & (*Uis[pair]);
                     }
-                    Info<<"there"<<endl;
                 }
             }
         }
