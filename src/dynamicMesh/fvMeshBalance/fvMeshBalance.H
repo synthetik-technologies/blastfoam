@@ -104,48 +104,8 @@ protected:
         //- Set the decomposer
         void makeDecomposer() const;
 
-
-    // Class to set the size of patches during
-    class fvPatchResizer
-    :
-        public MeshObject
-        <
-            polyMesh,
-            UpdateableMeshObject,
-            fvPatchResizer
-        >
-    {
-        fvMesh& mesh_;
-    public:
-
-        TypeName("fvPatchResizer");
-
-        fvPatchResizer(fvMesh& mesh)
-        :
-            MeshObject
-            <
-                polyMesh,
-                UpdateableMeshObject,
-                fvPatchResizer
-            >(mesh),
-            mesh_(mesh)
-        {}
-
-        virtual ~fvPatchResizer();
-
-        //- Resize patchFields
-        template<class Type, template<class> class Patch, class Mesh>
-        void resizePatchFields(fvMesh& mesh, const labelList& patchSizes);
-
-        //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
-
-        //- Move points
-        virtual bool movePoints()
-        {
-            return false;
-        }
-    };
+        //- Check in an internal patch is found
+        void checkForInternal() const;
 
 
 public:
@@ -171,9 +131,6 @@ public:
 
 
     // Member Functions
-
-        //- Template to update all volField boundaries
-        template<class GeoField> void correctBoundaries();
 
         //- Is balancing enabled
         bool balance() const
@@ -217,10 +174,6 @@ public:
         //- Balance the mesh
         autoPtr<mapDistributePolyMesh> distribute();
 
-        //- Helper: push master point data to collocated points
-        template<class Type>
-        static void pushUntransformedData(const polyMesh&, Field<Type>&);
-
         //- Read the projection parameters from dictionary
         void read(const dictionary& dict);
 
@@ -233,8 +186,17 @@ public:
         void operator=(const fvMeshBalance&) = delete;
 
 
-    // Return is the mesh is being balanced
+    // Static Member Functions
 
+        //- Template to update all processor boundaries
+        template<class GeoField>
+        static void correctProcessorBoundaries(const fvMesh&);
+
+        //- Helper: push master point data to collocated points
+        template<class Type>
+        static void pushUntransformedData(const polyMesh&, Field<Type>&);
+
+        // Return is the mesh is being balanced
         static bool isBalancing();
         static bool isBalancing(const polyMesh&);
 };
