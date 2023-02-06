@@ -8,6 +8,7 @@ paraFoam -builtin -touch
 
 runApplication -s fluid blockMesh -region fluid
 runApplication -s fluid decomposePar -region fluid
+runParallel addEmptyPatch internalPatch internal -region fluid -overwrite
 runParallel setRefinedFields -region fluid
 
 runApplication -s solid blockMesh -region solid

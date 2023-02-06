@@ -11,6 +11,8 @@ runApplication -s walls blockMesh -region walls
 
 runApplication decomposePar -allRegions
 
+runParallel addEmptyPatch internalPatch internal -region fluid -overwrite
+
 runParallel setRefinedFields -region fluid
 
 runParallel $(getApplication)

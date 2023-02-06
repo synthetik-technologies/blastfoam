@@ -49,7 +49,7 @@ Foam::word Foam::reconstruction::scheme
     const bool overwrite
 )
 {
-    return scheme(name, word::null, mesh, fail, overwrite);
+   return scheme(name, word::null, mesh, fail, overwrite);
 }
 
 
@@ -62,17 +62,23 @@ Foam::word Foam::reconstruction::scheme
     const bool overwrite
 )
 {
+    const dictionary& interpDict =
+        mesh.schemesDict().subDict("interpolationSchemes");
     const word name(IOobject::groupName(baseName, phaseName));
     word baseScheme(scheme(baseName));
     word nameScheme(scheme(name));
 
-    if (mesh.schemesDict().subDict("interpolationSchemes").found(nameScheme))
+    if (interpDict.found(nameScheme))
     {
         return nameScheme;
     }
-    else if (mesh.schemesDict().subDict("interpolationSchemes").found(baseScheme))
+    else if (interpDict.found(baseScheme))
     {
         return baseScheme;
+    }
+    else if (interpDict.found("defaultReconstruction"))
+    {
+        return "defaultReconstruction";
     }
     else if (fail && overwrite)
     {

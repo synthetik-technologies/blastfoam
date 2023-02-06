@@ -52,4 +52,43 @@ maxCo           0.5;
 
 functions
 {
+    errorEstimator
+    {
+        libs ("libutilityFunctionObjects.so");
+        type coded;
+        name errorEstimator;
+        codeInclude
+        #{
+            #include "volFields.H"
+            #include "autoPtr.H"
+        #};
+        codeData
+        #{
+            autoPtr<volScalarField> errorPtr_;
+        #};
+        codeRead
+        #{
+            if (!errorPtr_.valid())
+            {
+                errorPtr_.set
+                (
+                    new volScalarField
+                    (
+                        IOobject
+                        (
+                            "test",
+                            this->mesh().time().timeName(),
+                            this->mesh()
+                        ),
+                        mesh(),
+                        0.0
+                    )
+                );
+            }
+        #};
+        codeExecute
+        #{
+            //Do stuff
+        #};
+
 }

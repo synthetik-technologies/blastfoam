@@ -1,4 +1,5 @@
-blastfoam (6.0.0-staging.1) UNRELEASED; urgency=low
+blastfoam (6.1.0) UNRELEASED; urgency=low
+
 
   [ Ubuntu ]
   * Initial release. Closes: #nnnn
@@ -52,4 +53,34 @@ blastfoam (6.0.0-staging.1) UNRELEASED; urgency=low
   [  ]
   * Automated Release
 
- --  <runner@fv-az264-119.ca02foy5wcnuvlrvrz2wi3p2og.dx.internal.cloudapp.net>  Fri, 02 Sep 2022 19:53:37 +0000
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [  ]
+  * Automated Release
+
+  [ Synthetik Technologies ]
+  * Automated Release
+  * Automated Release
+  * Automated Release
+  * Automated Release
+
+ -- Synthetik Technologies <support@synthetik-technologies.com>  Thu, 02 Feb 2023 17:50:37 +0000

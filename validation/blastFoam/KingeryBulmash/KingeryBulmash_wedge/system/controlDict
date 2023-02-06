@@ -108,6 +108,11 @@ functions
             p
         );
     }
+    conservedQuantities
+    {
+        type conservedQuantities;
+        fields (rhoE);
+    }
 };
 
 // ************************************************************************* //

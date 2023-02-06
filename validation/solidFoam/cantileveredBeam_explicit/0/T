@@ -29,13 +29,21 @@ boundaryField
     {
         type            zeroGradient;
     }
+    bottom
+    {
+        type            zeroGradient;
+    }
+    free
+    {
+        type            zeroGradient;
+    }
     tip
     {
         type            zeroGradient;
     }
-    bottom
+    empty
     {
-        type            zeroGradient;
+        type empty;
     }
 }
 

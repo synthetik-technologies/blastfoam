@@ -155,7 +155,7 @@ void Foam::compressibleBlastSystem::solve()
 
 void Foam::compressibleBlastSystem::postUpdate()
 {
-    if (needSolve(U_.name()) || turbulence_.valid())
+    if (needSolve(U_.name()) || turbulence_.valid() || dragSource_.valid())
     {
         // Solve momentum
         fvVectorMatrix UEqn
@@ -182,7 +182,13 @@ void Foam::compressibleBlastSystem::postUpdate()
     }
 
     // Solve thermal energy diffusion
-    if (needSolve(e_.name()) || turbulence_.valid() || radiation_.valid())
+    if
+    (
+        needSolve(e_.name())
+     || turbulence_.valid()
+     || radiation_.valid()
+     || extESource_.valid()
+    )
     {
         if (radiation_.valid())
         {
@@ -228,12 +234,6 @@ void Foam::compressibleBlastSystem::postUpdate()
         }
         if (turbulence_.valid())
         {
-            // eEqn -=
-            //     fvc::laplacian
-            //     (
-            //         thermophysicalTransport_->alphaEff(),
-            //         T_
-            //     )*this->thermo().Cv();
             eEqn += thermophysicalTransport_->divq(e_);
         }
         constraints().constrain(eEqn);
@@ -254,6 +254,7 @@ void Foam::compressibleBlastSystem::postUpdate()
         thermophysicalTransport_->correct();
     }
 }
+
 
 
 void Foam::compressibleBlastSystem::addECoeff

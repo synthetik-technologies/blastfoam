@@ -105,6 +105,9 @@ protected:
         //- Set the decomposer
         void makeDecomposer() const;
 
+        //- Check in an internal patch is found
+        void checkForInternal() const;
+
 
 public:
 
@@ -172,10 +175,6 @@ public:
         //- Balance the mesh
         autoPtr<mapDistributePolyMesh> distribute();
 
-        //- Helper: push master point data to collocated points
-        template<class Type>
-        static void pushUntransformedData(const polyMesh&, Field<Type>&);
-
         //- Read the projection parameters from dictionary
         void read(const dictionary& dict);
 
@@ -193,6 +192,10 @@ public:
         //- Template to update all processor boundaries
         template<class GeoField>
         static void correctProcessorBoundaries(const fvMesh&);
+
+        //- Helper: push master point data to collocated points
+        template<class Type>
+        static void pushUntransformedData(const polyMesh&, Field<Type>&);
 
         // Return is the mesh is being balanced
         static bool isBalancing();

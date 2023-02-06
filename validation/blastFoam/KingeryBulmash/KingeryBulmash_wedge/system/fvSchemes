@@ -20,7 +20,7 @@ fluxScheme      Kurganov;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP;
+    timeIntegrator  RK2SSP 3;
 }
 
 gradSchemes
@@ -42,12 +42,8 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  vanAlbada;
-    reconstruct(rho)    vanAlbada;
+    "reconstruct\(.*\)" vanAlbada;
     reconstruct(U)      vanAlbadaV;
-    reconstruct(e)      vanAlbada;
-    reconstruct(p)      vanAlbada;
-    reconstruct(speedOfSound) vanAlbada;
 }
 
 snGradSchemes

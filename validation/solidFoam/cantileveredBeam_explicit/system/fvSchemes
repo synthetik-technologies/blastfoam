@@ -23,12 +23,12 @@ d2dt2Schemes
 ddtSchemes
 {
     default                 Euler;
-    timeIntegrator          RK2SSP 3;
 }
 
 gradSchemes
 {
     default                 extendedLeastSquares 0;
+    "limitedGrad\(.*\)"     localLeastSquares 0;
 }
 
 divSchemes
@@ -39,8 +39,7 @@ divSchemes
 
 laplacianSchemes
 {
-    default                 none;
-    laplacian(DU,U)         Gauss linear corrected;
+    default                 Gauss linear corrected;
 }
 
 snGradSchemes
@@ -51,6 +50,8 @@ snGradSchemes
 interpolationSchemes
 {
     default                 linear;
+    reconstruct(P)          linearMUSCL none;
+    reconstruct(U)          linearMUSCL none;
 }
 
 

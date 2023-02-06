@@ -81,13 +81,12 @@ void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& map)
 {
     fvMesh::updateMesh(map);
 
-    if (refiner_->isBalancing())
-    {
-        return;
-    }
-
-    // Update fluxes
-    if (correctFluxes_.size())
+    // Update fluxes if refining or unrefining
+    if
+    (
+        (refiner_->isRefining() || refiner_->isUnrefining())
+     && correctFluxes_.size()
+    )
     {
         const labelList& faceMap = map.faceMap();
         const labelList& reverseFaceMap = map.reverseFaceMap();

@@ -17,6 +17,7 @@ FoamFile
 
 // Refiner type (hexRefiner or polyRefiner)
 refiner polyRefiner;
+dumpLevel true;
 
 // Included parameters file
 #include "$FOAM_CASE/parameters";

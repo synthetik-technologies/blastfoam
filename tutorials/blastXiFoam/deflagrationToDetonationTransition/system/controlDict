@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     blastFoam;
+application     blastXiFoam;
 
 startFrom       startTime;
 

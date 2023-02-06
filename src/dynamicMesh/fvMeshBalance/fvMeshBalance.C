@@ -28,6 +28,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "RefineBalanceMeshObject.H"
 #include "parcelCloud.H"
+#include "internalFvPatch.H"
 #include "preserveFaceZonesConstraint.H"
 #include "singleProcessorFaceSetsConstraint.H"
 #include "preservePatchesConstraint.H"
@@ -64,6 +65,61 @@ bool Foam::fvMeshBalance::isBalancing(const polyMesh& mesh)
     }
     return false;
 }
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::fvMeshBalance::makeDecomposer() const
+{
+    if (decomposer_.valid())
+    {
+        FatalErrorInFunction
+            << "Decomposer already set" << endl
+            << abort(FatalError);
+    }
+    decomposer_ = decompositionMethod::New(decompositionDict_);
+
+    returnReduce(1, maxOp<label>());
+    if (!decomposer_->parallelAware())
+    {
+        WarningInFunction
+            << "You have selected decomposition method "
+            << decomposer_->typeName
+            << " which is not parallel aware." << endl;
+    }
+}
+
+
+void Foam::fvMeshBalance::checkForInternal() const
+{
+    if (!Pstream::parRun() || !balance_)
+    {
+        return;
+    }
+
+    bool foundInternal = false;
+    forAll(mesh_.boundary(), patchi)
+    {
+        if (isA<internalFvPatch>(mesh_.boundary()[patchi]))
+        {
+            foundInternal = true;
+            break;
+        }
+    }
+    reduce(foundInternal, andOp<bool>());
+
+    if (!foundInternal)
+    {
+        FatalErrorInFunction
+            << "When balancing is enabled, an internal patch should "
+            << "be added to the mesh. " << nl
+            << "\tTo add the necessary patch to the mesh and the fields, "
+            << "use the command" << nl
+            << "\t\"addEmptyPatch patchName internal -overwrite\" " << nl
+            << exit(FatalError);
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -211,7 +267,6 @@ Foam::fvMeshBalance::fvMeshBalance
 Foam::fvMeshBalance::~fvMeshBalance()
 {}
 
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::fvMeshBalance::read(const dictionary& balanceDict)
@@ -249,6 +304,8 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
     decompositionDict_ <<= balanceDict;
 
     balanceDict.readIfPresent("allowableImbalance", allowableImbalance_);
+
+    checkForInternal();
 }
 
 
@@ -420,27 +477,6 @@ void Foam::fvMeshBalance::preserveBaffles()
 }
 
 
-void Foam::fvMeshBalance::makeDecomposer() const
-{
-    if (decomposer_.valid())
-    {
-        FatalErrorInFunction
-            << "Decomposer already set" << endl
-            << abort(FatalError);
-    }
-    decomposer_ = decompositionMethod::New(decompositionDict_);
-
-    returnReduce(1, maxOp<label>());
-    if (!decomposer_->parallelAware())
-    {
-        WarningInFunction
-            << "You have selected decomposition method "
-            << decomposer_->typeName
-            << " which is not parallel aware." << endl;
-    }
-}
-
-
 Foam::decompositionMethod& Foam::fvMeshBalance::decomposer() const
 {
     if (!decomposer_.valid())
@@ -542,7 +578,7 @@ bool Foam::fvMeshBalance::canBalance() const
 Foam::autoPtr<Foam::mapDistributePolyMesh>
 Foam::fvMeshBalance::distribute()
 {
-    //Correct values on all coupled patches
+    // Correct values on all coupled patches
     correctProcessorBoundaries<volScalarField>(mesh_);
     correctProcessorBoundaries<volVectorField>(mesh_);
     correctProcessorBoundaries<volSphericalTensorField>(mesh_);
@@ -596,7 +632,7 @@ Foam::fvMeshBalance::distribute()
     blastMeshObject::distribute<fvMesh>(mesh_, map());
 
 
-    //Correct values on all coupled patches
+    // Correct values on all coupled patches
     correctProcessorBoundaries<volScalarField>(mesh_);
     correctProcessorBoundaries<volVectorField>(mesh_);
     correctProcessorBoundaries<volSphericalTensorField>(mesh_);

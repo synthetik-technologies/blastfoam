@@ -1,4 +1,6 @@
 #! /bin/bash
+export DEBEMAIL="support@synthetik-technologies.com"
+export DEBFULLNAME="Synthetik Technologies"
 
 version="$1"
 versionString="Version: $1" 

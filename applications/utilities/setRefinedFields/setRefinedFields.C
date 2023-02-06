@@ -238,9 +238,6 @@ GeoType getGeoType(const word& type)
             return iter();
         }
     }
-    FatalErrorInFunction
-        << "Could not determine geometry type from " << type << endl
-        << abort(FatalError);
     return UNKNOWN_GEO;
 }
 
@@ -254,9 +251,6 @@ PrimitiveType getPrimitiveType(const word& type)
             return iter();
         }
     }
-    FatalErrorInFunction
-        << "Could not determine primitive type from " << type << endl
-        << abort(FatalError);
     return UNKNOWN_PRIM;
 }
 
@@ -325,11 +319,6 @@ public:
             Istream& is
         ) const
         {
-            if (!returnReduce(elms.size(), sumOp<label>()) && !force_)
-            {
-                return;
-            }
-
             PrimitiveType prim(getPrimitiveType(fieldSetType));
             switch (prim)
             {
@@ -374,6 +363,10 @@ public:
                     );
                     break;
                 default:
+                    FatalIOErrorInFunction(is)
+                        << "Could not determine geometry type from "
+                        << fieldSetType << endl
+                        << abort(FatalIOError);
                     break;
             }
         }
@@ -418,7 +411,6 @@ public:
         {
             word fieldSetType(is);
             GeoType geo(getGeoType(fieldSetType));
-
             switch (geo)
             {
                 case VOL:
@@ -446,6 +438,10 @@ public:
                     );
                     break;
                 default:
+                    FatalIOErrorInFunction(is)
+                        << "Could not determine geometry type from "
+                        << fieldSetType << endl
+                        << abort(FatalIOError);
                     break;
             }
 
@@ -881,10 +877,17 @@ int main(int argc, char *argv[])
     else if (!args.optionFound("noRefine"))
     {
         FatalIOErrorInFunction(setFieldsDict)
-            << "maximum refinement could not be determined. Please " << nl
-            << "provide levels inside regions, a global \"maxRefinement\"" << nl
-            << "or an errorEstimator" << endl
+            << "Maximum refinement could not be determined." << nl
+            << "\tProvide levels inside regions, a global \"maxRefinement\", "
+            << "an errorEstimator, or specify \"-noRefine\"" << endl
             << abort(FatalIOError);
+    }
+    forAll(levels, i)
+    {
+        if (levels[i] < 0)
+        {
+            levels[i] = maxLevel;
+        }
     }
 
 

@@ -17,7 +17,11 @@ FoamFile
 
 solvers
 {
-    "(rho|rhoU|rhoE|alpha|.*)"
+    "alpha.*"
+    {
+        nLimiterIter 3;
+    }
+    "(rho|rhoU|rhoE).*"
     {
         solver          diagonal;
     }

@@ -25,12 +25,13 @@ ddtSchemes
 
 gradSchemes
 {
-    default         cellMDLimited leastSquares 1.0;
+    default         cellLimited<Venkatakrishnan> leastSquares 1.0;
 }
 
 divSchemes
 {
     default         none;
+    div(phirb,alpha) Gauss Minmod;
 }
 
 laplacianSchemes
@@ -41,12 +42,12 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  Minmod;
-    reconstruct(rho)    Minmod;
-    reconstruct(U)      Minmod;
-    reconstruct(e)      Minmod;
-    reconstruct(p)      Minmod;
-    reconstruct(speedOfSound) Minmod;
+    reconstruct(alpha)  quadraticMUSCL vanLeer01;//CICSAM 1;//interfaceCompression vanLeer 0;
+    reconstruct(rho)    quadraticMUSCL vanLeer;
+    reconstruct(U)      quadraticMUSCL vanLeer;
+    reconstruct(e)      quadraticMUSCL vanLeer;
+    reconstruct(p)      quadraticMUSCL vanLeer;
+    reconstruct(speedOfSound) quadraticMUSCL vanLeer;
 }
 
 snGradSchemes

@@ -25,7 +25,7 @@ boundaryField
 
     walls
     {
-        type            slip;
+        type            movingWallVelocity;
     }
 
     outlet

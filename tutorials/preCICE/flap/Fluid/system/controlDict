@@ -48,3 +48,9 @@ functions
         libs ("libpreciceAdapterFunctionObject.so");
     }
 }
+
+DebugSwitches
+{
+//meshObject 1;
+//pointMesh 1;
+}

@@ -16,7 +16,8 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (air water);
-//sigma  0.07;
+useInterface yes;
+sigma  0.07;
 air
 {
     type basic;
@@ -62,6 +63,10 @@ water
     {
         p0      1e5;
         rho0    1000.0;
+
+        a 3.31e8;
+        gamma 7.15;
+
         e0      3.542e5;
         omega   0.28;
         A       2.2e9;
@@ -86,7 +91,7 @@ water
     }
 
     residualRho     1e-6;
-    residualAlpha   1e-10;
+    residualAlpha   1e-6;
 }
 
 

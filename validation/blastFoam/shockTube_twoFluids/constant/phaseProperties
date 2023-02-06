@@ -16,7 +16,8 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (fluid gas);
-
+useInterface yes;
+sigma 0;
 fluid
 {
     type basic;

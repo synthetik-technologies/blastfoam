@@ -47,6 +47,10 @@ deltaT          1e-8;
 
 maxCo           0.5;
 
+DebugSwitches
+{
+    // ReconstructionScheme 1;
+}
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 functions

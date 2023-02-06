@@ -17,6 +17,7 @@ FoamFile
 
 fields (alpha.c4);
 nBufferLayers 2;
+balance no;
 
 defaultFieldValues
 (
@@ -50,7 +51,7 @@ regions
     patchToFace
     {
         name flap;
-        level 3;
+        level 2;
         refineFaces yes;
 
         faceZones

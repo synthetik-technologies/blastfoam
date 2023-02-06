@@ -9,8 +9,12 @@ FoamFile
 {
     format      ascii;
     class       volVectorField;
+<<<<<<<< HEAD:validation/explicitShallowWaterFoam/Deslestre_et_al_2016/sine/0/U.orig
     location    "0";
     object      U.orig;
+========
+    object      U;
+>>>>>>>> c93c7b9c85ee6dc2127afe07ec7ca9a9f0ae03db:tutorials/blastFoam/triplePointShockInteration/0/U.orig
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -20,21 +24,41 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
+<<<<<<<< HEAD:validation/explicitShallowWaterFoam/Deslestre_et_al_2016/sine/0/U.orig
     inlet
     {
         type            hUInletVelocity;
         inletValue      uniform (2.0 0 0);
         value           uniform (0.0 0 0);
     }
+========
+    //- Set patchGroups for constraint patches
+    #includeEtc "caseDicts/setConstraintTypes"
+    
+>>>>>>>> c93c7b9c85ee6dc2127afe07ec7ca9a9f0ae03db:tutorials/blastFoam/triplePointShockInteration/0/U.orig
     outlet
     {
         type            zeroGradient;
         inletValue      uniform (0 0 0);
         value           uniform (0 0 0);
     }
+<<<<<<<< HEAD:validation/explicitShallowWaterFoam/Deslestre_et_al_2016/sine/0/U.orig
     frontAndBack
+========
+
+    /*ground
     {
-        type            empty;
+        type            slip;
+    }*/
+
+    wedge0
+>>>>>>>> c93c7b9c85ee6dc2127afe07ec7ca9a9f0ae03db:tutorials/blastFoam/triplePointShockInteration/0/U.orig
+    {
+        type            wedge;
+    }
+    wedge1
+    {
+        type            wedge;
     }
 }
 
