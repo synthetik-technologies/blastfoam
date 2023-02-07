@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2022
+    \\  /    A nd           | Copyright (C) 2019-2021
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -21,76 +21,29 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::displacementRelaxations::Aitken
-
-Description
-    Aitken relaxation
-
-SourceFiles
-    AitkenDisplacementRelaxation.C
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef AitkenDisplacementRelaxation_H
-#define AitkenDisplacementRelaxation_H
+#include "NoAccelerationScheme.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "displacementRelaxation.H"
 
 namespace Foam
 {
-namespace displacementRelaxations
+namespace accelerationSchemes
 {
-
-/*---------------------------------------------------------------------------*\
-                           Class Aitken Declaration
-\*---------------------------------------------------------------------------*/
-
-class Aitken
-:
-    public displacementRelaxation
-{
-    scalar initRelaxFactor_;
-    scalar maxRelaxFactor_;
-    scalarList aitkenFactors_;
-
-    List<vectorField> residuals_;
-    List<vectorField> prevResiduals_;
-
-public:
-
-    TypeName("Aitken");
-
-    // Constructor
-    Aitken(const fvMesh& mesh, const dictionary& dict);
-
-
-    //- Destructor
-    virtual ~Aitken();
-
-
-    // Member functions
-
-        //- Update residuals
-        virtual void updateError(const pointVectorField&);
-
-        //- Relax the field
-        virtual void relax(const label iter, pointVectorField&);
-
-        //- Clear residuals
-        virtual void clear();
-};
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace displacementRelaxations
+makeAccelerationSchemeTypes(NoAcceleration, scalar);
+makeAccelerationSchemeTypes(NoAcceleration, vector);
+makeAccelerationSchemeTypes(NoAcceleration, symmTensor);
+makeAccelerationSchemeTypes(NoAcceleration, sphericalTensor);
+makeAccelerationSchemeTypes(NoAcceleration, tensor);
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace accelerationSchemes
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
 
 // ************************************************************************* //

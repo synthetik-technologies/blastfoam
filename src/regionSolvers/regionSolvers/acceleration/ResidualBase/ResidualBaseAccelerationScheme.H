@@ -22,79 +22,83 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::displacementRelaxations::QNBase
+    Foam::accelerationSchemes::ResidualBase
 
 Description
-    QNBase relaxation
+    Residual based acceleration
 
 SourceFiles
-    QNBaseDisplacementRelaxation.C
+    ResidualBaseAccelerationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef QNBaseDisplacementRelaxation_H
-#define QNBaseDisplacementRelaxation_H
+#ifndef ResidualBaseAccelerationScheme_H
+#define ResidualBaseAccelerationScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "displacementRelaxation.H"
+#include "AccelerationSchemeBase.H"
 
 namespace Foam
 {
-namespace displacementRelaxations
+namespace accelerationSchemes
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class QNBase Declaration
+                           Class ResidualBase Declaration
 \*---------------------------------------------------------------------------*/
 
-class QNBase
+template<class Type, template<class> class Patch, class Mesh>
+class ResidualBase
 :
-    public displacementRelaxation
+    public AccelerationSchemeBase<Type, Patch, Mesh>
 {
-    scalar initRelaxFactor_;
-    label nOldTimes_;
+protected:
 
-    List<vectorField> residuals_;
-    List<vectorField> prevResiduals_;
-    List<vectorField> oldResiduals_;
+    Field<Type> residuals_;
+    Field<Type> prevResiduals_;
 
-    List<DynamicList<vectorField>> pointsV_;
-    List<DynamicList<vectorField>> pointsW_;
-    List<DynamicList<scalar>> times_;
-
-    //- Update saved fields
-    void updateFields(const label iter, pointVectorField&);
 
 public:
 
-    TypeName("QNBase");
-
     // Constructor
-    QNBase(const fvMesh& mesh, const dictionary& dict);
+    ResidualBase
+    (
+        const word& type,
+        GeometricField<Type, Patch, Mesh>& field,
+        const label patchi,
+        const dictionary& dict
+    );
 
 
     //- Destructor
-    virtual ~QNBase();
+    virtual ~ResidualBase();
 
 
     // Member functions
 
         //- Update residuals
-        virtual void updateError(const pointVectorField&);
-
-        //- Relax the field
-        virtual void relax(const label iter, pointVectorField&);
+        virtual void updateError();
 
         //- Clear residuals
         virtual void clear();
+
+        //- Read parameters
+        virtual void read(const dictionary& dict)
+        {}
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace displacementRelaxations
+} // End namespace accelerationScehemes
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "ResidualBaseAccelerationScheme.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

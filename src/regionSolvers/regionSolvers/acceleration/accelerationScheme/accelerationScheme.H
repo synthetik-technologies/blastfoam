@@ -22,25 +22,26 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::displacementRelaxation
+    Foam::accelerationScheme
 
 Description
-    Base class for relaxation
+    Base class for acceleration
 
 SourceFiles
-    displacementRelaxation.C
-    displacementRelaxation.C
+    accelerationScheme.C
+    accelerationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef displacementRelaxation_H
-#define displacementRelaxation_H
+#ifndef accelerationScheme_H
+#define accelerationScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "dynamicFvMesh.H"
+#include "volFields.H"
+#include "surfaceFields.H"
 #include "pointFields.H"
-#include "globalPolyBoundaryMesh.H"
+#include "valuePointPatchField.H"
 #include "runTimeSelectionTables.H"
 
 
@@ -48,19 +49,18 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class displacementRelaxation Declaration
+                    Class accelerationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class displacementRelaxation
+class accelerationScheme
 {
 protected:
 // Protected data
 
-        //- fvMesh
-        const fvMesh& mesh_;
+        const word& type_;
 
-        //- Indices of coupled patches
-        labelList coupledPatches_;
+        //- Patches to relax
+        const label patchi_;
 
         //- Initial error
         scalar initialError_;
@@ -68,54 +68,76 @@ protected:
         //- Current residual
         scalar error_;
 
-        //- Return the coefficient dictionary
-        const dictionary& coeffDict(const dictionary& dict) const
+        //- Sum magSqr
+        template<class Type>
+        scalar sumDotDot(const UList<Type>& f) const
         {
-            return dict.optionalSubDict(this->type() + "Coeffs");
+            scalar sumf = Zero;
+            forAll(f, i)
+            {
+                sumf += magSqr(f[i]);
+            }
+            return returnReduce(sumf, sumOp<scalar>());
+        }
+
+        template<class Type>
+        scalar sumDotDot(const UList<Type>& f1, const UList<Type>& f2) const
+        {
+            scalar sumf12 = Zero;
+            forAll(f1, i)
+            {
+                sumf12 += f1[i] && f2[i];
+            }
+            return returnReduce(sumf12, sumOp<scalar>());
+        }
+
+        template<class Type>
+        scalar dotDot(const Type& f1) const
+        {
+            return magSqr(f1);
+        }
+
+        template<class Type>
+        scalar dotDot(const Type& f1, const Type& f2) const
+        {
+            return f1 && f2;
         }
 
 
 public:
 
-    TypeName("displacementRelaxation");
-
-     // Declare runtime construction
-
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            displacementRelaxation,
-            dictionary,
-            (
-                const fvMesh& mesh,
-                const dictionary& dict
-            ),
-            (mesh, dict)
-        );
+    TypeName("acceleration");
 
     // Constructor
-    displacementRelaxation(const fvMesh& mesh, const dictionary& dict);
+    accelerationScheme
+    (
+        const word& type,
+        const label patchi,
+        const dictionary& dict
+    );
 
 
     // Selector
-        static autoPtr<displacementRelaxation> New
+        template<class Type, template<class> class Patch, class Mesh>
+        static autoPtr<accelerationScheme> New
         (
-            const fvMesh& mesh,
+            GeometricField<Type, Patch, Mesh>& field,
+            const label patchi,
             const dictionary& dict
         );
 
 
     //- Destructor
-    virtual ~displacementRelaxation();
+    virtual ~accelerationScheme();
 
 
     // Member functions
 
         //- Update residuals
-        virtual void updateError(const pointVectorField&);
+        virtual void updateError() = 0;
 
         //- Relax the field
-        virtual void relax(const label iter, pointVectorField&) = 0;
+        virtual void relax(const label iter) = 0;
 
         //- Clear residuals
         virtual void clear();
@@ -123,7 +145,13 @@ public:
         // Return the absolute error
         inline scalar error() const
         {
-            return error_;
+            return mag(error_);
+        }
+
+        // Return the initial absolute error
+        inline scalar initError() const
+        {
+            return mag(initialError_);
         }
 
         //- Return the relative error
@@ -131,8 +159,33 @@ public:
         {
             return error_/(initialError_ + small);
         }
+
+        //- Read parameters
+        virtual void read(const dictionary& dict) = 0;
 };
 
+template<>
+Foam::scalar Foam::accelerationScheme::sumDotDot
+(
+    const UList<scalar>& f
+) const;
+template<>
+Foam::scalar Foam::accelerationScheme::sumDotDot
+(
+    const UList<scalar>& f1,
+    const UList<scalar>& f2
+) const;
+template<>
+Foam::scalar Foam::accelerationScheme::dotDot
+(
+    const scalar& f
+) const;
+template<>
+Foam::scalar Foam::accelerationScheme::dotDot
+(
+    const scalar& f1,
+    const scalar& f2
+) const;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

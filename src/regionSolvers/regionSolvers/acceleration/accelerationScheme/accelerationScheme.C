@@ -23,77 +23,96 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fixedDisplacementRelaxation.H"
-#include "valuePointPatchFields.H"
-#include "addToRunTimeSelectionTable.H"
+#include "accelerationScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace displacementRelaxations
-{
-    defineTypeNameAndDebug(fixed, 0);
-    addToRunTimeSelectionTable(displacementRelaxation, fixed, dictionary);
+    defineTypeNameAndDebug(accelerationScheme, 0);
 }
-}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::displacementRelaxations::fixed::fixed
+Foam::accelerationScheme::accelerationScheme
 (
-    const fvMesh& mesh,
+    const word& type,
+    const label patchi,
     const dictionary& dict
 )
 :
-    displacementRelaxation(mesh, dict),
-    relaxationFactor_(coeffDict(dict).lookup<scalar>("relaxationFactor"))
-{
-    Info<< "Using " << typeName  << " relaxation with:" << nl
-        << "relaxationFactor: " << relaxationFactor_ << nl << endl;
-}
+    type_(type),
+    patchi_(patchi),
+    initialError_(-1.0),
+    error_(great)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::displacementRelaxations::fixed::~fixed()
+Foam::accelerationScheme::~accelerationScheme()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::displacementRelaxations::fixed::relax
+template<>
+Foam::scalar Foam::accelerationScheme::sumDotDot
 (
-    const label iter,
-    pointVectorField& p
-)
+    const UList<scalar>& f
+) const
 {
-    updateError(p);
-    if (relaxationFactor_ < 1)
+    scalar sumf = Zero;
+    forAll(f, i)
     {
-        scalar f =
-            mesh_.relaxField(p.name())
-          ? mesh_.fieldRelaxationFactor(p.name())
-          : relaxationFactor_;
-
-        pointVectorField::Boundary& bp = p.boundaryFieldRef();
-        forAll(coupledPatches_, pi)
-        {
-            const label patchi = coupledPatches_[pi];
-            if (isA<valuePointPatchVectorField>(bp[patchi]))
-            {
-                valuePointPatchVectorField& pp =
-                    dynamicCast<valuePointPatchVectorField>(bp[patchi]);
-                const valuePointPatchVectorField& ppPrev =
-                    dynamicCast<const valuePointPatchVectorField>
-                    (
-                        p.prevIter().boundaryField()[patchi]
-                    );
-                pp == ppPrev*(1.0 - f) + f*pp;
-                pp.setInInternalField(p, pp);
-            }
-        }
+        sumf += sqr(f[i]);
     }
-
+    return returnReduce(sumf, sumOp<scalar>());
 }
+
+
+template<>
+Foam::scalar Foam::accelerationScheme::sumDotDot
+(
+    const UList<scalar>& f1,
+    const UList<scalar>& f2
+) const
+{
+    scalar sumf12 = Zero;
+    forAll(f1, i)
+    {
+        sumf12 += f1[i]*f2[i];
+    }
+    return returnReduce(sumf12, sumOp<scalar>());
+}
+
+
+template<>
+Foam::scalar Foam::accelerationScheme::dotDot
+(
+    const scalar& f
+) const
+{
+    return f*f;
+}
+
+
+template<>
+Foam::scalar Foam::accelerationScheme::dotDot
+(
+    const scalar& f1,
+    const scalar& f2
+) const
+{
+    return f1*f2;
+}
+
+
+void Foam::accelerationScheme::clear()
+{
+    initialError_ = -1;
+    error_ = great;
+}
+
 
 // ************************************************************************* //

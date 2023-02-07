@@ -23,49 +23,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "noDisplacementRelaxation.H"
-#include "valuePointPatchFields.H"
-#include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace displacementRelaxations
-{
-    defineTypeNameAndDebug(noRelaxation, 0);
-    addToRunTimeSelectionTable(displacementRelaxation, noRelaxation, dictionary);
-}
-}
+#include "NoAccelerationScheme.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::displacementRelaxations::noRelaxation::noRelaxation
+template<class Type, template<class> class Patch, class Mesh>
+Foam::accelerationSchemes::NoAcceleration<Type, Patch, Mesh>::NoAcceleration
 (
-    const fvMesh& mesh,
+    GeometricField<Type, Patch, Mesh>& field,
+    const label patchi,
     const dictionary& dict
 )
 :
-    displacementRelaxation(mesh, dict)
-{
-    Info<< "Using " << typeName  << " relaxation" << nl << endl;
-}
+    AccelerationSchemeBase<Type, Patch, Mesh>(typeName, field, patchi, dict)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::displacementRelaxations::noRelaxation::~noRelaxation()
+template<class Type, template<class> class Patch, class Mesh>
+Foam::accelerationSchemes::NoAcceleration<Type, Patch, Mesh>::~NoAcceleration()
 {}
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::displacementRelaxations::noRelaxation::relax
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::accelerationSchemes::NoAcceleration<Type, Patch, Mesh>::relax
 (
-    const label iter,
-    pointVectorField& p
+    const label iter
 )
 {
-    updateError(p);
+    this->updateError();
 }
+
 
 // ************************************************************************* //

@@ -22,43 +22,45 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 ------------------------------------------------------------------------*/
 
-#include "displacementRelaxation.H"
+#include "AccelerationSchemeBase.H"
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::displacementRelaxation> Foam::displacementRelaxation::New
+template<class Type, template<class> class Patch, class Mesh>
+Foam::autoPtr<Foam::accelerationScheme>
+Foam::AccelerationSchemeBase<Type, Patch, Mesh>::New
 (
-    const fvMesh& mesh,
+    GeometricField<Type, Patch, Mesh>& field,
+    const label patchi,
     const dictionary& dict
 )
 {
-    word relaxType("none");
-    if (dict.isDict(mesh.name())&& dict.subDict(mesh.name()).found("relaxation"))
+    word accelerationType("none");
+    if (dict.found(accelerationScheme::typeName))
     {
-        dict.subDict(mesh.name()).lookup("relaxation") >> relaxType;
-    }
-    else if (dict.found("relaxation"))
-    {
-        dict.lookup("relaxation") >> relaxType;
+        dict.lookup(accelerationScheme::typeName) >> accelerationType;
     }
 
-    Info<< "Selecting relaxation method: " << relaxType
-        << " for region " << mesh.name() << endl;
+    incrIndent(Info);
+    Info<< indent << field.mesh().boundary()[patchi].name()
+        << ": " << accelerationType << endl;
 
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(relaxType);
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(accelerationType);
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown relaxation type "
-            << relaxType << endl << endl
-            << "Valid regionSolvers are : " << endl
+            << "Unknown acceleration scheme type "
+            << accelerationType << endl << endl
+            << "Valid acceleration schemes are : " << endl
             << dictionaryConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict);
+    autoPtr<Foam::accelerationScheme> scheme(cstrIter()(field, patchi, dict));
+    Info<< endl << decrIndent;
+    return scheme;
 }
 
 

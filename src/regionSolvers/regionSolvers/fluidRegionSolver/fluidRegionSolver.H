@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "regionSolver.H"
-#include "displacementRelaxation.H"
+#include "accelerationSchemeList.H"
 #include "volFields.H"
 #include "pointFields.H"
 
@@ -78,7 +78,7 @@ protected:
         autoPtr<motionDiffusivity> diffusivityPtr_;
 
         //- Relaxation
-        autoPtr<displacementRelaxation> relaxation_;
+        autoPtr<accelerationSchemeList> acceleration_;
 
         //- Velocity field names
         wordList velocityFields_;
@@ -113,8 +113,8 @@ public:
                 }
                 else if
                 (
-                    relaxation_->error() < tolerance_
-                 || relaxation_->relError() < relTol_
+                    acceleration_->error() < tolerance_
+                 || acceleration_->relError() < relTol_
                 )
                 {
                     return CONVERGED;

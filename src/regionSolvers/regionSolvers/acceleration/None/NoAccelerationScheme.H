@@ -22,59 +22,75 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::displacementRelaxations::noRelaxation
+    Foam::accelerationSchemes::NoAcceleration
 
 Description
-    No relaxation
+    No acceleration
 
 SourceFiles
-    noDisplacementRelaxation.C
+    NoAccelerationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef noDisplacementRelaxation_H
-#define noDisplacementRelaxation_H
+#ifndef NoAccelerationScheme_H
+#define NoAccelerationScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "displacementRelaxation.H"
+#include "AccelerationSchemeBase.H"
 
 namespace Foam
 {
-namespace displacementRelaxations
+namespace accelerationSchemes
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class noRelaxation Declaration
+                           Class NoAcceleration Declaration
 \*---------------------------------------------------------------------------*/
 
-class noRelaxation
+template<class Type, template<class> class Patch, class Mesh>
+class NoAcceleration
 :
-    public displacementRelaxation
+    public AccelerationSchemeBase<Type, Patch, Mesh>
 {
 public:
 
     TypeName("none");
 
     // Constructor
-    noRelaxation(const fvMesh& mesh, const dictionary& dict);
+    NoAcceleration
+    (
+        GeometricField<Type, Patch, Mesh>& field,
+        const label patchi,
+        const dictionary& dict
+    );
 
 
     //- Destructor
-    virtual ~noRelaxation();
+    virtual ~NoAcceleration();
 
 
     // Member functions
 
         //- Relax the field
-        virtual void relax(const label iter, pointVectorField&);
+        virtual void relax(const label iter);
+
+        //- Read parameters
+        virtual void read(const dictionary& dict)
+        {}
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace displacementRelaxations
+} // End namespace accelerationSchemes
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "NoAccelerationScheme.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

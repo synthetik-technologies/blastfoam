@@ -3,13 +3,15 @@ regionSolver/regionSolverNew.C
 
 regionSolverList/regionSolverList.C
 
+acceleration/accelerationScheme/accelerationScheme.C
+acceleration/accelerationSchemeList/accelerationSchemeList.C
+acceleration/AccelerationSchemeBase/AccelerationSchemeBases.C
+acceleration/None/NoAccelerationSchemes.C
+acceleration/Fixed/FixedAccelerationSchemes.C
+acceleration/Aitken/AitkenAccelerationSchemes.C
+acceleration/IQNILS/IQNILSAccelerationSchemes.C
 
 fluidRegionSolver/fluidRegionSolver.C
-fluidRegionSolver/displacementRelaxation/displacementRelaxation.C
-fluidRegionSolver/displacementRelaxation/displacementRelaxationNew.C
-fluidRegionSolver/displacementRelaxation/noRelaxation/noDisplacementRelaxation.C
-fluidRegionSolver/displacementRelaxation/fixed/fixedDisplacementRelaxation.C
-fluidRegionSolver/displacementRelaxation/Aitken/AitkenDisplacementRelaxation.C
-fluidRegionSolver/displacementRelaxation/IQNILS/IQNILSDisplacementRelaxation.C
+
 
 LIB = $(BLAST_LIBBIN)/libregionSolvers

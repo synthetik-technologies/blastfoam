@@ -79,7 +79,7 @@ Foam::regionSolvers::fluid::fluid
             Zero
         )
     ),
-    relaxation_(displacementRelaxation::New(mesh_, regions_.solutionControls())),
+    acceleration_(),
     velocityFields_(1, "U"),
     tolerance_(-great),
     relTol_(-great)
@@ -201,6 +201,18 @@ Foam::regionSolvers::fluid::fluid
         motionDiffusivity::New(mesh_, dynMeshDict.lookup("diffusivity"));
 
     pointsOldPtr_.reset(new pointField(mesh_.points()));
+
+    acceleration_.set
+    (
+        new accelerationSchemeList
+        (
+            pointDPtr_->name(),
+            mesh_,
+            globalBoundary_.coupledPatches(),
+            regions_.solutionControls()
+        )
+    );
+
 }
 
 
@@ -268,7 +280,7 @@ void Foam::regionSolvers::fluid::initialiseMesh(const IterType iter)
 
     moveMesh(FINAL_ITER);
 
-    relaxation_->clear();
+    acceleration_->clear();
 
     if (mesh_.moving())
     {
@@ -343,11 +355,11 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
 
     if (iter != FINAL_ITER)
     {
-        relaxation_->relax(regions_.iterNo(), pointDPtr_());
+        acceleration_->relax(regions_.iterNo());
     }
     else
     {
-        relaxation_->updateError(pointDPtr_());
+        acceleration_->updateError();
     }
 
     //- Save boundary values
@@ -516,8 +528,8 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
         }
     }
     Info<<"Displacement error (abs/rel) = "
-        << relaxation_->error() << ", "
-        << relaxation_->relError() <<endl;
+        << acceleration_->error() << ", "
+        << acceleration_->relError() <<endl;
 
     forAll(velocityFields_, i)
     {
@@ -536,7 +548,7 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
 
 void Foam::regionSolvers::fluid::clear()
 {
-    relaxation_->clear();
+    acceleration_->clear();
 }
 
 

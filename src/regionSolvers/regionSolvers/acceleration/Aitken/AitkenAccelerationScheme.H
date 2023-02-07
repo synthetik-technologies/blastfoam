@@ -22,78 +22,78 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::displacementRelaxations::IQNILS
+    Foam::accelerationSchemes::Aitken
 
 Description
-    IQNILS relaxation
+    Aitken acceleration
 
 SourceFiles
-    IQNILSDisplacementRelaxation.C
+    AitkenAccelerationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef IQNILSDisplacementRelaxation_H
-#define IQNILSDisplacementRelaxation_H
+#ifndef AitkenAccelerationScheme_H
+#define AitkenAccelerationScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "displacementRelaxation.H"
+#include "ResidualBaseAccelerationScheme.H"
 
 namespace Foam
 {
-namespace displacementRelaxations
+namespace accelerationSchemes
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class IQNILS Declaration
+                           Class Aitken Declaration
 \*---------------------------------------------------------------------------*/
 
-class IQNILS
+template<class Type, template<class> class Patch, class Mesh>
+class Aitken
 :
-    public displacementRelaxation
+    public ResidualBase<Type, Patch, Mesh>
 {
     scalar initRelaxFactor_;
-    label nOldTimes_;
-
-    List<vectorField> residuals_;
-    List<vectorField> prevResiduals_;
-
-    List<vectorField> refResiduals_;
-    List<vectorField> refDisplacements_;
-
-    List<DynamicList<vectorField>> pointsV_;
-    List<DynamicList<vectorField>> pointsW_;
-    List<DynamicList<scalar>> times_;
+    scalar maxRelaxFactor_;
+    scalar aitkenFactor_;
 
 public:
 
-    TypeName("IQNILS");
+    TypeName("Aitken");
 
     // Constructor
-    IQNILS(const fvMesh& mesh, const dictionary& dict);
+    Aitken
+    (
+        GeometricField<Type, Patch, Mesh>& field,
+        const label patchi,
+        const dictionary& dict
+    );
 
 
     //- Destructor
-    virtual ~IQNILS();
+    virtual ~Aitken();
 
 
     // Member functions
 
-        //- Update residuals
-        virtual void updateError(const pointVectorField&);
-
         //- Relax the field
-        virtual void relax(const label iter, pointVectorField&);
+        virtual void relax(const label iter);
 
-        //- Clear residuals
-        virtual void clear();
+        //- Read parameters
+        virtual void read(const dictionary& dict);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace displacementRelaxations
+} // End namespace AccelerationSchemes
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "AitkenAccelerationScheme.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

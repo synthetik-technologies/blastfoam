@@ -22,60 +22,109 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::displacementRelaxations::fixed
+    Foam::accelerationSchemes::IQNILS
 
 Description
-    Fixed relaxation
+    IQNILS acceleration
 
 SourceFiles
-    fixedDisplacementRelaxation.C
+    IQNILSAccelerationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fixedDisplacementRelaxation_H
-#define fixedDisplacementRelaxation_H
+#ifndef IQNILSAccelerationScheme_H
+#define IQNILSAccelerationScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "displacementRelaxation.H"
+#include "QNBaseAccelerationScheme.H"
+#include "NamedEnum.H"
 
 namespace Foam
 {
-namespace displacementRelaxations
+namespace accelerationSchemes
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class fixed Declaration
+                           Class IQNILS Declaration
 \*---------------------------------------------------------------------------*/
 
-class fixed
+template<class Type, template<class> class Patch, class Mesh>
+class IQNILS
 :
-    public displacementRelaxation
+    public QNBase<Type, Patch, Mesh>
 {
-    scalar relaxationFactor_;
+private:
+// Private Data
+
+    //- Initial relaxation factor
+    scalar initRelaxFactor_;
+
+    //- Number of fixed relaxation steps
+    label nFixed_;
+
+    //- Reference field (unrelaxed)
+    Field<Type> refField_;
+
+    //- QR decomposition method
+    word qr_;
+
+
+    // Private member function
+
+        //- Return V reference residuals
+        virtual const Field<Type>& VRef() const
+        {
+            return this->prevResiduals_;
+        }
+
+        //- Return W reference field
+        virtual const Field<Type>& WRef() const
+        {
+            return refField_;
+        }
+
+        //- QR decomposition using modified Gram-Schmidt
+        void GramSchmidt_QRdecomp(Field<Type>& pFieldNew);
+
+
 public:
 
-    TypeName("fixed");
+    TypeName("IQNILS");
 
     // Constructor
-    fixed(const fvMesh& mesh, const dictionary& dict);
+    IQNILS
+    (
+        GeometricField<Type, Patch, Mesh>& field,
+        const label patchi,
+        const dictionary& dict
+    );
 
 
     //- Destructor
-    virtual ~fixed();
+    virtual ~IQNILS();
 
 
     // Member functions
 
         //- Relax the field
-        virtual void relax(const label iter, pointVectorField&);
+        virtual void relax(const label iter);
+
+        //- Read parameters
+        virtual void read(const dictionary& dict);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace displacementRelaxations
+} // End namespace accelerationSchemes
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "IQNILSAccelerationScheme.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
