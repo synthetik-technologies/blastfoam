@@ -49,7 +49,8 @@ Foam::regionSolver::regionSolver
     regions_(regions),
     dynMesh_(mesh),
     mesh_(dynMesh_),
-    globalBoundary_(globalPolyBoundaryMesh::New(mesh))
+    globalBoundary_(globalPolyBoundaryMesh::New(mesh)),
+    accelerationSchemes_(mesh_, regions_)
 {}
 
 
@@ -109,7 +110,9 @@ bool Foam::regionSolver::moveMesh(const IterType iter)
 
 
 void Foam::regionSolver::clear()
-{}
+{
+    accelerationSchemes_.clear();
+}
 
 
 Foam::scalar Foam::regionSolver::maxCo() const

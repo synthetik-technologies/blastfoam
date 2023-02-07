@@ -60,9 +60,10 @@ enum IterType
 
 enum Convergence
 {
+    UNKNOWN_CONVERGENCE,
     NOT_CONVERGED,
     CONVERGED,
-    UNKNOWN_CONVERGENCE
+    FULL_CONVERGENCE
 };
 
 class regionSolverList
@@ -75,7 +76,7 @@ protected:
         // Time
         const Time& runTime_;
 
-        const dictionary& regionProperties_;
+        const IOdictionary& regionProperties_;
 
         //- Have the meshes changed
         boolList changed_;
@@ -114,7 +115,7 @@ public:
     // Constructor
     regionSolverList
     (
-        const dictionary& regionProperties,
+        const IOdictionary& regionProperties,
         const Time& runTime,
         PtrList<dynamicFvMesh>& regionMeshes,
         const List<Pair<word>>& regionTypes
@@ -133,6 +134,12 @@ public:
             const dictionary& solutionControls() const
             {
                 return regionProperties_.subDict("solutionControls");
+            }
+
+            //- Return solution controls dictionary
+            const IOdictionary& regionProperties() const
+            {
+                return regionProperties_;
             }
 
             //- Return if all regions are converged

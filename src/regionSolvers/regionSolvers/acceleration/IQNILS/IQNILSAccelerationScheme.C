@@ -23,8 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "IQNILSDisplacementRelaxation.H"
-#include "QRMatrix.H"
+#include "IQNILSAccelerationScheme.H"
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

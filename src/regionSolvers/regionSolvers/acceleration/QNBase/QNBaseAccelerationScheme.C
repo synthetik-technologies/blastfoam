@@ -50,6 +50,10 @@ Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::QNBase
     {
         Info<< indent << "maxCouplingIter: " << maxCouplingIter_ << endl;
     }
+    else
+    {
+        Info<< indent << "maxCouplingIter: unlimited" << endl;
+    }
     Info<< indent << "nCouplingTimes: " << nCouplingTimes_ << endl;
 }
 

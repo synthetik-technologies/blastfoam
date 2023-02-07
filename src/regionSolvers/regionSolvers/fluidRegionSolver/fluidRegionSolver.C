@@ -79,7 +79,6 @@ Foam::regionSolvers::fluid::fluid
             Zero
         )
     ),
-    acceleration_(),
     velocityFields_(1, "U"),
     tolerance_(-great),
     relTol_(-great)
@@ -200,19 +199,8 @@ Foam::regionSolvers::fluid::fluid
     diffusivityPtr_ =
         motionDiffusivity::New(mesh_, dynMeshDict.lookup("diffusivity"));
 
-    pointsOldPtr_.reset(new pointField(mesh_.points()));
-
-    acceleration_.set
-    (
-        new accelerationSchemeList
-        (
-            pointDPtr_->name(),
-            mesh_,
-            globalBoundary_.coupledPatches(),
-            regions_.solutionControls()
-        )
-    );
-
+    // Add point displacement as a relaxation field
+    accelerationSchemes_.addField(pointDPtr_->name());
 }
 
 
@@ -272,15 +260,17 @@ void Foam::regionSolvers::fluid::initialiseMesh(const IterType iter)
                         pointMesh::New(mesh_)
                     );
                 pointDPtr_->instance() = mesh_.time().timeName();
-                pointDPtr_->storeOldTimes();
             }
-            pointDPtr_() == Zero;
         }
+        pointDPtr_() == Zero;
+        pointDPtr_->oldTime();
+        pointDPtr_->storeOldTime();
+        pointsOldPtr_.reset(new pointField(mesh_.points()));
     }
 
     moveMesh(FINAL_ITER);
 
-    acceleration_->clear();
+    accelerationSchemes_.clear();
 
     if (mesh_.moving())
     {
@@ -297,6 +287,9 @@ void Foam::regionSolvers::fluid::initialiseMesh(const IterType iter)
         }
     }
 
+    pointsOldPtr_.reset(new pointField(mesh_.points()));
+    pointDPtr_->storeOldTime();
+
     if (iter == FINAL_ITER)
     {
         pointDPtr_->write();
@@ -307,13 +300,30 @@ void Foam::regionSolvers::fluid::initialiseMesh(const IterType iter)
 
 void Foam::regionSolvers::fluid::initialise()
 {
+    pointsOldPtr_.reset(new pointField(mesh_.points()));
+
     moveMesh(FINAL_ITER);
-    moveMesh(FINAL_ITER);
+
+    // Make sure oldTime field is initialized
+    pointDPtr_->oldTime();
+
+    // Set old points
+    pointsOldPtr_.reset(new pointField(mesh_.points()));
     if (mesh_.moving())
     {
-        mesh_.lookupObjectRef<surfaceScalarField>("meshPhi") == Zero;
+        const_cast<surfaceScalarField&>(mesh_.phi()) == Zero;
+        forAll(velocityFields_, i)
+        {
+            if (mesh_.foundObject<volVectorField>(velocityFields_[i]))
+            {
+                mesh_.lookupObjectRef<volVectorField>
+                (
+                    velocityFields_[i]
+                ).correctBoundaryConditions();
+            }
+        }
+        mesh_.moving(false);
     }
-    mesh_.moving(false);
 }
 
 
@@ -339,6 +349,11 @@ bool Foam::regionSolvers::fluid::changeMesh()
 
 bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
 {
+    if (regions_.regionProperties().modified())
+    {
+        Info<<"modified: "<< regions_.regionProperties().modified()<<endl;
+        FatalErrorInFunction<<abort(FatalError);
+    }
     // return true;
     regionSolver::moveMesh(iter);
 
@@ -348,18 +363,18 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
 
     // The points have moved so before interpolation update
     // the fvMotionSolver accordingly
-    mesh_.movePoints(pointsOldPtr_());
+    // mesh_.movePoints(pointsOldPtr_());
 
     diffusivityPtr_->correct();
     pointDPtr_->correctBoundaryConditions();
 
     if (iter != FINAL_ITER)
     {
-        acceleration_->relax(regions_.iterNo());
+        accelerationSchemes_.relax(regions_.iterNo());
     }
     else
     {
-        acceleration_->updateError();
+        accelerationSchemes_.updateError();
     }
 
     //- Save boundary values
@@ -527,9 +542,8 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
             }
         }
     }
-    Info<<"Displacement error (abs/rel) = "
-        << acceleration_->error() << ", "
-        << acceleration_->relError() <<endl;
+
+    accelerationSchemes_.print(Info);
 
     forAll(velocityFields_, i)
     {
@@ -543,12 +557,6 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
     }
 
     return gMax(mag(pointDPtr_->primitiveField())) > small;
-}
-
-
-void Foam::regionSolvers::fluid::clear()
-{
-    acceleration_->clear();
 }
 
 

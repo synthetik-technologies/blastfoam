@@ -38,7 +38,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "regionSolver.H"
-#include "accelerationSchemeList.H"
 #include "volFields.H"
 #include "pointFields.H"
 
@@ -77,9 +76,6 @@ protected:
         //- Motion diffusivity
         autoPtr<motionDiffusivity> diffusivityPtr_;
 
-        //- Relaxation
-        autoPtr<accelerationSchemeList> acceleration_;
-
         //- Velocity field names
         wordList velocityFields_;
 
@@ -104,24 +100,6 @@ public:
 
         // Edit
 
-            //- Return if the solver converged
-            virtual Convergence converged() const
-            {
-                if (tolerance_ < 0)
-                {
-                    return UNKNOWN_CONVERGENCE;
-                }
-                else if
-                (
-                    acceleration_->error() < tolerance_
-                 || acceleration_->relError() < relTol_
-                )
-                {
-                    return CONVERGED;
-                }
-                return NOT_CONVERGED;
-            }
-
             //- Initialise the mesh
             virtual void initialiseMesh(const IterType iter);
 
@@ -133,9 +111,6 @@ public:
 
             //- Move the mesh
             virtual bool moveMesh(const IterType iter);
-
-            //- Clear the model
-            virtual void clear();
 };
 
 

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "accelerationScheme.H"
+#include "UautoPtr.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -42,6 +43,9 @@ Foam::accelerationScheme::accelerationScheme
     const dictionary& dict
 )
 :
+    regionName_("unknown"),
+    fieldName_("unknown"),
+    patchName_("unknown"),
     type_(type),
     patchi_(patchi),
     initialError_(-1.0),
@@ -55,6 +59,65 @@ Foam::accelerationScheme::~accelerationScheme()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+const Foam::dictionary& Foam::accelerationScheme::schemesDict
+(
+    const dictionary& dict,
+    const word& regionName,
+    const word& fieldName,
+    const word& patchName
+)
+{
+    UautoPtr<const dictionary> regionDict(dict.subDictPtr(regionName));
+    UautoPtr<const dictionary> fieldDict;
+    UautoPtr<const dictionary> patchDict;
+
+    if (regionDict.valid())
+    {
+        fieldDict.set(regionDict->subDictPtr(fieldName));
+    }
+    if (fieldDict.valid())
+    {
+        patchDict.set
+        (
+            fieldDict->subDictPtr(patchName)
+        );
+    }
+
+    if (patchDict.valid() && patchDict->found(accelerationScheme::typeName))
+    {
+        return patchDict();
+    }
+    else if (fieldDict.valid()&& fieldDict->found(accelerationScheme::typeName))
+    {
+        return fieldDict();
+    }
+    else if
+    (
+        regionDict.valid()
+     && regionDict->found(accelerationScheme::typeName)
+    )
+    {
+        return regionDict();
+    }
+    return dict;
+}
+
+
+const Foam::dictionary& Foam::accelerationScheme::coeffDict
+(
+    const dictionary& dict
+) const
+{
+    return
+        schemesDict
+        (
+            dict,
+            regionName_,
+            fieldName_,
+            patchName_
+        ).optionalSubDict(type_ + "Coeffs");
+}
 
 template<>
 Foam::scalar Foam::accelerationScheme::sumDotDot

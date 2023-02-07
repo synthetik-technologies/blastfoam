@@ -57,7 +57,17 @@ class accelerationScheme
 protected:
 // Protected data
 
-        const word& type_;
+        //- Name of the region
+        word regionName_;
+
+        //- Name of the field
+        word fieldName_;
+
+        //- Name of the patch
+        word patchName_;
+
+        //- Saved type name
+        const word type_;
 
         //- Patches to relax
         const label patchi_;
@@ -67,6 +77,9 @@ protected:
 
         //- Current residual
         scalar error_;
+
+        //- Return the coefficient dictionary
+        const dictionary& coeffDict(const dictionary& dict) const;
 
         //- Sum magSqr
         template<class Type>
@@ -106,7 +119,7 @@ protected:
 
 public:
 
-    TypeName("acceleration");
+    TypeName("accelerationScheme");
 
     // Constructor
     accelerationScheme
@@ -162,6 +175,16 @@ public:
 
         //- Read parameters
         virtual void read(const dictionary& dict) = 0;
+
+    // Static member functions
+
+        static const dictionary& schemesDict
+        (
+            const dictionary&,
+            const word& regionName,
+            const word& fieldName,
+            const word& patchName
+        );
 };
 
 template<>

@@ -35,15 +35,18 @@ Foam::AccelerationSchemeBase<Type, Patch, Mesh>::New
     const dictionary& dict
 )
 {
-    word accelerationType("none");
-    if (dict.found(accelerationScheme::typeName))
-    {
-        dict.lookup(accelerationScheme::typeName) >> accelerationType;
-    }
-
     incrIndent(Info);
-    Info<< indent << field.mesh().boundary()[patchi].name()
-        << ": " << accelerationType << endl;
+    Info<< indent << field.mesh().boundary()[patchi].name() << ": ";
+    word accelerationType =
+        accelerationScheme::schemesDict
+        (
+            dict,
+            field().mesh().thisDb().name(),
+            field.name(),
+            field().mesh().boundary()[patchi].name()
+        ).template lookupOrDefault<word>(accelerationScheme::typeName, "none");
+
+    Info<< accelerationType << endl;
 
     typename dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(accelerationType);

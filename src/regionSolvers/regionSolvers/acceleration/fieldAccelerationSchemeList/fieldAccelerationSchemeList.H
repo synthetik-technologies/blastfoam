@@ -22,34 +22,35 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::accelerationSchemeList
+    Foam::fieldAccelerationSchemeList
 
 Description
     Base class for acceleration
 
 SourceFiles
-    accelerationSchemeList.C
+    fieldAccelerationSchemeList.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef accelerationSchemeList_H
-#define accelerationSchemeList_H
+#ifndef fieldAccelerationSchemeList_H
+#define fieldAccelerationSchemeList_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "accelerationSchemeNew.H"
-#include "PtrList.H"
+#include "fieldAccelerationScheme.H"
+#include "regionSolverList.H"
+#include "PtrListDictionary.H"
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class accelerationSchemeList Declaration
+                    Class fieldAccelerationSchemeList Declaration
 \*---------------------------------------------------------------------------*/
 
-class accelerationSchemeList
+class fieldAccelerationSchemeList
 :
-    public PtrList<accelerationScheme>
+    public PtrListDictionary<fieldAccelerationScheme>
 {
 protected:
 // Protected data
@@ -57,24 +58,35 @@ protected:
     //- Reference to the mesh
     const fvMesh& mesh_;
 
+    //- Reference to the regionSolverList object
+    const regionSolverList& regions_;
+
 public:
 
-    TypeName("accelerationSchemeList");
+    TypeName("fieldAccelerationSchemeList");
 
     // Constructor
-    accelerationSchemeList
+    fieldAccelerationSchemeList
     (
-        const word& field,
         const fvMesh& mesh,
-        const labelList& patches,
-        const dictionary& dict
+        const regionSolverList& regions
     );
 
     //- Destructor
-    virtual ~accelerationSchemeList();
+    virtual ~fieldAccelerationSchemeList();
 
 
     // Member functions
+
+        //- Add a field for convergence
+        void addField
+        (
+            const word& fieldName,
+            const labelList& patches
+        );
+
+        //- Add a field for convergence
+        void addField(const word& fieldName);
 
         //- Update residuals
         void updateError();
@@ -85,14 +97,14 @@ public:
         //- Clear residuals
         void clear();
 
-        // Return the absolute error
-        scalar error() const;
-
-        //- Return the relative error
-        scalar relError() const;
+        //- Return convergence of all fields
+        Convergence convergence() const;
 
         //- Read parameters
         void read(const dictionary& dict);
+
+        //- Print current errors
+        void print(Ostream& os) const;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

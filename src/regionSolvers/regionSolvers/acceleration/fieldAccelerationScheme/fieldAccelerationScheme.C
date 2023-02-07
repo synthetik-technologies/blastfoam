@@ -23,19 +23,20 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "accelerationSchemeList.H"
+#include "fieldAccelerationScheme.H"
+#include "accelerationSchemeNew.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(accelerationSchemeList, 0);
+    defineTypeNameAndDebug(fieldAccelerationScheme, 0);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::accelerationSchemeList::accelerationSchemeList
+Foam::fieldAccelerationScheme::fieldAccelerationScheme
 (
     const word& fieldName,
     const fvMesh& mesh,
@@ -44,10 +45,12 @@ Foam::accelerationSchemeList::accelerationSchemeList
 )
 :
     PtrList<accelerationScheme>(patches.size()),
+    fieldName_(fieldName),
     mesh_(mesh)
 {
     Info<< "Selecting acceleration schemes for " << fieldName << endl;
     bool found = false;
+    label nPatches = 0;
     #define setSchemes(Type, Patch, Mesh)                                  \
     if (mesh_.foundObject<GeometricField<Type, Patch, Mesh>>(fieldName))   \
     {                                                                      \
@@ -60,17 +63,29 @@ Foam::accelerationSchemeList::accelerationSchemeList
         forAll(patches, pi)                                                \
         {                                                                  \
             const label patchi = patches[pi];                              \
-            this->set                                                      \
-            (                                                              \
-                pi,                                                        \
-                accelerationScheme::New                                    \
+            if (field.boundaryField()[patchi].fixesValue())                \
+            {                                                              \
+                this->set                                                  \
                 (                                                          \
-                    field,                                                 \
-                    patchi,                                                \
-                    dict                                                   \
-                )                                                          \
-            );                                                             \
+                    nPatches++,                                            \
+                    accelerationScheme::New                                \
+                    (                                                      \
+                        field,                                             \
+                        patchi,                                            \
+                        dict                                               \
+                    )                                                      \
+                );                                                         \
+            }                                                              \
+            else                                                           \
+            {                                                              \
+                WarningInFunction                                          \
+                    << "Trying to relax "                                  \
+                    << field.mesh().boundary()[patchi].name()              \
+                    << "for " << field.name() << " but it does not"        \
+                    << "fix a value. Skipping" << endl;                    \
+            }                                                              \
         }                                                                  \
+        this->setSize(nPatches);                                           \
     }
 
     FOR_ALL_FIELD_TYPES(setSchemes, fvPatchField, volMesh);
@@ -84,17 +99,38 @@ Foam::accelerationSchemeList::accelerationSchemeList
         FatalErrorInFunction
             << "Could not find " << fieldName << endl;
     }
+    this->read(dict);
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::accelerationSchemeList::~accelerationSchemeList()
+Foam::fieldAccelerationScheme::~fieldAccelerationScheme()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::accelerationSchemeList::updateError()
+bool Foam::fieldAccelerationScheme::readControls(const dictionary& dict)
+{
+    if (!dict.isDict(mesh_.name()) || !this->size())
+    {
+        return false;
+    }
+    const dictionary& regionDict =
+        dict.subDict(mesh_.name());
+    if (regionDict.isDict(fieldName_))
+    {
+        regionDict.subDict(fieldName_).lookup("tolerance") >> tolerance_;
+        regionDict.subDict(fieldName_).lookup("relTol") >> relTol_;
+        Info<< indent << "Tolerances for " << fieldName_ << " (abs/rel): "
+            << tolerance_ << "/" << relTol_ << endl;
+        return true;
+    }
+    return false;
+}
+
+
+void Foam::fieldAccelerationScheme::updateError()
 {
     forAll(*this, i)
     {
@@ -103,7 +139,7 @@ void Foam::accelerationSchemeList::updateError()
 }
 
 
-void Foam::accelerationSchemeList::relax(const label iter)
+void Foam::fieldAccelerationScheme::relax(const label iter)
 {
     forAll(*this, i)
     {
@@ -112,7 +148,7 @@ void Foam::accelerationSchemeList::relax(const label iter)
 }
 
 
-void Foam::accelerationSchemeList::clear()
+void Foam::fieldAccelerationScheme::clear()
 {
     forAll(*this, i)
     {
@@ -121,7 +157,7 @@ void Foam::accelerationSchemeList::clear()
 }
 
 
-Foam::scalar Foam::accelerationSchemeList::error() const
+Foam::scalar Foam::fieldAccelerationScheme::error() const
 {
     scalar errorSqr = Zero;
     forAll(*this, i)
@@ -132,7 +168,7 @@ Foam::scalar Foam::accelerationSchemeList::error() const
 }
 
 
-Foam::scalar Foam::accelerationSchemeList::relError() const
+Foam::scalar Foam::fieldAccelerationScheme::relError() const
 {
     scalar errorSqr = Zero;
     scalar initErrorSqr = Zero;
@@ -145,14 +181,24 @@ Foam::scalar Foam::accelerationSchemeList::relError() const
 }
 
 
-void Foam::accelerationSchemeList::read(const dictionary& dict)
+void Foam::fieldAccelerationScheme::read(const dictionary& dict)
 {
     forAll(*this, i)
     {
         this->operator[](i).read(dict);
     }
+    readControls(dict);
 }
 
+
+void Foam::fieldAccelerationScheme::print(Ostream& os) const
+{
+    if (this->size())
+    {
+        os  <<fieldName_ << " error (abs/rel): "
+            << error() << "/" << relError() << endl;
+    }
+}
 
 
 // ************************************************************************* //

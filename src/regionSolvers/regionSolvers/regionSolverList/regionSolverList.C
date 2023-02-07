@@ -40,7 +40,7 @@ namespace Foam
 
 Foam::regionSolverList::regionSolverList
 (
-    const dictionary& regionProperties,
+    const IOdictionary& regionProperties,
     const Time& runTime,
     PtrList<dynamicFvMesh>& regionMeshes,
     const List<Pair<word>>& regionTypes
@@ -50,7 +50,7 @@ Foam::regionSolverList::regionSolverList
     runTime_(runTime),
     regionProperties_(regionProperties),
     changed_(this->size(), true),
-    fixedMapping_(regionProperties_.lookupOrDefault<bool>("fixedMapping", false)),
+    fixedMapping_(regionProperties_.lookupOrDefault<bool>("fixedMapping", true)),
     iterNo_(0)
 {
     // Clearing of global patches is handled internally
@@ -120,11 +120,12 @@ bool Foam::regionSolverList::converged() const
     bool allUnknown = true;
     forAll(*this, regioni)
     {
-        switch (operator[](regioni).converged())
+        switch (operator[](regioni).convergence())
         {
             case NOT_CONVERGED:
                 return false;
             case CONVERGED:
+            case FULL_CONVERGENCE:
                 allUnknown = false;
                 break;
             default:
@@ -138,20 +139,30 @@ bool Foam::regionSolverList::converged() const
 Foam::Convergence Foam::regionSolverList::convergence() const
 {
     bool allUnknown = true;
+    bool allFull = true;
     forAll(*this, regioni)
     {
-        switch (operator[](regioni).converged())
+        switch (operator[](regioni).convergence())
         {
             case NOT_CONVERGED:
                 return NOT_CONVERGED;
             case CONVERGED:
+                allFull = false;
+                allUnknown = false;
+                break;
+            case FULL_CONVERGENCE:
                 allUnknown = false;
                 break;
             default:
                 break;
         }
     }
-    return allUnknown ? UNKNOWN_CONVERGENCE : CONVERGED;
+    return
+        allUnknown
+      ? UNKNOWN_CONVERGENCE
+      : (
+            allFull ? FULL_CONVERGENCE : CONVERGED
+        );
 }
 
 void Foam::regionSolverList::initialiseDisplacement()
@@ -189,6 +200,7 @@ void Foam::regionSolverList::initialiseDisplacement()
     label nInitialCorrectors =
         solutionControls().lookup<label>("nInitialCorrectors");
 
+    Convergence converged = UNKNOWN_CONVERGENCE;
     do
     {
         if (debug)
@@ -202,14 +214,22 @@ void Foam::regionSolverList::initialiseDisplacement()
             << "Initial correction iteration: " << iterNo_ << nl << endl;
 
         // Force updating of mapping
-        update(true);
+        update(fixedMapping_);
 
         // Initialize meshes
         forAll(*this, regioni)
         {
             operator[](regioni).moveMesh(MID_ITER);
         }
-    } while (iterNo_++ < nInitialCorrectors && !converged());
+
+        converged = convergence();
+
+        // Allow iterations to stop if the error is very small
+        if (converged == FULL_CONVERGENCE)
+        {
+            break;
+        }
+    } while (iterNo_++ < nInitialCorrectors && converged <= NOT_CONVERGED);
 
     if (debug)
     {
@@ -218,12 +238,12 @@ void Foam::regionSolverList::initialiseDisplacement()
 
     }
 
-    if (convergence() == CONVERGED)
+    if (converged >= CONVERGED)
     {
         Info<< "Converged initial displacement in " << iterNo_
             << " iterations" << nl << endl;
     }
-    else if (convergence() == NOT_CONVERGED)
+    else if (converged == NOT_CONVERGED)
     {
         Info<< "*** Initial displacement did not converge" << nl << endl;
     }
@@ -327,6 +347,8 @@ void Foam::regionSolverList::solve()
     iterNo_ = 0;
     bool finished = false;
     bool cleanup = false;
+
+    Convergence converged = UNKNOWN_CONVERGENCE;
     do
     {
         Info<< endl;
@@ -334,6 +356,9 @@ void Foam::regionSolverList::solve()
             << "Outer iteration: " << iterNo_ << nl
             << "Time = " << runTime_.timeName() << nl << endl;
 
+        // Mark if relaxation is allowed
+        // FINAL_ITER: no relaxation
+        // MID_ITER: Relaxation is allowed
         IterType iter =
             iterNo_ == 0 ? FIRST_ITER
           : (
@@ -357,14 +382,23 @@ void Foam::regionSolverList::solve()
 
         iterNo_++;
 
-        if (converged())
+        converged = convergence();
+
+        // Allow iterations to stop if the error is very small
+        if (converged == FULL_CONVERGENCE)
+        {
+            break;
+        }
+        // Convergence is met, but the relaxation need to be stopped for
+        // full motion
+        else if (converged == CONVERGED)
         {
             cleanup = true;
         }
 
     } while (!finished && iterNo_ < nOuterCorrectors);
 
-    if (convergence() == CONVERGED)
+    if (convergence() >= CONVERGED)
     {
         Info<< "All regions converged in " << iterNo_
             << " iterations" << nl << endl;

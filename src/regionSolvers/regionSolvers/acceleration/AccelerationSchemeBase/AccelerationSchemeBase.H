@@ -66,9 +66,6 @@ protected:
         void setInInternalField(PatchField<Type>& pp)
         {}
 
-        //- Return the coefficient dictionary
-        const dictionary& coeffDict(const dictionary& dict) const;
-
 
 public:
 

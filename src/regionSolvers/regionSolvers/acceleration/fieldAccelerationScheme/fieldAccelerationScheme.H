@@ -22,86 +22,113 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::accelerationSchemes::Aitken
+    Foam::fieldAccelerationScheme
 
 Description
-    Aitken acceleration
+    Base class for acceleration
 
 SourceFiles
-    AitkenAccelerationScheme.C
+    fieldAccelerationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef AitkenAccelerationScheme_H
-#define AitkenAccelerationScheme_H
+#ifndef fieldAccelerationScheme_H
+#define fieldAccelerationScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "ResidualBaseAccelerationScheme.H"
+#include "accelerationScheme.H"
+#include "regionSolverList.H"
+#include "PtrList.H"
 
 namespace Foam
 {
-namespace accelerationSchemes
-{
 
 /*---------------------------------------------------------------------------*\
-                           Class Aitken Declaration
+                    Class fieldAccelerationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type, template<class> class Patch, class Mesh>
-class Aitken
+class fieldAccelerationScheme
 :
-    public ResidualBase<Type, Patch, Mesh>
+    public PtrList<accelerationScheme>
 {
-    //- Number of fixed relaxation steps
-    label nFixed_;
+protected:
+// Protected data
 
-    //- Initial relaxation factor
-    scalar initRelaxFactor_;
+    // Field name
+    const word& fieldName_;
 
-    //- Maximum relaxation factor
-    scalar maxRelaxFactor_;
+    //- Reference to the mesh
+    const fvMesh& mesh_;
 
-    //- Current Aitken factor
-    scalar aitkenFactor_;
+    //- Tolerances
+    scalar tolerance_;
+    scalar relTol_;
+
+    //- Read controls
+    bool readControls(const dictionary& dict);
 
 public:
 
-    TypeName("Aitken");
+    TypeName("fieldAccelerationScheme");
 
     // Constructor
-    Aitken
+    fieldAccelerationScheme
     (
-        GeometricField<Type, Patch, Mesh>& field,
-        const label patchi,
+        const word& field,
+        const fvMesh& mesh,
+        const labelList& patches,
         const dictionary& dict
     );
 
-
     //- Destructor
-    virtual ~Aitken();
+    virtual ~fieldAccelerationScheme();
 
 
     // Member functions
 
+        //- Update residuals
+        void updateError();
+
         //- Relax the field
-        virtual void relax(const label iter);
+        void relax(const label iter);
+
+        //- Clear residuals
+        void clear();
+
+        // Return the absolute error
+        scalar error() const;
+
+        //- Return the relative error
+        scalar relError() const;
+
+        Convergence convergence() const
+        {
+            if (tolerance_ < 0)
+            {
+                return UNKNOWN_CONVERGENCE;
+            }
+            else if (error() < small)
+            {
+                return FULL_CONVERGENCE;
+            }
+            else if (error() < tolerance_ || relError() < relTol_)
+            {
+                return CONVERGED;
+            }
+            return NOT_CONVERGED;
+        }
 
         //- Read parameters
-        virtual void read(const dictionary& dict);
+        void read(const dictionary& dict);
+
+        //- Print current errors
+        void print(Ostream& os) const;
 };
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace AccelerationSchemes
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "AitkenAccelerationScheme.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

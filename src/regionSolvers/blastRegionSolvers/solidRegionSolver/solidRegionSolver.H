@@ -87,11 +87,15 @@ public:
             }
 
             //- Return if the solver converged
-            virtual Convergence converged() const
+            virtual Convergence convergence() const
             {
                 if (tolerance_ < 0)
                 {
                     return UNKNOWN_CONVERGENCE;
+                }
+                else if (error_ < small)
+                {
+                    return FULL_CONVERGENCE;
                 }
                 else if
                 (

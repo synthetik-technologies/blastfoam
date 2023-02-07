@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "AitkenDisplacementRelaxation.H"
+#include "AitkenAccelerationScheme.H"
 #include "valuePointPatchFields.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -39,17 +39,14 @@ Foam::accelerationSchemes::Aitken<Type, Patch, Mesh>::Aitken
 :
     ResidualBase<Type, Patch, Mesh>(typeName, field, patchi, dict),
 
-    initRelaxFactor_
-    (
-        this->coeffDict(dict).template lookup<scalar>("initialRelaxationFactor")
-    ),
-    maxRelaxFactor_
-    (
-        this->coeffDict(dict).template lookup<scalar>("maxRelaxationFactor")
-    ),
+    nFixed_(1),
+    initRelaxFactor_(1.0),
+    maxRelaxFactor_(1.0),
     aitkenFactor_(initRelaxFactor_)
 {
-    Info<< indent << "initialRelaxationFactor: " << initRelaxFactor_ << nl
+    read(dict);
+    Info<< indent << "nFixed: " << nFixed_ << nl
+        << indent << "initialRelaxationFactor: " << initRelaxFactor_ << nl
         << indent << "maxRelaxationFactor: " << maxRelaxFactor_ << nl << endl;
 }
 
@@ -98,7 +95,7 @@ void Foam::accelerationSchemes::Aitken<Type, Patch, Mesh>::relax
 
     Patch<Type>& pfield =
         dynamicCast<Patch<Type>>(this->field_.boundaryFieldRef()[this->patchi_]);
-     pfield ==
+     pfield =
         dynamicCast<const Field<Type>>
         (
             this->field_.prevIter().boundaryField()[this->patchi_]
@@ -118,6 +115,11 @@ void Foam::accelerationSchemes::Aitken<Type, Patch, Mesh>::read
         >> initRelaxFactor_;
     this->coeffDict(dict).lookup("maxRelaxationFactor")
         >> maxRelaxFactor_;
+    this->coeffDict(dict).readIfPresent("nFixed", nFixed_);
+    if (nFixed_ < 1)
+    {
+        nFixed_ = max(nFixed_, 1);
+    }
 }
 
 

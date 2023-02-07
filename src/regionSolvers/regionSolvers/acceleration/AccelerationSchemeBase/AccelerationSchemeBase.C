@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "AccelerationSchemeBase.H"
-#include "UautoPtr.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -40,6 +39,10 @@ Foam::AccelerationSchemeBase<Type, Patch, Mesh>::AccelerationSchemeBase
     accelerationScheme(type, patchi, dict),
     field_(field)
 {
+    regionName_ = field.mesh().thisDb().name();
+    fieldName_ = field.name();
+    patchName_= field.mesh().boundary()[patchi].name();
+
     // Make sure boundaries are actually fixed
     if (!field_.boundaryField()[patchi_].fixesValue())
     {
@@ -58,49 +61,6 @@ Foam::AccelerationSchemeBase<Type, Patch, Mesh>::~AccelerationSchemeBase()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-template<class Type, template<class> class Patch, class Mesh>
-const Foam::dictionary&
-Foam::AccelerationSchemeBase<Type, Patch, Mesh>::coeffDict
-(
-    const dictionary& dict
-) const
-{
-    UautoPtr<const dictionary> regionDict(dict.subDictPtr(field_.mesh().name()));
-    UautoPtr<const dictionary> fieldDict;
-    UautoPtr<const dictionary> patchDict;
-
-    if (regionDict.valid())
-    {
-        fieldDict.set(regionDict->subDictPtr(field_.name()));
-    }
-    if (fieldDict.valid())
-    {
-        patchDict.set
-        (
-            fieldDict->subDictPtr(field_.mesh().boundary()[patchi_].name())
-        );
-    }
-
-    if (patchDict.valid() && patchDict->found(accelerationScheme::typeName))
-    {
-        return patchDict->optionalSubDict(type_ + "Coeffs");
-    }
-    else if (fieldDict.valid()&& fieldDict->found(accelerationScheme::typeName))
-    {
-        return fieldDict->optionalSubDict(type_ + "Coeffs");
-    }
-    else if
-    (
-        regionDict.valid()
-     && regionDict->found(accelerationScheme::typeName)
-    )
-    {
-        return regionDict->optionalSubDict(type_ + "Coeffs");
-    }
-    return dict.optionalSubDict(type_ + "Coeffs");
-}
-
 
 template<class Type, template<class> class Patch, class Mesh>
 void Foam::AccelerationSchemeBase<Type, Patch, Mesh>::updateError()

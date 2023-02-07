@@ -4,7 +4,9 @@ regionSolver/regionSolverNew.C
 regionSolverList/regionSolverList.C
 
 acceleration/accelerationScheme/accelerationScheme.C
-acceleration/accelerationSchemeList/accelerationSchemeList.C
+acceleration/fieldAccelerationScheme/fieldAccelerationScheme.C
+acceleration/fieldAccelerationSchemeList/fieldAccelerationSchemeList.C
+
 acceleration/AccelerationSchemeBase/AccelerationSchemeBases.C
 acceleration/None/NoAccelerationSchemes.C
 acceleration/Fixed/FixedAccelerationSchemes.C

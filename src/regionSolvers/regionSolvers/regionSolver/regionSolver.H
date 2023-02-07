@@ -40,6 +40,7 @@ SourceFiles
 
 #include "dynamicFvMesh.H"
 #include "regionSolverList.H"
+#include "fieldAccelerationSchemeList.H"
 #include "globalPolyBoundaryMesh.H"
 #include "runTimeSelectionTables.H"
 
@@ -70,6 +71,9 @@ protected:
 
         //- Global polyBoundaryMesh
         globalPolyBoundaryMesh& globalBoundary_;
+
+        //- List of acceleration schemes
+        fieldAccelerationSchemeList accelerationSchemes_;
 
 
         //- Read controls
@@ -154,9 +158,9 @@ public:
         // Edit
 
             //- Return if the step converged
-            virtual Convergence converged() const
+            virtual Convergence convergence() const
             {
-                return UNKNOWN_CONVERGENCE;
+                return accelerationSchemes_.convergence();
             }
 
             //- Initial update to fields
