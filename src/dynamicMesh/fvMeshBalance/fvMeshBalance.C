@@ -28,6 +28,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "RefineBalanceMeshObject.H"
 #include "parcelCloud.H"
+#include "internalFvPatch.H"
 #include "preserveFaceZonesConstraint.H"
 #include "singleProcessorFaceSetsConstraint.H"
 #include "preservePatchesConstraint.H"
@@ -40,8 +41,6 @@ using namespace Foam::decompositionConstraints;
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshBalance, 0);
-    defineTypeNameAndDebug(fvMeshBalance::fvPatchResizer, 0);
-
     bool fvMeshBalance::balancing = false;
 }
 
@@ -65,6 +64,61 @@ bool Foam::fvMeshBalance::isBalancing(const polyMesh& mesh)
     }
     return false;
 }
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::fvMeshBalance::makeDecomposer() const
+{
+    if (decomposer_.valid())
+    {
+        FatalErrorInFunction
+            << "Decomposer already set" << endl
+            << abort(FatalError);
+    }
+    decomposer_ = decompositionMethod::New(decompositionDict_);
+
+    returnReduce(1, maxOp<label>());
+    if (!decomposer_->parallelAware())
+    {
+        WarningInFunction
+            << "You have selected decomposition method "
+            << decomposer_->typeName
+            << " which is not parallel aware." << endl;
+    }
+}
+
+
+void Foam::fvMeshBalance::checkForInternal() const
+{
+    if (!Pstream::parRun() || !balance_)
+    {
+        return;
+    }
+
+    bool foundInternal = false;
+    forAll(mesh_.boundary(), patchi)
+    {
+        if (isA<internalFvPatch>(mesh_.boundary()[patchi]))
+        {
+            foundInternal = true;
+            break;
+        }
+    }
+    reduce(foundInternal, andOp<bool>());
+
+    if (!foundInternal)
+    {
+        FatalErrorInFunction
+            << "When balancing is enabled, an internal patch should "
+            << "be added to the mesh. " << nl
+            << "\tTo add the necessary patch to the mesh and the fields, "
+            << "use the command" << nl
+            << "\t\"addEmptyPatch patchName internal -overwrite\" " << nl
+            << exit(FatalError);
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -212,9 +266,6 @@ Foam::fvMeshBalance::fvMeshBalance
 Foam::fvMeshBalance::~fvMeshBalance()
 {}
 
-Foam::fvMeshBalance::fvPatchResizer::~fvPatchResizer()
-{}
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::fvMeshBalance::read(const dictionary& balanceDict)
@@ -252,6 +303,8 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
     decompositionDict_ <<= balanceDict;
 
     balanceDict.readIfPresent("allowableImbalance", allowableImbalance_);
+
+    checkForInternal();
 }
 
 
@@ -423,27 +476,6 @@ void Foam::fvMeshBalance::preserveBaffles()
 }
 
 
-void Foam::fvMeshBalance::makeDecomposer() const
-{
-    if (decomposer_.valid())
-    {
-        FatalErrorInFunction
-            << "Decomposer already set" << endl
-            << abort(FatalError);
-    }
-    decomposer_ = decompositionMethod::New(decompositionDict_);
-
-    returnReduce(1, maxOp<label>());
-    if (!decomposer_->parallelAware())
-    {
-        WarningInFunction
-            << "You have selected decomposition method "
-            << decomposer_->typeName
-            << " which is not parallel aware." << endl;
-    }
-}
-
-
 Foam::decompositionMethod& Foam::fvMeshBalance::decomposer() const
 {
     if (!decomposer_.valid())
@@ -534,23 +566,21 @@ bool Foam::fvMeshBalance::canBalance() const
 Foam::autoPtr<Foam::mapDistributePolyMesh>
 Foam::fvMeshBalance::distribute()
 {
-    //Correct values on all coupled patches
-    correctBoundaries<volScalarField>();
-    correctBoundaries<volVectorField>();
-    correctBoundaries<volSphericalTensorField>();
-    correctBoundaries<volSymmTensorField>();
-    correctBoundaries<volTensorField>();
+    // Correct values on all coupled patches
+    correctProcessorBoundaries<volScalarField>(mesh_);
+    correctProcessorBoundaries<volVectorField>(mesh_);
+    correctProcessorBoundaries<volSphericalTensorField>(mesh_);
+    correctProcessorBoundaries<volSymmTensorField>(mesh_);
+    correctProcessorBoundaries<volTensorField>(mesh_);
 
-    correctBoundaries<pointScalarField>();
-    correctBoundaries<pointVectorField>();
-    correctBoundaries<pointSphericalTensorField>();
-    correctBoundaries<pointSymmTensorField>();
-    correctBoundaries<pointTensorField>();
+    correctProcessorBoundaries<pointScalarField>(mesh_);
+    correctProcessorBoundaries<pointVectorField>(mesh_);
+    correctProcessorBoundaries<pointSphericalTensorField>(mesh_);
+    correctProcessorBoundaries<pointSymmTensorField>(mesh_);
+    correctProcessorBoundaries<pointTensorField>(mesh_);
 
+    blastMeshObject::preDistribute<polyMesh>(mesh_);
     blastMeshObject::preDistribute<fvMesh>(mesh_);
-
-    // Create class to hook in before fvMesh::updateMesh is called
-    fvPatchResizer resizer(mesh_);
 
     Info<< "Distributing the mesh ..." << endl;
     balancing = true;
@@ -582,18 +612,18 @@ Foam::fvMeshBalance::distribute()
     blastMeshObject::distribute<fvMesh>(mesh_, map());
 
 
-    //Correct values on all coupled patches
-    correctBoundaries<volScalarField>();
-    correctBoundaries<volVectorField>();
-    correctBoundaries<volSphericalTensorField>();
-    correctBoundaries<volSymmTensorField>();
-    correctBoundaries<volTensorField>();
+    // Correct values on all coupled patches
+    correctProcessorBoundaries<volScalarField>(mesh_);
+    correctProcessorBoundaries<volVectorField>(mesh_);
+    correctProcessorBoundaries<volSphericalTensorField>(mesh_);
+    correctProcessorBoundaries<volSymmTensorField>(mesh_);
+    correctProcessorBoundaries<volTensorField>(mesh_);
 
-    correctBoundaries<pointScalarField>();
-    correctBoundaries<pointVectorField>();
-    correctBoundaries<pointSphericalTensorField>();
-    correctBoundaries<pointSymmTensorField>();
-    correctBoundaries<pointTensorField>();
+    correctProcessorBoundaries<pointScalarField>(mesh_);
+    correctProcessorBoundaries<pointVectorField>(mesh_);
+    correctProcessorBoundaries<pointSphericalTensorField>(mesh_);
+    correctProcessorBoundaries<pointSymmTensorField>(mesh_);
+    correctProcessorBoundaries<pointTensorField>(mesh_);
 
     return map;
 }
@@ -623,40 +653,6 @@ bool Foam::fvMeshBalance::write(const bool write) const
         return decomposeParDict.regIOobject::write();
     }
     return true;
-}
-
-
-// Problems can occur when mapping patchFields since the new size maybe bigger
-// than the previous size which leads to uninitialized values and can result
-// in crashes due to writing NaN
-// Current fix:
-//      After the polyMesh is updated, but before fields are mapped, set all
-//      patch sizes to the maximum size, and initialize to Zero. PointPatchFields
-//      are only updated if they are a valuePointPatchField
-void Foam::fvMeshBalance::fvPatchResizer::updateMesh(const mapPolyMesh& map)
-{
-    labelList newPatchSizes(map.oldPatchSizes());
-    forAll(mesh_.boundary(), patchi)
-    {
-        newPatchSizes[patchi] =
-            max(newPatchSizes[patchi], mesh_.boundary()[patchi].size());
-    }
-
-    #define resizePatchFieldType(Type, mesh, sizes)                            \
-        resizePatchFields<Type, fvPatchField, volMesh>                         \
-        (                                                                      \
-            mesh,                                                              \
-            sizes                                                              \
-        );                                                                     \
-        resizePatchFields<Type, fvsPatchField, surfaceMesh>                    \
-        (                                                                      \
-            mesh,                                                              \
-            sizes                                                              \
-        );
-
-    FOR_ALL_FIELD_TYPES(resizePatchFieldType, mesh_, newPatchSizes);
-
-    #undef resizePatchFieldType
 }
 
 

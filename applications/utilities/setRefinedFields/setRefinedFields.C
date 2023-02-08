@@ -238,9 +238,6 @@ GeoType getGeoType(const word& type)
             return iter();
         }
     }
-    FatalErrorInFunction
-        << "Could not determine geometry type from " << type << endl
-        << abort(FatalError);
     return UNKNOWN_GEO;
 }
 
@@ -254,9 +251,6 @@ PrimitiveType getPrimitiveType(const word& type)
             return iter();
         }
     }
-    FatalErrorInFunction
-        << "Could not determine primitive type from " << type << endl
-        << abort(FatalError);
     return UNKNOWN_PRIM;
 }
 
@@ -325,11 +319,6 @@ public:
             Istream& is
         ) const
         {
-            if (!returnReduce(elms.size(), sumOp<label>()) && !force_)
-            {
-                return;
-            }
-
             PrimitiveType prim(getPrimitiveType(fieldSetType));
             switch (prim)
             {
@@ -374,6 +363,10 @@ public:
                     );
                     break;
                 default:
+                    FatalIOErrorInFunction(is)
+                        << "Could not determine geometry type from "
+                        << fieldSetType << endl
+                        << abort(FatalIOError);
                     break;
             }
         }
@@ -418,7 +411,6 @@ public:
         {
             word fieldSetType(is);
             GeoType geo(getGeoType(fieldSetType));
-
             switch (geo)
             {
                 case VOL:
@@ -446,6 +438,10 @@ public:
                     );
                     break;
                 default:
+                    FatalIOErrorInFunction(is)
+                        << "Could not determine geometry type from "
+                        << fieldSetType << endl
+                        << abort(FatalIOError);
                     break;
             }
 
@@ -824,11 +820,11 @@ int main(int argc, char *argv[])
     );
     topoSetList topoSets(mesh);
 
-    labelList levels(regions.size(), 0);
+    labelList levels(regions.size(), -1);
     forAll(regions, regionI)
     {
         levels[regionI] =
-            regions[regionI].dict().lookupOrDefault("level", 0);
+            regions[regionI].dict().lookupOrDefault("level", -1);
     }
 
     // Error fields is the same since it is looked up
@@ -858,16 +854,34 @@ int main(int argc, char *argv[])
     };
     volScalarField& error = mesh.lookupObjectRef<volScalarField>("error");
 
-    label maxLevel =
-    (
-        levels.size() && !setFieldsDict.found("maxRefinement")
-      ? max(levels)
-      : (
-            EE.valid()
-          ? EE->maxLevel()
-          : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
-        )
-    );
+    label maxLevel = -1;
+    if (setFieldsDict.found("maxRefinement"))
+    {
+        maxLevel = setFieldsDict.lookup<label>("maxRefinement");
+    }
+    else if (max(levels) > 0)
+    {
+        maxLevel = max(levels);
+    }
+    else if (EE.valid())
+    {
+        maxLevel = EE->maxLevel();
+    }
+    else if (!args.optionFound("noRefine"))
+    {
+        FatalIOErrorInFunction(setFieldsDict)
+            << "Maximum refinement could not be determined." << nl
+            << "\tProvide levels inside regions, a global \"maxRefinement\", "
+            << "an errorEstimator, or specify \"-noRefine\"" << endl
+            << abort(FatalIOError);
+    }
+    forAll(levels, i)
+    {
+        if (levels[i] < 0)
+        {
+            levels[i] = maxLevel;
+        }
+    }
 
 
 
