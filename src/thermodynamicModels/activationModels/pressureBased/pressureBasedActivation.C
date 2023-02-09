@@ -97,12 +97,10 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
         const dictionary& pDict(dict.parent().subDict("products"));
         if (rDict.subDict("equationOfState").found(rho0_.name()))
         {
-            Info<<"reactants"<<endl;
             rho0_.read(rDict.subDict("equationOfState"));
         }
         else if (pDict.subDict("equationOfState").found(rho0_.name()))
         {
-            Info<<"products"<<endl;
             rho0_.read(pDict.subDict("equationOfState"));
         }
         else

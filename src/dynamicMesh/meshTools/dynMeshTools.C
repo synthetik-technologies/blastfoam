@@ -909,29 +909,29 @@ void Foam::meshTools::readAndStoreFields(const fvMesh& mesh)
     // Get all fields present at the current time
     IOobjectList objects(mesh, mesh.time().timeName());
 
-    readGeoFields<volScalarField>(mesh, objects);
-    readGeoFields<volVectorField>(mesh, objects);
-    readGeoFields<volSymmTensorField>(mesh, objects);
-    readGeoFields<volSphericalTensorField>(mesh, objects);
-    readGeoFields<volTensorField>(mesh, objects);
+    readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<tensor, fvPatchField, volMesh>(mesh, objects);
 
-    readGeoFields<volScalarField::Internal>(mesh, objects);
-    readGeoFields<volVectorField::Internal>(mesh, objects);
-    readGeoFields<volSymmTensorField::Internal>(mesh, objects);
-    readGeoFields<volSphericalTensorField::Internal>(mesh, objects);
-    readGeoFields<volTensorField::Internal>(mesh, objects);
+    readInternalFields<scalar, volMesh>(mesh, objects);
+    readInternalFields<vector, volMesh>(mesh, objects);
+    readInternalFields<symmTensor, volMesh>(mesh, objects);
+    readInternalFields<sphericalTensor, volMesh>(mesh, objects);
+    readInternalFields<tensor, volMesh>(mesh, objects);
 
-    readGeoFields<surfaceScalarField>(mesh, objects);
-    readGeoFields<surfaceVectorField>(mesh, objects);
-    readGeoFields<surfaceSymmTensorField>(mesh, objects);
-    readGeoFields<surfaceSphericalTensorField>(mesh, objects);
-    readGeoFields<surfaceTensorField>(mesh, objects);
+    readGeoFields<scalar, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<vector, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<tensor, fvsPatchField, surfaceMesh>(mesh, objects);
 
-    readPointFields<pointScalarField>(mesh, objects);
-    readPointFields<pointVectorField>(mesh, objects);
-    readPointFields<pointSymmTensorField>(mesh, objects);
-    readPointFields<pointSphericalTensorField>(mesh, objects);
-    readPointFields<pointTensorField>(mesh, objects);
+    readGeoFields<scalar, pointPatchField, pointMesh>(mesh, objects);
+    readGeoFields<vector, pointPatchField, pointMesh>(mesh, objects);
+    readGeoFields<symmTensor, pointPatchField, pointMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, pointPatchField, pointMesh>(mesh, objects);
+    readGeoFields<tensor, pointPatchField, pointMesh>(mesh, objects);
 }
 
 
@@ -1005,5 +1005,14 @@ void Foam::meshTools::filterPatches
         Info<< endl;
     }
 }
+
+
+template<>
+const Foam::pointMesh::Mesh&
+Foam::meshTools::getGeoMesh<Foam::pointMesh>(const fvMesh& mesh)
+{
+    return pointMesh::New(mesh);
+}
+
 
 // ************************************************************************* //

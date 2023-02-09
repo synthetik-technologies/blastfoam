@@ -101,7 +101,7 @@ protected:
             thermophysicalTransport_;
 
         //- Gravitational acceleration
-        const uniformDimensionedVectorField& g_;
+        uniformDimensionedVectorField g_;
 
         //- Solution directions
         vector solutionDs_;

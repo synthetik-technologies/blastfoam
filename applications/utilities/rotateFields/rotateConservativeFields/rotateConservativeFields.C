@@ -42,12 +42,50 @@ Description
 #include "indexedOctree.H"
 #include "treeDataCell.H"
 
-#include "fvMeshRefiner.H"
-#include "errorEstimator.H"
-
 #include "mappingFunctions.H"
+#include "compressibleSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class Type>
+void addTypeObjects
+(
+    const objectRegistry& db,
+    const objectRegistry& otherdb,
+    IOobjectList& objects
+)
+{
+    wordList typeObjects
+    (
+        db.names<GeometricField<Type, fvPatchField, volMesh>>()
+    );
+    forAll(typeObjects, i)
+    {
+        if
+        (
+            otherdb.foundObject<GeometricField<Type, fvPatchField, volMesh>>
+            (
+                typeObjects[i]
+            )
+        )
+        {
+            objects.insert
+            (
+                typeObjects[i],
+                new IOobject
+                (
+                    db.lookupObject<GeometricField<Type, fvPatchField, volMesh>>
+                    (
+                        typeObjects[i]
+                    )
+                )
+            );
+            objects[typeObjects[i]]->headerClassName() =
+                GeometricField<Type, fvPatchField, volMesh>::typeName;
+        }
+    }
+}
+
 
 void mapFields
 (
@@ -61,7 +99,37 @@ void mapFields
 )
 {
     Info<< "Mapping fields" << endl;
-    IOobjectList objects(sourceMeshes[0], sourceMeshes[0].time().timeName());
+    IOobjectList objects;
+    {
+        IOobjectList tobjects
+        (
+            sourceMeshes[0],
+            sourceMeshes[0].time().timeName()
+        );
+
+        forAllConstIter
+        (
+            HashSet<word>,
+            additionalFields,
+            iter
+        )
+        {
+            if (tobjects.found(iter.key()))
+            {
+                objects.insert
+                (
+                    iter.key(),
+                    tobjects[iter.key()]
+                );
+                tobjects[iter.key()] = nullptr;
+            }
+        }
+        addTypeObjects<scalar>(targetMesh, sourceMeshes[0], objects);
+        addTypeObjects<vector>(targetMesh, sourceMeshes[0], objects);
+        addTypeObjects<symmTensor>(targetMesh, sourceMeshes[0], objects);
+        addTypeObjects<sphericalTensor>(targetMesh, sourceMeshes[0], objects);
+        addTypeObjects<tensor>(targetMesh, sourceMeshes[0], objects);
+    }
 
     mapVolFields<scalar>
     (
@@ -191,6 +259,7 @@ int main(int argc, char *argv[])
     const string caseNameOrig = getEnv("FOAM_CASENAME");
 
     Time targetRunTime(Foam::Time::controlDictName, args);
+    Info<< "\nTarget time: " << targetRunTime.value() << nl << endl;
     fvMesh targetMesh
     (
         IOobject
@@ -201,19 +270,29 @@ int main(int argc, char *argv[])
             IOobject::MUST_READ
         )
     );
-    Info<<"Created target mesh"<<endl;
+    Info<< "Created target mesh" << nl << endl;
+
+    autoPtr<compressibleSystem> targetCompressibleSystem;
+    {
+        const label ti = targetRunTime.timeIndex();
+        const scalar tv = targetRunTime.value();
+        targetRunTime.setTime(tv, -1);
+        targetCompressibleSystem = compressibleSystem::New(targetMesh);
+        targetRunTime.setTime(tv, ti);
+    }
+
 
     const polyMesh::cellDecomposition decompMode =
         args.optionFound("tets") ? polyMesh::CELL_TETS : polyMesh::FACE_DIAG_TRIS;
 
     PtrList<Time> sourceRunTimes;
     PtrList<fvMesh> sourceMeshes;
+    PtrList<compressibleSystem> sourceCompressibleSystems;
     label nSourceCells = 0;
 
     // Create source case argList
     argList sourceArgs(args);
     const_cast<ParRunControl&>(sourceArgs.parRunControl()) = ParRunControl();
-
     if (parallelSource)
     {
         label nProcs = fileHandler().nProcs(rootDirSource/caseDirSource);
@@ -227,14 +306,18 @@ int main(int argc, char *argv[])
                 << abort(FatalError);
         }
 
+        Info<< "Reading parallel case with " << nProcs << "processors"
+            << nl << endl;
         setParRun(false);
         sourceRunTimes.setSize(nProcs);
         sourceMeshes.setSize(nProcs);
+        sourceCompressibleSystems.setSize(nProcs);
 
         setEnv("FOAM_CASE", rootDirSource/caseDirSource, true);
         setEnv("FOAM_CASENAME", caseDirSource, true);
         for (int proci=0; proci < nProcs; proci++)
         {
+            Info<< "Setting Time for processor " << proci << nl << endl;
             sourceRunTimes.set
             (
                 proci,
@@ -258,20 +341,29 @@ int main(int argc, char *argv[])
                     (
                         sourceRegion,
                         runTimeSource.timeName(),
-                        runTimeSource
+                        runTimeSource,
+                        IOobject::MUST_READ
                     )
                 )
             );
             nSourceCells += sourceMeshes[proci].nCells();
+
+            sourceCompressibleSystems.set
+            (
+                proci,
+                compressibleSystem::New(sourceMeshes[proci]).ptr()
+            );
         }
         resetParRun();
 
-        Info<< nl << "Read " << nProcs << " source processor meshes" << endl;
+        Info<< nl << "Finished reading " << nProcs
+            << " source processor meshes" << endl;
     }
     else
     {
         sourceRunTimes.setSize(1);
         sourceMeshes.setSize(1);
+        sourceCompressibleSystems.setSize(1);
 
         sourceRunTimes.set
         (
@@ -295,13 +387,21 @@ int main(int argc, char *argv[])
                 (
                     sourceRegion,
                     runTimeSource.timeName(),
-                    runTimeSource
+                    runTimeSource,
+                    IOobject::MUST_READ
                 )
             )
         );
-        Info<< "Created source mesh\n" << endl;
         nSourceCells += sourceMeshes[0].nCells();
+        Info<< "Created source mesh\n" << endl;
+
+        sourceCompressibleSystems.set
+        (
+            0,
+            compressibleSystem::New(sourceMeshes[0]).ptr()
+        );
     }
+
     setEnv("FOAM_CASE", caseDirOrig, true);
     setEnv("FOAM_CASENAME", caseNameOrig, true);
 
@@ -365,56 +465,6 @@ int main(int argc, char *argv[])
 
     Info<< "Source mesh size: " << nSourceCells << endl;
 
-    if (!args.optionFound("refine"))
-    {
-        Info<< "Target mesh size: " << targetMesh.nCells() << nl << endl;
-        List<cellInfoList> cellMap(targetMesh.nCells());
-        List<cellInfoList> extendedCellMap(targetMesh.nCells());
-        tensorField R(targetMesh.nCells(), tensor::I);
-
-        calcMapAndR
-        (
-            icos,
-            sourceMeshes,
-            targetMesh,
-            maxR,
-            sourceCentre,
-            targetCentre,
-            rotationAxis,
-            rAxis,
-            cellMap,
-            extendedCellMap,
-            R
-        );
-
-        // Map fields from the source mesh to the target mesh
-        mapFields
-        (
-            sourceMeshes,
-            targetMesh,
-            cellMap,
-            extendedCellMap,
-            R,
-            additionalFieldNames
-        );
-    }
-    else
-    {
-        refine
-        (
-            icos,
-            sourceMeshes,
-            targetMesh,
-            maxR,
-            sourceCentre,
-            targetCentre,
-            rotationAxis,
-            rAxis,
-            additionalFieldNames
-        );
-        targetRunTime.writeNow();
-    }
-
     if (copyUniform)
     {
         fileName local = "uniform";
@@ -443,6 +493,116 @@ int main(int argc, char *argv[])
                 );
             }
         }
+    }
+
+    if (!args.optionFound("refine"))
+    {
+        Info<< "Target mesh size: " << targetMesh.nCells() << nl << endl;
+        List<cellInfoList> cellMap(targetMesh.nCells());
+        List<cellInfoList> extendedCellMap(targetMesh.nCells());
+        tensorField R(targetMesh.nCells(), tensor::I);
+
+        calcMapAndR
+        (
+            icos,
+            sourceMeshes,
+            targetMesh,
+            maxR,
+            sourceCentre,
+            targetCentre,
+            rotationAxis,
+            rAxis,
+            cellMap,
+            extendedCellMap,
+            R
+        );
+
+        // Map fields from the source mesh to the target mesh
+        // All fields to get initial values for all fields, not just
+        // conservative variables since some fields may be set, but not read
+        mapFields
+        (
+            sourceMeshes,
+            targetMesh,
+            cellMap,
+            extendedCellMap,
+            R,
+            additionalFieldNames
+        );
+
+        // Update the compressible system (i.e. decode)
+        // to correct non-conservative fields
+        targetCompressibleSystem->update();
+
+        // Second pass to map conservative variables
+        mapFields
+        (
+            sourceMeshes,
+            targetMesh,
+            cellMap,
+            extendedCellMap,
+            R,
+            additionalFieldNames
+        );
+
+        // Decode conservative variables
+        targetCompressibleSystem->decode();
+
+        // Write
+        targetRunTime.writeNow();
+    }
+    else
+    {
+        // First pass to make sure all variables are initialized correctly
+        {
+            List<cellInfoList> cellMap(targetMesh.nCells());
+            List<cellInfoList> extendedCellMap(targetMesh.nCells());
+            tensorField R(targetMesh.nCells(), tensor::I);
+
+            calcMapAndR
+            (
+                icos,
+                sourceMeshes,
+                targetMesh,
+                maxR,
+                sourceCentre,
+                targetCentre,
+                rotationAxis,
+                rAxis,
+                cellMap,
+                extendedCellMap,
+                R
+            );
+
+            // Map fields from the source mesh to the target mesh
+            mapFields
+            (
+                sourceMeshes,
+                targetMesh,
+                cellMap,
+                extendedCellMap,
+                R,
+                additionalFieldNames
+            );
+
+            // Update the compressible system (i.e. decode)
+            // to correct non-conservative fields
+            targetCompressibleSystem->update();
+        }
+        refine
+        (
+            icos,
+            sourceMeshes,
+            targetMesh,
+            maxR,
+            sourceCentre,
+            targetCentre,
+            rotationAxis,
+            rAxis,
+            additionalFieldNames
+        );
+        targetCompressibleSystem->decode();
+        targetRunTime.writeNow();
     }
 
     // Write points0 field to time directory

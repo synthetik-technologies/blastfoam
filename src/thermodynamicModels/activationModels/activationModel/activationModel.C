@@ -449,31 +449,29 @@ void Foam::activationModel::initializeModels()
       ? "rhoPhi"
       : IOobject::groupName("alphaRhoPhi", phaseName_);
 
-    // if (lambda_.mesh().foundObject<volScalarField>(alphaRhoName))
-    {
-        alphaRhoPtr_.set
+    alphaRhoPtr_.set
+    (
+        &lambda_.mesh().lookupObject<volScalarField>
         (
-            &lambda_.mesh().lookupObject<volScalarField>
-            (
-                alphaRhoName
-            )
-        );
+            alphaRhoName
+        )
+    );
 
+    if (alphaRhoPtr_().time().timeIndex() >= 0)
+    {
         forAll(detonationPoints_, i)
         {
             detonationPoints_[i].check(alphaRhoPtr_());
         }
     }
-    // if (lambda_.mesh().foundObject<surfaceScalarField>(alphaRhoPhiName))
-    {
-        alphaRhoPhiPtr_.set
+
+    alphaRhoPhiPtr_.set
+    (
+        &lambda_.mesh().lookupObject<surfaceScalarField>
         (
-            &lambda_.mesh().lookupObject<surfaceScalarField>
-            (
-                alphaRhoPhiName
-            )
-        );
-    }
+            alphaRhoPhiName
+        )
+    );
 
     if (alphaRhoPtr_().time().restart())
     {

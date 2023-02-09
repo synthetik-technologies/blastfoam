@@ -40,6 +40,7 @@ SourceFiles
 #include "meshTools.H"
 #include "Pstream.H"
 #include "transformField.H"
+#include "pointMesh.H"
 #include "Map.H"
 #include "EdgeMap.H"
 #include "PackedBoolList.H"
@@ -226,11 +227,15 @@ namespace meshTools
         );
 
         //- Read and add fields to the database
-        template<class FieldType>
+        template<class Type, template<class> class Patch, class Mesh>
         void readGeoFields(const fvMesh& mesh, const IOobjectList& objects);
 
-        template<class FieldType>
-        void readPointFields(const fvMesh& mesh, const IOobjectList& objects);
+        //- Read and add fields to the database
+        template<class Type, class Mesh>
+        void readInternalFields(const fvMesh& mesh, const IOobjectList& objects);
+
+        template<class Mesh>
+        const typename Mesh::Mesh& getGeoMesh(const fvMesh& mesh);
 
         //- Read and add all fields to the database
         void readAndStoreFields(const fvMesh& mesh);
@@ -241,7 +246,13 @@ namespace meshTools
             polyMesh& mesh,
             const HashSet<word>& addedPatchNames
         );
-} // End namespace foamSyncTools
+} // End namespace meshTools
+
+
+template<>
+const Foam::pointMesh::Mesh&
+Foam::meshTools::getGeoMesh<Foam::pointMesh>(const fvMesh& mesh);
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

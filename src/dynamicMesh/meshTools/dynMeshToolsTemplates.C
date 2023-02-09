@@ -37,18 +37,18 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 //- Read and add fields to the database
-template<class FieldType>
-void Foam::meshTools::readGeoFields
+template<class Type, class Mesh>
+void Foam::meshTools::readInternalFields
 (
     const fvMesh& mesh,
     const IOobjectList& objects
 )
 {
-
-    IOobjectList fields = objects.lookupClass(FieldType::typeName);
+    typedef DimensionedField<Type, Mesh> dimField;
+    IOobjectList fields = objects.lookupClass(dimField::typeName);
     forAllIter(IOobjectList, fields, fieldIter)
     {
-        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        if (!mesh.foundObject<dimField>(fieldIter()->name()))
         {
             IOobject fieldTargetIOobject
             (
@@ -59,14 +59,14 @@ void Foam::meshTools::readGeoFields
                 IOobject::AUTO_WRITE
             );
 
-            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            if (fieldTargetIOobject.typeHeaderOk<dimField>(true))
             {
-                FieldType* fPtr
+                dimField* fPtr
                 (
-                    new FieldType
+                    new dimField
                     (
                         fieldTargetIOobject,
-                        mesh
+                        getGeoMesh<Mesh>(mesh)
                     )
                 );
                 fPtr->store(fPtr);
@@ -77,17 +77,18 @@ void Foam::meshTools::readGeoFields
 
 
 //- Read and add fields to the database
-template<class FieldType>
-void Foam::meshTools::readPointFields
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::meshTools::readGeoFields
 (
     const fvMesh& mesh,
     const IOobjectList& objects
 )
 {
-    IOobjectList fields(objects.lookupClass(FieldType::typeName));
+    typedef GeometricField<Type, Patch, Mesh> geoField;
+    IOobjectList fields = objects.lookupClass(geoField::typeName);
     forAllIter(IOobjectList, fields, fieldIter)
     {
-        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        if (!mesh.foundObject<geoField>(fieldIter()->name()))
         {
             IOobject fieldTargetIOobject
             (
@@ -98,20 +99,27 @@ void Foam::meshTools::readPointFields
                 IOobject::AUTO_WRITE
             );
 
-            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            if (fieldTargetIOobject.typeHeaderOk<geoField>(true))
             {
-                FieldType* fPtr
+                geoField* fPtr
                 (
-                    new FieldType
+                    new geoField
                     (
                         fieldTargetIOobject,
-                        pointMesh::New(mesh)
+                        getGeoMesh<Mesh>(mesh)
                     )
                 );
                 fPtr->store(fPtr);
             }
         }
     }
+}
+
+
+template<class Mesh>
+const typename Mesh::Mesh& Foam::meshTools::getGeoMesh(const fvMesh& mesh)
+{
+    return Mesh(mesh)();
 }
 
 // ************************************************************************* //

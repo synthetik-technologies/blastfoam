@@ -176,7 +176,18 @@ Foam::compressibleSystem::compressibleSystem
         mesh,
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
-    g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
+    g_
+    (
+        IOobject
+        (
+            "g",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedVector(dimAcceleration, Zero)
+    ),
     solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {
     scalar emptyDirV
