@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -20,31 +20,16 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-------------------------------------------------------------------------*/
 
-#ifndef accelerationSchemeNew_H
-#define accelerationSchemeNew_H
+\*---------------------------------------------------------------------------*/
 
-#include "AccelerationSchemeBase.H"
+#include "PatchFieldSelector.H"
 
-// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::autoPtr<Foam::accelerationScheme> Foam::accelerationScheme::New
-(
-    GeometricField<Type, Patch, Mesh>& field,
-    autoPtr<PatchFieldSelector<Type>> selector,
-    const dictionary& dict
-)
+namespace Foam
 {
-    return AccelerationSchemeBase<Type, Patch, Mesh>::New
-    (
-        field,
-        selector,
-        dict
-    );
+    defineTypeNameAndDebug(patchFieldSelectorBase, 0);
 }
-
-#endif
 
 // ************************************************************************* //

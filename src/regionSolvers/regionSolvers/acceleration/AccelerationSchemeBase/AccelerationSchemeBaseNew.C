@@ -31,19 +31,18 @@ Foam::autoPtr<Foam::accelerationScheme>
 Foam::AccelerationSchemeBase<Type, Patch, Mesh>::New
 (
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 {
-    incrIndent(Info);
-    Info<< indent << field.mesh().boundary()[patchi].name() << ": ";
+    Info<< indent << field.mesh().boundary()[selector->index()].name() << ": ";
     word accelerationType =
         accelerationScheme::schemesDict
         (
             dict,
             field().mesh().thisDb().name(),
             field.name(),
-            field().mesh().boundary()[patchi].name()
+            field().mesh().boundary()[selector->index()].name()
         ).template lookupOrDefault<word>(accelerationScheme::typeName, "none");
 
     Info<< accelerationType << endl;
@@ -61,9 +60,7 @@ Foam::AccelerationSchemeBase<Type, Patch, Mesh>::New
             << exit(FatalError);
     }
 
-    autoPtr<Foam::accelerationScheme> scheme(cstrIter()(field, patchi, dict));
-    Info<< endl << decrIndent;
-    return scheme;
+    return cstrIter()(field, selector, dict);
 }
 
 

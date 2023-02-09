@@ -139,6 +139,12 @@ public:
             const vector& dataPoint
         ) const;
 
+        //- Return the cutoff radius
+        virtual scalar cutOffRadius() const
+        {
+            return great;
+        }
+
         virtual scalar evaluate(const scalar dist) const = 0;
 
 };

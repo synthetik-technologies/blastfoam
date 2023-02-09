@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -20,31 +20,53 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-------------------------------------------------------------------------*/
 
-#ifndef accelerationSchemeNew_H
-#define accelerationSchemeNew_H
+\*---------------------------------------------------------------------------*/
 
-#include "AccelerationSchemeBase.H"
+#include "fieldAccelerationSchemeList.H"
+#include "globalPolyBoundaryMesh.H"
 
-// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class Patch, class Mesh>
-Foam::autoPtr<Foam::accelerationScheme> Foam::accelerationScheme::New
+void Foam::fieldAccelerationSchemeList::addField
 (
-    GeometricField<Type, Patch, Mesh>& field,
-    autoPtr<PatchFieldSelector<Type>> selector,
-    const dictionary& dict
+    GeometricField<Type, Patch, Mesh>& field
 )
 {
-    return AccelerationSchemeBase<Type, Patch, Mesh>::New
+    addField(field, globalPolyBoundaryMesh::New(mesh_).coupledPatches());
+}
+
+
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::fieldAccelerationSchemeList::addField
+(
+    GeometricField<Type, Patch, Mesh>& field,
+    const labelList& patches
+)
+{
+    if (this->found(field.name()))
+    {
+        return;
+    }
+
+    const label fieldi = this->size();
+    this->setSize(fieldi + 1);
+    this->set
     (
-        field,
-        selector,
-        dict
+        fieldi,
+        field.name(),
+        new fieldAccelerationScheme
+        (
+            field,
+            mesh_,
+            patches,
+            (subDictName_ != word::null)
+          ? dict_.subDict(subDictName_)
+          : dict_
+        )
     );
 }
 
-#endif
 
 // ************************************************************************* //

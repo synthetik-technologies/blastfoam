@@ -21,92 +21,58 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::accelerationSchemes::QNBase
 
 Description
-    QNBase acceleration
+    Enumerations for iteration type and convergence
 
 SourceFiles
-    QNBaseAccelerationScheme.C
+    regionSolverList.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef QNBaseAccelerationScheme_H
-#define QNBaseAccelerationScheme_H
+#ifndef Convergence_H
+#define Convergence_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "ResidualBaseAccelerationScheme.H"
-
 namespace Foam
 {
-namespace accelerationSchemes
+
+
+// Iteration types
+enum IterType
 {
+    // First iteration
+    FIRST_ITER,
 
-/*---------------------------------------------------------------------------*\
-                           Class QNBase Declaration
-\*---------------------------------------------------------------------------*/
+    // Not first or last iteration
+    MID_ITER,
 
-template<class Type, template<class> class Patch, class Mesh>
-class QNBase
-:
-    public ResidualBase<Type, Patch, Mesh>
+    // Final iteration
+    FINAL_ITER
+};
+
+
+// Convergence types
+enum Convergence
 {
-protected:
+    // No convergence criteria has been specified
+    UNKNOWN_CONVERGENCE,
 
-    label nCouplingTimes_;
+    // Criteria not met
+    NOT_CONVERGED,
 
-    DynamicList<Field<Type>> Vs_;
-    DynamicList<Field<Type>> Ws_;
-    DynamicList<label> times_;
+    // Criteria met, but not 0
+    CONVERGED,
 
-    //- Update matrices
-    void updateVW(const label iter);
-
-    //- Return V reference residuals
-    virtual const Field<Type>& VRef() const = 0;
-
-    //- Return W reference field
-    virtual const Field<Type>& WRef() const = 0;
-
-
-public:
-
-    // Constructor
-    QNBase
-    (
-        const word& type,
-        GeometricField<Type, Patch, Mesh>& field,
-        autoPtr<PatchFieldSelector<Type>> selector,
-        const dictionary& dict
-    );
-
-
-    //- Destructor
-    virtual ~QNBase();
-
-
-    // Member functions
-
-        //- Clear residuals
-        virtual void clear(const bool full);
-
-        //- Read parameters
-        virtual void read(const dictionary& dict);
+    // Negligible error, assume no clean up steps are needed
+    FULL_CONVERGENCE
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace accelerationScehemes
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "QNBaseAccelerationScheme.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

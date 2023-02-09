@@ -42,6 +42,7 @@ SourceFiles
 #include "surfaceFields.H"
 #include "pointFields.H"
 #include "valuePointPatchField.H"
+#include "PatchFieldSelector.H"
 #include "runTimeSelectionTables.H"
 
 
@@ -129,17 +130,6 @@ public:
         const dictionary& dict
     );
 
-
-    // Selector
-        template<class Type, template<class> class Patch, class Mesh>
-        static autoPtr<accelerationScheme> New
-        (
-            GeometricField<Type, Patch, Mesh>& field,
-            const label patchi,
-            const dictionary& dict
-        );
-
-
     //- Destructor
     virtual ~accelerationScheme();
 
@@ -153,7 +143,7 @@ public:
         virtual void relax(const label iter) = 0;
 
         //- Clear residuals
-        virtual void clear();
+        virtual void clear(const bool full);
 
         // Return the absolute error
         inline scalar error() const
@@ -172,6 +162,12 @@ public:
         {
             return error_/(initialError_ + small);
         }
+
+        //- Return the patch size
+        virtual label size() const = 0;
+
+        //- Store the previous iteration for the give field
+        virtual void storePrevIter() = 0;
 
         //- Read parameters
         virtual void read(const dictionary& dict) = 0;

@@ -1,0 +1,82 @@
+ /*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      regionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+maxIter 50;
+".*(x|y)"
+{
+    accelerationScheme IQNILS;
+    fixedCoeffs
+    {
+        relaxationFactor 0.2;
+    }
+    AitkenCoeffs
+    {
+        initialRelaxationFactor 0.5;
+        maxRelaxationFactor     0.5;
+    }
+    IQNILSCoeffs
+    {
+        nCouplingTimes 1;
+        initialRelaxationFactor 0.5;
+    }
+    tolerance   1e-6;
+    relTol      1e-6;
+}
+
+
+pointx
+{
+    accelerationScheme IQNILS;
+    fixedCoeffs
+    {
+        relaxationFactor 0.2;
+    }
+    AitkenCoeffs
+    {
+        initialRelaxationFactor 0.1;
+        maxRelaxationFactor     0.5;
+    }
+    IQNILSCoeffs
+    {
+        nCouplingTimes 1;
+        initialRelaxationFactor 0.01;
+    }
+    tolerance   1e-6;
+    relTol      1e-6;
+}
+
+pointy
+{
+    accelerationScheme Aitken;
+    fixedCoeffs
+    {
+        relaxationFactor 0.2;
+    }
+    AitkenCoeffs
+    {
+        initialRelaxationFactor 0.01;
+        maxRelaxationFactor     0.5;
+    }
+    IQNILSCoeffs
+    {
+        nCouplingTimes 1;
+        initialRelaxationFactor 0.01;
+    }
+    tolerance   1e-8;
+    relTol      1e-4;
+}
+// ************************************************************************* //

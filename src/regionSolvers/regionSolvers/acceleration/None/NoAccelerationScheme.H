@@ -61,7 +61,7 @@ public:
     NoAcceleration
     (
         GeometricField<Type, Patch, Mesh>& field,
-        const label patchi,
+        autoPtr<PatchFieldSelector<Type>> selector,
         const dictionary& dict
     );
 

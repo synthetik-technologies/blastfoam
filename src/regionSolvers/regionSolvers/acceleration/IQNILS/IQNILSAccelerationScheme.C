@@ -133,11 +133,11 @@ template<class Type, template<class> class Patch, class Mesh>
 Foam::accelerationSchemes::IQNILS<Type, Patch, Mesh>::IQNILS
 (
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 :
-    QNBase<Type, Patch, Mesh>(typeName, field, patchi, dict),
+    QNBase<Type, Patch, Mesh>(typeName, field, selector, dict),
 
     initRelaxFactor_(1.0),
     nFixed_(1),
@@ -166,17 +166,11 @@ void Foam::accelerationSchemes::IQNILS<Type, Patch, Mesh>::relax
 {
     this->updateError();
 
-    const GeometricField<Type, Patch, Mesh>& fieldPrev =
-        this->field_.prevIter();
-    typename GeometricField<Type, Patch, Mesh>::Boundary& bfield =
-        this->field_.boundaryFieldRef();
-
-    Patch<Type>& patchfield = dynamicCast<Patch<Type>>(bfield[this->patchi_]);
-    Field<Type>& pfield = dynamicCast<Field<Type>>(patchfield);
+    Field<Type>& pfield = this->selector_->field();
     const Field<Type>& pfieldPrev =
-        dynamicCast<const Field<Type>>
+        this->selector_->relaxField
         (
-            fieldPrev.boundaryField()[this->patchi_]
+            this->field_.prevIter().boundaryField()[this->patchi_]
         );
     const Field<Type> oldUnrelaxed(pfield);
 
@@ -202,7 +196,7 @@ void Foam::accelerationSchemes::IQNILS<Type, Patch, Mesh>::relax
     else if (iter < nFixed_ || this->times_.size() < 2)
     {
         pfield = pfieldPrev + initRelaxFactor_*this->residuals_;
-        this->setInInternalField(patchfield);
+        this->selector_->correct();
     }
     else
     {
@@ -223,7 +217,7 @@ void Foam::accelerationSchemes::IQNILS<Type, Patch, Mesh>::relax
         }
 
         pfield = pfieldNew;
-        this->setInInternalField(patchfield);
+        this->selector_->correct();
     }
 }
 

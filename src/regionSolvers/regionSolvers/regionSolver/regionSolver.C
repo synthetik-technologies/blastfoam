@@ -50,7 +50,12 @@ Foam::regionSolver::regionSolver
     dynMesh_(mesh),
     mesh_(dynMesh_),
     globalBoundary_(globalPolyBoundaryMesh::New(mesh)),
-    accelerationSchemes_(mesh_, regions_)
+    accelerationSchemes_
+    (
+        mesh_,
+        regions_.regionProperties(),
+        "solutionControls"
+    )
 {}
 
 
@@ -84,8 +89,16 @@ bool Foam ::regionSolver::readControls
 }
 
 
+void Foam::regionSolver::storePrevIter()
+{
+    accelerationSchemes_.storePrevIter();
+}
+
+
 void Foam::regionSolver::initialiseFields()
-{}
+{
+    // Look up fields to relax
+}
 
 
 void Foam::regionSolver::update()
@@ -98,20 +111,27 @@ void Foam::regionSolver::update()
 bool Foam::regionSolver::changeMesh()
 {
     DebugInfo<< "Changing " << mesh_.name() << " mesh" << endl;
-    return refineMesh(dynMesh_);
+    if (refineMesh(dynMesh_))
+    {
+        this->clear(true);
+        return true;
+    }
+    return false;
 }
 
 
 bool Foam::regionSolver::moveMesh(const IterType iter)
 {
     DebugInfo<< "Moving " << mesh_.name() << " mesh" << endl;
+    storePrevIter();
     return dynMesh_.update();
 }
 
 
-void Foam::regionSolver::clear()
+void Foam::regionSolver::clear(const bool full)
 {
-    accelerationSchemes_.clear();
+    DebugInfo<< "Clearing " << mesh_.name() << endl;
+    accelerationSchemes_.clear(full);
 }
 
 

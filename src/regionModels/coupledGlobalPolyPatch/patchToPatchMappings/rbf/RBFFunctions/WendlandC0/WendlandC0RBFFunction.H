@@ -86,7 +86,13 @@ public:
 
         inline scalar evaluate(const scalar dist) const
         {
-            return dist > radius_ ? 0.0 : sqr(1.0 - dist/radius_);
+            return sqr(1.0 - dist/radius_);
+        }
+
+        //- Return the cutoff radius
+        virtual scalar cutOffRadius() const
+        {
+            return radius_;
         }
 };
 

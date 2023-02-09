@@ -89,10 +89,13 @@ public:
         inline scalar evaluate(const scalar dist) const
         {
             const scalar p = dist/radius_;
-            return
-                p > 1
-              ? 0.0
-              : pow4(1.0 - p)*(1.0 + 4.0*p);
+            return pow4(1.0 - p)*(1.0 + 4.0*p);
+        }
+
+        //- Return the cutoff radius
+        virtual scalar cutOffRadius() const
+        {
+            return radius_;
         }
 };
 

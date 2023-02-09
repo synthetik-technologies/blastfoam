@@ -38,11 +38,13 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fieldAccelerationScheme.H"
-#include "regionSolverList.H"
 #include "PtrListDictionary.H"
+#include "Convergence.H"
 
 namespace Foam
 {
+
+class regionSolverList;
 
 /*---------------------------------------------------------------------------*\
                     Class fieldAccelerationSchemeList Declaration
@@ -58,8 +60,11 @@ protected:
     //- Reference to the mesh
     const fvMesh& mesh_;
 
-    //- Reference to the regionSolverList object
-    const regionSolverList& regions_;
+    //- Reference to the constructing dictionary
+    const dictionary& dict_;
+
+    //- Optional name of sub-dictionary
+    const word subDictName_;
 
 public:
 
@@ -69,7 +74,8 @@ public:
     fieldAccelerationSchemeList
     (
         const fvMesh& mesh,
-        const regionSolverList& regions
+        const dictionary& dict,
+        const word& subDictName = word::null
     );
 
     //- Destructor
@@ -79,6 +85,9 @@ public:
     // Member functions
 
         //- Add a field for convergence
+        void addField(const word& fieldName);
+
+        //- Add a field for convergence
         void addField
         (
             const word& fieldName,
@@ -86,7 +95,16 @@ public:
         );
 
         //- Add a field for convergence
-        void addField(const word& fieldName);
+        template<class Type, template<class> class Patch, class Mesh>
+        void addField(GeometricField<Type, Patch, Mesh>& field);
+
+        //- Add a field for convergence
+        template<class Type, template<class> class Patch, class Mesh>
+        void addField
+        (
+            GeometricField<Type, Patch, Mesh>& field,
+            const labelList& patches
+        );
 
         //- Update residuals
         void updateError();
@@ -95,10 +113,16 @@ public:
         void relax(const label iter);
 
         //- Clear residuals
-        void clear();
+        void clear(const bool full = false);
 
         //- Return convergence of all fields
         Convergence convergence() const;
+
+        //- Return if all fields converged
+        bool converged() const;
+
+        //- Store the previous iteration for the give field
+        void storePrevIter();
 
         //- Read parameters
         void read(const dictionary& dict);
@@ -110,6 +134,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "fieldAccelerationSchemeListTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

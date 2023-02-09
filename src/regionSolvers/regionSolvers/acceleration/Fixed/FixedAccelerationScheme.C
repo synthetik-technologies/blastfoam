@@ -31,11 +31,11 @@ template<class Type, template<class> class Patch, class Mesh>
 Foam::accelerationSchemes::Fixed<Type, Patch, Mesh>::Fixed
 (
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 :
-    AccelerationSchemeBase<Type, Patch, Mesh>(typeName, field, patchi, dict),
+    AccelerationSchemeBase<Type, Patch, Mesh>(typeName, field, selector, dict),
     relaxationFactor_(1.0)
 {
     read(dict);
@@ -58,22 +58,16 @@ void Foam::accelerationSchemes::Fixed<Type, Patch, Mesh>::relax
 )
 {
     this->updateError();
-    const GeometricField<Type, Patch, Mesh> fieldPrev =
-        this->field_.prevIter();
-    typename GeometricField<Type, Patch, Mesh>::Boundary& bfield =
-        this->field_.boundaryFieldRef();
 
-
-    Patch<Type>& pfield = dynamicCast<Patch<Type>>(bfield[this->patchi_]);
+    Field<Type>& pfield = this->selector_->field();
     const Field<Type>& pfieldPrev =
-        dynamicCast<const Field<Type>>
+        this->selector_->relaxField
         (
-            fieldPrev.boundaryField()[this->patchi_]
+            this->field_.prevIter().boundaryField()[this->patchi_]
         );
-    pfield ==
-        pfieldPrev*(1.0 - relaxationFactor_)
-        + relaxationFactor_*dynamicCast<const Field<Type>>(pfield);
-    this->setInInternalField(pfield);
+    pfield =
+        pfieldPrev*(1.0 - relaxationFactor_) + relaxationFactor_*pfield;
+    this->selector_->correct();
 }
 
 

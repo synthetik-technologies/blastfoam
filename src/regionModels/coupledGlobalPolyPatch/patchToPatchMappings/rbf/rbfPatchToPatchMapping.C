@@ -39,12 +39,12 @@ namespace patchToPatchMappings
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTypeNameAndDebug(rbfPatchToPatchMapping, 0);
-addToRunTimeSelectionTable
-(
-    patchToPatchMapping,
-    rbfPatchToPatchMapping,
-    dictionary
-);
+// addToRunTimeSelectionTable
+// (
+//     patchToPatchMapping,
+//     rbfPatchToPatchMapping,
+//     dictionary
+// );
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -73,7 +73,7 @@ void rbfPatchToPatchMapping::makeZoneAToZoneBFaceInterpolator() const
                 dict_,
                 zoneAFaceCentres,
                 zoneBFaceCentres,
-                false
+                true // should be false (consertvative)
             )
         );
 
@@ -130,7 +130,7 @@ void rbfPatchToPatchMapping::makeZoneBToZoneAFaceInterpolator() const
                 dict_,
                 zoneBFaceCentres,
                 zoneAFaceCentres,
-                false
+                true // should be false (consertvative)
             )
         );
 

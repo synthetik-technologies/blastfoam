@@ -87,10 +87,13 @@ public:
         virtual scalar evaluate(const scalar dist) const
         {
             const scalar p(dist/radius_);
-            return
-                p > 1
-              ? 0.0
-              : pow6(1.0 - p)*(35.0*sqr(p) + 18.0*p + 3.0);
+            return pow6(1.0 - p)*(35.0*sqr(p) + 18.0*p + 3.0);
+        }
+
+        //- Return the cutoff radius
+        virtual scalar cutOffRadius() const
+        {
+            return radius_;
         }
 };
 

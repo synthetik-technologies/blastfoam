@@ -40,6 +40,7 @@ SourceFiles
 #include "PtrListDictionary.H"
 #include "Time.H"
 #include "dynamicFvMesh.H"
+#include "Convergence.H"
 
 
 namespace Foam
@@ -49,22 +50,6 @@ class regionSolver;
 /*---------------------------------------------------------------------------*\
                            Class regionSolverList Declaration
 \*---------------------------------------------------------------------------*/
-
-// public enumerations
-enum IterType
-{
-    FIRST_ITER,
-    MID_ITER,
-    FINAL_ITER
-};
-
-enum Convergence
-{
-    UNKNOWN_CONVERGENCE,
-    NOT_CONVERGED,
-    CONVERGED,
-    FULL_CONVERGENCE
-};
 
 class regionSolverList
 :

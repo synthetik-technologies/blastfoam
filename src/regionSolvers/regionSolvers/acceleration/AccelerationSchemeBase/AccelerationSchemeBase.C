@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "AccelerationSchemeBase.H"
+#include "PatchFieldSelector.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -32,25 +33,17 @@ Foam::AccelerationSchemeBase<Type, Patch, Mesh>::AccelerationSchemeBase
 (
     const word& type,
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 :
-    accelerationScheme(type, patchi, dict),
-    field_(field)
+    accelerationScheme(type, selector->index(), dict),
+    field_(field),
+    selector_(selector)
 {
     regionName_ = field.mesh().thisDb().name();
     fieldName_ = field.name();
-    patchName_= field.mesh().boundary()[patchi].name();
-
-    // Make sure boundaries are actually fixed
-    if (!field_.boundaryField()[patchi_].fixesValue())
-    {
-        FatalErrorInFunction
-            << "Trying to relax a non-fixed boundary for "
-            << field_.name() << endl
-            << abort(FatalError);
-    }
+    patchName_= field.mesh().boundary()[selector_->index()].name();
 }
 
 
@@ -66,19 +59,23 @@ template<class Type, template<class> class Patch, class Mesh>
 void Foam::AccelerationSchemeBase<Type, Patch, Mesh>::updateError()
 {
     error_ = Zero;
-    const GeometricField<Type, Patch, Mesh>& fieldPrev = field_.prevIter();
 
-    const Field<Type>& pfield =
-        dynamicCast<const Field<Type>>(field_.boundaryField()[patchi_]);
+    const Field<Type>& pfield = selector_->field();
     const Field<Type>& pfieldPrev =
-        dynamicCast<const Field<Type>>(fieldPrev.boundaryField()[patchi_]);
+        selector_->relaxField(field_.prevIter().boundaryField()[patchi_]);
+    scalar maxErrorMagSqr = 0.0;
+    const label n = returnReduce(pfield.size(), sumOp<label>());
+
     forAll(pfield, i)
     {
-        error_ += magSqr(pfield[i] - pfieldPrev[i]);
+        scalar errorMagSqr = magSqr(pfield[i] - pfieldPrev[i]);
+        error_ += errorMagSqr;
+        maxErrorMagSqr = max(maxErrorMagSqr, errorMagSqr);
     }
 
     reduce(error_, sumOp<scalar>());
-    error_ = sqrt(error_);
+    reduce(maxErrorMagSqr, maxOp<scalar>());
+    error_ = sqrt(error_/(maxErrorMagSqr + small))/scalar(n);
 
     if (initialError_ < 0)
     {

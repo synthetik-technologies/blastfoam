@@ -75,13 +75,18 @@ void Foam::RBFInterpolation::calc() const
     Matrix CLU(n, n);
     CLU.setZero();
 
+    const scalar cutOff = RBF_->cutOffRadius();
+
     // RBF function evaluation
     forAll(controlPoints_, i)
     {
         for (label j = i; j < controlPoints_.size(); j++)
         {
-            CLU(i, j) =
-                RBF_->evaluate(mag(controlPoints_[i] - controlPoints_[j]));
+            scalar r = mag(controlPoints_[i] - controlPoints_[j]);
+            if (r < cutOff)
+            {
+                CLU(i, j) = RBF_->evaluate(r);
+            }
         }
     }
 
@@ -163,13 +168,18 @@ void Foam::RBFInterpolation::calcA() const
     Matrix& A = *APtr_;
     A.setZero();
 
+    const scalar cutOff = RBF_->cutOffRadius();
+
     // Evaluate A which contains the evaluation of the radial basis function
     forAll(dataPoints_, i)
     {
         forAll(controlPoints_, j)
         {
-            A(i, j) =
-                RBF_->evaluate(mag(controlPoints_[j] - dataPoints_[i]));
+            scalar r = mag(controlPoints_[j] - dataPoints_[i]);
+            if (r < cutOff)
+            {
+                A(i, j) = RBF_->evaluate(r);
+            }
         }
     }
 

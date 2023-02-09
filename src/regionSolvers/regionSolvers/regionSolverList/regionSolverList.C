@@ -354,7 +354,8 @@ void Foam::regionSolverList::solve()
         Info<< endl;
         IOobject::writeDivider(Info)
             << "Outer iteration: " << iterNo_ << nl
-            << "Time = " << runTime_.timeName() << nl << endl;
+            << "Time = " << runTime_.timeName() << nl
+            << "dltaT = " << runTime_.deltaTValue() << nl << endl;
 
         // Mark if relaxation is allowed
         // FINAL_ITER: no relaxation

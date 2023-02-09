@@ -68,7 +68,15 @@ const Foam::dictionary& Foam::accelerationScheme::schemesDict
     const word& patchName
 )
 {
-    UautoPtr<const dictionary> regionDict(dict.subDictPtr(regionName));
+    UautoPtr<const dictionary> regionDict;
+    if (regionName != polyMesh::defaultRegion)
+    {
+        regionDict.set(dict.subDictPtr(regionName));
+    }
+    else
+    {
+        regionDict.set(&dict);
+    }
     UautoPtr<const dictionary> fieldDict;
     UautoPtr<const dictionary> patchDict;
 
@@ -86,10 +94,12 @@ const Foam::dictionary& Foam::accelerationScheme::schemesDict
 
     if (patchDict.valid() && patchDict->found(accelerationScheme::typeName))
     {
+        DebugInfo<< "Using " << patchDict->name() << " dictionary" << endl;
         return patchDict();
     }
     else if (fieldDict.valid()&& fieldDict->found(accelerationScheme::typeName))
     {
+        DebugInfo<< "Using " << fieldDict->name() << " dictionary" << endl;
         return fieldDict();
     }
     else if
@@ -98,8 +108,10 @@ const Foam::dictionary& Foam::accelerationScheme::schemesDict
      && regionDict->found(accelerationScheme::typeName)
     )
     {
+        DebugInfo<< "Using " << regionDict->name() << " dictionary" << endl;
         return regionDict();
     }
+    DebugInfo<< "Using " << dict.name() << " dictionary" << endl;
     return dict;
 }
 
@@ -171,7 +183,7 @@ Foam::scalar Foam::accelerationScheme::dotDot
 }
 
 
-void Foam::accelerationScheme::clear()
+void Foam::accelerationScheme::clear(const bool)
 {
     initialError_ = -1;
     error_ = great;

@@ -200,7 +200,7 @@ Foam::regionSolvers::fluid::fluid
         motionDiffusivity::New(mesh_, dynMeshDict.lookup("diffusivity"));
 
     // Add point displacement as a relaxation field
-    accelerationSchemes_.addField(pointDPtr_->name());
+    accelerationSchemes_.addField(pointDPtr_());
 }
 
 
@@ -349,15 +349,7 @@ bool Foam::regionSolvers::fluid::changeMesh()
 
 bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
 {
-    if (regions_.regionProperties().modified())
-    {
-        Info<<"modified: "<< regions_.regionProperties().modified()<<endl;
-        FatalErrorInFunction<<abort(FatalError);
-    }
-    // return true;
     regionSolver::moveMesh(iter);
-
-    pointDPtr_->storePrevIter();
 
     // Solve point motion
 
@@ -503,7 +495,7 @@ bool Foam::regionSolvers::fluid::moveMesh(const IterType iter)
     }
     mesh_.movePoints(tcurPoints());
 
-    if (mesh_.moving())
+    if (mesh_.moving() && (debug || regionSolver::debug))
     {
         Info<<"Mesh boundary velocity (max/mean): " << endl;
         forAll(mesh_.boundary(), patchi)

@@ -31,11 +31,11 @@ template<class Type, template<class> class Patch, class Mesh>
 Foam::accelerationSchemes::NoAcceleration<Type, Patch, Mesh>::NoAcceleration
 (
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 :
-    AccelerationSchemeBase<Type, Patch, Mesh>(typeName, field, patchi, dict)
+    AccelerationSchemeBase<Type, Patch, Mesh>(typeName, field, selector, dict)
 {}
 
 

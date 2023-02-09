@@ -39,12 +39,14 @@ namespace Foam
 Foam::fieldAccelerationSchemeList::fieldAccelerationSchemeList
 (
     const fvMesh& mesh,
-    const regionSolverList& regions
+    const dictionary& dict,
+    const word& subDictName
 )
 :
     PtrListDictionary<fieldAccelerationScheme>(0),
     mesh_(mesh),
-    regions_(regions)
+    dict_(dict),
+    subDictName_(subDictName)
 {}
 
 
@@ -83,7 +85,9 @@ void Foam::fieldAccelerationSchemeList::addField
             fieldName,
             mesh_,
             patches,
-            regions_.solutionControls()
+            (subDictName_ != word::null)
+          ? dict_.subDict(subDictName_)
+          : dict_
         )
     );
 }
@@ -107,11 +111,11 @@ void Foam::fieldAccelerationSchemeList::relax(const label iter)
 }
 
 
-void Foam::fieldAccelerationSchemeList::clear()
+void Foam::fieldAccelerationSchemeList::clear(const bool full)
 {
     forAll(*this, i)
     {
-        this->operator[](i).clear();
+        this->operator[](i).clear(full);
     }
 }
 
@@ -143,6 +147,24 @@ Foam::Convergence Foam::fieldAccelerationSchemeList::convergence() const
       : (
             allFull ? FULL_CONVERGENCE : CONVERGED
         );
+}
+
+
+void Foam::fieldAccelerationSchemeList::storePrevIter()
+{
+    forAll(*this, i)
+    {
+        this->operator[](i).storePrevIter();
+    }
+}
+
+
+bool Foam::fieldAccelerationSchemeList::converged() const
+{
+    Convergence converged = this->convergence();
+    return
+        converged == CONVERGED
+     || converged == FULL_CONVERGENCE;
 }
 
 

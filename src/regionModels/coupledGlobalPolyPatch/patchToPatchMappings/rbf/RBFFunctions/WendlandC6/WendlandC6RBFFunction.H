@@ -88,10 +88,14 @@ public:
         {
             const scalar p(dist/radius_);
             return
-                p > 1
-              ? 0.0
-              : sqr(pow4(1.0 - p))
+                sqr(pow4(1.0 - p))
                *(32.0*pow3(p) + 25.0*sqr(p) + 8.0*p + 1.0);
+        }
+
+        //- Return the cutoff radius
+        virtual scalar cutOffRadius() const
+        {
+            return radius_;
         }
 };
 

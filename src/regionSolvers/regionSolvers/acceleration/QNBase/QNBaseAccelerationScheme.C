@@ -32,13 +32,12 @@ Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::QNBase
 (
     const word& type,
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 :
-    ResidualBase<Type, Patch, Mesh>(type, field, patchi, dict),
+    ResidualBase<Type, Patch, Mesh>(type, field, selector, dict),
 
-    maxCouplingIter_(labelMax),
     nCouplingTimes_(0),
 
     Vs_(),
@@ -46,14 +45,6 @@ Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::QNBase
     times_()
 {
     read(dict);
-    if (maxCouplingIter_ != labelMax)
-    {
-        Info<< indent << "maxCouplingIter: " << maxCouplingIter_ << endl;
-    }
-    else
-    {
-        Info<< indent << "maxCouplingIter: unlimited" << endl;
-    }
     Info<< indent << "nCouplingTimes: " << nCouplingTimes_ << endl;
 }
 
@@ -72,11 +63,7 @@ void Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::updateVW
     const label iter
 )
 {
-    const Field<Type>& pfield =
-        dynamicCast<const Field<Type>>
-        (
-            this->field_.boundaryField()[this->patchi_]
-        );
+    const Field<Type>& pfield = this->selector_->field();
     if (iter == 0)
     {
     }
@@ -90,53 +77,14 @@ void Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::updateVW
 
 
 template<class Type, template<class> class Patch, class Mesh>
-void Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::filter()
+void Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::clear
+(
+    const bool full
+)
 {
-    label startI = times_.size();
-    const label size =
-        dynamicCast<const Field<Type>>
-        (
-            this->field_.boundaryField()[this->patchi_]
-        ).size();
-    if
-    (
-        times_.size() < maxCouplingIter_
-     && size == Vs_.last().size()
-    )
-    {
-        return;
-    }
-    forAll(times_, ti)
-    {
-        if (size != Vs_[ti].size() || ti >= maxCouplingIter_)
-        {
-            startI = ti;
-            break;
-        }
-    }
+    ResidualBase<Type, Patch, Mesh>::clear(full);
 
-    const label oldSize = times_.size();
-    if (startI != times_.size())
-    {
-        for (label ti = 0; ti < oldSize-startI; ti++)
-        {
-            Vs_[ti].transfer(Vs_[ti+startI]);
-            Ws_[ti].transfer(Ws_[ti+startI]);
-            times_[ti] = times_[ti+startI];
-        }
-        Vs_.setSize(oldSize-startI);
-        Ws_.setSize(oldSize-startI);
-        times_.setSize(oldSize-startI);
-    }
-}
-
-
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::clear()
-{
-    ResidualBase<Type, Patch, Mesh>::clear();
-
-    if (!nCouplingTimes_)
+    if (!nCouplingTimes_ | full)
     {
         Vs_.clear();
         Ws_.clear();
@@ -178,7 +126,6 @@ void Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::read
 )
 {
     ResidualBase<Type, Patch, Mesh>::read(dict);
-    this->coeffDict(dict).readIfPresent("maxCouplingIter", maxCouplingIter_);
     this->coeffDict(dict).lookup("nCouplingTimes") >> nCouplingTimes_;
 }
 

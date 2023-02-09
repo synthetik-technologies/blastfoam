@@ -163,6 +163,9 @@ public:
                 return accelerationSchemes_.convergence();
             }
 
+            //- Store the previous iteration for the give field
+            virtual void storePrevIter();
+
             //- Initial update to fields
             virtual void initialiseFields();
 
@@ -185,7 +188,7 @@ public:
             virtual void solve() = 0;
 
             //- Clear the model
-            virtual void clear();
+            virtual void clear(const bool full = false);
 
             //- Return the Courant number
             virtual scalar CoNum() const = 0;

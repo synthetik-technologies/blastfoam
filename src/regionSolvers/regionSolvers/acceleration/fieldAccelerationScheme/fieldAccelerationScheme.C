@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fieldAccelerationScheme.H"
-#include "accelerationSchemeNew.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -44,55 +43,27 @@ Foam::fieldAccelerationScheme::fieldAccelerationScheme
     const dictionary& dict
 )
 :
-    PtrList<accelerationScheme>(patches.size()),
+    PtrList<accelerationScheme>(0),
     fieldName_(fieldName),
     mesh_(mesh)
 {
     Info<< "Selecting acceleration schemes for " << fieldName << endl;
+    incrIndent(Info);
     bool found = false;
-    label nPatches = 0;
-    #define setSchemes(Type, Patch, Mesh)                                  \
-    if (mesh_.foundObject<GeometricField<Type, Patch, Mesh>>(fieldName))   \
-    {                                                                      \
-        found = true;                                                      \
-        GeometricField<Type, Patch, Mesh>& field =                         \
-            mesh_.lookupObjectRef<GeometricField<Type, Patch, Mesh>>       \
-            (                                                              \
-                fieldName                                                  \
-            );                                                             \
-        forAll(patches, pi)                                                \
-        {                                                                  \
-            const label patchi = patches[pi];                              \
-            if (field.boundaryField()[patchi].fixesValue())                \
-            {                                                              \
-                this->set                                                  \
-                (                                                          \
-                    nPatches++,                                            \
-                    accelerationScheme::New                                \
-                    (                                                      \
-                        field,                                             \
-                        patchi,                                            \
-                        dict                                               \
-                    )                                                      \
-                );                                                         \
-            }                                                              \
-            else                                                           \
-            {                                                              \
-                WarningInFunction                                          \
-                    << "Trying to relax "                                  \
-                    << field.mesh().boundary()[patchi].name()              \
-                    << "for " << field.name() << " but it does not"        \
-                    << "fix a value. Skipping" << endl;                    \
-            }                                                              \
-        }                                                                  \
-        this->setSize(nPatches);                                           \
-    }
 
-    FOR_ALL_FIELD_TYPES(setSchemes, fvPatchField, volMesh);
-    FOR_ALL_FIELD_TYPES(setSchemes, fvsPatchField, surfaceMesh);
-    FOR_ALL_FIELD_TYPES(setSchemes, pointPatchField, pointMesh);
+    #define setAccelerators(Type, Patch, Mesh)                             \
+    found =                                                                \
+        setPatchAccelerators<Type, Patch, Mesh>                            \
+        (                                                                  \
+            patches,                                                       \
+            dict                                                           \
+        );                                                                 \
 
-    #undef setSchemes
+    FOR_ALL_FIELD_TYPES(setAccelerators, fvPatchField, volMesh);
+    FOR_ALL_FIELD_TYPES(setAccelerators, fvsPatchField, surfaceMesh);
+    FOR_ALL_FIELD_TYPES(setAccelerators, pointPatchField, pointMesh);
+
+    #undef setAccelerators
 
     if (!found)
     {
@@ -100,6 +71,8 @@ Foam::fieldAccelerationScheme::fieldAccelerationScheme
             << "Could not find " << fieldName << endl;
     }
     this->read(dict);
+
+    Info<< decrIndent << endl;
 }
 
 
@@ -112,12 +85,17 @@ Foam::fieldAccelerationScheme::~fieldAccelerationScheme()
 
 bool Foam::fieldAccelerationScheme::readControls(const dictionary& dict)
 {
-    if (!dict.isDict(mesh_.name()) || !this->size())
+    if
+    (
+        (mesh_.name() != polyMesh::defaultRegion && !dict.isDict(mesh_.name()))
+     || !this->size())
     {
         return false;
     }
     const dictionary& regionDict =
-        dict.subDict(mesh_.name());
+        mesh_.name() == polyMesh::defaultRegion
+      ? dict
+      : dict.subDict(mesh_.name());
     if (regionDict.isDict(fieldName_))
     {
         regionDict.subDict(fieldName_).lookup("tolerance") >> tolerance_;
@@ -148,36 +126,51 @@ void Foam::fieldAccelerationScheme::relax(const label iter)
 }
 
 
-void Foam::fieldAccelerationScheme::clear()
+void Foam::fieldAccelerationScheme::clear(const bool full)
 {
     forAll(*this, i)
     {
-        this->operator[](i).clear();
+        this->operator[](i).clear(full);
     }
 }
 
 
 Foam::scalar Foam::fieldAccelerationScheme::error() const
 {
-    scalar errorSqr = Zero;
+    scalar maxError = Zero;
     forAll(*this, i)
     {
-        errorSqr = sqr(this->operator[](i).error());
+        maxError = max(maxError, this->operator[](i).error());
     }
-    return sqrt(errorSqr);
+    return maxError;
 }
 
 
 Foam::scalar Foam::fieldAccelerationScheme::relError() const
 {
-    scalar errorSqr = Zero;
-    scalar initErrorSqr = Zero;
+    scalar maxRelError = Zero;
     forAll(*this, i)
     {
-        errorSqr = sqr(this->operator[](i).error());
-        initErrorSqr = sqr(this->operator[](i).initError());
+        maxRelError = max(maxRelError, this->operator[](i).relError());
     }
-    return sqrt(errorSqr)/(sqrt(initErrorSqr) + small);
+    return maxRelError;
+}
+
+
+void Foam::fieldAccelerationScheme::storePrevIter()
+{
+    bool found = false;
+    #define storePrevIterType(Type, Patch, Mesh)                           \
+    if (!found && storePrevIter<Type, Patch, Mesh>())                      \
+    {                                                                      \
+        return;                                                            \
+    }
+
+    FOR_ALL_FIELD_TYPES(storePrevIterType, fvPatchField, volMesh);
+    FOR_ALL_FIELD_TYPES(storePrevIterType, fvsPatchField, surfaceMesh);
+    FOR_ALL_FIELD_TYPES(storePrevIterType, pointPatchField, pointMesh);
+
+    #undef storePrevIterType
 }
 
 

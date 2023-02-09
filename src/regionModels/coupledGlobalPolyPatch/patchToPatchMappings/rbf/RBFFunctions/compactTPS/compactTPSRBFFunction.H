@@ -89,14 +89,18 @@ public:
         {
             const scalar p = dist*invRadius_;
             return
-                p > 1
-              ? 0.0
-              : 1.0
+                1.0
               - 30.0*sqr(p)
               - 10.0*pow3(p)
               + 45.0*pow4(p)
               - 6.0*pow5(p)
               - 60.0*pow3(p)*ln(max(p, small))
+        }
+
+        //- Return the cutoff radius
+        virtual scalar cutOffRadius() const
+        {
+            return 1.0/invRadius_;
         }
 };
 

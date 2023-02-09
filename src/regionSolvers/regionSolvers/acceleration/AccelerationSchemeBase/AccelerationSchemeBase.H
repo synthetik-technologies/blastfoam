@@ -39,7 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "accelerationScheme.H"
-#include "valuePointPatchField.H"
+#include "PatchFieldSelector.H"
 #include "runTimeSelectionTables.H"
 
 
@@ -61,11 +61,8 @@ protected:
         //- Field to relax
         GeometricField<Type, Patch, Mesh>& field_;
 
-        //- Update internal
-        template<template<class> class PatchField>
-        void setInInternalField(PatchField<Type>& pp)
-        {}
-
+        //- PatchField acceleration
+        autoPtr<PatchFieldSelector<Type>> selector_;
 
 public:
 
@@ -80,10 +77,10 @@ public:
             dictionary,
             (
                 GeometricField<Type, Patch, Mesh>& field,
-                const label patchi,
+                autoPtr<PatchFieldSelector<Type>> selector,
                 const dictionary& dict
             ),
-            (field, patchi, dict)
+            (field, selector, dict)
         );
 
     // Constructor
@@ -91,7 +88,7 @@ public:
     (
         const word& type,
         GeometricField<Type, Patch, Mesh>& field,
-        const label patchi,
+        autoPtr<PatchFieldSelector<Type>> selector,
         const dictionary& dict
     );
 
@@ -100,7 +97,7 @@ public:
         static autoPtr<accelerationScheme> New
         (
             GeometricField<Type, Patch, Mesh>& field,
-            const label patchi,
+            autoPtr<PatchFieldSelector<Type>> selector,
             const dictionary& dict
         );
 
@@ -113,6 +110,18 @@ public:
 
         //- Update residuals
         virtual void updateError();
+
+        //- Return the patch size
+        virtual label size() const
+        {
+            return field_.boundaryField()[this->patchi_].size();
+        }
+
+        //- Store the previous iteration for the give field
+        virtual void storePrevIter()
+        {
+            selector_->storePrevIter();
+        }
 };
 
 #define makeAccelerationScheme(Type, Patch, Mesh)                              \
@@ -133,20 +142,7 @@ public:
 #define makeAccelerationSchemes(Type)                                          \
     makeAccelerationScheme(Type, fvPatchField, volMesh);                       \
     makeAccelerationScheme(Type, fvsPatchField, surfaceMesh);                  \
-    makeAccelerationScheme(Type, pointPatchField, pointMesh);                  \
-    template<>                                                                 \
-    template<>                                                                 \
-    void Type##pointMesh##AccelerationScheme::setInInternalField           \
-    (                                                                          \
-        pointPatchField<Type>& pp                                              \
-    )                                                                          \
-    {                                                                          \
-        pp.setInInternalField                                                  \
-        (                                                                      \
-            field_,                                                            \
-            dynamicCast<Field<Type>>(pp)                                       \
-        );                                                                     \
-    }
+    makeAccelerationScheme(Type, pointPatchField, pointMesh);
 
 
 #define makeAccelerationSchemeType(AccelerationSchemeType, Type, Patch, Mesh)  \

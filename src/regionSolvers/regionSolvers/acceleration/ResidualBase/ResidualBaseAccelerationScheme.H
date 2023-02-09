@@ -66,7 +66,7 @@ public:
     (
         const word& type,
         GeometricField<Type, Patch, Mesh>& field,
-        const label patchi,
+        autoPtr<PatchFieldSelector<Type>> selector,
         const dictionary& dict
     );
 
@@ -81,7 +81,7 @@ public:
         virtual void updateError();
 
         //- Clear residuals
-        virtual void clear();
+        virtual void clear(const bool);
 
         //- Read parameters
         virtual void read(const dictionary& dict)

@@ -32,11 +32,11 @@ Foam::accelerationSchemes::ResidualBase<Type, Patch, Mesh>::ResidualBase
 (
     const word& type,
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 :
-    AccelerationSchemeBase<Type, Patch, Mesh>(type, field, patchi, dict),
+    AccelerationSchemeBase<Type, Patch, Mesh>(type, field, selector, dict),
 
     residuals_(),
     prevResiduals_()
@@ -55,28 +55,29 @@ template<class Type, template<class> class Patch, class Mesh>
 void Foam::accelerationSchemes::ResidualBase<Type, Patch, Mesh>::updateError()
 {
     this->error_ = Zero;
-    const GeometricField<Type, Patch, Mesh>& fieldPrev = this->field_.prevIter();
 
-    const Field<Type>& pfield =
-        dynamicCast<const Field<Type>>
-        (
-            this->field_.boundaryField()[this->patchi_]
-        );
+    const Field<Type>& pfield = this->selector_->field();
     const Field<Type>& pfieldPrev =
-        dynamicCast<const Field<Type>>
+        this->selector_->relaxField
         (
-            fieldPrev.boundaryField()[this->patchi_]
+            this->field_.prevIter().boundaryField()[this->patchi_]
         );
 
     prevResiduals_.transfer(residuals_);
     residuals_ = pfield - pfieldPrev;
+
+    scalar maxErrorMagSqr = 0.0;
+    const label n = returnReduce(pfield.size(), sumOp<label>());
     forAll(residuals_, i)
     {
-        this->error_ += magSqr(residuals_[i]);
+        scalar errorMagSqr = magSqr(residuals_[i]);
+        this->error_ += magSqr(errorMagSqr);
+        maxErrorMagSqr = max(maxErrorMagSqr, errorMagSqr);
     }
 
     reduce(this->error_, sumOp<scalar>());
-    this->error_ = sqrt(this->error_);
+    reduce(maxErrorMagSqr, maxOp<scalar>());
+    this->error_ = sqrt(this->error_/(maxErrorMagSqr + small))/scalar(n);
 
     if (this->initialError_ < 0)
     {
@@ -86,9 +87,12 @@ void Foam::accelerationSchemes::ResidualBase<Type, Patch, Mesh>::updateError()
 
 
 template<class Type, template<class> class Patch, class Mesh>
-void Foam::accelerationSchemes::ResidualBase<Type, Patch, Mesh>::clear()
+void Foam::accelerationSchemes::ResidualBase<Type, Patch, Mesh>::clear
+(
+    const bool full
+)
 {
-    AccelerationSchemeBase<Type, Patch, Mesh>::clear();
+    AccelerationSchemeBase<Type, Patch, Mesh>::clear(full);
     residuals_ = Zero;
 }
 

@@ -33,11 +33,11 @@ template<class Type, template<class> class Patch, class Mesh>
 Foam::accelerationSchemes::Aitken<Type, Patch, Mesh>::Aitken
 (
     GeometricField<Type, Patch, Mesh>& field,
-    const label patchi,
+    autoPtr<PatchFieldSelector<Type>> selector,
     const dictionary& dict
 )
 :
-    ResidualBase<Type, Patch, Mesh>(typeName, field, patchi, dict),
+    ResidualBase<Type, Patch, Mesh>(typeName, field, selector, dict),
 
     nFixed_(1),
     initRelaxFactor_(1.0),
@@ -93,14 +93,13 @@ void Foam::accelerationSchemes::Aitken<Type, Patch, Mesh>::relax
         }
     }
 
-    Patch<Type>& pfield =
-        dynamicCast<Patch<Type>>(this->field_.boundaryFieldRef()[this->patchi_]);
-     pfield =
-        dynamicCast<const Field<Type>>
+    Field<Type>& pfield = this->selector_->field();
+    pfield =
+        this->selector_->relaxField
         (
             this->field_.prevIter().boundaryField()[this->patchi_]
         ) + aitkenFactor_*this->residuals_;
-    this->setInInternalField(pfield);
+    this->selector_->correct();
 }
 
 

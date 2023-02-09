@@ -38,8 +38,8 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "accelerationScheme.H"
-#include "regionSolverList.H"
 #include "PtrList.H"
+#include "Convergence.H"
 
 namespace Foam
 {
@@ -68,6 +68,19 @@ protected:
     //- Read controls
     bool readControls(const dictionary& dict);
 
+    //- Find the given name and type
+    template<class Type, template <class> class Patch, class Mesh>
+    bool setPatchAccelerators
+    (
+        const labelList& patches,
+        const dictionary& dict
+    );
+
+    //- Find the given field and save the previous iteration
+    template<class Type, template <class> class Patch, class Mesh>
+    bool storePrevIter();
+
+
 public:
 
     TypeName("fieldAccelerationScheme");
@@ -76,6 +89,16 @@ public:
     fieldAccelerationScheme
     (
         const word& field,
+        const fvMesh& mesh,
+        const labelList& patches,
+        const dictionary& dict
+    );
+
+    // Constructor
+    template<class Type, template <class> class Patch, class Mesh>
+    fieldAccelerationScheme
+    (
+        GeometricField<Type, Patch, Mesh>& field,
         const fvMesh& mesh,
         const labelList& patches,
         const dictionary& dict
@@ -94,7 +117,7 @@ public:
         void relax(const label iter);
 
         //- Clear residuals
-        void clear();
+        void clear(const bool full);
 
         // Return the absolute error
         scalar error() const;
@@ -102,6 +125,7 @@ public:
         //- Return the relative error
         scalar relError() const;
 
+        //- Return convergence type
         Convergence convergence() const
         {
             if (tolerance_ < 0)
@@ -119,6 +143,9 @@ public:
             return NOT_CONVERGED;
         }
 
+        //- Store the previous iteration for the give field
+        void storePrevIter();
+
         //- Read parameters
         void read(const dictionary& dict);
 
@@ -129,6 +156,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "fieldAccelerationSchemeTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

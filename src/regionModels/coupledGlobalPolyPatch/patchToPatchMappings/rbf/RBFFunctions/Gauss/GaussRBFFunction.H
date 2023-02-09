@@ -89,10 +89,13 @@ public:
 
         inline scalar evaluate(const scalar dist) const
         {
-            return
-                dist > radius_
-              ? 0.0
-              : Foam::exp(-sqr(shape_*dist));
+            return Foam::exp(-sqr(shape_*dist));
+        }
+
+        //- Return the cutoff radius
+        virtual scalar cutOffRadius() const
+        {
+            return radius_;
         }
 };
 
