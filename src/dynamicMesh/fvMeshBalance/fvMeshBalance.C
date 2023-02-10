@@ -645,6 +645,13 @@ Foam::fvMeshBalance::distribute()
     correctProcessorBoundaries<pointSymmTensorField>(mesh_);
     correctProcessorBoundaries<pointTensorField>(mesh_);
 
+    // Reset patch fields since they are incorrectly mapped
+    correctPointBoundaries<scalar>(mesh_);
+    correctPointBoundaries<vector>(mesh_);
+    correctPointBoundaries<sphericalTensor>(mesh_);
+    correctPointBoundaries<symmTensor>(mesh_);
+    correctPointBoundaries<tensor>(mesh_);
+
     return map;
 }
 

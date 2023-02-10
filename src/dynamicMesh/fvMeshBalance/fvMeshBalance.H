@@ -193,6 +193,10 @@ public:
         template<class GeoField>
         static void correctProcessorBoundaries(const fvMesh&);
 
+        //- Template to update all processor boundaries
+        template<class Type>
+        static void correctPointBoundaries(const fvMesh&);
+
         //- Helper: push master point data to collocated points
         template<class Type>
         static void pushUntransformedData(const polyMesh&, Field<Type>&);

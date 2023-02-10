@@ -93,6 +93,30 @@ void Foam::fvMeshBalance::correctProcessorBoundaries(const fvMesh& mesh)
     }
 }
 
+
+template<class Type>
+void Foam::fvMeshBalance::correctPointBoundaries(const fvMesh& mesh)
+{
+    typedef GeometricField<Type, pointPatchField, pointMesh> GeoField;
+    HashTable<GeoField*> flds
+    (
+        const_cast<fvMesh&>(mesh).lookupClass<GeoField>()
+    );
+    forAllIter(typename HashTable<GeoField*>, flds, iter)
+    {
+        GeoField& fld = *iter();
+        typename GeoField::Boundary& bfld = fld.boundaryFieldRef();
+        forAll(bfld, patchi)
+        {
+            if (isA<valuePointPatchField<Type>>(bfld[patchi]))
+            {
+                bfld[patchi] == bfld[patchi].patchInternalField();
+            }
+        }
+    }
+}
+
+
 template<class Type>
 void Foam::fvMeshBalance::pushUntransformedData
 (
