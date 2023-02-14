@@ -31,7 +31,7 @@ template<class Type>
 Foam::PtrList<Foam::PatchFieldSelector<Type>>
 Foam::PatchFieldSelector<Type>::New
 (
-    fvPatchField<Type>& pfield,
+    const fvPatchField<Type>& pfield,
     const dictionary& dict
 )
 {
@@ -42,7 +42,11 @@ Foam::PatchFieldSelector<Type>::New
      || isA<fixedValueFvPatchField<Type>>(pfield)
     )
     {
-        DebugInfo<< "Using value type selector" << endl;
+        DebugInfo
+            << "Using value type selector for patch "
+            << string(pfield.patch().name())
+            << " and field " << string(pfield.internalField().name())
+            << endl;
         pacceleration.setSize(1);
         pacceleration.set
         (
@@ -52,7 +56,11 @@ Foam::PatchFieldSelector<Type>::New
     }
     else if (isA<fixedGradientFvPatchField<Type>>(pfield))
     {
-        DebugInfo<< "Using gradient type selector" << endl;
+        DebugInfo
+            << "Using gradient type selector for patch "
+            << string(pfield.patch().name())
+            << " and field " << string(pfield.internalField().name())
+            << endl;
         pacceleration.setSize(1);
         pacceleration.set
         (
@@ -82,7 +90,11 @@ Foam::PatchFieldSelector<Type>::New
         label selectori = 0;
         if (useRefValue)
         {
-            DebugInfo<< "Using mixed type selector with refValue" << endl;
+            DebugInfo
+                << "Using mixed type selector with a refValue for patch "
+                << string(pfield.patch().name())
+                << " and field " << string(pfield.internalField().name())
+                << endl;
             pacceleration.set
             (
                 selectori++,
@@ -95,7 +107,11 @@ Foam::PatchFieldSelector<Type>::New
         }
         if (useRefGrad)
         {
-            DebugInfo<< "Using mixed type selector with refGrad" << endl;
+            DebugInfo
+                << "Using mixed type selector with a refGrad for patch "
+                << string(pfield.patch().name())
+                << " and field " << string(pfield.internalField().name())
+                << endl;
             pacceleration.set
             (
                 selectori++,
@@ -140,7 +156,7 @@ template<class Type>
 Foam::PtrList<Foam::PatchFieldSelector<Type>>
 Foam::PatchFieldSelector<Type>::New
 (
-    fvsPatchField<Type>& pfield,
+    const fvsPatchField<Type>& pfield,
     const dictionary& dict
 )
 {
@@ -151,7 +167,11 @@ Foam::PatchFieldSelector<Type>::New
      || isA<fixedValueFvsPatchField<Type>>(pfield)
     )
     {
-        DebugInfo<< "Using value type selector" << endl;
+        DebugInfo
+            << "Using value type selector for patch "
+            << string(pfield.patch().name())
+            << " and field " << string(pfield.internalField().name())
+            << endl;
         pacceleration.setSize(1);
         pacceleration.set
         (
@@ -179,14 +199,25 @@ template<class Type>
 Foam::PtrList<Foam::PatchFieldSelector<Type>>
 Foam::PatchFieldSelector<Type>::New
 (
-    pointPatchField<Type>& pfield,
+    const pointPatchField<Type>& pfield,
     const dictionary& dict
 )
 {
     PtrList<PatchFieldSelector<Type>> pacceleration;
     if (isA<valuePointPatchField<Type>>(pfield))
     {
-        DebugInfo<< "Using value type selector" << endl;
+        if (debug)
+        {
+            const polyPatch& pp =
+                pfield.internalField().mesh().mesh().boundaryMesh()
+                [
+                    pfield.patch().index()
+                ];
+            Info<< "Using value type selector for patch "
+                << string(pp.name())
+                << " and field " << string(pfield.internalField().name())
+                << endl;
+        }
         pacceleration.setSize(1);
         pacceleration.set
         (

@@ -56,7 +56,11 @@ void Foam::accelerationSchemes::ResidualBase<Type, Patch, Mesh>::updateError()
 {
     this->error_ = Zero;
 
-    const Field<Type>& pfield = this->selector_->field();
+    const Field<Type>& pfield =
+        this->selector_->relaxField
+        (
+            this->field_.boundaryField()[this->patchi_]
+        );
     const Field<Type>& pfieldPrev =
         this->selector_->relaxField
         (

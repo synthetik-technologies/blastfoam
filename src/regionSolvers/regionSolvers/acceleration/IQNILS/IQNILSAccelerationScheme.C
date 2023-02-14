@@ -166,7 +166,8 @@ void Foam::accelerationSchemes::IQNILS<Type, Patch, Mesh>::relax
 {
     this->updateError();
 
-    Field<Type>& pfield = this->selector_->field();
+    Patch<Type>& pf = this->field_.boundaryFieldRef()[this->patchi_];
+    Field<Type>& pfield =this->selector_->relaxField(pf);
     const Field<Type>& pfieldPrev =
         this->selector_->relaxField
         (
@@ -196,7 +197,6 @@ void Foam::accelerationSchemes::IQNILS<Type, Patch, Mesh>::relax
     else if (iter < nFixed_ || this->times_.size() < 2)
     {
         pfield = pfieldPrev + initRelaxFactor_*this->residuals_;
-        this->selector_->correct();
     }
     else
     {
@@ -217,8 +217,8 @@ void Foam::accelerationSchemes::IQNILS<Type, Patch, Mesh>::relax
         }
 
         pfield = pfieldNew;
-        this->selector_->correct();
     }
+    this->selector_->correct(pf);
 }
 
 

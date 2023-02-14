@@ -66,29 +66,6 @@ Foam::regionSolver::~regionSolver()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam ::regionSolver::readControls
-(
-    const word& name,
-    scalar& tol,
-    scalar& relTol
-) const
-{
-    if (!regions_.solutionControls().isDict(mesh_.name()))
-    {
-        return false;
-    }
-    const dictionary& regionDict =
-        regions_.solutionControls().subDict(mesh_.name());
-    if (regionDict.isDict(name))
-    {
-        regionDict.subDict(name).lookup("tolerance") >> tol;
-        regionDict.subDict(name).lookup("relTol") >> relTol;
-        return true;
-    }
-    return false;
-}
-
-
 void Foam::regionSolver::storePrevIter()
 {
     accelerationSchemes_.storePrevIter();
@@ -123,7 +100,6 @@ bool Foam::regionSolver::changeMesh()
 bool Foam::regionSolver::moveMesh(const IterType iter)
 {
     DebugInfo<< "Moving " << mesh_.name() << " mesh" << endl;
-    storePrevIter();
     return dynMesh_.update();
 }
 
@@ -132,6 +108,7 @@ void Foam::regionSolver::clear(const bool full)
 {
     DebugInfo<< "Clearing " << mesh_.name() << endl;
     accelerationSchemes_.clear(full);
+    globalBoundary_.write();
 }
 
 

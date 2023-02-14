@@ -79,10 +79,15 @@ class PatchFieldSelector
 :
     public patchFieldSelectorBase
 {
+    //- Index of relaxation patch
+    const label index_;
+
 public:
 
     // Constructor
-    PatchFieldSelector()
+    PatchFieldSelector(const label index)
+    :
+        index_(index)
     {}
 
     // Selectors
@@ -90,21 +95,21 @@ public:
         //- Selector for fvPatchField
         static PtrList<PatchFieldSelector<Type>> New
         (
-            fvPatchField<Type>& pfield,
+            const fvPatchField<Type>& pfield,
             const dictionary& dict
         );
 
         //- Selector for fvsPatchField
         static PtrList<PatchFieldSelector<Type>> New
         (
-            fvsPatchField<Type>& pfield,
+            const fvsPatchField<Type>& pfield,
             const dictionary& dict
         );
 
         //- Selector for pointPatchField
         static PtrList<PatchFieldSelector<Type>> New
         (
-            pointPatchField<Type>& pfield,
+            const pointPatchField<Type>& pfield,
             const dictionary& dict
         );
 
@@ -117,7 +122,10 @@ public:
     // Member functions
 
         //- Return the patch index
-        virtual label index() const = 0;
+        inline label index() const
+        {
+            return index_;
+        }
 
         //- Return the type
         virtual word type() const
@@ -125,49 +133,125 @@ public:
             return word::null;
         }
 
-        //- Return the field to relax given a fvPatchField
-        virtual const Field<Type>& relaxField
-        (
-            const fvPatchField<Type>& f
-        ) const
-        {
-            NotImplemented;
-            return f;
-        }
+        // Return relaxation field
 
-        //- Return the field to relax given a fvsPatchField
-        virtual const Field<Type>& relaxField
-        (
-            const fvsPatchField<Type>& f
-        ) const
-        {
-            NotImplemented;
-            return f;
-        }
+            //- Return the field to relax given a fvPatchField
+            virtual const Field<Type>& relaxField
+            (
+                const fvPatchField<Type>& pfield
+            ) const
+            {
+                NotImplemented;
+                return pfield;
+            }
 
-        //- Return the field to relax given a pointPatchField
-        virtual const Field<Type>& relaxField
-        (
-            const pointPatchField<Type>& f
-        ) const
-        {
-            NotImplemented;
-            return dynamicCast<const Field<Type>>(f);
-        }
+            //- Access the field to relax given a fvPatchField
+            virtual Field<Type>& relaxField
+            (
+                fvPatchField<Type>& pfield
+            ) const
+            {
+                NotImplemented;
+                return pfield;
+            }
 
-        //- Return the field to relax
-        virtual const Field<Type>& field() const = 0;
+            //- Return the field to relax given a fvsPatchField
+            virtual const Field<Type>& relaxField
+            (
+                const fvsPatchField<Type>& pfield
+            ) const
+            {
+                NotImplemented;
+                return pfield;
+            }
 
-        //- Access the field to relax
-        virtual Field<Type>& field() = 0;
+            //- Access the field to relax given a fvsPatchField
+            virtual Field<Type>& relaxField
+            (
+                fvsPatchField<Type>& pfield
+            ) const
+            {
+                NotImplemented;
+                return pfield;
+            }
 
-        //- Store the previous iteration for the give field
-        virtual void storePrevIter()
-        {}
+            //- Return the field to relax given a pointPatchField
+            virtual const Field<Type>& relaxField
+            (
+                const pointPatchField<Type>& pfield
+            ) const
+            {
+                NotImplemented;
+                return dynamicCast<const Field<Type>>(pfield);
+            }
 
-        //- Correct the underlying field
-        virtual void correct()
-        {}
+            //- Access the field to relax given a pointPatchField
+            virtual Field<Type>& relaxField
+            (
+                pointPatchField<Type>& pfield
+            ) const
+            {
+                NotImplemented;
+                return dynamicCast<Field<Type>>(pfield);
+            }
+
+        // Store the previous iteration
+
+            //- Store the previous iteration for the given fvPatchField
+            virtual void storePrevIter
+            (
+                const fvPatchField<Type>& pfield,
+                fvPatchField<Type>& pfieldPrev
+            )
+            {
+                this->relaxField(pfieldPrev) = this->relaxField(pfield);
+            }
+
+            //- Store the previous iteration for the given fvPatchField
+            virtual void storePrevIter
+            (
+                const fvsPatchField<Type>& pfield,
+                fvsPatchField<Type>& pfieldPrev
+            )
+            {
+                this->relaxField(pfieldPrev) = this->relaxField(pfield);
+            }
+
+            //- Store the previous iteration for the given fvPatchField
+            virtual void storePrevIter
+            (
+                const pointPatchField<Type>& pfield,
+                pointPatchField<Type>& pfieldPrev
+            )
+            {
+                this->relaxField(pfieldPrev) = this->relaxField(pfield);
+            }
+
+
+        // Correct patch fields (evaluate)
+
+            //- Correct the fvPatchField
+            virtual void correct(fvPatchField<Type>& pfield)
+            {
+                pfield.fvPatchField<Type>::updateCoeffs();
+                pfield.evaluate();
+            }
+
+            //- Correct the fvsPatchField
+            virtual void correct(fvsPatchField<Type>& pfield)
+            {}
+
+            //- Correct the pointPatchField
+            virtual void correct(pointPatchField<Type>& pfield)
+            {
+                valuePointPatchField<Type>& vpfield =
+                    dynamicCast<valuePointPatchField<Type>>(pfield);
+                vpfield.setInInternalField
+                (
+                    const_cast<Field<Type>&>(vpfield.primitiveField()),
+                    vpfield
+                );
+            }
 };
 
 
@@ -180,18 +264,12 @@ class ValueFvPatchFieldSelector
 :
     public PatchFieldSelector<Type>
 {
-// Private member data
-
-    //- Reference to the fvPatchField
-    fvPatchField<Type>& pfield_;
-
-
 public:
 
     // Constructor
-    ValueFvPatchFieldSelector(fvPatchField<Type>& pfield)
+    ValueFvPatchFieldSelector(const fvPatchField<Type>& pfield)
     :
-        pfield_(pfield)
+        PatchFieldSelector<Type>(pfield.patch().index())
     {}
 
 
@@ -202,14 +280,7 @@ public:
 
     // Member functions
 
-        //- Return the patch index
-        inline label index() const
-        {
-            return pfield_.patch().index();
-        }
-
         //- Return the field to relax given an fvPatchField
-        using PatchFieldSelector<Type>::relaxField;
         inline const Field<Type>& relaxField
         (
             const fvPatchField<Type>& f
@@ -218,16 +289,13 @@ public:
             return f;
         }
 
-        //- Return the field to relax
-        inline const Field<Type>& field() const
+        //- Access the field to relax given an fvPatchField
+        inline Field<Type>& relaxField
+        (
+            fvPatchField<Type>& f
+        ) const
         {
-            return pfield_;
-        }
-
-        //- Access the field to relax
-        inline Field<Type>& field()
-        {
-            return pfield_;
+            return f;
         }
 };
 
@@ -241,18 +309,13 @@ class FixedGradientFvPatchFieldSelector
 :
     public PatchFieldSelector<Type>
 {
-// Private member data
-
-    //- Reference to the fvPatchField
-    fixedGradientFvPatchField<Type>& pfield_;
-
 
 public:
 
     // Constructor
-    FixedGradientFvPatchFieldSelector(fvPatchField<Type>& pfield)
+    FixedGradientFvPatchFieldSelector(const fvPatchField<Type>& pfield)
     :
-        pfield_(dynamicCast<fixedGradientFvPatchField<Type>>(pfield))
+        PatchFieldSelector<Type>(pfield.patch().index())
     {}
 
 
@@ -263,63 +326,35 @@ public:
 
     // Member functions
 
-        //- Return the patch index
-        inline label index() const
-        {
-            return pfield_.patch().index();
-        }
-
         //- Return the type
         virtual word type() const
         {
             return "(grad)";
         }
 
-        //- Return the field to relax given another patch field
         using PatchFieldSelector<Type>::relaxField;
+
+        //- Return the field to relax given another patch field
         inline const Field<Type>& relaxField
         (
-            const fvPatchField<Type>& f
+            const fvPatchField<Type>& pfield
         ) const
         {
             return
                 dynamicCast<const fixedGradientFvPatchField<Type>>
                 (
-                    f
+                    pfield
                 ).gradient();
         }
 
-        //- Return the field to relax
-        inline const Field<Type>& field() const
+        //- Access the field to relax given another patch field
+        inline Field<Type>& relaxField(fvPatchField<Type>& pfield) const
         {
-            return pfield_.gradient();
-        }
-
-        //- Access the field to relax
-        inline Field<Type>& field()
-        {
-            return pfield_.gradient();
-        }
-
-        //- Store the previous iteration for the give field
-        virtual void storePrevIter()
-        {
-            const fvPatchField<Type>& pfieldPrev =
-                dynamicCast<const GeometricField<Type, fvPatchField, volMesh>>
+            return
+                dynamicCast<fixedGradientFvPatchField<Type>>
                 (
-                    pfield_.internalField()
-                ).prevIter().boundaryField()[index()];
-            dynamicCast<fixedGradientFvPatchField<Type>>
-            (
-                const_cast<fvPatchField<Type>&>(pfieldPrev)
-            ).gradient() = field();
-        }
-
-        //- Correct the underlying field
-        virtual void correct()
-        {
-            pfield_.fvPatchField<Type>::updateCoeffs();
-            pfield_.evaluate();
+                    pfield
+                ).gradient();
         }
 };
 
@@ -346,9 +381,6 @@ public:
 private:
 // Private member data
 
-    //- Reference to the fvPatchField
-    mixedFvPatchField<Type>& pfield_;
-
     //- Field to return
     const FieldType type_;
 
@@ -358,11 +390,11 @@ public:
     // Constructor
     MixedFvPatchFieldSelector
     (
-        fvPatchField<Type>& pfield,
+        const fvPatchField<Type>& pfield,
         const FieldType type
     )
     :
-        pfield_(dynamicCast<mixedFvPatchField<Type>>(pfield)),
+        PatchFieldSelector<Type>(pfield.patch().index()),
         type_(type)
     {}
 
@@ -373,12 +405,6 @@ public:
 
 
     // Member functions
-
-        //- Return the patch index
-        inline label index() const
-        {
-            return pfield_.patch().index();
-        }
 
         //- Return the type
         virtual word type() const
@@ -396,93 +422,45 @@ public:
             return word::null;
         }
 
-        //- Return the field to relax given an fvPatchField
         using PatchFieldSelector<Type>::relaxField;
+
+        //- Return the field to relax given an fvPatchField
         inline const Field<Type>& relaxField
         (
-            const fvPatchField<Type>& f
+            const fvPatchField<Type>& pfield
         ) const
         {
-            const mixedFvPatchField<Type>& mpf =
-                dynamicCast<const mixedFvPatchField<Type>>(f);
+            const mixedFvPatchField<Type>& mixedpfield =
+                dynamicCast<const mixedFvPatchField<Type>>(pfield);
             switch (type_)
             {
                 case REF_VALUE:
-                    return mpf.refValue();
+                    return mixedpfield.refValue();
                 case REF_GRADIENT:
-                    return mpf.refGrad();
+                    return mixedpfield.refGrad();
                 case VALUE_FRACTION:
                     NotImplemented;
-                    return f;//mpf.valueFraction();
+                    return pfield;//mixedpfield.valueFraction();
             }
-            return f;
+            return pfield;
         }
 
-        //- Return the field to relax
-        inline const Field<Type>& field() const
+        //- Access the field to relax given an fvPatchField
+        inline Field<Type>& relaxField(fvPatchField<Type>& pfield) const
         {
+            mixedFvPatchField<Type>& mixedpfield =
+                dynamicCast<mixedFvPatchField<Type>>(pfield);
             switch (type_)
             {
                 case REF_VALUE:
-                    return pfield_.refValue();
+                    return mixedpfield.refValue();
                 case REF_GRADIENT:
-                    return pfield_.refGrad();
+                    return mixedpfield.refGrad();
                 case VALUE_FRACTION:
                     NotImplemented;
-                    return pfield_;//pfield_.valueFraction();
+                    return pfield;//mixedpfield.valueFraction();
             }
-            return pfield_;
-        }
-
-        //- Access the field to relax
-        inline Field<Type>& field()
-        {
-            switch (type_)
-            {
-                case REF_VALUE:
-                    return pfield_.refValue();
-                case REF_GRADIENT:
-                    return pfield_.refGrad();
-                case VALUE_FRACTION:
-                    NotImplemented;
-                    return pfield_;//pfield_.valueFraction();
-            }
-            return pfield_;
-        }
-
-        //- Store the previous iteration for the give field
-        virtual void storePrevIter()
-        {
-            const fvPatchField<Type>& pfieldPrev =
-                dynamicCast<const GeometricField<Type, fvPatchField, volMesh>>
-                (
-                    pfield_.internalField()
-                ).prevIter().boundaryField()[index()];
-            mixedFvPatchField<Type>& pmixedPrev =
-                dynamicCast<mixedFvPatchField<Type>>
-                (
-                    const_cast<fvPatchField<Type>&>(pfieldPrev)
-                );
-            switch (type_)
-            {
-                case REF_VALUE:
-                    pmixedPrev.refValue() = pfield_.refValue();
-                    return;
-                case REF_GRADIENT:
-                    pmixedPrev.refGrad() = pfield_.refGrad();
-                    return;
-                case VALUE_FRACTION:
-                    NotImplemented;
-                    pmixedPrev.valueFraction() = pfield_.valueFraction();
-                    return;
-            }
-        }
-
-        //- Correct the underlying field
-        virtual void correct()
-        {
-            pfield_.fvPatchField<Type>::updateCoeffs();
-            pfield_.evaluate();
+            return pfield;
         }
 };
 
@@ -496,18 +474,12 @@ class ValueFvsPatchFieldSelector
 :
     public PatchFieldSelector<Type>
 {
-// Private member data
-
-    //- Reference to the fvPatchField
-    fvsPatchField<Type>& pfield_;
-
-
 public:
 
     // Constructor
-    ValueFvsPatchFieldSelector(fvsPatchField<Type>& pfield)
+    ValueFvsPatchFieldSelector(const fvsPatchField<Type>& pfield)
     :
-        pfield_(pfield)
+        PatchFieldSelector<Type>(pfield.patch().index())
     {}
 
 
@@ -518,14 +490,9 @@ public:
 
     // Member functions
 
-        //- Return the patch index
-        inline label index() const
-        {
-            return pfield_.patch().index();
-        }
+        using PatchFieldSelector<Type>::relaxField;
 
         //- Return the field to relax given an fvPatchField
-        using PatchFieldSelector<Type>::relaxField;
         inline const Field<Type>& relaxField
         (
             const fvsPatchField<Type>& f
@@ -534,16 +501,10 @@ public:
             return f;
         }
 
-        //- Return the field to relax
-        inline const Field<Type>& field() const
+        //- Access the field to relax given an fvPatchField
+        inline Field<Type>& relaxField(fvsPatchField<Type>& f) const
         {
-            return pfield_;
-        }
-
-        //- Access the field to relax
-        inline Field<Type>& field()
-        {
-            return pfield_;
+            return f;
         }
 };
 
@@ -557,18 +518,12 @@ class ValuePointPatchFieldSelector
 :
     public PatchFieldSelector<Type>
 {
-// Private member data
-
-    //- Reference to the fvPatchField
-    valuePointPatchField<Type>& pfield_;
-
-
 public:
 
     // Constructor
-    ValuePointPatchFieldSelector(pointPatchField<Type>& pfield)
+    ValuePointPatchFieldSelector(const pointPatchField<Type>& pfield)
     :
-        pfield_(dynamicCast<valuePointPatchField<Type>>(pfield))
+        PatchFieldSelector<Type>(pfield.patch().index())
     {}
 
 
@@ -579,14 +534,9 @@ public:
 
     // Member functions
 
-        //- Return the patch index
-        inline label index() const
-        {
-            return pfield_.patch().index();
-        }
+        using PatchFieldSelector<Type>::relaxField;
 
         //- Return the field to relax given an fvPatchField
-        using PatchFieldSelector<Type>::relaxField;
         inline const Field<Type>& relaxField
         (
             const pointPatchField<Type>& f
@@ -595,26 +545,10 @@ public:
             return dynamicCast<const valuePointPatchField<Type>>(f);
         }
 
-        //- Return the field to relax
-        inline const Field<Type>& field() const
+        //- Access the field to relax given an fvPatchField
+        inline Field<Type>& relaxField(pointPatchField<Type>& f) const
         {
-            return pfield_;
-        }
-
-        //- Access the field to relax
-        inline Field<Type>& field()
-        {
-            return pfield_;
-        }
-
-        //- Correct the underlying field
-        virtual void correct()
-        {
-            pfield_.setInInternalField
-            (
-                const_cast<Field<Type>&>(pfield_.primitiveField()),
-                pfield_
-            );
+            return dynamicCast<valuePointPatchField<Type>>(f);
         }
 };
 

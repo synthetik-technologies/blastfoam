@@ -54,13 +54,10 @@ Foam::regionSolvers::solid::solid
 )
 :
     regionSolver(mesh, regions),
-    solid_(solidModel::New(dynMesh_)),
-    initialError_(-1),
-    error_(great),
-    tolerance_(-great),
-    relTol_(-great)
+    solid_(solidModel::New(dynMesh_))
 {
-    this->readControls("D", tolerance_, relTol_);
+    // Add Displacement field to track error
+    accelerationSchemes_.addField(solid_->D());
 }
 
 
@@ -119,11 +116,12 @@ bool Foam::regionSolvers::solid::moveMesh(const IterType iter)
 
 void Foam::regionSolvers::solid::solve()
 {
-    const volVectorField DOld(solid_->D());
-
     SolverPerformance<vector>::debug = 0;
 
+    solid_->D().storePrevIter();
     solid_->evolve();
+
+    accelerationSchemes_.updateError();
 
     const volVectorField& D = solid_->solutionD();
 
@@ -154,24 +152,14 @@ void Foam::regionSolvers::solid::solve()
 
     // Turn solver information back on
     SolverPerformance<vector>::debug = 1;
-
-    error_ = residual(solid_->D(), DOld);
-    if (initialError_ < 0)
-    {
-        initialError_ = error_;
-    }
-
-    Info<<"Displacement error (abs/rel) = "
-        << error_ << ", "
-        << error_/(initialError_+small) <<endl;
 }
 
 
-void Foam::regionSolvers::solid::clear()
+void Foam::regionSolvers::solid::clear(const bool full)
 {
-    solid_->updateTotalFields();
+    regionSolver::clear(full);
     solidTractionFvPatchVectorField::canRelax = true;
-    initialError_ = -1;
+    solid_->updateTotalFields();
 }
 
 

@@ -59,11 +59,6 @@ protected:
         //- Solid model
         autoPtr<solidModel> solid_;
 
-        //- Tolerances
-        scalar initialError_;
-        scalar error_;
-        scalar tolerance_;
-        scalar relTol_;
 
 public:
 
@@ -86,28 +81,6 @@ public:
                 return true;
             }
 
-            //- Return if the solver converged
-            virtual Convergence convergence() const
-            {
-                if (tolerance_ < 0)
-                {
-                    return UNKNOWN_CONVERGENCE;
-                }
-                else if (error_ < small)
-                {
-                    return FULL_CONVERGENCE;
-                }
-                else if
-                (
-                    error_< tolerance_
-                 || (error_/(initialError_ + small)) < relTol_
-                )
-                {
-                    return CONVERGED;
-                }
-                return NOT_CONVERGED;
-            }
-
 
         // Edit
 
@@ -127,7 +100,7 @@ public:
             virtual void solve();
 
             //- Clear the solver
-            virtual void clear();
+            virtual void clear(const bool full = false);
 
             //- Return the Courant number
             virtual scalar CoNum() const;

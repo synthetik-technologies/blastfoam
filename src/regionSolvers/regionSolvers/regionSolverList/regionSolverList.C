@@ -346,7 +346,7 @@ void Foam::regionSolverList::solve()
         solutionControls().lookup<label>("nOuterCorrectors");
     iterNo_ = 0;
     bool finished = false;
-    bool cleanup = false;
+    bool cleanup = nOuterCorrectors < 2;
 
     Convergence converged = UNKNOWN_CONVERGENCE;
     do
@@ -355,18 +355,16 @@ void Foam::regionSolverList::solve()
         IOobject::writeDivider(Info)
             << "Outer iteration: " << iterNo_ << nl
             << "Time = " << runTime_.timeName() << nl
-            << "dltaT = " << runTime_.deltaTValue() << nl << endl;
+            << "deltaT = " << runTime_.deltaTValue() << nl << endl;
 
         // Mark if relaxation is allowed
         // FINAL_ITER: no relaxation
         // MID_ITER: Relaxation is allowed
         IterType iter =
-            iterNo_ == 0 ? FIRST_ITER
-          : (
-                (cleanup || iterNo_ == nOuterCorrectors-1)
-              ? FINAL_ITER
-              : MID_ITER
-            );
+            (cleanup || iterNo_ == nOuterCorrectors-1)
+          ? FINAL_ITER
+          : (iterNo_ == 0 ? FIRST_ITER : MID_ITER);
+
         if (cleanup)
         {
             finished = true;
@@ -396,6 +394,11 @@ void Foam::regionSolverList::solve()
         {
             cleanup = true;
         }
+        else if (!converged && iterNo_ < nOuterCorrectors-1)
+        {
+            finished = false;
+            cleanup = false;
+        }
 
     } while (!finished && iterNo_ < nOuterCorrectors);
 
@@ -411,6 +414,9 @@ void Foam::regionSolverList::solve()
 
     update();
     clear();
+
+    Info<< endl;
+    IOobject::writeDivider(Info) << nl << endl;
 }
 
 

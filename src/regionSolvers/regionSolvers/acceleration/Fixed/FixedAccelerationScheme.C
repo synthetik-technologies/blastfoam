@@ -59,7 +59,8 @@ void Foam::accelerationSchemes::Fixed<Type, Patch, Mesh>::relax
 {
     this->updateError();
 
-    Field<Type>& pfield = this->selector_->field();
+    Patch<Type>& pf = this->field_.boundaryFieldRef()[this->patchi_];
+    Field<Type>& pfield =this->selector_->relaxField(pf);
     const Field<Type>& pfieldPrev =
         this->selector_->relaxField
         (
@@ -67,7 +68,7 @@ void Foam::accelerationSchemes::Fixed<Type, Patch, Mesh>::relax
         );
     pfield =
         pfieldPrev*(1.0 - relaxationFactor_) + relaxationFactor_*pfield;
-    this->selector_->correct();
+    this->selector_->correct(pf);
 }
 
 

@@ -60,9 +60,11 @@ void Foam::AccelerationSchemeBase<Type, Patch, Mesh>::updateError()
 {
     error_ = Zero;
 
-    const Field<Type>& pfield = selector_->field();
+    const Field<Type>& pfield =
+        selector_->relaxField(field_.boundaryField()[patchi_]);
     const Field<Type>& pfieldPrev =
         selector_->relaxField(field_.prevIter().boundaryField()[patchi_]);
+
     scalar maxErrorMagSqr = 0.0;
     const label n = returnReduce(pfield.size(), sumOp<label>());
 
@@ -81,6 +83,16 @@ void Foam::AccelerationSchemeBase<Type, Patch, Mesh>::updateError()
     {
         initialError_ = error_;
     }
+}
+
+
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::AccelerationSchemeBase<Type, Patch, Mesh>::storePrevIter()
+{
+    const Patch<Type>& pfield = field_.boundaryField()[patchi_];
+    Patch<Type>& pfieldPrev =
+        const_cast<Patch<Type>&>(field_.prevIter().boundaryField()[patchi_]);
+    selector_->storePrevIter(pfield, pfieldPrev);
 }
 
 

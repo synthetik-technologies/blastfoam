@@ -118,10 +118,7 @@ public:
         }
 
         //- Store the previous iteration for the give field
-        virtual void storePrevIter()
-        {
-            selector_->storePrevIter();
-        }
+        virtual void storePrevIter();
 };
 
 #define makeAccelerationScheme(Type, Patch, Mesh)                              \

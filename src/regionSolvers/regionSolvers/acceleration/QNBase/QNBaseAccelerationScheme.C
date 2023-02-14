@@ -63,7 +63,12 @@ void Foam::accelerationSchemes::QNBase<Type, Patch, Mesh>::updateVW
     const label iter
 )
 {
-    const Field<Type>& pfield = this->selector_->field();
+    const Field<Type>& pfield =
+        this->selector_->relaxField
+        (
+            this->field_.boundaryField()[this->patchi_]
+        );
+
     if (iter == 0)
     {
     }

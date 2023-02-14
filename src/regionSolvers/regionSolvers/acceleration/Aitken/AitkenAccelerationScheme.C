@@ -93,13 +93,15 @@ void Foam::accelerationSchemes::Aitken<Type, Patch, Mesh>::relax
         }
     }
 
-    Field<Type>& pfield = this->selector_->field();
-    pfield =
+    Patch<Type>& pf = this->field_.boundaryFieldRef()[this->patchi_];
+    Field<Type>& pfield =this->selector_->relaxField(pf);
+    const Field<Type>& pfieldPrev =
         this->selector_->relaxField
         (
             this->field_.prevIter().boundaryField()[this->patchi_]
-        ) + aitkenFactor_*this->residuals_;
-    this->selector_->correct();
+        );
+    pfield = pfieldPrev + aitkenFactor_*this->residuals_;
+    this->selector_->correct(pf);
 }
 
 

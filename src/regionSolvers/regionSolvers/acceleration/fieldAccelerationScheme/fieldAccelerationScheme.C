@@ -45,7 +45,9 @@ Foam::fieldAccelerationScheme::fieldAccelerationScheme
 :
     PtrList<accelerationScheme>(0),
     fieldName_(fieldName),
-    mesh_(mesh)
+    mesh_(mesh),
+    tolerance_(-1.0),
+    relTol_(0.0)
 {
     Info<< "Selecting acceleration schemes for " << fieldName << endl;
     incrIndent(Info);
@@ -90,20 +92,31 @@ bool Foam::fieldAccelerationScheme::readControls(const dictionary& dict)
         (mesh_.name() != polyMesh::defaultRegion && !dict.isDict(mesh_.name()))
      || !this->size())
     {
+        tolerance_ = -1.0;
         return false;
     }
     const dictionary& regionDict =
         mesh_.name() == polyMesh::defaultRegion
       ? dict
       : dict.subDict(mesh_.name());
-    if (regionDict.isDict(fieldName_))
+    if (!regionDict.isDict("outerCorrectorResidualControl"))
     {
-        regionDict.subDict(fieldName_).lookup("tolerance") >> tolerance_;
-        regionDict.subDict(fieldName_).lookup("relTol") >> relTol_;
+        tolerance_ = -1.0;
+        return false;
+    }
+
+    const dictionary& residualDict =
+        regionDict.subDict("outerCorrectorResidualControl");
+
+    if (residualDict.isDict(fieldName_))
+    {
+        residualDict.subDict(fieldName_).lookup("tolerance") >> tolerance_;
+        residualDict.subDict(fieldName_).lookup("relTol") >> relTol_;
         Info<< indent << "Tolerances for " << fieldName_ << " (abs/rel): "
             << tolerance_ << "/" << relTol_ << endl;
         return true;
     }
+    tolerance_ = -1.0;
     return false;
 }
 
@@ -159,9 +172,8 @@ Foam::scalar Foam::fieldAccelerationScheme::relError() const
 
 void Foam::fieldAccelerationScheme::storePrevIter()
 {
-    bool found = false;
     #define storePrevIterType(Type, Patch, Mesh)                           \
-    if (!found && storePrevIter<Type, Patch, Mesh>())                      \
+    if (storePrevIter<Type, Patch, Mesh>())                                \
     {                                                                      \
         return;                                                            \
     }

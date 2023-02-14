@@ -133,11 +133,14 @@ bool Foam::fieldAccelerationScheme::storePrevIter()
 {
     if (mesh_.foundObject<GeometricField<Type, Patch, Mesh>>(fieldName_))
     {
+        //- Store the previous iterator for the field
         mesh_.lookupObjectRef<GeometricField<Type, Patch, Mesh>>
         (
             fieldName_
         ).storePrevIter();
 
+
+        // Set all patches as needed (i.e. gradient)
         forAll(*this, i)
         {
             this->operator[](i).storePrevIter();

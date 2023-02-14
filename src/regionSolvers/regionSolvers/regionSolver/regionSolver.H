@@ -76,15 +76,6 @@ protected:
         fieldAccelerationSchemeList accelerationSchemes_;
 
 
-        //- Read controls
-        bool readControls
-        (
-            const word& name,
-            scalar& tol,
-            scalar& relTol
-        ) const;
-
-
 public:
 
     TypeName("regionSolver");

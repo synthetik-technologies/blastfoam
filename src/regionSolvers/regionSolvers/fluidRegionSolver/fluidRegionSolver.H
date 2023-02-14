@@ -64,8 +64,8 @@ protected:
         //- Viscous stresses
         volSymmTensorField devRhoReff_;
 
-        //- old point field
-        autoPtr<pointField> pointsOldPtr_;
+        //- Original pointField
+        autoPtr<pointIOField> points0Ptr_;
 
         //- Cell velocity
         autoPtr<volVectorField> cellDPtr_;
@@ -78,10 +78,6 @@ protected:
 
         //- Velocity field names
         wordList velocityFields_;
-
-        //- Tolerances
-        scalar tolerance_;
-        scalar relTol_;
 
 
 public:
