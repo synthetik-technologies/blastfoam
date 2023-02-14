@@ -533,6 +533,14 @@ public:
             {
                 return true;
             }
+
+            virtual bool writeObject
+            (
+                IOstream::streamFormat fmt,
+                IOstream::versionNumber ver,
+                IOstream::compressionType cmp,
+                const bool write
+            ) const;
 };
 
 

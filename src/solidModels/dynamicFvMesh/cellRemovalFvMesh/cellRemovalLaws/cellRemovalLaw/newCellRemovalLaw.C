@@ -44,7 +44,7 @@ autoPtr<cellRemovalLaw> cellRemovalLaw::New
     const dictionary& dict
 )
 {
-    word rheoTypeName = dict.lookup("type");
+    word rheoTypeName = dict.lookup(cellRemovalLaw::typeName);
 
     Info<< "Selecting meshFailure model " << rheoTypeName << endl;
 
@@ -53,22 +53,24 @@ autoPtr<cellRemovalLaw> cellRemovalLaw::New
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalIOErrorIn
-        (
-            "cellRemovalLaw::New(\n"
-            "    const word& name,\n"
-            "    fvMesh& mesh,\n"
-            "    const dictionary& dict\n"
-            ")",
-            dict
-        )   << "Unknown cellRemovalLaw type "
+        FatalIOErrorInFunction(dict)
+            << "Unknown cellRemovalLaw type "
             << rheoTypeName << endl << endl
             << "Valid  cellRemovalLaws are : " << endl
             << dictionaryConstructorTablePtr_->toc()
-            << exit(FatalIOError);
+            << abort(FatalIOError);
     }
 
-    return autoPtr<cellRemovalLaw>(cstrIter()(name, mesh, dict));
+    return
+        autoPtr<cellRemovalLaw>
+        (
+            cstrIter()
+            (
+                name,
+                mesh,
+                dict.optionalSubDict(rheoTypeName + "Coeffs")
+            )
+        );
 }
 
 

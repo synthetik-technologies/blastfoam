@@ -58,15 +58,7 @@ Foam::cellRemovalFvMesh::cellRemovalFvMesh
             true
         )
     ),
-    lawPtr_
-    (
-        cellRemovalLaw::New
-        (
-            "law",
-            *this,
-            dict_.subDict("law")
-        )
-     )
+    lawPtr_(cellRemovalLaw::New("law", *this, dict_))
 {}
 
 

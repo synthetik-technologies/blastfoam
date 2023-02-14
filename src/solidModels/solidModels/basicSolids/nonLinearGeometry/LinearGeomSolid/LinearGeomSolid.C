@@ -65,7 +65,7 @@ void LinearGeomSolid<IncrementalModel>::update(const bool correctSigma)
 template<class IncrementalModel>
 bool LinearGeomSolid<IncrementalModel>::write(const bool write) const
 {
-    bool good = true;
+    bool good = IncrementalModel::write(write);
     if (write)
     {
         // Write strain fields

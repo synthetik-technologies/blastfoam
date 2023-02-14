@@ -348,7 +348,7 @@ Foam::solidModel::solidModel
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         )
     ),
     mesh_(mesh),
@@ -604,28 +604,31 @@ void Foam::solidModel::updateTotalFields()
     mechanical().updateTotalFields();
 
     //- Clear global Patches since displacement may have changed
-    forAllIter
-    (
-        typename HashPtrTable<globalPolyPatch>,
-        globalPatches_.patches(),
-        iter
-    )
+    if (nonLinGeom() != nonLinearGeometry::UPDATED_LAGRANGIAN)
     {
-        globalPolyPatch& gpp = *iter();
-        if (gpp.valid())
+        forAllIter
+        (
+            typename HashPtrTable<globalPolyPatch>,
+            globalPatches_.patches(),
+            iter
+        )
         {
-            vectorField pX
-            (
-                gpp.patchPointToGlobal
+            globalPolyPatch& gpp = *iter();
+            if (gpp.valid())
+            {
+                vectorField pX
                 (
-                    gpp.patch().localPoints()
-                  + pointD_.boundaryField()
-                    [
-                        gpp.patch().index()
-                    ].patchInternalField()
-                )
-            );
-            gpp.movePoints(pX, false);
+                    gpp.patchPointToGlobal
+                    (
+                        gpp.patch().localPoints()
+                      + pointD_.boundaryField()
+                        [
+                            gpp.patch().index()
+                        ].patchInternalField()
+                    )
+                );
+                gpp.movePoints(pX, false);
+            }
         }
     }
 }
@@ -698,6 +701,18 @@ bool Foam::solidModel::write(const bool write) const
         DebugInfo<< "Max von Mises stress = " << gMax(vonMises) << endl;
     }
     return good;
+}
+
+
+bool Foam::solidModel::writeObject
+(
+    IOstream::streamFormat fmt,
+    IOstream::versionNumber ver,
+    IOstream::compressionType cmp,
+    const bool write
+) const
+{
+    return this->write(write);
 }
 
 
