@@ -762,6 +762,9 @@ void Foam::polyhedralRefinement::setRefinement
         newPointLevel.append(pointLevel_[pointi]);
     }
 
+    locationMapper& locMapper(locationMapper::NewRef(mesh_));
+    locMapper.clearOut();
+
     if (debug)
     {
         Pout<< FUNCTION_NAME << nl
@@ -805,7 +808,7 @@ void Foam::polyhedralRefinement::setRefinement
             newPointLevel(cellMidPoint[cellI]) = cellLevel_[cellI] + 1;
             splitCells.append(cellI);
         }
-        locationMapper_.addSplitCells(splitCells, cellMidPoint);
+        locMapper.addSplitCells(splitCells, cellMidPoint);
     }
 
     // Write out split cells as a cell set for debug
@@ -953,7 +956,7 @@ void Foam::polyhedralRefinement::setRefinement
                 splitEdges.append(edgeI);
             }
         }
-        locationMapper_.addSplitEdges(splitEdges, edgeMidPoint);
+        locMapper.addSplitEdges(splitEdges, edgeMidPoint);
     }
 
     // Write out edge mid points for split edges for debugging
@@ -1167,7 +1170,7 @@ void Foam::polyhedralRefinement::setRefinement
                 splitFaces.append(faceI);
             }
         }
-        locationMapper_.addSplitFaces(splitFaces, faceMidPoint);
+        locMapper.addSplitFaces(splitFaces, faceMidPoint);
     }
 
     // Write out split faces as a face set for debugging

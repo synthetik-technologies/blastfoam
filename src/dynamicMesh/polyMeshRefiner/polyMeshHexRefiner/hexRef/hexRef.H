@@ -121,9 +121,6 @@ protected:
         //- Cell shapes when seen as split hexes
         mutable autoPtr<cellShapeList> cellShapesPtr_;
 
-        //- Mapper for locations
-        mutable locationMapper locationMapper_;
-
 
     // Protected Member Functions
 
@@ -535,18 +532,6 @@ public:
                 const labelList& faceMap,
                 const labelList& cellMap
             );
-
-            //- Return the location mapper
-            const locationMapper& locMapper() const
-            {
-                return locationMapper_;
-            }
-
-            //- Access the location mapper
-            locationMapper& locMapper()
-            {
-                return locationMapper_;
-            }
 
             //- Update local numbering for mesh redistribution
             void distribute(const mapDistributePolyMesh&);

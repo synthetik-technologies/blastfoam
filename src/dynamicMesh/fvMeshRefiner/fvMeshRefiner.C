@@ -97,7 +97,7 @@ bool Foam::fvMeshRefiner::canBalance(const bool incr) const
     {
         nBalanceIterations_++;
     }
-    return balancer_.canBalance();
+    return returnReduce(balancer_.canBalance(), orOp<bool>());
 }
 
 
@@ -231,11 +231,12 @@ bool Foam::fvMeshRefiner::refine
             upperRefineLevel,
             unrefineLevel
         );
-    bool balanced = balance();
 
-    if (!hasChanged && balanced)
+    if (balance())
     {
-        mesh_.topoChanging(hasChanged);
+        hasChanged = true;
+
+        mesh_.topoChanging(true);
 
         // Reset moving flag (if any). If not using inflation we'll not
         // move, if are using inflation any follow on movePoints will set
@@ -245,8 +246,10 @@ bool Foam::fvMeshRefiner::refine
         // Make sure all processors have the correct instance
         mesh_.setInstance(mesh_.time().timeName());
     }
-    return balanced || hasChanged;
+
+    return hasChanged;
 }
+
 
 bool Foam::fvMeshRefiner::balance()
 {
@@ -326,6 +329,32 @@ void Foam::fvMeshRefiner::updateMesh(const mapPolyMesh& mpm)
     // {
     //     mesh_.clearGeomNotOldVol();
     // }
+
+    if (refiner_->isBalancing())
+    {
+        return;
+    }
+    const locationMapper& locMapper = locationMapper::New(mesh_);
+    const wordHashSet& interpolatedPointFields =
+        locMapper.interpolatedPointFields();
+    forAllConstIter(wordHashSet, interpolatedPointFields, iter)
+    {
+        const word& fieldName = iter.key();
+        if (mesh_.foundObject<pointVectorField>(fieldName))
+        {
+            pointVectorField& points =
+                mesh_.lookupObjectRef<pointVectorField>(fieldName);
+            points.correctBoundaryConditions();
+            locMapper.interpolateMidPoints(points.primitiveFieldRef());
+            pointConstraints::New(points.mesh()).setPatchFields(points);
+        }
+        else
+        {
+            WarningInFunction
+                << fieldName << " is not a registered pointVectorField. "
+                << "Not mapping" << endl;
+        }
+    }
 }
 
 

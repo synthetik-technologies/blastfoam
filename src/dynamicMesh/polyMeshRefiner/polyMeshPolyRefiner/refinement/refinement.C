@@ -698,8 +698,7 @@ Foam::refinement::refinement
     edgeBasedConsistency_
     (
         dict.lookupOrDefault<Switch>("edgeBasedConsistency", true)
-    ),
-    locationMapper_(mesh_)
+    )
 {
     if (!parentCells_.headerOk())
     {

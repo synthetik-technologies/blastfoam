@@ -1121,8 +1121,7 @@ Foam::hexRef::hexRef(const polyMesh& mesh, const bool readHistory)
     ),
     faceRemover_(mesh_, GREAT),     // merge boundary faces wherever possible
     savedPointLevel_(0),
-    savedCellLevel_(0),
-    locationMapper_(mesh_)
+    savedCellLevel_(0)
 {
     if (readHistory)
     {
@@ -1252,8 +1251,7 @@ Foam::hexRef::hexRef
     ),
     faceRemover_(mesh_, GREAT),     // merge boundary faces wherever possible
     savedPointLevel_(0),
-    savedCellLevel_(0),
-    locationMapper_(mesh_)
+    savedCellLevel_(0)
 {
     if (history_.active() && history_.visibleCells().size() != mesh_.nCells())
     {
@@ -1363,8 +1361,7 @@ Foam::hexRef::hexRef
     ),
     faceRemover_(mesh_, GREAT),     // merge boundary faces wherever possible
     savedPointLevel_(0),
-    savedCellLevel_(0),
-    locationMapper_(mesh_)
+    savedCellLevel_(0)
 {
     if
     (

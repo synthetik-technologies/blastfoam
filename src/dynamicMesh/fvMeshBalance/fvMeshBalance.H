@@ -195,6 +195,10 @@ public:
 
         //- Template to update all processor boundaries
         template<class Type>
+        static void setInPointBoundaries(const fvMesh&);
+
+        //- Template to update all processor boundaries
+        template<class Type>
         static void correctPointBoundaries(const fvMesh&);
 
         //- Helper: push master point data to collocated points

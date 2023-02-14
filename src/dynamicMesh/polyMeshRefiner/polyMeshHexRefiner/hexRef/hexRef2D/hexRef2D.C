@@ -795,6 +795,8 @@ Foam::labelListList Foam::hexRef2D::setRefinement
         newPointLevel.append(pointLevel_[pointi]);
     }
 
+    locationMapper& locMapper(locationMapper::NewRef(mesh_));
+    locMapper.clearOut();
 
     if (debug)
     {
@@ -969,7 +971,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                   + 1;
             }
         }
-        locationMapper_.addSplitEdges(splitEdges, newEdgePoints);
+        locMapper.addSplitEdges(splitEdges, newEdgePoints);
     }
 
     if (debug)
@@ -1161,7 +1163,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                 newPointLevel(faceMidPoint[facei]) = faceAnchorLevel[facei]+1;
             }
         }
-        locationMapper_.addSplitFaces(splitFaces, newFacePoints);
+        locMapper.addSplitFaces(splitFaces, newFacePoints);
     }
 
     if (debug)

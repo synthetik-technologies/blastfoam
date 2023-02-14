@@ -855,7 +855,7 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner(polyMesh& mesh)
                 // Get radial direction on the mesh
                 vector radialVector = axis ^ centreNormal;
 
-                // Translate as a component. Since wedge meshes should be constrained
+                // Translate as a component. Since wedge meshes should be constrainedhasChanged
                 // around one of the planes XY, XZ or YZ, we can directly get the
                 // distance to the axis
 
@@ -1610,7 +1610,6 @@ bool Foam::polyMeshHexRefiner::refine
         }
 
         reduce(hasChanged, orOp<bool>());
-        mesh_.topoChanging(hasChanged);
         if (hasChanged)
         {
             // Reset moving flag (if any). If not using inflation we'll not
@@ -1622,6 +1621,8 @@ bool Foam::polyMeshHexRefiner::refine
             mesh_.setInstance(mesh_.time().timeName());
         }
     }
+
+    mesh_.topoChanging(hasChanged);
 
     return hasChanged;
 }

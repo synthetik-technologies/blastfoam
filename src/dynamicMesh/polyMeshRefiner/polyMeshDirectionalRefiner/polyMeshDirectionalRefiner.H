@@ -100,9 +100,6 @@ private:
         // use other constructor.
         autoPtr<undoableMeshCutter> cutter_;
 
-        //- Location mapper
-        locationMapper locationMapper_;
-
 
     // Private Member Functions
 
@@ -166,18 +163,6 @@ public:
             virtual const labelList& pointLevel() const
             {
                 return pointLevel_;
-            }
-
-            //- Return the location mapper
-            virtual const locationMapper& locMapper() const
-            {
-                return locationMapper_;
-            }
-
-            //- Access the location mapper
-            virtual locationMapper& locMapper()
-            {
-                return locationMapper_;
             }
 
 

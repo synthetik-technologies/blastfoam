@@ -66,8 +66,11 @@ private:
         //- Reference to the mesh
         const polyMesh& mesh_;
 
-        //- Does this actually need to be used
-        mutable bool constructMap_;
+        //- Fields that need to be interpolated
+        wordHashSet interpolatedFields_;
+
+        //- Point fields that need to be interpolated
+        wordHashSet interpolatedPointFields_;
 
         //- Saved data from the old mesh
         mutable autoPtr<pointField> pointsOldPtr_;
@@ -122,10 +125,34 @@ public:
 
     // Member Functions
 
-        //- Set if the map needs to be constructed
-        void needMap(const bool need = true) const
+        //- Return if the map needs to be constructed
+        bool needMap() const
         {
-            constructMap_ = need;
+            return interpolatedFields_.size() || interpolatedPointFields_.size();
+        }
+
+        //- Return fields that need to be interpolated
+        const wordHashSet& interpolatedFields() const
+        {
+            return interpolatedFields_;
+        }
+
+        //- Return fields that need to be interpolated
+        void addInterpolatedField(const word& fieldName)
+        {
+            interpolatedFields_.insert(fieldName);
+        }
+
+        //- Return point fields that need to be interpolated
+        const wordHashSet& interpolatedPointFields() const
+        {
+            return interpolatedPointFields_;
+        }
+
+        //- Return fields that need to be interpolated
+        void addInterpolatedPointField(const word& fieldName)
+        {
+            interpolatedPointFields_.insert(fieldName);
         }
 
         //- Add split edges
@@ -151,6 +178,21 @@ public:
         {
             return true;
         }
+
+
+    // Static member functions
+
+        //- Return if a location mapper is found for the given mesh
+        static bool found(const polyMesh&);
+
+        //- Return a location mapper for the given mesh
+        static const locationMapper& New(const polyMesh&);
+
+        //- Access a location mapper for the given mesh
+        static locationMapper& NewRef(const polyMesh&);
+
+        //- Access a location mapper for the given mesh
+        static locationMapper& New(polyMesh&);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

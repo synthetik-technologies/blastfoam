@@ -30,7 +30,7 @@ License
 template<class Type>
 void Foam::locationMapper::interpolate(Field<Type>& pf) const
 {
-    if (!constructMap_)
+    if (!needMap())
     {
         return;
     }

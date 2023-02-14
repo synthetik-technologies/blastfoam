@@ -571,6 +571,9 @@ void Foam::prismatic2DRefinement::setRefinement
         newPointLevel.append(pointLevel_[pointi]);
     }
 
+    locationMapper& locMapper(locationMapper::NewRef(mesh_));
+    locMapper.clearOut();
+
     // PART 1: Mark cells for refinement
 
     // Bool list that marks cells which will be refined
@@ -771,7 +774,7 @@ void Foam::prismatic2DRefinement::setRefinement
                     ) + 1;
             }
         }
-        locationMapper_.addSplitEdges(splitEdges, edgeMidPoint);
+        locMapper.addSplitEdges(splitEdges, edgeMidPoint);
     }
 
     // Write out edge mid points for split edges for debugging
@@ -1113,7 +1116,7 @@ void Foam::prismatic2DRefinement::setRefinement
                 }
             }
         }
-        locationMapper_.addSplitFaces(splitFaces, newFacePoints);
+        locMapper.addSplitFaces(splitFaces, newFacePoints);
     }
 
     // Write out all split faces as a face set for debugging

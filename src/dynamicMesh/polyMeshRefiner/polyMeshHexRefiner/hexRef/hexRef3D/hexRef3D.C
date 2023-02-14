@@ -709,6 +709,9 @@ Foam::labelListList Foam::hexRef3D::setRefinement
     savedPointLevel_.clear();
     savedCellLevel_.clear();
 
+    locationMapper& locMapper(locationMapper::NewRef(mesh_));
+    locMapper.clearOut();
+
 
     // New point/cell level. Copy of pointLevel for existing points.
     DynamicList<label> newCellLevel(cellLevel_.size());
@@ -761,7 +764,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
 
         newPointLevel(cellMidPoint[celli]) = cellLevel_[celli]+1;
     }
-    locationMapper_.addSplitCells(splitCells, newCellPoints);
+    locMapper.addSplitCells(splitCells, newCellPoints);
 
 
     if (debug)
@@ -901,7 +904,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                   + 1;
             }
         }
-        locationMapper_.addSplitEdges(splitEdges, newEdgePoints);
+        locMapper.addSplitEdges(splitEdges, newEdgePoints);
     }
 
     if (debug)
@@ -1094,7 +1097,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                 newPointLevel(faceMidPoint[facei]) = faceAnchorLevel[facei]+1;
             }
         }
-        locationMapper_.addSplitFaces(splitFaces, newFacePoints);
+        locMapper.addSplitFaces(splitFaces, newFacePoints);
     }
 
     if (debug)

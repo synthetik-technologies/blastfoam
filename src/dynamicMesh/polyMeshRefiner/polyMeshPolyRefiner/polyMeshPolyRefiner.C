@@ -442,7 +442,6 @@ bool Foam::polyMeshPolyRefiner::refine
         }
 
         reduce(hasChanged, orOp<bool>());
-        mesh_.topoChanging(hasChanged);
 
         if (hasChanged)
         {
@@ -453,6 +452,7 @@ bool Foam::polyMeshPolyRefiner::refine
             mesh_.setInstance(mesh_.time().timeName());
         }
     }
+     mesh_.topoChanging(hasChanged);
 
     return hasChanged;
 }

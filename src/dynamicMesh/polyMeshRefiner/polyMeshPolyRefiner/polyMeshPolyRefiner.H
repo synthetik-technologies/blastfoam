@@ -117,13 +117,6 @@ public:
                 return refiner_();
             }
 
-            //- Return the location mapper
-            virtual const locationMapper& locMapper() const
-            {
-                return refiner_->locMapper();
-            }
-
-
         //- Read the projection parameters from dictionary
         void readDict(const dictionary& parentDict);
 

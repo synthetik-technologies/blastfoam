@@ -591,6 +591,13 @@ Foam::fvMeshBalance::distribute()
     correctProcessorBoundaries<pointSymmTensorField>(mesh_);
     correctProcessorBoundaries<pointTensorField>(mesh_);
 
+    // Set internal value point patch fields to the boundary values
+    setInPointBoundaries<scalar>(mesh_);
+    setInPointBoundaries<vector>(mesh_);
+    setInPointBoundaries<sphericalTensor>(mesh_);
+    setInPointBoundaries<symmTensor>(mesh_);
+    setInPointBoundaries<tensor>(mesh_);
+
     blastMeshObject::preDistribute<polyMesh>(mesh_);
     blastMeshObject::preDistribute<fvMesh>(mesh_);
 

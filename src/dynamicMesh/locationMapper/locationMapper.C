@@ -47,7 +47,7 @@ Foam::locationMapper::locationMapper(const polyMesh& mesh)
         )
     ),
     mesh_(mesh),
-    constructMap_(false),
+    interpolatedFields_(0),
 
     edgeSplits_(0),
     newEdgeIndices_(0),
@@ -74,7 +74,7 @@ void Foam::locationMapper::addSplitEdges
     const labelList& newEdgePoints
 )
 {
-    if (!constructMap_)
+    if (!needMap())
     {
         return;
     }
@@ -105,7 +105,7 @@ void Foam::locationMapper::addSplitFaces
     const labelList& newFacePoints
 )
 {
-    if (!constructMap_)
+    if (!needMap())
     {
         return;
     }
@@ -136,7 +136,7 @@ void Foam::locationMapper::addSplitCells
     const labelList& newCellPoints
 )
 {
-    if (!constructMap_)
+    if (!needMap())
     {
         return;
     }
@@ -283,7 +283,7 @@ void Foam::locationMapper::interpolateMidPoints
     pointField& points
 ) const
 {
-    if (!constructMap_)
+    if (!needMap())
     {
         return;
     }
@@ -320,6 +320,45 @@ void Foam::locationMapper::interpolateMidPoints
             }
         }
     }
+}
+
+
+bool Foam::locationMapper::found(const polyMesh& mesh)
+{
+    return mesh.foundObject<locationMapper>(locationMapper::typeName);
+}
+
+
+const Foam::locationMapper& Foam::locationMapper::New(const polyMesh& mesh)
+{
+    if (!mesh.foundObject<locationMapper>(locationMapper::typeName))
+    {
+        locationMapper* lm = new locationMapper(mesh);
+        lm->store(lm);
+    }
+    return mesh.lookupObject<locationMapper>(locationMapper::typeName);
+}
+
+
+Foam::locationMapper& Foam::locationMapper::NewRef(const polyMesh& mesh)
+{
+    if (!mesh.foundObject<locationMapper>(locationMapper::typeName))
+    {
+        locationMapper* lm = new locationMapper(mesh);
+        lm->store(lm);
+    }
+    return mesh.lookupObjectRef<locationMapper>(locationMapper::typeName);
+}
+
+
+Foam::locationMapper& Foam::locationMapper::New(polyMesh& mesh)
+{
+    if (!mesh.foundObject<locationMapper>(locationMapper::typeName))
+    {
+        locationMapper* lm = new locationMapper(mesh);
+        lm->store(lm);
+    }
+    return mesh.lookupObjectRef<locationMapper>(locationMapper::typeName);
 }
 
 

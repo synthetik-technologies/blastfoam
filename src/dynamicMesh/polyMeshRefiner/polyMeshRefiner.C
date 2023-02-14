@@ -288,6 +288,10 @@ bool Foam::polyMeshRefiner::canRefine(const bool incr) const
 
 bool Foam::polyMeshRefiner::canUnrefine(const bool incr) const
 {
+    // Make sure location mapper is cleared since removed points do not
+    // need to be updated
+    locationMapper::NewRef(mesh_).clearOut();
+
     if (!unrefine_)
     {
         return false;
@@ -363,7 +367,9 @@ Foam::polyMeshRefiner::polyMeshRefiner(polyMesh& mesh)
     isRefining_(false),
     isUnrefining_(false),
     isBalancing_(false)
-{}
+{
+    locationMapper::New(mesh_);
+}
 
 
 Foam::polyMeshRefiner::polyMeshRefiner
@@ -416,7 +422,9 @@ Foam::polyMeshRefiner::polyMeshRefiner
     isRefining_(false),
     isUnrefining_(false),
     isBalancing_(false)
-{}
+{
+    locationMapper::New(mesh_);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -499,6 +507,75 @@ void Foam::polyMeshRefiner::readDict(const dictionary& dict)
 
         endRefine_ = dict_.lookupOrDefault<scalar>("endRefine", great);
         endUnrefine_ = dict_.lookupOrDefault<scalar>("endUnrefine", great);
+    }
+}
+
+
+void Foam::polyMeshRefiner::updateMesh(const mapPolyMesh& mpm)
+{
+    if (isBalancing_)
+    {
+        return;
+    }
+    const locationMapper& locMapper = locationMapper::New(mesh_);
+    const wordHashSet& interpolatedPointFields =
+        locMapper.interpolatedPointFields();
+    const labelList& pointMap = mpm.pointMap();
+    forAllConstIter(wordHashSet, interpolatedPointFields, iter)
+    {
+        const word& fieldName = iter.key();
+        if (mesh_.foundObject<pointIOField>(fieldName))
+        {
+            pointIOField& points =
+                mesh_.lookupObjectRef<pointIOField>(fieldName);
+
+            pointField newPoints(pointMap.size(), Zero);
+            forAll(newPoints, pointi)
+            {
+                label oldPointi = pointMap[pointi];
+
+                if (oldPointi >= 0)
+                {
+                    newPoints[pointi] = points[oldPointi];
+                }
+            }
+            locMapper.interpolateMidPoints(newPoints);
+            points.transfer(newPoints);
+        }
+        else
+        {
+            WarningInFunction
+                << fieldName << " is not a registered pointField. Not mapping"
+                << endl;
+        }
+    }
+}
+
+
+void Foam::polyMeshRefiner::distribute
+(
+    const mapDistributePolyMesh& map
+)
+{
+    const locationMapper& locMapper = locationMapper::New(mesh_);
+    const wordHashSet& interpolatedPointFields =
+        locMapper.interpolatedPointFields();
+    forAllConstIter(wordHashSet, interpolatedPointFields, iter)
+    {
+        const word& fieldName = iter.key();
+        if (mesh_.foundObject<pointIOField>(fieldName))
+        {
+             map.distributePointData
+            (
+                mesh_.lookupObjectRef<pointIOField>(fieldName)
+            );
+        }
+        else
+        {
+            WarningInFunction
+                << fieldName << " is not a registered pointField. Not mapping"
+                << endl;
+        }
     }
 }
 
