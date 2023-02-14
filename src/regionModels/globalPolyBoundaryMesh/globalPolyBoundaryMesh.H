@@ -182,6 +182,9 @@ public:
 
         //- Return the coupledGlobalPolyPatch for the given pointPatch
         const coupledGlobalPolyPatch& operator()(const pointPatch&) const;
+
+    // Write the patches
+    virtual bool write() const;
 };
 
 

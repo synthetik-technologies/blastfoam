@@ -87,10 +87,6 @@ protected:
             //- Patch face to zone addressing
             mutable autoPtr<labelList> faceToGlobalAddrPtr_;
 
-            //- Addressing into master processor global patch from current
-            //  processor global patch
-            mutable autoPtr<labelList> globalMasterToCurrentProcPointAddrPtr_;
-
             //- Patch interpolator
             mutable autoPtr<PrimitivePatchInterpolation<standAlonePatch>> interpPtr_;
 
@@ -108,9 +104,6 @@ protected:
 
         //- Build global primitive patch
         virtual void calcGlobalPatch() const;
-
-        // Make globalMasterToCurrentProcPointAddr
-        virtual void calcGlobalMasterToCurrentProcPointAddr() const;
 
         //- Make the interpolator
         virtual void calcInterp() const;
@@ -235,10 +228,6 @@ public:
         //- Return patch face to global face addressing
         const labelList& faceToGlobalAddr() const;
 
-        // Addressing into master processor global patch from current processor
-        // global patch
-        const labelList& globalMasterToCurrentProcPointAddr() const;
-
         // Interpolation
 
             //- Interpolate patch to global patch point data
@@ -336,6 +325,9 @@ public:
 
         //- Clear addressing
         virtual void clearOut() const;
+
+        //- Write the global patch
+        virtual bool write() const;
 };
 
 

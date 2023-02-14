@@ -245,6 +245,22 @@ void Foam::globalPolyBoundaryMesh::clearOut()
 }
 
 
+bool Foam::globalPolyBoundaryMesh::write() const
+{
+    bool good = true;
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        good = good && iter()->write();
+    }
+    return good;
+}
+
+
 // * * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * //
 
 const Foam::globalPolyPatch&
@@ -420,4 +436,6 @@ Foam::globalPolyBoundaryMesh::operator()(const pointPatch& pp) const
 {
     return this->operator()(mesh().boundaryMesh()[pp.name()]);
 }
+
+
 // ************************************************************************* //

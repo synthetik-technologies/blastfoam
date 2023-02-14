@@ -1,7 +1,7 @@
 ifdef EIGEN_DIR
     RBF_INC = \
         -Wno-old-style-cast -Wno-deprecated-declarations \
-        -DEIGEN -I$(EIGEN_DIR)
+        -DUSE_EIGEN -I$(EIGEN_DIR)
 endif
 
 EXE_INC = \

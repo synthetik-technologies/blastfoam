@@ -77,14 +77,13 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
         patchName_,
         mesh_.boundaryMesh()
     );
-    const polyPatch& patch = mesh_.boundaryMesh()[patchID.index()];
-
     if (!patchID.active())
     {
         FatalErrorInFunction
             << "Cannot find patch " << patchName_
             << abort(FatalError);
     }
+    const polyPatch& patch = mesh_.boundaryMesh()[patchID.index()];
 
     // Collect points and faces from all processors
     typedef List<point> pointList;
@@ -339,149 +338,6 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
 }
 
 
-void Foam::globalPolyPatch::calcGlobalMasterToCurrentProcPointAddr() const
-{
-    if (globalMasterToCurrentProcPointAddrPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "pointer already set"
-            << abort(FatalError);
-    }
-
-    globalMasterToCurrentProcPointAddrPtr_.set
-    (
-        new labelList(globalPatch().nPoints(), -1)
-    );
-    labelList& curMap = globalMasterToCurrentProcPointAddrPtr_();
-
-    vectorField fzGlobalPoints(globalPatch().localPoints());
-
-    // Set all slave points to zero because only the master order is used
-    if (!Pstream::master())
-    {
-        fzGlobalPoints = vector::zero;
-    }
-
-    // Pass points to all procs
-    reduce(fzGlobalPoints, sumOp<List<vector>>());
-
-    // Now every proc has the master's list of FZ points
-    // every proc must now find the mapping from their local FZ points to
-    // the master FZ points
-
-    const vectorField& fzLocalPoints = globalPatch().localPoints();
-
-    const edgeList& fzLocalEdges = globalPatch().edges();
-
-    const labelListList& fzPointEdges = globalPatch().pointEdges();
-
-    scalarField minEdgeLength(fzLocalPoints.size(), GREAT);
-
-    forAll(minEdgeLength, pI)
-    {
-        const labelList& curPointEdges = fzPointEdges[pI];
-
-        forAll(curPointEdges, eI)
-        {
-            scalar Le = fzLocalEdges[curPointEdges[eI]].mag(fzLocalPoints);
-
-            if (Le < minEdgeLength[pI])
-            {
-                minEdgeLength[pI] = Le;
-            }
-        }
-    }
-
-    forAll(fzGlobalPoints, globalPointI)
-    {
-        boolList visited(fzLocalPoints.size(), false);
-
-        forAll(fzLocalPoints, procPointI)
-        {
-            if (!visited[procPointI])
-            {
-                visited[procPointI] = true;
-
-                label nextPoint = procPointI;
-
-                scalar curDist =
-                    mag
-                    (
-                        fzLocalPoints[nextPoint]
-                      - fzGlobalPoints[globalPointI]
-                    );
-
-                if (curDist < 1e-4*minEdgeLength[nextPoint])
-                {
-                    curMap[globalPointI] = nextPoint;
-                    break;
-                }
-
-                label found = false;
-
-                while (nextPoint != -1)
-                {
-                    const labelList& nextPointEdges =
-                        fzPointEdges[nextPoint];
-
-                    scalar minDist = GREAT;
-                    label index = -1;
-                    forAll(nextPointEdges, edgeI)
-                    {
-                        label curNgbPoint =
-                            fzLocalEdges
-                            [
-                                nextPointEdges[edgeI]
-                            ].otherVertex(nextPoint);
-
-                        if (!visited[curNgbPoint])
-                        {
-                            visited[curNgbPoint] = true;
-
-                            scalar curDist =
-                                mag
-                                (
-                                    fzLocalPoints[curNgbPoint]
-                                  - fzGlobalPoints[globalPointI]
-                                );
-
-                            if (curDist < 1e-4*minEdgeLength[curNgbPoint])
-                            {
-                                curMap[globalPointI] = curNgbPoint;
-                                found = true;
-                                break;
-                            }
-                            else if (curDist < minDist)
-                            {
-                                minDist = curDist;
-                                index = curNgbPoint;
-                            }
-                        }
-                    }
-
-                    nextPoint = index;
-                }
-
-                if (found)
-                {
-                    break;
-                }
-            }
-        }
-    }
-
-    forAll(curMap, globalPointI)
-    {
-        if (curMap[globalPointI] == -1)
-        {
-            FatalErrorInFunction
-                << "point map is not correct!"
-                << abort(FatalError);
-        }
-    }
-}
-
-
 void Foam::globalPolyPatch::calcInterp() const
 {
     if (debug)
@@ -546,7 +402,6 @@ void Foam::globalPolyPatch::clearOut() const
     globalPatchPtr_.clear();
     pointToGlobalAddrPtr_.clear();
     faceToGlobalAddrPtr_.clear();
-    globalMasterToCurrentProcPointAddrPtr_.clear();
     interpPtr_.clear();
     localInterpPtr_.clear();
 }
@@ -571,7 +426,6 @@ Foam::globalPolyPatch::globalPolyPatch
     globalPatchPtr_(NULL),
     pointToGlobalAddrPtr_(NULL),
     faceToGlobalAddrPtr_(NULL),
-    globalMasterToCurrentProcPointAddrPtr_(NULL),
     interpPtr_(NULL),
     localInterpPtr_(NULL)
 {
@@ -593,7 +447,6 @@ Foam::globalPolyPatch::globalPolyPatch
     globalPatchPtr_(NULL),
     pointToGlobalAddrPtr_(NULL),
     faceToGlobalAddrPtr_(NULL),
-    globalMasterToCurrentProcPointAddrPtr_(NULL),
     interpPtr_(NULL),
     localInterpPtr_(NULL)
 {
@@ -642,20 +495,6 @@ const Foam::standAlonePatch& Foam::globalPolyPatch::globalPatch() const
     if (!globalPatchPtr_.valid())
     {
         calcGlobalPatch();
-
-        if (displacementField_ != "none")
-        {
-            if (debug && mesh_.time().outputTime())
-            {
-                mkDir("VTK");
-                globalPatchPtr_->writeVTK
-                (
-                    "VTK/"
-                    + patch_.name() + '_'
-                    + Foam::name(mesh_.time().timeIndex())
-                );
-            }
-        }
     }
 
     return globalPatchPtr_();
@@ -708,18 +547,6 @@ const Foam::labelList& Foam::globalPolyPatch::faceToGlobalAddr() const
 }
 
 
-const Foam::labelList&
-Foam::globalPolyPatch::globalMasterToCurrentProcPointAddr() const
-{
-    if (!globalMasterToCurrentProcPointAddrPtr_.valid())
-    {
-        calcGlobalMasterToCurrentProcPointAddr();
-    }
-
-    return globalMasterToCurrentProcPointAddrPtr_();
-}
-
-
 void Foam::globalPolyPatch::update()
 {
     globalPatch();
@@ -736,7 +563,7 @@ void Foam::globalPolyPatch::movePoints(const bool clear)
 {
     if (clear)// if (displacementField_ != "none")
     {
-        globalPolyPatch::clearOut();
+        clearOut();
     }
     // else if (globalPatchPtr_.valid())
     // {
@@ -757,5 +584,21 @@ void Foam::globalPolyPatch::movePoints(const pointField& pts, const bool clear)
     }
 }
 
+
+bool Foam::globalPolyPatch::write() const
+{
+    bool good = true;
+    if (debug && mesh_.time().outputTime())
+    {
+        mkDir("VTK");
+        globalPatch().writeVTK
+        (
+            "VTK/"
+            + patch_.name() + '_'
+            + Foam::name(mesh_.time().timeIndex())
+        );
+    }
+    return returnReduce(good, andOp<bool>());
+}
 
 // ************************************************************************* //

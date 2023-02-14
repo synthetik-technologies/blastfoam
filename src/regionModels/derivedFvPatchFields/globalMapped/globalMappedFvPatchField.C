@@ -144,7 +144,7 @@ Foam::globalMappedFvPatchField<Type>::patchNeighbourField() const
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    return cgpp.faceInterpolate(nbr.patchInternalField());
+    return samplePatch.faceInterpolate(nbr.patchInternalField());
 
 }
 

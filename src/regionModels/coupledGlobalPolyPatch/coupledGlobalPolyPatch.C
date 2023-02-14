@@ -313,10 +313,6 @@ void Foam::coupledGlobalPolyPatch::update()
 
 void Foam::coupledGlobalPolyPatch::movePoints(const bool clear)
 {
-    if (clear)
-    {
-        clearInterp();
-    }
     globalPolyPatch::movePoints(clear);
 }
 
@@ -327,10 +323,6 @@ void Foam::coupledGlobalPolyPatch::movePoints
     const bool clear
 )
 {
-    if (clear)
-    {
-        clearInterp();
-    }
     globalPolyPatch::movePoints(newPoints, clear);
 }
 

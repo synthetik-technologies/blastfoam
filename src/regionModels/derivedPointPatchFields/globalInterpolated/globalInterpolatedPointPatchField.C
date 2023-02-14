@@ -163,7 +163,14 @@ void Foam::globalInterpolatedPointPatchField<Type>::updateCoeffs()
     UPstream::msgType() = oldTag+1;
 
     // Get the coupling information from the mappedPatchBase
-    const coupledGlobalPolyPatch& cgpp = globalBoundary_(this->patch());
+    const coupledGlobalPolyPatch& cgpp =
+        globalPolyBoundaryMesh::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                this->patch().boundaryMesh().mesh().thisDb()
+            )
+        )(this->patch());
     const polyMesh& nbrMesh = cgpp.sampleMesh();
     const coupledGlobalPolyPatch& samplePatch = cgpp.samplePatch();
     const label samplePatchi = samplePatch.patch().index();
