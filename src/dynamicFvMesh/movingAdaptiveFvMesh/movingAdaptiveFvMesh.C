@@ -55,7 +55,14 @@ Foam::movingAdaptiveFvMesh::movingAdaptiveFvMesh(const IOobject& io)
     motionPtr_(motionSolver::New(*this, dynamicMeshDict())),
     velocityMotionCorrection_(*this, dynamicMeshDict())
 {
-    refiner_->locMapper().needMap();
+    if (isA<points0MotionSolver>(motionPtr_()))
+    {
+        locationMapper::NewRef(*this).addInterpolatedField("points0");
+    }
+    else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
+    {
+        NotImplemented;
+    }
 }
 
 
@@ -70,48 +77,17 @@ Foam::movingAdaptiveFvMesh::~movingAdaptiveFvMesh()
 void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
     adaptiveFvMesh::updateMesh(mpm);
+
     // Do not update while balancing this is handled in the
     // distribute function
     if (refiner_->isBalancing())
-    {
-    }
+    {}
     else if
     (
         isA<displacementMotionSolver>(motionPtr_())
      && refiner_->isRefining()
     )
-    {
-        displacementMotionSolver& dispMS =
-            dynamicCast<displacementMotionSolver>(motionPtr_());
-        refiner_->locMapper().interpolateMidPoints
-        (
-            dispMS.points0()
-        );
-
-        if (Pstream::parRun())
-        {
-            fvMeshBalance::pushUntransformedData(*this, dispMS.points0());
-        }
-        dispMS.pointDisplacement().primitiveFieldRef() =
-            this->points() - dispMS.points0();
-    }
-//     else if
-//     (
-//         isA<componentDisplacementMotionSolver>(motionPtr_())
-//      && refiner_->isRefining()
-//     )
-//     {
-//         componentDisplacementMotionSolver& dispMS =
-//             dynamicCast<componentDisplacementMotionSolver>
-//             (
-//                 motionPtr_()
-//             );
-//         pointMapper(pointMesh::New(*this), mpm)(dispMS.points0());
-// //         if (Pstream::parRun())
-// //         {
-// //             this->pushUntransformedData(dispMS.points0());
-// //         }
-//     }
+    {}
     else
     {
         motionPtr_->updateMesh(mpm);
@@ -125,21 +101,6 @@ void Foam::movingAdaptiveFvMesh::distribute
 )
 {
     adaptiveFvMesh::distribute(map);
-    if (isA<displacementMotionSolver>(motionPtr_()))
-    {
-        displacementMotionSolver& dispMS =
-            dynamicCast<displacementMotionSolver>(motionPtr_());
-        map.distributePointData(dispMS.points0());
-    }
-    else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
-    {
-        componentDisplacementMotionSolver& dispMS =
-            dynamicCast<componentDisplacementMotionSolver>
-            (
-                motionPtr_()
-            );
-         map.distributePointData(dispMS.points0());
-    }
 }
 
 
@@ -153,7 +114,6 @@ bool Foam::movingAdaptiveFvMesh::refine()
 {
     if (adaptiveFvMesh::refine())
     {
-        refiner_->locMapper().clearOut();
         return true;
     }
 
