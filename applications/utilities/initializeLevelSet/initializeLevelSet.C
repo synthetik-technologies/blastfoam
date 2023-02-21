@@ -81,16 +81,20 @@ void setPhase
 
     // Maximum number of iterations
     label iter = 0;
-    label maxIter =
-        max
-        (
-            1,
+    label maxIter = 1;
+    if (refiner.valid())
+    {
+        maxIter =
             max
             (
-                2*maxLevel,
-                gMax(refiner->cellLevel())*2
-            )
-        );
+                1,
+                max
+                (
+                    2*maxLevel,
+                    gMax(refiner->cellLevel())*2
+                )
+            );
+    }
 
     // Flag for final iteration
     bool end = false;
