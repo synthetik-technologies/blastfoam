@@ -162,7 +162,15 @@ const Foam::entryTable& Foam::read2DTable
                 oldLineNo = lineNo;
                 break;
             }
-            if (t.isPunctuation())
+
+            if (delim == token::SPACE)
+            {
+                if (lineVals(cmpti).size())
+                {
+                    cmpti++;
+                }
+            }
+            else if (t.isPunctuation())
             {
                 if (t.pToken() == token::NL)
                 {
@@ -198,6 +206,7 @@ const Foam::entryTable& Foam::read2DTable
                 << "Incompatible table rows" << endl
                 << abort(FatalError);
         }
+
         tentries.append(List<List<token>>(lineVals.size()));
         forAll(lineVals, i)
         {
@@ -238,7 +247,6 @@ const Foam::entryTable& Foam::read2DTable
             }
         }
     }
-    Info<<entries<<endl;
 
     return entries;
 }
