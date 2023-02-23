@@ -76,6 +76,11 @@ public:
             multivariateEquation<Type>(dict)
         {}
 
+        //- Construct given name and dictionary
+        univariateEquation(const string& eqnString, const dictionary& dict)
+        :
+            multivariateEquation<Type>(eqnString, dict)
+        {}
 
     //- Declare runtime constructor selection table
     declareRunTimeSelectionTable
@@ -158,14 +163,6 @@ protected:
     //- Finite difference step size
     mutable scalarField dX_;
 
-    //- Calculate the gradient using a finite difference
-    void calculateGradient
-    (
-        const typename univariateEquation<Type>::VarType& x0,
-        const label li,
-        List<Type>& grad
-    ) const;
-
 
 public:
 
@@ -179,6 +176,15 @@ public:
         (
             const scalarList& lowerLimit,
             const scalarList& upperLimit,
+            const string& eqnString = string::null
+        );
+
+        //- Construct given an equation string, bounds, and dictionary
+        UnivariateEquation
+        (
+            const scalarList& lowerLimit,
+            const scalarList& upperLimit,
+            const dictionary& dict,
             const string& eqnString = string::null
         );
 
@@ -281,6 +287,23 @@ public:
 
         //- Check if the solution is bracketed (compute bounds)
         virtual bool containsRoot(const label li) const;
+
+        //- Calculate the gradient using a finite difference
+        void calculateGradient
+        (
+            const typename univariateEquation<Type>::VarType& x0,
+            const label li,
+            List<Type>& grad
+        ) const;
+
+        //- Calculate the gradient using a finite difference
+        void calculateGradient
+        (
+            const Type& fx0,
+            const typename univariateEquation<Type>::VarType& x0,
+            const label li,
+            List<Type>& grad
+        ) const;
 };
 
 

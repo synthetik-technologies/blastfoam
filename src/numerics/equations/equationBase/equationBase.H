@@ -73,9 +73,6 @@ protected:
         //- Return the object registry
         const objectRegistry& obr() const;
 
-        //- Return the log stream
-        OFstream& logStream() const;
-
 
 public:
 
@@ -89,6 +86,12 @@ public:
 
         //- Construct from multiple equation strings
         equationBase(const List<string>& eqnStrings);
+
+        //- Construct from equation string and dictionary
+        equationBase(const string& eqnString, const dictionary& dict);
+
+        //- Construct from multiple equation strings and dictionary
+        equationBase(const List<string>& eqnStrings, const dictionary& dict);
 
         //- Construct from a dictionary
         equationBase(const dictionary& dict);
@@ -127,6 +130,9 @@ public:
         //- Set the log name
         void setLog(const fileName&, const bool log = true);
 
+        //- Set the log name
+        void setLog(const bool log);
+
         //- Set the append flag for logging
         void setAppend(const bool append = true)
         {
@@ -135,6 +141,9 @@ public:
 
         //- Return the number of derivatives
         virtual label nDerivatives() const = 0;
+
+        //- Return the log stream
+        OFstream& logStream() const;
 
         //- Read logging information
         virtual void read(const dictionary&);

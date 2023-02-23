@@ -71,7 +71,7 @@ Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
     (
         dict.lookupOrDefault<scalar>
         (
-            "dx",
+            "stepSize",
             (eqn_.upper() - eqn_.lower())/100.0
         )
     ),

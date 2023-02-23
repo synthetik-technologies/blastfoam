@@ -89,6 +89,22 @@ Foam::Equation<Type>::Equation
 
 
 template<class Type>
+Foam::Equation<Type>::Equation
+(
+    const scalar lower,
+    const scalar upper,
+    const dictionary& dict,
+    const string& eqnString
+)
+:
+    equation<Type>(eqnString, dict),
+    lower_(dict.lookupOrDefault("lowerBound", lower)),
+    upper_(dict.lookupOrDefault("upperBound", upper)),
+    dx_(dict.lookupOrDefault<scalar>("dx", 1e-6))
+{}
+
+
+template<class Type>
 Foam::Equation<Type>::Equation(const dictionary& dict)
 :
     equation<Type>(dict),

@@ -63,20 +63,40 @@ Foam::equationBase::equationBase(const List<string>& eqnStrings)
 {}
 
 
-Foam::equationBase::equationBase(const dictionary& dict)
+Foam::equationBase::equationBase(const string& eqnString, const dictionary& dict)
 :
     log_(dict.lookupOrDefault("log", false)),
-    logFile_(fileName::null),
-    append_(false),
+    logFile_
+    (
+        dict.lookupOrDefault<fileName>
+        (
+            "logFile",
+            "${FOAM_CASE}.evals"
+        )
+    ),
+    append_(dict.lookupOrDefault("append", false)),
     logPtr_(nullptr),
-    eqnString_(dict.lookupOrDefault<string>("eqnString", string::null))
+    eqnString_(dict.lookupOrDefault<string>("eqnString", eqnString))
 {
-    if (log_)
-    {
-        logFile_ = dict.lookup<fileName>("logFile");
-        dict.readIfPresent("append", append_);
-    }
+    const fileName origLogFile(logFile_);
+    logFile_.expand();
 }
+
+
+Foam::equationBase::equationBase
+(
+    const List<string>& eqnStrings,
+    const dictionary& dict
+)
+:
+    equationBase(mergeStrings(eqnStrings), dict)
+{}
+
+
+Foam::equationBase::equationBase(const dictionary& dict)
+:
+    equationBase(word::null, dict)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -111,6 +131,12 @@ void Foam::equationBase::setLog(const fileName& logFile, const bool log)
 }
 
 
+void Foam::equationBase::setLog(const bool log)
+{
+    log_ = log;
+}
+
+
 Foam::OFstream& Foam::equationBase::logStream() const
 {
     if (!logPtr_.valid())
@@ -123,7 +149,7 @@ Foam::OFstream& Foam::equationBase::logStream() const
                 OFstream::ASCII,
                 OFstream::currentVersion,
                 OFstream::UNCOMPRESSED,
-                append_
+                false
             )
         );
     }
@@ -140,6 +166,7 @@ void Foam::equationBase::read(const dictionary& dict)
         if (dict.found("logFile") || logFile_.empty())
         {
             logFile_ = dict.lookup<fileName>("logFile");
+            logFile_.expand();
         }
         dict.readIfPresent("append", append_);
     }

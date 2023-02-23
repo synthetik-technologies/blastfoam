@@ -64,7 +64,7 @@ Foam::minimizationScheme::New
         FatalErrorInFunction
             << "Unknown multivariate minimization scheme type "
             << minimizationSchemeType << nl << nl
-            << "Valid multivariate minimization schemes : " << endl
+            << "Valid multivariate minimization schemes:" << endl
             << dictionaryMultivariateConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }

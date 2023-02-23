@@ -44,6 +44,12 @@ integrators/MultivariateIntegrator/MultivariateIntegrators.C
 
 minimizationSchemes/minimizationScheme/minimizationScheme.C
 minimizationSchemes/minimizationScheme/minimizationSchemeNew.C
+
+minimizationSchemes/lineSearch/lineSearch/lineSearch.C
+minimizationSchemes/lineSearch/lineSearchEquation/lineSearchEquation.C
+minimizationSchemes/lineSearch/exactLineSearch/exactLineSearch.C
+minimizationSchemes/lineSearch/approximateLineSearch/approximateLineSearch.C
+
 minimizationSchemes/gradientDescent/gradientDescentMinimizationScheme.C
 minimizationSchemes/particleSwarm/particleSwarmMinimizationScheme.C
 minimizationSchemes/NelderMead/NelderMeadMinimizationScheme.C

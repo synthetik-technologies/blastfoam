@@ -23,74 +23,83 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "gradientDescentMinimizationScheme.H"
+#include "approximateLineSearch.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(gradientDescentMinimizationScheme, 0);
-    addToRunTimeSelectionTable
-    (
-        minimizationScheme,
-        gradientDescentMinimizationScheme,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
-        minimizationScheme,
-        gradientDescentMinimizationScheme,
-        dictionaryMultivariate
-    );
+    defineTypeNameAndDebug(approximateLineSearch, 0);
+    addToRunTimeSelectionTable(lineSearch, approximateLineSearch, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
+Foam::approximateLineSearch::approximateLineSearch
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
-    minimizationScheme(eqns, dict)
+    lineSearch(eqns, dict),
+    alpha0_(dict.lookupOrDefault("alpha0", 1.0)),
+    alpha_(alpha0_),
+    beta_(dict.lookupOrDefault("beta", 1e-4)),
+    p_(dict.lookupOrDefault("p", 0.5))
+{}
+
+
+// * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
+
+Foam::approximateLineSearch::~approximateLineSearch()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField>
-Foam::gradientDescentMinimizationScheme::minimize
+void Foam::approximateLineSearch::search
 (
     const scalarList& x0,
-    const scalarList& xLow,
-    const scalarList& xHigh,
-    const label li
+    const scalarList& grad,
+    const label li,
+    scalarList& xNew
 ) const
 {
-    tmp<scalarField> txNew(new scalarField(x0));
-    scalarField& xNew = txNew.ref();
-    scalarField xOld(xNew);
-    scalarField grad(x0.size(), 0.0);
-    eqns_.dfdX(x0, li, grad);
-
-    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
+    if (debug)
     {
-        xOld = xNew;
-        lineSearcher().search(xOld, grad, li, xNew);
-        eqns_.limit(xNew);
-
-        if (convergedX(xNew, xOld))
-        {
-            break;
-        }
-
-        eqns_.dfdX(xNew, li, grad);
-        printStepInformation(xNew);
+        Info<< "Conducting approximate line search" << endl;
     }
-    printFinalInformation(xNew);
-    return txNew;
+
+    scalar fx0 = eqns_.fX(x0, li);
+    alpha_ = alpha0_;
+
+    lsEqn_.update(x0, grad);
+
+    scalar dfx = 0.0;
+    forAll(grad, i)
+    {
+        dfx += lsEqn_.dir()[i]*grad[i];
+    }
+
+    while (lsEqn_.fx(alpha_, li) > fx0 + alpha_*beta_*dfx)
+    {
+        alpha_ *= p_;
+    }
+
+    if (alpha_ < small)
+    {
+        alpha_ = -alpha0_;
+        while (lsEqn_.fx(alpha_, li) > fx0 + alpha_*beta_*dfx)
+        {
+            alpha_ *= p_;
+        }
+    }
+
+    Info<<"alpha: "<<alpha_<<" "<<grad<<" "<<lsEqn_.dir()<<endl;
+    xNew = lsEqn_.calcX(alpha_);
 }
+
 
 // ************************************************************************* //

@@ -97,13 +97,36 @@ Foam::UnivariateEquation<Type>::UnivariateEquation
 
 
 template<class Type>
+Foam::UnivariateEquation<Type>::UnivariateEquation
+(
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits,
+    const dictionary& dict,
+    const string& eqnString
+)
+:
+    univariateEquation<Type>(eqnString, dict),
+    lowerLimits_(dict.lookupOrDefault("lowerBounds", lowerLimits)),
+    upperLimits_(dict.lookupOrDefault("upperBounds", upperLimits)),
+    nVar_(lowerLimits.size()),
+    dX_
+    (
+        dict.found("dx")
+      ? scalarList(nVar_, dict.lookup<scalar>("dx"))
+      : dict.lookupOrDefault<scalarList>("dX", scalarList(nVar_, 1e-6))
+    )
+{}
+
+
+template<class Type>
 Foam::UnivariateEquation<Type>::UnivariateEquation(const dictionary& dict)
 :
-    univariateEquation<Type>(dict),
-    lowerLimits_(dict.lookup("lowerBounds")),
-    upperLimits_(dict.lookup("upperBounds")),
-    nVar_(lowerLimits_.size()),
-    dX_(dict.lookupOrDefault("dx", scalarList(nVar_, 1e-6)))
+    UnivariateEquation<Type>
+    (
+        dict.lookup("lowerBounds"),
+        dict.lookup("upperBounds"),
+        dict
+    )
 {}
 
 
@@ -124,7 +147,19 @@ void Foam::UnivariateEquation<Type>::calculateGradient
     List<Type>& grad
 ) const
 {
-    const Type fx0(this->fX(x0, li));
+    calculateGradient(this->fX(x0, li), x0, li, grad);
+}
+
+
+template<class Type>
+void Foam::UnivariateEquation<Type>::calculateGradient
+(
+    const Type& fx0,
+    const typename univariateEquation<Type>::VarType& x0,
+    const label li,
+    List<Type>& grad
+) const
+{
     scalarList x1(x0);
     for (label cmpti = 0; cmpti < nVar_; cmpti++)
     {

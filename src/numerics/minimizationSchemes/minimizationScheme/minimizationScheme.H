@@ -36,6 +36,8 @@ SourceFiles
 #define minimizationScheme_H
 
 #include "UnivariateEquationsFwd.H"
+#include "lineSearch.H"
+#include "EquationsFwd.H"
 #include "Switch.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -51,10 +53,12 @@ namespace Foam
 
 class minimizationScheme
 {
-
 protected:
 
     // Protected data
+
+        //- Constructing dictionary
+        const dictionary dict_;
 
         //- Reference to scalarEquation
         const scalarUnivariateEquation& eqns_;
@@ -70,6 +74,9 @@ protected:
 
         //- Relative convergence tolerances for y
         scalarField yRelTolerances_;
+
+        //- The minimum number of sub-steps allowed for the integration step
+        label minSteps_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -101,102 +108,84 @@ protected:
         //- In convergence in the delta checked
         bool checkY_;
 
+        //- Line search method
+        mutable autoPtr<lineSearch> lineSearch_;
 
-        //- Initial line search parameter
-        virtual scalar alpha
-        (
-            const scalarList& grad,
-            const scalarList& gradOld
-        ) const;
 
-        //- Line search
-        scalar lineSearch
-        (
-            const scalarList& x0,
-            const scalarList& grad,
-            const scalarList& gradOld,
-            const label li,
-            scalar& fx
-        ) const;
+        // Protected member functions
 
-        //- Line search
-        scalar lineSearch
-        (
-            const scalarList& x0,
-            const scalarList& grad,
-            const label li,
-            scalar& fx
-        ) const;
+            //- Return the L2 norm the given list
+            static scalar norm(const scalarList& lst);
 
-        //- Return the L2 norm the given list
-        scalar norm(const scalarList& lst) const;
+            //- Return lst^T * lst
+            static scalar inner(const scalarList& lst1, const scalarList& lst2);
 
-        //- Return lst^T * lst
-        scalar inner(const scalarList& lst1, const scalarList& lst2) const;
+            //- Is the solution converged in w.r.t x
+            bool convergedXScale
+            (
+                const scalarList& error,
+                const scalarList& s
+            ) const;
 
-        //- Is the solution converged in w.r.t x
-        bool convergedXScale
-        (
-            const scalarList& error,
-            const scalarList& s
-        ) const;
+            bool checkConvergence
+            (
+                const scalarList& absErrors,
+                const scalarList& relErrors,
+                const scalarList& absTols,
+                const scalarList& relTols
+            ) const;
 
-        bool checkConvergence
-        (
-            const scalarList& absErrors,
-            const scalarList& relErrors,
-            const scalarList& absTols,
-            const scalarList& relTols
-        ) const;
+            //- Is the solution converged in w.r.t x
+            bool convergedX(const scalarList& x1, const scalarList& x2) const;
 
-        //- Is the solution converged in w.r.t x
-        bool convergedX(const scalarList& x1, const scalarList& x2) const;
+            //- Is the solution converged in w.r.t y
+            bool convergedYScale
+            (
+                const scalarList& error,
+                const scalarList& s
+            ) const;
 
-        //- Is the solution converged in w.r.t y
-        bool convergedYScale
-        (
-            const scalarList& error,
-            const scalarList& s
-        ) const;
+            //- Is the solution converged in w.r.t y
+            bool convergedY(const scalarList& y1, const scalarList& y2) const;
 
-        //- Is the solution converged in w.r.t y
-        bool convergedY(const scalarList& y1, const scalarList& y2) const;
+            //- Is the solution converged in x and y
+            bool convergedScale
+            (
+                const scalarList& xError,
+                const scalarList& xS,
+                const scalarList& yError,
+                const scalarList& yS
+            ) const;
 
-        //- Is the solution converged in x and y
-        bool convergedScale
-        (
-            const scalarList& xError,
-            const scalarList& xS,
-            const scalarList& yError,
-            const scalarList& yS
-        ) const;
+            //- Is the solution converged in x and y
+            bool converged
+            (
+                const scalarList& x1,
+                const scalarList& x2,
+                const scalarList& y1,
+                const scalarList& y2
+            ) const;
 
-        //- Is the solution converged in x and y
-        bool converged
-        (
-            const scalarList& x1,
-            const scalarList& x2,
-            const scalarList& y1,
-            const scalarList& y2
-        ) const;
+            //- Print information about the current step
+            void printStepInformation(const scalarList& vals) const;
 
-        //- Print information about the current step
-        void printStepInformation(const scalarList& vals) const;
+            //- Print information about the current step
+            void printFinalInformation(const scalarList& vals) const;
 
-        //- Print information about the current step
-        void printFinalInformation(const scalarList& vals) const;
+            //- Sample and return the interval with the smallest value
+            void sample
+            (
+                scalarList&,
+                scalarList&,
+                labelList& xBest,
+                scalar& yBest,
+                labelList& indicies,
+                const label,
+                const label diri
+            ) const;
 
-        //- Sample and return the interval with the smallest value
-        void sample
-        (
-            scalarList&,
-            scalarList&,
-            labelList& xBest,
-            scalar& yBest,
-            labelList& indicies,
-            const label,
-            const label diri
-        ) const;
+            //- Return the line search solver
+            const lineSearch& lineSearcher() const;
 
 
 public:
@@ -255,8 +244,7 @@ public:
 
 
     //- Destructor
-    virtual ~minimizationScheme()
-    {}
+    virtual ~minimizationScheme();
 
 
     // Member Functions
@@ -314,6 +302,9 @@ public:
             const scalarList& xHigh,
             const label li
         ) const = 0;
+
+        //- Return if the solution converged
+        bool converged() const;
 
 
     // Member Operators

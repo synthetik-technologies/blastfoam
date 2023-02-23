@@ -98,7 +98,17 @@ Foam::NelderMeadMinimizationScheme::minimize
     ys[0] = eqns_.fX(points[0], li);
     for (label i = 1; i < np; i++)
     {
-        points[i][i - 1] += (xMin[i-1] + xMax[i-1])*0.5;
+        // Handle symmetric cases
+        scalar xc = (xMin[i-1] + xMax[i-1])*0.5;
+        if (mag(xc) > small)
+        {
+            points[i][i - 1] += xc;
+        }
+        else
+        {
+            points[i][i - 1] += (xMax[i-1] - xMin[i-1])/2.0;
+        }
+
         eqns_.limit(points[i]);
         ys[i] = eqns_.fX(points[i], li);
     }
@@ -122,11 +132,6 @@ Foam::NelderMeadMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (convergedXScale(xStd, xMean))
-        {
-            break;
-        }
-
         // Sort values, point order is automatically updated since
         // the indirect list uses a reference to the sort map
         ys.sort();
@@ -247,6 +252,11 @@ Foam::NelderMeadMinimizationScheme::minimize
         xStd = sqrt(xVar);
 
         printStepInformation(xMean);
+
+        if (convergedXScale(xStd, xMean))
+        {
+            break;
+        }
     }
     xMean = points[0];
     printFinalInformation(xMean);

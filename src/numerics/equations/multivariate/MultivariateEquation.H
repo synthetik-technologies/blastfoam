@@ -86,6 +86,18 @@ public:
             equationBase(dict)
         {}
 
+        //- Construct from equation string and dictionary
+        multivariateEquation(const string& eqnString, const dictionary& dict)
+        :
+            equationBase(eqnString, dict)
+        {}
+
+        //- Construct from a list of equation strings
+        multivariateEquation(const List<string>& eqnStrings, const dictionary& dict)
+        :
+            equationBase(eqnStrings, dict)
+        {}
+
     //- Declare runtime constructor selection table
     declareRunTimeSelectionTable
     (
@@ -242,6 +254,16 @@ public:
             const label nEqns,
             const scalarList& lowerLimits,
             const scalarList& upperLimits,
+            const List<string>& eqnString = List<string>()
+        );
+
+        //- Construct with number of equations, limits, name, and dictionary
+        MultivariateEquation
+        (
+            const label nEqns,
+            const scalarList& lowerLimits,
+            const scalarList& upperLimits,
+            const dictionary& dict,
             const List<string>& eqnString = List<string>()
         );
 

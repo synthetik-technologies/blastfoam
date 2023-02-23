@@ -126,6 +126,25 @@ Foam::MultivariateEquation<Type>::MultivariateEquation
 
 
 template<class Type>
+Foam::MultivariateEquation<Type>::MultivariateEquation
+(
+    const label nEqns,
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits,
+    const dictionary& dict,
+    const List<string>& eqnStrings
+)
+:
+    multivariateEquation<Type>(eqnStrings, dict),
+    lowerLimits_(dict.lookupOrDefault("lowerBounds", lowerLimits)),
+    upperLimits_(dict.lookupOrDefault("upperBounds", upperLimits)),
+    nVar_(lowerLimits.size()),
+    nEqns_(nEqns),
+    dX_(dict.lookupOrDefault<scalarList>("dX", scalarList(nVar_, 1e-6)))
+{}
+
+
+template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation(const dictionary& dict)
 :
     multivariateEquation<Type>(dict),

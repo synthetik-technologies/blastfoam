@@ -23,74 +23,70 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "gradientDescentMinimizationScheme.H"
-#include "addToRunTimeSelectionTable.H"
+#include "lineSearch.H"
+#include "approximateLineSearch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(gradientDescentMinimizationScheme, 0);
-    addToRunTimeSelectionTable
-    (
-        minimizationScheme,
-        gradientDescentMinimizationScheme,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
-        minimizationScheme,
-        gradientDescentMinimizationScheme,
-        dictionaryMultivariate
-    );
+    defineTypeNameAndDebug(lineSearch, 0);
+    defineRunTimeSelectionTable(lineSearch, dictionary);
 }
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
+Foam::lineSearch::lineSearch
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
-    minimizationScheme(eqns, dict)
+    eqns_(eqns),
+    lsEqn_
+    (
+        eqns,
+        dict.lookupOrDefault<word>
+        (
+            "descentMethod",
+            "PolakRibiere"
+        )
+    )
+{}
+
+
+// * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
+
+Foam::lineSearch::~lineSearch()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField>
-Foam::gradientDescentMinimizationScheme::minimize
+Foam::autoPtr<Foam::lineSearch>
+Foam::lineSearch::New
 (
-    const scalarList& x0,
-    const scalarList& xLow,
-    const scalarList& xHigh,
-    const label li
-) const
+    const scalarUnivariateEquation& eqn,
+    const dictionary& dict
+)
 {
-    tmp<scalarField> txNew(new scalarField(x0));
-    scalarField& xNew = txNew.ref();
-    scalarField xOld(xNew);
-    scalarField grad(x0.size(), 0.0);
-    eqns_.dfdX(x0, li, grad);
+    const word lineSearchType(dict.lookupOrDefault<word>("lineSearch", "exact"));
+    Info<< "Selecting lineSearch: " << lineSearchType << endl;
 
-    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(lineSearchType);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        xOld = xNew;
-        lineSearcher().search(xOld, grad, li, xNew);
-        eqns_.limit(xNew);
-
-        if (convergedX(xNew, xOld))
-        {
-            break;
-        }
-
-        eqns_.dfdX(xNew, li, grad);
-        printStepInformation(xNew);
+        FatalErrorInFunction
+            << "Unknown lineSearch type "
+            << lineSearchType << nl << nl
+            << "Valid lineSearches are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
     }
-    printFinalInformation(xNew);
-    return txNew;
+    return autoPtr<lineSearch>(cstrIter()(eqn, dict));
 }
+
 
 // ************************************************************************* //

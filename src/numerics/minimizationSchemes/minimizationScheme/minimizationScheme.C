@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "minimizationScheme.H"
+#include "univariateMinimizationScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -32,6 +33,31 @@ namespace Foam
     defineTypeNameAndDebug(minimizationScheme, 0);
     defineRunTimeSelectionTable(minimizationScheme, dictionaryUnivariate);
     defineRunTimeSelectionTable(minimizationScheme, dictionaryMultivariate);
+}
+
+Foam::scalar Foam::minimizationScheme::norm(const scalarList& lst)
+{
+    scalar sum = 0;
+    forAll(lst, i)
+    {
+        sum += magSqr(lst[i]);
+    }
+    return sqrt(sum/scalar(lst.size()));
+}
+
+
+Foam::scalar Foam::minimizationScheme::inner
+(
+    const scalarList& lst1,
+    const scalarList& lst2
+)
+{
+    scalar sum = 0;
+    forAll(lst1, i)
+    {
+        sum += lst1[i]*lst2[i];
+    }
+    return sum;
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
@@ -44,6 +70,11 @@ bool Foam::minimizationScheme::checkConvergence
     const scalarList& relTols
 ) const
 {
+    if (stepi_ < minSteps_)
+    {
+        return false;
+    }
+
     bool c = true;
     forAll(absErrors, i)
     {
@@ -164,15 +195,30 @@ void Foam::minimizationScheme::printStepInformation
 {
     if (debug > 2)
     {
-        DebugInfo<< "Step: " << stepi_ << ":" << nl
-            << "    Errors (abs/rel): "
-            << xErrors_ << ", " << xRelErrors_ << endl;
-        if (checkY_)
+        if (xErrors_.size() > 1)
         {
-            Info<< "    Deltas (abs/rel): "
-                << yErrors_ << ", " << yRelErrors_ << endl;
+            Info<< "Step: " << stepi_ << ":" << nl
+                << "    Errors (abs/rel): "
+                << xErrors_ << ", " << xRelErrors_ << endl;
+            if (checkY_)
+            {
+                Info<< "    Deltas (abs/rel): "
+                    << yErrors_ << ", " << yRelErrors_ << endl;
+            }
+            Info<< "    Values: " << vals << endl;
         }
-        Info<< "    Minimums: " << vals << endl;
+        else
+        {
+            Info<< "Step: " << stepi_ << ":" << nl
+                << "    Error (abs/rel): "
+                << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+            if (checkY_)
+            {
+                Info<< "    Delta (abs/rel): "
+                    << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+            }
+            Info<< "    Value: " << vals[0] << endl;
+        }
     }
 }
 
@@ -186,12 +232,8 @@ void Foam::minimizationScheme::printFinalInformation
     {
         return;
     }
-    bool converged =
-        max(xErrors_ - xTolerances_) <= 0.0
-     || max(xRelErrors_ - xRelTolerances_) <= 0.0
-     || max(yErrors_ - yTolerances_) <= 0.0
-     || max(yRelErrors_ - yRelTolerances_) <= 0.0;
-    if (converged)
+
+    if (converged())
     {
         Info<< "Converged in " << stepi_ << " iterations" << endl;
     }
@@ -207,120 +249,42 @@ void Foam::minimizationScheme::printFinalInformation
             << "Did not converge in "
             << stepi_ << " iterations" << endl;
     }
-    Info<< "    Final errors (abs/rel): "
-        << xErrors_ << ", " << xRelErrors_ << endl;
-    if (checkY_)
+    if (xErrors_.size() > 1)
     {
-        Info<< "    Final deltas (abs, rel): "
-            << yErrors_ << ", " << yRelErrors_ << endl;
+        Info<< "    Final errors (abs/rel): "
+            << xErrors_ << ", " << xRelErrors_ << endl;
+        if (checkY_)
+        {
+            Info<< "    Final deltas (abs, rel): "
+                << yErrors_ << ", " << yRelErrors_ << endl;
+        }
+        Info<< "    Values: " << vals << endl;
     }
-    Info<< "    Minimums: " << vals << endl;
+    else
+    {
+        Info<< "    Final error (abs/rel): "
+            << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+        if (checkY_)
+        {
+            Info<< "    Final delta (abs, rel): "
+                << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+        }
+        Info<< "    Value: " << vals[0] << endl;
+    }
 }
 
 
-Foam::scalar Foam::minimizationScheme::alpha
-(
-    const scalarList& grad,
-    const scalarList& gradOld
-) const
+const Foam::lineSearch& Foam::minimizationScheme::lineSearcher() const
 {
-    return 1.0;
-}
-
-
-Foam::scalar Foam::minimizationScheme::lineSearch
-(
-    const scalarList& x0,
-    const scalarList& grad,
-    const scalarList& gradOld,
-    const label li,
-    scalar& fx
-) const
-{
-    if (debug > 3)
+    if (!lineSearch_.valid())
     {
-        Info<< "Conducting line search" << endl;
+        const dictionary& lsDict
+        (
+            dict_.subOrEmptyDict("lineSearchCoeffs")
+        );
+        lineSearch_ = lineSearch::New(eqns_, lsDict);
     }
-
-//     scalar alpha = norm(grad)/stabilise(norm(gradOld), small);
-//     scalar alpha =
-//         max
-//         (
-//             inner(grad, grad - gradOld)/stabilise(norm(gradOld), small),
-//             0.0
-//         );
-    scalar a = alpha(grad, gradOld);
-    const scalar fx0(fx);
-    scalarField x1(x0 - a*grad);
-    eqns_.limit(x1);
-    fx = eqns_.fX(x1, li);
-
-    label iter = 0;
-    while (fx >= fx0 && iter++ < maxSteps_)
-    {
-        a *= tau_;
-        x1 = x0 - a*grad;
-        eqns_.limit(x1);
-        fx = eqns_.fX(x1, li);
-    }
-    return a;
-}
-
-
-Foam::scalar Foam::minimizationScheme::lineSearch
-(
-    const scalarList& x0,
-    const scalarList& grad,
-    const label li,
-    scalar& fx
-) const
-{
-    if (debug > 3)
-    {
-        Info<< "Conducting line search" << endl;
-    }
-    scalar alpha = 10.0;
-
-    const scalar fx0(fx);
-    scalarField x1(x0 - alpha*grad);
-    eqns_.limit(x1);
-    fx = eqns_.fX(x1, li);
-
-    label iter = 0;
-    while (fx >= fx0 && iter++ < maxSteps_)
-    {
-        alpha *= tau_;
-        x1 = x0 - alpha*grad;
-        eqns_.limit(x1);
-        fx = eqns_.fX(x1, li);
-    }
-    return alpha;
-}
-
-
-Foam::scalar Foam::minimizationScheme::norm(const scalarList& lst) const
-{
-    scalar sum = 0;
-    forAll(lst, i)
-    {
-        sum += magSqr(lst[i]);
-    }
-    return sqrt(sum/scalar(lst.size()));
-}
-
-
-Foam::scalar Foam::minimizationScheme::inner
-(
-    const scalarList& lst1,
-    const scalarList& lst2
-) const
-{
-    scalar sum = 0;
-    forAll(lst1, i)
-    {
-        sum += lst1[i]*lst2[i];
-    }
-    return sum;
+    return lineSearch_();
 }
 
 
@@ -392,6 +356,7 @@ Foam::minimizationScheme::minimizationScheme
     const dictionary& dict
 )
 :
+    dict_(dict),
     eqns_(eqns),
     xTolerances_
     (
@@ -419,7 +384,7 @@ Foam::minimizationScheme::minimizationScheme
                 eqns_.nVar(),
                 dict.lookupOrDefaultBackwardsCompatible
                 (
-                    {"xRelTolerance", "tolerance"},
+                    {"xRelTolerance", "relTolerance"},
                     1e-6
                 )
             )
@@ -451,13 +416,14 @@ Foam::minimizationScheme::minimizationScheme
                 eqns_.nVar(),
                 dict.lookupOrDefaultBackwardsCompatible
                 (
-                    {"yRelTolerance", "tolerance"},
+                    {"yRelTolerance", "relTolerance"},
                     1e-6
                 )
             )
         )
     ),
-    maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
+    minSteps_(dict.lookupOrDefault<scalar>("minIter", 0)),
+    maxSteps_(dict.lookupOrDefault<scalar>("maxIter", 100)),
     stepi_(0),
     xErrors_(eqns.nVar(), great),
     xRelErrors_(eqns.nVar(), great),
@@ -477,7 +443,15 @@ Foam::minimizationScheme::minimizationScheme
     ),
     normalize_(dict.lookupOrDefault("normaliseError", true)),
     tau_(dict.lookupOrDefault<scalar>("tau", 0.5)),
-    checkY_(false)
+    checkY_(false),
+
+    lineSearch_(nullptr)
+{}
+
+
+// * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
+
+Foam::minimizationScheme::~minimizationScheme()
 {}
 
 
@@ -547,4 +521,19 @@ Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
     return minimize(xStart, x1, x2, li);
 }
 
+
+bool Foam::minimizationScheme::converged() const
+{
+    bool c =
+        max(xErrors_ - xTolerances_) <= 0.0
+     || max(xRelErrors_ - xRelTolerances_) <= 0.0;
+    if (checkY_)
+    {
+        c =
+            c
+         || max(yErrors_ - yTolerances_) <= 0.0
+         || max(yRelErrors_ - yRelTolerances_) <= 0.0;
+    }
+    return c;
+}
 // ************************************************************************* //

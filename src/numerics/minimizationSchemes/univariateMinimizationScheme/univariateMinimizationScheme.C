@@ -29,7 +29,11 @@ License
 
 namespace Foam
 {
-    defineTypeName(univariateMinimizationScheme);
+    defineTypeNameAndDebug
+    (
+        univariateMinimizationScheme,
+        minimizationScheme::debug
+    );
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryZero);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryOne);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryTwo);
@@ -122,7 +126,7 @@ void Foam::univariateMinimizationScheme::printStepInformation
 {
     if (debug > 2)
     {
-        DebugInfo<< "Step: " << stepi_ << ":" << nl
+        Info<< "Step: " << stepi_ << ":" << nl
             << "    Error (abs/rel): "
             << xErrors_[0] << ", " << xRelErrors_[0] << endl;
         if (checkY_)
@@ -130,7 +134,7 @@ void Foam::univariateMinimizationScheme::printStepInformation
             Info<< "    Delta (abs/rel): "
                 << yErrors_[0] << ", " << yRelErrors_[0] << endl;
         }
-        Info<< "    Minimum: " << val << endl;
+        Info<< "    Value: " << val << endl;
     }
 }
 
@@ -171,7 +175,7 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
         Info<< "    Final delta (abs/rel): "
             << yErrors_[0] << ", " << yRelErrors_[0] << endl;
     }
-    Info<< "    Minimum: " << val << endl;
+    Info<< "    Value: " << val << endl;
     return val;
 }
 
@@ -228,6 +232,7 @@ Foam::univariateMinimizationScheme::univariateMinimizationScheme
     nSample_(dict.lookupOrDefault<label>("nSample", 0))
 {
     nSamples_ = 0;
+    debug = minimizationScheme::debug;
 }
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

@@ -73,6 +73,12 @@ public:
             univariateEquation<Type>(eqnString)
         {}
 
+        //- Construct from equation string and dictionary
+        equation(const string& eqnString, const dictionary& dict)
+        :
+            univariateEquation<Type>(eqnString, dict)
+        {}
+
         //- Construct from dictionary
         equation(const dictionary& dict)
         :
@@ -212,6 +218,15 @@ public:
         (
             const scalar lower,
             const scalar upper,
+            const string& eqnString = string::null
+        );
+
+        //- Construct given bounds, name, and dictionary
+        Equation
+        (
+            const scalar lower,
+            const scalar upper,
+            const dictionary& dict,
             const string& eqnString = string::null
         );
 

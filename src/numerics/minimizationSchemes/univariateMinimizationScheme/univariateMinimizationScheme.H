@@ -106,7 +106,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeNameNoDebug("univariateMinimizationScheme");
+    TypeName("univariateMinimizationScheme");
 
     // Declare run-time constructor selection table
 

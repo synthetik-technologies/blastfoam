@@ -34,7 +34,7 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
     const dictionary& dict
 )
 {
-    label nDeriv = eqn.nDerivatives();
+    const label nDeriv = eqn.nDerivatives();
     DebugInfo
         << "Selecting root solver "
         << univariateMinimizationSchemeTypeName << endl;
@@ -68,7 +68,8 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
             FatalErrorInFunction
                 << "Unknown univariateMinimizationScheme type "
                 << univariateMinimizationSchemeTypeName << nl << nl
-                << "Valid univariateMinimizationSchemes for one derivative are : " << endl
+                << "Valid univariateMinimizationSchemes for one derivative are:"
+                << endl
                 << dictionaryOneConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
@@ -82,7 +83,8 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
         FatalErrorInFunction
             << "Unknown univariateMinimizationScheme type "
             << univariateMinimizationSchemeTypeName << nl << nl
-            << "Valid univariateMinimizationSchemes for are : " << endl
+            << "Valid univariateMinimizationSchemes for two derivatives are:"
+            << endl
             << dictionaryTwoConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
