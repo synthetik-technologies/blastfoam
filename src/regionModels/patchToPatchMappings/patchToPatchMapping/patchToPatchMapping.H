@@ -166,45 +166,72 @@ public:
         // Access
 
             //- Return const access to the settings dict
-            const dictionary& dict() const
+            inline const dictionary& dict() const
             {
                 return dict_;
             }
 
             //- Const access to the patchA
-            const primitivePatch& patchA() const
+            inline const primitivePatch& patchA() const
             {
                 return patchA_;
             }
 
             //- Const access to the patchB
-            const primitivePatch& patchB() const
+            inline const primitivePatch& patchB() const
             {
                 return patchB_;
             };
 
+            //- Const access to the other patch
+            inline const primitivePatch& otherPatch
+            (
+                const primitivePatch& patch
+            ) const
+            {
+                return &patch == &patchA_ ? patchB_ : patchA_;
+            };
+
             //- Const access to the globalPatchA
-            const globalPolyPatch& globalPatchA() const
+            inline const globalPolyPatch& globalPatchA() const
             {
                 return globalPatchA_;
             }
 
             //- Const access to the globalPatchB
-            const globalPolyPatch& globalPatchB() const
+            inline const globalPolyPatch& globalPatchB() const
             {
                 return globalPatchB_;
             };
 
+            //- Const access to the other patch
+            inline const globalPolyPatch& otherGlobalPatch
+            (
+                const globalPolyPatch& patch
+            ) const
+            {
+                return &patch == &globalPatchA_ ? globalPatchB_ : globalPatchA_;
+            };
+
             //- Const access to the primitivePatch of globalPolyPatchA
-            const standAlonePatch& zoneA() const
+            inline const standAlonePatch& zoneA() const
             {
                 return globalPatchA_.globalPatch();
             }
 
             //- Const access to the primitivePatch of globalPolyPatchB
-            const standAlonePatch& zoneB() const
+            inline const standAlonePatch& zoneB() const
             {
                 return globalPatchB_.globalPatch();
+            };
+
+            //- Const access to the other zone
+            inline const standAlonePatch& otherZone
+            (
+                const standAlonePatch& zone
+            ) const
+            {
+                return &zone == &zoneA() ? zoneB() : zoneA();
             };
 
             //- Check field sizes are correct before interpolation/mapping

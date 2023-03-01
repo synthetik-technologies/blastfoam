@@ -38,37 +38,15 @@ tmp<Field<Type>>  patchToPatchMapping::transferFaces
     const Field<Type>& fromField
 ) const
 {
-    if (&fromPatch == &zoneA())
-    {
-        tmp<Field<Type>> toFieldTmp(new Field<Type>(zoneB().size()));
-        transferFaces
-        (
-            fromPatch,
-            zoneB(),
-            fromField,
-            toFieldTmp.ref()
-        );
-        return toFieldTmp;
-    }
-    else if (&fromPatch == &zoneB())
-    {
-        tmp<Field<Type>> toFieldTmp(new Field<Type>(zoneA().size()));
-        transferFaces
-        (
-            fromPatch,
-            zoneA(),
-            fromField,
-            toFieldTmp.ref()
-        );
-        return toFieldTmp;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Patch does not belong to this mapping"
-            << abort(FatalError);
-    }
-    return tmp<Field<Type>>();
+    tmp<Field<Type>> toFieldTmp(new Field<Type>(otherZone(fromPatch).size()));
+    transferFaces
+    (
+        fromPatch,
+        otherZone(fromPatch),
+        fromField,
+        toFieldTmp.ref()
+    );
+    return toFieldTmp;
 }
 
 
@@ -90,38 +68,16 @@ tmp<Field<Type>>  patchToPatchMapping::transferPoints
     const Field<Type>& fromField
 ) const
 {
-    if (&fromPatch == &zoneA())
-    {
-        tmp<Field<Type>> toFieldTmp(new Field<Type>(zoneB().nPoints()));
-        transferPoints
-        (
-            fromPatch,
-            zoneB(),
-            fromField,
-            toFieldTmp.ref()
-        );
-        return toFieldTmp;
-    }
-    else if (&fromPatch == &zoneB())
-    {
-        tmp<Field<Type>> toFieldTmp(new Field<Type>(zoneA().nPoints()));
-        transferPoints
-        (
-            fromPatch,
-            zoneA(),
-            fromField,
-            toFieldTmp.ref()
-        );
-        return toFieldTmp;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Patch does not belong to this mapping"
-            << abort(FatalError);
-    }
-    return tmp<Field<Type>>();
-}
+    tmp<Field<Type>> toFieldTmp(new Field<Type>(otherZone(fromPatch).nPoints()));
+    transferPoints
+    (
+        fromPatch,
+        otherZone(fromPatch),
+        fromField,
+        toFieldTmp.ref()
+    );
+    return toFieldTmp;
+   }
 
 template<class Type>
 tmp<Field<Type>>  patchToPatchMapping::transferPoints

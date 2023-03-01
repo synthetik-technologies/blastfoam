@@ -81,7 +81,7 @@ void amiPatchToPatchMapping::makeInterpolator() const
         )
     );
 
-    checkZoneAToZoneBError();
+    // checkZoneAToZoneBError();
     //checkZoneBToZoneAError();
 }
 

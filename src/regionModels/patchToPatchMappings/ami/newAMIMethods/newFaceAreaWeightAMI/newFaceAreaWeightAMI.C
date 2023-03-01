@@ -346,6 +346,7 @@ Foam::scalar Foam::newFaceAreaWeightAMI<SourcePatch, TargetPatch>::interArea
             << " points " << UIndirectList<point>(srcPoints, src)
             << " target face " << tgtFacei
             << " points " << UIndirectList<point>(tgtPoints, tgt)
+            << " magN: " << magN
             << endl;
     }
 
