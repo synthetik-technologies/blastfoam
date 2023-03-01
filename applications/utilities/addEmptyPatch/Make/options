@@ -8,5 +8,6 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lmeshTools \
     -ldynamicMesh \
+    -lgenericPatchFields \
     -L$(BLAST_LIBBIN) \
     -lblastDynamicMesh
