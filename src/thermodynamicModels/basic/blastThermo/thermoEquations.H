@@ -69,9 +69,9 @@ class fluidEEquation
     scalar p_;
 
 public:
-    fluidEEquation(fluidBlastThermo& thermo)
+    fluidEEquation(fluidBlastThermo& thermo, const dictionary& dict)
     :
-        ScalarEquation(-great, great),
+        ScalarEquation(-great, great, dict, "EEqn"),
         thermo_(thermo),
         e_(&thermo.he()),
         eOld_(0.0),
@@ -137,9 +137,9 @@ class fluidTEquation
     scalar p_;
 
 public:
-    fluidTEquation(fluidBlastThermo& thermo)
+    fluidTEquation(fluidBlastThermo& thermo, const dictionary& dict)
     :
-        ScalarEquation(-great, great),
+        ScalarEquation(-great, great, dict, "TEqn"),
         thermo_(thermo),
         e_(&thermo.he()),
         T_(&thermo.T()),
@@ -210,10 +210,11 @@ public:
     THEEquation
     (
         fluidBlastThermo& thermo,
-        const scalar TLow
+        const scalar TLow,
+        const dictionary& dict
     )
     :
-        ScalarEquation(-great, great),
+        ScalarEquation(TLow, great, dict, "THEEqn"),
         thermo_(thermo),
         he_(thermo.he()),
         patchi_(-1)

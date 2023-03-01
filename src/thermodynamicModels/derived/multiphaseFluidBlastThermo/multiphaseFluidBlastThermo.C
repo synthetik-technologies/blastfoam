@@ -178,10 +178,10 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     alphaRhos_(phases_.size()),
     sumVfPtr_(nullptr),
 
-    TEqn_(*this),
+    TEqn_(*this, dict.optionalSubDict("eSolverCoeffs")),
     TSolver_(nullptr),
 
-    THEEqn_(*this, this->TLow_),
+    THEEqn_(*this, this->TLow_, dict.optionalSubDict("TSolverCoeffs")),
     THESolver_(nullptr)
 
 {

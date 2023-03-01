@@ -222,9 +222,9 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
             phaseName
         )
     ),
-    TEqn_(*this),
+    TEqn_(*this, dict.optionalSubDict("eSolverCoeffs")),
     TSolver_(nullptr),
-    THEEqn_(*this, this->TLow_),
+    THEEqn_(*this, this->TLow_, dict.optionalSubDict("TSolverCoeffs")),
     THESolver_(nullptr)
 {
     // Select the solvers for energy and temperature
