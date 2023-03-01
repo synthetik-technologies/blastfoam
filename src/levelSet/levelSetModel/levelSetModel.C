@@ -144,7 +144,7 @@ Foam::levelSetModel::levelSetModel
     ),
     epsilon0_("epsilon", dimless, dict),
     epsilon_("epsilon", dimLength, 0.0),
-    useDistributed_(dict.lookupOrDefault("useDistributed", true)),
+    useDistributed_(dict.lookupOrDefault("useDistributed", false)),
     filterType_
     (
         dict.found("filtering")
@@ -347,7 +347,6 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
     );
 
     // Contour the volume fraction at 0.5
-
     isoSurface contour
     (
         mesh_,
@@ -457,7 +456,6 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
         }
     }
     ls.correctBoundaryConditions();
-
     return tls;
 }
 
