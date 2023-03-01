@@ -519,6 +519,7 @@ bool Foam::fvMeshBalance::canBalance() const
     // the number of processors.
     if (maxImbalanceRatio < allowableImbalance_)
     {
+        DebugInfo<< "Current imbalance under limit" << endl;
         return false;
     }
 
@@ -539,7 +540,7 @@ bool Foam::fvMeshBalance::canBalance() const
     reduce(procLoadNew, sumOp<labelList>());
     if (min(procLoadNew) == 0)
     {
-        DebugInfo
+        WarningInFunction
             << "New distribtion results in a load of 0. Skipping" << endl;
         return false;
     }

@@ -518,10 +518,11 @@ void Foam::polyMeshRefiner::updateMesh(const mapPolyMesh& mpm)
         return;
     }
     const locationMapper& locMapper = locationMapper::New(mesh_);
-    const wordHashSet& interpolatedPointFields =
-        locMapper.interpolatedPointFields();
+    const wordHashSet& interpolatedFields =
+        locMapper.interpolatedFields();
     const labelList& pointMap = mpm.pointMap();
-    forAllConstIter(wordHashSet, interpolatedPointFields, iter)
+
+    forAllConstIter(wordHashSet, interpolatedFields, iter)
     {
         const word& fieldName = iter.key();
         if (mesh_.foundObject<pointIOField>(fieldName))

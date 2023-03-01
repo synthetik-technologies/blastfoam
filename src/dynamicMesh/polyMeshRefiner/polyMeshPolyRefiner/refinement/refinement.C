@@ -168,13 +168,13 @@ void Foam::refinement::walkFaceFromMid
 
 Foam::label Foam::refinement::findMinLevel(const labelList& f) const
 {
-    return findMin(labelField(pointLevel_, f));
+    return findMin(UIndirectList<label>(pointLevel_, f));
 }
 
 
 Foam::label Foam::refinement::findMaxLevel(const labelList& f) const
 {
-    return findMax(labelField(pointLevel_, f));
+    return findMax(UIndirectList<label>(pointLevel_, f));
 }
 
 
