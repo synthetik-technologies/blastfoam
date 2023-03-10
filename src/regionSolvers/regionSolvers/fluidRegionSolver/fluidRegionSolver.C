@@ -220,7 +220,7 @@ Foam::regionSolvers::fluid::fluid
         else
         {
             points0IO.rename("points");
-            points0IO.instance() = mesh.time().constant();
+            points0IO.instance() = mesh.pointsInstance();
 
             // Return copy of original mesh points
             points0Ptr_.set(new pointIOField(points0IO));
