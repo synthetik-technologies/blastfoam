@@ -559,9 +559,9 @@ void Foam::polyMeshRefiner::distribute
 )
 {
     const locationMapper& locMapper = locationMapper::New(mesh_);
-    const wordHashSet& interpolatedPointFields =
-        locMapper.interpolatedPointFields();
-    forAllConstIter(wordHashSet, interpolatedPointFields, iter)
+    const wordHashSet& interpolatedFields =
+        locMapper.interpolatedFields();
+    forAllConstIter(wordHashSet, interpolatedFields, iter)
     {
         const word& fieldName = iter.key();
         if (mesh_.foundObject<pointIOField>(fieldName))
