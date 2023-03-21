@@ -22,10 +22,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::minimizationSchemes::HookeJeeves
+    Foam::minimizationSchemes::basis
 
 Description
-    Gradient free minimization scheme of Hooke-Jeeves
+    Basic class for schemes using a basis line search
 
 References:
     \verbatim
@@ -35,17 +35,15 @@ References:
     \endverbatim
 
 SourceFiles
-    HookeJeevesMinimizationScheme.C
+    basisMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef HookeJeevesMinimizationScheme_H
-#define HookeJeevesMinimizationScheme_H
+#ifndef basisMinimizationScheme_H
+#define basisMinimizationScheme_H
 
 #include "minimizationScheme.H"
-#include "typeInfo.H"
-#include "Random.H"
-#include "autoPtr.H"
+#include "cmptLineSearchEquation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,50 +53,50 @@ namespace minimizationSchemes
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class HookeJeeves Declaration
+                    Class basis Declaration
 \*---------------------------------------------------------------------------*/
 
-class HookeJeeves
+class basis
 :
     public minimizationScheme
 {
-private:
-    // Private member data
+protected:
+    // Protected data
 
-        //- Step size reduction factor
-        scalar gamma_;
+        //- Component line search equation
+        mutable cmptLineSearchEquation cmptLsEqn_;
+
+
+    // Protected functions
+
+        //- Search in the given direction
+        void searchDir
+        (
+            const scalarList& x0,
+            const label li,
+            const label dir,
+            const label sign,
+            scalarList& xNew
+        ) const;
 
 
 public:
 
     //- Runtime type information
-    TypeName("HookeJeeves");
+    TypeName("basis");
 
     // Constructors
 
         //- Construct for given minimizationScheme
-        HookeJeeves
+        basis
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
     //- Destructor
-    virtual ~HookeJeeves()
+    virtual ~basis()
     {}
-
-
-    // Member Functions
-
-        //- Solve the root
-        virtual tmp<scalarField> minimize
-        (
-            const scalarList& x0,
-            const scalarList& x1,
-            const scalarList& x2,
-            const label li
-        ) const;
-
 };
 
 

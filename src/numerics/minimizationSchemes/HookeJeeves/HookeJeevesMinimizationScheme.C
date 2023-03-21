@@ -53,7 +53,6 @@ Foam::minimizationSchemes::HookeJeeves::HookeJeeves
 )
 :
     minimizationScheme(eqns, dict),
-    alpha0_(dict.lookupOrDefault<scalar>("alpha0", 1.0)),
     gamma_(dict.lookupOrDefault<scalar>("gamma", 0.9))
 
 {
@@ -77,7 +76,11 @@ Foam::minimizationSchemes::HookeJeeves::minimize
     scalarField xOld(x0);
     scalarField xBest(x0);
     scalar yBest = eqns_.fX(x0, li);
-    scalar alpha = alpha0_;
+    scalarField alpha(xMax);
+    forAll(alpha, i)
+    {
+        alpha[i] = (xMax[i] - xMin[i])/2.0;
+    };
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
@@ -87,7 +90,7 @@ Foam::minimizationSchemes::HookeJeeves::minimize
         forAll(xOld, diri)
         {
             xNew = xOld;
-            xNew[diri] += alpha;
+            xNew[diri] += alpha[diri];
             eqns_.limit(xNew);
             scalar y = eqns_.fX(xNew,  li);
             if (y < yBest)
@@ -97,7 +100,7 @@ Foam::minimizationSchemes::HookeJeeves::minimize
                 improved = true;
             }
 
-            xNew[diri] -= 2.0*alpha;
+            xNew[diri] -= 2.0*alpha[diri];
             eqns_.limit(xNew);
             y = eqns_.fX(xNew, li);
             if (y < yBest)
