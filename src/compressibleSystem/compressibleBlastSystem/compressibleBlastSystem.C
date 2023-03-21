@@ -86,6 +86,10 @@ Foam::compressibleBlastSystem::compressibleBlastSystem
     e_(thermoPtr_->he())
 {
     thermoPtr_->validate("compressibleBlastSystem", "e");
+
+    // Initialize oldTimes
+    rho_.oldTime();
+    e_.oldTime();
 }
 
 

@@ -93,6 +93,9 @@ protected:
         //- Phase 2 mass flux
         surfaceScalarField alphaRhoPhi2_;
 
+    //- Transport phase densities
+    bool transportPhaseDensity_;
+
 
     //- Allocate models
     virtual void setModels();

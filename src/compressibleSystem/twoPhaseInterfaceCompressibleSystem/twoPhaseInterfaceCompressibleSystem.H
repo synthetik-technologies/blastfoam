@@ -93,12 +93,6 @@ public:
 
     // Member functions
 
-        //- Decode primative variables
-        void decode();
-
-        //- Solve
-        void solve();
-
         //- Update fluxes
         void update();
 };

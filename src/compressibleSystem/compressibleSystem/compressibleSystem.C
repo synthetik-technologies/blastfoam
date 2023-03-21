@@ -200,6 +200,11 @@ Foam::compressibleSystem::compressibleSystem
     {
         solutionDs_ = ((vector(mesh.geometricD()) + vector::one)/2.0);
     }
+
+    // Initialize oldTimes
+    U_.oldTime();
+    rhoU_.oldTime();
+    rhoE_.oldTime();
 }
 
 

@@ -74,14 +74,8 @@ public:
 
     // Member functions
 
-        //- Decode primative variables
-        void decode();
-
         //- Update fluxes
         virtual void update();
-
-        //- Solve
-        void solve();
 };
 
 

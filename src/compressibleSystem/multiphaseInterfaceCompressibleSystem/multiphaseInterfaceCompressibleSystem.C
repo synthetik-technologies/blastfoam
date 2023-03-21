@@ -182,6 +182,12 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
         );
         rhosOwn.set(phasei, rhoLimiter->interpolateOwn());
         rhosNei.set(phasei, rhoLimiter->interpolateNei());
+        fluxScheme::correctPhaseFields
+        (
+            alphas_[phasei],
+            rhosOwn[phasei], rhosNei[phasei],
+            thermo_.thermo(phasei).residualAlpha().value()
+        );
 
         tmp<surfaceScalarField> talphaRhoOwn = surfaceScalarField::New
         (
@@ -325,92 +331,72 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
 }
 
 
-void Foam::multiphaseInterfaceCompressibleSystem::solve()
-{
-    multiphaseCompressibleSystem::solve();
-
-    // Primitive transport of phase densities
-    volScalarField divU(fvc::div(phi_));
-    forAll(rhos_, phasei)
-    {
-        volScalarField deltaRho
-        (
-            fvc::div(fluxScheme_->flux(rhos_[phasei], phi_)) - rhos_[phasei]*divU
-        );
-        this->storeAndBlendOld(rhos_[phasei], false);
-        this->storeAndBlendDelta(deltaRho);
-
-        rhos_[phasei] -= mesh().time().deltaT()*deltaRho;
-    }
-}
-
-
-void Foam::multiphaseInterfaceCompressibleSystem::decode()
-{
-    rho_ == Zero;
-    const extendedNLevelCFCCellToCellStencil& stencil
-    (
-        extendedNLevelCFCCellToCellStencil::New(mesh(), 3)
-    );
-    List<List<scalar>> alphaNei(rho_.size());
-    List<List<scalar>> rhoNei(rho_.size());
-
-    forAll(alphas_, phasei)
-    {
-        volScalarField& alpha = alphas_[phasei];
-        volScalarField& rho = rhos_[phasei];
-        volScalarField& alphaRho = alphaRhos_[phasei];
-
-        alpha.maxMin(0.0, 1.0);
-        alphaRho.max(0);
-
-
-        // Only update cells that have a valid volume fraction
-        // other cell densities are handled by transport of density
-        const scalar rAlpha = thermo_.thermo(phasei).residualAlpha().value();
-        if (usesCompression(alpha.name()))
-        {
-            forAll(alpha, celli)
-            {
-                if (alpha[celli] > rAlpha)
-                {
-                    rho[celli] = alphaRho[celli]/alpha[celli];
-                }
-            }
-
-            stencil.collectData(alpha, alphaNei);
-            stencil.collectData(rho, rhoNei);
-
-            forAll(alpha, celli)
-            {
-                const scalar alphai = alpha[celli];
-                if (alphai < 0.5)
-                {
-                    scalar sumRhoW = 0.0;
-                    scalar sumW = 0.0;
-                    forAll(rhoNei[celli], cj)
-                    {
-                        if (alphaNei[celli][cj] > 0.5)
-                        {
-                            scalar w = 1.0/max(1.0 - alphaNei[celli][cj], rAlpha);
-                            sumRhoW += rhoNei[celli][cj]*w;
-                            sumW += w;
-                        }
-                    }
-                    rho[celli] = sumRhoW/max(sumW, rAlpha);
-                }
-            }
-        }
-        else
-        {
-            rho.ref() = alphaRho()/max(alpha(), rAlpha);
-        }
-        rho.correctBoundaryConditions();
-        alphaRho.boundaryFieldRef() = alpha.boundaryField()*rho.boundaryField();
-        rho_ += alphaRho;
-    }
-
-    compressibleBlastSystem::decode();
-}
+// void Foam::multiphaseInterfaceCompressibleSystem::decode()
+// {
+//     rho_ == Zero;
+//     const extendedNLevelCFCCellToCellStencil& stencil
+//     (
+//         extendedNLevelCFCCellToCellStencil::New(mesh(), 3)
+//     );
+//     List<List<scalar>> alphaNei(rho_.size());
+//     List<List<scalar>> rhoNei(rho_.size());
+//
+//     forAll(alphas_, phasei)
+//     {
+//         volScalarField& alpha = alphas_[phasei];
+//         volScalarField& rho = rhos_[phasei];
+//         volScalarField& alphaRho = alphaRhos_[phasei];
+//
+//         alpha.maxMin(0.0, 1.0);
+//         alphaRho.max(0);
+//
+//
+//         // Only update cells that have a valid volume fraction
+//         // other cell densities are handled by transport of density
+//         const scalar rAlpha = thermo_.thermo(phasei).residualAlpha().value();
+//         if (usesCompression(alpha.name()))
+//         {
+//             forAll(alpha, celli)
+//             {
+//                 if (alpha[celli] > rAlpha)
+//                 {
+//                     rho[celli] = alphaRho[celli]/alpha[celli];
+//                 }
+//             }
+//
+//             stencil.collectData(alpha, alphaNei);
+//             stencil.collectData(rho, rhoNei);
+//
+//             forAll(alpha, celli)
+//             {
+//                 const scalar alphai = alpha[celli];
+//                 if (alphai < 0.5)
+//                 {
+//                     scalar sumRhoW = 0.0;
+//                     scalar sumW = 0.0;
+//                     forAll(rhoNei[celli], cj)
+//                     {
+//                         if (alphaNei[celli][cj] > 0.5)
+//                         {
+//                             scalar w = 1.0/max(1.0 - alphaNei[celli][cj], rAlpha);
+//                             sumRhoW += rhoNei[celli][cj]*w;
+//                             sumW += w;
+//                         }
+//                     }
+//                     rho[celli] = sumRhoW/max(sumW, rAlpha);
+//                 }
+//             }
+//         }
+//         else
+//         {
+//             rho.ref() = alphaRho()/max(alpha(), rAlpha);
+//         }
+//         rho.correctBoundaryConditions();
+//         alphaRho.boundaryFieldRef() = alpha.boundaryField()*rho.boundaryField();
+//         rho_ += alphaRho;
+//     }
+//
+//     compressibleBlastSystem::decode();
+// }
 
 // ************************************************************************* //

@@ -63,7 +63,10 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     {
         // Ensure boundaries are updated
         alphas_[phasei].correctBoundaryConditions();
+        alphas_[phasei].oldTime();
+
         rhos_[phasei].correctBoundaryConditions();
+        rhos_[phasei].oldTime();
 
         word phaseName = alphas_[phasei].group();
         alphaRhos_.set
@@ -81,6 +84,8 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
                 rhos_[phasei].boundaryField().types()
             )
         );
+        alphaRhos_[phasei].oldTime();
+
         alphaPhis_.set
         (
             phasei,
@@ -141,7 +146,10 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     {
         // Ensure boundaries are updated
         alphas_[phasei].correctBoundaryConditions();
+        alphas_[phasei].oldTime();
+
         rhos_[phasei].correctBoundaryConditions();
+        rhos_[phasei].oldTime();
 
         word phaseName = alphas_[phasei].group();
         fluxScheme_->phases().insert(phaseName);
@@ -160,6 +168,8 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
                 rhos_[phasei].boundaryField().types()
             )
         );
+        alphaRhos_[phasei].oldTime();
+
         alphaPhis_.set
         (
             phasei,
