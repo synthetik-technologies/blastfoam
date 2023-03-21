@@ -159,7 +159,7 @@ Foam::multicomponentBlastThermo::integrator::~integrator()
 
 void Foam::multicomponentBlastThermo::correct()
 {
-    if (!species_.size() || !normalise_)
+    if (!species_.size())
     {
         return;
     }
