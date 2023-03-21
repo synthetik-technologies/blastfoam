@@ -31,6 +31,7 @@ Description
 #include "timeSelector.H"
 #include "fvMesh.H"
 #include "dynMeshTools.H"
+#include "internalPolyPatch.H"
 #include "processorPolyPatch.H"
 
 using namespace Foam;
@@ -77,11 +78,15 @@ int main(int argc, char *argv[])
     const word oldFacesInstance = mesh.facesInstance();
 
     // Read arguments
+    const word patchType(internalPolyPatch::typeName);
     const word patchName
     (
-        args.optionLookupOrDefault<word>("patchName", "internal")
+        args.optionLookupOrDefault<word>
+        (
+            "patchName",
+            patchType
+        )
     );
-    const word patchType("internal");
 
     // Do not write fields
     // Usefull if a refined mesh is needed before mesh manipulation
