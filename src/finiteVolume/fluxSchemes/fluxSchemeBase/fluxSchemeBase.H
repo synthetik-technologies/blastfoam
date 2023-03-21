@@ -232,6 +232,37 @@ public:
                 const word& fName
             ) const;
 
+            //- Templated interpolation for a phase, i.e. values at the interface
+            //  are use upwinding based on interface direction
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> phaseInterpolate
+            (
+                const volScalarField& alpha,
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const scalar rAlpha
+            ) const;
+
+            //- Templated interpolation for a phase
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> phaseInterpolate
+            (
+                const volScalarField& alpha,
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
+                const word& name,
+                const scalar rAlpha
+            ) const;
+
+            //- Templated interpolation for a phase
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> phaseInterpolate
+            (
+                const volScalarField& alpha,
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const word& fName,
+                const scalar rAlpha
+            ) const;
+
 
         // Fluxes
 
@@ -273,6 +304,63 @@ public:
                 const surfaceScalarField& phi
             ) const;
 
+
+            //- Own/nei phase interpolation of f
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> phaseFlux
+            (
+                const volScalarField& alpha,
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const surfaceScalarField& phi,
+                const scalar rAlpha,
+                const bool overwrite = true
+            ) const;
+
+            //- Own/nei interpolation of f and alphaRho
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> phaseFlux
+            (
+                const volScalarField& alpha,
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const volScalarField& alphaRho,
+                const surfaceScalarField& phi,
+                const scalar rAlpha,
+                const bool overwrite = true
+            ) const;
+
+            //- Own/nei interpolation of f
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> phaseFlux
+            (
+                const volScalarField& alpha,
+                const GeometricField<Type, fvPatchField, volMesh>& f,
+                const surfaceScalarField& alphaRhoOwn,
+                const surfaceScalarField& alphaRhoNei,
+                const surfaceScalarField& phi,
+                const scalar rAlpha
+            ) const;
+
+            //- Own/nei interpolation of f
+            template<class Type>
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> phaseFlux
+            (
+                const volScalarField& alpha,
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
+                const GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
+                const surfaceScalarField& phi,
+                const scalar rAlpha
+            ) const;
+
+
+        //- Correct phase fields
+        template<class Type>
+        static void correctPhaseFields
+        (
+            const volScalarField& alpha,
+            GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
+            GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
+            const scalar rAlpha
+        );
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const;
