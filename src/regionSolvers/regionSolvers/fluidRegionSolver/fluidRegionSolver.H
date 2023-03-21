@@ -79,6 +79,9 @@ protected:
         //- Velocity field names
         wordList velocityFields_;
 
+        //- Is the mesh moving
+        bool moving_;
+
 
 public:
 

@@ -148,7 +148,7 @@ void Foam::regionSolvers::solid::solve()
                 << st.force() << endl;
         }
     }
-    Info<< indent << "Total: " << forceSum << decrIndent << endl;
+    Info<< indent << "Total: " << forceSum << decrIndent << nl << endl;
 
     // Turn solver information back on
     SolverPerformance<vector>::debug = 1;
@@ -184,5 +184,12 @@ Foam::scalar Foam::regionSolvers::solid::maxCo() const
             solid_->maxCoNum()
         );
 }
+
+
+Foam::scalar Foam::regionSolvers::solid::newDeltaT() const
+{
+    return min(regionSolver::newDeltaT(), solid_->mechanical().newDeltaT());
+}
+
 
 // ************************************************************************* //

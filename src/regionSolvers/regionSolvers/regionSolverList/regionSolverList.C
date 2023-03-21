@@ -342,8 +342,16 @@ bool Foam::regionSolverList::moveMesh(const IterType iter)
 
 void Foam::regionSolverList::solve()
 {
-    label nOuterCorrectors =
-        solutionControls().lookup<label>("nOuterCorrectors");
+    label nOuterCorrectors = 1;
+    if
+    (
+        !solutionControls().found("explicit")
+     || !solutionControls().lookup<bool>("explicit")
+    )
+    {
+        nOuterCorrectors = solutionControls().lookup<label>("nOuterCorrectors");
+    }
+
     iterNo_ = 0;
     bool finished = false;
     bool cleanup = nOuterCorrectors < 2;
@@ -402,7 +410,9 @@ void Foam::regionSolverList::solve()
 
     } while (!finished && iterNo_ < nOuterCorrectors);
 
-    if (convergence() >= CONVERGED)
+    if (nOuterCorrectors == 1)
+    {}
+    else if (convergence() >= CONVERGED)
     {
         Info<< "All regions converged in " << iterNo_
             << " iterations" << nl << endl;
