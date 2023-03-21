@@ -28,7 +28,8 @@ License
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 template<>
-const char* Foam::NamedEnum<Foam::lineSearchEquation::DescentMethod, 3>::names[] =
+const char*
+Foam::NamedEnum<Foam::lineSearchEquation::DescentMethod, 3>::names[] =
 {
     "none",
     "FletcherReeves",
@@ -49,7 +50,6 @@ Foam::lineSearchEquation::lineSearchEquation
 :
     ScalarEquation(-great, great),
     eqns_(eqns),
-    initialized_(false),
     descent_(DescentMethodNames_[descentType]),
     grad_(eqns_.nVar(), 0.0),
     dir_(eqns_.nVar(), 0.0),
@@ -75,7 +75,6 @@ Foam::lineSearchEquation::lineSearchEquation
 :
     ScalarEquation(-great, great),
     eqns_(eqns),
-    initialized_(false),
     descent_(descent),
     grad_(eqns_.nVar(), 0.0),
     dir_(eqns_.nVar(), 0.0),
@@ -112,7 +111,7 @@ void Foam::lineSearchEquation::update
     x0_ = x0;
 
     // Set travel direction, aka normalized, negative gradient
-    if (!initialized_ || descent_ == NONE)
+    if (descent_ == NONE)
     {
         scalar gradMagSqr = 0.0;
         forAll(grad_, i)
@@ -121,7 +120,7 @@ void Foam::lineSearchEquation::update
         }
         dir_ = grad;
         dir_ /= -max(sqrt(gradMagSqr), small);
-        initialized_ = true;
+        beta_ = 1.0;
     }
     else
     {
@@ -173,6 +172,37 @@ void Foam::lineSearchEquation::update
 
     // Store the gradient
     grad_ = grad;
+}
+
+
+void Foam::lineSearchEquation::updateDir
+(
+    const scalarList& x0,
+    const scalarList& dir
+)
+{
+    x0_ = x0;
+    dir_ = dir;
+
+    // Compute total distance, and distances to the true bounds
+    tmp<scalarField> lowerLimits(eqns_.lowerLimits());
+    tmp<scalarField> upperLimits(eqns_.upperLimits());
+    scalar lower = 0.0;
+    scalar upper = 0.0;
+    forAll(dir_, i)
+    {
+        lower += (lowerLimits()[i] - x0[i])*dir_[i];
+        upper += (upperLimits()[i] - x0[i])*dir_[i];
+    }
+
+    // if (lower > upper)
+    // {
+    //     Swap(lower, upper);
+    // }
+
+    // Normal component of the distance to the boundary
+    this->setLower(lower);
+    this->setUpper(upper);
 }
 
 

@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::bisectionUnivariateMinimizationScheme
+    Foam::univariateMinimizationSchemes::bisection
 
 Description
     Univariate minimization using the bisection method
@@ -43,12 +43,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class bisectionUnivariateMinimizationScheme Declaration
+                    Class bisection Declaration
 \*---------------------------------------------------------------------------*/
 
-class bisectionUnivariateMinimizationScheme
+class bisection
 :
     public univariateMinimizationScheme
 {
@@ -59,8 +61,8 @@ public:
 
     // Constructors
 
-        //- Construct for given univariateUnivariateMinimizationScheme
-        bisectionUnivariateMinimizationScheme
+        //- Constructor
+        bisection
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
@@ -68,7 +70,7 @@ public:
 
 
     //- Destructor
-    virtual ~bisectionUnivariateMinimizationScheme()
+    virtual ~bisection()
     {}
 
 
@@ -86,12 +88,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const bisectionUnivariateMinimizationScheme&) = delete;
+        void operator=(const bisection&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

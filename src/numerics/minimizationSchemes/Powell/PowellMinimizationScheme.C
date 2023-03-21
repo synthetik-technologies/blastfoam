@@ -23,98 +23,94 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "bisectionUnivariateMinimizationScheme.H"
+#include "PowellMinimizationScheme.H"
+#include "SortableList.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
 {
-    defineTypeNameAndDebug(bisection, 0);
+    defineTypeNameAndDebug(Powell, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        bisection,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryTwo
+        Powell,
+        dictionaryMultivariate
     );
 }
 }
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::bisection::bisection
+Foam::minimizationSchemes::Powell::Powell
 (
-    const scalarUnivariateEquation& eqn,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
-    univariateMinimizationScheme(eqn, dict)
-{
-    checkY_ = true;
-}
+    basis(eqns, dict),
+    dirs_(eqns.nVar(), scalarList(eqns.nVar(), 0.0))
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::bisection::minimize
+Foam::tmp<Foam::scalarField>
+Foam::minimizationSchemes::Powell::minimize
 (
-    const scalar x,
-    const scalar x1,
-    const scalar x2,
+    const scalarList& x0,
+    const scalarList& xMin,
+    const scalarList& xMax,
     const label li
 ) const
 {
-    scalar xLow = x1;
-    scalar xHigh = x2;
-    scalar xMean = 0.5*(x1 + x2);
-    scalar yLow = eqn_.fx(xLow, li);
-    scalar yHigh = eqn_.fx(xHigh, li);
+    tmp<scalarField> txNew(new scalarField(x0));
+    scalarField& xNew = txNew.ref();
+    scalarField xOld(xNew);
+    scalarField delta(xNew);
+
+    forAll(dirs_, i)
+    {
+        dirs_[i] = 0.0;
+        dirs_[i][i] = 1.0;
+    }
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xLow, xHigh, yLow, yHigh))
+        xOld = xNew;
+        forAll(xNew, diri)
+        {
+            if (norm(dirs_[diri]) > small)
+            {
+                eqns_.limit(xNew);
+                lineSearcher().searchDir(xNew, dirs_[diri], li, xNew);
+            }
+        }
+        for (label diri = 0; diri < dirs_.size()-1; diri++)
+        {
+            dirs_[diri] = dirs_[diri+1];
+        }
+        delta = xNew - xOld;
+        dirs_.last() = delta;
+
+        if (norm(delta) > small)
+        {
+            eqns_.limit(xNew);
+            lineSearcher().searchDir(xNew, delta, li, xNew);
+            delta = xNew - xOld;
+        }
+
+        if (convergedXScale(delta, xNew))
         {
             break;
         }
-
-        if (yHigh < yLow)
-        {
-            xLow = xMean;
-            yLow = eqn_.fx(xLow, li);
-        }
-        else
-        {
-            xHigh = xMean;
-            yHigh = eqn_.fx(xHigh, li);
-        }
-
-        xMean = (xLow + xHigh)*0.5;
-
-        printStepInformation(xMean);
+        printStepInformation(xNew);
     }
-
-    return printFinalInformation(xMean);
+    printFinalInformation(xNew);
+    return txNew;
 }
 
 // ************************************************************************* //

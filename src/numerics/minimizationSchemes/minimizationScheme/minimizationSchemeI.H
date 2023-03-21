@@ -35,9 +35,9 @@ inline Foam::scalarList& Foam::minimizationScheme::xErrors() const
 }
 
 
-inline Foam::scalarList& Foam::minimizationScheme::yErrors() const
+inline Foam::scalar& Foam::minimizationScheme::yError() const
 {
-    return yErrors_;
+    return yError_;
 }
 
 // ************************************************************************* //

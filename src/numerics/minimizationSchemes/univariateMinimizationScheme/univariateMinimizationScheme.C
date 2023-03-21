@@ -41,84 +41,6 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::univariateMinimizationScheme::convergedXScale
-(
-    const scalar error,
-    const scalar s
-) const
-{
-    xErrors_[0] = mag(error);
-    xRelErrors_[0] = xErrors_[0]/max(mag(s), small);
-    return checkConvergence(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
-}
-
-
-bool Foam::univariateMinimizationScheme::convergedX
-(
-    const scalar x1,
-    const scalar x2
-) const
-{
-    xErrors_[0] = mag(x2 - x1);
-    xRelErrors_[0] = xErrors_[0]/stabilise(min(mag(x1), mag(x2)), small);
-    return checkConvergence(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
-}
-
-
-
-bool Foam::univariateMinimizationScheme::convergedYScale
-(
-    const scalar error,
-    const scalar s
-) const
-{
-    yErrors_[0] = mag(error);
-    yRelErrors_[0] = yErrors_[0]/max(mag(s), small);
-    return checkConvergence(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
-}
-
-
-bool Foam::univariateMinimizationScheme::convergedY
-(
-    const scalar y1,
-    const scalar y2
-) const
-{
-    yErrors_[0] = mag(y2 - y1);
-    yRelErrors_[0] = yErrors_[0]/stabilise(min(mag(y1), mag(y2)), small);
-    return checkConvergence(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
-}
-
-
-bool Foam::univariateMinimizationScheme::convergedScale
-(
-    const scalar xError,
-    const scalar xS,
-    const scalar yError,
-    const scalar yS
-) const
-{
-    bool xGood = convergedXScale(xError, xS);
-    bool yGood = convergedYScale(yError, yS);
-    return xGood && yGood;
-}
-
-
-
-bool Foam::univariateMinimizationScheme::converged
-(
-    const scalar x1,
-    const scalar x2,
-    const scalar y1,
-    const scalar y2
-) const
-{
-    bool xGood = convergedX(x1, x2);
-    bool yGood = convergedY(y1, y2);
-    return xGood && yGood;
-}
-
-
 void Foam::univariateMinimizationScheme::printStepInformation
 (
     const scalar val
@@ -132,7 +54,7 @@ void Foam::univariateMinimizationScheme::printStepInformation
         if (checkY_)
         {
             Info<< "    Delta (abs/rel): "
-                << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+                << yError_ << ", " << yRelError_ << endl;
         }
         Info<< "    Value: " << val << endl;
     }
@@ -149,8 +71,8 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
     bool converged =
         (xErrors_[0] - xTolerances_[0] <= 0.0)
      || (xRelErrors_[0] - xRelTolerances_[0] <= 0.0)
-     || (yErrors_[0] - yTolerances_[0] <= 0.0)
-     || (yRelErrors_[0] - yRelTolerances_[0] <= 0.0);
+     || (yError_ - yTolerance_ <= 0.0)
+     || (yRelError_ - yRelTolerance_ <= 0.0);
 
     if (converged)
     {
@@ -173,7 +95,7 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
     if (checkY_)
     {
         Info<< "    Final delta (abs/rel): "
-            << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+            << yError_ << ", " << yRelError_ << endl;
     }
     Info<< "    Value: " << val << endl;
     return val;

@@ -44,13 +44,27 @@ void Foam::exactLineSearch::bracket
     const scalar x0
 ) const
 {
-    scalar dx = dx0_;
+    bracket(lsEqn_, x0, li, dx0_, k_, maxBracketIter_);
+}
+
+
+void Foam::exactLineSearch::bracket
+(
+    scalarEquation& eqn,
+    const scalar x0,
+    const label li,
+    const scalar dx0,
+    const scalar k,
+    const label maxIter
+)
+{
+    scalar dx = dx0;
 
     scalar xa = x0;
-    scalar fxa = lsEqn_.fx(xa, li);
+    scalar fxa = eqn.fx(xa, li);
 
     scalar xb = xa + dx;
-    scalar fxb = lsEqn_.fx(xb, li);
+    scalar fxb = eqn.fx(xb, li);
 
     if (mag(fxb - fxa) < small)
     {
@@ -68,16 +82,16 @@ void Foam::exactLineSearch::bracket
     scalar fxc = fxb;
 
     label iter = 0;
-    while (iter++ < maxBracketIter_)
+    while (iter++ < maxIter)
     {
         xc = xb + dx;
-        fxc = lsEqn_.fx(xc, li);
+        fxc = eqn.fx(xc, li);
 
         if (fxc > fxb)
         {
             // Bound equation and return
-            lsEqn_.setLower(max(min(xa, xc), 0.0));
-            lsEqn_.setUpper(max(xa, xc));
+            eqn.setLower(max(min(xa, xc), 0.0));
+            eqn.setUpper(max(xa, xc));
             return;
         }
 
@@ -87,12 +101,13 @@ void Foam::exactLineSearch::bracket
         xb = xc;
         fxb = fxc;
 
-        dx *= k_;
+        dx *= k;
     }
     WarningInFunction
         << "Could not determine a valid interval containing a minimum in "
         << iter << " iterations " << endl;
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -110,7 +125,7 @@ Foam::exactLineSearch::exactLineSearch
             dict.lookupOrDefault
             (
                 "solver",
-                goldenRatioUnivariateMinimizationScheme::typeName
+                univariateMinimizationSchemes::goldenRatio::typeName
             ),
             lsEqn_,
             dict
@@ -130,7 +145,6 @@ Foam::exactLineSearch::~exactLineSearch()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 void Foam::exactLineSearch::search
 (
     const scalarList& x0,
@@ -149,6 +163,31 @@ void Foam::exactLineSearch::search
 
     lsEqn_.update(x0, grad);
     bracket(li, 0.0);
+    scalar alpha = lineSearcher_->solve(li);
+    xNew = lsEqn_.calcX(alpha);
+
+    // Reset debug flag
+    univariateMinimizationScheme::debug = oldDebug;
+}
+
+
+void Foam::exactLineSearch::searchDir
+(
+    const scalarList& x0,
+    const scalarList& dir,
+    const label li,
+    scalarList& xNew
+) const
+{
+    DebugInfo<< "Conducting line search" << endl;
+
+    // Store current state of the line search class since this would
+    // print out alot of information
+    // Only print if debug level is sufficiently high
+    const label oldDebug = univariateMinimizationScheme::debug;
+    univariateMinimizationScheme::debug = lineSearch::debug;
+
+    lsEqn_.updateDir(x0, dir);
     scalar alpha = lineSearcher_->solve(li);
     xNew = lsEqn_.calcX(alpha);
 

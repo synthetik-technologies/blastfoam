@@ -64,36 +64,6 @@ protected:
         //- Number of location to pre sample
         label nSample_;
 
-        //- Is the solution converged in x
-        bool convergedXScale(const scalar error, const scalar s) const;
-
-        //- Is the solution converged in x
-        bool convergedX(const scalar x1, const scalar x2) const;
-
-        //- Is the solution converged in y
-        bool convergedYScale(const scalar error, const scalar s) const;
-
-        //- Is the solution converged in y
-        bool convergedY(const scalar y1, const scalar y2) const;
-
-        //- Is the solution converged in x and y
-        bool convergedScale
-        (
-            const scalar xError,
-            const scalar xS,
-            const scalar yError,
-            const scalar yS
-        ) const;
-
-        //- Is the solution converged in x and y
-        bool converged
-        (
-            const scalar x1,
-            const scalar x2,
-            const scalar y1,
-            const scalar y2
-        ) const;
-
         //- Print information about the current step
         void printStepInformation(const scalar val) const;
 
@@ -177,14 +147,8 @@ public:
         //- Return the x tolerance
         inline scalar xTolerance() const;
 
-        //- Return the y tolerance
-        inline scalar yTolerance() const;
-
         //- Return the x error
         inline scalar xError() const;
-
-        //- Return the y error
-        inline scalar yError() const;
 
         using minimizationScheme::solve;
 

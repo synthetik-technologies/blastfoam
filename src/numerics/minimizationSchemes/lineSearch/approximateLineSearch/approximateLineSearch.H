@@ -97,6 +97,15 @@ public:
             const label li,
             scalarList& xNew
         ) const;
+
+        //- Search the line for the minimum
+        virtual void searchDir
+        (
+            const scalarList& x0,
+            const scalarList& dir,
+            const label li,
+            scalarList& xNew
+        ) const;
 };
 
 

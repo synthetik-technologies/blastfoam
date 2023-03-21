@@ -148,8 +148,11 @@ public:
 
         // Edit
 
-            // Set direction and start of line search
+            //- Set direction based on gradient and start of line search
             void update(const scalarList& x0, const scalarList& grad);
+
+            //- Set direction based on gradient and start of line search
+            void updateDir(const scalarList& x0, const scalarList& dir);
 
             //- Return the true x values given a distance from the
             //  reference state

@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::quadraticFitUnivariateMinimizationScheme
+    Foam::univariateMinimizationSchemes::quadraticFit
 
 Description
     Univariate minimization using an imposed quadratic fit
@@ -50,12 +50,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
                         Class quadraticFitUnivariateMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class quadraticFitUnivariateMinimizationScheme
+class quadraticFit
 :
     public univariateMinimizationScheme
 {
@@ -67,7 +69,7 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        quadraticFitUnivariateMinimizationScheme
+        quadraticFit
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
@@ -75,7 +77,7 @@ public:
 
 
     //- Destructor
-    virtual ~quadraticFitUnivariateMinimizationScheme()
+    virtual ~quadraticFit()
     {}
 
 
@@ -93,12 +95,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const quadraticFitUnivariateMinimizationScheme&) = delete;
+        void operator=(const quadraticFit&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

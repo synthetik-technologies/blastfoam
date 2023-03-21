@@ -31,19 +31,21 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(NelderMeadMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+    defineTypeNameAndDebug(NelderMead, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        NelderMeadMinimizationScheme,
+        NelderMead,
         dictionaryMultivariate
     );
 }
-
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::NelderMeadMinimizationScheme::NelderMeadMinimizationScheme
+Foam::minimizationSchemes::NelderMead::NelderMead
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
@@ -84,7 +86,7 @@ Foam::NelderMeadMinimizationScheme::NelderMeadMinimizationScheme
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
-Foam::NelderMeadMinimizationScheme::minimize
+Foam::minimizationSchemes::NelderMead::minimize
 (
     const scalarList& x0,
     const scalarList& xMin,

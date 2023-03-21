@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::stepUnivariateMinimizationScheme
+    Foam::univariateMinimizationSchemes::step
 
 Description
     Fine the minimum of a function by stepping by a given increment. If the
@@ -45,12 +45,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class stepUnivariateMinimizationScheme Declaration
+                        Class step Declaration
 \*---------------------------------------------------------------------------*/
 
-class stepUnivariateMinimizationScheme
+class step
 :
     public univariateMinimizationScheme
 {
@@ -71,14 +73,14 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        stepUnivariateMinimizationScheme
+        step
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
     //- Destructor
-    virtual ~stepUnivariateMinimizationScheme()
+    virtual ~step()
     {}
 
 
@@ -96,12 +98,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const stepUnivariateMinimizationScheme&) = delete;
+        void operator=(const step&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

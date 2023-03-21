@@ -29,21 +29,9 @@ inline Foam::scalar Foam::univariateMinimizationScheme::xTolerance() const
 }
 
 
-inline Foam::scalar Foam::univariateMinimizationScheme::yTolerance() const
-{
-    return yTolerances_[0];
-}
-
-
 inline Foam::scalar Foam::univariateMinimizationScheme::xError() const
 {
     return xErrors_[0];
-}
-
-
-inline Foam::scalar Foam::univariateMinimizationScheme::yError() const
-{
-    return yErrors_[0];
 }
 
 

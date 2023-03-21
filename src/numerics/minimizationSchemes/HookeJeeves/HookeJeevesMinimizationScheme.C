@@ -23,39 +23,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "bisectionUnivariateMinimizationScheme.H"
+#include "HookeJeevesMinimizationScheme.H"
+#include "SortableList.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
 {
-    defineTypeNameAndDebug(bisection, 0);
+    defineTypeNameAndDebug(HookeJeeves, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        bisection,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryTwo
+        HookeJeeves,
+        dictionaryMultivariate
     );
 }
 }
@@ -63,58 +46,88 @@ namespace univariateMinimizationSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::bisection::bisection
+Foam::minimizationSchemes::HookeJeeves::HookeJeeves
 (
-    const scalarUnivariateEquation& eqn,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
-    univariateMinimizationScheme(eqn, dict)
+    minimizationScheme(eqns, dict),
+    alpha0_(dict.lookupOrDefault<scalar>("alpha0", 1.0)),
+    gamma_(dict.lookupOrDefault<scalar>("gamma", 0.9))
+
 {
-    checkY_ = true;
+
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::bisection::minimize
+Foam::tmp<Foam::scalarField>
+Foam::minimizationSchemes::HookeJeeves::minimize
 (
-    const scalar x,
-    const scalar x1,
-    const scalar x2,
+    const scalarList& x0,
+    const scalarList& xMin,
+    const scalarList& xMax,
     const label li
 ) const
 {
-    scalar xLow = x1;
-    scalar xHigh = x2;
-    scalar xMean = 0.5*(x1 + x2);
-    scalar yLow = eqn_.fx(xLow, li);
-    scalar yHigh = eqn_.fx(xHigh, li);
+    tmp<scalarField> txNew(new scalarField(x0));
+    scalarField& xNew = txNew.ref();
+    scalarField xOld(x0);
+    scalarField xBest(x0);
+    scalar yBest = eqns_.fX(x0, li);
+    scalar alpha = alpha0_;
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xLow, xHigh, yLow, yHigh))
+        bool improved = false;
+        xOld = xNew;
+
+        forAll(xOld, diri)
         {
-            break;
+            xNew = xOld;
+            xNew[diri] += alpha;
+            eqns_.limit(xNew);
+            scalar y = eqns_.fX(xNew,  li);
+            if (y < yBest)
+            {
+                xBest = xNew;
+                yBest = y;
+                improved = true;
+            }
+
+            xNew[diri] -= 2.0*alpha;
+            eqns_.limit(xNew);
+            y = eqns_.fX(xNew, li);
+            if (y < yBest)
+            {
+                xBest = xNew;
+                yBest = y;
+                improved = true;
+            }
         }
 
-        if (yHigh < yLow)
+        if (!improved)
         {
-            xLow = xMean;
-            yLow = eqn_.fx(xLow, li);
+            alpha *= gamma_;
         }
         else
         {
-            xHigh = xMean;
-            yHigh = eqn_.fx(xHigh, li);
+            xNew = xBest;
+            if (convergedXScale(xNew - xOld, xNew))
+            {
+                break;
+            }
         }
 
-        xMean = (xLow + xHigh)*0.5;
-
-        printStepInformation(xMean);
+        printStepInformation(xNew);
     }
 
-    return printFinalInformation(xMean);
+    xNew.transfer(xBest);
+
+    printFinalInformation(xNew);
+    return txNew;
 }
 
 // ************************************************************************* //

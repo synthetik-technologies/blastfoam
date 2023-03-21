@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "minimizationScheme.H"
-#include "univariateMinimizationScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -38,7 +37,11 @@ Foam::minimizationScheme::New
 {
     Info
         << "Selecting minimization scheme: " << minimizationSchemeType << endl;
-    if (isA<scalarEquation>(eqn))
+    if
+    (
+        isA<scalarEquation>(eqn)
+      && !dictionaryMultivariateConstructorTablePtr_->found(minimizationSchemeType)
+    )
     {
 
         dictionaryUnivariateConstructorTable::iterator cstrIter =

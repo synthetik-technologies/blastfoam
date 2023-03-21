@@ -30,19 +30,22 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(NewtonRaphsonUnivariateMinimizationScheme, 0);
+namespace univariateMinimizationSchemes
+{
+    defineTypeNameAndDebug(NewtonRaphson, 0);
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        NewtonRaphsonUnivariateMinimizationScheme,
+        NewtonRaphson,
         dictionaryTwo
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::NewtonRaphsonUnivariateMinimizationScheme::NewtonRaphsonUnivariateMinimizationScheme
+Foam::univariateMinimizationSchemes::NewtonRaphson::NewtonRaphson
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -54,7 +57,7 @@ Foam::NewtonRaphsonUnivariateMinimizationScheme::NewtonRaphsonUnivariateMinimiza
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::NewtonRaphsonUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::univariateMinimizationSchemes::NewtonRaphson::minimize
 (
     const scalar x,
     const scalar xLow,

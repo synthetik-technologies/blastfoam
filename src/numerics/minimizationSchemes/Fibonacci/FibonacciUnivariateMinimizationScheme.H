@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::FibonacciUnivariateMinimizationScheme
+    Foam::univariateMinimizationSchemes::Fibonacci
 
 Description
     Univariate minimization using the Fibonacci method
@@ -50,12 +50,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class FibonacciUnivariateMinimizationScheme Declaration
+                    Class Fibonacci Declaration
 \*---------------------------------------------------------------------------*/
 
-class FibonacciUnivariateMinimizationScheme
+class Fibonacci
 :
     public univariateMinimizationScheme
 {
@@ -70,14 +72,14 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        FibonacciUnivariateMinimizationScheme
+        Fibonacci
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
     //- Destructor
-    virtual ~FibonacciUnivariateMinimizationScheme()
+    virtual ~Fibonacci()
     {}
 
 
@@ -95,12 +97,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const FibonacciUnivariateMinimizationScheme&) = delete;
+        void operator=(const Fibonacci&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

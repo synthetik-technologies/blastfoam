@@ -96,6 +96,29 @@ bool Foam::minimizationScheme::checkConvergence
 }
 
 
+bool Foam::minimizationScheme::checkConvergence
+(
+    const scalar absError,
+    const scalar relError,
+    const scalar absTol,
+    const scalar relTol
+) const
+{
+    if (stepi_ < minSteps_)
+    {
+        return false;
+    }
+
+    return
+        normalize_
+      ? (
+            relError < relTol
+         || absError < absTol
+        )
+      : absError < absTol;
+}
+
+
 bool Foam::minimizationScheme::convergedXScale
 (
     const scalarList& errors,
@@ -108,6 +131,26 @@ bool Foam::minimizationScheme::convergedXScale
         xRelErrors_[i] = xErrors_[i]/stabilise(mag(s[i]), small);
     }
     return checkConvergence(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
+}
+
+
+bool Foam::minimizationScheme::convergedXScale
+(
+    const scalar error,
+    const scalar s,
+    const label cmpt
+) const
+{
+    xErrors_[cmpt] = mag(error);
+    xRelErrors_[cmpt] = xErrors_[cmpt]/stabilise(mag(s), small);
+
+    return checkConvergence
+    (
+        xErrors_[cmpt],
+        xRelErrors_[cmpt],
+        xTolerances_[cmpt],
+        xRelTolerances_[cmpt]
+    );
 }
 
 
@@ -127,35 +170,50 @@ bool Foam::minimizationScheme::convergedX
 }
 
 
-bool Foam::minimizationScheme::convergedYScale
+bool Foam::minimizationScheme::convergedX
 (
-    const scalarList& errors,
-    const scalarList& s
+    const scalar x1,
+    const scalar x2,
+    const label cmpt
 ) const
 {
-    forAll(yErrors_, i)
-    {
-        yErrors_[i] = mag(errors[i]);
-        yRelErrors_[i] = yErrors_[i]/stabilise(mag(s[i]), small);
-    }
-    return checkConvergence(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
+    xErrors_[cmpt] = mag(x2 - x1);
+    xRelErrors_[cmpt] =
+        xErrors_[cmpt]/stabilise(min(mag(x1), mag(x2)), small);
+
+    return checkConvergence
+    (
+        xErrors_[cmpt],
+        xRelErrors_[cmpt],
+        xTolerances_[cmpt],
+        xRelTolerances_[cmpt]
+    );
+}
+
+
+bool Foam::minimizationScheme::convergedYScale
+(
+    const scalar error,
+    const scalar s
+) const
+{
+    yError_ = mag(error);
+    yRelError_ = yError_/stabilise(mag(s), small);
+
+    return checkConvergence(yError_, yRelError_, yTolerance_, yRelTolerance_);
 }
 
 
 bool Foam::minimizationScheme::convergedY
 (
-    const scalarList& y1,
-    const scalarList& y2
+    const scalar y1,
+    const scalar y2
 ) const
 {
-    forAll(yErrors_, i)
-    {
-
-        yErrors_[i] = mag(y2[i] - y1[i]);
-        yRelErrors_[i] =
-            yErrors_[i]/stabilise(min(mag(y1[i]), mag(y2[i])), small);
-    }
-    return checkConvergence(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
+    yError_ = mag(y2 - y1);
+    yRelError_ =
+        yError_/stabilise(min(mag(y1), mag(y2)), small);
+    return checkConvergence(yError_, yRelError_, yTolerance_, yRelTolerance_);
 }
 
 
@@ -163,8 +221,8 @@ bool Foam::minimizationScheme::convergedScale
 (
     const scalarList& xError,
     const scalarList& xS,
-    const scalarList& yError,
-    const scalarList& yS
+    const scalar yError,
+    const scalar yS
 ) const
 {
     bool xGood = convergedXScale(xError, xS);
@@ -178,11 +236,26 @@ bool Foam::minimizationScheme::converged
 (
     const scalarList& x1,
     const scalarList& x2,
-    const scalarList& y1,
-    const scalarList& y2
+    const scalar y1,
+    const scalar y2
 ) const
 {
     bool xGood = convergedX(x1, x2);
+    bool yGood = convergedY(y1, y2);
+    return xGood && yGood;
+}
+
+
+bool Foam::minimizationScheme::converged
+(
+    const scalar x1,
+    const scalar x2,
+    const scalar y1,
+    const scalar y2,
+    const label cmpt
+) const
+{
+    bool xGood = convergedX(x1, x2, cmpt);
     bool yGood = convergedY(y1, y2);
     return xGood && yGood;
 }
@@ -197,25 +270,31 @@ void Foam::minimizationScheme::printStepInformation
     {
         if (xErrors_.size() > 1)
         {
-            Info<< "Step: " << stepi_ << ":" << nl
-                << "    Errors (abs/rel): "
-                << xErrors_ << ", " << xRelErrors_ << endl;
+            Info<< "Step: " << stepi_ << ":" << endl;
+            if (checkX_)
+            {
+                Info<< "    Errors (abs/rel): "
+                    << xErrors_ << ", " << xRelErrors_ << endl;
+            }
             if (checkY_)
             {
                 Info<< "    Deltas (abs/rel): "
-                    << yErrors_ << ", " << yRelErrors_ << endl;
+                    << yError_ << ", " << yRelError_ << endl;
             }
             Info<< "    Values: " << vals << endl;
         }
         else
         {
-            Info<< "Step: " << stepi_ << ":" << nl
-                << "    Error (abs/rel): "
-                << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+            Info<< "Step: " << stepi_ << ":" << endl;
+            if (checkX_)
+            {
+                Info<< "    Error (abs/rel): "
+                    << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+            }
             if (checkY_)
             {
                 Info<< "    Delta (abs/rel): "
-                    << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+                    << yError_ << ", " << yRelError_ << endl;
             }
             Info<< "    Value: " << vals[0] << endl;
         }
@@ -251,23 +330,29 @@ void Foam::minimizationScheme::printFinalInformation
     }
     if (xErrors_.size() > 1)
     {
-        Info<< "    Final errors (abs/rel): "
-            << xErrors_ << ", " << xRelErrors_ << endl;
+        if (checkX_)
+        {
+            Info<< "    Final errors (abs/rel): "
+                << xErrors_ << ", " << xRelErrors_ << endl;
+        }
         if (checkY_)
         {
             Info<< "    Final deltas (abs, rel): "
-                << yErrors_ << ", " << yRelErrors_ << endl;
+                << yError_ << ", " << yRelError_ << endl;
         }
         Info<< "    Values: " << vals << endl;
     }
     else
     {
-        Info<< "    Final error (abs/rel): "
-            << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+        if (checkX_)
+        {
+            Info<< "    Final error (abs/rel): "
+                << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+        }
         if (checkY_)
         {
             Info<< "    Final delta (abs, rel): "
-                << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+                << yError_ << ", " << yRelError_ << endl;
         }
         Info<< "    Value: " << vals[0] << endl;
     }
@@ -390,36 +475,20 @@ Foam::minimizationScheme::minimizationScheme
             )
         )
     ),
-    yTolerances_
+    yTolerance_
     (
         dict.lookupOrDefaultBackwardsCompatible
         (
-            {"yTolerances", "tolerances"},
-            scalarList
-            (
-                eqns_.nVar(),
-                dict.lookupOrDefaultBackwardsCompatible
-                (
-                    {"yTolerance", "tolerance"},
-                    1e-6
-                )
-            )
+            {"yTolerance", "tolerance"},
+            1e-6
         )
     ),
-    yRelTolerances_
+    yRelTolerance_
     (
         dict.lookupOrDefaultBackwardsCompatible
         (
-            {"yRelTolerances", "tolerances"},
-            scalarList
-            (
-                eqns_.nVar(),
-                dict.lookupOrDefaultBackwardsCompatible
-                (
-                    {"yRelTolerance", "relTolerance"},
-                    1e-6
-                )
-            )
+            {"yRelTolerance", "tolerance"},
+            1e-6
         )
     ),
     minSteps_(dict.lookupOrDefault<scalar>("minIter", 0)),
@@ -427,8 +496,8 @@ Foam::minimizationScheme::minimizationScheme
     stepi_(0),
     xErrors_(eqns.nVar(), great),
     xRelErrors_(eqns.nVar(), great),
-    yErrors_(eqns.nVar(), great),
-    yRelErrors_(eqns.nVar(), great),
+    yError_(great),
+    yRelError_(great),
     nSamples_
     (
         dict.lookupOrDefault<labelList>
@@ -443,6 +512,7 @@ Foam::minimizationScheme::minimizationScheme
     ),
     normalize_(dict.lookupOrDefault("normaliseError", true)),
     tau_(dict.lookupOrDefault<scalar>("tau", 0.5)),
+    checkX_(true),
     checkY_(false),
 
     lineSearch_(nullptr)
@@ -524,15 +594,20 @@ Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 
 bool Foam::minimizationScheme::converged() const
 {
-    bool c =
-        max(xErrors_ - xTolerances_) <= 0.0
-     || max(xRelErrors_ - xRelTolerances_) <= 0.0;
+    bool c = false;
+    if (checkX_)
+    {
+        c =
+            c
+         || max(xErrors_ - xTolerances_) <= 0.0
+         || max(xRelErrors_ - xRelTolerances_) <= 0.0;
+    }
     if (checkY_)
     {
         c =
             c
-         || max(yErrors_ - yTolerances_) <= 0.0
-         || max(yRelErrors_ - yRelTolerances_) <= 0.0;
+         || (yError_ - yTolerance_ <= 0.0)
+         || (yRelError_ - yRelTolerance_ <= 0.0);
     }
     return c;
 }

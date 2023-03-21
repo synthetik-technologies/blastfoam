@@ -30,25 +30,28 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(particleSwarmMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+    defineTypeNameAndDebug(particleSwarm, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        particleSwarmMinimizationScheme,
+        particleSwarm,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        particleSwarmMinimizationScheme,
+        particleSwarm,
         dictionaryMultivariate
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::particleSwarmMinimizationScheme::particleSwarmMinimizationScheme
+Foam::minimizationSchemes::particleSwarm::particleSwarm
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
@@ -67,7 +70,7 @@ Foam::particleSwarmMinimizationScheme::particleSwarmMinimizationScheme
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
-Foam::particleSwarmMinimizationScheme::minimize
+Foam::minimizationSchemes::particleSwarm::minimize
 (
     const scalarList& x0,
     const scalarList& xLow,

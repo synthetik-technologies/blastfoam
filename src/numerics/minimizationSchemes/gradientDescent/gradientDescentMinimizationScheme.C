@@ -30,25 +30,28 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(gradientDescentMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+    defineTypeNameAndDebug(gradientDescent, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        gradientDescentMinimizationScheme,
+        gradientDescent,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        gradientDescentMinimizationScheme,
+        gradientDescent,
         dictionaryMultivariate
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
+Foam::minimizationSchemes::gradientDescent::gradientDescent
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
@@ -61,7 +64,7 @@ Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
-Foam::gradientDescentMinimizationScheme::minimize
+Foam::minimizationSchemes::gradientDescent::minimize
 (
     const scalarList& x0,
     const scalarList& xLow,

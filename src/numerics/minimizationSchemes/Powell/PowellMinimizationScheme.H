@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2023
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,120 +22,84 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::lineSearch
+    Foam::minimizationSchemes::Powell
 
 Description
-    Base class for line search methods
+    Gradient free minimization scheme of Powell
+
+References:
+    \verbatim
+        "Algorithms for Optimization",
+        Kochenderfer, M. J., Wheeler, T. A.,
+        The MIT Press, Cambridge, Massachusetts, 2019.
+    \endverbatim
 
 SourceFiles
-    lineSearch.C
+    PowellMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef lineSearch_H
-#define lineSearch_H
+#ifndef PowellMinimizationScheme_H
+#define PowellMinimizationScheme_H
 
-#include "UnivariateEquationsFwd.H"
-#include "lineSearchEquation.H"
+#include "basisMinimizationScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class lineSearch Declaration
+                        Class Powell Declaration
 \*---------------------------------------------------------------------------*/
 
-class lineSearch
+class Powell
+:
+    public basis
 {
-protected:
-
-    // Protected data
-
-        //- Reference to scalarEquation
-        const scalarUnivariateEquation& eqns_;
-
-        //- Line search equation
-        mutable lineSearchEquation lsEqn_;
+private:
+    // Private member data
+    mutable List<scalarList> dirs_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("lineSearch");
-
-    // Declare run-time constructor selection tables
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            lineSearch,
-            dictionary,
-            (const scalarUnivariateEquation& eqns, const dictionary& dict),
-            (eqns, dict)
-        );
-
+    TypeName("Powell");
 
     // Constructors
 
-        //- Construct for given equation
-        lineSearch
-        (
-            const scalarUnivariateEquation& eqns,
-            const dictionary& dict
-        );
-
-        //- Disallow default bitwise copy construction
-        lineSearch(const lineSearch&) = delete;
-
-
-    // Selectors
-
-        //- Select using a dictionary
-        static autoPtr<lineSearch> New
+        //- Construct for given minimizationScheme
+        Powell
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
-
     //- Destructor
-    virtual ~lineSearch();
+    virtual ~Powell()
+    {}
 
 
     // Member Functions
 
-        //- Search the line for the minimum
-        virtual void search
+        //- Solve the root
+        virtual tmp<scalarField> minimize
         (
             const scalarList& x0,
-            const scalarList& grad,
-            const label li,
-            scalarList& xNew
-        ) const = 0;
+            const scalarList& x1,
+            const scalarList& x2,
+            const label li
+        ) const;
 
-        //- Search the line for the minimum
-        virtual void searchDir
-        (
-            const scalarList& x0,
-            const scalarList& dir,
-            const label li,
-            scalarList& xNew
-        ) const = 0;
-
-        //- Return if the solution converged
-        // virtual bool converged() const = 0;
-
-
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const lineSearch&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

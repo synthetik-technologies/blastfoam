@@ -30,45 +30,48 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(goldenRatioUnivariateMinimizationScheme, 0);
+namespace univariateMinimizationSchemes
+{
+    defineTypeNameAndDebug(goldenRatio, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        goldenRatioUnivariateMinimizationScheme,
+        goldenRatio,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        goldenRatioUnivariateMinimizationScheme,
+        goldenRatio,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        goldenRatioUnivariateMinimizationScheme,
+        goldenRatio,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        goldenRatioUnivariateMinimizationScheme,
+        goldenRatio,
         dictionaryTwo
     );
 }
+}
 
-const Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::goldenRatio =
-    (sqrt(5.0) + 1.0)/2.0;
-
-const Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::invPhi =
+const Foam::scalar
+Foam::univariateMinimizationSchemes::goldenRatio::invPhi =
     (sqrt(5.0) - 1.0)/2.0;
 
-const Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::invPhi2 =
+const Foam::scalar
+Foam::univariateMinimizationSchemes::goldenRatio::invPhi2 =
     (3.0 - sqrt(5.0))/2.0;
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::goldenRatioUnivariateMinimizationScheme::goldenRatioUnivariateMinimizationScheme
+Foam::univariateMinimizationSchemes::goldenRatio::goldenRatio
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -82,7 +85,7 @@ Foam::goldenRatioUnivariateMinimizationScheme::goldenRatioUnivariateMinimization
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::univariateMinimizationSchemes::goldenRatio::minimize
 (
     const scalar x,
     const scalar x1,
@@ -93,10 +96,13 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
     scalar a = min(x1, x2);
     scalar b = max(x1, x2);
     scalar h = b - a;
+
     label n = ceil(log(xTolerance()/h)/log(invPhi));
 
     scalar c = a + invPhi2*h;
+    eqn_.limit(c);
     scalar d = a + invPhi*h;
+    eqn_.limit(d);
 
     scalar yc = eqn_.fx(c, li);
     scalar yd = eqn_.fx(d, li);
@@ -110,6 +116,7 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
             yd = yc;
             h = invPhi*h;
             c = a + invPhi2*h;
+            eqn_.limit(c);
             yc = eqn_.fx(c, li);
         }
         else
@@ -119,6 +126,7 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
             yc = yd;
             h = invPhi*h;
             d = a + invPhi*h;
+            eqn_.limit(d);
             yd = eqn_.fx(d, li);
         }
 

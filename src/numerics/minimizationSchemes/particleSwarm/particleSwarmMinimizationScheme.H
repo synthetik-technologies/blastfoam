@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::particleSwarmMinimizationScheme
+    Foam::minimizationSchemes::particleSwarm
 
 Description
     Gradient free minimization using a swarm of particles to randomly sample
@@ -52,12 +52,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-        Class particleSwarmMinimizationScheme Declaration
+        Class particleSwarm Declaration
 \*---------------------------------------------------------------------------*/
 
-class particleSwarmMinimizationScheme
+class particleSwarm
 :
     public minimizationScheme
 {
@@ -93,14 +95,14 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        particleSwarmMinimizationScheme
+        particleSwarm
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
     //- Destructor
-    virtual ~particleSwarmMinimizationScheme()
+    virtual ~particleSwarm()
     {}
 
 
@@ -120,6 +122,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

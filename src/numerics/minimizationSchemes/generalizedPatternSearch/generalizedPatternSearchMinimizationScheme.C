@@ -23,39 +23,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "bisectionUnivariateMinimizationScheme.H"
+#include "generalizedPatternSearchMinimizationScheme.H"
+#include "SortableList.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
 {
-    defineTypeNameAndDebug(bisection, 0);
+    defineTypeNameAndDebug(generalizedPatternSearch, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        bisection,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryTwo
+        generalizedPatternSearch,
+        dictionaryMultivariate
     );
 }
 }
@@ -63,58 +46,32 @@ namespace univariateMinimizationSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::bisection::bisection
+Foam::minimizationSchemes::generalizedPatternSearch::generalizedPatternSearch
 (
-    const scalarUnivariateEquation& eqn,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
-    univariateMinimizationScheme(eqn, dict)
-{
-    checkY_ = true;
-}
+    minimizationScheme(eqns, dict),
+    reflectionCoeff_(dict.lookupOrDefault<scalar>("reflectionCoeff", 1.0)),
+    expansionCoeff_(dict.lookupOrDefault<scalar>("expansionCoeff", 2.0)),
+    contractionCoeff_(dict.lookupOrDefault<scalar>("contractionCoeff", 0.5))
+
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::bisection::minimize
+Foam::tmp<Foam::scalarField>
+Foam::minimizationSchemes::generalizedPatternSearch::minimize
 (
-    const scalar x,
-    const scalar x1,
-    const scalar x2,
+    const scalarList& x0,
+    const scalarList& xMin,
+    const scalarList& xMax,
     const label li
 ) const
 {
-    scalar xLow = x1;
-    scalar xHigh = x2;
-    scalar xMean = 0.5*(x1 + x2);
-    scalar yLow = eqn_.fx(xLow, li);
-    scalar yHigh = eqn_.fx(xHigh, li);
 
-    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
-    {
-        if (converged(xLow, xHigh, yLow, yHigh))
-        {
-            break;
-        }
-
-        if (yHigh < yLow)
-        {
-            xLow = xMean;
-            yLow = eqn_.fx(xLow, li);
-        }
-        else
-        {
-            xHigh = xMean;
-            yHigh = eqn_.fx(xHigh, li);
-        }
-
-        xMean = (xLow + xHigh)*0.5;
-
-        printStepInformation(xMean);
-    }
-
-    return printFinalInformation(xMean);
 }
 
 // ************************************************************************* //

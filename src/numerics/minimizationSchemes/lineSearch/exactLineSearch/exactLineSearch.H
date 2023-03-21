@@ -53,7 +53,7 @@ class exactLineSearch
     public lineSearch
 {
 protected:
-    // Private member data
+    // Protected member data
 
         //- Line search minimization scheme
         mutable autoPtr<univariateMinimizationScheme> lineSearcher_;
@@ -111,6 +111,29 @@ public:
             const label li,
             scalarList& xNew
         ) const;
+
+        //- Search the line for the minimum
+        virtual void searchDir
+        (
+            const scalarList& x0,
+            const scalarList& dir,
+            const label li,
+            scalarList& xNew
+        ) const;
+
+
+    // Static functions
+
+        //- Bracket solution
+        static void bracket
+        (
+            scalarEquation& eqn,
+            const scalar x0,
+            const label li,
+            const scalar dx0,
+            const scalar k,
+            const label maxIter
+        );
 };
 
 

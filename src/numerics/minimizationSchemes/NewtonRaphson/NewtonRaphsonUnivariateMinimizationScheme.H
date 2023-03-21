@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NewtonRaphsonUnivariateMinimizationScheme
+    Foam::univariateMinimizationSchemes::NewtonRaphson
 
 Description
     Univariate minimization using the a Newton-Raphson method. First and
@@ -45,12 +45,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class NewtonRaphsonUnivariateMinimizationScheme Declaration
+                          Class NewtonRaphson Declaration
 \*---------------------------------------------------------------------------*/
 
-class NewtonRaphsonUnivariateMinimizationScheme
+class NewtonRaphson
 :
     public univariateMinimizationScheme
 {
@@ -62,7 +64,7 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        NewtonRaphsonUnivariateMinimizationScheme
+        NewtonRaphson
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
@@ -70,7 +72,7 @@ public:
 
 
     //- Destructor
-    virtual ~NewtonRaphsonUnivariateMinimizationScheme()
+    virtual ~NewtonRaphson()
     {}
 
 
@@ -88,12 +90,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const NewtonRaphsonUnivariateMinimizationScheme&) = delete;
+        void operator=(const NewtonRaphson&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -23,39 +23,21 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "bisectionUnivariateMinimizationScheme.H"
+#include "cyclicCoordinateMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
 {
-    defineTypeNameAndDebug(bisection, 0);
+    defineTypeNameAndDebug(cyclicCoordinate, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        bisection,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateMinimizationScheme,
-        bisection,
-        dictionaryTwo
+        cyclicCoordinate,
+        dictionaryMultivariate
     );
 }
 }
@@ -63,58 +45,55 @@ namespace univariateMinimizationSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::bisection::bisection
+Foam::minimizationSchemes::cyclicCoordinate::cyclicCoordinate
 (
-    const scalarUnivariateEquation& eqn,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
-    univariateMinimizationScheme(eqn, dict)
-{
-    checkY_ = true;
-}
+    basis(eqns, dict),
+    accelerate_(dict.lookupOrDefault<bool>("accelerate", true))
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::bisection::minimize
+Foam::tmp<Foam::scalarField>
+Foam::minimizationSchemes::cyclicCoordinate::minimize
 (
-    const scalar x,
-    const scalar x1,
-    const scalar x2,
+    const scalarList& x0,
+    const scalarList& xMin,
+    const scalarList& xMax,
     const label li
 ) const
 {
-    scalar xLow = x1;
-    scalar xHigh = x2;
-    scalar xMean = 0.5*(x1 + x2);
-    scalar yLow = eqn_.fx(xLow, li);
-    scalar yHigh = eqn_.fx(xHigh, li);
+    tmp<scalarField> txNew(new scalarField(x0));
+    scalarField& xNew = txNew.ref();
+    scalarField xOld(xNew);
+    scalarField delta(xNew);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xLow, xHigh, yLow, yHigh))
+        xOld = xNew;
+        forAll(xNew, diri)
+        {
+            basis::searchDir(xNew, li, diri, 1, xNew);
+        }
+
+        delta = xNew - xOld;
+        if (accelerate_)
+        {
+            lineSearcher().search(xNew, delta, li, xNew);
+            delta = xNew - xOld;
+        }
+        if (convergedXScale(delta, xNew))
         {
             break;
         }
-
-        if (yHigh < yLow)
-        {
-            xLow = xMean;
-            yLow = eqn_.fx(xLow, li);
-        }
-        else
-        {
-            xHigh = xMean;
-            yHigh = eqn_.fx(xHigh, li);
-        }
-
-        xMean = (xLow + xHigh)*0.5;
-
-        printStepInformation(xMean);
+        printStepInformation(xNew);
     }
-
-    return printFinalInformation(xMean);
+    printFinalInformation(xNew);
+    return txNew;
 }
 
 // ************************************************************************* //

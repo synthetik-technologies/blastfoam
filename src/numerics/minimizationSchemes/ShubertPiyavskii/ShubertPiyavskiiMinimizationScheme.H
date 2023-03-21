@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::ShubertPiyavskiiMinimizationScheme
+    Foam::univariateMinimizationSchemes::ShubertPiyavskii
 
 Description
     Find root using the ShubertPiyavskii method
@@ -44,12 +44,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class ShubertPiyavskiiMinimizationScheme Declaration
+                        Class ShubertPiyavskii Declaration
 \*---------------------------------------------------------------------------*/
 
-class ShubertPiyavskiiMinimizationScheme
+class ShubertPiyavskii
 :
     public univariateMinimizationScheme
 {
@@ -70,18 +72,18 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        ShubertPiyavskiiMinimizationScheme
+        ShubertPiyavskii
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
         //- Disallow default bitwise copy construction
-        ShubertPiyavskiiMinimizationScheme(const minimizationScheme&) = delete;
+        ShubertPiyavskii(const minimizationScheme&) = delete;
 
 
     //- Destructor
-    virtual ~ShubertPiyavskiiMinimizationScheme()
+    virtual ~ShubertPiyavskii()
     {}
 
 
@@ -99,12 +101,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const ShubertPiyavskiiMinimizationScheme&) = delete;
+        void operator=(const ShubertPiyavskii&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

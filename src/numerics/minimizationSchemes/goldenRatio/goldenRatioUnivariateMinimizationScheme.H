@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::goldenRatioUnivariateMinimizationScheme
+    Foam::univariateMinimizationSchemes::goldenRatio
 
 Description
     Univariate minimization using the golden ratio to determine the next
@@ -51,16 +51,17 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-            Class goldenRatioUnivariateMinimizationScheme Declaration
+                        Class goldenRatio Declaration
 \*---------------------------------------------------------------------------*/
 
-class goldenRatioUnivariateMinimizationScheme
+class goldenRatio
 :
     public univariateMinimizationScheme
 {
-    const static scalar goldenRatio;
     const static scalar invPhi;
     const static scalar invPhi2;
 
@@ -69,18 +70,16 @@ public:
     //- Runtime type information
     TypeName("goldenRatio");
 
-    // Constructors
-
-        //- Construct for given univariateUnivariateMinimizationScheme
-        goldenRatioUnivariateMinimizationScheme
-        (
-            const scalarUnivariateEquation& eqn,
-            const dictionary& dict
-        );
+    // Constructor
+    goldenRatio
+    (
+        const scalarUnivariateEquation& eqn,
+        const dictionary& dict
+    );
 
 
     //- Destructor
-    virtual ~goldenRatioUnivariateMinimizationScheme()
+    virtual ~goldenRatio()
     {}
 
 
@@ -98,12 +97,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const goldenRatioUnivariateMinimizationScheme&) = delete;
+        void operator=(const goldenRatio&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

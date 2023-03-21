@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NelderMeadMinimizationScheme
+    Foam:minimizationSchemes::NelderMead
 
 Description
     Gradient free minimization scheme of Nelder-Mead
@@ -51,12 +51,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-        Class NelderMeadMinimizationScheme Declaration
+                        Class NelderMead Declaration
 \*---------------------------------------------------------------------------*/
 
-class NelderMeadMinimizationScheme
+class NelderMead
 :
     public minimizationScheme
 {
@@ -121,14 +123,14 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        NelderMeadMinimizationScheme
+        NelderMead
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
     //- Destructor
-    virtual ~NelderMeadMinimizationScheme()
+    virtual ~NelderMead()
     {}
 
 
@@ -148,6 +150,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -97,8 +97,19 @@ void Foam::approximateLineSearch::search
         }
     }
 
-    Info<<"alpha: "<<alpha_<<" "<<grad<<" "<<lsEqn_.dir()<<endl;
     xNew = lsEqn_.calcX(alpha_);
+}
+
+
+void Foam::approximateLineSearch::searchDir
+(
+    const scalarList& x0,
+    const scalarList& dir,
+    const label li,
+    scalarList& xNew
+) const
+{
+    NotImplemented;
 }
 
 

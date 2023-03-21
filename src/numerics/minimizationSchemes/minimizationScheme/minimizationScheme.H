@@ -69,11 +69,11 @@ protected:
         //- Relative convergence tolerances for x
         scalarField xRelTolerances_;
 
-        //- Absolute convergence tolerances for y
-        scalarField yTolerances_;
+        //- Absolute convergence tolerance for y
+        scalar yTolerance_;
 
-        //- Relative convergence tolerances for y
-        scalarField yRelTolerances_;
+        //- Relative convergence tolerance for y
+        scalar yRelTolerance_;
 
         //- The minimum number of sub-steps allowed for the integration step
         label minSteps_;
@@ -90,11 +90,11 @@ protected:
         //- Current relative x errors
         mutable scalarList xRelErrors_;
 
-        //- Current absolute delta y errors
-        mutable scalarList yErrors_;
+        //- Current absolute delta y error
+        mutable scalar yError_;
 
-        //- Current relative delta y errors
-        mutable scalarList yRelErrors_;
+        //- Current relative delta y error
+        mutable scalar yRelError_;
 
         //- Number of pre-samples in each direction
         labelList nSamples_;
@@ -105,7 +105,10 @@ protected:
         //- Line search reduction coefficient
         scalar tau_;
 
-        //- In convergence in the delta checked
+        //- Is convergence in x checked
+        bool checkX_;
+
+        //- Is convergence in the delta checked
         bool checkY_;
 
         //- Line search method
@@ -127,6 +130,15 @@ protected:
                 const scalarList& s
             ) const;
 
+            //- Is the solution converged in x
+            bool convergedXScale
+            (
+                const scalar error,
+                const scalar s,
+                const label cmpt = 0
+            ) const;
+
+            //- Check convergence of a list of error
             bool checkConvergence
             (
                 const scalarList& absErrors,
@@ -135,26 +147,43 @@ protected:
                 const scalarList& relTols
             ) const;
 
+            // Check convergence of an error
+            bool checkConvergence
+            (
+                const scalar absError,
+                const scalar relError,
+                const scalar absTol,
+                const scalar relTol
+            ) const;
+
             //- Is the solution converged in w.r.t x
             bool convergedX(const scalarList& x1, const scalarList& x2) const;
+
+            //- Is the solution converged in x
+            bool convergedX
+            (
+                const scalar x1,
+                const scalar x2,
+                const label cmpt = 0
+            ) const;
 
             //- Is the solution converged in w.r.t y
             bool convergedYScale
             (
-                const scalarList& error,
-                const scalarList& s
+                const scalar error,
+                const scalar s
             ) const;
 
             //- Is the solution converged in w.r.t y
-            bool convergedY(const scalarList& y1, const scalarList& y2) const;
+            bool convergedY(const scalar y1, const scalar y2) const;
 
             //- Is the solution converged in x and y
             bool convergedScale
             (
                 const scalarList& xError,
                 const scalarList& xS,
-                const scalarList& yError,
-                const scalarList& yS
+                const scalar yError,
+                const scalar yS
             ) const;
 
             //- Is the solution converged in x and y
@@ -162,8 +191,18 @@ protected:
             (
                 const scalarList& x1,
                 const scalarList& x2,
-                const scalarList& y1,
-                const scalarList& y2
+                const scalar y1,
+                const scalar y2
+            ) const;
+
+            //- Is the solution converged in x and y
+            bool converged
+            (
+                const scalar x1,
+                const scalar x2,
+                const scalar y1,
+                const scalar y2,
+                const label cmpt = 0
             ) const;
 
             //- Print information about the current step
@@ -259,10 +298,10 @@ public:
         inline scalarList& xRelErrors() const;
 
         //- Return the absolute y errors
-        inline scalarList& yErrors() const;
+        inline scalar& yError() const;
 
         //- Return the relative y errors
-        inline scalarList& yRelErrors() const;
+        inline scalar& yRelError() const;
 
         //- Find the root of the equation
         virtual tmp<scalarField> solve() const;
