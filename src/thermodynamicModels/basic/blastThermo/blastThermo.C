@@ -260,13 +260,13 @@ Foam::word Foam::blastThermo::readThermoType(const dictionary& dict)
 Foam::wordList Foam::blastThermo::splitThermoName
 (
     const word& thermoName,
-    const int nCmpt
+    const label nCmpt
 )
 {
     wordList cmpts(nCmpt);
 
     string::size_type beg=0, end=0, endb=0, endc=0;
-    int i = 0;
+    label i = 0;
 
     while
     (
