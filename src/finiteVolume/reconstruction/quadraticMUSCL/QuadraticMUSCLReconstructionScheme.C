@@ -40,8 +40,8 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::QuadraticMUSCLReconstructionSche
     ReconstructionScheme<Type>(phi, is, overwrite),
     gradPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0),
     hessPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0),
-    bound_(is.good() ? readBool(is) : true),
-    extrapolate_(is.good() ? readBool(is) : false)
+    bound_(true),
+    extrapolate_(false)
 {
     if (this->overwrite_)
     {

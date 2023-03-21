@@ -62,6 +62,10 @@ class UpwindMUSCLReconstructionScheme
         return tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>();
     }
 
+    //- Read optional inputs
+    void read(Istream& is)
+    {}
+
 
 public:
 

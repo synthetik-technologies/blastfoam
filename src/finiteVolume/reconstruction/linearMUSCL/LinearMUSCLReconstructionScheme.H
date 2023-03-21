@@ -75,6 +75,19 @@ protected:
         return gradPhis_[diri];
     }
 
+    //- Read optional inputs
+    void read(Istream& is)
+    {
+        if (is.good())
+        {
+            bound_ = readBool(is);
+        }
+        if (is.good())
+        {
+            extrapolate_ = readBool(is);
+        }
+    }
+
 public:
 
     //- Runtime type information

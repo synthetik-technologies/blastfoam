@@ -87,7 +87,9 @@ public:
         :
             MUSCLType(phi, is, overwrite),
             Limiter(is)
-        {}
+        {
+            MUSCLType::read(is);
+        }
 
     //- Destructor
     virtual ~MUSCLReconstructionScheme()

@@ -68,7 +68,18 @@ Foam::word Foam::reconstruction::scheme
     word baseScheme(scheme(baseName));
     word nameScheme(scheme(name));
 
-    if (interpDict.found(nameScheme))
+    // Exact match, no pattern
+    if (interpDict.found(nameScheme, false, false))
+    {
+        return nameScheme;
+    }
+    else if (interpDict.found(baseScheme, false, false))
+    {
+        return baseScheme;
+    }
+
+    // Patterns allowed
+    else if (interpDict.found(nameScheme))
     {
         return nameScheme;
     }
@@ -76,10 +87,14 @@ Foam::word Foam::reconstruction::scheme
     {
         return baseScheme;
     }
+
+    // Default
     else if (interpDict.found("defaultReconstruction"))
     {
         return "defaultReconstruction";
     }
+
+    // Not found
     else if (fail && overwrite)
     {
         FatalErrorInFunction
