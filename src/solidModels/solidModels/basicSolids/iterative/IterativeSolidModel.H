@@ -67,11 +67,20 @@ class IterativeSolidModel
 {
     // Private data
 
-        //- Solution standard tolerance
+        //- Absolute tolerance
+        scalar tolerance_;
+
+        //- Relative tolerance
+        scalar relTol_;
+
+        //- Solution tolerance
         scalar solutionTol_;
 
-        //- Material law tolerance
+        //- Material law absolute tolerance
         scalar materialTol_;
+
+        //- Material law relative tolerance
+        scalar materialRelTol_;
 
         //- Solution tighter tolerance
         scalar alternativeTol_;
@@ -150,6 +159,18 @@ protected:
         Ostream& residualFile() const
         {
             return residualFilePtr_();
+        }
+
+        //- Return absolute tolerance
+        scalar tolerance() const
+        {
+            return tolerance_;
+        }
+
+        //- Return relative tolerance
+        scalar relTol() const
+        {
+            return relTol_;
         }
 
         //- Return solution standard tolerance

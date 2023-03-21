@@ -43,6 +43,8 @@ Author
 #include "mapPolyMesh.H"
 #include "cellRemovalLaw.H"
 
+#include "fvMeshSubset.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -56,7 +58,8 @@ class cellRemovalFvMesh
 :
     public dynamicFvMesh
 {
-    // Private Data Members
+protected:
+    // Protected Data Members
 
         //- Settings dictionary
         dictionary dict_;
@@ -70,8 +73,35 @@ class cellRemovalFvMesh
         //- Law for governing which cells are removed
         autoPtr<cellRemovalLaw> lawPtr_;
 
+        //- Current time index
+        label curIndex_;
+
+        //- Flag to save the subset cells
+        mutable bool saveSubset_;
+
+        //- Removed subMesh
+        mutable autoPtr<fvMeshSubset> subsetter_;
+
 
     // Private Member Functions
+
+        //- Compute the map from face index to patch index for exposed faces
+        labelList patchFaceMap
+        (
+            const mapPolyMesh& mpm,
+            const labelList& exposedFaces
+        ) const;
+
+        //- Mark dead cells
+        label addDeadCells(labelList& cellsToRemove);
+
+        //- Sync faces across coupled patches
+        void syncVisitedFaces
+        (
+            PackedBoolList& visited,
+            PackedBoolList& marked,
+            labelHashSet& newFacesToVisit
+        ) const;
 
         //- Update volField values on the newly exposed faces
         //  The values on the new faces are extrapolated from the internal
@@ -80,8 +110,13 @@ class cellRemovalFvMesh
         void updateVolFieldsExposedFaces
         (
             const mapPolyMesh& map,
-            const labelList& exposedFaces
+            const labelList& exposedFaces,
+            const labelList& patchFaceMap
         ) const;
+
+        //- Save geometric fields
+        template<class Type, template<class> class Patch, class Mesh>
+        void saveGeoFields(objectRegistry&) const;
 
         //- Disallow default bitwise copy construct
         cellRemovalFvMesh(const cellRemovalFvMesh&);
@@ -111,9 +146,29 @@ public:
 
         //- Update the mesh for both mesh motion and topology change
         virtual bool update();
+
+        //- Apply topological changes
         virtual bool refine(const bool correctError = true)
         {
             return false;
+        }
+
+        //- Mark to save the previous regions when removing cells
+        void subsetRemovedCells() const
+        {
+            saveSubset_ = true;
+        }
+
+        //- Return if cells have been removed
+        bool active() const
+        {
+            return subsetter_.valid();
+        }
+
+        //- Return the subset region
+        const fvMesh& removedMesh() const
+        {
+            return subsetter_->subMesh();
         }
 };
 

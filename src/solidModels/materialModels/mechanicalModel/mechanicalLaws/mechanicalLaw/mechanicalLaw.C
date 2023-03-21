@@ -1087,17 +1087,24 @@ Foam::mechanicalLaw::P(const surfaceSymmTensorField& sigma) const
 }
 
 
-Foam::scalar Foam::mechanicalLaw::residual()
+Foam::scalar Foam::mechanicalLaw::residual() const
 {
     // Default to zero; this can be overwritten by any derived mechanical law
     return 0.0;
 }
 
 
-Foam::scalar Foam::mechanicalLaw::newDeltaT()
+Foam::scalar Foam::mechanicalLaw::relResidual() const
+{
+    // Default to zero; this can be overwritten by any derived mechanical law
+    return 0.0;
+}
+
+
+Foam::scalar Foam::mechanicalLaw::newDeltaT() const
 {
     // Default to a large number
-    return mesh_.time().endTime().value();
+    return great;
 }
 
 

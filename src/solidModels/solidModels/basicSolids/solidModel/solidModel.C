@@ -547,7 +547,7 @@ Foam::solidModel::~solidModel()
 
 void Foam::solidModel::initialize()
 {
-    if (nonLinGeom() != nonLinearGeometry::UPDATED_LAGRANGIAN)
+    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
     {
         globalPatches_.setDisplacementField(mesh_.name(), "pointD");
     }
@@ -604,7 +604,7 @@ void Foam::solidModel::updateTotalFields()
     mechanical().updateTotalFields();
 
     //- Clear global Patches since displacement may have changed
-    if (nonLinGeom() != nonLinearGeometry::UPDATED_LAGRANGIAN)
+    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
     {
         forAllIter
         (
@@ -688,19 +688,7 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const surfaceScalarField& J)
 
 bool Foam::solidModel::write(const bool write) const
 {
-    bool good = true;
-    if (write)
-    {
-        // Calculate equivalent (von Mises) stress
-        volScalarField vonMises
-        (
-            "vonMises", sqrt((3.0/2.0)*magSqr(dev(sigma())))
-        );
-        good = vonMises.write();
-
-        DebugInfo<< "Max von Mises stress = " << gMax(vonMises) << endl;
-    }
-    return good;
+    return true;
 }
 
 

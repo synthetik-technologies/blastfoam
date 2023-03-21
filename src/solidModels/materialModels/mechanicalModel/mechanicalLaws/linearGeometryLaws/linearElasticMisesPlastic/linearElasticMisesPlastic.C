@@ -1151,7 +1151,7 @@ void Foam::linearElasticMisesPlastic::correct(surfaceSymmTensorField& sigma)
 }
 
 
-Foam::scalar Foam::linearElasticMisesPlastic::residual()
+Foam::scalar Foam::linearElasticMisesPlastic::residual() const
 {
     // Calculate residual based on change in plastic strain increment
     if
@@ -1168,7 +1168,7 @@ Foam::scalar Foam::linearElasticMisesPlastic::residual()
                     DEpsilonPf_.primitiveField()
                   - DEpsilonPf_.prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(DEpsilonPf_.prevIter().primitiveField()));
+            );
     }
     else
     {
@@ -1180,8 +1180,43 @@ Foam::scalar Foam::linearElasticMisesPlastic::residual()
                     DEpsilonP_.primitiveField()
                   - DEpsilonP_.prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(DEpsilonP_.prevIter().primitiveField()));
+            );
     }
+}
+
+
+Foam::scalar Foam::linearElasticMisesPlastic::relResidual() const
+{
+    // Calculate residual based on change in plastic strain increment
+    scalar DEpsilonPRef = 0.0;
+    if
+    (
+        mesh().foundObject<surfaceTensorField>("grad(D)f")
+     || mesh().foundObject<surfaceTensorField>("grad(DD)f")
+    )
+    {
+        DEpsilonPRef =
+            max
+            (
+                gMax(mag(DEpsilonPf_.prevIter().primitiveField())),
+                gMax(mag(DEpsilonPf_.oldTime().primitiveField()))
+            );
+    }
+    else
+    {
+        DEpsilonPRef =
+            max
+            (
+                gMax(mag(DEpsilonP_.prevIter().primitiveField())),
+                gMax(mag(DEpsilonP_.oldTime().primitiveField()))
+            );
+    }
+
+    if (DEpsilonPRef > small)
+    {
+        return this->residual()/DEpsilonPRef;
+    }
+    return 0.0;
 }
 
 
@@ -1254,7 +1289,7 @@ void Foam::linearElasticMisesPlastic::updateTotalFields()
 }
 
 
-Foam::scalar Foam::linearElasticMisesPlastic::newDeltaT()
+Foam::scalar Foam::linearElasticMisesPlastic::newDeltaT() const
 {
     // In the calculation of the plastic strain increment, the return direction
     // is kept constant for the time-step; we can approximate the error based on

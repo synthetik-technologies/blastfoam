@@ -148,7 +148,7 @@ public:
         }
 
         // Return list of cell IDs to be removed
-        virtual tmp<labelField> cellsToRemove() = 0;
+        virtual labelList cellsToRemove() = 0;
 
         // Return list of patch indices for the faces to be removed
         virtual label exposedFacesPatchID() = 0;

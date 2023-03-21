@@ -177,9 +177,13 @@ public:
             //- Return shear modulus
             tmp<volScalarField> shearModulus() const;
 
-            //- Return material residual i.e. a measured of how convergence of
+            //- Return absolute material residual i.e. a measured of how convergence of
             //  the material model
-            scalar residual();
+            scalar residual() const;
+
+            //- Return relative material residual i.e. a measured of how convergence of
+            //  the material model
+            scalar relResidual() const;
 
         // Edit
 
@@ -255,7 +259,7 @@ public:
             void updateTotalFields();
 
             //- Return the desired new time-step size
-            scalar newDeltaT();
+            scalar newDeltaT() const;
 
             //- Move subMeshes
             void moveSubMeshes();

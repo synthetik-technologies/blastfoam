@@ -25,6 +25,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "IterativeSolidModel.H"
+#include "IOmanip.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -46,50 +47,66 @@ bool Foam::IterativeSolidModel<SolidModel>::converged
     bool converged = false;
 
     // Calculate displacement residual based on the relative change of vf
-    scalar denom = gMax
-    (
-        DimensionedField<scalar, volMesh>
-        (
-            mag(vf.internalField() - vf.oldTime().internalField())
-        )
-    );
-    scalar residualvf = 0;
-    if (denom > SMALL)
+    scalar refResidual = great;
+
+    // If this is the delta displacement field use the max of the current
+    // and old time as the reference
+    if (vf.name() == this->DD().name())
     {
-        residualvf = gMax
-        (
-            DimensionedField<scalar, volMesh>
+        refResidual =
+            max
             (
-                mag(vf.internalField() - vf.prevIter().internalField())
-            )
-        )/denom;
+                gMax(mag(vf.primitiveField())),
+                gMax(mag(vf.oldTime().primitiveField()))
+            );
+    }
+    else
+    {
+        refResidual =
+            gMax
+            (
+                mag(vf.primitiveField() - vf.oldTime().primitiveField())
+            );
+    }
+    scalar residual =
+        gMax(mag(vf.primitiveField() - vf.prevIter().primitiveField()));
+    scalar relResidual = 0.0;
+    if (refResidual > SMALL)
+    {
+        relResidual = residual/refResidual;
     }
 
     // Calculate material residual
     const scalar materialResidual = this->mechanical().residual();
+    const scalar materialRelResidual = this->mechanical().relResidual();
 
     // If one of the residuals has converged to an order of magnitude
     // less than the tolerance then consider the solution converged
     // force at least 1 outer iteration and the material law must be converged
-    if (iCorr > 1 && materialResidual < materialTol_)
+    if
+    (
+        iCorr > 1
+     && (materialResidual < materialTol_ || materialRelResidual < materialRelTol_))
     {
         if
         (
             solverPerfInitRes < solutionTol_
-         && residualvf < solutionTol_
+         && (relResidual < relTol_ || residual < tolerance_)
         )
         {
             if (writeResiduals)
             {
-                Info<< "    Both residuals have converged" << endl;
+                Info<< nl << "    Both residuals have converged" << endl;
             }
             converged = true;
         }
-        else if (residualvf < alternativeTol_)
+        else if (residual < tolerance_ || relResidual < alternativeTol_)
         {
             if (writeResiduals)
             {
-                Info<< "    The relative residual has converged" << endl;
+                Info<< nl
+                    << "    The residual has converged to the alternative tolerance"
+                    << endl;
             }
             converged = true;
         }
@@ -97,7 +114,9 @@ bool Foam::IterativeSolidModel<SolidModel>::converged
         {
             if (writeResiduals)
             {
-                Info<< "    The solver residual has converged" << endl;
+                Info<< nl
+                    << "    The solver residual has converged to the alternative "
+                    << "tolerance" << endl;
             }
             converged = true;
         }
@@ -115,22 +134,39 @@ bool Foam::IterativeSolidModel<SolidModel>::converged
     // Print residual information
     if (iCorr == 0)
     {
-        Info<< "    Corr, res, relRes, matRes, iters" << endl;
+        int width = Info().precision() + 6;
+        Info<< "    "
+            << setf(ios_base::left)
+            << setw(10) << "Corr"
+            << setw(20) << "solutionResidual"
+            << setw(2*width + 3) << "residual (abs/rel)"
+            << setw(2*width + 3) << "materialResidual (abs/rel)"
+            << setw(5) << "iters"
+            << endl;
     }
-    else if (iCorr % infoFrequency_ == 0 || converged)
+
+    if (iCorr % infoFrequency_ == 0 || converged)
     {
-        Info<< "    " << iCorr
-            << ", " << solverPerfInitRes
-            << ", " << residualvf
-            << ", " << materialResidual
-            << ", " << solverPerfNIters << endl;
+        int width = Info().precision() + 6;
+        Info<< "    "
+            << setf(ios_base::left)
+            << setw(10) << iCorr
+            << setw(20) << solverPerfInitRes
+            << setw(2*width + 3)
+                << word(Foam::name(residual) + " / " + Foam::name(relResidual))
+            << setw(2*width + 3)
+                << word(Foam::name(materialResidual) + " / " + Foam::name(materialRelResidual))
+            << setw(5) << solverPerfNIters << endl;
 
         if (residualFilePtr_.valid())
         {
             residualFilePtr_()
-                << solverPerfInitRes << " "
-                << residualvf << " "
-                << materialResidual
+                << solverPerfInitRes << token::SPACE
+                << residual << token::SPACE
+                << relResidual << token::SPACE
+                << materialResidual << token::SPACE
+                << materialRelResidual << token::SPACE
+                << solverPerfNIters
                 << endl;
         }
 
@@ -142,8 +178,7 @@ bool Foam::IterativeSolidModel<SolidModel>::converged
     else if (iCorr == nCorr_ - 1)
     {
         maxIterReached_++;
-        Warning
-            << "Max iterations reached within momentum loop" << endl;
+        Warning<< "Max iterations reached within momentum loop" << endl;
     }
 
     return converged;

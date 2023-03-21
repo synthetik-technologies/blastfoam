@@ -378,7 +378,7 @@ bool Foam::coupledSolidTractionFvPatchVectorField::updateFields()
 
     // Flip sign since the boundary normal is opposite and the stress is dotted
     // with the neighbor boundary then mapped
-    this->traction() = Zero;//-samplePatch.faceInterpolate(viscousNbr);
+    this->traction() = -samplePatch.faceInterpolate(viscousNbr);
 
     // Integratre forces
     updateForce();

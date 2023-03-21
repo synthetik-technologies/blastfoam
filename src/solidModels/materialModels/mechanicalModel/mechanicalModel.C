@@ -901,14 +901,30 @@ void Foam::mechanicalModel::interpolate
 )
 {
     const PtrList<mechanicalLaw>& laws = *this;
-    const pointConstraints& pc =
-        pointConstraints::New(pointMesh::New(mesh()));
-
     if (laws.size() == 1)
     {
-        pointD == volToPoint().interpolate(D);
-        pc.constrainDisplacement(pointD, true);
-        pointD.correctBoundaryConditions();
+        volToPoint().interpolate(D, pointD);
+
+        if (D.member() == "D")
+        {
+            twoDPointCorrector::New(mesh()).correctPoints
+            (
+                pointD.primitiveFieldRef()
+            );
+        }
+        else
+        {
+            twoDPointCorrector::New(mesh()).correctDisplacement
+            (
+                (
+                    mesh().points()
+                  + mesh().lookupObject<pointVectorField>("pointD").primitiveField()
+                )(),
+                pointD.primitiveFieldRef()
+            );
+        }
+        pointConstraints::setPatchFields(pointD);
+
         return;
     }
 
@@ -932,7 +948,6 @@ void Foam::mechanicalModel::interpolate
     (
         solSubMeshes().subMeshPointD(), pointD
     );
-    pc.setPatchFields(pointD);
 }
 
 
@@ -997,9 +1012,9 @@ Foam::tmp<Foam::volVectorField> Foam::mechanicalModel::RhieChowCorrection
 }
 
 
-Foam::scalar Foam::mechanicalModel::residual()
+Foam::scalar Foam::mechanicalModel::residual() const
 {
-    PtrList<mechanicalLaw>& laws = *this;
+    const PtrList<mechanicalLaw>& laws = *this;
 
     scalar maxResidual = 0.0;
 
@@ -1009,6 +1024,21 @@ Foam::scalar Foam::mechanicalModel::residual()
     }
 
     return maxResidual;
+}
+
+
+Foam::scalar Foam::mechanicalModel::relResidual() const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    scalar maxRelResidual = 0.0;
+
+    forAll(laws, lawI)
+    {
+        maxRelResidual = max(maxRelResidual, laws[lawI].relResidual());
+    }
+
+    return maxRelResidual;
 }
 
 
@@ -1023,10 +1053,10 @@ void Foam::mechanicalModel::updateTotalFields()
 }
 
 
-Foam::scalar Foam::mechanicalModel::newDeltaT()
+Foam::scalar Foam::mechanicalModel::newDeltaT() const
 {
     // Find the minimum time-step of all the mechanical laws
-    PtrList<mechanicalLaw>& laws = *this;
+    const PtrList<mechanicalLaw>& laws = *this;
 
     // Initial set deltaT to as large as possible and then check
     // if any mechanical law wants a smaller time-step

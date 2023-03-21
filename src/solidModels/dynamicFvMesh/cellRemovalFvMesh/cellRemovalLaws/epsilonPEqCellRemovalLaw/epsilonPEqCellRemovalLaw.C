@@ -55,8 +55,16 @@ Foam::epsilonPEqCellRemovalLaw::epsilonPEqCellRemovalLaw
     cellRemovalLaw(name, mesh, dict),
     epsilonPEqCrit_(readScalar(dict.lookup("epsilonPEqCritical"))),
     epsilonPEqName_(dict.lookupOrDefault<word>("epsilonPEqName", "epsilonPEq")),
-    patchID_(readInt(dict.lookup("exposedFacesPatchID")))
-{}
+    exposedPatch_(dict.lookup("exposedPatch"))
+{
+    if (exposedFacesPatchID() < 0)
+    {
+        FatalIOErrorInFunction(dict)
+            << exposedPatch_ << " is not a valid patch. Valid patches are " << nl
+            << mesh.boundaryMesh().names() << endl
+            << abort(FatalIOError);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * * //
@@ -67,7 +75,7 @@ Foam::epsilonPEqCellRemovalLaw::~epsilonPEqCellRemovalLaw()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::labelField> Foam::epsilonPEqCellRemovalLaw::cellsToRemove()
+Foam::labelList Foam::epsilonPEqCellRemovalLaw::cellsToRemove()
 {
     // Lookup the plastic equivalent strain
     if (mesh().foundObject<volScalarField>(epsilonPEqName_))
@@ -88,18 +96,18 @@ Foam::tmp<Foam::labelField> Foam::epsilonPEqCellRemovalLaw::cellsToRemove()
             }
         }
 
-        return tmp<labelField>(new labelField(cellsToRemove.toc()));
+        return cellsToRemove.toc();
     }
     else
     {
-        return tmp<labelField>(new labelField(0));
+        return labelList(0);
     }
 }
 
 
 Foam::label Foam::epsilonPEqCellRemovalLaw::exposedFacesPatchID()
 {
-    return patchID_;
+    return mesh().boundaryMesh()[exposedPatch_].index();
 }
 
 // ************************************************************************* //

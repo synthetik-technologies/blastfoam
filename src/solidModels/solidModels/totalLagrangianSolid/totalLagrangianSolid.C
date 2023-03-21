@@ -63,7 +63,7 @@ totalLagrangianSolid::totalLagrangianSolid(dynamicFvMesh& mesh)
     )
 {
     //- Dummy Call to make sure the necessary old fields are initialized
-    fvc::d2dt2(rho().oldTime(), D().oldTime());
+    fvc::d2dt2(rho().oldTime(), DD().oldTime());
 }
 
 
@@ -86,14 +86,14 @@ bool totalLagrangianSolid::evolve()
     // Reset enforceLinear switch
     enforceLinear() = false;
 
-    bool changing = false;mesh().update();
+    mesh().update();
+
+    this->DD().correctBoundaryConditions();
+    this->update();
 
     // Momentum equation loop
     do
     {
-        //- Update the mesh
-        // changing = mesh().update();
-
         // Store fields for under-relaxation and residual calculation
         DD().storePrevIter();
 
@@ -156,11 +156,8 @@ bool totalLagrangianSolid::evolve()
                 DD()
             )
          && ++iCorr < nCorr()
-        ) || changing
+        )
     );
-
-    // Velocity
-    U() = fvc::ddt(D());
 
     return true;
 }

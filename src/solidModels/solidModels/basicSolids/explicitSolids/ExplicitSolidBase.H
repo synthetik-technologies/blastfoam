@@ -138,6 +138,14 @@ public:
 
             //- Return the max Courant number
             virtual scalar maxCoNum() const;
+
+
+    static void eigenStructure
+    (
+        const tensor& t,
+        vector& eigVal,
+        tensor& eigVec
+    );
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

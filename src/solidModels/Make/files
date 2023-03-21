@@ -148,6 +148,7 @@ functionObjects/solidTractions/solidTractions.C
 functionObjects/centrifugalBodyForce/centrifugalBodyForce.C
 functionObjects/patchAvgTractionHistory/patchAvgTractionHistory.C
 functionObjects/pointHistory/pointHistory.C
+functionObjects/vonMisesStress/vonMisesStress.C
 
 dynamicFvMesh/simpleCrackerFvMesh/simpleCrackerFvMesh.C
 dynamicFvMesh/crackerFvMesh/crackerFvMesh.C
@@ -192,5 +193,6 @@ cellRemovalLaws = dynamicFvMesh/cellRemovalFvMesh/cellRemovalLaws
 $(cellRemovalLaws)/cellRemovalLaw/cellRemovalLaw.C
 $(cellRemovalLaws)/cellRemovalLaw/newCellRemovalLaw.C
 $(cellRemovalLaws)/epsilonPEqCellRemovalLaw/epsilonPEqCellRemovalLaw.C
+$(cellRemovalLaws)/stressCellRemovalLaw/stressCellRemovalLaw.C
 
 LIB = $(BLAST_LIBBIN)/libblastSolidModels

@@ -110,7 +110,7 @@ void explicitRiemannSolid::solveGEqns
 
     if (filter_)
     {
-        xN_ += pointRhoU_/mechanical().volToPoint().interpolate(rho_)*deltaT;
+        xN_ == xN_ + pointRhoU_/mechanical().volToPoint().interpolate(rho_)*deltaT;
     }
     else
     {
@@ -316,7 +316,7 @@ explicitRiemannSolid::explicitRiemannSolid
     (
         IOobject
         (
-            "x",
+            "xf",
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
@@ -494,34 +494,74 @@ void explicitRiemannSolid::decode()
 
     // Update displacements
     {
-        volVectorField xOld(x_);
+        volVectorField DOld(D_);
 
         D_ = x_ - mesh().C();
         D_.correctBoundaryConditions();
 
-        DD_ = x_ - xOld;
+        DD_ = D_ - DOld;
         DD_.correctBoundaryConditions();
     }
 
     if (filter_)
     {
-        pointVectorField xNOld(xN_);
         pointD_.primitiveFieldRef() = xN_.primitiveField() - mesh().points();
-        pointD_.correctBoundaryConditions();
+        pointVectorField::Boundary& bpointD = pointD_.boundaryFieldRef();
+        forAll(bpointD, patchi)
+        {
+            if (bpointD[patchi].fixesValue())
+            {
+                bpointD[patchi] == bpointD[patchi].patchInternalField();
+            }
+        }
 
         const pointConstraints& pcs = pointConstraints::New(pointD_.mesh());
         pcs.constrainDisplacement(pointD_, true);
 
-        pointDD_ == xN_ - xNOld;
+        pointDD_ == pointD_ - pointD_.oldTime();
     }
     else
     {
-        this->mechanical().volToPoint().interpolate(D_, pointD_);
-        pointVectorField xNOld(xN_);
-        xN_.primitiveFieldRef() = mesh().points() + pointD_.primitiveField();
-        xN_.correctBoundaryConditions();
+        this->mechanical().interpolate(DD_, pointDD_, false);
+        pointD_.primitiveFieldRef() += pointDD_.primitiveField();
 
-        pointDD_ == xN_ - xNOld;
+        xN_.primitiveFieldRef() = mesh().points() + pointD_.primitiveField();
+        pointVectorField::Boundary& bpointD = pointD_.boundaryFieldRef();
+        pointVectorField::Boundary& bxN = xN_.boundaryFieldRef();
+        forAll(bpointD, patchi)
+        {
+            if (bpointD[patchi].fixesValue())
+            {
+                // Set pointD boundary using the old time as the reference since
+                // the boundary of pointDD is set using the total displacement
+                // change and incrementing from the current state would cause twice
+                // the actual change
+                bpointD[patchi] ==
+                    dynamicCast<const vectorField>(pointD_.oldTime().boundaryField()[patchi])
+                  + dynamicCast<const vectorField>(pointDD_.boundaryField()[patchi]);
+
+                // Set the patchInternalField since the internal points are updated
+                // using the incorrect displacement delta
+                const vectorField& ppointD
+                (
+                    dynamicCast<const vectorField>(bpointD[patchi])
+                );
+                bpointD[patchi].setInInternalField
+                (
+                    pointD_,
+                    ppointD
+                );
+
+                bxN[patchi] ==
+                    ppointD
+                  + mesh().boundaryMesh()[patchi].localPoints();
+                bxN[patchi].setInInternalField
+                (
+                    xN_,
+                    dynamicCast<const vectorField>(bxN[patchi])
+                );
+            }
+        }
     }
 }
 

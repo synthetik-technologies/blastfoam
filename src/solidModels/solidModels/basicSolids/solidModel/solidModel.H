@@ -196,8 +196,6 @@ protected:
 
         virtual void readDict();
 
-        //- Return a reference to setCellDisplacements
-        const setCellDisplacements& setCellDisps() const;
 
 public:
 
@@ -475,6 +473,9 @@ public:
 
             //- This function will check that the DD field was read from disk
             virtual void DDisRequired(const word& type);
+
+            //- Return a reference to setCellDisplacements
+            const setCellDisplacements& setCellDisps() const;
 
 
         // Edit

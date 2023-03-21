@@ -34,9 +34,13 @@ template<class Type>
 void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
 (
     const mapPolyMesh& map,
-    const labelList& exposedFaces
+    const labelList& exposedFaces,
+    const labelList& patchFaceMap
 ) const
 {
+    typedef GeometricField<Type, fvPatchField, volMesh> VolTypeField;
+    typedef GeometricField<Type, fvsPatchField, surfaceMesh> SurfTypeField;
+
     // Get reverse face map
     const labelList& revFaceMap = map.reverseFaceMap();
 
@@ -44,106 +48,120 @@ void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
     //const labelHashSet exposedFacesSet(exposedFaces);
 
     // Read volField objects from object registry
-    HashTable<const GeometricField<Type, fvPatchField, volMesh>*> fields
+    HashTable<const VolTypeField*> fields
     (
-        thisDb().objectRegistry::template lookupClass
-        <GeometricField<Type, fvPatchField, volMesh> >()
+        thisDb().template lookupClass<VolTypeField>()
     );
 
-    for
+    forAllConstIter
     (
-        typename HashTable<const GeometricField<Type, fvPatchField, volMesh>*>::
-            iterator fieldIter = fields.begin();
-        fieldIter != fields.end();
-        ++fieldIter
+        typename HashTable<const VolTypeField*>,
+        fields,
+        fieldIter
     )
     {
+        DebugInfo<< "Updating volField exposed faces for " << fieldIter()->name() << endl;
+
         // Read field
-        GeometricField<Type, fvPatchField, volMesh>& field =
-            const_cast<GeometricField<Type, fvPatchField, volMesh>&>
-            (*fieldIter());
-
-        Field<Type>& fieldI = field.primitiveFieldRef();
-
-        if (debug)
-        {
-            Info<< "    volField " << fieldIter()->name() << endl;
-        }
+        VolTypeField& field = const_cast<VolTypeField&>(*fieldIter());
 
         // Check if there is a surface field by the same name suffixed with 'f'
-        bool surfaceFieldExists = false;
-        const GeometricField<Type, fvsPatchField, surfaceMesh>*
-            surfaceFieldPtr = NULL;
-        if
-        (
-            foundObject<GeometricField<Type, fvsPatchField, surfaceMesh> >
-            (
-                "interpolate(" + field.name() + ')'
-            )
-        )
+        const word ffieldName("interpolate(" + field.name() + ")");
+        if (foundObject<SurfTypeField>(ffieldName))
         {
-            surfaceFieldExists = true;
 
-            surfaceFieldPtr =
-              &(
-                    lookupObject
-                    <
-                        GeometricField<Type, fvsPatchField, surfaceMesh>
-                    >("interpolate(" + field.name() + ')')
-               );
+            SurfTypeField& surfaceField =
+                lookupObjectRef<SurfTypeField>(ffieldName);
 
-            if (debug)
+            DebugInfo<< "    Using " << surfaceField.name()
+                << " for correction" << endl;
+
+            typename VolTypeField::Boundary& bfield = field.boundaryFieldRef();
+            typename SurfTypeField::Boundary& bsurfaceField =
+                surfaceField.boundaryFieldRef();
+
+            // Initialise field on newly exposed faces
+            forAll(exposedFaces, fi)
             {
-                Info<< "    surfaceField " << surfaceFieldPtr->name() << endl;
+                const label oldFaceID = exposedFaces[fi];
+                // Get new face ID
+                label newFaceID = revFaceMap[oldFaceID];
+
+                // Find the patch ID
+                const label patchID = patchFaceMap[fi];
+
+                if (patchID == -1)
+                {
+                    FatalErrorInFunction
+                        << "exposed face is not on the boundary!? What's going on?"
+                        << abort(FatalError);
+                }
+
+                const label start = boundaryMesh()[patchID].start();
+
+                // Get local face ID
+                const label newLocalFaceID = newFaceID - start;
+
+                // Get face cell ID
+                const label faceCellID =
+                    boundaryMesh()[patchID].faceCells()[newLocalFaceID];
+
+                // Set the new face value to be the previous face value
+                bfield[patchID][newLocalFaceID] = field[faceCellID];
+                bsurfaceField[patchID][newLocalFaceID] = field[faceCellID];
             }
         }
-
-        // Initialise field on newly exposed faces
-
-        forAll(exposedFaces, fI)
+        else
         {
-            // Get new face ID
-            label newFaceID = revFaceMap[exposedFaces[fI]];
+            typename VolTypeField::Boundary& bfield = field.boundaryFieldRef();
 
-            // Find the patch ID
-            const label patchID = boundaryMesh().whichPatch(newFaceID);
-
-            if (patchID == -1)
+            // Initialise field on newly exposed faces
+            forAll(exposedFaces, fi)
             {
-                FatalErrorIn
-                (
-                    "void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces"
-                )   << "exposed face is not on the boundary!? What's going on?"
-                    << abort(FatalError);
-            }
+                // Get new face ID
+                label newFaceID = revFaceMap[exposedFaces[fi]];
 
-            const label start = boundaryMesh()[patchID].start();
+                // Find the patch ID
+                const label patchID = patchFaceMap[fi];
 
-            // Get local face ID
-            const label newLocalFaceID = newFaceID - start;
+                const label start = boundaryMesh()[patchID].start();
 
-            // Get face cell ID
-            const label faceCellID =
-                boundaryMesh()[patchID].faceCells()[newLocalFaceID];
+                // Get local face ID
+                const label newLocalFaceID = newFaceID - start;
 
-            // Set the new face value to be the face cell value
-            field.boundaryFieldRef()[patchID][newLocalFaceID] =
-                fieldI[faceCellID];
+                // Get face cell ID
+                const label faceCellID =
+                    boundaryMesh()[patchID].faceCells()[newLocalFaceID];
 
-            if (surfaceFieldExists)
-            {
-                GeometricField<Type, fvsPatchField, surfaceMesh>&
-                    surfaceField =
-                    const_cast
-                    <
-                        GeometricField<Type, fvsPatchField, surfaceMesh>&
-                    >(*surfaceFieldPtr);
-
-                // Set the new surface face value to be the face cell value
-                surfaceField.boundaryFieldRef()[patchID][newLocalFaceID] =
-                    fieldI[faceCellID];
+                // Set the new face value to be the face cell value
+                bfield[patchID][newLocalFaceID] = field[faceCellID];
             }
         }
+    }
+}
+
+
+template<class Type, template<class> class Patch, class Mesh>
+void Foam::cellRemovalFvMesh::saveGeoFields
+(
+    objectRegistry& obr
+) const
+{
+    typedef GeometricField<Type, Patch, Mesh> GeoField;
+    HashTable<GeoField*> fields = obr.lookupClass<GeoField>();
+
+    forAllIter
+    (
+        typename HashTable<GeoField*>,
+        fields,
+        iter
+    )
+    {
+        const GeoField& field = *iter();
+        GeoField* interpField = subsetter_->interpolate(*iter()).ptr();
+        interpField->rename(field.name());
+        interpField->writeOpt() = field.writeOpt();
+        interpField->store(interpField);
     }
 }
 

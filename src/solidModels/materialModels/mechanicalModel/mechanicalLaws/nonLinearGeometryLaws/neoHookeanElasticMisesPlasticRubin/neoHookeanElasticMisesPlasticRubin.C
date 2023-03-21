@@ -509,7 +509,7 @@ void Foam::neoHookeanElasticMisesPlasticRubin::correct
 }
 
 
-Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::residual()
+Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::residual() const
 {
     // Note: we remove mag(I) when we normalise the residual so that the
     // residual is like a strain residual
@@ -521,7 +521,15 @@ Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::residual()
                 lambda_.primitiveField()
               - lambda_.prevIter().primitiveField()
             )
-        )/0.1;
+        );
+}
+
+
+Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::relResidual() const
+{
+    // Note: we remove mag(I) when we normalise the residual so that the
+    // residual is like a strain residual
+    return residual()/0.1;
 }
 
 
@@ -603,7 +611,7 @@ void Foam::neoHookeanElasticMisesPlasticRubin::updateTotalFields()
 }
 
 
-Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::newDeltaT()
+Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::newDeltaT() const
 {
     return mesh().time().endTime().value();
 }

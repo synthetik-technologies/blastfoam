@@ -73,7 +73,8 @@ void Foam::IterativeSolidModel<SolidModel>::relaxField
 
             // Update the relaxation factor field
             aitkenAlpha_() =
-                aitkenAlpha_()*(aitkenResidual_().prevIter() & aitkenResidualDelta)
+                aitkenAlpha_()
+               *(aitkenResidual_().prevIter() & aitkenResidualDelta)
                /(
                     magSqr(aitkenResidualDelta)
                   + dimensionedScalar("SMALL", dimLength*dimLength, SMALL)
@@ -215,19 +216,19 @@ void Foam::IterativeSolidModel<SolidModel>::relaxField
             for (label i = 0; i < cols; i++)
             {
                 // Normalize column i
-                R[i][i] = Foam::sqrt(sum(Q[i] & Q[i]));
+                R[i][i] = Foam::sqrt(gSum(Q[i] & Q[i]));
                 Q[i] /= max(R[i][i], small);
 
                 // Orthogonalize columns to the right of column i
                 for (label j = i+1; j < cols; j++)
                 {
-                    R[i][j] = sum(Q[i] & Q[j]);
+                    R[i][j] = gSum(Q[i] & Q[j]);
                     Q[j] -= R[i][j]*Q[i];
                 }
 
                 // Project minus the residual vector on the Q
                 C[i][0] =
-                    sum
+                    gSum
                     (
                         Q[i]
                       & (
@@ -302,9 +303,12 @@ template<class SolidModel>
 void Foam::IterativeSolidModel<SolidModel>::readDict()
 {
     const dictionary& dict = this->solidModelDict();
+    dict.readIfPresent("tolerance", tolerance_);
+    dict.readIfPresent("relTol", relTol_);
     dict.readIfPresent("solutionTolerance", solutionTol_);
     dict.readIfPresent("alternativeTolerance", alternativeTol_);
     dict.readIfPresent("materialTolerance", materialTol_);
+    dict.readIfPresent("materialRelTol", materialRelTol_);
     dict.readIfPresent("infoFrequency", infoFrequency_);
     dict.readIfPresent("nCorrectors", nCorr_);
     dict.readIfPresent("minCorrectors", minCorr_);
@@ -324,8 +328,11 @@ Foam::IterativeSolidModel<SolidModel>::IterativeSolidModel
 )
 :
     SolidModel(type, mesh, nonlinear, incremental, isSolid),
+    tolerance_(0.0),
+    relTol_(1e-06),
     solutionTol_(1e-06),
-    materialTol_(1e-05),
+    materialTol_(0.0),
+    materialRelTol_(1e-05),
     alternativeTol_(1e-07),
     infoFrequency_(100),
     nCorr_(10000),

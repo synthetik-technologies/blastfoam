@@ -63,7 +63,7 @@ class epsilonPEqCellRemovalLaw
         const word epsilonPEqName_;
 
         // Index of patch to put exposed faces in
-        const scalar patchID_;
+        const word exposedPatch_;
 
     // Private Member Functions
 
@@ -101,7 +101,7 @@ public:
     // Member Functions
 
         // Return list of cell IDs to be removed
-        virtual tmp<labelField> cellsToRemove();
+        virtual labelList cellsToRemove();
 
         // Return patch index for the faces to be exposed
         virtual label exposedFacesPatchID();

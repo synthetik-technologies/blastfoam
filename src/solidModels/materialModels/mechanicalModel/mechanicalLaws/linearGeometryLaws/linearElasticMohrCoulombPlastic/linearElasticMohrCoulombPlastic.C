@@ -834,7 +834,7 @@ void Foam::linearElasticMohrCoulombPlastic::correct
 }
 
 
-Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual()
+Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual() const
 {
     // Calculate residual based on change in plastic strain increment
     if
@@ -851,7 +851,7 @@ Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual()
                     sigmaEfff_.primitiveField()
                   - sigmaEfff_.prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(sigmaEfff_.primitiveField()));
+            );
     }
     else
     {
@@ -863,8 +863,42 @@ Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual()
                     sigmaEff_.primitiveField()
                   - sigmaEff_.prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(sigmaEff_.primitiveField()));
+            );
     }
+}
+
+
+Foam::scalar Foam::linearElasticMohrCoulombPlastic::relResidual() const
+{
+    // Calculate residual based on change in plastic strain increment
+    scalar sigmaEffRef = 0.0;
+    if
+    (
+        mesh().foundObject<surfaceVectorField>("grad(D)f")
+     || mesh().foundObject<surfaceVectorField>("grad(DD)f")
+    )
+    {
+        sigmaEffRef =
+            max
+            (
+                gMax(mag(sigmaEfff_.prevIter().primitiveField())),
+                gMax(mag(sigmaEfff_.oldTime().primitiveField()))
+            );
+    }
+    else
+    {
+        sigmaEffRef =
+            max
+            (
+                gMax(mag(sigmaEff_.prevIter().primitiveField())),
+                gMax(mag(sigmaEff_.oldTime().primitiveField()))
+            );
+    }
+    if (sigmaEffRef > small)
+    {
+        return residual()/sigmaEffRef;
+    }
+    return 0.0;
 }
 
 

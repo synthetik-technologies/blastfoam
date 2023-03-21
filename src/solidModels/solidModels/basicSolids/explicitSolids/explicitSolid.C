@@ -38,10 +38,10 @@ void Foam::solidModels::explicitSolid::updateDisplacement()
     this->gradDD() = this->gradD() - this->gradD().oldTime();
 
     // Interpolate cell displacements to vertices
-    this->mechanical().interpolate(this->D(), this->pointD());
+    this->mechanical().interpolate(this->DD(), this->pointDD());
 
     // Increment of displacement
-    this->pointDD() = this->pointD() - this->pointD().oldTime();
+    this->pointD() == this->pointD().oldTime() + this->pointDD();
 }
 
 

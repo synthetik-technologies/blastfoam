@@ -94,14 +94,6 @@ public:
 
             //- Return first Piola tensor on a patch
             virtual tmp<tensorField> P(const fvPatch& patch) const = 0;
-
-
-    static void eigenStructure
-    (
-        const tensor& t,
-        vector& eigVal,
-        tensor& eigVec
-    );
 };
 
 

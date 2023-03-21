@@ -131,7 +131,6 @@ void Foam::localLeastSquaresVectors::makeLocalLeastSquaresVectors() const
 
     const volVectorField& C = mesh_.C();
     const surfaceVectorField& Cf = mesh_.Cf();
-    const pointField& points = mesh_.points();
     const labelList& owner = mesh_.owner();
     const labelList& neighbour = mesh_.neighbour();
 

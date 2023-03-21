@@ -232,7 +232,11 @@ public:
 
         //- Return material residual i.e. a measured of how convergence of
         //  the material model
-        virtual scalar residual();
+        virtual scalar residual() const;
+
+        //- Return relative material residual i.e. a measured of how convergence of
+        //  the material model
+        virtual scalar relResidual() const;
 
         //- Update the yield stress: called at end of time-step
         virtual void updateTotalFields();
