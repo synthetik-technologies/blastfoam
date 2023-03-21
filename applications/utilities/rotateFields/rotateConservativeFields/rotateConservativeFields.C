@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
                 << abort(FatalError);
         }
 
-        Info<< "Reading parallel case with " << nProcs << "processors"
+        Info<< "Reading parallel case with " << nProcs << " processors"
             << nl << endl;
         setParRun(false);
         sourceRunTimes.setSize(nProcs);
@@ -315,9 +315,61 @@ int main(int argc, char *argv[])
 
         setEnv("FOAM_CASE", rootDirSource/caseDirSource, true);
         setEnv("FOAM_CASENAME", caseDirSource, true);
+
+        if (Pstream::master())
+        {
+            for (int proci=0; proci < nProcs; proci++)
+            {
+                fileName rootSystem(rootDirSource/caseDirSource);
+                fileName sourceSystem
+                (
+                    rootDirSource/caseDirSource
+                   /fileName(word("processor") + name(proci))
+                );
+                fileName rootConstant(rootDirSource/caseDirSource);
+                fileName sourceConstant
+                (
+                    rootDirSource/caseDirSource
+                   /fileName(word("processor") + name(proci))
+                );
+                if (sourceRegion != polyMesh::defaultRegion)
+                {
+                    rootSystem = rootSystem/sourceRegion;
+                    sourceSystem = sourceSystem/sourceRegion;
+                    rootConstant = rootConstant/sourceRegion;
+                    sourceConstant = sourceConstant/sourceRegion;
+                }
+                rootSystem = rootSystem/"system";
+                sourceSystem = sourceSystem/"system";
+                rootConstant = rootConstant/"constant";
+                sourceConstant = sourceConstant/"constant";
+
+                if (!isDir(sourceSystem))
+                {
+                    mkDir(sourceSystem);
+                }
+                if (!isDir(sourceConstant))
+                {
+                    mkDir(sourceConstant);
+                }
+                if (!isFile(sourceSystem/"fvSchemes"))
+                {
+                    ln(rootSystem/"fvSchemes", sourceSystem/"fvSchemes");
+                }
+                if (!isFile(sourceSystem/"fvSolution"))
+                {
+                    ln(rootSystem/"fvSolution", sourceSystem/"fvSolution");
+                }
+                if (!isFile(sourceConstant/"phaseProperties"))
+                {
+                    ln(rootConstant/"phaseProperties", sourceConstant/"phaseProperties");
+                }
+            }
+        }
+        returnReduce(true, orOp<bool>());
+
         for (int proci=0; proci < nProcs; proci++)
         {
-            Info<< "Setting Time for processor " << proci << nl << endl;
             sourceRunTimes.set
             (
                 proci,
@@ -342,7 +394,7 @@ int main(int argc, char *argv[])
                         sourceRegion,
                         runTimeSource.timeName(),
                         runTimeSource,
-                        IOobject::MUST_READ
+                        IOobject::NO_READ
                     )
                 )
             );
