@@ -1,3 +1,0 @@
-explicitShallowWaterFoam.C
-
-EXE = $(BLAST_APPBIN)/explicitShallowWaterFoam

@@ -1,9 +1,0 @@
-shallowFluxScheme/shallowFluxScheme.C
-shallowFluxScheme/shallowFluxSchemeNew.C
-Tadmor/TadmorShallowFluxScheme.C
-Kurganov/KurganovShallowFluxScheme.C
-HLL/HLLShallowFluxScheme.C
-HLLC/HLLCShallowFluxScheme.C
-Rusanov/RusanovShallowFluxScheme.C
-
-LIB = $(BLAST_LIBBIN)/libshallowFluxSchemes
