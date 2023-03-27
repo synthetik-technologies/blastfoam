@@ -46,7 +46,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     word modelType("none");
     if (radIO.typeHeaderOk<IOdictionary>(false))
     {
-        IOdictionary(radIO).lookup("blastRadiationModel") >> modelType;
+        IOdictionary(radIO).lookup("radiationModel") >> modelType;
     }
     else
     {
@@ -54,7 +54,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
             << endl;
     }
 
-    Info<< "Selecting blastRadiationModel " << modelType << endl;
+    Info<< "Selecting radiationModel " << modelType << endl;
 
     TConstructorTable::iterator cstrIter =
         TConstructorTablePtr_->find(modelType);

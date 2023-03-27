@@ -35,9 +35,9 @@ Foam::radiationModels::blastAbsorptionEmissionModel::New
     const fvMesh& mesh
 )
 {
-    const word modelType(dict.lookup<word>("blastAbsorptionEmissionModel"));
+    const word modelType(dict.lookup<word>("absorptionEmissionModel"));
 
-    Info<< "Selecting blastAbsorptionEmissionModel " << modelType << endl;
+    Info<< "Selecting absorptionEmissionModel " << modelType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(modelType);
