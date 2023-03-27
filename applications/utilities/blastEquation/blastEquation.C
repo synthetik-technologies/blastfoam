@@ -150,7 +150,7 @@ List<scalar> readSingleX(Istream& is)
             xs.append(t.number());
         }
     }
-    return move(xs);
+    return xs;
 }
 
 
@@ -200,7 +200,7 @@ List<scalarList> readMultiX(Istream& is)
             }
         }
     }
-    return move(xs);
+    return xs;
 }
 
 

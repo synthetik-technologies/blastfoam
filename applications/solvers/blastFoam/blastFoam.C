@@ -35,7 +35,7 @@ Description
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "compressibleSystem.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,13 +48,17 @@ int main(int argc, char *argv[])
     #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
+    if (maxCo > integrator.maxCo())
+    {
+        maxCo = integrator.maxCo();
+    }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     Info<< "\nStarting time loop\n" << endl;
 
     while (runTime.run())
     {
-        integrator->preUpdateMesh();
+        integrator.preUpdateMesh();
 
         //- Refine the mesh
         refineMesh(mesh);
@@ -62,6 +66,11 @@ int main(int argc, char *argv[])
         //- Set the new time step and advance
         scalar CoNum = fluid->CoNum();
         #include "readTimeControls.H"
+        if (maxCo > integrator.maxCo())
+        {
+            maxCo = integrator.maxCo();
+        }
+
         #include "setDeltaT.H"
 
         runTime++;
@@ -71,7 +80,7 @@ int main(int argc, char *argv[])
         mesh.update();
 
         Info<< "Calculating Fluxes" << endl;
-        integrator->integrate();
+        integrator.integrate();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
@@ -85,7 +94,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-        integrator->clear();
+        integrator.clear();
     }
 
     Info<< "End\n" << endl;

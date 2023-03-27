@@ -70,6 +70,7 @@ void Foam::singlePhaseCompressibleSystem::solve()
 
     dimensionedScalar dT = rho_.time().deltaT();
     this->storeAndBlendOld(rho_);
+
     rho_.storePrevIter();
 
     rho_ -= dT*deltaRho;

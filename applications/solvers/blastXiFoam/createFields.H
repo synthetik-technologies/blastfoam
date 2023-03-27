@@ -14,9 +14,9 @@ uniformDimensionedVectorField g
     dimensionedVector(dimAcceleration, Zero)
 );
 
-autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
+fvTimeIntegrator integrator(mesh);
 psiuCompressibleSystem fluid(mesh);
-integrator->addSystem(fluid);
+integrator.addSystem(fluid);
 
 psiuReactionThermo& thermo = fluid.rThermo();
 basicCombustionMixture& composition = thermo.composition();

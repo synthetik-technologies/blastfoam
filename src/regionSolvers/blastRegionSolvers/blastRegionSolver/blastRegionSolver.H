@@ -41,6 +41,7 @@ SourceFiles
 #include "fluidRegionSolver.H"
 #include "compressibleSystem.H"
 #include "uniformDimensionedFields.H"
+#include "fvTimeIntegrator.H"
 
 namespace Foam
 {
@@ -62,7 +63,7 @@ protected:
         uniformDimensionedVectorField g_;
 
         //- Time integrator
-        autoPtr<timeIntegrator> integrator_;
+        fvTimeIntegrator integrator_;
 
         //- Compressible system
         autoPtr<compressibleSystem> fluid_;

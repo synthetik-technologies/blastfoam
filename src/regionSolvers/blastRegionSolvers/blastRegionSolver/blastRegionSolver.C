@@ -60,10 +60,10 @@ Foam::regionSolvers::blast::blast
         ),
         dimensionedVector(dimAcceleration, Zero)
     ),
-    integrator_(timeIntegrator::New(mesh_)),
+    integrator_(mesh_),
     fluid_(compressibleSystem::New(mesh_))
 {
-    integrator_->addSystem(fluid_());
+    integrator_.addSystem(fluid_());
 }
 
 
@@ -87,10 +87,10 @@ Foam::regionSolvers::blast::blast
         ),
         dimensionedVector(dimAcceleration, Zero)
     ),
-    integrator_(timeIntegrator::New(mesh_)),
+    integrator_(mesh_),
     fluid_(compressibleSystem::New(type, mesh_))
 {
-    fluid_->decode();
+    integrator_.addSystem(fluid_());
 }
 
 
@@ -103,7 +103,7 @@ Foam::regionSolvers::blast::~blast()
 
 bool Foam::regionSolvers::blast::changeMesh()
 {
-    integrator_->preUpdateMesh();
+    integrator_.preUpdateMesh();
     return fluid::changeMesh();
 }
 
@@ -111,14 +111,14 @@ bool Foam::regionSolvers::blast::changeMesh()
 void Foam::regionSolvers::blast::solve()
 {
     Info<< "Calculating Fluxes" << endl;
-    integrator_->integrate();
+    integrator_.integrate();
 
     Info<< "max(p): " << max(fluid_->p()).value()
         << ", min(p): " << min(fluid_->p()).value() << endl;
     Info<< "max(T): " << max(fluid_->T()).value()
         << ", min(T): " << min(fluid_->T()).value() << endl;
 
-    integrator_->clear();
+    integrator_.clear();
 }
 
 

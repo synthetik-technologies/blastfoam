@@ -105,7 +105,7 @@ void Foam::refinement::walkFaceToMid
 
             return;
         }
-        else if (pointLevel_[f[fp]] == cLevel + 2)
+        else //if (pointLevel_[f[fp]] == cLevel + 2)
         {
             // Store and continue to cLevel + 1
             faceVerts.append(f[fp]);

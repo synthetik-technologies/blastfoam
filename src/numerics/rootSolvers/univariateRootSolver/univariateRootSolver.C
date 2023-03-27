@@ -233,7 +233,7 @@ Foam::List<Foam::scalar> Foam::univariateRootSolver::solveAll
     }
     eqn.setLower(oldLower);
     eqn.setUpper(oldUpper);
-    return move(roots);
+    return roots;
 }
 
 

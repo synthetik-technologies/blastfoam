@@ -568,138 +568,138 @@ void Foam::levelSetModel::update()
 
 void Foam::levelSetModel::solve()
 {
-    const surfaceScalarField& phi = phiPtr_();
-    if (solveH_)
-    {
-        tmp<surfaceScalarField> tHf;
-        if (fluxSchemeBase::foundFluxScheme(phi))
-        {
-            tHf = fluxSchemeBase::findFluxScheme(phi).interpolate(H_);
-        }
-        else
-        {
-            tHf = fvc::interpolate(H_);
-        }
-        const surfaceScalarField& Hf(tHf());
-
-        surfaceScalarField gamma
-        (
-            IOobject::groupName("gamma", phi.group()),
-            mag
-            (
-                phi/mesh_.magSf()
-                // H_.mesh().lookupObject<volVectorField>
-                // (
-                //     IOobject::groupName("U", phi.group())
-                // )
-            )
-        );
-
-
-        volScalarField deltaH
-        (
-            IOobject::groupName("deltaH", alpha_.group()),
-            fvc::div(phi*Hf)- H_*fvc::div(phi)
-          // - fvc::laplacian(gamma*fvc::interpolate(epsilon_), H_)
-          // + fvc::div(gamma*Hf*(1.0 - Hf)*nHatf_)
-        );
-
-        volScalarField HOld(H_);
-        this->storeAndBlendOld(HOld, false);
-        this->storeAndBlendDelta(deltaH);
-
-        H_ = HOld - mesh_.time().deltaT()*deltaH;
-        H_.maxMin(-1.0, 1.0);
-        H_.correctBoundaryConditions();
-
-        deltaH = (H_ - HOld)/mesh_.time().deltaT();
-        deltaH = this->calcAndStoreDelta(deltaH);
-        correct(false);
-    }
-    else
-    {
-        // Level set function is smooth so we do not need to worry about shocks
-        // volScalarField deltaLevelSet
-        // (
-        //     IOobject::groupName("deltaLevelSet", alpha_.group()),
-        //     fvc::div(phi, levelSet_)
-        //   - levelSet_*fvc::div(phi)
-        // );
-        //
-        // this->storeAndBlendOld(levelSet_, false);
-        // this->storeAndBlendDelta(deltaLevelSet);
-        // levelSet_ -= mesh_.time().deltaT()*deltaLevelSet;
-        // levelSet_.correctBoundaryConditions();
-        //
-        // Info<<levelSet_.average().value()<<endl;
-
-        // H_ = calcH(levelSet_);
-        // volScalarField levelSet(calcLevelSet(H_));
-        dimensionedScalar dTau(dimLength, 0.1*min(meshSizeObject::New(mesh_).dx()));
-        label nIter(epsilon_.value()/dTau.value());
-        volScalarField S0("S0", sign(levelSet_));
-        volScalarField nearInterface(this->nearInterface());
-        if (mesh_.time().outputTime())
-        {
-            nearInterface.write();
-        }
-        for (label i = 0; i < nIter; i++)
-        {
-        //     levelSet.storePrevIter();
-            levelSet_ += S0*(1.0 - mag(fvc::grad(levelSet_)))*dTau*nearInterface;
-        }
-        //     levelSet.correctBoundaryConditions();
-    //
-    //         // // levelSet_ += S0*(1.0 - mag(fvc::grad(levelSet_)));
-    //         //
-    //         // // volVectorField gradLevelSet(fvc::grad(levelSet_));
-    //         // // levelSet_ -= 0.5*S0*(1.0 - mag(gradLevelSet))/fvc::laplacian(S0, levelSet_);
-    //         //
-    //         // surfaceVectorField gradLevelSetf
-    //         // (
-    //         //     upwind<vector>(mesh_, fvc::interpolate(S0)).interpolate
-    //         //     (
-    //         //         fvc::grad(levelSet_)
-    //         //     )
-    //         // );
-    //         // volVectorField gradLevelSet(fvc::grad(levelSet_));
-    //         //
-    //         // surfaceScalarField w
-    //         // (
-    //         //     "w",
-    //         //     ((gradLevelSetf/max(mag(gradLevelSetf), small)) & mesh_.Sf())*S0f
-    //         // );
-    //         // volScalarField divW(fvc::div(w));
-    //         // // forAll(divW, celli)
-    //         // // {
-    //         // //     divW[celli] = stabilise(divW[celli], 1e-10);
-    //         // // }
-    //         //
-    //         // // levelSet_ -=
-    //         // //     (fvc::div(w, levelSet_) - fvc::div(w)*levelSet_ - S0)
-    //         // //    *dimensionedScalar(dimLength, 0.5);
-    //         // fvScalarMatrix levelSetEqn
-    //         // (
-    //         //     fvm::SuSp(volScalarField::New("one", mesh_, dx), levelSet_)
-    //         //   + fvm::div(w, levelSet_)
-    //         //   - fvm::Sp(divW, levelSet_)
-    //         //  ==
-    //         //     S0
-    //         // );
-    //         // levelSetEqn.relax(0.5);
-    //         // //
-    //         // //
-    //         // levelSetEqn.solve();
-    //         // // levelSet_.relax(0.5);
-    //         // Info<<levelSet_.average().value()<<" "<<(mag(levelSet_-levelSet_.prevIter()))().average().value()<<endl;
-    //         Info<<max(mag(mag(fvc::grad(levelSet))-1.0)).value()<<endl;
+    // const surfaceScalarField& phi = phiPtr_();
+    // if (solveH_)
+    // {
+    //     tmp<surfaceScalarField> tHf;
+    //     if (fluxSchemeBase::foundFluxScheme(phi))
+    //     {
+    //         tHf = fluxSchemeBase::findFluxScheme(phi).interpolate(H_);
     //     }
-        // H_ = calcH(levelSet);
+    //     else
+    //     {
+    //         tHf = fvc::interpolate(H_);
+    //     }
+    //     const surfaceScalarField& Hf(tHf());
     //
-        correct(true);
-    }
-    // FatalErrorInFunctfion<<exit(FatalError);
-    // Info<<levelSet_.average()<<endl;
+    //     surfaceScalarField gamma
+    //     (
+    //         IOobject::groupName("gamma", phi.group()),
+    //         mag
+    //         (
+    //             phi/mesh_.magSf()
+    //             // H_.mesh().lookupObject<volVectorField>
+    //             // (
+    //             //     IOobject::groupName("U", phi.group())
+    //             // )
+    //         )
+    //     );
+    //
+    //
+    //     volScalarField deltaH
+    //     (
+    //         IOobject::groupName("deltaH", alpha_.group()),
+    //         fvc::div(phi*Hf)- H_*fvc::div(phi)
+    //       // - fvc::laplacian(gamma*fvc::interpolate(epsilon_), H_)
+    //       // + fvc::div(gamma*Hf*(1.0 - Hf)*nHatf_)
+    //     );
+    //
+    //     volScalarField HOld(H_);
+    //     this->storeAndBlendOld(HOld, false);
+    //     this->storeAndBlendDelta(deltaH);
+    //
+    //     H_ = HOld - mesh_.time().deltaT()*deltaH;
+    //     H_.maxMin(-1.0, 1.0);
+    //     H_.correctBoundaryConditions();
+    //
+    //     deltaH = (H_ - HOld)/mesh_.time().deltaT();
+    //     deltaH = this->calcAndStoreDelta(deltaH);
+    //     correct(false);
+    // }
+    // else
+    // {
+    //     // Level set function is smooth so we do not need to worry about shocks
+    //     // volScalarField deltaLevelSet
+    //     // (
+    //     //     IOobject::groupName("deltaLevelSet", alpha_.group()),
+    //     //     fvc::div(phi, levelSet_)
+    //     //   - levelSet_*fvc::div(phi)
+    //     // );
+    //     //
+    //     // this->storeAndBlendOld(levelSet_, false);
+    //     // this->storeAndBlendDelta(deltaLevelSet);
+    //     // levelSet_ -= mesh_.time().deltaT()*deltaLevelSet;
+    //     // levelSet_.correctBoundaryConditions();
+    //     //
+    //     // Info<<levelSet_.average().value()<<endl;
+    //
+    //     // H_ = calcH(levelSet_);
+    //     // volScalarField levelSet(calcLevelSet(H_));
+    //     dimensionedScalar dTau(dimLength, 0.1*min(meshSizeObject::New(mesh_).dx()));
+    //     label nIter(epsilon_.value()/dTau.value());
+    //     volScalarField S0("S0", sign(levelSet_));
+    //     volScalarField nearInterface(this->nearInterface());
+    //     if (mesh_.time().outputTime())
+    //     {
+    //         nearInterface.write();
+    //     }
+    //     for (label i = 0; i < nIter; i++)
+    //     {
+    //     //     levelSet.storePrevIter();
+    //         levelSet_ += S0*(1.0 - mag(fvc::grad(levelSet_)))*dTau*nearInterface;
+    //     }
+    //     //     levelSet.correctBoundaryConditions();
+    // //
+    // //         // // levelSet_ += S0*(1.0 - mag(fvc::grad(levelSet_)));
+    // //         //
+    // //         // // volVectorField gradLevelSet(fvc::grad(levelSet_));
+    // //         // // levelSet_ -= 0.5*S0*(1.0 - mag(gradLevelSet))/fvc::laplacian(S0, levelSet_);
+    // //         //
+    // //         // surfaceVectorField gradLevelSetf
+    // //         // (
+    // //         //     upwind<vector>(mesh_, fvc::interpolate(S0)).interpolate
+    // //         //     (
+    // //         //         fvc::grad(levelSet_)
+    // //         //     )
+    // //         // );
+    // //         // volVectorField gradLevelSet(fvc::grad(levelSet_));
+    // //         //
+    // //         // surfaceScalarField w
+    // //         // (
+    // //         //     "w",
+    // //         //     ((gradLevelSetf/max(mag(gradLevelSetf), small)) & mesh_.Sf())*S0f
+    // //         // );
+    // //         // volScalarField divW(fvc::div(w));
+    // //         // // forAll(divW, celli)
+    // //         // // {
+    // //         // //     divW[celli] = stabilise(divW[celli], 1e-10);
+    // //         // // }
+    // //         //
+    // //         // // levelSet_ -=
+    // //         // //     (fvc::div(w, levelSet_) - fvc::div(w)*levelSet_ - S0)
+    // //         // //    *dimensionedScalar(dimLength, 0.5);
+    // //         // fvScalarMatrix levelSetEqn
+    // //         // (
+    // //         //     fvm::SuSp(volScalarField::New("one", mesh_, dx), levelSet_)
+    // //         //   + fvm::div(w, levelSet_)
+    // //         //   - fvm::Sp(divW, levelSet_)
+    // //         //  ==
+    // //         //     S0
+    // //         // );
+    // //         // levelSetEqn.relax(0.5);
+    // //         // //
+    // //         // //
+    // //         // levelSetEqn.solve();
+    // //         // // levelSet_.relax(0.5);
+    // //         // Info<<levelSet_.average().value()<<" "<<(mag(levelSet_-levelSet_.prevIter()))().average().value()<<endl;
+    // //         Info<<max(mag(mag(fvc::grad(levelSet))-1.0)).value()<<endl;
+    // //     }
+    //     // H_ = calcH(levelSet);
+    // //
+    //     correct(true);
+    // }
+    // // FatalErrorInFunctfion<<exit(FatalError);
+    // // Info<<levelSet_.average()<<endl;
 }
 
 

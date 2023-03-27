@@ -35,7 +35,7 @@ SourceFiles
 #ifndef levelSetModel_H
 #define levelSetModel_H
 
-#include "timeIntegrationSystem.H"
+#include "UautoPtr.H"
 #include "volFields.H"
 #include "NamedEnum.H"
 #include "surfaceFields.H"
@@ -54,8 +54,6 @@ class isoSurface;
 \*---------------------------------------------------------------------------*/
 
 class levelSetModel
-:
-    public timeIntegrationSystem
 {
 public:
 

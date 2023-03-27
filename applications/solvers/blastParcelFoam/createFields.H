@@ -13,9 +13,9 @@ uniformDimensionedVectorField g
     dimensionedVector(dimAcceleration, Zero)
 );
 
-autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
+fvTimeIntegrator integrator(mesh);
 coupledMultiphaseCompressibleSystem fluid(mesh);
-integrator->addSystem(fluid);
+integrator.addSystem(fluid);
 
 parcelCloudList clouds
 (

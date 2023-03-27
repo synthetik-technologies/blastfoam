@@ -35,7 +35,7 @@ Description
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "coupledMultiphaseCompressibleSystem.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
 
 #include "parcelCloudList.H"
 
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        integrator->preUpdateMesh();
+        integrator.preUpdateMesh();
 
         //- Refine the mesh
         refineMesh(mesh);
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         fluid.dragSource() = clouds.SU(fluid.U());
 
         Info<< "Calculating Fluxes" << endl;
-        integrator->integrate();
+        integrator.integrate();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-        integrator->clear();
+        integrator.clear();
     }
 
     Info<< "End\n" << endl;

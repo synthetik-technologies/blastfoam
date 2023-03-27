@@ -37,7 +37,7 @@ Description
 #include "dynamicBlastFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "reactingCompressibleSystem.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
     while (runTime.run())
     {
-        integrator->preUpdateMesh();
+        integrator.preUpdateMesh();
 
         //- Refine the mesh
         refineMesh(mesh);
@@ -75,9 +75,9 @@ int main(int argc, char *argv[])
         //- Move the mesh
         mesh.update();
 
-        integrator->integrate();
+        integrator.integrate();
 
-        integrator->clear();
+        integrator.clear();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

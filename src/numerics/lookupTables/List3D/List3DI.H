@@ -215,7 +215,7 @@ inline Foam::List2D<Type> Foam::List3D<Type>::operator()(const label i) const
     #ifdef FULLDEBUG
     checkIIndex(i);
     #endif
-    return move(List2D<Type>(const_cast<Type*>(this->cdata())+i*n_*l_, n_, l_));
+    return List2D<Type>(const_cast<Type*>(this->cdata())+i*n_*l_, n_, l_);
 }
 
 
@@ -225,7 +225,7 @@ inline Foam::List2D<Type> Foam::List3D<Type>::operator()(const label i)
     #ifdef FULLDEBUG
     checkIIndex(i);
     #endif
-    return move(List2D<Type>(this->data()+i*n_*l_, n_, l_));
+    return List2D<Type>(this->data()+i*n_*l_, n_, l_);
 }
 
 

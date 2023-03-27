@@ -161,7 +161,7 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
     const cellList& cells = this->mesh().cells();
     const scalarField magSf(mag(this->mesh().faceAreas()));
 
-    dimensionedScalar t(timeIntegrationSystem::time());
+    dimensionedScalar t(timeIntegrationSystem::t());
 
     forAll(lambda_, celli)
     {

@@ -36,7 +36,7 @@ Description
 #include "dynamicBlastFvMesh.H"
 #include "phaseSystem.H"
 #include "wedgeFvPatch.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -58,10 +58,10 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
     while (runTime.run())
     {
-        integrator->preUpdateMesh();
+        integrator.preUpdateMesh();
 
         //- Refine mesh
-       refineMesh(mesh);
+        refineMesh(mesh);
 
         #include "readTimeControls.H"
         #include "EigenCourantNos.H"
@@ -74,11 +74,11 @@ int main(int argc, char *argv[])
         mesh.update();
 
         //- Integrate the hyperbolic fluxes
-        integrator->integrate();
+        integrator.integrate();
 
         fluid.printInfo();
 
-        integrator->clear();
+        integrator.clear();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"

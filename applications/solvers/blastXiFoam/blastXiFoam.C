@@ -56,7 +56,7 @@ Description
 #include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "fluxScheme.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
 #include "laminarFlameSpeed.H"
 #include "ignition.H"
 #include "Switch.H"
@@ -95,12 +95,12 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         Info<< "Calculating Fluxes" << endl;
-        integrator->integrate();
+        integrator.integrate();
 
         #include "ftEqn.H"
         #include "bEqn.H"
 
-        integrator->clear();
+        integrator.clear();
 
         runTime.write();
 

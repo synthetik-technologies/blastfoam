@@ -123,8 +123,8 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addCellNeighbours
 			newCells.append(cc[i]);
 		}
     }
-
-    return move(newCells);
+    newCells.shrink();
+    return newCells;
 }
 
 
