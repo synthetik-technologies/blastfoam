@@ -115,11 +115,11 @@ void Foam::timeIntegratorCoeffs::setTimeFactors
     List<scalar>& f
 ) const
 {
-    f.resize(as.size());
-    f0.resize(as.size());
+    f.resize(nSteps());
+    f0.resize(nSteps());
     f0[0] = 0.0;
     f[0] = sum(bs[0]);
-    for (label stepi = 1; stepi < as.size(); stepi++)
+    for (label stepi = 2; stepi <= nSteps(); stepi++)
     {
         scalarList ts(stepi+1, 0.0);
         scalarList dts(stepi, 0.0);
