@@ -268,9 +268,9 @@ Foam::tmp<Type> Foam::timeIntegrationSystem::calcDelta
     for (label i = 0; i < step() - 1; i++)
     {
         label fi = indices[i];
-        if (fi != -1 && scales[fi] != 0)
+        if (fi != -1 && scales[i] != 0)
         {
-            fN.ref() -= scales[fi]*fList[fi];
+            fN.ref() -= scales[i]*fList[fi];
         }
     }
     fN.ref() /= scales[step() - 1];
@@ -327,9 +327,9 @@ void Foam::timeIntegrationSystem::blendSteps
     for (label i = 0; i < step() - 1; i++)
     {
         label fi = indices[i];
-        if (fi != -1 && scales[fi] != 0)
+        if (fi != -1 && scales[i] != 0)
         {
-            f += scales[fi]*fList[fi];
+            f += scales[i]*fList[fi];
         }
     }
 }
