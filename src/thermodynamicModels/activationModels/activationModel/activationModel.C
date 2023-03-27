@@ -475,7 +475,7 @@ void Foam::activationModel::solve()
 
     volScalarField deltaLambda(this->delta());
     deltaLambda.max(0.0);
-    this->storeDelta(deltaLambda);
+    this->storeAndBlendDelta(deltaLambda);
 
     // Store old value of lambda, old value of alphaRho is stored in the
     // phaseCompressible system

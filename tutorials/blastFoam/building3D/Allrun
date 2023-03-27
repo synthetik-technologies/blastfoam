@@ -19,6 +19,9 @@ runApplication decomposePar -copyZero
 # -- Cut out the stl
 runParallel snappyHexMesh -overwrite
 
+# -- Add internal patch
+runParallel addEmptyPatch internalPatch internal -overwrite
+
 # -- Set the initial conditions for the fluid
 runParallel setRefinedFields
 

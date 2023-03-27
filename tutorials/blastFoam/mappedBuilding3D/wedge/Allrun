@@ -13,6 +13,9 @@ runApplication blockMesh
 # -- Decompose the case
 runApplication decomposePar
 
+# -- Add internal patch
+runParallel addEmptyPatch internalPatch internal -overwrite
+
 # -- Set the charge
 runParallel setRefinedFields
 

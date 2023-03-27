@@ -6,12 +6,28 @@ cd ${0%/*} || exit 1    # run from this directory
 
 paraFoam -builtin -touch
 
+# -- Extract surface features
 runApplication surfaceFeatures
+
+#-- Create the base mesh
 runApplication blockMesh
+
+# -- Decompose the case
 runApplication decomposePar -copyZero
+
+# -- Refine and snap geometry
 runParallel snappyHexMesh -overwrite
+
+# -- Select faces to add to the windows
 runParallel topoSet
+
+#-- Create windows
 runParallel createBaffles -overwrite
+
+# -- Add internal patch
+runParallel addEmptyPatch internalPatch internal -overwrite
+
+# -- Set the charge
 runParallel setRefinedFields
 
 # -- run the calc

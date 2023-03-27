@@ -23,6 +23,9 @@ foamDictionary constant/building/polyMesh/boundary -entry entry0/building_to_air
 # -- Decompose the mesh
 runApplication decomposePar -allRegions
 
+# -- Add internal patch
+runParallel addEmptyPatch internalPatch internal -region air -overwrite
+
 # -- Set initial conditions in the air region
 runParallel setRefinedFields -region air
 

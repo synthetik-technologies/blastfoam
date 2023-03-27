@@ -79,7 +79,14 @@ void Foam::adaptiveFvMesh::readDict()
 
 void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& map)
 {
-    // Update fluxes
+    fvMesh::updateMesh(map);
+
+    // Update fluxes if refining or unrefining
+    if
+    (
+        (refiner_->isRefining() || refiner_->isUnrefining())
+     && correctFluxes_.size()
+    )
     {
         const labelList& faceMap = map.faceMap();
         const labelList& reverseFaceMap = map.reverseFaceMap();
@@ -241,8 +248,6 @@ void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& map)
             }
         }
     }
-
-    fvMesh::updateMesh(map);
 
     // Refiner is not updated because it is an UpdatableMeshObject
 }
