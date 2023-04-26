@@ -54,6 +54,7 @@ void Foam::vtkTimeSeriesSurfaceWriter::Write
     const bool isNodeValues
 ) const
 {
+    Info<<"writing " << surfaceName<<endl;
     if (!isDir(outputDir))
     {
         mkDir(outputDir);
