@@ -11,6 +11,11 @@ laplacian/laplacian.C
 Schlieren/Schlieren.C
 shadowgraph/shadowgraph.C
 
+blastSampledSurfaces/blastSampledSurfaces.C
+blastSampledSurfaces/blastSampledSurfacesGrouping.C
+blastSampledSurfaces/blastSampledSurface/blastSampledSurface.C
+blastSampledSurfaces/blastSampledPatch/blastSampledPatch.C
+
 # Blast specific
 impulse/impulse.C
 blastMachNo/blastMachNo.C
