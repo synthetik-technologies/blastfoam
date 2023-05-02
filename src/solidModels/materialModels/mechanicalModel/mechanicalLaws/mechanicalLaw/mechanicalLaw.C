@@ -153,7 +153,7 @@ void Foam::mechanicalLaw::makeRelJ() const
 
     relJPtr_ = makeTypeField<scalar, fvPatchField, volMesh>
     (
-        "relJ", dimensionedScalar("relJ", dimless, Zero)
+        "relJ", dimensionedScalar("relJ", dimless, 1.0)
     );
 }
 
@@ -168,7 +168,7 @@ void Foam::mechanicalLaw::makeRelJf() const
 
     relJfPtr_ = makeTypeField<scalar, fvsPatchField, surfaceMesh>
     (
-        "relJf", dimensionedScalar("relJ", dimless, Zero)
+        "relJf", dimensionedScalar("relJ", dimless, 1.0)
     );
 }
 
@@ -621,18 +621,22 @@ bool Foam::mechanicalLaw::updateF
         (
             baseMesh.lookupObject<volTensorField>("F")
         );
+        FRef().correctBoundaryConditions();
         relFRef() = subsetter.interpolate
         (
             baseMesh.lookupObject<volTensorField>("relF")
         );
+        relFRef().correctBoundaryConditions();
         relJRef() = subsetter.interpolate
         (
             baseMesh.lookupObject<volScalarField>("relJ")
         );
+        relJRef().correctBoundaryConditions();
         JRef() = subsetter.interpolate
         (
             baseMesh.lookupObject<volScalarField>("J")
         );
+        JRef().correctBoundaryConditions();
     }
 
     if (enforceLinear())
@@ -884,12 +888,19 @@ Foam::mechanicalLaw::mechanicalLaw
     baseMesh_(baseMesh),
     dict_(dict),
     nonLinGeom_(nonLinGeom),
-    FPtr_(),
-    FfPtr_(),
-    relFPtr_(),
-    relFfPtr_(),
-    sigmaHydPtr_(),
-    gradSigmaHydPtr_(),
+
+    FPtr_(nullptr),
+    FfPtr_(nullptr),
+    relFPtr_(nullptr),
+    relFfPtr_(nullptr),
+    JPtr_(nullptr),
+    JfPtr_(nullptr),
+    relJPtr_(nullptr),
+    relJfPtr_(nullptr),
+    sigmaHydPtr_(nullptr),
+    sigmaHydfPtr_(nullptr),
+    gradSigmaHydPtr_(nullptr),
+
     useSolidDeformation_(false),
     usePlaneStress_(planeStress()),
     planeStressDir_(-1),
