@@ -278,6 +278,7 @@ Foam::mechanicalModel::mechanicalModel
                 (
                     lawEntries[lawI].keyword(),
                     meshPtr(),
+                    mesh_,
                     lawEntries[lawI].dict(),
                     nonLinGeom
                 )
@@ -296,6 +297,7 @@ Foam::mechanicalModel::mechanicalModel
                 (
                     lawEntries[lawI].keyword(),
                     meshPtr(),
+                    mesh_,
                     lawEntries[lawI].dict(),
                     nonLinGeom
                 )
@@ -308,7 +310,6 @@ Foam::mechanicalModel::mechanicalModel
                 << "created for a solidModel with nonLinGeom = "
                 << nonLinGeom << abort(FatalError);
         }
-        laws[lawI].baseMeshRegionName() = mesh.name();
     }
 
     // Check: currently crackerFvMesh only works with a single material

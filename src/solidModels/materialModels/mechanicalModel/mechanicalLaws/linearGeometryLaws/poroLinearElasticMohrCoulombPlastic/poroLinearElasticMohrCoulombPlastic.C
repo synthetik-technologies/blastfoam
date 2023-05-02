@@ -47,11 +47,12 @@ Foam::poroLinearElasticMohrCoulombPlastic::poroLinearElasticMohrCoulombPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    linearElasticMohrCoulombPlastic(name, mesh, dict, nonLinGeom)
+    linearElasticMohrCoulombPlastic(name, mesh, baseMesh, dict, nonLinGeom)
 {}
 
 

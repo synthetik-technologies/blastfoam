@@ -46,11 +46,12 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     EInf_(dict.lookup("EInfinity")),
     E_(dict.lookup("E")),
     tau_(dict.lookup("relaxationTimes")),
@@ -545,13 +546,7 @@ Foam::scalar Foam::viscousHookeanElastic::residual() const
 {
     // Calculate residual based on change in internal variables
     scalar res = 0.0;
-    if
-    (
-        mesh().time().lookupObject<fvMesh>
-        (
-            baseMeshRegionName()
-        ).foundObject<surfaceTensorField>("Ff")
-    )
+    if (this->baseMesh().foundObject<surfaceTensorField>("Ff"))
     {
         forAll(hf_, MaxwellModelI)
         {
@@ -601,13 +596,7 @@ Foam::scalar Foam::viscousHookeanElastic::relResidual() const
     // Calculate residual based on change in internal variables
     scalarField residuals(gamma_.size());
     scalarField refValues(gamma_.size(), 0.0);
-    if
-    (
-        mesh().time().lookupObject<fvMesh>
-        (
-            baseMeshRegionName()
-        ).foundObject<surfaceTensorField>("Ff")
-    )
+    if (this->baseMesh().foundObject<surfaceTensorField>("Ff"))
     {
         forAll(hf_, modelI)
         {

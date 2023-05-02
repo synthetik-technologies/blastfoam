@@ -350,11 +350,12 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     mu_("zero", dimPressure, 0.0),
     K_("zero", dimPressure, 0.0),
     E_("zero", dimPressure, 0.0),

@@ -267,11 +267,12 @@ Foam::thermoLinearElastic::thermoLinearElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    linearElastic(name, mesh, dict, nonLinGeom),
+    linearElastic(name, mesh, baseMesh, dict, nonLinGeom),
     alpha_(dict.lookup("alpha")),
     T0_(dict.lookup("T0")),
     TPtr_(),

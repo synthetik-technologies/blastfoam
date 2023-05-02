@@ -188,11 +188,11 @@ class mechanicalLaw
         //- Const reference to mesh
         const fvMesh& mesh_;
 
+        //- Const reference to the base regionMesh
+        const fvMesh& baseMesh_;
+
         //- Mechanical law dictionary
         const dictionary dict_;
-
-        //- Name of the baseMesh region
-        word baseMeshRegionName_;
 
         //- Nonlinear geometry enumerator
         const nonLinearGeometry::nonLinearType nonLinGeom_;
@@ -553,10 +553,11 @@ public:
             (
                 const word name,
                 const fvMesh& mesh,
+                const fvMesh& baseMesh,
                 const dictionary& dict,
                 const nonLinearGeometry::nonLinearType& nonLinGeom
             ),
-            (name, mesh, dict, nonLinGeom)
+            (name, mesh, baseMesh, dict, nonLinGeom)
         );
 
         //- Mechanical law for nonlinear geometry i.e. finite strains and
@@ -569,10 +570,11 @@ public:
             (
                 const word name,
                 const fvMesh& mesh,
+                const fvMesh& baseMesh,
                 const dictionary& dict,
                 const nonLinearGeometry::nonLinearType& nonLinGeom
             ),
-            (name, mesh, dict, nonLinGeom)
+            (name, mesh, baseMesh, dict, nonLinGeom)
         );
 
 
@@ -583,6 +585,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -592,6 +595,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -604,6 +608,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -626,7 +631,7 @@ public:
         //- Is this model stored on the master model mesh
         bool isBaseRegion() const
         {
-            return mesh().name() == baseMeshRegionName_;
+            return &mesh_ == &baseMesh_;
         }
 
         //- Return the implicit stiffness
@@ -682,25 +687,10 @@ public:
             useSolidDeformation_ = true;
         }
 
-        //- Access the base mesh region name
-        word& baseMeshRegionName()
-        {
-            return baseMeshRegionName_;
-        }
-
-        //- Return the base mesh region name
-        const word& baseMeshRegionName() const
-        {
-            return baseMeshRegionName_;
-        }
-
         //- Return const access to the base mesh
         const fvMesh& baseMesh() const
         {
-            return mesh().time().lookupObject<fvMesh>
-            (
-                baseMeshRegionName_
-            );
+            return baseMesh_;
         }
 };
 

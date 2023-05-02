@@ -41,6 +41,7 @@ autoPtr<mechanicalLaw> mechanicalLaw::NewLinGeomMechLaw
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
@@ -70,7 +71,17 @@ autoPtr<mechanicalLaw> mechanicalLaw::NewLinGeomMechLaw
             << exit(FatalIOError);
     }
 
-    return autoPtr<mechanicalLaw>(cstrIter()(name, mesh, dict, nonLinGeom));
+    return autoPtr<mechanicalLaw>
+    (
+        cstrIter()
+        (
+            name,
+            mesh,
+            baseMesh,
+            dict,
+            nonLinGeom
+        )
+     );
 }
 
 
@@ -78,6 +89,7 @@ autoPtr<mechanicalLaw> mechanicalLaw::NewNonLinGeomMechLaw
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
@@ -91,23 +103,25 @@ autoPtr<mechanicalLaw> mechanicalLaw::NewNonLinGeomMechLaw
 
     if (cstrIter == nonLinGeomMechLawConstructorTablePtr_->end())
     {
-        FatalIOErrorIn
-        (
-            "mechanicalLaw::New(\n"
-            "    const word& name,\n"
-            "    const fvMehs& mesh,\n"
-            "    const dictionary& dict,\n"
-            "    const nonLinearGeometry::nonLinearType& nonLinGeom\n"
-            ")",
-            dict
-        )   << "Unknown mechanicalLaw type "
+        FatalIOErrorInFunction(dict)
+            << "Unknown mechanicalLaw type "
             << mechTypeName << endl << endl
             << "Valid nonLinearGeometry mechanicalLaws are : " << endl
             << nonLinGeomMechLawConstructorTablePtr_->toc()
-            << exit(FatalIOError);
+            << abort(FatalIOError);
     }
 
-    return autoPtr<mechanicalLaw>(cstrIter()(name, mesh, dict, nonLinGeom));
+    return autoPtr<mechanicalLaw>
+    (
+        cstrIter()
+        (
+            name,
+            mesh,
+            baseMesh,
+            dict,
+            nonLinGeom
+        )
+    );
 }
 
 

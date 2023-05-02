@@ -404,11 +404,12 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     E_("E", dimPressure, dict),
     nu_("nu", dimless, dict),
     lambda_

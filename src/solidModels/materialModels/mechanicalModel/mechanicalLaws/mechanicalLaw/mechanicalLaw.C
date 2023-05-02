@@ -257,16 +257,13 @@ void Foam::mechanicalLaw::makeGradSigmaHyd() const
 
 bool Foam::mechanicalLaw::planeStress() const
 {
-    if (mesh_.foundObject<IOdictionary>("mechanicalProperties"))
+    if (baseMesh().foundObject<IOdictionary>("mechanicalProperties"))
     {
         return
-            Switch
+            baseMesh().lookupObject<IOdictionary>
             (
-                mesh_.lookupObject<IOdictionary>
-                (
-                    "mechanicalProperties"
-                ).lookup("planeStress")
-            );
+                "mechanicalProperties"
+            ).lookup<bool>("planeStress");
     }
     else
     {
@@ -279,14 +276,15 @@ bool Foam::mechanicalLaw::planeStress() const
             IOobject
             (
                 "mechanicalProperties",
-                "constant",
-                mesh_.time(),
+                baseMesh().time().constant(),
+                baseMesh(),
                 IOobject::MUST_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                false
             )
         );
 
-        return Switch(mechProp.lookup("planeStress"));
+        return mechProp.lookup<bool>("planeStress");
     }
 }
 
@@ -501,7 +499,7 @@ Foam::volScalarField& Foam::mechanicalLaw::relJRef()
     }
     if (relJPtr_.empty())
     {
-        makeRelF();
+        makeRelJ();
     }
 
     return relJPtr_();
@@ -855,7 +853,7 @@ void Foam::mechanicalLaw::updateSigmaHyd
 const Foam::Switch& Foam::mechanicalLaw::enforceLinear() const
 {
     // Lookup the solideModel
-    const solidModel& solMod = lookupSolidModel(mesh(), baseMeshRegionName_);
+    const solidModel& solMod = lookupSolidModel(baseMesh());
 
     return solMod.enforceLinear();
 }
@@ -864,7 +862,7 @@ const Foam::Switch& Foam::mechanicalLaw::enforceLinear() const
 bool Foam::mechanicalLaw::incremental() const
 {
     // Lookup the solideModel
-    const solidModel& solMod = lookupSolidModel(mesh(), baseMeshRegionName_);
+    const solidModel& solMod = lookupSolidModel(baseMesh());
 
     return solMod.incremental();
 }
@@ -876,14 +874,15 @@ Foam::mechanicalLaw::mechanicalLaw
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
     name_(name),
     mesh_(mesh),
+    baseMesh_(baseMesh),
     dict_(dict),
-    baseMeshRegionName_(mesh.name()),
     nonLinGeom_(nonLinGeom),
     FPtr_(),
     FfPtr_(),

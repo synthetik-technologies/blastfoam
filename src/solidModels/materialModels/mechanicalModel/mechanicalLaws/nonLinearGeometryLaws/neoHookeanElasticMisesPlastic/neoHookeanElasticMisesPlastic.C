@@ -450,11 +450,12 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     mu_("zero", dimPressure, 0.0),
     K_("zero", dimPressure, 0.0),
     stressPlasticStrainSeries_(),
@@ -1372,13 +1373,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(surfaceSymmTensorField& sigma)
 Foam::scalar Foam::neoHookeanElasticMisesPlastic::residual() const
 {
     // Calculate residual based on change in plastic strain increment
-    if
-    (
-        mesh().time().lookupObject<fvMesh>
-        (
-            baseMeshRegionName()
-        ).foundObject<surfaceTensorField>("Ff")
-    )
+    if (this->baseMesh().foundObject<surfaceTensorField>("Ff"))
     {
         return
             gMax
@@ -1390,18 +1385,15 @@ Foam::scalar Foam::neoHookeanElasticMisesPlastic::residual() const
                 )
             );
     }
-    else
-    {
-        return
-            gMax
+    return
+        gMax
+        (
+            mag
             (
-                mag
-                (
-                    DEpsilonP_.primitiveField()
-                  - DEpsilonP_.prevIter().primitiveField()
-                )
-            );
-    }
+                DEpsilonP_.primitiveField()
+                - DEpsilonP_.prevIter().primitiveField()
+            )
+        );
 }
 
 
@@ -1409,13 +1401,7 @@ Foam::scalar Foam::neoHookeanElasticMisesPlastic::relResidual() const
 {
     // Calculate residual based on change in plastic strain increment
     scalar DEpsilonPRef = 0;
-    if
-    (
-        mesh().time().lookupObject<fvMesh>
-        (
-            baseMeshRegionName()
-        ).foundObject<surfaceTensorField>("Ff")
-    )
+    if (this->baseMesh().foundObject<surfaceTensorField>("Ff"))
     {
         DEpsilonPRef =
             max
@@ -1521,36 +1507,18 @@ Foam::scalar Foam::neoHookeanElasticMisesPlastic::newDeltaT() const
     //     F() = relF() & F().oldTime();
     // }
     tmp<volTensorField> tF;
-    if
-    (
-        mesh().time().lookupObject<fvMesh>
-        (
-            baseMeshRegionName()
-        ).foundObject<volTensorField>("F")
-    )
+    if (this->baseMesh().foundObject<volTensorField>("F"))
     {
         tF = tmp<volTensorField>
         (
-            mesh().time().lookupObject<fvMesh>
-            (
-                baseMeshRegionName()
-            ).lookupObject<volTensorField>("F")
+            this->baseMesh().lookupObject<volTensorField>("F")
         );
     }
-    else if
-    (
-        mesh().time().lookupObject<fvMesh>
-        (
-            baseMeshRegionName()
-        ).foundObject<surfaceTensorField>("Ff")
-    )
+    else if (this->baseMesh().foundObject<surfaceTensorField>("Ff"))
     {
         tF = fvc::average
         (
-            mesh().time().lookupObject<fvMesh>
-            (
-                baseMeshRegionName()
-            ).lookupObject<surfaceTensorField>("Ff")
+            this->baseMesh().lookupObject<surfaceTensorField>("Ff")
         );
     }
     else

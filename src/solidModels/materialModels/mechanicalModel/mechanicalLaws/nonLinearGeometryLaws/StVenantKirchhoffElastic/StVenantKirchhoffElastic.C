@@ -46,11 +46,12 @@ Foam::StVenantKirchhoffElastic::StVenantKirchhoffElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     lambda_("lambda", dimPressure, 0.0),
     mu_("mu", dimPressure, 0.0),
     K_("K", dimPressure, 0.0)

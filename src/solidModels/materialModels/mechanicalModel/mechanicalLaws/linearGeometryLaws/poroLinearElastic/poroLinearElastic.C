@@ -77,11 +77,12 @@ Foam::poroLinearElastic::poroLinearElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    linearElastic(name, mesh, dict, nonLinGeom),
+    linearElastic(name, mesh, baseMesh, dict, nonLinGeom),
     p0_
     (
         IOobject
