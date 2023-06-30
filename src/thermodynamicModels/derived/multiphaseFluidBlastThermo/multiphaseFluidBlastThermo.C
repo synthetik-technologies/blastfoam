@@ -169,7 +169,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     const word& phaseName
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName),
+    fluidBlastThermo(mesh, dict, phaseName, word::null, false),
     phases_(dict.lookup("phases")),
     truePhases_(phases_),
     volumeFractions_(phases_.size()),
@@ -308,6 +308,13 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
         sumAlpha += volumeFractions_[phasei];
     }
     rho_ /= max(sumAlpha, this->residualAlpha_);
+
+    // Initial guess for e
+    if (!this->e_.headerOk())
+    {
+        this->e_ == he(p_, T_);
+    }
+
     this->initializeFields();
 }
 

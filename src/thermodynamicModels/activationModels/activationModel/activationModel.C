@@ -506,6 +506,7 @@ Foam::vector Foam::activationModel::centerOfMass
 
 void Foam::activationModel::solve()
 {
+    const volScalarField& alphaRho = alphaRhoPtr_();
     dimensionedScalar dT(this->mesh().time().deltaT());
     dimensionedScalar smallRho("small", dimDensity, 1e-10);
 
@@ -545,15 +546,14 @@ void Foam::activationModel::solve()
     ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
     volScalarField& ddtLambda = ddtLambda_.ref();
 
-    //- Solve advection
-    lambda_ =
-        (
-            lambdaOld*alphaRhoPtr_().prevIter()
-          - dT*(deltaAlphaRhoLambda - ddtLambda*alphaRhoPtr_())
-        )/max(alphaRhoPtr_(), smallRho);
-
     //- Compute actual delta for the time step knowing the blended
     ddtLambda = this->calcAndStoreDelta(ddtLambda);
+
+    //- Update lambda to include advection and reaction
+    //  d(alpha rho lambda)/dt = alpha rho d(lambda)/dt + lambda d(alpha rho)/dt
+    lambda_ =
+        lambdaOld*(2.0 - alphaRho/max(alphaRho.prevIter(), smallRho))
+      + dT*(deltaLambda - deltaAlphaRhoLambda/max(alphaRho.prevIter(), smallRho));
 
 
     //- Correct the lambda field since zero mass will cause "unactivation"

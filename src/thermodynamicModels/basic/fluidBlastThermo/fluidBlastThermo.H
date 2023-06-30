@@ -103,7 +103,8 @@ public:
         const fvMesh&,
         const dictionary& dict,
         const word& phaseName,
-        const word& masterName = word::null
+        const word& masterName = word::null,
+        const bool requireRho = true
     );
 
     //- Initialize models

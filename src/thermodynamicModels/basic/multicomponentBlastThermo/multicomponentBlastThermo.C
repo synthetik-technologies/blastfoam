@@ -351,33 +351,36 @@ void Foam::multicomponentBlastThermo::integrator::solve()
 {
     const dimensionedScalar& dT(mesh_.time().deltaT());
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
+    const volScalarField& alphaRho = alphaRho_;
+    const volScalarField alphaRho0(max(alphaRho_.prevIter(), residualAlphaRho));
+    const volScalarField f(alphaRho/alphaRho0);
 
     forAll(Y_, i)
     {
         if (active_[i])
         {
+            volScalarField& Y = Y_[i];
             volScalarField deltaAlphaRhoY
             (
                 fvc::div
                 (
                     alphaRhoPhi_,
-                    Y_[i],
+                    Y,
                     "div(" + alphaRhoPhi_.name() + ",Yi)"
                 )
               - massTransferRates_[i]
             );
 
             // Not conservative, but alphaRho*Yi is
-            this->storeAndBlendOld(Y_[i], false);
+            this->storeAndBlendOld(Y, false);
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
-            Y_[i] =
+            Y =
                 (
-                    max(alphaRho_.prevIter(), residualAlphaRho)*Y_[i]
-                  - dT*deltaAlphaRhoY
-                )/max(residualAlphaRho, alphaRho_);
-            Y_[i].max(0.0);
-            Y_[i].correctBoundaryConditions();
+                    Y*(2.0 - f) - dT*deltaAlphaRhoY/alphaRho0
+                );
+            Y.max(0.0);
+            Y.correctBoundaryConditions();
 
             // Clear mass transfer after adding
             massTransferRates_[i] == Zero;

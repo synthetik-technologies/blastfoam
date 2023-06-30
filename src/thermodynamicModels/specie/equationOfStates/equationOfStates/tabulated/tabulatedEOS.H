@@ -239,7 +239,6 @@ public:
         inline scalar S
         (
             const scalar p,
-            const scalar rho,
             const scalar T
         ) const;
 

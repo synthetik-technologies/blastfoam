@@ -176,7 +176,7 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     const word& phaseName
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName),
+    fluidBlastThermo(mesh, dict, phaseName, word::null, false),
     twoPhaseMixture(mesh, dict),
     rho1_
     (
@@ -289,6 +289,12 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
 
     // Update total density
     this->rho_ = alpha1_*rho1_ + alpha2_*rho2_;
+
+    // Initial guess for e
+    if (!this->e_.headerOk())
+    {
+        this->e_ == he(p_, T_);
+    }
 
     initializeFields();
 }

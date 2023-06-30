@@ -44,7 +44,8 @@ Foam::fluidBlastThermo::fluidBlastThermo
     const fvMesh& mesh,
     const dictionary& dict,
     const word& phaseName,
-    const word&
+    const word&,
+    const bool requireRho
 )
 :
     blastThermo(mesh, dict, phaseName),
@@ -82,7 +83,16 @@ Foam::fluidBlastThermo::fluidBlastThermo
         mesh,
         dimensionedScalar(dimVelocity, 0.0)
     )
-{}
+{
+    if (requireRho && !this->rho_.headerOk())
+    {
+        FatalErrorInFunction
+            << this->rho_.name() << " must be proved for single phase simulations"
+            << ", i.e. " << this->rho_.path()/this->rho_.name()
+            << endl
+            << abort(FatalError);
+    }
+}
 
 
 void Foam::fluidBlastThermo::initializeFields()
