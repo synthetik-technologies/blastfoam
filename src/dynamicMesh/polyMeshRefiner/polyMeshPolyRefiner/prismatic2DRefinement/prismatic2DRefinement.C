@@ -1908,18 +1908,16 @@ void Foam::prismatic2DRefinement::setRefinement
                     // so check the direction and flip the face if it is not
                     // the same
                     {
-                        vector nOrig
+                        if
                         (
-                            mesh_.faces()[faceI].normal(mesh_.points())
-                        );
-                        vector nNew
-                        (
-                            face(identity(newFace.size())).normal
                             (
-                                pointField(meshMod.points(), newFace)
-                            )
-                        );
-                        if ((nOrig & nNew) < 0)
+                                mesh_.faceAreas()[faceI]
+                              & newFace.area
+                                (
+                                    UIndirectList<point>(meshMod.points(), newFace)
+                                )
+                            ) < 0
+                        )
                         {
                             newFace.flip();
                         }

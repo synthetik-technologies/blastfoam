@@ -128,4 +128,9 @@ Foam::scalar Foam::regionSolvers::blast::CoNum() const
 }
 
 
+Foam::scalar Foam::regionSolvers::blast::maxCo() const
+{
+    return min(fluid::maxCo(), integrator_.maxCo());
+}
+
 // ************************************************************************* //

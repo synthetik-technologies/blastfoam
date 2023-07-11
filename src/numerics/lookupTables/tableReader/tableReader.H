@@ -56,6 +56,14 @@ extern HashTable<entryTable> readTables;
 //- Remove comments from a line
 void removeComments(string& line);
 
+//- Return delimiter
+token::punctuationToken readDelim
+(
+    const dictionary& dict,
+    const word& name = "delim",
+    const token::punctuationToken delim = token::COMMA
+);
+
 template<class Type>
 const dictionary& readComponent
 (
@@ -71,7 +79,7 @@ template<class Type>
 void read1DTable
 (
     const fileName& file,
-    const char delim,
+    const token::punctuationToken delim,
     List<Type>& values,
     const bool determineSize = true
 );
@@ -82,7 +90,7 @@ template<class Type>
 void read2DTable
 (
     const fileName& file,
-    const char delim,
+    const token::punctuationToken delim,
     List2D<Type>& data,
     const bool flip,
     const bool determineSize = false
@@ -92,7 +100,7 @@ void read2DTable
 const entryTable& read2DTable
 (
     const fileName& file,
-    const char delim,
+    const token::punctuationToken delim,
     const label startRow = 0,
     const bool flip = false
 );
@@ -118,54 +126,12 @@ template<class Type>
 void read3DTable
 (
     const fileName& file,
-    const char delim,
-    const char rowDelim,
+    const token::punctuationToken delim,
+    const token::punctuationToken rowDelim,
     List3D<Type>& data,
     const bool flip,
     const bool determineSize = false
 );
-
-//- Template specialisation for pTraits<char>
-char readChar(Istream&);
-Istream& operator>>(Istream&, char&);
-
-template<>
-class pTraits<char>
-{
-    char p_;
-
-public:
-
-    //- Component type
-    typedef char cmptType;
-
-
-    // Static Data Members
-
-        static const char* const typeName;
-
-    // Constructors
-
-        //- Construct from primitive
-        explicit pTraits(const char&);
-
-        //- Construct from Istream
-        pTraits(Istream&);
-
-    // Member Functions
-
-        //- Access to the char value
-        operator char() const
-        {
-            return p_;
-        }
-
-        //- Access to the char value
-        operator char&()
-        {
-            return p_;
-        }
-};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

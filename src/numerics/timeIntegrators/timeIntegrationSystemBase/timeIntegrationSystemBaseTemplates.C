@@ -60,6 +60,7 @@ void Foam::timeIntegrationSystemBase::storeOld
                 )
             );
         }
+
         // Scale old field for mesh motion before storage
         // if conservative
         if (conservative)
@@ -115,15 +116,16 @@ void Foam::timeIntegrationSystemBase::storeOld
     const bool conservative
 )
 {
+    if (conservative)
+    {
+        f *= timeInt_->totalV0();
+    }
+
     // Store fields if needed later
     const label i = timeInt_->getOldIndex(step());
     if (i >= 0)
     {
         fList[i] = f;
-        if (conservative)
-        {
-            fList[i] *= timeInt_->totalV0();
-        }
     }
 }
 

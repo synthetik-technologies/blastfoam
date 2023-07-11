@@ -53,11 +53,19 @@ Foam::movingAdaptiveFvMesh::movingAdaptiveFvMesh(const IOobject& io)
     dynamicFvMesh(io),
     adaptiveFvMesh(io),
     motionPtr_(motionSolver::New(*this, dynamicMeshDict())),
-    velocityMotionCorrection_(*this, dynamicMeshDict())
+    velocityMotionCorrection_(*this, dynamicMeshDict()),
+    curTimeIndex_(-1)
 {
     if (isA<points0MotionSolver>(motionPtr_()))
     {
-        locationMapper::NewRef(*this).addInterpolatedField("points0");
+        // const pointIOField& points0 =
+        //     static_cast<const pointIOField&>
+        //     (
+        //         dynamicCast<const points0MotionSolver>(motionPtr_()).points0()
+        //     );
+        // const_cast<pointIOField&>(points0).checkIn();
+        // locationMapper::NewRef(*this).addInterpolatedField(points0.name());
+
     }
     else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
     {
@@ -80,18 +88,25 @@ void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 
     // Do not update while balancing this is handled in the
     // distribute function
-    if (refiner_->isBalancing())
-    {}
-    else if
-    (
-        isA<displacementMotionSolver>(motionPtr_())
-     && refiner_->isRefining()
-    )
-    {}
-    else
+    if (!refiner_->isBalancing())
     {
         motionPtr_->updateMesh(mpm);
+        if
+        (
+            isA<points0MotionSolver>(motionPtr_())
+         && refiner_->isRefining()
+        )
+        {
+            motionPtr_->updateMesh(mpm);
+            pointField& points0 =
+                const_cast<pointField&>
+                (
+                    dynamicCast<const points0MotionSolver>(motionPtr_()).points0()
+                );
+            locationMapper::New(*this).interpolateMidPoints(points0);
+        }
     }
+
 }
 
 
@@ -125,9 +140,13 @@ bool Foam::movingAdaptiveFvMesh::update()
 {
     // Get the new points solving for displacement
     pointField pointsNew(motionPtr_->newPoints());
-    if (pointsInstance() == time().timeName())
+    if (curTimeIndex_ == this->time().timeIndex())
     {
         pointsNew += oldPoints() - points();
+    }
+    else
+    {
+        curTimeIndex_ = this->time().timeIndex();
     }
 
     //- Sync points across boundaries

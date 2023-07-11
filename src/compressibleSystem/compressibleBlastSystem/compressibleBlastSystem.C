@@ -215,14 +215,14 @@ void Foam::compressibleBlastSystem::postUpdate()
 
         if (turbulence_.valid())
         {
-            volSymmTensorField devTau(turbulence_->devTau());
             rhoE_ -=
                 rho_.mesh().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-                  & fluxScheme_->Uf()
-                );
+               *(U_ & fvc::div(turbulence_->devTau()));
+               // *fvc::div
+               //  (
+               //      fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
+               //    & fluxScheme_->Uf()
+               //  );
         }
         e_ = rhoE_/rho() - 0.5*magSqr(U_);
 

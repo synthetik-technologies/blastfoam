@@ -190,6 +190,283 @@ bool explicitTotalLagrangianSolid::evolve()
 {
     this->solveMomentum();
     return true;
+    Info<< "Solving the momentum equation" << endl;
+
+    this->enforceLinear() = false;
+
+    tmp<volVectorField> stab;
+
+    // const scalar gamma = 0.5;
+    // const scalar beta = 0.0;
+    // bool changing = false;
+    // do
+    // {
+    //     // changing = this->mesh().update();
+    //     this->mesh().update();
+    //
+    //     // Central difference scheme
+    //     const dimensionedScalar& deltaT = this->time().deltaT();
+    //
+    //     // Update the stress field based on the latest D field
+    //     this->update();
+    //
+    //     // Compute acceleration
+    //     // Note the inclusion of a linear bulk viscosity pressure term to
+    //     // dissipate high frequency energies, and a Rhie-Chow term to
+    //     // avoid checker-boarding
+    //     stab =
+    //     (
+    //         this->stabilisation().stabilisation
+    //         (
+    //             this->U(),
+    //            (deltaT*this->impKf_)()
+    //         )
+    //     );
+    //     a_ =
+    //         (
+    //             fvc::div(this->tractionSf())
+    //           + fvc::div
+    //             (
+    //                 this->mesh().Sf()*energies_.viscousPressuref
+    //                 (
+    //                     this->rho(),
+    //                     wavespeed_,
+    //                     this->gradD()
+    //                 )
+    //             )
+    //
+    //             // This corresponds to Lax–Friedrichs smoothing
+    //           + stab()
+    //         )/this->rho()
+    //       + this->g();
+    //     a_.correctBoundaryConditions();
+    //
+    //     // Compute the velocity
+    //     // Note: this is the velocity at the middle of the time-step
+    //     this->U() =
+    //         this->U().oldTime()
+    //       + deltaT
+    //        *(
+    //             (1.0 - gamma)*a_.oldTime()
+    //           + gamma*a_
+    //         );
+    //
+    //     // Compute change in displacement
+    //     this->DD().ref() =
+    //         deltaT
+    //        *(
+    //             this->U().oldTime()
+    //           + deltaT
+    //            *(
+    //                 (0.5 - beta)*a_.oldTime()
+    //               + beta*a_
+    //             )
+    //         );
+    //
+    //     // Enforce any cell displacements
+    //     if (this->setCellDisps().cellIDs().size())
+    //     {
+    //         vectorField& DDI = this->DD();
+    //         vectorField& UI = this->U();
+    //         const vectorField& DOld = this->D().oldTime();
+    //
+    //         const labelList& cells = this->setCellDisps().cellIDs();
+    //         const vectorField& cellDs = this->setCellDisps().cellDisps();
+    //
+    //         forAll(cells, i)
+    //         {
+    //             const label celli = cells[i];
+    //             DDI[celli] = cellDs[i] - DOld[celli];
+    //             UI[celli] = DDI[celli]/deltaT.value();
+    //         }
+    //     }
+    //     this->DD().correctBoundaryConditions();
+    //     this->U().boundaryFieldRef() ==
+    //         this->DD().boundaryField()/deltaT.value();
+    //     // this->correctUBCs(this->U());
+    //
+    //     relax();
+    //
+    //     // Update displacement
+    //     this->D() == this->D().oldTime() + this->DD();
+    //
+    // } while (changing);
+
+    // bool changing = false;
+    // do
+    // {
+    //     // changing = this->mesh().update();
+    //     this->mesh().update();
+    //
+    //     // Central difference scheme
+    //     const dimensionedScalar& deltaT = this->time().deltaT();
+    //
+    //     // Update the stress field based on the latest D field
+    //     this->update();
+    //
+    //     // Compute acceleration
+    //     // Note the inclusion of a linear bulk viscosity pressure term to
+    //     // dissipate high frequency energies, and a Rhie-Chow term to
+    //     // avoid checker-boarding
+    //     stab =
+    //     (
+    //         this->stabilisation().stabilisation
+    //         (
+    //             this->U(),
+    //            (deltaT*this->impKf_)()
+    //         )
+    //     );
+    //     a_ =
+    //         (
+    //             fvc::div(this->tractionSf())
+    //           + fvc::div
+    //             (
+    //                 this->mesh().Sf()*energies_.viscousPressuref
+    //                 (
+    //                     this->rho(),
+    //                     wavespeed_,
+    //                     this->gradD()
+    //                 )
+    //             )
+    //
+    //             // This corresponds to Lax–Friedrichs smoothing
+    //           + stab()
+    //         )/this->rho()
+    //       + this->g();
+    //     a_.correctBoundaryConditions();
+    //
+    //     // Compute the velocity
+    //     // Note: this is the velocity at the middle of the time-step
+    //     this->U() = this->U().oldTime() + deltaT*a_;
+    //
+    //     // Compute change in displacement
+    //     this->DD().ref() = deltaT*this->U();
+    //
+    //     // Enforce any cell displacements
+    //     if (this->setCellDisps().cellIDs().size())
+    //     {
+    //         vectorField& DDI = this->DD();
+    //         vectorField& UI = this->U();
+    //         const vectorField& DOld = this->D().oldTime();
+    //
+    //         const labelList& cells = this->setCellDisps().cellIDs();
+    //         const vectorField& cellDs = this->setCellDisps().cellDisps();
+    //
+    //         forAll(cells, i)
+    //         {
+    //             const label celli = cells[i];
+    //             DDI[celli] = cellDs[i] - DOld[celli];
+    //             UI[celli] = DDI[celli]/deltaT.value();
+    //         }
+    //     }
+    //     this->DD().correctBoundaryConditions();
+    //     this->U().boundaryFieldRef() ==
+    //         this->DD().boundaryField()/deltaT.value();
+    //
+    //     relax();
+    //
+    //     // Update displacement
+    //     this->D() == this->D().oldTime() + this->DD();
+    //
+    //
+    //
+    //     // Second step
+    //
+    //     // Update the stress field based on the latest D field
+    //     this->update();
+    //
+    //     // Compute acceleration
+    //     // Note the inclusion of a linear bulk viscosity pressure term to
+    //     // dissipate high frequency energies, and a Rhie-Chow term to
+    //     // avoid checker-boarding
+    //     stab =
+    //     (
+    //         this->stabilisation().stabilisation
+    //         (
+    //             this->U(),
+    //            (deltaT*this->impKf_)()
+    //         )
+    //     );
+    //     a_ =
+    //         (
+    //             fvc::div(this->tractionSf())
+    //           + fvc::div
+    //             (
+    //                 this->mesh().Sf()*energies_.viscousPressuref
+    //                 (
+    //                     this->rho(),
+    //                     wavespeed_,
+    //                     this->gradD()
+    //                 )
+    //             )
+    //
+    //             // This corresponds to Lax–Friedrichs smoothing
+    //           + stab()
+    //         )/this->rho()
+    //       + this->g();
+    //     a_.correctBoundaryConditions();
+    //
+    //     // Compute the velocity
+    //     // Note: this is the velocity at the middle of the time-step
+    //     this->U() += deltaT*a_;
+    //
+    //     // Compute change in displacement
+    //     this->DD().ref() = deltaT*this->U();
+    //
+    //     // Enforce any cell displacements
+    //     if (this->setCellDisps().cellIDs().size())
+    //     {
+    //         vectorField& DDI = this->DD();
+    //         vectorField& UI = this->U();
+    //         const vectorField& DOld = this->D().oldTime();
+    //
+    //         const labelList& cells = this->setCellDisps().cellIDs();
+    //         const vectorField& cellDs = this->setCellDisps().cellDisps();
+    //
+    //         forAll(cells, i)
+    //         {
+    //             const label celli = cells[i];
+    //             DDI[celli] = cellDs[i] - DOld[celli];
+    //             UI[celli] = DDI[celli]/deltaT.value();
+    //         }
+    //     }
+    //     this->DD().correctBoundaryConditions();
+    //     this->U().boundaryFieldRef() ==
+    //         this->DD().boundaryField()/deltaT.value();
+    //
+    //     relax();
+    //
+    //
+    //
+    //     //- Average
+    //     this->DD() = 0.5*(DD() + DD().oldTime());
+    //     this->U() = 0.5*(U() + U().oldTime());
+    //     this->DD().correctBoundaryConditions();
+    //     this->U().boundaryFieldRef() ==
+    //         this->DD().boundaryField()/deltaT.value();
+    //
+    //     a_ = 0.5*(a_ + a_.oldTime());
+    //
+    //     // Update displacement
+    //     this->D() == this->D().oldTime() + this->DD();
+    //
+    //
+    // } while (changing);
+    //
+    // // Check energies
+    // energies_.checkEnergies
+    // (
+    //     this->rho(),
+    //     this->U(),
+    //     this->D(),
+    //     this->DD(),
+    //     this->sigma(),
+    //     this->gradD(),
+    //     this->gradDD(),
+    //     this->stabilisation(),
+    //     this->g()
+    // );
+    // return true;
 }
 
 

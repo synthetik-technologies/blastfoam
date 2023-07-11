@@ -48,7 +48,7 @@ const Foam::dictionary& Foam::readComponent
             &read2DTable
             (
                 parentDict.lookup<fileName>(name + "File"),
-                parentDict.lookupOrDefault<char>(name + "Delim", ','),
+                parentDict.lookupOrDefault<token>(name + "Delim", token::COMMA).pToken(),
                 parentDict.lookupOrDefault<label>(name + "StartRow", 0),
                 parentDict.lookupOrDefault<Switch>(name + "FlipTable", false)
             )
@@ -61,7 +61,7 @@ const Foam::dictionary& Foam::readComponent
             &read2DTable
             (
                 parentDict.lookup<fileName>("file"),
-                parentDict.lookupOrDefault<char>("delim", ','),
+                parentDict.lookupOrDefault<token>("delim", token::COMMA).pToken(),
                 parentDict.lookupOrDefault<label>("startRow", 0),
                 parentDict.lookupOrDefault<Switch>("flipTable", false)
             )
@@ -103,7 +103,7 @@ const Foam::dictionary& Foam::readComponent
                 &read2DTable
                 (
                     dict.lookup<fileName>("file"),
-                    dict.lookupOrDefault<char>("delim", ','),
+                    dict.lookupOrDefault<token>("delim", token::COMMA).pToken(),
                     dict.lookupOrDefault<label>("startRow", 0),
                     dict.lookupOrDefault<Switch>("flipTable", false)
                 )
@@ -329,7 +329,7 @@ template<class Type>
 void Foam::read1DTable
 (
     const fileName& file,
-    const string& delim,
+    const token::punctuationToken delim,
     List<Type>& values,
     const bool determineSize
 )
@@ -382,7 +382,7 @@ template<class Type>
 void Foam::read2DTable
 (
     const fileName& file,
-    const char delim,
+    const token::punctuationToken delim,
     List2D<Type>& data,
     const bool flip,
     const bool determineSize
@@ -413,7 +413,7 @@ void Foam::read2DTable
         removeComments(line);
 
         string lineEntry = line;
-        lineEntry.replaceAll(delim, " ");
+        lineEntry.replaceAll(delim, token::SPACE);
         lineEntry = '(' + lineEntry + ')';
         IStringStream iss(lineEntry);
 
@@ -554,8 +554,8 @@ template<class Type>
 void Foam::read3DTable
 (
     const fileName& file,
-    const char delim,
-    const char rowDelim,
+    const token::punctuationToken delim,
+    const token::punctuationToken rowDelim,
     List3D<Type>& data,
     const bool flip,
     const bool determineSize

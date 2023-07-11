@@ -94,7 +94,7 @@ fixedDisplacementZeroShearFvPatchVectorField
         dispSeries_ =
             Function1<vector>::New("displacementSeries", dict);
 
-        refValue() = dispSeries_->value(this->db().time().timeOutputValue());
+        refValue() = dispSeries_->value(this->db().time().value());
     }
     else if (dict.found("value"))
     {
@@ -136,7 +136,7 @@ fixedDisplacementZeroShearFvPatchVectorField
 :
     solidDirectionMixedFvPatchVectorField(ptf, iF),
     totalDisp_(ptf.totalDisp_),
-    dispSeries_(ptf.dispSeries_),
+    dispSeries_(ptf.dispSeries_, false),
     forceZeroShearGrad_(ptf.forceZeroShearGrad_)
 {}
 
@@ -182,7 +182,7 @@ void fixedDisplacementZeroShearFvPatchVectorField::updateCoeffs()
 
     if (dispSeries_.valid())
     {
-        disp = dispSeries_->value(this->db().time().timeOutputValue());
+        disp = dispSeries_->value(this->db().time().value());
     }
 
     if (internalField().name() == "DD")

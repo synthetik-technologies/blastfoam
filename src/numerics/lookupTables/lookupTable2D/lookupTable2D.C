@@ -705,7 +705,7 @@ void Foam::lookupTable2D<Type>::read
                 read2DTable
                 (
                     dict.lookup<fileName>(name + "File"),
-                    dict.lookupOrDefault<char>(name + "Delim", ','),
+                    readDelim(dict, name + "Delim"),
                     data,
                     dict.lookupOrDefault<bool>(name + "FlipTable", false),
                     !canRead
@@ -740,7 +740,7 @@ void Foam::lookupTable2D<Type>::read
             read2DTable
             (
                 fDict.lookup<fileName>("file"),
-                fDict.lookupOrDefault<char>("delim", ','),
+                readDelim(fDict),
                 data,
                 fDict.lookupOrDefault<bool>("flipTable", false),
                 !canRead

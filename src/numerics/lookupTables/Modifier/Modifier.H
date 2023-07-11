@@ -138,7 +138,7 @@ public:
     }
     virtual void readReal(const dictionary& dict, const word& entry)
     {
-        isReal_ = dict.lookup<bool>(entry) ? REAL : MODIFIED;
+        isReal_ = dict.template lookup<bool>(entry) ? REAL : MODIFIED;
     }
 };
 
@@ -268,7 +268,7 @@ public:
 
     inline scalar operator()(const scalar& x) const
     {
-        return log(x);
+        return log(max(x, small));
     }
 
     inline scalar inv(const scalar& x) const
@@ -300,7 +300,7 @@ public:
 
     inline scalar inv(const scalar& x) const
     {
-        return log(x);
+        return log(max(x, small));
     }
 };
 
@@ -322,7 +322,7 @@ public:
 
     inline scalar operator()(const scalar& x) const
     {
-        return log10(x);
+        return log10(max(x, small));
     }
 
     inline scalar inv(const scalar& x) const
@@ -354,7 +354,7 @@ public:
 
     inline scalar inv(const scalar& x) const
     {
-        return log10(x);
+        return log10(max(x, small));
     }
 };
 

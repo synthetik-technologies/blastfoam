@@ -102,6 +102,9 @@ public:
 
             //- Return the Courant number
             virtual scalar CoNum() const;
+
+            //- Return the maximum Courant number
+            virtual scalar maxCo() const;
 };
 
 

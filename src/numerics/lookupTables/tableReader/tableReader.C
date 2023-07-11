@@ -28,58 +28,6 @@ License
 
 Foam::HashTable<Foam::entryTable> Foam::readTables;
 
-const char* const Foam::pTraits<char>::typeName = "char";
-
-Foam::pTraits<char>::pTraits(const char& p)
-:
-    p_(p)
-{}
-
-Foam::pTraits<char>::pTraits(Istream& is)
-{
-    is >> p_;
-}
-
-
-Foam::Istream& Foam::operator>>(Istream& is, char& i)
-{
-    token t(is);
-
-    if (!t.good())
-    {
-        is.setBad();
-        return is;
-    }
-
-    if (t.isString())
-    {
-        i = char(t.stringToken()[0]);
-    }
-    else
-    {
-        is.setBad();
-        FatalIOErrorInFunction(is)
-            << "wrong token type - expected char, found " << t.info()
-            << exit(FatalIOError);
-
-        return is;
-    }
-
-    // Check state of Istream
-    is.check("Istream& operator>>(Istream&, char&)");
-
-    return is;
-}
-
-
-char Foam::readChar(Istream& is)
-{
-    char val;
-    is >> val;
-
-    return val;
-}
-
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
 void Foam::removeComments(string& line)
@@ -92,10 +40,33 @@ void Foam::removeComments(string& line)
 }
 
 
+Foam::token::punctuationToken Foam::readDelim
+(
+    const dictionary& dict,
+    const word& name,
+    const token::punctuationToken delim
+)
+{
+    if (!dict.found(name))
+    {
+        return delim;
+    }
+    ITstream is = dict.lookup(name);
+    token t(is);
+    if (!t.isString() || t.stringToken().size() != 1)
+    {
+        FatalIOErrorInFunction(is)
+            << "Expected single quoted character but found " << t << endl
+            << abort(FatalIOError);
+    }
+    return token::punctuationToken(t.stringToken()[0]);
+}
+
+
 const Foam::entryTable& Foam::read2DTable
 (
     const fileName& file,
-    const char delim,
+    const token::punctuationToken delim,
     const label startLine,
     const bool flip
 )
@@ -133,6 +104,7 @@ const Foam::entryTable& Foam::read2DTable
             is >> t;
             continue;
         }
+        label lineNo = t.lineNumber();
         if
         (
             (t.isPunctuation() && t.pToken() == token::HASH)
@@ -142,24 +114,27 @@ const Foam::entryTable& Foam::read2DTable
             do
             {
                 is >> t;
-            } while ((t.isPunctuation() && t.pToken() != token::NL) || !t.good());
+            } while
+            (
+                (t.isPunctuation() && t.pToken() != token::NL)
+             && t.good()
+             && t.lineNumber() == lineNo
+            );
         }
 
         DynamicList<DynamicList<token>> lineVals;
         label cmpti = 0;
-        label lineNo = t.lineNumber();
-        label oldLineNo = lineNo;
+        lineNo = t.lineNumber();
         while (is.good())
         {
             bool add = true;
-            lineNo = t.lineNumber();
             if (!t.good())
             {
                 break;
             }
-            else if (lineNo != oldLineNo)
+            else if (t.lineNumber() != lineNo)
             {
-                oldLineNo = lineNo;
+                lineNo = t.lineNumber();
                 break;
             }
 

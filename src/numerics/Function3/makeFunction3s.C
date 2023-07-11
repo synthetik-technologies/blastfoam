@@ -30,6 +30,7 @@ License
 #include "ZeroConstant3.H"
 #include "OneConstant3.H"
 #include "Scale3.H"
+#include "Component3.H"
 #include "CodedFunction3.H"
 
 #include "fieldTypes.H"
@@ -43,6 +44,7 @@ License
     makeFunction3Type(ZeroConstant, Type);                                     \
     makeFunction3Type(OneConstant, Type);                                      \
     makeFunction3Type(Scale, Type);                                            \
+    makeFunction3Type(Component, Type);                                        \
     makeFunction3Type(Coded, Type);
 
 namespace Foam

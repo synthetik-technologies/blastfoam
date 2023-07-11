@@ -207,8 +207,8 @@ void Foam::timeIntegrators::AdamsBashforth::setTimeFactors
     List<scalar>& f
 ) const
 {
-    f.setSize(currOrder_, 1.0);
-    f0.setSize(currOrder_, 0.0);
+    f.setSize(nSteps_, 1.0);
+    f0.setSize(nSteps_, 0.0);
 
     // f0[0] = 0.0;
     // f[0] = sum(bs[0]);

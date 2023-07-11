@@ -86,7 +86,7 @@ public:
         //- Return max Courant number
         virtual scalar maxCo() const
         {
-            return scalar(nSteps_) - 2.0;
+            return scalar(nSteps_) - 1.0;
         }
 };
 

@@ -945,9 +945,10 @@ Foam::autoPtr<Foam::hexRefRefinementHistory> Foam::hexRefRefinementHistory::clon
     // Loop over all entries. Note: could recurse like countProc so only
     // visit used entries but is probably not worth it.
 
+    label nSubCellsPerCell = 1 << dynamicCast<const polyMesh>(this->db()).nGeometricD();
     forAll(splitCells_, index)
     {
-        if (splitCellProc[index] == procI && splitCellNum[index] == 8)
+        if (splitCellProc[index] == procI && splitCellNum[index] == nSubCellsPerCell)
         {
             // Entry moves in its whole to procI
             oldToNewSplit[index] = newSplitCells.size();

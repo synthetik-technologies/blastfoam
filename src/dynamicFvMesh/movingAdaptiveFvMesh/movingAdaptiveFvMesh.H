@@ -73,6 +73,10 @@ class movingAdaptiveFvMesh
         //  after motion it is not necessary to specify a "velocityFields" list
         velocityMotionCorrection velocityMotionCorrection_;
 
+        //- Current time index
+        //  used to determine if the mesh is being moved again
+        label curTimeIndex_;
+
 
     // Private Member Functions
 

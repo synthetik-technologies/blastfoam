@@ -507,8 +507,8 @@ void Foam::lookupTable3D<Foam::scalar>::read
             read3DTable
             (
                 fDict.lookup<fileName>("file"),
-                dict.lookupOrDefault<char>("delim", ','),
-                dict.lookupOrDefault<char>("rowDelim", ';'),
+                readDelim(dict),
+                readDelim(dict, "rowDelim", token::END_STATEMENT),
                 data,
                 dict.lookupOrDefault<Switch>("flipTable", true),
                 !canRead

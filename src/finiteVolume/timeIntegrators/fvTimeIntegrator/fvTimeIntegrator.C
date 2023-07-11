@@ -90,13 +90,13 @@ void Foam::fvTimeIntegrator::updateAll()
                         mesh_.time().timeName(),
                         mesh_
                     ),
-                    mesh_.V0() + f0()*(mesh_.V() - mesh_.V0())
+                    (mesh_.V0() + f0()*(mesh_.V() - mesh_.V0()))/mesh_.V()
                 )
             );
         }
         else
         {
-            V0Ptr_() = mesh_.V0() + f0()*(mesh_.V() - mesh_.V0());
+            V0Ptr_() = (mesh_.V0() + f0()*(mesh_.V() - mesh_.V0()))/mesh_.V();
         }
 
         if (!VPtr_.valid())
@@ -111,13 +111,15 @@ void Foam::fvTimeIntegrator::updateAll()
                         mesh_.time().timeName(),
                         mesh_
                     ),
-                    mesh_.V0() + f()*(mesh_.V() - mesh_.V0())
+                    mesh_,
+                    1.0//mesh_.V()
+                    // mesh_.V0() + f()*(mesh_.V() - mesh_.V0())
                 )
             );
         }
         else
         {
-            VPtr_() = mesh_.V0() + f()*(mesh_.V() - mesh_.V0());
+            VPtr_() = 1.0;//mesh_.V();//mesh_.V0() + f()*(mesh_.V() - mesh_.V0());
         }
     }
     forAll(systems_, i)
@@ -257,7 +259,7 @@ void Foam::fvTimeIntegrator::reset()
 
 Foam::tmp<Foam::scalarField> Foam::fvTimeIntegrator::V0() const
 {
-    if (V0Ptr_.valid())
+    if (stepi_ == 0 && V0Ptr_.valid())
     {
         return V0Ptr_();
     }
@@ -267,7 +269,7 @@ Foam::tmp<Foam::scalarField> Foam::fvTimeIntegrator::V0() const
 
 Foam::tmp<Foam::scalarField> Foam::fvTimeIntegrator::V() const
 {
-    if (VPtr_.valid())
+    if (stepi_ == 0 && VPtr_.valid())
     {
         return VPtr_();
     }

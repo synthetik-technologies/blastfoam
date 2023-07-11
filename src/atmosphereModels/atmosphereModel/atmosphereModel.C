@@ -162,11 +162,10 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         p - rho*gh,
         ph_rghBcs
     );
-    ph_rgh.rename("p");
 
     pressureReference pressureReference
     (
-        ph_rgh,
+        p,
         dict_,
         ph_rgh.needReference()
     );
@@ -177,7 +176,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     );
     bool correctRho
     (
-        dict_.lookupOrDefault<bool>("correctRho", false)
+        dict_.lookupOrDefault<bool>("correctRho", true)
     );
     scalar tolerance(dict_.lookupOrDefault<scalar>("tolerance", 1e-6));
     scalar relTol(dict_.lookupOrDefault<scalar>("relTol", 1e-6));
