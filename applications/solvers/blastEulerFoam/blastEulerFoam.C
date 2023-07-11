@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
     #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
+    maxCo = min(maxCo, integrator.maxCo());
     #include "EigenCourantNos.H"
     #include "setInitialDeltaT.H"
 
@@ -64,6 +65,8 @@ int main(int argc, char *argv[])
         refineMesh(mesh);
 
         #include "readTimeControls.H"
+        maxCo = min(maxCo, integrator.maxCo());
+
         #include "EigenCourantNos.H"
         #include "setDeltaT.H"
 

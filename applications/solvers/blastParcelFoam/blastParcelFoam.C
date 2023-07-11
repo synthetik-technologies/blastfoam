@@ -50,6 +50,10 @@ int main(int argc, char *argv[])
     #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
+    maxCo = min(maxCo, integrator.maxCo());
+    scalar CoNum = fluid.CoNum();
+
+    #include "setInitialDeltaT.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,6 +69,8 @@ int main(int argc, char *argv[])
 
         scalar CoNum = fluid.CoNum();
         #include "readTimeControls.H"
+        maxCo = min(maxCo, integrator.maxCo());
+
         #include "setDeltaT.H"
 
         runTime++;

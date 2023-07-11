@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createFieldRefs.H"
     #include "createTimeControls.H"
-
+    maxCo = min(maxCo, integrator.maxCo());
     scalar CoNum = fluid.CoNum();
     #include "setInitialDeltaT.H"
 
@@ -89,6 +89,8 @@ int main(int argc, char *argv[])
     {
         CoNum = fluid.CoNum();
         #include "readTimeControls.H"
+        maxCo = min(maxCo, integrator.maxCo());
+
         #include "setDeltaT.H"
 
         runTime++;

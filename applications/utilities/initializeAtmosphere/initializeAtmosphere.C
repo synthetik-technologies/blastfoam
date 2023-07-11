@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
             zoneID
         )
     );
+    const dictionary& atmosphereDict = atmosphere->dict();
 
     IOdictionary phaseProperties
     (
@@ -136,7 +137,7 @@ int main(int argc, char *argv[])
     {
         phases = args.optionRead<word>("phase");
     }
-    else if (atmosphereProperties.found("phase"))
+    else if (atmosphereDict.found("phase"))
     {
         phases = atmosphereProperties.lookup<word>("phase");
     }
@@ -171,10 +172,10 @@ int main(int argc, char *argv[])
             atmosphereProperties.set("pRefValue", args.optionRead<scalar>("pRef"));
             refSet++;
         }
-        else if (atmosphereProperties.found("pRef"))
-        {
-            refSet++;
-        }
+        // else if (atmosphereDict.found("pRefValue"))
+        // {
+        //     refSet++;
+        // }
 
         if (args.optionFound("refCell"))
         {
@@ -186,23 +187,23 @@ int main(int argc, char *argv[])
             atmosphereProperties.set("pRefPoint", args.optionRead<vector>("refPoint"));
             refSet++;
         }
-        else if
-        (
-            atmosphereProperties.found("pRef")
-         || atmosphereProperties.found("pRefCell")
-        )
-        {
-            refSet++;
-        }
+        // else if
+        // (
+        //     atmosphereDict.found("pRefPoint")
+        //  || atmosphereDict.found("pRefCell")
+        // )
+        // {
+        //     refSet++;
+        // }
 
-        if (refSet < 2)
-        {
-            FatalErrorInFunction
-                << "Could not determine reference pressure state" << nl
-                << "please provide pRef and refCell/pRefCell or refPoint/pRefPoint" << nl
-                << " or provide fixed pressure patches" << endl
-                << abort(FatalError);
-        }
+        // if (refSet < 2)
+        // {
+        //     FatalErrorInFunction
+        //         << "Could not determine reference pressure state" << nl
+        //         << "please provide pRef and refCell/pRefCell or refPoint/pRefPoint" << nl
+        //         << " or provide fixed pressure patches" << endl
+        //         << abort(FatalError);
+        // }
     }
 
     Info<< "Initializing atmosphere." << endl;

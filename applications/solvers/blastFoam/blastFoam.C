@@ -48,10 +48,10 @@ int main(int argc, char *argv[])
     #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
-    if (maxCo > integrator.maxCo())
-    {
-        maxCo = integrator.maxCo();
-    }
+    maxCo = min(maxCo, integrator.maxCo());
+    scalar CoNum = fluid->CoNum();
+
+    #include "setInitialDeltaT.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     Info<< "\nStarting time loop\n" << endl;
@@ -64,12 +64,9 @@ int main(int argc, char *argv[])
         refineMesh(mesh);
 
         //- Set the new time step and advance
-        scalar CoNum = fluid->CoNum();
+        CoNum = fluid->CoNum();
         #include "readTimeControls.H"
-        if (maxCo > integrator.maxCo())
-        {
-            maxCo = integrator.maxCo();
-        }
+        maxCo = min(maxCo, integrator.maxCo());
 
         #include "setDeltaT.H"
 
