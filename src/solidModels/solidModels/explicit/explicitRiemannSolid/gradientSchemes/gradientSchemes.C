@@ -421,7 +421,7 @@ tmp<volTensorField> gradientSchemes::localGradient
             AinvLocal_[nei] & ((Uf[facei].z() - U[nei].z())*dNei);
     }
 
-    const volVectorField::Boundary& pU(U.boundaryField());
+    // const volVectorField::Boundary& pU(U.boundaryField());
     const surfaceVectorField::Boundary& pUf(Uf.boundaryField());
     // volVectorField::Boundary& pgradUx(gradUx.boundaryFieldRef());
     // volVectorField::Boundary& pgradUy(gradUy.boundaryFieldRef());
@@ -551,7 +551,7 @@ void gradientSchemes::reconstruct
 {
     autoPtr<ReconstructionScheme<scalar>> ULimiter
     (
-        ReconstructionScheme<scalar>::New(U, U.name())
+        ReconstructionScheme<scalar>::New(U, U.name(), true)
     );
     UOwn = ULimiter->interpolateOwn();
     UNei = ULimiter->interpolateNei();
@@ -570,7 +570,7 @@ void gradientSchemes::reconstruct
 {
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, U.name())
+        ReconstructionScheme<vector>::New(U, U.name(), true)
     );
     UOwn = ULimiter->interpolateOwn();
     UNei = ULimiter->interpolateNei();

@@ -134,8 +134,10 @@ void Foam::kineticTheoryModels::cohesionModels::Gu::update()
 {
     const volScalarField& alpha = kt_.phase();
     const volScalarField& rho = kt_.phase().rho();
-    const volScalarField& Theta = kt_.Theta();
-    const volScalarField& d = kt_.phase().d();
+    tmp<volScalarField> tTheta = kt_.Theta();
+    const volScalarField& Theta = tTheta();
+    tmp<volScalarField> td = kt_.phase().d();
+    const volScalarField& d = td();
     const scalar e = kt_.es();
 
     forAll(tauYield_, celli)
@@ -164,7 +166,6 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::cohesionModels::Gu::nu() const
 {
     const volScalarField& rho = kt_.phase().rho();
-    const volScalarField& Theta = kt_.Theta();
     volSymmTensorField S(dev(symm(fvc::grad(kt_.phase().U()))));
     volScalarField D(sqrt(2.0*(S && S)));
     D.max(small);
@@ -173,7 +174,7 @@ Foam::kineticTheoryModels::cohesionModels::Gu::nu() const
         sqr(tauYield_/rho)
        *W_
        /D
-       /(aw_*max(Theta, dimensionedScalar(sqr(dimVelocity), 1e-6)));
+       /(aw_*max(kt_.Theta(), dimensionedScalar(sqr(dimVelocity), 1e-6)));
 }
 
 
@@ -181,7 +182,8 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::cohesionModels::Gu::Ps() const
 {
     const volScalarField& alpha = kt_.phase();
-    const volScalarField& d = kt_.phase().d();
+    tmp<volScalarField> td = kt_.phase().d();
+    const volScalarField& d = td();
 
     tmp<volScalarField> tPsCoh
     (
@@ -224,7 +226,8 @@ Foam::tmp<Foam::volScalarField>
 Foam::kineticTheoryModels::cohesionModels::Gu::dPsdAlpha() const
 {
     const volScalarField& alpha = kt_.phase();
-    const volScalarField& d = kt_.phase().d();
+    tmp<volScalarField> td = kt_.phase().d();
+    const volScalarField& d = td();
 
     tmp<volScalarField> tdPsdAlpha
     (
@@ -286,8 +289,10 @@ Foam::kineticTheoryModels::cohesionModels::Gu::dissipationSource
 {
     const phaseModel& phase = kt_.phase();
     const volScalarField& rho = phase.rho();
-    const volScalarField& Theta = phase.Theta();
-    const volScalarField& d = phase.d();
+    tmp<volScalarField> tTheta = kt_.Theta();
+    const volScalarField& Theta = tTheta();
+    tmp<volScalarField> td = kt_.phase().d();
+    const volScalarField& d = td();
 
     tmp<volScalarField> gammaGoeff
     (

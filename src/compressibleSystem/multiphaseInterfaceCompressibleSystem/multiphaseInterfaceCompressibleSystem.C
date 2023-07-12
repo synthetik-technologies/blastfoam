@@ -156,7 +156,6 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
             dimensionedScalar(dimDensity, 0.0)
         )
     );
-    static boolList cached(alphas_.size()+1, false);
     forAll(rhos_, phasei)
     {
         autoPtr<ReconstructionScheme<scalar>> alphaLimiter
@@ -165,7 +164,8 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
             (
                 alphas_[phasei],
                 "alpha",
-                alphas_[phasei].group()
+                alphas_[phasei].group(),
+                true
             )
         );
         alphasOwn.set(phasei, alphaLimiter->interpolateOwn());
@@ -177,7 +177,8 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
             (
                 rhos_[phasei],
                 "rho",
-                rhos_[phasei].group()
+                rhos_[phasei].group(),
+                true
             )
         );
         rhosOwn.set(phasei, rhoLimiter->interpolateOwn());
@@ -200,21 +201,8 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
             alphasNei[phasei]*rhosNei[phasei]
         );
 
-        if (!cached[phasei+1])
-        {
-            cached[phasei] = true;
-            mesh().addTemporaryObject(talphaRhoOwn().name());
-            mesh().addTemporaryObject(talphaRhoNei().name());
-        }
-
         rhoOwn += talphaRhoOwn;
         rhoNei += talphaRhoNei;
-    }
-    if (!cached[0])
-    {
-        cached[0] = true;
-        mesh().addTemporaryObject(rhoOwn().name());
-        mesh().addTemporaryObject(rhoNei().name());
     }
 
     fluxScheme_->update

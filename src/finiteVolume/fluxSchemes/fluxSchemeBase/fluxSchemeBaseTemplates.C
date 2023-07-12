@@ -117,7 +117,7 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
 
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
-        ReconstructionScheme<Type>::New(f, name)
+        ReconstructionScheme<Type>::New(f, name, true)
     );
 
     tmp<fieldType> tfOwn, tfNei;
@@ -257,7 +257,7 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::phaseInter
 
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
-        ReconstructionScheme<Type>::New(f, name)
+        ReconstructionScheme<Type>::New(f, name, true)
     );
 
     tmp<fieldType> tfOwn, tfNei;
@@ -317,7 +317,7 @@ Foam::fluxSchemeBase::flux
     tmp<fieldType> tfOwn, tfNei;
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
-        ReconstructionScheme<Type>::New(f, f.member(), f.group())
+        ReconstructionScheme<Type>::New(f, f.member(), f.group(), true)
     );
     fLimiter->interpolateOwnNei(tfOwn, tfNei);
     tmp<fieldType> talphaRhofOwn(tfOwn*talphaRhoOwn);
@@ -342,7 +342,7 @@ Foam::fluxSchemeBase::flux
     tmp<fieldType> tfOwn, tfNei;
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
-        ReconstructionScheme<Type>::New(f, f.member(), f.group())
+        ReconstructionScheme<Type>::New(f, f.member(), f.group(), true)
     );
     fLimiter->interpolateOwnNei(tfOwn, tfNei);
 
@@ -502,7 +502,7 @@ Foam::fluxSchemeBase::phaseFlux
     tmp<fieldType> tfOwn, tfNei;
     autoPtr<ReconstructionScheme<Type>> fLimiter
     (
-        ReconstructionScheme<Type>::New(f, f.member(), f.group())
+        ReconstructionScheme<Type>::New(f, f.member(), f.group(), true)
     );
     fLimiter->interpolateOwnNei(tfOwn, tfNei);
 

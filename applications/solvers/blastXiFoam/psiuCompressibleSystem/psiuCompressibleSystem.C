@@ -91,6 +91,15 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
 
     fluxScheme_ = fluxScheme::NewSingle(phi_);
     encode();
+
+
+    // Mark flux fields to be cached
+    mesh.addTemporaryObject(reconstruction::ownName(rho_.name()));
+    mesh.addTemporaryObject(reconstruction::neiName(rho_.name()));
+    mesh.addTemporaryObject(reconstruction::ownName(U_.name()));
+    mesh.addTemporaryObject(reconstruction::neiName(U_.name()));
+    mesh.addTemporaryObject(reconstruction::ownName(p_.name()));
+    mesh.addTemporaryObject(reconstruction::neiName(p_.name()));
 }
 
 

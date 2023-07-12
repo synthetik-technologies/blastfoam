@@ -74,6 +74,18 @@ Foam::ReconstructionScheme<Type>::interpolateOwnNei
     {
         DebugInfo << "Recomputing " << ownName() << endl;
         tphiOwn = interpolateOwn();
+        if (phi_.mesh().cacheTemporaryObject(tphiOwn().name()))
+        {
+            DebugInfo << "Caching " << tphiOwn().name() << endl;
+            phi_.mesh().cacheTemporaryObject(tphiOwn.ref());
+            tphiOwn = tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+            (
+                phi_.mesh().template lookupObject
+                <
+                    GeometricField<Type, fvsPatchField, surfaceMesh>
+                >(ownName())
+            );
+        }
     }
 
     tphiNei.clear();
@@ -99,6 +111,18 @@ Foam::ReconstructionScheme<Type>::interpolateOwnNei
     {
         DebugInfo << "Recomputing " << neiName() << endl;
         tphiNei = interpolateNei();
+        if (phi_.mesh().cacheTemporaryObject(tphiNei().name()))
+        {
+            DebugInfo << "Caching " << tphiNei().name() << endl;
+            phi_.mesh().cacheTemporaryObject(tphiNei.ref());
+            tphiNei = tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+            (
+                phi_.mesh().template lookupObject
+                <
+                    GeometricField<Type, fvsPatchField, surfaceMesh>
+                >(neiName())
+            );
+        }
     }
 }
 

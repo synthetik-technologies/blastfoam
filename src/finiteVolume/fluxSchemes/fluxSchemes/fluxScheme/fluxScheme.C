@@ -110,21 +110,13 @@ void Foam::fluxScheme::update
 {
     autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        ReconstructionScheme<scalar>::New(rho, "rho")
+        ReconstructionScheme<scalar>::New(rho, "rho", true)
     );
 
     tmp<surfaceScalarField> trhoOwn, trhoNei;
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
     const surfaceScalarField& rhoOwn = trhoOwn();
     const surfaceScalarField& rhoNei = trhoNei();
-
-    static bool cached = false;
-    if (!cached)
-    {
-        cached = true;
-        mesh_.addTemporaryObject(rhoOwn.name());
-        mesh_.addTemporaryObject(rhoNei.name());
-    }
 
     update
     (
@@ -158,19 +150,19 @@ void Foam::fluxScheme::update
 
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U", true)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e", true)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p", true)
     );
     autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound")
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", true)
     );
 
     tmp<surfaceVectorField> tUOwn, tUNei;
@@ -272,7 +264,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e", true)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
@@ -293,20 +285,6 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     pLimiter->interpolateOwnNei(tpOwn, tpNei);
     const surfaceScalarField& pOwn = tpOwn();
     const surfaceScalarField& pNei = tpNei();
-
-    static bool cached = false;
-    if (!cached)
-    {
-        cached = true;
-        mesh_.addTemporaryObject(rhoOwn.name());
-        mesh_.addTemporaryObject(rhoNei.name());
-        mesh_.addTemporaryObject(UOwn.name());
-        mesh_.addTemporaryObject(UNei.name());
-        mesh_.addTemporaryObject(eOwn.name());
-        mesh_.addTemporaryObject(eNei.name());
-        mesh_.addTemporaryObject(pOwn.name());
-        mesh_.addTemporaryObject(pNei.name());
-    }
 
     tmp<surfaceScalarField> tmpPhi
     (
@@ -365,6 +343,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
                 );
         }
     }
+
     return tmpPhi;
 }
 

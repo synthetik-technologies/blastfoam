@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "MillerAfterburn.H"
+#include "fluxSchemeBase.H"
 #include "fvc.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -128,14 +129,31 @@ void Foam::afterburnModels::MillerAfterburn::initializeModels()
     (
         &c_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName)
     );
+
+    alphaRhoPtr_->mesh().addTemporaryObject
+    (
+        reconstruction::ownName(alphaRhoPtr_->name())
+    );
+    alphaRhoPtr_->mesh().addTemporaryObject
+    (
+        reconstruction::neiName(alphaRhoPtr_->name())
+    );
 }
 
 
 void Foam::afterburnModels::MillerAfterburn::solve()
 {
-    // Do not include volume changes
-    volScalarField cOld(c_);
-    this->storeAndBlendOld(cOld, false);
+    const volScalarField& alphaRho = alphaRhoPtr_();
+    dimensionedScalar dT(this->mesh().time().deltaT());
+    dimensionedScalar smallAlphaRho("small", dimDensity, 1e-10);
+
+    // Calculate the deltas using the current value
+    const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
+    volScalarField deltaAlphaRhoC
+    (
+        fvc::div(flux.flux(c_, alphaRhoPtr_(), flux.phi(), false))
+    );
+    this->storeAndBlendDelta(deltaAlphaRhoC);
 
     tmp<volScalarField> p(p_*pos(p_ - pMin_));
     if (pScale_ != 1.0)
@@ -150,16 +168,11 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     deltaC.max(0.0);
     this->storeAndBlendDelta(deltaC);
 
-    //- Calculate advection
-    const volScalarField& alphaRho = alphaRhoPtr_();
-    const surfaceScalarField& alphaRhoPhi = alphaRhoPhiPtr_();
+    // Do not include volume changes
+    this->storeAndBlendOld(c_, false);
+    volScalarField cOld(c_);
 
-    volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
-    this->storeAndBlendDelta(deltaAlphaRhoC);
-
-
-    dimensionedScalar dT = alphaRho.time().deltaT();
-    c_ = cOld + dT*deltaC;
+    c_ += deltaC*dT;
     c_.maxMin(0.0, 1.0);
     c_.correctBoundaryConditions();
 
@@ -174,10 +187,8 @@ void Foam::afterburnModels::MillerAfterburn::solve()
 
     //- Final update of c
     c_ =
-        (
-            cOld*alphaRho.prevIter() - dT*deltaAlphaRhoC
-        )/max(alphaRho, dimensionedScalar(dimDensity, 1e-10))
-      + dT*ddtC;
+        cOld*(2.0 - alphaRho/max(alphaRho.prevIter(), smallAlphaRho))
+      + dT*(deltaC - deltaAlphaRhoC/max(alphaRho.prevIter(), smallAlphaRho));
     c_.maxMin(0.0, 1.0);
     c_.correctBoundaryConditions();
 }

@@ -228,7 +228,6 @@ void Foam::multiphaseCompressibleSystem::update()
         rhoEPhi_
     );
 
-    static boolList cached(alphas_.size(), false);
     forAll(alphaRhoPhis_, phasei)
     {
         autoPtr<ReconstructionScheme<scalar>> alphaLimiter
@@ -237,7 +236,8 @@ void Foam::multiphaseCompressibleSystem::update()
             (
                 alphas_[phasei],
                 "alpha",
-                alphas_[phasei].group()
+                alphas_[phasei].group(),
+                true
             )
         );
         tmp<surfaceScalarField> talphaOwn, talphaNei;
@@ -251,7 +251,8 @@ void Foam::multiphaseCompressibleSystem::update()
             (
                 rhos_[phasei],
                 "rho",
-                rhos_[phasei].group()
+                rhos_[phasei].group(),
+                true
             )
         );
         tmp<surfaceScalarField> trhoOwn, trhoNei;
@@ -273,19 +274,9 @@ void Foam::multiphaseCompressibleSystem::update()
                 talphaNei*trhoNei()
             )
         );
-        if (!cached[phasei])
-        {
-            cached[phasei] = true;
-            mesh().addTemporaryObject(talphaRhoOwn().name());
-            mesh().addTemporaryObject(talphaRhoNei().name());
 
-            if (transportPhaseDensity_)
-            {
-                mesh().addTemporaryObject(trhoOwn().name());
-                mesh().addTemporaryObject(trhoNei().name());
-            }
-        }
-        alphaRhoPhis_[phasei] = fluxScheme_->flux(talphaRhoOwn(), talphaRhoNei(), phi_);
+        alphaRhoPhis_[phasei] =
+            fluxScheme_->flux(talphaRhoOwn(), talphaRhoNei(), phi_);
     }
     thermo_.update();
 }

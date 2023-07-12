@@ -170,22 +170,24 @@ public:
             if (overwrite != overwrite_)
             {
                 DebugInfo
-                    << "Attempt to used cached field, but "
+                    << "Attempt to used cached fields "
+                    << ownName() << " " << neiName() << ": "
                     <<  (
                             !phi.mesh().template foundObject
                             <
                                 GeometricField<Type, fvsPatchField, surfaceMesh>
                             >(ownName())
                           ? word(ownName() + " not found")
-                          : word::null
+                          : word(ownName() + " found")
                         )
+                    <<  ", "
                     <<  (
                             !phi.mesh().template foundObject
                             <
                                 GeometricField<Type, fvsPatchField, surfaceMesh>
                             >(neiName())
                           ? word(neiName() + " not found")
-                          : word::null
+                          : word(neiName() + " found")
                         ) << endl;
             }
         }
@@ -198,7 +200,7 @@ public:
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             const word& name,
-            const bool overwrite = true
+            const bool overwrite
         );
 
         static autoPtr<ReconstructionScheme<Type>> New
@@ -206,7 +208,7 @@ public:
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             const word& name,
             const word& phaseName,
-            const bool overwrite = true
+            const bool overwrite
         );
 
         //- Disallow default bitwise copy construction

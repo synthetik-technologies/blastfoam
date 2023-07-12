@@ -58,7 +58,7 @@ protected:
 
     //- Gradient of field
     //  Treated as a PtrList to ensure grad<type> is defined
-    PtrList<GeometricField<vector, fvPatchField, volMesh>> gradPhis_;
+    mutable PtrList<GeometricField<vector, fvPatchField, volMesh>> gradPhis_;
 
     //- Bound face values
     bool bound_;
@@ -87,6 +87,9 @@ protected:
             extrapolate_ = readBool(is);
         }
     }
+
+    //- Construct gradients
+    void constructGradPhis() const;
 
 public:
 

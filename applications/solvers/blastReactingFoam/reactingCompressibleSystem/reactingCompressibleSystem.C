@@ -118,6 +118,10 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
 
     fluxScheme_ = fluxScheme::NewSingle(phi_);
     encode();
+
+    // Mark flux fields to be cached
+    mesh.addTemporaryObject(reconstruction::ownName(rho_.name()));
+    mesh.addTemporaryObject(reconstruction::neiName(rho_.name()));
 }
 
 
@@ -175,7 +179,9 @@ void Foam::reactingCompressibleSystem::solve()
                 this->storeAndBlendOld(Ys[i], false);
                 this->storeAndBlendDelta(deltaRhoY);
 
-                Ys[i] = (Ys[i]*rho_.prevIter() - dT*deltaRhoY)/rho_;
+                Ys[i] =
+                    Ys[i]*(2.0 - rho_/rho_.prevIter())
+                  - dT*deltaRhoY/rho_.prevIter();
                 Ys[i].correctBoundaryConditions();
 
                 Ys[i].max(0.0);

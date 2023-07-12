@@ -130,7 +130,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
 
     autoPtr<ReconstructionScheme<scalar>> alphapLimiter
     (
-        ReconstructionScheme<scalar>::New(alphap, "alpha")
+        ReconstructionScheme<scalar>::New(alphap, "alpha", true)
     );
 
     alphapOwn_ = alphapLimiter->interpolateOwn();

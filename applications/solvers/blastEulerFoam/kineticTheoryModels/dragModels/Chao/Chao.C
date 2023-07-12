@@ -95,8 +95,10 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Chao::K
 
     const volScalarField& rho1(phase1.rho());
     const volScalarField& rho2(phase2.rho());
-    const volScalarField& Theta1 = pair_.phase1().Theta()();
-    const volScalarField& Theta2 = pair_.phase2().Theta()();
+    tmp<volScalarField> tTheta1 = pair_.phase1().Theta();
+    tmp<volScalarField> tTheta2 = pair_.phase2().Theta();
+    const volScalarField& Theta1 = tTheta1();
+    const volScalarField& Theta2 = tTheta2();
     const scalar pi(Foam::constant::mathematical::pi);
 
     tmp<volScalarField> gij(kineticTheorySystem_.gs0(phase1, phase2));

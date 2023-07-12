@@ -38,52 +38,11 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::QuadraticMUSCLReconstructionSche
 )
 :
     ReconstructionScheme<Type>(phi, is, overwrite),
-    gradPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0),
-    hessPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0),
+    gradPhis_(0),
+    hessPhis_(0),
     bound_(true),
     extrapolate_(false)
-{
-    if (this->overwrite_)
-    {
-        tmp<fv::gradScheme<scalar>> lgradientScheme
-        (
-            fv::gradScheme<scalar>::New
-            (
-                this->mesh_,
-                this->mesh_.gradScheme("limitedGrad(" + this->phi_.name() + ")")
-            )
-        );
-        tmp<fv::gradScheme<vector>> hgradientScheme
-        (
-            fv::gradScheme<vector>::New
-            (
-                this->mesh_,
-                this->mesh_.gradScheme("limitedHess(" + this->phi_.name() + ")")
-            )
-        );
-        for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
-        {
-            tmp<volScalarField> phiCmpt
-            (
-                volScalarField::New
-                (
-                    this->phi_.name() + "_" + Foam::name(cmpti),
-                    this->phi_.component(cmpti)
-                )
-            );
-            gradPhis_.set
-            (
-                cmpti,
-                lgradientScheme().grad(phiCmpt)
-            );
-            hessPhis_.set
-            (
-                cmpti,
-                hgradientScheme().grad(gradPhis_[cmpti])
-            );
-        }
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -94,11 +53,60 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::~QuadraticMUSCLReconstructionSch
 
 // * * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * //
 
+template<class Type>
+void Foam::QuadraticMUSCLReconstructionScheme<Type>::constructGradPhis() const
+{
+    gradPhis_.setSize(pTraits<Type>::nComponents);
+    hessPhis_.setSize(pTraits<Type>::nComponents);
+    tmp<fv::gradScheme<scalar>> lgradientScheme
+    (
+        fv::gradScheme<scalar>::New
+        (
+            this->mesh_,
+            this->mesh_.gradScheme("limitedGrad(" + this->phi_.name() + ")")
+        )
+    );
+    tmp<fv::gradScheme<vector>> hgradientScheme
+    (
+        fv::gradScheme<vector>::New
+        (
+            this->mesh_,
+            this->mesh_.gradScheme("limitedHess(" + this->phi_.name() + ")")
+        )
+    );
+    for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
+    {
+        tmp<volScalarField> phiCmpt
+        (
+            volScalarField::New
+            (
+                this->phi_.name() + "_" + Foam::name(cmpti),
+                this->phi_.component(cmpti)
+            )
+        );
+        gradPhis_.set
+        (
+            cmpti,
+            lgradientScheme().grad(phiCmpt)
+        );
+        hessPhis_.set
+        (
+            cmpti,
+            hgradientScheme().grad(gradPhis_[cmpti])
+        );
+    }
+}
+
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
 {
+    if (gradPhis_.size() != pTraits<Type>::nComponents)
+    {
+        constructGradPhis();
+    }
+
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> GeoField;
     tmp<GeoField> tphiOwn
     (
@@ -271,6 +279,11 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateNei() const
 {
+    if (gradPhis_.size() != pTraits<Type>::nComponents)
+    {
+        constructGradPhis();
+    }
+
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> GeoField;
     tmp<GeoField> tphiNei
     (

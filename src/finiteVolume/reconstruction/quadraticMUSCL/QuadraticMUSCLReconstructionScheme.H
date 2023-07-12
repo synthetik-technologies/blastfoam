@@ -58,10 +58,10 @@ protected:
 // Protected data
 
     //- Gradient of field
-    PtrList<GeometricField<vector, fvPatchField, volMesh>> gradPhis_;
+    mutable PtrList<GeometricField<vector, fvPatchField, volMesh>> gradPhis_;
 
     //- Hessian of field
-    PtrList<GeometricField<tensor, fvPatchField, volMesh>> hessPhis_;
+    mutable PtrList<GeometricField<tensor, fvPatchField, volMesh>> hessPhis_;
 
     //- Bound face values
     bool bound_;
@@ -90,6 +90,9 @@ protected:
             extrapolate_ = readBool(is);
         }
     }
+
+    //- Construct gradients
+    void constructGradPhis() const;
 
 
 public:

@@ -284,62 +284,63 @@ void Foam::twoPhaseCompressibleSystem::update()
 
     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
     (
-        ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group())
+        ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group(), true)
     );
     surfaceScalarField alpha1Own(alphaLimiter->interpolateOwn());
     surfaceScalarField alpha1Nei(alphaLimiter->interpolateNei());
 
     alphaPhi_ = fluxScheme_->flux(alpha1Own, alpha1Nei, phi_);
 
-    tmp<surfaceScalarField> talphaRho1Own, talphaRho1Nei;
-    tmp<surfaceScalarField> talphaRho2Own, talphaRho2Nei;
+    tmp<surfaceScalarField> trho1Own, trho1Nei;
+    autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+    (
+        ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group(), true)
+    );
+    rho1Limiter->interpolateOwnNei(trho1Own, trho1Nei);
+
+    tmp<surfaceScalarField> trho2Own, trho2Nei;
+    autoPtr<ReconstructionScheme<scalar>> rho2Limiter
+    (
+        ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group(), true)
+    );
+    rho2Limiter->interpolateOwnNei(trho2Own, trho2Nei);
+
     {
-        tmp<surfaceScalarField> trho1Own, trho1Nei;
-        autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+        surfaceScalarField alphaRho1Own
         (
-            ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group())
-        );
-        rho1Limiter->interpolateOwnNei(trho1Own, trho1Nei);
-
-        tmp<surfaceScalarField> trho2Own, trho2Nei;
-        autoPtr<ReconstructionScheme<scalar>> rho2Limiter
-        (
-            ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group())
-        );
-        rho2Limiter->interpolateOwnNei(trho2Own, trho2Nei);
-
-        talphaRho1Own = surfaceScalarField::New
-        (
-            rho1Limiter->ownName(alphaRho1_.name()),
+            reconstruction::ownName(alphaRho1_.name()),
             alpha1Own*trho1Own
         );
-        talphaRho1Nei = surfaceScalarField::New
+        surfaceScalarField alphaRho1Nei
         (
-            rho1Limiter->neiName(alphaRho1_.name()),
+            reconstruction::neiName(alphaRho1_.name()),
             alpha1Nei*trho1Nei
         );
-
-        talphaRho2Own = surfaceScalarField::New
+        surfaceScalarField alphaRho2Own
         (
-            rho2Limiter->ownName(alphaRho2_.name()),
+            reconstruction::ownName(alphaRho2_.name()),
             (1.0 - alpha1Own)*trho2Own
         );
-        talphaRho2Nei = surfaceScalarField::New
+        surfaceScalarField alphaRho2Nei
         (
-            rho2Limiter->ownName(alphaRho2_.name()),
+            reconstruction::neiName(alphaRho2_.name()),
             (1.0 - alpha1Nei)*trho2Nei
         );
-        static bool cached = false;
-        if (!cached)
+        alphaRhoPhi1_ = fluxScheme_->flux(alphaRho1Own, alphaRho1Nei, phi_);
+        alphaRhoPhi2_ = fluxScheme_->flux(alphaRho2Own, alphaRho2Nei, phi_);
+
+        if (mesh().cacheTemporaryObject(alphaRho1Own.name()))
         {
-            mesh().addTemporaryObject(talphaRho1Own().name());
-            mesh().addTemporaryObject(talphaRho1Nei().name());
-            mesh().addTemporaryObject(talphaRho2Own().name());
-            mesh().addTemporaryObject(talphaRho2Nei().name());
+            mesh().cacheTemporaryObject(alphaRho1Own);
+            mesh().cacheTemporaryObject(alphaRho1Nei);
+        }
+        if (mesh().cacheTemporaryObject(alphaRho2Own.name()))
+        {
+            mesh().cacheTemporaryObject(alphaRho2Own);
+            mesh().cacheTemporaryObject(alphaRho2Nei);
         }
     }
-    alphaRhoPhi1_ = fluxScheme_->flux(talphaRho1Own(), talphaRho1Nei(), phi_);
-    alphaRhoPhi2_ = fluxScheme_->flux(talphaRho2Own(), talphaRho2Nei(), phi_);
+
     thermo_.update();
 }
 

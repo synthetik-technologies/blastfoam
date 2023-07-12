@@ -121,7 +121,7 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
     tmp<surfaceScalarField> talpha1Own, talpha1Nei;
     autoPtr<ReconstructionScheme<scalar>> alpha1Limiter
     (
-        ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group())
+        ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group(), true)
     );
     alpha1Limiter->interpolateOwnNei(talpha1Own, talpha1Nei);
     const surfaceScalarField& alpha1Own = talpha1Own();
@@ -134,7 +134,7 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
     tmp<surfaceScalarField> trho1Own, trho1Nei;
     autoPtr<ReconstructionScheme<scalar>> rho1Limiter
     (
-        ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group())
+        ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group(), true)
     );
     rho1Limiter->interpolateOwnNei(trho1Own, trho1Nei);
     fluxScheme::correctPhaseFields
@@ -147,7 +147,7 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
     tmp<surfaceScalarField> trho2Own, trho2Nei;
     autoPtr<ReconstructionScheme<scalar>> rho2Limiter
     (
-        ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group())
+        ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group(), true)
     );
     rho2Limiter->interpolateOwnNei(trho2Own, trho2Nei);
     fluxScheme::correctPhaseFields
@@ -168,6 +168,12 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         rho1Limiter->neiName(alphaRho1_.name()),
         alpha1Nei*trho1Nei()
     );
+    if (mesh().cacheTemporaryObject(talphaRho1Own().name()))
+    {
+        mesh().cacheTemporaryObject(talphaRho1Own.ref());
+        mesh().cacheTemporaryObject(talphaRho1Nei.ref());
+    }
+
     tmp<surfaceScalarField> talphaRho2Own = surfaceScalarField::New
     (
         rho2Limiter->ownName(alphaRho2_.name()),
@@ -178,6 +184,11 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         rho2Limiter->ownName(alphaRho2_.name()),
         alpha2Nei*trho2Nei()
     );
+    if (mesh().cacheTemporaryObject(talphaRho2Own().name()))
+    {
+        mesh().cacheTemporaryObject(talphaRho2Own.ref());
+        mesh().cacheTemporaryObject(talphaRho2Nei.ref());
+    }
 
     surfaceScalarField rhoOwn
     (
@@ -189,18 +200,12 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         reconstruction::neiName(rho_.name()),
         talphaRho1Nei() + talphaRho2Nei()
     );
-
-    static bool cached = false;
-    if (!cached)
+    if (mesh().cacheTemporaryObject(rhoOwn.name()))
     {
-        mesh().addTemporaryObject(talphaRho1Own().name());
-        mesh().addTemporaryObject(talphaRho1Nei().name());
-        mesh().addTemporaryObject(talphaRho2Own().name());
-        mesh().addTemporaryObject(talphaRho2Nei().name());
-
-        mesh().addTemporaryObject(rhoOwn.name());
-        mesh().addTemporaryObject(rhoNei.name());
+        mesh().cacheTemporaryObject(rhoOwn);
+        mesh().cacheTemporaryObject(rhoNei);
     }
+
 
     fluxScheme_->update
     (

@@ -191,7 +191,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
 {
     autoPtr<ReconstructionScheme<scalar>> fLimiter
     (
-        ReconstructionScheme<scalar>::New(f, fName)
+        ReconstructionScheme<scalar>::New(f, fName, true)
     );
 
     tmp<surfaceScalarField> tfOwn;

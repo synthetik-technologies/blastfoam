@@ -456,6 +456,14 @@ void Foam::activationModel::initializeModels()
             alphaRhoName
         )
     );
+    alphaRhoPtr_->mesh().addTemporaryObject
+    (
+        reconstruction::ownName(alphaRhoPtr_->name())
+    );
+    alphaRhoPtr_->mesh().addTemporaryObject
+    (
+        reconstruction::neiName(alphaRhoPtr_->name())
+    );
 
     if (alphaRhoPtr_().time().timeIndex() >= 0)
     {

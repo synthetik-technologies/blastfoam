@@ -38,30 +38,10 @@ Foam::LinearMUSCLReconstructionScheme<Type>::LinearMUSCLReconstructionScheme
 )
 :
     ReconstructionScheme<Type>(phi, is, overwrite),
-    gradPhis_(this->overwrite_ ? pTraits<Type>::nComponents : 0),
+    gradPhis_(0),
     bound_(true),
     extrapolate_(false)
-{
-    if (this->overwrite_)
-    {
-        tmp<fv::gradScheme<scalar>> lgradientScheme
-        (
-            fv::gradScheme<scalar>::New
-            (
-                this->mesh_,
-                this->mesh_.gradScheme("limitedGrad(" + this->phi_.name() + ")")
-            )
-        );
-        for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
-        {
-            gradPhis_.set
-            (
-                cmpti,
-                lgradientScheme().grad(this->phi_.component(cmpti))
-            );
-        }
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -72,11 +52,38 @@ Foam::LinearMUSCLReconstructionScheme<Type>::~LinearMUSCLReconstructionScheme()
 
 // * * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * //
 
+template<class Type>
+void Foam::LinearMUSCLReconstructionScheme<Type>::constructGradPhis() const
+{
+    gradPhis_.setSize(pTraits<Type>::nComponents);
+    tmp<fv::gradScheme<scalar>> lgradientScheme
+    (
+        fv::gradScheme<scalar>::New
+        (
+            this->mesh_,
+            this->mesh_.gradScheme("limitedGrad(" + this->phi_.name() + ")")
+        )
+    );
+    for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
+    {
+        gradPhis_.set
+        (
+            cmpti,
+            lgradientScheme().grad(this->phi_.component(cmpti))
+        );
+    }
+}
+
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::LinearMUSCLReconstructionScheme<Type>::interpolateOwn() const
 {
+    if (gradPhis_.size() != pTraits<Type>::nComponents)
+    {
+        constructGradPhis();
+    }
+
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tphiOwn
     (
         GeometricField<Type, fvsPatchField, surfaceMesh>::New
@@ -232,6 +239,11 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::LinearMUSCLReconstructionScheme<Type>::interpolateNei() const
 {
+    if (gradPhis_.size() != pTraits<Type>::nComponents)
+    {
+        constructGradPhis();
+    }
+
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tphiNei
     (
         GeometricField<Type, fvsPatchField, surfaceMesh>::New

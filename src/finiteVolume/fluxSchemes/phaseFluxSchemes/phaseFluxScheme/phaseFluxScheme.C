@@ -174,27 +174,27 @@ void Foam::phaseFluxScheme::update
 
     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
     (
-        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_)
+        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_)
+        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U", phaseName_)
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e", phaseName_)
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p", phaseName_)
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_)
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
     );
 
     tmp<surfaceScalarField> talphaOwn;
@@ -208,6 +208,37 @@ void Foam::phaseFluxScheme::update
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
     const surfaceScalarField& rhoOwn = trhoOwn();
     const surfaceScalarField& rhoNei = trhoNei();
+
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_))
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_)),
+            alphaOwn*rhoOwn
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_))
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_)),
+            alphaNei*rhoNei
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
 
     tmp<surfaceVectorField> tUOwn;
     tmp<surfaceVectorField> tUNei;
@@ -303,27 +334,27 @@ void Foam::phaseFluxScheme::update
 
     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
     (
-        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_)
+        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_)
+        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U", phaseName_)
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e", phaseName_)
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p", phaseName_)
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_)
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
     );
 
     tmp<surfaceScalarField> talphaOwn;
@@ -337,6 +368,37 @@ void Foam::phaseFluxScheme::update
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
     const surfaceScalarField& rhoOwn = trhoOwn();
     const surfaceScalarField& rhoNei = trhoNei();
+
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_))
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_)),
+            alphaOwn*rhoOwn
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_))
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_)),
+            alphaNei*rhoNei
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
 
     tmp<surfaceVectorField> tUOwn;
     tmp<surfaceVectorField> tUNei;

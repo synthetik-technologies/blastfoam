@@ -144,7 +144,7 @@ void explicitRiemannSolid::updateFluxes()
     // Reconstruction of Piola tensor
     autoPtr<ReconstructionScheme<tensor>> PLimiter
     (
-        ReconstructionScheme<tensor>::New(P_, "P")
+        ReconstructionScheme<tensor>::New(P_, "P", true)
     );
     surfaceVectorField tractionOwn(PLimiter->interpolateOwn() & N);
     surfaceVectorField tractionNei(PLimiter->interpolateNei() & N);
@@ -152,7 +152,7 @@ void explicitRiemannSolid::updateFluxes()
     // Momentum
     autoPtr<ReconstructionScheme<vector>> rhoULimiter
     (
-        ReconstructionScheme<vector>::New(rhoU_, "U")
+        ReconstructionScheme<vector>::New(rhoU_, "U", true)
     );
     surfaceVectorField rhoUOwn(rhoULimiter->interpolateOwn());
     surfaceVectorField rhoUNei(rhoULimiter->interpolateNei());

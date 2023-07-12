@@ -63,7 +63,7 @@ RiemannConvectionScheme<Type>::flux
 {
     if (&faceFlux == &(fluxSchemePtr_->phi()))
     {
-        return fluxSchemePtr_->flux(vf, faceFlux);
+        return fluxSchemePtr_->flux(vf, faceFlux, true);
     }
     else if
     (
@@ -119,7 +119,7 @@ RiemannConvectionScheme<Type>::flux
     const volScalarField& alphaRho
 ) const
 {
-    return fluxSchemePtr_->flux(vf, alphaRho, faceFlux);
+    return fluxSchemePtr_->flux(vf, alphaRho, faceFlux, true);
 }
 
 

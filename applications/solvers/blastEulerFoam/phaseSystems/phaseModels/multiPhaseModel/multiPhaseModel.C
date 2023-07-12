@@ -288,7 +288,8 @@ void Foam::multiPhaseModel::update()
             (
                 alphas_[phasei],
                 "alpha",
-                alphas_[phasei].group()
+                alphas_[phasei].group(),
+                true
             )
         );
         surfaceScalarField alphaOwn(alphaLimiter->interpolateOwn());
