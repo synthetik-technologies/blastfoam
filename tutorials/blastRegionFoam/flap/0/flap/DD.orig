@@ -38,6 +38,11 @@ boundaryField
     {
         type            empty;
     }
+    wedge
+    {
+        type solidWedge;
+        patchType wedge;
+    }
 }
 
 

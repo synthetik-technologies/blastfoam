@@ -137,12 +137,6 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group(), true)
     );
     rho1Limiter->interpolateOwnNei(trho1Own, trho1Nei);
-    fluxScheme::correctPhaseFields
-    (
-        alpha1_,
-        trho1Own.ref(), trho1Nei.ref(),
-        thermo_.thermo(0).residualAlpha().value()
-    );
 
     tmp<surfaceScalarField> trho2Own, trho2Nei;
     autoPtr<ReconstructionScheme<scalar>> rho2Limiter
@@ -150,6 +144,15 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group(), true)
     );
     rho2Limiter->interpolateOwnNei(trho2Own, trho2Nei);
+
+    // Adjust densities on phase boundaries so that densities with zero volume
+    // fraction are not used
+    fluxScheme::correctPhaseFields
+    (
+        alpha1_,
+        trho1Own.ref(), trho1Nei.ref(),
+        thermo_.thermo(0).residualAlpha().value()
+    );
     fluxScheme::correctPhaseFields
     (
         alpha2_,
@@ -206,7 +209,7 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         mesh().cacheTemporaryObject(rhoNei);
     }
 
-
+    // Compute fluxes using the reconstructed total density
     fluxScheme_->update
     (
         rhoOwn,
@@ -274,6 +277,33 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         (phi_ - alphaPhi_)(),
         thermo_.thermo(1).residualAlpha().value()
     );
+
+    PtrList<surfaceScalarField> alphaRhoPhiUDs(2);
+    alphaRhoPhiUDs.set(0, upwind<scalar>(mesh(), alphaPhi_).flux(rho1_));
+    alphaRhoPhiUDs.set(1, upwind<scalar>(mesh(), phi_ - alphaPhi_).flux(rho2_));
+    alphaRhoPhi1_ -= alphaRhoPhiUDs[0];
+    alphaRhoPhi2_ -= alphaRhoPhiUDs[1];
+
+    {
+        UPtrList<scalarField> alphaRhoPhisInternal(2);
+        alphaRhoPhisInternal.set(0, &alphaRhoPhi1_);
+        alphaRhoPhisInternal.set(1, &alphaRhoPhi2_);
+        MULES::limitSum(alphaRhoPhisInternal);
+    }
+
+    const surfaceScalarField::Boundary& phibf = phi_.boundaryField();
+    forAll(phibf, patchi)
+    {
+        if (phibf[patchi].coupled())
+        {
+            UPtrList<scalarField> alphaRhoPhisPatch(2);
+            alphaRhoPhisPatch.set(0, &alphaRhoPhi1_.boundaryFieldRef()[patchi]);
+            alphaRhoPhisPatch.set(1, &alphaRhoPhi2_.boundaryFieldRef()[patchi]);
+            MULES::limitSum(alphaRhoPhisPatch);
+        }
+    }
+    alphaRhoPhi1_ += alphaRhoPhiUDs[0];
+    alphaRhoPhi2_ += alphaRhoPhiUDs[1];
 
     // Update thermo
     thermo_.update();

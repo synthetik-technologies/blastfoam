@@ -48,6 +48,7 @@ interpolationSchemes
     reconstruct(e)      quadraticMUSCL Minmod;
     reconstruct(p)      quadraticMUSCL Minmod;
     reconstruct(speedOfSound) quadraticMUSCL Minmod;
+    "reconstruct\(.*\)" quadraticMUSCL Minmod;
 }
 
 snGradSchemes

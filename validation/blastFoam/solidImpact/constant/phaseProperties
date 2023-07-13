@@ -16,8 +16,6 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (copper gas);
-useInterface yes;
-sigma 0;
 copper
 {
     type basic;

@@ -18,6 +18,7 @@ FoamFile
 phases (air water);
 useInterface yes;
 sigma  0.07;
+transportPhaseDensity yes;
 air
 {
     type basic;

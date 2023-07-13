@@ -58,10 +58,7 @@ boundary
     }
     flap_to_air
     {
-        type mappedMovingWall;
-        sampleMode nearestPatchFace;
-        sampleRegion air;
-        samplePatch air_to_flap;
+        type patch;
         faces
         (
             (1 2 6 5)

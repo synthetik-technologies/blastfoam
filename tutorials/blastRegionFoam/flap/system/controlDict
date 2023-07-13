@@ -31,7 +31,7 @@ writeControl    adjustableRunTime;
 
 runTimeModifiable yes;
 
-writeInterval   1e-4;
+writeInterval   1e-5;
 
 purgeWrite      0;
 

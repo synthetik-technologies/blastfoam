@@ -10,6 +10,3 @@ const volScalarField& T = fluid->T();
 
 integrator.models();
 integrator.constraints();
-
-// fluid->update();
-// integrator.clear();

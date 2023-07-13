@@ -34,7 +34,7 @@ regions
     boxToCell
     {
         boxes ((0.95 -1 -1) (1.25 1 1));
-        level 4;
+        level 2;
 
         fieldValues
         (

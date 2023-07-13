@@ -15,7 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 convertToMeters 1;
 
-theta   #calc "5.0 * Foam::constant::mathematical::pi/180.0";
+theta   #calc "1.0 * Foam::constant::mathematical::pi/180.0";
 z       0.1;
 R       0.020;
 x       #calc "$R * cos($theta)";

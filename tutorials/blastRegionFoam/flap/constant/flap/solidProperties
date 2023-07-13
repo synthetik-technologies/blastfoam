@@ -17,11 +17,28 @@ FoamFile
 
 solidModel nonLinearRiemann;
 
-".*RiemannCoeffs"
+".*RiemannCoeffs" // Riemann
 {
 }
 
-".*Coeffs"
+"explicit.*Coeffs" // explicit
+{
+    useBulkViscosity yes;
+    linearBulkViscosityCoeff 0.6;
+    quadraticBulkViscosityCoeff   1.5;
+
+    stabilisation
+    {
+        // Default: JST, JSTScaleFactor = 1e-3
+        // LaplacianScaleFactor = 0.01
+        // method JST;
+        methods (JST Laplacian);
+        JSTScaleFactor          0.001;
+        LaplacianScaleFactor    0.1;
+    }
+}
+
+".*Coeffs" // implicit
 {
     // Maximum number of momentum correctors
     nCorrectors             2000;

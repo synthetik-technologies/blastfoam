@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel nonLinearRiemann;
+solidModel explicitTotalLagrangian;
 
 ".*xplicit.*"
 {

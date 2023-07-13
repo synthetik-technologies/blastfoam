@@ -19,7 +19,7 @@ convertToMeters 1;
 R   16.0;
 x   #calc "cos(Foam::constant::mathematical::pi / 180.0) * $R";
 z   #calc "sin(Foam::constant::mathematical::pi / 180.0) * $R";
-nz  #calc "- sin(Foam::constant::mathematical::pi / 180.0) * $R";
+nz  #neg $z;
 
 vertices
 (

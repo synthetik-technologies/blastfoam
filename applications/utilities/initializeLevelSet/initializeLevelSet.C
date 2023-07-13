@@ -122,8 +122,6 @@ void setPhase
             WarningInFunction << "Reach maximum number of iteration" << endl;
         }
 
-        error == -1.0;
-
         // Check if this is the final iteration so correct cell shapes are used
         if (prepareToStop)
         {
@@ -199,6 +197,8 @@ void setPhase
         // Update error and mesh if not the final iteration
         if (refiner.valid())
         {
+            error == -1.0;
+
             LSModel.levelSet() = LSModel.calcLevelSet(alpha, surfaces);
             LSModel.correct();
             alpha = LSModel.alpha();
@@ -342,19 +342,6 @@ void setPhase
                 }
             }
 
-            // Mark cells greater than the max cell level for unrefinment
-            const labelList& cellLevel = refiner->cellLevel();
-            forAll(error, celli)
-            {
-                if (cellLevel[celli] == maxCellLevel[celli])
-                {
-                    error[celli] = 0.0;
-                }
-                else if (cellLevel[celli] > maxCellLevel[celli])
-                {
-                    error[celli] = -1.0;
-                }
-            }
             // Update mesh (return if mesh changes)
             if (!end)
             {

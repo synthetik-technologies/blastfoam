@@ -234,7 +234,7 @@ void Foam::levelSetModel::updateEpsilon()
         (
             "dx",
             dimLength,
-            min(meshSizeObject::New(mesh_).dx())
+            gMin(meshSizeObject::New(mesh_).dx())
         )*epsilon0_;
 }
 
@@ -313,12 +313,9 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
         {
             if (info[celli].hit())
             {
-                ls[celli] =
-                    min
-                    (
-                        ls[celli],
-                        mag(info[celli].hitPoint() - mesh.C()[celli])
-                    );
+                nearestDistSqr[celli] =
+                    magSqr(info[celli].hitPoint() - mesh.C()[celli]);
+                ls[celli] = sqrt(nearestDistSqr[celli]);
             }
         }
     }

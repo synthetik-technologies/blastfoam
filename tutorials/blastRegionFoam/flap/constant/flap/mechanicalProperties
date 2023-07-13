@@ -21,7 +21,7 @@ mechanical
 (
     steel
     {
-        type            neoHookeanElastic;
+        type            nonLinearJohnsonCookPlastic;
         E               195e9;
         nu              0.3;
         A               410e6;

@@ -20,18 +20,17 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP 3;
+    timeIntegrator  RK2SSP;//AdamsBashforth 4;
 }
 
 gradSchemes
 {
-    default         cellLimited<Venkatakrishnan> leastSquares 1.0;
+    default         cellMDLimited Gauss linear 1.0;//cellMDLimited leastSquares 1.0;
 }
 
 divSchemes
 {
     default         none;
-    div(phirb,alpha) Gauss Minmod;
 }
 
 laplacianSchemes
@@ -42,12 +41,12 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  quadraticMUSCL vanLeer01;//CICSAM 1;//interfaceCompression vanLeer 0;
-    reconstruct(rho)    quadraticMUSCL vanLeer;
-    reconstruct(U)      quadraticMUSCL vanLeer;
-    reconstruct(e)      quadraticMUSCL vanLeer;
-    reconstruct(p)      quadraticMUSCL vanLeer;
-    reconstruct(speedOfSound) quadraticMUSCL vanLeer;
+    reconstruct(alpha)  quadraticMUSCL limitedCubic01 1;
+    reconstruct(rho)    quadraticMUSCL limitedCubic 1;
+    reconstruct(U)      quadraticMUSCL limitedCubic 1;
+    reconstruct(e)      quadraticMUSCL limitedCubic 1;
+    reconstruct(p)      quadraticMUSCL limitedCubic 1;
+    reconstruct(speedOfSound) quadraticMUSCL limitedCubic 1;
 }
 
 snGradSchemes

@@ -27,13 +27,13 @@ endTime         0.25;
 
 writeControl    adjustableRunTime;
 
-writeInterval   5e-3;
+writeInterval   0.01;
 
 writeFormat     ascii;
 
 writePrecision  6;
 
-writeCompression off;
+writeCompression on;
 
 timeFormat      general;
 
@@ -47,48 +47,52 @@ deltaT          1e-6;
 
 maxCo           0.5;
 
+DebugSwitches
+{
+    // polyMesh 1;
+}
 // ************************************************************************* //
 
 
-functions
-{
-    errorEstimator
-    {
-        libs ("libutilityFunctionObjects.so");
-        type coded;
-        name errorEstimator;
-        codeInclude
-        #{
-            #include "volFields.H"
-            #include "autoPtr.H"
-        #};
-        codeData
-        #{
-            autoPtr<volScalarField> errorPtr_;
-        #};
-        codeRead
-        #{
-            if (!errorPtr_.valid())
-            {
-                errorPtr_.set
-                (
-                    new volScalarField
-                    (
-                        IOobject
-                        (
-                            "test",
-                            this->mesh().time().timeName(),
-                            this->mesh()
-                        ),
-                        mesh(),
-                        0.0
-                    )
-                );
-            }
-        #};
-        codeExecute
-        #{
-            //Do stuff
-        #};
-
-}
+// functions
+// {
+//     errorEstimator
+//     {
+//         libs ("libutilityFunctionObjects.so");
+//         type coded;
+//         name errorEstimator;
+//         codeInclude
+//         #{
+//             #include "volFields.H"
+//             #include "autoPtr.H"
+//         #};
+//         codeData
+//         #{
+//             autoPtr<volScalarField> errorPtr_;
+//         #};
+//         codeRead
+//         #{
+//             if (!errorPtr_.valid())
+//             {
+//                 errorPtr_.set
+//                 (
+//                     new volScalarField
+//                     (
+//                         IOobject
+//                         (
+//                             "test",
+//                             this->mesh().time().timeName(),
+//                             this->mesh()
+//                         ),
+//                         mesh(),
+//                         0.0
+//                     )
+//                 );
+//             }
+//         #};
+//         codeExecute
+//         #{
+//             //Do stuff
+//         #};
+//
+// }

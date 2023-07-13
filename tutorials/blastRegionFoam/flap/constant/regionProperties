@@ -17,8 +17,8 @@ FoamFile
 
 solutionControls
 {
-    nOuterCorrectors 10;
-    nInitialCorrectors 10;
+    nOuterCorrectors 1;
+    nInitialCorrectors 1;
 
     predictSolids yes;
     air

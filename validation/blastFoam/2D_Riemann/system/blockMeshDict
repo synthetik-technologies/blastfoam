@@ -37,7 +37,7 @@ vertices
     (2 2 2)
 );
 
-n 50;
+n 200;
 blocks
 (
     hex (0 1 4 3 9 10 13 12) ($n $n 1) simpleGrading (1 1 1)

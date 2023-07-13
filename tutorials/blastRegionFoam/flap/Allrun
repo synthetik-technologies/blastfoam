@@ -12,7 +12,7 @@ runApplication -s flap blockMesh -region flap
 runApplication decomposePar -allRegions
 
 runParallel addEmptyPatch internalPatch internal -region air -overwrite
-runParallel setRefinedFields -region air
+runParallel setRefinedFields -region air -points0
 
 runParallel $(getApplication)
 

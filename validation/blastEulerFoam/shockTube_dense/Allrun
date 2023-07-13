@@ -17,7 +17,7 @@ runApplication setFields
 runApplication $(getApplication)
 
 # -- Sample the results
-runApplication postProcess -func sampleDict -latestTime
+runApplication -o postProcess -func sampleDict -latestTime
 
 # -- Create graphs
 (cd validation && ./createGraphs)

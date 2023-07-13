@@ -15,8 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dynamicFvMesh   adaptiveFvMesh;
-errorEstimator  fieldValue;
-field test;
+errorEstimator  densityGradient;
 scaledDeltaField rho;
 
 // How often to refine

@@ -201,8 +201,19 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
             alphasNei[phasei]*rhosNei[phasei]
         );
 
+        if (mesh().cacheTemporaryObject(talphaRhoOwn().name()))
+        {
+            mesh().cacheTemporaryObject(talphaRhoOwn.ref());
+            mesh().cacheTemporaryObject(talphaRhoNei.ref());
+        }
+
         rhoOwn += talphaRhoOwn;
         rhoNei += talphaRhoNei;
+    }
+    if (mesh().cacheTemporaryObject(rhoOwn.name()))
+    {
+        mesh().cacheTemporaryObject(rhoOwn);
+        mesh().cacheTemporaryObject(rhoNei);
     }
 
     fluxScheme_->update
@@ -246,7 +257,7 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
             phi,
             alphaPhi,
             zeroField(),
-            (-divPhi*alphas_[phasei])(),
+            zeroField(),//(-divPhi*alphas_[phasei])(),
             oneField(),
             zeroField(),
             false

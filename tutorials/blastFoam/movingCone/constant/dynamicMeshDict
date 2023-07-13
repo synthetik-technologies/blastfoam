@@ -27,16 +27,17 @@ diffusivity     directional (1 200 0);
 refineInterval  5;
 
 // Refine field in between lower..upper (varies based on errorEstimator)
-lowerRefineLevel 0.01;
+lowerRefineLevel 0.05;
 
 // If value < unrefineLevel unrefine
-unrefineLevel   0.01;
+unrefineLevel   0.05;
 
 // Number of cells refined around high error cells
 nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement  3;
+// maxRefinement  4;
+minDx 5e-5;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;
