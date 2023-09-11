@@ -26,6 +26,7 @@ License
 #include "activationModel.H"
 #include "fluxSchemeBase.H"
 #include "fvc.H"
+#include "wedgePolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -290,7 +291,8 @@ Foam::activationModel::activationModel
     lambdaExp_(dict.lookupOrDefault("lambdaExp", 1.0)),
     alphaRhoPtr_(nullptr),
     alphaRhoPhiPtr_(nullptr),
-    maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
+    maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0)),
+    finished_(false)
 {
     if (detonationPoints_.size())
     {
@@ -337,6 +339,15 @@ Foam::activationModel::activationModel
         }
         Info<< endl;
     }
+
+    forAll(detonationPoints_, pointi)
+    {
+        detonationPoints_[pointi].setActivated
+        (
+            lambda_,
+            true
+        );
+    }
 }
 
 
@@ -378,7 +389,12 @@ Foam::activationModel::readDetonationPoints
           ? dict.lookup<List<vector>>("points")
           : dict.lookupOrDefault("points", List<vector>(0))
         )
-      : List<vector>(1, this->centerOfMass(alpha))
+      : List<vector>
+        (
+            1,
+            this->centerOfMass(alpha)
+          + dict.lookupOrDefault<vector>("offset", vector::zero)
+        )
     );
 
     scalarList delays
@@ -507,13 +523,52 @@ Foam::vector Foam::activationModel::centerOfMass
             << "No mass was found in the domain"
             << abort(FatalError);
     }
+    vector centre(gSum(m1)/V);
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        const polyPatch& patch = mesh.boundaryMesh()[patchi];
+        if (isA<wedgePolyPatch>(patch))
+        {
+            const wedgePolyPatch& wedge = dynamicCast<const wedgePolyPatch>
+            (
+                patch
+            );
+            vector sum(cmptMag(wedge.axis()) + cmptMag(wedge.centreNormal()));
+            for (label cmpti = 0; cmpti < 3; cmpti++)
+            {
+                if (sum[cmpti] < 1e-6)
+                {
+                    centre[cmpti] = 0.0;
+                }
+            }
+        }
+    }
 
-    return gSum(m1)/V;
+    return centre;
 }
 
 
 void Foam::activationModel::solve()
 {
+    if (finished_ || (this->step() == 0 && min(lambda_).value() > 1.0 - small))
+    {
+        if (!ddtLambda_.valid())
+        {
+            ddtLambda_ =
+                tmp<volScalarField>
+                (
+                    new volScalarField
+                    (
+                        "ddt(" + lambda_.name() + ")",
+                        fvc::ddt(lambda_)
+                    )
+                );
+        }
+        finished_ = true;
+
+        return;
+    }
+
     const volScalarField& alphaRho = alphaRhoPtr_();
     dimensionedScalar dT(this->mesh().time().deltaT());
     dimensionedScalar smallRho("small", dimDensity, 1e-10);
@@ -580,8 +635,9 @@ Foam::tmp<Foam::volScalarField> Foam::activationModel::initESource() const
     return volScalarField::New
     (
         "initESource",
-        lambda_.mesh(),
-        dimensionedScalar("0", e0_.dimensions(), 0.0)
+        lambda_*e0_
+        // lambda_.mesh(),
+        // dimensionedScalar("0", e0_.dimensions(), 0.0)
     );
 }
 

@@ -176,6 +176,9 @@ protected:
         //- Maximum change in lambda per time step
         scalar maxDLambda_;
 
+        //- Is the reaction finished
+        bool finished_;
+
         //- Is the change in lambda limited
         bool limit_;
 
