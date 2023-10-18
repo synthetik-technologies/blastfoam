@@ -45,6 +45,15 @@ Foam::massTransferModel::massTransferModel
     const phasePair& pair
 )
 :
+    regIOobject
+    (
+        IOobject
+        (
+            IOobject::groupName(typeName, pair.name()),
+            pair.phase1().mesh().time().timeName(),
+            pair.phase1().mesh()
+        )
+    ),
     pair_(pair)
 {}
 

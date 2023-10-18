@@ -51,6 +51,8 @@ class phasePair;
 \*---------------------------------------------------------------------------*/
 
 class massTransferModel
+:
+    public regIOobject
 {
 protected:
 
