@@ -73,7 +73,7 @@ protected:
 //- Protected data
 
     //- Mass transfer rates passed from an external source
-    PtrListDictionary<volScalarField> massTransferRates_;
+    PtrListDictionary<volScalarField::Internal> massTransferRates_;
 
     //- Sources to solve implicitly
     PtrListDictionary<fvScalarMatrix> implicitSources_;
@@ -91,7 +91,7 @@ protected:
     // Private data
         const fvMesh& mesh_;
         PtrList<volScalarField>& Y_;
-        PtrListDictionary<volScalarField>& massTransferRates_;
+        PtrListDictionary<volScalarField::Internal>& massTransferRates_;
         PtrListDictionary<fvScalarMatrix>& implicitSources_;
         const List<bool>& active_;
         const volScalarField& alphaRho_;
@@ -102,7 +102,7 @@ protected:
         (
             const fvMesh& mesh,
             PtrList<volScalarField>& Y,
-            PtrListDictionary<volScalarField>& massTransferRates,
+            PtrListDictionary<volScalarField::Internal>& massTransferRates,
             PtrListDictionary<fvScalarMatrix>& implicitSources,
             const List<bool>& active,
             const word& alphaRhoName,
@@ -188,9 +188,22 @@ public:
         {
             return basicSpecieMixture::contains(specieName);
         }
+
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
-        virtual void addDelta(const word& name, tmp<volScalarField>& delta);
+        virtual void clearDeltas();
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void clearSources();
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, tmp<volScalarField>&& delta);
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, tmp<volScalarField::Internal>&& delta);
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
@@ -199,6 +212,10 @@ public:
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
         virtual void addSource(const word& name, tmp<fvScalarMatrix>& source);
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addSource(const word& name, tmp<fvScalarMatrix>&& source);
 
 
      // Access

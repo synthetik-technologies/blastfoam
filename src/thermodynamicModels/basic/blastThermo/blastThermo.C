@@ -296,7 +296,7 @@ Foam::wordList Foam::blastThermo::splitThermoName
             // is greater than nCmpt return an empty list
             if (i == nCmpt)
             {
-                return wordList();
+                return cmpts;
             }
         }
         beg = end + 1;
@@ -304,10 +304,10 @@ Foam::wordList Foam::blastThermo::splitThermoName
 
     // If the number of number of components in the name is not equal to nCmpt
     // return an empty list
-    if (i + 1 != nCmpt)
-    {
-        return wordList();
-    }
+    // if (i + 1 != nCmpt)
+    // {
+    //     return wordList();
+    // }
 
     if (beg < thermoName.size())
     {
