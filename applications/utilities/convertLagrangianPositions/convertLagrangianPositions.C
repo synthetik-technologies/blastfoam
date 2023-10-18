@@ -58,8 +58,11 @@ positionFormat readCloud
     // Start the reading of the list
     // Either read the number or beginning of the list
     token firstToken(is);
+    label nParticles = 0;
     if (firstToken.isLabel())
     {
+        nParticles = firstToken.labelToken();
+
         // Read beginning of contents
         is.readBeginList
         (
@@ -71,88 +74,113 @@ positionFormat readCloud
     {
         if (firstToken.pToken() != token::BEGIN_LIST)
         {
-            FatalIOErrorInFunction
-            (
-                is
-            )   << "incorrect first token, '(', found "
+            FatalIOErrorInFunction(is)
+                << "incorrect first token, '(', found "
                 << firstToken.info() << exit(FatalIOError);
         }
     }
     else
     {
-        FatalIOErrorInFunction
-        (
-            is
-        )   << "incorrect first token, expected <int> or '(', found "
+        FatalIOErrorInFunction(is)
+            << "incorrect first token, expected <int> or '(', found "
             << firstToken.info() << exit(FatalIOError);
     }
 
-    // Read position/coordinates
-    scalarList p(is);
-
-    // Check the format
     positionFormat format = UNKNOWN;
-    if (p.size() == 4)
-    {
-        format = NEW;
-    }
-    else if (p.size() == 3)
-    {
-        format = OLD;
-    }
-    else
-    {
-        FatalIOError
-            << "Unknown positions format" << endl;
-    }
 
-    label pi = 0;
-    token lastToken(is);
-    while
-    (
-       !(
-            lastToken.isPunctuation()
-         && lastToken.pToken() == token::END_LIST
-        )
-    )
+    // Read position/coordinates
+    if (is.format() == IOstream::ASCII)
     {
-        is.putBack(lastToken);
+        scalarList p0(is);
 
-        // Read position only
+        // Check the format
+        if (p0.size() == 4)
+        {
+            format = NEW;
+        }
+        else if (p0.size() == 3)
+        {
+            format = OLD;
+        }
+        else
+        {
+            FatalIOErrorInFunction(is)
+                << "Unknown positions format" << endl
+                << abort(FatalIOError);
+        }
+
+        label pi = 0;
         if (format == NEW)
         {
-            if (pi++ == 0)
+            token t;
+            barycentric p;
+            label celli, tetFacei, tetPti;
+            while
+            (
+                is.read(t)
+             && !(t.isPunctuation() && t.pToken() == token::END_LIST)
+            )
             {
+                is.putBack(t);
+                if (pi == 0)
+                {
+                    p[0] = p0[0];
+                    p[1] = p0[1];
+                    p[2] = p0[2];
+                    p[3] = p0[3];
+                }
+                else
+                {
+                    is >> p;
+                }
+                is >> celli >> tetFacei >> tetPti;
                 c.append
                 (
-                    new particle
-                    (
-                        mesh,
-                        barycentric(p[0], p[1], p[2], p[3]),
-                        readLabel(is),
-                        readLabel(is),
-                        readLabel(is)
-                    )
+                    new particle(mesh, p, celli, tetFacei, tetPti)
                 );
-            }
-            else
-            {
-                c.append(new particle(mesh, is, false));
+                pi++;
             }
         }
         else
         {
-            c.append
+            token t;
+            vector p;
+            label celli;
+            while
             (
-                new particle
-                (
-                    mesh,
-                    pi++ == 0 ? vector(p[0], p[1], p[2]) : vector(is),
-                    readLabel(is)
-                )
-            );
+                is.read(t)
+             && !(t.isPunctuation() && t.pToken() == token::END_LIST)
+            )
+            {
+                is.putBack(t);
+                if (pi == 0)
+                {
+                    p[0] = p0[0];
+                    p[1] = p0[1];
+                    p[2] = p0[2];
+                }
+                else
+                {
+                    is >> p;
+                }
+                is >> celli;
+                c.append(new particle(mesh, p, celli));
+                pi++;
+            }
         }
-        is  >> lastToken;
+    }
+    else
+    {
+        format = NEW;
+        for (label i = 0; i < nParticles; i++)
+        {
+            c.append(new particle(mesh, is, false));
+        }
+        // Read beginning of contents
+        is.readEndList
+        (
+            "IOPosition<CloudType>::readData(Istream&, CloudType&)"
+        );
     }
 
     return format;
