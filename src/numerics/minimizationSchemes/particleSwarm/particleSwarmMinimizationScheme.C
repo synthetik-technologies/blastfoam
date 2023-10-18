@@ -58,7 +58,7 @@ Foam::minimizationSchemes::particleSwarm::particleSwarm
 )
 :
     minimizationScheme(eqns, dict),
-    rand_(0),
+    rand_(dict.lookupOrDefault<label>("seed", 127)),
     particles_(dict.lookupOrDefault<label>("nParticles", 100)),
     cLocal_(dict.lookup<scalar>("cLocal")),
     cGlobal_(dict.lookup<scalar>("cGlobal")),

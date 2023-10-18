@@ -32,6 +32,7 @@ License
 #include "Scale3.H"
 #include "Component3.H"
 #include "CodedFunction3.H"
+#include "LookupTable3.H"
 
 #include "fieldTypes.H"
 
@@ -58,6 +59,8 @@ namespace Foam
     makeFunction3s(sphericalTensor);
     makeFunction3s(symmTensor);
     makeFunction3s(tensor);
+
+    makeFunction3Type(LookupTable, scalar);
 }
 
 

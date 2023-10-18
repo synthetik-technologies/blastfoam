@@ -30,6 +30,16 @@ License
 
 Foam::timeIntegrationSystemBase::timeIntegrationSystemBase
 (
+    const word& name
+)
+:
+    name_(name),
+    timeInt_(nullptr)
+{}
+
+
+Foam::timeIntegrationSystemBase::timeIntegrationSystemBase
+(
     const word& name,
     const objectRegistry& obr
 )
@@ -61,6 +71,18 @@ void Foam::timeIntegrationSystemBase::set(const timeIntegrator& integrator)
     if (!timeInt_.valid())
     {
         timeInt_.reset(&integrator);
+    }
+}
+
+
+void Foam::timeIntegrationSystemBase::set(const objectRegistry& obr)
+{
+    if (!timeInt_.valid())
+    {
+        timeInt_.reset
+        (
+            &obr.lookupObjectRef<timeIntegrator>(timeIntegrator::typeName)
+        );
     }
 }
 

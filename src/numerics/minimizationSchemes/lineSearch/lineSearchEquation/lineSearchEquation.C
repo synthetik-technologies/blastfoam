@@ -110,14 +110,15 @@ void Foam::lineSearchEquation::update
     // Set reference point
     x0_ = x0;
 
+    scalar gradMagSqr = 0.0;
+    forAll(grad_, i)
+    {
+        gradMagSqr += sqr(grad[i]);
+    }
+
     // Set travel direction, aka normalized, negative gradient
     if (descent_ == NONE)
     {
-        scalar gradMagSqr = 0.0;
-        forAll(grad_, i)
-        {
-            gradMagSqr += sqr(grad[i]);
-        }
         dir_ = grad;
         dir_ /= -max(sqrt(gradMagSqr), small);
         beta_ = 1.0;
@@ -128,6 +129,10 @@ void Foam::lineSearchEquation::update
         forAll(grad_, i)
         {
             gradOldMagSqr += sqr(grad_[i]);
+        }
+        if (mag(gradOldMagSqr) < small)
+        {
+            gradOldMagSqr = gradMagSqr;
         }
         if (descent_ == FLETCHER_REEVES)
         {
@@ -149,26 +154,34 @@ void Foam::lineSearchEquation::update
         }
 
         // Update the travel direction
+        scalar magDir = 0.0;
         forAll(dir_, i)
         {
             dir_[i] = -grad[i] + beta_*dir_[i];
+            magDir += sqr(dir_[i]);
         }
+        dir_ /= sqrt(magDir) + small;
     }
 
     // Compute total distance, and distances to the true bounds
+    tmp<scalarField> ll(eqns_.lowerLimits());
+    tmp<scalarField> ul(eqns_.upperLimits());
     scalar maxDistSqr = 0.0;
+    scalar lower = 0.0;
+    scalar upper = 0.0;
     forAll(grad, i)
     {
         maxDistSqr +=
             max
             (
-                sqr((eqns_.upperLimits()()[i] - x0[i])*dir_[i]),
-                sqr((eqns_.lowerLimits()()[i] - x0[i])*dir_[i])
+                sqr((ul()[i] - x0[i])*dir_[i]),
+                sqr((ll()[i] - x0[i])*dir_[i])
             );
+        lower += (ll()[i] - x0[i])*dir_[i];
+        upper += (ul()[i] - x0[i])*dir_[i];
     }
-
     // Normal component of the distance to the boundary
-    this->setUpper(sqrt(maxDistSqr));
+    this->setUpper(min(sqrt(maxDistSqr), max(mag(upper), mag(lower))));
 
     // Store the gradient
     grad_ = grad;
@@ -178,11 +191,18 @@ void Foam::lineSearchEquation::update
 void Foam::lineSearchEquation::updateDir
 (
     const scalarList& x0,
-    const scalarList& dir
+    const scalarList& grad
 )
 {
     x0_ = x0;
-    dir_ = dir;
+    dir_ = grad;
+    scalar gradMag = 0.0;
+    forAll(dir_, i)
+    {
+        gradMag += sqr(grad[i]);
+    }
+
+    dir_ /= sqrt(gradMag);
 
     // Compute total distance, and distances to the true bounds
     tmp<scalarField> lowerLimits(eqns_.lowerLimits());
@@ -195,10 +215,10 @@ void Foam::lineSearchEquation::updateDir
         upper += (upperLimits()[i] - x0[i])*dir_[i];
     }
 
-    // if (lower > upper)
-    // {
-    //     Swap(lower, upper);
-    // }
+    if (lower > upper)
+    {
+        Swap(lower, upper);
+    }
 
     // Normal component of the distance to the boundary
     this->setLower(lower);

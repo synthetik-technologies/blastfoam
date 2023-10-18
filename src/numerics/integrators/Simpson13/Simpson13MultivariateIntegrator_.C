@@ -28,31 +28,31 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::Simpson13Integrator<Type>::Simpson13Integrator
+template<class Type, class Adapt>
+Foam::Simpson13Integrator<Type, Adapt>::Simpson13Integrator
 (
     const equationType& eqn,
     const dictionary& dict
 )
 :
-    Integrator<Type>(eqn, dict)
+    Integrator<Type, Adapt>(eqn, dict)
 {}
 
 
-template<class Type>
-Foam::Simpson13Integrator<Type>::Simpson13Integrator
+template<class Type, class Adapt>
+Foam::Simpson13Integrator<Type, Adapt>::Simpson13Integrator
 (
     const equationType& eqn,
     const integrator& inter
 )
 :
-    Integrator<Type>(eqn, inter)
+    Integrator<Type, Adapt>(eqn, inter)
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::Simpson13Integrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::Simpson13Integrator<Type, Adapt>::integrate_
 (
     const scalar dx,
     const Type& f0,
@@ -63,8 +63,8 @@ Type Foam::Simpson13Integrator<Type>::integrate_
     return dx/6.0*(f0 + 4.0*fm + f1);
 }
 
-template<class Type>
-Type Foam::Simpson13Integrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::Simpson13Integrator<Type, Adapt>::integrate_
 (
     const Type& Q,
     const scalar x0,
@@ -107,8 +107,8 @@ Type Foam::Simpson13Integrator<Type>::integrate_
 }
 
 
-template<class Type>
-Type Foam::Simpson13Integrator<Type>::integrate
+template<class Type, class Adapt>
+Type Foam::Simpson13Integrator<Type, Adapt>::integrate
 (
     const scalar X0,
     const scalar X1,

@@ -73,6 +73,9 @@ protected:
         //- Return the object registry
         const objectRegistry& obr() const;
 
+        //- Return the log file name
+        const fileName& logFileName() const;
+
 
 public:
 

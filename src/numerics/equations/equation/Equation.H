@@ -334,6 +334,12 @@ public:
             limit(x[0]);
         }
 
+        // //- Calculate the first derivative of the equation
+        // virtual Type dfdx(const scalar x, const label li) const
+        // {
+        //     return (this->fx(x, li) - this->fx(x + dx_, li))/dx_;
+        // }
+
         //- Calulate the function at a point
         virtual Type fX
         (

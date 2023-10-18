@@ -115,7 +115,7 @@ public:
                           Class Integrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class Integrator
 :
     public integrator
@@ -147,8 +147,16 @@ protected:
                 return false;
             }
             return
-                adaptiveError::error<Type>(t1, t2)
-              < max(adaptiveError::mag<Type>(t1), absTolerance_)*tol;
+                adaptiveError::error<Adapt>
+                (
+                    static_cast<const Adapt&>(t1),
+                    static_cast<const Adapt&>(t2)
+                )
+              < max
+                (
+                    adaptiveError::mag<Adapt>(static_cast<const Adapt&>(t1)),
+                    absTolerance_
+                )*tol;
         }
 
 
@@ -164,7 +172,10 @@ public:
             autoPtr,
             Integrator,
             dictionary,
-            (const equationType& eqn, const dictionary& dict),
+            (
+                const equationType& eqn,
+                const dictionary& dict
+            ),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -193,20 +204,20 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        Integrator(const Integrator<Type>&) = delete;
+        Integrator(const Integrator<Type, Adapt>&) = delete;
 
 
     // Selectors
 
         //- Construct from dictionary
-        static autoPtr<Integrator<Type>> New
+        static autoPtr<Integrator<Type, Adapt>> New
         (
             const equationType& eqn,
             const dictionary& dict
         );
 
         //- Construct from dictionary with a given type
-        static autoPtr<Integrator<Type>> New
+        static autoPtr<Integrator<Type, Adapt>> New
         (
             const word& integratorTypeName,
             const equationType& eqn,
@@ -214,7 +225,7 @@ public:
         );
 
         //- Select null constructed
-        static autoPtr<Integrator<Type>> New
+        static autoPtr<Integrator<Type, Adapt>> New
         (
             const equationType& eqn,
             const integrator& inter
@@ -231,7 +242,7 @@ public:
         //- Return if the integration is adaptive
         inline bool adaptive() const
         {
-            return adaptiveError::adaptive<Type>(adaptive_);
+            return adaptiveError::adaptive<Adapt>(adaptive_);
         }
 
         //- Set the equation to integrate
@@ -252,7 +263,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const Integrator<Type>&) = delete;
+        void operator=(const Integrator<Type, Adapt>&) = delete;
 };
 
 
@@ -268,21 +279,28 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define makeIntegrator(Type)                                                   \
-    defineNamedTemplateTypeNameAndDebug(Integrator<Type>, 0);                  \
+#define makeIntegrator(Type, Adapt)                                            \
+    typedef Integrator<Type, Adapt> Integrator##Type##Adapt;                   \
+    defineNamedTemplateTypeNameAndDebug(Integrator##Type##Adapt, 0);           \
                                                                                \
-    defineTemplateRunTimeSelectionTable(Integrator<Type>, dictionary);         \
-    defineTemplateRunTimeSelectionTable(Integrator<Type>, inputs);
+    defineTemplateRunTimeSelectionTable(Integrator##Type##Adapt, dictionary);  \
+                                                                               \
+    defineTemplateRunTimeSelectionTable(Integrator##Type##Adapt, inputs);
 
 
-#define makeIntegratorType(IntegratorType, Type)                               \
-    defineNamedTemplateTypeNameAndDebug(IntegratorType<Type>, 0);              \
+#define makeIntegratorType(IntegratorType, Type, Adapt)                        \
+    typedef IntegratorType<Type, Adapt> IntegratorType##Type##Adapt;           \
+    defineNamedTemplateTypeNameAndDebug(IntegratorType##Type##Adapt, 0);       \
                                                                                \
-    Integrator<Type>::adddictionaryConstructorToTable<IntegratorType<Type>>    \
-    add##IntegratorType##Type##dictinoary##ConstructorToTable_;                \
+    Integrator##Type##Adapt::adddictionaryConstructorToTable                   \
+    <                                                                          \
+        IntegratorType##Type##Adapt                                            \
+    > add##IntegratorType##Type##Adapt##dictinoary##ConstructorToTable_;       \
                                                                                \
-    Integrator<Type>::addinputsConstructorToTable<IntegratorType<Type>>        \
-    add##IntegratorType##Type##inputs##ConstructorToTable_;
+    Integrator##Type##Adapt::addinputsConstructorToTable                       \
+    <                                                                          \
+        IntegratorType##Type##Adapt                                            \
+    > add##IntegratorType##Type##Adapt##inputs##ConstructorToTable_;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

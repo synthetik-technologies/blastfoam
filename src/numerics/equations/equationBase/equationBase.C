@@ -120,6 +120,12 @@ const Foam::objectRegistry& Foam::equationBase::obr() const
 }
 
 
+const Foam::fileName& Foam::equationBase::logFileName() const
+{
+    return logFile_;
+}
+
+
 void Foam::equationBase::setLog(const fileName& logFile, const bool log)
 {
     log_ = log;
@@ -149,7 +155,7 @@ Foam::OFstream& Foam::equationBase::logStream() const
                 OFstream::ASCII,
                 OFstream::currentVersion,
                 OFstream::UNCOMPRESSED,
-                false
+                append_
             )
         );
     }

@@ -38,31 +38,29 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Define all integrators for a given type
-#define makeIntegratorTypes(Type)                                              \
-    makeIntegratorType(MidPointIntegrator, Type)                               \
-    makeIntegratorType(TrapezoidalIntegrator, Type)                            \
-    makeIntegratorType(Simpson13Integrator, Type)                              \
-    makeIntegratorType(Simpson38Integrator, Type)                              \
-    makeIntegratorType(GaussianIntegrator, Type)                               \
-    makeIntegratorType(BooleIntegrator, Type)
+#define makeIntegratorTypes(Type, Adapt)                                       \
+    makeIntegratorType(MidPointIntegrator, Type, Adapt)                        \
+    makeIntegratorType(TrapezoidalIntegrator, Type, Adapt)                     \
+    makeIntegratorType(Simpson13Integrator, Type, Adapt)                       \
+    makeIntegratorType(Simpson38Integrator, Type, Adapt)                       \
+    makeIntegratorType(GaussianIntegrator, Type, Adapt)                        \
+    makeIntegratorType(BooleIntegrator, Type, Adapt)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Make the base integrator type along with the actual models
-#define makeIntegrators(Type)                                                  \
-    makeIntegrator(Type)                                                       \
-    makeIntegratorTypes(Type);
+#define makeIntegrators(Type, Adapt)                                           \
+    makeIntegrator(Type, Adapt)                                                \
+    makeIntegratorTypes(Type, Adapt);
 
+// Make the base integrator type along with the actual models
+#define makeAdaptIntegrators(Adapt, Type)                                           \
+    makeIntegrator(Type, Adapt)                                                \
+    makeIntegratorTypes(Type, Adapt);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Macro with a dummy first input for use with some macro based construction
-#define makeIntegratorsArg(Dummy, Type)                                        \
-    makeIntegrator(Type)                                                       \
-    makeIntegratorTypes(Type);
-
 #endif
-
 
 // ************************************************************************* //

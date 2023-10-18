@@ -49,11 +49,11 @@ void Foam::univariateMinimizationScheme::printStepInformation
     if (debug > 2)
     {
         Info<< "Step: " << stepi_ << ":" << nl
-            << "    Error (abs/rel): "
+            << "    x-error (abs/rel): "
             << xErrors_[0] << ", " << xRelErrors_[0] << endl;
         if (checkY_)
         {
-            Info<< "    Delta (abs/rel): "
+            Info<< "    Y-error (abs/rel): "
                 << yError_ << ", " << yRelError_ << endl;
         }
         Info<< "    Value: " << val << endl;
@@ -90,11 +90,11 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
             << "Did not converge in "
             << stepi_ << " iterations" << endl;
     }
-    Info<< "    Final error (abs/rel): "
+    Info<< "    Final x-error (abs/rel): "
         << xErrors_[0] << ", " << xRelErrors_[0] << endl;
     if (checkY_)
     {
-        Info<< "    Final delta (abs/rel): "
+        Info<< "    Final y-error (abs/rel): "
             << yError_ << ", " << yRelError_ << endl;
     }
     Info<< "    Value: " << val << endl;

@@ -33,19 +33,19 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makeMultivariateIntegrator(scalar);
-makeMultivariateIntegrator(vector);
-makeMultivariateIntegrator(symmTensor);
-makeMultivariateIntegrator(sphericalTensor);
-makeMultivariateIntegrator(tensor);
+makeMultivariateIntegrator(scalar, scalar);
+makeMultivariateIntegrator(vector, vector);
+makeMultivariateIntegrator(symmTensor, symmTensor);
+makeMultivariateIntegrator(sphericalTensor, sphericalTensor);
+makeMultivariateIntegrator(tensor, tensor);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makeMultivariateIntegratorTypes(scalar);
-makeMultivariateIntegratorTypes(vector);
-makeMultivariateIntegratorTypes(symmTensor);
-makeMultivariateIntegratorTypes(sphericalTensor);
-makeMultivariateIntegratorTypes(tensor);
+makeMultivariateIntegratorTypes(scalar, scalar);
+makeMultivariateIntegratorTypes(vector, vector);
+makeMultivariateIntegratorTypes(symmTensor, symmTensor);
+makeMultivariateIntegratorTypes(sphericalTensor, sphericalTensor);
+makeMultivariateIntegratorTypes(tensor, tensor);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

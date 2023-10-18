@@ -151,6 +151,9 @@ public:
     // Constructors
 
         // Construct from name and object registry
+        timeIntegrationSystemBase(const word& name);
+
+        // Construct from name and object registry
         timeIntegrationSystemBase
         (
             const word& name,
@@ -170,6 +173,9 @@ public:
 
 
     // Member functions
+
+        //- Set pointer to time integration system
+        virtual void set(const objectRegistry& obr);
 
         //- Set pointer to time integration system
         virtual void set(const timeIntegrator& integrator);

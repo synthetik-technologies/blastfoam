@@ -50,7 +50,7 @@ void Foam::exactLineSearch::bracket
 
 void Foam::exactLineSearch::bracket
 (
-    scalarEquation& eqn,
+    lineSearchEquation& eqn,
     const scalar x0,
     const label li,
     const scalar dx0,
@@ -84,6 +84,11 @@ void Foam::exactLineSearch::bracket
     label iter = 0;
     while (iter++ < maxIter)
     {
+        if (lineSearch::debug)
+        {
+            Info<< "Line search iteration " << iter << " "
+                << ", direction = " << eqn.dir() << endl;
+        }
         xc = xb + dx;
         fxc = eqn.fx(xc, li);
 
@@ -168,6 +173,8 @@ void Foam::exactLineSearch::search
 
     // Reset debug flag
     univariateMinimizationScheme::debug = oldDebug;
+
+    return;
 }
 
 

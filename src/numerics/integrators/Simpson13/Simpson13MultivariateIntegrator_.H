@@ -48,7 +48,7 @@ namespace Foam
                         Class Simpson13Integrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class Simpson13Integrator
 :
     public Integrator<Type>

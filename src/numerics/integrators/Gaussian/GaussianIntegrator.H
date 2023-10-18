@@ -48,10 +48,10 @@ namespace Foam
                         Class GaussianIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class GaussianIntegrator
 :
-    public Integrator<Type>
+    public Integrator<Type, Adapt>
 {
 // Private data
 
@@ -102,7 +102,7 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        GaussianIntegrator(const GaussianIntegrator<Type>&) = delete;
+        GaussianIntegrator(const GaussianIntegrator<Type, Adapt>&) = delete;
 
 
     //- Destructor
@@ -120,7 +120,7 @@ public:
         ) const;
 
         //- Disallow default bitwise assignment
-        void operator=(const GaussianIntegrator<Type>&) = delete;
+        void operator=(const GaussianIntegrator<Type, Adapt>&) = delete;
 };
 
 

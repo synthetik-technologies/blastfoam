@@ -27,9 +27,9 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::autoPtr<Foam::MultivariateIntegrator<Type>>
-Foam::MultivariateIntegrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::MultivariateIntegrator<Type, Adapt>>
+Foam::MultivariateIntegrator<Type, Adapt>::New
 (
     const equationType& eqn,
     const dictionary& dict
@@ -39,9 +39,9 @@ Foam::MultivariateIntegrator<Type>::New
 }
 
 
-template<class Type>
-Foam::autoPtr<Foam::MultivariateIntegrator<Type>>
-Foam::MultivariateIntegrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::MultivariateIntegrator<Type, Adapt>>
+Foam::MultivariateIntegrator<Type, Adapt>::New
 (
     const word& integratorTypeName,
     const equationType& eqn,
@@ -63,12 +63,12 @@ Foam::MultivariateIntegrator<Type>::New
             << exit(FatalError);
     }
 
-    return autoPtr<MultivariateIntegrator<Type>>(cstrIter()(eqn, dict));
+    return autoPtr<MultivariateIntegrator<Type, Adapt>>(cstrIter()(eqn, dict));
 }
 
 
-template<class Type>
-Foam::autoPtr<Foam::MultivariateIntegrator<Type>> Foam::MultivariateIntegrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::MultivariateIntegrator<Type, Adapt>> Foam::MultivariateIntegrator<Type, Adapt>::New
 (
     const equationType& eqn,
     const multivariateIntegrator& inter
@@ -87,13 +87,13 @@ Foam::autoPtr<Foam::MultivariateIntegrator<Type>> Foam::MultivariateIntegrator<T
             << exit(FatalError);
     }
 
-    return autoPtr<MultivariateIntegrator<Type>>(cstrIter()(eqn, inter));
+    return autoPtr<MultivariateIntegrator<Type, Adapt>>(cstrIter()(eqn, inter));
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::MultivariateIntegrator<Type>::MultivariateIntegrator
+template<class Type, class Adapt>
+Foam::MultivariateIntegrator<Type, Adapt>::MultivariateIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
@@ -104,8 +104,8 @@ Foam::MultivariateIntegrator<Type>::MultivariateIntegrator
 {}
 
 
-template<class Type>
-Foam::MultivariateIntegrator<Type>::MultivariateIntegrator
+template<class Type, class Adapt>
+Foam::MultivariateIntegrator<Type, Adapt>::MultivariateIntegrator
 (
     const equationType& eqn,
     const multivariateIntegrator& inter
@@ -118,8 +118,8 @@ Foam::MultivariateIntegrator<Type>::MultivariateIntegrator
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-void Foam::MultivariateIntegrator<Type>::addMidsToInt
+template<class Type, class Adapt>
+void Foam::MultivariateIntegrator<Type, Adapt>::addMidsToInt
 (
     const label diri,
     label& fi,
@@ -155,8 +155,8 @@ void Foam::MultivariateIntegrator<Type>::addMidsToInt
 }
 
 
-template<class Type>
-void Foam::MultivariateIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+void Foam::MultivariateIntegrator<Type, Adapt>::integrate_
 (
     const PtrList<Type>& Qs,
     const label diri,
@@ -197,8 +197,8 @@ void Foam::MultivariateIntegrator<Type>::integrate_
 
 }
 
-template<class Type>
-Type Foam::MultivariateIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::MultivariateIntegrator<Type, Adapt>::integrate_
 (
     const Type& Q,
     const label diri,

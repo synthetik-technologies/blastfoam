@@ -127,7 +127,7 @@ public:
         //- Bracket solution
         static void bracket
         (
-            scalarEquation& eqn,
+            lineSearchEquation& eqn,
             const scalar x0,
             const label li,
             const scalar dx0,

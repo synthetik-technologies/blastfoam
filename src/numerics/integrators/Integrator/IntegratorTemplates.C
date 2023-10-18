@@ -28,8 +28,8 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::Integrator<Type, Adapt>> Foam::Integrator<Type, Adapt>::New
 (
     const equationType& eqn,
     const dictionary& dict
@@ -40,7 +40,7 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
         dict.lookupOrDefault<word>
         (
             "integrator",
-            Simpson13Integrator<Type>::typeName
+            Simpson13Integrator<Type, Adapt>::typeName
         ),
         eqn,
         dict
@@ -48,8 +48,8 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 }
 
 
-template<class Type>
-Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::Integrator<Type, Adapt>> Foam::Integrator<Type, Adapt>::New
 (
     const word& integratorTypeName,
     const equationType& eqn,
@@ -70,12 +70,12 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
             << exit(FatalError);
     }
 
-    return autoPtr<Integrator<Type>>(cstrIter()(eqn, dict));
+    return autoPtr<Integrator<Type, Adapt>>(cstrIter()(eqn, dict));
 }
 
 
-template<class Type>
-Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::Integrator<Type, Adapt>> Foam::Integrator<Type, Adapt>::New
 (
     const equationType& eqn,
     const integrator& inter
@@ -94,13 +94,13 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
             << exit(FatalError);
     }
 
-    return autoPtr<Integrator<Type>>(cstrIter()(eqn, inter));
+    return autoPtr<Integrator<Type, Adapt>>(cstrIter()(eqn, inter));
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::Integrator<Type>::Integrator
+template<class Type, class Adapt>
+Foam::Integrator<Type, Adapt>::Integrator
 (
     const equationType& eqn,
     const dictionary& dict
@@ -111,8 +111,8 @@ Foam::Integrator<Type>::Integrator
 {}
 
 
-template<class Type>
-Foam::Integrator<Type>::Integrator
+template<class Type, class Adapt>
+Foam::Integrator<Type, Adapt>::Integrator
 (
     const equationType& eqn,
     const integrator& inter
