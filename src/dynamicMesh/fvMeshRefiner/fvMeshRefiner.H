@@ -219,10 +219,22 @@ public:
                 return refiner_->nRefinementBufferLayers_;
             }
 
+            //- Set the number of buffer layers
+            inline label setRefinementBufferLayers(const label n)
+            {
+                return refiner_->setRefinementBufferLayers(n);
+            }
+
             //- Return the number of buffer layers
             inline label nUnrefinementBufferLayers() const
             {
                 return refiner_->nUnrefinementBufferLayers_;
+            }
+
+            //- Set the number of buffer layers
+            inline label setUnrefinementBufferLayers(const label n)
+            {
+                return refiner_->setUnrefinementBufferLayers(n);
             }
 
             //- Return if refinement is forced

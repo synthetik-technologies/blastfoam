@@ -280,10 +280,26 @@ public:
                 return nRefinementBufferLayers_;
             }
 
+            //- Set the number of buffer layers
+            label setRefinementBufferLayers(const label n)
+            {
+                const label nOld = nRefinementBufferLayers_;
+                nRefinementBufferLayers_ = n;
+                return nOld;
+            }
+
             //- Return the number of buffer layers
             label nUnrefinementBufferLayers() const
             {
                 return nUnrefinementBufferLayers_;
+            }
+
+            //- Return the number of buffer layers
+            label setUnrefinementBufferLayers(const label n)
+            {
+                const label nOld = nUnrefinementBufferLayers_;
+                nUnrefinementBufferLayers_ = n;
+                return nOld;
             }
 
             //- Return if refinement is forced
