@@ -838,9 +838,9 @@ int main(int argc, char *argv[])
 
 
             Pair<scalarList> bounds(integrationDict.lookup("bounds"));
-            autoPtr<MultivariateIntegrator<scalar>> integrator
+            autoPtr<MultivariateIntegrator<scalar, scalar>> integrator
             (
-                MultivariateIntegrator<scalar>::New(eqn, integrationDict)
+                MultivariateIntegrator<scalar, scalar>::New(eqn, integrationDict)
             );
             Info<<"Integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl
@@ -1013,9 +1013,9 @@ int main(int argc, char *argv[])
 
 
             Pair<scalar> bounds(integrationDict.lookup("bounds"));
-            autoPtr<Integrator<scalar>> integrator
+            autoPtr<Integrator<scalar, scalar>> integrator
             (
-                Integrator<scalar>::New(eqn, dictPtr())
+                Integrator<scalar, scalar>::New(eqn, dictPtr())
             );
             Info<< "Integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl
