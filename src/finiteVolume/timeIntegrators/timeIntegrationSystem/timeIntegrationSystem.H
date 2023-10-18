@@ -137,11 +137,11 @@ public:
 
 
     // Constructor
-    timeIntegrationSystem
-    (
-        const word& name,
-        const fvMesh& mesh
-    );
+    timeIntegrationSystem(const word& name);
+    timeIntegrationSystem(const word& name, const fvMesh& mesh);
+
+    //- Set pointer to time integration system
+    virtual void set(const fvMesh& mesh);
     virtual void set(const timeIntegrator& integrator);
 
 

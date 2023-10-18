@@ -28,6 +28,13 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::timeIntegrationSystem::timeIntegrationSystem(const word& name)
+:
+    timeIntegrationSystemBase(name),
+    meshPtr_(nullptr),
+    fvTimeInt_(nullptr)
+{}
+
 Foam::timeIntegrationSystem::timeIntegrationSystem
 (
     const word& name,
@@ -43,6 +50,23 @@ Foam::timeIntegrationSystem::timeIntegrationSystem
       : nullptr
     )
 {}
+
+
+void Foam::timeIntegrationSystem::set(const fvMesh& mesh)
+{
+    timeIntegrationSystemBase::set(mesh);
+    if (!meshPtr_.valid())
+    {
+        meshPtr_.reset(&mesh);
+    }
+    if (!fvTimeInt_.valid())
+    {
+        fvTimeInt_.reset
+        (
+            dynamic_cast<const fvTimeIntegrator*>(this->timeInt_.ptr())
+        );
+    }
+}
 
 
 void Foam::timeIntegrationSystem::set(const timeIntegrator& integrator)
