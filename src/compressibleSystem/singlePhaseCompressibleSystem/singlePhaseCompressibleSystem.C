@@ -43,16 +43,20 @@ namespace Foam
 
 Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 (
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const bool initialize
 )
 :
     compressibleBlastSystem(mesh, word::null)
 {
     this->fluxScheme_ = fluxScheme::NewSingle(phi_);
 
-    thermoPtr_->initializeModels();
-    this->setModels();
-    encode();
+    if (initialize)
+    {
+        thermoPtr_->initializeModels();
+        this->setModels();
+        encode();
+    }
 }
 
 
@@ -65,16 +69,17 @@ Foam::singlePhaseCompressibleSystem::~singlePhaseCompressibleSystem()
 
 void Foam::singlePhaseCompressibleSystem::solve()
 {
+    volScalarField& rho = this->rhoEff();
     volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
     this->storeAndBlendDelta(deltaRho);
 
-    dimensionedScalar dT = rho_.time().deltaT();
-    this->storeAndBlendOld(rho_);
+    dimensionedScalar dT = rho.time().deltaT();
+    this->storeAndBlendOld(rho);
 
-    rho_.storePrevIter();
+    rho.storePrevIter();
 
-    rho_ -= dT*deltaRho;
-    rho_.correctBoundaryConditions();
+    rho -= dT*deltaRho;
+    rho.correctBoundaryConditions();
 
     thermoPtr_->solve();
 
@@ -87,18 +92,25 @@ void Foam::singlePhaseCompressibleSystem::postUpdate()
     this->decode();
 
     // Solve mass
-    rho_.storePrevIter();
-    if (needSolve(rho_.name()))
+    volScalarField& rho = this->rhoEff();
+    rho.storePrevIter();
+    if (needSolve(rho.name()) || rhoSource_.valid())
     {
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(rho_) - fvc::ddt(rho_)
+            fvm::ddt(rho) - fvc::ddt(rho)
          ==
-            models().source(rho_)
+            models().source(rho)
         );
+
+        if (rhoSource_.valid())
+        {
+            rhoEqn -= rhoSource_;
+        }
+
         constraints().constrain(rhoEqn);
-        rhoEqn.solve();
-        constraints().constrain(rho_);
+        rhoEqn.solve(rho_.name());
+        constraints().constrain(rho);
     }
 
     compressibleBlastSystem::postUpdate();

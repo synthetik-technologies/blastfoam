@@ -101,6 +101,62 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 }
 
 
+Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::NewCoupled
+(
+    const fvMesh& mesh
+)
+{
+    word compressibleSystemType(word::null);
+
+    // Create temporary phase properties to lookup type
+    // not store in the database to remove possible conflict
+    Info<< "Reading phaseProperties dictionary\n" << endl;
+    IOdictionary phaseProperties
+    (
+        IOobject
+        (
+            "phaseProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        )
+    );
+
+    wordList phases
+    (
+        phaseProperties.lookupOrDefault("phases", wordList())
+    );
+
+    // word ext = word::null;
+    // if (phaseProperties.found("sigma"))
+    // {
+    //     if (phaseProperties.lookupOrDefault("useInterface", true))
+    //     {
+    //         ext = "Interface";
+    //     }
+    // }
+    // else if (phaseProperties.lookupOrDefault("useInterface", false))
+    // {
+    //     ext = "Interface";
+    // }
+
+
+    return New
+    (
+        mesh,
+        phaseProperties,
+        (
+            phases.size() < 2
+          ? singlePhaseCompressibleSystem::typeName
+          : multiphaseCompressibleSystem::typeName
+        ) + "Coupled",
+        coupledConstructorTablePtr_
+    );
+}
+
+
 Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 (
     const word& type,

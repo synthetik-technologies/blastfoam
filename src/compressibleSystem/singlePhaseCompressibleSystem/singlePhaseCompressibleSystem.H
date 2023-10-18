@@ -55,7 +55,7 @@ public:
     TypeName("singlePhase");
 
     // Constructor
-    singlePhaseCompressibleSystem(const fvMesh& mesh);
+    singlePhaseCompressibleSystem(const fvMesh& mesh, const bool initialize = true);
 
     //- Destructor
     virtual ~singlePhaseCompressibleSystem();

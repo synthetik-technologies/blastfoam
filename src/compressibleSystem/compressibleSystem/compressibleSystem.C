@@ -26,6 +26,7 @@ License
 #include "compressibleSystem.H"
 #include "uniformDimensionedFields.H"
 #include "fvm.H"
+#include "MULES.H"
 #include "fvcMeshPhi.H"
 #include "wedgeFvPatch.H"
 #include "blastRadiationModel.H"
@@ -38,6 +39,7 @@ namespace Foam
     defineRunTimeSelectionTable(compressibleSystem, singlePhase);
     defineRunTimeSelectionTable(compressibleSystem, twoPhase);
     defineRunTimeSelectionTable(compressibleSystem, multiphase);
+    defineRunTimeSelectionTable(compressibleSystem, coupled);
 }
 
 
@@ -51,7 +53,7 @@ void Foam::compressibleSystem::setModels()
         (
             compressible::momentumTransportModel::New
             (
-                rho(),
+                rhoEff(),
                 U(),
                 rhoPhi(),
                 this->thermo()
@@ -73,7 +75,7 @@ void Foam::compressibleSystem::setModels()
 
 Foam::tmp<Foam::volVectorField> Foam::compressibleSystem::rhoUSource() const
 {
-    return g_*rho();
+    return g_*rhoEff();
 }
 
 
@@ -82,6 +84,58 @@ Foam::tmp<Foam::volScalarField> Foam::compressibleSystem::rhoESource() const
     return rhoU_ & g_;
 }
 
+void Foam::compressibleSystem::limitAlphaRhoPhis
+(
+    const UPtrList<volScalarField>& alphas,
+    const UPtrList<volScalarField>& rhos,
+    UPtrList<surfaceScalarField>& alphaRhoPhis,
+    const surfaceScalarField& phi,
+    const surfaceScalarField& rhoPhi
+)
+{
+    PtrList<surfaceScalarField> alphaRhoPhiUDs(alphas.size());
+    // forAll(alphaRhoPhiUDs, phasei)
+    // {
+    //     alphaRhoPhiUDs.set
+    //     (
+    //         phasei,
+    //         upwind<scalar>(mesh(), phi).flux(alphas[phasei]*rhos[phasei])
+    //     );
+    //     alphaRhoPhis[phasei] -= alphaRhoPhiUDs[phasei];
+    // }
+
+    {
+        UPtrList<scalarField> alphaRhoPhisInternal(alphas.size());
+        forAll(alphaRhoPhisInternal, phasei)
+        {
+            alphaRhoPhisInternal.set(phasei, &alphaRhoPhis[phasei]);
+        }
+        MULES::limitSum(alphaRhoPhisInternal);
+    }
+
+    const surfaceScalarField::Boundary& phibf = phi_.boundaryField();
+    forAll(phibf, patchi)
+    {
+        if (phibf[patchi].coupled())
+        {
+            UPtrList<scalarField> alphaRhoPhisPatch(alphas.size());
+            forAll(alphaRhoPhisPatch, phasei)
+            {
+                alphaRhoPhisPatch.set
+                (
+                    phasei,
+                    &alphaRhoPhis[phasei].boundaryFieldRef()[patchi]
+                );
+            }
+            MULES::limitSum(alphaRhoPhisPatch);
+        }
+    }
+
+    // forAll(alphaRhoPhis, phasei)
+    // {
+    //     alphaRhoPhis[phasei] += alphaRhoPhiUDs[0];
+    // }
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -217,8 +271,8 @@ Foam::compressibleSystem::~compressibleSystem()
 
 void Foam::compressibleSystem::encode()
 {
-    rhoU_ = rho()*U_;
-    rhoE_ = rho()*(he() + 0.5*magSqr(U_));
+    rhoU_ = rhoEff()*U_;
+    rhoE_ = rhoEff()*(he() + 0.5*magSqr(U_));
 }
 
 
@@ -227,7 +281,7 @@ void Foam::compressibleSystem::update()
     decode();
     fluxScheme_->update
     (
-        rho(),
+        rhoEff(),
         U(),
         he(),
         p(),
@@ -246,7 +300,7 @@ void Foam::compressibleSystem::solve()
     volVectorField deltaRhoU
     (
         "deltaRhoU",
-        fvc::div(rhoUPhi_) - g_*rho()
+        fvc::div(rhoUPhi_) - g_*rhoEff()
     );
 
     volScalarField deltaRhoE
@@ -265,7 +319,7 @@ void Foam::compressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoE);
 
     //- Solve for momentum and energy
-    dimensionedScalar dT = rho().time().deltaT();
+    dimensionedScalar dT = rhoEff().time().deltaT();
     rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs_);
     rhoE_ -= dT*deltaRhoE;
 }
@@ -278,18 +332,18 @@ void Foam::compressibleSystem::postUpdate()
     {
         fvVectorMatrix UEqn
         (
-            fvm::ddt(rho(), U_) - fvc::ddt(rhoU_)
+            fvm::ddt(rhoEff(), U_) - fvc::ddt(rhoU_)
         ==
-            models().source(rho(), U_)
+            models().source(rhoEff(), U_)
         );
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevTau(U_);
             rhoE_ +=
-                rho().mesh().time().deltaT()
+                rhoEff().mesh().time().deltaT()
                 *fvc::div
                 (
-                    fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
+                    fvc::dotInterpolate(rhoEff().mesh().Sf(), turbulence_->devTau())
                   & fluxScheme_->Uf()
                 );
         }
@@ -297,10 +351,10 @@ void Foam::compressibleSystem::postUpdate()
         UEqn.solve();
         constraints().constrain(U_);
 
-        rhoU_ = rho()*U_;
+        rhoU_ = rhoEff()*U_;
 
         //- Update internal energy
-        he() = rhoE_/rho() - 0.5*magSqr(U_);
+        he() = rhoE_/rhoEff() - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
@@ -308,9 +362,9 @@ void Foam::compressibleSystem::postUpdate()
     {
         fvScalarMatrix eEqn
         (
-            fvm::ddt(rho(), he()) - fvc::ddt(rho().prevIter(), he())
+            fvm::ddt(rhoEff(), he()) - fvc::ddt(rhoEff().prevIter(), he())
         ==
-            models().source(rho(), he())
+            models().source(rhoEff(), he())
         );
         if (turbulence_.valid())
         {
@@ -320,7 +374,7 @@ void Foam::compressibleSystem::postUpdate()
         eEqn.solve();
         constraints().constrain(he());
 
-        rhoE_ = rho()*(he() + 0.5*magSqr(U_));
+        rhoE_ = rhoEff()*(he() + 0.5*magSqr(U_));
     }
 
     if (turbulence_.valid())
@@ -333,9 +387,115 @@ void Foam::compressibleSystem::postUpdate()
 }
 
 
+Foam::volScalarField& Foam::compressibleSystem::rhoEff()
+{
+    return rho();
+}
+
+
+const Foam::volScalarField& Foam::compressibleSystem::rhoEff() const
+{
+    return rho();
+}
+
+
 void Foam::compressibleSystem::clear()
 {
     fluxScheme_->clear();
+}
+
+
+void Foam::compressibleSystem::addRhoCoeff
+(
+    const volScalarField::Internal& coeff
+)
+{
+    if (!rhoSource_.valid())
+    {
+        rhoSource_ =
+            tmp<fvScalarMatrix>
+            (
+                new fvScalarMatrix(this->rhoEff(), dimMass/dimTime)
+            );
+    }
+    rhoSource_.ref() -= fvm::Sp(coeff, this->rhoEff());
+}
+
+
+void Foam::compressibleSystem::addRhoSource
+(
+    const volScalarField::Internal& src
+)
+{
+    if (!rhoSource_.valid())
+    {
+        rhoSource_ =
+            tmp<fvScalarMatrix>
+            (
+                new fvScalarMatrix(this->rhoEff(), dimMass/dimTime)
+            );
+    }
+    rhoSource_.ref() += src;
+}
+
+
+void Foam::compressibleSystem::addUCoeff
+(
+    const volScalarField::Internal& coeff
+)
+{
+    if (!dragSource_.valid())
+    {
+        dragSource_ = tmp<fvVectorMatrix>(new fvVectorMatrix(U_, dimForce));
+    }
+    dragSource_.ref() -= fvm::Sp(coeff, U_);
+}
+
+
+void Foam::compressibleSystem::addUSource
+(
+    const volVectorField::Internal& src
+)
+{
+    if (!dragSource_.valid())
+    {
+        dragSource_ = tmp<fvVectorMatrix>(new fvVectorMatrix(U_, dimForce));
+    }
+    dragSource_.ref() += src;
+}
+
+
+void Foam::compressibleSystem::addECoeff
+(
+    const volScalarField::Internal& coeff
+)
+{
+    if (!extESource_.valid())
+    {
+        extESource_ =
+            tmp<fvScalarMatrix>
+            (
+                new fvScalarMatrix(this->he(), dimEnergy/dimTime)
+            );
+    }
+    extESource_.ref() -= fvm::Sp(coeff, this->he());
+}
+
+
+void Foam::compressibleSystem::addESource
+(
+    const volScalarField::Internal& src
+)
+{
+    if (!extESource_.valid())
+    {
+        extESource_ =
+            tmp<fvScalarMatrix>
+            (
+                new fvScalarMatrix(this->he(), dimEnergy/dimTime)
+            );
+    }
+    extESource_.ref() += src;
 }
 
 

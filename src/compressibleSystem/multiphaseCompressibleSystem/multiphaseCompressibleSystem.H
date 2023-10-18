@@ -84,6 +84,9 @@ protected:
     //- Transport phase densities
     bool transportPhaseDensity_;
 
+    //- Sharpen volume fraction fields
+    List<bool> sharpen_;
+
         //- Calculate new alpha and rho fields
         virtual void calcAlphas();
 
@@ -93,10 +96,7 @@ public:
     TypeName("multiphase");
 
     // Constructor
-    multiphaseCompressibleSystem(const fvMesh& mesh);
-
-    // Constructor
-    multiphaseCompressibleSystem(const fvMesh& mesh, const bool);
+    multiphaseCompressibleSystem(const fvMesh& mesh, const bool initialize = true);
 
 
     //- Destructor

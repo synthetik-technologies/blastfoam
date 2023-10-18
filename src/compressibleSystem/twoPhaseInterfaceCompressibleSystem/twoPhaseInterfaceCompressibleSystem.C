@@ -27,9 +27,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "EulerDdtScheme.H"
 #include "gaussConvectionScheme.H"
-#include "CMULES.H"
-#include "extendedNLevelGlobalCellToCellStencils.H"
-#include "CICSAM.H"
+#include "MULES.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -118,12 +116,19 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
     // Decode primitives
     decode();
 
-    tmp<surfaceScalarField> talpha1Own, talpha1Nei;
-    autoPtr<ReconstructionScheme<scalar>> alpha1Limiter
+    // tmp<surfaceScalarField> talpha1Own, talpha1Nei;
+    // autoPtr<ReconstructionScheme<scalar>> alpha1Limiter
+    // (
+    //     ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group(), true)
+    // );
+    tmp<surfaceScalarField> talpha1Own = fvc::interpolate
     (
-        ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group(), true)
+        alpha1_,
+        phi_,
+        reconstruction::scheme("alpha", alpha1_.group(), mesh(), true, true)
     );
-    alpha1Limiter->interpolateOwnNei(talpha1Own, talpha1Nei);
+    tmp<surfaceScalarField> talpha1Nei(talpha1Own());
+    // alpha1Limiter->interpolateOwnNei(talpha1Own, talpha1Nei);
     const surfaceScalarField& alpha1Own = talpha1Own();
     const surfaceScalarField& alpha1Nei = talpha1Nei();
 
@@ -147,18 +152,21 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
 
     // Adjust densities on phase boundaries so that densities with zero volume
     // fraction are not used
-    fluxScheme::correctPhaseFields
-    (
-        alpha1_,
-        trho1Own.ref(), trho1Nei.ref(),
-        thermo_.thermo(0).residualAlpha().value()
-    );
-    fluxScheme::correctPhaseFields
-    (
-        alpha2_,
-        trho2Own.ref(), trho2Nei.ref(),
-        thermo_.thermo(1).residualAlpha().value()
-    );
+    if (!transportPhaseDensity_)
+    {
+        fluxScheme::correctPhaseFields
+        (
+            alpha1_,
+            trho1Own.ref(), trho1Nei.ref(),
+            thermo_.thermo(0).residualAlpha().value()
+        );
+        fluxScheme::correctPhaseFields
+        (
+            alpha2_,
+            trho2Own.ref(), trho2Nei.ref(),
+            thermo_.thermo(1).residualAlpha().value()
+        );
+    }
 
     // Compute total phase masses
     tmp<surfaceScalarField> talphaRho1Own = surfaceScalarField::New
@@ -269,41 +277,28 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         alphaPhi_,
         thermo_.thermo(0).residualAlpha().value()
     );
-    // alphaRhoPhi2_ = rhoPhi_ - alphaRhoPhi1_;
+    surfaceScalarField alphaPhi2(phi_ - alphaPhi_);
     alphaRhoPhi2_ = fluxScheme_->phaseFlux
     (
         alpha2_,
         trho2Own(), trho2Nei(),
-        (phi_ - alphaPhi_)(),
+        alphaPhi2,
         thermo_.thermo(1).residualAlpha().value()
     );
 
-    PtrList<surfaceScalarField> alphaRhoPhiUDs(2);
-    alphaRhoPhiUDs.set(0, upwind<scalar>(mesh(), alphaPhi_).flux(rho1_));
-    alphaRhoPhiUDs.set(1, upwind<scalar>(mesh(), phi_ - alphaPhi_).flux(rho2_));
-    alphaRhoPhi1_ -= alphaRhoPhiUDs[0];
-    alphaRhoPhi2_ -= alphaRhoPhiUDs[1];
-
-    {
-        UPtrList<scalarField> alphaRhoPhisInternal(2);
-        alphaRhoPhisInternal.set(0, &alphaRhoPhi1_);
-        alphaRhoPhisInternal.set(1, &alphaRhoPhi2_);
-        MULES::limitSum(alphaRhoPhisInternal);
-    }
-
-    const surfaceScalarField::Boundary& phibf = phi_.boundaryField();
-    forAll(phibf, patchi)
-    {
-        if (phibf[patchi].coupled())
-        {
-            UPtrList<scalarField> alphaRhoPhisPatch(2);
-            alphaRhoPhisPatch.set(0, &alphaRhoPhi1_.boundaryFieldRef()[patchi]);
-            alphaRhoPhisPatch.set(1, &alphaRhoPhi2_.boundaryFieldRef()[patchi]);
-            MULES::limitSum(alphaRhoPhisPatch);
-        }
-    }
-    alphaRhoPhi1_ += alphaRhoPhiUDs[0];
-    alphaRhoPhi2_ += alphaRhoPhiUDs[1];
+    // UPtrList<volScalarField> alphas(2);
+    // alphas.set(0, &alpha1_);
+    // alphas.set(1, &alpha2_);
+    //
+    // UPtrList<volScalarField> rhos(2);
+    // rhos.set(0, &rho1_);
+    // rhos.set(1, &rho2_);
+    //
+    // UPtrList<surfaceScalarField> alphaRhoPhis(2);
+    // alphaRhoPhis.set(0, &alphaRhoPhi1_);
+    // alphaRhoPhis.set(1, &alphaRhoPhi2_);
+    //
+    // limitAlphaRhoPhis(alphas, rhos, alphaRhoPhis, phi_, rhoPhi_);
 
     // Update thermo
     thermo_.update();

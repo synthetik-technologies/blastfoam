@@ -106,6 +106,15 @@ protected:
         //- Solution directions
         vector solutionDs_;
 
+        //- Mass source
+        tmp<fvScalarMatrix> rhoSource_;
+
+        //- Drag source
+        tmp<fvVectorMatrix> dragSource_;
+
+        //- External energy source
+        tmp<fvScalarMatrix> extESource_;
+
 
         // Protected member functions
 
@@ -117,6 +126,16 @@ protected:
 
             //- Return energy source term
             virtual tmp<volScalarField> rhoESource() const;
+
+            //- Limit mass fluxes
+            void limitAlphaRhoPhis
+            (
+                const UPtrList<volScalarField>& alphas,
+                const UPtrList<volScalarField>& rhos,
+                UPtrList<surfaceScalarField>& alphaRhoPhis,
+                const surfaceScalarField& phi,
+                const surfaceScalarField& rhoPhi
+            );
 
 public:
 
@@ -154,6 +173,16 @@ public:
             ),
             (mesh)
         );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            compressibleSystem,
+            coupled,
+            (
+                const fvMesh& mesh
+            ),
+            (mesh)
+        );
 
     // Constructor
     compressibleSystem(const fvMesh& mesh);
@@ -162,6 +191,7 @@ public:
     // Selector
         static autoPtr<compressibleSystem> New(const fvMesh& mesh);
         static autoPtr<compressibleSystem> New(const word& type, const fvMesh& mesh);
+        static autoPtr<compressibleSystem> NewCoupled(const fvMesh& mesh);
 
         template<class SelectionTable>
         static autoPtr<compressibleSystem> New
@@ -208,6 +238,15 @@ public:
         //- Const access to total mass
         virtual const volScalarField& rho() const = 0;
 
+        //- Access to total mass
+        virtual volScalarField& rho() = 0;
+
+        //- Const access to total effective mass
+        virtual const volScalarField& rhoEff() const;
+
+        //- Access to total mass
+        virtual volScalarField& rhoEff();
+
         //- Const access to velocity
         inline const volVectorField& U() const;
 
@@ -250,11 +289,69 @@ public:
         //- Post update
         virtual void postUpdate();
 
+        //- Add external mass source
+        tmp<fvScalarMatrix>& rhoSource()
+        {
+            return rhoSource_;
+        }
+
+        //- Add external mass source
+        void addRhoCoeff(const volScalarField::Internal& coeff);
+
+        //- Add external mass source
+        void addRhoSource(const volScalarField::Internal& src);
+
+        //- Add external energy source
+        tmp<fvVectorMatrix>& dragSource()
+        {
+            return dragSource_;
+        }
+
+        //- Add to U coefficient
+        void addUCoeff(const volScalarField::Internal& coeff);
+
+        //- Add to U source
+        void addUSource(const volVectorField::Internal& src);
+
+        //- Add external energy source
+        tmp<fvScalarMatrix>& eSource()
+        {
+            return extESource_;
+        }
+
+        //- Add external energy source
+        void addECoeff(const volScalarField::Internal& extEsrc);
+
+        //- Add external energy source
+        void addESource(const volScalarField::Internal& extEsrc);
+
         //- Clear the flux scheme
         virtual void clear();
 
         //- Return the maximum Courant number
         virtual scalar CoNum() const;
+
+    // Coupling functions
+
+        //- Set a pointer to the dispersed phase volume fraction
+        virtual void setDispersedVolumeFraction(const volScalarField& alphad)
+        {
+            NotImplemented;
+        }
+
+        //- Return const access to volume fraction
+        virtual const volScalarField& volumeFraction() const
+        {
+            NotImplemented;
+            return rhoE_;
+        }
+
+        //- Non-cont access to volume fraction
+        virtual volScalarField& volumeFraction()
+        {
+            NotImplemented;
+            return rhoE_;
+        }
 };
 
 

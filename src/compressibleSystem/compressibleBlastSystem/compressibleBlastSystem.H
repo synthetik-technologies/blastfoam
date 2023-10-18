@@ -82,13 +82,6 @@ protected:
         autoPtr<blastRadiationModel> radiation_;
 
 
-        //- External energy source matrix
-        tmp<fvScalarMatrix> extESource_;
-
-        //- Drag matrix
-        tmp<fvVectorMatrix> dragSource_;
-
-
     // Protected member function
 
         //- Allocate models
@@ -121,30 +114,6 @@ public:
         //- Post update
         virtual void postUpdate();
 
-        //- Add external energy source
-        tmp<fvScalarMatrix>& eSource()
-        {
-            return extESource_;
-        }
-
-        //- Add external energy source
-        void addECoeff(const volScalarField::Internal& extEsrc);
-
-        //- Add external energy source
-        void addESource(const volScalarField::Internal& extEsrc);
-
-        //- Add external energy source
-        tmp<fvVectorMatrix>& dragSource()
-        {
-            return dragSource_;
-        }
-
-        //- Add to U coefficient
-        void addUCoeff(const volScalarField::Internal& coeff);
-
-        //- Add to U source
-        void addUSource(const volVectorField::Internal& src);
-
 
     // Member Access Functions
 
@@ -162,6 +131,12 @@ public:
 
         //- Const access to total mass
         virtual const volScalarField& rho() const
+        {
+            return rho_;
+        }
+
+        //- Const access to total mass
+        virtual volScalarField& rho()
         {
             return rho_;
         }
