@@ -254,7 +254,9 @@ Foam::scalar Foam::VanderWaals<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
-    return this->R()/(1.0 - b_*rho);
+    return
+        sqr(this->R())*T
+       /(this->R()*T + 2.0*a_*rho*(b_*rho_*(2.0 - b_*rho) - 1.0));
 }
 
 

@@ -199,10 +199,29 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Ha
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::Hta
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Hs
 (
     const scalar rho,
     const scalar e,
+    const scalar T
+) const
+{
+    return Ha(rho, e, T) - Hf();
+}
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Cpt
+(
+    const scalar T
+) const
+{
+    const coeffArray& a = coeffs(T);
+    return ((((a[4]*T + a[3])*T + a[2])*T + a[1])*T + a[0]);
+}
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Hat
+(
     const scalar T
 ) const
 {
@@ -214,28 +233,13 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Hta
     );
 }
 
-
 template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::Hs
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Hst
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Ha(rho, e, T) - Hf();
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::Hts
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return Hta(rho, e, T) - Hf();
+    return Hat(T) - Hf();
 }
 
 

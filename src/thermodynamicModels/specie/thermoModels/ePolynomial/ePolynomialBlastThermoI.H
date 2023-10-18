@@ -105,18 +105,6 @@ inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Es
 
 
 template<class EquationOfState, int PolySize>
-inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Ets
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return eCoeffs_.value(T);
-}
-
-
-template<class EquationOfState, int PolySize>
 inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Ea
 (
     const scalar rho,
@@ -129,14 +117,32 @@ inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Ea
 
 
 template<class EquationOfState, int PolySize>
-inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Eta
+inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Cvt
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Ets(rho, e, T) + Hf();
+    return CvCoeffs_.value(T);
+}
+
+
+template<class EquationOfState, int PolySize>
+inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Est
+(
+    const scalar T
+) const
+{
+    return eCoeffs_.value(T);
+}
+
+
+template<class EquationOfState, int PolySize>
+inline Foam::scalar Foam::ePolynomialThermo<EquationOfState, PolySize>::Eat
+(
+    const scalar T
+) const
+{
+    return Est(T) + Hf();
 }
 
 

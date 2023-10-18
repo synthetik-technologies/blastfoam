@@ -95,18 +95,6 @@ inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Hs
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Hts
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return hTable_.lookup(T);
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Ha
 (
     const scalar rho,
@@ -119,14 +107,32 @@ inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Ha
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Hta
+inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Cpt
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Hts(rho, e, T) + Hf_;
+    return hTable_.dFdX(T);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Hst
+(
+    const scalar T
+) const
+{
+    return hTable_.lookup(T);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Hat
+(
+    const scalar T
+) const
+{
+    return Hst(T) + Hf_;
 }
 
 

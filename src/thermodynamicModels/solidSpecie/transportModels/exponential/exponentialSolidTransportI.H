@@ -82,6 +82,15 @@ Foam::exponentialSolidTransport<Thermo>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo>
+inline Foam::scalar Foam::exponentialSolidTransport<Thermo>::kappaT
+(
+    const scalar T
+) const
+{
+    return (kappa0_*pow(T/Tref_, n0_));
+}
+
+template<class Thermo>
 inline Foam::scalar Foam::exponentialSolidTransport<Thermo>::kappa
 (
     const scalar rho,
@@ -149,15 +158,50 @@ template<class Thermo>
 inline Foam::exponentialSolidTransport<Thermo> Foam::operator*
 (
     const scalar s,
-    const exponentialSolidTransport<Thermo>& ct
+    const exponentialSolidTransport<Thermo>& et
 )
 {
     return exponentialSolidTransport<Thermo>
     (
-        s*static_cast<const Thermo&>(ct),
-        ct.kappa0_,
-        ct.n0_,
-        ct.Tref_
+        s*static_cast<const Thermo&>(et),
+        et.kappa0_,
+        et.n0_,
+        et.Tref_
+    );
+}
+
+
+template<class Thermo>
+inline Foam::exponentialSolidTransport<Thermo> Foam::operator+
+(
+    const exponentialSolidTransport<Thermo>& et1,
+    const exponentialSolidTransport<Thermo>& et2
+)
+{
+    scalar Y1 = et1.Y();
+    Thermo et(et1);
+    et += static_cast<const Thermo&>(et2);
+
+    if (mag(et.Y()) > small)
+    {
+        Y1 /= et.Y();
+        scalar Y2 = et.Y()/et.Y();
+
+        return exponentialSolidTransport<Thermo>
+        (
+            et,
+            Y1*et1.kappa0_ + Y2*et2.kappa0_,
+            Y1*et1.n0_ + Y2*et2.n0_,
+            Y1*et1.Tref_ + Y2*et2.Tref_
+        );
+    }
+
+    return exponentialSolidTransport<Thermo>
+    (
+        et,
+        et1.kappa0_,
+        et1.n0_,
+        et1.Tref_
     );
 }
 

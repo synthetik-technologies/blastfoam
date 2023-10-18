@@ -125,18 +125,6 @@ inline Foam::scalar Foam::hConstThermo<EquationOfState>::Hs
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hConstThermo<EquationOfState>::Hts
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return Cp_*(T - Tref_) + Hsref_;
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::hConstThermo<EquationOfState>::Ha
 (
     const scalar rho,
@@ -149,14 +137,32 @@ inline Foam::scalar Foam::hConstThermo<EquationOfState>::Ha
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hConstThermo<EquationOfState>::Hta
+inline Foam::scalar Foam::hConstThermo<EquationOfState>::Cpt
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Hts(rho, e, T) + Hf_;
+    return Cp_;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::hConstThermo<EquationOfState>::Hst
+(
+    const scalar T
+) const
+{
+    return Cp_*(T - Tref_) + Hsref_;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::hConstThermo<EquationOfState>::Hat
+(
+    const scalar T
+) const
+{
+    return Hst(T) + Hf_;
 }
 
 

@@ -159,6 +159,9 @@ public:
         static const bool isotropic = true;
 
         //- Isotropic thermal conductivity [W/m/K]
+        inline scalar kappaT(const scalar T) const;
+
+        //- Isotropic thermal conductivity [W/m/K]
         inline scalar kappa
         (
             const scalar rho,

@@ -42,6 +42,7 @@ SourceFiles
 #include "scalar.H"
 #include "dictionary.H"
 #include "UautoPtr.H"
+#include "adaptiveTypes.H"
 
 #include "thermodynamicConstants.H"
 using namespace Foam::constant::thermodynamic;
@@ -166,6 +167,8 @@ public:
         friend Ostream& operator<<(Ostream&, const specieBlast&);
 };
 
+
+defineAdaptiveType(specieBlast);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

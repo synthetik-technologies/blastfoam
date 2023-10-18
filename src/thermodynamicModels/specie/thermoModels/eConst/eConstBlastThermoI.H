@@ -125,18 +125,6 @@ inline Foam::scalar Foam::eConstThermo<EquationOfState>::Es
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eConstThermo<EquationOfState>::Ets
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return Cv_*(T - Tref_) + Esref_;
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::eConstThermo<EquationOfState>::Ea
 (
     const scalar rho,
@@ -149,14 +137,32 @@ inline Foam::scalar Foam::eConstThermo<EquationOfState>::Ea
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eConstThermo<EquationOfState>::Eta
+inline Foam::scalar Foam::eConstThermo<EquationOfState>::Cvt
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Ets(rho, e, T) + Hf_;
+    return Cv_;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::eConstThermo<EquationOfState>::Est
+(
+    const scalar T
+) const
+{
+    return Cv_*(T - Tref_) + Esref_;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::eConstThermo<EquationOfState>::Eat
+(
+    const scalar T
+) const
+{
+    return Est(T) + Hf_;
 }
 
 

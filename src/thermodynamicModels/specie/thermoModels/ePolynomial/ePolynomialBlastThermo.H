@@ -205,14 +205,6 @@ public:
             const scalar T
         ) const;
 
-        //- Sensible thermal internal energy [J/kg]
-        inline scalar Ets
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
-
         //- Absolute internal energy [J/kg]
         inline scalar Ea
         (
@@ -221,13 +213,14 @@ public:
             const scalar T
         ) const;
 
+        //- Heat capacity at constant volume of mixture [J/kg/K]
+        inline scalar Cvt(const scalar T) const;
+
+        //- Sensible thermal internal energy [J/kg]
+        inline scalar Est(const scalar T) const;
+
         //- Absolute thermal internal energy [J/kg]
-        inline scalar Eta
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+        inline scalar Eat(const scalar T) const;
 
         #include "EtoHFuncs.H"
 
