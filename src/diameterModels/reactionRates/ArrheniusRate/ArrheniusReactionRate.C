@@ -40,13 +40,9 @@ namespace reactionRates
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::reactionRates::Arrhenius::Arrhenius
-(
-    const fvMesh& mesh,
-    const dictionary& dict
-)
+Foam::reactionRates::Arrhenius::Arrhenius(const dictionary& dict)
 :
-    reactionRate(mesh, dict),
+    reactionRate(dict),
     A_("A", inv(dimTime), dict),
     beta_("beta", dimless, dict),
     Ta_("Ta", dimTemperature, dict)

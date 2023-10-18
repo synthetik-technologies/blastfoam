@@ -70,7 +70,7 @@ public:
     TypeName("Arrhenius");
 
     // Constructor
-    Arrhenius(const fvMesh& mesh, const dictionary& dict);
+    Arrhenius(const dictionary& dict);
 
 
     //- Destructor

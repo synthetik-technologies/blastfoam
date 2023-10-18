@@ -28,7 +28,6 @@ License
 
 Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
 (
-    const fvMesh& mesh,
     const dictionary& dict
 )
 {
@@ -49,7 +48,7 @@ Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict);
+    return cstrIter()(dict);
 
 }
 

@@ -63,14 +63,13 @@ public:
             reactionRate,
             dictionary,
             (
-                const fvMesh& mesh,
                 const dictionary& dict
             ),
-            (mesh, dict)
+            (dict)
         );
 
     // Constructor
-    reactionRate(const fvMesh& mesh, const dictionary& dict);
+    reactionRate(const dictionary& dict);
 
 
     //- Destructor
@@ -79,11 +78,7 @@ public:
 
     // Selectors
 
-        static autoPtr<reactionRate> New
-        (
-            const fvMesh& mesh,
-            const dictionary& dict
-        );
+        static autoPtr<reactionRate> New(const dictionary& dict);
 
     //- Construct and return a clone
     virtual autoPtr<reactionRate> clone() const = 0;
@@ -92,7 +87,7 @@ public:
     // Public functions
 
         //- Initialize models
-        virtual void initializeModels()
+        virtual void initializeModels(const fvMesh& mesh)
         {}
 
         //- Optional update of necessary fields before calculating k

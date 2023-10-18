@@ -49,7 +49,7 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
 )
 :
     diameterModel(mesh, dict, phaseName),
-    rate_(reactionRate::New(mesh, dict)),
+    rate_(reactionRate::New(dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     TName_(dict.lookupOrDefault("TName", word("T"))),
     dVdt_
@@ -65,6 +65,7 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
     )
 {
     this->requireD();
+    rate_->initializeModels(mesh);
 }
 
 

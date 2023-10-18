@@ -43,11 +43,10 @@ namespace reactionRates
 
 Foam::reactionRates::pressureBased::pressureBased
 (
-    const fvMesh& mesh,
     const dictionary& dict
 )
 :
-    reactionRate(mesh, dict),
+    reactionRate(dict),
     pScale_(dict.lookup<scalar>("pScale")),
     pExponent_("pExponent", dimless, dict),
     pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict),

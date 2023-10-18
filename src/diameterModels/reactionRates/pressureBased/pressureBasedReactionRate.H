@@ -75,7 +75,7 @@ public:
     TypeName("pressureBased");
 
     // Constructor
-    pressureBased(const fvMesh& mesh, const dictionary& dict);
+    pressureBased(const dictionary& dict);
 
 
     //- Destructor
