@@ -17,6 +17,7 @@ wclean $targetType atmosphereModels
 wclean $targetType regionModels
 wclean $targetType solidModels
 wclean $targetType levelSet
+wclean $targetType FieldSetTypes
 
 wclean $targetType solids4fFoam
 

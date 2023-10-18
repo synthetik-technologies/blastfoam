@@ -22,6 +22,7 @@ wmake $targetType atmosphereModels
 wmake $targetType regionModels
 wmake $targetType solidModels
 wmake $targetType levelSet
+wmake $targetType FieldSetTypes
 
 # -- Region models and
 regionSolvers/Allwmake
