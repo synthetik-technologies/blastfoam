@@ -1140,14 +1140,16 @@ void Foam::phaseSystem::update()
         massTransferIter
     )
     {
-        blastThermo& dispersedThermo
-        (
-            phaseModels_[massTransferIter()->pair().dispersed().name()].thermo()
-        );
-        blastThermo& continuousThermo
-        (
-            phaseModels_[massTransferIter()->pair().continuous().name()].thermo()
-        );
+        blastThermo& dispersedThermo =
+            phaseModels_
+            [
+                massTransferIter()->pair().dispersed().name()
+            ].thermo();
+        blastThermo& continuousThermo =
+            phaseModels_
+            [
+                massTransferIter()->pair().continuous().name()
+            ].thermo();
 
         tmp<volScalarField> mDot(*mDots_[massTransferIter.key()]);
         List<word> species(massTransferIter()->dispersedSpecies());
@@ -1158,7 +1160,10 @@ void Foam::phaseSystem::update()
             const word& specieName(species[i]);
             if (dispersedThermo.contains(specieName))
             {
-                dynamicCast<multicomponentBlastThermo>(dispersedThermo).addDelta
+                dynamicCast<multicomponentBlastThermo>
+                (
+                    dispersedThermo
+                ).addDelta
                 (
                     specieName,
                     massTransferIter()->dispersedYi(specieName)*mDot()
@@ -1166,7 +1171,10 @@ void Foam::phaseSystem::update()
             }
             if (continuousThermo.contains(specieName))
             {
-                dynamicCast<multicomponentBlastThermo>(continuousThermo).addDelta
+                dynamicCast<multicomponentBlastThermo>
+                (
+                    continuousThermo
+                ).addDelta
                 (
                     specieName,
                     -massTransferIter()->continuousYi(specieName)*mDot()
@@ -1181,7 +1189,8 @@ void Foam::phaseSystem::solve()
 {
     forAll(phaseModels_, phasei)
     {
-        // Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
+        DebugInfo
+            << "Solving " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].solve();
     }
 
@@ -1194,9 +1203,9 @@ void Foam::phaseSystem::postUpdate()
     decode();
     forAll(phaseModels_, phasei)
     {
-        // Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
+        DebugInfo
+            << "Post update " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].postUpdate();
-        Info<< endl;
     }
 
     decode();
