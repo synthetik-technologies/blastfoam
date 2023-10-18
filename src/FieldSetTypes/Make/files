@@ -1,0 +1,12 @@
+FieldSetTypes/FieldSetType/fieldSetOptions.C
+FieldSetTypes/FieldSetType/FieldSetTypes.C
+FieldSetTypes/Uniform/UniformFieldSetTypes.C
+FieldSetTypes/InitialValue/InitialValueFieldSetTypes.C
+FieldSetTypes/CalculatedDensity/CalculatedDensityFieldSetTypes.C
+FieldSetTypes/MassIntegrated/MassIntegratedFieldSetTypes.C
+FieldSetTypes/Sum/SumFieldSetTypes.C
+FieldSetTypes/Function/FunctionFieldSetTypes.C
+
+fieldSetList.C
+
+LIB = $(BLAST_LIBBIN)/libFieldSetTypes
