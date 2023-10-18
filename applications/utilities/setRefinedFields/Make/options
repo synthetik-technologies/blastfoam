@@ -5,7 +5,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -IFieldSetTypes/lnInclude
+    -I$(BLAST_DIR)/src/FieldSetTypes/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \
