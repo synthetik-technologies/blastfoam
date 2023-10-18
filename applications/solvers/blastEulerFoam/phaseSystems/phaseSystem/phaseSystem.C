@@ -1112,6 +1112,13 @@ void Foam::phaseSystem::update()
     decode();
     forAll(phaseModels_, phasei)
     {
+        if (isA<multicomponentBlastThermo>(phaseModels_[phasei].thermo()))
+        {
+            dynamicCast<multicomponentBlastThermo>
+            (
+                phaseModels_[phasei].thermo()
+            ).clearDeltas();
+        }
         phaseModels_[phasei].update();
     }
 
@@ -1151,26 +1158,18 @@ void Foam::phaseSystem::update()
             const word& specieName(species[i]);
             if (dispersedThermo.contains(specieName))
             {
-                tmp<volScalarField> YmDot
-                (
-                    massTransferIter()->dispersedYi(specieName)*mDot
-                );
-                dispersedThermo.addDelta
+                dynamicCast<multicomponentBlastThermo>(dispersedThermo).addDelta
                 (
                     specieName,
-                    YmDot
+                    massTransferIter()->dispersedYi(specieName)*mDot()
                 );
             }
             if (continuousThermo.contains(specieName))
             {
-                tmp<volScalarField> YmDot
-                (
-                    -massTransferIter()->continuousYi(specieName)*mDot
-                );
-                continuousThermo.addDelta
+                dynamicCast<multicomponentBlastThermo>(continuousThermo).addDelta
                 (
                     specieName,
-                    YmDot
+                    -massTransferIter()->continuousYi(specieName)*mDot()
                 );
             }
         }
@@ -1358,7 +1357,7 @@ Foam::phaseSystem::mDot(const phaseModel& phase1, const phaseModel& phase2) cons
             dimensionedScalar(dimDensity/dimTime, 0.0)
         )
     );
-    volScalarField& mDoti = tmpmDoti.ref();
+    volScalarField::Internal& mDoti = tmpmDoti.ref();
     phasePairKey key1(phase1.name(), phase2.name(), true);
     phasePairKey key2(phase2.name(), phase1.name(), true);
 
@@ -1392,12 +1391,19 @@ Foam::phaseSystem::mDotByRho
     const phaseModel& phase2
 ) const
 {
-    return
+    tmp<volScalarField> tmDotByRhoi
+    (
         volScalarField::New
         (
             IOobject::groupName("mDotByRho", phase1.name()),
-            max(mD, zeroMDot)/phase2.rho() + min(mD, zeroMDot)/phase1.rho()
-        );
+            mesh_,
+            dimensionedScalar(inv(dimTime), 0.0)
+        )
+    );
+    tmDotByRhoi.ref().ref() =
+        max(mD(), zeroMDot)/phase2.rho()()
+      + min(mD(), zeroMDot)/phase1.rho()();
+    return tmDotByRhoi;
 }
 
 
@@ -1418,12 +1424,19 @@ Foam::tmp<Foam::volVectorField> Foam::phaseSystem::mDotU
     const phaseModel& phase2
 ) const
 {
-    return
+    tmp<volVectorField> tmDotUi
+    (
         volVectorField::New
         (
             IOobject::groupName("mDotU", phase1.name()),
-            max(mD, zeroMDot)*phase2.U() + min(mD, zeroMDot)*phase1.U()
-        );
+            mesh_,
+            dimensionedVector(dimDensity*dimVelocity/dimTime, Zero)
+        )
+    );
+    tmDotUi.ref().ref() =
+        max(mD(), zeroMDot)*phase2.U()()
+      + min(mD(), zeroMDot)*phase1.U()();
+    return tmDotUi;
 }
 
 Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
@@ -1433,30 +1446,36 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
     const phaseModel& phase2
 ) const
 {
-    volScalarField hc(phase1.thermo().hc() - phase2.thermo().hc());
-    volScalarField mD21(max(mD, zeroMDot));
-    volScalarField mD12(min(mD, zeroMDot));
+    volScalarField::Internal mD21(max(mD(), zeroMDot));
+    volScalarField::Internal mD12(min(mD(), zeroMDot));
 
     tmp<volScalarField> tmDotEi
     (
         volScalarField::New
         (
             IOobject::groupName("mDotE", phase1.name()),
-            mD21*phase2.thermo().hs()
-          + mD12*phase1.thermo().hs()
-          + mD21*hc
+            mesh_,
+            dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
         )
     );
+    volScalarField::Internal& mDotEi = tmDotEi.ref();
+
+    mDotEi =
+        mD21
+       *(
+            phase2.thermo().hs()()()
+          + phase1.thermo().hc()() + phase2.thermo().hc()()
+        )
+      + mD12*phase1.thermo().hs()()();
 
     if (phase1.totalEnergy())
     {
-        volScalarField& mDotEi = tmDotEi.ref();
-        volScalarField K1(0.5*magSqr(phase1.U()));
-        volScalarField K2(0.5*magSqr(phase2.U()));
+        tmp<volScalarField::Internal> K1(0.5*magSqr(phase1.U()()));
+        tmp<volScalarField::Internal> K2(0.5*magSqr(phase2.U()()));
 
         if (phase2.granular())
         {
-            K2 += 1.5*phase2.Theta();
+            K2.ref() += 1.5*phase2.Theta()();
         }
 
         mDotEi += mD21*K2 + mD12*K1;
@@ -1493,15 +1512,15 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotPTE
             dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
         )
     );
-    volScalarField& mDotPTEi = tmDotPTEi.ref();
+    volScalarField::Internal& mDotPTEi = tmDotPTEi.ref();
 
     if (phase1.granular())
     {
-        mDotPTEi += min(mD, zeroMDot)*1.5*phase1.Theta();
+        mDotPTEi += min(mD(), zeroMDot)*1.5*phase1.Theta()();
     }
     if (phase2.granular())
     {
-        mDotPTEi += max(mD, zeroMDot)*1.5*phase2.Theta();
+        mDotPTEi += max(mD(), zeroMDot)*1.5*phase2.Theta()();
     }
     return tmDotPTEi;
 }
