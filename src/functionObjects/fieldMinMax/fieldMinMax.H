@@ -202,6 +202,15 @@ public:
             const dictionary&
         );
 
+        //- Construct from Time and dictionary
+        fieldMinMax
+        (
+            const word& name,
+            const Time& runTime,
+            const dictionary&,
+            const minMaxType mm
+        );
+
         //- Disallow default bitwise copy construction
         fieldMinMax(const fieldMinMax&) = delete;
 
@@ -231,6 +240,48 @@ public:
         void operator=(const fieldMinMax&) = delete;
 };
 
+
+class fieldMin
+:
+    public fieldMinMax
+{
+public:
+
+    //- Runtime type information
+    TypeName("fieldMin");
+
+    fieldMin
+    (
+        const word& name,
+        const Time& runTime,
+        const dictionary& dict
+    )
+    :
+        fieldMinMax(name, runTime, dict, minMaxType::min)
+    {}
+};
+
+
+class fieldMax
+:
+    public fieldMinMax
+{
+public:
+
+    //- Runtime type information
+    TypeName("fieldMax");
+
+
+    fieldMax
+    (
+        const word& name,
+        const Time& runTime,
+        const dictionary& dict
+    )
+    :
+        fieldMinMax(name, runTime, dict, minMaxType::max)
+    {}
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -35,17 +35,12 @@ namespace Foam
 {
 namespace functionObjects
 {
+    defineTypeNameAndDebug(fieldMin, 0);
+    defineTypeNameAndDebug(fieldMax, 0);
     defineTypeNameAndDebug(fieldMinMax, 0);
+    addToRunTimeSelectionTable(functionObject, fieldMin, dictionary);
+    addToRunTimeSelectionTable(functionObject, fieldMax, dictionary);
     addToRunTimeSelectionTable(functionObject, fieldMinMax, dictionary);
-
-    // Add old name
-    addNamedToRunTimeSelectionTable
-    (
-        functionObject,
-        fieldMinMax,
-        dictionary,
-        fieldMax
-    );
 }
 }
 
@@ -88,7 +83,7 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     fvMeshFunctionObject(name, runTime, dict),
     restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
     mode_(modeType::cmpt),
-    minMax_(minMaxType::max),
+    minMax_(minMaxTypeNames_[dict.lookupOrDefault<word>("minMax", "max")]),
     minMaxName_(minMax_ == minMaxType::min ? "Min" : "Max"),
     fieldNames_(dict.lookup("fields")),
 
@@ -102,6 +97,30 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     read(dict);
 }
 
+Foam::functionObjects::fieldMinMax::fieldMinMax
+(
+    const word& name,
+    const Time& runTime,
+    const dictionary& dict,
+    const minMaxType mm
+)
+:
+    fvMeshFunctionObject(name, runTime, dict),
+    restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
+    mode_(modeType::cmpt),
+    minMax_(mm),
+    minMaxName_(minMax_ == minMaxType::min ? "Min" : "Max"),
+    fieldNames_(dict.lookup("fields")),
+
+    cellMap_(nullptr),
+    rCellMap_(nullptr)
+{
+    if (!dict.lookupOrDefault("executeAtStart", false))
+    {
+        executeAtStart_ = false;
+    }
+    read(dict);
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -118,9 +137,7 @@ bool Foam::functionObjects::fieldMinMax::read(const dictionary& dict)
     Log << type() << " " << name() << ":" << nl;
 
     dict.readIfPresent("restartOnRestart", restartOnRestart_);
-    mode_ = modeTypeNames_[dict.lookupOrDefault<word>("mode", "component")];
-    minMax_ = minMaxTypeNames_[dict.lookupOrDefault<word>("minMax", "max")];
-    minMaxName_ = minMax_ == minMaxType::min ? "Min" : "Max";
+    mode_ = modeTypeNames_[dict.lookupOrDefault<word>("mode", "component")];    minMaxName_ = minMax_ == minMaxType::min ? "Min" : "Max";
 
     Log << endl;
 
