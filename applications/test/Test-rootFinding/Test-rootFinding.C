@@ -62,9 +62,9 @@ public:
     }
     virtual void FX
     (
-        const UList<scalar>& x,
+        const multivariateEquation<scalar>::VarType& x,
         const label li,
-        scalarList& fx
+        List<scalar>& fx
     ) const
     {
         fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
@@ -72,9 +72,9 @@ public:
     }
     virtual void jacobian
     (
-        const UList<scalar>& x,
+        const multivariateEquation<scalar>::VarType& x,
         const label li,
-        scalarList& fx,
+        List<scalar>& fx,
         RectangularMatrix<scalar>& dfdx
     ) const
     {
@@ -121,9 +121,9 @@ public:
     }
     virtual void FX
     (
-        const UList<scalar>& x,
+        const multivariateEquation<scalar>::VarType& x,
         const label li,
-        scalarList& fx
+        List<scalar>& fx
     ) const
     {
         fx[0] = x[1] - sqr(x[0]) + x[0];
@@ -131,18 +131,18 @@ public:
     }
     virtual void jacobian
     (
-        const UList<scalar>& x,
+        const multivariateEquation<scalar>::VarType& x,
         const label li,
-        scalarList& fx,
-        RectangularMatrix<scalar>& J
+        List<scalar>& fx,
+        RectangularMatrix<scalar>& dfdx
     ) const
     {
         FX(x, li, fx);
 
-        J(0, 0) = stabilise(-2.0*x[0] + 1.0, small);
-        J(0, 1) = 1.0;
-        J(1, 0) = 2.0*x[0]/16.0;
-        J(1, 1) = stabilise(2.0*x[1], small);
+        dfdx(0, 0) = stabilise(-2.0*x[0] + 1.0, small);
+        dfdx(0, 1) = 1.0;
+        dfdx(1, 0) = 2.0*x[0]/16.0;
+        dfdx(1, 1) = stabilise(2.0*x[1], small);
     }
 };
 
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    Info<< "done" << endl;
+    Info<< "Done" << endl;
 
     return 0;
 }

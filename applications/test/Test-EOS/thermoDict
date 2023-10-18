@@ -1,99 +1,180 @@
 
-// thermoType
-// {
-//     transport const;
-//     thermo  eConst;
-//     equationOfState Tillotson;
-// }
+p 1e10;
+rho 1600;
+T 300;
+calculateDensity no;
 
-specie
-{
-    molWeight 28.97;//16.042;
-}
-
-// thermodynamics
-// {
-//     Cv  2400;
-//     Hf  0;
-// }
-
-transport
-{
-    mu  0;
-    Pr  1.0;
-}
 thermoType
 {
-    transport const;
-    thermo      eConst;
-    equationOfState perfectGas;
-}
-
-thermodynamics
-{
-    Cv      718;
-    Hf      -55528000;
-
-//     file        "T.csv";
-//     nRho        7;
-//     ne          40;
-//     minRho      -3.0;
-//     mine        11.8748;
-//     dRho        1.0;
-//     de          1.0;
-//
-//     mod         ln;
-//     TMod        ln;
+    transport   const;
+    thermo      ePolynomial;
+    equationOfState JWL;
 }
 equationOfState
 {
-// //     b 0.001;
-// // Shock
-// //     rho0    1000;
-// //     c       1480;
-// //     Gamma0  0.5;
-// //     a       0;
-// //     S1      2.56;
-// //     S2      1.986;
-// //     S3      1.2268;
-//
-// // Tillotson
-//     rho0    1000.0;
-//     a       0.7;
-//     b       0.15;
-//     A       21.1e8;
-//     B       132.5e8;
-//
-//     e0      7e5;
-//
-//     pCav    5000;
-//     rhoCav  995;
-//     k       1.33;
-//
-// // linearTillotson
-// //     p0      1e5;
-// //     rho0    1000.0;
-// //     e0      3.543e5;
-// //     omega   0.28;
-// //     A       2.2e9;
-// //     B       9.54e9;
-// //     C       14.57e9;
-// //     pCav    5000;
-//
-// Stiffened gas
-    // a 3e8;
-    // b 0;
-    // gamma 7.15;
+    beta    0.16;
+    kappa   10.91;
+    k       0.0033383;
+    b       0.0033383;
+    a       0.5;
+    Theta   400;
 
-
-// Peng robinson
-    //Tc        190.55;
-    //Vc        0.0285;
-    //Pc        4.595e6;
-    //omega     0.0115;
-
-    a               5.0;//895.506;
-    b               1e-3;//0.00268664;
-    c 0;
-    gamma 1.4;
+    rho0      1630; //1601;
+    A         371.21e9;
+    B         3.23e9;
+    R1        4.15;
+    R2        0.95;
+    omega     0.3;
 }
+specie
+{
+    molWeight       22.393;
+}
+transport
+{
+    mu              0;              // Viscosity
+    Pr              1;              // Prandtl number
+}
+thermodynamics
+{
+    // eCoeffs<9>     (-1250.0 0.28 0.0003 0 0 0 0 0 0);           // Heat capacity
+    // CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
+    CvCoeffs<8>     (280 0.6 0 0 0 0 0 0);           // Heat capacity
+    Sf              0.0;
+    Hf              0.0;
+}
+// thermoType
+// {
+//     transport   const;
+//     thermo      ePolynomial;
+//     equationOfState BKW;
+// }
+// equationOfState
+// {
+//     beta 0.09585;
+//     k   12.685;
+//     kappa 1.0;
+//     a 0.5;
+//     Theta 400;
+//
+//     // rho0      1630; //1601;
+//     // A         371.21e9;
+//     // B         3.23e9;
+//     // R1        4.15;
+//     // R2        0.95;
+//     // omega     0.3;
+// }
+// specie
+// {
+//     molWeight       55.0;
+// }
+// transport
+// {
+//     mu              0;              // Viscosity
+//     Pr              1;              // Prandtl number
+// }
+// thermodynamics
+// {
+//     CvCoeffs<8>     (-4700 0.6 0.001 0 0 0 0 0);           // Heat capacity
+//     Sf              0.0;
+//     Hf              0.0;
+// }
+//
+// // thermoType
+// // {
+// //     transport const;
+// //     thermo  eConst;
+// //     equationOfState Tillotson;
+// // }
+//
+// specie
+// {
+//     molWeight 22.393;//28.97;//16.042;
+// }
+//
+// // thermodynamics
+// // {
+// //     Cv  2400;
+// //     Hf  0;
+// // }
+//
+// transport
+// {
+//     mu  0;
+//     Pr  1.0;
+// }
+// thermoType
+// {
+//     transport const;
+//     thermo      eConst;
+//     equationOfState perfectGas;
+// }
+//
+// thermodynamics
+// {
+//     Cv      718;
+//     Hf      -55528000;
+//
+// //     file        "T.csv";
+// //     nRho        7;
+// //     ne          40;
+// //     minRho      -3.0;
+// //     mine        11.8748;
+// //     dRho        1.0;
+// //     de          1.0;
+// //
+// //     mod         ln;
+// //     TMod        ln;
+// }
+// equationOfState
+// {
+// // //     b 0.001;
+// // // Shock
+// // //     rho0    1000;
+// // //     c       1480;
+// // //     Gamma0  0.5;
+// // //     a       0;
+// // //     S1      2.56;
+// // //     S2      1.986;
+// // //     S3      1.2268;
+// //
+// // // Tillotson
+// //     rho0    1000.0;
+// //     a       0.7;
+// //     b       0.15;
+// //     A       21.1e8;
+// //     B       132.5e8;
+// //
+// //     e0      7e5;
+// //
+// //     pCav    5000;
+// //     rhoCav  995;
+// //     k       1.33;
+// //
+// // // linearTillotson
+// // //     p0      1e5;
+// // //     rho0    1000.0;
+// // //     e0      3.543e5;
+// // //     omega   0.28;
+// // //     A       2.2e9;
+// // //     B       9.54e9;
+// // //     C       14.57e9;
+// // //     pCav    5000;
+// //
+// // Stiffened gas
+//     // a 3e8;
+//     // b 0;
+//     // gamma 7.15;
+//
+//
+// // Peng robinson
+//     //Tc        190.55;
+//     //Vc        0.0285;
+//     //Pc        4.595e6;
+//     //omega     0.0115;
+//
+//     a               5.0;//895.506;
+//     b               1e-3;//0.00268664;
+//     c 0;
+//     gamma 1.4;
+// }

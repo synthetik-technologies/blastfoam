@@ -21,11 +21,16 @@ int main(int argc, char *argv[])
     autoPtr<simpleBlastThermo> eosPtr(simpleBlastThermo::New(dict));
     simpleBlastThermo& eos = eosPtr();
 
-    scalar p = 1e5;
-    scalar rho = 50;
-    scalar T = 7.3;//eos.rhoPT(0.1, p, T);//1.225;
-    // scalar e = eos.Es(rho, 0, T);
-
+    scalar p = dict.lookup<scalar>("p");
+    scalar rho = dict.lookup<scalar>("rho");
+    scalar T = dict.lookup<scalar>("T");
+    if (dict.lookupOrDefault("calculateDensity", false))
+    {
+        rho = eos.rhoPT(rho, p, T);
+    }
+    scalar e = eos.Es(rho, 0, T);
+    // p = eos.p(rho, e, T);
+//
 //     label n = 1000;
 //     std::vector<scalar> rhos(n, 0.0);
 //     std::vector<scalar> ps(n, 0.0);
@@ -37,8 +42,8 @@ int main(int argc, char *argv[])
 //         Es[i] = eos.E(rhos[i], e, T);
 //     }
 
-    scalar e = eos.initializeEnergy(p, rho, e, T);
-    // scalar T = eos.TRhoE(T, rho, e);
+    e = eos.initializeEnergy(p, rho, e, T);
+    T = eos.TRhoE(T, rho, e);
 
     Info<<"rho: "<< rho <<endl;
     Info<<"e: "<< e <<endl;
@@ -48,6 +53,8 @@ int main(int argc, char *argv[])
     Info<<"T: "<< eos.TRhoE(T, rho, e) <<endl;
     Info<<"Cp: "<< eos.Cp(rho, e, T) <<endl;
     Info<<"Cv: "<< eos.Cv(rho, e, T) <<endl;
+    Info<<"dpdT: "<< eos.dpdT(rho, e, T) <<endl;
+    Info<<"dpdv: "<< eos.dpdv(rho, e, T) <<endl;
     Info<<"rho: "<< eos.rhoPT(rho, p, T) <<endl;
     Info<<"p: "<< eos.p(rho, e, T) <<endl;
 
