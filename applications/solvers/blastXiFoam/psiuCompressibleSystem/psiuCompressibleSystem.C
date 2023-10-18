@@ -283,12 +283,6 @@ Foam::psiuCompressibleSystem::speedOfSound() const
 }
 
 
-const Foam::volScalarField& Foam::psiuCompressibleSystem::rho() const
-{
-    return rho_;
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::psiuCompressibleSystem::rhou() const
 {
     return thermo_->rhou();

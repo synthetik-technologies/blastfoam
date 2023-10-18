@@ -138,8 +138,29 @@ public:
 
     // Member Access Functions
 
-        //- Density of mixture [kg/m^3]
-        virtual const volScalarField& rho() const;
+        //- Const access to total mass
+        const volScalarField& rho() const
+        {
+            return rho_;
+        }
+
+        //- Access to total mass
+        volScalarField& rho()
+        {
+            return rho_;
+        }
+
+        //- Const access to total mass
+        const volScalarField& rhoEff() const
+        {
+            return rho_;
+        }
+
+        //- Access to total mass
+        volScalarField& rhoEff()
+        {
+            return rho_;
+        }
 
         //- Const access to internal energy
         virtual const volScalarField& he() const

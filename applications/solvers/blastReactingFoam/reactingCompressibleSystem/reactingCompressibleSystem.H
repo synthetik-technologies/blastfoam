@@ -140,6 +140,24 @@ public:
             return rho_;
         }
 
+        //- Access to total mass
+        volScalarField& rho()
+        {
+            return rho_;
+        }
+
+        //- Const access to total mass
+        const volScalarField& rhoEff() const
+        {
+            return rho_;
+        }
+
+        //- Access to total mass
+        volScalarField& rhoEff()
+        {
+            return rho_;
+        }
+
         //- Const access to internal energy
         const volScalarField& he() const
         {
