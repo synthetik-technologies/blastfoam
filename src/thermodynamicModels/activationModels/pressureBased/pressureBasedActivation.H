@@ -46,6 +46,8 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "activationModel.H"
+#include "ODESystem.H"
+#include "ODESolver.H"
 
 namespace Foam
 {
@@ -58,7 +60,8 @@ namespace activationModels
 
 class pressureBasedActivation
 :
-    public activationModel
+    public activationModel,
+    public ODESystem
 {
 // Private data
 
@@ -97,6 +100,9 @@ class pressureBasedActivation
     //- Reference to total pressure
     const volScalarField& p_;
 
+    //- Const reference to volume fraction (if valid)
+    UautoPtr<const volScalarField> alphaPtr_;
+
     //- Const reference to phase density
     const volScalarField& rho_;
 
@@ -105,6 +111,15 @@ class pressureBasedActivation
 
     //- Cutoff pressure
     dimensionedScalar pMin_;
+
+    //- Residual volume fraction
+    scalar residualAlpha_;
+
+    //- Optional ode solver
+    autoPtr<ODESolver> solver_;
+
+    //- Saved detonation time-step
+    mutable autoPtr<volScalarField::Internal> deltaTDet_;
 
 
     //- Return the time rate of chage of lambda
@@ -127,6 +142,36 @@ public:
 
     //- Destructor
     virtual ~pressureBasedActivation();
+
+
+    // Member Functions
+
+        //- Return the number of equations in the system
+        virtual label nEqns() const {return 1;}
+
+        //- Calculate the derivatives in dydx
+        //  for the current state x and y
+        //  and optional index into the list of systems to solve li
+        virtual void derivatives
+        (
+            const scalar x,
+            const scalarField& y,
+            const label li,
+            scalarField& dydx
+        ) const;
+
+        //- Calculate the Jacobian of the system
+        //  for the current state x and y
+        //  and optional index into the list of systems to solve li.
+        //  Need by stiff-system solvers
+        virtual void jacobian
+        (
+            const scalar x,
+            const scalarField& y,
+            const label li,
+            scalarField& dfdx,
+            scalarSquareMatrix& dfdy
+        ) const;
 };
 
 
