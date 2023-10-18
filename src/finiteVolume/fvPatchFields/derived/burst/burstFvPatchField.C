@@ -39,7 +39,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    coupledFvPatchField<Type>(p, iF),
+    fvPatchField<Type>(p, iF),
     burstFvPatchFieldBase(p),
     burstPatchField_
     (
@@ -73,7 +73,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const dictionary& dict
 )
 :
-    coupledFvPatchField<Type>(p, iF, dict, false),
+    fvPatchField<Type>(p, iF, dict, false),
     burstFvPatchFieldBase(p),
     burstPatchField_(),
     intactPatchField_()
@@ -138,7 +138,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const fvPatchFieldMapper& mapper
 )
 :
-    coupledFvPatchField<Type>(bpf, p, iF, mapper),
+    fvPatchField<Type>(bpf, p, iF, mapper),
     burstFvPatchFieldBase(p),
     burstPatchField_
     (
@@ -170,7 +170,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    coupledFvPatchField<Type>(bpf, iF),
+    fvPatchField<Type>(bpf, iF),
     burstFvPatchFieldBase(this->patch()),
     burstPatchField_(bpf.burstPatchField_->clone(iF)),
     intactPatchField_(bpf.intactPatchField_->clone(iF))

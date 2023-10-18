@@ -45,6 +45,11 @@ void Foam::burstPolyPatchBase::makePointIntact() const
 
     // Set the point intact field
     pointIntact_.set(new scalarField(patch_.nPoints(), 0));
+    if (!intact_.valid())
+    {
+        return;
+    }
+
     scalarField& pI = pointIntact_();
     const scalarField& I = intact_();
 
@@ -160,6 +165,15 @@ bool Foam::burstPolyPatchBase::update
     return returnReduce(burst_->update(p, intact), orOp<bool>());
 }
 
+
+void Foam::burstPolyPatchBase::setIntact(const scalarField& intact)
+{
+    if (!intact_.valid())
+    {
+        intact_.set(&intact);
+        pointIntact_.clear();
+    }
+}
 
 const Foam::Field<Foam::scalar>&
 Foam::burstPolyPatchBase::pointIntact() const

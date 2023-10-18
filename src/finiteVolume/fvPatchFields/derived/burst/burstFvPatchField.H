@@ -40,7 +40,7 @@ SourceFiles
 #ifndef burstFvPatchField_H
 #define burstFvPatchField_H
 
-#include "coupledFvPatchField.H"
+#include "fvPatchField.H"
 #include "burstFvPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -55,7 +55,7 @@ namespace Foam
 template<class Type>
 class burstFvPatchField
 :
-    public coupledFvPatchField<Type>,
+    public fvPatchField<Type>,
     public burstFvPatchFieldBase
 {
     // Private Data

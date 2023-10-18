@@ -136,13 +136,7 @@ public:
             }
 
             //- Access the intact field
-            void setIntact(const scalarField& intact)
-            {
-                if (!intact_.valid())
-                {
-                    intact_.set(&intact);
-                }
-            }
+            void setIntact(const scalarField& intact);
 
             //- Return the interpolated intact field
             const Field<scalar>& pointIntact() const;
