@@ -22,22 +22,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::fieldValue
+    Foam::errorEstimators::volumeFraction
 
 Description
     Error is the value of the given field
 
 SourceFiles
-    fieldValueErrorEstimator.C
+    volumeFractionErrorEstimator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fieldValueErrorEstimator_H
-#define fieldValueErrorEstimator_H
+#ifndef volumeFractionErrorEstimator_H
+#define volumeFractionErrorEstimator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "errorEstimator.H"
+#include "fieldValueErrorEstimator.H"
 
 namespace Foam
 {
@@ -45,45 +45,30 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class fieldValue Declaration
+                           Class volumeFraction Declaration
 \*---------------------------------------------------------------------------*/
 
-class fieldValue
+class volumeFraction
 :
-    public errorEstimator
+    public fieldValue
 {
-protected:
-// Protected data
-
-        //- Field name
-        const word fieldName_;
-
 public:
 
     //- Runtime type information
-    TypeName("fieldValue");
+    TypeName("volumeFraction");
 
     // Constructor
-    fieldValue(const fvMesh& mesh, const dictionary& dict, const word& name);
-
-    // Constructor
-    fieldValue
-    (
-        const fvMesh& mesh,
-        const dictionary& dict,
-        const word& name,
-        const word& fieldName
-    );
+    volumeFraction(const fvMesh& mesh, const dictionary& dict, const word& name);
 
 
     //- Destructor
-    virtual ~fieldValue();
+    virtual ~volumeFraction();
 
 
     // Member Functions
 
-        //- Update error
-        virtual void update(const bool scale = true);
+        //- Read level values
+        virtual void read(const dictionary& dict);
 };
 
 

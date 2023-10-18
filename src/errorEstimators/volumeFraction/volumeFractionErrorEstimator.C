@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fieldValueErrorEstimator.H"
+#include "volumeFractionErrorEstimator.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,65 +32,69 @@ namespace Foam
 {
 namespace errorEstimators
 {
-    defineTypeNameAndDebug(fieldValue, 0);
-    addToRunTimeSelectionTable(errorEstimator, fieldValue, dictionary);
+    defineTypeNameAndDebug(volumeFraction, 0);
+    addToRunTimeSelectionTable(errorEstimator, volumeFraction, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::fieldValue::fieldValue
+Foam::errorEstimators::volumeFraction::volumeFraction
 (
     const fvMesh& mesh,
     const dictionary& dict,
     const word& name
 )
 :
-    errorEstimator(mesh, dict, name),
-    fieldName_
+    fieldValue
     (
-        dict.lookupBackwardsCompatible({"fieldName", "field"})
+        mesh,
+        dict,
+        name,
+        IOobject::groupName
+        (
+            "alpha",
+            dict.lookup<word>("phase")
+        )
     )
 {
     this->read(dict);
 }
 
 
-Foam::errorEstimators::fieldValue::fieldValue
-(
-    const fvMesh& mesh,
-    const dictionary& dict,
-    const word& name,
-    const word& fieldName
-)
-:
-    errorEstimator(mesh, dict, name),
-    fieldName_(fieldName)
-{}
-
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::fieldValue::~fieldValue()
+Foam::errorEstimators::volumeFraction::~volumeFraction()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::fieldValue::update(const bool scale)
+void Foam::errorEstimators::volumeFraction::read(const dictionary& dict)
 {
-    if (updateCurTimeIndex(!scale))
+    lowerRefine_ = dict.lookup<scalar>("lowerRefineLevel");
+    lowerUnrefine_ = dict.lookup<scalar>("unrefineLevel");
+    upperRefine_ =
+        dict.lookupOrDefault("upperRefineLevel", 1.0 - lowerRefine_);
+    upperUnrefine_ =
+        dict.lookupOrDefault("upperUnrefineLevel", 1.0 - lowerUnrefine_);
+
+    if (dict.found("maxRefinement"))
     {
-        return;
+        maxLevel_ = dict.lookup<label>("maxRefinement");
+        minDx_ = -1;
     }
-
-    volScalarField& errorCells(error_);
-    this->getFieldValue(fieldName_, errorCells);
-
-    if (scale)
+    else if (dict.found("minDx"))
     {
-        normalize(error_);
+        minDx_ = dict.lookup<scalar>("minDx");
+        maxLevel_ = -1;
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Either maxRefinement or minDx must be specified" << endl
+            << abort(FatalIOError);
     }
 }
 
