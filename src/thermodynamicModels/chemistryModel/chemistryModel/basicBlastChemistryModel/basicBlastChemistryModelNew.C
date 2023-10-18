@@ -148,12 +148,12 @@ Foam::autoPtr<Foam::basicBlastChemistryModel> Foam::basicBlastChemistryModel::Ne
             validNames[0][1] = "method";
             forAll(names, i)
             {
-                const wordList cmpts(blastThermo::splitThermoName(names[i], 7));
+                const wordList cmpts(blastThermo::splitThermoName(names[i], 6));
 
                 if
                 (
-                    SubList<word>(cmpts, 5, 2)
-                 == SubList<word>(thisCmpts, 5, 2)
+                    SubList<word>(cmpts, 4, 2)
+                 == SubList<word>(thisCmpts, 4, 2)
                 )
                 {
                     validNames.append(SubList<word>(cmpts, 2));
