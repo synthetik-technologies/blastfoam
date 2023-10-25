@@ -437,17 +437,25 @@ Foam::kineticTheorySystem::lambda
     );
     volScalarField& l = tmpLambda.ref();
 
-    scalar pi = Foam::constant::mathematical::pi;
-    volScalarField m1(phase.rho()*pi*pow3(phase.d())/6.0);
+    using Foam::constant::mathematical::pi;
+    tmp<volScalarField> tm1(phase.rho()*pi*pow3(phase.d())/6.0);
+    const volScalarField& m1 = tm1();
+
     tmp<volScalarField> tTheta1 = phase.Theta();
     const volScalarField& Theta1 = tTheta1();
+
     forAll(phases_, phasej)
     {
         const phaseModel& phase2 = phases_[phasej];
-        volScalarField m2(phase2.rho()*pi*pow3(phase2.d())/6.0);
+
+        tmp<volScalarField> tm2(phase2.rho()*pi*pow3(phase2.d())/6.0);
+        const volScalarField&  m2 = tm2();
+
         tmp<volScalarField> tTheta2 = phase2.Theta();
         const volScalarField& Theta2 = tTheta2();
-        volScalarField Psij(Ps(phase, phase2));
+
+        tmp<volScalarField> tPsij(Ps(phase, phase2));
+        const volScalarField& Psij = tPsij();
 
         l +=
             Psij/phase.rho()*(phase.d() + phase2.d())/6.0

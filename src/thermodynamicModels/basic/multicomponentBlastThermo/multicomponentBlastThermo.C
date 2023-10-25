@@ -147,9 +147,9 @@ void Foam::multicomponentBlastThermo::correct()
         {
             fix = true;
             Yt.max(small);
-            // FatalErrorInFunction
-            //     << "Sum of mass fractions is zero for species " << species()
-            //     << exit(FatalError);
+            WarningInFunction
+                << "Sum of mass fractions is zero for phase "
+                << phaseName_ << endl;
         }
 
         forAll(Y_, i)

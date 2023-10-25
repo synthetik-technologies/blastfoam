@@ -133,6 +133,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
             faces
         )
     );
+
     if (isA<faceZoneSet>(faces))
     {
         const faceZoneSet& origFzs = dynamicCast<const faceZoneSet>(faces);
