@@ -53,20 +53,20 @@ maxDeltaT       1e-5;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-functions
-{
-    schlieren
-    {
-        type Schlieren;
-        writeControl writeTime;
-        field rho;
-
-    }
-    shadowgraph
-    {
-        type shadowgraph;
-        writeControl writeTime;
-        field rho;
-    }
-}
+// functions
+// {
+//     schlieren
+//     {
+//         type Schlieren;
+//         writeControl writeTime;
+//         field rho;
+//
+//     }
+//     shadowgraph
+//     {
+//         type shadowgraph;
+//         writeControl writeTime;
+//         field rho;
+//     }
+// }
 // ************************************************************************* //

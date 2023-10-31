@@ -82,8 +82,15 @@ functions
 
             if (startTime > 0 && endTime > 0 && write)
             {
-                OFstream outputFile("detonationVelocity");
-                outputFile<< 0.0 << ',' << 0.005/(endTime - startTime)<<endl;
+                OFstream outputFile
+                (
+                    "detonationVelocity",
+                    Ostream::ASCII,
+                    Ostream::currentVersion,
+                    Ostream::UNCOMPRESSED,
+                    true
+                );
+                outputFile<<0.005/(endTime - startTime)<<endl;
 
                 write = false;
             }

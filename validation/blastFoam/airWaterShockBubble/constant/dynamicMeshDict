@@ -36,7 +36,7 @@ errorEstimators
         unrefineLevel       0.001;
         upperUnrefineLevel  0.999;
 
-        maxRefinement       4;
+        maxRefinement       2;
     }
 );
 

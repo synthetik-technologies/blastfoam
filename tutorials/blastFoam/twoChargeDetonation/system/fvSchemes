@@ -20,7 +20,7 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP 3;
+    timeIntegrator  RK2SSP;
 }
 
 gradSchemes
@@ -31,6 +31,7 @@ gradSchemes
 divSchemes
 {
     default         none;
+    div(devTau) Gauss linear;
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
     div(alphaRhoPhi.tnt,lambda.tnt) Riemann;
     div(alphaRhoPhi.RDX,lambda.RDX) Riemann
@@ -46,9 +47,8 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha.tnt)  CICSAM 0.5;
-    reconstruct(alpha.RDX)  vanLeer;
-    reconstruct(alpha.gas)  vanLeer;
+    // reconstruct(alpha.tnt)  CICSAM 0.5;
+    reconstruct(alpha)  vanLeer;
     reconstruct(rho)    vanLeer;
     reconstruct(U)      vanLeerV;
     reconstruct(e)      vanLeer;

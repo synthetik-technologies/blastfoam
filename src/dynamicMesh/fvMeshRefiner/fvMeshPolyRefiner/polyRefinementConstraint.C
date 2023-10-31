@@ -84,30 +84,30 @@ void Foam::polyRefinementConstraint::add
     List<labelPair>& explicitConnections
 ) const
 {
-    autoPtr<const fvMeshPolyRefiner> storagePtr;
-    const fvMeshPolyRefiner* refPtr = nullptr;
+    autoPtr<const polyMeshPolyRefiner> storagePtr;
+    const polyMeshPolyRefiner* refPtr = nullptr;
 
-    if (mesh.foundObject<fvMeshPolyRefiner>(fvMeshRefiner::typeName))
+    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName))
     {
         if (decompositionConstraint::debug)
         {
-            Info<< type() << " : found fvMeshPolyRefiner" << endl;
+            Info<< type() << " : found polyMeshPolyRefiner" << endl;
         }
-        refPtr = &mesh.lookupObject<fvMeshPolyRefiner>
+        refPtr = &mesh.lookupObject<polyMeshPolyRefiner>
         (
-            fvMeshRefiner::typeName
+            polyMeshPolyRefiner::typeName
         );
     }
     else
     {
 //         if (decompositionConstraint::debug)
         {
-            Info<< type() << " : reading fvMeshPolyRefiner from time "
+            Info<< type() << " : reading polyMeshPolyRefiner from time "
                 << mesh.facesInstance() << endl;
         }
         storagePtr.reset
         (
-            new fvMeshPolyRefiner
+            new polyMeshPolyRefiner
             (
                 dynamicCast<fvMesh&>
                 (
@@ -117,7 +117,7 @@ void Foam::polyRefinementConstraint::add
         );
     }
 
-    const fvMeshPolyRefiner& ref =
+    const polyMeshPolyRefiner& ref =
     (
         storagePtr.valid()
       ? storagePtr()
@@ -125,7 +125,7 @@ void Foam::polyRefinementConstraint::add
     );
 
     // refinement itself implements decompositionConstraint
-    dynamicCast<const polyMeshPolyRefiner>(ref.refiner()).refiner().add
+    ref.refiner().add
     (
         blockedFace,
         specifiedProcessorFaces,
@@ -145,30 +145,30 @@ void Foam::polyRefinementConstraint::apply
     labelList& decomposition
 ) const
 {
-    autoPtr<const fvMeshPolyRefiner> storagePtr;
-    const fvMeshPolyRefiner* refPtr = nullptr;
+    autoPtr<const polyMeshPolyRefiner> storagePtr;
+    const polyMeshPolyRefiner* refPtr = nullptr;
 
-    if (mesh.foundObject<fvMeshPolyRefiner>(fvMeshRefiner::typeName))
+    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName))
     {
         if (decompositionConstraint::debug)
         {
-            Info<< type() << " : found fvMeshPolyRefiner" << endl;
+            Info<< type() << " : found polyMeshPolyRefiner" << endl;
         }
-        refPtr = &mesh.lookupObject<fvMeshPolyRefiner>
+        refPtr = &mesh.lookupObject<polyMeshPolyRefiner>
         (
-            fvMeshRefiner::typeName
+            polyMeshPolyRefiner::typeName
         );
     }
     else
     {
         if (decompositionConstraint::debug)
         {
-            Info<< type() << " : reading fvMeshPolyRefiner from time "
+            Info<< type() << " : reading polyMeshPolyRefiner from time "
                 << mesh.facesInstance() << endl;
         }
         storagePtr.reset
         (
-            new fvMeshPolyRefiner
+            new polyMeshPolyRefiner
             (
                 dynamicCast<fvMesh&>
                 (
@@ -178,7 +178,7 @@ void Foam::polyRefinementConstraint::apply
         );
     }
 
-    const fvMeshPolyRefiner& ref =
+    const polyMeshPolyRefiner& ref =
     (
         storagePtr.valid()
       ? storagePtr()
@@ -186,7 +186,7 @@ void Foam::polyRefinementConstraint::apply
     );
 
     // refinement itself implements decompositionConstraint
-    dynamicCast<const polyMeshPolyRefiner>(ref.refiner()).refiner().apply
+    ref.refiner().apply
     (
         blockedFace,
         specifiedProcessorFaces,

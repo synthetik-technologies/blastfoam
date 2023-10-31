@@ -20,12 +20,12 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP;//AdamsBashforth 4;
+    timeIntegrator  RK2;//AdamsBashforth 4;
 }
 
 gradSchemes
 {
-    default         cellMDLimited Gauss linear 1.0;//cellMDLimited leastSquares 1.0;
+    default         Gauss linear 1.0;//cellMDLimited leastSquares 1.0;
 }
 
 divSchemes

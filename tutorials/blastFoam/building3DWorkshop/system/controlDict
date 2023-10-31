@@ -148,6 +148,7 @@ functions
         writeInterval       1;
         adjustLocations     yes;
         append yes;
+        writeVTK yes;
         probeLocations
         (
             // probe locations in ( x y z ) format

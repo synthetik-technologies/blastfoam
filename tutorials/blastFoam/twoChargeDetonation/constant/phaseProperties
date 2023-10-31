@@ -16,25 +16,10 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (RDX tnt gas);
-useInterface yes;
-
-sigmas
-(
-    (RDX tnt)
-    {
-        sigma 0.0;
-    }
-    (RDX gas)
-    {
-        sigma 0.0;
-    }
-);
-
 
 RDX
 {
     type detonating;
-    calulateDensity yes;
     reactants
     {
         thermoType
@@ -57,7 +42,7 @@ RDX
         }
         transport
         {
-            mu              1;              // Viscosity
+            mu              0;              // Viscosity
             Pr              1;              // Prandtl number
         }
         thermodynamics
@@ -104,7 +89,7 @@ RDX
     initiation
     {
         E0      4.0e9;
-        points  ((0 0.25 0));
+        points  ((0 0.55 0));
         vDet    7850;
     }
 
@@ -114,9 +99,9 @@ RDX
 
 tnt
 {
-    type basic;
-    // reactants
-    // {
+    type detonating;
+    reactants
+    {
         thermoType
         {
             transport   const;
@@ -127,7 +112,7 @@ tnt
         {
             rho0            1601;
             K0              9.6e9;
-            K0Prime         0;
+            K0Prime         6.6;
             Gamma           0.35;
             pRef            101298;
         }
@@ -137,7 +122,7 @@ tnt
         }
         transport
         {
-            mu              1;              // Viscosity
+            mu              0;              // Viscosity
             Pr              1;              // Prandtl number
         }
         thermodynamics
@@ -145,7 +130,7 @@ tnt
             Cv              1095;           // Heat capacity
             Hf              0.0;
         }
-    // }
+    }
     products
     {
         thermoType
@@ -218,7 +203,7 @@ gas
     }
     transport
     {
-        mu              1e-5;
+        mu              0;
         Pr              1;
     }
     thermodynamics
@@ -233,4 +218,4 @@ gas
 }
 
 
-// ************************************************************************* //
+// // ************************************************************************* //

@@ -20,7 +20,7 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK3SSP 3;
+    timeIntegrator  RK4SSP;
 }
 
 gradSchemes
@@ -41,7 +41,7 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  CICSAM 0.5;
+    reconstruct(alpha)  HRIC;
     reconstruct(rho)    Minmod;
     reconstruct(U)      Minmod;
     reconstruct(e)      Minmod;

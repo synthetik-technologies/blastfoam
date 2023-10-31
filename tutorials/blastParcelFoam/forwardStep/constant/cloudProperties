@@ -50,7 +50,7 @@ solution
 
     integrationSchemes
     {
-        U               Euler;
+        U               analytical;
         T               analytical;
     }
 }
@@ -81,7 +81,7 @@ subModels
         {
             type            patchInjection;
             massTotal       10;
-            parcelBasisType mass;
+            parcelBasisType number;
             SOI             0;
             patchName       inlet;
             duration        0.025;

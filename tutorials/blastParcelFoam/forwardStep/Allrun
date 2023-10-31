@@ -13,9 +13,6 @@ runApplication blockMesh
 # -- Decompose the mesh
 runApplication decomposePar
 
-# -- Add internal patch
-runParallel addEmptyPatch internalPatch internal -overwrite
-
 # -- Run the calc
 runParallel $(getApplication)
 
