@@ -101,7 +101,7 @@ void Foam::meshSizeObject::calcDx() const
                 dx[nei[facei]] += magSf[facei];
 
                 nFaces[own[facei]]++;
-                nFaces[own[facei]]++;
+                nFaces[nei[facei]]++;
             }
         }
 
