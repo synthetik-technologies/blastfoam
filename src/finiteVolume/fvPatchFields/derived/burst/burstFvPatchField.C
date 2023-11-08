@@ -43,7 +43,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     burstFvPatchFieldBase(p),
     burstPatchField_
     (
-        new calculatedFvPatchField<Type>
+        new zeroGradientFvPatchField<Type>
         (
             p,
             iF
@@ -51,7 +51,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     ),
     intactPatchField_
     (
-        new calculatedFvPatchField<Type>
+        new zeroGradientFvPatchField<Type>
         (
             p,
             iF
