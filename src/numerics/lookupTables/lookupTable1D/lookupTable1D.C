@@ -336,6 +336,24 @@ void Foam::lookupTable1D<Type>::update(const scalar x) const
 
 
 template<class Type>
+void Foam::lookupTable1D<Type>::updateDDx(const scalar x) const
+{
+    scalar xMod(modX_()(x));
+    index_ = indexing_->findIndex(xMod);
+    interpolator_->updateDWeights
+    (
+        x,
+        xMod,
+        index_,
+        this->x(),
+        indices_,
+        weights_,
+        dweights_
+    );
+}
+
+
+template<class Type>
 Type Foam::lookupTable1D<Type>::lookup(const scalar x) const
 {
 #ifdef FULL_DEBUG

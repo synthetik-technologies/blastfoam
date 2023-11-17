@@ -105,6 +105,9 @@ protected:
     //- Current interpolation weight
     mutable DynamicList<scalar> weights_;
 
+    //- Current derivative interpolation weights
+    mutable DynamicList<scalar> dweights_;
+
 
     // Equation to evaulate the table
     class equation1D
@@ -302,10 +305,16 @@ public:
                 return indices_;
             }
 
-            //- Return current interpolation indices
+            //- Return current interpolation weights
             const scalarList& weights() const
             {
                 return weights_;
+            }
+
+            //- Return current derivative of interpolation weights
+            const scalarList& dweights() const
+            {
+                return dweights_;
             }
 
             //- Return the modifier
@@ -358,6 +367,9 @@ public:
 
         //- Update index and weight
         void update(const scalar x) const;
+
+        //- Update derivative index and weight
+        void updateDDx(const scalar x) const;
 
         //- Lookup value
         Type lookup(const scalar x) const;

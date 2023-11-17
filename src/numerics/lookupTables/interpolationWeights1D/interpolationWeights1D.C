@@ -146,6 +146,27 @@ void Foam::interpolationWeights1D::floor::updateWeights
 }
 
 
+void Foam::interpolationWeights1D::floor::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    indices.setSize(1);
+    weights.setSize(1);
+    dws.setSize(1);
+
+    indices[0] = i;
+    weights[0] = 1.0;
+    dws[0] = 0.0;
+}
+
+
 namespace Foam
 {
 namespace interpolationWeights1D
@@ -169,6 +190,27 @@ void Foam::interpolationWeights1D::ceil::updateWeights
 
     indices[0] = x != xs_[i] ? i + 1 : i;
     weights[0] = 1.0;
+}
+
+
+void Foam::interpolationWeights1D::ceil::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    indices.setSize(1);
+    weights.setSize(1);
+    dws.setSize(1);
+
+    indices[0] = x != xs[i] ? i + 1 : i;
+    weights[0] = 1.0;
+    dws[0] = 0.0;
 }
 
 
@@ -225,6 +267,24 @@ void Foam::interpolationWeights1D::linearExtrapolated::updateWeights
 
     weights[1] = (x - xs_[lo])/(xs_[hi] - xs_[lo]);
     weights[0] = 1.0 - weights[1];
+}
+
+
+void Foam::interpolationWeights1D::linearExtrapolated::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    updateWeights(xMod, i, indices, weights);
+    dws.setSize(2);
+    dws[1] = 1.0/(xs_[indices[1]] - xs_[indices[0]]);
+    dws[0] = - dws[1];
 }
 
 
@@ -288,6 +348,29 @@ void Foam::interpolationWeights1D::quadraticExtrapolated::updateWeights
     weights[0] = (x - x1)*(x - x2)/(x0 - x1)/(x0 - x2);
     weights[1] = (x - x2)*(x - x0)/(x1 - x2)/(x1 - x0);
     weights[2] = (x - x0)*(x - x1)/(x2 - x0)/(x2 - x1);
+}
+
+
+void Foam::interpolationWeights1D::quadraticExtrapolated::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    updateWeights(xMod, i, indices, weights);
+
+    dws.setSize(3);
+    const scalar x0 = xs[indices[0]];
+    const scalar x1 = xs[indices[1]];
+    const scalar x2 = xs[indices[2]];
+    dws[0] = ((x - x2) + (x - x1))/(x0 - x1)/(x0 - x2);
+    dws[1] = ((x - x0) + (x - x2))/(x1 - x2)/(x1 - x0);
+    dws[2] = ((x - x0) + (x - x1))/(x2 - x0)/(x2 - x1);
 }
 
 
@@ -369,6 +452,39 @@ void Foam::interpolationWeights1D::cubicExtrapolated::updateWeights
 //     weights[1] = x3*(2.0 - 1.0/dx31) + x2*(1.0/dx31 - 3.0) + 1.0;
 //     weights[2] = x3*(1.0/dx20 - 2.0) + x2*(3.0 - 2.0/dx20) + 1.0/dx20;
 //     weights[3] = (x3 - x2)/dx31;
+}
+
+
+void Foam::interpolationWeights1D::cubicExtrapolated::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    updateWeights(xMod, i, indices, weights);
+
+    dws.setSize(4);
+    const scalar x0 = xs[indices[0]];
+    const scalar x1 = xs[indices[1]];
+    const scalar x2 = xs[indices[2]];
+    const scalar x3 = xs[indices[3]];
+    dws[0] =
+        ((x - x2)*(x - x3) + (x - x1)*(x - x3) + (x - x1)*(x - x2))
+       /(x0 - x1)/(x0 - x2)/(x0 - x3);
+    dws[1] =
+        ((x - x3)*(x - x0) + (x - x2)*(x - x0) + (x - x2)*(x - x3))
+       /(x1 - x2)/(x1 - x3)/(x1 - x0);
+    dws[2] =
+        ((x - x0)*(x - x1) + (x - x3)*(x - x1) + (x - x3)*(x - x0))
+       /(x2 - x3)/(x2 - x0)/(x2 - x1);
+    dws[3] =
+        ((x - x1)*(x - x2) + (x - x0)*(x - x2) + (x - x0)*(x - x1))
+       /(x3 - x0)/(x3 - x1)/(x3 - x2);
 }
 
 // ************************************************************************* //

@@ -139,6 +139,17 @@ public:
         DynamicList<label>& indices,
         DynamicList<scalar>& weights
     ) const = 0;
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
+    ) const = 0;
 };
 
 
@@ -202,6 +213,43 @@ public:
         }
         Interp::updateWeights(x, i, indices, weights);
     }
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
+    ) const
+    {
+        if (x < xs[0])
+        {
+            indices.setSize(1);
+            weights.setSize(1);
+            dws.setSize(1);
+
+            indices[0] = 0;
+            weights[0] = 0;
+            dws[0] = 0.0;
+            return;
+        }
+        else if (x > xs.last())
+        {
+            indices.setSize(1);
+            weights.setSize(1);
+            dws.setSize(1);
+
+            indices[0] = xs.size()-1;
+            weights[0] = 1.0;
+            dws[0] = 0.0;
+            return;
+        }
+        Interp::updateDWeights(x, xMod, i, xs, indices, weights, dws);
+    }
+
 };
 
 /*---------------------------------------------------------------------------*\
@@ -244,6 +292,17 @@ public:
         const label i,
         DynamicList<label>& indices,
         DynamicList<scalar>& weights
+    ) const;
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
     ) const;
 };
 
@@ -289,6 +348,17 @@ public:
         DynamicList<label>& indices,
         DynamicList<scalar>& weights
     ) const;
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
+    ) const;
 };
 
 
@@ -332,6 +402,17 @@ public:
         const label i,
         DynamicList<label>& indices,
         DynamicList<scalar>& weights
+    ) const;
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
     ) const;
 };
 
@@ -379,6 +460,7 @@ public:
     virtual void updateWeights
     (
         const scalar x,
+        const scalar xMod,
         const label i,
         DynamicList<label>& indices,
         DynamicList<scalar>& weights
@@ -394,6 +476,39 @@ public:
             Clamp<linearExtrapolated>::updateWeights(x, i, indices, weights);
         }
     }
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
+    ) const
+    {
+        if (singular_)
+        {
+            indices(0) = 0;
+            weights(0) = 1.0;
+            dws(0) = 0.0;
+        }
+        else
+        {
+            Clamp<linearExtrapolated>::updateDWeights
+            (
+                x,
+                xMod,
+                i,
+                xs,
+                indices,
+                weights,
+                dws
+            );
+        }
+    }
+
 };
 
 /*---------------------------------------------------------------------------*\
@@ -437,6 +552,17 @@ public:
         const label i,
         DynamicList<label>& indices,
         DynamicList<scalar>& weights
+    ) const;
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
     ) const;
 };
 
@@ -509,6 +635,17 @@ public:
         const label i,
         DynamicList<label>& indices,
         DynamicList<scalar>& weights
+    ) const;
+
+    virtual void updateDWeights
+    (
+        const scalar x,
+        const scalar xMod,
+        const label i,
+        const UList<scalar>& xs,
+        DynamicList<label>& indices,
+        DynamicList<scalar>& weights,
+        DynamicList<scalar>& dws
     ) const;
 };
 
