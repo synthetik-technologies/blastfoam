@@ -110,16 +110,18 @@ bool Foam::vtkTimeSeries::writeTimeSeries
     scalarList times(this->sortedToc());
     forAll(times, i)
     {
-        os  << nl
-            << "    { "
-            << string("name") << " : "
-            << fileName(Time::timeName(times[i]) / name + ".vtk") << " ,"
-            << string("time") << " : " << times[i]
-            << " }";
-
-        if (i != this->size() - 1)
+        const fileName file(Time::timeName(times[i]) / name + ".vtk");
+        if (exists(outputDir_ / file))
         {
-            os << ",";
+            os  << nl
+                << "    { "
+                << string("name") << " : " << file << " ,"
+                << string("time") << " : " << times[i]
+                << " }";
+            if (i != this->size() - 1)
+            {
+                os << ",";
+            }
         }
     }
     os  << nl
