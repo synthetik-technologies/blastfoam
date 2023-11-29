@@ -1083,7 +1083,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseSystem::phi() const
 {
     tmp<surfaceScalarField> phiTmp
     (
-        new surfaceScalarField
+        surfaceScalarField::New
         (
             "phi",
             phaseModels_[0].alphaRhoPhi()
