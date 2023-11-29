@@ -48,7 +48,7 @@ namespace Foam
 
 Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner(fvMesh& mesh)
 :
-    fvMeshRefiner(mesh)
+    fvMeshRefiner(typeName, mesh)
 {}
 
 
@@ -60,7 +60,7 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner
     const bool read
 )
 :
-    fvMeshRefiner(mesh, dict, force, read)
+    fvMeshRefiner(typeName, mesh, dict, force, read)
 {
     readDict(dict);
 }

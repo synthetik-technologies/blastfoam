@@ -148,6 +148,9 @@ public:
         //- Does the mesh need to be balanced
         bool canBalance() const;
 
+        //- Set the allowable imbalance
+        void setAllowableImbalance(const scalar);
+
         // Decomposition constraints
 
             //- Add a constraint
@@ -171,6 +174,12 @@ public:
 
         //- Access the decompositionMethod
         decompositionMethod& decomposer() const;
+
+        //- Return the distributor
+        const fvMeshDistribute& distributor() const;
+
+        //- Access the distributor
+        fvMeshDistribute& distributor();
 
         //- Balance the mesh
         autoPtr<mapDistributePolyMesh> distribute();

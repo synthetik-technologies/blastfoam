@@ -309,7 +309,11 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
 }
 
 
-void Foam::fvMeshBalance::addConstraint(const word& dictName, const dictionary& dict)
+void Foam::fvMeshBalance::addConstraint
+(
+    const word& dictName,
+    const dictionary& dict
+)
 {
     // Add constraints dictionary
     if (!constraintsDict_->found(dictName))
@@ -487,6 +491,19 @@ Foam::decompositionMethod& Foam::fvMeshBalance::decomposer() const
 }
 
 
+
+const Foam::fvMeshDistribute& Foam::fvMeshBalance::distributor() const
+{
+    return distributor_;
+}
+
+
+Foam::fvMeshDistribute& Foam::fvMeshBalance::distributor()
+{
+    return distributor_;
+}
+
+
 bool Foam::fvMeshBalance::canBalance() const
 {
     if (!balance_)
@@ -576,6 +593,15 @@ bool Foam::fvMeshBalance::canBalance() const
 }
 
 
+void Foam::fvMeshBalance::setAllowableImbalance
+(
+    const scalar allowableImbalance
+)
+{
+    allowableImbalance_ = allowableImbalance;
+}
+
+
 Foam::autoPtr<Foam::mapDistributePolyMesh>
 Foam::fvMeshBalance::distribute()
 {
@@ -606,6 +632,11 @@ Foam::fvMeshBalance::distribute()
     balancing = true;
     autoPtr<mapDistributePolyMesh> map =
         distributor_.distribute(distribution_);
+
+    // Set the instance of the mesh IOobject, only primitive instances are
+    // set using mesh_.setInstance(inst)
+    mesh_.polyMesh::instance() = mesh_.time().timeName();
+
     balancing = false;
 
     if (!returnReduce(mesh_.nCells(), minOp<label>()))

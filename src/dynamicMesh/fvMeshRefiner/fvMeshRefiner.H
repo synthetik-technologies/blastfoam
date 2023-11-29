@@ -134,11 +134,12 @@ public:
     // Constructors
 
         //- Construct from mesh
-        explicit fvMeshRefiner(fvMesh& mesh);
+        explicit fvMeshRefiner(const word& refinerType, fvMesh& mesh);
 
         //- Construct from mesh and dictionary
         fvMeshRefiner
         (
+            const word& refinerType,
             fvMesh& mesh,
             const dictionary& dict,
             const bool force = false,

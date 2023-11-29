@@ -54,8 +54,15 @@ Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
         refinerType = dynamicMeshDict.lookup<word>("refiner");
     }
 
-    Info<< "Selecting polyMeshRefiner: " << refinerType << endl;
+    return New(refinerType, mesh);
+}
 
+Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
+(
+    const word& refinerType,
+    polyMesh& mesh
+)
+{
     polyMeshConstructorTable::iterator cstrIter =
         polyMeshConstructorTablePtr_->find(refinerType);
 
@@ -87,6 +94,19 @@ Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
         refinerType = dict.lookup<word>("refiner");
     }
 
+    return New(refinerType, mesh, dict, force, read);
+}
+
+
+Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
+(
+    const word& refinerType,
+    polyMesh& mesh,
+    const dictionary& dict,
+    const bool force,
+    const bool read
+)
+{
     Info<< "Selecting polyMeshRefiner " << refinerType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
@@ -104,6 +124,5 @@ Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
 
     return autoPtr<polyMeshRefiner>(cstrIter()(mesh, dict, force, read));
 }
-
 
 // ************************************************************************* //

@@ -103,7 +103,11 @@ bool Foam::fvMeshRefiner::canBalance(const bool incr) const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fvMeshRefiner::fvMeshRefiner(fvMesh& mesh)
+Foam::fvMeshRefiner::fvMeshRefiner
+(
+    const word& refinerType,
+    fvMesh& mesh
+)
 :
     FvMeshRefiner
     (
@@ -120,7 +124,7 @@ Foam::fvMeshRefiner::fvMeshRefiner(fvMesh& mesh)
 
     mesh_(mesh),
 
-    refiner_(polyMeshRefiner::New(mesh)),
+    refiner_(polyMeshRefiner::New(refinerType, mesh)),
     balancer_(mesh_),
 
     nBalanceIterations_(0),
@@ -137,6 +141,7 @@ Foam::fvMeshRefiner::fvMeshRefiner(fvMesh& mesh)
 
 Foam::fvMeshRefiner::fvMeshRefiner
 (
+    const word& refinerType,
     fvMesh& mesh,
     const dictionary& dict,
     const bool force,
@@ -157,7 +162,7 @@ Foam::fvMeshRefiner::fvMeshRefiner
     ),
 
     mesh_(mesh),
-    refiner_(polyMeshRefiner::New(mesh, dict, force, read)),
+    refiner_(polyMeshRefiner::New(refinerType, mesh, dict, force, read)),
 
     balancer_
     (

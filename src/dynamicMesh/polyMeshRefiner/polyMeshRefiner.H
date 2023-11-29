@@ -239,8 +239,19 @@ public:
         //- Select, construct and return the polyMeshRefiner
         static autoPtr<polyMeshRefiner> New(polyMesh&);
 
+        static autoPtr<polyMeshRefiner> New(const word&, polyMesh&);
+
         static autoPtr<polyMeshRefiner> New
         (
+            polyMesh& mesh,
+            const dictionary& dict,
+            const bool force = false,
+            const bool read = true
+        );
+
+        static autoPtr<polyMeshRefiner> New
+        (
+            const word& refinerType,
             polyMesh& mesh,
             const dictionary& dict,
             const bool force = false,

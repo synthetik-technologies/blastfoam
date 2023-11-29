@@ -59,7 +59,7 @@ namespace Foam
 
 Foam::fvMeshHexRefiner::fvMeshHexRefiner(fvMesh& mesh)
 :
-    fvMeshRefiner(mesh)
+    fvMeshRefiner(typeName, mesh)
 {
     // Added refinement history decomposition constraint to keep all
     // cells with the same parent together
@@ -83,7 +83,7 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner
     const bool read
 )
 :
-    fvMeshRefiner(mesh, dict, force, read)
+    fvMeshRefiner(typeName, mesh, dict, force, read)
 {
     // Added refinement history decomposition constraint to keep all
     // cells with the same parent together
