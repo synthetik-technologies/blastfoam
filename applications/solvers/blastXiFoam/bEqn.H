@@ -65,6 +65,8 @@ if (ign.ignited())
     // ~~~~~~~~~~~
     bEqn.solve();
 
+    b.maxMin(0.0, 1.0);
+
 
     Info<< "min(b) = " << min(b).value() << endl;
 
