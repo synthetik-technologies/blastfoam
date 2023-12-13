@@ -73,12 +73,11 @@ Foam::errorEstimators::volumeFraction::~volumeFraction()
 
 void Foam::errorEstimators::volumeFraction::read(const dictionary& dict)
 {
-    lowerRefine_ = dict.lookup<scalar>("lowerRefineLevel");
-    lowerUnrefine_ = dict.lookup<scalar>("unrefineLevel");
-    upperRefine_ =
-        dict.lookupOrDefault("upperRefineLevel", 1.0 - lowerRefine_);
-    upperUnrefine_ =
-        dict.lookupOrDefault("upperUnrefineLevel", 1.0 - lowerUnrefine_);
+    scalar threshold = dict.lookup<scalar>("threshold");
+    lowerRefine_ = threshold;
+    lowerUnrefine_ = threshold;
+    upperRefine_ = 1.0 - threshold;
+    upperUnrefine_ = 1.0 - threshold;
 
     if (dict.found("maxRefinement"))
     {
