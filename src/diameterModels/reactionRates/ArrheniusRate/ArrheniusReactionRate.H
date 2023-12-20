@@ -54,11 +54,11 @@ class Arrhenius
 {
 // Private data
 
-    //- Rate constant
-    dimensionedScalar A_;
-
     //- Temperature exponent
     dimensionedScalar beta_;
+    
+    //- Rate constant
+    dimensionedScalar A_;
 
     //- Activation temperature
     dimensionedScalar Ta_;

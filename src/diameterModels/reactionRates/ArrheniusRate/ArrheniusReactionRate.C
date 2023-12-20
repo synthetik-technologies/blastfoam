@@ -46,9 +46,9 @@ Foam::reactionRates::Arrhenius::Arrhenius
     const dictionary& dict
 )
 :
-    reactionRate(mesh, dict),
-    A_("A", inv(dimTime), dict),
-    beta_("beta", dimless, dict),
+    reactionRate(mesh, dict), 
+    beta_("beta", dimless, dict), 
+    A_("A", dimLength*inv(dimTime)/(pow(dimTemperature, beta_)), dict),
     Ta_("Ta", dimTemperature, dict)
 {}
 
