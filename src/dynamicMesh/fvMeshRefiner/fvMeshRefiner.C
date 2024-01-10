@@ -250,6 +250,7 @@ bool Foam::fvMeshRefiner::refine
 
         // Make sure all processors have the correct instance
         mesh_.setInstance(mesh_.time().timeName());
+        mesh_.polyMesh::instance() = mesh_.time().timeName();
     }
 
     return hasChanged;
