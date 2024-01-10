@@ -553,6 +553,7 @@ bool Foam::polyMeshDirectionalRefiner::refine
             // it.
             mesh_.moving(false);
             mesh_.setInstance(mesh_.time().timeName());
+            mesh_.polyMesh::instance() = mesh_.time().timeName();
         }
     }
 
