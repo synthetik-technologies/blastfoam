@@ -120,6 +120,17 @@ protected:
 
     #undef decalareDeltaFieldTypeTable
 
+    //- Stored delta fields
+    #define decalareSourceTermsTypeTable(Type, Geo)         \
+    mutable HashPtrTable<FieldName(Geo, Type)::Internal>    \
+        FieldVarName(Geo, Type, Source);                    \
+    mutable HashPtrTable<FieldName(Geo, Type)::Internal>    \
+        FieldVarName(Geo, Type, IntegratedSource);
+
+    FOR_ALL_FIELD_TYPES(decalareSourceTermsTypeTable, vol);
+
+    #undef decalareDeltaFieldTypeTable
+
 
 
     // Private member functions
@@ -336,6 +347,48 @@ public:
         FOR_ALL_FIELD_TYPES(decalareLookupFieldType, point);
 
         #undef decalareLookupFieldType
+
+        //- See if sources ar found, get source terms, or add source
+        //  terms for a given field
+        #define decalareSourceLookupType(Type, Geo)             \
+        bool foundSource                                        \
+        (                                                       \
+            const FieldName(Geo, Type)&                         \
+        ) const;                                                \
+                                                                \
+        void addSource                                          \
+        (                                                       \
+            const word&,                                        \
+            const FieldName(Geo, Type)::Internal&               \
+        );                                                      \
+                                                                \
+        void addSource                                          \
+        (                                                       \
+            const word&,                                        \
+            const tmp<FieldName(Geo, Type)::Internal>&          \
+        );                                                      \
+                                                                \
+        void addIntegratedSource                                \
+        (                                                       \
+            const word&,                                        \
+            const FieldName(Geo, Type)::Internal&               \
+        );                                                      \
+                                                                \
+        void addIntegratedSource                                \
+        (                                                       \
+            const word&,                                        \
+            const tmp<FieldName(Geo, Type)::Internal>&          \
+        );                                                      \
+                                                                \
+        void addDeltaSource                                     \
+        (                                                       \
+            const word&,                                        \
+            FieldName(Geo, Type)::Internal&                     \
+        ) const;
+
+        FOR_ALL_FIELD_TYPES(decalareSourceLookupType, vol);
+
+        #undef decalareSourceLookupType
 
 
         //- Dummy IO operations

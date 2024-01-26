@@ -88,6 +88,7 @@ bool totalLagrangianSolid::evolve()
 
     mesh().update();
 
+    return false;
     this->DD().correctBoundaryConditions();
     this->update();
 

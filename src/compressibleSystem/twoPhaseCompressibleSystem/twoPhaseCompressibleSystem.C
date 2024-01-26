@@ -270,8 +270,13 @@ void Foam::twoPhaseCompressibleSystem::solve()
     (
         fvc::div(alphaPhi_) - alpha1_*fvc::div(phi_)
     );
+    this->fvTimeInt_->addDeltaSource(alpha1_.name(), deltaAlpha);
+
     volScalarField deltaAlphaRho1(fvc::div(alphaRhoPhi1_));
+    this->fvTimeInt_->addDeltaSource(alphaRho1_.name(), deltaAlphaRho1);
+
     volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
+    this->fvTimeInt_->addDeltaSource(alphaRho2_.name(), deltaAlphaRho2);
 
     this->storeAndBlendDelta(deltaAlpha);
     this->storeAndBlendDelta(deltaAlphaRho1);
@@ -311,6 +316,7 @@ void Foam::twoPhaseCompressibleSystem::solve()
         fvc::div(rhoUPhi_)
       - rhoUSource()
     );
+    this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
 
     volScalarField deltaRhoE
     (
@@ -318,6 +324,7 @@ void Foam::twoPhaseCompressibleSystem::solve()
         fvc::div(rhoEPhi_)
       - rhoESource()
     );
+    this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);
@@ -339,10 +346,13 @@ void Foam::twoPhaseCompressibleSystem::solve()
         (
             fvc::div(fluxScheme_->flux(rho1_, phi_)) - rho1_*divU
         );
+        this->fvTimeInt_->addDeltaSource(rho1_.name(), deltaRho1);
+
         volScalarField deltaRho2
         (
             fvc::div(fluxScheme_->flux(rho2_, phi_)) - rho2_*divU
         );
+        this->fvTimeInt_->addDeltaSource(rho2_.name(), deltaRho2);
 
         this->storeAndBlendOld(rho1_);
         this->storeAndBlendOld(rho2_);

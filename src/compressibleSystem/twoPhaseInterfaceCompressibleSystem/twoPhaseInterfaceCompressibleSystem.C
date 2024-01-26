@@ -96,8 +96,7 @@ Foam::twoPhaseInterfaceCompressibleSystem::twoPhaseInterfaceCompressibleSystem
             mesh.time().timeName(),
             mesh
         ),
-        (fvc::interpolate(fvc::grad(psi_)) & mesh_.Sf())
-       /(mag(fvc::interpolate(fvc::grad(psi_))) + small)
+        this->nHatf(alpha1_)
     )
     // surfaceTension_(surfaceTensionModel::New(*this, mesh))
 {}
@@ -154,6 +153,11 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
     // fraction are not used
     if (!transportPhaseDensity_)
     {
+//         this->correctInterfaceField
+//         (
+//             rho1_->name(),
+//             alpha1_,
+//             rho1_
         fluxScheme::correctPhaseFields
         (
             alpha1_,
@@ -166,6 +170,16 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
             trho2Own.ref(), trho2Nei.ref(),
             thermo_.thermo(1).residualAlpha().value()
         );
+//         template<class Type>
+// void Foam::interfaceSystem::correctInterfaceField
+// (
+//     const word& schemeKey,
+//     const GeometricField<Type, fvPatchField, volMesh>& alpha,
+//     const GeometricField<Type, fvPatchField, volMesh>& psi,
+//     const GeometricField<scalar, fvsPatchField, surfaceMesh>& nHatf,
+//     GeometricField<Type, fvsPatchField, surfaceMesh>& psiOwn,
+//     GeometricField<Type, fvsPatchField, surfaceMesh>& psiNei
+// )
     }
 
     // Compute total phase masses
@@ -286,27 +300,29 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         thermo_.thermo(1).residualAlpha().value()
     );
 
-    // UPtrList<volScalarField> alphas(2);
-    // alphas.set(0, &alpha1_);
-    // alphas.set(1, &alpha2_);
-    //
-    // UPtrList<volScalarField> rhos(2);
-    // rhos.set(0, &rho1_);
-    // rhos.set(1, &rho2_);
-    //
-    // UPtrList<surfaceScalarField> alphaRhoPhis(2);
-    // alphaRhoPhis.set(0, &alphaRhoPhi1_);
-    // alphaRhoPhis.set(1, &alphaRhoPhi2_);
-    //
-    // limitAlphaRhoPhis(alphas, rhos, alphaRhoPhis, phi_, rhoPhi_);
+    UPtrList<volScalarField> alphas(2);
+    alphas.set(0, &alpha1_);
+    alphas.set(1, &alpha2_);
+
+    UPtrList<volScalarField> rhos(2);
+    rhos.set(0, &rho1_);
+    rhos.set(1, &rho2_);
+
+    UPtrList<surfaceScalarField> alphaRhoPhis(2);
+    alphaRhoPhis.set(0, &alphaRhoPhi1_);
+    alphaRhoPhis.set(1, &alphaRhoPhi2_);
+
+    limitAlphaRhoPhis(alphas, rhos, alphaRhoPhis, phi_, rhoPhi_);
 
     // Update thermo
     thermo_.update();
 }
 
 
-// void Foam::twoPhaseInterfaceCompressibleSystem::decode()
-// {
+void Foam::twoPhaseInterfaceCompressibleSystem::decode()
+{
+    twoPhaseCompressibleSystem::decode();
+    nHatf_ = this->nHatf(alpha1_);
 //     // Limit first phase volume fraction and calculate second phase volume fraction
 //     alpha1_.maxMin(0.0, 1.0);
 //     alpha1_.correctBoundaryConditions();
@@ -417,7 +433,7 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
 //
 //     rho_ = alphaRho1_ + alphaRho2_;
 //     compressibleBlastSystem::decode();
-// }
+}
 
 
 // ************************************************************************* //

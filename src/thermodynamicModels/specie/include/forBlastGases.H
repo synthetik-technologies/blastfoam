@@ -40,6 +40,7 @@ License
 
 #include "perfectGas.H"
 #include "AbelNobel.H"
+#include "AbelNobelSG.H"
 
 #include "idealGas.H"
 #include "stiffenedGas.H"
@@ -59,7 +60,6 @@ License
     forThermo(Mu, Cp, perfectGas, specieBlast, Macro, Args);                \
     forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args);                 \
     forThermo(Mu, Cp, idealGas, specieBlast, Macro, Args);                  \
-    forThermo(Mu, Cp, stiffenedGas, specieBlast, Macro, Args);              \
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
     forThermo(Mu, Cp, LSZK, specieBlast, Macro, Args);                      \
     forThermo(Mu, Cp, BKW, specieBlast, Macro, Args);                       \
@@ -68,7 +68,9 @@ License
 #define forGasThermos(Mu, Macro, Args...)                                   \
     forGasEqns(Mu, eConstThermo, Macro, Args);                              \
     forGasEqns(Mu, ePolynomialThermo, Macro, Args);                         \
-    forGasEqns(Mu, hConstThermo, Macro, Args)
+    forGasEqns(Mu, hConstThermo, Macro, Args)                               \
+    forThermo(Mu, eConstThermo, stiffenedGas, specieBlast, Macro, Args);    \
+    forThermo(Mu, eConstThermo, AbelNobelSG, specieBlast, Macro, Args);
 
 #define forGasTransports(Macro, Args...)                                    \
     forGasThermos(constTransport, Macro, Args);

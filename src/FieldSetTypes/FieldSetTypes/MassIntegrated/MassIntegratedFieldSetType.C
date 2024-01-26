@@ -53,22 +53,26 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::MassIntegrated
     ),
     phaseName_(readPhaseName(is, fieldName)),
     value_(pTraits<Type>(is)),
-    thermo_(lookupOrConstructThermo(mesh, phaseName_))
+    rhoPtr_(this->template lookupOrRead<volScalarField>(IOobject::groupName("rho", phaseName_)))
+//     thermo_(lookupOrConstructThermo(mesh, phaseName_))
 {
     if (this->good_)
     {
-        const volScalarField& rho(thermo_.rho());
+        const volScalarField& rho(*rhoPtr_);
         scalar mass(0.0);
         forAll(selectedIndices, i)
         {
             label celli = selectedIndices[i];
             mass += rho[celli]*mesh.V()[celli];
         }
+        reduce(mass, sumOp<scalar>());
         mass /= calcAngleFraction(mesh);
 
-        this->value_ = this->value_/mass;
-
-        this->setField();
+        if (mass > small)
+        {
+            this->value_ /= mass;
+            this->setField();
+        }
     }
 }
 

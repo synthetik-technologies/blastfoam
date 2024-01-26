@@ -224,7 +224,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
             << ": " << nZoneFaces << endl;
     }
 
-    if (nZoneFaces == 0)
+    if (debug && nZoneFaces == 0)
     {
         FatalErrorInFunction
             << "Patch " << patchID.name()

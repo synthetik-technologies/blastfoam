@@ -42,6 +42,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
 :
     compressibleSystem(mesh),
     thermo_(psiuReactionThermo::New(mesh)),
+    composition_(thermo_->composition()),
     rho_
     (
         IOobject
@@ -67,7 +68,72 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             mesh
         ),
         eu_*rho_
-    )
+    ),
+
+//     combustionProperties
+//     (
+//         IOobject
+//         (
+//             "combustionProperties",
+//             mesh.time().constant(),
+//             mesh,
+//             IOobject::MUST_READ_IF_MODIFIED,
+//             IOobject::NO_WRITE
+//         )
+//     ),
+//
+    b(composition_.Y("b"))//,
+//     Xi
+//     (
+//         IOobject
+//         (
+//             "Xi",
+//             mesh.time().timeName(),
+//             mesh,
+//             IOobject::MUST_READ,
+//             IOobject::AUTO_WRITE
+//         ),
+//         mesh
+//     ),
+//     Su
+//     (
+//         IOobject
+//         (
+//             "Su",
+//             mesh.time().timeName(),
+//             mesh,
+//             IOobject::MUST_READ,
+//             IOobject::AUTO_WRITE
+//         ),
+//         mesh
+//     ),
+//     St
+//     (
+//         IOobject
+//         (
+//             "St",
+//             mesh.time().timeName(),
+//             mesh,
+//             IOobject::NO_READ,
+//             IOobject::AUTO_WRITE
+//         ),
+//         Xi*Su
+//     ),
+//
+//     SuMin(0.01*Su.average()),
+//     SuMax(4.0*Su.average()),
+//
+//     unstrainedLaminarFlameSpeed_(laminarFlameSpeed::New(thermo_())),
+//
+//     SuModel(combustionProperties.lookup("SuModel")),
+//     XiModel(combustionProperties.lookup("XiModel")),
+//
+//     sigmaExt(combustionProperties.lookup("sigmaExt")),
+//     XiCoef(combustionProperties.lookup("XiCoef")),
+//     XiShapeCoef(combustionProperties.lookup("XiShapeCoef")),
+//     uPrimeCoef(combustionProperties.lookup("uPrimeCoef")),
+//
+//     ign(combustionProperties, mesh.time(), mesh)
 {
     thermo_->validate("psiuCompressibleSystem", "ea");
 
@@ -91,15 +157,6 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
 
     fluxScheme_ = fluxScheme::NewSingle(phi_);
     encode();
-
-
-    // Mark flux fields to be cached
-    mesh.addTemporaryObject(reconstruction::ownName(rho_.name()));
-    mesh.addTemporaryObject(reconstruction::neiName(rho_.name()));
-    mesh.addTemporaryObject(reconstruction::ownName(U_.name()));
-    mesh.addTemporaryObject(reconstruction::neiName(U_.name()));
-    mesh.addTemporaryObject(reconstruction::ownName(p_.name()));
-    mesh.addTemporaryObject(reconstruction::neiName(p_.name()));
 }
 
 
@@ -118,11 +175,13 @@ void Foam::psiuCompressibleSystem::solve()
     (
         fvc::div(rhoEPhi_)
       - (rhoU_ & g_)
+      - fvc::laplacian(thermophysicalTransport_->alphaEff(), e_)
     );
     volScalarField deltaRhoEu
     (
         fvc::div(fluxScheme_->energyFlux(rho_, U_, eu_, p_))
       - (rhoU_ & g_)
+      - fvc::laplacian(thermophysicalTransport_->alphaEff(), eu_)
     );
 
     //- Store changed in mass, momentum and energy
@@ -133,6 +192,8 @@ void Foam::psiuCompressibleSystem::solve()
 
     //- Store old values
     this->storeAndBlendOld(rho_);
+    const volScalarField rho0(rho_);
+
     this->storeAndBlendOld(rhoU_);
     this->storeAndBlendOld(rhoE_);
     this->storeAndBlendOld(rhoEu_);
@@ -145,6 +206,82 @@ void Foam::psiuCompressibleSystem::solve()
     rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs);
     rhoE_ -= dT*deltaRhoE;
     rhoEu_ -= dT*deltaRhoEu;
+
+    const volScalarField f(rho_/rho0);
+//     if (thermo_->composition().contains("ft"))
+//     {
+//         volScalarField& ft = thermo_->composition().Y("ft");
+//         volScalarField deltaRhoFt
+//         (
+//             fvc::div(fluxScheme_->flux(ft, rhoPhi_))
+//           - fvc::laplacian(thermophysicalTransport_->alphaEff(), ft)
+//         );
+//         this->storeAndBlendDelta(deltaRhoFt);
+//         this->storeAndBlendOld(ft);
+//
+//         ft = ft*(2.0 - f) - dT*deltaRhoFt/rho0;
+//         ft.max(0.0);
+//         ft.correctBoundaryConditions();
+//     }
+
+//     if (ign.ignited())
+//     {
+//         const fvMesh& mesh = this->mesh();
+//
+//         // progress variable
+//         // ~~~~~~~~~~~~~~~~~
+//         volScalarField c("c", scalar(1.0) - b);
+//
+//         // Unburnt gas density
+//         // ~~~~~~~~~~~~~~~~~~~
+//         volScalarField rhou(thermo_->rhou());
+//
+//         // Calculate flame normal etc.
+//         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//         volVectorField n("n", fvc::grad(b));
+//
+//         volScalarField mgb(mag(n));
+//
+//         dimensionedScalar dMgb =
+//             1.0e-3
+//            *(b*c*mgb)().weightedAverage(mesh.V())
+//            /((b*c)().weightedAverage(mesh.V()) + small)
+//           + dimensionedScalar(mgb.dimensions(), small);
+//         mgb += dMgb;
+//
+//         surfaceVectorField SfHat(mesh.Sf()/mesh.magSf());
+//         surfaceVectorField nfVec(fvc::interpolate(n));
+//         nfVec += SfHat*(fvc::snGrad(b) - (SfHat & nfVec));
+//         nfVec /= (mag(nfVec) + dMgb);
+//         surfaceScalarField nf((mesh.Sf() & nfVec));
+//         n /= mgb;
+//
+//
+//         #include "StCorr.H"
+
+//         // Calculate turbulent flame speed flux
+//         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//         surfaceScalarField phiSt("phiSt", fvc::interpolate(rhou*StCorr*Su*Xi)*nf);
+//
+//         scalar StCoNum = max
+//         (
+//             mesh.surfaceInterpolation::deltaCoeffs()
+//         *mag(phiSt)/(fvc::interpolate(rho)*mesh.magSf())
+//         ).value()*runTime.deltaTValue();
+//
+//         Info<< "Max St-Courant Number = " << StCoNum << endl;
+//
+//         // Create b equation
+//         // ~~~~~~~~~~~~~~~~~
+//         fvScalarMatrix bEqn
+//         (
+//             fvm::ddt(rho, b)
+//         + fvm::div(phi, b)
+//         + fvm::div(phiSt, b)
+//         - fvm::Sp(fvc::div(phiSt), b)
+//         - fvm::laplacian(thermophysicalTransport.alphaEff(), b)
+//         );
+//     }
 }
 
 
@@ -160,7 +297,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
    // Solve momentum diffusion
     fvVectorMatrix UEqn
     (
-        fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
+        fvm::ddt(rho_, U_) - fvc::ddt(rhoU_)
       + turbulence_->divDevTau(U_)
     );
     volScalarField dTDivSigmaDotU
@@ -172,46 +309,16 @@ void Foam::psiuCompressibleSystem::postUpdate()
           & fluxScheme_->Uf()
         )
     );
-    rhoE_ += dTDivSigmaDotU;
-    rhoEu_ += dTDivSigmaDotU;
-
     UEqn.solve();
     rhoU_ = rho_*U_;
 
-    // Solve thermal energy diffusion
-    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
-    eu_ = rhoEu_/rho_ - 0.5*magSqr(U_);
-    Foam::solve
-    (
-        fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-      - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
-    );
-    Foam::solve
-    (
-        fvm::ddt(rho_, eu_) - fvc::ddt(rho_, eu_)
-      - fvm::laplacian(thermophysicalTransport_->alphaEff(), eu_)
-    );
+    rhoE_ += dTDivSigmaDotU;
+    rhoEu_ += dTDivSigmaDotU;
 
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-    rhoEu_ = rho_*(eu_ + 0.5*magSqr(U_));
 
     turbulence_->correct();
 
-//     if(temperatureFix)
-    {
-        scalar Tulow = 250.0;
-        volScalarField dummyTu(thermo_->Tu());
-        dummyTu.min(Tulow);
-
-        eu_ = max(eu_, thermo_->he(p_, dummyTu));
-        rhoEu_ = rho_*(eu_ + 0.5*magSqr(U_));
-    }
-
-    thermo_->correct();
-    p_.ref() = rho_/thermo_->psi();
-    p_.correctBoundaryConditions();
-    rho_.boundaryFieldRef() ==
-        thermo_->psi().boundaryField()*p_.boundaryField();
+    decode();
 }
 
 
@@ -239,20 +346,24 @@ void Foam::psiuCompressibleSystem::decode()
 
     rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
 
-    volScalarField E(rhoE_/rho_);
-    e_.ref() = E() - 0.5*magSqr(U_());
+    e_.ref() = rhoE_()/rho_() - 0.5*magSqr(U_());
     e_.correctBoundaryConditions();
-
-    volScalarField Eu(rhoEu_/rho_);
-    eu_.ref() = Eu() - 0.5*magSqr(U_());
-    eu_.correctBoundaryConditions();
-
     rhoE_.boundaryFieldRef() =
         rho_.boundaryField()
        *(
             e_.boundaryField()
           + 0.5*magSqr(U_.boundaryField())
         );
+
+    eu_.ref() = rhoEu_()/rho_() - 0.5*magSqr(U_());
+    forAll(b, i)
+    {
+        if (b[i] < 1e-6)
+        {
+            eu_[i] = e_[i];
+        }
+    }
+    eu_.correctBoundaryConditions();
     rhoEu_.boundaryFieldRef() =
         rho_.boundaryField()
        *(

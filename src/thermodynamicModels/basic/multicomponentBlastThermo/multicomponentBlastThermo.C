@@ -154,7 +154,7 @@ void Foam::multicomponentBlastThermo::correct()
 
         forAll(Y_, i)
         {
-            Y_[i] /= Yt;
+            Y_[i].primitiveFieldRef() /= Yt;
             Y_[i].correctBoundaryConditions();
         }
         if (fix)

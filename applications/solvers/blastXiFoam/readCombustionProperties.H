@@ -42,4 +42,7 @@
         combustionProperties.lookup("uPrimeCoef")
     );
 
-    ignition ign(combustionProperties, runTime, mesh);
+    autoPtr<ignition> ignPtr
+    (
+        new ignition(combustionProperties, runTime, mesh)
+    );

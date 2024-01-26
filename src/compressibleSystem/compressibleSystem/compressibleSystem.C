@@ -302,6 +302,7 @@ void Foam::compressibleSystem::solve()
         "deltaRhoU",
         fvc::div(rhoUPhi_) - g_*rhoEff()
     );
+    this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
 
     volScalarField deltaRhoE
     (
@@ -309,6 +310,7 @@ void Foam::compressibleSystem::solve()
         fvc::div(rhoEPhi_)
       - (rhoU_ & g_)
     );
+    this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);

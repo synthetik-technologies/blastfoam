@@ -27,14 +27,15 @@ License
 
 
 template<>
-const char* Foam::NamedEnum<Foam::fieldSetOptions::options, 4>::names[] =
+const char* Foam::NamedEnum<Foam::fieldSetOptions::options, 5>::names[] =
 {
     "setBoundaries",
     "setAllBoundaries",
     "noInternal",
-    "evaluateBoundaries"
+    "evaluateBoundaries",
+    "averageInterpolation"
 };
 
-const Foam::NamedEnum<Foam::fieldSetOptions::options, 4>
+const Foam::NamedEnum<Foam::fieldSetOptions::options, 5>
 Foam::fieldSetOptions::optionNames;
 

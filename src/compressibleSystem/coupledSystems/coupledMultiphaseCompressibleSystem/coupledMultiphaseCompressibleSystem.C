@@ -90,12 +90,15 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
       - p_*fvc::grad(alphaf)
       - g_*alphaRho_
     );
+    this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
+
     volScalarField deltaRhoE
     (
         "deltaRhoE",
         fvc::div(rhoEPhi_) // alphaRhoEPhi
       - volumeFraction_*(rhoU_ & g_)
     );
+    this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
 
     this->storeAndBlendOld(volumeFraction_);
     volumeFraction_.storePrevIter();
@@ -108,9 +111,15 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
         (
             fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
         );
+        this->fvTimeInt_->addDeltaSource(alphas_[phasei].name(), deltaAlpha);
         this->storeAndBlendDelta(deltaAlpha);
 
         volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
+        this->fvTimeInt_->addDeltaSource
+        (
+            alphaRhos_[phasei].name(),
+            deltaAlphaRho
+        );
         this->storeAndBlendDelta(deltaAlphaRho);
 
         this->storeAndBlendOld(alphas_[phasei]);

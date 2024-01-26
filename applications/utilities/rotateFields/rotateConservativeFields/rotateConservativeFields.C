@@ -584,20 +584,6 @@ int main(int argc, char *argv[])
 
         // Update the compressible system (i.e. decode)
         // to correct non-conservative fields
-        targetCompressibleSystem->update();
-
-        // Second pass to map conservative variables
-        mapFields
-        (
-            sourceMeshes,
-            targetMesh,
-            cellMap,
-            extendedCellMap,
-            R,
-            additionalFieldNames
-        );
-
-        // Decode conservative variables
         targetCompressibleSystem->decode();
 
         // Write
@@ -639,7 +625,7 @@ int main(int argc, char *argv[])
 
             // Update the compressible system (i.e. decode)
             // to correct non-conservative fields
-            targetCompressibleSystem->update();
+            targetCompressibleSystem->decode();
         }
         refine
         (

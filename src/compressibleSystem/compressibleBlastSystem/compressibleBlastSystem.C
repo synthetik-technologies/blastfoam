@@ -134,6 +134,7 @@ void Foam::compressibleBlastSystem::solve()
         fvc::div(rhoUPhi_)
       - rhoUSource()
     );
+    this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
 
     volScalarField deltaRhoE
     (
@@ -141,6 +142,7 @@ void Foam::compressibleBlastSystem::solve()
         fvc::div(rhoEPhi_)
       - rhoESource()
     );
+    this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);
@@ -194,19 +196,19 @@ void Foam::compressibleBlastSystem::postUpdate()
      || extESource_.valid()
     )
     {
-        if (radiation_.valid())
-        {
-            radiation_->correct();
-            rhoE_ =
-                radiation_->calcRhoE
-                (
-                    rho_.mesh().time().deltaT(),
-                    rhoE_,
-                    rhoEff(),
-                    e_,
-                    this->thermo().Cv()
-                );
-        }
+//         if (radiation_.valid())
+//         {
+//             radiation_->correct();
+//             rhoE_ =
+//                 radiation_->calcRhoE
+//                 (
+//                     rho_.mesh().time().deltaT(),
+//                     rhoE_,
+//                     rhoEff(),
+//                     e_,
+//                     this->thermo().Cv()
+//                 );
+//         }
 
         if (dragSource_.valid())
         {
@@ -239,6 +241,11 @@ void Foam::compressibleBlastSystem::postUpdate()
         if (turbulence_.valid())
         {
             eEqn += thermophysicalTransport_->divq(e_);
+        }
+        if (radiation_.valid())
+        {
+            radiation_->correct();
+            eEqn += radiation_->Sh(thermo(), e_);
         }
         constraints().constrain(eEqn);
         eEqn.solve();

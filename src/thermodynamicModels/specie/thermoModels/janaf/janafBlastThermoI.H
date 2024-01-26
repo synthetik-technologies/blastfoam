@@ -112,13 +112,16 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::limit
     const scalar Told
 ) const
 {
-    if (janafThermo<EquationOfState>::debug && (T < Tlow_ || T > Thigh_))
+    if (T < Tlow_ || T > Thigh_)
     {
-        WarningInFunction
-            << "attempt to use janafThermo<EquationOfState>"
-               " out of temperature range "
-            << Tlow_ << " -> " << Thigh_ << ";  T = " << T
-            << endl;
+        if (janafThermo<EquationOfState>::debug)
+        {
+            WarningInFunction
+                << "attempt to use janafThermo<EquationOfState>"
+                << " out of temperature range "
+                << Tlow_ << " -> " << Thigh_ << ";  T = " << T
+                << endl;
+        }
 
         return min(max(T, Tlow_), Thigh_);
     }

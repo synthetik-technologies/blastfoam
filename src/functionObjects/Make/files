@@ -22,5 +22,7 @@ blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 timeOfArrival/timeOfArrival.C
+TExposure/TExposure.C
+thermalImpulse/thermalImpulse.C
 
 LIB = $(BLAST_LIBBIN)/libblastFunctionObjects

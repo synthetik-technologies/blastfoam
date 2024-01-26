@@ -35,19 +35,29 @@ Foam::standAlonePatch Foam::standAlonePatch::createGlobalPatch
         return standAlonePatch(patch.localFaces(), patch.localPoints());
     }
 
-    List<face> faces(patch.localFaces());
-    pointField points(patch.localPoints());
-    labelList pointMap;
+    labelList pointToGlobal;
+    labelList uniqueMeshPointLabels;
+    autoPtr<globalIndex> globalPoints;
+    autoPtr<globalIndex> globalFaces;
+    faceList mergedFaces;
+    pointField mergedPoints;
 
     PatchTools::gatherAndMerge
     (
-        1e-6*boundBox(points).mag(),
-        patch,
-        points,
-        faces,
-        pointMap
+        patch.boundaryMesh().mesh(),
+        patch.localFaces(),
+        patch.meshPoints(),
+        patch.meshPointMap(),
+
+        pointToGlobal,
+        uniqueMeshPointLabels,
+        globalPoints,
+        globalFaces,
+
+        mergedFaces,
+        mergedPoints
     );
-    return standAlonePatch(move(faces), move(points));
+    return standAlonePatch(move(mergedFaces), move(mergedPoints));
 }
 
 // ************************************************************************* //

@@ -52,13 +52,12 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
+#include "dynamicBlastFvMesh.H"
 #include "psiuCompressibleSystem.H"
 #include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "fluxScheme.H"
 #include "fvTimeIntegrator.H"
-#include "laminarFlameSpeed.H"
-#include "ignition.H"
 #include "Switch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -71,7 +70,7 @@ int main(int argc, char *argv[])
 
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createMesh.H"
+    #include "createDynamicFvMesh.H"
     #include "createControl.H"
     #include "readCombustionProperties.H"
     #include "createFields.H"
@@ -87,6 +86,20 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        // Update fvModels and constraints
+        integrator.preUpdateMesh();
+
+        // Refine the mesh
+        if (refineMesh(mesh))
+        {
+            ignPtr.reset
+            (
+                new ignition(combustionProperties, runTime, mesh)
+            );
+        }
+        ignition& ign = ignPtr();
+
+        // Update Courant number
         CoNum = fluid.CoNum();
         #include "readTimeControls.H"
         maxCo = min(maxCo, integrator.maxCo());
@@ -101,6 +114,16 @@ int main(int argc, char *argv[])
 
         #include "ftEqn.H"
         #include "bEqn.H"
+
+        Info<< "    max(p) = " << max(p).value()
+            << ", min(p) = " << min(p).value() << nl
+            << "    max(T) = " << max(T).value()
+            << ", min(T) = " << min(T).value() << nl
+            << "    max(b) = " << max(b).value()
+            << ", min(b) = " << min(b).value() << nl
+            << "    Combustion progress = "
+            << 100*(scalar(1) - b)().weightedAverage(mesh.V()).value() << "%"
+            << endl;
 
         integrator.clear();
 

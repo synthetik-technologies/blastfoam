@@ -73,6 +73,8 @@ void Foam::coupledSinglePhaseCompressibleSystem::solve()
         "deltaRho",
         fvc::div(rhoPhi_) // alphaRhoPhi_
     );
+    this->fvTimeInt_->addDeltaSource(rho_.name(), deltaRho);
+
     volVectorField deltaRhoU
     (
         "deltaRhoU",
@@ -80,12 +82,15 @@ void Foam::coupledSinglePhaseCompressibleSystem::solve()
       - p_*fvc::grad(fluxScheme_->interpolate(volumeFraction_, "alpha"))
       - g_*alphaRho_
     );
+    this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
+
     volScalarField deltaRhoE
     (
         "deltaRhoE",
         fvc::div(rhoEPhi_) // alphaRhoEPhi
       - volumeFraction_*(rhoU_ & g_)
     );
+    this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
 
     this->storeAndBlendOld(alphaRho_);
     this->storeAndBlendDelta(deltaRho);

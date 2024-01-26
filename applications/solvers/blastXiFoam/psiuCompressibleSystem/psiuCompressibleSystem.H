@@ -42,6 +42,8 @@ SourceFiles
 #include "fluxScheme.H"
 #include "psiuReactionThermo.H"
 #include "uniformDimensionedFields.H"
+#include "laminarFlameSpeed.H"
+#include "ignition.H"
 
 namespace Foam
 {
@@ -59,6 +61,9 @@ protected:
 
     //- Thermo
     autoPtr<psiuReactionThermo> thermo_;
+
+    //- Composition
+    basicCombustionMixture& composition_;
 
     //- Primitative variables
 
@@ -81,6 +86,42 @@ protected:
 
         //- Total unbunrt energy
         volScalarField rhoEu_;
+
+    // - Flame models
+
+//         //- Combustion properties
+//         IOdictionary combustionProperties;
+//
+        //- Burnt fraction
+        volScalarField& b;
+//
+//         //- Velocity ratio
+//         volScalarField Xi;
+//
+//         //- Strained laminar flame speed
+//         volScalarField Su;
+//
+//         //- Turbulent flame speed
+//         volScalarField St;
+//
+//         //- Su bounds
+//         dimensionedScalar SuMin;
+//         dimensionedScalar SuMax;
+//
+//         // - Laminar flame speed model
+//         autoPtr<laminarFlameSpeed> unstrainedLaminarFlameSpeed_;
+//
+//         // Model names
+//         word SuModel;
+//         word XiModel;
+//
+//         dimensionedScalar sigmaExt;
+//         dimensionedScalar XiCoef;
+//         dimensionedScalar XiShapeCoef;
+//         dimensionedScalar uPrimeCoef;
+//
+//         //- Ignition model
+//         ignition ign;
 
 
 public:

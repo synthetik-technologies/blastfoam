@@ -197,15 +197,15 @@ Foam::levelSetModel::levelSetModel
         triMeshDict_.set("mergeDistance", epsilon_.value()*1e-3);
     }
 
-    if (levelSet_.headerOk())
+    if (levelSet_.headerOk() && !H_.headerOk())
     {
         correct(true);
     }
-    else if (H_.headerOk())
+    else if (H_.headerOk() && !levelSet_.headerOk())
     {
         correct(false);
     }
-    else
+    else if (!H_.headerOk() && !levelSet_.headerOk())
     {
         if (mustRead)
         {

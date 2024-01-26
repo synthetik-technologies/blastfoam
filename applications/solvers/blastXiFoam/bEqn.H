@@ -29,7 +29,6 @@ if (ign.ignited())
     surfaceScalarField nf((mesh.Sf() & nfVec));
     n /= mgb;
 
-
     #include "StCorr.H"
 
     // Calculate turbulent flame speed flux
@@ -55,20 +54,15 @@ if (ign.ignited())
       - fvm::laplacian(thermophysicalTransport.alphaEff(), b)
     );
 
-
     // Add ignition cell contribution to b-equation
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #include "ignite.H"
-
 
     // Solve for b
     // ~~~~~~~~~~~
     bEqn.solve();
 
     b.maxMin(0.0, 1.0);
-
-
-    Info<< "min(b) = " << min(b).value() << endl;
 
 
     // Calculate coefficients for Gulder's flame speed correlation
@@ -253,10 +247,6 @@ if (ign.ignited())
             << args.executable() << " : Unknown Xi model " << XiModel
             << abort(FatalError);
     }
-
-    Info<< "Combustion progress = "
-        << 100*(scalar(1) - b)().weightedAverage(mesh.V()).value() << "%"
-        << endl;
 
     St = Xi*Su;
 }

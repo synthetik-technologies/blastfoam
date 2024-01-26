@@ -294,6 +294,8 @@ Foam::activationModel::activationModel
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0)),
     finished_(false)
 {
+    const bool active(dict.lookupOrDefault<bool>("active", true));
+
     if (detonationPoints_.size())
     {
         DynamicList<vector> unactivatedPoints(detonationPoints_.size());
@@ -306,6 +308,11 @@ Foam::activationModel::activationModel
 
         forAll(detonationPoints_, pti)
         {
+            if (!active)
+            {
+                detonationPoints_[pti].activated() = true;
+            }
+
             if (!detonationPoints_[pti].activated())
             {
                 unactivatedPoints.append(detonationPoints_[pti]);
@@ -552,17 +559,9 @@ void Foam::activationModel::solve()
 {
     if (finished_ || (this->step() == 0 && min(lambda_).value() > 1.0 - small))
     {
-        if (!ddtLambda_.valid())
+        if (ddtLambda_.valid())
         {
-            ddtLambda_ =
-                tmp<volScalarField>
-                (
-                    new volScalarField
-                    (
-                        "ddt(" + lambda_.name() + ")",
-                        fvc::ddt(lambda_)
-                    )
-                );
+            ddtLambda_.clear();
         }
         finished_ = true;
 
@@ -644,7 +643,15 @@ Foam::tmp<Foam::volScalarField> Foam::activationModel::initESource() const
 
 Foam::tmp<Foam::volScalarField> Foam::activationModel::ESource() const
 {
-    return ddtLambda()*e0_;
+    return
+        ddtLambda_.valid()
+      ? ddtLambda()*e0_
+      : volScalarField::New
+        (
+            "ESource",
+            lambda_.mesh(),
+            dimensionedScalar("0", e0_.dimensions()/dimTime, 0.0)
+        );
 }
 
 

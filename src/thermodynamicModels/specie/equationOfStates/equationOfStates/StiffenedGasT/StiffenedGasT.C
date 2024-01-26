@@ -1,12 +1,15 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
+                            class
 -------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,59 +26,46 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "boxMassToCell.H"
-#include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-namespace Foam
-{
-    defineTypeNameAndDebug(boxMassToCell, 0);
-    addToRunTimeSelectionTable(topoSetSource, boxMassToCell, word);
-}
-
+#include "AbelNobel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::boxMassToCell::boxMassToCell
+template<class Specie>
+Foam::AbelNobel<Specie>::AbelNobel
 (
-    const polyMesh& mesh,
     const dictionary& dict
 )
 :
-    massToCell(dict),
-    boxToCell
-    (
-        mesh,
-        bounds(dict)
-    )
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::boxMassToCell::~boxMassToCell()
+    Specie(dict),
+    b_(dict.subDict("equationOfState").lookup<scalar>("b"))
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::boxMassToCell::applyToSet
-(
-    const topoSetSource::setAction action,
-    topoSet& set
-) const
-{
-    labelHashSet oldSet(set);
-    boxToCell::applyToSet(action, set);
 
-    checkMass
-    (
-        action == topoSetSource::REMOVE
-      ? oldSet ^ set
-      : (action == topoSetSource::ADD ? set ^ oldSet : set),
-        mesh_
-    );
+template<class Specie>
+void Foam::AbelNobel<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("b", b_);
+    os  << indent << dict.dictName() << dict;
 }
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const AbelNobel<Specie>& an
+)
+{
+    an.write(os);
+    return os;
+}
+
 
 // ************************************************************************* //

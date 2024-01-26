@@ -71,6 +71,7 @@ void Foam::singlePhaseCompressibleSystem::solve()
 {
     volScalarField& rho = this->rhoEff();
     volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
+    this->fvTimeInt_->addDeltaSource(rho_.name(), deltaRho);
     this->storeAndBlendDelta(deltaRho);
 
     dimensionedScalar dT = rho.time().deltaT();

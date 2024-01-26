@@ -71,7 +71,7 @@ class MassIntegrated
     autoPtr<volScalarField> psPtr_;
 
     //- Thermodynamic model
-    const blastThermo& thermo_;
+    const volScalarField* rhoPtr_;
 
 
     //- Read the phase name of the field

@@ -1,30 +1,39 @@
 
-p 1e10;
-rho 1600;
-T 300;
+p 1e5;
+rho 950;
+T 400;
 calculateDensity no;
 
 thermoType
 {
+//     transport   const;
+//     thermo      ePolynomial;
+//     equationOfState JWL;
+
     transport   const;
-    thermo      ePolynomial;
-    equationOfState JWL;
+    thermo      eConst;
+    equationOfState stiffenedGas;
+    equationOfState AbelNobelSG;
 }
 equationOfState
 {
-    beta    0.16;
-    kappa   10.91;
-    k       0.0033383;
-    b       0.0033383;
-    a       0.5;
-    Theta   400;
+//     beta    0.16;
+//     kappa   10.91;
+//     k       0.0033383;
+//     b       0.0033383;
+//     a       0.5;
+//     Theta   400;
+//
+//     rho0      1630; //1601;
+//     A         371.21e9;
+//     B         3.23e9;
+//     R1        4.15;
+//     R2        0.95;
+//     omega     0.3;
 
-    rho0      1630; //1601;
-    A         371.21e9;
-    B         3.23e9;
-    R1        4.15;
-    R2        0.95;
-    omega     0.3;
+    gamma       1.19;
+    pInf        6.2178e8;
+    b           6.7212e-4;
 }
 specie
 {
@@ -37,6 +46,7 @@ transport
 }
 thermodynamics
 {
+    Cv          3610;           // Heat capacity
     // eCoeffs<9>     (-1250.0 0.28 0.0003 0 0 0 0 0 0);           // Heat capacity
     // CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
     CvCoeffs<8>     (280 0.6 0 0 0 0 0 0);           // Heat capacity

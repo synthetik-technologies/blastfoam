@@ -42,8 +42,8 @@ int main(int argc, char *argv[])
 //         Es[i] = eos.E(rhos[i], e, T);
 //     }
 
-    e = eos.initializeEnergy(p, rho, e, T);
-    T = eos.TRhoE(T, rho, e);
+//     e = eos.initializeEnergy(p, rho, e, T);
+//     T = eos.TRhoE(T, rho, e);
 
     Info<<"rho: "<< rho <<endl;
     Info<<"e: "<< e <<endl;

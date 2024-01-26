@@ -1,19 +1,3 @@
-
-// Read gravitational acceleration
-Info<< "\nReading g" << endl;
-uniformDimensionedVectorField g
-(
-    IOobject
-    (
-        "g",
-        runTime.constant(),
-        mesh,
-        IOobject::MUST_READ,
-        IOobject::NO_WRITE
-    ),
-    dimensionedVector(dimAcceleration, Zero)
-);
-
 fvTimeIntegrator integrator(mesh);
 psiuCompressibleSystem fluid(mesh);
 integrator.addSystem(fluid);
@@ -26,6 +10,7 @@ fluidThermophysicalTransportModel& thermophysicalTransport =
 
 const volScalarField& rho = fluid.rho();
 const volScalarField& p = thermo.p();
+const volScalarField& T = thermo.T();
 const volVectorField& U = fluid.U();
 const surfaceScalarField& phi = fluid.rhoPhi();
 

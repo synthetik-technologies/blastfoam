@@ -349,6 +349,11 @@ int main(int argc, char *argv[])
     );
     argList::addBoolOption
     (
+        "noUpdateAll",
+        "Do not update size of all fields in the current time step"
+    );
+    argList::addBoolOption
+    (
         "debug",
         "Output partial updates and additional fields"
     );
@@ -381,6 +386,11 @@ int main(int argc, char *argv[])
     (
         "noHistory",
         "Do not write the history"
+    );
+    argList::addBoolOption
+    (
+        "noBalance",
+        "Do not balance (only parallel)"
     );
     argList::addBoolOption
     (
@@ -491,7 +501,14 @@ int main(int argc, char *argv[])
         {
             if (Pstream::parRun())
             {
-                balance = refiner->balancer().balance();
+                if (args.optionFound("noBalance"))
+                {
+                    refiner->balancer().balance() = false;
+                }
+                else
+                {
+                    balance = refiner->balancer().balance();
+                }
             }
             refiner->setForce(true);
         }
@@ -536,9 +553,15 @@ int main(int argc, char *argv[])
     const scalar angleFraction = calcAngleFraction(mesh);
 
     // Read in all fields to allow resizing
-    if (updateAll || balance)
+    if (updateAll || (balance && !args.optionFound("noUpdateAll")))
     {
         readAndAddAllFields(mesh);
+    }
+    else if (balance)
+    {
+        WarningInFunction
+            << "Balancing will occur, but all fields are not set to be "
+            << "updated. If this is wanted, use \"-updateAll\"" << endl;
     }
 
     //- List of sources (and backups if present)

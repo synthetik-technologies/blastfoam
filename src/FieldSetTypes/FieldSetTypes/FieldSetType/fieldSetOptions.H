@@ -54,9 +54,10 @@ public:
         SetBoundaries,
         SetAllBoundaries,
         NoInternal,
-        EvaluateBoundaries
+        EvaluateBoundaries,
+        AverageInterpolation
     };
-    static const NamedEnum<options, 4> optionNames;
+    static const NamedEnum<options, 5> optionNames;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

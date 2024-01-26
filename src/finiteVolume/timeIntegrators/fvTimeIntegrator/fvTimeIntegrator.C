@@ -221,6 +221,13 @@ void Foam::fvTimeIntegrator::preUpdateMesh()
 void Foam::fvTimeIntegrator::integrate()
 {
     timeIntegrator::integrate();
+
+    DebugInfo<< "Clearing SourceTerms fields" << endl;
+    #define ClearSourceTypes(Type, Geo)             \
+        FieldVarName(Geo, Type, Source).clear();    \
+        FieldVarName(Geo, Type, IntegratedSource).clear();
+    FOR_ALL_FIELD_TYPES(ClearSourceTypes, vol);
+    #undef ClearSourceTypes
 }
 
 
@@ -294,5 +301,138 @@ Foam::scalar Foam::fvTimeIntegrator::totalV() const
     }
     return 1.0;
 }
+
+#define defineSourceLookupType(Type, Geo)                                   \
+bool Foam::fvTimeIntegrator::foundSource                                    \
+(                                                                           \
+    const FieldName(Geo, Type)& f                                           \
+) const                                                                     \
+{                                                                           \
+    return                                                                  \
+        FieldVarName(Geo, Type, IntegratedSource).found(f.name())           \
+     || FieldVarName(Geo, Type, Source).found(f.name());                    \
+}                                                                           \
+                                                                            \
+void Foam::fvTimeIntegrator::addSource                                      \
+(                                                                           \
+    const word& fName,                                                      \
+    const FieldName(Geo, Type)::Internal& S                                 \
+)                                                                           \
+{                                                                           \
+    HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
+        FieldVarName(Geo, Type, Source).find(fName);                        \
+    if (iter != FieldVarName(Geo, Type, Source).end())                      \
+    {                                                                       \
+        (*iter()) += S;                                                     \
+    }                                                                       \
+    else                                                                    \
+    {                                                                       \
+        FieldVarName(Geo, Type, Source).insert                              \
+        (                                                                   \
+            fName,                                                          \
+            new FieldName(Geo, Type)::Internal(fName + "Source" , S)        \
+        );                                                                  \
+    }                                                                       \
+}                                                                           \
+                                                                            \
+void Foam::fvTimeIntegrator::addSource                                      \
+(                                                                           \
+    const word& fName,                                                      \
+    const tmp<FieldName(Geo, Type)::Internal>& S                            \
+)                                                                           \
+{                                                                           \
+    HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
+        FieldVarName(Geo, Type, Source).find(fName);                        \
+    if (iter != FieldVarName(Geo, Type, Source).end())                      \
+    {                                                                       \
+        (*iter()) += S;                                                     \
+    }                                                                       \
+    else                                                                    \
+    {                                                                       \
+        S.ref().rename(fName + "Source");                                   \
+        FieldVarName(Geo, Type, Source).insert                              \
+        (                                                                   \
+            fName,                                                          \
+            S.ptr()                                                         \
+        );                                                                  \
+    }                                                                       \
+}                                                                           \
+                                                                            \
+void Foam::fvTimeIntegrator::addIntegratedSource                            \
+(                                                                           \
+    const word& fName,                                                      \
+    const FieldName(Geo, Type)::Internal& S                                 \
+)                                                                           \
+{                                                                           \
+    HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
+        FieldVarName(Geo, Type, IntegratedSource).find(fName);              \
+    if (iter != FieldVarName(Geo, Type, IntegratedSource).end())            \
+    {                                                                       \
+        (*iter()) += S;                                                     \
+    }                                                                       \
+    else                                                                    \
+    {                                                                       \
+        FieldVarName(Geo, Type, IntegratedSource).insert                    \
+        (                                                                   \
+            fName,                                                          \
+            new FieldName(Geo, Type)::Internal                              \
+            (                                                               \
+                fName + "IntegratedSource" ,                                \
+                S                                                           \
+            )                                                               \
+        );                                                                  \
+    }                                                                       \
+}                                                                           \
+                                                                            \
+void Foam::fvTimeIntegrator::addIntegratedSource                            \
+(                                                                           \
+    const word& fName,                                                      \
+    const tmp<FieldName(Geo, Type)::Internal>& S                            \
+)                                                                           \
+{                                                                           \
+    HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
+        FieldVarName(Geo, Type, IntegratedSource).find(fName);              \
+    if (iter != FieldVarName(Geo, Type, IntegratedSource).end())            \
+    {                                                                       \
+        (*iter()) += S;                                                     \
+    }                                                                       \
+    else                                                                    \
+    {                                                                       \
+        S.ref().rename(fName + "IntegratedSource");                         \
+        FieldVarName(Geo, Type, IntegratedSource).insert                    \
+        (                                                                   \
+            fName,                                                          \
+            S.ptr()                                                         \
+        );                                                                  \
+    }                                                                       \
+}                                                                           \
+                                                                            \
+void Foam::fvTimeIntegrator::addDeltaSource                                 \
+(                                                                           \
+    const word& fName,                                                      \
+    FieldName(Geo, Type)::Internal& fDelta                                  \
+) const                                                                     \
+{                                                                           \
+    {                                                                       \
+        HashPtrTable<FieldName(Geo, Type)::Internal>::const_iterator iter = \
+            FieldVarName(Geo, Type, Source).find(fName);                    \
+        if (iter != FieldVarName(Geo, Type, Source).cend())                 \
+        {                                                                   \
+            fDelta += *iter();                                              \
+        }                                                                   \
+    }                                                                       \
+    {                                                                       \
+        HashPtrTable<FieldName(Geo, Type)::Internal>::const_iterator iter = \
+            FieldVarName(Geo, Type, IntegratedSource).find(fName);          \
+        if (iter != FieldVarName(Geo, Type, IntegratedSource).cend())       \
+        {                                                                   \
+            fDelta += (*iter())/mesh_.V()/mesh_.time().deltaT();            \
+        }                                                                   \
+    }                                                                       \
+}
+
+FOR_ALL_FIELD_TYPES(defineSourceLookupType, vol);
+
+#undef defineSourceLookupType
 
 // ************************************************************************* //

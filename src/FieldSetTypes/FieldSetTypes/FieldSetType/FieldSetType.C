@@ -29,6 +29,7 @@ License
 #include "pointFields.H"
 #include "valuePointPatchField.H"
 #include "fieldSetOptions.H"
+#include "fvc.H"
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
@@ -50,6 +51,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     selectedIndices_(selectedIndices),
     noInternal_(false),
     evaluateBoundaries_(false),
+    averageInterpolation_(false),
     write_(write),
     good_(fieldPtr_.valid())
 {
@@ -79,6 +81,9 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
                 break;
             case fieldSetOptions::EvaluateBoundaries:
                 evaluateBoundaries_ = true;
+                break;
+            case fieldSetOptions::AverageInterpolation:
+                averageInterpolation_ = true;
                 break;
             default:
                 FatalErrorInFunction
@@ -280,12 +285,13 @@ const Foam::pointMesh& Foam::FieldSetType<Type, Patch, Mesh>::getMesh
 
 
 template<class Type, template<class> class Patch, class Mesh>
-typename Foam::FieldSetType<Type, Patch, Mesh>::FieldType*
+template<class GeoField>
+GeoField*
 Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
 {
-    if (mesh_.foundObject<FieldType>(fieldName))
+    if (mesh_.foundObject<GeoField>(fieldName))
     {
-        return &mesh_.lookupObjectRef<FieldType>(fieldName);
+        return &mesh_.lookupObjectRef<GeoField>(fieldName);
     }
 
 
@@ -299,7 +305,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
     );
 
     // Check the "constant" directory
-    if (!fieldHeader.typeHeaderOk<FieldType>(true))
+    if (!fieldHeader.typeHeaderOk<GeoField>(true))
     {
         fieldHeader = IOobject
         (
@@ -311,14 +317,14 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
     }
 
     // Check field exists
-    if (fieldHeader.typeHeaderOk<FieldType>(true))
+    if (fieldHeader.typeHeaderOk<GeoField>(true))
     {
-        FieldType* fPtr
+        GeoField* fPtr
         (
-            new FieldType(fieldHeader, getMesh(fieldPtr_))
+            new GeoField(fieldHeader, getMesh(fieldPtr_))
         );
         fPtr->store(fPtr);
-        return &mesh_.lookupObjectRef<FieldType>(fieldName);
+        return &mesh_.lookupObjectRef<GeoField>(fieldName);
     }
     return nullptr;
 }

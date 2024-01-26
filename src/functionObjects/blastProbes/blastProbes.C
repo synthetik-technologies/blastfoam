@@ -64,6 +64,9 @@ void Foam::blastProbes::findElements
     const bool movePts
 )
 {
+    // Make sure the tetBasePtIs is created before entering loop
+    (void)mesh.tetBasePtIs();
+
     if (debug)
     {
         Info<< "blastProbes: resetting sample locations" << endl;
@@ -77,9 +80,6 @@ void Foam::blastProbes::findElements
 
     boolList foundList(size(), false);
     label nBadProbes = 0;
-
-    // Make sure the tetBasePtIs is created before entering loop
-    mesh.tetBasePtIs();
 
     forAll(*this, probei)
     {

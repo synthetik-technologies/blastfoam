@@ -83,6 +83,9 @@ protected:
     //- Boundaries to set
     wordHashSet boundaries_;
 
+    //- Average interpolated value
+    bool averageInterpolation_;
+
     //- Write after setting fields
     bool write_;
 
@@ -90,7 +93,8 @@ protected:
     bool good_;
 
     //- Lookup from the mesh or read the field
-    FieldType* lookupOrRead(const word& fieldName) const;
+    template<class GeoField = FieldType>
+    GeoField* lookupOrRead(const word& fieldName) const;
 
     //- Set the selected cells
     virtual void setField() = 0;
