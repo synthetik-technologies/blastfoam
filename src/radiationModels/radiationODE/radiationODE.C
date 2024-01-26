@@ -58,7 +58,9 @@ Foam::radiationODE::radiationODE
             mesh
         ),
         mesh,
-        mesh.time().deltaT()
+        solve_
+      ? dict_.lookup<scalar>("initialRadDeltaT")
+      : mesh.time().deltaT()
     )
 {
     if (solve_)
@@ -85,9 +87,17 @@ void Foam::radiationODE::derivatives
     scalarField& dqdt
 ) const
 {
-    scalar e = q[0]/max(thermo_.cellrho(li), 1e-10);
-    scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
-    dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
+    const scalar rho = thermo_.cellrho(li);
+    if (rho < 1e-10)
+    {
+        dqdt = 0.0;
+    }
+    else
+    {
+        scalar e = q[0]/rho;
+        scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
+        dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
+    }
 }
 
 
@@ -100,31 +110,37 @@ void Foam::radiationODE::jacobian
     scalarSquareMatrix& J
 ) const
 {
-    scalar e = q[0]/max(thermo_.cellrho(li), 1e-10);
-    scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
-    dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
-    J = scalarSquareMatrix
-        (
-            1,
-            -4.0*rad_.cellRp(li)*pow3(T)/thermo_.cellCv(T, li)
-        );
+    const scalar rho = thermo_.cellrho(li);
+    if (rho < 1e-10)
+    {
+        dqdt = 0.0;
+        J(0, 0) = 0.0;
+    }
+    else
+    {
+        scalar e = q[0]/rho;
+        scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
+        dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
+        J(0, 0) = -4.0*rad_.cellRp(li)*pow3(T)/thermo_.cellCv(T, li);
+    }
 }
 
 
 Foam::scalar Foam::radiationODE::solve
 (
     const scalar& deltaT,
-    volScalarField& rhoE
+    const scalarField& rho,
+    scalarField& e
 )
 {
     if (!odeSolver_.valid())
     {
-        return min(deltaT_).value();
+        return great;
     }
 
-    forAll(rhoE, celli)
+    forAll(e, celli)
     {
-        q_ = rhoE[celli];
+        q_ = rho[celli]*e[celli];
 
         scalar timeLeft = deltaT;
         while (timeLeft > small)
@@ -132,9 +148,8 @@ Foam::scalar Foam::radiationODE::solve
             scalar dt = timeLeft;
             odeSolver_->solve(0, dt, q_, celli, deltaT_[celli]);
             timeLeft -= dt;
-            deltaT_[celli] = dt;
         }
-        rhoE[celli] = q_[0];
+        e[celli] = q_[0]/max(rho[celli], 1e-10);
     }
     return min(deltaT_).value();
 }

@@ -40,7 +40,20 @@ namespace Foam
 namespace radiationModels
 {
     defineTypeNameAndDebug(blastFvDOM, 0);
-    addToBlastRadiationRunTimeSelectionTables(blastFvDOM);
+    addNamedToRunTimeSelectionTable
+    (
+        blastRadiationModel,
+        blastFvDOM,
+        dictionary,
+        fvDOM
+    );
+    addNamedToRunTimeSelectionTable
+    (
+        blastRadiationModel,
+        blastFvDOM,
+        T,
+        fvDOM
+    );
 }
 }
 
@@ -200,7 +213,7 @@ void Foam::radiationModels::blastFvDOM::initialise()
 
 Foam::radiationModels::blastFvDOM::blastFvDOM(const volScalarField& T)
 :
-    blastRadiationModel(typeName, T),
+    blastRadiationModel("fvDOM", T),
     G_
     (
         IOobject
@@ -257,7 +270,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM(const volScalarField& T)
     (
         IOobject
         (
-            "blastFvDOM:a",
+            "fvDOM:a",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -292,12 +305,12 @@ Foam::radiationModels::blastFvDOM::blastFvDOM
     const volScalarField& T
 )
 :
-    blastRadiationModel(typeName, dict, T),
+    blastRadiationModel("fvDOM", dict, T),
     G_
     (
         IOobject
         (
-            "blastFvDOM:G",
+            "fvDOM:G",
             mesh_.time().timeName(),
             mesh_,
             IOobject::READ_IF_PRESENT,
@@ -349,7 +362,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM
     (
         IOobject
         (
-            "blastFvDOM:a",
+            "fvDOM:a",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,

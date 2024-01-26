@@ -46,7 +46,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     word modelType("none");
     if (radIO.typeHeaderOk<IOdictionary>(false))
     {
-        IOdictionary(radIO).lookup("blastRadiationModel") >> modelType;
+        IOdictionary(radIO).lookup("radiationModel") >> modelType;
     }
     else
     {
@@ -79,7 +79,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     const volScalarField& T
 )
 {
-    const word modelType(dict.lookup<word>("blastRadiationModel"));
+    const word modelType(dict.lookup<word>("radiationModel"));
 
     Info<< "Selecting blastRadiationModel " << modelType << endl;
 
