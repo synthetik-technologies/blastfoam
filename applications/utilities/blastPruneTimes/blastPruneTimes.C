@@ -87,24 +87,28 @@ int main(int argc, char *argv[])
     argList::addOption
     (
         "n",
-        "number of times to save"
+        "Number of times to save"
     );
 
     argList::addOption
     (
         "tolerance",
-        "tolerance for finding times"
+        "Tolerance for finding times"
     );
 
     argList::addBoolOption
     (
         "invert",
-        "select non-interval times"
+        "Select non-interval times"
     );
+
+    argList::addBoolOption("v", "Verbose");
 
 
     #include "addRegionOption.H"
     #include "setRootCase.H"
+
+    const bool verbose = args.optionFound("v");
 
     label nProcs = 1;
     PtrList<Time> databases(1);
@@ -152,6 +156,11 @@ int main(int argc, char *argv[])
         databases[0].times(),
         args
     );
+    scalar minDt = great;
+    for (label i = 1; i < times.size(); i++)
+    {
+        minDt = min(minDt, times[i].value() - times[i-1].value());
+    }
 
     DynamicList<instant> timesToKeep(times.size());
     DynamicList<instant> prunedTimes(times.size());
@@ -169,25 +178,31 @@ int main(int argc, char *argv[])
         dt /= args.optionRead<scalar>("n");
     }
 
-    const scalar tolerance = args.optionLookupOrDefault("tolerance", small);
+    const scalar tolerance = args.optionLookupOrDefault("tolerance", minDt/2.0);
 
     scalar nextTime = startTime;
 
     // Make sure the first time in the selected times is less than the starting time
     if (times.size())
     {
-        forAll(times, ti)
+        scalar tByDt(times[0].value()/dt);
+        if (mag(label(tByDt) - tByDt) < small)
         {
-            if (times[ti].value() > nextTime+tolerance)
+            nextTime = times[0].value();
+        }
+        else
+        {
+            forAll(times, ti)
             {
-                nextTime += dt;
+                if (times[ti].value() > startTime)
+                {
+                    nextTime += dt;
+                }
+                else
+                {
+                    break;
+                }
             }
-            else
-            {
-                break;
-            }
-
-
         }
     }
 
@@ -203,8 +218,8 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        scalar diff(times[ti].value() - nextTime);
-        if (mag(diff) < tolerance)
+        scalar tByDt(times[ti].value()/dt);
+        if (mag(label(tByDt) - tByDt)*dt < tolerance)
         {
             timesToKeep.append(times[ti]);
             nextTime += dt;
@@ -240,6 +255,10 @@ int main(int argc, char *argv[])
 
                     if (isDir(procTimePath))
                     {
+                        if (verbose)
+                        {
+                            Info<< "Removing " << procTimePath << endl;
+                        }
                         rmDir(procTimePath);
                     }
                 }
@@ -249,12 +268,16 @@ int main(int argc, char *argv[])
         {
             forAll(times, ti)
             {
-                const fileName procTimePath
+                const fileName timePath
                 (
                     fileHandler().filePath(args.path()/times[ti].name())
                 );
 
-                rmDir(procTimePath);
+                if (verbose)
+                {
+                    Info<< "Removing " << timePath << endl;
+                }
+                rmDir(timePath);
             }
         }
     }
