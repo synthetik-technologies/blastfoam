@@ -22,6 +22,7 @@ blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 timeOfArrival/timeOfArrival.C
+blastQuantities/blastQuantities.C
 TExposure/TExposure.C
 thermalImpulse/thermalImpulse.C
 
