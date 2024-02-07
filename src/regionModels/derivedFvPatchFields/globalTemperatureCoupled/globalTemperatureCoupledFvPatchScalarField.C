@@ -184,7 +184,7 @@ globalTemperatureCoupledFvPatchScalarField
         }
     }
 
-    fvPatchScalarField::operator=(scalarField("value", dict, p.size()));
+//     fvPatchScalarField::operator=(scalarField("value", dict, p.size()));
 
     if (dict.found("refValue"))
     {
@@ -275,6 +275,16 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
     const fvPatch& nbrPatch =
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
 
+    if (!returnReduce(nbrPatch.size(), sumOp<label>()))
+    {
+        refGrad() = Zero;
+        valueFraction() = 0.0;
+        refValue() = unmappedT_;
+        mixedFvPatchScalarField::updateCoeffs();
+        UPstream::msgType() = oldTag;
+        return;
+    }
+
     if (!nbrMesh.foundObject<volScalarField>(TnbrName_))
     {
         if (debug)
@@ -361,7 +371,19 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
 
     valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
     refValue() = TcNbr;
-    scalarField grad(q/kappa(*this));
+    scalarField grad(q);
+    scalarField pkappa(kappa(*this));
+    forAll(grad, i)
+    {
+        if (pkappa[i] > small)
+        {
+            grad[i] /= pkappa[i];
+        }
+        else
+        {
+            grad[i] = 0.0;
+        }
+    }
 
     if (limitGrad_)
     {

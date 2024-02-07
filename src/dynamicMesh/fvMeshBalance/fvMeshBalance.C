@@ -605,6 +605,16 @@ void Foam::fvMeshBalance::setAllowableImbalance
 Foam::autoPtr<Foam::mapDistributePolyMesh>
 Foam::fvMeshBalance::distribute()
 {
+    //- Make sure the distribtionis up to date
+    if (!returnReduce(distribution_.size() == mesh_.nCells(), andOp<bool>()))
+    {
+        distribution_ = decomposer().decompose
+        (
+            mesh_,
+            scalarField(mesh_.nCells(), 1.0)
+        );
+    }
+
     // Correct values on all coupled patches
     correctProcessorBoundaries<volScalarField>(mesh_);
     correctProcessorBoundaries<volVectorField>(mesh_);
@@ -691,6 +701,9 @@ Foam::fvMeshBalance::distribute()
     correctPointBoundaries<symmTensor>(mesh_);
     correctPointBoundaries<tensor>(mesh_);
 
+    // Clear the distribution
+    distribution_.clear();
+
     return map;
 }
 
@@ -698,8 +711,10 @@ bool Foam::fvMeshBalance::write(const bool write) const
 {
     if
     (
-        balance_ && modified_ && write &&
-        decompositionDict_.lookupOrDefault("writeDecomposeDict", false)
+        balance_
+     && modified_
+     && write
+     && decompositionDict_.lookupOrDefault("writeDecomposeDict", false)
     )
     {
         modified_ = false;
