@@ -146,11 +146,11 @@ void Foam::timeIntegrationSystemBase::storeDelta
 }
 
 
-template<template<class> class ListType, class Type>
+template<class FieldType>
 void Foam::timeIntegrationSystemBase::blendOld
 (
-    Type& f,
-    const ListType<Type>& fList,
+    FieldType& f,
+    const PtrList<FieldType>& fList,
     const bool conservative
 ) const
 {
@@ -187,6 +187,43 @@ void Foam::timeIntegrationSystemBase::blendOld
     if (tV.valid())
     {
         f.field() /= tV();
+    }
+}
+
+
+template<class Type>
+void Foam::timeIntegrationSystemBase::blendOld
+(
+    Type& f,
+    const List<Type>& fList,
+    const bool conservative
+) const
+{
+    const scalarList& scales = a();
+    const label curStep = timeInt_->step();
+
+    // Scale current step by weight
+    f *= scales[curStep];
+    if (conservative)
+    {
+        f *= timeInt_->totalV0();
+    }
+
+    forAll(scales, stepi)
+    {
+        if (curStep != stepi)
+        {
+            label i = timeInt_->getOldIndex(stepi);
+            if (i != -1 && scales[stepi] != 0)
+            {
+                f += scales[stepi]*fList[i];
+            }
+        }
+    }
+
+    if (conservative)
+    {
+        f /= timeInt_->totalV();
     }
 }
 

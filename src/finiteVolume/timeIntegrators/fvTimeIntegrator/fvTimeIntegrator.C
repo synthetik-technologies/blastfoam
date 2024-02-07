@@ -319,6 +319,13 @@ void Foam::fvTimeIntegrator::addSource                                      \
     const FieldName(Geo, Type)::Internal& S                                 \
 )                                                                           \
 {                                                                           \
+    if (!mesh_.foundObject<FieldName(Geo, Type)::Internal>(fName))          \
+    {                                                                       \
+        FatalErrorInFunction                                                \
+            << fName  << " is not a registered "                            \
+            << FieldName(Geo, Type)::Internal::typeName << endl             \
+            << abort(FatalError);                                           \
+    }                                                                       \
     HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
         FieldVarName(Geo, Type, Source).find(fName);                        \
     if (iter != FieldVarName(Geo, Type, Source).end())                      \
@@ -341,6 +348,13 @@ void Foam::fvTimeIntegrator::addSource                                      \
     const tmp<FieldName(Geo, Type)::Internal>& S                            \
 )                                                                           \
 {                                                                           \
+    if (!mesh_.foundObject<FieldName(Geo, Type)::Internal>(fName))          \
+    {                                                                       \
+        FatalErrorInFunction                                                \
+            << fName  << " is not a registered "                            \
+            << FieldName(Geo, Type)::Internal::typeName << endl             \
+            << abort(FatalError);                                           \
+    }                                                                       \
     HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
         FieldVarName(Geo, Type, Source).find(fName);                        \
     if (iter != FieldVarName(Geo, Type, Source).end())                      \
@@ -364,6 +378,13 @@ void Foam::fvTimeIntegrator::addIntegratedSource                            \
     const FieldName(Geo, Type)::Internal& S                                 \
 )                                                                           \
 {                                                                           \
+    if (!mesh_.foundObject<FieldName(Geo, Type)::Internal>(fName))          \
+    {                                                                       \
+        FatalErrorInFunction                                                \
+            << fName  << " is not a registered "                            \
+            << FieldName(Geo, Type)::Internal::typeName << endl             \
+            << abort(FatalError);                                           \
+    }                                                                       \
     HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
         FieldVarName(Geo, Type, IntegratedSource).find(fName);              \
     if (iter != FieldVarName(Geo, Type, IntegratedSource).end())            \
@@ -390,6 +411,13 @@ void Foam::fvTimeIntegrator::addIntegratedSource                            \
     const tmp<FieldName(Geo, Type)::Internal>& S                            \
 )                                                                           \
 {                                                                           \
+    if (!mesh_.foundObject<FieldName(Geo, Type)::Internal>(fName))          \
+    {                                                                       \
+        FatalErrorInFunction                                                \
+            << fName  << " is not a registered "                            \
+            << FieldName(Geo, Type)::Internal::typeName << endl             \
+            << abort(FatalError);                                           \
+    }                                                                       \
     HashPtrTable<FieldName(Geo, Type)::Internal>::iterator iter =           \
         FieldVarName(Geo, Type, IntegratedSource).find(fName);              \
     if (iter != FieldVarName(Geo, Type, IntegratedSource).end())            \

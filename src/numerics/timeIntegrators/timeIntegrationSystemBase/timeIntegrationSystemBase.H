@@ -95,11 +95,20 @@ protected:
         // General functions for blending
 
             //- Combine old fields using time step coefficients
-            template<template<class> class ListType, class Type>
+            template<class Type>
             void blendOld
             (
                 Type& f,
-                const ListType<Type>& fList,
+                const List<Type>& fList,
+                const bool conservative = true
+            ) const;
+
+            //- Combine old fields using time step coefficients
+            template<class FieldType>
+            void blendOld
+            (
+                FieldType& f,
+                const PtrList<FieldType>& fList,
                 const bool conservative = true
             ) const;
 
