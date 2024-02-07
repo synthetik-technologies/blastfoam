@@ -490,11 +490,21 @@ Foam::label Foam::meshTools::addPatch
             }
         }
 
+        label newPatchi = pbm.size();
+        forAll(pbm, patchi)
+        {
+            if (isA<processorPolyPatch>(pbm[patchi]))
+            {
+                newPatchi = patchi;
+                break;
+            }
+        }
+
 
         // Add patch, create calculated everywhere
         mesh.addPatch
         (
-            pbm.size(),
+            newPatchi,
             pp,
             dictionary(),   // do not set specialised patchFields
             calculatedFvPatchField<scalar>::typeName,
