@@ -1074,7 +1074,7 @@ Foam::hexRef::hexRef(const polyMesh& mesh, const bool readHistory)
             mesh_.facesInstance(),
             polyMesh::meshSubDir,
             mesh_,
-            IOobject::READ_IF_PRESENT,
+            readHistory ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
         labelList(mesh_.nCells(), 0)

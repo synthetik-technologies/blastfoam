@@ -115,13 +115,6 @@ protected:
         //  refinement of protectedCell_ (since 2:1 refinement cascade)
         void calculateProtectedCells(PackedBoolList& unrefineableCell) const;
 
-
-        //- Refine cells. Update mesh and fields.
-        autoPtr<mapPolyMesh> refine(const labelList&);
-
-        //- Unrefine cells. Gets passed in centre points of cells to combine.
-        autoPtr<mapPolyMesh> unrefine(const labelList&);
-
         //- Subset candidate cells for refinement
         virtual labelList selectRefineCells
         (
@@ -198,6 +191,11 @@ public:
             return meshCutter_->pointLevel();
         }
 
+        //- Refine cells. Update mesh and fields.
+        autoPtr<mapPolyMesh> refine(const labelList&);
+
+        //- Unrefine cells. Gets passed in centre points of cells to combine.
+        autoPtr<mapPolyMesh> unrefine(const labelList&);
 
         //- Refine the mesh
         virtual bool refine

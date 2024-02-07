@@ -380,7 +380,8 @@ public:
 
         static autoPtr<hexRef> New
         (
-            const polyMesh& mesh, const bool readHistory = true
+            const polyMesh& mesh,
+            const bool readHistory = true
         );
 
         static autoPtr<hexRef> New
