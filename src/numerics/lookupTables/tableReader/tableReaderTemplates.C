@@ -72,7 +72,8 @@ const Foam::dictionary& Foam::readComponent
 
     label col = -1;
     label row = -1;
-    label scale = 1;
+    scalar scale = 1;
+    Type offset(Zero);
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
@@ -84,10 +85,8 @@ const Foam::dictionary& Foam::readComponent
         );
         mod->readReal(dict, "isReal");
 
-        if (dict.found("scale"))
-        {
-            scale = dict.lookup<scalar>("scale");
-        }
+        dict.readIfPresent("scale", scale);
+        dict.readIfPresent("offset", offset);
 
         if (!canRead)
         {}
@@ -189,6 +188,8 @@ const Foam::dictionary& Foam::readComponent
     }
     else if (parentDict.found("n" + name.capitalise()))
     {
+        parentDict.readIfPresent(name + "Scale", scale);
+        parentDict.readIfPresent(name + "Offset", offset);
         mod = Modifier<Type>::New
         (
             parentDict.lookupOrDefault<word>(name + "Mod", "none"),
@@ -231,6 +232,8 @@ const Foam::dictionary& Foam::readComponent
     }
     else if (parentDict.found(name) || readFromTable || !canRead)
     {
+        parentDict.readIfPresent(name + "Scale", scale);
+        parentDict.readIfPresent(name + "Offset", offset);
         if (parentDict.found(name))
         {
             values = parentDict.lookup<List<Type>>(name);
@@ -310,9 +313,9 @@ const Foam::dictionary& Foam::readComponent
     }
     if (canRead)
     {
-        if (scale != 1.0)
+        forAll(values, i)
         {
-            values = scale*values;
+            values[i] = values[i]*scale + offset;
         }
         if (!mod->isReal())
         {
