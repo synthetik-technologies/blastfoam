@@ -251,12 +251,12 @@ public:
         void collectNbrData(Map<Type>& mapFld) const;
 
         //- Reduce data data to the master cell
-        template<class Type, class BinaryOp>
+        template<class Type, class BinaryEqOp>
         void reduce
         (
             const Map<Type>& mapFld,
             UList<Type>& fld,
-            const BinaryOp& bop
+            const BinaryEqOp& bop
         ) const;
 
         //- Sum surface field contributions to create cell values

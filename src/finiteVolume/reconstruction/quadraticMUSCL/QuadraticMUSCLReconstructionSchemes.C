@@ -41,6 +41,8 @@ License
 #include "limitedLinear.H"
 #include "vanLeer.H"
 #include "vanAlbada.H"
+#include "Koren.H"
+#include "logarithmic.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

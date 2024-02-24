@@ -63,10 +63,6 @@ protected:
     //- Location of cell centre
     vector centre_;
 
-    //- Local cells
-    labelList localStencil_;
-
-
 public:
 
     // Constructors
@@ -118,15 +114,6 @@ public:
                return centre_;
             }
 
-            //- Return the full local stencil
-            const labelList& localStencil() const
-            {
-                return
-                    Pstream::parRun()
-                  ? localStencil_
-                  : static_cast<const labelList&>(*this);
-            }
-
     // Edit
 
         //- Update the local and nonlocal stencils
@@ -141,7 +128,6 @@ public:
         labelList::operator=(stencil);
         localOwner_ = stencil.localOwner_;
         centre_ = stencil.centre_;
-        localStencil_ = stencil.localStencil_;
     }
 
     // Output

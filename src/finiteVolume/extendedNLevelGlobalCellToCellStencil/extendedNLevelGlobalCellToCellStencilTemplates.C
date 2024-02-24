@@ -205,12 +205,12 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectNbrData
 
 
 template<class StencilType>
-template<class Type, class BinaryOp>
+template<class Type, class BinaryEqOp>
 void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
 (
     const Map<Type>& mapFld,
     UList<Type>& fld,
-    const BinaryOp& bop
+    const BinaryEqOp& bop
 ) const
 {
     if (!Pstream::parRun())
@@ -249,7 +249,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
     forAll(sendCells, i)
     {
         const label celli = sendCells[i];
-        fld[celli] = bop(fld[celli], sendData[i]);
+        bop(fld[celli], sendData[i]);
     }
 }
 
@@ -299,7 +299,7 @@ Foam::tmp
             )
         )
     );
-    WeightedFieldType& wf = twf();
+    WeightedFieldType& wf = twf.ref();
 
     forAll(wf, celli)
     {

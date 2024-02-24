@@ -286,8 +286,12 @@ public:
 
 // Add the patch constructor functions to the hash tables
 
+#define declareReconstructionScheme(SCHEME, TYPE)                              \
+typedef SCHEME##ReconstructionScheme<TYPE> SCHEME##ReconstructionScheme##TYPE;
+
+
 #define defineReconstructionTable(TABLE, SCHEME, TYPE)                         \
-typedef SCHEME##ReconstructionScheme<TYPE> SCHEME##ReconstructionScheme##TYPE; \
+declareReconstructionScheme(SCHEME, TYPE)                                      \
 defineNamedTemplateTypeNameAndDebug(SCHEME##ReconstructionScheme##TYPE, 0);    \
 defineTemplateRunTimeSelectionTable                                            \
 (                                                                              \
@@ -313,6 +317,16 @@ makeReconstructionSchemeType(SCHEME, SS, sphericalTensor)                      \
 makeReconstructionSchemeType(SCHEME, SS, symmTensor)                           \
 makeReconstructionSchemeType(SCHEME, SS, tensor)
 
+
+
+
+#define declareReconstructionSchemes(SCHEME)                                    \
+                                                                               \
+declareReconstructionScheme(SCHEME, scalar)                                     \
+declareReconstructionScheme(SCHEME, vector)                                     \
+declareReconstructionScheme(SCHEME, sphericalTensor)                            \
+declareReconstructionScheme(SCHEME, symmTensor)                                 \
+declareReconstructionScheme(SCHEME, tensor)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

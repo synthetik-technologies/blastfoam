@@ -30,6 +30,7 @@ reconstruction/standard/StandardReconstructionSchemes.C
 reconstruction/upwindMUSCL/UpwindMUSCLReconstructionSchemes.C
 reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
 reconstruction/quadraticMUSCL/QuadraticMUSCLReconstructionSchemes.C
+reconstruction/limiters/Koren/Koren.C
 
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
