@@ -612,7 +612,7 @@ int main(int argc, char *argv[])
     {
         maxLevel = setFieldsDict.lookup<label>("maxRefinement");
     }
-    else if (max(levels) > 0)
+    else if (max(levels) >= 0)
     {
         maxLevel = max(levels);
     }
