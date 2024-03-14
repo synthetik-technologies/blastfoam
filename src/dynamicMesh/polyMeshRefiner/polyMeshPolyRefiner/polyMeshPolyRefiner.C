@@ -431,11 +431,12 @@ bool Foam::polyMeshPolyRefiner::refine
             if (nSplitPoints > 0)
             {
                 isUnrefining_ = true;
-                hasChanged = hasChanged || refiner_->unrefine
+                bool unref = refiner_->unrefine
                 (
                     mesh_,
                     pointsToUnrefine
                 );
+                hasChanged = hasChanged || unref;
 
                 isUnrefining_ = false;
             }
