@@ -138,7 +138,7 @@ protected:
             mutable bool isUnrefining_;
 
             //- Is the mesh in the process of being balanced
-            mutable bool isBalancing_;
+            const bool& isBalancing_;
 
 
     // Protected Member Functions

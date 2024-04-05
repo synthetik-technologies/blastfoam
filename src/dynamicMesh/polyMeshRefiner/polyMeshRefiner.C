@@ -36,6 +36,7 @@ License
 #include "hexRef3D.H"
 #include "RefineBalanceMeshObject.H"
 #include "parcelCloud.H"
+#include "fvMeshBalance.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -366,7 +367,7 @@ Foam::polyMeshRefiner::polyMeshRefiner(polyMesh& mesh)
 
     isRefining_(false),
     isUnrefining_(false),
-    isBalancing_(false)
+    isBalancing_(fvMeshBalance::balancing)
 {
     locationMapper::New(mesh_);
 }
@@ -421,7 +422,7 @@ Foam::polyMeshRefiner::polyMeshRefiner
 
     isRefining_(false),
     isUnrefining_(false),
-    isBalancing_(false)
+    isBalancing_(fvMeshBalance::balancing)
 {
     locationMapper::New(mesh_);
 }

@@ -266,8 +266,6 @@ bool Foam::fvMeshRefiner::balance()
     // Part 2 - Load Balancing
     if (canBalance(true))
     {
-        refiner_->isBalancing_ = true;
-
         //- Save the old volumes so it will be distributed and
         //  resized
         //  We cheat because so we can check which fields
@@ -296,12 +294,7 @@ bool Foam::fvMeshRefiner::balance()
         mesh_.clearGeom();
 
         Info<< "Mapping the fields ..." << endl;
-        autoPtr<mapDistributePolyMesh> map = balancer_.distribute();
-
-        //- Distribute other data
-        distribute(map());
-
-        refiner_->isBalancing_ = false;
+        balancer_.distribute();
 
         return true;
     }

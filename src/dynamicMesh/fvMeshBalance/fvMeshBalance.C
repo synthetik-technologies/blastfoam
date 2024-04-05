@@ -147,7 +147,7 @@ Foam::fvMeshBalance::fvMeshBalance(fvMesh& mesh)
     preservePatchesDict_(nullptr),
     preserveBafflesDict_(nullptr),
     distributor_(mesh_),
-    balance_(true),
+    balance_(Pstream::parRun()),
     allowableImbalance_(0.2)
 {
     if (!constraintsDict_)
@@ -218,7 +218,7 @@ Foam::fvMeshBalance::fvMeshBalance
     preservePatchesDict_(nullptr),
     preserveBafflesDict_(nullptr),
     distributor_(mesh_),
-    balance_(false),
+    balance_(Pstream::parRun()),
     allowableImbalance_(0.2)
 {
     if (!constraintsDict_)
@@ -277,8 +277,7 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
         return;
     }
 
-    balance_ = balanceDict.lookupOrDefault("balance", true);
-
+    balanceDict.readIfPresent("balance", balance_);
     if (!balance_)
     {
         return;
@@ -647,6 +646,10 @@ Foam::fvMeshBalance::distribute()
     // set using mesh_.setInstance(inst)
     mesh_.polyMesh::instance() = mesh_.time().timeName();
 
+    blastMeshObject::distribute<polyMesh>(mesh_, map());
+    blastMeshObject::distribute<fvMesh>(mesh_, map());
+
+
     balancing = false;
 
     if (!returnReduce(mesh_.nCells(), minOp<label>()))
@@ -676,10 +679,6 @@ Foam::fvMeshBalance::distribute()
             << "Cells = " << procLoadNew
              << endl;
     }
-
-    blastMeshObject::distribute<polyMesh>(mesh_, map());
-    blastMeshObject::distribute<fvMesh>(mesh_, map());
-
 
     // Correct values on all coupled patches
     correctProcessorBoundaries<volScalarField>(mesh_);
