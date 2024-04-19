@@ -69,7 +69,12 @@ void Foam::timeIntegrators::genericRK2::set
 ) const
 {
     as = {{1.0}, {1.0, 0.0}};
-    bs = {{alpha_}, {1.0 - 1.0/(2.0*alpha_), 1.0/(2.0*alpha_)}};
+    bs =
+    {
+        {alpha_},
+        {1.0 - 1.0/(2.0*alpha_), 1.0/(2.0*alpha_)},
+        {1.0, 0.0}
+    };
 }
 
 

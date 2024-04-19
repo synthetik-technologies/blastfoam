@@ -75,7 +75,8 @@ void Foam::timeIntegrator::postUpdateAll()
 Foam::timeIntegrator::timeIntegrator
 (
     const objectRegistry& obr,
-    const dictionary& dict
+    const dictionary& dict,
+    const bool embedded
 )
 :
     regIOobject
@@ -90,7 +91,7 @@ Foam::timeIntegrator::timeIntegrator
         )
     ),
     obr_(obr),
-    coeffs_(timeIntegratorCoeffs::New(dict)),
+    coeffs_(timeIntegratorCoeffs::New(dict, embedded)),
     systems_(0),
     nSteps_(0),
     stepi_(0),
@@ -105,8 +106,20 @@ Foam::timeIntegrator::timeIntegrator
     curTimeIndex_(-1),
     restart_(false)
 {
-    initialize();
+    if (!embedded)
+    {
+        initialize();
+    }
 }
+
+Foam::timeIntegrator::timeIntegrator
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
+:
+    timeIntegrator(obr, dict, false)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -121,6 +134,9 @@ void Foam::timeIntegrator::initialize()
 {
     coeffs_->set(as_, bs_, time().timeIndex());
     nSteps_ = coeffs_->nSteps();
+
+    as_.setSize(nSteps_);
+    bs_.setSize(nSteps_);
 
     oldIs_ = coeffs_->oldIs(as_);
     nOld_ = 0;

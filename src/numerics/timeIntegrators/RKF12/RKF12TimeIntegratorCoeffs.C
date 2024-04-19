@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2023
+    \\  /    A nd           | Copyright (C) 2020-2023
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "HeunTimeIntegratorCoeffs.H"
+#include "RKF12TimeIntegratorCoeffs.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,12 +32,12 @@ namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(Heun, 0);
-    addToRunTimeSelectionTable(timeIntegratorCoeffs, Heun, dictionary);
+    defineTypeNameAndDebug(RKF12, 0);
+    addToRunTimeSelectionTable(timeIntegratorCoeffs, RKF12, dictionary);
     addToRunTimeSelectionTable
     (
         timeIntegratorCoeffs,
-        Heun,
+        RKF12,
         dictionaryEmbedded
     );
 }
@@ -46,15 +46,42 @@ namespace timeIntegrators
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::Heun(Istream& is)
+Foam::timeIntegrators::RKF12::RKF12(Istream& is)
 :
-    genericRK2(1.0)
+    timeIntegratorCoeffs(3)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::~Heun()
+Foam::timeIntegrators::RKF12::~RKF12()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::timeIntegrators::RKF12::set
+(
+    List<List<scalar>>& as,
+    List<List<scalar>>& bs,
+    const label index
+) const
+{
+    as =
+    {
+        {1.0},
+        {1.0, 0.0},
+        {1.0, 0.0, 0.0},
+    };
+    bs =
+    {
+        {1.0/2.0},
+        {1.0/256.0, 255.0/256.0},
+        {1.0/512.0, 255/256.0, 1.0/512.0},
+        {1.0/256.0, 255.0/256.0, 0.0}
+
+    };
+}
+
 
 // ************************************************************************* //

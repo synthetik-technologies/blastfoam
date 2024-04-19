@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "HeunTimeIntegratorCoeffs.H"
+#include "RKBS23TimeIntegratorCoeffs.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,12 +32,12 @@ namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(Heun, 0);
-    addToRunTimeSelectionTable(timeIntegratorCoeffs, Heun, dictionary);
+    defineTypeNameAndDebug(RKBS23, 0);
+    addToRunTimeSelectionTable(timeIntegratorCoeffs, RKBS23, dictionary);
     addToRunTimeSelectionTable
     (
         timeIntegratorCoeffs,
-        Heun,
+        RKBS23,
         dictionaryEmbedded
     );
 }
@@ -46,15 +46,41 @@ namespace timeIntegrators
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::Heun(Istream& is)
+Foam::timeIntegrators::RKBS23::RKBS23(Istream& is)
 :
-    genericRK2(1.0)
+    timeIntegratorCoeffs(4)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::~Heun()
+Foam::timeIntegrators::RKBS23::~RKBS23()
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::timeIntegrators::RKBS23::set
+(
+    List<List<scalar>>& as,
+    List<List<scalar>>& bs,
+    const label index
+) const
+{
+    as =
+    {
+        {1.0},
+        {1.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0, 0.0}
+    };
+    bs =
+    {
+        {1.0/2.0},
+        {0.0, 3.0/4.0},
+        {2.0/9.0, 1.0/3.0, 4.0/9.0},
+        {2.0/9.0, 1.0/3.0, 4.0/9.0, 0.0},
+        {7.0/24.0, 1.0/4.0, 1.0/3.0, 1.0/8.0}
+    };
+}
 // ************************************************************************* //

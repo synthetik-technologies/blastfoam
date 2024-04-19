@@ -38,20 +38,6 @@ inline bool Foam::timeIntegrator::restart() const
 }
 
 
-inline const Foam::List<Foam::scalarList>&
-Foam::timeIntegrator::as() const
-{
-    return as_;
-}
-
-
-inline const Foam::List<Foam::scalarList>&
-Foam::timeIntegrator::bs() const
-{
-    return bs_;
-}
-
-
 inline const Foam::scalarList& Foam::timeIntegrator::a() const
 {
     return as_[stepi_];

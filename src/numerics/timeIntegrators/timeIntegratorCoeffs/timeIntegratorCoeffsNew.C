@@ -30,28 +30,46 @@ License
 
 Foam::autoPtr<Foam::timeIntegratorCoeffs> Foam::timeIntegratorCoeffs::New
 (
-    const dictionary& dict
+    const dictionary& dict,
+    const bool embedded
 )
 {
     ITstream is(dict.lookup("timeIntegrator"));
     word timeIntegratorType(is);
-
     Info<< "Selecting timeIntegrator: " << timeIntegratorType << endl;
 
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(timeIntegratorType);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    if (embedded)
     {
-        FatalErrorInFunction
-            << "Unknown timeIntegrator type "
-            << timeIntegratorType << endl << endl
-            << "Valid timeIntegrator types are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
+        dictionaryEmbeddedConstructorTable::iterator cstrIter =
+            dictionaryEmbeddedConstructorTablePtr_->find(timeIntegratorType);
 
-    return cstrIter()(is);
+        if (cstrIter == dictionaryEmbeddedConstructorTablePtr_->end())
+        {
+            FatalErrorInFunction
+                << "Unknown embedded timeIntegrator type "
+                << timeIntegratorType << endl << endl
+                << "Valid embedded timeIntegrators are : " << endl
+                << dictionaryEmbeddedConstructorTablePtr_->sortedToc()
+                << exit(FatalError);
+        }
+        return cstrIter()(is);
+    }
+    else
+    {
+        dictionaryConstructorTable::iterator cstrIter =
+            dictionaryConstructorTablePtr_->find(timeIntegratorType);
+
+        if (cstrIter == dictionaryConstructorTablePtr_->end())
+        {
+            FatalErrorInFunction
+                << "Unknown timeIntegrator type "
+                << timeIntegratorType << endl << endl
+                << "Valid timeIntegrator types are : " << endl
+                << dictionaryConstructorTablePtr_->sortedToc()
+                << exit(FatalError);
+        }
+        return cstrIter()(is);
+    }
 }
 
 // ************************************************************************* //

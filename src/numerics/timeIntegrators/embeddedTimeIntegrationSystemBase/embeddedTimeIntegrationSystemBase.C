@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2023
+    \\  /    A nd           | Copyright (C) 2019-2021
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,38 +23,47 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "HeunTimeIntegratorCoeffs.H"
-#include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace timeIntegrators
-{
-    defineTypeNameAndDebug(Heun, 0);
-    addToRunTimeSelectionTable(timeIntegratorCoeffs, Heun, dictionary);
-    addToRunTimeSelectionTable
-    (
-        timeIntegratorCoeffs,
-        Heun,
-        dictionaryEmbedded
-    );
-}
-}
-
+#include "embeddedTimeIntegrationSystemBase.H"
+#include "timeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::Heun(Istream& is)
+Foam::embeddedTimeIntegrationSystemBase::embeddedTimeIntegrationSystemBase
+(
+    const word& name
+)
 :
-    genericRK2(1.0)
+    timeIntegrationSystemBase(name)
+{}
+
+
+Foam::embeddedTimeIntegrationSystemBase::embeddedTimeIntegrationSystemBase
+(
+    const word& name,
+    const objectRegistry& obr
+)
+:
+    timeIntegrationSystemBase(name, obr)
+{}
+
+
+Foam::embeddedTimeIntegrationSystemBase::embeddedTimeIntegrationSystemBase
+(
+    const word& name,
+    const timeIntegrator& integrator
+)
+:
+    timeIntegrationSystemBase(name, integrator)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::~Heun()
+Foam::embeddedTimeIntegrationSystemBase::~embeddedTimeIntegrationSystemBase()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
 
 // ************************************************************************* //

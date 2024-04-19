@@ -34,6 +34,12 @@ namespace timeIntegrators
 {
     defineTypeNameAndDebug(Euler, 0);
     addToRunTimeSelectionTable(timeIntegratorCoeffs, Euler, dictionary);
+    addToRunTimeSelectionTable
+    (
+        timeIntegratorCoeffs,
+        Euler,
+        dictionaryEmbedded
+    );
 }
 }
 
@@ -62,7 +68,7 @@ void Foam::timeIntegrators::Euler::set
 ) const
 {
     as = {{1.0}};
-    bs = {{1.0}};
+    bs = {{1.0}, {0.0}};
 }
 
 // ************************************************************************* //

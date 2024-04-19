@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2023
+    \\  /    A nd           | Copyright (C) 2020-2023
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "HeunTimeIntegratorCoeffs.H"
+#include "RKCK45TimeIntegratorCoeffs.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,12 +32,12 @@ namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(Heun, 0);
-    addToRunTimeSelectionTable(timeIntegratorCoeffs, Heun, dictionary);
+    defineTypeNameAndDebug(RKCK45, 0);
+    addToRunTimeSelectionTable(timeIntegratorCoeffs, RKCK45, dictionary);
     addToRunTimeSelectionTable
     (
         timeIntegratorCoeffs,
-        Heun,
+        RKCK45,
         dictionaryEmbedded
     );
 }
@@ -46,15 +46,47 @@ namespace timeIntegrators
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::Heun(Istream& is)
+Foam::timeIntegrators::RKCK45::RKCK45(Istream& is)
 :
-    genericRK2(1.0)
+    timeIntegratorCoeffs(6)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Heun::~Heun()
+Foam::timeIntegrators::RKCK45::~RKCK45()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::timeIntegrators::RKCK45::set
+(
+    List<List<scalar>>& as,
+    List<List<scalar>>& bs,
+    const label index
+) const
+{
+    as =
+    {
+        {1.0},
+        {1.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+    };
+    bs =
+    {
+        {1.0/5.0},
+        {3.0/40.0, 9.0/40.0},
+        {3.0/10.0, -9.0/10.0, 6.0/5.0},
+        {-11.0/54.0, 5.0/2.0, -70.0/27.0, 35.0/27.0},
+        {1631.0/55296.0, 175.0/512.0, 575.0/13824.0, 44275.0/110592.0, 253.0/4096.0},
+        {37.0/378.0, 0.0, 250.0/621.0, 125.0/594.0, 0.0, 512.0/1771.0},
+        {2825.0/27648.0, 0.0, 18575.0/48384.0, 13525.0/55296.0, 277.0/14336.0, 1.0/4.0}
+    };
+}
+
 
 // ************************************************************************* //

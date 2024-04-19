@@ -74,6 +74,15 @@ public:
             (is)
         );
 
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            timeIntegratorCoeffs,
+            dictionaryEmbedded,
+            (Istream& is),
+            (is)
+        );
+
     // Constructor
     timeIntegratorCoeffs(const label nSteps);
 
@@ -84,8 +93,12 @@ public:
 
     // Selectors
 
-        //- Return a new timeIntegrator object
-        static autoPtr<timeIntegratorCoeffs> New(const dictionary& dict);
+        //- Return RK coefficnents
+        static autoPtr<timeIntegratorCoeffs> New
+        (
+            const dictionary& dict,
+            const bool embedded
+        );
 
 
     // Member Functions

@@ -21,40 +21,69 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::embeddedTimeIntegrators::RKBS23
+
+Description
+    Embedded Bogacki-Shampine 2-3 Rungge Kutta coefficients
+
+SourceFiles
+    RKBS23TimeIntegratorCoeffs.C
+
 \*---------------------------------------------------------------------------*/
 
-#include "HeunTimeIntegratorCoeffs.H"
-#include "addToRunTimeSelectionTable.H"
+#ifndef RKBS23TimeIntegratorCoeffs_H
+#define RKBS23TimeIntegratorCoeffs_H
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "timeIntegratorCoeffs.H"
 
 namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(Heun, 0);
-    addToRunTimeSelectionTable(timeIntegratorCoeffs, Heun, dictionary);
-    addToRunTimeSelectionTable
-    (
-        timeIntegratorCoeffs,
-        Heun,
-        dictionaryEmbedded
-    );
-}
-}
 
+/*---------------------------------------------------------------------------*\
+                           Class RKBS23 Declaration
+\*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::timeIntegrators::Heun::Heun(Istream& is)
+class RKBS23
 :
-    genericRK2(1.0)
-{}
+    public timeIntegratorCoeffs
+{
+
+public:
+
+    //- Runtime type information
+    TypeName("RKBS23");
+
+    // Constructor
+    RKBS23(Istream& is);
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+    //- Destructor
+    virtual ~RKBS23();
 
-Foam::timeIntegrators::Heun::~Heun()
-{}
+    // Public member functions
+
+        //- Set coefficients
+        virtual void set
+        (
+            List<List<scalar>>& as,
+            List<List<scalar>>& bs,
+            const label index
+        ) const;
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace timeIntegrators
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2023
+    \\  /    A nd           | Copyright (C) 2019-2021
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,38 +23,49 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "HeunTimeIntegratorCoeffs.H"
-#include "addToRunTimeSelectionTable.H"
+#include "embeddedTimeIntegrationSystemBase.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-namespace Foam
+
+template<template<class> class ListType, class Type>
+Type Foam::embeddedTimeIntegrationSystemBase::calcError
+(
+    const ListType<Type>& fList
+) const
 {
-namespace timeIntegrators
+    // List of error coefficients
+    const List<scalar>& errorCoeffs = timeInt_->bs().last();
+
+    // Remove old steps
+    Type error(Zero);
+    forAll(errorCoeffs, stepi)
+    {
+        label fi = timeInt_->getDeltaIndex(stepi);
+        if (fi != -1 && errorCoeffs[fi] != 0)
+        {
+            error += errorCoeffs[stepi]*fList[fi];
+        }
+    }
+    return error;
+}
+
+template<class Type>
+Foam::scalar Foam::embeddedTimeIntegrationSystemBase::normaliseError
+(
+    const Type& y0,
+    const Type& y,
+    const Type& err,
+    const scalar relTol,
+    const scalar absTol
+) const
 {
-    defineTypeNameAndDebug(Heun, 0);
-    addToRunTimeSelectionTable(timeIntegratorCoeffs, Heun, dictionary);
-    addToRunTimeSelectionTable
+    // Calculate the maximum error
+    Type tol
     (
-        timeIntegratorCoeffs,
-        Heun,
-        dictionaryEmbedded
+        pTraits<Type>::one*absTol
+      + relTol*max(cmptMag(y0), cmptMag(y))
     );
+    return cmptMax(cmptDivide(cmptMag(err), tol));
 }
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::timeIntegrators::Heun::Heun(Istream& is)
-:
-    genericRK2(1.0)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::timeIntegrators::Heun::~Heun()
-{}
-
 // ************************************************************************* //

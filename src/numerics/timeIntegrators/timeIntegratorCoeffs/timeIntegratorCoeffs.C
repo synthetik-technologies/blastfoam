@@ -32,6 +32,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(timeIntegratorCoeffs, 0);
     defineRunTimeSelectionTable(timeIntegratorCoeffs, dictionary);
+    defineRunTimeSelectionTable(timeIntegratorCoeffs, dictionaryEmbedded);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

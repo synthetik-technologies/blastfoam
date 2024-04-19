@@ -34,6 +34,12 @@ namespace timeIntegrators
 {
     defineTypeNameAndDebug(RKF45, 0);
     addToRunTimeSelectionTable(timeIntegratorCoeffs, RKF45, dictionary);
+    addToRunTimeSelectionTable
+    (
+        timeIntegratorCoeffs,
+        RKF45,
+        dictionaryEmbedded
+    );
 }
 }
 
@@ -61,22 +67,6 @@ void Foam::timeIntegrators::RKF45::set
     const label index
 ) const
 {
-    //- Fourth order coefficients
-//     scalar b60 = 25.0/216.0;
-//     scalar b61 = 0.0;
-//     scalar b62 = 1408.0/2565.0;
-//     scalar b63 = 2197.0/4104.0;
-//     scalar b64 = -1.0/5.0;
-//     scalar b65 = 0.0;
-
-    //- Fifth order coefficients
-    scalar b60 = 16.0/135.0;
-    scalar b61 = 0.0;
-    scalar b62 = 6656.0/12825.0;
-    scalar b63 = 28561.0/56430.0;
-    scalar b64 = -9.0/50.0;
-    scalar b65 = 2.0/55.0;
-
     as =
     {
         {1.0},
@@ -88,12 +78,13 @@ void Foam::timeIntegrators::RKF45::set
     };
     bs =
     {
-        {0.25},
+        {1.0/4.0},
         {3.0/32.0, 9.0/32.0},
         {1932.0/2197.0, -7200.0/2197.0, 7296.0/2197.0},
         {439.0/216.0, -8.0, 3680.0/513.0, -845.0/4104.0},
         {-8.0/27.0, 2.0, -3544.0/2565.0, 1859.0/4104.0, -11.0/40.0},
-        {b60, b61, b62, b63, b64, b65}
+        {16.0/135.0, 0.0, 6656.0/12825.0, 28561.0/56430.0, -9.0/50.0, 2.0/55.0},
+        {25.0/216.0, 0.0, 1408.0/2565.0, 2197.0/4104.0, -1.0/5.0, 0.0}
     };
 }
 

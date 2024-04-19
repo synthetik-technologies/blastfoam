@@ -120,6 +120,14 @@ protected:
         virtual void initialize();
 
 
+        // Constructor
+        timeIntegrator
+        (
+            const objectRegistry& obr,
+            const dictionary& dict,
+            const bool embedded
+        );
+
 public:
 
     //- Runtime type information
@@ -142,6 +150,12 @@ public:
 
             //- Return if on a restarted time step
             inline bool restart() const;
+
+            //- Return old coefficients
+            inline const List<scalarList>& as() const;
+
+            //- Return delta coefficients
+            inline const List<scalarList>& bs() const;
 
             //- Return old coefficients for the current step
             inline const scalarList& a() const;
