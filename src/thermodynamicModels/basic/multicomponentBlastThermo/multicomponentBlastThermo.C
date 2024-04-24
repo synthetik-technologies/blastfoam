@@ -464,6 +464,7 @@ void Foam::multicomponentBlastThermo::integrator::solve()
             {
                 deltaAlphaRhoY.ref() -= massTransferRates_[i];
             }
+            this->fvTimeInt_->addDeltaSource(Y.name(), deltaAlphaRhoY);
 
             // Not conservative, but alphaRho*Yi is
             this->storeAndBlendOld(Y, false);

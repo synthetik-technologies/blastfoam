@@ -608,14 +608,14 @@ void Foam::activationModel::solve()
     ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
     volScalarField& ddtLambda = ddtLambda_.ref();
 
-    //- Compute actual delta for the time step knowing the blended
-    ddtLambda = this->calcAndStoreDelta(ddtLambda);
-
     //- Update lambda to include advection and reaction
     //  d(alpha rho lambda)/dt = alpha rho d(lambda)/dt + lambda d(alpha rho)/dt
     lambda_ =
         lambdaOld*(2.0 - alphaRho/max(alphaRho.prevIter(), smallRho))
       + dT*(deltaLambda - deltaAlphaRhoLambda/max(alphaRho.prevIter(), smallRho));
+
+    //- Compute actual delta for the time step knowing the blended
+    ddtLambda = this->calcAndStoreDelta(ddtLambda);
 
 
     //- Correct the lambda field since zero mass will cause "unactivation"
