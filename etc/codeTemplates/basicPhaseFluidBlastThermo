@@ -62,6 +62,7 @@ equationOfState
     Tillotson
     tabulatedEOS
     VanderWaals
+    Gruneisen
 );
 
 specie
