@@ -88,7 +88,7 @@ protected:
                     mag
                     (
                         pf.patchInternalField()
-                    - pf.patchNeighbourField()
+                      - pf.patchNeighbourField()
                     );
             }
             else

@@ -85,7 +85,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(ptpsf, iF),
-    thermoBasePatchField(this->patch())
+    thermoBasePatchField(ptpsf)
 {}
 
 

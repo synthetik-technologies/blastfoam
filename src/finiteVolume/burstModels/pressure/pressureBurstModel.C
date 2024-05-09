@@ -46,7 +46,8 @@ Foam::burstModels::pressure::pressure(const dictionary& dict)
     burstModel(dict),
     pName_(dict.lookupOrDefault<word>("pName", "p")),
     pRef_(dict.lookupOrDefault<scalar>("pRef", 0.0)),
-    pBurst_(dict.lookup<scalar>("pBurst"))
+    pBurst_(dict.lookup<scalar>("pBurst")),
+    average_(partialBurst_ ? dict.lookup<bool>("useAverage") : false)
 {}
 
 
@@ -76,7 +77,14 @@ bool Foam::burstModels::pressure::update
     {
         const volScalarField& p =
             mesh.lookupObject<volScalarField>(pName_);
-        scalarField deltaP(this->patchField(p.boundaryField()[patch.index()]));
+        scalarField deltaP
+        (
+            this->patchField(p.boundaryField()[patch.index()])
+        );
+        if (!p.boundaryField()[patch.index()].coupled())
+        {
+            deltaP -= pRef_;
+        }
 
         if (partialBurst_)
         {
@@ -89,6 +97,12 @@ bool Foam::burstModels::pressure::update
                 }
             }
             burst_ = gMax(intact) < small;
+        }
+        else if (average_)
+        {
+            burst = gSum(deltaP*patch.magSf())/gSum(patch.magSf());
+            intact = !burst;
+            burst_ = burst;
         }
         else
         {

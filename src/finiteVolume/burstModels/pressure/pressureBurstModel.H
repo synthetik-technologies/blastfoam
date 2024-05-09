@@ -66,6 +66,9 @@ protected:
     //- Pressure causes the patch to burst
     scalar pBurst_;
 
+    //- Use average pressure to determine burst (only for non partial burst)
+    bool average_;
+
 
 public:
 
