@@ -74,14 +74,14 @@ Foam::diameterModel::~diameterModel()
 
 void Foam::diameterModel::requireD() const
 {
-    IOobject dHeader
+    typeIOobject<volScalarField> dHeader
     (
         d_.name(),
         d_.time().timeName(),
         d_.mesh(),
         IOobject::MUST_READ
     );
-    if (!dHeader.typeHeaderOk<volScalarField>(true))
+    if (!dHeader.headerOk())
     {
         FatalErrorInFunction
             << this->type() << " diameter model requires the " << d_.name()

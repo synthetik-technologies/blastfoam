@@ -1,5 +1,6 @@
 reactionRates/reactionRate/reactionRate.C
 reactionRates/reactionRate/newReactionRate.C
+reactionRates/constant/constantReactionRate.C
 reactionRates/ArrheniusRate/ArrheniusReactionRate.C
 reactionRates/pressureBased/pressureBasedReactionRate.C
 
