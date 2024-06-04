@@ -224,10 +224,6 @@ void Foam::lookupTable2D<Type>::set
     const bool isReal
 )
 {
-    setX(x, modXType, isReal);
-    setY(y, modYType, isReal);
-    setData(data, modType, isReal);
-
     xInterpolator_ =
         interpolationWeight1D::New(xInterpolationScheme, xModValues_);
     xInterpolator_->validate();
@@ -235,6 +231,10 @@ void Foam::lookupTable2D<Type>::set
     yInterpolator_ =
         interpolationWeight1D::New(yInterpolationScheme, yModValues_);
     yInterpolator_->validate();
+
+    setX(x, modXType, isReal);
+    setY(y, modYType, isReal);
+    setData(data, modType, isReal);
 }
 
 
@@ -294,6 +294,12 @@ void Foam::lookupTable2D<Type>::setX
         xInterpolator_->validate();
         xInterpolator_->update();
     }
+    else
+    {
+        xInterpolator_ =
+            interpolationWeight1D::New("linearClamp", xModValues_);
+        xInterpolator_->validate();
+    }
 }
 
 
@@ -352,6 +358,12 @@ void Foam::lookupTable2D<Type>::setY
     {
         yInterpolator_->validate();
         yInterpolator_->update();
+    }
+    else
+    {
+        yInterpolator_ =
+            interpolationWeight1D::New("linearClamp", yModValues_);
+        yInterpolator_->validate();
     }
 }
 

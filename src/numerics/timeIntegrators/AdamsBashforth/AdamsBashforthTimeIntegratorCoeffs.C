@@ -195,7 +195,7 @@ Foam::List<Foam::label> Foam::timeIntegrators::AdamsBashforth::deltaIs
 ) const
 {
     // Only save the first entry
-    return identity(currOrder_);
+    return identityMap(currOrder_);
 }
 
 

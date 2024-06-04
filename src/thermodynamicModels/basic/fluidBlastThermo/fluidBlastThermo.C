@@ -48,13 +48,14 @@ Foam::fluidBlastThermo::fluidBlastThermo
     const bool requireRho
 )
 :
+    physicalProperties(mesh, word::null),
     blastThermo(mesh, dict, phaseName),
     p_
     (
         blastThermo::lookupOrConstruct
         (
             mesh,
-            phasePropertyName("p", phaseName),
+            basicThermo::phasePropertyName("p", phaseName),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
             dimPressure,
@@ -65,7 +66,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:mu", phaseName),
+            basicThermo::phasePropertyName("thermo:mu", phaseName),
             mesh.time().timeName(),
             mesh
         ),
@@ -76,7 +77,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
     (
         IOobject
         (
-            phasePropertyName("speedOfSound", phaseName),
+            basicThermo::phasePropertyName("speedOfSound", phaseName),
             mesh.time().timeName(),
             mesh
         ),
@@ -92,17 +93,18 @@ Foam::fluidBlastThermo::fluidBlastThermo
             << endl
             << abort(FatalError);
     }
+    this->properties().dictionary::operator=(dict);
 }
 
 
 void Foam::fluidBlastThermo::initializeFields()
 {
-    if (!e_.typeHeaderOk<volScalarField>(true))
+    if (!e_.headerOk())
     {
         //- Calculate internal energy if it was not read
         e_ == this->calce(p_);
     }
-    correct();
+    this->correct();
 }
 
 
@@ -167,6 +169,19 @@ Foam::volScalarField& Foam::fluidBlastThermo::p()
 const Foam::volScalarField& Foam::fluidBlastThermo::p() const
 {
     return p_;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::renameRho()
+{
+    rho_.rename
+    (
+        basicThermo::phasePropertyName
+        (
+            Foam::typedName<fluidBlastThermo>("rho")
+        )
+    );
+    return rho_;
 }
 
 

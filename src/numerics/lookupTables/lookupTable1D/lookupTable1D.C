@@ -246,6 +246,12 @@ void Foam::lookupTable1D<Type>::setX
         interpolator_->validate();
         interpolator_->update();
     }
+    else
+    {
+        interpolator_ =
+            interpolationWeight1D::New("linearClamp", xModValues_);
+        interpolator_->validate();
+    }
 }
 
 

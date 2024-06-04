@@ -149,7 +149,7 @@ void Foam::fvTimeIntegrator::postUpdateAll()
 
 Foam::fvTimeIntegrator::fvTimeIntegrator(const fvMesh& mesh)
 :
-    timeIntegrator(mesh, mesh.schemesDict().subDict("ddtSchemes")),
+    timeIntegrator(mesh, mesh.schemes().dict().subDict("ddtSchemes")),
     mesh_(mesh),
     V0Ptr_(nullptr),
     VPtr_(nullptr),

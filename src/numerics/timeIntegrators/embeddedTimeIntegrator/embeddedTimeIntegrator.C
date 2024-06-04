@@ -94,7 +94,7 @@ void Foam::embeddedTimeIntegrator::initialize()
     }
 
     // Set required deltas to save
-    deltaIs_ = identity(nSteps_);
+    deltaIs_ = identityMap(nSteps_);
     nDelta_ = nSteps_;
 
     // Set error coefficients b_{n-2} - b_{n-1}

@@ -32,9 +32,9 @@ Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::New
     const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType
+    const word fluxSchemeType
     (
-        phi.mesh().schemesDict().subDict("fluxSchemes").subDict
+        phi.mesh().schemes().dict().subDict("fluxSchemes").subDict
         (
             phi.group()
         ).lookup("fluxScheme")
@@ -64,9 +64,9 @@ Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::NewSolid
     const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType
+    const word fluxSchemeType
     (
-        phi.mesh().schemesDict().subDict("fluxSchemes").subDict
+        phi.mesh().schemes().dict().subDict("fluxSchemes").subDict
         (
             phi.group()
         ).lookup("fluxScheme")

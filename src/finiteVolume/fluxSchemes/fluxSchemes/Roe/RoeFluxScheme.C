@@ -105,58 +105,49 @@ void Foam::fluxSchemes::Roe::calculateFluxes
 
     scalar deltaRho(rhoNei - rhoOwn);
     vector deltaU(UNei - UOwn);
-    scalar deltaUv(deltaU & normal);
+    scalar deltaUv(UvNei - UvOwn);
     scalar deltaP(pNei - pOwn);
 
-    scalar lambda1(mag(UvTilde));
-    scalar lambda2(mag(UvTilde + cTilde));
-    scalar lambda3(mag(UvTilde - cTilde));
+    scalar lambda1(mag(UvTilde - cTilde));
+    scalar lambda2(mag(UvTilde));
+    scalar lambda3(mag(UvTilde + cTilde));
 
-    scalar alpha1(deltaRho - deltaP/sqr(cTilde));
-    scalar alpha2((deltaP + rhoTilde*cTilde*deltaUv)/(2.0*sqr(cTilde)));
-    scalar alpha3((deltaP - rhoTilde*cTilde*deltaUv)/(2.0*sqr(cTilde)));
+    scalar alpha1((deltaP - rhoTilde*cTilde*deltaUv)/(2.0*sqr(cTilde)));
+    scalar alpha2(deltaRho - deltaP/sqr(cTilde));
+    scalar alpha3((deltaP + rhoTilde*cTilde*deltaUv)/(2.0*sqr(cTilde)));
 
     // U Row
-    vector K21(UTilde);
-    vector K224((UTilde + cTilde*normal));
-    vector K25((UTilde - cTilde*normal));
+    vector KU1(UTilde - cTilde*normal);
+    vector KU2(UTilde);
+    vector KU3((UTilde - deltaUv*normal));
+    vector KU4((UTilde + cTilde*normal));
 
     // E row
-    scalar K31(0.5*magSqr(UTilde));
-    scalar K324((HTilde + cTilde*UvTilde));
-    scalar K35((HTilde - cTilde*UvTilde));
+    scalar KE1(HTilde - cTilde*UvTilde);
+    scalar KE2(0.5*magSqr(UTilde));
+    scalar KE3((UTilde & deltaU) - UvTilde*deltaUv);
+    scalar KE4(HTilde + cTilde*UvTilde);
 
-//     {
-//         scalar eps = 0.1*cTilde; //adjustable parameter
-//
-//         if (lambda1 < eps || lambda2 < eps || lambda3 < eps)
-//         {
-//             lambda1 = (sqr(lambda1) + sqr(eps))/(2.0*eps);
-//             lambda2 = (sqr(lambda2) + sqr(eps))/(2.0*eps);
-//             lambda3 = (sqr(lambda3) + sqr(eps))/(2.0*eps);
-//         }
-//
-//         // First eigenvalue: U - c
-//         eps = 2.0*max(0.0, (UvNei - cNei) - (UvOwn - cOwn));
-//         if (lambda1 < eps)
-//         {
-//             lambda1 = (sqr(lambda1) + sqr(eps))/(2.0*eps);
-//         }
-//
-//         // Second eigenvalue: U
-//         eps = 2.0*max(0.0, UvNei - UvOwn);
-//         if (lambda2 < eps)
-//         {
-//             lambda2 = (sqr(lambda2) + sqr(eps))/(2.0*eps);
-//         }
-//
-//         // Third eigenvalue: U + c
-//         eps = 2.0*max(0.0, (UvNei + cNei) - (UvOwn + cOwn));
-//         if (lambda3 < eps)
-//         {
-//             lambda3 = (sqr(lambda3) + sqr(eps))/(2.0*eps);
-//         }
-//     }
+    {
+        scalar eps = 2.0*max(0.0, (UvNei - cNei) - (UvOwn - cOwn));
+        if (lambda1 < eps)
+        {
+            lambda1 = (sqr(lambda1) + sqr(eps))/(2.0*eps);
+        }
+
+        eps = 2.0*max(0.0, UvNei - UvOwn);
+        if (lambda2 < eps)
+        {
+            lambda2 = (sqr(lambda2) + sqr(eps))/(2.0*eps);
+        }
+
+        // Third eigenvalue: U + c
+        eps = 2.0*max(0.0, (UvNei + cNei) - (UvOwn + cOwn));
+        if (lambda3 < eps)
+        {
+            lambda3 = (sqr(lambda3) + sqr(eps))/(2.0*eps);
+        }
+    }
 
 //     this->save(facei, patchi, lambda1, lambda1_);
 //     this->save(facei, patchi, lambda2, lambda2_);
@@ -190,9 +181,9 @@ void Foam::fluxSchemes::Roe::calculateFluxes
        *(
             rhoUPhiOwn + rhoUPhiNei
           - (
-                lambda1*alpha1*K21
-              + lambda2*alpha2*K224
-              + lambda3*alpha3*K25
+                lambda1*alpha1*KU1
+              + lambda2*(alpha2*KU2 + rhoTilde*KU3)
+              + lambda3*alpha3*KU4
             )
        );
 
@@ -201,9 +192,9 @@ void Foam::fluxSchemes::Roe::calculateFluxes
        *(
             rhoEPhiOwn + rhoEPhiNei
           - (
-                lambda1*alpha1*K31
-              + lambda2*alpha2*K324
-              + lambda3*alpha3*K35
+                lambda1*alpha1*KE1
+              + lambda2*(alpha2*KE2 + rhoTilde*KE3)
+              + lambda3*alpha3*KE4
             )
        );
 }

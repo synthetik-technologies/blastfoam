@@ -151,7 +151,7 @@ Foam::ReconstructionScheme<Type>::New
 )
 {
     const word schemeKey(scheme(fieldName, phaseName, phi.mesh(), debug, overwrite));
-    Istream& is(phi.mesh().interpolationScheme(schemeKey));
+    Istream& is(phi.mesh().schemes().interpolation(schemeKey));
     word order(is);
     word scheme(order);
     typedef surfaceInterpolationScheme<Type> sISType;

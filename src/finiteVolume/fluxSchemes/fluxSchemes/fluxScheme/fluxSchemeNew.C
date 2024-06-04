@@ -32,7 +32,10 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewSingle
     const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType(phi().mesh().schemesDict().lookup<word>("fluxScheme"));
+    const word fluxSchemeType
+    (
+        phi().mesh().schemes().dict().lookup<word>("fluxScheme")
+    );
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 
@@ -58,7 +61,10 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewMulti
     const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType(phi.mesh().schemesDict().lookup<word>("fluxScheme"));
+    const word fluxSchemeType
+    (
+        phi.mesh().schemes().dict().lookup<word>("fluxScheme")
+    );
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 
@@ -84,7 +90,10 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewInterface
     const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType(phi.mesh().schemesDict().lookup<word>("fluxScheme"));
+    const word fluxSchemeType
+    (
+        phi.mesh().schemes().dict().lookup<word>("fluxScheme")
+    );
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 

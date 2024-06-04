@@ -35,7 +35,7 @@ SourceFiles
 #ifndef meshSizeObject_H
 #define meshSizeObject_H
 
-#include "MeshObject.H"
+#include "DemandDrivenMeshObject.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -44,7 +44,7 @@ namespace Foam
 {
 
 class meshSizeObject;
-typedef MeshObject
+typedef DemandDrivenMeshObject
 <
     polyMesh,
     Foam::MoveableMeshObject,

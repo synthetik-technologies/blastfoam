@@ -53,9 +53,6 @@ class cylinderListToCell
 
     // Private Data
 
-        //- Add usage string
-        static addToUsageTable usage_;
-
         //- First points on cylinder axis
         List<vector> p1s_;
 
@@ -100,13 +97,6 @@ public:
         (
             const polyMesh& mesh,
             const dictionary& dict
-        );
-
-        //- Construct from Istream
-        cylinderListToCell
-        (
-            const polyMesh& mesh,
-            Istream&
         );
 
 

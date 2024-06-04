@@ -374,14 +374,14 @@ Foam::activationModel::readDetonationPoints
 ) const
 {
     {
-        IOobject detPointsHeader
+        typeIOobject<IOPtrList<detonationPoint>> detPointsHeader
         (
             IOobject::groupName("detonationPoints", phaseName_),
             alpha.mesh().time().timeName(),
             "uniform",
             alpha.mesh()
         );
-        if (detPointsHeader.typeHeaderOk<IOPtrList<detonationPoint>>(true))
+        if (detPointsHeader.headerOk())
         {
             return PtrList<detonationPoint>();
         }

@@ -76,7 +76,7 @@ void Foam::burstPolyPatchBase::makePointIntact() const
         (
             allPI,
             maxEqOp<scalar>(),
-            mapDistribute::transform()
+            distributionMap::transform()
         );
         pI = scalarField(allPI, patch_.meshPoints());
     }

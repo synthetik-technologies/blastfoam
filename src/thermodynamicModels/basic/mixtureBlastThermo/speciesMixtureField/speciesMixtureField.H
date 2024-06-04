@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "volFields.H"
-#include "RefineBalanceMeshObject.H"
+#include "DemandDrivenMeshObject.H"
 #include "PtrList.H"
 
 namespace Foam
@@ -56,10 +56,10 @@ namespace Foam
 template<class ThermoType>
 class speciesMixtureField
 :
-    public MeshObject
+    public DemandDrivenMeshObject
     <
         fvMesh,
-        DistributeableMeshObject,
+        UpdateableMeshObject,
         speciesMixtureField<ThermoType>
     >
 
@@ -223,14 +223,21 @@ public:
         {}
 
         //- Distribute the intact field
-        virtual void distribute(const mapDistributePolyMesh&)
+        virtual void distribute(const polyDistributionMap&)
         {
             needCellUpdate_ = true;
             needPatchUpdate_ = true;
         }
 
-        //- Update the intact field after mapping
-        virtual void updateMesh(const mapPolyMesh& mpm)
+        //- Update topology using the given map
+        virtual void topoChange(const polyTopoChangeMap& map)
+        {
+            needCellUpdate_ = true;
+            needPatchUpdate_ = true;
+        }
+
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap& map)
         {
             needCellUpdate_ = true;
             needPatchUpdate_ = true;

@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "multicomponentBlastThermo.H"
-#include "thermophysicalTransportModel.H"
+#include "fluidMulticomponentThermophysicalTransportModel.H"
 #include "fvc.H"
 #include "fvm.H"
 
@@ -143,7 +143,7 @@ void Foam::multicomponentBlastThermo::correct()
         }
 
         bool fix = false;
-        if (min(Yt).value() < small)
+        if (min(Yt()).value() < small)
         {
             fix = true;
             Yt.max(small);
@@ -484,10 +484,10 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
 
     bool isPhase = alphaRho_.group() != word::null;
 
-    UautoPtr<const thermophysicalTransportModel> thermophysicalTransportPtr;
+    UautoPtr<const fluidMulticomponentThermophysicalTransportModel> thermophysicalTransportPtr;
     if
     (
-        mesh_.foundObject<thermophysicalTransportModel>
+        mesh_.foundObject<fluidMulticomponentThermophysicalTransportModel>
         (
             IOobject::groupName("thermophysicalTransport", alphaRho_.group())
         )
@@ -495,7 +495,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
     {
         thermophysicalTransportPtr.set
         (
-            &mesh_.lookupObject<thermophysicalTransportModel>
+            &mesh_.lookupObject<fluidMulticomponentThermophysicalTransportModel>
             (
                 IOobject::groupName("thermophysicalTransport", alphaRho_.group())
             )

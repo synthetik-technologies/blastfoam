@@ -42,7 +42,7 @@ SourceFiles
 #include "faceZoneSet.H"
 #include "pointZoneSet.H"
 #include "NamedEnum.H"
-#include "RefineBalanceMeshObject.H"
+#include "DemandDrivenMeshObject.H"
 #include "topoSetSource.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -51,10 +51,10 @@ namespace Foam
 {
 
 class topoSetList;
-typedef MeshObject
+typedef DemandDrivenMeshObject
 <
     polyMesh,
-    DistributeableMeshObject,
+    PatchMeshObject,
     topoSetList
 > TopoSetList;
 
@@ -244,10 +244,13 @@ public:
         {}
 
         //- Update any stored data for new labels. Not implemented.
-        virtual void updateMesh(const mapPolyMesh& morphMap);
+        virtual void topoChange(const polyTopoChangeMap& morphMap);
+
+        //- Update any stored data for new labels. Not implemented.
+        virtual void mapMesh(const polyMeshMap& morphMap);
 
         //- Distribute sets
-        virtual void distribute(const mapDistributePolyMesh& map);
+        virtual void distribute(const polyDistributionMap& map);
 
         //- Send the cellZones to the mesh, by default zones are removed here
         void transferZones(const bool remove = true);

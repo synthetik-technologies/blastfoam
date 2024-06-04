@@ -42,7 +42,7 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
     scalarField& TCells = this->TRef().primitiveFieldRef();
     scalarField& CpCells = this->CpRef().primitiveFieldRef();
     scalarField& CvCells = this->CvRef().primitiveFieldRef();
-    scalarField& alphaCells = this->alphaRef().primitiveFieldRef();
+    scalarField& kappaCells = this->kappaRef().primitiveFieldRef();
 
     forAll(this->rho_, celli)
     {
@@ -59,10 +59,9 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
             Ti = this->TLow_;
         }
 
-        scalar Cpi = t.Cp(rhoi, ei, Ti);
-        CpCells[celli] = Cpi;
+        CpCells[celli] = t.Cp(rhoi, ei, Ti);
         CvCells[celli] = t.Cv(rhoi, ei, Ti);
-        alphaCells[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
+        kappaCells[celli] = t.kappa(rhoi, ei, Ti);
     }
 
     const volScalarField::Boundary& rhoBf =
@@ -73,8 +72,8 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 
     volScalarField::Boundary& CpBf = this->CpRef().boundaryFieldRef();
     volScalarField::Boundary& CvBf = this->CvRef().boundaryFieldRef();
-    volScalarField::Boundary& alphaBf =
-        this->alphaRef().boundaryFieldRef();
+    volScalarField::Boundary& kappaBf =
+        this->kappaRef().boundaryFieldRef();
 
     forAll(this->rho_.boundaryField(), patchi)
     {
@@ -84,7 +83,7 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 
         fvPatchScalarField& pCp = CpBf[patchi];
         fvPatchScalarField& pCv = CvBf[patchi];
-        fvPatchScalarField& palpha = alphaBf[patchi];
+        fvPatchScalarField& pkappa = kappaBf[patchi];
 
         if (pT.fixesValue())
         {
@@ -100,10 +99,9 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 
                 ei = t.Es(rhoi, ei, Ti);
 
-                const scalar Cpi = t.Cp(rhoi, ei, Ti);
-                pCp[facei] = Cpi;
+                pCp[facei] = t.Cp(rhoi, ei, Ti);
                 pCv[facei] = t.Cv(rhoi, ei, Ti);
-                palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+                pkappa[facei] = t.kappa(rhoi, ei, Ti);
             }
         }
         else
@@ -125,10 +123,9 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
                     Ti = this->TLow_;
                 }
 
-                const scalar Cpi = t.Cp(rhoi, ei, Ti);
-                pCp[facei] = Cpi;
+                pCp[facei] = t.Cp(rhoi, ei, Ti);
                 pCv[facei] = t.Cv(rhoi, ei, Ti);
-                palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+                pkappa[facei] = t.kappa(rhoi, ei, Ti);
             }
         }
     }
@@ -247,90 +244,6 @@ Foam::multicomponentSolidBlastThermo<Thermo>::calce() const
         this->e_,
         this->T_
     );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volVectorField>
-Foam::multicomponentSolidBlastThermo<Thermo>::Kappa() const
-{
-    const fvMesh& mesh = this->T_.mesh();
-
-    tmp<volVectorField> tKappa
-    (
-        volVectorField::New
-        (
-            "Kappa",
-            mesh,
-            dimEnergy/dimTime/dimLength/dimTemperature
-        )
-    );
-
-    volVectorField& Kappa = tKappa.ref();
-    vectorField& KappaCells = Kappa.primitiveFieldRef();
-    const scalarField& rhoCells = this->rho_;
-    const scalarField& eCells = this->e_;
-    const scalarField& TCells = this->T_;
-
-    forAll(KappaCells, celli)
-    {
-        Kappa[celli] =
-            this->mixture_[celli].Kappa
-            (
-                rhoCells[celli],
-                eCells[celli],
-                TCells[celli]
-            );
-    }
-
-    volVectorField::Boundary& KappaBf = Kappa.boundaryFieldRef();
-
-    forAll(KappaBf, patchi)
-    {
-        vectorField& Kappap = KappaBf[patchi];
-        const scalarField& pRho = this->rho_.boundaryField()[patchi];
-        const scalarField& pe = this->e_.boundaryField()[patchi];
-        const scalarField& pT = this->T_.boundaryField()[patchi];
-
-        forAll(Kappap, facei)
-        {
-            Kappap[facei] =
-                this->mixture_.boundary(patchi, facei).Kappa
-                (
-                    pRho[facei],
-                    pe[facei],
-                    pT[facei]
-                );
-        }
-    }
-
-    return tKappa;
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::vectorField>
-Foam::multicomponentSolidBlastThermo<Thermo>::Kappa(const label patchi) const
-{
-    const scalarField& pRho = this->rho_.boundaryField()[patchi];
-    const scalarField& pe = this->e_.boundaryField()[patchi];
-    const scalarField& pT = this->T_.boundaryField()[patchi];
-    tmp<vectorField> tKappa(new vectorField(pe.size()));
-
-    vectorField& Kappap = tKappa.ref();
-
-    forAll(Kappap, facei)
-    {
-        Kappap[facei] =
-            this->mixture_.boundary(patchi, facei).Kappa
-            (
-                pRho[facei],
-                pe[facei],
-                pT[facei]
-            );
-    }
-
-    return tKappa;
 }
 
 

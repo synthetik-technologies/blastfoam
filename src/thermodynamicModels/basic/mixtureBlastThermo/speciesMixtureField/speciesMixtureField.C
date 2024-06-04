@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "speciesMixtureField.H"
-#include "mapPolyMesh.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -40,10 +39,10 @@ Foam::speciesMixtureField<ThermoType>::speciesMixtureField
     const word& phaseName
 )
 :
-    MeshObject
+    DemandDrivenMeshObject
     <
         fvMesh,
-        DistributeableMeshObject,
+        UpdateableMeshObject,
         speciesMixtureField<ThermoType>
     >
     (

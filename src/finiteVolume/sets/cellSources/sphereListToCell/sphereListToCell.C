@@ -33,16 +33,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(sphereListToCell, 0);
     addToRunTimeSelectionTable(topoSetSource, sphereListToCell, word);
-    addToRunTimeSelectionTable(topoSetSource, sphereListToCell, istream);
 }
-
-
-Foam::topoSetSource::addToUsageTable Foam::sphereListToCell::usage_
-(
-    sphereListToCell::typeName,
-    "\n    Usage: sphereListToCell ((centreX centreY centreZ)) radii\n\n"
-    "    Select all cells with cellCentre within bounding sphere\n\n"
-);
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -99,18 +90,6 @@ Foam::sphereListToCell::sphereListToCell
       ? dict.lookup("radii")
       : List<scalar>(centres_.size(), readScalar(dict.lookup("radius")))
     )
-{}
-
-
-Foam::sphereListToCell::sphereListToCell
-(
-    const polyMesh& mesh,
-    Istream& is
-)
-:
-    topoSetSource(mesh),
-    centres_(checkIs(is)),
-    radii_(checkIs(is))
 {}
 
 

@@ -91,15 +91,15 @@ void Foam::burstPolyPatch::movePoints
 }
 
 
-void Foam::burstPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
+void Foam::burstPolyPatch::initTopoChange(PstreamBuffers& pBufs)
 {
-    wallPolyPatch::initUpdateMesh(pBufs);
+    wallPolyPatch::initTopoChange(pBufs);
 }
 
 
-void Foam::burstPolyPatch::updateMesh(PstreamBuffers& pBufs)
+void Foam::burstPolyPatch::topoChange(PstreamBuffers& pBufs)
 {
-    wallPolyPatch::updateMesh(pBufs);
+    wallPolyPatch::topoChange(pBufs);
 }
 
 
@@ -158,19 +158,6 @@ Foam::burstPolyPatch::burstPolyPatch
     burstPolyPatchBase(*this, bpp, newSize, newStart)
 {}
 
-
-Foam::burstPolyPatch::burstPolyPatch
-(
-    const burstPolyPatch& bpp,
-    const polyBoundaryMesh& bm,
-    const label index,
-    const labelUList& mapAddressing,
-    const label newStart
-)
-:
-    wallPolyPatch(bpp, bm, index, mapAddressing, newStart),
-    burstPolyPatchBase(*this, bpp, mapAddressing)
-{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

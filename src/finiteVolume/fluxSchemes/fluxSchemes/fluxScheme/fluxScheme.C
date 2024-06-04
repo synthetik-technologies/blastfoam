@@ -42,7 +42,7 @@ namespace Foam
 Foam::fluxScheme::fluxScheme(const surfaceScalarField& phi)
 :
     fluxSchemeBase(phi),
-    dict_(mesh_.schemesDict())
+    dict_(mesh_.schemes().dict())
 {}
 
 

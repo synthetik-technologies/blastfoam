@@ -71,13 +71,13 @@ void Foam::meshSizeObject::calcDx() const
             << abort(FatalError);
     }
 
-    dxPtr_.set(new scalarField(mesh_.nCells(), 0.0));
+    dxPtr_.set(new scalarField(this->mesh().nCells(), 0.0));
     scalarField& dx = dxPtr_();
-    const Vector<label>& geoD = mesh_.geometricD();
+    const Vector<label>& geoD = this->mesh().geometricD();
 
-    if (mesh_.nGeometricD() != 3)
+    if (this->mesh().nGeometricD() != 3)
     {
-        const Vector<label>& solD = mesh_.solutionD();
+        const Vector<label>& solD = this->mesh().solutionD();
         vector validD(Zero);
         forAll(solD, cmpti)
         {
@@ -87,13 +87,18 @@ void Foam::meshSizeObject::calcDx() const
             }
         }
 
-        const vectorField& Sf = mesh_.faceAreas();
-        const scalarField& magSf = mesh_.magFaceAreas();
-        const labelList& own = mesh_.faceOwner();
-        const labelList& nei = mesh_.faceNeighbour();
+        const vectorField& Sf = this->mesh().faceAreas();
+        const scalarField& magSf = this->mesh().magFaceAreas();
+        const labelList& own = this->mesh().faceOwner();
+        const labelList& nei = this->mesh().faceNeighbour();
         labelList nFaces(dxPtr_->size(), 0);
 
-        for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+        for
+        (
+            label facei = 0;
+            facei < this->mesh().nInternalFaces();
+            facei++
+        )
         {
             if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
             {
@@ -107,8 +112,8 @@ void Foam::meshSizeObject::calcDx() const
 
         for
         (
-            label facei = mesh_.nInternalFaces();
-            facei < mesh_.nFaces();
+            label facei = this->mesh().nInternalFaces();
+            facei < this->mesh().nFaces();
             facei++
         )
         {
@@ -126,7 +131,7 @@ void Foam::meshSizeObject::calcDx() const
     }
     else
     {
-        dx = cbrt(mesh_.cellVolumes());
+        dx = cbrt(this->mesh().cellVolumes());
     }
 }
 
@@ -139,12 +144,12 @@ void Foam::meshSizeObject::calcDX() const
             <<"dX already set"
             << abort(FatalError);
     }
-    dXPtr_.set(new vectorField(mesh_.nCells(), vector::one));
+    dXPtr_.set(new vectorField(this->mesh().nCells(), vector::one));
     vectorField& dX = dXPtr_();
 
-    const cellList& cells = mesh_.cells();
-    const scalarField& V = mesh_.cellVolumes();
-    const vectorField& Sf = mesh_.faceAreas();
+    const cellList& cells = this->mesh().cells();
+    const scalarField& V = this->mesh().cellVolumes();
+    const vectorField& Sf = this->mesh().faceAreas();
 
     forAll(dX, celli)
     {

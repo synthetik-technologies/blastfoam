@@ -95,7 +95,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
     label constructSize = requests.size();
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     labelList sendCells(requestedCells);
@@ -138,7 +138,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
     label constructSize = requests.size();
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     labelList sendCells(requestedCells);
@@ -181,7 +181,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectNbrData
     label constructSize = requests.size();
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     labelList sendCells(requestedCells);
@@ -239,7 +239,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
     }
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     map().distribute(sendCells);

@@ -93,7 +93,7 @@ const Foam::fluidThermo& Foam::thermoBasePatchField::thermo() const
         (
             IOobject::groupName
             (
-                basicThermo::dictName,
+                physicalProperties::typeName,
                 phaseName_
             )
         );

@@ -55,7 +55,7 @@ class equation
 {
 public:
 
-    TypeName(pTraits<Type>::typeName + "Equation");
+    TypeName("Equation");
 
     typedef scalar VarType;
 

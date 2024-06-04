@@ -36,12 +36,23 @@ template<class Thermo>
 void Foam::multicomponentFluidBlastThermo<Thermo>::calculate()
 {
     this->updateMixture();
+    const scalarField& rhoCells = this->rho_.primitiveField();
+    scalarField& heCells = this->heRef();
+    scalarField& TCells = this->TRef().primitiveFieldRef();
+    scalarField& pCells = this->pRef().primitiveFieldRef();
+    scalarField& CpCells = this->CpRef().primitiveFieldRef();
+    scalarField& CvCells = this->CvRef().primitiveFieldRef();
+    scalarField& muCells = this->muRef().primitiveFieldRef();
+    scalarField& kappaCells = this->kappaRef().primitiveFieldRef();
+    scalarField& speedOfSoundCells =
+        this->speedOfSoundRef().primitiveFieldRef();
+
     forAll(this->rho_, celli)
     {
         const typename Thermo::thermoType& t(this->mixture_[celli]);
-        const scalar& rhoi(this->rho_[celli]);
-        scalar& ei(this->heRef()[celli]);
-        scalar& Ti = this->TRef()[celli];
+        const scalar& rhoi = rhoCells[celli];
+        scalar& ei = heCells[celli];
+        scalar& Ti = TCells[celli];
 
         // Update temperature
         Ti = t.TRhoE(Ti, rhoi, ei);
@@ -52,15 +63,28 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate()
         }
 
         scalar pi = t.p(rhoi, ei, Ti);
-        scalar Cpi = t.Cp(rhoi, ei, Ti);
-        this->pRef()[celli] = pi;
-        this->CpRef()[celli] = Cpi;
-        this->CvRef()[celli] = t.Cv(rhoi, ei, Ti);
-        this->muRef()[celli] = t.mu(rhoi, ei, Ti);
-        this->alphaRef()[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
-        this->speedOfSoundRef()[celli] =
+        pCells[celli] = pi;
+        CpCells[celli] = t.Cp(rhoi, ei, Ti);
+        CvCells[celli] = t.Cv(rhoi, ei, Ti);
+        muCells[celli] = t.mu(rhoi, ei, Ti);
+        kappaCells[celli] = t.kappa(rhoi, ei, Ti);
+        speedOfSoundCells[celli] =
             sqrt(max(t.cSqr(pi, rhoi, ei, Ti), small));
     }
+
+    const volScalarField::Boundary& rhoBf = this->rho_.boundaryField();
+
+    volScalarField::Boundary& heBf = this->heRef().boundaryFieldRef();
+    volScalarField::Boundary& TBf = this->TRef().boundaryFieldRef();
+    volScalarField::Boundary& pBf = this->pRef().boundaryFieldRef();
+
+    volScalarField::Boundary& CpBf = this->CpRef().boundaryFieldRef();
+    volScalarField::Boundary& CvBf = this->CvRef().boundaryFieldRef();
+    volScalarField::Boundary& muBf = this->muRef().boundaryFieldRef();
+    volScalarField::Boundary& kappaBf =
+        this->kappaRef().boundaryFieldRef();
+    volScalarField::Boundary& speedOfSoundBf =
+        this->speedOfSoundRef().boundaryFieldRef();
 
     this->TRef().correctBoundaryConditions();
     this->heRef().correctBoundaryConditions();
@@ -68,21 +92,16 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate()
 
     forAll(this->rho_.boundaryField(), patchi)
     {
-        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT =
-            this->TRef().boundaryField()[patchi];
-        const fvPatchScalarField& phe =
-            this->heRef().boundaryField()[patchi];
-        const fvPatchScalarField& pp =
-            this->pRef().boundaryField()[patchi];
+        const fvPatchScalarField& prho = rhoBf[patchi];
+        const fvPatchScalarField& pT = TBf[patchi];
+        const fvPatchScalarField& phe = heBf[patchi];
+        const fvPatchScalarField& pp = pBf[patchi];
 
-        fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pmu = this->muRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& palpha =
-            this->alphaRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pc =
-            this->speedOfSoundRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& pCp = CpBf[patchi];
+        fvPatchScalarField& pCv = CvBf[patchi];
+        fvPatchScalarField& pmu = muBf[patchi];
+        fvPatchScalarField& pkappa = kappaBf[patchi];
+        fvPatchScalarField& pc = speedOfSoundBf[patchi];
 
         forAll(prho, facei)
         {
@@ -90,15 +109,14 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate()
             (
                 this->mixture_.boundary(patchi, facei)
             );
-            const scalar rhoi(prho[facei]);
-            const scalar ei(phe[facei]);
-            const scalar Ti(pT[facei]);
+            const scalar rhoi = prho[facei];
+            const scalar ei = phe[facei];
+            const scalar Ti = pT[facei];
 
-            const scalar Cpi = t.Cp(rhoi, ei, Ti);
-            pCp[facei] = Cpi;
+            pCp[facei] = t.Cp(rhoi, ei, Ti);
             pCv[facei] = t.Cv(rhoi, ei, Ti);
             pmu[facei] = t.mu(rhoi, ei, Ti);
-            palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+            pkappa[facei] = t.kappa(rhoi, ei, Ti);
             pc[facei] =
                 sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
         }
@@ -115,7 +133,7 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
     volScalarField& alphaCp,
     volScalarField& alphaCv,
     volScalarField& alphaMu,
-    volScalarField& alphaAlphah,
+    volScalarField& alphaKappa,
     volScalarField& pXiSum,
     volScalarField& XiSum
 )
@@ -135,8 +153,7 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
             alphaCp[celli] += t.Cp(rhoi, ei, Ti)*alphai;
             alphaCv[celli] += t.Cv(rhoi, ei, Ti)*alphai;
             alphaMu[celli] += t.mu(rhoi, ei, Ti)*alphai;
-            alphaAlphah[celli] +=
-                t.kappa(rhoi, ei, Ti)/t.Cp(rhoi, ei, Ti)*alphai;
+            alphaKappa[celli] += t.kappa(rhoi, ei, Ti)*alphai;
             pXiSum[celli] += t.p(rhoi, ei, Ti)*Xii;
             XiSum[celli] += Xii;
         }
@@ -152,8 +169,8 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
         fvPatchScalarField& palphaCp = alphaCp.boundaryFieldRef()[patchi];
         fvPatchScalarField& palphaCv = alphaCv.boundaryFieldRef()[patchi];
         fvPatchScalarField& palphaMu = alphaMu.boundaryFieldRef()[patchi];
-        fvPatchScalarField& palphaAlphah =
-            alphaAlphah.boundaryFieldRef()[patchi];
+        fvPatchScalarField& palphaKappa =
+            alphaKappa.boundaryFieldRef()[patchi];
         fvPatchScalarField& ppXiSum = pXiSum.boundaryFieldRef()[patchi];
         fvPatchScalarField& pxiSum = XiSum.boundaryFieldRef()[patchi];
 
@@ -171,13 +188,11 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
                 const scalar Ti(pT[facei]);
                 const scalar Xii = alphai/(t.Gamma(rhoi, ei, Ti) - 1.0);
 
-                const scalar Cpi = t.Cp(rhoi, ei, Ti);
-
                 ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
-                palphaCp[facei] = Cpi*alphai;
+                palphaCp[facei] = t.Cp(rhoi, ei, Ti)*alphai;
                 palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai;
                 palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai;
-                palphaAlphah[facei] = t.kappa(rhoi, ei, Ti)/Cpi*alphai;
+                palphaKappa[facei] = t.kappa(rhoi, ei, Ti)*alphai;
                 pxiSum[facei] += Xii;
             }
         }

@@ -50,7 +50,7 @@ SourceFiles
 
 #include "fluidBlastThermo.H"
 #include "phaseFluidBlastThermo.H"
-#include "twoPhaseMixture.H"
+#include "twoPhases.H"
 #include "thermoEquations.H"
 #include "univariateRootSolver.H"
 
@@ -64,15 +64,27 @@ namespace Foam
 class twoPhaseFluidBlastThermo
 :
     public fluidBlastThermo,
-    public twoPhaseMixture
+    public twoPhases
 {
 // Private data
+
+        //- Name of first phase
+        word phase1Name_;
+
+        //- Volume fraction of phase 1
+        volScalarField alpha1_;
 
         //- Density of phase 1
         volScalarField rho1_;
 
         //- Equation of state for phase 1
         autoPtr<phaseFluidBlastThermo> thermo1_;
+
+        //- Name of first phase
+        word phase2Name_;
+
+        //- Volume fraction of phase 2
+        volScalarField alpha2_;
 
         //- Density of phase 2
         volScalarField rho2_;

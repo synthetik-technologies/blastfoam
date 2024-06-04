@@ -54,7 +54,7 @@ public:
 
     typedef Type EqnType;
 
-    TypeName(pTraits<Type>::typeName + "UnivariateEquation");
+    TypeName("UnivariateEquation");
 
     // Constructors
 

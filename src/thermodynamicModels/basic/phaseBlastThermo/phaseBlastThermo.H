@@ -117,8 +117,15 @@ protected:
                 return rho_;
             }
 
-            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            volScalarField& alphaRef()
+            //- Thermal conductivity for enthalpy of mixture [kg/m/s]
+            volScalarField& kappaRef()
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Thermal conductivity for enthalpy of mixture [kg/m/s]
+            const volScalarField& kappa() const
             {
                 NotImplemented;
                 return rho_;

@@ -166,7 +166,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::createMap() const
     List<Map<label>> compactMap(Pstream::nProcs());
     mapPtr_.reset
     (
-        new mapDistribute
+        new distributionMap
         (
             gIndexPtr_(),
             cellCells_,
@@ -177,7 +177,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::createMap() const
 
 
 template<class StencilType>
-const Foam::mapDistribute&
+const Foam::distributionMap&
 Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::map() const
 {
 	if (!mapPtr_.valid())
@@ -198,7 +198,7 @@ extendedNLevelGlobalCellToCellStencil
     const label nLevels
 )
 :
-    MeshObject
+    DemandDrivenMeshObject
     <
         polyMesh,
         UpdateableMeshObject,
@@ -224,7 +224,7 @@ extendedNLevelGlobalCellToCellStencil
     const labelList& nNbrs
 )
 :
-    MeshObject
+    DemandDrivenMeshObject
     <
         polyMesh,
         UpdateableMeshObject,
@@ -261,7 +261,7 @@ bool Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::movePoints()
 template<class StencilType>
 void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateMesh
 (
-    const mapPolyMesh& mpm
+    const polyMeshMap& mpm
 )
 {
 	stencilMap_.clear();
@@ -273,7 +273,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateMesh
 
 
 template<class StencilType>
-Foam::autoPtr<Foam::mapDistribute>
+Foam::autoPtr<Foam::distributionMap>
 Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::buildMap
 (
     const List<label>& toProc
@@ -322,7 +322,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::buildMap
     labelListList constructMap(Pstream::nProcs());
 
     // Local transfers first
-    constructMap[Pstream::myProcNo()] = identity
+    constructMap[Pstream::myProcNo()] = identityMap
     (
         sendMap[Pstream::myProcNo()].size()
     );
@@ -344,9 +344,9 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::buildMap
         }
     }
 
-    return autoPtr<mapDistribute>
+    return autoPtr<distributionMap>
     (
-        new mapDistribute
+        new distributionMap
         (
             constructSize,
             move(sendMap),
@@ -452,7 +452,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::calcStencil() const
             label constructSize = requests.size();
 
             // make the map
-            autoPtr<mapDistribute> map(buildMap(requests));
+            autoPtr<distributionMap> map(buildMap(requests));
 
             // Send requests
             map().distribute(requestedCells);
@@ -592,7 +592,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::update() const
 	    }
 
 	    // make the map
-	    autoPtr<mapDistribute> map(buildMap(requests));
+	    autoPtr<distributionMap> map(buildMap(requests));
 
 	    // Send requests
 	    map().distribute(sendCells);

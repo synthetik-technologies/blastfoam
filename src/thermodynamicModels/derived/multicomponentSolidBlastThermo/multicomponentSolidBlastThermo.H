@@ -226,15 +226,6 @@ public:
             const volScalarField& T
         ) const;
 
-        //- Thermal conductivity [W/m/K]
-        virtual tmp<volVectorField> Kappa() const;
-
-        //- Anisotropic thermal conductivity [W/m/K]
-        virtual tmp<vectorField> Kappa
-        (
-            const label patchi
-        ) const;
-
         //- Return true if thermal conductivity is isotropic
         virtual bool isotropic() const
         {

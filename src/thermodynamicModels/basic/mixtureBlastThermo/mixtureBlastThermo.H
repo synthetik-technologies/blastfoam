@@ -368,12 +368,6 @@ public:
             virtual scalar cellW(const label celli) const;
 
 
-        // Fields derived from transport state variables
-
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> calcKappa() const;
-
-
         // Specie properties
 
             //- Molecular weight of the given specie [kg/kmol]

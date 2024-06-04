@@ -849,22 +849,6 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellW(const label celli) cons
 
 
 template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calcKappa() const
-{
-    return volScalarFieldProperty
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        &ThermoType::kappa,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Wi
 (

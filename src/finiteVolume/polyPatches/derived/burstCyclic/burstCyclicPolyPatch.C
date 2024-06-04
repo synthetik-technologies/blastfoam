@@ -121,20 +121,6 @@ Foam::burstCyclicPolyPatch::burstCyclicPolyPatch
 {}
 
 
-Foam::burstCyclicPolyPatch::burstCyclicPolyPatch
-(
-    const burstCyclicPolyPatch& bcpp,
-    const polyBoundaryMesh& bm,
-    const label index,
-    const labelUList& mapAddressing,
-    const label newStart
-)
-:
-    cyclicPolyPatch(bcpp, bm, index, mapAddressing, newStart),
-    burstPolyPatchBase(*this, bcpp, mapAddressing)
-{}
-
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::burstCyclicPolyPatch::~burstCyclicPolyPatch()

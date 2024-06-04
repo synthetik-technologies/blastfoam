@@ -33,16 +33,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(cylinderListToCell, 0);
     addToRunTimeSelectionTable(topoSetSource, cylinderListToCell, word);
-    addToRunTimeSelectionTable(topoSetSource, cylinderListToCell, istream);
 }
-
-
-Foam::topoSetSource::addToUsageTable Foam::cylinderListToCell::usage_
-(
-    cylinderListToCell::typeName,
-    "\n    Usage: cylinderListToCell ((p1X p1Y p1Z)) ((p2X p2Y p2Z)) radii\n\n"
-    "    Select all cells with cell centres within bounding cylinders\n\n"
-);
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -111,19 +102,6 @@ Foam::cylinderListToCell::cylinderListToCell
       ? dict.lookup("radii")
       : List<scalar>(p1s_.size(), readScalar(dict.lookup("radius")))
     )
-{}
-
-
-Foam::cylinderListToCell::cylinderListToCell
-(
-    const polyMesh& mesh,
-    Istream& is
-)
-:
-    topoSetSource(mesh),
-    p1s_(checkIs(is)),
-    p2s_(checkIs(is)),
-    radii_(checkIs(is))
 {}
 
 

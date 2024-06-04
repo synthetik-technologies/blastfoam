@@ -115,7 +115,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
 
     this->Cp_ = Zero;
     this->Cv_ = Zero;
-    this->alpha_ = Zero;
+    this->kappa_ = Zero;
     this->mu_ = Zero;
 
     forAll(thermos_, i)
@@ -127,7 +127,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
             this->T_,
             this->Cp_,
             this->Cv_,
-            this->alpha_,
+            this->kappa_,
             this->mu_,
             pXiSum,
             XiSum
@@ -141,7 +141,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     normalise(Cp_);
     normalise(Cv_);
     normalise(mu_);
-    normalise(alpha_);
+    normalise(kappa_);
 
     forAll(thermos_, i)
     {

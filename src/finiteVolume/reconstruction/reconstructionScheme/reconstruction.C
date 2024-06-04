@@ -63,7 +63,7 @@ Foam::word Foam::reconstruction::scheme
 )
 {
     const dictionary& interpDict =
-        mesh.schemesDict().subDict("interpolationSchemes");
+        mesh.schemes().dict().subDict("interpolationSchemes");
     const word name(IOobject::groupName(baseName, phaseName));
     word baseScheme(scheme(baseName));
     word nameScheme(scheme(name));

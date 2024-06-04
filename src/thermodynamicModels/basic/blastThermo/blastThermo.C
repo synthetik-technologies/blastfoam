@@ -35,9 +35,7 @@ License
 #include "mixedEnergyFvPatchScalarField.H"
 #include "mixedEnergyCalculatedTemperatureFvPatchScalarField.H"
 #include "fixedJumpFvPatchFields.H"
-#include "fixedJumpAMIFvPatchFields.H"
 #include "energyJumpFvPatchScalarField.H"
-#include "energyJumpAMIFvPatchScalarField.H"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 
@@ -64,16 +62,6 @@ Foam::wordList Foam::blastThermo::heBoundaryBaseTypes()
         {
             const fixedJumpFvPatchScalarField& pf =
                 dynamic_cast<const fixedJumpFvPatchScalarField&>(tbf[patchi]);
-
-            hbt[patchi] = pf.interfaceFieldType();
-        }
-        else if (isA<fixedJumpAMIFvPatchScalarField>(tbf[patchi]))
-        {
-            const fixedJumpAMIFvPatchScalarField& pf =
-                dynamic_cast<const fixedJumpAMIFvPatchScalarField&>
-                (
-                    tbf[patchi]
-                );
 
             hbt[patchi] = pf.interfaceFieldType();
         }
@@ -122,10 +110,6 @@ Foam::wordList Foam::blastThermo::heBoundaryTypes()
         {
             hbt[patchi] = energyJumpFvPatchScalarField::typeName;
         }
-        else if (isA<fixedJumpAMIFvPatchScalarField>(tbf[patchi]))
-        {
-            hbt[patchi] = energyJumpAMIFvPatchScalarField::typeName;
-        }
 
         if
         (
@@ -155,8 +139,21 @@ Foam::blastThermo::blastThermo
         IOobject::groupName("blastThermo", phaseName),
         mesh
     ),
-    basicThermo::implementation(mesh, dict, phaseName),
+    mesh_(mesh),
+    dict_(dict),
     phaseName_(phaseName),
+    T_
+    (
+        IOobject
+        (
+            phasePropertyName("T", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
+    ),
     e_
     (
         IOobject
@@ -168,7 +165,7 @@ Foam::blastThermo::blastThermo
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar(dimEnergy/dimMass, 0.0),
@@ -210,6 +207,19 @@ Foam::blastThermo::blastThermo
         mesh,
         dimensionedScalar(dimEnergy/dimMass/dimTemperature, Zero)
     ),
+    kappa_
+    (
+        IOobject
+        (
+            phasePropertyName("kappa", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimTime/dimLength/dimTemperature, Zero)
+    ),
     TLow_
     (
         dict.lookupOrDefault("limitT", true)
@@ -230,8 +240,8 @@ Foam::blastThermo::~blastThermo()
 
 bool Foam::blastThermo::read()
 {
-    this->residualRho_.read(*this);
-    this->residualAlpha_.read(*this);
+    this->residualRho_.read(this->properties());
+    this->residualAlpha_.read(this->properties());
     return true;
 }
 
@@ -399,7 +409,7 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
     if (!mesh.foundObject<volScalarField>(name))
     {
         volScalarField* fPtr = nullptr;
-        IOobject io
+        typeIOobject<volScalarField> io
         (
             name,
             mesh.time().timeName(),
@@ -407,7 +417,7 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
             IOobject::NO_READ,
             wOpt
         );
-        IOobject baseIo
+        typeIOobject<volScalarField> baseIo
         (
             baseName,
             mesh.time().timeName(),
@@ -416,7 +426,7 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
             wOpt
         );
 
-        if (io.typeHeaderOk<volScalarField>(true))
+        if (io.headerOk())
         {
             io.readOpt() = IOobject::MUST_READ;
             fPtr =
@@ -438,7 +448,7 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
                     baseField.boundaryField()
                 );
         }
-        else if (baseIo.typeHeaderOk<volScalarField>(true) && allowNoGroup)
+        else if (baseIo.headerOk() && allowNoGroup)
         {
             baseIo.readOpt() = IOobject::MUST_READ;
             fPtr =
@@ -539,89 +549,9 @@ Foam::tmp<Foam::scalarField> Foam::blastThermo::gamma
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::kappa() const
+const Foam::volScalarField& Foam::blastThermo::kappa() const
 {
-    return volScalarField::New("kappa", Cp_*this->alpha_);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::kappa
-(
-    const label patchi
-) const
-{
-    return
-        this->Cp(this->T_.boundaryField()[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-Foam::scalar Foam::blastThermo::cellkappa(const label celli) const
-{
-    return this->cellCp(this->T_[celli], celli)*this->alpha_[celli];
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::alphahe() const
-{
-    return volScalarField::New
-    (
-        "alphahe",
-        this->gamma()*this->alpha_
-    );
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::alphahe
-(
-    const label patchi
-) const
-{
-    return
-        this->gamma(this->T_.boundaryField()[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return Cp_*(this->alpha_ + alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        this->Cp(this->T_.boundaryField()[patchi], patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return this->gamma()*(this->alpha_ + alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        this->gamma(this->T_.boundaryField()[patchi], patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
+    return kappa_;
 }
 
 // ************************************************************************* //

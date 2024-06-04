@@ -63,7 +63,10 @@ void Foam::QuadraticMUSCLReconstructionScheme<Type>::constructGradPhis() const
         fv::gradScheme<scalar>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("limitedGrad(" + this->phi_.name() + ")")
+            this->mesh_.schemes().grad
+            (
+                "limitedGrad(" + this->phi_.name() + ")"
+            )
         )
     );
     tmp<fv::gradScheme<vector>> hgradientScheme
@@ -71,7 +74,10 @@ void Foam::QuadraticMUSCLReconstructionScheme<Type>::constructGradPhis() const
         fv::gradScheme<vector>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("limitedHess(" + this->phi_.name() + ")")
+            this->mesh_.schemes().grad
+            (
+                "limitedHess(" + this->phi_.name() + ")"
+            )
         )
     );
     for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)

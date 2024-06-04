@@ -35,11 +35,11 @@ SourceFiles
 #ifndef extendedNLevelGlobalCellToCellStencil_H
 #define extendedNLevelGlobalCellToCellStencil_H
 
-#include "MeshObject.H"
+#include "DemandDrivenMeshObject.H"
 #include "PackedBoolList.H"
 #include "labelPair.H"
 #include "globalIndex.H"
-#include "mapDistribute.H"
+#include "polyDistributionMap.H"
 #include "DynamicList.H"
 #include "volFields.H"
 #include "cellStencil.H"
@@ -59,7 +59,7 @@ using PairMap = HashTable<Type, labelPair, Hash<labelPair>>;
 template<class StencilType>
 class extendedNLevelGlobalCellToCellStencil
 :
-    public MeshObject
+    public DemandDrivenMeshObject
     <
         polyMesh,
         UpdateableMeshObject,
@@ -89,7 +89,7 @@ public:
         //  Used for distributing
         mutable labelListList cellCells_;
 
-        mutable autoPtr<mapDistribute> mapPtr_;
+        mutable autoPtr<distributionMap> mapPtr_;
 
         //- Non local stencil cells
         mutable Map<label> nonlocalCells_;
@@ -125,7 +125,7 @@ public:
         ) const;
 
         void createMap() const;
-        const mapDistribute& map() const;
+        const distributionMap& map() const;
 
 public:
 
@@ -156,7 +156,10 @@ public:
     // Member Functions
 
         //- Build a mapDistribute for the supplied destination processor data
-        static autoPtr<mapDistribute> buildMap(const List<label>& toProc);
+        static autoPtr<distributionMap> buildMap
+        (
+            const List<label>& toProc
+        );
 
         //- Update after refining and balancing
         virtual void calcStencil() const;
@@ -183,7 +186,7 @@ public:
         //- Callback for geometry motion
         virtual bool movePoints();
 
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void updateMesh(const polyMeshMap& mpm);
 
         inline const globalIndex& gIndex() const
         {

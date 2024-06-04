@@ -130,7 +130,7 @@ Foam::CodedEquation<Type>::expandCodeDict
     forAll(codes, i)
     {
         verbatimString str(dict[codes[i]]);
-        stringOps::inplaceExpand(str, cDict, true, true);
+        stringOps::inplaceExpandEntry(str, cDict, true, true);
         dict.set(primitiveEntry(codes[i], str));
     }
     return cDict;

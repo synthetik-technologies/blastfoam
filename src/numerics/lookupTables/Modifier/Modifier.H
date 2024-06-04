@@ -70,7 +70,7 @@ protected:
 
 public:
 
-    TypeName(pTraits<Type>::typeName + "Modifier");
+    TypeName("Modifier");
 
     Modifier()
     :

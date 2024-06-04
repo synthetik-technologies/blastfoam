@@ -42,7 +42,13 @@ Foam::phaseFluxScheme::phaseFluxScheme(const surfaceScalarField& phi)
 :
     fluxSchemeBase(phi),
     phaseName_(phi.group()),
-    dict_(phi.mesh().schemesDict().subDict("fluxSchemes").subDict(phaseName_))
+    dict_
+    (
+        phi.mesh().schemes().dict().subDict
+        (
+            "fluxSchemes"
+        ).subDict(phaseName_)
+    )
 {}
 
 

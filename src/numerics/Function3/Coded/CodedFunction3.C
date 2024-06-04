@@ -116,7 +116,7 @@ const Foam::dictionary& Foam::Function3s::Coded<Type>::expandCodeDict
     dictionary& dict = const_cast<dictionary&>(cDict);
 
     verbatimString str(dict["code"]);
-    stringOps::inplaceExpand(str, cDict, true, true);
+    stringOps::inplaceExpandEntry(str, cDict, true, true);
     dict.set(primitiveEntry("code", str));
     return cDict;
 }

@@ -49,14 +49,34 @@ Foam::solidBlastThermo::solidBlastThermo
     const word& masterName
 )
 :
+    physicalProperties(mesh, word::null),
     blastThermo(mesh, dict, phaseName)
-{}
+{
+    this->properties().dictionary::operator=(dict);
+}
 
 
 void Foam::solidBlastThermo::initializeFields()
 {
+    if (!this->isotropic())
+    {
+        KappaPtr_.set
+        (
+            new volVectorField
+            (
+                IOobject
+                (
+                    basicThermo::phasePropertyName("Kappa"),
+                    mesh().time().timeName(),
+                    mesh()
+                ),
+                mesh(),
+                dimensionedVector(kappa_.dimensions(), Zero)
+            )
+        );
+    }
     updateRho();
-    if (!e_.typeHeaderOk<volScalarField>(true))
+    if (!e_.headerOk())
     {
         e_ == this->calce();
     }
@@ -91,76 +111,6 @@ Foam::solidBlastThermo::~solidBlastThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-/*
-void Foam::solidBlastThermo::correct()
-{
-    const scalarField& rhoCells = this->rho_;
-    scalarField& eCells = this->e_;
-
-    scalarField& TCells = this->T_.primitiveFieldRef();
-    scalarField& CpCells = this->Cp_.primitiveFieldRef();
-    scalarField& CvCells = this->Cv_.primitiveFieldRef();
-    scalarField& alphaCells = this->alpha_.primitiveFieldRef();
-
-    forAll(rhoCells, celli)
-    {
-        const blastMixture& thermoMixture = this->cellThermoMixture(celli);
-
-        // Update temperature
-        TCells[celli] =
-            thermoMixture.TRhoE(TCells[celli], rhoCells[celli], eCells[celli]);
-        if (TCells[celli] < this->TLow_)
-        {
-            eCells[celli] =
-                thermoMixture.HE(rhoCells[celli], eCells[celli], this->TLow_);
-            TCells[celli] = TLow_;
-        }
-
-        const scalar r(rhoCells[celli]);
-        const scalar e(eCells[celli]);
-        const scalar T(TCells[celli]);
-
-        CpCells[celli] = thermoMixture.Cp(r, e, T);
-        CvCells[celli] = thermoMixture.Cv(r, e, T);
-        alphaCells[celli] = thermoMixture.kappa(r, e, T)/CvCells[celli];
-    }
-
-    this->T_.correctBoundaryConditions();
-    this->he().correctBoundaryConditions();
-
-    const volScalarField::Boundary& rhoBf = this->rho_.boundaryField();
-    const volScalarField::Boundary& heBf = this->he().boundaryFieldRef();
-
-    volScalarField::Boundary& TBf = this->T_.boundaryFieldRef();
-    volScalarField::Boundary& CpBf = this->Cp_.boundaryFieldRef();
-    volScalarField::Boundary& CvBf = this->Cv_.boundaryFieldRef();
-    volScalarField::Boundary& alphaBf = this->alpha_.boundaryFieldRef();
-
-    forAll(this->T_.boundaryField(), patchi)
-    {
-        const fvPatchScalarField& prho = rhoBf[patchi];
-        const fvPatchScalarField& pT = TBf[patchi];
-        const fvPatchScalarField& phe = heBf[patchi];
-
-        fvPatchScalarField& pCp = CpBf[patchi];
-        fvPatchScalarField& pCv = CvBf[patchi];
-        fvPatchScalarField& palpha = alphaBf[patchi];
-
-        forAll(pT, facei)
-        {
-            const blastMixture& thermoMixture =
-                this->patchFaceThermoMixture(patchi, facei);
-            const scalar r(prho[facei]);
-            const scalar e(phe[facei]);
-            const scalar T(pT[facei]);
-
-            pCp[facei] = thermoMixture.Cp(r, e, T);
-            pCv[facei] = thermoMixture.Cv(r, e, T);
-            palpha[facei] = thermoMixture.kappa(r, e, T)/pCp[facei];
-        }
-    }
-}*/
-
 
 Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::nu() const
 {
@@ -170,99 +120,6 @@ Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::nu() const
         this->T_.mesh(),
         dimViscosity
     );
-}
-
-
-Foam::tmp<Foam::volSymmTensorField> Foam::solidBlastThermo::KappaLocal() const
-{
-    const fvMesh& mesh = this->T_.mesh();
-
-    const coordinateSystem coordinates
-    (
-        coordinateSystem::New(mesh, this->properties())
-    );
-
-    const tmp<volVectorField> tKappa(Kappa());
-    const volVectorField& Kappa = tKappa();
-
-    tmp<volSymmTensorField> tKappaLocal
-    (
-        volSymmTensorField::New
-        (
-            "KappaLocal",
-            mesh,
-            dimensionedSymmTensor(Kappa.dimensions(), Zero)
-        )
-    );
-    volSymmTensorField& KappaLocal = tKappaLocal.ref();
-
-    KappaLocal.primitiveFieldRef() =
-        coordinates.R(mesh.C()).transformVector(Kappa);
-
-    forAll(KappaLocal.boundaryField(), patchi)
-    {
-        KappaLocal.boundaryFieldRef()[patchi] =
-            coordinates.R(mesh.boundary()[patchi].Cf())
-           .transformVector(Kappa.boundaryField()[patchi]);
-    }
-
-    return tKappaLocal;
-}
-
-
-Foam::tmp<Foam::symmTensorField> Foam::solidBlastThermo::KappaLocal
-(
-    const label patchi
-) const
-{
-    const fvMesh& mesh = this->T_.mesh();
-
-    const coordinateSystem coordinates
-    (
-        coordinateSystem::New(mesh, this->properties())
-    );
-
-    return
-        coordinates.R(mesh.boundary()[patchi].Cf())
-       .transformVector(Kappa(patchi));
-}
-
-
-Foam::tmp<Foam::surfaceScalarField> Foam::solidBlastThermo::q() const
-{
-    const fvMesh& mesh = this->T_.mesh();
-    mesh.setFluxRequired(this->T_.name());
-
-    return
-      - (
-            isotropic()
-          ? fvm::laplacian(this->kappa(), this->T_)().flux()
-          : fvm::laplacian(KappaLocal(), this->T_)().flux()
-        )/mesh.magSf();
-}
-
-
-Foam::tmp<Foam::fvScalarMatrix> Foam::solidBlastThermo::divq
-(
-    volScalarField& e
-) const
-{
-    return
-      - (
-            isotropic()
-          ?   fvc::laplacian(this->kappa(), this->T_)
-            + correction(fvm::laplacian(this->alpha(), e))
-          :   fvc::laplacian(KappaLocal(), this->T_)
-            + correction
-              (
-                  fvm::laplacian
-                  (
-                      KappaLocal()/this->Cv(),
-                      e,
-                      "laplacian(" + this->alpha().name() + ",e)"
-                  )
-              )
-        );
 }
 
 

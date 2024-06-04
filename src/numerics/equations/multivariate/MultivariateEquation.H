@@ -54,7 +54,7 @@ class multivariateEquation
 {
 public:
 
-    TypeName(pTraits<Type>::typeName + "MultivariateEquation");
+    TypeName("MultivariateEquation");
 
     typedef List<scalar> VarType;
     typedef List<Type> EqnType;

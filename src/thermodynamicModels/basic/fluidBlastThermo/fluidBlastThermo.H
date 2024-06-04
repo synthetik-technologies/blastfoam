@@ -44,6 +44,7 @@ SourceFiles
 
 #include "fluidThermo.H"
 #include "blastThermo.H"
+#include "physicalProperties.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -55,6 +56,7 @@ namespace Foam
 
 class fluidBlastThermo
 :
+    public physicalProperties,
     public blastThermo,
     public fluidThermo
 {
@@ -159,6 +161,18 @@ public:
 
     // Access functions
 
+        //- Properties dictionary
+        virtual const IOdictionary& properties() const
+        {
+            return *this;
+        }
+
+        //- Non-const access the properties dictionary
+        virtual IOdictionary& properties()
+        {
+            return *this;
+        }
+
         // Access to thermodynamic state variables
 
             //- Pressure [Pa]
@@ -167,6 +181,15 @@ public:
 
             //- Pressure [Pa]
             virtual const volScalarField& p() const;
+
+            virtual tmp<volScalarField> rho() const
+            {
+                return rho_;
+            }
+
+            //- Rename and return the thermodynamic density field [kg/m^3]
+            //  This is used by solvers which create a separate continuity rho
+            virtual tmp<volScalarField> renameRho();
 
 
         // Fields derived from thermodynamic state variables
@@ -213,47 +236,6 @@ public:
             ) const
             {
                 return blastThermo::gamma(T, patchi);
-            }
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [W/m/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField& alphat
-            ) const
-            {
-                return blastThermo::kappaEff(alphat);
-            }
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
-            {
-                return blastThermo::kappaEff(alphat, patchi);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const
-            {
-                return blastThermo::alphaEff(alphat);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
-            {
-                return blastThermo::alphaEff(alphat, patchi);
             }
 
             using blastThermo::gamma;
@@ -325,6 +307,13 @@ public:
 
             //- Kinematic viscosity of mixture for cell [m^2/s]
             virtual scalar cellnu(const label celli) const;
+
+
+        //- Read thermophysical properties dictionary
+        virtual bool read()
+        {
+            return blastThermo::read();
+        }
 };
 
 

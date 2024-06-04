@@ -32,45 +32,60 @@ License
 template<class Thermo>
 void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
 {
+    const scalarField& rhoCells = this->rho_.primitiveFieldRef();
+    scalarField& heCells = this->heRef();
+    scalarField& TCells = this->TRef().primitiveFieldRef();
+    scalarField& CpCells = this->CpRef().primitiveFieldRef();
+    scalarField& CvCells = this->CvRef().primitiveFieldRef();
+    scalarField& kappaCells = this->kappaRef().primitiveFieldRef();
+    vectorField* KappaCells =
+        !this->isotropic() ? &this->KappaRef() : nullptr;
+
     const typename Thermo::thermoType1& t1(*this);
     const typename Thermo::thermoType2& t2(*this);
-    forAll(this->rho_, celli)
+    forAll(rhoCells, celli)
     {
         const scalar x2 = this->cellx(celli);
         const scalar x1 = 1.0 - x2;
-        const scalar rhoi(this->rho_[celli]);
-        scalar& ei(this->heRef()[celli]);
-        scalar& Ti(this->TRef()[celli]);
+        const scalar rhoi = this->rho_[celli];
+        scalar& ei = heCells[celli];
+        scalar& Ti = TCells[celli];
 
         if (x2 < this->residualActivation_)
         {
-            Ti =
-                t1.TRhoE(Ti, rhoi, ei);
+            Ti = t1.TRhoE(Ti, rhoi, ei);
             if (Ti < this->TLow_)
             {
                 ei = t1.Es(rhoi, ei, this->TLow_);
                 Ti = this->TLow_;
             }
 
-            const scalar Cpi = t1.Cp(rhoi, ei, Ti);
-            this->CpRef()[celli] = Cpi;
-            this->CvRef()[celli] = t1.Cv(rhoi, ei, Ti);
-            this->alphaRef()[celli] = t1.kappa(rhoi, ei, Ti)/Cpi;
+            CpCells[celli] = t1.Cp(rhoi, ei, Ti);
+            CvCells[celli] = t1.Cv(rhoi, ei, Ti);
+            kappaCells[celli] = t1.kappa(rhoi, ei, Ti);
+
+            if (KappaCells)
+            {
+                (*KappaCells)[celli] = t1.Kappa(rhoi, ei, Ti);
+            }
         }
         else if (x1 < this->residualActivation_)
         {
-            Ti =
-                t2.TRhoE(Ti, rhoi, ei);
+            Ti = t2.TRhoE(Ti, rhoi, ei);
             if (Ti < this->TLow_)
             {
                 ei = t2.Es(rhoi, ei, this->TLow_);
                 Ti = this->TLow_;
             }
 
-            const scalar Cpi = t2.Cp(rhoi, ei, Ti);
-            this->CpRef()[celli] = Cpi;
-            this->CvRef()[celli] = t2.Cv(rhoi, ei, Ti);
-            this->alphaRef()[celli] = t2.kappa(rhoi, ei, Ti)/Cpi;
+            CpCells[celli] = t2.Cp(rhoi, ei, Ti);
+            CvCells[celli] = t2.Cv(rhoi, ei, Ti);
+            kappaCells[celli] = t2.kappa(rhoi, ei, Ti);
+
+            if (KappaCells)
+            {
+                (*KappaCells)[celli] = t2.Kappa(rhoi, ei, Ti);
+            }
         }
         else
         {
@@ -85,34 +100,56 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                 Ti = this->TLow_;
             }
 
-            this->CpRef()[celli] =
+            CpCells[celli] =
                 t1.Cp(rhoi, ei, Ti)*x1
-              + t2.Cp(rhoi, ei, Ti)*x2;;
-            this->CvRef()[celli] =
+              + t2.Cp(rhoi, ei, Ti)*x2;
+            CvCells[celli] =
                 t1.Cv(rhoi, ei, Ti)*x1
               + t2.Cv(rhoi, ei, Ti)*x2;
-            this->alphaRef()[celli] =
-                t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
-              + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
+            kappaCells[celli] =
+                t1.kappa(rhoi, ei, Ti)*x1
+              + t2.kappa(rhoi, ei, Ti)*x2;
+
+            if (KappaCells)
+            {
+                (*KappaCells)[celli] =
+                    t1.Kappa(rhoi, ei, Ti)*x1
+                  + t2.Kappa(rhoi, ei, Ti)*x2;
+            }
         }
     }
+
+    const volScalarField::Boundary& rhoBf =
+        this->rho_.boundaryFieldRef();
+
+    volScalarField::Boundary& heBf = this->heRef().boundaryFieldRef();
+    volScalarField::Boundary& TBf = this->TRef().boundaryFieldRef();
+
+    volScalarField::Boundary& CpBf = this->CpRef().boundaryFieldRef();
+    volScalarField::Boundary& CvBf = this->CvRef().boundaryFieldRef();
+    volScalarField::Boundary& kappaBf =
+        this->kappaRef().boundaryFieldRef();
+    volVectorField::Boundary* KappaBf =
+        KappaCells
+      ? &(this->KappaRef().boundaryFieldRef())
+      : nullptr;
 
     this->TRef().correctBoundaryConditions();
     this->heRef().correctBoundaryConditions();
 
     forAll(this->T_.boundaryField(), patchi)
     {
-        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT =
-            this->TRef().boundaryField()[patchi];
-        const fvPatchScalarField& phe =
-            this->heRef().boundaryField()[patchi];
-        const scalarField px(this->x(patchi));
+        const fvPatchScalarField& prho = rhoBf[patchi];
+        const fvPatchScalarField& pT = TBf[patchi];
+        const fvPatchScalarField& phe = heBf[patchi];
+        tmp<scalarField> tpx(this->x(patchi));
+        const scalarField px = tpx();
 
-        fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& palpha =
-            this->alphaRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& pCp = CpBf[patchi];
+        fvPatchScalarField& pCv = CvBf[patchi];
+        fvPatchScalarField& pkappa = kappaBf[patchi];
+        fvPatchVectorField* pKappa =
+            KappaBf ? &(*KappaBf)[patchi] : nullptr;
 
         forAll(pT, facei)
         {
@@ -126,13 +163,23 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
             {
                 pCp[facei] = t1.Cp(rhoi, ei, Ti);
                 pCv[facei] = t1.Cv(rhoi, ei, Ti);
-                palpha[facei] = t1.kappa(rhoi, ei, Ti)/pCp[facei];
+                pkappa[facei] = t1.kappa(rhoi, ei, Ti);
+
+                if (pKappa)
+                {
+                    (*pKappa)[facei] = t1.Kappa(rhoi, ei, Ti);
+                }
             }
             else if (x1 < this->residualActivation_)
             {
                 pCp[facei] = t2.Cp(rhoi, ei, Ti);
                 pCv[facei] = t2.Cv(rhoi, ei, Ti);
-                palpha[facei] = t2.kappa(rhoi, ei, Ti)/pCp[facei];
+                pkappa[facei] = t2.kappa(rhoi, ei, Ti);
+
+                if (pKappa)
+                {
+                    (*pKappa)[facei] = t2.Kappa(rhoi, ei, Ti);
+                }
             }
             else
             {
@@ -142,9 +189,16 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                 pCv[facei] =
                     t1.Cv(rhoi, ei, Ti)*x1
                   + t2.Cv(rhoi, ei, Ti)*x2;
-                palpha[facei] =
-                    t1.kappa(rhoi, ei, Ti)/pCp[facei]*x1
-                  + t2.kappa(rhoi, ei, Ti)/pCp[facei]*x2;
+                pkappa[facei] =
+                    t1.kappa(rhoi, ei, Ti)*x1
+                  + t2.kappa(rhoi, ei, Ti)*x2;
+
+                if (pKappa)
+                {
+                    (*pKappa)[facei] =
+                        t1.Kappa(rhoi, ei, Ti)*x1
+                      + t2.Kappa(rhoi, ei, Ti)*x2;
+                }
             }
         }
     }
@@ -294,198 +348,6 @@ Foam::detonatingSolidBlastThermo<Thermo>::ESource() const
         "ESource",
         (activation_->ESource() + afterburn_->ESource())*this->rho_
     );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField> Foam::detonatingSolidBlastThermo<Thermo>::kappa() const
-{
-    return Thermo::blendedVolScalarFieldProperty
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        &Thermo::thermoType1::kappa,
-        &Thermo::thermoType2::kappa,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volVectorField>
-Foam::detonatingSolidBlastThermo<Thermo>::Kappa() const
-{
-    const fvMesh& mesh = this->T_.mesh();
-
-    tmp<volVectorField> tKappa
-    (
-        volVectorField::New
-        (
-            "Kappa",
-            mesh,
-            dimEnergy/dimTime/dimLength/dimTemperature
-        )
-    );
-
-    volVectorField& Kappa = tKappa.ref();
-    vectorField& KappaCells = Kappa.primitiveFieldRef();
-    const scalarField& rhoCells = this->rho_;
-    const scalarField& eCells = this->e_;
-    const scalarField& TCells = this->T_;
-
-    forAll(KappaCells, celli)
-    {
-        scalar x = cellx(celli);
-        if (x < this->residualActivation_)
-        {
-            Kappa[celli] =
-                Thermo::thermoType1::Kappa
-                (
-                    rhoCells[celli],
-                    eCells[celli],
-                    TCells[celli]
-                );
-        }
-        else if ((1.0 - x) < this->residualActivation_)
-        {
-            Kappa[celli] =
-                Thermo::thermoType2::Kappa
-                (
-                    rhoCells[celli],
-                    eCells[celli],
-                    TCells[celli]
-                );
-        }
-        else
-        {
-            Kappa[celli] =
-                Thermo::thermoType2::Kappa
-                (
-                    rhoCells[celli],
-                    eCells[celli],
-                    TCells[celli]
-                )*x
-              + Thermo::thermoType1::Kappa
-                (
-                    rhoCells[celli],
-                    eCells[celli],
-                    TCells[celli]
-                )*(1.0 - x);
-        }
-    }
-
-    volVectorField::Boundary& KappaBf = Kappa.boundaryFieldRef();
-
-    forAll(KappaBf, patchi)
-    {
-        vectorField& Kappap = KappaBf[patchi];
-        const scalarField& pRho = this->rho_.boundaryField()[patchi];
-        const scalarField& pe = this->e_.boundaryField()[patchi];
-        const scalarField& pT = this->T_.boundaryField()[patchi];
-        tmp<scalarField> xp(this->x(patchi));
-
-        forAll(Kappap, facei)
-        {
-            const scalar& x = xp()[facei];
-            if (x < this->residualActivation_)
-            {
-                Kappap[facei] =
-                    Thermo::thermoType1::Kappa
-                    (
-                        pRho[facei],
-                        pe[facei],
-                        pT[facei]
-                    );
-            }
-            else if ((1.0 - x) < this->residualActivation_)
-            {
-                Kappap[facei] =
-                    Thermo::thermoType2::Kappa
-                    (
-                        pRho[facei],
-                        pe[facei],
-                        pT[facei]
-                    );
-            }
-            else
-            {
-                Kappap[facei] =
-                    Thermo::thermoType2::Kappa
-                    (
-                        pRho[facei],
-                        pe[facei],
-                        pT[facei]
-                    )*x
-                  + Thermo::thermoType1::Kappa
-                    (
-                        pRho[facei],
-                        pe[facei],
-                        pT[facei]
-                    )*(1.0 - x);
-            }
-        }
-    }
-
-    return tKappa;
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::vectorField>
-Foam::detonatingSolidBlastThermo<Thermo>::Kappa(const label patchi) const
-{
-    const scalarField& pRho = this->rho_.boundaryField()[patchi];
-    const scalarField& pe = this->e_.boundaryField()[patchi];
-    const scalarField& pT = this->T_.boundaryField()[patchi];
-    tmp<vectorField> tKappa(new vectorField(pe.size()));
-
-    vectorField& Kappap = tKappa.ref();
-    tmp<scalarField> xp(this->x(patchi));
-
-    forAll(pe, facei)
-    {
-        const scalar& x = xp()[facei];
-        if (x < this->residualActivation_)
-        {
-            Kappap[facei] =
-                Thermo::thermoType1::Kappa
-                (
-                    pRho[facei],
-                    pe[facei],
-                    pT[facei]
-                );
-        }
-        else if ((1.0 - x) < this->residualActivation_)
-        {
-            Kappap[facei] =
-                Thermo::thermoType2::Kappa
-                (
-                    pRho[facei],
-                    pe[facei],
-                    pT[facei]
-                );
-        }
-        else
-        {
-            Kappap[facei] =
-                Thermo::thermoType2::Kappa
-                (
-                    pRho[facei],
-                    pe[facei],
-                    pT[facei]
-                )*x
-                + Thermo::thermoType1::Kappa
-                (
-                    pRho[facei],
-                    pe[facei],
-                    pT[facei]
-                )*(1.0 - x);
-        }
-    }
-
-    return tKappa;
 }
 
 

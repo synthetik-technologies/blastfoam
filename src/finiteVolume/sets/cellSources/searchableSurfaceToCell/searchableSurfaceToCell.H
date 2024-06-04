@@ -55,9 +55,6 @@ class searchableSurfaceToCell
 {
     // Private Data
 
-        //- Add usage string
-        static addToUsageTable usage_;
-
         //- Surface
         autoPtr<searchableSurface> surfacePtr_;
 
