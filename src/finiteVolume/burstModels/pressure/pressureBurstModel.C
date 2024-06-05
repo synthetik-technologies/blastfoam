@@ -129,6 +129,7 @@ void Foam::burstModels::pressure::writeData(Ostream& os) const
     writeEntry(os, "pName", pName_);
     writeEntry(os, "pBurst", pBurst_);
     writeEntry(os, "pRef", pRef_);
+    writeEntry(os, "useAverage", average_);
 }
 
 
