@@ -77,20 +77,17 @@ void Foam::burstFvPatchParent::makeIntact() const
     }
     else
     {
-        wordList patchTypes(mesh_.boundaryMesh().types());
-        wordList boundaryTypes(patchTypes);
+        wordList patchTypes(mesh_.boundaryMesh().size(), word::null);
+        wordList boundaryTypes
+        (
+            patchTypes.size(),
+            calculatedFvPatchField<scalar>::typeName
+        );
         forAll(mesh_.boundary(), patchi)
         {
-            if
-            (
-                isA<burstFvPatchBase>(mesh_.boundary()[patchi])
-            || !polyPatch::constraintType
-                (
-                    mesh_.boundaryMesh()[patchi].type()
-                )
-            )
+            if (isA<burstFvPatchBase>(mesh_.boundary()[patchi]))
             {
-                boundaryTypes[patchi] =
+                patchTypes[patchi] = mesh_.boundaryMesh()[patchi].type();
                     calculatedFvPatchField<scalar>::typeName;
             }
         }
