@@ -86,6 +86,10 @@ protected:
         //- Optional specification of smallest cell
         scalar minDx_;
 
+        //- Override error based on this estimator
+        //  (used with multicomponent)
+        bool override_;
+
         //- Are probes refined
         Switch refineProbes_;
 
@@ -187,6 +191,12 @@ public:
         label maxLevel() const
         {
             return maxLevel_;
+        }
+
+        //- Return override status
+        bool overrideError() const
+        {
+            return override_;
         }
 
         //- Return non constant reference to error field

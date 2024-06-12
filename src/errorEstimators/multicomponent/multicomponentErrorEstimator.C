@@ -120,7 +120,22 @@ void Foam::errorEstimators::multicomponent::update(const bool scale)
     forAll(errors_, i)
     {
         errors_[i].update(scale);
-        error = max(error,  errors_[i].error());
+        const volScalarField& ei = errors_[i].error();
+        if (errors_[i].overrideError())
+        {
+            forAll(error, celli)
+            {
+                // Force refinement/unrefinement
+                if (mag(ei[celli]) > small)
+                {
+                    error[celli] = ei[celli];
+                }
+            }
+        }
+        else
+        {
+            error = max(error,  ei);
+        }
     }
     error_ = error;
 }

@@ -136,6 +136,7 @@ Foam::errorEstimator::errorEstimator
     upperUnrefine_(0.0),
     maxLevel_(-1),
     minDx_(-1),
+    override_(false),
     refineProbes_(dict.lookupOrDefault("refineProbes", true)),
     force_(false),
     curTimeIndex_(-1)
@@ -173,10 +174,16 @@ void Foam::errorEstimator::read(const dictionary& dict)
             << "Either maxRefinement or minDx must be specified" << endl
             << abort(FatalIOError);
     }
+
+    override_ = dict.lookupOrDefault("override", false);
 }
 
 
-void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
+void Foam::errorEstimator::getFieldValue
+(
+    const word& name,
+    volScalarField& f
+) const
 {
     bool found = false;
     found = found || this->getFieldValueType<scalar>(name, f);
