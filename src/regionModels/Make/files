@@ -5,29 +5,27 @@ globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
 
 # Mapping methods
 patchToPatchMappings/patchToPatchMapping/patchToPatchMapping.C
+patchToPatchMappings/patchToPatchMapping/patchToPatchMappingParallelOps.C
 
-primitive=patchToPatchMappings/primitive
-$(primitive)/primitivePatchToPatchMapping.C
 
-direct=patchToPatchMappings/direct
-$(direct)/directPatchToPatchMapping.C
-
-nearestNeighbour=patchToPatchMappings/nearestNeighbour
-$(nearestNeighbour)/nearestNeighbourPatchToPatchMapping.C
+patchToPatchMappings/nearby/nearbyPatchToPatchMapping.C
+patchToPatchMappings/direct/directPatchToPatchMapping.C
+patchToPatchMappings/nearest/nearestPatchToPatchMapping.C
+patchToPatchMappings/inverseDistance/inverseDistancePatchToPatchMapping.C
 
 AMI = patchToPatchMappings/ami
-$(AMI)/newAMIInterpolation/newAMIInterpolationName.C
-$(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
-$(AMI)/amiPatchToPatchMapping.C
+#$(AMI)/newAMIInterpolation/newAMIInterpolationName.C
+#$(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
+#$(AMI)/amiPatchToPatchMapping.C
 
 GGI = patchToPatchMappings/ggi
-$(GGI)/GGIInterpolation/GGIInterpolationName.C
-$(GGI)/ggiPatchToPatchMapping.C
+#$(GGI)/GGIInterpolation/GGIInterpolationName.C
+#$(GGI)/ggiPatchToPatchMapping.C
 
 ifdef EIGEN_DIR
 RBF = patchToPatchMappings/rbf
-$(RBF)/RBFInterpolation/RBFInterpolation.C
-$(RBF)/rbfPatchToPatchMapping.C
+#$(RBF)/RBFInterpolation/RBFInterpolation.C
+#$(RBF)/rbfPatchToPatchMapping.C
 
 $(RBF)/RBFFunctions/RBFFunction/RBFFunction.C
 $(RBF)/RBFFunctions/RBFFunction/RBFFunctionNew.C

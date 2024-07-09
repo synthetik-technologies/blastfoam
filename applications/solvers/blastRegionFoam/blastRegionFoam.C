@@ -82,10 +82,16 @@ int main(int argc, char *argv[])
 
         #include "readTimeControls.H"
 
-        Info<< nl;
+        Info<< nl
+            << "****************************************"
+            << "****************************************" << endl;
         #include "setMultiRegionDeltaT.H"
-
         runTime++;
+        Info<< nl
+            << "Time = " << runTime.timeName() << nl
+            << "deltaT = " << runTime.deltaTValue() << nl
+            << "***************************************"
+            << "***************************************" << nl << endl;
 
         //- Solve all regions
         regions.solve();

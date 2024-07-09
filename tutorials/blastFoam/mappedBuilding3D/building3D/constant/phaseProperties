@@ -108,6 +108,7 @@ c4
 
         pMin            101300;  // Above this pressure activation is                                    // "turned on" [Pa]
 
+        active no;
         points ((0 0 0.5));
         radius      0.05;           // Set cell with in 0.05 m of
                                     // COM

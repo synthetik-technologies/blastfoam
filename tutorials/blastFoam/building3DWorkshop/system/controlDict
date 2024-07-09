@@ -81,6 +81,14 @@ functions
             impulse
         );
     }
+    exposure
+    {
+        type                TExposure;
+
+        writeControl        writeTime;
+        burnModel           Henriques;
+        source              WeaverStoll;
+    }
 
     surfaces
     {

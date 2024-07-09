@@ -1,0 +1,25 @@
+EXE_INC = \
+    -I$(FOAM_SRC)/meshTools/lnInclude \
+    -I$(FOAM_SRC)/finiteVolume/lnInclude \
+    -I$(FOAM_SRC)/fileFormats/lnInclude \
+    -I$(FOAM_SRC)/dynamicMesh/lnInclude \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
+    -I$(BLAST_DIR)/src/functionObjects/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
+    -IfiniteElements/lnInclude \
+    -IfeMesh1/lnInclude \
+    -ImaterialModels/lnInclude
+
+EXE_LIBS = \
+    -lmeshTools \
+    -lfiniteVolume \
+    -lfileFormats \
+    -L$(BLAST_LIBBIN) \
+    -lblastNumerics \
+    -lblastDynamicMesh \
+    -lblastFunctionObjects \
+    -lblastFiniteElements \
+    -lblastFeMesh1 \
+    -lblastFEMaterialModels
+
+

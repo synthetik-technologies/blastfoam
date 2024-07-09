@@ -69,6 +69,12 @@ protected:
         //- Displacement time series
         autoPtr<Function1<vector>> dispSeries_;
 
+        //- Displacment name
+        word displacementName_;
+
+        //- Displacment region
+        word regionName_;
+
         //- Patch interpolator to interpolate face values to the points
         mutable autoPtr<primitivePatchInterpolation> interpPtr_;
 

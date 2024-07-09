@@ -88,7 +88,6 @@ void Foam::burstFvPatchParent::makeIntact() const
             if (isA<burstFvPatchBase>(mesh_.boundary()[patchi]))
             {
                 patchTypes[patchi] = mesh_.boundaryMesh()[patchi].type();
-                    calculatedFvPatchField<scalar>::typeName;
             }
         }
         intactPtr_.set

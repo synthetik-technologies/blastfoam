@@ -87,7 +87,7 @@ c4
     initiation
     {
         E0              9.0e9;   // detonation energy in units of pressure
-        points     ((0 0 0.5));     // Detonation points
+        points     ((0 0 1));     // Detonation points
         vDet       7850;            // Detonation velocity [m/s]
         useCOM yes;                 // Overridden by the detonation points
     }

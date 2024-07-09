@@ -1,0 +1,3 @@
+Test-feShapes.C
+
+EXE = $(BLAST_APPBIN)/Test-feShapes

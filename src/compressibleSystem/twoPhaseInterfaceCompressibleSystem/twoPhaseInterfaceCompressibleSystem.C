@@ -193,11 +193,6 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         rho1Limiter->neiName(alphaRho1_.name()),
         alpha1Nei*trho1Nei()
     );
-    if (mesh().cacheTemporaryObject(talphaRho1Own().name()))
-    {
-        mesh().cacheTemporaryObject(talphaRho1Own.ref());
-        mesh().cacheTemporaryObject(talphaRho1Nei.ref());
-    }
 
     tmp<surfaceScalarField> talphaRho2Own = surfaceScalarField::New
     (
@@ -209,11 +204,6 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         rho2Limiter->ownName(alphaRho2_.name()),
         alpha2Nei*trho2Nei()
     );
-    if (mesh().cacheTemporaryObject(talphaRho2Own().name()))
-    {
-        mesh().cacheTemporaryObject(talphaRho2Own.ref());
-        mesh().cacheTemporaryObject(talphaRho2Nei.ref());
-    }
 
     surfaceScalarField rhoOwn
     (
@@ -225,11 +215,7 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         reconstruction::neiName(rho_.name()),
         talphaRho1Nei() + talphaRho2Nei()
     );
-    if (mesh().cacheTemporaryObject(rhoOwn.name()))
-    {
-        mesh().cacheTemporaryObject(rhoOwn);
-        mesh().cacheTemporaryObject(rhoNei);
-    }
+
 
     // Compute fluxes using the reconstructed total density
     fluxScheme_->update
@@ -245,6 +231,22 @@ void Foam::twoPhaseInterfaceCompressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
+
+    if (mesh().cacheTemporaryObject(talphaRho1Own().name()))
+    {
+        mesh().cacheTemporaryObject(talphaRho1Own.ref());
+        mesh().cacheTemporaryObject(talphaRho1Nei.ref());
+    }
+    if (mesh().cacheTemporaryObject(talphaRho2Own().name()))
+    {
+        mesh().cacheTemporaryObject(talphaRho2Own.ref());
+        mesh().cacheTemporaryObject(talphaRho2Nei.ref());
+    }
+    if (mesh().cacheTemporaryObject(rhoOwn.name()))
+    {
+        mesh().cacheTemporaryObject(rhoOwn);
+        mesh().cacheTemporaryObject(rhoNei);
+    }
 
     // Interface fields
     interface_.correct();

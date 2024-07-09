@@ -1235,34 +1235,39 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
 
        forAll(cellMidPoint, celli)
        {
-            const cell& cFaces = mesh_.cells()[celli];
-            forAll(cFaces, i)
+            if (cellMidPoint[celli] >= 0)
             {
-                label facei = cFaces[i];
-                const face& f = mesh_.faces()[facei];
-                forAll(f, fp)
+                const cell& cFaces = mesh_.cells()[celli];
+                forAll(cFaces, i)
                 {
-                    label pointi = f[fp];
-                    if
-                    (
-                        cellMidPoint[celli] >= 0
-                        && isDivisibleFace[facei]
-                        && pointLevel_[pointi] <= cellLevel_[celli]
-                    )
+                    label facei = cFaces[i];
+                    const face& f = mesh_.faces()[facei];
+                    forAll(f, fp)
                     {
-                        if (nAnchorPoints[celli] == 8)
+                        label pointi = f[fp];
+                        if
+                        (
+                            isDivisibleFace[facei]
+                         && pointLevel_[pointi] <= cellLevel_[celli]
+                        )
                         {
-                            dumpCell(celli);
-                            FatalErrorInFunction
-                                << "cell " << celli
-                                << " of level " << cellLevel_[celli]
-                                << " uses more than 8 points of equal or"
-                                << " lower level" << nl
-                                << "Points so far:" << cellAnchorPoints[celli]
-                                << abort(FatalError);
+                            if (nAnchorPoints[celli] == 8)
+                            {
+                                dumpCell(celli);
+                                FatalErrorInFunction
+                                    << "cell " << celli
+                                    << " of level "
+                                    << cellLevel_[celli]
+                                    << " uses more than 8 points "
+                                    << "of equal or lower level." << nl
+                                    << "Points so far:"
+                                    << cellAnchorPoints[celli] << nl
+                                    << "Adding point " << pointi
+                                    << abort(FatalError);
+                            }
+                            cellAnchorPoints[celli][nAnchorPoints[celli]++]
+                                = pointi;
                         }
-                        cellAnchorPoints[celli][nAnchorPoints[celli]++]
-                            = pointi;
                     }
                 }
             }

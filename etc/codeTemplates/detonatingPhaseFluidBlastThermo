@@ -67,6 +67,8 @@ rThermo
 
 uEquationOfState
 (
+    perfectGas
+    idealGas
     CochranChan
     Murnaghan
     BirchMurnaghan2

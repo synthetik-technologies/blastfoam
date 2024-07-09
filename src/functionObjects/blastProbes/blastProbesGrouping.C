@@ -44,6 +44,12 @@ void Foam::blastProbes::clearFieldGroups()
     surfaceSphericalTensorFields_.clear();
     surfaceSymmTensorFields_.clear();
     surfaceTensorFields_.clear();
+
+    pointScalarFields_.clear();
+    pointVectorFields_.clear();
+    pointSphericalTensorFields_.clear();
+    pointSymmTensorFields_.clear();
+    pointTensorFields_.clear();
 }
 
 
@@ -101,6 +107,31 @@ Foam::label Foam::blastProbes::appendFieldGroup
     else if (fieldType == surfaceTensorField::typeName)
     {
         surfaceTensorFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointScalarField::typeName)
+    {
+        pointScalarFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointVectorField::typeName)
+    {
+        pointVectorFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointSphericalTensorField::typeName)
+    {
+        pointSphericalTensorFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointSymmTensorField::typeName)
+    {
+        pointSymmTensorFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointTensorField::typeName)
+    {
+        pointTensorFields_.append(fieldName);
         return 1;
     }
 

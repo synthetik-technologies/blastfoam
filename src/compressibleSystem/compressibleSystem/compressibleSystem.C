@@ -164,8 +164,8 @@ Foam::compressibleSystem::compressibleSystem
             "rhoU",
             mesh.time().timeName(),
             mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedVector("0", dimDensity*dimVelocity, Zero),
@@ -178,8 +178,8 @@ Foam::compressibleSystem::compressibleSystem
             "rhoE",
             mesh.time().timeName(),
             mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
@@ -238,7 +238,8 @@ Foam::compressibleSystem::compressibleSystem
             mesh.time().constant(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            false
         ),
         dimensionedVector(dimAcceleration, Zero)
     ),
@@ -254,11 +255,6 @@ Foam::compressibleSystem::compressibleSystem
     {
         solutionDs_ = ((vector(mesh.geometricD()) + vector::one)/2.0);
     }
-
-    // Initialize oldTimes
-    U_.oldTime();
-    rhoU_.oldTime();
-    rhoE_.oldTime();
 }
 
 
@@ -523,7 +519,7 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
     );
 
     scalar CoNum =
-        0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
+        0.5*gMax(sumAmaxSf/mesh().Vsc()().field())*mesh().time().deltaTValue();
 
     scalar meanCoNum =
         0.5

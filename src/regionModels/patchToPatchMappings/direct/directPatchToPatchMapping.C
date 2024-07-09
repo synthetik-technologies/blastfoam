@@ -29,721 +29,151 @@ License
 #include "Time.H"
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
 namespace patchToPatchMappings
 {
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-defineTypeNameAndDebug(directPatchToPatchMapping, 0);
-addToRunTimeSelectionTable
-(
-    patchToPatchMapping,
-    directPatchToPatchMapping,
-    dictionary
-);
-
-
-const scalar directPatchToPatchMapping::relTol_ = 0.001;
+    defineTypeNameAndDebug(direct, 0);
+    addToRunTimeSelectionTable(patchToPatchMapping, direct, dictionary);
+}
+}
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void directPatchToPatchMapping::checkZoneSizes() const
+bool Foam::patchToPatchMappings::direct::forwardCheck
+(
+    const primitivePatch& patch,
+    const List<DynamicList<label>>& localOtherFaces,
+    const bool isSrc
+)
 {
-    if
-    (
-        zoneA().size() != zoneB().size()
-     || zoneA().nPoints() != zoneB().nPoints()
-    )
+    forAll(localOtherFaces, facei)
     {
-        FatalErrorInFunction
-            << "ZoneA and zoneB interfaces are not conformal (zoneA patch ="
-            << " " << globalPatchA().patchName() << ", zoneB "
-            << "patch = " << globalPatchB().patchName() << ")"
-            << nl
-            << "direct method requires conformal interfaces!"
-            << abort(FatalError);
-    }
-}
-
-
-void directPatchToPatchMapping::calcZoneAToZoneBFaceMap() const
-{
-    if (zoneAToZoneBFaceMapPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "List already set!" << abort(FatalError);
-    }
-
-    // Check zones are conformal
-    checkZoneSizes();
-
-    // Map name
-    const word mapName
-    (
-        "zoneAToZoneBFaceMap_" + globalPatchA().patchName()
-      + "_to_" + globalPatchB().patchName()
-    );
-
-    // Check if map needs to be read from disk
-    IOobject mapHeader
-    (
-        mapName,
-        globalPatchA().mesh().time().timeName(),
-        globalPatchA().mesh(),
-        IOobject::MUST_READ
-    );
-
-    if (mapHeader.typeHeaderOk<labelIOList>(true))
-    {
-        // Read map
-        Info<< "Reading " << mapName << " from disk" << endl;
-
-        zoneAToZoneBFaceMapPtr_.set
-        (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchA().mesh().time().timeName(),
-                    globalPatchA().mesh(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                )
-            )
-        );
-    }
-    else
-    {
-        // Initialise map
-        zoneAToZoneBFaceMapPtr_.set
-        (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchA().mesh().time().timeName(),
-                    globalPatchA().mesh(),
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                labelList(zoneB().size(), -1)
-            )
-        );
-        labelList& zoneAToZoneBMap = zoneAToZoneBFaceMapPtr_();
-
-        // Perform N^2 search for corresponding faces
-        // We will take 0.1% of the minEdgeLength as the exact match
-        // relative tolerance
-
-        const vectorField& zoneACf = zoneA().faceCentres();
-        const vectorField& zoneBCf = zoneB().faceCentres();
-        const scalar tol = relTol_*gMin(minEdgeLengths());
-
-        forAll(zoneBCf, zoneBFaceI)
+        if (localOtherFaces[facei].size() != 1)
         {
-            const vector& curZoneBCf = zoneBCf[zoneBFaceI];
+            FatalErrorInFunction
+                << (isSrc ? "Source" : "Target")
+                << " face #" << facei << " at "
+                << patch.faceCentres()[facei]
+                << " did not match a face on the "
+                << (isSrc ? "target" : "source")
+                << " side" << exit(FatalError);
+            return false;
+        }
+    }
+    return true;
+};
 
-            forAll(zoneACf, zoneAFaceI)
-            {
-                if (mag(curZoneBCf - zoneACf[zoneAFaceI]) < tol)
-                {
-                    zoneAToZoneBMap[zoneBFaceI] = zoneAFaceI;
-                    break;
-                }
-            }
+// Make sure every face is referenced by exactly one face
+bool Foam::patchToPatchMappings::direct::reverseCheck
+(
+    const primitivePatch& patch,
+    const List<DynamicList<label>>& otherLocalFaces,
+    const autoPtr<mapDistribute>& mapPtr,
+    const bool isSrc
+)
+{
+    labelList count
+    (
+        mapPtr.valid() ? mapPtr->constructSize() : patch.size(),
+        0
+    );
+
+    forAll(otherLocalFaces, otherFacei)
+    {
+        forAll(otherLocalFaces[otherFacei], i)
+        {
+            count[otherLocalFaces[otherFacei][i]] ++;
         }
     }
 
-    if (gMin(zoneAToZoneBFaceMapPtr_()) == -1)
+    if (mapPtr.valid())
     {
-        FatalErrorInFunction
-            << "Cannot calculate the map between interfaces!" << nl
-            << "ZoneA and zoneB interfaces are not conformal (zoneA patch ="
-            << " " << globalPatchA().patchName() << ", zoneB "
-            << "patch = " << globalPatchB().patchName() << ")"
-            << nl
-            << "Direct mapping can only be used with conformal interfaces!"
-            << abort(FatalError);
-    }
-}
-
-
-const labelIOList&
-directPatchToPatchMapping::zoneAToZoneBFaceMap() const
-{
-    if (zoneAToZoneBFaceMapPtr_.empty())
-    {
-        calcZoneAToZoneBFaceMap();
-    }
-
-    return zoneAToZoneBFaceMapPtr_;
-}
-
-
-void directPatchToPatchMapping::calcZoneBToZoneAFaceMap() const
-{
-    if (zoneBToZoneAFaceMapPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "Map already set!"
-            << abort(FatalError);
-    }
-
-    // Check zones are conformal
-    checkZoneSizes();
-
-    // Map name
-    const word mapName
-    (
-        "zoneBToZoneAFaceMap_" + globalPatchB().patchName()
-      + "_to_" + globalPatchA().patchName()
-    );
-
-    // Check if map needs to be read from disk
-    IOobject mapHeader
-    (
-        mapName,
-        globalPatchB().mesh().time().timeName(),
-        globalPatchB().mesh(),
-        IOobject::MUST_READ
-    );
-
-    if (mapHeader.typeHeaderOk<labelIOList>(true))
-    {
-        // Read map
-        Info<< "Reading " << mapName << "from disk" << endl;
-
-        zoneBToZoneAFaceMapPtr_.set
+        mapDistributeBase::distribute
         (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchB().mesh().time().timeName(),
-                    globalPatchB().mesh(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                )
-            )
+            Pstream::commsTypes::nonBlocking,
+            List<labelPair>(),
+            patch.size(),
+            mapPtr->constructMap(),
+            false,
+            mapPtr->subMap(),
+            false,
+            count,
+            plusEqOp<label>(),
+            flipOp(),
+            label(0)
         );
     }
-    else
+
+    forAll(count, facei)
     {
-        // Initialise map
-        zoneBToZoneAFaceMapPtr_.set
-        (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchB().mesh().time().timeName(),
-                    globalPatchB().mesh(),
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                labelList(zoneA().size(), -1)
-            )
-        );
-        labelList& zoneBToZoneAMap = zoneBToZoneAFaceMapPtr_();
-
-        // Perform N^2 search for corresponding faces
-        // We will take 0.1% of the minEdgeLength as the exact match
-        // tolerance
-
-        const vectorField& zoneACf = zoneA().faceCentres();
-        const vectorField& zoneBCf = zoneB().faceCentres();
-        const scalar tol = relTol_*gMin(minEdgeLengths());
-
-        forAll(zoneACf, zoneAFaceI)
+        if (count[facei] != 1)
         {
-            const vector& curZoneACf = zoneACf[zoneAFaceI];
+            FatalErrorInFunction
+                << (isSrc ? "Source" : "Target")
+                << " face #" << facei << " at "
+                << patch.faceCentres()[facei]
+                << " did not match a face on the "
+                << (isSrc ? "target" : "source")
+                << " side" << exit(FatalError);
 
-            forAll(zoneBCf, zoneBFaceI)
-            {
-                if (mag(curZoneACf - zoneBCf[zoneBFaceI]) < tol)
-                {
-                    zoneBToZoneAMap[zoneAFaceI] = zoneBFaceI;
-                    break;
-                }
-            }
+            return false;
         }
     }
+    return true;
+};
 
-    if (gMin(zoneBToZoneAFaceMapPtr_()) == -1)
-    {
-        FatalErrorInFunction
-            << "Cannot calculate the map between interfaces!" << nl
-            << "ZoneA and zoneB interfaces are not conformal (zoneA patch ="
-            << " " << globalPatchA().patchName() << ", zoneB "
-            << "patch = " << globalPatchB().patchName() << ")"
-            << nl
-            << "Direct mapping can only be used with conformal interfaces!"
-            << abort(FatalError);
-    }
-}
-
-
-const labelIOList&
-directPatchToPatchMapping::zoneBToZoneAFaceMap() const
+Foam::label Foam::patchToPatchMappings::direct::finalise
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0,
+    const transformer& tgtToSrc
+)
 {
-    if (zoneBToZoneAFaceMapPtr_.empty())
-    {
-        calcZoneBToZoneAFaceMap();
-    }
-
-    return zoneBToZoneAFaceMapPtr_;
-}
-
-
-void directPatchToPatchMapping::calcZoneAToZoneBPointMap() const
-{
-    if (zoneAToZoneBPointMapPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "Map already set!"
-            << abort(FatalError);
-    }
-
-    // Check zones are conformal
-    checkZoneSizes();
-
-    // Map name
-    const word mapName
-    (
-        "zoneAToZoneBPointMap_" + globalPatchA().patchName()
-      + "_to_" + globalPatchB().patchName()
-    );
-
-    // Check if map needs to be read from disk
-    IOobject mapHeader
-    (
-        mapName,
-        globalPatchA().mesh().time().timeName(),
-        globalPatchA().mesh(),
-        IOobject::MUST_READ
-    );
-
-    if (mapHeader.typeHeaderOk<labelIOList>(true))
-    {
-        // Read map
-        Info<< "Reading " << mapName << " from disk" << endl;
-
-        zoneAToZoneBPointMapPtr_.set
+    const label nCouples =
+        nearest::finalise
         (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchA().mesh().time().timeName(),
-                    globalPatchA().mesh(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                )
-            )
+            srcPatch,
+            srcPts0,
+            tgtPatch,
+            tgtPts0,
+            pointNormals,
+            pointNormals0,
+            tgtToSrc
         );
-    }
-    else
-    {
-        // Initialise map
-        zoneAToZoneBPointMapPtr_.set
-        (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchA().mesh().time().timeName(),
-                    globalPatchA().mesh(),
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                labelList(zoneB().nPoints(), -1)
-            )
-        );
-        labelList& zoneAToZoneBMap = zoneAToZoneBPointMapPtr_();
 
-        // Perform N^2 search for corresponding points
-        // We will take 0.1% of the minEdgeLength as the exact match
-        // tolerance
+    forwardCheck(srcPatch, localTgtToSrc_, true);
+    forwardCheck(tgtPatch, localSrcToTgt_, false);
 
-        const vectorField& zoneALP = zoneA().localPoints();
-        const vectorField& zoneBLP = zoneB().localPoints();
-        const scalar tol = relTol_*gMin(minEdgeLengths());
+    reverseCheck(srcPatch, localSrcToTgt_, srcMapPtr_, true);
+    reverseCheck(tgtPatch, localTgtToSrc_, tgtMapPtr_, false);
 
-        forAll(zoneBLP, zoneBPointI)
-        {
-            const vector& curZoneBLP = zoneBLP[zoneBPointI];
-
-            forAll(zoneALP, zoneAPointI)
-            {
-                if (mag(curZoneBLP - zoneALP[zoneAPointI]) < tol)
-                {
-                    zoneAToZoneBMap[zoneBPointI] = zoneAPointI;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (gMin(zoneAToZoneBPointMapPtr_()) == -1)
-    {
-        FatalErrorInFunction
-            << "Cannot calculate the map between interfaces!" << nl
-            << "ZoneA and zoneB interfaces are not conformal (zoneA patch ="
-            << " " << globalPatchA().patchName() << ", zoneB "
-            << "patch = " << globalPatchB().patchName() << ")"
-            << nl
-            << "Direct mapping can only be used with conformal interfaces!"
-            << abort(FatalError);
-    }
-}
-
-
-const labelIOList&
-directPatchToPatchMapping::zoneAToZoneBPointMap() const
-{
-    if (zoneAToZoneBPointMapPtr_.empty())
-    {
-        calcZoneAToZoneBPointMap();
-    }
-
-    return zoneAToZoneBPointMapPtr_;
-}
-
-
-void directPatchToPatchMapping::calcZoneBToZoneAPointMap() const
-{
-    if (zoneBToZoneAPointMapPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "Map already set!"
-            << abort(FatalError);
-    }
-
-    // Check zones are conformal
-    checkZoneSizes();
-
-    // Map name
-    const word mapName
-    (
-        "zoneBToZoneAPointMap_" + globalPatchB().patchName()
-      + "_to_" + globalPatchA().patchName()
-    );
-
-    // Check if map needs to be read from disk
-    IOobject mapHeader
-    (
-        mapName,
-        globalPatchB().mesh().time().timeName(),
-        globalPatchB().mesh(),
-        IOobject::MUST_READ
-    );
-
-    if (mapHeader.typeHeaderOk<labelIOList>(true))
-    {
-        // Read map
-        Info<< "Reading " << mapName << "from disk" << endl;
-
-        zoneBToZoneAPointMapPtr_.set
-        (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchB().mesh().time().timeName(),
-                    globalPatchB().mesh(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                )
-            )
-        );
-    }
-    else
-    {
-        // Initialise map
-        zoneBToZoneAPointMapPtr_.set
-        (
-            new labelIOList
-            (
-                IOobject
-                (
-                    mapName,
-                    globalPatchB().mesh().time().timeName(),
-                    globalPatchB().mesh(),
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                labelList(zoneA().nPoints(), -1)
-            )
-        );
-        labelList& zoneBToZoneAMap = zoneBToZoneAPointMapPtr_();
-
-        // Perform N^2 search for corresponding points
-        // We will take 0.1% of the minEdgeLength as the exact match
-        // tolerance
-
-        const vectorField& zoneALP = zoneA().localPoints();
-        const vectorField& zoneBLP = zoneB().localPoints();
-        const scalar tol = relTol_*gMin(minEdgeLengths());
-
-        forAll(zoneALP, zoneAPointI)
-        {
-            const vector& curZoneALP = zoneALP[zoneAPointI];
-
-            forAll(zoneBLP, zoneBPointI)
-            {
-                if (mag(curZoneALP - zoneBLP[zoneBPointI]) < tol)
-                {
-                    zoneBToZoneAMap[zoneAPointI] = zoneBPointI;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (gMin(zoneBToZoneAPointMapPtr_()) == -1)
-    {
-        FatalErrorInFunction
-            << "Cannot calculate the map between interfaces!" << nl
-            << "ZoneA and zoneB interfaces are not conformal (zoneA patch ="
-            << " " << globalPatchA().patchName() << ", zoneB "
-            << "patch = " << globalPatchB().patchName() << ")"
-            << nl
-            << "Direct mapping can only be used with conformal interfaces!"
-            << abort(FatalError);
-    }
-}
-
-
-const labelIOList&
-directPatchToPatchMapping::zoneBToZoneAPointMap() const
-{
-    if (zoneBToZoneAPointMapPtr_.empty())
-    {
-        calcZoneBToZoneAPointMap();
-    }
-
-    return zoneBToZoneAPointMapPtr_();
-
-}
-
-
-void directPatchToPatchMapping::calcMinEdgeLengths() const
-{
-    if (minEdgeLengthsPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "Pointer already set!"
-            << abort(FatalError);
-    }
-
-    minEdgeLengthsPtr_.set(new scalarField(zoneA().nPoints(), 0));
-    scalarField& minEdgeLength = minEdgeLengthsPtr_();
-
-    const edgeList& edges = zoneA().edges();
-    const vectorField& points = zoneA().localPoints();
-    const labelListList& pointEdges = zoneA().pointEdges();
-
-    forAll(points, pointI)
-    {
-        const labelList& curPointEdges = pointEdges[pointI];
-
-        scalar minLength = GREAT;
-
-        forAll(curPointEdges, edgeI)
-        {
-            const edge& curEdge = edges[curPointEdges[edgeI]];
-
-            scalar Le = curEdge.mag(points);
-
-            if (Le < minLength)
-            {
-                minLength = Le;
-            }
-        }
-
-        minEdgeLength[pointI] = minLength;
-    }
-}
-
-
-const scalarField& directPatchToPatchMapping::minEdgeLengths() const
-{
-    if (minEdgeLengthsPtr_.empty())
-    {
-        calcMinEdgeLengths();
-    }
-
-    return minEdgeLengthsPtr_();
+    return nCouples;
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-directPatchToPatchMapping::directPatchToPatchMapping
+Foam::patchToPatchMappings::direct::direct
 (
+    const primitivePatch& srcPatch,
+    const primitivePatch& tgtPatch,
     const dictionary& dict,
-    const primitivePatch& patchA,
-    const primitivePatch& patchB,
-    const globalPolyPatch& globalPatchA,
-    const globalPolyPatch& globalPatchB
+    const bool reverse
 )
 :
-    patchToPatchMapping
-    (
-        typeName_(), dict, patchA, patchB, globalPatchA, globalPatchB
-    ),
-    zoneAToZoneBFaceMapPtr_(),
-    zoneBToZoneAFaceMapPtr_(),
-    zoneAToZoneBPointMapPtr_(),
-    zoneBToZoneAPointMapPtr_(),
-    minEdgeLengthsPtr_()
-{
-    // Force calculation of maps upon constuction as they may need to be read
-    // from disk to allow restarts
-    zoneAToZoneBFaceMap();
-    zoneBToZoneAFaceMap();
-    zoneAToZoneBPointMap();
-    zoneBToZoneAPointMap();
-}
+    nearest(srcPatch, tgtPatch, dict, reverse)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void directPatchToPatchMapping::transferFaces
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<scalar>& fromField,  // from field
-    Field<scalar>& toField           // to field
-) const
-{
-    transferFaces<scalar>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferFaces
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<vector>& fromField,  // from field
-    Field<vector>& toField           // to field
-) const
-{
-    transferFaces<vector>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferFaces
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<symmTensor>& fromField,  // from field
-    Field<symmTensor>& toField           // to field
-) const
-{
-    transferFaces<symmTensor>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferFaces
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<sphericalTensor>& fromField,  // from field
-    Field<sphericalTensor>& toField           // to field
-) const
-{
-    transferFaces<sphericalTensor>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferFaces
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<tensor>& fromField,  // from field
-    Field<tensor>& toField           // to field
-) const
-{
-    transferFaces<tensor>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferPoints
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<scalar>& fromField,  // from field
-    Field<scalar>& toField           // to field
-) const
-{
-    transferPoints<scalar>(fromZone, toZone, fromField, toField);
-}
-
-void directPatchToPatchMapping::transferPoints
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<vector>& fromField,  // from field
-    Field<vector>& toField           // to field
-) const
-{
-    transferPoints<vector>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferPoints
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<symmTensor>& fromField,  // from field
-    Field<symmTensor>& toField           // to field
-) const
-{
-    transferPoints<symmTensor>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferPoints
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<sphericalTensor>& fromField,  // from field
-    Field<sphericalTensor>& toField           // to field
-) const
-{
-    transferPoints<sphericalTensor>(fromZone, toZone, fromField, toField);
-}
-
-
-void directPatchToPatchMapping::transferPoints
-(
-    const standAlonePatch& fromZone, // from zone
-    const standAlonePatch& toZone,   // to zone
-    const Field<tensor>& fromField,  // from field
-    Field<tensor>& toField           // to field
-) const
-{
-    transferPoints<tensor>(fromZone, toZone, fromField, toField);
-}
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace patchToPatchMappings
-
-} // End namespace Foam
 
 // ************************************************************************* //

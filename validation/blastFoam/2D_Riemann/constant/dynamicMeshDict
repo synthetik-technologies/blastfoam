@@ -15,6 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dynamicFvMesh   adaptiveFvMesh;
+refiner         polyRefiner;
 errorEstimator  densityGradient;
 scaledDeltaField rho;
 

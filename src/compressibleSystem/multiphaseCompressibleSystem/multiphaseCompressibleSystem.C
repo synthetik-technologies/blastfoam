@@ -62,14 +62,15 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 {
     this->fluxScheme_ = fluxScheme::NewMulti(phi_);
 
+    bool allRead = rhoU_.headerOk() && rhoE_.headerOk();
+    const bool initialDecode =
+        this->lookupOrDefault<bool>("initialDecode", false);
+
     forAll(alphas_, phasei)
     {
         // Ensure boundaries are updated
         alphas_[phasei].correctBoundaryConditions();
-        alphas_[phasei].oldTime();
-
         rhos_[phasei].correctBoundaryConditions();
-        rhos_[phasei].oldTime();
 
         word phaseName = alphas_[phasei].group();
         sharpen_[phasei] = this->subDict(phaseName).lookupOrDefault("sharpen", false);
@@ -83,13 +84,19 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
                 (
                     IOobject::groupName("alphaRho", phaseName),
                     mesh.time().timeName(),
-                    mesh
+                    mesh,
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::AUTO_WRITE
                 ),
                 alphas_[phasei]*rhos_[phasei],
                 rhos_[phasei].boundaryField().types()
             )
         );
-        alphaRhos_[phasei].oldTime();
+        if (initialDecode && !alphaRhos_[phasei].headerOk())
+        {
+            alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
+            alphaRhos_[phasei].correctBoundaryConditions();
+        }
 
         alphaPhis_.set
         (
@@ -128,6 +135,11 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
         thermoPtr_->initializeModels();
         this->setModels();
 
+        if (initialDecode && allRead)
+        {
+            Info<< "Decoding conservative fields"<<endl;
+            decode();
+        }
         encode();
     }
 }

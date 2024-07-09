@@ -135,6 +135,9 @@ public:
 
         //- Return thermal conductivity
         tmp<volScalarField> k() const;
+
+        //- Return the source term for the energy equation
+        tmp<fvScalarMatrix> divq();
 };
 
 

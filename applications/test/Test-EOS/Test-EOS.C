@@ -29,7 +29,8 @@ int main(int argc, char *argv[])
         rho = eos.rhoPT(rho, p, T);
     }
     scalar e = eos.Es(rho, 0, T);
-    // p = eos.p(rho, e, T);
+    e = eos.initializeEnergy(p, rho, e, T);
+    p = eos.p(rho, e, T);
 //
 //     label n = 1000;
 //     std::vector<scalar> rhos(n, 0.0);
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
     Info<<"rho: "<< rho <<endl;
     Info<<"e: "<< e <<endl;
     Info<<"gamma: "<< eos.Gamma(rho, e, T) <<endl;
-    Info<<"p: "<< eos.p(rho, e, T) <<endl;
+    Info<<"p: "<< p<<endl;//eos.p(rho, e, T) <<endl;
     Info<<"c: "<< Foam::sqrt(eos.cSqr(p, rho, e, T)) <<endl;
     Info<<"T: "<< eos.TRhoE(T, rho, e) <<endl;
     Info<<"Cp: "<< eos.Cp(rho, e, T) <<endl;

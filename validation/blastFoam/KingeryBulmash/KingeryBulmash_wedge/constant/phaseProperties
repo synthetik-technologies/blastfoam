@@ -26,28 +26,26 @@ tnt
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnaghan;
+            equationOfState perfectGas;
         }
         equationOfState
         {
-            rho0            1630;
-            Gamma           0.29;
-            K0              0.0;
-            pRef            101325;
+            gamma           1.4;            // Heat capactiy ratio
         }
         specie
         {
-            molWeight       227.13;
+            molWeight       30.295;
         }
         transport
         {
-            mu              0;              // Viscosity
-            Pr              1;              // Prandtl number
+            mu              0;
+            Pr              1;
         }
         thermodynamics
         {
-            Cv              1500;           // Heat capacity
-            Hf              0.0;
+            type        eConst;
+            Cv          1491;
+            Hf          0;
         }
     }
     products
@@ -92,6 +90,8 @@ tnt
             (0 0 0)
         );
         vDet       6985; //7850;
+        advection yes;              // The reaction progress variable is allowed
+                                    // to move with the explosive mass
     }
 
     residualRho     1e-6;           // Minimum density of the phase

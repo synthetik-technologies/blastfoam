@@ -407,25 +407,35 @@ bool Foam::fvMeshRefiner::writeObject
     {
         volScalarField scalarCellLevel
         (
-            volScalarField::New
+            IOobject
             (
                 "cellLevel",
+                mesh_.time().timeName(),
                 mesh_,
-                dimensionedScalar(dimless, 0),
-                extrapolatedCalculatedFvPatchField<scalar>::typeName
-            )
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh_,
+            dimensionedScalar(dimless, 0),
+            extrapolatedCalculatedFvPatchField<scalar>::typeName
         );
         scalarCellLevel.primitiveFieldRef() = scalarList(refiner_->cellLevel());
         scalarCellLevel.correctBoundaryConditions();
 
         pointScalarField scalarPointLevel
         (
-            pointScalarField::New
+            IOobject
             (
                 "pointLevel",
-                pointMesh::New(mesh_),
-                dimensionedScalar(dimless, 0.0)
-            )
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            pointMesh::New(mesh_),
+            dimensionedScalar(dimless, 0.0)
         );
         scalarPointLevel.primitiveFieldRef() = scalarList(refiner_->pointLevel());
 

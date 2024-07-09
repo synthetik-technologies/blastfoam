@@ -28,23 +28,48 @@ regions
 (
     cylinderToCell
     {
-        p1 (-0.5 0.5 -1);
-        p2 (-0.5 0.5  1);
+        p1 (-1 0.5 -1);
+        p2 (-1 0.5 1);
         radius 0.025;
         backup
         {
-            p1 (-0.5 0.5 -1);
-            p2 (-0.5 0.5  1 );
-            radius 0.1;
+            p1 (-1 0.5 -1);
+            p2 (-1 0.5 1);
+            radius 0.25;
         }
         refineInternal yes;
-        level 3;
+        level 4;
 
         fieldValues
         (
             volScalarFieldValue alpha.c4    1
         );
     }
+    patchToFace
+    {
+        name flap;
+        level 3;
+        refineFaces yes;
+    }
+//     cylinderToCell
+//     {
+//         p1 (-0.5 0.5 -1);
+//         p2 (-0.5 0.5  1);
+//         radius 0.025;
+//         backup
+//         {
+//             p1 (-0.5 0.5 -1);
+//             p2 (-0.5 0.5  1 );
+//             radius 0.1;
+//         }
+//         refineInternal yes;
+//         level 3;
+//
+//         fieldValues
+//         (
+//             volScalarFieldValue alpha.c4    1
+//         );
+//     }
 );
 
 

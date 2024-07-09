@@ -46,14 +46,14 @@ laplacianSchemes
 interpolationSchemes
 {
     default         linear;
-    reconstruct(alpha)  quadraticMUSCL Minmod;
-    reconstruct(rho)    quadraticMUSCL Minmod;
-    reconstruct(U)      quadraticMUSCL Minmod;
-    reconstruct(e)      quadraticMUSCL Minmod;
-    reconstruct(p)      quadraticMUSCL Minmod;
-    reconstruct(speedOfSound) quadraticMUSCL Minmod;
+    reconstruct(alpha)  vanLeer;
+    reconstruct(rho)    vanLeer;
+    reconstruct(U)      vanLeer;
+    reconstruct(e)      vanLeer;
+    reconstruct(p)      vanLeer;
+    reconstruct(speedOfSound) vanLeer;
 
-    "reconstruct(.*)"   quadraticMUSCL Minmod;
+    "reconstruct(.*)"   vanLeer;
 }
 
 snGradSchemes

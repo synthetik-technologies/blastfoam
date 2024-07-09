@@ -53,150 +53,50 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
             << abort(FatalError);
     }
 
-    const pointField& pts = this->globalPatch().points();
-    const pointField& samplePts = samplePatch().globalPatch().points();
-    boundBox bb(pts, false);
-    boundBox sampleBb(samplePts, false);
-
-    boundBox inflatedBb(bb);
-    boundBox inflatedSampleBb(sampleBb);
-    inflatedBb.inflate(1e-4);
-    inflatedSampleBb.inflate(1e-4);
-
-    if (!inflatedBb.contains(sampleBb))
-    {
-        labelHashSet unmapped;
-        labelList& unmappedPoints = samplePatch().unmappedPoints_;
-        forAll(samplePts, pti)
-        {
-            if (!inflatedBb.contains(samplePts[pti]))
-            {
-                unmapped.insert(pti);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = samplePatch().pointToGlobalAddr();
-            label pI = 0;
-            unmappedPoints.resize(addr.size());
-            forAll(addr, pi)
-            {
-                label gpI = addr[pi];
-                if (unmapped.found(gpI))
-                {
-                    unmappedPoints[pI++] = pi;
-                }
-            }
-            unmappedPoints.resize(pI);
-        }
-        else
-        {
-            unmappedPoints = unmapped.toc();
-        }
-
-        unmapped.clear();
-        labelList& unmappedFaces = samplePatch().unmappedFaces_;
-        const pointField& fc = samplePatch().globalPatch().faceCentres();
-        forAll(fc, fi)
-        {
-            if (!inflatedBb.contains(fc[fi]))
-            {
-                unmapped.insert(fi);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = samplePatch().faceToGlobalAddr();
-            label fI = 0;
-            unmappedFaces.resize(addr.size());
-            forAll(addr, fi)
-            {
-                label gfI = addr[fi];
-                if (unmapped.found(gfI))
-                {
-                    unmappedFaces[fI++] = fi;
-                }
-            }
-            unmappedFaces.resize(fI);
-        }
-        else
-        {
-            unmappedFaces = unmapped.toc();
-        }
-    }
-
-    if (!inflatedSampleBb.contains(bb))
-    {
-        labelHashSet unmapped;
-        forAll(pts, pti)
-        {
-            if (!inflatedSampleBb.contains(pts[pti]))
-            {
-                unmapped.insert(pti);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = pointToGlobalAddr();
-            label pI = 0;
-            unmappedPoints_.resize(addr.size());
-            forAll(addr, pi)
-            {
-                label gpI = addr[pi];
-                if (unmapped.found(gpI))
-                {
-                    unmappedPoints_[pI++] = pi;
-                }
-            }
-            unmappedPoints_.resize(pI);
-        }
-        else
-        {
-            unmappedPoints_ = unmapped.toc();
-        }
-
-        unmapped.clear();
-        const pointField& fc = this->globalPatch().faceCentres();
-        forAll(fc, fi)
-        {
-            if (!inflatedSampleBb.contains(fc[fi]))
-            {
-                unmapped.insert(fi);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = faceToGlobalAddr();
-            label fI = 0;
-            unmappedFaces_.resize(addr.size());
-            forAll(addr, fi)
-            {
-                label gfI = addr[fi];
-                if (unmapped.found(gfI))
-                {
-                    unmappedFaces_[fI++] = fi;
-                }
-            }
-            unmappedFaces_.resize(fI);
-        }
-        else
-        {
-            unmappedFaces_ = unmapped.toc();
-        }
-    }
+    isSrc_ = dict_.found("mappingType");
+    samplePatch().isSrc_ = !isSrc_;
+Info<<mesh_.name()<<" "<<isSrc_<<nl
+    << samplePatch().mesh().name()<<" "<<samplePatch().isSrc_<<endl;
+    const coupledGlobalPolyPatch& masterPatch =
+        isSrc_
+      ? *this
+      : samplePatch();
+    const coupledGlobalPolyPatch& slavePatch =
+        isSrc_
+      ? samplePatch()
+      : *this;
 
     patchToPatchInterpPtr_ =
         patchToPatchMapping::New
         (
-            dict_.found("mappingType")
-          ? dict_
-          : samplePatch().dict_,
-            patch(),
-            samplePatch().patch(),
-            *this,
-            samplePatch()
+            masterPatch.physicalPatch(),
+            slavePatch.physicalPatch(),
+            masterPatch.dict_,
+            false
         ).ptr();
-    samplePatch().setPatchToPatchInterp(patchToPatchInterpPtr_);
+
+    bool masterMoving =
+        &masterPatch.physicalPatch() != &masterPatch.physicalPatch0();
+    bool slaveMoving =
+        &slavePatch.physicalPatch() != &slavePatch.physicalPatch0();
+
+    patchToPatchInterpPtr_->update
+    (
+        masterMoving
+      ? masterPatch.physicalPatch0().points()
+      : NullObjectRef<pointField>(),
+        slaveMoving
+      ? slavePatch.physicalPatch0().points()
+      : NullObjectRef<pointField>(),
+        masterPatch.physicalPatch().pointNormals(),
+        masterMoving
+      ? masterPatch.physicalPatch0().pointNormals()
+      : NullObjectRef<vectorField>()
+    );
+
+    unmappedFaces_ = patchToPatchInterpPtr_->unmapped(physicalPatch());
+//     unmappedPoints_ = patchToPatchInterpPtr_->unmappedPoints(physicalPatch());
+//     samplePatch().setPatchToPatchInterp(patchToPatchInterpPtr_);
 }
 
 
@@ -206,6 +106,13 @@ void Foam::coupledGlobalPolyPatch::setPatchToPatchInterp
 ) const
 {
     patchToPatchInterpPtr_ = interpPtr;
+    if (patchToPatchInterpPtr_)
+    {
+        unmappedFaces_ =
+            patchToPatchInterpPtr_->unmapped(physicalPatch());
+//         unmappedPoints_ =
+//             patchToPatchInterpPtr_->unmappedPoints(physicalPatch());
+    }
 }
 
 
@@ -220,10 +127,7 @@ void Foam::coupledGlobalPolyPatch::clearInterp(const bool top) const
 {
     if (patchToPatchInterpPtr_)
     {
-        deleteDemandDrivenData
-        (
-            patchToPatchInterpPtr_
-        );
+        deleteDemandDrivenData(patchToPatchInterpPtr_);
         unmappedFaces_.clear();
         unmappedPoints_.clear();
 
@@ -314,16 +218,6 @@ void Foam::coupledGlobalPolyPatch::update()
 void Foam::coupledGlobalPolyPatch::movePoints(const bool clear)
 {
     globalPolyPatch::movePoints(clear);
-}
-
-
-void Foam::coupledGlobalPolyPatch::movePoints
-(
-    const pointField& newPoints,
-    const bool clear
-)
-{
-    globalPolyPatch::movePoints(newPoints, clear);
 }
 
 

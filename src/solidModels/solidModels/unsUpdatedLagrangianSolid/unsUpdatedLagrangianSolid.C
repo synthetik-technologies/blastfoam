@@ -67,7 +67,6 @@ unsUpdatedLagrangianSolid::unsUpdatedLagrangianSolid(dynamicFvMesh& mesh)
 bool unsUpdatedLagrangianSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfDD;

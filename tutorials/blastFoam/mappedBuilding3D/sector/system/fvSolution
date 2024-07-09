@@ -17,7 +17,7 @@ FoamFile
 
 solvers
 {
-    "(rho|rhoU|rhoE|alpha)"
+    "(rho|rhoU|rhoE|alpha).*"
     {
         solver          diagonal;
     }

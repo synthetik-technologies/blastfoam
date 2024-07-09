@@ -1,7 +1,7 @@
 
 p 1e5;
-rho 950;
-T 400;
+rho 1000;
+T 300;
 calculateDensity no;
 
 thermoType
@@ -12,8 +12,7 @@ thermoType
 
     transport   const;
     thermo      eConst;
-    equationOfState stiffenedGas;
-    equationOfState AbelNobelSG;
+    equationOfState Gruneisen;
 }
 equationOfState
 {
@@ -31,13 +30,21 @@ equationOfState
 //     R2        0.95;
 //     omega     0.3;
 
-    gamma       1.19;
-    pInf        6.2178e8;
-    b           6.7212e-4;
+//     gamma       1.19;
+//     pInf        6.2178e8;
+//     b           6.7212e-4;
+
+    rho0 1000;
+    C 1480;
+    S1 1.75;
+    S2 0;
+    S3 0;
+    Gamma 0.28;
+    a 0;
 }
 specie
 {
-    molWeight       22.393;
+    molWeight       18.01;
 }
 transport
 {
@@ -46,12 +53,14 @@ transport
 }
 thermodynamics
 {
-    Cv          3610;           // Heat capacity
+    Cv          3270;           // Heat capacity
     // eCoeffs<9>     (-1250.0 0.28 0.0003 0 0 0 0 0 0);           // Heat capacity
     // CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
     CvCoeffs<8>     (280 0.6 0 0 0 0 0 0);           // Heat capacity
     Sf              0.0;
     Hf              0.0;
+    Tref 300;
+    Esref 357.169;
 }
 // thermoType
 // {

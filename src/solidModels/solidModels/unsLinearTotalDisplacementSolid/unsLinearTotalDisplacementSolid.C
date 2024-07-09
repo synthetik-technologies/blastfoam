@@ -65,7 +65,6 @@ unsLinearTotalDisplacementSolid::unsLinearTotalDisplacementSolid
 bool unsLinearTotalDisplacementSolid::evolve()
 {
     Info << "Evolving solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfD;

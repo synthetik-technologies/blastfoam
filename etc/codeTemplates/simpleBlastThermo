@@ -63,6 +63,8 @@ equationOfState
     tabulated
     VanderWaals
     PengRobinson
+    AbelNobelSG
+    Gruneisen
 );
 
 specie
@@ -73,6 +75,7 @@ specie
 codeOptions
 #{
 EXE_INC = \
+    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/thermophysicalProperties/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \

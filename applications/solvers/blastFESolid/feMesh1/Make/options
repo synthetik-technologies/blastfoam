@@ -1,0 +1,15 @@
+EXE_INC = \
+    -I$(FOAM_SRC)/meshTools/lnInclude \
+    -I$(FOAM_SRC)/fileFormats/lnInclude \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
+    -I../finiteElements/lnInclude
+
+LIB_LIBS = \
+    -lmeshTools \
+    -lfileFormats \
+    -L$(BLAST_LIBBIN) \
+    -lblastNumerics \
+    -lblastFunctionObjects \
+    -lblastFiniteElements
+
+

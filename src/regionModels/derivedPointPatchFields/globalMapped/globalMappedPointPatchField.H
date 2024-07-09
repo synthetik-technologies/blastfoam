@@ -62,6 +62,16 @@ protected:
         //- Name of neighbour displacement field
         const word nbrName_;
 
+        //- Remove initial field
+        bool useRefState_;
+
+        //- Reference displacement field
+        Field<Type> f0_;
+
+        //- Has the reference field been set
+        bool refSet_;
+
+
 
 public:
 
@@ -91,7 +101,8 @@ public:
         (
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&,
-            const word&
+            const word&,
+            const bool
         );
 
         //- Construct by mapping given globalMappedPointPatchField

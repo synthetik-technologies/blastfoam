@@ -48,10 +48,7 @@ addToRunTimeSelectionTable(solidModel, linearSolid, dictionary);
 linearSolid::linearSolid(dynamicFvMesh& mesh)
 :
     LinearGeomSolid<incrementalSolid>(typeName, mesh)
-{
-    //- Dummy Call to make sure the necessary old fields are initialized
-    fvc::d2dt2(rho().oldTime(), D().oldTime());
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -60,9 +57,10 @@ linearSolid::linearSolid(dynamicFvMesh& mesh)
 bool linearSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     // Mesh update loop
+    mesh().update();
+
     do
     {
         int iCorr = 0;
@@ -81,7 +79,7 @@ bool linearSolid::evolve()
             fvVectorMatrix DDEqn
             (
                 rho()*fvm::d2dt2(DD())
-              + rho()*fvc::d2dt2(D().oldTime())
+              + rho()*fvc::ddt(U())
              == fvm::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
               - fvc::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
               + fvc::div(sigma(), "div(sigma)")
@@ -100,6 +98,7 @@ bool linearSolid::evolve()
 
             // Update the total displacement
             D() = D().oldTime() + DD();
+            U() = fvc::ddt(D());
 
             // Update gradient of displacement increment
             mechanical().grad(DD(), gradDD());

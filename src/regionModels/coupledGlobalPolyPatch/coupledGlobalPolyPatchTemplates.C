@@ -29,43 +29,61 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::tmp<Foam::Field<Type> >
+Foam::tmp<Foam::Field<Type>>
 Foam::coupledGlobalPolyPatch::pointInterpolate
 (
-    const Field<Type>& pField
+    const Field<Type>& pField,
+    const Field<Type>& unmapped
 ) const
 {
-    if (pField.size() == this->nPatchPoints())
-    {
-        return samplePatch().globalPointToPatch
-        (
-            this->patchToPatchInterpolator().transferPoints
-            (
-                globalPatch(),
-                this->patchPointToGlobal(pField)
-            )
-        );
-    }
-    else
+    if (pField.size() != this->physicalPatch().nPoints())
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch points." << nl
-            << "Patch size: " << this->nPatchPoints() << nl
+            << "Patch size: " << this->physicalPatch().nPoints() << nl
             << "Field size: " << pField.size()
             << abort(FatalError);
         return tmp<Field<Type>>();
+    }
+
+    // TODO handle point interpolation
+    const patchToPatchMapping& mapper = patchToPatchInterpolator();
+    if (!isSrc_)
+    {
+        return
+            samplePatch().faceToPoint
+            (
+                mapper.transferToTgt
+                (
+                    this->pointToFace(pField),
+                    unmapped
+                )
+            );
+    }
+    else
+    {
+        return
+            samplePatch().faceToPoint
+            (
+                mapper.transferToSrc
+                (
+                    this->pointToFace(pField),
+                    unmapped
+                )
+            );
     }
 }
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type> >
+Foam::tmp<Foam::Field<Type>>
 Foam::coupledGlobalPolyPatch::pointInterpolate
 (
-    const tmp<Field<Type>>& pField
+    const tmp<Field<Type>>& tpField,
+    const Field<Type>& unmapped
 ) const
 {
-    return pointInterpolate(pField());
+    return pointInterpolate(tpField(), unmapped);
 }
 
 
@@ -73,28 +91,38 @@ template<class Type>
 Foam::tmp<Foam::Field<Type> >
 Foam::coupledGlobalPolyPatch::faceInterpolate
 (
-    const Field<Type>& fField
+    const Field<Type>& fField,
+    const Field<Type>& unmapped
 ) const
 {
-    if (fField.size() == this->nPatchFaces())
-    {
-        return samplePatch().globalFaceToPatch
-        (
-            this->patchToPatchInterpolator().transferFaces
-            (
-                globalPatch(),
-                this->patchFaceToGlobal(fField)
-            )
-        );
-    }
-    else
+    if (fField.size() != this->physicalPatch().size())
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch faces." << nl
-            << "Patch size: " << this->nPatchFaces() << nl
+            << "Patch size: " << this->physicalPatch().size() << nl
             << "Field size: " << fField.size()
             << abort(FatalError);
         return tmp<Field<Type>>();
+    }
+
+    const patchToPatchMapping& mapper = patchToPatchInterpolator();
+    if (isSrc_)
+    {
+        return
+            mapper.transferToTgt
+            (
+                fField,
+                unmapped
+            );
+    }
+    else
+    {
+        return
+            mapper.transferToSrc
+            (
+                fField,
+                unmapped
+            );
     }
 }
 
@@ -103,104 +131,12 @@ template<class Type>
 Foam::tmp<Foam::Field<Type> >
 Foam::coupledGlobalPolyPatch::faceInterpolate
 (
-    const tmp<Field<Type>>& fField
+    const tmp<Field<Type>>& fField,
+    const Field<Type>& unmapped
 ) const
 {
 
-    return faceInterpolate(fField());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> >
-Foam::coupledGlobalPolyPatch::faceToPointInterpolate
-(
-    const Field<Type>& fField
-) const
-{
-    if (fField.size() == this->nPatchFaces())
-    {
-        const globalPolyPatch& sPatch(samplePatch());
-        return sPatch.globalPointToPatch
-        (
-            patchToPatchInterpolator().transferPoints
-            (
-                globalPatch(),
-                interpolator().faceToPointInterpolate
-                (
-                    this->patchFaceToGlobal(fField)
-                )
-            )
-        );
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Patch field does not correspond to patch faces." << nl
-            << "Patch size: " << this->nPatchFaces() << nl
-            << "Field size: " << fField.size()
-            << abort(FatalError);
-        return tmp<Field<Type>>();
-    }
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> >
-Foam::coupledGlobalPolyPatch::faceToPointInterpolate
-(
-    const tmp<Field<Type>>& fField
-) const
-{
-
-    return faceToPointInterpolate(fField());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> >
-Foam::coupledGlobalPolyPatch::pointToFaceInterpolate
-(
-    const Field<Type>& pField
-) const
-{
-
-    if (pField.size() == this->nPatchPoints())
-    {
-        const globalPolyPatch& sPatch(samplePatch());
-        return sPatch.globalFaceToPatch
-        (
-            this->patchToPatchInterpolator().transferFaces
-            (
-                globalPatch(),
-                this->interpolator().pointToFaceInterpolate
-                (
-                    samplePatch().patchPointToGlobal(pField)
-                )
-            )
-        );
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Patch field does not correspond to patch points." << nl
-            << "Patch size: " << this->nPatchPoints() << nl
-            << "Field size: " << pField.size()
-            << abort(FatalError);
-        return tmp<Field<Type>>();
-    }
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> >
-Foam::coupledGlobalPolyPatch::pointToFaceInterpolate
-(
-    const tmp<Field<Type>>& pField
-) const
-{
-
-    return pointToFaceInterpolate(pField());
+    return faceInterpolate(fField(), unmapped);
 }
 
 

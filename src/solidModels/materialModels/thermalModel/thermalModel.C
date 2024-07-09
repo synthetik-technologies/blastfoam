@@ -216,6 +216,12 @@ Foam::tmp<Foam::volScalarField> Foam::thermalModel::k() const
 }
 
 
+Foam::tmp<Foam::fvScalarMatrix> Foam::thermalModel::divq()
+{
+    return dynamicCast<solidBlastThermo>(thermoPtr_()).divq(thermoPtr_->he());
+}
+
+
 void Foam::thermalModel::correct()
 {
     if (subsetMeshes_.valid())

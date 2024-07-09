@@ -32,6 +32,8 @@ License
 #include "pointMesh.H"
 #include "pointFields.H"
 #include "valuePointPatchFields.H"
+#include "movingObject.H"
+#include "uniformDimensionedFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -123,6 +125,8 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
     fixedValueFvPatchVectorField(p, iF),
     totalDisp_(p.size(), vector::zero),
     dispSeries_(),
+    displacementName_(word::null),
+    regionName_(word::null),
     interpPtr_()
 {}
 
@@ -138,6 +142,8 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
     fixedValueFvPatchVectorField(ptf, p, iF, mapper),
     totalDisp_(mapper(ptf.totalDisp_)),
     dispSeries_(ptf.dispSeries_, false),
+    displacementName_(word::null),
+    regionName_(word::null),
     interpPtr_()
 {}
 
@@ -152,6 +158,8 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
     fixedValueFvPatchVectorField(p, iF, dict),
     totalDisp_(p.size()),
     dispSeries_(),
+    displacementName_(word::null),
+    regionName_(word::null),
     interpPtr_()
 {
     totalDisp_ = *this;
@@ -175,6 +183,12 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
             dispSeries_->value(this->db().time().timeOutputValue())
         );
     }
+    else if (dict.found("displacementName"))
+    {
+        dict.readIfPresent("displacementName", displacementName_);
+        dict.readIfPresent("displacementRegion", regionName_);
+    }
+
 }
 
 
@@ -187,6 +201,8 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
     fixedValueFvPatchVectorField(pivpvf, iF),
     totalDisp_(pivpvf.totalDisp_),
     dispSeries_(pivpvf.dispSeries_, false),
+    displacementName_(pivpvf.displacementName_),
+    regionName_(pivpvf.regionName_),
     interpPtr_()
 {}
 
@@ -255,6 +271,34 @@ void fixedDisplacementFvPatchVectorField::updateCoeffs()
             disp -= Dold.boundaryField()[patch().index()];
         }
         Field<vector>::operator=(disp);
+    }
+    else if (!displacementName_.empty())
+    {
+        const objectRegistry& obr =
+            !regionName_.empty()
+          ? db().time().lookupObject<objectRegistry>(regionName_)
+          : db();
+        if (obr.foundObject<movingObject>(displacementName_))
+        {
+            const movingObject& object =
+                obr.lookupObject<movingObject>(displacementName_);
+            Field<vector>::operator=
+            (
+                object.centreOfMass() - object.initialCentreOfMass()
+            );
+        }
+        else if
+        (
+            obr.foundObject<uniformDimensionedVectorField>(displacementName_)
+        )
+        {
+            const uniformDimensionedVectorField& disp =
+                obr.lookupObject<uniformDimensionedVectorField>
+                (
+                    displacementName_
+                );
+            Field<vector>::operator=(disp.value());
+        }
     }
 
     fixedValueFvPatchVectorField::updateCoeffs();

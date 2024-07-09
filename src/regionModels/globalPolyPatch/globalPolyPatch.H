@@ -68,7 +68,7 @@ protected:
         word patchName_;
 
         //- Reference to patch
-        const polyPatch& patch_;
+        const polyPatch& polyPatch_;
 
         //- Optional displacement field
         word displacementField_;
@@ -78,21 +78,27 @@ protected:
 
         // Demand-driven private data
 
-            //- Primitive patch made out of faces from parallel decomposition
-            mutable autoPtr<standAlonePatch> globalPatchPtr_;
+            //- Displaced patch points
+            mutable autoPtr<pointField> displacedPointsPtr_;
 
-            //- Patch point to zone addressing
-            mutable autoPtr<labelList> pointToGlobalAddrPtr_;
+            //- Displaced/local patch
+            mutable autoPtr<primitivePatch> physicalPatchPtr_;
 
-            //- Patch face to zone addressing
-            mutable autoPtr<labelList> faceToGlobalAddrPtr_;
+            //- Old displaced patch points
+            mutable autoPtr<pointField> displacedPoints0Ptr_;
 
-            //- Patch interpolator
-            mutable autoPtr<PrimitivePatchInterpolation<standAlonePatch>> interpPtr_;
+            //- Old primitive patch
+            mutable autoPtr<primitivePatch> physicalPatch0Ptr_;
 
-            //- Local patch interpolator
-            mutable autoPtr<primitivePatchInterpolation> localInterpPtr_;
+            //- Point to face interpolator
+            mutable autoPtr<primitivePatchInterpolation>
+                pointToFaceInterpolatorPtr_;
 
+            // Face to point weights
+            mutable List<scalarField>* faceToPointWeightsPtr_;
+
+            // Sum of face to point weights
+            mutable scalarField* faceToPointSumWeightsPtr_;
 
     // Private Member Functions
 
@@ -103,16 +109,22 @@ protected:
         void operator=(const globalPolyPatch&);
 
         //- Build global primitive patch
-        virtual void calcGlobalPatch() const;
+        virtual void calcPhysicalPatch() const;
 
-        //- Make the interpolator
-        virtual void calcInterp() const;
+        //- Make the point to face interpolator
+        void calcPointToFaceInterpolation() const;
 
-        //- Make the local interpolator
-        virtual void calcLocalInterp() const;
+        //- Make the face to point interpolator
+        void calcFaceToPointInterpolation() const;
 
-        //- Check
-        virtual void check() const;
+        //- Return face to point interpolation weights
+        const List<scalarField>& faceToPointWeights() const;
+
+        //- Return sum of face to point interpolation weights
+        const scalarField& faceToPointSumWeights() const;
+
+        //- Return reference to the local interpolator
+        const primitivePatchInterpolation& pointToFaceInterpolator() const;
 
 
 public:
@@ -170,34 +182,19 @@ public:
             return patchName_;
         }
 
-        virtual label nPatchFaces() const
-        {
-            return patch_.size();
-        }
-
-        virtual label nPatchPoints() const
-        {
-            return patch_.nPoints();
-        }
-
         //- Return mesh reference
         const polyMesh& mesh() const;
-
-        //- Map storing the local face index for every global face index.
-        //  Used to find out the index of face in the zone from the known
-        //   global face index.  If the face is not in the zone, returns -1
-        label whichFace(const label globalFaceID) const;
 
         //- Return reference to patch
         const polyPatch& patch() const
         {
-            return patch_;
+            return polyPatch_;
         }
 
         //- Set displacement field name
-        void setDisplacementField(const word& f)
+        void setDisplacementField(const word& Dname)
         {
-            displacementField_ = f;
+            displacementField_ = Dname;
         }
 
         //- Set inverse displacement flag
@@ -209,106 +206,33 @@ public:
         //- Return if the global patch is currently set
         bool valid() const
         {
-            return globalPatchPtr_.valid();
+            return physicalPatchPtr_.valid();
         }
 
-        //- Return reference to global patch
-        const standAlonePatch& globalPatch() const;
+        //- Return the physical patch
+        const primitivePatch& physicalPatch() const;
 
-        //- Return reference to the interpolator
-        const PrimitivePatchInterpolation<standAlonePatch>&
-        interpolator() const;
+        //- Return the old physical patch
+        const primitivePatch& physicalPatch0() const;
 
-        //- Return reference to the local interpolator
-        const primitivePatchInterpolation& localInterpolator() const;
-
-        //- Return patch point to global point addressing
-        const labelList& pointToGlobalAddr() const;
-
-        //- Return patch face to global face addressing
-        const labelList& faceToGlobalAddr() const;
 
         // Interpolation
-
-            //- Interpolate patch to global patch point data
-            template<class Type>
-            tmp<Field<Type> > patchPointToGlobal
-            (
-                const Field<Type>& pField
-            ) const;
-
-            template<class Type>
-            tmp<Field<Type> > patchPointToGlobal
-            (
-                const tmp<Field<Type>>& pField
-            ) const;
-
-            //- Filter global patch point data to patch
-            template<class Type>
-            tmp<Field<Type> > globalPointToPatch
-            (
-                const Field<Type>& gField
-            ) const;
-
-            template<class Type>
-            tmp<Field<Type> > globalPointToPatch
-            (
-                const tmp<Field<Type>>& gField
-            ) const;
-
-            //- Interpolate patch to global patch face data
-            template<class Type>
-            tmp<Field<Type> > patchFaceToGlobal
-            (
-                const Field<Type>& pField
-            ) const;
-
-            template<class Type>
-            tmp<Field<Type> > patchFaceToGlobal
-            (
-                const tmp<Field<Type>>& pField
-            ) const;
-
-            //- Filter global patch face data to patch
-            template<class Type>
-            tmp<Field<Type> > globalFaceToPatch
-            (
-                const Field<Type>& gField
-            ) const;
-
-            template<class Type>
-            tmp<Field<Type> > globalFaceToPatch
-            (
-                const tmp<Field<Type>>& gField
-            ) const;
 
             //- Interpolate patch faces to points
             //  local face -> global face -> global point -> local point
             template<class Type>
-            tmp<Field<Type> > faceToPoint
-            (
-                const Field<Type>& fField
-            ) const;
+            tmp<Field<Type>> faceToPoint(const Field<Type>& fFld) const;
 
             template<class Type>
-            tmp<Field<Type> > faceToPoint
-            (
-                const tmp<Field<Type>>& fField
-            ) const;
+            tmp<Field<Type>> faceToPoint(const tmp<Field<Type>>& tfFld) const;
 
             //- Interpolate patch points to faces
             //  points do not need to be made global
             template<class Type>
-            tmp<Field<Type> > pointToFace
-            (
-                const Field<Type>& pField
-            ) const;
+            tmp<Field<Type>> pointToFace(const Field<Type>& pFld) const;
 
             template<class Type>
-            tmp<Field<Type> > pointToFace
-            (
-                const tmp<Field<Type>>& pField
-            ) const;
+            tmp<Field<Type>> pointToFace(const tmp<Field<Type>>& tpFld) const;
 
 
         //- Force updat
@@ -316,9 +240,6 @@ public:
 
         //- Correct patch after moving points
         virtual void movePoints(const bool clear);
-
-        //- Move points
-        virtual void movePoints(const pointField& pts, const bool clear = true);
 
         //- Update for changes in topology
         virtual void updateMesh();

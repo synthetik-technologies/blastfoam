@@ -110,7 +110,6 @@ bool Foam::regionSolvers::blast::changeMesh()
 
 void Foam::regionSolvers::blast::solve()
 {
-    Info<< "Calculating Fluxes" << endl;
     integrator_.integrate();
 
     Info<< "max(p): " << max(fluid_->p()).value()

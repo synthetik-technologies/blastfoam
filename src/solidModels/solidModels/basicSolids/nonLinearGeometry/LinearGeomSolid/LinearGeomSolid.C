@@ -71,16 +71,23 @@ bool LinearGeomSolid<IncrementalModel>::write(const bool write) const
         // Write strain fields
 
         // Total strain
-        volSymmTensorField epsilon("epsilon", symm(this->gradD()));
+        tmp<volSymmTensorField> epsilon
+        (
+            volSymmTensorField::New("epsilon", symm(this->gradD()))
+        );
 
         // Equivalent strain
-        volScalarField epsilonEq
+        tmp<volScalarField> epsilonEq
         (
-            "epsilonEq", sqrt((2.0/3.0)*magSqr(dev(epsilon)))
+            volScalarField::New
+            (
+                "epsilonEq",
+                sqrt((2.0/3.0)*magSqr(dev(epsilon())))
+            )
         );
-        Info<< "Max epsilonEq = " << gMax(epsilonEq) << endl;
+        Info<< "Max epsilonEq = " << max(epsilonEq()).value() << endl;
 
-        good = epsilon.write() && epsilonEq.write();
+        good = epsilon().write() && epsilonEq().write();
     }
     return good && IncrementalModel::write(write);
 }

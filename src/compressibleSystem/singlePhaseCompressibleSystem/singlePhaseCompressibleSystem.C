@@ -67,14 +67,21 @@ Foam::singlePhaseCompressibleSystem::~singlePhaseCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::singlePhaseCompressibleSystem::decode()
+{
+    this->rhoEff().correctBoundaryConditions();
+    compressibleBlastSystem::decode();
+
+}
 void Foam::singlePhaseCompressibleSystem::solve()
 {
     volScalarField& rho = this->rhoEff();
+    dimensionedScalar dT = rho.time().deltaT();
+
     volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
     this->fvTimeInt_->addDeltaSource(rho_.name(), deltaRho);
     this->storeAndBlendDelta(deltaRho);
 
-    dimensionedScalar dT = rho.time().deltaT();
     this->storeAndBlendOld(rho);
 
     rho.storePrevIter();

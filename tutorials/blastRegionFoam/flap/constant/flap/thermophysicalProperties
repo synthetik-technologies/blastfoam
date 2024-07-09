@@ -30,7 +30,7 @@ specie
 }
 equationOfState
 {
-    rho0             2500;
+    rho0             2300;
 }
 transport
 {

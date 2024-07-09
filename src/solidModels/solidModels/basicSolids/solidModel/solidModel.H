@@ -114,9 +114,6 @@ class solidModel
         //  approaches
         volSymmTensorField sigma_;
 
-        //- Density
-        volScalarField& rho_;
-
         //- Gravitational acceleration
         const uniformDimensionedVectorField g_;
 
@@ -195,6 +192,9 @@ protected:
         wordList pointDBoundaryTypes(const volVectorField& D) const;
 
         virtual void readDict();
+
+        //- Construct null
+        solidModel(const word& type, dynamicFvMesh& mesh);
 
 
 public:
@@ -505,7 +505,7 @@ public:
             virtual tmp<Foam::vectorField> nf(const fvPatch& patch) const = 0;
 
             //- Return the patch implicit stiffness
-            virtual const scalarField& impK(const fvPatch& patch) const = 0;
+            virtual tmp<scalarField> impK(const fvPatch& patch) const = 0;
 
             //- Return the patch stress
             virtual const symmTensorField& sigma(const fvPatch& patch) const
@@ -526,6 +526,12 @@ public:
                 const volVectorField& DD,
                 pointVectorField& pointDD
             );
+
+            //- Read from dictionary
+            virtual bool read();
+
+//             //- Read from dictionary
+//             virtual bool readIfModified();
 
             //- Write fields
             virtual bool write(const bool write = true) const;

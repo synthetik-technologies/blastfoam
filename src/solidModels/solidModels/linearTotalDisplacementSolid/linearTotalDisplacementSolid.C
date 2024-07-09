@@ -106,7 +106,6 @@ linearTotalDisplacementSolid::linearTotalDisplacementSolid
 bool linearTotalDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     if (predictor_)
     {

@@ -89,7 +89,10 @@ bool Foam::fieldAccelerationScheme::readControls(const dictionary& dict)
 {
     if
     (
-        (mesh_.name() != polyMesh::defaultRegion && !dict.isDict(mesh_.name()))
+        (
+            mesh_.name() != polyMesh::defaultRegion
+         && !dict.isDict(mesh_.name())
+        )
      || !this->size())
     {
         tolerance_ = -1.0;

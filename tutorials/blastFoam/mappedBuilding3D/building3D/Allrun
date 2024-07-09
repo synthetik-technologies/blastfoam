@@ -30,8 +30,8 @@ fi
 
 # -- Set the initial conditions for the fluid
 #    rho is mapped for use with AMR
-runParallel rotateFields $sourceCase \
-    -sourceTime 1e-4 -additionalFields '(rho lambda.c4)' -uniform \
+runParallel rotateConservativeFields $sourceCase \
+    -sourceTime 1e-4 -additionalFields '(rho lambda.c4 impulse)' -uniform \
     -refine $parSource
 
 #- Run the calc
