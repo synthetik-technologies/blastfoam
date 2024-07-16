@@ -38,6 +38,8 @@ License
 #include "IFstream.H"
 #include "vtkWriteOps.H"
 #include "OSspecific.H"
+#include "indexedOctree.H"
+#include "treeDataCell.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -52,6 +54,25 @@ namespace Foam
         blastProbes,
         dictionary
     );
+
+    template<>
+    const char* Foam::NamedEnum
+    <
+        Foam::blastProbes::SearchType,
+        5
+    >::names[] =
+    {
+        "octree",
+        "facePlanes",
+        "faceCentreTri",
+        "faceDiagTri",
+        "cellTets"
+    };
+    const Foam::NamedEnum
+    <
+        Foam::blastProbes::SearchType,
+        5
+    > Foam::blastProbes::searchTypeNames_;
 }
 
 
@@ -81,13 +102,33 @@ void Foam::blastProbes::findElements
     boolList foundList(size(), false);
     label nBadProbes = 0;
 
+    if (searchType_ < OCTREE)
+    {
+        forAll(*this, probei)
+        {
+            elementList_[probei] = mesh.findCell
+            (
+                operator[](probei),
+                static_cast<polyMesh::cellDecomposition>(searchType_)
+            );
+        }
+    }
+    else
+    {
+        const indexedOctree<treeDataCell>& tree = mesh.cellTree();
+        forAll(*this, probei)
+        {
+            elementList_[probei] = tree.findInside
+            (
+                operator[](probei)
+            );
+        }
+    }
+
     forAll(*this, probei)
     {
         const vector& location = operator[](probei);
-
-        const label celli = mesh.findCell(location);
-
-        elementList_[probei] = celli;
+        const label celli = elementList_[probei];
         faceList_[probei] = findFaceIndex(mesh, celli, location);
     }
 
@@ -351,6 +392,12 @@ Foam::label Foam::blastProbes::prepare()
         currentFields.insert(surfaceSymmTensorFields_);
         currentFields.insert(surfaceTensorFields_);
 
+        currentFields.insert(pointScalarFields_);
+        currentFields.insert(pointVectorFields_);
+        currentFields.insert(pointSphericalTensorFields_);
+        currentFields.insert(pointSymmTensorFields_);
+        currentFields.insert(pointTensorFields_);
+
         if (debug)
         {
             Info<< "Probing fields: " << currentFields << nl
@@ -579,7 +626,8 @@ Foam::blastProbes::blastProbes
     fixedLocations_(false),
     adjustLocations_(false),
     interpolationScheme_("cell"),
-    append_(false)
+    append_(false),
+    searchType_(OCTREE)
 {
     read(dict);
 }
@@ -601,7 +649,8 @@ Foam::blastProbes::blastProbes
     fixedLocations_(false),
     adjustLocations_(false),
     interpolationScheme_("cell"),
-    append_(false)
+    append_(false),
+    searchType_(OCTREE)
 {
     read(dict);
 }
@@ -639,6 +688,10 @@ bool Foam::blastProbes::read(const dictionary& dict)
                 << "not using fixedLocations.  InterpolationScheme "
                 << "entry will be ignored";
         }
+    }
+    if (dict.found("searchType"))
+    {
+        searchType_ = searchTypeNames_.read(dict.lookup("searchType"));
     }
 
     dict.readIfPresent("append", append_);
@@ -727,6 +780,12 @@ bool Foam::blastProbes::write()
         sampleAndWriteSurfaceFields(surfaceSphericalTensorFields_);
         sampleAndWriteSurfaceFields(surfaceSymmTensorFields_);
         sampleAndWriteSurfaceFields(surfaceTensorFields_);
+
+        sampleAndWritePointFields(pointScalarFields_);
+        sampleAndWritePointFields(pointVectorFields_);
+        sampleAndWritePointFields(pointSphericalTensorFields_);
+        sampleAndWritePointFields(pointSymmTensorFields_);
+        sampleAndWritePointFields(pointTensorFields_);
     }
 
     return true;
