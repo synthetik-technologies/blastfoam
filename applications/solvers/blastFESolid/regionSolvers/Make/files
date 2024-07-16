@@ -1,0 +1,4 @@
+coupledSolidTraction/coupledSolidTractionBoundaryTraction.C
+feSolidRegionSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastFeSolidSolvers
