@@ -48,7 +48,13 @@ Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
             << exit(FatalError);
     }
 
-    return cstrIter()(dict.optionalSubDict(reactionRateType + "Coeffs"));
+    return cstrIter()
+    (
+        dict.optionalSubDict
+        (
+            reactionRateType + "ReactionRateCoeffs"
+        )
+    );
 
 }
 
