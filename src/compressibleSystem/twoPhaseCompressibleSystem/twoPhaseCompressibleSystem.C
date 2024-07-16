@@ -72,7 +72,9 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         (
             IOobject::groupName("alphaRho", rho1_.group()),
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         alpha1_*rho1_
     ),
@@ -82,7 +84,9 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         (
             IOobject::groupName("alphaRho", rho2_.group()),
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         alpha2_*rho2_
     ),
@@ -130,16 +134,20 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     thermo_.initializeModels();
     this->setModels();
 
+    if
+    (
+        this->lookupOrDefault<bool>("initialDecode", false)
+     && alpha1_.headerOk()
+     && alphaRho1_.headerOk()
+     && alphaRho2_.headerOk()
+     && rhoU_.headerOk()
+     && rhoE_.headerOk()
+    )
+    {
+        Info<< "Decoding conservative fields"<<endl;
+        decode();
+    }
     encode();
-
-    alpha1_.oldTime();
-    alpha2_.oldTime();
-    rho1_.oldTime();
-    rho2_.oldTime();
-
-    rho_.storeOldTime();
-    alphaRho1_.oldTime();
-    alphaRho2_.oldTime();
 }
 
 

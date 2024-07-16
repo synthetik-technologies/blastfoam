@@ -63,6 +63,9 @@ public:
 
     // Member functions
 
+        //- Decode primative variables
+        virtual void decode();
+
         //- Solve sub-step stepi
         virtual void solve();
 
