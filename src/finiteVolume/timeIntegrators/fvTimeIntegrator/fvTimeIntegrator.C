@@ -78,6 +78,12 @@ void Foam::fvTimeIntegrator::updateAll()
     // All fields are scaled according to the true volume
     if (mesh_.moving())
     {
+        tmp<volScalarField::Internal> tV0(mesh_.Vsc0());
+        const volScalarField::Internal& V0 = tV0();
+
+        tmp<volScalarField::Internal> tV(mesh_.Vsc());
+        const volScalarField::Internal& V = tV();
+
         if (!V0Ptr_.valid())
         {
             V0Ptr_.set
@@ -90,13 +96,13 @@ void Foam::fvTimeIntegrator::updateAll()
                         mesh_.time().timeName(),
                         mesh_
                     ),
-                    (mesh_.V0() + f0()*(mesh_.V() - mesh_.V0()))/mesh_.V()
+                    (V0 + f0()*(V - V0))/V
                 )
             );
         }
         else
         {
-            V0Ptr_() = (mesh_.V0() + f0()*(mesh_.V() - mesh_.V0()))/mesh_.V();
+            V0Ptr_() = (V0 + f0()*(V - V0))/V;
         }
 
         if (!VPtr_.valid())
@@ -112,14 +118,14 @@ void Foam::fvTimeIntegrator::updateAll()
                         mesh_
                     ),
                     mesh_,
-                    1.0//mesh_.V()
-                    // mesh_.V0() + f()*(mesh_.V() - mesh_.V0())
+                    1.0//V
+                    // V0 + f()*(V - V0)
                 )
             );
         }
         else
         {
-            VPtr_() = 1.0;//mesh_.V();//mesh_.V0() + f()*(mesh_.V() - mesh_.V0());
+            VPtr_() = 1.0;//V;//V0 + f()*(V - V0);
         }
     }
     forAll(systems_, i)
@@ -454,7 +460,11 @@ void Foam::fvTimeIntegrator::addDeltaSource                                 \
             FieldVarName(Geo, Type, IntegratedSource).find(fName);          \
         if (iter != FieldVarName(Geo, Type, IntegratedSource).cend())       \
         {                                                                   \
-            fDelta += (*iter())/mesh_.V()/mesh_.time().deltaT();            \
+            const TimeState& ts =                                           \
+                time().subCycling()                                         \
+              ? time().prevTimeState()                                      \
+              : time();                                                     \
+            fDelta += (*iter())/mesh_.V()/ts.deltaT();                      \
         }                                                                   \
     }                                                                       \
 }
