@@ -11,10 +11,6 @@ functionPlastic/functionPlasticMaterialModels.C
 powerLawPlastic/powerLawPlasticMaterialModels.C
 JohnsonCookPlastic/JohnsonCookPlasticMaterialModels.C
 
-#shellMaterialModel/shellMaterialModel.C
-#shellMaterialModel/shellMaterialModelNew.C
-#elastic/elasticShellMaterialModel.C
-
 displacementConstraints/displacementConstraint/displacementConstraint.C
 displacementConstraints/displacementConstraint/displacementConstraintNew.C
 displacementConstraints/fixedDisplacement/fixedDisplacementDisplacementConstraint.C
