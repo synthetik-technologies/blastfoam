@@ -171,7 +171,7 @@ void Foam::timeIntegrator::integrate()
     {
         reset();
         restart_ = true;
-        DebugInfo<< "Restarting time step" << endl;
+        Info<< "Restarting time step" << endl;
     }
     else
     {
