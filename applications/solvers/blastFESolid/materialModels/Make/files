@@ -21,7 +21,6 @@ boundaryTractions/boundaryTraction/boundaryTraction.C
 boundaryTractions/boundaryTraction/boundaryTractionNew.C
 boundaryTractions/solidTraction/solidTractionBoundaryTraction.C
 boundaryTractions/hydrostaticPressure/hydrostaticPressureBoundaryTraction.C
-boundaryTractions/CONWEPPressure/CONWEPPressureBoundaryTraction.C
 boundaryTractions/idealGasPressure/idealGasPressureBoundaryTraction.C
 
 
