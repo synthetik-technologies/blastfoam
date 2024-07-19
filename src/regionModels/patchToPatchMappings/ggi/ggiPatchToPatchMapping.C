@@ -170,6 +170,45 @@ ggiPatchToPatchMapping::ggiPatchToPatchMapping
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+labelList ggiPatchToPatchMapping::unmappedFaces
+(
+    const standAlonePatch& patch
+) const
+{
+    const labelListList& addr =
+        (&patch == &(zoneA()))
+      ? interpolatorPtr_->masterAddr()
+      : interpolatorPtr_->slaveAddr();
+    DynamicList<label> unmapped;
+    forAll(addr, i)
+    {
+        if (!addr[i].size())
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
+labelList ggiPatchToPatchMapping::unmappedPoints
+(
+    const standAlonePatch& patch
+) const
+{    const List<labelPair>& addr =
+        (&patch == &(zoneA()))
+      ? interpolatorPtr_->masterPointAddr()
+      : interpolatorPtr_->slavePointAddr();
+    DynamicList<label> unmapped;
+    forAll(addr, i)
+    {
+        if (addr[i].first() < 0)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
 void ggiPatchToPatchMapping::transferFaces
 (
     const standAlonePatch& fromZone, // from zone

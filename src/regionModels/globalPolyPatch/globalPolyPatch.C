@@ -444,11 +444,11 @@ Foam::globalPolyPatch::globalPolyPatch
     patch_(mesh_.boundaryMesh()[mesh_.boundaryMesh().findPatchID(patchName_)]),
     displacementField_(displacementField),
     inverseDisplacement_(false),
-    globalPatchPtr_(NULL),
-    pointToGlobalAddrPtr_(NULL),
-    faceToGlobalAddrPtr_(NULL),
-    interpPtr_(NULL),
-    localInterpPtr_(NULL)
+    globalPatchPtr_(nullptr),
+    pointToGlobalAddrPtr_(nullptr),
+    faceToGlobalAddrPtr_(nullptr),
+    interpPtr_(nullptr),
+    localInterpPtr_(nullptr)
 {
     check();
 }

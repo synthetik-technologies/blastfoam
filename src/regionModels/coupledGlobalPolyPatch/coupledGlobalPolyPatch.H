@@ -71,16 +71,17 @@ private:
         //- Patch to sample
         word samplePatch_;
 
-        //- Unmapped faces
-        mutable labelList unmappedFaces_;
-        mutable labelList unmappedPoints_;
-
 
         // Demand-driven private data
 
             //- Patch interpolator
-            mutable patchToPatchMapping*
-                patchToPatchInterpPtr_;
+            mutable patchToPatchMapping* patchToPatchInterpPtr_;
+
+            //- Unmapped faces
+            mutable labelList* unmappedFacesPtr_;
+
+            //- Unmapped points
+            mutable labelList* unmappedPointsPtr_;
 
 
     // Private Member Functions
@@ -157,16 +158,23 @@ public:
         //- Return reference to the interpolator
         const patchToPatchMapping& patchToPatchInterpolator() const;
 
+
+        //- Return unmapped faces
+        const labelList& unmappedFaces() const;
+
         //- Does the patch have unmapped faces
         bool hasUnmappedFaces() const
         {
-            return unmappedFaces_.size();
+            return unmappedFaces().size();
         }
+
+        //- Return unmapped points
+        const labelList& unmappedPoints() const;
 
         //- Does the patch have unmapped points
         bool hasUnmappedPoints() const
         {
-            return unmappedPoints_.size();
+            return unmappedPoints().size();
         }
 
 
@@ -213,15 +221,6 @@ public:
                 const tmp<Field<Type>>& tpf
             ) const;
 
-            bool hashUnmappedFaces() const
-            {
-                return unmappedFaces_.size();
-            }
-
-            bool hashUnmappedPoints() const
-            {
-                return unmappedPoints_.size();
-            }
 
             //- Set the unmapped values on field corresponding to faces
             template<class Type>

@@ -79,6 +79,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBFaceMap() const
     // We will take 0.1% of the minEdgeLength as the exact match
     // relative tolerance
     treeBoundBox bbA(zoneA().localPoints());
+    bbA = bbA.extend(1e-4);
+
     const scalar planarTol =
         indexedOctree<treeDataPrimitivePatch<standAlonePatch>>::
         perturbTol();
@@ -96,7 +98,15 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBFaceMap() const
         3
     );
 
-    scalar nds(magSqr(boundBox(zoneB().localPoints()).span()));
+    scalar nds
+    (
+//         max
+//         (
+//             magSqr(boundBox(zoneB().localPoints()).span()),
+//             magSqr(bbA.span())
+//         )
+        great
+    );
     const vectorField& pCf = zoneB().faceCentres();
     forAll(pCf, facei)
     {
@@ -108,7 +118,7 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBFaceMap() const
         }
     }
 
-    if (gMin(zoneToZoneMap) == -1)
+    if (requireMatch_ && gMin(zoneToZoneMap) == -1)
     {
         FatalErrorInFunction
             << "Cannot calculate the map between interfaces!" << nl
@@ -151,6 +161,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAFaceMap() const
     labelList& zoneToZoneMap = zoneBToZoneAFaceMapPtr_();
 
     treeBoundBox bbB(zoneB().localPoints());
+    bbB = bbB.extend(1e-4);
+
     const scalar planarTol =
         indexedOctree<treeDataPrimitivePatch<standAlonePatch>>::
         perturbTol();
@@ -168,7 +180,15 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAFaceMap() const
         3
     );
 
-    scalar nds(magSqr(boundBox(zoneA().localPoints()).span()));
+    scalar nds
+    (
+//         max
+//         (
+//             magSqr(boundBox(zoneA().localPoints()).span()),
+//             magSqr(bbB.span())
+//         )
+        great
+    );
     const vectorField& pCf = zoneA().faceCentres();
     forAll(pCf, facei)
     {
@@ -180,7 +200,7 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAFaceMap() const
         }
     }
 
-    if (gMin(zoneToZoneMap) == -1)
+    if (requireMatch_ && gMin(zoneToZoneMap) == -1)
     {
         FatalErrorInFunction
             << "Cannot calculate the map between interfaces!" << nl
@@ -223,6 +243,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBPointMap() const
     labelList& zoneToZoneMap = zoneAToZoneBPointMapPtr_();
 
     treeBoundBox bbA(zoneA().localPoints());
+    bbA = bbA.extend(1e-4);
+
     indexedOctree<treeDataPoint> tree
     (
         treeDataPoint(zoneA().localPoints()),
@@ -232,8 +254,15 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBPointMap() const
         3
     );
 
-
-    scalar nds(magSqr(boundBox(zoneB().localPoints()).span()));
+    const scalar nds
+    (
+//         max
+//         (
+//             magSqr(boundBox(zoneB().localPoints()).span()),
+//             magSqr(bbA.span())
+//         )
+        great
+    );
     const vectorField& pCf = zoneB().localPoints();
     forAll(pCf, facei)
     {
@@ -245,7 +274,7 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBPointMap() const
         }
     }
 
-    if (gMin(zoneToZoneMap) == -1)
+    if (requireMatch_ && gMin(zoneToZoneMap) == -1)
     {
         FatalErrorInFunction
             << "Cannot calculate the map between interfaces!" << nl
@@ -288,6 +317,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAPointMap() const
     labelList& zoneToZoneMap = zoneBToZoneAPointMapPtr_();
 
     treeBoundBox bbB(zoneB().localPoints());
+    bbB = bbB.extend(1e-4);
+
     indexedOctree<treeDataPoint> tree
     (
         treeDataPoint(zoneB().localPoints()),
@@ -297,8 +328,15 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAPointMap() const
         3
     );
 
-
-    scalar nds(magSqr(boundBox(zoneA().localPoints()).span()));
+    const scalar nds
+    (
+//         max
+//         (
+//             magSqr(boundBox(zoneA().localPoints()).span()),
+//             magSqr(bbB.span())
+//         )
+        great
+    );
     const vectorField& pCf = zoneA().localPoints();
     forAll(pCf, facei)
     {
@@ -310,7 +348,7 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAPointMap() const
         }
     }
 
-    if (gMin(zoneToZoneMap) == -1)
+    if (requireMatch_ && gMin(zoneToZoneMap) == -1)
     {
         FatalErrorInFunction
             << "Cannot calculate the map between interfaces!" << nl
@@ -358,6 +396,48 @@ nearestNeighbourPatchToPatchMapping::nearestNeighbourPatchToPatchMapping
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+labelList nearestNeighbourPatchToPatchMapping::unmappedFaces
+(
+    const globalPolyPatch& patch
+) const
+{
+    const labelList& addr =
+        (&patch == &(globalPatchA()))
+      ? zoneBToZoneAFaceMap()
+      : zoneAToZoneBFaceMap();
+    DynamicList<label> unmapped;
+    forAll(addr, i)
+    {
+        if (addr[i] < 0)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
+
+labelList nearestNeighbourPatchToPatchMapping::unmappedPoints
+(
+    const globalPolyPatch& patch
+) const
+{
+    const labelList& addr =
+        (&patch == &(globalPatchA()))
+      ? zoneBToZoneAPointMap()
+      : zoneAToZoneBPointMap();
+    DynamicList<label> unmapped;
+    forAll(addr, i)
+    {
+        if (addr[i] < 0)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
 
 void nearestNeighbourPatchToPatchMapping::transferFaces
 (

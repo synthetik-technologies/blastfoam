@@ -181,6 +181,26 @@ public:
 
     // Member Functions
 
+        // Access
+
+            //- Return unmapped faces for the given patch
+            virtual labelList unmappedFaces
+            (
+                const globalPolyPatch& patch
+            ) const
+            {
+                return labelList::null();
+            }
+
+            //- Return unmapped point for the given patch
+            virtual labelList unmappedPoints
+            (
+                const globalPolyPatch& patch
+            ) const
+            {
+                return labelList::null();
+            }
+
         // Edit
 
             //- Transfer/map/interpolate from one zone faces to another zone
