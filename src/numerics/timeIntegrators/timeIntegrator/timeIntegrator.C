@@ -167,7 +167,17 @@ void Foam::timeIntegrator::addSystem(timeIntegrationSystemBase& system)
 
 void Foam::timeIntegrator::integrate()
 {
-    if (obr_.time().timeIndex() == curTimeIndex_)
+    if (obr_.time().subCycling())
+    {
+        curTimeIndex_ = obr_.time().timeIndex();
+        restart_ = false;
+        update();
+    }
+    else if
+    (
+        obr_.time().timeIndex() == curTimeIndex_
+     && !obr_.time().subCycling()
+    )
     {
         reset();
         restart_ = true;

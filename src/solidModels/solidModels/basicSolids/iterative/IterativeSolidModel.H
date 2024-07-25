@@ -191,6 +191,12 @@ protected:
             return materialTol_;
         }
 
+        //- Return material law relative tolerance
+        scalar materialRelTol() const
+        {
+            return materialRelTol_;
+        }
+
         //- Return write frequency for residuals information
         int infoFrequency() const
         {

@@ -44,6 +44,7 @@ $(explicitRiemann)/explicitRiemannSolid.C
 $(explicitRiemann)/explicitLinearRiemannSolid/explicitLinearRiemannSolid.C
 $(explicitRiemann)/explicitNonLinearRiemannSolid/explicitNonLinearRiemannSolid.C
 
+solidModels/fixedSolid/fixedSolid.C
 solidModels/linearSolid/linearSolid.C
 solidModels/linearTotalDisplacementSolid/linearTotalDisplacementSolid.C
 solidModels/linearPressureDisplacementSolid/linearPressureDisplacementSolid.C
@@ -115,22 +116,22 @@ fvPatchFields/displacementVelocity/displacementVelocityFvPatchVectorField.C
 fvPatchFields/hydrostaticPressure/hydrostaticPressureFvPatchVectorField.C
 
 
-fvPatchFields/solidContact/solidContactFvPatchVectorField.C
-fvPatchFields/solidContact/solidContactFvPatchVectorFieldCalcContact.C
+#fvPatchFields/solidContact/solidContactFvPatchVectorField.C
+#fvPatchFields/solidContact/solidContactFvPatchVectorFieldCalcContact.C
 
-contactModels = fvPatchFields/solidContact/contactModels
-normalContactModels = $(contactModels)/normalContactModels
-$(normalContactModels)/normalContactModel/normalContactModel.C
-$(normalContactModels)/normalContactModel/newNormalContactModel.C
-$(normalContactModels)/standardPenalty/standardPenalty.C
-frictionContactModels = $(contactModels)/frictionContactModels
-$(frictionContactModels)/frictionContactModel/frictionContactModel.C
-$(frictionContactModels)/frictionContactModel/newFrictionContactModel.C
-$(frictionContactModels)/frictionless/frictionless.C
-$(frictionContactModels)/standardPenaltyFriction/standardPenaltyFriction.C
-$(frictionContactModels)/frictionLaws/frictionLaw/frictionLaw.C
-$(frictionContactModels)/frictionLaws/frictionLaw/newFrictionLaw.C
-$(frictionContactModels)/frictionLaws/coulombFriction/coulombFriction.C
+#contactModels = fvPatchFields/solidContact/contactModels
+#normalContactModels = $(contactModels)/normalContactModels
+#$(normalContactModels)/normalContactModel/normalContactModel.C
+#$(normalContactModels)/normalContactModel/newNormalContactModel.C
+#$(normalContactModels)/standardPenalty/standardPenalty.C
+#frictionContactModels = $(contactModels)/frictionContactModels
+#$(frictionContactModels)/frictionContactModel/frictionContactModel.C
+#$(frictionContactModels)/frictionContactModel/newFrictionContactModel.C
+#$(frictionContactModels)/frictionless/frictionless.C
+#$(frictionContactModels)/standardPenaltyFriction/standardPenaltyFriction.C
+#$(frictionContactModels)/frictionLaws/frictionLaw/frictionLaw.C
+#$(frictionContactModels)/frictionLaws/frictionLaw/newFrictionLaw.C
+#$(frictionContactModels)/frictionLaws/coulombFriction/coulombFriction.C
 
 functionObjects/hotCylinderAnalyticalSolution/hotCylinderAnalyticalSolution.C
 functionObjects/setInletVelocity/setInletVelocity.C

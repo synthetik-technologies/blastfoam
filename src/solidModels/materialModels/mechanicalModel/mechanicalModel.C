@@ -325,6 +325,29 @@ Foam::mechanicalModel::mechanicalModel
 }
 
 
+Foam::mechanicalModel::mechanicalModel(const fvMesh& mesh)
+:
+    IOdictionary
+    (
+        IOobject
+        (
+            "mechanicalProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        )
+    ),
+    PtrList<mechanicalLaw>(),
+    mesh_(mesh),
+    planeStress_(false),
+    incremental_(false),
+    cellZoneNames_(),
+    solSubMeshes_(),
+    volToPointPtr_(nullptr),
+    impKfcorrPtr_(nullptr)
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::mechanicalModel::~mechanicalModel()
@@ -364,16 +387,9 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::impK() const
     // Accumulate data for all fields
     tmp<volScalarField> tresult
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
+            "impK",
             mesh(),
             dimensionedScalar("zero", dimPressure, 0)
         )
@@ -401,8 +417,8 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::impK() const
 Foam::tmp<Foam::surfaceScalarField> Foam::mechanicalModel::impKf() const
 {
     // Linear interpolation actually seems to give the best convergence
-    const volScalarField impK(this->impK());
-    const word interpName = "interpolate(" + impK.name() + ')';
+    tmp<volScalarField> impK(this->impK());
+    const word interpName = "interpolate(" + impK().name() + ')';
     return fvc::interpolate(impK, interpName);
 }
 

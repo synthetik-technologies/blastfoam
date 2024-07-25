@@ -303,12 +303,12 @@ template<class SolidModel>
 void Foam::IterativeSolidModel<SolidModel>::readDict()
 {
     const dictionary& dict = this->solidModelDict();
-    dict.readIfPresent("tolerance", tolerance_);
-    dict.readIfPresent("relTol", relTol_);
+    dict.readIfPresent("absTolerance", tolerance_);
+    dict.readIfPresent("relTolerance", relTol_);
     dict.readIfPresent("solutionTolerance", solutionTol_);
     dict.readIfPresent("alternativeTolerance", alternativeTol_);
     dict.readIfPresent("materialTolerance", materialTol_);
-    dict.readIfPresent("materialRelTol", materialRelTol_);
+    dict.readIfPresent("materialRelTolerance", materialRelTol_);
     dict.readIfPresent("infoFrequency", infoFrequency_);
     dict.readIfPresent("nCorrectors", nCorr_);
     dict.readIfPresent("minCorrectors", minCorr_);

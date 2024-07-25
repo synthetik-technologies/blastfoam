@@ -134,6 +134,9 @@ public:
             const bool incremental = false
         );
 
+        //- Construct null
+        mechanicalModel(const fvMesh& mesh);
+
 
     //- Destructor
     ~mechanicalModel();

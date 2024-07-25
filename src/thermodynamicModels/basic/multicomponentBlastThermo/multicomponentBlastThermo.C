@@ -124,7 +124,7 @@ void Foam::multicomponentBlastThermo::correct()
         return;
     }
 
-    if (normalise_ )
+    if (true)//(normalise_ )
     {
         tmp<volScalarField> tYt
         (
@@ -467,10 +467,11 @@ void Foam::multicomponentBlastThermo::integrator::solve()
             this->fvTimeInt_->addDeltaSource(Y.name(), deltaAlphaRhoY);
 
             // Not conservative, but alphaRho*Yi is
-            this->storeAndBlendOld(Y, false);
+            volScalarField alphaRhoY(alphaRho*Y);
+            this->storeAndBlendOld(alphaRhoY);
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
-            Y = Y*(2.0 - f) - dT*deltaAlphaRhoY/alphaRho0;
+            Y = (alphaRhoY - dT*deltaAlphaRhoY)/alphaRho0;
             Y.max(0.0);
             Y.correctBoundaryConditions();
         }

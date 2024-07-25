@@ -73,7 +73,6 @@ totalLagrangianSolid::totalLagrangianSolid(dynamicFvMesh& mesh)
 bool totalLagrangianSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfDD;
@@ -88,7 +87,6 @@ bool totalLagrangianSolid::evolve()
 
     mesh().update();
 
-    return false;
     this->DD().correctBoundaryConditions();
     this->update();
 
@@ -159,6 +157,8 @@ bool totalLagrangianSolid::evolve()
          && ++iCorr < nCorr()
         )
     );
+
+    U() = fvc::ddt(D());
 
     return true;
 }

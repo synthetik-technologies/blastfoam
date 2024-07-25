@@ -107,7 +107,6 @@ linearPressureDisplacementSolid::linearPressureDisplacementSolid
 bool linearPressureDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     // Mesh update loop
     do

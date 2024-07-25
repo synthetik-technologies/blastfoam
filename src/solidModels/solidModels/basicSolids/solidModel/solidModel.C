@@ -250,7 +250,7 @@ Foam::mechanicalModel& Foam::solidModel::mechanical()
 
 Foam::volScalarField& Foam::solidModel::rho()
 {
-    return rho_;
+    return thermal_.rho();
 }
 
 
@@ -331,6 +331,152 @@ void Foam::solidModel::readDict()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::solidModel::solidModel(const word& type, dynamicFvMesh& mesh)
+:
+    IOdictionary
+    (
+        IOobject
+        (
+            "solidProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::AUTO_WRITE
+        )
+    ),
+    mesh_(mesh),
+    type_(type),
+    mechanical_(mesh),
+    thermal_(mesh, true),
+    D_
+    (
+        IOobject
+        (
+            "D",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedVector("zero", dimLength, vector::zero)
+    ),
+    DD_
+    (
+        IOobject
+        (
+            "DD",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedVector("zero", dimLength, vector::zero)
+    ),
+    U_
+    (
+        IOobject
+        (
+            "U",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedVector("0", dimLength/dimTime, vector::zero)
+    ),
+    pointD_
+    (
+        IOobject
+        (
+            "pointD",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        pMesh(),
+        dimensionedVector("0", dimLength, Zero)
+    ),
+    pointDD_
+    (
+        IOobject
+        (
+            "pointDD",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        pMesh(),
+        dimensionedVector("0", dimLength, Zero)
+    ),
+    gradD_
+    (
+        IOobject
+        (
+            "grad(" + D_.name() + ")",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedTensor("0", dimless, tensor::zero)
+    ),
+    gradDD_
+    (
+        IOobject
+        (
+            "grad(" + DD_.name() + ")",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedTensor("0", dimless, tensor::zero)
+    ),
+    sigma_
+    (
+        IOobject
+        (
+            "sigma",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
+    ),
+    g_
+    (
+        IOobject
+        (
+            "g",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedVector("g", dimAcceleration, Zero)
+    ),
+    stabilisationPtr_(new momentumStabilisation(solidModelDict())),
+    enforceLinear_(false),
+    globalPatches_(globalPolyBoundaryMesh::New(mesh))
+{
+    globalPatches_.setDisplacementField(mesh_.name(), "none");
+
+    if (!pointD_.headerOk())
+    {
+        mechanical().volToPoint().interpolate(D_, pointD_);
+    }
+    if (!pointDD_.headerOk())
+    {
+        mechanical().volToPoint().interpolate(DD_, pointDD_);
+    }
+}
+
+
 Foam::solidModel::solidModel
 (
     const word& type,
@@ -348,7 +494,7 @@ Foam::solidModel::solidModel
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         )
     ),
     mesh_(mesh),
@@ -457,7 +603,6 @@ Foam::solidModel::solidModel
         mesh,
         dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
     ),
-    rho_(thermal_.rho()),
     g_
     (
         IOobject
@@ -474,9 +619,6 @@ Foam::solidModel::solidModel
     enforceLinear_(false),
     globalPatches_(globalPolyBoundaryMesh::New(mesh))
 {
-    D_.oldTime();
-    DD_.oldTime();
-
     globalPatches_.setDisplacementField(mesh_.name(), "none");
 
     if (!pointD_.headerOk())
@@ -497,7 +639,11 @@ Foam::solidModel::solidModel
 
     if
     (
-        solidModelDict().lookupOrDefault("initializeDisplacementFromVelocity", false)
+        solidModelDict().lookupOrDefault
+        (
+            "initializeDisplacementFromVelocity",
+            false
+        )
      && !mesh.time().restart()
     )
     {
@@ -515,7 +661,7 @@ Foam::solidModel::solidModel
             (
                 "centreOfRotation",
                 dimLength,
-                solidModelDict().lookupOrDefault("centreOfRotation", vector::zero)
+                solidModelDict()
             );
             volVectorField omega(omegaIO, mesh_);
             U_ = omega ^ (mesh_.C() - xc);
@@ -526,7 +672,7 @@ Foam::solidModel::solidModel
             (
                 "centreOfRotation",
                 dimLength,
-                solidModelDict().lookupOrDefault("centreOfRotation", vector::zero)
+                solidModelDict()
             );
             dimensionedVector omega("omega", inv(dimTime), solidModelDict());
             U_ = omega ^ (mesh_.C() - xc);
@@ -561,7 +707,7 @@ void Foam::solidModel::initialize()
 
 const Foam::volScalarField& Foam::solidModel::rho() const
 {
-    return rho_;
+    return thermal_.rho();
 }
 
 const Foam::thermalModel& Foam::solidModel::thermal() const
@@ -602,35 +748,6 @@ void Foam::solidModel::updateTotalFields()
 {
     thermal().correct();
     mechanical().updateTotalFields();
-
-    //- Clear global Patches since displacement may have changed
-    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
-    {
-        forAllIter
-        (
-            typename HashPtrTable<globalPolyPatch>,
-            globalPatches_.patches(),
-            iter
-        )
-        {
-            globalPolyPatch& gpp = *iter();
-            if (gpp.valid())
-            {
-                vectorField pX
-                (
-                    gpp.patchPointToGlobal
-                    (
-                        gpp.patch().localPoints()
-                      + pointD_.boundaryField()
-                        [
-                            gpp.patch().index()
-                        ].patchInternalField()
-                    )
-                );
-                gpp.movePoints(pX, false);
-            }
-        }
-    }
 }
 
 
@@ -641,13 +758,12 @@ Foam::tmp<Foam::vectorField> Foam::solidModel::tractionBoundarySnGrad
     const fvPatch& patch
 ) const
 {
-    const scalarField& pimpK = this->impK(patch);
     const symmTensorField& psigma = this->sigma(patch);
     vectorField n(this->nf(patch));
 
     // Return patch snGrad
     return
-        (traction - n*pressure - (n & psigma))/pimpK
+        (traction - n*pressure - (n & psigma))/this->impK(patch)
       + (patch.nf() & (this->solutionGradD().boundaryField()[patch.index()]));
 }
 
@@ -684,6 +800,37 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const surfaceScalarField& J)
 
     return enforceLinear();
 }
+
+
+bool Foam::solidModel::read()
+{
+    if (regIOobject::read())
+    {
+        readDict();
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+// bool Foam::solidModel::readIfModified()
+// {
+//     if (regIOobject::readIfModified())
+//     {
+//         // Clear current settings except fluxRequired
+//         readDict();
+//
+//         return true;
+//     }
+//     else
+//     {
+//         return false;
+//     }
+// }
 
 
 bool Foam::solidModel::write(const bool write) const

@@ -210,7 +210,6 @@ weakThermalLinearSolid::weakThermalLinearSolid(dynamicFvMesh& mesh)
 bool weakThermalLinearSolid::evolve()
 {
     Info << "Evolving thermal solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<scalar> solverPerfT;

@@ -228,12 +228,15 @@ void Foam::fvTimeIntegrator::integrate()
 {
     timeIntegrator::integrate();
 
-    DebugInfo<< "Clearing SourceTerms fields" << endl;
-    #define ClearSourceTypes(Type, Geo)             \
-        FieldVarName(Geo, Type, Source).clear();    \
-        FieldVarName(Geo, Type, IntegratedSource).clear();
-    FOR_ALL_FIELD_TYPES(ClearSourceTypes, vol);
-    #undef ClearSourceTypes
+    if (!obr_.time().subCycling())
+    {
+        DebugInfo<< "Clearing SourceTerms fields" << endl;
+        #define ClearSourceTypes(Type, Geo)             \
+            FieldVarName(Geo, Type, Source).clear();    \
+            FieldVarName(Geo, Type, IntegratedSource).clear();
+        FOR_ALL_FIELD_TYPES(ClearSourceTypes, vol);
+        #undef ClearSourceTypes
+    }
 }
 
 
@@ -255,6 +258,13 @@ void Foam::fvTimeIntegrator::clear()
         FOR_ALL_FIELD_TYPES(ClearFieldTypes, point);
         #undef ClearFieldTypes
     }
+
+    DebugInfo<< "Clearing SourceTerms fields" << endl;
+    #define ClearSourceTypes(Type, Geo)             \
+        FieldVarName(Geo, Type, Source).clear();    \
+        FieldVarName(Geo, Type, IntegratedSource).clear();
+    FOR_ALL_FIELD_TYPES(ClearSourceTypes, vol);
+    #undef ClearSourceTypes
 }
 
 

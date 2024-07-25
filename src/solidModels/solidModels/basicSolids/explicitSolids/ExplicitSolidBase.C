@@ -351,9 +351,9 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
 
     tmp<volVectorField> stab;
 
-    bool changing = false;
-    do
-    {
+//     bool changing = false;
+//     do
+//     {
         // changing = this->mesh().update();
         this->mesh().update();
 
@@ -432,7 +432,7 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
           + this->g();
         a_.correctBoundaryConditions();
 
-    } while (changing);
+//     } while (changing);
 
     // Check energies
     energies_.checkEnergies

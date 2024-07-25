@@ -73,6 +73,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBFaceMap() const
     (
         new labelList(zoneB().size(), -1)
     );
+    if (!zoneA().size()) return;
+
     labelList& zoneToZoneMap = zoneAToZoneBFaceMapPtr_();
 
     // Perform N^2 search for corresponding faces
@@ -158,6 +160,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAFaceMap() const
     (
         new labelList(labelList(zoneA().size(), -1))
     );
+    if (!zoneB().size()) return;
+
     labelList& zoneToZoneMap = zoneBToZoneAFaceMapPtr_();
 
     treeBoundBox bbB(zoneB().localPoints());
@@ -240,6 +244,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneAToZoneBPointMap() const
     (
         new labelList(labelList(zoneB().nPoints(), -1))
     );
+    if (!zoneA().nPoints()) return;
+
     labelList& zoneToZoneMap = zoneAToZoneBPointMapPtr_();
 
     treeBoundBox bbA(zoneA().localPoints());
@@ -314,6 +320,8 @@ void nearestNeighbourPatchToPatchMapping::calcZoneBToZoneAPointMap() const
     (
         new labelList(labelList(zoneA().nPoints(), -1))
     );
+    if (!zoneB().nPoints()) return;
+
     labelList& zoneToZoneMap = zoneBToZoneAPointMapPtr_();
 
     treeBoundBox bbB(zoneB().localPoints());

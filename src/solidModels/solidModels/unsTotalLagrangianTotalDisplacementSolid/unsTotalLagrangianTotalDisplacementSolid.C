@@ -121,7 +121,6 @@ unsTotalLagrangianTotalDisplacementSolid
 bool unsTotalLagrangianTotalDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     scalar initialResidual = 0;
