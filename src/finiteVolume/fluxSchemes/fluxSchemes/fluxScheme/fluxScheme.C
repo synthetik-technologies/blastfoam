@@ -209,7 +209,6 @@ void Foam::fluxScheme::update
 
     forAll(U.boundaryField(), patchi)
     {
-        const fvPatch& pp = mesh_.boundary()[patchi];
         scalarField& pphi = phi.boundaryFieldRef()[patchi];
         scalarField& prhoPhi = rhoPhi.boundaryFieldRef()[patchi];
         vectorField& prhoUPhi = rhoUPhi.boundaryFieldRef()[patchi];

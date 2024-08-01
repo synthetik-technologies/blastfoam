@@ -166,7 +166,7 @@ bool writeGeoField
             if (!procFields[Pstream::myProcNo()].size())
             {
                 procFields[Pstream::myProcNo()] =
-                    interps[i].transferToTgt
+                    interps[i].transferFacesToTgt
                     (
                         weights[i]*fld.boundaryField()[patchID]
                     );
@@ -174,7 +174,7 @@ bool writeGeoField
             else
             {
                 procFields[Pstream::myProcNo()] +=
-                    interps[i].transferToTgt
+                    interps[i].transferFacesToTgt
                     (
                         weights[i]*fld.boundaryField()[patchID]
                     );
@@ -285,12 +285,12 @@ bool writePointField
             if (!procFields[Pstream::myProcNo()].size())
             {
                 procFields[Pstream::myProcNo()] =
-                    weights[i]*interps[i].transferToTgt(tpfld);
+                    weights[i]*interps[i].transferPointsToTgt(tpfld);
             }
             else
             {
                 procFields[Pstream::myProcNo()] +=
-                    weights[i]*interps[i].transferToTgt(tpfld);
+                    weights[i]*interps[i].transferPointsToTgt(tpfld);
             }
         }
         else
@@ -498,6 +498,7 @@ int main(int argc, char *argv[])
     );
 
     wordList fieldNames;
+    bool hasPoints = false;
     if (args.optionFound("fields"))
     {
         fieldNames = args.optionRead<wordList>("fields");
@@ -525,8 +526,14 @@ int main(int argc, char *argv[])
              || iter()->headerClassName() == surfaceSymmTensorField::typeName
              || iter()->headerClassName() == surfaceSphericalTensorField::typeName
              || iter()->headerClassName() == surfaceTensorField::typeName
+            )
+            {
+                fieldNames.append(iter.key());
+            }
 
-             || iter()->headerClassName() == pointScalarField::typeName
+            if
+            (
+                iter()->headerClassName() == pointScalarField::typeName
              || iter()->headerClassName() == pointVectorField::typeName
              || iter()->headerClassName() == pointSymmTensorField::typeName
              || iter()->headerClassName() == pointSphericalTensorField::typeName
@@ -534,6 +541,7 @@ int main(int argc, char *argv[])
             )
             {
                 fieldNames.append(iter.key());
+                hasPoints = true;
             }
         }
     }
@@ -697,6 +705,7 @@ int main(int argc, char *argv[])
                         meshPatches[patchi],
                         meshPatches[masterID],
                         interpDict,
+                        hasPoints,
                         true
                     )
                 );

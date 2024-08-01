@@ -133,7 +133,7 @@ void Foam::patchToPatchMappings::nearby::initialise
         srcSpheres_[srcFacei] =
             boundSphere
             (
-                UIndirectList<point>(srcPatch.points(), srcPatch[srcFacei])
+                UIndirectList<point>(srcPatch.localPoints(), srcPatch[srcFacei])
             );
     }
 
@@ -143,7 +143,7 @@ void Foam::patchToPatchMappings::nearby::initialise
         tgtSpheres_[tgtFacei] =
             boundSphere
             (
-                UIndirectList<point>(tgtPatch.points(), tgtPatch[tgtFacei])
+                UIndirectList<point>(tgtPatch.localPoints(), tgtPatch[tgtFacei])
             );
     }
 }

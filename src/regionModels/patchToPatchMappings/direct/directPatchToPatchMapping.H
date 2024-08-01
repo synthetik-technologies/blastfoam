@@ -123,7 +123,6 @@ public:
 
 
     // Destructor
-
         virtual ~direct()
         {}
 };

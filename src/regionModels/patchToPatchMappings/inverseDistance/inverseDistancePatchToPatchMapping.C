@@ -105,7 +105,7 @@ void Foam::patchToPatchMappings::inverseDistance::generateFaceWeights
                     patch.faceCentres()[facei],
                     (reverse ? -1 : +1)*patch.faceNormals()[facei],
                     otherPatch[otherFaces[facei][i]],
-                    otherPatch.points()
+                    otherPatch.localPoints()
                 )
             )
             {
@@ -247,6 +247,26 @@ void Foam::patchToPatchMappings::inverseDistance::generatePointWeights
             if (hit)
             {
                 break;
+            }
+        }
+        if (!hit)
+        {
+            scalar nearDistSqr = vGreat;
+            label nearOtherFace = -1;
+            forAll(pointAddr[pointi], opi)
+            {
+                const scalar distSqr =
+                    magSqr(pt - otherPoints[pointAddr[pointi][opi]]);
+                if (distSqr < nearDistSqr)
+                {
+                    nearDistSqr = distSqr;
+                    nearOtherFace = opi;
+                }
+            }
+            if (nearOtherFace >= 0)
+            {
+                weights[pointi][nearOtherFace] =
+                    1.0/max(sqrt(nearDistSqr), small);
             }
         }
     }
@@ -392,44 +412,6 @@ void Foam::patchToPatchMappings::inverseDistance::rDistributeTgt
             tgtPointsMapPtr_(),
             tgtPointWeights_
         );
-
-        // Remove zero weights
-        DynamicList<label> newIs;
-        DynamicList<scalar> newWs;
-        forAll(srcPointWeights_, srcPointi)
-        {
-            newIs.clear();
-            newWs.clear();
-            labelList& Is = localTgtPointsToSrc_[srcPointi];
-            scalarList& ws = srcPointWeights_[srcPointi];
-            forAll(ws, i)
-            {
-                if (ws[i] > vSmall)
-                {
-                    newIs.append(Is[i]);
-                    newWs.append(ws[i]);
-                }
-            }
-            Is = newIs;
-            ws = newWs;
-        }
-        forAll(tgtPointWeights_, tgtPointi)
-        {
-            newIs.clear();
-            newWs.clear();
-            labelList& Is = localSrcPointsToTgt_[tgtPointi];
-            scalarList& ws = tgtPointWeights_[tgtPointi];
-            forAll(ws, i)
-            {
-                if (ws[i] > vSmall)
-                {
-                    newIs.append(Is[i]);
-                    newWs.append(ws[i]);
-                }
-            }
-            Is = newIs;
-            ws = newWs;
-        }
     }
 }
 
@@ -461,6 +443,44 @@ Foam::label Foam::patchToPatchMappings::inverseDistance::finalisePoints
             pointNormals0,
             tgtToSrc
         );
+
+    // Remove zero weights
+    DynamicList<label> newIs;
+    DynamicList<scalar> newWs;
+    forAll(srcPointWeights_, srcPointi)
+    {
+        newIs.clear();
+        newWs.clear();
+        labelList& Is = localTgtPointsToSrc_[srcPointi];
+        scalarList& ws = srcPointWeights_[srcPointi];
+        forAll(ws, i)
+        {
+            if (ws[i] > vSmall)
+            {
+                newIs.append(Is[i]);
+                newWs.append(ws[i]);
+            }
+        }
+        Is = newIs;
+        ws = newWs;
+    }
+    forAll(tgtPointWeights_, tgtPointi)
+    {
+        newIs.clear();
+        newWs.clear();
+        labelList& Is = localSrcPointsToTgt_[tgtPointi];
+        scalarList& ws = tgtPointWeights_[tgtPointi];
+        forAll(ws, i)
+        {
+            if (ws[i] > vSmall)
+            {
+                newIs.append(Is[i]);
+                newWs.append(ws[i]);
+            }
+        }
+        Is = newIs;
+        ws = newWs;
+    }
 
     // Normalize weights
     forAll(srcPointWeights_, srcPointi)

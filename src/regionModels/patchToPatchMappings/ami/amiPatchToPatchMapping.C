@@ -565,6 +565,47 @@ amiPatchToPatchMapping::amiPatchToPatchMapping
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+labelList amiPatchToPatchMapping::unmappedFaces
+(
+    const globalPolyPatch& patch
+) const
+{
+    const labelListList& addr =
+        (&patch == &(globalPatchA()))
+      ? interpolatorPtr_->srcAddress()
+      : interpolatorPtr_->tgtAddress();
+    DynamicList<label> unmapped;
+    forAll(addr, i)
+    {
+        if (!addr[i].size())
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
+labelList amiPatchToPatchMapping::unmappedPoints
+(
+    const globalPolyPatch& patch
+) const
+{
+    // Use list of weights
+    const List<labelPair>& addr =
+        (&patch == &(globalPatchA()))
+      ? interpolatorPtr_->sourcePointAddr()
+      : interpolatorPtr_->targetPointAddr();
+    DynamicList<label> unmapped;
+    forAll(addr, i)
+    {
+        if (addr[i].first() < 0)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
 void amiPatchToPatchMapping::transferFaces
 (
     const standAlonePatch& fromZone, // from zone

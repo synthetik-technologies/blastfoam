@@ -196,6 +196,29 @@ void Foam::globalPolyPatch::calcPhysicalPatch() const
 }
 
 
+void Foam::globalPolyPatch::calcPointToFaceInterpolation() const
+{
+    if (debug)
+    {
+        InfoInFunction
+            << "Calculating point to face interpolation weights"
+            << endl;
+    }
+
+    if (pointToFaceInterpolatorPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "Face to point weights already set"
+            << abort(FatalError);
+    }
+
+    pointToFaceInterpolatorPtr_.reset
+    (
+        new primitivePatchInterpolation(physicalPatch())
+    );
+}
+
+
 void Foam::globalPolyPatch::calcFaceToPointInterpolation() const
 {
     if (debug)
@@ -326,7 +349,6 @@ Foam::globalPolyPatch::globalPolyPatch
     polyPatch_(mesh_.boundaryMesh()[mesh_.boundaryMesh().findPatchID(patchName_)]),
     displacementField_(displacementField),
     inverseDisplacement_(false),
-
     displacedPointsPtr_(),
     physicalPatchPtr_(),
     displacedPoints0Ptr_(),

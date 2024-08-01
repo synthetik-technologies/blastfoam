@@ -457,6 +457,7 @@ void Foam::twoPhaseCompressibleSystem::decode()
     alpha1_.maxMin(0.0, 1.0);
     alpha1_.correctBoundaryConditions();
     alpha2_ = 1.0 - alpha1_;
+    alpha2_.correctBoundaryConditions();
 
     alphaRho1_.max(0);
     alphaRho2_.max(0);

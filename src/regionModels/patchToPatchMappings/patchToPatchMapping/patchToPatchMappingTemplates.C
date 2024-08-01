@@ -157,7 +157,7 @@ Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::interpolate
         new Field<Type>
         (
             localOtherData.size(),
-            Zero//pTraits<Type>::one*Foam::NaN
+            pTraits<Type>::one*Foam::NaN
         )
     );
     Field<Type>& fld = tfld.ref();

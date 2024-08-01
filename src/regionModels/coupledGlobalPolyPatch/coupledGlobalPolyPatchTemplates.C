@@ -131,7 +131,7 @@ void Foam::coupledGlobalPolyPatch::setUnmappedFace
     const Type& unmapped
 ) const
 {
-    UIndirectList<Type>(ff, unmappedFaces_) = unmapped;
+    UIndirectList<Type>(ff, unmappedFaces()) = unmapped;
 }
 
 
@@ -142,8 +142,8 @@ void Foam::coupledGlobalPolyPatch::setUnmappedFace
     const Field<Type>& unmapped
 ) const
 {
-    UIndirectList<Type>(ff, unmappedFaces_) =
-        UIndirectList<Type>(unmapped, unmappedFaces_);
+    UIndirectList<Type>(ff, unmappedFaces()) =
+        UIndirectList<Type>(unmapped, unmappedFaces());
 }
 
 
@@ -165,7 +165,7 @@ void Foam::coupledGlobalPolyPatch::setUnmappedPoint
     const Type& unmapped
 ) const
 {
-    UIndirectList<Type>(pf, unmappedPoints_) = unmapped;
+    UIndirectList<Type>(pf, unmappedPoints()) = unmapped;
 }
 
 
@@ -176,8 +176,8 @@ void Foam::coupledGlobalPolyPatch::setUnmappedPoint
     const Field<Type>& unmapped
 ) const
 {
-    UIndirectList<Type>(pf, unmappedPoints_) =
-        UIndirectList<Type>(unmapped, unmappedPoints_);
+    UIndirectList<Type>(pf, unmappedPoints()) =
+        UIndirectList<Type>(unmapped, unmappedPoints());
 }
 
 

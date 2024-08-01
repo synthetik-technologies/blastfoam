@@ -168,16 +168,20 @@ Foam::treeBoundBox Foam::patchToPatchMapping::makeBb
     return treeBoundBox(c - l*vector::one, c + l*vector::one);
 }
 
+
 Foam::treeBoundBox Foam::patchToPatchMapping::makeBb
 (
     const primitivePatch& patch,
     const pointField& pts0
 ) const
 {
+    const faceList& faces = patch.localFaces();
+    const pointField& pts = patch.localPoints();
+
     treeBoundBox bb(treeBoundBox::invertedBox);
     forAll(patch, i)
     {
-        treeBoundBox bbi(makeBb(patch[i], patch.points()));
+        treeBoundBox bbi(makeBb(faces[i], pts));
         bb = treeBoundBox
         (
             min(bb.min(), bbi.min()),
@@ -207,11 +211,13 @@ Foam::treeBoundBox Foam::patchToPatchMapping::makeBb
     const label facei
 ) const
 {
+    const face& f = patch.localFaces()[facei];
+    const pointField& pts = patch.localPoints();
 
-    treeBoundBox bb(makeBb(patch[facei], patch.points()));
+    treeBoundBox bb(makeBb(f, pts));
     if (!isNull(pts0))
     {
-        treeBoundBox bbi(makeBb(patch[facei], pts0));
+        treeBoundBox bbi(makeBb(f, pts0));
         bb = treeBoundBox
         (
             min(bb.min(), bbi.min()),
@@ -229,10 +235,13 @@ Foam::treeBoundBox Foam::patchToPatchMapping::makeBb
     const vectorField& pointNormals0
 ) const
 {
+    const faceList& faces = patch.localFaces();
+    const pointField& pts = patch.localPoints();
+
     treeBoundBox bb(treeBoundBox::invertedBox);
-    forAll(patch, i)
+    forAll(faces, i)
     {
-        treeBoundBox bbi(makeBb(patch[i], patch.points(), pointNormals));
+        treeBoundBox bbi(makeBb(faces[i], pts, pointNormals));
         bb = treeBoundBox
         (
             min(bb.min(), bbi.min()),
@@ -242,9 +251,9 @@ Foam::treeBoundBox Foam::patchToPatchMapping::makeBb
 
     if (!isNull(pts0))
     {
-        forAll(patch, i)
+        forAll(faces, i)
         {
-            treeBoundBox bbi(makeBb(patch[i], pts0, pointNormals0));
+            treeBoundBox bbi(makeBb(faces[i], pts0, pointNormals0));
             bb = treeBoundBox
             (
                 min(bb.min(), bbi.min()),
@@ -265,11 +274,13 @@ Foam::treeBoundBox Foam::patchToPatchMapping::makeBb
     const label facei
 ) const
 {
+    const face& f = patch.localFaces()[facei];
+    const pointField& pts = patch.localPoints();
 
-    treeBoundBox bb(makeBb(patch[facei], patch.points(), pointNormals));
+    treeBoundBox bb(makeBb(f, pts, pointNormals));
     if (!isNull(pts0))
     {
-        treeBoundBox bbi(makeBb(patch[facei], pts0, pointNormals0));
+        treeBoundBox bbi(makeBb(f, pts0, pointNormals0));
         bb = treeBoundBox
         (
             min(bb.min(), bbi.min()),
@@ -457,7 +468,8 @@ void Foam::patchToPatchMapping::intersectPatches
      // Build a search tree for the target patch
     typedef treeDataPrimitivePatch<primitivePatch> treeType;
     const treeBoundBox tgtTreeBox =
-        treeBoundBox(tgtPatch.points(), tgtPatch.meshPoints()).extend(1e-4);
+        treeBoundBox(tgtPatch.localPoints()).extend(1e-4);
+
     indexedOctree<treeType> treeB
     (
         treeType
@@ -1317,6 +1329,19 @@ void Foam::patchToPatchMapping::update
     if (needPoints_)
     {
         Info<< indent << nCouples.first() << " coupled points" << endl;
+    }
+
+    if (debug)
+    {
+        Info<< "unmappedSrcFaces: "
+            << returnReduce(unmappedSrcFaces().size(), sumOp<label>()) << nl
+            << "unmappedTgtFaces: "
+            << returnReduce(unmappedTgtFaces().size(), sumOp<label>()) << nl
+            << "unmappedSrcPoints: "
+            << returnReduce(unmappedSrcPoints().size(), sumOp<label>()) << nl
+            << "unmappedTgtPoints: "
+            << returnReduce(unmappedTgtPoints().size(), sumOp<label>())
+            << endl;
     }
     Info<< decrIndent << endl;
 }

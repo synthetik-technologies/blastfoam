@@ -242,14 +242,17 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    Field<Type> nbr;
+    tmp<Field<Type>> tnbr;
     if (isA<valuePointPatchField<Type>>(pfNbr))
     {
-        nbr = dynamicCast<const valuePointPatchField<Type>>(pfNbr);
+        tnbr = tmp<Field<Type>>
+        (
+            dynamicCast<const valuePointPatchField<Type>>(pfNbr)
+        );
     }
     else
     {
-        nbr = pfNbr.patchInternalField();
+        tnbr = pfNbr.patchInternalField();
     }
 
 //     if (debug > 1 || (debug && this->db().time().outputTime()))
@@ -300,22 +303,22 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
 //         }
 //     }
 
-    nbr = samplePatch.pointInterpolate(nbr);
+    tnbr = samplePatch.pointInterpolate(tnbr);
 
     if (useRefState_)
     {
         //- Set the reference state if not already set
         if (!refSet_)
         {
-            f0_ = nbr;
+            f0_ = tnbr();
             refSet_ = true;
         }
 
         // Remove reference state
-        nbr -= f0_;
+        tnbr.ref() -= f0_;
     }
 
-    Field<Type>::operator=(nbr);
+    Field<Type>::operator=(tnbr);
     fixedValuePointPatchField<Type>::updateCoeffs();
 
     // Restore tag

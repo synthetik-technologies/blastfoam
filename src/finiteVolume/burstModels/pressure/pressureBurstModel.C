@@ -47,8 +47,20 @@ Foam::burstModels::pressure::pressure(const dictionary& dict)
     pName_(dict.lookupOrDefault<word>("pName", "p")),
     pRef_(dict.lookupOrDefault<scalar>("pRef", 0.0)),
     pBurst_(dict.lookup<scalar>("pBurst")),
-    average_(!partialBurst_ ? dict.lookup<bool>("useAverage") : false)
-{}
+    average_
+    (
+        !partialBurst_
+      ? dict.lookup<bool>("useAverage")
+      : dict.lookupOrDefault<bool>("useAverage", false)
+    )
+{
+    if (average_ && partialBurst_)
+    {
+        WarningInFunction
+            << "If partial burst is used, \"useAverage\" is ignored" << endl;
+        average_ = false;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -100,7 +112,8 @@ bool Foam::burstModels::pressure::update
         }
         else if (average_)
         {
-            burst = gSum(deltaP*patch.magSf())/gSum(patch.magSf());
+            burst =
+                gSum(deltaP*patch.magSf())/gSum(patch.magSf()) > pBurst_;
             intact = !burst;
             burst_ = burst;
         }
