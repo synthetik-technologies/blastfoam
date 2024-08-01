@@ -113,7 +113,7 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
       : NullObjectRef<vectorField>()
     );
 
-//     samplePatch().setPatchToPatchInterp(patchToPatchInterpPtr_);
+    samplePatch().setPatchToPatchInterp(patchToPatchInterpPtr_);
 }
 
 
