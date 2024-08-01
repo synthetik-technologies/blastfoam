@@ -339,7 +339,8 @@ bool Foam::regionSolverList::moveMesh(const IterType iter)
     bool anyMoved = false;
     forAll(*this, regioni)
     {
-        anyMoved = anyMoved || operator[](regioni).moveMesh(iter);
+        bool regionMoved = operator[](regioni).moveMesh(iter);
+        anyMoved = anyMoved || regionMoved;
     }
     return anyMoved;
 }
@@ -389,7 +390,8 @@ void Foam::regionSolverList::solve()
                 << "Solving region "
                 << operator[](regioni).mesh().name() << nl
                 << "********************" << nl << endl;
-            hasMoved = hasMoved || operator[](regioni).moveMesh(iter);
+            bool regionHasMoved = operator[](regioni).moveMesh(iter);
+            hasMoved = hasMoved || regionHasMoved;
             operator[](regioni).solve();
 
             Info<< endl;
