@@ -1058,6 +1058,16 @@ void Foam::patchToPatchMapping::update
         returnReduce(tgtPatch_.size(), sumOp<label>());
     if (srcTotalSize == 0 || tgtTotalSize == 0)
     {
+        singleProcess_ = true;
+        patchToPatchMapping::initialise
+        (
+            srcPatch_,
+            srcPts0,
+            tgtPatch_,
+            tgtPts0,
+            pointNormals,
+            pointNormals0
+        );
         return;
     }
 
