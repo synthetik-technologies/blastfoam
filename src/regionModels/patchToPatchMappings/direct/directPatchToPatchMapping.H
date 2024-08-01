@@ -60,25 +60,38 @@ class direct
 {
     // Private member functions
 
-        // Make sure every face references exactly one face
+        // Make sure every element references exactly one element
         static bool forwardCheck
         (
-            const primitivePatch& patch,
+            const word& elemType,
+            const vectorField& pts,
             const List<DynamicList<label>>& localOtherFaces,
             const bool isSrc
         );
 
-        // Make sure every face is referenced by exactly one face
+        // Make sure every element is referenced by exactly one element
         static bool reverseCheck
         (
-            const primitivePatch& patch,
-            const List<DynamicList<label>>& otherLocalFaces,
+            const word& elemType,
+            const vectorField& pts,
+            const List<DynamicList<label>>& otherLocal,
             const autoPtr<mapDistribute>& mapPtr,
             const bool isSrc
         );
 
         //- Finalise the intersection
-        virtual label finalise
+        virtual label finalisePoints
+        (
+            const primitivePatch& srcPatch,
+            const pointField& srcPts0,
+            const primitivePatch& tgtPatch,
+            const pointField& tgtPts0,
+            const vectorField& pointNormals,
+            const vectorField& pointNormals0,
+            const transformer& tgtToSrc
+        );
+        //- Finalise the intersection
+        virtual label finaliseFaces
         (
             const primitivePatch& srcPatch,
             const pointField& srcPts0,
@@ -104,6 +117,7 @@ public:
             const primitivePatch& srcPatch,
             const primitivePatch& tgtPatch,
             const dictionary& dict,
+            const bool needPoints,
             const bool reverse
         );
 

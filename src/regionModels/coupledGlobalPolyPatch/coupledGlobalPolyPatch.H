@@ -65,6 +65,9 @@ private:
         //- Dictionary
         const dictionary& dict_;
 
+        //- Is point interpolation needed
+        mutable bool needPoints_;
+
         //- Is this patch the source for mapping
         mutable bool isSrc_;
 
@@ -76,6 +79,8 @@ private:
 
         //- Unmapped faces
         mutable labelList unmappedFaces_;
+
+        //- Unmapped points
         mutable labelList unmappedPoints_;
 
 
@@ -103,6 +108,11 @@ private:
         //- Clear the interpolator
         virtual void clearInterp(const bool top = true) const;
 
+        //- Return reference to the interpolator
+        const patchToPatchMapping& patchToPatchInterpolator
+        (
+            const bool needPoints
+        ) const;
 
 public:
 
@@ -156,9 +166,6 @@ public:
 
         //- Return reference to sampled globalPolyPatch
         const coupledGlobalPolyPatch& samplePatch() const;
-
-        //- Return reference to the interpolator
-        const patchToPatchMapping& patchToPatchInterpolator() const;
 
         //- Does the patch have unmapped faces
         bool hasUnmappedFaces() const

@@ -106,7 +106,7 @@ Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::interpolate
         new Field<Type>
         (
             localOtherData.size(),
-            pTraits<Type>::one*Foam::NaN
+            Zero//pTraits<Type>::one*Foam::NaN
         )
     );
     Field<Type>& fld = tfld.ref();
@@ -157,7 +157,7 @@ Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::interpolate
         new Field<Type>
         (
             localOtherData.size(),
-            pTraits<Type>::one*Foam::NaN
+            Zero//pTraits<Type>::one*Foam::NaN
         )
     );
     Field<Type>& fld = tfld.ref();
@@ -187,7 +187,7 @@ Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::interpolate
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferToTgt
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferFacesToTgt
 (
     const Field<Type>& srcField,
     const Field<Type>& unmapped
@@ -197,9 +197,9 @@ Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferToTgt
     {
         return interpolate
         (
-            localSrcToTgt_,
-            tgtWeights()(),
-            srcMapPtr_,
+            localSrcFacesToTgt_,
+            tgtFaceWeights_,
+            srcFacesMapPtr_,
             srcField,
             unmapped
         );
@@ -208,9 +208,9 @@ Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferToTgt
     {
         return interpolate
         (
-            localSrcToTgt_,
-            tgtWeights()(),
-            srcMapPtr_,
+            localSrcFacesToTgt_,
+            tgtFaceWeights_,
+            srcFacesMapPtr_,
             srcField
         );
     }
@@ -218,18 +218,18 @@ Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferToTgt
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferToTgt
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferFacesToTgt
 (
     const tmp<Field<Type>>& tsrcField,
     const Field<Type>& unmapped
 ) const
 {
-    return transferToTgt(tsrcField(), unmapped);
+    return transferFacesToTgt(tsrcField(), unmapped);
 }
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferToSrc
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferFacesToSrc
 (
     const Field<Type>& tgtField,
     const Field<Type>& unmapped
@@ -239,9 +239,9 @@ Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferToSrc
     {
         return interpolate
         (
-            localTgtToSrc_,
-            srcWeights()(),
-            tgtMapPtr_,
+            localTgtFacesToSrc_,
+            srcFaceWeights_,
+            tgtFacesMapPtr_,
             tgtField,
             unmapped
         );
@@ -250,9 +250,9 @@ Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferToSrc
     {
         return interpolate
         (
-            localTgtToSrc_,
-            srcWeights()(),
-            tgtMapPtr_,
+            localTgtFacesToSrc_,
+            srcFaceWeights_,
+            tgtFacesMapPtr_,
             tgtField
         );
     }
@@ -260,13 +260,97 @@ Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferToSrc
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferToSrc
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferFacesToSrc
 (
     const tmp<Field<Type>>& ttgtField,
     const Field<Type>& unmapped
 ) const
 {
-    return transferToSrc(ttgtField(), unmapped);
+    return transferFacesToSrc(ttgtField(), unmapped);
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferPointsToTgt
+(
+    const Field<Type>& srcField,
+    const Field<Type>& unmapped
+) const
+{
+    if (!isNull(unmapped))
+    {
+        return interpolate
+        (
+            localSrcPointsToTgt_,
+            tgtPointWeights_,
+            srcPointsMapPtr_,
+            srcField,
+            unmapped
+        );
+    }
+    else
+    {
+        return interpolate
+        (
+            localSrcPointsToTgt_,
+            tgtPointWeights_,
+            srcPointsMapPtr_,
+            srcField
+        );
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferPointsToTgt
+(
+    const tmp<Field<Type>>& tsrcField,
+    const Field<Type>& unmapped
+) const
+{
+    return transferPointsToTgt(tsrcField(), unmapped);
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferPointsToSrc
+(
+    const Field<Type>& tgtField,
+    const Field<Type>& unmapped
+) const
+{
+    if (!isNull(unmapped))
+    {
+        return interpolate
+        (
+            localTgtPointsToSrc_,
+            srcPointWeights_,
+            tgtPointsMapPtr_,
+            tgtField,
+            unmapped
+        );
+    }
+    else
+    {
+        return interpolate
+        (
+            localTgtPointsToSrc_,
+            srcPointWeights_,
+            tgtPointsMapPtr_,
+            tgtField
+        );
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferPointsToSrc
+(
+    const tmp<Field<Type>>& ttgtField,
+    const Field<Type>& unmapped
+) const
+{
+    return transferPointsToSrc(ttgtField(), unmapped);
 }
 
 

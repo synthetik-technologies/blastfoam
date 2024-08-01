@@ -44,6 +44,25 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+const Foam::patchToPatchMapping&
+Foam::coupledGlobalPolyPatch::patchToPatchInterpolator
+(
+    const bool needPoints
+) const
+{
+    if (needPoints && !needPoints_)
+    {
+        needPoints_ = true;
+        clearInterp();
+    }
+
+    if (!patchToPatchInterpPtr_)
+    {
+        calcPatchToPatchInterp();
+    }
+    return *patchToPatchInterpPtr_;
+}
+
 void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
 {
     if (patchToPatchInterpPtr_)
@@ -55,8 +74,7 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
 
     isSrc_ = dict_.found("mappingType");
     samplePatch().isSrc_ = !isSrc_;
-Info<<mesh_.name()<<" "<<isSrc_<<nl
-    << samplePatch().mesh().name()<<" "<<samplePatch().isSrc_<<endl;
+
     const coupledGlobalPolyPatch& masterPatch =
         isSrc_
       ? *this
@@ -72,6 +90,7 @@ Info<<mesh_.name()<<" "<<isSrc_<<nl
             masterPatch.physicalPatch(),
             slavePatch.physicalPatch(),
             masterPatch.dict_,
+            needPoints_,
             false
         ).ptr();
 
@@ -94,8 +113,8 @@ Info<<mesh_.name()<<" "<<isSrc_<<nl
       : NullObjectRef<vectorField>()
     );
 
-    unmappedFaces_ = patchToPatchInterpPtr_->unmapped(physicalPatch());
-//     unmappedPoints_ = patchToPatchInterpPtr_->unmappedPoints(physicalPatch());
+    unmappedFaces_ = patchToPatchInterpPtr_->unmappedFaces(physicalPatch());
+    unmappedPoints_ = patchToPatchInterpPtr_->unmappedPoints(physicalPatch());
 //     samplePatch().setPatchToPatchInterp(patchToPatchInterpPtr_);
 }
 
@@ -109,9 +128,9 @@ void Foam::coupledGlobalPolyPatch::setPatchToPatchInterp
     if (patchToPatchInterpPtr_)
     {
         unmappedFaces_ =
-            patchToPatchInterpPtr_->unmapped(physicalPatch());
-//         unmappedPoints_ =
-//             patchToPatchInterpPtr_->unmappedPoints(physicalPatch());
+            patchToPatchInterpPtr_->unmappedFaces(physicalPatch());
+        unmappedPoints_ =
+            patchToPatchInterpPtr_->unmappedPoints(physicalPatch());
     }
 }
 
@@ -150,6 +169,7 @@ Foam::coupledGlobalPolyPatch::coupledGlobalPolyPatch
 :
     globalPolyPatch(dict, patch),
     dict_(dict),
+    needPoints_(false),
     sampleRegion_(dict.lookup("sampleRegion")),
     samplePatch_(dict.lookup("samplePatch")),
     patchToPatchInterpPtr_(nullptr)
@@ -196,16 +216,6 @@ const Foam::coupledGlobalPolyPatch&
 Foam::coupledGlobalPolyPatch::samplePatch() const
 {
     return globalPolyBoundaryMesh::New(sampleMesh())(samplePatch_);
-}
-
-const Foam::patchToPatchMapping&
-Foam::coupledGlobalPolyPatch::patchToPatchInterpolator() const
-{
-    if (!patchToPatchInterpPtr_)
-    {
-        calcPatchToPatchInterp();
-    }
-    return *patchToPatchInterpPtr_;
 }
 
 

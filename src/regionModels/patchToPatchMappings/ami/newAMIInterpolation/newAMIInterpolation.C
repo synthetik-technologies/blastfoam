@@ -841,16 +841,21 @@ void Foam::newAMIInterpolation<SourcePatch, TargetPatch>::update
     }
 
 
-    if (srcTotalSize == 0)
-    {
-        if (debug)
-        {
-            Info<< "AMI: no source faces present - no addressing constructed"
-                << endl;
-        }
-
-        return;
-    }
+//     if (srcTotalSize == 0)
+//     {
+// //         if (debug)
+//         {
+//             Info<< "AMI: no source faces present - no addressing constructed"
+//                 << endl;
+//         }
+//
+//         srcAddress_.setSize(srcPatch.size());
+//         srcWeights_.setSize(srcPatch.size());
+//         tgtAddress_.setSize(tgtPatch.size());
+//         tgtWeights_.setSize(tgtPatch.size());
+//
+//         return;
+//     }
 
     if (report)
     {
@@ -865,14 +870,16 @@ void Foam::newAMIInterpolation<SourcePatch, TargetPatch>::update
     srcMagSf_ = patchMagSf(srcPatch, triMode_);
     tgtMagSf_ = patchMagSf(tgtPatch, triMode_);
 
-    // Calculate if patches present on multiple processors
-    singlePatchProc_ = calcDistribution(srcPatch, tgtPatch);
-
-    if (useGlobalPolyPatch_)
+    if (useGlobalPolyPatch_ || !srcTotalSize)
     {
-        Info<< indent
+        DebugInfo<< indent
             << "AMI: using globalPolyPatch" << endl;
         singlePatchProc_ = Pstream::myProcNo();
+    }
+    else
+    {
+        // Calculate if patches present on multiple processors
+        singlePatchProc_ = calcDistribution(srcPatch, tgtPatch);
     }
 
 

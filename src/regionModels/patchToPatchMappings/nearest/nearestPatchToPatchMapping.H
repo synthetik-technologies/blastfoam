@@ -57,13 +57,30 @@ class nearest
     // Private data
 
         //- For each source face, the distance to its coupled target face
-        List<scalar> srcDistances_;
+        List<scalar> srcFaceDistances_;
 
         //- For each target face, the distance to its coupled source face
-        List<scalar> tgtDistances_;
+        List<scalar> tgtFaceDistances_;
+
+        //- For each source point, the distance to its coupled target point
+        List<scalar> srcPointDistances_;
+
+        //- For each target point, the distance to its coupled source point
+        List<scalar> tgtPointDistances_;
+
 
 
     // Private Member Functions
+
+        //- Find nearest points
+        void findNearestPoints
+        (
+            const primitivePatch& patch,
+            const primitivePatch& otherPatch,
+            const List<DynamicList<label>>& faceAddr,
+            List<DynamicList<label>>& pointAddr,
+            List<scalar>& distances
+        );
 
         //- Intersect two faces
         virtual bool intersectFaces
@@ -92,7 +109,16 @@ class nearest
         //- Finalise the intersection locally. Trims the local target patch
         //  so that only parts that actually intersect the source remain.
         //  Returns new-to-old map for trimming target-associated data.
-        virtual labelList finaliseLocal
+        virtual labelList finaliseLocalPoints
+        (
+            const primitivePatch& srcPatch,
+            const pointField& srcPts0,
+            const primitivePatch& tgtPatch,
+            const pointField& tgtPts0,
+            const vectorField& pointNormals,
+            const vectorField& pointNormals0
+        );
+        virtual labelList finaliseLocalFaces
         (
             const primitivePatch& srcPatch,
             const pointField& srcPts0,
@@ -115,7 +141,17 @@ class nearest
 protected:
 
         //- Finalise the intersection
-        virtual label finalise
+        virtual label finalisePoints
+        (
+            const primitivePatch& srcPatch,
+            const pointField& srcPts0,
+            const primitivePatch& tgtPatch,
+            const pointField& tgtPts0,
+            const vectorField& pointNormals,
+            const vectorField& pointNormals0,
+            const transformer& BtoA
+        );
+        virtual label finaliseFaces
         (
             const primitivePatch& srcPatch,
             const pointField& srcPts0,
@@ -141,6 +177,7 @@ public:
             const primitivePatch& srcPatch,
             const primitivePatch& tgtPatch,
             const dictionary& dict,
+            const bool needPoints,
             const bool reverse
         );
 

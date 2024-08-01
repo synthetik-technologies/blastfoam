@@ -1,17 +1,17 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright held by original author
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
 
-    OpenFOAM is free software; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version.
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -19,20 +19,18 @@ License
     for more details.
 
     You should have received a copy of the GNU General Public License
-    along with OpenFOAM; if not, write to the Free Software Foundation,
-    Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    patchToPatchMapping
+    Foam::patchToPatch
 
 Description
-    Virtual base class for mapping/interpolating between two interfaces
-
-Author
-    Philip Cardiff, UCD. All rights reserved.
+    Class to generate coupling geometry between two primitive patches
 
 SourceFiles
-    patchToPatchMapping.C
+    patchToPatch.C
+    patchToPatchParallelOps.C
+    patchToPatchTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -44,7 +42,8 @@ SourceFiles
 #include "dictionary.H"
 #include "primitivePatch.H"
 #include "treeBoundBox.H"
-#include "globalPolyPatch.H"
+#include "standAlonePatch.H"
+#include "remote.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -62,6 +61,9 @@ protected:
 
         //- Copy of settings dictionary
         const dictionary dict_;
+
+        //- Is point mapping needed
+        bool needPoints_;
 
         //- Stored patch pointers for determining mapping direction
         const primitivePatch& srcPatch_;
@@ -84,28 +86,55 @@ protected:
             // Face mapping
 
                 //- Local source to target faces
-                List<DynamicList<label>> localSrcToTgt_;
+                List<DynamicList<label>> localSrcFacesToTgt_;
 
                 //- Local target to source faces
-                List<DynamicList<label>> localTgtToSrc_;
+                List<DynamicList<label>> localTgtFacesToSrc_;
 
                 //- For each source face, the coupled target weights
-                List<DynamicList<scalar>> srcWeights_;
+                List<DynamicList<scalar>> srcFaceWeights_;
 
-                //- For each source point, the coupled target weights
-                List<DynamicList<scalar>> tgtWeights_;
+                //- For each source face, the coupled target weights
+                List<DynamicList<scalar>> tgtFaceWeights_;
 
                 //- Distribution map from source to target faces
-                autoPtr<mapDistribute> srcMapPtr_;
+                autoPtr<mapDistribute> srcFacesMapPtr_;
 
                 //- Distribution map from target to source faces
-                autoPtr<mapDistribute> tgtMapPtr_;
+                autoPtr<mapDistribute> tgtFacesMapPtr_;
 
                 //- Map of local source face indices [proc, index]
-                autoPtr<List<labelPair>> localSrcProcPtr_;
+                autoPtr<List<remote>> localSrcFacesProcPtr_;
 
                 //- Map of local target face indices [proc, index]
-                autoPtr<List<labelPair>> localTgtProcPtr_;
+                autoPtr<List<remote>> localTgtFacesProcPtr_;
+
+
+            // Point mapping
+
+                //- Local source to target points
+                List<DynamicList<label>> localSrcPointsToTgt_;
+
+                //- Local target to source points
+                List<DynamicList<label>> localTgtPointsToSrc_;
+
+                //- For each source point, the coupled target weights
+                List<DynamicList<scalar>> srcPointWeights_;
+
+                //- For each source point, the coupled target weights
+                List<DynamicList<scalar>> tgtPointWeights_;
+
+                //- Distribution map from source to target points
+                autoPtr<mapDistribute> srcPointsMapPtr_;
+
+                //- Distribution map from target to source points
+                autoPtr<mapDistribute> tgtPointsMapPtr_;
+
+                //- Map of local source point indices [proc, index]
+                autoPtr<List<remote>> localSrcPointsProcPtr_;
+
+                //- Map of local target point indices [proc, index]
+                autoPtr<List<remote>> localTgtPointsProcPtr_;
 
 
     // Protected Member Functions
@@ -131,7 +160,7 @@ protected:
             (
                 const face& f,
                 const pointField& pts,
-                const vectorField& pns
+                const vectorField& pointNormals
             ) const;
 
             //- Create bound box for a face list with old points
@@ -154,8 +183,8 @@ protected:
             (
                 const primitivePatch& patch,
                 const pointField& pts0,
-                const vectorField& pns,
-                const vectorField& pns0
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0
             ) const;
 
             //- Create bound box for a face list with old points and normals
@@ -163,8 +192,8 @@ protected:
             (
                 const primitivePatch& patch,
                 const pointField& pts0,
-                const vectorField& pns,
-                const vectorField& pns0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0,
                 const label facei
             ) const;
 
@@ -174,10 +203,10 @@ protected:
             //- Intersect 2 faces with old points
             virtual bool intersectFaces
             (
-                const primitivePatch& patchA,
-                const pointField& ptsA0,
-                const primitivePatch& patchB,
-                const pointField& ptsB0,
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
                 const vectorField& pn,
                 const vectorField& pn0,
                 const label faceAi,
@@ -187,12 +216,12 @@ protected:
             //- Intersect two faces
             bool findOrIntersectFaces
             (
-                const primitivePatch& patchA,
-                const pointField& ptsA0,
-                const primitivePatch& patchB,
-                const pointField& ptsB0,
-                const vectorField& pns,
-                const vectorField& pns0,
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0,
                 const label faceAi,
                 const label faceBi
             );
@@ -202,12 +231,12 @@ protected:
             //  pairs.
             label intersectPatchQueue
             (
-                const primitivePatch& patchA,
-                const pointField& ptsA0,
-                const primitivePatch& patchB,
-                const pointField& ptsB0,
-                const vectorField& pns,
-                const vectorField& pns0,
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0,
                 const bool isA,
                 const DynamicList<labelPair>& queue,
                 labelList& faceComplete,
@@ -220,12 +249,12 @@ protected:
             //- Intersect the patches
             void intersectPatches
             (
-                const primitivePatch& patchA,
+                const primitivePatch& srcPatch,
                 const pointField& pts0A,
-                const primitivePatch& patchB,
+                const primitivePatch& tgtPatch,
                 const pointField& pts0B,
-                const vectorField& pns,
-                const vectorField& pns0
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0
             );
 
         // Parallel operations
@@ -233,20 +262,45 @@ protected:
             //- Collect faces to send
             labelListList sendTgtPatch
             (
-                const primitivePatch& patchA,
+                const primitivePatch& srcPatch,
                 const pointField& pts0A,
-                const primitivePatch& patchB,
+                const primitivePatch& tgtPatch,
                 const pointField& pts0B,
-                const vectorField& pns,
-                const vectorField& pns0
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0
+            ) const;
+
+            //- Collect points and faces to send
+            void sendTgtPatch
+            (
+                const primitivePatch& srcPatch,
+                const pointField& pts0A,
+                const primitivePatch& tgtPatch,
+                const pointField& pts0B,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0,
+                labelListList& sendPoints,
+                labelListList& sendFaces
             ) const;
 
             //- Create local patch by combining all valid processors
-            List<labelPair> distributePatch
+            List<remote> distributePatch
             (
                 const mapDistribute& map,
                 const primitivePatch& patch,
                 const pointField& pts0,
+                autoPtr<standAlonePatch>& localPatchPtr,
+                autoPtr<pointField>& localPoints0Ptr
+            );
+
+            //- Create local patch by combining all valid processors
+            void distributePatch
+            (
+                const mapDistribute& map,
+                const primitivePatch& patch,
+                const pointField& pts0,
+                List<remote>& localProcPoints,
+                List<remote>& localProcFaces,
                 autoPtr<standAlonePatch>& localPatchPtr,
                 autoPtr<pointField>& localPoints0Ptr
             );
@@ -257,25 +311,43 @@ protected:
             //- Initialisation
             virtual void initialise
             (
-                const primitivePatch& patchA,
-                const pointField& ptsA0,
-                const primitivePatch& patchB,
-                const pointField& ptsB0,
-                const vectorField& pns,
-                const vectorField& pns0
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0
             );
 
             //- Finalise the intersection locally. Trims the local target patch
             //  so that only parts that actually intersect the source remain.
             //  Returns new-to-old map for trimming target-associated data.
-            virtual labelList finaliseLocal
+            virtual void finaliseLocal
             (
-                const primitivePatch& patchA,
-                const pointField& ptsA0,
-                const primitivePatch& patchB,
-                const pointField& ptsB0,
-                const vectorField& pns,
-                const vectorField& pns0
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0
+            );
+            virtual labelList finaliseLocalPoints
+            (
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0
+            );
+            virtual labelList finaliseLocalFaces
+            (
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0
             );
 
             //- Distribute the source patch so that any information needed by
@@ -296,31 +368,36 @@ protected:
             );
 
             //- Finalising
-            virtual label finalise
+            virtual labelPair finalise
             (
-                const primitivePatch& patchA,
-                const pointField& ptsA0,
-                const primitivePatch& patchB,
-                const pointField& ptsB0,
-                const vectorField& pns,
-                const vectorField& pns0,
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0,
                 const transformer& tgtToSrc
             );
-
-
-        // Interpolation
-
-            //- For each source face, the coupled target weights
-            virtual tmpNrc<List<DynamicList<scalar>>> srcWeights() const
-            {
-                return srcWeights_;
-            }
-
-            //- For each target face, the coupled source weights
-            virtual tmpNrc<List<DynamicList<scalar>>> tgtWeights() const
-            {
-                return tgtWeights_;
-            }
+            virtual label finalisePoints
+            (
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0,
+                const transformer& tgtToSrc
+            );
+            virtual label finaliseFaces
+            (
+                const primitivePatch& srcPatch,
+                const pointField& srcPts0,
+                const primitivePatch& tgtPatch,
+                const pointField& tgtPts0,
+                const vectorField& pointNormals,
+                const vectorField& pointNormals0,
+                const transformer& tgtToSrc
+            );
 
 
 public:
@@ -340,9 +417,10 @@ public:
                 const primitivePatch& srcPatch,
                 const primitivePatch& tgtPatch,
                 const dictionary& dict,
+                const bool needPoints,
                 const bool reverse
             ),
-            (srcPatch, tgtPatch, dict, reverse)
+            (srcPatch, tgtPatch, dict, needPoints, reverse)
         );
 
 
@@ -354,6 +432,7 @@ public:
             const primitivePatch& srcPatch,
             const primitivePatch& tgtPatch,
             const dictionary& dict,
+            const bool needPoints,
             const bool reverse
         );
 
@@ -366,6 +445,7 @@ public:
             const primitivePatch& srcPatch,
             const primitivePatch& tgtPatch,
             const dictionary& dict,
+            const bool needPoints,
             const bool reverse
         );
 
@@ -408,14 +488,35 @@ public:
                 return singleProcess_ >= 0;
             }
 
+            //- Are point weights used
+            bool needPoints() const
+            {
+                return needPoints_;
+            }
+
+            //- Set if point weights are needed
+            bool& needPoints()
+            {
+                return needPoints_;
+            }
+
             //- Return unmapped faces for source patch
-            labelList unmappedSrc() const;
+            labelList unmappedSrcFaces() const;
 
             //- Return unmapped faces for target
-            labelList unmappedTgt() const;
+            labelList unmappedTgtFaces() const;
 
             //- Return unmapped faces for the given patch
-            labelList unmapped(const primitivePatch& patch) const;
+            labelList unmappedFaces(const primitivePatch& patch) const;
+
+            //- Return unmapped points for source patch
+            labelList unmappedSrcPoints() const;
+
+            //- Return unmapped points for target
+            labelList unmappedTgtPoints() const;
+
+            //- Return unmapped points for the given patch
+            labelList unmappedPoints(const primitivePatch& patch) const;
 
 
         // Update
@@ -440,32 +541,64 @@ public:
 
             //- General functions that call the virtual implementations
 
-                //- Transfer field from source to target patch
+                //- Transfer face field from source to target patch
                 template<class Type>
-                tmp<Field<Type>> transferToTgt
+                tmp<Field<Type>> transferFacesToTgt
                 (
                     const Field<Type>& srcField,
                     const Field<Type>& unmapped =
                         NullObjectRef<Field<Type>>()
                 ) const;
                 template<class Type>
-                tmp<Field<Type>> transferToTgt
+                tmp<Field<Type>> transferFacesToTgt
                 (
                     const tmp<Field<Type>>& tsrcField,
                     const Field<Type>& unmapped =
                         NullObjectRef<Field<Type>>()
                 ) const;
 
-                //- Transfer field from target to source patch
+                //- Transfer face field from target to source patch
                 template<class Type>
-                tmp<Field<Type>> transferToSrc
+                tmp<Field<Type>> transferFacesToSrc
                 (
                     const Field<Type>& tgtField,
                     const Field<Type>& unmapped =
                         NullObjectRef<Field<Type>>()
                 ) const;
                 template<class Type>
-                tmp<Field<Type>> transferToSrc
+                tmp<Field<Type>> transferFacesToSrc
+                (
+                    const tmp<Field<Type>>& ttgtField,
+                    const Field<Type>& unmapped =
+                        NullObjectRef<Field<Type>>()
+                ) const;
+
+                //- Transfer point field from source to target patch
+                template<class Type>
+                tmp<Field<Type>> transferPointsToTgt
+                (
+                    const Field<Type>& srcField,
+                    const Field<Type>& unmapped =
+                        NullObjectRef<Field<Type>>()
+                ) const;
+                template<class Type>
+                tmp<Field<Type>> transferPointsToTgt
+                (
+                    const tmp<Field<Type>>& tsrcField,
+                    const Field<Type>& unmapped =
+                        NullObjectRef<Field<Type>>()
+                ) const;
+
+                //- Transfer point field from target to source patch
+                template<class Type>
+                tmp<Field<Type>> transferPointsToSrc
+                (
+                    const Field<Type>& tgtField,
+                    const Field<Type>& unmapped =
+                        NullObjectRef<Field<Type>>()
+                ) const;
+                template<class Type>
+                tmp<Field<Type>> transferPointsToSrc
                 (
                     const tmp<Field<Type>>& ttgtField,
                     const Field<Type>& unmapped =
@@ -490,7 +623,7 @@ public:
             //- Construct local addressing from the given distribution map.
             //  The result is a list of remote element indices that correspond
             //  to the elements that were sent by the distribution map.
-            static List<labelPair> distributeAddressing
+            static List<remote> distributeAddressing
             (
                 const mapDistribute& map
             );
@@ -500,14 +633,14 @@ public:
             static labelListList procSendIndices
             (
                 const labelListList& BLocalAFaces,
-                const List<labelPair>& localBProcFaces
+                const List<remote>& localBProcFaces
             );
 
             //- Dynamic list overload of the above
             static labelListList procSendIndices
             (
                 const List<DynamicList<label>>& BLocalAFaces,
-                const List<labelPair>& localBProcFaces
+                const List<remote>& localBProcFaces
             );
 
             //- Trim unused elements from a distribution map. Return the map
@@ -547,19 +680,19 @@ public:
             );
 
             //- Map local to proc/index indices
-            static List<List<labelPair>> localToRemote
+            static List<List<remote>> localToRemote
             (
                 const labelListList& indices,
-                const List<labelPair>& indexToProcIndex =
-                    NullObjectRef<List<labelPair>>()
+                const List<remote>& indexToProcIndex =
+                    NullObjectRef<List<remote>>()
             );
 
             //- Dynamic list overload of the above
-            static List<List<labelPair>> localToRemote
+            static List<List<remote>> localToRemote
             (
                 const List<DynamicList<label>>& indices,
-                const List<labelPair>& indexToProcIndex =
-                    NullObjectRef<List<labelPair>>()
+                const List<remote>& indexToProcIndex =
+                    NullObjectRef<List<remote>>()
             );
 
             //- Reverse distribute a set of target addressing
@@ -567,7 +700,7 @@ public:
             (
                 const label tgtSize,
                 const mapDistribute& map,
-                const List<labelPair>& localSrcProcData,
+                const List<remote>& localSrcProcData,
                 labelListList& tgtToLocalSrcData
             );
 
@@ -576,7 +709,7 @@ public:
             (
                 const label tgtSize,
                 const mapDistribute& map,
-                const List<labelPair>& localSrcProcData,
+                const List<remote>& localSrcProcData,
                 List<DynamicList<label>>& tgtToLocalSrcData
             );
 

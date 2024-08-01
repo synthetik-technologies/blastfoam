@@ -51,6 +51,10 @@ void Foam::newMapNearestAMI<SourcePatch, TargetPatch>::findNearestFace
     do
     {
         label tgtI = tgtFaces.remove();
+        if (tgtI < 0)
+        {
+            continue;
+        }
         visitedFaces.append(tgtI);
 
         scalar dTest = magSqr(tgtCf[tgtI] - srcP);
@@ -104,7 +108,7 @@ void Foam::newMapNearestAMI<SourcePatch, TargetPatch>::setNextNearestFaces
             srcFacei = facei;
             tgtFacei = this->findTargetFace(facei);
 
-            if (tgtFacei == -1)
+            if (this->requireMatch_ && tgtFacei == -1)
             {
                 const vectorField& srcCf = this->srcPatch_.faceCentres();
 
@@ -248,19 +252,25 @@ void Foam::newMapNearestAMI<SourcePatch, TargetPatch>::calculate
     {
         findNearestFace(this->srcPatch_, this->tgtPatch_, srcFacei, tgtFacei);
 
-        srcAddr[srcFacei].append(tgtFacei);
-        tgtAddr[tgtFacei].append(srcFacei);
+        if (srcFacei >= 0)
+        {
+            if (tgtFacei >= 0)
+            {
+                srcAddr[srcFacei].append(tgtFacei);
+                tgtAddr[tgtFacei].append(srcFacei);
+            }
 
-        mapFlag[srcFacei] = false;
+            mapFlag[srcFacei] = false;
 
-        // Do advancing front starting from srcFacei, tgtFacei
-        setNextNearestFaces
-        (
-            mapFlag,
-            startSeedI,
-            srcFacei,
-            tgtFacei
-        );
+            // Do advancing front starting from srcFacei, tgtFacei
+            setNextNearestFaces
+            (
+                mapFlag,
+                startSeedI,
+                srcFacei,
+                tgtFacei
+            );
+        }
     } while (srcFacei >= 0);
 
 
@@ -273,7 +283,7 @@ void Foam::newMapNearestAMI<SourcePatch, TargetPatch>::calculate
     {
         if (tgtAddr[targetFacei].size() > 1)
         {
-            const vector& tgtC = tgtCf[tgtFacei];
+            const vector& tgtC = tgtCf[targetFacei];
 
             DynamicList<label>& srcFaces = tgtAddr[targetFacei];
 
@@ -324,13 +334,29 @@ void Foam::newMapNearestAMI<SourcePatch, TargetPatch>::calculate
     // transfer data to persistent storage
     forAll(srcAddr, i)
     {
-        srcAddress[i].transfer(srcAddr[i]);
-        srcWeights[i] = scalarList(1, 1.0);
+        if (srcAddr[i].size())
+        {
+            srcAddress[i].transfer(srcAddr[i]);
+            srcWeights[i] = scalarList(1, 1.0);
+        }
+        else
+        {
+            srcAddress[i].clear();
+            srcWeights[i].clear();
+        }
     }
     forAll(tgtAddr, i)
     {
-        tgtAddress[i].transfer(tgtAddr[i]);
-        tgtWeights[i] = scalarList(1, 1.0);
+        if (tgtAddr[i].size())
+        {
+            tgtAddress[i].transfer(tgtAddr[i]);
+            tgtWeights[i] = scalarList(1, 1.0);
+        }
+        else
+        {
+            tgtAddress[i].clear();
+            tgtWeights[i].clear();
+        }
     }
 }
 

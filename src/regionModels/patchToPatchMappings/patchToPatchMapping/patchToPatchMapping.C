@@ -77,20 +77,22 @@ Foam::patchToPatchMapping::patchToPatchMapping
     const primitivePatch& srcPatch,
     const primitivePatch& tgtPatch,
     const dictionary& dict,
+    const bool needPoints,
     const bool reverse
 )
 :
     dict_(dict),
+    needPoints_(needPoints),
     srcPatch_(srcPatch),
     tgtPatch_(tgtPatch),
     reverse_(reverse),
     singleProcess_(-1),
-    localSrcToTgt_(0),
-    localTgtToSrc_(0),
-    srcMapPtr_(nullptr),
-    tgtMapPtr_(nullptr),
-    localSrcProcPtr_(nullptr),
-    localTgtProcPtr_(nullptr)
+    localSrcFacesToTgt_(0),
+    localTgtFacesToSrc_(0),
+    srcFacesMapPtr_(nullptr),
+    tgtFacesMapPtr_(nullptr),
+    localSrcFacesProcPtr_(nullptr),
+    localTgtFacesProcPtr_(nullptr)
 {}
 
 
@@ -107,6 +109,7 @@ Foam::autoPtr<Foam::patchToPatchMapping> Foam::patchToPatchMapping::New
     const primitivePatch& srcPatch,
     const primitivePatch& tgtPatch,
     const dictionary& dict,
+    const bool needPoints,
     const bool reverse
 )
 {
@@ -133,6 +136,7 @@ Foam::autoPtr<Foam::patchToPatchMapping> Foam::patchToPatchMapping::New
             srcPatch,
             tgtPatch,
             dict.optionalSubDict(type + "Coeffs"),
+            needPoints,
             reverse
         )
     );
@@ -288,17 +292,17 @@ bool Foam::patchToPatchMapping::findOrIntersectFaces
     const label tgtFacei
 )
 {
-    forAll(localSrcToTgt_[tgtFacei], i)
+    forAll(localSrcFacesToTgt_[tgtFacei], i)
     {
-        if (localSrcToTgt_[tgtFacei][i] == srcFacei)
+        if (localSrcFacesToTgt_[tgtFacei][i] == srcFacei)
         {
             return true;
         }
     }
 
-    forAll(localTgtToSrc_[srcFacei], i)
+    forAll(localTgtFacesToSrc_[srcFacei], i)
     {
-        if (localTgtToSrc_[srcFacei][i] == tgtFacei)
+        if (localTgtFacesToSrc_[srcFacei][i] == tgtFacei)
         {
             return true;
         }
@@ -606,33 +610,136 @@ void Foam::patchToPatchMapping::initialise
     const vectorField& pointNormals0
 )
 {
-    localTgtToSrc_.setSize(srcPatch.size());
-    forAll(localTgtToSrc_, i)
+    localTgtFacesToSrc_.setSize(srcPatch.size());
+    srcFaceWeights_.setSize(srcPatch.size());
+    forAll(localTgtFacesToSrc_, i)
     {
-        localTgtToSrc_[i].clear();
+        localTgtFacesToSrc_[i].clear();
+        srcFaceWeights_[i].clear();
     }
 
-    localSrcToTgt_.setSize(tgtPatch.size());
-    forAll(localSrcToTgt_, i)
+    localSrcFacesToTgt_.setSize(tgtPatch.size());
+    tgtFaceWeights_.setSize(tgtPatch.size());
+    forAll(localSrcFacesToTgt_, i)
     {
-        localSrcToTgt_[i].clear();
+        localSrcFacesToTgt_[i].clear();
+        tgtFaceWeights_[i].clear();
     }
 
-    srcWeights_.setSize(srcPatch.size());
-    forAll(srcWeights_, i)
+    if (needPoints_)
     {
-        srcWeights_[i].clear();
-    }
+        localTgtPointsToSrc_.setSize(srcPatch.nPoints());
+        srcPointWeights_.setSize(srcPatch.nPoints());
+        forAll(localTgtPointsToSrc_, i)
+        {
+            localTgtPointsToSrc_[i].clear();
+            srcPointWeights_[i].clear();
+        }
 
-    tgtWeights_.setSize(tgtPatch.size());
-    forAll(tgtWeights_, i)
-    {
-        tgtWeights_[i].clear();
+        localSrcPointsToTgt_.setSize(tgtPatch.nPoints());
+        tgtPointWeights_.setSize(tgtPatch.nPoints());
+        forAll(localSrcPointsToTgt_, i)
+        {
+            localSrcPointsToTgt_[i].clear();
+            tgtPointWeights_[i].clear();
+        }
     }
 }
 
 
-Foam::labelList Foam::patchToPatchMapping::finaliseLocal
+void Foam::patchToPatchMapping::finaliseLocal
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0
+)
+{
+    if (needPoints_)
+    {
+        finaliseLocalPoints
+        (
+            srcPatch,
+            srcPts0,
+            tgtPatch,
+            tgtPts0,
+            pointNormals,
+            pointNormals0
+        );
+    }
+    finaliseLocalFaces
+    (
+        srcPatch,
+        srcPts0,
+        tgtPatch,
+        tgtPts0,
+        pointNormals,
+        pointNormals0
+    );
+}
+
+
+Foam::labelList Foam::patchToPatchMapping::finaliseLocalPoints
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0
+)
+{
+
+    boolList localTgtPointIsUsed(tgtPatch.nPoints(), false);
+    forAll(localTgtPointsToSrc_, srcPointi)
+    {
+        UIndirectList<bool>
+        (
+            localTgtPointIsUsed,
+            localTgtPointsToSrc_[srcPointi]
+        ) = true;
+    }
+//     forAll(localSrcPointsToTgt_, tgtPointi)
+//     {
+//         if (localSrcPointsToTgt_[tgtPointi].size())
+//         {
+//             localTgtPointIsUsed[tgtPointi] = true;
+//         }
+//     }
+
+
+    labelList oldToNew, newToOld;
+    trimDistributionMap
+    (
+        localTgtPointIsUsed,
+        tgtPointsMapPtr_(),
+        oldToNew,
+        newToOld
+    );
+
+
+    forAll(localTgtPointsToSrc_, srcPointi)
+    {
+        labelList& tgtPoints = localTgtPointsToSrc_[srcPointi];
+        forAll(tgtPoints, tgtPointi)
+        {
+            tgtPoints[tgtPointi] = oldToNew[tgtPoints[tgtPointi]];
+        }
+    }
+
+
+    localSrcPointsToTgt_ =
+        List<DynamicList<label>>(localSrcPointsToTgt_, newToOld);
+    localTgtPointsProcPtr_() =
+        List<remote>(localTgtPointsProcPtr_(), newToOld);
+
+    return newToOld;
+}
+
+
+Foam::labelList Foam::patchToPatchMapping::finaliseLocalFaces
 (
     const primitivePatch& srcPatch,
     const pointField& srcPts0,
@@ -643,12 +750,12 @@ Foam::labelList Foam::patchToPatchMapping::finaliseLocal
 )
 {
     boolList localTgtFaceIsUsed(tgtPatch.size(), false);
-    forAll(localTgtToSrc_, faceAi)
+    forAll(localTgtFacesToSrc_, faceAi)
     {
         UIndirectList<bool>
         (
             localTgtFaceIsUsed,
-            localTgtToSrc_[faceAi]
+            localTgtFacesToSrc_[faceAi]
         ) = true;
     }
 
@@ -657,15 +764,15 @@ Foam::labelList Foam::patchToPatchMapping::finaliseLocal
     trimDistributionMap
     (
         localTgtFaceIsUsed,
-        tgtMapPtr_(),
+        tgtFacesMapPtr_(),
         oldToNew,
         newToOld
     );
 
 
-    forAll(localTgtToSrc_, faceAi)
+    forAll(localTgtFacesToSrc_, faceAi)
     {
-        labelList& tgtFaces = localTgtToSrc_[faceAi];
+        labelList& tgtFaces = localTgtFacesToSrc_[faceAi];
         forAll(tgtFaces, tgtFacei)
         {
             tgtFaces[tgtFacei] = oldToNew[tgtFaces[tgtFacei]];
@@ -673,14 +780,13 @@ Foam::labelList Foam::patchToPatchMapping::finaliseLocal
     }
 
 
-    localSrcToTgt_ =
-        List<DynamicList<label>>(localSrcToTgt_, newToOld);
-    localTgtProcPtr_() =
-        List<labelPair>(localTgtProcPtr_(), newToOld);
+    localSrcFacesToTgt_ =
+        List<DynamicList<label>>(localSrcFacesToTgt_, newToOld);
+    localTgtFacesProcPtr_() =
+        List<remote>(localTgtFacesProcPtr_(), newToOld);
 
     return newToOld;
 }
-
 
 void Foam::patchToPatchMapping::distributeSrc
 (
@@ -688,10 +794,18 @@ void Foam::patchToPatchMapping::distributeSrc
     const pointField& srcPts0
 )
 {
-    localSrcProcPtr_.reset
+    localSrcFacesProcPtr_.reset
     (
-        new List<labelPair>(distributeAddressing(srcMapPtr_()))
+        new List<remote>(distributeAddressing(srcFacesMapPtr_()))
     );
+
+    if (needPoints_)
+    {
+        localSrcPointsProcPtr_.reset
+        (
+            new List<remote>(distributeAddressing(srcPointsMapPtr_()))
+        );
+    }
 }
 
 void Foam::patchToPatchMapping::rDistributeTgt
@@ -703,14 +817,89 @@ void Foam::patchToPatchMapping::rDistributeTgt
     rDistributeTgtAddressing
     (
         tgtPatch.size(),
-        tgtMapPtr_(),
-        localSrcProcPtr_(),
-        localSrcToTgt_
+        tgtFacesMapPtr_(),
+        localSrcFacesProcPtr_(),
+        localSrcFacesToTgt_
     );
+
+    if (needPoints_)
+    {
+        rDistributeTgtAddressing
+        (
+            tgtPatch.nPoints(),
+            tgtPointsMapPtr_(),
+            localSrcPointsProcPtr_(),
+            localSrcPointsToTgt_
+        );
+    }
 }
 
 
-Foam::label Foam::patchToPatchMapping::finalise
+Foam::labelPair Foam::patchToPatchMapping::finalise
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0,
+    const transformer& tgtToSrc
+)
+{
+    labelPair nCouples(0, 0);
+    if (needPoints_)
+    {
+        nCouples.first() = finalisePoints
+        (
+            srcPatch,
+            srcPts0,
+            tgtPatch,
+            tgtPts0,
+            pointNormals,
+            pointNormals0,
+            tgtToSrc
+        );
+    }
+    nCouples.second() = finaliseFaces
+    (
+        srcPatch,
+        srcPts0,
+        tgtPatch,
+        tgtPts0,
+        pointNormals,
+        pointNormals0,
+        tgtToSrc
+    );
+    return nCouples;
+}
+
+
+Foam::label Foam::patchToPatchMapping::finalisePoints
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0,
+    const transformer& tgtToSrc
+)
+{
+    label nCoupled = 0;
+    forAll(localTgtPointsToSrc_, i)
+    {
+        nCoupled += localTgtPointsToSrc_[i].size();
+    }
+    forAll(localSrcPointsToTgt_, i)
+    {
+        nCoupled += localSrcPointsToTgt_[i].size();
+    }
+    reduce(nCoupled, sumOp<label>());
+    return nCoupled;
+}
+
+
+Foam::label Foam::patchToPatchMapping::finaliseFaces
 (
     const primitivePatch& srcPatch,
     const pointField& srcPts0,
@@ -722,24 +911,25 @@ Foam::label Foam::patchToPatchMapping::finalise
  )
 {
     label nCoupled = 0;
-    forAll(localTgtToSrc_, i)
+    forAll(localTgtFacesToSrc_, i)
     {
-        nCoupled += localTgtToSrc_[i].size();
+        nCoupled += localTgtFacesToSrc_[i].size();
     }
-    forAll(localSrcToTgt_, i)
+    forAll(localSrcFacesToTgt_, i)
     {
-        nCoupled += localSrcToTgt_[i].size();
+        nCoupled += localSrcFacesToTgt_[i].size();
     }
+    reduce(nCoupled, sumOp<label>());
     return nCoupled;
 }
 
 
-Foam::labelList Foam::patchToPatchMapping::unmappedSrc() const
+Foam::labelList Foam::patchToPatchMapping::unmappedSrcFaces() const
 {
-    DynamicList<label> unmapped(localTgtToSrc_.size());
-    forAll(localTgtToSrc_, i)
+    DynamicList<label> unmapped(localTgtFacesToSrc_.size());
+    forAll(localTgtFacesToSrc_, i)
     {
-        if (!localTgtToSrc_[i].size())
+        if (!localTgtFacesToSrc_[i].size())
         {
             unmapped.append(i);
         }
@@ -748,12 +938,12 @@ Foam::labelList Foam::patchToPatchMapping::unmappedSrc() const
 }
 
 
-Foam::labelList Foam::patchToPatchMapping::unmappedTgt() const
+Foam::labelList Foam::patchToPatchMapping::unmappedTgtFaces() const
 {
-    DynamicList<label> unmapped(localSrcToTgt_.size());
-    forAll(localSrcToTgt_, i)
+    DynamicList<label> unmapped(localSrcFacesToTgt_.size());
+    forAll(localSrcFacesToTgt_, i)
     {
-        if (!localSrcToTgt_[i].size())
+        if (!localSrcFacesToTgt_[i].size())
         {
             unmapped.append(i);
         }
@@ -762,18 +952,69 @@ Foam::labelList Foam::patchToPatchMapping::unmappedTgt() const
 }
 
 
-Foam::labelList Foam::patchToPatchMapping::unmapped
+Foam::labelList Foam::patchToPatchMapping::unmappedSrcPoints() const
+{
+    DynamicList<label> unmapped(localTgtPointsToSrc_.size());
+    forAll(localTgtPointsToSrc_, i)
+    {
+        if (!localTgtPointsToSrc_[i].size())
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
+
+Foam::labelList Foam::patchToPatchMapping::unmappedTgtPoints() const
+{
+    DynamicList<label> unmapped(localSrcPointsToTgt_.size());
+    forAll(localSrcPointsToTgt_, i)
+    {
+        if (!localSrcPointsToTgt_[i].size())
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
+
+Foam::labelList Foam::patchToPatchMapping::unmappedFaces
 (
     const primitivePatch& patch
 ) const
 {
     if (&patch == &srcPatch_)
     {
-        return unmappedSrc();
+        return unmappedSrcFaces();
     }
     else if (&patch == &tgtPatch_)
     {
-        return unmappedTgt();
+        return unmappedTgtFaces();
+    }
+
+    FatalErrorInFunction
+        << "Provided patch does not patch either patch provided for "
+        << "mapping creation" << endl
+        << abort(FatalError);
+
+    return labelList();
+}
+
+
+Foam::labelList Foam::patchToPatchMapping::unmappedPoints
+(
+    const primitivePatch& patch
+) const
+{
+    if (&patch == &srcPatch_)
+    {
+        return unmappedSrcPoints();
+    }
+    else if (&patch == &tgtPatch_)
+    {
+        return unmappedTgtPoints();
     }
 
     FatalErrorInFunction
@@ -848,9 +1089,19 @@ void Foam::patchToPatchMapping::update
     const primitivePatch& ttgtPatch = ttgtPatchPtr();
     const pointField& ttgtPts0 = ttgtPoints0Ptr();
 
-    Info<< indent << typeName << ": Calculating couplings between "
-        << srcTotalSize << " source faces and " << tgtTotalSize
-        << " target faces" << incrIndent << endl;
+    Info<< typeName << " [" << type() << "]"
+        << ": Calculating couplings" << incrIndent << nl
+        << indent << "Face couplings: "
+        << srcTotalSize << " source faces and "
+        << tgtTotalSize << " target faces" << endl;
+    if (needPoints_)
+    {
+        Info<< indent << "Point couplings: "
+            << returnReduce(srcPatch_.nPoints(), sumOp<label>())
+            << " source points and "
+            << returnReduce(tgtPatch_.nPoints(), sumOp<label>())
+            << " target points" << endl;
+    }
 
     // Determine if patches are present on multiple processors
     singleProcess_ = singleProcess(srcPatch_.size(), tgtPatch_.size());
@@ -894,34 +1145,75 @@ void Foam::patchToPatchMapping::update
         // to the source. This is done based on bound boxes, so quite a lot of
         // faces will get distributed that ultimately are not used. These will
         // be filtered out after the intersection has been completed.
-        tgtMapPtr_ =
-            constructDistributionMap
+        if (needPoints_)
+        {
+            labelListList sendPoints, sendFaces;
+            sendTgtPatch
             (
-                sendTgtPatch
-                (
-                    srcPatch_,
-                    srcPts0,
-                    ttgtPatch,
-                    ttgtPts0,
-                    pointNormals,
-                    pointNormals0
-                )
+                srcPatch_,
+                srcPts0,
+                ttgtPatch,
+                ttgtPts0,
+                pointNormals,
+                pointNormals0,
+                sendPoints,
+                sendFaces
             );
+            tgtFacesMapPtr_ = constructDistributionMap(sendFaces);
+            tgtPointsMapPtr_ = constructDistributionMap(sendPoints);
+        }
+        else
+        {
+            tgtFacesMapPtr_ =
+                constructDistributionMap
+                (
+                    sendTgtPatch
+                    (
+                        srcPatch_,
+                        srcPts0,
+                        ttgtPatch,
+                        ttgtPts0,
+                        pointNormals,
+                        pointNormals0
+                    )
+                );
+        }
 
-        localTgtProcPtr_.reset
-        (
-            new List<labelPair>
-            (
+        {
+            if (needPoints_)
+            {
+                localTgtPointsProcPtr_.reset(new List<remote>());
+                localTgtFacesProcPtr_.reset(new List<remote>());
                 distributePatch
                 (
-                    tgtMapPtr_(),
+                    tgtFacesMapPtr_(),
                     ttgtPatch,
                     ttgtPts0,
+                    localTgtPointsProcPtr_(),
+                    localTgtFacesProcPtr_(),
                     localTgtPatchPtr_,
                     localTgtPoints0Ptr_
-                )
-            )
-        );
+                );
+            }
+            else
+            {
+                localTgtPointsProcPtr_.clear();
+                localTgtFacesProcPtr_.reset
+                (
+                    new List<remote>
+                    (
+                        distributePatch
+                        (
+                            tgtFacesMapPtr_(),
+                            ttgtPatch,
+                            ttgtPts0,
+                            localTgtPatchPtr_,
+                            localTgtPoints0Ptr_
+                        )
+                    )
+                );
+            }
+        }
 
         // Massage target patch into form that can be used by the serial
         // intersection interface
@@ -976,15 +1268,27 @@ void Foam::patchToPatchMapping::update
         );
 
         // Distribute the source patch
-        srcMapPtr_ =
+        srcFacesMapPtr_ =
             constructDistributionMap
             (
                 procSendIndices
                 (
-                    localSrcToTgt_,
-                    localTgtProcPtr_()
+                    localSrcFacesToTgt_,
+                    localTgtFacesProcPtr_()
                 )
             );
+        if (needPoints_)
+        {
+            srcPointsMapPtr_ =
+                constructDistributionMap
+                (
+                    procSendIndices
+                    (
+                        localSrcPointsToTgt_,
+                        localTgtPointsProcPtr_()
+                    )
+                );
+        }
 
         distributeSrc(srcPatch_, srcPts0);
 
@@ -993,7 +1297,7 @@ void Foam::patchToPatchMapping::update
     }
 
     // Finalise the intersection
-    const label nCouples =
+    const labelPair nCouples =
         finalise
         (
             srcPatch_,
@@ -1004,19 +1308,17 @@ void Foam::patchToPatchMapping::update
             pointNormals0,
             tgtToSrc
         );
+    decrIndent(Info);
 
-    if (nCouples != 0)
-    {
-        Info<< indent
-            << nCouples << " face couplings calculated in "
-            << time.cpuTimeIncrement() << 's' << endl;
-    }
-    else
-    {
-        Info<< indent << "No couplings found" << endl;
-    }
 
-    Info<< decrIndent;
+    Info<< "Finished calulcating couplings in "
+        << time.cpuTimeIncrement() << "s" << incrIndent << nl
+        << indent << nCouples.second() << " coupled faces" << endl;
+    if (needPoints_)
+    {
+        Info<< indent << nCouples.first() << " coupled points" << endl;
+    }
+    Info<< decrIndent << endl;
 }
 
 

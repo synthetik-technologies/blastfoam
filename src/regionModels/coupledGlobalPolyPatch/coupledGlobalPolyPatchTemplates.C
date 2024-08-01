@@ -47,30 +47,14 @@ Foam::coupledGlobalPolyPatch::pointInterpolate
     }
 
     // TODO handle point interpolation
-    const patchToPatchMapping& mapper = patchToPatchInterpolator();
-    if (!isSrc_)
+    const patchToPatchMapping& mapper = patchToPatchInterpolator(true);
+    if (isSrc_)
     {
-        return
-            samplePatch().faceToPoint
-            (
-                mapper.transferToTgt
-                (
-                    this->pointToFace(pField),
-                    unmapped
-                )
-            );
+        return mapper.transferPointsToTgt(pField, unmapped);
     }
     else
     {
-        return
-            samplePatch().faceToPoint
-            (
-                mapper.transferToSrc
-                (
-                    this->pointToFace(pField),
-                    unmapped
-                )
-            );
+        return mapper.transferPointsToSrc(pField, unmapped);
     }
 }
 
@@ -105,11 +89,11 @@ Foam::coupledGlobalPolyPatch::faceInterpolate
         return tmp<Field<Type>>();
     }
 
-    const patchToPatchMapping& mapper = patchToPatchInterpolator();
+    const patchToPatchMapping& mapper = patchToPatchInterpolator(false);
     if (isSrc_)
     {
         return
-            mapper.transferToTgt
+            mapper.transferFacesToTgt
             (
                 fField,
                 unmapped
@@ -118,7 +102,7 @@ Foam::coupledGlobalPolyPatch::faceInterpolate
     else
     {
         return
-            mapper.transferToSrc
+            mapper.transferFacesToSrc
             (
                 fField,
                 unmapped

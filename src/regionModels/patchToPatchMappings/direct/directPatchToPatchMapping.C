@@ -46,20 +46,21 @@ namespace patchToPatchMappings
 
 bool Foam::patchToPatchMappings::direct::forwardCheck
 (
-    const primitivePatch& patch,
-    const List<DynamicList<label>>& localOtherFaces,
+    const word& elemType,
+    const vectorField& pts,
+    const List<DynamicList<label>>& localOther,
     const bool isSrc
 )
 {
-    forAll(localOtherFaces, facei)
+    forAll(localOther, i)
     {
-        if (localOtherFaces[facei].size() != 1)
+        if (localOther[i].size() != 1)
         {
             FatalErrorInFunction
-                << (isSrc ? "Source" : "Target")
-                << " face #" << facei << " at "
-                << patch.faceCentres()[facei]
-                << " did not match a face on the "
+                << (isSrc ? "Source " : "Target ")
+                << elemType << " #" << i << " at "
+                << pts[i]
+                << " did not match a " << elemType << " on the "
                 << (isSrc ? "target" : "source")
                 << " side" << exit(FatalError);
             return false;
@@ -71,23 +72,24 @@ bool Foam::patchToPatchMappings::direct::forwardCheck
 // Make sure every face is referenced by exactly one face
 bool Foam::patchToPatchMappings::direct::reverseCheck
 (
-    const primitivePatch& patch,
-    const List<DynamicList<label>>& otherLocalFaces,
+    const word& elemType,
+    const vectorField& pts,
+    const List<DynamicList<label>>& otherLocal,
     const autoPtr<mapDistribute>& mapPtr,
     const bool isSrc
 )
 {
     labelList count
     (
-        mapPtr.valid() ? mapPtr->constructSize() : patch.size(),
+        mapPtr.valid() ? mapPtr->constructSize() : pts.size(),
         0
     );
 
-    forAll(otherLocalFaces, otherFacei)
+    forAll(otherLocal, i)
     {
-        forAll(otherLocalFaces[otherFacei], i)
+        forAll(otherLocal[i], j)
         {
-            count[otherLocalFaces[otherFacei][i]] ++;
+            count[otherLocal[i][j]]++;
         }
     }
 
@@ -97,7 +99,7 @@ bool Foam::patchToPatchMappings::direct::reverseCheck
         (
             Pstream::commsTypes::nonBlocking,
             List<labelPair>(),
-            patch.size(),
+            pts.size(),
             mapPtr->constructMap(),
             false,
             mapPtr->subMap(),
@@ -109,15 +111,15 @@ bool Foam::patchToPatchMappings::direct::reverseCheck
         );
     }
 
-    forAll(count, facei)
+    forAll(count, i)
     {
-        if (count[facei] != 1)
+        if (count[i] != 1)
         {
             FatalErrorInFunction
-                << (isSrc ? "Source" : "Target")
-                << " face #" << facei << " at "
-                << patch.faceCentres()[facei]
-                << " did not match a face on the "
+                << (isSrc ? "Source " : "Target ")
+                << elemType << " #" << i << " at "
+                << pts[i]
+                << " did not match a " << elemType << " on the "
                 << (isSrc ? "target" : "source")
                 << " side" << exit(FatalError);
 
@@ -127,7 +129,7 @@ bool Foam::patchToPatchMappings::direct::reverseCheck
     return true;
 };
 
-Foam::label Foam::patchToPatchMappings::direct::finalise
+Foam::label Foam::patchToPatchMappings::direct::finalisePoints
 (
     const primitivePatch& srcPatch,
     const pointField& srcPts0,
@@ -139,7 +141,7 @@ Foam::label Foam::patchToPatchMappings::direct::finalise
 )
 {
     const label nCouples =
-        nearest::finalise
+        nearest::finalisePoints
         (
             srcPatch,
             srcPts0,
@@ -150,15 +152,46 @@ Foam::label Foam::patchToPatchMappings::direct::finalise
             tgtToSrc
         );
 
-    forwardCheck(srcPatch, localTgtToSrc_, true);
-    forwardCheck(tgtPatch, localSrcToTgt_, false);
+    forwardCheck("point", srcPatch.localPoints(), localTgtPointsToSrc_, true);
+    forwardCheck("point", tgtPatch.localPoints(), localSrcPointsToTgt_, false);
 
-    reverseCheck(srcPatch, localSrcToTgt_, srcMapPtr_, true);
-    reverseCheck(tgtPatch, localTgtToSrc_, tgtMapPtr_, false);
+    reverseCheck("point", srcPatch.localPoints(), localSrcPointsToTgt_, srcPointsMapPtr_, true);
+    reverseCheck("point", tgtPatch.localPoints(), localTgtPointsToSrc_, tgtPointsMapPtr_, false);
 
     return nCouples;
 }
 
+Foam::label Foam::patchToPatchMappings::direct::finaliseFaces
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0,
+    const transformer& tgtToSrc
+)
+{
+    const label nCouples =
+        nearest::finaliseFaces
+        (
+            srcPatch,
+            srcPts0,
+            tgtPatch,
+            tgtPts0,
+            pointNormals,
+            pointNormals0,
+            tgtToSrc
+        );
+
+    forwardCheck("face", srcPatch.faceCentres(), localTgtFacesToSrc_, true);
+    forwardCheck("face", tgtPatch.faceCentres(), localSrcFacesToTgt_, false);
+
+    reverseCheck("face", srcPatch.faceCentres(), localSrcFacesToTgt_, srcFacesMapPtr_, true);
+    reverseCheck("face", tgtPatch.faceCentres(), localTgtFacesToSrc_, tgtFacesMapPtr_, false);
+
+    return nCouples;
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -167,10 +200,11 @@ Foam::patchToPatchMappings::direct::direct
     const primitivePatch& srcPatch,
     const primitivePatch& tgtPatch,
     const dictionary& dict,
+    const bool needPoints,
     const bool reverse
 )
 :
-    nearest(srcPatch, tgtPatch, dict, reverse)
+    nearest(srcPatch, tgtPatch, dict, needPoints, reverse)
 {}
 
 

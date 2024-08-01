@@ -111,6 +111,7 @@ public:
             const primitivePatch& srcPatch,
             const primitivePatch& tgtPatch,
             const dictionary& dict,
+            const bool needPoints,
             const bool reverse
         );
 

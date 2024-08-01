@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
     DynamicList<instant> timesToKeep(times.size());
     DynamicList<instant> prunedTimes(times.size());
     const scalar startTime =
-        args.optionLookupOrDefault("startTime", databases[0].startTime().value());
+        args.optionLookupOrDefault("startTime", databases[0].beginTime().value());
     const scalar endTime =
         args.optionLookupOrDefault("endTime", databases[0].endTime().value());
     scalar dt = endTime - startTime;

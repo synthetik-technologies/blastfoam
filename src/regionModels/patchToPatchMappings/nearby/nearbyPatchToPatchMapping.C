@@ -46,10 +46,11 @@ Foam::patchToPatchMappings::nearby::nearby
     const primitivePatch& srcPatch,
     const primitivePatch& tgtPatch,
     const dictionary& dict,
+    const bool needPoints,
     const bool reverse
 )
 :
-    patchToPatchMapping(srcPatch, tgtPatch, dict, reverse),
+    patchToPatchMapping(srcPatch, tgtPatch, dict, needPoints, reverse),
     srcSpheres_(0),
     tgtSpheres_(0)
 {}
@@ -98,8 +99,8 @@ bool Foam::patchToPatchMappings::nearby::intersectFaces
 
     if (magSqr(centreA - centreB) < sqr(radiusA + radiusB))
     {
-        localTgtToSrc_[srcFacei].append(tgtFacei);
-        localSrcToTgt_[tgtFacei].append(srcFacei);
+        localTgtFacesToSrc_[srcFacei].append(tgtFacei);
+        localSrcFacesToTgt_[tgtFacei].append(srcFacei);
         return true;
     }
     return false;

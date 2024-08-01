@@ -3,6 +3,9 @@ globalPolyPatch/globalPolyPatch.C
 coupledGlobalPolyPatch/coupledGlobalPolyPatch.C
 globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
 
+tools/triIntersect/triIntersect.C
+tools/triIntersect/triIntersectLocationIO.C
+
 # Mapping methods
 patchToPatchMappings/patchToPatchMapping/patchToPatchMapping.C
 patchToPatchMappings/patchToPatchMapping/patchToPatchMappingParallelOps.C
@@ -12,6 +15,7 @@ patchToPatchMappings/nearby/nearbyPatchToPatchMapping.C
 patchToPatchMappings/direct/directPatchToPatchMapping.C
 patchToPatchMappings/nearest/nearestPatchToPatchMapping.C
 patchToPatchMappings/inverseDistance/inverseDistancePatchToPatchMapping.C
+patchToPatchMappings/intersection/intersectionPatchToPatchMapping.C
 
 AMI = patchToPatchMappings/ami
 #$(AMI)/newAMIInterpolation/newAMIInterpolationName.C

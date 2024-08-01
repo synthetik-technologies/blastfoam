@@ -25,6 +25,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "inverseDistancePatchToPatchMapping.H"
+#include "triPointRef.H"
 #include "addToRunTimeSelectionTable.H"
 
 
@@ -161,102 +162,92 @@ void Foam::patchToPatchMappings::inverseDistance::generateFaceWeights
 void Foam::patchToPatchMappings::inverseDistance::generatePointWeights
 (
     const primitivePatch& patch,
-    const primitivePatch& origOtherPatch,
-    const bool merge,
-    List<DynamicList<label>>& otherPoints,
+    const primitivePatch& otherPatch,
+    const List<DynamicList<label>>& faceAddr,
+    List<DynamicList<label>>& pointAddr,
     List<DynamicList<scalar>>& weights
 )
 {
-    tmpNrc<primitivePatch> totherPatch(origOtherPatch);
-    autoPtr<pointField> otherPointsPtr;
-    autoPtr<faceList> otherFacesPtr;
-    labelList mergePointMap(identity(origOtherPatch.nPoints()));
 
-    if (merge)
+    const pointField& points = patch.localPoints();
+    const pointField& otherPoints = otherPatch.localPoints();
+    const vectorField& normals = patch.faceNormals();
+
+
+    labelHashSet checkedFaces;
+    labelHashSet addedPoints;
+    forAll(points, pointi)
     {
-        if
-        (
-            mergePoints
-            (
-                origOtherPatch.points(),
-                1e-6,
-                false,
-                mergePointMap
-            )
-        )
+        // Collect all relevant points
+        const point& pt = points[pointi];
+        checkedFaces.clear();
+        addedPoints.clear();
+        bool hit = false;
+
+        const labelList& pointFaces = patch.pointFaces()[pointi];
+        forAll(pointFaces, pfi)
         {
-            otherPointsPtr.reset
-            (
-                new pointField(origOtherPatch.points(), mergePointMap)
-            );
-            otherFacesPtr.reset(new faceList(origOtherPatch));
-            faceList& otherFaces = otherFacesPtr();
-            forAll(otherFaces, facei)
+            const label facei = pointFaces[pfi];
+            const labelList& otherFaces = faceAddr[facei];
+            forAll(otherFaces, ofi)
             {
-                face& f = otherFaces[facei];
-                forAll(f, i)
+                const label otherFacei = otherFaces[ofi];
+                if (checkedFaces.insert(otherFacei))
                 {
-                    f[i] = mergePointMap[f[i]];
+                    pointHit ph = otherPatch[otherFacei].ray
+                    (
+                        pt,
+                        normals[facei],
+                        otherPoints
+                    );
+                    if (ph.hit())
+                    {
+                        hit = true;
+                        const face& otherFace = otherPatch[otherFacei];
+                        forAll(otherFace, pi)
+                        {
+                            const scalar w =
+                                1.0
+                               /max
+                                (
+                                    mag(pt - otherPoints[otherFace[pi]]),
+                                    vSmall
+                                );
+
+                            if (!addedPoints.insert(otherFace[pi]))
+                            {
+                                const label curI =
+                                    findIndex(pointAddr[pointi], otherFace[pi]);
+                                pointAddr[pointi][curI] = otherFace[pi];
+                                weights[pointi][curI] = w;
+                            }
+                            else
+                            {
+                                pointAddr[pointi].append(otherFace[pi]);
+                                weights[pointi].append(w);
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        const face& otherFace = otherPatch[otherFacei];
+
+                        forAll(otherFace, pi)
+                        {
+                            if (addedPoints.insert(otherFace[pi]))
+                            {
+                                pointAddr[pointi].append(otherFace[pi]);
+                                weights[pointi].append(0.0);
+                            }
+                        }
+                    }
                 }
             }
-            totherPatch =
-                new primitivePatch
-                (
-                    SubList<face>(otherFacesPtr(), otherFacesPtr->size()),
-                    otherPointsPtr()
-                );
-        }
-    }
-    const primitivePatch& otherPatch = totherPatch();
-
-    Map<label> rMergePointMap;
-    forAll(mergePointMap, i)
-    {
-        rMergePointMap.insert(mergePointMap[i], i);
-    }
-
-    const edgeList& otherEdges = otherPatch.edges();
-    const labelListList& otherPointEdges = otherPatch.pointEdges();
-
-    forAll(otherPoints, pointi)
-    {
-        if (otherPoints[pointi].empty()) continue;
-
-        label otherPointi = -1;
-
-        const point& p = patch.points()[pointi];
-
-        scalar minDistSqr = vGreat;
-
-        forAll(otherPoints[pointi], i)
-        {
-            const point& otherP =
-                otherPatch.points()[otherPoints[pointi][i]];
-            const scalar distSqr = magSqr(p - otherP);
-            if (distSqr < minDistSqr)
+            if (hit)
             {
-                minDistSqr = distSqr;
-                otherPointi = mergePointMap[otherPoints[pointi][i]];
+                break;
             }
-        }
-
-        // Remove all faces
-        otherPoints[pointi].clear();
-
-        // Add the found face and all its neighbours
-        const point& otherP = otherPatch.points()[otherPointi];
-        otherPoints[pointi].append(rMergePointMap[otherPointi]);
-        weights[pointi].append(1/(mag(p - otherP) + rootVSmall));
-
-        const labelList& pEdges = otherPointEdges[otherPointi];
-        forAll(pEdges, i)
-        {
-            const label otherPointj =
-                otherEdges[pEdges[i]].otherVertex(otherPointi);
-
-            const point& otherP = otherPatch.points()[otherPointj];
-            otherPoints[pointi].append(rMergePointMap[otherPointj]);
-            weights[pointi].append(1/(mag(p - otherP) + rootVSmall));
         }
     }
 }
@@ -264,7 +255,32 @@ void Foam::patchToPatchMappings::inverseDistance::generatePointWeights
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 
-void Foam::patchToPatchMappings::inverseDistance::generateWeights
+void Foam::patchToPatchMappings::inverseDistance::generatePointWeights
+(
+    const primitivePatch& srcPatch,
+    const primitivePatch& tgtPatch
+)
+{
+    generatePointWeights
+    (
+        srcPatch,
+        tgtPatch,
+        localTgtFacesToSrc_,
+        localTgtPointsToSrc_,
+        srcPointWeights_
+    );
+    generatePointWeights
+    (
+        tgtPatch,
+        srcPatch,
+        localSrcFacesToTgt_,
+        localSrcPointsToTgt_,
+        tgtPointWeights_
+    );
+}
+
+
+void Foam::patchToPatchMappings::inverseDistance::generateFaceWeights
 (
     const primitivePatch& srcPatch,
     const primitivePatch& tgtPatch
@@ -275,21 +291,21 @@ void Foam::patchToPatchMappings::inverseDistance::generateWeights
         srcPatch,
         tgtPatch,
         reverse_,
-        localTgtToSrc_,
-        srcWeights_
+        localTgtFacesToSrc_,
+        srcFaceWeights_
     );
     generateFaceWeights
     (
         tgtPatch,
         srcPatch,
         reverse_,
-        localSrcToTgt_,
-        tgtWeights_
+        localSrcFacesToTgt_,
+        tgtFaceWeights_
     );
 }
 
 
-Foam::labelList Foam::patchToPatchMappings::inverseDistance::finaliseLocal
+Foam::labelList Foam::patchToPatchMappings::inverseDistance::finaliseLocalPoints
 (
     const primitivePatch& srcPatch,
     const pointField& srcPts0,
@@ -299,11 +315,11 @@ Foam::labelList Foam::patchToPatchMappings::inverseDistance::finaliseLocal
     const vectorField& pointNormals0
 )
 {
-    generateWeights(srcPatch, tgtPatch);
+    generatePointWeights(srcPatch, tgtPatch);
 
     const labelList newToOld
     (
-        nearby::finaliseLocal
+        nearby::finaliseLocalPoints
         (
             srcPatch,
             srcPts0,
@@ -313,7 +329,38 @@ Foam::labelList Foam::patchToPatchMappings::inverseDistance::finaliseLocal
             pointNormals0
         )
     );
-    tgtWeights_ = List<DynamicList<scalar>>(tgtWeights_, newToOld);
+    tgtPointWeights_ = List<DynamicList<scalar>>(tgtPointWeights_, newToOld);
+
+    return newToOld;
+}
+
+
+
+Foam::labelList Foam::patchToPatchMappings::inverseDistance::finaliseLocalFaces
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0
+)
+{
+    generateFaceWeights(srcPatch, tgtPatch);
+
+    const labelList newToOld
+    (
+        nearby::finaliseLocalFaces
+        (
+            srcPatch,
+            srcPts0,
+            tgtPatch,
+            tgtPts0,
+            pointNormals,
+            pointNormals0
+        )
+    );
+    tgtFaceWeights_ = List<DynamicList<scalar>>(tgtFaceWeights_, newToOld);
 
     return newToOld;
 }
@@ -332,13 +379,114 @@ void Foam::patchToPatchMappings::inverseDistance::rDistributeTgt
     rDistributeListList
     (
         tgtPatch.size(),
-        tgtMapPtr_(),
-        tgtWeights_
+        tgtFacesMapPtr_(),
+        tgtFaceWeights_
     );
+
+    if (needPoints_)
+    {
+        // Reverse distribute the point weights
+        rDistributeListList
+        (
+            tgtPatch.nPoints(),
+            tgtPointsMapPtr_(),
+            tgtPointWeights_
+        );
+
+        // Remove zero weights
+        DynamicList<label> newIs;
+        DynamicList<scalar> newWs;
+        forAll(srcPointWeights_, srcPointi)
+        {
+            newIs.clear();
+            newWs.clear();
+            labelList& Is = localTgtPointsToSrc_[srcPointi];
+            scalarList& ws = srcPointWeights_[srcPointi];
+            forAll(ws, i)
+            {
+                if (ws[i] > vSmall)
+                {
+                    newIs.append(Is[i]);
+                    newWs.append(ws[i]);
+                }
+            }
+            Is = newIs;
+            ws = newWs;
+        }
+        forAll(tgtPointWeights_, tgtPointi)
+        {
+            newIs.clear();
+            newWs.clear();
+            labelList& Is = localSrcPointsToTgt_[tgtPointi];
+            scalarList& ws = tgtPointWeights_[tgtPointi];
+            forAll(ws, i)
+            {
+                if (ws[i] > vSmall)
+                {
+                    newIs.append(Is[i]);
+                    newWs.append(ws[i]);
+                }
+            }
+            Is = newIs;
+            ws = newWs;
+        }
+    }
 }
 
 
-Foam::label Foam::patchToPatchMappings::inverseDistance::finalise
+Foam::label Foam::patchToPatchMappings::inverseDistance::finalisePoints
+(
+    const primitivePatch& srcPatch,
+    const pointField& srcPts0,
+    const primitivePatch& tgtPatch,
+    const pointField& tgtPts0,
+    const vectorField& pointNormals,
+    const vectorField& pointNormals0,
+    const transformer& tgtToSrc
+)
+{
+    if (isSingleProcess())
+    {
+        generatePointWeights(srcPatch, tgtPatch);
+    }
+
+    const label nCouples =
+        nearby::finalisePoints
+        (
+            srcPatch,
+            srcPts0,
+            tgtPatch,
+            tgtPts0,
+            pointNormals,
+            pointNormals0,
+            tgtToSrc
+        );
+
+    // Normalize weights
+    forAll(srcPointWeights_, srcPointi)
+    {
+        scalarList& ws = srcPointWeights_[srcPointi];
+        const scalar sumW = max(sum(ws), vSmall);
+        forAll(ws, i)
+        {
+            ws[i] /= sumW;
+        }
+    }
+    forAll(tgtPointWeights_, tgtPointi)
+    {
+        scalarList& ws = tgtPointWeights_[tgtPointi];
+        const scalar sumW = max(sum(ws), vSmall);
+        forAll(ws, i)
+        {
+            ws[i] /= sumW;
+        }
+    }
+
+    return nCouples;
+}
+
+
+Foam::label Foam::patchToPatchMappings::inverseDistance::finaliseFaces
 (
     const primitivePatch& srcPatch,
     const pointField& srcPts0,
@@ -350,7 +498,7 @@ Foam::label Foam::patchToPatchMappings::inverseDistance::finalise
 )
 {
     const label nCouples =
-        nearby::finalise
+        nearby::finaliseFaces
         (
             srcPatch,
             srcPts0,
@@ -363,22 +511,22 @@ Foam::label Foam::patchToPatchMappings::inverseDistance::finalise
 
     if (isSingleProcess())
     {
-        generateWeights(srcPatch, tgtPatch);
+        generateFaceWeights(srcPatch, tgtPatch);
     }
 
     // Normalize weights
-    forAll(srcWeights_, srcFacei)
+    forAll(srcFaceWeights_, srcFacei)
     {
-        List<scalar>& ws = srcWeights_[srcFacei];
+        List<scalar>& ws = srcFaceWeights_[srcFacei];
         const scalar sumW = max(sum(ws), vSmall);
         forAll(ws, i)
         {
             ws[i] /= sumW;
         }
     }
-    forAll(tgtWeights_, tgtFacei)
+    forAll(tgtFaceWeights_, tgtFacei)
     {
-        List<scalar>& ws = tgtWeights_[tgtFacei];
+        List<scalar>& ws = tgtFaceWeights_[tgtFacei];
         const scalar sumW = max(sum(ws), vSmall);
         forAll(ws, i)
         {
@@ -397,10 +545,11 @@ Foam::patchToPatchMappings::inverseDistance::inverseDistance
     const primitivePatch& srcPatch,
     const primitivePatch& tgtPatch,
     const dictionary& dict,
+    const bool needPoints,
     const bool reverse
 )
 :
-    nearby(srcPatch, tgtPatch, dict, reverse)
+    nearby(srcPatch, tgtPatch, dict, needPoints, reverse)
 {}
 
 

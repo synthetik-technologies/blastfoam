@@ -100,22 +100,16 @@ protected:
             // Sum of face to point weights
             mutable scalarField* faceToPointSumWeightsPtr_;
 
-    // Private Member Functions
-
-        //- Disallow default bitwise copy construct
-        globalPolyPatch(const globalPolyPatch&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const globalPolyPatch&);
+    // Protected Member Functions
 
         //- Build global primitive patch
         virtual void calcPhysicalPatch() const;
 
         //- Make the point to face interpolator
-        void calcPointToFaceInterpolation() const;
+        virtual void calcPointToFaceInterpolation() const;
 
         //- Make the face to point interpolator
-        void calcFaceToPointInterpolation() const;
+        virtual void calcFaceToPointInterpolation() const;
 
         //- Return face to point interpolation weights
         const List<scalarField>& faceToPointWeights() const;
@@ -126,6 +120,15 @@ protected:
         //- Return reference to the local interpolator
         const primitivePatchInterpolation& pointToFaceInterpolator() const;
 
+private:
+
+    // Private Member Functions
+
+        //- Disallow default bitwise copy construct
+        globalPolyPatch(const globalPolyPatch&);
+
+        //- Disallow default bitwise assignment
+        void operator=(const globalPolyPatch&);
 
 public:
 

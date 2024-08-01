@@ -34,11 +34,15 @@ License
 template<class SourcePatch, class TargetPatch>
 void Foam::newAMIMethod<SourcePatch, TargetPatch>::checkPatches() const
 {
-    if (debug && (!srcPatch_.size() || !tgtPatch_.size()))
+    if (!srcPatch_.size() || !tgtPatch_.size())
     {
-        Pout<< "AMI: Patches not on processor: Source faces = "
-            << srcPatch_.size() << ", target faces = " << tgtPatch_.size()
-            << endl;
+        if (debug)
+        {
+            Pout<< "AMI: Patches not on processor: Source faces = "
+                << srcPatch_.size() << ", target faces = " << tgtPatch_.size()
+                << endl;
+        }
+        return;
     }
 
 
