@@ -65,6 +65,7 @@ void Foam::fvTimeIntegrator::update()
         FOR_ALL_FIELD_TYPES(ShuffleDeltaFieldTypes, deltaMap, "delta");
         #undef ShuffleDeltaFieldTypes
     }
+
     forAll(systems_, i)
     {
         systems_[i].save();
@@ -78,55 +79,55 @@ void Foam::fvTimeIntegrator::updateAll()
     // All fields are scaled according to the true volume
     if (mesh_.moving())
     {
-        tmp<volScalarField::Internal> tV0(mesh_.Vsc0());
-        const volScalarField::Internal& V0 = tV0();
+//         tmp<volScalarField::Internal> tV0(mesh_.V0());
+//         const volScalarField::Internal& V0 = tV0();
+//
+//         tmp<volScalarField::Internal> tV(mesh_.V());
+//         const volScalarField::Internal& V = tV();
 
-        tmp<volScalarField::Internal> tV(mesh_.Vsc());
-        const volScalarField::Internal& V = tV();
+//         if (!VPtr_.valid())
+//         {
+//             VPtr_.set
+//             (
+//                 new volScalarField::Internal
+//                 (
+//                     IOobject
+//                     (
+//                         "fvTimeIntegrator:V",
+//                         mesh_.time().timeName(),
+//                         mesh_
+//                     ),
+//                     mesh_,
+//                     1.0//V0 + f()*(V - V0)
+//                 )
+//             );
+//         }
+//         else
+//         {
+//             VPtr_() = 1.0;//V0 + f()*(V - V0);
+//         }
 
-        if (!V0Ptr_.valid())
-        {
-            V0Ptr_.set
-            (
-                new volScalarField::Internal
-                (
-                    IOobject
-                    (
-                        "fvTimeIntegrator:V0",
-                        mesh_.time().timeName(),
-                        mesh_
-                    ),
-                    (V0 + f0()*(V - V0))/V
-                )
-            );
-        }
-        else
-        {
-            V0Ptr_() = (V0 + f0()*(V - V0))/V;
-        }
-
-        if (!VPtr_.valid())
-        {
-            VPtr_.set
-            (
-                new volScalarField::Internal
-                (
-                    IOobject
-                    (
-                        "fvTimeIntegrator:V",
-                        mesh_.time().timeName(),
-                        mesh_
-                    ),
-                    mesh_,
-                    1.0//V
-                    // V0 + f()*(V - V0)
-                )
-            );
-        }
-        else
-        {
-            VPtr_() = 1.0;//V;//V0 + f()*(V - V0);
-        }
+//         if (!V0Ptr_.valid())
+//         {
+//             V0Ptr_.set
+//             (
+//                 new volScalarField::Internal
+//                 (
+//                     IOobject
+//                     (
+//                         "fvTimeIntegrator:V0",
+//                         mesh_.time().timeName(),
+//                         mesh_
+//                     ),
+//                     V0ByVPtr_()()*VPtr_()
+// //                     (V0 + f0()*(V - V0))
+//                 )
+//             );
+//         }
+//         else
+//         {
+//             V0Ptr_() = V0ByVPtr_()()*VPtr_();//(V0 + f0()*(V - V0));
+//         }
     }
     forAll(systems_, i)
     {
@@ -282,9 +283,10 @@ void Foam::fvTimeIntegrator::reset()
 
 Foam::tmp<Foam::scalarField> Foam::fvTimeIntegrator::V0() const
 {
-    if (stepi_ == 0 && V0Ptr_.valid())
+    if (stepi_ == 0 && mesh_.moving())
     {
-        return V0Ptr_();
+//         return V();
+        return mesh_.V0().field()/mesh_.V().field();
     }
     return tmp<scalarField>();
 }
@@ -292,30 +294,26 @@ Foam::tmp<Foam::scalarField> Foam::fvTimeIntegrator::V0() const
 
 Foam::tmp<Foam::scalarField> Foam::fvTimeIntegrator::V() const
 {
-    if (stepi_ == 0 && VPtr_.valid())
-    {
-        return VPtr_();
-    }
+//     if (VPtr_.valid())
+//     {
+//         return VPtr_();
+//     }
     return tmp<scalarField>();
 }
 
 
 Foam::scalar Foam::fvTimeIntegrator::totalV0() const
 {
-    if (V0Ptr_.valid())
+    if (stepi_ == 0 && mesh_.moving())
     {
-        return gSum(V0Ptr_());
+        return gSum(mesh_.V0());
     }
-    return 1.0;
+    return gSum(mesh_.V());
 }
 
 Foam::scalar Foam::fvTimeIntegrator::totalV() const
 {
-    if (VPtr_.valid())
-    {
-        return gSum(VPtr_());
-    }
-    return 1.0;
+    return gSum(mesh_.V());
 }
 
 #define defineSourceLookupType(Type, Geo)                                   \

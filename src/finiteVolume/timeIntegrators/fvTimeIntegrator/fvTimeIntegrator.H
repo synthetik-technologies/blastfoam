@@ -93,6 +93,9 @@ protected:
 
     mutable wordHashSet savedOldFields_;
 
+    //- Conservative fields
+    wordHashSet conservativeFields_;
+
     //- Stored old fields
     #define decalareOldFieldTypeTable(Type, Geo)            \
     mutable HashPtrTable                                    \
@@ -287,6 +290,18 @@ public:
                 createModels();
             }
             return solveFields_.found(field);
+        }
+
+        //- Return conservative fields
+        inline const wordHashSet& conservativeFields() const
+        {
+            return conservativeFields_;
+        }
+
+        //- Access conservative fields
+        wordHashSet& conservativeFields()
+        {
+            return conservativeFields_;
         }
 
         //- Return current step old volume
