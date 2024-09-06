@@ -262,22 +262,22 @@ int main(int argc, char *argv[])
                     args.path()/(word("processor") + name(proci))
                 );
 
-//                 forAll(times, ti)
-//                 {
-//                     const fileName procTimePath
-//                     (
-//                         fileHandler().filePath(procPath/times[ti].name())
-//                     );
-//
-//                     if (isDir(procTimePath))
-//                     {
-//                         if (verbose)
-//                         {
-//                             Info<< "Removing " << procTimePath << endl;
-//                         }
-//                         rmDir(procTimePath);
-//                     }
-//                 }
+                forAll(times, ti)
+                {
+                    const fileName procTimePath
+                    (
+                        fileHandler().filePath(procPath/times[ti].name())
+                    );
+
+                    if (isDir(procTimePath))
+                    {
+                        if (verbose)
+                        {
+                            Info<< "Removing " << procTimePath << endl;
+                        }
+                        rmDir(procTimePath);
+                    }
+                }
 
                 instantList procTimes
                 (
@@ -296,18 +296,17 @@ int main(int argc, char *argv[])
                             procPath/procTimes[ti].name()
                         )
                     );
-                    Info<<procTimes[ti]<<" "<<masterTimes.found(procTimes[ti].name())<<endl;
                     if
                     (
                         !masterTimes.found(procTimes[ti].name())
                      && isDir(procTimePath)
                     )
                     {
-//                         if (verbose)
+                        if (verbose)
                         {
-                            Info<< "found " << procTimePath << endl;
+                            Info<< "removing " << procTimePath << endl;
                         }
-//                         rmDir(procTimePath);
+                        rmDir(procTimePath);
                     }
                 }
             }
