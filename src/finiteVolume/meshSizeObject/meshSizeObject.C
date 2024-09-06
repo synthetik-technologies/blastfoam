@@ -75,54 +75,46 @@ void Foam::meshSizeObject::calcDx() const
     scalarField& dx = dxPtr_();
     const Vector<label>& geoD = mesh_.geometricD();
 
-    if (mesh_.nGeometricD() != 3)
+    if (mesh_.nGeometricD() == 1)
     {
-        const Vector<label>& solD = mesh_.solutionD();
-        vector validD(Zero);
-        forAll(solD, cmpti)
+        const cellList& cells = mesh_.cells();
+        const pointField& cellCentres = mesh_.cellCentres();
+        const pointField& faceCentres = mesh_.faceCentres();
+        forAll(mesh_.cells(), celli)
         {
-            if (geoD[cmpti] < 0)
+            const cell& c = cells[celli];
+            scalar deltaSum = 0.0;
+            scalar nIntFaces = 0.0;
+            forAll(c, fi)
             {
-                validD[cmpti] = 1.0;
+                const label facei = c[fi];
+                if (facei < mesh_.nInternalFaces())
+                {
+                    deltaSum += 2.0*mag(cellCentres[celli] - faceCentres[facei]);
+                    nIntFaces += 1.0;
+                }
+            }
+            if (nIntFaces)
+            {
+                dx[celli] = deltaSum / nIntFaces;
             }
         }
-
-        const vectorField& Sf = mesh_.faceAreas();
-        const scalarField& magSf = mesh_.magFaceAreas();
-        const labelList& own = mesh_.faceOwner();
-        const labelList& nei = mesh_.faceNeighbour();
-        labelList nFaces(dxPtr_->size(), 0);
-
-        for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+    }
+    else if (mesh_.nGeometricD() == 2)
+    {
+        forAll(mesh_.boundaryMesh(), patchi)
         {
-            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
+            const polyPatch& pp = mesh().boundaryMesh()[patchi];
+            if (isA<wedgePolyPatch>(pp) || isA<emptyPolyPatch>(pp))
             {
-                dx[own[facei]] += magSf[facei];
-                dx[nei[facei]] += magSf[facei];
-
-                nFaces[own[facei]]++;
-                nFaces[nei[facei]]++;
+                const List<label>& faceCells = pp.faceCells();
+                forAll(faceCells, fi)
+                {
+                    dx[faceCells[fi]] += pp.magFaceAreas()[fi];
+                }
             }
         }
-
-        for
-        (
-            label facei = mesh_.nInternalFaces();
-            facei < mesh_.nFaces();
-            facei++
-        )
-        {
-            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
-            {
-                dx[own[facei]] += magSf[facei];
-                nFaces[own[facei]]++;
-            }
-        }
-
-        forAll(dx, celli)
-        {
-            dx[celli] = sqrt(dx[celli]/scalar(nFaces[celli]));
-        }
+        dx /= 2.0;
     }
     else
     {
