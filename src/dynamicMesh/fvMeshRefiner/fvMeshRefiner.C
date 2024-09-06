@@ -194,7 +194,9 @@ void Foam::fvMeshRefiner::readDict(const dictionary& dict)
 {
     refiner_->readDict(dict);
 
-    dumpLevel_ = refiner_->dict_.lookupOrDefault<bool>("dumpLevel", false);
+    const dictionary& balanceDict =
+        refiner_->dict_.optionalSubDict("loadBalance");
+    dumpLevel_ = balanceDict.lookupOrDefault<bool>("dumpLevel", false);
 
     if (refiner_->force_)
     {
@@ -203,7 +205,7 @@ void Foam::fvMeshRefiner::readDict(const dictionary& dict)
     else
     {
         balanceInterval_ =
-            refiner_->dict_.lookupOrDefault<label>("balanceInterval", 1);
+            balanceDict.lookupOrDefault<label>("balanceInterval", 1);
         if (balanceInterval_ < 0)
         {
             FatalErrorInFunction
@@ -212,8 +214,8 @@ void Foam::fvMeshRefiner::readDict(const dictionary& dict)
                 << exit(FatalError);
         }
 
-        beginBalance_ = refiner_->dict_.lookupOrDefault<scalar>("beginBalance", 0.0);
-        endBalance_ = refiner_->dict_.lookupOrDefault<scalar>("endBalance", great);
+        beginBalance_ = balanceDict.lookupOrDefault<scalar>("beginBalance", 0.0);
+        endBalance_ = balanceDict.lookupOrDefault<scalar>("endBalance", great);
     }
 }
 
