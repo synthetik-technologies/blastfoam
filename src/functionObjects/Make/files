@@ -18,6 +18,7 @@ blastSampledSurfaces/blastSampledPatch/blastSampledPatch.C
 
 # Blast specific
 impulse/impulse.C
+blastCourantNo/blastCourantNo.C
 blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
