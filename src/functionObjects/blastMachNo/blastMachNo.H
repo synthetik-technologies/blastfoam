@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::MachNo
+    Foam::functionObjects::blastMachNo
 
 Description
     Calculates and writes the Mach number as a volScalarField.
