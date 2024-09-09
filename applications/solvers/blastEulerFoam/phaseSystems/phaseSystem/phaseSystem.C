@@ -526,11 +526,13 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
             dimensionedScalar("0", dimensionSet(1, -1, -3, -1, 0), 0.0)
         );
 
+        const BlendedInterfacialModel<heatTransferModel>& ht =
+            *heatTransferModels_[pair];
         for (label nodei = 0; nodei < phase1.nNodes(); nodei++)
         {
             for (label nodej = 0; nodej < phase2.nNodes(); nodej++)
             {
-                KhMean += heatTransferModels_[pair]->K(nodei, nodej);
+                KhMean += ht.K(nodei, nodej);
             }
         }
         volScalarField alphaRho1
@@ -545,9 +547,10 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
         (
             1.0/(alphaRho1*phase1.Cv()) + 1.0/(alphaRho2*phase2.Cv())
         );
+
         volScalarField deltaE
         (
-            (phase1.T() - phase2.T())/Xie
+            (phase1.Ts() - phase2.Ts())/Xie
            *(exp(-KhMean*Xie*deltaT) - 1.0)
         );
 

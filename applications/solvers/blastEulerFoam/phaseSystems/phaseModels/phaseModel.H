@@ -501,6 +501,12 @@ public:
                 return thermo().T();
             }
 
+            //- Return surface temperature
+            virtual tmp<volScalarField> Ts() const
+            {
+                return thermo().T();
+            }
+
             //- Constant access to phasic density
             virtual const volScalarField& alphaRho(const label nodei = -1) const
             {

@@ -58,6 +58,7 @@ SourceFiles
 #include "solidBlastThermo.H"
 #include "kineticTheoryModel.H"
 #include "phaseFluxScheme.H"
+#include "surfaceTemperatureModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -103,6 +104,9 @@ protected:
 
         //- Flux scheme
         autoPtr<phaseFluxScheme> fluxScheme_;
+
+        //- Surface temperature model
+        autoPtr<surfaceTemperatureModel> surfTModel_;
 
 
 public:
@@ -326,6 +330,12 @@ public:
             virtual scalar cellkappa(const label celli) const
             {
                 return this->kappa_[celli];
+            }
+
+            //- Return surface temperature
+            virtual tmp<volScalarField> Ts() const
+            {
+                return surfTModel_->Ts();
             }
 
             //- Thermal diffusivity for energy of mixture [kg/m/s]

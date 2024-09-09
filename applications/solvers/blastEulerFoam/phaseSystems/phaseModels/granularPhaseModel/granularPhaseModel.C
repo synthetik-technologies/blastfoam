@@ -83,7 +83,8 @@ Foam::granularPhaseModel::granularPhaseModel
         ),
         1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
     ),
-    fluxScheme_(phaseFluxScheme::NewSolid(phi_))
+    fluxScheme_(phaseFluxScheme::NewSolid(phi_)),
+    surfTModel_(surfaceTemperatureModel::New(phaseDict_, *this))
 {
     kineticTheorySystem_.addPhase(*this);
     thermoPtr_->read();
