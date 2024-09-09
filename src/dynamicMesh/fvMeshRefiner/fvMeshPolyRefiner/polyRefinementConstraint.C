@@ -87,7 +87,7 @@ void Foam::polyRefinementConstraint::add
     autoPtr<const polyMeshPolyRefiner> storagePtr;
     const polyMeshPolyRefiner* refPtr = nullptr;
 
-    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName))
+    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshRefiner::typeName))
     {
         if (decompositionConstraint::debug)
         {
@@ -95,12 +95,12 @@ void Foam::polyRefinementConstraint::add
         }
         refPtr = &mesh.lookupObject<polyMeshPolyRefiner>
         (
-            polyMeshPolyRefiner::typeName
+            polyMeshRefiner::typeName
         );
     }
     else
     {
-//         if (decompositionConstraint::debug)
+        if (decompositionConstraint::debug)
         {
             Info<< type() << " : reading polyMeshPolyRefiner from time "
                 << mesh.facesInstance() << endl;
