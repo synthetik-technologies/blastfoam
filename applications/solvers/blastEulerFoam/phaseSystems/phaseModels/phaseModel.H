@@ -190,7 +190,7 @@ protected:
         void solveAlphaRho();
 
         //- Solve the diameter model
-        void solveD();
+        virtual void solveD();
 
 
 public:

@@ -287,7 +287,7 @@ void Foam::phaseModel::solveD()
     }
 
     PI /= Foam::max(sumAlpha, this->residualAlpha());
-    dPtr_->solve(PI, T());
+    dPtr_->solve(PI, Ts());
 }
 
 
