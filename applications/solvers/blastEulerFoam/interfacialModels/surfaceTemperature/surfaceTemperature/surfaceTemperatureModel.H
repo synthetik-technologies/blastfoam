@@ -52,11 +52,12 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class surfaceTemperatureModel
-: public timeIntegrationSystem
+:
+    public timeIntegrationSystem
 {
 protected:
 
-    //- Const reference to phase pair
+    //- Const reference to phase model
     const phaseModel& phase_;
 
 
@@ -110,7 +111,7 @@ public:
     // Member Functions
 
         //- Return the phase model
-        const phaseModel& phase() const
+        inline const phaseModel& phase() const
         {
             return phase_;
         }
@@ -118,12 +119,6 @@ public:
         //- Return the surface temperature
         virtual tmp<volScalarField> Ts() const = 0;
 
-        //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const
-        {
-            return os.good();
-        }
-        
         //- Update before each ode step
         virtual void update() = 0;
 
@@ -134,7 +129,8 @@ public:
         virtual void solve() = 0;
         
         //- Initialize Models
-        virtual void initializeModels(const fvMesh& mesh) = 0;
+        virtual void initializeModels()
+        {}
 };
 
 

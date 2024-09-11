@@ -151,6 +151,7 @@ void Foam::granularPhaseModel::solve()
 
     //- Solve thermodynamics to get energy production
     thermoPtr_->solve();
+    surfTModel_->solve();
 
     //- Blend deltas
     deltaAlphaRhoU = cmptMultiply(deltaAlphaRhoU, solutionDs_);
@@ -313,6 +314,7 @@ void Foam::granularPhaseModel::postUpdate()
     }
 
     thermoPtr_->postUpdate();
+    surfTModel_->postUpdate();
     dPtr_->postUpdate();
 }
 
@@ -339,6 +341,7 @@ void Foam::granularPhaseModel::update()
         1.5*fluxScheme_->flux(Theta_, alphaRho_, phi_, false);
 
     thermoPtr_->update();
+    surfTModel_->update();
     phaseModel::update();
 }
 

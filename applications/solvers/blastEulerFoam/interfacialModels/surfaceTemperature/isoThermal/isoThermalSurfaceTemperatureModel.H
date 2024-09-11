@@ -25,7 +25,7 @@ Class
     Foam::surfaceTemperatureModels::isoThermal
 
 Description
-    Dispersed phased has a uniform temperature
+    Surface temperature is equal to the cell centered temperature
 
 SourceFiles
     isoThermalSurfaceTemperatureModel.C
@@ -78,16 +78,16 @@ public:
         virtual tmp<volScalarField> Ts() const;
         
         //- Update before each ode step
-        virtual void update(){};
+        virtual void update()
+        {};
 
         //- Update after ode integration
-        virtual void postUpdate(){};
+        virtual void postUpdate()
+        {};
 
         //- Solve sub-step stepi
-        virtual void solve(){};
-        
-        //- Initialize Models
-        virtual void initializeModels(const fvMesh& mesh){};
+        virtual void solve()
+        {};
 };
 
 

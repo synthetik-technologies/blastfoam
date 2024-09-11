@@ -287,6 +287,9 @@ void Foam::phaseModel::solveD()
     }
 
     PI /= Foam::max(sumAlpha, this->residualAlpha());
+
+    // Evolve the diameter model using the interfacial pressure and the
+    // surface temperature
     dPtr_->solve(PI, Ts());
 }
 
