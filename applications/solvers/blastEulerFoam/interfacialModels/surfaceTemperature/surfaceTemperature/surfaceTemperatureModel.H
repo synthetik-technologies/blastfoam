@@ -42,6 +42,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "phasePair.H"
 #include "fluidBlastThermo.H"
+#include "timeIntegrationSystem.H"
 
 namespace Foam
 {
@@ -51,6 +52,7 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class surfaceTemperatureModel
+: public timeIntegrationSystem
 {
 protected:
 
@@ -121,6 +123,18 @@ public:
         {
             return os.good();
         }
+        
+        //- Update before each ode step
+        virtual void update() = 0;
+
+        //- Update after ode integration
+        virtual void postUpdate() = 0;
+
+        //- Solve sub-step stepi
+        virtual void solve() = 0;
+        
+        //- Initialize Models
+        virtual void initializeModels(const fvMesh& mesh) = 0;
 };
 
 

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "surfaceTemperatureModel.H"
+#include "phaseSystem.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -42,6 +43,11 @@ Foam::surfaceTemperatureModel::surfaceTemperatureModel
     const phaseModel& phase
 )
 :
+    timeIntegrationSystem
+    (
+        IOobject::groupName("surfaceTemperatureModel", phase.name()),
+        phase.fluid().mesh()
+    ),
     phase_(phase)
 {}
 

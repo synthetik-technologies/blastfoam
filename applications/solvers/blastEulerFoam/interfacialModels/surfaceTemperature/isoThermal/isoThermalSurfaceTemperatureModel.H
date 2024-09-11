@@ -76,6 +76,18 @@ public:
 
         //- Return the surface temperature
         virtual tmp<volScalarField> Ts() const;
+        
+        //- Update before each ode step
+        virtual void update(){};
+
+        //- Update after ode integration
+        virtual void postUpdate(){};
+
+        //- Solve sub-step stepi
+        virtual void solve(){};
+        
+        //- Initialize Models
+        virtual void initializeModels(const fvMesh& mesh){};
 };
 
 
