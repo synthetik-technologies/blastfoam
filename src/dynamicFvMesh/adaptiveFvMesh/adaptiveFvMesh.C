@@ -252,16 +252,6 @@ void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& map)
     // Refiner is not updated because it is an UpdatableMeshObject
 }
 
-
-void Foam::adaptiveFvMesh::distribute
-(
-    const mapDistributePolyMesh& map
-)
-{
-    refiner_->distribute(map);
-
-}
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)

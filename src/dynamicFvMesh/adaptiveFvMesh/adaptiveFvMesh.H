@@ -119,9 +119,6 @@ protected:
             //- Overload update mesh to include other methods
             virtual void updateMesh(const mapPolyMesh& mpm);
 
-            //- Distribute additional information
-            virtual void distribute(const mapDistributePolyMesh& map);
-
             //- Map non-flux surface<Type>Fields for new internal faces
             //  (from cell splitting)
             template <class T>

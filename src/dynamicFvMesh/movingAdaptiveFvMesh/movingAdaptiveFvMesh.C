@@ -110,15 +110,6 @@ void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 }
 
 
-void Foam::movingAdaptiveFvMesh::distribute
-(
-    const mapDistributePolyMesh& map
-)
-{
-    adaptiveFvMesh::distribute(map);
-}
-
-
 const Foam::motionSolver& Foam::movingAdaptiveFvMesh::motion() const
 {
     return motionPtr_();

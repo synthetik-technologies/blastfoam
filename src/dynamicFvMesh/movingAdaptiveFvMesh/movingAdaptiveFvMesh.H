@@ -83,9 +83,6 @@ class movingAdaptiveFvMesh
         //- Overload update mesh to include other methods
         virtual void updateMesh(const mapPolyMesh& mpm);
 
-        //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
-
         //- Disallow default bitwise copy construct
         movingAdaptiveFvMesh(const movingAdaptiveFvMesh&);
 
