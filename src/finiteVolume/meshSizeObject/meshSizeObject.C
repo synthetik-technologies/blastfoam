@@ -110,7 +110,7 @@ void Foam::meshSizeObject::calcDx() const
                 const List<label>& faceCells = pp.faceCells();
                 forAll(faceCells, fi)
                 {
-                    dx[faceCells[fi]] += pp.magFaceAreas()[fi];
+                    dx[faceCells[fi]] += sqrt(pp.magFaceAreas()[fi]);
                 }
             }
         }
