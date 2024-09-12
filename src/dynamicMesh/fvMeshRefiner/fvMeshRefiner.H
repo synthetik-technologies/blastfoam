@@ -40,6 +40,7 @@ Description
 #include "mapDistributePolyMesh.H"
 #include "fvMeshBalance.H"
 #include "MeshObject.H"
+#include "RefineBalanceMeshObject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,7 +51,7 @@ class fvMeshRefiner;
 typedef MeshObject
 <
     fvMesh,
-    UpdateableMeshObject,
+    DistributeableMeshObject,
     fvMeshRefiner
 > FvMeshRefiner;
 
@@ -281,6 +282,19 @@ public:
 
         //- Overload update mesh to include other methods
         virtual void updateMesh(const mapPolyMesh& mpm);
+
+        //- Reordered/removed trailing patches. If validBoundary call is parallel
+        //  synced and all add the same patch with same settings
+        virtual void reorderPatches
+        (
+            const labelUList& newToOld,
+            const bool validBoundary
+        )
+        {}
+
+        //- Inserted patch at patchi
+        virtual void addPatch(const label patchi)
+        {}
 
         //- Move points
         virtual bool movePoints()
