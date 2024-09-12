@@ -63,9 +63,22 @@ public:
             reactionRate,
             dictionary,
             (
+                const Time& runTime,
                 const dictionary& dict
             ),
-            (dict)
+            (runTime, dict)
+        );
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            reactionRate,
+            fvMesh,
+            (
+                const fvMesh& mesh,
+                const dictionary& dict
+            ),
+            (mesh, dict)
         );
 
     // Constructor
@@ -78,17 +91,24 @@ public:
 
     // Selectors
 
-        static autoPtr<reactionRate> New(const dictionary& dict);
+        static autoPtr<reactionRate> New
+        (
+            const Time& runTime,
+            const dictionary& dict
+        );
+
+        static autoPtr<reactionRate> New
+        (
+            const fvMesh& mesh,
+            const dictionary& dict
+        );
+
 
     //- Construct and return a clone
     virtual autoPtr<reactionRate> clone() const = 0;
 
 
     // Public functions
-
-        //- Initialize models
-        virtual void initializeModels(const fvMesh& mesh)
-        {}
 
         //- Optional update of necessary fields before calculating k
         virtual void update

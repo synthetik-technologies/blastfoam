@@ -69,8 +69,17 @@ public:
     //- Runtime type information
     TypeName("Arrhenius");
 
-    // Constructor
-    Arrhenius(const dictionary& dict);
+
+    // Constructors
+
+        //- Construct from dictionary
+        Arrhenius(const dictionary& dict);
+
+        //- Construct from runTime and dictionary
+        Arrhenius(const Time& runTime, const dictionary& dict);
+
+        //- Construct from fvMesh and dictionary
+        Arrhenius(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor

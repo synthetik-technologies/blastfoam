@@ -34,6 +34,7 @@ namespace reactionRates
 {
     defineTypeNameAndDebug(Arrhenius, 0);
     addToRunTimeSelectionTable(reactionRate, Arrhenius, dictionary);
+    addToRunTimeSelectionTable(reactionRate, Arrhenius, fvMesh);
 }
 }
 
@@ -48,6 +49,25 @@ Foam::reactionRates::Arrhenius::Arrhenius(const dictionary& dict)
     Ta_("Ta", dimTemperature, dict)
 {}
 
+
+Foam::reactionRates::Arrhenius::Arrhenius
+(
+    const Time& runTime,
+    const dictionary& dict
+)
+:
+    Arrhenius(dict)
+{}
+
+
+Foam::reactionRates::Arrhenius::Arrhenius
+(
+    const fvMesh& mesh,
+    const dictionary& dict
+)
+:
+    Arrhenius(dict)
+{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -90,7 +110,7 @@ Foam::tmp<Foam::volScalarField> Foam::reactionRates::Arrhenius::k
         (
             IOobject
             (
-                "Arrhenius:k",
+                typeName + ":k",
                 p.time().timeName(),
                 p.mesh(),
                 IOobject::NO_READ,

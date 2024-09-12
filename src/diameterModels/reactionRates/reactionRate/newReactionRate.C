@@ -28,6 +28,7 @@ License
 
 Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
 (
+    const Time& runTime,
     const dictionary& dict
 )
 {
@@ -50,6 +51,41 @@ Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
 
     return cstrIter()
     (
+        runTime,
+        dict.optionalSubDict
+        (
+            reactionRateType + "ReactionRateCoeffs"
+        )
+    );
+}
+
+
+Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
+(
+    const fvMesh& mesh,
+    const dictionary& dict
+)
+{
+    const word reactionRateType(dict.lookup<word>("reactionRate"));
+
+    Info<< "Selecting fvMesh reactionRate: " << reactionRateType << endl;
+
+    fvMeshConstructorTable::iterator cstrIter =
+        fvMeshConstructorTablePtr_->find(reactionRateType);
+
+    if (cstrIter == fvMeshConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown fvMesh reactionRate type "
+            << reactionRateType << endl << endl
+            << "Valid fvMesh reactionRate types are : " << endl
+            << fvMeshConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()
+    (
+        mesh,
         dict.optionalSubDict
         (
             reactionRateType + "ReactionRateCoeffs"

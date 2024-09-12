@@ -34,6 +34,7 @@ namespace reactionRates
 {
     defineTypeNameAndDebug(constant, 0);
     addToRunTimeSelectionTable(reactionRate, constant, dictionary);
+    addToRunTimeSelectionTable(reactionRate, constant, fvMesh);
 }
 }
 
@@ -44,6 +45,26 @@ Foam::reactionRates::constant::constant(const dictionary& dict)
 :
     reactionRate(dict),
     rate_("rate", inv(dimTime), dict)
+{}
+
+
+Foam::reactionRates::constant::constant
+(
+    const Time& runTime,
+    const dictionary& dict
+)
+:
+    constant(dict)
+{}
+
+
+Foam::reactionRates::constant::constant
+(
+    const fvMesh& mesh,
+    const dictionary& dict
+)
+:
+    constant(dict)
 {}
 
 
@@ -74,7 +95,7 @@ Foam::tmp<Foam::volScalarField> Foam::reactionRates::constant::k
 {
     return volScalarField::New
     (
-        "constant:k",
+        typeName + ":k",
         p.mesh(),
         rate_
     );

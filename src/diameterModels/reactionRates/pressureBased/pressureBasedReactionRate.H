@@ -74,8 +74,17 @@ public:
     //- Runtime type information
     TypeName("pressureBased");
 
-    // Constructor
-    pressureBased(const dictionary& dict);
+
+    // Constructors
+
+        //- Construct from dictionary
+        pressureBased(const dictionary& dict);
+
+        //- Construct from runTime and dictionary
+        pressureBased(const Time& runTime, const dictionary& dict);
+
+        //- Construct from fvMesh and dictionary
+        pressureBased(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor

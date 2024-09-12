@@ -35,16 +35,14 @@ namespace reactionRates
 {
     defineTypeNameAndDebug(pressureBased, 0);
     addToRunTimeSelectionTable(reactionRate, pressureBased, dictionary);
+    addToRunTimeSelectionTable(reactionRate, pressureBased, fvMesh);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::reactionRates::pressureBased::pressureBased
-(
-    const dictionary& dict
-)
+Foam::reactionRates::pressureBased::pressureBased(const dictionary& dict)
 :
     reactionRate(dict),
     pScale_(dict.lookup<scalar>("pScale")),
@@ -52,6 +50,26 @@ Foam::reactionRates::pressureBased::pressureBased
     pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict),
     pMin_("pMin", dimPressure, dict.lookupOrDefault<scalar>("pMin", 0.0)),
     offset_("offset", dimLength/dimTime, dict.lookupOrDefault<scalar>("offset", 0.0))
+{}
+
+
+Foam::reactionRates::pressureBased::pressureBased
+(
+    const Time& runTime,
+    const dictionary& dict
+)
+:
+    pressureBased(dict)
+{}
+
+
+Foam::reactionRates::pressureBased::pressureBased
+(
+    const fvMesh& mesh,
+    const dictionary& dict
+)
+:
+    pressureBased(dict)
 {}
 
 
@@ -95,7 +113,7 @@ Foam::tmp<Foam::volScalarField> Foam::reactionRates::pressureBased::k
         (
             IOobject
             (
-                "pressureBased:k",
+                typeName + ":k",
                 p.time().timeName(),
                 p.mesh(),
                 IOobject::NO_READ,

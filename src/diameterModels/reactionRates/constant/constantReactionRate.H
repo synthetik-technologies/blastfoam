@@ -63,8 +63,17 @@ public:
     //- Runtime type information
     TypeName("constant");
 
-    // Constructor
-    constant(const dictionary& dict);
+
+    // Constructors
+
+        //- Construct from dictionary
+        constant(const dictionary& dict);
+
+        //- Construct from runTime and dictionary
+        constant(const Time& runTime, const dictionary& dict);
+
+        //- Construct from fvMesh and dictionary
+        constant(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor

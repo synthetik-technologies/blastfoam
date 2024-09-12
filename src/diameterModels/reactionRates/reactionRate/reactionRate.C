@@ -31,6 +31,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(reactionRate, 0);
     defineRunTimeSelectionTable(reactionRate, dictionary);
+    defineRunTimeSelectionTable(reactionRate, fvMesh);
 }
 
 
