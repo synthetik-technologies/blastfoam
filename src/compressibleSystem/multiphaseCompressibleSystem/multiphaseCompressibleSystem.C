@@ -499,8 +499,9 @@ void Foam::multiphaseCompressibleSystem::decode()
         }
 
         rho.correctBoundaryConditions();
-
-        alphaRho.boundaryFieldRef() = alpha.boundaryField()*rho.boundaryField();
+        alphaRho.correctBoundaryConditions();
+        alphaRho.boundaryFieldRef() =
+            alpha.boundaryField()*rho.boundaryField();
 
         rho_ += alphaRhos_[phasei];
     }

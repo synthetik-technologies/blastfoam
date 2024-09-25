@@ -108,6 +108,7 @@ void Foam::compressibleBlastSystem::decode()
     U_.ref() = rhoU_()/rhoEff()();
     U_.correctBoundaryConditions();
 
+    rhoU_.correctBoundaryConditions();
     rhoU_.boundaryFieldRef() =
         rhoEff().boundaryField()*U_.boundaryField();
 

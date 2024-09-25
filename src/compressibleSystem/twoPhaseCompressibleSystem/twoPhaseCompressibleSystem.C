@@ -489,8 +489,10 @@ void Foam::twoPhaseCompressibleSystem::decode()
     rho1_.correctBoundaryConditions();
     rho2_.correctBoundaryConditions();
 
-
+    alphaRho1_.correctBoundaryConditions();
     alphaRho1_.boundaryFieldRef() = alpha1_.boundaryField()*rho1_.boundaryField();
+
+    alphaRho2_.correctBoundaryConditions();
     alphaRho2_.boundaryFieldRef() = alpha2_.boundaryField()*rho2_.boundaryField();
 
     rho_ = alphaRho1_ + alphaRho2_;

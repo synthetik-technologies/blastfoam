@@ -391,6 +391,7 @@ void Foam::multiphaseInterfaceCompressibleSystem::update()
 //             rho.ref() = alphaRho()/max(alpha(), rAlpha);
 //         }
 //         rho.correctBoundaryConditions();
+//         alphaRho.correctBoundaryConditions();
 //         alphaRho.boundaryFieldRef() = alpha.boundaryField()*rho.boundaryField();
 //         rho_ += alphaRho;
 //     }
