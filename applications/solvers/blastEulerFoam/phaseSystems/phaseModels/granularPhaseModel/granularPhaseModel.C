@@ -362,6 +362,7 @@ void Foam::granularPhaseModel::decode()
     const volScalarField& alpha(*this);
 
     //- Correct phase mass at boundaries
+    alphaRho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() ==
         alpha.boundaryField()*rho_.boundaryField();
 
@@ -373,7 +374,9 @@ void Foam::granularPhaseModel::decode()
     U_.correctBoundaryConditions();
 
     //- Correct momentum at boundaries
-    alphaRhoU_.boundaryFieldRef() == alphaRho_.boundaryField()*U_.boundaryField();
+    alphaRhoU_.correctBoundaryConditions();
+    alphaRhoU_.boundaryFieldRef() ==
+        alphaRho_.boundaryField()*U_.boundaryField();
 
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
@@ -383,6 +386,8 @@ void Foam::granularPhaseModel::decode()
     alphaRhoPTE_.max(0.0);
     Theta_.ref() = alphaRhoPTE_()/(1.5*alphaRhoLimited());
     Theta_.correctBoundaryConditions();
+
+    alphaRhoPTE_.correctBoundaryConditions();
     alphaRhoPTE_.boundaryFieldRef() ==
         1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
 
