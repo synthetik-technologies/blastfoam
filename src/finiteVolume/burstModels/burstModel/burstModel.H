@@ -168,6 +168,18 @@ public:
             scalarField& intact
         ) const = 0;
 
+        //- Return if burst occurs
+        //  1 owner side
+        //  -1 neighbour side
+        // 0 no burst
+        virtual label update
+        (
+            const objectRegistry& obr,
+            const labelList& ownCells,
+            const labelList& neiCells,
+            const scalarField& V
+        ) const = 0;
+
         //- Write
         virtual void writeData(Ostream& os) const;
 

@@ -136,6 +136,60 @@ bool Foam::burstModels::pressure::update
 }
 
 
+Foam::label Foam::burstModels::pressure::update
+(
+    const objectRegistry& obr,
+    const labelList& ownCells,
+    const labelList& neiCells,
+    const scalarField& W
+) const
+{
+    const volScalarField& p =
+        obr.lookupObject<volScalarField>(pName_);
+    scalar ownp = 0.0;
+    scalar neip = 0.0;
+    scalar ownW = 0.0;
+    scalar neiW = 0.0;
+    forAll(ownCells, i)
+    {
+        const label celli = ownCells[i];
+        if (celli >= 0)
+        {
+            ownp += p[celli]*W[celli];
+            ownW += W[celli];
+        }
+    }
+    forAll(neiCells, i)
+    {
+        const label celli = neiCells[i];
+        if (celli >= 0)
+        {
+            neip += p[celli]*W[celli];
+            neiW += W[celli];
+        }
+    }
+    reduce(ownp, sumOp<scalar>());
+    reduce(ownW, sumOp<scalar>());
+    reduce(neip, sumOp<scalar>());
+    reduce(neiW, sumOp<scalar>());
+
+    if (ownW > 0)
+    {
+        ownp /= ownW;
+    }
+    if (neiW > 0)
+    {
+        neip /= neiW;
+    }
+
+    if (mag(ownp - neip) > pBurst_)
+    {
+        return ownp > neip ? 1 : -1;
+    }
+    return false;
+}
+
+
 void Foam::burstModels::pressure::writeData(Ostream& os) const
 {
     burstModel::writeData(os);

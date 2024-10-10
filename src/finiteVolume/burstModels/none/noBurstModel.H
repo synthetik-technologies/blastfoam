@@ -85,6 +85,18 @@ public:
             return false;
         }
 
+        //- Return if burst occurs
+        virtual label update
+        (
+            const objectRegistry& obr,
+            const labelList& ownCells,
+            const labelList& neiCells,
+            const scalarField& V
+        ) const
+        {
+            return 0;
+        }
+
         //- Write
         virtual void writeData(Ostream& os) const;
 };

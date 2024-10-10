@@ -112,6 +112,72 @@ bool Foam::burstModels::pressureImpulse::update
 }
 
 
+Foam::label Foam::burstModels::pressureImpulse::update
+(
+    const objectRegistry& obr,
+    const labelList& ownCells,
+    const labelList& neiCells,
+    const scalarField& W
+) const
+{
+    const label cond = pressure::update
+    (
+        obr,
+        ownCells,
+        neiCells,
+        W
+    );
+    if (cond)
+    {
+        return cond;
+    }
+
+    const volScalarField& imp =
+        obr.lookupObject<volScalarField>(impulseName_);
+    scalar ownImp = 0.0;
+    scalar neiImp = 0.0;
+    scalar ownW = 0.0;
+    scalar neiW = 0.0;
+    forAll(ownCells, i)
+    {
+        const label celli = ownCells[i];
+        if (celli >= 0)
+        {
+            ownImp += imp[celli]*W[celli];
+            ownW += W[celli];
+        }
+    }
+    forAll(neiCells, i)
+    {
+        const label celli = neiCells[i];
+        if (celli >= 0)
+        {
+            neiImp += imp[celli]*W[celli];
+            neiW += W[celli];
+        }
+    }
+    reduce(ownImp, sumOp<scalar>());
+    reduce(ownW, sumOp<scalar>());
+    reduce(neiImp, sumOp<scalar>());
+    reduce(neiW, sumOp<scalar>());
+
+    if (ownW > 0)
+    {
+        ownImp /= ownW;
+    }
+    if (neiW > 0)
+    {
+        neiImp /= neiW;
+    }
+
+    if (mag(ownImp - neiImp) > impulseBurst_)
+    {
+        return ownImp > neiImp ? 1 : -1;
+    }
+    return false;
+}
+
+
 void Foam::burstModels::pressureImpulse::writeData(Ostream& os) const
 {
     pressure::writeData(os);

@@ -132,6 +132,80 @@ bool Foam::burstModels::field::update
 }
 
 
+Foam::label Foam::burstModels::field::update
+(
+    const objectRegistry& obr,
+    const labelList& ownCells,
+    const labelList& neiCells,
+    const scalarField& W
+) const
+{
+    scalar ownW = 0.0;
+    scalar neiW = 0.0;
+    forAll(ownCells, i)
+    {
+        if (ownCells[i] >= 0)
+        {
+            ownW += W[ownCells[i]];
+        }
+    }
+    forAll(neiCells, i)
+    {
+        if (neiCells[i] >= 0)
+        {
+            neiW += W[neiCells[i]];
+        }
+    }
+    reduce(ownW, sumOp<scalar>());
+    reduce(neiW, sumOp<scalar>());
+
+    forAllConstIter(HashTable<scalar>, burstValues_, iter)
+    {
+        const word& fieldName(iter.key());
+        const scalar val = iter();
+
+        const volScalarField& f =
+            obr.lookupObject<volScalarField>(fieldName);
+
+        scalar ownF = 0.0;
+        scalar neiF = 0.0;
+        forAll(ownCells, i)
+        {
+            const label celli = ownCells[i];
+            if (celli >= 0)
+            {
+                ownF += f[celli]*W[celli];
+            }
+        }
+        forAll(neiCells, i)
+        {
+            const label celli = neiCells[i];
+            if (celli >= 0)
+            {
+                neiF += f[celli]*W[celli];
+            }
+        }
+        reduce(ownF, sumOp<scalar>());
+        reduce(neiF, sumOp<scalar>());
+
+        if (ownW > 0)
+        {
+            ownF /= ownW;
+        }
+        if (neiW > 0)
+        {
+            neiF /= neiW;
+        }
+
+        if (mag(ownF - neiF) > val)
+        {
+            return ownF > neiF ? 1 : -1;
+        }
+    }
+    return false;
+}
+
+
 void Foam::burstModels::field::writeData(Ostream& os) const
 {
     burstModel::writeData(os);
