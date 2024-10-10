@@ -313,6 +313,41 @@ Foam::tmp<Type> Foam::timeIntegrationSystemBase::calcDelta
 
 
 template<template<class> class ListType, class Type>
+void Foam::timeIntegrationSystemBase::calcDelta
+(
+    const Type& f,
+    const ListType<Type>& fList,
+    Type& fLimited
+) const
+{
+    const scalarList& scales = b();
+    const label curStep = timeInt_->step();
+
+    if (scales[curStep] == 0)
+    {
+        fLimited = Zero;
+        return;
+    }
+
+    fLimited = f;
+
+    // Remove old steps
+    forAll(scales, stepi)
+    {
+        if (curStep != stepi)
+        {
+            label fi = timeInt_->getDeltaIndex(stepi);
+            if (fi != -1 && scales[fi] != 0)
+            {
+                fLimited -= scales[fi]*fList[fi];
+            }
+        }
+    }
+    fLimited /= scales[curStep];
+}
+
+
+template<template<class> class ListType, class Type>
 Foam::tmp<Type> Foam::timeIntegrationSystemBase::calcAndStoreDelta
 (
     const Type& f,
@@ -324,5 +359,17 @@ Foam::tmp<Type> Foam::timeIntegrationSystemBase::calcAndStoreDelta
     return fN;
 }
 
+
+template<template<class> class ListType, class Type>
+void Foam::timeIntegrationSystemBase::calcAndStoreDelta
+(
+    const Type& f,
+    ListType<Type>& fList,
+    Type& fLimited
+)
+{
+    calcDelta(f, fList, fLimited);
+    storeDelta(fLimited, fList);
+}
 
 // ************************************************************************* //
