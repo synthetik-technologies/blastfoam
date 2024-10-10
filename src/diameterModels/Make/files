@@ -1,8 +1,8 @@
-reactionRates/reactionRate/reactionRate.C
-reactionRates/reactionRate/newReactionRate.C
-reactionRates/ArrheniusRate/ArrheniusReactionRate.C
-reactionRates/pressureBased/pressureBasedReactionRate.C
-reactionRates/constant/constantReactionRate.C
+reactionRates/surfaceReactionRate/surfaceReactionRate.C
+reactionRates/surfaceReactionRate/surfaceReactionRateNew.C
+reactionRates/Arrhenius/ArrheniusSurfaceReactionRate.C
+reactionRates/pressureBased/pressureBasedSurfaceReactionRate.C
+reactionRates/constant/constantSurfaceReactionRate.C
 
 diameterModel/diameterModel.C
 diameterModel/newDiameterModel.C
