@@ -60,6 +60,19 @@ Foam::objectMotionConstraints::line::line
 }
 
 
+Foam::objectMotionConstraints::line::line
+(
+    const word& name,
+    const point& centreOfRotation,
+    const vector& direction,
+    const movingObject& motion
+)
+:
+    objectMotionConstraint(name, motion),
+    centreOfRotation_(centreOfRotation),
+    direction_(direction)
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::objectMotionConstraints::line::~line()
