@@ -22,72 +22,101 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::reactionRates::constant
+    Foam::surfaceReactionRate
 
 Description
-    constant reaction rate
 
 SourceFiles
-    constantReactionRate.C
+    surfaceReactionRate.C
+    surfaceReactionRateNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantReactionRate_H
-#define constantReactionRate_H
+#ifndef surfaceReactionRate_H
+#define reactionRate_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "reactionRate.H"
+#include "volFields.H"
+#include "runTimeSelectionTables.H"
 
 namespace Foam
 {
-namespace reactionRates
-{
 
 /*---------------------------------------------------------------------------*\
-                    Class constant Declaration
+                    Class surfaceReactionRate Declaration
 \*---------------------------------------------------------------------------*/
 
-class constant
-:
-    public reactionRate
+class surfaceReactionRate
 {
-// Private data
-
-    //- Rate constant
-    dimensionedScalar rate_;
-
-
 public:
 
     //- Runtime type information
-    TypeName("constant");
+    TypeName("surfaceReactionRate");
 
 
-    // Constructors
+    // Declare runtime construction
 
-        //- Construct from dictionary
-        constant(const dictionary& dict);
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            surfaceReactionRate,
+            dictionary,
+            (
+                const Time& runTime,
+                const dictionary& dict
+            ),
+            (runTime, dict)
+        );
 
-        //- Construct from runTime and dictionary
-        constant(const Time& runTime, const dictionary& dict);
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            surfaceReactionRate,
+            fvMesh,
+            (
+                const fvMesh& mesh,
+                const dictionary& dict
+            ),
+            (mesh, dict)
+        );
 
-        //- Construct from fvMesh and dictionary
-        constant(const fvMesh& mesh, const dictionary& dict);
+    // Constructor
+    surfaceReactionRate(const dictionary& dict);
 
 
     //- Destructor
-    virtual ~constant();
+    virtual ~surfaceReactionRate();
+
+
+    // Selectors
+
+        static autoPtr<surfaceReactionRate> New
+        (
+            const Time& runTime,
+            const dictionary& dict
+        );
+
+        static autoPtr<surfaceReactionRate> New
+        (
+            const fvMesh& mesh,
+            const dictionary& dict
+        );
+
 
     //- Construct and return a clone
-    virtual autoPtr<reactionRate> clone() const
-    {
-        const constant& arr(*this);
-        return autoPtr<reactionRate>(new constant(arr));
-    }
+    virtual autoPtr<surfaceReactionRate> clone() const = 0;
 
 
     // Public functions
+
+        //- Optional update of necessary fields before calculating k
+        virtual void update
+        (
+            const volScalarField& p,
+            const volScalarField& T
+        )
+        {}
 
         //- Cell based reaction rate
         virtual scalar k
@@ -95,20 +124,19 @@ public:
             const scalar p,
             const scalar T,
             const label celli
-        ) const;
+        ) const = 0;
 
         //- Reaction rate
         virtual tmp<volScalarField> k
         (
             const volScalarField& p,
             const volScalarField& T
-        ) const;
+        ) const = 0;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace reactionRates
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

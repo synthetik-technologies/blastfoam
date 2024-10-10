@@ -22,81 +22,69 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::reactionRates::pressureBasedRateActivation
+    Foam::surfaceReactionRates::constant
 
 Description
-    pressureBased reaction rate
+    constant reaction rate
 
 SourceFiles
-    pressureBasedReactionRate.C
+    constantReactionRate.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pressureBasedReactionRate_H
-#define pressureBasedReactionRate_H
+#ifndef constantSurfaceReactionRate_H
+#define constantSurfaceReactionRate_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "reactionRate.H"
+#include "surfaceReactionRate.H"
 
 namespace Foam
 {
-namespace reactionRates
+namespace surfaceReactionRates
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class pressureBased Declaration
+                    Class constant Declaration
 \*---------------------------------------------------------------------------*/
 
-class pressureBased
+class constant
 :
-    public reactionRate
+    public surfaceReactionRate
 {
 // Private data
 
-    //- Pressure scaling coefficient
-    scalar pScale_;
+    //- Rate constant
+    dimensionedScalar rate_;
 
-    //- Pressure exponent
-    dimensionedScalar pExponent_;
-
-    //- Pressure coefficient
-    dimensionedScalar pCoeff_;
-
-    //- Minimum pressure
-    dimensionedScalar pMin_;
-
-    //- Rate offset
-    dimensionedScalar offset_;
 
 public:
 
     //- Runtime type information
-    TypeName("pressureBased");
+    TypeName("constant");
 
 
     // Constructors
 
         //- Construct from dictionary
-        pressureBased(const dictionary& dict);
+        constant(const dictionary& dict);
 
         //- Construct from runTime and dictionary
-        pressureBased(const Time& runTime, const dictionary& dict);
+        constant(const Time& runTime, const dictionary& dict);
 
         //- Construct from fvMesh and dictionary
-        pressureBased(const fvMesh& mesh, const dictionary& dict);
+        constant(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
-    virtual ~pressureBased();
+    virtual ~constant();
 
     //- Construct and return a clone
-    virtual autoPtr<reactionRate> clone() const
+    virtual autoPtr<surfaceReactionRate> clone() const
     {
-        const pressureBased& pbrr(*this);
-        return autoPtr<reactionRate>(new pressureBased(pbrr));
+        const constant& arr(*this);
+        return autoPtr<surfaceReactionRate>(new constant(arr));
     }
-
 
 
     // Public functions
@@ -120,7 +108,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace reactionRates
+} // End namespace surfaceReactionRates
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

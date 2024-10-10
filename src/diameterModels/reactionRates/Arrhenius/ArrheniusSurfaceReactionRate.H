@@ -22,101 +22,78 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::reactionRate
+    Foam::surfaceReactionRates::ArrheniusRateActivation
 
 Description
+    Arrhenius reaction rate
 
 SourceFiles
-    reactionRate.C
-    newReactionRate.C
+    ArrheniusSurfaceReactionRate.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef reactionRate_H
-#define reactionRate_H
+#ifndef ArrheniusSurfaceReactionRate_H
+#define ArrheniusSurfaceReactionRate_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "volFields.H"
-#include "runTimeSelectionTables.H"
+#include "surfaceReactionRate.H"
 
 namespace Foam
 {
+namespace surfaceReactionRates
+{
 
 /*---------------------------------------------------------------------------*\
-                    Class reactionRate Declaration
+                    Class Arrhenius Declaration
 \*---------------------------------------------------------------------------*/
 
-class reactionRate
+class Arrhenius
+:
+    public surfaceReactionRate
 {
+// Private data
+
+    //- Rate constant
+    dimensionedScalar A_;
+
+    //- Temperature exponent
+    dimensionedScalar beta_;
+
+    //- Activation temperature
+    dimensionedScalar Ta_;
+
+
 public:
 
     //- Runtime type information
-    TypeName("reactionRate");
+    TypeName("Arrhenius");
 
 
-    // Declare runtime construction
+    // Constructors
 
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            reactionRate,
-            dictionary,
-            (
-                const Time& runTime,
-                const dictionary& dict
-            ),
-            (runTime, dict)
-        );
+        //- Construct from dictionary
+        Arrhenius(const dictionary& dict);
 
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            reactionRate,
-            fvMesh,
-            (
-                const fvMesh& mesh,
-                const dictionary& dict
-            ),
-            (mesh, dict)
-        );
+        //- Construct from runTime and dictionary
+        Arrhenius(const Time& runTime, const dictionary& dict);
 
-    // Constructor
-    reactionRate(const dictionary& dict);
+        //- Construct from fvMesh and dictionary
+        Arrhenius(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
-    virtual ~reactionRate();
-
-
-    // Selectors
-
-        static autoPtr<reactionRate> New
-        (
-            const Time& runTime,
-            const dictionary& dict
-        );
-
-        static autoPtr<reactionRate> New
-        (
-            const fvMesh& mesh,
-            const dictionary& dict
-        );
-
+    virtual ~Arrhenius();
 
     //- Construct and return a clone
-    virtual autoPtr<reactionRate> clone() const = 0;
+    virtual autoPtr<surfaceReactionRate> clone() const
+    {
+        const Arrhenius& arr(*this);
+        return autoPtr<surfaceReactionRate>(new Arrhenius(arr));
+    }
 
 
     // Public functions
-
-        //- Optional update of necessary fields before calculating k
-        virtual void update
-        (
-            const volScalarField& p,
-            const volScalarField& T
-        )
-        {}
 
         //- Cell based reaction rate
         virtual scalar k
@@ -124,19 +101,20 @@ public:
             const scalar p,
             const scalar T,
             const label celli
-        ) const = 0;
+        ) const;
 
         //- Reaction rate
         virtual tmp<volScalarField> k
         (
             const volScalarField& p,
             const volScalarField& T
-        ) const = 0;
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace surfaceReactionRates
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -23,34 +23,34 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "ArrheniusReactionRate.H"
+#include "ArrheniusSurfaceReactionRate.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace reactionRates
+namespace surfaceReactionRates
 {
     defineTypeNameAndDebug(Arrhenius, 0);
-    addToRunTimeSelectionTable(reactionRate, Arrhenius, dictionary);
-    addToRunTimeSelectionTable(reactionRate, Arrhenius, fvMesh);
+    addToRunTimeSelectionTable(surfaceReactionRate, Arrhenius, dictionary);
+    addToRunTimeSelectionTable(surfaceReactionRate, Arrhenius, fvMesh);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::reactionRates::Arrhenius::Arrhenius(const dictionary& dict)
+Foam::surfaceReactionRates::Arrhenius::Arrhenius(const dictionary& dict)
 :
-    reactionRate(dict),
+    surfaceReactionRate(dict),
     A_("A", inv(dimTime), dict),
     beta_("beta", dimless, dict),
     Ta_("Ta", dimTemperature, dict)
 {}
 
 
-Foam::reactionRates::Arrhenius::Arrhenius
+Foam::surfaceReactionRates::Arrhenius::Arrhenius
 (
     const Time& runTime,
     const dictionary& dict
@@ -60,7 +60,7 @@ Foam::reactionRates::Arrhenius::Arrhenius
 {}
 
 
-Foam::reactionRates::Arrhenius::Arrhenius
+Foam::surfaceReactionRates::Arrhenius::Arrhenius
 (
     const fvMesh& mesh,
     const dictionary& dict
@@ -71,13 +71,13 @@ Foam::reactionRates::Arrhenius::Arrhenius
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::reactionRates::Arrhenius::~Arrhenius()
+Foam::surfaceReactionRates::Arrhenius::~Arrhenius()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::reactionRates::Arrhenius::k
+Foam::scalar Foam::surfaceReactionRates::Arrhenius::k
 (
     const scalar p,
     const scalar T,
@@ -98,7 +98,7 @@ Foam::scalar Foam::reactionRates::Arrhenius::k
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::reactionRates::Arrhenius::k
+Foam::tmp<Foam::volScalarField> Foam::surfaceReactionRates::Arrhenius::k
 (
     const volScalarField& p,
     const volScalarField& T

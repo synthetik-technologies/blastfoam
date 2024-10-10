@@ -23,32 +23,32 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "constantReactionRate.H"
+#include "constantSurfaceReactionRate.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace reactionRates
+namespace surfaceReactionRates
 {
     defineTypeNameAndDebug(constant, 0);
-    addToRunTimeSelectionTable(reactionRate, constant, dictionary);
-    addToRunTimeSelectionTable(reactionRate, constant, fvMesh);
+    addToRunTimeSelectionTable(surfaceReactionRate, constant, dictionary);
+    addToRunTimeSelectionTable(surfaceReactionRate, constant, fvMesh);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::reactionRates::constant::constant(const dictionary& dict)
+Foam::surfaceReactionRates::constant::constant(const dictionary& dict)
 :
-    reactionRate(dict),
+    surfaceReactionRate(dict),
     rate_("rate", inv(dimTime), dict)
 {}
 
 
-Foam::reactionRates::constant::constant
+Foam::surfaceReactionRates::constant::constant
 (
     const Time& runTime,
     const dictionary& dict
@@ -58,7 +58,7 @@ Foam::reactionRates::constant::constant
 {}
 
 
-Foam::reactionRates::constant::constant
+Foam::surfaceReactionRates::constant::constant
 (
     const fvMesh& mesh,
     const dictionary& dict
@@ -70,13 +70,13 @@ Foam::reactionRates::constant::constant
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::reactionRates::constant::~constant()
+Foam::surfaceReactionRates::constant::~constant()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::reactionRates::constant::k
+Foam::scalar Foam::surfaceReactionRates::constant::k
 (
     const scalar p,
     const scalar T,
@@ -87,7 +87,7 @@ Foam::scalar Foam::reactionRates::constant::k
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::reactionRates::constant::k
+Foam::tmp<Foam::volScalarField> Foam::surfaceReactionRates::constant::k
 (
     const volScalarField& p,
     const volScalarField& T

@@ -22,75 +22,81 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::reactionRates::ArrheniusRateActivation
+    Foam::surfaceReactionRates::pressureBasedRateActivation
 
 Description
-    Arrhenius reaction rate
+    pressureBased reaction rate
 
 SourceFiles
-    ArrheniusReactionRate.C
+    pressureBasedSurfaceReactionRate.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ArrheniusReactionRate_H
-#define ArrheniusReactionRate_H
+#ifndef pressureBasedSurfaceReactionRate_H
+#define pressureBasedSurfaceReactionRate_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "reactionRate.H"
+#include "surfaceReactionRate.H"
 
 namespace Foam
 {
-namespace reactionRates
+namespace surfaceReactionRates
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class Arrhenius Declaration
+                    Class pressureBased Declaration
 \*---------------------------------------------------------------------------*/
 
-class Arrhenius
+class pressureBased
 :
-    public reactionRate
+    public surfaceReactionRate
 {
 // Private data
 
-    //- Rate constant
-    dimensionedScalar A_;
+    //- Pressure scaling coefficient
+    scalar pScale_;
 
-    //- Temperature exponent
-    dimensionedScalar beta_;
+    //- Pressure exponent
+    dimensionedScalar pExponent_;
 
-    //- Activation temperature
-    dimensionedScalar Ta_;
+    //- Pressure coefficient
+    dimensionedScalar pCoeff_;
 
+    //- Minimum pressure
+    dimensionedScalar pMin_;
+
+    //- Rate offset
+    dimensionedScalar offset_;
 
 public:
 
     //- Runtime type information
-    TypeName("Arrhenius");
+    TypeName("pressureBased");
 
 
     // Constructors
 
         //- Construct from dictionary
-        Arrhenius(const dictionary& dict);
+        pressureBased(const dictionary& dict);
 
         //- Construct from runTime and dictionary
-        Arrhenius(const Time& runTime, const dictionary& dict);
+        pressureBased(const Time& runTime, const dictionary& dict);
 
         //- Construct from fvMesh and dictionary
-        Arrhenius(const fvMesh& mesh, const dictionary& dict);
+        pressureBased(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
-    virtual ~Arrhenius();
+    virtual ~pressureBased();
 
     //- Construct and return a clone
-    virtual autoPtr<reactionRate> clone() const
+    virtual autoPtr<surfaceReactionRate> clone() const
     {
-        const Arrhenius& arr(*this);
-        return autoPtr<reactionRate>(new Arrhenius(arr));
+        const pressureBased& pbrr(*this);
+        return autoPtr<surfaceReactionRate>(new pressureBased(pbrr));
     }
+
 
 
     // Public functions
@@ -114,7 +120,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace reactionRates
+} // End namespace surfaceReactionRates
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

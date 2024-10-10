@@ -23,27 +23,27 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "reactionRate.H"
+#include "surfaceReactionRate.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(reactionRate, 0);
-    defineRunTimeSelectionTable(reactionRate, dictionary);
-    defineRunTimeSelectionTable(reactionRate, fvMesh);
+    defineTypeNameAndDebug(surfaceReactionRate, 0);
+    defineRunTimeSelectionTable(surfaceReactionRate, dictionary);
+    defineRunTimeSelectionTable(surfaceReactionRate, fvMesh);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::reactionRate::reactionRate(const dictionary& dict)
+Foam::surfaceReactionRate::surfaceReactionRate(const dictionary& dict)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::reactionRate::~reactionRate()
+Foam::surfaceReactionRate::~surfaceReactionRate()
 {}
 
 // ************************************************************************* //

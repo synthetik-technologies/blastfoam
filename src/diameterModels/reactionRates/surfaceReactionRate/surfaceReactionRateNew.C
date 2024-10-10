@@ -22,11 +22,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 ------------------------------------------------------------------------*/
 
-#include "reactionRate.H"
+#include "surfaceReactionRate.H"
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
+Foam::autoPtr<Foam::surfaceReactionRate> Foam::surfaceReactionRate::New
 (
     const Time& runTime,
     const dictionary& dict
@@ -60,7 +60,7 @@ Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
 }
 
 
-Foam::autoPtr<Foam::reactionRate> Foam::reactionRate::New
+Foam::autoPtr<Foam::surfaceReactionRate> Foam::surfaceReactionRate::New
 (
     const fvMesh& mesh,
     const dictionary& dict

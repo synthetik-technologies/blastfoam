@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "diameterModel.H"
-#include "reactionRate.H"
+#include "surfaceReactionRate.H"
 
 namespace Foam
 {
@@ -56,7 +56,7 @@ class reactingDiameterModel
 // Private data
 
     //- Reaction rate model
-    autoPtr<reactionRate> rate_;
+    autoPtr<surfaceReactionRate> rate_;
 
     //- Name of pressure field
     const word pName_;

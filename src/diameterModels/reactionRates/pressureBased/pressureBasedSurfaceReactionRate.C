@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "pressureBasedReactionRate.H"
+#include "pressureBasedSurfaceReactionRate.H"
 #include "thermodynamicConstants.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -31,20 +31,20 @@ License
 
 namespace Foam
 {
-namespace reactionRates
+namespace surfaceReactionRates
 {
     defineTypeNameAndDebug(pressureBased, 0);
-    addToRunTimeSelectionTable(reactionRate, pressureBased, dictionary);
-    addToRunTimeSelectionTable(reactionRate, pressureBased, fvMesh);
+    addToRunTimeSelectionTable(surfaceReactionRate, pressureBased, dictionary);
+    addToRunTimeSelectionTable(surfaceReactionRate, pressureBased, fvMesh);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::reactionRates::pressureBased::pressureBased(const dictionary& dict)
+Foam::surfaceReactionRates::pressureBased::pressureBased(const dictionary& dict)
 :
-    reactionRate(dict),
+    surfaceReactionRate(dict),
     pScale_(dict.lookup<scalar>("pScale")),
     pExponent_("pExponent", dimless, dict),
     pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict),
@@ -53,7 +53,7 @@ Foam::reactionRates::pressureBased::pressureBased(const dictionary& dict)
 {}
 
 
-Foam::reactionRates::pressureBased::pressureBased
+Foam::surfaceReactionRates::pressureBased::pressureBased
 (
     const Time& runTime,
     const dictionary& dict
@@ -63,7 +63,7 @@ Foam::reactionRates::pressureBased::pressureBased
 {}
 
 
-Foam::reactionRates::pressureBased::pressureBased
+Foam::surfaceReactionRates::pressureBased::pressureBased
 (
     const fvMesh& mesh,
     const dictionary& dict
@@ -75,13 +75,13 @@ Foam::reactionRates::pressureBased::pressureBased
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::reactionRates::pressureBased::~pressureBased()
+Foam::surfaceReactionRates::pressureBased::~pressureBased()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::reactionRates::pressureBased::k
+Foam::scalar Foam::surfaceReactionRates::pressureBased::k
 (
     const scalar p,
     const scalar T,
@@ -101,7 +101,7 @@ Foam::scalar Foam::reactionRates::pressureBased::k
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::reactionRates::pressureBased::k
+Foam::tmp<Foam::volScalarField> Foam::surfaceReactionRates::pressureBased::k
 (
     const volScalarField& p,
     const volScalarField& T
