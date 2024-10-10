@@ -25,7 +25,7 @@ License
 
 #include "makeReaction.H"
 
-// #include "ArrheniusReactionRate.H"
+#include "ArrheniusReactionRate.H"
 #include "LandauTellerReactionRate.H"
 #include "thirdBodyArrheniusReactionRate.H"
 
