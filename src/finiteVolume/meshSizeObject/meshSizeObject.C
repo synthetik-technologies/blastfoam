@@ -80,24 +80,18 @@ void Foam::meshSizeObject::calcDx() const
         const cellList& cells = mesh_.cells();
         const pointField& cellCentres = mesh_.cellCentres();
         const pointField& faceCentres = mesh_.faceCentres();
+        label cmpti = -1;
+        for (label i = 0; i < 3; i++)
+        {
+            if (geoD[i] > 0)
+            {
+                cmpti = i;
+            }
+        }
         forAll(mesh_.cells(), celli)
         {
             const cell& c = cells[celli];
-            scalar deltaSum = 0.0;
-            scalar nIntFaces = 0.0;
-            forAll(c, fi)
-            {
-                const label facei = c[fi];
-                if (facei < mesh_.nInternalFaces())
-                {
-                    deltaSum += 2.0*mag(cellCentres[celli] - faceCentres[facei]);
-                    nIntFaces += 1.0;
-                }
-            }
-            if (nIntFaces)
-            {
-                dx[celli] = deltaSum / nIntFaces;
-            }
+            dx[celli] = boundBox(faceCentres, c, false).span()[cmpti];
         }
     }
     else if (mesh_.nGeometricD() == 2)
