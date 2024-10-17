@@ -200,7 +200,7 @@ bool Foam::Equation<Type>::containsRoot
                 << "Solution is not bracked:" << nl
                 << "limits: (" << lower() << ","<< upper() << ")" << endl
                 << "f(x0)=" << y0 << ", f(x1)=" << y1 << endl
-                << abort(FatalError);
+                << endl;
             #endif
             return false;
         }
