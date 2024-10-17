@@ -471,6 +471,7 @@ Foam::label Foam::patchToPatchMappings::nearest::finaliseFaces
 )
 {
     // Keep only the closest opposing face
+    srcFaceWeights_.setSize(localTgtFacesToSrc_.size());
     forAll(localTgtFacesToSrc_, srcFacei)
     {
         localTgtFacesToSrc_[srcFacei].resize
@@ -483,6 +484,8 @@ Foam::label Foam::patchToPatchMappings::nearest::finaliseFaces
             1.0
         );
     }
+
+    tgtFaceWeights_.setSize(localSrcFacesToTgt_.size());
     forAll(localSrcFacesToTgt_, tgtFacei)
     {
         localSrcFacesToTgt_[tgtFacei].resize

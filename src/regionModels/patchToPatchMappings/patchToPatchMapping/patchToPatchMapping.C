@@ -622,38 +622,37 @@ void Foam::patchToPatchMapping::initialise
     const vectorField& pointNormals0
 )
 {
+    // Set sizes of faces
+    // weights are not set here, instead they need to be set in the finalise
+    // functions
     localTgtFacesToSrc_.setSize(srcPatch.size());
-    srcFaceWeights_.setSize(srcPatch.size());
+    srcFaceWeights_.clear();
     forAll(localTgtFacesToSrc_, i)
     {
         localTgtFacesToSrc_[i].clear();
-        srcFaceWeights_[i].clear();
     }
 
     localSrcFacesToTgt_.setSize(tgtPatch.size());
-    tgtFaceWeights_.setSize(tgtPatch.size());
+    tgtFaceWeights_.clear();
     forAll(localSrcFacesToTgt_, i)
     {
         localSrcFacesToTgt_[i].clear();
-        tgtFaceWeights_[i].clear();
     }
 
     if (needPoints_)
     {
         localTgtPointsToSrc_.setSize(srcPatch.nPoints());
-        srcPointWeights_.setSize(srcPatch.nPoints());
+        srcPointWeights_.clear();
         forAll(localTgtPointsToSrc_, i)
         {
             localTgtPointsToSrc_[i].clear();
-            srcPointWeights_[i].clear();
         }
 
         localSrcPointsToTgt_.setSize(tgtPatch.nPoints());
-        tgtPointWeights_.setSize(tgtPatch.nPoints());
+        tgtPointWeights_.clear();
         forAll(localSrcPointsToTgt_, i)
         {
             localSrcPointsToTgt_[i].clear();
-            tgtPointWeights_[i].clear();
         }
     }
 }

@@ -69,8 +69,11 @@ void Foam::patchToPatchMappings::intersection::generatePointWeights
 
     labelHashSet checkedFaces;
     labelHashSet addedPoints;
+    weights.setSize(points.size());
     forAll(points, pointi)
     {
+        weights[pointi].clear();
+
         // Collect all relevant points
         const point& pt = points[pointi];
         checkedFaces.clear();
@@ -170,6 +173,7 @@ void Foam::patchToPatchMappings::intersection::generateFaceWeights
     List<DynamicList<scalar>>& weights
 )
 {
+    weights.setSize(couples.size());
     forAll(couples, facei)
     {
         weights[facei].resize(couples[facei].size());

@@ -89,8 +89,10 @@ void Foam::patchToPatchMappings::inverseDistance::generateFaceWeights
     List<DynamicList<scalar>>& weights
 )
 {
+    weights.setSize(otherFaces.size());
     forAll(otherFaces, facei)
     {
+        weights[facei].clear();
         if (otherFaces[facei].empty()) continue;
 
         label otherFacei = -1;
@@ -176,8 +178,12 @@ void Foam::patchToPatchMappings::inverseDistance::generatePointWeights
 
     labelHashSet checkedFaces;
     labelHashSet addedPoints;
+
+    weights.setSize(points.size());
     forAll(points, pointi)
     {
+        weights[pointi].clear();
+
         // Collect all relevant points
         const point& pt = points[pointi];
         checkedFaces.clear();
