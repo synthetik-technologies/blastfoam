@@ -78,53 +78,53 @@ namespace Foam
 
     // // Pressure dependent reactions
 
-    // forCoeffGases
-    // (
-    //     makeIRRPressureDependentReactions,
-    //     FallOffReactionRate,
-    //     ArrheniusReactionRate,
-    //     LindemannFallOffFunction
-    // );
+    forCoeffGases
+    (
+        makeIRRPressureDependentReactions,
+        FallOffReactionRate,
+        ArrheniusReactionRate,
+        LindemannFallOffFunction
+    );
 
-    // forCoeffGases
-    // (
-    //     makeIRRPressureDependentReactions,
-    //     FallOffReactionRate,
-    //     ArrheniusReactionRate,
-    //     TroeFallOffFunction
-    // );
+    forCoeffGases
+    (
+        makeIRRPressureDependentReactions,
+        FallOffReactionRate,
+        ArrheniusReactionRate,
+        TroeFallOffFunction
+    );
 
-    // forCoeffGases
-    // (
-    //     makeIRRPressureDependentReactions,
-    //     FallOffReactionRate,
-    //     ArrheniusReactionRate,
-    //     SRIFallOffFunction
-    // );
+    forCoeffGases
+    (
+        makeIRRPressureDependentReactions,
+        FallOffReactionRate,
+        ArrheniusReactionRate,
+        SRIFallOffFunction
+    );
 
-    // forCoeffGases
-    // (
-    //     makeIRRPressureDependentReactions,
-    //     ChemicallyActivatedReactionRate,
-    //     ArrheniusReactionRate,
-    //     LindemannFallOffFunction
-    // );
+    forCoeffGases
+    (
+        makeIRRPressureDependentReactions,
+        ChemicallyActivatedReactionRate,
+        ArrheniusReactionRate,
+        LindemannFallOffFunction
+    );
 
-    // forCoeffGases
-    // (
-    //     makeIRRPressureDependentReactions,
-    //     ChemicallyActivatedReactionRate,
-    //     ArrheniusReactionRate,
-    //     TroeFallOffFunction
-    // );
+    forCoeffGases
+    (
+        makeIRRPressureDependentReactions,
+        ChemicallyActivatedReactionRate,
+        ArrheniusReactionRate,
+        TroeFallOffFunction
+    );
 
-    // forCoeffGases
-    // (
-    //     makeIRRPressureDependentReactions,
-    //     ChemicallyActivatedReactionRate,
-    //     ArrheniusReactionRate,
-    //     SRIFallOffFunction
-    // );
+    forCoeffGases
+    (
+        makeIRRPressureDependentReactions,
+        ChemicallyActivatedReactionRate,
+        ArrheniusReactionRate,
+        SRIFallOffFunction
+    );
 }
 
 // ************************************************************************* //
