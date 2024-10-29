@@ -41,6 +41,7 @@ License
 #include "perfectGas.H"
 #include "AbelNobel.H"
 #include "AbelNobelSG.H"
+#include "VanderWaals.H"
 
 #include "idealGas.H"
 #include "stiffenedGas.H"
@@ -83,7 +84,8 @@ License
 
 #define forCoeffGasEqns(Mu, Cp, Macro, Args...)                             \
     forThermo(Mu, Cp, perfectGas, specieBlast, Macro, Args);                \
-    forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args)
+    forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args);                 \
+    forThermo(Mu, Cp, VanderWaals, specieBlast, Macro, Args)
 
 #define forCoeffGasThermos(Mu, Macro, Args...)                              \
     forCoeffGasEqns(Mu, hConstThermo, Macro, Args);                         \
