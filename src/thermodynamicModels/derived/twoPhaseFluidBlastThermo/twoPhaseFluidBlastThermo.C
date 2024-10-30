@@ -779,14 +779,6 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::hc() const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::flameT() const
-{
-    return
-        alpha1_*thermo1_->flameT()
-      + alpha2_*thermo2_->flameT();
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::THE() const
 {
     return

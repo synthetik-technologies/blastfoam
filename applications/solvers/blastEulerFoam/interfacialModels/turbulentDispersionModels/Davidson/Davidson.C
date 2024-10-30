@@ -77,8 +77,10 @@ Foam::turbulentDispersionModels::Davidson::D
 ) const
 {
     const fvMesh& mesh(pair_.phase1().mesh());
-    const volScalarField& alpha1 = pair_.dispersed().volumeFraction(nodei);
-    const volScalarField& alpha2 = pair_.continuous().volumeFraction(nodej);
+    tmp<volScalarField> talpha1(pair_.dispersed().volumeFraction(nodei));
+    const volScalarField& alpha1 = talpha1();
+    tmp<volScalarField> talpha2(pair_.continuous().volumeFraction(nodej));
+    const volScalarField& alpha2 = talpha2();
     const dragModel&
         drag
         (

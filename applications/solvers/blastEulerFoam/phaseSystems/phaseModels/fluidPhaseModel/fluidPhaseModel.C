@@ -28,8 +28,6 @@ License
 #include "fluidPhaseModel.H"
 #include "phaseSystem.H"
 #include "fvMatrix.H"
-#include "slipFvPatchFields.H"
-#include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "addToRunTimeSelectionTable.H"
@@ -207,6 +205,8 @@ void Foam::fluidPhaseModel::decode()
     rho_.ref() = alphaRho_()/alpha();
     rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
+
+    alphaRho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField();
     volScalarField alphaRhoLimited(alpha*rho_);
@@ -215,6 +215,7 @@ void Foam::fluidPhaseModel::decode()
     U_.ref() = alphaRhoU_()/(alphaRhoLimited());
     U_.correctBoundaryConditions();
 
+    alphaRhoU_.correctBoundaryConditions();
     alphaRhoU_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
 

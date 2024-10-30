@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2021 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2021-09-27 Jeff Heylmun:    Modified class for a density based thermodynamic
+2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
                             class
 -------------------------------------------------------------------------------
 License
@@ -25,123 +25,128 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::hPolynomialThermo
+    Foam::janaf9Thermo
 
 Description
-    Thermodynamic model that uses a table based on density and internal energy
-    to return temperature. Numerical derivatives are used to approximate
-    additional quantities such as specific heats
+    janaf9Thermo tables based thermodynamics package templated
+    into the equation of state.
+
+    entries 0:n-2 are cp coefficients, n-1 is the enthaply offset, and n-2 is the entropy offset
 
 SourceFiles
-    hPolynomialThermo.C
-
+    janaf9ThermoBlastThermo.C
 \*---------------------------------------------------------------------------*/
 
-#ifndef hPolynomialThermoBlast_H
-#define hPolynomialThermoBlast_H
+#ifndef janaf9ThermoBlast_H
+#define janaf9ThermoBlast_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "autoPtr.H"
-#include "Polynomial.H"
+#include "scalar.H"
+#include "List.H"
 
 namespace Foam
 {
 
 // Forward declaration of friend functions and operators
 
-template<class EquationOfState, int PolySize>
-class hPolynomialThermo;
+template<class EquationOfState> class janaf9Thermo;
 
-template<class EquationOfState, int PolySize>
-inline hPolynomialThermo<EquationOfState, PolySize> operator+
+template<class EquationOfState>
+inline janaf9Thermo<EquationOfState> operator+
 (
-    const hPolynomialThermo<EquationOfState, PolySize>&,
-    const hPolynomialThermo<EquationOfState, PolySize>&
+    const janaf9Thermo<EquationOfState>&,
+    const janaf9Thermo<EquationOfState>&
 );
 
-template<class EquationOfState, int PolySize>
-inline hPolynomialThermo<EquationOfState, PolySize> operator*
+template<class EquationOfState>
+inline janaf9Thermo<EquationOfState> operator*
 (
     const scalar,
-    const hPolynomialThermo<EquationOfState, PolySize>&
+    const janaf9Thermo<EquationOfState>&
 );
 
-template<class EquationOfState, int PolySize>
-inline hPolynomialThermo<EquationOfState, PolySize> operator==
+template<class EquationOfState>
+inline janaf9Thermo<EquationOfState> operator==
 (
-    const hPolynomialThermo<EquationOfState, PolySize>&,
-    const hPolynomialThermo<EquationOfState, PolySize>&
+    const janaf9Thermo<EquationOfState>&,
+    const janaf9Thermo<EquationOfState>&
 );
 
-template<class EquationOfState, int PolySize>
+template<class EquationOfState>
 Ostream& operator<<
 (
     Ostream&,
-    const hPolynomialThermo<EquationOfState, PolySize>&
+    const janaf9Thermo<EquationOfState>&
 );
 
 
 /*---------------------------------------------------------------------------*\
-                        Class hPolynomialThermo Declaration
+                           Class janaf9Thermo Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class EquationOfState, int PolySize=8>
-class hPolynomialThermo
+template<class EquationOfState>
+class janaf9Thermo
 :
     public EquationOfState
 {
+public:
+
+    // Public data
+
+        static const int nCoeffs_ = 9;
+        typedef FixedList<scalar, nCoeffs_> coeffArray;
+
+
+
+private:
+
     // Private Data
 
-        //- Heat of formation
-        scalar Hf_;
+        // Temperature limits of applicability of functions
+        scalar Tlow_, Thigh_, Tcommon_;
 
-        //- Standard entropy
-        scalar Sf_;
-
-        //- Specific heat at constant pressure polynomial coeffs [J/kg/K/K^i]
-        Polynomial<PolySize> CpCoeffs_;
-
-        //- Enthalpy polynomial coeffs [J/kg/K^i]
-        //  Derived from Cp coeffs. Relative to Tstd.
-        typename Polynomial<PolySize>::intPolyType hCoeffs_;
-
-        //- Entropy polynomial coeffs [J/kg/K/K^i]
-        //  Derived from Cp coeffs. Relative to Tstd.
-        Polynomial<PolySize> sCoeffs_;
+        coeffArray highCpCoeffs_;
+        coeffArray lowCpCoeffs_;
 
 
     // Private Member Functions
 
-        //- Construct from components
-        inline hPolynomialThermo
-        (
-            const EquationOfState& pt,
-            const scalar Hf,
-            const scalar Sf,
-            const Polynomial<PolySize>& CpCoeffs,
-            const typename Polynomial<PolySize>::intPolyType& hCoeffs,
-            const Polynomial<PolySize>& sCoeffs
-        );
+        //- Return the coefficients corresponding to the given temperature
+        const coeffArray& coeffs(const scalar T) const;
+
 
 
 public:
+
+    // Constructors
+
+        //- Construct from components
+        inline janaf9Thermo
+        (
+            const EquationOfState& st,
+            const scalar Tlow,
+            const scalar Thigh,
+            const scalar Tcommon,
+            const coeffArray& highCpCoeffs,
+            const coeffArray& lowCpCoeffs,
+            const bool convertCoeffs = false
+        );
+
+        //- Construct from dictionary
+        janaf9Thermo(const dictionary& dict);
+
+        //- Construct as a named copy
+        inline janaf9Thermo(const word&, const janaf9Thermo&);
+
 
     //- Return the instantiated type name
         static word typeName()
         {
             return
-                "hPolynomial<"
-              + word(EquationOfState::typeName()) + ">";
+                "janaf9<"
+              + word(EquationOfState::typeName()) + '>';
         }
-
-    // Constructors
-
-        //- Construct from dictionary
-        hPolynomialThermo(const dictionary& dict);
-
-        //- Construct as a named copy
-        inline hPolynomialThermo(const word&, const hPolynomialThermo&);
 
         //- Return the energy type
         static bool enthalpy()
@@ -153,9 +158,27 @@ public:
         inline scalar limit(const scalar T, const scalar Told) const;
 
 
+    // Access
+
+            //- Return const access to the low temperature limit
+            inline scalar Tlow() const;
+
+            //- Return const access to the high temperature limit
+            inline scalar Thigh() const;
+
+            //- Return const access to the common temperature
+            inline scalar Tcommon() const;
+
+            //- Return const access to the high temperature poly coefficients
+            inline const coeffArray& highCpCoeffs() const;
+
+            //- Return const access to the low temperature poly coefficients
+            inline const coeffArray& lowCpCoeffs() const;
+
+
     // Member Functions
 
-        //- Heat capacity at constant pressure [J/kg/K]
+        //- Heat capacity at constant pressure of mixture [J/kg/K]
         inline scalar Cp
         (
             const scalar rho,
@@ -163,7 +186,7 @@ public:
             const scalar T
         ) const;
 
-        //- Absolute enthalpy [J/kg]
+        //- Sensible enthalpy [J/kg]
         inline scalar Hs
         (
             const scalar rho,
@@ -193,6 +216,9 @@ public:
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
 
+        //- Flame temperature [K]
+        inline scalar flameT() const;
+
         //- Entropy [J/kg/K]
         inline scalar S(const scalar p, const scalar T) const;
 
@@ -208,35 +234,29 @@ public:
         ) const;
 
 
-        // I-O
-
-            //- Write to Ostream
-            void write(Ostream& os) const;
-
-
     // Member operators
 
-        inline void operator+=(const hPolynomialThermo&);
+        inline void operator+=(const janaf9Thermo&);
 
 
     // Friend operators
 
-        friend hPolynomialThermo operator+ <EquationOfState>
+        friend janaf9Thermo operator+ <EquationOfState>
         (
-            const hPolynomialThermo&,
-            const hPolynomialThermo&
+            const janaf9Thermo&,
+            const janaf9Thermo&
         );
 
-        friend hPolynomialThermo operator* <EquationOfState>
+        friend janaf9Thermo operator* <EquationOfState>
         (
             const scalar,
-            const hPolynomialThermo&
+            const janaf9Thermo&
         );
 
-        friend hPolynomialThermo operator== <EquationOfState>
+        friend janaf9Thermo operator== <EquationOfState>
         (
-            const hPolynomialThermo&,
-            const hPolynomialThermo&
+            const janaf9Thermo&,
+            const janaf9Thermo&
         );
 
 
@@ -245,10 +265,9 @@ public:
         friend Ostream& operator<< <EquationOfState>
         (
             Ostream&,
-            const hPolynomialThermo&
+            const janaf9Thermo&
         );
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -256,10 +275,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "hPolynomialBlastThermoI.H"
+#include "janaf9BlastThermoI.H"
 
 #ifdef NoRepository
-    #include "hPolynomialBlastThermo.C"
+    #include "janaf9BlastThermo.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

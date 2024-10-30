@@ -156,15 +156,6 @@ Foam::hPolynomialThermo<EquationOfState, PolySize>::Hf() const
 
 template<class EquationOfState, int PolySize>
 inline Foam::scalar
-Foam::hPolynomialThermo<EquationOfState, PolySize>::flameT() const
-{
-    NotImplemented;
-    return 0.0;
-}
-
-
-template<class EquationOfState, int PolySize>
-inline Foam::scalar
 Foam::hPolynomialThermo<EquationOfState, PolySize>::S
 (
     const scalar p,

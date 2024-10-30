@@ -26,40 +26,48 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "eConstBlastThermo.H"
+#include "janaf9BlastThermo.H"
+#include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class EquationOfState>
-Foam::eConstThermo<EquationOfState>::eConstThermo(const dictionary& dict)
+Foam::janaf9Thermo<EquationOfState>::janaf9Thermo(const dictionary& dict)
 :
     EquationOfState(dict),
-    Cv_(dict.subDict("thermodynamics").lookup<scalar>("Cv")),
-    Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
-    Tref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Tref", Tstd)),
-    Esref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Esref", Cv_*Tref_))
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-template<class EquationOfState>
-void Foam::eConstThermo<EquationOfState>::write(Ostream& os) const
+    Tlow_(dict.subDict("thermodynamics").lookup<scalar>("Tlow")),
+    Thigh_(dict.subDict("thermodynamics").lookup<scalar>("Thigh")),
+    Tcommon_(dict.subDict("thermodynamics").lookup<scalar>("Tcommon")),
+    highCpCoeffs_(dict.subDict("thermodynamics").lookup("highCpCoeffs")),
+    lowCpCoeffs_(dict.subDict("thermodynamics").lookup("lowCpCoeffs"))
 {
-    EquationOfState::write(os);
+    // Convert coefficients to mass-basis
+    for (label coefLabel=0; coefLabel<nCoeffs_; coefLabel++)
+    {
+        highCpCoeffs_[coefLabel] *= this->R();
+        lowCpCoeffs_[coefLabel] *= this->R();
+    }
 
-    dictionary dict("thermodynamics");
-    dict.add("Cv", Cv_);
-    dict.add("Hf", Hf_);
-    if (Tref_ != Tstd)
+    if (Tlow_ >= Thigh_)
     {
-        dict.add("Tref", Tref_);
+        FatalErrorInFunction
+            << "Tlow(" << Tlow_ << ") >= Thigh(" << Thigh_ << ')'
+            << exit(FatalError);
     }
-    if (Esref_ != 0)
+
+    if (Tcommon_ <= Tlow_)
     {
-        dict.add("Esref", Esref_);
+        FatalErrorInFunction
+            << "Tcommon(" << Tcommon_ << ") <= Tlow(" << Tlow_ << ')'
+            << exit(FatalError);
     }
-    os  << indent << dict.dictName() << dict;
+
+    if (Tcommon_ > Thigh_)
+    {
+        FatalErrorInFunction
+            << "Tcommon(" << Tcommon_ << ") > Thigh(" << Thigh_ << ')'
+            << exit(FatalError);
+    }
 }
 
 
@@ -69,10 +77,10 @@ template<class EquationOfState>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const eConstThermo<EquationOfState>& et
+    const janaf9Thermo<EquationOfState>& jt
 )
 {
-    et.write(os);
+    jt.write(os);
     return os;
 }
 

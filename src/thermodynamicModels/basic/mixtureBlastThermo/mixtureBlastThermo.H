@@ -276,9 +276,6 @@ public:
             //- Enthalpy of formation [J/kg]
             virtual tmp<volScalarField> hc() const;
 
-            //- Flame temperature [K]
-            virtual tmp<volScalarField> flameT() const;
-
             //- Temperature from enthalpy/internal energy
             virtual tmp<volScalarField> THE() const;
 
@@ -381,9 +378,6 @@ public:
 
             //- Enthalpy of formation [J/kg]
             virtual scalar Hf(const label speciei) const;
-
-            //- Flame temperature [K]
-            virtual scalar flameT(const label speciei) const;
 
 
         // Specie thermo properties

@@ -125,9 +125,6 @@ class hConstThermo
         //- Reference sensible enthalpy around which to linearise [J/kg]
         scalar Hsref_;
 
-        //- Flame temperature [K]
-        scalar flameT_;
-
 
         //- Construct from components
         inline hConstThermo
@@ -136,8 +133,7 @@ class hConstThermo
             const scalar Cp,
             const scalar Hf,
             const scalar Tref,
-            const scalar Hsref,
-            const scalar flameT
+            const scalar Hsref
         );
 
 
@@ -216,9 +212,6 @@ public:
 
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
-
-        //- Flame temperature [K]
-        inline scalar flameT() const;
 
         //- Entropy [J/kg/K]
         inline scalar S(const scalar p, const scalar T) const;

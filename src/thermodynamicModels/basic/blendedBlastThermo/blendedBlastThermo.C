@@ -683,20 +683,6 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hc() const
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::flameT() const
-{
-    return blendedVolScalarFieldProperty
-    (
-        "flameT",
-        dimTemperature,
-        &Thermo1::flameT,
-        &Thermo2::flameT
-    );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE() const
 {
     return blendedVolScalarFieldProperty

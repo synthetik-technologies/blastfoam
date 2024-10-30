@@ -332,9 +332,6 @@ public:
             //- Enthalpy of formation [J/kg]
             virtual tmp<volScalarField> hc() const;
 
-            //- Flame temperature [K]
-            virtual tmp<volScalarField> flameT() const;
-
             //- Temperature from enthalpy/internal energy
             virtual tmp<volScalarField> THE() const;
 

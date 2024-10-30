@@ -593,19 +593,6 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hc() const
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::flameT() const
-{
-    return volScalarFieldProperty
-    (
-        "flameT",
-        dimTemperature,
-        &ThermoType::flameT
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THE() const
 {
     return volScalarFieldProperty
@@ -883,17 +870,6 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Hf
 ) const
 {
     return speciesData_[speciei].Hf();
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::flameT
-(
-    const label speciei
-) const
-{
-    return speciesData_[speciei].flameT();
 }
 
 

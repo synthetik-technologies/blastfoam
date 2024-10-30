@@ -67,7 +67,8 @@ Foam::NusseltNumberModels::Gunn::Nu
     const label nodej
 ) const
 {
-    const volScalarField& alphag(pair_.continuous().volumeFraction(nodej));
+    tmp<volScalarField> talphag(pair_.continuous().volumeFraction(nodej));
+    const volScalarField& alphag = talphag();
     volScalarField Pr(pair_.Pr(nodei, nodej));
     volScalarField Re(pair_.Re(nodei, nodej));
     return

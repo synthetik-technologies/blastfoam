@@ -28,8 +28,6 @@ License
 #include "multiPhaseModel.H"
 #include "phaseSystem.H"
 #include "fvMatrix.H"
-#include "slipFvPatchFields.H"
-#include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "addToRunTimeSelectionTable.H"
@@ -389,6 +387,7 @@ void Foam::multiPhaseModel::decode()
     U_.ref() = alphaRhoU_()/(alphaRhoLimited());
     U_.correctBoundaryConditions();
 
+    alphaRhoU_.correctBoundaryConditions();
     alphaRhoU_.boundaryFieldRef() ==
         alphaRho_.boundaryField()*U_.boundaryField();
 

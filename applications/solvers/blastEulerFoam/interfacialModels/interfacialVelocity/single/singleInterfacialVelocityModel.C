@@ -53,9 +53,7 @@ Foam::interfacialVelocityModels::single::single
         pair_.phase1().name() == phaseName_
       ? pair_.phase1()
       : pair_.phase2()
-    ),
-    U_(phase_.U()),
-    phi_(phase_.phi())
+    )
 {}
 
 
@@ -70,14 +68,14 @@ Foam::interfacialVelocityModels::single::~single()
 Foam::tmp<Foam::volVectorField>
 Foam::interfacialVelocityModels::single::UI() const
 {
-    return U_;
+    return phase_.U();
 }
 
 
 Foam::tmp<Foam::surfaceScalarField>
 Foam::interfacialVelocityModels::single::phiI() const
 {
-    return phi_;
+    return phase_.phi();
 }
 
 // ************************************************************************* //

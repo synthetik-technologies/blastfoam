@@ -144,14 +144,6 @@ inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::Hf() const
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::flameT() const
-{
-    NotImplemented;
-    return 0.0;
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::hIcoTabulatedThermo<EquationOfState>::S
 (
     const scalar p,

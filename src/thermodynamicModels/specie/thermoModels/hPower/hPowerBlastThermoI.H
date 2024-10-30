@@ -185,14 +185,6 @@ inline Foam::scalar Foam::hPowerThermo<EquationOfState>::Hf() const
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::hPowerThermo<EquationOfState>::flameT() const
-{
-    NotImplemented;
-    return 0.0;
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::hPowerThermo<EquationOfState>::S
 (
     const scalar p,

@@ -61,12 +61,6 @@ class single
         //- const reference to phase model
         const phaseModel& phase_;
 
-        //- Interfacial Velocity
-        const volVectorField& U_;
-
-        //- Interfacial volumeric flux
-        const surfaceScalarField& phi_;
-
 
 public:
 

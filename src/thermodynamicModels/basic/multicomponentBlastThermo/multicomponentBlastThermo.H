@@ -238,9 +238,6 @@ public:
         //- Return the composition of the multi-component mixture
         virtual const basicSpecieBlastMixture& composition() const = 0;
 
-        //- Flame temperature [K]
-        virtual scalar flameT(const label speciei) const = 0;
-
         //- Return the pressure of a cell
         virtual scalar cellp(const label celli) const = 0;
 

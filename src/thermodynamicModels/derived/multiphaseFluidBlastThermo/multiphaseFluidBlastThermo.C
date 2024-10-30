@@ -890,18 +890,6 @@ Foam::multiphaseFluidBlastThermo::hc() const
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::multiphaseFluidBlastThermo::flameT() const
-{
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].flameT());
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
-    {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].flameT();
-    }
-    return normalise(tmpF);
-}
-
-
-Foam::tmp<Foam::volScalarField>
 Foam::multiphaseFluidBlastThermo::THE() const
 {
     tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].THE());

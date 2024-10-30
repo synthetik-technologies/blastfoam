@@ -376,9 +376,6 @@ public:
                 const label patchi
             ) const;
 
-            //- Flame temperature [k]
-            virtual tmp<volScalarField> flameT() const = 0;
-
             //- Return molecular weight
             virtual scalar cellW(const label) const = 0;
 
