@@ -111,7 +111,16 @@ Foam::burstCyclicAMIPointPatchField<Type>::burstCyclicAMIPointPatchField
     (
         dynamicCast<const facePointPatch>(this->patch()).patch()
     ),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
+    intactPointPatchField_
+    (
+        pointPatchField<Type>::New
+        (
+            ptf.intactPointPatchField_(),
+            p,
+            iF,
+            mapper
+        )
+    )
 {
     if (!isType<burstCyclicAMIPointPatch>(this->patch()))
     {

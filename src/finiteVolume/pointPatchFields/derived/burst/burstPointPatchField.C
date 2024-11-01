@@ -127,18 +127,37 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
 template<class Type>
 Foam::burstPointPatchField<Type>::burstPointPatchField
 (
-    const burstPointPatchField<Type>& ptf,
+    const burstPointPatchField<Type>& bpptf,
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
     const pointPatchFieldMapper& mapper
 )
 :
-    valuePointPatchField<Type>(ptf, p, iF, mapper),
+    valuePointPatchField<Type>(bpptf, p, iF, mapper),
     burstPointPatchFieldBase
     (
         dynamicCast<const facePointPatch>(this->patch()).patch()
     ),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
+    burstPointPatchField_
+    (
+        pointPatchField<Type>::New
+        (
+            bpptf.burstPointPatchField_(),
+            p,
+            iF,
+            mapper
+        )
+    ),
+    intactPointPatchField_
+    (
+        pointPatchField<Type>::New
+        (
+            bpptf.intactPointPatchField_(),
+            p,
+            iF,
+            mapper
+        )
+    )
 {
 //     if (!isType<burstPointPatch>(this->patch()))
 //     {
@@ -164,6 +183,7 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
     (
         dynamicCast<const facePointPatch>(this->patch()).patch()
     ),
+    burstPointPatchField_(ptf.burstPointPatchField_->clone(iF).ptr()),
     intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
 {}
 
@@ -257,9 +277,18 @@ void Foam::burstPointPatchField<Type>::evaluate
 template<class Type>
 void Foam::burstPointPatchField<Type>::write(Ostream& os) const
 {
-    burstPointPatchField_->write(os);
-    intactPointPatchField_->write(os);
     valuePointPatchField<Type>::write(os);
+
+    os  << indent << "burstPatch" << nl
+        << token::BEGIN_BLOCK << nl << incrIndent;
+    burstPointPatchField_->write(os);
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    os  << indent << "intactPatch" << nl
+        << token::BEGIN_BLOCK << nl << incrIndent;
+    intactPointPatchField_->write(os);
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
 }
 
 

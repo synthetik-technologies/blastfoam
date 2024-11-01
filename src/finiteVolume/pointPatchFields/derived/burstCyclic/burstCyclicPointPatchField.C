@@ -100,18 +100,27 @@ Foam::burstCyclicPointPatchField<Type>::burstCyclicPointPatchField
 template<class Type>
 Foam::burstCyclicPointPatchField<Type>::burstCyclicPointPatchField
 (
-    const burstCyclicPointPatchField<Type>& ptf,
+    const burstCyclicPointPatchField<Type>& bcppf,
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
     const pointPatchFieldMapper& mapper
 )
 :
-    cyclicPointPatchField<Type>(ptf, p, iF, mapper),
+    cyclicPointPatchField<Type>(bcppf, p, iF, mapper),
     burstPointPatchFieldBase
     (
         dynamicCast<const facePointPatch>(this->patch()).patch()
     ),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
+    intactPointPatchField_
+    (
+        pointPatchField<Type>::New
+        (
+            bcppf.intactPointPatchField_(),
+            p,
+            iF,
+            mapper
+        )
+    )
 {
     if (!isType<burstCyclicPointPatch>(this->patch()))
     {
@@ -128,16 +137,16 @@ Foam::burstCyclicPointPatchField<Type>::burstCyclicPointPatchField
 template<class Type>
 Foam::burstCyclicPointPatchField<Type>::burstCyclicPointPatchField
 (
-    const burstCyclicPointPatchField<Type>& ptf,
+    const burstCyclicPointPatchField<Type>& bcppf,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    cyclicPointPatchField<Type>(ptf, iF),
+    cyclicPointPatchField<Type>(bcppf, iF),
     burstPointPatchFieldBase
     (
         dynamicCast<const facePointPatch>(this->patch()).patch()
     ),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
+    intactPointPatchField_(bcppf.intactPointPatchField_->clone(iF).ptr())
 {}
 
 
