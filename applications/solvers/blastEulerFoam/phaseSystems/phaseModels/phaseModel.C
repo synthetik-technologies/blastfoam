@@ -292,7 +292,11 @@ void Foam::phaseModel::solveD()
 
 void Foam::phaseModel::solveAlphaRho()
 {
-    volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
+    volScalarField deltaAlphaRho
+    (
+        IOobject::groupName("deltaAlphaRho", name_),
+        fvc::div(alphaRhoPhi_)
+    );
     if (fluid_.hasMassTransfer(*this))
     {
         forAll(fluid_.phases(), phasei)
@@ -306,6 +310,7 @@ void Foam::phaseModel::solveAlphaRho()
     }
 
     this->storeAndBlendDelta(deltaAlphaRho);
+
 
     this->storeAndBlendOld(alphaRho_);
     alphaRho_.storePrevIter();
