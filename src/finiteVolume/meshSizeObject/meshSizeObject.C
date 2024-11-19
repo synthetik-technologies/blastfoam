@@ -42,7 +42,8 @@ Foam::meshSizeObject::meshSizeObject(const polyMesh& mesh)
 :
     MeshSizeObject(mesh),
     dxPtr_(nullptr),
-    dXPtr_(nullptr)
+    dXPtr_(nullptr),
+    minDXPtr_(nullptr)
 {}
 
 
@@ -58,6 +59,7 @@ bool Foam::meshSizeObject::movePoints()
 {
     dxPtr_.clear();
     dXPtr_.clear();
+    minDXPtr_.clear();
     return true;
 }
 
@@ -142,6 +144,31 @@ void Foam::meshSizeObject::calcDX() const
             sumMagSf += cmptMag(Sf[c[fi]]);
         }
         dX[celli] = cmptDivide(dX[celli], sumMagSf);
+    }
+}
+
+
+void Foam::meshSizeObject::calcMinDX() const
+{
+    if (minDXPtr_.valid())
+    {
+        FatalErrorInFunction
+            <<"dX already set"
+            << abort(FatalError);
+    }
+    minDXPtr_.set(new scalarField(mesh_.nCells(), great));
+    scalarField& minDX = minDXPtr_();
+    const vectorField& DX = this->dX();
+
+    for (label cmpti = 0; cmpti < 3; cmpti++)
+    {
+        if (mesh_.geometricD()[cmpti] > 0)
+        {
+            forAll(minDX, celli)
+            {
+                minDX[celli] = min(minDX[celli], DX[celli][cmpti]);
+            }
+        }
     }
 }
 

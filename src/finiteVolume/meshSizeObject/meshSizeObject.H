@@ -69,8 +69,12 @@ public:
         //- Mesh size (vector)
         mutable autoPtr<vectorField> dXPtr_;
 
+        //- Minimum mesh size (scalar)
+        mutable autoPtr<scalarField> minDXPtr_;
+
         //- Update the mesh size
         void calcDx() const;
+        void calcMinDX() const;
         void calcDX() const;
 
 
@@ -114,8 +118,19 @@ public:
             return dXPtr_();
         }
 
+        //- Return the mesh size
+        inline const scalarField& minDX() const
+        {
+            if (!minDXPtr_.valid())
+            {
+                calcMinDX();
+            }
+            return minDXPtr_();
+        }
+
         //- Return the mesh size as a volScalarField
         tmp<volScalarField> dx(const fvMesh&) const;
+
 
         //- Return the mesh size as a volVectorField
         tmp<volVectorField> dX(const fvMesh&) const;

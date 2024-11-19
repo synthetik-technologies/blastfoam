@@ -646,11 +646,11 @@ Foam::fvMeshBalance::distribute()
     // set using mesh_.setInstance(inst)
     mesh_.polyMesh::instance() = mesh_.time().timeName();
 
+    balancing = false;
+
     blastMeshObject::distribute<polyMesh>(mesh_, map());
     blastMeshObject::distribute<fvMesh>(mesh_, map());
 
-
-    balancing = false;
 
     if (!returnReduce(mesh_.nCells(), minOp<label>()))
     {

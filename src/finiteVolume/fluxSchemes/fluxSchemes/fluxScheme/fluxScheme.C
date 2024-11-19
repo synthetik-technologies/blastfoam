@@ -165,6 +165,11 @@ void Foam::fluxScheme::update
         ReconstructionScheme<scalar>::New(c, "speedOfSound", true)
     );
 
+//     if (min(rhoOwn).value() < 0 || min(rhoNei).value() < 0)
+//     {
+//         const_cast<Time&>(mesh_.time()).writeNow();
+//     }
+
     tmp<surfaceVectorField> tUOwn, tUNei;
     ULimiter->interpolateOwnNei(tUOwn, tUNei);
     const surfaceVectorField& UOwn = tUOwn();

@@ -518,22 +518,22 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
 
+    tmp<volScalarField::Internal> tV(mesh().Vsc());
+    const volScalarField::Internal& V = tV();
+
+    scalarField cof(0.5*(sumAmaxSf/V.field())*mesh().time().deltaTValue());
     scalar CoNum =
-        0.5*gMax(sumAmaxSf/mesh().Vsc()().field())*mesh().time().deltaTValue();
+        0.5*gMax(sumAmaxSf/V.field())*mesh().time().deltaTValue();
 
     scalar meanCoNum =
-        0.5
-       *(
-            gSum(sumAmaxSf)/gSum(mesh().V().field())
-        )*mesh().time().deltaTValue();
+        0.5*(gSum(sumAmaxSf)/gSum(V.field()))*mesh().time().deltaTValue();
 
     Info<< "Courant Number ";
     if (mesh().name() != polyMesh::defaultRegion)
     {
         Info<< "for region " << mesh().name() << " ";
     }
-    Info<< "Mean/Max = "
-        << meanCoNum << ", "<< CoNum << endl;
+    Info<< "Mean = " << meanCoNum << ", Max = "<< CoNum << endl;
     return CoNum;
 }
 

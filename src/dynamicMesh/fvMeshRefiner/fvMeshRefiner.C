@@ -268,17 +268,20 @@ bool Foam::fvMeshRefiner::balance()
     // Part 2 - Load Balancing
     if (canBalance(true))
     {
+        Info<<"canBalance"<<endl;
         //- Save the old volumes so it will be distributed and
         //  resized
         //  We cheat because so we can check which fields
         //  actually need to be mapped
         if (mesh_.V0Ptr_)
         {
+            Info<<"store V0"<<endl;
             V0OldPtr_ = mesh_.V0Ptr_;
             mesh_.V0Ptr_ = nullptr;
         }
         if (mesh_.V00Ptr_)
         {
+            Info<<"store V00"<<endl;
             V00OldPtr_ = mesh_.V00Ptr_;
             mesh_.V00Ptr_ = nullptr;
         }

@@ -63,9 +63,6 @@ protected:
         //- Name of the velocity field
         word phaseName_;
 
-        //- Pointer to the thermo class
-        mutable UautoPtr<const fluidThermo> thermoPtr_;
-
 
 public:
 
@@ -89,7 +86,8 @@ public:
         thermoBasePatchField
         (
             const fvPatch&,
-            const dictionary&
+            const dictionary&,
+            const word&
         );
 
         //- Construct from patch, internal field, and dictionary

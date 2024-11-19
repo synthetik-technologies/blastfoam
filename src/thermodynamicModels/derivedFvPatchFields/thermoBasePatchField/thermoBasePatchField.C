@@ -59,11 +59,12 @@ Foam::thermoBasePatchField::thermoBasePatchField
 Foam::thermoBasePatchField::thermoBasePatchField
 (
     const fvPatch& p,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& defaultGroup
 )
 :
     patch_(p),
-    phaseName_(dict.lookupOrDefault<word>("phase", word::null))
+    phaseName_(dict.lookupOrDefault<word>("phase", defaultGroup))
 {}
 
 
@@ -88,7 +89,7 @@ Foam::thermoBasePatchField::~thermoBasePatchField()
 
 const Foam::fluidThermo& Foam::thermoBasePatchField::thermo() const
 {
-    const fluidThermo& fThermo =
+    return
         patch_.db().lookupObject<fluidThermo>
         (
             IOobject::groupName
@@ -97,11 +98,6 @@ const Foam::fluidThermo& Foam::thermoBasePatchField::thermo() const
                 phaseName_
             )
         );
-    if (!thermoPtr_.valid())
-    {
-        thermoPtr_.set(&fThermo);
-    }
-    return fThermo;
 }
 
 
