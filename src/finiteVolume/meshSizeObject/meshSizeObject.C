@@ -79,9 +79,8 @@ void Foam::meshSizeObject::calcDx() const
 
     if (mesh_.nGeometricD() == 1)
     {
-        const cellList& cells = mesh_.cells();
-        const pointField& cellCentres = mesh_.cellCentres();
-        const pointField& faceCentres = mesh_.faceCentres();
+        const labelListList& cellPoints = mesh_.cellPoints();
+        const pointField& points = mesh_.points();
         label cmpti = -1;
         for (label i = 0; i < 3; i++)
         {
@@ -90,10 +89,9 @@ void Foam::meshSizeObject::calcDx() const
                 cmpti = i;
             }
         }
-        forAll(mesh_.cells(), celli)
+        forAll(cellPoints, celli)
         {
-            const cell& c = cells[celli];
-            dx[celli] = boundBox(faceCentres, c, false).span()[cmpti];
+            dx[celli] = boundBox(points, cellPoints[celli], false).span()[cmpti];
         }
     }
     else if (mesh_.nGeometricD() == 2)
