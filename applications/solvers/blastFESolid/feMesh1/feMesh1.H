@@ -107,6 +107,12 @@ class feMesh1
         //- Weight field (row summation)
         mutable pointScalarField* WPtr_;
 
+        //- Number of integration points
+        mutable label nIp_;
+
+        //- Element integration points
+        mutable List<labelList>* ipLabelsPtr_;
+
 
     // Private Member Functions
 
@@ -127,6 +133,7 @@ class feMesh1
 
        // Make geometric data
             void calcElements() const;
+            void calcIpLabels() const;
             void calcShapes() const;
             void calcDShapes() const;
             void calcBs() const;
@@ -210,8 +217,14 @@ public:
             //- Return number of points supporting patch faces
             label nNodes() const;
 
-            //- Return elements
+            //- Number of integration points
+            label nIp() const;
+
+            //- Access elements
             const List<element>& elements() const;
+
+            //- Access element integration point labels
+            const List<labelList>& ipLabels() const;
 
             //- Return nodes
             const pointField& nodes() const;

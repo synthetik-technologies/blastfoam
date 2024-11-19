@@ -56,8 +56,8 @@ protected:
 // Protected data
 
     //- bBar
-    pointSymmTensorField bBar_;
-    pointSymmTensorField DbBar_;
+    symmTensorField bBar_;
+    symmTensorField DbBar_;
 
     //- Consistently update bBar
     bool bBarConsistent_;
@@ -117,6 +117,8 @@ public:
                 const label elemi,
                 const label rulei
             );
+
+            virtual void write() const;
 
 };
 

@@ -38,6 +38,7 @@ SourceFiles
 
 #include "feMesh1.H"
 #include "scalarMatrices.H"
+#include "syncTools.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -376,6 +377,63 @@ public:
             const scalar E, const scalar nu,
             const bool ps
         );
+
+        virtual void write() const
+        {}
+
+        template<class Type>
+        void writeIpField
+        (
+            const word& name,
+            const dimensionSet& dims,
+            const List<Type> ipField
+        ) const
+        {
+            GeometricField<Type, pointPatchField, pointMesh> pField
+            (
+                IOobject
+                (
+                    name,
+                    mesh_.time().timeName(),
+                    mesh_.mesh()
+                ),
+                mesh_.pMesh(),
+                dimensioned<Type>(name, dims, Zero)
+            );
+
+
+            forAll(mesh_.elements(), elemi)
+            {
+                const element& elem = mesh_.elements()[elemi];
+                const labelList& ips = mesh_.ipLabels()[elemi];
+                const List<scalarList>& shapes = mesh_.shapes()[elemi];
+                const List<scalar>& Ws = mesh_.Ws()[elemi];
+                UIndirectList<Type> pField_loc(pField, elem);
+
+                forAll(elem.ir(), rulei)
+                {
+                    const scalar w = elem.ir()[rulei].w()*Ws[rulei];
+                    const scalarList& shape = shapes[rulei];
+                    forAll(shape, si)
+                    {
+                        pField_loc[si] += w*ipField[ips[rulei]]*shape[si];
+                    }
+                }
+            }
+
+            syncTools::syncPointList
+            (
+                mesh_.mesh(),
+                pField,
+                plusEqOp<Type>(),
+                pTraits<Type>::zero
+            );
+
+            pField.primitiveFieldRef() /= mesh_.W();
+            mesh_.pushUntransformedData(pField);
+
+            pField.write();
+        }
 };
 
 

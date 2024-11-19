@@ -120,6 +120,8 @@ void Foam::feMesh::clearAddressing(const bool isMeshUpdate)
     deleteDemandDrivenData(edgeNodesPtr_);
     deleteDemandDrivenData(faceNodesPtr_);
     deleteDemandDrivenData(nodesPtr_);
+    deleteDemandDrivenData(ipLabelsPtr_);
+    nIp_ = -1;
 }
 
 
@@ -158,7 +160,9 @@ Foam::feMesh::feMesh(const label order, const polyMesh& pMesh)
     BsPtr_(nullptr),
     JsPtr_(nullptr),
     invJsPtr_(nullptr),
-    WsPtr_(nullptr)
+    WsPtr_(nullptr),
+    nIp_(-1),
+    ipLabelsPtr_(nullptr)
 {}
 
 

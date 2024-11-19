@@ -50,80 +50,13 @@ Foam::materialModels::elasticPlastic::elasticPlastic
 :
     elastic(dict, mesh, D, U, planeStress, geoType),
     plasticSolver(dict),
-    sigmaY_
-    (
-        IOobject
-        (
-            "sigmaY",
-            mesh.time().timeName(),
-            mesh.mesh(),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh.pMesh(),
-        dimensionedScalar(dimPressure, 0.0)
-    ),
-    DsigmaY_
-    (
-        IOobject
-        (
-            "DsigmaY",
-            mesh.time().timeName(),
-            mesh.mesh()
-        ),
-        mesh.pMesh(),
-        dimensionedScalar(dimPressure, 0.0)
-    ),
-    epsilonPEq_
-    (
-        IOobject
-        (
-            "epsilonPEq",
-            mesh.time().timeName(),
-            mesh.mesh(),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh.pMesh(),
-        dimensionedScalar(dimless, 0.0)
-    ),
-    DepsilonPEq_
-    (
-        IOobject
-        (
-            "DepsilonPEq",
-            mesh.time().timeName(),
-            mesh.mesh()
-        ),
-        mesh.pMesh(),
-        dimensionedScalar(dimless, 0.0)
-    ),
-    epsilonP_
-    (
-        IOobject
-        (
-            "epsilonP",
-            mesh.time().timeName(),
-            mesh.mesh(),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh.pMesh(),
-        dimensionedSymmTensor(dimless, Zero)
-    ),
-    DepsilonP_
-    (
-        IOobject
-        (
-            "DepsilonP",
-            mesh.time().timeName(),
-            mesh.mesh()
-        ),
-        mesh.pMesh(),
-        dimensionedSymmTensor(dimless, Zero)
-    )
-{
-}
+    sigmaY_(mesh_.nIp(), 0.0),
+    DsigmaY_(mesh_.nIp(), 0.0),
+    epsilonPEq_(mesh_.nIp(), 0.0),
+    DepsilonPEq_(mesh_.nIp(), 0.0),
+    epsilonP_(mesh_.nIp(), symmTensor::zero),
+    DepsilonP_(mesh_.nIp(), symmTensor::zero)
+{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -143,35 +76,6 @@ void Foam::materialModels::elasticPlastic::preUpdate()
 
 void Foam::materialModels::elasticPlastic::postUpdate(const scalar f)
 {
-    const polyMesh& mesh = mesh_.mesh();
-
-    // Sum increments on coupled points
-    syncTools::syncPointList
-    (
-        mesh,
-        DepsilonPEq_,
-        plusEqOp<scalar>(),
-        0.0
-    );
-    syncTools::syncPointList
-    (
-        mesh,
-        DepsilonP_,
-        plusEqOp<symmTensor>(),
-        symmTensor::zero
-    );
-    syncTools::syncPointList
-    (
-        mesh,
-        DsigmaY_,
-        plusEqOp<scalar>(),
-        0.0
-    );
-
-    DepsilonPEq_ /= mesh_.W();
-    DepsilonP_ /= mesh_.W();
-    DsigmaY_ /= mesh_.W();
-
     if (f != 1.0)
     {
         epsilonPEq_ += f*DepsilonPEq_;
@@ -184,15 +88,6 @@ void Foam::materialModels::elasticPlastic::postUpdate(const scalar f)
         epsilonP_ += DepsilonP_;
         sigmaY_ += DsigmaY_;
     }
-
-    //- Make sure coupled points are synced
-    mesh_.pushUntransformedData(epsilonPEq_);
-    mesh_.pushUntransformedData(epsilonP_);
-    mesh_.pushUntransformedData(sigmaY_);
-
-//     epsilonPEq_.correctBoundaryConditions();
-//     epsilonP_.correctBoundaryConditions();
-//     sigmaY_.correctBoundaryConditions();
 }
 
 
@@ -203,8 +98,7 @@ Foam::scalar Foam::materialModels::elasticPlastic::calcSigma
     const label rulei
 )
 {
-    const element& elem = mesh_.elements()[elemi];
-    const integrationPoint& ip = elem.ir()[rulei];
+    const label ipI = mesh_.ipLabels()[elemi][rulei];
 
     const UIndirectList<vector> D(this->D_, mesh_.elements()[elemi]);
     const symmTensor eps
@@ -225,22 +119,9 @@ Foam::scalar Foam::materialModels::elasticPlastic::calcSigma
     const scalar mu = mu_.value();
     const scalar K = K_.value();
 
-    scalar epsPEq0 = 0.0;
-    symmTensor epsP0(Zero);
-    scalar sigY0 = 0.0;
-    const scalarList& shape = mesh_.shapes()[elemi][rulei];
-    {
-        const UIndirectList<scalar> epsilonPEq_loc(epsilonPEq_, elem);
-        const UIndirectList<symmTensor> epsilonP_loc(epsilonP_, elem);
-        const UIndirectList<scalar> sigmaY_loc(sigmaY_, elem);
-        forAll(shape, si)
-        {
-            const scalar s = shape[si];
-            epsPEq0 += s*epsilonPEq_loc[si];
-            epsP0 += s*epsilonP_loc[si];
-            sigY0 += s*sigmaY_loc[si];
-        }
-    }
+    const scalar epsPEq0 = epsilonPEq_[ipI];
+    const symmTensor& epsP0 = epsilonP_[ipI];
+    const scalar sigY0 = sigmaY_[ipI];
 
     // sTrial = 2*mu(epsilon - dev(epsilonP))
     symmTensor sTrial(2.0*mu*(dev(eps) - dev(epsP0)));
@@ -266,23 +147,12 @@ Foam::scalar Foam::materialModels::elasticPlastic::calcSigma
         1.0
     );
 
-    const scalar DepsPEq(sqrt2By3*Dlam);
-    const scalar DsigY(sigY - sigY0);
     const symmTensor DepsP(Dlam*plasticN);
-    if (update_)
-    {
-        const scalar w = ip.w()*mesh_.Ws()[elemi][rulei];
-        UIndirectList<scalar> DepsilonPEq_loc(DepsilonPEq_, elem);
-        UIndirectList<symmTensor> DepsilonP_loc(DepsilonP_, elem);
-        UIndirectList<scalar> DsigmaY_loc(DsigmaY_, elem);
-        forAll(shape, si)
-        {
-            const scalar sw = shape[si]*w;
-            DepsilonPEq_loc[si] += DepsPEq*sw;
-            DepsilonP_loc[si] += DepsP*sw;
-            DsigmaY_loc[si] += DsigY*sw;
-        }
-    }
+
+    DepsilonPEq_[ipI] = sqrt2By3*Dlam;
+    DepsilonP_[ipI] = DepsP;
+    DsigmaY_[ipI] = sigY - sigY0;
+
 
     sigma = sTrial - 2.0*mu*DepsP + K*tr(eps)*symmTensor::I;
 
@@ -304,5 +174,11 @@ Foam::scalar Foam::materialModels::elasticPlastic::calcPiola
 }
 
 
+void Foam::materialModels::elasticPlastic::write() const
+{
+    writeIpField("epsilonP", dimless, epsilonP_);
+    writeIpField("epsilonPEq", dimless, epsilonPEq_);
+    writeIpField("sigmaY", dimPressure, sigmaY_);
+}
 // ************************************************************************* //
 

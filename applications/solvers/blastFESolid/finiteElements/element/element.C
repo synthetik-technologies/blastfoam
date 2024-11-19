@@ -96,15 +96,81 @@ void Foam::element::initialize
                 cs.model().name(),
                 order
             );
-            switch (elem_->elemType())
-            {
-                case ElementType::HEX:
-                {
+//             switch (elem_->elemType())
+//             {
+//                 case ElementType::HEX:
+//                 {
+// //                     faceList faces(cs.model().faces(cs));
+// //                     const cell c(identity(faces.size()));
+// //
+// //                     label bottomFaceI = 0;
+// //                     face& bottomFace = faces[bottomFaceI];
+// //                     labelList::operator=(bottomFace);
+// //
+// //                     edgeList edges = c.edges(faces);
+// //                     label topStart = -1;
+// //                     forAll(edges, ei)
+// //                     {
+// //                         const edge& e = edges[ei];
+// //                         if (e[0] == bottomFace[0])
+// //                         {
+// //                             if (findIndex(bottomFace, e[1]) < 0)
+// //                             {
+// //                                 topStart = e[1];
+// //                                 break;
+// //                             }
+// //                         }
+// //                         else if (e[1] == bottomFace[0])
+// //                         {
+// //                             if (findIndex(bottomFace, e[0]) < 0)
+// //                             {
+// //                                 topStart = e[0];
+// //                                 break;
+// //                             }
+// //                         }
+// //                     }
+// //
+// //                     face topFace(bottomFace.size());
+// //                     {
+// //                         const label topFaceI =
+// //                             c.opposingFaceLabel(bottomFaceI, faces);
+// //                         label pi = findIndex(faces[topFaceI], topStart);
+// //                         forAll(topFace, i)
+// //                         {
+// //                             topFace[i] = faces[topFaceI][pi];
+// //                             pi = faces[topFaceI].fcIndex(pi);
+// //                         }
+// //                     }
+// //                     labelList::append(topFace);
 //                     faceList faces(cs.model().faces(cs));
 //                     const cell c(identity(faces.size()));
 //
-//                     label bottomFaceI = 0;
+//                     label bottomFaceI = -1;
+//                     scalar minz = great;
+//                     bool flip = true;
+//                     forAll(faces, fi)
+//                     {
+//                         vector fc(faces[fi].centre(mesh.points()));
+//
+//                         if (fc.z() < minz)
+//                         {
+//                             minz = fc.z();
+//                             bottomFaceI = fi;
+//                         }
+//                     }
 //                     face& bottomFace = faces[bottomFaceI];
+//
+//                     {
+//                         vector fa(bottomFace.area(mesh.points()));
+//                         if (fa.z() < 0) bottomFace.flip();
+//
+//                         scalarField magPts(mag(pointField(mesh.points(), bottomFace)));
+//                         inplaceRotateList
+//                         (
+//                             bottomFace,
+//                             bottomFace.size() - findMin(magPts)
+//                         );
+//                     }
 //                     labelList::operator=(bottomFace);
 //
 //                     edgeList edges = c.edges(faces);
@@ -140,85 +206,19 @@ void Foam::element::initialize
 //                             topFace[i] = faces[topFaceI][pi];
 //                             pi = faces[topFaceI].fcIndex(pi);
 //                         }
+//
+//                         vector fa(topFace.area(mesh.points()));
+//                         if (fa.z() < 0) topFace.flip();
 //                     }
 //                     labelList::append(topFace);
-                    faceList faces(cs.model().faces(cs));
-                    const cell c(identity(faces.size()));
-
-                    label bottomFaceI = -1;
-                    scalar minz = great;
-                    bool flip = true;
-                    forAll(faces, fi)
-                    {
-                        vector fc(faces[fi].centre(mesh.points()));
-
-                        if (fc.z() < minz)
-                        {
-                            minz = fc.z();
-                            bottomFaceI = fi;
-                        }
-                    }
-                    face& bottomFace = faces[bottomFaceI];
-
-                    {
-                        vector fa(bottomFace.area(mesh.points()));
-                        if (fa.z() < 0) bottomFace.flip();
-
-                        scalarField magPts(mag(pointField(mesh.points(), bottomFace)));
-                        inplaceRotateList
-                        (
-                            bottomFace,
-                            bottomFace.size() - findMin(magPts)
-                        );
-                    }
-                    labelList::operator=(bottomFace);
-
-                    edgeList edges = c.edges(faces);
-                    label topStart = -1;
-                    forAll(edges, ei)
-                    {
-                        const edge& e = edges[ei];
-                        if (e[0] == bottomFace[0])
-                        {
-                            if (findIndex(bottomFace, e[1]) < 0)
-                            {
-                                topStart = e[1];
-                                break;
-                            }
-                        }
-                        else if (e[1] == bottomFace[0])
-                        {
-                            if (findIndex(bottomFace, e[0]) < 0)
-                            {
-                                topStart = e[0];
-                                break;
-                            }
-                        }
-                    }
-
-                    face topFace(bottomFace.size());
-                    {
-                        const label topFaceI =
-                            c.opposingFaceLabel(bottomFaceI, faces);
-                        label pi = findIndex(faces[topFaceI], topStart);
-                        forAll(topFace, i)
-                        {
-                            topFace[i] = faces[topFaceI][pi];
-                            pi = faces[topFaceI].fcIndex(pi);
-                        }
-
-                        vector fa(topFace.area(mesh.points()));
-                        if (fa.z() < 0) topFace.flip();
-                    }
-                    labelList::append(topFace);
-                    break;
-                }
-                default:
-                {
+//                     break;
+//                 }
+//                 default:
+                // {
                     this->transfer(cs);
-                    break;
-                }
-            }
+                    // break;
+                // }
+            // }
 
 
             break;

@@ -486,7 +486,8 @@ int main(int argc, char *argv[])
                 plusEqOp<vector>(),
                 vector::zero
             );
-            pointConstraints::New(femesh.pMesh()).constrain(force);
+            // pointConstraints::New(femesh.pMesh()).constrain(force);
+            force.correctBoundaryConditions();
 
 
             // Sum stress on coupled points
@@ -575,6 +576,10 @@ int main(int argc, char *argv[])
         if (write)
         {
             runTime.write();
+            if (runTime.outputTime())
+            {
+                material.write();
+            }
         }
         else
         {

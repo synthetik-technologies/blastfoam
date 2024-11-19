@@ -149,7 +149,7 @@ public:
             ),
             ys_(stressPlasticStrainSeries_)
         {
-            if (!this->sigmaY_.headerOk())
+            // if (!this->sigmaY_.headerOk())
             {
                 dimensionedScalar sigmaY("sigmaY", dimPressure, 0.0);
                 if (nonLinearPlasticity_)
@@ -161,7 +161,7 @@ public:
                     sigmaY.read(dict);
                 }
 
-                this->sigmaY_ == sigmaY;
+                this->sigmaY_ = sigmaY.value();
             }
         }
 

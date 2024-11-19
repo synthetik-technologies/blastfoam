@@ -114,6 +114,12 @@ class feMesh
         //  elements x integration points
         mutable List<List<scalar>>* WsPtr_;
 
+        //- Number of integration points
+        mutable label nIp_;
+
+        //- Element integration points
+        mutable List<labelList> ipLabelsPtr_;
+
 
     // Private Member Functions
 
@@ -131,6 +137,7 @@ class feMesh
 
        // Make geometric data
             void calcElements() const;
+            void calcIpLabels() const;
             void calcShapes() const;
             void calcDShapes() const;
             void calcBs() const;
@@ -220,14 +227,23 @@ public:
             //- Return number of points supporting patch faces
             label nNodes() const;
 
+            //- Number of integration points
+            label nIp() const
+
             //- Access elements
             const List<element>& elements() const;
+
+            //- Access element integration point labels
+            const List<labelList>& ipLabels() const;
 
             //- Return nodes
             const pointField& nodes() const;
 
             //- Access edge-node addressing
             const List<labelList>& edgeNodes() const;
+
+            //- Access face-node addressing
+            const List<labelList>& faceNodes() const;
 
             //- Access face-node addressing
             const List<labelList>& faceNodes() const;

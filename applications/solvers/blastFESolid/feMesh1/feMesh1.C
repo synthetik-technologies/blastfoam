@@ -75,6 +75,8 @@ void Foam::feMesh1::clearAddressing(const bool isMeshUpdate)
     }
 
     deleteDemandDrivenData(elementsPtr_);
+    deleteDemandDrivenData(ipLabelsPtr_);
+    nIp_ = -1;
     clearRefGeom();
 }
 
@@ -104,7 +106,9 @@ Foam::feMesh1::feMesh1(const polyMesh& pMesh, const label intOrder)
     JsPtr_(nullptr),
     invJsPtr_(nullptr),
     WsPtr_(nullptr),
-    WPtr_(nullptr)
+    WPtr_(nullptr),
+    nIp_(-1),
+    ipLabelsPtr_(nullptr)
 {}
 
 
@@ -130,7 +134,9 @@ Foam::feMesh1::feMesh1
     JsPtr_(nullptr),
     invJsPtr_(nullptr),
     WsPtr_(nullptr),
-    WPtr_(nullptr)
+    WPtr_(nullptr),
+    nIp_(-1),
+    ipLabelsPtr_(nullptr)
 {}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

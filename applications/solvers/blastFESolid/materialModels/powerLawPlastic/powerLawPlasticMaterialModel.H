@@ -189,9 +189,9 @@ public:
                     pow(this->E_.value()/k_.value(), 1.0/(n_.value() - 1.0));
             }
 
-            if (!this->sigmaY_.headerOk())
+            // if (!this->sigmaY_.headerOk())
             {
-                this->sigmaY_ == k_*pow(epsilonY_, n_);
+                this->sigmaY_ = (k_*pow(epsilonY_, n_)).value();
             }
         }
 

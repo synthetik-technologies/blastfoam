@@ -82,6 +82,44 @@ void Foam::feMesh1::calcElements() const
 }
 
 
+void Foam::feMesh1::calcIpLabels() const
+{
+    if (debug)
+    {
+        InfoInFunction << "Assembling intrgration point labels" << endl;
+    }
+
+    // It is an error to attempt to recalculate
+    // if the pointer is already set
+    if (ipLabelsPtr_)
+    {
+        FatalErrorInFunction
+            << "Integration point labels already exist"
+            << abort(FatalError);
+    }
+
+    const List<element>& elements = this->elements();;
+
+    ipLabelsPtr_ = new List<labelList>(elements.size());
+    List<labelList>& ipLabels = *ipLabelsPtr_;
+    nIp_ = 0;
+    forAll(elements, elemi)
+    {
+        const label nip = elements[elemi].ir().size();
+        ipLabels[elemi].setSize(nip);
+        for (label i = 0; i < nip; i++)
+        {
+            ipLabels[elemi][i] = nIp_++;
+        }
+    }
+
+    // forAll(boundary_, patchi)
+    // {
+    //     nIp_ += boundary_[patchi].updateIpLabels(nIp_);
+    // }
+}
+
+
 void Foam::feMesh1::calcShapes() const
 {
     if (debug)
@@ -377,6 +415,28 @@ const Foam::List<Foam::element>& Foam::feMesh1::elements() const
     }
 
     return *elementsPtr_;
+}
+
+
+Foam::label Foam::feMesh1::nIp() const
+{
+    if (!ipLabelsPtr_)
+    {
+        calcIpLabels();
+    }
+
+    return nIp_;
+}
+
+
+const Foam::List<Foam::labelList>& Foam::feMesh1::ipLabels() const
+{
+    if (!ipLabelsPtr_)
+    {
+        calcIpLabels();
+    }
+
+    return *ipLabelsPtr_;
 }
 
 

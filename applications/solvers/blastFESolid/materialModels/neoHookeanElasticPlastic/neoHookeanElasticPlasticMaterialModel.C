@@ -51,30 +51,8 @@ Foam::materialModels::neoHookeanElasticPlastic::neoHookeanElasticPlastic
 )
 :
     elasticPlastic(dict, mesh, D, U, planeStress, geoType),
-    bBar_
-    (
-        IOobject
-        (
-            "bBar",
-            mesh.time().timeName(),
-            mesh.mesh(),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh.pMesh(),
-        dimensionedSymmTensor(dimless, symmTensor::I)
-    ),
-    DbBar_
-    (
-        IOobject
-        (
-            "DbBar",
-            mesh.time().timeName(),
-            mesh.mesh()
-        ),
-        mesh.pMesh(),
-        dimensionedSymmTensor(dimless, Zero)
-    ),
+    bBar_(mesh.nIp(), symmTensor::I),
+    DbBar_(mesh.nIp(), symmTensor::zero),
     bBarConsistent_(dict.lookupOrDefault<Switch>("bBarConsistent", true))
 {}
 
@@ -135,61 +113,20 @@ void Foam::materialModels::neoHookeanElasticPlastic::postUpdate
     const scalar f
 )
 {
-    const polyMesh& mesh = mesh_.mesh();
-
-    // Sum increments on coupled points
-    syncTools::syncPointList
-    (
-        mesh,
-        DepsilonPEq_,
-        plusEqOp<scalar>(),
-        0.0
-    );
-    syncTools::syncPointList
-    (
-        mesh,
-        DepsilonP_,
-        plusEqOp<symmTensor>(),
-        symmTensor::zero
-    );
-    syncTools::syncPointList
-    (
-        mesh,
-        DsigmaY_,
-        plusEqOp<scalar>(),
-        0.0
-    );
-    syncTools::syncPointList
-    (
-        mesh,
-        DbBar_,
-        plusEqOp<symmTensor>(),
-        symmTensor::zero
-    );
-
-    DepsilonPEq_ /= mesh_.W();
-    DepsilonP_ /= mesh_.W();
-    DsigmaY_ /= mesh_.W();
-    DbBar_ /= mesh_.W();
-
-    epsilonPEq_ += f*DepsilonPEq_;
-    epsilonP_ += f*DepsilonP_;
-    sigmaY_ += f*DsigmaY_;
-    bBar_ += f*DbBar_;
-
-
-    //- Make sure coupled points are synced
-    mesh_.pushUntransformedData(epsilonPEq_);
-    mesh_.pushUntransformedData(epsilonP_);
-    mesh_.pushUntransformedData(sigmaY_);
-    mesh_.pushUntransformedData(bBar_);
-
-
-    const pointConstraints& pc = pointConstraints::New(mesh_.pMesh());
-    pc.constrain(epsilonPEq_);
-    pc.constrain(epsilonP_);
-    pc.constrain(sigmaY_);
-    pc.constrain(bBar_);
+    if (f != 1.0)
+    {
+        epsilonPEq_ += f*DepsilonPEq_;
+        epsilonP_ += f*DepsilonP_;
+        sigmaY_ += f*DsigmaY_;
+        bBar_ += f*DbBar_;
+    }
+    else
+    {
+        epsilonPEq_ += DepsilonPEq_;
+        epsilonP_ += DepsilonP_;
+        sigmaY_ += DsigmaY_;
+        bBar_ += DbBar_;
+    }
 }
 
 
@@ -201,14 +138,13 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcSigma
 )
 {
     const element& elem = mesh_.elements()[elemi];
-    const integrationPoint& ip = elem.ir()[rulei];
+    const label ipI = mesh_.ipLabels()[elemi][rulei];
 
     // Element displacment and velocity
     const UIndirectList<vector> D(this->D_, elem);
     const UIndirectList<vector> U(this->U_, elem);
 
     // Element data
-    const scalarList& shape = mesh_.shapes()[elemi][rulei];
     const scalarRectangularMatrix& dshape = mesh_.dshapes()[elemi][rulei];
     const tensor& invJ = mesh_.invJs()[elemi][rulei];
 
@@ -230,26 +166,11 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcSigma
     const scalar mu = mu_.value();
     const scalar K = K_.value();
 
-    symmTensor bbar0(Zero);
-    scalar epsPEq0 = 0.0;
-    symmTensor epsP0(Zero);
-    scalar sigY0 = 0.0;
-    {
-        const UIndirectList<symmTensor> bBar_loc(bBar_, elem);
-        const UIndirectList<scalar> epsilonPEq_loc(epsilonPEq_, elem);
-        const UIndirectList<symmTensor> epsilonP_loc(epsilonP_, elem);
-        const UIndirectList<scalar> sigmaY_loc(sigmaY_, elem);
-        forAll(shape, si)
-        {
-            const scalar s = shape[si];
-            bbar0 += s*bBar_loc[si];
-            epsPEq0 += s*epsilonPEq_loc[si];
-            epsP0 += s*epsilonP_loc[si];
-            sigY0 += s*sigmaY_loc[si];
-        }
-    }
-
-    symmTensor trialbBar(transform(relFBar, bbar0));
+    const symmTensor& bbar0 = bBar_[ipI];
+    const scalar epsPEq0 = epsilonPEq_[ipI];
+    // const symmTensor& epsP0 = epsilonP_[ipI];
+    const scalar sigY0 = sigmaY_[ipI];
+    const symmTensor trialbBar(transform(relFBar, bbar0));
 
     const scalar magTrialbBar = mag(trialbBar);
     const scalar IBar = tr(trialbBar)/3.0;
@@ -278,9 +199,7 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcSigma
         det(F)
     );
 
-    const scalar DepsPEq(sqrt2By3*Dlam);
     const symmTensor DepsP(IBar*Dlam*plasticN);
-    const scalar DsigY(sigY - sigY0);
 
     // Deviatoric stress
     sigma = sTrial - 2.0*mu*DepsP;
@@ -296,22 +215,10 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcSigma
     }
     Dbbar -= bbar0;
 
-    if (update_)
-    {
-        const scalar w = ip.w()*mesh_.Ws()[elemi][rulei];
-        UIndirectList<symmTensor> DbBar_loc(DbBar_, elem);
-        UIndirectList<scalar> DepsilonPEq_loc(DepsilonPEq_, elem);
-        UIndirectList<symmTensor> DepsilonP_loc(DepsilonP_, elem);
-        UIndirectList<scalar> DsigmaY_loc(DsigmaY_, elem);
-        forAll(shape, si)
-        {
-            const scalar sw = shape[si]*w;
-            DbBar_loc[si] += Dbbar*sw;
-            DepsilonPEq_loc[si] += DepsPEq*sw;
-            DsigmaY_loc[si] += DsigY*sw;
-            DepsilonP_loc[si] += DepsP*sw;
-        }
-    }
+    DbBar_[ipI] = Dbbar;
+    DepsilonPEq_[ipI] = sqrt2By3*Dlam;
+    DsigmaY_[ipI] = sigY - sigY0;
+    DepsilonP_[ipI] = DepsP;
 
     // Add "pressure"
     sigma += (0.5*K*(sqr(J) - 1.0))*symmTensor::I;
@@ -333,14 +240,13 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcPiola
 )
 {
     const element& elem = mesh_.elements()[elemi];
-    const integrationPoint& ip = elem.ir()[rulei];
+    const label ipI = mesh_.ipLabels()[elemi][rulei];
 
     // Element displacment and velocity
     const UIndirectList<vector> D(this->D_, elem);
     const UIndirectList<vector> U(this->U_, elem);
 
     // Element data
-    const scalarList& shape = mesh_.shapes()[elemi][rulei];
     const scalarRectangularMatrix& dshape = mesh_.dshapes()[elemi][rulei];
     const tensor& invJ = mesh_.invJs()[elemi][rulei];
 
@@ -352,35 +258,21 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcPiola
 
     // Relative deformation gradient tensor using veclocity
     // \nabla (U) dt = \nabla (\Delta D)
-    const tensor relF (tensor::I);
-//     (
-//         calcF(U, dshape, invJ)*mesh_.mesh().time().deltaTValue()
-//       + tensor::I
-//     );
+    const tensor relF// (tensor::I);
+    (
+        calcF(U, dshape, invJ)*mesh_.mesh().time().deltaTValue()
+      + tensor::I
+    );
     const tensor relFBar(relF/cbrt(det(relF)));
 
     const scalar mu = mu_.value();
     const scalar K = K_.value();
 
-    symmTensor bbar0(symm(F & F.T()));
-//     symmTensor bbar0(Zero);
-    scalar epsPEq0 = 0.0;
-    symmTensor epsP0(Zero);
-    scalar sigY0 = 0.0;
-    {
-        const UIndirectList<symmTensor> bBar_loc(bBar_, elem);
-        const UIndirectList<scalar> epsilonPEq_loc(epsilonPEq_, elem);
-        const UIndirectList<symmTensor> epsilonP_loc(epsilonP_, elem);
-        const UIndirectList<scalar> sigmaY_loc(sigmaY_, elem);
-        forAll(shape, si)
-        {
-            const scalar s = shape[si];
-//             bbar0 += s*bBar_loc[si];
-            epsPEq0 += s*epsilonPEq_loc[si];
-            epsP0 += s*epsilonP_loc[si];
-            sigY0 += s*sigmaY_loc[si];
-        }
-    }
+    // const symmTensor bbar0(symm(F & F.T()));
+    const symmTensor& bbar0 = bBar_[ipI];
+    const scalar epsPEq0 = epsilonPEq_[ipI];
+    // const symmTensor& epsP0 = epsilonP_[ipI];
+    const scalar sigY0 = sigmaY_[ipI];
 
     symmTensor trialbBar(transform(relFBar, bbar0));
 
@@ -411,9 +303,7 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcPiola
         det(F)
     );
 
-    const scalar DepsPEq(sqrt2By3*Dlam);
     const symmTensor DepsP(IBar*Dlam*plasticN);
-    const scalar DsigY(sigY - sigY0);
 
     // Deviatoric stress
     sigma = sTrial - 2.0*mu*DepsP;
@@ -429,22 +319,10 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcPiola
     }
     Dbbar -= bbar0;
 
-    if (update_)
-    {
-        const scalar w = ip.w()*mesh_.Ws()[elemi][rulei];
-        UIndirectList<symmTensor> DbBar_loc(DbBar_, elem);
-        UIndirectList<scalar> DepsilonPEq_loc(DepsilonPEq_, elem);
-        UIndirectList<symmTensor> DepsilonP_loc(DepsilonP_, elem);
-        UIndirectList<scalar> DsigmaY_loc(DsigmaY_, elem);
-        forAll(shape, si)
-        {
-            const scalar sw = shape[si]*w;
-            DbBar_loc[si] += Dbbar*sw;
-            DepsilonPEq_loc[si] += DepsPEq*sw;
-            DsigmaY_loc[si] += DsigY*sw;
-            DepsilonP_loc[si] += DepsP*sw;
-        }
-    }
+    DbBar_[ipI] = Dbbar;
+    DepsilonPEq_[ipI] = sqrt2By3*Dlam;
+    DsigmaY_[ipI] = sigY - sigY0;
+    DepsilonP_[ipI] = DepsP;
 
     // Add "pressure"
     sigma += (0.5*K*(sqr(J) - 1.0))*symmTensor::I;
@@ -453,8 +331,8 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcPiola
     Piola = (F.inv() & sigma)*J;
 
     // Calculate scaling factor
-//     const scalar scale(1.0 - (2.0*muBar*Dlam/max(mag(sTrial), small)));
-//     return sqrt((scale*(4.0/3.0)*mu + K)/this->rho_.value());
+    // const scalar scale(1.0 - (2.0*muBar*Dlam/max(mag(sTrial), small)));
+    // return sqrt((scale*(4.0/3.0)*mu + K)/this->rho_.value());
 
 //     scalar scale = 1.0 - 2.0*muBar*Dlam/max(mag(sTrial), small);
     tensor C(F.T() & F);
@@ -503,6 +381,15 @@ Foam::scalar Foam::materialModels::neoHookeanElasticPlastic::calcPiola
     }
 
     return sqrt((4.0*mu/3.0 + K)/rho_.value())/minEV;
+}
+
+
+void Foam::materialModels::neoHookeanElasticPlastic::write() const
+{
+    writeIpField("bBar", dimless, bBar_);
+    writeIpField("epsilonP", dimless, epsilonP_);
+    writeIpField("epsilonPEq", dimless, epsilonPEq_);
+    writeIpField("sigmaY", dimPressure, sigmaY_);
 }
 // ************************************************************************* //
 

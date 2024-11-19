@@ -117,15 +117,15 @@ public:
             ),
             ys_(stressStrain_())
         {
-            if (!this->sigmaY_.headerOk())
+            // if (!this->sigmaY_.headerOk())
             {
-                this->sigmaY_ ==
+                this->sigmaY_ =
                     dimensionedScalar
                     (
                         "sigmaY",
                         dimPressure,
                         stressStrain_->value(0.0)
-                    );
+                    ).value();
             }
         }
 

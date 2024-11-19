@@ -281,9 +281,9 @@ public:
                 Tm_.read(dict);
             }
 
-            if (!this->sigmaY_.headerOk())
+            // if (!this->sigmaY_.headerOk())
             {
-                this->sigmaY_ == A_;
+                this->sigmaY_ = A_.value();
             }
         }
 

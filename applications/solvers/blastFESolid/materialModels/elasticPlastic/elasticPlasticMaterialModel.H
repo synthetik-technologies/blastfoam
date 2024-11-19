@@ -60,16 +60,16 @@ protected:
     // Linear fields
 
         //- Yield stress
-        pointScalarField sigmaY_;
-        pointScalarField DsigmaY_;
+        scalarField sigmaY_;
+        scalarField DsigmaY_;
 
         //- Equivilant elasticPlastic strain
-        pointScalarField epsilonPEq_;
-        pointScalarField DepsilonPEq_;
+        scalarField epsilonPEq_;
+        scalarField DepsilonPEq_;
 
         //- Plastic strain (symm)
-        pointSymmTensorField epsilonP_;
-        pointSymmTensorField DepsilonP_;
+        symmTensorField epsilonP_;
+        symmTensorField DepsilonP_;
 
 
 public:
@@ -120,6 +120,8 @@ public:
                 const label elemi,
                 const label rulei
             );
+
+            virtual void write() const;
 };
 
 
