@@ -94,4 +94,7 @@ sets/topoSetList/topoSetList.C
 sets/backupTopoSetSource/backupTopoSetSource.C
 sets/backupSearchableSurface/backupSearchableSurface.C
 
+sets/searchableSurfaces/searchableAnnulusCylinder/searchableAnnulusCylinder.C
+sets/searchableSurfaces/searchableAnnulusDisk/searchableAnnulusDisk.C
+
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume
