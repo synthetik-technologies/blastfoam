@@ -44,12 +44,13 @@ Foam::word Foam::reconstruction::scheme(const word& name)
 Foam::word Foam::reconstruction::scheme
 (
     const word& name,
+    const word& type,
     const fvMesh& mesh,
     const bool fail,
     const bool overwrite
 )
 {
-   return scheme(name, word::null, mesh, fail, overwrite);
+   return scheme(name, word::null, type, mesh, fail, overwrite);
 }
 
 
@@ -57,6 +58,7 @@ Foam::word Foam::reconstruction::scheme
 (
     const word& baseName,
     const word& phaseName,
+    const word& type,
     const fvMesh& mesh,
     const bool fail,
     const bool overwrite
@@ -67,6 +69,7 @@ Foam::word Foam::reconstruction::scheme
     const word name(IOobject::groupName(baseName, phaseName));
     word baseScheme(scheme(baseName));
     word nameScheme(scheme(name));
+    word typeScheme(scheme(type));
 
     // Exact match, no pattern
     if (interpDict.found(nameScheme, false, false))
@@ -77,6 +80,10 @@ Foam::word Foam::reconstruction::scheme
     {
         return baseScheme;
     }
+    else if (interpDict.found(typeScheme, false, false))
+    {
+        return typeScheme;
+    }
 
     // Patterns allowed
     else if (interpDict.found(nameScheme))
@@ -86,6 +93,10 @@ Foam::word Foam::reconstruction::scheme
     else if (interpDict.found(baseScheme))
     {
         return baseScheme;
+    }
+    else if (interpDict.found(typeScheme))
+    {
+        return typeScheme;
     }
 
     // Default
@@ -101,7 +112,8 @@ Foam::word Foam::reconstruction::scheme
             << "Riemann fluxes are used, but no limiter is " << nl
             << "specified for " << name << "." << nl
             << "Please specify " << string(nameScheme)
-            << " or " << string(baseScheme) << endl
+            << ", " << string(baseScheme)
+            << ", or " << string(typeScheme) << endl
             << "This may result in unstable solutions." << endl
             << abort(FatalError);
     }
@@ -112,7 +124,8 @@ Foam::word Foam::reconstruction::scheme
             << "specified for " << name << "." << nl
             << "This may result in unstable solutions." << nl
             << "Please specify " << string(nameScheme)
-            << " or " << string(baseScheme) << endl;
+            << ", " << string(baseScheme)
+            << ", or " << string(typeScheme) << endl;
 
     }
     return nameScheme;

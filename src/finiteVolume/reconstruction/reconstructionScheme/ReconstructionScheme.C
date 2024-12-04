@@ -150,7 +150,18 @@ Foam::ReconstructionScheme<Type>::New
     const bool overwrite
 )
 {
-    const word schemeKey(scheme(fieldName, phaseName, phi.mesh(), debug, overwrite));
+    const word schemeKey
+    (
+        scheme
+        (
+            fieldName,
+            phaseName,
+            pTraits<Type>::typeName,
+            phi.mesh(),
+            debug,
+            overwrite
+        )
+    );
     Istream& is(phi.mesh().interpolationScheme(schemeKey));
     word order(is);
     word scheme(order);
