@@ -296,7 +296,7 @@ Foam::activationModel::activationModel
 {
     const bool active(dict.lookupOrDefault<bool>("active", true));
 
-    if (detonationPoints_.size())
+    if (needDetonationPoints && detonationPoints_.size())
     {
         DynamicList<vector> unactivatedPoints(detonationPoints_.size());
         DynamicList<scalar> unactivatedDelays(detonationPoints_.size());
@@ -345,15 +345,15 @@ Foam::activationModel::activationModel
                 << "    " << activatedRadii << endl;
         }
         Info<< endl;
-    }
 
-    forAll(detonationPoints_, pointi)
-    {
-        detonationPoints_[pointi].setActivated
-        (
-            lambda_,
-            true
-        );
+        forAll(detonationPoints_, pointi)
+        {
+            detonationPoints_[pointi].setActivated
+            (
+                lambda_,
+                true
+            );
+        }
     }
 }
 
