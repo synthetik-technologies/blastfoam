@@ -25,10 +25,10 @@ Class
     Foam::FieldSetTypes::DetonationPressure
 
 Description
-    Given phase name and detonation energy, set the pressure
+    Given phase name, detonation energy, and reference density, set the pressure
 
 Usage:
-    volScalarFieldDetonationPressure p tnt 7e9
+    volScalarFieldDetonationPressure p tnt 7e9 1630
 
 
 SourceFiles

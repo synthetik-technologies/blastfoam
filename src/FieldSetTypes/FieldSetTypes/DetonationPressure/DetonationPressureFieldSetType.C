@@ -65,6 +65,12 @@ Foam::FieldSetTypes::DetonationPressure::DetonationPressure
     e0_(readScalar(is)),
     pDetPtr_(nullptr)
 {
+    if (fieldName != "p")
+    {
+        FatalErrorInFunction
+            << typeName << " should only be used to set pressure" << endl
+            << abort(FatalError);
+    }
     if (is.good())
     {
         e0_ /= readScalar(is);
