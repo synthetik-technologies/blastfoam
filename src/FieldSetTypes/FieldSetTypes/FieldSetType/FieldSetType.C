@@ -329,6 +329,31 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
     return nullptr;
 }
 
+template<class Type, template<class> class Patch, class Mesh>
+template<class GeoField>
+GeoField*
+Foam::FieldSetType<Type, Patch, Mesh>::lookupOrConstruct
+(
+    const word& fieldName,
+    const GeoField& fld
+) const
+{
+    if (mesh_.foundObject<GeoField>(fieldName))
+    {
+        return &mesh_.lookupObjectRef<GeoField>(fieldName);
+    }
+
+
+
+    // Check field exists
+    GeoField* fPtr
+    (
+        new GeoField(fieldName, fld)
+    );
+    fPtr->store(fPtr);
+    return &mesh_.lookupObjectRef<GeoField>(fieldName);
+}
+
 
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::VolFieldSetType<Type>::getBoundary

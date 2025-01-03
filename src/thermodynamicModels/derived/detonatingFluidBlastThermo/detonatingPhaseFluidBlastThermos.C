@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fluidBlastThermo.H"
+#include "phaseFluidBlastThermo.H"
 #include "detonatingFluidBlastThermo.H"
 #include "blendedBlastThermo.H"
 #include "forDetBlastGases.H"
@@ -38,7 +38,7 @@ namespace Foam
     forDetGases
     (
         makeDetThermo,
-        fluidBlastThermo,
+        phaseFluidBlastThermo,
         detonatingFluidBlastThermo,
         blendedBlastThermo
     );

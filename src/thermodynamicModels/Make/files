@@ -20,7 +20,8 @@ derived/basicFluidBlastThermo/basicFluidBlastThermos.C
 derived/basicFluidBlastThermo/basicPhaseFluidBlastThermos.C
 derived/basicSolidBlastThermo/basicSolidBlastThermos.C
 
-derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
+#derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
+derived/detonatingFluidBlastThermo/detonatingPhaseFluidBlastThermos.C
 derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 
 derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C

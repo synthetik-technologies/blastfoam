@@ -49,6 +49,7 @@ License
 #include "LSZK.H"
 #include "BKW.H"
 #include "DoanNickel.H"
+#include "JWL.H"
 
 #include "specieBlast.H"
 #include "rspecieBlast.H"
@@ -64,6 +65,7 @@ License
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
     forThermo(Mu, Cp, LSZK, specieBlast, Macro, Args);                      \
     forThermo(Mu, Cp, BKW, specieBlast, Macro, Args);                       \
+    forThermo(Mu, Cp, JWL, specieBlast, Macro, Args);                       \
     forThermo(Mu, Cp, DoanNickel, specieBlast, Macro, Args)
 
 #define forGasThermos(Mu, Macro, Args...)                                   \
