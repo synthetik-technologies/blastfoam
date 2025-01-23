@@ -69,15 +69,21 @@ Foam::multiphaseInterfaceCompressibleSystem::multiphaseInterfaceCompressibleSyst
         }
         is.putBack(t);
         interfacePair pair(is);
-        stModels_.insert
-        (
-            pair,
+        autoPtr<surfaceTensionModel> sfPtr =
             surfaceTensionModel::New
             (
                 dictionary(is),
                 mesh
-            ).ptr()
+            );
+        sfPtr->rename
+        (
+            IOobject::groupName
+            (
+                surfaceTensionModel::typeName,
+                pair.name()
+            )
         );
+        stModels_.insert(pair,sfPtr.ptr());
     }
 }
 
@@ -108,15 +114,21 @@ Foam::multiphaseInterfaceCompressibleSystem::multiphaseInterfaceCompressibleSyst
         }
         is.putBack(t);
         interfacePair pair(is);
-        stModels_.insert
-        (
-            pair,
+        autoPtr<surfaceTensionModel> sfPtr =
             surfaceTensionModel::New
             (
                 dictionary(is),
                 mesh
-            ).ptr()
+            );
+        sfPtr->rename
+        (
+            IOobject::groupName
+            (
+                surfaceTensionModel::typeName,
+                pair.name()
+            )
         );
+        stModels_.insert(pair,sfPtr.ptr());
     }
 }
 
