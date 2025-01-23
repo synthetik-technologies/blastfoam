@@ -168,7 +168,7 @@ Foam::blastThermo::blastThermo
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE//IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar(dimEnergy/dimMass, 0.0),
