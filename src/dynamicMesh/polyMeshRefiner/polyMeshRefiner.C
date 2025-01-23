@@ -199,7 +199,7 @@ Foam::labelList Foam::polyMeshRefiner::selectRefineCells
 
     candidates.shrink();
 
-    return move(candidates);
+    return candidates;
 }
 
 

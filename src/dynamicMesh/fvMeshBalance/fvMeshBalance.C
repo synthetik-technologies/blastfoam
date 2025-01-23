@@ -67,6 +67,43 @@ bool Foam::fvMeshBalance::isBalancing(const polyMesh& mesh)
 }
 
 
+Foam::fvMeshBalance& Foam::fvMeshBalance::New(fvMesh& mesh)
+{
+    IOdictionary dict
+    (
+        IOobject
+        (
+            "decomposeParDict",
+            mesh.time().system(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE,
+            false
+        )
+    );
+    return New(mesh, dict);
+}
+
+Foam::fvMeshBalance& Foam::fvMeshBalance::New
+(
+    fvMesh& mesh,
+    const dictionary& dict
+)
+{
+    if (mesh.thisDb().foundObject<fvMeshBalance>(fvMeshBalance::typeName))
+    {
+        return mesh.thisDb().lookupObjectRef<fvMeshBalance>(fvMeshBalance::typeName);
+    }
+    else
+    {
+        fvMeshBalance* balancePtr = new fvMeshBalance(mesh, dict);
+        balancePtr->store(balancePtr);
+
+        return *balancePtr;
+    }
+}
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::fvMeshBalance::makeDecomposer() const
@@ -125,6 +162,15 @@ void Foam::fvMeshBalance::checkForInternal() const
 
 Foam::fvMeshBalance::fvMeshBalance(fvMesh& mesh)
 :
+    regIOobject
+    (
+        IOobject
+        (
+            typeName,
+            mesh.time().timeName(),
+            mesh
+        )
+    ),
     mesh_(mesh),
     decompositionDict_
     (
@@ -136,7 +182,8 @@ Foam::fvMeshBalance::fvMeshBalance(fvMesh& mesh)
                 mesh.time().system(),
                 mesh,
                 IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                false
             )
         )
     ),
@@ -196,6 +243,15 @@ Foam::fvMeshBalance::fvMeshBalance
     const dictionary& dict
 )
 :
+    regIOobject
+    (
+        IOobject
+        (
+            typeName,
+            mesh.time().timeName(),
+            mesh
+        )
+    ),
     mesh_(mesh),
     decompositionDict_
     (
@@ -207,7 +263,8 @@ Foam::fvMeshBalance::fvMeshBalance
                 mesh.time().system(),
                 mesh,
                 IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                false
             )
         )
     ),
@@ -513,6 +570,11 @@ bool Foam::fvMeshBalance::canBalance() const
     //First determine current level of imbalance - do this for all
     // parallel runs with a changing mesh, even if balancing is disabled
     label nGlobalCells = returnReduce(mesh_.nCells(), sumOp<label>());
+    if (!nGlobalCells)
+    {
+        return false;
+    }
+
     scalar idealNCells =
         scalar(nGlobalCells)/scalar(Pstream::nProcs());
     scalar localImbalance = mag(scalar(mesh_.nCells()) - idealNCells);
@@ -577,7 +639,16 @@ bool Foam::fvMeshBalance::canBalance() const
              << endl;
     }
 
-    if (maxDevNew > maxImbalanceRatio*0.99)
+    label minDist = min(distribution_);
+    label maxDist = max(distribution_);
+    bool changing = returnReduce
+    (
+        minDist != maxDist
+     && minDist != Pstream::myProcNo(),
+        orOp<bool>()
+    );
+
+    if (!changing)
     {
         Info
             << "    Not balancing because the new distribution does" << nl
@@ -734,5 +805,12 @@ bool Foam::fvMeshBalance::write(const bool write) const
     }
     return true;
 }
+
+
+bool Foam::fvMeshBalance::writeData(Ostream&) const
+{
+    return true;
+}
+
 
 // ************************************************************************* //

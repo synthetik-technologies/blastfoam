@@ -52,6 +52,8 @@ class decompositionMethod;
 \*---------------------------------------------------------------------------*/
 
 class fvMeshBalance
+:
+    public regIOobject
 {
 public:
 
@@ -126,6 +128,9 @@ public:
         //- Disallow default bitwise copy construction
         fvMeshBalance(const fvMeshBalance&) = delete;
 
+        // Return fvMeshBalance, stored in the mesh db
+        static fvMeshBalance& New(fvMesh&);
+        static fvMeshBalance& New(fvMesh&, const dictionary&);
 
     //- Destructor
     virtual ~fvMeshBalance();
@@ -189,6 +194,9 @@ public:
 
         //- Write the decompositionDict
         bool write(const bool write = true) const;
+
+        //- regIOobject write
+        virtual bool writeData(Ostream&) const;
 
     // Member Operators
 

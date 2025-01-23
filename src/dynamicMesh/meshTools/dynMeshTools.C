@@ -47,7 +47,7 @@ void Foam::meshTools::getFaceInfo
     const label faceI,
     label& patchID,
     label& zoneID,
-    label& zoneFlip
+    bool& zoneFlip
 )
 {
     patchID = -1;
@@ -81,7 +81,8 @@ Foam::label Foam::meshTools::addFace
 )
 {
     // Set face information
-    label patchID, zoneID, zoneFlip;
+    label patchID, zoneID;
+    bool zoneFlip;
     meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
 
     // Set new face index to -1
@@ -197,7 +198,8 @@ void Foam::meshTools::modifyFace
 )
 {
     // Set face inforomation
-    label patchID, zoneID, zoneFlip;
+    label patchID, zoneID;
+    bool zoneFlip;
     meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
 
     // Get owner/neighbour addressing and mesh faces
@@ -272,7 +274,8 @@ void Foam::meshTools::changePatchFace
 )
 {
     // Set face inforomation
-    label patchID, zoneID, zoneFlip;
+    label patchID, zoneID;
+    bool zoneFlip;
     meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
 
     meshMod.setAction

@@ -125,7 +125,7 @@ Foam::fvMeshRefiner::fvMeshRefiner
     mesh_(mesh),
 
     refiner_(polyMeshRefiner::New(refinerType, mesh)),
-    balancer_(mesh_),
+    balancer_(fvMeshBalance::New(mesh_)),
 
     nBalanceIterations_(0),
     balanceInterval_(1),
@@ -166,8 +166,11 @@ Foam::fvMeshRefiner::fvMeshRefiner
 
     balancer_
     (
-        mesh_,
-        refiner_->dict_.optionalSubDict("loadBalance")
+        fvMeshBalance::New
+        (
+            mesh_,
+            refiner_->dict_.optionalSubDict("loadBalance")
+        )
     ),
 
     nBalanceIterations_(0),
@@ -268,20 +271,17 @@ bool Foam::fvMeshRefiner::balance()
     // Part 2 - Load Balancing
     if (canBalance(true))
     {
-        Info<<"canBalance"<<endl;
         //- Save the old volumes so it will be distributed and
         //  resized
         //  We cheat because so we can check which fields
         //  actually need to be mapped
         if (mesh_.V0Ptr_)
         {
-            Info<<"store V0"<<endl;
             V0OldPtr_ = mesh_.V0Ptr_;
             mesh_.V0Ptr_ = nullptr;
         }
         if (mesh_.V00Ptr_)
         {
-            Info<<"store V00"<<endl;
             V00OldPtr_ = mesh_.V00Ptr_;
             mesh_.V00Ptr_ = nullptr;
         }

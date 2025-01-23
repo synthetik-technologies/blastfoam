@@ -74,7 +74,7 @@ namespace meshTools
             const label faceI,
             label& patchID,
             label& zoneID,
-            label& zoneFlip
+            bool& zoneFlip
         );
 
         // Local topology modification functions (operate on cells/faces)

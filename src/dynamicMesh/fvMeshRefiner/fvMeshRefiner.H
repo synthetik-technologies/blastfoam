@@ -72,7 +72,7 @@ protected:
         autoPtr<polyMeshRefiner> refiner_;
 
         //- Balancer
-        fvMeshBalance balancer_;
+        fvMeshBalance& balancer_;
 
         //- Number of balance steps done so far
         mutable label nBalanceIterations_;
