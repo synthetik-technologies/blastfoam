@@ -360,6 +360,7 @@ void calcMapAndR
     const vector& targetCentre,
     const vector& rotationAxis,
     const vector& rAxis,
+    const bool nearest,
     List<cellInfoList>& cellMap,
     List<cellInfoList>& extendedCellMap,
     tensorField& R
@@ -408,6 +409,7 @@ void calcMapAndR
     forAll(cellMap, celli)
     {
         const cell& c = targetMesh.cells()[celli];
+        const vector& cc = targetMesh.cellCentres()[celli];
 
         // Mapping has already been set
         if (cellMap[celli].size())
@@ -448,6 +450,7 @@ void calcMapAndR
         // Keep track of the maximum volume (weight) for extended cell
         scalar maxV = -great;
         scalar sumV = 0.0;
+        scalar minDSqr = great;
         cellInfoList& infos = cellMap[celli];
         if (r < maxR || maxR < 0)
         {
@@ -474,6 +477,8 @@ void calcMapAndR
                     {
                         const label cellj = sCells[cj];
                         const scalar V = sourceMeshes[proci].V()[cellj];
+                        const scalar dSqr =
+                            magSqr(cc - sourceMeshes[proci].cellCentres()[cellj]);
                         sumV += V;
                         infos.append({proci, cellj, V});
 
@@ -481,13 +486,26 @@ void calcMapAndR
                         {
                             maxV = V;
                         }
+                        if (dSqr < minDSqr)
+                        {
+                            minDSqr = dSqr;
+                            if (infos.size() > 1)
+                            {
+                                Swap(infos.first(), infos.last());
+                            }
+                        }
                     }
                 }
             }
         }
 
         // normalize weights
-        if (sumV > 0)
+        if (nearest && infos.size())
+        {
+            infos.setSize(1);
+            infos[0].weight = 1.0;
+        }
+        else if (sumV > 0)
         {
             forAll(infos, cj)
             {
@@ -595,6 +613,7 @@ void refine
     const vector& targetCentre,
     const vector& rotationAxis,
     const vector& rAxis,
+    const bool nearest,
     const wordList& additionalFieldNames
 )
 {
@@ -697,6 +716,7 @@ void refine
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             cellMap,
             extendedCellMap,
             R
@@ -805,6 +825,11 @@ void addOptions()
     (
         "points0",
         "Write points0 field for moving meshes"
+    );
+    argList::addBoolOption
+    (
+        "nearest",
+        "Use the nearest cell to map"
     );
     #include "addRegionOption.H"
 }

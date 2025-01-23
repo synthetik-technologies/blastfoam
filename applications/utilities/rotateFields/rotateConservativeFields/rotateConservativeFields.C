@@ -512,6 +512,8 @@ int main(int argc, char *argv[])
         targetCentre = args.optionRead<vector>("centre");
     }
 
+    const bool nearest = args.optionFound("nearest");
+
     Info<< "Source centre: " << sourceCentre << nl
         << "Target centre: " << targetCentre << endl;
 
@@ -564,6 +566,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             cellMap,
             extendedCellMap,
             R
@@ -607,6 +610,7 @@ int main(int argc, char *argv[])
                 targetCentre,
                 rotationAxis,
                 rAxis,
+                nearest,
                 cellMap,
                 extendedCellMap,
                 R
@@ -637,6 +641,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             additionalFieldNames
         );
         targetCompressibleSystem->decode();

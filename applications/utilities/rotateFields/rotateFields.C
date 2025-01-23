@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
     const fileName rootDirSource = casePath.path().toAbsolute();
     const fileName caseDirSource = casePath.name();
 
+    const bool nearest = args.optionFound("nearest");
     if (!isDir(casePath))
     {
         FatalErrorInFunction
@@ -382,6 +383,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             cellMap,
             extendedCellMap,
             R
@@ -410,6 +412,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             additionalFieldNames
         );
         targetRunTime.writeNow();
