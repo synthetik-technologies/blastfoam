@@ -316,7 +316,7 @@ Foam::scalar Foam::JWL<Specie>::E
     return
         (A_/R1_*exp(-R1_*V)
       + B_/R2_*exp(-R2_*V))/rho0_
-      - e0_*omega_*log(rhos);
+      - e0_;
 }
 
 
@@ -337,7 +337,7 @@ Foam::scalar Foam::JWL<Specie>::H
     return
         A_*(1.0/rhos + 1.0/(R1_*rho0_))*exp(-R1_*rho0_/rhos)
       + B_*(1.0/rhos + 1.0/(R2_*rho0_))*exp(-R2_*rho0_/rhos)
-      - e0_*omega_*log(rhos);
+      - e0_;
 }
 
 
