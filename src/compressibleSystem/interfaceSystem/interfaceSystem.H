@@ -83,9 +83,13 @@ public:
 
             interfacePair(const volScalarField& alpha1, const volScalarField& alpha2)
             :
-                Pair<word>(alpha1.name(), alpha2.name())
+                Pair<word>(alpha1.group(), alpha2.group())
             {}
 
+            word name() const
+            {
+                return first() + "_" + second();
+            }
 
         // Friend Operators
 
