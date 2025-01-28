@@ -366,7 +366,7 @@ void Foam::Geometry<Foam::ElementType::HEX>::toRef
         if (fa.z() < 0) bottomFace.flip();
 
         scalarField magPts(mag(pointField(pts, bottomFace)));
-        inplaceRotateList
+        inplaceRotateList<List, label>
         (
             bottomFace,
             bottomFace.size() - findMin(magPts)
