@@ -64,6 +64,9 @@ protected:
     //- Has the patch completely burst
     mutable bool burst_;
 
+    //- Log information
+    bool log_;
+
     //- Return the patch value
     template<class Type>
     tmp<Field<Type>> patchField(const fvPatchField<Type>& pf) const

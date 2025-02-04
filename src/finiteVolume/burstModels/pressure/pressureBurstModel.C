@@ -182,6 +182,12 @@ Foam::label Foam::burstModels::pressure::update
         neip /= neiW;
     }
 
+    if (log_)
+    {
+        Info<< indent << "pressure differential: "<< mag(ownp - neip)
+            << endl;
+    }
+
     if (mag(ownp - neip) > pBurst_)
     {
         return ownp > neip ? 1 : -1;

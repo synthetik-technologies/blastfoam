@@ -170,6 +170,12 @@ Foam::label Foam::burstModels::pressureImpulse::update
         neiImp /= neiW;
     }
 
+    if (log_)
+    {
+        Info<< indent << "Impulse differential: "<< mag(ownImp - neiImp)
+            << endl;
+    }
+
     if (mag(ownImp - neiImp) > impulseBurst_)
     {
         return ownImp > neiImp ? 1 : -1;

@@ -69,7 +69,8 @@ Foam::burstModel::burstModel(const dictionary& dict)
 :
     partialBurst_(dict.lookup<bool>("partialBurst")),
     useDelta_(dict.lookupOrDefault<bool>("useDelta", true)),
-    burst_(false)
+    burst_(false),
+    log_(dict.lookupOrDefault("log", false))
 {}
 
 
@@ -77,7 +78,8 @@ Foam::burstModel::burstModel()
 :
     partialBurst_(false),
     useDelta_(true),
-    burst_(false)
+    burst_(false),
+    log_(false)
 {}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -93,6 +95,7 @@ void Foam::burstModel::writeData(Ostream& os) const
     writeEntry(os, "burstModel", type());
     writeEntry(os, "partialBurst", partialBurst_);
     writeEntry(os, "useDelta", useDelta_);
+    writeEntryIfDifferent(os, "log", log_, false);
 }
 
 

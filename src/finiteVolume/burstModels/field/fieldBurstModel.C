@@ -63,8 +63,17 @@ Foam::burstModels::field::field(const dictionary& dict)
     else
     {
         burstValues_ = HashTable<scalar>(dict.lookup("burstValues"));
-
     }
+
+    // if (log_)
+    // {
+    //     osPtr_() << '#' << '\t' << "time" << '\t';
+    //     forAllConstIter(HashTable<scalar>, burstValues_, iter)
+    //     {
+    //         osPtr_() << iter.key() << '\t';
+    //     }
+    //     osPtr_() << endl;
+    // }
 }
 
 
@@ -197,6 +206,11 @@ Foam::label Foam::burstModels::field::update
             neiF /= neiW;
         }
 
+        if (log_)
+        {
+            Info<< indent << iter.key() << " differential: "<< mag(ownF - neiF)
+                << endl;
+        }
         if (mag(ownF - neiF) > val)
         {
             return ownF > neiF ? 1 : -1;
