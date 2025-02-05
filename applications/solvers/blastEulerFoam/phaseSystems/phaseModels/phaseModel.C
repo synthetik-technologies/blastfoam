@@ -409,7 +409,7 @@ void Foam::phaseModel::postUpdate()
             fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
           + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
          ==
-            models().source(alphaRho_, U_)
+            models().source(*this, rho(), U_)
         );
         if (turbulence_.valid())
         {
@@ -445,7 +445,7 @@ void Foam::phaseModel::postUpdate()
           + fvc::ddt(smallAlphaRho, he())
           - fvm::ddt(smallAlphaRho, he())
          ==
-            models().source(alphaRho_, he())
+            models().source(*this, rho(), he())
         );
 
         if (turbulence_.valid())

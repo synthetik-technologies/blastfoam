@@ -226,7 +226,7 @@ void Foam::granularPhaseModel::postUpdate()
             fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
           + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
          ==
-            models().source(alphaRho_, U_)
+            models().source(alpha, rho(), U_)
         );
 
         if (this->includeViscosity())
@@ -250,7 +250,7 @@ void Foam::granularPhaseModel::postUpdate()
             fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRhoE_)
           + fvm::ddt(smallAlphaRho, he()) - fvc::ddt(smallAlphaRho, he())
         ==
-            models().source(alphaRho_, he())
+            models().source(alpha, rho(), he())
         );
         constraints().constrain(eEqn);
         eEqn.solve();
