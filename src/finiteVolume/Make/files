@@ -31,6 +31,7 @@ reconstruction/upwindMUSCL/UpwindMUSCLReconstructionSchemes.C
 reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
 reconstruction/quadraticMUSCL/QuadraticMUSCLReconstructionSchemes.C
 reconstruction/limiters/Koren/Koren.C
+reconstruction/limiters/overbee/overbee.C
 
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
@@ -96,5 +97,6 @@ sets/backupSearchableSurface/backupSearchableSurface.C
 
 sets/searchableSurfaces/searchableAnnulusCylinder/searchableAnnulusCylinder.C
 sets/searchableSurfaces/searchableAnnulusDisk/searchableAnnulusDisk.C
+sets/searchableSurfaces/transformedTriSurfaceMesh/transformedTriSurfaceMesh.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume
