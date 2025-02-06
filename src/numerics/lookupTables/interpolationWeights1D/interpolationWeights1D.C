@@ -44,6 +44,14 @@ Foam::autoPtr<Foam::interpolationWeight1D> Foam::interpolationWeight1D::New
     const bool finalData
 )
 {
+    if (xs.size() < 2 && finalData)
+    {
+        DebugInfo << "Singular data, using floor interpolation: " << scheme << endl;
+        return autoPtr<interpolationWeight1D>
+        (
+            new interpolationWeights1D::floor(xs)
+        );
+    }
     DebugInfo << "Selecting interpolation scheme: " << scheme << endl;
 
     nullConstructorTable::iterator cstrIter =
@@ -69,6 +77,15 @@ Foam::autoPtr<Foam::interpolationWeight1D> Foam::interpolationWeight1D::New
     const bool finalData
 )
 {
+    if (xs.size() < 2 && finalData)
+    {
+        DebugInfo << "Singular data, using floor interpolation: " << scheme << endl;
+        return autoPtr<interpolationWeight1D>
+        (
+            new interpolationWeights1D::floor(dict, xs)
+        );
+    }
+
     DebugInfo << "Selecting interpolation scheme: " << scheme << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
