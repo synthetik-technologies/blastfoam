@@ -203,6 +203,7 @@ void Foam::timeIntegrator::integrate()
             Info<< endl;
         }
     }
+    stepi_ = coeffs_->nSteps()-1;
 
     this->postUpdateAll();
     stepi_ = -1;
