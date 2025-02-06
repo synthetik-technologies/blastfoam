@@ -42,7 +42,8 @@ Foam::linearTillotson<Specie>::linearTillotson(const dictionary& dict)
     A_(dict.subDict("equationOfState").lookup<scalar>("A")),
     B_(dict.subDict("equationOfState").lookup<scalar>("B")),
     C_(dict.subDict("equationOfState").lookup<scalar>("C")),
-    pCav_(dict.subDict("equationOfState").lookup<scalar>("pCav"))
+    pCav_(dict.subDict("equationOfState").lookup<scalar>("pCav")),
+    eRef_(calcE(rho0_))
 {
     scalar Cv = dict.subDict("thermodynamics").lookup<scalar>("Cv");
     scalar T = e0_/Cv;
