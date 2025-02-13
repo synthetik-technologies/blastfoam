@@ -616,7 +616,7 @@ bool Foam::fvMeshBalance::canBalance() const
         procLoadNew[distribution_[celli]]++;
     }
     reduce(procLoadNew, sumOp<labelList>());
-    if (min(procLoadNew) == 0)
+    if (allowableImbalance_ >= 0 && min(procLoadNew) == 0)
     {
         WarningInFunction
             << "New distribtion results in a load of 0. Skipping" << endl;
@@ -723,7 +723,7 @@ Foam::fvMeshBalance::distribute()
     blastMeshObject::distribute<fvMesh>(mesh_, map());
 
 
-    if (!returnReduce(mesh_.nCells(), minOp<label>()))
+    if (allowableImbalance_ >= 0 && !returnReduce(mesh_.nCells(), minOp<label>()))
     {
         FatalErrorInFunction
             << "New distribution results in a processor with 0 cells" << endl
