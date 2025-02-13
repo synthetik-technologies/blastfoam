@@ -54,24 +54,63 @@ int main(int argc, char *argv[])
         "probeName",
         "Name of probe to merge"
     );
+    argList::addOption
+    (
+        "times",
+        "List of times to include"
+    );
+    argList::addBoolOption
+    (
+        "local",
+        "Path to probe is directly specified"
+    );
 
     #include "setRootCase.H"
 
     bool force(args.optionFound("force"));
     wordList probeNames(args.optionLookupOrDefault("probeNames", wordList()));
-    word probeDirName(args.argRead<fileName>(1));
+    fileName probeDirName(args.argRead<fileName>(1));
 
-    // Create the processor databases
-    fileName postProcessDir
+    // Create the probe databases
+    fileName probesDir
     (
-        args.caseName()/fileName("postProcessing")
+        args.optionFound("local")
+      ? probeDirName
+      : args.rootPath()/args.caseName()/fileName("postProcessing")/probeDirName
     );
-    fileName probesDir(args.rootPath()/postProcessDir/probeDirName);
-    wordList times(readDir(probesDir, fileType::directory));
-    SortableList<scalar> sTimes(times.size());
-
-    // Sort times
+    if (!isDir(probesDir))
     {
+        FatalErrorInFunction
+            << "Provided probe directory, " << probesDir << ", does not exist" << endl
+            << exit(FatalError);
+    }
+    Info<< "Merge probes in directory " << probesDir << nl << endl;
+
+    wordList times;
+    SortableList<scalar> sTimes;
+    if (args.optionFound("times"))
+    {
+        sTimes = args.optionRead<scalarList>("times");
+        sTimes.sort();
+
+        times.setSize(sTimes.size());
+        forAll(sTimes, ti)
+        {
+            times[ti] = Foam::Time::timeName(sTimes[ti]);
+        }
+    }
+    else
+    {
+        times = wordList(readDir(probesDir, fileType::directory));
+        if (!times.size())
+        {
+            FatalErrorInFunction
+                << "No times were found for probe " << probeDirName << endl
+                << exit(FatalError);
+        }
+        sTimes.setSize(times.size());
+
+        // Sort times
         forAll(sTimes, ti)
         {
             IStringStream is(times[ti]);
@@ -84,6 +123,12 @@ int main(int argc, char *argv[])
             times[ti] = oldTimes[sTimes.indices()[ti]];
         }
     }
+    Info<< "Merging times:" << nl << incrIndent;
+    forAll(times, ti)
+    {
+        Info << indent << times[ti] << nl;
+    }
+    Info<< decrIndent << endl;
     sTimes.append(great);
 
     // Get full list of probes
@@ -103,20 +148,34 @@ int main(int argc, char *argv[])
             }
             else
             {
-                WarningInFunction
-                    << probeNames[probei] << " already found. Skipping probe."
+                Warning << nl
+                    << (probeDirName/probeNames[probei])
+                    << " already found. Skipping probe." << nl
                     << endl;
             }
         }
+        probeNames = writtenProbes;
     }
 
-    Info<< "Merging probes: " << nl
-        << probeNames << endl;
+    Info<< "Probes to merge:" << nl << incrIndent;
+    forAll(probeNames, probei)
+    {
+        Info << indent << probeNames[probei] << nl;
+    }
+    Info<< decrIndent << endl;
+
 
     // Create outputs
     PtrList<OFstream> outputs(probeNames.size());
     forAll(outputs, probei)
     {
+        if (!exists(probesDir/probeNames[probei]))
+        {
+            FatalErrorInFunction
+                << "File could not be found - " << (probesDir/probeNames[probei]) << endl
+                << exit(FatalError);
+        }
+
         outputs.set(probei, new OFstream(probesDir/probeNames[probei]));
     }
 
