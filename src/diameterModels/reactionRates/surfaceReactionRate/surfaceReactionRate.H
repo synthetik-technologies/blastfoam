@@ -33,7 +33,7 @@ SourceFiles
 \*---------------------------------------------------------------------------*/
 
 #ifndef surfaceReactionRate_H
-#define reactionRate_H
+#define surfaceReactionRate_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
