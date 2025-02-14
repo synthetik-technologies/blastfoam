@@ -442,9 +442,10 @@ void Foam::multicomponentBlastThermo::integrator::solve()
 {
     const dimensionedScalar& dT(mesh_.time().deltaT());
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
+
     const volScalarField& alphaRho = alphaRho_;
-    const volScalarField alphaRho0(max(alphaRho_.prevIter(), residualAlphaRho));
-    const volScalarField f(alphaRho/alphaRho0);
+    tmp<volScalarField> talphaRho0(max(alphaRho_.prevIter(), residualAlphaRho));
+    const volScalarField& alphaRho0 = talphaRho0();
 
     forAll(Y_, i)
     {
@@ -540,7 +541,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
 
             if (thermophysicalTransportPtr.valid())
             {
-                YEqn -= thermophysicalTransportPtr->divj(Yi);
+                YEqn += thermophysicalTransportPtr->divj(Yi);
             }
 
             constraints().constrain(YEqn);
