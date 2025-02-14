@@ -90,6 +90,7 @@ sets/cellSources/boxMassToCell/boxMassToCell.C
 sets/cellSources/surfacesToCell/surfacesToCell.C
 sets/cellSources/searchableSurfaceToCell/searchableSurfaceToCell.C
 sets/cellSources/searchableSurfaceToPoint/searchableSurfaceToPoint.C
+sets/cellSources/triSurfaceRefPointToCell/triSurfaceRefPointToCell.C
 
 sets/topoSetList/topoSetList.C
 sets/backupTopoSetSource/backupTopoSetSource.C

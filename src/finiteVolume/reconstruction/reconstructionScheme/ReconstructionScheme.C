@@ -215,6 +215,6 @@ Foam::ReconstructionScheme<Type>::New
     }
 
     return cstrIter()(phi, is, overwrite);
-}\
+}
 
 // ************************************************************************* //
