@@ -1277,19 +1277,34 @@ void Foam::phaseSystem::printInfo() const
         }
         Info<< endl << decrIndent;
     }
-    // if (kineticTheoryPtr_.valid())
-    // {
-    //     if (kineticTheoryPtr_->polydisperse())
-    //     {
-    //         const volScalarField& alpha(kineticTheoryPtr_->alpha());
-    //         Info<< nl
-    //             << indent << alpha.name() << " fraction, max, min = "
-    //             << alpha.weightedAverage(mesh_.V()).value()
-    //             << ' ' << max(alpha).value()
-    //             << ' ' << min(alpha).value()
-    //             << endl;
-    //     }
-    // }
+    forAll(master_, i)
+    {
+        const masterSystem& sys = master_[i];
+        if (sys.polydisperse())
+        {
+            const volScalarField& alpha = sys.alpha();
+            tmp<volScalarField> talphaMax(sys.alphaMax());
+            const volScalarField& alphaMax = talphaMax();
+            tmp<volScalarField> talphaByAlphaMax(alpha/alphaMax);
+            const volScalarField& alphaByAlphaMax = talphaByAlphaMax();
+
+            Info<< indent << sys.name() << ":" << endl << incrIndent
+                << indent << alpha.name() << " average, max, min = "
+                << alpha.weightedAverage(mesh_.V()).value()
+                << ' ' << max(alpha).value()
+                << ' ' << min(alpha).value() << nl
+                << indent << alphaMax.name() << " average, max, min = "
+                << alphaMax.weightedAverage(mesh_.V()).value()
+                << ' ' << max(alphaMax).value()
+                << ' ' << min(alphaMax).value() << nl
+                << indent << alpha.name() << " / " << alphaMax.name()
+                << " average, max, min = "
+                << alphaByAlphaMax.weightedAverage(mesh_.V()).value()
+                << ' ' << max(alphaByAlphaMax).value()
+                << ' ' << min(alphaByAlphaMax).value() << nl
+                << decrIndent << endl;
+        }
+    }
     Info<< decrIndent;
 
 }

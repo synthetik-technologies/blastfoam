@@ -100,7 +100,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
             Theta_.time().timeName(),
             Theta_.mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
@@ -198,7 +198,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
             Theta_.time().timeName(),
             Theta_.mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)

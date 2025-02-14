@@ -589,10 +589,10 @@ Foam::kineticTheorySystem::dissipationSource
     Theta2.max(1e-10);
     phasePairKey key(phase1.name(), phase2.name(), false);
 
-    volScalarField m1(pi/6.0*pow3(phase1.d())*phase1.rho());
-    volScalarField m2(pi/6.0*pow3(phase2.d())*phase2.rho());
-    volScalarField m0(m1 + m2);
-    volScalarField m1Thetam2Theta(sqr(m1)*Theta1 + sqr(m2)*Theta2);
+    tmp<volScalarField> m1(pi/6.0*pow3(phase1.d())*phase1.rho());
+    tmp<volScalarField> m2(pi/6.0*pow3(phase2.d())*phase2.rho());
+    tmp<volScalarField> m0(m1() + m2());
+    tmp<volScalarField> m1Thetam2Theta(sqr(m1())*Theta1 + sqr(m2())*Theta2);
 
     return volScalarField::New
     (
@@ -602,11 +602,11 @@ Foam::kineticTheorySystem::dissipationSource
                 3.0/phase1.d()
                *sqrt
                 (
-                    2.0*sqr(m0)*phase1.Theta()*phase2.Theta()
-                   /(pi*m1Thetam2Theta)
+                    2.0*sqr(m0())*phase1.Theta()*phase2.Theta()
+                   /(pi*m1Thetam2Theta())
                 )
-              - (3.0*m0*(m1*phase1.Theta() + m2*phase2.Theta()))
-               /(4.0*m1Thetam2Theta)
+              - (3.0*m0()*(m1()*phase1.Theta() + m2()*phase2.Theta()))
+               /(4.0*m1Thetam2Theta())
                *fvc::div(this->phi())
             )
            *(1.0 - this->es(key))
