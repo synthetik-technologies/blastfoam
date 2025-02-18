@@ -80,12 +80,6 @@ class kineticTheorySystem
 {
     // Private data
 
-        //- Kinetic theory dictionary
-        const dictionary& dict_;
-
-        //- Write the total granular phase
-        Switch writeTotal_;
-
         //- Phase averaged granular temperature
         autoPtr<volScalarField> ThetapPtr_;
 

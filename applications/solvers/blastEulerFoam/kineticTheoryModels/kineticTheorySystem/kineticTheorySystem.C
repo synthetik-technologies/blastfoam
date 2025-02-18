@@ -55,15 +55,9 @@ Foam::kineticTheorySystem::kineticTheorySystem
     masterSystem
     (
         typeName,
-        fluid.subDict("kineticTheory").lookupOrDefault<word>
-        (
-            "name",
-            "kineticTheoryTotal"
-        ),
-        fluid
+        fluid,
+        fluid.subDict("kineticTheory")
     ),
-    dict_(fluid.subDict("kineticTheory")),
-    writeTotal_(dict_.lookupOrDefault("writeTotal", false)),
     ThetapPtr_(nullptr),
     kineticTheoryModels_(0),
     Thetas_(0),
@@ -148,12 +142,7 @@ Foam::kineticTheorySystem::kineticTheorySystem
     (
         !isA<kineticTheoryModels::noneViscosity>(viscosityModel_())
     )
-{
-    if (writeTotal_)
-    {
-        this->writeOpt() = IOobject::AUTO_WRITE;
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

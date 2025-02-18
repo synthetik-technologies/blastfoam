@@ -55,8 +55,14 @@ class masterSystem
 protected:
     // Protected data
 
+        //- Constructing dictionary
+        const dictionary& dict_;
+
         //- Group of the system
         word group_;
+
+        //- Write totals
+        bool writeTotal_;
 
         //- Const refrence to multiphaseSystem
         const phaseSystem& fluid_;
@@ -85,8 +91,17 @@ protected:
             //- Phase averaged volume fraction flux
             mutable autoPtr<surfaceScalarField> alphaPhiPtr_;
 
+            //- Was residual alpha read
+            bool readResidualAlpha_;
+
             //- Residual phase fraction
             dimensionedScalar residualAlpha_;
+
+            //- Was residual alpha read
+            bool readResidualRho_;
+
+            //- Residual phase density
+            dimensionedScalar residualRho_;
 
 
 public:
@@ -94,7 +109,12 @@ public:
     TypeName("masterSystem");
 
     // Constructor
-    masterSystem(const word& type, const word& group, const phaseSystem&);
+    masterSystem
+    (
+        const word& type,
+        const phaseSystem&,
+        const dictionary&
+    );
 
     //- Lookup or construct kineticTheorySystem
     template<class System>
@@ -153,6 +173,12 @@ public:
         const dimensionedScalar& residualAlpha() const
         {
             return residualAlpha_;
+        }
+
+        //- Return residual rho
+        const dimensionedScalar& residualRho() const
+        {
+            return residualRho_;
         }
 
         //- Return total volume fraction

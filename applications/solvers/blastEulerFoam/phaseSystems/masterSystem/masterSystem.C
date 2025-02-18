@@ -38,8 +38,8 @@ namespace Foam
 Foam::masterSystem::masterSystem
 (
     const word& type,
-    const word& group,
-    const phaseSystem& fluid
+    const phaseSystem& fluid,
+    const dictionary& dict
 )
 :
     regIOobject
@@ -54,7 +54,9 @@ Foam::masterSystem::masterSystem
             true
         )
     ),
-    group_(group),
+    dict_(dict),
+    group_(dict_.lookupOrDefault<word>("name", type + "Total")),
+    writeTotal_(dict_.lookupOrDefault("writeTotal", false)),
     fluid_(fluid),
     phases_(0),
     alphaPtr_(nullptr),
@@ -62,8 +64,25 @@ Foam::masterSystem::masterSystem
     UPtr_(nullptr),
     phiPtr_(nullptr),
     alphaPhiPtr_(nullptr),
-    residualAlpha_("residualAlpha", dimless, small)
+    readResidualAlpha_(dict.found("residualAlpha")),
+    residualAlpha_
+    (
+        "residualAlpha",
+        dimless,
+        dict.lookupOrDefault("residualAlpha", small)
+    ),
+    readResidualRho_(dict.found("residualRho")),
+    residualRho_
+    (
+        "residualRho",
+        dimDensity,
+        dict.lookupOrDefault("residualRho", small)
+    )
 {
+    if (writeTotal_)
+    {
+        this->writeOpt() = IOobject::AUTO_WRITE;
+    }
     masterSystemList::New(fluid.mesh()).addSystem(*this);
 }
 
@@ -196,6 +215,29 @@ void Foam::masterSystem::addPhase
     phases_.resize(phasei + 1);
     phases_.set(phasei, &phase);
     phaseIndexes_.append(phase.index());
+
+    if (!readResidualAlpha_)
+    {
+        if (phasei == 0)
+        {
+            residualAlpha_ = phase.residualAlpha();
+        }
+        else
+        {
+            residualAlpha_ = max(residualAlpha_, phase.residualAlpha());
+        }
+    }
+    if (!readResidualRho_)
+    {
+        if (phasei == 0)
+        {
+            residualRho_ = phase.residualRho();
+        }
+        else
+        {
+            residualRho_ = max(residualRho_, phase.residualRho());
+        }
+    }
 
     // Print granular quantities only if more than 1 phase is present
     if (phases_.size() > 1 && !alphaPtr_.valid())

@@ -375,6 +375,12 @@ public:
             return thermo().residualAlpha();
         }
 
+        //- Return the residual phase-dsnity for given phase
+        virtual dimensionedScalar residualRho() const
+        {
+            return thermo().residualRho();
+        }
+
         //- Return the residual phase-density for given phase
         virtual dimensionedScalar residualAlphaRho() const
         {
