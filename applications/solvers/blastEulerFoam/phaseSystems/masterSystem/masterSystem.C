@@ -25,6 +25,7 @@ License
 
 #include "masterSystem.H"
 #include "masterSystemList.H"
+#include "packingLimitModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -77,7 +78,19 @@ Foam::masterSystem::masterSystem
         "residualRho",
         dimDensity,
         dict.lookupOrDefault("residualRho", small)
-    )
+    ),
+    alphaMax_
+    (
+        IOobject
+        (
+            IOobject::groupName("alphaMax", group_),
+            fluid.mesh().time().timeName(),
+            fluid.mesh()
+        ),
+        fluid.mesh(),
+        dimensionedScalar(dimless, 1.0)
+    ),
+    minAlphaMax_(1.0)
 {
     if (writeTotal_)
     {
@@ -239,6 +252,19 @@ void Foam::masterSystem::addPhase
         }
     }
 
+    minAlphaMax_ = min(minAlphaMax_, phase.alphaMax());
+
+    if (!packingLimitModel_.valid())
+    {
+        packingLimitModel_ = packingLimitModel::New(dict_, *this);
+    }
+
+    // Print granular quantities only if more than 1 phase is present
+    if (phases_.size() > 1)
+    {
+        alphaMax_.writeOpt() = this->writeOpt();
+    }
+
     // Print granular quantities only if more than 1 phase is present
     if (phases_.size() > 1 && !alphaPtr_.valid())
     {
@@ -304,35 +330,15 @@ bool Foam::masterSystem::contains(const word& phaseName) const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::masterSystem::alphaMax() const
-{
-    scalar minAlphaMax = 1.0;
-    forAll(phases_, phasei)
-    {
-        minAlphaMax = min(minAlphaMax, phases_[phasei].alphaMax());
-    }
-    return volScalarField::New
-    (
-        IOobject::groupName("alphaMax", group_),
-        fluid_.mesh(),
-        minAlphaMax
-    );
-}
-
-
-Foam::scalar Foam::masterSystem::alphaMax(const label) const
-{
-    scalar minAlphaMax = 1.0;
-    forAll(phases_, phasei)
-    {
-        minAlphaMax = min(minAlphaMax, phases_[phasei].alphaMax());
-    }
-    return minAlphaMax;
-}
-
 void Foam::masterSystem::update()
 {
     correctAlpha();
+
+    //- Update packing limit
+    packingLimitModel_->updateAlphaMax(alphaMax_);
+    alphaMax_.max(minAlphaMax_);
+    alphaMax_.correctBoundaryConditions();
+
     if (UPtr_.valid())
     {
         volVectorField& U = UPtr_();

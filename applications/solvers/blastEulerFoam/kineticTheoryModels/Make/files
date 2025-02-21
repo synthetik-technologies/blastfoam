@@ -1,12 +1,6 @@
 kineticTheoryModel/kineticTheoryModel.C
 kineticTheorySystem/kineticTheorySystem.C
 
-packingLimitModel/packingLimitModel/packingLimitModel.C
-packingLimitModel/packingLimitModel/packingLimitModelNew.C
-packingLimitModel/constant/constantPackingLimit.C
-packingLimitModel/FedorsLandel/FedorsLandelPackingLimit.C
-packingLimitModel/YuStandish/YuStandishPackingLimit.C
-
 viscosityModel/viscosityModel/kineticTheoryViscosityModel.C
 viscosityModel/viscosityModel/kineticTheoryViscosityModelNew.C
 viscosityModel/Gidaspow/GidaspowViscosity.C

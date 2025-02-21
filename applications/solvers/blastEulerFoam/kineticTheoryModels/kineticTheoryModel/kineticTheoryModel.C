@@ -280,7 +280,7 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheoryModel::pPrime() const
             (
                 phase(),
                 kineticTheorySystem_.alpha(),
-                kineticTheorySystem_.alphaMax()()
+                kineticTheorySystem_.alphaMax()
             )
           : kineticTheorySystem_.frictionalPressurePrime(phase_)
         );
@@ -331,7 +331,7 @@ void Foam::kineticTheoryModel::correct()
         (
             phase(),
             kineticTheorySystem_.alpha(),
-            kineticTheorySystem_.alphaMax()()
+            kineticTheorySystem_.alphaMax()
         );
         nuFric_ =
             min
@@ -340,7 +340,7 @@ void Foam::kineticTheoryModel::correct()
                 (
                     phase(),
                     kineticTheorySystem_.alpha(),
-                    kineticTheorySystem_.alphaMax()(),
+                    kineticTheorySystem_.alphaMax(),
                     Pfric_
                 )/phase().rho(),
                 maxNut_ - nut_

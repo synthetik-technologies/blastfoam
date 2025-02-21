@@ -99,21 +99,6 @@ Foam::kineticTheorySystem::kineticTheorySystem
     ),
     eTable_(dict_.lookupOrDefault("e", phasePair::scalarTable())),
     CfTable_(dict_.lookupOrDefault("Cf", phasePair::scalarTable())),
-    alphaMax_
-    (
-        IOobject
-        (
-            IOobject::groupName("alphaMax", group_),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fluid.mesh(),
-        dimensionedScalar("one", dimless, 0.0),
-        zeroGradientFvPatchScalarField::typeName
-    ),
-    minAlphaMax_(1.0),
     alphaMinFriction_
     (
         IOobject
@@ -620,24 +605,9 @@ void Foam::kineticTheorySystem::addPhase
     kineticTheoryModels_.set(phasei, &kt);
     Thetas_.set(phasei, &kt.Theta());
 
-    minAlphaMax_ = min(minAlphaMax_, phase.alphaMax());
-
-    if (!packingLimitModel_.valid())
-    {
-        packingLimitModel_ =
-        (
-            kineticTheoryModels::packingLimitModel::New
-            (
-                dict_,
-                *this
-            )
-        );
-    }
-
     // Print granular quantities only if more than 1 phase is present
     if (phases_.size() > 1 && !ThetapPtr_.valid())
     {
-        alphaMax_.writeOpt() = this->writeOpt();
         ThetapPtr_.set
         (
             new volScalarField
@@ -695,10 +665,6 @@ void Foam::kineticTheorySystem::update()
         }
         Thetap /= max(alpha(), residualAlpha_);
     }
-
-    alphaMax_ = max(minAlphaMax_, packingLimitModel_->alphaMax());
-    alphaMax_.correctBoundaryConditions();
-
 
     frictionalStressModel_->update();
     alphaMinFriction_ =

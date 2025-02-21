@@ -27,11 +27,10 @@ License
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::kineticTheoryModels::packingLimitModel>
-Foam::kineticTheoryModels::packingLimitModel::New
+Foam::autoPtr<Foam::packingLimitModel> Foam::packingLimitModel::New
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 {
     word packingLimitModelType
@@ -55,7 +54,7 @@ Foam::kineticTheoryModels::packingLimitModel::New
             << abort(FatalError);
     }
 
-    return autoPtr<packingLimitModel>(cstrIter()(dict, kt));
+    return autoPtr<packingLimitModel>(cstrIter()(dict, system));
 }
 
 

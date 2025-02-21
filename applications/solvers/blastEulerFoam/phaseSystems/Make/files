@@ -2,6 +2,12 @@ phaseSystem/phaseSystem.C
 masterSystem/masterSystem.C
 masterSystem/masterSystemList.C
 
+masterSystem/packingLimitModels/packingLimitModel/packingLimitModel.C
+masterSystem/packingLimitModels/packingLimitModel/packingLimitModelNew.C
+masterSystem/packingLimitModels/constant/constantPackingLimit.C
+masterSystem/packingLimitModels/FedorsLandel/FedorsLandelPackingLimit.C
+masterSystem/packingLimitModels/YuStandish/YuStandishPackingLimit.C
+
 phaseModels/phaseModel.C
 phaseModels/phaseModelNew.C
 

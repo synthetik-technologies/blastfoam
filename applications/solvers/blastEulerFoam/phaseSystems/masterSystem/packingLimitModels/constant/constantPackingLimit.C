@@ -32,8 +32,6 @@ License
 
 namespace Foam
 {
-namespace kineticTheoryModels
-{
 namespace packingLimitModels
 {
     defineTypeNameAndDebug(constant, 0);
@@ -46,18 +44,17 @@ namespace packingLimitModels
     );
 }
 }
-}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModels::constant::constant
+Foam::packingLimitModels::constant::constant
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    packingLimitModel(dict, kt),
+    packingLimitModel(dict, system),
     maxAlpha_
     (
         dict.lookupOrDefault
@@ -71,52 +68,36 @@ Foam::kineticTheoryModels::packingLimitModels::constant::constant
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModels::constant::~constant()
+Foam::packingLimitModels::constant::~constant()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::kineticTheoryModels::packingLimitModels::constant::alphaMax() const
+void Foam::packingLimitModels::constant::updateAlphaMax
+(
+    volScalarField::Internal& alphaMaxI
+) const
 {
-    const UPtrList<phaseModel>& phases(kt_.phases());
+    const UPtrList<phaseModel>& phases(system_.phases());
 
-    scalar alphaMax = maxAlpha_;
-    if (alphaMax < 0)
+    if (maxAlpha_ < 0)
     {
         forAll(phases, phasei)
         {
-            alphaMax = max(phases[phasei].alphaMax(), alphaMax);
+            maxAlpha_ = max(phases[phasei].alphaMax(), maxAlpha_);
         }
     }
-    return
-        volScalarField::New
-        (
-            "alphaMax",
-            mesh_,
-            alphaMax,
-            zeroGradientFvPatchScalarField::typeName
-        );
+    alphaMaxI = maxAlpha_;
 }
 
-Foam::scalar
-Foam::kineticTheoryModels::packingLimitModels::constant::alphaMax
+Foam::scalar Foam::packingLimitModels::constant::alphaMax
 (
     const label celli,
     const SortableList<scalar>& ds
 ) const
 {
-    NotImplemented;
     return maxAlpha_;
-}
-
-
-bool Foam::kineticTheoryModels::packingLimitModels::constant::read()
-{
-    maxAlpha_ = dict_.lookup<scalar>("alphaMax");
-
-    return true;
 }
 
 

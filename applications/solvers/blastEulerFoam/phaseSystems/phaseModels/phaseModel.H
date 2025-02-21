@@ -384,7 +384,7 @@ public:
         //- Return the residual phase-density for given phase
         virtual dimensionedScalar residualAlphaRho() const
         {
-            return residualAlpha()*dimensionedScalar(dimDensity, 1e-3);
+            return residualAlpha()*residualRho();
         }
 
 

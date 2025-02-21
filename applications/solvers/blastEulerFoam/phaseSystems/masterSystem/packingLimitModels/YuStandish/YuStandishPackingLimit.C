@@ -31,8 +31,6 @@ License
 
 namespace Foam
 {
-namespace kineticTheoryModels
-{
 namespace packingLimitModels
 {
     defineTypeNameAndDebug(YuStandish, 0);
@@ -45,45 +43,42 @@ namespace packingLimitModels
     );
 }
 }
-}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModels::YuStandish::YuStandish
+Foam::packingLimitModels::YuStandish::YuStandish
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    packingLimitModel(dict, kt),
-    residualAlpha_(dict_.lookup<scalar>("residualAlpha"))
+    packingLimitModel(dict, system)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModels::YuStandish::~YuStandish()
+Foam::packingLimitModels::YuStandish::~YuStandish()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar
-Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
+Foam::scalar Foam::packingLimitModels::YuStandish::alphaMax
 (
     const label celli,
     const SortableList<scalar>& ds
 ) const
 {
-    scalar alphap = kt_.alpha()[celli];
+    scalar alphap = system_.alpha()[celli];
 
-    if(alphap < kt_.residualAlpha().value())
+    if(alphap < system_.residualAlpha().value())
     {
-        return kt_.minAlphaMax();
+        return system_.minAlphaMax();
     }
 
-    const UPtrList<phaseModel>& phases(kt_.phases());
+    const UPtrList<phaseModel>& phases(system_.phases());
 
     scalar maxAlpha = 1.0;
 
@@ -100,7 +95,7 @@ Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
         scalar alphaMax1 = phase1.alphaMax();
         scalar d1 = ds[i];
 
-        scalar cxi = alpha1/max(alphap, residualAlpha_);
+        scalar cxi = alpha1/max(alphap, system_.residualAlpha().value());
 
         scalar sum = 0.0;
 
@@ -138,14 +133,7 @@ Foam::kineticTheoryModels::packingLimitModels::YuStandish::alphaMax
         }
         maxAlpha = min(maxAlpha, alphaMax1/(1.0 - sum));
     }
-
-    return maxAlpha == 1 ? kt_.minAlphaMax() : maxAlpha;
-}
-
-
-bool Foam::kineticTheoryModels::packingLimitModels::YuStandish::read()
-{
-    return true;
+    return maxAlpha;
 }
 
 

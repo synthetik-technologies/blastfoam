@@ -44,6 +44,8 @@ SourceFiles
 namespace Foam
 {
 
+class packingLimitModel;
+
 /*---------------------------------------------------------------------------*\
                  Class kineticTheorySystem Declaration
 \*---------------------------------------------------------------------------*/
@@ -102,6 +104,17 @@ protected:
 
             //- Residual phase density
             dimensionedScalar residualRho_;
+
+        // Packing limits (optional)
+
+            //- Run-time selected packing limit model
+            autoPtr<packingLimitModel> packingLimitModel_;
+
+            //- Alpha max field
+            volScalarField alphaMax_;
+
+            //- Minimum phase alpha max
+            scalar minAlphaMax_;
 
 
 public:
@@ -196,11 +209,23 @@ public:
         //- Return total volume fraction flux
         tmp<surfaceScalarField> alphaPhi() const;
 
-        //- Return the maximum volume fraction of the system
-        virtual tmp<volScalarField> alphaMax() const;
+        //- Return the minimum max alpha
+        scalar minAlphaMax() const
+        {
+            return minAlphaMax_;
+        }
 
-        //- Return the maximum volume fraction of the system
-        virtual scalar alphaMax(const label) const;
+        //- Return maximum volume fraction
+        virtual const volScalarField& alphaMax() const
+        {
+            return alphaMax_;
+        }
+
+        //- Return maximum volume fraction
+        virtual scalar alphaMax(const label celli) const
+        {
+            return alphaMax_[celli];
+        }
 
         //- Initialize the model after everything is constructed
         virtual void initialize()

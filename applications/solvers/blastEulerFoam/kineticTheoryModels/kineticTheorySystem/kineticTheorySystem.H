@@ -62,7 +62,6 @@ class kineticTheoryModel;
 
 namespace kineticTheoryModels
 {
-    class packingLimitModel;
     class radialModel;
     class viscosityModel;
     class frictionalStressModel;
@@ -92,9 +91,6 @@ class kineticTheorySystem
         //- Table of granular pairs
         List<phasePairKey> pairs_;
 
-        //- Run-time selected packing limit model
-        autoPtr<kineticTheoryModels::packingLimitModel> packingLimitModel_;
-
         //- Run-time selected radial distribution model
         autoPtr<kineticTheoryModels::radialModel> radialModel_;
 
@@ -121,12 +117,6 @@ class kineticTheorySystem
 
             //- Table for coefficient of fricitions based on phase pairs
             phasePair::scalarTable CfTable_;
-
-            //- Maximum packing phase-fraction
-            volScalarField alphaMax_;
-
-            //- Minimum phase alpha max
-            scalar minAlphaMax_;
 
             //- Volume fraction that frictional stressed are turned on
             volScalarField alphaMinFriction_;
@@ -173,24 +163,6 @@ public:
 
         //- Add phase to list of kinetic theory phases.
         virtual void addPhase(phaseModel&);
-
-        //- Return the minimum max alpha
-        scalar minAlphaMax() const
-        {
-            return minAlphaMax_;
-        }
-
-        //- Return maximum volume fraction
-        virtual tmp<volScalarField> alphaMax() const
-        {
-            return alphaMax_;
-        }
-
-        //- Return maximum volume fraction
-        virtual scalar alphaMax(const label celli) const
-        {
-            return alphaMax_[celli];
-        }
 
         //- Return the minimum volume fraction frictional stresses are
         //  present

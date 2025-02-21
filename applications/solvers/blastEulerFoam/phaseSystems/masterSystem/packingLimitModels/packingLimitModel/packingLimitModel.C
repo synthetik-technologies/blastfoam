@@ -33,64 +33,46 @@ License
 
 namespace Foam
 {
-namespace kineticTheoryModels
-{
     defineTypeNameAndDebug(packingLimitModel, 0);
 
     defineRunTimeSelectionTable(packingLimitModel, dictionary);
-}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModel::packingLimitModel
+Foam::packingLimitModel::packingLimitModel
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    dict_(dict),
-    kt_(kt),
-    mesh_(kt.fluid().mesh())
+    system_(system),
+    mesh_(system.fluid().mesh())
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModel::~packingLimitModel()
+Foam::packingLimitModel::~packingLimitModel()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::kineticTheoryModels::packingLimitModel::alphaMax() const
+void Foam::packingLimitModel::updateAlphaMax
+(
+    volScalarField::Internal& alphaMaxI
+) const
 {
-    const UPtrList<phaseModel>& phases(kt_.phases());
-    tmp<volScalarField> tmpAlphaMax
-    (
-        volScalarField::New
-        (
-            "alphaMax",
-            mesh_,
-            dimensionedScalar
-            (
-                "alphaMax",
-                dimless,
-                phases[0].alphaMax()
-            ),
-            zeroGradientFvPatchScalarField::typeName
-        )
-    );
-    volScalarField& alphaMaxField(tmpAlphaMax.ref());
-
+    const UPtrList<phaseModel>& phases(system_.phases());
     if (phases.size() == 1)
     {
-        return tmpAlphaMax;
+        return;
     }
 
-
+    const volScalarField& alphap = system_.alpha();
+    const scalar& rAlpha = system_.residualAlpha().value();
     bool constantDiameters = true;
     forAll(phases, phasei)
     {
@@ -111,25 +93,33 @@ Foam::kineticTheoryModels::packingLimitModel::alphaMax() const
         }
         ds.sort();
 
-        alphaMaxField.primitiveFieldRef() = alphaMax(0, ds);
+        forAll(alphaMaxI, celli)
+        {
+            if (alphap[celli] > rAlpha)
+            {
+                alphaMaxI[celli] = alphaMax(celli, ds);
+            }
+        }
     }
     // Sort particle diameters for every cell
     else
     {
         SortableList<scalar> ds(phases.size());
-        forAll(alphaMaxField, celli)
+        forAll(alphaMaxI, celli)
         {
-            forAll(phases, phasei)
+            if (alphap[celli] > rAlpha)
             {
-                ds[phasei] = phases[phasei].celld(celli);
-            }
-            ds.sort();
+                forAll(phases, phasei)
+                {
+                    ds[phasei] = phases[phasei].celld(celli);
+                }
+                ds.sort();
 
-            alphaMaxField[celli] = alphaMax(celli, ds);
+                alphaMaxI[celli] = alphaMax(celli, ds);
+            }
         }
     }
-    alphaMaxField.correctBoundaryConditions();
-
-    return tmpAlphaMax;
 }
+
+
 // ************************************************************************* //

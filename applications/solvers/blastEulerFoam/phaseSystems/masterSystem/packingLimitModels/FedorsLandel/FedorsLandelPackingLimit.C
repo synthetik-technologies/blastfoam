@@ -30,8 +30,6 @@ License
 
 namespace Foam
 {
-namespace kineticTheoryModels
-{
 namespace packingLimitModels
 {
     defineTypeNameAndDebug(FedorsLandel, 0);
@@ -44,32 +42,29 @@ namespace packingLimitModels
     );
 }
 }
-}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::FedorsLandel
+Foam::packingLimitModels::FedorsLandel::FedorsLandel
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& system
 )
 :
-    packingLimitModel(dict, kt),
-    residualAlpha_(dict_.lookup<scalar>("residualAlpha"))
+    packingLimitModel(dict, system)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::~FedorsLandel()
+Foam::packingLimitModels::FedorsLandel::~FedorsLandel()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar
-Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::alphaMax
+Foam::scalar Foam::packingLimitModels::FedorsLandel::alphaMax
 (
     const label celli,
     const SortableList<scalar>& ds
@@ -83,9 +78,9 @@ Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::alphaMax
             << exit(FatalError);
     }
 
-     scalar alphap = kt_.alpha()[celli];
+     scalar alphap = system_.alpha()[celli];
 
-    const UPtrList<phaseModel>& phases(kt_.phases());
+    const UPtrList<phaseModel>& phases(system_.phases());
 
     if (alphap < phases[0].residualAlpha().value())
     {
@@ -97,7 +92,7 @@ Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::alphaMax
     scalar alpha1 = phase1[celli];
     scalar alphaMax1 = phase1.alphaMax();
     scalar d1 = ds[0];
-    scalar cx1 = alpha1/max(alphap, residualAlpha_);
+    scalar cx1 = alpha1/max(alphap, system_.residualAlpha().value());
 
     scalar alphaMax2 = phases[1].alphaMax();
     scalar d2 = ds[1];
@@ -134,12 +129,6 @@ Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::alphaMax
           + alphaMax2
         );
     }
-}
-
-
-bool Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::read()
-{
-    return true;
 }
 
 

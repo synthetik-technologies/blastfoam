@@ -1283,8 +1283,7 @@ void Foam::phaseSystem::printInfo() const
         if (sys.polydisperse())
         {
             const volScalarField& alpha = sys.alpha();
-            tmp<volScalarField> talphaMax(sys.alphaMax());
-            const volScalarField& alphaMax = talphaMax();
+            const volScalarField& alphaMax = sys.alphaMax();
             tmp<volScalarField> talphaByAlphaMax(alpha/alphaMax);
             const volScalarField& alphaByAlphaMax = talphaByAlphaMax();
 

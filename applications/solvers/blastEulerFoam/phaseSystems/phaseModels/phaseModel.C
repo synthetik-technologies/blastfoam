@@ -393,7 +393,6 @@ void Foam::phaseModel::solve()
 
         alpha -= dT*deltaAlpha;
         alpha.max(0);
-        alpha.min(alphaMax_);
         alpha.correctBoundaryConditions();
     }
 }
