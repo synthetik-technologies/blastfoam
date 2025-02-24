@@ -1275,6 +1275,16 @@ void Foam::phaseSystem::printInfo() const
                 << ' ' << max(p).value()
                 << ' ' << min(p).value() << endl;
         }
+
+        tmp<volScalarField> tTs(phaseModels_[phasei].Ts());
+        const volScalarField& Ts = tTs();
+        if ((&T) != (&Ts))
+        {
+            Info<< indent
+                << Ts.name() << " max, min = "
+                << ' ' << max(Ts).value()
+                << ' ' << min(Ts).value() << endl;
+        }
         Info<< endl << decrIndent;
     }
     forAll(master_, i)
