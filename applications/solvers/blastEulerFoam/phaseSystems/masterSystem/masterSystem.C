@@ -26,6 +26,7 @@ License
 #include "masterSystem.H"
 #include "masterSystemList.H"
 #include "packingLimitModel.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -88,7 +89,8 @@ Foam::masterSystem::masterSystem
             fluid.mesh()
         ),
         fluid.mesh(),
-        dimensionedScalar(dimless, 1.0)
+        dimensionedScalar(dimless, 1.0),
+        extrapolatedCalculatedFvPatchScalarField::typeName
     ),
     minAlphaMax_(1.0)
 {
