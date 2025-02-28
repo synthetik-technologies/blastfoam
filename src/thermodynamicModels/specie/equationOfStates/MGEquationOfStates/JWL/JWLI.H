@@ -188,7 +188,7 @@ Foam::scalar Foam::JWL<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return omega_ + 1.0;
+    return rho < rhoCutOff_ ? gammaIdeal_ : omega_ + 1.0;
 }
 
 
@@ -202,8 +202,19 @@ Foam::scalar Foam::JWL<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h(((omega_ + 1.0)*p + Pi(rho, e))/(omega_*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*omega_;
+    if (rho < 1e-10)
+    {
+        return small;
+    }
+    else if (rho < rhoCutOff_)
+    {
+        return p*gammaIdeal_/max(rho, 1e-10);
+    }
+    else
+    {
+        scalar h(((omega_ + 1.0)*p + Pi(rho, e))/(omega_*rho));
+        return (h - delta(p, rho, e))*omega_;
+    }
 }
 
 
@@ -294,6 +305,13 @@ Foam::scalar Foam::JWL<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return
+            this->eBased_
+          ? (gammaIdeal_ - 1.0)*CpCv
+          : CpCv*(gammaIdeal_ - 1.0)/gammaIdeal_;
+    };
     return this->eBased_ ? omega_*CpCv : CpCv*omega_/(omega_ + 1.0);
 }
 
