@@ -72,7 +72,7 @@ public:
     // Constructors
 
         //- Construct from components
-        Schaeffer(const dictionary& dict, const kineticTheorySystem& kt);
+        Schaeffer(const dictionary& dict, const masterSystem& master);
 
 
     //- Destructor

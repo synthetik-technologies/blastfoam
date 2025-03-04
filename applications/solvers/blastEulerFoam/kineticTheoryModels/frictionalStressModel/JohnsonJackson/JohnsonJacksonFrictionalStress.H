@@ -83,7 +83,7 @@ public:
     // Constructors
 
         //- Construct from components
-        JohnsonJackson(const dictionary& dict, const kineticTheorySystem& kt);
+        JohnsonJackson(const dictionary& dict, const masterSystem& master);
 
 
     //- Destructor

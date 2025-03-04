@@ -93,7 +93,7 @@ public:
     // Constructors
 
         //- Construct from components
-        Princeton(const dictionary& dict, const kineticTheorySystem& kt);
+        Princeton(const dictionary& dict, const masterSystem& master);
 
 
     //- Destructor

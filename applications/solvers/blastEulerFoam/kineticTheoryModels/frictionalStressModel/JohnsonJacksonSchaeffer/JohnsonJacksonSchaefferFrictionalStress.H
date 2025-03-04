@@ -87,7 +87,7 @@ public:
     // Constructors
 
         //- Construct from components
-        JohnsonJacksonSchaeffer(const dictionary& dict, const kineticTheorySystem& kt);
+        JohnsonJacksonSchaeffer(const dictionary& dict, const masterSystem& master);
 
 
     //- Destructor

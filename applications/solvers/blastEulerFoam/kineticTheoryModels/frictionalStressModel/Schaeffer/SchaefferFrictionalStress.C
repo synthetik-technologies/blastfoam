@@ -52,10 +52,10 @@ namespace frictionalStressModels
 Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::Schaeffer
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& master
 )
 :
-    frictionalStressModel(dict, kt),
+    frictionalStressModel(dict, master),
     phi_("phi", dimless, coeffDict()),
     alphaMinFrictionByAlphap_
     (

@@ -55,10 +55,10 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::
 Princeton
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& master
 )
 :
-    frictionalStressModel(dict, kt),
+    frictionalStressModel(dict, master),
     Fr_("Fr", dimensionSet(1, -1, -2, 0, 0), coeffDict()),
     eta_("eta", dimless, coeffDict()),
     p_("p", dimless, coeffDict()),
