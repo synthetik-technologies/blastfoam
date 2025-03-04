@@ -62,7 +62,8 @@ Foam::packingLimitModel::~packingLimitModel()
 
 void Foam::packingLimitModel::updateAlphaMax
 (
-    volScalarField::Internal& alphaMaxI
+    volScalarField::Internal& alphaMaxI,
+    const scalar defaultAlphaMax
 ) const
 {
     const UPtrList<phaseModel>& phases(system_.phases());
@@ -99,6 +100,10 @@ void Foam::packingLimitModel::updateAlphaMax
             {
                 alphaMaxI[celli] = alphaMax(celli, ds);
             }
+            else
+            {
+                alphaMaxI[celli] = defaultAlphaMax;
+            }
         }
     }
     // Sort particle diameters for every cell
@@ -116,6 +121,10 @@ void Foam::packingLimitModel::updateAlphaMax
                 ds.sort();
 
                 alphaMaxI[celli] = alphaMax(celli, ds);
+            }
+            else
+            {
+                alphaMaxI[celli] = defaultAlphaMax;
             }
         }
     }

@@ -173,7 +173,10 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 (
                     dragModelIter()->K(nodei, nodej)
                 );
-                Kd += dragCoeff;
+                if (!phase2.granular())
+                {
+                    Kd += dragCoeff;
+                }
 
                 if (!dragODE_.valid())
                 {
@@ -1029,9 +1032,9 @@ void Foam::phaseSystem::decode()
         }
 
         // find largest volume fraction and set to 1-sum
+        SortableList<scalar> alphas(phaseModels_.size(), -1);
         forAll(rho_, celli)
         {
-            SortableList<scalar> alphas(phaseModels_.size(), 0.0);
             scalar sumAlpha = 0.0;
             forAll(phaseModels_, phasei)
             {
@@ -1051,7 +1054,17 @@ void Foam::phaseSystem::decode()
                 }
                 sumAlpha += phaseModels_[phasei][celli];
             }
+
             alphas.reverseSort();
+
+            if (sumAlpha > 1)
+            {
+                for (label i = 1; i < alphas.size(); i++)
+                {
+                    const label phasei = alphas.indices()[i];
+                    phaseModels_[phasei][celli] /= sumAlpha;
+                }
+            }
 
             const label fixedPhase = alphas.indices()[0];
             phaseModels_[fixedPhase][celli] =

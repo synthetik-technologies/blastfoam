@@ -182,6 +182,12 @@ public:
         //- Return true if phase name is in the system
         bool contains(const word&) const;
 
+        //- Return true if phase is in the system
+        label whichPhase(const phaseModel&) const;
+
+        //- Return true if phase name is in the system
+        label whichPhase(const word&) const;
+
         //- Return residual alpha
         const dimensionedScalar& residualAlpha() const
         {
@@ -248,6 +254,24 @@ public:
         //- Remove stored fields
         virtual void clear()
         {}
+
+        //- Write using setting from DB
+        virtual bool write(const bool write = true) const
+        {
+            return true;
+        }
+
+        //- Write using given format, version and compression
+        virtual bool writeObject
+        (
+            IOstream::streamFormat,
+            IOstream::versionNumber,
+            IOstream::compressionType,
+            const bool write
+        ) const
+        {
+            return true;
+        }
 
         virtual bool writeData(Ostream&) const
         {

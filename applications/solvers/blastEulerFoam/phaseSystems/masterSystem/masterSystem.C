@@ -308,36 +308,47 @@ void Foam::masterSystem::addPhase
 
 bool Foam::masterSystem::contains(const phaseModel& phase) const
 {
-    forAll(phases_, phasei)
-    {
-        if (&phases_[phasei] == &phase)
-        {
-            return true;
-        }
-    }
-    return false;
+    return whichPhase(phase) >= 0;
 }
 
 
 bool Foam::masterSystem::contains(const word& phaseName) const
 {
+    return whichPhase(phaseName) >= 0;
+}
+
+
+Foam::label Foam::masterSystem::whichPhase(const phaseModel& phase) const
+{
+    forAll(phases_, phasei)
+    {
+        if (&phases_[phasei] == &phase)
+        {
+            return phasei;
+        }
+    }
+    return -1;
+}
+
+
+Foam::label Foam::masterSystem::whichPhase(const word& phaseName) const
+{
     forAll(phases_, phasei)
     {
         if (phases_[phasei].name() == phaseName)
         {
-            return true;
+            return phasei;
         }
     }
-    return false;
+    return -1;
 }
-
 
 void Foam::masterSystem::update()
 {
     correctAlpha();
 
     //- Update packing limit
-    packingLimitModel_->updateAlphaMax(alphaMax_);
+    packingLimitModel_->updateAlphaMax(alphaMax_, minAlphaMax_);
     alphaMax_.max(minAlphaMax_);
     alphaMax_.correctBoundaryConditions();
 

@@ -112,7 +112,8 @@ public:
         //- Return the maximum packing limit
         virtual void updateAlphaMax
         (
-            volScalarField::Internal& alphaMaxField
+            volScalarField::Internal& alphaMaxField,
+            const scalar defaultAlphaMax
         ) const;
 
         // Return the packing limit for celli
