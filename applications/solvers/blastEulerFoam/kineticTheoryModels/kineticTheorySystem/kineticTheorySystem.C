@@ -452,12 +452,26 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::frictionalPressure
     const phaseModel& phase
 ) const
 {
-    return frictionalStressModel_->frictionalPressure
-    (
-        phase,
-        this->alpha(),
-        alphaMax_
-    );
+    if (this->polydisperse())
+    {
+        return
+            phase/max(this->alpha(), this->residualAlpha())
+           *frictionalStressModel_->frictionalPressure
+            (
+                phase,
+                this->alpha(),
+                alphaMax_
+            );
+    }
+    else
+    {
+        return frictionalStressModel_->frictionalPressure
+        (
+            phase,
+            this->alpha(),
+            alphaMax_
+        );
+    }
 }
 
 
@@ -467,12 +481,35 @@ Foam::kineticTheorySystem::frictionalPressurePrime
     const phaseModel& phase
 ) const
 {
-    return frictionalStressModel_->frictionalPressurePrime
-    (
-        phase,
-        this->alpha(),
-        alphaMax_
-    );
+    if (this->polydisperse())
+    {
+        tmp<volScalarField> tstabAlpha(max(this->alpha(), this->residualAlpha()));
+        const volScalarField& stabAlpha = tstabAlpha();
+        return
+            (this->alpha() - phase)/sqr(stabAlpha)
+           *frictionalStressModel_->frictionalPressure
+            (
+                phase,
+                this->alpha(),
+                alphaMax_
+            )
+          + phase/stabAlpha
+           *frictionalStressModel_->frictionalPressurePrime
+            (
+                phase,
+                this->alpha(),
+                alphaMax_
+            );
+    }
+    else
+    {
+        return frictionalStressModel_->frictionalPressurePrime
+        (
+            phase,
+            this->alpha(),
+            alphaMax_
+        );
+    }
 }
 
 
@@ -571,7 +608,7 @@ Foam::kineticTheorySystem::dissipationSource
     return volScalarField::New
     (
         "dissipationSource",
-      - (
+        (
             (
                 3.0/phase1.d()
                *sqrt
