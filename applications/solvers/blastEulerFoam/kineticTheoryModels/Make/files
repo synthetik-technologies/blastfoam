@@ -23,6 +23,7 @@ radialModel/Gao/GaoRadial.C
 radialModel/CarnahanStarling/CarnahanStarlingRadial.C
 radialModel/LunSavage/LunSavageRadial.C
 radialModel/SinclairJackson/SinclairJacksonRadial.C
+radialModel/Huilin/HuilinRadial.C
 
 granularPressureModel/granularPressureModel/granularPressureModel.C
 granularPressureModel/granularPressureModel/granularPressureModelNew.C

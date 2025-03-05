@@ -22,17 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::kineticTheoryModels::radialModels::Gao
+    Foam::kineticTheoryModels::radialModels::Huilin
 
 Description
 
 SourceFiles
-    GaoRadial.C
+    HuilinRadial.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef GaoRadial_H
-#define GaoRadial_H
+#ifndef HuilinRadial_H
+#define HuilinRadial_H
 
 #include "radialModel.H"
 
@@ -46,10 +46,10 @@ namespace radialModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class Gao Declaration
+                           Class Huilin Declaration
 \*---------------------------------------------------------------------------*/
 
-class Gao
+class Huilin
 :
     public radialModel
 {
@@ -60,13 +60,13 @@ class Gao
 public:
 
     //- Runtime type information
-    TypeName("Gao");
+    TypeName("Huilin");
 
 
     // Constructors
 
         //- Construct from components
-        Gao
+        Huilin
         (
             const dictionary& dict,
             const masterSystem& system
@@ -74,7 +74,7 @@ public:
 
 
     //- Destructor
-    virtual ~Gao();
+    virtual ~Huilin();
 
 
     // Member Functions
