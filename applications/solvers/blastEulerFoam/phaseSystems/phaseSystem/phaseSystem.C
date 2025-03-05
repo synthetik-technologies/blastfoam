@@ -1031,50 +1031,99 @@ void Foam::phaseSystem::decode()
             phaseModels_[phasei].correctVolumeFraction();
         }
 
-        // find largest volume fraction and set to 1-sum
-        SortableList<scalar> alphas(phaseModels_.size(), -1);
-        forAll(rho_, celli)
         {
-            scalar sumAlpha = 0.0;
+            label fixedPhase = -1;
+            label nFluids = 0;
             forAll(phaseModels_, phasei)
             {
-                phaseModels_[phasei][celli] =
-                    Foam::max
-                    (
-                        Foam::min
-                        (
-                            phaseModels_[phasei][celli],
-                            1.0
-                        ),
-                        0.0
-                    );
                 if (!phaseModels_[phasei].slavePressure())
                 {
-                    alphas[phasei] = phaseModels_[phasei][celli];
+                    nFluids++;
+                    fixedPhase = phasei;
                 }
-                sumAlpha += phaseModels_[phasei][celli];
             }
 
-            alphas.reverseSort();
-
-            if (sumAlpha > 1)
+            if (nFluids == 1)
             {
-                for (label i = 1; i < alphas.size(); i++)
+                forAll(rho_, celli)
                 {
-                    const label phasei = alphas.indices()[i];
-                    phaseModels_[phasei][celli] /= sumAlpha;
+                    scalar sumAlpha = 0.0;
+                    forAll(phaseModels_, phasei)
+                    {
+                        if (phasei != fixedPhase)
+                        {
+                            scalar& alpha = phaseModels_[phasei][celli];
+                            alpha = max(min(alpha, 1.0), 0.0);
+                            sumAlpha += alpha;
+                        }
+                    }
+                    if (sumAlpha > 1)
+                    {
+                        forAll(phaseModels_, phasei)
+                        {
+                            phaseModels_[phasei][celli] /= sumAlpha;
+                        }
+                        phaseModels_[fixedPhase][celli] = 0.0;
+                    }
+                    else
+                    {
+                        phaseModels_[fixedPhase][celli] = 1.0 - sumAlpha;
+                    }
                 }
             }
+            else
+            {
+                NotImplemented;
+                // // find largest volume fraction and set to 1-sum
+                // SortableList<scalar> alphas(phaseModels_.size(), -1);
+                // forAll(rho_, celli)
+                // {
+                //     forAll(phaseModels_, phasei)
+                //     {
+                //         phaseModels_[phasei][celli] =
+                //             Foam::max
+                //             (
+                //                 Foam::min
+                //                 (
+                //                     phaseModels_[phasei][celli],
+                //                     1.0
+                //                 ),
+                //                 0.0
+                //             );
+                //         if (phaseModels_[phasei].slavePressure())
+                //         {
+                //             alphas[phasei] = phaseModels_[phasei][celli];
+                //             sumAlpha += phaseModels_[phasei][celli];
+                //         }
+                //         else
+                //         {
+                //             if (fixedPhase < 0)
+                //             {
+                //                 fixedPhase
+                //                 alphas[phasei] = great;
+                //         }
+                //     }
+                //
+                // alphas.reverseSort();
+                //
+                // if (sumAlpha > 1)
+                // {
+                //     for (label i = 1; i < alphas.size(); i++)
+                //     {
+                //         const label phasei = alphas.indices()[i];
+                //         phaseModels_[phasei][celli] /= sumAlpha;
+                //     }
+                // }
+            }
 
-            const label fixedPhase = alphas.indices()[0];
-            phaseModels_[fixedPhase][celli] =
-                1.0
-              - (sumAlpha - phaseModels_[fixedPhase][celli]);
+            // const label fixedPhase = alphas.indices()[0];
+            // phaseModels_[fixedPhase][celli] = 1.0 - sumAlpha;
         }
 
         forAll(phaseModels_, phasei)
         {
-            phaseModels_[phasei].correctVolumeFraction();
+            // phaseModels_[phasei].correctVolumeFraction();
+            phaseModels_[phasei].correctBoundaryConditions();
             phaseModels_[phasei].decode();
         }
     }
