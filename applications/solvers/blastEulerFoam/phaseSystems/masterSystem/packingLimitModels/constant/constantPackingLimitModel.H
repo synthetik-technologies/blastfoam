@@ -22,82 +22,52 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::packingLimitModel
+    Foam::packingLimitModels::constant
+
+Description
+    Constant packing limit
 
 SourceFiles
-    packingLimitModel.C
-    packingLimitModelNew.C
+    constantPackingLimitModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef packingLimitModel_H
-#define packingLimitModel_H
+#ifndef constantPackingLimitModel_H
+#define constantPackingLimitModel_H
 
-#include "dictionary.H"
-#include "volFields.H"
-#include "dimensionedTypes.H"
-#include "runTimeSelectionTables.H"
-#include "phaseModel.H"
-#include "masterSystem.H"
-#include "SortableList.H"
+#include "packingLimitModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace packingLimitModels
+{
 
 /*---------------------------------------------------------------------------*\
-                           Class packingLimitModel Declaration
+               Class constantPackingLimit Declaration
 \*---------------------------------------------------------------------------*/
 
-class packingLimitModel
+class constant
+:
+    public packingLimitModel
 {
-protected:
+    // Private data
 
-    // Protected data
-
-        //- Const reference to kinetic theories
-        const masterSystem& system_;
-
-        //- Const reference to mesh
-        const fvMesh& mesh_;
-
-        //- Minimum max volume fraction
-        scalar minAlphaMax_;
+        //- Maximum particle volume fraction
+        mutable scalar maxAlpha_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("packingLimitModel");
-
-    // Declare runtime constructor selection table
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        packingLimitModel,
-        dictionary,
-        (
-            const dictionary& dict,
-            const masterSystem& system
-        ),
-        (dict, system)
-    );
+    TypeName("constant");
 
 
     // Constructors
 
         //- Construct from components
-        packingLimitModel
-        (
-            const dictionary& dict,
-            const masterSystem& system
-        );
-
-
-    // Selectors
-
-        static autoPtr<packingLimitModel> New
+        constant
         (
             const dictionary& dict,
             const masterSystem& system
@@ -105,44 +75,27 @@ public:
 
 
     //- Destructor
-    virtual ~packingLimitModel();
+    virtual ~constant();
 
 
-    //- Disallow default bitwise copy construct
-    packingLimitModel(const packingLimitModel&) = delete;
+    // Member functions
 
-    // Member Functions
+        //- Update the maximum packing limit
+        virtual void updateAlphaMax(volScalarField::Internal& alphaMaxI) const;
 
-        //- Return the maximum packing limit
-        virtual void updateAlphaMax
-        (
-            volScalarField::Internal& alphaMaxField
-        ) const;
-
-        // Return the packing limit for celli
+        //- Return packing limit
         virtual scalar alphaMax
         (
             const label celli,
             SortableList<scalar>& ds,
             const bool fixedDs
-        ) const = 0;
-
-        //- Return minimum alphaMax
-        inline scalar minAlphaMax() const
-        {
-            return minAlphaMax_;
-        }
-
-
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const packingLimitModel&) = delete;
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace packingLimitModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

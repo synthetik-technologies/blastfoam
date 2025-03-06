@@ -113,9 +113,6 @@ protected:
             //- Alpha max field
             volScalarField alphaMax_;
 
-            //- Minimum phase alpha max
-            scalar minAlphaMax_;
-
 
 public:
 
@@ -216,10 +213,7 @@ public:
         tmp<surfaceScalarField> alphaPhi() const;
 
         //- Return the minimum max alpha
-        scalar minAlphaMax() const
-        {
-            return minAlphaMax_;
-        }
+        scalar minAlphaMax() const;
 
         //- Return maximum volume fraction
         virtual const volScalarField& alphaMax() const
@@ -234,8 +228,7 @@ public:
         }
 
         //- Initialize the model after everything is constructed
-        virtual void initialize()
-        {}
+        virtual void initialize();
 
         //- Correct total volume fraction
         virtual void correctAlpha();

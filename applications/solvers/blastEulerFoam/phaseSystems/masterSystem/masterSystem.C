@@ -91,8 +91,7 @@ Foam::masterSystem::masterSystem
         fluid.mesh(),
         dimensionedScalar(dimless, 1.0),
         extrapolatedCalculatedFvPatchScalarField::typeName
-    ),
-    minAlphaMax_(1.0)
+    )
 {
     if (writeTotal_)
     {
@@ -221,55 +220,40 @@ const Foam::labelList& Foam::masterSystem::phaseIndexes() const
 }
 
 
-void Foam::masterSystem::addPhase
-(
-    phaseModel& phase
-)
+Foam::scalar Foam::masterSystem::minAlphaMax() const
 {
-    const label phasei = phases_.size();
-    phases_.resize(phasei + 1);
-    phases_.set(phasei, &phase);
-    phaseIndexes_.append(phase.index());
+    return packingLimitModel_->minAlphaMax();
+}
 
+
+void Foam::masterSystem::initialize()
+{
     if (!readResidualAlpha_)
     {
-        if (phasei == 0)
+        residualAlpha_ = phases_[0].residualAlpha();
+        for (label phasei = 1; phasei < phases_.size(); phasei++)
         {
-            residualAlpha_ = phase.residualAlpha();
-        }
-        else
-        {
-            residualAlpha_ = max(residualAlpha_, phase.residualAlpha());
+            residualAlpha_ =
+                max(residualAlpha_, phases_[phasei].residualAlpha());
         }
     }
     if (!readResidualRho_)
     {
-        if (phasei == 0)
+        residualRho_ = phases_[0].residualRho();
+        for (label phasei = 1; phasei < phases_.size(); phasei++)
         {
-            residualRho_ = phase.residualRho();
-        }
-        else
-        {
-            residualRho_ = max(residualRho_, phase.residualRho());
+            residualRho_ =
+                max(residualRho_, phases_[phasei].residualRho());
         }
     }
 
-    minAlphaMax_ = min(minAlphaMax_, phase.alphaMax());
-
-    if (!packingLimitModel_.valid())
-    {
-        packingLimitModel_ = packingLimitModel::New(dict_, *this);
-    }
-
-    // Print granular quantities only if more than 1 phase is present
-    if (phases_.size() > 1)
-    {
-        alphaMax_.writeOpt() = this->writeOpt();
-    }
+    packingLimitModel_ = packingLimitModel::New(dict_, *this);
 
     // Print granular quantities only if more than 1 phase is present
     if (phases_.size() > 1 && !alphaPtr_.valid())
     {
+        alphaMax_.writeOpt() = this->writeOpt();
+
         alphaPtr_.set
         (
             new volScalarField
@@ -302,6 +286,24 @@ void Foam::masterSystem::addPhase
                 dimensionedVector("0", dimVelocity, Zero)
             )
         );
+    }
+}
+
+
+void Foam::masterSystem::addPhase
+(
+    phaseModel& phase
+)
+{
+    const label phasei = phases_.size();
+    phases_.resize(phasei + 1);
+    phases_.set(phasei, &phase);
+    phaseIndexes_.append(phase.index());
+
+    // Print granular quantities only if more than 1 phase is present
+    if (phases_.size() > 1)
+    {
+        alphaMax_.writeOpt() = this->writeOpt();
     }
 }
 
@@ -348,9 +350,11 @@ void Foam::masterSystem::update()
     correctAlpha();
 
     //- Update packing limit
-    packingLimitModel_->updateAlphaMax(alphaMax_, minAlphaMax_);
-    alphaMax_.max(minAlphaMax_);
-    alphaMax_.correctBoundaryConditions();
+    if (phases_.size() > 1)
+    {
+        packingLimitModel_->updateAlphaMax(alphaMax_);
+        alphaMax_.correctBoundaryConditions();
+    }
 
     if (UPtr_.valid())
     {

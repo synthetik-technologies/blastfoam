@@ -22,18 +22,26 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::packingLimitModels::constant
+    Foam::packingLimitModels::FedorsLandel
 
 Description
-    Constant packing limit
+    Packing limit for a bi-disperse particle mixture
+
+    Reference:
+    \verbatim
+        Fedors, R. F. and Landel, R. F. (1979).
+        "An Empirical method of estimating the void fraction in mixtures of
+        uniform particles of different size."
+        Powder Technology 23(2), 225-231
+    \endverbatim
 
 SourceFiles
-    constantPackingLimit.C
+    FedorsLandelPackingLimitModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantPackingLimit_H
-#define constantPackingLimit_H
+#ifndef FedorsLandelPackingLimitModel_H
+#define FedorsLandelPackingLimitModel_H
 
 #include "packingLimitModel.H"
 
@@ -45,29 +53,26 @@ namespace packingLimitModels
 {
 
 /*---------------------------------------------------------------------------*\
-               Class constantPackingLimit Declaration
+                        Class FedorsLandel Declaration
 \*---------------------------------------------------------------------------*/
 
-class constant
+class FedorsLandel
 :
     public packingLimitModel
 {
     // Private data
 
-        //- Maximum particle volume fraction
-        mutable scalar maxAlpha_;
-
 
 public:
 
     //- Runtime type information
-    TypeName("constant");
+    TypeName("FedorsLandel");
 
 
     // Constructors
 
         //- Construct from components
-        constant
+        FedorsLandel
         (
             const dictionary& dict,
             const masterSystem& system
@@ -75,22 +80,17 @@ public:
 
 
     //- Destructor
-    virtual ~constant();
+    virtual ~FedorsLandel();
 
 
     // Member functions
-
-        //- Update the maximum packing limit
-        virtual void updateAlphaMax
-        (
-            volScalarField::Internal& alphaMaxI
-        ) const;
 
         //- Return packing limit
         virtual scalar alphaMax
         (
             const label celli,
-            const SortableList<scalar>& ds
+            SortableList<scalar>& ds,
+            const bool fixedDs
         ) const;
 };
 

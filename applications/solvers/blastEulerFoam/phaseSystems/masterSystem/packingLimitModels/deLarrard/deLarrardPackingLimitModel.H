@@ -22,27 +22,27 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::kineticTheoryModels::packingLimitModels::YuStandish
+    Foam::kineticTheoryModels::packingLimitModels::deLarrard
 
 Description
-
+TODO
     Reference:
     \verbatim
-        Yu, A. B. and Standish, N. (1987).
+        deLarrard, A. B. and Standish, N. (1987).
         "Porosity calculations of multi-component mixtures of spherical
         particles."
         Powder Technology 52(3), 233-241
     \endverbatim
 
 SourceFiles
-    YuStandishPackingLimit.C
+    deLarrardPackingLimitModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef YuStandishPackingLimit_H
-#define YuStandishPackingLimit_H
+#ifndef deLarrardPackingLimitModel_H
+#define deLarrardPackingLimitModel_H
 
-#include "packingLimitModel.H"
+#include "binaryPackingLimitModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,26 +52,30 @@ namespace packingLimitModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class YuStandish Declaration
+                        Class deLarrard Declaration
 \*---------------------------------------------------------------------------*/
 
-class YuStandish
+class deLarrard
 :
-    public packingLimitModel
+    public binary
 {
-    // Private data
+protected:
+// Protected member functions
 
+    //- Interaction functions
+    virtual scalar aij(const scalar rij) const;
+    virtual scalar bij(const scalar rij) const;
 
 public:
 
     //- Runtime type information
-    TypeName("YuStandish");
+    TypeName("deLarrard");
 
 
     // Constructors
 
         //- Construct from components
-        YuStandish
+        deLarrard
         (
             const dictionary& dict,
             const masterSystem& system
@@ -79,17 +83,7 @@ public:
 
 
     //- Destructor
-    virtual ~YuStandish();
-
-
-    // Member functions
-
-        //- Return packing limit
-        virtual scalar alphaMax
-        (
-            const label celli,
-            const SortableList<scalar>& ds
-        ) const;
+    virtual ~deLarrard();
 };
 
 

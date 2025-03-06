@@ -36,6 +36,20 @@ namespace Foam
     defineTypeNameAndDebug(packingLimitModel, 0);
 
     defineRunTimeSelectionTable(packingLimitModel, dictionary);
+
+template<class T>
+class listMaxEqOp
+{
+public:
+
+    void operator()(List<T>& x, const List<T>& y) const
+    {
+        forAll(x, i)
+        {
+            x[i] = max(x[i], y[i]);
+        }
+    }
+};
 }
 
 
@@ -48,8 +62,14 @@ Foam::packingLimitModel::packingLimitModel
 )
 :
     system_(system),
-    mesh_(system.fluid().mesh())
-{}
+    mesh_(system.fluid().mesh()),
+    minAlphaMax_(1.0)
+{
+    forAll(system_.phases(), phasei)
+    {
+        minAlphaMax_ = min(minAlphaMax_, system_.phases()[phasei].alphaMax());
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -62,13 +82,13 @@ Foam::packingLimitModel::~packingLimitModel()
 
 void Foam::packingLimitModel::updateAlphaMax
 (
-    volScalarField::Internal& alphaMaxI,
-    const scalar defaultAlphaMax
+    volScalarField::Internal& alphaMaxI
 ) const
 {
     const UPtrList<phaseModel>& phases(system_.phases());
     if (phases.size() == 1)
     {
+        alphaMaxI = minAlphaMax_;
         return;
     }
 
@@ -84,48 +104,39 @@ void Foam::packingLimitModel::updateAlphaMax
     }
 
     // Only sort diameters in one cell to save time
+    SortableList<scalar> ds(phases.size(), 0.0);
     if (constantDiameters)
     {
         // Sort diameters from largest to smallest
-        SortableList<scalar> ds(phases.size());
         forAll(phases, phasei)
         {
-            ds[phasei] = phases[phasei].d()()[0];
+            if (alphap.size() && Pstream::myProcNo() == 1)
+            {
+                ds[phasei] = phases[phasei].celld(0);
+            }
         }
-        ds.sort();
+        ds.reverseSort();
 
-        forAll(alphaMaxI, celli)
-        {
-            if (alphap[celli] > rAlpha)
-            {
-                alphaMaxI[celli] = alphaMax(celli, ds);
-            }
-            else
-            {
-                alphaMaxI[celli] = defaultAlphaMax;
-            }
-        }
+        Pstream::combineGather(ds, listMaxEqOp<scalar>());
+        Pstream::scatter(ds);
     }
-    // Sort particle diameters for every cell
-    else
-    {
-        SortableList<scalar> ds(phases.size());
-        forAll(alphaMaxI, celli)
-        {
-            if (alphap[celli] > rAlpha)
-            {
-                forAll(phases, phasei)
-                {
-                    ds[phasei] = phases[phasei].celld(celli);
-                }
-                ds.sort();
 
-                alphaMaxI[celli] = alphaMax(celli, ds);
-            }
-            else
+    forAll(alphaMaxI, celli)
+    {
+        if (alphap[celli] > rAlpha)
+        {
+            forAll(phases, phasei)
             {
-                alphaMaxI[celli] = defaultAlphaMax;
+                ds[phasei] = phases[phasei].celld(celli);
             }
+            ds.sort();
+
+            const scalar aM = alphaMax(celli, ds, constantDiameters);
+            alphaMaxI[celli] = aM < 0 ? minAlphaMax_ : aM;
+        }
+        else
+        {
+            alphaMaxI[celli] = minAlphaMax_;
         }
     }
 }

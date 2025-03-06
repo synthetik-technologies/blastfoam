@@ -22,82 +22,56 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::packingLimitModel
+    Foam::kineticTheoryModels::packingLimitModels::YuStandish
+
+Description
+
+    Reference:
+    \verbatim
+        Yu, A. B. and Standish, N. (1987).
+        "Porosity calculations of multi-component mixtures of spherical
+        particles."
+        Powder Technology 52(3), 233-241
+    \endverbatim
 
 SourceFiles
-    packingLimitModel.C
-    packingLimitModelNew.C
+    YuStandishPackingLimitModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef packingLimitModel_H
-#define packingLimitModel_H
+#ifndef YuStandishPackingLimitModel_H
+#define YuStandishPackingLimitModel_H
 
-#include "dictionary.H"
-#include "volFields.H"
-#include "dimensionedTypes.H"
-#include "runTimeSelectionTables.H"
-#include "phaseModel.H"
-#include "masterSystem.H"
-#include "SortableList.H"
+#include "packingLimitModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace packingLimitModels
+{
 
 /*---------------------------------------------------------------------------*\
-                           Class packingLimitModel Declaration
+                        Class YuStandish Declaration
 \*---------------------------------------------------------------------------*/
 
-class packingLimitModel
+class YuStandish
+:
+    public packingLimitModel
 {
-protected:
-
-    // Protected data
-
-        //- Const reference to kinetic theories
-        const masterSystem& system_;
-
-        //- Const reference to mesh
-        const fvMesh& mesh_;
-
-        //- Minimum max volume fraction
-        scalar minAlphaMax_;
+    // Private data
 
 
 public:
 
     //- Runtime type information
-    TypeName("packingLimitModel");
-
-    // Declare runtime constructor selection table
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        packingLimitModel,
-        dictionary,
-        (
-            const dictionary& dict,
-            const masterSystem& system
-        ),
-        (dict, system)
-    );
+    TypeName("YuStandish");
 
 
     // Constructors
 
         //- Construct from components
-        packingLimitModel
-        (
-            const dictionary& dict,
-            const masterSystem& system
-        );
-
-
-    // Selectors
-
-        static autoPtr<packingLimitModel> New
+        YuStandish
         (
             const dictionary& dict,
             const masterSystem& system
@@ -105,44 +79,30 @@ public:
 
 
     //- Destructor
-    virtual ~packingLimitModel();
+    virtual ~YuStandish();
 
 
-    //- Disallow default bitwise copy construct
-    packingLimitModel(const packingLimitModel&) = delete;
+    // Member functions
 
-    // Member Functions
+        //- Is sorting needed
+        virtual bool needSort() const
+        {
+            return true;
+        }
 
-        //- Return the maximum packing limit
-        virtual void updateAlphaMax
-        (
-            volScalarField::Internal& alphaMaxField
-        ) const;
-
-        // Return the packing limit for celli
+        //- Return packing limit
         virtual scalar alphaMax
         (
             const label celli,
             SortableList<scalar>& ds,
             const bool fixedDs
-        ) const = 0;
-
-        //- Return minimum alphaMax
-        inline scalar minAlphaMax() const
-        {
-            return minAlphaMax_;
-        }
-
-
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const packingLimitModel&) = delete;
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace packingLimitModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

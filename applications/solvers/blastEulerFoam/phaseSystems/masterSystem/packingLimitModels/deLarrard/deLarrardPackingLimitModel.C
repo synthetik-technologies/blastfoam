@@ -23,7 +23,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "FedorsLandelPackingLimit.H"
+#include "deLarrardPackingLimitModel.H"
+#include "SortableList.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,12 +33,12 @@ namespace Foam
 {
 namespace packingLimitModels
 {
-    defineTypeNameAndDebug(FedorsLandel, 0);
+    defineTypeNameAndDebug(deLarrard, 0);
 
     addToRunTimeSelectionTable
     (
         packingLimitModel,
-        FedorsLandel,
+        deLarrard,
         dictionary
     );
 }
@@ -46,89 +47,33 @@ namespace packingLimitModels
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::packingLimitModels::FedorsLandel::FedorsLandel
+Foam::packingLimitModels::deLarrard::deLarrard
 (
     const dictionary& dict,
     const masterSystem& system
 )
 :
-    packingLimitModel(dict, system)
+    binary(dict, system)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::packingLimitModels::FedorsLandel::~FedorsLandel()
+Foam::packingLimitModels::deLarrard::~deLarrard()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::packingLimitModels::FedorsLandel::alphaMax
-(
-    const label celli,
-    const SortableList<scalar>& ds
-) const
+Foam::scalar Foam::packingLimitModels::deLarrard::aij(const scalar rij) const
 {
-    if (ds.size() != 2)
-    {
-        FatalErrorInFunction
-            << typeName << " packing limit model only supports bi-disperse "
-            << "particle distributions, " << ds.size() << " in use."
-            << exit(FatalError);
-    }
-
-     scalar alphap = system_.alpha()[celli];
-
-    const UPtrList<phaseModel>& phases(system_.phases());
-
-    if (alphap < phases[0].residualAlpha().value())
-    {
-        return phases[0].alphaMax();
-    }
+    return sqrt(1.0 - pow(1.0 - rij, 1.02));
+}
 
 
-    const phaseModel& phase1 = phases[0];
-    scalar alpha1 = phase1[celli];
-    scalar alphaMax1 = phase1.alphaMax();
-    scalar d1 = ds[0];
-    scalar cx1 = alpha1/max(alphap, system_.residualAlpha().value());
-
-    scalar alphaMax2 = phases[1].alphaMax();
-    scalar d2 = ds[1];
-    scalar cx2 = 1.0 - cx1;
-
-    scalar cxMax = alphaMax1/(alphaMax1 + (1.0 - alphaMax1)*alphaMax2);
-
-    scalar r21;
-    if (d1 < d2)
-    {
-        r21 = d1/d2;
-    }
-    else
-    {
-        r21 = d2/d1;
-    }
-
-    if (cx1 <= cxMax)
-    {
-        return
-        (
-            (alphaMax1 - alphaMax2)
-          + (1.0 - sqrt(r21))*(1.0 - alphaMax1)*alphaMax2
-           *(alphaMax1 + (1.0 - alphaMax1)*alphaMax2)*cx1/alphaMax1
-          + alphaMax2
-        );
-    }
-    else
-    {
-        return
-        (
-            (1.0 - sqrt(r21))
-           *(alphaMax1 + (1.0 - alphaMax1)*alphaMax2)*cx2
-          + alphaMax2
-        );
-    }
+Foam::scalar Foam::packingLimitModels::deLarrard::bij(const scalar rij) const
+{
+    return 1.0 - pow(1.0 - rij, 1.5);
 }
 
 

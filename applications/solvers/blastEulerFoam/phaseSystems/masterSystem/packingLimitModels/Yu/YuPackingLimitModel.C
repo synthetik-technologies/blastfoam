@@ -23,10 +23,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "constantPackingLimit.H"
+#include "YuPackingLimitModel.H"
+#include "SortableList.H"
 #include "addToRunTimeSelectionTable.H"
-#include "mathematicalConstants.H"
-#include "zeroGradientFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -34,12 +33,12 @@ namespace Foam
 {
 namespace packingLimitModels
 {
-    defineTypeNameAndDebug(constant, 0);
+    defineTypeNameAndDebug(Yu, 0);
 
     addToRunTimeSelectionTable
     (
         packingLimitModel,
-        constant,
+        Yu,
         dictionary
     );
 }
@@ -48,56 +47,33 @@ namespace packingLimitModels
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::packingLimitModels::constant::constant
+Foam::packingLimitModels::Yu::Yu
 (
     const dictionary& dict,
     const masterSystem& system
 )
 :
-    packingLimitModel(dict, system),
-    maxAlpha_
-    (
-        dict.lookupOrDefault
-        (
-            "alphaMax",
-            -1.0
-        )
-    )
+    binary(dict, system)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::packingLimitModels::constant::~constant()
+Foam::packingLimitModels::Yu::~Yu()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::packingLimitModels::constant::updateAlphaMax
-(
-    volScalarField::Internal& alphaMaxI
-) const
+Foam::scalar Foam::packingLimitModels::Yu::aij(const scalar rij) const
 {
-    const UPtrList<phaseModel>& phases(system_.phases());
-
-    if (maxAlpha_ < 0)
-    {
-        forAll(phases, phasei)
-        {
-            maxAlpha_ = max(phases[phasei].alphaMax(), maxAlpha_);
-        }
-    }
-    alphaMaxI = maxAlpha_;
+    return 1.0 - pow(1.0 - rij, 3.3) - 2.8*rij*pow(1.0 - rij, 2.7);
 }
 
-Foam::scalar Foam::packingLimitModels::constant::alphaMax
-(
-    const label celli,
-    const SortableList<scalar>& ds
-) const
+
+Foam::scalar Foam::packingLimitModels::Yu::bij(const scalar rij) const
 {
-    return maxAlpha_;
+    return 1.0 - sqr(1.0 - rij) - 0.4*rij*pow(1.0 - rij, 3.7);
 }
 
 

@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "YuStandishPackingLimit.H"
+#include "YuStandishPackingLimitModel.H"
 #include "SortableList.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -68,14 +68,20 @@ Foam::packingLimitModels::YuStandish::~YuStandish()
 Foam::scalar Foam::packingLimitModels::YuStandish::alphaMax
 (
     const label celli,
-    const SortableList<scalar>& ds
+    SortableList<scalar>& ds,
+    const bool fixedD
 ) const
 {
     scalar alphap = system_.alpha()[celli];
 
     if(alphap < system_.residualAlpha().value())
     {
-        return system_.minAlphaMax();
+        return minAlphaMax_;
+    }
+
+    if (!fixedD)
+    {
+        ds.reverseSort();
     }
 
     const UPtrList<phaseModel>& phases(system_.phases());
@@ -105,6 +111,7 @@ Foam::scalar Foam::packingLimitModels::YuStandish::alphaMax
             {
                 const label phasej = ds.indices()[j];
                 const phaseModel& phase2 = phases[phasej];
+                scalar cxj = phase2[celli]/max(alphap, system_.residualAlpha().value());
                 if (phase2[celli] > phase2.residualAlpha().value())
                 {
                     continue;
@@ -127,13 +134,13 @@ Foam::scalar Foam::packingLimitModels::YuStandish::alphaMax
                         *(1.0 - alphaMax1)
                         *(1.0 - 2.35*rij + 1.35*sqr(rij));
                     }
-                    sum += (1.0 - alphaMax1/pij)*cxi/Xij;
+                    sum += (1.0 - alphaMax1/pij)*cxj/Xij;
                 }
             }
         }
         maxAlpha = min(maxAlpha, alphaMax1/(1.0 - sum));
     }
-    return maxAlpha;
+    return max(maxAlpha, minAlphaMax_);
 }
 
 

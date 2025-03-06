@@ -22,26 +22,25 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::packingLimitModels::FedorsLandel
+    Foam::kineticTheoryModels::packingLimitModels::YuStandish
 
 Description
-    Packing limit for a bi-disperse particle mixture
 
     Reference:
     \verbatim
-        Fedors, R. F. and Landel, R. F. (1979).
-        "An Empirical method of estimating the void fraction in mixtures of
-        uniform particles of different size."
-        Powder Technology 23(2), 225-231
+        Yu, A. B. and Standish, N. (1987).
+        "Porosity calculations of multi-component mixtures of spherical
+        particles."
+        Powder Technology 52(3), 233-241
     \endverbatim
 
 SourceFiles
-    FedorsLandelPackingLimit.C
+    binaryPackingLimitModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FedorsLandelPackingLimit_H
-#define FedorsLandelPackingLimit_H
+#ifndef binaryPackingLimitModel_H
+#define binaryPackingLimitModel_H
 
 #include "packingLimitModel.H"
 
@@ -53,26 +52,30 @@ namespace packingLimitModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class FedorsLandel Declaration
+                        Class YuStandish Declaration
 \*---------------------------------------------------------------------------*/
 
-class FedorsLandel
+class binary
 :
     public packingLimitModel
 {
-    // Private data
+protected:
+// Protected member functions
 
+    //- Interaction functions
+    virtual scalar aij(const scalar rij) const = 0;
+    virtual scalar bij(const scalar rij) const = 0;
 
 public:
 
     //- Runtime type information
-    TypeName("FedorsLandel");
+    TypeName("binary");
 
 
     // Constructors
 
         //- Construct from components
-        FedorsLandel
+        binary
         (
             const dictionary& dict,
             const masterSystem& system
@@ -80,7 +83,7 @@ public:
 
 
     //- Destructor
-    virtual ~FedorsLandel();
+    virtual ~binary();
 
 
     // Member functions
@@ -89,7 +92,8 @@ public:
         virtual scalar alphaMax
         (
             const label celli,
-            const SortableList<scalar>& ds
+            SortableList<scalar>& ds,
+            const bool fixedDs
         ) const;
 };
 
