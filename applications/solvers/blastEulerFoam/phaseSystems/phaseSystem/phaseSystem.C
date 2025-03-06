@@ -277,24 +277,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
         phaseModel& phase1 = phaseModels_[phasei];
         if (phase1.granular())
         {
-            {
-                volScalarField gammaDot
-                (
-                    phase1.dissipationSource
-                    (
-                        phase1,
-                        mesh_.time().deltaT()
-                    )
-                );
-                phase1.alphaRhoPTE() += gammaDot;
-                phase1.alphaRhoE() -= gammaDot;
-            }
-            for
-            (
-                label phasej = phasei+1;
-                phasej < phaseModels_.size();
-                phasej++
-            )
+            forAll(phaseModels_, phasej)
             {
                 phaseModel& phase2 = phaseModels_[phasej];
                 if (phase2.granular())
@@ -307,11 +290,15 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                             mesh_.time().deltaT()
                         )
                     );
+
                     phase1.alphaRhoPTE() += gammaDot;
                     phase1.alphaRhoE() -= gammaDot;
 
-                    phase2.alphaRhoPTE() += gammaDot;
-                    phase2.alphaRhoE() -= gammaDot;
+                    if (phasei != phasej)
+                    {
+                        phase2.alphaRhoPTE() += gammaDot;
+                        phase2.alphaRhoE() -= gammaDot;
+                    }
                 }
             }
         }
