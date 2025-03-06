@@ -110,11 +110,11 @@ frictionalPressurePrime
     volScalarField alphapMin(max(alphap - alphaMinFriction_, scalar(0)));
     volScalarField alphapMax(max(alphaMax - alphap, alphaDeltaMin_));
     return
-        Fr_/pow(alphapMax, p_ + 1)
-       *(
-            eta_*pow(alphapMin, eta_ - 1.0)*alphapMax
-          + p_*pow(alphapMin, eta_)
-        );
+        Fr_
+       *pow(alphapMin, eta_ - 1)
+       /pow(alphapMax, p_ + 1)
+       *(eta_*alphapMax + p_*alphapMin);
+
 }
 
 
@@ -143,22 +143,11 @@ alphaMinFriction
     const volScalarField& alphaMax
 ) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("alphaMinFriction", alphap.group()),
-                alphap.mesh().time().timeName(),
-                alphap.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            alphap.mesh(),
-            alphaMinFriction_
-        )
+        IOobject::groupName("alphaMinFriction", alphap.group()),
+        alphap.mesh(),
+        alphaMinFriction_
     );
 }
 

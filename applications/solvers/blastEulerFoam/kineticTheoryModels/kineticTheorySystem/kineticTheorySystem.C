@@ -177,7 +177,7 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::gs0
 {
     if (&phase1  == &phase2 && !calc)
     {
-        return kineticTheoryModels_[phaseIndexes_[phase1.index()]].gs0();
+        return kineticTheoryModels_[whichPhase(phase1)].gs0();
     }
     return radialModel_->gs0(phase1, phase2);
 }
@@ -192,7 +192,7 @@ Foam::scalar Foam::kineticTheorySystem::cellgs0
 {
     if (&phase1  == &phase2)
     {
-        return kineticTheoryModels_[phaseIndexes_[phase1.index()]].gs0()[celli];
+        return kineticTheoryModels_[whichPhase(phase1)].gs0()[celli];
     }
     return radialModel_->cellgs0(celli, phase1, phase2);
 }
@@ -207,7 +207,7 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::gs0Prime
 {
     if (&phase1  == &phase2 && !calc)
     {
-        return kineticTheoryModels_[phaseIndexes_[phase1.index()]].gs0Prime();
+        return kineticTheoryModels_[whichPhase(phase1)].gs0Prime();
     }
     return radialModel_->gs0prime(phase1, phase2);
 }
@@ -222,7 +222,7 @@ Foam::scalar Foam::kineticTheorySystem::cellgs0Prime
 {
     if (&phase1  == &phase2)
     {
-        return kineticTheoryModels_[phaseIndexes_[phase1.index()]].gs0Prime()[celli];
+        return kineticTheoryModels_[whichPhase(phase1)].gs0Prime()[celli];
     }
     return radialModel_->cellgs0prime(celli, phase1, phase2);
 }
@@ -240,7 +240,7 @@ Foam::kineticTheorySystem::nu
     (
         phase,
         Theta,
-        kineticTheoryModels_[phaseIndexes_[phase.index()]].gs0(),
+        kineticTheoryModels_[whichPhase(phase)].gs0(),
         phase.rho(),
         phase.d(),
         dimensionedScalar("e", dimless, es(key))
@@ -483,23 +483,23 @@ Foam::kineticTheorySystem::frictionalPressurePrime
 {
     if (this->polydisperse())
     {
-        tmp<volScalarField> tstabAlpha(max(this->alpha(), this->residualAlpha()));
-        const volScalarField& stabAlpha = tstabAlpha();
         return
-            (this->alpha() - phase)/sqr(stabAlpha)
+        (
+            (this->alpha() - phase)
            *frictionalStressModel_->frictionalPressure
             (
                 phase,
                 this->alpha(),
                 alphaMax_
             )
-          + phase/stabAlpha
+          + phase*this->alpha()
            *frictionalStressModel_->frictionalPressurePrime
             (
                 phase,
                 this->alpha(),
                 alphaMax_
-            );
+            )
+        )/sqr(max(this->alpha(), this->residualAlpha()));
     }
     else
     {
@@ -566,6 +566,15 @@ Foam::kineticTheorySystem::dissipationSource
     if (Thetas_.size() == 1)
     {
         const kineticTheoryModel& kt = kineticTheoryModels_[0];
+        if (kt.es() == 1)
+        {
+            return volScalarField::New
+            (
+                "dissipationSource." + phase1.group(),
+                phase1.mesh(),
+                dimensionedScalar(dimDensity*sqr(dimVelocity), 0.0)
+            );
+        }
         tmp<volScalarField> gammaCoeff
         (
             volScalarField::New
@@ -585,20 +594,39 @@ Foam::kineticTheorySystem::dissipationSource
             (
                 3.0*phase1.alphaRho()
                /(
-                    3.0*phase1.alphaRho()
-                  + deltaT*gammaCoeff*sqrt(kt.Theta())
-                  + phase1.residualAlphaRho()
+                    max
+                    (
+                        3.0*phase1.alphaRho()
+                      + deltaT*gammaCoeff*sqrt(kt.Theta()),
+                        3.0*phase1.residualAlphaRho()
+                    )
                 )
             )
         );
-        return 1.5*phase1.alphaRho()*(ThetaStar - kt.Theta());
+        return volScalarField::New
+        (
+            "dissipationSource." + phase1.group(),
+            1.5*phase1.alphaRho()*(ThetaStar - kt.Theta())
+        );
     }
+
+    phasePairKey key(phase1.name(), phase2.name(), false);
+    const scalar e = this->es(key);
+    if (e == 1)
+    {
+        return volScalarField::New
+        (
+            "dissipationSource." + phase1.group() + "." + phase2.group(),
+            phase1.mesh(),
+            dimensionedScalar(dimDensity*sqr(dimVelocity), 0.0)
+        );
+    }
+
     // Dissipation of granular energy (Huilin and Gidaspow 2003, Eq. 25)
     volScalarField Theta1(phase1.Theta());
     Theta1.max(1e-10);
     volScalarField Theta2(phase2.Theta());
     Theta2.max(1e-10);
-    phasePairKey key(phase1.name(), phase2.name(), false);
 
     tmp<volScalarField> m1(pi/6.0*pow3(phase1.d())*phase1.rho());
     tmp<volScalarField> m2(pi/6.0*pow3(phase2.d())*phase2.rho());
@@ -607,8 +635,8 @@ Foam::kineticTheorySystem::dissipationSource
 
     return volScalarField::New
     (
-        "dissipationSource",
-        (
+        "dissipationSource." + phase1.group() + "." + phase2.group(),
+       - (
             (
                 3.0/phase1.d()
                *sqrt
@@ -618,9 +646,9 @@ Foam::kineticTheorySystem::dissipationSource
                 )
               - (3.0*m0()*(m1()*phase1.Theta() + m2()*phase2.Theta()))
                /(4.0*m1Thetam2Theta())
-               *fvc::div(this->phi())
+               *fvc::div(phase1.phi())
             )
-           *(1.0 - this->es(key))
+           *(1.0 - e)
            *this->Ps(phase1, phase2)
         )*deltaT
     );
@@ -633,7 +661,6 @@ void Foam::kineticTheorySystem::addPhase
 )
 {
     const label phasei = phases_.size();
-    const word& phaseName = phase.name();
     masterSystem::addPhase(phase);
     kineticTheoryModels_.resize(phasei + 1);
     Thetas_.resize(phasei + 1);
@@ -641,6 +668,11 @@ void Foam::kineticTheorySystem::addPhase
     kineticTheoryModel& kt = dynamicCast<kineticTheoryModel>(phase);
     kineticTheoryModels_.set(phasei, &kt);
     Thetas_.set(phasei, &kt.Theta());
+}
+
+void Foam::kineticTheorySystem::initialize()
+{
+    masterSystem::initialize();
 
     // Print granular quantities only if more than 1 phase is present
     if (phases_.size() > 1 && !ThetapPtr_.valid())
@@ -663,29 +695,30 @@ void Foam::kineticTheorySystem::addPhase
         );
     }
 
-    forAll(phases_, phasej)
+    forAll(phases_, phasei)
     {
-        word otherPhaseName = phases_[phasej].name();
-        phasePairKey key
-        (
-            phaseName,
-            otherPhaseName,
-            false
-        );
-        pairs_.append(key);
-        word name(key.second());
-        name[0] = toupper(name[0]);
-        name = key.first() + "And" + name;
-
-        if (phaseName == otherPhaseName)
+        word phaseName = phases_[phasei].name();
+        forAll(phases_, phasej)
         {
-            name = phaseName;
+            word otherPhaseName = phases_[phasej].name();
+            phasePairKey key
+            (
+                phaseName,
+                otherPhaseName,
+                false
+            );
+            pairs_.append(key);
+            word name(key.second());
+            name[0] = toupper(name[0]);
+            name = key.first() + "And" + name;
+
+            if (phaseName == otherPhaseName)
+            {
+                name = phaseName;
+            }
         }
     }
-}
 
-void Foam::kineticTheorySystem::initialize()
-{
     update();
 }
 

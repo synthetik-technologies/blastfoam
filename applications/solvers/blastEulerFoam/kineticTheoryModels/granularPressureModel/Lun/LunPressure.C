@@ -56,7 +56,17 @@ Foam::kineticTheoryModels::granularPressureModels::Lun::Lun
 )
 :
     granularPressureModel(dict, kt)
-{}
+{
+    if (kt.phases().size() > 1)
+    {
+        FatalErrorInFunction
+            << typeName << " does not support multiple granular propellant. "
+            << "Huilin is the analagous model for multiple granular phases."
+            << endl
+            << abort(FatalError);
+    }
+
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

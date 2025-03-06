@@ -297,13 +297,6 @@ void Foam::kineticTheoryModel::correct()
 {
     cohesion_->update();
 
-    // Local references
-    volScalarField alpha(max(phase_, scalar(0)));
-
-    tmp<volTensorField> tgradU(fvc::grad(phase_.U()));
-    const volTensorField& gradU(tgradU());
-    volSymmTensorField D(symm(gradU));
-
     // Calculating the radial distribution function
     gs0_ = kineticTheorySystem_.gs0(phase_, phase_, true);
     gs0Prime_ = kineticTheorySystem_.gs0Prime(phase_, phase_, true);
@@ -323,6 +316,7 @@ void Foam::kineticTheoryModel::correct()
     nut_ =
         kineticTheorySystem_.nu(phase_, Theta_)
       + cohesion_->nu();
+
     nut_.min(maxNut_);
 
     if (frictionalStressModel_.valid())

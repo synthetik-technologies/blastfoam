@@ -235,8 +235,8 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
             (
                 max
                 (
-                    (alphaOwn*sqr(cOwn) + alphaNei*sqr(cNei))
-                   /Foam::max(alphaOwn + alphaNei, 1e-6),
+                    (alphaOwn*rhoOwn*sqr(cOwn) + alphaNei*rhoNei*sqr(cNei))
+                   /Foam::max(alphaOwn*rhoOwn + alphaNei*rhoNei, 1e-6),
                     0.0
                 )
             ),
@@ -265,7 +265,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
       : 0.0
     );
 
-    scalar alphaP
+    scalar alphaPTotal
     (
         limit_
       ? max
@@ -280,7 +280,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
     (
         max
         (
-            (alphaP - alphaMinFriction)/(alphaMax - alphaMinFriction),
+            (alphaPTotal - alphaMinFriction)/(alphaMax - alphaMinFriction),
             0.0
         )
     );
@@ -303,10 +303,9 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
 
     scalar F
     (
-        c12
-       *(1.0 + mag(Ma12)*(1.0 - G/2.0))
-       *alphaP
-       *(alphaOwn*rhoOwn - alphaNei*rhoNei)/(2.0*alphaMax)
+        0.5*c12*(1.0 + mag(Ma12)*(1.0 - G/2.0))
+       *alphaPTotal/alphaMax
+       *(alphaOwn*rhoOwn - alphaNei*rhoNei)
     );
 
     scalar p5Own(P5(MaOwn, 1, xi));
