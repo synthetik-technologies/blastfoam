@@ -353,6 +353,13 @@ int main(int argc, char *argv[])
     Pair<vector> targetAxis(calculateAxis(targetMesh));
     vector rotationAxis = sourceAxis[1] - targetAxis[1];
     vector rAxis = sourceAxis[0];
+    Info<< "Source radial axis: " << sourceAxis[0] << nl
+        << "Source rotation axis: " << sourceAxis[1] << nl
+        << "Target radial axis: " << targetAxis[0] << nl
+        << "Target rotation axis: " << targetAxis[1] << nl
+        << "Rotation axis: " << rotationAxis << nl
+        << "Radial axis: " << rAxis << nl
+        << endl;
 
     vector sourceCentre = cmptMultiply(sourceSumCV, sourceAxis[1])/sourceSumV;
     vector targetCentre(sourceCentre);
