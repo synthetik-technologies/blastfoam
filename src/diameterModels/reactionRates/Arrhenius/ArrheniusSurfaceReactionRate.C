@@ -133,4 +133,31 @@ Foam::tmp<Foam::volScalarField> Foam::surfaceReactionRates::Arrhenius::k
     return tmpk;
 }
 
+
+Foam::tmp<Foam::scalarField> Foam::surfaceReactionRates::Arrhenius::k
+(
+    const fvPatchScalarField& p,
+    const fvPatchScalarField& T
+) const
+{
+    tmp<scalarField> tmpk(new scalarField(p.size(), A_.value()));
+    scalarField& K = tmpk.ref();
+    if (mag(beta_.value()) > vSmall)
+    {
+        forAll(K, fi)
+        {
+            K[fi] *= pow(T[fi], beta_.value());
+        }
+    }
+    if (mag(Ta_.value()) > vSmall)
+    {
+        forAll(K, fi)
+        {
+            K[fi] *= exp(-Ta_.value()/T[fi]);
+        }
+    }
+    return tmpk;
+}
+
+
 // ************************************************************************* //
