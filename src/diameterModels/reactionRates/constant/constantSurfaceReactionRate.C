@@ -101,4 +101,14 @@ Foam::tmp<Foam::volScalarField> Foam::surfaceReactionRates::constant::k
     );
 }
 
+
+Foam::tmp<Foam::scalarField> Foam::surfaceReactionRates::constant::k
+(
+    const fvPatchScalarField& p,
+    const fvPatchScalarField& T
+) const
+{
+    return tmp<scalarField>(new scalarField(p.size(), rate_.value()));
+}
+
 // ************************************************************************* //

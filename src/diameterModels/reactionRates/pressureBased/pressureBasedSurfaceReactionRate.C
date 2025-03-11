@@ -136,4 +136,30 @@ Foam::tmp<Foam::volScalarField> Foam::surfaceReactionRates::pressureBased::k
     return tmpk*pos(p - pMin_);
 }
 
+
+Foam::tmp<Foam::scalarField> Foam::surfaceReactionRates::pressureBased::k
+(
+    const fvPatchScalarField& p,
+    const fvPatchScalarField& T
+) const
+{
+    tmp<scalarField> tmpk(new scalarField(p.size(), pCoeff_.value()));
+    scalarField& K = tmpk.ref();
+    if (mag(pExponent_.value()) > vSmall)
+    {
+        forAll(K, fi)
+        {
+            K[fi] *= pow(p[fi]*pScale_, pExponent_.value());
+        }
+    }
+    if (mag(offset_.value()) > vSmall)
+    {
+        forAll(K, fi)
+        {
+            K[fi] += offset_.value();
+        }
+    }
+    return tmpk;
+}
+
 // ************************************************************************* //

@@ -103,6 +103,13 @@ public:
             const volScalarField& p,
             const volScalarField& T
         ) const;
+
+        //- Reaction rate for a patch
+        virtual tmp<scalarField> k
+        (
+            const fvPatchScalarField& p,
+            const fvPatchScalarField& T
+        ) const;
 };
 
 
