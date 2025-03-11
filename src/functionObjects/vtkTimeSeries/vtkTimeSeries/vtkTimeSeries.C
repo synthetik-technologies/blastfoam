@@ -43,7 +43,8 @@ Foam::vtkTimeSeries::vtkTimeSeries
 (
     const fileName& path,
     const bool nRemove,
-    const bool read
+    const bool read,
+    const scalar curTime
 )
 :
     outputDir_()
@@ -67,7 +68,7 @@ Foam::vtkTimeSeries::vtkTimeSeries
         {
             IStringStream is((word(dirs[i])));
             token t(is);
-            if (t.isNumber())
+            if (t.isNumber() && t.number() <= curTime)
             {
                 this->insert(t.number());
             }
