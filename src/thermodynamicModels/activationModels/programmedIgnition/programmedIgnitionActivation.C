@@ -83,7 +83,7 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
         dimDensity,
         dict.parent().subDict("products").subDict("equationOfState")
     ),
-    Vcj_("Vcj", 1.0/rho0_ - Pcj_/sqr(rho0_*vDet_)),
+    Vcj_("Vcj", 1.0 - Pcj_/(rho0_*sqr(vDet_))),
     model_(burnModelNames_.read(dict.lookup("burnModel"))),
     tIgn_
     (
@@ -156,24 +156,29 @@ Foam::activationModels::programmedIgnitionActivation::delta() const
     );
 }
 
-void Foam::activationModels::programmedIgnitionActivation::correct()
+void Foam::activationModels::programmedIgnitionActivation::correct
+(
+    volScalarField& lambda
+)
 {
     const cellList& cells = this->mesh().cells();
-    const scalarField magSf(mag(this->mesh().faceAreas()));
+    const scalarField& magSf = this->mesh().magSf();
 
     dimensionedScalar t(timeIntegrationSystem::t());
 
-    forAll(lambda_, celli)
+    forAll(lambda, celli)
     {
-        scalar lambdaBeta = 0;
-        scalar lambdaProgram = 0;
-
         //- Compression based activation
         if (model_ == BETA || model_ == PROGRAMMEDBETA)
         {
-            lambdaBeta =
-                (1.0 - rho0_.value()/max(rho_[celli], 1e-10))
-               /(1.0 - Vcj_.value());
+            if (rho_[celli] > rho0_.value())
+            {
+                lambda[celli] = max
+                (
+                    lambda[celli],
+                    (1.0 - rho0_.value()/rho_[celli])/(1.0 - Vcj_.value())
+                );
+            }
         }
         //- Position based activation
         if (model_ == PROGRAMMED || model_ == PROGRAMMEDBETA)
@@ -185,11 +190,13 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
                 A += magSf[c[facei]];
             }
             scalar edgeLength = this->mesh().V()[celli]/A;
-            lambdaProgram =
+            lambda[celli] = max
+            (
                 max(t.value() - tIgn_[celli], 0.0)
-                *vDet_.value()/(1.5*edgeLength);
+               *vDet_.value()/(1.5*edgeLength),
+                lambda[celli]
+            );
         }
-        lambda_[celli] = max(max(lambdaBeta, lambdaProgram), lambda_[celli]);
     }
 }
 

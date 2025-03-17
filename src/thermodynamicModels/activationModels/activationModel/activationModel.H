@@ -182,7 +182,13 @@ protected:
         //- Is the change in lambda limited
         bool limit_;
 
-        //- Stored changes in lambda
+        //- Saved old alphaRhoLambda
+        tmp<volScalarField> alphaRhoLambdaOld_;
+
+        //- Stored change in alphaRhoLambda
+        tmp<volScalarField> deltaAlphaRhoLambda_;
+
+        //- Stored changes in lambda due to burn
         tmp<volScalarField> ddtLambda_;
 
 
@@ -192,7 +198,7 @@ protected:
         virtual tmp<volScalarField> delta() const = 0;
 
         //- Correct lambda field after advection
-        virtual void correct()
+        virtual void correct(volScalarField& lambda)
         {}
 
         //- Return the list of detonation points read from the
@@ -260,8 +266,7 @@ public:
         virtual void initializeModels();
 
         //- Update
-        virtual void update()
-        {}
+        virtual void update();
 
         //- Solve sub-step stepi
         virtual void solve();

@@ -68,7 +68,7 @@ class linearActivation
         virtual tmp<volScalarField> delta() const;
 
         //- Correct lambda field after advection
-        virtual void correct();
+        virtual void correct(volScalarField& lambda);
 
 
 public:

@@ -90,6 +90,10 @@ public:
         virtual void initializeModels()
         {}
 
+        //- Update source terms
+        virtual void update()
+        {}
+
         //- Solve sub-step stepi
         virtual void solve();
 

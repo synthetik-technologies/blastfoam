@@ -121,18 +121,14 @@ Foam::activationModels::linearActivation::delta() const
 }
 
 
-void Foam::activationModels::linearActivation::correct()
+void Foam::activationModels::linearActivation::correct(volScalarField& lambda)
 {
-    if (min(lambda_.oldTime()).value() == 1)
-    {
-        return;
-    }
     volScalarField::Internal lambda0
     (
-        pos0(lambda_.time() - lambda_.time().deltaT() - tIgn_)
+        pos0(lambda.time() - lambda.time().deltaT() - tIgn_)
     );
-    volScalarField::Internal diff(pos0(lambda_.time() - tIgn_) - lambda0);
-    lambda_.ref() = max(lambda0 + diff*(this->f() - this->f0()), lambda_());
+    volScalarField::Internal diff(pos0(lambda.time() - tIgn_) - lambda0);
+    lambda.ref() = max(lambda0 + diff*(this->f() - this->f0()), lambda());
 }
 
 // ************************************************************************* //

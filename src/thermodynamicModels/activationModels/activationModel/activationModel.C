@@ -555,7 +555,7 @@ Foam::vector Foam::activationModel::centerOfMass
 }
 
 
-void Foam::activationModel::solve()
+void Foam::activationModel::update()
 {
     if (finished_ || (this->step() == 0 && min(lambda_).value() > 1.0 - small))
     {
@@ -570,28 +570,67 @@ void Foam::activationModel::solve()
 
     const volScalarField& alphaRho = alphaRhoPtr_();
     dimensionedScalar dT(this->mesh().time().deltaT());
-    dimensionedScalar smallRho("small", dimDensity, 1e-10);
 
-    // Calculate the deltas using the current value
-    const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
-    volScalarField deltaAlphaRhoLambda
-    (
-        fvc::div(flux.flux(lambda_, alphaRhoPtr_(), flux.phi(), false))
-    );
-    this->storeAndBlendDelta(deltaAlphaRhoLambda);
+    alphaRhoLambdaOld_ = alphaRho*lambda_;
 
-    volScalarField deltaLambda(this->delta());
+    volScalarField deltaLambda("delta:" + lambda_.name(), this->delta());
     deltaLambda.max(0.0);
     this->storeAndBlendDelta(deltaLambda);
 
     // Store old value of lambda, old value of alphaRho is stored in the
     // phaseCompressible system
-    this->storeAndBlendOld(lambda_, false);
-    const volScalarField lambdaOld(lambda_);
-
-    lambda_ += deltaLambda*dT;
+    volScalarField lambdaOld(lambda_);
+    this->storeAndBlendOld(lambdaOld, false);
+    volScalarField lambdaNew(lambdaOld + deltaLambda*dT);
 
     // Activate points that are delayed
+    forAll(detonationPoints_, pointi)
+    {
+        detonationPoints_[pointi].setActivated
+        (
+            lambdaNew,
+            false//this->finalStep()
+        );
+    }
+    this->correct(lambdaNew);
+    lambdaNew.maxMin(0.0, 1.0);
+
+    // Compute the limited change in lambda
+    ddtLambda_ = (lambdaNew - lambdaOld)/dT;
+    volScalarField& ddtLambda = ddtLambda_.ref();
+    this->calcAndStoreDelta(ddtLambda);
+
+    // Calculate the deltas using the current value
+    deltaAlphaRhoLambda_ =
+        fvc::div(alphaRhoPhiPtr_(), lambda_)
+      - ddtLambda*alphaRho;
+}
+
+
+void Foam::activationModel::solve()
+{
+    if (!alphaRhoLambdaOld_.valid())
+    {
+        return;
+    }
+
+    const volScalarField& alphaRho = alphaRhoPtr_();
+    dimensionedScalar dT(this->mesh().time().deltaT());
+    dimensionedScalar smallRho("small", dimDensity, 1e-6);
+
+    this->storeAndBlendOld(alphaRhoLambdaOld_.ref());
+    this->storeAndBlendDelta(deltaAlphaRhoLambda_.ref());
+
+    // volScalarField deltaLambda(ddtLambda_());
+    // this->blendDelta(deltaLambda);
+
+    //- Update lambda to include advection and reaction
+    //  d(alpha rho lambda)/dt = alpha rho d(lambda)/dt + lambda d(alpha rho)/dt
+    lambda_ =
+        (alphaRhoLambdaOld_ - deltaAlphaRhoLambda_*dT)
+       /max(alphaRho, smallRho);
+      // + deltaLambda*dT;
+
     forAll(detonationPoints_, pointi)
     {
         detonationPoints_[pointi].setActivated
@@ -600,30 +639,7 @@ void Foam::activationModel::solve()
             this->finalStep()
         );
     }
-    this->correct();
-    lambda_.maxMin(0.0, 1.0);
-    lambda_.correctBoundaryConditions();
-
-    // Compute the limited change in lambda
-    ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
-    volScalarField& ddtLambda = ddtLambda_.ref();
-
-    //- Update lambda to include advection and reaction
-    //  d(alpha rho lambda)/dt = alpha rho d(lambda)/dt + lambda d(alpha rho)/dt
-    lambda_ =
-        lambdaOld*(2.0 - alphaRho/max(alphaRho.prevIter(), smallRho))
-      + dT*(deltaLambda - deltaAlphaRhoLambda/max(alphaRho.prevIter(), smallRho));
-
-    //- Compute actual delta for the time step knowing the blended
-    ddtLambda = this->calcAndStoreDelta(ddtLambda);
-
-
-    //- Correct the lambda field since zero mass will cause "unactivation"
-    //  which is not correct for some models
-    //  Detonation points are not corrected since they should have mass at
-    //  the detonation points
-    this->correct();
-
+    // this->correct(lambda_);
     lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
 }
