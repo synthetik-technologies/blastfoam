@@ -144,6 +144,9 @@ public:
         //- Return change in radius per unit time
         //  Only used in mass transfer
         virtual tmp<volScalarField> dMdt() const;
+        
+        //- Return the length to diameter ratio
+        virtual tmp<volScalarField> LDratio() const;
 };
 
 
