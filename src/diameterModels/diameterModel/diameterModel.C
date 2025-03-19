@@ -140,4 +140,10 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::LDratio() const
     );
 }
 
+Foam::scalar
+Foam::diameterModel::LDratio(const label celli) const
+{
+    return 1.0;
+}
+
 // ************************************************************************* //

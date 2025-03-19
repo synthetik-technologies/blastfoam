@@ -147,6 +147,9 @@ public:
         
         //- Return the length to diameter ratio
         virtual tmp<volScalarField> LDratio() const;
+
+        //- Return the length to diameter ratio for a cell
+        virtual scalar LDratio(const label celli) const;
 };
 
 
