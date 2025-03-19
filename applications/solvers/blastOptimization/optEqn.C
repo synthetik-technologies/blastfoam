@@ -161,7 +161,6 @@ void Foam::optEqnBase::readLogFile(const fileName& file, const label nVar)
     }
     savedVars_.transfer(vars);
     savedErrors_.transfer(errs);
-    Info<<savedVars_<<nl<<savedErrors_<<endl;
 }
 
 Foam::string Foam::optEqnBase::logFile
