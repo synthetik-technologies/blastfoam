@@ -1,0 +1,11 @@
+blastOptimization.C
+entries/optEntry.C
+entries/varEntry.C
+entries/paramEntry.C
+entries/commandEntry.C
+optEqn.C
+# errorTypes/errorType/errorType.C
+# errorTypes/errorType/errorTypeNew.C
+# errorTypes/fieldError/fieldError.C
+
+EXE = $(BLAST_APPBIN)/blastOptimization
