@@ -185,11 +185,11 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::phaseInter
         }
         else if (validNei)
         {
-            fi = fNei;
+            fi = fiOwn;
         }
         else
         {
-            fi = fOwn;
+            fi = fiNei;
         }
 
     }

@@ -61,6 +61,7 @@ RiemannConvectionScheme<Type>::flux
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
+    return interpolate(faceFlux, vf)*faceFlux;
     if (&faceFlux == &(fluxSchemePtr_->phi()))
     {
         return fluxSchemePtr_->flux(vf, faceFlux, true);
