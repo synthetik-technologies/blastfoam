@@ -75,9 +75,9 @@ Foam::optEqn1::optEqn1(const Time& runTime, const dictionary& dict, const bool r
             "logFile",
             runTime.globalPath() / runTime.globalCaseName() + ".evals"
         );
-    ScalarEquation::setLog(logFile, this->log());
+    ScalarEquation::setLog(logFile, dict.lookupOrDefault("log", true));
 
-    if (restart)
+    if (restart && this->log())
     {
         readLogFile(logFile, this->nVar());
     }
@@ -100,9 +100,9 @@ Foam::optEqn::optEqn(const Time& runTime, const dictionary& dict, const bool res
             "logFile",
             runTime.globalPath() / runTime.globalCaseName() + ".evals"
         );
-    ScalarUnivariateEquation::setLog(logFile, this->log());
+    ScalarUnivariateEquation::setLog(logFile, dict.lookupOrDefault("log", true));
 
-    if (restart)
+    if (restart && this->log())
     {
         readLogFile(logFile, this->nVar());
     }
