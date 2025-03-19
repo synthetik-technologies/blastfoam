@@ -168,8 +168,13 @@ void Foam::smoluchowskiJumpTFvPatchScalarField::updateCoeffs()
             IOobject::groupName(basicThermo::dictName, internalField().group())
         );
     const label patchi = patch().index();
-    const scalarField& pmu = thermo.mu(patchi);
-    const scalarField& prho = thermo.rho(patchi);
+
+    const tmp<scalarField> tpmu(thermo.mu(patchi));
+    const scalarField pmu = tpmu();
+
+    const tmp<scalarField> tprho(thermo.rho(patchi));
+    const scalarField& prho = tprho();
+
     const scalarField& pT = thermo.T().boundaryField()[patchi];
 
     Field<scalar> C2
