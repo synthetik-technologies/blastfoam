@@ -88,7 +88,9 @@ public:
 
         //- Set pointers to mass and mass flux
         virtual void initializeModels()
-        {}
+        {
+            initialized_ = true;
+        }
 
         //- Update source terms
         virtual void update()

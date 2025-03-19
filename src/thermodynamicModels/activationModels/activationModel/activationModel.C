@@ -157,7 +157,7 @@ void Foam::activationModel::detonationPoint::setActivated
 ) const
 {
     const scalar& t = lambda.time().value();
-    if (activated_ || t < delay_)
+    if (activated_ || t <= delay_)
     {
         return;
     }
@@ -289,6 +289,7 @@ Foam::activationModel::activationModel
       : dimensionedScalar("e0", dimEnergy/dimMass, dict)
     ),
     lambdaExp_(dict.lookupOrDefault("lambdaExp", 1.0)),
+    initialized_(lambda_.time().restart()),
     alphaRhoPtr_(nullptr),
     alphaRhoPhiPtr_(nullptr),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0)),
@@ -296,7 +297,7 @@ Foam::activationModel::activationModel
 {
     const bool active(dict.lookupOrDefault<bool>("active", true));
 
-    if (needDetonationPoints && detonationPoints_.size())
+    if (needDetonationPoints || detonationPoints_.size())
     {
         DynamicList<vector> unactivatedPoints(detonationPoints_.size());
         DynamicList<scalar> unactivatedDelays(detonationPoints_.size());
@@ -354,6 +355,7 @@ Foam::activationModel::activationModel
                 true
             );
         }
+        lambda_.storeOldTime();
     }
 }
 
@@ -364,6 +366,52 @@ Foam::activationModel::~activationModel()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::activationModel::lambdaPow() const
+{
+    return
+        initialized_
+      ? pow(lambda_, lambdaExp_)
+      : volScalarField::New("lambdaPow", lambda_.mesh(), 0.0);
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::activationModel::lambdaPow
+(
+    const label patchi
+) const
+{
+    return
+        initialized_
+      ? pow(lambda_.boundaryField()[patchi], lambdaExp_)
+      : tmp<scalarField>
+        (
+            new scalarField
+            (
+                lambda_.boundaryField()[patchi].size(),
+                0.0
+            )
+        );
+}
+
+
+Foam::scalar Foam::activationModel::cellLambdaPow(const label celli) const
+{
+    return initialized_ ? pow(lambda_[celli], lambdaExp_) : 0.0;
+}
+
+Foam::scalar Foam::activationModel::patchFaceLambdaPow
+(
+    const label patchi,
+    const label facei
+) const
+{
+    return
+        initialized_
+      ? pow(lambda_.boundaryField()[patchi][facei], lambdaExp_)
+      : 0.0;
+}
+
 
 Foam::PtrList<Foam::activationModel::detonationPoint>
 Foam::activationModel::readDetonationPoints
@@ -409,7 +457,11 @@ Foam::activationModel::readDetonationPoints
         dict.lookupOrDefault
         (
             "delays",
-            scalarList(points.size(), 0.0)
+            scalarList
+            (
+                points.size(),
+                dict.lookupOrDefault("delay", 0.0)
+            )
         )
     );
     List<scalar> radii
@@ -504,14 +556,7 @@ void Foam::activationModel::initializeModels()
         )
     );
 
-    if (alphaRhoPtr_().time().restart())
-    {
-        forAll(detonationPoints_, pointi)
-        {
-            detonationPoints_[pointi].setActivated(lambda_, true);
-        }
-        lambda_.storeOldTimes();
-    }
+    initialized_ = true;
 }
 
 Foam::vector Foam::activationModel::centerOfMass
@@ -589,7 +634,7 @@ void Foam::activationModel::update()
         detonationPoints_[pointi].setActivated
         (
             lambdaNew,
-            false//this->finalStep()
+            this->finalStep()
         );
     }
     this->correct(lambdaNew);
@@ -601,8 +646,10 @@ void Foam::activationModel::update()
     this->calcAndStoreDelta(ddtLambda);
 
     // Calculate the deltas using the current value
+    const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
     deltaAlphaRhoLambda_ =
-        fvc::div(alphaRhoPhiPtr_(), lambda_)
+        // fvc::div(alphaRhoPhiPtr_(), lambda_)
+        fvc::div(flux.interpolate(lambda_, lambda_.name())*alphaRhoPhiPtr_())
       - ddtLambda*alphaRho;
 }
 
@@ -631,14 +678,14 @@ void Foam::activationModel::solve()
        /max(alphaRho, smallRho);
       // + deltaLambda*dT;
 
-    forAll(detonationPoints_, pointi)
-    {
-        detonationPoints_[pointi].setActivated
-        (
-            lambda_,
-            this->finalStep()
-        );
-    }
+    // forAll(detonationPoints_, pointi)
+    // {
+    //     detonationPoints_[pointi].setActivated
+    //     (
+    //         lambda_,
+    //         this->finalStep()
+    //     );
+    // }
     // this->correct(lambda_);
     lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
