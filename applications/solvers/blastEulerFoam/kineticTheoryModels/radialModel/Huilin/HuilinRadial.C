@@ -88,7 +88,13 @@ Foam::kineticTheoryModels::radialModels::Huilin::gs0
 
     volScalarField f
     (
-        1.0/(1.0 - system_.alpha()/system_.alphaMax())
+        "f",
+        system_.alphaMax()
+       /max
+        (
+            system_.alphaMax() - system_.alpha(),
+            residualAlpha_
+        )
     );
     volScalarField delta(0.25*(phase1/d1 + phase2/d2));
     volScalarField dd(d1*d2/(d1 + d2));
@@ -115,7 +121,12 @@ Foam::kineticTheoryModels::radialModels::Huilin::cellgs0
 
     const scalar f
     (
-        1.0/(1.0 - system_.alpha()[celli]/system_.alphaMax()[celli])
+        system_.alphaMax()[celli]
+       /max
+        (
+            system_.alphaMax()[celli] - system_.alpha()[celli],
+            residualAlpha_
+        )
     );
     const scalar delta(0.25*(phase1[celli]/d1 + phase2[celli]/d2));
     const scalar dd(d1*d2/(d1 + d2));
@@ -145,14 +156,8 @@ Foam::kineticTheoryModels::radialModels::Huilin::gs0prime
     const volScalarField& alpha = system_.alpha();
     const volScalarField& alphaMax = system_.alphaMax();
 
-    volScalarField f
-    (
-        1.0/(1.0 - alpha/alphaMax)
-    );
-    volScalarField fPrime
-    (
-        1.0/(alphaMax*sqr(1.0 - alpha/alphaMax))
-    );
+    volScalarField f(alphaMax/max(alphaMax() - alpha, residualAlpha_));
+    volScalarField fPrime(sqr(f)/alphaMax);
     volScalarField delta(0.25*(phase1/d1 + phase2/d2));
     volScalarField deltaPrime(0.25/d1);
     volScalarField dd(d1*d2/(d1 + d2));
@@ -178,8 +183,8 @@ Foam::kineticTheoryModels::radialModels::Huilin::cellgs0prime
     const scalar alpha = system_.alpha()[celli];
     const scalar alphaMax = system_.alphaMax()[celli];
 
-    const scalar f = 1.0/(1.0 - alpha/alphaMax);
-    const scalar fPrime = 1.0/(alphaMax*sqr(1.0 - alpha/alphaMax));
+    const scalar f = alphaMax/max(alphaMax - alpha, residualAlpha_.value());
+    const scalar fPrime = sqr(f)/alphaMax;
     const scalar delta(0.25*(phase1[celli]/d1 + phase2[celli]/d2));
     const scalar deltaPrime(0.25/d1);
     const scalar dd(d1*d2/(d1 + d2));

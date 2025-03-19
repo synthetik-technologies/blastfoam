@@ -53,6 +53,9 @@ class LunSavage
 :
     public radialModel
 {
+    // Private data
+
+        dimensionedScalar residualAlpha_;
 
 public:
 

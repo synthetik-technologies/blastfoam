@@ -725,6 +725,14 @@ void Foam::kineticTheorySystem::initialize()
 void Foam::kineticTheorySystem::update()
 {
     masterSystem::update();
+
+    // if (max(this->alpha()/alphaMax()).value() > 1)
+    // {
+    //     FatalErrorInFunction
+    //         << "Sum of volume fractions is greater than alphaMax" << endl
+    //         << abort(FatalError);
+    // }
+
     if (ThetapPtr_.valid())
     {
         volScalarField& Thetap = ThetapPtr_();
