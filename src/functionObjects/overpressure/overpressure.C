@@ -54,10 +54,6 @@ Foam::functionObjects::overpressure::overpressure
     pRef_("pRef", dimPressure, dict),
     store_(dict.lookupOrDefault("store", false))
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
     if (store_)
     {
         obr_.store

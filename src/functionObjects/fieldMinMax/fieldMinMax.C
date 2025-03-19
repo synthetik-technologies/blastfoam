@@ -90,10 +90,6 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     cellMap_(nullptr),
     rCellMap_(nullptr)
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
     read(dict);
 }
 
@@ -115,10 +111,6 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     cellMap_(nullptr),
     rCellMap_(nullptr)
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
     read(dict);
 }
 
@@ -246,6 +238,11 @@ void Foam::functionObjects::fieldMinMax::setOldFields(const mapPolyMesh& mpm)
 
 bool Foam::functionObjects::fieldMinMax::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
+
     bool good = true;
     forAll(fieldNames_, fieldi)
     {

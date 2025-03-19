@@ -316,6 +316,10 @@ bool Foam::functionObjects::TExposure::execute()
 
 bool Foam::functionObjects::TExposure::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
     return exposure_.write();
 }
 

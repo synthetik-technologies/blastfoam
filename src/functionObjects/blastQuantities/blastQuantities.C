@@ -191,12 +191,7 @@ Foam::functionObjects::blastQuantities::blastQuantities
             dimPressure
         )
     )
-{
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -220,6 +215,7 @@ bool Foam::functionObjects::blastQuantities::read
 
 bool Foam::functionObjects::blastQuantities::execute()
 {
+    Info<<"execute bq"<<endl;
     const fvMesh& mesh = this->mesh_;
     const volScalarField& p(mesh.lookupObject<volScalarField>(pName_));
 
@@ -273,6 +269,11 @@ bool Foam::functionObjects::blastQuantities::execute()
 
 bool Foam::functionObjects::blastQuantities::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
+
     return
         writeObject(overpressureName_)
      && pMax_.write()

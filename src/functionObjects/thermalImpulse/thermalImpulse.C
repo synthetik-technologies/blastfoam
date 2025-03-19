@@ -143,6 +143,10 @@ bool Foam::functionObjects::thermalImpulse::execute()
 
 bool Foam::functionObjects::thermalImpulse::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
     return intGradT_.write() && intQExt_.write();
 }
 

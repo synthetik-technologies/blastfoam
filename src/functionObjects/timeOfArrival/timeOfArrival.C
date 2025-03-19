@@ -119,12 +119,7 @@ Foam::functionObjects::timeOfArrival::timeOfArrival
             dimPressure
         )
     )
-{
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -183,6 +178,10 @@ bool Foam::functionObjects::timeOfArrival::execute()
 
 bool Foam::functionObjects::timeOfArrival::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
     return pMax_.write() && timeOfArrival_.write();
 }
 

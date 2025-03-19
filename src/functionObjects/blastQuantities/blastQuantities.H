@@ -27,7 +27,7 @@ Class
     Foam::functionObjects::blastQuantities
 
 Description
-    Calculates standard blast quantities including overprssure, impulse,
+    Calculates standard blast quantities including overpressure, impulse,
     time of arrival, and positive phase duration
 
 See also
