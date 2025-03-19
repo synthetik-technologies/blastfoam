@@ -230,7 +230,6 @@ void Foam::optEntry::read(Istream& is)
         index_ = -1;
         is.putBack(t);
     }
-    Info<<file_<<" "<<index_<<endl;
 
     // Find the token and return the pointer
     t_ =

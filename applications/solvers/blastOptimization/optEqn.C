@@ -3,6 +3,7 @@
 #include "OSspecific.H"
 #include "IFstream.H"
 #include "IOmanip.H"
+#include "SubList.H"
 
 Foam::List<Foam::scalar>
 Foam::optEqnBase::limits(const label cmpt) const
@@ -25,7 +26,8 @@ Foam::optEqnBase::optEqnBase(const dictionary& dict)
         dict.lookupOrDefault("configurations", List<List<paramEntry>>(1))
     ),
     commands_(dict.lookup("commands")),
-    results_(dict.lookup("results"))
+    results_(dict.lookup("results")),
+    savedIndex_(0)
 {
     IOobject::writeDivider(Info);
     Info<< "Commands " << incrIndent << endl;
@@ -57,7 +59,7 @@ Foam::optEqnBase::optEqnBase(const dictionary& dict)
 }
 
 
-Foam::optEqn1::optEqn1(const Time& runTime, const dictionary& dict)
+Foam::optEqn1::optEqn1(const Time& runTime, const dictionary& dict, const bool restart)
 :
     optEqnBase(dict),
     ScalarEquation
@@ -67,16 +69,22 @@ Foam::optEqn1::optEqn1(const Time& runTime, const dictionary& dict)
         dict
     )
 {
-    ScalarEquation::setLog
-    (
-        runTime.globalPath() / runTime.globalCaseName() + ".evals",
-        this->log()
-    );
-    ScalarEquation::read(dict);
+    const fileName logFile =
+        dict.lookupOrDefault<fileName>
+        (
+            "logFile",
+            runTime.globalPath() / runTime.globalCaseName() + ".evals"
+        );
+    ScalarEquation::setLog(logFile, this->log());
+
+    if (restart)
+    {
+        readLogFile(logFile, this->nVar());
+    }
 }
 
 
-Foam::optEqn::optEqn(const Time& runTime, const dictionary& dict)
+Foam::optEqn::optEqn(const Time& runTime, const dictionary& dict, const bool restart)
 :
     optEqnBase(dict),
     ScalarUnivariateEquation
@@ -86,12 +94,18 @@ Foam::optEqn::optEqn(const Time& runTime, const dictionary& dict)
         dict
     )
 {
-    ScalarUnivariateEquation::setLog
-    (
-        runTime.globalPath() / runTime.globalCaseName() + ".evals",
-        this->log()
-    );
-    ScalarUnivariateEquation::read(dict);
+    const fileName logFile =
+        dict.lookupOrDefault<fileName>
+        (
+            "logFile",
+            runTime.globalPath() / runTime.globalCaseName() + ".evals"
+        );
+    ScalarUnivariateEquation::setLog(logFile, this->log());
+
+    if (restart)
+    {
+        readLogFile(logFile, this->nVar());
+    }
 }
 
 
@@ -110,6 +124,45 @@ Foam::optEqn::~optEqn()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::optEqnBase::readLogFile(const fileName& file, const label nVar)
+{
+    if (!exists(file))
+    {
+        return;
+    }
+
+    IFstream is(file);
+    word line;
+    is.getLine(line);
+
+    DynamicList<List<scalar>> vars;
+    DynamicList<scalar> errs;
+    while (is.good())
+    {
+        is.getLine(line);
+        if (!line.size())
+        {
+            break;
+        }
+        line = "(" + line + ")";
+
+        IStringStream iss(line);
+        scalarList lst(iss);
+        if (lst.size() != nVar + 1)
+        {
+            FatalIOErrorInFunction(is)
+                << "Log file has " << lst.size()-1 << " variables "
+                << "but should have " << nVar << endl
+                << abort(FatalIOError);
+        }
+        vars.append(SubList<scalar>(lst, nVar));
+        errs.append(lst.last());
+    }
+    savedVars_.transfer(vars);
+    savedErrors_.transfer(errs);
+    Info<<savedVars_<<nl<<savedErrors_<<endl;
+}
 
 Foam::string Foam::optEqnBase::logFile
 (
@@ -198,15 +251,8 @@ Foam::scalar Foam::optEqnBase::run() const
         {
             is >> errorName >> value >> errorValue;
             errors.insert(errorName, {value, errorValue});
-            // if (errorName != "totalError")
-            // {
-            //     Info<< errorName << ": "
-            //         << "value = " << value
-            //         << ", error = " << errorValue << endl;
-            // }
         }
 
-        // Info<< "Total error = " << errors["totalError"][1] << endl;
         totalError += errors["totalError"][1];
     }
 
@@ -219,7 +265,16 @@ Foam::scalar Foam::optEqn1::fx(const scalar x, const label li) const
     // Set to initial values
     variables_[0].set(x);
 
-    scalar error = run();
+    scalar error = 0;
+    if (savedIndex_ < savedVars_.size())
+    {
+        error = savedErrors_[savedIndex_];
+        savedIndex_++;
+    }
+    else
+    {
+        error = run();
+    }
 
     if (this->log())
     {
@@ -250,7 +305,17 @@ Foam::scalar Foam::optEqn::fX(const VarType& x, const label li) const
         variables_[i].set(x[i]);
     }
 
-    scalar error = run();
+    scalar error = 0;
+    if (savedIndex_ < savedVars_.size())
+    {
+        error = savedErrors_[savedIndex_];
+        savedIndex_++;
+    }
+    else
+    {
+        error = run();
+    }
+
     if (this->log())
     {
         const unsigned int w = IOstream::defaultPrecision() + 7;

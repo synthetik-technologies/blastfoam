@@ -200,6 +200,7 @@ Foam::errorType::errorType
     name_(dict.dictName()),
     runTime_(runTime),
     regionName_(region),
+    normalise_(dict.lookupOrDefault("normalise", true)),
     value_(0.0),
 
     timeReduction_(timeReduction),
@@ -240,7 +241,14 @@ Foam::scalar Foam::errorType::error() const
     }
     if (mag(targetValue_) > small)
     {
-        return mag(value_ - targetValue_)/targetValue_;
+        if (normalise_)
+        {
+            return mag(value_ - targetValue_)/targetValue_;
+        }
+        else
+        {
+            return mag(value_ - targetValue_);
+        }
     }
     return mag(value_);
 }

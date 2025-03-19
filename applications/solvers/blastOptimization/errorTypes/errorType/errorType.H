@@ -91,6 +91,9 @@ protected:
     //- Name of the region
     const word regionName_;
 
+    //- Normalise error
+    bool normalise_;
+
     //- Current value
     scalar value_;
 

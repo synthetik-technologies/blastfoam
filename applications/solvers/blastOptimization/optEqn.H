@@ -59,6 +59,13 @@ protected:
     //- Output file
     fileName results_;
 
+    //- Saved list of variables and result error
+    mutable label savedIndex_;
+    List<List<scalar>> savedVars_;
+    List<scalar> savedErrors_;
+
+    //- Read log file
+    void readLogFile(const fileName& file, const label nVar);
 
     //- Return log file name for a given command number and configuration
     string logFile(const label cmd, const label config) const;
@@ -90,7 +97,7 @@ class optEqn1
 {
 public:
     //Constructor
-    optEqn1(const Time& runTime, const dictionary& dict);
+    optEqn1(const Time& runTime, const dictionary& dict, const bool restart);
 
     //Destructor
     ~optEqn1();
@@ -113,7 +120,7 @@ class optEqn
 {
 public:
     //Constructor
-    optEqn(const Time& runTime, const dictionary& dict);
+    optEqn(const Time& runTime, const dictionary& dict, const bool restart);
 
     //Destructor
     ~optEqn();

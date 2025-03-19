@@ -44,60 +44,60 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    // argList::addNote
-    // (
-    //     "Optimises a given case setup by reading scalar entries to modify\n"
-    //     "and changing the inputs of the simulation within the given bounds.\n"
-    //     "The \"vars\" entry provides the path to the entries to change, and\n"
-    //     "the \"errorCriteria\" gives the list of error calculators used to\n"
-    //     "determine a cost function.\n"
-    //     "\n"
-    //     "Entries:\n"
-    //     "    Scalar entry: \"path/to/entry\" (lower upper) initial\n"
-    //     "    List entry: \"path/to/entry\" (lower upper) initial index\n"
-    //     "\n\n"
-    //     "Examples:\n\n"
-    //     "    gas\n"
-    //     "    { \n"
-    //     "        ignitor\n"
-    //     "        {\n"
-    //     "            mass 0.0023;\n"
-    //     "        }\n"
-    //     "    }\n\n"
-    //     "    projectile\n"
-    //     "    { \n"
-    //     "        resistanceProfile\n"
-    //     "        {\n"
-    //     "            pressure (1e6 10e7 21e6 35e6);\n"
-    //     "        }\n"
-    //     "    }\n"
-    //     "\n"
-    //     "\n"
-    //     "    // Method for optimising scalar entries\n"
-    //     "    Scalar entry:\n"
-    //     "        // Modify the mass entry in the gas/ignitor subDictionary\n"
-    //     "        // The lower bound is 1e-5 and the upper bound is 0.001\n"
-    //     "        // The initial value is 0.0023 (value above)\n"
-    //     "        vars\n"
-    //     "        (\n"
-    //     "            \"gas/ignitor/mass\" (1e-5 0.001) 0.0023\n"
-    //     "        );\n"
-    //     "\n"
-    //     "\n"
-    //     "    // Method for optimising and any entry with multiple scalars\n"
-    //     "    // between parenthesis, i.e. ( 0 1 ... N )\n"
-    //     "    List entry:\n"
-    //     "        // Modify the pressure entry in the projectile/resistanceProfile "
-    //     "subDictionary\n"
-    //     "        // The lower bound is 20e-6 and the upper bound is 30e6\n"
-    //     "        // The initial value is 21e6 (value above)\n"
-    //     "        // We are changing index 2 or the 3rd entry "
-    //     "(numbering starts from 0)\n"
-    //     "        vars\n"
-    //     "        (\n"
-    //     "            \"projectile/resistanceProfile/pressure\" (20e6 30e6) 21e6 2\n"
-    //     "        );\n"
-    // );
+    argList::addNote
+    (
+        "Optimises a given case setup by reading scalar entries to modify\n"
+        "and changing the inputs of the simulation within the given bounds.\n"
+        "The \"variables\" entry provides the path to the entries to change, and\n"
+        "the \"errors\" gives the list of error calculators used to\n"
+        "determine a cost function. The \"optError\" functionObject should be\n"
+        "used in the actual simulation so the error is written\n"
+        "\n"
+        "Entries:\n"
+        "    Scalar entry: \"path/to/entry\" (lower upper) initial\n"
+        "    List entry: \"path/to/entry\" [index] (lower upper) initial \n"
+        "\n\n"
+        "Examples:\n\n"
+        "    dict00\n"
+        "    { \n"
+        "        dict01\n"
+        "        {\n"
+        "            val 0.0023;\n"
+        "        }\n"
+        "    }\n\n"
+        "    dict10\n"
+        "    { \n"
+        "        dict11\n"
+        "        {\n"
+        "            lst (0 1 2);\n"
+        "        }\n"
+        "    }\n"
+        "\n"
+        "\n"
+        "    // Method for optimising scalar entries\n"
+        "    Scalar entry:\n"
+        "        // Modify the mass entry in the gas/ignitor subDictionary\n"
+        "        // The lower bound is 0 and the upper bound is 1\n"
+        "        // The initial value is 0.5 (value above)\n"
+        "        variables\n"
+        "        (\n"
+        "            \"dict00/dict01/val\" (0 1) 0.5\n"
+        "        );\n"
+        "\n"
+        "\n"
+        "    // Method for optimising and any entry with multiple scalars\n"
+        "    // between parenthesis, i.e. ( 0 1 ... N )\n"
+        "    List entry:\n"
+        "        // Modify the entry in the dict10/dict11 subDictionary\n"
+        "        // The lower bound is 0 and the upper bound is 10\n"
+        "        // The initial value is 5 (value above)\n"
+        "        // We are changing index 2 or the 3rd entry (numbering starts from 0)\n"
+        "        variable\n"
+        "        (\n"
+        "            \"dict10/dict11/lst\" [2] (0 10) 5\n"
+        "        );\n"
+    );
+    argList::addBoolOption("restart", "Used cached results to restart simulation");
 
     #include "setRootCase.H"
     #include "createTime.H"
@@ -120,11 +120,27 @@ int main(int argc, char *argv[])
     List<varEntry> variables(optimizationProperties.lookup("variables"));
     if (variables.size() == 1)
     {
-        eqnPtr.set(new optEqn1(runTime, optimizationProperties));
+        eqnPtr.set
+        (
+            new optEqn1
+            (
+                runTime,
+                optimizationProperties,
+                args.optionFound("restart")
+            )
+        );
     }
     else
     {
-        eqnPtr.set(new optEqn(runTime, optimizationProperties));
+        eqnPtr.set
+        (
+            new optEqn
+            (
+                runTime,
+                optimizationProperties,
+                args.optionFound("restart")
+            )
+        );
     }
     scalarUnivariateEquation& eqn = eqnPtr();
 
