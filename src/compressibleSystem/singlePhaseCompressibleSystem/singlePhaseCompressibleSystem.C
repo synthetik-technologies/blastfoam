@@ -89,9 +89,9 @@ void Foam::singlePhaseCompressibleSystem::solve()
     rho -= dT*deltaRho;
     rho.correctBoundaryConditions();
 
-    thermoPtr_->solve();
-
     compressibleBlastSystem::solve();
+
+    thermoPtr_->solve();
 }
 
 
