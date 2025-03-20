@@ -125,7 +125,7 @@ Foam::kineticTheoryModels::radialModels::Huilin::cellgs0
        /max
         (
             system_.alphaMax()[celli] - system_.alpha()[celli],
-            residualAlpha_
+            residualAlpha_.value()
         )
     );
     const scalar delta(0.25*(phase1[celli]/d1 + phase2[celli]/d2));
@@ -156,7 +156,7 @@ Foam::kineticTheoryModels::radialModels::Huilin::gs0prime
     const volScalarField& alpha = system_.alpha();
     const volScalarField& alphaMax = system_.alphaMax();
 
-    volScalarField f(alphaMax/max(alphaMax() - alpha, residualAlpha_));
+    volScalarField f(alphaMax/max(alphaMax - alpha, residualAlpha_));
     volScalarField fPrime(sqr(f)/alphaMax);
     volScalarField delta(0.25*(phase1/d1 + phase2/d2));
     volScalarField deltaPrime(0.25/d1);
