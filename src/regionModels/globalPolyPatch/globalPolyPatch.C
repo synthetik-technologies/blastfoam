@@ -453,6 +453,10 @@ void Foam::globalPolyPatch::updateMesh()
 }
 
 
+void Foam::globalPolyPatch::updateMeshOther() const
+{}
+
+
 void Foam::globalPolyPatch::movePoints(const bool clear)
 {
     if (clear)
@@ -460,6 +464,10 @@ void Foam::globalPolyPatch::movePoints(const bool clear)
         clearOut();
     }
 }
+
+
+void Foam::globalPolyPatch::movePointsOther(const bool clear) const
+{}
 
 
 bool Foam::globalPolyPatch::write() const

@@ -198,7 +198,6 @@ Foam::coupledGlobalPolyPatch::~coupledGlobalPolyPatch()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 const Foam::polyMesh& Foam::coupledGlobalPolyPatch::sampleMesh() const
 {
     return mesh_.time().lookupObject<polyMesh>(sampleRegion_);
@@ -260,12 +259,14 @@ void Foam::coupledGlobalPolyPatch::update()
 void Foam::coupledGlobalPolyPatch::movePoints(const bool clear)
 {
     globalPolyPatch::movePoints(clear);
+    samplePatch().movePointsOther(clear);
 }
 
 
 void Foam::coupledGlobalPolyPatch::updateMesh()
 {
     clearOut();
+    samplePatch().updateMeshOther();
 }
 
 

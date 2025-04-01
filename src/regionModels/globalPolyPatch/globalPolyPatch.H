@@ -244,8 +244,14 @@ public:
         //- Correct patch after moving points
         virtual void movePoints(const bool clear);
 
+        //- Correct patch after moving points (other patch)
+        virtual void movePointsOther(const bool clear) const;
+
         //- Update for changes in topology
         virtual void updateMesh();
+
+        //- Update for changes in topology (other patch)
+        virtual void updateMeshOther() const;
 
         //- Clear addressing
         virtual void clearOut() const;

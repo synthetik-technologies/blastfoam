@@ -275,6 +275,7 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
     const fvPatch& nbrPatch =
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
 
+
     if (!returnReduce(nbrPatch.size(), sumOp<label>()))
     {
         refGrad() = Zero;
