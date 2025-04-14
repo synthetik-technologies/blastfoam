@@ -227,6 +227,38 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         }
     }
 
+    volScalarField::Boundary& berror = error.boundaryFieldRef();
+    forAll(berror, patchi)
+    {
+        fvPatchScalarField& perror = berror[patchi];
+        const labelList& faceCells = perror.patch().faceCells();
+
+        forAll(perror, facei)
+        {
+            const label celli = faceCells[facei];
+            if
+            (
+                perror[facei] < lowerUnrefine_
+             || perror[facei] > upperUnrefine_
+            )
+            {
+                error[celli] = max(error[celli], -1.0);
+            }
+            else if
+            (
+                perror[facei] > lowerRefine_
+             && perror[facei] < upperRefine_
+            )
+            {
+                error[celli] = max(error[celli], 1.0);
+            }
+            else
+            {
+                error[celli] = max(error[celli], 0.0);
+            }
+        }
+    }
+
     if (!refineProbes_)
     {
         return;
