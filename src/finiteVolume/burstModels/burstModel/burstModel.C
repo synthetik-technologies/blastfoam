@@ -70,7 +70,7 @@ Foam::burstModel::burstModel(const dictionary& dict)
     partialBurst_(dict.lookup<bool>("partialBurst")),
     useDelta_(dict.lookupOrDefault<bool>("useDelta", true)),
     burst_(false),
-    log_(dict.lookupOrDefault("log", false))
+    log_(dict.lookupOrDefault("logBurst", false))
 {}
 
 
