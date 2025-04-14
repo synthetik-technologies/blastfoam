@@ -94,6 +94,9 @@ protected:
         //- Name of pressure field
         word pName_;
 
+        //- Saved initial pressure
+        autoPtr<volScalarField> p0Ptr_;
+
         //- Reference pressure
         dimensionedScalar pRef_;
 

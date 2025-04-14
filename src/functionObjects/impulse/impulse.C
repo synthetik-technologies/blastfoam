@@ -51,7 +51,7 @@ Foam::functionObjects::impulse::impulse
     fvMeshFunctionObject(name, runTime, dict),
     restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
-    pRef_("pRef", dimPressure, dict),
+    pRef_("pRef", dimPressure, 0.0),
     impulse_
     (
         IOobject
@@ -86,8 +86,39 @@ bool Foam::functionObjects::impulse::read(const dictionary& dict)
     Log << type() << " " << name() << ":" << nl;
     fvMeshFunctionObject::read(dict);
 
+    if (!p0Ptr_.valid() && dict.lookupOrDefault("nonUniformPRef", false))
+    {
+        IOobject p0IO
+        (
+            IOobject::groupName("p0", IOobject::group(pName_)),
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        );
+        if (p0IO.typeHeaderOk<volScalarField>())
+        {
+            p0Ptr_.set(new volScalarField(p0IO, mesh_));
+        }
+        else
+        {
+            p0IO.readOpt() = IOobject::NO_READ;
+            p0Ptr_.set
+            (
+                new volScalarField
+                (
+                    p0IO,
+                    mesh_.lookupObject<volScalarField>(pName_)
+                )
+            );
+        }
+    }
+
     dict.readIfPresent("restartOnRestart", restartOnRestart_);
-    pRef_.read(dict);
+    if (!p0Ptr_.valid())
+    {
+        pRef_.read(dict);
+    }
 
     Log << endl;
 
@@ -100,7 +131,14 @@ bool Foam::functionObjects::impulse::execute()
     const volScalarField& p =
         mesh_.lookupObject<volScalarField>(pName_);
 
-    impulse_ = impulse_.oldTime() + (p - pRef_)*obr_.time().deltaT();
+    if (p0Ptr_.valid())
+    {
+        impulse_ = impulse_.oldTime() + (p - p0Ptr_())*obr_.time().deltaT();
+    }
+    else
+    {
+        impulse_ = impulse_.oldTime() + (p - pRef_)*obr_.time().deltaT();
+    }
 
     return true;
 }
