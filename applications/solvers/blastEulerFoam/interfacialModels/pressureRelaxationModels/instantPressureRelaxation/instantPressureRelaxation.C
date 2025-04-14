@@ -81,7 +81,7 @@ Foam::instantPressureRelaxation::~instantPressureRelaxation()
 
 void Foam::instantPressureRelaxation::FX
 (
-     const ScalarMultivariateEquation::VarType& rhoPI,
+    const ScalarMultivariateEquation::VarType& rhoPI,
     const label li,
     scalarList& fx
 ) const
@@ -96,17 +96,19 @@ void Foam::instantPressureRelaxation::FX
         {
             continue;
         }
-        scalar alpha = alphaRho/max(rhoPI[phasei], 1e-10);
+        const scalar alpha = alphaRho/max(rhoPI[phasei], 1e-10);
         thermos_[phasei].rho()[li] = rhoPI[phasei];
         scalar e = thermos_[phasei].calcCelle(rhoPI.last(), li);
         thermos_[phasei].he()[li] = e;
+        const scalar pi = thermos_[phasei].cellpRhoT(li, false);
 
-        fx[phasei] =
-            2.0*rhoPI[phasei]*rho0_[phasei]*(e - e0_[phasei])
-          + (rhoPI.last() + PI0_)*(rhoPI[phasei] - rho0_[phasei]);
+        fx[phasei] = rhoPI.last() - pi;
+
+            // 2.0*rhoPI[phasei]*rho0_[phasei]*(e - e0_[phasei])
+          // + (rhoPI.last() + PI0_)*(rhoPI[phasei] - rho0_[phasei]);
         sumAlpha += alpha;
     }
-    fx.last() = sumAlpha - 1.0;
+    fx.last() = 1.0 - sumAlpha;
 }
 
 
@@ -121,6 +123,7 @@ void Foam::instantPressureRelaxation::jacobian
     J.setSize(nEqns(), nEqns());
     fx.setSize(nEqns(), 0.0);
     scalar sumAlpha = 0;
+
     forAll(phaseModels_, phasei)
     {
         scalar alphaRho = phaseModels_[phasei].alphaRho()[li];
@@ -128,27 +131,52 @@ void Foam::instantPressureRelaxation::jacobian
         {
             continue;
         }
-        scalar alpha = alphaRho/max(rhoPI[phasei], 1e-10);
+        const scalar rhos = max(rhoPI[phasei], 1e-10);
+        const scalar alpha = alphaRho/rhos;
         thermos_[phasei].rho()[li] = rhoPI[phasei];
         scalar e = thermos_[phasei].calcCelle(rhoPI.last(), li);
         thermos_[phasei].he()[li] = e;
 
-        fx[phasei] =
-            2.0*rhoPI[phasei]*rho0_[phasei]*(e - e0_[phasei])
-          + (rhoPI.last() + PI0_)*(rhoPI[phasei] - rho0_[phasei]);
+        const scalar pi = thermos_[phasei].cellpRhoT(li, false);
+        const scalar dpdRho = thermos_[phasei].celldpdRho(li);
+        const scalar dAlphadRho = -alphaRho/sqr(rhos);
 
-        J(phasei, phasei) =
-            2.0*rho0_[phasei]
-           *(
-                (e - e0_[phasei])
-              + rhoPI[phasei]*thermos_[phasei].celldpde(li)
-            );
-        J(phasei, phaseModels_.size()) = -alphaRho/sqr(rhoPI[phasei]);
-        J(phaseModels_.size(), phasei) = rho0_[phasei] - rhoPI[phasei];
+        fx[phasei] = rhoPI.last() - pi;
+        J(phasei, phasei) = thermos_[phasei].celldpdRho(li);
+        J(phasei, phaseModels_.size()) = -1.0;
+        J(phaseModels_.size(), phasei) = dAlphadRho;
 
         sumAlpha += alpha;
     }
-    fx.last() = sumAlpha - 1.0;
+
+    // forAll(phaseModels_, phasei)
+    // {
+    //     scalar alphaRho = phaseModels_[phasei].alphaRho()[li];
+    //     if (alphaRho < 1e-10)
+    //     {
+    //         continue;
+    //     }
+    //     scalar alpha = alphaRho/max(rhoPI[phasei], 1e-10);
+    //     thermos_[phasei].rho()[li] = rhoPI[phasei];
+    //     scalar e = thermos_[phasei].calcCelle(rhoPI.last(), li);
+    //     thermos_[phasei].he()[li] = e;
+    //
+    //     fx[phasei] =
+    //         2.0*rhoPI[phasei]*rho0_[phasei]*(e - e0_[phasei])
+    //       + (rhoPI.last() + PI0_)*(rhoPI[phasei] - rho0_[phasei]);
+    //
+    //     J(phasei, phasei) =
+    //         2.0*rho0_[phasei]
+    //        *(
+    //             (e - e0_[phasei])
+    //           + rhoPI[phasei]*thermos_[phasei].celldpde(li)
+    //         );
+    //     J(phasei, phaseModels_.size()) = -alphaRho/sqr(rhoPI[phasei]);
+    //     J(phaseModels_.size(), phasei) = rho0_[phasei] - rhoPI[phasei];
+    //
+    //     sumAlpha += alpha;
+    // }
+    // fx.last() = sumAlpha - 1.0;
     J(phaseModels_.size(), phaseModels_.size()) = small;
 }
 
