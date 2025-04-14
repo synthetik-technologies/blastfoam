@@ -41,11 +41,31 @@ Description
 
 int main(int argc, char *argv[])
 {
+    #include "addRegionOption.H"
+
     #include "postProcess.H"
 
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+
+    Info<< "Create mesh for time = "
+        << runTime.timeName() << nl << endl;
+
+    autoPtr<dynamicFvMesh> meshPtr
+    (
+        dynamicFvMesh::New
+        (
+            IOobject
+            (
+                args.optionLookupOrDefault("region", dynamicFvMesh::defaultRegion),
+                runTime.timeName(),
+                runTime,
+                IOobject::MUST_READ
+            )
+        )
+    );
+
+    dynamicFvMesh& mesh = meshPtr();
     #include "createFields.H"
     #include "createTimeControls.H"
     maxCo = min(maxCo, integrator.maxCo());
