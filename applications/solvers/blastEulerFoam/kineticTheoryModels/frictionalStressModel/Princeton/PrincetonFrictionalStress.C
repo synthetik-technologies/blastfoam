@@ -96,6 +96,7 @@ frictionalPressure
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
@@ -103,7 +104,7 @@ frictionalPressure
 
     return
         neg(alphap - alphaMinSchaefer)
-       *Fr_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_)
+       *Fr_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_)
        /pow(max(alphaMax - alphap, alphaDeltaMin_), p_)
       + dimensionedScalar("1e24", dimensionSet(1, -1, -2, 0, 0), 1e24)
        *pow(Foam::max(alphap - alphaMinSchaefer, scalar(0)), 10.0);
@@ -116,6 +117,7 @@ frictionalPressurePrime
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
@@ -125,9 +127,9 @@ frictionalPressurePrime
         neg(alphap - alphaMinSchaefer)
        *Fr_
        *(
-            eta_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_ - 1.0)
+            eta_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_ - 1.0)
            *(alphaMax - alphap)
-          + p_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_)
+          + p_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_)
         )/pow(max(alphaMax - alphap, alphaDeltaMin_), p_ + 1.0)
       + dimensionedScalar("1e25", dimensionSet(1, -1, -2, 0, 0), 1e25)
        *pow(Foam::max(alphap - alphaMinSchaefer, scalar(0)), 9.0);
@@ -139,11 +141,12 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax,
     const volScalarField& Pc
 ) const
 {
-    volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
+    volScalarField alphaMinFrictionByAlphap(alphaMinFrictionByAlphap_*alphaMax);
     tmp<volScalarField> da = phase.d();
     const volScalarField& Theta =
         phase.mesh().lookupObject<volScalarField>
@@ -195,7 +198,7 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::mu
 
     forAll(Pc, celli)
     {
-        if (alphap[celli] > alphaMinFriction[celli])
+        if (alphap[celli] > alphaMinFrictionByAlphap[celli])
         {
             muf[celli] =
                 sqrt(2.0)*Pf()[celli]*sin(phi_.value())

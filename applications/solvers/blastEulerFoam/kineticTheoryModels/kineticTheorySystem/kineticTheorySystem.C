@@ -460,6 +460,7 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::frictionalPressure
             (
                 phase,
                 this->alpha(),
+                alphaMinFriction_,
                 alphaMax_
             );
     }
@@ -469,6 +470,7 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::frictionalPressure
         (
             phase,
             this->alpha(),
+            alphaMinFriction_,
             alphaMax_
         );
     }
@@ -490,6 +492,7 @@ Foam::kineticTheorySystem::frictionalPressurePrime
             (
                 phase,
                 this->alpha(),
+                alphaMinFriction_,
                 alphaMax_
             )
           + phase*this->alpha()
@@ -497,6 +500,7 @@ Foam::kineticTheorySystem::frictionalPressurePrime
             (
                 phase,
                 this->alpha(),
+                alphaMinFriction_,
                 alphaMax_
             )
         )/sqr(max(this->alpha(), this->residualAlpha()));
@@ -507,6 +511,7 @@ Foam::kineticTheorySystem::frictionalPressurePrime
         (
             phase,
             this->alpha(),
+            alphaMinFriction_,
             alphaMax_
         );
     }
@@ -523,6 +528,7 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheorySystem::muFrictional
     (
         phase,
         this->alpha(),
+        alphaMinFriction_,
         alphaMax_,
         Pfr
     );

@@ -89,11 +89,12 @@ frictionalPressure
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
     return
-        Fr_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_)
+        Fr_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_)
        /pow(max(alphaMax - alphap, alphaDeltaMin_), p_);
 }
 
@@ -104,10 +105,11 @@ frictionalPressurePrime
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
-    volScalarField alphapMin(max(alphap - alphaMinFriction_, scalar(0)));
+    volScalarField alphapMin(max(alphap - alphaMinFriction, scalar(0)));
     volScalarField alphapMax(max(alphaMax - alphap, alphaDeltaMin_));
     return
         Fr_
@@ -123,6 +125,7 @@ Foam::kineticTheoryModels::frictionalStressModels::JohnsonJackson::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax,
     const volScalarField& pf
 ) const

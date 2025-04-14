@@ -100,6 +100,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax
         ) const;
 
@@ -107,6 +108,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax
         ) const;
 
@@ -114,6 +116,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax,
             const volScalarField& pf
         ) const;
