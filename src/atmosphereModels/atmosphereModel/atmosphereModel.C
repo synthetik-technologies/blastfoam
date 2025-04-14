@@ -162,6 +162,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         p - rho*gh,
         ph_rghBcs
     );
+    volScalarField T0(thermo.T());
 
     pressureReference pressureReference
     (
@@ -240,9 +241,11 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         p.correctBoundaryConditions();
         if (correctRho)
         {
+            thermo.T() = T0;
             thermo.updateRho(p);
         }
-        thermo.he() = thermo.calce(thermo.p());
+        thermo.he() = thermo.calce(p);
+        thermo.update();
 
         Info<< "Hydrostatic pressure variation "<< residual << endl;
         if (iter > 0)
@@ -277,6 +280,10 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         thermo.p().correctBoundaryConditions();
 
         // Correct density and thermodynamic quantities
+        if (correctRho)
+        {
+            thermo.T() = T0;
+        }
         thermo.updateRho(thermo.p());
         thermo.he() = thermo.calce(thermo.p());
         thermo.correct();
