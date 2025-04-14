@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "vofRegionSolver.H"
-#include "noPhaseChange.H"
 #include "hydrostaticInitialisation.H"
 #include "addToRunTimeSelectionTable.H"
 
