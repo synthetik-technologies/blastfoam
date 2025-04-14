@@ -38,17 +38,15 @@ Foam::NoneReconstructionScheme<Type>::NoneReconstructionScheme
 )
 :
     ReconstructionScheme<Type>(phi, is, overwrite),
-    interp_
-    (
-        this->overwrite_
-      ? surfaceInterpolationScheme<Type>::New
-        (
-            phi.mesh(),
-            is
-        )
-      : tmp<surfaceInterpolationScheme<Type>>()
-    )
-{}
+    tokens_(),
+    is_(is.name(), tokens_)
+{
+    while (is.good())
+    {
+        tokens_.append(token(is));
+    }
+    is_.tokenList::operator=(tokens_);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -64,6 +62,15 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::NoneReconstructionScheme<Type>::interpolateOwn() const
 {
+    if (!interp_.valid())
+    {
+        is_.rewind();
+        interp_ = surfaceInterpolationScheme<Type>::New
+        (
+            this->phi_.mesh(),
+            is_
+        );
+    }
     return GeometricField<Type, fvsPatchField, surfaceMesh>::New
     (
         this->ownName(),
@@ -75,6 +82,15 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::NoneReconstructionScheme<Type>::interpolateNei() const
 {
+    if (!interp_.valid())
+    {
+        is_.rewind();
+        interp_ = surfaceInterpolationScheme<Type>::New
+        (
+            this->phi_.mesh(),
+            is_
+        );
+    }
     return GeometricField<Type, fvsPatchField, surfaceMesh>::New
     (
         this->neiName(),
@@ -82,5 +98,26 @@ Foam::NoneReconstructionScheme<Type>::interpolateNei() const
     );
 }
 
+
+template<class Type>
+Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
+Foam::NoneReconstructionScheme<Type>::interpolate
+(
+    const surfaceScalarField& faceFlux
+) const
+{
+    const dictionary& schemesDict =
+        this->phi_.mesh().schemesDict().subDict("interpolationSchemes");
+    return GeometricField<Type, fvsPatchField, surfaceMesh>::New
+    (
+        this->neiName(),
+        fvc::interpolate
+        (
+            this->phi_,
+            faceFlux,
+            schemesDict.lookup("upwindInterpolate(" + this->phi_.name() +")")
+        )
+    );
+}
 
 // ************************************************************************* //

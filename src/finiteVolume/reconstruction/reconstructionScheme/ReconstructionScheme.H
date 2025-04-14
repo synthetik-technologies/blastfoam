@@ -44,6 +44,10 @@ Description
 
         // Standard linear interpolation with Minmod limiter
         reconstruct(e)   Minmod;
+
+        // No own and neighbour reconstruction use same field
+        reconstruct(alpha)   none;
+        interpolate(alpha)   CICSAM 0.5;
     }
     \endverbatim
 
@@ -229,6 +233,12 @@ public:
         //- Return the name of the neighbour field
         word neiName() const;
 
+        //- Return if pure upwinding is used
+        virtual bool upwind() const
+        {
+            return false;
+        }
+
         //- Return the owner and neighbor interpolated fields
         virtual void interpolateOwnNei
         (
@@ -244,6 +254,13 @@ public:
         virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
         interpolateNei() const = 0;
 
+        //- Return the upwind interpolated field based on face flux
+        virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        interpolate
+        (
+            const surfaceScalarField& faceFlux
+        ) const;
+
     // Member Operators
 
         //- Disallow default bitwise assignment
@@ -256,8 +273,6 @@ class noneLimiter
 :
     public LimiterFunc
 {
-    scalar k_;
-
 public:
 
     noneLimiter(Istream& is)

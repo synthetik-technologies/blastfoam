@@ -128,6 +128,22 @@ Foam::ReconstructionScheme<Type>::interpolateOwnNei
 
 
 template<class Type>
+Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
+Foam::ReconstructionScheme<Type>::interpolate
+(
+    const surfaceScalarField& faceFlux
+) const
+{
+    return GeometricField<Type, fvsPatchField, surfaceMesh>::New
+    (
+        "interpolate(" + this->phi_.name() + ")",
+       this->interpolateOwn()*pos0(faceFlux)
+     + this->interpolateNei()*neg(faceFlux)
+    );
+}
+
+
+template<class Type>
 Foam::autoPtr<Foam::ReconstructionScheme<Type>>
 Foam::ReconstructionScheme<Type>::New
 (
