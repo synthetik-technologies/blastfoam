@@ -627,6 +627,7 @@ template<class Type>
 void Foam::fluxSchemeBase::correctPhaseFields
 (
     const volScalarField& alpha,
+    const GeometricField<Type, fvPatchField, volMesh>& f,
     GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
     GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
     const scalar rAlpha
@@ -637,20 +638,18 @@ void Foam::fluxSchemeBase::correctPhaseFields
 
     forAll(fOwn, facei)
     {
-        const bool validOwn = alpha[owner[facei]] > rAlpha;
-        const bool validNei = alpha[neighbour[facei]] > rAlpha;
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
+        const bool validOwn = alpha[own] > rAlpha;
+        const bool validNei = alpha[nei] > rAlpha;
 
-        if (validOwn && validNei)
+        if (validNei && !validOwn)
         {
-            // Do nothing
+            fOwn[facei] = f[nei];
         }
-        else if (validNei)
+        else if (validOwn && !validNei)
         {
-            fOwn[facei] = fNei[facei];
-        }
-        else if (validOwn)
-        {
-            fNei[facei] = fOwn[facei];
+            fNei[facei] = f[own];
         }
     }
 
@@ -663,28 +662,83 @@ void Foam::fluxSchemeBase::correctPhaseFields
         Field<Type>& pfOwn = bfOwn[patchi];
         Field<Type>& pfNei = bfNei[patchi];
         const fvPatchField<scalar>& palpha = alpha.boundaryField()[patchi];
+        const fvPatchField<Type>& pvf = f.boundaryField()[patchi];
 
         if (alpha.boundaryField()[patchi].coupled())
         {
-            const scalarField alphaOwn(palpha.patchInternalField());
+            const labelList& faceCells = pvf.patch().faceCells();
             const scalarField alphaNei(palpha.patchNeighbourField());
+            const Field<Type> pvfNei(pvf.patchNeighbourField());
 
             forAll(pfOwn, facei)
             {
-                const bool validOwn = alphaOwn[facei] > rAlpha;
+                const label own = faceCells[facei];
+                const bool validOwn = alpha[own] > rAlpha;
                 const bool validNei = alphaNei[facei] > rAlpha;
 
-                if (validOwn && validNei)
+                if (validNei && !validOwn)
                 {
-                    // Do nothing
+                    pfOwn[facei] = pvfNei[facei];
                 }
-                else if (validNei)
+                else if (validOwn && !validNei)
                 {
-                    pfOwn[facei] = pfNei[facei];
+                    pfNei[facei] = f[own];
                 }
-                else if (validOwn)
+            }
+        }
+    }
+}
+
+template<class Type>
+void Foam::fluxSchemeBase::correctPhaseFields
+(
+    const volScalarField& alpha,
+    GeometricField<Type, fvPatchField, volMesh>& f,
+    const scalar rAlpha
+)
+{
+    const labelList& owner = alpha.mesh().owner();
+    const labelList& neighbour = alpha.mesh().neighbour();
+
+    forAll(neighbour, facei)
+    {
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
+        const bool validOwn = alpha[own] > rAlpha;
+        const bool validNei = alpha[nei] > rAlpha;
+
+        if (validNei && !validOwn)
+        {
+            f[own] = f[nei];
+        }
+        else if (validOwn && !validNei)
+        {
+            f[nei] = f[own];
+        }
+    }
+
+    typename GeometricField<Type, fvPatchField, volMesh>::Boundary& bf =
+        f.boundaryFieldRef();
+    forAll(bf, patchi)
+    {
+        fvPatchField<Type>& pf = bf[patchi];
+        const fvPatchField<scalar>& palpha = alpha.boundaryField()[patchi];
+
+        if (alpha.boundaryField()[patchi].coupled())
+        {
+            const labelList& faceCells = pf.patch().faceCells();
+            const scalarField palphaNei(palpha.patchNeighbourField());
+            const Field<Type> pfNei(pf.patchNeighbourField());
+
+            forAll(pf, facei)
+            {
+                const label own = faceCells[facei];
+                const bool validOwn = alpha[own] > rAlpha;
+                const bool validNei = palphaNei[facei] > rAlpha;
+
+                if (validNei && !validOwn)
                 {
-                    pfNei[facei] = pfOwn[facei];
+                    pf[facei] = pfNei[facei];
                 }
             }
         }
