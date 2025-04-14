@@ -51,6 +51,7 @@ Foam::patchToPatchMappings::nearby::nearby
 )
 :
     patchToPatchMapping(srcPatch, tgtPatch, dict, needPoints, reverse),
+    minBbDim_(dict.lookupOrDefault("minBbDim", -1.0)),
     srcSpheres_(0),
     tgtSpheres_(0)
 {}
@@ -74,7 +75,7 @@ Foam::treeBoundBox Foam::patchToPatchMappings::nearby::makeBb
     const treeBoundBox bb(pts, f);
 
     const point c = bb.midpoint();
-    const scalar l = bb.maxDim();
+    const scalar l = minBbDim_ < 0 ? bb.maxDim() : minBbDim_;
 
     return treeBoundBox(c - l*vector::one, c + l*vector::one);
 }
@@ -135,6 +136,7 @@ void Foam::patchToPatchMappings::nearby::initialise
             (
                 UIndirectList<point>(srcPatch.localPoints(), srcPatch[srcFacei])
             );
+        srcSpheres_[srcFacei].second() = max(srcSpheres_[srcFacei].second(), minBbDim_);
     }
 
     tgtSpheres_.setSize(tgtPatch.size());
@@ -145,6 +147,7 @@ void Foam::patchToPatchMappings::nearby::initialise
             (
                 UIndirectList<point>(tgtPatch.localPoints(), tgtPatch[tgtFacei])
             );
+        tgtSpheres_[tgtFacei].second() = max(tgtSpheres_[tgtFacei].second(), minBbDim_);
     }
 }
 

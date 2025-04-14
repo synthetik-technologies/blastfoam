@@ -56,6 +56,9 @@ class nearby
 protected:
     // Protected data
 
+        //- Minum bounding box dimension
+        scalar minBbDim_;
+
         //- For each source face, the bounding sphere
         List<Tuple2<point, scalar>> srcSpheres_;
 

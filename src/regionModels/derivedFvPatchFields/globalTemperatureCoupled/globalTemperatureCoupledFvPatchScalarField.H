@@ -64,6 +64,7 @@ SourceFiles
 #include "mixedFvPatchFields.H"
 #include "globalPolyBoundaryMesh.H"
 #include "scalarList.H"
+#include "NamedEnum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -78,6 +79,17 @@ class globalTemperatureCoupledFvPatchScalarField
 :
     public mixedFvPatchScalarField
 {
+public:
+
+    enum TRefType
+    {
+        MAX,
+        NEIGHBOUR,
+        KAPPA_BY_DELTA
+    };
+    static const NamedEnum<TRefType, 3> TRefTypeNames_;
+
+
 protected:
     // Protected Data
 
@@ -103,6 +115,9 @@ protected:
 
         //- Is the temperature gradient limited
         bool limitGrad_;
+
+        //- How is the reference temperature calculated
+        TRefType TRefType_;
 
         //- Thickness of layers
         scalarList thicknessLayers_;

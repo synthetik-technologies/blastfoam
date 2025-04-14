@@ -34,6 +34,17 @@ License
 namespace Foam
 {
 
+template<>
+const char* NamedEnum<globalTemperatureCoupledFvPatchScalarField::TRefType, 3>::names[] =
+{
+    "max",
+    "neighbour",
+    "kappaByDelta"
+};
+
+const NamedEnum<globalTemperatureCoupledFvPatchScalarField::TRefType, 3>
+    globalTemperatureCoupledFvPatchScalarField::TRefTypeNames_;
+
 Foam::tmp<Foam::scalarField>
 Foam::globalTemperatureCoupledFvPatchScalarField::kappa
 (
@@ -93,27 +104,27 @@ Foam::globalTemperatureCoupledFvPatchScalarField::kappa
             return thermo.kappa(patchi);
         }
     }
-//     else if
-//     (
-//         mesh.foundObject<volScalarField>
-//         (
-//             IOobject::groupName("kappa", phase)
-//         )
-//     )
+    else if
+    (
+        mesh.foundObject<volScalarField>
+        (
+            IOobject::groupName("kappa", phase)
+        )
+    )
     {
         return Tp.patch().lookupPatchField<volScalarField, scalar>
         (
             IOobject::groupName("kappa", phase)
         );
     }
-//     else
-//     {
-//         FatalErrorInFunction
-//             << "Cannot find a fluidThermo or solidThermo instance"
-//             << exit(FatalError);
-//
-//         return scalarField::null();
-//     }
+    else
+    {
+        FatalErrorInFunction
+            << "Cannot find a fluidThermo or solidThermo instance"
+            << exit(FatalError);
+
+        return scalarField::null();
+    }
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -133,6 +144,7 @@ globalTemperatureCoupledFvPatchScalarField
     qrNbrName_("none"),
     qrName_("none"),
     limitGrad_(false),
+    TRefType_(KAPPA_BY_DELTA),
     thicknessLayers_(0),
     kappaLayers_(0),
     contactRes_(0),
@@ -160,6 +172,12 @@ globalTemperatureCoupledFvPatchScalarField
     qrNbrName_(dict.lookupOrDefault<word>("qrNbr", "none")),
     qrName_(dict.lookupOrDefault<word>("qr", "none")),
     limitGrad_(dict.lookupOrDefault("limitGrad", false)),
+    TRefType_
+    (
+        dict.found("TRefType")
+      ? TRefTypeNames_.read(dict.lookup("TRefType"))
+      : KAPPA_BY_DELTA
+    ),
     thicknessLayers_(0),
     kappaLayers_(0),
     contactRes_(0.0),
@@ -220,6 +238,7 @@ globalTemperatureCoupledFvPatchScalarField
     qrNbrName_(psf.qrNbrName_),
     qrName_(psf.qrName_),
     limitGrad_(psf.limitGrad_),
+    TRefType_(psf.TRefType_),
     thicknessLayers_(psf.thicknessLayers_),
     kappaLayers_(psf.kappaLayers_),
     contactRes_(psf.contactRes_),
@@ -245,6 +264,7 @@ globalTemperatureCoupledFvPatchScalarField
     qrNbrName_(psf.qrNbrName_),
     qrName_(psf.qrName_),
     limitGrad_(psf.limitGrad_),
+    TRefType_(psf.TRefType_),
     thicknessLayers_(psf.thicknessLayers_),
     kappaLayers_(psf.kappaLayers_),
     contactRes_(psf.contactRes_),
@@ -301,58 +321,69 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    scalarField TcOwn(patchInternalField());
+    // Values for this patch
     scalarField& Tp = *this;
+    scalarField TcOwn(this->patchInternalField());
 
+    //- Values for neighbour patch
     const fvPatchScalarField& nbrTp =
         nbrPatch.lookupPatchField<volScalarField, scalar>(TnbrName_);
-
-    // Swap to obtain full local values of neighbour internal field
-    scalarField TcNbr
-    (
-        samplePatch.faceInterpolate(nbrTp.patchInternalField())
-    );
-
-    //- Difference in temperature
-    const scalarField deltaT(TcNbr - TcOwn);
+    scalarField TcNbr(nbrTp.patchInternalField());
 
     // Swap to obtain full local values of neighbour K*delta
-    scalarField KDeltaNbr;
-    if (contactRes_ == 0.0)
+    scalarField nbrKappaByDelta;
+    scalarField nbrKappaTByDelta;
     {
-        KDeltaNbr =
-            samplePatch.faceInterpolate
-            (
-                kappa(nbrTp)*nbrPatch.deltaCoeffs()
-            );
-    }
-    else
-    {
-        KDeltaNbr.setSize(this->size(), contactRes_);
+        if (contactRes_ == 0.0)
+        {
+            nbrKappaByDelta = kappa(nbrTp)*nbrPatch.deltaCoeffs();
+        }
+        else
+        {
+            nbrKappaByDelta.setSize(this->size(), contactRes_);
+        }
+
+        nbrKappaTByDelta = samplePatch.faceInterpolate
+        (
+            nbrKappaByDelta*TcNbr
+        );
+        nbrKappaByDelta = samplePatch.faceInterpolate(nbrKappaByDelta);
     }
 
-    scalarField KDelta(kappa(*this)*patch().deltaCoeffs());
+    scalarField pkappa(this->kappa(*this));
+    scalarField kappaByDelta(pkappa*patch().deltaCoeffs());
 
     scalarField q(Tp.size(), 0.0);
-    if (hName_ != "none")
     {
-        q +=
-            patch().lookupPatchField<volScalarField, scalar>(hName_)
-           *deltaT;
-    }
+        const bool hOwn = hName_ != "none";
+        const bool hNbr = hNbrName_ != "none";
+        scalarField deltaT;
+        if (hOwn || hNbr)
+        {
+            //- Difference in temperature
+            deltaT = samplePatch.faceInterpolate(TcNbr) - TcOwn;
+        }
 
-    if (hNbrName_ != "none")
-    {
-        q +=
-            samplePatch.faceInterpolate
-            (
-                nbrPatch.lookupPatchField<volScalarField, scalar>
+        if (hOwn)
+        {
+            q +=
+                patch().lookupPatchField<volScalarField, scalar>(hName_)
+               *deltaT;
+        }
+        if (hNbr)
+        {
+            q +=
+                samplePatch.faceInterpolate
                 (
-                    hNbrName_
-                )
-            )*deltaT;
+                    nbrPatch.lookupPatchField<volScalarField, scalar>
+                    (
+                        hNbrName_
+                    )
+                )*deltaT;
+        }
     }
 
+    bool nbrRad = false;
     if (qrName_ != "none")
     {
         q += patch().lookupPatchField<volScalarField, scalar>(qrName_);
@@ -360,6 +391,7 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
 
     if (qrNbrName_ != "none")
     {
+        nbrRad = true;
         q +=
             samplePatch.faceInterpolate
             (
@@ -370,15 +402,33 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
             );
     }
 
-    valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
-    refValue() = TcNbr;
-    scalarField grad(q);
-    scalarField pkappa(kappa(*this));
+    scalarField& grad = refGrad();
+    scalarField& vf = valueFraction();
+    scalarField& rv = refValue();
     forAll(grad, i)
     {
+        vf[i] = nbrKappaByDelta[i]/(nbrKappaByDelta[i] + kappaByDelta[i] + small);
+
+        switch (TRefType_)
+        {
+            case KAPPA_BY_DELTA:
+                if (nbrKappaByDelta[i] > small)
+                {
+                    rv[i] = (nbrKappaTByDelta[i] + q[i])/nbrKappaByDelta[i];
+                }
+                break;
+            case MAX:
+                rv[i] = max(TcNbr[i], TcOwn[i]);
+                break;
+            case NEIGHBOUR:
+                rv[i] = TcNbr[i];
+                break;
+        }
+
+        // Set gradient
         if (pkappa[i] > small)
         {
-            grad[i] /= pkappa[i];
+            grad[i] = q[i]/pkappa[i];
         }
         else
         {
@@ -386,42 +436,46 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
         }
     }
 
+    // rv = max(samplePatch.faceInterpolate(TcNbr), TcOwn);
+    // grad = 0.0;
     if (limitGrad_)
     {
+        TcNbr = samplePatch.faceInterpolate(TcNbr);
+
         // Limit gradients based on neighbour cells and max/min
         // coupled region
-        scalarField minT(min(min(nbrTp.internalField()).value(), TcOwn));
-        scalarField maxT(max(max(nbrTp.internalField()).value(), TcOwn));
-        const scalarField& vf = valueFraction();
+        scalar gMinT = great;
+        scalar gMaxT = -great;
+        if (nbrRad)
+        {
+            gMinT = gMin(nbrTp.internalField());
+            gMaxT = gMax(nbrTp.internalField());
+        }
 
-        scalarField minGradT
-        (
-            (
-                (minT - vf*refValue())/max(1.0 - vf, small)
-              - patchInternalField()
-            )*patch().deltaCoeffs()
-        );
-        scalarField maxGradT
-        (
-            (
-                (maxT - vf*refValue())/max(1.0 - vf, small)
-              - patchInternalField()
-            )*patch().deltaCoeffs()
-        );
+        const scalarField& dc = patch().deltaCoeffs();
 
         //- Make sure resulting temperature is within  physical bounds
         forAll(grad, i)
         {
-            grad[i] =
-                vf[i] > small
-              ? min(max(grad[i], minGradT[i]), maxGradT[i]) : grad[i];
+            const scalar gf = 1.0 - vf[i];
+            if (vf[i] > small && gf > small)
+            {
+                const scalar minT = min(min(TcOwn[i], TcNbr[i]), gMinT);
+                const scalar maxT = max(max(TcOwn[i], TcNbr[i]), gMaxT);
+
+                scalar minGradT =
+                    ((minT - vf[i]*rv[i])/gf - TcOwn[i])*dc[i];
+                scalar maxGradT =
+                    ((maxT - vf[i]*rv[i])/gf - TcOwn[i])*dc[i];
+                grad[i] = min(max(grad[i], minGradT), maxGradT);
+            }
         }
     }
-    refGrad() = grad;
 
     if (cgpp.hasUnmappedFaces())
     {
-        cgpp.setUnmappedFace(valueFraction(), 1.0);
+        cgpp.setUnmappedFace(valueFraction(), 0.0);
+        cgpp.setUnmappedFace(refGrad(), 0.0);
         cgpp.setUnmappedFace(refValue(), unmappedT_);
     }
 
@@ -429,7 +483,7 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
-        scalar Q = gSum(kappa(*this)*patch().magSf()*snGrad());
+        scalar Q = gSum(pkappa*patch().magSf()*snGrad());
 
         Info<< patch().boundaryMesh().mesh().name() << ':'
             << patch().name() << ':'
@@ -482,6 +536,13 @@ void globalTemperatureCoupledFvPatchScalarField::write
         "limitGrad",
         false,
         limitGrad_
+    );
+    writeEntryIfDifferent<word>
+    (
+        os,
+        "TRefType",
+        TRefTypeNames_[KAPPA_BY_DELTA],
+        TRefTypeNames_[TRefType_]
     );
 }
 

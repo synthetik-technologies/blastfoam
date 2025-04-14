@@ -40,6 +40,8 @@ Foam::coupledGlobalPolyPatch::pointInterpolate
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch points." << nl
+            << "Region name: " << this->patch().boundaryMesh().mesh().name() << nl
+            << "Patch name: " << this->patch().name() << nl
             << "Patch size: " << this->physicalPatch().nPoints() << nl
             << "Field size: " << pField.size()
             << abort(FatalError);
@@ -83,6 +85,8 @@ Foam::coupledGlobalPolyPatch::faceInterpolate
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch faces." << nl
+            << "Region name: " << this->patch().boundaryMesh().mesh().name() << nl
+            << "Patch name: " << this->patch().name() << nl
             << "Patch size: " << this->physicalPatch().size() << nl
             << "Field size: " << fField.size()
             << abort(FatalError);
@@ -188,7 +192,7 @@ void Foam::coupledGlobalPolyPatch::setUnmappedPoint
     const tmp<Field<Type>>& tunmapped
 ) const
 {
-    setUnmappedFace(pf, tunmapped());
+    setUnmappedPoint(pf, tunmapped());
 }
 
 
