@@ -66,10 +66,13 @@ Foam::tractionBase::tractionBase
 )
 :
     patch_(p),
-    traction_(mapper(tb.traction_)),
-    pressure_(mapper(tb.pressure_)),
+    traction_(p.size(), Zero),
+    pressure_(p.size(), Zero),
     force_(tb.force_)
-{}
+{
+    mapper(traction_, tb.traction_);
+    mapper(pressure_, tb.pressure_);
+}
 
 
 Foam::tractionBase::tractionBase
