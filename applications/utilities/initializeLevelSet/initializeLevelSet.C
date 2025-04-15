@@ -199,6 +199,7 @@ void setPhase
         {
             error == -1.0;
 
+            LSModel.updateEpsilon();
             LSModel.levelSet() = LSModel.calcLevelSet(alpha, surfaces);
             LSModel.correct();
             alpha = LSModel.alpha();
@@ -351,6 +352,7 @@ void setPhase
         iter++;
     }
 
+    LSModel.updateEpsilon();
     LSModel.levelSet() = LSModel.calcLevelSet(alpha, surfaces);
     LSModel.correct();
     alpha = LSModel.alpha();
