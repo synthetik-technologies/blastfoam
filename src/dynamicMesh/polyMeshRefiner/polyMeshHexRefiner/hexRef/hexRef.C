@@ -43,6 +43,7 @@ License
 #include "refinementData.H"
 #include "refinementDistanceData.H"
 #include "degenerateMatcher.H"
+#include "wedgePolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -117,7 +118,32 @@ Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
 
     label nLevels = gMax(cellLevel_)+1;
 
-    scalarField typEdgeLenSqr(nLevels, GREAT2);
+    scalarField typEdgeLenSqr(nLevels, 0.0);
+    labelField edgeLevelCount(nLevels, 0);
+    boolList validEdge(mesh_.nEdges(), true);
+    if (mesh_.nGeometricD() != 3)
+    {
+        validEdge = false;
+        forAll(mesh_.boundaryMesh(), patchi)
+        {
+            if
+            (
+                isA<emptyPolyPatch>(mesh_.boundaryMesh()[patchi])
+            || isA<wedgePolyPatch>(mesh_.boundaryMesh()[patchi])
+            )
+            {
+                const polyPatch& patch = mesh_.boundaryMesh()[patchi];
+                forAll(patch, fi)
+                {
+                    UIndirectList<bool>
+                    (
+                        validEdge,
+                        mesh_.faceEdges()[fi + patch.start()]
+                    ) = true;
+                }
+            }
+        }
+    }
 
 
     // 1. Look only at edges surrounded by cellLevel cells only.
@@ -170,20 +196,25 @@ Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
         {
             const label eLevel = edgeLevel[edgeI];
 
-            if (eLevel >= 0 && eLevel < labelMax)
+            if (validEdge[edgeI] && eLevel >= 0 && eLevel < labelMax)
             {
                 const edge& e = mesh_.edges()[edgeI];
 
                 scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
-
-                typEdgeLenSqr[eLevel] = min(typEdgeLenSqr[eLevel], edgeLenSqr);
+                typEdgeLenSqr[eLevel] += edgeLenSqr;
+                edgeLevelCount[eLevel]++;
             }
         }
     }
 
     // Get the minimum per level over all processors. Note minimum so if
     // cells are not cubic we use the smallest edge side.
-    Pstream::listCombineGather(typEdgeLenSqr, minEqOp<scalar>());
+    Pstream::listCombineGather(edgeLevelCount, plusEqOp<label>());
+    Pstream::listCombineGather(typEdgeLenSqr, plusEqOp<scalar>());
+    forAll(typEdgeLenSqr, levelI)
+    {
+        typEdgeLenSqr[levelI] /= max(edgeLevelCount[levelI], 1.0);
+    }
     Pstream::listCombineScatter(typEdgeLenSqr);
 
     if (debug)
@@ -210,11 +241,14 @@ Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
 
         forAll(cEdges, i)
         {
-            const edge& e = mesh_.edges()[cEdges[i]];
+            if (validEdge[cEdges[i]])
+            {
+                const edge& e = mesh_.edges()[cEdges[i]];
 
-            scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
+                scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
 
-            maxEdgeLenSqr[cLevel] = max(maxEdgeLenSqr[cLevel], edgeLenSqr);
+                maxEdgeLenSqr[cLevel] = max(maxEdgeLenSqr[cLevel], edgeLenSqr);
+            }
         }
     }
 
