@@ -10,6 +10,4 @@ LIB_LIBS = \
     -lfluidThermophysicalModels \
     -lsolidThermo \
     -L$(BLAST_LIBBIN) \
-    -lblastNumerics \
-    -lblastFiniteVolume \
-    -lblastThermodynamics
+    -lblastNumerics

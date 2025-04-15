@@ -129,8 +129,8 @@ int main(int argc, char *argv[])
         << indent <<"dpdT: "<< eos.dpdT(rho, e, T) << nl
         << indent <<"dpdv: "<< eos.dpdv(rho, e, T) << nl
         << indent << "p(rho, T): " << eos.p(rho, e, T) << nl
-        << indent << "e(rho, T): " << eos.Es(rho, e, T) << nl
-        << indent << "e(rho, p): " << eos.initializeEnergy(p, rho, e, T) << nl
+        << indent << "Es(rho, T): " << eos.Es(rho, e, T) << nl
+        << indent << "e(p, rho, T): " << eos.initializeEnergy(p, rho, e, T) << nl
         << indent << "rho(p, T): " << eos.rhoPT(rho, p, T) << nl
         << indent << "T(rho, e): " << eos.TRhoE(T, rho, e) << nl
         << endl;
