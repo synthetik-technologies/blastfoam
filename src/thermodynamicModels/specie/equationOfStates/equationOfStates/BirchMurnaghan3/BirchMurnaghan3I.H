@@ -220,19 +220,25 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::E
     const scalar T
 ) const
 {
+    const scalar V23 = sqr(cbrt(rho/rho0_));
     return
-        (
-            9.0/16.0*K0_
-           *(
-                cbrt(pow5(rho/rho0_))
-               *(
-                   cbrt(sqr(rho/rho0_))*(14.0 - 3.0*K0Prime_)
-                 + 3.0*K0Prime_ - 16.0
-                )
-              + pow3(rho/rho0_)*(K0Prime_ - 4.0)
-            )
-          - pRef_
-        )/max(rho, 1e-10);
+        9.0*K0_/(16.0*rho0_)
+       *(
+            pow3(V23 - 1.0)*K0Prime_
+          + sqr(V23 - 1.0)*(6.0 - 4.0*V23)
+        );
+    // return
+    //     (
+    //         9.0/16.0*K0_
+    //        *(
+    //             cbrt(pow5(rho/rho0_))
+    //            *(
+    //                cbrt(sqr(rho/rho0_))*(14.0 - 3.0*K0Prime_)
+    //              + 3.0*K0Prime_ - 16.0
+    //             )
+    //           + pow3(rho/rho0_)*(K0Prime_ - 4.0)
+    //         )
+    //     )/max(rho, 1e-10);
 }
 
 

@@ -31,6 +31,19 @@ derived/multicomponentSolidBlastThermo/multicomponentSolidBlastThermos.C
 derived/reactingFluidBlastThermo/reactingFluidBlastThermos.C
 derived/reactingSolidBlastThermo/reactingSolidBlastThermos.C
 
+derived/cavitatingFluidBlastThermo/cavitatingFluidBlastThermos.C
+derived/cavitatingFluidBlastThermo/cavitatingPhaseFluidBlastThermos.C
+
+saturationPressure=derived/cavitatingFluidBlastThermo/saturationPressure
+${saturationPressure}/saturationPressure/saturationPressureModel.C
+${saturationPressure}/saturationPressure/saturationPressureModelNew.C
+${saturationPressure}/constant/constantSaturationPressureModel.C
+${saturationPressure}/function/functionSaturationPressureModel.C
+${saturationPressure}/ArdenBuck/ArdenBuckSaturationPressureModel.C
+${saturationPressure}/Antoine/AntoineSaturationPressureModel.C
+${saturationPressure}/AntoineExtended/AntoineExtendedSaturationPressureModel.C
+${saturationPressure}/Tetens/TetensSaturationPressureModel.C
+
 chemistryModel/chemistryModel/basicBlastChemistryModel/basicBlastChemistryModel.C
 chemistryModel/chemistryModel/basicBlastChemistryModel/basicBlastChemistryModelNew.C
 

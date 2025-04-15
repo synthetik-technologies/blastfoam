@@ -123,20 +123,14 @@ Foam::activationModels::linearActivation::delta() const
 
 void Foam::activationModels::linearActivation::correct(volScalarField& lambda)
 {
-    // const scalar t = this->t().value();
-    // forAll(lambda, celli)
-    // {
-    //     if (t >= tIgn_[celli])
-    //     {
-    //         lambda[celli] = 1.0;
-    //     }
-    // }
-    volScalarField::Internal lambda0
-    (
-        pos0(lambda.time() - lambda.time().deltaT() - tIgn_)
-    );
-    volScalarField::Internal diff(pos0(lambda.time() - tIgn_));
-    lambda.ref() = max(lambda0 + diff*(this->f() - this->f0()), lambda());
+    const scalar t = lambda.time().value();
+    forAll(lambda, celli)
+    {
+        if (t >= tIgn_[celli])
+        {
+            lambda[celli] = 1.0;
+        }
+    }
 }
 
 // ************************************************************************* //

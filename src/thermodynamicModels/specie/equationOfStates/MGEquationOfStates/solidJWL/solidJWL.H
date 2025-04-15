@@ -114,6 +114,9 @@ class solidJWL
         //- Internal energy that gives 0 pressure at reference density
         scalar e0_;
 
+        //- Internal energy that gives 0 pressure at reference density
+        scalar eRef_;
+
 
     // Private member functions
 
@@ -148,7 +151,8 @@ public:
             const scalar R1,
             const scalar R2,
             const scalar pRef,
-            const scalar e0
+            const scalar e0,
+            const scalar eRef
         );
 
         //- Construct from dictionary

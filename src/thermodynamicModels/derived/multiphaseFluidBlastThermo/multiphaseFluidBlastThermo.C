@@ -567,6 +567,30 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellpRhoT
 }
 
 
+Foam::scalar Foam::multiphaseFluidBlastThermo::patchFacepRhoT
+(
+    const label patchi,
+    const label facei,
+    const bool limit
+) const
+{
+    scalar rGamma = 0.0;
+    scalar pByGamma = 0.0;
+    forAll(thermos_, phasei)
+    {
+        scalar alphai(volumeFractions_[phasei].boundaryField()[patchi][facei]);
+        if (alphai > residualAlpha_.value())
+        {
+            const scalar Xi =
+                alphai/(thermos_[phasei].patchFaceGamma(patchi, facei) - 1.0);
+            rGamma += Xi;
+            pByGamma += Xi*thermos_[phasei].patchFacepRhoT(patchi, facei, limit);
+        }
+    }
+    return pByGamma/max(rGamma, residualAlpha_.value());
+}
+
+
 Foam::scalar Foam::multiphaseFluidBlastThermo::cellGamma(const label celli) const
 {
     scalar f(volumeFractions_[0][celli]/thermos_[0].cellGamma(celli));
@@ -575,6 +599,25 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellGamma(const label celli) cons
         f += volumeFractions_[phasei][celli]/thermos_[phasei].cellGamma(celli);
     }
     return 1.0/cellNormalise(f, celli);
+}
+
+
+Foam::scalar Foam::multiphaseFluidBlastThermo::patchFaceGamma
+(
+    const label patchi,
+    const label facei
+) const
+{
+    scalar f =
+        volumeFractions_[0].boundaryField()[patchi][facei]
+       /thermos_[0].patchFaceGamma(patchi, facei);
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        f +=
+            volumeFractions_[phasei].boundaryField()[patchi][facei]
+           /thermos_[phasei].patchFaceGamma(patchi, facei);
+    }
+    return 1.0/patchFaceNormalise(f, patchi, facei);
 }
 
 

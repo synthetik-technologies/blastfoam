@@ -361,8 +361,18 @@ Foam::wordList Foam::blastThermo::splitThermoName
         cmpts.append(newStr);
     }
 
+    Info<<cmpts[1]<<endl;
     wordList cmptsFinal(6);
-    if (cmpts[0] == "detonating")
+    if (cmpts[1] == "detonating")
+    {
+        cmptsFinal[0] = cmpts[0];
+        cmptsFinal[1] = cmpts[1];
+        cmptsFinal[2] = cmpts[2] + '/' + cmpts[6];
+        cmptsFinal[3] = cmpts[3] + '/' + cmpts[7];
+        cmptsFinal[4] = cmpts[4] + '/' + cmpts[8];
+        cmptsFinal[5] = cmpts[5] + '/' + cmpts[9];
+    }
+    else if (cmpts[1] == "cavitating")
     {
         cmptsFinal[0] = cmpts[0];
         cmptsFinal[1] = cmpts[1];

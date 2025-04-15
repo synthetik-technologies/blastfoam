@@ -71,8 +71,7 @@ Foam::scalar Foam::JWL<Specie>::Pi
     scalar V(rho0_/max(rho, 1e-10));
     return
         A_*(omega_/(R1_*V) - 1.0)*exp(-R1_*V)
-      + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V)
-      - omega_*rho*e0_;
+      + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V);
 
 }
 
@@ -97,7 +96,6 @@ Foam::scalar Foam::JWL<Specie>::delta
            *(omega_*(1.0/(R1_*rho0_) + 1.0/rhos) - R1_*rho0_/sqr(rhos))
           + B_*exp(-R2_*rho0_/rhos)
            *(omega_*(1.0/(R2_*rho0_) + 1.0/rhos) - R2_*rho0_/sqr(rhos))
-          - omega_*e0_
         )/omega_;
 }
 
@@ -238,7 +236,7 @@ Foam::scalar Foam::JWL<Specie>::dpdv
            *(R1_*rho0_ - omega_*rho*(1.0 + rho/R1_/rho0_))
           + B_*exp(-R2_*rho0_/rhos)
            *(R2_*rho0_ - omega_*rho*(1.0 + rho/R2_/rho0_))
-          + omega_*(e + e0_)*sqr(rhos)
+          + omega_*e*sqr(rhos)
         );
 }
 

@@ -42,7 +42,7 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
         scalar& ei(this->heRef()[celli]);
         scalar& Ti(this->TRef()[celli]);
 
-        if (x2 < this->residualActivation_)
+        if (x2 < this->residualFac_)
         {
             Ti =
                 t1.TRhoE(Ti, rhoi, ei);
@@ -57,7 +57,7 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
             this->CvRef()[celli] = t1.Cv(rhoi, ei, Ti);
             this->alphaRef()[celli] = t1.kappa(rhoi, ei, Ti)/Cpi;
         }
-        else if (x1 < this->residualActivation_)
+        else if (x1 < this->residualFac_)
         {
             Ti =
                 t2.TRhoE(Ti, rhoi, ei);
@@ -122,13 +122,13 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
             const scalar ei(phe[facei]);
             const scalar Ti(pT[facei]);
 
-            if (x2 < this->residualActivation_)
+            if (x2 < this->residualFac_)
             {
                 pCp[facei] = t1.Cp(rhoi, ei, Ti);
                 pCv[facei] = t1.Cv(rhoi, ei, Ti);
                 palpha[facei] = t1.kappa(rhoi, ei, Ti)/pCp[facei];
             }
-            else if (x1 < this->residualActivation_)
+            else if (x1 < this->residualFac_)
             {
                 pCp[facei] = t2.Cp(rhoi, ei, Ti);
                 pCv[facei] = t2.Cv(rhoi, ei, Ti);
@@ -190,6 +190,8 @@ Foam::detonatingSolidBlastThermo<Thermo>::detonatingSolidBlastThermo
         )
     )
 {
+
+    dict.readIfPresent("residualActivation", this->residualFac_);
     this->initializeFields();
 }
 
@@ -338,7 +340,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::Kappa() const
     forAll(KappaCells, celli)
     {
         scalar x = cellx(celli);
-        if (x < this->residualActivation_)
+        if (x < this->residualFac_)
         {
             Kappa[celli] =
                 Thermo::thermoType1::Kappa
@@ -348,7 +350,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::Kappa() const
                     TCells[celli]
                 );
         }
-        else if ((1.0 - x) < this->residualActivation_)
+        else if ((1.0 - x) < this->residualFac_)
         {
             Kappa[celli] =
                 Thermo::thermoType2::Kappa
@@ -389,7 +391,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::Kappa() const
         forAll(Kappap, facei)
         {
             const scalar& x = xp()[facei];
-            if (x < this->residualActivation_)
+            if (x < this->residualFac_)
             {
                 Kappap[facei] =
                     Thermo::thermoType1::Kappa
@@ -399,7 +401,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::Kappa() const
                         pT[facei]
                     );
             }
-            else if ((1.0 - x) < this->residualActivation_)
+            else if ((1.0 - x) < this->residualFac_)
             {
                 Kappap[facei] =
                     Thermo::thermoType2::Kappa
@@ -447,7 +449,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::Kappa(const label patchi) const
     forAll(pe, facei)
     {
         const scalar& x = xp()[facei];
-        if (x < this->residualActivation_)
+        if (x < this->residualFac_)
         {
             Kappap[facei] =
                 Thermo::thermoType1::Kappa
@@ -457,7 +459,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::Kappa(const label patchi) const
                     pT[facei]
                 );
         }
-        else if ((1.0 - x) < this->residualActivation_)
+        else if ((1.0 - x) < this->residualFac_)
         {
             Kappap[facei] =
                 Thermo::thermoType2::Kappa

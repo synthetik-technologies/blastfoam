@@ -448,6 +448,24 @@ Foam::scalar Foam::multicomponentFluidBlastThermo<Thermo>::cellpRhoT
 
 
 template<class Thermo>
+Foam::scalar Foam::multicomponentFluidBlastThermo<Thermo>::patchFacepRhoT
+(
+    const label patchi,
+    const label facei,
+    const bool limit
+) const
+{
+    return this->mixture_.boundary(patchi, facei).p
+    (
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
+        this->T_.boundaryField()[patchi][facei],
+        limit
+    );
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidBlastThermo<Thermo>::Gamma() const
 {
@@ -474,6 +492,23 @@ Foam::multicomponentFluidBlastThermo<Thermo>::cellGamma(const label celli) const
         this->T_[celli]
     );
 }
+
+
+template<class Thermo>
+Foam::scalar Foam::multicomponentFluidBlastThermo<Thermo>::patchFaceGamma
+(
+    const label patchi,
+    const label facei
+) const
+{
+    return this->mixture_.boundary(patchi, facei).Gamma
+    (
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
+        this->T_.boundaryField()[patchi][facei]
+    );
+}
+
 
 template<class Thermo>
 Foam::scalar

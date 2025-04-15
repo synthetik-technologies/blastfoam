@@ -58,8 +58,6 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define forGasEqns(Mu, Cp, Macro, Args...)                                  \
-    forThermo(Mu, Cp, perfectGas, specieBlast, Macro, Args);                \
-    forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args);                 \
     forThermo(Mu, Cp, idealGas, specieBlast, Macro, Args);                  \
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
     forThermo(Mu, Cp, LSZK, specieBlast, Macro, Args);                      \
@@ -70,7 +68,6 @@ License
 #define forGasThermos(Mu, Macro, Args...)                                   \
     forGasEqns(Mu, eConstThermo, Macro, Args);                              \
     forGasEqns(Mu, ePolynomialThermo, Macro, Args);                         \
-    forGasEqns(Mu, hConstThermo, Macro, Args)                               \
     forThermo(Mu, eConstThermo, stiffenedGas, specieBlast, Macro, Args);
 
 #define forGasTransports(Macro, Args...)                                    \
@@ -88,9 +85,9 @@ License
     forThermo(Mu, Cp, VanderWaals, specieBlast, Macro, Args)
 
 #define forCoeffGasThermos(Mu, Macro, Args...)                              \
+    forCoeffGasEqns(Mu, eConstThermo, Macro, Args);                         \
     forCoeffGasEqns(Mu, hConstThermo, Macro, Args);                         \
-    forCoeffGasEqns(Mu, janafThermo, Macro, Args);                          \
-    forCoeffGasEqns(Mu, eConstThermo, Macro, Args)
+    forCoeffGasEqns(Mu, janafThermo, Macro, Args);
 
 #define forCoeffGasTransports(Macro, Args...)                               \
     forCoeffGasThermos(constTransport, Macro, Args);                        \

@@ -63,7 +63,7 @@ protected:
     typedef Thermo2 thermoType2;
 
     //- Residual value of activation parameter
-    scalar residualActivation_;
+    scalar residualFac_;
 
 
     // Protected functions

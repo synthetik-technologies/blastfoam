@@ -54,8 +54,6 @@ class noneActivation
 {
 // Private data
 
-        //- Does lambda need to be set to one
-        mutable bool setLambda_;
 
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const
@@ -87,10 +85,7 @@ public:
     // Member Functions
 
         //- Set pointers to mass and mass flux
-        virtual void initializeModels()
-        {
-            initialized_ = true;
-        }
+        virtual void initializeModels();
 
         //- Update source terms
         virtual void update()

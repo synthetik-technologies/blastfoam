@@ -42,7 +42,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
         scalar& ei(this->heRef()[celli]);
         scalar& Ti(this->TRef()[celli]);
 
-        if (x2 < this->residualActivation_)
+        if (x2 < this->residualFac_)
         {
             Ti =
                 t1.TRhoE(Ti, rhoi, ei);
@@ -63,7 +63,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             this->speedOfSoundRef()[celli] =
                 sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small));
         }
-        else if (x1 < this->residualActivation_)
+        else if (x1 < this->residualFac_)
         {
             Ti =
                 t2.TRhoE(Ti, rhoi, ei);
@@ -155,7 +155,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             const scalar Ti(pT[facei]);
             const scalar pi(pp[facei]);
 
-            if (x2 < this->residualActivation_)
+            if (x2 < this->residualFac_)
             {
                 pCp[facei] = t1.Cp(rhoi, ei, Ti);
                 pCv[facei] = t1.Cv(rhoi, ei, Ti);
@@ -164,7 +164,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                 pc[facei] =
                     sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small));
             }
-            else if (x1 < this->residualActivation_)
+            else if (x1 < this->residualFac_)
             {
                 pCp[facei] = t2.Cp(rhoi, ei, Ti);
                 pCv[facei] = t2.Cv(rhoi, ei, Ti);
@@ -230,7 +230,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
             scalar Gamma = alphai;
             scalar pi;
 
-            if (x2 < this->residualActivation_)
+            if (x2 < this->residualFac_)
             {
                 alphaCp[celli] += t1.Cp(rhoi, ei, Ti)*alphai;
                 alphaCv[celli] += t1.Cv(rhoi, ei, Ti)*alphai;
@@ -240,7 +240,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                 Gamma = t1.Gamma(rhoi, ei, Ti);
                 pi = t1.p(rhoi, ei, Ti);
             }
-            else if (x1 < this->residualActivation_)
+            else if (x1 < this->residualFac_)
             {
                 alphaCp[celli] += t2.Cp(rhoi, ei, Ti)*alphai;
                 alphaCv[celli] += t2.Cv(rhoi, ei, Ti)*alphai;
@@ -313,7 +313,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                 scalar Gamma;
                 scalar pi;
 
-                if (x2 < this->residualActivation_)
+                if (x2 < this->residualFac_)
                 {
                     palphaCp[facei] += t1.Cp(rhoi, ei, Ti)*alphai;
                     palphaCv[facei] += t1.Cv(rhoi, ei, Ti)*alphai;
@@ -324,7 +324,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                     Gamma = t1.Gamma(rhoi, ei, Ti);
                     pi = t1.p(rhoi, ei, Ti);
                 }
-                else if (x1 < this->residualActivation_)
+                else if (x1 < this->residualFac_)
                 {
                     palphaCp[facei] += t2.Cp(rhoi, ei, Ti)*alphai;
                     palphaCv[facei] += t2.Cv(rhoi, ei, Ti)*alphai;
@@ -395,12 +395,12 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
             scalar cSqr;
             scalar Gamma;
 
-            if (x2 < this->residualActivation_)
+            if (x2 < this->residualFac_)
             {
                 cSqr = t1.cSqr(pi, rhoi, ei, Ti);
                 Gamma = t1.Gamma(rhoi, ei, Ti);
             }
-            else if (x1 < this->residualActivation_)
+            else if (x1 < this->residualFac_)
             {
                 cSqr = t2.cSqr(pi, rhoi, ei, Ti);
                 Gamma = t2.Gamma(rhoi, ei, Ti);
@@ -442,12 +442,12 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                 scalar cSqr;
                 scalar Gamma;
 
-                if (x2 < this->residualActivation_)
+                if (x2 < this->residualFac_)
                 {
                     cSqr = t1.cSqr(pi, rhoi, ei, Ti);
                     Gamma = t1.Gamma(rhoi, ei, Ti);
                 }
-                else if (x1 < this->residualActivation_)
+                else if (x1 < this->residualFac_)
                 {
                     cSqr = t2.cSqr(pi, rhoi, ei, Ti);
                     Gamma = t2.Gamma(rhoi, ei, Ti);
@@ -505,6 +505,8 @@ Foam::detonatingFluidBlastThermo<Thermo>::detonatingFluidBlastThermo
         )
     )
 {
+    dict.readIfPresent("residualActivation", this->residualFac_);
+
     //- Initialize the density using the pressure and temperature
     //  This is only done at the first time step (Not on restart)
     if
@@ -615,11 +617,11 @@ void Foam::detonatingFluidBlastThermo<Thermo>::updateRho
             const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
 
-            if (x2 < this->residualActivation_)
+            if (x2 < this->residualFac_)
             {
                 rhoI[celli] = t1.rhoPT(rhoI[celli], p[celli], this->T_[celli]);
             }
-            else if (x1 < this->residualActivation_)
+            else if (x1 < this->residualFac_)
             {
                 rhoI[celli] = t2.rhoPT(rhoI[celli], p[celli], this->T_[celli]);
             }
@@ -648,11 +650,11 @@ void Foam::detonatingFluidBlastThermo<Thermo>::updateRho
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
-                if (x2 < this->residualActivation_)
+                if (x2 < this->residualFac_)
                 {
                     prho[facei] = t1.rhoPT(prho[facei], pp[facei], pT[facei]);
                 }
-                else if (x1 < this->residualActivation_)
+                else if (x1 < this->residualFac_)
                 {
                     prho[facei] = t2.rhoPT(prho[facei], pp[facei], pT[facei]);
                 }
@@ -679,11 +681,38 @@ Foam::scalar Foam::detonatingFluidBlastThermo<Thermo>::cellpRhoT
     const scalar rho = this->rho_[celli];
     const scalar e = this->e_[celli];
     const scalar T = this->T_[celli];
-    if (x < this->residualActivation_)
+    if (x < this->residualFac_)
     {
         return Thermo::thermoType1::p(rho, e, T, limit);
     }
-    else if ((1.0 - x) < this->residualActivation_)
+    else if ((1.0 - x) < this->residualFac_)
+    {
+        return Thermo::thermoType2::p(rho, e, T, limit);
+    }
+
+    return
+        Thermo::thermoType2::p(rho, e, T, limit)*x
+      + Thermo::thermoType1::p(rho, e, T, limit)*(1.0 - x);
+}
+
+
+template<class Thermo>
+Foam::scalar Foam::detonatingFluidBlastThermo<Thermo>::patchFacepRhoT
+(
+    const label patchi,
+    const label facei,
+    const bool limit
+) const
+{
+    const scalar& x = this->patchFacex(patchi, facei);
+    const scalar rho = this->rho_.boundaryField()[patchi][facei];
+    const scalar e = this->e_.boundaryField()[patchi][facei];
+    const scalar T = this->T_.boundaryField()[patchi][facei];
+    if (x < this->residualFac_)
+    {
+        return Thermo::thermoType1::p(rho, e, T, limit);
+    }
+    else if ((1.0 - x) < this->residualFac_)
     {
         return Thermo::thermoType2::p(rho, e, T, limit);
     }
@@ -719,6 +748,33 @@ Foam::detonatingFluidBlastThermo<Thermo>::cellGamma(const label celli) const
     const scalar rho = this->rho_[celli];
     const scalar e = this->e_[celli];
     const scalar T = this->T_[celli];
+    if (x < small)
+    {
+        return Thermo::thermoType1::Gamma(rho, e, T);
+    }
+    else if ((1.0 - x) < small)
+    {
+        return Thermo::thermoType2::Gamma(rho, e, T);
+    }
+
+    return
+        Thermo::thermoType2::Gamma(rho, e, T)*x
+      + Thermo::thermoType1::Gamma(rho, e, T)*(1.0 - x);
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::detonatingFluidBlastThermo<Thermo>::patchFaceGamma
+(
+    const label patchi,
+    const label facei
+) const
+{
+    const scalar& x = this->patchFacex(patchi, facei);
+    const scalar rho = this->rho_.boundaryField()[patchi][facei];
+    const scalar e = this->e_.boundaryField()[patchi][facei];
+    const scalar T = this->T_.boundaryField()[patchi][facei];
     if (x < small)
     {
         return Thermo::thermoType1::Gamma(rho, e, T);

@@ -250,18 +250,22 @@ Foam::tmp<Foam::fvScalarMatrix> Foam::solidBlastThermo::divq
     return
       - (
             isotropic()
-          ?   fvc::laplacian(this->kappa(), this->T_)
-            + correction(fvm::laplacian(this->alpha(), e))
-          :   fvc::laplacian(KappaLocal(), this->T_)
-            + correction
-              (
-                  fvm::laplacian
-                  (
-                      KappaLocal()/this->Cv(),
-                      e,
-                      "laplacian(" + this->alpha().name() + ",e)"
-                  )
-              )
+          ? (
+                fvc::laplacian(this->kappa(), this->T_)
+              + correction(fvm::laplacian(this->alpha(), e))
+            )
+          : (
+                fvc::laplacian(KappaLocal(), this->T_)
+              + correction
+                (
+                    fvm::laplacian
+                    (
+                        KappaLocal()/this->Cv(),
+                        e,
+                        "laplacian(" + this->alpha().name() + ",e)"
+                    )
+                )
+            )
         );
 }
 

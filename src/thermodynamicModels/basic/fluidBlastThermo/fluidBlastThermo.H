@@ -288,6 +288,17 @@ public:
                 const bool limit = true
             ) const = 0;
 
+            //- Calculate pressure for patch and face [Pa]
+            virtual scalar patchFacepRhoT
+            (
+                const label patchi,
+                const label facei,
+                const bool limit = true
+            ) const = 0;
+
+            //- Calculate the pressure
+            virtual tmp<volScalarField> pRhoT() const;
+
             //- Return the speed of sound
             virtual const volScalarField& speedOfSound() const;
 

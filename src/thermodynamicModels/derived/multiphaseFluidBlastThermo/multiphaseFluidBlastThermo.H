@@ -295,8 +295,19 @@ public:
                 const bool limit = true
             ) const;
 
+            //- Calculate pressure for cell [Pa]
+            virtual scalar patchFacepRhoT
+            (
+                const label patchi,
+                const label facei,
+                const bool limit = true
+            ) const;
+
             //- Gamma = dpde for cell []
             virtual scalar cellGamma(const label celli) const;
+
+            //- Gamma = dpde for cell []
+            virtual scalar patchFaceGamma(const label patchi, const label facei) const;
 
             //- Derivative of pressure w.r.t density for cel
             virtual scalar celldpdRho(const label celli) const;

@@ -263,8 +263,8 @@ Foam::scalar Foam::linearTillotson<Specie>::E
     const scalar T
 ) const
 {
-    // return EcTable_.lookup(rho) + e0_;
-    return calcE(rho) - eRef_ + e0_;
+    return EcTable_.lookup(rho);// + e0_;
+    // return calcE(rho) - eRef_;
 }
 
 

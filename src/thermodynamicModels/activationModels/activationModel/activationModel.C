@@ -157,7 +157,7 @@ void Foam::activationModel::detonationPoint::setActivated
 ) const
 {
     const scalar& t = lambda.time().value();
-    if (activated_ || t <= delay_)
+    if (activated_ || t < delay_)
     {
         return;
     }
@@ -355,6 +355,7 @@ Foam::activationModel::activationModel
                 true
             );
         }
+        lambda_.correctBoundaryConditions();
         lambda_.storeOldTime();
     }
 }
@@ -602,12 +603,9 @@ Foam::vector Foam::activationModel::centerOfMass
 
 void Foam::activationModel::update()
 {
+    ddtLambda_.clear();
     if (finished_ || (this->step() == 0 && min(lambda_).value() > 1.0 - small))
     {
-        if (ddtLambda_.valid())
-        {
-            ddtLambda_.clear();
-        }
         finished_ = true;
 
         return;
@@ -643,13 +641,13 @@ void Foam::activationModel::update()
     // Compute the limited change in lambda
     ddtLambda_ = (lambdaNew - lambdaOld)/dT;
     volScalarField& ddtLambda = ddtLambda_.ref();
-    this->calcAndStoreDelta(ddtLambda);
+    ddtLambda = this->calcAndStoreDelta(ddtLambda);
 
     // Calculate the deltas using the current value
     const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
     deltaAlphaRhoLambda_ =
-        // fvc::div(alphaRhoPhiPtr_(), lambda_)
-        fvc::div(flux.interpolate(lambda_, lambda_.name())*alphaRhoPhiPtr_())
+        fvc::div(alphaRhoPhiPtr_(), lambda_)
+        // fvc::div(flux.interpolate(lambda_, lambda_.name())*alphaRhoPhiPtr_())
       - ddtLambda*alphaRho;
 }
 
@@ -677,16 +675,6 @@ void Foam::activationModel::solve()
         (alphaRhoLambdaOld_ - deltaAlphaRhoLambda_*dT)
        /max(alphaRho, smallRho);
       // + deltaLambda*dT;
-
-    // forAll(detonationPoints_, pointi)
-    // {
-    //     detonationPoints_[pointi].setActivated
-    //     (
-    //         lambda_,
-    //         this->finalStep()
-    //     );
-    // }
-    // this->correct(lambda_);
     lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
 }

@@ -514,6 +514,34 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::cellpRhoT
 }
 
 
+Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFacepRhoT
+(
+    const label patchi,
+    const label facei,
+    const bool limit
+) const
+{
+    const scalar a1 = alpha1_.boundaryField()[patchi][facei];
+    const scalar a2 = alpha2_.boundaryField()[patchi][facei];
+    if (a2 < thermo2_->residualAlpha().value())
+    {
+        return thermo1_->patchFacepRhoT(patchi, facei, limit);
+    }
+    if (a1 < thermo1_->residualAlpha().value())
+    {
+        return thermo2_->patchFacepRhoT(patchi, facei, limit);
+    }
+    const scalar alphaXi1 = a1/(thermo1_->patchFaceGamma(patchi, facei) - 1.0);
+    const scalar alphaXi2 = a2/(thermo2_->patchFaceGamma(patchi, facei) - 1.0);
+
+    return
+        (
+            alphaXi1*thermo1_->patchFacepRhoT(patchi, facei, limit)
+          + alphaXi2*thermo2_->patchFacepRhoT(patchi, facei, limit)
+        )/(alphaXi1 + alphaXi2);
+}
+
+
 Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpdRho(const label celli) const
 {
     if (alpha2_[celli] < thermo2_->residualAlpha().value())
@@ -599,6 +627,18 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::cellGamma(const label celli) const
     return
         alpha1_[celli]*thermo1_->cellGamma(celli)
       + alpha2_[celli]*thermo2_->cellGamma(celli);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFaceGamma
+(
+    const label patchi,
+    const label facei
+) const
+{
+    return
+        alpha1_.boundaryField()[patchi][facei]*thermo1_->patchFaceGamma(patchi, facei)
+      + alpha2_.boundaryField()[patchi][facei]*thermo2_->patchFaceGamma(patchi, facei);
 }
 
 
