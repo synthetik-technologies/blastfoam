@@ -42,11 +42,82 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * Private Members Functions * * * * * * * * * * * * //
+// * * * * * * * * * * * * Protected Members Functions * * * * * * * * * * * * //
 
-void Foam::twoPhaseCompressibleSystem::setModels()
+void Foam::twoPhaseCompressibleSystem::updateFluxes
+(
+    const surfaceScalarField& alpha1Own,
+    const surfaceScalarField& alpha1Nei,
+
+    const surfaceScalarField& alphaRho1Own,
+    const surfaceScalarField& alphaRho1Nei,
+
+    const surfaceScalarField& alphaRho2Own,
+    const surfaceScalarField& alphaRho2Nei
+)
 {
-    compressibleBlastSystem::setModels();
+    fluxScheme_->update
+    (
+        (alphaRho1Own + alphaRho2Own)(),
+        (alphaRho1Nei + alphaRho2Nei)(),
+        U_,
+        e_,
+        p_,
+        speedOfSound()(),
+        phi_,
+        rhoPhi_,
+        rhoUPhi_,
+        rhoEPhi_
+    );
+
+    alphaPhi_ = fluxScheme_->flux(alpha1Own, alpha1Nei, phi_);
+
+    // Limit volume fraction flux
+    if (MUSLESLimiting_)
+    {
+        // Create copy of alpha to blend and set old time for MULES correction
+        volScalarField alpha1Old(alpha1_);
+        this->storeAndBlendOld(alpha1Old, false);
+        alpha1Old.oldTime();
+        alpha1Old.storeOldTimes();
+
+        // Blend fluxes for ODE solver
+        this->storeAndBlendDelta(alphaPhi_);
+
+        volScalarField Su
+        (
+            volScalarField::New
+            (
+                "Su",
+                alpha1_*fvc::div(phi_)
+            )
+        );
+        this->storeAndBlendDelta(Su);
+
+        surfaceScalarField phi(phi_);
+        this->storeAndBlendDelta(phi);
+
+        // Limit volume fraction flux to ensure boundedness
+        MULES::limit
+        (
+            1.0/mesh().time().deltaT().value(),
+            geometricOneField(),
+            alpha1Old,
+            phi,
+            alphaPhi_,
+            zeroField(),
+            Su,
+            oneField(),
+            zeroField(),
+            false
+        );
+
+        // Using the total field, un-blend volume fraction flux
+        alphaPhi_ = this->calcAndStoreDelta(alphaPhi_);
+    }
+
+    alphaRhoPhi1_ = fluxScheme_->flux(alphaRho1Own, alphaRho1Nei, phi_);
+    alphaRhoPhi2_ = fluxScheme_->flux(alphaRho2Own, alphaRho2Nei, phi_);
 }
 
 
@@ -123,7 +194,9 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         mesh,
         dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
     ),
-    transportPhaseDensity_(this->lookupOrDefault("transportPhaseDensity", false))
+    transportPhaseDensity_(this->lookupOrDefault("transportPhaseDensity", false)),
+    densityReconstruction_(this->lookupOrDefault("densityReconstruction", false)),
+    MUSLESLimiting_(this->lookupOrDefault("MUSLESLimiting", false))
 {
     this->fluxScheme_ = fluxScheme::NewMulti(phi_);
     fluxScheme_->phases().insert(alpha1_.group());
@@ -133,6 +206,19 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
 
     thermo_.initializeModels();
     this->setModels();
+
+    // if (this->isDict("phaseChange"))
+    // {
+    //     phaseChange_ = phaseChangeModel::New
+    //     (
+    //         subDict("phaseChange"),
+    //         alpha1_,
+    //         thermo_.thermo(0),
+    //         alpha2_,
+    //         thermo_.thermo(1)
+    //     );
+    // }
+
 
     if
     (
@@ -168,123 +254,150 @@ void Foam::twoPhaseCompressibleSystem::update()
     (
         ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group(), true)
     );
-    surfaceScalarField alpha1Own(alphaLimiter->interpolateOwn());
-    surfaceScalarField alpha1Nei(alphaLimiter->interpolateNei());
 
-    autoPtr<ReconstructionScheme<scalar>> rho1Limiter
-    (
-        ReconstructionScheme<scalar>::New(alphaRho1_, "rho", rho1_.group(), true)
-    );
-    surfaceScalarField alphaRho1Own(rho1Limiter->interpolateOwn());
-    surfaceScalarField alphaRho1Nei(rho1Limiter->interpolateNei());
+    phi_ = fvc::relative(fvc::flux(U_), U_);
 
-    autoPtr<ReconstructionScheme<scalar>> rho2Limiter
-    (
-        ReconstructionScheme<scalar>::New(alphaRho2_, "rho", rho2_.group(), true)
-    );
-    surfaceScalarField alphaRho2Own(rho2Limiter->interpolateOwn());
-    surfaceScalarField alphaRho2Nei(rho2Limiter->interpolateNei());
-
-
-    fluxScheme_->update
-    (
-        (alphaRho1Own + alphaRho2Own)(),
-        (alphaRho1Nei + alphaRho2Nei)(),
-        U_,
-        e_,
-        p_,
-        speedOfSound()(),
-        phi_,
-        rhoPhi_,
-        rhoUPhi_,
-        rhoEPhi_
-    );
-
-    alphaPhi_ = fluxScheme_->flux(alpha1Own, alpha1Nei, phi_);
-
-    // Limit volume fraction flux
+    tmp<surfaceScalarField> talpha1Own, talpha1Nei;
+    if (alphaLimiter->upwind())
     {
-        const scalar vDotResidualAlpha = 1e-4;
-
-        // Create copy of alpha to blend and set old time for MULES correction
-        volScalarField alpha1Old(alpha1_);
-        this->storeAndBlendOld(alpha1Old, false);
-        alpha1Old.oldTime();
-        alpha1Old.storeOldTimes();
-
-        // Blend fluxes for ODE solver
-        this->storeAndBlendDelta(alphaPhi_);
-
-        volScalarField vDot(alpha1_*fvc::div(phi_));
-        volScalarField Su
-        (
-            volScalarField::New
+        talpha1Own =
+            surfaceScalarField::New
             (
-                "Su",
-                mesh(),
-                dimensionedScalar(vDot.dimensions(), 0.0)
-            )
-        );
-        volScalarField Sp
-        (
-            volScalarField::New
+                alphaLimiter->ownName(alpha1_.name()),
+                alphaLimiter->interpolate(phi_)
+            );
+        talpha1Nei =
+            surfaceScalarField::New
             (
-                "Sp",
-                mesh(),
-                dimensionedScalar(vDot.dimensions(), 0.0)
-            )
+                alphaLimiter->neiName(alpha1_.name()),
+                talpha1Own()
+            );
+    }
+    else
+    {
+        talpha1Own = alphaLimiter->interpolateOwn();
+        talpha1Nei = alphaLimiter->interpolateNei();
+    }
+    const surfaceScalarField& alpha1Own = talpha1Own();
+    const surfaceScalarField& alpha1Nei = talpha1Nei();
+
+    tmp<surfaceScalarField> talphaRho1Own;
+    tmp<surfaceScalarField> talphaRho1Nei;
+    tmp<surfaceScalarField> talphaRho2Own;
+    tmp<surfaceScalarField> talphaRho2Nei;
+    if (densityReconstruction_)
+    {
+        // Rho 1
+        autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+        (
+            ReconstructionScheme<scalar>::New(rho1_, "rho", rho1_.group(), true)
         );
-        forAll(vDot, celli)
+        surfaceScalarField rho1Own(rho1Limiter->interpolateOwn());
+        surfaceScalarField rho1Nei(rho1Limiter->interpolateNei());
+        if (!transportPhaseDensity_)
         {
-            if (vDot[celli] > 0.0)
-            {
-                Sp[celli] -=
-                    vDot[celli]/max(1.0 - alpha1_[celli], vDotResidualAlpha);
-                Su[celli] +=
-                    vDot[celli]/max(1.0 - alpha1_[celli], vDotResidualAlpha);
-            }
-            else if (vDot[celli] < 0.0)
-            {
-                Sp[celli] += vDot[celli]/max(alpha1_[celli], vDotResidualAlpha);
-            }
+            fluxScheme::correctPhaseFields
+            (
+                alpha1_,
+                rho1_,
+                rho1Own, rho1Nei,
+                thermo_.thermo(0).residualAlpha().value()
+            );
         }
-        this->storeAndBlendDelta(Su);
-        this->storeAndBlendDelta(Sp);
 
-        surfaceScalarField phi(phi_);
-        this->storeAndBlendDelta(phi);
-
-        // Limit volume fraction flux to ensure boundedness
-        MULES::limit
+        talphaRho1Own = surfaceScalarField::New
         (
-            1.0/mesh().time().deltaT().value(),
-            geometricOneField(),
-            alpha1Old,
-            phi,
-            alphaPhi_,
-            Sp,
-            Su,
-            oneField(),
-            zeroField(),
-            false
+            rho1Limiter->ownName(alphaRho1_.name()),
+            alpha1Own*rho1Own
+        );
+        talphaRho1Nei = surfaceScalarField::New
+        (
+            rho1Limiter->neiName(alphaRho1_.name()),
+            alpha1Nei*rho1Nei
         );
 
-        // Using the total field, un-blend volume fraction flux
-        alphaPhi_ = this->calcAndStoreDelta(alphaPhi_);
+        // Rho 2
+        autoPtr<ReconstructionScheme<scalar>> rho2Limiter
+        (
+            ReconstructionScheme<scalar>::New(rho2_, "rho", rho2_.group(), true)
+        );
+        surfaceScalarField rho2Own(rho2Limiter->interpolateOwn());
+        surfaceScalarField rho2Nei(rho2Limiter->interpolateNei());
+        if (!transportPhaseDensity_)
+        {
+            fluxScheme::correctPhaseFields
+            (
+                alpha2_,
+                rho2_,
+                rho2Own, rho2Nei,
+                thermo_.thermo(1).residualAlpha().value()
+            );
+        }
+
+        talphaRho2Own = surfaceScalarField::New
+        (
+            rho2Limiter->ownName(alphaRho2_.name()),
+            (1.0 - alpha1Own)*rho2Own
+        );
+        talphaRho2Nei = surfaceScalarField::New
+        (
+            rho2Limiter->neiName(alphaRho2_.name()),
+            (1.0 - alpha1Nei)*rho2Nei
+        );
+    }
+    else
+    {
+        // Rho 1
+        autoPtr<ReconstructionScheme<scalar>> rho1Limiter
+        (
+            ReconstructionScheme<scalar>::New
+            (
+                alphaRho1_,
+                "rho",
+                rho1_.group(),
+                true
+            )
+        );
+
+        talphaRho1Own = rho1Limiter->interpolateOwn();
+        talphaRho1Nei = rho1Limiter->interpolateNei();
+
+        // Rho 2
+        autoPtr<ReconstructionScheme<scalar>> rho2Limiter
+        (
+            ReconstructionScheme<scalar>::New
+            (
+                alphaRho2_,
+                "rho",
+                rho2_.group(),
+                true
+            )
+        );
+        talphaRho2Own = rho2Limiter->interpolateOwn();
+        talphaRho2Nei = rho2Limiter->interpolateNei();
     }
 
-    alphaRhoPhi1_ = fluxScheme_->flux(alphaRho1Own, alphaRho1Nei, phi_);
-    alphaRhoPhi2_ = fluxScheme_->flux(alphaRho2Own, alphaRho2Nei, phi_);
+    updateFluxes
+    (
+        alpha1Own,
+        alpha1Nei,
 
-    if (mesh().cacheTemporaryObject(alphaRho1Own.name()))
+        talphaRho1Own(),
+        talphaRho1Nei(),
+
+        talphaRho2Own(),
+        talphaRho2Nei()
+    );
+
+    if (mesh().cacheTemporaryObject(talphaRho1Own().name()))
     {
-        mesh().cacheTemporaryObject(alphaRho1Own);
-        mesh().cacheTemporaryObject(alphaRho1Nei);
+        mesh().cacheTemporaryObject(talphaRho1Own.ref());
+        mesh().cacheTemporaryObject(talphaRho1Nei.ref());
     }
-    if (mesh().cacheTemporaryObject(alphaRho2Own.name()))
+    if (mesh().cacheTemporaryObject(talphaRho2Own().name()))
     {
-        mesh().cacheTemporaryObject(alphaRho2Own);
-        mesh().cacheTemporaryObject(alphaRho2Nei);
+        mesh().cacheTemporaryObject(talphaRho2Own.ref());
+        mesh().cacheTemporaryObject(talphaRho2Nei.ref());
     }
 
     thermo_.update();
@@ -308,9 +421,47 @@ void Foam::twoPhaseCompressibleSystem::solve()
     volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
     this->fvTimeInt_->addDeltaSource(alphaRho2_.name(), deltaAlphaRho2);
 
-
     // Delta T value
     dimensionedScalar dT = rho_.time().deltaT();
+
+    // if (phaseChange_.valid())
+    // {
+    //     Pair<tmp<volScalarField::Internal>> mDots(phaseChange_->mDots());
+    //     Info<<min(mDots.first()()).dimensions()<<" "<<max(mDots.first()()).value()<<endl;
+    //     // Info<<min(alphaRho1_()/dT).value()<<" "<<max(alphaRho1_()/dT).value()<<endl;
+    //     Info<<min(mDots.second()()).dimensions()<<" "<<max(mDots.second()()).value()<<endl;
+    //     // Info<<min(alphaRho2_()/dT).value()<<" "<<max(alphaRho2_()/dT).value()<<endl;
+    //     // mDots.first().ref() = min(mDots.first()(), alphaRho2_()/dT);
+    //     // mDots.second().ref() = min(mDots.second()(), alphaRho1_()/dT);
+    //
+    //     volScalarField::Internal mDot
+    //     (
+    //         "mDot",
+    //         mDots.first()() - mDots.second()()
+    //         // min
+    //         // (
+    //         //     max
+    //         //     (
+    //         //         mDots.first()() - mDots.second()(),
+    //         //         -alphaRho1_()/dT
+    //         //     ),
+    //         //     alphaRho2_()/dT
+    //         // )
+    //     );
+    //     Info<<max(mDot).value()<<" "<<min(mDot).value()<<endl;
+    //
+    //     deltaAlphaRho1.ref() -= mDot;
+    //     deltaAlphaRho2.ref() += mDot;
+    //
+    //     volScalarField::Internal dAlpha
+    //     (
+    //         "dAlpha",
+    //         mDots.first()/max(rho2_(), thermo_.thermo(1).residualRho())
+    //       - mDots.second()/max(rho1_(), thermo_.thermo(0).residualRho())
+    //     );
+    //     Info<<max(dAlpha).value()<<" "<<min(dAlpha).value()<<endl;
+    //     deltaAlpha.ref() -= dAlpha;
+    // }
 
     // Blend old values
     this->storeAndBlendOld(alpha1_, false);
@@ -486,6 +637,9 @@ void Foam::twoPhaseCompressibleSystem::decode()
     {
         rho1_.ref() = alphaRho1_()/max(alpha1_(), rAlpha1);
         rho2_.ref() = alphaRho2_()/max(alpha2_(), rAlpha2);
+
+        fluxScheme::correctPhaseFields(alpha1_, rho1_, rAlpha1);
+        fluxScheme::correctPhaseFields(alpha1_, rho1_, rAlpha1);
     }
     rho1_.correctBoundaryConditions();
     rho2_.correctBoundaryConditions();

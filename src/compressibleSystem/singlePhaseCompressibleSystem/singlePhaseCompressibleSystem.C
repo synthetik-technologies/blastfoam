@@ -75,6 +75,8 @@ void Foam::singlePhaseCompressibleSystem::decode()
 }
 void Foam::singlePhaseCompressibleSystem::solve()
 {
+    compressibleBlastSystem::solve();
+
     volScalarField& rho = this->rhoEff();
     dimensionedScalar dT = rho.time().deltaT();
 
@@ -88,8 +90,6 @@ void Foam::singlePhaseCompressibleSystem::solve()
 
     rho -= dT*deltaRho;
     rho.correctBoundaryConditions();
-
-    compressibleBlastSystem::solve();
 
     thermoPtr_->solve();
 }

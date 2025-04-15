@@ -87,8 +87,12 @@ protected:
         //- Allocate models
         virtual void setModels();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> rhoESource() const;
+        //- Add source terms to momentum and energy equations
+            virtual void addSources
+            (
+                volVectorField::Internal& rhoUSource,
+                volScalarField::Internal& rhoESource
+            ) const;
 
 
 public:

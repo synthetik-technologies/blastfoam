@@ -121,21 +121,12 @@ protected:
             //- Allocate models
             virtual void setModels();
 
-            //- Return momentum source term
-            virtual tmp<volVectorField> rhoUSource() const;
-
-            //- Return energy source term
-            virtual tmp<volScalarField> rhoESource() const;
-
-            //- Limit mass fluxes
-            void limitAlphaRhoPhis
+            //- Add source terms to momentum and energy equations
+            virtual void addSources
             (
-                const UPtrList<volScalarField>& alphas,
-                const UPtrList<volScalarField>& rhos,
-                UPtrList<surfaceScalarField>& alphaRhoPhis,
-                const surfaceScalarField& phi,
-                const surfaceScalarField& rhoPhi
-            );
+                volVectorField::Internal& rhoUSource,
+                volScalarField::Internal& rhoESource
+            ) const;
 
 public:
 

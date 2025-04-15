@@ -441,7 +441,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::interfaceSystem::surfaceTensionForce
             const volScalarField& alpha2 = alphas[phasej];
             typename surfaceTensionTable::const_iterator iter =
                 stModels.find(interfacePair(alpha1, alpha2));
-            if (iter == stModels.end())
+            if (iter == stModels.cend())
             {
                 FatalErrorInFunction
                     << "Cannot find interface " << interfacePair(alpha1, alpha2)

@@ -50,9 +50,16 @@ void Foam::compressibleBlastSystem::setModels()
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::compressibleBlastSystem::rhoESource() const
+void Foam::compressibleBlastSystem::addSources
+(
+    volVectorField::Internal& rhoUSource,
+    volScalarField::Internal& rhoESource
+) const
 {
-    return compressibleSystem::rhoESource() + thermoPtr_->ESource();
+
+    compressibleSystem::addSources(rhoUSource, rhoESource);
+
+    rhoESource -= thermoPtr_->ESource();
 }
 
 
@@ -125,21 +132,13 @@ void Foam::compressibleBlastSystem::decode()
 void Foam::compressibleBlastSystem::solve()
 {
     //- Calculate deltas for momentum and energy
-    volVectorField deltaRhoU
-    (
-        "deltaRhoU",
-        fvc::div(rhoUPhi_)
-      - rhoUSource()
-    );
+    volVectorField deltaRhoU("deltaRhoU", fvc::div(rhoUPhi_));
     this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
 
-    volScalarField deltaRhoE
-    (
-        "deltaRhoE",
-        fvc::div(rhoEPhi_)
-      - rhoESource()
-    );
+    volScalarField deltaRhoE("deltaRhoE", fvc::div(rhoEPhi_));
     this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
+
+    this->addSources(deltaRhoU, deltaRhoE);
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);
@@ -235,7 +234,7 @@ void Foam::compressibleBlastSystem::postUpdate()
         {
             eEqn -= extESource_;
         }
-        if (turbulence_.valid())
+        if (thermophysicalTransport_.valid())
         {
             eEqn += thermophysicalTransport_->divq(e_);
         }
@@ -259,6 +258,9 @@ void Foam::compressibleBlastSystem::postUpdate()
     if (turbulence_.valid())
     {
         turbulence_->correct();
+    }
+    if (thermophysicalTransport_.valid())
+    {
         thermophysicalTransport_->correct();
     }
 }

@@ -73,69 +73,20 @@ void Foam::compressibleSystem::setModels()
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::compressibleSystem::rhoUSource() const
-{
-    return g_*rhoEff();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::compressibleSystem::rhoESource() const
-{
-    return rhoU_ & g_;
-}
-
-void Foam::compressibleSystem::limitAlphaRhoPhis
+void Foam::compressibleSystem::addSources
 (
-    const UPtrList<volScalarField>& alphas,
-    const UPtrList<volScalarField>& rhos,
-    UPtrList<surfaceScalarField>& alphaRhoPhis,
-    const surfaceScalarField& phi,
-    const surfaceScalarField& rhoPhi
-)
+    volVectorField::Internal& rhoUSource,
+    volScalarField::Internal& rhoESource
+) const
 {
-    PtrList<surfaceScalarField> alphaRhoPhiUDs(alphas.size());
-    // forAll(alphaRhoPhiUDs, phasei)
-    // {
-    //     alphaRhoPhiUDs.set
-    //     (
-    //         phasei,
-    //         upwind<scalar>(mesh(), phi).flux(alphas[phasei]*rhos[phasei])
-    //     );
-    //     alphaRhoPhis[phasei] -= alphaRhoPhiUDs[phasei];
-    // }
 
+    if (mag(g_).value() > small)
     {
-        UPtrList<scalarField> alphaRhoPhisInternal(alphas.size());
-        forAll(alphaRhoPhisInternal, phasei)
-        {
-            alphaRhoPhisInternal.set(phasei, &alphaRhoPhis[phasei]);
-        }
-        MULES::limitSum(alphaRhoPhisInternal);
+        rhoUSource -= g_*rhoEff()();
+        rhoESource -= g_ & rhoU_();
     }
-
-    const surfaceScalarField::Boundary& phibf = phi_.boundaryField();
-    forAll(phibf, patchi)
-    {
-        if (phibf[patchi].coupled())
-        {
-            UPtrList<scalarField> alphaRhoPhisPatch(alphas.size());
-            forAll(alphaRhoPhisPatch, phasei)
-            {
-                alphaRhoPhisPatch.set
-                (
-                    phasei,
-                    &alphaRhoPhis[phasei].boundaryFieldRef()[patchi]
-                );
-            }
-            MULES::limitSum(alphaRhoPhisPatch);
-        }
-    }
-
-    // forAll(alphaRhoPhis, phasei)
-    // {
-    //     alphaRhoPhis[phasei] += alphaRhoPhiUDs[0];
-    // }
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
