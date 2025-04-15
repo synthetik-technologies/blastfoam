@@ -353,6 +353,10 @@ int main(int argc, char *argv[])
     Pair<vector> targetAxis(calculateAxis(targetMesh));
     vector rotationAxis = sourceAxis[1] - targetAxis[1];
     vector rAxis = sourceAxis[0];
+    if (mag(rotationAxis) < small)
+    {
+        rotationAxis = sourceAxis[1];
+    }
     Info<< "Source radial axis: " << sourceAxis[0] << nl
         << "Source rotation axis: " << sourceAxis[1] << nl
         << "Target radial axis: " << targetAxis[0] << nl
@@ -361,7 +365,12 @@ int main(int argc, char *argv[])
         << "Radial axis: " << rAxis << nl
         << endl;
 
-    vector sourceCentre = cmptMultiply(sourceSumCV, sourceAxis[1])/sourceSumV;
+    vector sourceCentre =
+        args.optionLookupOrDefault
+        (
+            "sourceCentre",
+            cmptMultiply(sourceSumCV, sourceAxis[1])/sourceSumV
+        );
     vector targetCentre(sourceCentre);
     if (args.optionFound("centre"))
     {

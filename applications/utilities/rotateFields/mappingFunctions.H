@@ -372,39 +372,41 @@ void calcMapAndR
     vector targetD(targetMesh.geometricD());
 
     pointField transformedPoints(targetMesh.points());
-    forAll(transformedPoints, pointi)
+    if (mag(rAxis) > small)
     {
-        // Get the position on the target mesh
-        vector ptTarget =
-            cmptMultiply
-            (
-                targetMesh.points()[pointi],
-                targetD
-            );
-
-        // Offset from the center of the source mesh
-        vector nTarget = (ptTarget - targetCentre);
-
-        // Radius
-        scalar r = mag(nTarget);
-
-        // Offset from the source mesh center (only solved directions)
-        vector nSource(Zero);
-        if (nSourceD == 1)
+        forAll(transformedPoints, pointi)
         {
-            nSource = r*rAxis;
-        }
-        else
-        {
-            scalar y = nTarget & rotationAxis;
-            scalar x = mag((nTarget - y*rotationAxis));
-            nSource = y*rotationAxis + x*rAxis;
-        }
+            // Get the position on the target mesh
+            vector ptTarget =
+                cmptMultiply
+                (
+                    targetMesh.points()[pointi],
+                    targetD
+                );
 
-        // Actual point on the source mesh
-        transformedPoints[pointi] = nSource + sourceCentre;
+            // Offset from the center of the source mesh
+            vector nTarget = (ptTarget - targetCentre);
+
+            // Radius
+            scalar r = mag(nTarget);
+
+            // Offset from the source mesh center (only solved directions)
+            vector nSource(Zero);
+            if (nSourceD == 1)
+            {
+                nSource = r*rAxis;
+            }
+            else
+            {
+                scalar y = nTarget & rotationAxis;
+                scalar x = mag((nTarget - y*rotationAxis));
+                nSource = y*rotationAxis + x*rAxis;
+            }
+
+            // Actual point on the source mesh
+            transformedPoints[pointi] = nSource + sourceCentre;
+        }
     }
-
 
     forAll(cellMap, celli)
     {
@@ -799,6 +801,12 @@ void addOptions()
         "centre",
         "vector|'(0 0 0)'",
         "Location of center in the target mesh"
+    );
+    argList::addOption
+    (
+        "sourceCentre",
+        "vector|'(0 0 0)'",
+        "Location of center in the source mesh"
     );
     argList::addOption
     (
