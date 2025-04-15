@@ -708,10 +708,16 @@ Foam::fvMeshBalance::distribute()
     blastMeshObject::preDistribute<polyMesh>(mesh_);
     blastMeshObject::preDistribute<fvMesh>(mesh_);
 
+    // Checkout to avoid duplicates of mesh name in time db
+    this->time().checkOut(static_cast<polyMesh&>(mesh_));
+
     Info<< "Distributing the mesh ..." << endl;
     balancing = true;
     autoPtr<mapDistributePolyMesh> map =
         distributor_.distribute(distribution_);
+
+    // Check backin
+    this->time().checkIn(static_cast<polyMesh&>(mesh_));
 
     // Set the instance of the mesh IOobject, only primitive instances are
     // set using mesh_.setInstance(inst)
