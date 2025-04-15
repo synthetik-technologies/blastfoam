@@ -130,4 +130,20 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::dMdt() const
     );
 }
 
+Foam::tmp<Foam::volScalarField> Foam::diameterModel::LDratio() const
+{
+    return volScalarField::New
+    (
+        IOobject::groupName("LDratio", d_.group()),
+        d_.mesh(),
+        dimensionedScalar(dimless, 1.0)
+    );
+}
+
+Foam::scalar
+Foam::diameterModel::LDratio(const label celli) const
+{
+    return 1.0;
+}
+
 // ************************************************************************* //
