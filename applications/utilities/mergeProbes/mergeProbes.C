@@ -169,13 +169,6 @@ int main(int argc, char *argv[])
     PtrList<OFstream> outputs(probeNames.size());
     forAll(outputs, probei)
     {
-        if (!exists(probesDir/probeNames[probei]))
-        {
-            FatalErrorInFunction
-                << "File could not be found - " << (probesDir/probeNames[probei]) << endl
-                << exit(FatalError);
-        }
-
         outputs.set(probei, new OFstream(probesDir/probeNames[probei]));
     }
 
