@@ -31,48 +31,23 @@ Foam::label Foam::functionObjects::blastSampledSurfaces::classifyFields()
 {
     label nFields = 0;
 
-    if (loadFromFiles_)
+    // Check currently available fields
+    wordList allFields = mesh_.sortedNames();
+    labelList indices = findStrings(fieldSelection_, allFields);
+
+    forAll(fieldSelection_, i)
     {
-        // Check files for a particular time
-        IOobjectList objects(mesh_, mesh_.time().timeName());
-        wordList allFields = objects.sortedNames();
+        labelList indices = findStrings(fieldSelection_[i], allFields);
 
-        forAll(fieldSelection_, i)
+        if (indices.size())
         {
-            labelList indices = findStrings(fieldSelection_[i], allFields);
-
-            if (indices.size())
-            {
-                nFields += indices.size();
-            }
-            else
-            {
-                WarningInFunction
-                    << "Cannot find field file matching "
-                    << fieldSelection_[i] << endl;
-            }
+            nFields += indices.size();
         }
-    }
-    else
-    {
-        // Check currently available fields
-        wordList allFields = mesh_.sortedNames();
-        labelList indices = findStrings(fieldSelection_, allFields);
-
-        forAll(fieldSelection_, i)
+        else
         {
-            labelList indices = findStrings(fieldSelection_[i], allFields);
-
-            if (indices.size())
-            {
-                nFields += indices.size();
-            }
-            else
-            {
-                WarningInFunction
-                    << "Cannot find registered field matching "
-                    << fieldSelection_[i] << endl;
-            }
+            WarningInFunction
+                << "Cannot find registered field matching "
+                << fieldSelection_[i] << endl;
         }
     }
 

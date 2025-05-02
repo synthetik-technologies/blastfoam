@@ -29,8 +29,8 @@ License
 template<class SelectionTable>
 Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 (
-    const fvMesh& mesh,
     const dictionary& dict,
+    const fvMesh& mesh,
     const word& defaultType,
     SelectionTable* tablePtr
 )
@@ -59,7 +59,7 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
         }
     }
 
-    return cstrIter()(mesh);
+    return cstrIter()(dict, mesh);
 }
 
 

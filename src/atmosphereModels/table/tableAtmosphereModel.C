@@ -45,10 +45,10 @@ Foam::atmosphereModels::table::table
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 :
-    atmosphereModel(mesh, dict, zoneID),
+    atmosphereModel(mesh, dict, zoneName),
     pTable_(dict_.subDict("pTable"), "h", "p"),
     setT_(dict_.lookupOrDefault("setT", dict.isDict("TTable"))),
     TTable_
@@ -83,9 +83,9 @@ void Foam::atmosphereModels::table::createAtmosphere
     // Optional setting of only some cells
     labelList cells
     (
-        zoneID_ >= 0
-      ? labelList(mesh_.cellZones()[zoneID_])
-      : identity(mesh_.nCells())
+        !zoneName_.empty()
+      ? labelList(mesh_.cellZones()[zoneName_])
+      : identityMap(mesh_.nCells())
     );
 
     // Create a hash set for easier searching of selected cells

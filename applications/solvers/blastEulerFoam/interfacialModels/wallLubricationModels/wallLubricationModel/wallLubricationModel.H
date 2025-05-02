@@ -42,6 +42,7 @@ SourceFiles
 #include "wallDependentModel.H"
 #include "volFields.H"
 #include "dictionary.H"
+#include "BlendedInterfacialModel.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -123,26 +124,39 @@ public:
 
     // Member Functions
 
-        //- Return phase-intensive wall lubrication force
-        virtual tmp<volVectorField> FI
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
-
         //- Return wall lubrication force
-        virtual tmp<volVectorField> F
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volVectorField> F() const = 0;
 
         //- Return face wall lubrication force
-        virtual tmp<surfaceScalarField> Ff
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<surfaceScalarField> Ff() const = 0;
+};
+
+
+/*---------------------------------------------------------------------------*\
+                    Class blendedWallLubricationModel Declaration
+\*---------------------------------------------------------------------------*/
+
+class blendedWallLubricationModel
+:
+    public BlendedInterfacialModel<wallLubricationModel>
+{
+public:
+
+    typedef wallLubricationModel modelType;
+
+    // Constructors
+
+        //- Inherit base class constructors
+        using BlendedInterfacialModel<wallLubricationModel>::BlendedInterfacialModel;
+
+
+    // Member Functions
+
+        //- Return the wallLubrication force
+        tmp<volVectorField> F() const;
+
+        //- Return the wallLubrication force
+        tmp<surfaceScalarField> Ff() const;
 };
 
 

@@ -90,25 +90,30 @@ Foam::wallLubricationModel::~wallLubricationModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField> Foam::wallLubricationModel::F
-(
-    const label nodei,
-    const label nodej
-) const
+
+
+Foam::tmp<Foam::volVectorField>
+Foam::blendedWallLubricationModel::F() const
 {
-    return pair_.dispersed().volumeFraction(nodei)*FI(nodei, nodej);
+    return this->evaluate
+    (
+        &wallLubricationModel::F,
+        "F", wallLubricationModel::dimF,
+        false
+    );
 }
 
 
-Foam::tmp<Foam::surfaceScalarField> Foam::wallLubricationModel::Ff
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::surfaceScalarField>
+Foam::blendedWallLubricationModel::Ff() const
 {
-    return
-        fvc::interpolate(pair_.dispersed().volumeFraction(nodei))
-        *fvc::flux(FI(nodei, nodej));
+    return this->evaluate
+    (
+        &wallLubricationModel::Ff,
+        "Ff",
+        wallLubricationModel::dimF*dimArea,
+        false
+    );
 }
 
 // ************************************************************************* //

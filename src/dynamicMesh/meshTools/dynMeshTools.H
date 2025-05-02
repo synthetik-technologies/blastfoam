@@ -67,16 +67,6 @@ namespace meshTools
 {
     // Face information
 
-        //- Set face information: patch, zone and zone flip for a face
-        void getFaceInfo
-        (
-            const polyMesh& mesh,
-            const label faceI,
-            label& patchID,
-            label& zoneID,
-            label& zoneFlip
-        );
-
         // Local topology modification functions (operate on cells/faces)
 
             //- Adds a face on top of existing faceI. Reverses if nessecary
@@ -182,8 +172,6 @@ namespace meshTools
             const label own,
             const bool flipFaceFlux,
             const label newPatchi,
-            const label zoneID,
-            const bool zoneFlip,
 
             PackedBoolList& modifiedFace
         );
@@ -245,6 +233,15 @@ namespace meshTools
         (
             polyMesh& mesh,
             const HashSet<word>& addedPatchNames
+        );
+
+        //- Reorder according to map.
+        void reorder
+        (
+            const labelList& map,
+            const label len,
+            const label null,
+            labelList& elems
         );
 } // End namespace meshTools
 

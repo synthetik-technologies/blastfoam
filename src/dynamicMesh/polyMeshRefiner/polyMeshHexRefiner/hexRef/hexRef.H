@@ -70,7 +70,7 @@ class polyMesh;
 class polyPatch;
 class polyTopoChange;
 class mapPolyMesh;
-class mapDistributePolyMesh;
+class polyDistributionMap;
 
 /*---------------------------------------------------------------------------*\
                            Class hexRef Declaration
@@ -78,19 +78,6 @@ class mapDistributePolyMesh;
 
 class hexRef
 {
-public:
-    // Public static functions
-
-        //- Reorder according to map.
-        static void reorder
-        (
-            const labelList& map,
-            const label len,
-            const label null,
-            labelList& elems
-        );
-
-
 protected:
     // Protected data
 
@@ -497,7 +484,7 @@ public:
             ) = 0;
 
             //- Update local numbering for changed mesh.
-            void updateMesh(const mapPolyMesh&);
+            void topoChange(const polyTopoChangeMap&);
 
 
             // Restoring : is where other processes delete and reinsert data.
@@ -516,9 +503,9 @@ public:
                 //- Update local numbering + undo
                 //  Data to restore given as new pointlabel + stored pointlabel
                 //  (i.e. what was in pointsToStore)
-                void updateMesh
+                void topoChange
                 (
-                    const mapPolyMesh&,
+                    const polyTopoChangeMap&,
                     const Map<label>& pointsToRestore,
                     const Map<label>& facesToRestore,
                     const Map<label>& cellsToRestore
@@ -535,7 +522,7 @@ public:
             );
 
             //- Update local numbering for mesh redistribution
-            void distribute(const mapDistributePolyMesh&);
+            void distribute(const polyDistributionMap&);
 
             //- Debug: Check coupled mesh for correctness
             void checkMesh() const;
@@ -597,7 +584,7 @@ public:
             void setInstance(const fileName& inst);
 
             //- Force writing refinement+history to polyMesh directory.
-            bool write() const;
+            bool write(const bool w = true) const;
 };
 
 

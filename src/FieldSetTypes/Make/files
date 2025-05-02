@@ -6,6 +6,7 @@ FieldSetTypes/CalculatedDensity/CalculatedDensityFieldSetTypes.C
 FieldSetTypes/MassIntegrated/MassIntegratedFieldSetTypes.C
 FieldSetTypes/Sum/SumFieldSetTypes.C
 FieldSetTypes/Function/FunctionFieldSetTypes.C
+FieldSetTypes/DetonationPressure/DetonationPressureFieldSetType.C
 
 fieldSetList.C
 

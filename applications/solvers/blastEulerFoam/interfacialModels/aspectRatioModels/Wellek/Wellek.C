@@ -66,28 +66,21 @@ Foam::aspectRatioModels::Wellek::~Wellek()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::aspectRatioModels::Wellek::E
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::aspectRatioModels::Wellek::E() const
 {
-    return scalar(1)/(scalar(1) + 0.163*pow(pair_.Eo(nodei,nodej), 0.757));
+    return scalar(1)/(scalar(1) + 0.163*pow(pair_.Eo(), 0.757));
 }
 
 
 
 Foam::scalar Foam::aspectRatioModels::Wellek::cellE
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return
         scalar(1)
-       /(scalar(1) + 0.163*pow(pair_.cellEo(celli, nodei, nodej), 0.757));
+       /(scalar(1) + 0.163*pow(pair_.cellEo(celli), 0.757));
 }
 
 

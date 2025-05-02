@@ -46,7 +46,7 @@ Foam::StandardReconstructionScheme<Type>::lookupOrConstruct
                 IOobject
                 (
                     fieldName,
-                    this->mesh_.time().timeName(),
+                    this->mesh_.time().name(),
                     this->mesh_
                 ),
                 this->mesh_,

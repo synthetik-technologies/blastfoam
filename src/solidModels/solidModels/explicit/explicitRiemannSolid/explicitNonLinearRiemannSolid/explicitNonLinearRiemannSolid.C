@@ -49,7 +49,7 @@ addToRunTimeSelectionTable
 
 explicitNonLinearRiemannSolid::explicitNonLinearRiemannSolid
 (
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     explicitRiemannSolid

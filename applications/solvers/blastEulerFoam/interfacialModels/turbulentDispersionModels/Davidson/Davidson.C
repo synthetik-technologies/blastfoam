@@ -29,7 +29,7 @@ License
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
-#include "dragModel.H"
+#include "dispersedDragModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -56,7 +56,7 @@ Foam::turbulentDispersionModels::Davidson::Davidson
     const phasePair& pair
 )
 :
-    turbulentDispersionModel(dict, pair),
+    dispersedTurbulentDispersionModel(dict, pair),
     residualRe_("residualRe", dimless, dict)
 {}
 
@@ -70,23 +70,16 @@ Foam::turbulentDispersionModels::Davidson::~Davidson()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::turbulentDispersionModels::Davidson::D
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::turbulentDispersionModels::Davidson::D() const
 {
     const fvMesh& mesh(pair_.phase1().mesh());
-    const volScalarField& alpha1 = pair_.dispersed().volumeFraction(nodei);
-    const volScalarField& alpha2 = pair_.continuous().volumeFraction(nodej);
-    const dragModel&
-        drag
-        (
-            mesh.lookupObject<dragModel>
+    const volScalarField& alpha1 = pair_.dispersed();
+    const volScalarField& alpha2 = pair_.continuous();
+    const dragModels::dispersedDragModel& drag =
+            mesh.lookupObject<dragModels::dispersedDragModel>
             (
                 IOobject::groupName(dragModel::typeName, pair_.name())
-            )
-        );
+            );
 
     volScalarField Cdis
     (
@@ -96,22 +89,22 @@ Foam::turbulentDispersionModels::Davidson::D
           *pair_.continuous().rho()/pair_.dispersed().rho()
          + sqrt(alpha2/max(alpha1, pair_.dispersed().residualAlpha()))
         )
-       /(drag.CdRe(nodei, nodej)/max(pair_.Re(nodei, nodej), residualRe_))
+       /(drag.CdRe()/max(pair_.Re(), residualRe_))
     );
 
     return
         0.75*Cdis
-       *pair_.magUr(nodei, nodej)
+       *pair_.magUr()
        *Foam::sqrt(alpha1*alpha2)
-       *drag.CdRe(nodei, nodej)
+       *drag.CdRe()
        *pair_.continuous().rho()
        *pair_.continuous().nu()
-       /pair_.dispersed().d(nodei)
+       /pair_.dispersed().d()
        /max
         (
             pair_.continuous(),
             pair_.continuous().residualAlpha()
-        )*pos0(pair_.dispersed().volumeFraction(nodei) - 0.001);
+        )*pos0(pair_.dispersed() - 0.001);
 }
 
 

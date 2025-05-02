@@ -90,19 +90,6 @@ public:
                 const pointVectorField& pointU
             ) const;
 
-            //- Helper: push master point data to collocated points
-            //  (Borrowed from volPointInterpolation class in OpenFOAM)
-            template<class Type>
-            void pushUntransformedData(List<Type>&) const;
-
-            //- Add separated contributions
-            //  (Borrowed from volPointInterpolation class in OpenFOAM)
-            template<class Type>
-            void addSeparated
-            (
-                GeometricField<Type, pointPatchField, pointMesh>&
-            ) const;
-
             // Volume to point interpolation for vectorField
             void volToPoint
             (

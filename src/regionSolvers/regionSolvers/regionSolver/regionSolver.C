@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "regionSolver.H"
-#include "dynamicBlastFvMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -41,14 +40,13 @@ namespace Foam
 
 Foam::regionSolver::regionSolver
 (
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const regionSolverList& regions
 )
 :
     runTime_(mesh.time()),
     regions_(regions),
-    dynMesh_(mesh),
-    mesh_(dynMesh_),
+    mesh_(mesh),
     globalBoundary_(globalPolyBoundaryMesh::New(mesh)),
     accelerationSchemes_
     (
@@ -88,7 +86,7 @@ void Foam::regionSolver::update()
 bool Foam::regionSolver::changeMesh()
 {
     DebugInfo<< "Changing " << mesh_.name() << " mesh" << endl;
-    if (refineMesh(dynMesh_))
+    if (mesh_.update())
     {
         this->clear(true);
         return true;
@@ -100,7 +98,7 @@ bool Foam::regionSolver::changeMesh()
 bool Foam::regionSolver::moveMesh(const IterType iter)
 {
     DebugInfo<< "Moving " << mesh_.name() << " mesh" << endl;
-    return dynMesh_.update();
+    return mesh_.move();
 }
 
 

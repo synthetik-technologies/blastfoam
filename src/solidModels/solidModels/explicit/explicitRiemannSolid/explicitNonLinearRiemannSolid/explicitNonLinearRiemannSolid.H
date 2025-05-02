@@ -84,7 +84,7 @@ public:
     // Constructors
 
         //- Construct from components
-        explicitNonLinearRiemannSolid(dynamicFvMesh& mesh);
+        explicitNonLinearRiemannSolid(fvMesh& mesh);
 
     // Destructor
 

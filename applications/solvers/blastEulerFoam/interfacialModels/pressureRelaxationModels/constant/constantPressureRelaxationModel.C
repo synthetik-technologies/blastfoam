@@ -70,22 +70,11 @@ Foam::tmp<Foam::volScalarField> Foam::pressureRelaxationModels::constant::K
 ) const
 {
     const fvMesh& mesh = pair_.phase1().mesh();
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "constant:K",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            mu_
-        )
+        typeName + ":K",
+        mesh,
+        mu_
     );
 }
 

@@ -27,8 +27,8 @@ License
 #include "UList.H"
 
 #include "hexRefData.H"
-#include "mapPolyMesh.H"
-#include "mapDistributePolyMesh.H"
+#include "polyTopoChangeMap.H"
+#include "polyDistributionMap.H"
 #include "polyMesh.H"
 #include "syncTools.H"
 #include "hexRefRefinementHistory.H"
@@ -39,45 +39,36 @@ License
 Foam::hexRefData::hexRefData(const IOobject& io)
 {
     {
-        IOobject rio(io);
+        typeIOobject<labelIOList> rio(io);
         rio.rename("cellLevel");
-        bool haveFile = returnReduce(rio.typeHeaderOk<labelIOList>(), orOp<bool>());
-        if (haveFile)
+        if (returnReduce(rio.headerOk(), orOp<bool>()))
         {
             Info<< "Reading hexRef data : " << rio.name() << endl;
             cellLevelPtr_.reset(new labelIOList(rio));
         }
     }
     {
-        IOobject rio(io);
+        typeIOobject<labelIOList> rio(io);
         rio.rename("pointLevel");
-        bool haveFile = returnReduce(rio.typeHeaderOk<labelIOList>(), orOp<bool>());
-        if (haveFile)
+        if (returnReduce(rio.headerOk(), orOp<bool>()))
         {
             Info<< "Reading hexRef data : " << rio.name() << endl;
             pointLevelPtr_.reset(new labelIOList(rio));
         }
     }
     {
-        IOobject rio(io);
+        typeIOobject<uniformDimensionedScalarField> rio(io);
         rio.rename("level0Edge");
-        bool haveFile = returnReduce(rio.typeHeaderOk<uniformDimensionedScalarField>(), orOp<bool>());
-        if (haveFile)
+        if (returnReduce(rio.headerOk(), orOp<bool>()))
         {
             Info<< "Reading hexRef data : " << rio.name() << endl;
             level0EdgePtr_.reset(new uniformDimensionedScalarField(rio));
         }
     }
     {
-        IOobject rio(io);
+        typeIOobject<hexRefRefinementHistory> rio(io);
         rio.rename("refinementHistory");
-        bool haveFile =
-            returnReduce
-            (
-                rio.typeHeaderOk<hexRefRefinementHistory>(),
-                orOp<bool>()
-            );
-        if (haveFile)
+        if (returnReduce(rio.headerOk(), orOp<bool>()))
         {
             Info<< "Reading hexRef data : " << rio.name() << endl;
             refHistoryPtr_.reset(new hexRefRefinementHistory(rio));
@@ -302,8 +293,12 @@ void Foam::hexRefData::sync(const IOobject& io)
 }
 
 
-void Foam::hexRefData::updateMesh(const mapPolyMesh& map)
+void Foam::hexRefData::topoChange(const polyTopoChangeMap& map)
 {
+    if (level0EdgePtr_.valid())
+    {
+        level0EdgePtr_().instance() = map.mesh().facesInstance();
+    }
     if (cellLevelPtr_.valid())
     {
         cellLevelPtr_() = labelList(cellLevelPtr_(), map.cellMap());
@@ -319,13 +314,13 @@ void Foam::hexRefData::updateMesh(const mapPolyMesh& map)
 
     if (refHistoryPtr_.valid() && refHistoryPtr_().active())
     {
-        refHistoryPtr_().updateMesh(map);
+        refHistoryPtr_().topoChange(map);
         refHistoryPtr_().instance() = map.mesh().facesInstance();
     }
 }
 
 
-void Foam::hexRefData::distribute(const mapDistributePolyMesh& map)
+void Foam::hexRefData::distribute(const polyDistributionMap& map)
 {
     if (cellLevelPtr_.valid())
     {

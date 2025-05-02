@@ -33,6 +33,7 @@ template<class Type>
 Foam::Function3s::ZeroConstant<Type>::ZeroConstant
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :

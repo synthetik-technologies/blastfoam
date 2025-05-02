@@ -45,7 +45,7 @@ SourceFiles
 
 #include "minimizationScheme.H"
 #include "typeInfo.H"
-#include "Random.H"
+#include "randomGenerator.H"
 #include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -76,7 +76,7 @@ public:
 private:
 
     //- Random number generator
-    mutable Random rand_;
+    mutable randomGenerator rand_;
 
     //- Particles
     mutable List<particle> particles_;

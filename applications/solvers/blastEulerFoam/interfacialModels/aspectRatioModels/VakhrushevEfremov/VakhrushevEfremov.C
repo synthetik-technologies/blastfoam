@@ -67,13 +67,9 @@ Foam::aspectRatioModels::VakhrushevEfremov::~VakhrushevEfremov()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::aspectRatioModels::VakhrushevEfremov::E
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::aspectRatioModels::VakhrushevEfremov::E() const
 {
-    volScalarField Ta(pair_.Ta(nodei, nodej));
+    volScalarField Ta(pair_.Ta());
 
     return
         neg(Ta - scalar(1))*scalar(1)
@@ -85,12 +81,10 @@ Foam::aspectRatioModels::VakhrushevEfremov::E
 
 Foam::scalar Foam::aspectRatioModels::VakhrushevEfremov::cellE
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
-    scalar Ta(pair_.cellTa(celli, nodei, nodej));
+    scalar Ta(pair_.cellTa(celli));
 
     return
         neg(Ta - scalar(1))*scalar(1)

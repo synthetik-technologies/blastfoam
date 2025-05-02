@@ -52,7 +52,7 @@ Foam::standAlonePatch::standAlonePatch
     List<point>&& points
 )
 :
-    PrimitivePatch<faceList, pointField>(move(faces), move(points)),
+    PrimitivePatch<faceList, pointField>(move(faces), pointField(points)),
     pointsRef_(const_cast<pointField&>(this->points()))
 {}
 

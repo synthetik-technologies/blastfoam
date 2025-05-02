@@ -55,7 +55,13 @@ Foam::kineticTheoryModels::radialModels::LunSavage::LunSavage
     const masterSystem& system
 )
 :
-    radialModel(dict, system)
+    radialModel(dict, system),
+    residualAlpha_
+    (
+        "residualAlpha",
+        dimless,
+        dict.lookup("residualAlpha")
+    )
 {}
 
 
@@ -84,7 +90,12 @@ Foam::kineticTheoryModels::radialModels::LunSavage::gs0
                 dimensionedScalar(dimless, 0.0)
             );
     }
-    return pow(1 - phase1/phase1.alphaMax(), -2.5*phase1.alphaMax());
+    return pow
+    (
+        max(phase1.alphaMax() - phase1, residualAlpha_)
+       /phase1.alphaMax(),
+        -2.5*phase1.alphaMax()
+    );
 }
 
 
@@ -100,7 +111,12 @@ Foam::kineticTheoryModels::radialModels::LunSavage::cellgs0
     {
         return 0.0;
     }
-    return pow(1 - phase1[celli]/phase1.alphaMax(), -2.5*phase1.alphaMax());
+    return pow
+    (
+        max(phase1.alphaMax() - phase1[celli], residualAlpha_.value())
+       /phase1.alphaMax(),
+        -2.5*phase1.alphaMax()
+    );
 }
 
 
@@ -121,7 +137,14 @@ Foam::kineticTheoryModels::radialModels::LunSavage::gs0prime
                 dimensionedScalar(dimless, 0.0)
             );
     }
-    return 2.5*pow(1 - phase1/phase1.alphaMax(), -2.5*phase1.alphaMax() - 1);
+    return
+        2.5
+       *pow
+        (
+            max(phase1.alphaMax() - phase1, residualAlpha_)
+           /phase1.alphaMax(),
+            -2.5*phase1.alphaMax() - 1
+        );
 }
 
 
@@ -137,7 +160,14 @@ Foam::kineticTheoryModels::radialModels::LunSavage::cellgs0prime
     {
         return 0.0;
     }
-    return 2.5*pow(1 - phase1[celli]/phase1.alphaMax(), -2.5*phase1.alphaMax() - 1);
+    return
+        2.5
+       *pow
+        (
+            max(phase1.alphaMax() - phase1[celli], residualAlpha_.value())
+           /phase1.alphaMax(),
+            -2.5*phase1.alphaMax() - 1
+        );
 }
 
 

@@ -6,3 +6,6 @@ phaseSystem fluid(mesh);
 integrator.addSystem(fluid);
 
 PtrList<phaseModel>& phases(fluid.phases());
+
+const ::Foam::fvModels& fvModels = integrator.models();
+const ::Foam::fvConstraints& fvConstraints = integrator.constraints();

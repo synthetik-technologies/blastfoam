@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "constantVirtualMassCoefficient.H"
-#include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -56,7 +55,7 @@ constantVirtualMassCoefficient
     const bool registerObject
 )
 :
-    virtualMassModel(dict, pair, registerObject),
+    dispersedVirtualMassModel(dict, pair, registerObject),
     Cvm_("Cvm", dimless, dict)
 {}
 
@@ -71,30 +70,15 @@ Foam::virtualMassModels::constantVirtualMassCoefficient::
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::virtualMassModels::constantVirtualMassCoefficient::Cvm
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::virtualMassModels::constantVirtualMassCoefficient::Cvm() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Cvm",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            Cvm_
-        )
+        typeName + ":Cvm",
+        mesh,
+        Cvm_
     );
 }
 

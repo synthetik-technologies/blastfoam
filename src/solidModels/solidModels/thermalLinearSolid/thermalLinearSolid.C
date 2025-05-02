@@ -50,32 +50,32 @@ bool thermalLinearSolid::converged
 (
     const int iCorr,
     const SolverPerformance<vector>& solverPerfD,
-    const SolverPerformance<scalar>& solverPerfT,
+    const SolverPerformance<scalar>& solverPerfHE,
     const volVectorField& D,
-    const volScalarField& T
+    const volScalarField& he
 )
 {
     // We will check a number of different residuals for convergence
     bool converged = false;
 
     // Calculate relative residuals
-    const scalar absResidualT =
+    const scalar absResidualHE =
         gMax
         (
             DimensionedField<double, volMesh>
             (
-                mag(T.internalField() - T.prevIter().internalField())
+                mag(he.internalField() - he.prevIter().internalField())
             )
         );
-    const scalar residualT =
-        absResidualT
+    const scalar residualHE =
+        absResidualHE
        /max
         (
             gMax
             (
                 DimensionedField<double, volMesh>
                 (
-                    mag(T.internalField() - T.oldTime().internalField())
+                    mag(he.internalField() - he.oldTime().internalField())
                 )
             ),
             SMALL
@@ -103,14 +103,22 @@ bool thermalLinearSolid::converged
 
     // Calculate material residual
     const scalar materialResidual = mechanical().residual();
+    const scalar materialRelResidual = this->mechanical().relResidual();
 
     // If one of the residuals has converged to an order of magnitude
     // less than the tolerance then consider the solution converged
     // force at leaast 1 outer iteration and the material law must be converged
-    if (iCorr > 1 && materialResidual < materialTol())
+    if
+    (
+        iCorr > 1
+     && (
+            materialResidual < materialTol()
+         || materialRelResidual < materialRelTol()
+        )
+    )
     {
         bool convergedD = false;
-        bool convergedT = false;
+        bool convergedHE = false;
 
         if
         (
@@ -128,19 +136,18 @@ bool thermalLinearSolid::converged
         if
         (
             (
-                solverPerfT.initialResidual() < solutionTol()
-             && residualT < solutionTol()
+                solverPerfHE.initialResidual() < solutionTol()
+             && residualHE < solutionTol()
             )
-         || solverPerfT.initialResidual() < alternativeTol()
-         || residualT < alternativeTol()
-         || absResidualT < absTTol_
+         || solverPerfHE.initialResidual() < alternativeTol()
+         || residualHE < alternativeTol()
+         || absResidualHE < absHETol_
         )
         {
-            convergedT = true;
+            convergedHE = true;
         }
 
-
-        if (convergedD && convergedT)
+        if (convergedD && convergedHE)
         {
             Info<< "    The residuals have converged" << endl;
             converged = true;
@@ -150,18 +157,18 @@ bool thermalLinearSolid::converged
     // Print residual information
     if (iCorr == 0)
     {
-        Info<< "    Corr, res (T & D), relRes (T & D), matRes, iters (T & D)"
+        Info<< "    Corr, res (he & D), relRes (he & D), matRes, iters (he & D)"
             << endl;
     }
     else if (iCorr % infoFrequency() == 0 || converged)
     {
         Info<< "    " << iCorr
-            << ", " << solverPerfT.initialResidual()
+            << ", " << solverPerfHE.initialResidual()
             << ", " << mag(solverPerfD.initialResidual())
-            << ", " << residualT
+            << ", " << residualHE
             << ", " << residualD
             << ", " << materialResidual
-            << ", " << solverPerfT.nIterations()
+            << ", " << solverPerfHE.nIterations()
             << ", " << solverPerfD.nIterations() << endl;
 
         if (converged)
@@ -183,53 +190,23 @@ bool thermalLinearSolid::converged
 void thermalLinearSolid::readDict()
 {
     solidModel::readDict();
-    solidModelDict().readIfPresent("absoluteTemperatureTolerance", absTTol_);
+    solidModelDict().readIfPresent("absoluteEnergyTolerance", absHETol_);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-thermalLinearSolid::thermalLinearSolid(dynamicFvMesh& mesh)
+thermalLinearSolid::thermalLinearSolid(fvMesh& mesh)
 :
     LinearGeomSolid<totalDisplacementSolid>(typeName, mesh),
-    rhoC_
-    (
-        IOobject
-        (
-            "rhoC",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        this->thermal().C()*this->rho()
-    ),
-    k_(this->thermal().k()),
-    T_(this->thermal().thermo().T()),
-    gradT_
-    (
-        IOobject
-        (
-            "grad(T)",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedVector("0", dimTemperature/dimLength, vector::zero)
-    ),
-    absTTol_
+    absHETol_
     (
         solidModelDict().lookupOrDefault<scalar>
         (
-            "absoluteTemperatureTolerance",
+            "absoluteEneryTolerance",
             1e-06
         )
     )
-{
-    // Store T old time
-    T_.oldTime();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -237,41 +214,42 @@ thermalLinearSolid::thermalLinearSolid(dynamicFvMesh& mesh)
 bool thermalLinearSolid::evolve()
 {
     Info<< "Evolving thermal solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfD;
-    SolverPerformance<scalar> solverPerfT;
+    SolverPerformance<scalar> solverPerfHE;
     SolverPerformance<vector>::debug = 0;
+    SolverPerformance<scalar>::debug = 0;
 
     Info<< "Solving coupled energy and displacements equation for T and D"
         << endl;
+
+    this->mesh().update();
+
+    blastThermo& thermo = thermal().thermo();
+    volScalarField& he = thermo.he();
 
     // Momentum-energy coupling outer loop
     do
     {
         // Store fields for under-relaxation and residual calculation
-        T().storePrevIter();
+        he.storePrevIter();
 
         // Heat equation
-        fvScalarMatrix TEqn
+        fvScalarMatrix heEqn
         (
-            rhoC_*fvm::ddt(T_)
-         == fvm::laplacian(k_, T_, "laplacian(k,T)")
-          + (sigma() && fvc::grad(U()))
+            fvm::ddt(thermo.rho(), he)
+          + thermal().divq()
         );
 
         // Under-relaxation the linear system
-        TEqn.relax();
+        heEqn.relax();
 
         // Solve the linear system
-        solverPerfT = TEqn.solve();
+        solverPerfHE = heEqn.solve();
 
         // Under-relax the field
-        T_.relax();
-
-        // Update gradient of temperature
-        gradT_ = fvc::grad(T_);
+        he.relax();
 
         // Store fields for under-relaxation and residual calculation
         D().storePrevIter();
@@ -324,7 +302,7 @@ bool thermalLinearSolid::evolve()
     }
     while
     (
-        !converged(iCorr, solverPerfD, solverPerfT, D(), T_)
+        !converged(iCorr, solverPerfD, solverPerfHE, D(), he)
      && ++iCorr < nCorr()
     );
 
@@ -337,6 +315,9 @@ bool thermalLinearSolid::evolve()
     // Increment of point displacement
     pointDD() = pointD() - pointD().oldTime();
 
+    Info<< "Max T = " << gMax(thermo.T()) << ", "
+        << "Min T = " << gMin(thermo.T()) << endl;
+
     return true;
 }
 
@@ -346,8 +327,10 @@ bool thermalLinearSolid::write(const bool write) const
     bool good = true;
     if (write)
     {
-        Info<< "Max T = " << max(T_).value() << nl
-            << "Min T = " << min(T_).value() << endl;
+        const volScalarField& T = thermal().thermo().T();
+
+        Info<< "Max T = " << max(T).value() << nl
+            << "Min T = " << min(T).value() << endl;
 
         // Heat flux
         volVectorField heatFlux
@@ -355,7 +338,7 @@ bool thermalLinearSolid::write(const bool write) const
             volVectorField::New
             (
                 "heatFlux",
-                -k_*gradT_
+                -this->thermal().k()*fvc::grad(T)
             )
         );
         good = heatFlux.write();

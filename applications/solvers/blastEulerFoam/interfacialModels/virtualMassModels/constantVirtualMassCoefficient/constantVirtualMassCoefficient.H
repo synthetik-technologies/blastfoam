@@ -37,15 +37,12 @@ SourceFiles
 #ifndef constantVirtualMassCoefficient_H
 #define constantVirtualMassCoefficient_H
 
-#include "virtualMassModel.H"
+#include "dispersedVirtualMassModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-class phasePair;
-
 namespace virtualMassModels
 {
 
@@ -55,7 +52,7 @@ namespace virtualMassModels
 
 class constantVirtualMassCoefficient
 :
-    public virtualMassModel
+    public dispersedVirtualMassModel
 {
     // Private data
 
@@ -87,11 +84,7 @@ public:
     // Member Functions
 
         //- Virtual mass coefficient
-        virtual tmp<volScalarField> Cvm
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> Cvm() const;
 };
 
 

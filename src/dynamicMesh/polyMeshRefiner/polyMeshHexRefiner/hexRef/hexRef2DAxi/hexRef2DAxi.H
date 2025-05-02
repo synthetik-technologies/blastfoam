@@ -51,7 +51,9 @@ namespace Foam
                            Class hexRef2DAxi Declaration
 \*---------------------------------------------------------------------------*/
 
-class hexRef2DAxi : public hexRef
+class hexRef2DAxi
+:
+    public hexRef
 {
 
 protected:

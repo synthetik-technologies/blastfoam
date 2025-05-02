@@ -52,15 +52,12 @@ SourceFiles
 #ifndef Moraga_H
 #define Moraga_H
 
-#include "liftModel.H"
+#include "dispersedLiftModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-class phasePair;
-
 namespace liftModels
 {
 
@@ -70,7 +67,7 @@ namespace liftModels
 
 class Moraga
 :
-    public liftModel
+    public dispersedLiftModel
 {
 public:
 
@@ -95,11 +92,7 @@ public:
     // Member Functions
 
         //- Lift coefficient
-        virtual tmp<volScalarField> Cl
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> Cl() const;
 };
 
 

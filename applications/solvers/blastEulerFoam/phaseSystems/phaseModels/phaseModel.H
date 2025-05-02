@@ -50,9 +50,10 @@ SourceFiles
 #include "fvm.H"
 #include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
-#include "dynamicTransportModel.H"
-#include "PhaseThermophysicalTransportModel.H"
-#include "phaseDynamicMomentumTransportModel.H"
+#include "viscosity.H"
+#include "compressibleMomentumTransportModel.H"
+#include "phaseFluidThermophysicalTransportModel.H"
+#include "phaseCompressibleMomentumTransportModel.H"
 #include "fluidBlastThermo.H"
 #include "solidBlastThermo.H"
 #include "hashedWordList.H"
@@ -91,7 +92,7 @@ class phaseModel
 :
     public volScalarField,
     public timeIntegrationSystem,
-    public dynamicTransportModel
+    public viscosity
 {
 protected:
     // Protected typedefs
@@ -190,7 +191,7 @@ protected:
         void solveAlphaRho();
 
         //- Solve the diameter model
-        void solveD();
+        virtual void solveD();
 
 
 public:
@@ -326,12 +327,6 @@ public:
             return index_;
         }
 
-        //- Return the number of nodes
-        virtual label nNodes() const
-        {
-            return 1;
-        }
-
         //- Optional maximum phase-fraction (e.g. packing limit)
         //  Defaults to 1
         scalar alphaMax() const
@@ -375,10 +370,16 @@ public:
             return thermo().residualAlpha();
         }
 
+        //- Return the residual phase-dsnity for given phase
+        virtual dimensionedScalar residualRho() const
+        {
+            return thermo().residualRho();
+        }
+
         //- Return the residual phase-density for given phase
         virtual dimensionedScalar residualAlphaRho() const
         {
-            return residualAlpha()*dimensionedScalar(dimDensity, 1e-3);
+            return residualAlpha()*residualRho();
         }
 
 
@@ -405,22 +406,6 @@ public:
 
         //- Return conserved quantities
 
-            //- Constant access to alpha field for nodei
-            virtual tmp<volScalarField> volumeFraction(const label nodei = -1) const
-            {
-                return *this;
-            }
-
-            //- Constant access to alpha field for nodei
-            virtual scalar cellvolumeFraction
-            (
-                const label celli,
-                const label nodei = -1
-            ) const
-            {
-                return (*this)[celli];
-            }
-
             //- Return the density
             virtual const volScalarField& rho() const = 0;
 
@@ -428,13 +413,13 @@ public:
             virtual volScalarField& rho() = 0;
 
             //- Constant access to the mean velocity
-            virtual const volVectorField& U(const label nodei = -1) const
+            virtual const volVectorField& U() const
             {
                 return U_;
             }
 
             //- Non-const access to the mean velocity
-            virtual volVectorField& U(const label nodei = -1)
+            virtual volVectorField& U()
             {
                 return U_;
             }
@@ -460,13 +445,13 @@ public:
             }
 
             //- Return diameter of nodei
-            virtual tmp<volScalarField> d(const label nodei = -1) const
+            virtual tmp<volScalarField> d() const
             {
                 return dPtr_->d();
             }
 
             //- Return diameter of nodei for celli
-            virtual scalar celld(const label celli, const label nodei = -1) const
+            virtual scalar celld(const label celli) const
             {
                 return dPtr_->d()[celli];
             }
@@ -501,26 +486,32 @@ public:
                 return thermo().T();
             }
 
+            //- Return surface temperature
+            virtual tmp<volScalarField> Ts() const
+            {
+                return thermo().T();
+            }
+
             //- Constant access to phasic density
-            virtual const volScalarField& alphaRho(const label nodei = -1) const
+            virtual const volScalarField& alphaRho() const
             {
                 return alphaRho_;
             }
 
             //- Non-constant access to phasic density
-            virtual volScalarField& alphaRho(const label nodei = -1)
+            virtual volScalarField& alphaRho()
             {
                 return alphaRho_;
             }
 
             //- Constant access to phasic momentum
-            virtual tmp<volVectorField> alphaRhoU(const label nodei = -1) const
+            virtual tmp<volVectorField> alphaRhoU() const
             {
                 return alphaRhoU_;
             }
 
             //- Non-constant access to phasic momentum
-            virtual volVectorField& alphaRhoU(const label nodei = -1)
+            virtual volVectorField& alphaRhoU()
             {
                 return alphaRhoU_;
             }
@@ -578,6 +569,9 @@ public:
             //- Access thermodynamic model
             virtual blastThermo& thermo() = 0;
 
+            //- Return thermodynamic model
+            virtual const ::Foam::fluidThermo& fluidThermo() const = 0;
+
             //- Return the laminar viscosity
             virtual tmp<volScalarField> nu() const = 0;
 
@@ -593,12 +587,6 @@ public:
             //- Return the laminar dynamic viscosity for patch
             virtual tmp<scalarField> mu(const label patchi) const = 0;
 
-            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alpha() const = 0;
-
-            //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> alpha(const label patchi) const = 0;
-
             //- Thermal diffusivity for temperature of mixture [J/m/s/K]
             virtual tmp<volScalarField> kappa() const = 0;
 
@@ -610,40 +598,13 @@ public:
             //  for cell [J/m/s/K]
             virtual scalar cellkappa(const label celli) const = 0;
 
-            //- Thermal diffusivity for energy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphahe() const = 0;
-
-            //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> alphahe(const label patchi) const = 0;
-
             //- Effective thermal turbulent diffusivity for temperature
             //  of mixture [J/m/s/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField& alphat
-            ) const = 0;
+            virtual tmp<volScalarField> kappaEff() const = 0;
 
             //- Effective thermal turbulent diffusivity for temperature
             //  of mixture for patch [J/m/s/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const = 0;
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const = 0;
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const = 0;
+            virtual tmp<scalarField> kappaEff(const label patchi) const = 0;
 
             //- Return the specific heat capacity at constant pressure
             virtual tmp<volScalarField> Cp() const = 0;

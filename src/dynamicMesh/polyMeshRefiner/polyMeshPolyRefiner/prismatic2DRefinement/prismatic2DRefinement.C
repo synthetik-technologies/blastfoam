@@ -34,9 +34,6 @@ Author
 #include "cellSet.H"
 #include "faceSet.H"
 #include "pointSet.H"
-#include "polyAddCell.H"
-#include "polyAddFace.H"
-#include "polyAddPoint.H"
 #include "syncTools.H"
 #include "emptyPolyPatch.H"
 #include "wedgePolyPatch.H"
@@ -755,15 +752,11 @@ void Foam::prismatic2DRefinement::setRefinement
             if (edgeMidPoint[edgeI] > -1)
             {
                 const edge& e = mesh_.edges()[edgeI];
-                edgeMidPoint[edgeI] = meshMod.setAction
+                edgeMidPoint[edgeI] = meshMod.addPoint
                 (
-                    polyAddPoint
-                    (
-                        edgeMids[edgeI], // Point
-                        e[0],            // Appended point, no master ID
-                        -1,              // Zone for point
-                        true             // Supports a cell
-                    )
+                    edgeMids[edgeI], // Point
+                    e[0],            // Appended point, no master ID
+                    true             // Supports a cell
                 );
                 splitEdges.append(edgeI);
                 newPointLevel(edgeMidPoint[edgeI]) =
@@ -1095,15 +1088,11 @@ void Foam::prismatic2DRefinement::setRefinement
                         // split. Add the point at face centre and replace
                         // faceMidPoint with new point label
 
-                        faceMidPoint[faceI] = meshMod.setAction
+                        faceMidPoint[faceI] = meshMod.addPoint
                         (
-                            polyAddPoint
-                            (
-                                meshFaceCentres[faceI], // Point
-                                f[0],                   // Master ID
-                                -1,                     // Zone for point
-                                true                    // Supports a cell
-                            )
+                            meshFaceCentres[faceI], // Point
+                            f[0],                   // Master ID
+                            true                    // Supports a cell
                         );
 
                         splitFaces.append(faceI);
@@ -1300,7 +1289,6 @@ void Foam::prismatic2DRefinement::setRefinement
         pointCellToAddedCellMap(6*cellsToRefine.size());
 
     // Get mesh data
-    const meshCellZones& cellZones = mesh_.cellZones();
     const cellList& meshCells = mesh_.cells();
     const faceList& meshFaces = mesh_.faces();
     const labelListList& meshPointEdges = mesh_.pointEdges();
@@ -1367,17 +1355,8 @@ void Foam::prismatic2DRefinement::setRefinement
                         else
                         {
                             // Other cells, need to add the cells
-                            cAdded[cellCounter] = meshMod.setAction
-                            (
-                                polyAddCell
-                                (
-                                    -1,                         // M. point
-                                    -1,                         // M. edge
-                                    -1,                         // M. face
-                                    cellI,                      // M. cell
-                                    cellZones.whichZone(cellI)  // M. zone
-                                )
-                            );
+                            cAdded[cellCounter] = meshMod.addCell(cellI);
+
                             // Update cell level of the added cells
                             newCellLevel(cAdded[cellCounter]) =
                                 cellLevel_[cellI] + 1;
@@ -2418,7 +2397,7 @@ void Foam::prismatic2DRefinement::setRefinement
                 }
 
                 // Finally, add the face. Note: ignoring return of new face
-                // index from meshMod.setAction(polyAddFace(...)) call
+                // index from meshMod.addFace(...) call
                 meshTools::addInternalFace
                 (
                     meshMod,

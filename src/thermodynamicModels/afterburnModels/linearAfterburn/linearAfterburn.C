@@ -65,24 +65,13 @@ Foam::afterburnModels::linearAfterburn::~linearAfterburn()
 Foam::tmp<Foam::volScalarField>
 Foam::afterburnModels::linearAfterburn::ESource() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "linearAfterburn:Esource",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            Q0_/(tEnd_ - tStart_)
-           *pos(this->t() - tStart_)
-           *pos(tEnd_ - this->t())
-        )
+        type() + ":Esource",
+        mesh_,
+        Q0_/(tEnd_ - tStart_)
+        *pos(this->t() - tStart_)
+        *pos(tEnd_ - this->t())
     );
 }
 

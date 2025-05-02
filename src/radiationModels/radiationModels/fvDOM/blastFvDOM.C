@@ -174,7 +174,7 @@ void Foam::radiationModels::blastFvDOM::initialise()
                 IOobject
                 (
                     "aLambda_" + Foam::name(lambdaI) ,
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -219,7 +219,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM(const volScalarField& T)
         IOobject
         (
             "blastFvDOM:G",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -232,7 +232,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM(const volScalarField& T)
         IOobject
         (
             "qr",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -245,7 +245,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM(const volScalarField& T)
         IOobject
         (
             "qem",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -258,7 +258,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM(const volScalarField& T)
         IOobject
         (
             "qin",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -271,7 +271,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM(const volScalarField& T)
         IOobject
         (
             "fvDOM:a",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -311,7 +311,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM
         IOobject
         (
             "fvDOM:G",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -324,7 +324,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM
         IOobject
         (
             "qr",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -337,7 +337,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM
         IOobject
         (
             "qem",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -350,7 +350,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM
         IOobject
         (
             "qin",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -363,7 +363,7 @@ Foam::radiationModels::blastFvDOM::blastFvDOM
         IOobject
         (
             "fvDOM:a",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -523,17 +523,9 @@ Foam::radiationModels::blastFvDOM::Ru() const
 {
     tmp<DimensionedField<scalar, volMesh>> tRu
     (
-        new DimensionedField<scalar, volMesh>
+        DimensionedField<scalar, volMesh>::New
         (
-            IOobject
-            (
-                "Ru",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            "Ru",
             mesh_,
             dimensionedScalar(dimensionSet(1, -1, -3, 0, 0), 0)
         )

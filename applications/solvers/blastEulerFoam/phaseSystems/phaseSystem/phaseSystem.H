@@ -54,16 +54,16 @@ SourceFiles
 namespace Foam
 {
 
-class virtualMassModel;
-class heatTransferModel;
-class liftModel;
-class wallLubricationModel;
-class turbulentDispersionModel;
+class blendedDragModel;
+class blendedVirtualMassModel;
+class blendedHeatTransferModel;
+class blendedLiftModel;
+class blendedWallLubricationModel;
+class blendedTurbulentDispersionModel;
 class massTransferModel;
 class interfacialPressureModel;
 class interfacialVelocityModel;
 class pressureRelaxationModel;
-class dragModel;
 class dragODE;
 class pressureRelaxationSolver;
 
@@ -93,42 +93,42 @@ public:
 
         typedef HashTable
         <
-            autoPtr<BlendedInterfacialModel<dragModel>>,
+            autoPtr<blendedDragModel>,
             phasePairKey,
             phasePairKey::hash
         > dragModelTable;
 
         typedef HashTable
         <
-            autoPtr<BlendedInterfacialModel<virtualMassModel>>,
+            autoPtr<blendedVirtualMassModel>,
             phasePairKey,
             phasePairKey::hash
         > virtualMassModelTable;
 
         typedef HashTable
         <
-            autoPtr<BlendedInterfacialModel<liftModel>>,
+            autoPtr<blendedLiftModel>,
             phasePairKey,
             phasePairKey::hash
         > liftModelTable;
 
         typedef HashTable
         <
-            autoPtr<BlendedInterfacialModel<wallLubricationModel>>,
+            autoPtr<blendedWallLubricationModel>,
             phasePairKey,
             phasePairKey::hash
         > wallLubricationModelTable;
 
         typedef HashTable
         <
-            autoPtr<BlendedInterfacialModel<turbulentDispersionModel>>,
+            autoPtr<blendedTurbulentDispersionModel>,
             phasePairKey,
             phasePairKey::hash
         > turbulentDispersionModelTable;
 
         typedef HashTable
         <
-            autoPtr<BlendedInterfacialModel<heatTransferModel>>,
+            autoPtr<blendedHeatTransferModel>,
             phasePairKey,
             phasePairKey::hash
         > heatTransferModelTable;
@@ -355,13 +355,13 @@ protected:
         );
 
         //- Generate pairs and blended sub-model tables
-        template<class modelType>
-        void generatePairsAndSubModels
+        template<class BlendedModel>
+        void generateBlendedPairsAndSubModels
         (
             const word& modelName,
             HashTable
             <
-                autoPtr<BlendedInterfacialModel<modelType>>,
+                autoPtr<BlendedModel>,
                 phasePairKey,
                 phasePairKey::hash
             >& models,
@@ -471,24 +471,10 @@ public:
         tmp<surfaceScalarField> phi() const;
 
         //- Return the aspect-ratio for a pair
-        tmp<volScalarField> E
-        (
-            const phasePairKey& key,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
-        //- Return the aspect-ratio for a pair
-        scalar cellE
-        (
-            const label celli,
-            const phasePairKey& key,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
-        //- Return the aspect-ratio for a pair
         tmp<volScalarField> E(const phasePairKey& key) const;
+
+        //- Return the aspect-ratio for a pair
+        scalar cellE(const phasePairKey& key, const label celli) const;
 
         //- Return is mas transfer is used for a phase
         bool hasMassTransfer(const phaseModel& phase) const;
@@ -576,17 +562,23 @@ public:
 
             // Sub-model lookup
 
-            //- Return a sub model between a phase pair
-            template<class modelType>
-            bool foundSubModel(const phasePair& key) const;
+            //- Return blending methods
+            const blendingMethodTable& blendingMethods() const
+            {
+                return blendingMethods_;
+            }
 
             //- Return a sub model between a phase pair
             template<class modelType>
-            const modelType& lookupSubModel(const phasePair& key) const;
+            bool foundInterfacialModel(const phasePair& key) const;
+
+            //- Return a sub model between a phase pair
+            template<class modelType>
+            const modelType& lookupInterfacialModel(const phasePair& key) const;
 
             //- Return a sub model between two phases
             template<class modelType>
-            bool foundSubModel
+            bool foundInterfacialModel
             (
                 const phaseModel& dispersed,
                 const phaseModel& continuous,
@@ -595,7 +587,7 @@ public:
 
             //- Return a sub model between two phases
             template<class modelType>
-            const modelType& lookupSubModel
+            const modelType& lookupInterfacialModel
             (
                 const phaseModel& dispersed,
                 const phaseModel& continuous,
@@ -603,13 +595,13 @@ public:
             ) const;
 
             //- Check availability of a blended sub model for a given phase pair
-            template<class modelType>
-            bool foundBlendedSubModel(const phasePair& key) const;
+            template<class BlendedModelType>
+            bool foundBlendedInterfacialModel(const phasePair& key) const;
 
             //- Return a blended sub model between a phase pair
-            template<class modelType>
-            const BlendedInterfacialModel<modelType>&
-            lookupBlendedSubModel(const phasePair& key) const;
+            template<class BlendedModelType>
+            const BlendedModelType&
+            lookupBlendedInterfacialModel(const phasePair& key) const;
 
             //- Return the surface tension coefficient
             const dimensionedScalar& sigma() const;

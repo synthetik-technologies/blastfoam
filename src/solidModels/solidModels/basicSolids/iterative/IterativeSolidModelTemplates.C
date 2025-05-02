@@ -86,7 +86,11 @@ bool Foam::IterativeSolidModel<SolidModel>::converged
     if
     (
         iCorr > 1
-     && (materialResidual < materialTol_ || materialRelResidual < materialRelTol_))
+     && (
+            materialResidual < materialTol_
+         || materialRelResidual < materialRelTol_
+        )
+    )
     {
         if
         (
@@ -125,6 +129,7 @@ bool Foam::IterativeSolidModel<SolidModel>::converged
             converged = false;
         }
     }
+    reduce(converged, andOp<bool>());
 
     if (!writeResiduals)
     {

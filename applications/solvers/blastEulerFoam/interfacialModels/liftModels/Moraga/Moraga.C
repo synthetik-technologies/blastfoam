@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Moraga.H"
-#include "phasePair.H"
 #include "fvcGrad.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -50,7 +49,7 @@ Foam::liftModels::Moraga::Moraga
     const phasePair& pair
 )
 :
-    liftModel(dict, pair)
+    dispersedLiftModel(dict, pair)
 {}
 
 
@@ -62,19 +61,15 @@ Foam::liftModels::Moraga::~Moraga()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::liftModels::Moraga::Cl
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::liftModels::Moraga::Cl() const
 {
-    volScalarField Re(pair_.Re(nodei, nodej));
+    volScalarField Re(pair_.Re());
 
     volScalarField sqrSr
     (
-        sqr(pair_.dispersed().d(nodei))
+        sqr(pair_.dispersed().d())
        /pair_.continuous().nu()
-       *mag(fvc::grad(pair_.continuous().U(nodej)))
+       *mag(fvc::grad(pair_.continuous().U()))
     );
 
     if

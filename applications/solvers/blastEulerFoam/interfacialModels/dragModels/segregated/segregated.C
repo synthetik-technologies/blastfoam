@@ -67,31 +67,12 @@ Foam::dragModels::segregated::~segregated()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::segregated::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the segregated model."
-        << exit(FatalError);
-
-    return pair_.phase1();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::dragModels::segregated::K
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::segregated::K() const
 {
     const fvMesh& mesh(pair_.phase1().mesh());
 
-    volScalarField alpha1(pair_.phase1().volumeFraction());
-    volScalarField alpha2(pair_.phase2().volumeFraction());
+    const volScalarField& alpha1 = pair_.phase1();
+    const volScalarField& alpha2 = pair_.phase2();
 
     tmp<volScalarField> trho1(pair_.phase1().rho());
     tmp<volScalarField> trho2(pair_.phase2().rho());
@@ -110,7 +91,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::segregated::K
         IOobject
         (
             "L",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -124,24 +105,12 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::segregated::K
     volScalarField I
     (
         alpha1
-        /max
+       /max
         (
             alpha1 + alpha2,
             pair_.phase1().residualAlpha() + pair_.phase2().residualAlpha()
         )
     );
-
-    if (pair_.phase2().nNodes() > 1)
-    {
-        // Scale so not counted nNodes times
-        I *=
-            alpha2
-           /max
-            (
-                pair_.phase2(),
-                pair_.phase2().residualAlpha()
-            );
-    }
 
     volScalarField magGradI
     (
@@ -170,7 +139,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::segregated::K
     volScalarField ReI
     (
         pair_.rho()
-       *pair_.magUr(nodei, nodej)
+       *pair_.magUr()
        /(magGradI*muI)
     );
 
@@ -180,38 +149,13 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::segregated::K
 }
 
 
-Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::segregated::Kf
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::segregated::Kf() const
 {
-    return fvc::interpolate(K(nodei, nodej));
+    return fvc::interpolate(K());
 }
 
 
-Foam::scalar Foam::dragModels::segregated::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the segregated model."
-        << exit(FatalError);
-
-    return pair_.phase1()[celli];
-}
-
-
-Foam::scalar Foam::dragModels::segregated::cellK
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::dragModels::segregated::cellK(const label celli) const
 {
     NotImplemented;
     return pair_.phase1()[celli];

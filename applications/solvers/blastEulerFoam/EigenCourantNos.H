@@ -1,5 +1,7 @@
 {
-    scalarField sumPhi(mesh.V().field().size(), 0.0);
+    const scalarField& V = mesh.V();
+
+    scalarField sumPhi(V.size(), 0.0);
     scalarList phaseCoNums(phases.size(), 0.0);
     scalarList meanPhaseCoNums(phases.size(), 0.0);
     forAll(phases, phasei)
@@ -30,15 +32,15 @@
             )().primitiveField();
 
         phaseCoNums[phasei] =
-            0.5*gMax(sumAmaxSf/mesh.V().field())*runTime.deltaTValue();
+            0.5*gMax(sumAmaxSf/V)*runTime.deltaTValue();
         meanPhaseCoNums[phasei] =
-            0.5*(gSum(amaxSf)/gSum(mesh.V().field()))*runTime.deltaTValue();
+            0.5*(gSum(amaxSf)/gSum(V))*runTime.deltaTValue();
     }
 
-    scalar maxCoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
+    scalar maxCoNum = 0.5*gMax(sumPhi/V)*runTime.deltaTValue();
     scalar meanCoNum
     (
-        0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue()
+        0.5*(gSum(sumPhi)/gSum(V))*runTime.deltaTValue()
     );
 
     Info<< "Courant number: mean = " << meanCoNum

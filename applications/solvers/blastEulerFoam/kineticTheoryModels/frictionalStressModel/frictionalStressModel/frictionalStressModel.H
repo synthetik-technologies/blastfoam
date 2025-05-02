@@ -38,7 +38,7 @@ SourceFiles
 #include "dimensionedTypes.H"
 #include "runTimeSelectionTables.H"
 #include "phaseModel.H"
-#include "kineticTheorySystem.H"
+#include "masterSystem.H"
 #include "timeIntegrationSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -61,10 +61,10 @@ protected:
     // Protected data
 
         //- Reference to higher-level dictionary for re-read
-        const dictionary& dict_;
+        const dictionary dict_;
 
         //- Reference to the kinetic theory system
-        const kineticTheorySystem& kt_;
+        const masterSystem& master_;
 
         //- Return to coefficient dictionary
         const dictionary& coeffDict() const
@@ -86,9 +86,9 @@ public:
         dictionary,
         (
             const dictionary& dict,
-            const kineticTheorySystem& kt
+            const masterSystem& master
         ),
-        (dict, kt)
+        (dict, master)
     );
 
 
@@ -98,7 +98,7 @@ public:
         frictionalStressModel
         (
             const dictionary& dict,
-            const kineticTheorySystem& kt
+            const masterSystem& master
         );
 
         //- Disallow default bitwise copy construction
@@ -110,7 +110,7 @@ public:
         static autoPtr<frictionalStressModel> New
         (
             const dictionary& dict,
-            const kineticTheorySystem& kt
+            const masterSystem& master
         );
 
 
@@ -124,6 +124,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax
         ) const = 0;
 
@@ -131,6 +132,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax
         ) const = 0;
 
@@ -138,6 +140,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax,
             const volScalarField& pf
         ) const = 0;

@@ -29,33 +29,6 @@ particles
     alphaMax    0.65;
     alphaMinFriction 0.5;
 
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo  eConst;
-        transport constIso;
-    }
-    specie
-    {
-        molWeight 100;
-    }
-    equationOfState
-    {
-        rho0         1470;
-    }
-
-    transport
-    {
-        kappa       1.0;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          987;           // Heat capacity
-        Hf          0.0;
-    }
-
     kineticTheoryCoeffs
     {
         e   0.999;
@@ -72,34 +45,6 @@ gas
     constantDiameterCoeffs
     {
         d           0;
-    }
-
-    type basic;
-    calculateDensity yes;
-    thermoType
-    {
-        transport   const;
-        thermo      eConst;
-        equationOfState idealGas;
-    }
-    equationOfState
-    {
-        gamma           1.4;            // Heat capactiy ratio
-    }
-    specie
-    {
-        molWeight       28.97;
-    }
-    transport
-    {
-        mu              1.81e-5;
-        Pr              0.71;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          718;
-        Hf          0;
     }
 
     residualRho     1e-6;

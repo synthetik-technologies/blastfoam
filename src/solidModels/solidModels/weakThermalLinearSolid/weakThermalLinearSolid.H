@@ -108,7 +108,7 @@ public:
     // Constructors
 
         //- Construct from components
-        weakThermalLinearSolid(dynamicFvMesh& mesh);
+        weakThermalLinearSolid(fvMesh& mesh);
 
 
     // Destructor

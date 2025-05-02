@@ -30,14 +30,11 @@ License
 #include "surfaceFields.H"
 #include "fvcMeshPhi.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
+Foam::normalDisplacementFvPatchVectorField::
+normalDisplacementFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -49,21 +46,23 @@ normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
 {}
 
 
-normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
+Foam::normalDisplacementFvPatchVectorField::
+normalDisplacementFvPatchVectorField
 (
-    const normalDisplacementFvPatchVectorField& ptf,
+    const normalDisplacementFvPatchVectorField& ndpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
-    fixedValueFvPatchVectorField(ptf, p, iF, mapper),
-    normalDisp_(mapper(ptf.normalDisp_)),
-    dispSeries_(ptf.dispSeries_)
+    fixedValueFvPatchVectorField(ndpvf, p, iF, mapper),
+    normalDisp_(mapper(ndpvf.normalDisp_)),
+    dispSeries_(ndpvf.dispSeries_, false)
 {}
 
 
-normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
+Foam::normalDisplacementFvPatchVectorField::
+normalDisplacementFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -79,11 +78,17 @@ normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
     {
         DebugInfo
             << "    normal displacement is time-varying" << endl;
-        dispSeries_ = Function1<scalar>::New("displacementSeries", dict);
+        dispSeries_ = Function1<scalar>::New
+        (
+            "displacementSeries",
+            this->db().time().userUnits(),
+            dimLength,
+            dict
+        );
 
         fvPatchField<vector>::operator==
         (
-            patch().nf()*dispSeries_->value(this->db().time().timeOutputValue())
+            patch().nf()*dispSeries_->value(this->db().time().value())
         );
     }
     else
@@ -98,49 +103,51 @@ normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
 }
 
 
-normalDisplacementFvPatchVectorField::normalDisplacementFvPatchVectorField
+Foam::normalDisplacementFvPatchVectorField::
+normalDisplacementFvPatchVectorField
 (
-    const normalDisplacementFvPatchVectorField& pivpvf,
+    const normalDisplacementFvPatchVectorField& ndpvf,
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    fixedValueFvPatchVectorField(pivpvf, iF),
-    normalDisp_(pivpvf.normalDisp_),
-    dispSeries_(pivpvf.dispSeries_)
+    fixedValueFvPatchVectorField(ndpvf, iF),
+    normalDisp_(ndpvf.normalDisp_),
+    dispSeries_(ndpvf.dispSeries_, false)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void normalDisplacementFvPatchVectorField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchVectorField::autoMap(m);
-
-    m(normalDisp_, normalDisp_);
-}
-
-
-// Reverse-map the given fvPatchField onto this fvPatchField
-void normalDisplacementFvPatchVectorField::rmap
+void Foam::normalDisplacementFvPatchVectorField::map
 (
     const fvPatchField<vector>& ptf,
-    const labelList& addr
+    const fieldMapper& mapper
 )
 {
-    fixedValueFvPatchVectorField::rmap(ptf, addr);
+    fixedValueFvPatchVectorField::map(ptf, mapper);
 
-    const normalDisplacementFvPatchVectorField& dmptf =
+    const normalDisplacementFvPatchVectorField& ndpvf =
         refCast<const normalDisplacementFvPatchVectorField>(ptf);
 
-    normalDisp_.rmap(dmptf.normalDisp_, addr);
+    mapper(normalDisp_, ndpvf.normalDisp_);
 }
 
 
-void normalDisplacementFvPatchVectorField::updateCoeffs()
+void Foam::normalDisplacementFvPatchVectorField::reset
+(
+    const fvPatchField<vector>& ptf
+)
+{
+    fixedValueFvPatchVectorField::reset(ptf);
+
+    const normalDisplacementFvPatchVectorField& ndpvf =
+        refCast<const normalDisplacementFvPatchVectorField>(ptf);
+
+    normalDisp_.reset(ndpvf.normalDisp_);
+}
+
+
+void Foam::normalDisplacementFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())
     {
@@ -151,7 +158,7 @@ void normalDisplacementFvPatchVectorField::updateCoeffs()
 
     if (dispSeries_.valid())
     {
-        nDisp = dispSeries_->value(this->db().time().timeOutputValue());
+        nDisp = dispSeries_->value(this->db().time().value());
     }
 
     vectorField disp(nDisp*patch().nf());
@@ -173,8 +180,8 @@ void normalDisplacementFvPatchVectorField::updateCoeffs()
 }
 
 
-Foam::tmp<Foam::Field<vector> >
-normalDisplacementFvPatchVectorField::snGrad() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::normalDisplacementFvPatchVectorField::snGrad() const
 {
     //- fixedValue snGrad with no correction
     //  return (*this - patchInternalField())*this->patch().deltaCoeffs();
@@ -201,8 +208,9 @@ normalDisplacementFvPatchVectorField::snGrad() const
     )*patch().deltaCoeffs();
 }
 
-tmp<Field<vector> >
-normalDisplacementFvPatchVectorField::gradientBoundaryCoeffs() const
+
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::normalDisplacementFvPatchVectorField::gradientBoundaryCoeffs() const
 {
     const fvPatchField<tensor>& gradField =
         patch().lookupPatchField<volTensorField, tensor>
@@ -227,7 +235,7 @@ normalDisplacementFvPatchVectorField::gradientBoundaryCoeffs() const
 }
 
 
-void normalDisplacementFvPatchVectorField::write(Ostream& os) const
+void Foam::normalDisplacementFvPatchVectorField::write(Ostream& os) const
 {
     if (dispSeries_.valid())
     {
@@ -244,14 +252,14 @@ void normalDisplacementFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField
-(
-    fvPatchVectorField,
-    normalDisplacementFvPatchVectorField
-);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        normalDisplacementFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

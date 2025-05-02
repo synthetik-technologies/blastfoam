@@ -507,10 +507,10 @@ void Foam::lookupTable3D<Foam::scalar>::read
             read3DTable
             (
                 fDict.lookup<fileName>("file"),
-                readDelim(dict),
+                readDelim(dict, "colDelim", token::COMMA),
                 readDelim(dict, "rowDelim", token::END_STATEMENT),
                 data,
-                dict.lookupOrDefault<Switch>("flipTable", true),
+                dict.lookupOrDefault<Switch>("flipTable", false),
                 !canRead
             );
         }

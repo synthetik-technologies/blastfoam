@@ -43,7 +43,7 @@ namespace regionSolvers
 
 Foam::regionSolvers::hydrostatic::hydrostatic
 (
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const regionSolverList& regions
 )
 :

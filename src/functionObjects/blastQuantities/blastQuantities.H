@@ -27,7 +27,7 @@ Class
     Foam::functionObjects::blastQuantities
 
 Description
-    Calculates standard blast quantities including overprssure, impulse,
+    Calculates standard blast quantities including overpressure, impulse,
     time of arrival, and positive phase duration
 
 See also
@@ -75,6 +75,9 @@ protected:
 
         //- Name of pressure field
         word pName_;
+
+        //- Saved initial pressure
+        autoPtr<volScalarField> p0Ptr_;
 
         //- Reference pressure
         dimensionedScalar pRef_;
@@ -194,6 +197,12 @@ public:
 
         //- Read the field average data
         virtual bool read(const dictionary&);
+
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return {pName_};
+        }
 
         //- Calculate the field averages
         virtual bool execute();

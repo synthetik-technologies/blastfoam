@@ -141,6 +141,62 @@ primitivePatchToPatchMapping::primitivePatchToPatchMapping
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+labelList primitivePatchToPatchMapping::unmappedFaces
+(
+    const globalPolyPatch& patch
+) const
+{
+    Field<scalar> res
+    (
+        (&patch == &(globalPatchA()))
+      ? zoneBToZoneAInterpolator().faceInterpolate
+        (
+            scalarField(zoneB().size(), 1.0)
+        )
+      : zoneAToZoneBInterpolator().faceInterpolate
+        (
+            scalarField(zoneA().size(), 1.0)
+        )
+    );
+    DynamicList<label> unmapped;
+    forAll(res, i)
+    {
+        if (mag(res[i]) < small)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
+labelList primitivePatchToPatchMapping::unmappedPoints
+(
+    const globalPolyPatch& patch
+) const
+{
+    Field<scalar> res
+    (
+        (&patch == &(globalPatchA()))
+      ? zoneBToZoneAInterpolator().pointInterpolate
+        (
+            scalarField(zoneB().nPoints(), 1.0)
+        )
+      : zoneAToZoneBInterpolator().pointInterpolate
+        (
+            scalarField(zoneA().nPoints(), 1.0)
+        )
+    );
+    DynamicList<label> unmapped;
+    forAll(res, i)
+    {
+        if (mag(res[i]) < small)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
 void primitivePatchToPatchMapping::transferFaces
 (
     const standAlonePatch& fromZone, // from zone

@@ -56,7 +56,7 @@ c4
         thermoType
         {
             transport   const;
-            thermo      ePolynomial;
+            thermo      eConst;
             equationOfState JWL;
         }
         equationOfState
@@ -79,14 +79,12 @@ c4
         }
         thermodynamics
         {
-            // Heat capacity coefficients
-            CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
-            Sf          0.0;
-            Hf          0.0;
+            Cv              1000;           // Heat capacity
+            Hf              0.0;
         }
     }
 
-    activationModel pressureBased;
+    activationModel none;
     initiation
     {
         E0              9.0e9;

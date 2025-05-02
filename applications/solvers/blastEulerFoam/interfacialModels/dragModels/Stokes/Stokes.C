@@ -66,55 +66,54 @@ Foam::dragModels::Stokes::~Stokes()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the Stokes model."
-        << exit(FatalError);
-
-    return pair_.phase1();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::Ki
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::Ki() const
 {
     return pair_.dispersed().rho()/dragTime_;
 }
 
 
-Foam::scalar Foam::dragModels::Stokes::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::K() const
 {
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the Stokes model."
-        << exit(FatalError);
+    return
+        max
+        (
+            pair_.dispersed(),
+            pair_.dispersed().residualAlpha()
+        )*Ki();
+}
 
-    return pair_.phase1()[celli];
+
+Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Stokes::Kf() const
+{
+    return
+        max
+        (
+            fvc::interpolate(pair_.dispersed()),
+            pair_.dispersed().residualAlpha()
+        )*fvc::interpolate(Ki());
 }
 
 
 Foam::scalar Foam::dragModels::Stokes::cellKi
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return pair_.dispersed().rho()[celli]/dragTime_.value();
+}
+
+
+Foam::scalar Foam::dragModels::Stokes::cellK
+(
+    const label celli
+) const
+{
+    return
+        max
+        (
+            pair_.dispersed()[celli],
+            pair_.dispersed().residualAlpha().value()
+        )*cellKi(celli);
 }
 
 

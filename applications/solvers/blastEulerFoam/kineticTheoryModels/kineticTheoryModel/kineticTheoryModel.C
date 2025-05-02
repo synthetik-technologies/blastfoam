@@ -57,7 +57,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("Theta", phase.name()),
-            phase.fluid().mesh().time().timeName(),
+            phase.fluid().mesh().time().name(),
             phase.fluid().mesh(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -70,7 +70,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("gs0", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -83,7 +83,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("gs0Prime", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -97,10 +97,10 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("lambdas", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
@@ -111,7 +111,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("p", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -125,7 +125,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("Pfric", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -139,7 +139,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("Ptot", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -153,7 +153,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("kappas", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -167,7 +167,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("nut", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -181,7 +181,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("nuFric", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -195,10 +195,10 @@ Foam::kineticTheoryModel::kineticTheoryModel
         IOobject
         (
             IOobject::groupName("nuTotal", phase.name()),
-            Theta_.time().timeName(),
+            Theta_.time().name(),
             Theta_.mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
@@ -237,7 +237,7 @@ Foam::kineticTheoryModel::devRhoReff() const
             IOobject
             (
                 IOobject::groupName("devRhoReff", Theta_.group()),
-                Theta_.time().timeName(),
+                Theta_.time().name(),
                 Theta_.mesh(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
@@ -280,7 +280,8 @@ Foam::tmp<Foam::volScalarField> Foam::kineticTheoryModel::pPrime() const
             (
                 phase(),
                 kineticTheorySystem_.alpha(),
-                kineticTheorySystem_.alphaMax()()
+                kineticTheorySystem_.alphaMinFriction(),
+                kineticTheorySystem_.alphaMax()
             )
           : kineticTheorySystem_.frictionalPressurePrime(phase_)
         );
@@ -296,13 +297,6 @@ const Foam::volScalarField& Foam::kineticTheoryModel::Pfr() const
 void Foam::kineticTheoryModel::correct()
 {
     cohesion_->update();
-
-    // Local references
-    volScalarField alpha(max(phase_, scalar(0)));
-
-    tmp<volTensorField> tgradU(fvc::grad(phase_.U()));
-    const volTensorField& gradU(tgradU());
-    volSymmTensorField D(symm(gradU));
 
     // Calculating the radial distribution function
     gs0_ = kineticTheorySystem_.gs0(phase_, phase_, true);
@@ -323,6 +317,7 @@ void Foam::kineticTheoryModel::correct()
     nut_ =
         kineticTheorySystem_.nu(phase_, Theta_)
       + cohesion_->nu();
+
     nut_.min(maxNut_);
 
     if (frictionalStressModel_.valid())
@@ -331,7 +326,8 @@ void Foam::kineticTheoryModel::correct()
         (
             phase(),
             kineticTheorySystem_.alpha(),
-            kineticTheorySystem_.alphaMax()()
+            kineticTheorySystem_.alphaMinFriction(),
+            kineticTheorySystem_.alphaMax()
         );
         nuFric_ =
             min
@@ -340,7 +336,8 @@ void Foam::kineticTheoryModel::correct()
                 (
                     phase(),
                     kineticTheorySystem_.alpha(),
-                    kineticTheorySystem_.alphaMax()(),
+                    kineticTheorySystem_.alphaMinFriction(),
+                    kineticTheorySystem_.alphaMax(),
                     Pfric_
                 )/phase().rho(),
                 maxNut_ - nut_

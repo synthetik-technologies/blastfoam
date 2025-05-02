@@ -84,7 +84,6 @@ Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
 (
     polyMesh& mesh,
     const dictionary& dict,
-    const bool force,
     const bool read
 )
 {
@@ -94,7 +93,7 @@ Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
         refinerType = dict.lookup<word>("refiner");
     }
 
-    return New(refinerType, mesh, dict, force, read);
+    return New(refinerType, mesh, dict, read);
 }
 
 
@@ -103,7 +102,6 @@ Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
     const word& refinerType,
     polyMesh& mesh,
     const dictionary& dict,
-    const bool force,
     const bool read
 )
 {
@@ -122,7 +120,7 @@ Foam::autoPtr<Foam::polyMeshRefiner> Foam::polyMeshRefiner::New
             << exit(FatalError);
     }
 
-    return autoPtr<polyMeshRefiner>(cstrIter()(mesh, dict, force, read));
+    return autoPtr<polyMeshRefiner>(cstrIter()(mesh, dict, read));
 }
 
 // ************************************************************************* //

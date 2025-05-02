@@ -88,19 +88,10 @@ public:
         virtual word name() const;
 
         //- Aspect ratio
-        virtual tmp<volScalarField> E
-        (
-            const label nodei,
-            const label nodej
-        ) const;
+        virtual tmp<volScalarField> E() const;
 
         //- Aspect ratio
-        virtual scalar cellE
-        (
-            const label celli,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual scalar cellE(const label celli) const;
 };
 
 

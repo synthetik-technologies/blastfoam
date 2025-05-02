@@ -35,7 +35,7 @@ void Foam::compressibleBlastSystem::setModels()
 {
     compressibleSystem::setModels();
 
-    IOobject radPropertiesIO
+    typeIOobject<IOdictionary> radPropertiesIO
     (
         "radiationProperties",
         rho_.time().constant(),
@@ -43,16 +43,23 @@ void Foam::compressibleBlastSystem::setModels()
         IOobject::MUST_READ_IF_MODIFIED,
         IOobject::NO_WRITE
     );
-    if (radPropertiesIO.typeHeaderOk<IOdictionary>(true))
+    if (radPropertiesIO.headerOk())
     {
         radiation_.set(blastRadiationModel::New(this->T()).ptr());
     }
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::compressibleBlastSystem::rhoESource() const
+void Foam::compressibleBlastSystem::addSources
+(
+    volVectorField::Internal& rhoUSource,
+    volScalarField::Internal& rhoESource
+) const
 {
-    return compressibleSystem::rhoESource() + thermoPtr_->ESource();
+
+    compressibleSystem::addSources(rhoUSource, rhoESource);
+
+    rhoESource -= thermoPtr_->ESource();
 }
 
 
@@ -60,36 +67,22 @@ Foam::tmp<Foam::volScalarField> Foam::compressibleBlastSystem::rhoESource() cons
 
 Foam::compressibleBlastSystem::compressibleBlastSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh,
     const word& thermoType
 )
 :
-    compressibleSystem(mesh),
-    IOdictionary
-    (
-        IOobject
-        (
-            "phaseProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
-        )
-    ),
+    compressibleSystem(dict, mesh),
     thermoPtr_
     (
-        fluidBlastThermo::New(mesh, *this, thermoType)
+        fluidBlastThermo::New(mesh, dict, thermoType)
     ),
-    rho_(thermoPtr_->rho()),
+    rho_(thermoPtr_().rhoRef()),
     p_(thermoPtr_->p()),
     T_(thermoPtr_->T()),
     e_(thermoPtr_->he())
 {
     thermoPtr_->validate("compressibleBlastSystem", "e");
-
-    // Initialize oldTimes
-    rho_.oldTime();
-    e_.oldTime();
 }
 
 
@@ -109,15 +102,14 @@ void Foam::compressibleBlastSystem::update()
 
 void Foam::compressibleBlastSystem::decode()
 {
-    U_.ref() = rhoU_()/rhoEff()();
+    U_.internalFieldRef() = rhoU_()/rhoEff()();
     U_.correctBoundaryConditions();
 
+    rhoU_.correctBoundaryConditions();
     rhoU_.boundaryFieldRef() =
         rhoEff().boundaryField()*U_.boundaryField();
 
-    e_.ref() = rhoE_()/rhoEff()() - 0.5*magSqr(U_());
-    e_.correctBoundaryConditions();
-
+    e_.internalFieldRef() = rhoE_()/rhoEff()() - 0.5*magSqr(U_());
     thermoPtr_->correct();
 
     //- Update total energy because the e field may have been modified
@@ -128,21 +120,13 @@ void Foam::compressibleBlastSystem::decode()
 void Foam::compressibleBlastSystem::solve()
 {
     //- Calculate deltas for momentum and energy
-    volVectorField deltaRhoU
-    (
-        "deltaRhoU",
-        fvc::div(rhoUPhi_)
-      - rhoUSource()
-    );
+    volVectorField deltaRhoU("deltaRhoU", fvc::div(rhoUPhi_));
     this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
 
-    volScalarField deltaRhoE
-    (
-        "deltaRhoE",
-        fvc::div(rhoEPhi_)
-      - rhoESource()
-    );
+    volScalarField deltaRhoE("deltaRhoE", fvc::div(rhoEPhi_));
     this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
+
+    this->addSources(deltaRhoU, deltaRhoE);
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);
@@ -238,7 +222,7 @@ void Foam::compressibleBlastSystem::postUpdate()
         {
             eEqn -= extESource_;
         }
-        if (turbulence_.valid())
+        if (thermophysicalTransport_.valid())
         {
             eEqn += thermophysicalTransport_->divq(e_);
         }
@@ -262,6 +246,9 @@ void Foam::compressibleBlastSystem::postUpdate()
     if (turbulence_.valid())
     {
         turbulence_->correct();
+    }
+    if (thermophysicalTransport_.valid())
+    {
         thermophysicalTransport_->correct();
     }
 }

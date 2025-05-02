@@ -59,19 +59,20 @@ Foam::heatTransferModels::noneNu::~noneNu()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::heatTransferModels::noneNu::K
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::heatTransferModels::noneNu::K() const
 {
     return volScalarField::New
     (
-        "noneNu",
+        typeName + ":K",
         pair_.phase1().mesh(),
         dimensionedScalar(heatTransferModel::dimK, 0.0)
     );
+}
+
+
+Foam::scalar Foam::heatTransferModels::noneNu::cellK(const label celli) const
+{
+    return 0;
 }
 
 

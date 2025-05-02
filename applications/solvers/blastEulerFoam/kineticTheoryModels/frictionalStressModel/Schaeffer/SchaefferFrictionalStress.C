@@ -52,10 +52,10 @@ namespace frictionalStressModels
 Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::Schaeffer
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& master
 )
 :
-    frictionalStressModel(dict, kt),
+    frictionalStressModel(dict, master),
     phi_("phi", dimless, coeffDict()),
     alphaMinFrictionByAlphap_
     (
@@ -82,14 +82,15 @@ frictionalPressure
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
-    volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
+    volScalarField alphaMinFrictionByAlphap(alphaMinFrictionByAlphap_*alphaMax);
 
     return
         dimensionedScalar(dimensionSet(1, -1, -2, 0, 0), 1e24)
-       *pow(Foam::max(alphap - alphaMinFriction, scalar(0)), 10.0);
+       *pow(Foam::max(alphap - alphaMinFrictionByAlphap, scalar(0)), 10.0);
 }
 
 
@@ -99,14 +100,15 @@ frictionalPressurePrime
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
-    volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
+    volScalarField alphaMinFrictionByAlphap(alphaMinFrictionByAlphap_*alphaMax);
 
     return
         dimensionedScalar(dimensionSet(1, -1, -2, 0, 0), 1e25)
-       *pow(Foam::max(alphap - alphaMinFriction, scalar(0)), 9.0);
+       *pow(Foam::max(alphap - alphaMinFrictionByAlphap, scalar(0)), 9.0);
 }
 
 
@@ -115,11 +117,12 @@ Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax,
     const volScalarField& pf
 ) const
 {
-    volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
+    volScalarField alphaMinFrictionByAlphap(alphaMinFrictionByAlphap_*alphaMax);
 
     tmp<volScalarField> tmu
     (
@@ -136,7 +139,7 @@ Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::mu
     volSymmTensorField D(symm(fvc::grad(phase.U())));
     forAll(D, celli)
     {
-        if (alphap[celli] > alphaMinFriction[celli])
+        if (alphap[celli] > alphaMinFrictionByAlphap[celli])
         {
             muf[celli] =
                 0.5*pf[celli]*sin(phi_.value())

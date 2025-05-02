@@ -31,7 +31,8 @@ License
 #include "fvcGrad.H"
 #include "fluidThermo.H"
 #include "thermodynamicConstants.H"
-#include "thermophysicalTransportModel.H"
+#include "fluidThermophysicalTransportModel.H"
+#include "compressibleMomentumTransportModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -130,29 +131,34 @@ Foam::maxwellSlipUFvPatchVectorField::maxwellSlipUFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::maxwellSlipUFvPatchVectorField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    mixedFixedValueSlipFvPatchVectorField::autoMap(m);
-    m(Uwall_, Uwall_);
-}
-
-
-void Foam::maxwellSlipUFvPatchVectorField::rmap
+void Foam::maxwellSlipUFvPatchVectorField::map
 (
     const fvPatchVectorField& ptf,
-    const labelList& addr
+    const fieldMapper& mapper
 )
 {
-    mixedFixedValueSlipFvPatchVectorField::rmap(ptf, addr);
+    mixedFixedValueSlipFvPatchVectorField::map(ptf, mapper);
 
-    const maxwellSlipUFvPatchVectorField& dmptf =
+    const maxwellSlipUFvPatchVectorField& mspvf =
         refCast<const maxwellSlipUFvPatchVectorField>(ptf);
 
-    Uwall_.rmap(dmptf.Uwall_, addr);
+    mapper(Uwall_, mspvf.Uwall_);
 }
+
+
+void Foam::maxwellSlipUFvPatchVectorField::reset
+(
+    const fvPatchVectorField& ptf
+)
+{
+    mixedFixedValueSlipFvPatchVectorField::reset(ptf);
+
+    const maxwellSlipUFvPatchVectorField& mspvf =
+        refCast<const maxwellSlipUFvPatchVectorField>(ptf);
+
+    Uwall_.reset(mspvf.Uwall_);
+}
+
 
 void Foam::maxwellSlipUFvPatchVectorField::updateCoeffs()
 {
@@ -164,11 +170,19 @@ void Foam::maxwellSlipUFvPatchVectorField::updateCoeffs()
     const fluidThermo& thermo =
         db().lookupObject<fluidThermo>
         (
-            IOobject::groupName(basicThermo::dictName, internalField().group())
+            IOobject::groupName
+            (
+                physicalProperties::typeName,
+                internalField().group()
+            )
         );
     const label patchi = patch().index();
-    const scalarField& pmu = thermo.mu(patchi);
-    const scalarField& prho = thermo.rho(patchi);
+
+    const scalarField& pmu = thermo.mu().boundaryField()[patchi];
+
+    const tmp<scalarField> tprho(thermo.rho(patchi));
+    const scalarField& prho = tprho();
+
     const volScalarField& vsfT = thermo.T();
     const fvPatchScalarField& pT = vsfT.boundaryField()[patchi];
 
@@ -199,12 +213,12 @@ void Foam::maxwellSlipUFvPatchVectorField::updateCoeffs()
     {
         const volVectorField& vsfU =
             db().lookupObject<volVectorField>(internalField().name());
-        const thermophysicalTransportModel& ttm =
-            db().lookupObject<thermophysicalTransportModel>
+        const fluidThermophysicalTransportModel& ttm =
+            db().lookupObject<fluidThermophysicalTransportModel>
             (
                 IOobject::groupName
                 (
-                    thermophysicalTransportModel::typeName,
+                    fluidThermophysicalTransportModel::typeName,
                     internalField().group()
                 )
             );
@@ -213,7 +227,7 @@ void Foam::maxwellSlipUFvPatchVectorField::updateCoeffs()
             ttm.momentumTransport();
         tensorField ptauMC
         (
-            turbModel.muEff(patchi)
+            turbModel.nuEff(patchi)*prho
            *dev2
             (
                 Foam::T(fvc::grad(vsfU))().boundaryField()[patchi]

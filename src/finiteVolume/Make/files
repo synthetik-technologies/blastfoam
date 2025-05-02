@@ -31,6 +31,7 @@ reconstruction/upwindMUSCL/UpwindMUSCLReconstructionSchemes.C
 reconstruction/linearMUSCL/LinearMUSCLReconstructionSchemes.C
 reconstruction/quadraticMUSCL/QuadraticMUSCLReconstructionSchemes.C
 reconstruction/limiters/Koren/Koren.C
+reconstruction/limiters/overbee/overbee.C
 
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
@@ -42,14 +43,27 @@ finiteVolume/interpolationSchemes/CICSAM/CICSAM.C
 finiteVolume/interpolationSchemes/HRIC/HRIC.C
 finiteVolume/interpolationSchemes/mHRIC/mHRIC.C
 
+finiteVolume/fvc/fvcCellLimitedGrad.C
+finiteVolume/backwardD2dt2Scheme/backwardD2dt2Schemes.C
+finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
+finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
+finiteVolume/gradSchemes/localLeastSquaresGrad/localLeastSquaresVectors.C
+finiteVolume/gradSchemes/localLeastSquaresGrad/localLeastSquaresGrads.C
+finiteVolume/skewCorrectedSnGrad/skewCorrectedSnGrads.C
+finiteVolume/logExpVolFields/eig3/eig3.C
+finiteVolume/logExpVolFields/eig3Field.C
+finiteVolume/logExpVolFields/expVolFields.C
+finiteVolume/logExpVolFields/logVolFields.C
+#finiteVolume/newLeastSquaresVolPointInterpolation/newLeastSquaresVolPointInterpolation.C
+
 calcAngleFraction/calcAngleFraction.C
 
-burstModels/burstModel/burstModel.C
-burstModels/none/noBurstModel.C
-burstModels/pressure/pressureBurstModel.C
-burstModels/impulse/impulseBurstModel.C
-burstModels/pressureImpulse/pressureImpulseBurstModel.C
-burstModels/field/fieldBurstModel.C
+#burstModels/burstModel/burstModel.C
+#burstModels/none/noBurstModel.C
+#burstModels/pressure/pressureBurstModel.C
+#burstModels/impulse/impulseBurstModel.C
+#burstModels/pressureImpulse/pressureImpulseBurstModel.C
+#burstModels/field/fieldBurstModel.C
 
 # polyPatches/derived/burstBase/burstPolyPatchBase.C
 # polyPatches/derived/burst/burstPolyPatch.C
@@ -89,9 +103,14 @@ sets/cellSources/boxMassToCell/boxMassToCell.C
 sets/cellSources/surfacesToCell/surfacesToCell.C
 sets/cellSources/searchableSurfaceToCell/searchableSurfaceToCell.C
 sets/cellSources/searchableSurfaceToPoint/searchableSurfaceToPoint.C
+sets/cellSources/triSurfaceRefPointToCell/triSurfaceRefPointToCell.C
 
 sets/topoSetList/topoSetList.C
 sets/backupTopoSetSource/backupTopoSetSource.C
 sets/backupSearchableSurface/backupSearchableSurface.C
+
+sets/searchableSurfaces/searchableAnnulusCylinder/searchableAnnulusCylinder.C
+sets/searchableSurfaces/searchableAnnulusDisk/searchableAnnulusDisk.C
+sets/searchableSurfaces/transformedTriSurfaceMesh/transformedTriSurfaceMesh.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

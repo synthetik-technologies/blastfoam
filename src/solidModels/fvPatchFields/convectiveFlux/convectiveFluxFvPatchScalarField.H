@@ -106,7 +106,7 @@ public:
             const convectiveFluxFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy

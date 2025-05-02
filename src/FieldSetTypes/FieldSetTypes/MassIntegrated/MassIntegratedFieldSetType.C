@@ -53,7 +53,13 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::MassIntegrated
     ),
     phaseName_(readPhaseName(is, fieldName)),
     value_(pTraits<Type>(is)),
-    rhoPtr_(this->template lookupOrRead<volScalarField>(IOobject::groupName("rho", phaseName_)))
+    rhoPtr_
+    (
+        this->template lookupOrRead<volScalarField>
+        (
+            IOobject::groupName("rho", phaseName_)
+        )
+    )
 //     thermo_(lookupOrConstructThermo(mesh, phaseName_))
 {
     if (this->good_)
@@ -176,7 +182,7 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::lookupOrConstructThermo
     const word& phaseName
 ) const
 {
-    word thermoName(IOobject::groupName(basicThermo::dictName, phaseName));
+    word thermoName(IOobject::groupName(physicalProperties::typeName, phaseName));
 
     if (mesh.foundObject<blastThermo>(thermoName))
     {
@@ -202,7 +208,7 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::lookupOrConstructThermo
                 IOobject
                 (
                     IOobject::groupName("p", phaseName),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh
                 ),
                 mesh,
@@ -238,7 +244,7 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::lookupOrConstructThermo
             << "unknown state " << stateType << nl
             << abort(FatalError);
     }
-    thermoPtr->store(thermoPtr);
+    mesh.thisDb().store(thermoPtr);
 
     return mesh.lookupObject<blastThermo>(thermoName);
 }

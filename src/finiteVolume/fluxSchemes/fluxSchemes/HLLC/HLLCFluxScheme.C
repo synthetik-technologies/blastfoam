@@ -81,7 +81,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("SOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -95,7 +95,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("SNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -109,7 +109,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("SStar"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -129,7 +129,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("pStarOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -143,7 +143,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("pStarNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -157,7 +157,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("UvOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -171,7 +171,7 @@ void Foam::fluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("UvNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,

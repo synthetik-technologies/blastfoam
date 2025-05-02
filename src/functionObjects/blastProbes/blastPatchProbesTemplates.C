@@ -88,47 +88,18 @@ void Foam::blastPatchProbes::sampleAndWrite
     const fieldGroup<Type>& fields
 )
 {
+    typedef GeometricField<Type, fvPatchField, volMesh> VolField;
     forAll(fields, fieldi)
     {
-        if (loadFromFiles_)
-        {
-            sampleAndWrite
-            (
-                GeometricField<Type, fvPatchField, volMesh>
-                (
-                    IOobject
-                    (
-                        fields[fieldi],
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::MUST_READ,
-                        IOobject::NO_WRITE,
-                        false
-                    ),
-                    mesh_
-                )
-            );
-        }
-        else
-        {
-            objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
+        objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
 
-            if
-            (
-                iter != objectRegistry::end()
-             && iter()->type()
-             == GeometricField<Type, fvPatchField, volMesh>::typeName
-            )
-            {
-                sampleAndWrite
-                (
-                    mesh_.lookupObject
-                    <GeometricField<Type, fvPatchField, volMesh>>
-                    (
-                        fields[fieldi]
-                    )
-                );
-            }
+        if
+        (
+            iter != objectRegistry::end()
+         && iter()->type() == VolField::typeName
+        )
+        {
+            sampleAndWrite(mesh_.lookupObject<VolField>(fields[fieldi]));
         }
     }
 }
@@ -140,47 +111,18 @@ void Foam::blastPatchProbes::sampleAndWriteSurfaceFields
     const fieldGroup<Type>& fields
 )
 {
+    typedef GeometricField<Type, fvPatchField, volMesh> VolField;
     forAll(fields, fieldi)
     {
-        if (loadFromFiles_)
-        {
-            sampleAndWrite
-            (
-                GeometricField<Type, fvsPatchField, surfaceMesh>
-                (
-                    IOobject
-                    (
-                        fields[fieldi],
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::MUST_READ,
-                        IOobject::NO_WRITE,
-                        false
-                    ),
-                    mesh_
-                )
-            );
-        }
-        else
-        {
-            objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
+        objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
 
-            if
-            (
-                iter != objectRegistry::end()
-             && iter()->type()
-             == GeometricField<Type, fvsPatchField, surfaceMesh>::typeName
-            )
-            {
-                sampleAndWrite
-                (
-                    mesh_.lookupObject
-                    <GeometricField<Type, fvsPatchField, surfaceMesh>>
-                    (
-                        fields[fieldi]
-                    )
-                );
-            }
+        if
+        (
+            iter != objectRegistry::end()
+         && iter()->type() == VolField::typeName
+        )
+        {
+            sampleAndWrite(mesh_.lookupObject<VolField>(fields[fieldi]));
         }
     }
 }

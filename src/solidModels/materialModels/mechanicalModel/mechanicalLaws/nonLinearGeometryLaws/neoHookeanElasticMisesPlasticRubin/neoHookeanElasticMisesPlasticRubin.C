@@ -84,7 +84,7 @@ Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlasticRubin::Ibar
             IOobject
             (
                 "Ibar",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -207,7 +207,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "yieldStress",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -221,7 +221,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "P",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -234,7 +234,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "Je",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -247,7 +247,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "bEbarTrial",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -260,7 +260,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "bEbar",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -273,7 +273,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "lambda",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -286,7 +286,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "activeYield",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -585,7 +585,7 @@ void Foam::neoHookeanElasticMisesPlasticRubin::updateTotalFields()
     Info<< "    " << numCellsYielding << " cells are actively yielding"
         << nl << endl;
 
-    if (mesh().time().outputTime())
+    if (mesh().time().writeTime())
     {
         Info<< "Writing tauEq" << endl;
 

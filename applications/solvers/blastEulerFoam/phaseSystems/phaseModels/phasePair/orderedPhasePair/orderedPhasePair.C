@@ -69,24 +69,15 @@ Foam::word Foam::orderedPhasePair::name() const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::orderedPhasePair::E
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::orderedPhasePair::E() const
 {
-    return phase1().fluid().E(*this, nodei, nodej);
+    return phase1().fluid().E(*this);
 }
 
 
-Foam::scalar Foam::orderedPhasePair::cellE
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::orderedPhasePair::cellE(const label celli) const
 {
-    return phase1().fluid().cellE(celli, *this, nodei, nodej);
+    return phase1().fluid().cellE(*this, celli);
 }
 
 

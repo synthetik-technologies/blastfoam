@@ -81,98 +81,86 @@ void Foam::blastProbes::sampleAndWrite
 
 
 template<class Type>
+void Foam::blastProbes::sampleAndWrite
+(
+    const GeometricField<Type, pointPatchField, pointMesh>& pField
+)
+{
+    Field<Type> values(sample(pField));
+
+    if (Pstream::master())
+    {
+        unsigned int w = IOstream::defaultPrecision() + 7;
+        OFstream& os = *probeFilePtrs_[pField.name()];
+
+        os  << setw(w) << pField.time().timeToUserTime(pField.time().value());
+
+        forAll(values, probei)
+        {
+            os  << ' ' << setw(w) << values[probei];
+        }
+        os  << endl;
+    }
+}
+
+
+template<class Type>
 void Foam::blastProbes::sampleAndWrite(const fieldGroup<Type>& fields)
 {
+    typedef GeometricField<Type, fvPatchField, volMesh> VolField;
     forAll(fields, fieldi)
     {
-        if (loadFromFiles_)
-        {
-            sampleAndWrite
-            (
-                GeometricField<Type, fvPatchField, volMesh>
-                (
-                    IOobject
-                    (
-                        fields[fieldi],
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::MUST_READ,
-                        IOobject::NO_WRITE,
-                        false
-                    ),
-                    mesh_
-                )
-            );
-        }
-        else
-        {
-            objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
+        objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
 
-            if
-            (
-                iter != objectRegistry::end()
-             && iter()->type()
-             == GeometricField<Type, fvPatchField, volMesh>::typeName
-            )
-            {
-                sampleAndWrite
-                (
-                    mesh_.lookupObject
-                    <GeometricField<Type, fvPatchField, volMesh>>
-                    (
-                        fields[fieldi]
-                    )
-                );
-            }
+        if
+        (
+            iter != objectRegistry::end()
+         && iter()->type() == VolField::typeName
+        )
+        {
+            sampleAndWrite(mesh_.lookupObject<VolField>(fields[fieldi]));
         }
     }
 }
 
 
 template<class Type>
-void Foam::blastProbes::sampleAndWriteSurfaceFields(const fieldGroup<Type>& fields)
+void Foam::blastProbes::sampleAndWriteSurfaceFields
+(
+    const fieldGroup<Type>& fields
+)
 {
+    typedef GeometricField<Type, fvPatchField, volMesh> VolField;
     forAll(fields, fieldi)
     {
-        if (loadFromFiles_)
-        {
-            sampleAndWrite
-            (
-                GeometricField<Type, fvsPatchField, surfaceMesh>
-                (
-                    IOobject
-                    (
-                        fields[fieldi],
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::MUST_READ,
-                        IOobject::NO_WRITE,
-                        false
-                    ),
-                    mesh_
-                )
-            );
-        }
-        else
-        {
-            objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
+        objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
 
-            if
-            (
-                iter != objectRegistry::end()
-             && iter()->type()
-             == GeometricField<Type, fvsPatchField, surfaceMesh>::typeName
-            )
-            {
-                sampleAndWrite
-                (
-                    mesh_.lookupObject
-                    <GeometricField<Type, fvsPatchField, surfaceMesh>>
-                    (
-                        fields[fieldi]
-                    )
-                );
-            }
+        if
+        (
+            iter != objectRegistry::end()
+         && iter()->type() == VolField::typeName
+        )
+        {
+            sampleAndWrite(mesh_.lookupObject<VolField>(fields[fieldi]));
+        }
+    }
+}
+
+template<class Type>
+void Foam::blastProbes::sampleAndWritePointFields(const fieldGroup<Type>& fields)
+{
+    typedef GeometricField<Type, pointPatchField, pointMesh> PointField;
+    forAll(fields, fieldi)
+    {
+        objectRegistry::const_iterator iter = mesh_.find(fields[fieldi]);
+
+        if
+        (
+            iter != objectRegistry::end()
+         && iter()->type() == PointField::typeName
+        )
+        {
+            sampleAndWrite(mesh_.lookupObject<PointField>(fields[fieldi]));
         }
     }
 }
@@ -301,6 +289,70 @@ Foam::blastProbes::sampleSurfaceFields(const word& fieldName) const
     return sample
     (
         mesh_.lookupObject<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        (
+            fieldName
+        )
+    );
+}
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::blastProbes::sample
+(
+    const GeometricField<Type, pointPatchField, pointMesh>& pField
+) const
+{
+    const Type unsetVal(-vGreat*pTraits<Type>::one);
+
+    tmp<Field<Type>> tValues
+    (
+        new Field<Type>(this->size(), unsetVal)
+    );
+
+    Field<Type>& values = tValues.ref();
+    const pointField& points = mesh_.points();
+    forAll(*this, probei)
+    {
+        bool set = false;
+        if (elementList_[probei] >= 0)
+        {
+            const vector& samplePt = (*this)[probei];
+            const labelList& cellPoints =
+                mesh_.cellPoints()[elementList_[probei]];
+            scalar sumW = 0.0;
+            values[probei] = Zero;
+            forAll(cellPoints, cpi)
+            {
+                const label pointi = cellPoints[cpi];
+                const scalar w =
+                    1.0/max(mag(samplePt - points[pointi]), small);
+                sumW += w;
+                values[probei] += w*pField[pointi];
+            }
+            values[probei] /= sumW;
+            set = true;
+        }
+
+        if (!returnReduce(set, orOp<bool>()))
+        {
+            values[probei] = Zero;
+        }
+    }
+
+    Pstream::listCombineGather(values, isNotEqOp<Type>());
+    Pstream::listCombineScatter(values);
+
+    return tValues;
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::blastProbes::samplePointFields(const word& fieldName) const
+{
+    return sample
+    (
+        mesh_.lookupObject<GeometricField<Type, pointPatchField, pointMesh>>
         (
             fieldName
         )

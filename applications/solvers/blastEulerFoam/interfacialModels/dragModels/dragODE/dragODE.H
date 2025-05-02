@@ -61,7 +61,7 @@ class dragODE
         > phasePairTable;
     typedef HashTable
         <
-            autoPtr<BlendedInterfacialModel<dragModel>>,
+            autoPtr<blendedDragModel>,
             phasePairKey,
             phasePairKey::hash
         > dragModelTable;
@@ -99,7 +99,7 @@ protected:
         phaseModelList& phaseModels_;
 
         //- PrtList of references to dragModels
-        UPtrList<BlendedInterfacialModel<dragModel>> dragModels_;
+        UPtrList<blendedDragModel> dragModels_;
 
         //- Reference to phase pairs
         UPtrList<phasePair> phasePairs_;

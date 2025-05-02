@@ -37,14 +37,12 @@ SourceFiles
 #define noWallLubrication_H
 
 #include "wallLubricationModel.H"
+#include "phasePair.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-class phasePair;
-
 namespace wallLubricationModels
 {
 
@@ -78,19 +76,11 @@ public:
 
     // Member Functions
 
-        //- Return phase-intensive wall lubrication force
-        virtual tmp<volVectorField> FI
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
         //- Wall lubrication force
-        virtual tmp<volVectorField> F
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volVectorField> F() const;
+
+        //- Return face wall lubrication force
+        virtual tmp<surfaceScalarField> Ff() const;
 };
 
 

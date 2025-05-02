@@ -89,10 +89,10 @@ public:
     // Constructors
 
         //- Construct from components
-        linearTotalDisplacementSolid(dynamicFvMesh& mesh);
+        linearTotalDisplacementSolid(fvMesh& mesh);
 
         //- Construct from components and typename
-        linearTotalDisplacementSolid(const word& type, dynamicFvMesh& mesh);
+        linearTotalDisplacementSolid(const word& type, fvMesh& mesh);
 
     // Destructor
 

@@ -238,14 +238,9 @@ Foam::tmp<Foam::surfaceScalarField> Foam::mHRIC::limiter
 
     tmp<surfaceScalarField> tLimiter
     (
-        new surfaceScalarField
+        surfaceScalarField::New
         (
-            IOobject
-            (
-                type() + "Limiter(" + phi.name() + ')',
-                mesh.time().timeName(),
-                mesh
-            ),
+            type() + "Limiter(" + phi.name() + ')',
             mesh,
             dimless
         )
@@ -270,7 +265,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::mHRIC::limiter
 
     const vectorField& C = mesh.C();
 
-    scalarField& pLim = lim.ref();
+    scalarField& pLim = lim.primitiveFieldRef();
 
     forAll(pLim, faceI)
     {

@@ -49,6 +49,14 @@ namespace Foam
         eBlastThermo
     );
 
+    forCoeffGases
+    (
+        makeThermo,
+        fluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
+    );
+
     forLiquids
     (
         makeThermo,

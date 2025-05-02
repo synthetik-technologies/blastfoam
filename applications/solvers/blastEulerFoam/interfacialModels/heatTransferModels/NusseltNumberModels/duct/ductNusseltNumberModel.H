@@ -85,19 +85,10 @@ public:
     // Member Functions
 
         //- Nusselt number
-        virtual tmp<volScalarField> Nu
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> Nu() const;
 
         //- Nusselt number for cell
-        scalar cellNu
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual scalar cellNu(const label) const;
 };
 
 

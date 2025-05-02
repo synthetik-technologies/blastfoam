@@ -37,6 +37,7 @@ namespace Foam
 
 Foam::coupledCompressibleSystem::coupledCompressibleSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh
 )
 :
@@ -44,8 +45,8 @@ Foam::coupledCompressibleSystem::coupledCompressibleSystem
     (
         IOobject
         (
-            "continuousVolumeFraction",
-            mesh.time().timeName(),
+            IOobject::groupName("alpha", "fluid"),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -58,7 +59,7 @@ Foam::coupledCompressibleSystem::coupledCompressibleSystem
         IOobject
         (
             "alphaRho",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE

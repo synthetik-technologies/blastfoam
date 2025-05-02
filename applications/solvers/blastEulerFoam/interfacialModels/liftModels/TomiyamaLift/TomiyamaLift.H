@@ -49,7 +49,7 @@ SourceFiles
 #ifndef TomiyamaLift_H
 #define TomiyamaLift_H
 
-#include "liftModel.H"
+#include "dispersedLiftModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -67,7 +67,7 @@ namespace liftModels
 
 class TomiyamaLift
 :
-    public liftModel
+    public dispersedLiftModel
 {
 public:
 
@@ -92,11 +92,7 @@ public:
     // Member Functions
 
         //- Lift coefficient
-        virtual tmp<volScalarField> Cl
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> Cl() const;
 };
 
 

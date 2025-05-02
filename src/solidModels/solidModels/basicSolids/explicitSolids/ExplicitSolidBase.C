@@ -98,7 +98,7 @@ template<class IncrementalSolid>
 Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::ExplicitSolidBase
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType nonLinear,
     const bool isSolid
 )
@@ -109,7 +109,7 @@ Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::ExplicitSolidBase
         IOobject
         (
             "wavespeed",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -122,7 +122,7 @@ Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::ExplicitSolidBase
         IOobject
         (
             "sWavespeed",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -136,7 +136,7 @@ Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::ExplicitSolidBase
         IOobject
         (
             "a",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -351,9 +351,9 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
 
     tmp<volVectorField> stab;
 
-    bool changing = false;
-    do
-    {
+//     bool changing = false;
+//     do
+//     {
         // changing = this->mesh().update();
         this->mesh().update();
 
@@ -369,7 +369,7 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
         this->U() = this->U().oldTime() + deltaT01*a_.oldTime();
 
         // Compute change in displacement
-        this->DD().ref() = deltaT*this->U()();
+        this->DD().internalFieldRef() = deltaT*this->U()();
 
         // Enforce any cell displacements
         if (this->setCellDisps().cellIDs().size())
@@ -432,7 +432,7 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
           + this->g();
         a_.correctBoundaryConditions();
 
-    } while (changing);
+//     } while (changing);
 
     // Check energies
     energies_.checkEnergies

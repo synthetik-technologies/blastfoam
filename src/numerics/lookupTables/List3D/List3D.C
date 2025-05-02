@@ -205,6 +205,27 @@ void Foam::List3D<Type>::transfer(List3D<Type>& lst)
 }
 
 
+
+
+
+template<class Type>
+void Foam::List3D<Type>::flip()
+{
+    List3D<Type> newLst(l_, n_, m_);
+    for (label k = 0; k < l_; k++)
+    {
+        for (label j = 0; j < n_; j++)
+        {
+            for (label i = 0; i < m_; i++)
+            {
+                newLst[k][j][i] = operator()(i, j, k);
+            }
+        }
+    }
+    operator=(newLst);
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>

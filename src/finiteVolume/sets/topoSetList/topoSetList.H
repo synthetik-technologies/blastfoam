@@ -54,7 +54,7 @@ class topoSetList;
 typedef DemandDrivenMeshObject
 <
     polyMesh,
-    PatchMeshObject,
+    RepatchableMeshObject,
     topoSetList
 > TopoSetList;
 

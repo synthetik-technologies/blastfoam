@@ -46,15 +46,12 @@ SourceFiles
 #ifndef Panicker_H
 #define Panicker_H
 
-#include "turbulentDispersionModel.H"
+#include "dispersedTurbulentDispersionModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-class phasePair;
-
 namespace turbulentDispersionModels
 {
 
@@ -64,7 +61,7 @@ namespace turbulentDispersionModels
 
 class Panicker
 :
-    public turbulentDispersionModel
+    public dispersedTurbulentDispersionModel
 {
     // Private data
 
@@ -99,11 +96,7 @@ public:
 
         //- Turbulent diffusivity
         //  multiplying the gradient of the phase-fraction
-        virtual tmp<volScalarField> D
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> D() const;
 };
 
 

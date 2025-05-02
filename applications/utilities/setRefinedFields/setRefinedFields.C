@@ -45,8 +45,7 @@ Description
 #include "volFields.H"
 #include "systemDict.H"
 
-#include "fvMeshHexRefiner.H"
-#include "mapPolyMesh.H"
+#include "polyMeshHexRefiner.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
 #include "wedgePolyPatch.H"
@@ -57,7 +56,6 @@ Description
 #include "fieldSetList.H"
 
 using namespace Foam;
-
 
 void calcFaceDiff
 (
@@ -185,16 +183,16 @@ void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
     {
         if (!mesh.foundObject<FieldType>(fieldIter()->name()))
         {
-            IOobject fieldTargetIOobject
+            typeIOobject<FieldType> fieldTargetIOobject
             (
                 fieldIter()->name(),
-                mesh.time().timeName(),
+                mesh.time().name(),
                 mesh,
                 IOobject::MUST_READ,
                 IOobject::AUTO_WRITE
             );
 
-            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            if (fieldTargetIOobject.headerOk())
             {
                 FieldType* fPtr
                 (
@@ -221,16 +219,16 @@ void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
     {
         if (!mesh.foundObject<FieldType>(fieldIter()->name()))
         {
-            IOobject fieldTargetIOobject
+            typeIOobject<FieldType> fieldTargetIOobject
             (
                 fieldIter()->name(),
-                mesh.time().timeName(),
+                mesh.time().name(),
                 mesh,
                 IOobject::MUST_READ,
                 IOobject::AUTO_WRITE
             );
 
-            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            if (fieldTargetIOobject.headerOk())
             {
                 FieldType* fPtr
                 (
@@ -251,7 +249,7 @@ void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
 void readAndAddAllFields(const fvMesh& mesh)
 {
     // Get all fields present at the current time
-    IOobjectList objects(mesh, mesh.time().timeName());
+    IOobjectList objects(mesh, mesh.time().name());
 
     readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
     readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
@@ -401,13 +399,12 @@ int main(int argc, char *argv[])
     #include "addDictOption.H"
     #include "addRegionOption.H"
     #include "setRootCase.H"
-    #include "createTime.H"
+    #include "createTimeNoFunctionObjects.H"
 
     //- Select time
-    runTime.functionObjects().off();
     instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
 
-    #include "createNamedMesh.H"
+    #include "createRegionMeshNoChangers.H"
 
     const word oldFacesInstance = mesh.facesInstance();
 
@@ -443,7 +440,7 @@ int main(int argc, char *argv[])
 
     //- Is the mesh balanced
     bool balance = false;
-    autoPtr<fvMeshRefiner> refiner;
+    autoPtr<polyMeshRefiner> refiner;
     if (!noRefine)
     {
         dictionary& refineDict
@@ -454,40 +451,45 @@ int main(int argc, char *argv[])
         );
         if (!refineDict.found("refiner"))
         {
-            IOobject dynamicMeshDictIO
+            typeIOobject<IOdictionary> dynamicMeshDictIO
             (
                 "dynamicMeshDict",
                 runTime.constant(),
                 runTime,
-                IOobject::NO_READ,
+                IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 false
             );
-            if (dynamicMeshDictIO.typeHeaderOk<IOdictionary>(true))
+            if (dynamicMeshDictIO.headerOk())
             {
-                dynamicMeshDictIO.readOpt() = IOobject::MUST_READ;
                 IOdictionary dynamicMeshDict(dynamicMeshDictIO);
-                const word type(dynamicMeshDict.lookup("dynamicFvMesh"));
-                const dictionary& coeffsDict(dynamicMeshDict.optionalSubDict(type + "Coeffs"));
-                if (coeffsDict.found("refiner"))
+                if
+                (
+                    dynamicMeshDict.isDict("topoChanger")
+                 && dynamicMeshDict.subDict("topoChanger").found("refiner")
+                )
                 {
                     refineDict.set
                     (
                         "refiner",
-                        coeffsDict.lookup<word>("refiner")
+                        dynamicMeshDict.subDict("topoChanger").lookup<word>
+                        (
+                            "refiner"
+                        )
                     );
                 }
             }
         }
 
+        refineDict.set("force", true);
         if (args.optionFound("forceHex8"))
         {
             refineDict.set("forceHex8", true);
-            refiner.set(new fvMeshHexRefiner(mesh, refineDict, true));
+            refiner.set(new polyMeshHexRefiner(mesh, refineDict));
         }
         else if (refineDict.found("refiner") || mesh.nGeometricD() > 1)
         {
-            refiner = fvMeshRefiner::New(mesh, refineDict, true);
+            refiner = polyMeshRefiner::New(mesh, refineDict);
         }
         else
         {
@@ -497,21 +499,21 @@ int main(int argc, char *argv[])
                 << "\"refiner\" keyword." << nl << endl;
         }
 
-        if (refiner.valid())
-        {
-            if (Pstream::parRun())
-            {
-                if (args.optionFound("noBalance"))
-                {
-                    refiner->balancer().balance() = false;
-                }
-                else
-                {
-                    balance = refiner->balancer().balance();
-                }
-            }
-            refiner->setForce(true);
-        }
+        // if (refiner.valid())
+        // {
+        //     if (Pstream::parRun())
+        //     {
+        //         if (args.optionFound("noBalance"))
+        //         {
+        //             refiner->balancer().balance() = false;
+        //         }
+        //         else
+        //         {
+        //             balance = refiner->balancer().balance();
+        //         }
+        //     }
+        //     refiner->setForce(true);
+        // }
     }
     bool refine = refiner.valid();
 
@@ -525,16 +527,16 @@ int main(int argc, char *argv[])
     forAll(fields, fieldi)
     {
         // Check the current time directory
-        IOobject fieldHeader
+        typeIOobject<volScalarField> fieldHeader
         (
             fieldNames[fieldi],
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         );
 
-        if (fieldHeader.typeHeaderOk<volScalarField>(true))
+        if (fieldHeader.headerOk())
         {
             fields.set
             (
@@ -596,7 +598,7 @@ int main(int argc, char *argv[])
                 IOobject
                 (
                     "error",
-                    runTime.timeName(),
+                    runTime.name(),
                     mesh
                 ),
                 mesh,
@@ -695,7 +697,7 @@ int main(int argc, char *argv[])
         if (debug)
         {
             runTime++;
-            Info<< "Time = " << runTime.timeName() << nl << endl;
+            Info<< "Time = " << runTime.name() << nl << endl;
         }
 
         if (maxIter <= iter)
@@ -725,9 +727,9 @@ int main(int argc, char *argv[])
                 (
                     mesh,
                     setFieldsDict,
-                    identity(mesh.nCells()),
-                    identity(mesh.nFaces()),
-                    identity(mesh.nPoints()),
+                    identityMap(mesh.nCells()),
+                    identityMap(mesh.nFaces()),
+                    identityMap(mesh.nPoints()),
                     write
                 )
             );
@@ -1097,7 +1099,7 @@ int main(int argc, char *argv[])
             // Write fields and mesh if using debug
             if (debug)
             {
-                mesh.setInstance(runTime.timeName());
+                mesh.setInstance(runTime.name());
                 bool writeOk = (mesh.write() && refiner->write());
                 volScalarField scalarMaxCellLevel
                 (

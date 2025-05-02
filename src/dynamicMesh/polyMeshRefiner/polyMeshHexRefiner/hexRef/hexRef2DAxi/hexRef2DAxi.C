@@ -32,20 +32,12 @@ License
 #include "polyMesh.H"
 #include "polyTopoChange.H"
 #include "meshTools.H"
-#include "polyAddFace.H"
-#include "polyAddPoint.H"
-#include "polyAddCell.H"
-#include "polyModifyFace.H"
 #include "syncTools.H"
 #include "faceSet.H"
 #include "cellSet.H"
 #include "pointSet.H"
 #include "OFstream.H"
 #include "Time.H"
-#include "FaceCellWave.H"
-#include "mapDistributePolyMesh.H"
-#include "refinementData.H"
-#include "refinementDistanceData.H"
 #include "degenerateMatcher.H"
 #include "dynMeshTools.H"
 
@@ -956,26 +948,17 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
 
                 const edge& e = mesh_.edges()[edgei];
 
-                edgeMidPoint[edgei] = meshMod.setAction
+                edgeMidPoint[edgei] = meshMod.addPoint
                 (
-                    polyAddPoint
-                    (
-                        edgeMids[edgei],            // point
-                        e[0],                       // master point
-                        -1,                         // zone for point
-                        true                        // supports a cell
-                    )
+                    edgeMids[edgei],            // point
+                    e[0],                       // master point
+                    true                        // supports a cell
                 );
                 splitEdges.append(edgei);
                 newEdgePoints[edgei] = edgeMidPoint[edgei];
 
                 newPointLevel(edgeMidPoint[edgei]) =
-                    max
-                    (
-                        pointLevel_[e[0]],
-                        pointLevel_[e[1]]
-                    )
-                  + 1;
+                    max(pointLevel_[e[0]], pointLevel_[e[1]]) + 1;
             }
         }
         locMapper.addSplitEdges(splitEdges, newEdgePoints);
@@ -1151,19 +1134,15 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
                 // point label.
 
                 const face& f = mesh_.faces()[facei];
-                faceMidPoint[facei] = meshMod.setAction
+                faceMidPoint[facei] = meshMod.addPoint
                 (
-                    polyAddPoint
                     (
-                        (
-                            facei < mesh_.nInternalFaces()
-                          ? mesh_.faceCentres()[facei]
-                          : bFaceMids[facei-mesh_.nInternalFaces()]
-                        ),                          // point
-                        f[0],                       // master point
-                        -1,                         // zone for point
-                        true                        // supports a cell
-                    )
+                        facei < mesh_.nInternalFaces()
+                      ? mesh_.faceCentres()[facei]
+                      : bFaceMids[facei-mesh_.nInternalFaces()]
+                    ),                          // point
+                    f[0],                       // master point
+                    true                        // supports a cell
                 );
 
                 splitFaces.append(facei);
@@ -1235,34 +1214,39 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
 
        forAll(cellMidPoint, celli)
        {
-            const cell& cFaces = mesh_.cells()[celli];
-            forAll(cFaces, i)
+            if (cellMidPoint[celli] >= 0)
             {
-                label facei = cFaces[i];
-                const face& f = mesh_.faces()[facei];
-                forAll(f, fp)
+                const cell& cFaces = mesh_.cells()[celli];
+                forAll(cFaces, i)
                 {
-                    label pointi = f[fp];
-                    if
-                    (
-                        cellMidPoint[celli] >= 0
-                        && isDivisibleFace[facei]
-                        && pointLevel_[pointi] <= cellLevel_[celli]
-                    )
+                    label facei = cFaces[i];
+                    const face& f = mesh_.faces()[facei];
+                    forAll(f, fp)
                     {
-                        if (nAnchorPoints[celli] == 8)
+                        label pointi = f[fp];
+                        if
+                        (
+                            isDivisibleFace[facei]
+                         && pointLevel_[pointi] <= cellLevel_[celli]
+                        )
                         {
-                            dumpCell(celli);
-                            FatalErrorInFunction
-                                << "cell " << celli
-                                << " of level " << cellLevel_[celli]
-                                << " uses more than 8 points of equal or"
-                                << " lower level" << nl
-                                << "Points so far:" << cellAnchorPoints[celli]
-                                << abort(FatalError);
+                            if (nAnchorPoints[celli] == 8)
+                            {
+                                dumpCell(celli);
+                                FatalErrorInFunction
+                                    << "cell " << celli
+                                    << " of level "
+                                    << cellLevel_[celli]
+                                    << " uses more than 8 points "
+                                    << "of equal or lower level." << nl
+                                    << "Points so far:"
+                                    << cellAnchorPoints[celli] << nl
+                                    << "Adding point " << pointi
+                                    << abort(FatalError);
+                            }
+                            cellAnchorPoints[celli][nAnchorPoints[celli]++]
+                                = pointi;
                         }
-                        cellAnchorPoints[celli][nAnchorPoints[celli]++]
-                            = pointi;
                     }
                 }
             }
@@ -1329,17 +1313,7 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
 
             for (label i = 1; i < 4; i++)
             {
-                cAdded[i] = meshMod.setAction
-                (
-                    polyAddCell
-                    (
-                        -1,                                 // master point
-                        -1,                                 // master edge
-                        -1,                                 // master face
-                        celli,                              // master cell
-                        mesh_.cellZones().whichZone(celli)  // zone for cell
-                    )
-                );
+                cAdded[i] = meshMod.addCell(celli);
 
                 newCellLevel(cAdded[i]) = cellLevel_[celli]+1;
             }

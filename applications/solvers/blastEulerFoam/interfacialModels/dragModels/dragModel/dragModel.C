@@ -29,7 +29,6 @@ License
 #include "dragModel.H"
 #include "BlendedInterfacialModel.H"
 #include "phasePair.H"
-#include "swarmCorrection.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 
@@ -58,7 +57,7 @@ Foam::dragModel::dragModel
         IOobject
         (
             IOobject::groupName(typeName, pair.name()),
-            pair.phase1().mesh().time().timeName(),
+            pair.phase1().mesh().time().name(),
             pair.phase1().mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -81,15 +80,14 @@ Foam::dragModel::dragModel
         IOobject
         (
             IOobject::groupName(typeName, pair.name()),
-            pair.phase1().mesh().time().timeName(),
+            pair.phase1().mesh().time().name(),
             pair.phase1().mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
             registerObject
         )
     ),
-    pair_(pair),
-    swarmCorrection_(swarmCorrection::New(dict, pair))
+    pair_(pair)
 {}
 
 
@@ -101,88 +99,27 @@ Foam::dragModel::~dragModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModel::Ki
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        0.75
-       *CdRe(nodei, nodej)
-       *swarmCorrection_->Cs(nodei, nodej)
-       *pair_.continuous().rho()
-       *pair_.continuous().nu()
-       /sqr(pair_.dispersed().d(nodei));
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::dragModel::K
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        max
-        (
-            pair_.dispersed().volumeFraction(nodei),
-            pair_.dispersed().residualAlpha()
-        )*Ki(nodei, nodej);
-}
-
-
-Foam::tmp<Foam::surfaceScalarField> Foam::dragModel::Kf
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        max
-        (
-            fvc::interpolate(pair_.dispersed().volumeFraction(nodei)),
-            pair_.dispersed().residualAlpha()
-        )*fvc::interpolate(Ki(nodei, nodej));
-}
-
-
-Foam::scalar Foam::dragModel::cellKi
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        0.75
-       *cellCdRe(celli, nodei, nodej)
-       *swarmCorrection_->cellCs(celli, nodei, nodej)
-       *pair_.continuous().rho()[celli]
-       *pair_.continuous().cellnu(celli)
-       /sqr(pair_.dispersed().celld(celli, nodei));
-}
-
-
-Foam::scalar Foam::dragModel::cellK
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        max
-        (
-            pair_.dispersed().cellvolumeFraction(celli, nodei),
-            pair_.dispersed().residualAlpha().value()
-        )*cellKi(celli, nodei, nodej);
-}
-
-
 bool Foam::dragModel::writeData(Ostream& os) const
 {
     return os.good();
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::blendedDragModel::K() const
+{
+    return this->evaluate(&dragModel::K, "K", dragModel::dimK, false);
+}
+
+
+Foam::tmp<Foam::surfaceScalarField> Foam::blendedDragModel::Kf() const
+{
+    return this->evaluate(&dragModel::Kf, "Kf", dragModel::dimK, false);
+}
+
+
+Foam::scalar Foam::blendedDragModel::cellK(const label celli) const
+{
+    return this->evaluate(&dragModel::cellK, false, celli);
 }
 
 

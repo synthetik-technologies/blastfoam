@@ -67,60 +67,31 @@ Foam::wallLubricationModels::noWallLubrication::~noWallLubrication()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volVectorField>
-Foam::wallLubricationModels::noWallLubrication::FI
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::wallLubricationModels::noWallLubrication::F() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return tmp<volVectorField>
+    return volVectorField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                "noWallLubrication:Fi",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            dimensionedVector("zero", dimF, Zero)
-        )
+        typeName + ":F",
+        mesh,
+        dimensionedVector(dimF, Zero)
     );
 }
 
 
-Foam::tmp<Foam::volVectorField>
-Foam::wallLubricationModels::noWallLubrication::F
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::surfaceScalarField>
+Foam::wallLubricationModels::noWallLubrication::Ff() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return tmp<volVectorField>
+    return surfaceScalarField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                "noWallLubrication:F",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            dimensionedVector("zero", dimF, Zero)
-        )
+        typeName + ":Ff",
+        mesh,
+        dimensionedScalar(dimF*dimArea, Zero)
     );
 }
+
 
 // ************************************************************************* //

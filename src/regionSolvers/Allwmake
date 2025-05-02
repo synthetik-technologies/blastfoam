@@ -6,7 +6,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 wmake $targetType regionSolvers
 wmake $targetType blastRegionSolvers
-wmake $targetType foamRegionSolvers
+#wmake $targetType foamRegionSolvers
 
 # -----------------------------------------------------------------------------
 

@@ -48,7 +48,7 @@ addToRunTimeSelectionTable
 
 explicitUpdatedLagrangianSolid::explicitUpdatedLagrangianSolid
 (
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     UpdatedLagrangianGeomSolid<explicitNonLinearSolid>(typeName, mesh)

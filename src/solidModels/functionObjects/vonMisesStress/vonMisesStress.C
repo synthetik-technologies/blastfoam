@@ -57,7 +57,7 @@ Foam::functionObjects::vonMisesStress::vonMisesStress
 :
     fvMeshFunctionObject(name, runTime, dict)
 {
-    Info<< "Creating " << this->name() << " function object" << endl;
+    read(dict);
 }
 
 

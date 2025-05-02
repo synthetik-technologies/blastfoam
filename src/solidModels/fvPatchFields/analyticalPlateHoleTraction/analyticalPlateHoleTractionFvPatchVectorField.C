@@ -33,14 +33,10 @@ License
 #include "fixedValueFvPatchFields.H"
 #include "coordinateSystem.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
 // * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * * * //
 
-symmTensor analyticalPlateHoleTractionFvPatchVectorField::plateHoleSolution
+Foam::symmTensor
+Foam::analyticalPlateHoleTractionFvPatchVectorField::plateHoleSolution
 (
     const vector& C
 )
@@ -86,7 +82,7 @@ symmTensor analyticalPlateHoleTractionFvPatchVectorField::plateHoleSolution
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-analyticalPlateHoleTractionFvPatchVectorField::
+Foam::analyticalPlateHoleTractionFvPatchVectorField::
 analyticalPlateHoleTractionFvPatchVectorField
 (
     const fvPatch& p,
@@ -99,7 +95,7 @@ analyticalPlateHoleTractionFvPatchVectorField
 {}
 
 
-analyticalPlateHoleTractionFvPatchVectorField::
+Foam::analyticalPlateHoleTractionFvPatchVectorField::
 analyticalPlateHoleTractionFvPatchVectorField
 (
     const fvPatch& p,
@@ -113,58 +109,56 @@ analyticalPlateHoleTractionFvPatchVectorField
 {}
 
 
-analyticalPlateHoleTractionFvPatchVectorField::
+Foam::analyticalPlateHoleTractionFvPatchVectorField::
 analyticalPlateHoleTractionFvPatchVectorField
 (
-    const analyticalPlateHoleTractionFvPatchVectorField& stpvf,
+    const analyticalPlateHoleTractionFvPatchVectorField& aphtpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
-    solidTractionFvPatchVectorField(stpvf, p, iF, mapper),
-    T_(stpvf.T_),
-    holeR_(stpvf.holeR_)
+    solidTractionFvPatchVectorField(aphtpvf, p, iF, mapper),
+    T_(aphtpvf.T_),
+    holeR_(aphtpvf.holeR_)
 {}
 
 
-analyticalPlateHoleTractionFvPatchVectorField::
+Foam::analyticalPlateHoleTractionFvPatchVectorField::
 analyticalPlateHoleTractionFvPatchVectorField
 (
-    const analyticalPlateHoleTractionFvPatchVectorField& stpvf,
+    const analyticalPlateHoleTractionFvPatchVectorField& aphtpvf,
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    solidTractionFvPatchVectorField(stpvf, iF),
-    T_(stpvf.T_),
-    holeR_(stpvf.holeR_)
+    solidTractionFvPatchVectorField(aphtpvf, iF),
+    T_(aphtpvf.T_),
+    holeR_(aphtpvf.holeR_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void analyticalPlateHoleTractionFvPatchVectorField::autoMap
+void Foam::analyticalPlateHoleTractionFvPatchVectorField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchField<vector>& ptf,
+    const fieldMapper& mapper
 )
 {
-    solidTractionFvPatchVectorField::autoMap(m);
+    solidTractionFvPatchVectorField::map(ptf, mapper);
 }
 
 
-// Reverse-map the given fvPatchField onto this fvPatchField
-void analyticalPlateHoleTractionFvPatchVectorField::rmap
+void Foam::analyticalPlateHoleTractionFvPatchVectorField::reset
 (
-    const fvPatchVectorField& ptf,
-    const labelList& addr
+    const fvPatchVectorField& ptf
 )
 {
-    solidTractionFvPatchVectorField::rmap(ptf, addr);
+    solidTractionFvPatchVectorField::reset(ptf);
 }
 
 
-// Update the coefficients associated with the patch field
-bool analyticalPlateHoleTractionFvPatchVectorField::updateFields()
+bool Foam::analyticalPlateHoleTractionFvPatchVectorField::updateFields()
 {
     // Patch unit normals
     vectorField n(patch().nf());
@@ -196,29 +190,28 @@ bool analyticalPlateHoleTractionFvPatchVectorField::updateFields()
 }
 
 
-// Write
-void analyticalPlateHoleTractionFvPatchVectorField::write(Ostream& os) const
+void Foam::analyticalPlateHoleTractionFvPatchVectorField::write
+(
+    Ostream& os
+) const
 {
     solidTractionFvPatchVectorField::write(os);
 
-    os.writeKeyword("farFieldTractionX")
-        << T_ << token::END_STATEMENT << nl;
-
-    os.writeKeyword("holeRadius")
-        << holeR_ << token::END_STATEMENT << nl;
+    writeEntry(os, "farFieldTractionX", T_);
+    writeEntry(os, "holeRadius", holeR_);
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField
-(
-    fvPatchVectorField,
-    analyticalPlateHoleTractionFvPatchVectorField
-);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        analyticalPlateHoleTractionFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

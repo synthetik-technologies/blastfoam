@@ -27,6 +27,7 @@ License
 
 #include "CodedUnivariateEquation.H"
 #include "adaptiveTypes.H"
+#include "stringOps.H"
 
 template<class Type>
 Foam::wordList Foam::CodedUnivariateEquation<Type>::codeKeys() const
@@ -36,6 +37,18 @@ Foam::wordList Foam::CodedUnivariateEquation<Type>::codeKeys() const
         "fx_code",
         "dfdx_code",
         "codeInclude"
+    };
+}
+
+
+template<class Type>
+Foam::wordList Foam::CodedUnivariateEquation<Type>::codeDictVars() const
+{
+    return
+    {
+        word::null,
+        word::null,
+        word::null
     };
 }
 

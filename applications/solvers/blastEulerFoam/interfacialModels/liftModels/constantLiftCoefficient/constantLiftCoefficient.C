@@ -49,7 +49,7 @@ Foam::liftModels::constantLiftCoefficient::constantLiftCoefficient
     const phasePair& pair
 )
 :
-    liftModel(dict, pair),
+    dispersedLiftModel(dict, pair),
     Cl_("Cl", dimless, dict)
 {}
 
@@ -63,29 +63,16 @@ Foam::liftModels::constantLiftCoefficient::~constantLiftCoefficient()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::liftModels::constantLiftCoefficient::Cl
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::liftModels::constantLiftCoefficient::Cl() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return
-        tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "zero",
-                    mesh.time().timeName(),
-                    mesh
-                ),
-                mesh,
-                Cl_
-            )
-        );
+    return volScalarField::New
+    (
+        typeName + ":Cl",
+        mesh,
+        Cl_
+    );
 }
 
 

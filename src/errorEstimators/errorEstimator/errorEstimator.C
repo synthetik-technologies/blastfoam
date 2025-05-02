@@ -59,7 +59,8 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
                 isA<mappedPatchBase>(mesh.boundary()[patchi])
             )
             {
-                boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
+                boundaryTypes[patchi] =
+                    coupledMaxErrorFvPatchScalarField::typeName;
             }
             if (debug)
             {
@@ -74,7 +75,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
                 IOobject
                 (
                     errorName,
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh
                 ),
                 mesh,
@@ -120,7 +121,7 @@ Foam::errorEstimator::errorEstimator
         IOobject
         (
             IOobject::groupName(typeName, name),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE,
@@ -136,6 +137,7 @@ Foam::errorEstimator::errorEstimator
     upperUnrefine_(0.0),
     maxLevel_(-1),
     minDx_(-1),
+    override_(false),
     refineProbes_(dict.lookupOrDefault("refineProbes", true)),
     force_(false),
     curTimeIndex_(-1)
@@ -173,10 +175,16 @@ void Foam::errorEstimator::read(const dictionary& dict)
             << "Either maxRefinement or minDx must be specified" << endl
             << abort(FatalIOError);
     }
+
+    override_ = dict.lookupOrDefault("override", false);
 }
 
 
-void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
+void Foam::errorEstimator::getFieldValue
+(
+    const word& name,
+    volScalarField& f
+) const
 {
     bool found = false;
     found = found || this->getFieldValueType<scalar>(name, f);
@@ -217,6 +225,38 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         else
         {
             error[celli] = 0.0;
+        }
+    }
+
+    volScalarField::Boundary& berror = error.boundaryFieldRef();
+    forAll(berror, patchi)
+    {
+        fvPatchScalarField& perror = berror[patchi];
+        const labelList& faceCells = perror.patch().faceCells();
+
+        forAll(perror, facei)
+        {
+            const label celli = faceCells[facei];
+            if
+            (
+                perror[facei] < lowerUnrefine_
+             || perror[facei] > upperUnrefine_
+            )
+            {
+                error[celli] = max(error[celli], -1.0);
+            }
+            else if
+            (
+                perror[facei] > lowerRefine_
+             && perror[facei] < upperRefine_
+            )
+            {
+                error[celli] = max(error[celli], 1.0);
+            }
+            else
+            {
+                error[celli] = max(error[celli], 0.0);
+            }
         }
     }
 

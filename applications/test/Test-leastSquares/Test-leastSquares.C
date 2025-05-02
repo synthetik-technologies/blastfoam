@@ -5,7 +5,7 @@
 #include "createEquations.H"
 #include "UnivariateEquationsFwd.H"
 #include "argList.H"
-#include "Random.H"
+#include "randomGenerator.H"
 
 using namespace Foam;
 
@@ -93,7 +93,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-    Random rand(0);
+    randomGenerator rand(0);
     const label n = 100;
     const scalar xMax = 20.0;
     List<scalar> x1(n);

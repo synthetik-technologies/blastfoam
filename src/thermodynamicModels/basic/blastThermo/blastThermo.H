@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "timeIntegrationSystem.H"
-#include "basicThermo.H"
+#include "rhoThermo.H"
 #include "OSspecific.H"
 
 namespace Foam
@@ -57,7 +57,7 @@ class basicBlastThermo;
 class blastThermo
 :
     public timeIntegrationSystem,
-    virtual public basicThermo
+    virtual public rhoThermo
 {
 protected:
 
@@ -252,12 +252,23 @@ public:
         virtual tmp<volScalarField> ESource() const = 0;
 
         //- Return residual values
-        virtual dimensionedScalar residualAlpha() const
+        virtual const dimensionedScalar& residualAlpha() const
         {
             return residualAlpha_;
         }
 
-        virtual dimensionedScalar residualRho() const
+        virtual const dimensionedScalar& residualRho() const
+        {
+            return residualRho_;
+        }
+
+        //- Access residual values
+        virtual dimensionedScalar& residualAlpha()
+        {
+            return residualAlpha_;
+        }
+
+        virtual dimensionedScalar& residualRho()
         {
             return residualRho_;
         }
@@ -322,7 +333,7 @@ public:
 
         // Fields derived from thermodynamic state variables
 
-            using basicThermo::he;
+            using rhoThermo::he;
 
             //- Return enthalpy/Internal energy [J/kg]
             virtual const volScalarField& he() const;
@@ -331,14 +342,14 @@ public:
             virtual volScalarField& he();
 
             //- Enthalpy/Internal energy for a cell [J/kg]
-            virtual scalar cellHE
+            virtual scalar cellhe
             (
                 const scalar T,
                 const label celli
             ) const = 0;
 
             //- Enthalpy/Internal energy for patch and face [J/kg]
-            virtual scalar patchFaceHE
+            virtual scalar patchFacehe
             (
                 const scalar T,
                 const label patchi,
@@ -359,33 +370,33 @@ public:
             }
 
             //- Heat capacity at constant pressure [J/kg/K]
-            using basicThermo::Cp;
+            using rhoThermo::Cp;
             virtual const volScalarField& Cp() const
             {
                 return Cp_;
             }
 
             //- Heat capacity at constant volume [J/kg/K]
-            using basicThermo::Cv;
+            using rhoThermo::Cv;
             virtual const volScalarField& Cv() const
             {
                 return Cv_;
             }
 
             //- Heat capacity at constant volume [J/kg/K]
-            using basicThermo::Cpv;
+            using rhoThermo::Cpv;
             virtual const volScalarField& Cpv() const
             {
                 return Cv_;
             }
 
-            using basicThermo::THE;
+            using rhoThermo::The;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual tmp<volScalarField> THE() const = 0;
+            virtual tmp<volScalarField> The() const = 0;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar cellTHE
+            virtual scalar cellThe
             (
                 const scalar he,
                 const scalar T0,
@@ -404,6 +415,9 @@ public:
             //- Return non-const access to the local density field [kg/m^3]
             virtual volScalarField& rho();
 
+            //- Return non-const access to the local density field [kg/m^3]
+            virtual volScalarField& rhoRef();
+
             //- Old-time density [kg/m^3]
             virtual tmp<volScalarField> rho0() const;
 
@@ -419,9 +433,6 @@ public:
                 const scalarField& T,
                 const label patchi
             ) const;
-
-            //- Flame temperature [k]
-            virtual tmp<volScalarField> flameT() const = 0;
 
             //- Return molecular weight
             virtual scalar cellW(const label) const = 0;
@@ -455,6 +466,9 @@ public:
 
         //- Read residual values
         virtual bool read();
+
+        //- Read residual values
+        virtual bool read(const dictionary& dict);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

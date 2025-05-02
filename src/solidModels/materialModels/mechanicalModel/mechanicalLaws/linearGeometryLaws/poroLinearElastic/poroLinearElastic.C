@@ -88,7 +88,7 @@ Foam::poroLinearElastic::poroLinearElastic
         IOobject
         (
             "p0",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE

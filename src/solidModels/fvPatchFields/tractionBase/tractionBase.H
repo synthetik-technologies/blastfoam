@@ -107,7 +107,7 @@ public:
         (
             const tractionBase&,
             const fvPatch&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy
@@ -157,18 +157,12 @@ public:
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
-            (
-                const fvPatchFieldMapper&
-            );
+            //- Map the given fvPatchField onto this fvPatchField
+            virtual void map(const fvPatchField<vector>&, const fieldMapper&);
 
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
-            (
-                const tractionBase&,
-                const labelList&
-            );
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset(const fvPatchField<vector>&);
 
         //- Update pressure and traction
         virtual bool updateFields() = 0;

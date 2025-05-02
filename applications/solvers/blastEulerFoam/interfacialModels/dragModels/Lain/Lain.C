@@ -50,7 +50,7 @@ Foam::dragModels::Lain::Lain
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject)
+    dispersedDragModel(dict, pair, registerObject)
 {}
 
 
@@ -62,13 +62,9 @@ Foam::dragModels::Lain::~Lain()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Lain::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Lain::CdRe() const
 {
-    volScalarField Re(pair_.Re(nodei, nodej));
+    volScalarField Re(pair_.Re());
 
     return
         neg(Re - 1.5)*16.0
@@ -78,14 +74,9 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Lain::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Lain::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::dragModels::Lain::cellCdRe(const label celli) const
 {
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli));
 
     return
         neg(Re - 1.5)*16.0

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "HuilinPressure.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -78,41 +79,69 @@ Foam::kineticTheoryModels::granularPressureModels::Huilin::granularPressure
     const dimensionedScalar& e
 ) const
 {
-    const scalar pi = Foam::constant::mathematical::pi;
-    volScalarField d1(phase1.d());
-    volScalarField d2(phase2.d());
-    volScalarField d12(0.5*(d1 + d2));
-
-    volScalarField Theta1(theta1);
-    Theta1.max(1e-10);
-    volScalarField Theta2(theta2);
-    Theta2.max(1e-10);
-
-    volScalarField m1(pi/6.0*pow3(d1)*phase1.rho());
-    volScalarField m2(pi/6.0*pow3(d2)*phase2.rho());
-    volScalarField n1(6.0*phase1/(pi*pow3(d1)));
-    volScalarField n2(6.0*phase2/(pi*pow3(d2)));
-    volScalarField m0(m1 + m2);
-    volScalarField omega
-    (
-        (m1*Theta1 - m2*Theta2)
-       /sqrt
+    if (&phase1 == &phase2)
+    {
+        return volScalarField::New
         (
-            sqr(m1*Theta1) + sqr(m2*Theta2)
-          + Theta1*Theta2*(sqr(m1) + sqr(m2))
+            "Ps." + phase1.group(),
+            sqr(phase1)*phase1.rho()*theta1*2.0*(1.0 + e)*g0
+        );
+    }
+
+    using Foam::constant::mathematical::pi;
+
+    tmp<volScalarField> tPs
+    (
+        volScalarField::New
+        (
+            "Ps." + phase1.group() + "." + phase2.group(),
+            phase1.mesh(),
+            dimensionedScalar(dimPressure, 0.0),
+            extrapolatedCalculatedFvPatchScalarField::typeName
         )
     );
+    volScalarField& Ps = tPs.ref();
 
-    return
-        pi*(1 + e)*pow3(d12)*g0*n1*n2*m1*m2*m0*Theta1*Theta2
-       /(3.0*(sqr(m1)*Theta1 + sqr(m2)*Theta2))
-       *pow
-        (
-            sqr(m0)*Theta1*Theta2
-           /((sqr(m1)*Theta1 + sqr(m2)*Theta2)*(Theta1 + Theta2)),
-            3.0/2.0
-        )
-       *(1.0 - 3.0*omega + 6.0*sqr(omega) - 10.0*pow3(omega));
+    tmp<volScalarField> td1(phase1.d());
+    const volScalarField& d1 = td1();
+
+    tmp<volScalarField> td2(phase2.d());
+    const volScalarField& d2 = td2();
+
+    const volScalarField& rho1 = phase1.rho();
+    const volScalarField& rho2 = phase2.rho();
+
+    forAll(Ps, celli)
+    {
+        const scalar d12 = d1[celli] + d2[celli];
+        const scalar m1 = pi/6.0*pow3(d1[celli])*rho1[celli];
+        const scalar m2 = pi/6.0*pow3(d2[celli])*rho2[celli];
+        const scalar m0 = m1 + m2;
+        const scalar n1 = 6.0*phase1[celli]/(pi*pow3(d1[celli]));
+        const scalar n2 = 6.0*phase2[celli]/(pi*pow3(d2[celli]));
+        const scalar t1 = theta1[celli];
+        const scalar t2 = theta2[celli];
+
+        if (t1 > small || t2 > small)
+        {
+            const scalar omega =
+                (m1*t1 - m2*t2)
+               /sqrt(sqr(m1*t1) + sqr(m2*t2) + t1*t2*(sqr(m1) + sqr(m2)));
+
+            Ps[celli] =
+                pi*(1 + e.value())*pow3(d12)*g0[celli]*n1*n2*m1*m2*m0*t1*t2
+               /(3.0*(sqr(m1)*t1 + sqr(m2)*t2))
+               *pow
+                (
+                    sqr(m0)*t1*t2/((sqr(m1)*t1 + sqr(m2)*t2)*(t1 + t2)),
+                    1.5
+                )
+               *(1.0 - 3.0*omega + 6.0*sqr(omega) - 10.0*pow3(omega));
+        }
+    }
+    Ps.correctBoundaryConditions();
+
+    return tPs;
 }
 
 
@@ -129,10 +158,25 @@ granularPressureByAlpha
     const dimensionedScalar& e
 ) const
 {
-    const scalar pi = Foam::constant::mathematical::pi;
-    volScalarField d1(phase1.d());
-    volScalarField d2(phase2.d());
-    volScalarField d12(0.5*(d1 + d2));
+    if (&phase1 == &phase2)
+    {
+        return volScalarField::New
+        (
+            "dPsdAlpha." + phase1.group(),
+            2.0*phase1*phase1.rho()*theta1*(1.0 + e)*(2.0*g0 + phase1*g0prime)
+        );
+    }
+
+    using Foam::constant::mathematical::pi;
+
+    tmp<volScalarField> td1(phase1.d());
+    const volScalarField& d1 = td1();
+
+    tmp<volScalarField> td2(phase2.d());
+    const volScalarField& d2 = td2();
+
+    tmp<volScalarField> td12(0.5*(d1 + d2));
+    const volScalarField& d12 = td12();
 
     volScalarField Theta1(theta1);
     Theta1.max(1e-10);
@@ -183,10 +227,25 @@ granularPressureByTheta
     const dimensionedScalar& e
 ) const
 {
-    const scalar pi = Foam::constant::mathematical::pi;
-    volScalarField d1(phase1.d());
-    volScalarField d2(phase2.d());
-    volScalarField d12(0.5*(d1 + d2));
+    if (&phase1 == &phase2)
+    {
+        return volScalarField::New
+        (
+            "dPsdTheta." + phase1.group(),
+            sqr(phase1)*phase1.rho()*2.0*(1.0 + e)*g0
+        );
+    }
+
+    using Foam::constant::mathematical::pi;
+
+    tmp<volScalarField> td1(phase1.d());
+    const volScalarField& d1 = td1();
+
+    tmp<volScalarField> td2(phase2.d());
+    const volScalarField& d2 = td2();
+
+    tmp<volScalarField> td12(0.5*(d1 + d2));
+    const volScalarField& d12 = td12();
 
     volScalarField Theta1(theta1);
     Theta1.max(1e-10);
@@ -201,7 +260,7 @@ granularPressureByTheta
     volScalarField n2(6.0*phase2/(pi*pow3(d2)));
     volScalarField m0(m1 + m2);
 
-    volScalarField a(pi*(1.0 + e)*pow3(d12)*g0*n1*n2*m1*m2*m0/3.0);
+    volScalarField coeff(pi*(1.0 + e)*pow3(d12)*g0*n1*n2*m1*m2*m0/3.0);
     volScalarField d
     (
         m1Sqr*Theta1*(Theta1 + Theta2) + m2Sqr*Theta2*(Theta1 + Theta2)
@@ -214,7 +273,7 @@ granularPressureByTheta
     (
         pow(y(), 1.5)
     );
-    volScalarField delta
+    volScalarField omega
     (
         (m1*Theta1 - m2*Theta2)
        /sqrt
@@ -224,17 +283,12 @@ granularPressureByTheta
           + Theta1*Theta2*(m1Sqr + m2Sqr )
         )
     );
-    volScalarField Z(1.0 - 3.0*delta + 6.0*sqr(delta) - 10.0*pow3(delta));
+    volScalarField Z(1.0 - 3.0*omega + 6.0*sqr(omega) - 10.0*pow3(omega));
 
-    if (&phase1 == &phase2)
-    {
-        return a/(2.0*sqr(m1))*Y*Z;
-    }
-
-    volScalarField X(a*Theta1*Theta2/(m1Sqr*Theta1 + m2Sqr*Theta2));
+    volScalarField X(coeff*Theta1*Theta2/(m1Sqr*Theta1 + m2Sqr*Theta2));
     tmp<volScalarField> XPrime
     (
-        a*sqr(Theta2*m2)/sqr(m1Sqr*Theta1 + m2Sqr*Theta2)
+        coeff*sqr(Theta2*m2)/sqr(m1Sqr*Theta1 + m2Sqr*Theta2)
     );
     tmp<volScalarField> dPrime
     (
@@ -258,11 +312,11 @@ granularPressureByTheta
         2.0*m1Sqr*Theta1 + Theta2*(m1Sqr + m2Sqr);
     tmp<volScalarField> deltaPrime
     (
-        nPrime/sqrt(d) - 0.5*n*dPrime()/pow(d, 1.5)
+        (nPrime*d - 0.5*n*dPrime())/pow(d, 1.5)
     );
     tmp<volScalarField> ZPrime
     (
-        deltaPrime*(3.0 + 12.0*delta - 30.0*sqr(delta))
+        deltaPrime*(3.0 + 12.0*omega - 30.0*sqr(omega))
     );
     return
         XPrime*Y*Z

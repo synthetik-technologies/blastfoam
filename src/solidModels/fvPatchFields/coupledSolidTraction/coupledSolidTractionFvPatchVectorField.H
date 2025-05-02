@@ -109,7 +109,7 @@ public:
             const coupledSolidTractionFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Copy constructor
@@ -138,24 +138,26 @@ public:
         }
 
 
-    // Member Functions
+        // Mapping functions
 
-        //- Return integrated force on neighbour patch
-        const vector& forceNbr() const
-        {
-            return forceNbr_;
-        }
+            //- Map the given fvPatchField onto this fvPatchField
+            virtual void map(const fvPatchField<vector>&, const fieldMapper&);
 
-        //- Map (and resize as needed) from self given a mapping object
-        //  Used to update fields following mesh topology change
-        virtual void autoMap(const fvPatchFieldMapper&);
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset(const fvPatchField<vector>&);
 
-        //- Reverse map the given fvPatchField onto this fvPatchField
-        //  Used to reconstruct fields
-        virtual void rmap(const fvPatchVectorField&, const labelList&);
 
-        //- Update pressure and traction
-        virtual bool updateFields();
+        // Evaluation
+
+            //- Return integrated force on neighbour patch
+            const vector& forceNbr() const
+            {
+                return forceNbr_;
+            }
+
+            //- Update pressure and traction
+            virtual bool updateFields();
 
         //- Write
         virtual void write(Ostream&) const;

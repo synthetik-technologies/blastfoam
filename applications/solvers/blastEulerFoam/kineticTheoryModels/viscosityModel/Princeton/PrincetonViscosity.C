@@ -81,7 +81,7 @@ Foam::kineticTheoryModels::viscosityModels::Princeton::nu
         IOobject
         (
             "alphag0",
-         Theta.time().timeName(),
+         Theta.time().name(),
          Theta.mesh()
         ),
      Theta.mesh(),
@@ -104,7 +104,7 @@ Foam::kineticTheoryModels::viscosityModels::Princeton::nu
         IOobject
         (
             "Beta",
-         Theta.mesh().time().timeName(),
+         Theta.mesh().time().name(),
          Theta.mesh()
         ),
      Theta.mesh(),

@@ -29,7 +29,7 @@ Description
 
 SourceFiles
     diameterModel.C
-    newDiameterModel.C
+    diameterModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -144,6 +144,12 @@ public:
         //- Return change in radius per unit time
         //  Only used in mass transfer
         virtual tmp<volScalarField> dMdt() const;
+        
+        //- Return the length to diameter ratio
+        virtual tmp<volScalarField> LDratio() const;
+
+        //- Return the length to diameter ratio for a cell
+        virtual scalar LDratio(const label celli) const;
 };
 
 

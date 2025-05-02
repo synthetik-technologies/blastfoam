@@ -55,13 +55,21 @@ public:
     TypeName("singlePhase");
 
     // Constructor
-    singlePhaseCompressibleSystem(const fvMesh& mesh, const bool initialize = true);
+    singlePhaseCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const bool initialize = true
+    );
 
     //- Destructor
     virtual ~singlePhaseCompressibleSystem();
 
 
     // Member functions
+
+        //- Decode primative variables
+        virtual void decode();
 
         //- Solve sub-step stepi
         virtual void solve();

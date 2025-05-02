@@ -33,8 +33,9 @@ License
 
 namespace Foam
 {
+namespace functionObjects
+{
     defineTypeNameAndDebug(hotCylinderAnalyticalSolution, 0);
-
     addToRunTimeSelectionTable
     (
         functionObject,
@@ -42,29 +43,71 @@ namespace Foam
         dictionary
     );
 }
+}
 
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-bool Foam::hotCylinderAnalyticalSolution::writeData()
+Foam::functionObjects::hotCylinderAnalyticalSolution::
+hotCylinderAnalyticalSolution
+(
+    const word& name,
+    const Time& t,
+    const dictionary& dict
+)
+:
+    fvMeshFunctionObject(name, t, dict),
+    rInner_("rInner", dimLength, dict.lookup("rInner")),
+    rOuter_("rOuter", dimLength, dict.lookup("rOuter")),
+    TInner_("TInner", dimTemperature, dict.lookup("TInner")),
+    TOuter_("TOuter", dimTemperature, dict.lookup("TOuter")),
+    E_("E", dimPressure, dict.lookup("E")),
+    nu_("nu", dimless, dict.lookup("nu")),
+    alpha_("alpha", dimVolume/dimTemperature, dict.lookup("alpha"))
 {
-    Info<< "hotCylinderAnalyticalSolution: writing analytical solution fields"
-        << endl;
+    read(dict);
+}
 
-    // Lookup the solid mesh
-    const fvMesh* meshPtr = NULL;
-    if (time_.foundObject<fvMesh>("solid"))
-    {
-        meshPtr = &(time_.lookupObject<fvMesh>("solid"));
-    }
-    else
-    {
-        meshPtr = &(time_.lookupObject<fvMesh>("region0"));
-    }
-    const fvMesh& mesh = *meshPtr;
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::functionObjects::hotCylinderAnalyticalSolution::read
+(
+    const dictionary& dict
+)
+{
+    fvMeshFunctionObject::read(dict);
+    dict.readIfPresent("rInner", rInner_.value());
+    dict.readIfPresent("rOuter", rOuter_.value());
+    dict.readIfPresent("TInner", TInner_.value());
+    dict.readIfPresent("TOuter", TOuter_.value());
+    dict.readIfPresent("E", E_.value());
+    dict.readIfPresent("nu", nu_.value());
+    dict.readIfPresent("alpha", alpha_.value());
+
+
+    if (rInner_.value() >= rOuter_.value())
+    {
+        FatalErrorInFunction
+            << "rInner should be less than rOuter!"
+            << abort(FatalError);
+    }
+
+    if (E_.value() < small || nu_.value() < small)
+    {
+        FatalErrorInFunction
+            << "E and nu should be positive!"
+            << abort(FatalError);
+    }
+
+    return true;
+}
+
+
+bool Foam::functionObjects::hotCylinderAnalyticalSolution::execute()
+{
     // Cell centre coordinates
-    const volVectorField& C = mesh.C();
+    const volVectorField& C = mesh_.C();
 
     // Create radial coordinates field
     // Note: I divide by 1.0 so that radii will be dimless
@@ -74,7 +117,7 @@ bool Foam::hotCylinderAnalyticalSolution::writeData()
         (
             sqr(C.component(vector::X))
           + sqr(C.component(vector::Y))
-        )/dimensionedScalar("one", dimLength, 1)
+        )
     );
 
     if (gMin(radii.primitiveField()) < SMALL)
@@ -86,35 +129,17 @@ bool Foam::hotCylinderAnalyticalSolution::writeData()
     }
 
     // Create the analytical temperature field
-    volScalarField analyticalT
+    store
     (
-        IOobject
-        (
-            "analyticalT",
-            time_.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
+        "analyticalT",
         ((TInner_ - TOuter_)/Foam::log(rOuter_/rInner_))
        *Foam::log(rOuter_/radii)
     );
 
-    // Write out the analytical temperature field
-    Info<< "    Writing analytical temperature field (analyticalT)" << endl;
-    analyticalT.write();
-
     // Create the analytical radial stress field
-    volScalarField analyticalRadialStress
+    store
     (
-        IOobject
-        (
-            "analyticalRadialStress",
-            time_.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
+        "analyticalRadialStress",
         (
             (alpha_*E_*(TInner_ - TOuter_))
            /(2.0*(1.0 - nu_)*Foam::log(rOuter_/rInner_))
@@ -127,22 +152,10 @@ bool Foam::hotCylinderAnalyticalSolution::writeData()
         )
     );
 
-    // Write out the analytical radial stress field
-    Info<< "    Writing analytical radial stress field (analyticalRadialStress)"
-        << endl;
-    analyticalRadialStress.write();
-
     // Create the analytical hoop stress field
-    volScalarField analyticalHoopStress
+    store
     (
-        IOobject
-        (
-            "analyticalHoopStress",
-            time_.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
+        "analyticalHoopStress",
         (
             (alpha_*E_*(TInner_ - TOuter_))
            /(2.0*(1.0 - nu_)*Foam::log(rOuter_/rInner_))
@@ -155,75 +168,16 @@ bool Foam::hotCylinderAnalyticalSolution::writeData()
         )
     );
 
-    // Write out the analytical hoop stress field
-    Info<< "    Writing analytical hoop stress field (analyticalHoopStress)"
-        << nl << endl;
-    analyticalHoopStress.write();
-
-    return true;
-}
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::hotCylinderAnalyticalSolution::hotCylinderAnalyticalSolution
-(
-    const word& name,
-    const Time& t,
-    const dictionary& dict
-)
-:
-    functionObject(name),
-    name_(name),
-    time_(t),
-    rInner_(readScalar(dict.lookup("rInner"))),
-    rOuter_(readScalar(dict.lookup("rOuter"))),
-    TInner_(readScalar(dict.lookup("TInner"))),
-    TOuter_(readScalar(dict.lookup("TOuter"))),
-    E_(readScalar(dict.lookup("E"))),
-    nu_(readScalar(dict.lookup("nu"))),
-    alpha_(readScalar(dict.lookup("alpha")))
-{
-    Info<< "Creating " << this->name() << " function object" << endl;
-
-    if (rInner_ >= rOuter_)
-    {
-        FatalErrorIn(this->name() + " function object constructor")
-            << "rInner should be less than rOuter!"
-            << abort(FatalError);
-    }
-
-    if (E_ < SMALL || nu_ < SMALL)
-    {
-        FatalErrorIn(this->name() + " function object constructor")
-            << "E and nu should be positive!"
-            << abort(FatalError);
-    }
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::hotCylinderAnalyticalSolution::start()
-{
     return true;
 }
 
 
-bool Foam::hotCylinderAnalyticalSolution::execute()
+bool Foam::functionObjects::hotCylinderAnalyticalSolution::write()
 {
-    return writeData();
-}
-
-
-bool Foam::hotCylinderAnalyticalSolution::read(const dictionary& dict)
-{
-    return true;
-}
-
-
-bool Foam::hotCylinderAnalyticalSolution::write()
-{
-    return writeData();
+    return
+        writeObject("analyticalT")
+     && writeObject("analyticalRadialStress")
+     && writeObject("analyticalHoopStress");
 }
 
 // ************************************************************************* //

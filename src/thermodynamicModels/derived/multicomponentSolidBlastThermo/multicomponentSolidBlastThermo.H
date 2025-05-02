@@ -123,7 +123,7 @@ public:
             virtual scalar cellp(const label celli) const;
 
             //- Pressure [kg/m/s^2]
-            virtual scalar p
+            virtual scalar pi
             (
                 const label speciei,
                 const scalar rho,
@@ -132,7 +132,7 @@ public:
             ) const;
 
             //- Density [kg/m^3]
-            virtual tmp<volScalarField> p
+            virtual tmp<volScalarField> pi
             (
                 const label speciei,
                 const volScalarField& rho,
@@ -141,7 +141,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. density
-            virtual scalar dpdRho
+            virtual scalar dpdRhoi
             (
                 const label speciei,
                 const scalar rho,
@@ -150,7 +150,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. Temperature
-            virtual scalar dpdT
+            virtual scalar dpdTi
             (
                 const label speciei,
                 const scalar rho,
@@ -162,9 +162,9 @@ public:
         // Mass Transfer
 
             //- Does the mixture include this specie?
-            inline bool contains(const word& specieName) const
+            inline bool containsSpecie(const word& specieName) const
             {
-                return multicomponentBlastThermo::contains(specieName);
+                return multicomponentBlastThermo::containsSpecie(specieName);
             }
             //- Add an external change to a thermodynamic field if present
             //  i.e. mass transfer
@@ -193,7 +193,7 @@ public:
         virtual void updateRho();
 
         //- Dynamic viscosity [kg/m/s]
-        virtual scalar mu
+        virtual scalar mui
         (
             const label speciei,
             const scalar p,
@@ -201,7 +201,7 @@ public:
         ) const;
 
         //- Dynamic viscosity [kg/m/s]
-        virtual scalar mu
+        virtual scalar mui
         (
             const label speciei,
             const scalar rho,
@@ -210,7 +210,7 @@ public:
         ) const;
 
         //- Dynamic viscosity [kg/m/s]
-        virtual tmp<volScalarField> mu
+        virtual tmp<volScalarField> mui
         (
             const label speciei,
             const volScalarField& p,
@@ -218,7 +218,7 @@ public:
         ) const;
 
         //- Dynamic viscosity [kg/m/s]
-        virtual tmp<volScalarField> mu
+        virtual tmp<volScalarField> mui
         (
             const label speciei,
             const volScalarField& rho,

@@ -43,7 +43,16 @@ mechanics::mechanics
     const operations& ops
 )
 :
-    MeshObject<fvMesh, UpdateableMeshObject, mechanics>(F.mesh()),
+    regIOobject
+    (
+        IOobject
+        (
+            typeName,
+            F.mesh().time().constant(),
+            F.mesh()
+        )
+    ),
+    TopoChangeableMeshObject<fvMesh>(*this),
     mesh_(F.mesh()),
 
     ops_(ops),
@@ -55,7 +64,7 @@ mechanics::mechanics
         IOobject
         (
             "relF",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         F_ & inv(F_.oldTime())
@@ -66,7 +75,7 @@ mechanics::mechanics
         IOobject
         (
             "Finv",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         inv(F_)
@@ -77,7 +86,7 @@ mechanics::mechanics
         IOobject
         (
             "J",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -90,7 +99,7 @@ mechanics::mechanics
         IOobject
         (
             "relJ",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         det(relF_)
@@ -103,7 +112,7 @@ mechanics::mechanics
         IOobject
         (
             "n",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_.Sf()/mesh_.magSf()
@@ -114,7 +123,7 @@ mechanics::mechanics
         IOobject
         (
             "stabRhoU",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -126,7 +135,7 @@ mechanics::mechanics
         IOobject
         (
             "stabTraction",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -138,7 +147,7 @@ mechanics::mechanics
         IOobject
         (
             "stretch",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -164,7 +173,19 @@ bool mechanics::movePoints()
 }
 
 
-void mechanics::updateMesh(const mapPolyMesh&)
+void mechanics::distribute(const polyDistributionMap&)
+{
+    N_ = mesh_.Sf()/mesh_.magSf();
+}
+
+
+void mechanics::topoChange(const polyTopoChangeMap&)
+{
+    N_ = mesh_.Sf()/mesh_.magSf();
+}
+
+
+void mechanics::mapMesh(const polyMeshMap&)
 {
     N_ = mesh_.Sf()/mesh_.magSf();
 }

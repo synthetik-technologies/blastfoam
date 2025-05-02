@@ -59,12 +59,14 @@ int main(int argc, char *argv[])
     argList::addOption("fixedPatches", "patches to fix pressure on");
     argList::addOption("refCell", "Reference cell");
     argList::addOption("refPoint", "Reference point");
+    argList::addOption("maxIter", "Maximum number of iteration");
+    argList::addOption("correctRho", "Correct density");
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createNamedMesh.H"
+    #include "createRegionMesh.H"
 
     IOdictionary atmosphereProperties
     (
@@ -90,6 +92,22 @@ int main(int argc, char *argv[])
     {
         atmosphereProperties.set("hRef", args.optionRead<scalar>("hRef"));
     }
+    if (args.optionFound("maxIter"))
+    {
+        atmosphereProperties.set
+        (
+            "nHydrostaticCorrectors",
+            args.optionRead<label>("maxIter")
+        );
+    }
+    if (args.optionFound("correctRho"))
+    {
+        atmosphereProperties.set
+        (
+            "correctRho",
+            args.optionRead<Switch>("correctRho")
+        );
+    }
 
     label refSet = 0;
     if (args.optionFound("fixedPatches"))
@@ -102,11 +120,6 @@ int main(int argc, char *argv[])
         );
     }
 
-    label zoneID = -1;
-    if (args.optionFound("zone"))
-    {
-        zoneID = mesh.cellZones()[args.optionRead<word>("zone")].index();
-    }
     autoPtr<atmosphereModel> atmosphere
     (
         atmosphereModel::New
@@ -114,7 +127,7 @@ int main(int argc, char *argv[])
             type,
             mesh,
             atmosphereProperties,
-            zoneID
+            args.optionLookupOrDefault<word>("zone", word::null)
         )
     );
     const dictionary& atmosphereDict = atmosphere->dict();

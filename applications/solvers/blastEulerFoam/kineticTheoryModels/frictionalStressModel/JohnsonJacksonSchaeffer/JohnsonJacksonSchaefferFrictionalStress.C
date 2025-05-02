@@ -54,10 +54,10 @@ Foam::kineticTheoryModels::frictionalStressModels::
 JohnsonJacksonSchaeffer::JohnsonJacksonSchaeffer
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& master
 )
 :
-    frictionalStressModel(dict, kt),
+    frictionalStressModel(dict, master),
     Fr_("Fr", dimensionSet(1, -1, -2, 0, 0), coeffDict()),
     eta_("eta", dimless, coeffDict()),
     p_("p", dimless, coeffDict()),
@@ -95,11 +95,12 @@ JohnsonJacksonSchaeffer::frictionalPressure
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
     return
-        Fr_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_)
+        Fr_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_)
        /pow(max(alphaMax - alphap, alphaDeltaMin_), p_);
 }
 
@@ -110,14 +111,15 @@ JohnsonJacksonSchaeffer::frictionalPressurePrime
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
     return Fr_*
     (
-        eta_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_ - 1.0)
+        eta_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_ - 1.0)
        *(alphaMax - alphap)
-      + p_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_)
+      + p_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_)
     )/pow(max(alphaMax - alphap, alphaDeltaMin_), p_ + 1.0);
 }
 
@@ -128,11 +130,12 @@ JohnsonJacksonSchaeffer::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax,
     const volScalarField& pf
 ) const
 {
-    volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
+    volScalarField alphaMinFrictionByAlphap(alphaMinFrictionByAlphap_*alphaMax);
 
     tmp<volScalarField> tmu
     (
@@ -148,7 +151,7 @@ JohnsonJacksonSchaeffer::mu
     volSymmTensorField D(symm(fvc::grad(phase.U())));
     forAll(D, celli)
     {
-        if (alphap[celli] > alphaMinFriction[celli])
+        if (alphap[celli] > alphaMinFrictionByAlphap[celli])
         {
             muf[celli] =
                 0.5*pf[celli]*sin(phi_.value())
@@ -194,22 +197,11 @@ alphaMinFriction
     const volScalarField& alphaMax
 ) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("alphaMinFriction", alphap.group()),
-                alphap.mesh().time().timeName(),
-                alphap.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            alphap.mesh(),
-            alphaMinFriction_
-        )
+        IOobject::groupName("alphaMinFriction", alphap.group()),
+        alphap.mesh(),
+        alphaMinFriction_
     );
 }
 

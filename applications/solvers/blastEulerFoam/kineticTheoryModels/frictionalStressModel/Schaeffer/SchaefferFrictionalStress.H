@@ -72,7 +72,7 @@ public:
     // Constructors
 
         //- Construct from components
-        Schaeffer(const dictionary& dict, const kineticTheorySystem& kt);
+        Schaeffer(const dictionary& dict, const masterSystem& master);
 
 
     //- Destructor
@@ -85,6 +85,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax
         ) const;
 
@@ -92,6 +93,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax
         ) const;
 
@@ -99,6 +101,7 @@ public:
         (
             const phaseModel& phase,
             const volScalarField& alphap,
+            const volScalarField& alphaMinFriction,
             const volScalarField& alphaMax,
             const volScalarField& pf
         ) const;

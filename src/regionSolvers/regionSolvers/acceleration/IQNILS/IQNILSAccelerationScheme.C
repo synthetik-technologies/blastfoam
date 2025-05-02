@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "IQNILSAccelerationScheme.H"
+#include "scalarMatrices.H"
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

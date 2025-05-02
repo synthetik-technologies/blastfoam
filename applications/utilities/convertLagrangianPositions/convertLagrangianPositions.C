@@ -31,8 +31,8 @@ Description
 #include "fvMesh.H"
 #include "argList.H"
 #include "Time.H"
-#include "regionProperties.H"
 #include "timeSelector.H"
+#include "IFstream.H"
 #include "Cloud.H"
 #include "particle.H"
 
@@ -134,9 +134,10 @@ positionFormat readCloud
                     is >> p;
                 }
                 is >> celli >> tetFacei >> tetPti;
+                label n = 0;
                 c.append
                 (
-                    new particle(mesh, p, celli, tetFacei, tetPti)
+                    new particle(mesh, p, celli, tetFacei, tetPti, n)
                 );
                 pi++;
             }
@@ -164,7 +165,8 @@ positionFormat readCloud
                     is >> p;
                 }
                 is >> celli;
-                c.append(new particle(mesh, p, celli));
+                label n = 0;
+                c.append(new particle(mesh, p, celli, n));
                 pi++;
             }
         }
@@ -174,7 +176,8 @@ positionFormat readCloud
         format = NEW;
         for (label i = 0; i < nParticles; i++)
         {
-            c.append(new particle(mesh, is, false));
+            label n = 0;
+            c.append(new particle(mesh, is, false, n));
         }
         // Read beginning of contents
         is.readEndList
@@ -227,12 +230,15 @@ int main(int argc, char *argv[])
 
     bool revert = args.optionFound("revert");
 
-    const wordList regionNames(selectRegionNames(args, runTime));
+    #include "setRegionNames.H"
 
     forAll(regionNames, regioni)
     {
         const word& regionName = regionNames[regioni];
-        const word& regionDir = Foam::regionDir(regionName);
+        const word& regionDir =
+            regionName == polyMesh::defaultRegion
+          ? word::null
+          : regionName;
 
         Info<< "\n\nConverting lagrangian positions for region " << regionName << nl
             << endl;
@@ -243,17 +249,18 @@ int main(int argc, char *argv[])
             // Set time for global database
             runTime.setTime(timeDirs[timei], timei);
 
-            Info<< "Time = " << runTime.timeName() << endl;
+            Info<< "Time = " << runTime.name() << endl;
 
             fvMesh mesh
             (
                 IOobject
                 (
                     regionName,
-                    runTime.timeName(),
+                    runTime.name(),
                     runTime,
                     IOobject::MUST_READ
-                )
+                ),
+                false
             );
             mesh.tetBasePtIs();
 
@@ -276,16 +283,27 @@ int main(int argc, char *argv[])
                     fileType::directory
                 );
             }
+            {
+                List<fileNameList> procClouds(Pstream::nProcs());
+                procClouds[Pstream::myProcNo()] = cloudDirs;
+                Pstream::gatherList(procClouds);
+                HashSet<fileName> cloudSet;
+                forAll(procClouds, proci)
+                {
+                    cloudSet.insert(procClouds[proci]);
+                }
+                cloudDirs = cloudSet.toc();
+                Pstream::scatter(cloudDirs);
+            }
 
             forAll(cloudDirs, i)
             {
-
                 IOobject positionsIO
                 (
                     IOobject
                     (
                         "positions",
-                        runTime.timeName(),
+                        runTime.name(),
                         cloud::prefix/cloudDirs[i],
                         mesh,
                         IOobject::NO_READ,
@@ -293,26 +311,39 @@ int main(int argc, char *argv[])
                         false
                     )
                 );
+
                 word cloudType;
                 IDLList<particle> tmp;
                 Cloud<particle> c(mesh, cloudDirs[i], tmp);
                 IOPosition<Cloud<particle>> ioP(c);
 
-                IFstream is(positionsIO.objectPath());
-                positionsIO.readHeader(is);
-                cloudType = positionsIO.headerClassName();
+                IFstream is(positionsIO.objectPath(false));
+                bool write = true;
+                positionFormat format = NEW;
+                if (is.good())
+                {
+                    positionsIO.readHeader(is);
+                    cloudType = positionsIO.headerClassName();
 
-                positionFormat format = readCloud(mesh, c, ioP, is);
+                    format = readCloud(mesh, c, ioP, is);
+                }
+                else
+                {
+                    write = false;
+                }
 
-                bool write =
-                    (!revert && (format == NEW))
-                 || (revert && (format == OLD));
+                write =
+                    write
+                 && (
+                        (!revert && (format == NEW))
+                     || (revert && (format == OLD))
+                    );
 
                 if (write)
                 {
                     Info << "\tWriting positions file" << endl;
 
-                    OFstream positionsOS(positionsIO.objectPath());
+                    OFstream positionsOS(positionsIO.objectPath(false));
                     positionsIO.writeHeader
                     (
                         positionsOS,
@@ -336,7 +367,7 @@ int main(int argc, char *argv[])
                         else
                         {
                             positionsOS
-                                << pIter().position()
+                                << pIter().position(mesh)
                                 << token::SPACE << pIter().cell()
                                 << nl;
                         }

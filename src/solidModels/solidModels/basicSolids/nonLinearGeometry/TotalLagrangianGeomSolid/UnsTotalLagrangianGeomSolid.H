@@ -81,7 +81,7 @@ public:
         UnsTotalLagrangianGeomSolid
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const bool isSolid = true
         );
 

@@ -52,7 +52,9 @@ namespace Foam
                            Class hexRef2D Declaration
 \*---------------------------------------------------------------------------*/
 
-class hexRef2D : public hexRef
+class hexRef2D
+:
+    public hexRef
 {
 
 protected:

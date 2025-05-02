@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "TomiyamaCorrelated.H"
-#include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -51,7 +50,7 @@ Foam::dragModels::TomiyamaCorrelated::TomiyamaCorrelated
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject),
+    dispersedDragModel(dict, pair, registerObject),
     A_("A", dimless, dict)
 {}
 
@@ -65,14 +64,10 @@ Foam::dragModels::TomiyamaCorrelated::~TomiyamaCorrelated()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::dragModels::TomiyamaCorrelated::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::dragModels::TomiyamaCorrelated::CdRe() const
 {
-    volScalarField Re(pair_.Re(nodei, nodej));
-    volScalarField Eo(pair_.Eo(nodei, nodej));
+    volScalarField Re(pair_.Re());
+    volScalarField Eo(pair_.Eo());
 
     return
         max
@@ -90,13 +85,11 @@ Foam::dragModels::TomiyamaCorrelated::CdRe
 
 Foam::scalar Foam::dragModels::TomiyamaCorrelated::cellCdRe
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
-    scalar Eo(pair_.cellEo(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli));
+    scalar Eo(pair_.cellEo(celli));
 
     return
         max

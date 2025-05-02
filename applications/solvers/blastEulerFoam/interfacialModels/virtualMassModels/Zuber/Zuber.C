@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Zuber.H"
-#include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -55,7 +54,7 @@ Foam::virtualMassModels::Zuber::Zuber
     const bool registerObject
 )
 :
-    virtualMassModel(dict, pair, registerObject),
+    dispersedVirtualMassModel(dict, pair, registerObject),
     residualAlpha_
     (
         "residualAlpha",
@@ -77,16 +76,12 @@ Foam::virtualMassModels::Zuber::~Zuber()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::virtualMassModels::Zuber::Cvm
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::virtualMassModels::Zuber::Cvm() const
 {
 
     return
-        (1.0 + 2.0*pair_.dispersed().volumeFraction(nodei))
-       /max(pair_.continuous().volumeFraction(nodei), residualAlpha_);
+        (1.0 + 2.0*pair_.dispersed())
+       /max(pair_.continuous(), residualAlpha_);
 }
 
 

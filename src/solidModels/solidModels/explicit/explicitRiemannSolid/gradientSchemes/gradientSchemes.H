@@ -39,7 +39,8 @@ SourceFiles
 #include "surfaceFields.H"
 #include "pointFields.H"
 #include "operations.H"
-#include "MeshObject.H"
+#include "MeshObjects.H"
+#include "DemandDrivenMeshObject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,7 +49,12 @@ namespace Foam
 
 class gradientSchemes
 :
-    public MeshObject<fvMesh, UpdateableMeshObject, gradientSchemes>
+    public DemandDrivenMeshObject
+    <
+        fvMesh,
+        MoveableMeshObject,
+        gradientSchemes
+    >
 {
     // Private data
 
@@ -62,10 +68,10 @@ class gradientSchemes
         const operations ops_;
 
         //- Inverse of distance matrix
-        tensorField Ainv_;
+        mutable tensorField* AinvPtr_;
 
         //- Inverse of local distance matrix
-        tensorField AinvLocal_;
+        mutable tensorField* AinvLocalPtr_;
 
 
         //- Return the scalar limiter
@@ -305,10 +311,10 @@ public:
         // Edit
 
             //- Inverse distance matrix for gradient
-            tmp<tensorField> distanceMatrix() const;
+            const tensorField& distanceMatrix() const;
 
             //- Inverse distance matrix for local gradient
-            tmp<tensorField> distanceMatrixLocal() const;
+            const tensorField& distanceMatrixLocal() const;
 
             //- Least square gradient for a volScalarField
             tmp<volVectorField> gradient
@@ -369,7 +375,6 @@ public:
             );
 
         virtual bool movePoints();
-        virtual void updateMesh(const mapPolyMesh&);
 
 };
 

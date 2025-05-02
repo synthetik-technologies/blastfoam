@@ -109,27 +109,6 @@ Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::globalMappedFvPatchField<Type>::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchField<Type>::autoMap(m);
-}
-
-
-template<class Type>
-void Foam::globalMappedFvPatchField<Type>::rmap
-(
-    const fvPatchField<Type>& ptf,
-    const labelList& addr
-)
-{
-    fixedValueFvPatchField<Type>::rmap(ptf, addr);
-}
-
-
-template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::globalMappedFvPatchField<Type>::patchNeighbourField() const
 {

@@ -41,6 +41,7 @@ SourceFiles
 
 #include "volFields.H"
 #include "dictionary.H"
+#include "BlendedInterfacialModel.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -118,18 +119,40 @@ public:
 
         //- Turbulent diffusivity
         //  multiplying the gradient of the phase-fraction
-        virtual tmp<volScalarField> D
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
+        virtual tmp<volScalarField> D() const = 0;
 
         //- Turbulent dispersion force
-        virtual tmp<volVectorField> F
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volVectorField> F() const;
+};
+
+
+/*---------------------------------------------------------------------------*\
+                Class blendedTurbulentDispersionModel Declaration
+\*---------------------------------------------------------------------------*/
+
+class blendedTurbulentDispersionModel
+:
+    public BlendedInterfacialModel<turbulentDispersionModel>
+{
+public:
+
+    typedef turbulentDispersionModel modelType;
+
+    // Constructors
+
+        //- Inherit base class constructors
+        using BlendedInterfacialModel<turbulentDispersionModel>::
+            BlendedInterfacialModel;
+
+
+    // Member Functions
+
+        //- Turbulent diffusivity
+        //  multiplying the gradient of the phase-fraction
+        tmp<volScalarField> D() const;
+
+        //- Return the turbulent dispersion force
+        tmp<volVectorField> F() const;
 };
 
 

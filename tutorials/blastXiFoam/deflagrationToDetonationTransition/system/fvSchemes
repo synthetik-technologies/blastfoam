@@ -47,7 +47,7 @@ divSchemes
     div((Su*n)) Gauss linear;
     div((U+((Su*Xi)*n))) Gauss linear;
 
-    div(((rho*nuEff)*dev2(T(grad(U)))))          Gauss linear;
+    div(devTau)          Gauss linear;
 }
 
 laplacianSchemes
@@ -64,6 +64,7 @@ interpolationSchemes
     reconstruct(e)      Minmod;
     reconstruct(p)      Minmod;
     reconstruct(speedOfSound)      Minmod;
+
 
     reconstruct(ft)     limitedLinear01 1;
     reconstruct(b)      limitedLinear01 1;

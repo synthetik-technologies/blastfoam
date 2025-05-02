@@ -39,6 +39,7 @@ SourceFiles
 
 #include "compressibleBlastSystem.H"
 #include "twoPhaseFluidBlastThermo.H"
+// #include "phaseChangeModel.H"
 
 
 namespace Foam
@@ -94,12 +95,34 @@ protected:
         surfaceScalarField alphaRhoPhi2_;
 
 
+    //- Cavitation model (optional)
+    // autoPtr<phaseChangeModel> phaseChange_;
+
+
     //- Transport phase densities
     bool transportPhaseDensity_;
 
+    //- Calculate reconstructed phaseDensity (alphaRho) with density
+    bool densityReconstruction_;
 
-    //- Allocate models
-    virtual void setModels();
+    //- Use MULES volume fraction flux limiting
+    bool MUSLESLimiting_;
+
+
+    // Protected member functions
+
+        // Update fluxes given interpolated alphas and alphaRhos
+        void updateFluxes
+        (
+            const surfaceScalarField& alpha1Own,
+            const surfaceScalarField& alpha1Nei,
+
+            const surfaceScalarField& alphaRho1Own,
+            const surfaceScalarField& alphaRho1Nei,
+
+            const surfaceScalarField& alphaRho2Own,
+            const surfaceScalarField& alphaRho2Nei
+        );
 
 
 public:
@@ -107,7 +130,11 @@ public:
     TypeName("twoPhase");
 
     // Constructor
-    twoPhaseCompressibleSystem(const fvMesh& mesh);
+    twoPhaseCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
 
     //- Destructor

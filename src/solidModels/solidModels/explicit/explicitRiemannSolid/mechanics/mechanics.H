@@ -37,7 +37,7 @@ SourceFiles
 
 #include "fvc.H"
 #include "operations.H"
-#include "MeshObject.H"
+#include "MeshObjects.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,7 +46,8 @@ namespace Foam
 
 class mechanics
 :
-    public MeshObject<fvMesh, UpdateableMeshObject, mechanics>
+    public regIOobject,
+    public TopoChangeableMeshObject<fvMesh>
 {
     // Private data
 
@@ -182,7 +183,14 @@ public:
 
             virtual bool movePoints();
 
-            virtual void updateMesh(const mapPolyMesh&);
+            virtual void distribute(const polyDistributionMap&);
+            virtual void topoChange(const polyTopoChangeMap&);
+            virtual void mapMesh(const polyMeshMap&);
+
+            virtual bool writeData(Ostream&) const
+            {
+                return true;
+            }
 
 };
 

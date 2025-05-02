@@ -46,15 +46,12 @@ SourceFiles
 #ifndef Antal_H
 #define Antal_H
 
-#include "wallLubricationModel.H"
+#include "dispersedWallLubricationModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-class phasePair;
-
 namespace wallLubricationModels
 {
 
@@ -64,7 +61,7 @@ namespace wallLubricationModels
 
 class Antal
 :
-    public wallLubricationModel
+    public dispersedWallLubricationModel
 {
     // Private data
 
@@ -98,11 +95,7 @@ public:
     // Member Functions
 
         //- Return phase-intensive wall lubrication force
-        tmp<volVectorField> FI
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volVectorField> Fi() const;
 };
 
 

@@ -72,7 +72,11 @@ class Component
     // Private Member Functions
 
         //- Read the coefficients from the given dictionary
-        void read(const dictionary& dict);
+        void read
+        (
+            const dictionary& dict,
+            const unitConversions& units
+        );
 
 
 public:
@@ -87,6 +91,7 @@ public:
         Component
         (
             const word& name,
+            const unitConversions& units,
             const dictionary& dict
         );
 

@@ -39,6 +39,7 @@ SourceFiles
 
 #include "regionSolver.H"
 #include "solidBlastThermo.H"
+#include "solidThermophysicalTransportModel.H"
 #include "fvConstraints.H"
 #include "fvModels.H"
 
@@ -61,6 +62,9 @@ protected:
     //- Solid thermo model
     autoPtr<solidBlastThermo> thermo_;
 
+    //- Solid thermophysical transport model
+    autoPtr<solidThermophysicalTransportModel> thermophysicalTransport_;
+
     //- Fv models
     fvModels& fvModels_;
 
@@ -73,7 +77,7 @@ public:
     TypeName("thermal");
 
     // Constructor
-    thermal(dynamicFvMesh& mesh, const regionSolverList& regions);
+    thermal(fvMesh& mesh, const regionSolverList& regions);
 
 
     //- Destructor

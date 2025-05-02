@@ -58,7 +58,11 @@ void nearestNeighbourPatchToPatchMapping::transferFaces
         const labelList& map = zoneAToZoneBFaceMap();
         forAll(toField, faceI)
         {
-            toField[faceI] = fromField[map[faceI]];
+            const label I = map[faceI];
+            toField[faceI] =
+                I >= 0
+              ? fromField[I]
+              : pTraits<Type>::zero;
         }
     }
     else if (&toZone == &zoneA() && &fromZone == &zoneB())
@@ -67,7 +71,8 @@ void nearestNeighbourPatchToPatchMapping::transferFaces
         const labelList& map = zoneBToZoneAFaceMap();
         forAll(toField, faceI)
         {
-            toField[faceI] = fromField[map[faceI]];
+            const label I = map[faceI];
+            toField[faceI] = I >= 0 ? fromField[I] : pTraits<Type>::zero;
         }
     }
     else
@@ -102,7 +107,8 @@ void nearestNeighbourPatchToPatchMapping::transferPoints
         const labelList& map = zoneAToZoneBPointMap();
         forAll(toField, pointI)
         {
-            toField[pointI] = fromField[map[pointI]];
+            const label I = map[pointI];
+            toField[pointI] = I >= 0 ? fromField[I] : pTraits<Type>::zero;
         }
     }
     else if (&toZone == &zoneA() && &fromZone == &zoneB())
@@ -111,7 +117,8 @@ void nearestNeighbourPatchToPatchMapping::transferPoints
         const labelList& map = zoneBToZoneAPointMap();
         forAll(toField, pointI)
         {
-            toField[pointI] = fromField[map[pointI]];
+            const label I = map[pointI];
+            toField[pointI] = I >= 0 ? fromField[I] : pTraits<Type>::zero;
         }
     }
     else

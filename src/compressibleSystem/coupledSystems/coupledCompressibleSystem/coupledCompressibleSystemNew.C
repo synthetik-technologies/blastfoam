@@ -29,19 +29,20 @@ License
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::coupledCompressibleSystem> Foam::coupledCompressibleSystem::New
+Foam::autoPtr<Foam::compressibleSystem>
+Foam::coupledCompressibleSystem::New
 (
     const fvMesh& mesh
 )
 {
     // Create temporary phase properties to lookup type
     // not store in the database to remove possible conflict
-    Info<< "Reading phaseProperties dictionary\n" << endl;
-    IOdictionary phaseProperties
+    Info<< "Reading physicalProperties dictionary\n" << endl;
+    IOdictionary physicalPropertiesDict
     (
         IOobject
         (
-            "phaseProperties",
+            physicalProperties::typeName,
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ,
@@ -52,20 +53,28 @@ Foam::autoPtr<Foam::coupledCompressibleSystem> Foam::coupledCompressibleSystem::
 
     wordList phases
     (
-        phaseProperties.lookupOrDefault("phases", wordList())
+        physicalPropertiesDict.lookupOrDefault("phases", wordList())
     );
-    if (phases.size() == 1)
+    if (phases.size() < 2)
     {
-        return autoPtr<coupledCompressibleSystem>
+        return autoPtr<compressibleSystem>
         (
-            new coupledSinglePhaseCompressibleSystem(mesh)
+            new coupledSinglePhaseCompressibleSystem
+            (
+                physicalPropertiesDict,
+                mesh
+            )
         );
     }
     else
     {
-        return autoPtr<coupledCompressibleSystem>
+        return autoPtr<compressibleSystem>
         (
-            new coupledMultiphaseCompressibleSystem(mesh)
+            new coupledMultiphaseCompressibleSystem
+            (
+                physicalPropertiesDict,
+                mesh
+            )
         );
     }
 }

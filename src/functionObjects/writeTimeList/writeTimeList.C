@@ -99,7 +99,7 @@ bool Foam::functionObjects::writeTimeList::execute()
 }
 
 
-Foam::scalar Foam::functionObjects::writeTimeList::timeToNextWrite()
+Foam::scalar Foam::functionObjects::writeTimeList::timeToNextAction()
 {
     return max(writeTimes_[index_] - obr_.time().value(), 0.0);
 }
@@ -107,7 +107,7 @@ Foam::scalar Foam::functionObjects::writeTimeList::timeToNextWrite()
 
 bool Foam::functionObjects::writeTimeList::write()
 {
-    if (mag(this->timeToNextWrite()) == 0)
+    if (mag(this->timeToNextAction()) < small)
     {
         Time& time(const_cast<Time&>(time_));
         time.writeNow();

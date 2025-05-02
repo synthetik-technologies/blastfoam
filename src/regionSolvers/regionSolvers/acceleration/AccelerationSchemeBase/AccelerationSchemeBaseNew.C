@@ -35,7 +35,6 @@ Foam::AccelerationSchemeBase<Type, Patch, Mesh>::New
     const dictionary& dict
 )
 {
-    Info<< indent << field.mesh().boundary()[selector->index()].name() << ": ";
     word accelerationType =
         accelerationScheme::schemesDict
         (
@@ -43,9 +42,13 @@ Foam::AccelerationSchemeBase<Type, Patch, Mesh>::New
             field().mesh().thisDb().name(),
             field.name(),
             field().mesh().boundary()[selector->index()].name()
-        ).template lookupOrDefault<word>(accelerationScheme::typeName, "none");
-
-    Info<< accelerationType << endl;
+        ).template lookupOrDefault<word>
+        (
+            accelerationScheme::typeName,
+            "none"
+        );
+    Info<< indent << field.mesh().boundary()[selector->index()].name()
+        << ": " << accelerationType << endl;
 
     typename dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(accelerationType);

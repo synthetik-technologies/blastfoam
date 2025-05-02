@@ -50,7 +50,7 @@ Foam::dragModels::GidaspowSchillerNaumann::GidaspowSchillerNaumann
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject),
+    dispersedDragModel(dict, pair, registerObject),
     residualRe_("residualRe", dimless, dict)
 {}
 
@@ -64,22 +64,18 @@ Foam::dragModels::GidaspowSchillerNaumann::~GidaspowSchillerNaumann()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::dragModels::GidaspowSchillerNaumann::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::dragModels::GidaspowSchillerNaumann::CdRe() const
 {
     volScalarField alpha2
     (
         max
         (
-            scalar(1) - pair_.dispersed().volumeFraction(),
+            scalar(1) - pair_.dispersed(),
             pair_.continuous().residualAlpha()
         )
     );
 
-    volScalarField Re(alpha2*pair_.Re(nodei, nodej));
+    volScalarField Re(alpha2*pair_.Re());
 
     volScalarField CdsRe
     (
@@ -92,7 +88,7 @@ Foam::dragModels::GidaspowSchillerNaumann::CdRe
        *pow(alpha2, -2.65)
        *max
         (
-            pair_.continuous().volumeFraction(nodej),
+            pair_.continuous(),
             pair_.continuous().residualAlpha()
         );
 }
@@ -100,9 +96,7 @@ Foam::dragModels::GidaspowSchillerNaumann::CdRe
 
 Foam::scalar Foam::dragModels::GidaspowSchillerNaumann::cellCdRe
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     scalar alpha2
@@ -114,7 +108,7 @@ Foam::scalar Foam::dragModels::GidaspowSchillerNaumann::cellCdRe
         )
     );
 
-    scalar Re(alpha2*pair_.cellRe(celli, nodei, nodej));
+    scalar Re(alpha2*pair_.cellRe(celli));
 
     scalar CdsRe
     (

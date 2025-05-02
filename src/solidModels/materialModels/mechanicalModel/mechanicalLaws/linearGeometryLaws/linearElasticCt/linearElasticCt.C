@@ -156,7 +156,7 @@ void Foam::linearElasticCt::setYoungsModulusFromCt()
             IOobject
             (
                 "Hu",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -173,7 +173,7 @@ void Foam::linearElasticCt::setYoungsModulusFromCt()
             IOobject
             (
                 "relRho",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -408,7 +408,7 @@ Foam::linearElasticCt::linearElasticCt
         IOobject
         (
             "E",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -423,7 +423,7 @@ Foam::linearElasticCt::linearElasticCt
         IOobject
         (
             "mu",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -435,7 +435,7 @@ Foam::linearElasticCt::linearElasticCt
         IOobject
         (
             "mu",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE

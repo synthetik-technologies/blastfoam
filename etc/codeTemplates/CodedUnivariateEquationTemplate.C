@@ -73,7 +73,7 @@ ${typeName}_${TemplateType}UnivariateEquation
 :
     UnivariateEquation<${TemplateType}>(dict)
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Construct ${typeName} sha1: ${SHA1sum} from dictionary\n";
     }

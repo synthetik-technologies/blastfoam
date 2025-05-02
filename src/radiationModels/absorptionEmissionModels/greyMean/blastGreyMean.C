@@ -27,7 +27,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "unitConversion.H"
 #include "extrapolatedCalculatedFvPatchFields.H"
-#include "basicSpecieMixture.H"
+#include "multicomponentThermo.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -64,7 +64,7 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::blastGreyMean
     speciesNames_(0),
     specieIndex_(),
     lookUpTablePtr_(),
-    thermo_(mesh.lookupObject<fluidThermo>(basicThermo::dictName)),
+    thermo_(mesh.lookupObject<fluidThermo>(physicalProperties::typeName)),
     Yj_()
 {
     label nFunc = 0;
@@ -143,9 +143,9 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::blastGreyMean
         }
     }
 
-    if (isA<basicSpecieMixture>(thermo_))
+    if (isA<multicomponentThermo>(thermo_))
     {
-        mixture_.set(dynamic_cast<const basicSpecieMixture*>(&thermo_));
+        mixture_.set(dynamic_cast<const multicomponentThermo*>(&thermo_));
 
         if (coeffsDict_.found("lookUpTableFileName"))
         {
@@ -269,6 +269,8 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::aCont
         )
     );
 
+    const unitConversion& unitAtm = units()["atm"];
+
     scalarField& a = ta.ref().primitiveFieldRef();
     forAll(a, celli)
     {
@@ -294,11 +296,11 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::aCont
                 scalar invWt = 0.0;
                 forAll(mixture_->Y(), s)
                 {
-                    invWt += mixture_->Y(s)[celli]/mixture_->Wi(s);
+                    invWt += mixture_->Y(s)[celli]/mixture_->WiValue(s);
                 }
 
                 label index = mixture_->species()[iter.key()];
-                Xi = mixture_->Y(index)[celli]/(mixture_->Wi(index)*invWt);
+                Xi = mixture_->Y(index)[celli]/(mixture_->WiValue(index)*invWt);
             }
 
             if (speciePhases_[n].size())
@@ -322,7 +324,7 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::aCont
                 Ti = 1.0/Ti;
             }
             a[celli] +=
-                Xi*paToAtm(p[celli])
+                Xi*unitAtm.toUser(p[celli])
                *(
                     ((((b[5]*Ti + b[4])*Ti + b[3])*Ti + b[2])*Ti + b[1])*Ti
                   + b[0]
@@ -347,6 +349,8 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::cellaCont
 
     scalar a = 0.0;
 
+    const unitConversion& unitAtm = units()["atm"];
+
     forAllConstIter(HashTable<label>, speciesNames_, iter)
     {
         label n = iter();
@@ -368,11 +372,11 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::cellaCont
             scalar invWt = 0.0;
             forAll(mixture_->Y(), s)
             {
-                invWt += mixture_->Y(s)[celli]/mixture_->Wi(s);
+                invWt += mixture_->Y(s)[celli]/mixture_->WiValue(s);
             }
 
             label index = mixture_->species()[iter.key()];
-            Xi = mixture_->Y(index)[celli]/(mixture_->Wi(index)*invWt);
+            Xi = mixture_->Y(index)[celli]/(mixture_->WiValue(index)*invWt);
         }
 
         scalar Ti = T[celli];
@@ -385,7 +389,7 @@ Foam::radiationModels::absorptionEmissionModels::blastGreyMean::cellaCont
             Ti = 1.0/Ti;
         }
         a +=
-            Xi*paToAtm(p[celli])
+            Xi*unitAtm.toUser(p[celli])
            *(
                 ((((b[5]*Ti + b[4])*Ti + b[3])*Ti + b[2])*Ti + b[1])*Ti
               + b[0]

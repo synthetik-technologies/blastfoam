@@ -30,14 +30,10 @@ License
 #include "uniformDimensionedFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const fvPatch& p,
@@ -57,7 +53,7 @@ hydrostaticPressureFvPatchVectorField
 }
 
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const fvPatch& p,
@@ -73,7 +69,13 @@ hydrostaticPressureFvPatchVectorField
 {
     if (dict.found("phFunc"))
     {
-        phFunc_ = Function1<scalar>::New("phFunc", dict);
+        phFunc_ = Function1<scalar>::New
+        (
+            "phFunc",
+            this->db().time().userUnits(),
+            dimPressure,
+            dict
+        );
     }
     else
     {
@@ -96,13 +98,13 @@ hydrostaticPressureFvPatchVectorField
 }
 
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const hydrostaticPressureFvPatchVectorField& hpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     solidTractionFvPatchVectorField(hpvf, p, iF, mapper),
@@ -116,7 +118,7 @@ hydrostaticPressureFvPatchVectorField
 }
 
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const hydrostaticPressureFvPatchVectorField& hpvf,
@@ -136,7 +138,7 @@ hydrostaticPressureFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool hydrostaticPressureFvPatchVectorField::updateFields()
+bool Foam::hydrostaticPressureFvPatchVectorField::updateFields()
 {
     const uniformDimensionedVectorField& g =
         this->patch().boundaryMesh().mesh().lookupObject
@@ -183,10 +185,14 @@ void Foam::hydrostaticPressureFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchVectorField, hydrostaticPressureFvPatchVectorField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        hydrostaticPressureFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

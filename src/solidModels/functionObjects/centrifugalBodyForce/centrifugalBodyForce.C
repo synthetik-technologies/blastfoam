@@ -39,8 +39,9 @@ Author
 
 namespace Foam
 {
+namespace functionObjects
+{
     defineTypeNameAndDebug(centrifugalBodyForce, 0);
-
     addToRunTimeSelectionTable
     (
         functionObject,
@@ -48,78 +49,50 @@ namespace Foam
         dictionary
     );
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-bool Foam::centrifugalBodyForce::setBodyForce()
-{
-    const fvMesh& mesh =
-        time_.lookupObject<fvMesh>(polyMesh::defaultRegion);
-
-    volVectorField& bodyForce =
-        const_cast<volVectorField&>
-        (
-            mesh.lookupObject<volVectorField>("bodyForce")
-        );
-
-    bodyForce = -(angularVelocity_^(angularVelocity_^mesh.C()));
-
-    return true;
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::centrifugalBodyForce::centrifugalBodyForce
+Foam::functionObjects::centrifugalBodyForce::centrifugalBodyForce
 (
     const word& name,
     const Time& t,
     const dictionary& dict
 )
 :
-    functionObject(name),
-    name_(name),
-    time_(t),
-    regionName_(polyMesh::defaultRegion),
-    angularVelocity_(dict.lookup("angularVelocity"))
+    fvMeshFunctionObject(name, t, dict),
+    angularVelocity_(inv(dimTime), dict.lookup("angularVelocity"))
 {
-    Info << "Creating " << this->name() << " function object." << endl;
-
-    if (dict.found("region"))
-    {
-        dict.lookup("region") >> regionName_;
-    }
+    read(dict);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::centrifugalBodyForce::start()
+
+bool Foam::functionObjects::centrifugalBodyForce::read(const dictionary& dict)
 {
-    return setBodyForce();
-}
-
-
-bool Foam::centrifugalBodyForce::execute()
-{
-    return setBodyForce();
-}
-
-
-bool Foam::centrifugalBodyForce::read(const dictionary& dict)
-{
-    if (dict.found("region"))
-    {
-        dict.lookup("region") >> regionName_;
-    }
+    fvMeshFunctionObject::read(dict);
+    dict.readIfPresent("angularVelocity", angularVelocity_);
 
     return true;
 }
 
 
-bool Foam::centrifugalBodyForce::write()
+bool Foam::functionObjects::centrifugalBodyForce::execute()
 {
-    return setBodyForce();
+    return store
+    (
+        "centrifugalBodyForce",
+        -(angularVelocity_ ^ (angularVelocity_ ^ mesh_.C()))
+    );
+}
+
+
+bool Foam::functionObjects::centrifugalBodyForce::write()
+{
+    return writeObject("centrifugalBodyForce");
 }
 
 // ************************************************************************* //

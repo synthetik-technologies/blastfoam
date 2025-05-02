@@ -50,7 +50,7 @@ Foam::dragModels::Gibilaro::Gibilaro
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject)
+    dispersedDragModel(dict, pair, registerObject)
 {}
 
 
@@ -62,39 +62,30 @@ Foam::dragModels::Gibilaro::~Gibilaro()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Gibilaro::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Gibilaro::CdRe() const
 {
     volScalarField alpha2
     (
         max
         (
-            scalar(1) - pair_.dispersed().volumeFraction(nodei),
+            scalar(1) - pair_.dispersed(),
             pair_.continuous().residualAlpha()
         )
     );
 
     return
         (4.0/3.0)
-       *(17.3/alpha2 + 0.336*pair_.Re(nodei, nodej))
+       *(17.3/alpha2 + 0.336*pair_.Re())
        *max
         (
-            pair_.continuous().volumeFraction(nodej),
+            pair_.continuous(),
             pair_.continuous().residualAlpha()
         )
        *pow(alpha2, -2.8);
 }
 
 
-Foam::scalar Foam::dragModels::Gibilaro::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::dragModels::Gibilaro::cellCdRe(const label celli) const
 {
     scalar alpha2
     (
@@ -107,7 +98,7 @@ Foam::scalar Foam::dragModels::Gibilaro::cellCdRe
 
     return
         (4.0/3.0)
-       *(17.3/alpha2 + 0.336*pair_.cellRe(celli, nodei, nodej))
+       *(17.3/alpha2 + 0.336*pair_.cellRe(celli))
        *max
         (
             pair_.continuous()[celli],

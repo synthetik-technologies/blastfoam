@@ -176,6 +176,9 @@ public:
             //- Transfer to another List3D
             void transfer(List3D<Type>& lst);
 
+            //- Flip the list (swap x and z)
+            void flip();
+
 
     // Member Operators
 

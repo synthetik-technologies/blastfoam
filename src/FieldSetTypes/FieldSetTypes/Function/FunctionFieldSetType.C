@@ -53,7 +53,15 @@ Foam::FieldSetTypes::Function<Type, FSType>::Function
     dictionary funcDict(dict, dictionary());
     funcDict.add(fieldName, dictionary(is));
 
-    func_ = Function3<Type>::New(fieldName, funcDict);
+    func_ = Function3<Type>::New
+    (
+        fieldName,
+        dimLength,
+        dimLength,
+        dimLength,
+        this->fieldPtr_->dimensions(),
+        funcDict
+    );
 
     if (this->good_)
     {

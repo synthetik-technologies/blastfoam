@@ -78,7 +78,7 @@ public:
     // Constructors
 
         //- Construct from components
-        linearSolid(dynamicFvMesh& mesh);
+        linearSolid(fvMesh& mesh);
 
 
     // Destructor

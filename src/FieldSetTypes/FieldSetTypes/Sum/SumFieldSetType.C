@@ -79,7 +79,7 @@ Foam::FieldSetTypes::Sum<Type, FSType>::Sum
                     IOobject
                     (
                         "sum:" + this->fieldPtr_->name(),
-                        mesh.time().timeName(),
+                        mesh.time().name(),
                         mesh
                     ),
                     this->getMesh(),

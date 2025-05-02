@@ -50,7 +50,7 @@ Foam::dragModels::WenYu::WenYu
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject),
+    dispersedDragModel(dict, pair, registerObject),
     residualRe_("residualRe", dimless, dict)
 {}
 
@@ -63,22 +63,18 @@ Foam::dragModels::WenYu::~WenYu()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe() const
 {
     volScalarField alpha2
     (
         max
         (
-            pair_.continuous().volumeFraction(nodej),
+            pair_.continuous(),
             pair_.continuous().residualAlpha()
         )
     );
 
-    volScalarField Res(alpha2*pair_.Re(nodei, nodej));
+    volScalarField Res(alpha2*pair_.Re());
     volScalarField CdsRes
     (
         neg(Res - 1000)*24.0*(1.0 + 0.15*pow(Res, 0.687))
@@ -91,23 +87,18 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::WenYu::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::dragModels::WenYu::cellCdRe(const label celli) const
 {
     scalar alpha2
     (
         max
         (
-            pair_.continuous().cellvolumeFraction(celli),
+            pair_.continuous()[celli],
             pair_.continuous().residualAlpha().value()
         )
     );
 
-    scalar Res(alpha2*pair_.cellRe(celli, nodei, nodej));
+    scalar Res(alpha2*pair_.cellRe(celli));
     scalar CdsRes
     (
         neg(Res - 1000)*24.0*(1.0 + 0.15*pow(Res, 0.687))

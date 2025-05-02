@@ -122,40 +122,25 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::rho() const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::magUr
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::magUr() const
 {
-    return mag(phase1().U(nodei) - phase2().U(nodej));
+    return mag(phase1().U() - phase2().U());
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::phasePair::Ur
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volVectorField> Foam::phasePair::Ur() const
 {
-    return dispersed().U(nodei) - continuous().U(nodej);
+    return dispersed().U() - continuous().U();
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::Re
-(
-    const label nodei, const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::Re() const
 {
-    return magUr(nodei, nodej)*dispersed().d(nodei)/continuous().nu();
+    return magUr()*dispersed().d()/continuous().nu();
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::Pr
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::Pr() const
 {
     return
          continuous().nu()
@@ -164,49 +149,34 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::Pr
         /continuous().kappa();
 }
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::We
-(
-    const label nodei, const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::We() const
 {
     return
-        sqr(magUr(nodei, nodej))*dispersed().d(nodei)
+        sqr(magUr())*dispersed().d()
         *continuous().rho()/sigma_;
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::Eo
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::Eo() const
 {
-    return EoH(dispersed().d(nodei));
+    return EoH(dispersed().d());
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::EoH1
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::EoH1() const
 {
     return
         EoH
         (
-            dispersed().d(nodei)
-           *cbrt(1.0 + 0.163*pow(Eo(nodei, nodej), 0.757))
+            dispersed().d()
+           *cbrt(1.0 + 0.163*pow(Eo(), 0.757))
         );
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::EoH2
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::EoH2() const
 {
-    return EoH(dispersed().d(nodei)/cbrt(E(nodei, nodej)));
+    return EoH(dispersed().d()/cbrt(E()));
 }
 
 
@@ -230,20 +200,12 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::Mo() const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::Ta
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::Ta() const
 {
-    return Re(nodei, nodej)*pow(Mo(), 0.23);
+    return Re()*pow(Mo(), 0.23);
 }
 
-Foam::tmp<Foam::volScalarField> Foam::phasePair::E
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::phasePair::E() const
 {
     FatalErrorInFunction
         << "Requested aspect ratio of the dispersed phase in an unordered pair"
@@ -261,48 +223,28 @@ Foam::scalar Foam::phasePair::cellrho(const label celli) const
 }
 
 
-Foam::scalar Foam::phasePair::cellmagUr
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellmagUr(const label celli) const
 {
-    return mag(phase1().U(nodei)[celli] - phase2().U(nodej)[celli]);
+    return mag(phase1().U()[celli] - phase2().U()[celli]);
 }
 
 
-Foam::vector Foam::phasePair::cellUr
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::vector Foam::phasePair::cellUr(const label celli) const
 {
-    return dispersed().U(nodei)[celli] - continuous().U(nodej)[celli];
+    return dispersed().U()[celli] - continuous().U()[celli];
 }
 
 
-Foam::scalar Foam::phasePair::cellRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellRe(const label celli) const
 {
     return
-        cellmagUr(celli, nodei, nodej)
-       *dispersed().celld(celli, nodei)
+        cellmagUr(celli)
+       *dispersed().celld(celli)
        /continuous().cellnu(celli);
 }
 
 
-Foam::scalar Foam::phasePair::cellPr
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellPr(const label celli) const
 {
     return
          continuous().cellnu(celli)
@@ -311,59 +253,39 @@ Foam::scalar Foam::phasePair::cellPr
         /continuous().cellkappa(celli);
 }
 
-Foam::scalar Foam::phasePair::cellWe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellWe(const label celli) const
 {
     return
-        sqr(cellmagUr(celli, nodei, nodej))*dispersed().celld(celli, nodei)
+        sqr(cellmagUr(celli))*dispersed().celld(celli)
         *continuous().rho()[celli]/sigma_.value();
 }
 
 
-Foam::scalar Foam::phasePair::cellEo
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellEo(const label celli) const
 {
-    return cellEoH(celli, dispersed().celld(celli, nodei));
+    return cellEoH(celli, dispersed().celld(celli));
 }
 
 
-Foam::scalar Foam::phasePair::cellEoH1
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellEoH1(const label celli) const
 {
     return
         cellEoH
         (
             celli,
-            dispersed().celld(celli, nodei)
-           *cbrt(1.0 + 0.163*pow(cellEo(celli, nodei, nodej), 0.757))
+            dispersed().celld(celli)
+           *cbrt(1.0 + 0.163*pow(cellEo(celli), 0.757))
         );
 }
 
 
-Foam::scalar Foam::phasePair::cellEoH2
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellEoH2(const label celli) const
 {
     return
         cellEoH
         (
             celli,
-            dispersed().celld(celli, nodei)/cbrt(cellE(celli, nodei, nodej))
+            dispersed().celld(celli)/cbrt(cellE(celli))
         );
 }
 
@@ -393,22 +315,12 @@ Foam::scalar Foam::phasePair::cellMo(const label celli) const
 }
 
 
-Foam::scalar Foam::phasePair::cellTa
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellTa(const label celli) const
 {
-    return cellRe(celli, nodei, nodej)*pow(cellMo(celli), 0.23);
+    return cellRe(celli)*pow(cellMo(celli), 0.23);
 }
 
-Foam::scalar Foam::phasePair::cellE
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::phasePair::cellE(const label celli) const
 {
     FatalErrorInFunction
         << "Requested aspect ratio of the dispersed phase in an unordered pair"
@@ -416,4 +328,6 @@ Foam::scalar Foam::phasePair::cellE
 
     return phase1()[celli];
 }
+
+
 // ************************************************************************* //

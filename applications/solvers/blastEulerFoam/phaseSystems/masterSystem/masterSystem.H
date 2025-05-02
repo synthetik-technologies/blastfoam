@@ -44,6 +44,8 @@ SourceFiles
 namespace Foam
 {
 
+class packingLimitModel;
+
 /*---------------------------------------------------------------------------*\
                  Class kineticTheorySystem Declaration
 \*---------------------------------------------------------------------------*/
@@ -55,8 +57,14 @@ class masterSystem
 protected:
     // Protected data
 
+        //- Constructing dictionary
+        const dictionary& dict_;
+
         //- Group of the system
         word group_;
+
+        //- Write totals
+        bool writeTotal_;
 
         //- Const refrence to multiphaseSystem
         const phaseSystem& fluid_;
@@ -85,8 +93,25 @@ protected:
             //- Phase averaged volume fraction flux
             mutable autoPtr<surfaceScalarField> alphaPhiPtr_;
 
+            //- Was residual alpha read
+            bool readResidualAlpha_;
+
             //- Residual phase fraction
             dimensionedScalar residualAlpha_;
+
+            //- Was residual alpha read
+            bool readResidualRho_;
+
+            //- Residual phase density
+            dimensionedScalar residualRho_;
+
+        // Packing limits (optional)
+
+            //- Run-time selected packing limit model
+            autoPtr<packingLimitModel> packingLimitModel_;
+
+            //- Alpha max field
+            volScalarField alphaMax_;
 
 
 public:
@@ -94,7 +119,12 @@ public:
     TypeName("masterSystem");
 
     // Constructor
-    masterSystem(const word& type, const word& group, const phaseSystem&);
+    masterSystem
+    (
+        const word& type,
+        const phaseSystem&,
+        const dictionary&
+    );
 
     //- Lookup or construct kineticTheorySystem
     template<class System>
@@ -149,10 +179,22 @@ public:
         //- Return true if phase name is in the system
         bool contains(const word&) const;
 
+        //- Return true if phase is in the system
+        label whichPhase(const phaseModel&) const;
+
+        //- Return true if phase name is in the system
+        label whichPhase(const word&) const;
+
         //- Return residual alpha
         const dimensionedScalar& residualAlpha() const
         {
             return residualAlpha_;
+        }
+
+        //- Return residual rho
+        const dimensionedScalar& residualRho() const
+        {
+            return residualRho_;
         }
 
         //- Return total volume fraction
@@ -170,15 +212,23 @@ public:
         //- Return total volume fraction flux
         tmp<surfaceScalarField> alphaPhi() const;
 
-        //- Return the maximum volume fraction of the system
-        virtual tmp<volScalarField> alphaMax() const;
+        //- Return the minimum max alpha
+        scalar minAlphaMax() const;
 
-        //- Return the maximum volume fraction of the system
-        virtual scalar alphaMax(const label) const;
+        //- Return maximum volume fraction
+        virtual const volScalarField& alphaMax() const
+        {
+            return alphaMax_;
+        }
+
+        //- Return maximum volume fraction
+        virtual scalar alphaMax(const label celli) const
+        {
+            return alphaMax_[celli];
+        }
 
         //- Initialize the model after everything is constructed
-        virtual void initialize()
-        {}
+        virtual void initialize();
 
         //- Correct total volume fraction
         virtual void correctAlpha();
@@ -197,6 +247,24 @@ public:
         //- Remove stored fields
         virtual void clear()
         {}
+
+        //- Write using setting from DB
+        virtual bool write(const bool write = true) const
+        {
+            return true;
+        }
+
+        //- Write using given format, version and compression
+        virtual bool writeObject
+        (
+            IOstream::streamFormat,
+            IOstream::versionNumber,
+            IOstream::compressionType,
+            const bool write
+        ) const
+        {
+            return true;
+        }
 
         virtual bool writeData(Ostream&) const
         {

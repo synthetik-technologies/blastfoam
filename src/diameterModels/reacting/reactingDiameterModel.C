@@ -49,15 +49,15 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
 )
 :
     diameterModel(mesh, dict, phaseName),
-    rate_(reactionRate::New(dict)),
+    rate_(surfaceReactionRate::New(mesh, dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
-    TName_(dict.lookupOrDefault("TName", word("T"))),
+    TName_(dict.lookupOrDefault("TName", IOobject::groupName("T", phaseName))),
     dVdt_
     (
         IOobject
         (
             IOobject::groupName("dVdt", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -65,7 +65,6 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
     )
 {
     this->requireD();
-    rate_->initializeModels(mesh);
 }
 
 

@@ -27,6 +27,7 @@ License
 
 #include "CodedEquation.H"
 #include "adaptiveTypes.H"
+#include "stringOps.H"
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -41,6 +42,20 @@ Foam::wordList Foam::CodedEquation<Type>::codeKeys() const
         "d2fdx2_code",
         "d3fdx3_code",
         "codeInclude"
+    };
+}
+
+
+template<class Type>
+Foam::wordList Foam::CodedEquation<Type>::codeDictVars() const
+{
+    return
+    {
+        word::null,
+        word::null,
+        word::null,
+        word::null,
+        word::null
     };
 }
 
@@ -64,6 +79,9 @@ void Foam::CodedEquation<Type>::prepare
 
     // Copy filtered H template
     dynCode.addCopyFile(codeTemplateH("CodedEquation"));
+
+    // Make verbose if debugging
+    dynCode.setFilterVariable("verbose", Foam::name(bool(debug)));
 
     // Debugging: make verbose
     if (debug)

@@ -48,7 +48,7 @@ const Foam::dictionary& Foam::readComponent
             &read2DTable
             (
                 parentDict.lookup<fileName>(name + "File"),
-                parentDict.lookupOrDefault<token>(name + "Delim", token::COMMA).pToken(),
+                readDelim(parentDict, name + "Delim", token::COMMA),
                 parentDict.lookupOrDefault<label>(name + "StartRow", 0),
                 parentDict.lookupOrDefault<Switch>(name + "FlipTable", false)
             )
@@ -61,7 +61,7 @@ const Foam::dictionary& Foam::readComponent
             &read2DTable
             (
                 parentDict.lookup<fileName>("file"),
-                parentDict.lookupOrDefault<token>("delim", token::COMMA).pToken(),
+                readDelim(parentDict, "delim", token::COMMA),
                 parentDict.lookupOrDefault<label>("startRow", 0),
                 parentDict.lookupOrDefault<Switch>("flipTable", false)
             )
@@ -102,7 +102,7 @@ const Foam::dictionary& Foam::readComponent
                 &read2DTable
                 (
                     dict.lookup<fileName>("file"),
-                    dict.lookupOrDefault<token>("delim", token::COMMA).pToken(),
+                    readDelim(dict, "delim", token::COMMA),
                     dict.lookupOrDefault<label>("startRow", 0),
                     dict.lookupOrDefault<Switch>("flipTable", false)
                 )
@@ -170,7 +170,8 @@ const Foam::dictionary& Foam::readComponent
         {
             FatalIOErrorInFunction(dict)
                 << "Could not determine construction method of " << name << nl
-                << "Pease provide a file to read from or (n, min, delta/max)" << endl
+                << "Pease provide a file to read from or (n, min, delta/max)"
+                << endl
                 << abort(FatalIOError);
         }
 
@@ -218,7 +219,8 @@ const Foam::dictionary& Foam::readComponent
             {
                 FatalIOErrorInFunction(parentDict)
                     << "Either delta" << name.capitalise()
-                    << " or max" << name.capitalise() << " must be provided" <<endl
+                    << " or max" << name.capitalise() << " must be provided"
+                    << endl
                     << abort(FatalIOError);
             }
 
@@ -289,9 +291,9 @@ const Foam::dictionary& Foam::readComponent
             else
             {
                 FatalIOErrorInFunction(parentDict)
-                    << "Looking up a component of a 2D table requires either" << nl
-                    << "a row (" << rowName << ") or column (" << colName << ")" << nl
-                    << " to be specified" << endl
+                    << "Looking up a component of a 2D table requires either "
+                    << "a row (" << rowName << ") or column (" << colName << ") "
+                    << "to be specified" << endl
                     << abort(FatalIOError);
             }
         }
@@ -406,9 +408,9 @@ void Foam::read2DTable
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    label ny = -1;
     label nx = 0;
-    DynamicList<List<Type>> tdata(10);
+    label ny = -1;
+    DynamicList<List<Type>> tdata(data.n());
     while (is.good())
     {
         string line;
@@ -444,9 +446,7 @@ void Foam::read2DTable
 
     if (flip)
     {
-        label t = nx;
-        nx = ny;
-        ny = t;
+        Swap(nx, ny);
     }
 
     if (!determineSize)
@@ -473,18 +473,10 @@ void Foam::read2DTable
         }
     }
 
-    if (!flip)
+    data = tdata;
+    if (flip)
     {
-        data = tdata;
-        return;
-    }
-    data.resize(nx, ny);
-    for (label i = 0; i < data.m(); i++)
-    {
-        for (label j = 0; j < data.n(); j++)
-        {
-            data(i, j) = tdata[j][i];
-        }
+        data.flip();
     }
 }
 
@@ -648,9 +640,7 @@ void Foam::read3DTable
 
     if (flip)
     {
-        label t = nx;
-        nx = nz;
-        nz = t;
+        Swap(nx, nz);
     }
 
     if (!determineSize)
@@ -686,28 +676,12 @@ void Foam::read3DTable
                 << abort(FatalError);
         }
     }
-    else
-    {
-        data.resize(nx, ny, nz);
-    }
 
-    if (!flip)
+    data = tdata;
+    if (flip)
     {
-        data = tdata;
+        data.flip();
         return;
-    }
-
-
-    // Data needs to be correctly allocated before reading
-    for (label i = 0; i < data.m(); i++)
-    {
-        for (label j = 0; j < data.n(); j++)
-        {
-            for (label k = 0; k < data.l(); k++)
-            {
-                data(i, j, k) = tdata[k][j][i];
-            }
-        }
     }
 }
 

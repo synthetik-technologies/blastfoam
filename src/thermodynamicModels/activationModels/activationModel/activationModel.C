@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "activationModel.H"
-#include "fluxSchemeBase.H"
+#include "reconstruction.H"
 #include "fvc.H"
 #include "wedgePolyPatch.H"
 
@@ -241,7 +241,7 @@ Foam::activationModel::activationModel
         IOobject
         (
             IOobject::groupName("lambda", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -255,7 +255,7 @@ Foam::activationModel::activationModel
         IOobject
         (
             IOobject::groupName("detonationPoints", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             "uniform",
             mesh,
             IOobject::READ_IF_PRESENT,
@@ -289,6 +289,7 @@ Foam::activationModel::activationModel
       : dimensionedScalar("e0", dimEnergy/dimMass, dict)
     ),
     lambdaExp_(dict.lookupOrDefault("lambdaExp", 1.0)),
+    initialized_(lambda_.time().restart()),
     alphaRhoPtr_(nullptr),
     alphaRhoPhiPtr_(nullptr),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0)),
@@ -296,7 +297,7 @@ Foam::activationModel::activationModel
 {
     const bool active(dict.lookupOrDefault<bool>("active", true));
 
-    if (detonationPoints_.size())
+    if (needDetonationPoints || detonationPoints_.size())
     {
         DynamicList<vector> unactivatedPoints(detonationPoints_.size());
         DynamicList<scalar> unactivatedDelays(detonationPoints_.size());
@@ -345,15 +346,17 @@ Foam::activationModel::activationModel
                 << "    " << activatedRadii << endl;
         }
         Info<< endl;
-    }
 
-    forAll(detonationPoints_, pointi)
-    {
-        detonationPoints_[pointi].setActivated
-        (
-            lambda_,
-            true
-        );
+        forAll(detonationPoints_, pointi)
+        {
+            detonationPoints_[pointi].setActivated
+            (
+                lambda_,
+                true
+            );
+        }
+        lambda_.correctBoundaryConditions();
+        lambda_.storeOldTimes();
     }
 }
 
@@ -364,6 +367,52 @@ Foam::activationModel::~activationModel()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::activationModel::lambdaPow() const
+{
+    return
+        initialized_
+      ? pow(lambda_, lambdaExp_)
+      : volScalarField::New("lambdaPow", lambda_.mesh(), 0.0);
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::activationModel::lambdaPow
+(
+    const label patchi
+) const
+{
+    return
+        initialized_
+      ? pow(lambda_.boundaryField()[patchi], lambdaExp_)
+      : tmp<scalarField>
+        (
+            new scalarField
+            (
+                lambda_.boundaryField()[patchi].size(),
+                0.0
+            )
+        );
+}
+
+
+Foam::scalar Foam::activationModel::cellLambdaPow(const label celli) const
+{
+    return initialized_ ? pow(lambda_[celli], lambdaExp_) : 0.0;
+}
+
+Foam::scalar Foam::activationModel::patchFaceLambdaPow
+(
+    const label patchi,
+    const label facei
+) const
+{
+    return
+        initialized_
+      ? pow(lambda_.boundaryField()[patchi][facei], lambdaExp_)
+      : 0.0;
+}
+
 
 Foam::PtrList<Foam::activationModel::detonationPoint>
 Foam::activationModel::readDetonationPoints
@@ -377,7 +426,7 @@ Foam::activationModel::readDetonationPoints
         typeIOobject<IOPtrList<detonationPoint>> detPointsHeader
         (
             IOobject::groupName("detonationPoints", phaseName_),
-            alpha.mesh().time().timeName(),
+            alpha.mesh().time().name(),
             "uniform",
             alpha.mesh()
         );
@@ -409,7 +458,11 @@ Foam::activationModel::readDetonationPoints
         dict.lookupOrDefault
         (
             "delays",
-            scalarList(points.size(), 0.0)
+            scalarList
+            (
+                points.size(),
+                dict.lookupOrDefault("delay", 0.0)
+            )
         )
     );
     List<scalar> radii
@@ -504,14 +557,7 @@ void Foam::activationModel::initializeModels()
         )
     );
 
-    if (alphaRhoPtr_().time().restart())
-    {
-        forAll(detonationPoints_, pointi)
-        {
-            detonationPoints_[pointi].setActivated(lambda_, true);
-        }
-        lambda_.storeOldTimes();
-    }
+    initialized_ = true;
 }
 
 Foam::vector Foam::activationModel::centerOfMass
@@ -555,14 +601,11 @@ Foam::vector Foam::activationModel::centerOfMass
 }
 
 
-void Foam::activationModel::solve()
+void Foam::activationModel::update()
 {
+    ddtLambda_.clear();
     if (finished_ || (this->step() == 0 && min(lambda_).value() > 1.0 - small))
     {
-        if (ddtLambda_.valid())
-        {
-            ddtLambda_.clear();
-        }
         finished_ = true;
 
         return;
@@ -570,60 +613,66 @@ void Foam::activationModel::solve()
 
     const volScalarField& alphaRho = alphaRhoPtr_();
     dimensionedScalar dT(this->mesh().time().deltaT());
-    dimensionedScalar smallRho("small", dimDensity, 1e-10);
 
-    // Calculate the deltas using the current value
-    const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
-    volScalarField deltaAlphaRhoLambda
-    (
-        fvc::div(flux.flux(lambda_, alphaRhoPtr_(), flux.phi(), false))
-    );
-    this->storeAndBlendDelta(deltaAlphaRhoLambda);
+    alphaRhoLambdaOld_ = alphaRho*lambda_;
 
-    volScalarField deltaLambda(this->delta());
+    volScalarField deltaLambda("delta:" + lambda_.name(), this->delta());
     deltaLambda.max(0.0);
     this->storeAndBlendDelta(deltaLambda);
 
     // Store old value of lambda, old value of alphaRho is stored in the
     // phaseCompressible system
-    this->storeAndBlendOld(lambda_, false);
-    const volScalarField lambdaOld(lambda_);
-
-    lambda_ += deltaLambda*dT;
+    volScalarField lambdaOld(lambda_);
+    this->storeAndBlendOld(lambdaOld, false);
+    volScalarField lambdaNew(lambdaOld + deltaLambda*dT);
 
     // Activate points that are delayed
     forAll(detonationPoints_, pointi)
     {
         detonationPoints_[pointi].setActivated
         (
-            lambda_,
+            lambdaNew,
             this->finalStep()
         );
     }
-    this->correct();
-    lambda_.maxMin(0.0, 1.0);
-    lambda_.correctBoundaryConditions();
+    this->correct(lambdaNew);
+    lambdaNew.maxMin(0.0, 1.0);
 
     // Compute the limited change in lambda
-    ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
+    ddtLambda_ = (lambdaNew - lambdaOld)/dT;
     volScalarField& ddtLambda = ddtLambda_.ref();
+    ddtLambda = this->calcAndStoreDelta(ddtLambda);
+
+    // Calculate the deltas using the current value
+    deltaAlphaRhoLambda_ =
+        fvc::div(alphaRhoPhiPtr_(), lambda_)
+      - ddtLambda*alphaRho;
+}
+
+
+void Foam::activationModel::solve()
+{
+    if (!alphaRhoLambdaOld_.valid())
+    {
+        return;
+    }
+
+    const volScalarField& alphaRho = alphaRhoPtr_();
+    dimensionedScalar dT(this->mesh().time().deltaT());
+    dimensionedScalar smallRho("small", dimDensity, 1e-6);
+
+    this->storeAndBlendOld(alphaRhoLambdaOld_.ref());
+    this->storeAndBlendDelta(deltaAlphaRhoLambda_.ref());
+
+    // volScalarField deltaLambda(ddtLambda_());
+    // this->blendDelta(deltaLambda);
 
     //- Update lambda to include advection and reaction
     //  d(alpha rho lambda)/dt = alpha rho d(lambda)/dt + lambda d(alpha rho)/dt
     lambda_ =
-        lambdaOld*(2.0 - alphaRho/max(alphaRho.prevIter(), smallRho))
-      + dT*(deltaLambda - deltaAlphaRhoLambda/max(alphaRho.prevIter(), smallRho));
-
-    //- Compute actual delta for the time step knowing the blended
-    ddtLambda = this->calcAndStoreDelta(ddtLambda);
-
-
-    //- Correct the lambda field since zero mass will cause "unactivation"
-    //  which is not correct for some models
-    //  Detonation points are not corrected since they should have mass at
-    //  the detonation points
-    this->correct();
-
+        (alphaRhoLambdaOld_ - deltaAlphaRhoLambda_*dT)
+       /max(alphaRho, smallRho);
+      // + deltaLambda*dT;
     lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
 }

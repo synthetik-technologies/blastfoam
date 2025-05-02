@@ -55,7 +55,7 @@ Foam::virtualMassModels::Lamb::Lamb
     const bool registerObject
 )
 :
-    virtualMassModel(dict, pair, registerObject)
+    dispersedVirtualMassModel(dict, pair, registerObject)
 {}
 
 
@@ -67,14 +67,10 @@ Foam::virtualMassModels::Lamb::~Lamb()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::virtualMassModels::Lamb::Cvm
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::virtualMassModels::Lamb::Cvm() const
 {
-    volScalarField E(min(max(pair_.E(nodei, nodej), SMALL), 1 - SMALL));
-    volScalarField rtOmEsq(sqrt(1 - sqr(E)));
+    volScalarField E(min(max(pair_.E(), small), 1.0 - small));
+    volScalarField rtOmEsq(sqrt(1.0 - sqr(E)));
 
     return (rtOmEsq - E*acos(E))/(E*acos(E) - sqr(E)*rtOmEsq);
 }

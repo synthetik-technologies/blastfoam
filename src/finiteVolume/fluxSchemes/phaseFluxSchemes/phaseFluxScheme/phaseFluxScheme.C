@@ -79,7 +79,7 @@ void Foam::phaseFluxScheme::createSavedFields()
             IOobject
             (
                 fieldName("Uf"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -93,7 +93,7 @@ void Foam::phaseFluxScheme::createSavedFields()
             IOobject
             (
                 fieldName("pf"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -107,7 +107,7 @@ void Foam::phaseFluxScheme::createSavedFields()
             IOobject
             (
                 fieldName("alphaf"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,

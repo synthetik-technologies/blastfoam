@@ -27,14 +27,10 @@ License
 #include "solidTractionFreeFvPatchVectorField.H"
 #include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidTractionFreeFvPatchVectorField::
+Foam::solidTractionFreeFvPatchVectorField::
 solidTractionFreeFvPatchVectorField
 (
     const fvPatch& p,
@@ -50,7 +46,7 @@ solidTractionFreeFvPatchVectorField
 }
 
 
-solidTractionFreeFvPatchVectorField::
+Foam::solidTractionFreeFvPatchVectorField::
 solidTractionFreeFvPatchVectorField
 (
     const fvPatch& p,
@@ -83,13 +79,13 @@ solidTractionFreeFvPatchVectorField
 }
 
 
-solidTractionFreeFvPatchVectorField::
+Foam::solidTractionFreeFvPatchVectorField::
 solidTractionFreeFvPatchVectorField
 (
     const solidTractionFreeFvPatchVectorField& stpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     solidTractionFvPatchVectorField(stpvf, p, iF, mapper)
@@ -99,7 +95,7 @@ solidTractionFreeFvPatchVectorField
 }
 
 
-solidTractionFreeFvPatchVectorField::
+Foam::solidTractionFreeFvPatchVectorField::
 solidTractionFreeFvPatchVectorField
 (
     const solidTractionFreeFvPatchVectorField& stpvf,
@@ -114,7 +110,7 @@ solidTractionFreeFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool solidTractionFreeFvPatchVectorField::updateFields()
+bool Foam::solidTractionFreeFvPatchVectorField::updateFields()
 {
     traction() = Zero;
     pressure() = Zero;
@@ -125,10 +121,14 @@ bool solidTractionFreeFvPatchVectorField::updateFields()
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchVectorField, solidTractionFreeFvPatchVectorField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        solidTractionFreeFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

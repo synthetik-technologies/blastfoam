@@ -41,6 +41,7 @@ SourceFiles
 
 #include "volFields.H"
 #include "dictionary.H"
+#include "BlendedInterfacialModel.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -114,33 +115,37 @@ public:
 
     // Member Functions
 
-        //- Return lift coefficient
-        virtual tmp<volScalarField> Cl
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
-
-        //- Return phase-intensive lift force
-        virtual tmp<volVectorField> FI
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
         //- Return lift force
-        virtual tmp<volVectorField> F
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volVectorField> F() const = 0;
 
         //- Return face lift force
-        virtual tmp<surfaceScalarField> Ff
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<surfaceScalarField> Ff() const = 0;
+};
+
+
+/*---------------------------------------------------------------------------*\
+                      Class blendedLiftModel Declaration
+\*---------------------------------------------------------------------------*/
+
+class blendedLiftModel
+:
+    public BlendedInterfacialModel<liftModel>
+{
+public:
+
+    // Constructors
+
+        //- Inherit base class constructors
+        using BlendedInterfacialModel<liftModel>::BlendedInterfacialModel;
+
+
+    // Member Functions
+
+        //- Return the lift force
+        tmp<volVectorField> F() const;
+
+        //- Return the lift force
+        tmp<surfaceScalarField> Ff() const;
 };
 
 

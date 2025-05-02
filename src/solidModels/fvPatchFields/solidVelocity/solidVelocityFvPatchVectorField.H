@@ -47,7 +47,7 @@ Author
 #include "fvPatchFields.H"
 #include "fixedValueFvPatchFields.H"
 #include "Function1.H"
-#include "primitivePatchInterpolation.H"
+#include "PrimitivePatchInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -71,6 +71,8 @@ class solidVelocityFvPatchVectorField
         autoPtr<Function1<vector>> velocitySeries_;
 
         //- Patch interpolator to interpolate face values to the points
+        typedef PrimitivePatchInterpolation<primitivePatch>
+            primitivePatchInterpolation;
         mutable autoPtr<primitivePatchInterpolation> interpPtr_;
 
     // Private Functions
@@ -79,7 +81,7 @@ class solidVelocityFvPatchVectorField
         void makeInterp() const;
 
         //- Return the patch interpolator
-        primitivePatchInterpolation& interp();
+        const primitivePatchInterpolation& interp() const;
 
         //- Set the point displacement field boundary condition
         void setPointDisplacement(const vectorField& faceDisp);
@@ -114,7 +116,7 @@ public:
             const solidVelocityFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy
@@ -162,18 +164,16 @@ public:
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
-            (
-                const fvPatchFieldMapper&
-            );
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
+            //- Map the given fvPatchField onto this fvPatchField
+            virtual void map
             (
                 const fvPatchField<vector>&,
-                const labelList&
+                const fieldMapper&
             );
+
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset(const fvPatchField<vector>&);
 
         //- Write
         virtual void write(Ostream&) const;

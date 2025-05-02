@@ -178,6 +178,21 @@ void Foam::List2D<Type>::transfer(List2D<Type>& lst)
     List<Type>::transfer(lst);
 }
 
+
+template<class Type>
+void Foam::List2D<Type>::flip()
+{
+    List2D<Type> newLst(n_, m_);
+    for (label i = 0; i < m_; i++)
+    {
+        for (label j = 0; j < n_; j++)
+        {
+            newLst(j, i) = operator()(i, j);
+        }
+    }
+    operator=(move(newLst));
+}
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>

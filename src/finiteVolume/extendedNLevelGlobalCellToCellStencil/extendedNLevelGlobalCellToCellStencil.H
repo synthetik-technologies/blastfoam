@@ -62,7 +62,7 @@ class extendedNLevelGlobalCellToCellStencil
     public DemandDrivenMeshObject
     <
         polyMesh,
-        UpdateableMeshObject,
+        TopoChangeableMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >
 {
@@ -186,7 +186,9 @@ public:
         //- Callback for geometry motion
         virtual bool movePoints();
 
-        virtual void updateMesh(const polyMeshMap& mpm);
+        virtual void distribute(const polyDistributionMap& map);
+        virtual void topoChange(const polyTopoChangeMap& mpm);
+        virtual void mapMesh(const polyMeshMap& map);
 
         inline const globalIndex& gIndex() const
         {

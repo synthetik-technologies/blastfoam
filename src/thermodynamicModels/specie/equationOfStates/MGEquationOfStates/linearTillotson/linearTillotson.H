@@ -116,6 +116,9 @@ class linearTillotson
         //- Cavitation pressure
         scalar pCav_;
 
+        //- Internal energy contribution at reference density
+        scalar eRef_;
+
         //- Stored cavitation energies
         scalarLookupTable1D EcTable_;
 
@@ -136,6 +139,8 @@ class linearTillotson
             const scalar rho,
             const scalar e
         ) const;
+
+        inline scalar calcE(const scalar rho) const;
 
 
 public:

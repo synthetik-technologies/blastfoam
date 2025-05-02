@@ -49,7 +49,7 @@ Foam::solidBlastThermo::solidBlastThermo
     const word& masterName
 )
 :
-    physicalProperties(mesh, word::null),
+    physicalProperties(mesh, phaseName),
     blastThermo(mesh, dict, phaseName)
 {
     this->properties().dictionary::operator=(dict);
@@ -67,7 +67,7 @@ void Foam::solidBlastThermo::initializeFields()
                 IOobject
                 (
                     basicThermo::phasePropertyName("Kappa"),
-                    mesh().time().timeName(),
+                    mesh().time().name(),
                     mesh()
                 ),
                 mesh(),
@@ -104,6 +104,27 @@ Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
 }
 
 
+Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
+(
+    const fvMesh& mesh,
+    const word& phaseName
+)
+{
+    const IOdictionary dict
+    (
+        physicalProperties::findModelDict(mesh, phaseName)
+    );
+
+    return blastThermo::New<solidBlastThermo>
+    (
+        mesh,
+        dict.optionalSubDict("mixture"),
+        phaseName,
+        phaseName
+    );
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::solidBlastThermo::~solidBlastThermo()
@@ -118,9 +139,8 @@ Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::nu() const
     (
         "nu",
         this->T_.mesh(),
-        dimViscosity
+        dimKinematicViscosity
     );
 }
-
 
 // ************************************************************************* //

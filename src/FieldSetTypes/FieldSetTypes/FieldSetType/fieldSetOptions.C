@@ -32,7 +32,7 @@ const char* Foam::NamedEnum<Foam::fieldSetOptions::options, 5>::names[] =
     "setBoundaries",
     "setAllBoundaries",
     "noInternal",
-    "evaluateBoundaries",
+    "correctBC",
     "averageInterpolation"
 };
 

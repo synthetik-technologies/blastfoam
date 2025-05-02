@@ -40,6 +40,18 @@ namespace Foam
 Foam::objectMotionConstraint::objectMotionConstraint
 (
     const word& name,
+    const movingObject& motion
+)
+:
+    name_(name),
+    coeffDict_(),
+    motion_(motion)
+{}
+
+
+Foam::objectMotionConstraint::objectMotionConstraint
+(
+    const word& name,
     const dictionary& dict,
     const movingObject& motion
 )

@@ -58,6 +58,7 @@ SourceFiles
 #include "solidBlastThermo.H"
 #include "kineticTheoryModel.H"
 #include "phaseFluxScheme.H"
+#include "surfaceTemperatureModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -103,6 +104,9 @@ protected:
 
         //- Flux scheme
         autoPtr<phaseFluxScheme> fluxScheme_;
+
+        //- Surface temperature model
+        autoPtr<surfaceTemperatureModel> surfTModel_;
 
 
 public:
@@ -270,6 +274,13 @@ public:
                 return thermoPtr_();
             }
 
+            //- Return thermodynamic model
+            virtual const ::Foam::fluidThermo& fluidThermo() const
+            {
+                NotImplemented;
+                return NullObjectRef<::Foam::fluidThermo>();
+            }
+
             //- Return the laminar viscosity
             virtual tmp<volScalarField> nu() const
             {
@@ -302,12 +313,6 @@ public:
                    *rho_.boundaryField()[patchi];
             }
 
-            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alpha() const;
-
-            //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> alpha(const label patchi) const;
-
             //- Thermal diffusivity for temperature of mixture [J/m/s/K]
             virtual tmp<volScalarField> kappa() const
             {
@@ -328,51 +333,24 @@ public:
                 return this->kappa_[celli];
             }
 
-            //- Thermal diffusivity for energy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphahe() const;
-
-            //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> alphahe(const label patchi) const;
+            //- Return surface temperature
+            virtual tmp<volScalarField> Ts() const
+            {
+                return surfTModel_->Ts();
+            }
 
             //- Effective thermal turbulent diffusivity for temperature
             //  of mixture [J/m/s/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField& alphat
-            ) const
+            virtual tmp<volScalarField> kappaEff() const
             {
-                return thermoPtr_->kappaEff(alphat);
+                return thermophysicalTransport_->kappaEff();
             }
 
             //- Effective thermal turbulent diffusivity for temperature
             //  of mixture for patch [J/m/s/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
+            virtual tmp<scalarField> kappaEff(const label patchi) const
             {
-                return thermoPtr_->kappaEff(alphat, patchi);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const
-            {
-                return thermoPtr_->alphaEff(alphat);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
-            {
-                return thermoPtr_->alphaEff(alphat, patchi);
+                return thermophysicalTransport_->kappaEff(patchi);
             }
 
             //- Return the specific heat capacity at constant pressure

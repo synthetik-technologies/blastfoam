@@ -68,17 +68,13 @@ Foam::aspectRatioModels::TomiyamaAspectRatio::~TomiyamaAspectRatio()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::aspectRatioModels::TomiyamaAspectRatio::E
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::aspectRatioModels::TomiyamaAspectRatio::E() const
 {
     return
-        VakhrushevEfremov::E(nodei, nodej)
+        VakhrushevEfremov::E()
        *max
        (
-           scalar(1) - 0.35*yWall()/pair_.dispersed().d(nodei),
+           scalar(1) - 0.35*yWall()/pair_.dispersed().d(),
            scalar(0.65)
        );
 }
@@ -86,16 +82,14 @@ Foam::aspectRatioModels::TomiyamaAspectRatio::E
 
 Foam::scalar Foam::aspectRatioModels::TomiyamaAspectRatio::cellE
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return
-        VakhrushevEfremov::cellE(celli, nodei, nodej)
+        VakhrushevEfremov::cellE(celli)
        *max
        (
-           scalar(1) - 0.35*yWall()[celli]/pair_.dispersed().celld(celli, nodei),
+           scalar(1) - 0.35*yWall()[celli]/pair_.dispersed().celld(celli),
            scalar(0.65)
        );
 }

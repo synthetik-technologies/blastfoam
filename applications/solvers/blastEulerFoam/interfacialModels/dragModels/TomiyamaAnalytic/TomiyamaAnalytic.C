@@ -50,7 +50,7 @@ Foam::dragModels::TomiyamaAnalytic::TomiyamaAnalytic
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject),
+    dispersedDragModel(dict, pair, registerObject),
     residualRe_("residualRe", dimless, dict),
     residualEo_("residualEo", dimless, dict),
     residualE_("residualE", dimless, dict)
@@ -66,14 +66,10 @@ Foam::dragModels::TomiyamaAnalytic::~TomiyamaAnalytic()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::dragModels::TomiyamaAnalytic::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::dragModels::TomiyamaAnalytic::CdRe() const
 {
-    volScalarField Eo(max(pair_.Eo(nodei, nodej), residualEo_));
-    volScalarField E(max(pair_.E(nodei, nodej), residualE_));
+    volScalarField Eo(max(pair_.Eo(), residualEo_));
+    volScalarField E(max(pair_.E(), residualE_));
 
     volScalarField OmEsq(max(scalar(1) - sqr(E), sqr(residualE_)));
     volScalarField rtOmEsq(sqrt(OmEsq));
@@ -88,19 +84,17 @@ Foam::dragModels::TomiyamaAnalytic::CdRe
           + 16*pow(E, 4.0/3.0)
         )
        /sqr(F)
-       *max(pair_.Re(nodei, nodej), residualRe_);
+       *max(pair_.Re(), residualRe_);
 }
 
 
 Foam::scalar Foam::dragModels::TomiyamaAnalytic::cellCdRe
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
-    scalar Eo(max(pair_.cellEo(celli, nodei, nodej), residualEo_.value()));
-    scalar E(max(pair_.cellE(celli, nodei, nodej), residualE_.value()));
+    scalar Eo(max(pair_.cellEo(celli), residualEo_.value()));
+    scalar E(max(pair_.cellE(celli), residualE_.value()));
 
     scalar OmEsq(max(scalar(1) - sqr(E), sqr(residualE_.value())));
     scalar rtOmEsq(sqrt(OmEsq));
@@ -115,7 +109,7 @@ Foam::scalar Foam::dragModels::TomiyamaAnalytic::cellCdRe
           + 16*pow(E, 4.0/3.0)
         )
        /sqr(F)
-       *max(pair_.cellRe(celli, nodei, nodej), residualRe_.value());
+       *max(pair_.cellRe(celli), residualRe_.value());
 }
 
 // ************************************************************************* //

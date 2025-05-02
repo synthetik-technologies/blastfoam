@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "locationMapper.H"
+#include "pointFields.H"
 #include "Time.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -42,12 +43,12 @@ Foam::locationMapper::locationMapper(const polyMesh& mesh)
         IOobject
         (
             typeName,
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         )
     ),
     mesh_(mesh),
-    interpolatedFields_(0),
+    interpolatedFields_(),
 
     edgeSplits_(0),
     newEdgeIndices_(0),
@@ -57,7 +58,12 @@ Foam::locationMapper::locationMapper(const polyMesh& mesh)
 
     cellSplits_(0),
     newCellIndices_(0)
-{}
+{
+    if (mesh.foundObject<pointVectorField>("pointDisplacement"))
+    {
+        interpolatedFields_.insert ("pointDisplacement");
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

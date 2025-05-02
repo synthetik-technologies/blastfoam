@@ -41,7 +41,7 @@ SourceFiles
 #define locationMapper_H
 
 #include "polyMesh.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChangeMap.H"
 #include "autoPtr.H"
 #include "DynamicList.H"
 

@@ -81,26 +81,7 @@ Foam::dragModels::Syamlal::~Syamlal()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Syamlal::CdRe
-(
-    const label,
-    const label
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the Syamlal model."
-        << exit(FatalError);
-
-    return pair_.phase1();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Syamlal::K
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Syamlal::K() const
 {
     const phaseModel& phase1 = pair_.phase1();
     const phaseModel& phase2 = pair_.phase2();
@@ -115,52 +96,27 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Syamlal::K
         (
             3.0*(1.0 + e_)*(pi/2.0 + Cf_*sqr(pi)/8.0)
            *phase1*phase1.rho()*phase2*phase2.rho()
-           *sqr(phase1.d(nodei) + phase2.d(nodej))
-           *g0*pair_.magUr(nodei, nodej)
+           *sqr(phase1.d() + phase2.d())
+           *g0*pair_.magUr()
         )
        /(
             2.0*pi
            *(
-                phase1.rho()*pow3(phase1.d(nodei))
-              + phase2.rho()*pow3(phase2.d(nodej))
+                phase1.rho()*pow3(phase1.d())
+              + phase2.rho()*pow3(phase2.d())
             )
         )
       + C1_*Pfric;
 }
 
 
-Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Syamlal::Kf
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Syamlal::Kf() const
 {
-    return fvc::interpolate(K(nodei, nodej));
+    return fvc::interpolate(K());
 }
 
 
-Foam::scalar Foam::dragModels::Syamlal::cellCdRe
-(
-    const label,
-    const label,
-    const label
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the Syamlal model."
-        << exit(FatalError);
-
-    return 0.0;
-}
-
-
-Foam::scalar Foam::dragModels::Syamlal::cellK
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::dragModels::Syamlal::cellK(const label celli) const
 {
     const phaseModel& phase1 = pair_.phase1();
     const phaseModel& phase2 = pair_.phase2();
@@ -175,14 +131,14 @@ Foam::scalar Foam::dragModels::Syamlal::cellK
             3.0*(1.0 + e_)*(pi/2.0 + Cf_*sqr(pi)/8.0)
            *phase1[celli]*phase1.rho()[celli]
            *phase2[celli]*phase2.rho()[celli]
-           *sqr(phase1.celld(celli, nodei) + phase2.celld(celli, nodej))
-           *g0*pair_.cellmagUr(celli, nodei, nodej)
+           *sqr(phase1.celld(celli) + phase2.celld(celli))
+           *g0*pair_.cellmagUr(celli)
         )
        /(
             2.0*pi
            *(
-                phase1.rho()[celli]*pow3(phase1.celld(celli, nodei))
-              + phase2.rho()[celli]*pow3(phase2.celld(celli, nodej))
+                phase1.rho()[celli]*pow3(phase1.celld(celli))
+              + phase2.rho()[celli]*pow3(phase2.celld(celli))
             )
         )
       + C1_.value()*Pfric;

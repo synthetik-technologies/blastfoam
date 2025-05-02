@@ -204,7 +204,7 @@ Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
             IOobject
             (
                 "Ibar",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -464,7 +464,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "sigmaY",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -482,7 +482,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "sigmaYf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -500,7 +500,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DSigmaY",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -513,7 +513,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DSigmaYf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -526,7 +526,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "epsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -539,7 +539,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "epsilonPf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -552,7 +552,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DEpsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -565,7 +565,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DEpsilonPf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -578,7 +578,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "bEbarTrial",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -591,7 +591,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "bEbarTrialf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -604,7 +604,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "bEbar",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -617,7 +617,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "bEbarf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -630,7 +630,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DEpsilonPEq",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -643,7 +643,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DEpsilonPEqf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -656,7 +656,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DLambda",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -669,7 +669,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "DLambdaf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -682,7 +682,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "epsilonPEq",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -695,7 +695,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "epsilonPEqf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -708,7 +708,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "activeYield",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -721,7 +721,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "plasticN",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -734,7 +734,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         IOobject
         (
             "plasticNf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -807,6 +807,8 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
             Function1<scalar>::New
             (
                 "stressPlasticStrainSeries",
+                mesh().time().userUnits(),
+                dimPressure,
                 dict
             );
         dimensionedScalar sigmaY

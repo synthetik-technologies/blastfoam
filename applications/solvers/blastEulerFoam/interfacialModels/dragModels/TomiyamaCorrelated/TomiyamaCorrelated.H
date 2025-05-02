@@ -46,15 +46,13 @@ SourceFiles
 #ifndef TomiyamaCorrelated_H
 #define TomiyamaCorrelated_H
 
-#include "dragModel.H"
+#include "dispersedDragModel.H"
+#include "phasePair.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-class phasePair;
-
 namespace dragModels
 {
 
@@ -64,7 +62,7 @@ namespace dragModels
 
 class TomiyamaCorrelated
 :
-    public dragModel
+    public dispersedDragModel
 {
     // Private data
 
@@ -96,19 +94,10 @@ public:
     // Member Functions
 
         //- Drag coefficient
-        virtual tmp<volScalarField> CdRe
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> CdRe() const;
 
         //- Drag coefficient
-        virtual scalar cellCdRe
-        (
-            const label celli,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual scalar cellCdRe(const label celli) const;
 };
 
 

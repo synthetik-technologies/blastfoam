@@ -28,10 +28,7 @@ License
 #include "polyMesh.H"
 #include "polyTopoChange.H"
 #include "meshTools.H"
-#include "polyAddFace.H"
-#include "polyAddPoint.H"
-#include "polyAddCell.H"
-#include "polyModifyFace.H"
+#include "dynMeshTools.H"
 #include "syncTools.H"
 #include "faceSet.H"
 #include "cellSet.H"
@@ -39,10 +36,11 @@ License
 #include "OFstream.H"
 #include "Time.H"
 #include "FaceCellWave.H"
-#include "mapDistributePolyMesh.H"
+#include "polyDistributionMap.H"
 #include "refinementData.H"
 #include "refinementDistanceData.H"
 #include "degenerateMatcher.H"
+#include "wedgePolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -68,35 +66,6 @@ namespace Foam
 
 // * * * * * * * * * * * * * Protected Member Functions * * * * * * * * * * //
 
-void Foam::hexRef::reorder
-(
-    const labelList& map,
-    const label len,
-    const label null,
-    labelList& elems
-)
-{
-    labelList newElems(len, null);
-
-    forAll(elems, i)
-    {
-        label newI = map[i];
-
-        if (newI >= len)
-        {
-            FatalErrorInFunction << abort(FatalError);
-        }
-
-        if (newI >= 0)
-        {
-            newElems[newI] = elems[i];
-        }
-    }
-
-    elems.transfer(newElems);
-}
-
-
 // Bit complex way to determine the unrefined edge length.
 Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
 {
@@ -117,7 +86,32 @@ Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
 
     label nLevels = gMax(cellLevel_)+1;
 
-    scalarField typEdgeLenSqr(nLevels, GREAT2);
+    scalarField typEdgeLenSqr(nLevels, 0.0);
+    labelField edgeLevelCount(nLevels, 0);
+    boolList validEdge(mesh_.nEdges(), true);
+    if (mesh_.nGeometricD() != 3)
+    {
+        validEdge = false;
+        forAll(mesh_.boundaryMesh(), patchi)
+        {
+            if
+            (
+                isA<emptyPolyPatch>(mesh_.boundaryMesh()[patchi])
+            || isA<wedgePolyPatch>(mesh_.boundaryMesh()[patchi])
+            )
+            {
+                const polyPatch& patch = mesh_.boundaryMesh()[patchi];
+                forAll(patch, fi)
+                {
+                    UIndirectList<bool>
+                    (
+                        validEdge,
+                        mesh_.faceEdges()[fi + patch.start()]
+                    ) = true;
+                }
+            }
+        }
+    }
 
 
     // 1. Look only at edges surrounded by cellLevel cells only.
@@ -170,20 +164,25 @@ Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
         {
             const label eLevel = edgeLevel[edgeI];
 
-            if (eLevel >= 0 && eLevel < labelMax)
+            if (validEdge[edgeI] && eLevel >= 0 && eLevel < labelMax)
             {
                 const edge& e = mesh_.edges()[edgeI];
 
                 scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
-
-                typEdgeLenSqr[eLevel] = min(typEdgeLenSqr[eLevel], edgeLenSqr);
+                typEdgeLenSqr[eLevel] += edgeLenSqr;
+                edgeLevelCount[eLevel]++;
             }
         }
     }
 
     // Get the minimum per level over all processors. Note minimum so if
     // cells are not cubic we use the smallest edge side.
-    Pstream::listCombineGather(typEdgeLenSqr, minEqOp<scalar>());
+    Pstream::listCombineGather(edgeLevelCount, plusEqOp<label>());
+    Pstream::listCombineGather(typEdgeLenSqr, plusEqOp<scalar>());
+    forAll(typEdgeLenSqr, levelI)
+    {
+        typEdgeLenSqr[levelI] /= max(edgeLevelCount[levelI], 1.0);
+    }
     Pstream::listCombineScatter(typEdgeLenSqr);
 
     if (debug)
@@ -210,11 +209,14 @@ Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
 
         forAll(cEdges, i)
         {
-            const edge& e = mesh_.edges()[cEdges[i]];
+            if (validEdge[cEdges[i]])
+            {
+                const edge& e = mesh_.edges()[cEdges[i]];
 
-            scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
+                scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
 
-            maxEdgeLenSqr[cLevel] = max(maxEdgeLenSqr[cLevel], edgeLenSqr);
+                maxEdgeLenSqr[cLevel] = max(maxEdgeLenSqr[cLevel], edgeLenSqr);
+            }
         }
     }
 
@@ -2405,20 +2407,20 @@ void Foam::hexRef::storeData
 // Gets called after the mesh change. setRefinement will already have made
 // sure the pointLevel_ and cellLevel_ are the size of the new mesh so we
 // only need to account for reordering.
-void Foam::hexRef::updateMesh(const mapPolyMesh& map)
+void Foam::hexRef::topoChange(const polyTopoChangeMap& map)
 {
     Map<label> dummyMap(0);
 
-    updateMesh(map, dummyMap, dummyMap, dummyMap);
+    topoChange(map, dummyMap, dummyMap, dummyMap);
 }
 
 
 // Gets called after the mesh change. setRefinement will already have made
 // sure the pointLevel_ and cellLevel_ are the size of the new mesh so we
 // only need to account for reordering.
-void Foam::hexRef::updateMesh
+void Foam::hexRef::topoChange
 (
-    const mapPolyMesh& map,
+    const polyTopoChangeMap& map,
     const Map<label>& pointsToRestore,
     const Map<label>& facesToRestore,
     const Map<label>& cellsToRestore
@@ -2427,7 +2429,7 @@ void Foam::hexRef::updateMesh
     // Update celllevel
     if (debug)
     {
-        Pout<< "hexRef::updateMesh :"
+        Pout<< "hexRef::topoChange :"
             << " Updating various lists"
             << endl;
     }
@@ -2437,7 +2439,7 @@ void Foam::hexRef::updateMesh
 
         if (debug)
         {
-            Pout<< "hexRef::updateMesh :"
+            Pout<< "hexRef::topoChange :"
                 << " reverseCellMap:" << map.reverseCellMap().size()
                 << " cellMap:" << map.cellMap().size()
                 << " nCells:" << mesh_.nCells()
@@ -2457,7 +2459,13 @@ void Foam::hexRef::updateMesh
             // Just account for reordering. We cannot use cellMap since
             // then cells created from cells would get cellLevel_ of
             // cell they were created from.
-            reorder(reverseCellMap, mesh_.nCells(), -1, cellLevel_);
+            meshTools::reorder
+            (
+                reverseCellMap,
+                mesh_.nCells(),
+                -1,
+                cellLevel_
+            );
         }
         else
         {
@@ -2522,7 +2530,13 @@ void Foam::hexRef::updateMesh
         if (reversePointMap.size() == pointLevel_.size())
         {
             // Assume it is after hexRef that this routine is called.
-            reorder(reversePointMap, mesh_.nPoints(), -1,  pointLevel_);
+            meshTools::reorder
+            (
+                reversePointMap,
+                mesh_.nPoints(),
+                -1,
+                pointLevel_
+            );
         }
         else
         {
@@ -2591,14 +2605,14 @@ void Foam::hexRef::updateMesh
     // Update refinement tree
     if (history_.active())
     {
-        history_.updateMesh(map);
+        history_.topoChange(map);
     }
 
     // Mark files as changed
     setInstance(mesh_.facesInstance());
 
     // Update face removal engine
-    faceRemover_.updateMesh(map);
+    faceRemover_.topoChange(map);
 
     // Clear cell shapes
     cellShapesPtr_.clear();
@@ -2690,7 +2704,7 @@ void Foam::hexRef::subset
 
 
 // Gets called after the mesh distribution
-void Foam::hexRef::distribute(const mapDistributePolyMesh& map)
+void Foam::hexRef::distribute(const polyDistributionMap& map)
 {
     if (debug)
     {
@@ -3243,16 +3257,16 @@ const Foam::cellShapeList& Foam::hexRef::cellShapes() const
 
 
 // Write refinement to polyMesh directory.
-bool Foam::hexRef::write() const
+bool Foam::hexRef::write(const bool w) const
 {
     bool writeOk =
-        cellLevel_.write()
-     && pointLevel_.write()
-     && level0Edge_.write();
+        cellLevel_.write(w)
+     && pointLevel_.write(w)
+     && level0Edge_.write(w);
 
     if (returnReduce(history_.active(), orOp<bool>()))
     {
-        writeOk = writeOk && history_.write();
+        writeOk = writeOk && history_.write(w);
     }
 
     return writeOk;

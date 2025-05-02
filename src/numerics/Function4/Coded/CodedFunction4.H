@@ -87,11 +87,17 @@ class Coded
         //- The dynamically generated Function4 pointer
         mutable autoPtr<Function4<Type>> redirectFunction4Ptr_;
 
+        //- Units
+        unitConversions units_;
+
 
     // Private Member Functions
 
         //- Get the keywords associated with source code
         virtual wordList codeKeys() const;
+
+        //- Get the name of the dictionary variables in the source code
+        virtual wordList codeDictVars() const;
 
         //- Adapt the context for the current object
         virtual void prepare(dynamicCode&, const dynamicCodeContext&) const;
@@ -118,6 +124,7 @@ public:
         Coded
         (
             const word& name,
+            const unitConversions& units,
             const dictionary& dict
         );
 

@@ -60,6 +60,20 @@ Foam::objectMotionConstraints::plane::plane
 }
 
 
+Foam::objectMotionConstraints::plane::plane
+(
+    const word& name,
+    const point& centreOfRotation,
+    const vector& normal,
+    const movingObject& motion
+)
+:
+    objectMotionConstraint(name, motion),
+    centreOfRotation_(centreOfRotation),
+    normal_(normal)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::objectMotionConstraints::plane::~plane()

@@ -40,7 +40,7 @@ SourceFiles
 
 #include "compressibleSystem.H"
 #include "fluxScheme.H"
-#include "psiuReactionThermo.H"
+#include "psiuMulticomponentThermo.H"
 #include "uniformDimensionedFields.H"
 #include "laminarFlameSpeed.H"
 #include "ignition.H"
@@ -60,7 +60,7 @@ protected:
 // Protected data
 
     //- Thermo
-    autoPtr<psiuReactionThermo> thermo_;
+    autoPtr<psiuMulticomponentThermo> thermo_;
 
     //- Composition
     basicCombustionMixture& composition_;
@@ -89,39 +89,39 @@ protected:
 
     // - Flame models
 
-//         //- Combustion properties
-//         IOdictionary combustionProperties;
-//
+        //- Combustion properties
+        IOdictionary combustionProperties;
+
         //- Burnt fraction
         volScalarField& b;
-//
-//         //- Velocity ratio
-//         volScalarField Xi;
-//
-//         //- Strained laminar flame speed
-//         volScalarField Su;
-//
-//         //- Turbulent flame speed
-//         volScalarField St;
-//
-//         //- Su bounds
-//         dimensionedScalar SuMin;
-//         dimensionedScalar SuMax;
-//
-//         // - Laminar flame speed model
-//         autoPtr<laminarFlameSpeed> unstrainedLaminarFlameSpeed_;
-//
-//         // Model names
-//         word SuModel;
-//         word XiModel;
-//
-//         dimensionedScalar sigmaExt;
-//         dimensionedScalar XiCoef;
-//         dimensionedScalar XiShapeCoef;
-//         dimensionedScalar uPrimeCoef;
-//
-//         //- Ignition model
-//         ignition ign;
+
+        //- Velocity ratio
+        volScalarField Xi;
+
+        //- Strained laminar flame speed
+        volScalarField Su;
+
+        //- Turbulent flame speed
+        volScalarField St;
+
+        //- Su bounds
+        dimensionedScalar SuMin;
+        dimensionedScalar SuMax;
+
+        // - Laminar flame speed model
+        autoPtr<laminarFlameSpeed> unstrainedLaminarFlameSpeed_;
+
+        // Model names
+        word SuModel;
+        word XiModel;
+
+        dimensionedScalar sigmaExt;
+        dimensionedScalar XiCoef;
+        dimensionedScalar XiShapeCoef;
+        dimensionedScalar uPrimeCoef;
+
+        //- Ignition model
+        ignition ign;
 
 
 public:

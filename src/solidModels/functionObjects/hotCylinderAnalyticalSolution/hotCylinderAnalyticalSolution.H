@@ -23,7 +23,7 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    hotCylinderAnalyticalSolution
+    functionObjects::hotCylinderAnalyticalSolution
 
 Description
     FunctionObject that generates the analytical temperature (analyticalT) and
@@ -53,14 +53,15 @@ SourceFiles
 #ifndef hotCylinderAnalyticalSolution_H
 #define hotCylinderAnalyticalSolution_H
 
-#include "functionObject.H"
+#include "fvMeshFunctionObject.H"
 #include "dictionary.H"
-#include "fvMesh.H"
-#include "OFstream.H"
+#include "dimensionedScalar.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
+{
+namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
@@ -69,51 +70,30 @@ namespace Foam
 
 class hotCylinderAnalyticalSolution
 :
-    public functionObject
+    public fvMeshFunctionObject
 {
     // Private data
 
-        //- Name
-        const word name_;
-
-        //- Reference to main object registry
-        const Time& time_;
-
         //- Inner pipe radius
-        const scalar rInner_;
+        dimensionedScalar rInner_;
 
         //- Outer pipe radius
-        const scalar rOuter_;
+        dimensionedScalar rOuter_;
 
         //- Inner pipe temperature
-        const scalar TInner_;
+        dimensionedScalar TInner_;
 
         //- Outer pipe temperature
-        const scalar TOuter_;
+        dimensionedScalar TOuter_;
 
         //- Young's modulus
-        const scalar E_;
+        dimensionedScalar E_;
 
         //- Poisson's ratio
-        const scalar nu_;
+        dimensionedScalar nu_;
 
         //- Coefficient of linear thermal expansion
-        const scalar alpha_;
-
-
-    // Private Member Functions
-
-        //- Write data
-        bool writeData();
-
-        //- Disallow default bitwise copy construct
-        hotCylinderAnalyticalSolution
-        (
-            const hotCylinderAnalyticalSolution&
-        );
-
-        //- Disallow default bitwise assignment
-        void operator=(const hotCylinderAnalyticalSolution&);
+        dimensionedScalar alpha_;
 
 
 public:
@@ -135,20 +115,16 @@ public:
 
     // Member Functions
 
-        //- start is called at the start of the time-loop
-        virtual bool start();
+        //- Read and set the function object if its data has changed
+        virtual bool read(const dictionary& dict);
+
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        };
 
         //- execute is called at each ++ or += of the time-loop
         virtual bool execute();
-
-        //- Called when time was set at the end of the Time::operator++
-        virtual bool timeSet()
-        {
-            return true;
-        }
-
-        //- Read and set the function object if its data has changed
-        virtual bool read(const dictionary& dict);
 
         //- Write
         virtual bool write();
@@ -157,6 +133,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

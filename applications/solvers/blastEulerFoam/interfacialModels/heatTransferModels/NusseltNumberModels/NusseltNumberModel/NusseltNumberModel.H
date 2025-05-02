@@ -116,19 +116,10 @@ public:
         }
 
         //- Nusselt number
-        virtual tmp<volScalarField> Nu
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
+        virtual tmp<volScalarField> Nu() const = 0;
 
         //- Nusselt number for cell
-        virtual scalar cellNu
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
+        virtual scalar cellNu(const label) const = 0;
 };
 
 

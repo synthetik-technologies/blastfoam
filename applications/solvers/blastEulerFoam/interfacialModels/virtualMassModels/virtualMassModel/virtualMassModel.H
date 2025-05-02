@@ -41,6 +41,7 @@ SourceFiles
 
 #include "volFields.H"
 #include "dictionary.H"
+#include "BlendedInterfacialModel.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -118,44 +119,36 @@ public:
     // Member Functions
 
         //- Return the virtual mass coefficient
-        virtual tmp<volScalarField> Cvm
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
-
-        //- Return the phase-intensive virtual mass coefficient Ki
-        //  used in the momentum equation
-        //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(DU1_Dt - DU2_Dt)
-        //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(DU1_Dt - DU2_Dt)
-        virtual tmp<volScalarField> KI
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
-        //- Return the virtual mass coefficient K
-        //  used in the momentum equation
-        //    ddt(alpha1*rho1*U1) + ... = ... K*(DU1_Dt - DU2_Dt)
-        //    ddt(alpha2*rho2*U2) + ... = ... K*(DU1_Dt - DU2_Dt)
-        virtual tmp<volScalarField> K
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
-        //- Return the virtual mass coefficient Kf
-        //  used in the face-momentum equations
-        virtual tmp<surfaceScalarField> Kf
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> K() const = 0;
 
         // Dummy write for regIOobject
         bool writeData(Ostream& os) const;
 };
 
+
+/*---------------------------------------------------------------------------*\
+                      Class blendedVirtualMassModel Declaration
+\*---------------------------------------------------------------------------*/
+
+class blendedVirtualMassModel
+:
+    public BlendedInterfacialModel<virtualMassModel>
+{
+public:
+
+    typedef virtualMassModel modelType;
+
+    // Constructors
+
+        //- Inherit base class constructors
+        using BlendedInterfacialModel<virtualMassModel>::BlendedInterfacialModel;
+
+
+    // Member Functions
+
+        //- Return the drag coefficient K
+        tmp<volScalarField> K() const;
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

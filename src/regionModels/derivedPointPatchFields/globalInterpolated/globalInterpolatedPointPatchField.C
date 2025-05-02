@@ -180,7 +180,7 @@ void Foam::globalInterpolatedPointPatchField<Type>::updateCoeffs()
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    Field<Type>::operator=(samplePatch.faceToPointInterpolate(nbr));
+    Field<Type>::operator=(cgpp.faceToPoint(samplePatch.faceInterpolate(nbr)));
     fixedValuePointPatchField<Type>::updateCoeffs();
 
     // Restore tag

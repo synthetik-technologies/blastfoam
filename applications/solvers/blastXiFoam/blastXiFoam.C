@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
         Info<< "Calculating Fluxes" << endl;
         integrator.integrate();
 
-        #include "ftEqn.H"
-        #include "bEqn.H"
+//         #include "ftEqn.H"
+//         #include "bEqn.H"
 
         Info<< "    max(p) = " << max(p).value()
             << ", min(p) = " << min(p).value() << nl

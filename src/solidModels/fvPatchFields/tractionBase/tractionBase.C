@@ -62,14 +62,17 @@ Foam::tractionBase::tractionBase
 (
     const tractionBase& tb,
     const fvPatch& p,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     patch_(p),
-    traction_(mapper(tb.traction_)),
-    pressure_(mapper(tb.pressure_)),
+    traction_(p.size(), Zero),
+    pressure_(p.size(), Zero),
     force_(tb.force_)
-{}
+{
+    mapper(traction_, tb.traction_);
+    mapper(pressure_, tb.pressure_);
+}
 
 
 Foam::tractionBase::tractionBase
@@ -87,24 +90,23 @@ Foam::tractionBase::tractionBase
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::tractionBase::autoMap
+void Foam::tractionBase::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchField<vector>& ptf,
+    const fieldMapper& mapper
 )
 {
-    m(traction_, traction_);
-    m(pressure_, pressure_);
+    const tractionBase& tb = dynamicCast<const tractionBase>(ptf);
+    mapper(traction_, tb.traction_);
+    mapper(pressure_, tb.pressure_);
 }
 
 
-void Foam::tractionBase::rmap
-(
-    const tractionBase& tb,
-    const labelList& addr
-)
+void Foam::tractionBase::reset(const fvPatchField<vector>& ptf)
 {
-    traction_.rmap(tb.traction_, addr);
-    pressure_.rmap(tb.pressure_, addr);
+    const tractionBase& tb = dynamicCast<const tractionBase>(ptf);
+    traction_.reset(tb.traction_);
+    pressure_.reset(tb.pressure_);
 }
 
 

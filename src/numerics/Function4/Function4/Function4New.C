@@ -33,6 +33,7 @@ template<class Type>
 Foam::autoPtr<Foam::Function4<Type>> Foam::Function4<Type>::New
 (
     const word& name,
+    const Function4s::unitConversions& units,
     const dictionary& dict
 )
 {
@@ -56,7 +57,7 @@ Foam::autoPtr<Foam::Function4<Type>> Foam::Function4<Type>::New
                 << exit(FatalError);
         }
 
-        return cstrIter()(name, coeffsDict);
+        return cstrIter()(name, units, coeffsDict);
     }
     else
     {
@@ -70,7 +71,7 @@ Foam::autoPtr<Foam::Function4<Type>> Foam::Function4<Type>::New
             is.putBack(firstToken);
             return autoPtr<Function4<Type>>
             (
-                new Function4s::Constant<Type>(name, is)
+                new Function4s::Constant<Type>(name, units, is)
             );
         }
         else
@@ -92,7 +93,7 @@ Foam::autoPtr<Foam::Function4<Type>> Foam::Function4<Type>::New
                 << exit(FatalError);
         }
 
-        return cstrIter()(name, dict);
+        return cstrIter()(name, units, dict);
     }
 }
 

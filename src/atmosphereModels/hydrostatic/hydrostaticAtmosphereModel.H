@@ -60,7 +60,7 @@ public:
     TypeName("hydrostatic");
 
     // Constructor
-    hydrostatic(const fvMesh&, const dictionary&, const label);
+    hydrostatic(const fvMesh&, const dictionary&, const word&);
 
     //- Destructor
     virtual ~hydrostatic();

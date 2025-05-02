@@ -31,8 +31,6 @@ Author
 
 #include "polyhedralRefinement.H"
 #include "polyTopoChange.H"
-#include "polyAddCell.H"
-#include "polyAddPoint.H"
 #include "cellSet.H"
 #include "faceSet.H"
 #include "pointSet.H"
@@ -795,15 +793,11 @@ void Foam::polyhedralRefinement::setRefinement
             const label& cellI = cellsToRefine[i];
             label anchorPointi = mesh_.faces()[mesh_.cells()[cellI][0]][0];
 
-            cellMidPoint[cellI] = meshMod.setAction
+            cellMidPoint[cellI] = meshMod.addPoint
             (
-                polyAddPoint
-                (
-                    meshCellCentres[cellI], // Point to add (cell centre)
-                    anchorPointi,           // Appended point: no master ID
-                    -1,                     // Zone for point
-                    true                    // Supports a cell
-                )
+                meshCellCentres[cellI], // Point to add (cell centre)
+                anchorPointi,           // Appended point: no master ID
+                true                    // Supports a cell
             );
             newPointLevel(cellMidPoint[cellI]) = cellLevel_[cellI] + 1;
             splitCells.append(cellI);
@@ -936,23 +930,14 @@ void Foam::polyhedralRefinement::setRefinement
             if (edgeMidPoint[edgeI] > -1)
             {
                 const edge& e = mesh_.edges()[edgeI];
-                edgeMidPoint[edgeI] = meshMod.setAction
+                edgeMidPoint[edgeI] = meshMod.addPoint
                 (
-                    polyAddPoint
-                    (
-                        edgeMids[edgeI], // Point
-                        e[0],            // Appended point, no master ID
-                        -1,              // Zone for point
-                        true             // Supports a cell
-                    )
+                    edgeMids[edgeI], // Point
+                    e[0],            // Appended point, no master ID
+                    true             // Supports a cell
                 );
                 newPointLevel(edgeMidPoint[edgeI]) =
-                    max
-                    (
-                        pointLevel_[e[0]],
-                        pointLevel_[e[1]]
-                    ) + 1;
-
+                    max(pointLevel_[e[0]], pointLevel_[e[1]]) + 1;
                 splitEdges.append(edgeI);
             }
         }
@@ -1152,19 +1137,15 @@ void Foam::polyhedralRefinement::setRefinement
                 // Face marked to be split. Add the point at face centre and
                 // replace faceMidPoint with actual point label
 
-                faceMidPoint[faceI] = meshMod.setAction
+                faceMidPoint[faceI] = meshMod.addPoint
                 (
-                    polyAddPoint
                     (
-                        (
-                            faceI < nInternalFaces
-                          ? meshFaceCentres[faceI]
-                          : bFaceMids[faceI - nInternalFaces]
-                        ),    // Point
-                        f[0], // Appended point, no master ID
-                        -1,   // Zone for point
-                        true  // Supports a cell
-                    )
+                        faceI < nInternalFaces
+                        ? meshFaceCentres[faceI]
+                      : bFaceMids[faceI - nInternalFaces]
+                    ),    // Point
+                    f[0], // Appended point, no master ID
+                    true  // Supports a cell
                 );
                 newPointLevel(faceMidPoint[faceI]) = faceAnchorLevel[faceI]+1;
                 splitFaces.append(faceI);
@@ -1307,9 +1288,6 @@ void Foam::polyhedralRefinement::setRefinement
     // number of anchor points in a cell
     labelListList cellAddedCells(mesh_.nCells());
 
-    // Get cell zone mesh
-    const meshCellZones& cellZones = mesh_.cellZones();
-
     forAll(cellAnchorPoints, cellI)
     {
         // Check whether this is a split cell
@@ -1331,18 +1309,8 @@ void Foam::polyhedralRefinement::setRefinement
             // Add other cells
             for (label i = 1; i < cAdded.size(); ++i)
             {
-                cAdded[i] = meshMod.setAction
-                (
-                    polyAddCell
-                    (
-                        -1,                         // Master point
-                        -1,                         // Master edge
-                        -1,                         // Master face
-                        cellI,                      // Master cell
-                        cellZones.whichZone(cellI)  // Zone for cell
-                    )
-                );
-                newCellLevel(cAdded[i]) = cellLevel_[cellI]+1;
+                cAdded[i] = meshMod.addCell(cellI);
+                newCellLevel(cAdded[i]) = cellLevel_[cellI] + 1;
             }
         }
     }

@@ -64,6 +64,8 @@ protected:
 
 public:
 
+    typedef aspectRatioModel modelType;
+
     //- Runtime type information
     TypeName("aspectRatioModel");
 
@@ -108,19 +110,10 @@ public:
     // Member Functions
 
         //- Aspect ratio
-        virtual tmp<volScalarField> E
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
+        virtual tmp<volScalarField> E() const = 0;
 
         //- Aspect ratio
-        virtual scalar cellE
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
+        virtual scalar cellE(const label) const = 0;
 };
 
 

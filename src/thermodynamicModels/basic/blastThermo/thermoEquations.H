@@ -160,7 +160,7 @@ public:
         p_ = p;
         TOld_ = (*T_)[li];
         eOld_ = (*e_)[li];
-        (*e_)[li] = thermo_.cellHE(TOld_, li);
+        (*e_)[li] = thermo_.cellhe(TOld_, li);
     }
 
     // Revert to the old energy
@@ -174,7 +174,7 @@ public:
     inline scalar fx(const scalar T, const label li) const
     {
         (*T_)[li] = T;
-        (*e_)[li] = thermo_.cellHE(T, li);
+        (*e_)[li] = thermo_.cellhe(T, li);
         return thermo_.cellpRhoT(li, false) - p_;
     }
 
@@ -182,7 +182,7 @@ public:
     inline scalar dfdx(const scalar T, const label li) const
     {
         (*T_)[li] = T;
-        (*e_)[li] = thermo_.cellHE(T, li);
+        (*e_)[li] = thermo_.cellhe(T, li);
         return thermo_.celldpdT(li);
     }
 };
@@ -244,8 +244,8 @@ public:
     {
         return
             patchi_ == -1
-          ? thermo_.cellHE(T, li) - he_[li]
-          : thermo_.patchFaceHE(T, patchi_, li)
+          ? thermo_.cellhe(T, li) - he_[li]
+          : thermo_.patchFacehe(T, patchi_, li)
           - he_.boundaryField()[patchi_][li];
     }
 

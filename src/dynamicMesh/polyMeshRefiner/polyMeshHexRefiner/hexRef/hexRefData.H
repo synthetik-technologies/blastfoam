@@ -46,8 +46,8 @@ namespace Foam
 {
 
 // Forward declaration of classes
-class mapPolyMesh;
-class mapDistributePolyMesh;
+class polyTopoChangeMap;
+class polyDistributionMap;
 class hexRefRefinementHistory;
 class fvMesh;
 
@@ -118,10 +118,10 @@ public:
         void sync(const IOobject& io);
 
         //- In-place update for topology changes
-        void updateMesh(const mapPolyMesh&);
+        void topoChange(const polyTopoChangeMap&);
 
         //- In-place distribute
-        void distribute(const mapDistributePolyMesh&);
+        void distribute(const polyDistributionMap&);
 
         //- Write
         bool write() const;

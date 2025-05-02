@@ -68,7 +68,7 @@ protected:
     uniformDimensionedScalarField hRef_;
 
     //- Saved zoneID to set
-    const label zoneID_;
+    const word zoneName_;
 
     //- Stabilize fields
     void hydrostaticInitialisation
@@ -92,13 +92,13 @@ public:
             (
                 const fvMesh& mesh,
                 const dictionary& dict,
-                const label zoneID
+                const word& zoneName
             ),
-            (mesh, dict, zoneID)
+            (mesh, dict, zoneName)
         );
 
     // Constructor
-    atmosphereModel(const fvMesh&, const dictionary&, const label);
+    atmosphereModel(const fvMesh&, const dictionary&, const word&);
 
 
     //- Destructor
@@ -112,7 +112,7 @@ public:
         (
             const fvMesh& mesh,
             const dictionary& dict,
-            const label zoneID = -1
+            const word& zoneName = word::null
         );
 
         //- COnstruct given a model type and dictionary
@@ -121,7 +121,7 @@ public:
             const word& atmosphereModelType,
             const fvMesh& mesh,
             const dictionary& dict,
-            const label zoneID = -1
+            const word& zoneName = word::null
         );
 
 

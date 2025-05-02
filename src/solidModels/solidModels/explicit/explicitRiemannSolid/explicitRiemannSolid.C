@@ -31,7 +31,6 @@ License
 #include "fvcCellReduce.H"
 #include "labelVector.H"
 #include "addToRunTimeSelectionTable.H"
-#include "primitivePatchInterpolation.H"
 
 #include "meshSizeObject.H"
 
@@ -41,7 +40,7 @@ License
 #include "solidTractionFvPatchVectorField.H"
 #include "ReconstructionScheme.H"
 #include "fvcPointAverage.H"
-#include "fvcInterpolate.H"
+#include "fvcPointInterpolate.H"
 #include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -265,7 +264,7 @@ void explicitRiemannSolid::updateFluxes()
 explicitRiemannSolid::explicitRiemannSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType& nonLinear
 )
 :
@@ -275,7 +274,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "F",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -305,7 +304,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "x",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -317,7 +316,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "xf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -329,7 +328,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "xN",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -345,7 +344,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "rhoU",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -357,7 +356,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "rhoUC",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         fvc::interpolate(rho_*U_)
@@ -367,7 +366,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "pointRhoU",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -381,7 +380,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "tractionC",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -397,7 +396,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "P",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -409,7 +408,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "pWaveSpeed",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         sqrt(mechanical().elasticModulus()/rho_)/beta_/mech_.stretch()
@@ -419,7 +418,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "sWaveSpeed",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         sqrt(mechanical().shearModulus()/rho_)*beta_/mech_.stretch()
@@ -546,7 +545,7 @@ void explicitRiemannSolid::decode()
                 (
                     dynamicCast<const vectorField>(bpointD[patchi])
                 );
-                bpointD[patchi].setInInternalField
+                bpointD[patchi].setInternalField
                 (
                     pointD_,
                     ppointD
@@ -555,7 +554,7 @@ void explicitRiemannSolid::decode()
                 bxN[patchi] ==
                     ppointD
                   + mesh().boundaryMesh()[patchi].localPoints();
-                bxN[patchi].setInInternalField
+                bxN[patchi].setInternalField
                 (
                     xN_,
                     dynamicCast<const vectorField>(bxN[patchi])
@@ -745,7 +744,10 @@ scalar explicitRiemannSolid::CoNum() const
     (
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
-    return 0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
+    return
+        0.5
+       *gMax(sumAmaxSf/mesh().V().primitiveField())
+       *mesh().time().deltaTValue();
 }
 
 

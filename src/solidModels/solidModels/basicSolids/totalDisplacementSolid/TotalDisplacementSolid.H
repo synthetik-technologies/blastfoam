@@ -79,7 +79,7 @@ public:
         TotalDisplacementSolid
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const nonLinearGeometry::nonLinearType nonLinear,
             const bool isSolid = true
         );
@@ -117,7 +117,7 @@ public:
             }
 
             //- Return the patch implicit stiffness
-            virtual const scalarField& impK(const fvPatch& patch) const
+            virtual tmp<scalarField> impK(const fvPatch& patch) const
             {
                 return this->impK_.boundaryField()[patch.index()];
             }

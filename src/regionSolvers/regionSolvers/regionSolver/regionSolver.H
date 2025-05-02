@@ -38,7 +38,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "dynamicFvMesh.H"
+#include "fvMesh.H"
 #include "regionSolverList.H"
 #include "fieldAccelerationSchemeList.H"
 #include "globalPolyBoundaryMesh.H"
@@ -63,9 +63,6 @@ protected:
         //- Reference to the region solver list
         const regionSolverList& regions_;
 
-        //- Dynamic mesh
-        dynamicFvMesh& dynMesh_;
-
         //- fvMesh
         fvMesh& mesh_;
 
@@ -88,21 +85,21 @@ public:
             regionSolver,
             dictionary,
             (
-                dynamicFvMesh& mesh,
+                fvMesh& mesh,
                 const regionSolverList& regions
             ),
             (mesh, regions)
         );
 
     // Constructor
-    regionSolver(dynamicFvMesh& mesh, const regionSolverList& regions);
+    regionSolver(fvMesh& mesh, const regionSolverList& regions);
 
 
     // Selector
         static autoPtr<regionSolver> New
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const regionSolverList& regions
         );
 

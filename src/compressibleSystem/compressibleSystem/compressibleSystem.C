@@ -29,6 +29,7 @@ License
 #include "MULES.H"
 #include "fvcMeshPhi.H"
 #include "wedgeFvPatch.H"
+#include "emptyFvPatch.H"
 #include "blastRadiationModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -63,7 +64,7 @@ void Foam::compressibleSystem::setModels()
 
         thermophysicalTransport_ =
         (
-            fluidThermophysicalTransportModel::New
+            fluidThermoThermophysicalTransportModel::New
             (
                 turbulence_,
                 this->thermo()
@@ -73,74 +74,26 @@ void Foam::compressibleSystem::setModels()
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::compressibleSystem::rhoUSource() const
-{
-    return g_*rhoEff();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::compressibleSystem::rhoESource() const
-{
-    return rhoU_ & g_;
-}
-
-void Foam::compressibleSystem::limitAlphaRhoPhis
+void Foam::compressibleSystem::addSources
 (
-    const UPtrList<volScalarField>& alphas,
-    const UPtrList<volScalarField>& rhos,
-    UPtrList<surfaceScalarField>& alphaRhoPhis,
-    const surfaceScalarField& phi,
-    const surfaceScalarField& rhoPhi
-)
+    volVectorField::Internal& rhoUSource,
+    volScalarField::Internal& rhoESource
+) const
 {
-    PtrList<surfaceScalarField> alphaRhoPhiUDs(alphas.size());
-    // forAll(alphaRhoPhiUDs, phasei)
-    // {
-    //     alphaRhoPhiUDs.set
-    //     (
-    //         phasei,
-    //         upwind<scalar>(mesh(), phi).flux(alphas[phasei]*rhos[phasei])
-    //     );
-    //     alphaRhoPhis[phasei] -= alphaRhoPhiUDs[phasei];
-    // }
 
+    if (mag(g_).value() > small)
     {
-        UPtrList<scalarField> alphaRhoPhisInternal(alphas.size());
-        forAll(alphaRhoPhisInternal, phasei)
-        {
-            alphaRhoPhisInternal.set(phasei, &alphaRhoPhis[phasei]);
-        }
-        MULES::limitSum(alphaRhoPhisInternal);
+        rhoUSource -= g_*rhoEff()();
+        rhoESource -= g_ & rhoU_();
     }
-
-    const surfaceScalarField::Boundary& phibf = phi_.boundaryField();
-    forAll(phibf, patchi)
-    {
-        if (phibf[patchi].coupled())
-        {
-            UPtrList<scalarField> alphaRhoPhisPatch(alphas.size());
-            forAll(alphaRhoPhisPatch, phasei)
-            {
-                alphaRhoPhisPatch.set
-                (
-                    phasei,
-                    &alphaRhoPhis[phasei].boundaryFieldRef()[patchi]
-                );
-            }
-            MULES::limitSum(alphaRhoPhisPatch);
-        }
-    }
-
-    // forAll(alphaRhoPhis, phasei)
-    // {
-    //     alphaRhoPhis[phasei] += alphaRhoPhiUDs[0];
-    // }
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::compressibleSystem::compressibleSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh
 )
 :
@@ -150,7 +103,7 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "U",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -162,10 +115,10 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "rhoU",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedVector("0", dimDensity*dimVelocity, Zero),
@@ -176,10 +129,10 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "rhoE",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
@@ -189,7 +142,7 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "phi",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -202,7 +155,7 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "rhoPhi",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -213,7 +166,7 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "rhoUPhi",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -224,7 +177,7 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "rhoEPhi",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -235,10 +188,11 @@ Foam::compressibleSystem::compressibleSystem
         IOobject
         (
             "g",
-            mesh.time().constant(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            false
         ),
         dimensionedVector(dimAcceleration, Zero)
     ),
@@ -254,11 +208,6 @@ Foam::compressibleSystem::compressibleSystem
     {
         solutionDs_ = ((vector(mesh.geometricD()) + vector::one)/2.0);
     }
-
-    // Initialize oldTimes
-    U_.oldTime();
-    rhoU_.oldTime();
-    rhoE_.oldTime();
 }
 
 
@@ -505,39 +454,100 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
 {
     surfaceScalarField amaxSf
     (
-        fvc::interpolate(speedOfSound())*mesh().magSf()
+        surfaceScalarField::New
+        (
+            "amaxSf",
+            mesh(),
+            dimensionedScalar(dimVelocity*dimArea, Zero)
+        )
     );
+
+    tmp<volScalarField> tc(speedOfSound());
+    const volScalarField& c = tc();
+    const volVectorField& U = this->U();
+
+    const scalarField& magSf = mesh().magSf();
+    const labelList& owner = mesh().faceOwner();
+    const labelList& neighbour = mesh().faceNeighbour();
+    forAll(neighbour, facei)
+    {
+        amaxSf[facei] =
+            sqrt
+            (
+                max
+                (
+                    magSqr(U[owner[facei]]) + sqr(c[owner[facei]]),
+                    magSqr(U[neighbour[facei]]) + sqr(c[neighbour[facei]])
+                )
+            )*magSf[facei];
+    }
+
     // Remove wave speed from wedge boundaries
+    surfaceScalarField::Boundary& bamaxSf = amaxSf.boundaryFieldRef();
     forAll(amaxSf.boundaryField(), patchi)
     {
-        if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
+        const fvPatch& patch = mesh().boundary()[patchi];
+        const scalarField& pmagSf = patch.magSf();
+        const labelList& faceCells = patch.faceCells();
+        const fvPatchVectorField& pU = U.boundaryField()[patchi];
+        const fvPatchScalarField& pc = c.boundaryField()[patchi];
+        fvsPatchScalarField& pamaxSf = bamaxSf[patchi];
+        if (patch.coupled())
         {
-            amaxSf.boundaryFieldRef()[patchi] = Zero;
+            const vectorField nbrU(pU.patchNeighbourField());
+            const scalarField nbrc(pc.patchNeighbourField());
+            forAll(pU, fi)
+            {
+                const label own = faceCells[fi];
+                pamaxSf[fi] =
+                    sqrt
+                    (
+                        max
+                        (
+                            magSqr(U[own]) + sqr(c[own]),
+                            magSqr(nbrU[fi]) + sqr(nbrc[fi])
+                        )
+                    )*pmagSf[fi];
+            }
+        }
+        else if (!isA<wedgeFvPatch>(patch) && !isA<emptyFvPatch>(patch))
+        {
+            forAll(pU, fi)
+            {
+                const label own = faceCells[fi];
+                // pamaxSf[fi] = (mag(U[own]) + c[own])*pmagSf[fi];
+
+                pamaxSf[fi] = (mag(pU[fi]) + pc[fi])*pmagSf[fi];
+            }
         }
     }
-    amaxSf += mag(fvc::relative(fvc::flux(U()), U()));
+    // if (mesh().moving())
+    // {
+    //     amaxSf -= mesh().phi();
+    // }
 
     scalarField sumAmaxSf
     (
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
 
-    scalar CoNum =
-        0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
+    tmp<volScalarField::Internal> tV(mesh().Vsc());
+    const scalarField& V = tV();
+
+    scalarField cof(0.5*(sumAmaxSf/V)*mesh().time().deltaTValue());
+    scalar CoNum = 0.5*gMax(sumAmaxSf/V)*mesh().time().deltaTValue();
 
     scalar meanCoNum =
         0.5
-       *(
-            gSum(sumAmaxSf)/gSum(mesh().V().field())
-        )*mesh().time().deltaTValue();
+       *(gSum(sumAmaxSf)/gSum(V))
+       *mesh().time().deltaTValue();
 
     Info<< "Courant Number ";
     if (mesh().name() != polyMesh::defaultRegion)
     {
         Info<< "for region " << mesh().name() << " ";
     }
-    Info<< "Mean/Max = "
-        << meanCoNum << ", "<< CoNum << endl;
+    Info<< "Mean = " << meanCoNum << ", Max = "<< CoNum << endl;
     return CoNum;
 }
 

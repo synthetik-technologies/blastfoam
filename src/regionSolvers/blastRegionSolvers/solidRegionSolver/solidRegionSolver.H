@@ -65,7 +65,7 @@ public:
     TypeName("solid");
 
     // Constructor
-    solid(dynamicFvMesh& mesh, const regionSolverList& regions);
+    solid(fvMesh& mesh, const regionSolverList& regions);
 
     //- Destructor
     virtual ~solid();

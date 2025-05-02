@@ -49,30 +49,30 @@ namespace Foam
 typedef MeshFieldUpdater<cellGeoMesh> cellMeshFieldUpdater;
 
 template<>
-void cellMeshFieldUpdater::updateMesh(const mapPolyMesh&);
+void cellMeshFieldUpdater::topoChange(const polyTopoChangeMap&);
 
 template<>
-void cellMeshFieldUpdater::distribute(const mapDistributePolyMesh&);
+void cellMeshFieldUpdater::distribute(const polyDistributionMap&);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 typedef MeshFieldUpdater<faceGeoMesh> faceMeshFieldUpdater;
 
 template<>
-void faceMeshFieldUpdater::updateMesh(const mapPolyMesh&);
+void faceMeshFieldUpdater::topoChange(const polyTopoChangeMap&);
 
 template<>
-void faceMeshFieldUpdater::distribute(const mapDistributePolyMesh&);
+void faceMeshFieldUpdater::distribute(const polyDistributionMap&);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 typedef MeshFieldUpdater<pointGeoMesh> pointMeshFieldUpdater;
 
 template<>
-void pointMeshFieldUpdater::updateMesh(const mapPolyMesh&);
+void pointMeshFieldUpdater::topoChange(const polyTopoChangeMap&);
 
 template<>
-void pointMeshFieldUpdater::distribute(const mapDistributePolyMesh&);
+void pointMeshFieldUpdater::distribute(const polyDistributionMap&);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

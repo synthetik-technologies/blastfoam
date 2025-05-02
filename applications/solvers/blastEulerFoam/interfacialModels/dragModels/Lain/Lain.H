@@ -53,7 +53,7 @@ SourceFiles
 #ifndef Lain_H
 #define Lain_H
 
-#include "dragModel.H"
+#include "dispersedDragModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -71,7 +71,7 @@ namespace dragModels
 
 class Lain
 :
-    public dragModel
+    public dispersedDragModel
 {
 public:
 
@@ -97,19 +97,10 @@ public:
     // Member Functions
 
         //- Drag coefficient
-        virtual tmp<volScalarField> CdRe
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> CdRe() const;
 
         //- Drag coefficient
-        virtual scalar cellCdRe
-        (
-            const label celli,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual scalar cellCdRe(const label celli) const;
 };
 
 

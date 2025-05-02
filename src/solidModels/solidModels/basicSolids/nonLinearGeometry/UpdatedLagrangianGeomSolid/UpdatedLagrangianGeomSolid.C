@@ -49,7 +49,7 @@ template<class IncrementalModel>
 UpdatedLagrangianGeomSolid<IncrementalModel>::UpdatedLagrangianGeomSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const bool isSolid
 )
 :
@@ -59,7 +59,7 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::UpdatedLagrangianGeomSolid
         IOobject
         (
             "F",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -72,7 +72,7 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::UpdatedLagrangianGeomSolid
         IOobject
         (
             "J",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -84,7 +84,7 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::UpdatedLagrangianGeomSolid
         IOobject
         (
             "relF",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -96,7 +96,7 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::UpdatedLagrangianGeomSolid
         IOobject
         (
             "relFinv",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         inv(relF_)
@@ -106,7 +106,7 @@ UpdatedLagrangianGeomSolid<IncrementalModel>::UpdatedLagrangianGeomSolid
         IOobject
         (
             "relJ",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE

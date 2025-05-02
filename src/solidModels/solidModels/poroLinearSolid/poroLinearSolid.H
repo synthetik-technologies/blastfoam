@@ -135,7 +135,7 @@ public:
     // Constructors
 
         //- Construct from components
-        poroLinearSolid(dynamicFvMesh& mesh);
+        poroLinearSolid(fvMesh& mesh);
 
 
     // Destructor

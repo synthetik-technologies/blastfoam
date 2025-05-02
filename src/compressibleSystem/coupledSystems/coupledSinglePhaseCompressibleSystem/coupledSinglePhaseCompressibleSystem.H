@@ -57,7 +57,11 @@ public:
     TypeName("singlePhaseCoupled");
 
     // Constructor
-    coupledSinglePhaseCompressibleSystem(const fvMesh& mesh);
+    coupledSinglePhaseCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
 
     //- Destructor

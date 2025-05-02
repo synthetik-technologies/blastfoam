@@ -187,7 +187,7 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
                 IOobject
                 (
                     IOobject::groupName("pressureBased::deltaT", phaseName),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::READ_IF_PRESENT,
                     IOobject::AUTO_WRITE

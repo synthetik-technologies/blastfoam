@@ -42,6 +42,8 @@ SourceFiles
 #include "timeIntegratorCoeffs.H"
 #include "Time.H"
 #include "PtrList.H"
+#include "scalarField.H"
+#include "scalarList.H"
 
 namespace Foam
 {

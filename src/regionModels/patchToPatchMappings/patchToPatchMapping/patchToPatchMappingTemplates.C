@@ -25,73 +25,177 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "patchToPatchMapping.H"
-
-namespace Foam
-{
+#include "patchToPatchTools.H"
 
 // * * * * * * * * * * * * * Public Member Functions  * * * * * * * * * * * //
 
+
 template<class Type>
-tmp<Field<Type>>  patchToPatchMapping::transferFaces
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferFacesToTgt
 (
-    const standAlonePatch& fromPatch,
-    const Field<Type>& fromField
+    const Field<Type>& srcField,
+    const Field<Type>& unmapped
 ) const
 {
-    tmp<Field<Type>> toFieldTmp(new Field<Type>(otherZone(fromPatch).size()));
-    transferFaces
-    (
-        fromPatch,
-        otherZone(fromPatch),
-        fromField,
-        toFieldTmp.ref()
-    );
-    return toFieldTmp;
+    if (!isNull(unmapped))
+    {
+        return patchToPatchTools::interpolate
+        (
+            localSrcFacesToTgt_,
+            tgtFaceWeights_,
+            srcFacesMapPtr_,
+            srcField,
+            unmapped
+        );
+    }
+    else
+    {
+        return patchToPatchTools::interpolate
+        (
+            localSrcFacesToTgt_,
+            tgtFaceWeights_,
+            srcFacesMapPtr_,
+            srcField
+        );
+    }
 }
 
 
 template<class Type>
-tmp<Field<Type>>  patchToPatchMapping::transferFaces
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferFacesToTgt
 (
-    const standAlonePatch& fromPatch,
-    const tmp<Field<Type>>& fromField
+    const tmp<Field<Type>>& tsrcField,
+    const Field<Type>& unmapped
 ) const
 {
-    return transferFaces(fromPatch, fromField());
+    return transferFacesToTgt(tsrcField(), unmapped);
 }
 
 
 template<class Type>
-tmp<Field<Type>>  patchToPatchMapping::transferPoints
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferFacesToSrc
 (
-    const standAlonePatch& fromPatch,
-    const Field<Type>& fromField
+    const Field<Type>& tgtField,
+    const Field<Type>& unmapped
 ) const
 {
-    tmp<Field<Type>> toFieldTmp(new Field<Type>(otherZone(fromPatch).nPoints()));
-    transferPoints
-    (
-        fromPatch,
-        otherZone(fromPatch),
-        fromField,
-        toFieldTmp.ref()
-    );
-    return toFieldTmp;
-   }
-
-template<class Type>
-tmp<Field<Type>>  patchToPatchMapping::transferPoints
-(
-    const standAlonePatch& fromPatch,
-    const tmp<Field<Type>>& fromField
-) const
-{
-    return transferPoints(fromPatch, fromField());
+    if (!isNull(unmapped))
+    {
+        return patchToPatchTools::interpolate
+        (
+            localTgtFacesToSrc_,
+            srcFaceWeights_,
+            tgtFacesMapPtr_,
+            tgtField,
+            unmapped
+        );
+    }
+    else
+    {
+        return patchToPatchTools::interpolate
+        (
+            localTgtFacesToSrc_,
+            srcFaceWeights_,
+            tgtFacesMapPtr_,
+            tgtField
+        );
+    }
 }
 
-// ************************************************************************* //
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferFacesToSrc
+(
+    const tmp<Field<Type>>& ttgtField,
+    const Field<Type>& unmapped
+) const
+{
+    return transferFacesToSrc(ttgtField(), unmapped);
+}
 
 
-} // End namespace Foam
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferPointsToTgt
+(
+    const Field<Type>& srcField,
+    const Field<Type>& unmapped
+) const
+{
+    if (!isNull(unmapped))
+    {
+        return patchToPatchTools::interpolate
+        (
+            localSrcPointsToTgt_,
+            tgtPointWeights_,
+            srcPointsMapPtr_,
+            srcField,
+            unmapped
+        );
+    }
+    else
+    {
+        return patchToPatchTools::interpolate
+        (
+            localSrcPointsToTgt_,
+            tgtPointWeights_,
+            srcPointsMapPtr_,
+            srcField
+        );
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::patchToPatchMapping::transferPointsToTgt
+(
+    const tmp<Field<Type>>& tsrcField,
+    const Field<Type>& unmapped
+) const
+{
+    return transferPointsToTgt(tsrcField(), unmapped);
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferPointsToSrc
+(
+    const Field<Type>& tgtField,
+    const Field<Type>& unmapped
+) const
+{
+    if (!isNull(unmapped))
+    {
+        return patchToPatchTools::interpolate
+        (
+            localTgtPointsToSrc_,
+            srcPointWeights_,
+            tgtPointsMapPtr_,
+            tgtField,
+            unmapped
+        );
+    }
+    else
+    {
+        return patchToPatchTools::interpolate
+        (
+            localTgtPointsToSrc_,
+            srcPointWeights_,
+            tgtPointsMapPtr_,
+            tgtField
+        );
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>  Foam::patchToPatchMapping::transferPointsToSrc
+(
+    const tmp<Field<Type>>& ttgtField,
+    const Field<Type>& unmapped
+) const
+{
+    return transferPointsToSrc(ttgtField(), unmapped);
+}
+
 
 // ************************************************************************* //

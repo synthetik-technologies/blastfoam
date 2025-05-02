@@ -12,6 +12,7 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lfileFormats \
     -lsampling \
+    -lpolyTopoChange \
     -L$(BLAST_LIBBIN) \
     -lblastNumerics \
     -lblastFiniteVolume \

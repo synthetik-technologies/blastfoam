@@ -44,17 +44,19 @@ namespace Foam
 
 Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh
 )
 :
-    coupledCompressibleSystem(mesh),
-    multiphaseCompressibleSystem(mesh, false)
+    coupledCompressibleSystem(dict, mesh),
+    multiphaseCompressibleSystem(dict, mesh, false)
 {
     volumeFraction_ = 0.0;
     forAll(alphas_, phasei)
     {
         volumeFraction_ += alphas_[phasei];
     }
+
     dynamicCast<multiphaseFluidBlastThermo>
     (
         thermoPtr_()
@@ -221,8 +223,7 @@ void Foam::coupledMultiphaseCompressibleSystem::decode()
             );
     rhos_[lastPhase].correctBoundaryConditions();
     alphaRhos_[lastPhase].boundaryFieldRef() =
-        alphas_[lastPhase].boundaryField()
-       *rhos_[lastPhase].boundaryField();
+        alphas_[lastPhase].boundaryField()*rhos_[lastPhase].boundaryField();
     alphaRho_ += alphaRhos_[lastPhase];
 
     // Update density
@@ -231,14 +232,14 @@ void Foam::coupledMultiphaseCompressibleSystem::decode()
     // Update velocity
     volScalarField alphaRhos(alphaRho_);
     alphaRhos.max(1e-10);
-    U_.ref() = rhoU_()/alphaRhos();
+    U_.internalFieldRef() = rhoU_()/alphaRhos();
     U_.correctBoundaryConditions();
 
     rhoU_.boundaryFieldRef() =
         alphaRho_.boundaryField()*U_.boundaryField();
 
     //- Update internal energy
-    e_.ref() = rhoE_()/alphaRhos() - 0.5*magSqr(U_());
+    e_.internalFieldRef() = rhoE_()/alphaRhos() - 0.5*magSqr(U_());
 
     thermoPtr_->correct();
 

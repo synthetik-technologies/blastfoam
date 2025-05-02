@@ -66,7 +66,17 @@ public:
     TypeName("coupledCompressibleSystem");
 
     // Constructor
-    coupledCompressibleSystem(const fvMesh& mesh);
+    coupledCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
+
+    // Selector
+    static autoPtr<compressibleSystem> New
+    (
+        const fvMesh& mesh
+    );
 
     //- Destructor
     virtual ~coupledCompressibleSystem();

@@ -73,7 +73,7 @@ public:
         unsSolidModel
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const nonLinearGeometry::nonLinearType nonlinear,
             const bool incremental,
             const bool isSolid = true

@@ -137,7 +137,6 @@ public:
         (
             polyMesh& mesh,
             const dictionary& dict,
-            const bool force = false,
             const bool read = true
         );
 
@@ -180,10 +179,13 @@ public:
         );
 
         //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void topoChange(const polyTopoChangeMap&);
+
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap&);
 
         //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
+        virtual void distribute(const polyDistributionMap& map);
 
 
     // Writing

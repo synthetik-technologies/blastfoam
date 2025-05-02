@@ -63,7 +63,7 @@ Foam::functionObjects::thermalImpulse::thermalImpulse
                 "intGradTName",
                 IOobject::groupName("intGradT", IOobject::group(TName_))
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             restartOnRestart_
           ? IOobject::NO_READ
@@ -82,7 +82,7 @@ Foam::functionObjects::thermalImpulse::thermalImpulse
                 "intQName",
                 IOobject::groupName("intQExt", IOobject::group(TName_))
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             restartOnRestart_
           ? IOobject::NO_READ
@@ -143,6 +143,10 @@ bool Foam::functionObjects::thermalImpulse::execute()
 
 bool Foam::functionObjects::thermalImpulse::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
     return intGradT_.write() && intQExt_.write();
 }
 

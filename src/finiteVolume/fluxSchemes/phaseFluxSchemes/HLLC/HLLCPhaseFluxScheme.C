@@ -76,7 +76,7 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("SOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -90,7 +90,7 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("SNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -104,7 +104,7 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
             IOobject
             (
                 fieldName("SStar"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,

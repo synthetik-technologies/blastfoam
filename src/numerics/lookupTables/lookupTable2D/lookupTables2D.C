@@ -147,7 +147,7 @@ List2D<scalar> leastSquaresFit
             labelPairHashSet next;
             labelHashSet& mapi = fullMap(i, j);
 
-            while (mapi.size() < minSamples)
+            while (mapi.size() < minSamples && prev.size())
             {
                 next.clear();
                 forAllConstIter
@@ -184,7 +184,10 @@ List2D<scalar> leastSquaresFit
             List<vector2D> subX(XModSamples, indices);
             Field<scalar> subF(FSamples, indices);
 
-            autoPtr<scalarUnivariateEquation> eqn(solver.createEquation(subX, subF));
+            autoPtr<scalarUnivariateEquation> eqn
+            (
+                solver.createEquation(subX, subF)
+            );
             f(i, j) = eqn->fX({xMod[i], yMod[j]}, 0);
         }
     }
@@ -283,7 +286,7 @@ void Foam::lookupTable2D<Foam::scalar>::read
                 read2DTable
                 (
                     dict.lookup<fileName>(name + "File"),
-                    readDelim(dict, name + "Delim"),
+                    readDelim(dict, name + "Delim", token::COMMA),
                     data,
                     dict.lookupOrDefault<bool>(name + "FlipTable", false),
                     !canRead
@@ -318,7 +321,7 @@ void Foam::lookupTable2D<Foam::scalar>::read
             read2DTable
             (
                 fDict.lookup<fileName>("file"),
-                readDelim(fDict),
+                readDelim(fDict, "delim", token::COMMA),
                 data,
                 fDict.lookupOrDefault<bool>("flipTable", false),
                 !canRead

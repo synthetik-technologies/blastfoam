@@ -61,15 +61,11 @@ Foam::NusseltNumberModels::Gunn::~Gunn()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::NusseltNumberModels::Gunn::Nu
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::NusseltNumberModels::Gunn::Nu() const
 {
-    const volScalarField& alphag(pair_.continuous().volumeFraction(nodej));
-    volScalarField Pr(pair_.Pr(nodei, nodej));
-    volScalarField Re(pair_.Re(nodei, nodej));
+    const volScalarField& alphag = pair_.continuous();
+    volScalarField Pr(pair_.Pr());
+    volScalarField Re(pair_.Re());
     return
         (7.0 - 10.0*alphag + 5.0*sqr(alphag))
        *(1.0 + 0.7*pow(Re, 0.2)*pow(Pr, 1.0/3.0))
@@ -80,14 +76,12 @@ Foam::NusseltNumberModels::Gunn::Nu
 
 Foam::scalar Foam::NusseltNumberModels::Gunn::cellNu
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
-    scalar alphag(pair_.continuous().cellvolumeFraction(celli, nodej));
-    scalar Pr(pair_.cellPr(celli, nodei, nodej));
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar alphag(pair_.continuous()[celli]);
+    scalar Pr(pair_.cellPr(celli));
+    scalar Re(pair_.cellRe(celli));
     return
         (7.0 - 10.0*alphag + 5.0*sqr(alphag))
        *(1.0 + 0.7*pow(Re, 0.2)*pow(Pr, 1.0/3.0))

@@ -101,7 +101,7 @@ SourceFiles
 namespace Foam
 {
 
-class basicSpecieMixture;
+class multicomponentThermo;
 
 namespace radiationModels
 {
@@ -156,7 +156,7 @@ protected:
         UPtrList<volScalarField> volumeFractions_;
 
         //- Pointer to specie mixture
-        UautoPtr<const basicSpecieMixture> mixture_;
+        UautoPtr<const multicomponentThermo> mixture_;
 
         //- Pointer to ft field
         UautoPtr<const volScalarField> ft_;

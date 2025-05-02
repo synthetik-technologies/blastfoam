@@ -53,32 +53,7 @@ blendedInterfacialModel::interpolate(tmp<volScalarField> f)
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-template<class ModelType>
-template<class GeoField>
-void Foam::BlendedInterfacialModel<ModelType>::correctFixedFluxBCs
-(
-    GeoField& field
-) const
-{
-    typename GeoField::Boundary& fieldBf = field.boundaryFieldRef();
-
-    forAll(phase1_.phi()().boundaryField(), patchi)
-    {
-        if
-        (
-            isA<fixedValueFvsPatchScalarField>
-            (
-                phase1_.phi()().boundaryField()[patchi]
-            )
-        )
-        {
-            fieldBf[patchi] = Zero;
-        }
-    }
-}
-
+// * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class ModelType>
 template
@@ -124,17 +99,9 @@ Foam::BlendedInterfacialModel<ModelType>::evaluate
 
     tmp<typeGeoField> x
     (
-        new typeGeoField
+        typeGeoField::New
         (
-            IOobject
-            (
-                ModelType::typeName + ":" + name,
-                phase1_.mesh().time().timeName(),
-                phase1_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            ModelType::typeName + ":" + name,
             phase1_.mesh(),
             dimensioned<Type>("zero", dims, Zero)
         )
@@ -172,15 +139,6 @@ Foam::BlendedInterfacialModel<ModelType>::evaluate
         }
     }
 
-    if
-    (
-        correctFixedFluxBCs_
-     && (model_.valid() || model1In2_.valid() || model2In1_.valid())
-    )
-    {
-        correctFixedFluxBCs(x.ref());
-    }
-
     return x;
 }
 
@@ -194,7 +152,6 @@ Type
 Foam::BlendedInterfacialModel<ModelType>::evaluate
 (
     Type (ModelType::*method)(const label, Args ...) const,
-    const word& name,
     const bool subtract,
     const label celli,
     Args ... args
@@ -261,8 +218,7 @@ Foam::BlendedInterfacialModel<ModelType>::BlendedInterfacialModel
     const blendingMethod& blending,
     autoPtr<ModelType> model,
     autoPtr<ModelType> model1In2,
-    autoPtr<ModelType> model2In1,
-    const bool correctFixedFluxBCs
+    autoPtr<ModelType> model2In1
 )
 :
     regIOobject
@@ -270,7 +226,7 @@ Foam::BlendedInterfacialModel<ModelType>::BlendedInterfacialModel
         IOobject
         (
             IOobject::groupName(typeName, phasePair(phase1, phase2).name()),
-            phase1.volScalarField::time().timeName(),
+            phase1.volScalarField::time().name(),
             phase1.volScalarField::mesh()
         )
     ),
@@ -279,8 +235,7 @@ Foam::BlendedInterfacialModel<ModelType>::BlendedInterfacialModel
     blending_(blending),
     model_(model),
     model1In2_(model1In2),
-    model2In1_(model2In1),
-    correctFixedFluxBCs_(correctFixedFluxBCs)
+    model2In1_(model2In1)
 {}
 
 
@@ -291,8 +246,7 @@ Foam::BlendedInterfacialModel<ModelType>::BlendedInterfacialModel
     const blendingMethod& blending,
     const phasePair& pair,
     const orderedPhasePair& pair1In2,
-    const orderedPhasePair& pair2In1,
-    const bool correctFixedFluxBCs
+    const orderedPhasePair& pair2In1
 )
 :
     regIOobject
@@ -300,14 +254,13 @@ Foam::BlendedInterfacialModel<ModelType>::BlendedInterfacialModel
         IOobject
         (
             IOobject::groupName(typeName, pair.name()),
-            pair.phase1().mesh().time().timeName(),
+            pair.phase1().mesh().time().name(),
             pair.phase1().mesh()
         )
     ),
     phase1_(pair.phase1()),
     phase2_(pair.phase2()),
-    blending_(blending),
-    correctFixedFluxBCs_(correctFixedFluxBCs)
+    blending_(blending)
 {
     if (modelTable.found(pair))
     {
@@ -380,6 +333,32 @@ const ModelType& Foam::BlendedInterfacialModel<ModelType>::model
 
 
 template<class ModelType>
+template<class GeoField>
+void Foam::BlendedInterfacialModel<ModelType>::correctFixedFluxBCs
+(
+    GeoField& field
+) const
+{
+    typename GeoField::Boundary& fieldBf = field.boundaryFieldRef();
+
+    forAll(phase1_.phi()().boundaryField(), patchi)
+    {
+        if
+        (
+            isA<fixedValueFvsPatchScalarField>
+            (
+                phase1_.phi()().boundaryField()[patchi]
+            )
+        )
+        {
+            fieldBf[patchi] = Zero;
+        }
+    }
+}
+
+
+
+template<class ModelType>
 Foam::tmp<Foam::volScalarField>
 Foam::BlendedInterfacialModel<ModelType>::K
 (
@@ -439,7 +418,7 @@ Foam::BlendedInterfacialModel<ModelType>::cellF
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::cellF, "cellF", true, celli, nodei, nodej);
+    return evaluate(&ModelType::cellF, true, celli, nodei, nodej);
 }
 
 
@@ -475,7 +454,7 @@ Foam::scalar Foam::BlendedInterfacialModel<ModelType>::cellD
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::cellD, "cellD", false, celli, nodei, nodej);
+    return evaluate(&ModelType::cellD, false, celli, nodei, nodej);
 }
 
 
@@ -500,7 +479,7 @@ Foam::BlendedInterfacialModel<ModelType>::celldmdt
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::celldmdt, "celldmdt", false, celli, nodei, nodej);
+    return evaluate(&ModelType::celldmdt, false, celli, nodei, nodej);
 }
 
 

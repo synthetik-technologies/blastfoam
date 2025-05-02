@@ -134,7 +134,19 @@ word readXs(Istream& is)
             os << t << token::SPACE;
         }
     }
-    return os.str();
+    return word(os.str());
+}
+
+word readX(Istream& is)
+{
+    OStringStream os;
+    word str;
+    token t(is);
+    if (t.good())
+    {
+        os << t << token::SPACE;
+    }
+    return word(os.str());
 }
 
 
@@ -330,10 +342,20 @@ void setEquationSolverDict
     dictionary& dict
 )
 {
+
     if (args.optionFound("eval"))
     {
         dictionary evaluationDict;
-        evaluationDict.set("x", readXs((args.optionLookup("eval")())));
+        word xName(readX((args.optionLookup("eval")())));
+        evaluationDict.set("x", word("(" + xName + ")"));
+        dict.set("evaluationCoeffs", evaluationDict);
+        dict.set("evaluate", true);
+        Info<<dict<<endl;
+    }
+    else if (args.optionFound("evals"))
+    {
+        dictionary evaluationDict;
+        evaluationDict.set("x", readXs((args.optionLookup("evals")())));
         dict.set("evaluationCoeffs", evaluationDict);
         dict.set("evaluate", true);
     }
@@ -628,7 +650,8 @@ int main(int argc, char *argv[])
     argList::addOption("d3fdx3", "Third derivative function");
     argList::addOption("P", "Polynomial coeffs");
 
-    argList::addOption("eval", "Evaluate the function at the given values");
+    argList::addOption("eval", "Evaluate the function at the given value");
+    argList::addOption("evals", "Evaluate the function at the given values");
 
     argList::addOption("findRoots", "Find nearest root");
     argList::addOption("findAllRoots", "Find all roots");

@@ -25,6 +25,8 @@ License
 
 #include "masterSystem.H"
 #include "masterSystemList.H"
+#include "packingLimitModel.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -38,8 +40,8 @@ namespace Foam
 Foam::masterSystem::masterSystem
 (
     const word& type,
-    const word& group,
-    const phaseSystem& fluid
+    const phaseSystem& fluid,
+    const dictionary& dict
 )
 :
     regIOobject
@@ -54,7 +56,9 @@ Foam::masterSystem::masterSystem
             true
         )
     ),
-    group_(group),
+    dict_(dict),
+    group_(dict_.lookupOrDefault<word>("name", type + "Total")),
+    writeTotal_(dict_.lookupOrDefault("writeTotal", false)),
     fluid_(fluid),
     phases_(0),
     alphaPtr_(nullptr),
@@ -62,8 +66,37 @@ Foam::masterSystem::masterSystem
     UPtr_(nullptr),
     phiPtr_(nullptr),
     alphaPhiPtr_(nullptr),
-    residualAlpha_("residualAlpha", dimless, small)
+    readResidualAlpha_(dict.found("residualAlpha")),
+    residualAlpha_
+    (
+        "residualAlpha",
+        dimless,
+        dict.lookupOrDefault("residualAlpha", small)
+    ),
+    readResidualRho_(dict.found("residualRho")),
+    residualRho_
+    (
+        "residualRho",
+        dimDensity,
+        dict.lookupOrDefault("residualRho", small)
+    ),
+    alphaMax_
+    (
+        IOobject
+        (
+            IOobject::groupName("alphaMax", group_),
+            fluid.mesh().time().name(),
+            fluid.mesh()
+        ),
+        fluid.mesh(),
+        dimensionedScalar(dimless, 1.0),
+        extrapolatedCalculatedFvPatchScalarField::typeName
+    )
 {
+    if (writeTotal_)
+    {
+        this->writeOpt() = IOobject::AUTO_WRITE;
+    }
     masterSystemList::New(fluid.mesh()).addSystem(*this);
 }
 
@@ -97,7 +130,7 @@ const Foam::volScalarField& Foam::masterSystem::rho() const
                 IOobject
                 (
                     IOobject::groupName("rho", group_),
-                    fluid_.mesh().time().timeName(),
+                    fluid_.mesh().time().name(),
                     fluid_.mesh()
                 ),
                 phases_[0].rho()
@@ -135,7 +168,7 @@ const Foam::surfaceScalarField& Foam::masterSystem::phi() const
                 IOobject
                 (
                     IOobject::groupName("phi", group_),
-                    fluid_.mesh().time().timeName(),
+                    fluid_.mesh().time().name(),
                     fluid_.mesh()
                 ),
                 phases_[0].alphaPhi()
@@ -166,7 +199,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::masterSystem::alphaPhi() const
                 IOobject
                 (
                     IOobject::groupName("alphaPhi", group_),
-                    fluid_.mesh().time().timeName(),
+                    fluid_.mesh().time().name(),
                     fluid_.mesh()
                 ),
                 phases_[0].alphaPhi()
@@ -187,19 +220,42 @@ const Foam::labelList& Foam::masterSystem::phaseIndexes() const
 }
 
 
-void Foam::masterSystem::addPhase
-(
-    phaseModel& phase
-)
+Foam::scalar Foam::masterSystem::minAlphaMax() const
 {
-    const label phasei = phases_.size();
-    phases_.resize(phasei + 1);
-    phases_.set(phasei, &phase);
-    phaseIndexes_.append(phase.index());
+    return packingLimitModel_->minAlphaMax();
+}
+
+
+void Foam::masterSystem::initialize()
+{
+    if (!readResidualAlpha_)
+    {
+        residualAlpha_ = phases_[0].residualAlpha();
+        for (label phasei = 1; phasei < phases_.size(); phasei++)
+        {
+            residualAlpha_ =
+                max(residualAlpha_, phases_[phasei].residualAlpha());
+        }
+    }
+    if (!readResidualRho_)
+    {
+        residualRho_ = phases_[0].residualRho();
+        for (label phasei = 1; phasei < phases_.size(); phasei++)
+        {
+            residualRho_ =
+                max(residualRho_, phases_[phasei].residualRho());
+        }
+    }
+
+    packingLimitModel_ = packingLimitModel::New(dict_, *this);
+    packingLimitModel_->updateAlphaMax(alphaMax_);
+    alphaMax_.correctBoundaryConditions();
 
     // Print granular quantities only if more than 1 phase is present
     if (phases_.size() > 1 && !alphaPtr_.valid())
     {
+        alphaMax_.writeOpt() = this->writeOpt();
+
         alphaPtr_.set
         (
             new volScalarField
@@ -207,7 +263,7 @@ void Foam::masterSystem::addPhase
                 IOobject
                 (
                     IOobject::groupName("alpha", group_),
-                    fluid_.mesh().time().timeName(),
+                    fluid_.mesh().time().name(),
                     fluid_.mesh(),
                     IOobject::NO_READ,
                     this->writeOpt()
@@ -223,7 +279,7 @@ void Foam::masterSystem::addPhase
                 IOobject
                 (
                     IOobject::groupName("U", group_),
-                    fluid_.mesh().time().timeName(),
+                    fluid_.mesh().time().name(),
                     fluid_.mesh(),
                     IOobject::NO_READ,
                     this->writeOpt()
@@ -236,61 +292,72 @@ void Foam::masterSystem::addPhase
 }
 
 
+void Foam::masterSystem::addPhase
+(
+    phaseModel& phase
+)
+{
+    const label phasei = phases_.size();
+    phases_.resize(phasei + 1);
+    phases_.set(phasei, &phase);
+    phaseIndexes_.append(phase.index());
+
+    // Print granular quantities only if more than 1 phase is present
+    if (phases_.size() > 1)
+    {
+        alphaMax_.writeOpt() = this->writeOpt();
+    }
+}
+
+
 bool Foam::masterSystem::contains(const phaseModel& phase) const
 {
-    forAll(phases_, phasei)
-    {
-        if (&phases_[phasei] == &phase)
-        {
-            return true;
-        }
-    }
-    return false;
+    return whichPhase(phase) >= 0;
 }
 
 
 bool Foam::masterSystem::contains(const word& phaseName) const
 {
+    return whichPhase(phaseName) >= 0;
+}
+
+
+Foam::label Foam::masterSystem::whichPhase(const phaseModel& phase) const
+{
+    forAll(phases_, phasei)
+    {
+        if (&phases_[phasei] == &phase)
+        {
+            return phasei;
+        }
+    }
+    return -1;
+}
+
+
+Foam::label Foam::masterSystem::whichPhase(const word& phaseName) const
+{
     forAll(phases_, phasei)
     {
         if (phases_[phasei].name() == phaseName)
         {
-            return true;
+            return phasei;
         }
     }
-    return false;
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::masterSystem::alphaMax() const
-{
-    scalar minAlphaMax = 1.0;
-    forAll(phases_, phasei)
-    {
-        minAlphaMax = min(minAlphaMax, phases_[phasei].alphaMax());
-    }
-    return volScalarField::New
-    (
-        IOobject::groupName("alphaMax", group_),
-        fluid_.mesh(),
-        minAlphaMax
-    );
-}
-
-
-Foam::scalar Foam::masterSystem::alphaMax(const label) const
-{
-    scalar minAlphaMax = 1.0;
-    forAll(phases_, phasei)
-    {
-        minAlphaMax = min(minAlphaMax, phases_[phasei].alphaMax());
-    }
-    return minAlphaMax;
+    return -1;
 }
 
 void Foam::masterSystem::update()
 {
     correctAlpha();
+
+    //- Update packing limit
+    if (phases_.size() > 1)
+    {
+        packingLimitModel_->updateAlphaMax(alphaMax_);
+        alphaMax_.correctBoundaryConditions();
+    }
+
     if (UPtr_.valid())
     {
         volVectorField& U = UPtr_();

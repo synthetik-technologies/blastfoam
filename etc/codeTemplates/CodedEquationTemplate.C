@@ -76,7 +76,7 @@ Foam::${typeName}_${TemplateType}Equation::${typeName}_${TemplateType}Equation
 :
     Equation<${TemplateType}>(dict)
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Construct ${typeName} sha1: ${SHA1sum} from dictionary\n";
     }
@@ -87,7 +87,7 @@ Foam::${typeName}_${TemplateType}Equation::${typeName}_${TemplateType}Equation
 
 Foam::${typeName}_${TemplateType}Equation::~${typeName}_${TemplateType}Equation()
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Destroy ${typeName} sha1: ${SHA1sum}\n";
     }

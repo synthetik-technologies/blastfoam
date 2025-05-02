@@ -45,7 +45,7 @@ addToRunTimeSelectionTable
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-explicitLinearSolid::explicitLinearSolid(dynamicFvMesh& mesh)
+explicitLinearSolid::explicitLinearSolid(fvMesh& mesh)
 :
     LinearGeomSolid<explicitSolid>(typeName, mesh)
 {

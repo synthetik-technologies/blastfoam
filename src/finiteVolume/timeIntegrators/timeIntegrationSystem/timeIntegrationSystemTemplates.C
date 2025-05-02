@@ -31,6 +31,10 @@ License
 template<class FieldType>
 void Foam::timeIntegrationSystem::storeOld(FieldType& f, const bool conservative)
 {
+    if (conservative)
+    {
+        fvTimeInt_->conservativeFields().insert(f.name());
+    }
     storeOld(f, fvTimeInt_->oldFieldsRef(f), conservative);
 }
 

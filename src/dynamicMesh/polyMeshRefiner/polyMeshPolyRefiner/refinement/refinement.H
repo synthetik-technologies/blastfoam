@@ -282,7 +282,7 @@ public:
             //- Insert the polyhedral refinement into the
             //  topological change and return the cells that were refined
             //  (new indices)
-            virtual autoPtr<mapPolyMesh> refine
+            virtual autoPtr<polyTopoChangeMap> refine
             (
                 polyMesh& mesh,
                 const labelList& cellsToRefine
@@ -290,17 +290,17 @@ public:
 
             //- Insert the polyhedral refinement/unrefinement into the
             //  topological change
-            virtual bool unrefine
+            virtual autoPtr<polyTopoChangeMap> unrefine
             (
                 polyMesh& mesh,
                 const labelList& unrefinementPointCandidates
             );
 
             //- Force recalculation of locally stored data on topological change
-            virtual void updateMesh(const mapPolyMesh&);
+            virtual void topoChange(const polyTopoChangeMap&);
 
             //- Distribute additional information
-            virtual void distribute(const mapDistributePolyMesh& map);
+            virtual void distribute(const polyDistributionMap& map);
 
 
         // Helpers for decompositionConstraint

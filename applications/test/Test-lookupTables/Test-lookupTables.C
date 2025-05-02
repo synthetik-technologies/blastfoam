@@ -4,7 +4,7 @@
 #include "lookupTables3D.H"
 #include "OFstream.H"
 #include "IFstream.H"
-#include "Random.H"
+#include "randomGenerator.H"
 
 #include "univariateRootSolver.H"
 #include "EquationsFwd.H"
@@ -184,14 +184,14 @@ int main(int argc, char *argv[])
     }
     {
         OFstream out3D("table3D.csv");
-        for (label k = 0; k <= nz; k++)
+        for (label i = 0; i <= nx; i++)
         {
             for (label j = 0; j <= ny; j++)
             {
-                for (label i = 0; i <= nx; i++)
+                for (label k = 0; k <= nz; k++)
                 {
                     out3D << func3(x[i], y[j], z[k]);
-                    if ( i != nx)
+                    if ( k != nz)
                     {
                         out3D << ",";
                     }
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
     }
 
     {
-        Random rand(0);
+        randomGenerator rand(0);
         label nSamples = 10000;
 
         OFstream outX("sparseX.csv");

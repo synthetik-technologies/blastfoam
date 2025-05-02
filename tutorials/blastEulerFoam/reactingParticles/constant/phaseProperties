@@ -80,8 +80,8 @@ gas
         d           0;
     }
 
-    type            reacting;
-    species         (ignitor air products_1 products_2 products_3);
+    type            multicomponent;
+    species         (ignitor air products);
     defaultSpecie   air;
     calculateDensity yes;
     thermoType

@@ -28,14 +28,10 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
+Foam::solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -45,12 +41,12 @@ solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 {}
 
 
-solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
+Foam::solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 (
     const solidWedgeFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     wedgeFvPatchField<vector>(ptf, p, iF, mapper)
@@ -68,7 +64,7 @@ solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 }
 
 
-solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
+Foam::solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -104,7 +100,7 @@ solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 }
 
 
-solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
+Foam::solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 (
     const solidWedgeFvPatchVectorField& ptf,
     const DimensionedField<vector, volMesh>& iF
@@ -116,7 +112,8 @@ solidWedgeFvPatchVectorField::solidWedgeFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-tmp<Field<vector> > solidWedgeFvPatchVectorField::snGrad() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::solidWedgeFvPatchVectorField::snGrad() const
 {
     //Info<< "solidWedgeFvPatchVectorField::snGrad()" << endl;
     // Method:
@@ -173,7 +170,10 @@ tmp<Field<vector> > solidWedgeFvPatchVectorField::snGrad() const
 }
 
 
-void solidWedgeFvPatchVectorField::evaluate(const Pstream::commsTypes)
+void Foam::solidWedgeFvPatchVectorField::evaluate
+(
+    const Pstream::commsTypes
+)
 {
     if (!this->updated())
     {
@@ -211,7 +211,7 @@ void solidWedgeFvPatchVectorField::evaluate(const Pstream::commsTypes)
 }
 
 
-void solidWedgeFvPatchVectorField::write(Ostream& os) const
+void Foam::solidWedgeFvPatchVectorField::write(Ostream& os) const
 {
     wedgeFvPatchVectorField::write(os);
     writeEntry(os, "value", *this);
@@ -220,10 +220,14 @@ void solidWedgeFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchVectorField, solidWedgeFvPatchVectorField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        solidWedgeFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

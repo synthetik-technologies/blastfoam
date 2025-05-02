@@ -8,5 +8,5 @@ integrator.addSystem(fluid());
 const volScalarField& p = fluid->p();
 const volScalarField& T = fluid->T();
 
-integrator.models();
-integrator.constraints();
+const fvModels& fvModels = integrator.models();
+const fvConstraints& fvConstraints = integrator.constraints();

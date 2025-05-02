@@ -27,6 +27,7 @@ License
 
 #include "CodedMultivariateEquation.H"
 #include "adaptiveTypes.H"
+#include "stringOps.H"
 
 template<class Type>
 Foam::wordList Foam::CodedMultivariateEquation<Type>::codeKeys() const
@@ -36,6 +37,18 @@ Foam::wordList Foam::CodedMultivariateEquation<Type>::codeKeys() const
         "fx_code",
         "dfdx_code"
         "codeInclude"
+    };
+}
+
+
+template<class Type>
+Foam::wordList Foam::CodedMultivariateEquation<Type>::codeDictVars() const
+{
+    return
+    {
+        word::null,
+        word::null,
+        word::null
     };
 }
 

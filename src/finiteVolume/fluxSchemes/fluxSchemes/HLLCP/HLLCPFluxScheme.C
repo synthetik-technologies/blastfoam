@@ -75,7 +75,7 @@ void Foam::fluxSchemes::HLLCP::createSavedFields()
             IOobject
             (
                 fieldName("phip"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -89,7 +89,7 @@ void Foam::fluxSchemes::HLLCP::createSavedFields()
             IOobject
             (
                 fieldName("UTilde"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -102,14 +102,12 @@ void Foam::fluxSchemes::HLLCP::preUpdate(const volScalarField& p)
 {
     volScalarField fCells
     (
-        IOobject
+        volScalarField::New
         (
             fieldName("fCells"),
-            p.time().timeName(),
-            mesh_
-        ),
-        mesh_,
-        dimensionedScalar("0", dimless, 1.0)
+            mesh_,
+            dimensionedScalar("0", dimless, 1.0)
+        )
     );
 
     const labelListList& cellCells = mesh_.cellCells();

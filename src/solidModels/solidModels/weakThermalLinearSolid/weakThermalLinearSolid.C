@@ -161,7 +161,7 @@ void weakThermalLinearSolid::readDict()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-weakThermalLinearSolid::weakThermalLinearSolid(dynamicFvMesh& mesh)
+weakThermalLinearSolid::weakThermalLinearSolid(fvMesh& mesh)
 :
     linearTotalDisplacementSolid(typeName, mesh),
     rhoC_
@@ -169,7 +169,7 @@ weakThermalLinearSolid::weakThermalLinearSolid(dynamicFvMesh& mesh)
         IOobject
         (
             "rhoC",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
@@ -183,7 +183,7 @@ weakThermalLinearSolid::weakThermalLinearSolid(dynamicFvMesh& mesh)
         IOobject
         (
             "grad(T)",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -210,7 +210,6 @@ weakThermalLinearSolid::weakThermalLinearSolid(dynamicFvMesh& mesh)
 bool weakThermalLinearSolid::evolve()
 {
     Info << "Evolving thermal solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<scalar> solverPerfT;

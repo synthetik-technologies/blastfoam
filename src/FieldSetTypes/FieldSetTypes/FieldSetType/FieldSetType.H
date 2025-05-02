@@ -96,6 +96,14 @@ protected:
     template<class GeoField = FieldType>
     GeoField* lookupOrRead(const word& fieldName) const;
 
+    //- Lookup from the mesh or read the field
+    template<class GeoField = FieldType>
+    GeoField* lookupOrConstruct
+    (
+        const word& fieldName,
+        const GeoField& fld
+    ) const;
+
     //- Set the selected cells
     virtual void setField() = 0;
 

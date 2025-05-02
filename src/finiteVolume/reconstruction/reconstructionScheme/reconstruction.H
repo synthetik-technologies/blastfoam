@@ -71,15 +71,17 @@ public:
         static word scheme(const word&);
         static word scheme
         (
-            const word&,
+            const word& name,
+            const word& type,
             const fvMesh&,
             const bool fail,
             const bool overwrite
         );
         static word scheme
         (
-            const word&,
-            const word&,
+            const word& name,
+            const word& phaseName,
+            const word& type,
             const fvMesh&,
             const bool fail,
             const bool overwrite

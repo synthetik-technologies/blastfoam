@@ -130,10 +130,6 @@ protected:
         return alphaRhoPhiPtr_();
     }
 
-    //- Correct mass fractions
-    void correct();
-
-
 
 public:
 
@@ -171,9 +167,6 @@ public:
         //- Initialize models
         virtual void initializeModels();
 
-        //- Update the mixtures
-        virtual void updateMixture() = 0;
-
         //- Pre update step
         virtual void update();
 
@@ -182,12 +175,6 @@ public:
 
         //- Post update
         virtual void postUpdate();
-
-        //- Does the mixture include this specie?
-        inline bool contains(const word& specieName) const
-        {
-            return basicSpecieMixture::contains(specieName);
-        }
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
@@ -237,48 +224,6 @@ public:
 
         //- Return the composition of the multi-component mixture
         virtual const basicSpecieBlastMixture& composition() const = 0;
-
-        //- Flame temperature [K]
-        virtual scalar flameT(const label speciei) const = 0;
-
-        //- Return the pressure of a cell
-        virtual scalar cellp(const label celli) const = 0;
-
-        //- Pressure [kg/m/s^2]
-        virtual scalar p
-        (
-            const label speciei,
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const = 0;
-
-        //- Density [kg/m^3]
-        virtual tmp<volScalarField> p
-        (
-            const label speciei,
-            const volScalarField& rho,
-            const volScalarField& e,
-            const volScalarField& T
-        ) const = 0;
-
-        //- Return derivative of pressure w.r.t. density
-        virtual scalar dpdRho
-        (
-            const label speciei,
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const = 0;
-
-        //- Return derivative of pressure w.r.t. Temperature
-        virtual scalar dpdT
-        (
-            const label speciei,
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const = 0;
 
         //- Return the name of the thermo physics
         virtual word thermoName() const = 0;

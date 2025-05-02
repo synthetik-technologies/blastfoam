@@ -102,7 +102,7 @@ class Time;
 class objectRegistry;
 class dictionary;
 class fvMesh;
-class mapPolyMesh;
+class polyTopoChangeMap;
 
 /*---------------------------------------------------------------------------*\
                           Class blastProbes Declaration
@@ -113,6 +113,22 @@ class blastProbes
     public functionObject,
     public pointField
 {
+public:
+
+        //- Enumeration defining the type of action
+        enum SearchType
+        {
+            OCTREE = -1,
+            FACE_PLANES = polyMesh::FACE_PLANES,
+            FACE_CENTRE_TRIS = polyMesh::FACE_CENTRE_TRIS,
+            FACE_DIAG_TRIS = polyMesh::FACE_DIAG_TRIS,
+            CELL_TETS = polyMesh::CELL_TETS
+        };
+
+
+        //- Action type names
+        static const NamedEnum<SearchType, 5> searchTypeNames_;
+
 protected:
 
     // Protected classes
@@ -136,13 +152,10 @@ protected:
         //- Const reference to fvMesh
         const fvMesh& mesh_;
 
-        //- Load fields from files (not from objectRegistry)
-        bool loadFromFiles_;
-
         // Read from dictionary
 
             //- Names of fields to probe
-            wordReList fieldSelection_;
+            wordList fieldSelection_;
 
             //- Fixed locations, default = yes
             //  Note: set to false for moving mesh calculations where locations
@@ -158,6 +171,9 @@ protected:
 
             //- Are the blastProbes appended to the end of a previous output
             Switch append_;
+
+            //- Cell search method
+            SearchType searchType_;
 
             //- Switch if update is needed before sampling
             bool needUpdate_;
@@ -178,6 +194,13 @@ protected:
             fieldGroup<sphericalTensor> surfaceSphericalTensorFields_;
             fieldGroup<symmTensor> surfaceSymmTensorFields_;
             fieldGroup<tensor> surfaceTensorFields_;
+
+            //- Categorized scalar/vector/tensor point fields
+            fieldGroup<scalar> pointScalarFields_;
+            fieldGroup<vector> pointVectorFields_;
+            fieldGroup<sphericalTensor> pointSphericalTensorFields_;
+            fieldGroup<symmTensor> pointSymmTensorFields_;
+            fieldGroup<tensor> pointTensorFields_;
 
             //- Cells to be probed (obtained from the locations)
             labelList elementList_;
@@ -242,6 +265,13 @@ private:
             const GeometricField<Type, fvsPatchField, surfaceMesh>&
         );
 
+        //- Sample and write a particular surface field
+        template<class Type>
+        void sampleAndWrite
+        (
+            const GeometricField<Type, pointPatchField, pointMesh>&
+        );
+
         //- Sample and write all the fields of the given type
         template<class Type>
         void sampleAndWrite(const fieldGroup<Type>&);
@@ -249,6 +279,10 @@ private:
         //- Sample and write all the surface fields of the given type
         template<class Type>
         void sampleAndWriteSurfaceFields(const fieldGroup<Type>&);
+
+        //- Sample and write all the point fields of the given type
+        template<class Type>
+        void sampleAndWritePointFields(const fieldGroup<Type>&);
 
 
 public:
@@ -267,16 +301,6 @@ public:
             const dictionary& dict
         );
 
-        //- Construct for given objectRegistry and dictionary.
-        //  Allow the possibility to load fields from files
-        blastProbes
-        (
-            const word& name,
-            const objectRegistry& obr,
-            const dictionary& dict,
-            const bool loadFromFiles = false
-        );
-
         //- Disallow default bitwise copy construction
         blastProbes(const blastProbes&) = delete;
 
@@ -288,7 +312,7 @@ public:
     // Member Functions
 
         //- Return names of fields to probe
-        virtual const wordReList& fieldNames() const
+        virtual wordList fields() const
         {
             return fieldSelection_;
         }
@@ -321,7 +345,10 @@ public:
         virtual bool write();
 
         //- Update for changes of mesh
-        virtual void updateMesh(const mapPolyMesh&);
+        virtual void topoChange(const polyTopoChangeMap&);
+
+        //- Update for changes of mesh
+        virtual void distribute(const polyDistributionMap&);
 
         //- Update for changes of mesh
         virtual void movePoints(const polyMesh&);
@@ -350,6 +377,17 @@ public:
         tmp<Field<Type>> sample
         (
             const GeometricField<Type, fvsPatchField, surfaceMesh>&
+        ) const;
+
+        //- Sample a single scalar field on all sample locations
+        template<class Type>
+        tmp<Field<Type>> samplePointFields(const word& fieldName) const;
+
+        //- Sample a point field at all locations
+        template<class Type>
+        tmp<Field<Type>> sample
+        (
+            const GeometricField<Type, pointPatchField, pointMesh>&
         ) const;
 
 

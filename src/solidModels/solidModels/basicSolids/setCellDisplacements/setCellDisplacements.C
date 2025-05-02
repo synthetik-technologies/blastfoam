@@ -58,7 +58,9 @@ void Foam::setCellDisplacements::readDict()
             cellDispI,
             Function1<vector>::New
             (
-                "displacement",
+                word("displacement"),
+                mesh_.time().userUnits(),
+                dimLength,
                 curCellDict
             ).ptr()
         );
@@ -154,7 +156,7 @@ const Foam::vectorField& Foam::setCellDisplacements::cellDisps() const
                 // Time-varying
                 currentCellDisps_[cI] = disps_[cI].value
                 (
-                    mesh_.time().timeOutputValue()
+                    mesh_.time().value()
                 );
             }
         }

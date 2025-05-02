@@ -29,14 +29,13 @@ License
 #include "surfaceInterpolate.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
-#include "fvCFD.H"
 #include "pointMesh.H"
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
 #include "hexRef3D.H"
 #include "RefineBalanceMeshObject.H"
+#include "cloud.H"
 #include "parcelCloud.H"
-#include "fvMeshBalance.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -199,7 +198,7 @@ Foam::labelList Foam::polyMeshRefiner::selectRefineCells
 
     candidates.shrink();
 
-    return move(candidates);
+    return candidates;
 }
 
 
@@ -239,16 +238,16 @@ void Foam::polyMeshRefiner::setMaxCellLevel(labelList& maxCellLevel) const
 
 bool Foam::polyMeshRefiner::preUpdate()
 {
+    HashTable<parcelCloud*> clouds
+    (
+        mesh_.lookupClass<parcelCloud>()
+    );
+    forAllIter(HashTable<parcelCloud*>, clouds, iter)
+    {
+        iter()->storeGlobalPositions();
+    }
     if (canRefine() || canUnrefine())
     {
-        HashTable<parcelCloud*> clouds
-        (
-            mesh_.lookupClass<parcelCloud>()
-        );
-        forAllIter(HashTable<parcelCloud*>, clouds, iter)
-        {
-            iter()->storeGlobalPositions();
-        }
         return true;
     }
     return false;
@@ -322,13 +321,13 @@ bool Foam::polyMeshRefiner::canUnrefine(const bool incr) const
     return true;
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::polyMeshRefiner::polyMeshRefiner(polyMesh& mesh)
 :
-    PolyMeshRefiner
+    regIOobject
     (
-        mesh,
         IOobject
         (
             typeName,
@@ -366,8 +365,7 @@ Foam::polyMeshRefiner::polyMeshRefiner(polyMesh& mesh)
     protectedPatches_(),
 
     isRefining_(false),
-    isUnrefining_(false),
-    isBalancing_(fvMeshBalance::balancing)
+    isUnrefining_(false)
 {
     locationMapper::New(mesh_);
 }
@@ -377,13 +375,11 @@ Foam::polyMeshRefiner::polyMeshRefiner
 (
     polyMesh& mesh,
     const dictionary& dict,
-    const bool force,
     const bool read
 )
 :
-    PolyMeshRefiner
+    regIOobject
     (
-        mesh,
         IOobject
         (
             typeName,
@@ -400,7 +396,7 @@ Foam::polyMeshRefiner::polyMeshRefiner
     nRefinementIterations_(0),
     nUnrefinementIterations_(0),
 
-    force_(force),
+    force_(dict.lookupOrDefault("force", false)),
     refine_(true),
     unrefine_(true),
 
@@ -421,8 +417,7 @@ Foam::polyMeshRefiner::polyMeshRefiner
     protectedPatches_(),
 
     isRefining_(false),
-    isUnrefining_(false),
-    isBalancing_(fvMeshBalance::balancing)
+    isUnrefining_(false)
 {
     locationMapper::New(mesh_);
 }
@@ -512,16 +507,18 @@ void Foam::polyMeshRefiner::readDict(const dictionary& dict)
 }
 
 
-void Foam::polyMeshRefiner::updateMesh(const mapPolyMesh& mpm)
+void Foam::polyMeshRefiner::topoChange(const polyTopoChangeMap& mpm)
 {
-    if (isBalancing_)
-    {
-        return;
-    }
     const locationMapper& locMapper = locationMapper::New(mesh_);
     const wordHashSet& interpolatedFields =
         locMapper.interpolatedFields();
     const labelList& pointMap = mpm.pointMap();
+
+    HashTable<cloud*> clouds(mesh_.lookupClass<cloud>());
+    forAllIter(HashTable<cloud*>, clouds, iter)
+    {
+        iter()->topoChange(mpm);
+    }
 
     forAllConstIter(wordHashSet, interpolatedFields, iter)
     {
@@ -554,11 +551,23 @@ void Foam::polyMeshRefiner::updateMesh(const mapPolyMesh& mpm)
 }
 
 
+void Foam::polyMeshRefiner::mapMesh(const polyMeshMap&)
+{
+    NotImplemented;
+}
+
+
 void Foam::polyMeshRefiner::distribute
 (
-    const mapDistributePolyMesh& map
+    const polyDistributionMap& map
 )
 {
+    HashTable<cloud*> clouds(mesh_.lookupClass<cloud>());
+    forAllIter(HashTable<cloud*>, clouds, iter)
+    {
+        iter()->distribute(map);
+    }
+
     const locationMapper& locMapper = locationMapper::New(mesh_);
     const wordHashSet& interpolatedFields =
         locMapper.interpolatedFields();

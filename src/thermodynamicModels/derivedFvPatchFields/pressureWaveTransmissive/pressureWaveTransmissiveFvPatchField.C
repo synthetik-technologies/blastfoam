@@ -72,7 +72,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(p, iF, dict),
-    thermoBasePatchField(this->patch(), dict)
+    thermoBasePatchField(this->patch(), dict, iF.group())
 {}
 
 

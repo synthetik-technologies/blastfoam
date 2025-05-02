@@ -27,6 +27,33 @@ License
 
 #include "Function4.H"
 
+// * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+template<class Type>
+Type Foam::Function4<Type>::readValue
+(
+    const unitConversion& defaultUnits,
+    Istream& is
+)
+{
+    // Read the units if they are before the value
+    unitConversion units(defaultUnits);
+    const bool haveUnits = units.readIfPresent(is);
+
+    // Read the value
+    const Type value = pTraits<Type>(is);
+
+    // Read the units if they are after the value
+    if (!haveUnits && !is.eof())
+    {
+        units.readIfPresent(is);
+    }
+
+    // Modify the value by the unit conversion and return
+    return units.toStandard(value);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
 template<class Type>

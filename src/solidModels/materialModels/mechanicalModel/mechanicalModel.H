@@ -89,9 +89,6 @@ class mechanicalModel
         //- Sub-meshes for each mechanicalLaw
         mutable autoPtr<solidSubMeshes> solSubMeshes_;
 
-        //- Volume field to point field interpolator for the base mesh
-        mutable volPointInterpolation* volToPointPtr_;
-
        //- The implicit stiffness surface field for Rhie-Chow correction
         mutable surfaceScalarField* impKfcorrPtr_;
 
@@ -133,6 +130,9 @@ public:
             const nonLinearGeometry::nonLinearType& nonLinGeom,
             const bool incremental = false
         );
+
+        //- Construct null
+        mechanicalModel(const fvMesh& mesh);
 
 
     //- Destructor

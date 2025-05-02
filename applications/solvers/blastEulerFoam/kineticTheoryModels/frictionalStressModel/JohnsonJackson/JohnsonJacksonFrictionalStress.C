@@ -54,10 +54,10 @@ Foam::kineticTheoryModels::frictionalStressModels::JohnsonJackson::
 JohnsonJackson
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& master
 )
 :
-    frictionalStressModel(dict, kt),
+    frictionalStressModel(dict, master),
     Fr_("Fr", dimensionSet(1, -1, -2, 0, 0), coeffDict()),
     eta_("eta", dimless, coeffDict()),
     p_("p", dimless, coeffDict()),
@@ -89,11 +89,12 @@ frictionalPressure
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
     return
-        Fr_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_)
+        Fr_*pow(max(alphap - alphaMinFriction, scalar(0)), eta_)
        /pow(max(alphaMax - alphap, alphaDeltaMin_), p_);
 }
 
@@ -104,17 +105,18 @@ frictionalPressurePrime
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax
 ) const
 {
-    volScalarField alphapMin(max(alphap - alphaMinFriction_, scalar(0)));
+    volScalarField alphapMin(max(alphap - alphaMinFriction, scalar(0)));
     volScalarField alphapMax(max(alphaMax - alphap, alphaDeltaMin_));
     return
-        Fr_/pow(alphapMax, p_ + 1)
-       *(
-            eta_*pow(alphapMin, eta_ - 1.0)*alphapMax
-          + p_*pow(alphapMin, eta_)
-        );
+        Fr_
+       *pow(alphapMin, eta_ - 1)
+       /pow(alphapMax, p_ + 1)
+       *(eta_*alphapMax + p_*alphapMin);
+
 }
 
 
@@ -123,6 +125,7 @@ Foam::kineticTheoryModels::frictionalStressModels::JohnsonJackson::mu
 (
     const phaseModel& phase,
     const volScalarField& alphap,
+    const volScalarField& alphaMinFriction,
     const volScalarField& alphaMax,
     const volScalarField& pf
 ) const
@@ -143,22 +146,11 @@ alphaMinFriction
     const volScalarField& alphaMax
 ) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("alphaMinFriction", alphap.group()),
-                alphap.mesh().time().timeName(),
-                alphap.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            alphap.mesh(),
-            alphaMinFriction_
-        )
+        IOobject::groupName("alphaMinFriction", alphap.group()),
+        alphap.mesh(),
+        alphaMinFriction_
     );
 }
 

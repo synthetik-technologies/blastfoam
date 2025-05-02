@@ -30,22 +30,29 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
-#include "zeroGradientFvPatchFields.H"
+#include "argList.H"
+#include "timeSelector.H"
 #include "wedgeFvPatch.H"
 #include "compressibleSystem.H"
 #include "fvTimeIntegrator.H"
+
+using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
     #include "postProcess.H"
+    #include "addRegionOption.H"
 
-    #include "setRootCaseLists.H"
+    #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+
+    Info<< "Create mesh for time = "
+        << runTime.name() << nl << endl;
+
+    #include "createRegionMesh.H"
+
     #include "createFields.H"
     #include "createTimeControls.H"
     maxCo = min(maxCo, integrator.maxCo());
@@ -61,7 +68,7 @@ int main(int argc, char *argv[])
         integrator.preUpdateMesh();
 
         //- Refine the mesh
-        refineMesh(mesh);
+        mesh.update();
 
         //- Set the new time step and advance
         CoNum = fluid->CoNum();
@@ -71,21 +78,20 @@ int main(int argc, char *argv[])
         #include "setDeltaT.H"
 
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         //- Move the mesh
-        mesh.update();
+        mesh.move();
 
         Info<< "Calculating Fluxes" << endl;
         integrator.integrate();
 
         Info<< "max(p): " << max(p).value()
-            << ", min(p): " << min(p).value() << endl;
-        Info<< "max(T): " << max(T).value()
+            << ", min(p): " << min(p).value() << nl
+            << "max(T): " << max(T).value()
             << ", min(T): " << min(T).value() << endl;
 
         runTime.write();
-
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"

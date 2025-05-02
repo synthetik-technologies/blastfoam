@@ -74,7 +74,7 @@ void Foam::solidModels::unsExplicitNonLinearSolid::updateWavespeeds()
 Foam::solidModels::unsExplicitNonLinearSolid::unsExplicitNonLinearSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType nonLinear,
     const bool isSolid
 )

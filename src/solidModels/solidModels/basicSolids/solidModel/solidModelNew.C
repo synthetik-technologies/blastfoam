@@ -28,7 +28,7 @@ License
 
 // * * * * * * * * * * * * * * Static Data Functions * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::solidModel> Foam::solidModel::New(dynamicFvMesh& mesh)
+Foam::autoPtr<Foam::solidModel> Foam::solidModel::New(fvMesh& mesh)
 {
     word solidModelTypeName;
 
@@ -71,7 +71,7 @@ Foam::autoPtr<Foam::solidModel> Foam::solidModel::New(dynamicFvMesh& mesh)
 }
 
 
-Foam::autoPtr<Foam::solidModel> Foam::solidModel::NewLU(dynamicFvMesh& mesh)
+Foam::autoPtr<Foam::solidModel> Foam::solidModel::NewLU(fvMesh& mesh)
 {
     word solidModelTypeName;
 

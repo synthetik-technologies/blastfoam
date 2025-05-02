@@ -201,41 +201,41 @@ Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::limiter
 
     const word limiterFieldName(type() + "Limiter(" + phi.name() + ')');
 
-    if (this->mesh().cache("limiter"))
-    {
-        if (!mesh.foundObject<surfaceScalarField>(limiterFieldName))
-        {
-            surfaceScalarField* limiterField
-            (
-                new surfaceScalarField
-                (
-                    IOobject
-                    (
-                        limiterFieldName,
-                        mesh.time().timeName(),
-                        mesh,
-                        IOobject::NO_READ,
-                        IOobject::NO_WRITE
-                    ),
-                    mesh,
-                    dimless
-                )
-            );
-
-            mesh.objectRegistry::store(limiterField);
-        }
-
-        surfaceScalarField& limiterField =
-            mesh.lookupObjectRef<surfaceScalarField>
-            (
-                limiterFieldName
-            );
-
-        calcLimiter(phi, limiterField);
-
-        return limiterField;
-    }
-    else
+    // if (this->mesh().cache("limiter"))
+    // {
+    //     if (!mesh.foundObject<surfaceScalarField>(limiterFieldName))
+    //     {
+    //         surfaceScalarField* limiterField
+    //         (
+    //             new surfaceScalarField
+    //             (
+    //                 IOobject
+    //                 (
+    //                     limiterFieldName,
+    //                     mesh.time().name(),
+    //                     mesh,
+    //                     IOobject::NO_READ,
+    //                     IOobject::NO_WRITE
+    //                 ),
+    //                 mesh,
+    //                 dimless
+    //             )
+    //         );
+    //
+    //         mesh.objectRegistry::store(limiterField);
+    //     }
+    //
+    //     surfaceScalarField& limiterField =
+    //         mesh.lookupObjectRef<surfaceScalarField>
+    //         (
+    //             limiterFieldName
+    //         );
+    //
+    //     calcLimiter(phi, limiterField);
+    //
+    //     return limiterField;
+    // }
+    // else
     {
         tmp<surfaceScalarField> tlimiterField
         (
@@ -244,7 +244,7 @@ Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::limiter
                 IOobject
                 (
                     limiterFieldName,
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh
                 ),
                 mesh,

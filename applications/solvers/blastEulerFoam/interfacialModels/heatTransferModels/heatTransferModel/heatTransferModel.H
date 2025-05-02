@@ -39,6 +39,7 @@ SourceFiles
 
 #include "volFields.H"
 #include "dictionary.H"
+#include "BlendedInterfacialModel.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -119,11 +120,42 @@ public:
         //    ddt(alpha1*rho1*ha) + ... = ... K*(Ta - Tb)
         //    ddt(alpha2*rho2*hb) + ... = ... K*(Tb - Ta)
         //  with a specified residual volume fraction
-        virtual tmp<volScalarField> K
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
+        virtual tmp<volScalarField> K() const = 0;
+
+        //- The heat transfer function K used in the enthalpy equation
+        //    ddt(alpha1*rho1*ha) + ... = ... K*(Ta - Tb)
+        //    ddt(alpha2*rho2*hb) + ... = ... K*(Tb - Ta)
+        //  with a specified residual volume fraction
+        virtual scalar cellK(const label celli) const = 0;
+};
+
+
+/*---------------------------------------------------------------------------*\
+                      Class blendedDragModel Declaration
+\*---------------------------------------------------------------------------*/
+
+class blendedHeatTransferModel
+:
+    public BlendedInterfacialModel<heatTransferModel>
+{
+public:
+
+    typedef heatTransferModel modelType;
+
+    // Constructors
+
+        //- Inherit base class constructors
+        using BlendedInterfacialModel<heatTransferModel>::
+            BlendedInterfacialModel;
+
+
+    // Member Functions
+
+        //- Return the drag coefficient K
+        tmp<volScalarField> K() const;
+
+        //- Return the blended cell force coefficient
+        scalar cellK(const label) const;
 };
 
 

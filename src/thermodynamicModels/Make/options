@@ -1,10 +1,8 @@
 EXE_INC = \
     -I$(LIB_SRC)/ODE/lnInclude \
-    -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/physicalProperties/lnInclude \
-    -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/multicomponentThermo/lnInclude \
@@ -19,6 +17,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude
 
 LIB_LIBS = \
+    -lmeshTools \
     -lfiniteVolume \
     -lODE \
     -lsolidThermo \

@@ -64,7 +64,7 @@ Foam::solidModels::UnsTotalDisplacementSolid<UnsSolidModel>::
 UnsTotalDisplacementSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType nonLinear,
     const bool isSolid
 )

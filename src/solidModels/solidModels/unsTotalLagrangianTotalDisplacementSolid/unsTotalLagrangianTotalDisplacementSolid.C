@@ -92,7 +92,7 @@ void unsTotalLagrangianTotalDisplacementSolid::readDict()
 unsTotalLagrangianTotalDisplacementSolid::
 unsTotalLagrangianTotalDisplacementSolid
 (
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     UnsTotalLagrangianGeomSolid<unsTotalDisplacementSolid>(typeName, mesh),
@@ -121,7 +121,6 @@ unsTotalLagrangianTotalDisplacementSolid
 bool unsTotalLagrangianTotalDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     scalar initialResidual = 0;
@@ -138,7 +137,7 @@ bool unsTotalLagrangianTotalDisplacementSolid::evolve()
     {
         if (SolverPerformance<vector>::debug)
         {
-            Info<< "Time: " << runTime().timeName()
+            Info<< "Time: " << runTime().name()
                 << ", outer iteration: " << iCorr << endl;
         }
 

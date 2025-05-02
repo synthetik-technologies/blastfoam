@@ -32,7 +32,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
+#include "argList.H"
+#include "fvMesh.H"
 #include "labelVector.H"
 #include "wedgeFvPatch.H"
 #include "IOobjectList.H"
@@ -55,33 +56,31 @@ void addTypeObjects
     IOobjectList& objects
 )
 {
-    wordList typeObjects
-    (
-        db.names<GeometricField<Type, fvPatchField, volMesh>>()
-    );
-    forAll(typeObjects, i)
+    typedef GeometricField<Type, fvPatchField, volMesh> FieldType;
+    HashTable<const FieldType*> flds(db.lookupClass<FieldType>());
+    forAllConstIter(typename HashTable<const FieldType*>, flds, iter)
     {
         if
         (
             otherdb.foundObject<GeometricField<Type, fvPatchField, volMesh>>
             (
-                typeObjects[i]
+                iter()->name()
             )
         )
         {
             objects.insert
             (
-                typeObjects[i],
-                new IOobject
+                iter()->name(),
+                new typeIOobject<Type>
                 (
                     db.lookupObject<GeometricField<Type, fvPatchField, volMesh>>
                     (
-                        typeObjects[i]
+                        iter()->name()
                     )
                 )
             );
-            objects[typeObjects[i]]->headerClassName() =
-                GeometricField<Type, fvPatchField, volMesh>::typeName;
+            // objects[typeObjects[i]]->headerClassName() =
+            //     GeometricField<Type, fvPatchField, volMesh>::typeName;
         }
     }
 }
@@ -104,7 +103,7 @@ void mapFields
         IOobjectList tobjects
         (
             sourceMeshes[0],
-            sourceMeshes[0].time().timeName()
+            sourceMeshes[0].time().name()
         );
 
         forAllConstIter
@@ -265,10 +264,11 @@ int main(int argc, char *argv[])
         IOobject
         (
             targetRegion,
-            targetRunTime.timeName(),
+            targetRunTime.name(),
             targetRunTime,
             IOobject::MUST_READ
-        )
+        ),
+        false
     );
     Info<< "Created target mesh" << nl << endl;
 
@@ -380,7 +380,7 @@ int main(int argc, char *argv[])
                 )
             );
             Time& runTimeSource = sourceRunTimes[proci];
-            const_cast<dictionary&>(runTimeSource.controlDict()) =
+            const_cast<IOdictionary&>(runTimeSource.controlDict()) =
                 targetRunTime.controlDict();
             #include "setTimeIndex.H"
 
@@ -392,10 +392,11 @@ int main(int argc, char *argv[])
                     IOobject
                     (
                         sourceRegion,
-                        runTimeSource.timeName(),
+                        runTimeSource.name(),
                         runTimeSource,
                         IOobject::NO_READ
-                    )
+                    ),
+                    false
                 )
             );
             nSourceCells += sourceMeshes[proci].nCells();
@@ -438,10 +439,11 @@ int main(int argc, char *argv[])
                 IOobject
                 (
                     sourceRegion,
-                    runTimeSource.timeName(),
+                    runTimeSource.name(),
                     runTimeSource,
                     IOobject::MUST_READ
-                )
+                ),
+                false
             )
         );
         nSourceCells += sourceMeshes[0].nCells();
@@ -505,12 +507,22 @@ int main(int argc, char *argv[])
     vector rotationAxis = sourceAxis[1] - targetAxis[1];
     vector rAxis = sourceAxis[0];
 
+    Info<< "Source radial axis: " << sourceAxis[0] << nl
+        << "Source rotation axis: " << sourceAxis[1] << nl
+        << "Target radial axis: " << targetAxis[0] << nl
+        << "Target rotation axis: " << targetAxis[1] << nl
+        << "Rotation axis: " << rotationAxis << nl
+        << "Radial axis: " << rAxis << nl
+        << endl;
+
     vector sourceCentre = cmptMultiply(sourceSumCV, sourceAxis[1])/sourceSumV;
     vector targetCentre(sourceCentre);
     if (args.optionFound("centre"))
     {
         targetCentre = args.optionRead<vector>("centre");
     }
+
+    const bool nearest = args.optionFound("nearest");
 
     Info<< "Source centre: " << sourceCentre << nl
         << "Target centre: " << targetCentre << endl;
@@ -525,7 +537,7 @@ int main(int argc, char *argv[])
         IOobjectList uniformObjects
         (
             sourceMeshes[0],
-            sourceRunTimes[0].timeName()/local
+            sourceRunTimes[0].name()/local
         );
         forAllConstIter
         (
@@ -537,10 +549,10 @@ int main(int argc, char *argv[])
             fileName name = iter()->name();
             if (name != "time")
             {
-                fileName srcPath = iter()->objectPath();
+                fileName srcPath = iter()->objectPath(true);
                 cp
                 (
-                    iter()->objectPath(),
+                    iter()->objectPath(true),
                     path/local/name
                 );
             }
@@ -564,6 +576,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             cellMap,
             extendedCellMap,
             R
@@ -607,6 +620,7 @@ int main(int argc, char *argv[])
                 targetCentre,
                 rotationAxis,
                 rAxis,
+                nearest,
                 cellMap,
                 extendedCellMap,
                 R
@@ -637,6 +651,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             additionalFieldNames
         );
         targetCompressibleSystem->decode();

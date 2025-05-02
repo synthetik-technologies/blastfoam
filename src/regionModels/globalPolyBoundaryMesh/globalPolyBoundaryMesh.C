@@ -144,7 +144,7 @@ bool Foam::globalPolyBoundaryMesh::movePoints()
 }
 
 
-void Foam::globalPolyBoundaryMesh::updateMesh(const mapPolyMesh& mpm)
+void Foam::globalPolyBoundaryMesh::distribute(const polyDistributionMap& map)
 {
     forAllIter
     (
@@ -153,7 +153,35 @@ void Foam::globalPolyBoundaryMesh::updateMesh(const mapPolyMesh& mpm)
         iter
     )
     {
-        iter()->updateMesh();
+        iter()->distribute(map);
+    }
+}
+
+
+void Foam::globalPolyBoundaryMesh::topoChange(const polyTopoChangeMap& map)
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->topoChange(map);
+    }
+}
+
+
+void Foam::globalPolyBoundaryMesh::mapMesh(const polyMeshMap& map)
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->mapMesh(map);
     }
 }
 
@@ -275,7 +303,7 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
     if (!patches_.found(pp.name()))
     {
         dictionary dict;
-        if (interfaceDicts_.found(mesh_.name()))
+        if (interfaceDicts_.found(mesh().name()))
         {
             const dictionary& mDict = interfaceDicts_[mesh().name()];
             if (mDict.found(pp.name()))
@@ -283,14 +311,14 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
                 dict = mDict.subDict(pp.name());
             }
         }
-        if (displacementFields_.found(mesh_.name()))
+        if (displacementFields_.found(mesh().name()))
         {
             if (!dict.found("displacementField"))
             {
                 dict.add
                 (
                     "displacementField",
-                    displacementFields_[mesh_.name()]
+                    displacementFields_[mesh().name()]
                 );
             }
         }
@@ -300,11 +328,11 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
             globalPolyPatch::New(dict, pp).ptr()
         );
 
-        if (inverseDisplacement_.found(mesh_.name()))
+        if (inverseDisplacement_.found(mesh().name()))
         {
             patches_[pp.name()]->setInverseDisplacement
             (
-                inverseDisplacement_[mesh_.name()]
+                inverseDisplacement_[mesh().name()]
             );
         }
     }
@@ -336,8 +364,8 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
             IOobject
             (
                 "regionProperties",
-                mesh_.time().constant(),
-                mesh_.time(),
+                mesh().time().constant(),
+                mesh().time(),
                 IOobject::MUST_READ
             )
         );
@@ -357,7 +385,7 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
             << "i.e. " << nl
             << "interfaces" << nl
             << "(" << nl
-            << "    " << mesh_.name()<< nl
+            << "    " << mesh().name()<< nl
             << "    {" << nl
             << "        " << pp.name() << nl
             << "        {" << nl
@@ -367,19 +395,19 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
             << ");" << endl
             << abort(FatalError);
     }
-    if (!interfaceDicts_.found(mesh_.name()))
+    if (!interfaceDicts_.found(mesh().name()))
     {
         FatalErrorInFunction
-            << mesh_.name() << " was not found in the list of interfaces" << nl
+            << mesh().name() << " was not found in the list of interfaces" << nl
             << "but a coupled patch was requested for the region." << nl
             << "Please specify the region and interface mapping methods" << endl
             << abort(FatalError);
     }
-    else if (!interfaceDicts_[mesh_.name()].found(pp.name()))
+    else if (!interfaceDicts_[mesh().name()].found(pp.name()))
     {
         FatalErrorInFunction
             << pp.name() << " was not found in the list of interfaces" << nl
-            << "for region " << mesh_.name() << " "
+            << "for region " << mesh().name() << " "
             << "but a coupled patch was requested. Please specify the" << nl
             << "mapping method for the patch" << endl
             << abort(FatalError);
@@ -399,16 +427,16 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
         dictionary& dict =
             const_cast<dictionary&>
             (
-                interfaceDicts_[mesh_.name()].subDict(pp.name())
+                interfaceDicts_[mesh().name()].subDict(pp.name())
             );
-        if (displacementFields_.found(mesh_.name()))
+        if (displacementFields_.found(mesh().name()))
         {
             if (!dict.found("displacementField"))
             {
                 dict.add
                 (
                     "displacementField",
-                    displacementFields_[mesh_.name()]
+                    displacementFields_[mesh().name()]
                 );
             }
         }
@@ -417,11 +445,11 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
             pp.name(),
             coupledGlobalPolyPatch::New(dict, pp).ptr()
         );
-        if (inverseDisplacement_.found(mesh_.name()))
+        if (inverseDisplacement_.found(mesh().name()))
         {
             patches_[pp.name()]->setInverseDisplacement
             (
-                inverseDisplacement_[mesh_.name()]
+                inverseDisplacement_[mesh().name()]
             );
         }
     }

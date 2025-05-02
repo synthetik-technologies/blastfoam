@@ -63,40 +63,16 @@ Foam::virtualMassModels::noVirtualMass::~noVirtualMass()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::virtualMassModels::noVirtualMass::Cvm
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::virtualMassModels::noVirtualMass::K() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return
-        tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "noVirtualMass:Cvm",
-                    mesh.time().timeName(),
-                    mesh
-                ),
-                mesh,
-                dimensionedScalar("zero", dimless, 0)
-            )
-        );
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::virtualMassModels::noVirtualMass::K
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return Cvm(nodei, nodej)*dimensionedScalar("zero", dimDensity, 0);
+    return volScalarField::New
+    (
+        typeName + ":K",
+        mesh,
+        dimensionedScalar(dimK, 0.0)
+    );
 }
 
 

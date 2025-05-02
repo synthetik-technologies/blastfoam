@@ -59,22 +59,6 @@ class vtkTimeSeriesSurfaceWriter
     // Private Member Data
     mutable autoPtr<vtkTimeSeries> timeSeries_;
 
-    // Private Member Functions
-
-        //- Templated write operation
-        template<class Type>
-        void Write
-        (
-            const fileName& outputDir,
-            const fileName& surfaceName,
-            const pointField& points,
-            const faceList& faces,
-            const word& fieldName,
-            const Field<Type>& values,
-            const bool isNodeValues
-        ) const;
-
-
 public:
 
     //- Runtime type information
@@ -83,8 +67,8 @@ public:
 
     // Constructors
 
-        //- Construct given write format
-        vtkTimeSeriesSurfaceWriter(const IOstream::streamFormat writeFormat);
+        //- Inherit constructors
+        using surfaceWriter::surfaceWriter;
 
 
     //- Destructor
@@ -93,79 +77,22 @@ public:
 
     // Member Functions
 
-        //- Write single surface geometry to file.
-        virtual void write
-        (
-            const fileName& outputDir,
-            const fileName& surfaceName,
-            const pointField& points,
-            const faceList& faces
-        ) const;
-
-        //- Write scalarField for a single surface to file.
-        //  One value per face or vertex (isNodeValues = true)
-        virtual void write
+         virtual void write
         (
             const fileName& outputDir,      // <case>/surface/TIME
             const fileName& surfaceName,    // name of surface
             const pointField& points,
             const faceList& faces,
-            const word& fieldName,          // name of field
-            const Field<scalar>& values,
-            const bool isNodeValues
+            const wordList& fieldNames,     // names of fields
+            const bool writePointValues
+            #define FieldTypeValuesConstArg(Type, nullArg) \
+                , const UPtrList<const Field<Type>>& field##Type##Values
+            FOR_ALL_FIELD_TYPES(FieldTypeValuesConstArg)
+            #undef FieldTypeValuesConstArg
         ) const;
 
-        //- Write vectorField for a single surface to file.
-        //  One value per face or vertex (isNodeValues = true)
-        virtual void write
-        (
-            const fileName& outputDir,      // <case>/surface/TIME
-            const fileName& surfaceName,    // name of surface
-            const pointField& points,
-            const faceList& faces,
-            const word& fieldName,          // name of field
-            const Field<vector>& values,
-            const bool isNodeValues
-        ) const;
-
-        //- Write sphericalTensorField for a single surface to file.
-        //  One value per face or vertex (isNodeValues = true)
-        virtual void write
-        (
-            const fileName& outputDir,      // <case>/surface/TIME
-            const fileName& surfaceName,    // name of surface
-            const pointField& points,
-            const faceList& faces,
-            const word& fieldName,          // name of field
-            const Field<sphericalTensor>& values,
-            const bool isNodeValues
-        ) const;
-
-        //- Write symmTensorField for a single surface to file.
-        //  One value per face or vertex (isNodeValues = true)
-        virtual void write
-        (
-            const fileName& outputDir,      // <case>/surface/TIME
-            const fileName& surfaceName,    // name of surface
-            const pointField& points,
-            const faceList& faces,
-            const word& fieldName,          // name of field
-            const Field<symmTensor>& values,
-            const bool isNodeValues
-        ) const;
-
-        //- Write tensorField for a single surface to file.
-        //  One value per face or vertex (isNodeValues = true)
-        virtual void write
-        (
-            const fileName& outputDir,      // <case>/surface/TIME
-            const fileName& surfaceName,    // name of surface
-            const pointField& points,
-            const faceList& faces,
-            const word& fieldName,          // name of field
-            const Field<tensor>& values,
-            const bool isNodeValues
-        ) const;
+        //- Inherit base class templated write
+        using surfaceWriter::write;
 };
 
 

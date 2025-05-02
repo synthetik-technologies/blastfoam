@@ -29,6 +29,7 @@ License
 #include "coupledGlobalPolyPatch.H"
 #include "vtkWritePolyData.H"
 #include "OSspecific.H"
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -49,7 +50,10 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
             )
         )
     ),
-    nbrName_(iF.name())
+    nbrName_(iF.name()),
+    useRefState_(false),
+    f0_(),
+    refSet_(false)
 {
     Field<Type>::operator=(Zero);
 }
@@ -74,8 +78,17 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
             )
         )
     ),
-    nbrName_(dict.lookup<word>("nbrName"))
-{}
+    nbrName_(dict.lookup<word>("nbrName")),
+    useRefState_(dict.lookupOrDefault<bool>("useRefState", false)),
+    f0_(),
+    refSet_(false)
+{
+    if (dict.found("refValue"))
+    {
+        f0_ = Field<Type>("refValue", dict, this->size());
+        refSet_ = true;
+    }
+}
 
 
 template<class Type>
@@ -83,7 +96,8 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
 (
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
-    const word& nbrName
+    const word& nbrName,
+    const bool useRefState
 )
 :
     fixedValuePointPatchField<Type>(p, iF),
@@ -97,7 +111,10 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
             )
         )
     ),
-    nbrName_(nbrName)
+    nbrName_(nbrName),
+    useRefState_(useRefState),
+    f0_(),
+    refSet_(false)
 {
     Field<Type>::operator=(this->patchInternalField());
 }
@@ -123,8 +140,16 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
             )
         )
     ),
-    nbrName_(ptf.nbrName_)
-{}
+    nbrName_(ptf.nbrName_),
+    useRefState_(ptf.useRefState_),
+    f0_(ptf.f0_),
+    refSet_(ptf.refSet_)
+{
+    if (useRefState_ && refSet_)
+    {
+        f0_ = mapper(ptf.f0_);
+    }
+}
 
 
 template<class Type>
@@ -145,27 +170,45 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
             )
         )
     ),
-    nbrName_(ptf.nbrName_)
+    nbrName_(ptf.nbrName_),
+    useRefState_(ptf.useRefState_),
+    f0_(ptf.f0_),
+    refSet_(ptf.refSet_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::globalMappedPointPatchField<Type>::autoMap(const pointPatchFieldMapper& mapper)
+void Foam::globalMappedPointPatchField<Type>::map
+(
+    const pointPatchField<Type>& ppf,
+    const fieldMapper& mapper
+)
 {
-    fixedValuePointPatchField<Type>::autoMap(mapper);
+    fixedValuePointPatchField<Type>::map(ppf, mapper);
+    if (useRefState_ && refSet_)
+    {
+        const globalMappedPointPatchField& gmppf =
+            dynamicCast<const globalMappedPointPatchField>(ppf);
+        mapper(f0_, gmppf.f0_);
+    }
 }
 
 
 template<class Type>
-void Foam::globalMappedPointPatchField<Type>::rmap
+void Foam::globalMappedPointPatchField<Type>::reset
 (
-    const pointPatchField<Type>& ppf,
-    const labelList& addr
+    const pointPatchField<Type>& ppf
 )
 {
-    fixedValuePointPatchField<Type>::rmap(ppf, addr);
+    fixedValuePointPatchField<Type>::reset(ppf);
+    if (useRefState_ && refSet_)
+    {
+        const globalMappedPointPatchField& gmppf =
+            dynamicCast<const globalMappedPointPatchField>(ppf);
+        f0_.reset(gmppf.f0_);
+    }
 }
 
 
@@ -200,71 +243,83 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    Field<Type> nbr;
+    tmp<Field<Type>> tnbr;
     if (isA<valuePointPatchField<Type>>(pfNbr))
     {
-        nbr = dynamicCast<const valuePointPatchField<Type>>(pfNbr);
+        tnbr = tmp<Field<Type>>
+        (
+            dynamicCast<const valuePointPatchField<Type>>(pfNbr)
+        );
     }
     else
     {
-        nbr = pfNbr.patchInternalField();
+        tnbr = pfNbr.patchInternalField();
     }
 
-    if (debug > 1 || (debug && this->db().time().outputTime()))
+//     if (debug > 1 || (debug && this->db().time().outputTime()))
+//     {
+//         Field<Type> pfGlobal(samplePatch.patchPointToGlobal(nbr));
+//         Field<Type> pfInterp
+//         (
+//             cgpp.patchToPatchInterpolator().transferPoints
+//             (
+//                 samplePatch.globalPatch(),
+//                 pfGlobal
+//             )
+//         );
+//
+//         if (Pstream::master())
+//         {
+//             fileName path
+//             (
+//                 this->db().time().globalPath()
+//                /"VTK"
+//                /this->db().time().timeName()
+//             );
+//             mkDir(path);
+//             vtkWritePolyData::write
+//             (
+//                 path/(this->internalField().name() + "_interpolated.vtk"),
+//                 this->internalField().name(),
+//                 true,
+//                 cgpp.physicalPatch().points(),
+//                 labelList(),
+//                 edgeList(),
+//                 cgpp.physicalPatch(),
+//                 this->internalField().name(), true, pfInterp
+//             );
+//             vtkWritePolyData::write
+//             (
+//                 path/(nbrName_ + "_actual.vtk"),
+//                 nbrName_,
+//                 true,
+//                 samplePatch.physicalPatch().points(),
+//                 labelList(),
+//                 edgeList(),
+//                 samplePatch.physicalPatch(),
+//                 nbrName_,
+//                 true,
+//                 pfGlobal
+//             );
+//         }
+//     }
+
+    tnbr = samplePatch.pointInterpolate(tnbr);
+
+    if (useRefState_)
     {
-        Field<Type> pfGlobal(samplePatch.patchPointToGlobal(nbr));
-        Field<Type> pfInterp
-        (
-            cgpp.patchToPatchInterpolator().transferPoints
-            (
-                samplePatch.globalPatch(),
-                pfGlobal
-            )
-        );
-
-        if (Pstream::master())
+        //- Set the reference state if not already set
+        if (!refSet_)
         {
-            fileName path
-            (
-                this->db().time().globalPath()
-               /"VTK"
-               /this->db().time().timeName()
-            );
-            mkDir(path);
-            vtkWritePolyData::write
-            (
-                path/(this->internalField().name() + "_interpolated.vtk"),
-                this->internalField().name(),
-                true,
-                cgpp.globalPatch().points(),
-                labelList(),
-                edgeList(),
-                cgpp.globalPatch(),
-                this->internalField().name(),
-                true,
-                pfInterp
-
-            );
-            vtkWritePolyData::write
-            (
-                path/(nbrName_ + "_actual.vtk"),
-                nbrName_,
-                true,
-                samplePatch.globalPatch().points(),
-                labelList(),
-                edgeList(),
-                samplePatch.globalPatch(),
-                nbrName_,
-                true,
-                pfGlobal
-            );
+            f0_ = tnbr();
+            refSet_ = true;
         }
+
+        // Remove reference state
+        tnbr.ref() -= f0_;
     }
 
-    Field<Type>::operator=
-    (
-        samplePatch.pointInterpolate(nbr)
-    );
+    Field<Type>::operator=(tnbr);
     fixedValuePointPatchField<Type>::updateCoeffs();
 
     // Restore tag
@@ -277,6 +332,11 @@ void Foam::globalMappedPointPatchField<Type>::write(Ostream& os) const
 {
     fixedValuePointPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
+    writeEntry(os, "useRefState", useRefState_);
+    if (useRefState_)
+    {
+        writeEntry(os, "refValue", f0_);
+    }
 }
 
 // ************************************************************************* //

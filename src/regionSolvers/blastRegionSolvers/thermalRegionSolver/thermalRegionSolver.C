@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "thermalRegionSolver.H"
-#include "fvCFD.H"
+#include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -42,7 +42,7 @@ namespace regionSolvers
 
 Foam::regionSolvers::thermal::thermal
 (
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const regionSolverList& regions
 )
 :
@@ -66,6 +66,10 @@ Foam::regionSolvers::thermal::thermal
             )
         )
     ),
+    thermophysicalTransport_
+    (
+        solidThermophysicalTransportModel::New(thermo_())
+    ),
     fvModels_(fvModels::New(mesh_)),
     fvConstraints_(fvConstraints::New(mesh_))
 {}
@@ -80,7 +84,8 @@ Foam::regionSolvers::thermal::~thermal()
 
 void Foam::regionSolvers::thermal::initialiseMesh(const IterType)
 {
-    dynMesh_.update();
+    mesh_.update();
+    mesh_.move();
     if (mesh_.moving())
     {
         const_cast<surfaceScalarField&>(mesh_.phi()) == Zero;
@@ -99,8 +104,8 @@ void Foam::regionSolvers::thermal::solve()
     const volScalarField& rho = trho();
     volScalarField& e = thermo_->he();
 
-    label maxIter = mesh_.solutionDict().lookup<label>("maxIter");
-    scalar tolerance = mesh_.solutionDict().lookup<scalar>("tolerance");
+    label maxIter = mesh_.solution().lookup<label>("maxIter");
+    scalar tolerance = mesh_.solution().lookup<scalar>("tolerance");
 
     label iter = 0;
     bool lastIter = false;
@@ -115,7 +120,7 @@ void Foam::regionSolvers::thermal::solve()
         fvScalarMatrix eEqn
         (
             fvm::ddt(rho, e)
-          + thermo_->divq(e)
+          + thermophysicalTransport_->divq(e)
          ==
             fvModels_.source(rho, e)
         );

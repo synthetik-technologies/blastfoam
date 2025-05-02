@@ -52,7 +52,7 @@ Foam::dragModels::GidaspowErgunWenYu::GidaspowErgunWenYu
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject),
+    dispersedDragModel(dict, pair, registerObject),
     Ergun_
     (
         new Ergun
@@ -83,30 +83,22 @@ Foam::dragModels::GidaspowErgunWenYu::~GidaspowErgunWenYu()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::dragModels::GidaspowErgunWenYu::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::dragModels::GidaspowErgunWenYu::CdRe() const
 {
     return
-        pos0(pair_.continuous() - 0.8)*WenYu_->CdRe(nodei, nodej)
-      + neg(pair_.continuous() - 0.8)*Ergun_->CdRe(nodei, nodej);
+        pos0(pair_.continuous() - 0.8)*WenYu_->CdRe()
+      + neg(pair_.continuous() - 0.8)*Ergun_->CdRe();
 }
 
 
 Foam::scalar Foam::dragModels::GidaspowErgunWenYu::cellCdRe
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return
-        pos0(pair_.continuous()[celli] - 0.8)
-       *WenYu_->cellCdRe(celli, nodei, nodej)
-      + neg(pair_.continuous()[celli] - 0.8)
-       *Ergun_->cellCdRe(celli, nodei, nodej);
+        pos0(pair_.continuous()[celli] - 0.8)*WenYu_->cellCdRe(celli)
+      + neg(pair_.continuous()[celli] - 0.8)*Ergun_->cellCdRe(celli);
 }
 
 // ************************************************************************* //

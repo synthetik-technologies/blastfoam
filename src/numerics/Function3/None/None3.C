@@ -33,6 +33,7 @@ template<class Type>
 Foam::Function3s::None<Type>::None
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :

@@ -33,8 +33,9 @@ License
 
 namespace Foam
 {
+namespace functionObjects
+{
     defineTypeNameAndDebug(stressTriaxiality, 0);
-
     addToRunTimeSelectionTable
     (
         functionObject,
@@ -42,100 +43,55 @@ namespace Foam
         dictionary
     );
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-
-bool Foam::stressTriaxiality::writeData()
-{
-    if (runTime_.outputTime())
-    {
-        // Lookup stress tensor
-        const volSymmTensorField& sigma =
-            mesh_.lookupObject<volSymmTensorField>("sigma");
-
-        // Calculate hydrostatic stress
-        const volScalarField sigmaHyd(-tr(sigma)/3.0);
-
-        // Calculate equivalent stress
-        volScalarField sigmaEq(sqrt((3.0/2.0)*magSqr(dev(sigma))));
-
-        // Limit sigmaEq to at least SMALL to avid division by zero
-        sigmaEq = max(sigmaEq, dimensionedScalar("SMALL", dimPressure, SMALL));
-
-        // Calculate stress triaxiality
-        const volScalarField stressTriaxiality
-        (
-            "stressTriaxiality", -sigmaHyd/sigmaEq
-        );
-
-        stressTriaxiality.write();
-
-        Info<< "Stress triaxiality : min = " << gMin(stressTriaxiality)
-            << ", max = " << gMax(stressTriaxiality) << endl;
-    }
-
-    return true;
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::stressTriaxiality::stressTriaxiality
+Foam::functionObjects::stressTriaxiality::stressTriaxiality
 (
     const word& name,
     const Time& t,
     const dictionary& dict
 )
 :
-    functionObject(name),
-    name_(name),
-    runTime_(t),
-    mesh_
-    (
-        runTime_.lookupObject<fvMesh>
-        (
-            dict.lookupOrDefault<word>("region", "region0")
-        )
-    )
+    fvMeshFunctionObject(name, t, dict)
 {
-    Info<< "Creating " << this->name() << " function object" << endl;
+    read(dict);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::stressTriaxiality::start()
+bool Foam::functionObjects::stressTriaxiality::read(const dictionary& dict)
 {
-    if (runTime_.outputTime())
-    {
-        return writeData();
-    }
-
-    return true;
+    return fvMeshFunctionObject::read(dict);
 }
 
 
-bool Foam::stressTriaxiality::execute()
+bool Foam::functionObjects::stressTriaxiality::execute()
 {
-    if (runTime_.outputTime())
-    {
-        return writeData();
-    }
+    // Lookup stress tensor
+    const volSymmTensorField& sigma =
+        mesh_.lookupObject<volSymmTensorField>("sigma");
 
-    return true;
+    // Calculate hydrostatic stress
+    const volScalarField sigmaHyd(-tr(sigma)/3.0);
+
+    // Calculate equivalent stress
+    volScalarField sigmaEq(sqrt((3.0/2.0)*magSqr(dev(sigma))));
+
+    // Limit sigmaEq to at least small to avid division by zero
+    sigmaEq.max(dimensionedScalar(dimPressure, small));
+
+    // Calculate stress triaxiality
+    return store("stressTriaxiality", -sigmaHyd/sigmaEq);
 }
 
 
-bool Foam::stressTriaxiality::read(const dictionary& dict)
+bool Foam::functionObjects::stressTriaxiality::write()
 {
-    return true;
-}
-
-
-bool Foam::stressTriaxiality::write()
-{
-    return writeData();
+    return writeObject("stressTriaxiality");
 }
 
 // ************************************************************************* //

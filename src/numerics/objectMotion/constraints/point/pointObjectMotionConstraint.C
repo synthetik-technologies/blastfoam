@@ -61,6 +61,17 @@ Foam::objectMotionConstraints::point::point
 }
 
 
+Foam::objectMotionConstraints::point::point
+(
+    const word& name,
+    const Foam::point& centreOfRotation,
+    const movingObject& motion
+)
+:
+    objectMotionConstraint(name, motion),
+    centreOfRotation_(centreOfRotation)
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::objectMotionConstraints::point::~point()

@@ -38,7 +38,6 @@ Description
 
 #include "polyMeshRefiner.H"
 #include "refinement.H"
-#include "polyTopoChanger.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -83,7 +82,6 @@ public:
         (
             polyMesh& mesh,
             const dictionary& dict,
-            const bool force = false,
             const bool read = true
         );
 
@@ -131,10 +129,29 @@ public:
         );
 
         //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void topoChange(const polyTopoChangeMap& mpm);
 
         //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
+        virtual void distribute(const polyDistributionMap& map);
+
+        //- Add my decomposition constraints
+        void add
+        (
+            boolList& blockedFace,
+            PtrList<labelList>& specifiedProcessorFaces,
+            labelList& specifiedProcessor,
+            List<labelPair>& explicitConnections
+        ) const;
+
+        //- Apply any additional post-decomposition constraints
+        void apply
+        (
+            const boolList& blockedFace,
+            const PtrList<labelList>& specifiedProcessorFaces,
+            const labelList& specifiedProcessor,
+            const List<labelPair>& explicitConnections,
+            labelList& decomposition
+        ) const;
 
 
     // Writing

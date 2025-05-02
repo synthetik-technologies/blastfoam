@@ -30,10 +30,6 @@ License
 #include "polyMesh.H"
 #include "polyTopoChange.H"
 #include "meshTools.H"
-#include "polyAddFace.H"
-#include "polyAddPoint.H"
-#include "polyAddCell.H"
-#include "polyModifyFace.H"
 #include "syncTools.H"
 #include "faceSet.H"
 #include "cellSet.H"
@@ -41,7 +37,7 @@ License
 #include "OFstream.H"
 #include "Time.H"
 #include "FaceCellWave.H"
-#include "mapDistributePolyMesh.H"
+#include "polyDistributionMap.H"
 #include "refinementData.H"
 #include "refinementDistanceData.H"
 #include "degenerateMatcher.H"
@@ -749,15 +745,11 @@ Foam::labelListList Foam::hexRef3D::setRefinement
 
         label anchorPointi = mesh_.faces()[mesh_.cells()[celli][0]][0];
 
-        cellMidPoint[celli] = meshMod.setAction
+        cellMidPoint[celli] = meshMod.addPoint
         (
-            polyAddPoint
-            (
-                mesh_.cellCentres()[celli],     // point
-                anchorPointi,                   // master point
-                -1,                             // zone for point
-                true                            // supports a cell
-            )
+            mesh_.cellCentres()[celli],     // point
+            anchorPointi,                   // master point
+            true                            // supports a cell
         );
         splitCells.append(celli);
         newCellPoints[celli] = cellMidPoint[celli];
@@ -882,15 +874,11 @@ Foam::labelListList Foam::hexRef3D::setRefinement
 
                 const edge& e = mesh_.edges()[edgeI];
 
-                edgeMidPoint[edgeI] = meshMod.setAction
+                edgeMidPoint[edgeI] = meshMod.addPoint
                 (
-                    polyAddPoint
-                    (
-                        edgeMids[edgeI],            // point
-                        e[0],                       // master point
-                        -1,                         // zone for point
-                        true                        // supports a cell
-                    )
+                    edgeMids[edgeI],            // point
+                    e[0],                       // master point
+                    true                        // supports a cell
                 );
                 splitEdges.append(edgeI);
                 newEdgePoints[edgeI] = edgeMidPoint[edgeI];
@@ -900,8 +888,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                     (
                         pointLevel_[e[0]],
                         pointLevel_[e[1]]
-                    )
-                  + 1;
+                    ) + 1;
             }
         }
         locMapper.addSplitEdges(splitEdges, newEdgePoints);
@@ -1002,7 +989,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
 
         forAll(newNeiLevel, i)
         {
-            label facei = i+mesh_.nInternalFaces();
+            label facei = i + mesh_.nInternalFaces();
 
             if (faceAnchorLevel[facei] >= 0)
             {
@@ -1075,19 +1062,15 @@ Foam::labelListList Foam::hexRef3D::setRefinement
 
                 const face& f = mesh_.faces()[facei];
 
-                faceMidPoint[facei] = meshMod.setAction
+                faceMidPoint[facei] = meshMod.addPoint
                 (
-                    polyAddPoint
                     (
-                        (
-                            facei < mesh_.nInternalFaces()
-                          ? mesh_.faceCentres()[facei]
-                          : bFaceMids[facei-mesh_.nInternalFaces()]
-                        ),                          // point
-                        f[0],                       // master point
-                        -1,                         // zone for point
-                        true                        // supports a cell
-                    )
+                        facei < mesh_.nInternalFaces()
+                      ? mesh_.faceCentres()[facei]
+                      : bFaceMids[facei-mesh_.nInternalFaces()]
+                    ),                          // point
+                    f[0],                       // master point
+                    true                        // supports a cell
                 );
                 splitFaces.append(facei);
                 newFacePoints[facei] = faceMidPoint[facei];
@@ -1243,18 +1226,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
 
             for (label i = 1; i < 8; i++)
             {
-                cAdded[i] = meshMod.setAction
-                (
-                    polyAddCell
-                    (
-                        -1,                                 // master point
-                        -1,                                 // master edge
-                        -1,                                 // master face
-                        celli,                              // master cell
-                        mesh_.cellZones().whichZone(celli)  // zone for cell
-                    )
-                );
-
+                cAdded[i] = meshMod.addCell(celli);
                 newCellLevel(cAdded[i]) = cellLevel_[celli]+1;
             }
         }

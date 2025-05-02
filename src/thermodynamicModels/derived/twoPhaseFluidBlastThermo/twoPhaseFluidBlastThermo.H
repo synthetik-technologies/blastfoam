@@ -203,8 +203,19 @@ public:
                 const bool limit = true
             ) const;
 
+            //- Calculate pressure for cell [Pa]
+            virtual scalar patchFacepRhoT
+            (
+                const label patchi,
+                const label facei,
+                const bool limit = true
+            ) const;
+
             //- Gamma = dpde for cell []
             virtual scalar cellGamma(const label celli) const;
+
+            //- Gamma = dpde for cell []
+            virtual scalar patchFaceGamma(const label patchi, const label facei) const;
 
             //- Derivative of pressure w.r.t density for cel
             virtual scalar celldpdRho(const label celli) const;
@@ -276,15 +287,22 @@ public:
                 const label patchi
             ) const;
 
+            //- Enthalpy/Internal energy for source [J/kg]
+            virtual tmp<scalarField> he
+            (
+                const scalarField& T,
+                const fvSource& source
+            ) const;
+
             //- Enthalpy/Internal energy for a cell [J/kg]
-            virtual scalar cellHE
+            virtual scalar cellhe
             (
                 const scalar T,
                 const label celli
             ) const;
 
             //- Enthalpy/Internal energy for patch and face [J/kg]
-            virtual scalar patchFaceHE
+            virtual scalar patchFacehe
             (
                 const scalar T,
                 const label patchi,
@@ -344,14 +362,11 @@ public:
             //- Enthalpy of formation [J/kg]
             virtual tmp<volScalarField> hc() const;
 
-            //- Flame temperature [K]
-            virtual tmp<volScalarField> flameT() const;
+            //- Temperature from enthalpy/internal energy
+            virtual tmp<volScalarField> The() const;
 
             //- Temperature from enthalpy/internal energy
-            virtual tmp<volScalarField> THE() const;
-
-            //- Temperature from enthalpy/internal energy
-            virtual tmp<volScalarField> THE
+            virtual tmp<volScalarField> The
             (
                 const volScalarField& h,
                 const volScalarField& p,
@@ -359,7 +374,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for cell-set
-            virtual tmp<scalarField> THE
+            virtual tmp<scalarField> The
             (
                 const scalarField& he,
                 const scalarField& T0,      // starting temperature
@@ -367,7 +382,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for patch
-            virtual tmp<scalarField> THE
+            virtual tmp<scalarField> The
             (
                 const scalarField& he,
                 const scalarField& T0,      // starting temperature
@@ -375,7 +390,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar cellTHE
+            virtual scalar cellThe
             (
                 const scalar he,
                 const scalar T0,

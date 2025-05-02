@@ -78,26 +78,11 @@ public:
 
     // Member Functions
 
-        //- Lift coefficient
-        virtual tmp<volScalarField> Cl
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
         //- Lift force
-        virtual tmp<volVectorField> F
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volVectorField> F() const;
 
         //- Lift force on faces
-        virtual tmp<surfaceScalarField> Ff
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<surfaceScalarField> Ff() const;
 };
 
 

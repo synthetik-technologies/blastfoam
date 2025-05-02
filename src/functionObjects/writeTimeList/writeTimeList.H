@@ -120,11 +120,17 @@ public:
         //- Read the field average data
         virtual bool read(const dictionary&);
 
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        }
+
         //- Update index
         virtual bool execute();
 
         //- Return time to next write
-        virtual scalar timeToNextWrite();
+        virtual scalar timeToNextAction();
 
         //- Write the field averages
         virtual bool write();

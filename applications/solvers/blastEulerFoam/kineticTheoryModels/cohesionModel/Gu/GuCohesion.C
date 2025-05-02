@@ -90,7 +90,7 @@ Foam::kineticTheoryModels::cohesionModels::Gu::Gu
         IOobject
         (
             IOobject::groupName("Gu:tauYield", kt.phase().name()),
-            kt.phase().mesh().time().timeName(),
+            kt.phase().mesh().time().name(),
             kt.phase().mesh()
         ),
         kt.phase().mesh(),
@@ -102,7 +102,7 @@ Foam::kineticTheoryModels::cohesionModels::Gu::Gu
         IOobject
         (
             IOobject::groupName("Gu:W", kt.phase().name()),
-            kt.phase().mesh().time().timeName(),
+            kt.phase().mesh().time().name(),
             kt.phase().mesh()
         ),
         kt.phase().mesh(),

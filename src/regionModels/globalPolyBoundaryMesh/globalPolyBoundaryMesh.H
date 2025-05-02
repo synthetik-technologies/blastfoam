@@ -40,7 +40,8 @@ SourceFiles
 #include "globalPolyPatch.H"
 #include "regIOobject.H"
 #include "HashPtrTable.H"
-#include "MeshObject.H"
+#include "MeshObjects.H"
+#include "DemandDrivenMeshObject.H"
 #include "PtrListDictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,10 +53,10 @@ class pointPatch;
 class coupledGlobalPolyPatch;
 
 class globalPolyBoundaryMesh;
-typedef MeshObject
+typedef DemandDrivenMeshObject
 <
     polyMesh,
-    PatchMeshObject,
+    RepatchableMeshObject,
     globalPolyBoundaryMesh
 > GlobalPolyBoundaryMesh;
 
@@ -140,8 +141,14 @@ public:
             // Move points
             virtual bool movePoints();
 
+            //- Distribute
+            virtual void distribute(const polyDistributionMap& mpm);
+
             //- Update mesh
-            virtual void updateMesh(const mapPolyMesh& mpm);
+            virtual void topoChange(const polyTopoChangeMap& mpm);
+
+            //- Update mesh
+            virtual void mapMesh(const polyMeshMap& mpm);
 
             //- Reorder patches
             virtual void reorderPatches

@@ -176,7 +176,7 @@ bool poroLinearSolid::converged
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-poroLinearSolid::poroLinearSolid(dynamicFvMesh& mesh)
+poroLinearSolid::poroLinearSolid(fvMesh& mesh)
 :
     LinearGeomSolid<totalDisplacementSolid>(typeName, mesh),
     p_
@@ -184,7 +184,7 @@ poroLinearSolid::poroLinearSolid(dynamicFvMesh& mesh)
         IOobject
         (
             "p",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -196,7 +196,7 @@ poroLinearSolid::poroLinearSolid(dynamicFvMesh& mesh)
         IOobject
         (
             "grad(p)",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -227,7 +227,6 @@ poroLinearSolid::poroLinearSolid(dynamicFvMesh& mesh)
 bool poroLinearSolid::evolve()
 {
     Info << "Evolving poro solid solver" << endl;
-    this->readDict();
 
     int iCorr = 0;
     SolverPerformance<vector> solverPerfD;

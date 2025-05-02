@@ -64,7 +64,7 @@ Foam::functionObjects::blastQuantities::lookupOrCreate
             IOobject
             (
                 name,
-                obr_.time().timeName(),
+                obr_.time().name(),
                 obr_,
                 IOobject::READ_IF_PRESENT,
                 IOobject::NO_WRITE
@@ -108,7 +108,7 @@ Foam::functionObjects::blastQuantities::blastQuantities
                 "impulse",
                 IOobject::group(pName_)
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             IOobject::READ_IF_PRESENT
         ),
@@ -124,7 +124,7 @@ Foam::functionObjects::blastQuantities::blastQuantities
                 "timeOfArrival",
                 IOobject::group(pName_)
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             IOobject::READ_IF_PRESENT
         ),
@@ -140,7 +140,7 @@ Foam::functionObjects::blastQuantities::blastQuantities
                 "positivePhaseDuration",
                 IOobject::group(pName_)
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             IOobject::READ_IF_PRESENT
         ),
@@ -156,7 +156,7 @@ Foam::functionObjects::blastQuantities::blastQuantities
                 "negativePhaseDuration",
                 IOobject::group(pName_)
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             IOobject::READ_IF_PRESENT
         ),
@@ -172,7 +172,7 @@ Foam::functionObjects::blastQuantities::blastQuantities
                 "blastQuantities:stage",
                 IOobject::group(pName_)
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             IOobject::READ_IF_PRESENT
         ),
@@ -191,12 +191,7 @@ Foam::functionObjects::blastQuantities::blastQuantities
             dimPressure
         )
     )
-{
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -213,6 +208,40 @@ bool Foam::functionObjects::blastQuantities::read
 )
 {
     fvMeshFunctionObject::read(dict);
+
+    if (!p0Ptr_.valid() && dict.lookupOrDefault("nonUniformPRef", false))
+    {
+        typeIOobject<volScalarField> p0IO
+        (
+            IOobject::groupName("p0", IOobject::group(pName_)),
+            mesh_.time().name(),
+            mesh_,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        );
+        if (p0IO.headerOk())
+        {
+            p0Ptr_.set(new volScalarField(p0IO, mesh_));
+        }
+        else
+        {
+            p0IO.readOpt() = IOobject::NO_READ;
+            p0Ptr_.set
+            (
+                new volScalarField
+                (
+                    p0IO,
+                    mesh_.lookupObject<volScalarField>(pName_)
+                )
+            );
+        }
+    }
+
+    if (!p0Ptr_.valid())
+    {
+        pRef_.read(dict);
+    }
+
 
     return true;
 }
@@ -273,6 +302,11 @@ bool Foam::functionObjects::blastQuantities::execute()
 
 bool Foam::functionObjects::blastQuantities::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
+
     return
         writeObject(overpressureName_)
      && pMax_.write()

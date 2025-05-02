@@ -32,7 +32,7 @@ Description
 
 SourceFiles
     mechanicalLaw.C
-    newMechanicalLaw.C
+    mechanicalLawNew.C
 
 \*---------------------------------------------------------------------------*/
 

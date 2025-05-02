@@ -64,40 +64,21 @@ Foam::liftModel::~liftModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField> Foam::liftModel::FI
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volVectorField> Foam::blendedLiftModel::F() const
 {
-    return
-        Cl(nodei, nodej)
-       *pair_.continuous().rho()
-       *(
-            pair_.Ur(nodei, nodej) ^ fvc::curl(pair_.continuous().U(nodej))
-        );
+    return this->evaluate(&liftModel::F, "F", liftModel::dimF, false);
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::liftModel::F
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::surfaceScalarField> Foam::blendedLiftModel::Ff() const
 {
-    return pair_.dispersed().volumeFraction(nodei)*FI(nodei, nodej);
-}
-
-
-Foam::tmp<Foam::surfaceScalarField> Foam::liftModel::Ff
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        fvc::interpolate(pair_.dispersed().volumeFraction(nodei))
-       *fvc::flux(FI(nodei, nodej));
+    return this->evaluate
+    (
+        &liftModel::Ff,
+        "Ff",
+        liftModel::dimF*dimArea,
+        false
+    );
 }
 
 

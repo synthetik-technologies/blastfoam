@@ -40,8 +40,7 @@ Description
 #include "locationMapper.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
-#include "mapDistributePolyMesh.H"
-#include "RefineBalanceMeshObject.H"
+#include "polyTopoChangeMap.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,13 +49,6 @@ namespace Foam
 
 class fvMeshRefiner;
 
-class polyMeshRefiner;
-typedef MeshObject
-<
-    polyMesh,
-    DistributeableMeshObject,
-    polyMeshRefiner
-> PolyMeshRefiner;
 
 /*---------------------------------------------------------------------------*\
                      Class polyMeshRefiner Declaration
@@ -64,7 +56,7 @@ typedef MeshObject
 
 class polyMeshRefiner
 :
-    public PolyMeshRefiner
+    public regIOobject
 {
 protected:
 
@@ -131,14 +123,14 @@ protected:
 
         // Track the state of the refiner
 
+            //-  Has the refiner mapped already
+            mutable bool hasMapped_;
+
             //- Is the mesh in the process of being refined
             mutable bool isRefining_;
 
             //- Is the mesh in the process of being unrefined
             mutable bool isUnrefining_;
-
-            //- Is the mesh in the process of being balanced
-            const bool& isBalancing_;
 
 
     // Protected Member Functions
@@ -211,8 +203,8 @@ public:
             autoPtr,
             polyMeshRefiner,
             dictionary,
-            (polyMesh& mesh, const dictionary dict, const bool force, const bool read),
-            (mesh, dict, force, read)
+            (polyMesh& mesh, const dictionary dict, const bool read),
+            (mesh, dict, read)
         );
 
 
@@ -226,7 +218,6 @@ public:
         (
             polyMesh& mesh,
             const dictionary& dict,
-            const bool force = false,
             const bool read = true
         );
 
@@ -245,7 +236,6 @@ public:
         (
             polyMesh& mesh,
             const dictionary& dict,
-            const bool force = false,
             const bool read = true
         );
 
@@ -254,7 +244,6 @@ public:
             const word& refinerType,
             polyMesh& mesh,
             const dictionary& dict,
-            const bool force = false,
             const bool read = true
         );
 
@@ -277,12 +266,6 @@ public:
             bool isUnrefining() const
             {
                 return isUnrefining_;
-            }
-
-            //- Is the mesh being balanced
-            bool isBalancing() const
-            {
-                return isBalancing_;
             }
 
             //- Return the number of buffer layers
@@ -346,8 +329,10 @@ public:
         ) = 0;
 
         //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void topoChange(const polyTopoChangeMap&);
 
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap&);
 
         //- Reordered/removed trailing patches. If validBoundary call is parallel
         //  synced and all add the same patch with same settings
@@ -369,7 +354,7 @@ public:
         }
 
         //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
+        virtual void distribute(const polyDistributionMap& map);
 
         static void extendMaxCellLevel
         (
@@ -403,6 +388,11 @@ public:
 
 
     // Writing
+
+        virtual bool writeData(Ostream&) const
+        {
+            return true;
+        }
 
         //- Write using given format, version and compression
         virtual bool writeObject

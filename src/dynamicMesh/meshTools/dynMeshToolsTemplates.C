@@ -50,16 +50,16 @@ void Foam::meshTools::readInternalFields
     {
         if (!mesh.foundObject<dimField>(fieldIter()->name()))
         {
-            IOobject fieldTargetIOobject
+            typeIOobject<dimField> fieldTargetIOobject
             (
                 fieldIter()->name(),
-                mesh.time().timeName(),
+                mesh.time().name(),
                 mesh,
                 IOobject::MUST_READ,
                 IOobject::AUTO_WRITE
             );
 
-            if (fieldTargetIOobject.typeHeaderOk<dimField>(true))
+            if (fieldTargetIOobject.headerOk())
             {
                 dimField* fPtr
                 (
@@ -90,16 +90,16 @@ void Foam::meshTools::readGeoFields
     {
         if (!mesh.foundObject<geoField>(fieldIter()->name()))
         {
-            IOobject fieldTargetIOobject
+            typeIOobject<geoField> fieldTargetIOobject
             (
                 fieldIter()->name(),
-                mesh.time().timeName(),
+                mesh.time().name(),
                 mesh,
                 IOobject::MUST_READ,
                 IOobject::AUTO_WRITE
             );
 
-            if (fieldTargetIOobject.typeHeaderOk<geoField>(true))
+            if (fieldTargetIOobject.headerOk())
             {
                 geoField* fPtr
                 (

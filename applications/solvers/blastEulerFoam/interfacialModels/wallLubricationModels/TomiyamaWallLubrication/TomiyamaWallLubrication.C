@@ -54,7 +54,7 @@ Foam::wallLubricationModels::TomiyamaWallLubrication::TomiyamaWallLubrication
     const phasePair& pair
 )
 :
-    wallLubricationModel(dict, pair),
+    dispersedWallLubricationModel(dict, pair),
     D_("Cwd", dimLength, dict)
 {}
 
@@ -68,18 +68,14 @@ Foam::wallLubricationModels::TomiyamaWallLubrication::~TomiyamaWallLubrication()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volVectorField>
-Foam::wallLubricationModels::TomiyamaWallLubrication::FI
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::wallLubricationModels::TomiyamaWallLubrication::Fi() const
 {
-    volVectorField Ur(pair_.Ur(nodei, nodej));
+    volVectorField Ur(pair_.Ur());
 
     const volVectorField& n(nWall());
     const volScalarField& y(yWall());
 
-    volScalarField Eo(pair_.Eo(nodei, nodej));
+    volScalarField Eo(pair_.Eo());
 
     return
         (
@@ -88,7 +84,7 @@ Foam::wallLubricationModels::TomiyamaWallLubrication::FI
           + pos0(Eo - 33.0)*0.179
         )
        *0.5
-       *pair_.dispersed().d(nodei)
+       *pair_.dispersed().d()
        *(
             1/sqr(y)
           - 1/sqr(D_ - y)

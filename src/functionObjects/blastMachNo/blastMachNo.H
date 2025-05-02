@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::MachNo
+    Foam::functionObjects::blastMachNo
 
 Description
     Calculates and writes the Mach number as a volScalarField.
@@ -101,6 +101,12 @@ public:
 
         //- Disallow default bitwise assignment
         void operator=(const blastMachNo&) = delete;
+
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return {UName_};
+        }
 };
 
 

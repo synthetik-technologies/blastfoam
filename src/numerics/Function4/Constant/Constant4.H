@@ -84,12 +84,22 @@ public:
         Constant(const word& name, const Type& val);
 
         //- Construct from name and dictionary
-        Constant(const word& name, const dictionary& dict);
+        Constant
+        (
+            const word& name,
+            const unitConversions& units,
+            const dictionary& dict
+        );
 
         //- Construct from name and Istream
         //  Reads the constant value without the Function4 type
         //  for backward compatibility
-        Constant(const word& name, Istream& is);
+        Constant
+        (
+            const word& name,
+            const unitConversions& units,
+            Istream& is
+        );
 
         //- Copy constructor
         Constant(const Constant<Type>& cnst);

@@ -43,16 +43,16 @@ namespace kineticTheoryModels
 Foam::kineticTheoryModels::frictionalStressModel::frictionalStressModel
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& master
 )
 :
     timeIntegrationSystem
     (
         typeName,
-        kt.fluid().mesh()
+        master.fluid().mesh()
     ),
     dict_(dict),
-    kt_(kt)
+    master_(master)
 {}
 
 

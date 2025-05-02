@@ -78,7 +78,7 @@ void Foam::fluxSchemes::Rusanov::createSavedFields()
             IOobject
             (
                 fieldName("phivOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -92,7 +92,7 @@ void Foam::fluxSchemes::Rusanov::createSavedFields()
             IOobject
             (
                 fieldName("phivNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -106,7 +106,7 @@ void Foam::fluxSchemes::Rusanov::createSavedFields()
             IOobject
             (
                 fieldName("lambda"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,

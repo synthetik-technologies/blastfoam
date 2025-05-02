@@ -15,7 +15,9 @@ wmake $targetType dynamicMesh
 wmake $targetType functionObjects
 
 wmake $targetType errorEstimators
-wmake $targetType dynamicFvMesh
+# wmake $targetType dynamicFvMesh
+wmake $targetType fvMeshTopoChangers
+wmake $targetType fvMeshDistributors
 
 wmake $targetType atmosphereModels
 

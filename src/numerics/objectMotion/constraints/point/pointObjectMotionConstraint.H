@@ -80,6 +80,14 @@ public:
             const movingObject& motion
         );
 
+        //- Construct from components
+        point
+        (
+            const word& name,
+            const Foam::point& centreOfRotation,
+            const movingObject& motion
+        );
+
         //- Construct and return a clone
         virtual autoPtr<objectMotionConstraint> clone() const
         {

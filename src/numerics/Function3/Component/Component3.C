@@ -26,32 +26,37 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Component3.H"
+#include "ZeroConstant.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-void Foam::Function3s::Component<Type>::read(const dictionary& dict)
+void Foam::Function3s::Component<Type>::read
+(
+    const dictionary& dict,
+    const unitConversions& units
+)
 {
     xFunc_ =
         dict.found("x")
-      ? Function1<Type>::New("x", dict)
+      ? Function1<Type>::New("x", units.x, units.value, dict)
       : autoPtr<Function1<Type>>
         (
-            new Function1s::Constant<Type>("x", Zero)
+            new Function1s::ZeroConstant<Type>("x")
         );
     yFunc_ =
         dict.found("y")
-      ? Function1<Type>::New("y", dict)
+      ? Function1<Type>::New("y", units.y, units.value, dict)
       : autoPtr<Function1<Type>>
         (
-            new Function1s::Constant<Type>("y", Zero)
+            new Function1s::ZeroConstant<Type>("y")
         );
     zFunc_ =
         dict.found("z")
-      ? Function1<Type>::New("z", dict)
+      ? Function1<Type>::New("z", units.z, units.value, dict)
       : autoPtr<Function1<Type>>
         (
-            new Function1s::Constant<Type>("z", Zero)
+            new Function1s::ZeroConstant<Type>("z")
         );
 }
 
@@ -62,12 +67,13 @@ template<class Type>
 Foam::Function3s::Component<Type>::Component
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :
     FieldFunction3<Type, Component<Type>>(name)
 {
-    read(dict);
+    read(dict, units);
 }
 
 

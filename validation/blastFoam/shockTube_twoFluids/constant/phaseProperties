@@ -35,7 +35,7 @@ fluid
     }
     specie
     {
-        molWeight    28.97;
+        molWeight    12.317037;
     }
     transport
     {
@@ -44,7 +44,7 @@ fluid
     }
     thermodynamics
     {
-        Cv          4186;           // Heat capacity
+        Cv          3610;           // Heat capacity
         Hf          0.0;
     }
 

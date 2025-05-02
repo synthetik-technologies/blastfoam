@@ -68,7 +68,8 @@ class BlendedInterfacialModel
 :
     public regIOobject
 {
-    // Private Data
+protected:
+    // Protected Data
 
         //- Reference to phase 1
         const phaseModel& phase1_;
@@ -88,15 +89,8 @@ class BlendedInterfacialModel
         //- Model for dispersed phase 2 in continuous phase 1
         autoPtr<ModelType> model2In1_;
 
-        //- If true set coefficients and forces to 0 at fixed-flux BCs
-        bool correctFixedFluxBCs_;
 
-
-    // Private Member Functions
-
-        //- Correct coeff/value on fixed flux boundary conditions
-        template<class GeoField>
-        void correctFixedFluxBCs(GeoField& field) const;
+    // Protected Member Functions
 
         //- Return the blended coeff/value
         template
@@ -125,7 +119,6 @@ class BlendedInterfacialModel
         Type evaluate
         (
             Type (ModelType::*method)(const label, Args ...) const,
-            const word& name,
             const bool subtract,
             const label celli,
             Args ... args
@@ -133,6 +126,8 @@ class BlendedInterfacialModel
 
 
 public:
+
+    typedef ModelType modelType;
 
     //- Runtime type information
     TypeName("BlendedInterfacialModel");
@@ -148,10 +143,8 @@ public:
             const blendingMethod& blending,
             autoPtr<ModelType> model,
             autoPtr<ModelType> model1In2,
-            autoPtr<ModelType> model2In1,
-            const bool correctFixedFluxBCs = true
+            autoPtr<ModelType> model2In1
         );
-
 
         //- Construct from the model table, dictionary and pairs
         BlendedInterfacialModel
@@ -160,8 +153,14 @@ public:
             const blendingMethod& blending,
             const phasePair& pair,
             const orderedPhasePair& pair1In2,
-            const orderedPhasePair& pair2In1,
-            const bool correctFixedFluxBCs = true
+            const orderedPhasePair& pair2In1
+        );
+
+        //- Construct from the model table, dictionary and pairs
+        BlendedInterfacialModel
+        (
+            const dictionary& dict,
+            const phasePair& pair
         );
 
         //- Disallow default bitwise copy construction
@@ -177,6 +176,9 @@ public:
 
     // Member Functions
 
+        //- Add the used pairs to the table
+        void addPairs(phasePair::dictTable& pairs) const;
+
         //- Return true if a model is specified for the supplied phase
         bool hasModel(const phaseModel& phase) const;
 
@@ -185,6 +187,10 @@ public:
 
         //- Return the sign of the explicit value for the supplied phase
         scalar sign(const phaseModel& phase) const;
+
+        //- Correct coeff/value on fixed flux boundary conditions
+        template<class GeoField>
+        void correctFixedFluxBCs(GeoField& field) const;
 
         //- Return the blended force coefficient
         tmp<volScalarField> K

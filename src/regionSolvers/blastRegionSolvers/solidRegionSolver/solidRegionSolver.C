@@ -49,12 +49,12 @@ namespace regionSolvers
 
 Foam::regionSolvers::solid::solid
 (
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const regionSolverList& regions
 )
 :
     regionSolver(mesh, regions),
-    solid_(solidModel::New(dynMesh_))
+    solid_(solidModel::New(mesh_))
 {
     // Add Displacement field to track error
     accelerationSchemes_.addField(solid_->D());

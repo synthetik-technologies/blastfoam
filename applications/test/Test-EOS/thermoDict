@@ -1,9 +1,69 @@
 
-p 1e5;
-rho 950;
-T 400;
-calculateDensity no;
-
+p 1.0453e5;
+rho 957.74;
+T 300;
+calculateDensity yes;
+// air
+// {
+//     specie
+//     {
+//         molWeight       28.97;
+//     }
+//     equationOfState
+//     {
+//         gamma           1.4;
+//         a               0;
+//         b               0;
+//         q               0;
+//         qPrime          0;
+//         pInf            0;
+//     }
+//     transport
+//     {
+//         mu              0;              // Viscosity
+//         Pr              0.7;            // Prandtl number
+//     }
+//     thermodynamics
+//     {
+//         Cv          718;           // Heat capacity
+//         Hf          0.0;
+//     }
+//
+//     residualRho     1e-6;
+//     residualAlpha   1e-6;
+// }
+//
+//
+//
+// water
+// {
+//     specie
+//     {
+//         molWeight       18.30;
+//     }
+//     equationOfState
+//     {
+//         gamma           1.19;
+//         a               3e8;
+//         b               6.61e-4;
+//         q               -1177788;
+//         pInf            7028e5;
+//         qPrime          0;
+//     }
+//     transport
+//     {
+//         mu              0;              // Viscosity
+//         Pr              1;              // Prandtl number
+//     }
+//     thermodynamics
+//     {
+//         Cv          3610;           // Heat capacity
+//         Hf          0.0;
+//     }
+//
+//     residualRho     1e-6;
+//     residualAlpha   1e-6;
+// }
 thermoType
 {
 //     transport   const;
@@ -12,7 +72,6 @@ thermoType
 
     transport   const;
     thermo      eConst;
-    equationOfState stiffenedGas;
     equationOfState AbelNobelSG;
 }
 equationOfState
@@ -31,13 +90,35 @@ equationOfState
 //     R2        0.95;
 //     omega     0.3;
 
-    gamma       1.19;
-    pInf        6.2178e8;
-    b           6.7212e-4;
+//     gamma       1.19;
+//     pInf        6.2178e8;
+//     b           6.7212e-4;
+
+    // rho0 1000;
+    // C 1480;
+    // S1 1.75;
+    // S2 0;
+    // S3 0;
+    // Gamma 0.28;
+    // a 0;
+
+    // gamma           1.4;
+    // a               0;
+    // b               0;
+    // q               0;
+    // qPrime          0;
+    // pInf            0;
+
+    gamma           1.19;
+    a               3e8;
+    b               6.61e-4;
+    q               -1177788;
+    pInf            7028e5;
+    qPrime          0;
 }
 specie
 {
-    molWeight       22.393;
+    molWeight       18.01;
 }
 transport
 {
@@ -46,12 +127,15 @@ transport
 }
 thermodynamics
 {
-    Cv          3610;           // Heat capacity
-    // eCoeffs<9>     (-1250.0 0.28 0.0003 0 0 0 0 0 0);           // Heat capacity
-    // CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
-    CvCoeffs<8>     (280 0.6 0 0 0 0 0 0);           // Heat capacity
-    Sf              0.0;
+    // Cv          3270;           // Heat capacity
+    // // eCoeffs<9>     (-1250.0 0.28 0.0003 0 0 0 0 0 0);           // Heat capacity
+    // // CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
+    // CvCoeffs<8>     (280 0.6 0 0 0 0 0 0);           // Heat capacity
+    // Sf              0.0;
     Hf              0.0;
+    // Tref 300;
+    // Esref 357.169;
+    Cv 3610;
 }
 // thermoType
 // {

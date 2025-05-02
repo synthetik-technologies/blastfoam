@@ -76,12 +76,12 @@ public:
     // Constructors
 
         // Lookup compressible system type
-        blast(dynamicFvMesh& mesh, const regionSolverList& regions);
+        blast(fvMesh& mesh, const regionSolverList& regions);
 
         //- Construct with a given compressibleSystemType
         blast
         (
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const word& type,
             const regionSolverList& regions
         );

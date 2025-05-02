@@ -92,19 +92,10 @@ public:
     // Member Functions
 
         //- Aspect ratio
-        virtual tmp<volScalarField> E
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> E() const;
 
         //- Aspect ratio
-        virtual scalar cellE
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual scalar cellE(const label celli) const;
 };
 
 

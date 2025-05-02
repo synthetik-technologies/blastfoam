@@ -45,6 +45,7 @@ template<class Type>
 Foam::Function4s::Constant<Type>::Constant
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :
@@ -53,7 +54,7 @@ Foam::Function4s::Constant<Type>::Constant
 {
     if (!dict.found(name))
     {
-        dict.lookup("value") >> value_;
+        value_ = this->readValue(units.value, dict.lookup("value"));
     }
     else
     {
@@ -61,11 +62,11 @@ Foam::Function4s::Constant<Type>::Constant
         word entryType(is);
         if (is.eof())
         {
-            dict.lookup("value") >> value_;
+            value_ = this->readValue(units.value, dict.lookup("value"));
         }
         else
         {
-            is  >> value_;
+            value_ = this->readValue(units.value, is);
         }
     }
 }
@@ -75,11 +76,12 @@ template<class Type>
 Foam::Function4s::Constant<Type>::Constant
 (
     const word& name,
+    const unitConversions& units,
     Istream& is
 )
 :
     FieldFunction4<Type, Constant<Type>>(name),
-    value_(pTraits<Type>(is))
+    value_(this->readValue(units.value, is))
 {}
 
 

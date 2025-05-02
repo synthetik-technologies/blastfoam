@@ -32,17 +32,17 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
+#include "argList.H"
+#include "fvMesh.H"
 #include "labelVector.H"
 #include "wedgeFvPatch.H"
 #include "IOobjectList.H"
 #include "HashSet.H"
 #include "UautoPtr.H"
-#include "genericFvPatchField.H"
 #include "indexedOctree.H"
 #include "treeDataCell.H"
 
-#include "fvMeshRefiner.H"
+#include "polyMeshRefiner.H"
 #include "errorEstimator.H"
 
 #include "mappingFunctions.H"
@@ -61,7 +61,7 @@ void mapFields
 )
 {
     Info<< "Mapping fields" << endl;
-    IOobjectList objects(sourceMeshes[0], sourceMeshes[0].time().timeName());
+    IOobjectList objects(sourceMeshes[0], sourceMeshes[0].time().name());
 
     mapVolFields<scalar>
     (
@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
     const fileName rootDirSource = casePath.path().toAbsolute();
     const fileName caseDirSource = casePath.name();
 
+    const bool nearest = args.optionFound("nearest");
     if (!isDir(casePath))
     {
         FatalErrorInFunction
@@ -196,10 +197,11 @@ int main(int argc, char *argv[])
         IOobject
         (
             targetRegion,
-            targetRunTime.timeName(),
+            targetRunTime.name(),
             targetRunTime,
             IOobject::MUST_READ
-        )
+        ),
+        false
     );
     Info<<"Created target mesh"<<endl;
 
@@ -245,7 +247,7 @@ int main(int argc, char *argv[])
                 )
             );
             Time& runTimeSource = sourceRunTimes[proci];
-            const_cast<dictionary&>(runTimeSource.controlDict()) =
+            const_cast<IOdictionary&>(runTimeSource.controlDict()) =
                 targetRunTime.controlDict();
             #include "setTimeIndex.H"
 
@@ -257,9 +259,10 @@ int main(int argc, char *argv[])
                     IOobject
                     (
                         sourceRegion,
-                        runTimeSource.timeName(),
+                        runTimeSource.name(),
                         runTimeSource
-                    )
+                    ),
+                    false
                 )
             );
             nSourceCells += sourceMeshes[proci].nCells();
@@ -294,9 +297,10 @@ int main(int argc, char *argv[])
                 IOobject
                 (
                     sourceRegion,
-                    runTimeSource.timeName(),
+                    runTimeSource.name(),
                     runTimeSource
-                )
+                ),
+                false
             )
         );
         Info<< "Created source mesh\n" << endl;
@@ -352,8 +356,24 @@ int main(int argc, char *argv[])
     Pair<vector> targetAxis(calculateAxis(targetMesh));
     vector rotationAxis = sourceAxis[1] - targetAxis[1];
     vector rAxis = sourceAxis[0];
+    if (mag(rotationAxis) < small)
+    {
+        rotationAxis = sourceAxis[1];
+    }
+    Info<< "Source radial axis: " << sourceAxis[0] << nl
+        << "Source rotation axis: " << sourceAxis[1] << nl
+        << "Target radial axis: " << targetAxis[0] << nl
+        << "Target rotation axis: " << targetAxis[1] << nl
+        << "Rotation axis: " << rotationAxis << nl
+        << "Radial axis: " << rAxis << nl
+        << endl;
 
-    vector sourceCentre = cmptMultiply(sourceSumCV, sourceAxis[1])/sourceSumV;
+    vector sourceCentre =
+        args.optionLookupOrDefault
+        (
+            "sourceCentre",
+            cmptMultiply(sourceSumCV, sourceAxis[1])/sourceSumV
+        );
     vector targetCentre(sourceCentre);
     if (args.optionFound("centre"))
     {
@@ -382,6 +402,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             cellMap,
             extendedCellMap,
             R
@@ -410,6 +431,7 @@ int main(int argc, char *argv[])
             targetCentre,
             rotationAxis,
             rAxis,
+            nearest,
             additionalFieldNames
         );
         targetRunTime.writeNow();
@@ -423,7 +445,7 @@ int main(int argc, char *argv[])
         IOobjectList uniformObjects
         (
             sourceMeshes[0],
-            sourceRunTimes[0].timeName()/local
+            sourceRunTimes[0].name()/local
         );
         forAllConstIter
         (
@@ -435,10 +457,10 @@ int main(int argc, char *argv[])
             fileName name = iter()->name();
             if (name != "time")
             {
-                fileName srcPath = iter()->objectPath();
+                fileName srcPath = iter()->objectPath(false);
                 cp
                 (
-                    iter()->objectPath(),
+                    iter()->objectPath(false),
                     path/local/name
                 );
             }

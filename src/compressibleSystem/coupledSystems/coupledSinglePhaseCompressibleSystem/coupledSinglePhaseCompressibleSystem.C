@@ -44,11 +44,12 @@ namespace Foam
 
 Foam::coupledSinglePhaseCompressibleSystem::coupledSinglePhaseCompressibleSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh
 )
 :
-    coupledCompressibleSystem(mesh),
-    singlePhaseCompressibleSystem(mesh, false)
+    coupledCompressibleSystem(dict, mesh),
+    singlePhaseCompressibleSystem(dict, mesh, false)
 {
     thermoPtr_->initializeModels();
     this->setModels();
@@ -125,7 +126,7 @@ void Foam::coupledSinglePhaseCompressibleSystem::decode()
     }
 
     // Update density
-    rho_.ref() = alphaRho_()/max(volumeFraction_(), 1e-10);
+    rho_.internalFieldRef() = alphaRho_()/max(volumeFraction_(), 1e-10);
     rho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() ==
         rho_.boundaryField()*volumeFraction_.boundaryField();
@@ -133,14 +134,14 @@ void Foam::coupledSinglePhaseCompressibleSystem::decode()
     // Update velocity
     volScalarField alphaRhos(alphaRho_);
     alphaRhos.max(1e-10);
-    U_.ref() = rhoU_()/alphaRhos();
+    U_.internalFieldRef() = rhoU_()/alphaRhos();
     U_.correctBoundaryConditions();
 
     rhoU_.boundaryFieldRef() =
         alphaRho_.boundaryField()*U_.boundaryField();
 
     //- Update internal energy
-    e_.ref() = rhoE_()/alphaRhos() - 0.5*magSqr(U_());
+    e_.internalFieldRef() = rhoE_()/alphaRhos() - 0.5*magSqr(U_());
 
     thermoPtr_->correct();
 

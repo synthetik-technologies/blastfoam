@@ -33,11 +33,13 @@ template<class Type>
 Foam::Function3s::LookupTable<Type>::LookupTable
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :
     FieldFunction3<Type, LookupTable<Type>>(name),
-    table_(dict, "x", "y", "z", "f")
+    table_(dict, "x", "y", "z", "f"),
+    units_(units)
 {}
 
 

@@ -417,6 +417,23 @@ Foam::basicFluidBlastThermo<Thermo>::cellGamma(const label celli) const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::basicFluidBlastThermo<Thermo>::patchFaceGamma
+(
+    const label patchi,
+    const label facei
+) const
+{
+    return Thermo::thermoType::Gamma
+    (
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
+        this->T_.boundaryField()[patchi][facei]
+    );
+}
+
+
+template<class Thermo>
 Foam::scalar Foam::basicFluidBlastThermo<Thermo>::cellpRhoT
 (
     const label celli,
@@ -428,6 +445,24 @@ Foam::scalar Foam::basicFluidBlastThermo<Thermo>::cellpRhoT
         this->rho_[celli],
         this->e_[celli],
         this->T_[celli],
+        limit
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar Foam::basicFluidBlastThermo<Thermo>::patchFacepRhoT
+(
+    const label patchi,
+    const label facei,
+    const bool limit
+) const
+{
+    return Thermo::thermoType::p
+    (
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
+        this->T_.boundaryField()[patchi][facei],
         limit
     );
 }
@@ -502,22 +537,6 @@ Foam::basicFluidBlastThermo<Thermo>::calcCelle
         this->rho_[celli],
         this->e_[celli],
         this->T_[celli]
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidBlastThermo<Thermo>::calcp() const
-{
-    return Thermo::volScalarFieldProperty
-    (
-        "p",
-        dimPressure,
-        &Thermo::thermoType::pRhoT,
-        this->rho_,
-        this->e_,
-        this->T_
     );
 }
 

@@ -70,8 +70,16 @@ public:
 
     // Constructors
 
+        //- Construct from name
+        ZeroConstant(const word& name);
+
         //- Construct from name and dictionary
-        ZeroConstant(const word& name, const dictionary& dict);
+        ZeroConstant
+        (
+            const word& name,
+            const unitConversions& units,
+            const dictionary& dict
+        );
 
 
     //- Destructor

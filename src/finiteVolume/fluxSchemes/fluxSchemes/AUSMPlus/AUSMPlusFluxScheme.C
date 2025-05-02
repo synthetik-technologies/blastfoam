@@ -73,7 +73,7 @@ void Foam::fluxSchemes::AUSMPlus::createSavedFields()
             IOobject
             (
                 fieldName("phi"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,

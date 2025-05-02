@@ -102,25 +102,36 @@ void Foam::errorEstimators::multicomponent::update(const bool scale)
         return;
     }
 
-    volScalarField error
+    tmp<volScalarField> terror
     (
-        IOobject
+        volScalarField::New
         (
             "error",
-            mesh_.time().timeName(),
             mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            false
-        ),
-        mesh_,
-        -1.0
+            -1.0
+        )
     );
+    volScalarField& error = terror.ref();
 
     forAll(errors_, i)
     {
         errors_[i].update(scale);
-        error = max(error,  errors_[i].error());
+        const volScalarField& ei = errors_[i].error();
+        if (errors_[i].overrideError())
+        {
+            forAll(error, celli)
+            {
+                // Force refinement/unrefinement
+                if (mag(ei[celli]) > small)
+                {
+                    error[celli] = ei[celli];
+                }
+            }
+        }
+        else
+        {
+            error = max(error,  ei);
+        }
     }
     error_ = error;
 }

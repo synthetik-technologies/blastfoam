@@ -54,7 +54,7 @@ addToRunTimeSelectionTable
 
 linearPressureDisplacementSolid::linearPressureDisplacementSolid
 (
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     LinearGeomSolid<totalDisplacementSolid>(typeName, mesh),
@@ -65,7 +65,7 @@ linearPressureDisplacementSolid::linearPressureDisplacementSolid
         IOobject
         (
             "p",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -107,7 +107,6 @@ linearPressureDisplacementSolid::linearPressureDisplacementSolid
 bool linearPressureDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     // Mesh update loop
     do

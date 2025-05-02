@@ -14,29 +14,38 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
-errorEstimator  densityGradient;
+// topoChanger
+// {
+//     type            hexRefiner;
+//     errorEstimator  densityGradient;
+//
+//     balanceInterval 10;
+//
+//     // Do not unrefine
+//     beginUnrefine 1;
+//
+//     // How often to refine
+//     refineInterval  1;
+//
+//     // Refine field in between lower..upper
+//     lowerRefineLevel 0.01;
+//
+//     // If value < unrefineLevel unrefine
+//     unrefineLevel   0.01;
+//
+//     // Have slower than 2:1 refinement
+//     nBufferLayers   2;
+//
+//     // Refine cells only up to maxRefinement levels
+//     maxRefinement   3;
+//
+//     // Write the refinement level as a volScalarField
+//     dumpLevel       true;
+// }
+//
+// distributor
+// {
+//     type            redistributor;
+// }
 
-balanceInterval 10;
-
-// Do not unrefine
-beginUnrefine 1;
-
-// How often to refine
-refineInterval  1;
-
-// Refine field in between lower..upper
-lowerRefineLevel 0.01;
-
-// If value < unrefineLevel unrefine
-unrefineLevel   0.01;
-
-// Have slower than 2:1 refinement
-nBufferLayers   2;
-
-// Refine cells only up to maxRefinement levels
-maxRefinement   3;
-
-// Write the refinement level as a volScalarField
-dumpLevel       true;
 // ************************************************************************* //

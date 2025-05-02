@@ -23,7 +23,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseDynamicMomentumTransportModels.H"
+#include "makePhaseCompressibleMomentumTransportModel.H"
+#include "phasePair.H"
+
+namespace Foam
+{
+  typedef phasePair dispersedPhaseInterface;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

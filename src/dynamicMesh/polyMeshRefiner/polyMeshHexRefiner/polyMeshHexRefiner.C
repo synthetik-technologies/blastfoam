@@ -37,7 +37,6 @@ License
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
 #include "hexRef3D.H"
-#include "parcelCloud.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -174,7 +173,7 @@ void Foam::polyMeshHexRefiner::calculateProtectedCells
 
 
 // Refines cells, maps fields and recalculates (an approximate) flux
-Foam::autoPtr<Foam::mapPolyMesh>
+Foam::autoPtr<Foam::polyTopoChangeMap>
 Foam::polyMeshHexRefiner::refine
 (
     const labelList& cellsToRefine
@@ -187,8 +186,8 @@ Foam::polyMeshHexRefiner::refine
     meshCutter_->setRefinement(cellsToRefine, meshMod);
 
     // Create mesh (with inflation), return map from old to new mesh.
-    //autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh_, true);
-    autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh_, false);
+    //autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh_, true);
+    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh_);
 
     Info<< "Refined from "
         << returnReduce(map().nOldCells(), sumOp<label>())
@@ -218,7 +217,12 @@ Foam::polyMeshHexRefiner::refine
     //    cellTreePtr_.clear();
 
     // Update fields
-    mesh_.updateMesh(map);
+    hasMapped_ = false;
+    mesh_.topoChange(map);
+    if (!hasMapped_)
+    {
+        this->topoChange(map);
+    }
 
     // Update numbering of protectedCell_
     if (protectedCell_.size())
@@ -240,7 +244,7 @@ Foam::polyMeshHexRefiner::refine
 }
 
 
-Foam::autoPtr<Foam::mapPolyMesh>
+Foam::autoPtr<Foam::polyTopoChangeMap>
 Foam::polyMeshHexRefiner::unrefine
 (
     const labelList& splitElems
@@ -263,10 +267,15 @@ Foam::polyMeshHexRefiner::unrefine
 
 
     // Change mesh and generate map.
-    autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh_, false);
+    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh_);
 
     // Update fields
-    mesh_.updateMesh(map);
+    hasMapped_ = false;
+    mesh_.topoChange(map);
+    if (!hasMapped_)
+    {
+        this->topoChange(map);
+    }
 
     Info<< "Unrefined from "
         << returnReduce(map().nOldCells(), sumOp<label>())
@@ -522,21 +531,20 @@ void Foam::polyMeshHexRefiner::setProtectedCells()
 }
 
 
-void Foam::polyMeshHexRefiner::updateMesh(const mapPolyMesh& mpm)
+void Foam::polyMeshHexRefiner::topoChange(const polyTopoChangeMap& mpm)
 {
-    polyMeshRefiner::updateMesh(mpm);
+    polyMeshRefiner::topoChange(mpm);
+    meshCutter_->topoChange(mpm);
+    hasMapped_ = true;
 
-    // Do not update hexMesh since it is handled in the distribute function
-    if (!this->isBalancing_)
-    {
-        meshCutter_->updateMesh(mpm);
-    }
+    changedSinceWrite_ = true;
+
 }
 
 
 void Foam::polyMeshHexRefiner::distribute
 (
-    const mapDistributePolyMesh& map
+    const polyDistributionMap& map
 )
 {
     polyMeshRefiner::distribute(map);
@@ -556,6 +564,8 @@ void Foam::polyMeshHexRefiner::distribute
         protectedCell_ = protectedCell;
     }
 
+    changedSinceWrite_ = true;
+
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -567,7 +577,8 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner(polyMesh& mesh)
     meshCutter_(hexRef::New(mesh_)),
 
     nProtected_(0),
-    protectedCell_(mesh_.nCells(), 0)
+    protectedCell_(mesh_.nCells(), 0),
+    changedSinceWrite_(false)
 {
     nProtected_ = 0;
 
@@ -984,11 +995,10 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
 (
     polyMesh& mesh,
     const dictionary& dict,
-    const bool force,
     const bool read
 )
 :
-    polyMeshRefiner(mesh, dict, force, read),
+    polyMeshRefiner(mesh, dict, read),
 
     meshCutter_
     (
@@ -998,7 +1008,8 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
     ),
 
     nProtected_(0),
-    protectedCell_(mesh_.nCells(), 0)
+    protectedCell_(mesh_.nCells(), 0),
+    changedSinceWrite_(false)
 {
     // Read static part of dictionary
     readDict(dict);
@@ -1504,7 +1515,7 @@ bool Foam::polyMeshHexRefiner::refine
                 isRefining_ = true;
 
                 // Refine/update mesh and map fields
-                autoPtr<mapPolyMesh> map = refine(cellsToRefine);
+                autoPtr<polyTopoChangeMap> map = refine(cellsToRefine);
 
                 // Update refineCell. Note that some of the marked ones have
                 // not been refined due to constraints.
@@ -1615,16 +1626,15 @@ bool Foam::polyMeshHexRefiner::refine
             // Reset moving flag (if any). If not using inflation we'll not
             // move, if are using inflation any follow on movePoints will set
             // it.
-            mesh_.moving(false);
+            // mesh_.moving(false);
 
             // Make sure all processors have the correct instance
-            mesh_.setInstance(mesh_.time().timeName());
-            mesh_.polyMesh::instance() = mesh_.time().timeName();
+            mesh_.setInstance(mesh_.time().name());
+            mesh_.polyMesh::instance() = mesh_.time().name();
         }
     }
 
-    mesh_.topoChanging(hasChanged);
-
+    // mesh_.topoChanging(hasChanged);
     return hasChanged;
 }
 
@@ -1637,31 +1647,35 @@ bool Foam::polyMeshHexRefiner::writeObject
     const bool write
 ) const
 {
-    // Force refinement data to go to the current time directory.
-    const_cast<hexRef&>(meshCutter_()).setInstance(mesh_.facesInstance());
 
     bool writeOk =
-        polyMeshRefiner::writeObject(fmt, ver, cmp, write)
-     && meshCutter_->write();
+        polyMeshRefiner::writeObject(fmt, ver, cmp, write);
 
-    if (returnReduce(nProtected_, sumOp<label>()) > 0)
+    if (changedSinceWrite_)
     {
-        cellSet protectedCells(mesh_, "protectedCells", nProtected_);
-        forAll(protectedCell_, celli)
+        // Force refinement data to go to the current time directory.
+        const_cast<hexRef&>(meshCutter_()).setInstance(mesh_.time().name());
+        writeOk = meshCutter_->write(write) && writeOk;
+
+        if (returnReduce(nProtected_, sumOp<label>()) > 0)
         {
-            if (protectedCell_.get(celli))
+            cellSet protectedCells(mesh_, "protectedCells", nProtected_);
+            forAll(protectedCell_, celli)
             {
-                protectedCells.insert(celli);
+                if (protectedCell_.get(celli))
+                {
+                    protectedCells.insert(celli);
+                }
             }
+
+            Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
+                << " cells that are protected from refinement."
+                << " Writing these to cellSet "
+                << protectedCells.name()
+                << "." << endl;
+
+            writeOk = protectedCells.write(write) && writeOk;
         }
-
-        Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
-            << " cells that are protected from refinement."
-            << " Writing these to cellSet "
-            << protectedCells.name()
-            << "." << endl;
-
-        protectedCells.write();
     }
 
     return writeOk;

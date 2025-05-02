@@ -33,61 +33,61 @@ defaultFieldValues
 (
     // Set internal field to 0 and all boundaries to 0
     volScalarFieldValue     test0 -setAllBoundaries 0
-/*
+
     // Set a surface field
     surfaceScalarFieldValue test0f -setBoundaries (patches)  0
 
     // Set a pointField
     pointScalarFieldValue   pointtest0 -setAllBoundaries 0
 
-    // Set a vector field with a coded value
-    // the "code" section provides x, y, and z and scalars
-    volVectorFieldFunction  test1
-    {
-        type coded;
-
-        // Additional folders to include
-        codeOptions
-        #{
-            -I$(FOAM_SRC)/finiteVolume/lnInclude \
-            -I$(FOAM_SRC)/atmosphericModels/lnInclude
-        #};
-
-        // Additional libraries to include
-        codeLibs
-        #{
-            -latmosphericModels
-        #};
-
-        // Headers to include
-        codeInclude
-        #{
-            #include "atmBoundaryLayer.H"
-        #};
-
-        // This is the created function
-        // inserted after
-        // Type value(const scalar x, const scalar y, const scalar z)
-        // {
-        code
-        #{
-            // Create the atmBoundaryLayer class
-            // non scalars/labels should be read since they are seen as
-            // (0 0 0) instead of vector(0, 0, 0)
-            atmBoundaryLayer atmbl
-            (
-                dict_.topDict().lookup<vector>("uDir"),   // flowDir
-                dict_.topDict().lookup<vector>("zDir"),   // zDir
-                $uRef,   // read from parameters
-                $zRef,   // read from parameters
-                scalarField(1, $z0), // read from parameters
-                scalarField(1, $zg)  // read from parameters
-            );
-
-            // Return the value
-            return atmbl.U(vectorField(1, vector(x,y,z)))()[0];
-        #};
-    }
+    // // Set a vector field with a coded value
+    // // the "code" section provides x, y, and z and scalars
+    // volVectorFieldFunction  test1
+    // {
+    //     type coded;
+    //
+    //     // Additional folders to include
+    //     codeOptions
+    //     #{
+    //         -I$(FOAM_SRC)/finiteVolume/lnInclude \
+    //         -I$(FOAM_SRC)/atmosphericModels/lnInclude
+    //     #};
+    //
+    //     // Additional libraries to include
+    //     codeLibs
+    //     #{
+    //         -latmosphericModels
+    //     #};
+    //
+    //     // Headers to include
+    //     codeInclude
+    //     #{
+    //         #include "atmBoundaryLayer.H"
+    //     #};
+    //
+    //     // This is the created function
+    //     // inserted after
+    //     // Type value(const scalar x, const scalar y, const scalar z)
+    //     // {
+    //     code
+    //     #{
+    //         // Create the atmBoundaryLayer class
+    //         // non scalars/labels should be read since they are seen as
+    //         // (0 0 0) instead of vector(0, 0, 0)
+    //         atmBoundaryLayer atmbl
+    //         (
+    //             dict_.topDict().lookup<vector>("uDir"),   // flowDir
+    //             dict_.topDict().lookup<vector>("zDir"),   // zDir
+    //             $uRef,   // read from parameters
+    //             $zRef,   // read from parameters
+    //             scalarField(1, $z0), // read from parameters
+    //             scalarField(1, $zg)  // read from parameters
+    //         );
+    //
+    //         // Return the value
+    //         return atmbl.U(vectorField(1, vector(x,y,z)))()[0];
+    //     #};
+    // }
 
     // Another coded field
     // Func1(sine) returns a temporary Function1<Type> object
@@ -108,7 +108,7 @@ defaultFieldValues
             Func1(sine, func1);
             return Func1(sine).value(y)*func1.value(x);
         #};
-    }*/
+    }
 );
 
 
@@ -173,134 +173,134 @@ regions
             volScalarFieldValue test0   2
         );
     }
-//     boxToCell // Use cylinder for 3D
-//     {
-//         boxes ((0 0 0) (0.5 0.5 1));
-//
-//         // Faces are used to refine the mesh
-//         refineFaces yes;
-//
-//         // Only faces on the interface are selected
-//         selectionMode interface;
-//
-//         // Refinement level of this set
-//         level 3;
-//
-//         // Create a new cell set named test
-//         pointZones
-//         (
-//             {
-//                 name points;
-//                 action new;
-//                 selectionMode all;
-//             }
-//         );
-//
-//         // Add to the existing "faces" faceZone
-//         faceZones
-//         (
-//             {
-//                 // Use the previously created faceZone
-//                 name faces;
-//
-//                 // Add to the existing zone
-//                 action add;
-//
-//                 // Only select faces on the boundary
-//                 selectionMode boundary;
-//
-//                 // Which patches to include faces from
-//                 patches (patches);
-//             }
-//         );
-//
-//         cellZones
-//         (
-//             {
-//                 // Create a new cellZone
-//                 name cells;
-//                 action new;
-//             }
-//         );
-//
-//         // Set region values with options
-//         // If boundaries are changed in a set they should also be set in
-//         // defaultFieldValues
-//         //
-//         // options: (i.e. -*)
-//         //  -setBoundaries (patch1 patch2) - set boundary values
-//         //  -setAllBoundaries -  set all boundaries
-//         //  -noInternal - do not set internal values
-//         fieldValues
-//         (
-//             volScalarFieldValue test0 -setBoundaries (patches) -noInternal 1
-//             volVectorFieldValue test1 -setBoundaries (patches)  $v1
-//             surfaceScalarFieldValue test0f -setBoundaries (patches)  1
-//             pointScalarFieldValue pointtest0 -setBoundaries (patches)  1
-//         );
-//     }
-//
-//     boxToCell // Use cylinder for 3D
-//     {
-//         boxes ((0.25 0.25 0) (0.75 0.75 1));
-//
-//         // Faces are used to refine the mesh
-//         refineFaces yes;
-//
-//         // Only faces on the interface are selected
-//         selectionMode interface;
-//
-//         // Refinement level of this set
-//         level 2;
-//
-//         // Create a new cell zone named test
-//         // Zones can be viewed in paraview by checking the "readZones"
-//         // option
-//         // The "Copy data to cell zones" can be used to view fields in
-//         // these zones
-//         cellSet
-//         (
-//             {
-//                 // Subset cells from the cells cellZone, aka only cells
-//                 // in both zones
-//                 name subsetCells;
-//
-//                 action subset;
-//
-//                 source cells;
-//             }
-//         );
-//
-//         // Create a subset faceZone from "faces"
-//         faceZones
-//         (
-//             {
-//                 // Use the previously created faceZone
-//                 name subsetFaces;
-//
-//                 // Create a new faceZone
-//                 action new;
-//
-//                 // Only select interface faces
-//                 selectionMode interface;
-//             }
-//         );
-//
-//         // Create a new cell set named test
-//         pointZones
-//         (
-//             {
-//                 name points;
-//                 action remove;
-//                 selectionMode all;
-//             }
-//         );
-//
-//         fieldValues
-//         (
-//             volVectorFieldValue test1 (0 0 0)
-//         );
-//     }
+    boxToCell // Use cylinder for 3D
+    {
+        boxes ((0 0 0) (0.5 0.5 1));
+
+        // Faces are used to refine the mesh
+        refineFaces yes;
+
+        // Only faces on the interface are selected
+        selectionMode interface;
+
+        // Refinement level of this set
+        level 3;
+
+        // Create a new cell set named test
+        pointZones
+        (
+            {
+                name points;
+                action new;
+                selectionMode all;
+            }
+        );
+
+        // Add to the existing "faces" faceZone
+        faceZones
+        (
+            {
+                // Use the previously created faceZone
+                name faces;
+
+                // Add to the existing zone
+                action add;
+
+                // Only select faces on the boundary
+                selectionMode boundary;
+
+                // Which patches to include faces from
+                patches (patches);
+            }
+        );
+
+        cellZones
+        (
+            {
+                // Create a new cellZone
+                name cells;
+                action new;
+            }
+        );
+
+        // Set region values with options
+        // If boundaries are changed in a set they should also be set in
+        // defaultFieldValues
+        //
+        // options: (i.e. -*)
+        //  -setBoundaries (patch1 patch2) - set boundary values
+        //  -setAllBoundaries -  set all boundaries
+        //  -noInternal - do not set internal values
+        fieldValues
+        (
+            volScalarFieldValue test0 -setBoundaries (patches) -noInternal 1
+            volVectorFieldValue test1 -setBoundaries (patches)  $v1
+            surfaceScalarFieldValue test0f -setBoundaries (patches)  1
+            pointScalarFieldValue pointtest0 -setBoundaries (patches)  1
+        );
+    }
+
+    boxToCell // Use cylinder for 3D
+    {
+        boxes ((0.25 0.25 0) (0.75 0.75 1));
+
+        // Faces are used to refine the mesh
+        refineFaces yes;
+
+        // Only faces on the interface are selected
+        selectionMode interface;
+
+        // Refinement level of this set
+        level 2;
+
+        // Create a new cell zone named test
+        // Zones can be viewed in paraview by checking the "readZones"
+        // option
+        // The "Copy data to cell zones" can be used to view fields in
+        // these zones
+        cellSet
+        (
+            {
+                // Subset cells from the cells cellZone, aka only cells
+                // in both zones
+                name subsetCells;
+
+                action subset;
+
+                source cells;
+            }
+        );
+
+        // Create a subset faceZone from "faces"
+        faceZones
+        (
+            {
+                // Use the previously created faceZone
+                name subsetFaces;
+
+                // Create a new faceZone
+                action new;
+
+                // Only select interface faces
+                selectionMode interface;
+            }
+        );
+
+        // Create a new cell set named test
+        pointZones
+        (
+            {
+                name points;
+                action remove;
+                selectionMode all;
+            }
+        );
+
+        fieldValues
+        (
+            volVectorFieldValue test1 (0 0 0)
+        );
+    }
 );
 
 

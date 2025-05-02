@@ -26,8 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "LopezDeBertodano.H"
-#include "phasePair.H"
-#include "PhaseCompressibleTurbulenceModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -55,7 +53,7 @@ Foam::turbulentDispersionModels::LopezDeBertodano::LopezDeBertodano
     const phasePair& pair
 )
 :
-    turbulentDispersionModel(dict, pair),
+    dispersedTurbulentDispersionModel(dict, pair),
     Ctd_("Ctd", dimless, dict)
 {}
 
@@ -69,16 +67,12 @@ Foam::turbulentDispersionModels::LopezDeBertodano::~LopezDeBertodano()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::turbulentDispersionModels::LopezDeBertodano::D
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::turbulentDispersionModels::LopezDeBertodano::D() const
 {
     return
         Ctd_
        *pair_.continuous().rho()
-       *pair_.continuous().turbulence().k();
+       *continuousTurbulence().k();
 }
 
 // ************************************************************************* //

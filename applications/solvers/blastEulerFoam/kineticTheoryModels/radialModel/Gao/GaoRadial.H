@@ -31,8 +31,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Gao_H
-#define Gao_H
+#ifndef GaoRadial_H
+#define GaoRadial_H
 
 #include "radialModel.H"
 

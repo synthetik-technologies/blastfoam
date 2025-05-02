@@ -86,31 +86,35 @@ Foam::mixedFixedValueSlipFvPatchField<Type>::mixedFixedValueSlipFvPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::mixedFixedValueSlipFvPatchField<Type>::autoMap
+void Foam::mixedFixedValueSlipFvPatchField<Type>::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchField<Type>& ptf,
+    const fieldMapper& mapper
 )
 {
-    m(*this, *this);
-    m(refValue_, refValue_);
-    m(valueFraction_, valueFraction_);
+    transformFvPatchField<Type>::map(ptf, mapper);
+
+    const mixedFixedValueSlipFvPatchField<Type>& mfvspf =
+        refCast<const mixedFixedValueSlipFvPatchField<Type>>(ptf);
+
+    mapper(refValue_, mfvspf.refValue_);
+    mapper(valueFraction_, mfvspf.valueFraction_);
 }
 
 
 template<class Type>
-void Foam::mixedFixedValueSlipFvPatchField<Type>::rmap
+void Foam::mixedFixedValueSlipFvPatchField<Type>::reset
 (
-    const fvPatchField<Type>& ptf,
-    const labelList& addr
+    const fvPatchField<Type>& ptf
 )
 {
-    transformFvPatchField<Type>::rmap(ptf, addr);
+    transformFvPatchField<Type>::reset(ptf);
 
-    const mixedFixedValueSlipFvPatchField<Type>& dmptf =
+    const mixedFixedValueSlipFvPatchField<Type>& mfvspf =
         refCast<const mixedFixedValueSlipFvPatchField<Type>>(ptf);
 
-    refValue_.rmap(dmptf.refValue_, addr);
-    valueFraction_.rmap(dmptf.valueFraction_, addr);
+    refValue_.reset(mfvspf.refValue_);
+    valueFraction_.reset(mfvspf.valueFraction_);
 }
 
 

@@ -357,8 +357,18 @@ public:
         static void correctPhaseFields
         (
             const volScalarField& alpha,
+            const GeometricField<Type, fvPatchField, volMesh>& f,
             GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
             GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
+            const scalar rAlpha
+        );
+
+        //- Correct phase fields
+        template<class Type>
+        static void correctPhaseFields
+        (
+            const volScalarField& alpha,
+            GeometricField<Type, fvPatchField, volMesh>& f,
             const scalar rAlpha
         );
 

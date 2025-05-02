@@ -40,7 +40,6 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "speciesMixtureField.H"
 #include "multicomponentBlastThermo.H"
 
 namespace Foam
@@ -66,7 +65,7 @@ protected:
     PtrList<ThermoType> speciesData_;
 
     //- Mixture
-    speciesMixtureField<ThermoType> mixture_;
+    mutable ThermoType mixture_;
 
 
 
@@ -74,7 +73,7 @@ protected:
 
         //- Construct the species data from the given dictionary and return the
         //  data for the first specie to initialise the mixture thermo data
-        const PtrList<ThermoType>& constructSpeciesData(const dictionary&);
+        PtrList<ThermoType> constructSpeciesData(const dictionary&);
 
         //- Return a volScalarField of the given property
         template<class Method, class ... Args>
@@ -161,8 +160,41 @@ public:
 
     // Member functions
 
-        //- Pre update step
-        virtual void updateMixture();
+        // Access
+
+            //- Return type
+            virtual const word& type() const
+            {
+                return BasicThermo::type();
+            }
+
+            //- Return const access to the mesh
+            virtual const fvMesh& mesh() const
+            {
+                return BasicThermo::mesh();
+            }
+
+            //- Phase name
+            virtual const word& phaseName() const
+            {
+                return BasicThermo::phaseName();
+            }
+
+            //- Properties dictionary
+            virtual const IOdictionary& properties() const
+            {
+                return BasicThermo::properties();
+            }
+
+        //- Update cell mixture for celli
+        const ThermoType& cellMixture(const label celli) const;
+
+        //- Update mixture for a given face on a patch
+        const ThermoType& patchFaceMixture
+        (
+            const label patchi,
+            const label facei
+        ) const;
 
         //- Solve sub-step stepi
         virtual void solve();
@@ -208,15 +240,22 @@ public:
                 const label patchi
             ) const;
 
+            //- Enthalpy/Internal energy for cell-set [J/kg]
+            virtual tmp<scalarField> he
+            (
+                const scalarField& T,
+                const fvSource& source
+            ) const;
+
             //- Enthalpy/Internal energy for a cell [J/kg]
-            virtual scalar cellHE
+            virtual scalar cellhe
             (
                 const scalar T,
                 const label celli
             ) const;
 
             //- Enthalpy/Internal energy for patch and face [J/kg]
-            virtual scalar patchFaceHE
+            virtual scalar patchFacehe
             (
                 const scalar T,
                 const label patchi,
@@ -276,14 +315,11 @@ public:
             //- Enthalpy of formation [J/kg]
             virtual tmp<volScalarField> hc() const;
 
-            //- Flame temperature [K]
-            virtual tmp<volScalarField> flameT() const;
+            //- Temperature from enthalpy/internal energy
+            virtual tmp<volScalarField> The() const;
 
             //- Temperature from enthalpy/internal energy
-            virtual tmp<volScalarField> THE() const;
-
-            //- Temperature from enthalpy/internal energy
-            virtual tmp<volScalarField> THE
+            virtual tmp<volScalarField> The
             (
                 const volScalarField& h,
                 const volScalarField& p,
@@ -291,7 +327,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for cell-set
-            virtual tmp<scalarField> THE
+            virtual tmp<scalarField> The
             (
                 const scalarField& he,
                 const scalarField& T0,      // starting temperature
@@ -299,7 +335,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for patch
-            virtual tmp<scalarField> THE
+            virtual tmp<scalarField> The
             (
                 const scalarField& he,
                 const scalarField& T0,      // starting temperature
@@ -307,7 +343,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar cellTHE
+            virtual scalar cellThe
             (
                 const scalar he,
                 const scalar T0,
@@ -371,13 +407,17 @@ public:
         // Specie properties
 
             //- Molecular weight of the given specie [kg/kmol]
-            virtual scalar Wi(const label speciei) const;
+            virtual scalar WiValue(const label speciei) const;
+
+            //- Molecular weight of the given specie [kg/kmol]
+            virtual dimensionedScalar Wi(const label speciei) const;
+
 
             //- Enthalpy of formation [J/kg]
-            virtual scalar Hf(const label speciei) const;
+            virtual scalar hfiValue(const label speciei) const;
 
-            //- Flame temperature [K]
-            virtual scalar flameT(const label speciei) const;
+            //- Enthalpy of formation [J/kg]
+            virtual dimensionedScalar hfi(const label speciei) const;
 
 
         // Specie thermo properties
@@ -385,7 +425,7 @@ public:
             using BasicThermo::rho;
 
             //- Density [kg/m^3]
-            virtual scalar rho
+            virtual scalar rhoi
             (
                 const label speciei,
                 const scalar p,
@@ -393,7 +433,7 @@ public:
             ) const;
 
             //- Density [kg/m^3]
-            virtual tmp<volScalarField> rho
+            virtual tmp<volScalarField> rhoi
             (
                 const label speciei,
                 const volScalarField& p,
@@ -401,7 +441,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure [J/kg/K]
-            virtual scalar Cp
+            virtual scalar Cpi
             (
                 const label speciei,
                 const scalar p,
@@ -409,7 +449,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure [J/kg/K]
-            virtual scalar Cp
+            virtual scalar Cpi
             (
                 const label speciei,
                 const scalar rho,
@@ -418,7 +458,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure [J/kg/K]
-            virtual tmp<volScalarField> Cp
+            virtual tmp<volScalarField> Cpi
             (
                 const label speciei,
                 const volScalarField& p,
@@ -426,7 +466,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure [J/kg/K]
-            virtual tmp<volScalarField> Cp
+            virtual tmp<volScalarField> Cpi
             (
                 const label speciei,
                 const volScalarField& rho,
@@ -435,7 +475,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual scalar HE
+            virtual scalar hei
             (
                 const label speciei,
                 const scalar p,
@@ -443,7 +483,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual scalar HE
+            virtual scalar hei
             (
                 const label speciei,
                 const scalar rho,
@@ -452,7 +492,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<scalarField> HE
+            virtual tmp<scalarField> hei
             (
                 const label speciei,
                 const scalarField& p,
@@ -460,7 +500,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<scalarField> HE
+            virtual tmp<scalarField> hei
             (
                 const label speciei,
                 const scalarField& rho,
@@ -469,7 +509,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<volScalarField> HE
+            virtual tmp<volScalarField> hei
             (
                 const label speciei,
                 const volScalarField& p,
@@ -477,7 +517,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<volScalarField> HE
+            virtual tmp<volScalarField> hei
             (
                 const label speciei,
                 const volScalarField& rho,
@@ -486,7 +526,7 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
-            virtual scalar Hs
+            virtual scalar hsi
             (
                 const label speciei,
                 const scalar p,
@@ -494,7 +534,7 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
-            virtual scalar Hs
+            virtual scalar hsi
             (
                 const label speciei,
                 const scalar rho,
@@ -503,7 +543,7 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
-            virtual tmp<scalarField> Hs
+            virtual tmp<scalarField> hsi
             (
                 const label speciei,
                 const scalarField& p,
@@ -511,7 +551,7 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
-            virtual tmp<scalarField> Hs
+            virtual tmp<scalarField> hsi
             (
                 const label speciei,
                 const scalarField& rho,
@@ -520,7 +560,7 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
-            virtual tmp<volScalarField> Hs
+            virtual tmp<volScalarField> hsi
             (
                 const label speciei,
                 const volScalarField& p,
@@ -528,7 +568,7 @@ public:
             ) const;
 
             //- Sensible enthalpy [J/kg]
-            virtual tmp<volScalarField> Hs
+            virtual tmp<volScalarField> hsi
             (
                 const label speciei,
                 const volScalarField& rho,
@@ -537,7 +577,7 @@ public:
             ) const;
 
             //- Absolute enthalpy [J/kg]
-            virtual scalar Ha
+            virtual scalar hai
             (
                 const label speciei,
                 const scalar p,
@@ -545,7 +585,7 @@ public:
             ) const;
 
             //- Absolute enthalpy [J/kg]
-            virtual scalar Ha
+            virtual scalar hai
             (
                 const label speciei,
                 const scalar rho,
@@ -554,7 +594,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<scalarField> Ha
+            virtual tmp<scalarField> hai
             (
                 const label speciei,
                 const scalarField& p,
@@ -562,7 +602,7 @@ public:
             ) const;
 
             //- Enthalpy/Internal energy [J/kg]
-            virtual tmp<scalarField> Ha
+            virtual tmp<scalarField> hai
             (
                 const label speciei,
                 const scalarField& rho,
@@ -571,7 +611,7 @@ public:
             ) const;
 
             //- Absolute enthalpy [J/kg]
-            virtual tmp<volScalarField> Ha
+            virtual tmp<volScalarField> hai
             (
                 const label speciei,
                 const volScalarField& p,
@@ -579,7 +619,7 @@ public:
             ) const;
 
             //- Absolute enthalpy [J/kg]
-            virtual tmp<volScalarField> Ha
+            virtual tmp<volScalarField> hai
             (
                 const label speciei,
                 const volScalarField& rho,
@@ -593,7 +633,7 @@ public:
             using BasicThermo::kappa;
 
             //- Thermal conductivity [W/m/K]
-            virtual scalar kappa
+            virtual scalar kappai
             (
                 const label speciei,
                 const scalar p,
@@ -601,7 +641,7 @@ public:
             ) const;
 
             //- Thermal conductivity [W/m/K]
-            virtual scalar kappa
+            virtual scalar kappai
             (
                 const label speciei,
                 const scalar rho,
@@ -610,7 +650,7 @@ public:
             ) const;
 
             //- Thermal conductivity [W/m/K]
-            virtual tmp<volScalarField> kappa
+            virtual tmp<volScalarField> kappai
             (
                 const label speciei,
                 const volScalarField& p,
@@ -618,7 +658,7 @@ public:
             ) const;
 
             //- Thermal conductivity [W/m/K]
-            virtual tmp<volScalarField> kappa
+            virtual tmp<volScalarField> kappai
             (
                 const label speciei,
                 const volScalarField& rho,

@@ -29,7 +29,7 @@ License
 Foam::autoPtr<Foam::regionSolver> Foam::regionSolver::New
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const regionSolverList& regions
 )
 {

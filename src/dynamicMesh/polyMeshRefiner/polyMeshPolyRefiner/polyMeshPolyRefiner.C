@@ -25,7 +25,6 @@ License
 
 #include "polyMeshPolyRefiner.H"
 #include "polyTopoChange.H"
-#include "parcelCloud.H"
 #include "prismatic2DRefinement.H"
 #include "polyhedralRefinement.H"
 #include "addToRunTimeSelectionTable.H"
@@ -86,8 +85,8 @@ Foam::labelList Foam::polyMeshPolyRefiner::selectUnrefinePoints
     );
 
     Info<< "Selected " << returnReduce(consistentSet.size(), sumOp<label>())
-        << " points to split " << mesh_.globalData().nTotalPoints()
-        << "." << endl;
+        << " points to split out of "
+        << returnReduce(mesh_.nPoints(), sumOp<label>()) << endl;
 
     return consistentSet;
 }
@@ -157,11 +156,10 @@ Foam::polyMeshPolyRefiner::polyMeshPolyRefiner
 (
     polyMesh& mesh,
     const dictionary& dict,
-    const bool force,
     const bool read
 )
 :
-    polyMeshRefiner(mesh, dict, force, read),
+    polyMeshRefiner(mesh, dict, read),
 
     refiner_(nullptr)
 {
@@ -346,13 +344,13 @@ bool Foam::polyMeshPolyRefiner::refine
             Info<< "Selected "
                 << nCellsToRefine
                 << " cells for refinement out of "
-                << mesh_.globalData().nTotalCells()
-                << "." << endl;
+                << returnReduce(mesh_.nCells(), sumOp<label>()) << endl;
 
             if (nCellsToRefine > 0)
             {
                 isRefining_ = true;
-                autoPtr<mapPolyMesh> map = refiner_->refine
+                hasMapped_ = false;
+                autoPtr<polyTopoChangeMap> map = refiner_->refine
                 (
                     mesh_,
                     cellsToRefine
@@ -385,6 +383,11 @@ bool Foam::polyMeshPolyRefiner::refine
                         }
                     }
                     refineCell.transfer(newRefineCell);
+                }
+
+                if (!hasMapped_)
+                {
+                    this->topoChange(map());
                 }
 
                 hasChanged = true;
@@ -431,12 +434,18 @@ bool Foam::polyMeshPolyRefiner::refine
             if (nSplitPoints > 0)
             {
                 isUnrefining_ = true;
-                bool unref = refiner_->unrefine
+                hasMapped_ = false;
+                autoPtr<polyTopoChangeMap> map = refiner_->unrefine
                 (
                     mesh_,
                     pointsToUnrefine
                 );
-                hasChanged = hasChanged || unref;
+
+                if (!hasMapped_)
+                {
+                    this->topoChange(map());
+                }
+                hasChanged = true;
 
                 isUnrefining_ = false;
             }
@@ -449,30 +458,66 @@ bool Foam::polyMeshPolyRefiner::refine
             // Reset moving flag (if any). If not using inflation we'll not
             // move, if are using inflation any follow on movePoints will set
             // it.
-            mesh_.moving(false);
-            mesh_.setInstance(mesh_.time().timeName());
-            mesh_.polyMesh::instance() = mesh_.time().timeName();
+            // mesh_.moving(false);
+            mesh_.setInstance(mesh_.time().name());
+            mesh_.polyMesh::instance() = mesh_.time().name();
         }
     }
-     mesh_.topoChanging(hasChanged);
+     // mesh_.topoChanging(hasChanged);
 
     return hasChanged;
 }
 
-void Foam::polyMeshPolyRefiner::updateMesh(const mapPolyMesh& map)
+void Foam::polyMeshPolyRefiner::topoChange(const polyTopoChangeMap& map)
 {
-    polyMeshRefiner::updateMesh(map);
-    if (!isBalancing_)
-    {
-        refiner_->updateMesh(map);
-    }
+    polyMeshRefiner::topoChange(map);
+    refiner_->topoChange(map);
+    hasMapped_ = true;
 }
 
 
-void Foam::polyMeshPolyRefiner::distribute(const mapDistributePolyMesh& map)
+void Foam::polyMeshPolyRefiner::distribute(const polyDistributionMap& map)
 {
     polyMeshRefiner::distribute(map);
     refiner_->distribute(map);
+}
+
+
+void Foam::polyMeshPolyRefiner::add
+(
+    boolList& blockedFace,
+    PtrList<labelList>& specifiedProcessorFaces,
+    labelList& specifiedProcessor,
+    List<labelPair>& explicitConnections
+) const
+{
+    refiner_->add
+    (
+        blockedFace,
+        specifiedProcessorFaces,
+        specifiedProcessor,
+        explicitConnections
+    );
+}
+
+
+void Foam::polyMeshPolyRefiner::apply
+(
+    const boolList& blockedFace,
+    const PtrList<labelList>& specifiedProcessorFaces,
+    const labelList& specifiedProcessor,
+    const List<labelPair>& explicitConnections,
+    labelList& decomposition
+) const
+{
+    refiner_->apply
+    (
+        blockedFace,
+        specifiedProcessorFaces,
+        specifiedProcessor,
+        explicitConnections,
+        decomposition
+    );
 }
 
 

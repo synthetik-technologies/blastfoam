@@ -54,7 +54,7 @@ Foam::diameterModel::diameterModel
         IOobject
         (
             IOobject::groupName("d", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -77,7 +77,7 @@ void Foam::diameterModel::requireD() const
     typeIOobject<volScalarField> dHeader
     (
         d_.name(),
-        d_.time().timeName(),
+        d_.time().name(),
         d_.mesh(),
         IOobject::MUST_READ
     );
@@ -128,6 +128,22 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::dMdt() const
         d_.mesh(),
         dimensionedScalar(dimMass/dimTime, 0.0)
     );
+}
+
+Foam::tmp<Foam::volScalarField> Foam::diameterModel::LDratio() const
+{
+    return volScalarField::New
+    (
+        IOobject::groupName("LDratio", d_.group()),
+        d_.mesh(),
+        dimensionedScalar(dimless, 1.0)
+    );
+}
+
+Foam::scalar
+Foam::diameterModel::LDratio(const label celli) const
+{
+    return 1.0;
 }
 
 // ************************************************************************* //

@@ -39,12 +39,15 @@ public:
         ScalarMultivariateEquation
         (
             2,
-            {0.0, 0.0},
-            {2.0, 2.0},
-            {
-                "f1(x1, x2) = x1^2 + x2^2 - 4.0",
-                "f2(x1, x2) = x1^2 - x2 + 1.0"
-            }
+            scalarList({0.0, 0.0}),
+            scalarList({2.0, 2.0}),
+            List<string>
+            (
+                {
+                    "f1(x1, x2) = x1^2 + x2^2 - 4.0",
+                    "f2(x1, x2) = x1^2 - x2 + 1.0"
+                }
+            )
         )
     {}
 
@@ -98,12 +101,15 @@ public:
         ScalarMultivariateEquation
         (
             2,
-            {-10.0, -10.0},
-            {10.0, 10.0},
-            {
-                "f1(x1, x2) = x2^2 + x1^2 + x1",
-                "f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0"
-            }
+            scalarList({-10.0, -10.0}),
+            scalarList({10.0, 10.0}),
+            List<string>
+            (
+                {
+                    "f1(x1, x2) = x2^2 + x1^2 + x1",
+                    "f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0"
+                }
+            )
         )
     {}
 

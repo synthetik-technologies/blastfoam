@@ -91,9 +91,9 @@ const solidModel& lookupSolidModel
         << "Could not find " << solidModel::typeName
         << "for region " << obReg.name() << nl << nl
         << "solidModels in the objectRegistry: "
-        << obReg.names<solidModel>() << nl << nl
+        << obReg.lookupClass<solidModel>().toc() << nl << nl
         << "solidModels in the parent objectRegistry:"
-        << obReg.parent().names<solidModel>() << abort(FatalError);
+        << obReg.parent().lookupClass<solidModel>().toc() << abort(FatalError);
 
     // Keep the compiler happy
     return obReg.lookupObject<solidModel>("none");

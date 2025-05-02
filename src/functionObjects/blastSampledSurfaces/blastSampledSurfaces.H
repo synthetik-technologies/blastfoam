@@ -139,9 +139,6 @@ class blastSampledSurfaces
         //- Const reference to fvMesh
         const fvMesh& mesh_;
 
-        //- Load fields from files (not from objectRegistry)
-        const bool loadFromFiles_;
-
         //- Output path
         fileName outputPath_;
 
@@ -149,7 +146,7 @@ class blastSampledSurfaces
         // Read from dictonary
 
             //- Names of fields to sample
-            wordReList fieldSelection_;
+            wordList fields_;
 
             //- Interpolation scheme to use
             word interpolationScheme_;
@@ -170,49 +167,36 @@ class blastSampledSurfaces
     // Private Member Functions
 
 
-        //- Return number of fields
-        label classifyFields();
+        //- Does any of the surfaces need an update?
+        bool needsUpdate() const;
 
-        //- Write geometry only
-        void writeGeometry() const;
+        //- Mark the surfaces as needing an update.
+        //  May also free up unneeded data.
+        //  Return false if all surfaces were already marked as expired.
+        bool expire();
 
-        //- Write sampled fieldName on surface and on outputDir path
+        //- Update the surfaces as required and merge surface points (parallel).
+        //  Return false if no surfaces required an update.
+        bool update();
+
+        //- Sample all fields of a type on a given surface
         template<class Type>
-        void writeSurface
+        PtrList<Field<Type>> sampleLocalType
         (
-            const Field<Type>& values,
-            const label surfI,
-            const word& fieldName,
-            const fileName& outputDir,
-            const bool isNodeValue
+            const label surfi,
+            const wordList& fieldNames,
+            HashPtrTable<interpolation<Type>>& interpolations
         );
 
-        //- Sample and write a particular volume field
+        //- Sample all fields of a type on a given surface and combine on the
+        //  master for writing
         template<class Type>
-        void sampleAndWrite
+        PtrList<Field<Type>> sampleType
         (
-            const GeometricField<Type, fvPatchField, volMesh>&
+            const label surfi,
+            const wordList& fieldNames,
+            HashPtrTable<interpolation<Type>>& interpolations
         );
-
-        //- Sample and write a particular surface field
-        template<class Type>
-        void sampleAndWrite
-        (
-            const GeometricField<Type, fvsPatchField, surfaceMesh>&
-        );
-
-        //- Sample and write a particular surface field
-        template<class Type>
-        void sampleAndWrite
-        (
-            const GeometricField<Type, pointPatchField, pointMesh>&
-        );
-
-        //- Sample and write all sampled fields
-        template<class Type> void sampleAndWrite(const IOobjectList& objects);
-
-        //- Sample and write all sampled point fields
-        template<class Type> void sampleAndWritePoints(const IOobjectList& objects);
 
 
 public:
@@ -229,16 +213,6 @@ public:
             const word& name,
             const Time& time,
             const dictionary& dict
-        );
-
-        //- Construct for given objectRegistry and dictionary
-        //  allow the possibility to load fields from files
-        blastSampledSurfaces
-        (
-            const word& name,
-            const objectRegistry&,
-            const dictionary&,
-            const bool loadFromFiles = false
         );
 
         //- Disallow default bitwise copy construction
@@ -276,7 +250,7 @@ public:
         virtual bool write();
 
         //- Update for changes of mesh - expires the surfaces
-        virtual void updateMesh(const mapPolyMesh&);
+        virtual void topoChange(const polyTopoChangeMap&);
 
         //- Update for mesh point-motion - expires the surfaces
         virtual void movePoints(const polyMesh&);

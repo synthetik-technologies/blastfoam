@@ -30,7 +30,9 @@ License
 
 #include "polyMeshDirectionalRefiner.H"
 #include "newRefinementIterator.H"
-#include "hexRef.H"
+#include "polyDistributionMap.H"
+#include "Time.H"
+#include "dynMeshTools.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -349,11 +351,10 @@ Foam::polyMeshDirectionalRefiner::polyMeshDirectionalRefiner
 (
     polyMesh& mesh,
     const dictionary& dict,
-    const bool force,
     const bool read
 )
 :
-    polyMeshRefiner(mesh, dict, force, read),
+    polyMeshRefiner(mesh, dict, read),
 
     cellLevel_
     (
@@ -543,33 +544,37 @@ bool Foam::polyMeshDirectionalRefiner::refine
             }
         }
 
-        reduce(hasChanged, orOp<bool>());
-        mesh_.topoChanging(hasChanged);
+        // reduce(hasChanged, orOp<bool>());
+        // mesh_.topoChanging(hasChanged);
 
         if (hasChanged)
         {
             // Reset moving flag (if any). If not using inflation we'll not
             // move, if are using inflation any follow on movePoints will set
             // it.
-            mesh_.moving(false);
-            mesh_.setInstance(mesh_.time().timeName());
-            mesh_.polyMesh::instance() = mesh_.time().timeName();
+            // mesh_.moving(false);
+            mesh_.setInstance(mesh_.time().name());
+            mesh_.polyMesh::instance() = mesh_.time().name();
         }
     }
 
     return hasChanged;
 }
 
-void Foam::polyMeshDirectionalRefiner::updateMesh(const mapPolyMesh& map)
+
+void Foam::polyMeshDirectionalRefiner::topoChange
+(
+    const polyTopoChangeMap& map
+)
 {
-    polyMeshRefiner::updateMesh(map);
+    polyMeshRefiner::topoChange(map);
     if (!isRefining_)
     {
         const labelList& reverseCellMap = map.reverseCellMap();
 
         if (debug)
         {
-            Pout<< "hexRef::updateMesh :"
+            Pout<< "polyMeshDirectionalRefiner::topoChange :"
                 << " reverseCellMap:" << map.reverseCellMap().size()
                 << " cellMap:" << map.cellMap().size()
                 << " nCells:" << mesh_.nCells()
@@ -580,11 +585,17 @@ void Foam::polyMeshDirectionalRefiner::updateMesh(const mapPolyMesh& map)
 
         if (reverseCellMap.size() == cellLevel_.size())
         {
-            // Assume it is after hexRef that this routine is called.
+            // Assume it is after refinement that this routine is called.
             // Just account for reordering. We cannot use cellMap since
             // then cells created from cells would get cellLevel_ of
             // cell they were created from.
-            hexRef::reorder(reverseCellMap, mesh_.nCells(), -1, cellLevel_);
+            meshTools::reorder
+            (
+                reverseCellMap,
+                mesh_.nCells(),
+                -1,
+                cellLevel_
+            );
         }
         else
         {
@@ -608,10 +619,22 @@ void Foam::polyMeshDirectionalRefiner::updateMesh(const mapPolyMesh& map)
             cellLevel_.transfer(newCellLevel);
         }
     }
+    hasMapped_ = true;
 }
 
 
-void Foam::polyMeshDirectionalRefiner::distribute(const mapDistributePolyMesh& map)
+void Foam::polyMeshDirectionalRefiner::mapMesh
+(
+    const polyMeshMap& map
+)
+{
+    NotImplemented;
+}
+
+void Foam::polyMeshDirectionalRefiner::distribute
+(
+    const polyDistributionMap& map
+)
 {
     polyMeshRefiner::distribute(map);
     map.cellMap().distribute(cellLevel_);

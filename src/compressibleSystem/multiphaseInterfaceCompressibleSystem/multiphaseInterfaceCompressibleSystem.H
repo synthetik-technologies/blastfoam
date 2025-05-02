@@ -39,7 +39,6 @@ SourceFiles
 
 #include "multiphaseCompressibleSystem.H"
 #include "multiphaseFluidBlastThermo.H"
-#include "interfaceSystem.H"
 #include "surfaceTensionModel.H"
 
 namespace Foam
@@ -51,10 +50,89 @@ namespace Foam
 
 class multiphaseInterfaceCompressibleSystem
 :
-    public multiphaseCompressibleSystem,
-    public interfaceSystem
+    public multiphaseCompressibleSystem
 {
+public:
+
+    class interfacePair
+    :
+        public Pair<word>
+    {
+    public:
+
+        class hash
+        :
+            public Hash<interfacePair>
+        {
+        public:
+
+            hash()
+            {}
+
+            label operator()(const interfacePair& key) const
+            {
+                return word::hash()(key.first()) + word::hash()(key.second());
+            }
+        };
+
+
+        // Constructors
+
+            using Pair<word>::Pair;
+
+            interfacePair(const volScalarField& alpha1, const volScalarField& alpha2)
+            :
+                Pair<word>(alpha1.group(), alpha2.group())
+            {}
+
+            word name() const
+            {
+                return first() + "_" + second();
+            }
+
+        // Friend Operators
+
+            friend bool operator==(const interfacePair& a, const interfacePair& b)
+            {
+                return
+                (
+                    ((a.first() == b.first()) && (a.second() == b.second()))
+                 || ((a.first() == b.second()) && (a.second() == b.first()))
+                );
+            }
+
+            friend bool operator!=(const interfacePair& a, const interfacePair& b)
+            {
+                return (!(a == b));
+            }
+    };
+
+    typedef HashPtrTable<surfaceTensionModel, interfacePair, interfacePair::hash>
+        surfaceTensionTable;
+
+private:
+
+    //- Surface tension models
     surfaceTensionTable stModels_;
+
+    //- Stabilisation for normalisation of the interface normal
+    dimensionedScalar deltaN_;
+
+    // Protected member functions
+
+        //- Return Curvature
+        tmp<volScalarField> K
+        (
+            const volScalarField& alpha1,
+            const volScalarField& alpha2
+        ) const;
+
+        //- Add source terms to momentum and energy equations
+        virtual void addSources
+        (
+            volVectorField::Internal& rhoUSource,
+            volScalarField::Internal& rhoESource
+        ) const;
 
 
 public:
@@ -62,10 +140,12 @@ public:
     TypeName("multiphaseInterface");
 
     // Constructor
-    multiphaseInterfaceCompressibleSystem(const fvMesh& mesh);
-
-    // Constructor
-    multiphaseInterfaceCompressibleSystem(const fvMesh& mesh, const bool);
+    multiphaseInterfaceCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const bool initialize = true
+    );
 
 
     //- Destructor

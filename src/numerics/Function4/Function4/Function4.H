@@ -53,6 +53,45 @@ template<class Type> class Function4;
 template<class Type> Ostream& operator<<(Ostream&, const Function4<Type>&);
 
 /*---------------------------------------------------------------------------*\
+                 Class Function2s::unitConversions Declaration
+\*---------------------------------------------------------------------------*/
+
+namespace Function4s
+{
+struct unitConversions
+{
+    // Public Data
+
+        //- Unit conversion for time values
+        unitConversion t;
+
+        //- Unit conversion for x-axis values
+        unitConversion x;
+
+        //- Unit conversion for y-axis values
+        unitConversion y;
+
+        //- Unit conversion for z-axis values
+        unitConversion z;
+
+        //- Unit conversion for result values
+        unitConversion value;
+};
+}
+
+
+// Global Functions
+
+//- Generate an error in an context where unit conversions are not supported
+void assertNoConvertUnits
+(
+    const word& typeName,
+    const Function4s::unitConversions& units,
+    const dictionary& dict
+);
+
+
+/*---------------------------------------------------------------------------*\
                           Class Function4 Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -61,6 +100,11 @@ class Function4
 :
     public tmp<Function4<Type>>::refCount
 {
+public:
+    // Protected Member Functions
+
+        //- Read the value
+        static Type readValue(const unitConversion& units, Istream& is);
 
 protected:
 
@@ -85,9 +129,10 @@ public:
         dictionary,
         (
             const word& name,
+            const Function4s::unitConversions& units,
             const dictionary& dict
         ),
-        (name, dict)
+        (name, units, dict)
     );
 
 
@@ -107,6 +152,7 @@ public:
     static autoPtr<Function4<Type>> New
     (
         const word& name,
+        const Function4s::unitConversions& units,
         const dictionary& dict
     );
 

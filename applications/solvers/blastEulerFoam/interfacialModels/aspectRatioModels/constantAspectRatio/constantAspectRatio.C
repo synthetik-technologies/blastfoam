@@ -68,37 +68,22 @@ Foam::aspectRatioModels::constantAspectRatio::~constantAspectRatio()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::aspectRatioModels::constantAspectRatio::E
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::aspectRatioModels::constantAspectRatio::E() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return
-        tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "zero",
-                    mesh.time().timeName(),
-                    mesh
-                ),
-                mesh,
-                E0_
-            )
-        );
+    return volScalarField::New
+    (
+        typeName + ":E",
+        mesh,
+        E0_
+    );
 }
 
 
 Foam::scalar Foam::aspectRatioModels::constantAspectRatio::cellE
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return E0_.value();

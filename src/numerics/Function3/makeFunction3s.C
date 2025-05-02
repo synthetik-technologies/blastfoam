@@ -52,15 +52,17 @@ namespace Foam
 {
     makeFunction3(label);
     makeFunction3Type(None, label);
+    makeFunction3Type(ZeroConstant, label);
+    makeFunction3Type(OneConstant, label);
     makeFunction3Type(Constant, label);
 
     makeFunction3s(scalar);
+    makeFunction3Type(LookupTable, scalar);
+
     makeFunction3s(vector);
     makeFunction3s(sphericalTensor);
     makeFunction3s(symmTensor);
     makeFunction3s(tensor);
-
-    makeFunction3Type(LookupTable, scalar);
 }
 
 

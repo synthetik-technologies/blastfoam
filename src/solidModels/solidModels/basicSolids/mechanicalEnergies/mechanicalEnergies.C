@@ -121,7 +121,7 @@ const volScalarField& mechanicalEnergies::viscousPressure
                 IOobject
                 (
                     "viscousPressure",
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -132,7 +132,7 @@ const volScalarField& mechanicalEnergies::viscousPressure
         );
     }
 
-    const volScalarField& L(meshSizeObject::New(mesh_).dx(mesh_));
+    const volScalarField& L = meshSizeObject::New(mesh_).dx(mesh_);
     volScalarField epsilonDot(tr(fvc::ddt(gradD))/3.0);
 
     viscousPressurePtr_() =
@@ -162,7 +162,7 @@ const surfaceScalarField& mechanicalEnergies::viscousPressuref
                 IOobject
                 (
                     "viscousPressure",
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE

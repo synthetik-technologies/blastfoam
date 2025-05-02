@@ -40,11 +40,11 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
     // Create temporary phase properties to lookup type
     // not store in the database to remove possible conflict
     Info<< "Reading phaseProperties dictionary\n" << endl;
-    IOdictionary phaseProperties
+    IOdictionary physicalPropertiesDict
     (
         IOobject
         (
-            "phaseProperties",
+            physicalProperties::typeName,
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ,
@@ -55,18 +55,18 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 
     wordList phases
     (
-        phaseProperties.lookupOrDefault("phases", wordList())
+        physicalPropertiesDict.lookupOrDefault("phases", wordList())
     );
 
     word ext = word::null;
-    if (phaseProperties.found("sigma"))
+    if (physicalPropertiesDict.found("sigma"))
     {
-        if (phaseProperties.lookupOrDefault("useInterface", true))
+        if (physicalPropertiesDict.lookupOrDefault("useInterface", true))
         {
             ext = "Interface";
         }
     }
-    else if (phaseProperties.lookupOrDefault("useInterface", false))
+    else if (physicalPropertiesDict.lookupOrDefault("useInterface", false))
     {
         ext = "Interface";
     }
@@ -75,8 +75,8 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
     {
         return New
         (
+            physicalPropertiesDict,
             mesh,
-            phaseProperties,
             singlePhaseCompressibleSystem::typeName,
             singlePhaseConstructorTablePtr_
         );
@@ -85,19 +85,19 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
     {
         return New
         (
+            physicalPropertiesDict,
             mesh,
-            phaseProperties,
             multiphaseCompressibleSystem::typeName + ext,
             multiphaseConstructorTablePtr_
         );
     }
     return New
-        (
-            mesh,
-            phaseProperties,
-            twoPhaseCompressibleSystem::typeName + ext,
-            twoPhaseConstructorTablePtr_
-        );
+    (
+        physicalPropertiesDict,
+        mesh,
+        twoPhaseCompressibleSystem::typeName + ext,
+        twoPhaseConstructorTablePtr_
+    );
 }
 
 
@@ -110,12 +110,12 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::NewCoupled
 
     // Create temporary phase properties to lookup type
     // not store in the database to remove possible conflict
-    Info<< "Reading phaseProperties dictionary\n" << endl;
-    IOdictionary phaseProperties
+    Info<< "Reading physicalProperties dictionary\n" << endl;
+    IOdictionary physicalPropertiesDict
     (
         IOobject
         (
-            "phaseProperties",
+            physicalProperties::typeName,
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ,
@@ -126,18 +126,18 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::NewCoupled
 
     wordList phases
     (
-        phaseProperties.lookupOrDefault("phases", wordList())
+        physicalPropertiesDict.lookupOrDefault("phases", wordList())
     );
 
     // word ext = word::null;
-    // if (phaseProperties.found("sigma"))
+    // if (physicalPropertiesDict.found("sigma"))
     // {
-    //     if (phaseProperties.lookupOrDefault("useInterface", true))
+    //     if (physicalPropertiesDict.lookupOrDefault("useInterface", true))
     //     {
     //         ext = "Interface";
     //     }
     // }
-    // else if (phaseProperties.lookupOrDefault("useInterface", false))
+    // else if (physicalPropertiesDict.lookupOrDefault("useInterface", false))
     // {
     //     ext = "Interface";
     // }
@@ -145,8 +145,8 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::NewCoupled
 
     return New
     (
+        physicalPropertiesDict,
         mesh,
-        phaseProperties,
         (
             phases.size() < 2
           ? singlePhaseCompressibleSystem::typeName
@@ -163,13 +163,29 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
     const fvMesh& mesh
 )
 {
+    // Create temporary phase properties to lookup type
+    // not store in the database to remove possible conflict
+    Info<< "Reading physicalProperties dictionary\n" << endl;
+    IOdictionary physicalPropertiesDict
+    (
+        IOobject
+        (
+            physicalProperties::typeName,
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        )
+    );
+
     Info<< "Selecting " << type << " compressibleSystem" << endl;
     {
         typename singlePhaseConstructorTable::iterator cstrIter =
             singlePhaseConstructorTablePtr_->find(type);
         if (cstrIter != singlePhaseConstructorTablePtr_->cend())
         {
-            return cstrIter()(mesh);
+            return cstrIter()(physicalPropertiesDict, mesh);
         }
     }
     {
@@ -177,7 +193,7 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
             twoPhaseConstructorTablePtr_->find(type);
         if (cstrIter != twoPhaseConstructorTablePtr_->cend())
         {
-            return cstrIter()(mesh);
+            return cstrIter()(physicalPropertiesDict, mesh);
         }
     }
     {
@@ -185,7 +201,7 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
             multiphaseConstructorTablePtr_->find(type);
         if (cstrIter != multiphaseConstructorTablePtr_->cend())
         {
-            return cstrIter()(mesh);
+            return cstrIter()(physicalPropertiesDict, mesh);
         }
     }
 
@@ -198,7 +214,11 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
         << multiphaseConstructorTablePtr_->sortedToc() << nl
         << exit(FatalError);
 
-    return singlePhaseConstructorTablePtr_->find(type)()(mesh);
+    return singlePhaseConstructorTablePtr_->find(type)()
+    (
+        physicalPropertiesDict,
+        mesh
+    );
 }
 
 // ************************************************************************* //

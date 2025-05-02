@@ -127,24 +127,24 @@ blastGreyDiffusiveRadiationMixedFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::blastGreyDiffusiveRadiationMixedFvPatchScalarField::autoMap
+void Foam::blastGreyDiffusiveRadiationMixedFvPatchScalarField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchScalarField& ptf,
+    const fieldMapper& mapper
 )
 {
-    mixedFvPatchScalarField::autoMap(m);
-    radiationCoupledBase::autoMap(m);
+    mixedFvPatchScalarField::map(ptf, mapper);
+    radiationCoupledBase::map(ptf, mapper);
 }
 
 
-void Foam::blastGreyDiffusiveRadiationMixedFvPatchScalarField::rmap
+void Foam::blastGreyDiffusiveRadiationMixedFvPatchScalarField::reset
 (
-    const fvPatchScalarField& ptf,
-    const labelList& addr
+    const fvPatchScalarField& ptf
 )
 {
-    mixedFvPatchScalarField::rmap(ptf, addr);
-    radiationCoupledBase::rmap(ptf, addr);
+    mixedFvPatchScalarField::reset(ptf);
+    radiationCoupledBase::reset(ptf);
 }
 
 

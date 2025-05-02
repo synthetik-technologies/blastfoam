@@ -82,13 +82,12 @@ int main(int argc, char *argv[])
 
     #include "addRegionOption.H"
     #include "setRootCase.H"
-    #include "createTime.H"
+    #include "createTimeNoFunctionObjects.H"
 
     //- Select time
-    runTime.functionObjects().off();
     instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
 
-    #include "createNamedMesh.H"
+    #include "createRegionMesh.H"
 
     const fileName meshInstance(mesh.facesInstance());
 
@@ -111,7 +110,7 @@ int main(int argc, char *argv[])
         wordHashSet cellZonesToRemove;
         args.optionReadIfPresent("cells", cellZonesToRemove);
 
-        const meshCellZones& cellZones = mesh.cellZones();
+        const cellZoneList& cellZones = mesh.cellZones();
         forAll(cellZones, zonei)
         {
             const word& zoneName = cellZones[zonei].name();
@@ -122,7 +121,6 @@ int main(int argc, char *argv[])
                     (
                         zoneName,
                         cellZones[zonei],
-                        czi,
                         mesh.cellZones()
                     );
                 czi++;
@@ -135,7 +133,7 @@ int main(int argc, char *argv[])
         wordHashSet faceZonesToRemove;
         args.optionReadIfPresent("faces", faceZonesToRemove);
 
-        const meshFaceZones& faceZones = mesh.faceZones();
+        const faceZoneList& faceZones = mesh.faceZones();
         forAll(faceZones, zonei)
         {
             const word& zoneName = faceZones[zonei].name();
@@ -147,7 +145,6 @@ int main(int argc, char *argv[])
                         zoneName,
                         faceZones[zonei],
                         faceZones[zonei].flipMap(),
-                        fzi,
                         mesh.faceZones()
                     );
                 fzi++;
@@ -160,7 +157,7 @@ int main(int argc, char *argv[])
         wordHashSet pointZonesToRemove;
         args.optionReadIfPresent("points", pointZonesToRemove);
 
-        const meshPointZones& pointZones = mesh.pointZones();
+        const pointZoneList& pointZones = mesh.pointZones();
         forAll(pointZones, zonei)
         {
             const word& zoneName = pointZones[zonei].name();
@@ -171,7 +168,6 @@ int main(int argc, char *argv[])
                     (
                         zoneName,
                         pointZones[zonei],
-                        pzi,
                         mesh.pointZones()
                     );
                 pzi++;

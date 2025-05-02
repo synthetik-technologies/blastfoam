@@ -28,47 +28,14 @@ License
 #include "faceZone.H"
 #include "syncTools.H"
 #include "polyTopoChange.H"
-#include "polyAddFace.H"
-#include "polyModifyFace.H"
 #include "removeCells.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "pointFields.H"
 #include "fvMeshTools.H"
 
-#include "polyModifyFace.H"
-#include "polyAddFace.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::meshTools::getFaceInfo
-(
-    const polyMesh& mesh,
-    const label faceI,
-    label& patchID,
-    label& zoneID,
-    label& zoneFlip
-)
-{
-    patchID = -1;
-
-    if (!mesh.isInternalFace(faceI))
-    {
-        patchID = mesh.boundaryMesh().whichPatch(faceI);
-    }
-
-    zoneID = mesh.faceZones().whichZone(faceI);
-
-    zoneFlip = false;
-
-    if (zoneID > -1)
-    {
-        const faceZone& fZone = mesh.faceZones()[zoneID];
-
-        zoneFlip = fZone.flipMap()[fZone.whichFace(faceI)];
-    }
-}
-
 
 Foam::label Foam::meshTools::addFace
 (
@@ -81,54 +48,34 @@ Foam::label Foam::meshTools::addFace
 )
 {
     // Set face information
-    label patchID, zoneID, zoneFlip;
-    meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
-
-    // Set new face index to -1
-    label newFaceI = -1;
+    const label patchID = mesh.boundaryMesh().whichPatch(faceI);
 
     if ((nei == -1) || (own < nei))
     {
         // Ordering is ok, add the face
-        newFaceI = meshMod.setAction
+        return meshMod.addFace
         (
-            polyAddFace
-            (
-                newFace,                    // face
-                own,                        // owner
-                nei,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                faceI,                      // master face for addition
-                false,                      // flux flip
-                patchID,                    // patch for face
-                zoneID,                     // zone for face
-                zoneFlip                    // face zone flip
-            )
+            newFace,                    // face
+            own,                        // owner
+            nei,                        // neighbour
+            faceI,                      // master face for addition
+            false,                      // flux flip
+            patchID                     // patch for face
         );
     }
     else
     {
         // Ordering is flipped, reverse face and flip owner/neighbour
-        newFaceI = meshMod.setAction
+        return meshMod.addFace
         (
-            polyAddFace
-            (
-                newFace.reverseFace(),      // face
-                nei,                        // owner
-                own,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                faceI,                      // master face for addition
-                false,                      // flux flip
-                patchID,                    // patch for face
-                zoneID,                     // zone for face
-                zoneFlip                    // face zone flip
-            )
+            newFace.reverseFace(),      // face
+            nei,                        // owner
+            own,                        // neighbour
+            faceI,                      // master face for addition
+            false,                      // flux flip
+            patchID                     // patch for face
         );
     }
-
-    return newFaceI;
 }
 
 
@@ -146,41 +93,27 @@ Foam::label Foam::meshTools::addInternalFace
     // Check whether this is an internal face
     if (mesh.isInternalFace(meshFaceI))
     {
-        return meshMod.setAction
+        return meshMod.addFace
         (
-            polyAddFace
-            (
-                newFace,                    // face
-                own,                        // owner
-                nei,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                meshFaceI,                  // master face for addition
-                false,                      // flux flip
-                -1,                         // patch for face
-                -1,                         // zone for face
-                false                       // face zone flip
-            )
+            newFace,                    // face
+            own,                        // owner
+            nei,                        // neighbour
+            meshFaceI,                  // master face for addition
+            false,                      // flux flip
+            -1                          // patch for face
         );
     }
     else
     {
         // This is not an internal face. Add face out of nothing
-        return meshMod.setAction
+        return meshMod.addFace
         (
-            polyAddFace
-            (
-                newFace,                    // face
-                own,                        // owner
-                nei,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                -1,                         // master face for addition
-                false,                      // flux flip
-                -1,                         // patch for face
-                -1,                         // zone for face
-                false                       // face zone flip
-            )
+            newFace,                    // face
+            own,                        // owner
+            nei,                        // neighbour
+            -1,                         // master face for addition
+            false,                      // flux flip
+            -1                          // patch for face
         );
     }
 }
@@ -197,8 +130,7 @@ void Foam::meshTools::modifyFace
 )
 {
     // Set face inforomation
-    label patchID, zoneID, zoneFlip;
-    meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
+    const label patchID = mesh.boundaryMesh().whichPatch(faceI);
 
     // Get owner/neighbour addressing and mesh faces
     const labelList& owner = mesh.faceOwner();
@@ -224,39 +156,27 @@ void Foam::meshTools::modifyFace
         if ((nei == -1) || (own < nei))
         {
             // Ordering is ok, add the face
-            meshMod.setAction
+            meshMod.modifyFace
             (
-                polyModifyFace
-                (
-                    newFace,            // modified face
-                    faceI,              // label of face being modified
-                    own,                // owner
-                    nei,                // neighbour
-                    false,              // face flip
-                    patchID,            // patch for face
-                    false,              // remove from zone
-                    zoneID,             // zone for face
-                    zoneFlip            // face flip in zone
-                )
+                newFace,            // modified face
+                faceI,              // label of face being modified
+                own,                // owner
+                nei,                // neighbour
+                false,              // face flip
+                patchID             // patch for face
             );
         }
         else
         {
             // Ordering is flipped, reverse face and flip owner/neighbour
-            meshMod.setAction
+            meshMod.modifyFace
             (
-                polyModifyFace
-                (
-                    newFace.reverseFace(),  // modified face
-                    faceI,                  // label of face being modified
-                    nei,                    // owner
-                    own,                    // neighbour
-                    false,                  // face flip
-                    patchID,                // patch for face
-                    false,                  // remove from zone
-                    zoneID,                 // zone for face
-                    zoneFlip                // face flip in zone
-                )
+                newFace.reverseFace(),  // modified face
+                faceI,                  // label of face being modified
+                nei,                    // owner
+                own,                    // neighbour
+                false,                  // face flip
+                patchID                 // patch for face
             );
         }
     }
@@ -271,24 +191,14 @@ void Foam::meshTools::changePatchFace
     const label newPatchID
 )
 {
-    // Set face inforomation
-    label patchID, zoneID, zoneFlip;
-    meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
-
-    meshMod.setAction
+    meshMod.modifyFace
     (
-        polyModifyFace
-        (
-            mesh.faces()[faceI],    // modified face
-            faceI,                  // label of face being modified
-            mesh.faceOwner()[faceI],// owner
-            -1,                     // neighbour
-            false,                  // face flip
-            newPatchID,             // patch for face
-            false,                  // remove from zone
-            zoneID,                 // zone for face
-            zoneFlip                // face flip in zone
-        )
+        mesh.faces()[faceI],    // modified face
+        faceI,                  // label of face being modified
+        mesh.faceOwner()[faceI],// owner
+        -1,                     // neighbour
+        false,                  // face flip
+        newPatchID              // patch for face
     );
 }
 
@@ -303,7 +213,7 @@ void Foam::meshTools::checkInternalOrientation
     const face& newFace
 )
 {
-    const face compactFace(identity(newFace.size()));
+    const face compactFace(identityMap(newFace.size()));
 
     // Get compact points
     const pointField compactPoints(meshMod.points(), newFace);
@@ -365,7 +275,7 @@ void Foam::meshTools::checkBoundaryOrientation
     const face& newFace
 )
 {
-    face compactFace(identity(newFace.size()));
+    face compactFace(identityMap(newFace.size()));
     pointField compactPoints(meshMod.points(), newFace);
 
     vector n(compactFace.normal(compactPoints));
@@ -468,7 +378,7 @@ Foam::label Foam::meshTools::addPatch
 {
     const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
-    if (pbm.findPatchID(patchName) == -1)
+    if (pbm.findIndex(patchName) == -1)
     {
         autoPtr<polyPatch> ppPtr
         (
@@ -519,7 +429,7 @@ Foam::label Foam::meshTools::addPatch
             << endl;
     }
 
-    return pbm.findPatchID(patchName);
+    return pbm.findIndex(patchName);
 }
 
 
@@ -542,8 +452,6 @@ void Foam::meshTools::modifyOrAddFace
     const label own,
     const bool flipFaceFlux,
     const label newPatchi,
-    const label zoneID,
-    const bool zoneFlip,
 
     PackedBoolList& modifiedFace
 )
@@ -551,41 +459,28 @@ void Foam::meshTools::modifyOrAddFace
     if (!modifiedFace.get(facei))
     {
         // First usage of face. Modify.
-        meshMod.setAction
+        meshMod.modifyFace
         (
-            polyModifyFace
-            (
-                f,                          // modified face
-                facei,                      // label of face
-                own,                        // owner
-                -1,                         // neighbour
-                flipFaceFlux,               // face flip
-                newPatchi,                  // patch for face
-                false,                      // remove from zone
-                zoneID,                     // zone for face
-                zoneFlip                    // face flip in zone
-            )
+            f,                          // modified face
+            facei,                      // label of face
+            own,                        // owner
+            -1,                         // neighbour
+            flipFaceFlux,               // face flip
+            newPatchi                   // patch for face
         );
         modifiedFace.set(facei);
     }
     else
     {
         // Second or more usage of face. Add.
-        meshMod.setAction
+        meshMod.addFace
         (
-            polyAddFace
-            (
-                f,                          // modified face
-                own,                        // owner
-                -1,                         // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                facei,                      // master face
-                flipFaceFlux,               // face flip
-                newPatchi,                  // patch for face
-                zoneID,                     // zone for face
-                zoneFlip                    // face flip in zone
-            )
+            f,                          // modified face
+            own,                        // owner
+            -1,                         // neighbour
+            facei,                      // master face
+            flipFaceFlux,               // face flip
+            newPatchi                  // patch for face
         );
     }
 }
@@ -612,7 +507,7 @@ Foam::label Foam::meshTools::createBaffleFaces
 
         for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
         {
-            label zoneFacei = fZone.whichFace(facei);
+            label zoneFacei = fZone.localIndex(facei);
 
             if (zoneFacei != -1)
             {
@@ -627,8 +522,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         mesh.faceOwner()[facei],// owner
                         false,                  // face flip
                         newMasterPatches[i],    // patch for face
-                        fZone.index(),          // zone for face
-                        false,                  // face flip in zone
+
                         modifiedFace            // modify or add status
                     );
                 }
@@ -646,8 +540,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         mesh.faceNeighbour()[facei],// owner
                         true,                       // face flip
                         newMasterPatches[i],        // patch for face
-                        fZone.index(),              // zone for face
-                        false,                      // face flip in zone
+
                         modifiedFace                // modify or add status
                     );
                 }
@@ -662,7 +555,7 @@ Foam::label Foam::meshTools::createBaffleFaces
 
         for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
         {
-            label zoneFacei = fZone.whichFace(facei);
+            label zoneFacei = fZone.localIndex(facei);
 
             if (zoneFacei != -1)
             {
@@ -677,8 +570,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         mesh.faceNeighbour()[facei],    // owner
                         true,                           // face flip
                         newSlavePatches[i],             // patch for face
-                        fZone.index(),                  // zone for face
-                        true,                           // face flip in zone
+
                         modifiedFace                    // modify or add
                     );
                 }
@@ -693,8 +585,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         mesh.faceOwner()[facei],// owner
                         false,                  // face flip
                         newSlavePatches[i],     // patch for face
-                        fZone.index(),          // zone for face
-                        true,                   // face flip in zone
+
                         modifiedFace            // modify or add status
                     );
                 }
@@ -741,7 +632,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                 {
                     label facei = pp.start()+i;
 
-                    label zoneFacei = fZone.whichFace(facei);
+                    label zoneFacei = fZone.localIndex(facei);
 
                     if (zoneFacei != -1)
                     {
@@ -771,8 +662,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                             fZone.flipMap()[zoneFacei]
                           ? newSlavePatchi
                           : newMasterPatchi,            // patch for face
-                            fZone.index(),              // zone for face
-                            fZone.flipMap()[zoneFacei], // face flip in zone
+
                             modifiedFace                // modify or add
                         );
 
@@ -805,7 +695,7 @@ Foam::label Foam::meshTools::createPatchFaces
 
         for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
         {
-            label zoneFacei = fZone.whichFace(facei);
+            label zoneFacei = fZone.localIndex(facei);
 
             if (zoneFacei != -1)
             {
@@ -820,8 +710,7 @@ Foam::label Foam::meshTools::createPatchFaces
                         mesh.faceOwner()[facei],// owner
                         false,                  // face flip
                         newPatches[i],          // patch for face
-                        fZone.index(),          // zone for face
-                        false,                  // face flip in zone
+
                         modifiedFace            // modify or add status
                     );
                 }
@@ -839,8 +728,7 @@ Foam::label Foam::meshTools::createPatchFaces
                         mesh.faceNeighbour()[facei],// owner
                         true,                       // face flip
                         newPatches[i],              // patch for face
-                        fZone.index(),              // zone for face
-                        false,                      // face flip in zone
+
                         modifiedFace                // modify or add status
                     );
                 }
@@ -851,7 +739,7 @@ Foam::label Foam::meshTools::createPatchFaces
 
         for (label facei = mesh.nInternalFaces(); facei < mesh.nFaces(); facei++)
         {
-            label zoneFacei = fZone.whichFace(facei);
+            label zoneFacei = fZone.localIndex(facei);
 
             if (zoneFacei != -1)
             {
@@ -864,8 +752,7 @@ Foam::label Foam::meshTools::createPatchFaces
                     mesh.faceOwner()[facei],// owner
                     false,                  // face flip
                     newPatches[i],          // patch for face
-                    fZone.index(),          // zone for face
-                    false,                  // face flip in zone
+
                     modifiedFace            // modify or add status
                 );
                 nModified++;
@@ -885,7 +772,7 @@ Foam::label Foam::meshTools::setRemoveCells
     const bool keepCells
 )
 {
-    label patchi = mesh.boundaryMesh().findPatchID(patchName);
+    label patchi = mesh.boundaryMesh().findIndex(patchName);
     labelHashSet cellsToRemove(selectedCells);
     if (keepCells)
     {
@@ -917,7 +804,7 @@ Foam::label Foam::meshTools::setRemoveCells
 void Foam::meshTools::readAndStoreFields(const fvMesh& mesh)
 {
     // Get all fields present at the current time
-    IOobjectList objects(mesh, mesh.time().timeName());
+    IOobjectList objects(mesh, mesh.time().name());
 
     readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
     readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
@@ -1024,5 +911,33 @@ Foam::meshTools::getGeoMesh<Foam::pointMesh>(const fvMesh& mesh)
     return pointMesh::New(mesh);
 }
 
+
+void Foam::meshTools::reorder
+(
+    const labelList& map,
+    const label len,
+    const label null,
+    labelList& elems
+)
+{
+    labelList newElems(len, null);
+
+    forAll(elems, i)
+    {
+        label newI = map[i];
+
+        if (newI >= len)
+        {
+            FatalErrorInFunction << abort(FatalError);
+        }
+
+        if (newI >= 0)
+        {
+            newElems[newI] = elems[i];
+        }
+    }
+
+    elems.transfer(newElems);
+}
 
 // ************************************************************************* //

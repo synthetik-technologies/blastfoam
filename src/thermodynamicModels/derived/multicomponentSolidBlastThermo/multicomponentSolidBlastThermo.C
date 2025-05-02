@@ -35,8 +35,6 @@ License
 template<class Thermo>
 void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 {
-    this->updateMixture();
-
     const scalarField& rhoCells = this->rho_.primitiveFieldRef();
     scalarField& heCells = this->heRef();
     scalarField& TCells = this->TRef().primitiveFieldRef();
@@ -46,9 +44,11 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 
     forAll(this->rho_, celli)
     {
-        const typename Thermo::thermoType& t(this->mixture_[celli]);
-        const scalar& rhoi(rhoCells[celli]);
-        scalar& ei(heCells[celli]);
+        const typename Thermo::thermoType& t =
+            this->cellMixture(celli);
+
+        const scalar rhoi = rhoCells[celli];
+        scalar& ei = heCells[celli];
         scalar& Ti = TCells[celli];
 
         // Update temperature
@@ -89,13 +89,12 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
         {
             forAll(prho, facei)
             {
-                const typename Thermo::thermoType& t
-                (
-                    this->mixture_.boundary(patchi, facei)
-                );
-                const scalar rhoi(prho[facei]);
-                scalar& ei(phe[facei]);
-                const scalar Ti(pT[facei]);
+                const typename Thermo::thermoType& t =
+                    this->patchFaceMixture(patchi, facei);
+
+                const scalar rhoi = prho[facei];
+                scalar& ei = phe[facei];
+                const scalar Ti = pT[facei];
 
                 ei = t.Es(rhoi, ei, Ti);
 
@@ -108,13 +107,12 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
         {
             forAll(prho, facei)
             {
-                const typename Thermo::thermoType& t
-                (
-                    this->mixture_.boundary(patchi, facei)
-                );
-                const scalar rhoi(prho[facei]);
-                scalar& ei(phe[facei]);
-                scalar& Ti(pT[facei]);
+                const typename Thermo::thermoType& t =
+                    this->patchFaceMixture(patchi, facei);
+
+                const scalar rhoi = prho[facei];
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
 
                 Ti = t.TRhoE(Ti, rhoi, ei);
                 if (Ti < this->TLow_)
@@ -251,7 +249,7 @@ template<class Thermo>
 Foam::scalar
 Foam::multicomponentSolidBlastThermo<Thermo>::cellp(const label celli) const
 {
-    return this->mixture_[celli].pRhoT
+    return this->cellMixture(celli).pRhoT
     (
         this->rho_[celli],
         this->e_[celli],
@@ -262,7 +260,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::cellp(const label celli) const
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentSolidBlastThermo<Thermo>::p
+Foam::multicomponentSolidBlastThermo<Thermo>::pi
 (
     const label speciei,
     const scalar rho,
@@ -276,7 +274,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::p
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::multicomponentSolidBlastThermo<Thermo>::p
+Foam::multicomponentSolidBlastThermo<Thermo>::pi
 (
     const label speciei,
     const volScalarField& rho,
@@ -299,7 +297,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::p
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentSolidBlastThermo<Thermo>::dpdRho
+Foam::multicomponentSolidBlastThermo<Thermo>::dpdRhoi
 (
     const label speciei,
     const scalar rho,
@@ -316,7 +314,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::dpdRho
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentSolidBlastThermo<Thermo>::dpdT
+Foam::multicomponentSolidBlastThermo<Thermo>::dpdTi
 (
     const label speciei,
     const scalar rho,
@@ -330,7 +328,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::dpdT
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentSolidBlastThermo<Thermo>::mu
+Foam::multicomponentSolidBlastThermo<Thermo>::mui
 (
     const label speciei,
     const scalar p,
@@ -344,7 +342,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::mu
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentSolidBlastThermo<Thermo>::mu
+Foam::multicomponentSolidBlastThermo<Thermo>::mui
 (
     const label speciei,
     const scalar rho,
@@ -358,7 +356,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::mu
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::multicomponentSolidBlastThermo<Thermo>::mu
+Foam::multicomponentSolidBlastThermo<Thermo>::mui
 (
     const label speciei,
     const volScalarField& p,
@@ -372,7 +370,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::mu
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::multicomponentSolidBlastThermo<Thermo>::mu
+Foam::multicomponentSolidBlastThermo<Thermo>::mui
 (
     const label speciei,
     const volScalarField& rho,

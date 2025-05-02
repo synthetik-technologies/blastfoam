@@ -108,6 +108,9 @@ protected:
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
 
+        //- Has the mesh changed since the last write
+        mutable bool changedSinceWrite_;
+
 
     // Protected Member Functions
 
@@ -153,7 +156,6 @@ public:
         (
             polyMesh& mesh,
             const dictionary& dict,
-            const bool force = false,
             const bool read = true
         );
 
@@ -192,10 +194,10 @@ public:
         }
 
         //- Refine cells. Update mesh and fields.
-        autoPtr<mapPolyMesh> refine(const labelList&);
+        autoPtr<polyTopoChangeMap> refine(const labelList&);
 
         //- Unrefine cells. Gets passed in centre points of cells to combine.
-        autoPtr<mapPolyMesh> unrefine(const labelList&);
+        autoPtr<polyTopoChangeMap> unrefine(const labelList&);
 
         //- Refine the mesh
         virtual bool refine
@@ -208,10 +210,10 @@ public:
         );
 
         //- Overload update mesh to include other methods
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void topoChange(const polyTopoChangeMap& mpm);
 
         //- Distribute additional information
-        virtual void distribute(const mapDistributePolyMesh& map);
+        virtual void distribute(const polyDistributionMap& map);
 
 
     // Writing

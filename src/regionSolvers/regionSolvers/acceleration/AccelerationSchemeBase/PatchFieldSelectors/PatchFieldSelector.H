@@ -246,7 +246,7 @@ public:
             {
                 valuePointPatchField<Type>& vpfield =
                     dynamicCast<valuePointPatchField<Type>>(pfield);
-                vpfield.setInInternalField
+                vpfield.setInternalField
                 (
                     const_cast<Field<Type>&>(vpfield.primitiveField()),
                     vpfield

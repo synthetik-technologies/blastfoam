@@ -205,7 +205,7 @@ Time integration now supports restarting of time steps which is useful for FSI c
 ### Previous Releases
 
 ### blastFoam Version 5.0 Release Notes and Features
-blastFoam 5.0 greatly improves compatibility of blastFoam thermodynamics with that of standard OpenFOAM. This results in the ability to use most standard OpenFOAM functionObjects and fvModels and constraints. This also includes the ability to compile new combinations of thermodynamic models at run-time. Additional thermodynamic models have been added including ePower, ePolynomial, eTabulated, hPower, hPolynomial, and hTabulated. Additional fluid transport models have been added including polynomial, logPolynomial, sutherland, WLF, and tabulated. Additional sold transport models have been added including exponential and polynomial.
+blastFoam 5.0 greatly improves compatibility of blastFoam thermodynamics with that of standard OpenFOAM. This results in the ability to use most standard OpenFOAM functionObjects and fvModels and constraints. This also includes the ability to compile new combinations of thearmodynamic models at run-time. Additional thermodynamic models have been added including ePower, ePolynomial, eTabulated, hPower, hPolynomial, and hTabulated. Additional fluid transport models have been added including polynomial, logPolynomial, sutherland, WLF, and tabulated. Additional sold transport models have been added including exponential and polynomial.
 
 Support for fvModels and fvConstraints has been added. This allows for sources that are not typically included in the solver, for example point mass sources.
 

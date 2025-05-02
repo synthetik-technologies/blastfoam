@@ -73,17 +73,17 @@ void Foam::errorEstimators::delta::update(const bool scale)
         return;
     }
 
-    volScalarField x
+    tmp<volScalarField> tx
     (
-        IOobject
+        volScalarField::New
         (
             "mag(" + fieldName_ + ")",
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_,
-        0.0
+            mesh_,
+            0.0
+        )
     );
+    volScalarField& x = tx.ref();
+
     this->getFieldValue(fieldName_, x);
 
     const labelUList& owner = mesh_.owner();

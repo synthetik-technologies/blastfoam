@@ -26,11 +26,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Gosman.H"
-#include "phasePair.H"
-#include "PhaseCompressibleTurbulenceModel.H"
 #include "addToRunTimeSelectionTable.H"
 
-#include "dragModel.H"
+#include "dispersedDragModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -57,7 +55,7 @@ Foam::turbulentDispersionModels::Gosman::Gosman
     const phasePair& pair
 )
 :
-    turbulentDispersionModel(dict, pair),
+    dispersedTurbulentDispersionModel(dict, pair),
     sigma_("sigma", dimless, dict)
 {}
 
@@ -71,31 +69,24 @@ Foam::turbulentDispersionModels::Gosman::~Gosman()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::turbulentDispersionModels::Gosman::D
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::turbulentDispersionModels::Gosman::D() const
 {
     const fvMesh& mesh(pair_.phase1().mesh());
-    const dragModel&
-        drag
-        (
-            mesh.lookupObject<dragModel>
+    const dragModels::dispersedDragModel& drag =
+            mesh.lookupObject<dragModels::dispersedDragModel>
             (
                 IOobject::groupName(dragModel::typeName, pair_.name())
-            )
-        );
+            );
 
     return
         0.75
-       *drag.CdRe(nodei, nodej)
-       *pair_.dispersed().volumeFraction(nodei)
+       *drag.CdRe()
+       *pair_.dispersed()
        *pair_.continuous().nu()
-       *pair_.continuous().turbulence().nut()
+       *continuousTurbulence().nut()
        /(
             sigma_
-           *sqr(pair_.dispersed().d(nodei))
+           *sqr(pair_.dispersed().d())
         )
        *pair_.continuous().rho();
 }

@@ -78,39 +78,27 @@ Foam::swarmCorrections::TomiyamaSwarm::~TomiyamaSwarm()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::swarmCorrections::TomiyamaSwarm::Cs
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::swarmCorrections::TomiyamaSwarm::Cs() const
 {
     return
         pow
         (
-            max
-            (
-                this->pair_.continuous().volumeFraction(),
-                residualAlpha_
-            ), scalar(3) - 2*l_
+            max(this->pair_.continuous(), residualAlpha_),
+            3.0 - 2.0*l_
         );
 }
 
 
 Foam::scalar Foam::swarmCorrections::TomiyamaSwarm::cellCs
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return
         pow
         (
-            max
-            (
-                this->pair_.continuous()[celli],
-                residualAlpha_.value()
-            ), scalar(3) - 2*l_.value()
+            max(this->pair_.continuous()[celli], residualAlpha_.value()),
+            3.0 - 2.0*l_.value()
         );
 }
 

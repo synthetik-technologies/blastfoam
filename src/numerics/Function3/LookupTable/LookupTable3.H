@@ -72,6 +72,8 @@ class LookupTable
         //- LookupTable value
         lookupTable3D<Type> table_;
 
+        //- Units
+        unitConversions units_;
 
 public:
 
@@ -82,7 +84,12 @@ public:
     // Constructors
 
         //- Construct from name and dictionary
-        LookupTable(const word& name, const dictionary& dict);
+        LookupTable
+        (
+            const word& name,
+            const unitConversions& units,
+            const dictionary& dict
+        );
 
         //- Construct and return a clone
         virtual tmp<Function3<Type>> clone() const

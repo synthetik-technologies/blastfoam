@@ -42,13 +42,13 @@ SourceFiles
 
 #include "volFields.H"
 #include "dictionary.H"
+#include "BlendedInterfacialModel.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
 {
 
 class phasePair;
-class swarmCorrection;
 
 /*---------------------------------------------------------------------------*\
                            Class dragModel Declaration
@@ -64,9 +64,6 @@ protected:
 
         //- Phase pair
         const phasePair& pair_;
-
-        //- Swarm correction
-        autoPtr<swarmCorrection> swarmCorrection_;
 
 
 public:
@@ -133,74 +130,56 @@ public:
 
     // Member Functions
 
-        //- Drag coefficient
-        virtual tmp<volScalarField> CdRe
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
-
-        //- Return the phase-intensive drag coefficient Ki
-        //  used in the momentum equations
-        //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
-        //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
-        virtual tmp<volScalarField> Ki
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
         //- Return the drag coefficient K
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
-        virtual tmp<volScalarField> K
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> K() const = 0;
 
         //- Return the drag coefficient Kf
         //  used in the face-momentum equations
-        virtual tmp<surfaceScalarField> Kf
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
-
-
-        //- Drag coefficient
-        virtual scalar cellCdRe
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const = 0;
-
-        //- Return the phase-intensive drag coefficient Ki
-        //  used in the momentum equations
-        //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
-        //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
-        virtual scalar cellKi
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<surfaceScalarField> Kf() const = 0;
 
         //- Return the drag coefficient K
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
-        virtual scalar cellK
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual scalar cellK(const label) const = 0;
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const;
+};
+
+
+/*---------------------------------------------------------------------------*\
+                      Class blendedDragModel Declaration
+\*---------------------------------------------------------------------------*/
+
+class blendedDragModel
+:
+    public BlendedInterfacialModel<dragModel>
+{
+public:
+
+    // Constructors
+
+        //- Inherit base class constructors
+        using BlendedInterfacialModel<dragModel>::BlendedInterfacialModel;
+
+
+    // Member Functions
+
+        //- Return the drag coefficient K
+        tmp<volScalarField> K() const;
+
+        //- Return the drag coefficient Kf
+        tmp<surfaceScalarField> Kf() const;
+
+        //- Return the blended cell force coefficient
+        scalar cellK
+        (
+            const label
+        ) const;
 };
 
 

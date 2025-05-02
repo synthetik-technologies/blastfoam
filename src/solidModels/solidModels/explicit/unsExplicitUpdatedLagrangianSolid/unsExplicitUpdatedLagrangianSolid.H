@@ -97,7 +97,7 @@ public:
     // Constructors
 
         //- Construct from components
-        unsExplicitUpdatedLagrangianSolid(dynamicFvMesh& mesh);
+        unsExplicitUpdatedLagrangianSolid(fvMesh& mesh);
 
     // Destructor
 

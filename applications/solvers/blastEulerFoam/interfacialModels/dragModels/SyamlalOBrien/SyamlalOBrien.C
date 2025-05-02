@@ -50,7 +50,7 @@ Foam::dragModels::SyamlalOBrien::SyamlalOBrien
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject)
+    dispersedDragModel(dict, pair, registerObject)
 {}
 
 
@@ -62,17 +62,13 @@ Foam::dragModels::SyamlalOBrien::~SyamlalOBrien()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::SyamlalOBrien::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::SyamlalOBrien::CdRe() const
 {
     volScalarField alpha2
     (
         max
         (
-            scalar(1) - pair_.dispersed().volumeFraction(),
+            scalar(1) - pair_.dispersed(),
             pair_.continuous().residualAlpha()
         )
     );
@@ -83,7 +79,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::SyamlalOBrien::CdRe
         neg(alpha2 - 0.85)*(0.8*pow(alpha2, 1.28))
       + pos0(alpha2 - 0.85)*(pow(alpha2, 2.65))
     );
-    volScalarField Re(pair_.Re(nodei, nodej));
+    volScalarField Re(pair_.Re());
     volScalarField Vr
     (
         0.5
@@ -97,7 +93,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::SyamlalOBrien::CdRe
         CdsRe
        *max
         (
-            pair_.continuous().volumeFraction(nodej),
+            pair_.continuous(),
             pair_.continuous().residualAlpha()
         )
        /sqr(Vr);
@@ -106,9 +102,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::SyamlalOBrien::CdRe
 
 Foam::scalar Foam::dragModels::SyamlalOBrien::cellCdRe
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     scalar alpha2
@@ -126,7 +120,7 @@ Foam::scalar Foam::dragModels::SyamlalOBrien::cellCdRe
         neg(alpha2 - 0.85)*(0.8*pow(alpha2, 1.28))
       + pos0(alpha2 - 0.85)*(pow(alpha2, 2.65))
     );
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli));
     scalar Vr
     (
         0.5
@@ -140,7 +134,7 @@ Foam::scalar Foam::dragModels::SyamlalOBrien::cellCdRe
         CdsRe
        *max
         (
-            pair_.continuous().cellvolumeFraction(celli, nodej),
+            pair_.continuous()[celli],
             pair_.continuous().residualAlpha().value()
         )
        /sqr(Vr);

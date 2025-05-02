@@ -65,22 +65,29 @@ private:
         //- Dictionary
         const dictionary& dict_;
 
+        //- Is point interpolation needed
+        mutable bool needPoints_;
+
+        //- Is this patch the source for mapping
+        mutable bool isSrc_;
+
         //- Region to sample
         word sampleRegion_;
 
         //- Patch to sample
         word samplePatch_;
 
-        //- Unmapped faces
-        mutable labelList unmappedFaces_;
-        mutable labelList unmappedPoints_;
-
 
         // Demand-driven private data
 
             //- Patch interpolator
-            mutable patchToPatchMapping*
-                patchToPatchInterpPtr_;
+            mutable patchToPatchMapping* patchToPatchInterpPtr_;
+
+            //- Unmapped faces
+            mutable labelList* unmappedFacesPtr_;
+
+            //- Unmapped points
+            mutable labelList* unmappedPointsPtr_;
 
 
     // Private Member Functions
@@ -100,6 +107,11 @@ private:
         //- Clear the interpolator
         virtual void clearInterp(const bool top = true) const;
 
+        //- Return reference to the interpolator
+        const patchToPatchMapping& patchToPatchInterpolator
+        (
+            const bool needPoints
+        ) const;
 
 public:
 
@@ -157,71 +169,58 @@ public:
         //- Return reference to the interpolator
         const patchToPatchMapping& patchToPatchInterpolator() const;
 
+        //- Return unmapped faces
+        const labelList& unmappedFaces() const;
+
         //- Does the patch have unmapped faces
         bool hasUnmappedFaces() const
         {
-            return unmappedFaces_.size();
+            return unmappedFaces().size();
         }
+
+        //- Return unmapped points
+        const labelList& unmappedPoints() const;
 
         //- Does the patch have unmapped points
         bool hasUnmappedPoints() const
         {
-            return unmappedPoints_.size();
+            return unmappedPoints().size();
         }
 
 
         // Interpolation (from sample patch to this patch)
-        // All return a field the size of this patch (face or points)
 
-            //- Interpolate point field
+            //- Interpolate point field from this patch to the other patch
             template<class Type>
-            tmp<Field<Type>> pointInterpolate(const Field<Type>& pf) const;
-
-            template<class Type>
-            tmp<Field<Type>> pointInterpolate(const tmp<Field<Type>>& tpf) const;
-
-            //- Interpolate face field
-            template<class Type>
-            tmp<Field<Type>> faceInterpolate(const Field<Type>& pf) const;
-
-            template<class Type>
-            tmp<Field<Type>> faceInterpolate(const tmp<Field<Type>>& tpf) const;
-
-            //- Interpolate from faces to points
-            template<class Type>
-            tmp<Field<Type>> faceToPointInterpolate
+            tmp<Field<Type>> pointInterpolate
             (
-                const Field<Type>& ff
+                const Field<Type>& pf,
+                const Field<Type>& unmapped = NullObjectRef<Field<Type>>()
+            ) const;
+            template<class Type>
+            tmp<Field<Type>> pointInterpolate
+            (
+                const tmp<Field<Type>>& pf,
+                const Field<Type>& unmapped = NullObjectRef<Field<Type>>()
+            ) const;
+
+
+
+            //- Interpolate face field with unmapped values
+            template<class Type>
+            tmp<Field<Type>> faceInterpolate
+            (
+                const Field<Type>& pf,
+                const Field<Type>& unmapped = NullObjectRef<Field<Type>>()
             ) const;
 
             template<class Type>
-            tmp<Field<Type>> faceToPointInterpolate
+            tmp<Field<Type>> faceInterpolate
             (
-                const tmp<Field<Type>>& tff
+                const tmp<Field<Type>>& tpf,
+                const Field<Type>& unmapped = NullObjectRef<Field<Type>>()
             ) const;
 
-            //- Interpolate from points to faces
-            template<class Type>
-            tmp<Field<Type>> pointToFaceInterpolate
-            (
-                const Field<Type>& pf
-            ) const;
-
-            template<class Type>
-            tmp<Field<Type>> pointToFaceInterpolate
-            (
-                const tmp<Field<Type>>& tpf
-            ) const;
-
-            bool hashUnmappedFaces() const
-            {
-                return unmappedFaces_.size();
-            }
-
-            bool hashUnmappedPoints() const
-            {
-                return unmappedPoints_.size();
-            }
 
             //- Set the unmapped values on field corresponding to faces
             template<class Type>
@@ -274,11 +273,26 @@ public:
         //- Correct patch after moving points
         virtual void movePoints(const bool clear);
 
-        //- Move points
-        virtual void movePoints(const pointField& pts, const bool clear = true);
+        //- Correct patch after moving points (other patch)
+        virtual void movePointsOther(const bool clear) const;
 
-        //- Update for changes in topology
-        virtual void updateMesh();
+       //- Distribute
+        virtual void distribute(const polyDistributionMap& mpm);
+
+        //- Update for changes in topology (other patch)
+        virtual void distributeOther() const;
+
+        //- Update mesh
+        virtual void topoChange(const polyTopoChangeMap& mpm);
+
+        //- Update for changes in topology (other patch)
+        virtual void topoChangeOther() const;
+
+        //- Update mesh
+        virtual void mapMesh(const polyMeshMap& mpm);
+
+        //- Update for changes in topology (other patch)
+        virtual void mapMeshOther() const;
 
         //- Clear addressing
         virtual void clearOut() const;

@@ -29,7 +29,7 @@ License
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
-#include "dragModel.H"
+#include "dispersedDragModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -56,7 +56,7 @@ Foam::turbulentDispersionModels::Panicker::Panicker
     const phasePair& pair
 )
 :
-    turbulentDispersionModel(dict, pair),
+    dispersedTurbulentDispersionModel(dict, pair),
     Cdis_
     (
         dimensionedScalar::lookupOrDefault
@@ -89,34 +89,27 @@ Foam::turbulentDispersionModels::Panicker::~Panicker()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::turbulentDispersionModels::Panicker::D
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::turbulentDispersionModels::Panicker::D() const
 {
     const fvMesh& mesh(pair_.phase1().mesh());
     tmp<volScalarField> alpha1(pair_.dispersed());
-    tmp<volScalarField> d(pair_.dispersed().d(nodei));
+    tmp<volScalarField> d(pair_.dispersed().d());
 
-    const dragModel&
-        drag
-        (
-            mesh.lookupObject<dragModel>
+    const dragModels::dispersedDragModel& drag =
+            mesh.lookupObject<dragModels::dispersedDragModel>
             (
                 IOobject::groupName(dragModel::typeName, pair_.name())
-            )
-        );
+            );
 
     scalar b = 0.5;
     scalar a = 1 + b - (1/3);
     return
         0.75
-       *drag.CdRe(nodei, nodej)
+       *drag.CdRe()
        *Cdis_
        *pair_.continuous().rho()
        *sqr(pair_.continuous().nu()/d)
-       *pair_.Re(nodei, nodej)
+       *pair_.Re()
        *pos0(alpha1() - 0.001)
        *alpha1()*(1 - a*alpha1() + b*sqr(alpha1()));
 }

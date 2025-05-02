@@ -98,7 +98,7 @@ public:
     // Constructors
 
         //- Construct from components
-        explicitLinearSolid(dynamicFvMesh& mesh);
+        explicitLinearSolid(fvMesh& mesh);
 
     // Destructor
 

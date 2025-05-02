@@ -25,6 +25,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "IterativeSolidModel.H"
+#include "scalarMatrices.H"
 
 // * * * * * * * * * * Protected Member Function * * * * * * * * * * * * * * //
 
@@ -58,10 +59,10 @@ void Foam::IterativeSolidModel<SolidModel>::relaxField
             // Fixed under-relaxation is applied on the first iteration
             aitkenAlpha_() = 1.0;
 
-            if (this->mesh().relaxField(D.name()))
+            if (this->mesh().solution().relaxField(D.name()))
             {
                 aitkenAlpha_() =
-                    this->mesh().fieldRelaxationFactor(D.name());
+                    this->mesh().solution().fieldRelaxationFactor(D.name());
             }
         }
         else
@@ -303,12 +304,12 @@ template<class SolidModel>
 void Foam::IterativeSolidModel<SolidModel>::readDict()
 {
     const dictionary& dict = this->solidModelDict();
-    dict.readIfPresent("tolerance", tolerance_);
-    dict.readIfPresent("relTol", relTol_);
+    dict.readIfPresent("absTolerance", tolerance_);
+    dict.readIfPresent("relTolerance", relTol_);
     dict.readIfPresent("solutionTolerance", solutionTol_);
     dict.readIfPresent("alternativeTolerance", alternativeTol_);
     dict.readIfPresent("materialTolerance", materialTol_);
-    dict.readIfPresent("materialRelTol", materialRelTol_);
+    dict.readIfPresent("materialRelTolerance", materialRelTol_);
     dict.readIfPresent("infoFrequency", infoFrequency_);
     dict.readIfPresent("nCorrectors", nCorr_);
     dict.readIfPresent("minCorrectors", minCorr_);
@@ -321,7 +322,7 @@ template<class SolidModel>
 Foam::IterativeSolidModel<SolidModel>::IterativeSolidModel
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType nonlinear,
     const bool incremental,
     const bool isSolid

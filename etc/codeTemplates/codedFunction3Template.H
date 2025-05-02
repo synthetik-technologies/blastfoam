@@ -81,6 +81,8 @@ namespace Function3s
     Function1<${TemplateType}>::New                     \
     (                                                   \
         #Name,                                          \
+        dimless,                                        \
+        dimless,                                        \
         dict_                                           \
     )()
 
@@ -90,6 +92,8 @@ namespace Function3s
         Function1<${TemplateType}>::New                 \
         (                                               \
             #Name,                                      \
+            dimless,                                    \
+            dimless,                                    \
             dict_                                       \
         )                                               \
     );                                                  \
@@ -117,6 +121,8 @@ namespace Function3s
         Function2<${TemplateType}>::New                 \
         (                                               \
             #Name,                                      \
+            dimless,                                    \
+            dimless,                                    \
             dict_                                       \
         )                                               \
     );                                                  \
@@ -152,6 +158,7 @@ public:
         ${typeName}Function3${TemplateType}
         (
             const word& entryName,
+            const unitConversions& units,
             const dictionary& dict
         );
 

@@ -38,7 +38,7 @@ Foam::radiationODE::radiationODE
 :
     ODESystem(),
     rad_(rad),
-    thermo_(mesh.lookupObject<blastThermo>(basicThermo::dictName)),
+    thermo_(mesh.lookupObject<blastThermo>(physicalProperties::typeName)),
     solve_(rad_.lookupOrDefault("solveODE", false)),
     dict_
     (
@@ -54,7 +54,7 @@ Foam::radiationODE::radiationODE
         IOobject
         (
             "radiation::deltaT",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -95,7 +95,7 @@ void Foam::radiationODE::derivatives
     else
     {
         scalar e = q[0]/rho;
-        scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
+        scalar T = thermo_.cellThe(e, thermo_.T()[li], li);
         dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
     }
 }
@@ -119,7 +119,7 @@ void Foam::radiationODE::jacobian
     else
     {
         scalar e = q[0]/rho;
-        scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
+        scalar T = thermo_.cellThe(e, thermo_.T()[li], li);
         dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
         J(0, 0) = -4.0*rad_.cellRp(li)*pow3(T)/thermo_.cellCv(T, li);
     }

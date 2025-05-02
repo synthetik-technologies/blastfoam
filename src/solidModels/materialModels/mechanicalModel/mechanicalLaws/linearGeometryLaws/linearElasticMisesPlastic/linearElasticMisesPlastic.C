@@ -371,7 +371,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "sigmaHyd",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -385,7 +385,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "sigmaHydf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -398,7 +398,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "sigmaY",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -416,7 +416,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "sigmaYf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -434,7 +434,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DSigmaY",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -447,7 +447,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DSigmaYf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -460,7 +460,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "epsilon",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -473,7 +473,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "epsilonf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -486,7 +486,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "epsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -499,7 +499,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "epsilonPf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -512,7 +512,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DEpsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -525,7 +525,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DEpsilonPf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -538,7 +538,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DEpsilonPEq",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -551,7 +551,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DEpsilonPEqf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -564,7 +564,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DLambda",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -577,7 +577,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "DLambdaf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -590,7 +590,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "epsilonPEq",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -603,7 +603,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "epsilonPEqf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -616,7 +616,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "activeYield",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -629,7 +629,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "plasticN",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -642,7 +642,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         IOobject
         (
             "plasticNf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -714,6 +714,8 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
             Function1<scalar>::New
             (
                 "stressPlasticStrainSeries",
+                mesh().time().userUnits(),
+                dimPressure,
                 dict
             );
         dimensionedScalar sigmaY
@@ -1277,7 +1279,7 @@ void Foam::linearElasticMisesPlastic::updateTotalFields()
     //         IOobject
     //         (
     //             "epsilonPMag",
-    //             mesh().time().timeName(),
+    //             mesh().time().name(),
     //             mesh(),
     //             IOobject::NO_READ,
     //             IOobject::AUTO_WRITE

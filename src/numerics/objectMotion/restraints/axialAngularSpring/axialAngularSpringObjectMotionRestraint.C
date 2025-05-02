@@ -175,23 +175,25 @@ bool Foam::objectMotionRestraints::axialAngularSpring::read
             << abort(FatalError);
     }
 
-    moment_ = Function1<scalar>::New("moment", coeffDict_);
+    moment_ = Function1<scalar>::New
+    (
+        "moment",
+        unitRadians,
+        dimForce/dimLength,
+        coeffDict_
+    );
 
-    const word angleFormat = coeffDict_.lookup("angleFormat");
-
-    if (angleFormat == "degrees" || angleFormat == "degree")
+    if
+    (
+        coeffDict_.found("angleUnits")
+     || coeffDict_.found("angleFormat")
+    )
     {
-        convertToDegrees_ = true;
-    }
-    else if (angleFormat == "radians" || angleFormat == "radian")
-    {
-        convertToDegrees_ = false;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "angleFormat must be degree, degrees, radian or radians"
-            << abort(FatalError);
+        FatalIOErrorInFunction(coeffDict_)
+            << "Angle units are no longer specified with 'angleUnits' or "
+            << "'angleFormat' entries. Instead, parameters of the 'moment' "
+            << "function can have their units specified directly."
+            << exit(FatalIOError);
     }
 
     coeffDict_.lookup("damping") >> damping_;
@@ -209,7 +211,7 @@ void Foam::objectMotionRestraints::axialAngularSpring::write
 
     writeEntry(os, "axis", axis_);
 
-    moment_->write(os);
+    writeEntry(os, moment_());
 
     writeKeyword(os, "angleFormat");
 

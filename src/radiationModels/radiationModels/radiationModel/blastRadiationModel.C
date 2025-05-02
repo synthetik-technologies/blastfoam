@@ -193,7 +193,7 @@ Foam::tmp<Foam::volScalarField> Foam::blastRadiationModel::calcRhoE
         volScalarField eNew(e);
         volScalarField K(rhoE - rho*e);
 
-        radODE_.solve(dt.value(), rho, eNew.ref());
+        radODE_.solve(dt.value(), rho, eNew.primitiveFieldRef());
         return eNew*rho + K;
     }
 
@@ -205,7 +205,7 @@ Foam::tmp<Foam::volScalarField> Foam::blastRadiationModel::calcRhoE
     (
         (rhoE - dt*this->Rp()*T3*(T_ - 4.0*e/Cv))/den
     );
-    eNew.ref() += dt*this->Ru()/den();
+    eNew.internalFieldRef() += dt*this->Ru()/den();
     return rho*eNew;
 }
 

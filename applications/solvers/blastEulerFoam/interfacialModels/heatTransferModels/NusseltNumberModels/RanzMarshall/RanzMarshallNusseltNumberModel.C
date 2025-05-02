@@ -61,32 +61,26 @@ Foam::NusseltNumberModels::RanzMarshall::~RanzMarshall()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::NusseltNumberModels::RanzMarshall::Nu
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::NusseltNumberModels::RanzMarshall::Nu() const
 {
     return volScalarField::New
     (
-        "RanzMarshall::Nu",
-        2.0 + 0.6*sqrt(pair_.Re(nodei, nodej))*cbrt(pair_.Pr(nodei, nodej))
+        typeName + "Nu",
+        2.0 + 0.6*sqrt(pair_.Re())*cbrt(pair_.Pr())
     );
 }
 
 
 Foam::scalar Foam::NusseltNumberModels::RanzMarshall::cellNu
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return
         2.0
       + 0.6
-       *sqrt(pair_.cellRe(celli, nodei, nodej))
-       *cbrt(pair_.cellPr(celli, nodei, nodej));
+       *sqrt(pair_.cellRe(celli))
+       *cbrt(pair_.cellPr(celli));
 }
 
 // ************************************************************************* //

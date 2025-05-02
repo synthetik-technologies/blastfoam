@@ -51,7 +51,7 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
         scalar& ei = heCells[celli];
         scalar& Ti = TCells[celli];
 
-        if (x2 < this->residualActivation_)
+        if (x2 < this->residualFac_)
         {
             Ti = t1.TRhoE(Ti, rhoi, ei);
             if (Ti < this->TLow_)
@@ -69,7 +69,7 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                 (*KappaCells)[celli] = t1.Kappa(rhoi, ei, Ti);
             }
         }
-        else if (x1 < this->residualActivation_)
+        else if (x1 < this->residualFac_)
         {
             Ti = t2.TRhoE(Ti, rhoi, ei);
             if (Ti < this->TLow_)
@@ -159,7 +159,7 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
             const scalar ei(phe[facei]);
             const scalar Ti(pT[facei]);
 
-            if (x2 < this->residualActivation_)
+            if (x2 < this->residualFac_)
             {
                 pCp[facei] = t1.Cp(rhoi, ei, Ti);
                 pCv[facei] = t1.Cv(rhoi, ei, Ti);
@@ -170,7 +170,7 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                     (*pKappa)[facei] = t1.Kappa(rhoi, ei, Ti);
                 }
             }
-            else if (x1 < this->residualActivation_)
+            else if (x1 < this->residualFac_)
             {
                 pCp[facei] = t2.Cp(rhoi, ei, Ti);
                 pCv[facei] = t2.Cv(rhoi, ei, Ti);
@@ -244,6 +244,8 @@ Foam::detonatingSolidBlastThermo<Thermo>::detonatingSolidBlastThermo
         )
     )
 {
+
+    dict.readIfPresent("residualActivation", this->residualFac_);
     this->initializeFields();
 }
 

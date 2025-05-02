@@ -205,7 +205,7 @@ Foam::rootSolver::rootSolver
             scalarList
             (
                 eqns.nVar(),
-                dict.lookupOrDefault("xAbsTolerance", 1e-6)
+                dict.lookupOrDefault("xAbsTolerance", 0.0)
             )
         )
     ),

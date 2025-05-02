@@ -136,7 +136,7 @@ Foam::fluxSchemeBase::fluxSchemeBase(const surfaceScalarField& phi)
         IOobject
         (
             IOobject::groupName("fluxScheme", phi.group()),
-            phi.mesh().time().timeName(),
+            phi.mesh().time().name(),
             phi.mesh()
         )
     ),

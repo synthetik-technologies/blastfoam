@@ -60,27 +60,18 @@ Foam::NusseltNumberModels::duct::~duct()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::NusseltNumberModels::duct::Nu
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::NusseltNumberModels::duct::Nu() const
 {
-    tmp<volScalarField> Pr(pair_.Pr(nodei, nodej));
-    tmp<volScalarField> Re(pair_.Re(nodei, nodej));
+    tmp<volScalarField> Pr(pair_.Pr());
+    tmp<volScalarField> Re(pair_.Re());
     return 0.023*pow(Re, 0.8)*pow(Pr, 0.4);
 }
 
 
-Foam::scalar Foam::NusseltNumberModels::duct::cellNu
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::NusseltNumberModels::duct::cellNu(const label celli) const
 {
-    scalar Pr(pair_.cellPr(celli, nodei, nodej));
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar Pr(pair_.cellPr(celli));
+    scalar Re(pair_.cellRe(celli));
     return 0.023*pow(Re, 0.8)*pow(Pr, 0.4);
 }
 

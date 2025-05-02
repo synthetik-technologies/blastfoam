@@ -64,7 +64,7 @@ interpolationSchemes
     reconstruct(e)      quadraticMUSCL vanAlbada;
     reconstruct(p)      quadraticMUSCL vanAlbada;
     reconstruct(speedOfSound) quadraticMUSCL vanAlbada;
-    "reconstruct\(Y.*\)" quadraticMUSCL vanAlbada;
+    "reconstruct\(.*\)" quadraticMUSCL vanAlbada;
     reconstruct(Theta)  quadraticMUSCL vanAlbada;
 }
 

@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Frank.H"
-#include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -54,7 +53,7 @@ Foam::wallLubricationModels::Frank::Frank
     const phasePair& pair
 )
 :
-    wallLubricationModel(dict, pair),
+    dispersedWallLubricationModel(dict, pair),
     Cwd_("Cwd", dimless, dict),
     Cwc_("Cwc", dimless, dict),
     p_(readScalar(dict.lookup("p")))
@@ -69,19 +68,15 @@ Foam::wallLubricationModels::Frank::~Frank()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Frank::FI
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Frank::Fi() const
 {
-    volVectorField Ur(pair_.Ur(nodei, nodej));
+    volVectorField Ur(pair_.Ur());
 
-    const volVectorField& n(nWall());
-    const volScalarField& y(yWall());
+    const volVectorField& n = nWall();
+    const volScalarField& y = yWall();
 
-    volScalarField Eo(pair_.Eo(nodei, nodej));
-    volScalarField yTilde(y/(Cwc_*pair_.dispersed().d(nodei)));
+    volScalarField Eo(pair_.Eo());
+    volScalarField yTilde(y/(Cwc_*pair_.dispersed().d()));
 
     return zeroGradWalls
     (

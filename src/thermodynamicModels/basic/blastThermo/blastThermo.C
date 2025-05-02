@@ -58,12 +58,9 @@ Foam::wordList Foam::blastThermo::heBoundaryBaseTypes()
         {
             hbt[patchi] = "immersed";
         }
-        else if (isA<fixedJumpFvPatchScalarField>(tbf[patchi]))
+        else if (tbf[patchi].overridesConstraint())
         {
-            const fixedJumpFvPatchScalarField& pf =
-                dynamic_cast<const fixedJumpFvPatchScalarField&>(tbf[patchi]);
-
-            hbt[patchi] = pf.interfaceFieldType();
+            hbt[patchi] = tbf[patchi].patch().type();
         }
     }
 
@@ -158,14 +155,11 @@ Foam::blastThermo::blastThermo
     (
         IOobject
         (
-            basicThermo::phasePropertyName
-            (
-                "e", phaseName
-            ),
-            mesh.time().timeName(),
+            phasePropertyName("e", phaseName),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE//IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar(dimEnergy/dimMass, 0.0),
@@ -177,7 +171,7 @@ Foam::blastThermo::blastThermo
         IOobject
         (
             IOobject::groupName("rho", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -190,7 +184,7 @@ Foam::blastThermo::blastThermo
         IOobject
         (
             IOobject::groupName("Cp", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -201,7 +195,7 @@ Foam::blastThermo::blastThermo
         IOobject
         (
             IOobject::groupName("Cv", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -240,8 +234,14 @@ Foam::blastThermo::~blastThermo()
 
 bool Foam::blastThermo::read()
 {
-    this->residualRho_.read(this->properties());
-    this->residualAlpha_.read(this->properties());
+    return this->read(this->properties());
+}
+
+
+bool Foam::blastThermo::read(const dictionary& dict)
+{
+    this->residualRho_.read(dict);
+    this->residualAlpha_.read(dict);
     return true;
 }
 
@@ -371,8 +371,18 @@ Foam::wordList Foam::blastThermo::splitThermoName
         cmpts.append(newStr);
     }
 
+    Info<<cmpts[1]<<endl;
     wordList cmptsFinal(6);
-    if (cmpts[0] == "detonating")
+    if (cmpts[1] == "detonating")
+    {
+        cmptsFinal[0] = cmpts[0];
+        cmptsFinal[1] = cmpts[1];
+        cmptsFinal[2] = cmpts[2] + '/' + cmpts[6];
+        cmptsFinal[3] = cmpts[3] + '/' + cmpts[7];
+        cmptsFinal[4] = cmpts[4] + '/' + cmpts[8];
+        cmptsFinal[5] = cmpts[5] + '/' + cmpts[9];
+    }
+    else if (cmpts[1] == "cavitating")
     {
         cmptsFinal[0] = cmpts[0];
         cmptsFinal[1] = cmpts[1];
@@ -412,7 +422,7 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
         typeIOobject<volScalarField> io
         (
             name,
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             wOpt
@@ -420,7 +430,7 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
         typeIOobject<volScalarField> baseIo
         (
             baseName,
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             wOpt
@@ -522,6 +532,12 @@ Foam::scalar Foam::blastThermo::cellrho(const label celli) const
 
 
 Foam::volScalarField& Foam::blastThermo::rho()
+{
+    return rho_;
+}
+
+
+Foam::volScalarField& Foam::blastThermo::rhoRef()
 {
     return rho_;
 }

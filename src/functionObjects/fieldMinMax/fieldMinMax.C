@@ -90,10 +90,6 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     cellMap_(nullptr),
     rCellMap_(nullptr)
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
     read(dict);
 }
 
@@ -115,10 +111,6 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     cellMap_(nullptr),
     rCellMap_(nullptr)
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
     read(dict);
 }
 
@@ -145,31 +137,35 @@ bool Foam::functionObjects::fieldMinMax::read(const dictionary& dict)
 }
 
 
-void Foam::functionObjects::fieldMinMax::updateMesh(const mapPolyMesh& mpm)
+void Foam::functionObjects::fieldMinMax::topoChange
+(
+    const polyTopoChangeMap& mpm
+)
 {
-    forAll(fieldNames_, fieldi)
-    {
-        bool found = false;
-        #define MapFields(Type, Patch, Mesh)                \
-        found =                                             \
-            found                                           \
-         || map<GeometricField<Type, Patch, Mesh>>          \
-            (                                               \
-                fieldNames_[fieldi], mpm                    \
-            );
-
-        FOR_ALL_FIELD_TYPES(MapFields, fvPatchField, volMesh);
-        FOR_ALL_FIELD_TYPES(MapFields, fvsPatchField, surfaceMesh);
-
-        #undef MapFields
-
-        if (!found)
-        {
-            cannotFindObject(fieldNames_[fieldi]);
-        }
-    }
-
-    setOldFields(mpm);
+    // TODO update since topoChange is called after fields are updated
+    // forAll(fieldNames_, fieldi)
+    // {
+    //     bool found = false;
+    //     #define MapFields(Type, Patch, Mesh)                \
+    //     found =                                             \
+    //         found                                           \
+    //      || map<GeometricField<Type, Patch, Mesh>>          \
+    //         (                                               \
+    //             fieldNames_[fieldi], mpm                    \
+    //         );
+    //
+    //     FOR_ALL_FIELD_TYPES(MapFields, fvPatchField, volMesh);
+    //     FOR_ALL_FIELD_TYPES(MapFields, fvsPatchField, surfaceMesh);
+    //
+    //     #undef MapFields
+    //
+    //     if (!found)
+    //     {
+    //         cannotFindObject(fieldNames_[fieldi]);
+    //     }
+    // }
+    //
+    // setOldFields(mpm);
 }
 
 
@@ -197,6 +193,7 @@ bool Foam::functionObjects::fieldMinMax::execute()
         }
     }
 
+    clearOldFields();
     return true;
 }
 
@@ -213,7 +210,10 @@ void Foam::functionObjects::fieldMinMax::clearOldFields()
 }
 
 
-void Foam::functionObjects::fieldMinMax::setOldFields(const mapPolyMesh& mpm)
+void Foam::functionObjects::fieldMinMax::setOldFields
+(
+    const polyTopoChangeMap& mpm
+)
 {
     clearOldFields();
 
@@ -246,6 +246,11 @@ void Foam::functionObjects::fieldMinMax::setOldFields(const mapPolyMesh& mpm)
 
 bool Foam::functionObjects::fieldMinMax::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
+
     bool good = true;
     forAll(fieldNames_, fieldi)
     {

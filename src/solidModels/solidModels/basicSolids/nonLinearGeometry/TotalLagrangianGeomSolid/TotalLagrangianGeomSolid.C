@@ -41,7 +41,7 @@ template<class IncrementalModel>
 TotalLagrangianGeomSolid<IncrementalModel>::TotalLagrangianGeomSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const bool isSolid
 )
 :
@@ -51,7 +51,7 @@ TotalLagrangianGeomSolid<IncrementalModel>::TotalLagrangianGeomSolid
         IOobject
         (
             "F",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -64,7 +64,7 @@ TotalLagrangianGeomSolid<IncrementalModel>::TotalLagrangianGeomSolid
         IOobject
         (
             "Finv",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         inv(F_)
@@ -74,7 +74,7 @@ TotalLagrangianGeomSolid<IncrementalModel>::TotalLagrangianGeomSolid
         IOobject
         (
             "relF",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         I + this->gradDD().T()
@@ -84,7 +84,7 @@ TotalLagrangianGeomSolid<IncrementalModel>::TotalLagrangianGeomSolid
         IOobject
         (
             "J",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -96,7 +96,7 @@ TotalLagrangianGeomSolid<IncrementalModel>::TotalLagrangianGeomSolid
         IOobject
         (
             "relJ",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         det(relF_)

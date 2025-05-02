@@ -52,7 +52,7 @@ addToRunTimeSelectionTable
 
 explicitTotalLagrangianSolid::explicitTotalLagrangianSolid
 (
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     TotalLagrangianGeomSolid<explicitNonLinearSolid>(typeName, mesh)

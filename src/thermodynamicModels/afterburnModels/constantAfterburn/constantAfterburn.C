@@ -63,22 +63,11 @@ Foam::afterburnModels::constantAfterburn::~constantAfterburn()
 Foam::tmp<Foam::volScalarField>
 Foam::afterburnModels::constantAfterburn::ESource() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "constantAfterburn:Esource",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            Qdot_
-        )
+        type() + ":Esource",
+        mesh_,
+        Qdot_
     );
 }
 

@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Antal.H"
-#include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -54,7 +53,7 @@ Foam::wallLubricationModels::Antal::Antal
     const phasePair& pair
 )
 :
-    wallLubricationModel(dict, pair),
+    dispersedWallLubricationModel(dict, pair),
     Cw1_("Cw1", dimless, dict),
     Cw2_("Cw2", dimless, dict)
 {}
@@ -68,22 +67,18 @@ Foam::wallLubricationModels::Antal::~Antal()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Antal::FI
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Antal::Fi() const
 {
-    volVectorField Ur(pair_.Ur(nodei, nodej));
+    volVectorField Ur(pair_.Ur());
 
-    const volVectorField& n(nWall());
+    const volVectorField& n = nWall();
 
     return zeroGradWalls
     (
         max
         (
             dimensionedScalar("zero", dimless/dimLength, 0),
-            Cw1_/pair_.dispersed().d(nodei) + Cw2_/yWall()
+            Cw1_/pair_.dispersed().d() + Cw2_/yWall()
         )
        *pair_.continuous().rho()
        *magSqr(Ur - (Ur & n)*n)

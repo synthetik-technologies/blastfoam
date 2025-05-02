@@ -78,13 +78,13 @@ void Foam::phaseSystem::generatePairsAndSubModels
 }
 
 
-template<class modelType>
-void Foam::phaseSystem::generatePairsAndSubModels
+template<class BlendedModel>
+void Foam::phaseSystem::generateBlendedPairsAndSubModels
 (
     const word& modelName,
     HashTable
     <
-        autoPtr<BlendedInterfacialModel<modelType>>,
+        autoPtr<BlendedModel>,
         phasePairKey,
         phasePairKey::hash
     >& models,
@@ -92,6 +92,7 @@ void Foam::phaseSystem::generatePairsAndSubModels
     const bool correctFixedFluxBCs
 )
 {
+    typedef typename BlendedModel::modelType modelType;
     typedef
         HashTable<autoPtr<modelType>, phasePairKey, phasePairKey::hash>
         modelTypeTable;
@@ -124,17 +125,16 @@ void Foam::phaseSystem::generatePairsAndSubModels
         models.insert
         (
             key,
-            autoPtr<BlendedInterfacialModel<modelType>>
+            autoPtr<BlendedModel>
             (
-                new BlendedInterfacialModel<modelType>
+                new BlendedModel
                 (
                     phaseModels_[key.first()],
                     phaseModels_[key.second()],
                     blending,
                     tempModels.found(key    ) ? tempModels[key    ] : noModel,
                     tempModels.found(key1In2) ? tempModels[key1In2] : noModel,
-                    tempModels.found(key2In1) ? tempModels[key2In1] : noModel,
-                    correctFixedFluxBCs
+                    tempModels.found(key2In1) ? tempModels[key2In1] : noModel
                 )
             )
         );
@@ -173,8 +173,12 @@ void Foam::phaseSystem::generatePairsAndSubModels
 )
 {
     typedef
-        HashTable<autoPtr<modelType>, phasePairKey, phasePairKey::hash>
-        modelTypeTable;
+        HashTable
+        <
+            autoPtr<modelType>,
+            phasePairKey,
+            phasePairKey::hash
+        > modelTypeTable;
 
     forAll(phaseModels_, phasei)
     {
@@ -206,6 +210,7 @@ void Foam::phaseSystem::generatePairsAndSubModels
 
             if (!pair.contains(phase))
             {
+
                 FatalErrorInFunction
                     << "A two-sided " << modelType::typeName << " was "
                     << "specified for the " << phase.name() << " side of the "
@@ -221,7 +226,7 @@ void Foam::phaseSystem::generatePairsAndSubModels
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class modelType>
-bool Foam::phaseSystem::foundSubModel(const phasePair& key) const
+bool Foam::phaseSystem::foundInterfacialModel(const phasePair& key) const
 {
     const word name(IOobject::groupName(modelType::typeName, key.name()));
 
@@ -259,7 +264,10 @@ bool Foam::phaseSystem::foundSubModel(const phasePair& key) const
 
 
 template<class modelType>
-const modelType& Foam::phaseSystem::lookupSubModel(const phasePair& key) const
+const modelType& Foam::phaseSystem::lookupInterfacialModel
+(
+    const phasePair& key
+) const
 {
     const word name(IOobject::groupName(modelType::typeName, key.name()));
 
@@ -279,7 +287,7 @@ const modelType& Foam::phaseSystem::lookupSubModel(const phasePair& key) const
 
 
 template<class modelType>
-bool Foam::phaseSystem::foundSubModel
+bool Foam::phaseSystem::foundInterfacialModel
 (
     const phaseModel& dispersed,
     const phaseModel& continuous,
@@ -288,14 +296,20 @@ bool Foam::phaseSystem::foundSubModel
 {
     if (ordered)
     {
-        return foundSubModel<modelType>(orderedPhasePair(dispersed, continuous));
+        return foundInterfacialModel<modelType>
+        (
+            orderedPhasePair(dispersed, continuous)
+        );
     }
-    return foundSubModel<modelType>(phasePair(dispersed, continuous));
+    return foundInterfacialModel<modelType>
+    (
+        phasePair(dispersed, continuous)
+    );
 }
 
 
 template<class modelType>
-const modelType& Foam::phaseSystem::lookupSubModel
+const modelType& Foam::phaseSystem::lookupInterfacialModel
 (
     const phaseModel& dispersed,
     const phaseModel& continuous,
@@ -304,30 +318,36 @@ const modelType& Foam::phaseSystem::lookupSubModel
 {
     if (ordered)
     {
-        return lookupSubModel<modelType>(orderedPhasePair(dispersed, continuous));
+        return lookupInterfacialModel<modelType>
+        (
+            orderedPhasePair(dispersed, continuous)
+        );
     }
-    return lookupSubModel<modelType>(phasePair(dispersed, continuous));
+    return lookupInterfacialModel<modelType>
+    (
+        phasePair(dispersed, continuous)
+    );
 }
 
 
-template<class modelType>
-bool Foam::phaseSystem::foundBlendedSubModel(const phasePair& key) const
+template<class BlendedModelType>
+bool Foam::phaseSystem::foundBlendedInterfacialModel(const phasePair& key) const
 {
     if
     (
-        mesh().foundObject<BlendedInterfacialModel<modelType>>
+        mesh().foundObject<BlendedModelType>
         (
             IOobject::groupName
             (
-                BlendedInterfacialModel<modelType>::typeName,
+                BlendedModelType::typeName,
                 key.name()
             )
         )
-     || mesh().foundObject<BlendedInterfacialModel<modelType>>
+     || mesh().foundObject<BlendedModelType>
         (
             IOobject::groupName
             (
-                BlendedInterfacialModel<modelType>::typeName,
+                BlendedModelType::typeName,
                 key.otherName()
             )
         )
@@ -342,31 +362,31 @@ bool Foam::phaseSystem::foundBlendedSubModel(const phasePair& key) const
 }
 
 
-template<class modelType>
-const Foam::BlendedInterfacialModel<modelType>&
-Foam::phaseSystem::lookupBlendedSubModel(const phasePair& key) const
+template<class BlendedModelType>
+const BlendedModelType&
+Foam::phaseSystem::lookupBlendedInterfacialModel(const phasePair& key) const
 {
     const word name
     (
         IOobject::groupName
         (
-            BlendedInterfacialModel<modelType>::typeName,
+            BlendedModelType::typeName,
             key.name()
         )
     );
 
-    if (mesh().foundObject<BlendedInterfacialModel<modelType>>(name))
+    if (mesh().foundObject<BlendedModelType>(name))
     {
-        return mesh().lookupObject<BlendedInterfacialModel<modelType>>(name);
+        return mesh().lookupObject<BlendedModelType>(name);
     }
     else
     {
         return
-            mesh().lookupObject<BlendedInterfacialModel<modelType>>
+            mesh().lookupObject<BlendedModelType>
             (
                 IOobject::groupName
                 (
-                    BlendedInterfacialModel<modelType>::typeName,
+                    BlendedModelType::typeName,
                     key.otherName()
                 )
             );

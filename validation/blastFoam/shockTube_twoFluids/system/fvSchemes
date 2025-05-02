@@ -20,12 +20,12 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2;//AdamsBashforth 4;
+    timeIntegrator  RK4SSP;//AdamsBashforth 4;
 }
 
 gradSchemes
 {
-    default         Gauss linear 1.0;//cellMDLimited leastSquares 1.0;
+    default         cellMDLimited leastSquares 1.0;
 }
 
 divSchemes
@@ -38,15 +38,18 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
+alphaLim quadraticMUSCL Koren01;
+limiter quadraticMUSCL Koren;
+
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  quadraticMUSCL limitedCubic01 1;
-    reconstruct(rho)    quadraticMUSCL limitedCubic 1;
-    reconstruct(U)      quadraticMUSCL limitedCubic 1;
-    reconstruct(e)      quadraticMUSCL limitedCubic 1;
-    reconstruct(p)      quadraticMUSCL limitedCubic 1;
-    reconstruct(speedOfSound) quadraticMUSCL limitedCubic 1;
+    reconstruct(alpha)  $alphaLim;
+    reconstruct(rho)    $limiter;
+    reconstruct(U)      $limiter;
+    reconstruct(e)      $limiter;
+    reconstruct(p)      $limiter;
+    reconstruct(speedOfSound) $limiter;
 }
 
 snGradSchemes

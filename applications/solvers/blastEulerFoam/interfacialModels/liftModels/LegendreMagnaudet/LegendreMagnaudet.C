@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "LegendreMagnaudet.H"
-#include "phasePair.H"
 #include "fvcGrad.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -50,7 +49,7 @@ Foam::liftModels::LegendreMagnaudet::LegendreMagnaudet
     const phasePair& pair
 )
 :
-    liftModel(dict, pair),
+    dispersedLiftModel(dict, pair),
     residualRe_("residualRe", dimless, dict)
 {}
 
@@ -63,22 +62,19 @@ Foam::liftModels::LegendreMagnaudet::~LegendreMagnaudet()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::liftModels::LegendreMagnaudet::Cl
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField>
+Foam::liftModels::LegendreMagnaudet::Cl() const
 {
-    volScalarField Re(max(pair_.Re(nodei, nodej), residualRe_));
+    volScalarField Re(max(pair_.Re(), residualRe_));
 
     volScalarField Sr
     (
-        sqr(pair_.dispersed().d(nodei))
+        sqr(pair_.dispersed().d())
        /(
             Re
            *pair_.continuous().nu()
         )
-       *mag(fvc::grad(pair_.continuous().U(nodej)))
+       *mag(fvc::grad(pair_.continuous().U()))
     );
 
     volScalarField ClLowSqr

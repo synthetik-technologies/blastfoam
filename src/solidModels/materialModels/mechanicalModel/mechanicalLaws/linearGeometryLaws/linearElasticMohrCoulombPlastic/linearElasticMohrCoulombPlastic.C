@@ -460,7 +460,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "sigmaEff",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -473,7 +473,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "sigmaEfff",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -486,7 +486,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "DEpsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -499,7 +499,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "DEpsilonPf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -512,7 +512,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "epsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -525,7 +525,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "epsilonPEq",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -538,7 +538,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "activeYield",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -653,7 +653,7 @@ void Foam::linearElasticMohrCoulombPlastic::correct(volSymmTensorField& sigma)
         IOobject
         (
             "DEpsilon",
-            mesh().time().timeName(),
+            mesh().time().name(),
             mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -751,7 +751,7 @@ void Foam::linearElasticMohrCoulombPlastic::correct
         IOobject
         (
             "DEpsilon",
-            mesh().time().timeName(),
+            mesh().time().name(),
             mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -917,7 +917,7 @@ void Foam::linearElasticMohrCoulombPlastic::updateTotalFields()
         IOobject
         (
             "DEpsilon",
-            mesh().time().timeName(),
+            mesh().time().name(),
             mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE

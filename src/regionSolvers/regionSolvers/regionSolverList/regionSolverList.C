@@ -42,7 +42,7 @@ Foam::regionSolverList::regionSolverList
 (
     const IOdictionary& regionProperties,
     const Time& runTime,
-    PtrList<dynamicFvMesh>& regionMeshes,
+    PtrList<fvMesh>& regionMeshes,
     const List<Pair<word>>& regionTypes
 )
 :
@@ -70,7 +70,7 @@ Foam::regionSolverList::regionSolverList
         );
     }
 
-    labelList map(identity(regionMeshes.size()));
+    labelList map(identityMap(regionMeshes.size()));
     if (regionProperties.found("order"))
     {
         wordList order(regionProperties.lookup("order"));
@@ -214,7 +214,7 @@ void Foam::regionSolverList::initialiseDisplacement()
             << "Initial correction iteration: " << iterNo_ << nl << endl;
 
         // Force updating of mapping
-        update(fixedMapping_);
+        update(true);
 
         // Initialize meshes
         forAll(*this, regioni)
@@ -234,7 +234,11 @@ void Foam::regionSolverList::initialiseDisplacement()
     if (debug)
     {
         const_cast<Time&>(runTime_).writeNow();
-        const_cast<Time&>(runTime_).setTime(runTime_.value()+runTime_.deltaTValue(), runTime_.timeIndex());
+        const_cast<Time&>(runTime_).setTime
+        (
+            runTime_.value()+runTime_.deltaTValue(),
+            runTime_.timeIndex()
+        );
 
     }
 
@@ -318,6 +322,7 @@ void Foam::regionSolverList::initialise()
             operator[](regioni).initialise();
         }
     }
+    update(true);
     forAll(*this, regioni)
     {
         if (!operator[](regioni).isSolid())
@@ -325,18 +330,19 @@ void Foam::regionSolverList::initialise()
             operator[](regioni).initialise();
         }
     }
-    update(fixedMapping_);
+//     update(true);
 }
 
 
 bool Foam::regionSolverList::moveMesh(const IterType iter)
 {
+    bool anyMoved = false;
     forAll(*this, regioni)
     {
-        changed_[regioni] =
-            changed_[regioni] || operator[](regioni).moveMesh(iter);
+        bool regionMoved = operator[](regioni).moveMesh(iter);
+        anyMoved = anyMoved || regionMoved;
     }
-    return anyChanged();
+    return anyMoved;
 }
 
 
@@ -355,15 +361,14 @@ void Foam::regionSolverList::solve()
     iterNo_ = 0;
     bool finished = false;
     bool cleanup = nOuterCorrectors < 2;
+    bool hasMoved = false;
 
     Convergence converged = UNKNOWN_CONVERGENCE;
     do
     {
-        Info<< endl;
-        IOobject::writeDivider(Info)
+        Info<< "********************************************" << nl
             << "Outer iteration: " << iterNo_ << nl
-            << "Time = " << runTime_.timeName() << nl
-            << "deltaT = " << runTime_.deltaTValue() << nl << endl;
+            << "********************************************" << nl << endl;
 
         // Mark if relaxation is allowed
         // FINAL_ITER: no relaxation
@@ -381,10 +386,16 @@ void Foam::regionSolverList::solve()
 
         forAll(*this, regioni)
         {
-            Info<< "Solving region "
-                << operator[](regioni).mesh().name() << endl;
-            operator[](regioni).moveMesh(iter);
+            Info<< "********************" << nl
+                << "Solving region "
+                << operator[](regioni).mesh().name() << nl
+                << "********************" << nl << endl;
+            bool regionHasMoved = operator[](regioni).moveMesh(iter);
+            hasMoved = hasMoved || regionHasMoved;
             operator[](regioni).solve();
+
+            Info<< endl;
+
         }
 
         iterNo_++;
@@ -422,8 +433,9 @@ void Foam::regionSolverList::solve()
         Info<< "*** Regions did not converge" << nl << endl;
     }
 
-    update();
+    update(hasMoved && !fixedMapping_);
     clear();
+
 
     Info<< endl;
     IOobject::writeDivider(Info) << nl << endl;
@@ -468,7 +480,6 @@ Foam::scalar Foam::regionSolverList::newDeltaT() const
     {
         deltaT = min(deltaT, operator[](regioni).newDeltaT());
     }
-    Info<< "deltaT = " <<  deltaT << endl;
     return deltaT;
 }
 

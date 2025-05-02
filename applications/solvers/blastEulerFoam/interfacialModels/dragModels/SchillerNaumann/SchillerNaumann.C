@@ -50,7 +50,7 @@ Foam::dragModels::SchillerNaumann::SchillerNaumann
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject),
+    dispersedDragModel(dict, pair, registerObject),
     residualRe_("residualRe", dimless, dict)
 {}
 
@@ -63,13 +63,9 @@ Foam::dragModels::SchillerNaumann::~SchillerNaumann()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::SchillerNaumann::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::SchillerNaumann::CdRe() const
 {
-    volScalarField Re(pair_.Re(nodei, nodej));
+    volScalarField Re(pair_.Re());
 
     return
         neg(Re - 1000)*24.0*(1.0 + 0.15*pow(Re, 0.687))
@@ -79,12 +75,10 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::SchillerNaumann::CdRe
 
 Foam::scalar Foam::dragModels::SchillerNaumann::cellCdRe
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli));
 
     return
         neg(Re - 1000)*24.0*(1.0 + 0.15*pow(Re, 0.687))

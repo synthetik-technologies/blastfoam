@@ -79,7 +79,7 @@ public:
     // Constructors
 
         // Lookup compressible system type
-        hydrostatic(dynamicFvMesh& mesh, const regionSolverList& regions);
+        hydrostatic(fvMesh& mesh, const regionSolverList& regions);
 
 
     //- Destructor

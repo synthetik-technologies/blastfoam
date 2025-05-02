@@ -60,27 +60,21 @@ Foam::NusseltNumberModels::GelperinEinstein::~GelperinEinstein()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::NusseltNumberModels::GelperinEinstein::Nu
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::NusseltNumberModels::GelperinEinstein::Nu() const
 {
-    tmp<volScalarField> Pr(pair_.Pr(nodei, nodej));
-    tmp<volScalarField> Re(pair_.Re(nodei, nodej));
+    tmp<volScalarField> Pr(pair_.Pr());
+    tmp<volScalarField> Re(pair_.Re());
     return 0.4*pow(Re, 2.0/3.0)*pow(Pr, 1.0/3.0);
 }
 
 
 Foam::scalar Foam::NusseltNumberModels::GelperinEinstein::cellNu
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
-    scalar Pr(pair_.cellPr(celli, nodei, nodej));
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar Pr(pair_.cellPr(celli));
+    scalar Re(pair_.cellRe(celli));
     return 0.4*pow(Re, 2.0/3.0)*pow(Pr, 1.0/3.0);
 }
 

@@ -201,7 +201,7 @@ extendedNLevelGlobalCellToCellStencil
     DemandDrivenMeshObject
     <
         polyMesh,
-        UpdateableMeshObject,
+        TopoChangeableMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >(mesh),
     mesh_(mesh),
@@ -227,7 +227,7 @@ extendedNLevelGlobalCellToCellStencil
     DemandDrivenMeshObject
     <
         polyMesh,
-        UpdateableMeshObject,
+        TopoChangeableMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >(mesh),
     mesh_(mesh),
@@ -259,7 +259,35 @@ bool Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::movePoints()
 
 
 template<class StencilType>
-void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateMesh
+void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::distribute
+(
+    const polyDistributionMap& mpm
+)
+{
+	stencilMap_.clear();
+    mapPtr_.clear();
+    gIndexPtr_.clear();
+    nonlocalCells_.clear();
+    nonlocalOwners_.clear();
+}
+
+
+template<class StencilType>
+void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::topoChange
+(
+    const polyTopoChangeMap& mpm
+)
+{
+	stencilMap_.clear();
+    mapPtr_.clear();
+    gIndexPtr_.clear();
+    nonlocalCells_.clear();
+    nonlocalOwners_.clear();
+}
+
+
+template<class StencilType>
+void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::mapMesh
 (
     const polyMeshMap& mpm
 )

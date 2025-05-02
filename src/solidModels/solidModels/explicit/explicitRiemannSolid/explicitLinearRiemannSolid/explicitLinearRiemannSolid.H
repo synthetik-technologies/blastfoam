@@ -77,7 +77,7 @@ public:
     // Constructors
 
         //- Construct from components
-        explicitLinearRiemannSolid(dynamicFvMesh& mesh);
+        explicitLinearRiemannSolid(fvMesh& mesh);
 
     // Destructor
 

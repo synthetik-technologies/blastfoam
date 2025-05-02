@@ -55,7 +55,7 @@ template<class SolidModel>
 Foam::solidModels::TotalDisplacementSolid<SolidModel>::TotalDisplacementSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType nonLinear,
     const bool isSolid
 )

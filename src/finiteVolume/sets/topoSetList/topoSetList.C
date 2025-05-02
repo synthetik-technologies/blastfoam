@@ -498,18 +498,9 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
 
 Foam::topoSetList::topoSetList(const polyMesh& mesh)
 :
-    TopoSetList
-    (
-        mesh,
-        IOobject
-        (
-            typeName,
-            mesh.facesInstance(),
-            mesh
-        )
-    )
+    TopoSetList(mesh)
 {
-    wordList cellZoneNames = mesh.cellZones().names();
+    wordList cellZoneNames = mesh.cellZones().toc();
     forAll(mesh.cellZones(), czi)
     {
         const cellZone& cz = mesh.cellZones()[czi];
@@ -526,7 +517,7 @@ Foam::topoSetList::topoSetList(const polyMesh& mesh)
         cellZones_.insert(cellZoneNames[czi]);
     }
 
-    wordList faceZoneNames = mesh.faceZones().names();
+    wordList faceZoneNames = mesh.faceZones().toc();
     forAll(mesh.faceZones(), fzi)
     {
         const faceZone& fz = mesh.faceZones()[fzi];
@@ -544,7 +535,7 @@ Foam::topoSetList::topoSetList(const polyMesh& mesh)
         faceZones_.insert(faceZoneNames[fzi]);
     }
 
-    wordList pointZoneNames = mesh.pointZones().names();
+    wordList pointZoneNames = mesh.pointZones().toc();
     forAll(mesh.pointZones(), pzi)
     {
         const pointZone& pz = mesh.pointZones()[pzi];
@@ -1196,7 +1187,6 @@ void Foam::topoSetList::transferZones(const bool remove)
                 (
                     czIter()->name(),
                     czIter()->toc(),
-                    zonei,
                     this->mesh().cellZones()
                 );
             if (remove)
@@ -1220,7 +1210,6 @@ void Foam::topoSetList::transferZones(const bool remove)
                     fzIter()->name(),
                     fzIter()->toc(),
                     dynamicCast<const faceZoneSet>(*fzIter()).flipMap(),
-                    zonei,
                     this->mesh().faceZones()
                 );
             if (remove)
@@ -1243,7 +1232,6 @@ void Foam::topoSetList::transferZones(const bool remove)
                 (
                     pzIter()->name(),
                     pzIter()->toc(),
-                    zonei,
                     this->mesh().pointZones()
                 );
             if (remove)
@@ -1290,7 +1278,7 @@ bool Foam::topoSetList::writeSets() const
     List<cellZone*> meshCellZones;
     List<faceZone*> meshFaceZones;
     List<pointZone*> meshPointZones;
-    label cellZonei = 0;
+
     forAllConstIter
     (
         HashPtrTable<topoSet>,
@@ -1306,7 +1294,6 @@ bool Foam::topoSetList::writeSets() const
                 (
                     iter()->name(),
                     iter()->toc(),
-                    cellZonei++,
                     this->mesh().cellZones()
                 )
             );
@@ -1319,7 +1306,6 @@ bool Foam::topoSetList::writeSets() const
         }
     }
 
-    label faceZonei = 0;
     forAllConstIter
     (
         HashPtrTable<topoSet>,
@@ -1336,7 +1322,6 @@ bool Foam::topoSetList::writeSets() const
                     iter()->name(),
                     iter()->toc(),
                     boolList(iter()->size(), false),
-                    faceZonei++,
                     this->mesh().faceZones()
                 )
             );
@@ -1349,7 +1334,6 @@ bool Foam::topoSetList::writeSets() const
         }
     }
 
-    label pointZonei = 0;
     forAllConstIter
     (
         HashPtrTable<topoSet>,
@@ -1365,7 +1349,6 @@ bool Foam::topoSetList::writeSets() const
                 (
                     iter()->name(),
                     iter()->toc(),
-                    pointZonei++,
                     this->mesh().pointZones()
                 )
             );
@@ -1377,17 +1360,17 @@ bool Foam::topoSetList::writeSets() const
             iter()->write();
         }
     }
-    if (cellZonei || faceZonei || pointZonei)
+    if (meshCellZones.size() || meshFaceZones.size() || meshPointZones.size())
     {
-        if (cellZonei && debug)
+        if (meshCellZones.size() && debug)
         {
             Info << "Adding cellZones " << cellZones_ << endl;
         }
-        if (faceZonei && debug)
+        if (meshFaceZones.size() && debug)
         {
             Info << "Adding faceZones " << faceZones_ << endl;
         }
-        if (pointZonei && debug)
+        if (meshPointZones.size() && debug)
         {
             Info << "Adding pointZones " << pointZones_ << endl;
         }

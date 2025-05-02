@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "virtualMassModel.H"
-#include "BlendedInterfacialModel.H"
 #include "phasePair.H"
 #include "surfaceInterpolate.H"
 
@@ -56,7 +55,7 @@ Foam::virtualMassModel::virtualMassModel
         IOobject
         (
             IOobject::groupName(typeName, pair.name()),
-            pair.phase1().mesh().time().timeName(),
+            pair.phase1().mesh().time().name(),
             pair.phase1().mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -75,42 +74,23 @@ Foam::virtualMassModel::~virtualMassModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::virtualMassModel::KI
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return Cvm(nodei, nodej)*pair_.continuous().rho();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::virtualMassModel::K
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return pair_.dispersed().volumeFraction(nodei)*KI(nodei, nodej);
-}
-
-
-Foam::tmp<Foam::surfaceScalarField> Foam::virtualMassModel::Kf
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        fvc::interpolate(pair_.dispersed().volumeFraction(nodei))
-       *fvc::interpolate(KI(nodei, nodej));
-}
-
-
 bool Foam::virtualMassModel::writeData(Ostream& os) const
 {
     return os.good();
 }
+
+
+Foam::tmp<Foam::volScalarField> Foam::blendedVirtualMassModel::K() const
+{
+    return this->evaluate
+    (
+        &virtualMassModel::K,
+        "K",
+        virtualMassModel::dimK,
+        false
+    );
+}
+
 
 
 // ************************************************************************* //

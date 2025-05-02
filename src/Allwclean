@@ -10,7 +10,7 @@ wclean $targetType thermodynamicModels
 wclean $targetType radiationModels
 wclean $targetType compressibleSystem
 wclean $targetType dynamicMesh
-wclean $targetType dynamicFvMesh
+# wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
 wclean $targetType functionObjects
 wclean $targetType atmosphereModels

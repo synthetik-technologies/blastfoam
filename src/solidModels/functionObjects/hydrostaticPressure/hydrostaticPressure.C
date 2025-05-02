@@ -33,6 +33,8 @@ License
 
 namespace Foam
 {
+namespace functionObjects
+{
     defineTypeNameAndDebug(hydrostaticPressure, 0);
 
     addToRunTimeSelectionTable
@@ -42,103 +44,50 @@ namespace Foam
         dictionary
     );
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-
-bool Foam::hydrostaticPressure::writeData()
-{
-    if (time_.outputTime())
-    {
-        // Lookup the solid mesh
-        const fvMesh* meshPtr = NULL;
-        if (time_.foundObject<fvMesh>("solid"))
-        {
-            meshPtr = &(time_.lookupObject<fvMesh>("solid"));
-        }
-        else
-        {
-            meshPtr = &(time_.lookupObject<fvMesh>("region0"));
-        }
-        const fvMesh& mesh = *meshPtr;
-
-        // Lookup stress tensor
-        const volSymmTensorField& sigma =
-            mesh.lookupObject<volSymmTensorField>("sigma");
-
-        // Calculate hydrostatic stress
-
-        const volScalarField hydrostaticPressure
-        (
-            "hydrostaticPressure", -tr(sigma)/3.0
-        );
-
-        hydrostaticPressure.write();
-
-        Info<< "Hydrostatic pressure: min = " << gMin(hydrostaticPressure)
-            << ", max = " << gMax(hydrostaticPressure) << endl;
-    }
-
-    return true;
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::hydrostaticPressure::hydrostaticPressure
+Foam::functionObjects::hydrostaticPressure::hydrostaticPressure
 (
     const word& name,
     const Time& t,
     const dictionary& dict
 )
 :
-    functionObject(name),
-    name_(name),
-    time_(t)
+    fvMeshFunctionObject(name, t, dict)
 {
-    Info<< "Creating " << this->name() << " function object" << endl;
+    read(dict);
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::hydrostaticPressure::~hydrostaticPressure()
+Foam::functionObjects::hydrostaticPressure::~hydrostaticPressure()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::hydrostaticPressure::start()
+bool Foam::functionObjects::hydrostaticPressure::read(const dictionary& dict)
 {
-    if (time_.outputTime())
-    {
-        return writeData();
-    }
+    return fvMeshFunctionObject::read(dict);
+}
 
-    return true;
+bool Foam::functionObjects::hydrostaticPressure::execute()
+{
+    // Lookup stress tensor
+    const volSymmTensorField& sigma =
+        mesh_.lookupObject<volSymmTensorField>("sigma");
+
+    return store("hydrostaticPressure", -tr(sigma)/3.0);
 }
 
 
-bool Foam::hydrostaticPressure::execute()
+bool Foam::functionObjects::hydrostaticPressure::write()
 {
-    if (time_.outputTime())
-    {
-        return writeData();
-    }
-
-    return true;
-}
-
-
-bool Foam::hydrostaticPressure::read(const dictionary& dict)
-{
-    return true;
-}
-
-
-bool Foam::hydrostaticPressure::write()
-{
-    return writeData();
+    return writeObject("hydrostaticPressure");
 }
 
 // ************************************************************************* //

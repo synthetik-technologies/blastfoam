@@ -147,10 +147,28 @@ protected:
 
             //- Calculate the sub delta given the actual change
             template<template<class> class ListType, class Type>
+            void calcDelta
+            (
+                const Type& f,
+                const ListType<Type>& fList,
+                Type& fLimited
+            ) const;
+
+            //- Calculate the sub delta given the actual change
+            template<template<class> class ListType, class Type>
             tmp<Type> calcAndStoreDelta
             (
                 const Type& f,
                 ListType<Type>& fList
+            );
+
+            //- Calculate the sub delta given the actual change
+            template<template<class> class ListType, class Type>
+            void calcAndStoreDelta
+            (
+                const Type& f,
+                ListType<Type>& fList,
+                Type& fLimited
             );
 
 

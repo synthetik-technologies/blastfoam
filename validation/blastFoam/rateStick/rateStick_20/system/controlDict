@@ -61,6 +61,11 @@ functions
         writeControl  timeStep;
         writeInterval 1;
 
+        codeInclude
+        #{
+            #include "OFstream.H"
+        #};
+
         codeExecute
         #{
             static bool write = true;

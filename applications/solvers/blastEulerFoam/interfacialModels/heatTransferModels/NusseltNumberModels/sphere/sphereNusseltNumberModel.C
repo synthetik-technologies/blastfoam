@@ -60,29 +60,17 @@ Foam::NusseltNumberModels::sphere::~sphere()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::NusseltNumberModels::sphere::Nu
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::NusseltNumberModels::sphere::Nu() const
 {
-    return 2.0 + 0.4*sqrt(pair_.Re(nodei, nodej))*cbrt(pair_.Pr(nodei, nodej));
+    return 2.0 + 0.4*sqrt(pair_.Re())*cbrt(pair_.Pr());
 }
 
 
-Foam::scalar Foam::NusseltNumberModels::sphere::cellNu
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::NusseltNumberModels::sphere::cellNu(const label celli) const
 {
     return
         2.0
-      + 0.4
-       *sqrt(pair_.cellRe(celli, nodei, nodej))
-       *cbrt(pair_.cellPr(celli, nodei, nodej));
+      + 0.4*sqrt(pair_.cellRe(celli))*cbrt(pair_.cellPr(celli));
 }
 
 // ************************************************************************* //

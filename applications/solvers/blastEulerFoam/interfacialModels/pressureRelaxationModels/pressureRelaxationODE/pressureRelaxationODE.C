@@ -64,7 +64,7 @@ Foam::pressureRelaxationODE::pressureRelaxationODE
         IOobject
         (
             typeName + ":deltaT",
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -121,7 +121,7 @@ void Foam::pressureRelaxationODE::derivatives
     dqdt = scalarField(nEqns_, 0.0);
     forAll(thermos_, phasei)
     {
-        thermos_[phasei].rho()[li] =
+        thermos_[phasei].rhoRef()[li] =
             phaseModels_[phasei].alphaRho()[li]
            /max(phaseModels_[phasei][li], 1e-10);
     }
@@ -171,7 +171,7 @@ void Foam::pressureRelaxationODE::jacobian
     J = scalarSquareMatrix(nEqns_, 0.0);
     forAll(thermos_, phasei)
     {
-        thermos_[phasei].rho()[li] =
+        thermos_[phasei].rhoRef()[li] =
             phaseModels_[phasei].alphaRho()[li]
            /max(phaseModels_[phasei][li], 1e-10);
     }

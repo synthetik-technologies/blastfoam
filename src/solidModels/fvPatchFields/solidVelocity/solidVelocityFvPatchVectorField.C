@@ -33,14 +33,10 @@ License
 #include "pointFields.H"
 #include "valuePointPatchFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * * * //
 
-void solidVelocityFvPatchVectorField::makeInterp() const
+void Foam::solidVelocityFvPatchVectorField::makeInterp() const
 {
     if (interpPtr_.valid())
     {
@@ -52,7 +48,8 @@ void solidVelocityFvPatchVectorField::makeInterp() const
 }
 
 
-primitivePatchInterpolation& solidVelocityFvPatchVectorField::interp()
+const Foam::solidVelocityFvPatchVectorField::primitivePatchInterpolation&
+Foam::solidVelocityFvPatchVectorField::interp() const
 {
     if (interpPtr_.empty())
     {
@@ -63,7 +60,7 @@ primitivePatchInterpolation& solidVelocityFvPatchVectorField::interp()
 }
 
 
-void solidVelocityFvPatchVectorField::setPointDisplacement
+void Foam::solidVelocityFvPatchVectorField::setPointDisplacement
 (
     const vectorField& faceDisp
 )
@@ -111,7 +108,7 @@ void solidVelocityFvPatchVectorField::setPointDisplacement
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
+Foam::solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -124,22 +121,22 @@ solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
 {}
 
 
-solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
+Foam::solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
 (
-    const solidVelocityFvPatchVectorField& ptf,
+    const solidVelocityFvPatchVectorField& svpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
-    fixedValueFvPatchVectorField(ptf, p, iF, mapper),
-    velocity_(mapper(ptf.velocity_)),
-    velocitySeries_(ptf.velocitySeries_, false),
+    fixedValueFvPatchVectorField(svpvf, p, iF, mapper),
+    velocity_(mapper(svpvf.velocity_)),
+    velocitySeries_(svpvf.velocitySeries_, false),
     interpPtr_(NULL)
 {}
 
 
-solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
+Foam::solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -162,11 +159,17 @@ solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
     else if (dict.found("velocitySeries"))
     {
         DebugInfo<< "    velocity is time-varying" << endl;
-        velocitySeries_ = Function1<vector>::New("velocitySeries", dict);
+        velocitySeries_ = Function1<vector>::New
+        (
+            "velocitySeries",
+            this->db().time().userUnits(),
+            dimVelocity,
+            dict
+        );
 
         fvPatchField<vector>::operator==
         (
-            velocitySeries_->value(this->db().time().timeOutputValue())
+            velocitySeries_->value(this->db().time().value())
         );
     }
     else
@@ -187,50 +190,51 @@ solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
 }
 
 
-solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
+Foam::solidVelocityFvPatchVectorField::solidVelocityFvPatchVectorField
 (
-    const solidVelocityFvPatchVectorField& pivpvf,
+    const solidVelocityFvPatchVectorField& svpvf,
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    fixedValueFvPatchVectorField(pivpvf, iF),
-    velocity_(pivpvf.velocity_),
-    velocitySeries_(pivpvf.velocitySeries_, false),
+    fixedValueFvPatchVectorField(svpvf, iF),
+    velocity_(svpvf.velocity_),
+    velocitySeries_(svpvf.velocitySeries_, false),
     interpPtr_(NULL)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void solidVelocityFvPatchVectorField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchVectorField::autoMap(m);
-
-    m(velocity_, velocity_);
-}
-
-
-// Reverse-map the given fvPatchField onto this fvPatchField
-void solidVelocityFvPatchVectorField::rmap
+void Foam::solidVelocityFvPatchVectorField::map
 (
     const fvPatchField<vector>& ptf,
-    const labelList& addr
+    const fieldMapper& mapper
 )
 {
-    fixedValueFvPatchVectorField::rmap(ptf, addr);
+    fixedValueFvPatchVectorField::map(ptf, mapper);
 
-    const solidVelocityFvPatchVectorField& dmptf =
+    const solidVelocityFvPatchVectorField& svpvf =
        refCast<const solidVelocityFvPatchVectorField>(ptf);
 
-    velocity_.rmap(dmptf.velocity_, addr);
+    mapper(velocity_, svpvf.velocity_);
 }
 
 
-void solidVelocityFvPatchVectorField::updateCoeffs()
+void Foam::solidVelocityFvPatchVectorField::reset
+(
+    const fvPatchField<vector>& ptf
+)
+{
+    fixedValueFvPatchVectorField::reset(ptf);
+
+    const solidVelocityFvPatchVectorField& svpvf =
+       refCast<const solidVelocityFvPatchVectorField>(ptf);
+
+    velocity_.reset(svpvf.velocity_);
+}
+
+
+void Foam::solidVelocityFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())
     {
@@ -240,7 +244,7 @@ void solidVelocityFvPatchVectorField::updateCoeffs()
     // Check if the velocity is time-varying
     if (velocitySeries_.valid())
     {
-        velocity_ = velocitySeries_->value(this->db().time().timeOutputValue());
+        velocity_ = velocitySeries_->value(this->db().time().value());
     }
 
     vectorField disp = vectorField(patch().size(), vector::zero);
@@ -274,7 +278,8 @@ void solidVelocityFvPatchVectorField::updateCoeffs()
 }
 
 
-Foam::tmp<Foam::Field<vector> > solidVelocityFvPatchVectorField::snGrad() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::solidVelocityFvPatchVectorField::snGrad() const
 {
     // fixedValue snGrad with no correction
     // return (*this - patchInternalField())*this->patch().deltaCoeffs();
@@ -300,8 +305,8 @@ Foam::tmp<Foam::Field<vector> > solidVelocityFvPatchVectorField::snGrad() const
     )*patch().deltaCoeffs();
 }
 
-tmp<Field<vector> >
-solidVelocityFvPatchVectorField::gradientBoundaryCoeffs() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::solidVelocityFvPatchVectorField::gradientBoundaryCoeffs() const
 {
     const fvPatchField<tensor>& gradField =
         patch().lookupPatchField<volTensorField, tensor>
@@ -322,7 +327,8 @@ solidVelocityFvPatchVectorField::gradientBoundaryCoeffs() const
     );
 }
 
-void solidVelocityFvPatchVectorField::write(Ostream& os) const
+
+void Foam::solidVelocityFvPatchVectorField::write(Ostream& os) const
 {
     if (velocitySeries_.valid())
     {
@@ -339,14 +345,14 @@ void solidVelocityFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField
-(
-    fvPatchVectorField,
-    solidVelocityFvPatchVectorField
-);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        solidVelocityFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

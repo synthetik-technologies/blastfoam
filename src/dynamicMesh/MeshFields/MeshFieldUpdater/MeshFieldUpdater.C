@@ -33,10 +33,10 @@ Foam::MeshFieldUpdater<GeoMesh>::MeshFieldUpdater
     const polyMesh& mesh
 )
 :
-    MeshObject
+    DemandDrivenMeshObject
     <
         polyMesh,
-        DistributeableMeshObject,
+        RepatchableMeshObject,
         MeshFieldUpdater<GeoMesh>
     >(mesh)
 {}

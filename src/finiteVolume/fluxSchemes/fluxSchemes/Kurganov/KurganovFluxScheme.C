@@ -79,7 +79,7 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             IOobject
             (
                 fieldName("aOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -93,7 +93,7 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             IOobject
             (
                 fieldName("aNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -129,9 +129,9 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     scalar cSfOwn(cOwn*magSf);
     scalar cSfNei(cNei*magSf);
 
-    const scalar vMesh(meshPhi(facei, patchi));
-    phivOwn -= vMesh;
-    phivNei -= vMesh;
+    const scalar meshFlux = meshPhi(facei, patchi);
+    phivOwn -= meshFlux;
+    phivNei -= meshFlux;
 
     scalar ap
     (
@@ -183,7 +183,7 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + vMesh*(aOwn*pOwn + aNei*pNei)
+      + meshFlux*(aOwn*pOwn + aNei*pNei)
     );
 }
 
@@ -213,7 +213,7 @@ Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
-      + meshPhi(facei, patchi)/mag(Sf)*(aOwn*pOwn + aNei*pNei)
+      + meshPhi(facei, patchi)*(aOwn*pOwn + aNei*pNei)
     );
 }
 
@@ -221,7 +221,6 @@ Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
 Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool isDensity,
     const label facei, const label patchi
 ) const
 {

@@ -37,7 +37,7 @@ SourceFiles
 #ifndef IterativeSolidModel_H
 #define IterativeSolidModel_H
 
-#include "dynamicFvMesh.H"
+#include "fvMesh.H"
 #include "IOdictionary.H"
 #include "scalarIOField.H"
 #include "autoPtr.H"
@@ -191,6 +191,12 @@ protected:
             return materialTol_;
         }
 
+        //- Return material law relative tolerance
+        scalar materialRelTol() const
+        {
+            return materialRelTol_;
+        }
+
         //- Return write frequency for residuals information
         int infoFrequency() const
         {
@@ -218,7 +224,7 @@ public:
         IterativeSolidModel
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const nonLinearGeometry::nonLinearType nonlinear,
             const bool incremental,
             const bool isSolid

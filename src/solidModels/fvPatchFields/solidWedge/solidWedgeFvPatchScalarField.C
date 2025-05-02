@@ -28,14 +28,10 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
+Foam::solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
@@ -45,12 +41,12 @@ solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 {}
 
 
-solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
+Foam::solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 (
     const solidWedgeFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     wedgeFvPatchField<scalar>(ptf, p, iF, mapper)
@@ -68,7 +64,7 @@ solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 }
 
 
-solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
+Foam::solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -104,7 +100,7 @@ solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 }
 
 
-solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
+Foam::solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 (
     const solidWedgeFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
@@ -116,7 +112,8 @@ solidWedgeFvPatchScalarField::solidWedgeFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-tmp<Field<scalar> > solidWedgeFvPatchScalarField::snGrad() const
+Foam::tmp<Foam::Field<Foam::scalar>>
+Foam::solidWedgeFvPatchScalarField::snGrad() const
 {
     //Info<< "solidWedgeFvPatchScalarField::snGrad()" << endl;
     // Method:
@@ -130,7 +127,7 @@ tmp<Field<scalar> > solidWedgeFvPatchScalarField::snGrad() const
     const wedgePolyPatch& wedgePatch =
         refCast<const wedgePolyPatch>(patch().patch());
 
-    const vectorField& patchC = patch().patch().faceCentres();
+    const SubField<vector> patchC = patch().patch().faceCentres();
     vectorField nHat(this->patch().nf());
     const vector centreN = wedgePatch.centreNormal();
     scalarField d(((patch().Cn() - patchC) & centreN)/(nHat & centreN));
@@ -174,7 +171,10 @@ tmp<Field<scalar> > solidWedgeFvPatchScalarField::snGrad() const
 }
 
 
-void solidWedgeFvPatchScalarField::evaluate(const Pstream::commsTypes)
+void Foam::solidWedgeFvPatchScalarField::evaluate
+(
+    const Pstream::commsTypes
+)
 {
     if (!this->updated())
     {
@@ -189,7 +189,7 @@ void solidWedgeFvPatchScalarField::evaluate(const Pstream::commsTypes)
         refCast<const wedgeFvPatch>(this->patch());
 
     // Rotate patchC field back to centre plane to find transformed cell centres
-    const vectorField patchC(patch().patch().faceCentres());
+    const SubField<vector> patchC = patch().patch().faceCentres();
     vectorField transC(wedgePatch.faceT().T() & patchC);
 
     // Calculate correction vector which connects actual cell centre to the
@@ -214,10 +214,14 @@ void solidWedgeFvPatchScalarField::evaluate(const Pstream::commsTypes)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchScalarField, solidWedgeFvPatchScalarField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchScalarField,
+        solidWedgeFvPatchScalarField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

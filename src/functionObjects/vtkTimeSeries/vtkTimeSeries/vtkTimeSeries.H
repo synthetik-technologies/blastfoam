@@ -69,7 +69,8 @@ public:
         (
             const fileName& path,
             const bool nRemove,
-            const bool read
+            const bool read,
+            const scalar curTime = great
         );
 
 

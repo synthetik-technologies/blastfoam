@@ -673,7 +673,7 @@ public:
         );
 
     //- Write data to dictionary stream
-    virtual void write(Ostream& os) const;
+    virtual void write(Ostream& os, const word& dictName = word::null) const;
 
 
     // Member Operators
@@ -695,6 +695,15 @@ public:
 
 template<class Type>
 void writeEntry(Ostream& os, const lookupTable2D<Type>& table);
+
+template<class Type>
+void writeEntry
+(
+    Ostream& os,
+    const word& dictName,
+    const lookupTable2D<Type>& table
+);
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

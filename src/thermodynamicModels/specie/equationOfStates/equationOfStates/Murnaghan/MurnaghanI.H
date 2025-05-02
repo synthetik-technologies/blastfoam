@@ -210,9 +210,9 @@ Foam::scalar Foam::Murnaghan<Specie>::E
 {
     scalar rhos(max(rho, rhoMin_));
     return
-       -pRef_/rhos
-      + (pow(rho/rho0_, n_) - (n_ - 1.0))
-       /(kappa_*n_*max(rho*(n_ - 1.0), 1e-10));
+        K0_/(K0Prime_*rhos)
+       *(pow(rho/rho0_, K0Prime_)/(K0Prime_ - 1.0) + 1.0)
+      - K0_/((K0Prime_ - 1.0)*rho0_);
 }
 
 

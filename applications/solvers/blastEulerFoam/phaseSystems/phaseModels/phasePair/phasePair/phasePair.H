@@ -126,60 +126,28 @@ public:
         tmp<volScalarField> rho() const;
 
         //- Relative velocity magnitude
-        tmp<volScalarField> magUr
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> magUr() const;
 
         //- Relative velocity
-        tmp<volVectorField> Ur
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volVectorField> Ur() const;
 
          //- Reynolds number
-        tmp<volScalarField> Re
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> Re() const;
 
         //- Prandtl number
-        tmp<volScalarField> Pr
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> Pr() const;
 
          //- Weber number
-        tmp<volScalarField> We
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> We() const;
 
         //- Eotvos number
-        tmp<volScalarField> Eo
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> Eo() const;
 
         //- Eotvos number based on hydraulic diameter type 1
-        tmp<volScalarField> EoH1
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> EoH1() const;
 
         //- Eotvos number based on hydraulic diameter type 2
-        tmp<volScalarField> EoH2
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> EoH2() const;
 
         //- Surface tension coefficient
         tmp<volScalarField> sigma() const;
@@ -188,18 +156,10 @@ public:
         tmp<volScalarField> Mo() const;
 
         //- Takahashi Number
-        tmp<volScalarField> Ta
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volScalarField> Ta() const;
 
         //- Aspect ratio
-        virtual tmp<volScalarField> E
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> E() const;
 
 
         // Cell based
@@ -208,68 +168,28 @@ public:
             scalar cellrho(const label celli) const;
 
             //- Relative velocity magnitude
-            scalar cellmagUr
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            scalar cellmagUr(const label celli) const;
 
             //- Relative velocity
-            vector cellUr
-            (
-                const label celli,
-                const label nodei = -1,
-            const label nodej = -1
-            ) const;
+            vector cellUr(const label celli) const;
 
             //- Reynolds number
-            scalar cellRe
-            (
-                const label celli,
-                const label nodei = -1,
-            const label nodej = -1
-            ) const;
+            scalar cellRe(const label celli) const;
 
             //- Prandtl number
-            scalar cellPr
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            scalar cellPr(const label celli) const;
 
             //- Weber number
-            scalar cellWe
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            scalar cellWe(const label celli) const;
 
             //- Eotvos number
-            scalar cellEo
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            scalar cellEo(const label celli) const;
 
             //- Eotvos number based on hydraulic diameter type 1
-            scalar cellEoH1
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            scalar cellEoH1(const label celli) const;
 
             //- Eotvos number based on hydraulic diameter type 2
-            scalar cellEoH2
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            scalar cellEoH2(const label celli) const;
 
             //- Surface tension coefficient
             scalar cellsigma(label celli) const;
@@ -278,20 +198,10 @@ public:
             scalar cellMo(const label celli) const;
 
             //- Takahashi Number
-            scalar cellTa
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            scalar cellTa(const label celli) const;
 
             //- Aspect ratio
-            virtual scalar cellE
-            (
-                const label celli,
-                const label nodei = -1,
-                const label nodej = -1
-            ) const;
+            virtual scalar cellE(const label celli) const;
 
         // Access
 

@@ -108,7 +108,7 @@ public:
     // Constructors
 
         //- Construct from components
-        linearPressureDisplacementSolid(dynamicFvMesh& mesh);
+        linearPressureDisplacementSolid(fvMesh& mesh);
 
     // Destructor
 

@@ -66,63 +66,63 @@ Foam::dragModels::lengthBased::~lengthBased()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the lengthBased model."
-        << exit(FatalError);
-
-    return pair_.phase1();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::Ki
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::Ki() const
 {
     return
         C_
        *pair_.dispersed().rho()
        *4.0
-       /sqr(pair_.dispersed().d(nodei));
+       /sqr(pair_.dispersed().d());
 }
 
 
-Foam::scalar Foam::dragModels::lengthBased::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::K() const
 {
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the lengthBased model."
-        << exit(FatalError);
+    return
+        max
+        (
+            pair_.dispersed(),
+            pair_.dispersed().residualAlpha()
+        )*Ki();
+}
 
-    return pair_.phase1()[celli];
+
+Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::lengthBased::Kf() const
+{
+    return
+        max
+        (
+            fvc::interpolate(pair_.dispersed()),
+            pair_.dispersed().residualAlpha()
+        )*fvc::interpolate(Ki());
 }
 
 
 Foam::scalar Foam::dragModels::lengthBased::cellKi
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
     return
         C_.value()
        *pair_.dispersed().rho()[celli]
        *4.0
-       /sqr(pair_.dispersed().celld(celli, nodei));
+       /sqr(pair_.dispersed().celld(celli));
 }
+
+
+Foam::scalar Foam::dragModels::lengthBased::cellK
+(
+    const label celli
+) const
+{
+    return
+        max
+        (
+            pair_.dispersed()[celli],
+            pair_.dispersed().residualAlpha().value()
+        )*cellKi(celli);
+}
+
 
 // ************************************************************************* //

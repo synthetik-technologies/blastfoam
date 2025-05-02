@@ -87,7 +87,7 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0
         IOobject
         (
             "alphard",
-            alphap.time().timeName(),
+            alphap.time().name(),
             alphap.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -153,7 +153,7 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0prime
         IOobject
         (
             "alphard",
-            alphap.time().timeName(),
+            alphap.time().name(),
             alphap.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -176,12 +176,8 @@ Foam::kineticTheoryModels::radialModels::Lebowitz::gs0prime
     volScalarField d1(phase1.d());
     volScalarField d2(phase2.d());
     return
-        1.0/max(sqr(alphag), residualAlpha_)
-       *(
-            1.0
-          + 3.0*d2/(d1 + d2)
-           *(2.0/max(alphag, residualAlpha_)*(d1*alphard + phase1) + 1.0)
-        );
+        (1.0 + 3.0*d2/(d1 + d2)*(1.0 + 2.0*d1*alphard/alphag))
+       /sqr(max(alphag, residualAlpha_));
 }
 
 

@@ -79,7 +79,7 @@ void Foam::phaseFluxSchemes::Kurganov::createSavedFields()
             IOobject
             (
                 fieldName("aOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -93,7 +93,7 @@ void Foam::phaseFluxSchemes::Kurganov::createSavedFields()
             IOobject
             (
                 fieldName("aNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,

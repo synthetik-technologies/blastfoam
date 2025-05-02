@@ -88,7 +88,7 @@ public:
     TypeName("fluid");
 
     // Constructor
-    fluid(dynamicFvMesh& mesh, const regionSolverList& regions);
+    fluid(fvMesh& mesh, const regionSolverList& regions);
 
 
     //- Destructor

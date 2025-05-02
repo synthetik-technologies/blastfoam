@@ -25,7 +25,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UnsUpdatedLagrangianGeomSolid.H"
-#include "fvcInterpolate.H"
+#include "fvcPointInterpolate.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -40,7 +40,7 @@ template<class IncrementalModel>
 UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const bool isSolid
 )
 :
@@ -50,7 +50,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
         IOobject
         (
             "Ff",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -62,7 +62,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
         IOobject
         (
             "relFf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -74,7 +74,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
         IOobject
         (
             "invRelFf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -86,7 +86,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
         IOobject
         (
             "Jf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -98,7 +98,7 @@ UnsUpdatedLagrangianGeomSolid<IncrementalModel>::UnsUpdatedLagrangianGeomSolid
         IOobject
         (
             "relJf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE

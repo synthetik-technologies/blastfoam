@@ -60,18 +60,26 @@ Foam::heatTransferModels::RanzMarshall::~RanzMarshall()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::heatTransferModels::RanzMarshall::K
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::heatTransferModels::RanzMarshall::K() const
 {
     return
         6.0
-       *max(pair_.dispersed().volumeFraction(nodei), residualAlpha_)
+       *max(pair_.dispersed(), residualAlpha_)
        *pair_.continuous().kappa()
-       *this->NuModel_->Nu(nodei, nodej)
-       /sqr(pair_.dispersed().d(nodei));
+       *this->NuModel_->Nu()
+       /sqr(pair_.dispersed().d());
+}
+
+
+Foam::scalar
+Foam::heatTransferModels::RanzMarshall::cellK(const label celli) const
+{
+    return
+        6.0
+       *max(pair_.dispersed()[celli], residualAlpha_.value())
+       *pair_.continuous().cellkappa(celli)
+       *this->NuModel_->cellNu(celli)
+       /sqr(pair_.dispersed().celld(celli));
 }
 
 

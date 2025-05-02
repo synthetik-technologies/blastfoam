@@ -262,14 +262,6 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Hf() const
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::flameT() const
-{
-    NotImplemented;
-    return 0;
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::janafThermo<EquationOfState>::S
 (
     const scalar p,

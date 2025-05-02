@@ -81,7 +81,7 @@ public:
     // Constructors
 
         //- Construct from components
-        unsLinearTotalDisplacementSolid(dynamicFvMesh& mesh);
+        unsLinearTotalDisplacementSolid(fvMesh& mesh);
 
     // Destructor
 

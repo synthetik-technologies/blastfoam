@@ -39,7 +39,7 @@ SourceFiles
 #include "volFields.H"
 #include "NamedEnum.H"
 #include "surfaceFields.H"
-#include "searchableSurface.H"
+#include "searchableSurfaces.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -108,9 +108,6 @@ private:
 
         //- Use distributed triSurface
         bool useDistributed_;
-
-        //- Filtering method for contouring
-        word filterType_;
 
         //- Method for computing level set function
         levelSetFunc lsFunc_;

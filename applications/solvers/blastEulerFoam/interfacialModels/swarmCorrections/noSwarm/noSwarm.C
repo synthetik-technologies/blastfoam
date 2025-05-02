@@ -61,38 +61,20 @@ Foam::swarmCorrections::noSwarm::~noSwarm()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::swarmCorrections::noSwarm::Cs
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::swarmCorrections::noSwarm::Cs() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return
-        tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "one",
-                    mesh.time().timeName(),
-                    mesh
-                ),
-                mesh,
-                dimensionedScalar("one", dimless, 1.0)
-            )
-        );
+    return volScalarField::New
+    (
+        "one",
+        mesh,
+        dimensionedScalar("one", dimless, 1.0)
+    );
 }
 
 
-Foam::scalar Foam::swarmCorrections::noSwarm::cellCs
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::swarmCorrections::noSwarm::cellCs(const label celli) const
 {
     return 1.0;
 }

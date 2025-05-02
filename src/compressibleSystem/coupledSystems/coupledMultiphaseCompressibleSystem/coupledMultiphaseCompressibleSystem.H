@@ -62,7 +62,11 @@ public:
     TypeName("multiphaseCoupled");
 
     // Constructor
-    coupledMultiphaseCompressibleSystem(const fvMesh& mesh);
+    coupledMultiphaseCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
 
     //- Destructor

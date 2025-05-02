@@ -186,14 +186,15 @@ public:
             //- Calculate Gamma = dpde
             virtual tmp<volScalarField> Gamma() const = 0;
 
-            //- Calculate the pressure
-            virtual tmp<volScalarField> calcp() const = 0;
-
             //- Calculate the speed of sound
             virtual tmp<volScalarField> calcSpeedOfSound() const = 0;
 
             //- Pressure [Pa]
             const volScalarField& p() const;
+
+            //- Calculate the pressure
+            virtual tmp<volScalarField> pRhoT() const ;
+
 
             //- Calculate pressure for cell [Pa]
             virtual scalar cellpRhoT
@@ -202,8 +203,19 @@ public:
                 const bool limit = true
             ) const = 0;
 
+            //- Calculate pressure for patch and face [Pa]
+            virtual scalar patchFacepRhoT
+            (
+                const label patchi,
+                const label facei,
+                const bool limit = true
+            ) const = 0;
+
             //- Gamma = dpde for cell []
             virtual scalar cellGamma(const label celli) const = 0;
+
+            //- Gamma = dpde for cell []
+            virtual scalar patchFaceGamma(const label patchi, const label facei) const = 0;
 
             //- Derivative of pressure w.r.t density for cell
             virtual scalar celldpdRho(const label celli) const = 0;

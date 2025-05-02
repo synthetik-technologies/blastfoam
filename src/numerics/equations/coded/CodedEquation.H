@@ -72,6 +72,9 @@ class CodedEquation
         //- Get the keywords associated with source code
         virtual wordList codeKeys() const;
 
+         //- Get the name of the dictionary variables in the source code
+        virtual wordList codeDictVars() const;
+
         //- Adapt the context for the current object
         virtual void prepare
         (

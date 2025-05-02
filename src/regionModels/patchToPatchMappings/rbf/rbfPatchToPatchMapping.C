@@ -305,6 +305,62 @@ rbfPatchToPatchMapping::rbfPatchToPatchMapping
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+labelList rbfPatchToPatchMapping::unmappedFaces
+(
+    const standAlonePatch& patch
+) const
+{
+    Field<scalar> res
+    (
+        (&patch == &(zoneA()))
+      ? zoneBToZoneAFaceInterpolator().interpolate
+        (
+            scalarField(zoneB().size(), 1.0)
+        )
+      : zoneAToZoneBFaceInterpolator().interpolate
+        (
+            scalarField(zoneA().size(), 1.0)
+        )
+    );
+    DynamicList<label> unmapped;
+    forAll(res, i)
+    {
+        if (mag(res[i]) < small)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
+labelList rbfPatchToPatchMapping::unmappedPoints
+(
+    const standAlonePatch& patch
+) const
+{
+    Field<scalar> res
+    (
+        (&patch == &(zoneA()))
+      ? zoneBToZoneAPointInterpolator().interpolate
+        (
+            scalarField(zoneB().nPoints(), 1.0)
+        )
+      : zoneAToZoneBPointInterpolator().interpolate
+        (
+            scalarField(zoneA().nPoints(), 1.0)
+        )
+    );
+    DynamicList<label> unmapped;
+    forAll(res, i)
+    {
+        if (mag(res[i]) < small)
+        {
+            unmapped.append(i);
+        }
+    }
+    return unmapped;
+}
+
 void rbfPatchToPatchMapping::transferFaces
 (
     const standAlonePatch& fromZone, // from zone

@@ -44,7 +44,7 @@ SourceFiles
 #ifndef Lamb_H
 #define Lamb_H
 
-#include "virtualMassModel.H"
+#include "dispersedVirtualMassModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -62,7 +62,7 @@ namespace virtualMassModels
 
 class Lamb
 :
-    public virtualMassModel
+    public dispersedVirtualMassModel
 {
 public:
 
@@ -88,11 +88,7 @@ public:
     // Member Functions
 
         //- Virtual mass coefficient
-        virtual tmp<volScalarField> Cvm
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        virtual tmp<volScalarField> Cvm() const;
 };
 
 

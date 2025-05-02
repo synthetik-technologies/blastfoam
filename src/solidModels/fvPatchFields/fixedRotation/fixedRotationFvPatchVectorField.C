@@ -32,14 +32,10 @@ License
 #include "RodriguesRotation.H"
 #include "fixedValuePointPatchFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
+Foam::fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -57,12 +53,12 @@ fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 {}
 
 
-fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
+Foam::fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 (
     const fixedRotationFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     fixedValueFvPatchVectorField(ptf, p, iF, mapper),
@@ -77,7 +73,7 @@ fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 {}
 
 
-fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
+Foam::fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -97,7 +93,13 @@ fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
     // Check if angle is time-varying
     if (dict.found("rotationAngleSeries"))
     {
-        angleSeries_ = Function1<scalar>::New("rotationAngleSeries", dict);
+        angleSeries_ = Function1<scalar>::New
+        (
+            "rotationAngleSeries",
+            this->db().time().userUnits(),
+            unitRadians/dimTime,
+            dict
+        );
     }
     else
     {
@@ -107,13 +109,25 @@ fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
     // Check if there is a time-varying translation
     if (dict.found("displacementSeries"))
     {
-        dispSeries_ = Function1<vector>::New("displacementSeries", dict);
+        dispSeries_ = Function1<vector>::New
+        (
+            "displacementSeries",
+            this->db().time().userUnits(),
+            dimLength,
+            dict
+        );
     }
 
     // Check if origin is time-varying
     if (dict.found("rotationOriginSeries"))
     {
-        originSeries_ = Function1<vector>::New("rotationOriginSeries", dict);
+        originSeries_ = Function1<vector>::New
+        (
+            "rotationOriginSeries",
+            this->db().time().userUnits(),
+            dimLength,
+            dict
+        );
     }
     else
     {
@@ -153,7 +167,7 @@ fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 }
 
 
-fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
+Foam::fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 (
     const fixedRotationFvPatchVectorField& pivpvf,
     const DimensionedField<vector, volMesh>& iF
@@ -173,8 +187,8 @@ fixedRotationFvPatchVectorField::fixedRotationFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::Field<vector> > fixedRotationFvPatchVectorField::
-snGrad() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::fixedRotationFvPatchVectorField::snGrad() const
 {
     // fixedValue snGrad with no correction
     // return (*this - patchInternalField())*this->patch().deltaCoeffs();
@@ -199,7 +213,7 @@ snGrad() const
 }
 
 
-void fixedRotationFvPatchVectorField::updateCoeffs()
+void Foam::fixedRotationFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())
     {
@@ -208,12 +222,12 @@ void fixedRotationFvPatchVectorField::updateCoeffs()
 
     if (angleSeries_.valid())
     {
-        rotationAngle_ = angleSeries_->value(this->db().time().timeOutputValue());
+        rotationAngle_ = angleSeries_->value(this->db().time().value());
     }
 
     if (originSeries_.valid())
     {
-        rotationOrigin_ = originSeries_->value(this->db().time().timeOutputValue());
+        rotationOrigin_ = originSeries_->value(this->db().time().value());
     }
 
     // Rotation tensor
@@ -229,7 +243,7 @@ void fixedRotationFvPatchVectorField::updateCoeffs()
     // Superimposed translation
     if (dispSeries_.valid())
     {
-        disp += dispSeries_->value(this->db().time().timeOutputValue());
+        disp += dispSeries_->value(this->db().time().value());
     }
 
     const fvMesh& mesh = patch().boundaryMesh().mesh();
@@ -290,7 +304,7 @@ void fixedRotationFvPatchVectorField::updateCoeffs()
             if (dispSeries_.valid())
             {
                 pointDisp +=
-                    dispSeries_->value(this->db().time().timeOutputValue());
+                    dispSeries_->value(this->db().time().value());
             }
 
             const labelList& meshPoints =
@@ -316,8 +330,8 @@ void fixedRotationFvPatchVectorField::updateCoeffs()
 }
 
 
-tmp<Field<vector> > fixedRotationFvPatchVectorField::
-gradientBoundaryCoeffs() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::fixedRotationFvPatchVectorField::gradientBoundaryCoeffs() const
 {
     const fvPatchField<tensor>& gradField =
         patch().lookupPatchField<volTensorField, tensor>
@@ -339,7 +353,7 @@ gradientBoundaryCoeffs() const
 }
 
 
-void fixedRotationFvPatchVectorField::write(Ostream& os) const
+void Foam::fixedRotationFvPatchVectorField::write(Ostream& os) const
 {
     fixedValueFvPatchVectorField::write(os);
 
@@ -369,14 +383,14 @@ void fixedRotationFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField
-(
-    fvPatchVectorField,
-    fixedRotationFvPatchVectorField
-);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        fixedRotationFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

@@ -26,8 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "constantTurbulentDispersionCoefficient.H"
-#include "phasePair.H"
-#include "PhaseCompressibleTurbulenceModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -56,7 +54,7 @@ constantTurbulentDispersionCoefficient
     const phasePair& pair
 )
 :
-    turbulentDispersionModel(dict, pair),
+    dispersedTurbulentDispersionModel(dict, pair),
     Ctd_("Ctd", dimless, dict)
 {}
 
@@ -71,17 +69,13 @@ Foam::turbulentDispersionModels::constantTurbulentDispersionCoefficient::
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::turbulentDispersionModels::constantTurbulentDispersionCoefficient::D
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::turbulentDispersionModels::constantTurbulentDispersionCoefficient::D() const
 {
     return
         Ctd_
-       *pair_.dispersed().volumeFraction(nodei)
+       *pair_.dispersed()
        *pair_.continuous().rho()
-       *pair_.continuous().turbulence().k();
+       *continuousTurbulence().k();
 }
 
 

@@ -40,7 +40,7 @@ SourceFiles
 #ifndef directPatchToPatchMapping_H
 #define directPatchToPatchMapping_H
 
-#include "patchToPatchMapping.H"
+#include "nearestPatchToPatchMapping.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,104 +54,53 @@ namespace patchToPatchMappings
                         Class directPatchToPatchMapping Declaration
 \*---------------------------------------------------------------------------*/
 
-class directPatchToPatchMapping
+class direct
 :
-    public patchToPatchMapping
+    public nearest
 {
-    // Private data
+    // Private member functions
 
-        //- Face map from zoneB to zoneA
-        //  For each zoneB face, give the index of the corresponding zoneA face
-        mutable autoPtr<labelIOList> zoneAToZoneBFaceMapPtr_;
-
-        //- Face map from zoneA to zoneB
-        //  For each zoneA face, give the index of the corresponding zoneB face
-        mutable autoPtr<labelIOList> zoneBToZoneAFaceMapPtr_;
-
-        //- Point map from zoneB to zoneA
-        //  For each zoneB point, give the index of the corresponding zoneA
-        //  point
-        mutable autoPtr<labelIOList> zoneAToZoneBPointMapPtr_;
-
-        //- Point map from zoneA to zoneB
-        //  For each zoneA point, give the index of the corresponding zoneB
-        //  point
-        mutable autoPtr<labelIOList> zoneBToZoneAPointMapPtr_;
-
-        //- List of min edge lengths for interfaces points at fluid side
-        mutable autoPtr<scalarField> minEdgeLengthsPtr_;
-
-    // Private static data
-
-        //  Relative tolerance (fraction of minimum edge length used when
-        //  checking for matched faces/points
-        static const scalar relTol_;
-
-    // Private Member Functions
-
-        //- Check zone face and points sizes are conformal
-        void checkZoneSizes() const;
-
-        //- Calculate zoneA to zoneB face map
-        void calcZoneAToZoneBFaceMap() const;
-
-        //- Return a reference to the zoneA to zoneB face map
-        const labelIOList& zoneAToZoneBFaceMap() const;
-
-        //- Calculate zoneB to zoneA face map
-        void calcZoneBToZoneAFaceMap() const;
-
-        //- Return a reference to the zoneB to zoneA face map
-        const labelIOList& zoneBToZoneAFaceMap() const;
-
-        //- Calculate zoneA to zoneB point map
-        void calcZoneAToZoneBPointMap() const;
-
-        //- Return a reference to the zoneA to zoneB point map
-        const labelIOList& zoneAToZoneBPointMap() const;
-
-        //- Calculate zoneB to zoneA point map
-        void calcZoneBToZoneAPointMap() const;
-
-        //- Return a reference to the zoneB to zoneA point map
-        const labelIOList& zoneBToZoneAPointMap() const;
-
-        //- Calculate minimal edge lengths
-        void calcMinEdgeLengths() const;
-
-        //- Return minimal edge lengths
-        const scalarField& minEdgeLengths() const;
-
-        //- Transfer/map/interpolate from one zone faces to another zone
-        //  faces for Type
-        template<class Type>
-        void transferFaces
+        // Make sure every element references exactly one element
+        static bool forwardCheck
         (
-            const standAlonePatch& fromZone,    // from zone
-            const standAlonePatch& toZone,      // to zone
-            const Field<Type>& fromField,       // from field
-            Field<Type>& toField               // to field
-        ) const;
-
-        //- Transfer/map/interpolate from one zone points to another zone
-        //  points for Type
-        template<class Type>
-        void transferPoints
-        (
-            const standAlonePatch& fromZone,    // from zone
-            const standAlonePatch& toZone,      // to zone
-            const Field<Type>& fromField,       // from field
-            Field<Type>& toField               // to field
-        ) const;
-
-        //- Disallow default bitwise copy construct
-        directPatchToPatchMapping
-        (
-            const directPatchToPatchMapping&
+            const word& elemType,
+            const vectorField& pts,
+            const List<DynamicList<label>>& localOtherFaces,
+            const bool isSrc
         );
 
-        //- Disallow default bitwise assignment
-        void operator=(const directPatchToPatchMapping&);
+        // Make sure every element is referenced by exactly one element
+        static bool reverseCheck
+        (
+            const word& elemType,
+            const vectorField& pts,
+            const List<DynamicList<label>>& otherLocal,
+            const autoPtr<distributionMap>& mapPtr,
+            const bool isSrc
+        );
+
+        //- Finalise the intersection
+        virtual label finalisePoints
+        (
+            const primitivePatch& srcPatch,
+            const pointField& srcPts0,
+            const primitivePatch& tgtPatch,
+            const pointField& tgtPts0,
+            const vectorField& pointNormals,
+            const vectorField& pointNormals0,
+            const transformer& tgtToSrc
+        );
+        //- Finalise the intersection
+        virtual label finaliseFaces
+        (
+            const primitivePatch& srcPatch,
+            const pointField& srcPts0,
+            const primitivePatch& tgtPatch,
+            const pointField& tgtPts0,
+            const vectorField& pointNormals,
+            const vectorField& pointNormals0,
+            const transformer& tgtToSrc
+        );
 
 
 public:
@@ -163,126 +112,19 @@ public:
     // Constructors
 
         //- Construct from components
-        directPatchToPatchMapping
+        direct
         (
+            const primitivePatch& srcPatch,
+            const primitivePatch& tgtPatch,
             const dictionary& dict,
-            const primitivePatch& patchA,
-            const primitivePatch& patchB,
-            const globalPolyPatch& globalPatchA,
-            const globalPolyPatch& globalPatchB
+            const bool needPoints,
+            const bool reverse
         );
 
 
     // Destructor
-
-        virtual ~directPatchToPatchMapping()
+        virtual ~direct()
         {}
-
-
-    // Member Functions
-
-        // Edit
-
-            //- Transfer/map/interpolate from one zone faces to another zone
-            //  faces for scalars
-            virtual void transferFaces
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<scalar>& fromField,       // from field
-                Field<scalar>& toField                // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone faces to another zone
-            //  faces for vectors
-            virtual void transferFaces
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<vector>& fromField,       // from field
-                Field<vector>& toField                // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone faces to another zone
-            //  faces for symmTensor
-            virtual void transferFaces
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<symmTensor>& fromField,   // from field
-                Field<symmTensor>& toField            // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone faces to another zone
-            //  faces for sphericalTensor
-            virtual void transferFaces
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<sphericalTensor>& fromField, // from field
-                Field<sphericalTensor>& toField       // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone faces to another zone
-            //  faces for tensor
-            virtual void transferFaces
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<tensor>& fromField,       // from field
-                Field<tensor>& toField                // to field
-            ) const;
-
-
-            //- Transfer/map/interpolate from one zone points to another zone
-            //  points for scalars
-            virtual void transferPoints
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<scalar>& fromField,       // from field
-                Field<scalar>& toField                // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone points to another zone
-            //  points for vectors
-            virtual void transferPoints
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<vector>& fromField,       // from field
-                Field<vector>& toField                // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone points to another zone
-            //  points for symmTensors
-            virtual void transferPoints
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<symmTensor>& fromField,   // from field
-                Field<symmTensor>& toField            // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone points to another zone
-            //  points for sphericalTensor
-            virtual void transferPoints
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<sphericalTensor>& fromField, // from field
-                Field<sphericalTensor>& toField       // to field
-            ) const;
-
-            //- Transfer/map/interpolate from one zone points to another zone
-            //  points for tensors
-            virtual void transferPoints
-            (
-                const standAlonePatch& fromPatch,      // from zone
-                const standAlonePatch& toPatch,        // to zone
-                const Field<tensor>& fromField,       // from field
-                Field<tensor>& toField                // to field
-            ) const;
 };
 
 
@@ -290,12 +132,6 @@ public:
 
 } // End namespace patchToPatchMappings
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-#   include "directPatchToPatchMappingTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

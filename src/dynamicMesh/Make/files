@@ -28,17 +28,6 @@ polyMeshRefiner/polyMeshPolyRefiner/polyhedralRefinement/polyhedralRefinement.C
 polyMeshRefiner/polyMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
 polyMeshRefiner/polyMeshPolyRefiner/refinement/refinement.C
 
-# fvMesh refinement
-fvMeshRefiner/fvMeshRefiner.C
-fvMeshRefiner/fvMeshRefinerNew.C
-fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
-fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
-fvMeshRefiner/fvMeshHexRefiner/hexRefRefinementHistoryConstraint.C
-fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C
-fvMeshRefiner/fvMeshPolyRefiner/polyRefinementConstraint.C
-
-fvMeshBalance/fvMeshBalance.C
-
 meshTools/dynMeshTools.C
 
 MeshFields/MeshField/MeshFields.C

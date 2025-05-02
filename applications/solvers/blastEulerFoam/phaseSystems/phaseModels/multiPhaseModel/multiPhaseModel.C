@@ -28,8 +28,6 @@ License
 #include "multiPhaseModel.H"
 #include "phaseSystem.H"
 #include "fvMatrix.H"
-#include "slipFvPatchFields.H"
-#include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "addToRunTimeSelectionTable.H"
@@ -80,7 +78,7 @@ Foam::multiPhaseModel::multiPhaseModel
         IOobject
         (
             "sumAlpha",
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -102,7 +100,7 @@ Foam::multiPhaseModel::multiPhaseModel
                 IOobject
                 (
                     IOobject::groupName("alphaRho", phaseName),
-                    fluid.mesh().time().timeName(),
+                    fluid.mesh().time().name(),
                     fluid.mesh()
                 ),
                 alphas_[phasei]*rhos_[phasei],
@@ -118,7 +116,7 @@ Foam::multiPhaseModel::multiPhaseModel
                 IOobject
                 (
                     IOobject::groupName("alphaPhi", phaseName),
-                    fluid.mesh().time().timeName(),
+                    fluid.mesh().time().name(),
                     fluid.mesh()
                 ),
                 fluid.mesh(),
@@ -133,7 +131,7 @@ Foam::multiPhaseModel::multiPhaseModel
                 IOobject
                 (
                     IOobject::groupName("alphaRhoPhi", phaseName),
-                    fluid.mesh().time().timeName(),
+                    fluid.mesh().time().name(),
                     fluid.mesh()
                 ),
                 fluid.mesh(),
@@ -386,13 +384,14 @@ void Foam::multiPhaseModel::decode()
 
     volScalarField alphaRhoLimited(alphaRho_);
     alphaRhoLimited.max(1e-10);
-    U_.ref() = alphaRhoU_()/(alphaRhoLimited());
+    U_.internalFieldRef() = alphaRhoU_()/(alphaRhoLimited());
     U_.correctBoundaryConditions();
 
+    alphaRhoU_.correctBoundaryConditions();
     alphaRhoU_.boundaryFieldRef() ==
         alphaRho_.boundaryField()*U_.boundaryField();
 
-    e_.ref() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
+    e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
     e_.correctBoundaryConditions();
 
     thermoPtr_->correct();

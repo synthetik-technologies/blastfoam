@@ -64,9 +64,19 @@ baffles
         // Generate patchGroup windows with two patches:
         //  - windows_master
         //  - windows_slave
+        owner
+        {
+            name    windowsIntact_master;
+            type    wall;
+        }
+        neighbour
+        {
+            name windowsIntact_slave;
+            type    wall;
+        }
         patchPairs
         {
-            type            burstCyclicAMI;
+            type            wall;
             partialBurst    yes;
 
             burstModel      field;

@@ -61,14 +61,15 @@ SourceFiles
 #ifndef hydrostaticPressure_H
 #define hydrostaticPressure_H
 
-#include "functionObject.H"
+#include "fvMeshFunctionObject.H"
 #include "dictionary.H"
-#include "fvMesh.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
+{
+namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
@@ -77,32 +78,8 @@ namespace Foam
 
 class hydrostaticPressure
 :
-    public functionObject
+    public fvMeshFunctionObject
 {
-    // Private data
-
-        //- Name
-        const word name_;
-
-        //- Reference to main object registry
-        const Time& time_;
-
-
-    // Private Member Functions
-
-        //- Write data
-        bool writeData();
-
-        //- Disallow default bitwise copy construct
-        hydrostaticPressure
-        (
-            const hydrostaticPressure&
-        );
-
-        //- Disallow default bitwise assignment
-        void operator=(const hydrostaticPressure&);
-
-
 public:
 
     //- Runtime type information
@@ -127,20 +104,17 @@ public:
 
     // Member Functions
 
-        //- start is called at the start of the time-loop
-        virtual bool start();
+        //- Read and set the function object if its data has changed
+        virtual bool read(const dictionary& dict);
+
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return {"sigma"};
+        }
 
         //- execute is called at each ++ or += of the time-loop
         virtual bool execute();
-
-        //- Called when time was set at the end of the Time::operator++
-        virtual bool timeSet()
-        {
-            return true;
-        }
-
-        //- Read and set the function object if its data has changed
-        virtual bool read(const dictionary& dict);
 
         //- Write
         virtual bool write();
@@ -149,6 +123,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -67,20 +67,8 @@ class thermalLinearSolid
 {
     // Private data
 
-        //- The product of density and specific heat
-        volScalarField rhoC_;
-
-        //- Thermal conductivity
-        volScalarField k_;
-
-        //- Temperature
-        volScalarField& T_;
-
-        //- Temperature gradient
-        volVectorField gradT_;
-
-        //- Absolute temperature tolerance (in degrees)
-        scalar absTTol_;
+        //- Absolute energy tolerance
+        scalar absHETol_;
 
 
     // Private Member Functions
@@ -90,9 +78,9 @@ class thermalLinearSolid
         (
             const int iCorr,
             const SolverPerformance<vector>& solverPerfD,
-            const SolverPerformance<scalar>& solverPerfp,
+            const SolverPerformance<scalar>& solverPerfHE,
             const volVectorField& D,
-            const volScalarField& T
+            const volScalarField& he
         );
 
         //- Disallow default bitwise copy construct
@@ -112,7 +100,7 @@ public:
     // Constructors
 
         //- Construct from components
-        thermalLinearSolid(dynamicFvMesh& mesh);
+        thermalLinearSolid(fvMesh& mesh);
 
 
     // Destructor
@@ -122,20 +110,6 @@ public:
 
 
     // Member Functions
-
-        // Access
-
-            //- Return const access to the cell temperature field
-            const volScalarField& T() const
-            {
-                return T_;
-            }
-
-            //- Return non-const access to the cell temperature field
-            volScalarField& T()
-            {
-                return T_;
-            }
 
         // Edit
 

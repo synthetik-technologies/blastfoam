@@ -50,7 +50,7 @@ Foam::dragModels::Ergun::Ergun
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject)
+    dispersedDragModel(dict, pair, registerObject)
 {}
 
 
@@ -62,11 +62,7 @@ Foam::dragModels::Ergun::~Ergun()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Ergun::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Ergun::CdRe() const
 {
     return
         (4.0/3.0)
@@ -78,17 +74,12 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Ergun::CdRe
                 pair_.continuous(),
                 pair_.continuous().residualAlpha()
             )
-          + 1.75*pair_.Re(nodei, nodej)
+          + 1.75*pair_.Re()
         );
 }
 
 
-Foam::scalar Foam::dragModels::Ergun::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::dragModels::Ergun::cellCdRe(const label celli) const
 {
     return
         (4.0/3.0)
@@ -104,7 +95,7 @@ Foam::scalar Foam::dragModels::Ergun::cellCdRe
                 pair_.continuous()[celli],
                 pair_.continuous().residualAlpha().value()
             )
-          + 1.75*pair_.cellRe(celli, nodei, nodej)
+          + 1.75*pair_.cellRe(celli)
         );
 }
 

@@ -44,6 +44,7 @@ SourceFiles
 #include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 #include "volFields.H"
+#include "thermophysicalTransportModel.H"
 #include "tmp.H"
 #include "blastThermo.H"
 #include "Switch.H"
@@ -74,6 +75,9 @@ class thermalModel
 
         //- Sub thermo models
         PtrList<blastThermo> thermoModels_;
+
+        //- Pointer to the solid thermophysical transport model
+        autoPtr<thermophysicalTransportModel> thermophysicalTransport_;
 
 
     // Private Member Functions
@@ -135,6 +139,9 @@ public:
 
         //- Return thermal conductivity
         tmp<volScalarField> k() const;
+
+        //- Return the source term for the energy equation
+        tmp<fvScalarMatrix> divq();
 };
 
 

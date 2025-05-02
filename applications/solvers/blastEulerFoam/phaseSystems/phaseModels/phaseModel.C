@@ -28,10 +28,6 @@ License
 #include "phaseModel.H"
 #include "phaseSystem.H"
 #include "fvMatrix.H"
-#include "fixedValueFvsPatchFields.H"
-#include "fixedValueFvPatchFields.H"
-#include "slipFvPatchFields.H"
-#include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "phaseFluxScheme.H"
@@ -60,7 +56,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("alpha", phaseName),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -86,7 +82,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("U", name_),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -98,7 +94,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("alphaRho", name_),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -109,7 +105,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("alphaRhoU", name_),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -121,7 +117,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("alphaRhoE", name_),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -133,7 +129,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("alphaRhoPhi", name_),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -144,7 +140,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("alphaRhoUPhi", name_),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -155,7 +151,7 @@ Foam::phaseModel::phaseModel
         IOobject
         (
             IOobject::groupName("alphaRhoEPhi", name_),
-            fluid.mesh().time().timeName(),
+            fluid.mesh().time().name(),
             fluid.mesh()
         ),
         fluid.mesh(),
@@ -223,7 +219,7 @@ void Foam::phaseModel::solveAlpha(const bool s)
             IOobject
             (
                 IOobject::groupName("alphaPhi", name_),
-                this->mesh().time().timeName(),
+                this->mesh().time().name(),
                 this->mesh()
             ),
             this->mesh(),
@@ -266,7 +262,7 @@ void Foam::phaseModel::solveD()
         const phaseModel& otherPhase = fluid_.phases()[phasei];
         if
         (
-            fluid_.foundSubModel<interfacialPressureModel>
+            fluid_.foundInterfacialModel<interfacialPressureModel>
             (
                 *this,
                 otherPhase,
@@ -275,7 +271,7 @@ void Foam::phaseModel::solveD()
         )
         {
             PI +=
-                fluid_.lookupSubModel<interfacialPressureModel>
+                fluid_.lookupInterfacialModel<interfacialPressureModel>
                 (
                     *this,
                     otherPhase,
@@ -287,13 +283,20 @@ void Foam::phaseModel::solveD()
     }
 
     PI /= Foam::max(sumAlpha, this->residualAlpha());
-    dPtr_->solve(PI, T());
+
+    // Evolve the diameter model using the interfacial pressure and the
+    // surface temperature
+    dPtr_->solve(PI, Ts());
 }
 
 
 void Foam::phaseModel::solveAlphaRho()
 {
-    volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
+    volScalarField deltaAlphaRho
+    (
+        IOobject::groupName("deltaAlphaRho", name_),
+        fvc::div(alphaRhoPhi_)
+    );
     if (fluid_.hasMassTransfer(*this))
     {
         forAll(fluid_.phases(), phasei)
@@ -307,6 +310,7 @@ void Foam::phaseModel::solveAlphaRho()
     }
 
     this->storeAndBlendDelta(deltaAlphaRho);
+
 
     this->storeAndBlendOld(alphaRho_);
     alphaRho_.storePrevIter();
@@ -389,7 +393,6 @@ void Foam::phaseModel::solve()
 
         alpha -= dT*deltaAlpha;
         alpha.max(0);
-        alpha.min(alphaMax_);
         alpha.correctBoundaryConditions();
     }
 }
@@ -405,7 +408,7 @@ void Foam::phaseModel::postUpdate()
             fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
           + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
          ==
-            models().source(alphaRho_, U_)
+            models().source(*this, rho(), U_)
         );
         if (turbulence_.valid())
         {
@@ -441,7 +444,7 @@ void Foam::phaseModel::postUpdate()
           + fvc::ddt(smallAlphaRho, he())
           - fvm::ddt(smallAlphaRho, he())
          ==
-            models().source(alphaRho_, he())
+            models().source(*this, rho(), he())
         );
 
         if (turbulence_.valid())

@@ -601,11 +601,12 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
 
 template<class ThermoType>
-inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
+inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPTOffset
 (
     const scalar rho,
     const scalar p,
-    const scalar T
+    const scalar T,
+    const scalar eOffset
 ) const
 {
     //- Simple method to calculate initial density
@@ -625,7 +626,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
     {
         E *= ThermoType::Cv(rhoEst, 0.0, T);
     }
-    E = ThermoType::Es(rhoEst, E, T);
+    E = ThermoType::Es(rhoEst, E, T) + eOffset;
 
     label iter = 0;
     do
@@ -639,7 +640,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
         // Update internal energy if required
         if (!ThermoType::temperatureBased())
         {
-            E = ThermoType::Es(rhoEst, E, T);
+            E = ThermoType::Es(rhoEst, E, T) + eOffset;
         }
 
         // If density is less than 0, reduce by half
@@ -650,6 +651,18 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
     } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
 
     return rhoNew;
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
+(
+    const scalar rho,
+    const scalar p,
+    const scalar T
+) const
+{
+    return rhoPTOffset(rho, p, T, 0.0);
 }
 
 

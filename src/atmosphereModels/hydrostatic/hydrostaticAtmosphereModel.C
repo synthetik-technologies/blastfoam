@@ -44,10 +44,10 @@ Foam::atmosphereModels::hydrostatic::hydrostatic
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 :
-    atmosphereModel(mesh, dict, zoneID)
+    atmosphereModel(mesh, dict, zoneName)
 {}
 
 

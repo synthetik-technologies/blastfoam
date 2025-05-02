@@ -31,7 +31,7 @@ Foam::autoPtr<Foam::kineticTheoryModels::frictionalStressModel>
 Foam::kineticTheoryModels::frictionalStressModel::New
 (
     const dictionary& dict,
-    const kineticTheorySystem& kt
+    const masterSystem& master
 )
 {
     word frictionalStressModelType(dict.lookup("frictionalStressModel"));
@@ -54,7 +54,7 @@ Foam::kineticTheoryModels::frictionalStressModel::New
             << abort(FatalError);
     }
 
-    return autoPtr<frictionalStressModel>(cstrIter()(dict, kt));
+    return autoPtr<frictionalStressModel>(cstrIter()(dict, master));
 }
 
 

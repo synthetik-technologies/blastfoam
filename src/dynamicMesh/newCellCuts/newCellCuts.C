@@ -278,7 +278,7 @@ void Foam::newCellCuts::writeUncutOBJ
     // Cell edges
     OFstream cutsStream(dir / "cell_" + name(celli) + ".obj");
 
-    Pout<< "Writing cell for time " <<  mesh().time().timeName()
+    Pout<< "Writing cell for time " <<  mesh().time().name()
         << " to " << cutsStream.name() << nl;
 
     meshTools::writeOBJ
@@ -293,7 +293,7 @@ void Foam::newCellCuts::writeUncutOBJ
     // Loop cutting cell in two
     OFstream cutStream(dir / "cellCuts_" + name(celli) + ".obj");
 
-    Pout<< "Writing raw cuts on cell for time " <<  mesh().time().timeName()
+    Pout<< "Writing raw cuts on cell for time " <<  mesh().time().name()
         << " to " << cutStream.name() << nl;
 
     const labelList& cPoints = mesh().cellPoints()[celli];
@@ -338,7 +338,7 @@ void Foam::newCellCuts::writeOBJ
     // Cell edges
     OFstream cutsStream(dir / "cell_" + name(celli) + ".obj");
 
-    Pout<< "Writing cell for time " <<  mesh().time().timeName()
+    Pout<< "Writing cell for time " <<  mesh().time().name()
         << " to " << cutsStream.name() << nl;
 
     meshTools::writeOBJ
@@ -354,7 +354,7 @@ void Foam::newCellCuts::writeOBJ
     // Loop cutting cell in two
     OFstream loopStream(dir / "cellLoop_" + name(celli) + ".obj");
 
-    Pout<< "Writing loop for time " <<  mesh().time().timeName()
+    Pout<< "Writing loop for time " <<  mesh().time().name()
         << " to " << loopStream.name() << nl;
 
     label vertI = 0;
@@ -365,7 +365,7 @@ void Foam::newCellCuts::writeOBJ
     // Anchors for cell
     OFstream anchorStream(dir / "anchors_" + name(celli) + ".obj");
 
-    Pout<< "Writing anchors for time " <<  mesh().time().timeName()
+    Pout<< "Writing anchors for time " <<  mesh().time().name()
         << " to " << anchorStream.name() << endl;
 
     forAll(anchors, i)
@@ -1355,7 +1355,7 @@ bool Foam::newCellCuts::loopAnchorConsistent
 ) const
 {
     // Create identity face for ease of calculation of area etc.
-    const face f(identity(loopPts.size()));
+    const face f(identityMap(loopPts.size()));
 
     const vector a = f.area(loopPts);
     const point ctr = f.centre(loopPts);
@@ -2894,7 +2894,7 @@ Foam::newCellCuts::newCellCuts
         Pout<< "cellCuts : constructor from cellLoops" << endl;
     }
 
-    calcLoopsAndAddressing(identity(mesh.nCells()));
+    calcLoopsAndAddressing(identityMap(mesh.nCells()));
 
     // Adds cuts on other side of coupled boundaries
     syncProc();

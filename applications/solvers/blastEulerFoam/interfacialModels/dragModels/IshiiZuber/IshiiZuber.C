@@ -50,7 +50,7 @@ Foam::dragModels::IshiiZuber::IshiiZuber
     const bool registerObject
 )
 :
-    dragModel(dict, pair, registerObject)
+    dispersedDragModel(dict, pair, registerObject)
 {}
 
 
@@ -63,14 +63,10 @@ Foam::dragModels::IshiiZuber::~IshiiZuber()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::dragModels::IshiiZuber::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::dragModels::IshiiZuber::CdRe() const
 {
-    volScalarField Re(pair_.Re(nodei, nodej));
-    volScalarField Eo(pair_.Eo(nodei, nodej));
+    volScalarField Re(pair_.Re());
+    volScalarField Eo(pair_.Eo());
 
     volScalarField mud(pair_.dispersed().mu());
     volScalarField muc(pair_.continuous().mu());
@@ -82,7 +78,7 @@ Foam::dragModels::IshiiZuber::CdRe
         muc
        *pow
         (
-            max(1 - pair_.dispersed().volumeFraction(nodei),
+            max(1 - pair_.dispersed(),
             scalar(1e-3)), -2.5*muStar
         )
     );
@@ -96,7 +92,7 @@ Foam::dragModels::IshiiZuber::CdRe
 
     volScalarField F
     (
-        (muc/muMix)*sqrt(1 - pair_.dispersed().volumeFraction(nodei))
+        (muc/muMix)*sqrt(1 - pair_.dispersed())
     );
     F.max(1e-3);
 
@@ -109,7 +105,7 @@ Foam::dragModels::IshiiZuber::CdRe
        *min
         (
             CdReEllipse,
-            Re*sqr(1 - pair_.dispersed().volumeFraction(nodej))*2.66667
+            Re*sqr(1 - pair_.dispersed())*2.66667
         )
       + neg(CdReEllipse - CdRe)*CdRe;
 }
@@ -117,13 +113,11 @@ Foam::dragModels::IshiiZuber::CdRe
 
 Foam::scalar Foam::dragModels::IshiiZuber::cellCdRe
 (
-    const label celli,
-    const label nodei,
-    const label nodej
+    const label celli
 ) const
 {
-    scalar Re(pair_.cellRe(celli, nodei, nodej));
-    scalar Eo(pair_.cellEo(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli));
+    scalar Eo(pair_.cellEo(celli));
 
     scalar mud(pair_.dispersed().cellnu(celli)*pair_.dispersed().rho()[celli]);
     scalar muc(pair_.continuous().cellnu(celli)*pair_.continuous().rho()[celli]);
@@ -135,7 +129,7 @@ Foam::scalar Foam::dragModels::IshiiZuber::cellCdRe
         muc
        *pow
         (
-            max(1 - pair_.dispersed().cellvolumeFraction(celli, nodei),
+            max(1 - pair_.dispersed()[celli],
             scalar(1e-3)), -2.5*muStar
         )
     );
@@ -149,7 +143,7 @@ Foam::scalar Foam::dragModels::IshiiZuber::cellCdRe
 
     scalar F
     (
-        (muc/muMix)*sqrt(1 - pair_.dispersed().cellvolumeFraction(celli, nodei))
+        (muc/muMix)*sqrt(1.0 - pair_.dispersed()[celli])
     );
     F = max(F, 1e-3);
 
@@ -163,10 +157,8 @@ Foam::scalar Foam::dragModels::IshiiZuber::cellCdRe
         (
             CdReEllipse,
             Re
-           *sqr
-            (
-                1 - pair_.dispersed().cellvolumeFraction(celli, nodej)
-            )*2.66667
+           *sqr(1.0 - pair_.dispersed()[celli])
+           *2.66667
         )
       + neg(CdReEllipse - CdRe)*CdRe;
 }

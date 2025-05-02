@@ -39,7 +39,7 @@ namespace solidModels
 unsSolidModel::unsSolidModel
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType nonlinear,
     const bool incremental,
     const bool isSolid
@@ -50,8 +50,8 @@ unsSolidModel::unsSolidModel
     (
         IOobject
         (
-            "sigmafa",
-            mesh.time().timeName(),
+            "sigmaf",
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -64,7 +64,7 @@ unsSolidModel::unsSolidModel
         IOobject
         (
             "grad(" + D().name() + ")f",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -75,7 +75,7 @@ unsSolidModel::unsSolidModel
         IOobject
         (
             "grad(" + DD().name() + ")f",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,

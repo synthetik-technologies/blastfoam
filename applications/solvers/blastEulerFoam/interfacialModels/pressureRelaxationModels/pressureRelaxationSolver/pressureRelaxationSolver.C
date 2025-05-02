@@ -144,7 +144,7 @@ Foam::pressureRelaxationSolver::pressureRelaxationSolver
             phasei,
             &fluid.mesh().lookupObjectRef<fluidBlastThermo>
             (
-                IOobject::groupName(basicThermo::dictName, phase.group())
+                IOobject::groupName(physicalProperties::typeName, phase.group())
             )
         );
     }

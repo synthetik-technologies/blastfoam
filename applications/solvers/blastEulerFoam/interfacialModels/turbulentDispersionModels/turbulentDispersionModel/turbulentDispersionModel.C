@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "turbulentDispersionModel.H"
-#include "BlendedInterfacialModel.H"
 #include "phasePair.H"
 #include "fvcGrad.H"
 
@@ -63,14 +62,35 @@ Foam::turbulentDispersionModel::~turbulentDispersionModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField>
-Foam::turbulentDispersionModel::F
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volVectorField> Foam::turbulentDispersionModel::F() const
 {
-    return D(nodei, nodej)*fvc::grad(pair_.dispersed().volumeFraction(nodei));
+    return D()*fvc::grad(pair_.dispersed());
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::blendedTurbulentDispersionModel::D() const
+{
+    return this->evaluate
+    (
+        &turbulentDispersionModel::D,
+        "D",
+        turbulentDispersionModel::dimD,
+        false
+    );
+}
+
+
+Foam::tmp<Foam::volVectorField>
+Foam::blendedTurbulentDispersionModel::F() const
+{
+    return this->evaluate
+    (
+        &turbulentDispersionModel::F,
+        "F",
+        turbulentDispersionModel::dimF,
+        false
+    );
 }
 
 // ************************************************************************* //

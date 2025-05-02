@@ -33,9 +33,10 @@ License
 #include "zeroGradientFvPatchFields.H"
 #include "fixedGradientFvPatchFields.H"
 #include "gaussGrad.H"
-#include "isoSurface.H"
+#include "cutPolyIsoSurface.H"
 #include "upwind.H"
 #include "fluxSchemeBase.H"
+#include "MeshedSurface.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -97,7 +98,7 @@ Foam::levelSetModel::levelSetModel
         IOobject
         (
             IOobject::groupName("levelSet", alpha.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -111,7 +112,7 @@ Foam::levelSetModel::levelSetModel
         IOobject
         (
             IOobject::groupName("H", alpha.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -125,7 +126,7 @@ Foam::levelSetModel::levelSetModel
         IOobject
         (
             IOobject::groupName("nHatf", alpha_.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -136,7 +137,7 @@ Foam::levelSetModel::levelSetModel
         IOobject
         (
             IOobject::groupName("curvature", alpha_.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -145,12 +146,6 @@ Foam::levelSetModel::levelSetModel
     epsilon0_("epsilon", dimless, dict),
     epsilon_("epsilon", dimLength, 0.0),
     useDistributed_(dict.lookupOrDefault("useDistributed", false)),
-    filterType_
-    (
-        dict.found("filtering")
-      ? dict.lookup<word>("filtering")
-      : isoSurface::filterTypeNames_[isoSurface::filterType::full]
-    ),
     lsFunc_
     (
         dict.found("levelSetFunction")
@@ -344,30 +339,33 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
     );
 
     // Contour the volume fraction at 0.5
-    isoSurface contour
+    cutPolyIsoSurface contour
     (
         mesh_,
-        isoField,
         pointIsoField,
-        isoValue,
-        isoSurface::filterTypeNames_[filterType_]
+        isoValue
+    );
+    MeshedSurface<face> surf
+    (
+        pointField(contour.points()),
+        faceList(contour.faces())
     );
 
     // Make sure the isoSurface is meshed with triangles
-    contour.triangulate();
+    surf.triangulate();
 
     // Copy faces to a triFaceList
-    triFaceList triFaces(contour.size());
-    forAll(contour, facei)
+    triFaceList triFaces(surf.size());
+    forAll(surf, facei)
     {
-        triFaces[facei][0] = contour[facei][0];
-        triFaces[facei][1] = contour[facei][1];
-        triFaces[facei][2] = contour[facei][2];
+        triFaces[facei][0] = surf[facei][0];
+        triFaces[facei][1] = surf[facei][1];
+        triFaces[facei][2] = surf[facei][2];
     }
 
     // Create a searchable triSufaceMesh
     autoPtr<triSurfaceMesh> triMeshPtr;
-    triSurface tri(triFaces, contour.points());
+    triSurface tri(move(triFaces), surf.points());
     if (Pstream::parRun() && useDistributed_)
     {
         triMeshDict_.set("bounds", List<boundBox>(1, mesh_.bounds()));
@@ -378,7 +376,7 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
                 IOobject
                 (
                     "contour_" + isoField.name(),
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_
                 ),
                 tri,
@@ -395,7 +393,7 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
                 IOobject
                 (
                     "contour_" + isoField.name(),
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_
                 ),
                 tri

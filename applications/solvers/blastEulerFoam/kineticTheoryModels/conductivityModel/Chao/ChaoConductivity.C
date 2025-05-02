@@ -88,7 +88,7 @@ Foam::kineticTheoryModels::conductivityModels::Chao::kappa
         IOobject
         (
             "alphaCoeff",
-            Theta.time().timeName(),
+            Theta.time().name(),
             Theta.mesh()
         ),
         Theta.mesh(),
@@ -99,7 +99,7 @@ Foam::kineticTheoryModels::conductivityModels::Chao::kappa
         IOobject
         (
             "coeff",
-         Theta.time().timeName(),
+         Theta.time().name(),
          Theta.mesh()
         ),
      Theta.mesh(),

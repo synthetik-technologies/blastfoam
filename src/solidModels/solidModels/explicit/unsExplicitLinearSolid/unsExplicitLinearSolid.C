@@ -50,7 +50,7 @@ addToRunTimeSelectionTable
 
 unsExplicitLinearSolid::unsExplicitLinearSolid
 (
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     UnsLinearGeomSolid<unsExplicitSolid>(typeName, mesh)

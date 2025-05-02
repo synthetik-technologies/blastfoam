@@ -154,6 +154,14 @@ public:
             const word& phaseName = word::null
         );
 
+        //- Standard selection based on fvMesh
+        static autoPtr<fluidBlastThermo> New
+        (
+            const fvMesh&,
+            const word& thermoType,
+            const word& phaseName = word::null
+        );
+
     //- Destructor
     virtual ~fluidBlastThermo();
 
@@ -270,6 +278,17 @@ public:
                 const bool limit = true
             ) const = 0;
 
+            //- Calculate pressure for patch and face [Pa]
+            virtual scalar patchFacepRhoT
+            (
+                const label patchi,
+                const label facei,
+                const bool limit = true
+            ) const = 0;
+
+            //- Calculate the pressure
+            virtual tmp<volScalarField> pRhoT() const;
+
             //- Return the speed of sound
             virtual const volScalarField& speedOfSound() const;
 
@@ -292,11 +311,9 @@ public:
         // Access to transport state variables
 
             //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> mu() const;
+            virtual const volScalarField& mu() const;
 
-            //- Dynamic viscosity of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> mu(const label patchi) const;
-
+            //- Kinematic viscosity of [m^2/s]
             using fluidThermo::nu;
 
             //- Kinematic viscosity of [m^2/s]
@@ -313,6 +330,10 @@ public:
         virtual bool read()
         {
             return blastThermo::read();
+        }
+        virtual bool read(const dictionary& dict)
+        {
+            return blastThermo::read(dict);
         }
 };
 

@@ -16,7 +16,7 @@ FoamFile
 
 dynamicFvMesh   adaptiveFvMesh;
 errorEstimator densityGradient;
-
+refiner polyRefiner;
 // How often to refine
 refineInterval  1;
 
@@ -30,7 +30,7 @@ unrefineLevel   0.05;
 nBufferLayers   3;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   1;
+maxRefinement   3;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

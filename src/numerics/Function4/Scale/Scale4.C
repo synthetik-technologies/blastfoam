@@ -26,42 +26,47 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Scale4.H"
+#include "OneConstant.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-void Foam::Function4s::Scale<Type>::read(const dictionary& dict)
+void Foam::Function4s::Scale<Type>::read
+(
+    const dictionary& dict,
+    const unitConversions& units
+)
 {
-    scale_ = Function4<scalar>::New("scale", dict);
+    scale_ = Function4<scalar>::New("scale", units, dict);
     tScale_ =
         dict.found("tScale")
-      ? Function1<scalar>::New("tScale", dict)
+      ? Function1<scalar>::New("tScale", units.t, units.t, dict)
       : autoPtr<Function1<scalar>>
         (
-            new Function1s::Constant<scalar>("tScale", 1.0)
+            new Function1s::OneConstant<scalar>("tScale")
         );
     xScale_ =
         dict.found("xScale")
-      ? Function1<scalar>::New("xScale", dict)
+      ? Function1<scalar>::New("xScale", units.x, units.x, dict)
       : autoPtr<Function1<scalar>>
         (
-            new Function1s::Constant<scalar>("xScale", 1.0)
+            new Function1s::OneConstant<scalar>("xScale")
         );
     yScale_ =
         dict.found("yScale")
-      ? Function1<scalar>::New("yScale", dict)
+      ? Function1<scalar>::New("yScale", units.y, units.y, dict)
       : autoPtr<Function1<scalar>>
         (
-            new Function1s::Constant<scalar>("yScale", 1.0)
+            new Function1s::OneConstant<scalar>("yScale")
         );
     zScale_ =
         dict.found("zScale")
-      ? Function1<scalar>::New("yScale", dict)
+      ? Function1<scalar>::New("zScale", units.z, units.z, dict)
       : autoPtr<Function1<scalar>>
         (
-            new Function1s::Constant<scalar>("zScale", 1.0)
+            new Function1s::OneConstant<scalar>("zScale")
         );
-    value_ = Function4<Type>::New("value", dict);
+    value_ = Function4<Type>::New("value", units, dict);
 }
 
 
@@ -71,12 +76,13 @@ template<class Type>
 Foam::Function4s::Scale<Type>::Scale
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :
     FieldFunction4<Type, Scale<Type>>(name)
 {
-    read(dict);
+    read(dict, units);
 }
 
 

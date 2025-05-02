@@ -141,6 +141,7 @@ public:
     timeIntegrationSystem(const word& name, const fvMesh& mesh);
 
     //- Set pointer to time integration system
+    using timeIntegrationSystemBase::set;
     virtual void set(const fvMesh& mesh);
     virtual void set(const timeIntegrator& integrator);
 

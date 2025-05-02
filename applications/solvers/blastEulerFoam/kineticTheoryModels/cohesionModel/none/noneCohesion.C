@@ -76,7 +76,7 @@ Foam::kineticTheoryModels::cohesionModels::none::nu() const
         (
             "none:PsCoh",
             kt_.phase().mesh(),
-            dimensionedScalar(dimViscosity, 0)
+            dimensionedScalar(dimKinematicViscosity, 0)
         );
 }
 

@@ -76,6 +76,12 @@ protected:
         //- Moving object
         const movingObject& motion_;
 
+        //- Construct from the name and moving object
+        objectMotionConstraint
+        (
+            const word& name,
+            const movingObject& motion
+        );
 
 public:
 

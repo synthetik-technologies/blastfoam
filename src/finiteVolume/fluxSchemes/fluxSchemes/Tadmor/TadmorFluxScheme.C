@@ -81,7 +81,7 @@ void Foam::fluxSchemes::Tadmor::createSavedFields()
             IOobject
             (
                 fieldName("aPhivOwn"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -95,7 +95,7 @@ void Foam::fluxSchemes::Tadmor::createSavedFields()
             IOobject
             (
                 fieldName("aPhivNei"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -113,7 +113,7 @@ void Foam::fluxSchemes::Tadmor::createSavedFields()
             IOobject
             (
                 fieldName("aSf"),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,

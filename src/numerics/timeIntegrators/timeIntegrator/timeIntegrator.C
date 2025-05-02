@@ -84,7 +84,7 @@ Foam::timeIntegrator::timeIntegrator
         IOobject
         (
             typeName,
-            obr.time().timeName(),
+            obr.time().name(),
             obr,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -167,11 +167,21 @@ void Foam::timeIntegrator::addSystem(timeIntegrationSystemBase& system)
 
 void Foam::timeIntegrator::integrate()
 {
-    if (obr_.time().timeIndex() == curTimeIndex_)
+    if (obr_.time().subCycling())
+    {
+        curTimeIndex_ = obr_.time().timeIndex();
+        restart_ = false;
+        update();
+    }
+    else if
+    (
+        obr_.time().timeIndex() == curTimeIndex_
+     && !obr_.time().subCycling()
+    )
     {
         reset();
         restart_ = true;
-        DebugInfo<< "Restarting time step" << endl;
+        Info<< "Restarting time step" << endl;
     }
     else
     {
@@ -193,6 +203,7 @@ void Foam::timeIntegrator::integrate()
             Info<< endl;
         }
     }
+    stepi_ = coeffs_->nSteps()-1;
 
     this->postUpdateAll();
     stepi_ = -1;

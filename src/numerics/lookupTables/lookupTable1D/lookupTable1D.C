@@ -492,9 +492,13 @@ void Foam::lookupTable1D<Type>::read
 }
 
 template<class Type>
-void  Foam::lookupTable1D<Type>::write(Ostream& os) const
+void  Foam::lookupTable1D<Type>::write(Ostream& os, const word& dictName) const
 {
-    os << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+    if (!dictName.empty())
+    {
+        os  << indent << dictName << nl
+            << indent << token::BEGIN_BLOCK << nl << incrIndent;
+    }
 
     if (solver_.valid())
     {
@@ -519,7 +523,10 @@ void  Foam::lookupTable1D<Type>::write(Ostream& os) const
 
     os  << decrIndent << indent << token::END_BLOCK << endl;
 
-    os  << decrIndent << indent << token::END_BLOCK << endl;
+    if (!dictName.empty())
+    {
+        os  << decrIndent << indent << token::END_BLOCK << endl;
+    }
 }
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
@@ -548,9 +555,21 @@ void Foam::lookupTable1D<Type>::operator=(const lookupTable1D<Type>& table)
 // * * * * * * * * * * * * * * * IOstream Functions  * * * * * * * * * * * * //
 
 template<class Type>
-void  Foam::writeEntry(Ostream& os, const lookupTable1D<Type>& table)
+void Foam::writeEntry(Ostream& os, const lookupTable1D<Type>& table)
 {
     table.write(os);
+}
+
+
+template<class Type>
+void  Foam::writeEntry
+(
+    Ostream& os,
+    const word& dictName,
+    const lookupTable1D<Type>& table
+)
+{
+    table.write(os, dictName);
 }
 
 

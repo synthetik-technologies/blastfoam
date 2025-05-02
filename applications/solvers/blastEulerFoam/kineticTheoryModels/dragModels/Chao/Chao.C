@@ -69,26 +69,7 @@ Foam::dragModels::Chao::~Chao()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Chao::CdRe
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the Chao model."
-        << exit(FatalError);
-
-    return pair_.phase1();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Chao::K
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Chao::K() const
 {
     const phaseModel& phase1 = pair_.phase1();
     const phaseModel& phase2 = pair_.phase2();
@@ -102,16 +83,16 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Chao::K
     const scalar pi(Foam::constant::mathematical::pi);
 
     tmp<volScalarField> gij(kineticTheorySystem_.gs0(phase1, phase2));
-    volScalarField dij(0.5*(phase1.d(nodei) + phase2.d(nodej)));
+    volScalarField dij(0.5*(phase1.d() + phase2.d()));
     volScalarField m0
     (
         constant::mathematical::pi/6.0
        *(
-            phase1.rho()*pow3(phase1.d(nodei))
-          + phase2.rho()*pow3(phase2.d(nodej))
+            phase1.rho()*pow3(phase1.d())
+          + phase2.rho()*pow3(phase2.d())
         )
     );
-    volScalarField magUr(pair_.magUr(nodei, nodej));
+    volScalarField magUr(pair_.magUr());
 
     return
         phase1*phase2
@@ -128,38 +109,13 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Chao::K
 }
 
 
-Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Chao::Kf
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Chao::Kf() const
 {
-    return fvc::interpolate(K(nodei, nodej));
+    return fvc::interpolate(K());
 }
 
 
-Foam::scalar Foam::dragModels::Chao::cellCdRe
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
-{
-    FatalErrorInFunction
-        << "Not implemented."
-        << "Drag coefficient not defined for the Chao model."
-        << exit(FatalError);
-
-    return 0.0;
-}
-
-
-Foam::scalar Foam::dragModels::Chao::cellK
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::dragModels::Chao::cellK(const label celli) const
 {
     const phaseModel& phase1 = pair_.phase1();
     const phaseModel& phase2 = pair_.phase2();
@@ -174,17 +130,17 @@ Foam::scalar Foam::dragModels::Chao::cellK
     scalar gij(kineticTheorySystem_.cellgs0(celli, phase1, phase2));
     scalar dij
     (
-        0.5*(phase1.celld(celli, nodei) + phase2.celld(celli, nodej))
+        0.5*(phase1.celld(celli) + phase2.celld(celli))
     );
     scalar m0
     (
         constant::mathematical::pi/6.0
        *(
-            rho1*pow3(phase1.celld(celli, nodei))
-          + rho2*pow3(phase2.celld(celli, nodej))
+            rho1*pow3(phase1.celld(celli))
+          + rho2*pow3(phase2.celld(celli))
         )
     );
-    scalar magUr(pair_.cellmagUr(celli, nodei, nodej));
+    scalar magUr(pair_.cellmagUr(celli));
 
     return
         phase1[celli]*phase2[celli]

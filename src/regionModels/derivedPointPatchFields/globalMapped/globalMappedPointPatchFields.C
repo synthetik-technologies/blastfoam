@@ -25,7 +25,7 @@ License
 
 #include "globalMappedPointPatchFields.H"
 #include "addToRunTimeSelectionTable.H"
-#include "volFields.H"
+#include "pointPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -34,8 +34,8 @@ namespace Foam
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-makeTemplatePointPatchTypeField(pointPatchScalarField, globalMappedPointPatchScalarField);
-makeTemplatePointPatchTypeField(pointPatchVectorField, globalMappedPointPatchVectorField);
+makeNullConstructableTemplatePointPatchTypeField(scalar, globalMapped);
+makeNullConstructableTemplatePointPatchTypeField(vector, globalMapped);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

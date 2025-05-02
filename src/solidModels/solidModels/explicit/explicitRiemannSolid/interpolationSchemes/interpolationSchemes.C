@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "interpolationSchemes.H"
+#include "fvcPointInterpolate.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -152,89 +153,6 @@ tmp<volVectorField> interpolationSchemes::surfaceToVol
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-template<class Type>
-void interpolationSchemes::pushUntransformedData
-(
-    List<Type>& pointData
-) const
-{
-    const globalMeshData& gmd = mesh_.globalData();
-    const indirectPrimitivePatch& cpp = gmd.coupledPatch();
-    const labelList& meshPoints = cpp.meshPoints();
-
-    const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
-    const labelListList& slaves = gmd.globalCoPointSlaves();
-
-    List<Type> elems(slavesMap.constructSize());
-    forAll(meshPoints, i)
-    {
-        elems[i] = pointData[meshPoints[i]];
-    }
-
-    forAll(slaves, i)
-    {
-        const labelList& slavePoints = slaves[i];
-        forAll(slavePoints, j)
-        {
-            elems[slavePoints[j]] = elems[i];
-        }
-    }
-
-    slavesMap.reverseDistribute(elems.size(), elems, false);
-
-    forAll(meshPoints, i)
-    {
-        pointData[meshPoints[i]] = elems[i];
-    }
-}
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-template<class Type>
-void interpolationSchemes::addSeparated
-(
-    GeometricField<Type, pointPatchField, pointMesh>& pf
-) const
-{
-    typename GeometricField<Type, pointPatchField, pointMesh>::
-        Internal& pfi = pf.ref();
-
-    typename GeometricField<Type, pointPatchField, pointMesh>::
-        Boundary& pfbf = pf.boundaryFieldRef();
-
-    forAll(pfbf, patchi)
-    {
-        if (pfbf[patchi].coupled())
-        {
-            refCast<coupledPointPatchField<Type>>
-                (pfbf[patchi]).initSwapAddSeparated
-                (
-                    Pstream::commsTypes::nonBlocking,
-                    pfi
-                );
-        }
-    }
-
-    Pstream::waitRequests();
-
-    forAll(pfbf, patchi)
-    {
-        if (pfbf[patchi].coupled())
-        {
-            refCast<coupledPointPatchField<Type>>
-                (pfbf[patchi]).swapAddSeparated
-                (
-                    Pstream::commsTypes::nonBlocking,
-                    pfi
-                );
-        }
-    }
-}
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 void interpolationSchemes::volToPoint
 (
     const volVectorField& U,
@@ -289,8 +207,8 @@ void interpolationSchemes::volToPoint
             sum,
             plusEqOp<scalar>()
         );
-        addSeparated(sum);
-        pushUntransformedData(sum);
+        // pointFieldOps::addSeparated(sum);
+        pointFieldOps::pushUntransformedData(sum, mesh_);
 
         forAll(points, nodei)
         {
@@ -303,8 +221,8 @@ void interpolationSchemes::volToPoint
             pointU,
             plusEqOp<vector>()
         );
-        addSeparated(pointU);
-        pushUntransformedData(pointU);
+        // pointFieldOps::addSeparated(pointU);
+        pointFieldOps::pushUntransformedData(pointU, mesh_);
     }
 
     else

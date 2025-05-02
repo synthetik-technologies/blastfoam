@@ -39,7 +39,7 @@ SourceFiles
 
 #include "PtrListDictionary.H"
 #include "Time.H"
-#include "dynamicFvMesh.H"
+#include "fvMesh.H"
 #include "Convergence.H"
 
 
@@ -102,7 +102,7 @@ public:
     (
         const IOdictionary& regionProperties,
         const Time& runTime,
-        PtrList<dynamicFvMesh>& regionMeshes,
+        PtrList<fvMesh>& regionMeshes,
         const List<Pair<word>>& regionTypes
     );
 

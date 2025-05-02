@@ -43,7 +43,7 @@ namespace regionSolvers
 
 Foam::regionSolvers::blast::blast
 (
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const regionSolverList& regions
 )
 :
@@ -69,7 +69,7 @@ Foam::regionSolvers::blast::blast
 
 Foam::regionSolvers::blast::blast
 (
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const word& type,
     const regionSolverList& regions
 )
@@ -110,7 +110,6 @@ bool Foam::regionSolvers::blast::changeMesh()
 
 void Foam::regionSolvers::blast::solve()
 {
-    Info<< "Calculating Fluxes" << endl;
     integrator_.integrate();
 
     Info<< "max(p): " << max(fluid_->p()).value()

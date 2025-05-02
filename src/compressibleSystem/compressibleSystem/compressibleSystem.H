@@ -42,8 +42,8 @@ SourceFiles
 #include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 #include "fluidThermo.H"
-#include "dynamicMomentumTransportModel.H"
-#include "fluidThermophysicalTransportModel.H"
+#include "compressibleMomentumTransportModel.H"
+#include "fluidThermoThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
@@ -94,10 +94,10 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         //- Turbulence model
-        autoPtr<compressible::momentumTransportModel> turbulence_;
+        autoPtr<compressibleMomentumTransportModel> turbulence_;
 
         //- Thermophysical transport model
-        autoPtr<fluidThermophysicalTransportModel>
+        autoPtr<fluidThermoThermophysicalTransportModel>
             thermophysicalTransport_;
 
         //- Gravitational acceleration
@@ -121,21 +121,12 @@ protected:
             //- Allocate models
             virtual void setModels();
 
-            //- Return momentum source term
-            virtual tmp<volVectorField> rhoUSource() const;
-
-            //- Return energy source term
-            virtual tmp<volScalarField> rhoESource() const;
-
-            //- Limit mass fluxes
-            void limitAlphaRhoPhis
+            //- Add source terms to momentum and energy equations
+            virtual void addSources
             (
-                const UPtrList<volScalarField>& alphas,
-                const UPtrList<volScalarField>& rhos,
-                UPtrList<surfaceScalarField>& alphaRhoPhis,
-                const surfaceScalarField& phi,
-                const surfaceScalarField& rhoPhi
-            );
+                volVectorField::Internal& rhoUSource,
+                volScalarField::Internal& rhoESource
+            ) const;
 
 public:
 
@@ -149,9 +140,10 @@ public:
             compressibleSystem,
             singlePhase,
             (
+                const dictionary& dict,
                 const fvMesh& mesh
             ),
-            (mesh)
+            (dict, mesh)
         );
         declareRunTimeSelectionTable
         (
@@ -159,9 +151,10 @@ public:
             compressibleSystem,
             twoPhase,
             (
+                const dictionary& dict,
                 const fvMesh& mesh
             ),
-            (mesh)
+            (dict, mesh)
         );
         declareRunTimeSelectionTable
         (
@@ -169,9 +162,10 @@ public:
             compressibleSystem,
             multiphase,
             (
+                const dictionary& dict,
                 const fvMesh& mesh
             ),
-            (mesh)
+            (dict, mesh)
         );
         declareRunTimeSelectionTable
         (
@@ -179,25 +173,40 @@ public:
             compressibleSystem,
             coupled,
             (
+                const dictionary& dict,
                 const fvMesh& mesh
             ),
-            (mesh)
+            (dict, mesh)
         );
 
     // Constructor
-    compressibleSystem(const fvMesh& mesh);
+    compressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
 
     // Selector
-        static autoPtr<compressibleSystem> New(const fvMesh& mesh);
-        static autoPtr<compressibleSystem> New(const word& type, const fvMesh& mesh);
-        static autoPtr<compressibleSystem> NewCoupled(const fvMesh& mesh);
+        static autoPtr<compressibleSystem> New
+        (
+            const fvMesh& mesh
+        );
+        static autoPtr<compressibleSystem> New
+        (
+            const word& type,
+            const fvMesh& mesh
+        );
+        static autoPtr<compressibleSystem> NewCoupled
+        (
+            const fvMesh& mesh
+        );
 
         template<class SelectionTable>
         static autoPtr<compressibleSystem> New
         (
-            const fvMesh& mesh,
             const dictionary& dict,
+            const fvMesh& mesh,
             const word& defaultType,
             SelectionTable* table
         );

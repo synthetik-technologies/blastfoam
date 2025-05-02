@@ -28,8 +28,6 @@ License
 #include "fluidPhaseModel.H"
 #include "phaseSystem.H"
 #include "fvMatrix.H"
-#include "slipFvPatchFields.H"
-#include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "addToRunTimeSelectionTable.H"
@@ -59,18 +57,17 @@ Foam::fluidPhaseModel::fluidPhaseModel
         fluidBlastThermo::New
         (
             fluid.mesh(),
-            phaseDict_,
             thermoType,
             this->name_
         )
     ),
-    rho_(thermoPtr_->rho()),
+    rho_(thermoPtr_->rhoRef()),
     e_(thermoPtr_->he()),
     T_(thermoPtr_->T()),
     p_(thermoPtr_->p()),
     fluxScheme_(phaseFluxScheme::New(phi_))
 {
-    thermoPtr_->read();
+    thermoPtr_->read(phaseDict_);
 
     this->turbulence_ =
         phaseCompressible::momentumTransportModel::New
@@ -204,21 +201,24 @@ void Foam::fluidPhaseModel::decode()
     this->correctBoundaryConditions();
     volScalarField alpha(Foam::max(*this, residualAlpha()));
 
-    rho_.ref() = alphaRho_()/alpha();
+    rho_.internalFieldRef() = alphaRho_()/alpha();
     rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
+
+    alphaRho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField();
     volScalarField alphaRhoLimited(alpha*rho_);
     alphaRhoLimited.max(1e-10);
 
-    U_.ref() = alphaRhoU_()/(alphaRhoLimited());
+    U_.internalFieldRef() = alphaRhoU_()/(alphaRhoLimited());
     U_.correctBoundaryConditions();
 
+    alphaRhoU_.correctBoundaryConditions();
     alphaRhoU_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
 
-    e_.ref() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
+    e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
 
     thermoPtr_->correct();
     thermoPtr_->speedOfSound() *= pos(alpha - residualAlpha());

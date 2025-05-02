@@ -215,7 +215,7 @@ coupledSolidTractionFvPatchVectorField
     const coupledSolidTractionFvPatchVectorField& tdpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     solidTractionFvPatchVectorField(tdpvf, p, iF, mapper),
@@ -241,23 +241,24 @@ coupledSolidTractionFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::coupledSolidTractionFvPatchVectorField::autoMap
+void Foam::coupledSolidTractionFvPatchVectorField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchField<vector>& ptf,
+    const fieldMapper& mapper
 )
 {
-    solidTractionFvPatchVectorField::autoMap(m);
+    solidTractionFvPatchVectorField::map(ptf, mapper);
 }
 
 
-void Foam::coupledSolidTractionFvPatchVectorField::rmap
+void Foam::coupledSolidTractionFvPatchVectorField::reset
 (
-    const fvPatchVectorField& ptf,
-    const labelList& addr
+    const fvPatchVectorField& ptf
 )
 {
-    solidTractionFvPatchVectorField::rmap(ptf, addr);
+    solidTractionFvPatchVectorField::reset(ptf);
 }
+
 
 bool Foam::coupledSolidTractionFvPatchVectorField::updateFields()
 {
@@ -307,72 +308,72 @@ bool Foam::coupledSolidTractionFvPatchVectorField::updateFields()
         }
     }
 
-    if (debug == 2 || (debug && this->db().time().outputTime()))
-    {
-        vectorField tractionGlobal(samplePatch.patchFaceToGlobal(viscousNbr));
-        vectorField tractionInterp
-        (
-            cgpp.patchToPatchInterpolator().transferFaces
-            (
-                samplePatch.globalPatch(),
-                tractionGlobal
-            )
-        );
-
-        scalarField pGlobal(samplePatch.patchFaceToGlobal(ppNbr));
-        scalarField pInterp
-        (
-            cgpp.patchToPatchInterpolator().transferFaces
-            (
-                samplePatch.globalPatch(),
-                pGlobal
-            )
-        );
-
-        if (Pstream::master())
-        {
-            fileName path
-            (
-                this->db().time().globalPath()
-               /"VTK"
-               /this->db().time().timeName()
-            );
-            mkDir(path);
-            vtkWritePolyData::write
-            (
-                path/"p_traction_interpolated.vtk",
-                "p_traction_interpolated",
-                false,
-                cgpp.globalPatch().points(),
-                labelList(),
-                edgeList(),
-                cgpp.globalPatch(),
-                "p",
-                false,
-                pInterp,
-                "traction",
-                false,
-                tractionInterp
-
-            );
-            vtkWritePolyData::write
-            (
-                path/"p_traction_actual.vtk",
-                "p_traction_actual",
-                false,
-                samplePatch.globalPatch().points(),
-                labelList(),
-                edgeList(),
-                samplePatch.globalPatch(),
-                "p",
-                false,
-                pGlobal,
-                "traction",
-                false,
-                tractionGlobal
-            );
-        }
-    }
+//     if (debug == 2 || (debug && this->db().time().outputTime()))
+//     {
+//         vectorField tractionGlobal(samplePatch.patchFaceToGlobal(viscousNbr));
+//         vectorField tractionInterp
+//         (
+//             cgpp.patchToPatchInterpolator().transferFaces
+//             (
+//                 samplePatch.globalPatch(),
+//                 tractionGlobal
+//             )
+//         );
+//
+//         scalarField pGlobal(samplePatch.patchFaceToGlobal(ppNbr));
+//         scalarField pInterp
+//         (
+//             cgpp.patchToPatchInterpolator().transferFaces
+//             (
+//                 samplePatch.globalPatch(),
+//                 pGlobal
+//             )
+//         );
+//
+//         if (Pstream::master())
+//         {
+//             fileName path
+//             (
+//                 this->db().time().globalPath()
+//                /"VTK"
+//                /this->db().time().timeName()
+//             );
+//             mkDir(path);
+//             vtkWritePolyData::write
+//             (
+//                 path/"p_traction_interpolated.vtk",
+//                 "p_traction_interpolated",
+//                 false,
+//                 cgpp.globalPatch().points(),
+//                 labelList(),
+//                 edgeList(),
+//                 cgpp.globalPatch(),
+//                 "p",
+//                 false,
+//                 pInterp,
+//                 "traction",
+//                 false,
+//                 tractionInterp
+//
+//             );
+//             vtkWritePolyData::write
+//             (
+//                 path/"p_traction_actual.vtk",
+//                 "p_traction_actual",
+//                 false,
+//                 samplePatch.globalPatch().points(),
+//                 labelList(),
+//                 edgeList(),
+//                 samplePatch.globalPatch(),
+//                 "p",
+//                 false,
+//                 pGlobal,
+//                 "traction",
+//                 false,
+//                 tractionGlobal
+//             );
+//         }
+//     }
 
     this->pressure() = samplePatch.faceInterpolate(ppNbr);
 

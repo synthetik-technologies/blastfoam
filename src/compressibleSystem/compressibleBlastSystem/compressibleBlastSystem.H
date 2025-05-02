@@ -52,8 +52,7 @@ class blastRadiationModel;
 
 class compressibleBlastSystem
 :
-    public compressibleSystem,
-    public IOdictionary
+    public compressibleSystem
 {
 protected:
 // Protected data
@@ -87,14 +86,23 @@ protected:
         //- Allocate models
         virtual void setModels();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> rhoESource() const;
+        //- Add source terms to momentum and energy equations
+            virtual void addSources
+            (
+                volVectorField::Internal& rhoUSource,
+                volScalarField::Internal& rhoESource
+            ) const;
 
 
 public:
 
     // Constructor
-    compressibleBlastSystem(const fvMesh& mesh, const word& thermoType);
+    compressibleBlastSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const word& thermoType
+    );
 
     //- Destructor
     virtual ~compressibleBlastSystem();

@@ -38,9 +38,10 @@ Description
 #define MeshFieldUpdater_H
 
 #include "RefineBalanceMeshObject.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChangeMap.H"
+#include "polyMeshMap.H"
+#include "polyDistributionMap.H"
 #include "pointMesh.H"
-#include "mapDistributePolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,10 +55,10 @@ namespace Foam
 template<class GeoMesh>
 class MeshFieldUpdater
 :
-    public MeshObject
+    public DemandDrivenMeshObject
     <
         polyMesh,
-        DistributeableMeshObject,
+        RepatchableMeshObject,
         MeshFieldUpdater<GeoMesh>
     >
 {
@@ -85,7 +86,11 @@ public:
             return false;
         }
 
-        virtual void updateMesh(const mapPolyMesh& map)
+        virtual void topoChange(const polyTopoChangeMap& map)
+        {
+            NotImplemented;
+        }
+        virtual void mapMesh(const polyMeshMap& map)
         {
             NotImplemented;
         }
@@ -100,27 +105,29 @@ public:
         )
         {}
 
-        virtual void distribute(const mapDistributePolyMesh& map);
+        virtual void distribute(const polyDistributionMap& map);
 };
 
 #define updateFields(Type, GeoMesh)                                            \
 {                                                                              \
-    wordList fieldNames = mesh_.names<MeshField<Type, GeoMesh>>();             \
-    forAll(fieldNames, i)                                                      \
+    typedef MeshField<Type, GeoMesh> FieldType;                                \
+    HashTable<FieldType*> fields =                                             \
+        const_cast<objectRegistry&>(mesh().thisDb()).lookupClass<FieldType>(); \
+    forAllConstIter(HashTable<FieldType*>, fields, iter)                       \
     {                                                                          \
-        MeshField<Type, GeoMesh>& f =                                          \
-            mesh_.lookupObjectRef<MeshField<Type, GeoMesh>>(fieldNames[i]);    \
+        MeshField<Type, GeoMesh>& f = *(iter());                               \
         mapper(f, f);                                                          \
     }                                                                          \
 }
 
 #define distributeFields(Type, GeoMesh, Distribute)                            \
 {                                                                              \
-    wordList fieldNames = mesh_.names<MeshField<Type, GeoMesh>>();             \
-    forAll(fieldNames, i)                                                      \
+    typedef MeshField<Type, GeoMesh> FieldType;                                \
+    HashTable<FieldType*> fields =                                             \
+        const_cast<objectRegistry&>(mesh().thisDb()).lookupClass<FieldType>(); \
+    forAllConstIter(HashTable<FieldType*>, fields, iter)                       \
     {                                                                          \
-        MeshField<Type, GeoMesh>& f =                                          \
-            mesh_.lookupObjectRef<MeshField<Type, GeoMesh>>(fieldNames[i]);    \
+        MeshField<Type, GeoMesh>& f = *(iter());                               \
         mdpm.Distribute(f);                                                    \
     }                                                                          \
 }

@@ -62,11 +62,7 @@ Foam::NusseltNumberModels::constant::~constant()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::NusseltNumberModels::constant::Nu
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::NusseltNumberModels::constant::Nu() const
 {
     return volScalarField::New
     (
@@ -77,12 +73,7 @@ Foam::NusseltNumberModels::constant::Nu
 }
 
 
-Foam::scalar Foam::NusseltNumberModels::constant::cellNu
-(
-    const label celli,
-    const label nodei,
-    const label nodej
-) const
+Foam::scalar Foam::NusseltNumberModels::constant::cellNu(const label) const
 {
     return Nu_.value();
 }

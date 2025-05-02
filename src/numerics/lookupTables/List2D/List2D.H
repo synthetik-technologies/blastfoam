@@ -157,6 +157,10 @@ public:
             //- Transfer to another List2D
             void transfer(List2D<Type>& lst);
 
+            //- Flip table (transpose)
+            void flip();
+
+
 
     // Member Operators
 

@@ -24,8 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "hexRefRefinementHistory.H"
-#include "mapPolyMesh.H"
-#include "mapDistributePolyMesh.H"
+#include "polyTopoChangeMap.H"
+#include "polyDistributionMap.H"
 #include "polyMesh.H"
 #include "syncTools.H"
 
@@ -1127,7 +1127,7 @@ void Foam::hexRefRefinementHistory::resize(const label size)
 }
 
 
-void Foam::hexRefRefinementHistory::updateMesh(const mapPolyMesh& map)
+void Foam::hexRefRefinementHistory::topoChange(const polyTopoChangeMap& map)
 {
     if (active())
     {
@@ -1258,7 +1258,7 @@ void Foam::hexRefRefinementHistory::countProc
 }
 
 
-void Foam::hexRefRefinementHistory::distribute(const mapDistributePolyMesh& map)
+void Foam::hexRefRefinementHistory::distribute(const polyDistributionMap& map)
 {
     if (!active())
     {

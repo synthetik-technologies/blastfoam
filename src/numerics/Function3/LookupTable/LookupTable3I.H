@@ -37,7 +37,16 @@ inline Type Foam::Function3s::LookupTable<Type>::value
     const scalar z
 ) const
 {
-    return table_.lookup(x, y, z);
+    return
+        units_.value.toStandard
+        (
+            table_.lookup
+            (
+                units_.x.toUser(x),
+                units_.y.toUser(y),
+                units_.z.toUser(z)
+            )
+        );
 }
 
 
@@ -53,7 +62,16 @@ inline Foam::tmp<Foam::Field<Type>> Foam::Function3s::LookupTable<Type>::value
     Field<Type>& res = tres.ref();
     forAll(res, i)
     {
-        res[i] = table_.lookup(x[i], y[i], z[i]);
+        res[i] =
+            units_.value.toStandard
+            (
+                table_.lookup
+                (
+                    units_.x.toUser(x[i]),
+                    units_.y.toUser(y[i]),
+                    units_.z.toUser(z[i])
+                )
+            );
     }
     return tres;
 }

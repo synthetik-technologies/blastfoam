@@ -41,9 +41,11 @@ Author
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
+#include "argList.H"
+#include "timeSelector.H"
 #include "solidModel.H"
+
+using namespace  Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,23 +56,9 @@ int main(int argc, char *argv[])
     #include "createTime.H"
 
     Info<< "Create mesh for time = "
-        << runTime.timeName() << nl << endl;
+        << runTime.name() << nl << endl;
 
-    autoPtr<dynamicFvMesh> meshPtr
-    (
-        dynamicFvMesh::New
-        (
-            IOobject
-            (
-                args.optionLookupOrDefault("region", dynamicFvMesh::defaultRegion),
-                runTime.timeName(),
-                runTime,
-                IOobject::MUST_READ
-            )
-        )
-    );
-
-    dynamicFvMesh& mesh = meshPtr();
+    #include "createRegionMesh.H"
 
     #include "createFields.H"
     #include "createTimeControls.H"
@@ -87,7 +75,9 @@ int main(int argc, char *argv[])
     {
         #include "readTimeControls.H"
 
-        refineMesh(mesh);
+        fvModels.preUpdateMesh();
+
+        mesh.update();
 
         CoNum = solid.CoNum();
         maxCo = min(maxCo, solid.maxCoNum());
@@ -95,7 +85,7 @@ int main(int argc, char *argv[])
         #include "setDeltaT.H"
 
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         solid.evolve();
 

@@ -35,15 +35,13 @@ inline Foam::eConstThermo<EquationOfState>::eConstThermo
     const scalar cv,
     const scalar hf,
     const scalar Tref,
-    const scalar Esref,
-    const scalar ft
+    const scalar Esref
 )
 :
     EquationOfState(st),
     Cv_(cv),
     Hf_(hf),Tref_(Tref),
-    Esref_(Esref),
-    flameT_(ft)
+    Esref_(Esref)
 {}
 
 
@@ -60,8 +58,7 @@ inline Foam::eConstThermo<EquationOfState>::eConstThermo
     Cv_(ct.Cv_),
     Hf_(ct.Hf_),
     Tref_(ct.Tref_),
-    Esref_(ct.Esref_),
-    flameT_(ct.flameT_)
+    Esref_(ct.Esref_)
 {}
 
 
@@ -174,13 +171,6 @@ inline Foam::scalar Foam::eConstThermo<EquationOfState>::Hf() const
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eConstThermo<EquationOfState>::flameT() const
-{
-    return flameT_;
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::eConstThermo<EquationOfState>::S
 (
     const scalar p,
@@ -252,7 +242,6 @@ inline void Foam::eConstThermo<EquationOfState>::operator+=
         Cv_ = Y1*Cv_ + Y2*ct.Cv_;
         Hf_ = Y1*Hf_ + Y2*ct.Hf_;
         Esref_ = Y1*Esref_ + Y2*ct.Esref_;
-        flameT_ = Y1*flameT_ + Y2*ct.flameT_;
     }
 }
 
@@ -280,8 +269,7 @@ inline Foam::eConstThermo<EquationOfState> Foam::operator+
             ct1.Cv_,
             ct1.Hf_,
             ct1.Tref_,
-            ct1.Esref_,
-            ct1.flameT_
+            ct1.Esref_
         );
         return eThermo;
     }
@@ -310,9 +298,7 @@ inline Foam::eConstThermo<EquationOfState> Foam::operator+
           + ct2.Y()/eofs.Y()*ct2.Hf_,
             ct1.Tref_,
             ct1.Y()/eofs.Y()*ct1.Esref_
-          + ct2.Y()/eofs.Y()*ct2.Esref_,
-            ct1.Y()/eofs.Y()*ct1.flameT_
-          + ct2.Y()/eofs.Y()*ct2.flameT_
+          + ct2.Y()/eofs.Y()*ct2.Esref_
         );
         return eThermo;
     }
@@ -332,8 +318,7 @@ inline Foam::eConstThermo<EquationOfState> Foam::operator*
         ct.Cv_,
         ct.Hf_,
         ct.Tref_,
-        ct.Esref_,
-        ct.flameT_
+        ct.Esref_
     );
     return eThermo;
 }
@@ -375,9 +360,7 @@ inline Foam::eConstThermo<EquationOfState> Foam::operator==
       - ct1.Y()/eofs.Y()*ct1.Hf_,
         ct1.Tref_,
         ct2.Y()/eofs.Y()*ct2.Esref_
-      - ct1.Y()/eofs.Y()*ct1.Esref_,
-        ct2.Y()/eofs.Y()*ct2.flameT_
-      - ct1.Y()/eofs.Y()*ct1.flameT_
+      - ct1.Y()/eofs.Y()*ct1.Esref_
     );
     return eThermo;
 }

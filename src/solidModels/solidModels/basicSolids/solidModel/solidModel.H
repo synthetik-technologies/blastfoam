@@ -41,7 +41,7 @@ SourceFiles
 #ifndef solidModel_H
 #define solidModel_H
 
-#include "dynamicFvMesh.H"
+#include "fvMesh.H"
 #include "IOdictionary.H"
 #include "scalarIOField.H"
 #include "autoPtr.H"
@@ -74,7 +74,7 @@ class solidModel
     // Private data
 
         //- Mesh
-        dynamicFvMesh& mesh_;
+        fvMesh& mesh_;
 
         //- Derived solidModel type
         const word type_;
@@ -113,9 +113,6 @@ class solidModel
         //  true (Cauchy) stress for nonlinear geometry (large strain)
         //  approaches
         volSymmTensorField sigma_;
-
-        //- Density
-        volScalarField& rho_;
 
         //- Gravitational acceleration
         const uniformDimensionedVectorField g_;
@@ -196,6 +193,9 @@ protected:
 
         virtual void readDict();
 
+        //- Construct null
+        solidModel(const word& type, fvMesh& mesh);
+
 
 public:
 
@@ -211,7 +211,7 @@ public:
             solidModel,
             dictionary,
             (
-                dynamicFvMesh& mesh
+                fvMesh& mesh
             ),
             (mesh)
         );
@@ -222,7 +222,7 @@ public:
             solidModel,
             lagrangian,
             (
-                dynamicFvMesh& mesh
+                fvMesh& mesh
             ),
             (mesh)
         );
@@ -234,7 +234,7 @@ public:
         solidModel
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const nonLinearGeometry::nonLinearType nonlinear,
             const bool incremental,
             const bool isSolid = true
@@ -244,10 +244,10 @@ public:
     // Selectors
 
         //- Select constructed from time
-        static autoPtr<solidModel> New(dynamicFvMesh& mesh);
+        static autoPtr<solidModel> New(fvMesh& mesh);
 
         //- Select constructed from time (moving meshes)
-        static autoPtr<solidModel> NewLU(dynamicFvMesh& mesh);
+        static autoPtr<solidModel> NewLU(fvMesh& mesh);
 
 
     // Destructor
@@ -260,13 +260,13 @@ public:
         // Access
 
             //- Return mesh
-            const dynamicFvMesh& mesh() const
+            const fvMesh& mesh() const
             {
                 return mesh_;
             }
 
             //- Return non-const mesh
-            dynamicFvMesh& mesh()
+            fvMesh& mesh()
             {
                 return mesh_;
             }
@@ -505,7 +505,7 @@ public:
             virtual tmp<Foam::vectorField> nf(const fvPatch& patch) const = 0;
 
             //- Return the patch implicit stiffness
-            virtual const scalarField& impK(const fvPatch& patch) const = 0;
+            virtual tmp<scalarField> impK(const fvPatch& patch) const = 0;
 
             //- Return the patch stress
             virtual const symmTensorField& sigma(const fvPatch& patch) const
@@ -526,6 +526,12 @@ public:
                 const volVectorField& DD,
                 pointVectorField& pointDD
             );
+
+            //- Read from dictionary
+            virtual bool read();
+
+//             //- Read from dictionary
+//             virtual bool readIfModified();
 
             //- Write fields
             virtual bool write(const bool write = true) const;

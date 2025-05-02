@@ -129,16 +129,6 @@ public:
             const dictionary& dict
         );
 
-        //- Construct for given objectRegistry and dictionary.
-        //  Allow the possibility to load fields from files
-        blastPatchProbes
-        (
-            const word& name,
-            const objectRegistry&,
-            const dictionary&,
-            const bool loadFromFiles = false
-        );
-
         //- Disallow default bitwise copy construction
         blastPatchProbes(const blastPatchProbes&) = delete;
 

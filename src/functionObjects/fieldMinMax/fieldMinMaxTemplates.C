@@ -143,7 +143,7 @@ bool Foam::functionObjects::fieldMinMax::createOld
                 IOobject
                 (
                     computeFieldName,
-                    obr_.time().timeName(),
+                    obr_.time().name(),
                     obr_,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
@@ -167,7 +167,9 @@ bool Foam::functionObjects::fieldMinMax::update
     if (obr_.foundObject<FieldType>(fieldName))
     {
         const word computeFieldName(computedName(fieldName));
-        if (!oldFields_.found(computeFieldName))
+        HashPtrTable<regIOobject>::iterator oldIter =
+            oldFields_.find(computeFieldName);
+        if (oldIter == oldFields_.end())
         {
             createMinMax<FieldType>(fieldName);
         }
@@ -196,7 +198,7 @@ bool Foam::functionObjects::fieldMinMax::update
             const labelList& rCellMap = rCellMap_();
 
             const FieldType& fOld =
-                *dynamic_cast<const FieldType*>(oldFields_[computeFieldName]);
+                *dynamic_cast<const FieldType*>(oldIter());
 
             forAll(cellMap, i)
             {
@@ -228,7 +230,7 @@ template<class FieldType>
 bool Foam::functionObjects::fieldMinMax::map
 (
     const word& fieldName,
-    const mapPolyMesh& meshMap
+    const polyTopoChangeMap& meshMap
 )
 {
     const word computeFieldName(computedName(fieldName));

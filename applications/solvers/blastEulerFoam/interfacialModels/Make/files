@@ -1,5 +1,6 @@
 dragModels/dragModel/dragModel.C
 dragModels/dragModel/dragModelNew.C
+dragModels/dispersedDragModel/dispersedDragModel.C
 dragModels/segregated/segregated.C
 dragModels/Ergun/Ergun.C
 dragModels/Gibilaro/Gibilaro.C
@@ -39,6 +40,7 @@ swarmCorrections/TomiyamaSwarm/TomiyamaSwarm.C
 
 liftModels/liftModel/liftModel.C
 liftModels/liftModel/liftModelNew.C
+liftModels/dispersedLiftModel/dispersedLiftModel.C
 liftModels/noLift/noLift.C
 liftModels/constantLiftCoefficient/constantLiftCoefficient.C
 liftModels/Moraga/Moraga.C
@@ -47,6 +49,7 @@ liftModels/TomiyamaLift/TomiyamaLift.C
 
 virtualMassModels/virtualMassModel/virtualMassModel.C
 virtualMassModels/virtualMassModel/virtualMassModelNew.C
+virtualMassModels/dispersedVirtualMassModel/dispersedVirtualMassModel.C
 virtualMassModels/noVirtualMass/noVirtualMass.C
 virtualMassModels/constantVirtualMassCoefficient/constantVirtualMassCoefficient.C
 virtualMassModels/Lamb/Lamb.C
@@ -54,6 +57,7 @@ virtualMassModels/Zuber/Zuber.C
 
 wallLubricationModels/wallLubricationModel/wallLubricationModel.C
 wallLubricationModels/wallLubricationModel/wallLubricationModelNew.C
+wallLubricationModels/dispersedWallLubricationModel/dispersedWallLubricationModel.C
 wallLubricationModels/noWallLubrication/noWallLubrication.C
 wallLubricationModels/Antal/Antal.C
 wallLubricationModels/Frank/Frank.C
@@ -61,9 +65,13 @@ wallLubricationModels/TomiyamaWallLubrication/TomiyamaWallLubrication.C
 
 turbulentDispersionModels/turbulentDispersionModel/turbulentDispersionModel.C
 turbulentDispersionModels/turbulentDispersionModel/turbulentDispersionModelNew.C
+turbulentDispersionModels/dispersedTurbulentDispersionModel/dispersedTurbulentDispersionModel.C
 turbulentDispersionModels/noTurbulentDispersion/noTurbulentDispersion.C
+turbulentDispersionModels/constantTurbulentDispersionCoefficient/constantTurbulentDispersionCoefficient.C
 turbulentDispersionModels/Davidson/Davidson.C
 turbulentDispersionModels/Panicker/Panicker.C
+turbulentDispersionModels/LopezDeBertodano/LopezDeBertodano.C
+turbulentDispersionModels/Gosman/Gosman.C
 
 massTransferModels/massTransferModel/massTransferModel.C
 massTransferModels/massTransferModel/massTransferModelNew.C
@@ -84,6 +92,10 @@ interfacialPressure/interfacialPressure/interfacialPressureModelNew.C
 interfacialPressure/single/singleInterfacialPressureModel.C
 interfacialPressure/volumeAveraged/volumeAveragedInterfacialPressureModel.C
 interfacialPressure/totalPressure/totalPressureInterfacialPressureModel.C
+
+surfaceTemperature/surfaceTemperature/surfaceTemperatureModel.C
+surfaceTemperature/surfaceTemperature/surfaceTemperatureModelNew.C
+surfaceTemperature/isoThermal/isoThermalSurfaceTemperatureModel.C
 
 interfacialVelocity/interfacialVelocity/interfacialVelocityModel.C
 interfacialVelocity/interfacialVelocity/interfacialVelocityModelNew.C

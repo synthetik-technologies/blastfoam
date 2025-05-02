@@ -64,7 +64,7 @@ Foam::linearElasticFromFile::linearElasticFromFile
         IOobject
         (
             "E",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -77,7 +77,7 @@ Foam::linearElasticFromFile::linearElasticFromFile
         IOobject
         (
             "mu",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -89,7 +89,7 @@ Foam::linearElasticFromFile::linearElasticFromFile
         IOobject
         (
             "mu",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE

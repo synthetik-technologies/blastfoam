@@ -29,7 +29,7 @@ License
 #include "refineCell.H"
 #include "undoableMeshCutter.H"
 #include "polyTopoChange.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChangeMap.H"
 #include "newCellCuts.H"
 #include "OFstream.H"
 #include "meshTools.H"
@@ -110,9 +110,9 @@ Foam::Map<Foam::label> Foam::newRefinementIterator::setRefinement
                     << " cells" << endl;
 
 
-                fileName cutsFile("failedCuts_" + runTime.timeName() + ".obj");
+                fileName cutsFile("failedCuts_" + runTime.name() + ".obj");
 
-                Pout<< "Writing cuts for time " <<  runTime.timeName()
+                Pout<< "Writing cuts for time " <<  runTime.name()
                     << " to " << cutsFile << endl;
 
                 OFstream cutsStream(cutsFile);
@@ -138,9 +138,9 @@ Foam::Map<Foam::label> Foam::newRefinementIterator::setRefinement
 
         if (debug)
         {
-            fileName cutsFile("cuts_" + runTime.timeName() + ".obj");
+            fileName cutsFile("cuts_" + runTime.name() + ".obj");
 
-            Pout<< "Writing cuts for time " <<  runTime.timeName()
+            Pout<< "Writing cuts for time " <<  runTime.name()
                 << " to " << cutsFile << endl;
 
             OFstream cutsStream(cutsFile);
@@ -156,21 +156,11 @@ Foam::Map<Foam::label> Foam::newRefinementIterator::setRefinement
         // Do all changes
         //
 
-        autoPtr<mapPolyMesh> morphMap = meshMod.changeMesh
-        (
-            mesh_,
-            false
-        );
-
-        // Move mesh (since morphing does not do this)
-        if (morphMap().hasMotionPoints())
-        {
-            mesh_.movePoints(morphMap().preMotionPoints());
-        }
+        autoPtr<polyTopoChangeMap> morphMap = meshMod.changeMesh(mesh_);
 
         // Update stored refinement pattern
-        mesh_.updateMesh(morphMap());
-        meshRefiner_.updateMesh(morphMap());
+        mesh_.topoChange(morphMap());
+        meshRefiner_.topoChange(morphMap());
 
         // Update currentRefCells for new cell numbers. Use helper function
         // in meshCutter class.
@@ -312,9 +302,9 @@ Foam::Map<Foam::label> Foam::newRefinementIterator::setRefinement
                     << " cells" << endl;
 
 
-                fileName cutsFile("failedCuts_" + runTime.timeName() + ".obj");
+                fileName cutsFile("failedCuts_" + runTime.name() + ".obj");
 
-                Pout<< "Writing cuts for time " <<  runTime.timeName()
+                Pout<< "Writing cuts for time " <<  runTime.name()
                     << " to " << cutsFile << endl;
 
                 OFstream cutsStream(cutsFile);
@@ -340,9 +330,9 @@ Foam::Map<Foam::label> Foam::newRefinementIterator::setRefinement
 
         if (debug)
         {
-            fileName cutsFile("cuts_" + runTime.timeName() + ".obj");
+            fileName cutsFile("cuts_" + runTime.name() + ".obj");
 
-            Pout<< "Writing cuts for time " <<  runTime.timeName()
+            Pout<< "Writing cuts for time " <<  runTime.name()
                 << " to " << cutsFile << endl;
 
             OFstream cutsStream(cutsFile);
@@ -357,22 +347,11 @@ Foam::Map<Foam::label> Foam::newRefinementIterator::setRefinement
         //
         // Do all changes
         //
-
-        autoPtr<mapPolyMesh> morphMap = meshMod.changeMesh
-        (
-            mesh_,
-            false
-        );
-
-        // Move mesh (since morphing does not do this)
-        if (morphMap().hasMotionPoints())
-        {
-            mesh_.movePoints(morphMap().preMotionPoints());
-        }
+        autoPtr<polyTopoChangeMap> morphMap = meshMod.changeMesh(mesh_);
 
         // Update stored refinement pattern
-        mesh_.updateMesh(morphMap());
-        meshRefiner_.updateMesh(morphMap());
+        mesh_.topoChange(morphMap());
+        meshRefiner_.topoChange(morphMap());
 
         // Update addedCells for new cell numbers
         updateLabels

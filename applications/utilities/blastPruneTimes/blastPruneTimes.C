@@ -102,6 +102,12 @@ int main(int argc, char *argv[])
         "Select non-interval times"
     );
 
+    argList::addBoolOption
+    (
+        "Clean",
+        "Remove times not in the processor0 folder"
+    );
+
     argList::addBoolOption("v", "Verbose");
 
 
@@ -156,6 +162,7 @@ int main(int argc, char *argv[])
         databases[0].times(),
         args
     );
+
     scalar minDt = great;
     for (label i = 1; i < times.size(); i++)
     {
@@ -165,7 +172,7 @@ int main(int argc, char *argv[])
     DynamicList<instant> timesToKeep(times.size());
     DynamicList<instant> prunedTimes(times.size());
     const scalar startTime =
-        args.optionLookupOrDefault("startTime", databases[0].startTime().value());
+        args.optionLookupOrDefault("startTime", databases[0].beginTime().value());
     const scalar endTime =
         args.optionLookupOrDefault("endTime", databases[0].endTime().value());
     scalar dt = endTime - startTime;
@@ -178,33 +185,37 @@ int main(int argc, char *argv[])
         dt /= args.optionRead<scalar>("n");
     }
 
-    const scalar tolerance = args.optionLookupOrDefault("tolerance", minDt/2.0);
+    const scalar tolerance = args.optionLookupOrDefault
+    (
+        "tolerance",
+        minDt*1e-3
+    );
 
     scalar nextTime = startTime;
 
-    // Make sure the first time in the selected times is less than the starting time
-    if (times.size())
-    {
-        scalar tByDt(times[0].value()/dt);
-        if (mag(label(tByDt) - tByDt) < small)
-        {
-            nextTime = times[0].value();
-        }
-        else
-        {
-            forAll(times, ti)
-            {
-                if (times[ti].value() > startTime)
-                {
-                    nextTime += dt;
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-    }
+//     // Make sure the first time in the selected times is less than the starting time
+//     if (times.size())
+//     {
+//         scalar tByDt(times[0].value()/dt);
+//         if (mag(label(tByDt) - tByDt) < tolerance)
+//         {
+//             nextTime = times[0].value();
+//         }
+//         else
+//         {
+//             forAll(times, ti)
+//             {
+//                 if (times[ti].value() > startTime)
+//                 {
+//                     nextTime += dt;
+//                 }
+//                 else
+//                 {
+//                     break;
+//                 }
+//             }
+//         }
+//     }
 
     // Space times
     forAll(times, ti)
@@ -219,10 +230,9 @@ int main(int argc, char *argv[])
         }
 
         scalar tByDt(times[ti].value()/dt);
-        if (mag(label(tByDt) - tByDt)*dt < tolerance)
+        if (mag(round(tByDt) - tByDt) < tolerance)
         {
             timesToKeep.append(times[ti]);
-            nextTime += dt;
         }
         else
         {
@@ -239,6 +249,12 @@ int main(int argc, char *argv[])
     {
         if (args.optionFound("processor"))
         {
+            HashSet<word> masterTimes;
+            forAll(times, ti)
+            {
+                masterTimes.insert(times[ti].name());
+            }
+
             for (label proci=0; proci<nProcs; proci++)
             {
                 const fileName procPath
@@ -258,6 +274,37 @@ int main(int argc, char *argv[])
                         if (verbose)
                         {
                             Info<< "Removing " << procTimePath << endl;
+                        }
+                        rmDir(procTimePath);
+                    }
+                }
+
+                instantList procTimes
+                (
+                    timeSelector::select
+                    (
+                        databases[proci].times(),
+                        args
+                    )
+                );
+                forAll(procTimes, ti)
+                {
+                    const fileName procTimePath
+                    (
+                        fileHandler().filePath
+                        (
+                            procPath/procTimes[ti].name()
+                        )
+                    );
+                    if
+                    (
+                        !masterTimes.found(procTimes[ti].name())
+                     && isDir(procTimePath)
+                    )
+                    {
+                        if (verbose)
+                        {
+                            Info<< "removing " << procTimePath << endl;
                         }
                         rmDir(procTimePath);
                     }

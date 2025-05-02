@@ -43,11 +43,12 @@ namespace Foam
 
 Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh,
     const bool initialize
 )
 :
-    compressibleBlastSystem(mesh, word::null)
+    compressibleBlastSystem(dict, mesh, word::null)
 {
     this->fluxScheme_ = fluxScheme::NewSingle(phi_);
 
@@ -67,14 +68,23 @@ Foam::singlePhaseCompressibleSystem::~singlePhaseCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::singlePhaseCompressibleSystem::decode()
+{
+    this->rhoEff().correctBoundaryConditions();
+    compressibleBlastSystem::decode();
+
+}
 void Foam::singlePhaseCompressibleSystem::solve()
 {
+    compressibleBlastSystem::solve();
+
     volScalarField& rho = this->rhoEff();
+    dimensionedScalar dT = rho.time().deltaT();
+
     volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
     this->fvTimeInt_->addDeltaSource(rho_.name(), deltaRho);
     this->storeAndBlendDelta(deltaRho);
 
-    dimensionedScalar dT = rho.time().deltaT();
     this->storeAndBlendOld(rho);
 
     rho.storePrevIter();
@@ -83,8 +93,6 @@ void Foam::singlePhaseCompressibleSystem::solve()
     rho.correctBoundaryConditions();
 
     thermoPtr_->solve();
-
-    compressibleBlastSystem::solve();
 }
 
 

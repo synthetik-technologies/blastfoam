@@ -53,7 +53,7 @@ SourceFiles
 #ifndef Frank_H
 #define Frank_H
 
-#include "wallLubricationModel.H"
+#include "dispersedWallLubricationModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -71,7 +71,7 @@ namespace wallLubricationModels
 
 class Frank
 :
-    public wallLubricationModel
+    public dispersedWallLubricationModel
 {
     // Private data
 
@@ -108,11 +108,7 @@ public:
     // Member Functions
 
         //- Return phase-intensive wall lubrication force
-        tmp<volVectorField> FI
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        tmp<volVectorField> Fi() const;
 };
 
 

@@ -77,7 +77,7 @@ void totalLagrangianTotalDisplacementSolid::predict()
 
 totalLagrangianTotalDisplacementSolid::totalLagrangianTotalDisplacementSolid
 (
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     TotalLagrangianGeomSolid<totalDisplacementSolid>(typeName, mesh),
@@ -88,12 +88,12 @@ totalLagrangianTotalDisplacementSolid::totalLagrangianTotalDisplacementSolid
         // Check ddt scheme for D is not steadyState
         const word ddtDScheme
         (
-            mesh.ddtScheme("ddt(" + D().name() +')')
+            mesh.schemes().ddt("ddt(" + D().name() +')')
         );
 
         if (ddtDScheme == "steadyState")
         {
-            FatalErrorIn(type() + "::" + type())
+            FatalErrorInFunction
                 << "If predictor is turned on, then the ddt(" << D().name()
                 << ") scheme should not be 'steadyState'!" << abort(FatalError);
         }
@@ -106,7 +106,6 @@ totalLagrangianTotalDisplacementSolid::totalLagrangianTotalDisplacementSolid
 bool totalLagrangianTotalDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     if (predictor_)
     {

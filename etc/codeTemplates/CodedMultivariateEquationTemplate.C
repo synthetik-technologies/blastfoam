@@ -77,7 +77,7 @@ ${typeName}_${TemplateType}MultivariateEquation
 :
     MultivariateEquation<${TemplateType}>(dict)
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Construct ${typeName} sha1: ${SHA1sum} from dictionary\n";
     }
@@ -89,7 +89,7 @@ ${typeName}_${TemplateType}MultivariateEquation
 Foam::${typeName}_${TemplateType}MultivariateEquation::
 ~${typeName}_${TemplateType}MultivariateEquation()
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Destroy ${typeName} sha1: ${SHA1sum}\n";
     }

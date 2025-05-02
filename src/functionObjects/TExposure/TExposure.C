@@ -74,7 +74,7 @@ Foam::functionObjects::TExposure::TExposure
                 "fieldName",
                 IOobject::groupName("TExposure", IOobject::group(TName_))
             ),
-            runTime.timeName(),
+            runTime.name(),
             mesh_,
             restartOnRestart_
           ? IOobject::NO_READ
@@ -316,6 +316,10 @@ bool Foam::functionObjects::TExposure::execute()
 
 bool Foam::functionObjects::TExposure::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
     return exposure_.write();
 }
 

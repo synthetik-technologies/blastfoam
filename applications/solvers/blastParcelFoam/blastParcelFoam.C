@@ -30,14 +30,15 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
-#include "zeroGradientFvPatchFields.H"
-#include "wedgeFvPatch.H"
+#include "argList.H"
+#include "fvMesh.H"
+#include "timeSelector.H"
 #include "coupledMultiphaseCompressibleSystem.H"
 #include "fvTimeIntegrator.H"
 
 #include "parcelCloudList.H"
+
+using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,9 +46,9 @@ int main(int argc, char *argv[])
 {
     #include "postProcess.H"
 
-    #include "setRootCaseLists.H"
+    #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
     maxCo = min(maxCo, integrator.maxCo());
@@ -65,7 +66,7 @@ int main(int argc, char *argv[])
         integrator.preUpdateMesh();
 
         //- Refine the mesh
-        refineMesh(mesh);
+        mesh.update();
 
         scalar CoNum = fluid.CoNum();
         #include "readTimeControls.H"
@@ -74,14 +75,14 @@ int main(int argc, char *argv[])
         #include "setDeltaT.H"
 
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         //- Move the mesh
-        mesh.update();
+        mesh.move();
 
         fluid.decode();
         clouds.evolve();
-        theta = clouds.theta();
+        alpha = clouds.alpha();
 
         fluid.eSource() = clouds.Sh(fluid.he());
         fluid.dragSource() = clouds.SU(fluid.U());

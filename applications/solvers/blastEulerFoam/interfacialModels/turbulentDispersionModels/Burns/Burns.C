@@ -26,11 +26,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Burns.H"
-#include "phasePair.H"
-#include "PhaseCompressibleTurbulenceModel.H"
 #include "addToRunTimeSelectionTable.H"
 
-#include "dragModel.H"
+#include "dispersedDragModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -57,7 +55,7 @@ Foam::turbulentDispersionModels::Burns::Burns
     const phasePair& pair
 )
 :
-    turbulentDispersionModel(dict, pair),
+    dispersedTurbulentDispersionModel(dict, pair),
     sigma_("sigma", dimless, dict),
     residualAlpha_
     (
@@ -81,17 +79,13 @@ Foam::turbulentDispersionModels::Burns::~Burns()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::turbulentDispersionModels::Burns::D
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::turbulentDispersionModels::Burns::D() const
 {
     const fvMesh& mesh(pair_.phase1().mesh());
-    const dragModel&
+    const dragModels::dispersedDragModel&
         drag
         (
-            mesh.lookupObject<dragModel>
+            mesh.lookupObject<dragModels::dispersedDragModel>
             (
                 IOobject::groupName(dragModel::typeName, pair_.name())
             )
@@ -99,18 +93,17 @@ Foam::turbulentDispersionModels::Burns::D
 
     return
         0.75
-       *drag.CdRe(nodei, nodej)
+       *drag.CdRe()
        *pair_.continuous().nu()
-       *pair_.continuous().turbulence().nut()
+       *continuousTurbulence().nut()
        /(
             sigma_
-           *sqr(pair_.dispersed().d(nodei))
+           *sqr(pair_.dispersed().d())
         )
        *pair_.continuous().rho()
        *(
            1.0
-         + pair_.dispersed().volumeFraction(nodei)
-          /max(pair_.continuous(), residualAlpha_)
+         + pair_.dispersed()/max(pair_.continuous(), residualAlpha_)
         );
 }
 

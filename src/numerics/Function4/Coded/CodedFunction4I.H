@@ -41,7 +41,17 @@ inline Type Foam::Function4s::Coded<Type>::value
     // Make sure library containing user-defined Function4 is up-to-date
     this->updateLibrary();
 
-    return redirectFunction4Ptr_->value(t, x, y, z);
+
+    return units_.value.toStandard
+        (
+            redirectFunction4Ptr_->value
+            (
+                units_.t.toUser(t),
+                units_.x.toUser(x),
+                units_.y.toUser(y),
+                units_.z.toUser(z)
+            )
+        );
 }
 
 

@@ -133,25 +133,16 @@ public:
 
     // Member Functions
 
-        // Mapping functions
+        // Evaluation functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap(const fvPatchFieldMapper&);
+            //- Return neighbour coupled internal cell data
+            tmp<Field<Type>> patchNeighbourField() const;
 
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap(const fvPatchField<Type>&, const labelList&);
+            //- Update the coefficients associated with the patch field
+            virtual void updateCoeffs();
 
-
-    // Evaluation functions
-
-        //- Return neighbour coupled internal cell data
-        tmp<Field<Type>> patchNeighbourField() const;
-
-        //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
-
-        //- Write
-        virtual void write(Ostream&) const;
+            //- Write
+            virtual void write(Ostream&) const;
 };
 
 

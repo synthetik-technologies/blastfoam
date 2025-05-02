@@ -91,20 +91,24 @@ const Foam::entryTable& Foam::read2DTable
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    label ny = -1;
-    label nx = 0;
+    label nx = -1;
+    label ny = 0;
 
     DynamicList<List<List<token>>> tentries;
     token t(is);
 
-    while (is.good())
+    // Start from "startLine"
+    while (is.good() && t.lineNumber() < startLine)
     {
-        if (t.lineNumber() <= startLine)
-        {
-            is >> t;
-            continue;
-        }
-        label lineNo = t.lineNumber();
+        is >> t;
+    }
+
+    while (is.good() && t.good())
+    {
+        // Current line number
+        const label lineNo = t.lineNumber();
+
+        // Remove comments
         if
         (
             (t.isPunctuation() && t.pToken() == token::HASH)
@@ -120,74 +124,47 @@ const Foam::entryTable& Foam::read2DTable
              && t.good()
              && t.lineNumber() == lineNo
             );
+            continue;
         }
 
-        DynamicList<DynamicList<token>> lineVals;
-        label cmpti = 0;
-        lineNo = t.lineNumber();
-        while (is.good())
-        {
-            bool add = true;
-            if (!t.good())
-            {
-                break;
-            }
-            else if (t.lineNumber() != lineNo)
-            {
-                lineNo = t.lineNumber();
-                break;
-            }
+        DynamicList<List<token>> lineVals;
 
-            if (delim == token::SPACE)
+        // Loop until a new line is reached
+        while (t.good() && t.lineNumber() == lineNo)
+        {
+            // Add tokens until delimiter is reached
+            DynamicList<token> tokens;
+            while (t.good() && t.lineNumber() == lineNo)
             {
-                if (lineVals(cmpti).size())
+                tokens.append(t);
+                is >> t;
+                // Read next token if this is the delimiter
+                if (t.isPunctuation() && t.pToken() == delim)
                 {
-                    cmpti++;
-                }
-            }
-            else if (t.isPunctuation())
-            {
-                if (t.pToken() == token::NL)
-                {
+                    is >> t;
                     break;
                 }
-                if (t.pToken() == delim)
-                {
-                    if (lineVals(cmpti).size())
-                    {
-                        cmpti++;
-                    }
-                    add = false;
-                }
             }
-            if (add && t.good())
-            {
-                lineVals(cmpti).append(t);
-            }
-            is>> t;
+            lineVals.append(tokens);
         }
 
         if (!lineVals.size())
         {
             continue;
         }
-        else if (ny < 0)
+        else if (nx < 0)
         {
-            ny = lineVals.size();
+            nx = lineVals.size();
         }
-        else if (lineVals.size() != ny)
+        else if (lineVals.size() != nx)
         {
             FatalErrorInFunction
                 << "Incompatible table rows" << endl
                 << abort(FatalError);
         }
 
-        tentries.append(List<List<token>>(lineVals.size()));
-        forAll(lineVals, i)
-        {
-            tentries[nx][i].transfer(lineVals[i]);
-        }
-        nx++;
+        tentries.append(lineVals);
+        ny++;
     }
 
     // If only one row is provided, assume this is the data
@@ -195,32 +172,13 @@ const Foam::entryTable& Foam::read2DTable
     if (flip || nx == 1)
     {
         f = true;
-        label t = nx;
-        nx = ny;
-        ny = t;
     }
 
     entryTable& entries = readTables(file);
-    entries.setSize(nx, ny);
-    if (!f)
+    entries = tentries;
+    if (f)
     {
-        forAll(tentries, i)
-        {
-            forAll(tentries[i], j)
-            {
-                entries(i, j).transfer(tentries[i][j]);
-            }
-        }
-    }
-    else
-    {
-        forAll(tentries, j)
-        {
-            forAll(tentries[j], i)
-            {
-                entries(i, j).transfer(tentries[j][i]);
-            }
-        }
+        entries.flip();
     }
 
     return entries;

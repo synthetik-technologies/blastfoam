@@ -41,38 +41,159 @@ namespace Foam
     );
 }
 
+// * * * * * * * * * * * * Protected Members Functions * * * * * * * * * * * * //
+
+void Foam::multiphaseCompressibleSystem::updateFluxes
+(
+    const PtrList<surfaceScalarField>& alphasOwn,
+    const PtrList<surfaceScalarField>& alphasNei,
+    const PtrList<surfaceScalarField>& alphaRhosOwn,
+    const PtrList<surfaceScalarField>& alphaRhosNei
+)
+{
+    surfaceScalarField rhoOwn
+    (
+        surfaceScalarField::New
+        (
+            reconstruction::ownName("rho"),
+            mesh(),
+            dimensionedScalar(dimDensity, 0.0)
+        )
+    );
+    surfaceScalarField rhoNei
+    (
+        surfaceScalarField::New
+        (
+            reconstruction::neiName("rho"),
+            mesh(),
+            dimensionedScalar(dimDensity, 0.0)
+        )
+    );
+    forAll(alphaRhoPhis_, phasei)
+    {
+        rhoOwn += alphaRhosOwn[phasei];
+        rhoNei += alphaRhosNei[phasei];
+    }
+
+    fluxScheme_->update
+    (
+        rhoOwn,
+        rhoNei,
+        U_,
+        e_,
+        p_,
+        speedOfSound()(),
+        phi_,
+        rhoPhi_,
+        rhoUPhi_,
+        rhoEPhi_
+    );
+
+    forAll(alphaRhoPhis_, phasei)
+    {
+        alphaPhis_[phasei] = fluxScheme_->flux
+        (
+            alphasOwn[phasei],
+            alphasNei[phasei],
+            phi_
+        );
+        alphaRhoPhis_[phasei] = fluxScheme_->flux
+        (
+            alphaRhosOwn[phasei],
+            alphaRhosNei[phasei],
+            phi_
+        );
+    }
+
+    if (MUSLESLimiting_)
+    {
+        tmp<volScalarField> tdivPhi(fvc::div(phi_));
+        const volScalarField& divPhi = tdivPhi();
+        // Limit alpha flux
+        surfaceScalarField phi(phi_);
+        this->storeAndBlendDelta(phi);
+
+        UPtrList<const volScalarField> alphas(alphas_.size());
+        forAll(alphas_, phasei)
+        {
+            const volScalarField& alpha = alphas_[phasei];
+            volScalarField Su
+            (
+                IOobject::groupName("Su", alpha.group()),
+                alphas_[phasei]*divPhi
+            );
+            this->storeAndBlendDelta(Su);
+
+            surfaceScalarField& alphaPhi = alphaPhis_[phasei];
+            this->storeAndBlendDelta(alphaPhi);
+
+            alphas.set(phasei, &alphas_[phasei]);
+            volScalarField alphaOld(alphas_[phasei]);
+            this->blendOld(alphaOld);
+            alphaOld.storeOldTimes();
+
+            MULES::limit
+            (
+                1.0/mesh().time().deltaT().value(),
+                geometricOneField(),
+                alphaOld,
+                phi,
+                alphaPhi,
+                zeroField(),
+                Su,
+                oneField(),
+                zeroField(),
+                false
+            );
+            alphaPhi = this->calcAndStoreDelta(alphaPhi);
+        }
+        MULES::limitSum(alphas, alphaPhis_, phi_);
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh,
     const bool initialize
 )
 :
-    compressibleBlastSystem(mesh, multiphaseFluidBlastThermo::typeName),
+    compressibleBlastSystem
+    (
+        dict,
+        mesh,
+        multiphaseFluidBlastThermo::typeName
+    ),
     thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size()),
-    transportPhaseDensity_(this->lookupOrDefault("transportPhaseDensity", false)),
+    transportPhaseDensity_(dict.lookupOrDefault("transportPhaseDensity", false)),
+    densityReconstruction_(dict.lookupOrDefault("densityReconstruction", false)),
+    MUSLESLimiting_(dict.lookupOrDefault("MUSLESLimiting", false)),
     sharpen_(alphas_.size(), false)
 
 {
     this->fluxScheme_ = fluxScheme::NewMulti(phi_);
 
+    bool allRead = rhoU_.headerOk() && rhoE_.headerOk();
+    const bool initialDecode =
+        dict.lookupOrDefault<bool>("initialDecode", false);
+
     forAll(alphas_, phasei)
     {
         // Ensure boundaries are updated
         alphas_[phasei].correctBoundaryConditions();
-        alphas_[phasei].oldTime();
-
         rhos_[phasei].correctBoundaryConditions();
-        rhos_[phasei].oldTime();
 
         word phaseName = alphas_[phasei].group();
-        sharpen_[phasei] = this->subDict(phaseName).lookupOrDefault("sharpen", false);
+        sharpen_[phasei] =
+            dict.subDict(phaseName).lookupOrDefault("sharpen", false);
         fluxScheme_->phases().insert(phaseName);
         alphaRhos_.set
         (
@@ -82,14 +203,20 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
                 IOobject
                 (
                     IOobject::groupName("alphaRho", phaseName),
-                    mesh.time().timeName(),
-                    mesh
+                    mesh.time().name(),
+                    mesh,
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::AUTO_WRITE
                 ),
                 alphas_[phasei]*rhos_[phasei],
                 rhos_[phasei].boundaryField().types()
             )
         );
-        alphaRhos_[phasei].oldTime();
+        if (initialDecode && !alphaRhos_[phasei].headerOk())
+        {
+            alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
+            alphaRhos_[phasei].correctBoundaryConditions();
+        }
 
         alphaPhis_.set
         (
@@ -99,7 +226,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
                 IOobject
                 (
                     IOobject::groupName("alphaPhi", phaseName),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh
                 ),
                 mesh,
@@ -114,7 +241,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
                 IOobject
                 (
                     IOobject::groupName("alphaRhoPhi", phaseName),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh
                 ),
                 mesh,
@@ -123,13 +250,52 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
         );
     }
 
+    HashSet<word> adjustableSet;
+    if (dict.found("adjustablePhases"))
+    {
+        adjustableSet.insert(List<word>(dict.lookup("adjustablePhases")));
+    }
+    else
+    {
+        adjustableSet.insert(thermo_.phaseNames());
+    }
+
+    forAllConstIter(HashSet<word>, adjustableSet, iter)
+    {
+        const label phasei = whichPhase(iter.key());
+        if (phasei >= 0)
+        {
+            adjustablePhases_.append(phasei);
+        }
+        else
+        {
+            WarningInFunction
+                << "Unknown phase " << iter.key() << endl;
+        }
+    }
+
+
     if (initialize)
     {
         thermoPtr_->initializeModels();
         this->setModels();
 
+        if (initialDecode && allRead)
+        {
+            Info<< "Decoding conservative fields"<<endl;
+            decode();
+        }
         encode();
     }
+}
+
+
+Foam::label Foam::multiphaseCompressibleSystem::whichPhase
+(
+    const word& phaseName
+) const
+{
+    return findIndex(thermo_.phaseNames(), phaseName);
 }
 
 
@@ -149,28 +315,10 @@ void Foam::multiphaseCompressibleSystem::update()
     PtrList<surfaceScalarField> alphasNei(alphas_.size());
     PtrList<surfaceScalarField> alphaRhosOwn(alphas_.size());
     PtrList<surfaceScalarField> alphaRhosNei(alphas_.size());
-    tmp<surfaceScalarField> trhoOwn
-    (
-        surfaceScalarField::New
-        (
-            reconstruction::ownName(rho_.name()),
-            mesh(),
-            dimensionedScalar(dimDensity, 0.0)
-        )
-    );
-    surfaceScalarField& rhoOwn = trhoOwn.ref();
-    tmp<surfaceScalarField> trhoNei
-    (
-        surfaceScalarField::New
-        (
-            reconstruction::neiName(rho_.name()),
-            mesh(),
-            dimensionedScalar(dimDensity, 0.0)
-        )
-    );
-    surfaceScalarField& rhoNei = trhoNei.ref();
 
-    forAll(alphaRhoPhis_, phasei)
+    phi_ = fvc::relative(fvc::flux(U_), U_);
+
+    forAll(alphas_, phasei)
     {
         autoPtr<ReconstructionScheme<scalar>> alphaLimiter
         (
@@ -182,93 +330,166 @@ void Foam::multiphaseCompressibleSystem::update()
                 true
             )
         );
-        tmp<surfaceScalarField> talphaOwn, talphaNei;
-        alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
-
-        autoPtr<ReconstructionScheme<scalar>> rhoLimiter
-        (
-            ReconstructionScheme<scalar>::New
+        if (alphaLimiter->upwind())
+        {
+            alphasOwn.set
             (
-                rhos_[phasei],
-                "rho",
-                rhos_[phasei].group(),
-                true
-            )
-        );
-        tmp<surfaceScalarField> trhoOwn, trhoNei;
-        rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
-        fluxScheme::correctPhaseFields
-        (
-            alphas_[phasei],
-            trhoOwn.ref(), trhoNei.ref(),
-            thermo_.thermo(phasei).residualAlpha().value()
-        );
-
-        alphaRhosOwn.set
-        (
-            phasei,
-            surfaceScalarField::New
+                phasei,
+                surfaceScalarField::New
+                (
+                    alphaLimiter->ownName(alphas_[phasei].name()),
+                    alphaLimiter->interpolate(phi_)
+                )
+            );
+            alphasNei.set
             (
-                rhoLimiter->ownName(alphaRhos_[phasei].name()),
-                talphaOwn()*trhoOwn()
-            )
-        );
-        alphaRhosNei.set
-        (
-            phasei,
-            surfaceScalarField::New
-            (
-                rhoLimiter->neiName(alphaRhos_[phasei].name()),
-                talphaNei()*trhoNei()
-            )
-        );
-        alphasOwn.set(phasei, talphaOwn.ptr());
-        alphasNei.set(phasei, talphaNei.ptr());
-        rhoOwn += alphaRhosOwn[phasei];
-        rhoNei += alphaRhosNei[phasei];
+                phasei,
+                surfaceScalarField::New
+                (
+                    alphaLimiter->neiName(alphas_[phasei].name()),
+                    alphasOwn[phasei]
+                )
+            );
+        }
+        else
+        {
+            alphasOwn.set(phasei, alphaLimiter->interpolateOwn());
+            alphasNei.set(phasei, alphaLimiter->interpolateNei());
+        }
     }
 
-
-    fluxScheme_->update
-    (
-        rhoOwn,
-        rhoNei,
-        U_,
-        e_,
-        p_,
-        speedOfSound()(),
-        phi_,
-        rhoPhi_,
-        rhoUPhi_,
-        rhoEPhi_
-    );
-
-    forAll(alphaRhoPhis_, phasei)
+    // Ensure sum of alphaOwn and alphaNei = 1
     {
-        alphaPhis_[phasei] =
-            fluxScheme_->flux(alphasOwn[phasei], alphasNei[phasei], phi_);
-        alphaRhoPhis_[phasei] =
-            fluxScheme_->flux(alphaRhosOwn[phasei], alphaRhosNei[phasei], phi_);
+        forAll(alphasOwn[0], facei)
+        {
+            scalar sumAlphaOwn = 0;
+            scalar sumAlphaNei = 0;
+            forAll(alphasOwn, phasei)
+            {
+                sumAlphaOwn += alphasOwn[phasei][facei];
+                sumAlphaNei += alphasNei[phasei][facei];
+            }
+            forAll(alphasOwn, phasei)
+            {
+                alphasOwn[phasei][facei] /= sumAlphaOwn;
+                alphasNei[phasei][facei] /= sumAlphaNei;
+            }
+        }
+
+        UPtrList<surfaceScalarField::Boundary> balphasOwn(alphas_.size());
+        UPtrList<surfaceScalarField::Boundary> balphasNei(alphas_.size());
+        forAll(alphasOwn, phasei)
+        {
+            balphasOwn.set(phasei, &alphasOwn[phasei].boundaryFieldRef());
+            balphasNei.set(phasei, &alphasNei[phasei].boundaryFieldRef());
+        }
+
+        forAll(balphasOwn[0], patchi)
+        {
+            forAll(balphasOwn[0][patchi], facei)
+            {
+                scalar sumAlphaOwn = 0;
+                scalar sumAlphaNei = 0;
+                forAll(balphasOwn, phasei)
+                {
+                    sumAlphaOwn += balphasOwn[phasei][patchi][facei];
+                    sumAlphaNei += balphasNei[phasei][patchi][facei];
+                }
+                forAll(alphasOwn, phasei)
+                {
+                    balphasOwn[phasei][patchi][facei] /= sumAlphaOwn;
+                    balphasNei[phasei][patchi][facei] /= sumAlphaNei;
+                }
+            }
+        }
     }
+
+    forAll(alphas_, phasei)
+    {
+        if (densityReconstruction_)
+        {
+            autoPtr<ReconstructionScheme<scalar>> rhoLimiter
+            (
+                ReconstructionScheme<scalar>::New
+                (
+                    rhos_[phasei],
+                    "rho",
+                    rhos_[phasei].group(),
+                    true
+                )
+            );
+            surfaceScalarField rhoOwn(rhoLimiter->interpolateOwn());
+            surfaceScalarField rhoNei(rhoLimiter->interpolateNei());
+            if (!transportPhaseDensity_)
+            {
+                fluxScheme::correctPhaseFields
+                (
+                    alphas_[phasei],
+                    rhos_[phasei],
+                    rhoOwn, rhoNei,
+                    thermo_.thermo(phasei).residualAlpha().value()
+                );
+            }
+            alphaRhosOwn.set
+            (
+                phasei,
+                surfaceScalarField::New
+                (
+                    rhoLimiter->ownName(alphaRhos_[phasei].name()),
+                    alphasOwn[phasei]*rhoOwn
+                )
+            );
+            alphaRhosNei.set
+            (
+                phasei,
+                surfaceScalarField::New
+                (
+                    rhoLimiter->neiName(alphaRhos_[phasei].name()),
+                    alphasNei[phasei]*rhoNei
+                )
+            );
+        }
+        else
+        {
+            autoPtr<ReconstructionScheme<scalar>> rhoLimiter
+            (
+                ReconstructionScheme<scalar>::New
+                (
+                    alphaRhos_[phasei],
+                    "rho",
+                    rhos_[phasei].group(),
+                    true
+                )
+            );
+            alphaRhosOwn.set(phasei, rhoLimiter->interpolateOwn());
+            alphaRhosNei.set(phasei, rhoLimiter->interpolateNei());
+        }
+    }
+
+    updateFluxes(alphasOwn, alphasNei, alphaRhosOwn, alphaRhosNei);
+
     thermo_.update();
 }
 
 
 void Foam::multiphaseCompressibleSystem::solve()
 {
-    dimensionedScalar dT = rho_.time().deltaT();
-    rho_ = dimensionedScalar("0", dimDensity, 0.0);
+    // Solve momentum and energy
+    compressibleBlastSystem::solve();
 
+    dimensionedScalar dT = rho_.time().deltaT();
+
+    // Divergence of volumetric flux
     volScalarField divPhi(fvc::div(phi_));
-    forAll(alphas_, phasei)
+
+    rho_ = Zero;
+    forAll(alphaRhos_, phasei)
     {
         volScalarField deltaAlpha
         (
             fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*divPhi
         );
         this->fvTimeInt_->addDeltaSource(alphas_[phasei].name(), deltaAlpha);
-        this->storeAndBlendDelta(deltaAlpha);
-        this->storeAndBlendOld(alphas_[phasei], false);
 
         volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
         this->fvTimeInt_->addDeltaSource
@@ -276,16 +497,22 @@ void Foam::multiphaseCompressibleSystem::solve()
             alphaRhos_[phasei].name(),
             deltaAlphaRho
         );
-        this->storeAndBlendDelta(deltaAlphaRho);
+
+        // Blend old values
+        this->storeAndBlendOld(alphas_[phasei], false);
         this->storeAndBlendOld(alphaRhos_[phasei]);
         rho_ += alphaRhos_[phasei];
 
-        //- Solve volume fraction
+        // Blend deltas
+        this->storeAndBlendDelta(deltaAlpha);
+        this->storeAndBlendDelta(deltaAlphaRho);
+
+        // Solve volume fraction
         alphas_[phasei] -= dT*deltaAlpha;
+        alphas_[phasei].maxMin(0.0, 1.0);
         alphas_[phasei].correctBoundaryConditions();
 
-
-        //- Solve phasic mass transport
+        // Solve phase mass transport
         alphaRhos_[phasei].storePrevIter();
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
@@ -308,55 +535,32 @@ void Foam::multiphaseCompressibleSystem::solve()
         }
     }
 
-    //- Store "old" total density
+    // Store "old" total density
     rho_.storePrevIter();
 
     //- Compute new density
-    rho_ = dimensionedScalar("0", dimDensity, 0.0);
+    rho_ = Zero;
     forAll(alphas_, phasei)
     {
         rho_ += alphaRhos_[phasei];
     }
 
+    // Solve thermo
     thermoPtr_->solve();
-
-    compressibleBlastSystem::solve();
 }
 
 
 void Foam::multiphaseCompressibleSystem::postUpdate()
 {
+    this->decode();
+
     // Solve volume fraction and phase mass transports
     bool needUpdate = false;
-    surfaceScalarField nMagUf(fvc::interpolate(mag(U_)));
-    nMagUf.dimensions().reset(sqr(dimLength)/dimTime);
     forAll(alphas_, phasei)
     {
-        if (needSolve(alphas_[phasei].name()) || sharpen_[phasei])
+        if (needSolve(alphas_[phasei].name()))
         {
             needUpdate = true;
-
-            if (sharpen_[phasei])
-            {
-                const dictionary& controls = mesh().solverDict(alphas_[phasei].name());
-                const label nCorrectors
-                (
-                    controls.lookupOrDefault<label>("nCorrectors", 10)
-                );
-                const scalar sharpenTol(controls.lookup<scalar>("sharpenTol"));
-                label iter = 0;
-                scalar initialResidual = 0;
-                do
-                {
-                    fvScalarMatrix alphaEqn
-                    (
-                        fvm::ddt(alphas_[phasei])
-                      - fvc::ddt(alphas_[phasei])
-                      + fvm::laplacian(nMagUf, alphas_[phasei])
-                    );
-                    initialResidual = alphaEqn.solve().initialResidual();
-                } while (++iter < nCorrectors && initialResidual > sharpenTol);
-            }
 
             fvScalarMatrix alphaEqn
             (
@@ -373,9 +577,6 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
     {
         calcAlphas();
     }
-
-    // Update primitive variables
-    this->decode();
 
     // Solve phase 1 mass
     rho_.storePrevIter();
@@ -409,42 +610,54 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
 
 void Foam::multiphaseCompressibleSystem::calcAlphas()
 {
-    // // find largest volume fraction and set to 1-sum
-    // forAll(rho_, celli)
-    // {
-    //     // SortableList<scalar> alphas(alphas_.size());
-    //     scalar sumAlpha = 0.0;
-    //     forAll(alphas_, phasei)
-    //     {
-    //         alphas_[phasei][celli] = max(alphas_[phasei][celli], 0.0);
-    //         sumAlpha += sqr(alphas_[phasei][celli]);
-    //         // alphas_[phasei][celli] = max(min(alphas_[phasei][celli], 1.0), 0.0);
-    //         // alphas[phasei] = alphas_[phasei][celli];
-    //     }
-    //     sumAlpha = sqrt(sumAlpha);
-    //     forAll(alphas_, phasei)
-    //     {
-    //         alphas_[phasei][celli] /= sumAlpha;
-    //     }
-    //
-    //     // alphas.reverseSort();
-    //
-    //     // const label fixedPhase = alphas.indices()[0];
-    //
-    //     // for (label phasei = 1; phasei < alphas.size(); phasei++)
-    //     // {
-    //     //     sumAlpha += alphas[phasei];
-    //     // }
-    //     // alphas_[fixedPhase][celli] = 1.0 - sumAlpha;
-    // }
+    // find largest volume fraction and set to 1-sum
+    SortableList<scalar> alphas(alphas_.size());
     forAll(rho_, celli)
     {
-        scalar sumAlpha = 1.0;
+        scalar sumAlpha = 0.0;
         forAll(alphas_, phasei)
         {
-            alphas_[phasei][celli] = min(max(alphas_[phasei][celli], 0.0), sumAlpha);
-            sumAlpha = max(sumAlpha - alphas_[phasei][celli], 0);
+            alphas[phasei] = alphas_[phasei][celli];
+            sumAlpha += alphas_[phasei][celli];
+
+            // alphas[phasei] = sqr(alphas_[phasei][celli]);
+            // sumAlpha += alphas[phasei];
         }
+
+        forAll(alphas_, phasei)
+        {
+            alphas_[phasei][celli] /= sumAlpha;
+        }
+
+
+        // alphas.reverseSort();
+        //
+        // const labelList& indices = alphas.indices();
+        // label sortedFixedPhase = 0;
+        // forAll(indices, i)
+        // {
+        //     if (findIndex(adjustablePhases_, indices[i]) >= 0)
+        //     {
+        //         sortedFixedPhase = i;
+        //         break;
+        //     }
+        // }
+        // const label fixedPhase = indices[sortedFixedPhase];
+        //
+        // sumAlpha -= alphas[sortedFixedPhase];
+        // if (sumAlpha > 1)
+        // {
+        //     forAll(alphas, i)
+        //     {
+        //         const label phasei = indices[i];
+        //         alphas_[phasei][celli] /= sumAlpha;
+        //     }
+        //     alphas_[fixedPhase][celli] = 0.0;
+        // }
+        // else
+        // {
+        //     alphas_[fixedPhase][celli] = 1.0 - sumAlpha;
+        // }
     }
     forAll(alphas_, phasei)
     {
@@ -458,7 +671,7 @@ void Foam::multiphaseCompressibleSystem::decode()
     calcAlphas();
 
     // Calculate densities
-    rho_ = dimensionedScalar("0", dimDensity, 0.0);
+    rho_ = Zero;
 
     forAll(alphas_, phasei)
     {
@@ -483,12 +696,12 @@ void Foam::multiphaseCompressibleSystem::decode()
         }
         else
         {
-            rho.ref() = alphaRho()/max(alpha(), rAlpha);
+            rho.internalFieldRef() = alphaRho()/max(alpha(), rAlpha);
         }
 
         rho.correctBoundaryConditions();
-
-        alphaRho.boundaryFieldRef() = alpha.boundaryField()*rho.boundaryField();
+        alphaRho.boundaryFieldRef() =
+            alpha.boundaryField()*rho.boundaryField();
 
         rho_ += alphaRhos_[phasei];
     }
@@ -499,7 +712,7 @@ void Foam::multiphaseCompressibleSystem::decode()
 
 void Foam::multiphaseCompressibleSystem::encode()
 {
-    rho_ = dimensionedScalar("0", dimDensity, 0.0);
+    rho_ = Zero;
     forAll(alphas_, phasei)
     {
         alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];

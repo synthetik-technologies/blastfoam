@@ -51,7 +51,7 @@ Foam::atmosphereModel::atmosphereModel
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 :
     dict_(dict),
@@ -81,7 +81,7 @@ Foam::atmosphereModel::atmosphereModel
       ? dimensionedScalar("hRef", dimLength, dict_)
       : dimensionedScalar("hRef", dimLength, 0.0)
     ),
-    zoneID_(zoneID)
+    zoneName_(zoneName)
 {}
 
 
@@ -97,7 +97,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
 {
     volScalarField p(thermo.p());
 
-    const volScalarField& rho(thermo.rho());
+    const volScalarField& rho = thermo.rho();
     const fvMesh& mesh = p.mesh();
 
     volScalarField gh("gh", (g_ & mesh_.C()) + mag(g_)*hRef_);
@@ -131,7 +131,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         IOobject
         (
             "U",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT
         ),
@@ -144,7 +144,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         IOobject
         (
             "phi",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         fvc::flux(U)
@@ -155,13 +155,14 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         IOobject
         (
             "ph_rgh",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT
         ),
         p - rho*gh,
         ph_rghBcs
     );
+    volScalarField T0(thermo.T());
 
     pressureReference pressureReference
     (
@@ -240,9 +241,11 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         p.correctBoundaryConditions();
         if (correctRho)
         {
+            thermo.T() = T0;
             thermo.updateRho(p);
         }
-        thermo.he() = thermo.calce(thermo.p());
+        thermo.he() = thermo.calce(p);
+        thermo.update();
 
         Info<< "Hydrostatic pressure variation "<< residual << endl;
         if (iter > 0)
@@ -270,13 +273,17 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         Info<< nl << "Did not converge hydrostatic pressure" << nl << endl;
     }
 
-    if (zoneID_ >= 0)
+    if (!zoneName_.empty())
     {
-        const cellZone& cz = mesh_.cellZones()[zoneID_];
+        const cellZone& cz = mesh_.cellZones()[zoneName_];
         UIndirectList<scalar>(thermo.p(), cz) = UIndirectList<scalar>(p, cz);
         thermo.p().correctBoundaryConditions();
 
         // Correct density and thermodynamic quantities
+        if (correctRho)
+        {
+            thermo.T() = T0;
+        }
         thermo.updateRho(thermo.p());
         thermo.he() = thermo.calce(thermo.p());
         thermo.correct();

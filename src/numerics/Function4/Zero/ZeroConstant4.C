@@ -30,9 +30,17 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
+Foam::Function4s::ZeroConstant<Type>::ZeroConstant(const word& name)
+:
+    FieldFunction4<Type, ZeroConstant<Type>>(name)
+{}
+
+
+template<class Type>
 Foam::Function4s::ZeroConstant<Type>::ZeroConstant
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :

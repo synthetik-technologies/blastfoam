@@ -296,28 +296,22 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
 
 
     // Check the current time directory
-    IOobject fieldHeader
+    typeIOobject<GeoField> fieldHeader
     (
         fieldName,
-        mesh_.time().timeName(),
+        mesh_.time().name(),
         mesh_,
         IOobject::MUST_READ
     );
 
     // Check the "constant" directory
-    if (!fieldHeader.typeHeaderOk<GeoField>(true))
+    if (!fieldHeader.headerOk())
     {
-        fieldHeader = IOobject
-        (
-            fieldName,
-            mesh_.time().constant(),
-            mesh_,
-            IOobject::MUST_READ
-        );
+        fieldHeader.instance() = mesh_.time().constant();
     }
 
     // Check field exists
-    if (fieldHeader.typeHeaderOk<GeoField>(true))
+    if (fieldHeader.headerOk())
     {
         GeoField* fPtr
         (
@@ -327,6 +321,31 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
         return &mesh_.lookupObjectRef<GeoField>(fieldName);
     }
     return nullptr;
+}
+
+template<class Type, template<class> class Patch, class Mesh>
+template<class GeoField>
+GeoField*
+Foam::FieldSetType<Type, Patch, Mesh>::lookupOrConstruct
+(
+    const word& fieldName,
+    const GeoField& fld
+) const
+{
+    if (mesh_.foundObject<GeoField>(fieldName))
+    {
+        return &mesh_.lookupObjectRef<GeoField>(fieldName);
+    }
+
+
+
+    // Check field exists
+    GeoField* fPtr
+    (
+        new GeoField(fieldName, fld)
+    );
+    fPtr->store(fPtr);
+    return &mesh_.lookupObjectRef<GeoField>(fieldName);
 }
 
 
@@ -443,7 +462,7 @@ void Foam::SurfaceFieldSetType<Type>::setField()
         const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
         if (this->boundaries_.found(p.name()) && fieldBf[patchi].fixesValue())
         {
-            indices = identity(p.size());
+            indices = identityMap(p.size());
             I = 0;
             forAll(p, fi)
             {

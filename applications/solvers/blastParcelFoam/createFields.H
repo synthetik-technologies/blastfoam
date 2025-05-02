@@ -12,9 +12,24 @@ uniformDimensionedVectorField g
     ),
     dimensionedVector(dimAcceleration, Zero)
 );
+IOdictionary physicalProperties
+(
+    IOobject
+    (
+        "physicalProperties",
+        runTime.constant(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::NO_WRITE,
+        false
+    )
+);
 
 fvTimeIntegrator integrator(mesh);
-coupledMultiphaseCompressibleSystem fluid(mesh);
+autoPtr<compressibleSystem> fluidPtr(coupledCompressibleSystem::New(mesh));
+compressibleSystem& fluid = fluidPtr();
+coupledCompressibleSystem& coupledFluid =
+    dynamicCast<coupledCompressibleSystem>(fluid);
 integrator.addSystem(fluid);
 
 parcelCloudList clouds
@@ -24,22 +39,26 @@ parcelCloudList clouds
     g,
     fluid.thermo()
 );
-volScalarField theta
+volScalarField alpha
 (
     IOobject
     (
-        "theta",
-        runTime.timeName(),
+        IOobject::groupName("alpha", parcelCloudList::cloudNamesName),
+        runTime.name(),
         mesh,
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
     ),
-    clouds.theta()
+    clouds.alpha()
 );
-fluid.setDispersedVolumeFraction(theta);
+coupledFluid.setDispersedVolumeFraction(alpha);
 
 
 const volScalarField& p = fluid.p();
 const volScalarField& T = fluid.T();
 const surfaceScalarField& phi = fluid.phi();
 fluid.update();
+
+
+const ::Foam::fvModels& fvModels = integrator.models();
+const ::Foam::fvConstraints& fvConstraints = integrator.constraints();

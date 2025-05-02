@@ -24,18 +24,13 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "refinement.H"
-#include "polyTopoChanger.H"
-#include "polyAddFace.H"
-#include "polyAddPoint.H"
-#include "polyModifyFace.H"
 #include "polyMesh.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
 #include "meshTools.H"
-#include "hexRef.H"
 #include "dynMeshTools.H"
-#include "mapPolyMesh.H"
-#include "mapDistributePolyMesh.H"
+#include "polyTopoChangeMap.H"
+#include "polyDistributionMap.H"
 #include "globalIndex.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -692,7 +687,7 @@ Foam::refinement::refinement
             read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        identity(mesh_.nCells())
+        identityMap(mesh_.nCells())
     ),
     faceRemover_(mesh_, GREAT),   // Merge boundary faces wherever possible
     edgeBasedConsistency_
@@ -807,7 +802,7 @@ Foam::labelList Foam::refinement::consistentRefinement
 }
 
 
-Foam::autoPtr<Foam::mapPolyMesh> Foam::refinement::refine
+Foam::autoPtr<Foam::polyTopoChangeMap> Foam::refinement::refine
 (
     polyMesh& mesh,
     const labelList& cellsToRefine
@@ -815,8 +810,8 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::refinement::refine
 {
     polyTopoChange meshMod(mesh);
     this->setRefinement(meshMod, cellsToRefine);
-    autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
-    mesh.updateMesh(map());
+    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh, false);
+    mesh.topoChange(map());
 
     Info<< "Refined from "
         << returnReduce(map().nOldCells(), sumOp<label>())
@@ -825,7 +820,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::refinement::refine
 }
 
 
-bool Foam::refinement::unrefine
+Foam::autoPtr<Foam::polyTopoChangeMap> Foam::refinement::unrefine
 (
     polyMesh& mesh,
     const labelList& splitPointsToUnrefine
@@ -833,18 +828,18 @@ bool Foam::refinement::unrefine
 {
     polyTopoChange meshMod(mesh);
     this->setUnrefinement(meshMod, splitPointsToUnrefine);
-    autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
-    mesh.updateMesh(map());
+    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh, false);
+    mesh.topoChange(map());
 
     Info<< "Unrefined from "
         << returnReduce(map().nOldCells(), sumOp<label>())
         << " to " << mesh_.globalData().nTotalCells() << " cells."
         << endl;
 
-    return true;
+    return map;
 }
 
-void Foam::refinement::updateMesh(const mapPolyMesh& map)
+void Foam::refinement::topoChange(const polyTopoChangeMap& map)
 {
     if (debug)
     {
@@ -852,7 +847,7 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
             << "Updating cell and point levels."
             << endl;
 
-        Pout<< "hexRef::updateMesh :"
+        Pout<< "refinement::topoChange :"
             << " reverseCellMap:" << map.reverseCellMap().size()
             << " cellMap:" << map.cellMap().size()
             << " nCells:" << mesh_.nCells()
@@ -872,11 +867,17 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
         const labelList& reverseCellMap = map.reverseCellMap();
         if (reverseCellMap.size() == cellLevel_.size())
         {
-            // Assume it is after hexRef that this routine is called.
+            // Assume it is after refinement that this routine is called.
             // Just account for reordering. We cannot use cellMap since
             // then cells created from cells would get cellLevel_ of
             // cell they were created from.
-            hexRef::reorder(reverseCellMap, mesh_.nCells(), -1, cellLevel_);
+            meshTools::reorder
+            (
+                reverseCellMap,
+                mesh_.nCells(),
+                -1,
+                cellLevel_
+            );
         }
         else
         {
@@ -933,8 +934,14 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
         const labelList& reversePointMap = map.reversePointMap();
         if (reversePointMap.size() == pointLevel_.size())
         {
-            // Assume it is after hexRef that this routine is called.
-            hexRef::reorder(reversePointMap, mesh_.nPoints(), -1,  pointLevel_);
+            // Assume it is after refine that this routine is called.
+            meshTools::reorder
+            (
+                reversePointMap,
+                mesh_.nPoints(),
+                -1,
+                pointLevel_
+            );
         }
         else
         {
@@ -968,14 +975,14 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
     }
 
     // Update face remover
-    faceRemover_.updateMesh(map);
+    faceRemover_.topoChange(map);
 
     // Mark files as changed
     setInstance(mesh_.facesInstance());
 }
 
 
-void Foam::refinement::distribute(const mapDistributePolyMesh& map)
+void Foam::refinement::distribute(const polyDistributionMap& map)
 {
     if (debug)
     {

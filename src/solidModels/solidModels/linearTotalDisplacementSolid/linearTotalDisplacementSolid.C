@@ -66,7 +66,7 @@ void linearTotalDisplacementSolid::predict()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-linearTotalDisplacementSolid::linearTotalDisplacementSolid(dynamicFvMesh& mesh)
+linearTotalDisplacementSolid::linearTotalDisplacementSolid(fvMesh& mesh)
 :
     linearTotalDisplacementSolid(typeName, mesh)
 {}
@@ -75,7 +75,7 @@ linearTotalDisplacementSolid::linearTotalDisplacementSolid(dynamicFvMesh& mesh)
 linearTotalDisplacementSolid::linearTotalDisplacementSolid
 (
     const word& type,
-    dynamicFvMesh& mesh
+    fvMesh& mesh
 )
 :
     LinearGeomSolid<totalDisplacementSolid>(type, mesh),
@@ -86,7 +86,7 @@ linearTotalDisplacementSolid::linearTotalDisplacementSolid
         // Check ddt scheme for D is not steadyState
         const word ddtDScheme
         (
-            mesh.ddtScheme("ddt(" + D().name() +')')
+            mesh.schemes().ddt("ddt(" + D().name() +')')
         );
 
         if (ddtDScheme == "steadyState")
@@ -106,7 +106,6 @@ linearTotalDisplacementSolid::linearTotalDisplacementSolid
 bool linearTotalDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
-    this->readDict();
 
     if (predictor_)
     {

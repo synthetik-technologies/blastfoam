@@ -114,6 +114,13 @@ public:
             const word& phaseName = word::null
         );
 
+        //- Standard selection based on fvMesh
+        static autoPtr<solidBlastThermo> New
+        (
+            const fvMesh&,
+            const word& phaseName = word::null
+        );
+
 
     //- Destructor
     virtual ~solidBlastThermo();
@@ -130,6 +137,12 @@ public:
         virtual IOdictionary& properties()
         {
             return *this;
+        }
+
+        //- The dpdt term should not be included in the enthalpy equation
+        virtual Switch dpdt() const
+        {
+            return false;
         }
 
         // Fields derived from thermodynamic state variables
@@ -207,6 +220,10 @@ public:
         virtual bool read()
         {
             return blastThermo::read();
+        }
+        virtual bool read(const dictionary& dict)
+        {
+            return blastThermo::read(dict);
         }
 };
 

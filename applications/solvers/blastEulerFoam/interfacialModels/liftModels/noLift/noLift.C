@@ -61,86 +61,28 @@ Foam::liftModels::noLift::~noLift()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::liftModels::noLift::Cl
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volVectorField> Foam::liftModels::noLift::F() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return tmp<volScalarField>
+    return volVectorField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Cl",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            dimensionedScalar("Cl", dimless, 0)
-        )
+        typeName + ":F",
+        mesh,
+        dimensionedVector("zero", dimF, Zero)
     );
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::liftModels::noLift::F
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::surfaceScalarField> Foam::liftModels::noLift::Ff() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
-    return tmp<volVectorField>
+    return surfaceScalarField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                "noLift:F",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            dimensionedVector("zero", dimF, Zero)
-        )
-    );
-}
-
-
-Foam::tmp<Foam::surfaceScalarField> Foam::liftModels::noLift::Ff
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    const fvMesh& mesh(this->pair_.phase1().mesh());
-
-    return tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "noLift:Ff",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh,
-            dimensionedScalar("zero", dimF*dimArea, 0)
-        )
+        typeName + ":Ff",
+        mesh,
+        dimensionedScalar("zero", dimF*dimArea, 0)
     );
 }
 

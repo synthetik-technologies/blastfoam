@@ -32,12 +32,15 @@ License
 #include "dictionary.H"
 #include "Time.H"
 #include "IOmanip.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChangeMap.H"
+#include "polyDistributionMap.H"
 #include "polyPatch.H"
 #include "SortableList.H"
 #include "IFstream.H"
 #include "vtkWriteOps.H"
 #include "OSspecific.H"
+#include "indexedOctree.H"
+#include "treeDataCell.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -52,6 +55,25 @@ namespace Foam
         blastProbes,
         dictionary
     );
+
+    template<>
+    const char* Foam::NamedEnum
+    <
+        Foam::blastProbes::SearchType,
+        5
+    >::names[] =
+    {
+        "octree",
+        "facePlanes",
+        "faceCentreTri",
+        "faceDiagTri",
+        "cellTets"
+    };
+    const Foam::NamedEnum
+    <
+        Foam::blastProbes::SearchType,
+        5
+    > Foam::blastProbes::searchTypeNames_;
 }
 
 
@@ -81,13 +103,33 @@ void Foam::blastProbes::findElements
     boolList foundList(size(), false);
     label nBadProbes = 0;
 
+    if (searchType_ < OCTREE)
+    {
+        forAll(*this, probei)
+        {
+            elementList_[probei] = mesh.findCell
+            (
+                operator[](probei),
+                static_cast<polyMesh::cellDecomposition>(searchType_)
+            );
+        }
+    }
+    else
+    {
+        const indexedOctree<treeDataCell>& tree = mesh.cellTree();
+        forAll(*this, probei)
+        {
+            elementList_[probei] = tree.findInside
+            (
+                operator[](probei)
+            );
+        }
+    }
+
     forAll(*this, probei)
     {
         const vector& location = operator[](probei);
-
-        const label celli = mesh.findCell(location);
-
-        elementList_[probei] = celli;
+        const label celli = elementList_[probei];
         faceList_[probei] = findFaceIndex(mesh, celli, location);
     }
 
@@ -351,6 +393,12 @@ Foam::label Foam::blastProbes::prepare()
         currentFields.insert(surfaceSymmTensorFields_);
         currentFields.insert(surfaceTensorFields_);
 
+        currentFields.insert(pointScalarFields_);
+        currentFields.insert(pointVectorFields_);
+        currentFields.insert(pointSphericalTensorFields_);
+        currentFields.insert(pointSymmTensorFields_);
+        currentFields.insert(pointTensorFields_);
+
         if (debug)
         {
             Info<< "Probing fields: " << currentFields << nl
@@ -404,7 +452,7 @@ Foam::label Foam::blastProbes::prepare()
         }
         else
         {
-            timeName = mesh_.time().timeName();
+            timeName = mesh_.time().name();
         }
         probeSubDir = probeSubDir/timeName;
 
@@ -448,7 +496,7 @@ Foam::label Foam::blastProbes::prepare()
             if
             (
                 exists(fileName(probeDir/fieldName))
-             && times[0] != mesh_.time().timeName()
+             && times[0] != mesh_.time().name()
              && append_
             )
             {
@@ -475,7 +523,7 @@ Foam::label Foam::blastProbes::prepare()
                         if (nOldProbes != size())
                         {
                             fileName oldProbeDir(probeDir);
-                            probeDir = probeDir/".."/mesh_.time().timeName();
+                            probeDir = probeDir/".."/mesh_.time().name();
                             probeDir.clean();
 
                             if (Pstream::master())
@@ -562,7 +610,7 @@ Foam::blastProbes::blastProbes
     const dictionary& dict
 )
 :
-    functionObject(name),
+    functionObject(name, t),
     pointField(0),
     mesh_
     (
@@ -574,34 +622,12 @@ Foam::blastProbes::blastProbes
             )
         )
     ),
-    loadFromFiles_(false),
     fieldSelection_(),
     fixedLocations_(false),
     adjustLocations_(false),
     interpolationScheme_("cell"),
-    append_(false)
-{
-    read(dict);
-}
-
-
-Foam::blastProbes::blastProbes
-(
-    const word& name,
-    const objectRegistry& obr,
-    const dictionary& dict,
-    const bool loadFromFiles
-)
-:
-    functionObject(name),
-    pointField(0),
-    mesh_(refCast<const fvMesh>(obr)),
-    loadFromFiles_(loadFromFiles),
-    fieldSelection_(),
-    fixedLocations_(false),
-    adjustLocations_(false),
-    interpolationScheme_("cell"),
-    append_(false)
+    append_(false),
+    searchType_(OCTREE)
 {
     read(dict);
 }
@@ -639,6 +665,10 @@ bool Foam::blastProbes::read(const dictionary& dict)
                 << "not using fixedLocations.  InterpolationScheme "
                 << "entry will be ignored";
         }
+    }
+    if (dict.found("searchType"))
+    {
+        searchType_ = searchTypeNames_.read(dict.lookup("searchType"));
     }
 
     dict.readIfPresent("append", append_);
@@ -727,20 +757,21 @@ bool Foam::blastProbes::write()
         sampleAndWriteSurfaceFields(surfaceSphericalTensorFields_);
         sampleAndWriteSurfaceFields(surfaceSymmTensorFields_);
         sampleAndWriteSurfaceFields(surfaceTensorFields_);
+
+        sampleAndWritePointFields(pointScalarFields_);
+        sampleAndWritePointFields(pointVectorFields_);
+        sampleAndWritePointFields(pointSphericalTensorFields_);
+        sampleAndWritePointFields(pointSymmTensorFields_);
+        sampleAndWritePointFields(pointTensorFields_);
     }
 
     return true;
 }
 
 
-void Foam::blastProbes::updateMesh(const mapPolyMesh& mpm)
+void Foam::blastProbes::topoChange(const polyTopoChangeMap& mpm)
 {
-    DebugInfo<< "blastProbes: updateMesh" << endl;
-
-    if (&mpm.mesh() != &mesh_)
-    {
-        return;
-    }
+    DebugInfo<< "blastProbes: topoChange" << endl;
 
     if (!fixedLocations_)
     {
@@ -808,6 +839,25 @@ void Foam::blastProbes::updateMesh(const mapPolyMesh& mpm)
 
             faceList_.transfer(elems);
         }
+    }
+}
+
+void Foam::blastProbes::distribute(const polyDistributionMap& map)
+{
+    DebugInfo<< "blastProbes: distribute" << endl;
+
+    if (!fixedLocations_)
+    {
+        needUpdate_ = true;
+    }
+    else
+    {
+        if (debug)
+        {
+            Info<< "blastProbes: remapping sample locations" << endl;
+        }
+        map.distributeCellIndices(elementList_);
+        map.distributeFaceIndices(faceList_);
     }
 }
 

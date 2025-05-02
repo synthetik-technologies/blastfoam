@@ -73,7 +73,7 @@ SourceFiles
 #define functionObjects_fieldMinMax_H
 
 #include "fvMeshFunctionObject.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChangeMap.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "HashPtrTable.H"
@@ -152,7 +152,7 @@ protected:
         bool map
         (
             const word& fName,
-            const mapPolyMesh&
+            const polyTopoChangeMap&
         );
 
         //- Update field max
@@ -181,7 +181,7 @@ protected:
         ) const;
 
         //- Set all old fields and cell maps
-        void setOldFields(const mapPolyMesh& mpm);
+        void setOldFields(const polyTopoChangeMap& mpm);
 
         //- Clear all old field and cell maps
         void clearOldFields();
@@ -224,8 +224,14 @@ public:
         //- Read the field average data
         virtual bool read(const dictionary&);
 
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return fieldNames_;
+        }
+
         //- Update mesh and store map
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void topoChange(const polyTopoChangeMap& mpm);
 
         //- Calculate the field averages
         virtual bool execute();

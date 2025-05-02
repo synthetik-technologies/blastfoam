@@ -56,8 +56,8 @@ Foam::heatTransferModel::heatTransferModel
         (
             "residualAlpha",
             pair_.ordered()
-          ? pair_.dispersed().residualAlpha().value()/pair_.dispersed().nNodes()
-          : pair_.phase1().residualAlpha().value()/pair_.phase1().nNodes()
+          ? pair_.dispersed().residualAlpha().value()
+          : pair_.phase1().residualAlpha().value()
         )
     )
 {}
@@ -67,6 +67,26 @@ Foam::heatTransferModel::heatTransferModel
 
 Foam::heatTransferModel::~heatTransferModel()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::blendedHeatTransferModel::K() const
+{
+    return this->evaluate
+    (
+        &heatTransferModel::K,
+        "K",
+        heatTransferModel::dimK,
+        false
+    );
+}
+
+
+Foam::scalar Foam::blendedHeatTransferModel::cellK(const label celli) const
+{
+    return this->evaluate(&heatTransferModel::cellK, false, celli);
+}
 
 
 // ************************************************************************* //
