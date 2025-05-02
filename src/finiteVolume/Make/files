@@ -113,4 +113,6 @@ sets/searchableSurfaces/searchableAnnulusCylinder/searchableAnnulusCylinder.C
 sets/searchableSurfaces/searchableAnnulusDisk/searchableAnnulusDisk.C
 sets/searchableSurfaces/transformedTriSurfaceMesh/transformedTriSurfaceMesh.C
 
+explicitSolver/explicitSolver.C
+
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume
