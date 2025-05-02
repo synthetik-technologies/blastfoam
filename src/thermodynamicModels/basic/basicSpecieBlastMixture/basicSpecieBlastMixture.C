@@ -78,31 +78,30 @@ void Foam::basicSpecieBlastMixture::correctMassFractions()
         return;
     }
 
-    tmp<volScalarField> tYt
-    (
-        volScalarField::New
-        (
-            IOobject::groupName("Yt", Y_[0].group()),
-            Y_[0],
-            calculatedFvPatchScalarField::typeName
-        )
-    );
-    volScalarField& Yt = tYt.ref();
-
-    for (label i = 1; i < Y_.size(); i++)
-    {
-        Yt += Y_[i];
-    }
-
-    if (mag(min(Yt).value()) < rootVSmall)
-    {
-        FatalErrorInFunction
-            << "Sum of mass fractions is zero for species " << species()
-            << exit(FatalError);
-    }
-
     if (defaultSpeciei_ < 0)
     {
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", Y_[0].group()),
+                Y_[0],
+                calculatedFvPatchScalarField::typeName
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+
+        for (label i = 1; i < Y_.size(); i++)
+        {
+            Yt += Y_[i];
+        }
+
+        if (mag(min(Yt).value()) < rootVSmall)
+        {
+            FatalErrorInFunction
+                << "Sum of mass fractions is zero for species " << species()
+                << exit(FatalError);
+        }
         forAll(Y_, i)
         {
             Y_[i] /= Yt;
@@ -110,7 +109,26 @@ void Foam::basicSpecieBlastMixture::correctMassFractions()
     }
     else
     {
-        Y()[defaultSpeciei_] = 1.0 - Yt;
+        volScalarField Ysum
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Ysum", Y_[0].group()),
+                mesh(),
+                0.0,
+                calculatedFvPatchScalarField::typeName
+            )
+        );
+
+        forAll(Y_, i)
+        {
+            if (i != defaultSpeciei_)
+            {
+                Ysum += Y_[i];
+            }
+        }
+
+        Y()[defaultSpeciei_] = 1.0 - Ysum;
         Y()[defaultSpeciei_].max(0);
     }
 }
@@ -130,7 +148,7 @@ Foam::basicSpecieBlastMixture::basicSpecieBlastMixture
     species_(specieNames),
     defaultSpecieName_
     (
-        species_.size() && !phaseName.empty()
+        species_.size() && phaseName.empty()
       ? thermoDict.lookupBackwardsCompatible<word>
         (
             {"defaultSpecie", "inertSpecie"}
@@ -147,7 +165,7 @@ Foam::basicSpecieBlastMixture::basicSpecieBlastMixture
     active_(species_.size(), true),
     Y_(species_.size())
 {
-    if (species_.size() && !phaseName.empty() && defaultSpeciei_ == -1)
+    if (species_.size() && phaseName.empty() && defaultSpeciei_ == -1)
     {
         FatalIOErrorInFunction(thermoDict)
             << "default specie " << defaultSpecieName_
