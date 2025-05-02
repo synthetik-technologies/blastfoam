@@ -50,7 +50,15 @@ Foam::word Foam::reconstruction::scheme
     const bool overwrite
 )
 {
-   return scheme(name, word::null, type, mesh, fail, overwrite);
+    return scheme
+    (
+        IOobject::member(name),
+        IOobject::group(name),
+        type,
+        mesh,
+        fail,
+        overwrite
+    );
 }
 
 
@@ -111,8 +119,8 @@ Foam::word Foam::reconstruction::scheme
         FatalErrorInFunction
             << "Riemann fluxes are used, but no limiter is " << nl
             << "specified for " << name << "." << nl
-            << "Please specify " << string(nameScheme)
-            << ", " << string(baseScheme)
+            << "Please specify " << string(baseScheme)
+            << ", " << string(nameScheme)
             << ", or " << string(typeScheme) << endl
             << "This may result in unstable solutions." << endl
             << abort(FatalError);
@@ -123,8 +131,8 @@ Foam::word Foam::reconstruction::scheme
             << "Riemann fluxes are used, but no limiter is " << nl
             << "specified for " << name << "." << nl
             << "This may result in unstable solutions." << nl
-            << "Please specify " << string(nameScheme)
-            << ", " << string(baseScheme)
+            << "Please specify " << string(baseScheme)
+            << ", " << string(nameScheme)
             << ", or " << string(typeScheme) << endl;
 
     }

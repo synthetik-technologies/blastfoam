@@ -152,7 +152,13 @@ Foam::ReconstructionScheme<Type>::New
     const bool overwrite
 )
 {
-    return New(phi, fieldName, word::null, overwrite);
+    return New
+    (
+        phi,
+        IOobject::member(fieldName),
+        IOobject::group(fieldName),
+        overwrite
+    );
 }
 
 
