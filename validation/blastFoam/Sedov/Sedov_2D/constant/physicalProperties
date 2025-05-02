@@ -1,25 +1,25 @@
 /*--------------------------------*- C++ -*----------------------------------*\
-| =========                 |                                                 |
-| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.3.0                                 |
-|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
-|    \\/     M anipulation  |                                                 |
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
-    format      ascii;
+    format      binary;
     class       dictionary;
     location    "constant";
-    object      MieGruneisenEOSProperties;
+    object      physicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 type            basic;
+
 thermoType
 {
-    transport   const;
-    thermo      eConst;
+    transport       const;
+    thermo          eConst;
     equationOfState idealGas;
 }
 
@@ -27,19 +27,22 @@ specie
 {
     molWeight       28.97;
 }
+
 transport
 {
     mu              0;
     Pr              1;
 }
+
 thermodynamics
 {
-    Cv          1;
-    Hf          0.0;
+    Cv              1;
+    Hf              0;
 }
+
 equationOfState
 {
-    gamma 1.4;
+    gamma           1.4;
 }
 
 

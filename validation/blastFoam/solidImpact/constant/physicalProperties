@@ -1,0 +1,95 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( copper gas );
+
+copper
+{
+    type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState CochranChan;
+    }
+    equationOfState
+    {
+        Gamma0          2;
+        A               1.45667e+11;
+        B               1.4775e+11;
+        Epsilon1        2.994;
+        Epsilon2        1.994;
+        rho0            8900;
+        e0              117900;
+    }
+    specie
+    {
+        molWeight       63.546;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        Cv              3860;
+        Hf              0;
+    }
+    residualRho     1e-10;
+    residualAlpha   1e-06;
+}
+
+gas
+{
+    type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          ePolynomial;
+        equationOfState JWL;
+    }
+    equationOfState
+    {
+        omega           0.25;
+        A               8.545e+11;
+        B               2.051e+10;
+        R1              4.6;
+        R2              1.35;
+        rho0            1840;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        CvCoeffs<8>     ( 413.15 2.1538 0 0 0 0 0 0 );
+        Sf              0;
+        Hf              0;
+    }
+    activationModel none;
+    residualRho     1e-10;
+    residualAlpha   1e-10;
+}
+
+
+// ************************************************************************* //

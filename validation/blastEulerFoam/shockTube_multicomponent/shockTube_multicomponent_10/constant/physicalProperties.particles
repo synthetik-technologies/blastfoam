@@ -11,35 +11,34 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      phaseProperties;
+    object      physicalProperties.particles;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 type basic;
 thermoType
 {
-    transport   const;
-    thermo      hConst;
-    equationOfState idealGas;
-}
-equationOfState
-{
-    gamma           1.4;
+    equationOfState rhoConst;
+    thermo eConst;
+    transport constIso;
 }
 specie
 {
-    molWeight       11640.3; // Normalizes pressure
+    molWeight  100.0;
+}
+equationOfState
+{
+    rho0         2500;
 }
 transport
 {
-    mu              0;
-    Pr              1;
+    kappa       0.36;
 }
 thermodynamics
 {
-    Cp          2.5;
-    Cv          1.785714286;
-    Hf          0;
+    type        eConst;
+    Cv          745;           // Heat capacity
+    Hf          0.0;
 }
 
 // ************************************************************************* //

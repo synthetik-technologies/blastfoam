@@ -19,7 +19,7 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  AdamsBashforth 4;
+    timeIntegrator  RK2SSP 4;
 }
 
 gradSchemes
@@ -37,16 +37,16 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
-order limitWith quadraticUpwindFit 1;
+order limitedCubic 1;
 interpolationSchemes
 {
     default             linear;
 
-    reconstruct(rho)    $order Minmod;
-    reconstruct(U)      $order MinmodV;
-    reconstruct(e)      $order Minmod;
-    reconstruct(p)      $order Minmod;
-    reconstruct(speedOfSound) $order Minmod;
+    reconstruct(rho)    Minmod;
+    reconstruct(U)      MinmodV;
+    reconstruct(e)      Minmod;
+    reconstruct(p)      Minmod;
+    reconstruct(speedOfSound) Minmod;
 }
 
 snGradSchemes

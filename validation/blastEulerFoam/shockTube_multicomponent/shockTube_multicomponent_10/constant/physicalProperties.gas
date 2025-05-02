@@ -11,84 +11,62 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      phaseProperties;
+    object      physicalProperties.gas;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (fluid gas);
-
-fluid
+type multicomponent;
+species      (He N2);
+defaultSpecie He;
+calculateDensity yes;
+thermoType
 {
-    type basic;
+    transport   const;
+    thermo      eConst;
+    equationOfState idealGas;
+}
 
-    thermoType
-    {
-        transport   const;
-        thermo      eConst;
-        equationOfState stiffenedGas;
-    }
-
+He
+{
     equationOfState
     {
-        gamma       4.4;
-        a           6.0e8;
+        gamma           1.667;            // Heat capactiy ratio
     }
     specie
     {
-        molWeight    12.317037;
+        molWeight       4.0;
     }
     transport
     {
-        mu              0;              // Viscosity
-        Pr              1;              // Prandtl number
+        mu              1.96e-5;
+        Pr              1;
     }
     thermodynamics
     {
-        Cv          3610;           // Heat capacity
-        Hf          0.0;
+        Cv          3115.6;
+        Hf          0;
     }
-
-    residualRho 1e-10;
-    residualAlpha 1e-6;
 }
-
-gas
+N2
 {
-    type basic;
-
-    thermoType
-    {
-        transport   const;
-        thermo      eConst;
-        equationOfState vanderWaals;
-    }
-
     equationOfState
     {
-        gamma           1.4;
-        a               5.0;
-        b               1e-3;
-        c               0;
+        gamma           1.4;            // Heat capactiy ratio
     }
-
     specie
     {
-        molWeight     28.97;
+        molWeight       28.00;
     }
     transport
     {
-        mu              0;              // Viscosity
-        Pr              1;              // Prandtl number
+        mu              1.76e-5;
+        Pr              1;
     }
     thermodynamics
     {
-        Cv          718;           // Heat capacity
-        Hf          0.0;
+        Cv          718;
+        Hf          0;
     }
-
-    residualRho     1e-10;
-    residualAlpha   1e-6;
 }
-
 
 // ************************************************************************* //

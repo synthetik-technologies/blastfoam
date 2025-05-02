@@ -11,36 +11,62 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      MieGruneisenEOSProperties;
+    object      physicalProperties.gas;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type        basic;
+type multicomponent;
+species      (He N2);
+defaultSpecie He;
+calculateDensity yes;
 thermoType
 {
-    transport const;
-    thermo  eConst;
+    transport   const;
+    thermo      eConst;
     equationOfState idealGas;
 }
 
-specie
+He
 {
-    molWeight       28.97;
+    equationOfState
+    {
+        gamma           1.667;            // Heat capactiy ratio
+    }
+    specie
+    {
+        molWeight       4.0;
+    }
+    transport
+    {
+        mu              1.96e-5;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        Cv          3115.6;
+        Hf          0;
+    }
 }
-transport
+N2
 {
-    mu              0;              // Viscosity
-    Pr              1;              // Prandtl number
+    equationOfState
+    {
+        gamma           1.4;            // Heat capactiy ratio
+    }
+    specie
+    {
+        molWeight       28.00;
+    }
+    transport
+    {
+        mu              1.76e-5;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        Cv          718;
+        Hf          0;
+    }
 }
-thermodynamics
-{
-    Cv          1;           // Heat capacity
-    Hf          0.0;
-}
-equationOfState
-{
-    gamma 1.4;
-}
-
 
 // ************************************************************************* //

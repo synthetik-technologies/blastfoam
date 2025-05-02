@@ -14,7 +14,7 @@ runApplication blockMesh
 runApplication decomposePar
 
 # -- Add internal patch
-runParallel addEmptyPatch internalPatch internal -overwrite
+runParallel addInternalPatch
 
 # -- Set and refine the initial conditions
 runParallel setRefinedFields
@@ -23,7 +23,7 @@ runParallel setRefinedFields
 runParallel $(getApplication)
 
 # -- Sample the fields
-runParallel -o setRefinedFields -postProcess -func sampleDict -latestTime
+runParallel -o postProcess -func sampleDict -latestTime -noFunctionObjects
 
 # -- Create graphs
 ( cd validation && ./createGraphs )

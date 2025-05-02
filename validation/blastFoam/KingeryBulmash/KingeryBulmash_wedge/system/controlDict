@@ -61,13 +61,6 @@ functions
         writeControl        writeTime;
         pRef                101325;
     }
-//     overpressure
-//     {
-//         type                overpressure;
-//         writeControl        writeTime;
-//         store               yes;
-//         pRef                101325;
-//     }
     maxPImpulse
     {
         type                fieldMinMax;
@@ -78,12 +71,6 @@ functions
             impulse
         );
     }
-//     timeOfArrival
-//     {
-//         type                timeOfArrival;
-//         writeControl        writeTime;
-//         writeInterval       1;
-//     }
     pressureProbes
     {
         type                blastProbes;
@@ -108,11 +95,6 @@ functions
             p
         );
     }
-//     cons
-//     {
-//         type conservedQuantities;
-//         fields (rho);
-//     }
 };
 
 // ************************************************************************* //

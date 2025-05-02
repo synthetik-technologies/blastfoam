@@ -45,9 +45,9 @@ title="blastFoam_multicomponent_validation_U"
                 with points linewidth 8 linecolor rgb 'red',\
             "$2" using 1:2 title 'Particles - Houim Oran (2016)'\
                 with points linewidth 8 linecolor rgb 'blue',\
-            "$3" using 1:2 title 'Gas - blastFoam'\
+            "$3" using 1:8 title 'Gas - blastFoam'\
                 with lines lt 1 linewidth 2 linecolor rgb 'red', \
-            "$3" using 1:5 title 'Particles blastFoam'\
+            "$3" using 1:11 title 'Particles blastFoam'\
                 with lines lt 1 linewidth 2 linecolor rgb 'blue'
 EOF
 }
@@ -123,12 +123,11 @@ TgVal="$VALIDATIONDATAROOT/T_g_25.csv"
 TsVal="$VALIDATIONDATAROOT/T_s_25.csv"
 rhogVal="$VALIDATIONDATAROOT/rho_g_25.csv"
 rhosVal="$VALIDATIONDATAROOT/rho_s_25.csv"
-blastFOAMs="../postProcessing/sampleDict/*/Centerline_p*"
-blastFOAMv="../postProcessing/sampleDict/*/Centerline_U*"
+blastFOAM="../postProcessing/sampleDict/*/Centerline.xy*"
 
-createEpsP $pgVal $psVal $blastFOAMs
-createEpsU $UgVal $UsVal $blastFOAMv
-createEpsT $TgVal $TsVal $blastFOAMs
-createEpsRho $rhogVal $rhosVal $blastFOAMs
+createEpsP $pgVal $psVal $blastFOAM
+createEpsU $UgVal $UsVal $blastFOAM
+createEpsT $TgVal $TsVal $blastFOAM
+createEpsRho $rhogVal $rhosVal $blastFOAM
 
 echo Done

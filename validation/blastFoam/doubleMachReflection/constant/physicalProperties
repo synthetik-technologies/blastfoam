@@ -7,37 +7,43 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      binary;
+    format      ascii;
     class       dictionary;
     location    "constant";
-    object      dynamicMeshDict;
+    object      physicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-topoChanger
+type            basic;
+
+thermoType
 {
-    type            hexRefiner;
-    libs            1 ( "libblastFvMeshTopoChangers.so" );
-
-    errorEstimator  densityGradient;
-
-    refineInterval  1;
-
-    lowerRefineLevel 0.01;
-
-    unrefineLevel   0.01;
-
-    nBufferLayers   1;
-
-    maxRefinement   5;
-
-    dumpLevel       true;
+    transport       const;
+    thermo          hConst;
+    equationOfState idealGas;
 }
 
-distributor
+equationOfState
 {
-    type            redistributor;
-    libs            1 ( "libblastFvMeshDistributors.so" );
+    gamma           1.4;
+}
+
+specie
+{
+    molWeight       11640.3;
+}
+
+transport
+{
+    mu              0;
+    Pr              1;
+}
+
+thermodynamics
+{
+    Cp              2.5;
+    Cv              1.78571;
+    Hf              0;
 }
 
 

@@ -11,9 +11,34 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      turbulenceProperties.gas;
+    object      physicalProperties.particles;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-simulationType laminar;
+
+type basic;
+thermoType
+{
+    equationOfState rhoConst;
+    thermo eConst;
+    transport constIso;
+}
+specie
+{
+    molWeight   100;
+}
+equationOfState
+{
+    rho0         2500;
+}
+transport
+{
+    kappa       0.36;
+}
+thermodynamics
+{
+    type        eConst;
+    Cv          745;           // Heat capacity
+    Hf          0.0;
+}
 
 // ************************************************************************* //

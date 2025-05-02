@@ -11,7 +11,7 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      phaseProperties;
+    object      physicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -26,14 +26,23 @@ tnt
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnaghan;
+            equationOfState solidJWL;
         }
         equationOfState
         {
-            Gamma           0.29;
-            pRef            101325;
+            Gamma           0.3;
             rho0            1630;
-            K0              0;
+            K0              7.3e9;
+            K0Prime         10;
+            pRef            101325;
+
+            omega           0.8926;
+            A               1798e9;
+            B               -93.1e9;
+            R1              6.2;
+            R2              3.1;
+
+            eRef            328500;
         }
         specie
         {
@@ -42,12 +51,14 @@ tnt
         transport
         {
             mu              0;              // Viscosity
-            Pr              1;              // Prandtl number
+            Pr              0.7;              // Prandtl number
         }
         thermodynamics
         {
             Cv              1095;           // Heat capacity
             Hf              0.0;
+            // Tref            300;
+            // Esref           0;
         }
     }
     products
@@ -60,12 +71,14 @@ tnt
         }
         equationOfState
         {
-            rho0      1630; //1601;
-            A         527.28e9; //371.21e9;
-            B         6.300e9; //3.23e9;
-            R1        4.71; //4.15;
-            R2        1.07; //0.95;
-            omega     0.29; //0.3;
+            rho0        1630;
+            A           371.2e9;
+            B           3.23e9;
+            R1          4.15;
+            R2          0.95;
+            omega       0.3;
+            // e0 1.28496e+07;
+            // e0 4.294e6;
         }
         specie
         {
@@ -74,12 +87,14 @@ tnt
         transport
         {
             mu              0;              // Viscosity
-            Pr              1;              // Prandtl number
+            Pr              0.7;              // Prandtl number
         }
         thermodynamics
         {
-            Cv              1000;           // Heat capacity
+            Cv              1400;           // Heat capacity
             Hf              0.0;
+            // Tref            300;
+            // Esref           0;
         }
     }
 

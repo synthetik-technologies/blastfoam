@@ -38,7 +38,7 @@ createEpsUx()
     set xrange [0:1]
     plot    "$1" using 1:2 title 'Zheng 2011'\
                 with points linewidth 8 linecolor rgb 'black',\
-            "$2" using 1:2 title 'blastFOAM'\
+            "$2" using 1:4 title 'blastFOAM'\
                 with lines lt 1 linewidth 2 linecolor rgb 'black'
 EOF
 }
@@ -55,10 +55,9 @@ VALIDATIONDATAROOT=./validationData
 
 pVal="$VALIDATIONDATAROOT/p_zheng.csv"
 uVal="$VALIDATIONDATAROOT/u_zheng.csv"
-pBlastFOAM="../postProcessing/sampleDict/*/Centerline_p*"
-UBlastFOAM="../postProcessing/sampleDict/*/Centerline_U*"
+blastFOAM="../postProcessing/sampleDict/*/Centerline.xy"
 
-createEpsP $pVal $pBlastFOAM
-createEpsUx $uVal $UBlastFOAM
+createEpsP $pVal $blastFOAM
+createEpsUx $uVal $blastFOAM
 
 echo Done
