@@ -41,7 +41,8 @@ SourceFiles
 
 namespace Foam
 {
-
+namespace solvers
+{
 
 /*---------------------------------------------------------------------------*\
                         Class explicitSolver Declaration
@@ -51,10 +52,23 @@ class explicitSolver
 :
     public solver
 {
+    // Control parameters
+
+        //- Maximum allowed Courant number
+        scalar maxCo_;
+
+        //- Maximum time-step
+        scalar maxDeltaT_;
+
 protected:
+
+    // Protected member functions
 
         //- Read controls
         virtual bool read();
+
+        //- Return the current Courant number
+        virtual scalar CoNum() const = 0;
 
 public:
 
@@ -77,6 +91,9 @@ public:
 
 
     // Member Functions
+
+        //- Return the current maximum time-step for stable solution
+        virtual scalar maxDeltaT() const;
 
         //- Solve
         virtual void solve() = 0;
@@ -114,6 +131,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace solvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

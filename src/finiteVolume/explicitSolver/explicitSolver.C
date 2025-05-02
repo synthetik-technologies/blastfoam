@@ -29,33 +29,72 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(explicitSolver, 0);\
+namespace solvers
+{
+    defineTypeNameAndDebug(explicitSolver, 0);
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::explicitSolver::explicitSolver(fvMesh& mesh)
+Foam::solvers::explicitSolver::explicitSolver(fvMesh& mesh)
 :
-    solver(mesh)
-{}
+    solver(mesh),
+    maxCo_(0.5),
+    maxDeltaT_(vGreat)
+{
+    steady = false;
+    LTS = false;
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::explicitSolver::~explicitSolver()
+Foam::solvers::explicitSolver::~explicitSolver()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::explicitSolver::preSolve()
+bool Foam::solvers::explicitSolver::read()
+{
+    solver::read();
+
+    maxCo_ =
+        runTime.controlDict().lookupOrDefault<scalar>("maxCo", 0.5);
+
+    maxDeltaT_ =
+        runTime.controlDict().found("maxDeltaT")
+      ? runTime.controlDict().lookup<scalar>("maxDeltaT", runTime.userUnits())
+      : vGreat;
+
+    return true;
+}
+
+
+Foam::scalar Foam::solvers::explicitSolver::maxDeltaT() const
+{
+    const scalar Co = this->CoNum();
+
+    scalar deltaT = min(fvModels().maxDeltaT(), maxDeltaT_);
+
+    if (maxCo_ < vGreat && Co > small)
+    {
+        deltaT = min(deltaT, maxCo_/Co*runTime.deltaTValue());
+    }
+
+    return deltaT;
+}
+
+
+void Foam::solvers::explicitSolver::preSolve()
 {
     mesh_.update();
 }
 
 
-void Foam::explicitSolver::moveMesh()
+void Foam::solvers::explicitSolver::moveMesh()
 {
     if (pimple.firstIter())
     {
@@ -64,32 +103,32 @@ void Foam::explicitSolver::moveMesh()
 }
 
 
-void Foam::explicitSolver::motionCorrector()
+void Foam::solvers::explicitSolver::motionCorrector()
 {}
 
 
-void Foam::explicitSolver::prePredictor()
+void Foam::solvers::explicitSolver::prePredictor()
 {}
 
-void Foam::explicitSolver::momentumPredictor()
+void Foam::solvers::explicitSolver::momentumPredictor()
 {
+    Info<<runTime.deltaTValue()<<endl;
     this->solve();
 }
 
-void Foam::explicitSolver::thermophysicalPredictor()
+void Foam::solvers::explicitSolver::thermophysicalPredictor()
 {}
 
 
-void Foam::explicitSolver::pressureCorrector()
+void Foam::solvers::explicitSolver::pressureCorrector()
 {}
 
 
-void Foam::explicitSolver::postCorrector()
+void Foam::solvers::explicitSolver::postCorrector()
 {}
 
 
-void Foam::explicitSolver::postSolve()
+void Foam::solvers::explicitSolver::postSolve()
 {}
-
 
 // ************************************************************************* //
