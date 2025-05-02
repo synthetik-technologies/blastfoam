@@ -25,9 +25,9 @@ License
 
 #include "feMesh.H"
 #include "demandDrivenData.H"
-#include "mapPolyMesh.H"
-#include "mapClouds.H"
-#include "MeshObject.H"
+#include "polyTopoChangeMap.H"
+#include "polyDistributionMap.H"
+#include "polyMeshMap.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -41,7 +41,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::feMesh::mapFields(const mapPolyMesh& mpm)
+void Foam::feMesh::mapFields(const polyTopoChangeMap& mpm)
 {
 //     if (debug)
 //     {
@@ -145,7 +145,10 @@ Foam::feMesh::feMesh(const label order, const polyMesh& pMesh)
             pMesh
         )
     ),
-    MeshObject<polyMesh, Foam::PatchMeshObject, feMesh>(pMesh),
+    DemandDrivenMeshObject<polyMesh, Foam::RepatchableMeshObject, feMesh>
+    (
+        pMesh
+    ),
     GeoMesh<polyMesh>(pMesh),
 
     order_(order),
@@ -208,18 +211,48 @@ bool Foam::feMesh::movePoints()
 }
 
 
-void Foam::feMesh::updateMesh(const mapPolyMesh& mpm)
+void Foam::feMesh::distribute(const polyDistributionMap& map)
 {
     if (debug)
     {
-        Pout<< "feMesh::updateMesh(const mapPolyMesh&): "
+        Pout<< "feMesh::distribute(const polyDistributionMap&): "
             << "Updating for topology changes." << endl;
         Pout<< endl;
     }
-    boundary_.updateMesh();
+    boundary_.distribute();
 
     // Map all registered point fields
-    mapFields(mpm);
+    // mapFields(map);
+}
+
+
+void Foam::feMesh::topoChange(const polyTopoChangeMap& map)
+{
+    if (debug)
+    {
+        Pout<< "feMesh::topoChange(const polyTopoChangeMap&): "
+            << "Updating for topology changes." << endl;
+        Pout<< endl;
+    }
+    boundary_.topoChange();
+
+    // Map all registered point fields
+    mapFields(map);
+}
+
+
+void Foam::feMesh::mapMesh(const polyMeshMap& map)
+{
+    if (debug)
+    {
+        Pout<< "feMesh::mapMesh(const polyMeshMap&): "
+            << "Updating for topology changes." << endl;
+        Pout<< endl;
+    }
+    boundary_.mapMesh();
+
+    // Map all registered point fields
+    // mapFields(map);
 }
 
 

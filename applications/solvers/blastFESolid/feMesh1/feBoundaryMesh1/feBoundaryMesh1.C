@@ -109,9 +109,9 @@ void Foam::feBoundaryMesh1::calcGeometry()
 }
 
 
-Foam::label Foam::feBoundaryMesh1::findPatchID(const word& patchName) const
+Foam::label Foam::feBoundaryMesh1::findIndex(const word& patchName) const
 {
-   return mesh().mesh().boundaryMesh().findPatchID(patchName);
+   return mesh().mesh().boundaryMesh().findIndex(patchName);
 }
 
 
@@ -171,7 +171,7 @@ void Foam::feBoundaryMesh1::movePoints(const pointField& p)
 }
 
 
-void Foam::feBoundaryMesh1::updateMesh()
+void Foam::feBoundaryMesh1::topoChange()
 {
     PstreamBuffers pBufs(Pstream::defaultCommsType);
 
@@ -237,7 +237,7 @@ const Foam::fePatch1& Foam::feBoundaryMesh1::operator[]
     const word& patchName
 ) const
 {
-    const label patchi = findPatchID(patchName);
+    const label patchi = findIndex(patchName);
 
     if (patchi < 0)
     {
@@ -255,7 +255,7 @@ Foam::fePatch1& Foam::feBoundaryMesh1::operator[]
     const word& patchName
 )
 {
-    const label patchi = findPatchID(patchName);
+    const label patchi = findIndex(patchName);
 
     if (patchi < 0)
     {

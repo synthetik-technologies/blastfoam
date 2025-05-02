@@ -112,15 +112,36 @@ Foam::errorTypes::field::field
         }
         if (cmpts_.size() == 1)
         {
-            func1_ = Function1<scalar>::New("function", dict);
+            func1_ = Function1<scalar>::New
+            (
+                "function",
+                runTime.userUnits(),
+                dimless,
+                dict
+            );
         }
         else if (cmpts_.size() == 2)
         {
-            func2_ = Function2<scalar>::New("function", dict);
+            func2_ = Function2<scalar>::New
+            (
+                "function",
+                dimless,
+                dimless,
+                dimless,
+                dict
+            );
         }
         else if (cmpts_.size() == 3)
         {
-            func3_ = Function3<scalar>::New("function", dict);
+            func3_ = Function3<scalar>::New
+            (
+                "function",
+                dimless,
+                dimless,
+                dimless,
+                dimless,
+                dict
+            );
         }
         // else if (cmpts_.size() == 4)
         // {

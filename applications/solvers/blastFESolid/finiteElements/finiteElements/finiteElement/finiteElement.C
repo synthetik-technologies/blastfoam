@@ -446,7 +446,7 @@ labelList _matchNodes
     }
     else
     {
-        labelHashSet nodesToAdd(identity(indices.size()));
+        labelHashSet nodesToAdd(identityMap(indices.size()));
         forAll(localNodes, i)
         {
             const vector& n = localNodes[i];

@@ -109,7 +109,7 @@ public:
     TypeName("feSolid");
 
     // Constructor
-    feSolid(dynamicFvMesh& mesh, const regionSolverList& regions);
+    feSolid(fvMesh& mesh, const regionSolverList& regions);
 
     //- Destructor
     virtual ~feSolid();

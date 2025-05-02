@@ -132,7 +132,7 @@ Foam::boundaryTractions::idealGasPressure::idealGasPressure
             IOobject
             (
                 IOobject::groupName("VRef", name),
-                mesh_.time().timeName(),
+                mesh_.time().name(),
                 "uniform",
                 mesh_,
                 IOobject::READ_IF_PRESENT,

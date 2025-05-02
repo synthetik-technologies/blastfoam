@@ -127,7 +127,6 @@ Foam::materialModel::materialModel
     U_(U),
     rho_("rho", dimDensity, 0.0),
     name_(dict.name()),
-    id_(mesh.mesh().cellZones().findZoneID(name_)),
     planeStress_(planeStress),
     update_(false)
 {
@@ -180,8 +179,8 @@ Foam::materialModel::~materialModel()
 const Foam::labelList& Foam::materialModel::elements() const
 {
     return
-        id_ >= 0
-      ? static_cast<const labelList&>(mesh_.mesh().cellZones()[id_])
+        mesh_.mesh().cellZones().found(name_)
+      ? static_cast<const labelList&>(mesh_.mesh().cellZones()[name_])
       : labelList::null();
 }
 

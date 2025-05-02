@@ -30,7 +30,16 @@ Foam::displacementConstraints::fixedVelocity::fixedVelocity
 )
 :
     displacementConstraint(name, D, U, dict),
-    velocity_(Function1<vector>::New("velocity", dict))
+    velocity_
+    (
+        Function1<vector>::New
+        (
+            "velocity",
+            D.time().userUnits(),
+            dimVelocity,
+            dict
+        )
+    )
 {}
 
 

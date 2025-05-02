@@ -43,7 +43,7 @@ SourceFiles
 #include "Function3Fwd.H"
 #include "Function4Fwd.H"
 
-#include "fvCFD.H"
+#include "fvc.H"
 
 namespace Foam
 {

@@ -91,7 +91,7 @@ void Foam::feMesh1::clearOut()
 
 Foam::feMesh1::feMesh1(const polyMesh& pMesh, const label intOrder)
 :
-    MeshObject<polyMesh, PatchMeshObject, feMesh1>(pMesh),
+    DemandDrivenMeshObject<polyMesh, RepatchableMeshObject, feMesh1>(pMesh),
 
     pointMesh_(pointMesh::New(pMesh)),
     intOrder_(intOrder),
@@ -119,7 +119,7 @@ Foam::feMesh1::feMesh1
     const label orderT
 )
 :
-    MeshObject<polyMesh, PatchMeshObject, feMesh1>(pMesh),
+    DemandDrivenMeshObject<polyMesh, RepatchableMeshObject, feMesh1>(pMesh),
 
     pointMesh_(pointMesh::New(pMesh)),
     intOrder_(orderRS),
@@ -185,18 +185,48 @@ bool Foam::feMesh1::movePoints()
 }
 
 
-void Foam::feMesh1::updateMesh(const mapPolyMesh& mpm)
+void Foam::feMesh1::distribute(const polyDistributionMap& map)
 {
     if (debug)
     {
-        Pout<< "feMesh1::updateMesh(const mapPolyMesh&): "
+        Pout<< "feMesh1::distribute(const polyDistributionMap&): "
             << "Updating for topology changes." << endl;
         Pout<< endl;
     }
 
     clearAddressing();
 
-    boundary_.updateMesh();
+    // boundary_.topoChange();
+}
+
+
+void Foam::feMesh1::topoChange(const polyTopoChangeMap& map)
+{
+    if (debug)
+    {
+        Pout<< "feMesh1::topoChange(const polyTopoChangeMap&): "
+            << "Updating for topology changes." << endl;
+        Pout<< endl;
+    }
+
+    clearAddressing();
+
+    // boundary_.topoChange();
+}
+
+
+void Foam::feMesh1::mapMesh(const polyMeshMap& map)
+{
+    if (debug)
+    {
+        Pout<< "feMesh1::mapMesh(const polyMeshMap&): "
+            << "Updating for topology changes." << endl;
+        Pout<< endl;
+    }
+
+    clearAddressing();
+
+    // boundary_.topoChange();
 }
 
 

@@ -30,7 +30,16 @@ Foam::displacementConstraints::fixedDisplacement::fixedDisplacement
 )
 :
     displacementConstraint(name, D, U, dict),
-    displacement_(Function1<vector>::New("displacement", dict))
+    displacement_
+    (
+        Function1<vector>::New
+        (
+            "displacement",
+            D.time().userUnits(),
+            dimLength,
+            dict
+        )
+    )
 {}
 
 

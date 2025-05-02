@@ -39,34 +39,44 @@ namespace finiteElements
     addToRunTimeSelectionTable(finiteElement, quadrilateral, type);
     addNamedToRunTimeSelectionTable(finiteElement, quadrilateral, type, quad);
 
+    addFE(quad4); addFEMap(quad4, msh, 3);
+    addFE(quad9); addFEMap(quad9, msh, 10);
+    addFE(quad16); addFEMap(quad16, msh, 36);
+    addFE(quad25); addFEMap(quad25, msh, 37);
+    addFE(quad36); addFEMap(quad36, msh, 38);
+    addFE(quad49); addFEMap(quad49, msh, 47);
+    addFE(quad64); addFEMap(quad64, msh, 48);
+    addFE(quad81); addFEMap(quad81, msh, 49);
+    addFE(quad100); addFEMap(quad100, msh, 50);
+    addFE(quad121); addFEMap(quad121, msh, 51);
 
-    typedef ShellFiniteElement<quadrilateral> quadrilateralShell;
-    defineTemplateTypeNameAndDebug(quadrilateralShell, 0);
 
-    addToRunTimeSelectionTable
-    (
-        shellFiniteElement,
-        quadrilateralShell,
-        type
-    );
-    addNamedToRunTimeSelectionTable
-    (
-        shellFiniteElement,
-        quadrilateralShell,
-        type,
-        quad
-    );
-
-    addFE(quad4); addFEMap(quad4, msh, 3); addShellFE(quad4);
-    addFE(quad9); addFEMap(quad9, msh, 10); addShellFE(quad9);
-    addFE(quad16); addFEMap(quad16, msh, 36); addShellFE(quad16);
-    addFE(quad25); addFEMap(quad25, msh, 37); addShellFE(quad25);
-    addFE(quad36); addFEMap(quad36, msh, 38); addShellFE(quad36);
-    addFE(quad49); addFEMap(quad49, msh, 47); addShellFE(quad49);
-    addFE(quad64); addFEMap(quad64, msh, 48); addShellFE(quad64);
-    addFE(quad81); addFEMap(quad81, msh, 49); addShellFE(quad81);
-    addFE(quad100); addFEMap(quad100, msh, 50); addShellFE(quad100);
-    addFE(quad121); addFEMap(quad121, msh, 51); addShellFE(quad121);
+//     typedef ShellFiniteElement<quadrilateral> quadrilateralShell;
+//     defineTemplateTypeNameAndDebug(quadrilateralShell, 0);
+//
+//     addToRunTimeSelectionTable
+//     (
+//         shellFiniteElement,
+//         quadrilateralShell,
+//         type
+//     );
+//     addNamedToRunTimeSelectionTable
+//     (
+//         shellFiniteElement,
+//         quadrilateralShell,
+//         type,
+//         quad
+//     );
+//     addShellFE(quad4);
+//     addShellFE(quad9);
+//     addShellFE(quad16);
+//     addShellFE(quad25);
+//     addShellFE(quad36);
+//     addShellFE(quad49);
+//     addShellFE(quad64);
+//     addShellFE(quad81);
+//     addShellFE(quad100);
+//     addShellFE(quad121);
 }
 }
 

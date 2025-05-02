@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "pointD",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "pointU",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "force",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "pressure",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "M",
-            runTime.timeName(),
+            runTime.name(),
             mesh
         ),
         femesh.pMesh(),
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "sigma",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
             Info << nl << "Max Courant Number: "<< CoNum << endl;
         }
         runTime++;
-        Info<<"Time " << runTime.timeName()
+        Info<<"Time " << runTime.name()
             << ", deltaT = " << runTime.deltaTValue() << endl;
 
 
@@ -514,7 +514,7 @@ int main(int argc, char *argv[])
             material.postUpdate(tCoeffs[stepi].first());
 
             // Update velocity
-            U.ref() +=
+            U.internalFieldRef() +=
                 tCoeffs[stepi].second()
                *force()
                *runTime.deltaT()
@@ -576,7 +576,7 @@ int main(int argc, char *argv[])
         if (write)
         {
             runTime.write();
-            if (runTime.outputTime())
+            if (runTime.writeTime())
             {
                 material.write();
             }

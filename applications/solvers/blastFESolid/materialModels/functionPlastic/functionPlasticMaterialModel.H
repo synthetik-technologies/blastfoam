@@ -113,7 +113,13 @@ public:
             Plastic(dict, mesh, D, U, planeStress, geoType),
             stressStrain_
             (
-                Function1<scalar>::New("stressPlasticStrainSeries", dict)
+                Function1<scalar>::New
+                (
+                    "stressPlasticStrainSeries",
+                    mesh.time().userUnits(),
+                    dimPressure,
+                    dict
+                )
             ),
             ys_(stressStrain_())
         {

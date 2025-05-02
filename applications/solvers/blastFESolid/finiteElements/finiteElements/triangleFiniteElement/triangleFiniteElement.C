@@ -41,22 +41,34 @@ namespace finiteElements
     addToRunTimeSelectionTable(finiteElement, triangle, type);
     addNamedToRunTimeSelectionTable(finiteElement, triangle, type, tri);
 
-    typedef ShellFiniteElement<triangle> triangleShell;
-    defineTemplateTypeNameAndDebug(triangleShell, 0);
+    addFE(tri3); addFEMap(tri3, msh, 2);
+    addFE(tri6); addFEMap(tri6, msh, 9);
+    addFE(tri10); addFEMap(tri10, msh, 21);
+    addFE(tri15); addFEMap(tri15, msh, 23);
+    addFE(tri21); addFEMap(tri21, msh, 25);
+    addFE(tri28); addFEMap(tri28, msh, 42);
+    addFE(tri36); addFEMap(tri36, msh, 43);
+    addFE(tri45); addFEMap(tri45, msh, 44);
+    addFE(tri55); addFEMap(tri55, msh, 45);
+    addFE(tri66); addFEMap(tri66, msh, 46);
 
-    addToRunTimeSelectionTable(shellFiniteElement, triangleShell, type);
-    addNamedToRunTimeSelectionTable(shellFiniteElement, triangleShell, type, tri);
 
-    addFE(tri3); addFEMap(tri3, msh, 2); addShellFE(tri3);
-    addFE(tri6); addFEMap(tri6, msh, 9); addShellFE(tri6);
-    addFE(tri10); addFEMap(tri10, msh, 21); addShellFE(tri10);
-    addFE(tri15); addFEMap(tri15, msh, 23); addShellFE(tri15);
-    addFE(tri21); addFEMap(tri21, msh, 25); addShellFE(tri21);
-    addFE(tri28); addFEMap(tri28, msh, 42); addShellFE(tri28);
-    addFE(tri36); addFEMap(tri36, msh, 43); addShellFE(tri36);
-    addFE(tri45); addFEMap(tri45, msh, 44); addShellFE(tri45);
-    addFE(tri55); addFEMap(tri55, msh, 45); addShellFE(tri55);
-    addFE(tri66); addFEMap(tri66, msh, 46); addShellFE(tri66);
+    // typedef ShellFiniteElement<triangle> triangleShell;
+    // defineTemplateTypeNameAndDebug(triangleShell, 0);
+
+    // addToRunTimeSelectionTable(shellFiniteElement, triangleShell, type);
+    // addNamedToRunTimeSelectionTable(shellFiniteElement, triangleShell, type, tri);
+
+    // addShellFE(tri3);
+    // addShellFE(tri6);
+    // addShellFE(tri10);
+    // addShellFE(tri15);
+    // addShellFE(tri21);
+    // addShellFE(tri28);
+    // addShellFE(tri36);
+    // addShellFE(tri45);
+    // addShellFE(tri55);
+    // addShellFE(tri60);
 }
 }
 

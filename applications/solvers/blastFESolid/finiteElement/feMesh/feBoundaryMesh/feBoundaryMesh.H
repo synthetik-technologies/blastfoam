@@ -100,7 +100,7 @@ public:
         void movePoints(const pointField& p);
 
         //- Correct pointBoundaryMesh after topology update
-        void updateMesh();
+        void topoChange();
 
         //- Create pointBoundaryMesh from polyBoundaryMesh
         void reset(const polyBoundaryMesh&);

@@ -364,7 +364,7 @@ void Foam::feMesh1::calcW() const
         IOobject
         (
             "W",
-            mesh().time().timeName(),
+            mesh().time().name(),
             mesh()
         ),
         pointMesh_,

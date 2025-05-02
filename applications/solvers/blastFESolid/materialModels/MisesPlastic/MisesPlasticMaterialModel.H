@@ -137,6 +137,8 @@ public:
               ? Function1<scalar>::New
                 (
                     "stressPlasticStrainSeries",
+                    mesh.time().userUnits(),
+                    dimPressure,
                     dict
                 ).ptr()
               : nullptr

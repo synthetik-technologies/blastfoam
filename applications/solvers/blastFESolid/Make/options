@@ -2,7 +2,6 @@ EXE_INC = \
     -I$(FOAM_SRC)/meshTools/lnInclude \
     -I$(FOAM_SRC)/finiteVolume/lnInclude \
     -I$(FOAM_SRC)/fileFormats/lnInclude \
-    -I$(FOAM_SRC)/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/functionObjects/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \

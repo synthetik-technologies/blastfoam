@@ -30,8 +30,26 @@ Foam::boundaryTractions::solidTraction::solidTraction
 )
 :
     boundaryTraction(name, dict, femesh, DPtr),
-    pressure_(Function1<scalar>::New("pressure", dict)),
-    traction_(Function1<vector>::New("traction", dict))
+    pressure_
+    (
+        Function1<scalar>::New
+        (
+            "pressure",
+            femesh.time().userUnits(),
+            dimPressure,
+            dict
+        )
+    ),
+    traction_
+    (
+        Function1<vector>::New
+        (
+            "traction",
+            femesh.time().userUnits(),
+            dimPressure,
+            dict
+        )
+    )
 {}
 
 

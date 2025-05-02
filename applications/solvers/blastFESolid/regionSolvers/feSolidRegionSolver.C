@@ -51,7 +51,7 @@ namespace regionSolvers
 
 Foam::regionSolvers::feSolid::feSolid
 (
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const regionSolverList& regions
 )
 :
@@ -86,7 +86,7 @@ Foam::regionSolvers::feSolid::feSolid
         IOobject
         (
             "pointD",
-            runTime_.timeName(),
+            runTime_.name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -99,7 +99,7 @@ Foam::regionSolvers::feSolid::feSolid
         IOobject
         (
             "pointU",
-            runTime_.timeName(),
+            runTime_.name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -112,7 +112,7 @@ Foam::regionSolvers::feSolid::feSolid
         IOobject
         (
             "pointForce",
-            runTime_.timeName(),
+            runTime_.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -125,7 +125,7 @@ Foam::regionSolvers::feSolid::feSolid
         IOobject
         (
             "M",
-            runTime_.timeName(),
+            runTime_.name(),
             mesh
         ),
         femesh_.pMesh(),
@@ -136,7 +136,7 @@ Foam::regionSolvers::feSolid::feSolid
         IOobject
         (
             "sigma",
-            runTime_.timeName(),
+            runTime_.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -149,7 +149,7 @@ Foam::regionSolvers::feSolid::feSolid
         IOobject
         (
             "pressure",
-            runTime_.timeName(),
+            runTime_.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -515,11 +515,13 @@ void Foam::regionSolvers::feSolid::solve()
     // Update velocity
     if (runTime_.timeIndex() == 1)
     {
-        U_.ref() = U_.oldTime()() + force_()*runTime_.deltaT()*0.5/M_;
+        U_.internalFieldRef() =
+            U_.oldTime()() + force_()*runTime_.deltaT()*0.5/M_;
     }
     else
     {
-        U_.ref() = U_.oldTime()() + force_()*runTime_.deltaT()/M_;
+        U_.internalFieldRef() =
+            U_.oldTime()() + force_()*runTime_.deltaT()/M_;
     }
 
     // Make sure no movement in empty directions

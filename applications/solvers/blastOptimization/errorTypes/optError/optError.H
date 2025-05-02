@@ -93,6 +93,12 @@ public:
 
     // Member Functions
 
+        //- Reuired Fields
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        }
+
         //- Read the field average data
         virtual bool read(const dictionary&);
 

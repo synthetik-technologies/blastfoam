@@ -48,7 +48,8 @@ SourceFiles
 #define feMesh_H
 
 #include "GeoMesh.H"
-#include "MeshObject.H"
+#include "MeshObjects.H"
+#include "DemandDrivenMeshObject.H"
 #include "polyMesh.H"
 #include "feBoundaryMesh.H"
 #include "element.H"
@@ -65,7 +66,7 @@ namespace Foam
 class feMesh
 :
     public objectRegistry,
-    public MeshObject<polyMesh, PatchMeshObject, feMesh>,
+    public DemandDrivenMeshObject<polyMesh, RepatchableMeshObject, feMesh>,
     public GeoMesh<polyMesh>
 {
     // Private Data
@@ -118,7 +119,7 @@ class feMesh
         mutable label nIp_;
 
         //- Element integration points
-        mutable List<labelList> ipLabelsPtr_;
+        mutable List<labelList>* ipLabelsPtr_;
 
 
     // Private Member Functions
@@ -147,7 +148,7 @@ class feMesh
             void calcWs() const;
 
         //- Map fields
-        void mapFields(const mapPolyMesh& mpm);
+        void mapFields(const polyTopoChangeMap& map);
 
 public:
 
@@ -228,7 +229,7 @@ public:
             label nNodes() const;
 
             //- Number of integration points
-            label nIp() const
+            label nIp() const;
 
             //- Access elements
             const List<element>& elements() const;
@@ -246,7 +247,7 @@ public:
             const List<labelList>& faceNodes() const;
 
             //- Access face-node addressing
-            const List<labelList>& faceNodes() const;
+            const List<labelList>& cellNodes() const;
 
 
         // Addressing into mesh
@@ -279,7 +280,9 @@ public:
             virtual bool movePoints();
 
             //- Update the mesh corresponding to given map
-            virtual void updateMesh(const mapPolyMesh& mpm);
+            virtual void distribute(const polyDistributionMap& map);
+            virtual void topoChange(const polyTopoChangeMap& map);
+            virtual void mapMesh(const polyMeshMap& map);
 
             //- Reordered/removed trailing patches. If validBoundary call is
             //  parallel synced and all add the same patch with same settings

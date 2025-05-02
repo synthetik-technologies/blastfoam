@@ -81,9 +81,6 @@ protected:
     //- Name of the material
     word name_;
 
-    //- Id of the material
-    label id_;
-
     //- Plane stress
     bool planeStress_;
 
@@ -195,12 +192,6 @@ public:
             inline const word& name() const
             {
                 return name_;
-            }
-
-            //- Return the material id
-            inline label id() const
-            {
-                return id_;
             }
 
             //- Return the density
@@ -394,7 +385,7 @@ public:
                 IOobject
                 (
                     name,
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_.mesh()
                 ),
                 mesh_.pMesh(),

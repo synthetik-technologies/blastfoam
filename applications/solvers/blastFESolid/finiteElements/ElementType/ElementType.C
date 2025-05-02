@@ -345,7 +345,7 @@ void Foam::Geometry<Foam::ElementType::HEX>::toRef
     const pointField& pts
 )
 {
-    const cell c(identity(fs.size()));
+    const cell c(identityMap(fs.size()));
 
     label bottomFaceI = -1;
     scalar minz = great;

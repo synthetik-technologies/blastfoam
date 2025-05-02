@@ -39,7 +39,8 @@ SourceFiles
 #define feMesh1_H
 
 #include "pointMesh.H"
-#include "MeshObject.H"
+#include "MeshObjects.H"
+#include "DemandDrivenMeshObject.H"
 #include "polyMesh.H"
 #include "feBoundaryMesh1.H"
 #include "element.H"
@@ -56,7 +57,7 @@ namespace Foam
 
 class feMesh1
 :
-    public MeshObject<polyMesh, PatchMeshObject, feMesh1>
+    public DemandDrivenMeshObject<polyMesh, RepatchableMeshObject, feMesh1>
 {
     // Private Data
 
@@ -144,7 +145,7 @@ class feMesh1
             void calcW() const;
 
         //- Map fields
-        void mapFields(const mapPolyMesh& mpm);
+        void mapFields(const polyTopoChangeMap& map);
 
 public:
 
@@ -269,7 +270,9 @@ public:
             virtual bool movePoints();
 
             //- Update the mesh corresponding to given map
-            virtual void updateMesh(const mapPolyMesh& mpm);
+            virtual void distribute(const polyDistributionMap& map);
+            virtual void topoChange(const polyTopoChangeMap& map);
+            virtual void mapMesh(const polyMeshMap& map);
 
             //- Reordered/removed trailing patches. If validBoundary call is
             //  parallel synced and all add the same patch with same settings
@@ -294,7 +297,7 @@ public:
             const indirectPrimitivePatch& cpp = gmd.coupledPatch();
             const labelList& meshPoints = cpp.meshPoints();
 
-            const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
+            const distributionMap& slavesMap = gmd.globalCoPointSlavesMap();
             const labelListList& slaves = gmd.globalCoPointSlaves();
 
             List<Type> elems(slavesMap.constructSize());

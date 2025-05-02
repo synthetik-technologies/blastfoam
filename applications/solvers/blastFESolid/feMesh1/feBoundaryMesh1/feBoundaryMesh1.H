@@ -90,7 +90,7 @@ public:
             }
 
             //- Find patch index given a name
-            label findPatchID(const word& patchName) const;
+            label findIndex(const word& patchName) const;
 
             //- Find patch indices given a name
             labelList findIndices(const wordRe&, const bool useGroups) const;
@@ -100,7 +100,7 @@ public:
         void movePoints(const pointField& p);
 
         //- Correct pointBoundaryMesh after topology update
-        void updateMesh();
+        void topoChange();
 
         //- Create pointBoundaryMesh from polyBoundaryMesh
         void reset(const polyBoundaryMesh&);
