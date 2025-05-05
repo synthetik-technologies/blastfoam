@@ -810,7 +810,7 @@ Foam::autoPtr<Foam::polyTopoChangeMap> Foam::refinement::refine
 {
     polyTopoChange meshMod(mesh);
     this->setRefinement(meshMod, cellsToRefine);
-    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh, false);
+    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh);
     mesh.topoChange(map());
 
     Info<< "Refined from "
@@ -828,7 +828,7 @@ Foam::autoPtr<Foam::polyTopoChangeMap> Foam::refinement::unrefine
 {
     polyTopoChange meshMod(mesh);
     this->setUnrefinement(meshMod, splitPointsToUnrefine);
-    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh, false);
+    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh);
     mesh.topoChange(map());
 
     Info<< "Unrefined from "

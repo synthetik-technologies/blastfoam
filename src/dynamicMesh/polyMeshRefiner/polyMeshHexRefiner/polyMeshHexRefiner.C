@@ -185,8 +185,7 @@ Foam::polyMeshHexRefiner::refine
     // Play refinement commands into mesh changer.
     meshCutter_->setRefinement(cellsToRefine, meshMod);
 
-    // Create mesh (with inflation), return map from old to new mesh.
-    //autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh_, true);
+    // Create mesh, return map from old to new mesh.
     autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh_);
 
     Info<< "Refined from "

@@ -356,6 +356,11 @@ bool Foam::polyMeshPolyRefiner::refine
                     cellsToRefine
                 );
 
+                if (!hasMapped_)
+                {
+                    this->topoChange(map());
+                }
+
                 // Update refineCell. Note that some of the marked ones have
                 // not been refined due to constraints.
                 {
@@ -383,11 +388,6 @@ bool Foam::polyMeshPolyRefiner::refine
                         }
                     }
                     refineCell.transfer(newRefineCell);
-                }
-
-                if (!hasMapped_)
-                {
-                    this->topoChange(map());
                 }
 
                 hasChanged = true;
