@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "pressureImpulseBurstModel.H"
-#include "burstFvPatchFieldBase.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -81,9 +80,10 @@ Foam::burstModels::pressureImpulse::~pressureImpulse()
 
 void Foam::burstModels::pressureImpulse::writeData(Ostream& os) const
 {
-    pressure::writeData(os);
+    burstModel::writeData(os);
     writeEntry(os, "pName", pName_);
     writeEntry(os, "pBurst", burstValues_[pName_] - pRef_);
+    writeEntry(os, "pRef", pRef_);
     writeEntry(os, "impulseName", impulseName_);
     writeEntry(os, "impulseBurst", burstValues_[impulseName_]);
 }
