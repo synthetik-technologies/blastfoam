@@ -102,18 +102,19 @@ void Foam::FieldSetTypes::InitialValue<Type, FSType>::setGeoField
 {
     if (patchi < 0)
     {
-        tmp<Field<Type>> tpOrig(this->getBoundary(patchi, origFieldPtr_()));
-        const Field<Type>& pOrig = tpOrig();
         forAll(indices, i)
         {
-            f[i] = pOrig[indices[i]];
+            f[i] = origFieldPtr_()[indices[i]];
         }
     }
     else
     {
+        tmp<Field<Type>> tpOrig(this->getBoundary(patchi, origFieldPtr_()));
+        const Field<Type>& pOrig = tpOrig();
+        Info<<indices<<nl<<f.size()<<nl<<pOrig.size()<<endl;
         forAll(indices, i)
         {
-            f[i] = origFieldPtr_()[indices[i]];
+            f[i] = pOrig[indices[i]];
         }
     }
 }
