@@ -177,7 +177,7 @@ positionFormat readCloud
         for (label i = 0; i < nParticles; i++)
         {
             label n = 0;
-            c.append(new particle(mesh, is, false, n));
+            c.append(new particle(is, false));
         }
         // Read beginning of contents
         is.readEndList
