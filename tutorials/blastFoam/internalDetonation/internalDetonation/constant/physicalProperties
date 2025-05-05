@@ -1,0 +1,141 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      binary;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( c4 air );
+
+radiationModel  none;
+
+c4
+{
+    type            detonating;
+    reactants
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState Murnaghan;
+        }
+        equationOfState
+        {
+            Gamma           0.25;
+            pRef            101298;
+            rho0            1601;
+            K0              0;
+        }
+        specie
+        {
+            molWeight       55;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1400;
+            Hf              0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState JWL;
+        }
+        equationOfState
+        {
+            rho0            1601;
+            A               6.0977e+11;
+            B               1.295e+10;
+            R1              4.5;
+            R2              1.4;
+            omega           0.25;
+        }
+        specie
+        {
+            molWeight       55;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1400;
+            Hf              0;
+        }
+    }
+    afterburnModel  Miller;
+    MillerCoeffs
+    {
+        Q0              1e+07;
+        m               0.5;
+        n               0.1667;
+        a               0.0065;
+        pMin            100000;
+        pScale          1e-06;
+    }
+    activationModel linear;
+    initiation
+    {
+        E0              9e+09;
+        points          ( ( 0 0 0.05 ) );
+        vDet            7850;
+        pRef            101298;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-10;
+}
+
+air
+{
+    type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        type            eConst;
+        Cv              718;
+        Hf              0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-10;
+}
+
+
+// ************************************************************************* //

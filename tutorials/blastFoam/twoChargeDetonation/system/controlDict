@@ -23,11 +23,11 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         1e-5;
+endTime         0.001;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-4;
+writeInterval   1e-5;
 
 writeFormat     binary;
 
@@ -47,10 +47,6 @@ deltaT          1e-8;
 
 maxCo           0.5;
 
-DebugSwitches
-{
-    ReconstructionScheme 1;
-}
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 functions

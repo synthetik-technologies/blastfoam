@@ -41,7 +41,8 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    defaultReconstruction quadraticMUSCL Minmod;
+    // defaultReconstruction quadraticMUSCL Minmod;
+    reconstruct(alpha)  quadraticMUSCL Minmod;
     reconstruct(rho)    quadraticMUSCL Minmod;
     reconstruct(U)      quadraticMUSCL Minmod;
     reconstruct(e)      quadraticMUSCL Minmod;

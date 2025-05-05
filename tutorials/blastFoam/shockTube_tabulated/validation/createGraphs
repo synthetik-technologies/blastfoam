@@ -61,7 +61,7 @@ createEpsUx()
     set key on
     set size 2,2
     set autoscale
-    plot    "$1" using 1:2 title 'Tabulated' \
+    plot    "$1" using 1:4 title 'Tabulated' \
             with lines lt 1 linewidth 2 linecolor rgb 'black', \
             "$2" using 1:2 every 20 title 'Ideal gas' \
             with points pt 5 ps 3 linecolor rgb 'red'
@@ -79,14 +79,13 @@ fi
 VALIDATIONDATAROOT=./validationData
 
 time=$(foamListTimes -latestTime -case ../)
-pRhoBlastFOAM="../postProcessing/sampleDict/$time/Centerline_p*"
-UBlastFOAM="../postProcessing/sampleDict/$time/Centerline_U*"
+blastFOAM="../postProcessing/sampleDict/$time/Centerline.xy"
 
 pRhoIdeal="data/Centerline_p*"
 UIdeal="data/Centerline_U*"
 
-createEpsP $pRhoBlastFOAM $pRhoIdeal
-createEpsRho $pRhoBlastFOAM $pRhoIdeal
-createEpsUx $UBlastFOAM $UIdeal
+createEpsP $blastFOAM $pRhoIdeal
+createEpsRho $blastFOAM $pRhoIdeal
+createEpsUx $blastFOAM $UIdeal
 
 echo Done

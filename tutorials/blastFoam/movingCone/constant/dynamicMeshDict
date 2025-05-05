@@ -48,8 +48,10 @@ topoChanger
     nBufferLayers   1;
 
     // Refine cells only up to maxRefinement levels
-    // maxRefinement  4;
-    minDx 5e-5;
+    maxRefinement  2;
+
+    // Smallest cell size
+    minDx           5e-5;
 
     // Write the refinement level as a volScalarField
     dumpLevel       true;

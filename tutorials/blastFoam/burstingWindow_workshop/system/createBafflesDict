@@ -31,13 +31,15 @@ baffles
         // Generate patchGroup windows with two patches:
         //  - windows_master
         //  - windows_slave
-        patchPairs
+        owner
         {
-            type            burstCyclicAMI;
-            burstModel      pressure;
-            partialBurst    yes;
-            pBurst          5e6;
-            useDelta        no;
+            name            windowsIntact_master;
+            type            wall;
+        }
+        neighbour
+        {
+            name            windowsIntact_slave;
+            type            wall;
         }
     }
 }

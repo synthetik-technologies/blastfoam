@@ -51,4 +51,14 @@ maxCo           0.5;
 
 
 functions
-{}
+{
+    stopProbes
+    {
+        type    stopProbes;
+        locations ((0.5 0 1));
+        fields
+        (
+            p   1e6
+        );
+    }
+}
