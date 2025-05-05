@@ -34,32 +34,6 @@ particles
     alphaMax    0.63;
     alphaMinFriction 0.5;
 
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo eConst;
-        transport constIso;
-    }
-    specie
-    {
-        molWeight  100.0;
-    }
-    equationOfState
-    {
-        rho0         1600;
-    }
-    transport
-    {
-        kappa       0.36;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          745;           // Heat capacity
-        Hf          0;
-    }
-
     kineticTheoryCoeffs
     {
         e           0.999;
@@ -80,80 +54,6 @@ gas
         d           0;
     }
 
-    type            multicomponent;
-    species         (ignitor air products);
-    defaultSpecie   air;
-    calculateDensity yes;
-    thermoType
-    {
-        transport   const;
-        thermo      eConst;
-        equationOfState AbelNobel;
-    }
-
-    ignitor
-    {
-        equationOfState
-        {
-            b               0.99e-3;
-        }
-        specie
-        {
-            molWeight       22.935;
-        }
-        transport
-        {
-            mu              1.81e-5;
-            Pr              0.7;
-        }
-        thermodynamics
-        {
-            Cv          1450;
-            Hf          0;
-        }
-    }
-    products
-    {
-        equationOfState
-        {
-            b           0.99e-3;            // Heat capactiy ratio
-        }
-        specie
-        {
-            molWeight       21.0;
-        }
-        transport
-        {
-            mu              1.81e-5;
-            Pr              0.7;
-        }
-        thermodynamics
-        {
-            Cv          2100;
-            Hf          1.5e6;
-        }
-    }
-    air
-    {
-        equationOfState
-        {
-            b           1.02e-3;            // Heat capactiy ratio
-        }
-        specie
-        {
-            molWeight       28.6689;
-        }
-        transport
-        {
-            mu              1.81e-5;
-            Pr              0.7;
-        }
-        thermodynamics
-        {
-            Cv          1450;
-            Hf          0;
-        }
-    }
     residualRho     1e-6;
     residualAlpha   1e-6;
 }

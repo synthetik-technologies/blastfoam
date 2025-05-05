@@ -27,33 +27,6 @@ coal
     }
     alphaMax    0.65;
 
-
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo          eConst;
-        transport       constIso;
-    }
-    specie
-    {
-        molWeight   100.0;
-    }
-    equationOfState
-    {
-        rho0         1300;
-    }
-    transport
-    {
-        kappa       0.36;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          987;           // Heat capacity
-        Hf          0.0;
-    }
-
     kineticTheoryCoeffs
     {
         e       0.9;
@@ -74,32 +47,6 @@ particles0
 
     alphaMax    0.65;
 
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo          eConst;
-        transport       constIso;
-    }
-    specie
-    {
-        molWeight   100.0;
-    }
-    equationOfState
-    {
-        rho0         2700;
-    }
-    transport
-    {
-        kappa       0.36;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          987;           // Heat capacity
-        Hf          0.0;
-    }
-
     kineticTheoryCoeffs
     {
         e       0.9;
@@ -117,32 +64,6 @@ particles1
         d           8.931e-6;
     }
     alphaMax    0.65;
-
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo          eConst;
-        transport       constIso;
-    }
-    specie
-    {
-        molWeight   100.0;
-    }
-    equationOfState
-    {
-        rho0         2700;
-    }
-    transport
-    {
-        kappa       0.36;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          987;           // Heat capacity
-        Hf          0.0;
-    }
 
     kineticTheoryCoeffs
     {
@@ -164,32 +85,6 @@ particles2
 
     alphaMax    0.65;
 
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo          eConst;
-        transport       constIso;
-    }
-    specie
-    {
-        molWeight   100.0;
-    }
-    equationOfState
-    {
-        rho0         2700;
-    }
-    transport
-    {
-        kappa       0.36;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          987;           // Heat capacity
-        Hf          0.0;
-    }
-
     kineticTheoryCoeffs
     {
         e       0.9;
@@ -208,32 +103,6 @@ particles3
         d           81.633e-6;
     }
     alphaMax    0.65;
-
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo          eConst;
-        transport       constIso;
-    }
-    specie
-    {
-        molWeight   100.0;
-    }
-    equationOfState
-    {
-        rho0         2700;
-    }
-    transport
-    {
-        kappa       0.36;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          987;           // Heat capacity
-        Hf          0.0;
-    }
 
     kineticTheoryCoeffs
     {
@@ -255,32 +124,6 @@ particles4
 
     alphaMax    0.65;
 
-    type basic;
-    thermoType
-    {
-        equationOfState rhoConst;
-        thermo          eConst;
-        transport       constIso;
-    }
-    specie
-    {
-        molWeight   100.0;
-    }
-    equationOfState
-    {
-        rho0         2700;
-    }
-    transport
-    {
-        kappa       0.36;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          987;           // Heat capacity
-        Hf          0.0;
-    }
-
     kineticTheoryCoeffs
     {
         e       0.9;
@@ -297,33 +140,6 @@ gas
     constantDiameterCoeffs
     {
         d           0;
-    }
-
-    type basic;
-    thermoType
-    {
-        transport   const;
-        thermo      eConst;
-        equationOfState idealGas;
-    }
-    equationOfState
-    {
-        gamma           1.4;            // Heat capactiy ratio
-    }
-    specie
-    {
-        molWeight       28.97;
-    }
-    transport
-    {
-        mu              1.81e-5;
-        Pr              1;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          718;
-        Hf          0;
     }
 
     residualRho     1e-6;

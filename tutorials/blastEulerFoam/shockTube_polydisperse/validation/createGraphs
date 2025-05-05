@@ -28,17 +28,17 @@ title=multiclass_shockTube_validation_Ux_$2
     set yrange [0:230]
     plot    "$1" using 1:(\$2 >= 1e-5 ? \$8 : 0) title 'Coal-dust' \
             with lines linewidth 2 linecolor rgb 'red',\
-            "$1" using 1:(\$3 >= 1e-5 ? \$9 : 0) title 'Rock-dust (1.7 {/Symbol m}m)' \
+            "$1" using 1:(\$3 >= 1e-5 ? \$11 : 0) title 'Rock-dust (1.7 {/Symbol m}m)' \
             with lines linewidth 2 linecolor rgb 'green',\
-            "$1" using 1:(\$4 >= 1e-5 ? \$10 : 0) title 'Rock-dust (8.9 {/Symbol m}m)' \
+            "$1" using 1:(\$4 >= 1e-5 ? \$14 : 0) title 'Rock-dust (8.9 {/Symbol m}m)' \
             with lines linewidth 2 linecolor rgb 'blue',\
-            "$1" using 1:(\$5 >= 1e-5 ? \$11 : 0) title 'Rock-dust (26.2 {/Symbol m}m)' \
+            "$1" using 1:(\$5 >= 1e-5 ? \$17 : 0) title 'Rock-dust (26.2 {/Symbol m}m)' \
             with lines linewidth 2 linecolor rgb 'black',\
-            "$1" using 1:(\$6 >= 1e-5 ? \$12 : 0) title 'Rock-dust (81.6 {/Symbol m}m)' \
+            "$1" using 1:(\$6 >= 1e-5 ? \$20 : 0) title 'Rock-dust (81.6 {/Symbol m}m)' \
             with lines linewidth 2 linecolor rgb 'orange',\
-            "$1" using 1:(\$7 >= 1e-5 ? \$13 : 0) title 'Rock-dust (171.2 {/Symbol m}m)' \
+            "$1" using 1:(\$7 >= 1e-5 ? \$23 : 0) title 'Rock-dust (171.2 {/Symbol m}m)' \
             with lines linewidth 2 linecolor rgb 'purple', \
-            "$1" using 1:14 title 'Gas' \
+            "$1" using 1:26 title 'Gas' \
             with lines dt 3 linewidth 2 linecolor rgb 'brown'
 EOF
 # convert -colorspace sRGB -flatten $title.eps -background white $title.png
@@ -78,37 +78,21 @@ fi
 # paths to data
 VALIDATIONDATAROOT=./validationData
 
-nodeBlastFOAM0="../postProcessing/sampleDict/0/Centerline_alpha*"
-UBlastFOAM0="../postProcessing/sampleDict/0/Centerline_U*"
-nodeBlastFOAM5="../postProcessing/sampleDict/5e-05/Centerline_alpha*"
-UBlastFOAM5="../postProcessing/sampleDict/5e-05/Centerline_U*"
-nodeBlastFOAM1="../postProcessing/sampleDict/0.0001/Centerline_alpha*"
-UBlastFOAM1="../postProcessing/sampleDict/0.0001/Centerline_U*"
-nodeBlastFOAM2="../postProcessing/sampleDict/0.0002/Centerline_alpha*"
-UBlastFOAM2="../postProcessing/sampleDict/0.0002/Centerline_U*"
+blastFoam0="../postProcessing/sampleDict/0/Centerline.xy"
+blastFoam05="../postProcessing/sampleDict/5e-05/Centerline.xy"
+blastFoam1="../postProcessing/sampleDict/0.0001/Centerline.xy"
+blastFoam2="../postProcessing/sampleDict/0.0002/Centerline.xy"
 
-awk '{$1=$3=$4=$6=$7=$9=$10=$12=$13=$15=$16=$18=$19=$21=$22=""; print $0}'  $UBlastFOAM0 > UBlastFoam0
-paste $nodeBlastFOAM0 UBlastFoam0 > blastFoam0
+createEpsUx $blastFoam0 0
+createEpsAlpha $blastFoam0 0
 
-awk '{$1=$3=$4=$6=$7=$9=$10=$12=$13=$15=$16=$18=$19=$21=$22=""; print $0}'  $UBlastFOAM5 > UBlastFoam5
-paste $nodeBlastFOAM5 UBlastFoam5 > blastFoam5
-awk '{$1=$3=$4=$6=$7=$9=$10=$12=$13=$15=$16=$18=$19=$21=$22=""; print $0}'  $UBlastFOAM1 > UBlastFoam1
-paste $nodeBlastFOAM1 UBlastFoam1 > blastFoam1
-awk '{$1=$3=$4=$6=$7=$9=$10=$12=$13=$15=$16=$18=$19=$21=$22=""; print $0}'  $UBlastFOAM2 > UBlastFoam2
-paste $nodeBlastFOAM2 UBlastFoam2 > blastFoam2
+createEpsUx $blastFoam05 50
+createEpsAlpha $blastFoam05 50
 
-createEpsUx blastFoam0 0
-createEpsAlpha blastFoam0 0
+createEpsUx $blastFoam1 100
+createEpsAlpha $blastFoam1 100
 
-createEpsUx blastFoam5 50
-createEpsAlpha blastFoam5 50
-
-createEpsUx blastFoam1 100
-createEpsAlpha blastFoam1 100
-
-createEpsUx blastFoam2 200
-createEpsAlpha blastFoam2 200
-
-rm UBlastFoam? blastFoam?
+createEpsUx $blastFoam2 200
+createEpsAlpha $blastFoam2 200
 
 echo Done

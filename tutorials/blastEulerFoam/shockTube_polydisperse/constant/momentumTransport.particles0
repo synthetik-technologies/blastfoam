@@ -10,28 +10,11 @@ FoamFile
     format      binary;
     class       dictionary;
     location    "constant";
-    object      dynamicMeshDict;
+    object      momentumTransport.particles0;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-topoChanger
-{
-    type            polyRefiner;
-    errorEstimator  densityGradient;
-    refineInterval  1;
-    lowerRefineLevel 0.05;
-    unrefineLevel   0.05;
-    nBufferLayers   3;
-    maxRefinement   2;
-    dumpLevel       true;
-    libs            1 ( "libblastFvMeshTopoChangers.so" );
-}
-
-distributor
-{
-    type            redistributor;
-    libs            1 ( "libblastFvMeshDistributors.so" );
-}
+simulationType  laminar;
 
 
 // ************************************************************************* //
