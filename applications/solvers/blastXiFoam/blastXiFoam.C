@@ -51,14 +51,16 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
+#include "argList.H"
+#include "fvMesh.H"
+#include "volFields.H"
 #include "psiuCompressibleSystem.H"
-#include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "fluxScheme.H"
 #include "fvTimeIntegrator.H"
-#include "Switch.H"
+#include "timeSelector.H"
+
+using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -68,11 +70,10 @@ int main(int argc, char *argv[])
 
     fluxSchemeBase::needEnergyFlux = true;
 
-    #include "setRootCaseLists.H"
+    #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createMesh.H"
     #include "createControl.H"
-    #include "readCombustionProperties.H"
     #include "createFields.H"
     #include "createFieldRefs.H"
     #include "createTimeControls.H"
@@ -90,14 +91,7 @@ int main(int argc, char *argv[])
         integrator.preUpdateMesh();
 
         // Refine the mesh
-        if (refineMesh(mesh))
-        {
-            ignPtr.reset
-            (
-                new ignition(combustionProperties, runTime, mesh)
-            );
-        }
-        ignition& ign = ignPtr();
+        mesh.update();
 
         // Update Courant number
         CoNum = fluid.CoNum();
@@ -107,7 +101,7 @@ int main(int argc, char *argv[])
         #include "setDeltaT.H"
 
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         Info<< "Calculating Fluxes" << endl;
         integrator.integrate();

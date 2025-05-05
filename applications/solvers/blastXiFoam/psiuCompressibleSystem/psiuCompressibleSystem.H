@@ -41,6 +41,8 @@ SourceFiles
 #include "compressibleSystem.H"
 #include "fluxScheme.H"
 #include "psiuMulticomponentThermo.H"
+#include "RASThermophysicalTransportModel.H"
+#include "unityLewisEddyDiffusivity.H"
 #include "uniformDimensionedFields.H"
 #include "laminarFlameSpeed.H"
 #include "ignition.H"
@@ -61,9 +63,6 @@ protected:
 
     //- Thermo
     autoPtr<psiuMulticomponentThermo> thermo_;
-
-    //- Composition
-    basicCombustionMixture& composition_;
 
     //- Primitative variables
 
@@ -87,41 +86,67 @@ protected:
         //- Total unbunrt energy
         volScalarField rhoEu_;
 
+
     // - Flame models
 
         //- Combustion properties
-        IOdictionary combustionProperties;
+        IOdictionary combustionProperties_;
 
         //- Burnt fraction
-        volScalarField& b;
+        volScalarField& b_;
 
         //- Velocity ratio
-        volScalarField Xi;
+        volScalarField Xi_;
 
         //- Strained laminar flame speed
-        volScalarField Su;
+        volScalarField Su_;
 
         //- Turbulent flame speed
-        volScalarField St;
+        volScalarField St_;
 
         //- Su bounds
-        dimensionedScalar SuMin;
-        dimensionedScalar SuMax;
+        dimensionedScalar SuMin_;
+        dimensionedScalar SuMax_;
 
         // - Laminar flame speed model
         autoPtr<laminarFlameSpeed> unstrainedLaminarFlameSpeed_;
 
         // Model names
-        word SuModel;
-        word XiModel;
+        word SuModel_;
+        word XiModel_;
 
-        dimensionedScalar sigmaExt;
-        dimensionedScalar XiCoef;
-        dimensionedScalar XiShapeCoef;
-        dimensionedScalar uPrimeCoef;
+        dimensionedScalar sigmaExt_;
+        dimensionedScalar XiCoef_;
+        dimensionedScalar XiShapeCoef_;
+        dimensionedScalar uPrimeCoef_;
 
         //- Ignition model
-        ignition ign;
+        ignition ign_;
+
+        // Thermophysical transport
+        autoPtr
+        <
+            turbulenceThermophysicalTransportModels::unityLewisEddyDiffusivity
+            <
+                RASThermophysicalTransportModel
+                <
+                    ThermophysicalTransportModel
+                    <
+                        compressibleMomentumTransportModel,
+                        fluidThermo
+                    >
+                >
+            >
+        > thermophysicalTransport_;
+
+
+        //- Calculate and return the turbulent flame-speed kernel correction
+        dimensionedScalar calcStCorr
+        (
+            const volScalarField& c,
+            const surfaceScalarField& nf,
+            const dimensionedScalar& dMgb
+        ) const;
 
 
 public:
@@ -129,7 +154,11 @@ public:
     TypeName("psiuCompressibleSystem");
 
     // Constructor
-    psiuCompressibleSystem(const fvMesh& mesh);
+    psiuCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
     //- Destructor
     virtual ~psiuCompressibleSystem();
@@ -150,13 +179,13 @@ public:
         }
 
         //- Non-const reference to reaction thermo
-        psiuReactionThermo& rThermo()
+        psiuMulticomponentThermo& rThermo()
         {
             return thermo_();
         }
 
         //- Const reference to reaction thermo
-        const psiuReactionThermo& rThermo() const
+        const psiuMulticomponentThermo& rThermo() const
         {
             return thermo_();
         }
@@ -229,74 +258,6 @@ public:
 
         //- Return speed of sound
         virtual tmp<volScalarField> speedOfSound() const;
-
-
-    //- Return functions for transport model
-
-        //- Density of unburnt mixture [kg/m^3]
-        virtual tmp<volScalarField> rhou() const;
-
-        //- Heat capacit at contant volume of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cv() const;
-
-        //- Dynamic viscosity of mixture [kg/m/s]
-        virtual tmp<volScalarField> mu() const;
-
-        //- Dynamic viscosity of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> mu(const label patchi) const;
-
-        //- Dynamic viscosity of unburnt mixture [kg/m/s]
-        virtual tmp<volScalarField> muu() const;
-
-        //- Dynamic viscosity of burnt mixture [kg/m/s]
-        virtual tmp<volScalarField> mub() const;
-
-        //- Kinematic viscosity of mixture [m^2/s]
-        virtual tmp<volScalarField> nu() const;
-
-        //- Kinematic viscosity of mixture for patch [m^2/s]
-        virtual tmp<scalarField> nu(const label patchi) const;
-
-        //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alpha() const;
-
-        //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alpha(const label patchi) const;
-
-        //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphaEff(const volScalarField&) const;
-
-        //- Effective thermal turbulent diffusivity of mixture
-        //  for patch [kg/m/s]
-        virtual tmp<scalarField> alphaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
-
-        //- Thermal diffusivity for energy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphahe() const;
-
-        //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alphahe(const label patchi) const;
-
-        //- Thermal diffusivity for temperature of mixture [W/m/K]
-        virtual tmp<volScalarField> kappa() const;
-
-        //- Thermal diffusivity for temperature of mixture for patch [W/m/K]
-        virtual tmp<scalarField> kappa(const label patchi) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture [W/m/K]
-        virtual tmp<volScalarField> kappaEff(const volScalarField&) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture for patch [W/m/K]
-        virtual tmp<scalarField> kappaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
 };
 
 

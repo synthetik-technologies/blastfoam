@@ -1,73 +1,20 @@
 fvTimeIntegrator integrator(mesh);
-psiuCompressibleSystem fluid(mesh);
+
+IOdictionary physicalProperties
+(
+    IOobject
+    (
+        ::Foam::physicalProperties::typeName,
+        runTime.constant(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::NO_WRITE,
+        false
+    )
+);
+psiuCompressibleSystem fluid(physicalProperties, mesh);
 integrator.addSystem(fluid);
 
-psiuReactionThermo& thermo = fluid.rThermo();
-basicCombustionMixture& composition = thermo.composition();
-compressible::momentumTransportModel& turbulence = fluid.turbulence();
-fluidThermophysicalTransportModel& thermophysicalTransport =
-    fluid.thermophysicalTransport();
+psiuMulticomponentThermo& thermo = fluid.rThermo();
 
-const volScalarField& rho = fluid.rho();
-const volScalarField& p = thermo.p();
-const volScalarField& T = thermo.T();
-const volVectorField& U = fluid.U();
-const surfaceScalarField& phi = fluid.rhoPhi();
-
-
-volScalarField& b = composition.Y("b");
-Info<< "min(b) = " << min(b).value() << endl;
-
-
-Info<< "Creating field Xi\n" << endl;
-volScalarField Xi
-(
-    IOobject
-    (
-        "Xi",
-        runTime.timeName(),
-        mesh,
-        IOobject::MUST_READ,
-        IOobject::AUTO_WRITE
-    ),
-    mesh
-);
-
-
-Info<< "Creating the unstrained laminar flame speed\n" << endl;
-autoPtr<laminarFlameSpeed> unstrainedLaminarFlameSpeed
-(
-    laminarFlameSpeed::New(thermo)
-);
-
-
-Info<< "Reading strained laminar flame speed field Su\n" << endl;
-volScalarField Su
-(
-    IOobject
-    (
-        "Su",
-        runTime.timeName(),
-        mesh,
-        IOobject::MUST_READ,
-        IOobject::AUTO_WRITE
-    ),
-    mesh
-);
-
-dimensionedScalar SuMin = 0.01*Su.average();
-dimensionedScalar SuMax = 4*Su.average();
-
-Info<< "Calculating turbulent flame speed field St\n" << endl;
-volScalarField St
-(
-    IOobject
-    (
-        "St",
-        runTime.timeName(),
-        mesh,
-        IOobject::NO_READ,
-        IOobject::AUTO_WRITE
-    ),
-    Xi*Su
-);
+const ::Foam::fvModels& fvModels = integrator.models();
