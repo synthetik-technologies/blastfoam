@@ -34,8 +34,6 @@ License
 #include "wedgePolyPatch.H"
 #include "hexRef3D.H"
 #include "RefineBalanceMeshObject.H"
-#include "cloud.H"
-#include "parcelCloud.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -238,14 +236,6 @@ void Foam::polyMeshRefiner::setMaxCellLevel(labelList& maxCellLevel) const
 
 bool Foam::polyMeshRefiner::preUpdate()
 {
-    HashTable<parcelCloud*> clouds
-    (
-        mesh_.lookupClass<parcelCloud>()
-    );
-    forAllIter(HashTable<parcelCloud*>, clouds, iter)
-    {
-        iter()->storeGlobalPositions();
-    }
     if (canRefine() || canUnrefine())
     {
         return true;
@@ -507,18 +497,13 @@ void Foam::polyMeshRefiner::readDict(const dictionary& dict)
 }
 
 
-void Foam::polyMeshRefiner::topoChange(const polyTopoChangeMap& mpm)
+void Foam::polyMeshRefiner::topoChange(const polyTopoChangeMap& map)
 {
     const locationMapper& locMapper = locationMapper::New(mesh_);
     const wordHashSet& interpolatedFields =
         locMapper.interpolatedFields();
-    const labelList& pointMap = mpm.pointMap();
 
-    HashTable<cloud*> clouds(mesh_.lookupClass<cloud>());
-    forAllIter(HashTable<cloud*>, clouds, iter)
-    {
-        iter()->topoChange(mpm);
-    }
+    const labelList& pointMap = map.pointMap();
 
     forAllConstIter(wordHashSet, interpolatedFields, iter)
     {
@@ -562,15 +547,10 @@ void Foam::polyMeshRefiner::distribute
     const polyDistributionMap& map
 )
 {
-    HashTable<cloud*> clouds(mesh_.lookupClass<cloud>());
-    forAllIter(HashTable<cloud*>, clouds, iter)
-    {
-        iter()->distribute(map);
-    }
-
     const locationMapper& locMapper = locationMapper::New(mesh_);
     const wordHashSet& interpolatedFields =
         locMapper.interpolatedFields();
+
     forAllConstIter(wordHashSet, interpolatedFields, iter)
     {
         const word& fieldName = iter.key();
