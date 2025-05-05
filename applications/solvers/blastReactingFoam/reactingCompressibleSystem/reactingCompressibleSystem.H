@@ -39,8 +39,8 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "compressibleSystem.H"
-#include "fluidReactionThermo.H"
-#include "fluidReactionThermophysicalTransportModel.H"
+#include "fluidMulticomponentThermo.H"
+#include "fluidMulticomponentThermophysicalTransportModel.H"
 #include "combustionModel.H"
 #include "radiationModel.H"
 
@@ -59,7 +59,7 @@ protected:
 // Protected data
 
     //- Thermo
-    autoPtr<fluidReactionThermo> thermo_;
+    autoPtr<fluidMulticomponentThermo> thermo_;
 
     //- Primitative variables
 
@@ -76,8 +76,8 @@ protected:
         volScalarField& e_;
 
         //- Thermo turbulence model
-        autoPtr<fluidReactionThermophysicalTransportModel> reactionThermophysicalTransport_;
-
+        autoPtr<fluidMulticomponentThermophysicalTransportModel>
+            thermophysicalTransport_;
 
         //- Chemistry
         autoPtr<combustionModel> reaction_;
@@ -96,7 +96,11 @@ public:
     TypeName("reactingCompressibleSystem");
 
     // Constructor
-    reactingCompressibleSystem(const fvMesh& mesh);
+    reactingCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
     //- Destructor
     virtual ~reactingCompressibleSystem();
@@ -184,65 +188,6 @@ public:
 
         //- Return speed of sound
         tmp<volScalarField> speedOfSound() const;
-
-
-    //- Return functions for transport model
-
-        //- Heat capacity at constant volume of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cv() const;
-
-        //- Dynamic viscosity of mixture [kg/m/s]
-        virtual tmp<volScalarField> mu() const;
-
-        //- Dynamic viscosity of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> mu(const label patchi) const;
-
-        //- Kinematic viscosity of mixture [m^2/s]
-        virtual tmp<volScalarField> nu() const;
-
-        //- Kinematic viscosity of mixture for patch [m^2/s]
-        virtual tmp<scalarField> nu(const label patchi) const;
-
-        //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alpha() const;
-
-        //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alpha(const label patchi) const;
-
-        //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphaEff(const volScalarField&) const;
-
-        //- Effective thermal turbulent diffusivity of mixture
-        //  for patch [kg/m/s]
-        virtual tmp<scalarField> alphaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
-
-        //- Thermal diffusivity for energy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphahe() const;
-
-        //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alphahe(const label patchi) const;
-
-        //- Thermal diffusivity for temperature of mixture [W/m/K]
-        virtual tmp<volScalarField> kappa() const;
-
-        //- Thermal diffusivity for temperature of mixture for patch [W/m/K]
-        virtual tmp<scalarField> kappa(const label patchi) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture [W/m/K]
-        virtual tmp<volScalarField> kappaEff(const volScalarField&) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture for patch [W/m/K]
-        virtual tmp<scalarField> kappaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
 };
 
 

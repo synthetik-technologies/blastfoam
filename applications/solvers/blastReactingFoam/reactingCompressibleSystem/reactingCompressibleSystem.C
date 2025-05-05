@@ -38,17 +38,18 @@ namespace Foam
 
 Foam::reactingCompressibleSystem::reactingCompressibleSystem
 (
+    const dictionary& dict,
     const fvMesh& mesh
 )
 :
-    compressibleSystem(mesh),
-    thermo_(fluidReactionThermo::New(mesh)),
+    compressibleSystem(dict, mesh),
+    thermo_(fluidMulticomponentThermo::New(mesh)),
     rho_
     (
         IOobject
         (
             "rho",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -65,7 +66,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
 
     Switch useChemistry
     (
-        thermo_->composition().Y().size() > 1
+        thermo_->Y().size() > 1
     );
 
     turbulence_.set
@@ -78,9 +79,9 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
             thermo_()
         ).ptr()
     );
-    reactionThermophysicalTransport_.set
+    thermophysicalTransport_.set
     (
-        fluidReactionThermophysicalTransportModel::New
+        fluidMulticomponentThermophysicalTransportModel::New
         (
             turbulence_(),
             thermo_()
@@ -99,13 +100,13 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         );
     }
 
-    IOobject radIO
+    typeIOobject<IOdictionary> radIO
     (
         "radiationProperties",
         mesh.time().constant(),
         mesh
     );
-    if (radIO.typeHeaderOk<IOdictionary>(true))
+    if (radIO.headerOk())
     {
         radiation_ = radiationModel::New(T_);
     }
@@ -164,12 +165,19 @@ void Foam::reactingCompressibleSystem::solve()
 
     if (reaction_.valid())
     {
-        basicSpecieMixture& composition = thermo_->composition();
-        PtrList<volScalarField>& Ys = composition.Y();
-        volScalarField Yt(0.0*Ys[0]);
+        PtrList<volScalarField>& Ys = thermo_->Y();
+        volScalarField Yt
+        (
+            volScalarField::New
+            (
+                "Yt",
+                mesh(),
+                0.0
+            )
+        );
         forAll(Ys, i)
         {
-            if (composition.solve(i))
+            if (thermo_->solveSpecie(i))
             {
                 volScalarField deltaRhoY
                 (
@@ -188,7 +196,7 @@ void Foam::reactingCompressibleSystem::solve()
                 Yt += Ys[i];
             }
         }
-        composition.normalise();
+        thermo_->normaliseY();
     }
 }
 
@@ -229,7 +237,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_.prevIter(), e_)
      ==
-        reactionThermophysicalTransport_->divq(e_)
+        thermophysicalTransport_->divq(e_)
       + models().source(rho_, e_)
     );
 
@@ -238,21 +246,19 @@ void Foam::reactingCompressibleSystem::postUpdate()
         Info<< "Solving reactions" << endl;
         reaction_->correct();
 
-        basicSpecieMixture& composition = thermo_->composition();
-
         eEqn -= reaction_->Qdot();
 
-        PtrList<volScalarField>& Y = composition.Y();
+        PtrList<volScalarField>& Y = thermo_->Y();
         forAll(Y, i)
         {
-            if (composition.solve(i))
+            if (thermo_->solveSpecie(i))
             {
                 volScalarField& Yi = Y[i];
                 fvScalarMatrix YiEqn
                 (
                     fvm::ddt(rho_, Yi)
                   - fvc::ddt(rho_.prevIter(), Yi)
-                  + reactionThermophysicalTransport_->divj(Yi)
+                  + thermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
                   + models().source(rho_, Yi)
@@ -265,7 +271,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 Yi.max(0.0);
             }
         }
-        composition.normalise();
+        thermo_->normaliseY();
     }
 
     // Solve momentum equation
@@ -283,7 +289,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
     // Update thermo
     thermo_->correct();
 
-    p_.ref() = rho_()/thermo_->psi()();
+    p_.internalFieldRef() = rho_()/thermo_->psi()();
     constraints().constrain(p_);
     p_.correctBoundaryConditions();
 
@@ -318,13 +324,13 @@ void Foam::reactingCompressibleSystem::decode()
 {
     thermo_->rho() = rho_;
 
-    U_.ref() = rhoU_()/rho_();
+    U_.internalFieldRef() = rhoU_()/rho_();
     U_.correctBoundaryConditions();
 
     rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
 
     volScalarField E(rhoE_/rho_);
-    e_.ref() = E() - 0.5*magSqr(U_());
+    e_.internalFieldRef() = E() - 0.5*magSqr(U_());
     e_.correctBoundaryConditions();
 
     rhoE_.boundaryFieldRef() =
@@ -335,7 +341,7 @@ void Foam::reactingCompressibleSystem::decode()
         );
 
     thermo_->correct();
-    p_.ref() = rho_/thermo_->psi();
+    p_.internalFieldRef() = rho_/thermo_->psi();
     p_.correctBoundaryConditions();
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
@@ -356,102 +362,4 @@ Foam::reactingCompressibleSystem::speedOfSound() const
     return sqrt(thermo_->Cp()/(thermo_->Cv()*thermo_->psi()));
 }
 
-
-Foam::tmp<Foam::volScalarField> Foam::reactingCompressibleSystem::Cv() const
-{
-    return thermo_->Cv();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::reactingCompressibleSystem::mu() const
-{
-    return thermo_->mu();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::reactingCompressibleSystem::mu(const label patchi) const
-{
-    return thermo_->mu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::reactingCompressibleSystem::nu() const
-{
-    return thermo_->nu();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::reactingCompressibleSystem::nu(const label patchi) const
-{
-    return thermo_->nu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::reactingCompressibleSystem::alpha() const
-{
-    return thermo_->alpha();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::reactingCompressibleSystem::alpha(const label patchi) const
-{
-    return thermo_->alpha(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::reactingCompressibleSystem::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_->alphaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::reactingCompressibleSystem::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermo_->alphaEff(alphat, patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::reactingCompressibleSystem::alphahe() const
-{
-    return thermo_->alphahe();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::reactingCompressibleSystem::alphahe(const label patchi) const
-{
-    return thermo_->alphahe(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::reactingCompressibleSystem::kappa() const
-{
-    return thermo_->kappa();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::reactingCompressibleSystem::kappa(const label patchi) const
-{
-    return thermo_->kappa(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::reactingCompressibleSystem::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_->kappaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::reactingCompressibleSystem::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermo_->kappaEff(alphat, patchi);
-}
 // ************************************************************************* //
