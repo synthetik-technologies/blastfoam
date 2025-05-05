@@ -104,7 +104,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     surfaceScalarField ghf("ghf", (g_ & mesh_.Cf()) + mag(g_)*hRef_);
 
     // Set the default boundary conditions for ph_rgh
-    wordList ph_rghBcs(p.boundaryField().size(), "fixedFluxPressure");
+    wordList ph_rghBcs(p.boundaryField().size(), "zeroGradient");
     forAll(ph_rghBcs, patchi)
     {
         if (p.boundaryField()[patchi].fixesValue())
