@@ -10,43 +10,19 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      controlDict;
+    location    "constant";
+    object      momentumTransport;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     blastParcelFoam;
+simulationType  laminar;
 
-startFrom       startTime;
+RAS
+{
+    RASModel kEpsilon;
+    turbulence on;
+    printCoeffs on;
+}
 
-startTime       0;
-
-stopAt          endTime;
-
-endTime         0.0025;
-
-deltaT          1e-5;
-
-writeControl    adjustableRunTime;
-
-writeInterval   2e-5;
-
-purgeWrite      0;
-
-writeFormat     binary;
-
-writePrecision  6;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   6;
-
-runTimeModifiable true;
-
-adjustTimeStep  true;
-
-maxCo   0.5;
 
 // ************************************************************************* //
