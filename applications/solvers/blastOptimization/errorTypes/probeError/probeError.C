@@ -49,18 +49,17 @@ namespace errorTypes
     const NamedEnum<field::Operation, 5> field::operationNames_;
 
     template<>
-    const char* NamedEnum<field::FieldReduction, 7>::names[] =
+    const char* NamedEnum<errorType::Reduction, 6>::names[] =
     {
         "min",
         "minMagSqr",
         "max",
         "maxMagSqr",
         "average",
-        "weightedAverage",
-        "probe"
+        "weightedAverage"
     };
 
-    const NamedEnum<field::FieldReduction, 7>
+    const NamedEnum<errorType::Reduction, 6>
         field::fieldReductionTypeNames;
 }
 }
@@ -100,13 +99,11 @@ Foam::errorTypes::field::field
     {
         const polyMesh& mesh = this->mesh();
         timeVarying_ = dict.lookup<Switch>("timeVarying");
-        List<word> cmptNames;
         forAll(mesh.geometricD(), i)
         {
             if (mesh.geometricD()[i] > 0)
             {
                 cmpts_.append(i);
-                cmptNames.append(vector::componentNames[i]);
             }
         }
         if (timeVarying_)
@@ -115,7 +112,6 @@ Foam::errorTypes::field::field
         }
         if (cmpts_.size() == 1)
         {
-            Info<< "Reading Function1<scalar>" << endl;
             func1_ = Function1<scalar>::New
             (
                 "function",
@@ -126,7 +122,6 @@ Foam::errorTypes::field::field
         }
         else if (cmpts_.size() == 2)
         {
-            Info<< "Reading Function2<scalar>" << endl;
             func2_ = Function2<scalar>::New
             (
                 "function",
@@ -138,7 +133,6 @@ Foam::errorTypes::field::field
         }
         else if (cmpts_.size() == 3)
         {
-            Info<< "Reading Function2<scalar>" << endl;
             func3_ = Function3<scalar>::New
             (
                 "function",
@@ -153,11 +147,6 @@ Foam::errorTypes::field::field
         // {
         //     func4_ = Function4<scalar>::New("function", dict);
         // }
-    }
-
-    if (fieldReduction_ == PROBE)
-    {
-        probeLocation_ = dict.lookup<vector>("location");
     }
 }
 
@@ -271,24 +260,11 @@ void Foam::errorTypes::field::update()
     // Perform operation to field
     tmp<volScalarField> topField(performOperation(field));
 
-    if (fieldReduction_ == PROBE)
-    {
-        const label celli = mesh().findCell(probeLocation_);
-        value_ = -great;
-        if (celli >= 0)
-        {
-            value_ = topField()[celli];
-        }
-        reduce(value_, maxOp<scalar>());
-    }
-    else
-    {
-        // Reduce the field and update time based values
-        value_ = reduceValue
-        (
-            reduceField(fieldReduction_, topField(), this->mesh().V())
-        );
-    }
+    // Reduce the field and update time based values
+    value_ = reduceValue
+    (
+        reduceField(fieldReduction_, topField(), this->mesh().V())
+    );
 }
 
 // ************************************************************************* //

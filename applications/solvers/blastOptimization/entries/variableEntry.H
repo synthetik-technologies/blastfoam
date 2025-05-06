@@ -22,31 +22,31 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::varEntry
+    Foam::variableEntry
 
 Description
     Variable entry
 
 SourceFiles
-    varEntry.C
+    variableEntry.C
 
 \*---------------------------------------------------------------------------*/
-#ifndef varEntry_H
-#define varEntry_H
+#ifndef variableEntry_H
+#define variableEntry_H
 
-#include "optEntry.H"
+#include "optimizationEntry.H"
 #include "Pair.H"
 
 namespace Foam
 {
 
-class varEntry;
-Istream& operator>>(Istream& is, varEntry& entry);
-Ostream& operator<<(Ostream& os, const varEntry& entry);
+class variableEntry;
+Istream& operator>>(Istream& is, variableEntry& entry);
+Ostream& operator<<(Ostream& os, const variableEntry& entry);
 
-class varEntry
+class variableEntry
 :
-    public optEntry
+    public optimizationEntry
 {
 // Private data
 
@@ -60,13 +60,13 @@ public:
     //Constructors
 
         //- Null constructor
-        varEntry();
+        variableEntry();
 
         //- Construct from Istream
-        varEntry(Istream& is);
+        variableEntry(Istream& is);
 
     //Destructor
-    ~varEntry();
+    ~variableEntry();
 
 
     // Member functions
@@ -103,10 +103,10 @@ public:
     // Operators
 
         //- Read
-        friend Istream& operator>>(Istream& is, varEntry& entry);
+        friend Istream& operator>>(Istream& is, variableEntry& entry);
 
         //- Write
-        friend Ostream& operator<<(Ostream& os, const varEntry& entry);
+        friend Ostream& operator<<(Ostream& os, const variableEntry& entry);
 };
 
 

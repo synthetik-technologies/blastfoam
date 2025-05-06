@@ -135,7 +135,7 @@ protected:
         //- Reduce the current value over time
         static scalar reduceField
         (
-            const Reduction method,
+            const label method,
             const scalarField& f,
             const scalarField& w
         );

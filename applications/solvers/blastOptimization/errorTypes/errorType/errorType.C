@@ -134,7 +134,7 @@ Foam::scalar Foam::errorType::reduceValue(const scalar f)
 
 Foam::scalar Foam::errorType::reduceField
 (
-    const Reduction method,
+    const label method,
     const scalarField& f,
     const scalarField& w
 )
@@ -157,14 +157,19 @@ Foam::scalar Foam::errorType::reduceField
         {
             return gMaxMagSqr(f);
         }
+        case AVERAGE:
+        {
+            return gAverage(f);
+        }
         case WEIGHTED_AVERAGE:
         {
             return gSum(f*w)/gSum(w);
         }
-        case AVERAGE:
         default:
         {
-            return gAverage(f);
+            FatalErrorInFunction
+                << "Unsupported field reduction method" << endl
+                << abort(FatalError);
         }
     }
     return 0;

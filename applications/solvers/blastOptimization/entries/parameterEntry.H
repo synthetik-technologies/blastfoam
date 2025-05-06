@@ -22,31 +22,31 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::paramEntry
+    Foam::parameterEntry
 
 Description
     optimization entry
 
 SourceFiles
-    paramEntry.C
+    parameterEntry.C
 
 \*---------------------------------------------------------------------------*/
-#ifndef paramEntry_H
-#define paramEntry_H
+#ifndef parameterEntry_H
+#define parameterEntry_H
 
-#include "optEntry.H"
+#include "optimizationEntry.H"
 #include "List.H"
 
 namespace Foam
 {
 
-class paramEntry;
-Istream& operator>>(Istream& is, paramEntry& entry);
-Ostream& operator<<(Ostream& os, const paramEntry& entry);
+class parameterEntry;
+Istream& operator>>(Istream& is, parameterEntry& entry);
+Ostream& operator<<(Ostream& os, const parameterEntry& entry);
 
-class paramEntry
+class parameterEntry
 :
-    public optEntry
+    public optimizationEntry
 {
 //- Private data
 
@@ -58,13 +58,13 @@ public:
     //Constructors
 
         //- Null constructor
-        paramEntry();
+        parameterEntry();
 
         //- Construct from Istream
-        paramEntry(Istream& is);
+        parameterEntry(Istream& is);
 
     //Destructor
-    ~paramEntry();
+    ~parameterEntry();
 
 
     // Member functions
@@ -88,10 +88,10 @@ public:
     // Operators
 
         //- Read
-        friend Istream& operator>>(Istream& is, paramEntry& entry);
+        friend Istream& operator>>(Istream& is, parameterEntry& entry);
 
         //- Write
-        friend Ostream& operator<<(Ostream& os, const paramEntry& entry);
+        friend Ostream& operator<<(Ostream& os, const parameterEntry& entry);
 };
 
 

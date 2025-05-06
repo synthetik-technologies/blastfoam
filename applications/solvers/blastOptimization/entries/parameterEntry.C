@@ -23,16 +23,16 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "paramEntry.H"
+#include "parameterEntry.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::paramEntry::paramEntry()
+Foam::parameterEntry::parameterEntry()
 {}
 
 
 
-Foam::paramEntry::paramEntry(Istream& is)
+Foam::parameterEntry::parameterEntry(Istream& is)
 {
     is  >> *this;
 }
@@ -40,28 +40,28 @@ Foam::paramEntry::paramEntry(Istream& is)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::paramEntry::~paramEntry()
+Foam::parameterEntry::~parameterEntry()
 {}
 
 
-void Foam::paramEntry::read(Istream& is)
+void Foam::parameterEntry::read(Istream& is)
 {
-    optEntry::read(is);
+    optimizationEntry::read(is);
     is >> value_;
 }
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-Foam::Istream& Foam::operator>>(Istream& is, paramEntry& entry)
+Foam::Istream& Foam::operator>>(Istream& is, parameterEntry& entry)
 {
     entry.read(is);
     return is;
 }
 
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const paramEntry& entry)
+Foam::Ostream& Foam::operator<<(Ostream& os, const parameterEntry& entry)
 {
-    os  << static_cast<const optEntry&>(entry) << incrIndent
+    os  << static_cast<const optimizationEntry&>(entry) << incrIndent
         << indent << "value: " << entry.value_ << decrIndent << endl;
     return os;
 }

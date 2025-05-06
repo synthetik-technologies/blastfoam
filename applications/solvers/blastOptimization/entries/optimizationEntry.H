@@ -22,17 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::optEntry
+    Foam::optimizationEntry
 
 Description
     optimization entry
 
 SourceFiles
-    optEntry.C
+    optimizationEntry.C
 
 \*---------------------------------------------------------------------------*/
-#ifndef optEntry_H
-#define optEntry_H
+#ifndef optimizationEntry_H
+#define optimizationEntry_H
 
 #include "HashTable.H"
 #include "dictionary.H"
@@ -40,11 +40,11 @@ SourceFiles
 namespace Foam
 {
 
-class optEntry;
-Istream& operator>>(Istream& is, optEntry& entry);
-Ostream& operator<<(Ostream& os, const optEntry& entry);
+class optimizationEntry;
+Istream& operator>>(Istream& is, optimizationEntry& entry);
+Ostream& operator<<(Ostream& os, const optimizationEntry& entry);
 
-class optEntry
+class optimizationEntry
 {
 public:
 
@@ -83,13 +83,13 @@ public:
     //Constructors
 
         //- Null constructor
-        optEntry();
+        optimizationEntry();
 
         //- Construct from Istream
-        optEntry(Istream& is);
+        optimizationEntry(Istream& is);
 
     //Destructor
-    virtual ~optEntry();
+    virtual ~optimizationEntry();
 
 
     // Member functions
@@ -118,20 +118,20 @@ public:
 
     // Operators
 
-        virtual bool operator!=(const optEntry& e) const
+        virtual bool operator!=(const optimizationEntry& e) const
         {
             return t_ != e.t_;
         }
-        virtual bool operator==(const optEntry& e) const
+        virtual bool operator==(const optimizationEntry& e) const
         {
             return t_ == e.t_;
         }
 
         //- Read
-        friend Istream& operator>>(Istream& is, optEntry& entry);
+        friend Istream& operator>>(Istream& is, optimizationEntry& entry);
 
         //- Write
-        friend Ostream& operator<<(Ostream& os, const optEntry& entry);
+        friend Ostream& operator<<(Ostream& os, const optimizationEntry& entry);
 };
 
 

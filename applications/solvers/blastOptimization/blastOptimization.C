@@ -34,9 +34,9 @@ Description
 #include "argList.H"
 #include "IOdictionary.H"
 #include "minimizationScheme.H"
-#include "varEntry.H"
-#include "paramEntry.H"
-#include "optEqn.H"
+#include "variableEntry.H"
+#include "parameterEntry.H"
+#include "optimizationEquation.H"
 
 using namespace Foam;
 
@@ -117,12 +117,12 @@ int main(int argc, char *argv[])
 
     // Set up optimization
     autoPtr<scalarUnivariateEquation> eqnPtr;
-    List<varEntry> variables(optimizationProperties.lookup("variables"));
+    List<variableEntry> variables(optimizationProperties.lookup("variables"));
     if (variables.size() == 1)
     {
         eqnPtr.set
         (
-            new optEqn1
+            new optimizationEquation1
             (
                 runTime,
                 optimizationProperties,
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     {
         eqnPtr.set
         (
-            new optEqn
+            new optimizationEquation
             (
                 runTime,
                 optimizationProperties,
@@ -168,8 +168,9 @@ int main(int argc, char *argv[])
 
     List<scalar> results = solverPtr->solve(x);
 
-    scalar error = eqn.fX(x, 0);
-    //
+    // Run optimized case
+    scalar error = eqn.fX(results, 0);
+
     label nSteps = max(solverPtr->nSteps(), 1);
 
     Info<< nl;
@@ -188,17 +189,20 @@ int main(int argc, char *argv[])
     Info<< "Optimized values are: " << incrIndent << endl;
     forAll(variables, i)
     {
-        Info<< results[i] << endl;
+        Info<< indent
+            << fileName(variables[i].file())
+            << "|" << fileName(variables[i].path())
+            << " = " << results[i] << endl;
     }
-    Info<< "Final error = " << error << endl;
+    Info<< nl << decrIndent
+        << "Final error = " << error << nl << endl;
 
-    Info<< decrIndent << endl;
+
     IOobject::writeDivider(Info);
 
     Info<< nl
         << "Finished" << endl
-        << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-        << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+        << "ClockTime = " << runTime.elapsedClockTime() << " s"
         << nl << endl;
 
     return 0;

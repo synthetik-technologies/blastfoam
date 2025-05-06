@@ -23,18 +23,18 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "optEntry.H"
+#include "optimizationEntry.H"
 #include "OSspecific.H"
 #include "IFstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::HashTable<Foam::dictionary> Foam::optEntry::dictionaries;
+Foam::HashTable<Foam::dictionary> Foam::optimizationEntry::dictionaries;
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-Foam::token* Foam::optEntry::findTokenEntry
+Foam::token* Foam::optimizationEntry::findTokenEntry
 (
     const dictionary& dict,
     const fileName& path,
@@ -98,7 +98,7 @@ Foam::token* Foam::optEntry::findTokenEntry
 }
 
 
-Foam::fileName Foam::optEntry::findDictFromPath(fileName& path)
+Foam::fileName Foam::optimizationEntry::findDictFromPath(fileName& path)
 {
     label cmpti = 0;
     wordList cmpts(path.components());
@@ -166,7 +166,7 @@ Foam::fileName Foam::optEntry::findDictFromPath(fileName& path)
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::optEntry::optEntry()
+Foam::optimizationEntry::optimizationEntry()
 :
     file_("unknown"),
     path_("unknown"),
@@ -176,7 +176,7 @@ Foam::optEntry::optEntry()
 
 
 
-Foam::optEntry::optEntry(Istream& is)
+Foam::optimizationEntry::optimizationEntry(Istream& is)
 :
     file_("unknown"),
     path_("unknown"),
@@ -189,13 +189,13 @@ Foam::optEntry::optEntry(Istream& is)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::optEntry::~optEntry()
+Foam::optimizationEntry::~optimizationEntry()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::optEntry::read(Istream& is)
+void Foam::optimizationEntry::read(Istream& is)
 {
     is >> path_;
 
@@ -207,7 +207,7 @@ void Foam::optEntry::read(Istream& is)
     }
     else
     {
-        file_ = optEntry::findDictFromPath(path_);
+        file_ = optimizationEntry::findDictFromPath(path_);
         is.putBack(t);
     }
 
@@ -233,23 +233,23 @@ void Foam::optEntry::read(Istream& is)
 
     // Find the token and return the pointer
     t_ =
-        optEntry::findTokenEntry
+        optimizationEntry::findTokenEntry
         (
-            optEntry::dictionaries[file_],
+            optimizationEntry::dictionaries[file_],
             path_,
             index_
         );
 }
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
-Foam::Istream& Foam::operator>>(Istream& is, optEntry& entry)
+Foam::Istream& Foam::operator>>(Istream& is, optimizationEntry& entry)
 {
     entry.read(is);
     return is;
 }
 
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const optEntry& entry)
+Foam::Ostream& Foam::operator<<(Ostream& os, const optimizationEntry& entry)
 {
     os  << entry.file_ << ": "
         << word(entry.path_);

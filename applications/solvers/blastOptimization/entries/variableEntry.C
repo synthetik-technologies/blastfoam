@@ -23,11 +23,11 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "varEntry.H"
+#include "variableEntry.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::varEntry::varEntry()
+Foam::variableEntry::variableEntry()
 :
     value_(0.0),
     bounds_(-great, great)
@@ -35,7 +35,7 @@ Foam::varEntry::varEntry()
 
 
 
-Foam::varEntry::varEntry(Istream& is)
+Foam::variableEntry::variableEntry(Istream& is)
 :
     value_(0.0),
     bounds_(-great, great)
@@ -46,15 +46,15 @@ Foam::varEntry::varEntry(Istream& is)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::varEntry::~varEntry()
+Foam::variableEntry::~variableEntry()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::varEntry::read(Istream& is)
+void Foam::variableEntry::read(Istream& is)
 {
-    optEntry::read(is);
+    optimizationEntry::read(is);
 
     // Read bounds
     is >> bounds_;
@@ -73,16 +73,16 @@ void Foam::varEntry::read(Istream& is)
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-Foam::Istream& Foam::operator>>(Istream& is, varEntry& entry)
+Foam::Istream& Foam::operator>>(Istream& is, variableEntry& entry)
 {
     entry.read(is);
     return is;
 }
 
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const varEntry& entry)
+Foam::Ostream& Foam::operator<<(Ostream& os, const variableEntry& entry)
 {
-    os  << static_cast<const optEntry&>(entry) << incrIndent
+    os  << static_cast<const optimizationEntry&>(entry) << incrIndent
         << indent << "bounds: " << entry.bounds_ << nl
         << indent << "value: " << entry.value_ << decrIndent << endl;
     return os;

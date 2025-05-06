@@ -54,9 +54,9 @@ namespace errorTypes
                             Class field Declaration
 \*---------------------------------------------------------------------------*/
 
-class field
+class probe
 :
-    public errorType
+    public fieldError
 {
 
 public:
@@ -71,20 +71,7 @@ public:
         FUNCTION
     };
     static const NamedEnum<Operation, 5> operationNames_;
-
-    enum FieldReduction
-    {
-        MIN = Reduction::MIN,
-        MIN_MAG_SQR = Reduction::MIN_MAG_SQR,
-        MAX = Reduction::MAX,
-        MAX_MAG_SQR = Reduction::MAX_MAG_SQR,
-        AVERAGE = Reduction::AVERAGE,
-        WEIGHTED_AVERAGE = Reduction::WEIGHTED_AVERAGE,
-
-        // Replace "LATEST"
-        PROBE = Reduction::LATEST
-    };
-    static const NamedEnum<FieldReduction, 7> fieldReductionTypeNames;
+    static const NamedEnum<Reduction, 6> fieldReductionTypeNames;
 
 protected:
     // Protected data
@@ -96,7 +83,7 @@ protected:
         const Operation operation_;
 
         //- How the field is reduced
-        const FieldReduction fieldReduction_;
+        const Reduction fieldReduction_;
 
         bool timeVarying_;
         labelList cmpts_;
@@ -104,7 +91,6 @@ protected:
         autoPtr<Function2<scalar>> func2_;
         autoPtr<Function3<scalar>> func3_;
         autoPtr<Function4<scalar>> func4_;
-        vector probeLocation_;
 
 
     // Protected member functions
