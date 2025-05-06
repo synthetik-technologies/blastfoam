@@ -38,6 +38,10 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
     DebugInfo
         << "Selecting root solver "
         << univariateMinimizationSchemeTypeName << endl;
+    const dictionary& coeffDict = dict.optionalSubDict
+    (
+        univariateMinimizationSchemeTypeName
+    );
 
     if (nDeriv <= 0)
     {
@@ -56,7 +60,10 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
                 << dictionaryZeroConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<univariateMinimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<univariateMinimizationScheme>
+        (
+            cstrIter()(eqn, coeffDict)
+        );
     }
     else if (nDeriv == 1)
     {
@@ -73,7 +80,10 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
                 << dictionaryOneConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<univariateMinimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<univariateMinimizationScheme>
+        (
+            cstrIter()(eqn, coeffDict)
+        );
     }
     dictionaryTwoConstructorTable::iterator cstrIter =
         dictionaryTwoConstructorTablePtr_->find(univariateMinimizationSchemeTypeName);
@@ -88,7 +98,10 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
             << dictionaryTwoConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
-    return autoPtr<univariateMinimizationScheme>(cstrIter()(eqn, dict));
+    return autoPtr<univariateMinimizationScheme>
+    (
+        cstrIter()(eqn, coeffDict)
+    );
 }
 
 

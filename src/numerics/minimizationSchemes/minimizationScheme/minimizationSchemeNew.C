@@ -35,8 +35,12 @@ Foam::minimizationScheme::New
     const dictionary& dict
 )
 {
-    Info
-        << "Selecting minimization scheme: " << minimizationSchemeType << endl;
+    Info<< "Selecting minimization scheme: " << minimizationSchemeType
+        << endl;
+    const dictionary& coeffDict = dict.optionalSubDict
+    (
+        minimizationSchemeType
+    );
     if
     (
         isA<scalarEquation>(eqn)
@@ -56,7 +60,10 @@ Foam::minimizationScheme::New
                 << dictionaryUnivariateConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<minimizationScheme>
+        (
+            cstrIter()(eqn, coeffDict)
+        );
     }
 
     dictionaryMultivariateConstructorTable::iterator cstrIter =
@@ -71,7 +78,10 @@ Foam::minimizationScheme::New
             << dictionaryMultivariateConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
-    return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
+    return autoPtr<minimizationScheme>
+    (
+        cstrIter()(eqn, coeffDict)
+    );
 }
 
 Foam::autoPtr<Foam::minimizationScheme>
