@@ -15,23 +15,33 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Variables to optimize
+// format:
+//   - "path/to/file/path/in/file"
+//   - [0] index in a list (if part of a list, i.e. "(0 1 2)")
+//   - bounds of the variable
+//   - initial value
+
 variables
 (
     "constant/physicalProperties/DTValue" (1e-5 1) 0.05
 );
 
+
+// Commands to run every time a new variable is set
 commands
 (
     "laplacianFoam"
 );
 
-solver      goldenRatio;
-goldenRatioCoeffs
+
+// Optimization solver
+minimizationScheme
 {
-    //coeffs (10.07 -11.55 11.55 -9.935e-15 0); // Assuming L = 1m, D = 0.05, Time = 3 s, u0 = 10.
+    solver      NelderMead;
 
     maxSteps    200;
-    tolerance   1e-12;
+    tolerance   1e-6;
     nParticles  10;
     cLocal      0.1;
     cGlobal     0.1;
