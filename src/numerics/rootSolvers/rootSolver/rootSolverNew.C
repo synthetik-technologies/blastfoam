@@ -59,6 +59,10 @@ Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
     }
 
     Info<< "Selecting root solver: " << rootSolverType << endl;
+    const dictionary& coeffDict = dict.optionalSubDict
+    (
+        rootSolverType + "Coeffs"
+    );
     if (eqn.nDerivatives() <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =
@@ -67,13 +71,12 @@ Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
         if (cstrIter == dictionaryZeroConstructorTablePtr_->end())
         {
             FatalErrorInFunction
-                << "Unknown root solver type "
-                << rootSolverType << nl << nl
-                << "Valid root solvers for no derivates are : " << endl
+                << "Unknown root solver type " << rootSolverType << nl
+                << "Valid root solvers for no derivates are: " << endl
                 << dictionaryZeroConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<rootSolver>(cstrIter()(eqn, dict));
+        return autoPtr<rootSolver>(cstrIter()(eqn, coeffDict));
     }
     dictionaryOneConstructorTable::iterator cstrIter =
         dictionaryOneConstructorTablePtr_->find(rootSolverType);
@@ -81,14 +84,13 @@ Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
     if (cstrIter == dictionaryOneConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown root solver type "
-            << rootSolverType << nl << nl
-            << "Valid root solvers are : " << endl
+            << "Unknown root solver type " << rootSolverType << nl
+            << "Valid root solvers are: " << endl
             << dictionaryOneConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<rootSolver>(cstrIter()(eqn, dict));
+    return autoPtr<rootSolver>(cstrIter()(eqn, coeffDict));
 }
 
 

@@ -67,6 +67,9 @@ void Foam::CodedUnivariateEquation<Type>::prepare
     // Set TemplateType filter variables
     dynCode.setFilterVariable("TemplateType", pTraits<Type>::typeName);
 
+    // Make verbose if debugging
+    dynCode.setFilterVariable("verbose", Foam::name(bool(debug)));
+
     // Compile filtered C template
     dynCode.addCompileFile(codeTemplateC("CodedUnivariateEquation"));
 
@@ -76,7 +79,6 @@ void Foam::CodedUnivariateEquation<Type>::prepare
     // Debugging: make verbose
     if (debug)
     {
-        dynCode.setFilterVariable("verbose", "true");
         Info<<"compile " << codeName() << " sha1: "
             << context.sha1() << endl;
     }

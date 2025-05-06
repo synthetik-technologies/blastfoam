@@ -56,14 +56,20 @@ Foam::MultivariateIntegrator<Type, Adapt>::New
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown integrator type "
-            << integratorTypeName << nl << nl
-            << "Valid integrators are : " << endl
+            << "Unknown integrator type " << integratorTypeName << nl
+            << "Valid integrators are: " << endl
             << dictionaryConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<MultivariateIntegrator<Type, Adapt>>(cstrIter()(eqn, dict));
+    return autoPtr<MultivariateIntegrator<Type, Adapt>>
+    (
+        cstrIter()
+        (
+            eqn,
+            dict.optionalSubDict(integratorTypeName + "Coeffs")
+        )
+    );
 }
 
 
@@ -80,14 +86,16 @@ Foam::autoPtr<Foam::MultivariateIntegrator<Type, Adapt>> Foam::MultivariateInteg
     if (cstrIter == inputsConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown integrator type "
-            << inter.type() << nl << nl
-            << "Valid integrators are : " << endl
+            << "Unknown integrator type " << inter.type() << nl
+            << "Valid integrators are: " << endl
             << inputsConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<MultivariateIntegrator<Type, Adapt>>(cstrIter()(eqn, inter));
+    return autoPtr<MultivariateIntegrator<Type, Adapt>>
+    (
+        cstrIter()(eqn, inter)
+    );
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

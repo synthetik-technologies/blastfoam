@@ -39,12 +39,15 @@ Foam::minimizationScheme::New
         << endl;
     const dictionary& coeffDict = dict.optionalSubDict
     (
-        minimizationSchemeType
+        minimizationSchemeType + "Coeffs"
     );
     if
     (
         isA<scalarEquation>(eqn)
-      && !dictionaryMultivariateConstructorTablePtr_->found(minimizationSchemeType)
+     && !dictionaryMultivariateConstructorTablePtr_->found
+        (
+            minimizationSchemeType
+        )
     )
     {
 
@@ -67,7 +70,10 @@ Foam::minimizationScheme::New
     }
 
     dictionaryMultivariateConstructorTable::iterator cstrIter =
-        dictionaryMultivariateConstructorTablePtr_->find(minimizationSchemeType);
+        dictionaryMultivariateConstructorTablePtr_->find
+        (
+            minimizationSchemeType
+        );
 
     if (cstrIter == dictionaryMultivariateConstructorTablePtr_->end())
     {

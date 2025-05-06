@@ -40,7 +40,7 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
         << univariateMinimizationSchemeTypeName << endl;
     const dictionary& coeffDict = dict.optionalSubDict
     (
-        univariateMinimizationSchemeTypeName
+        univariateMinimizationSchemeTypeName + "Coeffs"
     );
 
     if (nDeriv <= 0)
@@ -55,8 +55,9 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
         {
             FatalErrorInFunction
                 << "Unknown univariateMinimizationScheme type "
-                << univariateMinimizationSchemeTypeName << nl << nl
-                << "Valid univariateMinimizationSchemes for no derivatives are : " << endl
+                << univariateMinimizationSchemeTypeName << nl
+                << "Valid univariateMinimizationSchemes for no "
+                << "derivatives are: " << endl
                 << dictionaryZeroConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
@@ -74,9 +75,9 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
         {
             FatalErrorInFunction
                 << "Unknown univariateMinimizationScheme type "
-                << univariateMinimizationSchemeTypeName << nl << nl
-                << "Valid univariateMinimizationSchemes for one derivative are:"
-                << endl
+                << univariateMinimizationSchemeTypeName << nl
+                << "Valid univariateMinimizationSchemes for one "
+                << "derivative are:" << endl
                 << dictionaryOneConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
@@ -92,9 +93,9 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
     {
         FatalErrorInFunction
             << "Unknown univariateMinimizationScheme type "
-            << univariateMinimizationSchemeTypeName << nl << nl
-            << "Valid univariateMinimizationSchemes for two derivatives are:"
-            << endl
+            << univariateMinimizationSchemeTypeName << nl
+            << "Valid univariateMinimizationSchemes for two "
+            << "derivatives are:" << endl
             << dictionaryTwoConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
