@@ -274,12 +274,13 @@ void Foam::errorTypes::field::update()
     if (fieldReduction_ == PROBE)
     {
         const label celli = mesh().findCell(probeLocation_);
-        value_ = -great;
+        scalar val = -great;
         if (celli >= 0)
         {
-            value_ = topField()[celli];
+            val = topField()[celli];
         }
-        reduce(value_, maxOp<scalar>());
+        reduce(val, maxOp<scalar>());
+        value_ = reduceValue(fieldReduction_, val);
     }
     else
     {
