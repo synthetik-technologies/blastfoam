@@ -110,7 +110,7 @@ bool Foam::regionSolvers::solid::moveMesh(const IterType iter)
     }
 
     regionSolver::moveMesh(iter);
-    return max(mag(solid_->DD())).value() > small;
+    return mesh_.moving() || max(mag(solid_->U())).value() > small;
 }
 
 
