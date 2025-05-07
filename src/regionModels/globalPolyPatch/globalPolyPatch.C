@@ -23,6 +23,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#define curMotionTimeIndex_ curMotionTimeIndex_; \
+public: \
+    bool hasOldPoints() const {return oldPointsPtr_.valid();} \
+protected:
+
+#include "polyMesh.H"
+
 #include "globalPolyPatch.H"
 #include "coupledGlobalPolyPatch.H"
 #include "volFields.H"
@@ -71,10 +78,20 @@ void Foam::globalPolyPatch::calcPhysicalPatch() const
     // Allocate old patch points
     if (mesh_.moving() || displacementField_ != "none")
     {
-        displacedPoints0Ptr_.reset
-        (
-            new pointField(mesh_.oldPoints(), polyPatch_.meshPoints())
-        );
+        if (mesh_.hasOldPoints())
+        {
+            displacedPoints0Ptr_.reset
+            (
+                new pointField(mesh_.oldPoints(), polyPatch_.meshPoints())
+            );
+        }
+        else
+        {
+            displacedPoints0Ptr_.reset
+            (
+                new pointField(mesh_.points(), polyPatch_.meshPoints())
+            );
+        }
     }
 
     // Insert my points
