@@ -43,9 +43,9 @@ title="blastFoam_multicomponent_validation_U"
     set yrange [0:500]
     plot    "$1" using 1:2 title 'Gas - Houim Oran (2016)'\
                 with points linewidth 8 linecolor rgb 'red',\
-            "$2" using 1:8 title 'Particles - Houim Oran (2016)'\
+            "$2" using 1:2 title 'Particles - Houim Oran (2016)'\
                 with points linewidth 8 linecolor rgb 'blue',\
-            "$3" using 1:2 title 'Gas - blastFoam'\
+            "$3" using 1:8 title 'Gas - blastFoam'\
                 with lines lt 1 linewidth 2 linecolor rgb 'red', \
             "$3" using 1:11 title 'Particles blastFoam'\
                 with lines lt 1 linewidth 2 linecolor rgb 'blue'
