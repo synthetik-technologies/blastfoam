@@ -51,24 +51,6 @@ namespace finiteElements
     addFE(tri45); addFEMap(tri45, msh, 44);
     addFE(tri55); addFEMap(tri55, msh, 45);
     addFE(tri66); addFEMap(tri66, msh, 46);
-
-
-    // typedef ShellFiniteElement<triangle> triangleShell;
-    // defineTemplateTypeNameAndDebug(triangleShell, 0);
-
-    // addToRunTimeSelectionTable(shellFiniteElement, triangleShell, type);
-    // addNamedToRunTimeSelectionTable(shellFiniteElement, triangleShell, type, tri);
-
-    // addShellFE(tri3);
-    // addShellFE(tri6);
-    // addShellFE(tri10);
-    // addShellFE(tri15);
-    // addShellFE(tri21);
-    // addShellFE(tri28);
-    // addShellFE(tri36);
-    // addShellFE(tri45);
-    // addShellFE(tri55);
-    // addShellFE(tri60);
 }
 }
 

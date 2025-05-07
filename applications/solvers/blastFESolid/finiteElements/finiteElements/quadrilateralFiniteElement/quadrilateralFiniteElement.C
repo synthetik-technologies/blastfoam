@@ -49,34 +49,6 @@ namespace finiteElements
     addFE(quad81); addFEMap(quad81, msh, 49);
     addFE(quad100); addFEMap(quad100, msh, 50);
     addFE(quad121); addFEMap(quad121, msh, 51);
-
-
-//     typedef ShellFiniteElement<quadrilateral> quadrilateralShell;
-//     defineTemplateTypeNameAndDebug(quadrilateralShell, 0);
-//
-//     addToRunTimeSelectionTable
-//     (
-//         shellFiniteElement,
-//         quadrilateralShell,
-//         type
-//     );
-//     addNamedToRunTimeSelectionTable
-//     (
-//         shellFiniteElement,
-//         quadrilateralShell,
-//         type,
-//         quad
-//     );
-//     addShellFE(quad4);
-//     addShellFE(quad9);
-//     addShellFE(quad16);
-//     addShellFE(quad25);
-//     addShellFE(quad36);
-//     addShellFE(quad49);
-//     addShellFE(quad64);
-//     addShellFE(quad81);
-//     addShellFE(quad100);
-//     addShellFE(quad121);
 }
 }
 
