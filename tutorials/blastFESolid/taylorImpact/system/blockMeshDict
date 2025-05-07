@@ -1,0 +1,98 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM Extend Project: Open Source CFD        |
+|  \\    /   O peration     | Version:  1.6-ext                               |
+|   \\  /    A nd           | Web:      www.extend-project.de                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant/polyMesh";
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+convertToMeters 0.001;
+
+rc  1.4;
+R   3.2;
+L   32.4;
+
+x45 #calc "cos(degToRad(45.0)) * $R";
+x225 #calc "cos(degToRad(22.5)) * $R";
+y225 #calc "sin(degToRad(22.5)) * $R";
+
+vertices
+(
+    //- dimension in mm
+    (0 0 0)
+    ($rc 0 0)
+    ($R 0 0)
+    (0 $rc 0)
+    ($rc $rc 0)
+    ($x45 $x45 0)
+    (0 $R 0)
+
+    (0 0 $L)
+    ($rc 0 $L)
+    ($R 0 $L)
+    (0 $rc $L)
+    ($rc $rc $L)
+    ($x45 $x45 $L)
+    (0 $R $L)
+
+);
+
+nr 2;
+nL 40;
+blocks
+(
+    hex (0 1 4 3 7 8 11 10) ($nr $nr $nL) simpleGrading (1 1 1)
+    hex (1 2 5 4 8 9 12 11) ($nr $nr $nL) simpleGrading (1 1 1)
+    hex (4 5 6 3 11 12 13 10) ($nr $nr $nL) simpleGrading (1 1 1)
+);
+
+edges
+(
+    arc 6 5 ($y225 $x225 0)
+    arc 13 12 ($y225 $x225 $L)
+
+    arc 5 2 ($x225 $y225 0)
+    arc 12 9 ($x225 $y225 $L)
+);
+
+
+patches
+(
+    patch free
+    (
+        (7 8 11 10)
+        (8 9 12 11)
+        (10 11 12 13)
+        (5 6 13 12)
+        (5 2 9 12)
+    )
+
+    symmetry symmetricY
+    (
+        (0 1 8 7)
+        (1 2 9 8)
+    )
+
+    symmetry symmetricZ
+    (
+        (0 1 4 3)
+        (1 2 5 4)
+        (3 4 5 6)
+    )
+
+    symmetry symmetricX
+    (
+        (0 3 10 7)
+        (3 6 13 10)
+    )
+);
+
+// ************************************************************************* //
