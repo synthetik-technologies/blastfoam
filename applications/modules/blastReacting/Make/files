@@ -1,0 +1,4 @@
+reactingCompressibleSystem/reactingCompressibleSystem.C
+blastReactingSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastReacting

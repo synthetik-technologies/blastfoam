@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2022-2023 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -21,25 +21,88 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::solvers::blastReacting
+
+Description
+    Module for blastReactingFoam solver
+
+SourceFiles
+    blastReactingSolver.C
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef mixedFixedValueSlipFvPatchFields_H
-#define mixedFixedValueSlipFvPatchFields_H
+#ifndef blastReactingSolver_H
+#define blastReactingSolver_H
 
-#include "mixedFixedValueSlipFvPatchField.H"
-#include "fieldTypes.H"
+#include "explicitSolver.H"
+#include "fvTimeIntegrator.H"
+#include "reactingCompressibleSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace solvers
+{
+
+/*---------------------------------------------------------------------------*\
+                        Class blastReacting Declaration
+\*---------------------------------------------------------------------------*/
+
+class blastReacting
+:
+    public explicitSolver
+{
+protected:
+// Protected data
+
+
+    //- Time integrator
+    fvTimeIntegrator integrator_;
+
+    //- Compressible system
+    reactingCompressibleSystem fluid_;
+
+    // Protected member functions
+
+        //- Read maximum Courant number
+        virtual scalar CoNum() const;
+
+
+public:
+
+
+    //- Runtime type information
+    TypeName("blastReacting");
+
+
+    // Constructors
+
+        //- Construct from region mesh
+        blastReacting(fvMesh& mesh);
+
+        //- Disallow default bitwise copy construction
+        blastReacting(const blastReacting&) = delete;
+
+
+    //- Destructor
+    virtual ~blastReacting();
+
+
+    // Member Functions
+
+        //- Solve
+        virtual void solve();
+
+        //- Called after the PIMPLE loop at the end of the time-step
+        virtual void postSolve();
+};
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeFieldTypedefs(mixedFixedValueSlip);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+} // End namespace solvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
