@@ -610,63 +610,59 @@ bool explicitRiemannSolid::evolve()
     Info<< "Evolving solid solver" << endl;
     const dimensionedScalar& deltaT = mesh().time().deltaT();
 
-    mesh().update();
     enforceLinear() = false;
 
-    // do
-    {
-        volVectorField rhoURHS
+    volVectorField rhoURHS
+    (
+        volVectorField::New
         (
-            volVectorField::New
-            (
-                "rhoURHS",
-                mesh(),
-                dimensionedVector(rhoU_.dimensions()/dimTime, Zero)
-            )
-        );
+            "rhoURHS",
+            mesh(),
+            dimensionedVector(rhoU_.dimensions()/dimTime, Zero)
+        )
+    );
 
-        // Reset fields
-        if (curIndex_ != this->runTime().timeIndex())
-        {
-            x_ == x_.oldTime();
-            xf_ == xf_.oldTime();
-            xN_ == xN_.oldTime();
+    // Reset fields
+    if (curIndex_ != this->runTime().timeIndex())
+    {
+        x_ == x_.oldTime();
+        xf_ == xf_.oldTime();
+        xN_ == xN_.oldTime();
 
-            rhoU_ == rhoU_.oldTime();
+        rhoU_ == rhoU_.oldTime();
 
-            F_ == F_.oldTime();
-        }
-        else
-        {
-            curIndex_ = this->runTime().timeIndex();
-        }
+        F_ == F_.oldTime();
+    }
+    else
+    {
+        curIndex_ = this->runTime().timeIndex();
+    }
 
 
-        // Predictor
-        updateFluxes();
-        solveGEqns(rhoURHS, 0);
+    // Predictor
+    updateFluxes();
+    solveGEqns(rhoURHS, 0);
 
-        // Corrector
-        updateFluxes();
-        solveGEqns(rhoURHS, 1);
+    // Corrector
+    updateFluxes();
+    solveGEqns(rhoURHS, 1);
 
 
-        // Average old time and new time
-        x_ == 0.5*(x_.oldTime() + x_);
-        xf_ == 0.5*(xf_.oldTime() + xf_);
-        xN_ == 0.5*(xN_.oldTime() + xN_);
-        x_.correctBoundaryConditions();
-        xN_.correctBoundaryConditions();
+    // Average old time and new time
+    x_ == 0.5*(x_.oldTime() + x_);
+    xf_ == 0.5*(xf_.oldTime() + xf_);
+    xN_ == 0.5*(xN_.oldTime() + xN_);
+    x_.correctBoundaryConditions();
+    xN_.correctBoundaryConditions();
 
-        //- Update momentum
-        rhoU_ == 0.5*(rhoU_.oldTime() + rhoU_);
+    //- Update momentum
+    rhoU_ == 0.5*(rhoU_.oldTime() + rhoU_);
 
-        // Update deformation gradient tensor
-        F_ == 0.5*(F_.oldTime() + F_);
+    // Update deformation gradient tensor
+    F_ == 0.5*(F_.oldTime() + F_);
 
-        decode();
+    decode();
 
-    }// while (mesh().update());
 
     // Check energies
     energies_.checkEnergies

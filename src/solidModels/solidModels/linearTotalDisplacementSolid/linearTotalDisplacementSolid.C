@@ -112,84 +112,79 @@ bool linearTotalDisplacementSolid::evolve()
         predict();
     }
 
-    // Mesh update loop
+    int iCorr = 0;
+    SolverPerformance<vector> solverPerfD;
+    SolverPerformance<vector>::debug = 0;
+
+    Info<< "Solving the momentum equation for D" << endl;
+
+    // Momentum equation loop
     do
     {
-        int iCorr = 0;
-        SolverPerformance<vector> solverPerfD;
-        SolverPerformance<vector>::debug = 0;
+        // Store fields for under-relaxation and residual calculation
+        D().storePrevIter();
 
-        Info<< "Solving the momentum equation for D" << endl;
-
-        // Momentum equation loop
-        do
-        {
-            // Store fields for under-relaxation and residual calculation
-            D().storePrevIter();
-
-            // Linear momentum equation total displacement form
-            fvVectorMatrix DEqn
-            (
-                rho()*fvm::d2dt2(D())
-             == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
-              - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
-              + fvc::div(sigma(), "div(sigma)")
-              + rho()*g()
-              + stabilisation().stabilisation(D(), gradD(), impK_)
-            );
-
-            // Under-relaxation the linear system
-            DEqn.relax();
-
-            // Enforce any cell displacements
-            solidModel::setCellDisps(DEqn);
-
-            // Solve the linear system
-            solverPerfD = DEqn.solve();
-
-            // Fixed or adaptive field under-relaxation
-            relaxField(D(), iCorr);
-
-            // Update the momentum equation inverse diagonal field
-            // This may be used by the mechanical law when calculating the
-            // hydrostatic pressure
-            const volScalarField DEqnA("DEqnA", DEqn.A());
-
-            // Calculate the stress using run-time selectable mechanical law
-            update();
-
-            // Update impKf to improve convergence
-            // Note: impK and rImpK are not updated as they are used for
-            // traction boundaries
-            if (iCorr % 10 == 0)
-            {
-               impKf_ = mechanical().impKf();
-            }
-        }
-        while
+        // Linear momentum equation total displacement form
+        fvVectorMatrix DEqn
         (
-            !converged
-            (
-                iCorr,
-                mag(solverPerfD.initialResidual()),
-                max
-                (
-                    solverPerfD.nIterations()[0],
-                    max
-                    (
-                        solverPerfD.nIterations()[1],
-                        solverPerfD.nIterations()[2]
-                    )
-                ),
-                D()
-            )
-         && ++iCorr < nCorr()
+            rho()*fvm::d2dt2(D())
+         == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
+          - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
+          + fvc::div(sigma(), "div(sigma)")
+          + rho()*g()
+          + stabilisation().stabilisation(D(), gradD(), impK_)
         );
 
-        // Velocity
-        U() = fvc::ddt(D());
+        // Under-relaxation the linear system
+        DEqn.relax();
+
+        // Enforce any cell displacements
+        solidModel::setCellDisps(DEqn);
+
+        // Solve the linear system
+        solverPerfD = DEqn.solve();
+
+        // Fixed or adaptive field under-relaxation
+        relaxField(D(), iCorr);
+
+        // Update the momentum equation inverse diagonal field
+        // This may be used by the mechanical law when calculating the
+        // hydrostatic pressure
+        const volScalarField DEqnA("DEqnA", DEqn.A());
+
+        // Calculate the stress using run-time selectable mechanical law
+        update();
+
+        // Update impKf to improve convergence
+        // Note: impK and rImpK are not updated as they are used for
+        // traction boundaries
+        if (iCorr % 10 == 0)
+        {
+            impKf_ = mechanical().impKf();
+        }
     }
-    while (mesh().update());
+    while
+    (
+        !converged
+        (
+            iCorr,
+            mag(solverPerfD.initialResidual()),
+            max
+            (
+                solverPerfD.nIterations()[0],
+                max
+                (
+                    solverPerfD.nIterations()[1],
+                    solverPerfD.nIterations()[2]
+                )
+            ),
+            D()
+        )
+     && ++iCorr < nCorr()
+    );
+
+    // Velocity
+    U() = fvc::ddt(D());
 
     return true;
 }

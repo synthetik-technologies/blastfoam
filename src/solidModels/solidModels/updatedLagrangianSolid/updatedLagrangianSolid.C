@@ -74,13 +74,9 @@ bool updatedLagrangianSolid::evolve()
 
     enforceLinear() = false;
 
-    bool changing = false;
-
     // Momentum equation loop
     do
     {
-        changing = mesh().update();
-
         // Store fields for under-relaxation and residual calculation
         DD().storePrevIter();
 
@@ -137,7 +133,7 @@ bool updatedLagrangianSolid::evolve()
                 DD()
             )
          && ++iCorr < nCorr()
-        ) || changing
+        )
     );
 
     // Total displacement at points

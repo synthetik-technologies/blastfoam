@@ -108,128 +108,89 @@ bool linearPressureDisplacementSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
 
-    // Mesh update loop
+    int iCorr = 0;
+    SolverPerformance<vector> solverPerfD;
+    SolverPerformance<vector>::debug = 0;
+
+    Info<< "Solving the momentum equation for D and p" << endl;
+
+    // Loop around displacement and pressure equations
     do
     {
-        int iCorr = 0;
-        SolverPerformance<vector> solverPerfD;
-        SolverPerformance<vector>::debug = 0;
+        // Store fields for under-relaxation and residual calculation
+        D().storePrevIter();
 
-        Info<< "Solving the momentum equation for D and p" << endl;
+        // Momentum equation in terms of displacement
+        // Note: sigma contains pressure term
+        fvVectorMatrix DEqn
+        (
+            fvm::d2dt2(rho(), D())
+         == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
+          - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
+          + fvc::div(sigma(), "div(sigma)")
+          + rho()*g()
+          + stabilisation().stabilisation(D(), gradD(), impK_)
+        );
 
-        // Loop around displacement and pressure equations
-        do
+        // Under-relaxation the linear system
+        DEqn.relax();
+
+        // Enforce any cell displacements
+        solidModel::setCellDisps(DEqn);
+
+        // Solve the linear system
+        solverPerfD = DEqn.solve();
+
+        // Fixed or adaptive field under-relaxation
+        relaxField(D(), iCorr);
+
+        // Update increment of displacement
+        DD() = D() - D().oldTime();
+
+        // Update gradient of displacement
+        mechanical().grad(D(), gradD());
+
+        // Update gradient of displacement increment
+        gradDD() = gradD() - gradD().oldTime();
+
+        // Store reciprocal of diagonal
+        const surfaceScalarField rAUf(fvc::interpolate(1.0/DEqn.A()));
+
+        // Calculate hydrostatic pressure
+        if (solvePressureEquationImplicitly_)
         {
-            // Store fields for under-relaxation and residual calculation
-            D().storePrevIter();
+            int iInnerCorr = 0;
+            SolverPerformance<scalar> solverPerfP;
 
-            // Momentum equation in terms of displacement
-            // Note: sigma contains pressure term
-            fvVectorMatrix DEqn
-            (
-                fvm::d2dt2(rho(), D())
-             == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
-              - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
-              + fvc::div(sigma(), "div(sigma)")
-              + rho()*g()
-              + stabilisation().stabilisation(D(), gradD(), impK_)
-            );
-
-            // Under-relaxation the linear system
-            DEqn.relax();
-
-            // Enforce any cell displacements
-            solidModel::setCellDisps(DEqn);
-
-            // Solve the linear system
-            solverPerfD = DEqn.solve();
-
-            // Fixed or adaptive field under-relaxation
-            relaxField(D(), iCorr);
-
-            // Update increment of displacement
-            DD() = D() - D().oldTime();
-
-            // Update gradient of displacement
-            mechanical().grad(D(), gradD());
-
-            // Update gradient of displacement increment
-            gradDD() = gradD() - gradD().oldTime();
-
-            // Store reciprocal of diagonal
-            const surfaceScalarField rAUf(fvc::interpolate(1.0/DEqn.A()));
-
-            // Calculate hydrostatic pressure
-            if (solvePressureEquationImplicitly_)
+            do
             {
-                int iInnerCorr = 0;
-                SolverPerformance<scalar> solverPerfP;
+                // Store fields for under-relaxation and residual
+                // calculation
+                p_.storePrevIter();
 
-                do
-                {
-                    // Store fields for under-relaxation and residual
-                    // calculation
-                    p_.storePrevIter();
-
-                    // Pressure equation
-                    fvScalarMatrix pEqn
-                    (
-                        fvm::Sp(rK_, p_)
-                      - fvm::laplacian(rAUf, p_, "laplacian(Dp,p)")
-                      + fvc::laplacian(rAUf, p_, "laplacian(Dp,p)")
-                     ==
-                      - fvc::div(D())
-                      + pressureRhieChowScaleFac_
-                       *(
-                           fvc::laplacian(rAUf, p_, "laplacian(Dp,p)")
-                         - fvc::div(rAUf*mesh().Sf() & fvc::interpolate(gradp_))
-                        )
-                    );
-
-                    // Under-relaxation the linear system
-                    pEqn.relax();
-
-                    // Solve the linear system
-                    solverPerfP = pEqn.solve();
-
-                    // Under-relax the field
-                    p_.relax();
-
-                    // Update the gradient of pressure
-                    gradp_ = fvc::grad(p_);
-
-                    // Calculate the stress using run-time selectable mechanical
-                    // law
-                    mechanical().correct(sigma());
-
-                    // Replace hydrostatic component of stress tensor
-                    sigma() = dev(sigma()) - p_*I;
-                }
-                while
+                // Pressure equation
+                fvScalarMatrix pEqn
                 (
-                    !converged
-                    (
-                        iInnerCorr,
-                        solverPerfP.initialResidual(),
-                        solverPerfP.nIterations(),
-                        p_,
-                        false
-                    )
-                 && ++iInnerCorr < nInnerCorr_
-                );
-            }
-            else
-            {
-                // Explicitly add Rhie-Chow smoothing to pressure field
-                p_ = k_*
-                (
+                    fvm::Sp(rK_, p_)
+                  - fvm::laplacian(rAUf, p_, "laplacian(Dp,p)")
+                  + fvc::laplacian(rAUf, p_, "laplacian(Dp,p)")
+                 ==
                   - fvc::div(D())
                   + pressureRhieChowScaleFac_
                    *(
-                       fvc::laplacian(rAUf, p_, "laplacian(Dp,p)")
-                     - fvc::div(rAUf*mesh().Sf() & fvc::interpolate(gradp_))
+                        fvc::laplacian(rAUf, p_, "laplacian(Dp,p)")
+                      - fvc::div(rAUf*mesh().Sf() & fvc::interpolate(gradp_))
                     )
                 );
+
+                // Under-relaxation the linear system
+                pEqn.relax();
+
+                // Solve the linear system
+                solverPerfP = pEqn.solve();
+
+                // Under-relax the field
+                p_.relax();
 
                 // Update the gradient of pressure
                 gradp_ = fvc::grad(p_);
@@ -241,40 +202,74 @@ bool linearPressureDisplacementSolid::evolve()
                 // Replace hydrostatic component of stress tensor
                 sigma() = dev(sigma()) - p_*I;
             }
-        }
-        while
-        (
-            !converged
+            while
             (
-                iCorr,
-                mag(solverPerfD.initialResidual()),
+                !converged
+                (
+                    iInnerCorr,
+                    solverPerfP.initialResidual(),
+                    solverPerfP.nIterations(),
+                    p_,
+                    false
+                )
+             && ++iInnerCorr < nInnerCorr_
+            );
+        }
+        else
+        {
+            // Explicitly add Rhie-Chow smoothing to pressure field
+            p_ =
+                (
+                  - fvc::div(D())
+                  + pressureRhieChowScaleFac_
+                   *(
+                        fvc::laplacian(rAUf, p_, "laplacian(Dp,p)")
+                      - fvc::div(rAUf*mesh().Sf() & fvc::interpolate(gradp_))
+                    )
+                )*k_;
+
+            // Update the gradient of pressure
+            gradp_ = fvc::grad(p_);
+
+            // Calculate the stress using run-time selectable mechanical
+            // law
+            mechanical().correct(sigma());
+
+            // Replace hydrostatic component of stress tensor
+            sigma() = dev(sigma()) - p_*I;
+        }
+    }
+    while
+    (
+        !converged
+        (
+            iCorr,
+            mag(solverPerfD.initialResidual()),
+            max
+            (
+                solverPerfD.nIterations()[0],
                 max
                 (
-                    solverPerfD.nIterations()[0],
-                    max
-                    (
-                        solverPerfD.nIterations()[1],
-                        solverPerfD.nIterations()[2]
-                    )
-                ),
-                D()
-            )
-         && ++iCorr < nCorr()
-        );
+                    solverPerfD.nIterations()[1],
+                    solverPerfD.nIterations()[2]
+                )
+            ),
+            D()
+        )
+     && ++iCorr < nCorr()
+    );
 
-        // Interpolate cell displacements to vertices
-        mechanical().interpolate(D(), pointD());
+    // Interpolate cell displacements to vertices
+    mechanical().interpolate(D(), pointD());
 
-        // Increment of displacement
-        DD() = D() - D().oldTime();
+    // Increment of displacement
+    DD() = D() - D().oldTime();
 
-        // Increment of point displacement
-        pointDD() = pointD() - pointD().oldTime();
+    // Increment of point displacement
+    pointDD() = pointD() - pointD().oldTime();
 
-        // Velocity
-        U() = fvc::ddt(D());
-    }
-    while (mesh().update());
+    // Velocity
+    U() = fvc::ddt(D());
 
     return true;
 }

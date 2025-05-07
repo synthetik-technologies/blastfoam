@@ -85,8 +85,6 @@ bool totalLagrangianSolid::evolve()
     // Reset enforceLinear switch
     enforceLinear() = false;
 
-    mesh().update();
-
     this->DD().correctBoundaryConditions();
     this->update();
 

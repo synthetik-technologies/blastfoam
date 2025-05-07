@@ -224,8 +224,6 @@ bool thermalLinearSolid::evolve()
     Info<< "Solving coupled energy and displacements equation for T and D"
         << endl;
 
-    this->mesh().update();
-
     blastThermo& thermo = thermal().thermo();
     volScalarField& he = thermo.he();
 

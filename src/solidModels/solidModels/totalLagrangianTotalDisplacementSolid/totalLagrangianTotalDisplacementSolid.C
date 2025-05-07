@@ -112,8 +112,6 @@ bool totalLagrangianTotalDisplacementSolid::evolve()
         predict();
     }
 
-    mesh().update();
-
     int iCorr = 0;
     SolverPerformance<vector> solverPerfD;
     SolverPerformance<vector>::debug = 0;

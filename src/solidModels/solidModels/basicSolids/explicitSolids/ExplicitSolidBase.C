@@ -351,88 +351,82 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
 
     tmp<volVectorField> stab;
 
-//     bool changing = false;
-//     do
-//     {
-        // changing = this->mesh().update();
-        this->mesh().update();
 
-        // Central difference scheme
-        const dimensionedScalar& deltaT = this->time().deltaT();
-        const dimensionedScalar deltaT01
-        (
-            0.5*(deltaT + this->time().deltaT0())
-        );
+    // Central difference scheme
+    const dimensionedScalar& deltaT = this->time().deltaT();
+    const dimensionedScalar deltaT01
+    (
+        0.5*(deltaT + this->time().deltaT0())
+    );
 
-        // Compute the velocity
-        // Note: this is the velocity at the middle of the time-step
-        this->U() = this->U().oldTime() + deltaT01*a_.oldTime();
+    // Compute the velocity
+    // Note: this is the velocity at the middle of the time-step
+    this->U() = this->U().oldTime() + deltaT01*a_.oldTime();
 
-        // Compute change in displacement
-        this->DD().internalFieldRef() = deltaT*this->U()();
+    // Compute change in displacement
+    this->DD().internalFieldRef() = deltaT*this->U()();
 
-        // Enforce any cell displacements
-        if (this->setCellDisps().cellIDs().size())
+    // Enforce any cell displacements
+    if (this->setCellDisps().cellIDs().size())
+    {
+        vectorField& DDI = this->DD();
+        vectorField& UI = this->U();
+        const vectorField& DOld = this->D().oldTime();
+
+        const labelList& cells = this->setCellDisps().cellIDs();
+        const vectorField& cellDs = this->setCellDisps().cellDisps();
+
+        forAll(cells, i)
         {
-            vectorField& DDI = this->DD();
-            vectorField& UI = this->U();
-            const vectorField& DOld = this->D().oldTime();
-
-            const labelList& cells = this->setCellDisps().cellIDs();
-            const vectorField& cellDs = this->setCellDisps().cellDisps();
-
-            forAll(cells, i)
-            {
-                const label celli = cells[i];
-                DDI[celli] = cellDs[i] - DOld[celli];
-                UI[celli] = DDI[celli]/deltaT.value();
-            }
+            const label celli = cells[i];
+            DDI[celli] = cellDs[i] - DOld[celli];
+            UI[celli] = DDI[celli]/deltaT.value();
         }
-        this->DD().correctBoundaryConditions();
-        this->U().boundaryFieldRef() ==
-            this->DD().boundaryField()/deltaT.value();
-        // this->correctUBCs(this->U());
+    }
+    this->DD().correctBoundaryConditions();
+    this->U().boundaryFieldRef() ==
+        this->DD().boundaryField()/deltaT.value();
+    // this->correctUBCs(this->U());
 
-        relax();
+    relax();
 
-        // Update displacement
-        this->D() == this->D().oldTime() + this->U()*deltaT;
+    // Update displacement
+    this->D() == this->D().oldTime() + this->U()*deltaT;
 
-        // Update the stress field based on the latest D field
-        this->update();
+    // Update the stress field based on the latest D field
+    this->update();
 
-        // Compute acceleration
-        // Note the inclusion of a linear bulk viscosity pressure term to
-        // dissipate high frequency energies, and a Rhie-Chow term to
-        // avoid checker-boarding
-        stab =
+    // Compute acceleration
+    // Note the inclusion of a linear bulk viscosity pressure term to
+    // dissipate high frequency energies, and a Rhie-Chow term to
+    // avoid checker-boarding
+    stab =
+    (
+        this->stabilisation().stabilisation
         (
-            this->stabilisation().stabilisation
+            this->U(),
+            (deltaT01*this->impKf_)()
+        )
+    );
+    a_ =
+        (
+            fvc::div(this->tractionSf())
+          + fvc::div
             (
-                this->U(),
-               (deltaT01*this->impKf_)()
-            )
-        );
-        a_ =
-            (
-                fvc::div(this->tractionSf())
-              + fvc::div
+                this->mesh().Sf()*energies_.viscousPressuref
                 (
-                    this->mesh().Sf()*energies_.viscousPressuref
-                    (
-                        this->rho(),
-                        wavespeed_,
-                        this->gradD()
-                    )
+                    this->rho(),
+                    wavespeed_,
+                    this->gradD()
                 )
+            )
 
-                // This corresponds to Lax–Friedrichs smoothing
-              + stab()
-            )/this->rho()
-          + this->g();
-        a_.correctBoundaryConditions();
+            // This corresponds to Lax–Friedrichs smoothing
+          + stab()
+        )/this->rho()
+      + this->g();
+    a_.correctBoundaryConditions();
 
-//     } while (changing);
 
     // Check energies
     energies_.checkEnergies

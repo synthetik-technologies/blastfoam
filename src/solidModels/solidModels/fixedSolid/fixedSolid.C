@@ -56,7 +56,7 @@ fixedSolid::fixedSolid(fvMesh& mesh)
 
 bool fixedSolid::evolve()
 {
-    return mesh().update();
+    return false;
 }
 
 
