@@ -36,7 +36,7 @@ Description
 #include "coupledMultiphaseCompressibleSystem.H"
 #include "fvTimeIntegrator.H"
 
-#include "parcelCloudList.H"
+#include "parcelClouds.H"
 
 using namespace Foam;
 
@@ -64,6 +64,10 @@ int main(int argc, char *argv[])
     while (runTime.run())
     {
         integrator.preUpdateMesh();
+        if (mesh.dynamic() || mesh.distributing())
+        {
+            clouds.preUpdateMesh();
+        }
 
         //- Refine the mesh
         mesh.update();

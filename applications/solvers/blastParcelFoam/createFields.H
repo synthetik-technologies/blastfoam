@@ -12,18 +12,6 @@ uniformDimensionedVectorField g
     ),
     dimensionedVector(dimAcceleration, Zero)
 );
-IOdictionary physicalProperties
-(
-    IOobject
-    (
-        "physicalProperties",
-        runTime.constant(),
-        mesh,
-        IOobject::MUST_READ,
-        IOobject::NO_WRITE,
-        false
-    )
-);
 
 fvTimeIntegrator integrator(mesh);
 autoPtr<compressibleSystem> fluidPtr(coupledCompressibleSystem::New(mesh));
@@ -32,8 +20,9 @@ coupledCompressibleSystem& coupledFluid =
     dynamicCast<coupledCompressibleSystem>(fluid);
 integrator.addSystem(fluid);
 
-parcelCloudList clouds
+parcelClouds& clouds = parcelClouds::New
 (
+    mesh,
     fluid.rho(),
     fluid.U(),
     g,
