@@ -1,0 +1,3 @@
+blastConvertCaseFiles.C
+
+EXE = $(BLAST_APPBIN)/blastConvertCaseFiles
