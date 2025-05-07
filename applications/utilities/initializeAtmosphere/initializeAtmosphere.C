@@ -132,14 +132,16 @@ int main(int argc, char *argv[])
     );
     const dictionary& atmosphereDict = atmosphere->dict();
 
-    IOdictionary phaseProperties
+    IOdictionary physicalProperties
     (
         IOobject
         (
-            "phaseProperties",
+            "physicalProperties",
             runTime.constant(),
             mesh,
-            IOobject::MUST_READ
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
         )
     );
 
@@ -154,9 +156,9 @@ int main(int argc, char *argv[])
     {
         phases = atmosphereProperties.lookup<word>("phase");
     }
-    else if (phaseProperties.found("phases"))
+    else if (physicalProperties.found("phases"))
     {
-        phases = phaseProperties.lookup<wordList>("phases");
+        phases = physicalProperties.lookup<wordList>("phases");
         if (phases.size() == 2)
         {
             thermoType = twoPhaseFluidBlastThermo::typeName;
@@ -172,7 +174,7 @@ int main(int argc, char *argv[])
         fluidBlastThermo::New
         (
             mesh,
-            phaseProperties,
+            physicalProperties,
             thermoType,
             phaseName
         )
