@@ -49,6 +49,8 @@ export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
 # For mac
 # export BLAST_DIR="$( cd $(dirname $0)/../ && pwd )"
 
+export BLAST_MODULES="$BLAST_DIR/applications/modules"
+
 # Required OpenFOAM version
 export BLAST_OF_VERSION=12
 
