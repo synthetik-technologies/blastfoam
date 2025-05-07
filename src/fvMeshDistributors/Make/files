@@ -4,4 +4,4 @@ redistributor/redistributorFvMeshDistributor.C
 hexRefRefinementHistoryConstraint/hexRefRefinementHistoryConstraint.C
 polyRefinementConstraint/polyRefinementConstraint.C
 
-LIB = $(FOAM_LIBBIN)/libblastFvMeshDistributors
+LIB = $(BLAST_LIBBIN)/libblastFvMeshDistributors
