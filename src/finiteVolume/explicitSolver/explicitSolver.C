@@ -128,7 +128,6 @@ void Foam::solvers::explicitSolver::prePredictor()
 
 void Foam::solvers::explicitSolver::momentumPredictor()
 {
-    Info<<runTime.deltaTValue()<<endl;
     this->solve();
 }
 
