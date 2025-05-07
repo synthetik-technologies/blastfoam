@@ -50,6 +50,9 @@ solvers
     }
 }
 
+PIMPLE
+{}
+
 relaxationFactors
 {
     D  1;
