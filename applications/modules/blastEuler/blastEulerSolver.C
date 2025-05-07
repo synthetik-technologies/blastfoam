@@ -45,18 +45,6 @@ Foam::solvers::blastEuler::blastEuler(fvMesh& mesh)
 :
     explicitSolver(mesh),
     integrator_(mesh),
-    g_
-    (
-        IOobject
-        (
-            "g",
-            runTime.constant(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        dimensionedVector("g", dimAcceleration, vector::zero)
-    ),
     fluid_(mesh)
 {
     integrator_.addSystem(fluid_);

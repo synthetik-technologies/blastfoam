@@ -61,9 +61,6 @@ protected:
     //- Time integrator
     fvTimeIntegrator integrator_;
 
-    //- Gravitational acceleration
-    uniformDimensionedVectorField g_;
-
     //- Compressible system
     phaseSystem fluid_;
 

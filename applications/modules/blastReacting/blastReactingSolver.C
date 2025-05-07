@@ -45,22 +45,19 @@ Foam::solvers::blastReacting::blastReacting(fvMesh& mesh)
     integrator_(mesh),
     fluid_
     (
-        reactingCompressibleSystem
+        IOdictionary
         (
-            IOdictionary
+            IOobject
             (
-                IOobject
-                (
-                    ::Foam::physicalProperties::typeName,
-                    runTime.constant(),
-                    mesh,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE,
-                    false
-                )
-            ),
-            mesh
-        )
+                ::Foam::physicalProperties::typeName,
+                runTime.constant(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                false
+            )
+        ),
+        mesh
     )
 {
     integrator_.addSystem(fluid_);

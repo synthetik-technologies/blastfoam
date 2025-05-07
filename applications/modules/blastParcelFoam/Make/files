@@ -1,3 +1,0 @@
-blastParcelFoam.C
-
-EXE = $(BLAST_APPBIN)/blastParcelFoam
