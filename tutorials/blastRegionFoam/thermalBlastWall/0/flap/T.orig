@@ -9,15 +9,26 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSolution;
+    class       volScalarField;
+    object      T.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-PIMPLE
+dimensions      [0 0 0 1 0 0 0];
+
+internalField   uniform 282.051811;
+
+boundaryField
 {
-    nOuterCorrectors 1;
+    flap_to_air
+    {
+        type            globalTemperatureCoupled;
+        value           $internalField;
+    }
+    flapBase
+    {
+        type            zeroGradient;
+    }
 }
 
 // ************************************************************************* //

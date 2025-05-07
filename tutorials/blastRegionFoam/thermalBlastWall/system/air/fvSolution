@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  dev
+    \\  /    A nd           | Version:  7
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -10,36 +10,32 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "constant/heater";
-    object      thermophysicalProperties;
+    location    "system";
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type basic;
+solvers
+{
+    "(alpha|rho|rhoE|rhoU).*"
+    {
+        solver diagonal;
+    }
 
-thermoType
-{
-    transport       constIso;
-    thermo          eConst;
-    equationOfState rhoConst;
+    "(U|cellD|cellMotionU|e).*"
+    {
+        solver          PCG;
+        smoother        GaussSeidel;
+        preconditioner  DIC;
+        tolerance       1e-8;
+        relTol          0;
+        minIter         1;
+    }
 }
 
-specie
+relaxationFactors
 {
-    molWeight       60.08;
-}
-equationOfState
-{
-    rho0             2300;
-}
-transport
-{
-    kappa           0.36;
-}
-thermodynamics
-{
-    Hf              0;
-    Cv              800;
+    cellD 0.1;
 }
 
 

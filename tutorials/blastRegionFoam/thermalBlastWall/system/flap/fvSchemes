@@ -46,7 +46,7 @@ laplacianSchemes
     laplacian(DU,U) Gauss linear corrected;
     laplacian(DD,D) Gauss linear corrected;
     laplacian(DDD,DD) Gauss linear corrected;
-    laplacian(DT,T) Gauss linear corrected;
+    laplacian(kappa,T) Gauss linear corrected;
 }
 
 interpolationSchemes
@@ -54,12 +54,11 @@ interpolationSchemes
     default linear;
     reconstruct(U) linearMUSCL none 0 1;
     reconstruct(P) linearMUSCL none 0 1;
-
     flap_to_air
     {
         sampleRegion    air;
         samplePatch     air_to_flap;
-    }
+    };
 }
 
 snGradSchemes

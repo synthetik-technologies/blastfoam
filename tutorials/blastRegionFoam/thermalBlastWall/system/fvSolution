@@ -17,7 +17,9 @@ FoamFile
 
 PIMPLE
 {
+    solveOrder (flap air);
     nOuterCorrectors 1;
 }
+
 
 // ************************************************************************* //

@@ -8,52 +8,39 @@
 FoamFile
 {
     version     2.0;
-    format      ascii;
+    format      binary;
     class       dictionary;
-    location    "system";
-    object      controlDict;
+    location    "system/ground";
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     blastRegionFoam;
-
-startFrom       startTime;
-
-startTime       0;
-
-stopAt          endTime;
-
-endTime         0.002;
-
-deltaT          1e-7;
-
-writeControl    adjustableRunTime;
-
-runTimeModifiable yes;
-
-writeInterval   1e-5;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  12;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   6;
-
-maxCo 0.5;
-
-adjustTimeStep yes;
-
-regionSolvers
+solvers
 {
-    air blast;
-    flap solid;
+    "(D|DD|T|e)"
+    {
+        solver          PCG;
+        tolerance       1e-8;
+        relTol          0.01;
+        preconditioner  DIC;
+
+        maxOuterIter    10;
+        outerTolerance  1e-4;
+    }
 }
 
-functions
-{}
+stressAnalysis
+{
+    compactNormalStress yes;
+    nCorrectors     10;
+    D               1e-06;
+}
+
+relaxationFactors
+{
+    D  0.5;
+    DD 0.5;
+//     T  1;
+}
+
+// ************************************************************************* //

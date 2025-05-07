@@ -9,15 +9,30 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSolution;
+    class       volVectorField;
+    object      U.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-PIMPLE
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
 {
-    nOuterCorrectors 1;
+    air_to_flap
+    {
+        type            movingWallVelocity;
+        value           $internalField;
+    }
+    ground
+    {
+        type            slip;
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
 }
 
 // ************************************************************************* //

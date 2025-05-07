@@ -9,15 +9,31 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSolution;
+    class       volScalarField;
+    object      rho.c4;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-PIMPLE
+dimensions      [1 -3 0 0 0 0 0];
+
+internalField   uniform 1601;
+
+boundaryField
 {
-    nOuterCorrectors 1;
+    air_to_flap
+    {
+        type            zeroGradient;
+    }
+
+    outlet
+    {
+        type            zeroGradient;
+    }
+
+    ground
+    {
+        type            zeroGradient;
+    }
 }
 
 // ************************************************************************* //

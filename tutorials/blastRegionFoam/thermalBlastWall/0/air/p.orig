@@ -9,15 +9,30 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "system";
-    object      fvSolution;
+    class       volScalarField;
+    object      p.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-PIMPLE
+dimensions      [1 -1 -2 0 0 0 0];
+
+internalField   uniform 0.90530979e5;
+
+boundaryField
 {
-    nOuterCorrectors 1;
+    air_to_flap
+    {
+        type            zeroGradient;
+    }
+    ground
+    {
+        type            zeroGradient;
+    }
+    outlet
+    {
+        type            pressureWaveTransmissive;
+        value           $internalField;
+    }
 }
 
 // ************************************************************************* //
