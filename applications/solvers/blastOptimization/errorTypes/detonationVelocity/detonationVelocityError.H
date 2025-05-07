@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2025 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -16,7 +16,7 @@ License
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-    for more details.
+    for more detonationails.
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
@@ -25,15 +25,16 @@ Class
     Foam::errorTypes::field
 
 Description
-    Compute error in field estimates. Can use operations.
+    Computes detonation velocity based on the time when a target pressure is
+    reached at two different locations
 
 SourceFiles
-    detVelocityError.C
+    detonationVelocityError.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef detVelocityError_H
-#define detVelocityError_H
+#ifndef detonationVelocityError_H
+#define detonationVelocityError_H
 
 #include "errorType.H"
 #include "runTimeSelectionTables.H"
@@ -45,10 +46,10 @@ namespace errorTypes
 {
 
 /*---------------------------------------------------------------------------*\
-                            Class detVelocity Declaration
+                            Class detonationVelocity Declaration
 \*---------------------------------------------------------------------------*/
 
-class detVelocity
+class detonationVelocity
 :
     public errorType
 {
@@ -58,27 +59,35 @@ protected:
         //- Name of the field
         const word pName_;
 
+        //- Probe locations
         vector point1_;
         vector point2_;
 
+        //- Saved detonation velocity
         scalar vDet_;
 
+        //- Time when first probe is reached
         scalar startTime_;
+
+        //- Time when second probe is reached
         scalar endTime_;
+
+        //- Stop the simulation when the second probe is reached
         bool stopWhenReached_;
 
+        //- Pressure to mark "reached"
         scalar pTarget_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("detonationVelocity");
+    TypeName("detonationonationVelocity");
 
     // Constructor
 
         // Construct from dictionary
-        detVelocity
+        detonationVelocity
         (
             const Time& runTime,
             const dictionary& dict,
@@ -88,12 +97,12 @@ public:
     //- Clone the object
     virtual autoPtr<errorType> clone() const
     {
-        return autoPtr<errorType>(new detVelocity(*this));
+        return autoPtr<errorType>(new detonationVelocity(*this));
     }
 
 
     //- Destructor
-    virtual ~detVelocity();
+    virtual ~detonationVelocity();
 
 
     //Member functions

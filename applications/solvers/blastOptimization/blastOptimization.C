@@ -159,7 +159,11 @@ int main(int argc, char *argv[])
     minimizationScheme::debug = 3;
     autoPtr<minimizationScheme> solverPtr
     (
-        minimizationScheme::New(eqn, optimizationProperties)
+        minimizationScheme::New
+        (
+            eqn,
+            optimizationProperties.subDict(minimizationScheme::typeName)
+        )
     );
 
     Info<< endl;

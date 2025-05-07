@@ -38,10 +38,12 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
+#include "argList.H"
+#include "fvMesh.H"
 #include "regionSolverList.H"
-#include "regionProperties.H"
-#include "systemDict.H"
+#include "multiRegionSolutionControl.H"
+
+using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,10 +56,10 @@ int main(int argc, char *argv[])
     );
     #include "addDictOption.H"
 
-    #include "setRootCaseLists.H"
+    #include "setRootCase.H"
     #include "createTime.H"
-    #include "createMesh.H"
-    #include "createFields.H"
+
+    regionSolverList regions(runTime);
 
     //- Move meshes to the initial locations
     if (args.optionFound("initialiseDisplacement"))
@@ -88,7 +90,7 @@ int main(int argc, char *argv[])
         #include "setMultiRegionDeltaT.H"
         runTime++;
         Info<< nl
-            << "Time = " << runTime.timeName() << nl
+            << "Time = " << runTime.name() << nl
             << "deltaT = " << runTime.deltaTValue() << nl
             << "***************************************"
             << "***************************************" << nl << endl;

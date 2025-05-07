@@ -1,9 +1,9 @@
 errorType/errorType.C
 errorType/errorTypeNew.C
 fieldError/fieldError.C
-detVelocityError/detVelocityError.C
+detonationVelocity/detonationVelocityError.C
 
-optError/optError.C
+optimizationError/optimizationErrorFunctionObject.C
 
 
 LIB = $(BLAST_LIBBIN)/liboptimizationError

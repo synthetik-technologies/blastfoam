@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-13-05-2020 Synthetik Applied Technologies: | Calculate optError
+13-05-2025 Synthetik Applied Technologies: | Calculate optimizationError
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "optError.H"
+#include "optimizationErrorFunctionObject.H"
 #include "OFstream.H"
 #include "OSspecific.H"
 #include "addToRunTimeSelectionTable.H"
@@ -36,14 +36,14 @@ namespace Foam
 {
 namespace functionObjects
 {
-    defineTypeNameAndDebug(optError, 0);
-    addToRunTimeSelectionTable(functionObject, optError, dictionary);
+    defineTypeNameAndDebug(optimizationError, 0);
+    addToRunTimeSelectionTable(functionObject, optimizationError, dictionary);
 }
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::functionObjects::optError::optError
+Foam::functionObjects::optimizationError::optimizationError
 (
     const word& name,
     const Time& runTime,
@@ -60,7 +60,8 @@ Foam::functionObjects::optError::optError
             runTime.constant(),
             runTime,
             IOobject::MUST_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            false
         )
     );
 
@@ -75,13 +76,13 @@ Foam::functionObjects::optError::optError
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::functionObjects::optError::~optError()
+Foam::functionObjects::optimizationError::~optimizationError()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::functionObjects::optError::read
+bool Foam::functionObjects::optimizationError::read
 (
     const dictionary& dict
 )
@@ -90,7 +91,7 @@ bool Foam::functionObjects::optError::read
 }
 
 
-bool Foam::functionObjects::optError::execute()
+bool Foam::functionObjects::optimizationError::execute()
 {
     // Update errors
     Info<< "Current optimization status:" << incrIndent << endl;
@@ -98,7 +99,8 @@ bool Foam::functionObjects::optError::execute()
     forAll(errors_,i)
     {
         errors_[i].update();
-        Info<< indent << errors_[i].name() << " = " << errors_[i].value()  << endl;
+        Info<< indent
+            << errors_[i].name() << " = " << errors_[i].value() << endl;
     }
     Info<< decrIndent << endl;
 
@@ -106,7 +108,7 @@ bool Foam::functionObjects::optError::execute()
 }
 
 
-bool Foam::functionObjects::optError::write()
+bool Foam::functionObjects::optimizationError::write()
 {
     mkDir(output_.path());
 

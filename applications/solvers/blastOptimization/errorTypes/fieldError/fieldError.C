@@ -280,7 +280,7 @@ void Foam::errorTypes::field::update()
             val = topField()[celli];
         }
         reduce(val, maxOp<scalar>());
-        value_ = reduceValue(fieldReduction_, val);
+        value_ = reduceValue(val);
     }
     else
     {

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2025 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -16,14 +16,14 @@ License
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-    for more details.
+    for more detonationails.
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
 
-#include "detVelocityError.H"
+#include "detonationVelocityError.H"
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -34,15 +34,15 @@ namespace Foam
 {
 namespace errorTypes
 {
-    defineTypeNameAndDebug(detVelocity, 0);
-    addToRunTimeSelectionTable(errorType, detVelocity, dictionary);
+    defineTypeNameAndDebug(detonationVelocity, 0);
+    addToRunTimeSelectionTable(errorType, detonationVelocity, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::errorTypes::detVelocity::detVelocity
+Foam::errorTypes::detonationVelocity::detonationVelocity
 (
     const Time& runTime,
     const dictionary& dict,
@@ -65,13 +65,13 @@ Foam::errorTypes::detVelocity::detVelocity
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::errorTypes::detVelocity::~detVelocity()
+Foam::errorTypes::detonationVelocity::~detonationVelocity()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorTypes::detVelocity::update()
+void Foam::errorTypes::detonationVelocity::update()
 {
     const fvMesh& mesh = this->mesh();
     const Time& runTime = mesh.time();
@@ -85,6 +85,8 @@ void Foam::errorTypes::detVelocity::update()
     if (startTime_ < 0)
     {
         label celli = mesh.findCell(point1_);
+
+        // Check if first probe is reached
         if (celli >= 0 && p[celli] > pTarget_)
         {
             point1_ = mesh.C()[celli];
@@ -92,6 +94,8 @@ void Foam::errorTypes::detVelocity::update()
         }
         reduce(startTime_, maxOp<scalar>());
 
+        // Probe reached, get the actual position of the cell
+        // Overwrite initial value, but no longer needed
         if (Pstream::parRun() && startTime_ > 0)
         {
             if (celli < 0)
@@ -103,6 +107,7 @@ void Foam::errorTypes::detVelocity::update()
     }
     if (endTime_ < 0)
     {
+        // Check if second probe has been reached
         label celli = mesh.findCell(point2_);
         if (celli >= 0 && p[celli] > pTarget_)
         {
@@ -111,6 +116,7 @@ void Foam::errorTypes::detVelocity::update()
         }
         reduce(endTime_, maxOp<scalar>());
 
+        // Probe reached, get the actual position
         if (Pstream::parRun() && endTime_ > 0)
         {
             if (celli < 0)
@@ -121,16 +127,20 @@ void Foam::errorTypes::detVelocity::update()
         }
     }
 
+    // Calculate det velocity since both probes have been reached
     if (endTime_ > 0 && startTime_ > 0)
     {
+        // Set detonation velocity
+        value_ = mag(point2_ - point1_)/(endTime_ - startTime_);
+
         if (stopWhenReached_ && value_ != 0)
         {
+            // Stop at next time
             const_cast<Time&>(runTime).stopAt
             (
                 Time::stopAtControl::nextWrite
             );
         }
-        value_ = mag(point2_ - point1_)/(endTime_ - startTime_);
     }
 }
 

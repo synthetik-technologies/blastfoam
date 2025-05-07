@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::optError
+    Foam::functionObjects::optimizationError
 
 Description
     Calculates and writes the Mach number as a volScalarField.
@@ -33,12 +33,12 @@ See also
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    optError.C
+    optimizationErrorFucntionObject.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_optError_H
-#define functionObjects_optError_H
+#ifndef functionObjects_optimizationError_H
+#define functionObjects_optimizationError_H
 
 #include "fvMeshFunctionObject.H"
 #include "errorType.H"
@@ -51,10 +51,10 @@ namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class optError Declaration
+                         Class optimizationError Declaration
 \*---------------------------------------------------------------------------*/
 
-class optError
+class optimizationError
 :
     public fvMeshFunctionObject
 {
@@ -70,13 +70,13 @@ class optError
 public:
 
     //- Runtime type information
-    TypeName("optError");
+    TypeName("optimizationError");
 
     // Constructors
 
         //- Construct for given objectRegistry and dictionary.
         //  Allow the possibility to load fields from files
-        optError
+        optimizationError
         (
             const word& name,
             const Time& runTime,
@@ -84,11 +84,11 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        optError(const optError&) = delete;
+        optimizationError(const optimizationError&) = delete;
 
 
     //- Destructor
-    virtual ~optError();
+    virtual ~optimizationError();
 
 
     // Member Functions
@@ -112,7 +112,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const optError&) = delete;
+        void operator=(const optimizationError&) = delete;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
