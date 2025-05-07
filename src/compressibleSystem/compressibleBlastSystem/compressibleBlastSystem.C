@@ -110,6 +110,7 @@ void Foam::compressibleBlastSystem::decode()
         rhoEff().boundaryField()*U_.boundaryField();
 
     e_.internalFieldRef() = rhoE_()/rhoEff()() - 0.5*magSqr(U_());
+    e_.correctBoundaryConditions();
     thermoPtr_->correct();
 
     //- Update total energy because the e field may have been modified

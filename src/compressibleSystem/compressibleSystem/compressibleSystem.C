@@ -515,9 +515,9 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
             forAll(pU, fi)
             {
                 const label own = faceCells[fi];
-                // pamaxSf[fi] = (mag(U[own]) + c[own])*pmagSf[fi];
+                pamaxSf[fi] = (mag(U[own]) + c[own])*pmagSf[fi];
 
-                pamaxSf[fi] = (mag(pU[fi]) + pc[fi])*pmagSf[fi];
+                // pamaxSf[fi] = (mag(pU[fi]) + pc[fi])*pmagSf[fi];
             }
         }
     }

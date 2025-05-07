@@ -142,6 +142,7 @@ void Foam::coupledSinglePhaseCompressibleSystem::decode()
 
     //- Update internal energy
     e_.internalFieldRef() = rhoE_()/alphaRhos() - 0.5*magSqr(U_());
+    e_.correctBoundaryConditions();
 
     thermoPtr_->correct();
 
