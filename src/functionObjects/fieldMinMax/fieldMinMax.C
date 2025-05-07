@@ -85,10 +85,7 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     mode_(modeType::cmpt),
     minMax_(minMaxTypeNames_[dict.lookupOrDefault<word>("minMax", "max")]),
     minMaxName_(minMax_ == minMaxType::min ? "Min" : "Max"),
-    fieldNames_(dict.lookup("fields")),
-
-    cellMap_(nullptr),
-    rCellMap_(nullptr)
+    fieldNames_(dict.lookup("fields"))
 {
     read(dict);
 }
@@ -106,10 +103,7 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     mode_(modeType::cmpt),
     minMax_(mm),
     minMaxName_(minMax_ == minMaxType::min ? "Min" : "Max"),
-    fieldNames_(dict.lookup("fields")),
-
-    cellMap_(nullptr),
-    rCellMap_(nullptr)
+    fieldNames_(dict.lookup("fields"))
 {
     read(dict);
 }
@@ -139,33 +133,54 @@ bool Foam::functionObjects::fieldMinMax::read(const dictionary& dict)
 
 void Foam::functionObjects::fieldMinMax::topoChange
 (
-    const polyTopoChangeMap& mpm
+    const polyTopoChangeMap& map
 )
 {
-    // TODO update since topoChange is called after fields are updated
-    // forAll(fieldNames_, fieldi)
-    // {
-    //     bool found = false;
-    //     #define MapFields(Type, Patch, Mesh)                \
-    //     found =                                             \
-    //         found                                           \
-    //      || map<GeometricField<Type, Patch, Mesh>>          \
-    //         (                                               \
-    //             fieldNames_[fieldi], mpm                    \
-    //         );
-    //
-    //     FOR_ALL_FIELD_TYPES(MapFields, fvPatchField, volMesh);
-    //     FOR_ALL_FIELD_TYPES(MapFields, fvsPatchField, surfaceMesh);
-    //
-    //     #undef MapFields
-    //
-    //     if (!found)
-    //     {
-    //         cannotFindObject(fieldNames_[fieldi]);
-    //     }
-    // }
-    //
-    // setOldFields(mpm);
+    forAll(fieldNames_, fieldi)
+    {
+        bool found = false;
+        #define MapFields(Type, Patch, Mesh)                \
+        found =                                             \
+            found                                           \
+         || mapField<GeometricField<Type, Patch, Mesh>>     \
+            (                                               \
+                fieldNames_[fieldi],                        \
+                map                                         \
+            );
+
+        FOR_ALL_FIELD_TYPES(MapFields, fvPatchField, volMesh);
+        FOR_ALL_FIELD_TYPES(MapFields, fvsPatchField, surfaceMesh);
+
+        #undef MapFields
+
+        if (!found)
+        {
+            cannotFindObject(fieldNames_[fieldi]);
+        }
+    }
+
+    forAll(fieldNames_, fieldi)
+    {
+        bool found = false;
+        #define StoreOldFields(Type, Patch, Mesh)           \
+        found =                                             \
+            found                                           \
+            || storeOld<GeometricField<Type, Patch, Mesh>>     \
+            (                                               \
+                fieldNames_[fieldi]                         \
+            );
+
+        FOR_ALL_FIELD_TYPES(StoreOldFields, fvPatchField, volMesh);
+        FOR_ALL_FIELD_TYPES(StoreOldFields, fvsPatchField, surfaceMesh);
+
+        #undef StoreOldFields
+
+        if (!found)
+        {
+            cannotFindObject(fieldNames_[fieldi]);
+        }
+    }
+
 }
 
 
@@ -193,54 +208,31 @@ bool Foam::functionObjects::fieldMinMax::execute()
         }
     }
 
-    clearOldFields();
-    return true;
-}
-
-
-void Foam::functionObjects::fieldMinMax::clearOldFields()
-{
-    if (cellMap_.valid())
+    if (mesh_.dynamic())
     {
-        cellMap_.clear();
-        rCellMap_.clear();
-
-        oldFields_.clear();
-    }
-}
-
-
-void Foam::functionObjects::fieldMinMax::setOldFields
-(
-    const polyTopoChangeMap& mpm
-)
-{
-    clearOldFields();
-
-    forAll(fieldNames_, fieldi)
-    {
-        bool found = false;
-        #define SetOldFields(Type, Patch, Mesh)             \
-        found =                                             \
-            found                                           \
-         || createOld<GeometricField<Type, Patch, Mesh>>    \
-            (                                               \
-                fieldNames_[fieldi]                         \
-            );
-
-        FOR_ALL_FIELD_TYPES(SetOldFields, fvPatchField, volMesh);
-        FOR_ALL_FIELD_TYPES(SetOldFields, fvsPatchField, surfaceMesh);
-
-        #undef SetOldFields
-
-        if (!found)
+        forAll(fieldNames_, fieldi)
         {
-            cannotFindObject(fieldNames_[fieldi]);
+            bool found = false;
+            #define StoreOldFields(Type, Patch, Mesh)           \
+            found =                                             \
+                found                                           \
+             || storeOld<GeometricField<Type, Patch, Mesh>>     \
+                (                                               \
+                    fieldNames_[fieldi]                         \
+                );
+
+            FOR_ALL_FIELD_TYPES(StoreOldFields, fvPatchField, volMesh);
+            FOR_ALL_FIELD_TYPES(StoreOldFields, fvsPatchField, surfaceMesh);
+
+            #undef StoreOldFields
+
+            if (!found)
+            {
+                cannotFindObject(fieldNames_[fieldi]);
+            }
         }
     }
-
-    cellMap_.set(new labelList(mpm.cellMap()));
-    rCellMap_.set(new labelList(mpm.reverseCellMap()));
+    return true;
 }
 
 

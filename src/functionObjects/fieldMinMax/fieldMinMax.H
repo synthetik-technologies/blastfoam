@@ -132,9 +132,6 @@ protected:
         //- Name of fields
         wordList fieldNames_;
 
-        autoPtr<labelList> cellMap_;
-        autoPtr<labelList> rCellMap_;
-
         //- Old field values
         HashPtrTable<regIOobject> oldFields_;
 
@@ -149,7 +146,7 @@ protected:
 
         //- Store old fields
         template<class FieldType>
-        bool map
+        bool mapField
         (
             const word& fName,
             const polyTopoChangeMap&
@@ -161,7 +158,7 @@ protected:
 
         //- Create old field
         template<class FieldType>
-        bool createOld(const word& fieldName);
+        bool storeOld(const word& fieldName);
 
         //- Update field max
         template<class FieldType>
@@ -180,11 +177,6 @@ protected:
             const FieldType& b
         ) const;
 
-        //- Set all old fields and cell maps
-        void setOldFields(const polyTopoChangeMap& mpm);
-
-        //- Clear all old field and cell maps
-        void clearOldFields();
 
 public:
 

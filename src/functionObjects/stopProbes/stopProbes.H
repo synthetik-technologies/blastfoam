@@ -2,11 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-13-05-2020 Synthetik Applied Technologies: |    Calculate mach number with
-                                                blastFoam thermo
+    \\  /    A nd           | Copyright (C) 2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -25,23 +22,24 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::blastMachNo
+    Foam::functionObjects::stopProbes
 
 Description
-    Calculates and writes the Mach number as a volScalarField.
+    Check field values at locations and stops simulation when the perscribed
+    value is met
 
 See also
-    Foam::functionObjects::blastMachNo
+    Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    blastMachNo.C
+    stopProbes.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_blastMachNo_H
-#define functionObjects_blastMachNo_H
+#ifndef functionObjects_stopProbes_H
+#define functionObjects_stopProbes_H
 
-#include "fieldExpression.H"
+#include "fvMeshFunctionObject.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,37 +50,37 @@ namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class MachNo Declaration
+                          Class stopProbes Declaration
 \*---------------------------------------------------------------------------*/
 
-class blastMachNo
+class stopProbes
 :
-    public fieldExpression
+    public fvMeshFunctionObject
 {
     // Private Member data
 
-        //- Name of phase
-        word phaseName_;
+        //- Table of field name and values to stop at
+        HashTable<scalar> fieldValues_;
 
-        //- Name of velocity field
-        word UName_;
+        //- Sample locations
+        pointField locations_;
 
+        //- Stop control
+        Time::stopAtControl stopControl_;
 
-    // Protected member functions
-
-        virtual bool calc();
-
+        //- Does the simulation need to be stopped
+        bool stop_;
 
 public:
 
     //- Runtime type information
-    TypeName("blastMachNo");
+    TypeName("stopProbes");
 
     // Constructors
 
         //- Construct for given objectRegistry and dictionary.
         //  Allow the possibility to load fields from files
-        blastMachNo
+        stopProbes
         (
             const word& name,
             const Time& runTime,
@@ -90,22 +88,33 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        blastMachNo(const blastMachNo&) = delete;
+        stopProbes(const stopProbes&) = delete;
 
 
     //- Destructor
-    virtual ~blastMachNo();
+    virtual ~stopProbes();
 
 
-    // Member Operators
 
-        //- Disallow default bitwise assignment
-        void operator=(const blastMachNo&) = delete;
+
+    // Member Functions
+
+        //- Read the field average data
+        virtual bool read(const dictionary&);
 
         //- Return the list of fields required
         virtual wordList fields() const
         {
-            return {UName_};
+            return wordList::null();
+        }
+
+        //- Check if the simulation should be stopped
+        virtual bool execute();
+
+        //- Write
+        virtual bool write()
+        {
+            return true;
         }
 };
 

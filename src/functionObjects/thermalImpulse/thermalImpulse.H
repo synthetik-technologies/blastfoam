@@ -40,6 +40,7 @@ Description
         restartOnRestart    false;
 
         TName           T;
+        qrName          qr;
     }
     \endverbatim
 
@@ -48,6 +49,7 @@ Usage
         Property          | Description               | Required | Default
         restartOnRestart  | Restart the averaging on restart |no | no
         TName             | Name of temperature field | no       | T
+        qrName            | Name of radiation thermal flux | no       | qr
     \endtable
 
 

@@ -10,6 +10,7 @@ vtkTimeSeries/vtkTimeSeriesWriter/vtkTimeSeriesSurfaceWriter.C
 laplacian/laplacian.C
 Schlieren/Schlieren.C
 shadowgraph/shadowgraph.C
+stopProbes/stopProbes.C
 
 #blastSampledSurfaces/blastSampledSurfaces.C
 #blastSampledSurfaces/blastSampledSurfacesGrouping.C

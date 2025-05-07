@@ -28,10 +28,10 @@ Class
     Foam::functionObjects::blastCourantNo
 
 Description
-    Calculates and writes the Mach number as a volScalarField.
+    Calculates and writes the Courant number as a volScalarField.
 
 See also
-    Foam::functionObjects::fvMeshFunctionObject
+    Foam::functionObjects::blastCourantNo
 
 SourceFiles
     blastCourantNo.C

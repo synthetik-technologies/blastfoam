@@ -124,7 +124,7 @@ bool Foam::functionObjects::fieldMinMax::createMinMax
 
 
 template<class FieldType>
-bool Foam::functionObjects::fieldMinMax::createOld
+bool Foam::functionObjects::fieldMinMax::storeOld
 (
     const word& fieldName
 )
@@ -135,7 +135,7 @@ bool Foam::functionObjects::fieldMinMax::createOld
         const FieldType& f = obr_.lookupObject<FieldType>(computeFieldName);
 
         // Store unregistered fields so fields are not updated with refinement
-        oldFields_.insert
+        oldFields_.set
         (
             computeFieldName,
             new FieldType
@@ -167,9 +167,9 @@ bool Foam::functionObjects::fieldMinMax::update
     if (obr_.foundObject<FieldType>(fieldName))
     {
         const word computeFieldName(computedName(fieldName));
-        HashPtrTable<regIOobject>::iterator oldIter =
-            oldFields_.find(computeFieldName);
-        if (oldIter == oldFields_.end())
+        objectRegistry::const_iterator oldIter =
+            obr_.find(computeFieldName);
+        if (oldIter == obr_.cend())
         {
             createMinMax<FieldType>(fieldName);
         }
@@ -191,35 +191,6 @@ bool Foam::functionObjects::fieldMinMax::update
                 baseField.boundaryField()[patchi]
             );
         }
-
-        if (cellMap_.valid())
-        {
-            const labelList& cellMap = cellMap_();
-            const labelList& rCellMap = rCellMap_();
-
-            const FieldType& fOld =
-                *dynamic_cast<const FieldType*>(oldIter());
-
-            forAll(cellMap, i)
-            {
-                label celli = cellMap[i];
-                if (celli > -1)
-                {
-                    field[i] = compute(field[i], fOld[celli]);
-                }
-            }
-
-            forAll(rCellMap, i)
-            {
-                label index = rCellMap[i];
-
-                if (index < -1)
-                {
-                    label celli = -index-2;
-                    field[celli] = compute(field[celli], fOld[i]);
-                }
-            }
-        }
         return true;
     }
     return false;
@@ -227,10 +198,10 @@ bool Foam::functionObjects::fieldMinMax::update
 
 
 template<class FieldType>
-bool Foam::functionObjects::fieldMinMax::map
+bool Foam::functionObjects::fieldMinMax::mapField
 (
     const word& fieldName,
-    const polyTopoChangeMap& meshMap
+    const polyTopoChangeMap& map
 )
 {
     const word computeFieldName(computedName(fieldName));
@@ -238,33 +209,31 @@ bool Foam::functionObjects::fieldMinMax::map
     {
         FieldType& f = obr_.lookupObjectRef<FieldType>(computeFieldName);
 
-        if (cellMap_.valid())
+        const labelList& cellMap = map.cellMap();
+        const labelList& rCellMap = map.reverseCellMap();
+
+        const FieldType& fOld =
+            *dynamic_cast<const FieldType*>(oldFields_[computeFieldName]);
+        forAll(cellMap, i)
         {
-            const labelList& cellMap = cellMap_();
-            const labelList& rCellMap = rCellMap_();
-
-            const FieldType& fOld =
-                *dynamic_cast<const FieldType*>(oldFields_[computeFieldName]);
-            forAll(cellMap, i)
+            label celli = cellMap[i];
+            if (celli > -1)
             {
-                label celli = cellMap[i];
-                if (celli > -1)
-                {
-                    f[i] = compute(f[i], fOld[celli]);
-                }
-            }
-
-            forAll(rCellMap, i)
-            {
-                label index = rCellMap[i];
-
-                if (index < -1)
-                {
-                    label celli = -index-2;
-                    f[celli] = compute(f[celli], fOld[i]);
-                }
+                f[i] = compute(f[i], fOld[celli]);
             }
         }
+
+        forAll(rCellMap, i)
+        {
+            label index = rCellMap[i];
+
+            if (index < -1)
+            {
+                label celli = -index-2;
+                f[celli] = compute(f[celli], fOld[i]);
+            }
+        }
+
         return true;
     }
     return false;
