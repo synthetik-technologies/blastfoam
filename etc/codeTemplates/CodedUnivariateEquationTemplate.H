@@ -81,7 +81,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual ${TemplateType} fX
         (
-            const typename UnivariateEquation<Type>::VarType>& x,
+            const typename multivariateEquation<${TemplateType}>::VarType& x,
             const label li
         ) const
         {
@@ -93,7 +93,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual void dfdX
         (
-            const typename UnivariateEquation<Type>::VarType& x,
+            const typename multivariateEquation<${TemplateType}>::VarType& x,
             const label li,
             List<${TemplateType}>& dfdx
         ) const
@@ -103,7 +103,6 @@ public:
 //}}} end code
         }
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

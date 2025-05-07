@@ -85,7 +85,7 @@ ${typeName}_${TemplateType}UnivariateEquation
 Foam::${typeName}_${TemplateType}UnivariateEquation::
 ~${typeName}_${TemplateType}UnivariateEquation()
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Destroy ${typeName} sha1: ${SHA1sum}\n";
     }
