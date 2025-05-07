@@ -53,6 +53,9 @@ class explicitSolver
 :
     public solver
 {
+protected:
+// Protected member data
+
     // Control parameters
 
         //- Maximum allowed Courant number
