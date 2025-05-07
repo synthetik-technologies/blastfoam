@@ -41,6 +41,7 @@ SourceFiles
 #include "Time.H"
 #include "fvMesh.H"
 #include "Convergence.H"
+#include "fvSolution.H"
 
 
 namespace Foam
@@ -61,7 +62,11 @@ protected:
         // Time
         const Time& runTime_;
 
-        const IOdictionary& regionProperties_;
+        //- Control
+        fvSolution solution_;
+
+        //- List of meshes
+        PtrList<fvMesh> regionMeshes_;
 
         //- Have the meshes changed
         boolList changed_;
@@ -98,13 +103,7 @@ public:
     TypeName("regionSolverList");
 
     // Constructor
-    regionSolverList
-    (
-        const IOdictionary& regionProperties,
-        const Time& runTime,
-        PtrList<fvMesh>& regionMeshes,
-        const List<Pair<word>>& regionTypes
-    );
+    regionSolverList(const Time& runTime);
 
 
     //- Destructor
@@ -118,13 +117,7 @@ public:
             //- Return solution controls dictionary
             const dictionary& solutionControls() const
             {
-                return regionProperties_.subDict("solutionControls");
-            }
-
-            //- Return solution controls dictionary
-            const IOdictionary& regionProperties() const
-            {
-                return regionProperties_;
+                return solution_.subDict("PIMPLE");
             }
 
             //- Return if all regions are converged

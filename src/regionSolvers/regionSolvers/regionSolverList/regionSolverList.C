@@ -38,50 +38,105 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionSolverList::regionSolverList
-(
-    const IOdictionary& regionProperties,
-    const Time& runTime,
-    PtrList<fvMesh>& regionMeshes,
-    const List<Pair<word>>& regionTypes
-)
+Foam::regionSolverList::regionSolverList(const Time& runTime)
 :
-    PtrListDictionary<regionSolver>(regionMeshes.size()),
+    PtrListDictionary<regionSolver>(0),
     runTime_(runTime),
-    regionProperties_(regionProperties),
-    changed_(this->size(), true),
-    fixedMapping_(regionProperties_.lookupOrDefault<bool>("fixedMapping", true)),
+    solution_(runTime_),
+    regionMeshes_(0),
+    changed_(0, true),
+    fixedMapping_(solutionControls().lookupOrDefault<bool>("fixedMapping", true)),
     iterNo_(0)
 {
+    List<Pair<word>> regionSolvers;
+    if (runTime_.controlDict().isDict("regionSolvers"))
+    {
+        const dictionary& regionSolversDict =
+            runTime_.controlDict().subDict("regionSolvers");
+        forAllConstIter(dictionary, regionSolversDict, iter)
+        {
+            regionSolvers.append({iter().keyword(), word(iter().stream())});
+        }
+    }
+
+    // Set list sizes
+    this->setSize(regionSolvers.size());
+    regionMeshes_.setSize(regionSolvers.size());
+    changed_.setSize(regionSolvers.size(), true);
+    forAll(regionSolvers, regioni)
+    {
+        regionMeshes_.set
+        (
+            regioni,
+            new fvMesh
+            (
+                IOobject
+                (
+                    regionSolvers[regioni].first(),
+                    runTime_.name(),
+                    runTime_,
+                    IOobject::MUST_READ
+                ),
+                false
+            )
+        );
+    }
+
+    bool requireNonFixedMapping = false;
+    forAll(regionSolvers, regioni)
+    {
+        regionMeshes_[regioni].postConstruct
+        (
+            true,
+            fvMesh::stitchType::geometric
+        );
+        if
+        (
+            regionMeshes_[regioni].dynamic()
+         || regionMeshes_[regioni].distributing()
+        )
+        {
+            requireNonFixedMapping = true;
+        }
+    }
+    if (fixedMapping_ && requireNonFixedMapping)
+    {
+        WarningInFunction
+            << "Fixed mapping but topological changes require non-fixed "
+            << "mapping, overriding" << endl;
+        fixedMapping_ = false;
+    }
+
+
     // Clearing of global patches is handled internally
     globalPolyBoundaryMesh::clearOnMovement = false;
-    forAll(regionMeshes, regioni)
+    forAll(regionMeshes_, regioni)
     {
         this->set
         (
             regioni,
-            regionMeshes[regioni].name(),
+            regionMeshes_[regioni].name(),
             regionSolver::New
             (
-                regionTypes[regioni].second(),
-                regionMeshes[regioni],
+                regionSolvers[regioni].second(),
+                regionMeshes_[regioni],
                 *this
-            ).ptr()
+            )
         );
     }
 
-    labelList map(identityMap(regionMeshes.size()));
-    if (regionProperties.found("order"))
+    labelList map(identityMap(regionMeshes_.size()));
+    if (solutionControls().found("solveOrder"))
     {
-        wordList order(regionProperties.lookup("order"));
+        wordList solveOrder(solutionControls().lookup("solveOrder"));
         HashTable<label> rMap;
-        forAll(order, i)
+        forAll(solveOrder, i)
         {
-            rMap.insert(order[i], i);
+            rMap.insert(solveOrder[i], i);
         }
-        forAll(regionMeshes, regioni)
+        forAll(regionMeshes_, regioni)
         {
-            map[regioni] = rMap[regionMeshes[regioni].name()];
+            map[regioni] = rMap[regionMeshes_[regioni].name()];
         }
     }
     else
@@ -89,14 +144,14 @@ Foam::regionSolverList::regionSolverList
         bool predictSolids =
             solutionControls().lookupOrDefault<bool>("predictSolids", true);
         label regioni = 0;
-        forAll(regionMeshes, i)
+        forAll(regionMeshes_, i)
         {
             if (operator[](i).isSolid() == predictSolids)
             {
                 map[i] = regioni++;
             }
         }
-        forAll(regionMeshes, i)
+        forAll(regionMeshes_, i)
         {
             if (operator[](i).isSolid() != predictSolids)
             {
@@ -175,7 +230,11 @@ void Foam::regionSolverList::initialiseDisplacement()
 
     if (debug)
     {
-        const_cast<Time&>(runTime_).setTime(runTime_.value()+runTime_.deltaTValue(), runTime_.timeIndex());
+        const_cast<Time&>(runTime_).setTime
+        (
+            runTime_.value() + runTime_.deltaTValue(),
+            runTime_.timeIndex()
+        );
     }
 
     update(true);
@@ -206,7 +265,11 @@ void Foam::regionSolverList::initialiseDisplacement()
         if (debug)
         {
             const_cast<Time&>(runTime_).writeNow();
-            const_cast<Time&>(runTime_).setTime(runTime_.value()+runTime_.deltaTValue(), runTime_.timeIndex());
+            const_cast<Time&>(runTime_).setTime
+            (
+                runTime_.value()+runTime_.deltaTValue(),
+                runTime_.timeIndex()
+            );
         }
 
         Info<< endl;

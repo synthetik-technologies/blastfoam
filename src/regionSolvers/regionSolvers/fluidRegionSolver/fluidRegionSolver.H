@@ -61,26 +61,8 @@ class fluid
 protected:
 // Protected data
 
-        //- Viscous stresses
-        volSymmTensorField devRhoReff_;
-
-        //- Original pointField
-        autoPtr<pointIOField> points0Ptr_;
-
-        //- Cell velocity
-        autoPtr<volVectorField> cellDPtr_;
-
-        //- Point velocity
-        autoPtr<pointVectorField> pointDPtr_;
-
-        //- Motion diffusivity
-        autoPtr<motionDiffusivity> diffusivityPtr_;
-
         //- Velocity field names
         wordList velocityFields_;
-
-        //- Is the mesh moving
-        bool moving_;
 
 
 public:

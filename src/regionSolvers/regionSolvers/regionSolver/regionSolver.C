@@ -51,8 +51,8 @@ Foam::regionSolver::regionSolver
     accelerationSchemes_
     (
         mesh_,
-        regions_.regionProperties(),
-        "solutionControls"
+        mesh.solution(),
+        "fieldRelaxation"
     )
 {}
 

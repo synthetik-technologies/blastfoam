@@ -45,7 +45,7 @@ void Foam::fieldAccelerationSchemeList::addField
     const labelList& patches
 )
 {
-    if (this->found(field.name()))
+    if (this->found(field.name()) || !dict_.isDict(subDictName_))
     {
         return;
     }
