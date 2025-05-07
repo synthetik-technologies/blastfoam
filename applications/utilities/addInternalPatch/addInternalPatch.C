@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
         args.optionLookupOrDefault<word>
         (
             "patchName",
-            patchType
+            patchType + "Patch"
         )
     );
 
