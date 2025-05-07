@@ -66,7 +66,6 @@ void Foam::patchToPatchMappings::intersection::generatePointWeights
 
     const pointField& points = patch.localPoints();
     const pointField& otherPoints = otherPatch.localPoints();
-    const vectorField& normals = patch.faceNormals();
 
     labelHashSet checkedFaces;
     labelHashSet addedPoints;
@@ -74,13 +73,17 @@ void Foam::patchToPatchMappings::intersection::generatePointWeights
     forAll(points, pointi)
     {
         weights[pointi].clear();
+        pointAddr[pointi].clear();
 
         // Collect all relevant points
         const point& pt = points[pointi];
         checkedFaces.clear();
         addedPoints.clear();
-        bool hit = false;
 
+        label nearestOther = -1;
+        scalar nearestDist = great;
+
+        // Find the face that is closest to the point
         const labelList& pointFaces = patch.pointFaces()[pointi];
         forAll(pointFaces, pfi)
         {
@@ -91,76 +94,57 @@ void Foam::patchToPatchMappings::intersection::generatePointWeights
                 const label otherFacei = otherFaces[ofi];
                 if (checkedFaces.insert(otherFacei))
                 {
-                    pointHit ph = otherPatch[otherFacei].ray
+                    pointHit ph = otherPatch[otherFacei].nearestPoint
                     (
                         pt,
-                        normals[facei],
                         otherPoints
                     );
-                    if (ph.hit())
+
+                    // No check if hit since the faces are correctly mapped
+                    // so the nearest point should be valid
+                    if (ph.distance() < nearestDist)
                     {
-                        hit = true;
-                        const face& otherFace = otherPatch[otherFacei];
-                        forAll(otherFace, pi)
-                        {
-                            const label p0 = otherFace.rcIndex(pi);
-                            const label p1 = otherFace.fcIndex(pi);
-                            const scalar At =
-                                triPointRef
-                                (
-                                    otherPoints[otherFace[p0]],
-                                    otherPoints[otherFace[pi]],
-                                    otherPoints[otherFace[p1]]
-                                ).mag();
-                            const scalar A0 =
-                                triPointRef
-                                (
-                                    otherPoints[otherFace[p0]],
-                                    otherPoints[otherFace[pi]],
-                                    pt
-                                ).mag();
-                            const scalar A1 =
-                                triPointRef
-                                (
-                                    otherPoints[otherFace[pi]],
-                                    otherPoints[otherFace[p1]],
-                                    pt
-                                ).mag();
-
-                            const scalar w = At/max(A0*A1, vSmall);
-                            if (!addedPoints.insert(otherFace[pi]))
-                            {
-                                const label curI =
-                                    findIndex(pointAddr[pointi], otherFace[pi]);
-                                pointAddr[pointi][curI] = otherFace[pi];
-                                weights[pointi][curI] = w;
-                            }
-                            else
-                            {
-                                pointAddr[pointi].append(otherFace[pi]);
-                                weights[pointi].append(w);
-                            }
-
-                        }
-                    }
-                    else
-                    {
-                        const face& otherFace = otherPatch[otherFacei];
-
-                        forAll(otherFace, pi)
-                        {
-                            if (addedPoints.insert(otherFace[pi]))
-                            {
-                                pointAddr[pointi].append(otherFace[pi]);
-                                weights[pointi].append(0.0);
-                            }
-                        }
+                        nearestOther = otherFacei;
+                        nearestDist = ph.distance();
                     }
                 }
             }
-            if (hit)
+        }
+
+        // If there is a face overlap, set the weights using the
+        // triangle face areas
+        if (nearestOther >= 0)
+        {
+            const face& otherFace = otherPatch[nearestOther];
+            forAll(otherFace, pi)
             {
-                break;
+                const label p0 = otherFace.rcIndex(pi);
+                const label p1 = otherFace.fcIndex(pi);
+                const scalar At =
+                    triPointRef
+                    (
+                        otherPoints[otherFace[p0]],
+                        otherPoints[otherFace[pi]],
+                        otherPoints[otherFace[p1]]
+                    ).mag();
+                const scalar A0 =
+                    triPointRef
+                    (
+                        otherPoints[otherFace[p0]],
+                        otherPoints[otherFace[pi]],
+                        pt
+                    ).mag();
+                const scalar A1 =
+                    triPointRef
+                    (
+                        otherPoints[otherFace[pi]],
+                        otherPoints[otherFace[p1]],
+                        pt
+                    ).mag();
+
+                const scalar w = At/max(A0*A1, vSmall);
+                pointAddr[pointi].append(otherFace[pi]);
+                weights[pointi].append(w);
             }
         }
     }
