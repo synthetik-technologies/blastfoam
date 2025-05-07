@@ -42,6 +42,7 @@ Description
 #include "levelSetModel.H"
 #include "IOobjectList.H"
 #include "fvc.H"
+#include "pointFields.H"
 
 using namespace Foam;
 
@@ -525,18 +526,18 @@ int main(int argc, char *argv[])
 
     if (changerPtr.valid() && args.optionFound("points0"))
     {
-        //- Write points0 field to time directory
-        pointIOField points0
+        pointVectorField points0
         (
             IOobject
             (
                 "points0",
                 mesh.facesInstance(),
-                polyMesh::meshSubDir,
                 mesh
             ),
-            mesh.points()
+            pointMesh::New(mesh),
+            dimensionedVector(dimLength, vector::zero)
         );
+        points0.primitiveFieldRef() = mesh.points();
         points0.write();
     }
 

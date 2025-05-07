@@ -449,6 +449,7 @@ int main(int argc, char *argv[])
           ? setFieldsDict.subDict("refinerCoeffs")
           : setFieldsDict
         );
+        word refinerType("hexRefiner");
         if (!refineDict.found("refiner"))
         {
             typeIOobject<IOdictionary> dynamicMeshDictIO
@@ -466,19 +467,23 @@ int main(int argc, char *argv[])
                 if
                 (
                     dynamicMeshDict.isDict("topoChanger")
-                 && dynamicMeshDict.subDict("topoChanger").found("refiner")
+                 && dynamicMeshDict.subDict("topoChanger").found("type")
                 )
                 {
-                    refineDict.set
+                    const word tcType
                     (
-                        "refiner",
-                        dynamicMeshDict.subDict("topoChanger").lookup<word>
-                        (
-                            "refiner"
-                        )
+                        dynamicMeshDict.subDict("topoChanger").lookup("type")
                     );
+                    if (tcType.find("Refiner") != string::npos)
+                    {
+                        refinerType = tcType;
+                    }
                 }
             }
+        }
+        else
+        {
+            refinerType = refineDict.lookup<word>("refiner");
         }
 
         refineDict.set("force", true);
@@ -489,6 +494,7 @@ int main(int argc, char *argv[])
         }
         else if (refineDict.found("refiner") || mesh.nGeometricD() > 1)
         {
+            refineDict.set("refiner", refinerType);
             refiner = polyMeshRefiner::New(mesh, refineDict);
         }
         else
@@ -1152,17 +1158,18 @@ int main(int argc, char *argv[])
     if (args.optionFound("points0"))
     {
         writeMesh = true;
-        pointIOField points0
+        pointVectorField points0
         (
             IOobject
             (
                 "points0",
                 mesh.facesInstance(),
-                polyMesh::meshSubDir,
                 mesh
             ),
-            mesh.points()
+            pointMesh::New(mesh),
+            dimensionedVector(dimLength, vector::zero)
         );
+        points0.primitiveFieldRef() = mesh.points();
         points0.write();
     }
 

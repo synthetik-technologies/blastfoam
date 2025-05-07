@@ -51,6 +51,7 @@ using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+const wordHashSet ignoreField({"Cc", "Cf", "Sf", "magSf"});
 bool parRun = false;
 void setParRun(const bool par)
 {
@@ -138,6 +139,10 @@ void mapVolFields
     IOobjectList fields = objects.lookupClass(FieldType::typeName);
     forAllIter(IOobjectList, fields, fieldIter)
     {
+        if (ignoreField.found(fieldIter()->name()))
+        {
+            continue;
+        }
         typeIOobject<FieldType> fieldTargetIOobject
         (
             fieldIter()->name(),
@@ -191,10 +196,14 @@ void mapVolFields
         autoPtr<FieldType> fieldTargetPtr;
         UautoPtr<const List<cellInfoList>> mapPtr;
         bool exists = false;
+
         if (!UfieldSources.set(0))
-        {}
+        {
+            Info<<"no " << fieldIter()->name()<<endl;
+        }
         else if (targetMesh.foundObject<FieldType>(fieldIter()->name()))
         {
+            Info<<"lookup " << fieldIter()->name()<<endl;
             mapField = true;
             fieldTargetPtr.set
             (
@@ -208,6 +217,7 @@ void mapVolFields
         }
         else if (fieldTargetIOobject.headerOk())
         {
+            Info<<"read " << fieldIter()->name()<<endl;
             mapField = true;
             fieldTargetPtr.set
             (
@@ -221,6 +231,7 @@ void mapVolFields
         }
         else if (mapFields.found(fieldTargetIOobject.name()))
         {
+            Info<<"read " << fieldIter()->name()<<endl;
             mapField = true;
             fieldTargetIOobject.readOpt() = IOobject::NO_READ;
             FieldType* fieldPtr =
@@ -417,10 +428,11 @@ void calcMapAndR
         const vector& cc = targetMesh.cellCentres()[celli];
 
         // Mapping has already been set
-        if (cellMap[celli].size())
-        {
-            continue;
-        }
+        // if (cellMap[celli].size())
+        // {
+        //     continue;
+        // }
+        cellMap[celli].clear();
         // Get the position on the target mesh
         vector ptTarget =
             cmptMultiply
@@ -453,7 +465,6 @@ void calcMapAndR
 
         // Map from the source mesh to the target mesh
         // Keep track of the maximum volume (weight) for extended cell
-        scalar maxV = -great;
         scalar sumV = 0.0;
         scalar minDSqr = great;
         cellInfoList& infos = cellMap[celli];
@@ -487,10 +498,6 @@ void calcMapAndR
                         sumV += V;
                         infos.append({proci, cellj, V});
 
-                        if (V > maxV)
-                        {
-                            maxV = V;
-                        }
                         if (dSqr < minDSqr)
                         {
                             minDSqr = dSqr;
@@ -622,7 +629,7 @@ void refine
     const wordList& additionalFieldNames
 )
 {
-    autoPtr<IOdictionary> refineDictPtr;
+    dictionary refineDict;
     {
         typeIOobject<IOdictionary> dynamicMeshDictIO
         (
@@ -648,17 +655,21 @@ void refine
         );
         if (dynamicMeshDictIO.headerOk())
         {
-            refineDictPtr.set(new IOdictionary(dynamicMeshDictIO));
+            IOdictionary dynamicMeshDict(dynamicMeshDictIO);
+            if (dynamicMeshDict.isDict("topoChanger"))
+            {
+                refineDict = dynamicMeshDict.subDict("topoChanger");
+            }
         }
         else
         {
             if (rotateFieldsDictIO.headerOk())
             {
-                refineDictPtr.set(new IOdictionary(rotateFieldsDictIO));
+                refineDict = IOdictionary(rotateFieldsDictIO);
             }
         }
 
-        if (!refineDictPtr.valid())
+        if (refineDict.empty())
         {
             WarningInFunction
                 << "Refinement was specified, but neither " << nl
@@ -669,8 +680,6 @@ void refine
             return;
         }
     }
-    IOdictionary& refineDict = refineDictPtr();
-
     autoPtr<errorEstimator> error
     (
         errorEstimator::New(targetMesh, refineDict)

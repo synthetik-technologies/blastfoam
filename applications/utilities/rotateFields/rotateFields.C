@@ -471,17 +471,19 @@ int main(int argc, char *argv[])
     if (args.optionFound("points0"))
     {
         Info<< "Writing points0" << endl;
-        pointIOField
+        pointVectorField points0
         (
             IOobject
             (
                 "points0",
                 targetMesh.facesInstance(),
-                polyMesh::meshSubDir,
                 targetMesh
             ),
-            targetMesh.points()
-        ).write();
+            pointMesh::New(targetMesh),
+            dimensionedVector(dimLength, vector::zero)
+        );
+        points0.primitiveFieldRef() = targetMesh.points();
+        points0.write();
     }
 
     Info<< nl << "Finished" << endl
