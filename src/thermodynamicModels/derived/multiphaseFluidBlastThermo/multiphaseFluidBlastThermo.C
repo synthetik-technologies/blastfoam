@@ -57,38 +57,37 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     forAll(TCells, celli)
     {
         TCells[celli] = THESolver_->solve(TCells[celli], celli);
+        if (TCells[celli] < this->TLow_)
+        {
+            TCells[celli] = this->TLow_;
+            heCells[celli] = this->cellhe(this->TLow_, celli);
+        }
     }
     forAll(bT, patchi)
     {
         THEEqn_.setPatch(patchi);
-        scalarField& pT = bT[patchi];
-        forAll(pT, facei)
+        fvPatchScalarField& pT = bT[patchi];
+        fvPatchScalarField& phe = bhe[patchi];
+        if (pT.fixesValue())
         {
-            pT[facei] = THESolver_->solve(pT[facei], facei);
-        }
-    }
-    T_.correctBoundaryConditions();
-
-    if (min(T_).value() < this->TLow_)
-    {
-        forAll(TCells, celli)
-        {
-            if (TCells[celli] < this->TLow_)
+            forAll(pT, facei)
             {
-                TCells[celli] = this->TLow_;
-                heCells[celli] = this->cellhe(this->TLow_, celli);
+                phe[facei] = patchFacehe(pT[facei], patchi, facei);
             }
         }
-        forAll(bhe, patchi)
+        else
         {
-            scalarField& pT = bT[patchi];
-            scalarField& phe = bhe[patchi];
-
-            pT = max(pT, this->TLow_);
-            phe = this->he(pT, patchi);
+            forAll(pT, facei)
+            {
+                pT[facei] = THESolver_->solve(pT[facei], facei);
+                if (pT[facei] < TLow_)
+                {
+                    pT[facei] = TLow_;
+                    phe[facei] = patchFacehe(pT[facei], patchi, facei);
+                }
+            }
         }
     }
-    this->he().correctBoundaryConditions();
 
     volScalarField XiSum
     (
@@ -511,7 +510,6 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
             eInit[celli] = this->cellhe(this->T_[celli], celli);
         }
     }
-    eInit.correctBoundaryConditions();
 
     return teInit;
 }

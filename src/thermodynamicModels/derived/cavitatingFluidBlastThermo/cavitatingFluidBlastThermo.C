@@ -135,10 +135,10 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate()
         }
     }
 
-    this->heRef().correctBoundaryConditions();
-    this->TRef().correctBoundaryConditions();
     this->pRef().correctBoundaryConditions();
 
+    volScalarField::Boundary& bhe = this->heRef().boundaryFieldRef();
+    volScalarField::Boundary& bT = this->TRef().boundaryFieldRef();
     volScalarField::Boundary& bCp = this->CpRef().boundaryFieldRef();
     volScalarField::Boundary& bCv = this->CvRef().boundaryFieldRef();
     volScalarField::Boundary& bmu = this->muRef().boundaryFieldRef();
@@ -148,80 +148,189 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate()
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT =
-            this->TRef().boundaryField()[patchi];
-        const fvPatchScalarField& phe =
-            this->heRef().boundaryField()[patchi];
         const fvPatchScalarField& pp =
             this->pRef().boundaryField()[patchi];
         const fvPatchScalarField& px = x_.boundaryField()[patchi];
 
+        fvPatchScalarField& pT = bT[patchi];
+        fvPatchScalarField& phe = bhe[patchi];
         fvPatchScalarField& pCp = bCp[patchi];
         fvPatchScalarField& pCv = bCv[patchi];
         fvPatchScalarField& pmu = bmu[patchi];
         fvPatchScalarField& pkappa = bkappa[patchi];
         fvPatchScalarField& pc = bc[patchi];
 
-        forAll(pT, facei)
+        if (pT.fixesValue())
         {
-            const scalar rhoi(prho[facei]);
-            const scalar ei(phe[facei]);
-            const scalar Ti(pT[facei]);
-
-            const scalar xv = px[facei];
-            const scalar xl = 1.0 - xv;
-
-            const scalar pi(pp[facei]);
-
-            if (xl < this->residualFac_)
+            forAll(pT, facei)
             {
-                pCp[facei] = tv.Cp(rhoi, ei, Ti);
-                pCv[facei] = tv.Cv(rhoi, ei, Ti);
-                pmu[facei] = tv.mu(rhoi, ei, Ti);
-                pkappa[facei] = tv.kappa(rhoi, ei, Ti);
-                pc[facei] =
-                    sqrt(max(tv.cSqr(pi, rhoi, ei, Ti), small));
-            }
-            else if (xv < this->residualFac_)
-            {
-                pCp[facei] = tl.Cp(rhoi, ei, Ti);
-                pCv[facei] = tl.Cv(rhoi, ei, Ti);
-                pmu[facei] = tl.mu(rhoi, ei, Ti);
-                pkappa[facei] = tl.kappa(rhoi, ei, Ti);
-                pc[facei] =
-                    sqrt(max(tl.cSqr(pi, rhoi, ei, Ti), small));
-            }
-            else
-            {
-                const scalar rhoSatv = rhoSatv_.lookup(Ti);
-                const scalar rhoSatl = rhoSatl_.lookup(Ti);
+                const scalar rhoi(prho[facei]);
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
 
-                const scalar fv = rhoSatv/rhoi;
-                const scalar fl = rhoSatl/rhoi;
+                const scalar xv = px[facei];
+                const scalar xl = 1.0 - xv;
 
-                pCp[facei] =
-                    tv.Cp(rhoi, ei, Ti)*xv*fv
-                  + tl.Cp(rhoi, ei, Ti)*xl*fl;
-                pCv[facei] =
-                    tv.Cv(rhoi, ei, Ti)*xv*fv
-                  + tl.Cv(rhoi, ei, Ti)*xl*fl;
-                pmu[facei] =
-                    tv.mu(rhoi, ei, Ti)*xv
-                  + tl.mu(rhoi, ei, Ti)*xl;
-                pkappa[facei] =
-                    tv.kappa(rhoi, ei, Ti)*xv
-                  + tl.kappa(rhoi, ei, Ti)*xl;
-                pc[facei] =
-                    sqrt
-                    (
-                        1.0
-                       /(
-                            xv/(rhoSatv*max(tv.cSqr(pi, rhoi, ei, Ti), small))
-                          + xl/(rhoSatl*max(tl.cSqr(pi, rhoi, ei, Ti), small))
-                        )/rhoi
-                    );
+                const scalar pi(pp[facei]);
+
+                if (xl < this->residualFac_)
+                {
+                    ei = tv.Es(rhoi, ei, Ti);
+                    pCp[facei] = tv.Cp(rhoi, ei, Ti);
+                    pCv[facei] = tv.Cv(rhoi, ei, Ti);
+                    pmu[facei] = tv.mu(rhoi, ei, Ti);
+                    pkappa[facei] = tv.kappa(rhoi, ei, Ti);
+                    pc[facei] =
+                        sqrt(max(tv.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else if (xv < this->residualFac_)
+                {
+                    ei = tl.Es(rhoi, ei, Ti);
+                    pCp[facei] = tl.Cp(rhoi, ei, Ti);
+                    pCv[facei] = tl.Cv(rhoi, ei, Ti);
+                    pmu[facei] = tl.mu(rhoi, ei, Ti);
+                    pkappa[facei] = tl.kappa(rhoi, ei, Ti);
+                    pc[facei] =
+                        sqrt(max(tl.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else
+                {
+                    const scalar rhoSatv = rhoSatv_.lookup(Ti);
+                    const scalar rhoSatl = rhoSatl_.lookup(Ti);
+
+                    const scalar fv = rhoSatv/rhoi;
+                    const scalar fl = rhoSatl/rhoi;
+
+                    ei =
+                        tv.Es(rhoi, ei, Ti)*xv
+                      + tl.Es(rhoi, ei , Ti)*xl;
+                    pCp[facei] =
+                        tv.Cp(rhoi, ei, Ti)*xv*fv
+                      + tl.Cp(rhoi, ei, Ti)*xl*fl;
+                    pCv[facei] =
+                        tv.Cv(rhoi, ei, Ti)*xv*fv
+                      + tl.Cv(rhoi, ei, Ti)*xl*fl;
+                    pmu[facei] =
+                        tv.mu(rhoi, ei, Ti)*xv
+                      + tl.mu(rhoi, ei, Ti)*xl;
+                    pkappa[facei] =
+                        tv.kappa(rhoi, ei, Ti)*xv
+                      + tl.kappa(rhoi, ei, Ti)*xl;
+                    pc[facei] =
+                        sqrt
+                        (
+                            1.0
+                           /(
+                                xv
+                                /(
+                                    rhoSatv
+                                    *max(tv.cSqr(pi, rhoi, ei, Ti), small)
+                                )
+                              + xl
+                               /(
+                                    rhoSatl
+                                   *max(tl.cSqr(pi, rhoi, ei, Ti), small)
+                                )
+                            )/rhoi
+                        );
+                }
             }
         }
+        else
+        {
+            forAll(pT, facei)
+            {
+                const scalar rhoi(prho[facei]);
+
+                const scalar xv = px[facei];
+                const scalar xl = 1.0 - xv;
+
+                const scalar pi(pp[facei]);
+
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
+
+                if (xl < this->residualFac_)
+                {
+                    Ti = tv.TRhoE(Ti, rhoi, ei);
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei = tv.Es(rhoi, ei, Ti);
+                    }
+                    pCp[facei] = tv.Cp(rhoi, ei, Ti);
+                    pCv[facei] = tv.Cv(rhoi, ei, Ti);
+                    pmu[facei] = tv.mu(rhoi, ei, Ti);
+                    pkappa[facei] = tv.kappa(rhoi, ei, Ti);
+                    pc[facei] =
+                        sqrt(max(tv.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else if (xv < this->residualFac_)
+                {
+                    Ti = tl.TRhoE(Ti, rhoi, ei);
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei = tl.Es(rhoi, ei, Ti);
+                    }
+                    pCp[facei] = tl.Cp(rhoi, ei, Ti);
+                    pCv[facei] = tl.Cv(rhoi, ei, Ti);
+                    pmu[facei] = tl.mu(rhoi, ei, Ti);
+                    pkappa[facei] = tl.kappa(rhoi, ei, Ti);
+                    pc[facei] =
+                        sqrt(max(tl.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else
+                {
+                    const scalar rhoSatv = rhoSatv_.lookup(Ti);
+                    const scalar rhoSatl = rhoSatl_.lookup(Ti);
+
+                    const scalar fv = rhoSatv/rhoi;
+                    const scalar fl = rhoSatl/rhoi;
+
+                    Ti =
+                        tv.TRhoE(Ti, rhoi, ei)*xv
+                      + tl.TRhoE(Ti, rhoi, ei)*xl;
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei =
+                            tv.Es(rhoi, ei, Ti)*xv
+                          + tl.Es(rhoi, ei, Ti)*xl;
+                    }
+                    pCp[facei] =
+                        tv.Cp(rhoi, ei, Ti)*xv*fv
+                      + tl.Cp(rhoi, ei, Ti)*xl*fl;
+                    pCv[facei] =
+                        tv.Cv(rhoi, ei, Ti)*xv*fv
+                      + tl.Cv(rhoi, ei, Ti)*xl*fl;
+                    pmu[facei] =
+                        tv.mu(rhoi, ei, Ti)*xv
+                      + tl.mu(rhoi, ei, Ti)*xl;
+                    pkappa[facei] =
+                        tv.kappa(rhoi, ei, Ti)*xv
+                      + tl.kappa(rhoi, ei, Ti)*xl;
+                    pc[facei] =
+                        sqrt
+                        (
+                            1.0
+                           /(
+                                xv
+                               /(
+                                    rhoSatv
+                                   *max(tv.cSqr(pi, rhoi, ei, Ti), small)
+                                )
+                              + xl
+                               /(
+                                    rhoSatl
+                                   *max(tl.cSqr(pi, rhoi, ei, Ti), small)
+                                )
+                            )/rhoi
+                        );
+                }
+            }
+        }
+
     }
 }
 

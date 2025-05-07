@@ -87,38 +87,65 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate()
     volScalarField::Boundary& speedOfSoundBf =
         this->speedOfSoundRef().boundaryFieldRef();
 
-    this->TRef().correctBoundaryConditions();
-    this->heRef().correctBoundaryConditions();
     this->pRef().correctBoundaryConditions();
 
     forAll(this->rho_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = rhoBf[patchi];
-        const fvPatchScalarField& pT = TBf[patchi];
-        const fvPatchScalarField& phe = heBf[patchi];
         const fvPatchScalarField& pp = pBf[patchi];
 
+        fvPatchScalarField& pT = TBf[patchi];
+        fvPatchScalarField& phe = heBf[patchi];
         fvPatchScalarField& pCp = CpBf[patchi];
         fvPatchScalarField& pCv = CvBf[patchi];
         fvPatchScalarField& pmu = muBf[patchi];
         fvPatchScalarField& pkappa = kappaBf[patchi];
         fvPatchScalarField& pc = speedOfSoundBf[patchi];
 
-        forAll(prho, facei)
+        if (pT.fixesValue())
         {
-            const typename Thermo::thermoType& t =
-                this->patchFaceMixture(patchi, facei);
+            forAll(prho, facei)
+            {
+                const typename Thermo::thermoType& t =
+                    this->patchFaceMixture(patchi, facei);
 
-            const scalar rhoi = prho[facei];
-            const scalar ei = phe[facei];
-            const scalar Ti = pT[facei];
+                const scalar rhoi = prho[facei];
+                const scalar Ti = pT[facei];
+                scalar& ei = phe[facei];
 
-            pCp[facei] = t.Cp(rhoi, ei, Ti);
-            pCv[facei] = t.Cv(rhoi, ei, Ti);
-            pmu[facei] = t.mu(rhoi, ei, Ti);
-            pkappa[facei] = t.kappa(rhoi, ei, Ti);
-            pc[facei] =
-                sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
+                ei = t.Es(rhoi, ei, Ti);
+                pCp[facei] = t.Cp(rhoi, ei, Ti);
+                pCv[facei] = t.Cv(rhoi, ei, Ti);
+                pmu[facei] = t.mu(rhoi, ei, Ti);
+                pkappa[facei] = t.kappa(rhoi, ei, Ti);
+                pc[facei] =
+                    sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
+            }
+        }
+        else
+        {
+            forAll(prho, facei)
+            {
+                const typename Thermo::thermoType& t =
+                    this->patchFaceMixture(patchi, facei);
+
+                const scalar rhoi = prho[facei];
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
+
+                Ti = t.TRhoE(Ti, rhoi, ei);
+                if (Ti < this->TLow_)
+                {
+                    Ti = this->TLow_;
+                    ei = t.Es(rhoi, ei, Ti);
+                }
+                pCp[facei] = t.Cp(rhoi, ei, Ti);
+                pCv[facei] = t.Cv(rhoi, ei, Ti);
+                pmu[facei] = t.mu(rhoi, ei, Ti);
+                pkappa[facei] = t.kappa(rhoi, ei, Ti);
+                pc[facei] =
+                    sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
+            }
         }
     }
 }

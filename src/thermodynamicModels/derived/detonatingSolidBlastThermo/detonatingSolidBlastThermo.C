@@ -134,70 +134,153 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
       ? &(this->KappaRef().boundaryFieldRef())
       : nullptr;
 
-    this->TRef().correctBoundaryConditions();
-    this->heRef().correctBoundaryConditions();
-
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = rhoBf[patchi];
-        const fvPatchScalarField& pT = TBf[patchi];
-        const fvPatchScalarField& phe = heBf[patchi];
+
         tmp<scalarField> tpx(this->x(patchi));
         const scalarField px = tpx();
 
+        fvPatchScalarField& pT = TBf[patchi];
+        fvPatchScalarField& phe = heBf[patchi];
         fvPatchScalarField& pCp = CpBf[patchi];
         fvPatchScalarField& pCv = CvBf[patchi];
         fvPatchScalarField& pkappa = kappaBf[patchi];
         fvPatchVectorField* pKappa =
             KappaBf ? &(*KappaBf)[patchi] : nullptr;
 
-        forAll(pT, facei)
+        if (pT.fixesValue())
         {
-            const scalar x2 = px[facei];
-            const scalar x1 = 1.0 - x2;
-            const scalar rhoi(prho[facei]);
-            const scalar ei(phe[facei]);
-            const scalar Ti(pT[facei]);
-
-            if (x2 < this->residualFac_)
+            forAll(pT, facei)
             {
-                pCp[facei] = t1.Cp(rhoi, ei, Ti);
-                pCv[facei] = t1.Cv(rhoi, ei, Ti);
-                pkappa[facei] = t1.kappa(rhoi, ei, Ti);
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                const scalar rhoi(prho[facei]);
 
-                if (pKappa)
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
+
+                if (x2 < this->residualFac_)
                 {
-                    (*pKappa)[facei] = t1.Kappa(rhoi, ei, Ti);
+                    ei = t1.Es(rhoi, ei, Ti);
+                    pCp[facei] = t1.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t1.Cv(rhoi, ei, Ti);
+                    pkappa[facei] = t1.kappa(rhoi, ei, Ti);
+
+                    if (pKappa)
+                    {
+                        (*pKappa)[facei] = t1.Kappa(rhoi, ei, Ti);
+                    }
+                }
+                else if (x1 < this->residualFac_)
+                {
+                    ei = t2.Es(rhoi, ei, Ti);
+                    pCp[facei] = t2.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t2.Cv(rhoi, ei, Ti);
+                    pkappa[facei] = t2.kappa(rhoi, ei, Ti);
+
+                    if (pKappa)
+                    {
+                        (*pKappa)[facei] = t2.Kappa(rhoi, ei, Ti);
+                    }
+                }
+                else
+                {
+                    ei =
+                        t1.Es(rhoi, ei, Ti)*x1
+                      + t2.Es(rhoi, ei, Ti)*x2;
+                    pCp[facei] =
+                        t1.Cp(rhoi, ei, Ti)*x1
+                      + t2.Cp(rhoi, ei, Ti)*x2;
+                    pCv[facei] =
+                        t1.Cv(rhoi, ei, Ti)*x1
+                      + t2.Cv(rhoi, ei, Ti)*x2;
+                    pkappa[facei] =
+                        t1.kappa(rhoi, ei, Ti)*x1
+                      + t2.kappa(rhoi, ei, Ti)*x2;
+
+                    if (pKappa)
+                    {
+                        (*pKappa)[facei] =
+                            t1.Kappa(rhoi, ei, Ti)*x1
+                          + t2.Kappa(rhoi, ei, Ti)*x2;
+                    }
                 }
             }
-            else if (x1 < this->residualFac_)
+        }
+        else
+        {
+            forAll(pT, facei)
             {
-                pCp[facei] = t2.Cp(rhoi, ei, Ti);
-                pCv[facei] = t2.Cv(rhoi, ei, Ti);
-                pkappa[facei] = t2.kappa(rhoi, ei, Ti);
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                const scalar rhoi(prho[facei]);
 
-                if (pKappa)
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
+
+                if (x2 < this->residualFac_)
                 {
-                    (*pKappa)[facei] = t2.Kappa(rhoi, ei, Ti);
+                    Ti = t1.TRhoE(Ti, rhoi, ei);
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei = t1.Es(rhoi, ei, Ti);
+                    }
+                    pCp[facei] = t1.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t1.Cv(rhoi, ei, Ti);
+                    pkappa[facei] = t1.kappa(rhoi, ei, Ti);
+
+                    if (pKappa)
+                    {
+                        (*pKappa)[facei] = t1.Kappa(rhoi, ei, Ti);
+                    }
                 }
-            }
-            else
-            {
-                pCp[facei] =
-                    t1.Cp(rhoi, ei, Ti)*x1
-                  + t2.Cp(rhoi, ei, Ti)*x2;
-                pCv[facei] =
-                    t1.Cv(rhoi, ei, Ti)*x1
-                  + t2.Cv(rhoi, ei, Ti)*x2;
-                pkappa[facei] =
-                    t1.kappa(rhoi, ei, Ti)*x1
-                  + t2.kappa(rhoi, ei, Ti)*x2;
-
-                if (pKappa)
+                else if (x1 < this->residualFac_)
                 {
-                    (*pKappa)[facei] =
-                        t1.Kappa(rhoi, ei, Ti)*x1
-                      + t2.Kappa(rhoi, ei, Ti)*x2;
+                    Ti = t2.TRhoE(Ti, rhoi, ei);
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei = t2.Es(rhoi, ei, Ti);
+                    }
+                    pCp[facei] = t2.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t2.Cv(rhoi, ei, Ti);
+                    pkappa[facei] = t2.kappa(rhoi, ei, Ti);
+
+                    if (pKappa)
+                    {
+                        (*pKappa)[facei] = t2.Kappa(rhoi, ei, Ti);
+                    }
+                }
+                else
+                {
+                    Ti =
+                        t1.TRhoE(Ti, rhoi, ei)*x1
+                      + t2.TRhoE(Ti, rhoi, ei)*x2;
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei =
+                            t1.Es(rhoi, ei, Ti)*x1
+                          + t2.Es(rhoi, ei, Ti)*x2;
+                    }
+                    pCp[facei] =
+                        t1.Cp(rhoi, ei, Ti)*x1
+                      + t2.Cp(rhoi, ei, Ti)*x2;
+                    pCv[facei] =
+                        t1.Cv(rhoi, ei, Ti)*x1
+                      + t2.Cv(rhoi, ei, Ti)*x2;
+                    pkappa[facei] =
+                        t1.kappa(rhoi, ei, Ti)*x1
+                      + t2.kappa(rhoi, ei, Ti)*x2;
+
+                    if (pKappa)
+                    {
+                        (*pKappa)[facei] =
+                            t1.Kappa(rhoi, ei, Ti)*x1
+                          + t2.Kappa(rhoi, ei, Ti)*x2;
+                    }
                 }
             }
         }

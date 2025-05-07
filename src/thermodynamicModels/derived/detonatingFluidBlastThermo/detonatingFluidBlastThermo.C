@@ -145,71 +145,151 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
     volScalarField::Boundary& speedOfSoundBf =
         this->speedOfSoundRef().boundaryFieldRef();
 
-
-    this->TRef().correctBoundaryConditions();
-    this->heRef().correctBoundaryConditions();
     this->pRef().correctBoundaryConditions();
 
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = rhoBf[patchi];
-        const fvPatchScalarField& pT = TBf[patchi];
-        const fvPatchScalarField& phe = heBf[patchi];
         const fvPatchScalarField& pp = pBf[patchi];
         tmp<scalarField> tpx(this->x(patchi));
         const scalarField& px = tpx();
 
+        fvPatchScalarField& pT = TBf[patchi];
+        fvPatchScalarField& phe = heBf[patchi];
         fvPatchScalarField& pCp = CpBf[patchi];
         fvPatchScalarField& pCv = CvBf[patchi];
         fvPatchScalarField& pmu = muBf[patchi];
         fvPatchScalarField& pkappa = kappaBf[patchi];
         fvPatchScalarField& pc = speedOfSoundBf[patchi];
 
-        forAll(pT, facei)
+        if (pT.fixesValue())
         {
-            const scalar x2 = px[facei];
-            const scalar x1 = 1.0 - x2;
-            const scalar rhoi = prho[facei];
-            const scalar ei = phe[facei];
-            const scalar Ti = pT[facei];
-            const scalar pi = pp[facei];
+            forAll(pT, facei)
+            {
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                const scalar rhoi = prho[facei];
+                const scalar pi = pp[facei];
 
-            if (x2 < this->residualFac_)
-            {
-                pCp[facei] = t1.Cp(rhoi, ei, Ti);
-                pCv[facei] = t1.Cv(rhoi, ei, Ti);
-                pmu[facei] = t1.mu(rhoi, ei, Ti);
-                pkappa[facei] = t1.kappa(rhoi, ei, Ti);
-                pc[facei] = sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small));
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
+
+                if (x2 < this->residualFac_)
+                {
+                    phe[facei] = t1.Es(rhoi, ei, Ti);
+                    pCp[facei] = t1.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t1.Cv(rhoi, ei, Ti);
+                    pmu[facei] = t1.mu(rhoi, ei, Ti);
+                    pkappa[facei] = t1.kappa(rhoi, ei, Ti);
+                    pc[facei] = sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else if (x1 < this->residualFac_)
+                {
+                    phe[facei] = t2.Es(rhoi, ei, Ti);
+                    pCp[facei] = t2.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t2.Cv(rhoi, ei, Ti);
+                    pmu[facei] = t2.mu(rhoi, ei, Ti);
+                    pkappa[facei] = t2.kappa(rhoi, ei, Ti);
+                    pc[facei] = sqrt(max(t2.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else
+                {
+                    phe[facei] =
+                        t1.Es(rhoi, ei, Ti)*x1
+                      + t2.Es(rhoi, ei, Ti)*x2;
+                    pCp[facei] =
+                        t1.Cp(rhoi, ei, Ti)*x1
+                      + t2.Cp(rhoi, ei, Ti)*x2;
+                    pCv[facei] =
+                        t1.Cv(rhoi, ei, Ti)*x1
+                      + t2.Cv(rhoi, ei, Ti)*x2;
+                    pmu[facei] =
+                        t1.mu(rhoi, ei, Ti)*x1
+                      + t2.mu(rhoi, ei, Ti)*x2;
+                    pkappa[facei] =
+                        t1.kappa(rhoi, ei, Ti)*x1
+                      + t2.kappa(rhoi, ei, Ti)*x2;
+                    pc[facei] =
+                        sqrt
+                        (
+                            max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
+                          + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
+                        );
+                }
             }
-            else if (x1 < this->residualFac_)
+        }
+        else
+        {
+            forAll(pT, facei)
             {
-                pCp[facei] = t2.Cp(rhoi, ei, Ti);
-                pCv[facei] = t2.Cv(rhoi, ei, Ti);
-                pmu[facei] = t2.mu(rhoi, ei, Ti);
-                pkappa[facei] = t2.kappa(rhoi, ei, Ti);
-                pc[facei] = sqrt(max(t2.cSqr(pi, rhoi, ei, Ti), small));
-            }
-            else
-            {
-                pCp[facei] =
-                    t1.Cp(rhoi, ei, Ti)*x1
-                  + t2.Cp(rhoi, ei, Ti)*x2;
-                pCv[facei] =
-                    t1.Cv(rhoi, ei, Ti)*x1
-                  + t2.Cv(rhoi, ei, Ti)*x2;
-                pmu[facei] =
-                    t1.mu(rhoi, ei, Ti)*x1
-                  + t2.mu(rhoi, ei, Ti)*x2;
-                pkappa[facei] =
-                    t1.kappa(rhoi, ei, Ti)*x1
-                  + t2.kappa(rhoi, ei, Ti)*x2;
-                pc[facei] =
-                    sqrt
-                    (
-                        max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
-                      + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
-                    );
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+
+                const scalar rhoi = prho[facei];
+                const scalar pi = pp[facei];
+
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
+
+                if (x2 < this->residualFac_)
+                {
+                    Ti = t1.TRhoE(Ti, rhoi, ei);
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei = t1.Es(rhoi, ei, Ti);
+                    }
+                    pCp[facei] = t1.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t1.Cv(rhoi, ei, Ti);
+                    pmu[facei] = t1.mu(rhoi, ei, Ti);
+                    pkappa[facei] = t1.kappa(rhoi, ei, Ti);
+                    pc[facei] = sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else if (x1 < this->residualFac_)
+                {
+                    Ti = t2.TRhoE(Ti, rhoi, ei);
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei = t2.Es(rhoi, ei, Ti);
+                    }
+                    pCp[facei] = t2.Cp(rhoi, ei, Ti);
+                    pCv[facei] = t2.Cv(rhoi, ei, Ti);
+                    pmu[facei] = t2.mu(rhoi, ei, Ti);
+                    pkappa[facei] = t2.kappa(rhoi, ei, Ti);
+                    pc[facei] = sqrt(max(t2.cSqr(pi, rhoi, ei, Ti), small));
+                }
+                else
+                {
+                    Ti =
+                        t1.TRhoE(Ti, rhoi, ei)*x1
+                      + t2.TRhoE(Ti, rhoi, ei)*x2;
+                    if (Ti < this->TLow_)
+                    {
+                        Ti = this->TLow_;
+                        ei =
+                            t1.Es(rhoi, ei, Ti)*x1
+                          + t1.Es(rhoi, ei, Ti)*x2;
+                    }
+                    pCp[facei] =
+                        t1.Cp(rhoi, ei, Ti)*x1
+                      + t2.Cp(rhoi, ei, Ti)*x2;
+                    pCv[facei] =
+                        t1.Cv(rhoi, ei, Ti)*x1
+                      + t2.Cv(rhoi, ei, Ti)*x2;
+                    pmu[facei] =
+                        t1.mu(rhoi, ei, Ti)*x1
+                      + t2.mu(rhoi, ei, Ti)*x2;
+                    pkappa[facei] =
+                        t1.kappa(rhoi, ei, Ti)*x1
+                      + t2.kappa(rhoi, ei, Ti)*x2;
+                    pc[facei] =
+                        sqrt
+                        (
+                            max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
+                          + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
+                        );
+                }
             }
         }
     }

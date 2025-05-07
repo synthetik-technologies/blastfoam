@@ -50,46 +50,56 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
 {
     scalarField& TCells = T_.primitiveFieldRef();
     scalarField& heCells = this->he().primitiveFieldRef();
-    volScalarField::Boundary& bT = T_.boundaryFieldRef();
-    volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
 
     THEEqn_.setCells();
     forAll(TCells, celli)
     {
         TCells[celli] = THESolver_->solve(TCells[celli], celli);
+        if (TCells[celli] <= this->TLow_)
+        {
+            TCells[celli] = this->TLow_;
+            heCells[celli] = this->cellhe(this->TLow_, celli);
+        }
     }
+
+
+    volScalarField::Boundary& bT = T_.boundaryFieldRef();
+    volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
     forAll(bT, patchi)
     {
         THEEqn_.setPatch(patchi);
-        scalarField& pT = bT[patchi];
-        forAll(pT, facei)
+        fvPatchScalarField& pT = bT[patchi];
+        fvPatchScalarField& phe = bhe[patchi];
+        if (pT.fixesValue())
         {
-            pT[facei] = THESolver_->solve(pT[facei], facei);
-        }
-    }
-    T_.correctBoundaryConditions();
-
-    if (min(T_).value() <= this->TLow_)
-    {
-        forAll(TCells, celli)
-        {
-            if (TCells[celli] <= this->TLow_)
+            forAll(pT, facei)
             {
-                TCells[celli] = this->TLow_;
-                heCells[celli] = this->cellhe(this->TLow_, celli);
+                phe[facei] = this->patchFacehe
+                (
+                    pT[facei],
+                    patchi,
+                    facei
+                );
             }
         }
-        forAll(bhe, patchi)
+        else
         {
-            scalarField& pT = bT[patchi];
-            scalarField& phe = bhe[patchi];
-
-            pT = max(pT, this->TLow_);
-            phe = this->he(pT, patchi);
+            forAll(pT, facei)
+            {
+                pT[facei] = THESolver_->solve(pT[facei], facei);
+                if (pT[facei] < TLow_)
+                {
+                    pT[facei] = TLow_;
+                    phe[facei] = this->patchFacehe
+                    (
+                        pT[facei],
+                        patchi,
+                        facei
+                    );
+                }
+            }
         }
     }
-
-    this->he().correctBoundaryConditions();
 
     volScalarField XiSum
     (
@@ -489,7 +499,6 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
             eInit[celli] = cellhe(this->T_[celli], celli);
         }
     }
-    eInit.correctBoundaryConditions();
 
     return eInitTmp;
 }
