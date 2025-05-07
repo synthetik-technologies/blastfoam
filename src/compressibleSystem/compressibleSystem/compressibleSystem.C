@@ -512,19 +512,29 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
         }
         else if (!isA<wedgeFvPatch>(patch) && !isA<emptyFvPatch>(patch))
         {
-            forAll(pU, fi)
+            // When topological changes or balancing occurs the meshPhi
+            // field is deleted so calls to it cause a crash
+            if
+            (
+                (mesh().dynamic() || mesh().distributing())
+             && (mesh().moving())
+            )
             {
-                const label own = faceCells[fi];
-                pamaxSf[fi] = (mag(U[own]) + c[own])*pmagSf[fi];
-
-                // pamaxSf[fi] = (mag(pU[fi]) + pc[fi])*pmagSf[fi];
+                forAll(pU, fi)
+                {
+                    const label own = faceCells[fi];
+                    pamaxSf[fi] = (mag(U[own]) + c[own])*pmagSf[fi];
+                }
+            }
+            else
+            {
+                forAll(pU, fi)
+                {
+                    pamaxSf[fi] = (mag(pU[fi]) + pc[fi])*pmagSf[fi];
+                }
             }
         }
     }
-    // if (mesh().moving())
-    // {
-    //     amaxSf -= mesh().phi();
-    // }
 
     scalarField sumAmaxSf
     (
