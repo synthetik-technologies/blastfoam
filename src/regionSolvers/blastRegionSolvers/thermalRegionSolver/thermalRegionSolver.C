@@ -51,19 +51,7 @@ Foam::regionSolvers::thermal::thermal
     (
         solidBlastThermo::New
         (
-            mesh_,
-            IOdictionary
-            (
-                IOobject
-                (
-                    "thermophysicalProperties",
-                    runTime_.constant(),
-                    mesh_,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE,
-                    false
-                )
-            )
+            mesh_
         )
     ),
     thermophysicalTransport_
@@ -104,8 +92,10 @@ void Foam::regionSolvers::thermal::solve()
     const volScalarField& rho = trho();
     volScalarField& e = thermo_->he();
 
-    label maxIter = mesh_.solution().lookup<label>("maxIter");
-    scalar tolerance = mesh_.solution().lookup<scalar>("tolerance");
+    const label maxIter =
+        mesh_.solution().solverDict(e.name()).lookup<label>("maxOuterIter");
+    const scalar tolerance =
+        mesh_.solution().solverDict(e.name()).lookup<scalar>("outerTolerance");
 
     label iter = 0;
     bool lastIter = false;
@@ -172,15 +162,7 @@ void Foam::regionSolvers::thermal::solve()
 
 Foam::scalar Foam::regionSolvers::thermal::CoNum() const
 {
-    tmp<volScalarField> magKappa;
-    if (thermo_->isotropic())
-    {
-        magKappa = thermo_->kappa();
-    }
-    else
-    {
-        magKappa = mag(thermo_->Kappa());
-    }
+    tmp<volScalarField> kappa(thermophysicalTransport_->kappaEff());
 
     tmp<volScalarField> tcp = thermo_->Cp();
     const volScalarField& cp = tcp();
@@ -191,7 +173,7 @@ Foam::scalar Foam::regionSolvers::thermal::CoNum() const
     surfaceScalarField kapparhoCpbyDelta
     (
         sqr(mesh_.surfaceInterpolation::deltaCoeffs())
-       *fvc::interpolate(magKappa)
+       *fvc::interpolate(kappa)
        /fvc::interpolate(cp*rho)
     );
 
