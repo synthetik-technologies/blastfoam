@@ -48,6 +48,7 @@ Foam::locationMapper::locationMapper(const polyMesh& mesh)
         )
     ),
     mesh_(mesh),
+    needMap_(false),
     interpolatedFields_(),
 
     edgeSplits_(0),
@@ -58,12 +59,7 @@ Foam::locationMapper::locationMapper(const polyMesh& mesh)
 
     cellSplits_(0),
     newCellIndices_(0)
-{
-    if (mesh.foundObject<pointVectorField>("pointDisplacement"))
-    {
-        interpolatedFields_.insert ("pointDisplacement");
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

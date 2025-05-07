@@ -66,11 +66,11 @@ private:
         //- Reference to the mesh
         const polyMesh& mesh_;
 
-        //- Fields that need to be interpolated
-        wordHashSet interpolatedFields_;
+        //- Is mapping needed
+        mutable bool needMap_;
 
-        //- Point fields that need to be interpolated
-        wordHashSet interpolatedPointFields_;
+        //- Fields that need to be interpolated
+        mutable wordHashSet interpolatedFields_;
 
         //- Saved data from the old mesh
         mutable autoPtr<pointField> pointsOldPtr_;
@@ -128,7 +128,13 @@ public:
         //- Return if the map needs to be constructed
         bool needMap() const
         {
-            return interpolatedFields_.size() || interpolatedPointFields_.size();
+            return needMap_ || interpolatedFields_.size();
+        }
+
+        //- Set mapping as needed
+        void setNeedMap() const
+        {
+            needMap_ = true;
         }
 
         //- Return fields that need to be interpolated
@@ -138,21 +144,9 @@ public:
         }
 
         //- Return fields that need to be interpolated
-        void addInterpolatedField(const word& fieldName)
+        void addInterpolatedField(const word& fieldName) const
         {
             interpolatedFields_.insert(fieldName);
-        }
-
-        //- Return point fields that need to be interpolated
-        const wordHashSet& interpolatedPointFields() const
-        {
-            return interpolatedPointFields_;
-        }
-
-        //- Return fields that need to be interpolated
-        void addInterpolatedPointField(const word& fieldName)
-        {
-            interpolatedPointFields_.insert(fieldName);
         }
 
         //- Add split edges
