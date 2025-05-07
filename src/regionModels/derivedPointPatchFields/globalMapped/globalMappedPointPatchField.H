@@ -61,6 +61,9 @@ protected:
         //- Name of neighbour displacement field
         const word nbrName_;
 
+        //- Unmapped value
+        Type unmappedValue_;
+
         //- Remove initial field
         bool useRefState_;
 

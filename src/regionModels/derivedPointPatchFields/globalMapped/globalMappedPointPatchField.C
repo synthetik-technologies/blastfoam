@@ -51,6 +51,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(iF.name()),
+    unmappedValue_(Zero),
     useRefState_(false),
     f0_(),
     refSet_(false)
@@ -79,6 +80,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(dict.lookup<word>("nbrName")),
+    unmappedValue_(dict.lookupOrDefault<Type>("unmappedValue", Zero)),
     useRefState_(dict.lookupOrDefault<bool>("useRefState", false)),
     f0_(),
     refSet_(false)
@@ -112,6 +114,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(nbrName),
+    unmappedValue_(Zero),
     useRefState_(useRefState),
     f0_(),
     refSet_(false)
@@ -141,6 +144,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(ptf.nbrName_),
+    unmappedValue_(ptf.unmappedValue_),
     useRefState_(ptf.useRefState_),
     f0_(ptf.f0_),
     refSet_(ptf.refSet_)
@@ -171,6 +175,7 @@ Foam::globalMappedPointPatchField<Type>::globalMappedPointPatchField
         )
     ),
     nbrName_(ptf.nbrName_),
+    unmappedValue_(ptf.unmappedValue_),
     useRefState_(ptf.useRefState_),
     f0_(ptf.f0_),
     refSet_(ptf.refSet_)
@@ -256,70 +261,163 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
         tnbr = pfNbr.patchInternalField();
     }
 
-//     if (debug > 1 || (debug && this->db().time().outputTime()))
-//     {
-//         Field<Type> pfGlobal(samplePatch.patchPointToGlobal(nbr));
-//         Field<Type> pfInterp
-//         (
-//             cgpp.patchToPatchInterpolator().transferPoints
-//             (
-//                 samplePatch.globalPatch(),
-//                 pfGlobal
-//             )
-//         );
-//
-//         if (Pstream::master())
-//         {
-//             fileName path
-//             (
-//                 this->db().time().globalPath()
-//                /"VTK"
-//                /this->db().time().timeName()
-//             );
-//             mkDir(path);
-//             vtkWritePolyData::write
-//             (
-//                 path/(this->internalField().name() + "_interpolated.vtk"),
-//                 this->internalField().name(),
-//                 true,
-//                 cgpp.physicalPatch().points(),
-//                 labelList(),
-//                 edgeList(),
-//                 cgpp.physicalPatch(),
-//                 this->internalField().name(), true, pfInterp
-//             );
-//             vtkWritePolyData::write
-//             (
-//                 path/(nbrName_ + "_actual.vtk"),
-//                 nbrName_,
-//                 true,
-//                 samplePatch.physicalPatch().points(),
-//                 labelList(),
-//                 edgeList(),
-//                 samplePatch.physicalPatch(),
-//                 nbrName_,
-//                 true,
-//                 pfGlobal
-//             );
-//         }
-//     }
 
-    tnbr = samplePatch.pointInterpolate(tnbr);
+    Field<Type> mappedNbr(samplePatch.pointInterpolate(tnbr()));
+
 
     if (useRefState_)
     {
         //- Set the reference state if not already set
         if (!refSet_)
         {
-            f0_ = tnbr();
+            f0_ = mappedNbr;
             refSet_ = true;
         }
 
         // Remove reference state
-        tnbr.ref() -= f0_;
+        mappedNbr -= f0_;
     }
 
-    Field<Type>::operator=(tnbr);
+    // Set unmapped values
+    cgpp.setUnmappedPoint(mappedNbr, unmappedValue_);
+
+    if (debug > 1 || (debug && this->db().time().writeTime()))
+    {
+        // Reusable
+        pointField globalPoints;
+        faceList globalFaces;
+        labelList pointMap;
+
+
+        // Merge and gather sample patch
+        const primitivePatch& nbrPatch = samplePatch.physicalPatch();
+        PatchTools::gatherAndMerge
+        (
+            1e-6*this->patch().boundaryMesh().mesh().mesh().bounds().mag(),
+            primitivePatch
+            (
+                SubList<face>(nbrPatch.localFaces(), nbrPatch.size()),
+                nbrPatch.localPoints()
+            ),
+            globalPoints,
+            globalFaces,
+            pointMap
+        );
+
+        {
+            List<Field<Type>> gatheredValues(Pstream::nProcs());
+            gatheredValues[Pstream::myProcNo()] = tnbr();
+            Pstream::gatherList(gatheredValues);
+
+            if (Pstream::master())
+            {
+                // Path to VTK files
+                fileName path
+                (
+                    this->db().time().globalPath()
+                  / "VTK"
+                  / this->internalField().name() + "_actual"
+                  / this->db().time().name()
+                );
+                mkDir(path);
+
+                Field<Type> fld
+                (
+                    ListListOps::combine<Field<Type>>
+                    (
+                        gatheredValues,
+                        accessOp<Field<Type>>()
+                    )
+                );
+                {
+                    Field<Type> reducedField(globalPoints.size());
+                    forAll(pointMap, i)
+                    {
+                        reducedField[i] = fld[pointMap[i]];
+                    }
+                    fld.transfer(reducedField);
+                }
+
+                vtkWritePolyData::write
+                (
+                    path/(this->internalField().name() + "_actual.vtk"),
+                    this->internalField().name(),
+                    true,
+                    globalPoints,
+                    labelList(),
+                    edgeList(),
+                    globalFaces,
+                    this->internalField().name(), true, fld
+                );
+            }
+        }
+
+
+
+        // Merge and gather my patch
+        const primitivePatch& myPatch = cgpp.physicalPatch();
+        PatchTools::gatherAndMerge
+        (
+            1e-6*this->patch().boundaryMesh().mesh().mesh().bounds().mag(),
+            primitivePatch
+            (
+                SubList<face>(myPatch.localFaces(), myPatch.size()),
+                myPatch.localPoints()
+            ),
+            globalPoints,
+            globalFaces,
+            pointMap
+        );
+
+        {
+            List<Field<Type>> gatheredValues(Pstream::nProcs());
+            gatheredValues[Pstream::myProcNo()] = mappedNbr;
+            Pstream::gatherList(gatheredValues);
+
+            if (Pstream::master())
+            {
+                fileName path
+                (
+                    this->db().time().globalPath()
+                / "VTK"
+                / this->internalField().name() + "_interpolated"
+                / this->db().time().name()
+                );
+                mkDir(path);
+
+                Field<Type> fld
+                (
+                    ListListOps::combine<Field<Type>>
+                    (
+                        gatheredValues,
+                        accessOp<Field<Type>>()
+                    )
+                );
+                {
+                    Field<Type> reducedField(globalPoints.size());
+                    forAll(pointMap, i)
+                    {
+                        reducedField[i] = fld[pointMap[i]];
+                    }
+                    fld.transfer(reducedField);
+                }
+
+                vtkWritePolyData::write
+                (
+                    path/(nbrName_ + "_interpolated.vtk"),
+                    nbrName_,
+                    true,
+                    globalPoints,
+                    labelList(),
+                    edgeList(),
+                    globalFaces,
+                    nbrName_, true, fld
+                );
+            }
+        }
+    }
+
+    Field<Type>::operator=(mappedNbr);
     fixedValuePointPatchField<Type>::updateCoeffs();
 
     // Restore tag
@@ -333,6 +431,13 @@ void Foam::globalMappedPointPatchField<Type>::write(Ostream& os) const
     fixedValuePointPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
     writeEntry(os, "useRefState", useRefState_);
+    writeEntryIfDifferent
+    (
+        os,
+        "unmappedValue",
+        unmappedValue_,
+        pTraits<Type>::zero
+    );
     if (useRefState_)
     {
         writeEntry(os, "refValue", f0_);

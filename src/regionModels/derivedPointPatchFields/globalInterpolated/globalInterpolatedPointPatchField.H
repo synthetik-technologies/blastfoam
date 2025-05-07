@@ -56,6 +56,9 @@ class globalInterpolatedPointPatchField
 
         const globalPolyBoundaryMesh& globalBoundary_;
 
+        //- Unmapped value
+        Type unmappedValue_;
+
         //- Name of neighbour field
         const word nbrName_;
 

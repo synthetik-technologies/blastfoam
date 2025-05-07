@@ -49,6 +49,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(Zero),
     nbrName_(word(iF.name()).replaceAll("point", word::null))
 {}
 
@@ -72,6 +73,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(dict.lookupOrDefault<Type>("unmappedValue", Zero)),
     nbrName_(dict.lookup<word>("nbrName"))
 {}
 
@@ -95,6 +97,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(Zero),
     nbrName_(nbrName)
 {
     Field<Type>::operator=(this->patchInternalField());
@@ -121,6 +124,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(ptf.unmappedValue_),
     nbrName_(ptf.nbrName_)
 {}
 
@@ -143,6 +147,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(ptf.unmappedValue_),
     nbrName_(ptf.nbrName_)
 {}
 
@@ -180,7 +185,9 @@ void Foam::globalInterpolatedPointPatchField<Type>::updateCoeffs()
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    Field<Type>::operator=(cgpp.faceToPoint(samplePatch.faceInterpolate(nbr)));
+    Field<Type> mappedNbr(samplePatch.faceInterpolate(nbr));
+    cgpp.setUnmappedFace(mappedNbr, unmappedValue_);
+    Field<Type>::operator=(cgpp.faceToPoint(mappedNbr));
     fixedValuePointPatchField<Type>::updateCoeffs();
 
     // Restore tag
@@ -193,6 +200,13 @@ void Foam::globalInterpolatedPointPatchField<Type>::write(Ostream& os) const
 {
     fixedValuePointPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
+    writeEntryIfDifferent
+    (
+        os,
+        "unmappedValue",
+        unmappedValue_,
+        pTraits<Type>::zero
+    );
 }
 
 // ************************************************************************* //
