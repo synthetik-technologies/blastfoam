@@ -53,6 +53,7 @@ Foam::coupledGlobalPolyPatch::patchToPatchInterpolator
     if (needPoints && !needPoints_)
     {
         needPoints_ = true;
+        samplePatch().needPoints_ = true;
         clearInterp();
     }
 
