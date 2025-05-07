@@ -42,10 +42,24 @@ Foam::solvers::explicitSolver::explicitSolver(fvMesh& mesh)
 :
     solver(mesh),
     maxCo_(0.5),
-    maxDeltaT_(vGreat)
+    maxDeltaT_(vGreat),
+    g_
+    (
+        IOobject
+        (
+            "g",
+            runTime.constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedVector("g", dimAcceleration, vector::zero)
+    )
 {
     steady = false;
     LTS = false;
+
+    const_cast<dictionary&>(pimple.dict()).set("nOuterCorrectors", 1);
 }
 
 
@@ -59,6 +73,8 @@ Foam::solvers::explicitSolver::~explicitSolver()
 
 bool Foam::solvers::explicitSolver::read()
 {
+    const_cast<dictionary&>(pimple.dict()).set("nOuterCorrectors", 1);
+
     solver::read();
 
     maxCo_ =

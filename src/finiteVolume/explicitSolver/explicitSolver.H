@@ -36,6 +36,7 @@ SourceFiles
 #define explicitSolver_H
 
 #include "solver.H"
+#include "uniformDimensionedFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,6 +60,9 @@ class explicitSolver
 
         //- Maximum time-step
         scalar maxDeltaT_;
+
+        //- Gravitational acceleration
+        uniformDimensionedVectorField g_;
 
 protected:
 
