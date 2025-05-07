@@ -18,12 +18,12 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/functionObjects/lnInclude \
-    -I$(BLAST_MODULES)/blastEuler/phaseSystems/lnInclude \
-    -I$(BLAST_MODULES)/blastEuler/interfacialModels/lnInclude \
-    -I$(BLAST_MODULES)/blastEuler/phaseCompressibleMomentumTransportModels/lnInclude \
-    -I$(BLAST_MODULES)/blastEuler/kineticTheoryModels/lnInclude
+    -IphaseSystems/lnInclude \
+    -IinterfacialModels/lnInclude \
+    -IphaseCompressibleMomentumTransportModels/lnInclude \
+    -IkineticTheoryModels/lnInclude
 
-EXE_LIBS = \
+LIB_LIBS = \
     -lmeshTools \
     -lsampling \
     -lphaseFluidThermophysicalTransportModels \

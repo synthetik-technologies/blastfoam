@@ -1,0 +1,3 @@
+blastEulerSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastEuler
