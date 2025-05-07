@@ -50,7 +50,7 @@ functions
     error
     {
         libs ("liboptimizationError.so");
-        type optError;
+        type optimizationError;
     }
 }
 
