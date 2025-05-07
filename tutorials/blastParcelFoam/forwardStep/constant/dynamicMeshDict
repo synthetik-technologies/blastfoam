@@ -17,6 +17,7 @@ FoamFile
 
 topoChanger
 {
+    libs    ("libblastFvMeshTopoChangers.so");
     type    hexRefiner;
 
     errorEstimator densityGradient;
@@ -41,7 +42,8 @@ topoChanger
 
 distributor
 {
-    type redistributor;
+    libs    ("libblastFvMeshDistributors.so");
+    type    redistributor;
 }
 
 // ************************************************************************* //
