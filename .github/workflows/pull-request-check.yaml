@@ -100,7 +100,7 @@ jobs:
       - name: Run ${{ matrix.solver }}
         shell: bash -l {0}
         run: |
-          source /opt/openfoam9/etc/bashrc
+          source /opt/openfoam12/etc/bashrc
           source /opt/blastfoam/etc/bashrc
           echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
           if [ -n "${{ matrix.validation }}" ]; then
