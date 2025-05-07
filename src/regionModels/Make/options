@@ -5,7 +5,6 @@ ifdef EIGEN_DIR
 endif
 
 EXE_INC = \
-    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/fileFormats/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
