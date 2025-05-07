@@ -62,7 +62,7 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
     (
         IOobject
         (
-            "thermophysicalProperties",
+            "physicalProperties",
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ,
