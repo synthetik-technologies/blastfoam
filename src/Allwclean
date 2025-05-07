@@ -9,9 +9,13 @@ wclean $targetType diameterModels
 wclean $targetType thermodynamicModels
 wclean $targetType radiationModels
 wclean $targetType compressibleSystem
+
 wclean $targetType dynamicMesh
-# wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
+wmake $targetType fvMotionSolvers
+wmake $targetType fvMeshTopoChangers
+wmake $targetType fvMeshDistributors
+
 wclean $targetType functionObjects
 wclean $targetType atmosphereModels
 wclean $targetType regionModels
