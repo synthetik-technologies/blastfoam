@@ -24,6 +24,11 @@ solvers
         tolerance       1e-08;
         relTol          0;
     }
+    "(U|ea|eau)Final"
+    {
+        $U;
+        relTol          0;
+    }
 
     "(Su|Xi|b|ft|b|k|omega|epsilon)"
     {
@@ -31,6 +36,10 @@ solvers
         preconditioner  DILU;
         tolerance       1e-08;
         relTol          0;
+    }
+    "(Su|Xi|b|ft|b|k|omega|epsilon)Final"
+    {
+        $Su;
     }
 }
 
