@@ -87,6 +87,9 @@ private:
     //- Inverse displacement flags
     HashTable<bool> inverseDisplacement_;
 
+    //- Was mapping read from regionProperties
+    mutable bool readFromRP_;
+
 
 public:
 

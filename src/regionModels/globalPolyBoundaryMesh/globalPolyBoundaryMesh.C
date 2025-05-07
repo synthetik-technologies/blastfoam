@@ -28,6 +28,7 @@ License
 #include "IOdictionary.H"
 #include "hashedWordList.H"
 #include "Time.H"
+#include "fvMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -46,7 +47,8 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
 )
 :
     GlobalPolyBoundaryMesh(mesh),
-    interfaceDicts_()
+    interfaceDicts_(),
+    readFromRP_(false)
 {
     if (mesh.time().db().foundObject<IOdictionary>("regionProperties"))
     {
@@ -56,6 +58,7 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
         {
             interfaceDicts_ =
                 HashTable<dictionary>(regionProperties.lookup("interfaces"));
+            readFromRP_ = true;
         }
     }
 }
@@ -68,7 +71,8 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
 )
 :
     GlobalPolyBoundaryMesh(mesh),
-    interfaceDicts_(dict.lookupOrDefault("interfaces", HashTable<dictionary>()))
+    interfaceDicts_(dict.lookupOrDefault("interfaces", HashTable<dictionary>())),
+    readFromRP_(false)
 {}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -359,57 +363,131 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
 {
     if (!interfaceDicts_.size())
     {
-        IOdictionary regionProperties
+        typeIOobject<IOdictionary> regionPropertiesIO
         (
             IOobject
             (
                 "regionProperties",
                 mesh().time().constant(),
                 mesh().time(),
-                IOobject::MUST_READ
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                false
             )
         );
-        if (regionProperties.found("interfaces"))
+        if (mesh().foundObject<IOdictionary>(regionPropertiesIO.name()))
         {
-            interfaceDicts_ =
-                HashTable<dictionary>(regionProperties.lookup("interfaces"));
+            const IOdictionary& regionProperties =
+                mesh().lookupObject<IOdictionary>(regionPropertiesIO.name());
+
+            if (regionProperties.found("interfaces"))
+            {
+                interfaceDicts_ =
+                    HashTable<dictionary>(regionProperties.lookup("interfaces"));
+                readFromRP_ = true;
+            }
+        }
+        else if (regionPropertiesIO.headerOk())
+        {
+            IOdictionary regionProperties(regionPropertiesIO);
+            if (regionProperties.found("interfaces"))
+            {
+                interfaceDicts_ =
+                    HashTable<dictionary>(regionProperties.lookup("interfaces"));
+                readFromRP_ = true;
+            }
+        }
+        else if (isA<fvMesh>(mesh()))
+        {
+            const fvSchemes& schemes =
+                dynamicCast<const fvMesh>(mesh()).schemes();
+            const entry& e =
+                schemes.dict().subDict("interpolationSchemes").lookupEntry
+                (
+                    pp.name(),
+                    false,
+                    false
+                );
+            interfaceDicts_(mesh().name()).set(pp.name(), e.dict());
         }
     }
+
+    bool missingInterpolation = false;
     if (!interfaceDicts_.size())
     {
-        FatalErrorInFunction
-            << "The interfaces is empty in regionProperties." << nl
-            << "This is the default, but a list of" << nl
-            << "interfaces is necessary when using coupled patches." << nl
-            << "Please specify the interfaces and their mapping methods." << nl
-            << "i.e. " << nl
-            << "interfaces" << nl
-            << "(" << nl
-            << "    " << mesh().name()<< nl
-            << "    {" << nl
-            << "        " << pp.name() << nl
-            << "        {" << nl
-            << "            ..." << nl
-            << "        }" << nl
-            << "    }" << nl
-            << ");" << endl
-            << abort(FatalError);
+        if (readFromRP_)
+        {
+            FatalErrorInFunction
+                << "The interfaces is empty in regionProperties. "
+                << "This is the default, but a list of "
+                << "interfaces is necessary when using coupled patches."
+                << "Please specify the interfaces and their mapping methods."
+                << "i.e. " << nl
+                << "interfaces" << nl
+                << "(" << nl
+                << "    " << mesh().name()<< nl
+                << "    {" << nl
+                << "        " << pp.name() << nl
+                << "        {" << nl
+                << "            ..." << nl
+                << "        }" << nl
+                << "    }" << nl
+                << ");" << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            missingInterpolation = true;
+        }
     }
     if (!interfaceDicts_.found(mesh().name()))
     {
-        FatalErrorInFunction
-            << mesh().name() << " was not found in the list of interfaces" << nl
-            << "but a coupled patch was requested for the region." << nl
-            << "Please specify the region and interface mapping methods" << endl
-            << abort(FatalError);
+        if (readFromRP_)
+        {
+            FatalErrorInFunction
+                << mesh().name() << " was not found in the list of "
+                << "interfaces but a coupled patch was requested for the "
+                << "region." << nl
+                << "Please specify the region and interface mapping methods"
+                << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            missingInterpolation = true;
+        }
     }
-    else if (!interfaceDicts_[mesh().name()].found(pp.name()))
+    else if (!interfaceDicts_[mesh().name()].isDict(pp.name()))
+    {
+        if (readFromRP_)
+        {
+            FatalErrorInFunction
+                << pp.name() << " was not found in the list of interfaces "
+                << "for region " << mesh().name() << " "
+                << "but a coupled patch was requested. Please specify the "
+                << "mapping method for the patch" << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            missingInterpolation = true;
+        }
+    }
+
+    if (missingInterpolation)
     {
         FatalErrorInFunction
-            << pp.name() << " was not found in the list of interfaces" << nl
-            << "for region " << mesh().name() << " "
-            << "but a coupled patch was requested. Please specify the" << nl
-            << "mapping method for the patch" << endl
+            << "No mapping was provided in fvSchemes/interpolationSchemes. "
+            << "Mapping is necessary when using coupled patches."
+            << "Please specify the coupled patch mapping methods."
+            << "i.e. " << nl
+            << "interpolationSchemes" << nl
+            << "{" << nl
+            << "    " << pp.name() << nl
+            << "    {" << nl
+            << "        ..." << nl
+            << "    }" << nl
+            << "}" << endl
             << abort(FatalError);
     }
 
