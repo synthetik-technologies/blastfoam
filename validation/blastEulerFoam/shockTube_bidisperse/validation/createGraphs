@@ -31,7 +31,7 @@ title=bidisperse_shockTube_validation_Ux_$5
                 with points linewidth 8 linecolor rgb 'red',\
             "$3" using 1:2 title 'Lai 2018 (large)'\
                 with points lt 1 linewidth 8 linecolor rgb 'green',\
-            "$4" using 1:11 title 'blastFoam (gas)'\
+            "$4" using 1:10 title 'blastFoam (gas)'\
                 with lines linewidth 2 linecolor rgb 'black', \
             "$4" using 1:(\$2 >= 1e-6 ? \$4 : 0) title 'blastFoam (small)'\
                 with lines linewidth 2 linecolor rgb 'red', \

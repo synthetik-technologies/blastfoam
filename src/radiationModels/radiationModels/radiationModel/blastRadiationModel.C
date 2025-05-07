@@ -56,11 +56,14 @@ Foam::blastRadiationModel::readRadiationProperties(const word& type)
 
 void Foam::blastRadiationModel::initialise()
 {
-    solverFreq_ = max(1, lookupOrDefault<label>("solverFreq", 1));
+    const dictionary& radDict(*this);
+    Info<<radDict<<endl;
+
+    solverFreq_ = max(1, radDict.lookupOrDefault<label>("solverFreq", 1));
 
     absorptionEmission_.reset
     (
-        radiationModels::blastAbsorptionEmissionModel::New(*this, mesh_).ptr()
+        radiationModels::blastAbsorptionEmissionModel::New(radDict, mesh_).ptr()
     );
     bAbsorptionEmission_.reset
     (
@@ -70,9 +73,9 @@ void Foam::blastRadiationModel::initialise()
         )
     );
 
-    scatter_.reset(radiationModels::scatterModel::New(*this, mesh_).ptr());
+    scatter_.reset(radiationModels::scatterModel::New(radDict, mesh_).ptr());
 
-    soot_.reset(radiationModels::sootModel::New(*this, mesh_).ptr());
+    soot_.reset(radiationModels::sootModel::New(radDict, mesh_).ptr());
 }
 
 
@@ -85,11 +88,22 @@ Foam::blastRadiationModel::blastRadiationModel(const volScalarField& T)
 {}
 
 
-Foam::blastRadiationModel::blastRadiationModel(const word& type, const volScalarField& T)
+Foam::blastRadiationModel::blastRadiationModel
+(
+    const word& type,
+    const volScalarField& T
+)
 :
     radiationModel(T),
     radODE_(readRadiationProperties(type), T.mesh())
 {
+    // Read radiationProperties
+    this->readOpt() = IOobject::MUST_READ;
+    static_cast<IOdictionary&>(*this) = IOdictionary(static_cast<const IOobject&>(*this));
+
+    coeffs_ = subOrEmptyDict(type + "Coeffs");
+    solverFreq_ = 1;
+
     initialise();
 }
 
@@ -104,8 +118,11 @@ Foam::blastRadiationModel::blastRadiationModel
     radiationModel(T),
     radODE_(readRadiationProperties(type), T.mesh())
 {
-    radiationModel::readOpt() = IOobject::MUST_READ;
-    radiationModel::read();
+    // Copy the constructing dictionary
+    static_cast<dictionary&>(*this) = dict;
+
+    coeffs_ = subOrEmptyDict(type + "Coeffs");
+    solverFreq_ = 1;
 
     initialise();
 }

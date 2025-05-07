@@ -54,7 +54,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
             << endl;
     }
 
-    Info<< "Selecting blastRadiationModel " << modelType << endl;
+    Info<< "Selecting radiationModel " << modelType << endl;
 
     TConstructorTable::iterator cstrIter =
         TConstructorTablePtr_->find(modelType);

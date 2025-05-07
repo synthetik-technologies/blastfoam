@@ -29,6 +29,33 @@ particles0
 
     alphaMax    0.65;
 
+
+    type basic;
+    thermoType
+    {
+        equationOfState rhoConst;
+        thermo eConst;
+        transport constIso;
+    }
+    specie
+    {
+        molWeight 100;
+    }
+    equationOfState
+    {
+        rho0         1300;
+    }
+    transport
+    {
+        kappa       0.36;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          987;           // Heat capacity
+        Hf          0.0;
+    }
+
     kineticTheoryCoeffs
     {
         e 0.9;
@@ -49,6 +76,32 @@ particles1
     }
     alphaMax    0.65;
 
+    type basic;
+    thermoType
+    {
+        equationOfState rhoConst;
+        thermo eConst;
+        transport constIso;
+    }
+    specie
+    {
+        molWeight 100;
+    }
+    equationOfState
+    {
+        rho0        1300;
+    }
+    transport
+    {
+        kappa       0.36;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          987;           // Heat capacity
+        Hf          0.0;
+    }
+
     kineticTheoryCoeffs
     {
         e 0.9;
@@ -66,6 +119,33 @@ gas
     constantDiameterCoeffs
     {
         d           0;
+    }
+
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;            // Heat capactiy ratio
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              1.81e-5;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          718;
+        Hf          0;
     }
 
     residualRho     1e-6;
