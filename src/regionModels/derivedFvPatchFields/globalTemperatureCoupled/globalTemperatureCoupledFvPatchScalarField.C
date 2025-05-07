@@ -60,32 +60,27 @@ Foam::globalTemperatureCoupledFvPatchScalarField::kappa
     (
         IOobject::groupName(physicalProperties::typeName, phase)
     );
-
-    if (mesh.foundObject<fluidThermo>(thermoName))
-    {
-        static word ttmName
+    const word ttmName
+    (
+        IOobject::groupName
         (
-            IOobject::groupName
-            (
-                thermophysicalTransportModel::typeName,
-                phase
-            )
-        );
+            thermophysicalTransportModel::typeName,
+            phase
+        )
+    );
+    if (mesh.foundObject<thermophysicalTransportModel>(ttmName))
+    {
+        const thermophysicalTransportModel& ttm =
+            mesh.lookupObject<thermophysicalTransportModel>(ttmName);
 
-        if (mesh.foundObject<thermophysicalTransportModel>(ttmName))
-        {
-            const thermophysicalTransportModel& ttm =
-                mesh.lookupObject<thermophysicalTransportModel>(ttmName);
+        return ttm.kappaEff(patchi);
+    }
+    else if (mesh.foundObject<fluidThermo>(thermoName))
+    {
+        const fluidThermo& thermo =
+            mesh.lookupObject<fluidThermo>(thermoName);
 
-            return ttm.kappaEff(patchi);
-        }
-        else
-        {
-            const fluidThermo& thermo =
-                mesh.lookupObject<fluidThermo>(thermoName);
-
-            return thermo.kappa().boundaryField()[patchi];
-        }
+        return thermo.kappa().boundaryField()[patchi];
     }
     else if (mesh.foundObject<solidThermo>(thermoName))
     {
@@ -93,19 +88,6 @@ Foam::globalTemperatureCoupledFvPatchScalarField::kappa
             mesh.lookupObject<solidThermo>(thermoName);
 
         return thermo.kappa().boundaryField()[patchi];
-    }
-    else if
-    (
-        mesh.foundObject<volScalarField>
-        (
-            IOobject::groupName("kappa", phase)
-        )
-    )
-    {
-        return Tp.patch().lookupPatchField<volScalarField, scalar>
-        (
-            IOobject::groupName("kappa", phase)
-        );
     }
     else
     {
