@@ -24,8 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fvMeshPolyRefiner.H"
-#include "prismatic2DRefinement.H"
-#include "polyhedralRefinement.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -33,7 +31,6 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshPolyRefiner, 0);
-    addToRunTimeSelectionTable(fvMeshRefiner, fvMeshPolyRefiner, fvMesh);
     addToRunTimeSelectionTable(fvMeshTopoChanger, fvMeshPolyRefiner, fvMesh);
 }
 
@@ -45,20 +42,13 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner
     const dictionary& dict
 )
 :
-    fvMeshRefiner(mesh, dict)
-{
-    // Added refinement history decomposition constraint to keep all
-    // cells with the same parent together
-    // {
-    //     dictionary refinementHistoryDict("refinementHistory");
-    //     refinementHistoryDict.add
-    //     (
-    //         "type",
-    //         polyRefinementConstraint::typeName
-    //     );
-    //     balancer_.addConstraint("refinementHistory", refinementHistoryDict);
-    // }
-}
+    fvMeshRefiner
+    (
+        mesh,
+        dict,
+        polyMeshPolyRefiner::typeName
+    )
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

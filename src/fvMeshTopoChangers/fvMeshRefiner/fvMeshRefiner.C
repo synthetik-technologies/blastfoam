@@ -37,7 +37,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshRefiner, 0);
-    defineRunTimeSelectionTable(fvMeshRefiner, fvMesh);
+    addToRunTimeSelectionTable(fvMeshTopoChanger, fvMeshRefiner, fvMesh);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -48,15 +48,25 @@ Foam::fvMeshRefiner::fvMeshRefiner
     const dictionary& dict
 )
 :
+    fvMeshRefiner(mesh, dict, dict.lookup<word>("refiner"))
+{}
+
+
+Foam::fvMeshRefiner::fvMeshRefiner
+(
+    fvMesh& mesh,
+    const dictionary& dict,
+    const word& refinerType
+)
+:
     fvMeshTopoChanger(mesh),
 
     error_(errorEstimator::New(mesh, dict)),
 
-    refiner_(polyMeshRefiner::New(mesh, dict, true)),
+    refiner_(polyMeshRefiner::New(refinerType, mesh, dict, true)),
 
     dumpLevel_(dict.lookupOrDefault("dumpLevel", true))
 {}
-
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 

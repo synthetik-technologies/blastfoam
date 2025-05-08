@@ -72,16 +72,6 @@ public:
     TypeName("fvMeshRefiner");
 
 
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            fvMeshRefiner,
-            fvMesh,
-            (fvMesh& mesh, const dictionary dict),
-            (mesh, dict)
-        );
-
-
     // Constructors
 
         //- Construct from mesh and dictionary
@@ -91,20 +81,16 @@ public:
             const dictionary& dict
         );
 
-        //- Disallow default bitwise copy construction
-        fvMeshRefiner(const fvMeshRefiner&) = delete;
-
-
-    // Selectors
-
-        //- Select, construct and return the fvMeshRefiner
-        static autoPtr<fvMeshRefiner> New(fvMesh&);
-
-        static autoPtr<fvMeshRefiner> New
+        //- Construct from mesh, dictionary, and refiner type
+        fvMeshRefiner
         (
             fvMesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            const word& refinerType
         );
+
+        //- Disallow default bitwise copy construction
+        fvMeshRefiner(const fvMeshRefiner&) = delete;
 
 
     //- Destructor

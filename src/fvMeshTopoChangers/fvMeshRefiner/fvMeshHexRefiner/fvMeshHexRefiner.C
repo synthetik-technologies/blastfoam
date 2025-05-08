@@ -36,7 +36,6 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshHexRefiner, 0);
-    addToRunTimeSelectionTable(fvMeshRefiner, fvMeshHexRefiner, fvMesh);
     addToRunTimeSelectionTable(fvMeshTopoChanger, fvMeshHexRefiner, fvMesh);
 
 }
@@ -49,7 +48,12 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner
     const dictionary& dict
 )
 :
-    fvMeshRefiner(mesh, dict)
+    fvMeshRefiner
+    (
+        mesh,
+        dict,
+        polyMeshHexRefiner::typeName
+    )
 {}
 
 

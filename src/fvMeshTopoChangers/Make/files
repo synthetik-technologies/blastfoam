@@ -1,6 +1,5 @@
 # fvMesh refinement
 fvMeshRefiner/fvMeshRefiner.C
-fvMeshRefiner/fvMeshRefinerNew.C
 fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
 fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
 fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C

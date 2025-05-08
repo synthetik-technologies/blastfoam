@@ -48,7 +48,12 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner
     const dictionary& dict
 )
 :
-    fvMeshRefiner(mesh, dict)
+    fvMeshRefiner
+    (
+        mesh,
+        dict,
+        polyMeshDirectionalRefiner::typeName
+    )
 {}
 
 

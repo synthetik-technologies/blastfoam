@@ -81,6 +81,7 @@ Description
 #define fvMeshHexRefiner_H
 
 #include "fvMeshRefiner.H"
+#include "polyMeshHexRefiner.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
