@@ -38,8 +38,8 @@ Foam::hTabulatedThermo<EquationOfState>::hTabulatedThermo
 :
     EquationOfState(dict),
     hTable_(dict.subDict("thermodynamics"), "rho", "T", "h"),
-    Tlow_(min(hTable_.x())),
-    Thigh_(max(hTable_.x())),
+    Tlow_(min(hTable_.y())),
+    Thigh_(max(hTable_.y())),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf"))
 {}
 

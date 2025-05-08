@@ -38,8 +38,8 @@ inline Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
 :
     EquationOfState(st),
     eTable_(eTable),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x())),
+    Tlow_(min(eTable_.y())),
+    Thigh_(max(eTable_.y())),
     Hf_(Hf)
 {}
 
