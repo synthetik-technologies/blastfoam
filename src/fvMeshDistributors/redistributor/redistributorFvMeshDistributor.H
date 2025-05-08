@@ -132,14 +132,11 @@ protected:
 
     // Protected Member Functions
 
-        //- Read the projection parameters from dictionary
-        void readDict();
-
         //- Set the decomposer
         decompositionMethod& decomp();
 
         //- Distribute the mesh and mesh data
-        void distribute(const labelList& distribution);
+        void distribute(const labelList& distribution, const bool dist);
 
         //- Was the given constraint type found?
         bool constraintFound(const word& type) const;
@@ -157,7 +154,7 @@ public:
     // Constructors
 
         //- Construct from fvMesh
-        explicit redistributor(fvMesh& mesh);
+        explicit redistributor(fvMesh& mesh, const bool read = true);
 
         //- Disallow default bitwise copy construction
         redistributor(const redistributor&) = delete;
@@ -169,8 +166,17 @@ public:
 
     // Member Functions
 
+        //- Force the distributor to balance
+        void setForce(const bool f)
+        {
+            force_ = f;
+        }
+
         //- Distribute the mesh
         virtual bool update();
+
+        //- force distribute the mesh, optional call to fvMesh::distribute
+        bool forceUpdate(const bool dist);
 
         //- Update corresponding to the given map
         virtual void topoChange(const polyTopoChangeMap&);
@@ -181,6 +187,14 @@ public:
         //- Update corresponding to the given distribution map
         virtual void distribute(const polyDistributionMap&);
 
+
+    // Reading
+
+        //- Read the projection parameters from dictionary
+        void readDict();
+
+        //- Read the projection parameters from dictionary
+        void readDict(const dictionary& dict);
 
     // Writing
 

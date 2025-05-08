@@ -250,13 +250,25 @@ void Foam::fvMeshDistributors::redistributor::preserveBaffles
 
 void Foam::fvMeshDistributors::redistributor::readDict()
 {
+    if (Pstream::parRun())
+    {
+        readDict(this->dict());
+        return;
+    }
+}
+
+
+void Foam::fvMeshDistributors::redistributor::readDict
+(
+    const dictionary& balanceDict
+)
+{
     if (!Pstream::parRun())
     {
         balance_ = false;
         return;
     }
 
-    const dictionary& balanceDict = this->dict();
     balance_ = balanceDict.lookupOrDefault("balance", true);
 
     if (!balance_)
@@ -348,7 +360,8 @@ Foam::decompositionMethod& Foam::fvMeshDistributors::redistributor::decomp()
 
 void Foam::fvMeshDistributors::redistributor::distribute
 (
-    const labelList& distribution
+    const labelList& distribution,
+    const bool dist
 )
 {
     fvMesh& mesh = this->mesh();
@@ -362,14 +375,21 @@ void Foam::fvMeshDistributors::redistributor::distribute
         distributor.distribute(distribution)
     );
 
-    // Distribute the mesh data
-    mesh.distribute(map);
+    if (dist)
+    {
+        // Distribute the mesh data
+        mesh.distribute(map);
+    }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fvMeshDistributors::redistributor::redistributor(fvMesh& mesh)
+Foam::fvMeshDistributors::redistributor::redistributor
+(
+    fvMesh& mesh,
+    const bool read
+)
 :
     fvMeshDistributor(mesh),
     decompositionDict_(decompositionMethod::decomposeParDict(mesh.time())),
@@ -400,7 +420,7 @@ Foam::fvMeshDistributors::redistributor::redistributor(fvMesh& mesh)
         {
             IOdictionary dict(dictHeader);
 
-            if (dict.found("distributor"))
+            if (dict.isDict("distributor"))
             {
                 const dictionary& distributorDict = dict.subDict("distributor");
 
@@ -444,7 +464,11 @@ Foam::fvMeshDistributors::redistributor::redistributor(fvMesh& mesh)
         );
         addConstraint("refinementHistory", refinementHistoryDict);
     }
-    readDict();
+
+    if (read)
+    {
+        readDict();
+    }
 }
 
 
@@ -537,12 +561,84 @@ bool Foam::fvMeshDistributors::redistributor::update()
 
         Info<< "Redistributing mesh with new imbalance = "
             << 100.0*maxDevNew << endl;
-        distribute(distribution);
+        distribute(distribution, true);
 
         return true;
     }
 
     return false;
+}
+
+
+bool Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
+{
+    const fvMesh& mesh = this->mesh();
+
+    const scalar idealNCells =
+        mesh.globalData().nTotalCells()/Pstream::nProcs();
+
+    const scalar imbalance = mag(1 - mesh.nCells()/idealNCells);
+
+    const scalar globalImbalance = returnReduce(imbalance, maxOp<scalar>());
+
+    Info<<"Maximum imbalance = " << 100*globalImbalance << " %" << endl;
+
+    if (debug)
+    {
+        Pout<< "Current local imbalance = "
+            << 100.0*imbalance << "%, "
+            << "nCells = " << mesh.nCells()
+            << endl;
+    }
+
+
+    if (globalImbalance < maxImbalance_)
+    {
+        DebugInfo<< "Current imbalance under limit" << endl;
+        return false;
+    }
+
+    // Create new decomposition distribution
+    const labelList distribution
+    (
+        decomp().decompose(mesh, scalarField())
+    );
+
+    // Check if distribution will improve anything
+    labelList procLoadNew(Pstream::nProcs(), 0);
+    forAll(distribution, celli)
+    {
+        procLoadNew[distribution[celli]]++;
+    }
+    reduce(procLoadNew, sumOp<labelList>());
+    if (min(procLoadNew) == 0)
+    {
+        DebugInfo
+            << "New distribtion results in a load of 0. Skipping" << endl;
+        return false;
+    }
+    scalar averageLoadNew
+    (
+        scalar(sum(procLoadNew))/scalar(Pstream::nProcs())
+    );
+    scalar maxDevNew(max(mag(procLoadNew - averageLoadNew))/averageLoadNew);
+
+    if (maxDevNew > maxImbalance_*0.99)
+    {
+        Info
+            << "    Not balancing because the new distribution does" << nl
+            << "    not improve the load. Skipping" << nl
+            << "    old imbalance: " << maxImbalance_ << nl
+            << "    new imbalance: " << maxDevNew << nl
+            << endl;
+        return false;
+    }
+
+    Info<< "Redistributing mesh with new imbalance = "
+        << 100.0*maxDevNew << endl;
+    distribute(distribution, dist);
+
+    return true;
 }
 
 
