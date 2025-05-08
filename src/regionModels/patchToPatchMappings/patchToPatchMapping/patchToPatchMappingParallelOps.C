@@ -53,7 +53,6 @@ Foam::labelListList Foam::patchToPatchMapping::sendTgtPatch
     Pstream::scatterList(srcProcBbs);
 
     List<DynamicList<label>> overlappingProcFaces(Pstream::nProcs());
-    Pout<<tgtPatch.points().size()<<" "<<pointNormals.size()<<endl;
     forAll(tgtPatch, tgtFacei)
     {
         const treeBoundBox tgtBb
