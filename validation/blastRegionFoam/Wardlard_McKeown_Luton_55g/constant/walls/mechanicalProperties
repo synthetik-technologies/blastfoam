@@ -1,0 +1,40 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant/walls";
+    object      mechanicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+planeStress off;
+
+mechanical
+(
+    aluminum
+    {
+        // Aluminum 5086-H116
+        type            nonLinearPowerLawPlastic;
+
+        // Aluminum 5086-H116
+        E               71e9;
+        nu              0.33;
+        sigmaY          207e6;  // Yield strength
+        sigmaUT         290e6;  // Ultimate tensile strength
+        elongation      0.12;   // Elongation
+
+        // Strain hardening exponent and strength coefficient calculated using
+        // Ramberg-Osgood equations
+
+        solvePressureEqn no;
+    }
+);
+
+// ************************************************************************* //
