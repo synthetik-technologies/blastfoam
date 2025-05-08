@@ -77,7 +77,8 @@ Foam::pointVectorField Foam::blastPoints0MotionSolver::readPoints0
             IOobject
             (
                 "points",
-                mesh.time().constant(),
+                mesh.facesInstance(),
+                polyMesh::meshSubDir,
                 mesh,
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
