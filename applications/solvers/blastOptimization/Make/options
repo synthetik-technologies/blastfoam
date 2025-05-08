@@ -1,8 +1,6 @@
 EXE_INC = \
-    -DFULLDEBUG -g -O0 \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I./errorTypes/lnInclude \
-    -I./optSolvers/lnInclude \
     -Ientries
 
 EXE_LIBS = \
