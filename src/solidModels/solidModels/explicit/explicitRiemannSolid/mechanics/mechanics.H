@@ -45,9 +45,6 @@ namespace Foam
 {
 
 class mechanics
-:
-    public regIOobject,
-    public TopoChangeableMeshObject<fvMesh>
 {
     // Private data
 
@@ -179,19 +176,7 @@ public:
             );
 
             //- Correct deformation fields
-            void correctDeformation(const bool useOldTime = false);
-
-            virtual bool movePoints();
-
-            virtual void distribute(const polyDistributionMap&);
-            virtual void topoChange(const polyTopoChangeMap&);
-            virtual void mapMesh(const polyMeshMap&);
-
-            virtual bool writeData(Ostream&) const
-            {
-                return true;
-            }
-
+            void correctDeformation();
 };
 
 

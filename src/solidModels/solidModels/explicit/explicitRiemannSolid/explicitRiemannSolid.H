@@ -64,7 +64,6 @@ Also see:
 #include "operations.H"
 #include "mechanics.H"
 #include "gradientSchemes.H"
-#include "interpolationSchemes.H"
 #include "angularMomentum.H"
 #include "dynamicRelaxation.H"
 
@@ -143,12 +142,6 @@ class explicitRiemannSolid
 
         //- Mechanics
         mechanics mech_;
-
-        //- Interpolation schemes
-        interpolationSchemes interpSchemes_;
-
-        //- Gradients
-        gradientSchemes gradSchemes_;
 
         //- Angular momentum
         angularMomentum am_;

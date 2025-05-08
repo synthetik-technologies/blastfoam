@@ -43,16 +43,6 @@ mechanics::mechanics
     const operations& ops
 )
 :
-    regIOobject
-    (
-        IOobject
-        (
-            typeName,
-            F.mesh().time().constant(),
-            F.mesh()
-        )
-    ),
-    TopoChangeableMeshObject<fvMesh>(*this),
     mesh_(F.mesh()),
 
     ops_(ops),
@@ -165,42 +155,22 @@ mechanics::~mechanics()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
-bool mechanics::movePoints()
-{
-    N_ = mesh_.Sf()/mesh_.magSf();
-    return true;
-}
-
-
-void mechanics::distribute(const polyDistributionMap&)
-{
-    N_ = mesh_.Sf()/mesh_.magSf();
-}
-
-
-void mechanics::topoChange(const polyTopoChangeMap&)
-{
-    N_ = mesh_.Sf()/mesh_.magSf();
-}
-
-
-void mechanics::mapMesh(const polyMeshMap&)
-{
-    N_ = mesh_.Sf()/mesh_.magSf();
-}
-
-
 void mechanics::correctN()
 {
+    if (mesh_.changing())
+    {
+        N_ = mesh_.Sf()/mesh_.magSf();
+    }
+
     surfaceTensorField invFf(fvc::interpolate(invF_));
+
     n_ = (invFf.T() & N_)/mag(invFf.T() & N_);
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-void mechanics::correctDeformation(const bool useOldTime)
+void mechanics::correctDeformation()
 {
     // Spatial normals
     correctN();

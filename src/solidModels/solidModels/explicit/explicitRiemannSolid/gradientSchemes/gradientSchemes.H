@@ -58,12 +58,6 @@ class gradientSchemes
 {
     // Private data
 
-        //- Mesh
-        const fvMesh& mesh_;
-
-        //- Reference to displacement field
-        const volVectorField& D_;
-
         //- Operations
         const operations ops_;
 
@@ -72,6 +66,10 @@ class gradientSchemes
 
         //- Inverse of local distance matrix
         mutable tensorField* AinvLocalPtr_;
+
+        //- Inverse of local distance matrix correction (Fixed value)
+        mutable tensorField* AinvLocalFixedPtr_;
+
 
 
         //- Return the scalar limiter
@@ -284,6 +282,9 @@ private:
 
     // Private member functions
 
+        // Calculate loacl distanct matrices
+        void calcDistanceMatrixLocal() const;
+
         //- Disallow default bitwise copy construct
         gradientSchemes(const gradientSchemes&);
 
@@ -299,7 +300,7 @@ public:
     // Constructors
 
         //- Construct from mesh
-        gradientSchemes(const volVectorField&);
+        gradientSchemes(const fvMesh& mesh);
 
 
     // Destructor
@@ -315,6 +316,9 @@ public:
 
             //- Inverse distance matrix for local gradient
             const tensorField& distanceMatrixLocal() const;
+
+            //- Inverse distance matrix for local gradient (fixed value)
+            const tensorField& distanceMatrixLocalFixed() const;
 
             //- Least square gradient for a volScalarField
             tmp<volVectorField> gradient

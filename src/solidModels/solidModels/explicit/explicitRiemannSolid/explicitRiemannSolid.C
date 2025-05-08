@@ -247,10 +247,11 @@ void explicitRiemannSolid::updateFluxes()
     // Filter linear momentum
     if (filter_)
     {
+        const gradientSchemes& gradSchemes = gradientSchemes::New(mesh());
         volVectorField rhoUAvg(fvc::surfVolInterpolate(rhoUC_));
         volTensorField rhoUGradLocal
         (
-            gradSchemes_.localGradient(rhoUAvg, rhoUC_, pointRhoU_)
+            gradSchemes.localGradient(rhoUAvg, rhoUC_, pointRhoU_)
         );
         fvc::volPointInterpolate(rhoUAvg, rhoUGradLocal, pointRhoU_, true);
         pointRhoU_.correctBoundaryConditions();
@@ -387,8 +388,6 @@ explicitRiemannSolid::explicitRiemannSolid
         dimensionedVector("0", dimensionSet(1, -1, -2, 0, 0, 0, 0), Zero)
     ),
     mech_(F_, ops_),
-    interpSchemes_(mesh),
-    gradSchemes_(DD_),
     am_(mesh, *this),
     relaxation_(this->solidModelDict().optionalSubDict("relaxation")),
     P_
