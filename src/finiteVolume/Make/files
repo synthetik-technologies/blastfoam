@@ -49,6 +49,7 @@ finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
 finiteVolume/gradSchemes/localLeastSquaresGrad/localLeastSquaresVectors.C
 finiteVolume/gradSchemes/localLeastSquaresGrad/localLeastSquaresGrads.C
+finiteVolume/limitedGradSchemes/newCellLimitedGrads.C
 finiteVolume/skewCorrectedSnGrad/skewCorrectedSnGrads.C
 finiteVolume/logExpVolFields/eig3/eig3.C
 finiteVolume/logExpVolFields/eig3Field.C
