@@ -148,7 +148,8 @@ public:
         //- Construct from mesh
         explicit polyMeshHexRefiner
         (
-            polyMesh& mesh
+            polyMesh& mesh,
+            const bool read = true
         );
 
         //- Construct from mesh and dictionary

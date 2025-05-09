@@ -569,11 +569,15 @@ void Foam::polyMeshHexRefiner::distribute
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::polyMeshHexRefiner::polyMeshHexRefiner(polyMesh& mesh)
+Foam::polyMeshHexRefiner::polyMeshHexRefiner
+(
+    polyMesh& mesh,
+    const bool read
+)
 :
     polyMeshRefiner(mesh),
 
-    meshCutter_(hexRef::New(mesh_)),
+    meshCutter_(hexRef::New(mesh_, read)),
 
     nProtected_(0),
     protectedCell_(mesh_.nCells(), 0),
