@@ -23,10 +23,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#define curMotionTimeIndex_ curMotionTimeIndex_; \
+// Hack for figuring out if the old points are actually allocated
+// since topoChange and distribute delete this data, no other way to
+// know if it exists
+#define storeOldCellCentres_ storeOldCellCentres_; \
 public: \
     bool hasOldPoints() const {return oldPointsPtr_.valid();} \
-protected:
+private:
 
 #include "polyMesh.H"
 
