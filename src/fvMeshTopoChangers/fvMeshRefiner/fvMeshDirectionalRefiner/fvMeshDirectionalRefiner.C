@@ -36,7 +36,6 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fvMeshDirectionalRefiner, 0);
-    addToRunTimeSelectionTable(fvMeshRefiner, fvMeshDirectionalRefiner, fvMesh);
     addToRunTimeSelectionTable(fvMeshTopoChanger, fvMeshDirectionalRefiner, fvMesh);
 }
 
