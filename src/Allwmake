@@ -9,6 +9,7 @@ wmake $targetType finiteVolume
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
+wmake $targetType MomentumTransportModels
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh
 
