@@ -36,4 +36,5 @@ LIB_LIBS = \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastThermodynamics \
-    -lblastRadiationModels
+    -lblastRadiationModels \
+    -lblastCompressibleMomentumTransportModels

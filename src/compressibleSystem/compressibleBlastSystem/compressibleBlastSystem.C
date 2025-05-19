@@ -146,6 +146,15 @@ void Foam::compressibleBlastSystem::solve()
 
 void Foam::compressibleBlastSystem::postUpdate()
 {
+    if (turbulence_.valid())
+    {
+        turbulence_->predict();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->predict();
+    }
+
     if (needSolve(U_.name()) || turbulence_.valid() || dragSource_.valid())
     {
         // Solve momentum

@@ -400,6 +400,15 @@ void Foam::phaseModel::solve()
 
 void Foam::phaseModel::postUpdate()
 {
+    if (turbulence_.valid())
+    {
+        turbulence_->predict();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->predict();
+    }
+
     dimensionedScalar smallAlphaRho(residualAlphaRho());
     if (needSolve(U_.name()) || turbulence_.valid())
     {
@@ -462,6 +471,10 @@ void Foam::phaseModel::postUpdate()
     if (turbulence_.valid())
     {
         turbulence_->correct();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->correct();
     }
 
     thermo().postUpdate();
