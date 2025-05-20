@@ -587,34 +587,6 @@ public:
             //- Return the laminar dynamic viscosity for patch
             virtual tmp<scalarField> mu(const label patchi) const = 0;
 
-            //- Thermal diffusivity for temperature of mixture [J/m/s/K]
-            virtual tmp<volScalarField> kappa() const = 0;
-
-            //- Thermal diffusivity for temperature of mixture
-            //  for patch [J/m/s/K]
-            virtual tmp<scalarField> kappa(const label patchi) const = 0;
-
-            //- Thermal diffusivity for temperature of mixture
-            //  for cell [J/m/s/K]
-            virtual scalar cellkappa(const label celli) const = 0;
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [J/m/s/K]
-            virtual tmp<volScalarField> kappaEff() const = 0;
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [J/m/s/K]
-            virtual tmp<scalarField> kappaEff(const label patchi) const = 0;
-
-            //- Return the specific heat capacity at constant pressure
-            virtual tmp<volScalarField> Cp() const = 0;
-
-            //- Return the specific heat capacity at constant volume
-            virtual tmp<volScalarField> Cv() const = 0;
-
-            //- Return the specific heat capacity at constant volume
-            virtual scalar cellCv(const label celli) const = 0;
-
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const = 0;
 

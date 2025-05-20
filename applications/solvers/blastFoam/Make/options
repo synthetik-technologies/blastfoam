@@ -24,7 +24,6 @@ EXE_LIBS = \
     -L$(BLAST_LIBBIN) \
     -lblastNumerics \
     -lblastThermodynamics \
-    -lblastDynamicMesh \
     -lcompressibleSystems \
     -lblastFunctionObjects \
     -lblastFvMeshTopoChangers \

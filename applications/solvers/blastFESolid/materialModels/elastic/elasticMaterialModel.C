@@ -187,6 +187,44 @@ Foam::scalar Foam::materialModels::elastic::calcPiola
     return vp();
 }
 
+Foam::scalar Foam::materialModels::elastic::vp
+(
+    const label elemi,
+    const label rulei
+) const
+{
+    return sqrt(this->elasticModulus(elemi, rulei)/rho_.value());
+}
+
+
+Foam::scalar Foam::materialModels::elastic::bulkModulus
+(
+    const label elemi,
+    const label rulei
+) const
+{
+    return K_.value();
+}
+
+
+Foam::scalar Foam::materialModels::elastic::elasticModulus
+(
+    const label elemi,
+    const label rulei
+) const
+{
+    return K_.value() + 4.0/3.0*mu_.value();
+}
+
+
+Foam::scalar Foam::materialModels::elastic::shearModulus
+(
+    const label elemi,
+    const label rulei
+) const
+{
+    return mu_.value();
+}
 
 // ************************************************************************* //
 

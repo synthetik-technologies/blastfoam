@@ -44,10 +44,11 @@ Description
 
 namespace Foam
 {
-
+namespace fvMeshTopoChangers
+{
 
 /*---------------------------------------------------------------------------*\
-                     Class fvMeshRefiner Declaration
+                Class fvMeshTopoChangers::fvMeshRefiner Declaration
 \*---------------------------------------------------------------------------*/
 
 class fvMeshRefiner
@@ -128,13 +129,13 @@ public:
             //- Return the number of buffer layers
             inline label nRefinementBufferLayers() const
             {
-                return refiner_->nRefinementBufferLayers_;
+                return refiner_->nRefinementBufferLayers();
             }
 
             //- Return the number of buffer layers
             inline label nUnrefinementBufferLayers() const
             {
-                return refiner_->nUnrefinementBufferLayers_;
+                return refiner_->nUnrefinementBufferLayers();
             }
 
             //- Force refinement/unrefinement
@@ -216,6 +217,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace fvMeshTopoChangers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

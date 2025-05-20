@@ -425,7 +425,8 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
 
         volScalarField Xie
         (
-            1.0/(alphaRho1*phase1.Cv()) + 1.0/(alphaRho2*phase2.Cv())
+            1.0/(alphaRho1*phase1.thermo().Cv())
+          + 1.0/(alphaRho2*phase2.thermo().Cv())
         );
 
         volScalarField deltaE
@@ -523,7 +524,7 @@ void Foam::phaseSystem::calcMixtureVariables()
         sumAlpha += phase;
         sumAlphaRho += phase.alphaRho();
         p_ += phase*phase.p();
-        sumAlphaRhoKappa += phase.alphaRho()*phase.kappa();
+        sumAlphaRhoKappa += phase.alphaRho()*phase.thermo().kappa();
         if (PIPtr_.valid())
         {
             PIPtr_() +=

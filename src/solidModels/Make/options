@@ -16,7 +16,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/regionModels/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
+    -I$(BLAST_DIR)/src/polyTopoChange/lnInclude \
     -I$(BLAST_DIR)/src/fvMeshTopoChangers/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
 
@@ -29,6 +29,6 @@ LIB_LIBS = \
     -lpolyTopoChange \
     -L$(BLAST_LIBBIN) \
     -lblastRegionModels \
-    -lblastDynamicMesh \
+    -lblastPolyTopoChange \
     -lblastFvMeshTopoChangers \
     -lerrorEstimators

@@ -5,7 +5,7 @@ EXE_INC = \
     -I$(LIB_SRC)/parallel/decompose/decompositionMethods/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude
+    -I$(BLAST_DIR)/src/polyTopoChange/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \
@@ -13,4 +13,4 @@ LIB_LIBS = \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lerrorEstimators \
-    -lblastDynamicMesh
+    -lblastPolyTopoChange

@@ -213,58 +213,6 @@ public:
             return thermoPtr_->mu().boundaryField()[patchi];
         }
 
-        //- Thermal diffusivity for temperature of mixture [J/m/s/K]
-        virtual tmp<volScalarField> kappa() const
-        {
-            return thermoPtr_->kappa();
-        }
-
-        //- Thermal diffusivity for temperature of mixture
-        //  for patch [J/m/s/K]
-        virtual tmp<scalarField> kappa(const label patchi) const
-        {
-            return thermoPtr_->kappa().boundaryField()[patchi];
-        }
-
-        //- Thermal diffusivity for temperature of mixture
-        //  for cell [J/m/s/K]
-        virtual scalar cellkappa(const label celli) const
-        {
-            return thermoPtr_->kappa()[celli];
-        }
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture [J/m/s/K]
-        virtual tmp<volScalarField> kappaEff() const
-        {
-            return thermophysicalTransport_->kappaEff();
-        }
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture for patch [J/m/s/K]
-        virtual tmp<scalarField> kappaEff(const label patchi) const
-        {
-            return thermophysicalTransport_->kappaEff(patchi);
-        }
-
-        //- Return the specific heat capacity at constant pressure
-        virtual tmp<volScalarField> Cp() const
-        {
-            return thermoPtr_->Cp();
-        }
-
-        //- Return the specific heat capacity at constant volume
-        virtual tmp<volScalarField> Cv() const
-        {
-            return thermoPtr_->Cv();
-        }
-
-        //- Return the specific heat capacity at constant volume
-        virtual scalar cellCv(const label celli) const
-        {
-            return thermoPtr_->cellCv(T_[celli], celli);
-        }
-
         //- Return the speed of sound
         virtual tmp<volScalarField> speedOfSound() const
         {

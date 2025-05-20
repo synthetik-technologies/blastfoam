@@ -313,56 +313,10 @@ public:
                    *rho_.boundaryField()[patchi];
             }
 
-            //- Thermal diffusivity for temperature of mixture [J/m/s/K]
-            virtual tmp<volScalarField> kappa() const
-            {
-                return this->kappa_;
-            }
-
-            //- Thermal diffusivity for temperature of mixture
-            //  for patch [J/m/s/K]
-            virtual tmp<scalarField> kappa(const label patchi) const
-            {
-                return this->kappa_.boundaryField()[patchi];
-            }
-
-            //- Thermal diffusivity for temperature of mixture
-            //  for cell [J/m/s/K]
-            virtual scalar cellkappa(const label celli) const
-            {
-                return this->kappa_[celli];
-            }
-
             //- Return surface temperature
             virtual tmp<volScalarField> Ts() const
             {
                 return surfTModel_->Ts();
-            }
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [J/m/s/K]
-            virtual tmp<volScalarField> kappaEff() const
-            {
-                return thermophysicalTransport_->kappaEff();
-            }
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [J/m/s/K]
-            virtual tmp<scalarField> kappaEff(const label patchi) const
-            {
-                return thermophysicalTransport_->kappaEff(patchi);
-            }
-
-            //- Return the specific heat capacity at constant pressure
-            virtual tmp<volScalarField> Cp() const;
-
-            //- Return the specific heat capacity at constant volume
-            virtual tmp<volScalarField> Cv() const;
-
-            //- Return the specific heat capacity at constant volume
-            virtual scalar cellCv(const label celli) const
-            {
-                return thermoPtr_->cellCv(T_[celli], celli);
             }
 
             //- Return the speed of sound

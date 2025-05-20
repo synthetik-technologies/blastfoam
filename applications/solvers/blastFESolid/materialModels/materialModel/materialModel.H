@@ -81,6 +81,17 @@ protected:
     //- Name of the material
     word name_;
 
+    //- Include viscous pressure
+    bool viscousPressure_;
+
+    //- Linear bulk viscosity coefficient
+    //  Defaults to 0.06, as in Abaqus
+    dimensionedScalar linearBulkViscosityCoeff_;
+
+    //- Quadratic bulk viscosity coefficient
+    //  Defaults to 1.2, as in Abaqus
+    dimensionedScalar quadraticBulkViscosityCoeff_;
+
     //- Plane stress
     bool planeStress_;
 
@@ -202,6 +213,7 @@ public:
 
             //- Return elements that use this material
             virtual const labelList& elements() const;
+
 
 
         // Evaluation
@@ -326,11 +338,45 @@ public:
             (
                 UList<vector>& f,
                 UList<symmTensor>& sigma,
-                const label elemi
+                const label elemi,
+                const scalar L
             );
 
             //- Return base wavespeed
             virtual scalar vp() const = 0;
+
+            //- Return wavespeed at a given element and integration point
+            virtual scalar vp(const label elemi, const  label rulei) const = 0;
+
+            //- Return the bulk modulus at a given element and integration point
+            virtual scalar bulkModulus
+            (
+                const label elemi,
+                const label rulei
+            ) const = 0;
+
+            //- Return the elastic modulus at a given element and integration point
+            virtual scalar elasticModulus
+            (
+                const label elemi,
+                const label rulei
+            ) const = 0;
+
+            //- Return the shear modulus at a given element and integration point
+            virtual scalar shearModulus
+            (
+                const label elemi,
+                const label rulei
+            ) const = 0;
+
+            //- Return bulk viscosity force
+            virtual scalar viscousPressure
+            (
+                const scalar vp,
+                const scalar L,
+                const label elemi,
+                const label rulei
+            ) const;
 
 
 
@@ -367,6 +413,14 @@ public:
         (
             const scalar E, const scalar nu,
             const bool ps
+        );
+
+        //- Return eigenvalues and eigenvectors given deformation
+        static void eigenStructure
+        (
+            const tensor& Cf,
+            vector& eigenVal,
+            tensor& eigenVec
         );
 
         virtual void write() const

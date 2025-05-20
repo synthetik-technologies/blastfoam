@@ -11,7 +11,7 @@ wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
 wmake $targetType MomentumTransportModels
 wmake $targetType compressibleSystem
-wmake $targetType dynamicMesh
+wmake $targetType polyTopoChange
 
 wmake $targetType functionObjects
 

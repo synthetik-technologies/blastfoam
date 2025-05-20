@@ -45,8 +45,8 @@ vertices
 
 );
 
-nr 2;
-nL 40;
+nr 5;
+nL 100;
 blocks
 (
     hex (0 1 4 3 7 8 11 10) ($nr $nr $nL) simpleGrading (1 1 1)

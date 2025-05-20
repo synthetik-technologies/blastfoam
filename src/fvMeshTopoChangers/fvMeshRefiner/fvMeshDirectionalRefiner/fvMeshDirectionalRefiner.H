@@ -23,7 +23,7 @@ License
 
 
 Class
-    Foam::fvMeshDirectionalRefiner
+    Foam::fvMeshTopoChangers::direcionalRefiner
 
 SourceFiles
     fvMeshDirectionalRefiner.C
@@ -46,12 +46,14 @@ Description
 
 namespace Foam
 {
+namespace fvMeshTopoChangers
+{
 
 /*---------------------------------------------------------------------------*\
-                     Class fvMeshDirectionalRefiner Declaration
+            Class fvMeshTopoChangers::direcionalRefiner Declaration
 \*---------------------------------------------------------------------------*/
 
-class fvMeshDirectionalRefiner
+class direcionalRefiner
 :
     public fvMeshRefiner
 {
@@ -65,29 +67,30 @@ public:
     // Constructors
 
         //- Construct from fvMesh and dictionary
-        fvMeshDirectionalRefiner
+        direcionalRefiner
         (
             fvMesh& mesh,
             const dictionary& dict
         );
 
         //- Disallow default bitwise copy construction
-        fvMeshDirectionalRefiner(const fvMeshDirectionalRefiner&) = delete;
+        direcionalRefiner(const direcionalRefiner&) = delete;
 
 
     //- Destructor
-    virtual ~fvMeshDirectionalRefiner();
+    virtual ~direcionalRefiner();
 
 
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const fvMeshDirectionalRefiner&) = delete;
+        void operator=(const direcionalRefiner&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace fvMeshTopoChangers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

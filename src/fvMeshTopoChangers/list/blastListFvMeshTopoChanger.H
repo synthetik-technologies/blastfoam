@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2022
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2022 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -21,23 +21,22 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-
 Class
-    Foam::fvMeshTopoChangers::polyRefiner
-
-SourceFiles
-    fvMeshPolyRefiner.C
+    Foam::fvMeshTopoChangers::blastList
 
 Description
-    A fvMesh with run-time load balancing.
+    Sequence of mesh topology changes applied in order.
+
+SourceFiles
+    blastListFvMeshTopoChanger.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fvMeshPolyRefiner_H
-#define fvMeshPolyRefiner_H
+#ifndef blastListFvMeshTopoChanger_H
+#define blastListFvMeshTopoChanger_H
 
-#include "fvMeshRefiner.H"
-#include "polyMeshPolyRefiner.H"
+#include "fvMeshTopoChanger.H"
+#include "PtrDictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,41 +46,58 @@ namespace fvMeshTopoChangers
 {
 
 /*---------------------------------------------------------------------------*\
-                Class fvMeshTopoChangers::polyRefiner Declaration
+                   Class fvMeshTopoChangers::blastList Declaration
 \*---------------------------------------------------------------------------*/
 
-class polyRefiner
+class blastList
 :
-    public fvMeshRefiner
+    public fvMeshTopoChanger
 {
+    // Private Data
+
+        PtrDictionary<fvMeshTopoChanger> list_;
+
 
 public:
 
     //- Runtime type information
-    TypeName(polyMeshPolyRefiner::typeName_());
+    TypeName("blastList");
 
 
     // Constructors
 
         //- Construct from fvMesh and dictionary
-        polyRefiner
-        (
-            fvMesh& mesh,
-            const dictionary& dict
-        );
+        blastList(fvMesh& mesh, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
-        polyRefiner(const polyRefiner&) = delete;
+        blastList(const blastList&) = delete;
 
 
     //- Destructor
-    virtual ~polyRefiner();
+    virtual ~blastList();
 
+
+    // Member Functions
+
+        //- Update the mesh for both mesh motion and topology change
+        virtual bool update();
+
+        //- Update corresponding to the given map
+        virtual void topoChange(const polyTopoChangeMap&);
+
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap&);
+
+        //- Update corresponding to the given distribution map
+        virtual void distribute(const polyDistributionMap&);
+
+        //- Write the mover state
+        virtual bool write(const bool write = true) const;
 
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const polyRefiner&) = delete;
+        void operator=(const list&) = delete;
 };
 
 

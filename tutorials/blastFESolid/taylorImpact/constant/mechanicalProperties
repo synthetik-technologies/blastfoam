@@ -29,6 +29,8 @@ mechanical
         rho     8930;
 
         solvePressureEqn no;
+
+        viscousPressure yes;
     }
 );
 

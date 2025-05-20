@@ -11,4 +11,8 @@ burst/burstModels/field/fieldBurstModel.C
 burst/burstModels/impulse/impulseBurstModel.C
 burst/burstModels/pressure/pressureBurstModel.C
 burst/burstModels/pressureImpulse/pressureImpulseBurstModel.C
+
+# List (modified)
+list/blastListFvMeshTopoChanger.C
+
 LIB = $(BLAST_LIBBIN)/libblastFvMeshTopoChangers

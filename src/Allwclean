@@ -11,7 +11,7 @@ wclean $targetType radiationModels
 wclean $targetType MomentumTransportModels
 wclean $targetType compressibleSystem
 
-wclean $targetType dynamicMesh
+wclean $targetType polyTopoChange
 wclean $targetType errorEstimators
 wmake $targetType fvMotionSolvers
 wmake $targetType fvMeshTopoChangers

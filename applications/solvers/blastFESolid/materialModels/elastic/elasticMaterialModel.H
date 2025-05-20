@@ -156,6 +156,30 @@ public:
                 );
             }
 
+            //- Return wavespeed at a given element and integration point
+            virtual scalar vp(const label elemi, const  label rulei) const;
+
+            //- Return the bulk modulus at a given element and integration point
+            virtual scalar bulkModulus
+            (
+                const label elemi,
+                const label rulei
+            ) const;
+
+            //- Return the elastic modulus at a given element and integration point
+            virtual scalar elasticModulus
+            (
+                const label elemi,
+                const label rulei
+            ) const;
+
+            //- Return the shear modulus at a given element and integration point
+            virtual scalar shearModulus
+            (
+                const label elemi,
+                const label rulei
+            ) const;
+
 };
 
 

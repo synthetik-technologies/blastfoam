@@ -4,7 +4,7 @@ EXE_INC = \
     -I$(FOAM_SRC)/fileFormats/lnInclude \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/functionObjects/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -IfiniteElements/lnInclude \
     -IfeMesh1/lnInclude \
     -ImaterialModels/lnInclude
@@ -15,7 +15,7 @@ EXE_LIBS = \
     -lfileFormats \
     -L$(BLAST_LIBBIN) \
     -lblastNumerics \
-    -lblastDynamicMesh \
+    -lblastFiniteVolume \
     -lblastFunctionObjects \
     -lblastFiniteElements \
     -lblastFeMesh1 \

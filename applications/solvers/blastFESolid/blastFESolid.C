@@ -9,6 +9,7 @@
 #include "DynamicList.H"
 #include "materialModel.H"
 #include "wedgePolyPatch.H"
+#include "meshSizeObject.H"
 
 #include "valuePointPatchFields.H"
 #include "pointConstraints.H"
@@ -47,44 +48,52 @@ int main(int argc, char *argv[])
     const pointField& nodes = femesh.nodes();
 
     scalar minDx = great;
-    if (mesh.nGeometricD() == 3)
+    scalarField L(femesh.elements().size());
+    // if (mesh.nGeometricD() == 3)
     {
         forAll(femesh.elements(), ei)
         {
             const UIndirectList<vector> pts(nodes, femesh.elements()[ei]);
+            scalar  minDxi = great;
             forAll(pts, i)
-                for (label j = i+1; j < pts.size(); j++)
-                    minDx = min(mag(pts[i] - pts[j]), minDx);
-        }
-    }
-    else
-    {
-        forAll(mesh.boundaryMesh(), patchi)
-        {
-            if
-            (
-                isA<wedgePolyPatch>(mesh.boundaryMesh()[patchi])
-             || isA<emptyPolyPatch>(mesh.boundaryMesh()[patchi])
-            )
             {
-                forAll(mesh.boundaryMesh()[patchi], ei)
+                for (label j = i+1; j < pts.size(); j++)
                 {
-                    const UIndirectList<vector> pts
-                    (
-                        nodes,
-                        femesh.boundary()[patchi].elements()[ei]
-                    );
-                    forAll(pts, i)
-                    {
-                        for (label j = i+1; j < pts.size(); j++)
-                        {
-                            minDx = min(mag(pts[i] - pts[j]), minDx);
-                        }
-                    }
+                    minDxi = min(mag(pts[i] - pts[j]), minDxi);
                 }
             }
+            minDx = min(minDx, minDxi);
+            L[ei] = minDxi;
         }
     }
+    // else
+    // {
+    //     forAll(mesh.boundaryMesh(), patchi)
+    //     {
+    //         if
+    //         (
+    //             isA<wedgePolyPatch>(mesh.boundaryMesh()[patchi])
+    //          || isA<emptyPolyPatch>(mesh.boundaryMesh()[patchi])
+    //         )
+    //         {
+    //             forAll(mesh.boundaryMesh()[patchi], ei)
+    //             {
+    //                 const UIndirectList<vector> pts
+    //                 (
+    //                     nodes,
+    //                     femesh.boundary()[patchi].elements()[ei]
+    //                 );
+    //                 forAll(pts, i)
+    //                 {
+    //                     for (label j = i+1; j < pts.size(); j++)
+    //                     {
+    //                         minDx = min(mag(pts[i] - pts[j]), minDx);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     const scalar dampingCoeff = args.optionLookupOrDefault("d", -1.0);
     const label nDamp = args.optionLookupOrDefault("n", 1);
@@ -414,7 +423,7 @@ int main(int argc, char *argv[])
             material.preUpdate();
             forAll(femesh.elements(), ei)
             {
-                maxVp = max(maxVp, material.addForce(force, sigma, ei));
+                maxVp = max(maxVp, material.addForce(force, sigma, ei, L[ei]));
             }
             reduce(maxVp, maxOp<scalar>());
 

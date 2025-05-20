@@ -5,7 +5,7 @@ EXE_INC = \
     -I$(LIB_SRC)/generic/genericFvFields/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
+    -I$(BLAST_DIR)/src/polyTopoChange/lnInclude \
 
 EXE_LIBS = \
     -lsampling \
@@ -14,4 +14,4 @@ EXE_LIBS = \
     -lgenericFvFields \
     -L$(BLAST_LIBBIN) \
     -lerrorEstimators \
-    -lblastDynamicMesh
+    -lblastPolyTopoChange

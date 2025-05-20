@@ -23,6 +23,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#define list fvMeshRefiner
+#include "fvMesh.H"
+
 #include "fvMeshRefiner.H"
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
@@ -36,13 +39,16 @@ License
 
 namespace Foam
 {
+namespace fvMeshTopoChangers
+{
     defineTypeNameAndDebug(fvMeshRefiner, 0);
     addToRunTimeSelectionTable(fvMeshTopoChanger, fvMeshRefiner, fvMesh);
+}
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fvMeshRefiner::fvMeshRefiner
+Foam::fvMeshTopoChangers::fvMeshRefiner::fvMeshRefiner
 (
     fvMesh& mesh,
     const dictionary& dict
@@ -52,7 +58,7 @@ Foam::fvMeshRefiner::fvMeshRefiner
 {}
 
 
-Foam::fvMeshRefiner::fvMeshRefiner
+Foam::fvMeshTopoChangers::fvMeshRefiner::fvMeshRefiner
 (
     fvMesh& mesh,
     const dictionary& dict,
@@ -70,17 +76,17 @@ Foam::fvMeshRefiner::fvMeshRefiner
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::fvMeshRefiner::~fvMeshRefiner()
+Foam::fvMeshTopoChangers::fvMeshRefiner::~fvMeshRefiner()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::fvMeshRefiner::update()
+bool Foam::fvMeshTopoChangers::fvMeshRefiner::update()
 {
     error_->update();
     error_->error().correctBoundaryConditions();
-    return refine
+    bool updated = refine
     (
         error_->error(),
         error_->maxRefinement(),
@@ -88,10 +94,15 @@ bool Foam::fvMeshRefiner::update()
         great,
         -sqrt(small)
     );
+    if (updated)
+    {
+        mesh().moving_ = false;
+    }
+    return updated;
 }
 
 
-bool Foam::fvMeshRefiner::refine
+bool Foam::fvMeshTopoChangers::fvMeshRefiner::refine
 (
     const scalarField& error,
     const labelList& maxCellLevel,
@@ -100,7 +111,7 @@ bool Foam::fvMeshRefiner::refine
     const scalar unrefineLevel
 )
 {
-    return refiner_->refine
+    bool updated = refiner_->refine
     (
         error,
         maxCellLevel,
@@ -108,28 +119,33 @@ bool Foam::fvMeshRefiner::refine
         upperRefineLevel,
         unrefineLevel
     );
+    if (updated)
+    {
+        mesh().moving_ = false;
+    }
+    return updated;
 }
 
 
-void Foam::fvMeshRefiner::topoChange(const polyTopoChangeMap& map)
+void Foam::fvMeshTopoChangers::fvMeshRefiner::topoChange(const polyTopoChangeMap& map)
 {
     refiner_->topoChange(map);
 }
 
 
-void Foam::fvMeshRefiner::mapMesh(const polyMeshMap& map)
+void Foam::fvMeshTopoChangers::fvMeshRefiner::mapMesh(const polyMeshMap& map)
 {
     refiner_->mapMesh(map);
 }
 
 
-void Foam::fvMeshRefiner::distribute(const polyDistributionMap& map)
+void Foam::fvMeshTopoChangers::fvMeshRefiner::distribute(const polyDistributionMap& map)
 {
     refiner_->distribute(map);
 }
 
 
-bool Foam::fvMeshRefiner::write(const bool write) const
+bool Foam::fvMeshTopoChangers::fvMeshRefiner::write(const bool write) const
 {
     if (dumpLevel_ && write)
     {

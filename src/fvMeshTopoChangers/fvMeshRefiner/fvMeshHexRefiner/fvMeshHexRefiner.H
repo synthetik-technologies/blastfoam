@@ -28,7 +28,7 @@ License
 
 
 Class
-    Foam::fvMeshHexRefiner
+    Foam::fvMeshTopoChangers::hexRefiner
 
 SourceFiles
     fvMeshHexRefiner.C
@@ -87,12 +87,14 @@ Description
 
 namespace Foam
 {
+namespace fvMeshTopoChangers
+{
 
 /*---------------------------------------------------------------------------*\
-                     Class fvMeshHexRefiner Declaration
+                Class fvMeshTopoChangers::hexRefiner Declaration
 \*---------------------------------------------------------------------------*/
 
-class fvMeshHexRefiner
+class hexRefiner
 :
     public fvMeshRefiner
 {
@@ -105,29 +107,30 @@ public:
     // Constructors
 
         //- Construct from mesh and dictionary
-        fvMeshHexRefiner
+        hexRefiner
         (
             fvMesh& mesh,
             const dictionary& dict
         );
 
         //- Disallow default bitwise copy construction
-        fvMeshHexRefiner(const fvMeshHexRefiner&) = delete;
+        hexRefiner(const hexRefiner&) = delete;
 
 
     //- Destructor
-    virtual ~fvMeshHexRefiner();
+    virtual ~hexRefiner();
 
 
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const fvMeshHexRefiner&) = delete;
+        void operator=(const hexRefiner&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace fvMeshTopoChangers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

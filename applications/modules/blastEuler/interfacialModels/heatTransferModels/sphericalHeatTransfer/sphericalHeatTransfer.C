@@ -70,7 +70,7 @@ Foam::heatTransferModels::sphericalHeatTransfer::K() const
     return
         60.0
        *max(pair_.dispersed(), residualAlpha_)
-       *pair_.continuous().kappa()
+       *pair_.continuous().thermo().kappa()
        /sqr(pair_.dispersed().d());
 }
 
@@ -83,7 +83,7 @@ Foam::scalar Foam::heatTransferModels::sphericalHeatTransfer::cellK
     return
         60.0
        *max(pair_.dispersed()[celli], residualAlpha_.value())
-       *pair_.continuous().cellkappa(celli)
+       *pair_.continuous().thermo().kappa()[celli]
        /sqr(pair_.dispersed().celld(celli));
 }
 

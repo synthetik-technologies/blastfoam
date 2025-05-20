@@ -144,9 +144,9 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::Pr() const
 {
     return
          continuous().nu()
-        *continuous().Cv()
+        *continuous().thermo().Cv()
         *continuous().rho()
-        /continuous().kappa();
+        /continuous().thermo().kappa();
 }
 
 Foam::tmp<Foam::volScalarField> Foam::phasePair::We() const
@@ -248,9 +248,9 @@ Foam::scalar Foam::phasePair::cellPr(const label celli) const
 {
     return
          continuous().cellnu(celli)
-        *continuous().cellCv(celli)
+        *continuous().thermo().Cv()[celli]
         *continuous().rho()[celli]
-        /continuous().cellkappa(celli);
+        /continuous().thermo().kappa()[celli];
 }
 
 Foam::scalar Foam::phasePair::cellWe(const label celli) const

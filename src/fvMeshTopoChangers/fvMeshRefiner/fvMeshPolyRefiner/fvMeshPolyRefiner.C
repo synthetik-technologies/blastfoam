@@ -30,13 +30,16 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(fvMeshPolyRefiner, 0);
-    addToRunTimeSelectionTable(fvMeshTopoChanger, fvMeshPolyRefiner, fvMesh);
+namespace fvMeshTopoChangers
+{
+    defineTypeNameAndDebug(polyRefiner, 0);
+    addToRunTimeSelectionTable(fvMeshTopoChanger, polyRefiner, fvMesh);
+}
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fvMeshPolyRefiner::fvMeshPolyRefiner
+Foam::fvMeshTopoChangers::polyRefiner::polyRefiner
 (
     fvMesh& mesh,
     const dictionary& dict
@@ -53,7 +56,7 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::fvMeshPolyRefiner::~fvMeshPolyRefiner()
+Foam::fvMeshTopoChangers::polyRefiner::~polyRefiner()
 {}
 
 // ************************************************************************* //

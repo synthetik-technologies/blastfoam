@@ -65,7 +65,7 @@ Foam::heatTransferModels::RanzMarshall::K() const
     return
         6.0
        *max(pair_.dispersed(), residualAlpha_)
-       *pair_.continuous().kappa()
+       *pair_.continuous().thermo().kappa()
        *this->NuModel_->Nu()
        /sqr(pair_.dispersed().d());
 }
@@ -77,7 +77,7 @@ Foam::heatTransferModels::RanzMarshall::cellK(const label celli) const
     return
         6.0
        *max(pair_.dispersed()[celli], residualAlpha_.value())
-       *pair_.continuous().cellkappa(celli)
+       *pair_.continuous().thermo().kappa()[celli]
        *this->NuModel_->cellNu(celli)
        /sqr(pair_.dispersed().celld(celli));
 }

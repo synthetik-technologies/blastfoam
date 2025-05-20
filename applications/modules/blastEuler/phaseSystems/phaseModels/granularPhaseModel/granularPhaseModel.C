@@ -476,23 +476,4 @@ void Foam::granularPhaseModel::correctThermo()
 }
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::granularPhaseModel::ESource() const
-{
-    return (*this)*thermoPtr_->ESource();
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::granularPhaseModel::Cp() const
-{
-    return thermoPtr_->Cp();
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::granularPhaseModel::Cv() const
-{
-    return thermoPtr_->Cv();
-}
-
 // ************************************************************************* //
