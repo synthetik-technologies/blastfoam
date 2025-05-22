@@ -186,13 +186,14 @@ BiBTex:
 
 ### blastFoam Version 7.0 Release Notes and Features
 ***Due to changes within OpenFOAM all cases will need to be modified
-To help the process a new utility, blastConvertCaseFiles, has been added. The support is limited to single region cases that use blastFoam or blastEulerFoam. The new files written will have any comments removed, but the original files will be saved.
+To help the process a new utility, blastConvertCaseFiles, has been added. The support is limited to single region cases that use blastFoam or blastEulerFoam. The new files written will have any comments removed, but the original files will be saved. Currently only blastFoam and blastEulerFoam cases with AMR and load balancing are supported.
 
 phaseProperties -> physicalProperties (blastFoam)
 phaseProperties -> phaseProperties, physicalProperties.phase1, physicalProperties.phase2, etc. (physicalProperties.* has the thermodynamic models)
 
 dynamicMeshDict: Needs topoChanger entry for AMR, need distributor entry for load balancing, and mover entry for mesh motion. ***Note: all OpenFOAM standard movers support AMR, the blastFvMotionSolvers library was added for this reason.
 
+burst patches have been replaced by the burst fvMeshTopoChanger. In order to use this, patches for both intact and burst conditions should be created. Initially the intact patch should have faces while the burst patch should be empty. If a coupled set of patches is used (i.e. internal baffles) the "createNonConformalCouples" utility should be used to create the additional patches required for the movement between either side of the "internal" faces on the burst patches.
 
 OpenFOAM version is now checked for compatibility. If you are using the specified version, but you are getting errors, resourceing your .bashrc file should fix the errors.
 
