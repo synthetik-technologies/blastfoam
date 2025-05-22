@@ -23,85 +23,190 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvMeshTopoChangersRaw.H"
+#include "burstFvMeshTopoChanger.H"
+#include "conformedFvPatchField.H"
+#include "conformedFvsPatchField.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type, template<class> class PatchField, class GeoMesh>
-void Foam::fvMeshTopoChangers::raw::setUnmappedValues
+
+template<class Type>
+void Foam::fvMeshTopoChangers::burst::storeVolBoundaries
 (
-    GeometricField<Type, PatchField, GeoMesh>& fld,
-    const PackedBoolList& mappedFace,
-    const GeometricField<Type, PatchField, GeoMesh>& baseFld
-)
+    const labelList& boundaryMap,
+    HashPtrTable<typename VolField<Type>::Boundary>& bfields
+) const
 {
-    // Pout<< "Checking field " << fld.name() << endl;
-
-    forAll(fld.boundaryField(), patchi)
+    const fvBoundaryMesh& bMesh = mesh().boundary();
+    UPtrList<VolField<Type>> fields(mesh().curFields<VolField<Type>>());
+    forAll(fields, i)
     {
-        PatchField<Type>& fvp = const_cast<PatchField<Type>&>
+        VolField<Type>& field = fields[i];
+        bfields.insert
         (
-            fld.boundaryField()[patchi]
+            field.name(),
+            new typename VolField<Type>::Boundary(bMesh)
         );
+        typename VolField<Type>::Boundary& bfield0 = *bfields[field.name()];
+        typename VolField<Type>::Boundary& bfield =
+            const_cast<typename VolField<Type>::Boundary&>(field.boundaryField());
 
-        const label start = fvp.patch().start();
-        forAll(fvp, i)
+        // Unconform mesh, i.e. make sure the actual patch types are being used
+        // since the old patch is not conformed but the new patch is
+        conformedFvPatchField<Type>::unconform(bfield);
+
+        forAll(boundaryMap, patchi)
         {
-            if (!mappedFace[start+i])
+            const label newPatchi = boundaryMap[patchi];
+            if (newPatchi >= 0)
             {
-                // Pout<< "** Resetting unassigned value on patch "
-                //    << fvp.patch().name()
-                //    << " localface:" << i
-                //    << " to:" << baseFld.boundaryField()[patchi][i] << endl;
-                fvp[i] = baseFld.boundaryField()[patchi][i];
+                bfield0.set
+                (
+                    newPatchi,
+                    field.boundaryField()[patchi].clone(field)
+                );
             }
         }
     }
 }
 
 
-template<class Type, template<class> class PatchField, class GeoMesh>
-void Foam::fvMeshTopoChangers::raw::zeroUnmappedValues
+template<class Type>
+void Foam::fvMeshTopoChangers::burst::storeSurfaceBoundaries
+(
+    const labelList& boundaryMap,
+    HashPtrTable<typename SurfaceField<Type>::Boundary>& bfields
+) const
+{
+    const fvBoundaryMesh& bMesh = mesh().boundary();
+    UPtrList<SurfaceField<Type>> fields(mesh().curFields<SurfaceField<Type>>());
+    forAll(fields, i)
+    {
+        SurfaceField<Type>& field = fields[i];
+        bfields.insert
+        (
+            field.name(),
+            new typename SurfaceField<Type>::Boundary(bMesh)
+        );
+        typename SurfaceField<Type>::Boundary& bfield0 = *bfields[field.name()];
+        typename SurfaceField<Type>::Boundary& bfield =
+            const_cast<typename SurfaceField<Type>::Boundary&>(field.boundaryField());
+
+        // Unconform mesh, i.e. make sure the actual patch types are being used
+        // since the old patch is not conformed but the new patch is
+        conformedFvsPatchField<Type>::unconform(bfield);
+
+        forAll(boundaryMap, patchi)
+        {
+            const label newPatchi = boundaryMap[patchi];
+            if (newPatchi >= 0)
+            {
+                bfield0.set
+                (
+                    newPatchi,
+                    field.boundaryField()[patchi].clone(field)
+                );
+            }
+        }
+    }
+}
+
+
+template<class Type>
+void Foam::fvMeshTopoChangers::burst::mapVolBoundaries
+(
+    const PtrList<fieldMapper>& mappers,
+    const HashPtrTable<typename VolField<Type>::Boundary>& bfields
+) const
+{
+    UPtrList<VolField<Type>> fields(mesh().curFields<VolField<Type>>());
+    forAll(fields, i)
+    {
+        VolField<Type>& field = fields[i];
+        typename VolField<Type>::Boundary& bfield =
+            const_cast<typename VolField<Type>::Boundary&>(field.boundaryField());
+        const typename VolField<Type>::Boundary& bfield0 = *bfields[field.name()];
+
+        forAll(bfield0, patchi)
+        {
+            if (bfield0.set(patchi))
+            {
+                fvPatchField<Type>& fvp = const_cast<fvPatchField<Type>&>
+                (
+                    field.boundaryField()[patchi]
+                );
+                fvp.map(bfield0[patchi], mappers[patchi]);
+            }
+        }
+
+        // Mapping has been completed so re-conform the patch fields
+        conformedFvPatchField<Type>::conform(bfield);
+    }
+}
+
+
+template<class Type>
+void Foam::fvMeshTopoChangers::burst::mapSurfaceBoundaries
+(
+    const PtrList<fieldMapper>& mappers,
+    const HashPtrTable<typename SurfaceField<Type>::Boundary>& bfields
+) const
+{
+    UPtrList<SurfaceField<Type>> fields(mesh().curFields<SurfaceField<Type>>());
+    forAll(fields, i)
+    {
+        SurfaceField<Type>& field = fields[i];
+        typename SurfaceField<Type>::Boundary& bfield =
+            const_cast<typename SurfaceField<Type>::Boundary&>(field.boundaryField());
+        const typename SurfaceField<Type>::Boundary& bfield0 = *bfields[field.name()];
+
+        forAll(bfield0, patchi)
+        {
+            if (bfield0.set(patchi))
+            {
+                fvsPatchField<Type>& fvsp = const_cast<fvsPatchField<Type>&>
+                (
+                    field.boundaryField()[patchi]
+                );
+                fvsp.map(bfield0[patchi], mappers[patchi]);
+            }
+        }
+
+        // Mapping has been completed so re-conform the patch fields
+        conformedFvsPatchField<Type>::conform(bfield);
+    }
+}
+
+
+template<class Type>
+void Foam::fvMeshTopoChangers::burst::setUnmappedValues
 (
     const PackedBoolList& mappedFace
 ) const
 {
-    const wordList fldNames
-    (
-        mesh().names(GeometricField<Type, PatchField, GeoMesh>::typeName)
-    );
+    UPtrList<VolField<Type>> fields(mesh().curFields<VolField<Type>>());
 
-    forAll(fldNames, i)
+    forAll(fields, i)
     {
-        // Pout<< "Checking field " << fldNames[i] << endl;
+        VolField<Type>& field = fields[i];
 
-        GeometricField<Type, PatchField, GeoMesh>& fld =
-            mesh().lookupObjectRef<GeometricField<Type, PatchField, GeoMesh>>
+        forAll(field.boundaryField(), patchi)
+        {
+            fvPatchField<Type>& fvp = const_cast<fvPatchField<Type>&>
             (
-                fldNames[i]
+                field.boundaryField()[patchi]
             );
-
-        setUnmappedValues
-        (
-            fld,
-            mappedFace,
-            GeometricField<Type, PatchField, GeoMesh>
-            (
-                IOobject
-                (
-                    "zero",
-                    mesh().time().name(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    false
-                ),
-                mesh(),
-                dimensioned<Type>("0", fld.dimensions(), Zero)
-            )
-        );
+            const label start = fvp.patch().start();
+            const labelList& faceCells = fvp.patch().faceCells();
+            forAll(fvp, fi)
+            {
+                if (!mappedFace[start+fi])
+                {
+                    fvp[fi] = field[faceCells[fi]];
+                }
+            }
+        }
     }
 }
-
 
 // ************************************************************************* //

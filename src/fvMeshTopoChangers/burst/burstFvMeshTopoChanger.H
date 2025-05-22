@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2022 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is derivitive work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,16 +22,38 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fvMeshTopoChangers::raw
+    Foam::fvMeshTopoChangers::burst
 
 Description
-    Prototype fvMeshTopoChanger without any added functionality.
+    TopoChanger that handles the switching of patches when a burst condition is
+    met. Either coupled or uncoupled boundaries can be used and how the burst
+     criteria is determined is handled by the burstModel.
 
-    Can be used as the starting point for any polyTopoChanger based
-    topo-changer.
+     Mapping of "new" faces is handles for all
 
-    Note: run without FOAM_SETNAN. Temporary has unitialised patch
-    data when faces are created out of nothing.
+Example
+    topoChanger
+    {
+        type            burst;
+        patches
+        (
+            bag
+            {
+                intactMasterPatch   bag_master;
+                intactSlavePatch    bag_slave;
+
+                burstMasterPatch    bagBurst_master;
+                burstSlavePatch     bagBurst_slave;
+
+                burstModel          pressure;
+                pBurst              1e5;
+                partialBurst        yes;
+                useAverage          no;
+
+                patchToPatch        nearest;
+            }
+        );
+    }
 
 SourceFiles
     burstFvMeshTopoChanger.C
@@ -45,6 +67,8 @@ SourceFiles
 #include "polyTopoChange.H"
 #include "patchToPatch.H"
 #include "burstModel.H"
+#include "HashPtrTable.H"
+#include "fieldMapper.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,18 +88,23 @@ class burst
     // Private Data
     class burstData
     {
+        //- Is this a coupled set?
         bool coupled_;
 
+        //- Name of intact patches
         const word intactMasterPatchName_;
         const word intactSlavePatchName_;
 
+        //- Names of burst patches
         const word burstMasterPatchName_;
         const word burstSlavePatchName_;
 
+        //- Burst model
         autoPtr<burstModel> burst_;
 
     public:
 
+        //- Coupled constructor
         burstData
         (
             const word& intactMasterPatchName,
@@ -98,6 +127,7 @@ class burst
             burst_(burstModel::New(dict, coupled_))
         {}
 
+        //- One-sided constructor
         burstData
         (
             const word& intactPatchName,
@@ -117,49 +147,104 @@ class burst
             burst_(burstModel::New(dict, coupled_))
         {}
 
+        //- Return is the set is coupled (i.e. master and slave)
         bool coupled() const
         {
             return coupled_;
         }
 
+        //- Return intact master-side patch name
         const word& intactMasterPatch() const
         {
             return intactMasterPatchName_;
         }
+
+        //- Return intact slave-side patch name
         const word& intactSlavePatch() const
         {
             return intactSlavePatchName_;
         }
+
+        //- Return intact patch name
         const word& intactPatch() const
         {
             return intactMasterPatchName_;
         }
 
+        //- Return burst master-side patch name
         const word& burstMasterPatch() const
         {
             return burstMasterPatchName_;
         }
+
+        //- Return burst slave-side patch name
         const word& burstSlavePatch() const
         {
             return burstSlavePatchName_;
         }
+
+        //- Return burst patch name
         const word& burstPatch() const
         {
             return burstMasterPatchName_;
         }
 
+        //- Return burst model
         const burstModel& burst() const
         {
             return burst_();
         }
 
+        //- Access burst model
         burstModel& burst()
         {
             return burst_();
         }
     };
 
+    //- List of burst sets
     PtrList<burstData> patchData_;
+
+    // Private member functions
+
+        //- Store mapped vol boundary fields before mesh changes
+        template<class Type>
+        void storeVolBoundaries
+        (
+            const labelList& boundaryMap,
+            HashPtrTable<typename VolField<Type>::Boundary>& bfields
+        ) const;
+
+        //- Store mapped surface boundary fields before mesh changes
+        template<class Type>
+        void storeSurfaceBoundaries
+        (
+            const labelList& boundaryMap,
+            HashPtrTable<typename SurfaceField<Type>::Boundary>& bfields
+        ) const;
+
+        //- Map vol boundary fields
+        template<class Type>
+        void mapVolBoundaries
+        (
+            const PtrList<fieldMapper>& mappers,
+            const HashPtrTable<typename VolField<Type>::Boundary>& bfields
+        ) const;
+
+        //- Map surface boundary fields
+        template<class Type>
+        void mapSurfaceBoundaries
+        (
+            const PtrList<fieldMapper>& mappers,
+            const HashPtrTable<typename SurfaceField<Type>::Boundary>& bfields
+        ) const;
+
+        //- Set unmapped values
+        template<class Type>
+        void setUnmappedValues
+        (
+            const PackedBoolList& mappedFace
+        ) const;
 
 
 public:
@@ -208,6 +293,12 @@ public:
 } // End namespace fvMeshTopoChangers
 } // End namespace Foam
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "burstFvMeshTopoChangerTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -28,6 +28,7 @@ License
 #include "polyTopoChangeMap.H"
 #include "volFields.H"
 #include "PatchTools.H"
+#include "forwardFieldMapper.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -125,6 +126,9 @@ bool Foam::fvMeshTopoChangers::burst::update()
    DebugInfo<< "burst : Checking for topology changes..."
         << endl;
 
+    labelList boundaryMap(mesh().boundary().size(), -1);
+    labelList rboundaryMap(mesh().boundary().size(), -1);
+    List<Map<label>> bfaceMap(mesh().boundary().size());
     DynamicList<label> masterFacesToChange;
     DynamicList<label> slaveFacesToChange;
     autoPtr<polyTopoChange> meshModPtr;
@@ -165,6 +169,29 @@ bool Foam::fvMeshTopoChangers::burst::update()
 
             nMasterRemoved = masterFacesToChange.size();
             nSlaveRemoved = slaveFacesToChange.size();
+
+            if (nMasterRemoved)
+            {
+                boundaryMap[intactMasterPatchID] = burstMasterPatchID;
+                rboundaryMap[burstMasterPatchID] = intactMasterPatchID;
+
+                Map<label>& faceMap = bfaceMap[burstMasterPatchID];
+                forAll(masterFacesToChange, fi)
+                {
+                    faceMap.insert(masterFacesToChange[fi], -1);
+                }
+            }
+            if (nSlaveRemoved)
+            {
+                boundaryMap[intactSlavePatchID] = burstSlavePatchID;
+                rboundaryMap[burstSlavePatchID] = intactSlavePatchID;
+
+                Map<label>& faceMap = bfaceMap[burstSlavePatchID];
+                forAll(slaveFacesToChange, fi)
+                {
+                    faceMap.insert(slaveFacesToChange[fi], -1);
+                }
+            }
         }
         else
         {
@@ -181,6 +208,18 @@ bool Foam::fvMeshTopoChangers::burst::update()
                 masterFacesToChange
             );
             nMasterRemoved = masterFacesToChange.size();
+
+            if (nMasterRemoved)
+            {
+                boundaryMap[intactPatchID] = burstMasterPatchID;
+                rboundaryMap[burstMasterPatchID] = intactPatchID;
+
+                Map<label>& faceMap = bfaceMap[burstMasterPatchID];
+                forAll(masterFacesToChange, fi)
+                {
+                    faceMap.insert(masterFacesToChange[fi], -1);
+                }
+            }
         }
         reduce(nMasterRemoved, sumOp<label>());
         reduce(nSlaveRemoved, sumOp<label>());
@@ -239,9 +278,64 @@ bool Foam::fvMeshTopoChangers::burst::update()
 
     if (meshModPtr.valid())
     {
+        // Map all the volFields in the objectRegistry
+        #define storeBoundariesType(Type, Mesh)                 \
+            HashPtrTable<typename Mesh##Field<Type>::Boundary>  \
+                bfields##Mesh##Type;                            \
+            store##Mesh##Boundaries<Type>                       \
+            (                                                   \
+                boundaryMap,                                    \
+                bfields##Mesh##Type                             \
+            );
+        FOR_ALL_FIELD_TYPES(storeBoundariesType, Vol);
+        FOR_ALL_FIELD_TYPES(storeBoundariesType, Surface);
+
         // Do any topology changes
         autoPtr<polyTopoChangeMap> map = meshModPtr->changeMesh(mesh());
         mesh().topoChange(map);
+
+        // Mapping from old patch to new patch using faceMap
+        // New patch is created with out any source face so all values are Zero
+        // Used copied patch from pre-mesh update to map unmapped faces
+        // fvPatchFields are cloned so all data should be handled
+        // Only new faces should be included so exisiting faces are left alone
+        const labelList& faceMap = map().reverseFaceMap();
+        const labelList& oldPatchStarts = map().oldPatchStarts();
+        List<labelList> addressing(mesh().boundary().size());
+        PtrList<fieldMapper> mappers(mesh().boundary().size());
+        forAll(bfaceMap, patchi)
+        {
+            Map<label>& fMap = bfaceMap[patchi];
+            const polyPatch& patch = mesh().boundaryMesh()[patchi];
+            if (fMap.size())
+            {
+                const label start = patch.start();
+                const label oldStart = oldPatchStarts[rboundaryMap[patchi]];
+
+                labelList& addr = addressing[patchi];
+                addr.setSize(patch.size(), -1);
+
+                forAllIter(Map<label>, fMap, iter)
+                {
+                    const label oldLocalFacei = iter.key() - oldStart;
+                    const label newLocalFacei = faceMap[iter.key()] - start;
+                    addr[newLocalFacei] = oldLocalFacei;
+                }
+                mappers.set(patchi, new forwardFieldMapper(addr));
+            }
+        }
+
+        // Map all the volFields in the objectRegistry using the mapping created
+        // from the old local indices to the new local indices
+        #define mapBoundariesType(Type, Mesh)                   \
+            map##Mesh##Boundaries<Type>                         \
+            (                                                   \
+                mappers,                                        \
+                bfields##Mesh##Type                             \
+            );
+        FOR_ALL_FIELD_TYPES(mapBoundariesType, Vol);
+        FOR_ALL_FIELD_TYPES(mapBoundariesType, Surface);
+
         return true;
     }
 
