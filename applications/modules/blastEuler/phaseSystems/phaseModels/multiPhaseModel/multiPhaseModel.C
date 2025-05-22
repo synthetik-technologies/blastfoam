@@ -358,6 +358,8 @@ void Foam::multiPhaseModel::correctVolumeFraction()
 
 void Foam::multiPhaseModel::decode()
 {
+    const fvConstraints& constraints = this->constraints();
+
     // Calculate densities
     alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
 
@@ -377,7 +379,7 @@ void Foam::multiPhaseModel::decode()
 
         alphaRho_ += alphaRhos_[phasei];
     }
-    volScalarField& alpha(*this);
+    volScalarField& alpha = *this;
     this->correctBoundaryConditions();
 
     rho_ = alphaRho_/Foam::max(alpha, residualAlpha());
@@ -385,6 +387,11 @@ void Foam::multiPhaseModel::decode()
     volScalarField alphaRhoLimited(alphaRho_);
     alphaRhoLimited.max(1e-10);
     U_.internalFieldRef() = alphaRhoU_()/(alphaRhoLimited());
+    if (constraints.constrainsField(U_.name()))
+    {
+        constraints.constrain(U_);
+        alphaRhoU_.internalFieldRef() = (*this)()*rho_()*U_;
+    }
     U_.correctBoundaryConditions();
 
     alphaRhoU_.correctBoundaryConditions();
@@ -392,6 +399,7 @@ void Foam::multiPhaseModel::decode()
         alphaRho_.boundaryField()*U_.boundaryField();
 
     e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
+    constraints.constrain(e_);
     e_.correctBoundaryConditions();
 
     thermoPtr_->correct();

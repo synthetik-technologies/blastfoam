@@ -364,7 +364,7 @@ void Foam::phaseModel::solve()
                 if (solveAlpha_)
                 {
                     deltaAlpha.ref() -=
-                    fluid_.mDotByRho(mD, *this, otherPhase);
+                        fluid_.mDotByRho(mD, *this, otherPhase);
                 }
                 deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
                 deltaAlphaRhoE -= fluid_.mDotE(mD, *this, otherPhase);

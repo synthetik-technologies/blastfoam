@@ -101,6 +101,12 @@ Foam::granularPhaseModel::~granularPhaseModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::tmp<Foam::volScalarField> Foam::granularPhaseModel::ESource() const
+{
+    return (*this)*thermoPtr_->ESource();
+}
+
+
 void Foam::granularPhaseModel::solve()
 {
     dimensionedScalar dT = rho_.time().deltaT();
@@ -347,7 +353,7 @@ void Foam::granularPhaseModel::update()
 
 void Foam::granularPhaseModel::correctVolumeFraction()
 {
-    volScalarField& alpha(*this);
+    volScalarField& alpha = *this;
 
     //- Update volume fraction since density is known
     alphaRho_.max(0.0);
@@ -358,7 +364,8 @@ void Foam::granularPhaseModel::correctVolumeFraction()
 
 void Foam::granularPhaseModel::decode()
 {
-    const volScalarField& alpha(*this);
+    const fvConstraints& constraints = this->constraints();
+    const volScalarField& alpha = *this;
 
     //- Correct phase mass at boundaries
     alphaRho_.correctBoundaryConditions();
@@ -370,6 +377,11 @@ void Foam::granularPhaseModel::decode()
 
     //- Calculate velocity from momentum
     U_.internalFieldRef() = alphaRhoU_()/alphaRhoLimited();
+    if (constraints.constrainsField(U_.name()))
+    {
+        constraints.constrain(U_);
+        alphaRhoU_.internalFieldRef() = (*this)()*rho_()*U_;
+    }
     U_.correctBoundaryConditions();
 
     //- Correct momentum at boundaries
@@ -380,10 +392,17 @@ void Foam::granularPhaseModel::decode()
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
     e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited();
+    constraints.constrain(e_);
+    e_.correctBoundaryConditions();
 
     //- Compute granular temperature
     alphaRhoPTE_.max(0.0);
     Theta_.internalFieldRef() = alphaRhoPTE_()/(1.5*alphaRhoLimited());
+    if (constraints.constrainsField(Theta_.name()))
+    {
+        constraints.constrain(Theta_);
+        alphaRhoPTE_.internalFieldRef() = 1.5*alpha()*rho_()*Theta_();
+    }
     Theta_.correctBoundaryConditions();
 
     alphaRhoPTE_.correctBoundaryConditions();

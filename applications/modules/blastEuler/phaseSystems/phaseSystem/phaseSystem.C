@@ -1101,7 +1101,7 @@ void Foam::phaseSystem::update()
         forAll(species, i)
         {
             const word& specieName(species[i]);
-            if (dispersedThermo.contains(specieName))
+            if (dispersedThermo.containsSpecie(specieName))
             {
                 dynamicCast<multicomponentBlastThermo>
                 (
@@ -1112,7 +1112,7 @@ void Foam::phaseSystem::update()
                     massTransferIter()->dispersedYi(specieName)*mDot()
                 );
             }
-            if (continuousThermo.contains(specieName))
+            if (continuousThermo.containsSpecie(specieName))
             {
                 dynamicCast<multicomponentBlastThermo>
                 (
@@ -1308,8 +1308,11 @@ bool Foam::phaseSystem::hasMassTransfer
 ) const
 {
     return
-        hasMassTransfer_[phase1.index()][phase2.index()]
-     || hasMassTransfer_[phase2.index()][phase1.index()];
+        phase1.index() != phase2.index()
+     && (
+            hasMassTransfer_[phase1.index()][phase2.index()]
+         || hasMassTransfer_[phase2.index()][phase1.index()]
+        );
 }
 
 
@@ -1429,7 +1432,8 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
     volScalarField::Internal& mDotEi = tmDotEi.ref();
 
     mDotEi =
-        mD21*(phase2.thermo().ha()()() + phase1.thermo().hs()()());
+        mD21*(phase2.thermo().ha()()() + phase1.thermo().hc()()())
+      + mD12*phase1.thermo().hs()()();
 
     if (phase1.totalEnergy())
     {

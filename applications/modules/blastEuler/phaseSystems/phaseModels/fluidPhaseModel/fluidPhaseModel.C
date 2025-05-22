@@ -198,20 +198,28 @@ void Foam::fluidPhaseModel::update()
 
 void Foam::fluidPhaseModel::decode()
 {
-    this->correctBoundaryConditions();
-    volScalarField alpha(Foam::max(*this, residualAlpha()));
+    const fvConstraints& constraints = this->constraints();
 
-    rho_.internalFieldRef() = alphaRho_()/alpha();
+    this->correctBoundaryConditions();
+    const volScalarField& alpha = *this;
+    volScalarField alphaLimited(Foam::max(*this, residualAlpha()));
+
+    rho_.internalFieldRef() = alphaRho_()/alphaLimited();
     rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
 
     alphaRho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField();
-    volScalarField alphaRhoLimited(alpha*rho_);
-    alphaRhoLimited.max(1e-10);
+    volScalarField alphaRhoLimited(alphaLimited*rho_);
 
     U_.internalFieldRef() = alphaRhoU_()/(alphaRhoLimited());
+    if (constraints.constrainsField(U_.name()))
+    {
+        constraints.constrain(U_);
+        alphaRhoU_.internalFieldRef() = (*this)()*rho_()*U_;
+    }
+    constraints.constrain(U_);
     U_.correctBoundaryConditions();
 
     alphaRhoU_.correctBoundaryConditions();
@@ -219,6 +227,8 @@ void Foam::fluidPhaseModel::decode()
         (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
 
     e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
+    constraints.constrain(e_);
+    e_.correctBoundaryConditions();
 
     thermoPtr_->correct();
     thermoPtr_->speedOfSound() *= pos(alpha - residualAlpha());
@@ -227,7 +237,7 @@ void Foam::fluidPhaseModel::decode()
     // Update total energy because e may have changed
     alphaRhoE_ == alphaRho_*(e_ + 0.5*magSqr(U_));
 
-    constraints().constrain(p_);
+    constraints.constrain(p_);
 }
 
 
