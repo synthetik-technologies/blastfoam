@@ -325,7 +325,7 @@ public:
         // Mass transfer
 
             //- Does the mixture include this specie?
-            virtual inline bool contains(const word& specieName) const
+            virtual inline bool containsSpecie(const word& specieName) const
             {
                 return false;
             }
@@ -340,6 +340,9 @@ public:
 
             //- Return enthalpy/Internal energy [J/kg]
             virtual volScalarField& he();
+
+            //- Enthalpy of formation [J/kg]
+            virtual tmp<volScalarField> hc() const = 0;
 
             //- Enthalpy/Internal energy for a cell [J/kg]
             virtual scalar cellhe

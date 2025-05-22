@@ -464,7 +464,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
                  || thermophysicalTransportPtr.valid()
                 )
             )
-          || this->needSolve(Yi.name());
+         || this->needSolve(Yi.name());
 
         if (needUpdate)
         {
