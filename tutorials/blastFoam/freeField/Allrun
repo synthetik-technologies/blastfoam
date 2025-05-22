@@ -14,7 +14,7 @@ runApplication blockMesh
 runApplication decomposePar
 
 # -- Add internal patch
-runParallel addEmptyPatch internalPatch internal -overwrite
+runParallel addInternalPatch
 
 # -- Set the initial conditions for the fluid
 runParallel setRefinedFields
