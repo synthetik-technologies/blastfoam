@@ -34,8 +34,11 @@ runParallel addInternalPatch
 runParallel -s master addEmptyPatch windowsBurst_master wall -overwrite
 runParallel -s slave addEmptyPatch windowsBurst_slave wall -overwrite
 
+# -- Create overlapping couple patches for "internal" faces
+runParallel createNonConformalCouples windowsBurst_master windowsBurst_slave -overwrite -fields
+
 # -- Set the charge
 runParallel setRefinedFields
 
 # -- run the calc
-# runParallel $(getApplication)
+runParallel $(getApplication)
