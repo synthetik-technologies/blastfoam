@@ -452,89 +452,18 @@ void Foam::compressibleSystem::addESource
 
 Foam::scalar Foam::compressibleSystem::CoNum() const
 {
-    surfaceScalarField amaxSf
-    (
-        surfaceScalarField::New
-        (
-            "amaxSf",
-            mesh(),
-            dimensionedScalar(dimVelocity*dimArea, Zero)
-        )
-    );
-
-    tmp<volScalarField> tc(speedOfSound());
-    const volScalarField& c = tc();
-    const volVectorField& U = this->U();
-
-    const scalarField& magSf = mesh().magSf();
-    const labelList& owner = mesh().faceOwner();
-    const labelList& neighbour = mesh().faceNeighbour();
-    forAll(neighbour, facei)
-    {
-        amaxSf[facei] =
-            sqrt
-            (
-                max
-                (
-                    magSqr(U[owner[facei]]) + sqr(c[owner[facei]]),
-                    magSqr(U[neighbour[facei]]) + sqr(c[neighbour[facei]])
-                )
-            )*magSf[facei];
-    }
+    const surfaceScalarField& magSf = mesh().magSf();
+    surfaceScalarField amaxSf(fvc::interpolate(speedOfSound())*magSf);
 
     // Remove wave speed from wedge boundaries
-    surfaceScalarField::Boundary& bamaxSf = amaxSf.boundaryFieldRef();
     forAll(amaxSf.boundaryField(), patchi)
     {
-        const fvPatch& patch = mesh().boundary()[patchi];
-        const scalarField& pmagSf = patch.magSf();
-        const labelList& faceCells = patch.faceCells();
-        const fvPatchVectorField& pU = U.boundaryField()[patchi];
-        const fvPatchScalarField& pc = c.boundaryField()[patchi];
-        fvsPatchScalarField& pamaxSf = bamaxSf[patchi];
-        if (patch.coupled())
+        if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
         {
-            const vectorField nbrU(pU.patchNeighbourField());
-            const scalarField nbrc(pc.patchNeighbourField());
-            forAll(pU, fi)
-            {
-                const label own = faceCells[fi];
-                pamaxSf[fi] =
-                    sqrt
-                    (
-                        max
-                        (
-                            magSqr(U[own]) + sqr(c[own]),
-                            magSqr(nbrU[fi]) + sqr(nbrc[fi])
-                        )
-                    )*pmagSf[fi];
-            }
-        }
-        else if (!isA<wedgeFvPatch>(patch) && !isA<emptyFvPatch>(patch))
-        {
-            // When topological changes or balancing occurs the meshPhi
-            // field is deleted so calls to it cause a crash
-            if
-            (
-                (mesh().dynamic() || mesh().distributing())
-             && (mesh().moving())
-            )
-            {
-                forAll(pU, fi)
-                {
-                    const label own = faceCells[fi];
-                    pamaxSf[fi] = (mag(U[own]) + c[own])*pmagSf[fi];
-                }
-            }
-            else
-            {
-                forAll(pU, fi)
-                {
-                    pamaxSf[fi] = (mag(pU[fi]) + pc[fi])*pmagSf[fi];
-                }
-            }
+            amaxSf.boundaryFieldRef() = Zero;
         }
     }
+    amaxSf += mag(fvc::flux(this->U()));
 
     scalarField sumAmaxSf
     (
