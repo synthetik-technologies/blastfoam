@@ -177,8 +177,8 @@ bool Foam::burstModel::findBurstFaces
         scalarField refVal2
         (
             useDelta_
-          ? mag(pf2 - mappingPtr_->tgtToSrc(pf1, pf2))
-          : max(pf2,  mappingPtr_->tgtToSrc(pf1, pf2))
+          ? mag(pf2 - mappingPtr_->srcToTgt(pf1, pf2))
+          : max(pf2,  mappingPtr_->srcToTgt(pf1, pf2))
         );
         refVal2 -= burstValue;
 
