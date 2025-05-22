@@ -107,6 +107,7 @@ Foam::regionSolvers::feSolid::feSolid
         femesh_.pMesh(),
         dimensionedVector(dimVelocity, Zero)
     ),
+    L_(femesh_.elements().size(), 0.0),
     force_
     (
         IOobject
@@ -322,6 +323,20 @@ Foam::regionSolvers::feSolid::feSolid
           : nullptr
         )
     );
+
+    forAll(femesh_.elements(), ei)
+    {
+        const UIndirectList<vector> pts(femesh_.nodes(), femesh_.elements()[ei]);
+        scalar  minDxi = great;
+        forAll(pts, i)
+        {
+            for (label j = i+1; j < pts.size(); j++)
+            {
+                minDxi = min(mag(pts[i] - pts[j]), minDxi);
+            }
+        }
+        L_[ei] = minDxi;
+    }
 }
 
 
@@ -378,7 +393,7 @@ void Foam::regionSolvers::feSolid::solve()
         material.preUpdate();
         forAll(femesh_.elements(), ei)
         {
-            maxVp_ = max(maxVp_, material.addForce(force_, sigma_, ei));
+            maxVp_ = max(maxVp_, material.addForce(force_, sigma_, ei, L_[ei]));
         }
         material.postUpdate(1.0);
     }
@@ -395,7 +410,7 @@ void Foam::regionSolvers::feSolid::solve()
                 maxVp_ = max
                 (
                     maxVp_,
-                    material.addForce(force_, sigma_, elemi)
+                    material.addForce(force_, sigma_, elemi, L_[ei])
                 );
             }
             material.postUpdate(1.0);

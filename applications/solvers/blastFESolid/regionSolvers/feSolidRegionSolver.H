@@ -78,6 +78,9 @@ protected:
     //- Velocity field
     pointVectorField U_;
 
+    //- Characteristic length of elements
+    scalarField L_;
+
     //- Force
     pointVectorField force_;
 
