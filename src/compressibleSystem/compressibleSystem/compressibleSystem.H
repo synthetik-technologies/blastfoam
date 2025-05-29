@@ -43,7 +43,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "fluidThermo.H"
 #include "compressibleMomentumTransportModel.H"
-#include "fluidThermoThermophysicalTransportModel.H"
+#include "fluidThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
@@ -97,7 +97,7 @@ protected:
         autoPtr<compressibleMomentumTransportModel> turbulence_;
 
         //- Thermophysical transport model
-        autoPtr<fluidThermoThermophysicalTransportModel>
+        autoPtr<fluidThermophysicalTransportModel>
             thermophysicalTransport_;
 
         //- Gravitational acceleration

@@ -30,6 +30,8 @@ License
 #include "fvcMeshPhi.H"
 #include "wedgeFvPatch.H"
 #include "emptyFvPatch.H"
+#include "fluidThermoThermophysicalTransportModel.H"
+#include "fluidMulticomponentThermophysicalTransportModel.H"
 #include "blastRadiationModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -62,14 +64,28 @@ void Foam::compressibleSystem::setModels()
         );
         turbulence_->validate();
 
-        thermophysicalTransport_ =
-        (
-            fluidThermoThermophysicalTransportModel::New
+        if (isA<multicomponentThermo>(this->thermo()))
+        {
+            thermophysicalTransport_ =
             (
-                turbulence_,
-                this->thermo()
-            ).ptr()
-        );
+                fluidMulticomponentThermophysicalTransportModel::New
+                (
+                    turbulence_,
+                    dynamicCast<const fluidMulticomponentThermo>(this->thermo())
+                ).ptr()
+            );
+        }
+        else
+        {
+            thermophysicalTransport_ =
+            (
+                fluidThermoThermophysicalTransportModel::New
+                (
+                    turbulence_,
+                    this->thermo()
+                ).ptr()
+            );
+        }
     }
 }
 
