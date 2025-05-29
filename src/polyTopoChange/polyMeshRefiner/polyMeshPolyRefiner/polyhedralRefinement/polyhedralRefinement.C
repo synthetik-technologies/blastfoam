@@ -35,7 +35,7 @@ Author
 #include "faceSet.H"
 #include "pointSet.H"
 #include "meshTools.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "syncTools.H"
 #include "OFstream.H"
 

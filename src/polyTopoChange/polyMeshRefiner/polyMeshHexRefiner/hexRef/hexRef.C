@@ -28,7 +28,7 @@ License
 #include "polyMesh.H"
 #include "polyTopoChange.H"
 #include "meshTools.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "syncTools.H"
 #include "faceSet.H"
 #include "cellSet.H"

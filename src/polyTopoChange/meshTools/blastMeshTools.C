@@ -22,7 +22,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "polyMesh.H"
 #include "hexMatcher.H"
 #include "faceZone.H"
@@ -456,7 +456,7 @@ void Foam::meshTools::modifyOrAddFace
     PackedBoolList& modifiedFace
 )
 {
-    if (!modifiedFace.get(facei))
+    if (!modifiedFace[facei])
     {
         // First usage of face. Modify.
         meshMod.modifyFace
@@ -468,7 +468,7 @@ void Foam::meshTools::modifyOrAddFace
             flipFaceFlux,               // face flip
             newPatchi                   // patch for face
         );
-        modifiedFace.set(facei);
+        modifiedFace[facei] = 1;
     }
     else
     {
@@ -502,6 +502,9 @@ Foam::label Foam::meshTools::createBaffleFaces
 
     forAll(newMasterPatches, i)
     {
+        const label newMasterPatchi = newMasterPatches[i];
+        const label newSlavePatchi = newSlavePatches[i];
+
         // Pass 1. Do selected side of zone
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -521,8 +524,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         facei,                  // label of face
                         mesh.faceOwner()[facei],// owner
                         false,                  // face flip
-                        newMasterPatches[i],    // patch for face
-
+                        newMasterPatchi,        // patch for face
                         modifiedFace            // modify or add status
                     );
                 }
@@ -539,8 +541,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         facei,                      // label of face
                         mesh.faceNeighbour()[facei],// owner
                         true,                       // face flip
-                        newMasterPatches[i],        // patch for face
-
+                        newMasterPatchi,            // patch for face
                         modifiedFace                // modify or add status
                     );
                 }
@@ -569,8 +570,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         facei,                          // label of face
                         mesh.faceNeighbour()[facei],    // owner
                         true,                           // face flip
-                        newSlavePatches[i],             // patch for face
-
+                        newSlavePatchi,                 // patch for face
                         modifiedFace                    // modify or add
                     );
                 }
@@ -584,8 +584,7 @@ Foam::label Foam::meshTools::createBaffleFaces
                         facei,                  // label of face
                         mesh.faceOwner()[facei],// owner
                         false,                  // face flip
-                        newSlavePatches[i],     // patch for face
-
+                        newSlavePatchi,         // patch for face
                         modifiedFace            // modify or add status
                     );
                 }
@@ -662,7 +661,6 @@ Foam::label Foam::meshTools::createBaffleFaces
                             fZone.flipMap()[zoneFacei]
                           ? newSlavePatchi
                           : newMasterPatchi,            // patch for face
-
                             modifiedFace                // modify or add
                         );
 
@@ -710,7 +708,6 @@ Foam::label Foam::meshTools::createPatchFaces
                         mesh.faceOwner()[facei],// owner
                         false,                  // face flip
                         newPatches[i],          // patch for face
-
                         modifiedFace            // modify or add status
                     );
                 }
@@ -728,7 +725,6 @@ Foam::label Foam::meshTools::createPatchFaces
                         mesh.faceNeighbour()[facei],// owner
                         true,                       // face flip
                         newPatches[i],              // patch for face
-
                         modifiedFace                // modify or add status
                     );
                 }
@@ -752,7 +748,6 @@ Foam::label Foam::meshTools::createPatchFaces
                     mesh.faceOwner()[facei],// owner
                     false,                  // face flip
                     newPatches[i],          // patch for face
-
                     modifiedFace            // modify or add status
                 );
                 nModified++;

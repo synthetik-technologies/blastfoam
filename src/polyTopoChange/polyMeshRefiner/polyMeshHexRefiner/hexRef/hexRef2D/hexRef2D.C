@@ -38,7 +38,7 @@ License
 #include "OFstream.H"
 #include "Time.H"
 #include "meshTools.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

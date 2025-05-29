@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "polyMesh.H"
 #include "processorPolyPatch.H"
 #include "cyclicPolyPatch.H"

@@ -28,7 +28,8 @@ polyMeshRefiner/polyMeshPolyRefiner/polyhedralRefinement/polyhedralRefinement.C
 polyMeshRefiner/polyMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
 polyMeshRefiner/polyMeshPolyRefiner/refinement/refinement.C
 
-meshTools/dynMeshTools.C
+meshTools/blastMeshTools.C
+meshTools/blastSyncTools.C
 
 MeshFields/MeshField/MeshFields.C
 MeshFields/MeshFieldUpdater/MeshFieldUpdaters.C

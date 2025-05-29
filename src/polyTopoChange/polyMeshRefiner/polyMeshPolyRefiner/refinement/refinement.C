@@ -28,7 +28,7 @@ License
 #include "polyTopoChange.H"
 #include "syncTools.H"
 #include "meshTools.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "polyTopoChangeMap.H"
 #include "polyDistributionMap.H"
 #include "globalIndex.H"

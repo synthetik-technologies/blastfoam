@@ -23,19 +23,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Namespace
-    Foam::dynMeshTools
+    Foam::blastMeshTools
 
 Description
     Collection of functions to do various modifications to the mesh
 
 SourceFiles
-    dynMeshTools.C
-    dynMeshToolsTemplates.C
+    blastMeshTools.C
+    blastMeshToolsTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynMeshTools_H
-#define dynMeshTools_H
+#ifndef blastMeshTools_H
+#define blastMeshTools_H
 
 #include "meshTools.H"
 #include "Pstream.H"
@@ -246,6 +246,10 @@ namespace meshTools
 } // End namespace meshTools
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
 template<>
 const Foam::pointMesh::Mesh&
 Foam::meshTools::getGeoMesh<Foam::pointMesh>(const fvMesh& mesh);
@@ -253,12 +257,8 @@ Foam::meshTools::getGeoMesh<Foam::pointMesh>(const fvMesh& mesh);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #ifdef NoRepository
-#   include "dynMeshToolsTemplates.C"
+#   include "blastMeshToolsTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

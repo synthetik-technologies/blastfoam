@@ -38,7 +38,7 @@ Author
 #include "emptyPolyPatch.H"
 #include "wedgePolyPatch.H"
 #include "meshTools.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "OFstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

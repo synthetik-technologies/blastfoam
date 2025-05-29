@@ -39,7 +39,7 @@ License
 #include "OFstream.H"
 #include "Time.H"
 #include "degenerateMatcher.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

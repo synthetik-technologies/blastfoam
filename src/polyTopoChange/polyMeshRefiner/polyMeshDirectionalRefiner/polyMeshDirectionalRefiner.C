@@ -32,7 +32,7 @@ License
 #include "newRefinementIterator.H"
 #include "polyDistributionMap.H"
 #include "Time.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
