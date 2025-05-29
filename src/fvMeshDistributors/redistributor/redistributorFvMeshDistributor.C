@@ -304,6 +304,20 @@ void Foam::fvMeshDistributors::redistributor::readDict
             decompositionDict_ <<= balanceDict;
             decomp_.clear();
         }
+
+        if (balanceDict.found("contraints"))
+        {
+            const dictionary& constraintsDict = balanceDict.subDict("constraints");
+            forAllConstIter(dictionary, constraintsDict, iter)
+            {
+                const entry& e = *iter;
+                if (e.isDict())
+                {
+                    addConstraint(e.keyword(), e.dict());
+                    decomp_.clear();
+                }
+            }
+        }
     }
 
     balanceDict.readIfPresent("force", force_);
@@ -400,7 +414,8 @@ Foam::fvMeshDistributors::redistributor::redistributor
     beginBalance_(0),
     endBalance_(great),
     maxImbalance_(0.1),
-    timeIndex_(-1)
+    timeIndex_(-1),
+    iter_(0)
 {
     {
         typeIOobject<IOdictionary> dictHeader
@@ -484,6 +499,8 @@ bool Foam::fvMeshDistributors::redistributor::update()
 {
     const fvMesh& mesh = this->mesh();
 
+    // Only balance if first time step or if some topological changes
+    // have happened
     if
     (
         balance_
@@ -492,7 +509,13 @@ bool Foam::fvMeshDistributors::redistributor::update()
          || (
                 Pstream::nProcs() > 1
              && timeIndex_ != mesh.time().timeIndex()
-             && mesh.time().timeIndex() % balanceInterval_ == 0
+             && (
+                    timeIndex_ == 0
+                 || (
+                        mesh.topoChanging()
+                     && ++iter_ % balanceInterval_ == 0
+                    )
+                )
             )
         )
     )

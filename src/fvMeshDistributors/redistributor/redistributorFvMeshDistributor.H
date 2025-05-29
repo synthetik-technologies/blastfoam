@@ -129,6 +129,9 @@ protected:
         //- The time index used for updating
         label timeIndex_;
 
+        //- Current iteration (number of times topoChanges have happened)
+        label iter_;
+
 
     // Protected Member Functions
 
@@ -137,12 +140,6 @@ protected:
 
         //- Distribute the mesh and mesh data
         void distribute(const labelList& distribution, const bool dist);
-
-        //- Was the given constraint type found?
-        bool constraintFound(const word& type) const;
-
-        //- Set the constraint dictionary
-        void addConstraint(const word& name, const dictionary& dict);
 
 
 public:
@@ -186,6 +183,12 @@ public:
 
         //- Update corresponding to the given distribution map
         virtual void distribute(const polyDistributionMap&);
+
+        //- Was the given constraint type found?
+        bool constraintFound(const word& type) const;
+
+        //- Set the constraint dictionary
+        void addConstraint(const word& name, const dictionary& dict);
 
 
     // Reading
