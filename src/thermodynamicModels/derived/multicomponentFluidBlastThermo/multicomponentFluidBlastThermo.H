@@ -43,6 +43,7 @@ SourceFiles
 
 #include "multicomponentBlastThermo.H"
 #include "mixtureBlastThermo.H"
+#include "fluidMulticomponentThermo.H"
 
 namespace Foam
 {
@@ -50,7 +51,8 @@ namespace Foam
 template<class Thermo>
 class multicomponentFluidBlastThermo
 :
-    public Thermo
+    public Thermo,
+    virtual public fluidMulticomponentThermo
 {
     //- Calculate thermodynamic fields
     void calculate();

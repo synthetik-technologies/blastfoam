@@ -58,7 +58,7 @@ class fluidBlastThermo
 :
     public physicalProperties,
     public blastThermo,
-    public fluidThermo
+    virtual public fluidThermo
 {
 protected:
 

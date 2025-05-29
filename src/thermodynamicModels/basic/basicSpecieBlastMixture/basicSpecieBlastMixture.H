@@ -48,7 +48,7 @@ namespace Foam
 
 class basicSpecieBlastMixture
 :
-    public multicomponentThermo
+    virtual public multicomponentThermo
 {
 protected:
 
@@ -142,6 +142,8 @@ public:
 
 
         // Mass fractions
+
+            using multicomponentThermo::Y;
 
             //- Access the mass-fraction fields
             virtual PtrList<volScalarField>& Y()

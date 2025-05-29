@@ -226,7 +226,7 @@ Foam::scalar Foam::AbelNobel<Specie>::H
     const scalar T
 ) const
 {
-    return 0.0;
+    return this->R()*T*b_*rho/(1.0 - b_*rho);
 }
 
 
