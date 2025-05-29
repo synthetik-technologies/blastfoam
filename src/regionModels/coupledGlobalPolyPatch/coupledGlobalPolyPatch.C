@@ -73,8 +73,14 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
             << abort(FatalError);
     }
 
-    isSrc_ = dict_.found("mappingType");
-    samplePatch().isSrc_ = !isSrc_;
+    if (!srcSet_)
+    {
+        isSrc_ = dict_.found("mappingType");
+        samplePatch().isSrc_ = !isSrc_;
+
+        srcSet_ = true;
+        samplePatch().srcSet_ = true;
+    }
 
     const coupledGlobalPolyPatch& masterPatch =
         isSrc_
@@ -162,6 +168,8 @@ Foam::coupledGlobalPolyPatch::coupledGlobalPolyPatch
     globalPolyPatch(dict, patch),
     dict_(dict),
     needPoints_(false),
+    srcSet_(false),
+    isSrc_(false),
     sampleRegion_(dict.lookup("sampleRegion")),
     samplePatch_(dict.lookup("samplePatch")),
     patchToPatchInterpPtr_(nullptr),

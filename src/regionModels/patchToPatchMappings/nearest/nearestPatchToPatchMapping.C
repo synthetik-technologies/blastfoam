@@ -529,6 +529,20 @@ Foam::patchToPatchMappings::nearest::nearest
 {}
 
 
+Foam::patchToPatchMappings::nearest::nearest
+(
+    const primitivePatch& srcPatch,
+    const primitivePatch& tgtPatch,
+    const dictionary& dict,
+    const bool needPoints,
+    const bool reverse,
+    const scalar minBbDim
+)
+:
+    nearby(srcPatch, tgtPatch, dict, needPoints, reverse, minBbDim)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 // ************************************************************************* //

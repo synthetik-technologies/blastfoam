@@ -485,7 +485,6 @@ void Foam::patchToPatchMapping::intersectPatches
                 )
             )
         );
-
         if (tgtPatchSeeds.size())
         {
             DebugInfo

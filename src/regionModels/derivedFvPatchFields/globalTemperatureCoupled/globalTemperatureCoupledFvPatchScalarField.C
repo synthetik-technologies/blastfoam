@@ -54,8 +54,7 @@ Foam::globalTemperatureCoupledFvPatchScalarField::kappa
     const fvMesh& mesh = Tp.patch().boundaryMesh().mesh();
     const label patchi = Tp.patch().index();
 
-    const word& phase(Tp.internalField().group());
-
+    const word phase(Tp.internalField().group());
     const word thermoName
     (
         IOobject::groupName(physicalProperties::typeName, phase)
@@ -68,6 +67,7 @@ Foam::globalTemperatureCoupledFvPatchScalarField::kappa
             phase
         )
     );
+
     if (mesh.foundObject<thermophysicalTransportModel>(ttmName))
     {
         const thermophysicalTransportModel& ttm =
@@ -75,27 +75,20 @@ Foam::globalTemperatureCoupledFvPatchScalarField::kappa
 
         return ttm.kappaEff(patchi);
     }
-    else if (mesh.foundObject<fluidThermo>(thermoName))
+    else if (mesh.foundObject<basicThermo>(thermoName))
     {
-        const fluidThermo& thermo =
-            mesh.lookupObject<fluidThermo>(thermoName);
-
-        return thermo.kappa().boundaryField()[patchi];
-    }
-    else if (mesh.foundObject<solidThermo>(thermoName))
-    {
-        const solidThermo& thermo =
-            mesh.lookupObject<solidThermo>(thermoName);
+        const basicThermo& thermo =
+            mesh.lookupObject<basicThermo>(thermoName);
 
         return thermo.kappa().boundaryField()[patchi];
     }
     else
     {
         FatalErrorInFunction
-            << "Cannot find a fluidThermo or solidThermo instance"
+            << "Cannot find a  thermophysicalTransportModel or basicThermo instance"
             << exit(FatalError);
 
-        return scalarField::null();
+        return tmp<scalarField>();
     }
 }
 
@@ -320,6 +313,12 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
             nbrKappaByDelta*TcNbr
         );
         nbrKappaByDelta = samplePatch.faceInterpolate(nbrKappaByDelta);
+
+        if (cgpp.hasUnmappedFaces())
+        {
+            cgpp.setUnmappedFace(nbrKappaTByDelta, 0.0);
+            cgpp.setUnmappedFace(nbrKappaByDelta, 0.0);
+        }
     }
 
     scalarField pkappa(this->kappa(*this));
@@ -334,6 +333,11 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
         {
             //- Difference in temperature
             deltaT = samplePatch.faceInterpolate(TcNbr) - TcOwn;
+
+            if (cgpp.hasUnmappedFaces())
+            {
+                cgpp.setUnmappedFace(deltaT, 0.0);
+            }
         }
 
         if (hOwn)
@@ -344,14 +348,22 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
         }
         if (hNbr)
         {
-            q +=
+            tmp<scalarField> nbrq
+            (
                 samplePatch.faceInterpolate
                 (
                     nbrPatch.lookupPatchField<volScalarField, scalar>
                     (
                         hNbrName_
                     )
-                )*deltaT;
+                )*deltaT
+            );
+
+            if (cgpp.hasUnmappedFaces())
+            {
+                cgpp.setUnmappedFace(nbrq.ref(), 0.0);
+            }
+            q += nbrq;
         }
     }
 
@@ -364,14 +376,22 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
     if (qrNbrName_ != "none")
     {
         nbrRad = true;
-        q +=
+        tmp<scalarField> nbrq
+        (
             samplePatch.faceInterpolate
             (
                 nbrPatch.lookupPatchField<volScalarField, scalar>
                 (
                     qrNbrName_
                 )
-            );
+            )
+        );
+
+        if (cgpp.hasUnmappedFaces())
+        {
+            cgpp.setUnmappedFace(nbrq.ref(), 0.0);
+        }
+        q += nbrq;
     }
 
     scalarField& grad = refGrad();
@@ -482,7 +502,7 @@ void globalTemperatureCoupledFvPatchScalarField::write
 ) const
 {
     mixedFvPatchScalarField::write(os);
-    writeEntryIfDifferent<word>(os, "Tnbr", "T", TnbrName_);
+    writeEntryIfDifferent<word>(os, "TNbr", "T", TnbrName_);
     writeEntryIfDifferent<word>(os, "qrNbr", "none", qrNbrName_);
     writeEntryIfDifferent<word>(os, "qr", "none", qrName_);
     writeEntryIfDifferent<word>(os, "hNbr", "none", hNbrName_);
@@ -517,7 +537,6 @@ void globalTemperatureCoupledFvPatchScalarField::write
         TRefTypeNames_[TRefType_]
     );
 }
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -68,6 +68,9 @@ private:
         //- Is point interpolation needed
         mutable bool needPoints_;
 
+        //- Has the source patch been set
+        mutable bool srcSet_;
+
         //- Is this patch the source for mapping
         mutable bool isSrc_;
 

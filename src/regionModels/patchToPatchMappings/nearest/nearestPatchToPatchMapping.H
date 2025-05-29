@@ -181,6 +181,17 @@ public:
             const bool reverse
         );
 
+        //- Construct from components
+        nearest
+        (
+            const primitivePatch& srcPatch,
+            const primitivePatch& tgtPatch,
+            const dictionary& dict,
+            const bool needPoints,
+            const bool reverse,
+            const scalar minBbDim
+        );
+
 
     // Destructor
 
