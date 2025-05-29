@@ -34,7 +34,7 @@ Description
 #include "backupSearchableSurface.H"
 #include "systemDict.H"
 #include "calcAngleFraction.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 
 #include "fvMeshTopoChanger.H"
 #include "polyMeshRefiner.H"

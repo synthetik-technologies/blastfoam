@@ -30,7 +30,7 @@ Description
 #include "Time.H"
 #include "timeSelector.H"
 #include "fvMesh.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "processorPolyPatch.H"
 
 using namespace Foam;

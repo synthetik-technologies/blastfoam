@@ -45,7 +45,7 @@ Description
 
 #include "errorEstimator.H"
 #include "polyMeshRefiner.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 
 using namespace Foam;
 
