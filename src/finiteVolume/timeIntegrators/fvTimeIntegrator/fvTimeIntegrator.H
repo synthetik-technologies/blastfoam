@@ -395,7 +395,7 @@ public:
             const tmp<FieldName(Geo, Type)::Internal>&          \
         );                                                      \
                                                                 \
-        void addDeltaSource                                     \
+        bool addDeltaSource                                     \
         (                                                       \
             const word&,                                        \
             FieldName(Geo, Type)::Internal&                     \

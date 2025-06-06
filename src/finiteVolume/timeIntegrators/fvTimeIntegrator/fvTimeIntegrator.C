@@ -449,18 +449,20 @@ void Foam::fvTimeIntegrator::addIntegratedSource                            \
     }                                                                       \
 }                                                                           \
                                                                             \
-void Foam::fvTimeIntegrator::addDeltaSource                                 \
+bool Foam::fvTimeIntegrator::addDeltaSource                                 \
 (                                                                           \
     const word& fName,                                                      \
     FieldName(Geo, Type)::Internal& fDelta                                  \
 ) const                                                                     \
 {                                                                           \
+    bool set = false;                                                       \
     {                                                                       \
         HashPtrTable<FieldName(Geo, Type)::Internal>::const_iterator iter = \
             FieldVarName(Geo, Type, Source).find(fName);                    \
         if (iter != FieldVarName(Geo, Type, Source).cend())                 \
         {                                                                   \
             fDelta += *iter();                                              \
+            set = true;                                                     \
         }                                                                   \
     }                                                                       \
     {                                                                       \
@@ -473,8 +475,10 @@ void Foam::fvTimeIntegrator::addDeltaSource                                 \
               ? time().prevTimeState()                                      \
               : time();                                                     \
             fDelta += (*iter())/mesh_.V()/ts.deltaT();                      \
+            set = true;                                                     \
         }                                                                   \
     }                                                                       \
+    return set;                                                             \
 }
 
 FOR_ALL_FIELD_TYPES(defineSourceLookupType, vol);
