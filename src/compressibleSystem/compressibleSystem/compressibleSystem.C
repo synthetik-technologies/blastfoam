@@ -468,6 +468,10 @@ void Foam::compressibleSystem::addESource
 
 Foam::scalar Foam::compressibleSystem::CoNum() const
 {
+    if (mesh().topoChanged())
+    {
+        const_cast<compressibleSystem&>(*this).decode();
+    }
     const surfaceScalarField& magSf = mesh().magSf();
     surfaceScalarField amaxSf(fvc::interpolate(speedOfSound())*magSf);
 
