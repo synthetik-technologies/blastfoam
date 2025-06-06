@@ -361,13 +361,15 @@ void Foam::phaseModel::solve()
             if (&otherPhase != this && fluid_.hasMassTransfer(*this, otherPhase))
             {
                 volScalarField mD(fluid_.mDot(*this, otherPhase));
+                volScalarField alphaD(fluid_.mDotByRho(*this, otherPhase));
                 if (solveAlpha_)
                 {
-                    deltaAlpha.ref() -=
-                        fluid_.mDotByRho(mD, *this, otherPhase);
+                    deltaAlpha.ref() -= alphaD;
                 }
                 deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
-                deltaAlphaRhoE -= fluid_.mDotE(mD, *this, otherPhase);
+                deltaAlphaRhoE -=
+                    fluid_.mDotE(mD, *this, otherPhase)
+                  - alphaD*p_ ;
             }
         }
     }
