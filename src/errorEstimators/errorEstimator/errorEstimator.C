@@ -204,6 +204,7 @@ void Foam::errorEstimator::getFieldValue
 
 void Foam::errorEstimator::normalize(volScalarField& error)
 {
+    error_.correctBoundaryConditions();
     forAll(error, celli)
     {
         if
