@@ -231,18 +231,6 @@ int main(int argc, char *argv[])
 
     const bool parallelSource = args.optionFound("parallelSource");
 
-    scalar maxR(-1);
-    if (args.optionFound("maxR"))
-    {
-        maxR = args.optionRead<scalar>("maxR");
-        Info<< "Maximum distance from target centre is " << maxR << endl;
-    }
-    else if (args.optionFound("extend"))
-    {
-        maxR = great;
-        Info<< "Extending mapping to the edge of the domain" << endl;
-    }
-
     wordList additionalFieldNames;
     if (args.optionFound("additionalFields"))
     {
@@ -528,6 +516,38 @@ int main(int argc, char *argv[])
         << "Target centre: " << targetCentre << endl;
 
     Info<< "Source mesh size: " << nSourceCells << endl;
+
+    scalar maxR(-1);
+    if (args.optionFound("maxR"))
+    {
+        maxR = args.optionRead<scalar>("maxR");
+        Info<< "Maximum distance from target centre is " << maxR << endl;
+    }
+    else if (args.optionFound("extend"))
+    {
+        maxR = great;
+        Info<< "Extending mapping to the edge of the domain" << endl;
+    }
+    else
+    {
+        Info<<"Using maxium radius of sorce domain" << endl;
+        forAll(sourceMeshes, i)
+        {
+            boundBox bb(sourceMeshes[i].points(), false);
+            maxR = max
+            (
+                maxR,
+                mag(cmptMultiply(bb.min() - sourceCentre, targetAxis[0]))
+            );
+            maxR = max
+            (
+                maxR,
+                mag(cmptMultiply(bb.max() - sourceCentre, targetAxis[0]))
+            );
+        }
+        reduce(maxR, maxOp<scalar>());
+        Info<< "Maximum calulated radius = " << maxR << endl;
+    }
 
     if (copyUniform)
     {

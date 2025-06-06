@@ -199,11 +199,9 @@ void mapVolFields
 
         if (!UfieldSources.set(0))
         {
-            Info<<"no " << fieldIter()->name()<<endl;
         }
         else if (targetMesh.foundObject<FieldType>(fieldIter()->name()))
         {
-            Info<<"lookup " << fieldIter()->name()<<endl;
             mapField = true;
             fieldTargetPtr.set
             (
@@ -217,7 +215,6 @@ void mapVolFields
         }
         else if (fieldTargetIOobject.headerOk())
         {
-            Info<<"read " << fieldIter()->name()<<endl;
             mapField = true;
             fieldTargetPtr.set
             (
@@ -231,7 +228,6 @@ void mapVolFields
         }
         else if (mapFields.found(fieldTargetIOobject.name()))
         {
-            Info<<"read " << fieldIter()->name()<<endl;
             mapField = true;
             fieldTargetIOobject.readOpt() = IOobject::NO_READ;
             FieldType* fieldPtr =
@@ -286,6 +282,7 @@ void mapVolFields
                 fieldTarget.boundaryFieldRef()[patchi] =
                     fieldTarget.boundaryField()[patchi].patchInternalField();
             }
+
             if (!exists)
             {
                 fieldTarget.write();
