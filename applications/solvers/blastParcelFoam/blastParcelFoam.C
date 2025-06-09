@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2025 Synthetik Applied Technologies
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -25,8 +25,7 @@ Application
     blastFoam
 
 Description
-    Multiphase compressible solver that uses Riemann solver to construct
-    hyperbolic fluxes. Equation of states use the Mie–Grüneisen form.
+    Dilute particle solver coupled to blastFoam solver
 
 \*---------------------------------------------------------------------------*/
 
