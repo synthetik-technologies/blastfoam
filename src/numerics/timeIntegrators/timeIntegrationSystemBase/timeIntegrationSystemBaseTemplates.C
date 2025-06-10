@@ -121,16 +121,18 @@ void Foam::timeIntegrationSystemBase::storeOld
     const bool conservative
 )
 {
-    if (conservative)
-    {
-        f *= timeInt_->totalV0();
-    }
-
     // Store fields if needed later
     const label i = timeInt_->getOldIndex(step());
     if (i >= 0)
     {
-        fList[i] = f;
+        if (conservative)
+        {
+            fList[i] = f*timeInt_->totalV0();
+        }
+        else
+        {
+            fList[i] = f;
+        }
     }
 }
 
