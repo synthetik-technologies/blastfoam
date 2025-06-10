@@ -1,12 +1,13 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2021-2022 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
+
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@ License
 
 #include "internalPolyPatch.H"
 #include "processorPolyPatch.H"
+#include "blastSyncTools.H"
 
 #include "polyMeshHexRefiner.H"
 #include "polyMeshPolyRefiner.H"
@@ -270,7 +272,6 @@ void Foam::fvMeshDistributors::redistributor::readDict
     }
 
     balance_ = balanceDict.lookupOrDefault("balance", true);
-
     if (!balance_)
     {
         return;
@@ -304,18 +305,18 @@ void Foam::fvMeshDistributors::redistributor::readDict
             decompositionDict_ <<= balanceDict;
             decomp_.clear();
         }
+    }
 
-        if (balanceDict.found("contraints"))
+    if (balanceDict.found("constraints"))
+    {
+        const dictionary& constraintsDict = balanceDict.subDict("constraints");
+        forAllConstIter(dictionary, constraintsDict, iter)
         {
-            const dictionary& constraintsDict = balanceDict.subDict("constraints");
-            forAllConstIter(dictionary, constraintsDict, iter)
+            const entry& e = *iter;
+            if (e.isDict())
             {
-                const entry& e = *iter;
-                if (e.isDict())
-                {
-                    addConstraint(e.keyword(), e.dict());
-                    decomp_.clear();
-                }
+                addConstraint(e.keyword(), e.dict());
+                decomp_.clear();
             }
         }
     }
@@ -336,6 +337,10 @@ bool Foam::fvMeshDistributors::redistributor::constraintFound
     const word& type
 ) const
 {
+    if (!decompositionDict_.isDict("contraints"))
+    {
+        return false;
+    }
     const dictionary& constraintDict = decompositionDict_.subDict("constraints");
     forAllConstIter(dictionary, constraintDict, iter)
     {
@@ -357,6 +362,10 @@ void Foam::fvMeshDistributors::redistributor::addConstraint
     const dictionary& dict
 )
 {
+    if (!decompositionDict_.isDict("constraints"))
+    {
+        decompositionDict_.set("constraints", dictionary::null);
+    }
     dictionary& constraintDict = decompositionDict_.subDict("constraints");
     constraintDict.set(name, dict);
 }
@@ -380,6 +389,30 @@ void Foam::fvMeshDistributors::redistributor::distribute
 {
     fvMesh& mesh = this->mesh();
 
+    // Correct values on all coupled patches
+    blastSyncTools::correctProcessorBoundaries<volScalarField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<volVectorField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<volSphericalTensorField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<volSymmTensorField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<volTensorField>(mesh);
+
+    blastSyncTools::correctProcessorBoundaries<pointScalarField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<pointVectorField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<pointSphericalTensorField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<pointSymmTensorField>(mesh);
+    blastSyncTools::correctProcessorBoundaries<pointTensorField>(mesh);
+
+    // Set internal value point patch fields to the boundary values
+    blastSyncTools::setInPointBoundaries<scalar>(mesh);
+    blastSyncTools::setInPointBoundaries<vector>(mesh);
+    blastSyncTools::setInPointBoundaries<sphericalTensor>(mesh);
+    blastSyncTools::setInPointBoundaries<symmTensor>(mesh);
+    blastSyncTools::setInPointBoundaries<tensor>(mesh);
+
+
+
+    mesh.time().checkOut(static_cast<polyMesh&>(mesh));
+
     // Mesh distribution engine
     fvMeshDistribute distributor(mesh);
 
@@ -389,10 +422,32 @@ void Foam::fvMeshDistributors::redistributor::distribute
         distributor.distribute(distribution)
     );
 
+    mesh.time().checkIn(static_cast<polyMesh&>(mesh));
+
     if (dist)
     {
         // Distribute the mesh data
-        mesh.distribute(map);
+       mesh.distribute(map);
+
+       // Correct values on all coupled patches
+        blastSyncTools::correctProcessorBoundaries<volScalarField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<volVectorField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<volSphericalTensorField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<volSymmTensorField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<volTensorField>(mesh);
+
+        blastSyncTools::correctProcessorBoundaries<pointScalarField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<pointVectorField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<pointSphericalTensorField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<pointSymmTensorField>(mesh);
+        blastSyncTools::correctProcessorBoundaries<pointTensorField>(mesh);
+
+        // Set internal value point patch fields to the boundary values
+        blastSyncTools::setInPointBoundaries<scalar>(mesh);
+        blastSyncTools::setInPointBoundaries<vector>(mesh);
+        blastSyncTools::setInPointBoundaries<sphericalTensor>(mesh);
+        blastSyncTools::setInPointBoundaries<symmTensor>(mesh);
+        blastSyncTools::setInPointBoundaries<tensor>(mesh);
     }
 }
 
@@ -406,47 +461,25 @@ Foam::fvMeshDistributors::redistributor::redistributor
 )
 :
     fvMeshDistributor(mesh),
-    decompositionDict_(decompositionMethod::decomposeParDict(mesh.time())),
+    decompositionDict_
+    (
+        (
+            dict().found("decomposer")
+         || dict().found("method")
+        )
+      ? dict()
+      : decompositionMethod::decomposeParDict(mesh.time())
+    ),
     decomp_(nullptr),
-    balance_(true),
+    balance_(Pstream::nProcs() > 1),
     force_(false),
     balanceInterval_(10),
     beginBalance_(0),
     endBalance_(great),
     maxImbalance_(0.1),
-    timeIndex_(-1),
+    timeIndex_(mesh.time().timeIndex()),
     iter_(0)
 {
-    {
-        typeIOobject<IOdictionary> dictHeader
-        (
-            IOobject
-            (
-                "dynamicMeshDict",
-                mesh.time().constant(),
-                mesh,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                false
-            )
-        );
-
-        if (dictHeader.headerOk())
-        {
-            IOdictionary dict(dictHeader);
-
-            if (dict.isDict("distributor"))
-            {
-                const dictionary& distributorDict = dict.subDict("distributor");
-
-                if (distributorDict.isDict("decomposition"))
-                {
-                    decompositionDict_ = distributorDict.subDict("decomposition");
-                }
-            }
-        }
-    }
-
     if
     (
         mesh.foundObject<polyMeshHexRefiner>(polyMeshHexRefiner::typeName)
@@ -507,14 +540,11 @@ bool Foam::fvMeshDistributors::redistributor::update()
      && (
             force_
          || (
-                Pstream::nProcs() > 1
-             && timeIndex_ != mesh.time().timeIndex()
-             && (
-                    timeIndex_ == 0
-                 || (
-                        mesh.topoChanging()
-                     && ++iter_ % balanceInterval_ == 0
-                    )
+                timeIndex_ == mesh.time().startTimeIndex()
+             || (
+                    timeIndex_ != mesh.time().timeIndex()
+                 && mesh.topoChanged()
+                 && (iter_ % balanceInterval_ == 0)
                 )
             )
         )
@@ -522,19 +552,25 @@ bool Foam::fvMeshDistributors::redistributor::update()
     {
         timeIndex_ = mesh.time().timeIndex();
 
-        const scalar idealNCells =
-            mesh.globalData().nTotalCells()/Pstream::nProcs();
+        const label nTotalCells = returnReduce(mesh.nCells(), sumOp<label>());
+        if (!nTotalCells)
+        {
+            return false;
+        }
 
-        const scalar imbalance = mag(1 - mesh.nCells()/idealNCells);
+        iter_++;
 
-        const scalar globalImbalance = returnReduce(imbalance, maxOp<scalar>());
+        const scalar idealNCells = scalar(nTotalCells)/scalar(Pstream::nProcs());
+
+        const scalar localImbalance = mag(1 - mesh.nCells()/idealNCells);
+
+        const scalar globalImbalance = returnReduce(localImbalance, maxOp<scalar>());
 
         Info<<"Maximum imbalance = " << 100*globalImbalance << " %" << endl;
-
         if (debug)
         {
             Pout<< "Current local imbalance = "
-                << 100.0*imbalance << "%, "
+                << 100.0*localImbalance << "%, "
                 << "nCells = " << mesh.nCells()
                 << endl;
         }
@@ -551,6 +587,12 @@ bool Foam::fvMeshDistributors::redistributor::update()
         (
             decomp().decompose(mesh, scalarField())
         );
+        bool allSame = min(distribution) == max(distribution);
+        if (returnReduce(allSame, andOp<bool>()))
+        {
+            DebugInfo<< "Distribution does not change. Skipping" << endl;
+            return false;
+        }
 
         // Check if distribution will improve anything
         labelList procLoadNew(Pstream::nProcs(), 0);
@@ -559,10 +601,10 @@ bool Foam::fvMeshDistributors::redistributor::update()
             procLoadNew[distribution[celli]]++;
         }
         reduce(procLoadNew, sumOp<labelList>());
-        if (min(procLoadNew) == 0)
+        if (maxImbalance_ >= 0 && min(procLoadNew) == 0)
         {
             DebugInfo
-                << "New distribtion results in a load of 0. Skipping" << endl;
+                << "New distribution results in a load of 0. Skipping" << endl;
             return false;
         }
         scalar averageLoadNew
@@ -571,20 +613,26 @@ bool Foam::fvMeshDistributors::redistributor::update()
         );
         scalar maxDevNew(max(mag(procLoadNew - averageLoadNew))/averageLoadNew);
 
-        if (maxDevNew > maxImbalance_*0.99)
+        if (maxImbalance_ >= 0 && maxDevNew > maxImbalance_*0.99)
         {
             Info
                 << "    Not balancing because the new distribution does" << nl
                 << "    not improve the load. Skipping" << nl
-                << "    old imbalance: " << maxImbalance_ << nl
+                << "    old imbalance: " << globalImbalance << nl
                 << "    new imbalance: " << maxDevNew << nl
                 << endl;
             return false;
         }
 
-        Info<< "Redistributing mesh with new imbalance = "
-            << 100.0*maxDevNew << endl;
         distribute(distribution, true);
+
+        Info<< "Redistributed mesh with new imbalance = "
+            << 100.0*maxDevNew << "%" << endl;
+        if (debug)
+        {
+            Pout<< "New local nCells = " << mesh.nCells() << endl;
+        }
+        const_cast<surfaceScalarField&>(mesh.phi()) = Zero;
 
         return true;
     }
@@ -634,7 +682,7 @@ bool Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
         procLoadNew[distribution[celli]]++;
     }
     reduce(procLoadNew, sumOp<labelList>());
-    if (min(procLoadNew) == 0)
+    if (maxImbalance_ >= 0 && min(procLoadNew) == 0)
     {
         DebugInfo
             << "New distribtion results in a load of 0. Skipping" << endl;
@@ -646,7 +694,7 @@ bool Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
     );
     scalar maxDevNew(max(mag(procLoadNew - averageLoadNew))/averageLoadNew);
 
-    if (maxDevNew > maxImbalance_*0.99)
+    if (maxImbalance_ >= 0 && maxDevNew > maxImbalance_*0.99)
     {
         Info
             << "    Not balancing because the new distribution does" << nl
