@@ -32,6 +32,12 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(reactingCompressibleSystem, 0);
+    addToRunTimeSelectionTable
+    (
+        compressibleSystem,
+        reactingCompressibleSystem,
+        singlePhase
+    );
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

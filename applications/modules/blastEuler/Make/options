@@ -17,6 +17,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
     -I$(BLAST_DIR)/src/functionObjects/lnInclude \
+    -I$(BLAST_DIR)/src/regionModels/lnInclude \
+    -I$(BLAST_DIR)/src/regionSolvers/regionSolvers/lnInclude \
     -IphaseSystems/lnInclude \
     -IinterfacialModels/lnInclude \
     -IphaseCompressibleMomentumTransportModels/lnInclude \
@@ -30,7 +32,9 @@ LIB_LIBS = \
     -lblastNumerics \
     -lblastThermodynamics \
     -lblastFiniteVolume \
-    -lblastInterfacialModels\
+    -lblastRegionModels \
+    -lregionSolvers \
+    -lblastInterfacialModels \
     -lblastPhaseSystems \
     -lblastKineticTheoryModels \
     -lblastPhaseCompressibleMomentumTransportModels \

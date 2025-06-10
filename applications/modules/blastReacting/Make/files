@@ -1,4 +1,5 @@
 reactingCompressibleSystem/reactingCompressibleSystem.C
 blastReactingSolver.C
+regionSolver/blastReactingRegionSolver.C
 
 LIB = $(BLAST_LIBBIN)/libblastReacting
