@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2022
+    \\  /    A nd           | Copyright (C) 2022-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -85,7 +85,7 @@ Foam::fvMeshTopoChangers::fvMeshRefiner::~fvMeshRefiner()
 bool Foam::fvMeshTopoChangers::fvMeshRefiner::update()
 {
     error_->update();
-    error_->error().correctBoundaryConditions();
+
     bool updated = refine
     (
         error_->error(),
