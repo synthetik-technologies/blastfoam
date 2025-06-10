@@ -36,15 +36,15 @@ Foam::autoPtr<Foam::regionSolver> Foam::regionSolver::New
     Info<< "Selecting regionSolver: " << type
         << " for region " << mesh.name() << endl;
 
-    libs.open
-    (
-        dict,
-        "libs",
-        dictionaryConstructorTablePtr_
-    );
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(type);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        libs.open("lib" + type + ".so");
+        cstrIter = dictionaryConstructorTablePtr_->find(type);
+    }
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {

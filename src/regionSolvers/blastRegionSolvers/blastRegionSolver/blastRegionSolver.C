@@ -64,6 +64,7 @@ Foam::regionSolvers::blast::blast
     fluid_(compressibleSystem::New(mesh_))
 {
     integrator_.addSystem(fluid_());
+    fluid_->update();
 }
 
 
@@ -91,6 +92,7 @@ Foam::regionSolvers::blast::blast
     fluid_(compressibleSystem::New(type, mesh_))
 {
     integrator_.addSystem(fluid_());
+    fluid_->update();
 }
 
 

@@ -124,12 +124,6 @@ void Foam::regionSolvers::thermal::solve()
 
         converged = eEqn.solve().initialResidual() < tolerance;
 
-        if (!lastIter)
-        {
-            e.storePrevIter();
-            e.relax();
-        }
-
         fvConstraints_.constrain(e);
 
     } while (++iter < maxIter && !lastIter);

@@ -101,9 +101,12 @@ Foam::regionSolverList::regionSolverList(const Time& runTime)
     }
     if (fixedMapping_ && requireNonFixedMapping)
     {
-        WarningInFunction
-            << "Fixed mapping but topological changes require non-fixed "
-            << "mapping, overriding" << endl;
+        if (solutionControls().found("fixedMapping"))
+        {
+            WarningInFunction
+                << "Fixed mapping but topological changes require non-fixed "
+                << "mapping, overriding" << endl;
+        }
         fixedMapping_ = false;
     }
 
