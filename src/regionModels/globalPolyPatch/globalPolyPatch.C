@@ -114,11 +114,14 @@ void Foam::globalPolyPatch::calcPhysicalPatch() const
             tppointD = faceToPoint(D.boundaryField()[patchID]);
             if (displacedPoints0Ptr_.valid())
             {
-                tppointD0 =
-                    faceToPoint
-                    (
-                        D.oldTime().boundaryField()[patchID]
-                    );
+                if (D.nOldTimes(false))
+                {
+                    tppointD0 = faceToPoint(D.oldTime().boundaryField()[patchID]);
+                }
+                else
+                {
+                    tppointD0 = faceToPoint(D.boundaryField()[patchID]);
+                }
             }
         }
         else if
@@ -141,13 +144,26 @@ void Foam::globalPolyPatch::calcPhysicalPatch() const
                 );
                 if (displacedPoints0Ptr_.valid())
                 {
-                    tppointD0 = tmp<vectorField>
-                    (
-                        dynamicCast<const valuePointPatchVectorField>
+                    if (pointD.nOldTimes(false))
+                    {
+                        tppointD0 = tmp<vectorField>
                         (
-                            pointD.oldTime().boundaryField()[patchID]
-                        )
-                    );
+                            dynamicCast<const valuePointPatchVectorField>
+                            (
+                                pointD.oldTime().boundaryField()[patchID]
+                            )
+                        );
+                    }
+                    else
+                    {
+                        tppointD0 = tmp<vectorField>
+                        (
+                            dynamicCast<const valuePointPatchVectorField>
+                            (
+                                pointD.boundaryField()[patchID]
+                            )
+                        );
+                    }
                 }
             }
             else
@@ -155,11 +171,22 @@ void Foam::globalPolyPatch::calcPhysicalPatch() const
                 tppointD = ppointD.patchInternalField();
                 if (displacedPoints0Ptr_.valid())
                 {
-                    tppointD0 =
-                        pointD.oldTime().boundaryField()
-                        [
-                            patchID
-                        ].patchInternalField();
+                    if (pointD.nOldTimes(false))
+                    {
+                        tppointD0 =
+                            pointD.oldTime().boundaryField()
+                            [
+                                patchID
+                            ].patchInternalField();
+                    }
+                    else
+                    {
+                        tppointD0 =
+                            pointD.boundaryField()
+                            [
+                                patchID
+                            ].patchInternalField();
+                    }
                 }
             }
         }
