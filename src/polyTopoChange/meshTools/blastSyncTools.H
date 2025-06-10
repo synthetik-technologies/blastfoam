@@ -54,9 +54,6 @@ class pointMesh;
 class blastSyncTools
 {
 
-    //- Original parRun status
-    static bool parRun;
-
 public:
 
      //- Template to update all processor boundaries
@@ -74,10 +71,6 @@ public:
     //- Helper: push master point data to collocated points
     template<class Type>
     static void pushUntransformedData(const polyMesh&, Field<Type>&);
-
-    // Return is the mesh is being balanced
-    static bool isBalancing();
-
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

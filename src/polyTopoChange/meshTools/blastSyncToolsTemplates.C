@@ -111,7 +111,7 @@ void Foam::blastSyncTools::setInPointBoundaries(const fvMesh& mesh)
         {
             if (isA<valuePointPatchField<Type>>(bfld[patchi]))
             {
-                bfld[patchi].setInInternalField
+                bfld[patchi].setInternalField
                 (
                     fld.primitiveFieldRef(),
                     dynamicCast<const Field<Type>>(bfld[patchi])

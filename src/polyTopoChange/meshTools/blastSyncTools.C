@@ -28,19 +28,5 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::blastSyncTools::parRun = Pstream::parRun();
-
-bool Foam::blastSyncTools::isBalancing()
-{
-    if (!Foam::blastSyncTools::parRun)
-    {
-        return false;
-    }
-    else if (!Pstream::parRun())
-    {
-        return true;
-    }
-    return false;
-}
 
 // ************************************************************************* //

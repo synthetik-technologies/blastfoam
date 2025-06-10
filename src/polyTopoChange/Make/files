@@ -29,7 +29,7 @@ polyMeshRefiner/polyMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.
 polyMeshRefiner/polyMeshPolyRefiner/refinement/refinement.C
 
 meshTools/blastMeshTools.C
-meshTools/blastSyncTools.C
+#meshTools/blastSyncTools.C
 
 MeshFields/MeshField/MeshFields.C
 MeshFields/MeshFieldUpdater/MeshFieldUpdaters.C
