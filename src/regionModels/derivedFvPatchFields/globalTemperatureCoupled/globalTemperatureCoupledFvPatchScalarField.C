@@ -167,7 +167,7 @@ globalTemperatureCoupledFvPatchScalarField
         }
     }
 
-//     fvPatchScalarField::operator=(scalarField("value", dict, p.size()));
+    fvPatchScalarField::operator=(scalarField("value", dict, p.size()));
 
     if (dict.found("refValue"))
     {
