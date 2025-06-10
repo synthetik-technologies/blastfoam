@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2015-2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2025-06-09 Jeff Heylmun     : Derived from compressible::kOmegaSST
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -38,7 +40,7 @@ Description
 
     The model coefficients are
     \verbatim
-        kOmegaSSTSAS_compCoeffs
+        compressible::kOmegaSSTSASCoeffs
         {
             // Default SST coefficients
             alphaK1     0.85;

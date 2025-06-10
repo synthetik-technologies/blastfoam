@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2025-06-09 Jeff Heylmun     : Derived from compressibilityCorrection
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -74,7 +76,7 @@ Description
 
     The default model coefficients are
     \verbatim
-        kOmegaSSTCoeffs
+        compressible::kOmegaSSTCoeffs
         {
             alphaK1     0.85;
             alphaK2     1.0;
@@ -93,6 +95,9 @@ Description
             alpha       0.5;
         }
     \endverbatim
+
+
+    Inherits compressibility correction classs
 
 SourceFiles
     kOmegaSSTBase_comp.C

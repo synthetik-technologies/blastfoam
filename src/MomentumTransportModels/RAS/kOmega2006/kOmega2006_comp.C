@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2021-2023 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2025-06-09 Jeff Heylmun     : Derived from compressibilityCorrection
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
