@@ -4,6 +4,7 @@ Info<< "Creating phaseSystem\n" << endl;
 fvTimeIntegrator integrator(mesh);
 phaseSystem fluid(mesh);
 integrator.addSystem(fluid);
+fluid.update();
 
 PtrList<phaseModel>& phases(fluid.phases());
 

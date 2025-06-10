@@ -14,6 +14,7 @@ IOdictionary physicalProperties
 );
 psiuCompressibleSystem fluid(physicalProperties, mesh);
 integrator.addSystem(fluid);
+fluid.update();
 
 psiuMulticomponentThermo& thermo = fluid.rThermo();
 

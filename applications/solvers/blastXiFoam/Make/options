@@ -18,7 +18,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
-    -IpsiuCompressibleSystem
+    -I$(BLAST_MODULES)/blastXi/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \
@@ -34,4 +34,5 @@ EXE_LIBS = \
     -lXiIgnition \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
-    -lcompressibleSystems
+    -lcompressibleSystems \
+    -lblastXi
