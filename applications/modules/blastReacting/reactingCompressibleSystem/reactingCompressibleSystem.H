@@ -39,7 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "compressibleSystem.H"
-#include "fluidMulticomponentThermo.H"
+#include "psiMulticomponentThermo.H"
 #include "fluidMulticomponentThermophysicalTransportModel.H"
 #include "combustionModel.H"
 #include "radiationModel.H"
@@ -59,7 +59,7 @@ protected:
 // Protected data
 
     //- Thermo
-    autoPtr<fluidMulticomponentThermo> thermo_;
+    autoPtr<psiMulticomponentThermo> thermo_;
 
     //- Primitative variables
 

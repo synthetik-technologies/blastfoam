@@ -49,7 +49,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
 )
 :
     compressibleSystem(dict, mesh),
-    thermo_(fluidMulticomponentThermo::New(mesh)),
+    thermo_(psiMulticomponentThermo::New(mesh)),
     rho_
     (
         IOobject
@@ -57,11 +57,11 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
             "rho",
             mesh.time().name(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("rho", dimDensity, 0.0)
+        dimensionedScalar("rho", dimDensity, 1.0)
     ),
     p_(thermo_->p()),
     T_(thermo_->T()),
@@ -155,8 +155,9 @@ void Foam::reactingCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoE);
 
     //- Store old values
+    const volScalarField rho0(rho_);
     this->storeAndBlendOld(rho_);
-    rho_.storePrevIter();
+    const volScalarField rhoPrev(rho_);
 
     this->storeAndBlendOld(rhoU_);
     this->storeAndBlendOld(rhoE_);
@@ -164,7 +165,6 @@ void Foam::reactingCompressibleSystem::solve()
 
     dimensionedScalar dT = rho_.time().deltaT();
     rho_ -= dT*deltaRho;
-    rho_.correctBoundaryConditions();
 
     rhoU_ -= dT*deltaRhoU;
     rhoE_ -= dT*deltaRhoE;
@@ -187,28 +187,29 @@ void Foam::reactingCompressibleSystem::solve()
             {
                 volScalarField deltaRhoY
                 (
-                    fvc::div(fluxScheme_->flux(Ys[i], rho_, phi_, false))
+                    fvc::div(fluxScheme_->flux(Ys[i], rho0, phi_, false))
                 );
 
-                this->storeAndBlendOld(Ys[i], false);
+                volScalarField rhoYi(rho0*Ys[i]);
+                this->storeAndBlendOld(rhoYi);
                 this->storeAndBlendDelta(deltaRhoY);
 
-                Ys[i] =
-                    Ys[i]*(2.0 - rho_/rho_.prevIter())
-                  - dT*deltaRhoY/rho_.prevIter();
+                Ys[i] = (rhoYi - dT*deltaRhoY)/rho_;
                 Ys[i].correctBoundaryConditions();
 
                 Ys[i].max(0.0);
                 Yt += Ys[i];
             }
         }
-        thermo_->normaliseY();
     }
 }
 
 
 void Foam::reactingCompressibleSystem::postUpdate()
 {
+    turbulence_->predict();
+    thermophysicalTransport_->predict();
+
     this->decode();
 
     // Solve mass
@@ -290,10 +291,12 @@ void Foam::reactingCompressibleSystem::postUpdate()
     constraints().constrain(eEqn);
     eEqn.solve();
     constraints().constrain(e_);
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
     // Update thermo
     thermo_->correct();
+
+    // Update total energy
+    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
     p_.internalFieldRef() = rho_()/thermo_->psi()();
     constraints().constrain(p_);
@@ -305,6 +308,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
 
     // correct turbulence
     turbulence_->correct();
+    thermophysicalTransport_->correct();
 }
 
 
@@ -333,24 +337,22 @@ void Foam::reactingCompressibleSystem::decode()
     U_.internalFieldRef() = rhoU_()/rho_();
     U_.correctBoundaryConditions();
 
-    rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
-
-    volScalarField E(rhoE_/rho_);
-    e_.internalFieldRef() = E() - 0.5*magSqr(U_());
+    e_.internalFieldRef() = rhoE_()/rho_() - 0.5*magSqr(U_());
     e_.correctBoundaryConditions();
-
-    rhoE_.boundaryFieldRef() =
-        rho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
 
     thermo_->correct();
     p_.internalFieldRef() = rho_/thermo_->psi();
     p_.correctBoundaryConditions();
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
+
+    rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
+    rhoE_.boundaryFieldRef() =
+        rho_.boundaryField()
+       *(
+            e_.boundaryField()
+          + 0.5*magSqr(U_.boundaryField())
+        );
 }
 
 
