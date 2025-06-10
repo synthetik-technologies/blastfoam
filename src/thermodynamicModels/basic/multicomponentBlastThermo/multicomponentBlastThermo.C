@@ -88,7 +88,8 @@ Foam::multicomponentBlastThermo::integrator::integrator
     PtrListDictionary<fvScalarMatrix>& implicitSources,
     const List<bool>& active,
     const word& alphaRhoName,
-    const word& alphaRhoPhiName
+    const word& alphaRhoPhiName,
+    const bool normalize
 )
 :
     timeIntegrationSystem
@@ -102,7 +103,8 @@ Foam::multicomponentBlastThermo::integrator::integrator
     implicitSources_(implicitSources),
     active_(active),
     alphaRho_(mesh_.lookupObject<volScalarField>(alphaRhoName)),
-    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName))
+    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName)),
+    normalize_(normalize)
 {}
 
 
@@ -174,7 +176,8 @@ void Foam::multicomponentBlastThermo::initializeModels()
             implicitSources_,
             active_,
             alphaRhoName,
-            alphaRhoPhiName
+            alphaRhoPhiName,
+            defaultSpeciei_ < 0
         )
     );
 }
@@ -183,6 +186,10 @@ void Foam::multicomponentBlastThermo::initializeModels()
 void Foam::multicomponentBlastThermo::update()
 {
     integratorPtr_->update();
+    if (integratorPtr_->normalize())
+    {
+        defaultSpeciei_ = -1;
+    }
     correctMassFractions();
 }
 
@@ -190,12 +197,20 @@ void Foam::multicomponentBlastThermo::update()
 void Foam::multicomponentBlastThermo::solve()
 {
     integratorPtr_->solve();
+    if (integratorPtr_->normalize())
+    {
+        defaultSpeciei_ = -1;
+    }
 }
 
 
 void Foam::multicomponentBlastThermo::postUpdate()
 {
     integratorPtr_->postUpdate();
+    if (integratorPtr_->normalize())
+    {
+        defaultSpeciei_ = -1;
+    }
     correctMassFractions();
 }
 
@@ -232,6 +247,7 @@ void Foam::multicomponentBlastThermo::addDelta
 {
     if (this->containsSpecie(name))
     {
+        defaultSpeciei_ = -1;
         const label speciei = species_[name];
         if (!massTransferRates_.PtrList<volScalarField::Internal>::set(speciei))
         {
@@ -269,6 +285,7 @@ void Foam::multicomponentBlastThermo::addDelta
 {
     if (this->containsSpecie(name))
     {
+        defaultSpeciei_ = -1;
         const label speciei = species_[name];
         if (!massTransferRates_.PtrList<volScalarField::Internal>::set(speciei))
         {
@@ -305,6 +322,7 @@ void Foam::multicomponentBlastThermo::addDelta
 {
     if (this->containsSpecie(name))
     {
+        defaultSpeciei_ = -1;
         const label speciei = species_[name];
         if (!massTransferRates_.PtrList<volScalarField::Internal>::set(speciei))
         {
@@ -340,6 +358,7 @@ void Foam::multicomponentBlastThermo::addSource
 {
     if (species_.found(name))
     {
+        defaultSpeciei_ = -1;
         if (implicitSources_.found(name))
         {
             implicitSources_[name] += source;
@@ -365,6 +384,7 @@ void Foam::multicomponentBlastThermo::addSource
 {
     if (species_.found(name))
     {
+        defaultSpeciei_ = -1;
         if (implicitSources_.found(name))
         {
             implicitSources_[name] += source;
@@ -413,7 +433,12 @@ void Foam::multicomponentBlastThermo::integrator::solve()
             {
                 deltaAlphaRhoY.internalFieldRef() -= massTransferRates_[i];
             }
-            this->fvTimeInt_->addDeltaSource(Y.name(), deltaAlphaRhoY);
+
+            // External source so not conservative, normalize mass fractions
+            if (this->fvTimeInt_->addDeltaSource(Y.name(), deltaAlphaRhoY))
+            {
+                normalize_ = true;
+            }
 
             // Not conservative, but alphaRho*Yi is
             volScalarField alphaRhoY(alphaRho*Y);

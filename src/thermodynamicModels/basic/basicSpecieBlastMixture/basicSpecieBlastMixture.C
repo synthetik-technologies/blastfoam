@@ -148,7 +148,7 @@ Foam::basicSpecieBlastMixture::basicSpecieBlastMixture
     species_(specieNames),
     defaultSpecieName_
     (
-        species_.size() && phaseName.empty()
+        (species_.size() && phaseName.empty())
       ? thermoDict.lookupBackwardsCompatible<word>
         (
             {"defaultSpecie", "inertSpecie"}

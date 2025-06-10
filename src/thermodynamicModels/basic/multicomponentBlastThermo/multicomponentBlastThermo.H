@@ -96,6 +96,7 @@ protected:
         const List<bool>& active_;
         const volScalarField& alphaRho_;
         const surfaceScalarField& alphaRhoPhi_;
+        bool normalize_;
 
     public:
         integrator
@@ -106,7 +107,8 @@ protected:
             PtrListDictionary<fvScalarMatrix>& implicitSources,
             const List<bool>& active,
             const word& alphaRhoName,
-            const word& alphaRhoPhiName
+            const word& alphaRhoPhiName,
+            const bool normalize
         );
 
         virtual ~integrator();
@@ -114,6 +116,11 @@ protected:
         virtual void update();
         virtual void solve();
         virtual void postUpdate();
+
+        bool normalize() const
+        {
+            return normalize_;
+        }
     };
 
     autoPtr<integrator> integratorPtr_;

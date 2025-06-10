@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "scalar.H"
-#include "List.H"
+#include "FixedList.H"
 
 namespace Foam
 {
