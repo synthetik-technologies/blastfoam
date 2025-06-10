@@ -30,36 +30,37 @@ License
 template<class FieldType>
 void Foam::timeIntegrationSystemBase::storeOld
 (
-    FieldType& f,
+    const FieldType& f,
     PtrList<FieldType>& fList,
     const bool conservative
 )
 {
-    if (timeInt_->firstStep() && !timeInt_->restart())
-    {
-        f.storeOldTimes();
-    }
-
     // Store fields if needed later
     label i = timeInt_->getOldIndex(step());
     if (i != -1)
     {
-        if (fList.set(i))
+        if (!fList.set(i))
         {
-            fList[i] = f;
-        }
-        else
-        {
+            // Copy constructor coppies old times, so initialize zero field
+            // the set the value
+            typedef typename FieldType::value_type Type;
             fList.set
             (
                 i,
                 new FieldType
                 (
-                    IOobject::groupName(f.name() + "_old", Foam::name(i)),
-                    f
+                    IOobject
+                    (
+                        IOobject::groupName(f.name() + "_old", Foam::name(i)),
+                        f.time().name(),
+                        f.mesh()
+                    ),
+                    f.mesh(),
+                    dimensioned<Type>(f.dimensions(), Zero)
                 )
             );
         }
+        fList[i] = f;
 
         // Scale old field for mesh motion before storage
         // if conservative
@@ -71,7 +72,6 @@ void Foam::timeIntegrationSystemBase::storeOld
                 fList[i].primitiveFieldRef() *= V0;
             }
         }
-        fList[i].checkIn();
     }
 }
 
@@ -87,23 +87,28 @@ void Foam::timeIntegrationSystemBase::storeDelta
     label i = timeInt_->getDeltaIndex(step());
     if (i != -1)
     {
-        if (fList.set(i))
+        if (!fList.set(i))
         {
-            fList[i] = f;
-        }
-        else
-        {
+            // Copy constructor coppies old times, so initialize zero field
+            // the set the value
+            typedef typename FieldType::value_type Type;
             fList.set
             (
                 i,
                 new FieldType
                 (
-                    IOobject::groupName(f.name() + "_delta", Foam::name(i)),
-                    f
+                    IOobject
+                    (
+                        IOobject::groupName(f.name() + "_delta", Foam::name(i)),
+                        f.time().name(),
+                        f.mesh()
+                    ),
+                    f.mesh(),
+                    dimensioned<Type>(f.dimensions(), Zero)
                 )
             );
-            fList[i].checkIn();
         }
+        fList[i] = f;
     }
 }
 
@@ -111,7 +116,7 @@ void Foam::timeIntegrationSystemBase::storeDelta
 template<class Type>
 void Foam::timeIntegrationSystemBase::storeOld
 (
-    Type& f,
+    const Type& f,
     List<Type>& fList,
     const bool conservative
 )

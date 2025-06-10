@@ -67,7 +67,12 @@ protected:
             //- Store old fields
             //  moving keyword used for template function
             template<class Type>
-            void storeOld(Type& f, List<Type>& fList, bool conservative = true);
+            void storeOld
+            (
+                const Type& f,
+                List<Type>& fList,
+                bool conservative = true
+            );
 
             //- Store delta fields
             template<class Type>
@@ -79,7 +84,7 @@ protected:
             template<class FieldType>
             void storeOld
             (
-                FieldType& f,
+                const FieldType& f,
                 PtrList<FieldType>& fList,
                 const bool conservative = true
             );
