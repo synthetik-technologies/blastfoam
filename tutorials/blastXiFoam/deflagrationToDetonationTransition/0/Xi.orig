@@ -10,20 +10,19 @@ FoamFile
     format      ascii;
     class       volScalarField;
     location    "0";
-    object      nut;
+    object      Xi.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 2 -1 0 0 0 0];
+dimensions      [0 0 0 0 0 0 0];
 
-internalField   uniform 0;
+internalField   uniform 1;
 
 boundaryField
 {
     walls
     {
-        type            nutkWallFunction;
-        value           $internalField;
+        type            zeroGradient;
     }
     defaultFaces
     {

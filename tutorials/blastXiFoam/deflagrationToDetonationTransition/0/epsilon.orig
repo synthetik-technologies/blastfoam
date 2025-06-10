@@ -10,19 +10,20 @@ FoamFile
     format      ascii;
     class       volScalarField;
     location    "0";
-    object      fu;
+    object      epsilon.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [];
+dimensions      [0 2 -3 0 0 0 0];
 
-internalField   uniform 0;
+internalField   uniform 5.3;
 
 boundaryField
 {
     walls
     {
-        type            zeroGradient;
+        type            epsilonWallFunction;
+        value           $internalField;
     }
     defaultFaces
     {

@@ -10,11 +10,11 @@ FoamFile
     format      ascii;
     class       volScalarField;
     location    "0";
-    object      tau;
+    object      alphat.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [];
+dimensions      [1 -1 -1 0 0 0 0];
 
 internalField   uniform 0;
 
@@ -22,7 +22,8 @@ boundaryField
 {
     walls
     {
-        type            zeroGradient;
+        type            compressible::alphatWallFunction;
+        value           $internalField;
     }
     defaultFaces
     {
