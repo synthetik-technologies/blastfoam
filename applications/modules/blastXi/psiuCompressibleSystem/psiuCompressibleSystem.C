@@ -57,7 +57,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             "rho",
             mesh.time().name(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         thermo_->rho()
@@ -144,36 +144,33 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
 {
     thermo_->validate("psiuCompressibleSystem", "ea");
 
-    if (min(thermo_->mu()).value() > small)
-    {
-        turbulence_ =
-            compressible::momentumTransportModel::New
-            (
-                rho_,
-                U_,
-                rhoPhi_,
-                thermo_()
-            );
-        thermophysicalTransport_.set
+    turbulence_ =
+        compressible::momentumTransportModel::New
         (
-            new turbulenceThermophysicalTransportModels::unityLewisEddyDiffusivity
+            rho_,
+            U_,
+            rhoPhi_,
+            thermo_()
+        );
+    thermophysicalTransport_.set
+    (
+        new turbulenceThermophysicalTransportModels::unityLewisEddyDiffusivity
+        <
+            RASThermophysicalTransportModel
             <
-                RASThermophysicalTransportModel
+                ThermophysicalTransportModel
                 <
-                    ThermophysicalTransportModel
-                    <
-                        compressibleMomentumTransportModel,
-                        fluidThermo
-                    >
+                    compressibleMomentumTransportModel,
+                    fluidThermo
                 >
             >
-            (
-                turbulence_(),
-                thermo_(),
-                true
-            )
-        );
-    }
+        >
+        (
+            turbulence_(),
+            thermo_(),
+            true
+        )
+    );
 
     fluxScheme_ = fluxScheme::NewSingle(phi_);
     encode();
@@ -293,6 +290,9 @@ Foam::dimensionedScalar Foam::psiuCompressibleSystem::calcStCorr
 
 void Foam::psiuCompressibleSystem::solve()
 {
+    turbulence_->predict();
+    thermophysicalTransport_->predict();
+
     volSymmTensorField devTau(turbulence_->devTau());
     volScalarField divSigmaDotU
     (
@@ -663,6 +663,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
 
     this->decode();
     turbulence_->correct();
+    thermophysicalTransport_->correct();
 }
 
 
@@ -688,16 +689,9 @@ void Foam::psiuCompressibleSystem::decode()
     U_.internalFieldRef() = rhoU_()/rho_();
     U_.correctBoundaryConditions();
 
-    rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
-
     e_.internalFieldRef() = rhoE_()/rho_() - 0.5*magSqr(U_());
     e_.correctBoundaryConditions();
-    rhoE_.boundaryFieldRef() =
-        rho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
+
 
     eu_.internalFieldRef() = rhoEu_()/rho_() - 0.5*magSqr(U_());
     forAll(b_, i)
@@ -708,18 +702,27 @@ void Foam::psiuCompressibleSystem::decode()
         }
     }
     eu_.correctBoundaryConditions();
-    rhoEu_.boundaryFieldRef() =
-        rho_.boundaryField()
-       *(
-            eu_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
 
     thermo_->correct();
     p_.internalFieldRef() = rho_/thermo_->psi();
     p_.correctBoundaryConditions();
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
+
+    rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
+    rhoE_.boundaryFieldRef() =
+        rho_.boundaryField()
+       *(
+            e_.boundaryField()
+          + 0.5*magSqr(U_.boundaryField())
+        );
+
+    rhoEu_.boundaryFieldRef() =
+        rho_.boundaryField()
+       *(
+            eu_.boundaryField()
+          + 0.5*magSqr(U_.boundaryField())
+        );
 }
 
 
