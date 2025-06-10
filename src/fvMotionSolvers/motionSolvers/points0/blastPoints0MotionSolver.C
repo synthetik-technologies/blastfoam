@@ -5,6 +5,8 @@
     \\  /    A nd           | Copyright (C) 2016-2023 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2025-06-09 Jeff Heylmun     : Updated reading of points0
+-------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
 
