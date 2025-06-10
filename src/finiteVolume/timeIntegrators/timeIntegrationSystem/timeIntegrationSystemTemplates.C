@@ -29,27 +29,50 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class FieldType>
-void Foam::timeIntegrationSystem::storeOld(FieldType& f, const bool conservative)
+void Foam::timeIntegrationSystem::storeOld
+(
+    FieldType& f,
+    const bool conservative
+)
 {
     if (conservative)
     {
-        fvTimeInt_->conservativeFields().insert(f.name());
+        fvTimeInt_->conservativeFieldsRef().insert(f.name());
     }
-    storeOld(f, fvTimeInt_->oldFieldsRef(f), conservative);
+    if (timeInt_->firstStep() && !timeInt_->restart())
+    {
+        f.storeOldTimes();
+    }
+
+    storeOld
+    (
+        f,
+        fvTimeInt_->oldFieldsRef(f),
+        conservative
+    );
 }
 
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::storeDelta(const FieldType& f)
 {
-    storeDelta(f, fvTimeInt_->deltaFieldsRef(f));
+    storeDelta(f(), fvTimeInt_->deltaFieldsRef(f));
 }
 
 
 template<class FieldType>
-void Foam::timeIntegrationSystem::blendOld(FieldType& f, const bool conservative) const
+void Foam::timeIntegrationSystem::blendOld
+(
+    FieldType& f,
+    const bool conservative
+) const
 {
-    blendOld(f, fvTimeInt_->oldFields(f), conservative);
+    blendOld
+    (
+        f,
+        fvTimeInt_->oldFields(f),
+        conservative
+    );
 }
 
 
@@ -67,14 +90,27 @@ void Foam::timeIntegrationSystem::storeAndBlendOld
     const bool conservative
 )
 {
-    storeAndBlendOld(f, fvTimeInt_->oldFieldsRef(f), conservative);
+    if (conservative)
+    {
+        fvTimeInt_->conservativeFieldsRef().insert(f.name());
+    }
+    storeAndBlendOld
+    (
+        f,
+        fvTimeInt_->oldFieldsRef(f),
+        conservative
+    );
 }
 
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::storeAndBlendDelta(FieldType& f)
 {
-    storeAndBlendDelta(f, fvTimeInt_->deltaFieldsRef(f));
+    storeAndBlendDelta
+    (
+        f,
+        fvTimeInt_->deltaFieldsRef(f)
+    );
 }
 
 

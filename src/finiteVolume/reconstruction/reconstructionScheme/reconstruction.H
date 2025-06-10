@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2022
+    \\  /    A nd           | Copyright (C) 2022-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License

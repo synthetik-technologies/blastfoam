@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -48,29 +48,29 @@ FOR_ALL_FIELD_TYPES(defineAddFieldType, point);
 
 #undef defineAddFieldType
 
-#define defineGetFieldType(Type, Geo)   \
-const Foam::PtrList<Foam::FieldName(Geo, Type)>&  \
-Foam::fvTimeIntegrator::oldFields(const FieldName(Geo, Type)& f) const  \
-{   \
-    return lookupOld(OldFieldVarName(Geo, Type), f);   \
-}   \
-    \
-Foam::PtrList<Foam::FieldName(Geo, Type)>&    \
-Foam::fvTimeIntegrator::oldFieldsRef(const FieldName(Geo, Type)& f) const    \
-{   \
-    return lookupOldRef(OldFieldVarName(Geo, Type), f);   \
-}   \
-    \
-const Foam::PtrList<Foam::FieldName(Geo, Type)>&  \
-Foam::fvTimeIntegrator::deltaFields(const FieldName(Geo, Type)& f) const    \
-{   \
-    return lookupDelta(DeltaFieldVarName(Geo, Type), f); \
-}   \
-    \
-Foam::PtrList<Foam::FieldName(Geo, Type)>&    \
-Foam::fvTimeIntegrator::deltaFieldsRef(const FieldName(Geo, Type)& f) const \
-{   \
-    return lookupDeltaRef(DeltaFieldVarName(Geo, Type), f); \
+#define defineGetFieldType(Type, Geo)                                          \
+const Foam::PtrList<Foam::FieldName(Geo, Type)>&                               \
+Foam::fvTimeIntegrator::oldFields(const FieldName(Geo, Type)& f) const         \
+{                                                                              \
+    return lookupOld(OldFieldVarName(Geo, Type), f);                           \
+}                                                                              \
+                                                                               \
+Foam::PtrList<Foam::FieldName(Geo, Type)>&                                     \
+Foam::fvTimeIntegrator::oldFieldsRef(const FieldName(Geo, Type)& f) const      \
+{                                                                              \
+    return lookupOldRef(OldFieldVarName(Geo, Type), f);                        \
+}                                                                              \
+                                                                               \
+const Foam::PtrList<Foam::FieldName(Geo, Type)>&                               \
+Foam::fvTimeIntegrator::deltaFields(const FieldName(Geo, Type)& f) const       \
+{                                                                              \
+    return lookupDelta(DeltaFieldVarName(Geo, Type), f);                       \
+}                                                                              \
+                                                                               \
+Foam::PtrList<Foam::FieldName(Geo, Type)>&                                     \
+Foam::fvTimeIntegrator::deltaFieldsRef(const FieldName(Geo, Type)& f) const    \
+{                                                                              \
+    return lookupDeltaRef(DeltaFieldVarName(Geo, Type), f);                    \
 }
 
 FOR_ALL_FIELD_TYPES(defineGetFieldType, vol);

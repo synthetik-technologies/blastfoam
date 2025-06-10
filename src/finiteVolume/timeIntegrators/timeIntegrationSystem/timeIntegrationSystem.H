@@ -93,7 +93,11 @@ protected:
             //- Combine old fields using time step coefficients, looking up
             //  the saved fields
             template<class FieldType>
-            void blendOld(FieldType& f, const bool conservative = true) const;
+            void blendOld
+            (
+                FieldType& f,
+                const bool conservative = true
+            ) const;
 
             //- Combine delta fields using time step coefficients, looking up
             //  the saved fields
@@ -103,7 +107,11 @@ protected:
             //- Combine old fields using time step coefficients, looking up
             //  the saved fields
             template<class FieldType>
-            void storeAndBlendOld(FieldType& f, const bool conservative = true);
+            void storeAndBlendOld
+            (
+                FieldType& f,
+                const bool conservative = true
+            );
 
             //- Combine delta fields using time step coefficients, looking up
             //  the saved fields

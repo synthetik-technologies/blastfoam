@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -82,6 +82,9 @@ protected:
     //- Current step volume
     autoPtr<volScalarField::Internal> VPtr_;
 
+    //- Current volume ratio
+    autoPtr<volScalarField::Internal> V0ByVPtr_;
+
     //- FvModels
     mutable UautoPtr<fvModels> modelsPtr_;
 
@@ -94,7 +97,7 @@ protected:
     mutable wordHashSet savedOldFields_;
 
     //- Conservative fields
-    wordHashSet conservativeFields_;
+    mutable wordHashSet conservativeFields_;
 
     //- Stored old fields
     #define decalareOldFieldTypeTable(Type, Geo)            \
@@ -299,7 +302,7 @@ public:
         }
 
         //- Access conservative fields
-        wordHashSet& conservativeFields()
+        wordHashSet& conservativeFieldsRef() const
         {
             return conservativeFields_;
         }

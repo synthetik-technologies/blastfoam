@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -47,10 +47,25 @@ void Foam::fvTimeIntegrator::update()
     const labelList oldMap(coeffs_->oldSaveMap());
     if (oldMap.size())
     {
-        #define ShuffleOldFieldTypes(Type, map, type)                     \
-            shuffleFields(OldFieldVarName(vol, Type), map, type);         \
-            shuffleFields(OldFieldVarName(surface, Type), map, type);     \
-            shuffleFields(OldFieldVarName(point, Type), map, type);
+        #define ShuffleOldFieldTypes(Type, map, type)                      \
+            shuffleFields<FieldName(vol, Type)>                            \
+            (                                                              \
+                OldFieldVarName(vol, Type),                                \
+                map,                                                       \
+                type                                                       \
+            );                                                             \
+            shuffleFields<FieldName(surface, Type)>                        \
+            (                                                              \
+                OldFieldVarName(surface, Type),                            \
+                map,                                                       \
+                type                                                       \
+            );                                                             \
+            shuffleFields<FieldName(point, Type)>                          \
+            (                                                              \
+                OldFieldVarName(point, Type),                              \
+                map,                                                       \
+                type                                                       \
+            );
         FOR_ALL_FIELD_TYPES(ShuffleOldFieldTypes, oldMap, "old");
         #undef ShuffleOldFieldTypes
     }
@@ -58,10 +73,25 @@ void Foam::fvTimeIntegrator::update()
     const labelList deltaMap(coeffs_->deltaSaveMap());
     if (deltaMap.size())
     {
-        #define ShuffleDeltaFieldTypes(Type, map, type)                  \
-            shuffleFields(DeltaFieldVarName(vol, Type), map, type);       \
-            shuffleFields(DeltaFieldVarName(surface, Type), map, type);   \
-            shuffleFields(DeltaFieldVarName(point, Type), map, type);
+        #define ShuffleDeltaFieldTypes(Type, map, type)                    \
+            shuffleFields<FieldName(vol, Type)>                            \
+            (                                                              \
+                DeltaFieldVarName(vol, Type),                              \
+                map,                                                       \
+                type                                                       \
+            );                                                             \
+            shuffleFields<FieldName(surface, Type)>                        \
+            (                                                              \
+                DeltaFieldVarName(surface, Type),                          \
+                map,                                                       \
+                type                                                       \
+            );                                                             \
+            shuffleFields<FieldName(point, Type)>                          \
+            (                                                              \
+                DeltaFieldVarName(point, Type),                            \
+                map,                                                       \
+                type                                                       \
+            );
         FOR_ALL_FIELD_TYPES(ShuffleDeltaFieldTypes, deltaMap, "delta");
         #undef ShuffleDeltaFieldTypes
     }
@@ -79,11 +109,33 @@ void Foam::fvTimeIntegrator::updateAll()
     // All fields are scaled according to the true volume
     if (mesh_.moving())
     {
-//         tmp<volScalarField::Internal> tV0(mesh_.V0());
-//         const volScalarField::Internal& V0 = tV0();
-//
-//         tmp<volScalarField::Internal> tV(mesh_.V());
-//         const volScalarField::Internal& V = tV();
+        tmp<volScalarField::Internal> tV0(mesh_.V0());
+        const volScalarField::Internal& V0 = tV0();
+
+        tmp<volScalarField::Internal> tV(mesh_.V());
+        const volScalarField::Internal& V = tV();
+
+        if (!V0ByVPtr_.valid())
+        {
+            V0ByVPtr_.set
+            (
+                new volScalarField::Internal
+                (
+                    IOobject
+                    (
+                        "fvTimeIntegrator:V0ByV",
+                        mesh_.time().name(),
+                        mesh_
+                    ),
+                    V0/V
+                )
+            );
+        }
+        else
+        {
+            V0ByVPtr_() = V0/V;
+        }
+
 
 //         if (!VPtr_.valid())
 //         {
@@ -94,7 +146,7 @@ void Foam::fvTimeIntegrator::updateAll()
 //                     IOobject
 //                     (
 //                         "fvTimeIntegrator:V",
-//                         mesh_.time().timeName(),
+//                         mesh_.time().name(),
 //                         mesh_
 //                     ),
 //                     mesh_,
@@ -116,7 +168,7 @@ void Foam::fvTimeIntegrator::updateAll()
 //                     IOobject
 //                     (
 //                         "fvTimeIntegrator:V0",
-//                         mesh_.time().timeName(),
+//                         mesh_.time().name(),
 //                         mesh_
 //                     ),
 //                     V0ByVPtr_()()*VPtr_()
@@ -160,6 +212,7 @@ Foam::fvTimeIntegrator::fvTimeIntegrator(const fvMesh& mesh)
     mesh_(mesh),
     V0Ptr_(nullptr),
     VPtr_(nullptr),
+    V0ByVPtr_(nullptr),
     modelsPtr_(nullptr),
     constraintsPtr_(nullptr),
     solveFields_()
@@ -251,9 +304,15 @@ void Foam::fvTimeIntegrator::clear()
             systems_[i].clear();
         }
 
-        #define ClearFieldTypes(Type, Geo)               \
-            clearOldFields(OldFieldVarName(Geo, Type));     \
-            clearDeltaFields(DeltaFieldVarName(Geo, Type));
+        #define ClearFieldTypes(Type, Geo)                  \
+            clearOldFields<FieldName(Geo, Type)>            \
+            (                                               \
+                OldFieldVarName(Geo, Type)                  \
+            );                                              \
+            clearDeltaFields<FieldName(Geo, Type)>          \
+            (                                               \
+                DeltaFieldVarName(Geo, Type)                \
+            );
         FOR_ALL_FIELD_TYPES(ClearFieldTypes, vol);
         FOR_ALL_FIELD_TYPES(ClearFieldTypes, surface);
         FOR_ALL_FIELD_TYPES(ClearFieldTypes, point);
@@ -285,8 +344,8 @@ Foam::tmp<Foam::scalarField> Foam::fvTimeIntegrator::V0() const
 {
     if (stepi_ == 0 && mesh_.moving())
     {
-//         return V();
-        return mesh_.V0().primitiveField()/mesh_.V().primitiveField();
+        return V0ByVPtr_();
+        // return mesh_.V0().primitiveField()/mesh_.V().primitiveField();
     }
     return tmp<scalarField>();
 }
