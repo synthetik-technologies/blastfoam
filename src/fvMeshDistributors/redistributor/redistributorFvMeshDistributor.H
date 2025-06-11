@@ -139,7 +139,11 @@ protected:
         decompositionMethod& decomp();
 
         //- Distribute the mesh and mesh data
-        void distribute(const labelList& distribution, const bool dist);
+        autoPtr<polyDistributionMap> distribute
+        (
+            const labelList& distribution,
+            const bool dist
+        );
 
 
 public:
@@ -152,6 +156,9 @@ public:
 
         //- Construct from fvMesh
         explicit redistributor(fvMesh& mesh, const bool read = true);
+
+        //- Construct from fvMesh and dictionary
+        redistributor(fvMesh& mesh, const dictionary& bDict);
 
         //- Disallow default bitwise copy construction
         redistributor(const redistributor&) = delete;
@@ -173,7 +180,7 @@ public:
         virtual bool update();
 
         //- force distribute the mesh, optional call to fvMesh::distribute
-        bool forceUpdate(const bool dist);
+        autoPtr<polyDistributionMap> forceUpdate(const bool dist);
 
         //- Update corresponding to the given map
         virtual void topoChange(const polyTopoChangeMap&);

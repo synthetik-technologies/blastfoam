@@ -381,7 +381,8 @@ Foam::decompositionMethod& Foam::fvMeshDistributors::redistributor::decomp()
 }
 
 
-void Foam::fvMeshDistributors::redistributor::distribute
+Foam::autoPtr<Foam::polyDistributionMap>
+Foam::fvMeshDistributors::redistributor::distribute
 (
     const labelList& distribution,
     const bool dist
@@ -429,7 +430,7 @@ void Foam::fvMeshDistributors::redistributor::distribute
         // Distribute the mesh data
        mesh.distribute(map);
 
-       // Correct values on all coupled patches
+        // Correct values on all coupled patches
         blastSyncTools::correctProcessorBoundaries<volScalarField>(mesh);
         blastSyncTools::correctProcessorBoundaries<volVectorField>(mesh);
         blastSyncTools::correctProcessorBoundaries<volSphericalTensorField>(mesh);
@@ -449,6 +450,8 @@ void Foam::fvMeshDistributors::redistributor::distribute
         blastSyncTools::setInPointBoundaries<symmTensor>(mesh);
         blastSyncTools::setInPointBoundaries<tensor>(mesh);
     }
+
+    return map;
 }
 
 
@@ -463,6 +466,7 @@ Foam::fvMeshDistributors::redistributor::redistributor
     fvMeshDistributor(mesh),
     decompositionDict_
     (
+
         (
             dict().found("decomposer")
          || dict().found("method")
@@ -515,8 +519,74 @@ Foam::fvMeshDistributors::redistributor::redistributor
 
     if (read)
     {
+        Info<<"read"<<endl;
         readDict();
     }
+}
+
+
+
+Foam::fvMeshDistributors::redistributor::redistributor
+(
+    fvMesh& mesh,
+    const dictionary& bDict
+)
+:
+    fvMeshDistributor(mesh),
+    decompositionDict_
+    (
+
+        (
+            bDict.found("decomposer")
+         || bDict.found("method")
+        )
+      ? bDict
+      : decompositionMethod::decomposeParDict(mesh.time())
+    ),
+    decomp_(nullptr),
+    balance_(Pstream::nProcs() > 1),
+    force_(false),
+    balanceInterval_(10),
+    beginBalance_(0),
+    endBalance_(great),
+    maxImbalance_(0.1),
+    timeIndex_(mesh.time().timeIndex()),
+    iter_(0)
+{
+    if
+    (
+        mesh.foundObject<polyMeshHexRefiner>(polyMeshHexRefiner::typeName)
+     && !constraintFound(hexRefRefinementHistoryConstraint::typeName)
+    )
+    {
+        // Added refinement history decomposition constraint to keep all
+        // cells with the same parent together
+        dictionary refinementHistoryDict("refinementHistory");
+        refinementHistoryDict.add
+        (
+            "type",
+            hexRefRefinementHistoryConstraint::typeName
+        );
+        addConstraint("refinementHistory", refinementHistoryDict);
+    }
+    else if
+    (
+        mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName)
+     && !constraintFound(polyRefinementConstraint::typeName)
+    )
+    {
+        // Added refinement history decomposition constraint to keep all
+        // cells with the same parent together
+        dictionary refinementHistoryDict("refinementHistory");
+        refinementHistoryDict.add
+        (
+            "type",
+            polyRefinementConstraint::typeName
+        );
+        addConstraint("refinementHistory", refinementHistoryDict);
+    }
+
+    readDict(bDict);
 }
 
 
@@ -641,7 +711,8 @@ bool Foam::fvMeshDistributors::redistributor::update()
 }
 
 
-bool Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
+Foam::autoPtr<Foam::polyDistributionMap>
+Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
 {
     const fvMesh& mesh = this->mesh();
 
@@ -666,7 +737,7 @@ bool Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
     if (globalImbalance < maxImbalance_)
     {
         DebugInfo<< "Current imbalance under limit" << endl;
-        return false;
+        return autoPtr<polyDistributionMap>();
     }
 
     // Create new decomposition distribution
@@ -686,7 +757,7 @@ bool Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
     {
         DebugInfo
             << "New distribtion results in a load of 0. Skipping" << endl;
-        return false;
+        return autoPtr<polyDistributionMap>();
     }
     scalar averageLoadNew
     (
@@ -702,18 +773,19 @@ bool Foam::fvMeshDistributors::redistributor::forceUpdate(const bool dist)
             << "    old imbalance: " << maxImbalance_ << nl
             << "    new imbalance: " << maxDevNew << nl
             << endl;
-        return false;
+        return autoPtr<polyDistributionMap>();
     }
 
     Info<< "Redistributing mesh with new imbalance = "
         << 100.0*maxDevNew << endl;
-    distribute(distribution, dist);
-
-    return true;
+    return distribute(distribution, dist);
 }
 
 
-void Foam::fvMeshDistributors::redistributor::topoChange(const polyTopoChangeMap&)
+void Foam::fvMeshDistributors::redistributor::topoChange
+(
+    const polyTopoChangeMap&
+)
 {}
 
 
