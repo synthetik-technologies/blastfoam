@@ -46,6 +46,8 @@ Description
 #include "systemDict.H"
 
 #include "polyMeshHexRefiner.H"
+#include "redistributorFvMeshDistributor.H"
+#include "polyDistributionMap.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
 #include "wedgePolyPatch.H"
@@ -325,7 +327,7 @@ int main(int argc, char *argv[])
     argList::addBoolOption
     (
         "noBalance",
-        "Do not balance (only parallel)"
+        "Balance the mesh with refinement"
     );
     argList::addBoolOption
     (
@@ -349,20 +351,20 @@ int main(int argc, char *argv[])
 
     // Update All fields in the current time folder
     // Resizes to make sure all fields are consistent with the mesh
-    bool updateAll(args.optionFound("updateAll"));
+    bool updateAll = args.optionFound("updateAll");
 
     // Do not write fields
     // Usefull if a refined mesh is needed before mesh manipulation
-    bool noFields(args.optionFound("noFields"));
+    bool noFields = args.optionFound("noFields");
 
     // Do not write fields
     // Usefull if a refined mesh is needed before mesh manipulation
-    bool noWrite(args.optionFound("noWrite") || noFields);
+    bool noWrite = args.optionFound("noWrite") || noFields;
 
-    bool noRefine(args.optionFound("noRefine"));
-    bool overwrite(args.optionFound("overwrite"));
-    bool noHistory(args.optionFound("noHistory"));
-    bool debug(args.optionFound("debug"));
+    bool noRefine = args.optionFound("noRefine");
+    bool overwrite = args.optionFound("overwrite");
+    bool noHistory = args.optionFound("noHistory");
+    bool debug = args.optionFound("debug");
 
     if (overwrite && debug)
     {
@@ -376,8 +378,8 @@ int main(int argc, char *argv[])
     }
 
     //- Is the mesh balanced
-    bool balance = false;
     autoPtr<polyMeshRefiner> refiner;
+    autoPtr<fvMeshDistributors::redistributor> balancer;
     if (!noRefine)
     {
         dictionary& refineDict
@@ -386,6 +388,9 @@ int main(int argc, char *argv[])
           ? setFieldsDict.subDict("refinerCoeffs")
           : setFieldsDict
         );
+
+        dictionary balanceDict = refineDict;
+
         word refinerType("hexRefiner");
         if (!refineDict.found("refiner"))
         {
@@ -416,6 +421,10 @@ int main(int argc, char *argv[])
                         refinerType = tcType;
                     }
                 }
+                if (dynamicMeshDict.isDict("distributor"))
+                {
+                    balanceDict.merge(dynamicMeshDict.subDict("distributor"));
+                }
             }
         }
         else
@@ -442,23 +451,23 @@ int main(int argc, char *argv[])
                 << "\"refiner\" keyword." << nl << endl;
         }
 
-        // if (refiner.valid())
-        // {
-        //     if (Pstream::parRun())
-        //     {
-        //         if (args.optionFound("noBalance"))
-        //         {
-        //             refiner->balancer().balance() = false;
-        //         }
-        //         else
-        //         {
-        //             balance = refiner->balancer().balance();
-        //         }
-        //     }
-        //     refiner->setForce(true);
-        // }
+        if (refiner.valid())
+        {
+            if (Pstream::parRun())
+            {
+                if (!args.optionFound("noBalance"))
+                {
+                    balancer.set
+                    (
+                        new fvMeshDistributors::redistributor(mesh, balanceDict)
+                    );
+                }
+            }
+            refiner->setForce(true);
+        }
     }
     bool refine = refiner.valid();
+    bool balance = balancer.valid();
 
     wordList fieldNames;
     if (!noFields)
@@ -567,11 +576,14 @@ int main(int argc, char *argv[])
     }
     else if (!args.optionFound("noRefine"))
     {
-        FatalIOErrorInFunction(setFieldsDict)
-            << "Maximum refinement could not be determined." << nl
-            << "\tProvide levels inside regions, a global \"maxRefinement\", "
-            << "an errorEstimator, or specify \"-noRefine\"" << endl
-            << abort(FatalIOError);
+        WarningInFunction
+            << "Level of refinement could not be determined so refinement is "
+            << "disabled. Please provide \"level\" inside regions, a global "
+            << "\"maxRefinement\", or specify an errorEstimator to enable refinement"
+            << nl << endl;
+        refine = false;
+        balance = false;
+        maxLevel = 0;
     }
     forAll(levels, i)
     {
@@ -1073,7 +1085,20 @@ int main(int argc, char *argv[])
             // Update mesh (return if mesh changes)
             if (!end)
             {
-                prepareToStop = !refiner->refine(error, maxCellLevel);
+                const bool refined = refiner->refine(error, maxCellLevel);
+                if (refined && balance)
+                {
+                    // Balance the mesh, do not call "distribute" since the
+                    // mover, topoChanger, and disributor are not set, but used without
+                    // checks
+                    autoPtr<polyDistributionMap> map = balancer->forceUpdate(false);
+                    if (map.valid())
+                    {
+                        refiner->distribute(map);
+                    }
+                }
+                prepareToStop = !refined;
+
             }
         }
         iter++;
