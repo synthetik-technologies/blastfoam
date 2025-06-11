@@ -66,7 +66,6 @@ Foam::functionObjects::writeTimeList::~writeTimeList()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-#include "IOmanip.H"
 bool Foam::functionObjects::writeTimeList::read
 (
     const dictionary& dict
@@ -294,8 +293,6 @@ bool Foam::functionObjects::writeTimeList::read
     // Return sorted times
     writeTimes_ = hashedTimes.sortedToc();
     writeTimes_.append(great);
-    Info<<writeTimes_<<endl;
-    std::exit(0);
 
     // Get current time index
     forAll(writeTimes_, ti)
