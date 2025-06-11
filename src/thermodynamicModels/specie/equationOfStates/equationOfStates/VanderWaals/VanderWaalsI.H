@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -241,7 +241,7 @@ Foam::scalar Foam::VanderWaals<Specie>::H
     const scalar T
 ) const
 {
-    return this->E(rho, e, T) + this->R()*T*b_*rho/(1.0 - b_*rho) - a_*rho;
+    return -2.0*a_*rho + this->R()*T*(1.0/(1.0 - b_*rho) - 1.0);
 }
 
 

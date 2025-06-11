@@ -1,13 +1,9 @@
-
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2014-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-2022-07-19 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -29,10 +25,7 @@ Class
     Foam::PengRobinsonGas
 
 Description
-    PengRobinsonGas cubic equation of state
-    Coefficient mixing is very inaccurate and not supported, so this equation of
-    state can only be applied to mixtures by using a thermophysical properties
-    model which mixes specie property value.
+    Van der Waals equation of state
 
 Usage
     \table
@@ -42,16 +35,6 @@ Usage
         a            | Atteaction factor [-]
         b            | Covolume [m^3]
     \endtable
-
-    Example specification of the PengRobinsonGas equation of state for methane:
-
-    \verbatim
-    equationOfState
-    {
-        Tc        190.55;
-        Pc        4.595e6;
-    }
-    \endverbatim
 
 SourceFiles
     VanderWaalsI.H
