@@ -297,8 +297,7 @@ inline void Foam::VanderWaals<Specie>::operator+=
         const scalar X2 = this->W()*vw.Y()/(vw.W()*this->Y());
 
         Tc_ = X1*Tc_ + X2*vw.Tc_;
-        scalar Vc = 3.0*(X1*b_ + X2*vw.b_);
-        Pc_ = 3.0/8.0*RR*Tc_/Vc;
+        Pc_ = X1*Pc_ + X2*vw.Pc_;
         a_ = 27.0*sqr(Tc_*this->R())/(64.0*Pc_);
         b_ = this->R()*Tc_/8.0/Pc_;
     }
@@ -341,14 +340,11 @@ inline Foam::VanderWaals<Specie> Foam::operator+
         const scalar X1 = sp.W()*vw1.Y()/(vw1.W()*sp.Y());
         const scalar X2 = sp.W()*vw2.Y()/(vw2.W()*sp.Y());
 
-        const scalar Tc = X1*vw1.Tc_ + X2*vw2.Tc_;
-        const scalar Vc = 3.0*(X1*vw1.b_ + X2*vw2.b_);
-
         return VanderWaals<Specie>
         (
             sp,
-            Tc,
-            3.0/8.0*sp.R()*Tc/Vc
+            X1*vw1.Tc_ + X2*vw2.Tc_,
+            X1*vw1.Pc_ + X2*vw2.Pc_
         );
     }
 }
@@ -386,14 +382,11 @@ inline Foam::VanderWaals<Specie> Foam::operator==
     const scalar X1 = sp.W()*vw1.Y()/(vw1.W()*sp.Y());
     const scalar X2 = sp.W()*vw2.Y()/(vw2.W()*sp.Y());
 
-    const scalar Tc = X2*vw2.Tc_ - X1*vw1.Tc_;
-    const scalar Vc = 3.0*(X2*vw2.b_ - X2*vw1.b_);
-
     return VanderWaals<Specie>
     (
         sp,
-        Tc,
-        3.0/8.0*sp.R()*Tc/Vc
+        X2*vw2.Tc_ - X1*vw1.Tc_,
+        X2*vw2.Pc_ - X1*vw1.Pc_
     );
 }
 
