@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,85 +22,91 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::diameterModels::reactingDiameterModel
+    Foam::diameterReactionRate
 
 Description
-    Reacting diameter model used for mass transfer
 
 SourceFiles
-    reactingDiameterModel.C
+    diameterReactionRate.C
+    diameterReactionRateNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef reactingDiameterModel_H
-#define reactingDiameterModel_H
+#ifndef diameterReactionRate_H
+#define diameterReactionRate_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "diameterModel.H"
-#include "diameterReactionRate.H"
+#include "volFields.H"
+#include "runTimeSelectionTables.H"
 
 namespace Foam
 {
-namespace diameterModels
-{
+
+class diameterModel;
 
 /*---------------------------------------------------------------------------*\
-                           Class reactingDiameterModel Declaration
+                    Class diameterReactionRate Declaration
 \*---------------------------------------------------------------------------*/
 
-class reactingDiameterModel
-:
-    public diameterModel
+class diameterReactionRate
 {
-// Private data
+protected:
+// Protected data
 
-    //- Reaction rate model
-    autoPtr<diameterReactionRate> rate_;
-
-    //- Name of pressure field
-    const word pName_;
-
-    //- Name of temperature field
-    const word TName_;
-
-    //- Stored change in volume per unit time
-    volScalarField dVdt_;
+    //- Reference to the diameter model
+    const diameterModel& dModel_;
 
 public:
 
     //- Runtime type information
-    TypeName("reacting");
+    TypeName("diameterReactionRate");
+
+
+    // Declare runtime construction
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            diameterReactionRate,
+            dictionary,
+            (
+                const diameterModel& dModel,
+                const dictionary& dict
+            ),
+            (dModel, dict)
+        );
 
     // Constructor
-    reactingDiameterModel
-    (
-        const fvMesh& mesh,
-        const dictionary& dict,
-        const word& phaseName
-    );
+    diameterReactionRate(const diameterModel& dModel);
 
 
     //- Destructor
-    virtual ~reactingDiameterModel();
+    virtual ~diameterReactionRate();
 
-    // ODE functions
 
-        //- Solve sub-step stepi
-        virtual void solve();
+    // Selectors
 
-        //- Solve sub-step stepi given pressure and temperature fields
-        virtual void solve(const volScalarField& p, const volScalarField& T);
+        static autoPtr<diameterReactionRate> New
+        (
+            const diameterModel& dModel,
+            const dictionary& dict
+        );
 
-        //- Return change in radius per unit time
-        //  Only used in mass transfer
-        virtual tmp<volScalarField> dMdt() const;
+
+    // Public functions
+
+        //- Reaction rate
+        virtual tmp<volScalarField> dDdt
+        (
+            const volScalarField& p,
+            const volScalarField& T
+        ) const = 0;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace diameterModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

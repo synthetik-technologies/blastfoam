@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,85 +22,75 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::diameterModels::reactingDiameterModel
+    Foam::diameterReactionRates::length
 
 Description
-    Reacting diameter model used for mass transfer
 
 SourceFiles
-    reactingDiameterModel.C
+    lengthDiameterReactionRate.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef reactingDiameterModel_H
-#define reactingDiameterModel_H
+#ifndef lengthDiameterReactionRate_H
+#define lengthDiameterReactionRate_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "diameterModel.H"
 #include "diameterReactionRate.H"
+#include "surfaceReactionRate.H"
+#include "runTimeSelectionTables.H"
 
 namespace Foam
 {
-namespace diameterModels
+namespace diameterReactionRates
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class reactingDiameterModel Declaration
+                    Class diameterReactionRate Declaration
 \*---------------------------------------------------------------------------*/
 
-class reactingDiameterModel
+class length
 :
-    public diameterModel
+    public diameterReactionRate
 {
-// Private data
+protected:
+// Protected data
 
-    //- Reaction rate model
-    autoPtr<diameterReactionRate> rate_;
-
-    //- Name of pressure field
-    const word pName_;
-
-    //- Name of temperature field
-    const word TName_;
-
-    //- Stored change in volume per unit time
-    volScalarField dVdt_;
+    //- Reference to the diameter model
+    autoPtr<surfaceReactionRate> rate_;
 
 public:
 
     //- Runtime type information
-    TypeName("reacting");
+    TypeName("length");
+
 
     // Constructor
-    reactingDiameterModel
+    length
     (
-        const fvMesh& mesh,
-        const dictionary& dict,
-        const word& phaseName
+        const diameterModel& dModel,
+        autoPtr<surfaceReactionRate> rate
     );
 
 
     //- Destructor
-    virtual ~reactingDiameterModel();
+    virtual ~length();
 
-    // ODE functions
 
-        //- Solve sub-step stepi
-        virtual void solve();
+    // Public functions
 
-        //- Solve sub-step stepi given pressure and temperature fields
-        virtual void solve(const volScalarField& p, const volScalarField& T);
-
-        //- Return change in radius per unit time
-        //  Only used in mass transfer
-        virtual tmp<volScalarField> dMdt() const;
+        //- Reaction rate
+        virtual tmp<volScalarField> dDdt
+        (
+            const volScalarField& p,
+            const volScalarField& T
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace diameterModels
+} // End namespace diameterReactionRates
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -4,6 +4,10 @@ reactionRates/Arrhenius/ArrheniusSurfaceReactionRate.C
 reactionRates/pressureBased/pressureBasedSurfaceReactionRate.C
 reactionRates/constant/constantSurfaceReactionRate.C
 
+diameterReactionRates/diameterReactionRate/diameterReactionRate.C
+diameterReactionRates/diameterReactionRate/diameterReactionRateNew.C
+
+
 diameterModel/diameterModel.C
 diameterModel/diameterModelNew.C
 

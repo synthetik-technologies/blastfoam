@@ -49,7 +49,7 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
 )
 :
     diameterModel(mesh, dict, phaseName),
-    rate_(surfaceReactionRate::New(mesh, dict)),
+    rate_(diameterReactionRate::New(*this, dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     TName_(dict.lookupOrDefault("TName", IOobject::groupName("T", phaseName))),
     dVdt_
@@ -106,7 +106,7 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const volScalarField dOld(this->d_);
     this->storeAndBlendOld(this->d_);
 
-    volScalarField dDdt(-2.0*rate_->k(pi, T));
+    volScalarField dDdt(-2.0*rate_->dDdt(pi, T));
     this->blendDelta(dDdt);
 
     const dimensionedScalar& dT(this->d_.time().deltaT());
