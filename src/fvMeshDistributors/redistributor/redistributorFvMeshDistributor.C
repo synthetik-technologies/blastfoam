@@ -702,7 +702,6 @@ bool Foam::fvMeshDistributors::redistributor::update()
         {
             Pout<< "New local nCells = " << mesh.nCells() << endl;
         }
-        const_cast<surfaceScalarField&>(mesh.phi()) = Zero;
 
         return true;
     }
