@@ -296,10 +296,18 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
         );
 
         thermos_[phasei].read(dict.subDict(phases_[phasei]));
-        this->residualAlpha_ =
-            max(thermos_[phasei].residualAlpha(), this->residualAlpha_);
-        this->residualRho_ =
-            max(thermos_[phasei].residualRho(), this->residualRho_);
+        this->residualAlpha_.value() =
+            max
+            (
+                thermos_[phasei].residualAlpha().value(),
+                this->residualAlpha_.value()
+            );
+        this->residualRho_.value() =
+            max
+            (
+                thermos_[phasei].residualRho().value(),
+                this->residualRho_.value()
+            );
 
         rho_ += volumeFractions_[phasei]*rhos_[phasei];
         sumAlpha += volumeFractions_[phasei];
@@ -353,10 +361,18 @@ bool Foam::multiphaseFluidBlastThermo::read()
     forAll(thermos_, phasei)
     {
         thermos_[phasei].read(this->subDict(phases_[phasei]));
-        this->residualAlpha_ =
-            max(this->residualAlpha_, thermos_[phasei].residualAlpha());
-        this->residualRho_ =
-            max(this->residualRho_, thermos_[phasei].residualRho());
+        this->residualAlpha_.value() =
+            max
+            (
+                this->residualAlpha_.value(),
+                thermos_[phasei].residualAlpha().value()
+            );
+        this->residualRho_.value() =
+            max
+            (
+                this->residualRho_.value(),
+                thermos_[phasei].residualRho().value()
+            );
     }
     return true;
 }
