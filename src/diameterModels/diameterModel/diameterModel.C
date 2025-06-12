@@ -85,7 +85,7 @@ void Foam::diameterModel::requireD() const
     {
         FatalErrorInFunction
             << this->type() << " diameter model requires the " << d_.name()
-            << "field to be specified"
+            << " field to be specified"
             << abort(FatalError);
     }
 }
