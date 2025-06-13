@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2025
+    \\  /    A nd           | Copyright (C) 2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,6 +25,7 @@ Class
     Foam::diameterReactionRate
 
 Description
+    Reaction class that also knows about diameter model.
 
 SourceFiles
     diameterReactionRate.C
@@ -56,6 +57,7 @@ protected:
 
     //- Reference to the diameter model
     const diameterModel& dModel_;
+
 
 public:
 

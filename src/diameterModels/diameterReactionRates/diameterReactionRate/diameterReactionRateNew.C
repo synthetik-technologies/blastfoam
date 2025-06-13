@@ -54,7 +54,10 @@ Foam::autoPtr<Foam::diameterReactionRate> Foam::diameterReactionRate::New
             )
         );
     }
-    wordHashSet types(dictionaryConstructorTablePtr_->toc());
+    wordHashSet types
+    (
+        surfaceReactionRate::dictionaryConstructorTablePtr_->toc()
+    );
 
     if (dictionaryConstructorTablePtr_)
     {

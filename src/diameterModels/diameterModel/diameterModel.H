@@ -141,6 +141,9 @@ public:
         //- Return volume
         virtual tmp<volScalarField> V() const;
 
+        //- Return derivative of volume w.r.t diameter
+        virtual tmp<volScalarField> dVdD() const;
+
         //- Return change in radius per unit time
         //  Only used in mass transfer
         virtual tmp<volScalarField> dMdt() const;

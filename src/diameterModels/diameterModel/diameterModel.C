@@ -102,6 +102,12 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::V() const
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::diameterModel::dVdD() const
+{
+    return Foam::constant::mathematical::pi*sqr(d_)/3.0;
+}
+
+
 void Foam::diameterModel::update()
 {}
 

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2025
+    \\  /    A nd           | Copyright (C) 2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,6 +25,8 @@ Class
     Foam::diameterReactionRates::length
 
 Description
+    Wrapper class to hold the surface reaction model for a diameter reaction
+    rate
 
 SourceFiles
     lengthDiameterReactionRate.C
