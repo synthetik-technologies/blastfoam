@@ -184,6 +184,24 @@ public:
         //- Update
         void update
         (
+            const surfaceScalarField& alphaOwn,
+            const surfaceScalarField& alphaNei,
+            const surfaceScalarField& rhoOwn,
+            const surfaceScalarField& rhoNei,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p,
+            const volScalarField& c,
+            surfaceScalarField& phi,
+            surfaceScalarField& alphaPhi,
+            surfaceScalarField& alphaRhoPhi,
+            surfaceVectorField& alphaRhoUPhi,
+            surfaceScalarField& alphaRhoEPhi
+        );
+
+        //- Update
+        void update
+        (
             const volScalarField& alpha,
             const volScalarField& rho,
             const volVectorField& U,
@@ -192,6 +210,23 @@ public:
             const volScalarField& c,
             surfaceScalarField& phi,
             surfaceScalarField& alphaPhi,
+            surfaceScalarField& alphaRhoPhi,
+            surfaceVectorField& alphaRhoUPhi,
+            surfaceScalarField& alphaRhoEPhi
+        );
+
+        //- Update
+        void update
+        (
+            const surfaceScalarField& alphaOwn,
+            const surfaceScalarField& alphaNei,
+            const surfaceScalarField& rhoOwn,
+            const surfaceScalarField& rhoNei,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p,
+            const volScalarField& c,
+            surfaceScalarField& phi,
             surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& alphaRhoUPhi,
             surfaceScalarField& alphaRhoEPhi

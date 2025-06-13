@@ -163,8 +163,10 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::alphaf() const
 
 void Foam::phaseFluxScheme::update
 (
-    const volScalarField& alpha,
-    const volScalarField& rho,
+    const surfaceScalarField& alphaOwn,
+    const surfaceScalarField& alphaNei,
+    const surfaceScalarField& rhoOwn,
+    const surfaceScalarField& rhoNei,
     const volVectorField& U,
     const volScalarField& e,
     const volScalarField& p,
@@ -178,14 +180,6 @@ void Foam::phaseFluxScheme::update
 {
     createSavedFields();
 
-    autoPtr<ReconstructionScheme<scalar>> alphaLimiter
-    (
-        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_, true)
-    );
-    autoPtr<ReconstructionScheme<scalar>> rhoLimiter
-    (
-        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_, true)
-    );
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
         ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
@@ -203,18 +197,6 @@ void Foam::phaseFluxScheme::update
         ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
     );
 
-    tmp<surfaceScalarField> talphaOwn;
-    tmp<surfaceScalarField> talphaNei;
-    alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
-    const surfaceScalarField& alphaOwn = talphaOwn();
-    const surfaceScalarField& alphaNei = talphaNei();
-
-    tmp<surfaceScalarField> trhoOwn;
-    tmp<surfaceScalarField> trhoNei;
-    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
-    const surfaceScalarField& rhoOwn = trhoOwn();
-    const surfaceScalarField& rhoNei = trhoNei();
-
     if
     (
         mesh_.cacheTemporaryObject
@@ -225,7 +207,10 @@ void Foam::phaseFluxScheme::update
     {
         surfaceScalarField alphaRhoNei
         (
-            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_)),
+            reconstruction::ownName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
             alphaOwn*rhoOwn
         );
         mesh_.cacheTemporaryObject(alphaRhoNei);
@@ -240,7 +225,10 @@ void Foam::phaseFluxScheme::update
     {
         surfaceScalarField alphaRhoNei
         (
-            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_)),
+            reconstruction::neiName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
             alphaNei*rhoNei
         );
         mesh_.cacheTemporaryObject(alphaRhoNei);
@@ -322,6 +310,7 @@ void Foam::phaseFluxScheme::update
     postUpdate();
 }
 
+
 void Foam::phaseFluxScheme::update
 (
     const volScalarField& alpha,
@@ -331,13 +320,12 @@ void Foam::phaseFluxScheme::update
     const volScalarField& p,
     const volScalarField& c,
     surfaceScalarField& phi,
+    surfaceScalarField& alphaPhi,
     surfaceScalarField& alphaRhoPhi,
     surfaceVectorField& alphaRhoUPhi,
     surfaceScalarField& alphaRhoEPhi
 )
 {
-    createSavedFields();
-
     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
     (
         ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_, true)
@@ -366,26 +354,82 @@ void Foam::phaseFluxScheme::update
     tmp<surfaceScalarField> talphaOwn;
     tmp<surfaceScalarField> talphaNei;
     alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
-    const surfaceScalarField& alphaOwn = talphaOwn();
-    const surfaceScalarField& alphaNei = talphaNei();
 
     tmp<surfaceScalarField> trhoOwn;
     tmp<surfaceScalarField> trhoNei;
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
-    const surfaceScalarField& rhoOwn = trhoOwn();
-    const surfaceScalarField& rhoNei = trhoNei();
+
+    update
+    (
+        talphaOwn(),
+        talphaNei(),
+        trhoOwn(),
+        trhoNei(),
+        U,
+        e,
+        p,
+        c,
+        phi,
+        alphaPhi,
+        alphaRhoPhi,
+        alphaRhoUPhi,
+        alphaRhoEPhi
+    );
+}
+
+
+void Foam::phaseFluxScheme::update
+(
+    const surfaceScalarField& alphaOwn,
+    const surfaceScalarField& alphaNei,
+    const surfaceScalarField& rhoOwn,
+    const surfaceScalarField& rhoNei,
+    const volVectorField& U,
+    const volScalarField& e,
+    const volScalarField& p,
+    const volScalarField& c,
+    surfaceScalarField& phi,
+    surfaceScalarField& alphaRhoPhi,
+    surfaceVectorField& alphaRhoUPhi,
+    surfaceScalarField& alphaRhoEPhi
+)
+{
+    createSavedFields();
+
+    autoPtr<ReconstructionScheme<vector>> ULimiter
+    (
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> eLimiter
+    (
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> pLimiter
+    (
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> cLimiter
+    (
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
+    );
 
     if
     (
         mesh_.cacheTemporaryObject
         (
-            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_))
+            reconstruction::ownName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            )
         )
     )
     {
         surfaceScalarField alphaRhoNei
         (
-            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_)),
+            reconstruction::ownName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
             alphaOwn*rhoOwn
         );
         mesh_.cacheTemporaryObject(alphaRhoNei);
@@ -394,13 +438,19 @@ void Foam::phaseFluxScheme::update
     (
         mesh_.cacheTemporaryObject
         (
-            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_))
+            reconstruction::neiName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            )
         )
     )
     {
         surfaceScalarField alphaRhoNei
         (
-            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_)),
+            reconstruction::neiName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
             alphaNei*rhoNei
         );
         mesh_.cacheTemporaryObject(alphaRhoNei);
@@ -482,5 +532,71 @@ void Foam::phaseFluxScheme::update
     }
     postUpdate();
 }
+
+
+void Foam::phaseFluxScheme::update
+(
+    const volScalarField& alpha,
+    const volScalarField& rho,
+    const volVectorField& U,
+    const volScalarField& e,
+    const volScalarField& p,
+    const volScalarField& c,
+    surfaceScalarField& phi,
+    surfaceScalarField& alphaRhoPhi,
+    surfaceVectorField& alphaRhoUPhi,
+    surfaceScalarField& alphaRhoEPhi
+)
+{
+    autoPtr<ReconstructionScheme<scalar>> alphaLimiter
+    (
+        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> rhoLimiter
+    (
+        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<vector>> ULimiter
+    (
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> eLimiter
+    (
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> pLimiter
+    (
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> cLimiter
+    (
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
+    );
+
+    tmp<surfaceScalarField> talphaOwn;
+    tmp<surfaceScalarField> talphaNei;
+    alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
+
+    tmp<surfaceScalarField> trhoOwn;
+    tmp<surfaceScalarField> trhoNei;
+    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
+
+    update
+    (
+        talphaOwn(),
+        talphaNei(),
+        trhoOwn(),
+        trhoNei(),
+        U,
+        e,
+        p,
+        c,
+        phi,
+        alphaRhoPhi,
+        alphaRhoUPhi,
+        alphaRhoEPhi
+    );
+}
+
 
 // ************************************************************************* //
