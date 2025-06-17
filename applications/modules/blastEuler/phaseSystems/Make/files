@@ -22,6 +22,8 @@ phaseModels/phasePair/phasePairKey/phasePairKey.C
 phaseModels/phasePair/phasePair/phasePair.C
 phaseModels/phasePair/orderedPhasePair/orderedPhasePair.C
 
+phaseModels/diameterModels/HSR/HSRDiameterReactionRate.C
+
 BlendedInterfacialModel/blendingMethods/blendingMethod/blendingMethod.C
 BlendedInterfacialModel/blendingMethods/blendingMethod/newBlendingMethod.C
 BlendedInterfacialModel/blendingMethods/noBlending/noBlending.C

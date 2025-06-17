@@ -161,8 +161,19 @@ public:
 
         // integrationSystem functions
 
+            //- Scale volume fraction
+            virtual void scaleVolumeFraction
+            (
+                const scalar sumAlpha,
+                const label celli
+            );
+
             //- Correct volume fraction
-            virtual void correctVolumeFraction();
+            virtual void correctVolumeFraction
+            (
+                const scalar alpha,
+                const label celli
+            );
 
             //- Decode primative variables
             virtual void decode();

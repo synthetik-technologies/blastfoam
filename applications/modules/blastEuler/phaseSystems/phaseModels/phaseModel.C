@@ -484,8 +484,24 @@ void Foam::phaseModel::postUpdate()
 }
 
 
-void Foam::phaseModel::correctVolumeFraction()
-{}
+void Foam::phaseModel::scaleVolumeFraction
+(
+    const scalar sumAlpha,
+    const label celli
+)
+{
+    (*this)[celli] /= sumAlpha;
+}
+
+
+void Foam::phaseModel::correctVolumeFraction
+(
+    const scalar alpha,
+    const label celli
+)
+{
+    (*this)[celli] = alpha;
+}
 
 
 void Foam::phaseModel::update()

@@ -550,7 +550,7 @@ Foam::phaseSystem::phaseSystem
             "phaseProperties",
             mesh.time().constant(),
             mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::MUST_READ,
             IOobject::NO_WRITE
         )
     ),
@@ -775,33 +775,35 @@ Foam::phaseSystem::phaseSystem
         {
             phaseModels_[1].solveAlpha(true);
             phaseModels_[0].solveAlpha(false);
+
+            dynamicCast<volScalarField>(phaseModels_[0]) ==
+                1.0 - phaseModels_[1];
         }
         else
         {
             phaseModels_[0].solveAlpha(true);
             phaseModels_[1].solveAlpha(false);
+
+            dynamicCast<volScalarField>(phaseModels_[1]) ==
+                1.0 - phaseModels_[0];
         }
     }
     else
     {
+        volScalarField sumAlpha
+        (
+            volScalarField::New
+            (
+                "sumAlpha",
+                mesh,
+                0.0
+            )
+        );
+
         forAll(phaseModels_, phasei)
         {
-            phaseModels_[phasei].solveAlpha(true);
-        }
-    }
-
-    if (phaseModels_.size() == 2)
-    {
-        dynamicCast<volScalarField>(phaseModels_[1]) =
-            1.0 - phaseModels_[0];
-        phaseModels_[1].correctVolumeFraction();
-    }
-    else
-    {
-        volScalarField sumAlpha("sumAlpha", phaseModels_[0]);
-        for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
-        {
             // Update boundaries
+            phaseModels_[phasei].solveAlpha(true);
             phaseModels_[phasei].correctBoundaryConditions();
             sumAlpha += phaseModels_[phasei];
         }
@@ -893,22 +895,23 @@ void Foam::phaseSystem::decode()
     if (phaseModels_.size() == 2)
     {
         volScalarField& alpha1(phaseModels_[0]);
-        phaseModels_[0].correctVolumeFraction();
-
         volScalarField& alpha2(phaseModels_[1]);
-        alpha2 = 1.0 - alpha1;
-        phaseModels_[1].correctVolumeFraction();
+
+
+        if (phaseModels_[1].slavePressure())
+        {
+            alpha1 == 1.0 - alpha2;
+        }
+        else
+        {
+            alpha2 == 1.0 - alpha1;
+        }
 
         phaseModels_[0].decode();
         phaseModels_[1].decode();
     }
     else
     {
-        forAll(phaseModels_, phasei)
-        {
-            phaseModels_[phasei].correctVolumeFraction();
-        }
-
         {
             label fixedPhase = -1;
             label nFluids = 0;
@@ -939,13 +942,25 @@ void Foam::phaseSystem::decode()
                     {
                         forAll(phaseModels_, phasei)
                         {
-                            phaseModels_[phasei][celli] /= sumAlpha;
+                            phaseModels_[phasei].scaleVolumeFraction
+                            (
+                                sumAlpha,
+                                celli
+                            );
                         }
-                        phaseModels_[fixedPhase][celli] = 0.0;
+                        phaseModels_[fixedPhase].correctVolumeFraction
+                        (
+                            0.0,
+                            celli
+                        );
                     }
                     else
                     {
-                        phaseModels_[fixedPhase][celli] = 1.0 - sumAlpha;
+                        phaseModels_[fixedPhase].correctVolumeFraction
+                        (
+                            1.0 - sumAlpha,
+                            celli
+                        );
                     }
                 }
             }
@@ -1029,10 +1044,15 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseSystem::phi() const
         surfaceScalarField::New
         (
             "phi",
-            phaseModels_[0].alphaRhoPhi()
+            mesh(),
+            dimensionedScalar
+            (
+                dimDensity*dimArea*dimVelocity,
+                0.0
+            )
         )
     );
-    for (label phasei = 1; phasei < phaseModels_.size(); ++ phasei)
+    forAll(phaseModels_, phasei)
     {
         phiTmp.ref() += phaseModels_[phasei].alphaRhoPhi();
     }

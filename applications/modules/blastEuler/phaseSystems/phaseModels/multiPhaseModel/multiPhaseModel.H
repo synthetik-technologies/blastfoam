@@ -61,9 +61,6 @@ class multiPhaseModel
 protected:
     // Protected data
 
-        //- Names of components
-        wordList phases_;
-
         //- Primitative variables
 
             //- Equation of states
@@ -90,6 +87,20 @@ protected:
             //- Phase mass fluxes
             PtrList<surfaceScalarField> alphaRhoPhis_;
 
+        //- Calculate reconstructed phaseDensity (alphaRho) with density
+        bool densityReconstruction_;
+
+
+        // Update fluxes given interpolated alphas and alphaRhos
+        void updateFluxes
+        (
+            const PtrList<surfaceScalarField>& alphasOwn,
+            const PtrList<surfaceScalarField>& alphasNei,
+
+            const PtrList<surfaceScalarField>& alphaRhosOwn,
+            const PtrList<surfaceScalarField>& alphaRhosNei
+        );
+
 
 public:
 
@@ -114,8 +125,19 @@ public:
 
         // integrationSystem functions
 
+            //- Scale volume fraction
+            virtual void scaleVolumeFraction
+            (
+                const scalar sumAlpha,
+                const label celli
+            );
+
             //- Correct volume fraction
-            virtual void correctVolumeFraction();
+            virtual void correctVolumeFraction
+            (
+                const scalar alpha,
+                const label celli
+            );
 
             //- Decode primative variables
             virtual void decode();

@@ -85,20 +85,7 @@ Foam::tmp<Foam::volScalarField>
 Foam::massTransferModels::reactingParticleMassTransfer::K() const
 {
     const diameterModel& dModel = pair_.dispersed().dModel();
-    volScalarField V(dModel.V());
-    V.max(small);
-    tmp<volScalarField> n(pair_.dispersed()/V);
-
-    tmp<volScalarField> mDot
-    (
-        volScalarField::New
-        (
-            "reactingParticle:mDot",
-            n
-           *dModel.dMdt()
-        )
-    );
-    return mDot;
+    return dModel.dMdt();
 }
 
 

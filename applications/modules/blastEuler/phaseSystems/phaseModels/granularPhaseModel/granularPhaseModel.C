@@ -181,6 +181,12 @@ void Foam::granularPhaseModel::solve()
     this->storeAndBlendDelta(deltaAlphaRhoPTE);
     alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
     alphaRhoPTE_.correctBoundaryConditions();
+
+
+    //- Update volume fraction since density is known
+    alphaRho_.max(0.0);
+    this->internalFieldRef() = alphaRho_()/rho_();
+    this->correctBoundaryConditions();
 }
 
 
@@ -351,14 +357,24 @@ void Foam::granularPhaseModel::update()
 }
 
 
-void Foam::granularPhaseModel::correctVolumeFraction()
+void Foam::granularPhaseModel::scaleVolumeFraction
+(
+    const scalar sumAlpha,
+    const label celli
+)
 {
-    volScalarField& alpha = *this;
+    (*this)[celli] /= sumAlpha;
+    alphaRho_[celli] /= sumAlpha;
+}
 
-    //- Update volume fraction since density is known
-    alphaRho_.max(0.0);
-    alpha.internalFieldRef() = alphaRho_()/rho_();
-    alpha.correctBoundaryConditions();
+
+void Foam::granularPhaseModel::correctVolumeFraction
+(
+    const scalar alpha,
+    const label celli
+)
+{
+    (*this)[celli] = alpha;
 }
 
 
