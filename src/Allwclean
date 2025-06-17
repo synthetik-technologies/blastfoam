@@ -13,9 +13,9 @@ wclean $targetType compressibleSystem
 
 wclean $targetType polyTopoChange
 wclean $targetType errorEstimators
-wmake $targetType fvMotionSolvers
-wmake $targetType fvMeshTopoChangers
-wmake $targetType fvMeshDistributors
+wclean $targetType fvMotionSolvers
+wclean $targetType fvMeshTopoChangers
+wclean $targetType fvMeshDistributors
 
 wclean $targetType functionObjects
 wclean $targetType atmosphereModels
