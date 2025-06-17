@@ -52,6 +52,19 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
     rate_(diameterReactionRate::New(*this, dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     TName_(dict.lookupOrDefault("TName", IOobject::groupName("T", phaseName))),
+    N_
+    (
+        IOobject
+        (
+            IOobject::groupName("N", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", inv(dimVolume), 1.0)
+    ),
     dVdt_
     (
         IOobject
@@ -75,6 +88,20 @@ Foam::diameterModels::reactingDiameterModel::~reactingDiameterModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::diameterModels::reactingDiameterModel::update()
+{
+    const volScalarField& alpha =
+        this->d_.mesh().lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", this->d_.group())
+        );
+
+    N_ =
+        alpha
+       /max(this->V(), dimensionedScalar(dimVolume, small));
+}
+
 
 void Foam::diameterModels::reactingDiameterModel::solve()
 {
@@ -147,7 +174,8 @@ Foam::diameterModels::reactingDiameterModel::dMdt() const
             IOobject::groupName("rho", this->d_.group())
         )
     );
-    return dVdt_*rho;
+
+    return dVdt_*rho*N_;
 }
 
 // ************************************************************************* //

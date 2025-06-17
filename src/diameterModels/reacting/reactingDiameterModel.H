@@ -64,6 +64,9 @@ class reactingDiameterModel
     //- Name of temperature field
     const word TName_;
 
+    //- Number density
+    volScalarField N_;
+
     //- Stored change in volume per unit time
     volScalarField dVdt_;
 
@@ -85,6 +88,9 @@ public:
     virtual ~reactingDiameterModel();
 
     // ODE functions
+
+        //- Update number density
+        virtual void update();
 
         //- Solve sub-step stepi
         virtual void solve();

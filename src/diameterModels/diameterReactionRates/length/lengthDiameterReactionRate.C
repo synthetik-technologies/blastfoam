@@ -24,7 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lengthDiameterReactionRate.H"
-#include "addToRunTimeSelectionTable
+#include "addToRunTimeSelectionTable.H"
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
@@ -44,14 +45,14 @@ Foam::diameterReactionRates::length::length
     autoPtr<surfaceReactionRate> rate
 )
 :
-    diameterModel(dModel),
+    diameterReactionRate(dModel),
     rate_(rate)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::diameterReactionRates::~length()
+Foam::diameterReactionRates::length::~length()
 {}
 
 
@@ -63,7 +64,7 @@ Foam::tmp<Foam::volScalarField> Foam::diameterReactionRates::length::dDdt
     const volScalarField& T
 ) const
 {
-    return rate_->k();
+    return rate_->k(p, T);
 }
 
 
