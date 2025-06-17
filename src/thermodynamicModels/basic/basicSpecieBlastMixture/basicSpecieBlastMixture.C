@@ -46,13 +46,14 @@ void Foam::basicSpecieBlastMixture::normaliseMassFractions()
         volScalarField::New
         (
             IOobject::groupName("Yt", Y_[0].group()),
-            Y_[0],
+            Y_[0].mesh(),
+            0.0,
             calculatedFvPatchScalarField::typeName
         )
     );
     volScalarField& Yt = tYt.ref();
 
-    for (label i = 1; i < Y_.size(); i++)
+    forAll(Y_, i)
     {
         Yt += Y_[i];
     }
@@ -85,13 +86,14 @@ void Foam::basicSpecieBlastMixture::correctMassFractions()
             volScalarField::New
             (
                 IOobject::groupName("Yt", Y_[0].group()),
-                Y_[0],
+                Y_[0].mesh(),
+                0.0,
                 calculatedFvPatchScalarField::typeName
             )
         );
         volScalarField& Yt = tYt.ref();
 
-        for (label i = 1; i < Y_.size(); i++)
+        forAll(Y_, i)
         {
             Yt += Y_[i];
         }
