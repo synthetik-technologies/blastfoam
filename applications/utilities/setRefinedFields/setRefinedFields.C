@@ -1098,7 +1098,25 @@ int main(int argc, char *argv[])
                     }
                 }
                 prepareToStop = !refined;
+            }
 
+            // Print cell level distribution
+            {
+                Info<<"Cell level distribution" << incrIndent << endl;
+                label maxCellLevel = gMax(cellLevel);
+                labelList nCellsCellLevel(maxCellLevel + 1, 0);
+                forAll(cellLevel, celli)
+                {
+                    nCellsCellLevel[cellLevel[celli]]++;
+                }
+
+                Pstream::listCombineGather(nCellsCellLevel, plusEqOp<label>());
+                forAll(nCellsCellLevel, i)
+                {
+                    Info<< indent << "level " << i << ": "
+                        << nCellsCellLevel[i] << endl;
+                }
+                Info<< decrIndent << endl;
             }
         }
         iter++;
