@@ -63,12 +63,6 @@ int main(int argc, char *argv[])
         "execute functionObjects"
     );
 
-    argList::addBoolOption
-    (
-        "withFunctionObjects",
-        "execute functionObjects"
-    );
-
     argList::addOption
     (
         "startTime",
