@@ -444,6 +444,12 @@ void Foam::polyMeshHexRefiner::checkEightAnchorPoints
 
 void Foam::polyMeshHexRefiner::setProtectedCells()
 {
+    if (mesh_.nGeometricD() < 2)
+    {
+        nProtected_ = 0;
+        protectedCell_.clear();
+        return;
+    }
     const labelList& cellLevel = meshCutter_->cellLevel();
     const labelList& pointLevel = meshCutter_->pointLevel();
 
@@ -712,8 +718,9 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
         }
 
         bool isAxisym = (mesh_.nGeometricD() == 2 && mesh_.nSolutionD() == 3);
+        bool is1D = mesh_.nGeometricD() == 1;
 
-        if (!isAxisym)
+        if (!isAxisym && !is1D)
         {
             // Also protect any cells that are less than hex
             forAll(mesh_.cells(), celli)
@@ -746,7 +753,7 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
             // Check cells for 8 corner points
             checkEightAnchorPoints(protectedCell_, nProtected_);
         }
-        else
+        else if (!is1D)
         {
             PackedBoolList cellIsAxisPrism(mesh_.nCells(), false);
             label nAxisPrims = 0;
@@ -1146,8 +1153,9 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
         }
 
         bool isAxisym = (mesh_.nGeometricD() == 2 && mesh_.nSolutionD() == 3);
+        bool is1D = (mesh_.nGeometricD() == 1);
 
-        if (!isAxisym)
+        if (!isAxisym && !is1D)
         {
             // Also protect any cells that are less than hex
             forAll(mesh_.cells(), celli)
@@ -1180,7 +1188,7 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
             // Check cells for 8 corner points
             checkEightAnchorPoints(protectedCell_, nProtected_);
         }
-        else
+        else if (!is1D)
         {
             PackedBoolList cellIsAxisPrism(mesh_.nCells(), false);
             label nAxisPrims = 0;

@@ -168,26 +168,6 @@ protected:
             DynamicList<label>& verts
         ) const;
 
-        //- Store in maps correspondence from midpoint to anchors and faces.
-        virtual label storeMidPointInfo
-        (
-            const labelListList& cellAnchorPoints,
-            const labelListList& cellAddedCells,
-            const labelList& cellMidPoint,
-            const labelList& faceMidPoint,
-            const labelList& edgeMidPoint,
-            const label celli,
-            const label facei,
-            const bool faceOrder,
-            const label midPointi,
-            const label anchorPointi,
-            const label faceMidPointi,
-
-            Map<edge>& midPointToAnchors,
-            Map<edge>& midPointToFaceMids,
-            polyTopoChange& meshMod
-        ) const = 0;
-
         //- Create all internal faces from an unsplit face.
         void createInternalFromSplitFace
         (
@@ -204,19 +184,6 @@ protected:
             polyTopoChange& meshMod,
             label& nFacesAdded
         ) const;
-
-        //- Create all internal faces to split celli into 8.
-        virtual void createInternalFaces
-        (
-            const labelListList& cellAnchorPoints,
-            const labelListList& cellAddedCells,
-            const labelList& cellMidPoint,
-            const labelList& faceMidPoint,
-            const labelList& faceAnchorLevel,
-            const labelList& edgeMidPoint,
-            const label celli,
-            polyTopoChange& meshMod
-        ) const = 0;
 
         //- Store vertices from startFp upto face split point.
         //  Used when splitting face into 4.

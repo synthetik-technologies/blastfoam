@@ -41,9 +41,10 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
 
     // Infer the type of hexRef we need to use from the number of dimensions in
     // the polymesh
-    // nSolutionD == 3 && nGeometricD == 3: 3D mesh => hexRef8
-    // nSolutionD == 3 && nGeometricD == 2: axisymmetric mesh => hexRef4Axi
-    // nSolutionD == 2 && nGeometricD == 2: 2D mesh => hexRef4
+    // nSolutionD == 3 && nGeometricD == 3: 3D mesh => hexRef3D
+    // nSolutionD == 3 && nGeometricD == 2: axisymmetric mesh => hexRef2DAxi
+    // nSolutionD == 2 && nGeometricD == 2: 2D mesh => hexRef2D
+    // nSolutionD == 1 && nGeometricD == 1: 2D mesh => hexRef1D
 
     label nSoluD(mesh.nSolutionD());
     label nGeomD(mesh.nGeometricD());
@@ -60,6 +61,10 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
     {
         hexRefTypeName = "hexRef2D";
     }
+    else if (nSoluD == 1 && nGeomD == 1)
+    {
+        hexRefTypeName = "hexRef1D";
+    }
 
     meshConstructorTable::iterator hexRefIter =
         meshConstructorTablePtr_->find(hexRefTypeName);
@@ -69,7 +74,8 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
         FatalErrorInFunction
             << "Unsupported mesh number of dimensions for hex refinement" << nl
             << "nSolutionD: " << nSoluD << ", nGeometricD: " << nGeomD << nl
-            << "Only 3D, 2D and 2D axisymmetric mesh refinements are supported"
+            << "Only 3D, 2D, 1D, and 2D axisymmetric mesh refinements are "
+            << "supported"
             << exit(FatalError);
     }
 
@@ -92,24 +98,29 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
 
     // Infer the type of hexRef we need to use from the number of dimensions in
     // the polymesh
-    // nSolutionD == 3 && nGeometricD == 3: 3D mesh => hexRef8
-    // nSolutionD == 3 && nGeometricD == 2: axisymmetric mesh => hexRef4Axi
-    // nSolutionD == 2 && nGeometricD == 2: 2D mesh => hexRef4
+    // nSolutionD == 3 && nGeometricD == 3: 3D mesh => hexRef3D
+    // nSolutionD == 3 && nGeometricD == 2: axisymmetric mesh => hexRef2DAxi
+    // nSolutionD == 2 && nGeometricD == 2: 2D mesh => hexRef2D
+    // nSolutionD == 1 && nGeometricD == 1: 2D mesh => hexRef1D
 
     label nSoluD(mesh.nSolutionD());
     label nGeomD(mesh.nGeometricD());
 
     if (nSoluD == 3 && nGeomD == 3)
     {
-        hexRefTypeName = "hexRef8";
+        hexRefTypeName = "hexRef3D";
     }
     else if (nSoluD == 3 && nGeomD == 2)
     {
-        hexRefTypeName = "hexRef4Axi";
+        hexRefTypeName = "hexRef2DAxi";
     }
     else if (nSoluD == 2 && nGeomD == 2)
     {
-        hexRefTypeName = "hexRef4";
+        hexRefTypeName = "hexRef2D";
+    }
+    else if (nSoluD == 1 && nGeomD == 1)
+    {
+        hexRefTypeName = "hexRef1D";
     }
 
     levelsHistConstructorTable::iterator hexRefIter =
@@ -120,7 +131,8 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
         FatalErrorInFunction
             << "Unsupported mesh number of dimensions for hex refinement" << nl
             << "nSolutionD: " << nSoluD << ", nGeometricD: " << nGeomD << nl
-            << "Only 3D, 2D and 2D axisymmetric mesh refinements are supported"
+            << "Only 3D, 2D, 1D, and 2D axisymmetric mesh refinements are "
+            << "supported"
             << exit(FatalError);
     }
 
@@ -142,24 +154,29 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
 
     // Infer the type of hexRef we need to use from the number of dimensions in
     // the polymesh
-    // nSolutionD == 3 && nGeometricD == 3: 3D mesh => hexRef8
-    // nSolutionD == 3 && nGeometricD == 2: axisymmetric mesh => hexRef4Axi
-    // nSolutionD == 2 && nGeometricD == 2: 2D mesh => hexRef4
+    // nSolutionD == 3 && nGeometricD == 3: 3D mesh => hexRef3D
+    // nSolutionD == 3 && nGeometricD == 2: axisymmetric mesh => hexRef2DAxi
+    // nSolutionD == 2 && nGeometricD == 2: 2D mesh => hexRef2D
+    // nSolutionD == 1 && nGeometricD == 1: 2D mesh => hexRef1D
 
     label nSoluD(mesh.nSolutionD());
     label nGeomD(mesh.nGeometricD());
 
     if (nSoluD == 3 && nGeomD == 3)
     {
-        hexRefTypeName = "hexRef8";
+        hexRefTypeName = "hexRef3D";
     }
     else if (nSoluD == 3 && nGeomD == 2)
     {
-        hexRefTypeName = "hexRef4Axi";
+        hexRefTypeName = "hexRef2DAxi";
     }
     else if (nSoluD == 2 && nGeomD == 2)
     {
-        hexRefTypeName = "hexRef4";
+        hexRefTypeName = "hexRef2D";
+    }
+    else if (nSoluD == 1 && nGeomD == 1)
+    {
+        hexRefTypeName = "hexRef1D";
     }
 
     levelsConstructorTable::iterator hexRefIter =
@@ -170,7 +187,8 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
         FatalErrorInFunction
             << "Unsupported mesh number of dimensions for hex refinement" << nl
             << "nSolutionD: " << nSoluD << ", nGeometricD: " << nGeomD << nl
-            << "Only 3D, 2D and 2D axisymmetric mesh refinements are supported"
+            << "Only 3D, 2D, 1D, and 2D axisymmetric mesh refinements are "
+            << "supported"
             << exit(FatalError);
     }
 

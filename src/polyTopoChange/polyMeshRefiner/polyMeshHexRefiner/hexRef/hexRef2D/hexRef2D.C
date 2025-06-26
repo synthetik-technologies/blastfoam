@@ -95,7 +95,7 @@ Foam::label Foam::hexRef2D::getAnchorCell
             {
                 if (index >= 4) //AB....
                 {
-                if (index == 4)
+                    if (index == 4)
                     {
                         index = 8;
                     }

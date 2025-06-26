@@ -2694,7 +2694,10 @@ Foam::prismatic2DRefinement::prismatic2DRefinement
 )
 :
     refinement(mesh, dict, read)
-{}
+{
+    edgeBasedConsistency_ =
+        dict.lookupOrDefault<Switch>("edgeBasedConsistency", false);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -2738,7 +2741,7 @@ Foam::labelList Foam::prismatic2DRefinement::consistentUnrefinement
     const labelListList& meshPointEdges = mesh_.pointEdges();
 
     // Loop through all points
-    forAll (meshPointEdges, pointI)
+    forAll(meshPointEdges, pointI)
     {
         // Get point level of this point
         const label& centralPointLevel = pointLevel_[pointI];
@@ -2842,7 +2845,7 @@ Foam::labelList Foam::prismatic2DRefinement::consistentUnrefinement
     PackedBoolList splitPointsToUnrefine(nPoints, false);
 
     // Loop through all unrefinement candidates
-    forAll (unrefinementPointCandidates, i)
+    forAll(unrefinementPointCandidates, i)
     {
         // Get point index
         const label& pointI = unrefinementPointCandidates[i];
@@ -2872,14 +2875,14 @@ Foam::labelList Foam::prismatic2DRefinement::consistentUnrefinement
         PackedBoolList cellsToUnrefine(nCells, false);
 
         // Loop through all split points to unrefine
-        forAll (splitPointsToUnrefine, pointI)
+        forAll(splitPointsToUnrefine, pointI)
         {
             if (splitPointsToUnrefine.get(pointI))
             {
                 // This split point is marked for unrefinement, collect all of
                 // its cells
                 const labelList& pCells = meshPointCells[pointI];
-                forAll (pCells, i)
+                forAll(pCells, i)
                 {
                     cellsToUnrefine.set(pCells[i]);
                 }

@@ -413,7 +413,6 @@ Foam::label Foam::refinement::faceConsistentUnrefinement
         {
             // Since was 2:1 this can only occur if own is marked for
             // unrefinement.
-
             if (maxSet)
             {
                 nChanged += unrefineCell.set(nei);
@@ -451,24 +450,24 @@ Foam::label Foam::refinement::faceConsistentUnrefinement
     // Create owner level for boundary faces to prepare for swapping on coupled
     // boundaries
     labelList neiLevel(nFaces - nInternalFaces);
-    forAll (neiLevel, i)
+    forAll(neiLevel, bfacei)
     {
         // Get owner of the face and update owner cell levels
-        const label& own = owner[i + nInternalFaces];
-        neiLevel[i] = cellLevel_[own] - unrefineCell.get(own);
+        const label& own = owner[bfacei + nInternalFaces];
+        neiLevel[bfacei] = cellLevel_[own] - unrefineCell.get(own);
     }
 
     // Swap boundary face lists (coupled boundary update)
     syncTools::swapBoundaryFaceList(mesh_, neiLevel);
 
     // Loop through boundary faces
-    forAll (neiLevel, i)
+    forAll(neiLevel, bfacei)
     {
         // Get owner of the face and owner level
-        const label& own = owner[i + nInternalFaces];
+        const label& own = owner[bfacei + nInternalFaces];
         const label ownLevel = cellLevel_[own] - unrefineCell.get(own);
 
-        if (ownLevel < (neiLevel[i] - 1))
+        if (ownLevel < (neiLevel[bfacei] - 1))
         {
             if (!maxSet)
             {
@@ -481,7 +480,7 @@ Foam::label Foam::refinement::faceConsistentUnrefinement
                 nChanged += unrefineCell.unset(own);
             }
         }
-        else if (neiLevel[i] < (ownLevel - 1))
+        else if (neiLevel[bfacei] < (ownLevel - 1))
         {
             if (maxSet)
             {
@@ -511,20 +510,20 @@ Foam::label Foam::refinement::edgeConsistentUnrefinement
     label nChanged = 0;
 
     // Algorithm: loop over all edges and visit all unique cell pairs sharing
-    // this particular edge. Then, ensure 2:1 edge consistency by protecting the
-    // cell with lower level from unrefinement
+    // this particular edge. Then, ensure 2:1 edge consistency by protecting
+    // the cell with lower level from unrefinement
 
     // Get edge cells
     const labelListList& meshEdgeCells = mesh_.edgeCells();
 
     // Loop through all mesh edges
-    forAll (meshEdgeCells, edgeI)
+    forAll(meshEdgeCells, edgeI)
     {
         // Get current edge cells
         const labelList& curEdgeCells = meshEdgeCells[edgeI];
 
         // Loop through all edge cells
-        forAll (curEdgeCells, i)
+        forAll(curEdgeCells, i)
         {
             // Get first cell index
             const label& cellI = curEdgeCells[i];
@@ -536,8 +535,8 @@ Foam::label Foam::refinement::edgeConsistentUnrefinement
                 const label& cellJ = curEdgeCells[j];
 
                 // Get levels of the two cells. If the cell is marked for
-                // unrefinement, the level is current level - 1, otherwise it is
-                // equal to the current level
+                // unrefinement, the level is current level - 1, otherwise it
+                // is equal to the current level
 
                 // Note: unrefineCell flag for both cellI and cellJ might
                 // change, this is why we need to recalculate cellI level here
