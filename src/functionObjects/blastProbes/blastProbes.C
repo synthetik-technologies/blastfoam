@@ -630,6 +630,7 @@ Foam::blastProbes::blastProbes
     searchType_(OCTREE)
 {
     read(dict);
+    prepare();
 }
 
 
@@ -686,7 +687,6 @@ bool Foam::blastProbes::read(const dictionary& dict)
             adjustLocations_
         );
     }
-    prepare();
 
     Switch writeVTK(dict.lookupOrDefault("writeVTK", false));
 

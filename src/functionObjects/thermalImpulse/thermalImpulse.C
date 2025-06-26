@@ -28,6 +28,7 @@ License
 #include "thermalImpulse.H"
 #include "fvcAverage.H"
 #include "fvcSnGrad.H"
+#include "thermophysicalTransportModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -54,46 +55,31 @@ Foam::functionObjects::thermalImpulse::thermalImpulse
     restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
     TName_(dict.lookupOrDefault("TName", word("T"))),
     qrName_(dict.lookupOrDefault("qrName", word("qr"))),
-    intGradT_
+    intGradTName_
     (
-        IOobject
+        dict.lookupOrDefault
         (
-            dict.lookupOrDefault
-            (
-                "intGradTName",
-                IOobject::groupName("intGradT", IOobject::group(TName_))
-            ),
-            runTime.name(),
-            mesh_,
-            restartOnRestart_
-          ? IOobject::NO_READ
-          : IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedScalar("0", dimTemperature/dimLength*dimTime, 0.0)
+            "intGradTName",
+            IOobject::groupName("intGradT", IOobject::group(TName_))
+        )
     ),
-    intQExt_
+    intQExtName_
     (
-        IOobject
+        dict.lookupOrDefault
         (
-            dict.lookupOrDefault
-            (
-                "intQName",
-                IOobject::groupName("intQExt", IOobject::group(TName_))
-            ),
-            runTime.name(),
-            mesh_,
-            restartOnRestart_
-          ? IOobject::NO_READ
-          : IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensionedScalar("0", dimMass/sqr(dimTime), 0.0)
+            "intQExtName",
+            IOobject::groupName("intQExt", IOobject::group(TName_))
+        )
+    ),
+    intQName_
+    (
+        dict.lookupOrDefault
+        (
+            "intQName",
+            IOobject::groupName("intQ", IOobject::group(TName_))
+        )
     )
 {
-    executeAtStart_ = false;
     read(dict);
 }
 
@@ -123,19 +109,117 @@ bool Foam::functionObjects::thermalImpulse::execute()
 {
     const dimensionedScalar& deltaT = mesh_.time().deltaT();
 
-    intGradT_ =
-        intGradT_.oldTime()
-      + deltaT
-       *fvc::average
+    const word thermophysicalTransportModelName
+    (
+        IOobject::groupName
         (
-            fvc::snGrad(mesh_.lookupObject<volScalarField>(TName_))
-        );
+            thermophysicalTransportModel::typeName,
+            IOobject::group(TName_)
+        )
+    );
+    if
+    (
+        foundObject<thermophysicalTransportModel>
+        (
+            thermophysicalTransportModelName
+        )
+    )
+    {
+        if (!intQ_.valid())
+        {
+            intQ_.set
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        intQName_,
+                        Time::timeName(time_.startTime().value()),
+                        mesh_,
+                        restartOnRestart_
+                      ? IOobject::NO_READ
+                      : IOobject::READ_IF_PRESENT,
+                        IOobject::NO_WRITE
+                    ),
+                    mesh_,
+                    dimensionedScalar(dimMass/sqr(dimTime), 0.0)
+                )
+            );
+        }
+        const thermophysicalTransportModel& ttm =
+            lookupObject<thermophysicalTransportModel>
+            (
+                thermophysicalTransportModelName
+            );
+        intQ_() = intQ_->oldTime() + deltaT*fvc::average(ttm.q());
+    }
+    else
+    {
+        if (!intGradT_.valid())
+        {
+            intGradT_.set
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        intGradTName_,
+                        Time::timeName(time_.startTime().value()),
+                        mesh_,
+                        restartOnRestart_
+                      ? IOobject::NO_READ
+                      : IOobject::READ_IF_PRESENT,
+                        IOobject::NO_WRITE
+                    ),
+                    mesh_,
+                    dimensionedScalar(dimTemperature/dimLength*dimTime, 0.0)
+                )
+            );
+        }
+
+        intGradT_() =
+            intGradT_->oldTime()
+          + fvc::average
+            (
+                fvc::snGrad(mesh_.lookupObject<volScalarField>(TName_))
+            )*deltaT;
+    }
+
     if (mesh_.foundObject<volScalarField>(qrName_))
     {
-        intQExt_ =
-            intQExt_.oldTime()
-          + deltaT*mesh_.lookupObject<volScalarField>(qrName_);
+        if (!intQExt_.valid())
+        {
+            intQExt_.set
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        intQExtName_,
+                        Time::timeName(time_.startTime().value()),
+                        mesh_,
+                        restartOnRestart_
+                      ? IOobject::NO_READ
+                      : IOobject::READ_IF_PRESENT,
+                        IOobject::NO_WRITE
+                    ),
+                    mesh_,
+                    dimensionedScalar(dimMass/sqr(dimTime), 0.0)
+                )
+            );
+        }
+
+        const volScalarField& qr =
+            mesh_.lookupObject<volScalarField>(qrName_);
+        intQExt_() = intQExt_->oldTime() + deltaT*qr;
+
+        if (intQ_.valid())
+        {
+            intQ_() += deltaT*qr;
+        }
     }
+
+
 
     return true;
 }
@@ -147,7 +231,21 @@ bool Foam::functionObjects::thermalImpulse::write()
     {
         return true;
     }
-    return intGradT_.write() && intQExt_.write();
+    bool good = true;
+
+    if (intGradT_.valid())
+    {
+        good = intGradT_->write() && good;
+    }
+    if (intQExt_.valid())
+    {
+        good = intQExt_->write() && good;
+    }
+    if (intQ_.valid())
+    {
+        good = intQ_->write() && good;
+    }
+    return good;
 }
 
 

@@ -104,12 +104,24 @@ protected:
         //- Name of qr (radiation heat flux) field
         word qrName_;
 
+        //- Name of integrated temperature gradient field
+        word intGradTName_;
+
+        //- Name of integrated external heat flux field
+        word intQExtName_;
+
+        //- Name of integrated heat flux field
+        word intQName_;
+
         //- Integral of temperature gradient
         // averaged snGrad
-        volScalarField intGradT_;
+        autoPtr<volScalarField> intGradT_;
 
         //- Integral of external energy flux (i.e. radiation heat flux)
-        volScalarField intQExt_;
+        autoPtr<volScalarField> intQExt_;
+
+        //- Integral of total energy flux
+        autoPtr<volScalarField> intQ_;
 
 public:
 
