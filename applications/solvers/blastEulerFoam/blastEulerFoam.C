@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createTimeControls.H"
     maxCo = min(maxCo, integrator.maxCo());
+    scalar mDotCoNum = 0.0;
     #include "EigenCourantNos.H"
     #include "setInitialDeltaT.H"
 

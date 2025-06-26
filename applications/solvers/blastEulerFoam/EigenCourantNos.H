@@ -57,4 +57,64 @@
     }
     Info<< endl << decrIndent;
     CoNum = max(phaseCoNums);//max(max(phaseCoNums), maxCoNum);
+
+    bool hasMassTransfer = false;
+    forAll(phases, phasei)
+    {
+        const phaseModel& phase = phases[phasei];
+
+        if (fluid.hasMassTransfer(phase))
+        {
+            hasMassTransfer = true;
+            break;
+        }
+    }
+
+    mDotCoNum = 0.0;
+    if (hasMassTransfer)
+    {
+        Info<< "Maximum phase Courant numbers based on mass transfer:" << endl
+            << incrIndent;
+
+        const dimensionedScalar zeroMDot(dimDensity/dimTime, 0.0);
+        forAll(phases, phasei)
+        {
+            const phaseModel& phase = phases[phasei];
+
+            if (fluid.hasMassTransfer(phase))
+            {
+                volScalarField totalMDot
+                (
+                    volScalarField::New
+                    (
+                        IOobject::groupName("mDot", phase.name()),
+                        mesh,
+                        dimensionedScalar(dimDensity/dimTime, 0.0)
+                    )
+                );
+                forAll(phases, phasej)
+                {
+                    const phaseModel& otherPhase = phases[phasej];
+                    if (&otherPhase != &phase)
+                    {
+                        totalMDot += fluid.mDot(phase, otherPhase);
+                    }
+                }
+                scalar mDotCo =
+                    mag
+                    (
+                        gMaxMagSqr
+                        (
+                            (
+                                totalMDot*runTime.deltaTValue()
+                               /max(phase.alphaRho(), phase.residualAlphaRho())
+                            )()
+                        )
+                    );
+                Info<< indent << phase.name() << ": " << mDotCo << nl;
+                mDotCoNum = max(mDotCoNum, mDotCo);
+            }
+        }
+        Info<< endl << decrIndent;
+    }
 }
