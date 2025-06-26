@@ -47,7 +47,7 @@ Foam::activationModels::linearActivation::linearActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, true),
+    activationModel(mesh, dict, phaseName, 1),
     vDet_("vDet", dimVelocity, dict),
     tIgn_
     (

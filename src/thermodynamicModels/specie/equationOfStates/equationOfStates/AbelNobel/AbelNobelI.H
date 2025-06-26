@@ -244,13 +244,33 @@ Foam::scalar Foam::AbelNobel<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobel<Specie>::S
+Foam::scalar Foam::AbelNobel<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
-    return 0.0;
+    return -this->R()*log(p/Pstd);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::AbelNobel<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    return
+        this->R()
+       *(
+            log(T*Pstd/(Tstd*p))
+          + log
+            (
+                (1.0 - b_*rho(p, T))
+               /(1.0 - b_*rho(Pstd, Tstd))
+            )
+        );
 }
 
 

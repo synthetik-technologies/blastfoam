@@ -412,12 +412,40 @@ Foam::scalar Foam::PengRobinson<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::PengRobinson<Specie>::S
+Foam::scalar Foam::PengRobinson<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
+    const scalar Pr = p/Pc_;
+    const scalar Tr = T/Tc_;
+    const scalar B = 0.07780*Pr/Tr;
+
+    const scalar Z = this->Z(p, T);
+
+    return
+        this->R()
+       *(
+          - log(p/Pstd)
+          + (
+                log(Z - B)
+              - 2.078*kappa_*((1 + kappa_)/sqrt(Tr) - kappa_)
+               *log((Z + 2.414*B)/(Z - 0.414*B))
+            )
+        );
+}
+
+
+template<class Specie>
+Foam::scalar Foam::PengRobinson<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    //TODO
+    NotImplemented;
     const scalar Pr = p/Pc_;
     const scalar Tr = T/Tc_;
     const scalar B = 0.07780*Pr/Tr;

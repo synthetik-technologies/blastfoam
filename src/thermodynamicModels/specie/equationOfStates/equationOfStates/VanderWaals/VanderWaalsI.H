@@ -261,12 +261,36 @@ Foam::scalar Foam::VanderWaals<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::VanderWaals<Specie>::S
+Foam::scalar Foam::VanderWaals<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
+    //TODO
+    NotImplemented;
+    const scalar rho = this->rho(p, T);
+    return
+        this->R()
+       *(
+          - log(p/Pstd)
+          + (
+              - log(1.0 - b_*rho)/(b_*rho) - 1
+              + log(1.0/(1 - b_*rho) - a_*rho/this->R()*T)
+            )
+        );
+}
+
+
+template<class Specie>
+Foam::scalar Foam::VanderWaals<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    //TODO
+    NotImplemented;
     const scalar rho = this->rho(p, T);
     return
         this->R()

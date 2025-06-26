@@ -47,33 +47,8 @@ Foam::activationModels::noneActivation::noneActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, false)
+    activationModel(mesh, dict, phaseName, -1)
 {
-    if (detonationPoints_.size() == 0)
-    {
-        detonationPoints_.resize(1);
-        detonationPoints_.set
-        (
-            0,
-            new detonationPoint
-            (
-                returnReduce
-                (
-                    minMagSqr(mesh.C().primitiveField()),
-                    minMagSqrOp<vector>()
-                ),
-                0.0,
-                0.0
-            )
-        );
-    }
-    forAll(detonationPoints_, i)
-    {
-        if (!detonationPoints_[i].activated())
-        {
-            detonationPoints_[i].activated() = true;
-        }
-    }
     lambda_ == 1.0;
 }
 

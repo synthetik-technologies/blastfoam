@@ -94,6 +94,11 @@ Foam::fluidBlastThermo::fluidBlastThermo
             << abort(FatalError);
     }
     this->properties().dictionary::operator=(dict);
+
+    // Make sure the physicalProperties file is not reread
+    this->properties().checkOut();
+    this->properties().readOpt() = IOobject::MUST_READ;
+    this->properties().checkIn();
 }
 
 

@@ -274,7 +274,19 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::BirchMurnaghan2<Specie>::S
+Foam::scalar Foam::BirchMurnaghan2<Specie>::Sp
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan2<Specie>::Sv
 (
     const scalar p,
     const scalar T

@@ -179,7 +179,7 @@ inline Foam::scalar Foam::eConstThermo<EquationOfState>::S
 {
     return
         Cp(EquationOfState::rho(p, T), T*Cv_, T)*log(T/Tstd)
-      + EquationOfState::S(p, T);
+      + EquationOfState::Sv(p, T);
 }
 
 

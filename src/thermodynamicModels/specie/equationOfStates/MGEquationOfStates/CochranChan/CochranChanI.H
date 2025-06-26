@@ -319,14 +319,26 @@ Foam::scalar Foam::CochranChan<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::S
+Foam::scalar Foam::CochranChan<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

@@ -274,16 +274,26 @@ Foam::scalar Foam::stiffenedGas<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::stiffenedGas<Specie>::S
+Foam::scalar Foam::stiffenedGas<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    scalar rho((p - gamma_*a_)/this->R()*T);
-    scalar rho0((Pstd - gamma_*a_)/this->R()*Tstd);
-    return this->R()*(log(rho0) - log(rho));
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::stiffenedGas<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

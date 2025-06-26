@@ -262,7 +262,7 @@ inline Foam::scalar Foam::janaf9Thermo<EquationOfState>::S
       - rT*(0.5*a[0]*rT + a[1])
       + a[2]*log(T) + T*(a[3] + T*(0.5*a[4] + T*(a[5]/3.0 + T*0.25*a[6])))
       + a[8]
-    ) + EquationOfState::S(p, T);
+    ) + EquationOfState::Sp(p, T);
 }
 
 

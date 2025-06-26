@@ -327,12 +327,9 @@ Foam::scalar Foam::JWL<Specie>::E
         return 0.0;
     }
 
-    scalar rhos = max(rho, 1e-10);
-    scalar V(rho0_/rhos);
-    return
-        (A_/R1_*exp(-R1_*V)
-      + B_/R2_*exp(-R2_*V))/rho0_
-      - e0_;
+    const scalar rhos = max(rho, 1e-10);
+    const scalar V= rho0_/rhos;
+    return (A_/R1_*exp(-R1_*V) + B_/R2_*exp(-R2_*V))/rho0_ - e0_;
 }
 
 
@@ -349,7 +346,7 @@ Foam::scalar Foam::JWL<Specie>::H
         return 0.0;
     }
 
-    scalar rhos(max(rho, 1e-10));
+    const scalar rhos = max(rho, 1e-10);
     return
         A_*(1.0/rhos + 1.0/(R1_*rho0_))*exp(-R1_*rho0_/rhos)
       + B_*(1.0/rhos + 1.0/(R2_*rho0_))*exp(-R2_*rho0_/rhos)
@@ -358,14 +355,26 @@ Foam::scalar Foam::JWL<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::S
+Foam::scalar Foam::JWL<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::JWL<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

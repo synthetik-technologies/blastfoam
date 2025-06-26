@@ -65,8 +65,8 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
         dict,
         phaseName,
         burnModelNames_.read(dict.lookup("burnModel")) == PROGRAMMED
-      ? true
-      : false
+      ? 1
+      : 0
     ),
     rho_
     (

@@ -210,7 +210,7 @@ protected:
         (
             const dictionary& dict,
             const volScalarField& alpha,
-            const bool needDetonationPoints
+            const label needDetonationPoints
         ) const;
 
         //- Return the center of centerOfMass
@@ -245,7 +245,7 @@ public:
         const fvMesh& mesh,
         const dictionary& dict,
         const word& phaseName,
-        const bool needDetonationPoints
+        const label needDetonationPoints
     );
 
 

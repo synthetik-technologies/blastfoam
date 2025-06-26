@@ -306,7 +306,19 @@ Foam::scalar Foam::BWR<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::BWR<Specie>::S
+Foam::scalar Foam::BWR<Specie>::Sp
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BWR<Specie>::Sv
 (
     const scalar p,
     const scalar T

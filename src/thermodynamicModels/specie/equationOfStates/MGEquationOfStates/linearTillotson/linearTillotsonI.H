@@ -318,14 +318,26 @@ Foam::scalar Foam::linearTillotson<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::linearTillotson<Specie>::S
+Foam::scalar Foam::linearTillotson<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

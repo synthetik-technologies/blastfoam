@@ -162,7 +162,7 @@ Foam::ePolynomialThermo<EquationOfState, PolySize>::S
     const scalar T
 ) const
 {
-    return sCoeffs_.value(T) + EquationOfState::S(p, T);
+    return sCoeffs_.value(T) + EquationOfState::Sv(p, T);
 }
 
 

@@ -241,12 +241,11 @@ public:
             const scalar CpCv
         ) const;
 
-        //- Heat capacity at constant volume of mixture [J/kg/K]
-        inline scalar S
-        (
-            const scalar p,
-            const scalar T
-        ) const;
+        //- Return entropy contribution to the integral of Cp/T [J/kg/K]
+        inline scalar Sp(const scalar p, const scalar T) const;
+
+        //- Return entropy contribution to the integral of Cv/T [J/kg/K]
+        inline scalar Sv(const scalar p, const scalar T) const;
 
 
         // IO

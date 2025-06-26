@@ -257,12 +257,25 @@ Foam::scalar Foam::AbelNobelSG<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::S
+Foam::scalar Foam::AbelNobelSG<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::AbelNobelSG<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
     return 0.0;
 }
 

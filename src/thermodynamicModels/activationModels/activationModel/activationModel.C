@@ -227,7 +227,7 @@ Foam::activationModel::activationModel
     const fvMesh& mesh,
     const dictionary& dict,
     const word& phaseName,
-    const bool needDetonationPoints
+    const label needDetonationPoints
 )
 :
     timeIntegrationSystem
@@ -297,7 +297,7 @@ Foam::activationModel::activationModel
 {
     const bool active(dict.lookupOrDefault<bool>("active", true));
 
-    if (needDetonationPoints || detonationPoints_.size())
+    if (detonationPoints_.size())
     {
         DynamicList<vector> unactivatedPoints(detonationPoints_.size());
         DynamicList<scalar> unactivatedDelays(detonationPoints_.size());
@@ -419,9 +419,15 @@ Foam::activationModel::readDetonationPoints
 (
     const dictionary& dict,
     const volScalarField& alpha,
-    const bool needDetonationPoints
+    const label needDetonationPoints
 ) const
 {
+    // Not unsed
+    if (needDetonationPoints < 0)
+    {
+        return PtrList<detonationPoint>();
+    }
+
     {
         typeIOobject<IOPtrList<detonationPoint>> detPointsHeader
         (
