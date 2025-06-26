@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2022
+    \\  /    A nd           | Copyright (C) 2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Adds and empty patch to mesh and optionally fields
+    Converts case files from OpenFOAM-9 format to OpenFOAM-12 format
 
 \*---------------------------------------------------------------------------*/
 
