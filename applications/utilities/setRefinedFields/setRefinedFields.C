@@ -1066,15 +1066,28 @@ int main(int argc, char *argv[])
                         extrapolatedCalculatedFvPatchField<scalar>::typeName
                     )
                 );
+                volScalarField vCellLevel
+                (
+                    volScalarField::New
+                    (
+                        "cellLevel",
+                        mesh,
+                        dimensionedScalar(dimless, 0),
+                        extrapolatedCalculatedFvPatchField<scalar>::typeName
+                    )
+                );
 
                 forAll(cellLevel, celli)
                 {
                     scalarMaxCellLevel[celli] = maxCellLevel[celli];
+                    vCellLevel[celli] = cellLevel[celli];
                 }
                 scalarMaxCellLevel.correctBoundaryConditions();
+                vCellLevel.correctBoundaryConditions();
                 writeOk =
                     writeOk
                  && scalarMaxCellLevel.write()
+                 && vCellLevel.write()
                  && error.write();
 
                 Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
