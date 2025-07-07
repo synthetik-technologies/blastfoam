@@ -164,7 +164,7 @@ bool Foam::functionObjects::fieldMinMax::storeOld
         }
         else
         {
-            dynamicCast<FieldType&>(*oldFields_[computeFieldName]) = f;
+            dynamicCast<FieldType&>(*oldFields_[computeFieldName]).reset(f);
         }
         return true;
     }
