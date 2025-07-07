@@ -139,49 +139,64 @@ void Foam::errorEstimators::cellSize::update(const bool scale)
     {
         return;
     }
+    const labelHashSet eCells(this->errorCells());
 
-    scalarField& errorCells(error_);
+    scalarField& errorI = error_;
     if (sizeType_ == VOLUME)
     {
-        errorCells = mesh_.V();
+        const scalarField& V = mesh_.V();
+        forAllConstIter(labelHashSet, eCells, iter)
+        {
+            const label celli = iter.key();
+            errorI[celli] = V[celli];
+        }
     }
     else if (sizeType_ == CHARACTERISTIC)
     {
-        errorCells = meshSizeObject::New(mesh_).dx();
+        const scalarField& dx = meshSizeObject::New(mesh_).dx();
+        forAllConstIter(labelHashSet, eCells, iter)
+        {
+            const label celli = iter.key();
+            errorI[celli] = dx[celli];
+        }
     }
     else if (sizeType_ == MAG)
     {
         const vectorField& dX = meshSizeObject::New(mesh_).dX();
-        const Vector<label> geoD(mesh_.geometricD());
-        errorCells = 0.0;
-        forAll(geoD, cmpti)
+        const Vector<label>& geoD = mesh_.geometricD();
+        forAllConstIter(labelHashSet, eCells, iter)
         {
-            if (geoD[cmpti] == 1)
+            const label celli = iter.key();
+            forAll(geoD, cmpti)
             {
-                errorCells += sqr(dX.component(cmpti));
+                if (geoD[cmpti] > 0)
+                {
+                    errorI[celli] += sqr(component(dX[celli], cmpti));
+                }
             }
+            errorI[celli] = sqrt(errorI[celli]);
         }
-        errorCells = sqrt(errorCells);
     }
     else if (sizeType_ == CMPT)
     {
         const vectorField& dX = meshSizeObject::New(mesh_).dX();
-        forAll(cmpts_, i)
+        forAllConstIter(labelHashSet, eCells, iter)
         {
-            label cmpti = cmpts_[i];
-            forAll(errorCells, celli)
+            const label celli = iter.key();
+            forAll(cmpts_, i)
             {
+                const label cmpti = cmpts_[i];
                 if (dX[celli][cmpti] > maxDX_[cmpti])
                 {
-                    errorCells[celli] = max(1.0, errorCells[celli]);
+                    errorI[celli] = max(1.0, errorI[celli]);
                 }
                 else if (dX[celli][cmpti] < minDX_[cmpti])
                 {
-                    errorCells[celli] = max(-1.0, errorCells[celli]);
+                    errorI[celli] = max(-1.0, errorI[celli]);
                 }
                 else
                 {
-                    errorCells[celli] = max(0, errorCells[celli]);
+                    errorI[celli] = max(0, errorI[celli]);
                 }
             }
         }
@@ -189,19 +204,20 @@ void Foam::errorEstimators::cellSize::update(const bool scale)
 
     if (sizeType_ != CMPT)
     {
-        forAll(errorCells, celli)
+        forAllConstIter(labelHashSet, eCells, iter)
         {
-            if (errorCells[celli] < lowerUnrefine_)
+            const label celli = iter.key();
+            if (errorI[celli] < lowerUnrefine_)
             {
-                errorCells[celli] = -1.0;
+                errorI[celli] = -1.0;
             }
-            else if (errorCells[celli] > lowerRefine_)
+            else if (errorI[celli] > lowerRefine_)
             {
-                errorCells[celli] = 1.0;
+                errorI[celli] = 1.0;
             }
             else
             {
-                errorCells[celli] = 0.0;
+                errorI[celli] = 0.0;
             }
         }
     }
@@ -216,7 +232,6 @@ void Foam::errorEstimators::cellSize::read(const dictionary& dict)
         cmpts_ = readCmpts(dict.lookup("cmpts"));
         minDX_ = dict.lookup<vector>("minDX");
         maxDX_ = dict.lookup<vector>("maxDX");
-        Info<<cmpts_<<endl;
     }
     else if (sizeType_ == VOLUME)
     {
@@ -230,6 +245,8 @@ void Foam::errorEstimators::cellSize::read(const dictionary& dict)
     }
 
     maxLevel_ = dict.lookupOrDefault<label>("maxRefinement", 10);
+
+    readCellZones(dict);
 }
 
 // ************************************************************************* //

@@ -34,6 +34,9 @@ namespace Foam
 {
 namespace errorEstimators
 {
+    defineTypeNameAndDebug(gradient, 0);
+    addToRunTimeSelectionTable(errorEstimator, gradient, dictionary);
+
     defineTypeNameAndDebug(densityGradient, 0);
     addToRunTimeSelectionTable(errorEstimator, densityGradient, dictionary);
 }
@@ -42,6 +45,36 @@ namespace errorEstimators
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::errorEstimators::gradient::gradient
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& name
+)
+:
+    errorEstimator(mesh, dict, name),
+    fieldName_(dict.lookupBackwardsCompatible({"fieldName", "field"}))
+{
+    this->read(dict);
+}
+
+
+Foam::errorEstimators::gradient::gradient
+(
+    const word& fieldName,
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& name
+)
+:
+    errorEstimator(mesh, dict, name),
+    fieldName_(fieldName)
+{
+    this->read(dict);
+}
+
+
+
 Foam::errorEstimators::densityGradient::densityGradient
 (
     const fvMesh& mesh,
@@ -49,21 +82,23 @@ Foam::errorEstimators::densityGradient::densityGradient
     const word& name
 )
 :
-    errorEstimator(mesh, dict, name)
-{
-    this->read(dict);
-}
+    gradient("rho", mesh, dict, name)
+{}
+
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::densityGradient::~densityGradient()
+Foam::errorEstimators::gradient::~gradient()
 {}
 
 
+Foam::errorEstimators::densityGradient::~densityGradient()
+{}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::densityGradient::update(const bool scale)
+void Foam::errorEstimators::gradient::update(const bool scale)
 {
     if (updateCurTimeIndex(!scale))
     {
@@ -75,22 +110,26 @@ void Foam::errorEstimators::densityGradient::update(const bool scale)
     volVectorField gradRho(fvc::grad(rho));
     const scalarField& dL(meshSizeObject::New(mesh_).dx());
 
+    const labelHashSet& eCells = this->errorCells();
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
     const label nInternalFaces = mesh_.nInternalFaces();
     error_ = 0.0;
 
-    vector solutionD((vector(mesh_.geometricD()) + vector::one)/2.0);
+    const vector solutionD((vector(mesh_.geometricD()) + vector::one)/2.0);
 
     for (label facei = 0; facei < nInternalFaces; facei++)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
-        vector dr = mesh_.C()[nei] - mesh_.C()[own];
-        scalar magdr = mag(dr);
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
+        const vector dr = mesh_.C()[nei] - mesh_.C()[own];
+        const scalar magdr = mag(dr);
+
+        const bool foundOwn = eCells.found(own);
+        const bool foundNei= eCells.found(nei);
 
         // Ignore error in empty directions
-        if (mag(solutionD & (dr/magdr)) > 0.1)
+        if ((foundOwn || foundNei) && mag(solutionD & (dr/magdr)) > 0.1)
         {
             scalar dRhodr = (rho[nei] - rho[own])/magdr;
             scalar rhoc = (rho[nei] + rho[own])*0.5;
@@ -103,8 +142,14 @@ void Foam::errorEstimators::densityGradient::update(const bool scale)
                     mag(dRhodr - dRhoDotNei)/(0.3*rhoc/dl + mag(dRhoDotNei)),
                     mag(dRhodr - dRhoDotOwn)/(0.3*rhoc/dl + mag(dRhoDotOwn))
                 );
-            error_[own] = Foam::max(error_[own], eT);
-            error_[nei] = Foam::max(error_[nei], eT);
+            if (foundOwn)
+            {
+                error_[own] = Foam::max(error_[own], eT);
+            }
+            if (foundNei)
+            {
+                error_[nei] = Foam::max(error_[nei], eT);
+            }
         }
     }
 
@@ -137,11 +182,15 @@ void Foam::errorEstimators::densityGradient::update(const bool scale)
 
             forAll(faceCells, facei)
             {
-                vector dr = drField[facei];
-                scalar magdr = mag(dr);
+                const vector& dr = drField[facei];
+                const scalar magdr = mag(dr);
 
                 // Ignore error in empty directions
-                if (mag(solutionD & (dr/magdr)) > 0.1)
+                if
+                (
+                    eCells.found(faceCells[facei])
+                 && mag(solutionD & (dr/magdr)) > 0.1
+                )
                 {
                     scalar dRhodr = (rhon[facei] - rhop[facei])/magdr;
                     scalar rhoc = (rhon[facei] + rhop[facei])*0.5;
@@ -151,8 +200,10 @@ void Foam::errorEstimators::densityGradient::update(const bool scale)
                     scalar eT =
                         Foam::max
                         (
-                            mag(dRhodr - dRhoDotNei)/(0.3*rhoc/dl + mag(dRhoDotNei)),
-                            mag(dRhodr - dRhoDotOwn)/(0.3*rhoc/dl + mag(dRhoDotOwn))
+                            mag(dRhodr - dRhoDotNei)
+                           /(0.3*rhoc/dl + mag(dRhoDotNei)),
+                            mag(dRhodr - dRhoDotOwn)
+                           /(0.3*rhoc/dl + mag(dRhoDotOwn))
                         );
                     error_[faceCells[facei]] =
                         Foam::max(error_[faceCells[facei]], eT);
@@ -162,7 +213,7 @@ void Foam::errorEstimators::densityGradient::update(const bool scale)
     }
     if (scale)
     {
-        normalize(error_);
+        normalize(error_, eCells);
     }
 }
 

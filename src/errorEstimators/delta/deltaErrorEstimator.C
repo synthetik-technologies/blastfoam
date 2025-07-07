@@ -77,14 +77,15 @@ void Foam::errorEstimators::delta::update(const bool scale)
     (
         volScalarField::New
         (
-            "mag(" + fieldName_ + ")",
+            "error(" + fieldName_ + ")",
             mesh_,
             0.0
         )
     );
     volScalarField& x = tx.ref();
 
-    this->getFieldValue(fieldName_, x);
+    const labelHashSet& eCells = this->errorCells();
+    this->getFieldValue(fieldName_, x, eCells);
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
@@ -93,13 +94,22 @@ void Foam::errorEstimators::delta::update(const bool scale)
 
     for (label facei = 0; facei < nInternalFaces; facei++)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
-        scalar eT = mag(x[own] - x[nei]);
+        const bool foundOwn = eCells.found(own);
+        const bool foundNei = eCells.found(nei);
 
-        error_[own] = max(error_[own], eT);
-        error_[nei] = max(error_[nei], eT);
+        const scalar eT = mag(x[own] - x[nei]);
+
+        if (foundOwn)
+        {
+            error_[own] = max(error_[own], eT);
+        }
+        if (foundNei)
+        {
+            error_[nei] = max(error_[nei], eT);
+        }
     }
 
     // Boundary faces
@@ -109,7 +119,7 @@ void Foam::errorEstimators::delta::update(const bool scale)
         {
             const fvPatch& p = x.boundaryField()[patchi].patch();
 
-            const labelUList& faceCells = p.faceCells();
+            const labelList& faceCells = p.faceCells();
             scalarField fp(x.boundaryField()[patchi].patchInternalField());
 
             scalarField fn
@@ -119,15 +129,18 @@ void Foam::errorEstimators::delta::update(const bool scale)
 
             forAll(faceCells, facei)
             {
-                scalar eT = mag(fp[facei] - fn[facei]);
-                error_[faceCells[facei]]=
-                    max(error_[faceCells[facei]], eT);
+                const label celli = faceCells[facei];
+                if (eCells.found(celli))
+                {
+                    const scalar eT = mag(fp[facei] - fn[facei]);
+                    error_[celli] = max(error_[celli], eT);
+                }
             }
         }
     }
     if (scale)
     {
-        normalize(error_);
+        normalize(error_, eCells);
     }
 }
 

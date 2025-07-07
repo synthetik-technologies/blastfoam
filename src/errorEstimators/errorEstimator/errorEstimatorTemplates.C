@@ -31,7 +31,8 @@ template<class Type>
 bool Foam::errorEstimator::getFieldValueType
 (
     const word& name,
-    volScalarField& f
+    volScalarField& f,
+    const labelHashSet& eCells
 ) const
 {
     typedef GeometricField<Type, fvPatchField, volMesh> thisType;
@@ -39,8 +40,11 @@ bool Foam::errorEstimator::getFieldValueType
     if (mesh_.foundObject<thisType>(name))
     {
         const thisType& x = mesh_.lookupObject<thisType>(name);
-        f.primitiveFieldRef() =  mag(x.primitiveField());
-        f.boundaryFieldRef() = mag(x.boundaryField());
+        forAllConstIter(labelHashSet, eCells, iter)
+        {
+            const label celli = iter.key();
+            f[celli] = mag(x[celli]);
+        }
         return true;
     }
     return false;

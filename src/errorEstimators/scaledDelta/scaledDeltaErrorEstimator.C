@@ -79,14 +79,17 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
     (
         volScalarField::New
         (
-            "mag(" + fieldName_ + ")",
+            "error(" + fieldName_ + ")",
             mesh_,
             0.0
         )
     );
     volScalarField& x = tx.ref();
 
-    this->getFieldValue(fieldName_, x);
+    const labelHashSet& eCells = this->errorCells();
+
+    this->getFieldValue(fieldName_, x, eCells);
+
     if (mag(offset_) > small)
     {
         x -= offset_;
@@ -99,13 +102,20 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
 
     for (label facei = 0; facei < nInternalFaces; facei++)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
-        scalar eT =
+        const scalar eT =
             mag(x[own] - x[nei])/max(min(x[own], x[nei]), minVal_);
-        error_[own] = max(error_[own], eT);
-        error_[nei] = max(error_[nei], eT);
+
+        if (eCells.found(own))
+        {
+            error_[own] = max(error_[own], eT);
+        }
+        if (eCells.found(nei))
+        {
+            error_[nei] = max(error_[nei], eT);
+        }
     }
 
     // Boundary faces
@@ -125,18 +135,21 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
 
             forAll(faceCells, facei)
             {
-                scalar eT =
-                    mag(fp[facei] - fn[facei])
-                   /max(min(fp[facei], fn[facei]), minVal_);
-                error_[faceCells[facei]] =
-                    max(error_[faceCells[facei]], eT);
+                const label celli = faceCells[facei];
+                if (eCells.found(celli))
+                {
+                    const scalar eT =
+                        mag(fp[facei] - fn[facei])
+                       /max(min(fp[facei], fn[facei]), minVal_);
+                    error_[celli] = max(error_[celli], eT);
+                }
             }
         }
     }
 
     if (scale)
     {
-        normalize(error_);
+        normalize(error_, eCells);
     }
 }
 

@@ -81,14 +81,22 @@ protected:
         scalar upperUnrefine_;
 
         //- Optional specification of max level for an error estimator
-        label maxLevel_;
+        HashTable<label> maxLevel_;
+        label defaultMaxLevel_;
 
         //- Optional specification of smallest cell
-        scalar minDx_;
+        HashTable<scalar> minDx_;
+        scalar defaultMinDx_;
 
         //- Override error based on this estimator
         //  (used with multicomponent)
         bool override_;
+
+        //- Cell zones (optional)
+        wordList cZones_;
+
+        //- Does the list of cell zones contain "default"
+        bool hasDefault_;
 
         //- Are probes refined
         Switch refineProbes_;
@@ -108,17 +116,36 @@ protected:
         }
 
         //- Normalize error (-1 = unrefine, 0 = do nothing, 1 = refine)
-        void normalize(volScalarField& error);
+        void normalize(volScalarField& error, const labelHashSet& eCells);
 
         //- Lookup and return the scalar value of the field
-        void getFieldValue(const word& name, volScalarField& f) const;
+        void getFieldValue
+        (
+            const word& name,
+            volScalarField& f,
+            const labelHashSet& eCells
+        ) const;
 
         //- Lookup and return the scalar value of the field
         template<class Type>
-        bool getFieldValueType(const word& name, volScalarField& f) const;
+        bool getFieldValueType
+        (
+            const word& name,
+            volScalarField& f,
+            const labelHashSet& eCells
+        ) const;
 
         //- Update the time index
         bool updateCurTimeIndex(const bool unset) const;
+
+        //- Return cells to compute error for
+        labelHashSet errorCells() const;
+
+        //- Read cell zones
+        void readCellZones(const dictionary& dict);
+
+        //- Read cell zones
+        void readMaxRefinement(const dictionary& dict);
 
 
 public:
@@ -190,7 +217,7 @@ public:
 
         label maxLevel() const
         {
-            return maxLevel_;
+            return defaultMaxLevel_;
         }
 
         //- Return override status
@@ -199,7 +226,7 @@ public:
             return override_;
         }
 
-        //- Return non constant reference to error field
+        //- Return maximum refinement level
         virtual labelList maxRefinement() const;
 
         //- Read level values
@@ -216,6 +243,13 @@ public:
 
 };
 
+template<>
+bool errorEstimator::getFieldValueType<scalar>
+(
+    const word& name,
+    volScalarField& f,
+    const labelHashSet& eCells
+) const;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

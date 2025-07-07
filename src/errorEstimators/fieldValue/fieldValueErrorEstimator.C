@@ -85,12 +85,12 @@ void Foam::errorEstimators::fieldValue::update(const bool scale)
         return;
     }
 
-    volScalarField& errorCells(error_);
-    this->getFieldValue(fieldName_, errorCells);
+    const labelHashSet& eCells = this->errorCells();
+    this->getFieldValue(fieldName_, error_, eCells);
 
     if (scale)
     {
-        normalize(error_);
+        normalize(error_, eCells);
     }
 }
 

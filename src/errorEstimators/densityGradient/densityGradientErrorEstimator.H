@@ -53,12 +53,51 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class densityGradient Declaration
+                           Class gradient Declaration
 \*---------------------------------------------------------------------------*/
+
+class gradient
+:
+    public errorEstimator
+{
+    word fieldName_;
+
+public:
+
+    //- Runtime type information
+    TypeName("gradient");
+
+    // Constructor
+    gradient
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
+
+    // Constructor
+    gradient
+    (
+        const word& fieldName,
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
+
+
+    //- Destructor
+    virtual ~gradient();
+
+
+    // Member Functions
+
+        //- Update error
+        virtual void update(const bool scale = true);
+};
 
 class densityGradient
 :
-    public errorEstimator
+    public gradient
 {
 public:
 
@@ -76,12 +115,6 @@ public:
 
     //- Destructor
     virtual ~densityGradient();
-
-
-    // Member Functions
-
-        //- Update error
-        virtual void update(const bool scale = true);
 };
 
 

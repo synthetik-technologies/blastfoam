@@ -79,6 +79,8 @@ void Foam::errorEstimators::volumeFraction::read(const dictionary& dict)
     upperRefine_ = 1.0 - threshold;
     upperUnrefine_ = 1.0 - threshold;
 
+    readCellZones(dict);
+
     if (dict.found("maxRefinement"))
     {
         maxLevel_ = dict.lookup<label>("maxRefinement");

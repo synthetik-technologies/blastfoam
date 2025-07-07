@@ -52,7 +52,7 @@ Foam::errorEstimators::Lohner::Lohner
     errorEstimator(mesh, dict, name),
     fieldName_
     (
-        dict.lookupBackwardsCompatible({"deltaField", "field"})
+        dict.lookupBackwardsCompatible({"fieldName", "field"})
     ),
     epsilon_(readScalar(dict.lookup("epsilon")))
 {
@@ -75,6 +75,7 @@ void Foam::errorEstimators::Lohner::update(const bool scale)
         return;
     }
 
+    const labelHashSet& eCells = this->errorCells();
     const volScalarField& x = mesh_.lookupObject<volScalarField>(fieldName_);
     surfaceScalarField xf
     (
@@ -88,26 +89,39 @@ void Foam::errorEstimators::Lohner::update(const bool scale)
 
     for (label facei = 0; facei < nInternalFaces; facei++)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
-        scalar eT =
-            sqrt
-            (
-                mag(x[nei] - 2.0*xf[facei] + x[own])
-               /(
-                    mag(x[nei] - xf[facei])
-                  + mag(xf[facei] - x[own])
-                  + epsilon_
-                   *(
-                        mag(x[nei])
-                      + 2.0*mag(xf[facei])
-                      + mag(x[own])
+        const bool foundOwn = eCells.found(own);
+        const bool foundNei = eCells.found(nei);
+
+        if (foundOwn || foundNei)
+        {
+
+            const scalar eT =
+                sqrt
+                (
+                    mag(x[nei] - 2.0*xf[facei] + x[own])
+                   /(
+                        mag(x[nei] - xf[facei])
+                      + mag(xf[facei] - x[own])
+                      + epsilon_
+                       *(
+                            mag(x[nei])
+                          + 2.0*mag(xf[facei])
+                          + mag(x[own])
+                        )
                     )
-                )
-            );
-        error_[own] = Foam::max(error_[own], eT);
-        error_[nei] = Foam::max(error_[nei], eT);
+                );
+            if (foundOwn)
+            {
+                error_[own] = Foam::max(error_[own], eT);
+            }
+            if (foundNei)
+            {
+                error_[nei] = Foam::max(error_[nei], eT);
+            }
+        }
     }
 
     forAll(error_.boundaryField(), patchi)
@@ -116,7 +130,7 @@ void Foam::errorEstimators::Lohner::update(const bool scale)
         {
             const fvPatch& patch = x.boundaryField()[patchi].patch();
 
-            const labelUList& faceCells = patch.faceCells();
+            const labelList& faceCells = patch.faceCells();
             scalarField xp
             (
                 x.boundaryField()[patchi].patchInternalField()
@@ -132,29 +146,32 @@ void Foam::errorEstimators::Lohner::update(const bool scale)
 
             forAll(faceCells, facei)
             {
-               scalar eT =
-                    sqrt
-                    (
-                        mag(xn[facei] - 2.0*xbf[facei] + xp[facei])
-                       /(
-                            mag(xn[facei] - xbf[facei])
-                          + mag(xbf[facei] - xp[facei])
-                          + epsilon_
-                           *(
-                                mag(xn[facei])
-                              + 2.0*mag(xbf[facei])
-                              + mag(xp[facei])
+                const label celli  = faceCells[facei];
+                if (eCells.found(celli))
+                {
+                    const scalar eT =
+                        sqrt
+                        (
+                            mag(xn[facei] - 2.0*xbf[facei] + xp[facei])
+                           /(
+                                mag(xn[facei] - xbf[facei])
+                              + mag(xbf[facei] - xp[facei])
+                              + epsilon_
+                               *(
+                                    mag(xn[facei])
+                                  + 2.0*mag(xbf[facei])
+                                  + mag(xp[facei])
+                                )
                             )
-                        )
-                    );
-                error_[faceCells[facei]] =
-                    Foam::max(error_[faceCells[facei]], eT);
+                        );
+                    error_[celli] = Foam::max(error_[celli], eT);
+                }
             }
         }
     }
     if (scale)
     {
-        normalize(error_);
+        normalize(error_, eCells);
     }
 }
 
