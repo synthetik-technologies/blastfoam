@@ -658,7 +658,7 @@ Foam::refinement::refinement
             polyMesh::meshSubDir,
             mesh_,
             read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         labelList(mesh_.nCells(), 0)
     ),
@@ -671,7 +671,7 @@ Foam::refinement::refinement
             polyMesh::meshSubDir,
             mesh_,
             read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         labelList(mesh_.nPoints(), 0)
     ),
@@ -684,7 +684,7 @@ Foam::refinement::refinement
             polyMesh::meshSubDir,
             mesh_,
             read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         identityMap(mesh_.nCells())
     ),
@@ -1110,7 +1110,7 @@ bool Foam::refinement::write() const
     setInstance(mesh_.facesInstance());
 
     // Write necessary data before writing dictionary
-    return cellLevel_.write() && pointLevel_.write();
+    return cellLevel_.write() && pointLevel_.write() && parentCells_.write();
 }
 
 
