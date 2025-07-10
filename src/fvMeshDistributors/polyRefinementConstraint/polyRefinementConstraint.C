@@ -75,7 +75,7 @@ void Foam::polyRefinementConstraint::add
     autoPtr<polyMeshPolyRefiner> storagePtr;
     polyMeshPolyRefiner* refPtr = nullptr;
 
-    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName))
+    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshRefiner::typeName))
     {
         if (decompositionConstraint::debug)
         {
@@ -83,7 +83,7 @@ void Foam::polyRefinementConstraint::add
         }
         refPtr = &mesh.lookupObjectRef<polyMeshPolyRefiner>
         (
-            polyMeshPolyRefiner::typeName
+            polyMeshRefiner::typeName
         );
     }
     else
@@ -130,7 +130,7 @@ void Foam::polyRefinementConstraint::apply
     autoPtr<polyMeshPolyRefiner> storagePtr;
     polyMeshPolyRefiner* refPtr = nullptr;
 
-    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName))
+    if (mesh.foundObject<polyMeshPolyRefiner>(polyMeshRefiner::typeName))
     {
         if (decompositionConstraint::debug)
         {
@@ -138,7 +138,7 @@ void Foam::polyRefinementConstraint::apply
         }
         refPtr = &mesh.lookupObjectRef<polyMeshPolyRefiner>
         (
-            polyMeshPolyRefiner::typeName
+            polyMeshRefiner::typeName
         );
     }
     else

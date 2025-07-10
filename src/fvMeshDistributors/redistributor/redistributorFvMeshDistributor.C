@@ -486,7 +486,7 @@ Foam::fvMeshDistributors::redistributor::redistributor
 {
     if
     (
-        mesh.foundObject<polyMeshHexRefiner>(polyMeshHexRefiner::typeName)
+        mesh.foundObject<polyMeshHexRefiner>(polyMeshRefiner::typeName)
      && !constraintFound(hexRefRefinementHistoryConstraint::typeName)
     )
     {
@@ -502,7 +502,7 @@ Foam::fvMeshDistributors::redistributor::redistributor
     }
     else if
     (
-        mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName)
+        mesh.foundObject<polyMeshPolyRefiner>(polyMeshRefiner::typeName)
      && !constraintFound(polyRefinementConstraint::typeName)
     )
     {
@@ -519,7 +519,6 @@ Foam::fvMeshDistributors::redistributor::redistributor
 
     if (read)
     {
-        Info<<"read"<<endl;
         readDict();
     }
 }
@@ -553,12 +552,19 @@ Foam::fvMeshDistributors::redistributor::redistributor
     timeIndex_(mesh.time().timeIndex()),
     iter_(0)
 {
+    Info<<mesh.foundObject<polyMeshRefiner>(polyMeshRefiner::typeName)<<endl;
+    Info<<mesh.foundObject<polyMeshHexRefiner>(polyMeshRefiner::typeName)<<endl;
+    Info<<constraintFound(hexRefRefinementHistoryConstraint::typeName)<<endl;
+
+    Info<<mesh.foundObject<polyMeshPolyRefiner>(polyMeshRefiner::typeName)<<endl;
+    Info<<constraintFound(polyRefinementConstraint::typeName)<<endl;
     if
     (
-        mesh.foundObject<polyMeshHexRefiner>(polyMeshHexRefiner::typeName)
+        mesh.foundObject<polyMeshHexRefiner>(polyMeshRefiner::typeName)
      && !constraintFound(hexRefRefinementHistoryConstraint::typeName)
     )
     {
+        Info<<"add hex"<<endl;
         // Added refinement history decomposition constraint to keep all
         // cells with the same parent together
         dictionary refinementHistoryDict("refinementHistory");
@@ -571,10 +577,11 @@ Foam::fvMeshDistributors::redistributor::redistributor
     }
     else if
     (
-        mesh.foundObject<polyMeshPolyRefiner>(polyMeshPolyRefiner::typeName)
+        mesh.foundObject<polyMeshPolyRefiner>(polyMeshRefiner::typeName)
      && !constraintFound(polyRefinementConstraint::typeName)
     )
     {
+        Info<<"add poly"<<endl;
         // Added refinement history decomposition constraint to keep all
         // cells with the same parent together
         dictionary refinementHistoryDict("refinementHistory");
@@ -587,6 +594,7 @@ Foam::fvMeshDistributors::redistributor::redistributor
     }
 
     readDict(bDict);
+    Info<<decompositionDict_<<endl;
 }
 
 
