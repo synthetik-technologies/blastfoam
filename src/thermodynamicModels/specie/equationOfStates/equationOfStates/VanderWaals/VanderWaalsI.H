@@ -125,7 +125,7 @@ Foam::scalar Foam::VanderWaals<Specie>::rho
         a_*b_,
         -a_,
         this->R()*T + p*b_,
-        p
+        -p
     ).roots()[0];
 }
 
