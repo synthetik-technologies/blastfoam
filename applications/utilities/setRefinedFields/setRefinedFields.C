@@ -507,7 +507,15 @@ int main(int argc, char *argv[])
     const scalar angleFraction = calcAngleFraction(mesh);
 
     // Read in all fields to allow resizing
-    if (updateAll || (balance && !args.optionFound("noUpdateAll")))
+    if
+    (
+        updateAll
+     || (
+            balance
+         && !args.optionFound("noUpdateAll")
+         && !noFields
+        )
+    )
     {
         readAndAddAllFields(mesh);
     }
