@@ -416,6 +416,9 @@ public:
         //- Calculate mixture properties
         void calcMixtureVariables();
 
+        //- Calculate mixture fluxes
+        void calcMixtureFluxes();
+
         //- Decode primative variables
         virtual void decode();
 

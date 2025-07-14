@@ -456,7 +456,6 @@ void Foam::phaseSystem::relaxPressure(const dimensionedScalar& deltaT)
 void Foam::phaseSystem::calcMixtureVariables()
 {
     rho_ = Zero;
-    phi_ = Zero;
     volVectorField alphaRhoU
     (
         volVectorField::New
@@ -482,7 +481,6 @@ void Foam::phaseSystem::calcMixtureVariables()
         rho_ += alphaRho;
         alphaRhoU += alphaRho*phase.U();
         alphaRhoT += alphaRho*phase.T();
-        phi_ += phase.alphaPhi();
     }
     U_ = alphaRhoU/rho_;
     T_ = alphaRhoT/rho_;
@@ -535,6 +533,16 @@ void Foam::phaseSystem::calcMixtureVariables()
     kappa_ = sumAlphaRhoKappa/sumAlphaRho;
 }
 
+
+void Foam::phaseSystem::calcMixtureFluxes()
+{
+    phi_ = Zero;
+    forAll(phaseModels_, phasei)
+    {
+        const phaseModel& phase = phaseModels_[phasei];
+        phi_ += phase.alphaPhi();
+    }
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -1084,6 +1092,8 @@ void Foam::phaseSystem::update()
         }
         phaseModels_[phasei].update();
     }
+
+    calcMixtureFluxes();
 
     //- Update mass transfer rates
     forAllConstIter
