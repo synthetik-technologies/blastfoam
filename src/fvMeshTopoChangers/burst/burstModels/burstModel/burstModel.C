@@ -73,6 +73,7 @@ Foam::burstModel::burstModel
     const bool coupled
 )
 :
+    dict_(dict),
     partialBurst_(dict.lookup<bool>("partialBurst")),
     useDelta_
     (
@@ -97,7 +98,7 @@ Foam::burstModel::burstModel
         mappingPtr_ =
             patchToPatch::New
             (
-                dict.lookup<word>("patchToPatch"),
+                dict_.lookup<word>("patchToPatch"),
                 false
             );
     }
@@ -120,18 +121,23 @@ void Foam::burstModel::needUpdate() const
 
 void Foam::burstModel::updateMapping
 (
-    const polyPatch& patch1,
-    const polyPatch& patch2
+    const primitivePatch& patch1,
+    const primitivePatch& patch2
 ) const
 {
-    if (!needUpdate_)
+    if (!needUpdate_ && mappingPtr_.valid())
     {
         return;
     }
+
+    // Reset model
+    mappingPtr_ = patchToPatch::New(mappingPtr_->type(), false);
+
+    // Compute mapping
     mappingPtr_->update
     (
         patch1,
-        PatchTools::pointNormals(patch1.boundaryMesh().mesh(), patch1),
+        patch1.pointNormals(),
         patch2
     );
     needUpdate_ = false;

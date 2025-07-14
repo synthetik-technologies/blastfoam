@@ -56,6 +56,12 @@ class burstModel
 protected:
 // Protected variables
 
+    //- Constructing dictionary
+    const dictionary dict_;
+
+    //- Is this for a coupled set of patches
+    word patchToPatchType_;
+
     //- Is a partial burst used
     bool partialBurst_;
 
@@ -141,8 +147,8 @@ public:
         //- Update the patch to patch mapping
         void updateMapping
         (
-            const polyPatch& patch1,
-            const polyPatch& patch2
+            const primitivePatch& patch1,
+            const primitivePatch& patch2
         ) const;
 
         //- Find and set face indices to change, return if any added
