@@ -19,6 +19,9 @@ runApplication decomposePar -copyZero
 runParallel snappyHexMesh -overwrite
 
 # -- Refine the window
+runParallel addInternalPatch -noFields
+
+# -- Refine the window
 runParallel -s windows setRefinedFields -noFields
 
 # -- Select faces to add to the windows
@@ -30,15 +33,14 @@ runParallel createBaffles -overwrite
 runParallel splitBaffles -overwrite
 
 # -- Add internal patch
-runParallel addInternalPatch
-runParallel -s master addEmptyPatch windowsBurst_master wall -overwrite
-runParallel -s slave addEmptyPatch windowsBurst_slave wall -overwrite
+runParallel -s master addEmptyPatch windowsBurst_master wall -overwrite -noFields
+runParallel -s slave addEmptyPatch windowsBurst_slave wall -overwrite -noFields
 
 # -- Create overlapping couple patches for "internal" faces
-runParallel createNonConformalCouples windowsBurst_master windowsBurst_slave -overwrite -fields
+runParallel createNonConformalCouples windowsBurst_master windowsBurst_slave -overwrite
 
 # -- Set the charge
 runParallel setRefinedFields
 
 # -- run the calc
-runParallel $(getApplication)
+# runParallel $(getApplication)
