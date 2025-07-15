@@ -80,7 +80,10 @@ Foam::autoPtr<Foam::patchToPatchMapping> Foam::patchToPatchMapping::New
     const bool reverse
 )
 {
-    const word type(dict.lookup("mappingType"));
+    const word type
+    (
+        dict.lookupBackwardsCompatible({"mappingType", "patchToPatch"})
+    );
     DebugInfo<< "Selecting patchToPatchMapping " << type << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
