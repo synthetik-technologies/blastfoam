@@ -826,6 +826,38 @@ public:
             const bool canRead = true
         );
 
+        //- Read from a given dictionary
+        void readX
+        (
+            const dictionary& dict,
+            const word& xName,
+            const bool canRead = true
+        );
+
+        //- Read from a given dictionary
+        void readY
+        (
+            const dictionary& dict,
+            const word& yName,
+            const bool canRead = true
+        );
+
+        //- Read from a given dictionary
+        void readZ
+        (
+            const dictionary& dict,
+            const word& zName,
+            const bool canRead = true
+        );
+
+        //- Read from a given dictionary
+        void readF
+        (
+            const dictionary& dict,
+            const word& name,
+            const bool canRead = true
+        );
+
     //- Write data to dictionary stream
     virtual void write(Ostream& os, const word& dictName = word::null) const;
 

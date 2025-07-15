@@ -440,8 +440,20 @@ void Foam::lookupTable1D<Type>::read
     const bool canRead
 )
 {
+    readX(dict, xName, canRead);
+    readF(dict, name, canRead);
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::readX
+(
+    const dictionary& dict,
+    const word& xName,
+    const bool canRead
+)
+{
     xName_ = xName;
-    fName_ = name;
 
     {
         scalarList x;
@@ -469,6 +481,18 @@ void Foam::lookupTable1D<Type>::read
             interpolator_->validate();
         }
     }
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::readF
+(
+    const dictionary& dict,
+    const word& name,
+    const bool canRead
+)
+{
+    fName_ = name;
 
     List<Type> data;
     readComponent<Type>
@@ -490,6 +514,7 @@ void Foam::lookupTable1D<Type>::read
         );
     }
 }
+
 
 template<class Type>
 void  Foam::lookupTable1D<Type>::write(Ostream& os, const word& dictName) const

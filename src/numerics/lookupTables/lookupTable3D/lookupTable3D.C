@@ -1217,6 +1217,230 @@ void Foam::lookupTable3D<Type>::read
 
 
 template<class Type>
+void Foam::lookupTable3D<Type>::readX
+(
+    const dictionary& dict,
+    const word& xName,
+    const bool canRead
+)
+{
+    xName_ = xName;
+
+    const word scheme
+    (
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+    );
+
+    scalarField x;
+    const dictionary& xDict = readComponent
+    (
+        dict,
+        xName,
+        modX_,
+        x,
+        canRead
+    );
+    setX(x, true);
+    xInterpolator_ = interpolationWeight1D::New
+    (
+        xDict.found("interpolationScheme")
+        ? xDict.lookup<word>("interpolationScheme")
+        : dict.lookupOrDefault<word>
+        (
+            xName + "InterpolationScheme",
+            scheme
+        ),
+        xModValues_,
+        canRead
+    );
+    xInterpolator_->validate();
+}
+
+
+template<class Type>
+void Foam::lookupTable3D<Type>::readY
+(
+    const dictionary& dict,
+    const word& yName,
+    const bool canRead
+)
+{
+    yName_ = yName;
+
+    const word scheme
+    (
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+    );
+
+    scalarField y;
+    const dictionary& yDict = readComponent
+    (
+        dict,
+        yName,
+        modY_,
+        y,
+        canRead
+    );
+    setY(y, true);
+    yInterpolator_ = interpolationWeight1D::New
+    (
+        yDict.found("interpolationScheme")
+        ? yDict.lookup<word>("interpolationScheme")
+        : dict.lookupOrDefault<word>
+        (
+            yName + "InterpolationScheme",
+            scheme
+        ),
+        yModValues_,
+        canRead
+    );
+    yInterpolator_->validate();
+}
+
+
+template<class Type>
+void Foam::lookupTable3D<Type>::readZ
+(
+    const dictionary& dict,
+    const word& zName,
+    const bool canRead
+)
+{
+    zName_ = zName;
+
+    const word scheme
+    (
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+    );
+
+    scalarField z;
+    const dictionary& zDict = readComponent
+    (
+        dict,
+        zName,
+        modZ_,
+        z,
+        canRead
+    );
+    setZ(z, true);
+    zInterpolator_ = interpolationWeight1D::New
+    (
+        zDict.found("interpolationScheme")
+        ? zDict.lookup<word>("interpolationScheme")
+        : dict.lookupOrDefault<word>
+        (
+            zName + "InterpolationScheme",
+            scheme
+        ),
+        zModValues_,
+        canRead
+    );
+    zInterpolator_->validate();
+}
+
+
+template<class Type>
+void Foam::lookupTable3D<Type>::readF
+(
+    const dictionary& dict,
+    const word& name,
+    const bool canRead
+)
+{
+    fName_ = name;
+
+    List3D<Type> data
+    (
+        xModValues_.size(),
+        yModValues_.size(),
+        zModValues_.size()
+    );
+
+    if (dict.found(name))
+    {
+        dict.readIfPresent(name, data);
+        mod_ = Modifier<Type>::New
+        (
+            dict.lookup<word>(name + "Mod"),
+            dict
+        );
+        mod_->readReal(dict, name + "IsReal");
+    }
+    else if (dict.isDict(name + "Coeffs"))
+    {
+        const dictionary& fDict(dict.subDict(name + "Coeffs"));
+        mod_ = Modifier<Type>::New(fDict.lookup<word>("mod"), fDict);
+        mod_->readReal(fDict, "isReal");
+
+        if (fDict.found(name))
+        {
+            fDict.readIfPresent(name, data);
+        }
+        else if (fDict.found("file"))
+        {
+            read3DTable
+            (
+                fDict.lookup<fileName>("file"),
+                readDelim(dict),
+                readDelim(dict, "rowDelim", token::END_STATEMENT),
+                data,
+                dict.lookupOrDefault<Switch>("flipTable", false),
+                !canRead
+            );
+        }
+        else
+        {
+            FatalIOErrorInFunction(fDict)
+                << "Neither the entry \"" << name << "\", "
+                << " or a file was provided for construction" << endl
+                << abort(FatalIOError);
+        }
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Neither the entry \"" << name << "\", "
+            << " or the \""
+            << name << "Coeffs\" subDictionary was found" << endl
+            << abort(FatalIOError);
+    }
+
+    if
+    (
+        data.m() != xModValues_.size()
+     || data.n() != yModValues_.size()
+     || data.l() != zModValues_.size()
+    )
+    {
+        FatalIOErrorInFunction(dict)
+            << "Incompatible dimensions for table" << nl
+            << "table size: "
+            << data.m() << " x "
+            << data.n() << " x "
+            << data.l() << nl
+            << "x and y size: "
+            << xModValues_.size() << " x "
+            << yModValues_.size() << " z "
+            << yModValues_.size() << nl
+            << abort(FatalIOError);
+    }
+    if (!mod_->isReal())
+    {
+        mod_->Inv(data);
+        mod_->setReal();
+    }
+    setData(data, true);
+
+    if (dict.found("rootSolver"))
+    {
+        this->solver
+        (
+            dict.lookup<word>("rootSolver"),
+            dict
+        );
+    }
+}
+template<class Type>
 void  Foam::lookupTable3D<Type>::write(Ostream& os, const word& dictName) const
 {
     if (!dictName.empty())

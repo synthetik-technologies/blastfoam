@@ -638,70 +638,107 @@ void Foam::lookupTable2D<Type>::read
     const bool canRead
 )
 {
+    readX(dict, xName, canRead);
+    readY(dict, yName, canRead);
+    readF(dict, name, canRead);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::readX
+(
+    const dictionary& dict,
+    const word& xName,
+    const bool canRead
+)
+{
     xName_ = xName;
-    yName_ = yName;
     const word scheme
     (
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
     );
 
     scalarField x;
+    const dictionary& xDict = readComponent
+    (
+        dict,
+        xName,
+        modX_,
+        x,
+        canRead
+    );
+    setX(x, true);
+    xInterpolator_ = interpolationWeight1D::New
+    (
+        xDict.found("interpolationScheme")
+        ? xDict.lookup<word>("interpolationScheme")
+        : dict.lookupOrDefault<word>
+        (
+            xName + "InterpolationScheme",
+            scheme
+        ),
+        xModValues_,
+        canRead
+    );
+    if (canRead)
     {
-        const dictionary& xDict = readComponent
-        (
-            dict,
-            xName,
-            modX_,
-            x,
-            canRead
-        );
-        setX(x, true);
-        xInterpolator_ = interpolationWeight1D::New
-        (
-            xDict.found("interpolationScheme")
-          ? xDict.lookup<word>("interpolationScheme")
-          : dict.lookupOrDefault<word>
-            (
-                xName + "InterpolationScheme",
-                scheme
-            ),
-            xModValues_,
-            canRead
-        );
-        if (canRead)
-        {
-            xInterpolator_->validate();
-        }
+        xInterpolator_->validate();
     }
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::readY
+(
+    const dictionary& dict,
+    const word& yName,
+    const bool canRead
+)
+{
+    yName_ = yName;
+    const word scheme
+    (
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+    );
 
     scalarField y;
+    const dictionary& yDict = readComponent
+    (
+        dict,
+        yName,
+        modY_,
+        y,
+        canRead
+    );
+    setY(y, true);
+    yInterpolator_ = interpolationWeight1D::New
+    (
+        yDict.found("interpolationScheme")
+        ? yDict.lookup<word>("interpolationScheme")
+        : dict.lookupOrDefault<word>
+        (
+            yName + "InterpolationScheme",
+            scheme
+        ),
+        yModValues_,
+        canRead
+    );
+    if (canRead)
     {
-        const dictionary& yDict = readComponent
-        (
-            dict,
-            yName,
-            modY_,
-            y,
-            canRead
-        );
-        setY(y, true);
-        yInterpolator_ = interpolationWeight1D::New
-        (
-            yDict.found("interpolationScheme")
-          ? yDict.lookup<word>("interpolationScheme")
-          : dict.lookupOrDefault<word>
-            (
-                yName + "InterpolationScheme",
-                scheme
-            ),
-            yModValues_,
-            canRead
-        );
-        if (canRead)
-        {
-            yInterpolator_->validate();
-        }
+        yInterpolator_->validate();
     }
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::readF
+(
+    const dictionary& dict,
+    const word& name,
+    const bool canRead
+)
+{
+    fName_ = name;
 
     List2D<Type> data(xModValues_.size(), yModValues_.size());
     if (dict.found(name) || dict.found(name + "File"))

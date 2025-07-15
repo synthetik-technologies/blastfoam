@@ -3261,8 +3261,8 @@ bool Foam::hexRef::write(const bool w) const
 {
     bool writeOk =
         cellLevel_.write(w)
-     && pointLevel_.write(w)
-     && level0Edge_.write(w);
+     && pointLevel_.write(w);
+     // && level0Edge_.write(w);
 
     if (returnReduce(history_.active(), orOp<bool>()))
     {
