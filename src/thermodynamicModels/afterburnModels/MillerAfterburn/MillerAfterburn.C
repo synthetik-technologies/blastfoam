@@ -83,24 +83,24 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
         0.0,
         "zeroGradient"
     ),
-    pScale_(dict.lookupOrDefault("pScale", 1.0)),
+    pScale_(dict_.lookupOrDefault("pScale", 1.0)),
     pName_(dict_.lookupOrDefault("pName", word("p"))),
     p_(mesh_.lookupObject<volScalarField>(pName_)),
     alphaRhoPtr_(nullptr),
     alphaRhoPhiPtr_(nullptr),
     Q0_("Q0", sqr(dimVelocity), dict_),
-    m_(readScalar(dict.lookup("m"))),
-    n_(readScalar(dict.lookup("n"))),
+    m_(readScalar(dict_.lookup("m"))),
+    n_(readScalar(dict_.lookup("n"))),
     a_("a", pow(dimPressure, -n_)/dimTime, dict_),
     pMin_("pMin", dimPressure, dict_)
 {
-    if (dict.found("tUnits"))
+    if (dict_.found("tUnits"))
     {
-        a_.value() *= pow(10.0, -tUnits[dict.lookup<word>("tUnits")]);
+        a_.value() *= pow(10.0, -tUnits[dict_.lookup<word>("tUnits")]);
     }
-    if (dict.found("pUnits") && !dict.found("pScale"))
+    if (dict_.found("pUnits") && !dict_.found("pScale"))
     {
-        pScale_ = pow(10.0, -pUnits[dict.lookup<word>("pUnits")]);
+        pScale_ = pow(10.0, -pUnits[dict_.lookup<word>("pUnits")]);
     }
 }
 
@@ -148,12 +148,12 @@ void Foam::afterburnModels::MillerAfterburn::update()
 
     alphaRhoCOld_ = alphaRho*c_;
 
-    tmp<volScalarField> p(p_*pos(p_ - pMin_));
+    volScalarField p(p_*pos(p_ - pMin_));
     if (pScale_ != 1.0)
     {
-        p.ref() *= pScale_;
+        p *= pScale_;
     }
-    p.ref().max(small);
+    p.max(small);
 
     ddtC_ = a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_);
     ddtC_.ref().max(0.0);

@@ -48,9 +48,9 @@ Foam::afterburnModels::linearAfterburn::linearAfterburn
 )
 :
     afterburnModel(mesh, dict, phaseName),
-    Q0_("Q0", sqr(dimVelocity), dict),
-    tStart_(dimensionedScalar::lookupOrDefault("tStart", dict, dimTime, 0.0)),
-    tEnd_("tEnd", dimTime, dict)
+    Q0_("Q0", sqr(dimVelocity), dict_),
+    tStart_(dimensionedScalar::lookupOrDefault("tStart", dict_, dimTime, 0.0)),
+    tEnd_("tEnd", dimTime, dict_)
 {}
 
 
