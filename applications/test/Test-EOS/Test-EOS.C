@@ -41,7 +41,10 @@ int main(int argc, char *argv[])
     argList::addOption("T", "Temperature [K]");
     argList args(argc, argv, false, true);
 
-    const fileName dictPath(args.optionLookupOrDefault<fileName>("dict", "thermoDict"));
+    const fileName dictPath
+    (
+        args.optionLookupOrDefault<fileName>("dict", "thermoDict")
+    );
     fileName name(dictPath);
     IFstream is(name);
     dictionary parentDict(is);
@@ -50,14 +53,36 @@ int main(int argc, char *argv[])
     word entryName;
     if (args.optionReadIfPresent("entry", entryName))
     {
-        const word scopedName(dotToSlash(entryName));
-        const entry* entPtr = parentDict.lookupScopedEntryPtr
+        const entry* entryPtr = parentDict.lookupScopedEntryPtr
         (
-            scopedName,
+            entryName,
             false,
             true            // Support wildcards
         );
-        dict = entPtr->dict();
+        if (!entryPtr)
+        {
+            wordList cmpts(fileName(entryName).components('/'));
+            word scopedName;
+            while (cmpts.size() && !entryPtr)
+            {
+                cmpts.setSize(cmpts.size()-1);
+                scopedName = cmpts[0];
+                for (label i = 1; i < cmpts.size(); i++)
+                {
+                    scopedName += word('.') + cmpts[i];
+                }
+                entryPtr = parentDict.lookupScopedEntryPtr
+                (
+                    scopedName,
+                    false,
+                    true            // Support wildcards
+                );
+            }
+            FatalErrorInFunction
+                << "Could not find " << scopedName << endl
+                << abort(FatalError);
+        }
+        dict = entryPtr->dict();
     }
     else
     {
@@ -111,7 +136,7 @@ int main(int argc, char *argv[])
         e = eos.initializeEnergy(p, rho, e, T);
         T = eos.TRhoE(T, rho, e);
     }
-
+CWACfdde1!
 
     Info<< "Initial values: " << nl << incrIndent
         << indent << "p: " << p << nl
