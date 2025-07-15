@@ -227,7 +227,7 @@ class burst
         template<class Type>
         void mapVolBoundaries
         (
-            const PtrList<fieldMapper>& mappers,
+            const List<labelList>& addrs,
             const HashPtrTable<typename VolField<Type>::Boundary>& bfields
         ) const;
 
@@ -235,15 +235,8 @@ class burst
         template<class Type>
         void mapSurfaceBoundaries
         (
-            const PtrList<fieldMapper>& mappers,
+            const List<labelList>& addrs,
             const HashPtrTable<typename SurfaceField<Type>::Boundary>& bfields
-        ) const;
-
-        //- Set unmapped values
-        template<class Type>
-        void setUnmappedValues
-        (
-            const PackedBoolList& mappedFace
         ) const;
 
 

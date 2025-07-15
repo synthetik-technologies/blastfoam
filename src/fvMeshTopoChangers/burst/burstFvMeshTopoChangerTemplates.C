@@ -27,6 +27,10 @@ License
 #include "conformedFvPatchField.H"
 #include "conformedFvsPatchField.H"
 
+#include "fixedGradientFvPatchField.H"
+#include "mixedFvPatchField.H"
+#include "directionMixedFvPatchField.H"
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
@@ -51,10 +55,11 @@ void Foam::fvMeshTopoChangers::burst::storeVolBoundaries
         typename VolField<Type>::Boundary& bfield =
             const_cast<typename VolField<Type>::Boundary&>(field.boundaryField());
 
-        // Unconform mesh, i.e. make sure the actual patch types are being used
-        // since the old patch is not conformed but the new patch is
+        // Unconform patch field, i.e. make sure the actual patch types are
+        // being used since the old patch is not conformed but the new patch is
         conformedFvPatchField<Type>::unconform(bfield);
 
+        // Store
         forAll(boundaryMap, patchi)
         {
             const label newPatchi = boundaryMap[patchi];
@@ -92,8 +97,8 @@ void Foam::fvMeshTopoChangers::burst::storeSurfaceBoundaries
         typename SurfaceField<Type>::Boundary& bfield =
             const_cast<typename SurfaceField<Type>::Boundary&>(field.boundaryField());
 
-        // Unconform mesh, i.e. make sure the actual patch types are being used
-        // since the old patch is not conformed but the new patch is
+        // Unconform patch field, i.e. make sure the actual patch types are
+        // being used since the old patch is not conformed but the new patch is
         conformedFvsPatchField<Type>::unconform(bfield);
 
         forAll(boundaryMap, patchi)
@@ -115,32 +120,161 @@ void Foam::fvMeshTopoChangers::burst::storeSurfaceBoundaries
 template<class Type>
 void Foam::fvMeshTopoChangers::burst::mapVolBoundaries
 (
-    const PtrList<fieldMapper>& mappers,
+    const List<labelList>& addressing,
     const HashPtrTable<typename VolField<Type>::Boundary>& bfields
 ) const
 {
+    auto evaluate = [](const typename VolField<Type>::Patch& pf)
+    {
+        return
+            (
+                isA<nonConformalFvPatch>(pf.patch())
+             && pf.type() == pf.patch().patch().type()
+             && polyPatch::constraintType(pf.patch().patch().type())
+            )
+         || isA<nonConformalErrorFvPatch>(pf.patch());
+    };
+
     UPtrList<VolField<Type>> fields(mesh().curFields<VolField<Type>>());
     forAll(fields, i)
     {
         VolField<Type>& field = fields[i];
         typename VolField<Type>::Boundary& bfield =
-            const_cast<typename VolField<Type>::Boundary&>(field.boundaryField());
-        const typename VolField<Type>::Boundary& bfield0 = *bfields[field.name()];
+            field.boundaryFieldRefNoStoreOldTimes();
+        const typename VolField<Type>::Boundary& bfield0 =
+            *bfields[field.name()];
 
         forAll(bfield0, patchi)
         {
-            if (bfield0.set(patchi))
+            const labelList& addr = addressing[patchi];
+            if (addr.size())
             {
-                fvPatchField<Type>& fvp = const_cast<fvPatchField<Type>&>
+                forwardFieldMapper m(addr);
+
+                typename VolField<Type>::Patch& pf = bfield[patchi];
+                const typename VolField<Type>::Patch& pf0 = bfield0[patchi];
+
+                // Check for comparable types between new and old patch fields
+                // If the types are not the same then check basic types
+                if
                 (
-                    field.boundaryField()[patchi]
-                );
-                fvp.map(bfield0[patchi], mappers[patchi]);
+                    (pf.type() == pf0.type())
+                 || (
+                        isA<fixedGradientFvPatchField<Type>>(pf)
+                     && isA<fixedGradientFvPatchField<Type>>(pf0)
+                    )
+                 || (
+                        isA<mixedFvPatchField<Type>>(pf)
+                     && isA<mixedFvPatchField<Type>>(pf0)
+                    )
+                 || (
+                        isA<directionMixedFvPatchField<Type>>(pf)
+                     && isA<directionMixedFvPatchField<Type>>(pf0)
+                    )
+                )
+                {
+                    // Only map if same type
+                    pf.map(pf0, m);
+                }
+                else
+                {
+                    // Map the actual values
+                    m(pf, pf0);
+
+                    // Check type to try and determine additional fields to
+                    // map since actual values will be unmapped
+                    if (isA<fixedGradientFvPatchField<Type>>(pf))
+                    {
+                        fixedGradientFvPatchField<Type>& fgpf =
+                            dynamicCast<fixedGradientFvPatchField<Type>>(pf);
+                        Field<Type>& g = fgpf.gradient();
+                        forAll(addr, fi)
+                        {
+                            if (addr[fi] >= 0)
+                            {
+                                g[fi] = Zero;
+                            }
+                        }
+                    }
+                    else if (isA<mixedFvPatchField<Type>>(pf))
+                    {
+                        mixedFvPatchField<Type>& mpf =
+                            dynamicCast<mixedFvPatchField<Type>>(pf);
+                        Field<Type>& rv = mpf.refValue();
+                        Field<Type>& rg = mpf.refGrad();
+                        Field<scalar>& vf = mpf.valueFraction();
+                        forAll(addr, fi)
+                        {
+                            if (addr[fi] >= 0)
+                            {
+                                // Set ref value as the current value
+                                rv[fi] = mpf[fi];
+
+                                // Zero gradient
+                                rg[fi] = Zero;
+                                vf[fi] = Zero;
+                            }
+                        }
+                    }
+                    else if (isA<directionMixedFvPatchField<Type>>(pf))
+                    {
+                        directionMixedFvPatchField<Type>& dmpf =
+                            dynamicCast<directionMixedFvPatchField<Type>>(pf);
+                        Field<Type>& rv = dmpf.refValue();
+                        Field<Type>& rg = dmpf.refGrad();
+                        Field<symmTensor>& vf = dmpf.valueFraction();
+                        forAll(addr, fi)
+                        {
+                            if (addr[fi] >= 0)
+                            {
+                                // Set ref value as the current value
+                                rv[fi] = dmpf[fi];
+
+                                // Zero gradient
+                                rg[fi] = Zero;
+                                vf[fi] = Zero;
+                            }
+                        }
+                    }
+                    // Not a basic boundary so not sure how to fix
+                    // Un-initialize fields. Hopefully this is okay
+                }
             }
         }
 
         // Mapping has been completed so re-conform the patch fields
         conformedFvPatchField<Type>::conform(bfield);
+
+
+        // Synchronise boundaries
+        const label nReq = Pstream::nRequests();
+
+        forAll(bfield0, patchi)
+        {
+            typename VolField<Type>::Patch& pf = bfield[patchi];
+            if (bfield0.set(patchi) && evaluate(pf))
+            {
+                pf.initEvaluate(Pstream::defaultCommsType);
+            }
+        }
+
+        if
+        (
+            Pstream::parRun()
+         && Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+        )
+        {
+            Pstream::waitRequests(nReq);
+        }
+
+        forAll(bfield0, patchi)
+        {
+            typename VolField<Type>::Patch& pf = bfield[patchi];
+            if (bfield0.set(patchi) && evaluate(pf))
+            {
+                pf.evaluate(Pstream::defaultCommsType);
+            }
+        }
     }
 }
 
@@ -148,7 +282,7 @@ void Foam::fvMeshTopoChangers::burst::mapVolBoundaries
 template<class Type>
 void Foam::fvMeshTopoChangers::burst::mapSurfaceBoundaries
 (
-    const PtrList<fieldMapper>& mappers,
+    const List<labelList>& addressing,
     const HashPtrTable<typename SurfaceField<Type>::Boundary>& bfields
 ) const
 {
@@ -157,55 +291,30 @@ void Foam::fvMeshTopoChangers::burst::mapSurfaceBoundaries
     {
         SurfaceField<Type>& field = fields[i];
         typename SurfaceField<Type>::Boundary& bfield =
-            const_cast<typename SurfaceField<Type>::Boundary&>(field.boundaryField());
-        const typename SurfaceField<Type>::Boundary& bfield0 = *bfields[field.name()];
+            field.boundaryFieldRefNoStoreOldTimes();
+        const typename SurfaceField<Type>::Boundary& bfield0 =
+            *bfields[field.name()];
 
         forAll(bfield0, patchi)
         {
-            if (bfield0.set(patchi))
+            const labelList& addr = addressing[patchi];
+            if (addr.size())
             {
-                fvsPatchField<Type>& fvsp = const_cast<fvsPatchField<Type>&>
-                (
-                    field.boundaryField()[patchi]
-                );
-                fvsp.map(bfield0[patchi], mappers[patchi]);
+                typename SurfaceField<Type>::Patch& pf = bfield[patchi];
+                pf.map(bfield0[patchi], forwardFieldMapper(addr));
             }
         }
 
         // Mapping has been completed so re-conform the patch fields
         conformedFvsPatchField<Type>::conform(bfield);
-    }
-}
 
-
-template<class Type>
-void Foam::fvMeshTopoChangers::burst::setUnmappedValues
-(
-    const PackedBoolList& mappedFace
-) const
-{
-    UPtrList<VolField<Type>> fields(mesh().curFields<VolField<Type>>());
-
-    forAll(fields, i)
-    {
-        VolField<Type>& field = fields[i];
-
-        forAll(field.boundaryField(), patchi)
-        {
-            fvPatchField<Type>& fvp = const_cast<fvPatchField<Type>&>
-            (
-                field.boundaryField()[patchi]
-            );
-            const label start = fvp.patch().start();
-            const labelList& faceCells = fvp.patch().faceCells();
-            forAll(fvp, fi)
-            {
-                if (!mappedFace[start+fi])
-                {
-                    fvp[fi] = field[faceCells[fi]];
-                }
-            }
-        }
+        // bfield = fvMeshStitcherTools::synchronisedBoundaryField
+        // (
+        //     bfield,
+        //     false,
+        //     0.5,
+        //     0.5
+        // );
     }
 }
 

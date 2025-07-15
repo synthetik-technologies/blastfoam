@@ -302,7 +302,6 @@ bool Foam::fvMeshTopoChangers::burst::update()
         const labelList& faceMap = map().reverseFaceMap();
         const labelList& oldPatchStarts = map().oldPatchStarts();
         List<labelList> addressing(mesh().boundary().size());
-        PtrList<fieldMapper> mappers(mesh().boundary().size());
         forAll(bfaceMap, patchi)
         {
             Map<label>& fMap = bfaceMap[patchi];
@@ -321,16 +320,16 @@ bool Foam::fvMeshTopoChangers::burst::update()
                     const label newLocalFacei = faceMap[iter.key()] - start;
                     addr[newLocalFacei] = oldLocalFacei;
                 }
-                mappers.set(patchi, new forwardFieldMapper(addr));
             }
         }
+
 
         // Map all the volFields in the objectRegistry using the mapping created
         // from the old local indices to the new local indices
         #define mapBoundariesType(Type, Mesh)                   \
             map##Mesh##Boundaries<Type>                         \
             (                                                   \
-                mappers,                                        \
+                addressing,                                     \
                 bfields##Mesh##Type                             \
             );
         FOR_ALL_FIELD_TYPES(mapBoundariesType, Vol);
