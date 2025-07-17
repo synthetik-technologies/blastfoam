@@ -157,6 +157,19 @@ Foam::univariateMinimizationScheme::univariateMinimizationScheme
     debug = minimizationScheme::debug;
 }
 
+
+Foam::univariateMinimizationScheme::univariateMinimizationScheme
+(
+    const scalarUnivariateEquation& eqn,
+    const univariateMinimizationScheme& solver
+)
+:
+    minimizationScheme(eqn, solver),
+    eqn_(dynamicCast<const scalarEquation>(eqn)),
+    nSample_(solver.nSample_)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::scalar Foam::univariateMinimizationScheme::solve(const scalar x0) const

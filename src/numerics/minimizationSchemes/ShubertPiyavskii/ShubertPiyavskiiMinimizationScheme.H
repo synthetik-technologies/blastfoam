@@ -78,8 +78,33 @@ public:
             const dictionary& dict
         );
 
-        //- Disallow default bitwise copy construction
-        ShubertPiyavskii(const minimizationScheme&) = delete;
+        //- Copy constructor
+        basis
+        (
+            const scalarUnivariateEquation& eqn,
+            const basis& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new basis(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new basis(eqns, *this)
+            );
+        }
 
 
     //- Destructor

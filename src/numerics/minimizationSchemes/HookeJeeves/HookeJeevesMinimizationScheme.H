@@ -82,6 +82,23 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        HookeJeeves
+        (
+            const scalarUnivariateEquation& eqn,
+            const HookeJeeves& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new HookeJeeves(eqns, *this));
+        }
+
+
     //- Destructor
     virtual ~HookeJeeves()
     {}

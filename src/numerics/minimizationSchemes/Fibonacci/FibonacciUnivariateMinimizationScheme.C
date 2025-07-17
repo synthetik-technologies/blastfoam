@@ -30,7 +30,9 @@ License
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
     defineTypeNameAndDebug(Fibonacci, 0);
     addToRunTimeSelectionTable
@@ -59,17 +61,20 @@ namespace univariateMinimizationSchemes
     );
 }
 }
+}
 
-const Foam::scalar Foam::univariateMinimizationSchemes::Fibonacci::goldenRatio =
+const Foam::scalar
+Foam::minimizationSchemes::univariate::Fibonacci::goldenRatio =
     (sqrt(5.0) + 1.0)/2.0;
 
-const Foam::scalar Foam::univariateMinimizationSchemes::Fibonacci::s =
+const Foam::scalar
+Foam::minimizationSchemes::univariate::Fibonacci::s =
     (1.0 - sqrt(5.0))/(1.0 + sqrt(5.0));
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::Fibonacci::Fibonacci
+Foam::minimizationSchemes::univariate::Fibonacci::Fibonacci
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -81,9 +86,18 @@ Foam::univariateMinimizationSchemes::Fibonacci::Fibonacci
 }
 
 
+Foam::minimizationSchemes::univariate::Fibonacci::Fibonacci
+(
+    const scalarUnivariateEquation& eqn,
+    const Fibonacci& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver)
+{}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::Fibonacci::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::Fibonacci::minimize
 (
     const scalar x,
     const scalar x1,

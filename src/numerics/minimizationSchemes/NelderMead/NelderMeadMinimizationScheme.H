@@ -128,6 +128,23 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        NelderMead
+        (
+            const scalarUnivariateEquation& eqn,
+            const NelderMead& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new NelderMead(eqns, *this));
+        }
+
+
     //- Destructor
     virtual ~NelderMead()
     {}

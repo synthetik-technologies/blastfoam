@@ -455,31 +455,32 @@ void Foam::lookupTable1D<Type>::readX
 {
     xName_ = xName;
 
+    scalarList x;
+    const dictionary& xDict = readComponent<scalar>
+    (
+        dict,
+        xName,
+        modX_,
+        x,
+        canRead
+    );
+    if (canRead)
     {
-        scalarList x;
-        const dictionary& xDict = readComponent<scalar>
+        setX(x, true);
+    }
+
+    interpolator_ =
+        interpolationWeight1D::New
         (
-            dict,
-            xName,
-            modX_,
-            x,
+            xDict.found("interpolationScheme")
+          ? xDict.lookup<word>("interpolationScheme")
+          : dict.lookupOrDefault<word>("interpolationScheme", "linearClamp"),
+            xModValues_,
             canRead
         );
-        setX(x, true);
-
-        interpolator_ =
-            interpolationWeight1D::New
-            (
-                xDict.found("interpolationScheme")
-              ? xDict.lookup<word>("interpolationScheme")
-              : dict.lookupOrDefault<word>("interpolationScheme", "linearClamp"),
-                xModValues_,
-                canRead
-            );
-        if (canRead)
-        {
-            interpolator_->validate();
-        }
+    if (canRead)
+    {
+        interpolator_->validate();
     }
 }
 
@@ -503,7 +504,10 @@ void Foam::lookupTable1D<Type>::readF
         data,
         canRead
     );
-    setData(data, true);
+    if (canRead)
+    {
+        setData(data, true);
+    }
 
     if (dict.found("rootSolver"))
     {

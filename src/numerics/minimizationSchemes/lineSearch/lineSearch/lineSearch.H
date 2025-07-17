@@ -85,8 +85,22 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        lineSearch
+        (
+            const scalarUnivariateEquation& eqns,
+            const lineSearch& ls
+        );
+
         //- Disallow default bitwise copy construction
         lineSearch(const lineSearch&) = delete;
+
+        //- Clone
+        virtual autoPtr<lineSearch> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const = 0;
+
 
 
     // Selectors

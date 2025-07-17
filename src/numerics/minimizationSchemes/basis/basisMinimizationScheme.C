@@ -50,6 +50,17 @@ Foam::minimizationSchemes::basis::basis
 {}
 
 
+Foam::minimizationSchemes::basis::basis
+(
+    const scalarUnivariateEquation& eqns,
+    const basis& solver
+)
+:
+    minimizationScheme(eqns, solver),
+    cmptLsEqn_(eqns, solver.cmptLsEqn_)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::minimizationSchemes::basis::searchDir

@@ -78,6 +78,23 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        Powell
+        (
+            const scalarUnivariateEquation& eqn,
+            const Powell& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new Powell(eqns, *this));
+        }
+
+
     //- Destructor
     virtual ~Powell()
     {}

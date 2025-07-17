@@ -82,6 +82,22 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        approximateLineSearch
+        (
+            const scalarUnivariateEquation& eqns,
+            const approximateLineSearch& ls
+        );
+
+        //- Clone
+        virtual autoPtr<lineSearch> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<lineSearch>(new approximateLineSearch(eqns, *this));
+        }
+
 
     //- Destructor
     virtual ~approximateLineSearch();

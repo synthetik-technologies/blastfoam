@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::badBroydenRootSolver
+    Foam::rootSolvers::badBroyden
 
 Description
     Find multivariateRoot using the badBroyden method. The inverse jacobian
@@ -30,7 +30,7 @@ Description
     and its inverse is needed
 
 SourceFiles
-    multivariateRootSolver.C
+    badBroydenRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,15 +45,20 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class multivariateRootSolver Declaration
+                          Class rootSolvers::badBroyden Declaration
 \*---------------------------------------------------------------------------*/
 
-class badBroydenRootSolver
+class badBroyden
 :
     public rootSolver
 {
+    scalarField dX_;
+
+
 public:
 
     //- Runtime type information
@@ -62,18 +67,35 @@ public:
     // Constructors
 
         //- Construct for given multivariateRootSolver
-        badBroydenRootSolver
+        badBroyden
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy construct for given multivariateRootSolver
+        badBroyden
+        (
+            const scalarMultivariateEquation& eqn,
+            const badBroyden& solver
+        );
+
         //- Disallow default bitwise copy construction
-        badBroydenRootSolver(const badBroydenRootSolver&) = delete;
+        badBroyden(const badBroyden&) = delete;
+
+        //- Clone the solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new badBroyden(eqns, *this));
+        }
+
 
 
     //- Destructor
-    virtual ~badBroydenRootSolver();
+    virtual ~badBroyden();
 
 
     // Member Functions
@@ -91,6 +113,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

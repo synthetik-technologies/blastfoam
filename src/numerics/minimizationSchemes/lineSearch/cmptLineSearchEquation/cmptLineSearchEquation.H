@@ -105,6 +105,13 @@ public:
             const dictionary& dict
         );
 
+        // Construct from the given equation
+        cmptLineSearchEquation
+        (
+            const scalarUnivariateEquation& eqn,
+            const cmptLineSearchEquation& ls
+        );
+
     // Destructor
     virtual ~cmptLineSearchEquation();
 

@@ -131,6 +131,13 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        univariateRootSolver
+        (
+            const scalarMultivariateEquation& eqn,
+            const univariateRootSolver& solver
+        );
+
         //- Disallow default bitwise copy construction
         univariateRootSolver(const univariateRootSolver&) = delete;
 
@@ -152,6 +159,11 @@ public:
             const dictionary& dict
         );
 
+    //- Clone the univariate root solver
+    virtual autoPtr<univariateRootSolver> cloneUnivariate
+    (
+        const scalarMultivariateEquation& eqns
+    ) const = 0;
 
     //- Destructor
     virtual ~univariateRootSolver();

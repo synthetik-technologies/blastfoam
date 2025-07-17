@@ -30,7 +30,9 @@ License
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
     defineTypeNameAndDebug(step, 0);
     addToRunTimeSelectionTable
@@ -59,10 +61,11 @@ namespace univariateMinimizationSchemes
     );
 }
 }
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::step::step
+Foam::minimizationSchemes::univariate::step::step
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -83,9 +86,22 @@ Foam::univariateMinimizationSchemes::step::step
 }
 
 
+Foam::minimizationSchemes::univariate::step::step
+(
+    const scalarUnivariateEquation& eqn,
+    const step& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver),
+    dx_(solver.dx_),
+    f_(solver.f_)
+{}
+
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::step::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::step::minimize
 (
     const scalar,
     const scalar x0,

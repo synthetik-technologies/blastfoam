@@ -31,49 +31,66 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(badBroydenRootSolver, 0);
+namespace rootSolvers
+{
+    defineTypeNameAndDebug(badBroyden, 0);
     addToRunTimeSelectionTable
     (
         rootSolver,
-        badBroydenRootSolver,
+        badBroyden,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         rootSolver,
-        badBroydenRootSolver,
+        badBroyden,
         dictionaryOne
     );
 }
-
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::badBroydenRootSolver::badBroydenRootSolver
+Foam::rootSolvers::badBroyden::badBroyden
 (
     const scalarMultivariateEquation& eqns,
     const dictionary& dict
 )
 :
-    rootSolver(eqns, dict)
+    rootSolver(eqns, dict),
+    dX_(eqns_.dX())
 {
     if (dict.found("dx"))
     {
-        eqns_.setDX(dict.lookup<scalarField>("dx"));
+        dX_ = dict.lookup<scalarField>("dx");
+        eqns_.setDX(dX_);
     }
+}
+
+
+Foam::rootSolvers::badBroyden::badBroyden
+(
+    const scalarMultivariateEquation& eqns,
+    const badBroyden& solver
+)
+:
+    rootSolver(eqns, solver),
+    dX_(solver.dX_)
+{
+    eqns_.setDX(dX_);
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::badBroydenRootSolver::~badBroydenRootSolver()
+Foam::rootSolvers::badBroyden::~badBroyden()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
-Foam::badBroydenRootSolver::findRoots
+Foam::rootSolvers::badBroyden::findRoots
 (
     const scalarList& x0,
     const scalarList& xLow,

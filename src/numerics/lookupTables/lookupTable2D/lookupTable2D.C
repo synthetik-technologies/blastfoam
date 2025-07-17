@@ -667,7 +667,10 @@ void Foam::lookupTable2D<Type>::readX
         x,
         canRead
     );
-    setX(x, true);
+    if (canRead)
+    {
+        setX(x, true);
+    }
     xInterpolator_ = interpolationWeight1D::New
     (
         xDict.found("interpolationScheme")
@@ -710,12 +713,16 @@ void Foam::lookupTable2D<Type>::readY
         y,
         canRead
     );
-    setY(y, true);
+    if (canRead)
+    {
+        setY(y, true);
+    }
+
     yInterpolator_ = interpolationWeight1D::New
     (
         yDict.found("interpolationScheme")
-        ? yDict.lookup<word>("interpolationScheme")
-        : dict.lookupOrDefault<word>
+      ? yDict.lookup<word>("interpolationScheme")
+      : dict.lookupOrDefault<word>
         (
             yName + "InterpolationScheme",
             scheme
@@ -812,26 +819,29 @@ void Foam::lookupTable2D<Type>::readF
             << abort(FatalIOError);
     }
 
-    if
-    (
-        data.m() != xModValues_.size()
-     || data.n() != yModValues_.size()
-    )
+    if (canRead)
     {
-        FatalIOErrorInFunction(dict)
-            << "Incompatible dimensions for table" << nl
-            << "table size: "
-            << data.m() << " x " << data.n() << nl
-            << "x and y size: "
-            << xModValues_.size() << " x " << yModValues_.size() << nl
-            << abort(FatalIOError);
+        if
+        (
+            data.m() != xModValues_.size()
+         || data.n() != yModValues_.size()
+        )
+        {
+            FatalIOErrorInFunction(dict)
+                << "Incompatible dimensions for table" << nl
+                << "table size: "
+                << data.m() << " x " << data.n() << nl
+                << "x and y size: "
+                << xModValues_.size() << " x " << yModValues_.size() << nl
+                << abort(FatalIOError);
+        }
+        if (!mod_->isReal())
+        {
+            mod_->Inv(data);
+            mod_->setReal();
+        }
+        setData(data, true);
     }
-    if (!mod_->isReal())
-    {
-        mod_->Inv(data);
-        mod_->setReal();
-    }
-    setData(data, true);
 
     if (dict.found("rootSolver"))
     {

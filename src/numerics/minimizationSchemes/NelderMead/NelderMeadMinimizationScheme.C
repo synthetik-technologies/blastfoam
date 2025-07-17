@@ -55,7 +55,6 @@ Foam::minimizationSchemes::NelderMead::NelderMead
     reflectionCoeff_(dict.lookupOrDefault<scalar>("reflectionCoeff", 1.0)),
     expansionCoeff_(dict.lookupOrDefault<scalar>("expansionCoeff", 2.0)),
     contractionCoeff_(dict.lookupOrDefault<scalar>("contractionCoeff", 0.5))
-
 {
     if (reflectionCoeff_ <= 0)
     {
@@ -81,6 +80,19 @@ Foam::minimizationSchemes::NelderMead::NelderMead
             << abort(FatalError);
     }
 }
+
+
+Foam::minimizationSchemes::NelderMead::NelderMead
+(
+    const scalarUnivariateEquation& eqns,
+    const NelderMead& solver
+)
+:
+    minimizationScheme(eqns, solver),
+    reflectionCoeff_(solver.reflectionCoeff_),
+    expansionCoeff_(solver.expansionCoeff_),
+    contractionCoeff_(solver.contractionCoeff_)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

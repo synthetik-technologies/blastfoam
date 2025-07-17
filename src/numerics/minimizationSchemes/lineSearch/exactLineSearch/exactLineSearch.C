@@ -130,7 +130,7 @@ Foam::exactLineSearch::exactLineSearch
             dict.lookupOrDefault
             (
                 "solver",
-                univariateMinimizationSchemes::goldenRatio::typeName
+                minimizationSchemes::univariate::goldenRatio::typeName
             ),
             lsEqn_,
             dict
@@ -139,6 +139,20 @@ Foam::exactLineSearch::exactLineSearch
     maxBracketIter_(dict.lookupOrDefault("maxBracketIter", 100)),
     dx0_(dict.lookupOrDefault("dx0Bracket", 1e-2)),
     k_(dict.lookupOrDefault("kBracket", 2.0))
+{}
+
+
+Foam::exactLineSearch::exactLineSearch
+(
+    const scalarUnivariateEquation& eqns,
+    const exactLineSearch& ls
+)
+:
+    lineSearch(eqns, ls),
+    lineSearcher_(ls.lineSearcher_->cloneUnivariate(lsEqn_)),
+    maxBracketIter_(ls.maxBracketIter_),
+    dx0_(ls.dx0_),
+    k_(ls.k_)
 {}
 
 

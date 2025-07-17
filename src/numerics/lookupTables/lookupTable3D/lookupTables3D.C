@@ -367,103 +367,14 @@ Foam::scalar Foam::lookupTable3D<Foam::scalar>::reverseLookupZ
 
 
 template<>
-void Foam::lookupTable3D<Foam::scalar>::read
+void Foam::lookupTable3D<Foam::scalar>::readF
 (
     const dictionary& dict,
-    const word& xName,
-    const word& yName,
-    const word& zName,
     const word& name,
     const bool canRead
 )
 {
-    xName_ = xName;
-    yName_ = yName;
-    zName_ = zName;
     fName_ = name;
-
-    const word scheme
-    (
-        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
-    );
-
-    scalarField x;
-    {
-        const dictionary& xDict = readComponent
-        (
-            dict,
-            xName,
-            modX_,
-            x,
-            canRead
-        );
-        setX(x, true);
-        xInterpolator_ = interpolationWeight1D::New
-        (
-            xDict.found("interpolationScheme")
-          ? xDict.lookup<word>("interpolationScheme")
-          : dict.lookupOrDefault<word>
-            (
-                xName + "InterpolationScheme",
-                scheme
-            ),
-            xModValues_,
-            canRead
-        );
-        xInterpolator_->validate();
-    }
-
-    scalarField y;
-    {
-        const dictionary& yDict = readComponent
-        (
-            dict,
-            yName,
-            modY_,
-            y,
-            canRead
-        );
-        setY(y, true);
-        yInterpolator_ = interpolationWeight1D::New
-        (
-            yDict.found("interpolationScheme")
-          ? yDict.lookup<word>("interpolationScheme")
-          : dict.lookupOrDefault<word>
-            (
-                yName + "InterpolationScheme",
-                scheme
-            ),
-            yModValues_,
-            canRead
-        );
-        yInterpolator_->validate();
-    }
-
-    scalarField z;
-    {
-        const dictionary& zDict = readComponent
-        (
-            dict,
-            zName,
-            modZ_,
-            z,
-            canRead
-        );
-        setZ(z, true);
-        zInterpolator_ = interpolationWeight1D::New
-        (
-            zDict.found("interpolationScheme")
-          ? zDict.lookup<word>("interpolationScheme")
-          : dict.lookupOrDefault<word>
-            (
-                zName + "InterpolationScheme",
-                scheme
-            ),
-            zModValues_,
-            canRead
-        );
-        zInterpolator_->validate();
-    }
 
     List3D<scalar> data
     (
@@ -475,7 +386,7 @@ void Foam::lookupTable3D<Foam::scalar>::read
     bool useLeastSquares = dict.lookupOrDefault("leastSquaresFit", false);
     if (dict.found(name))
     {
-        if (!useLeastSquares)
+        if (canRead && !useLeastSquares)
         {
             dict.readIfPresent(name, data);
         }
@@ -496,7 +407,7 @@ void Foam::lookupTable3D<Foam::scalar>::read
         );
         mod_->readReal(fDict, "isReal");
 
-        if (useLeastSquares)
+        if (!canRead || useLeastSquares)
         {}
         else if (fDict.found(name))
         {
@@ -541,7 +452,7 @@ void Foam::lookupTable3D<Foam::scalar>::read
         mod_->readReal(dict, name + "IsReal");
     }
 
-    if (useLeastSquares)
+    if (canRead && useLeastSquares)
     {
         const dictionary& lsDict(dict.subDict("leastSquaresCoeffs"));
         scalarField sparseF;
@@ -552,7 +463,7 @@ void Foam::lookupTable3D<Foam::scalar>::read
         readComponent
         (
             lsDict,
-            xName,
+            xName_,
             sparseXMod,
             sparseX,
             true
@@ -562,7 +473,7 @@ void Foam::lookupTable3D<Foam::scalar>::read
         readComponent
         (
             lsDict,
-            yName,
+            yName_,
             sparseYMod,
             sparseY,
             true
@@ -572,7 +483,7 @@ void Foam::lookupTable3D<Foam::scalar>::read
         readComponent
         (
             lsDict,
-            zName,
+            zName_,
             sparseZMod,
             sparseZ,
             true
@@ -582,7 +493,7 @@ void Foam::lookupTable3D<Foam::scalar>::read
         readComponent
         (
             lsDict,
-            name,
+            fName_,
             sparseFMod,
             sparseF,
             true
@@ -604,31 +515,34 @@ void Foam::lookupTable3D<Foam::scalar>::read
         mod_->setReal();
     }
 
-    if
-    (
-        data.m() != xModValues_.size()
-     || data.n() != yModValues_.size()
-     || data.l() != zModValues_.size()
-    )
+    if (canRead)
     {
-        FatalIOErrorInFunction(dict)
-            << "Incompatible dimensions for table" << nl
-            << "table size: "
-            << data.m() << " x "
-            << data.n() << " x "
-            << data.l() << nl
-            << "x and y size: "
-            << xModValues_.size() << " x "
-            << yModValues_.size() << " z "
-            << yModValues_.size() << nl
-            << abort(FatalIOError);
+        if
+        (
+            data.m() != xModValues_.size()
+         || data.n() != yModValues_.size()
+         || data.l() != zModValues_.size()
+        )
+        {
+            FatalIOErrorInFunction(dict)
+                << "Incompatible dimensions for table" << nl
+                << "table size: "
+                << data.m() << " x "
+                << data.n() << " x "
+                << data.l() << nl
+                << "x, y, and z sizes: "
+                << "x = " << xModValues_.size() << ", "
+                << "y = " << yModValues_.size() << ", and "
+                << "z = " << zModValues_.size() << nl
+                << abort(FatalIOError);
+        }
+        if (!mod_->isReal())
+        {
+            mod_->Inv(data);
+            mod_->setReal();
+        }
+        setData(data, true);
     }
-    if (!mod_->isReal())
-    {
-        mod_->Inv(data);
-        mod_->setReal();
-    }
-    setData(data, true);
 
     if (dict.found("rootSolver"))
     {

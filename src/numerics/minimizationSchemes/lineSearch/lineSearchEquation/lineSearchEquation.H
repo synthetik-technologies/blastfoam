@@ -118,6 +118,13 @@ public:
             const DescentMethod descent
         );
 
+        // Construct from the given equation and descent type
+        lineSearchEquation
+        (
+            const scalarUnivariateEquation& eqn,
+            const lineSearchEquation& ls
+        );
+
 
     // Destructor
     virtual ~lineSearchEquation();

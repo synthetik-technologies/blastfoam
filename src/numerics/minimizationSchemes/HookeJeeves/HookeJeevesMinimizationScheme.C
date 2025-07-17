@@ -54,10 +54,18 @@ Foam::minimizationSchemes::HookeJeeves::HookeJeeves
 :
     minimizationScheme(eqns, dict),
     gamma_(dict.lookupOrDefault<scalar>("gamma", 0.9))
+{}
 
-{
 
-}
+Foam::minimizationSchemes::HookeJeeves::HookeJeeves
+(
+    const scalarUnivariateEquation& eqns,
+    const HookeJeeves& solver
+)
+:
+    minimizationScheme(eqns, solver),
+    gamma_(solver.gamma_)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

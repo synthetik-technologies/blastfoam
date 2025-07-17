@@ -449,8 +449,9 @@ public:
         //- Return an equation using the table
         const univariateRootSolver& solver
         (
-            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
-            const dictionary& dict = dictionary()
+            const word& type =
+                rootSolvers::univariate::NewtonRaphson::typeName,
+            const dictionary& dict = dictionary::null
         ) const
         {
             if (!solver_.valid())
@@ -469,8 +470,9 @@ public:
         const univariateRootSolver& solver
         (
             const Type& fin,
-            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
-            const dictionary& dict = dictionary()
+            const word& type =
+                rootSolvers::univariate::NewtonRaphson::typeName,
+            const dictionary& dict = dictionary::null
         ) const
         {
             error().set(fin);

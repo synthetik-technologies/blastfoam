@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::univariateMinimizationSchemes::goldenRatio
+    Foam::minimizationSchemes::univariate::goldenRatio
 
 Description
     Univariate minimization using the golden ratio to determine the next
@@ -51,11 +51,13 @@ SourceFiles
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class goldenRatio Declaration
+        Class minimizationSchemes::univariate::goldenRatio Declaration
 \*---------------------------------------------------------------------------*/
 
 class goldenRatio
@@ -70,12 +72,40 @@ public:
     //- Runtime type information
     TypeName("goldenRatio");
 
-    // Constructor
-    goldenRatio
-    (
-        const scalarUnivariateEquation& eqn,
-        const dictionary& dict
-    );
+        //- Constructors
+        goldenRatio
+        (
+            const scalarUnivariateEquation& eqn,
+            const dictionary& dict
+        );
+
+        //- Copy constructor
+        goldenRatio
+        (
+            const scalarUnivariateEquation& eqn,
+            const goldenRatio& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new goldenRatio(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new goldenRatio(eqns, *this)
+            );
+        }
 
 
     //- Destructor
@@ -103,7 +133,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace univariateMinimizationSchemes
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

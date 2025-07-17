@@ -80,6 +80,26 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        cyclicCoordinate
+        (
+            const scalarUnivariateEquation& eqn,
+            const cyclicCoordinate& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>
+            (
+                new cyclicCoordinate(eqns, *this)
+            );
+        }
+
+
     //- Destructor
     virtual ~cyclicCoordinate()
     {}

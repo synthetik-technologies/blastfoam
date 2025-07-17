@@ -115,6 +115,13 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        univariateMinimizationScheme
+        (
+            const scalarUnivariateEquation& eqn,
+            const univariateMinimizationScheme& solver
+        );
+
         //- Disallow default bitwise copy construction
         univariateMinimizationScheme(const univariateMinimizationScheme&) = delete;
 
@@ -135,6 +142,12 @@ public:
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const = 0;
 
 
     //- Destructor

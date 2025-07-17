@@ -55,6 +55,17 @@ Foam::lineSearch::lineSearch
 {}
 
 
+Foam::lineSearch::lineSearch
+(
+    const scalarUnivariateEquation& eqns,
+    const lineSearch& ls
+)
+:
+    eqns_(eqns),
+    lsEqn_(eqns, ls.lsEqn_)
+{}
+
+
 // * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
 
 Foam::lineSearch::~lineSearch()

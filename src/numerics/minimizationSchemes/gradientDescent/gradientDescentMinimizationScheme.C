@@ -61,6 +61,16 @@ Foam::minimizationSchemes::gradientDescent::gradientDescent
 {}
 
 
+Foam::minimizationSchemes::gradientDescent::gradientDescent
+(
+    const scalarUnivariateEquation& eqns,
+    const gradientDescent& solver
+)
+:
+    minimizationScheme(eqns, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>

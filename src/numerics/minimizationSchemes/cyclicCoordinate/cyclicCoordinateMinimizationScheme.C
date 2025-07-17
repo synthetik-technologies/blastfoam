@@ -56,6 +56,17 @@ Foam::minimizationSchemes::cyclicCoordinate::cyclicCoordinate
 {}
 
 
+Foam::minimizationSchemes::cyclicCoordinate::cyclicCoordinate
+(
+    const scalarUnivariateEquation& eqns,
+    const cyclicCoordinate& solver
+)
+:
+    basis(eqns, solver),
+    accelerate_(solver.accelerate_)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>

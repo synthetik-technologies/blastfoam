@@ -50,12 +50,37 @@ Foam::cmptLineSearchEquation::cmptLineSearchEquation
             dict.lookupOrDefault
             (
                 "solver",
-                univariateMinimizationSchemes::goldenRatio::typeName
+                minimizationSchemes::univariate::goldenRatio::typeName
             ),
             *this,
             dict
         )
     )
+{
+    if (isA<scalarEquation>(eqns))
+    {
+        sEqn_.set
+        (
+            &dynamicCast<const scalarEquation>(eqns)
+        );
+    }
+}
+
+
+Foam::cmptLineSearchEquation::cmptLineSearchEquation
+(
+    const scalarUnivariateEquation& eqns,
+    const cmptLineSearchEquation& ls
+)
+:
+    ScalarEquation(ls),
+    eqns_(eqns),
+    cmpt_(ls.cmpt_),
+    sign_(ls.sign_),
+    x0_(eqns_.lowerLimits()),
+    x_(x0_),
+    dfdX_(eqns_.nVar(), 0.0),
+    lineSearcher_(ls.lineSearcher_->cloneUnivariate(*this))
 {
     if (isA<scalarEquation>(eqns))
     {

@@ -63,7 +63,21 @@ Foam::minimizationSchemes::particleSwarm::particleSwarm
     cLocal_(dict.lookup<scalar>("cLocal")),
     cGlobal_(dict.lookup<scalar>("cGlobal")),
     vWeight_(dict.lookup<scalar>("vWeight"))
+{}
 
+
+Foam::minimizationSchemes::particleSwarm::particleSwarm
+(
+    const scalarUnivariateEquation& eqns,
+    const particleSwarm& solver
+)
+:
+    minimizationScheme(eqns, solver),
+    rand_(solver.rand_),
+    particles_(solver.particles_),
+    cLocal_(solver.cLocal_),
+    cGlobal_(solver.cGlobal_),
+    vWeight_(solver.vWeight_)
 {}
 
 

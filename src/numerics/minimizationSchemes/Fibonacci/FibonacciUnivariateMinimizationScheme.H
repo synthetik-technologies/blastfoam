@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::univariateMinimizationSchemes::Fibonacci
+    Foam::minimizationSchemes::univariate::Fibonacci
 
 Description
     Univariate minimization using the Fibonacci method
@@ -50,11 +50,13 @@ SourceFiles
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class Fibonacci Declaration
+            Class minimizationSchemes::univariate::Fibonacci Declaration
 \*---------------------------------------------------------------------------*/
 
 class Fibonacci
@@ -77,6 +79,34 @@ public:
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
+
+        //- Copy constructor
+        Fibonacci
+        (
+            const scalarUnivariateEquation& eqn,
+            const Fibonacci& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new Fibonacci(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new Fibonacci(eqns, *this)
+            );
+        }
 
     //- Destructor
     virtual ~Fibonacci()
@@ -103,7 +133,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace univariateMinimizationSchemes
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

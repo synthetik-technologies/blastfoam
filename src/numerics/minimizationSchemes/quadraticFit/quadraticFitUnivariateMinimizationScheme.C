@@ -30,7 +30,9 @@ License
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
     defineTypeNameAndDebug(quadraticFit, 0);
     addToRunTimeSelectionTable
@@ -59,10 +61,12 @@ namespace univariateMinimizationSchemes
     );
 }
 }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::quadraticFit::quadraticFit
+Foam::minimizationSchemes::univariate::quadraticFit::quadraticFit
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -74,9 +78,19 @@ Foam::univariateMinimizationSchemes::quadraticFit::quadraticFit
 }
 
 
+Foam::minimizationSchemes::univariate::quadraticFit::quadraticFit
+(
+    const scalarUnivariateEquation& eqn,
+    const quadraticFit& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::quadraticFit::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::quadraticFit::minimize
 (
     const scalar x0,
     const scalar x1,

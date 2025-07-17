@@ -95,6 +95,22 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        exactLineSearch
+        (
+            const scalarUnivariateEquation& eqns,
+            const exactLineSearch& ls
+        );
+
+        //- Clone
+        virtual autoPtr<lineSearch> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<lineSearch>(new exactLineSearch(eqns, *this));
+        }
+
 
     //- Destructor
     virtual ~exactLineSearch();

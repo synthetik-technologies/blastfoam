@@ -30,31 +30,37 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(BrentUnivariateRootSolver, 0);
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(Brent, 0);
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        BrentUnivariateRootSolver,
+        Brent,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        BrentUnivariateRootSolver,
+        Brent,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        BrentUnivariateRootSolver,
+        Brent,
         dictionaryTwo
     );
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::BrentUnivariateRootSolver::BrentUnivariateRootSolver
+Foam::rootSolvers::univariate::Brent::Brent
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -64,15 +70,25 @@ Foam::BrentUnivariateRootSolver::BrentUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::Brent::Brent
+(
+    const scalarMultivariateEquation& eqn,
+    const Brent& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::BrentUnivariateRootSolver::~BrentUnivariateRootSolver()
+Foam::rootSolvers::univariate::Brent::~Brent()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::BrentUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::Brent::findRoot
 (
     const scalar x,
     const scalar xLow,

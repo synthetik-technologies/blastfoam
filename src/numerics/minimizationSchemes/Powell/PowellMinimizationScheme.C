@@ -56,6 +56,17 @@ Foam::minimizationSchemes::Powell::Powell
 {}
 
 
+Foam::minimizationSchemes::Powell::Powell
+(
+    const scalarUnivariateEquation& eqns,
+    const Powell& solver
+)
+:
+    basis(eqns, solver),
+    dirs_(eqns.nVar(), scalarList(eqns.nVar(), 0.0))
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>

@@ -61,6 +61,16 @@ Foam::minimizationSchemes::conjugateGradientDescent::conjugateGradientDescent
 {}
 
 
+Foam::minimizationSchemes::conjugateGradientDescent::conjugateGradientDescent
+(
+    const scalarUnivariateEquation& eqns,
+    const conjugateGradientDescent& solver
+)
+:
+    minimizationScheme(eqns, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>

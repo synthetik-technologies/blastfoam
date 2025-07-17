@@ -51,6 +51,22 @@ Foam::approximateLineSearch::approximateLineSearch
 {}
 
 
+
+Foam::approximateLineSearch::approximateLineSearch
+(
+    const scalarUnivariateEquation& eqns,
+    const approximateLineSearch& ls
+)
+:
+    lineSearch(eqns, ls),
+    alpha0_(ls.alpha0_),
+    alpha_(ls.alpha_),
+    beta_(ls.beta_),
+    p_(ls.p_)
+{}
+
+
+
 // * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
 
 Foam::approximateLineSearch::~approximateLineSearch()

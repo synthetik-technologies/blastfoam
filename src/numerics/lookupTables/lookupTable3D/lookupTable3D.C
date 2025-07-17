@@ -1226,7 +1226,7 @@ void Foam::lookupTable3D<Type>::readX
 {
     xName_ = xName;
 
-    const word scheme
+    const word defaultScheme
     (
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
     );
@@ -1240,20 +1240,28 @@ void Foam::lookupTable3D<Type>::readX
         x,
         canRead
     );
-    setX(x, true);
+    if (canRead)
+    {
+        setX(x, true);
+    }
+
     xInterpolator_ = interpolationWeight1D::New
     (
         xDict.found("interpolationScheme")
-        ? xDict.lookup<word>("interpolationScheme")
-        : dict.lookupOrDefault<word>
+      ? xDict.lookup<word>("interpolationScheme")
+      : dict.lookupOrDefault<word>
         (
             xName + "InterpolationScheme",
-            scheme
+            defaultScheme
         ),
         xModValues_,
         canRead
     );
-    xInterpolator_->validate();
+
+    if (canRead)
+    {
+        xInterpolator_->validate();
+    }
 }
 
 
@@ -1267,7 +1275,7 @@ void Foam::lookupTable3D<Type>::readY
 {
     yName_ = yName;
 
-    const word scheme
+    const word defaultScheme
     (
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
     );
@@ -1281,20 +1289,28 @@ void Foam::lookupTable3D<Type>::readY
         y,
         canRead
     );
-    setY(y, true);
+    if (canRead)
+    {
+        setY(y, true);
+    }
+
     yInterpolator_ = interpolationWeight1D::New
     (
         yDict.found("interpolationScheme")
-        ? yDict.lookup<word>("interpolationScheme")
-        : dict.lookupOrDefault<word>
+      ? yDict.lookup<word>("interpolationScheme")
+      : dict.lookupOrDefault<word>
         (
             yName + "InterpolationScheme",
-            scheme
+            defaultScheme
         ),
         yModValues_,
         canRead
     );
-    yInterpolator_->validate();
+
+    if (canRead)
+    {
+        yInterpolator_->validate();
+    }
 }
 
 
@@ -1308,7 +1324,7 @@ void Foam::lookupTable3D<Type>::readZ
 {
     zName_ = zName;
 
-    const word scheme
+    const word defaultScheme
     (
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
     );
@@ -1322,20 +1338,28 @@ void Foam::lookupTable3D<Type>::readZ
         z,
         canRead
     );
-    setZ(z, true);
+    if (canRead)
+    {
+        setZ(z, true);
+    }
+
     zInterpolator_ = interpolationWeight1D::New
     (
         zDict.found("interpolationScheme")
-        ? zDict.lookup<word>("interpolationScheme")
-        : dict.lookupOrDefault<word>
+      ? zDict.lookup<word>("interpolationScheme")
+      : dict.lookupOrDefault<word>
         (
             zName + "InterpolationScheme",
-            scheme
+            defaultScheme
         ),
         zModValues_,
         canRead
     );
-    zInterpolator_->validate();
+
+    if (canRead)
+    {
+        zInterpolator_->validate();
+    }
 }
 
 
@@ -1405,31 +1429,34 @@ void Foam::lookupTable3D<Type>::readF
             << abort(FatalIOError);
     }
 
-    if
-    (
-        data.m() != xModValues_.size()
-     || data.n() != yModValues_.size()
-     || data.l() != zModValues_.size()
-    )
+    if (canRead)
     {
-        FatalIOErrorInFunction(dict)
-            << "Incompatible dimensions for table" << nl
-            << "table size: "
-            << data.m() << " x "
-            << data.n() << " x "
-            << data.l() << nl
-            << "x and y size: "
-            << xModValues_.size() << " x "
-            << yModValues_.size() << " z "
-            << yModValues_.size() << nl
-            << abort(FatalIOError);
+        if
+        (
+            data.m() != xModValues_.size()
+         || data.n() != yModValues_.size()
+         || data.l() != zModValues_.size()
+        )
+        {
+            FatalIOErrorInFunction(dict)
+                << "Incompatible dimensions for table" << nl
+                << "table size: "
+                << data.m() << " x "
+                << data.n() << " x "
+                << data.l() << nl
+                << "x and y size: "
+                << xModValues_.size() << " x "
+                << yModValues_.size() << " z "
+                << yModValues_.size() << nl
+                << abort(FatalIOError);
+        }
+        if (!mod_->isReal())
+        {
+            mod_->Inv(data);
+            mod_->setReal();
+        }
+        setData(data, true);
     }
-    if (!mod_->isReal())
-    {
-        mod_->Inv(data);
-        mod_->setReal();
-    }
-    setData(data, true);
 
     if (dict.found("rootSolver"))
     {

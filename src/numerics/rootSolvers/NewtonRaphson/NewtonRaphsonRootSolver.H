@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NewtonRaphsonRootSolver
+    Foam::rootSolvers::NewtonRaphson
 
 Description
     Multivariate root finding using a Newton-Raphson method using the
@@ -44,12 +44,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class NewtonRaphsonRootSolver Declaration
+                    Class rootSolvers::NewtonRaphson Declaration
 \*---------------------------------------------------------------------------*/
 
-class NewtonRaphsonRootSolver
+class NewtonRaphson
 :
     public rootSolver
 {
@@ -67,21 +69,34 @@ public:
     // Constructors
 
         //- Construct for given multivariateMultivariateRootSolver
-        NewtonRaphsonRootSolver
+        NewtonRaphson
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
-        //- Disallow default bitwise copy construction
-        NewtonRaphsonRootSolver
+        //- Copy constructor
+        NewtonRaphson
         (
-            const NewtonRaphsonRootSolver&
-        ) = delete;
+            const scalarMultivariateEquation& eqn,
+            const NewtonRaphson& solver
+        );
+
+        //- Disallow default bitwise copy construction
+        NewtonRaphson(const NewtonRaphson&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new NewtonRaphson(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~NewtonRaphsonRootSolver();
+    virtual ~NewtonRaphson();
 
 
     // Member Functions
@@ -99,6 +114,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

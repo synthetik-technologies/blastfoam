@@ -30,7 +30,9 @@ License
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
     defineTypeNameAndDebug(goldenRatio, 0);
     addToRunTimeSelectionTable
@@ -59,19 +61,20 @@ namespace univariateMinimizationSchemes
     );
 }
 }
+}
 
 const Foam::scalar
-Foam::univariateMinimizationSchemes::goldenRatio::invPhi =
+Foam::minimizationSchemes::univariate::goldenRatio::invPhi =
     (sqrt(5.0) - 1.0)/2.0;
 
 const Foam::scalar
-Foam::univariateMinimizationSchemes::goldenRatio::invPhi2 =
+Foam::minimizationSchemes::univariate::goldenRatio::invPhi2 =
     (3.0 - sqrt(5.0))/2.0;
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::goldenRatio::goldenRatio
+Foam::minimizationSchemes::univariate::goldenRatio::goldenRatio
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -83,9 +86,19 @@ Foam::univariateMinimizationSchemes::goldenRatio::goldenRatio
 }
 
 
+Foam::minimizationSchemes::univariate::goldenRatio::goldenRatio
+(
+    const scalarUnivariateEquation& eqn,
+    const goldenRatio& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::goldenRatio::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::goldenRatio::minimize
 (
     const scalar x,
     const scalar x1,

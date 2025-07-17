@@ -135,6 +135,17 @@ Foam::univariateRootSolver::univariateRootSolver
 {}
 
 
+Foam::univariateRootSolver::univariateRootSolver
+(
+    const scalarMultivariateEquation& eqn,
+    const univariateRootSolver& solver
+)
+:
+    rootSolver(eqn, solver),
+    eqn_(dynamicCast<const scalarEquation>(eqn))
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::univariateRootSolver::~univariateRootSolver()

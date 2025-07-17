@@ -94,6 +94,13 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        basis
+        (
+            const scalarUnivariateEquation& eqn,
+            const basis& solver
+        );
+
     //- Destructor
     virtual ~basis()
     {}

@@ -30,14 +30,20 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(HalleyUnivariateRootSolver, 0);
-    addToRunTimeSelectionTable(univariateRootSolver, HalleyUnivariateRootSolver, dictionaryTwo);
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(Halley, 0);
+    addToRunTimeSelectionTable(univariateRootSolver, Halley, dictionaryTwo);
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::HalleyUnivariateRootSolver::HalleyUnivariateRootSolver
+Foam::rootSolvers::univariate::Halley::Halley
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -47,15 +53,25 @@ Foam::HalleyUnivariateRootSolver::HalleyUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::Halley::Halley
+(
+    const scalarMultivariateEquation& eqn,
+    const Halley& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::HalleyUnivariateRootSolver::~HalleyUnivariateRootSolver()
+Foam::rootSolvers::univariate::Halley::~Halley()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::HalleyUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::Halley::findRoot
 (
     const scalar x0,
     const scalar x1,

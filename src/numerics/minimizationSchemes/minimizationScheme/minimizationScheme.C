@@ -519,6 +519,40 @@ Foam::minimizationScheme::minimizationScheme
 {}
 
 
+Foam::minimizationScheme::minimizationScheme
+(
+    const scalarUnivariateEquation& eqns,
+    const minimizationScheme& solver
+)
+:
+    dict_(solver.dict_),
+    eqns_(eqns),
+    xTolerances_(solver.xTolerances_),
+    xRelTolerances_(solver.xRelTolerances_),
+    yTolerance_(solver.yTolerance_),
+    yRelTolerance_(solver.yRelTolerance_),
+    minSteps_(solver.minSteps_),
+    maxSteps_(solver.maxSteps_),
+    stepi_(0),
+    xErrors_(eqns.nVar(), great),
+    xRelErrors_(eqns.nVar(), great),
+    yError_(great),
+    yRelError_(great),
+    nSamples_(solver.nSamples_),
+    normalize_(solver.normalize_),
+    tau_(solver.tau_),
+    checkX_(solver.checkX_),
+    checkY_(solver.checkY_),
+
+    lineSearch_
+    (
+        solver.lineSearch_.valid()
+      ? solver.lineSearch_->clone(eqns_)
+      : autoPtr<lineSearch>()
+    )
+{}
+
+
 // * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
 
 Foam::minimizationScheme::~minimizationScheme()

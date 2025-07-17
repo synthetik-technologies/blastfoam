@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::falsePointUnivariateRootSolver
+    Foam::rootSolvers::univariate::falsePoint
 
 Description
     Univariate root finding using the false-point method.
@@ -43,12 +43,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class falsePointUnivariateRootSolver Declaration
+                Class rootSolvers::univariate::falsePoint Declaration
 \*---------------------------------------------------------------------------*/
 
-class falsePointUnivariateRootSolver
+class falsePoint
 :
     public univariateRootSolver
 {
@@ -60,18 +64,43 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        falsePointUnivariateRootSolver
+        falsePoint
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        falsePoint
+        (
+            const scalarMultivariateEquation& eqn,
+            const falsePoint& solver
+        );
+
         //- Disallow default bitwise copy construction
-        falsePointUnivariateRootSolver(const univariateRootSolver&) = delete;
+        falsePoint(const falsePoint&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new falsePoint(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new falsePoint(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~falsePointUnivariateRootSolver();
+    virtual ~falsePoint();
 
 
     // Member Functions
@@ -89,6 +118,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End name space rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

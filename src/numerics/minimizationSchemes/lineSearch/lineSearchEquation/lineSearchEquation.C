@@ -93,6 +93,32 @@ Foam::lineSearchEquation::lineSearchEquation
 }
 
 
+Foam::lineSearchEquation::lineSearchEquation
+(
+    const scalarUnivariateEquation& eqns,
+    const lineSearchEquation& ls
+)
+:
+    ScalarEquation(ls),
+    eqns_(eqns),
+    descent_(ls.descent_),
+    grad_(eqns_.nVar(), 0.0),
+    dir_(eqns_.nVar(), 0.0),
+    x0_(eqns_.lowerLimits()),
+    beta_(ls.beta_),
+    x_(ls.x_),
+    dfdX_(eqns_.nVar(), 0.0)
+{
+    if (isA<scalarEquation>(eqns))
+    {
+        sEqn_.set
+        (
+            &dynamicCast<const scalarEquation>(eqns)
+        );
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
 
 Foam::lineSearchEquation::~lineSearchEquation()

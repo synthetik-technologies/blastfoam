@@ -633,8 +633,9 @@ public:
         //- Return an equation using the table
         const univariateRootSolver& solver
         (
-            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
-            const dictionary& dict = dictionary()
+            const word& type =
+                rootSolvers::univariate::NewtonRaphson::typeName,
+            const dictionary& dict = dictionary::null
         ) const
         {
             if (!solver_.valid())
@@ -654,8 +655,9 @@ public:
             const label dir,
             const Type& f,
             const scalar y,
-            const word& type = NewtonRaphsonUnivariateRootSolver::typeName,
-            const dictionary& dict = dictionary()
+            const word& type =
+                rootSolvers::univariate::NewtonRaphson::typeName,
+            const dictionary& dict = dictionary::null
         ) const
         {
             error().set(dir, f, y);
@@ -748,11 +750,9 @@ Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
 ) const;
 
 template<>
-void Foam::lookupTable2D<Foam::scalar>::read
+void Foam::lookupTable2D<Foam::scalar>::readF
 (
     const dictionary& dict,
-    const word& xName,
-    const word& yName,
     const word& name,
     const bool canRead
 );

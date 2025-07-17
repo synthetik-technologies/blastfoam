@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::secantUnivariateRootSolver
+    Foam::rootSolvers::univariate::secant
 
 Description
     Univariate root finding using the secant method to approximate the first
@@ -44,12 +44,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                 Class secantUnivariateRootSolver Declaration
+                Class rootSolvers::univariate::secant Declaration
 \*---------------------------------------------------------------------------*/
 
-class secantUnivariateRootSolver
+class secant
 :
     public univariateRootSolver
 {
@@ -61,18 +65,43 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        secantUnivariateRootSolver
+        secant
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        secant
+        (
+            const scalarMultivariateEquation& eqn,
+            const secant& solver
+        );
+
         //- Disallow default bitwise copy construction
-        secantUnivariateRootSolver(const univariateRootSolver&) = delete;
+        secant(const secant&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new secant(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new secant(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~secantUnivariateRootSolver();
+    virtual ~secant();
 
 
     // Member Functions
@@ -90,6 +119,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

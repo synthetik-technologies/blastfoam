@@ -30,31 +30,36 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(bisectionUnivariateRootSolver, 0);
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(bisection, 0);
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        bisectionUnivariateRootSolver,
+        bisection,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        bisectionUnivariateRootSolver,
+        bisection,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        bisectionUnivariateRootSolver,
+        bisection,
         dictionaryTwo
     );
 }
-
+}
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::bisectionUnivariateRootSolver::bisectionUnivariateRootSolver
+Foam::rootSolvers::univariate::bisection::bisection
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -64,15 +69,25 @@ Foam::bisectionUnivariateRootSolver::bisectionUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::bisection::bisection
+(
+    const scalarMultivariateEquation& eqn,
+    const bisection& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::bisectionUnivariateRootSolver::~bisectionUnivariateRootSolver()
+Foam::rootSolvers::univariate::bisection::~bisection()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::bisectionUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::bisection::findRoot
 (
     const scalar x0,
     const scalar x1,

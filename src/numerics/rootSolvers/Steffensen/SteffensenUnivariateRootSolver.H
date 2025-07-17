@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::SteffensenUnivariateRootSolver
+    Foam::rootSolvers::univariate::Steffensen
 
 Description
     Univariate root finding using the Steffensen method.
@@ -43,12 +43,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class SteffensenUnivariateRootSolver Declaration
+            Class rootSolvers::univariate::Steffensen Declaration
 \*---------------------------------------------------------------------------*/
 
-class SteffensenUnivariateRootSolver
+class Steffensen
 :
     public univariateRootSolver
 {
@@ -60,18 +64,43 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        SteffensenUnivariateRootSolver
+        Steffensen
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        Steffensen
+        (
+            const scalarMultivariateEquation& eqn,
+            const Steffensen& solver
+        );
+
         //- Disallow default bitwise copy construction
-        SteffensenUnivariateRootSolver(const univariateRootSolver&) = delete;
+        Steffensen(const Steffensen&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new Steffensen(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new Steffensen(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~SteffensenUnivariateRootSolver();
+    virtual ~Steffensen();
 
 
     // Member Functions
@@ -89,6 +118,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

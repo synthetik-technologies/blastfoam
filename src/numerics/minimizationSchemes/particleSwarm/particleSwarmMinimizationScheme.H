@@ -101,6 +101,22 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        particleSwarm
+        (
+            const scalarUnivariateEquation& eqn,
+            const particleSwarm& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new particleSwarm(eqns, *this));
+        }
+
     //- Destructor
     virtual ~particleSwarm()
     {}

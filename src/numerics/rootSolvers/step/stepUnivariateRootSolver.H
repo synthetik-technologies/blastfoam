@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::stepUnivariateRootSolver
+    Foam::rootSolvers::univariate::step
 
 Description
     Simple method to find a root of an equation by starting at the lower
@@ -45,12 +45,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class stepRootSolver Declaration
+                Class rootSolvers::univariate::step Declaration
 \*---------------------------------------------------------------------------*/
 
-class stepUnivariateRootSolver
+class step
 :
     public univariateRootSolver
 {
@@ -71,26 +75,50 @@ public:
     // Constructors
 
         //- Construct for given UnivariateRootSolver
-        stepUnivariateRootSolver
+        step
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
         //- Construct from equation and step size
-        stepUnivariateRootSolver
+        step
         (
             const scalarMultivariateEquation& eqn,
             const scalar dx
         );
 
+        //- Copy constructor
+        step
+        (
+            const scalarMultivariateEquation& eqn,
+            const step& solver
+        );
 
         //- Disallow default bitwise copy construction
-        stepUnivariateRootSolver(const rootSolver&) = delete;
+        step(const step&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new step(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new step(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~stepUnivariateRootSolver();
+    virtual ~step();
 
 
     // Member Functions
@@ -108,6 +136,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

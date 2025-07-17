@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::RidderUnivariateRootSolver
+    Foam::rootSolvers::univariate::Ridder
 
 Description
     Univariate root finding using the Ridder method.
@@ -43,12 +43,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class RidderUnivariateRootSolver Declaration
+                Class rootSolvers::univariate::Ridder Declaration
 \*---------------------------------------------------------------------------*/
 
-class RidderUnivariateRootSolver
+class Ridder
 :
     public univariateRootSolver
 {
@@ -60,18 +64,43 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        RidderUnivariateRootSolver
+        Ridder
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        Ridder
+        (
+            const scalarMultivariateEquation& eqn,
+            const Ridder& solver
+        );
+
         //- Disallow default bitwise copy construction
-        RidderUnivariateRootSolver(const univariateRootSolver&) = delete;
+        Ridder(const Ridder&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new Ridder(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new Ridder(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~RidderUnivariateRootSolver();
+    virtual ~Ridder();
 
 
     // Member Functions
@@ -89,6 +118,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

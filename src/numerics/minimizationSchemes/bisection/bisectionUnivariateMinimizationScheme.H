@@ -43,7 +43,9 @@ SourceFiles
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
 
 /*---------------------------------------------------------------------------*\
@@ -67,6 +69,34 @@ public:
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
+
+        //- Copy constructor
+        bisection
+        (
+            const scalarUnivariateEquation& eqn,
+            const bisection& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new bisection(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new bisection(eqns, *this)
+            );
+        }
 
 
     //- Destructor
@@ -94,7 +124,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace univariateMinimizationSchemes
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

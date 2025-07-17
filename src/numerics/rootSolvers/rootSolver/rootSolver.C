@@ -217,6 +217,24 @@ Foam::rootSolver::rootSolver
 {}
 
 
+Foam::rootSolver::rootSolver
+(
+    const scalarMultivariateEquation& eqns,
+    const rootSolver& solver
+)
+:
+    eqns_(eqns),
+    xTols_(solver.xTols_),
+    yTols_(solver.yTols_),
+    xAbsTols_(solver.xAbsTols_),
+    xRelTols_(solver.xRelTols_),
+    maxSteps_(solver.maxSteps_),
+    stepi_(0),
+    xErrors_(eqns.nVar(), great),
+    yErrors_(eqns.nEqns(), great)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::rootSolver::~rootSolver()

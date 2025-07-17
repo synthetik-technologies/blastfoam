@@ -76,6 +76,26 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        conjugateGradientDescent
+        (
+            const scalarUnivariateEquation& eqn,
+            const conjugateGradientDescent& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>
+            (
+                new conjugateGradientDescent(eqns, *this)
+            );
+        }
+
+
     //- Destructor
     virtual ~conjugateGradientDescent()
     {}

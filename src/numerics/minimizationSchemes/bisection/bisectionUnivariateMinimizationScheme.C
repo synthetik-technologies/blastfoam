@@ -30,7 +30,9 @@ License
 
 namespace Foam
 {
-namespace univariateMinimizationSchemes
+namespace minimizationSchemes
+{
+namespace univariate
 {
     defineTypeNameAndDebug(bisection, 0);
     addToRunTimeSelectionTable
@@ -59,11 +61,12 @@ namespace univariateMinimizationSchemes
     );
 }
 }
+}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::univariateMinimizationSchemes::bisection::bisection
+Foam::minimizationSchemes::univariate::bisection::bisection
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -75,9 +78,19 @@ Foam::univariateMinimizationSchemes::bisection::bisection
 }
 
 
+Foam::minimizationSchemes::univariate::bisection::bisection
+(
+    const scalarUnivariateEquation& eqn,
+    const bisection& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::univariateMinimizationSchemes::bisection::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::bisection::minimize
 (
     const scalar x,
     const scalar x1,
