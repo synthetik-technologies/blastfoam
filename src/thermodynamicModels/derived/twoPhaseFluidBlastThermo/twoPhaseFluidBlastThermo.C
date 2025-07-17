@@ -276,7 +276,7 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
                 eDict.lookupOrDefault
                 (
                     "solver",
-                    NewtonRaphsonUnivariateRootSolver::typeName
+                    rootSolvers::univariate::NewtonRaphson::typeName
                 ),
                 TEqn_,
                 eDict
@@ -287,7 +287,7 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
         TSolver_ =
             univariateRootSolver::New
             (
-                NewtonRaphsonUnivariateRootSolver::typeName,
+                rootSolvers::univariate::NewtonRaphson::typeName,
                 TEqn_,
                 dict
             );
@@ -301,7 +301,7 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
                 TDict.lookupOrDefault
                 (
                     "solver",
-                    NewtonRaphsonUnivariateRootSolver::typeName
+                    rootSolvers::univariate::NewtonRaphson::typeName
                 ),
                 THEEqn_,
                 TDict
@@ -312,7 +312,7 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
         THESolver_ =
             univariateRootSolver::New
             (
-                NewtonRaphsonUnivariateRootSolver::typeName,
+                rootSolvers::univariate::NewtonRaphson::typeName,
                 THEEqn_,
                 dict
             );
