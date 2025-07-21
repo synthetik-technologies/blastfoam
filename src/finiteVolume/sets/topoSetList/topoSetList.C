@@ -1128,7 +1128,7 @@ void Foam::topoSetList::distribute(const polyDistributionMap& map)
         if (isA<faceZoneSet>(*iter()))
         {
             faceZoneSet& fzs = dynamicCast<faceZoneSet>(*iter());
-            boolList flipMap(this->mesh().nFaces(), false);
+            boolList flipMap(map.nOldFaces(), false);
             forAll(fzs.addressing(), fi)
             {
                 flipMap[fzs.addressing()[fi]] = fzs.flipMap()[fi];
