@@ -63,15 +63,41 @@ Foam::burstModels::field::field
         {
             burstValues_.insert(fields[i], values[i]);
         }
+
+        if (dict.found("refValues"))
+        {
+            HashTable<scalar> refValues(dict.lookup("refValues"));
+            forAllIter(HashTable<scalar>, burstValues_, iter)
+            {
+                if (refValues.found(iter.key()))
+                {
+                    iter() -= refValues[iter.key()];
+                }
+            }
+        }
     }
     else if (dict.found("burstValue"))
     {
         Tuple2<word, scalar> nameVal(dict.lookup("burstValue"));
-        burstValues_.insert(nameVal.first(), nameVal.second());
+        scalar refValue(dict.lookupOrDefault<scalar>("refValue", 0.0));
+        burstValues_.insert(nameVal.first(), nameVal.second() - refValue);
     }
     else if (dict.found("burstValues"))
     {
         burstValues_ = HashTable<scalar>(dict.lookup("burstValues"));
+
+
+        if (dict.found("refValues"))
+        {
+            HashTable<scalar> refValues(dict.lookup("refValues"));
+            forAllIter(HashTable<scalar>, burstValues_, iter)
+            {
+                if (refValues.found(iter.key()))
+                {
+                    iter() -= refValues[iter.key()];
+                }
+            }
+        }
     }
     else
     {
@@ -80,16 +106,6 @@ Foam::burstModels::field::field
             << "must be provided" << endl
             << abort(FatalError);
     }
-
-    // if (log_)
-    // {
-    //     osPtr_() << '#' << '\t' << "time" << '\t';
-    //     forAllConstIter(HashTable<scalar>, burstValues_, iter)
-    //     {
-    //         osPtr_() << iter.key() << '\t';
-    //     }
-    //     osPtr_() << endl;
-    // }
 }
 
 
@@ -109,15 +125,6 @@ Foam::burstModels::field::field
     {
         burstValues_.insert(names[i], vals[i]);
     }
-    // if (log_)
-    // {
-    //     osPtr_() << '#' << '\t' << "time" << '\t';
-    //     forAllConstIter(HashTable<scalar>, burstValues_, iter)
-    //     {
-    //         osPtr_() << iter.key() << '\t';
-    //     }
-    //     osPtr_() << endl;
-    // }
 }
 
 
@@ -146,6 +153,14 @@ bool Foam::burstModels::field::facesToChange
         return false;
     }
 
+    if (needRegionUpdate_ && regionize_)
+    {
+        regionize(patch1.patch(), patch2.patch());
+        needRegionUpdate_ = false;
+    }
+
+    updateMapping(patch1.patch(), patch2.patch());
+
     const fvMesh& mesh = patch1.boundaryMesh().mesh();
     labelHashSet masterSet, slaveSet;
 
@@ -161,9 +176,9 @@ bool Foam::burstModels::field::facesToChange
                 this->findBurstFaces
                 (
                     f.boundaryField()[patch1.index()],
-                    patch1,
+                    patch1.magSf(),
                     f.boundaryField()[patch2.index()],
-                    patch2,
+                    patch2.magSf(),
                     iter(),
                     masterSet,
                     slaveSet
@@ -180,8 +195,20 @@ bool Foam::burstModels::field::facesToChange
                 << ", neglecting. " << endl;
         }
     }
+
+    // Offset face indices by the start of the patches
     masterFaces = masterSet.toc();
+    forAll(masterFaces, fi)
+    {
+        masterFaces[fi] += patch1.start();
+    }
+
     slaveFaces = slaveSet.toc();
+    forAll(slaveFaces, fi)
+    {
+        slaveFaces[fi] += patch2.start();
+    }
+
     return returnReduce(masterFaces.size() + slaveFaces.size(), orOp<bool>());
 }
 
@@ -198,8 +225,12 @@ bool Foam::burstModels::field::facesToChange
     }
 
     const fvMesh& mesh = patch.boundaryMesh().mesh();
-    const polyPatch& pp = patch.patch();
     labelHashSet faceSet;
+
+    if (needRegionUpdate_ && regionize_)
+    {
+        regionize(patch.patch());
+    }
 
     forAllConstIter(HashTable<scalar>, burstValues_, iter)
     {
@@ -208,45 +239,17 @@ bool Foam::burstModels::field::facesToChange
         {
             const volScalarField& f =
                 mesh.lookupObject<volScalarField>(fieldName);
-            const scalarField& pf = f.boundaryField()[patch.index()];
-
-            bool allBurst = false;
-
-            if (useAverage_)
+            if
+            (
+                this->findBurstFaces
+                (
+                    f.boundaryField()[patch.index()],
+                    patch.magSf(),
+                    iter(),
+                    faceSet
+                )
+            )
             {
-                const scalar pfMean =
-                    gSum(pf*patch.magSf())/gSum(patch.magSf());
-                allBurst = pfMean > iter();
-            }
-            else
-            {
-                // Map pf1 and pf2 to the other side
-                const scalarField refVal(pf - iter());
-
-                if (partialBurst_)
-                {
-                    forAll(pp, fi)
-                    {
-                        if (refVal[fi] > 0)
-                        {
-                            faceSet.insert(pp.start() + fi);
-                        }
-                    }
-                }
-                else
-                {
-                    allBurst = gMax(refVal) > 0;
-                }
-            }
-            reduce(allBurst, orOp<bool>());
-
-
-            if (allBurst)
-            {
-                forAll(pp, fi)
-                {
-                    faceSet.insert(pp.start() + fi);
-                }
                 break;
             }
         }
@@ -257,7 +260,14 @@ bool Foam::burstModels::field::facesToChange
                 << ", neglecting. " << endl;
         }
     }
+
+    // Offset face indices by the start of the patches
     faces = faceSet.toc();
+    forAll(faces, fi)
+    {
+        faces[fi] += patch.start();
+    }
+
     return returnReduce(faces.size(), orOp<bool>());
 }
 
