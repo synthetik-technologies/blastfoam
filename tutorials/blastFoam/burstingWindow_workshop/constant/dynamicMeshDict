@@ -51,9 +51,9 @@ topoChanger
             (
                 windows
                 {
-                    intactMasterPatch windowsIntact_master;
-                    intactSlavePatch windowsIntact_slave;
-                    burstMasterPatch windowsBurst_master;
+                    intactMasterPatch windows;
+                    intactSlavePatch windows_slave;
+                    burstMasterPatch windowsBurst;
                     burstSlavePatch windowsBurst_slave;
 
 
