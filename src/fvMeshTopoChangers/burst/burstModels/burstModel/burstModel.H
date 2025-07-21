@@ -41,6 +41,8 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "patchToPatch.H"
 #include "fvPatch.H"
+#include "distributionMap.H"
+#include "remote.H"
 
 
 namespace Foam
@@ -71,14 +73,23 @@ protected:
     //- Use average pressure to determine burst (only for non partial burst)
     bool useAverage_;
 
+    //- Split patch into connect regions, non-partial burst applied to regions
+    bool regionize_;
+
     //- Log information
     bool log_;
 
     //- Is an update needed
     mutable bool needUpdate_;
+    mutable bool needRegionUpdate_;
 
     //- Patch to patch storage
     mutable autoPtr<patchToPatch> mappingPtr_;
+
+    //- List of region faces
+    mutable List<labelList> patchRegionFaces_;
+    mutable List<labelList> patch1RegionFaces_;
+    mutable List<labelList> patch2RegionFaces_;
 
     // Protected member function
 
@@ -86,12 +97,52 @@ protected:
         bool findBurstFaces
         (
             const scalarField& pf1,
-            const fvPatch&  patch1,
+            const scalarField& magSf1,
             const scalarField& pf2,
-            const fvPatch&  patch2,
+            const scalarField& magSf2,
             const scalar burstValue,
             labelHashSet& master,
             labelHashSet& slave
+        ) const;
+
+        bool findBurstFaces
+        (
+            const scalarField& pf,
+            const scalarField& magSf,
+            const scalar burstValue,
+            labelHashSet& faces
+        ) const;
+
+        //- Split single patch in to regions
+        void regionize(const polyPatch& patch) const;
+
+        //- Split single patch in to regions
+        void regionize
+        (
+            const polyPatch& patch,
+            List<labelList>& patchRegionFaces
+        ) const;
+
+        //- Split two coupled patch in to regions
+        void regionize
+        (
+            const polyPatch& patch1,
+            const polyPatch& patch2
+        ) const;
+
+        //- Find faces that need to be sent to other processors
+        labelListList facesToSend
+        (
+            const primitivePatch& srcPatch,
+            const primitivePatch& tgtPatch
+        ) const;
+
+        //- Distribute patch
+        List<remote> distributePatch
+        (
+            const distributionMap& map,
+            const primitivePatch& patch,
+            autoPtr<PrimitivePatch<faceList, pointField>>& localPatchPtr
         ) const;
 
 public:
@@ -147,8 +198,8 @@ public:
         //- Update the patch to patch mapping
         void updateMapping
         (
-            const primitivePatch& patch1,
-            const primitivePatch& patch2
+            const polyPatch& patch1,
+            const polyPatch& patch2
         ) const;
 
         //- Find and set face indices to change, return if any added
