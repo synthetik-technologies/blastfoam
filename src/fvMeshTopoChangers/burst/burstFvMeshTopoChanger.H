@@ -239,6 +239,8 @@ class burst
             const HashPtrTable<typename SurfaceField<Type>::Boundary>& bfields
         ) const;
 
+        //- Add processor cyclic patches
+        void addProcessorCyclicPatches(const List<bool>& hasOldSize);
 
 public:
 

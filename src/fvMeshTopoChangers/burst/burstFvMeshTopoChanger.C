@@ -29,6 +29,7 @@ License
 #include "volFields.H"
 #include "PatchTools.H"
 #include "forwardFieldMapper.H"
+#include "fvMeshTools.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -120,6 +121,160 @@ Foam::fvMeshTopoChangers::burst::~burst()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::fvMeshTopoChangers::burst::addProcessorCyclicPatches
+(
+    const List<bool>& hasOldSize
+)
+{
+    if (!Pstream::parRun())
+    {
+        return;
+    }
+
+    DynamicList<polyPatch*, 1, 1, 1> newPatches(mesh().boundaryMesh().size());
+
+    label newPatchi = mesh().boundaryMesh().size();
+
+    wordList addedPatches;
+
+    // Add the processor cyclic patches
+    forAll(patchData_, couplei)
+    {
+        const Pair<word> origPatchNames
+        (
+            patchData_[couplei].burstMasterPatch(),
+            patchData_[couplei].burstSlavePatch()
+        );
+        Pair<word> ncPatchNames
+        (
+            nonConformalCyclicPolyPatch::typeName + "_on_" + origPatchNames[0],
+            nonConformalCyclicPolyPatch::typeName + "_on_" + origPatchNames[1]
+        );
+
+        const polyBoundaryMesh& patches = mesh().boundaryMesh();
+
+        const polyPatch& patch1 = patches[origPatchNames.first()];
+        const polyPatch& patch2 = patches[origPatchNames.second()];
+
+        if
+        (
+            returnReduce
+            (
+                hasOldSize[couplei]
+
+             && !patch1.size()
+             && !patch2.size(),
+                orOp<bool>()
+            )
+        )
+        {
+            continue;
+        }
+
+        boolList procHasPatch1(Pstream::nProcs(), false);
+        procHasPatch1[Pstream::myProcNo()] = !patch1.empty();
+        Pstream::gatherList(procHasPatch1);
+        Pstream::scatterList(procHasPatch1);
+
+        boolList procHasPatch2(Pstream::nProcs(), false);
+        procHasPatch2[Pstream::myProcNo()] = !patch2.empty();
+        Pstream::gatherList(procHasPatch2);
+        Pstream::scatterList(procHasPatch2);
+
+        // Multiple cyclic interfaces must be ordered in a specific way for
+        // processor communication to function correctly.
+        //
+        // A communication that is sent from the cyclic owner is received
+        // on the cyclic neighbour and vice versa. Therefore, in a coupled
+        // pair of processors if one sends the owner first the other must
+        // receive the neighbour first.
+        //
+        // We ensure the above by ordering the patches so that for the
+        // lower indexed processor the owner interface comes first, and for
+        // the higher indexed processor the neighbour comes first.
+
+        auto appendProcPatches = [&](const bool owner, const bool first)
+        {
+            const boolList& procHasPatchA =
+                owner ? procHasPatch1 : procHasPatch2;
+            const boolList& procHasPatchB =
+                owner ? procHasPatch2 : procHasPatch1;
+
+            if (procHasPatchA[Pstream::myProcNo()])
+            {
+                forAll(procHasPatchB, proci)
+                {
+                    if
+                    (
+                        (
+                            (first && proci > Pstream::myProcNo())
+                         || (!first && proci < Pstream::myProcNo())
+                        )
+                     && procHasPatchB[proci]
+                    )
+                    {
+                        autoPtr<nonConformalProcessorCyclicPolyPatch> ncpcpp
+                        (
+                            new nonConformalProcessorCyclicPolyPatch
+                            (
+                                0,
+                                mesh().nFaces(),
+                                patches.size(),
+                                patches,
+                                Pstream::myProcNo(),
+                                proci,
+                                ncPatchNames[!owner],
+                                origPatchNames[!owner]
+                            )
+                        );
+
+                        if (patches.findIndex(ncpcpp->name()) < 0)
+                        {
+                            addedPatches.append(ncpcpp->name());
+                            newPatches(newPatchi++) = ncpcpp.ptr();
+                        }
+                    }
+                }
+            }
+        };
+
+        appendProcPatches(true, true);
+        appendProcPatches(false, true);
+        appendProcPatches(false, false);
+        appendProcPatches(true, false);
+    }
+
+    if (returnReduce(newPatchi != mesh().boundaryMesh().size(), orOp<bool>()))
+    {
+        DebugInfo
+            << "Adding " << nonConformalProcessorCyclicPolyPatch::typeName
+            << " patches:" << nl
+            << addedPatches << endl;
+
+        const polyBoundaryMesh& patches = mesh().boundaryMesh();
+        forAll(patches, patchi)
+        {
+            newPatches(patchi) = patches[patchi].clone(patches).ptr();
+        }
+
+        forAll(newPatches, newPatchi)
+        {
+            fvMeshTools::addPatch
+            (
+                mesh(),
+                *newPatches[newPatchi],
+                dictionary(),
+                calculatedFvPatchField<scalar>::typeName,
+                false
+            );
+
+            // Delete pointers
+            deleteDemandDrivenData(newPatches[newPatchi]);
+        }
+    }
+}
+
+
 bool Foam::fvMeshTopoChangers::burst::update()
 {
     // Do mesh changes (use inflation - put new points in topoChangeMap)
@@ -132,6 +287,7 @@ bool Foam::fvMeshTopoChangers::burst::update()
     DynamicList<label> masterFacesToChange;
     DynamicList<label> slaveFacesToChange;
     autoPtr<polyTopoChange> meshModPtr;
+    List<bool> hasOldSize(patchData_.size(), false);
     forAll(patchData_, i)
     {
         masterFacesToChange.clear();
@@ -144,6 +300,7 @@ bool Foam::fvMeshTopoChangers::burst::update()
 
         label nMasterRemoved = 0;
         label nSlaveRemoved = 0;
+
         if (data.coupled())
         {
             burstMasterPatchID =
@@ -158,6 +315,8 @@ bool Foam::fvMeshTopoChangers::burst::update()
             const polyPatch& intactSlavePp =
                 mesh().boundaryMesh()[data.intactSlavePatch()];
             const label intactSlavePatchID = intactSlavePp.index();
+
+            hasOldSize[i] = intactMasterPp.size() && intactSlavePp.size();
 
             data.burst().facesToChange
             (
@@ -324,6 +483,19 @@ bool Foam::fvMeshTopoChangers::burst::update()
         }
 
 
+        bool needUpdate = false;
+        forAll(hasOldSize, i)
+        {
+            if (!hasOldSize[i])
+            {
+                needUpdate = true;
+            }
+        }
+        if (returnReduce(needUpdate, orOp<bool>()))
+        {
+            addProcessorCyclicPatches(hasOldSize);
+        }
+
         // Map all the volFields in the objectRegistry using the mapping created
         // from the old local indices to the new local indices
         #define mapBoundariesType(Type, Mesh)                   \
@@ -334,6 +506,7 @@ bool Foam::fvMeshTopoChangers::burst::update()
             );
         FOR_ALL_FIELD_TYPES(mapBoundariesType, Vol);
         FOR_ALL_FIELD_TYPES(mapBoundariesType, Surface);
+        #undef mapBoundariesType
 
         return true;
     }
