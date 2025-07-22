@@ -63,6 +63,9 @@ Foam::FieldSetTypes::Function<Type, FSType>::Function
         funcDict
     );
 
+    // Make sure all processors are sync'd
+    returnReduce(true, andOp<bool>());
+
     if (this->good_)
     {
         this->setField();
