@@ -1189,11 +1189,6 @@ void Foam::topoSetList::transferZones(const bool remove)
                     czIter()->toc(),
                     this->mesh().cellZones()
                 );
-            if (remove)
-            {
-                cellTopoSets_.erase(czIter);
-            }
-
         }
     }
 
@@ -1212,11 +1207,6 @@ void Foam::topoSetList::transferZones(const bool remove)
                     dynamicCast<const faceZoneSet>(*fzIter()).flipMap(),
                     this->mesh().faceZones()
                 );
-            if (remove)
-            {
-                faceTopoSets_.erase(fzIter);
-            }
-
         }
     }
 
@@ -1234,18 +1224,7 @@ void Foam::topoSetList::transferZones(const bool remove)
                     pzIter()->toc(),
                     this->mesh().pointZones()
                 );
-            if (remove)
-            {
-                pointTopoSets_.erase(pzIter);
-            }
-
         }
-    }
-    if (remove)
-    {
-        cellZones_.clear();
-        faceZones_.clear();
-        pointZones_.clear();
     }
 
 
@@ -1269,6 +1248,46 @@ void Foam::topoSetList::transferZones(const bool remove)
         mesh.cellZones().clear();
 
         mesh.addZones(meshPointZones, meshFaceZones, meshCellZones);
+    }
+
+    if (remove)
+    {
+        forAll(cellZones, zonei)
+        {
+            const word& zoneName = cellZones[zonei];
+            HashPtrTable<topoSet>::iterator czIter =
+                cellTopoSets_.find(zoneName);
+            if (czIter != cellTopoSets_.end())
+            {
+                cellTopoSets_.erase(czIter);
+            }
+        }
+
+        forAll(faceZones, zonei)
+        {
+            const word& zoneName = faceZones[zonei];
+            HashPtrTable<topoSet>::iterator fzIter =
+                faceTopoSets_.find(zoneName);
+            if (fzIter != faceTopoSets_.end())
+            {
+                faceTopoSets_.erase(fzIter);
+            }
+        }
+
+        forAll(pointZones, zonei)
+        {
+            const word& zoneName = pointZones[zonei];
+            HashPtrTable<topoSet>::iterator pzIter =
+                pointTopoSets_.find(zoneName);
+            if (pzIter != pointTopoSets_.end())
+            {
+                pointTopoSets_.erase(pzIter);
+            }
+        }
+
+        cellZones_.clear();
+        faceZones_.clear();
+        pointZones_.clear();
     }
 }
 
@@ -1360,6 +1379,7 @@ bool Foam::topoSetList::writeSets() const
             iter()->write();
         }
     }
+
     if (meshCellZones.size() || meshFaceZones.size() || meshPointZones.size())
     {
         if (meshCellZones.size() && debug)
