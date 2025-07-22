@@ -533,7 +533,7 @@ int main(int argc, char *argv[])
         setFieldsDict.lookup("regions"),
         backupTopoSetSource::iNew(mesh)
     );
-    topoSetList topoSets(mesh);
+    topoSetList& topoSets = topoSetList::New(mesh);
 
     labelList levels(regions.size(), -1);
     forAll(regions, regionI)
@@ -803,7 +803,7 @@ int main(int argc, char *argv[])
                             selectedCells,
                             selectedFaces,
                             selectedPoints,
-                            end || debug
+                            write
                         )
                     );
                 }
@@ -1110,12 +1110,16 @@ int main(int argc, char *argv[])
                 if (refined && balance)
                 {
                     // Balance the mesh, do not call "distribute" since the
-                    // mover, topoChanger, and disributor are not set, but used without
-                    // checks
-                    autoPtr<polyDistributionMap> map = balancer->forceUpdate(false);
+                    // mover, topoChanger, and disributor are not set, but
+                    // used without  checks
+                    autoPtr<polyDistributionMap> map =
+                        balancer->forceUpdate(false);
                     if (map.valid())
                     {
                         refiner->distribute(map);
+
+                        // Update sets and zones
+                        topoSets.distribute(map);
                     }
                 }
                 prepareToStop = !refined;
@@ -1180,10 +1184,11 @@ int main(int argc, char *argv[])
     }
 
     // Write all fields
-    if (updateAll)
+    if (!noWrite && updateAll)
     {
         runTime.write();
     }
+
     if (refine || writeMesh)
     {
         mesh.write();
