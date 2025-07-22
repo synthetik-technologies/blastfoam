@@ -179,10 +179,26 @@ int main(int argc, char *argv[])
     newFaceZones.setSize(fzi);
     newPointZones.setSize(pzi);
 
+    // Delete empty files
+    if (!czi)
+    {
+        rm(mesh.cellZones().objectPath());
+    }
+    if (!fzi)
+    {
+        rm(mesh.faceZones().objectPath());
+    }
+    if (!pzi)
+    {
+        rm(mesh.pointZones().objectPath());
+    }
+
+    // Clear mesh zone (required)
     mesh.pointZones().clear();
     mesh.faceZones().clear();
     mesh.cellZones().clear();
 
+    // Add zones to the mesh
     mesh.addZones(newPointZones, newFaceZones, newCellZones);
 
     Info<< "writing mesh to " << meshInstance << endl;
