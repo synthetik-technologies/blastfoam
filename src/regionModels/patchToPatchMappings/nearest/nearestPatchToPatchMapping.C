@@ -421,6 +421,7 @@ Foam::label Foam::patchToPatchMappings::nearest::finalisePoints
     }
 
     // Keep only the closest opposing point
+    srcPointWeights_.setSize(localTgtPointsToSrc_.size());
     forAll(localTgtPointsToSrc_, srcPointi)
     {
         localTgtPointsToSrc_[srcPointi].resize
@@ -433,6 +434,7 @@ Foam::label Foam::patchToPatchMappings::nearest::finalisePoints
             1.0
         );
     }
+    tgtPointWeights_.setSize(localSrcPointsToTgt_.size());
     forAll(localSrcPointsToTgt_, tgtPointi)
     {
         localSrcPointsToTgt_[tgtPointi].resize
