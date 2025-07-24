@@ -696,7 +696,7 @@ bool Foam::fvMeshDistributors::redistributor::update()
         distribute(distribution, true);
 
         Info<< "Redistributed mesh with new imbalance = "
-            << 100.0*maxDevNew << "%" << endl;
+            << 100.0*maxDevNew << " %" << endl;
         if (debug)
         {
             Pout<< "New local nCells = " << mesh.nCells() << endl;
