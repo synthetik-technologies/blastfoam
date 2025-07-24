@@ -27,6 +27,7 @@ License
 #include "inverseDistancePatchToPatchMapping.H"
 #include "triPointRef.H"
 #include "patchToPatchTools.H"
+#include "triangleFuncs.H"
 #include "addToRunTimeSelectionTable.H"
 
 
@@ -98,6 +99,8 @@ void Foam::patchToPatchMappings::inverseDistance::generateFaceWeights
 
         label otherFacei = -1;
 
+        const labelList ovelapFaces(otherFaces[facei]);
+
         // Find the other face that "contains" this face's centre
         forAll(otherFaces[facei], i)
         {
@@ -157,6 +160,85 @@ void Foam::patchToPatchMappings::inverseDistance::generateFaceWeights
                 1.0
                /(mag(c - otherPatch.faceCentres()[otherFacej]) + rootVSmall)
             );
+        }
+
+        // Make sure overlapping faces are added since only one side may use
+        // it for mapping
+
+        const face& f1 = patch.localFaces()[facei];
+        const vector& fc1 = patch.faceCentres()[facei];
+        vector hp1, hp2;
+        forAll(ovelapFaces, i)
+        {
+            const label otherFacej = ovelapFaces[i];
+            if (findIndex(otherFaces[facei], otherFacej) >= 0)
+            {
+                continue;
+            }
+
+            bool hit = false;
+            const face& f2 = otherPatch.localFaces()[otherFacej];
+            const vector& fc2 = otherPatch.faceCentres()[otherFacej];
+            forAll(f1, pi)
+            {
+                const point p11 = patch.localPoints()[f1[pi]];
+                const point p12 = patch.localPoints()[f1[f1.fcIndex(pi)]];
+                triPointRef tri1(p11, p12, fc1);
+
+                forAll(f2, pj)
+                {
+                    const barycentric2D b21 = tri1.pointToBarycentric
+                    (
+                        otherPatch.localPoints()[f2[pj]]
+                    );
+                    if
+                    (
+                        b21.a() >= 0 && b21.a() <= 1
+                     && b21.b() >= 0 && b21.b() <= 1
+                     && b21.c() >= 0 && b21.c() <= 1
+                    )
+                    {
+                        hit = true;
+                        break;
+                    }
+                    const point p21 = tri1.barycentricToPoint(b21);
+                    const point p22 = tri1.barycentricToPoint
+                    (
+                        tri1.pointToBarycentric
+                        (
+                            otherPatch.localPoints()[f2[f2.fcIndex(pj)]]
+                        )
+                    );
+
+                    if
+                    (
+                        triangleFuncs::intersect
+                        (
+                            p11,
+                            p12,
+                            fc1,
+
+                            p21,
+                            p22,
+                            fc2,
+
+                            hp1,
+                            hp2
+                        )
+                    )
+                    {
+                        hit = true;
+                        break;
+                    }
+                }
+                if (hit) break;
+            }
+
+            if (hit)
+            {
+                otherFaces[facei].append(otherFacej);
+                weights[facei].append(0);
+            }
         }
     }
 }
@@ -218,7 +300,7 @@ void Foam::patchToPatchMappings::inverseDistance::generatePointWeights
                                /max
                                 (
                                     mag(pt - otherPoints[otherFace[pi]]),
-                                    vSmall
+                                    rootVSmall
                                 );
 
                             if (!addedPoints.insert(otherFace[pi]))
@@ -388,7 +470,6 @@ Foam::labelList Foam::patchToPatchMappings::inverseDistance::finaliseLocalFaces
         )
     );
     tgtFaceWeights_ = List<DynamicList<scalar>>(tgtFaceWeights_, newToOld);
-
     return newToOld;
 }
 
@@ -560,6 +641,7 @@ Foam::label Foam::patchToPatchMappings::inverseDistance::finaliseFaces
             ws[i] /= sumW;
         }
     }
+
 
     return nCouples;
 }
