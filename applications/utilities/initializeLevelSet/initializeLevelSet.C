@@ -36,8 +36,9 @@ Description
 #include "calcAngleFraction.H"
 #include "blastMeshTools.H"
 
-#include "fvMeshTopoChanger.H"
-#include "polyMeshRefiner.H"
+#include "polyMeshHexRefiner.H"
+#include "redistributorFvMeshDistributor.H"
+#include "polyDistributionMap.H"
 #include "topoSetList.H"
 #include "levelSetModel.H"
 #include "IOobjectList.H"
@@ -48,7 +49,8 @@ using namespace Foam;
 
 void setPhase
 (
-    autoPtr<fvMeshTopoChanger>& changer,
+    autoPtr<polyMeshRefiner>& refiner,
+    autoPtr<fvMeshDistributors::redistributor>& balancer,
     fvMesh& mesh,
     volScalarField& alpha,
     levelSetModel& LSModel,
@@ -190,7 +192,7 @@ void setPhase
         alpha.correctBoundaryConditions();
 
         // Update error and mesh if not the final iteration
-        if (changer.valid())
+        if (refiner.valid())
         {
             error == -1.0;
 
@@ -207,12 +209,12 @@ void setPhase
                 }
             }
 
+            labelList maxCellLevel(mesh.nCells(), -1);
             if (mesh.foundObject<labelIOList>("cellLevel"))
             {
                 const labelIOList& cellLevel =
                     mesh.lookupObject<labelIOList>("cellLevel");
 
-                labelList maxCellLevel(mesh.nCells(), -1);
                 forAll(regions, regionI)
                 {
                     // Set specified cells to be refined
@@ -357,7 +359,24 @@ void setPhase
             // Update mesh (return if mesh changes)
             if (!end)
             {
-                prepareToStop = !changer->update();
+                const bool refined = refiner->refine(error, maxCellLevel);
+                if (refined && balancer.valid())
+                {
+                    // Balance the mesh, do not call "distribute" since the
+                    // mover, topoChanger, and disributor are not set, but
+                    // used without  checks
+                    autoPtr<polyDistributionMap> map =
+                        balancer->forceUpdate(false);
+                    if (map.valid())
+                    {
+                        refiner->distribute(map);
+
+                        // Update sets and zones
+                        // topoSets.distribute(map);
+                    }
+                }
+                LSModel.updateEpsilon();
+                prepareToStop = !refined;
             }
         }
         iter++;
@@ -420,12 +439,12 @@ int main(int argc, char *argv[])
     //- Select time
     instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
 
-    #include "createRegionMesh.H"
+    #include "createRegionMeshNoChangers.H"
 
     // Store original mesh instance
     const fileName oldFacesInstance = mesh.facesInstance();
 
-    const dictionary levelSetProperties
+    dictionary levelSetProperties
     (
         systemDict("levelSetProperties", args, mesh)
     );
@@ -438,28 +457,93 @@ int main(int argc, char *argv[])
     bool noHistory(args.optionFound("noHistory"));
 
     //- Is the mesh balanced
-    autoPtr<fvMeshTopoChanger> changerPtr;
+    autoPtr<polyMeshRefiner> refiner;
+    autoPtr<fvMeshDistributors::redistributor> balancer;
     if (!noRefine)
     {
-        dictionary refineDict
+        dictionary& refineDict
         (
-            levelSetProperties.optionalSubDict
-            (
-                "refinerCoeffs"
-            )
+            levelSetProperties.isDict("refinerCoeffs")
+          ? levelSetProperties.subDict("refinerCoeffs")
+          : levelSetProperties
         );
-        refineDict.set("forceRefinement", true);
+
+        dictionary balanceDict = refineDict;
+
+        word refinerType("hexRefiner");
+        if (!refineDict.found("refiner"))
+        {
+            typeIOobject<IOdictionary> dynamicMeshDictIO
+            (
+                "dynamicMeshDict",
+                runTime.constant(),
+                runTime,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                false
+            );
+            if (dynamicMeshDictIO.headerOk())
+            {
+                IOdictionary dynamicMeshDict(dynamicMeshDictIO);
+                if
+                (
+                    dynamicMeshDict.isDict("topoChanger")
+                 && dynamicMeshDict.subDict("topoChanger").found("type")
+                )
+                {
+                    const word tcType
+                    (
+                        dynamicMeshDict.subDict("topoChanger").lookup("type")
+                    );
+                    if (tcType.find("Refiner") != string::npos)
+                    {
+                        refinerType = tcType;
+                    }
+                }
+                if (dynamicMeshDict.isDict("distributor"))
+                {
+                    balanceDict.merge(dynamicMeshDict.subDict("distributor"));
+                }
+            }
+        }
+        else
+        {
+            refinerType = refineDict.lookup<word>("refiner");
+        }
+
+        refineDict.set("force", true);
         if (args.optionFound("forceHex8"))
         {
             refineDict.set("forceHex8", true);
+            refiner.set(new polyMeshHexRefiner(mesh, refineDict));
+        }
+        else if (refineDict.found("refiner") || mesh.nGeometricD() > 1)
+        {
+            refineDict.set("refiner", refinerType);
+            refiner = polyMeshRefiner::New(mesh, refineDict);
+        }
+        else
+        {
+            IOWarningInFunction(refineDict)
+                << "A default refiner is no specified for " << mesh.nGeometricD()
+                << " geometricD so a refiner must be explicitily specified using the "
+                << "\"refiner\" keyword." << nl << endl;
         }
 
-        changerPtr =
-            fvMeshTopoChanger::New
-            (
-                mesh,
-                refineDict
-            );
+        if (refiner.valid())
+        {
+            if (Pstream::parRun())
+            {
+                if (!args.optionFound("noBalance"))
+                {
+                    balancer.set
+                    (
+                        new fvMeshDistributors::redistributor(mesh, balanceDict)
+                    );
+                }
+            }
+            refiner->setForce(true);
+        }
     }
 
     // Collect the phases to set
@@ -510,7 +594,8 @@ int main(int argc, char *argv[])
         Info<<"Creating levelSet function for " << phases[phasei] << endl;
         setPhase
         (
-            changerPtr,
+            refiner,
+            balancer,
             mesh,
             alphas[phasei],
             LSModels[phasei],
@@ -524,7 +609,7 @@ int main(int argc, char *argv[])
         mesh.setInstance(oldFacesInstance);
     }
 
-    if (changerPtr.valid() && args.optionFound("points0"))
+    if (refiner.valid() && args.optionFound("points0"))
     {
         pointVectorField points0
         (
@@ -543,7 +628,7 @@ int main(int argc, char *argv[])
 
     if (noHistory)
     {
-        changerPtr.clear();
+        refiner.clear();
     }
 
     if (!args.optionFound("writeAll"))

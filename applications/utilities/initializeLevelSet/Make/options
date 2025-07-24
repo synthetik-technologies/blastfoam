@@ -8,6 +8,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/polyTopoChange/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
+    -I$(BLAST_DIR)/src/fvMeshDistributors/lnInclude \
     -I$(BLAST_DIR)/src/levelSet/lnInclude
 
 EXE_LIBS = \
@@ -20,4 +21,5 @@ EXE_LIBS = \
     -lblastFiniteVolume \
     -lblastPolyTopoChange \
     -lerrorEstimators \
+    -lblastFvMeshDistributors \
     -llevelSet
