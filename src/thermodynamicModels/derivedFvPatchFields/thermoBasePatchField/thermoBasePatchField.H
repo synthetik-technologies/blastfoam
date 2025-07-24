@@ -114,14 +114,23 @@ public:
             //- Return the psi field
             tmp<scalarField> psi() const;
 
+            //- Return the psi internal field
+            tmp<scalarField> psiIf() const;
+
             //- Return the gamma field
             tmp<scalarField> gamma() const;
+
+            //- Return the gamma internal field
+            tmp<scalarField> gammaIf() const;
 
             //- Return the gamma field given a temperature
             tmp<scalarField> gamma(const scalarField& T) const;
 
             //- Return the speed of sound
             tmp<scalarField> speedOfSound() const;
+
+            //- Return the speed of sound
+            tmp<scalarField> speedOfSoundIf() const;
 
 
         //- Write
