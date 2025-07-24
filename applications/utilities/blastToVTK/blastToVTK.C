@@ -93,15 +93,20 @@ template<class GeoField>
 bool foundGeoField
 (
     const fvMesh& mesh,
-    const word& fieldName
+    const word& fieldName,
+    const word& type
 )
 {
+    if (type != GeoField::typeName)
+    {
+        return false;
+    }
     typeIOobject<GeoField> io
     (
         fieldName,
         mesh.time().name(),
         mesh,
-        IOobject::MUST_READ
+        IOobject::NO_READ
     );
 
     if (!returnReduce(io.headerOk(), andOp<bool>()))
@@ -119,6 +124,7 @@ bool writeGeoField
     const PtrList<fvMesh>& meshes,
     const label size,
     const word& fieldName,
+    const word& type,
     const label patchID,
     const scalarList& weights,
     const PtrList<patchToPatchMapping>& interps
@@ -135,7 +141,7 @@ bool writeGeoField
         // Check if the field has been registered
         const fvMesh& mesh = meshes[i];
 
-        if (!foundGeoField<GeoField<Type>>(mesh, fieldName))
+        if (!foundGeoField<GeoField<Type>>(mesh, fieldName, type))
         {
             return false;
         }
@@ -155,21 +161,21 @@ bool writeGeoField
         // If not the master surface, interpolate to the master patch
         if (interps.set(i))
         {
+            tmp<Field<Type>> tinterpFld
+            (
+                interps[i].transferFacesToTgt
+                (
+                    weights[i]*fld.boundaryField()[patchID]
+                )
+            );
             if (!procFields[Pstream::myProcNo()].size())
             {
-                procFields[Pstream::myProcNo()] =
-                    interps[i].transferFacesToTgt
-                    (
-                        weights[i]*fld.boundaryField()[patchID]
-                    );
+                procFields[Pstream::myProcNo()] = tinterpFld;
+
             }
             else
             {
-                procFields[Pstream::myProcNo()] +=
-                    interps[i].transferFacesToTgt
-                    (
-                        weights[i]*fld.boundaryField()[patchID]
-                    );
+                procFields[Pstream::myProcNo()] += tinterpFld;
             }
         }
         else
@@ -188,7 +194,6 @@ bool writeGeoField
     }
 
     Pstream::gatherList(procFields);
-
 
     // Write
     if (Pstream::master())
@@ -219,6 +224,7 @@ bool writePointField
     const PtrList<fvMesh>& meshes,
     const label size,
     const word& fieldName,
+    const word& type,
     const label patchID,
     const scalarList& weights,
     const PtrList<patchToPatchMapping>& interps
@@ -234,7 +240,7 @@ bool writePointField
     {
         // Check if the field has been registered
         const fvMesh& mesh = meshes[i];
-        if (!foundGeoField<PointField<Type>>(mesh, fieldName))
+        if (!foundGeoField<PointField<Type>>(mesh, fieldName, type))
         {
             return false;
         }
@@ -252,8 +258,6 @@ bool writePointField
         );
 
         // Reduce the field to the global patch
-        List<Field<Type>> procFields(Pstream::nProcs());
-
         tmp<Field<Type>> tpfld;
         if (isA<valuePointPatchField<Type>>(fld.boundaryField()[patchID]))
         {
@@ -269,7 +273,6 @@ bool writePointField
         {
             tpfld = fld.boundaryField()[patchID].patchInternalField();
         }
-
 
         // If not the master surface, interpolate to the master patch
         if (interps.set(i))
@@ -416,7 +419,10 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
     #include "createTime.H"
 
-    const bool binary = !args.optionFound("ascii");
+    const bool binary =
+        args.optionFound("ascii")
+      ? true
+      : runTime.writeFormat() == IOstream::BINARY;
 
     const word regionName =
         args.optionLookupOrDefault("region", polyMesh::defaultRegion);
@@ -490,11 +496,60 @@ int main(int argc, char *argv[])
         )
     );
 
-    wordList fieldNames;
+    List<Pair<word>> fieldNamesType;
     bool hasPoints = false;
     if (args.optionFound("fields"))
     {
-        fieldNames = args.optionRead<wordList>("fields");
+        // Get list of objects from processor0 database
+        IOobjectList objects
+        (
+            meshes[0],
+            timeDirs[0].name()
+        );
+
+        HashSet<word> fieldNames(args.optionRead<wordList>("fields"));
+        forAllConstIter(IOobjectList, objects, iter)
+        {
+            if (fieldNames.found(iter()->name()))
+            {
+                if
+                (
+                    iter()->headerClassName() == volScalarField::typeName
+                 || iter()->headerClassName() == volVectorField::typeName
+                  || iter()->headerClassName() == volSymmTensorField::typeName
+                  || iter()->headerClassName() == volSphericalTensorField::typeName
+                  || iter()->headerClassName() == volTensorField::typeName
+
+                  || iter()->headerClassName() == surfaceScalarField::typeName
+                  || iter()->headerClassName() == surfaceVectorField::typeName
+                  || iter()->headerClassName() == surfaceSymmTensorField::typeName
+                  || iter()->headerClassName() == surfaceSphericalTensorField::typeName
+                  || iter()->headerClassName() == surfaceTensorField::typeName
+                )
+                {
+                    fieldNamesType.append
+                    (
+                        {iter.key(), iter()->headerClassName()}
+                    );
+                }
+
+                if
+                (
+                    iter()->headerClassName() == pointScalarField::typeName
+                  || iter()->headerClassName() == pointVectorField::typeName
+                  || iter()->headerClassName() == pointSymmTensorField::typeName
+                  || iter()->headerClassName() == pointSphericalTensorField::typeName
+                  || iter()->headerClassName() == pointTensorField::typeName
+                )
+                {
+                    fieldNamesType.append
+                    (
+                        {iter.key(), iter()->headerClassName()}
+                    );
+                    hasPoints = true;
+                }
+            }
+        }
     }
     else
     {
@@ -521,7 +576,10 @@ int main(int argc, char *argv[])
              || iter()->headerClassName() == surfaceTensorField::typeName
             )
             {
-                fieldNames.append(iter.key());
+                fieldNamesType.append
+                (
+                    {iter.key(), iter()->headerClassName()}
+                );
             }
 
             if
@@ -533,15 +591,18 @@ int main(int argc, char *argv[])
              || iter()->headerClassName() == pointTensorField::typeName
             )
             {
-                fieldNames.append(iter.key());
+                fieldNamesType.append
+                (
+                    {iter.key(), iter()->headerClassName()}
+                );
                 hasPoints = true;
             }
         }
     }
     Info<< "Sampling fields:" << endl << incrIndent;
-    forAll(fieldNames, fieldi)
+    forAll(fieldNamesType, fieldi)
     {
-        Info<< indent << fieldNames[fieldi] << endl;
+        Info<< indent << fieldNamesType[fieldi].first() << endl;
     }
     Info<< decrIndent << endl;
 
@@ -562,11 +623,11 @@ int main(int argc, char *argv[])
     interpDict.add
     (
         "mappingType",
-        args.optionLookupOrDefault<word>("mappingType", "inverseDistance")
+        args.optionLookupOrDefault<word>("mappingType", "nearest")
     );
 
     fileName outputDir(args.optionLookupOrDefault<fileName>("outputDir", "VTK"));
-    vtkTimeSeries timeSeries(outputDir, 0, true);
+    vtkTimeSeries timeSeries(outputDir, 0, false);
     forAll(sampleTimes, ti)
     {
 
@@ -627,7 +688,7 @@ int main(int argc, char *argv[])
         }
         Info<< decrIndent << endl;
 
-        UPtrList<const polyPatch> meshPatches(Is.size());
+        PtrList<primitivePatch> meshPatches(Is.size());
         forAll(meshPatches, tj)
         {
             if (!runTimes.set(tj))
@@ -679,7 +740,20 @@ int main(int argc, char *argv[])
             {
                 meshes[tj].readUpdate();
             }
-            meshPatches.set(tj, &meshes[tj].boundaryMesh()[patchID]);
+            meshPatches.set
+            (
+                tj,
+                new primitivePatch
+                (
+                    SubList<face>
+                    (
+                        meshes[tj].boundaryMesh()[patchID].localFaces(),
+                        meshes[tj].boundaryMesh()[patchID].size()
+                    ),
+                    meshes[tj].boundaryMesh()[patchID].localPoints()
+                )
+            );
+            // meshPatches.set(tj, &meshes[tj].boundaryMesh()[patchID]);
         }
 
         label nFaces =
@@ -703,6 +777,7 @@ int main(int argc, char *argv[])
                         true
                     )
                 );
+                interps[patchi].update(meshPatches[patchi].pointNormals());
             }
         }
 
@@ -768,7 +843,8 @@ int main(int argc, char *argv[])
              || foundGeoField<GeoField<Type>>   \
                 (                               \
                     meshes[i],                  \
-                    fieldNames[fieldi]          \
+                    fieldNamesType[fieldi].first(),\
+                    fieldNamesType[fieldi].second()\
                 );                              \
         }
 
@@ -780,6 +856,7 @@ int main(int argc, char *argv[])
             meshes,                             \
             nFaces,                             \
             fieldName,                          \
+            type,                               \
             patchID,                            \
             ws,                                 \
             interps                             \
@@ -792,6 +869,7 @@ int main(int argc, char *argv[])
             meshes,                             \
             nPoints,                            \
             fieldName,                          \
+            type,                               \
             patchID,                            \
             ws,                                 \
             interps                             \
@@ -800,16 +878,16 @@ int main(int argc, char *argv[])
 
         // Loop through all the fields and check if exists and
         // if it is a vol/surface field or a point field
-        DynamicList<word> faceFields;
-        DynamicList<word> pointFields;
-        forAll(fieldNames, fieldi)
+        DynamicList<Pair<word>> faceFields;
+        DynamicList<Pair<word>> pointFields;
+        forAll(fieldNamesType, fieldi)
         {
             bool found = false;
             FOR_ALL_FIELD_TYPES(FoundGeoField, VolField);
             FOR_ALL_FIELD_TYPES(FoundGeoField, SurfaceField);
             if (found)
             {
-                faceFields.append(fieldNames[fieldi]);
+                faceFields.append(fieldNamesType[fieldi]);
                 found = true;
             }
             bool foundFace = found;
@@ -817,14 +895,14 @@ int main(int argc, char *argv[])
             FOR_ALL_FIELD_TYPES(FoundGeoField, PointField);
             if (found)
             {
-                pointFields.append(fieldNames[fieldi]);
+                pointFields.append(fieldNamesType[fieldi]);
                 found = true;
             }
 
             if (!foundFace && !found)
             {
                 WarningInFunction
-                    << "Did not find " << fieldNames[fieldi]
+                    << "Did not find " << fieldNamesType[fieldi].first()
                     << " for time " << runTimes[masterID].name() << endl;
             }
         }
@@ -838,7 +916,8 @@ int main(int argc, char *argv[])
         }
         forAll(faceFields, fieldi)
         {
-            const word& fieldName = faceFields[fieldi];
+            const word& fieldName = faceFields[fieldi].first();
+            const word& type = faceFields[fieldi].second();
             FOR_ALL_FIELD_TYPES(WriteGeoField, VolField);
             FOR_ALL_FIELD_TYPES(WriteGeoField, SurfaceField);
         }
@@ -852,7 +931,8 @@ int main(int argc, char *argv[])
         }
         forAll(pointFields, fieldi)
         {
-            const word& fieldName = pointFields[fieldi];
+            const word& fieldName = pointFields[fieldi].first();
+            const word& type = pointFields[fieldi].second();
             FOR_ALL_FIELD_TYPES(WritePointField);
         }
 
