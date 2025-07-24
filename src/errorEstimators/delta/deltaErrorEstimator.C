@@ -51,7 +51,7 @@ Foam::errorEstimators::delta::delta
     errorEstimator(mesh, dict, name),
     fieldName_
     (
-        dict.lookupBackwardsCompatible({"deltaField", "field"})
+        dict.lookupBackwardsCompatible({typeName + "Field", "field"})
     )
 {
     this->read(dict);
@@ -73,19 +73,9 @@ void Foam::errorEstimators::delta::update(const bool scale)
         return;
     }
 
-    tmp<volScalarField> tx
-    (
-        volScalarField::New
-        (
-            "error(" + fieldName_ + ")",
-            mesh_,
-            0.0
-        )
-    );
-    volScalarField& x = tx.ref();
-
     const labelHashSet& eCells = this->errorCells();
-    this->getFieldValue(fieldName_, x, eCells);
+    tmp<volScalarField> tx(this->getFieldValue(fieldName_, eCells));
+    const volScalarField& x = tx();
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();

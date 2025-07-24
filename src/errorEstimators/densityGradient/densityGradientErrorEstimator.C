@@ -53,7 +53,7 @@ Foam::errorEstimators::gradient::gradient
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_(dict.lookupBackwardsCompatible({"fieldName", "field"}))
+    fieldName_(dict.lookupBackwardsCompatible({typeName + "Field", "field"}))
 {
     this->read(dict);
 }
@@ -105,12 +105,16 @@ void Foam::errorEstimators::gradient::update(const bool scale)
         return;
     }
 
-    const volScalarField& rho = mesh_.lookupObject<volScalarField>("rho");
+    const labelHashSet& eCells = this->errorCells();
 
-    volVectorField gradRho(fvc::grad(rho));
+    tmp<volScalarField> tx(this->getFieldValue(fieldName_, eCells));
+    const volScalarField& x = tx();
+
+    tmp<volVectorField> tgradX(fvc::grad(x));
+    const volVectorField& gradX = tgradX();
+
     const scalarField& dL(meshSizeObject::New(mesh_).dx());
 
-    const labelHashSet& eCells = this->errorCells();
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
     const label nInternalFaces = mesh_.nInternalFaces();
@@ -131,16 +135,16 @@ void Foam::errorEstimators::gradient::update(const bool scale)
         // Ignore error in empty directions
         if ((foundOwn || foundNei) && mag(solutionD & (dr/magdr)) > 0.1)
         {
-            scalar dRhodr = (rho[nei] - rho[own])/magdr;
-            scalar rhoc = (rho[nei] + rho[own])*0.5;
+            scalar dxdr = (x[nei] - x[own])/magdr;
+            scalar xc = (x[nei] + x[own])*0.5;
             scalar dl = (dL[own] + dL[nei])*0.5;
-            scalar dRhoDotOwn = gradRho[own] & (dr/magdr);
-            scalar dRhoDotNei = gradRho[nei] & (-dr/magdr);
+            scalar dxDotOwn = gradX[own] & (dr/magdr);
+            scalar dxDotNei = gradX[nei] & (-dr/magdr);
             scalar eT =
                 Foam::max
                 (
-                    mag(dRhodr - dRhoDotNei)/(0.3*rhoc/dl + mag(dRhoDotNei)),
-                    mag(dRhodr - dRhoDotOwn)/(0.3*rhoc/dl + mag(dRhoDotOwn))
+                    mag(dxdr - dxDotNei)/(0.3*xc/dl + mag(dxDotNei)),
+                    mag(dxdr - dxDotOwn)/(0.3*xc/dl + mag(dxDotOwn))
                 );
             if (foundOwn)
             {
@@ -158,25 +162,25 @@ void Foam::errorEstimators::gradient::update(const bool scale)
     {
         if (error_.boundaryField()[patchi].coupled())
         {
-            const fvPatch& patch = rho.boundaryField()[patchi].patch();
+            const fvPatch& patch = x.boundaryField()[patchi].patch();
 
             const labelUList& faceCells = patch.faceCells();
-            scalarField rhop
+            scalarField xp
             (
-                rho.boundaryField()[patchi].patchInternalField()
+                x.boundaryField()[patchi].patchInternalField()
             );
-            scalarField rhon
+            scalarField xn
             (
-                rho.boundaryField()[patchi].patchNeighbourField()
+                x.boundaryField()[patchi].patchNeighbourField()
             );
             vectorField drField(patch.delta());
-            vectorField gradRhop
+            vectorField gradXp
             (
-                gradRho.boundaryField()[patchi].patchInternalField()
+                gradX.boundaryField()[patchi].patchInternalField()
             );
-            vectorField gradRhon
+            vectorField gradXn
             (
-                gradRho.boundaryField()[patchi].patchNeighbourField()
+                gradX.boundaryField()[patchi].patchNeighbourField()
             );
 
 
@@ -192,18 +196,18 @@ void Foam::errorEstimators::gradient::update(const bool scale)
                  && mag(solutionD & (dr/magdr)) > 0.1
                 )
                 {
-                    scalar dRhodr = (rhon[facei] - rhop[facei])/magdr;
-                    scalar rhoc = (rhon[facei] + rhop[facei])*0.5;
+                    scalar dxdr = (xn[facei] - xp[facei])/magdr;
+                    scalar xc = (xn[facei] + xp[facei])*0.5;
                     scalar dl = dL[faceCells[facei]];
-                    scalar dRhoDotOwn = gradRhop[facei] & (dr/magdr);
-                    scalar dRhoDotNei = gradRhon[facei] & (-dr/magdr);
+                    scalar dxDotOwn = gradXp[facei] & (dr/magdr);
+                    scalar dxDotNei = gradXn[facei] & (-dr/magdr);
                     scalar eT =
                         Foam::max
                         (
-                            mag(dRhodr - dRhoDotNei)
-                           /(0.3*rhoc/dl + mag(dRhoDotNei)),
-                            mag(dRhodr - dRhoDotOwn)
-                           /(0.3*rhoc/dl + mag(dRhoDotOwn))
+                            mag(dxdr - dxDotNei)
+                           /(0.3*xc/dl + mag(dxDotNei)),
+                            mag(dxdr - dxDotOwn)
+                           /(0.3*xc/dl + mag(dxDotOwn))
                         );
                     error_[faceCells[facei]] =
                         Foam::max(error_[faceCells[facei]], eT);

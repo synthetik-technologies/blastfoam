@@ -52,6 +52,11 @@ class volumeFraction
 :
     public fieldValue
 {
+
+    //- Check face owner neighbour for and interface
+    bool refineFaces_;
+
+
 public:
 
     //- Runtime type information
@@ -66,6 +71,9 @@ public:
 
 
     // Member Functions
+
+        //- Update error
+        virtual void update(const bool scale = true);
 
         //- Read level values
         virtual void read(const dictionary& dict);

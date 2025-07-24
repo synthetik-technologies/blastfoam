@@ -50,7 +50,7 @@ Foam::errorEstimators::fieldValue::fieldValue
     errorEstimator(mesh, dict, name),
     fieldName_
     (
-        dict.lookupBackwardsCompatible({"fieldName", "field"})
+        dict.lookupBackwardsCompatible({typeName + "Name", "field"})
     )
 {
     this->read(dict);
@@ -86,7 +86,7 @@ void Foam::errorEstimators::fieldValue::update(const bool scale)
     }
 
     const labelHashSet& eCells = this->errorCells();
-    this->getFieldValue(fieldName_, error_, eCells);
+    error_ = this->getFieldValue(fieldName_, eCells);
 
     if (scale)
     {

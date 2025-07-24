@@ -119,19 +119,17 @@ protected:
         void normalize(volScalarField& error, const labelHashSet& eCells);
 
         //- Lookup and return the scalar value of the field
-        void getFieldValue
+        tmp<volScalarField> getFieldValue
         (
             const word& name,
-            volScalarField& f,
             const labelHashSet& eCells
         ) const;
 
         //- Lookup and return the scalar value of the field
         template<class Type>
-        bool getFieldValueType
+        tmp<volScalarField> getFieldValueType
         (
             const word& name,
-            volScalarField& f,
             const labelHashSet& eCells
         ) const;
 
@@ -244,10 +242,9 @@ public:
 };
 
 template<>
-bool errorEstimator::getFieldValueType<scalar>
+tmp<volScalarField> errorEstimator::getFieldValueType<scalar>
 (
     const word& name,
-    volScalarField& f,
     const labelHashSet& eCells
 ) const;
 

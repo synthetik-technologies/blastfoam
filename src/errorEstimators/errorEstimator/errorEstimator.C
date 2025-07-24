@@ -142,10 +142,9 @@ Foam::labelHashSet Foam::errorEstimator::errorCells() const
 
 
 template<>
-bool Foam::errorEstimator::getFieldValueType<Foam::scalar>
+Foam::tmp<Foam::volScalarField> Foam::errorEstimator::getFieldValueType<Foam::scalar>
 (
     const word& name,
-    volScalarField& f,
     const labelHashSet& eCells
 ) const
 {
@@ -153,15 +152,9 @@ bool Foam::errorEstimator::getFieldValueType<Foam::scalar>
 
     if (mesh_.foundObject<thisType>(name))
     {
-        const thisType& x = mesh_.lookupObject<thisType>(name);
-        forAllConstIter(labelHashSet, eCells, iter)
-        {
-            const label celli = iter.key();
-            f[celli] = x[celli];
-        }
-        return true;
+        return mesh_.lookupObject<thisType>(name);
     }
-    return false;
+    return tmp<volScalarField>();
 }
 
 
@@ -249,8 +242,8 @@ void Foam::errorEstimator::readMaxRefinement(const dictionary& dict)
     }
     else if (dict.found("minDx"))
     {
-        defaultMaxLevel_ = dict.lookup<scalar>("minDx");
-        defaultMinDx_ = -1;
+        defaultMaxLevel_ = -1;
+        defaultMinDx_ = dict.lookup<scalar>("minDx");
     }
     else
     {
@@ -323,26 +316,30 @@ void Foam::errorEstimator::read(const dictionary& dict)
 }
 
 
-void Foam::errorEstimator::getFieldValue
+Foam::tmp<Foam::volScalarField> Foam::errorEstimator::getFieldValue
 (
     const word& name,
-    volScalarField& f,
     const labelHashSet& eCells
 ) const
 {
-    bool found = false;
-    found = found || this->getFieldValueType<scalar>(name, f, eCells);
-    found = found || this->getFieldValueType<vector>(name, f, eCells);
-    found = found || this->getFieldValueType<symmTensor>(name, f, eCells);
-    found = found || this->getFieldValueType<sphericalTensor>(name, f, eCells);
-    found = found || this->getFieldValueType<tensor>(name, f, eCells);
+    tmp<volScalarField> tfld;
 
-    if (!found && f.time().timeIndex() > 0)
+    #define GetFieldValueType(Type, name, eCells)           \
+    tfld = this->getFieldValueType<Type>(name, eCells);     \
+    if (tfld.valid()) return tfld;
+
+    FOR_ALL_FIELD_TYPES(GetFieldValueType, name, eCells);
+
+    #undef GetFieldValueType
+
+    if (mesh_.time().timeIndex() > 0)
     {
         FatalErrorInFunction
             << name << " is not a registered field" << endl
             << abort(FatalError);
     }
+
+    return tfld;
 }
 
 
@@ -450,6 +447,7 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
 {
     const labelHashSet& eCells = errorCells();
     labelList maxLevel(mesh_.nCells(), 0);
+
     if (defaultMaxLevel_ >= 0)
     {
         maxLevel = defaultMaxLevel_;
@@ -480,7 +478,8 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
         (
             mesh_.lookupObject<labelIOList>("cellLevel")
         );
-        const scalarField& dx(meshSizeObject::New(mesh_).dx());
+        const scalarField& dx = meshSizeObject::New(mesh_).dx();
+
         if (defaultMaxLevel_ < 0)
         {
             forAllConstIter(labelHashSet, eCells, iter)

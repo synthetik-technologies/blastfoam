@@ -51,7 +51,7 @@ Foam::errorEstimators::scaledDelta::scaledDelta
     errorEstimator(mesh, dict, name),
     fieldName_
     (
-        dict.lookupBackwardsCompatible({"scaledDeltaField", "field"})
+        dict.lookupBackwardsCompatible({typeName + "Field", "field"})
     ),
     minVal_(dict.lookupOrDefault<scalar>("minValue", small)),
     offset_(dict.lookupOrDefault<scalar>("offset", 0.0))
@@ -75,25 +75,10 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
         return;
     }
 
-    tmp<volScalarField> tx
-    (
-        volScalarField::New
-        (
-            "error(" + fieldName_ + ")",
-            mesh_,
-            0.0
-        )
-    );
-    volScalarField& x = tx.ref();
-
     const labelHashSet& eCells = this->errorCells();
 
-    this->getFieldValue(fieldName_, x, eCells);
-
-    if (mag(offset_) > small)
-    {
-        x -= offset_;
-    }
+    tmp<volScalarField> tx(this->getFieldValue(fieldName_, eCells));
+    const volScalarField& x = tx;
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
@@ -106,7 +91,7 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
         const label nei = neighbour[facei];
 
         const scalar eT =
-            mag(x[own] - x[nei])/max(min(x[own], x[nei]), minVal_);
+            mag(x[own] - x[nei])/max(min(x[own], x[nei]) - offset_, minVal_);
 
         if (eCells.found(own))
         {
@@ -140,7 +125,7 @@ void Foam::errorEstimators::scaledDelta::update(const bool scale)
                 {
                     const scalar eT =
                         mag(fp[facei] - fn[facei])
-                       /max(min(fp[facei], fn[facei]), minVal_);
+                       /max(min(fp[facei], fn[facei]) - offset_, minVal_);
                     error_[celli] = max(error_[celli], eT);
                 }
             }

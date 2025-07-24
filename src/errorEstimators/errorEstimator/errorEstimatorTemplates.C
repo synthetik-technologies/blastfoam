@@ -28,10 +28,9 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-bool Foam::errorEstimator::getFieldValueType
+Foam::tmp<Foam::volScalarField> Foam::errorEstimator::getFieldValueType
 (
     const word& name,
-    volScalarField& f,
     const labelHashSet& eCells
 ) const
 {
@@ -39,15 +38,9 @@ bool Foam::errorEstimator::getFieldValueType
 
     if (mesh_.foundObject<thisType>(name))
     {
-        const thisType& x = mesh_.lookupObject<thisType>(name);
-        forAllConstIter(labelHashSet, eCells, iter)
-        {
-            const label celli = iter.key();
-            f[celli] = mag(x[celli]);
-        }
-        return true;
+        return mag(mesh_.lookupObject<thisType>(name));
     }
-    return false;
+    return tmp<volScalarField>();
 }
 
 // ************************************************************************* //

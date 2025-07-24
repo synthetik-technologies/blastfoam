@@ -57,7 +57,8 @@ Foam::errorEstimators::volumeFraction::volumeFraction
             "alpha",
             dict.lookup<word>("phase")
         )
-    )
+    ),
+    refineFaces_(dict.lookupOrDefault("refineFaces", true))
 {
     this->read(dict);
 }
@@ -71,6 +72,95 @@ Foam::errorEstimators::volumeFraction::~volumeFraction()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::errorEstimators::volumeFraction::update(const bool scale)
+{
+    if (updateCurTimeIndex(!scale))
+    {
+        return;
+    }
+
+    const labelHashSet& eCells = this->errorCells();
+
+    const volScalarField& alpha =
+        mesh_.lookupObjectRef<volScalarField>(fieldName_);
+
+    // Error is volume fraction
+    error_ = alpha;
+
+    // Average of lower and upper refinement values
+    const scalar avgRefine = 0.5*(lowerRefine_ + upperRefine_);
+
+    if (!refineFaces_)
+    {
+         if (scale)
+        {
+            normalize(error_, eCells);
+        }
+        return;
+    }
+
+    // Check own/nei of faces for an interface
+    for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+    {
+        const label own = mesh_.faceOwner()[facei];
+        const label nei = mesh_.faceNeighbour()[facei];
+        const bool foundOwn = eCells.found(own);
+        const bool foundNei = eCells.found(nei);
+
+        if
+        (
+            (foundOwn || foundNei)
+         && (
+                (alpha[own] < lowerRefine_ && alpha[nei] > upperRefine_)
+             || (alpha[own] > upperRefine_ && alpha[nei] < lowerRefine_)
+            )
+        )
+        {
+            if (foundOwn) error_[own] = avgRefine;
+            if (foundNei) error_[nei] = avgRefine;
+        }
+    }
+
+    volScalarField::Boundary& berror = error_.boundaryFieldRef();
+    forAll(berror, patchi)
+    {
+        fvPatchScalarField& perror = berror[patchi];
+        if (perror.coupled())
+        {
+            const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
+            const labelList& faceCells = perror.patch().faceCells();
+            const scalarField alphaNbr(palpha.patchNeighbourField());
+            forAll(perror, fi)
+            {
+                if
+                (
+                    eCells.found(faceCells[fi])
+                 && (
+                        (
+                            palpha[fi] < lowerRefine_
+                         && alphaNbr[fi] > upperRefine_
+                        )
+                     || (
+                            palpha[fi] > upperRefine_
+                         && alphaNbr[fi] < lowerRefine_
+                        )
+                    )
+                )
+                {
+                    error_[faceCells[fi]] = avgRefine;
+                    perror[fi] = avgRefine;
+                }
+            }
+        }
+    }
+
+    if (scale)
+    {
+        normalize(error_, eCells);
+    }
+}
+
+
 void Foam::errorEstimators::volumeFraction::read(const dictionary& dict)
 {
     scalar threshold = dict.lookup<scalar>("threshold");
@@ -80,23 +170,7 @@ void Foam::errorEstimators::volumeFraction::read(const dictionary& dict)
     upperUnrefine_ = 1.0 - threshold;
 
     readCellZones(dict);
-
-    if (dict.found("maxRefinement"))
-    {
-        maxLevel_ = dict.lookup<label>("maxRefinement");
-        minDx_ = -1;
-    }
-    else if (dict.found("minDx"))
-    {
-        minDx_ = dict.lookup<scalar>("minDx");
-        maxLevel_ = -1;
-    }
-    else
-    {
-        FatalIOErrorInFunction(dict)
-            << "Either maxRefinement or minDx must be specified" << endl
-            << abort(FatalIOError);
-    }
+    readMaxRefinement(dict);
 }
 
 // ************************************************************************* //
