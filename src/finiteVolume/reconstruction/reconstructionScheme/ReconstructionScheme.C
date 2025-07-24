@@ -223,17 +223,15 @@ Foam::ReconstructionScheme<Type>::New
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalIOErrorInFunction
-        (
-            is
-        )   << "Unknown discretisation scheme "
+        FatalIOErrorInFunction(is)
+            << "Unknown discretisation scheme "
             << scheme << " for " << fieldName << nl << nl
             << "Valid MUSCL schemes are :" << nl
             << dictionaryConstructorTablePtr_->sortedToc() << nl << nl
             << "Valid OpenFOAM schemes are:" << nl
             << sISType::MeshFluxConstructorTablePtr_->sortedToc()
             << endl
-            << abort(FatalIOError);
+            << exit(FatalIOError);
     }
 
     return cstrIter()(phi, is, overwrite);
