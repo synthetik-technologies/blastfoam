@@ -256,11 +256,10 @@ void Foam::twoPhaseCompressibleSystem::update()
         ReconstructionScheme<scalar>::New(alpha1_, "alpha", alpha1_.group(), true)
     );
 
-    phi_ = fvc::relative(fvc::flux(U_), U_);
-
     tmp<surfaceScalarField> talpha1Own, talpha1Nei;
     if (alphaLimiter->upwind())
     {
+        phi_ = fvc::relative(fvc::flux(U_), U_);
         talpha1Own =
             surfaceScalarField::New
             (
@@ -410,9 +409,10 @@ void Foam::twoPhaseCompressibleSystem::solve()
     compressibleBlastSystem::solve();
 
     // Update changes in volume fraction and phase mass
+    volScalarField divU(fvc::div(phi_));
     volScalarField deltaAlpha
     (
-        fvc::div(alphaPhi_) - alpha1_*fvc::div(phi_)
+        fvc::div(alphaPhi_) - alpha1_*divU
     );
     this->fvTimeInt_->addDeltaSource(alpha1_.name(), deltaAlpha);
 
@@ -504,7 +504,6 @@ void Foam::twoPhaseCompressibleSystem::solve()
     // Primitive transport of phase densities
     if (transportPhaseDensity_)
     {
-        volScalarField divU(fvc::div(phi_));
         volScalarField deltaRho1
         (
             fvc::div(fluxScheme_->flux(rho1_, phi_)) - rho1_*divU
@@ -644,7 +643,7 @@ void Foam::twoPhaseCompressibleSystem::decode()
         rho2_.internalFieldRef() = alphaRho2_()/max(alpha2_(), rAlpha2);
 
         fluxScheme::correctPhaseFields(alpha1_, rho1_, rAlpha1);
-        fluxScheme::correctPhaseFields(alpha1_, rho1_, rAlpha1);
+        fluxScheme::correctPhaseFields(alpha2_, rho2_, rAlpha2);
     }
     rho1_.correctBoundaryConditions();
     rho2_.correctBoundaryConditions();
