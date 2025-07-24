@@ -48,6 +48,10 @@ Foam::labelListList Foam::patchToPatchMapping::sendTgtPatch
             makeBb(srcPatch, srcPts0, pointNormals, pointNormals0)
         );
     }
+    else
+    {
+        srcProcBbs[Pstream::myProcNo()] = List<treeBoundBox>();
+    }
 
     Pstream::gatherList(srcProcBbs);
     Pstream::scatterList(srcProcBbs);

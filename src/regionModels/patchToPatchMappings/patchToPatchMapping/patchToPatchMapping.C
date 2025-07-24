@@ -673,6 +673,7 @@ Foam::labelList Foam::patchToPatchMapping::finaliseLocalPoints
 {
 
     boolList localTgtPointIsUsed(tgtPatch.nPoints(), false);
+    // Mark used points
     forAll(localTgtPointsToSrc_, srcPointi)
     {
         UIndirectList<bool>
@@ -681,13 +682,20 @@ Foam::labelList Foam::patchToPatchMapping::finaliseLocalPoints
             localTgtPointsToSrc_[srcPointi]
         ) = true;
     }
-//     forAll(localSrcPointsToTgt_, tgtPointi)
-//     {
-//         if (localSrcPointsToTgt_[tgtPointi].size())
-//         {
-//             localTgtPointIsUsed[tgtPointi] = true;
-//         }
-//     }
+
+    // Make sure all used faces are also kept
+    forAll(localTgtFacesToSrc_, faceAi)
+    {
+        const labelList& faces = localTgtFacesToSrc_[faceAi];
+        forAll(faces, fi)
+        {
+            UIndirectList<bool>
+            (
+                localTgtPointIsUsed,
+                tgtPatch.localFaces()[faces[fi]]
+            ) = true;
+        }
+    }
 
 
     labelList oldToNew, newToOld;
@@ -730,12 +738,12 @@ Foam::labelList Foam::patchToPatchMapping::finaliseLocalFaces
 )
 {
     boolList localTgtFaceIsUsed(tgtPatch.size(), false);
-    forAll(localTgtFacesToSrc_, faceAi)
+    forAll(localTgtFacesToSrc_, tgtFacei)
     {
         UIndirectList<bool>
         (
             localTgtFaceIsUsed,
-            localTgtFacesToSrc_[faceAi]
+            localTgtFacesToSrc_[tgtFacei]
         ) = true;
     }
 
@@ -750,12 +758,12 @@ Foam::labelList Foam::patchToPatchMapping::finaliseLocalFaces
     );
 
 
-    forAll(localTgtFacesToSrc_, faceAi)
+    forAll(localTgtFacesToSrc_, tgtFacei)
     {
-        labelList& tgtFaces = localTgtFacesToSrc_[faceAi];
-        forAll(tgtFaces, tgtFacei)
+        labelList& tgtFaces = localTgtFacesToSrc_[tgtFacei];
+        forAll(tgtFaces, fj)
         {
-            tgtFaces[tgtFacei] = oldToNew[tgtFaces[tgtFacei]];
+            tgtFaces[fj] = oldToNew[tgtFaces[fj]];
         }
     }
 
@@ -1312,7 +1320,6 @@ void Foam::patchToPatchMapping::update
             tgtToSrc
         );
     decrIndent(Info);
-
 
     Info<< "Finished calulcating couplings in "
         << time.cpuTimeIncrement() << "s" << incrIndent << nl
