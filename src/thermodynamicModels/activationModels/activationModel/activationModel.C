@@ -679,6 +679,8 @@ void Foam::activationModel::solve()
         (alphaRhoLambdaOld_ - deltaAlphaRhoLambda_*dT)
        /max(alphaRho, smallRho);
       // + deltaLambda*dT;
+
+    this->correct(lambda_);
     lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
 }
