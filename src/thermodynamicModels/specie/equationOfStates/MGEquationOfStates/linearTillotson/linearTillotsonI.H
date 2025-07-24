@@ -104,6 +104,7 @@ Foam::scalar Foam::linearTillotson<Specie>::calcE(const scalar rho) const
         );
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -263,8 +264,8 @@ Foam::scalar Foam::linearTillotson<Specie>::E
     const scalar T
 ) const
 {
-    return EcTable_.lookup(rho);// + e0_;
-    // return calcE(rho) - eRef_;
+    return EcTable_.lookup(rho) + e0_;
+    // return calcE(rho) - eRef_ + e0_;
 }
 
 
@@ -313,7 +314,15 @@ Foam::scalar Foam::linearTillotson<Specie>::H
     const scalar T
 ) const
 {
-    return 0.0;
+    NotImplemented;
+    const scalar rhoByRho0 = rho/rho0_;
+    return
+        (
+          - 1.5*C_*sqr(rhoByRho0)
+          - rhoByRho0*(B_ - 3.0*C_)
+          + (B_ - 1.5*C_)
+        )/rho0_
+      - e*omega_*log(max(rhoByRho0, small));
 }
 
 
