@@ -333,8 +333,8 @@ void Foam::psiuCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoEu);
 
     //- Store old values
-    this->storeAndBlendOld(rho_);
     const volScalarField rho0(rho_);
+    this->storeAndBlendOld(rho_);
 
     this->storeAndBlendOld(rhoU_);
     this->storeAndBlendOld(rhoE_);
@@ -349,19 +349,19 @@ void Foam::psiuCompressibleSystem::solve()
     rhoE_ -= dT*deltaRhoE;
     rhoEu_ -= dT*deltaRhoEu;
 
-    const volScalarField twoMinusf(2.0 - rho_/rho0);
     if (thermo_->containsSpecie("ft"))
     {
         volScalarField& ft = thermo_->Y("ft");
         volScalarField deltaRhoFt
         (
             fvc::div(fluxScheme_->flux(ft, rhoPhi_))
-          - fvc::laplacian(thermophysicalTransport_->DEff(ft), ft)
         );
-        this->storeAndBlendDelta(deltaRhoFt);
-        this->storeAndBlendOld(ft);
 
-        ft = ft*twoMinusf - dT*deltaRhoFt/rho0;
+        volScalarField rhoft(rho_.name() + ft.name(), rho0*ft);
+        this->storeAndBlendOld(rhoft);
+        this->storeAndBlendDelta(deltaRhoFt);
+
+        ft = (rhoft - dT*deltaRhoFt)/rho_;
         ft.max(0.0);
         ft.correctBoundaryConditions();
     }
@@ -377,7 +377,285 @@ void Foam::psiuCompressibleSystem::solve()
         // Unburnt gas density
         // ~~~~~~~~~~~~~~~~~~~
         volScalarField rhou(thermo_->rhou());
-        const volScalarField& rho = rho_;
+
+        // Calculate flame normal etc.
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        volVectorField n("n", fvc::grad(b_));
+
+        volScalarField mgb(mag(n));
+
+        dimensionedScalar dMgb =
+            1.0e-3
+           *(b_*c*mgb)().weightedAverage(mesh.V())
+           /((b_*c)().weightedAverage(mesh.V()) + small)
+          + dimensionedScalar(mgb.dimensions(), small);
+        mgb += dMgb;
+
+        surfaceVectorField SfHat(mesh.Sf()/mesh.magSf());
+        surfaceVectorField nfVec(fvc::interpolate(n));
+        nfVec += SfHat*(fvc::snGrad(b_) - (SfHat & nfVec));
+        nfVec /= (mag(nfVec) + dMgb);
+        surfaceScalarField nf((mesh.Sf() & nfVec));
+        n /= mgb;
+
+        const volScalarField nDotn(n & n);
+
+        const dimensionedScalar StCorr(calcStCorr(c, nf, dMgb));
+
+        // Calculate turbulent flame speed flux
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        surfaceScalarField phiSt
+        (
+            "phiSt",
+            fvc::interpolate(rhou*StCorr*Su_*Xi_)*nf
+        );
+
+        volScalarField deltaRhoB
+        (
+            "deltaRhoB",
+            fvc::div((rhoPhi_ + phiSt)*fluxScheme_->interpolate(b_, "b"))
+          - b_*fvc::div(phiSt)
+        );
+
+        volScalarField rhob(rho_.name() + b_.name(), rho0*b_);
+        this->storeAndBlendOld(rhob);
+        this->storeAndBlendDelta(deltaRhoB);
+        b_ = (rhob - dT*deltaRhoB)/rho_;
+        b_.maxMin(0.0, 1.0);
+        b_.correctBoundaryConditions();
+
+
+        tmp<volScalarField> tsigmas;
+        if
+        (
+            SuModel_ == "equilibrium"
+         || SuModel_ == "transport"
+         || XiModel_ == "transport"
+        )
+        (
+            tsigmas =
+                (nDotn*fvc::div(phi_) - (n & fvc::grad(U_) & n))/Xi_
+              + (
+                    nDotn*fvc::div(Su_*n)
+                  - (n & fvc::grad(Su_*n) & n)
+                )*(Xi_ + scalar(1))/(2*Xi_)
+        );
+
+        // Calculate Xi flux
+        // ~~~~~~~~~~~~~~~~~
+        surfaceScalarField phiXi
+        (
+            phiSt
+          - fvc::interpolate
+            (
+                fvc::laplacian(thermophysicalTransport_->DEff(b_), b_)/mgb
+            )*nf
+          + fvc::interpolate(rho_)*fvc::interpolate(Su_*(1.0/Xi_ - Xi_))*nf
+        );
+
+        const volScalarField SuOld(Su_);
+
+        volScalarField Su0(unstrainedLaminarFlameSpeed_()());
+        if (SuModel_ == "unstrained")
+        {
+            Su_ == Su0;
+        }
+        else if (SuModel_ == "equilibrium")
+        {
+            Su_ == Su0*max(scalar(1) - tsigmas/sigmaExt_, scalar(0.01));
+        }
+        else if (SuModel_ == "transport")
+        {
+            // Solve for the strained laminar flame speed
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            volScalarField deltaRhoSu
+            (
+                "deltaRhoSu",
+                fvc::div((phi_ + phiXi)*fluxScheme_->interpolate(Su_, "Su"))
+              - Su_*fvc::div(phiXi)
+            );
+
+            volScalarField rhoSu(rho_.name() + Su_.name(), rho0*Su_);
+            this->storeAndBlendOld(rhoSu);
+            this->storeAndBlendDelta(deltaRhoSu);
+
+
+            Su_ = (rhoSu - dT*deltaRhoSu)/rho_;
+            Su_.maxMin(SuMin_, SuMin_);
+            Su_.correctBoundaryConditions();
+        }
+        else
+        {
+            FatalError
+                << "Unknown Su model " << SuModel_
+                << abort(FatalError);
+        }
+
+
+        // Calculate Xi according to the selected flame wrinkling model
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        if (XiModel_ == "fixed")
+        {
+            // Do nothing, Xi is fixed!
+        }
+        else if (XiModel_ == "algebraic")
+        {
+            volScalarField epsilon(pow(uPrimeCoef_, 3)*turbulence().epsilon());
+            volScalarField tauEta(sqrt(thermo_->muu()/(rhou*epsilon)));
+
+            volScalarField up(uPrimeCoef_*sqrt((2.0/3.0)*turbulence().k()));
+
+            tmp<volScalarField> Reta
+            (
+                up
+               /(
+                    sqrt(epsilon*tauEta)
+                  + dimensionedScalar(up.dimensions(), 1e-8)
+                )
+            );
+
+            // Simple algebraic model for Xi based on Gulders correlation
+            // with a linear correction function to give a plausible profile
+            // for Xi
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            Xi_ ==
+                1.0
+                + (1.0 + (2*XiShapeCoef_)*(0.5 - b_))
+                *XiCoef_*sqrt(up/(SuOld + SuMin_))*Reta;
+        }
+        else if (XiModel_ == "transport")
+        {
+            // Solve for the flame wrinkling
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            volScalarField deltaRhoXi
+            (
+                "deltaRhoXi",
+                fvc::div
+                (
+                    (phi_ + phiXi)
+                    *fluxScheme_->interpolate(Xi_, "Xi")
+                )
+                - fvc::div(phiXi)*Xi_
+            );
+            this->storeAndBlendDelta(deltaRhoXi);
+
+            volScalarField rhoXi(rho_.name() + Xi_.name(), rho0*Xi_);
+            this->storeAndBlendOld(Xi_);
+            Xi_ = (rhoXi - dT*deltaRhoXi)/rho_;
+            Xi_.max(1.0);
+            Xi_.correctBoundaryConditions();
+        }
+        else
+        {
+            FatalError
+                << "Unknown Xi model " << XiModel_
+                << abort(FatalError);
+        }
+        St_ = Xi_*Su_;
+    }
+}
+
+
+void Foam::psiuCompressibleSystem::postUpdate()
+{
+    turbulence_->predict();
+    thermophysicalTransport_->predict();
+
+    rhoEff().storePrevIter();
+
+    {
+        // Solve momentum
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(rhoEff(), U_) - fvc::ddt(rhoU_)
+          + turbulence_->divDevTau(U_)
+         ==
+            models().source(rhoEff(), U_)
+        );
+
+        constraints().constrain(UEqn);
+        UEqn.solve();
+        constraints().constrain(U_);
+
+        rhoU_ = rhoEff()*U_;
+    }
+
+    // Solve thermal energy diffusion
+    {
+        // Add kinetic energy
+        rhoE_ -=
+            rho_.mesh().time().deltaT()
+           *(U_ & fvc::div(turbulence_->devTau()));
+
+        e_ = rhoE_/rhoEff() - 0.5*magSqr(U_);
+
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(rhoEff(), e_) - fvc::ddt(rhoEff().prevIter(), e_)
+          + thermophysicalTransport_->divq(e_)
+         ==
+            models().source(rhoEff(), e_)
+        );
+
+        constraints().constrain(eEqn);
+        eEqn.solve();
+        constraints().constrain(e_);
+
+        rhoE_ = rhoEff()*(e_ + 0.5*magSqr(U_));
+    }
+
+    // Solve un burnt energy
+    {
+        // Add kinetic energy
+        rhoEu_ -=
+            rho_.mesh().time().deltaT()
+           *(U_ & fvc::div(turbulence_->devTau()));
+
+        eu_ = rhoEu_/rhoEff() - 0.5*magSqr(U_);
+
+        fvScalarMatrix euEqn
+        (
+            fvm::ddt(rhoEff(), eu_) - fvc::ddt(rhoEff().prevIter(), eu_)
+          + thermophysicalTransport_->divq(eu_)
+         ==
+            models().source(rhoEff(), eu_)
+        );
+
+        constraints().constrain(euEqn);
+        euEqn.solve();
+        constraints().constrain(eu_);
+
+        rhoEu_ = rhoEff()*(eu_ + 0.5*magSqr(U_));
+    }
+
+    if (thermo_->containsSpecie("ft"))
+    {
+        volScalarField& ft = thermo_->Y("ft");
+        fvScalarMatrix ftEqn
+        (
+            fvm::ddt(rhoEff(), ft) - fvc::ddt(rhoEff().prevIter(), ft)
+          + thermophysicalTransport_->divq(ft)
+         ==
+            models().source(rhoEff(), ft)
+        );
+
+        constraints().constrain(ftEqn);
+        ftEqn.solve();
+        constraints().constrain(ft);
+    }
+
+    if (ign_.ignited())
+    {
+        const fvMesh& mesh = this->mesh();
+
+        // progress variable
+        // ~~~~~~~~~~~~~~~~~
+        volScalarField c("c", scalar(1.0) - b_);
+
+        // Unburnt gas density
+        // ~~~~~~~~~~~~~~~~~~~
+        volScalarField rhou(thermo_->rhou());
 
         // Calculate flame normal etc.
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -414,22 +692,16 @@ void Foam::psiuCompressibleSystem::solve()
         scalar StCoNum = max
         (
             mesh.surfaceInterpolation::deltaCoeffs()
-           *mag(phiSt)/(fvc::interpolate(rho)*mesh.magSf())
-        ).value()*rho.time().deltaTValue();
+           *mag(phiSt)/(fvc::interpolate(rho_)*mesh.magSf())
+        ).value()*rho_.time().deltaTValue();
 
         Info<< "Max St-Courant Number = " << StCoNum << endl;
-
-        tmp<surfaceScalarField> tbf(fluxScheme_->interpolate(b_, "b"));
-        const surfaceScalarField& bf = tbf();
-
-        volScalarField deltaRhoB
+        fvScalarMatrix bEqn
         (
-            "deltaRhoB",
-            fvc::div(rhoPhi_*bf)
-          + fvc::div(phiSt*bf)
-          - b_*fvc::div(phiSt)
-          - fvc::laplacian(thermophysicalTransport_->DEff(b_), b_)
+            fvm::ddt(rho_, b_) - fvc::ddt(rho_, b_)
+          - fvm::laplacian(thermophysicalTransport_->DEff(b_), b_)
         );
+
         forAll(ign_.sites(), i)
         {
             const ignitionSite& ignSite = ign_.sites()[i];
@@ -448,21 +720,26 @@ void Foam::psiuCompressibleSystem::solve()
                         << ' ' << mgb[ignCell]
                         << endl;
 
-                    deltaRhoB[ignCell] -=
-                        (
-                            ignSite.strength()*rhou[ignCell]/ignSite.duration()
-                        )/(b_[ignCell] + 0.001);
+                    bEqn.diag()[ignSite.cells()[icelli]] +=
+                    (
+                        ignSite.strength()*ignSite.cellVolumes()[icelli]
+                       *rhou[ignSite.cells()[icelli]]/ignSite.duration()
+                    )/(b_[ignSite.cells()[icelli]] + 0.001);
                 }
             }
         }
 
-        const volScalarField bOld(b_);
+        // Solve for b
+        // ~~~~~~~~~~~
+        bEqn.relax();
 
-        this->storeAndBlendDelta(deltaRhoB);
-        this->storeAndBlendOld(b_);
-        b_ = b_*twoMinusf - dT*deltaRhoB/rho0;
-        b_.maxMin(0.0, 1.0);
-        b_.correctBoundaryConditions();
+        constraints().constrain(bEqn);
+
+        bEqn.solve();
+
+        constraints().constrain(b_);
+
+        Info<< "min(b) = " << min(b_).value() << endl;
 
 
         // Calculate Xi flux
@@ -476,7 +753,7 @@ void Foam::psiuCompressibleSystem::solve()
                 (
                     fvc::laplacian(thermophysicalTransport_->DEff(b_), b_)/mgb
                 )*nf
-              + fvc::interpolate(rho)*fvc::interpolate(Su_*(1.0/Xi_ - Xi_))*nf;
+              + fvc::interpolate(rho_)*fvc::interpolate(Su_*(1.0/Xi_ - Xi_))*nf;
         }
 
         tmp<volScalarField> tsigmas;
@@ -504,7 +781,7 @@ void Foam::psiuCompressibleSystem::solve()
             (
                 fvc::laplacian(thermophysicalTransport_->DEff(b_), b_)/mgb
             )*nf
-          + fvc::interpolate(rho)*fvc::interpolate(Su_*(1.0/Xi_ - Xi_))*nf
+          + fvc::interpolate(rho_)*fvc::interpolate(Su_*(1.0/Xi_ - Xi_))*nf
         );
 
         const volScalarField SuOld(Su_);
@@ -535,17 +812,27 @@ void Foam::psiuCompressibleSystem::solve()
                 /(sqr(Su0 - SuInf) + sqr(SuMin_))
             );
 
-            volScalarField deltaRhoSu
+            fvScalarMatrix SuEqn
             (
-                "deltaRhoSu",
-                fvc::div((phi_ + phiXi)*fluxScheme_->interpolate(Su_, "Su"))
-              - Su_*(fvc::div(phiXi) + rho*(Rc*Su0 - (sigmas + Rc)))
+                fvm::ddt(rho_, Su_) - fvc::ddt(rho_, Su_)
+            ==
+              - fvm::SuSp(-rho_*Rc*Su0/Su_, Su_)
+              - fvm::SuSp(rho_*(sigmas + Rc), Su_)
+              + models().source(rho_, Su_)
             );
-            this->storeAndBlendDelta(deltaRhoSu);
-            this->storeAndBlendOld(Su_);
-            Su_ = Su_*twoMinusf - dT*deltaRhoSu/rho0;
-            Su_.maxMin(SuMin_, SuMin_);
-            Su_.correctBoundaryConditions();
+
+            SuEqn.relax();
+
+            constraints().constrain(SuEqn);
+
+            SuEqn.solve();
+
+            constraints().constrain(Su_);
+
+            // Limit the maximum Su
+            // ~~~~~~~~~~~~~~~~~~~~
+            Su_.min(SuMax_);
+            Su_.max(SuMin_);
         }
         else
         {
@@ -585,13 +872,16 @@ void Foam::psiuCompressibleSystem::solve()
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 Xi_ ==
                     1.0
-                  + (1.0 + (2*XiShapeCoef_)*(0.5 - bOld))
+                  + (1.0 + (2*XiShapeCoef_)*(0.5 - b_))
                    *XiCoef_*sqrt(up/(SuOld + SuMin_))*Reta;
             }
             else
             {
                 volVectorField Ut(U_ + SuOld*Xi_*n);
-                volScalarField sigmat(nDotn*fvc::div(Ut) - (n & fvc::grad(Ut) & n));
+                volScalarField sigmat
+                (
+                    nDotn*fvc::div(Ut) - (n & fvc::grad(Ut) & n)
+                );
 
                 // Calculate Xi transport coefficients based on Gulders correlation
                 // and DNS data for the rate of generation
@@ -604,7 +894,7 @@ void Foam::psiuCompressibleSystem::solve()
                 volScalarField XiEq
                 (
                     1.001
-                 + (1.0 + (2*XiShapeCoef_)*(0.5 - bOld))*(XiEqStar - 1.001)
+                 + (1.0 + (2*XiShapeCoef_)*(0.5 - b_))*(XiEqStar - 1.001)
                 );
 
                 volScalarField Gstar(0.28/tauEta);
@@ -615,30 +905,35 @@ void Foam::psiuCompressibleSystem::solve()
 
                 // Solve for the flame wrinkling
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                tmp<surfaceScalarField> tXif(fluxScheme_->interpolate(Xi_, "Xi"));
-                const surfaceScalarField& Xif = tXif();
-
-                volScalarField deltaRhoXi
+                fvScalarMatrix XiEqn
                 (
-                    "deltaRhoXi",
-                    fvc::div((phi_ + phiXi)*Xif)
-                  - fvc::div(phiXi)*Xi_
-                  + rho
-                   *(
-                        (Xi_ - 1.0)*R - G
-                      + max
+                    fvm::ddt(rho_, Xi_) - fvc::ddt(rho_, Xi_)
+                 ==
+                    rho_*R
+                  - fvm::Sp(rho_*(R - G), Xi_)
+                  - fvm::Sp
+                    (
+                        rho_*max
                         (
                             sigmat - tsigmas,
                             dimensionedScalar(sigmat.dimensions(), 0)
-                        )*Xi_
+                        ),
+                        Xi_
                     )
+                  + models().source(rho_, Xi_)
                 );
-                this->storeAndBlendDelta(deltaRhoXi);
-                this->storeAndBlendOld(Xi_);
-                Xi_ = Xi_*twoMinusf - dT*deltaRhoXi/rho0;
-                Xi_.max(1.0);
-                Xi_.correctBoundaryConditions();
 
+                XiEqn.relax();
+
+                constraints().constrain(XiEqn);
+
+                XiEqn.solve();
+
+                constraints().constrain(Xi_);
+
+                // Correct boundedness of Xi
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~
+                Xi_.max(1.0);
                 Info<< "max(Xi) = " << max(Xi_).value() << endl;
                 Info<< "max(XiEq) = " << max(XiEq).value() << endl;
             }
@@ -646,22 +941,16 @@ void Foam::psiuCompressibleSystem::solve()
         else
         {
             FatalError
-                << "Unknown Xi model " << SuModel_
+                << "Unknown Xi model " << XiModel_
                 << abort(FatalError);
         }
         St_ = Xi_*Su_;
     }
-}
-
-
-void Foam::psiuCompressibleSystem::postUpdate()
-{
-    if (!turbulence_.valid())
-    {
-        return;
-    }
 
     this->decode();
+    constraints().constrain(p_);
+    p_.correctBoundaryConditions();
+
     turbulence_->correct();
     thermophysicalTransport_->correct();
 }
@@ -696,7 +985,7 @@ void Foam::psiuCompressibleSystem::decode()
     eu_.internalFieldRef() = rhoEu_()/rho_() - 0.5*magSqr(U_());
     forAll(b_, i)
     {
-        if (b_[i] < 1e-6)
+        if (b_[i] < 0.0001)
         {
             eu_[i] = e_[i];
         }
