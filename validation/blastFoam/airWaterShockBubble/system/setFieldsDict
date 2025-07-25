@@ -22,7 +22,6 @@ defaultFieldValues
 (
     volScalarFieldValue p           1e5
     volScalarFieldValue alpha.air   0
-    volScalarFieldValue alpha.water 1
     volScalarFieldValue rho.water   1000
     volScalarFieldValue rho.air     1
     volVectorFieldValue U           (0 0 0)
@@ -53,7 +52,6 @@ regions
         fieldValues
         (
             volScalarFieldValue         alpha.air   1
-            volScalarFieldValue         alpha.water 0
         );
     }
 );

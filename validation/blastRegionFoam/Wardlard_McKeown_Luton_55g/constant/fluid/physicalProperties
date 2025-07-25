@@ -129,7 +129,6 @@ water
         Cv          3267;
         Cp          4183;
         Hf          -15.6429313e6;
-        Hf          0;
         Tref        300;
         Esref       0;
     }

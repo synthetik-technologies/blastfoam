@@ -19,7 +19,7 @@ type            basic;
 thermoType
 {
     transport       const;
-    thermo          hConst;
+    thermo          eConst;
     equationOfState idealGas;
 }
 

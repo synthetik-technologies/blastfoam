@@ -20,12 +20,13 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK4SSP;
+    timeIntegrator  RK2SSP 2;
 }
 
 gradSchemes
 {
-    default         cellMDLimited leastSquares 1;
+    default         Gauss linear;
+    "limitedGrad\(.*\)" cellLimited<BarthJaspersen> Gauss linear 1;
 }
 
 divSchemes
@@ -41,12 +42,9 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  HRIC;
-    reconstruct(rho)    Minmod;
-    reconstruct(U)      Minmod;
-    reconstruct(e)      Minmod;
-    reconstruct(p)      Minmod;
-    reconstruct(speedOfSound) Minmod;
+    reconstruct(alpha)  quadraticMUSCL overbee01 1;
+    reconstruct(scalar) quadraticMUSCL overbee 1;
+    reconstruct(vector) quadraticMUSCL overbee 1;
 }
 
 snGradSchemes

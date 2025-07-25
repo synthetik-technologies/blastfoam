@@ -14,38 +14,44 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
+topoChanger
+{
+    libs ("libblastFvMeshTopoChangers.so");
+    type hexRefiner;
+    errorEstimator  multicomponent;
+    errorEstimators
+    (
+        density
+        {
+            errorEstimator      scaledDelta;
+            field               p;
+            lowerRefineLevel    0.1;
+            unrefineLevel       0.1;
+            maxRefinement       2;
+        }
+        volumeFraction
+        {
+            errorEstimator      volumeFraction;
+            phase               air;
+            threshold           0.01;
 
-errorEstimator  multicomponent;
-errorEstimators
-(
-    density
-    {
-        errorEstimator  densityGradient;
-        lowerRefineLevel    0.1;
-        unrefineLevel       0.1;
-        maxRefinement       2;
-    }
-    volumeFraction
-    {
-        errorEstimator      fieldValue;
-        field               alpha.air;
-        lowerRefineLevel    0.01;
-        upperRefineLevel    0.99;
+            maxRefinement       2;
+        }
+    );
 
-        unrefineLevel       0.001;
-        upperUnrefineLevel  0.999;
+    // How often to refine
+    refineInterval  1;
 
-        maxRefinement       2;
-    }
-);
+    // Have slower than 2:1 refinement
+    nBufferLayers   1;
 
-// How often to refine
-refineInterval  1;
+    // Write the refinement level as a volScalarField
+    dumpLevel       true;
+}
 
-// Have slower than 2:1 refinement
-nBufferLayers   1;
-
-// Write the refinement level as a volScalarField
-dumpLevel       true;
+distributor
+{
+    libs ("libblastFvMeshDistributors.so");
+    type redistributor;
+}
 // ************************************************************************* //

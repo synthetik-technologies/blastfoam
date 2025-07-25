@@ -75,6 +75,8 @@ water
     {
         Cv              4186;
         Hf              0;
+        Tref            300;
+        Esref           0;
     }
     residualRho     1e-06;
     residualAlpha   1e-06;

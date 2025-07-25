@@ -14,22 +14,22 @@ runApplication blockMesh
 runApplication decomposePar
 
 # -- Add internal patch
-runParallel addEmptyPatch internalPatch internal -overwrite
+runParallel addInternalPatch
 
 # -- Set initial conditions
 runParallel setRefinedFields -updateAll
 runParallel initializeLevelSet -updateAll
 
 # -- run the calc
-# runParallel $(getApplication)
+runParallel $(getApplication)
 
 # -- Sample
-# runParallel -o postProcess -func sampleDict -time 0.0001
-# runParallel -o postProcess -func sampleDict -time 0.0002
-# runParallel -o postProcess -func sampleDict -time 0.0003
-# runParallel -o postProcess -func sampleDict -time 0.0004
+runParallel -o postProcess -func sampleDict -time 0.0001
+runParallel -o postProcess -func sampleDict -time 0.0002
+runParallel -o postProcess -func sampleDict -time 0.0003
+runParallel -o postProcess -func sampleDict -time 0.0004
 
 # -- Create graphs
-# ( cd validation && ./createGraphs )
+( cd validation && ./createGraphs )
 
 # ----------------------------------------------------------------- end-of-file

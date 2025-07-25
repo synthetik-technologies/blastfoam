@@ -6,8 +6,6 @@ cd ${0%/*} || exit 1    # run from this directory
 
 cleanCase
 
-rm -rf constant/*/polyMesh 0/cellToRegion 0/*/cellToRegion 0/*/polyMesh 0/*/cellLevel
-
 rm -f validation/*.eps
 
 # ----------------------------------------------------------------- end-of-file

@@ -25,7 +25,7 @@ ddtSchemes
 
 gradSchemes
 {
-    default             cellMDLimited Gauss linear 1;
+    default             cellLimited Gauss linear 1;
 }
 
 divSchemes

@@ -11,8 +11,11 @@ runApplication -s walls blockMesh -region walls
 
 runApplication decomposePar -allRegions
 
+runParallel addInternalPatch -region fluid
 runParallel setRefinedFields -region fluid
 
 runParallel $(getApplication)
+
+( cd validation && ./createGraphs )
 
 # ----------------------------------------------------------------- end-of-file
