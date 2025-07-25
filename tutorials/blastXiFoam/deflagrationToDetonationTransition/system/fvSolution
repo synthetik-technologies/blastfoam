@@ -30,16 +30,28 @@ solvers
         relTol          0;
     }
 
-    "(Su|Xi|b|ft|b|k|omega|epsilon)"
+    "(Su|Xi|b|ft|b)"
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-08;
+        relTol          0;
+    }
+    "(Su|Xi|b|ft|b)Final"
+    {
+        $Su;
+    }
+
+    "(k|omega|epsilon)"
     {
         solver          PBiCGStab;
         preconditioner  DILU;
         tolerance       1e-08;
         relTol          0;
     }
-    "(Su|Xi|b|ft|b|k|omega|epsilon)Final"
+    "(k|omega|epsilon)Final"
     {
-        $Su;
+        $k;
     }
 }
 

@@ -8,5 +8,8 @@ paraFoam -builtin -touch
 # Create the mesh
 runApplication blockMesh
 
+# Decompose the case
+runApplication decomposePar
+
 # Run the solver
-runApplication $(getApplication)
+runParallel $(getApplication)

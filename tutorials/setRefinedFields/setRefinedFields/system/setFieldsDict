@@ -20,13 +20,13 @@ refiner polyRefiner;
 dumpLevel true;
 
 // Included parameters file
-#include "$FOAM_CASE/parameters";
+#include "$FOAM_CASE/parameters"
 
 // Fields to refine
 fields (test0);
 
 // Number of refined cells between levels
-nBufferLayers 3;
+nBufferLayers 1;
 
 // Values set before each refinement iteration
 defaultFieldValues
@@ -40,54 +40,54 @@ defaultFieldValues
     // Set a pointField
     pointScalarFieldValue   pointtest0 -setAllBoundaries 0
 
-    // // Set a vector field with a coded value
-    // // the "code" section provides x, y, and z and scalars
-    // volVectorFieldFunction  test1
-    // {
-    //     type coded;
-    //
-    //     // Additional folders to include
-    //     codeOptions
-    //     #{
-    //         -I$(FOAM_SRC)/finiteVolume/lnInclude \
-    //         -I$(FOAM_SRC)/atmosphericModels/lnInclude
-    //     #};
-    //
-    //     // Additional libraries to include
-    //     codeLibs
-    //     #{
-    //         -latmosphericModels
-    //     #};
-    //
-    //     // Headers to include
-    //     codeInclude
-    //     #{
-    //         #include "atmBoundaryLayer.H"
-    //     #};
-    //
-    //     // This is the created function
-    //     // inserted after
-    //     // Type value(const scalar x, const scalar y, const scalar z)
-    //     // {
-    //     code
-    //     #{
-    //         // Create the atmBoundaryLayer class
-    //         // non scalars/labels should be read since they are seen as
-    //         // (0 0 0) instead of vector(0, 0, 0)
-    //         atmBoundaryLayer atmbl
-    //         (
-    //             dict_.topDict().lookup<vector>("uDir"),   // flowDir
-    //             dict_.topDict().lookup<vector>("zDir"),   // zDir
-    //             $uRef,   // read from parameters
-    //             $zRef,   // read from parameters
-    //             scalarField(1, $z0), // read from parameters
-    //             scalarField(1, $zg)  // read from parameters
-    //         );
-    //
-    //         // Return the value
-    //         return atmbl.U(vectorField(1, vector(x,y,z)))()[0];
-    //     #};
-    // }
+    // Set a vector field with a coded value
+    // the "code" section provides x, y, and z and scalars
+    volVectorFieldFunction  test1
+    {
+        type coded;
+
+        // Additional folders to include
+        codeOptions
+        #{
+            -I$(FOAM_SRC)/finiteVolume/lnInclude \
+            -I$(FOAM_SRC)/atmosphericModels/lnInclude
+        #};
+
+        // Additional libraries to include
+        codeLibs
+        #{
+            -latmosphericModels
+        #};
+
+        // Headers to include
+        codeInclude
+        #{
+            #include "atmBoundaryLayer.H"
+        #};
+
+        // This is the created function
+        // inserted after
+        // Type value(const scalar x, const scalar y, const scalar z)
+        // {
+        code
+        #{
+            // Create the atmBoundaryLayer class
+            // non scalars/labels should be read since they are seen as
+            // (0 0 0) instead of vector(0, 0, 0)
+            atmBoundaryLayer atmbl
+            (
+                vector(1, 0, 0),   // flowDir
+                vector(0, 0, 1),   // zDir
+                $uRef,   // read from parameters
+                $zRef,   // read from parameters
+                scalarField(1, $z0), // read from parameters
+                scalarField(1, $zg)  // read from parameters
+            );
+
+            // Return the value
+            return atmbl.U(vectorField(1, vector(x,y,z)))()[0];
+        #};
+    }
 
     // Another coded field
     // Func1(sine) returns a temporary Function1<Type> object
@@ -258,7 +258,7 @@ regions
         // option
         // The "Copy data to cell zones" can be used to view fields in
         // these zones
-        cellSet
+        cellSets
         (
             {
                 // Subset cells from the cells cellZone, aka only cells

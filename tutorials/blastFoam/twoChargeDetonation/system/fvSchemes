@@ -25,7 +25,7 @@ ddtSchemes
 
 gradSchemes
 {
-    default         cellMDLimited leastSquares 1;
+    default         cellLimited leastSquares 1;
 }
 
 divSchemes
@@ -47,17 +47,8 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    // reconstruct(alpha.tnt)  CICSAM 0.5;
-    reconstruct(alpha)  vanLeer;
-    reconstruct(rho)    vanLeer;
-    reconstruct(U)      vanLeerV;
-    reconstruct(e)      vanLeer;
-    reconstruct(p)      vanLeer;
-    reconstruct(speedOfSound)      vanLeer;
-    "reconstruct\(lambda.*\)" vanLeer;
-
-    reconstruct(k)      vanLeer;
-    reconstruct(epsilon) vanLeer;
+    reconstruct(scalar) vanLeer;
+    reconstruct(vector) vanLeerV;
 }
 
 snGradSchemes

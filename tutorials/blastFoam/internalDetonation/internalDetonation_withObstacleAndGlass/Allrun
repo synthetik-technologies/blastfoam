@@ -22,6 +22,9 @@ runApplication -s windows setRefinedFields -noFields -overwrite -noRefine
 # -- Create baffles
 runApplication createBaffles -overwrite
 
+# -- Remove zones
+runApplication removeZones -allFaces
+
 # -- Split the baffles so faces use different points (necessary for AMR)
 runApplication splitBaffles -overwrite
 

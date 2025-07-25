@@ -74,22 +74,6 @@ baffles
             name windowsIntact_slave;
             type    wall;
         }
-        patchPairs
-        {
-            type            wall;
-            partialBurst    yes;
-
-            burstModel      field;
-            burstValues
-            (
-                p 4e7
-                impulse 10000
-            );
-
-            // burstModel      pressureImpulse;
-            // impulseBurst    10000;
-            // pBurst          4e7;
-        }
     }
 }
 

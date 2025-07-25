@@ -16,6 +16,9 @@ FoamFile
 
 topoChanger
 {
+    libs            ( "libblastFvMeshTopoChangers.so" );
+    type            hexRefiner;
+
     errorEstimator  densityGradient;
     refineInterval  1;
     lowerRefineLevel 0.05;
@@ -23,21 +26,12 @@ topoChanger
     nBufferLayers   1;
     maxRefinement   4;
     dumpLevel       true;
-    type            hexRefiner;
-    libs            1 ( "libblastFvMeshTopoChangers.so" );
 }
 
 distributor
 {
-    errorEstimator  densityGradient;
-    refineInterval  1;
-    lowerRefineLevel 0.05;
-    unrefineLevel   0.05;
-    nBufferLayers   1;
-    maxRefinement   4;
-    dumpLevel       true;
+    libs            ( "libblastFvMeshDistributors.so" );
     type            redistributor;
-    libs            1 ( "libblastFvMeshDistributors.so" );
 }
 
 

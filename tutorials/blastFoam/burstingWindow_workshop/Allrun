@@ -31,7 +31,7 @@ runParallel -s slave addEmptyPatch windowsBurst_slave wall -overwrite -noFields
 runParallel createNonConformalCouples windowsBurst windowsBurst_slave -overwrite
 
 # -- Set the charge
-runParallel setRefinedFields
+runParallel setRefinedFields -debug
 
 # -- run the calc
-runParallel $(getApplication)
+# runParallel $(getApplication)

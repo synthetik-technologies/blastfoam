@@ -16,6 +16,8 @@ FoamFile
 
 phases          ( RDX tnt gas );
 
+transportPhaseDensity yes;
+
 RDX
 {
     type            detonating;
@@ -48,6 +50,8 @@ RDX
         {
             Cv              1130.78;
             Hf              0;
+            Tref            300;
+            Esref           0;
         }
     }
     products
@@ -126,6 +130,8 @@ tnt
         {
             Cv              1095;
             Hf              0;
+            Tref            300;
+            Esref           0;
         }
     }
     products

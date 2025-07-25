@@ -17,7 +17,7 @@ FoamFile
 
 thermoType
 {
-    type            heRhoThermo;
+    type            hePsiThermo;
     mixture         pureMixture;
     transport       const;
     thermo          eConst;
