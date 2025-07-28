@@ -55,6 +55,8 @@ class equation
 {
 public:
 
+    TypeName("Equation");
+
     typedef scalar VarType;
 
     // Constructors
@@ -71,11 +73,45 @@ public:
             univariateEquation<Type>(eqnString)
         {}
 
+        //- Construct from equation string and dictionary
+        equation(const string& eqnString, const dictionary& dict)
+        :
+            univariateEquation<Type>(eqnString, dict)
+        {}
+
         //- Construct from dictionary
         equation(const dictionary& dict)
         :
             univariateEquation<Type>(dict)
         {}
+
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        equation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
+    // Selectors
+
+        //- Select equation type from the constructing dictionary
+        static autoPtr<equation<Type>> New
+        (
+            const dictionary& dict
+        );
+
+        //- Select using given equation type
+        static autoPtr<equation<Type>> New
+        (
+            const word& type,
+            const dictionary& dict
+        );
 
 
     //- Destructor
@@ -185,6 +221,15 @@ public:
             const string& eqnString = string::null
         );
 
+        //- Construct given bounds, name, and dictionary
+        Equation
+        (
+            const scalar lower,
+            const scalar upper,
+            const dictionary& dict,
+            const string& eqnString = string::null
+        );
+
          //- Construct from dictionary
         Equation(const dictionary& dict);
 
@@ -289,17 +334,23 @@ public:
             limit(x[0]);
         }
 
+        // //- Calculate the first derivative of the equation
+        // virtual Type dfdx(const scalar x, const label li) const
+        // {
+        //     return (this->fx(x, li) - this->fx(x + dx_, li))/dx_;
+        // }
+
         //- Calulate the function at a point
         virtual Type fX
         (
-            const UList<scalar>& x,
+            const typename UnivariateEquation<Type>::VarType& x,
             const label li
         ) const;
 
         //- Calulate the function at a point
         virtual void FX
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& fx
         ) const;
@@ -307,7 +358,7 @@ public:
         //- Calulate the gradient
         virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename UnivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& dfdx
         ) const;
@@ -315,7 +366,7 @@ public:
         //- Calulate the Jacobian (dfdx)
         virtual void jacobian
         (
-            const UList<scalar>& x,
+            const typename MultivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J

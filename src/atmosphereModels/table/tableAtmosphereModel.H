@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2022
+    \\  /    A nd           | Copyright (C) 2020-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -60,6 +60,7 @@ class table
     lookupTable1D<scalar> pTable_;
 
     //- Temperature table
+    bool setT_;
     lookupTable1D<scalar> TTable_;
 
     //- Is the pressure field corrected
@@ -72,7 +73,7 @@ public:
     TypeName("table");
 
     // Constructor
-    table(const fvMesh&, const dictionary&, const label);
+    table(const fvMesh&, const dictionary&, const word&);
 
 
     //- Destructor
@@ -83,6 +84,12 @@ public:
 
         //- Create atmosphere
         virtual void createAtmosphere(fluidBlastThermo& thermo) const;
+
+
+        virtual bool needReference() const
+        {
+            return correct_ && !dict_.found("fixedPatches");
+        }
 };
 
 

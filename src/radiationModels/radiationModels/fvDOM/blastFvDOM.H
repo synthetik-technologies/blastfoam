@@ -146,7 +146,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("blastFvDOM");
+    TypeName("blastfvDOM");
 
 
     // Constructors

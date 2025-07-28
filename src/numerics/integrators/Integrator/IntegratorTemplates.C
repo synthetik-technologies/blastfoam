@@ -28,8 +28,8 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::Integrator<Type, Adapt>> Foam::Integrator<Type, Adapt>::New
 (
     const equationType& eqn,
     const dictionary& dict
@@ -40,7 +40,7 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
         dict.lookupOrDefault<word>
         (
             "integrator",
-            Simpson13Integrator<Type>::typeName
+            Simpson13Integrator<Type, Adapt>::typeName
         ),
         eqn,
         dict
@@ -48,8 +48,8 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 }
 
 
-template<class Type>
-Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::Integrator<Type, Adapt>> Foam::Integrator<Type, Adapt>::New
 (
     const word& integratorTypeName,
     const equationType& eqn,
@@ -63,19 +63,25 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown integrator type "
-            << integratorTypeName << nl << nl
-            << "Valid integrators are : " << endl
+            << "Unknown integrator type " << integratorTypeName << nl
+            << "Valid integrators are: " << endl
             << dictionaryConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<Integrator<Type>>(cstrIter()(eqn, dict));
+    return autoPtr<Integrator<Type, Adapt>>
+    (
+        cstrIter()
+        (
+            eqn,
+            dict.optionalSubDict(integratorTypeName + "Coeffs")
+        )
+    );
 }
 
 
-template<class Type>
-Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+template<class Type, class Adapt>
+Foam::autoPtr<Foam::Integrator<Type, Adapt>> Foam::Integrator<Type, Adapt>::New
 (
     const equationType& eqn,
     const integrator& inter
@@ -87,20 +93,19 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
     if (cstrIter == inputsConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown integrator type "
-            << inter.type() << nl << nl
-            << "Valid integrators are : " << endl
+            << "Unknown integrator type " << inter.type() << nl
+            << "Valid integrators are: " << endl
             << inputsConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<Integrator<Type>>(cstrIter()(eqn, inter));
+    return autoPtr<Integrator<Type, Adapt>>(cstrIter()(eqn, inter));
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::Integrator<Type>::Integrator
+template<class Type, class Adapt>
+Foam::Integrator<Type, Adapt>::Integrator
 (
     const equationType& eqn,
     const dictionary& dict
@@ -111,8 +116,8 @@ Foam::Integrator<Type>::Integrator
 {}
 
 
-template<class Type>
-Foam::Integrator<Type>::Integrator
+template<class Type, class Adapt>
+Foam::Integrator<Type, Adapt>::Integrator
 (
     const equationType& eqn,
     const integrator& inter

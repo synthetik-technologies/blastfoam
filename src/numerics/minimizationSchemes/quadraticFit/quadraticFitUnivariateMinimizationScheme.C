@@ -30,36 +30,43 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(quadraticFitUnivariateMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(quadraticFit, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        quadraticFitUnivariateMinimizationScheme,
+        quadraticFit,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        quadraticFitUnivariateMinimizationScheme,
+        quadraticFit,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        quadraticFitUnivariateMinimizationScheme,
+        quadraticFit,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        quadraticFitUnivariateMinimizationScheme,
+        quadraticFit,
         dictionaryTwo
     );
 }
+}
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::quadraticFitUnivariateMinimizationScheme::quadraticFitUnivariateMinimizationScheme
+Foam::minimizationSchemes::univariate::quadraticFit::quadraticFit
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -71,9 +78,19 @@ Foam::quadraticFitUnivariateMinimizationScheme::quadraticFitUnivariateMinimizati
 }
 
 
+Foam::minimizationSchemes::univariate::quadraticFit::quadraticFit
+(
+    const scalarUnivariateEquation& eqn,
+    const quadraticFit& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::quadraticFit::minimize
 (
     const scalar x0,
     const scalar x1,
@@ -96,8 +113,8 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
     {
         if
         (
-            (convergedX(a, b) && convergedY(ya, yb))
-         || (convergedX(b, c) && convergedY(yb, yc))
+            (converged(a, b, ya, yb))
+         || (converged(b, c, yb, yc))
         )
         {
             break;

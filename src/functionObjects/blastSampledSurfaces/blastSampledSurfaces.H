@@ -1,0 +1,284 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::functionObjects::blastSampledSurfaces
+
+Description
+    Set of surfaces to sample
+
+    Example of function object specification:
+    \verbatim
+    surfaces1
+    {
+        type            blastSurfaces;
+        libs            ("libblastFunctionObjects.so");
+
+        writeControl    writeTime;
+
+        fields          (p U);
+
+        surfaceFormat   vtk;
+        interpolationScheme cellPoint;
+
+        surfaces
+        (
+            p1e5
+            {
+                type            isoSurface;
+                isoField        p;
+                isoValue        1e5;
+                interpolate     yes;
+            }
+        );
+    }
+    \endverbatim
+
+Usage
+    \table
+        Property     | Description             | Required    | Default value
+        type         | type name: surfaces     | yes         |
+        surfaceFormat | the format in which to write the surface file | yes   |
+        interpolationScheme | the method by which values are interpolated \\
+                              from the mesh to the surface | yes
+        surfaces     | the list of surfaces    | yes         |
+    \endtable
+
+See also
+    Foam::blastSampledSurfaces
+
+SourceFiles
+    blastSampledSurfaces.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef functionObjects_blastSampledSurfaces_H
+#define functionObjects_blastSampledSurfaces_H
+
+#include "functionObject.H"
+#include "blastSampledSurface.H"
+#include "surfaceWriter.H"
+#include "volFieldsFwd.H"
+#include "surfaceFieldsFwd.H"
+#include "wordReList.H"
+#include "IOobjectList.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Forward declaration of classes
+class Time;
+class fvMesh;
+class dictionary;
+
+namespace functionObjects
+{
+
+/*---------------------------------------------------------------------------*\
+                       Class blastSampledSurfaces Declaration
+\*---------------------------------------------------------------------------*/
+
+class blastSampledSurfaces
+:
+    public functionObject,
+    public PtrList<blastSampledSurface>
+{
+    // Private classes
+
+        //- Class used for surface merging information
+        class mergeInfo
+        {
+        public:
+            pointField points;
+            faceList   faces;
+            labelList  pointsMap;
+
+            //- Clear all storage
+            void clear()
+            {
+                points.clear();
+                faces.clear();
+                pointsMap.clear();
+            }
+        };
+
+
+    // Static Data Members
+
+        //- Output verbosity
+        static bool verbose_;
+
+        //- Tolerance for merging points (fraction of mesh bounding box)
+        static scalar mergeTol_;
+
+
+    // Private Data
+
+        //- Const reference to fvMesh
+        const fvMesh& mesh_;
+
+        //- Output path
+        fileName outputPath_;
+
+
+        // Read from dictonary
+
+            //- Names of fields to sample
+            wordList fields_;
+
+            //- Interpolation scheme to use
+            word interpolationScheme_;
+
+
+        // surfaces
+
+            //- Information for merging surfaces
+            List<mergeInfo> mergeList_;
+
+
+        // Calculated
+
+            //- Surface formatter
+            autoPtr<surfaceWriter> formatter_;
+
+
+    // Private Member Functions
+
+
+        //- Does any of the surfaces need an update?
+        bool needsUpdate() const;
+
+        //- Mark the surfaces as needing an update.
+        //  May also free up unneeded data.
+        //  Return false if all surfaces were already marked as expired.
+        bool expire();
+
+        //- Update the surfaces as required and merge surface points (parallel).
+        //  Return false if no surfaces required an update.
+        bool update();
+
+        //- Sample all fields of a type on a given surface
+        template<class Type>
+        PtrList<Field<Type>> sampleLocalType
+        (
+            const label surfi,
+            const wordList& fieldNames,
+            HashPtrTable<interpolation<Type>>& interpolations
+        );
+
+        //- Sample all fields of a type on a given surface and combine on the
+        //  master for writing
+        template<class Type>
+        PtrList<Field<Type>> sampleType
+        (
+            const label surfi,
+            const wordList& fieldNames,
+            HashPtrTable<interpolation<Type>>& interpolations
+        );
+
+
+public:
+
+    //- Runtime type information
+    TypeName("blastSurfaces");
+
+
+    // Constructors
+
+        //- Construct from Time and dictionary
+        blastSampledSurfaces
+        (
+            const word& name,
+            const Time& time,
+            const dictionary& dict
+        );
+
+        //- Disallow default bitwise copy construction
+        blastSampledSurfaces(const blastSampledSurfaces&) = delete;
+
+
+    //- Destructor
+    virtual ~blastSampledSurfaces();
+
+
+    // Member Functions
+
+        //- Does any of the surfaces need an update?
+        virtual bool needsUpdate() const;
+
+        //- Mark the surfaces as needing an update.
+        //  May also free up unneeded data.
+        //  Return false if all surfaces were already marked as expired.
+        virtual bool expire();
+
+        //- Update the surfaces as required and merge surface points (parallel).
+        //  Return false if no surfaces required an update.
+        virtual bool update();
+
+        //- Set verbosity level
+        void verbose(const bool verbosity = true);
+
+        //- Read the blastSampledSurfaces dictionary
+        virtual bool read(const dictionary&);
+
+        //- Execute, currently does nothing
+        virtual bool execute();
+
+        //- Sample and write
+        virtual bool write();
+
+        //- Update for changes of mesh - expires the surfaces
+        virtual void topoChange(const polyTopoChangeMap&);
+
+        //- Update for mesh point-motion - expires the surfaces
+        virtual void movePoints(const polyMesh&);
+
+        //- Update for changes of mesh due to readUpdate - expires the surfaces
+        virtual void readUpdate(const polyMesh::readUpdateState state);
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const blastSampledSurfaces&) = delete;
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace functionObjects
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "blastSampledSurfacesTemplates.C"
+#endif
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //

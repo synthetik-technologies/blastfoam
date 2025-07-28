@@ -1,15 +1,15 @@
-# DESTDIR = /opt
 prefix = /opt/blastfoam
 export MAKE=True
+
 build: SHELL:=bash
 build:
-	+ source /opt/openfoam9/etc/bashrc && \
+	+ source /opt/openfoam12/etc/bashrc && \
 	source etc/bashrc && \
 	./Allwmake -j -s
 
 clean: SHELL:=bash
 clean:
-	+ source /opt/openfoam9/etc/bashrc && \
+	+ source /opt/openfoam12/etc/bashrc && \
 	source etc/bashrc  && \
 	./Allwclean
 

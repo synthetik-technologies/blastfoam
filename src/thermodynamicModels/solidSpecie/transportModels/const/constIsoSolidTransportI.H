@@ -77,6 +77,16 @@ Foam::constIsoSolidTransport<Thermo>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo>
+inline Foam::scalar Foam::constIsoSolidTransport<Thermo>::kappaT
+(
+    const scalar T
+) const
+{
+    return kappa_;
+}
+
+
+template<class Thermo>
 inline Foam::scalar Foam::constIsoSolidTransport<Thermo>::kappa
 (
     const scalar rho,

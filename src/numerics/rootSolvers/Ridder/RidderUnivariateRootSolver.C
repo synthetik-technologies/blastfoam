@@ -30,31 +30,22 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(RidderUnivariateRootSolver, 0);
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        RidderUnivariateRootSolver,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        RidderUnivariateRootSolver,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        RidderUnivariateRootSolver,
-        dictionaryTwo
-    );
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(Ridder, 0);
+    addToRunTimeSelectionTable(univariateRootSolver, Ridder, dictionaryZero);
+    addToRunTimeSelectionTable(univariateRootSolver, Ridder, dictionaryOne);
+    addToRunTimeSelectionTable(univariateRootSolver, Ridder, dictionaryTwo);
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::RidderUnivariateRootSolver::RidderUnivariateRootSolver
+Foam::rootSolvers::univariate::Ridder::Ridder
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -64,15 +55,25 @@ Foam::RidderUnivariateRootSolver::RidderUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::Ridder::Ridder
+(
+    const scalarMultivariateEquation& eqn,
+    const Ridder& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::RidderUnivariateRootSolver::~RidderUnivariateRootSolver()
+Foam::rootSolvers::univariate::Ridder::~Ridder()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::RidderUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::Ridder::findRoot
 (
     const scalar x,
     const scalar xLow,

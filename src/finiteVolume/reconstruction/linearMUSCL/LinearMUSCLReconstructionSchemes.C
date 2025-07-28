@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -59,6 +59,7 @@ defineReconstructionTable(Linear, LinearMUSCL, sphericalTensor);
 defineReconstructionTable(Linear, LinearMUSCL, tensor);
 
 // Define limiters
+makeMUSCLReconstruction(Linear, "linearMUSCL", none, noneLimiter)
 makeMUSCLReconstruction(Linear, "linearMUSCL", Gamma, GammaLimiter);
 makeLMUSCLReconstruction
 (

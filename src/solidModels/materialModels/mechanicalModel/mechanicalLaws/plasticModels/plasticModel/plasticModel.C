@@ -238,11 +238,12 @@ Foam::plasticModel::plasticModel
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     mu_("zero", dimPressure, 0.0),
     K_("zero", dimPressure, 0.0),
     E_("zero", dimPressure, 0.0),
@@ -252,7 +253,7 @@ Foam::plasticModel::plasticModel
         IOobject
         (
             "activeYield",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -346,7 +347,7 @@ Foam::tmp<Foam::volScalarField> Foam::plasticModel::shearModulus() const
 }
 
 
-Foam::scalar Foam::plasticModel::residual()
+Foam::scalar Foam::plasticModel::residual() const
 {
     // Calculate residual based on change in plastic strain increment
     if
@@ -363,7 +364,7 @@ Foam::scalar Foam::plasticModel::residual()
                     DEpsilonPf().primitiveField()
                   - DEpsilonPf().prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(DEpsilonPf().prevIter().primitiveField()));
+            );
     }
     else
     {
@@ -375,8 +376,43 @@ Foam::scalar Foam::plasticModel::residual()
                     DEpsilonP().primitiveField()
                   - DEpsilonP().prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(DEpsilonP().prevIter().primitiveField()));
+            );
     }
+}
+
+
+Foam::scalar Foam::plasticModel::relResidual() const
+{
+    // Calculate residual based on change in plastic strain increment
+    scalar DEpsilonPEqRef = 0.0;
+    if
+    (
+        mesh().foundObject<surfaceTensorField>("grad(D)f")
+     || mesh().foundObject<surfaceTensorField>("grad(DD)f")
+    )
+    {
+        DEpsilonPEqRef =
+            max
+            (
+                gMax(mag(DEpsilonPf().prevIter().primitiveField())),
+                gMax(mag(DEpsilonPf().oldTime().primitiveField()))
+            );
+    }
+    else
+    {
+        DEpsilonPEqRef =
+            max
+            (
+                gMax(mag(DEpsilonP().prevIter().primitiveField())),
+                gMax(mag(DEpsilonP().oldTime().primitiveField()))
+            );
+    }
+
+    if (DEpsilonPEqRef > small)
+    {
+        return residual()/DEpsilonPEqRef;
+    }
+    return 0.0;
 }
 
 
@@ -449,7 +485,7 @@ void Foam::plasticModel::updateTotalFields()
 }
 
 
-Foam::scalar Foam::plasticModel::newDeltaT()
+Foam::scalar Foam::plasticModel::newDeltaT() const
 {
     // In the calculation of the plastic strain increment, the return direction
     // is kept constant for the time-step; we can approximate the error based on
@@ -482,27 +518,27 @@ Foam::scalar Foam::plasticModel::newDeltaT()
     // Max error
     const scalar maxMagDEpsilonPErr = gMax(mag(DEpsilonPErrorI));
 
-    if (maxMagDEpsilonPErr > SMALL)
-    {
-        Info<< "    " << name() << ": max time integration error = "
-            << maxMagDEpsilonPErr
-            << endl;
-
-        if (maxMagDEpsilonPErr > 50*maxDeltaErr_)
-        {
-            WarningInFunction
-                << "The error in the plastic strain is over 50 times larger "
-                << "than the desired value!\n    Consider starting the "
-                << "simulation with a smaller initial time-step" << endl;
-        }
-
-        // Calculate the time-step scaling factor, where maxDeltaErr_ is the
-        // maximum allowed error
-        const scalar scaleFac = maxDeltaErr_/maxMagDEpsilonPErr;
-
-        // Return the new time-step size
-        return scaleFac*mesh().time().deltaTValue();
-    }
+    // if (maxMagDEpsilonPErr > SMALL)
+    // {
+    //     Info<< "    " << name() << ": max time integration error = "
+    //         << maxMagDEpsilonPErr
+    //         << endl;
+    //
+    //     if (maxMagDEpsilonPErr > 50*maxDeltaErr_)
+    //     {
+    //         WarningInFunction
+    //             << "The error in the plastic strain is over 50 times larger "
+    //             << "than the desired value!\n    Consider starting the "
+    //             << "simulation with a smaller initial time-step" << endl;
+    //     }
+    //
+    //     // Calculate the time-step scaling factor, where maxDeltaErr_ is the
+    //     // maximum allowed error
+    //     const scalar scaleFac = maxDeltaErr_/maxMagDEpsilonPErr;
+    //
+    //     // Return the new time-step size
+    //     return scaleFac*mesh().time().deltaTValue();
+    // }
 
     return mesh().time().endTime().value();
 }

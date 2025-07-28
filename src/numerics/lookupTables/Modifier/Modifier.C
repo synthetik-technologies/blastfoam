@@ -24,49 +24,27 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Modifier.H"
+#include "tensor.H"
+#include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
-
-template<>
-Foam::autoPtr<Foam::Modifier<Foam::scalar>>
-Foam::Modifier<Foam::scalar>::New
-(
-    const word& mod
-)
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+namespace Foam
 {
-    if (mod == "log10")
+    defineModifierType(scalar);
+    defineModifierType(vector);
+    defineModifierType(symmTensor);
+    defineModifierType(sphericalTensor);
+    defineModifierType(tensor);
+
+    namespace modifiers
     {
-        return autoPtr<Modifier<scalar>>(new modifiers::Log10());
+        addModifiers(None);
+
+        addModifier(Ln, scalar);
+        addModifier(Exp, scalar);
+        addModifier(Log10, scalar);
+        addModifier(Pow10, scalar);
     }
-    else if (mod == "pow10")
-    {
-        return autoPtr<Modifier<scalar>>(new modifiers::Pow10());
-    }
-    else if (mod == "ln")
-    {
-        return autoPtr<Modifier<scalar>>(new modifiers::Ln());
-    }
-    else if (mod == "exp")
-    {
-        return autoPtr<Modifier<scalar>>(new modifiers::Exp());
-    }
-    else if (mod == "none")
-    {
-        return autoPtr<Modifier<scalar>>(new modifiers::None<scalar>());
-    }
-    else
-    {
-        FatalErrorInFunction
-            << mod << " is not a valid mod scheme" << nl
-            << "Options are: " << nl
-            << "    none" << nl
-            << "    log10" << nl
-            << "    pow10" << nl
-            << "    ln" << nl
-            << "    exp" << nl
-            << abort(FatalError);
-    }
-    return autoPtr<Modifier<scalar>>();
 }
 
 // ************************************************************************* //

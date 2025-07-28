@@ -65,7 +65,13 @@ Foam::massToCell::massToCell(const dictionary& dict)
     mustRead_(dict.dictName() != "backup"),
     rho_(1.0),
     mass_(0.0),
-    centre_(dict.lookup<vector>("centre")),
+    centre_
+    (
+        // Lookup centre from parent dict if in backup
+        (!mustRead_ && dict.parent().found("centre"))
+      ? dict.parent().lookup<vector>("centre")
+      : dict.lookup<vector>("centre")
+    ),
     volume_(0.0),
     scale_(dict.lookupOrDefault("scale", 1.0)),
     read_(false)

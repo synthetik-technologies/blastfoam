@@ -268,6 +268,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -305,13 +306,17 @@ public:
 
         //- Return material residual i.e. a measured of how convergence of
         //  the material model
-        virtual scalar residual();
+        virtual scalar residual() const;
+
+        //- Return relative material residual i.e. a measured of how convergence of
+        //  the material model
+        virtual scalar relResidual() const;
 
         //- Update the yield stress: called at end of time-step
         virtual void updateTotalFields();
 
         //- Return the desired new time-step
-        virtual scalar newDeltaT();
+        virtual scalar newDeltaT() const;
 };
 
 

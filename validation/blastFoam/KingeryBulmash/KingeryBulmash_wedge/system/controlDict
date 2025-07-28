@@ -43,7 +43,7 @@ timeFormat      general;
 
 timePrecision   12;
 
-runTimeModifiable true;
+runTimeModifiable false;
 
 adjustTimeStep  yes;
 
@@ -55,17 +55,10 @@ maxDeltaT       1;
 
 functions
 {
-    impulse
+    bq
     {
-        type                impulse;
+        type                blastQuantities;
         writeControl        writeTime;
-        pRef                101325;
-    }
-    overpressure
-    {
-        type                overpressure;
-        writeControl        writeTime;
-        store               yes;
         pRef                101325;
     }
     maxPImpulse
@@ -77,12 +70,6 @@ functions
             overpressure
             impulse
         );
-    }
-    timeOfArrival
-    {
-        type                timeOfArrival;
-        writeControl        writeTime;
-        writeInterval       1;
     }
     pressureProbes
     {

@@ -39,7 +39,8 @@ SourceFiles
 #include "surfaceFields.H"
 #include "pointFields.H"
 #include "operations.H"
-#include "MeshObject.H"
+#include "MeshObjects.H"
+#include "DemandDrivenMeshObject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,39 +49,27 @@ namespace Foam
 
 class gradientSchemes
 :
-    public MeshObject<fvMesh, MoveableMeshObject, gradientSchemes>
+    public DemandDrivenMeshObject
+    <
+        fvMesh,
+        MoveableMeshObject,
+        gradientSchemes
+    >
 {
     // Private data
-
-        //- Mesh
-        const fvMesh& mesh_;
-
-        //- Reference to displacement field
-        const volVectorField& D_;
 
         //- Operations
         const operations ops_;
 
-        //- Cell owners
-        const labelUList& own_;
-
-        //- Cell neighbours
-        const labelUList& nei_;
-
-        // Cell centre coordinates
-        const volVectorField& C_;
-
-        // Face centre coordinates
-        const surfaceVectorField& Cf_;
-
-        //- Material nodal coordinates
-        const pointField& points_;
-
         //- Inverse of distance matrix
-        tensorField Ainv_;
+        mutable tensorField* AinvPtr_;
 
         //- Inverse of local distance matrix
-        tensorField AinvLocal_;
+        mutable tensorField* AinvLocalPtr_;
+
+        //- Inverse of local distance matrix correction (Fixed value)
+        mutable tensorField* AinvLocalFixedPtr_;
+
 
 
         //- Return the scalar limiter
@@ -149,7 +138,7 @@ class gradientSchemes
                     dimensioned<Type>("pLimiter", dimless, pTraits<Type>::one)
                 )
             );
-// //             return tphiLimiter;
+            return tphiLimiter;
             GeoFieldType& phiLimiter(tphiLimiter.ref());
 
             // Collect min and max values from neighbourhood
@@ -293,6 +282,9 @@ private:
 
     // Private member functions
 
+        // Calculate loacl distanct matrices
+        void calcDistanceMatrixLocal() const;
+
         //- Disallow default bitwise copy construct
         gradientSchemes(const gradientSchemes&);
 
@@ -308,7 +300,7 @@ public:
     // Constructors
 
         //- Construct from mesh
-        gradientSchemes(const volVectorField&);
+        gradientSchemes(const fvMesh& mesh);
 
 
     // Destructor
@@ -320,10 +312,13 @@ public:
         // Edit
 
             //- Inverse distance matrix for gradient
-            tmp<tensorField> distanceMatrix() const;
+            const tensorField& distanceMatrix() const;
 
             //- Inverse distance matrix for local gradient
-            tmp<tensorField> distanceMatrixLocal() const;
+            const tensorField& distanceMatrixLocal() const;
+
+            //- Inverse distance matrix for local gradient (fixed value)
+            const tensorField& distanceMatrixLocalFixed() const;
 
             //- Least square gradient for a volScalarField
             tmp<volVectorField> gradient
@@ -351,7 +346,7 @@ public:
             (
                 const volVectorField&,
                 const GeometricField<vector, fvsPatchField, surfaceMesh>&,
-                const GeometricField<vector, pointPatchField, pointMesh>&
+                const pointVectorField&
             ) const;
 
             //- Reconstruction of a volScalarField to surfaceScalarField

@@ -55,15 +55,9 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             cubic;
-    reconstruct(alpha)  quadraticMUSCL Minmod;
-    reconstruct(rho)    quadraticMUSCL Minmod;
-    reconstruct(U)      quadraticMUSCL Minmod;
-    reconstruct(e)      quadraticMUSCL Minmod;
-    reconstruct(p)      quadraticMUSCL Minmod;
-    reconstruct(speedOfSound) quadraticMUSCL Minmod;
-    "reconstruct\(Y.*\)" quadraticMUSCL Minmod;
-    reconstruct(Theta)  quadraticMUSCL Minmod;
+    default             linear;
+    reconstruct(scalar) quadraticMUSCL Minmod;
+    reconstruct(vector) quadraticMUSCL Minmod;
 }
 
 snGradSchemes

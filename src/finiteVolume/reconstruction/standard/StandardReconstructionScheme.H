@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -91,7 +91,8 @@ public:
         StandardReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         );
 
     //- Destructor

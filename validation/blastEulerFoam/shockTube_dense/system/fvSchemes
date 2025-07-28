@@ -61,6 +61,7 @@ interpolationSchemes
     reconstruct(p)      vanAlbada;
     reconstruct(speedOfSound) vanAlbada;
     reconstruct(Theta)  vanAlbada;
+    "reconstruct\(.*\)"  vanAlbada;
 }
 
 snGradSchemes

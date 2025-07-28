@@ -39,24 +39,45 @@ Foam::ePolynomialThermo<EquationOfState, PolySize>::ePolynomialThermo
     EquationOfState(dict),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
     Sf_(dict.subDict("thermodynamics").lookup<scalar>("Sf")),
-    CvCoeffs_
-    (
-        dict.subDict("thermodynamics").lookup
-        (
-            "CvCoeffs<" + Foam::name(PolySize) + '>'
-        )
-    ),
+    CvCoeffs_(),
     eCoeffs_(),
     sCoeffs_()
 {
-    eCoeffs_ = CvCoeffs_.integral();
+    const dictionary& thermoDict = dict.subDict("thermodynamics");
+    if (thermoDict.found("CvCoeffs<" + Foam::name(PolySize) + '>'))
+    {
+        thermoDict.lookup("CvCoeffs<" + Foam::name(PolySize) + '>')
+            >> CvCoeffs_;
+        eCoeffs_ = CvCoeffs_.integral();
+    }
+    else if (thermoDict.found("eCoeffs<" + Foam::name(PolySize+1) + '>'))
+    {
+        thermoDict.lookup("eCoeffs<" + Foam::name(PolySize+1) + '>')
+            >> eCoeffs_;
+        for (label i = 0; i < PolySize; i++)
+        {
+            CvCoeffs_[i] = scalar(i+1)*eCoeffs_[i+1];
+        }
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Either "
+            << "CvCoeffs<" << PolySize << ">" << " or "
+            << "eCoeffs<" << PolySize+1 << ">" << " must be provided" << endl
+            << abort(FatalError);
+    }
+
     sCoeffs_ = CvCoeffs_.integralMinus1();
 
-    // Offset e poly so that it is relative to the enthalpy at Tstd
-    eCoeffs_[0] -= eCoeffs_.value(Tstd);
+    if (EquationOfState::temperatureBased())
+    {
+        // Offset e poly so that it is relative to the enthalpy at Tstd
+        eCoeffs_[0] -= eCoeffs_.value(Tstd);
 
-    // Offset s poly so that it is relative to the entropy at Tstd
-    sCoeffs_[0] -= sCoeffs_.value(Tstd);
+        // Offset s poly so that it is relative to the entropy at Tstd
+        sCoeffs_[0] -= sCoeffs_.value(Tstd);
+    }
 }
 
 

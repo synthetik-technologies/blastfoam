@@ -57,38 +57,37 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     forAll(TCells, celli)
     {
         TCells[celli] = THESolver_->solve(TCells[celli], celli);
+        if (TCells[celli] < this->TLow_)
+        {
+            TCells[celli] = this->TLow_;
+            heCells[celli] = this->cellhe(this->TLow_, celli);
+        }
     }
     forAll(bT, patchi)
     {
         THEEqn_.setPatch(patchi);
-        scalarField& pT = bT[patchi];
-        forAll(pT, facei)
+        fvPatchScalarField& pT = bT[patchi];
+        fvPatchScalarField& phe = bhe[patchi];
+        if (pT.fixesValue())
         {
-            pT[facei] = THESolver_->solve(pT[facei], facei);
-        }
-    }
-    T_.correctBoundaryConditions();
-
-    if (min(T_).value() < this->TLow_)
-    {
-        forAll(TCells, celli)
-        {
-            if (TCells[celli] < this->TLow_)
+            forAll(pT, facei)
             {
-                TCells[celli] = this->TLow_;
-                heCells[celli] = this->cellHE(this->TLow_, celli);
+                phe[facei] = patchFacehe(pT[facei], patchi, facei);
             }
         }
-        forAll(bhe, patchi)
+        else
         {
-            scalarField& pT = bT[patchi];
-            scalarField& phe = bhe[patchi];
-
-            pT = max(pT, this->TLow_);
-            phe = this->he(pT, patchi);
+            forAll(pT, facei)
+            {
+                pT[facei] = THESolver_->solve(pT[facei], facei);
+                if (pT[facei] < TLow_)
+                {
+                    pT[facei] = TLow_;
+                    phe[facei] = patchFacehe(pT[facei], patchi, facei);
+                }
+            }
         }
     }
-    this->he().correctBoundaryConditions();
 
     volScalarField XiSum
     (
@@ -115,7 +114,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
 
     this->Cp_ = Zero;
     this->Cv_ = Zero;
-    this->alpha_ = Zero;
+    this->kappa_ = Zero;
     this->mu_ = Zero;
 
     forAll(thermos_, i)
@@ -127,7 +126,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
             this->T_,
             this->Cp_,
             this->Cv_,
-            this->alpha_,
+            this->kappa_,
             this->mu_,
             pXiSum,
             XiSum
@@ -141,7 +140,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     normalise(Cp_);
     normalise(Cv_);
     normalise(mu_);
-    normalise(alpha_);
+    normalise(kappa_);
 
     forAll(thermos_, i)
     {
@@ -169,19 +168,23 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     const word& phaseName
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName),
+    fluidBlastThermo(mesh, dict, phaseName, word::null, false),
     phases_(dict.lookup("phases")),
+    truePhases_(phases_),
     volumeFractions_(phases_.size()),
     rhos_(phases_.size()),
     thermos_(phases_.size()),
     alphaRhos_(phases_.size()),
     sumVfPtr_(nullptr),
-    TEqn_(*this),
+
+    TEqn_(*this, dict.optionalSubDict("eSolverCoeffs")),
     TSolver_(nullptr),
-    THEEqn_(*this, this->TLow_),
+
+    THEEqn_(*this, this->TLow_, dict.optionalSubDict("TSolverCoeffs")),
     THESolver_(nullptr)
 
 {
+
     // Select the solvers for energy and temperature
     if (dict.isDict("eSolverCoeffs"))
     {
@@ -192,7 +195,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
                 eDict.lookupOrDefault
                 (
                     "solver",
-                    NewtonRaphsonUnivariateRootSolver::typeName
+                    rootSolvers::univariate::NewtonRaphson::typeName
                 ),
                 TEqn_,
                 eDict
@@ -203,7 +206,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
         TSolver_ =
             univariateRootSolver::New
             (
-                NewtonRaphsonUnivariateRootSolver::typeName,
+                rootSolvers::univariate::NewtonRaphson::typeName,
                 TEqn_,
                 dict
             );
@@ -217,7 +220,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
                 TDict.lookupOrDefault
                 (
                     "solver",
-                    NewtonRaphsonUnivariateRootSolver::typeName
+                    rootSolvers::univariate::NewtonRaphson::typeName
                 ),
                 THEEqn_,
                 TDict
@@ -228,27 +231,26 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
         THESolver_ =
             univariateRootSolver::New
             (
-                NewtonRaphsonUnivariateRootSolver::typeName,
+                rootSolvers::univariate::NewtonRaphson::typeName,
                 THEEqn_,
                 dict
             );
     }
     volScalarField sumAlpha
     (
-        IOobject
+        volScalarField::New
         (
             "sumAlpha",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        0.0
+            mesh,
+            0.0
+        )
     );
     rho_ == Zero;
 
     forAll(phases_, phasei)
     {
-        const word& phaseIName = phases_[phasei];
+        truePhases_[phasei] = IOobject::groupName(phases_[phasei], phaseName);
+        const word& phaseIName = truePhases_[phasei];
         volumeFractions_.set
         (
             phasei,
@@ -256,8 +258,8 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
             (
                 IOobject
                 (
-                    IOobject::groupName("alpha", phases_[phasei]),
-                    mesh.time().timeName(),
+                    IOobject::groupName("alpha", phaseIName),
+                    mesh.time().name(),
                     mesh,
                     IOobject::MUST_READ,
                     IOobject::AUTO_WRITE
@@ -272,8 +274,8 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
             (
                 IOobject
                 (
-                    IOobject::groupName("rho", phases_[phasei]),
-                    mesh.time().timeName(),
+                    IOobject::groupName("rho", phaseIName),
+                    mesh.time().name(),
                     mesh,
                     IOobject::MUST_READ,
                     IOobject::AUTO_WRITE
@@ -287,22 +289,37 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
             phaseFluidBlastThermo::New
             (
                 mesh,
-                dict.subDict(phaseIName),
+                dict.subDict(phases_[phasei]),
                 phaseIName,
                 phaseName
             ).ptr()
         );
 
-        thermos_[phasei].read(dict.subDict(phaseIName));
-        this->residualAlpha_ =
-            max(thermos_[phasei].residualAlpha(), this->residualAlpha_);
-        this->residualRho_ =
-            max(thermos_[phasei].residualRho(), this->residualRho_);
+        thermos_[phasei].read(dict.subDict(phases_[phasei]));
+        this->residualAlpha_.value() =
+            max
+            (
+                thermos_[phasei].residualAlpha().value(),
+                this->residualAlpha_.value()
+            );
+        this->residualRho_.value() =
+            max
+            (
+                thermos_[phasei].residualRho().value(),
+                this->residualRho_.value()
+            );
 
         rho_ += volumeFractions_[phasei]*rhos_[phasei];
         sumAlpha += volumeFractions_[phasei];
     }
     rho_ /= max(sumAlpha, this->residualAlpha_);
+
+    // Initial guess for e
+    if (!this->e_.headerOk())
+    {
+        this->e_ == he(p_, T_);
+    }
+
     this->initializeFields();
 }
 
@@ -343,11 +360,19 @@ bool Foam::multiphaseFluidBlastThermo::read()
 {
     forAll(thermos_, phasei)
     {
-        thermos_[phasei].read(this->subDict(thermos_[phasei].phaseName()));
-        this->residualAlpha_ =
-            max(this->residualAlpha_, thermos_[phasei].residualAlpha());
-        this->residualRho_ =
-            max(this->residualRho_, thermos_[phasei].residualRho());
+        thermos_[phasei].read(this->subDict(phases_[phasei]));
+        this->residualAlpha_.value() =
+            max
+            (
+                this->residualAlpha_.value(),
+                thermos_[phasei].residualAlpha().value()
+            );
+        this->residualRho_.value() =
+            max
+            (
+                this->residualRho_.value(),
+                thermos_[phasei].residualRho().value()
+            );
     }
     return true;
 }
@@ -399,6 +424,70 @@ void Foam::multiphaseFluidBlastThermo::updateRho(const volScalarField& p)
         rho_ += volumeFractions_[phasei]*thermos_[phasei].rho();
     }
     normalise(rho_);
+    rho_.correctBoundaryConditions();
+}
+
+
+bool Foam::multiphaseFluidBlastThermo::contains(const word& specieName) const
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(specieName))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Foam::multiphaseFluidBlastThermo::addDelta
+(
+    const word& name,
+    tmp<volScalarField>& delta
+)
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(name))
+        {
+            thermos_[i].addDelta(name, delta);
+            return;
+        }
+    }
+}
+
+
+void Foam::multiphaseFluidBlastThermo::addDelta
+(
+    const word& name,
+    const volScalarField::Internal& delta
+)
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(name))
+        {
+            thermos_[i].addDelta(name, delta);
+            return;
+        }
+    }
+}
+
+
+void Foam::multiphaseFluidBlastThermo::addSource
+(
+    const word& name,
+    tmp<fvScalarMatrix>& source
+)
+{
+    forAll(thermos_, i)
+    {
+        if (thermos_[i].contains(name))
+        {
+            thermos_[i].addSource(name, source);
+            return;
+        }
+    }
 }
 
 
@@ -416,26 +505,29 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidBlastThermo::ESource() cons
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
 {
-    tmp<volScalarField> eInitTmp(volScalarField::New("eInit", e_));
-    volScalarField& eInit(eInitTmp.ref());
+    tmp<volScalarField> teInit(volScalarField::New("eInit", e_));
+    volScalarField& eInit(teInit.ref());
 
-    forAll(eInit, celli)
+    if (!rho_.time().restart())
     {
-        scalar Tinit = this->T_[celli];
-        if (mag(celldpdT(celli)) > small)
+        forAll(eInit, celli)
         {
-            TEqn_.save(p[celli], celli);
-            Tinit = TSolver_->solve(T_[celli], celli);
-            TEqn_.reset(celli);
+            eInit[celli] = calcCelle(p[celli], celli);
         }
-        eInit[celli] = cellHE(Tinit, celli);
+        forAll(volumeFractions_, phasei)
+        {
+            eInit += volumeFractions_[phasei]*thermos_[phasei].initESource();
+        }
     }
-    forAll(volumeFractions_, phasei)
+    else
     {
-        eInit += volumeFractions_[phasei]*thermos_[phasei].initESource();
+        forAll(eInit, celli)
+        {
+            eInit[celli] = this->cellhe(this->T_[celli], celli);
+        }
     }
 
-    return eInitTmp;
+    return teInit;
 }
 
 
@@ -445,14 +537,23 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::calcCelle
     const label celli
 ) const
 {
-    scalar Tinit = this->T_[celli];
+    scalar TNew = this->T_[celli];
     if (mag(celldpdT(celli)) > small)
     {
         TEqn_.save(p, celli);
-        Tinit = TSolver_->solve(T_[celli], celli);
+        TNew = TSolver_->solve(T_[celli], celli);
         TEqn_.reset(celli);
     }
-    return cellHE(Tinit, celli);
+    return cellhe(TNew, celli);
+
+    // scalar eNew = cellhe(this->T_[celli], celli);
+    // if (mag(celldpde(celli)) > small)
+    // {
+    //     eEqn_.save(p, celli);
+    //     eNew = eSolver_->solve(e_[celli], celli);
+    //     eEqn_.reset(celli);
+    // }
+    // return eNew;
 }
 
 
@@ -478,6 +579,30 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellpRhoT
 }
 
 
+Foam::scalar Foam::multiphaseFluidBlastThermo::patchFacepRhoT
+(
+    const label patchi,
+    const label facei,
+    const bool limit
+) const
+{
+    scalar rGamma = 0.0;
+    scalar pByGamma = 0.0;
+    forAll(thermos_, phasei)
+    {
+        scalar alphai(volumeFractions_[phasei].boundaryField()[patchi][facei]);
+        if (alphai > residualAlpha_.value())
+        {
+            const scalar Xi =
+                alphai/(thermos_[phasei].patchFaceGamma(patchi, facei) - 1.0);
+            rGamma += Xi;
+            pByGamma += Xi*thermos_[phasei].patchFacepRhoT(patchi, facei, limit);
+        }
+    }
+    return pByGamma/max(rGamma, residualAlpha_.value());
+}
+
+
 Foam::scalar Foam::multiphaseFluidBlastThermo::cellGamma(const label celli) const
 {
     scalar f(volumeFractions_[0][celli]/thermos_[0].cellGamma(celli));
@@ -486,6 +611,25 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellGamma(const label celli) cons
         f += volumeFractions_[phasei][celli]/thermos_[phasei].cellGamma(celli);
     }
     return 1.0/cellNormalise(f, celli);
+}
+
+
+Foam::scalar Foam::multiphaseFluidBlastThermo::patchFaceGamma
+(
+    const label patchi,
+    const label facei
+) const
+{
+    scalar f =
+        volumeFractions_[0].boundaryField()[patchi][facei]
+       /thermos_[0].patchFaceGamma(patchi, facei);
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        f +=
+            volumeFractions_[phasei].boundaryField()[patchi][facei]
+           /thermos_[phasei].patchFaceGamma(patchi, facei);
+    }
+    return 1.0/patchFaceNormalise(f, patchi, facei);
 }
 
 
@@ -602,7 +746,29 @@ Foam::multiphaseFluidBlastThermo::he
 }
 
 
-Foam::scalar Foam::multiphaseFluidBlastThermo::cellHE
+Foam::tmp<Foam::scalarField>
+Foam::multiphaseFluidBlastThermo::he
+(
+    const scalarField& T,
+    const fvSource& source
+) const
+{
+    tmp<scalarField> tmpF
+    (
+        scalarField(volumeFractions_[0], source.cells())
+       *thermos_[0].he(T, source)
+    );
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        tmpF.ref() +=
+            scalarField(volumeFractions_[phasei], source.cells())
+           *thermos_[phasei].he(T, source);
+    }
+    return normalise(tmpF, source.cells());
+}
+
+
+Foam::scalar Foam::multiphaseFluidBlastThermo::cellhe
 (
     const scalar T,
     const label celli
@@ -614,14 +780,14 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellHE
         scalar alphai(volumeFractions_[phasei][celli]);
         if (alphai > thermos_[phasei].residualAlpha().value())
         {
-            heSum += alphai*thermos_[phasei].cellHE(T, celli);
+            heSum += alphai*thermos_[phasei].cellhe(T, celli);
         }
     }
     return cellNormalise(heSum, celli);
 }
 
 
-Foam::scalar Foam::multiphaseFluidBlastThermo::patchFaceHE
+Foam::scalar Foam::multiphaseFluidBlastThermo::patchFacehe
 (
     const scalar T,
     const label patchi,
@@ -637,7 +803,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::patchFaceHE
         );
         if (alphai > thermos_[phasei].residualAlpha().value())
         {
-            heSum += alphai*thermos_[phasei].patchFaceHE(T, patchi, facei);
+            heSum += alphai*thermos_[phasei].patchFacehe(T, patchi, facei);
         }
     }
     return patchFaceNormalise(heSum, patchi, facei);
@@ -801,48 +967,36 @@ Foam::multiphaseFluidBlastThermo::hc() const
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::multiphaseFluidBlastThermo::flameT() const
+Foam::multiphaseFluidBlastThermo::The() const
 {
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].flameT());
+    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].The());
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].flameT();
+        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].The();
     }
     return normalise(tmpF);
 }
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::multiphaseFluidBlastThermo::THE() const
-{
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].THE());
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
-    {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].THE();
-    }
-    return normalise(tmpF);
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::multiphaseFluidBlastThermo::THE
+Foam::multiphaseFluidBlastThermo::The
 (
     const volScalarField& he,
     const volScalarField& p,
     const volScalarField& T
 ) const
 {
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].THE(he, p, T));
+    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].The(he, p, T));
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].THE(he, p, T);
+        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].The(he, p, T);
     }
     return normalise(tmpF);
 }
 
 
 Foam::tmp<Foam::scalarField>
-Foam::multiphaseFluidBlastThermo::THE
+Foam::multiphaseFluidBlastThermo::The
 (
     const scalarField& he,
     const scalarField& T,
@@ -852,20 +1006,20 @@ Foam::multiphaseFluidBlastThermo::THE
     tmp<scalarField> tmpF
     (
         UIndirectList<scalar>(volumeFractions_[0], cells)()
-       *thermos_[0].THE(he, T, cells)
+       *thermos_[0].The(he, T, cells)
     );
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
         tmpF.ref() +=
             UIndirectList<scalar>(volumeFractions_[phasei], cells)()
-           *thermos_[phasei].THE(he, T, cells);
+           *thermos_[phasei].The(he, T, cells);
     }
     return normalise(tmpF, cells);
 }
 
 
 Foam::tmp<Foam::scalarField>
-Foam::multiphaseFluidBlastThermo::THE
+Foam::multiphaseFluidBlastThermo::The
 (
     const scalarField& he,
     const scalarField& T,
@@ -875,31 +1029,31 @@ Foam::multiphaseFluidBlastThermo::THE
     tmp<scalarField> tmpF
     (
         volumeFractions_[0].boundaryField()[patchi]
-       *thermos_[0].THE(he, T, patchi)
+       *thermos_[0].The(he, T, patchi)
     );
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
         tmpF.ref() +=
             volumeFractions_[phasei].boundaryField()[patchi]
-           *thermos_[phasei].THE(he, T, patchi);
+           *thermos_[phasei].The(he, T, patchi);
     }
     return normalise(tmpF, patchi);
 }
 
 
-Foam::scalar Foam::multiphaseFluidBlastThermo::cellTHE
+Foam::scalar Foam::multiphaseFluidBlastThermo::cellThe
 (
     const scalar he,
     const scalar T0,
     const label celli
 ) const
 {
-    scalar f(volumeFractions_[0][celli]*thermos_[0].cellTHE(he, T0, celli));
+    scalar f(volumeFractions_[0][celli]*thermos_[0].cellThe(he, T0, celli));
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
         f +=
             volumeFractions_[phasei][celli]
-           *thermos_[phasei].cellTHE(he, T0, celli);
+           *thermos_[phasei].cellThe(he, T0, celli);
     }
     return cellNormalise(f, celli);
 }

@@ -25,6 +25,21 @@ License
 
 #include "indexing.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+defineTypeNameAndDebug(indexer, 0);
+
+namespace indexers
+{
+    defineTypeNameAndDebug(null, 0);
+    defineTypeNameAndDebug(uniform, 0);
+    defineTypeNameAndDebug(nonuniform, 0);
+}
+}
+
+
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::indexer> Foam::indexer::New
@@ -86,7 +101,41 @@ Foam::autoPtr<Foam::indexer> Foam::indexer::New
 }
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::indexer::indexer
+(
+    const List<scalar>& xs
+)
+:
+    xs_(xs)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::indexer::validate(bool fail) const
+{
+    bool ordered = true;
+    scalar sign = xs_[1] - xs_[0];
+    for (label i = 1; i < xs_.size()-1; i++)
+    {
+        if (sign*(xs_[i+1] - xs_[i]) < 0)
+        {
+            ordered = false;
+            break;
+        }
+    }
+    if (!ordered & fail)
+    {
+        FatalErrorInFunction
+            << "coordinates are not ordered" << nl
+            << xs_ << endl
+            << abort(FatalError);
+    }
+    return ordered;
+}
+
 
 Foam::label Foam::indexers::uniform::findIndex
 (

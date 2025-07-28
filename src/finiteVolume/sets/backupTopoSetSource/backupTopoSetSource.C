@@ -492,7 +492,51 @@ void Foam::backupTopoSetSource::updateSets()
             }
         }
     }
+    check();
 }
 
 
+bool Foam::backupTopoSetSource::check() const
+{
+    if
+    (
+        isCell()
+        && !returnReduce(selectedCells_.size(), sumOp<label>())
+    )
+    {
+        WarningInFunction
+            << "No cells were selected for using " << nl
+            << dict_
+            << "To expand searchable region add backup " << nl
+            << "Region or expand backup region." << endl;
+        return false;
+    }
+    else if
+    (
+        isFace()
+        && !returnReduce(selectedFaces_.size(), sumOp<label>())
+    )
+    {
+        WarningInFunction
+            << "No faces were selected for using " << nl
+            << dict_
+            << "To expand searchable region add backup " << nl
+            << "Region or expand backup region." << endl;
+        return false;
+    }
+    else if
+    (
+        isPoint()
+        && !returnReduce(selectedPoints_.size(), sumOp<label>())
+    )
+    {
+        WarningInFunction
+            << "No points were selected for using " << nl
+            << dict_
+            << "To expand searchable region add backup " << nl
+            << "Region or expand backup region." << endl;
+        return false;
+    }
+    return true;
+}
 // ************************************************************************* //

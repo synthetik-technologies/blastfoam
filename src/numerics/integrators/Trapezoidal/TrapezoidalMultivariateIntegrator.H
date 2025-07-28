@@ -48,10 +48,10 @@ namespace Foam
                         Class TrapezoidalMultivariateIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class TrapezoidalMultivariateIntegrator
 :
-    public MultivariateIntegrator<Type>
+    public MultivariateIntegrator<Type, Adapt>
 {
     typedef univariateEquation<Type> equationType;
 
@@ -96,7 +96,7 @@ public:
         //- Disallow default bitwise copy construction
         TrapezoidalMultivariateIntegrator
         (
-            const TrapezoidalMultivariateIntegrator<Type>&
+            const TrapezoidalMultivariateIntegrator<Type, Adapt>&
         ) = delete;
 
 
@@ -118,7 +118,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const TrapezoidalMultivariateIntegrator<Type>&) = delete;
+        void operator=(const TrapezoidalMultivariateIntegrator<Type, Adapt>&) = delete;
 };
 
 

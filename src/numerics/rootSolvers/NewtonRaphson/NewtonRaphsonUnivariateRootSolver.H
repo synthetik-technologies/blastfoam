@@ -44,12 +44,15 @@ SourceFiles
 
 namespace Foam
 {
-
+namespace rootSolvers
+{
+namespace univariate
+{
 /*---------------------------------------------------------------------------*\
-                          Class NewtonRaphsonUnivariateUnivariateRootSolver Declaration
+             Class rootSolvers::univariate::NewtonRaphson Declaration
 \*---------------------------------------------------------------------------*/
 
-class NewtonRaphsonUnivariateRootSolver
+class NewtonRaphson
 :
     public univariateRootSolver
 {
@@ -61,18 +64,46 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        NewtonRaphsonUnivariateRootSolver
+        NewtonRaphson
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        NewtonRaphson
+        (
+            const scalarMultivariateEquation& eqn,
+            const NewtonRaphson& solver
+        );
+
         //- Disallow default bitwise copy construction
-        NewtonRaphsonUnivariateRootSolver(const univariateRootSolver&) = delete;
+        NewtonRaphson(const NewtonRaphson&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new NewtonRaphson(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>
+            (
+                new NewtonRaphson(eqns, *this)
+            );
+        }
 
 
     //- Destructor
-    virtual ~NewtonRaphsonUnivariateRootSolver();
+    virtual ~NewtonRaphson();
 
 
     // Member Functions
@@ -90,6 +121,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

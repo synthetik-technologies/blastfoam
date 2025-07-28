@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -41,6 +41,8 @@ License
 #include "limitedLinear.H"
 #include "vanLeer.H"
 #include "vanAlbada.H"
+#include "Koren.H"
+#include "logarithmic.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -58,6 +60,7 @@ defineReconstructionTable(Quadratic, QuadraticMUSCL, sphericalTensor)
 defineReconstructionTable(Quadratic, QuadraticMUSCL, tensor)
 
 // Define limiters
+makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", none, noneLimiter)
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", Gamma, GammaLimiter)
 makeLMUSCLReconstruction
 (
@@ -163,6 +166,16 @@ makeLMUSCLReconstruction
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", vanAlbada, vanAlbadaLimiter)
 
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", vanLeer, vanLeerLimiter)
+makeLMUSCLReconstruction
+(
+    Quadratic, "quadraticMUSCL",
+    vanLeer01,
+    Limited01Limiter,
+    vanLeerLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

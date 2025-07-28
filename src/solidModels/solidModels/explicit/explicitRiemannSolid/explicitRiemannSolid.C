@@ -31,7 +31,6 @@ License
 #include "fvcCellReduce.H"
 #include "labelVector.H"
 #include "addToRunTimeSelectionTable.H"
-#include "primitivePatchInterpolation.H"
 
 #include "meshSizeObject.H"
 
@@ -39,6 +38,10 @@ License
 #include "symmetryPolyPatch.H"
 #include "symmetryPlanePolyPatch.H"
 #include "solidTractionFvPatchVectorField.H"
+#include "ReconstructionScheme.H"
+#include "fvcPointAverage.H"
+#include "fvcPointInterpolate.H"
+#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,17 +59,6 @@ defineTypeNameAndDebug(explicitRiemannSolid, 0);
 
 // * * * * * * * * * * *  Private Member Functions * * * * * * * * * * * * * //
 
-
-void explicitRiemannSolid::updateStress()
-{
-    // Calculate the stress using run-time selectable mechanical law
-    mechanical().correct(sigma());
-    impK_ = mechanical().impK();
-
-    P_ = mech_.J()*(sigma() & mech_.invF().T());
-}
-
-
 void explicitRiemannSolid::solveGEqns
 (
     volVectorField& rhoURHS,
@@ -77,330 +69,151 @@ void explicitRiemannSolid::solveGEqns
 
     // Compute right hand sides
     rhoURHS = fvc::surfaceIntegrate(tractionC_*mesh().magSf());
-    if (JSTScaleFactor_ > 0)
-    {
-        rhoURHS -=
-            JSTScaleFactor_*fvc::laplacian
-            (
-                mesh().magSf(),
-                fvc::laplacian
-                (
-                    deltaT*mechanical().impKf(),
-                    U_,
-                    "laplacian(DU,U)"
-                ),
-                "laplacian(DU,U)"
-            );
-    }
     if (angularMomentumConservation_)
     {
         volVectorField rhsRhoUAM
         (
-            fvc::div(((Df_ + mesh().Cf()) ^ tractionC_)*mesh().magSf())
+            fvc::div((xf_ ^ tractionC_)*mesh().magSf())
         );
         am_.AMconservation(x_, rhoU_, rhoURHS, rhsRhoUAM, stage);
     }
+    // if (useStabilisation_)
+    // {
+    //     rhoURHS +=
+    //         stabilisation().stabilisation
+    //         (
+    //             U(),
+    //             fvc::grad(U())(),
+    //             (deltaT*impKf_)()
+    //         );
+    // }
+    // if (useBulkViscosity_)
+    // {
+    //     rhoURHS +=
+    //         fvc::div
+    //         (
+    //             this->mesh().Sf()*energies_.viscousPressure
+    //             (
+    //                 this->rho(),
+    //                 fvc::interpolate(sWaveSpeed_)(),
+    //                 this->gradD()
+    //             )
+    //         );
+    // }
 
     surfaceScalarField rhof(fvc::interpolate(rho_));
 
     // Update coordinates
+    x_ += rhoU_/rho_*deltaT;
+    xf_ += rhoUC_/rhof*deltaT;
+
+    if (filter_)
     {
-        volVectorField prevD(D_);
-        volTensorField prevGradD(gradD_);
-        pointVectorField prevPointD(pointD_);
-
-        D_.ref() += U_()*deltaT;
-        D_.correctBoundaryConditions();
-
-        Df_ += deltaT*rhoUC_/rhof;
-        pointD_ += deltaT*pointRhoU_/mechanical().volToPoint().interpolate(rho_);
-
-//         mechanical().interpolate(D_, pointD_);
-        mechanical().grad(D_, gradD_);
-
-        DD_ = D_ - prevD;
-        gradDD_ = gradD_ - prevGradD;
-        pointDD_ = pointD_ - prevPointD;
+        xN_ == xN_ + pointRhoU_/mechanical().volToPoint().interpolate(rho_)*deltaT;
+    }
+    else
+    {
+        pointRhoU_ == mechanical().volToPoint().interpolate(rhoU_);
     }
 
-    // Face displacement
-    Df_ = fvc::interpolate(D_);
-
-    // Material positions
-    x_ = mesh().C() + D_;
-
-    // Update linear momentum
-    rhoU_.ref() += deltaT*rhoURHS();
-    U_.ref() = rhoU_()/rho_();
-
-    U_.boundaryFieldRef() = DD_.boundaryField()/deltaT.value();
-    rhoU_.boundaryFieldRef() = U_.boundaryField()*rho_.boundaryField();
+     // Update linear momentum
+    rhoU_ += deltaT*rhoURHS;
 
     // Update deformation gradient tensor
-    F_ +=
-        deltaT
-       *fvc::surfaceIntegrate(rhoUC_/rhof*mesh().Sf());
-//     F_ = I + gradD_.T();
+    F_ += deltaT*fvc::surfaceIntegrate(rhoUC_/rhof*mesh().Sf());
+    if (pTouch_)
+    {
+        F_ += 0.5*(fvc::surfaceIntegrate(xf_*mesh().Sf()) - F_);
+    }
+    F_.correctBoundaryConditions();
 
-    // Update deformation quantities
-    mech_.correctDeformation();
+    // Calculate primitive variables
+    decode();
 }
 
 
 void explicitRiemannSolid::updateFluxes()
 {
-    pWaveSpeed_ =
-        sqrt(mechanical().elasticModulus()/rho_)/beta_/mech_.stretch();
-    sWaveSpeed_ =
-        sqrt(mechanical().shearModulus()/rho_)*beta_/mech_.stretch();
-
-    mech_.correct(pWaveSpeed_, sWaveSpeed_);
-
-    updateStress();
+    update();
 
     // Surface normals
     const surfaceVectorField& N = mech_.N();
     const surfaceVectorField& n = mech_.n();
 
-    volVectorField Px(ops_.decomposeTensorX(P_));
-    volVectorField Py(ops_.decomposeTensorY(P_));
-    volVectorField Pz(ops_.decomposeTensorZ(P_));
-
-    volTensorField gradRhoU(fvc::grad(rhoU_));
-    volTensorField gradPx(fvc::grad(Px));
-    volTensorField gradPy(fvc::grad(Py));
-    volTensorField gradPz(fvc::grad(Pz));
-
-    // Reconstruction
-    surfaceTensorField POwn
+    // Reconstruction of Piola tensor
+    autoPtr<ReconstructionScheme<tensor>> PLimiter
     (
-        surfaceTensorField::New
-        (
-            "POwn",
-            mesh(),
-            P_.dimensions()
-        )
+        ReconstructionScheme<tensor>::New(P_, "P", true)
     );
-    surfaceTensorField PNei
+    surfaceVectorField tractionOwn(PLimiter->interpolateOwn() & N);
+    surfaceVectorField tractionNei(PLimiter->interpolateNei() & N);
+
+    // Momentum
+    autoPtr<ReconstructionScheme<vector>> rhoULimiter
     (
-        surfaceTensorField::New
-        (
-            "PNei",
-            mesh(),
-            P_.dimensions()
-        )
+        ReconstructionScheme<vector>::New(rhoU_, "U", true)
     );
-
-
-    gradSchemes_.reconstruct(rhoU_, gradRhoU, rhoUOwn_, rhoUNei_);
-    gradSchemes_.reconstruct(P_, gradPx, gradPy, gradPz, POwn, PNei);
-    tractionOwn_ = POwn & N;
-    tractionNei_ = PNei & N;
+    surfaceVectorField rhoUOwn(rhoULimiter->interpolateOwn());
+    surfaceVectorField rhoUNei(rhoULimiter->interpolateNei());
 
     const surfaceTensorField& stabRhoU(mech_.stabRhoU());
     const surfaceTensorField& stabTraction(mech_.stabTraction());
 
     // Acoustic Riemann solver
     tractionC_ =
-        0.5*(tractionOwn_ + tractionNei_)
-      + 0.5*(stabRhoU & (rhoUNei_ - rhoUOwn_));
+    (
+        0.5*(tractionOwn + tractionNei + (stabRhoU & (rhoUNei - rhoUOwn)))
+    );
     rhoUC_ =
-        0.5*(rhoUOwn_ + rhoUNei_)
-      + 0.5*(stabTraction & (tractionNei_ - tractionOwn_));
+    (
+        0.5*(rhoUOwn + rhoUNei + (stabTraction & (tractionNei - tractionOwn)))
+    );
 
-    surfaceVectorField::Boundary& rhoUCBf(rhoUC_.boundaryFieldRef());
-    surfaceVectorField::Boundary& tractionCBf(tractionC_.boundaryFieldRef());
-    forAll(tractionCBf, patchi)
+    volVectorField::Boundary& brhoU(rhoU_.boundaryFieldRef());
+    surfaceVectorField::Boundary& brhoUC(rhoUC_.boundaryFieldRef());
+    pointVectorField::Boundary& bpointRhoU(pointRhoU_.boundaryFieldRef());
+    surfaceVectorField::Boundary& btractionC(tractionC_.boundaryFieldRef());
+
+    pointScalarField pointRho(this->mechanical().volToPoint().interpolate(rho_));
+
+    forAll(btractionC, patchi)
     {
         const polyPatch& p = mesh().boundaryMesh()[patchi];
-        const fvPatch& patch = mesh().boundary()[patchi];
-        const fvPatchField<vector>& pD(D_.boundaryField()[patchi]);
-        const fvPatchField<vector>& pRhoU(rhoU_.boundaryField()[patchi]);
-        const vectorField pn(n.boundaryField()[patchi]);
-        const vectorField pN(N.boundaryField()[patchi]);
+        const fvPatchField<vector>& pDD(DD_.boundaryField()[patchi]);
+        const vectorField& pn(n.boundaryField()[patchi]);
 
-        // Riemann solver for inter-processor boundaries
-        if (pD.fixesValue() || U_.boundaryField()[patchi].fixesValue())
+        if (isA<tractionBase>(pDD))
         {
-            rhoUCBf[patchi] = pRhoU[patchi];
+            const tractionBase& tb = dynamicCast<const tractionBase>(pDD);
+            vectorField tp((tb.traction() - pn*tb.pressure()));
 
-            tractionCBf[patchi] =
-                tractionOwn_.boundaryField()[patchi]
+            brhoUC[patchi] =
+                rhoUOwn.boundaryField()[patchi]
+              + (
+                    stabTraction.boundaryField()[patchi]
+                  & (tp - tractionOwn.boundaryField()[patchi])
+                );
+            btractionC[patchi] = tp;
+        }
+        else if (pDD.fixesValue())
+        {
+            brhoUC[patchi] ==
+                rho_.boundaryField()[patchi]
+               *pDD/this->mesh().time().deltaTValue();
+            bpointRhoU[patchi] ==
+                pointRho.boundaryField()[patchi].patchInternalField()
+               *pointDD_.boundaryField()[patchi].patchInternalField()
+               /this->mesh().time().deltaTValue();
+
+            btractionC[patchi] ==
+                tractionOwn.boundaryField()[patchi]
               + (
                     stabRhoU.boundaryField()[patchi]
                   & (
-                        rhoUCBf[patchi]
-                      - rhoUOwn_.boundaryField()[patchi]
+                        brhoUC[patchi]
+                      - rhoUOwn.boundaryField()[patchi]
                     )
                 );
-        }
-        else if (isA<solidTractionFvPatchVectorField>(pD))
-        {
-            const solidTractionFvPatchVectorField& stD =
-                dynamicCast<const solidTractionFvPatchVectorField>(pD);
-            vectorField tp(stD.traction() - stD.pressure()*pn);
-
-            rhoUCBf[patchi] =
-                rhoUOwn_.boundaryField()[patchi]
-              + (
-                    stabTraction.boundaryField()[patchi]
-                  & (tp - tractionOwn_.boundaryField()[patchi])
-                );
-            tractionCBf[patchi] = tp;
-        }
-        else if (patch.coupled())
-        {
-            const vectorField prhoUOwn
-            (
-                rhoU_.boundaryField()[patchi].patchInternalField()
-            );
-            const vectorField prhoUNei
-            (
-                rhoU_.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const tensorField pPOwn
-            (
-                P_.boundaryField()[patchi].patchInternalField()
-            );
-            const tensorField pPNei
-            (
-                P_.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const vectorField pPxOwn
-            (
-                Px.boundaryField()[patchi].patchInternalField()
-            );
-            const vectorField pPxNei
-            (
-                Px.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const vectorField pPyOwn
-            (
-                Py.boundaryField()[patchi].patchInternalField()
-            );
-            const vectorField pPyNei
-            (
-                Py.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const vectorField pPzOwn
-            (
-                Pz.boundaryField()[patchi].patchInternalField()
-            );
-            const vectorField pPzNei
-            (
-                Pz.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const tensorField pgradRhoUOwn
-            (
-                gradRhoU.boundaryField()[patchi].patchInternalField()
-            );
-            const tensorField pgradRhoUNei
-            (
-                gradRhoU.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const tensorField pgradPxOwn
-            (
-                gradPx.boundaryField()[patchi].patchInternalField()
-            );
-            const tensorField pgradPxNei
-            (
-                gradPx.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const tensorField pgradPyOwn
-            (
-                gradPy.boundaryField()[patchi].patchInternalField()
-            );
-            const tensorField pgradPyNei
-            (
-                gradPy.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const tensorField pgradPzOwn
-            (
-                gradPz.boundaryField()[patchi].patchInternalField()
-            );
-            const tensorField pgradPzNei
-            (
-                gradPz.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const vectorField pdeltaOwn(patch.fvPatch::delta());
-            const vectorField pdeltaNei(pdeltaOwn - patch.delta());
-
-            const scalarField ppWaveSpeedOwn
-            (
-                pWaveSpeed_.boundaryField()[patchi].patchInternalField()
-            );
-            const scalarField ppWaveSpeedNei
-            (
-                pWaveSpeed_.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const scalarField psWaveSpeedOwn
-            (
-                sWaveSpeed_.boundaryField()[patchi].patchInternalField()
-            );
-            const scalarField psWaveSpeedNei
-            (
-                sWaveSpeed_.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            forAll(mesh().boundary()[patchi], facei)
-            {
-                const vector& dOwn(pdeltaOwn[facei]);
-                const vector& dNei(pdeltaNei[facei]);
-
-                const vector rhoUOwni =
-                    prhoUOwn[facei] + (pgradRhoUOwn[facei] & dOwn);
-                const vector rhoUNeii =
-                    prhoUNei[facei] + (pgradRhoUNei[facei] & dNei);
-
-                const vector PxOwni =
-                    pPxOwn[facei] + (pgradPxOwn[facei] & dOwn);
-                const vector PxNeii =
-                    pPxNei[facei] + (pgradPxNei[facei] & dNei);
-
-                const vector PyOwni =
-                    pPyOwn[facei] + (pgradPyOwn[facei] & dOwn);
-                const vector PyNeii =
-                    pPyNei[facei] + (pgradPyNei[facei] & dNei);
-
-                const vector PzOwni =
-                    pPzOwn[facei] + (pgradPzOwn[facei] & dOwn);
-                const vector PzNeii =
-                    pPzNei[facei] + (pgradPzNei[facei] & dNei);
-
-                const tensor POwni = tensor(PxOwni, PyOwni, PzOwni);
-                const tensor PNeii = tensor(PxNeii, PyNeii, PzNeii);
-
-                const scalar pWSi =
-                    0.5*(ppWaveSpeedOwn[facei] + ppWaveSpeedNei[facei]);
-                const scalar sWSi =
-                    0.5*(psWaveSpeedOwn[facei] + psWaveSpeedNei[facei]);
-
-                const vector& Ni = pN[facei];
-                const vector& ni = pn[facei];
-
-                const tensor stabRhoUi =
-                    (pWSi*ni*ni) + (sWSi*(I - (ni*ni)));
-                const tensor stabTractioni =
-                    ((ni*ni)/pWSi) + ((I - (ni*ni))/sWSi);
-
-                tractionCBf[patchi][facei] =
-                    0.5*((POwni + PNeii) & Ni)
-                  + (0.5*stabRhoUi & (rhoUNeii - rhoUOwni));
-
-                rhoUCBf[patchi][facei] =
-                    0.5*(rhoUOwni + rhoUNeii)
-                  + 0.5*(stabTractioni & ((PNeii - POwni) & Ni));
-            }
         }
         else if
         (
@@ -408,83 +221,43 @@ void explicitRiemannSolid::updateFluxes()
          || isA<symmetryPlanePolyPatch>(p)
         )
         {
-            rhoUCBf[patchi] =
+            brhoUC[patchi] =
                 (tensor::I - pn*pn)
               & (
-                    rhoUOwn_.boundaryField()[patchi]
-                  - tractionOwn_.boundaryField()[patchi]
+                    rhoUOwn.boundaryField()[patchi]
+                  - tractionOwn.boundaryField()[patchi]
                    /sWaveSpeed_.boundaryField()[patchi]
                 );
-            tractionCBf[patchi] =
+            btractionC[patchi] =
                 (pn*pn)
               & (
-                    tractionOwn_.boundaryField()[patchi]
+                    tractionOwn.boundaryField()[patchi]
                   - pWaveSpeed_.boundaryField()[patchi]
-                   *rhoUOwn_.boundaryField()[patchi]
+                   *rhoUOwn.boundaryField()[patchi]
                 );
         }
-        else if (!polyPatch::constraintType(p.type()))
+        else if (!pDD.coupled())
         {
-            rhoUCBf[patchi] = pRhoU;
-
-            tractionCBf[patchi] =
-                tractionOwn_.boundaryField()[patchi]
-              + (
-                    stabRhoU.boundaryField()[patchi]
-                  & (
-                        rhoUCBf[patchi]
-                      - rhoUOwn_.boundaryField()[patchi]
-                    )
-                );
+            brhoUC[patchi] = rhoUOwn.boundaryField()[patchi];
+            btractionC[patchi] = tractionOwn.boundaryField()[patchi];
         }
-        else
-        {
-            rhoUCBf[patchi] = pRhoU;
-            tractionCBf[patchi] =  P_.boundaryField()[patchi] & pn;
-        }
+        brhoU[patchi] == brhoUC[patchi];
     }
 
-    // Average linear momentum
-    volVectorField rhoUAvg
-    (
-//         fvc::average(rhoUC_)
-        interpSchemes_.surfaceToVol(rhoUC_, pointRhoU_)
-    );
-    volTensorField gradRhoUAvg
-    (
-//         fvc::grad(rhoUAvg)
-        gradSchemes_.localGradient(rhoUAvg, rhoUC_, pointRhoU_)
-    );
-
-    interpSchemes_.volToPoint(rhoUAvg, gradRhoUAvg, pointRhoU_, true);
-
-    forAll(tractionCBf, patchi)
+    // Filter linear momentum
+    if (filter_)
     {
-        const polyPatch& p = mesh().boundaryMesh()[patchi];
-        const vectorField pN(N.boundaryField()[patchi]);
-        if
+        const gradientSchemes& gradSchemes = gradientSchemes::New(mesh());
+        volVectorField rhoUAvg(fvc::surfVolInterpolate(rhoUC_));
+        volTensorField rhoUGradLocal
         (
-            isA<symmetryPolyPatch>(p)
-         || isA<symmetryPlanePolyPatch>(p)
-        )
-        {
-            forAll(p, fi)
-            {
-                const label& facei = p.start() + fi;
-                forAll(mesh().faces()[facei], ni)
-                {
-                    const label& nodei = mesh().faces()[facei][ni];
-                    pointRhoU_[nodei] =
-                        (
-                            tensor::I - (pN[facei]*pN[facei])
-                        ) & pointRhoU_[nodei];
-                }
-            }
-        }
-    }
-    pointRhoU_.correctBoundaryConditions();
+            gradSchemes.localGradient(rhoUAvg, rhoUC_, pointRhoU_)
+        );
+        fvc::volPointInterpolate(rhoUAvg, rhoUGradLocal, pointRhoU_, true);
+        pointRhoU_.correctBoundaryConditions();
 
-    rhoUC_.ref() = interpSchemes_.pointToSurface(pointRhoU_)()();
+        rhoUC_ = fvc::average(pointRhoU_);
+    }
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -492,7 +265,7 @@ void explicitRiemannSolid::updateFluxes()
 explicitRiemannSolid::explicitRiemannSolid
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType& nonLinear
 )
 :
@@ -502,7 +275,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "F",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -513,14 +286,15 @@ explicitRiemannSolid::explicitRiemannSolid
     ops_(mesh),
     beta_
     (
-        solidModelDict().lookup<scalar>
+        solidModelDict().lookupOrDefault<scalar>
         (
-            "incompressiblilityCoefficient"
+            "incompressiblilityCoefficient",
+            1.0
         )
      ),
     angularMomentumConservation_
     (
-        solidModelDict().lookup("angularMomentumConservation")
+        solidModelDict().lookupOrDefault("conserveAngularMomentum", true)
     ),
     D_(this->D()),
     DD_(this->DD()),
@@ -531,20 +305,36 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "x",
-            mesh.time().timeName(),
-            mesh
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         mesh.C() + D_
     ),
-    Df_
+    xf_
     (
         IOobject
         (
-            "Df",
-            mesh.time().timeName(),
-            mesh
+            "xf",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
-        fvc::interpolate(D_)
+        fvc::interpolate(x_)
+    ),
+    xN_
+    (
+        IOobject
+        (
+            "xN",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        this->pointD()
     ),
     pointD_(this->pointD()),
     pointDD_(this->pointDD()),
@@ -555,7 +345,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "rhoU",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -567,7 +357,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "rhoUC",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         fvc::interpolate(rho_*U_)
@@ -577,34 +367,35 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "pointRhoU",
-            mesh.time().timeName(),
-            mesh
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         pMesh(),
         dimensionedVector("0", rhoU_.dimensions(), Zero),
-        pointDBoundaryTypes(D_)
+        pointDBoundaryTypes(DD_)
     ),
     tractionC_
     (
         IOobject
         (
             "tractionC",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
         dimensionedVector("0", dimensionSet(1, -1, -2, 0, 0, 0, 0), Zero)
     ),
     mech_(F_, ops_),
-    interpSchemes_(mesh),
-    gradSchemes_(DD_),
     am_(mesh, *this),
+    relaxation_(this->solidModelDict().optionalSubDict("relaxation")),
     P_
     (
         IOobject
         (
             "P",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -616,7 +407,7 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "pWaveSpeed",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         sqrt(mechanical().elasticModulus()/rho_)/beta_/mech_.stretch()
@@ -626,186 +417,300 @@ explicitRiemannSolid::explicitRiemannSolid
         IOobject
         (
             "sWaveSpeed",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         sqrt(mechanical().shearModulus()/rho_)*beta_/mech_.stretch()
     ),
-    rhoUOwn_("rhoUOwn", rhoUC_),
-    rhoUNei_("rhoUNei", rhoUC_),
-    tractionOwn_("tractionOwn", tractionC_),
-    tractionNei_("tractionNei", tractionC_),
-    JSTScaleFactor_
-    (
-        solidModelDict().lookupOrDefault<scalar>("JSTScaleFactor", 0.0)
-    ),
+
+    useStabilisation_(solidModelDict().lookupOrDefault("useStabilisation", false)),
+    useBulkViscosity_(solidModelDict().lookupOrDefault("useBulkViscosity", false)),
+
     energies_(mesh, solidModelDict()),
-    impK_(mechanical().impK())
+
+    pTouch_(solidModelDict().lookupOrDefault("pTouch", false)),
+    filter_(solidModelDict().lookupOrDefault("filter", false)),
+
+    impK_("impK", mechanical().impK()),
+    impKf_("impKf", mechanical().impKf()),
+    curIndex_(-1)
 {
-    DisRequired(type);
+    if (!xN_.headerOk())
+    {
+        xN_.primitiveFieldRef() += mesh.points();
+        xN_.correctBoundaryConditions();
+    }
+    DDisRequired(type);
+    if (!useStabilisation_)
+    {
+        stabilisation().setMethods(momentumStabilisation::NONE, dictionary());
+    }
+    updateFluxes();
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void explicitRiemannSolid::decode()
+{
+    // Enforce any cell displacements
+    if (this->setCellDisps().cellIDs().size())
+    {
+        const scalar deltaT = this->mesh().time().deltaTValue();
+        vectorField& xI = x_.primitiveFieldRef();
+        vectorField& xNI = xN_.primitiveFieldRef();
+        vectorField& rhoUI = rhoU_;
+        vectorField& pointRhoUI = pointRhoU_;
+        const vectorField& xOldI = x_.oldTime();
+        const scalarField& rhoI = rho_;
+
+        const labelList& cells = this->setCellDisps().cellIDs();
+        const vectorField& cellDs = this->setCellDisps().cellDisps();
+        const labelListList& cellPoints = mesh().cellPoints();
+        const pointField& points = mesh().points();
+
+        forAll(cells, i)
+        {
+            const label celli = cells[i];
+            xI[celli] = mesh().C()[celli] + cellDs[i];
+            rhoUI[celli] = rhoI[celli]*(xI[celli] - xOldI[celli])/deltaT;
+
+            const labelList& cp = cellPoints[celli];
+            forAll(cp, pi)
+            {
+                const label pointi = cp[pi];
+                pointRhoUI[pointi] = rhoUI[celli];
+                xNI[pointi] = points[pointi] + cellDs[i];
+            }
+
+        }
+    }
+    x_.correctBoundaryConditions();
+    rhoU_.correctBoundaryConditions();
+
+    U_ == rhoU_/rho_;
+
+    // Update displacements
+    {
+        volVectorField DOld(D_);
+
+        D_ = x_ - mesh().C();
+        D_.correctBoundaryConditions();
+
+        DD_ = D_ - DOld;
+        DD_.correctBoundaryConditions();
+    }
+
+    if (filter_)
+    {
+        pointD_.primitiveFieldRef() = xN_.primitiveField() - mesh().points();
+        pointVectorField::Boundary& bpointD = pointD_.boundaryFieldRef();
+        forAll(bpointD, patchi)
+        {
+            if (bpointD[patchi].fixesValue())
+            {
+                bpointD[patchi] == bpointD[patchi].patchInternalField();
+            }
+        }
+
+        const pointConstraints& pcs = pointConstraints::New(pointD_.mesh());
+        pcs.constrainDisplacement(pointD_, true);
+
+        pointDD_ == pointD_ - pointD_.oldTime();
+    }
+    else
+    {
+        this->mechanical().interpolate(DD_, pointDD_, false);
+        pointD_.primitiveFieldRef() += pointDD_.primitiveField();
+
+        xN_.primitiveFieldRef() = mesh().points() + pointD_.primitiveField();
+        pointVectorField::Boundary& bpointD = pointD_.boundaryFieldRef();
+        pointVectorField::Boundary& bxN = xN_.boundaryFieldRef();
+        forAll(bpointD, patchi)
+        {
+            if (bpointD[patchi].fixesValue())
+            {
+                // Set pointD boundary using the old time as the reference since
+                // the boundary of pointDD is set using the total displacement
+                // change and incrementing from the current state would cause twice
+                // the actual change
+                bpointD[patchi] ==
+                    dynamicCast<const vectorField>(pointD_.oldTime().boundaryField()[patchi])
+                  + dynamicCast<const vectorField>(pointDD_.boundaryField()[patchi]);
+
+                // Set the patchInternalField since the internal points are updated
+                // using the incorrect displacement delta
+                const vectorField& ppointD
+                (
+                    dynamicCast<const vectorField>(bpointD[patchi])
+                );
+                bpointD[patchi].setInternalField
+                (
+                    pointD_,
+                    ppointD
+                );
+
+                bxN[patchi] ==
+                    ppointD
+                  + mesh().boundaryMesh()[patchi].localPoints();
+                bxN[patchi].setInternalField
+                (
+                    xN_,
+                    dynamicCast<const vectorField>(bxN[patchi])
+                );
+            }
+        }
+    }
+}
+
+
+void explicitRiemannSolid::update(const bool correctSigma)
+{
+    //- Update gradients
+    mechanical().grad(D_, gradD_);
+    // gradD_ = F_ - tensor::I;
+    gradDD_ = gradD_ - gradD_.oldTime();
+
+    //- Update wavespeeds
+    // Update deformation quantities
+    mech_.correctDeformation();
+
+    // Calculate the stress using run-time selectable mechanical law
+    mechanical().correct(sigma());
+    impK_ = mechanical().impK();
+    impKf_ = mechanical().impKf();
+
+    pWaveSpeed_ =
+        sqrt(mechanical().elasticModulus()/rho_)/beta_/mech_.stretch();
+    sWaveSpeed_ =
+        sqrt(mechanical().shearModulus()/rho_)*beta_/mech_.stretch();
+
+    mech_.correct(pWaveSpeed_, sWaveSpeed_);
+
+    P_ = mechanical().P(sigma());
+    // if (useBulkViscosity_)
+    // {
+    //     P_ +=
+    //         fvc::reconstruct
+    //         (
+    //             energies_.viscousPressure
+    //             (
+    //                 rho(),
+    //                 fvc::interpolate(pWaveSpeed_),
+    //                 gradD()
+    //             )*mech_.n()
+    //         );
+    // }
+}
+
 
 bool explicitRiemannSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
     const dimensionedScalar& deltaT = mesh().time().deltaT();
 
-    label iter = 0;
-    do
-    {
-        if (iter++ > 0)
-        {
-            // Momentum
-            rhoU_ = rhoU_.oldTime();
+    enforceLinear() = false;
 
-            // Displacements
-            D_ = D_.oldTime();
-            Df_ = Df_.oldTime();
-            pointD_ = pointD_.oldTime();
-
-            // Deformation
-            gradD_ = gradD_.oldTime();
-            F_ = F_.oldTime();
-        }
-
-        volVectorField rhoURHS
-        (
-            volVectorField::New
-            (
-                "rhoURHS",
-                mesh(),
-                dimensionedVector(rhoU_.dimensions()/dimTime, Zero)
-            )
-        );
-
-        // Predictor
-        updateFluxes();
-        solveGEqns(rhoURHS, 0);
-
-        // Corrector
-        updateFluxes();
-        solveGEqns(rhoURHS, 1);
-
-        // Update coordinates
-        rhoU_.ref() = 0.5*(rhoU_.oldTime()() + rhoU_());
-        U_.ref() = rhoU_()/rho_();
-
-        D_ = 0.5*(D_.oldTime() + D_);
-        Df_ = 0.5*(Df_.oldTime() + Df_);
-        pointD_ = 0.5*(pointD_.oldTime() + pointD_);
-
-        D_.correctBoundaryConditions();
-        DD_ = D_ - D_.oldTime();
-        pointDD_ = pointD_ - pointD_.oldTime();
-
-        // Update coordinates
-        x_ = mesh().C() + D_;
-
-//         D_.ref() =  D_.oldTime() + deltaT*U_();
-//         D_.correctBoundaryConditions();
-//         mechanical().interpolate(D_, pointD_);
-//
-//         // Displacements
-//         DD_ = D_ - D_.oldTime();
-//         Df_ = fvc::interpolate(D_);
-//         pointDD_ = pointD_ - pointD_.oldTime();
-//
-//         // Material positions
-//         x_ = mesh().C() + D_;
-//
-        U_.boundaryFieldRef() = DD_.boundaryField()/deltaT.value();
-        rhoU_.boundaryFieldRef() = U_.boundaryField()*rho_.boundaryField();
-
-        // Update gradient of displacement increment
-        mechanical().grad(D_, gradD_);
-
-        // Update the gradient of total displacement
-        gradDD_ = gradD_ - gradD_.oldTime();
-//
-//         // Update deformation gradient tensor
-//         F_ = 0.5*(F_.oldTime() + F_);//I + gradD_.T();
-
-        // Update deformation quantities
-        mech_.correctDeformation(true);
-    } while (mesh().update());
-
-    return true;
-}
-
-
-tmp<vectorField> explicitRiemannSolid::tractionBoundarySnGrad
-(
-    const vectorField& traction,
-    const scalarField& pressure,
-    const fvPatch& patch
-) const
-{
-    // Patch index
-    const label patchID = patch.index();
-
-    // Patch mechanical property
-    const scalarField& impK(impK_.boundaryField()[patch.index()]);
-
-    // Patch gradient
-    const tensorField& pGradD = gradD_.boundaryField()[patchID];
-
-    // Patch stress
-    const symmTensorField& pSigma = sigma().boundaryField()[patchID];
-
-    // Patch unit normals (initial configuration)
-    const vectorField n(patch.nf());
-
-    // Patch unit normals (deformed configuration)
-    const vectorField& nCurrent(mech_.n().boundaryField()[patchID]);
-
-    // Return patch snGrad
-    return tmp<vectorField>
+    volVectorField rhoURHS
     (
-        new vectorField
+        volVectorField::New
         (
-            (
-                (traction - nCurrent*pressure)
-              - (nCurrent & pSigma)
-              + impK*(n & pGradD)
-            )/impK
+            "rhoURHS",
+            mesh(),
+            dimensionedVector(rhoU_.dimensions()/dimTime, Zero)
         )
     );
-}
+
+    // Reset fields
+    if (curIndex_ != this->runTime().timeIndex())
+    {
+        x_ == x_.oldTime();
+        xf_ == xf_.oldTime();
+        xN_ == xN_.oldTime();
+
+        rhoU_ == rhoU_.oldTime();
+
+        F_ == F_.oldTime();
+    }
+    else
+    {
+        curIndex_ = this->runTime().timeIndex();
+    }
 
 
-void explicitRiemannSolid::setDeltaT(Time& runTime)
-{
-    // waveSpeed = cellWidth/deltaT
-    // So, deltaT = cellWidth/waveVelocity == (1.0/deltaCoeff)/waveSpeed
-    // In the current discretisation, information can move two cells per
-    // time-step. This means that we use 1/(2*d) == 0.5*deltaCoeff when
-    // calculating the required stable time-step
-    // i.e.e deltaT = (1.0/(0.5*deltaCoeff)/waveSpeed
-    // For safety, we should use a time-step smaller than this e.g. Abaqus uses
-    // 1/sqrt(2)*stableTimeStep: we will default to this value
-    const scalar requiredDeltaT =
-        1.0
-       /gMax
-        (
-            (
-                mesh().surfaceInterpolation::deltaCoeffs()
-               *fvc::interpolate(pWaveSpeed_)
-            )()
-        );
+    // Predictor
+    updateFluxes();
+    solveGEqns(rhoURHS, 0);
 
-    // Lookup the desired Courant number
-    const scalar maxCo =
-        runTime.controlDict().lookupOrDefault<scalar>("maxCo", 0.7071);
+    // Corrector
+    updateFluxes();
+    solveGEqns(rhoURHS, 1);
 
-    const scalar newDeltaT = maxCo*requiredDeltaT;
 
-    Info<< "maxCo = " << maxCo << nl
-        << "deltaT = " << newDeltaT << nl << endl;
+    // Average old time and new time
+    x_ == 0.5*(x_.oldTime() + x_);
+    xf_ == 0.5*(xf_.oldTime() + xf_);
+    xN_ == 0.5*(xN_.oldTime() + xN_);
+    x_.correctBoundaryConditions();
+    xN_.correctBoundaryConditions();
 
-    runTime.setDeltaT(newDeltaT);
+    //- Update momentum
+    rhoU_ == 0.5*(rhoU_.oldTime() + rhoU_);
+
+    // Update deformation gradient tensor
+    F_ == 0.5*(F_.oldTime() + F_);
+
+    decode();
+
+
+    // Check energies
+    energies_.checkEnergies
+    (
+        this->rho(),
+        this->U(),
+        this->D(),
+        this->DD(),
+        this->sigma(),
+        this->gradD(),
+        this->gradDD(),
+        this->stabilisation(),
+        this->g()
+    );
+
+    {
+        vector linearMoementum(Zero);
+        vector angularMomentum(Zero);
+        scalar totalV(0.0);
+
+        const scalarField& V = mesh().V();
+        forAll(V, celli)
+        {
+            linearMoementum += rhoU_[celli]*V[celli];
+            angularMomentum += V[celli]*(x_[celli] ^ rhoU_[celli]);
+            totalV += V[celli];
+        }
+
+        reduce(linearMoementum, sumOp<vector>());
+        reduce(angularMomentum, sumOp<vector>());
+        reduce(totalV, sumOp<scalar>());
+
+
+        Info<< "Total linear momentum = " << linearMoementum/totalV << nl
+            << "Total angular momentum = " << angularMomentum/totalV << endl;
+    }
+
+    // Re-read the dictionary
+    relaxation_.read
+    (
+        this->solidModelDict().optionalSubDict("relaxation")
+    );
+
+    //- Relax, if wanted
+    relaxation_.relax(this->U(), this->rho());
+    relaxation_.relax(rhoU_);
+    relaxation_.relax(pointRhoU_);
+
+    return true;
 }
 
 
@@ -834,7 +739,10 @@ scalar explicitRiemannSolid::CoNum() const
     (
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
-    return 0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
+    return
+        0.5
+       *gMax(sumAmaxSf/mesh().V().primitiveField())
+       *mesh().time().deltaTValue();
 }
 
 

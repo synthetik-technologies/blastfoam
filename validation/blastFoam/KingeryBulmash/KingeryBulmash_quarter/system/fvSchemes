@@ -48,6 +48,7 @@ interpolationSchemes
     reconstruct(e)      vanAlbada;
     reconstruct(p)      vanAlbada;
     reconstruct(speedOfSound) vanAlbada;
+    reconstruct(lambda) vanAlbada;
 }
 
 snGradSchemes

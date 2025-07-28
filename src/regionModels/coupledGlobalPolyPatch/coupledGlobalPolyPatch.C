@@ -26,15 +26,43 @@ License
 #include "coupledGlobalPolyPatch.H"
 #include "globalPolyBoundaryMesh.H"
 #include "Time.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(coupledGlobalPolyPatch, 0);
+    defineRunTimeSelectionTable(coupledGlobalPolyPatch, patch);
+    addToRunTimeSelectionTable
+    (
+        coupledGlobalPolyPatch,
+        coupledGlobalPolyPatch,
+        patch
+    );
 }
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+const Foam::patchToPatchMapping&
+Foam::coupledGlobalPolyPatch::patchToPatchInterpolator
+(
+    const bool needPoints
+) const
+{
+    if (needPoints && !needPoints_)
+    {
+        needPoints_ = true;
+        samplePatch().needPoints_ = true;
+        clearInterp();
+    }
+
+    if (!patchToPatchInterpPtr_)
+    {
+        calcPatchToPatchInterp();
+    }
+    return *patchToPatchInterpPtr_;
+}
 
 void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
 {
@@ -45,149 +73,53 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
             << abort(FatalError);
     }
 
-    const pointField& pts = this->globalPatch().points();
-    const pointField& samplePts = samplePatch().globalPatch().points();
-    boundBox bb(pts, false);
-    boundBox sampleBb(samplePts, false);
-
-    boundBox inflatedBb(bb);
-    boundBox inflatedSampleBb(sampleBb);
-    inflatedBb.inflate(1e-4);
-    inflatedSampleBb.inflate(1e-4);
-
-    if (!inflatedBb.contains(sampleBb))
+    if (!srcSet_)
     {
-        labelHashSet unmapped;
-        labelList& unmappedPoints = samplePatch().unmappedPoints_;
-        forAll(samplePts, pti)
-        {
-            if (!inflatedBb.contains(samplePts[pti]))
-            {
-                unmapped.insert(pti);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = samplePatch().pointToGlobalAddr();
-            label pI = 0;
-            unmappedPoints.resize(addr.size());
-            forAll(addr, pi)
-            {
-                label gpI = addr[pi];
-                if (unmapped.found(gpI))
-                {
-                    unmappedPoints[pI++] = pi;
-                }
-            }
-            unmappedPoints.resize(pI);
-        }
-        else
-        {
-            unmappedPoints = unmapped.toc();
-        }
+        isSrc_ = dict_.found("mappingType");
+        samplePatch().isSrc_ = !isSrc_;
 
-        unmapped.clear();
-        labelList& unmappedFaces = samplePatch().unmappedFaces_;
-        const pointField& fc = samplePatch().globalPatch().faceCentres();
-        forAll(fc, fi)
-        {
-            if (!inflatedBb.contains(fc[fi]))
-            {
-                unmapped.insert(fi);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = samplePatch().faceToGlobalAddr();
-            label fI = 0;
-            unmappedFaces.resize(addr.size());
-            forAll(addr, fi)
-            {
-                label gfI = addr[fi];
-                if (unmapped.found(gfI))
-                {
-                    unmappedFaces[fI++] = fi;
-                }
-            }
-            unmappedFaces.resize(fI);
-        }
-        else
-        {
-            unmappedFaces = unmapped.toc();
-        }
+        srcSet_ = true;
+        samplePatch().srcSet_ = true;
     }
 
-    if (!inflatedSampleBb.contains(bb))
-    {
-        labelHashSet unmapped;
-        forAll(pts, pti)
-        {
-            if (!inflatedSampleBb.contains(pts[pti]))
-            {
-                unmapped.insert(pti);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = pointToGlobalAddr();
-            label pI = 0;
-            unmappedPoints_.resize(addr.size());
-            forAll(addr, pi)
-            {
-                label gpI = addr[pi];
-                if (unmapped.found(gpI))
-                {
-                    unmappedPoints_[pI++] = pi;
-                }
-            }
-            unmappedPoints_.resize(pI);
-        }
-        else
-        {
-            unmappedPoints_ = unmapped.toc();
-        }
-
-        unmapped.clear();
-        const pointField& fc = this->globalPatch().faceCentres();
-        forAll(fc, fi)
-        {
-            if (!inflatedSampleBb.contains(fc[fi]))
-            {
-                unmapped.insert(fi);
-            }
-        }
-        if (Pstream::parRun())
-        {
-            const labelList& addr = faceToGlobalAddr();
-            label fI = 0;
-            unmappedFaces_.resize(addr.size());
-            forAll(addr, fi)
-            {
-                label gfI = addr[fi];
-                if (unmapped.found(gfI))
-                {
-                    unmappedFaces_[fI++] = fi;
-                }
-            }
-            unmappedFaces_.resize(fI);
-        }
-        else
-        {
-            unmappedFaces_ = unmapped.toc();
-        }
-    }
+    const coupledGlobalPolyPatch& masterPatch =
+        isSrc_
+      ? *this
+      : samplePatch();
+    const coupledGlobalPolyPatch& slavePatch =
+        isSrc_
+      ? samplePatch()
+      : *this;
 
     patchToPatchInterpPtr_ =
         patchToPatchMapping::New
         (
-            dict_.found("mappingType")
-          ? dict_
-          : samplePatch().dict_,
-            patch(),
-            samplePatch().patch(),
-            *this,
-            samplePatch()
+            masterPatch.physicalPatch(),
+            slavePatch.physicalPatch(),
+            masterPatch.dict_,
+            needPoints_,
+            false
         ).ptr();
+
+    bool masterMoving =
+        &masterPatch.physicalPatch() != &masterPatch.physicalPatch0();
+    bool slaveMoving =
+        &slavePatch.physicalPatch() != &slavePatch.physicalPatch0();
+
+    patchToPatchInterpPtr_->update
+    (
+        masterMoving
+      ? masterPatch.physicalPatch0().points()
+      : NullObjectRef<pointField>(),
+        slaveMoving
+      ? slavePatch.physicalPatch0().points()
+      : NullObjectRef<pointField>(),
+        masterPatch.physicalPatch().pointNormals(),
+        masterMoving
+      ? masterPatch.physicalPatch0().pointNormals()
+      : NullObjectRef<vectorField>()
+    );
+
     samplePatch().setPatchToPatchInterp(patchToPatchInterpPtr_);
 }
 
@@ -212,16 +144,13 @@ void Foam::coupledGlobalPolyPatch::clearInterp(const bool top) const
 {
     if (patchToPatchInterpPtr_)
     {
-        deleteDemandDrivenData
-        (
-            patchToPatchInterpPtr_
-        );
-        unmappedFaces_.clear();
-        unmappedPoints_.clear();
+        deleteDemandDrivenData(patchToPatchInterpPtr_);
+        deleteDemandDrivenData(unmappedFacesPtr_);
+        deleteDemandDrivenData(unmappedPointsPtr_);
 
         samplePatch().setPatchToPatchInterp(nullptr);
-        samplePatch().unmappedFaces_.clear();
-        samplePatch().unmappedPoints_.clear();
+        deleteDemandDrivenData(samplePatch().unmappedFacesPtr_);
+        deleteDemandDrivenData(samplePatch().unmappedPointsPtr_);
     }
 
 }
@@ -238,11 +167,35 @@ Foam::coupledGlobalPolyPatch::coupledGlobalPolyPatch
 :
     globalPolyPatch(dict, patch),
     dict_(dict),
+    needPoints_(false),
+    srcSet_(false),
+    isSrc_(false),
     sampleRegion_(dict.lookup("sampleRegion")),
     samplePatch_(dict.lookup("samplePatch")),
-    patchToPatchInterpPtr_(nullptr)
+    patchToPatchInterpPtr_(nullptr),
+    unmappedFacesPtr_(nullptr),
+    unmappedPointsPtr_(nullptr)
 {}
 
+
+Foam::autoPtr<Foam::coupledGlobalPolyPatch> Foam::coupledGlobalPolyPatch::New
+(
+    const dictionary& dict,
+    const polyPatch& patch
+)
+{
+    patchConstructorTable::iterator cstrIter =
+        patchConstructorTablePtr_->find(patch.type());
+
+    if (cstrIter != patchConstructorTablePtr_->end())
+    {
+        return cstrIter()(dict, patch);
+    }
+    return autoPtr<coupledGlobalPolyPatch>
+    (
+        new coupledGlobalPolyPatch(dict, patch)
+    );
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -253,7 +206,6 @@ Foam::coupledGlobalPolyPatch::~coupledGlobalPolyPatch()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
 
 const Foam::polyMesh& Foam::coupledGlobalPolyPatch::sampleMesh() const
 {
@@ -267,6 +219,7 @@ Foam::coupledGlobalPolyPatch::samplePatch() const
     return globalPolyBoundaryMesh::New(sampleMesh())(samplePatch_);
 }
 
+
 const Foam::patchToPatchMapping&
 Foam::coupledGlobalPolyPatch::patchToPatchInterpolator() const
 {
@@ -278,16 +231,82 @@ Foam::coupledGlobalPolyPatch::patchToPatchInterpolator() const
 }
 
 
-void Foam::coupledGlobalPolyPatch::movePoints()
+const Foam::labelList&
+Foam::coupledGlobalPolyPatch::unmappedFaces() const
 {
-    clearOut();
+    if (!unmappedFacesPtr_)
+    {
+        unmappedFacesPtr_ = new labelList
+        (
+            patchToPatchInterpolator().unmappedFaces(physicalPatch())
+        );
+    }
+    return *unmappedFacesPtr_;
 }
 
 
-void Foam::coupledGlobalPolyPatch::updateMesh()
+const Foam::labelList&
+Foam::coupledGlobalPolyPatch::unmappedPoints() const
+{
+    if (!unmappedPointsPtr_)
+    {
+        unmappedPointsPtr_ = new labelList
+        (
+            patchToPatchInterpolator().unmappedPoints(physicalPatch())
+        );
+    }
+    return *unmappedPointsPtr_;
+}
+
+
+void Foam::coupledGlobalPolyPatch::update()
+{
+    globalPolyPatch::update();
+}
+
+
+void Foam::coupledGlobalPolyPatch::movePoints(const bool clear)
+{
+    globalPolyPatch::movePoints(clear);
+    samplePatch().movePointsOther(clear);
+}
+
+
+void Foam::coupledGlobalPolyPatch::movePointsOther(const bool clear) const
+{}
+
+
+void Foam::coupledGlobalPolyPatch::distribute(const polyDistributionMap&)
 {
     clearOut();
+    samplePatch().distributeOther();
 }
+
+
+void Foam::coupledGlobalPolyPatch::distributeOther() const
+{}
+
+
+void Foam::coupledGlobalPolyPatch::topoChange(const polyTopoChangeMap&)
+{
+    clearOut();
+    samplePatch().topoChangeOther();
+}
+
+
+void Foam::coupledGlobalPolyPatch::topoChangeOther() const
+{}
+
+
+void Foam::coupledGlobalPolyPatch::mapMesh(const polyMeshMap&)
+{
+    clearOut();
+    samplePatch().mapMeshOther();
+}
+
+
+void Foam::coupledGlobalPolyPatch::mapMeshOther() const
+{}
 
 
 // ************************************************************************* //

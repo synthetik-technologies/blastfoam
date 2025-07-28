@@ -32,6 +32,15 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(rspecieBlast, 0);
+
+    makeAdaptiveType
+    (
+        1,
+        f.Y(),
+        f.Y(),
+        ::Foam::mag(f1.Y() - f2.Y())/stabilise(max(f1.Y(), f2.Y()), 1e-6),
+        rspecieBlast
+    );
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

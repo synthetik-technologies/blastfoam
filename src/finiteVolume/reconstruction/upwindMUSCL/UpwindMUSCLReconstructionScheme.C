@@ -31,10 +31,11 @@ template<class Type>
 Foam::UpwindMUSCLReconstructionScheme<Type>::UpwindMUSCLReconstructionScheme
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
+    Istream& is,
+    const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is)
+    ReconstructionScheme<Type>(phi, is, overwrite)
 {}
 
 
@@ -54,7 +55,7 @@ Foam::UpwindMUSCLReconstructionScheme<Type>::interpolateOwn() const
     (
         GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            this->phi_.name() + "Own",
+            this->ownName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
@@ -94,7 +95,7 @@ Foam::UpwindMUSCLReconstructionScheme<Type>::interpolateNei() const
     (
         GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            this->phi_.name() + "Nei",
+            this->neiName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )

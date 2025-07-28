@@ -45,6 +45,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fluxScheme.H"
+#include "HLLCFluxScheme.H"
 
 namespace Foam
 {
@@ -57,20 +58,13 @@ namespace fluxSchemes
 
 class HLLCP
 :
-    public fluxScheme
+    public HLLC
 {
 
     // Saved variables
 
-        tmp<surfaceScalarField> SOwn_;
-        tmp<surfaceScalarField> SNei_;
-        tmp<surfaceScalarField> SStar_;
-        tmp<surfaceScalarField> pStar_;
         tmp<surfaceScalarField> phip_;
         tmp<surfaceVectorField> UTilde_;
-        tmp<surfaceScalarField> UvOwn_;
-        tmp<surfaceScalarField> UvNei_;
-
         tmp<surfaceScalarField> f_;
 
     // Private functions
@@ -91,25 +85,6 @@ class HLLCP
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
-        (
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
-            const label facei, const label patchi = -1
-        );
-
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux
         (
@@ -118,14 +93,6 @@ class HLLCP
             const scalar& eOwn, const scalar& eNei,
             const scalar& pOwn, const scalar& pNei,
             const vector& Sf,
-            const label facei, const label patchi = -1
-        ) const;
-
-        //- Interpolate field
-        virtual scalar interpolate
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const bool isDensity,
             const label facei, const label patchi = -1
         ) const;
 
@@ -142,7 +109,7 @@ public:
     TypeName("HLLCP");
 
     // Constructor
-    HLLCP(const fvMesh& mesh);
+    HLLCP(const surfaceScalarField& phi);
 
 
     //- Destructor

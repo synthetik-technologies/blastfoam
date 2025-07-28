@@ -25,140 +25,134 @@ License
 
 #include "interpolationWeights1D.H"
 #include "hashedWordList.H"
+#include "addToRunTimeSelectionTable.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+namespace Foam
+{
+    defineTypeNameAndDebug(interpolationWeight1D, 0);
+    defineRunTimeSelectionTable(interpolationWeight1D, null);
+    defineRunTimeSelectionTable(interpolationWeight1D, dictionary);
+}
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::interpolationWeight1D> Foam::interpolationWeight1D::New
 (
     const word& scheme,
-    const List<scalar>& xs
+    const List<scalar>& xs,
+    const bool finalData
 )
 {
-    if (scheme == "floor")
+    if (xs.size() < 2 && finalData)
     {
+        DebugInfo << "Singular data, using floor interpolation: " << scheme << endl;
         return autoPtr<interpolationWeight1D>
         (
             new interpolationWeights1D::floor(xs)
         );
     }
-    else if (scheme == "ceil")
-    {
-        return autoPtr<interpolationWeight1D>
-        (
-            new interpolationWeights1D::ceil(xs)
-        );
-    }
-    else if (scheme == "linearClamp")
-    {
-        return autoPtr<interpolationWeight1D>
-        (
-            new interpolationWeights1D::linearClamp(xs)
-        );
-    }
-    else if (scheme == "linearExtrapolated")
-    {
-        return autoPtr<interpolationWeight1D>
-        (
-            new interpolationWeights1D::linearExtrapolated(xs)
-        );
-    }
-    else if (scheme == "quadraticClamp")
-    {
-        return autoPtr<interpolationWeight1D>
-        (
-            new interpolationWeights1D::quadraticClamp(xs)
-        );
-    }
-    else if (scheme == "quadraticExtrapolated")
-    {
-        return autoPtr<interpolationWeight1D>
-        (
-            new interpolationWeights1D::quadraticExtrapolated(xs)
-        );
-    }
-    else if (scheme == "cubicClamp")
-    {
-        return autoPtr<interpolationWeight1D>
-        (
-            new interpolationWeights1D::cubicClamp(xs)
-        );
-    }
-    else if (scheme == "cubicExtrapolated")
-    {
-        return autoPtr<interpolationWeight1D>
-        (
-            new interpolationWeights1D::cubicExtrapolated(xs)
-        );
-    }
-    else
+    DebugInfo << "Selecting interpolation scheme: " << scheme << endl;
+
+    nullConstructorTable::iterator cstrIter =
+        nullConstructorTablePtr_->find(scheme);
+
+    if (cstrIter == nullConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << scheme << " is not a valid interpolation scheme" << nl
-            << "Options are: " << nl
-            << "    linearClamp" << nl
-            << "    linearExtrapolated" << nl
-            << "    quadraticClamp" << nl
-            << "    quadraticExtrapolated" << nl
-            << "    cubicClamp" << nl
-            << "    cubicExtrapolated" << nl
-            << "    ceil" << nl
-            << "    floor" << nl
-            << abort(FatalError);
+            << "Unknown interpolation scheme " << scheme << nl << nl
+            << "Valid interpolation schemes are: " << endl
+            << nullConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
     }
-    return autoPtr<interpolationWeight1D>();
+    return autoPtr<interpolationWeight1D>(cstrIter()(xs));
 }
+
+
+Foam::autoPtr<Foam::interpolationWeight1D> Foam::interpolationWeight1D::New
+(
+    const word& scheme,
+    const dictionary& dict,
+    const List<scalar>& xs,
+    const bool finalData
+)
+{
+    if (xs.size() < 2 && finalData)
+    {
+        DebugInfo << "Singular data, using floor interpolation: " << scheme << endl;
+        return autoPtr<interpolationWeight1D>
+        (
+            new interpolationWeights1D::floor(dict, xs)
+        );
+    }
+
+    DebugInfo << "Selecting interpolation scheme: " << scheme << endl;
+
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(scheme);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown interpolation scheme " << scheme << nl << nl
+            << "Valid interpolation schemes are: " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+    return autoPtr<interpolationWeight1D>(cstrIter()(dict, xs));
+}
+
 
 bool Foam::interpolationWeight1D::validate(const bool fail) const
 {
     hashedWordList validSchemes;
     const label n = xs_.size();
-    if (n > 0)
+    if (n >= nRequired())
     {
-        validSchemes.append("floor");
-        validSchemes.append("ceil");
-        validSchemes.append("linearClamp");
+        return true;
     }
-    if (n > 1)
+    else if (!fail)
     {
-        validSchemes.append("linearExtrapolated");
-    }
-    if (n > 2)
-    {
-        validSchemes.append("quadraticClamp");
-        validSchemes.append("quadraticExtrapolated");
-    }
-    if (n > 3)
-    {
-        validSchemes.append("cubicClamp");
-        validSchemes.append("cibicExtrapolated");
-    }
-
-    if (!validSchemes.found(this->type()))
-    {
-        if (fail)
-        {
-            FatalErrorInFunction
-                << this->type()
-                << " is not a valid interpolation scheme for a list "
-                << " of size " << n << nl
-                << "Valid Options are: " << nl
-                << validSchemes << endl
-                << abort(FatalError);
-        }
         return false;
     }
-    return true;
+
+    forAllConstIter(nullConstructorTable, *nullConstructorTablePtr_, iter)
+    {
+        autoPtr<interpolationWeight1D> scheme(iter()(xs_));
+        if (scheme->nRequired() <= n)
+        {
+            validSchemes.append(scheme->type());
+        }
+    }
+    FatalErrorInFunction
+        << this->type()
+        << " requires " << this->nRequired() << " entries, but "
+        << n << " entries were provied" << nl << nl
+        << "Valid schemes for " << n << " entries are: " << nl
+        << validSchemes << endl
+        << abort(FatalError);
+    return false;
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+namespace Foam
+{
+namespace interpolationWeights1D
+{
+    defineTypeNameAndDebug(floor, 0);
+    addToRunTimeSelectionTable(interpolationWeight1D, floor, null);
+    addToRunTimeSelectionTable(interpolationWeight1D, floor, dictionary);
+}
+}
+
 void Foam::interpolationWeights1D::floor::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     indices.setSize(1);
@@ -169,12 +163,43 @@ void Foam::interpolationWeights1D::floor::updateWeights
 }
 
 
+void Foam::interpolationWeights1D::floor::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    indices.setSize(1);
+    weights.setSize(1);
+    dws.setSize(1);
+
+    indices[0] = i;
+    weights[0] = 1.0;
+    dws[0] = 0.0;
+}
+
+
+namespace Foam
+{
+namespace interpolationWeights1D
+{
+    defineTypeNameAndDebug(ceil, 0);
+    addToRunTimeSelectionTable(interpolationWeight1D, ceil, null);
+    addToRunTimeSelectionTable(interpolationWeight1D, ceil, dictionary);
+}
+}
+
 void Foam::interpolationWeights1D::ceil::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     indices.setSize(1);
@@ -185,12 +210,67 @@ void Foam::interpolationWeights1D::ceil::updateWeights
 }
 
 
+void Foam::interpolationWeights1D::ceil::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    indices.setSize(1);
+    weights.setSize(1);
+    dws.setSize(1);
+
+    indices[0] = x != xs[i] ? i + 1 : i;
+    weights[0] = 1.0;
+    dws[0] = 0.0;
+}
+
+
+namespace Foam
+{
+namespace interpolationWeights1D
+{
+    defineTypeNameAndDebug(linearExtrapolated, 0);
+    defineTypeNameAndDebug(linearClamp, 0);
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        linearExtrapolated,
+        null
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        linearExtrapolated,
+        dictionary
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        linearClamp,
+        null
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        linearClamp,
+        dictionary
+    );
+}
+}
+
+
 void Foam::interpolationWeights1D::linearExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     label lo = max(i, 0);
@@ -207,12 +287,64 @@ void Foam::interpolationWeights1D::linearExtrapolated::updateWeights
 }
 
 
+void Foam::interpolationWeights1D::linearExtrapolated::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    updateWeights(xMod, i, indices, weights);
+    dws.setSize(2);
+    dws[1] = 1.0/(xs_[indices[1]] - xs_[indices[0]]);
+    dws[0] = - dws[1];
+}
+
+
+namespace Foam
+{
+namespace interpolationWeights1D
+{
+    defineTypeNameAndDebug(quadraticExtrapolated, 0);
+    defineTypeNameAndDebug(quadraticClamp, 0);
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        quadraticExtrapolated,
+        null
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        quadraticExtrapolated,
+        dictionary
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        quadraticClamp,
+        null
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        quadraticClamp,
+        dictionary
+    );
+}
+}
+
+
 void Foam::interpolationWeights1D::quadraticExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     label lo = max(i-1, 0);
@@ -236,12 +368,68 @@ void Foam::interpolationWeights1D::quadraticExtrapolated::updateWeights
 }
 
 
+void Foam::interpolationWeights1D::quadraticExtrapolated::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    updateWeights(xMod, i, indices, weights);
+
+    dws.setSize(3);
+    const scalar x0 = xs[indices[0]];
+    const scalar x1 = xs[indices[1]];
+    const scalar x2 = xs[indices[2]];
+    dws[0] = ((x - x2) + (x - x1))/(x0 - x1)/(x0 - x2);
+    dws[1] = ((x - x0) + (x - x2))/(x1 - x2)/(x1 - x0);
+    dws[2] = ((x - x0) + (x - x1))/(x2 - x0)/(x2 - x1);
+}
+
+
+namespace Foam
+{
+namespace interpolationWeights1D
+{
+    defineTypeNameAndDebug(cubicExtrapolated, 0);
+    defineTypeNameAndDebug(cubicClamp, 0);
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        cubicExtrapolated,
+        null
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        cubicExtrapolated,
+        dictionary
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        cubicClamp,
+        null
+    );
+    addToRunTimeSelectionTable
+    (
+        interpolationWeight1D,
+        cubicClamp,
+        dictionary
+    );
+}
+}
+
 void Foam::interpolationWeights1D::cubicExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    List<label>& indices,
-    List<scalar>& weights
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights
 ) const
 {
     label lo = max(i - 1, 0);
@@ -281,6 +469,39 @@ void Foam::interpolationWeights1D::cubicExtrapolated::updateWeights
 //     weights[1] = x3*(2.0 - 1.0/dx31) + x2*(1.0/dx31 - 3.0) + 1.0;
 //     weights[2] = x3*(1.0/dx20 - 2.0) + x2*(3.0 - 2.0/dx20) + 1.0/dx20;
 //     weights[3] = (x3 - x2)/dx31;
+}
+
+
+void Foam::interpolationWeights1D::cubicExtrapolated::updateDWeights
+(
+    const scalar x,
+    const scalar xMod,
+    const label i,
+    const UList<scalar>& xs,
+    DynamicList<label>& indices,
+    DynamicList<scalar>& weights,
+    DynamicList<scalar>& dws
+) const
+{
+    updateWeights(xMod, i, indices, weights);
+
+    dws.setSize(4);
+    const scalar x0 = xs[indices[0]];
+    const scalar x1 = xs[indices[1]];
+    const scalar x2 = xs[indices[2]];
+    const scalar x3 = xs[indices[3]];
+    dws[0] =
+        ((x - x2)*(x - x3) + (x - x1)*(x - x3) + (x - x1)*(x - x2))
+       /(x0 - x1)/(x0 - x2)/(x0 - x3);
+    dws[1] =
+        ((x - x3)*(x - x0) + (x - x2)*(x - x0) + (x - x2)*(x - x3))
+       /(x1 - x2)/(x1 - x3)/(x1 - x0);
+    dws[2] =
+        ((x - x0)*(x - x1) + (x - x3)*(x - x1) + (x - x3)*(x - x0))
+       /(x2 - x3)/(x2 - x0)/(x2 - x1);
+    dws[3] =
+        ((x - x1)*(x - x2) + (x - x0)*(x - x2) + (x - x0)*(x - x1))
+       /(x3 - x0)/(x3 - x1)/(x3 - x2);
 }
 
 // ************************************************************************* //

@@ -89,9 +89,9 @@ title="blastFoam_dense_validation_U"
                 with points linewidth 8 linecolor rgb 'green',\
             "$2" using 1:2 title 'U_g - Houim Oran (2016)'\
                 with points linewidth 8 linecolor rgb 'red',\
-            "$3" using 1:2 title 'U_p - blastFoam'\
+            "$3" using 1:8 title 'U_p - blastFoam'\
                 with lines lt 1 linewidth 2 linecolor rgb 'green',\
-            "$3" using 1:5 title 'U_g - blastFoam'\
+            "$3" using 1:11 title 'U_g - blastFoam'\
                 with lines lt 1 linewidth 2 linecolor rgb 'red'
 EOF
 }
@@ -113,12 +113,11 @@ ugVal="$VALIDATIONDATAROOT/U_g.csv"
 upVal="$VALIDATIONDATAROOT/U_p.csv"
 TgVal="$VALIDATIONDATAROOT/T_g.csv"
 TpVal="$VALIDATIONDATAROOT/T_p.csv"
-blastFOAM="../postProcessing/sampleDict/0.0001/Centerline_p*"
-blastFOAMU="../postProcessing/sampleDict/0.0001/Centerline_U*"
+blastFOAM="../postProcessing/sampleDict/0.0001/Centerline.xy"
 
 createEpsP $pVal $blastFOAM
 createEpsRho $rhopVal $rhogVal $blastFOAM
 createEpsT $TpVal $TgVal $blastFOAM
-createEpsU $upVal $ugVal $blastFOAMU
+createEpsU $upVal $ugVal $blastFOAM
 
 echo Done

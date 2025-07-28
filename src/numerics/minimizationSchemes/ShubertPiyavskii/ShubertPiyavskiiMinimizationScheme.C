@@ -31,34 +31,37 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(ShubertPiyavskiiMinimizationScheme, 0);
+namespace univariateMinimizationSchemes
+{
+    defineTypeNameAndDebug(ShubertPiyavskii, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        ShubertPiyavskiiMinimizationScheme,
+        ShubertPiyavskii,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        ShubertPiyavskiiMinimizationScheme,
+        ShubertPiyavskii,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        ShubertPiyavskiiMinimizationScheme,
+        ShubertPiyavskii,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        ShubertPiyavskiiMinimizationScheme,
+        ShubertPiyavskii,
         dictionaryTwo
     );
 }
+}
 
-Foam::vector2D Foam::ShubertPiyavskiiMinimizationScheme::intersection
+Foam::vector2D Foam::univariateMinimizationSchemes::ShubertPiyavskii::intersection
 (
     const vector2D& A,
     const vector2D& B
@@ -71,7 +74,7 @@ Foam::vector2D Foam::ShubertPiyavskiiMinimizationScheme::intersection
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::ShubertPiyavskiiMinimizationScheme::ShubertPiyavskiiMinimizationScheme
+Foam::univariateMinimizationSchemes::ShubertPiyavskii::ShubertPiyavskii
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -93,7 +96,7 @@ Foam::ShubertPiyavskiiMinimizationScheme::ShubertPiyavskiiMinimizationScheme
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::minimize
+Foam::scalar Foam::univariateMinimizationSchemes::ShubertPiyavskii::minimize
 (
     const scalar x,
     const scalar x1,
@@ -122,11 +125,7 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::minimize
         P_prev = intersection(P_prev, P);
         P_next = intersection(P, P_next);
 
-        if
-        (
-            convergedX(P_next.x(), P_prev.x())
-         && convergedY(P_next.y(), P_prev.y())
-        )
+        if (converged(P_next.x(), P_prev.x(), P_next.y(), P_prev.y()))
         {
             break;
         }

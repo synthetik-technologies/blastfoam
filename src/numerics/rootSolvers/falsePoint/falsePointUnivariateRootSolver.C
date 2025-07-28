@@ -30,31 +30,37 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(falsePointUnivariateRootSolver, 0);
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(falsePoint, 0);
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        falsePointUnivariateRootSolver,
+        falsePoint,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        falsePointUnivariateRootSolver,
+        falsePoint,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        falsePointUnivariateRootSolver,
+        falsePoint,
         dictionaryTwo
     );
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::falsePointUnivariateRootSolver::falsePointUnivariateRootSolver
+Foam::rootSolvers::univariate::falsePoint::falsePoint
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -64,15 +70,25 @@ Foam::falsePointUnivariateRootSolver::falsePointUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::falsePoint::falsePoint
+(
+    const scalarMultivariateEquation& eqn,
+    const falsePoint& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::falsePointUnivariateRootSolver::~falsePointUnivariateRootSolver()
+Foam::rootSolvers::univariate::falsePoint::~falsePoint()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::falsePointUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::falsePoint::findRoot
 (
     const scalar x0,
     const scalar x1,

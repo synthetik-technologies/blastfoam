@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2022
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -35,7 +35,7 @@ void Foam::compressibleBlastSystem::setModels()
 {
     compressibleSystem::setModels();
 
-    IOobject radPropertiesIO
+    typeIOobject<IOdictionary> radPropertiesIO
     (
         "radiationProperties",
         rho_.time().constant(),
@@ -43,37 +43,41 @@ void Foam::compressibleBlastSystem::setModels()
         IOobject::MUST_READ_IF_MODIFIED,
         IOobject::NO_WRITE
     );
-    if (radPropertiesIO.typeHeaderOk<IOdictionary>(true))
+    if (radPropertiesIO.headerOk())
     {
         radiation_.set(blastRadiationModel::New(this->T()).ptr());
     }
 }
 
+
+void Foam::compressibleBlastSystem::addSources
+(
+    volVectorField::Internal& rhoUSource,
+    volScalarField::Internal& rhoESource
+) const
+{
+
+    compressibleSystem::addSources(rhoUSource, rhoESource);
+
+    rhoESource -= thermoPtr_->ESource();
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::compressibleBlastSystem::compressibleBlastSystem
 (
-    const label nPhases,
-    const fvMesh& mesh
+    const dictionary& dict,
+    const fvMesh& mesh,
+    const word& thermoType
 )
 :
-    compressibleSystem(mesh),
-    IOdictionary
-    (
-        IOobject
-        (
-            "phaseProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
-        )
-    ),
+    compressibleSystem(dict, mesh),
     thermoPtr_
     (
-        fluidBlastThermo::New(nPhases, mesh, *this)
+        fluidBlastThermo::New(mesh, dict, thermoType)
     ),
-    rho_(thermoPtr_->rho()),
+    rho_(thermoPtr_().rhoRef()),
     p_(thermoPtr_->p()),
     T_(thermoPtr_->T()),
     e_(thermoPtr_->he())
@@ -98,37 +102,32 @@ void Foam::compressibleBlastSystem::update()
 
 void Foam::compressibleBlastSystem::decode()
 {
-    U_.ref() = rhoU_()/rho()();
+    U_.internalFieldRef() = rhoU_()/rhoEff()();
     U_.correctBoundaryConditions();
 
+    rhoU_.correctBoundaryConditions();
     rhoU_.boundaryFieldRef() =
-        rho().boundaryField()*U_.boundaryField();
+        rhoEff().boundaryField()*U_.boundaryField();
 
-    e_.ref() = rhoE_()/rho()() - 0.5*magSqr(U_());
-
+    e_.internalFieldRef() = rhoE_()/rhoEff()() - 0.5*magSqr(U_());
+    e_.correctBoundaryConditions();
     thermoPtr_->correct();
 
     //- Update total energy because the e field may have been modified
-    rhoE_ = rho()*(e_ + 0.5*magSqr(U_));
+    rhoE_ = rhoEff()*(e_ + 0.5*magSqr(U_));
 }
 
 
 void Foam::compressibleBlastSystem::solve()
 {
     //- Calculate deltas for momentum and energy
-    volVectorField deltaRhoU
-    (
-        "deltaRhoU",
-        fvc::div(rhoUPhi_) - g_*rho()
-    );
+    volVectorField deltaRhoU("deltaRhoU", fvc::div(rhoUPhi_));
+    this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
 
-    volScalarField deltaRhoE
-    (
-        "deltaRhoE",
-        fvc::div(rhoEPhi_)
-      - ESource()
-      - (rhoU_ & g_)
-    );
+    volScalarField deltaRhoE("deltaRhoE", fvc::div(rhoEPhi_));
+    this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
+
+    this->addSources(deltaRhoU, deltaRhoE);
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);
@@ -147,32 +146,23 @@ void Foam::compressibleBlastSystem::solve()
 
 void Foam::compressibleBlastSystem::postUpdate()
 {
-    bool updateE = false;
-    if (radiation_.valid())
+    if (turbulence_.valid())
     {
-        updateE = true;
-        radiation_->correct();
-        rhoE_ =
-            radiation_->calcRhoE
-            (
-                rho_.mesh().time().deltaT(),
-                rhoE_,
-                rho(),
-                e_,
-                this->thermo().Cv()
-            );
+        turbulence_->predict();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->predict();
     }
 
-    if (needSolve(U_.name()) || turbulence_.valid())
+    if (needSolve(U_.name()) || turbulence_.valid() || dragSource_.valid())
     {
-        updateE = true;
-
         // Solve momentum
         fvVectorMatrix UEqn
         (
-            fvm::ddt(rho(), U_) - fvc::ddt(rhoU_)
+            fvm::ddt(rhoEff(), U_) - fvc::ddt(rhoU_)
          ==
-            models().source(rho(), U_)
+            models().source(rhoEff(), U_)
         );
 
         if (dragSource_.valid())
@@ -183,120 +173,94 @@ void Foam::compressibleBlastSystem::postUpdate()
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevTau(U_);
-            rhoE_ +=
-                rho_.mesh().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-                  & fluxScheme_->Uf()
-                );
         }
         constraints().constrain(UEqn);
         UEqn.solve();
         constraints().constrain(U_);
 
-        rhoU_ = rho()*U_;
-    }
-
-    //- Update internal energy
-    if (updateE)
-    {
-        e_ = rhoE_/rho() - 0.5*magSqr(U_);
-        e_.correctBoundaryConditions();
+        rhoU_ = rhoEff()*U_;
     }
 
     // Solve thermal energy diffusion
-    if (needSolve(e_.name()) || turbulence_.valid())
+    if
+    (
+        needSolve(e_.name())
+     || turbulence_.valid()
+     || radiation_.valid()
+     || extESource_.valid()
+    )
     {
+//         if (radiation_.valid())
+//         {
+//             radiation_->correct();
+//             rhoE_ =
+//                 radiation_->calcRhoE
+//                 (
+//                     rho_.mesh().time().deltaT(),
+//                     rhoE_,
+//                     rhoEff(),
+//                     e_,
+//                     this->thermo().Cv()
+//                 );
+//         }
+
+        if (dragSource_.valid())
+        {
+            rhoE_ += (dragSource_ & U_) & U_;
+        }
+
+        if (turbulence_.valid())
+        {
+            rhoE_ -=
+                rho_.mesh().time().deltaT()
+               *(U_ & fvc::div(turbulence_->devTau()));
+               // *fvc::div
+               //  (
+               //      fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
+               //    & fluxScheme_->Uf()
+               //  );
+        }
+        e_ = rhoE_/rhoEff() - 0.5*magSqr(U_);
+
         fvScalarMatrix eEqn
         (
-            fvm::ddt(rho(), e_) - fvc::ddt(rho().prevIter(), e_)
+            fvm::ddt(rhoEff(), e_) - fvc::ddt(rhoEff().prevIter(), e_)
          ==
-            models().source(rho(), e_)
+            models().source(rhoEff(), e_)
         );
         if (extESource_.valid())
         {
             eEqn -= extESource_;
         }
-        if (turbulence_.valid())
+        if (thermophysicalTransport_.valid())
         {
             eEqn += thermophysicalTransport_->divq(e_);
+        }
+        if (radiation_.valid())
+        {
+            radiation_->correct();
+            eEqn += radiation_->Sh(thermo(), e_);
         }
         constraints().constrain(eEqn);
         eEqn.solve();
         constraints().constrain(e_);
 
-        rhoE_ = rho()*(e_ + 0.5*magSqr(U_));
+        rhoE_ = rhoEff()*(e_ + 0.5*magSqr(U_));
     }
 
     this->thermo().postUpdate();
     this->thermo().correct();
     constraints().constrain(p_);
+    p_.correctBoundaryConditions();
 
     if (turbulence_.valid())
     {
         turbulence_->correct();
     }
-}
-
-
-void Foam::compressibleBlastSystem::addECoeff
-(
-    const volScalarField::Internal& ECoeff
-)
-{
-    if (!extESource_.valid())
+    if (thermophysicalTransport_.valid())
     {
-        extESource_ =
-            tmp<fvScalarMatrix>
-            (
-                new fvScalarMatrix(e_, dimEnergy/dimTime)
-            );
+        thermophysicalTransport_->correct();
     }
-    extESource_.ref() -= fvm::Sp(ECoeff, e_);
-}
-
-
-void Foam::compressibleBlastSystem::addESource
-(
-    const volScalarField::Internal& ESource
-)
-{
-    if (!extESource_.valid())
-    {
-        extESource_ =
-            tmp<fvScalarMatrix>
-            (
-                new fvScalarMatrix(e_, dimEnergy/dimTime)
-            );
-    }
-    extESource_.ref() += ESource;
-}
-
-
-void Foam::compressibleBlastSystem::addUCoeff
-(
-    const volScalarField::Internal& UCoeff
-)
-{
-    if (!dragSource_.valid())
-    {
-        dragSource_ = tmp<fvVectorMatrix>(new fvVectorMatrix(U_, dimForce));
-    }
-    dragSource_.ref() -= fvm::Sp(UCoeff, U_);
-}
-
-
-void Foam::compressibleBlastSystem::addUSource
-(
-    const volVectorField::Internal& USource
-)
-{
-    if (!dragSource_.valid())
-    {
-        dragSource_ = tmp<fvVectorMatrix>(new fvVectorMatrix(U_, dimForce));
-    }
-    dragSource_.ref() += USource;
 }
 
 // ************************************************************************* //

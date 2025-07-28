@@ -208,12 +208,19 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::E
     const scalar T
 ) const
 {
+    const scalar V = rho/rho0_;
     return
-        (
-            9.0/8.0*K0_*pow(rho/rho0_, 5.0/3.0)
-           *(pow(rho/rho0_, 2.0/3.0) - 2.0)
-          - pRef_
-        )/max(rho, 1e-10);
+        1.125*K0_/rho0_
+       *(
+            2.0*pow(V, 2.0/3.0)
+          - pow6(V)/3.0
+          - 1.0
+        )/rho0_;
+    // return
+    //     (
+    //         9.0/8.0*K0_*pow(rho/rho0_, 5.0/3.0)
+    //        *(pow(rho/rho0_, 2.0/3.0) - 2.0)
+    //     )/max(rho, 1e-10);
 }
 
 
@@ -267,7 +274,19 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::BirchMurnaghan2<Specie>::S
+Foam::scalar Foam::BirchMurnaghan2<Specie>::Sp
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan2<Specie>::Sv
 (
     const scalar p,
     const scalar T

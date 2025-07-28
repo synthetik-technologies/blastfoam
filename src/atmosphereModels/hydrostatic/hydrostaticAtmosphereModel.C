@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2022
+    \\  /    A nd           | Copyright (C) 2020-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -44,10 +44,10 @@ Foam::atmosphereModels::hydrostatic::hydrostatic
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 :
-    atmosphereModel(mesh, dict, zoneID)
+    atmosphereModel(mesh, dict, zoneName)
 {}
 
 

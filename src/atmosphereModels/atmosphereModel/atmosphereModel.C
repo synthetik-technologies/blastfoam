@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2022
+    \\  /    A nd           | Copyright (C) 2020-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -34,6 +34,7 @@ License
 #include "surfaceInterpolate.H"
 #include "constrainPressure.H"
 #include "uniformDimensionedFields.H"
+#include "noSlipFvPatchVectorField.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -50,7 +51,7 @@ Foam::atmosphereModel::atmosphereModel
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 :
     dict_(dict),
@@ -66,8 +67,7 @@ Foam::atmosphereModel::atmosphereModel
             IOobject::NO_WRITE
         )
     ),
-    normal_(-g_.value()/max(mag(g_).value(), small)),
-    baseElevation_
+    hRef_
     (
         IOobject
         (
@@ -81,12 +81,8 @@ Foam::atmosphereModel::atmosphereModel
       ? dimensionedScalar("hRef", dimLength, dict_)
       : dimensionedScalar("hRef", dimLength, 0.0)
     ),
-    h_("h", normal_ & mesh.C()),
-    zoneID_(zoneID),
-    fixedPatches_(dict.lookupOrDefault("fixedPatches", wordReList()))
-{
-    h_ += baseElevation_ - min(h_);
-}
+    zoneName_(zoneName)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -101,14 +97,14 @@ void Foam::atmosphereModel::hydrostaticInitialisation
 {
     volScalarField p(thermo.p());
 
-    const volScalarField& rho(thermo.rho());
+    const volScalarField& rho = thermo.rho();
     const fvMesh& mesh = p.mesh();
 
-    volScalarField gh("gh", (g_ & normal_)*h_);
-    surfaceScalarField ghf("ghf", fvc::interpolate(gh));
+    volScalarField gh("gh", (g_ & mesh_.C()) + mag(g_)*hRef_);
+    surfaceScalarField ghf("ghf", (g_ & mesh_.Cf()) + mag(g_)*hRef_);
 
     // Set the default boundary conditions for ph_rgh
-    wordList ph_rghBcs(p.boundaryField().size(), "fixedFluxPressure");
+    wordList ph_rghBcs(p.boundaryField().size(), "zeroGradient");
     forAll(ph_rghBcs, patchi)
     {
         if (p.boundaryField()[patchi].fixesValue())
@@ -116,10 +112,12 @@ void Foam::atmosphereModel::hydrostaticInitialisation
             ph_rghBcs[patchi] = "fixedValue";
         }
     }
-    if (fixedPatches_.size())
+    if (dict_.found("fixedPatches"))
     {
-        Info<< "Fixing " << fixedPatches_ << endl;
-        labelHashSet fixedPatchIDs(mesh.boundaryMesh().patchSet(fixedPatches_));
+        wordReList fixedPatches(dict_.lookup("fixedPatches"));
+
+        Info<< "Fixing " << fixedPatches << endl;
+        labelHashSet fixedPatchIDs(mesh.boundaryMesh().patchSet(fixedPatches));
         forAllConstIter(labelHashSet, fixedPatchIDs, iter)
         {
             const label patchi = iter.key();
@@ -133,20 +131,20 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         IOobject
         (
             "U",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT
         ),
         mesh,
         dimensionedVector(dimVelocity, Zero),
-        "fixedValue"
+        noSlipFvPatchVectorField::typeName
     );
     surfaceScalarField phi
     (
         IOobject
         (
             "phi",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         fvc::flux(U)
@@ -157,19 +155,18 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         IOobject
         (
             "ph_rgh",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT
         ),
-        mesh_,
-        dimensionedScalar("ph_rgh", dimPressure, 0.0),
+        p - rho*gh,
         ph_rghBcs
     );
-    ph_rgh.rename("p");
+    volScalarField T0(thermo.T());
 
     pressureReference pressureReference
     (
-        ph_rgh,
+        p,
         dict_,
         ph_rgh.needReference()
     );
@@ -178,19 +175,28 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     (
         dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 10)
     );
+    bool correctRho
+    (
+        dict_.lookupOrDefault<bool>("correctRho", true)
+    );
+    scalar tolerance(dict_.lookupOrDefault<scalar>("tolerance", 1e-6));
+    scalar relTol(dict_.lookupOrDefault<scalar>("relTol", 1e-6));
 
     // Create a simple solver dictionary
     dictionary solverDict;
     solverDict.add("solver", "PCG");
     solverDict.add("preconditioner", "DIC");
     solverDict.add("smoother", "GaussSeidel");
-    solverDict.add("tolerance", 1e-6);
+    solverDict.add("tolerance", 1e-8);
     solverDict.add("relTol", 0);
     solverDict.add("minIter", 1);
 
-    for (label i=0; i<nCorr; i++)
+    scalar residualOld = great;
+    scalar error = great;
+    label iter = 0;
+    for (iter = 0; iter < nCorr; iter++)
     {
-        Info<< nl << "Hydrostatic iteration " << i << endl;
+        Info<< nl << "Hydrostatic iteration " << iter << endl;
 
         ph_rgh == p - rho*gh;
 
@@ -208,6 +214,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         (
             fvm::laplacian(rhof, ph_rgh) == fvc::div(phig)
         );
+
         ph_rghEqn.setReference
         (
             pressureReference.refCell(),
@@ -230,24 +237,61 @@ void Foam::atmosphereModel::hydrostaticInitialisation
             );
         }
 
-        Info<< "Hydrostatic pressure variation "<< residual << endl;
-
         // Correct density and thermodynamic quantities
         p.correctBoundaryConditions();
-        thermo.updateRho(p);
-        thermo.he() = thermo.calce(thermo.p());
+        if (correctRho)
+        {
+            thermo.T() = T0;
+            thermo.updateRho(p);
+        }
+        thermo.he() = thermo.calce(p);
+        thermo.update();
+
+        Info<< "Hydrostatic pressure variation "<< residual << endl;
+        if (iter > 0)
+        {
+            Info<< "Change in hydrostatic variation "
+                << residual - residualOld << endl;
+
+            error = mag(residual - residualOld);
+            if (error < tolerance || error/residualOld < relTol)
+            {
+                break;
+            }
+        }
+        residualOld = residual;
     }
 
-    if (zoneID_ >= 0)
+    if (error < tolerance || error/residualOld < relTol)
     {
-        const cellZone& cz = mesh_.cellZones()[zoneID_];
+        Info<< nl
+            << "Converged hydrostatic pressure in " << iter
+            << " iterations" << nl << endl;
+    }
+    else
+    {
+        Info<< nl << "Did not converge hydrostatic pressure" << nl << endl;
+    }
+
+    if (!zoneName_.empty())
+    {
+        const cellZone& cz = mesh_.cellZones()[zoneName_];
         UIndirectList<scalar>(thermo.p(), cz) = UIndirectList<scalar>(p, cz);
         thermo.p().correctBoundaryConditions();
 
         // Correct density and thermodynamic quantities
+        if (correctRho)
+        {
+            thermo.T() = T0;
+        }
         thermo.updateRho(thermo.p());
         thermo.he() = thermo.calce(thermo.p());
         thermo.correct();
+    }
+    else
+    {
+        thermo.p() = p;
+        thermo.p().correctBoundaryConditions();
     }
 }
 

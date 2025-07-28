@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     blastFoam;
+application     blastXiFoam;
 
 startFrom       startTime;
 
@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         20e-3;
+endTime         0.013401;//20e-3;
 
 writeControl    adjustableRunTime;
 

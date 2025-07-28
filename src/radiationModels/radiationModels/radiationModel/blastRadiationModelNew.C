@@ -33,7 +33,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     const volScalarField& T
 )
 {
-    IOobject radIO
+    typeIOobject<IOdictionary> radIO
     (
         "radiationProperties",
         T.time().constant(),
@@ -44,9 +44,9 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     );
 
     word modelType("none");
-    if (radIO.typeHeaderOk<IOdictionary>(false))
+    if (radIO.headerOk())
     {
-        IOdictionary(radIO).lookup("blastRadiationModel") >> modelType;
+        IOdictionary(radIO).lookup("radiationModel") >> modelType;
     }
     else
     {
@@ -54,7 +54,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
             << endl;
     }
 
-    Info<< "Selecting blastRadiationModel " << modelType << endl;
+    Info<< "Selecting radiationModel " << modelType << endl;
 
     TConstructorTable::iterator cstrIter =
         TConstructorTablePtr_->find(modelType);
@@ -79,7 +79,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     const volScalarField& T
 )
 {
-    const word modelType(dict.lookup<word>("blastRadiationModel"));
+    const word modelType(dict.lookup<word>("radiationModel"));
 
     Info<< "Selecting blastRadiationModel " << modelType << endl;
 

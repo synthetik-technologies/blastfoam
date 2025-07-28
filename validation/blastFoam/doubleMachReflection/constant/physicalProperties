@@ -1,0 +1,50 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            basic;
+
+thermoType
+{
+    transport       const;
+    thermo          eConst;
+    equationOfState idealGas;
+}
+
+equationOfState
+{
+    gamma           1.4;
+}
+
+specie
+{
+    molWeight       11640.3;
+}
+
+transport
+{
+    mu              0;
+    Pr              1;
+}
+
+thermodynamics
+{
+    Cp              2.5;
+    Cv              1.78571;
+    Hf              0;
+}
+
+
+// ************************************************************************* //

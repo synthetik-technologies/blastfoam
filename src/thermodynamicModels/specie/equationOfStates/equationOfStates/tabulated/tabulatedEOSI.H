@@ -223,7 +223,19 @@ Foam::scalar Foam::tabulatedEOS<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::tabulatedEOS<Specie>::S
+Foam::scalar Foam::tabulatedEOS<Specie>::Sp
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::tabulatedEOS<Specie>::Sv
 (
     const scalar p,
     const scalar T

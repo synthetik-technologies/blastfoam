@@ -1,0 +1,72 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.1                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      mechanicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+planeStress no;
+mechanical
+(
+    linearElastic
+    {
+        type    neoHookeanMisesPlastic;
+        E       117e9;
+        nu      0.35;
+        nonLinearPlasticity no;
+        Hp      0.1e9;
+        sigmaY  0.4e9;
+        rho     8930;
+
+        solvePressureEqn no;
+
+        viscousPressure yes;
+    }
+);
+
+displacementConstraints
+(
+    // symmetricX
+    // {
+    //     selection       patch;
+    //     type            fixedDisplacement;
+    //     displacement    (0 0 0);
+    //     dims            (x);
+    // }
+    // symmetricY
+    // {
+    //     selection       patch;
+    //     type            fixedDisplacement;
+    //     displacement    (0 0 0);
+    //     dims            (y);
+    // }
+    // symmetricZ
+    // {
+    //     selection       patch;
+    //     type            fixedDisplacement;
+    //     displacement    (0 0 0);
+    //     dims            (z);
+    // }
+);
+
+boundaryLoads
+(
+//     walls_to_fluid
+//     {
+//         selection   patch;
+//         type        coupledSolidTraction;
+//         pRef        1e5;
+//     }
+);
+
+// ************************************************************************* //

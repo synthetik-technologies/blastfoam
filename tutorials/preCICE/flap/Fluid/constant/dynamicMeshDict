@@ -32,9 +32,6 @@ balance no;
 // How often to refine
 refineInterval  2;
 
-// Field to be refinement on
-field           error;
-
 // Refine field in between lower..upper (varies based on errorEstimator)
 lowerRefineLevel 0.1;
 

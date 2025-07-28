@@ -66,19 +66,20 @@ cp system/setFieldsDict system/setFieldsDict_mod
 # -- Create the mesh
 if [ $tets -eq 1 ]; then
 
-# -- Convert GMSH file to OpenFOAM mesh
+    # -- Convert GMSH file to OpenFOAM mesh
     runApplication gmshToFoam tets.msh
 
-# -- Remove cell zones creates by gmshToFoam
+    # -- Remove cell zones creates by gmshToFoam
     runApplication removeZones -clear
+    rm -rf constant/polyMesh/cellZones
 
-# -- Set the correct boundary type
+    # -- Set the correct boundary type
     runApplication -s boundary foamDictionary \
         constant/polyMesh/boundary \
         -entry entry0/defaultFaces/type \
         -set empty
 
-# -- Set the correct refinement type in system/setFieldsDict
+    # -- Set the correct refinement type in system/setFieldsDict
     runApplication -s refiner foamDictionary \
         system/setFieldsDict_mod \
         -entry refiner \
@@ -86,10 +87,10 @@ if [ $tets -eq 1 ]; then
 
 else
 
-# -- Create hex mesh
+    # -- Create hex mesh
     runApplication blockMesh
 
-# -- Set the correct refinement type in system/setFieldsDict
+    # -- Set the correct refinement type in system/setFieldsDict
     runApplication foamDictionary \
         system/setFieldsDict_mod \
         -entry refiner \
@@ -97,18 +98,25 @@ else
 fi
 
 # -- Run in parallel
-if [ $parallel -eq 1 ]; then
+if [ $parallel -eq 1 ]
+then
 
-# -- Decompose the mesh
+    # -- Decompose the mesh
     runApplication decomposePar
 
-# -- Run the case
-# the debug flag writes each intermediate refinement set
+    # -- Add internal patch
+    runParallel addInternalPatch
+
+    # compile functions (sometimes they can misbehave)
+#     runApplication -s compile $(getApplication) -noRefine -noWrite
+
+    # -- Run the case
+    # the debug flag writes each intermediate refinement set
     runParallel $(getApplication) -debug -dict system/setFieldsDict_mod
 
 else
-# -- run the calc
-# the debug flag writes each intermediate refinement set
+    # -- run the calc
+    # the debug flag writes each intermediate refinement set
     runApplication $(getApplication) -debug -dict system/setFieldsDict_mod
 
 fi

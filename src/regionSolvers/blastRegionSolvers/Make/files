@@ -1,0 +1,6 @@
+blastRegionSolver/blastRegionSolver.C
+thermalRegionSolver/thermalRegionSolver.C
+solidRegionSolver/solidRegionSolver.C
+hydrostaticRegionSolver/hydrostaticRegionSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastRegionSolvers

@@ -13,6 +13,9 @@ runApplication blockMesh
 # -- Decompose the case
 runApplication decomposePar
 
+# -- Add internal patch
+runParallel addInternalPatch
+
 # -- Set initial conditions
 runParallel setRefinedFields
 

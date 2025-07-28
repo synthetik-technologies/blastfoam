@@ -31,8 +31,8 @@ Description
 #include "fvMesh.H"
 #include "argList.H"
 #include "Time.H"
-#include "regionProperties.H"
 #include "timeSelector.H"
+#include "IFstream.H"
 #include "Cloud.H"
 #include "particle.H"
 
@@ -58,8 +58,11 @@ positionFormat readCloud
     // Start the reading of the list
     // Either read the number or beginning of the list
     token firstToken(is);
+    label nParticles = 0;
     if (firstToken.isLabel())
     {
+        nParticles = firstToken.labelToken();
+
         // Read beginning of contents
         is.readBeginList
         (
@@ -71,88 +74,116 @@ positionFormat readCloud
     {
         if (firstToken.pToken() != token::BEGIN_LIST)
         {
-            FatalIOErrorInFunction
-            (
-                is
-            )   << "incorrect first token, '(', found "
+            FatalIOErrorInFunction(is)
+                << "incorrect first token, '(', found "
                 << firstToken.info() << exit(FatalIOError);
         }
     }
     else
     {
-        FatalIOErrorInFunction
-        (
-            is
-        )   << "incorrect first token, expected <int> or '(', found "
+        FatalIOErrorInFunction(is)
+            << "incorrect first token, expected <int> or '(', found "
             << firstToken.info() << exit(FatalIOError);
     }
 
-    // Read position/coordinates
-    scalarList p(is);
-
-    // Check the format
     positionFormat format = UNKNOWN;
-    if (p.size() == 4)
-    {
-        format = NEW;
-    }
-    else if (p.size() == 3)
-    {
-        format = OLD;
-    }
-    else
-    {
-        FatalIOError
-            << "Unknown positions format" << endl;
-    }
 
-    label pi = 0;
-    token lastToken(is);
-    while
-    (
-       !(
-            lastToken.isPunctuation()
-         && lastToken.pToken() == token::END_LIST
-        )
-    )
+    // Read position/coordinates
+    if (is.format() == IOstream::ASCII)
     {
-        is.putBack(lastToken);
+        scalarList p0(is);
 
-        // Read position only
+        // Check the format
+        if (p0.size() == 4)
+        {
+            format = NEW;
+        }
+        else if (p0.size() == 3)
+        {
+            format = OLD;
+        }
+        else
+        {
+            FatalIOErrorInFunction(is)
+                << "Unknown positions format" << endl
+                << abort(FatalIOError);
+        }
+
+        label pi = 0;
         if (format == NEW)
         {
-            if (pi++ == 0)
+            token t;
+            barycentric p;
+            label celli, tetFacei, tetPti;
+            while
+            (
+                is.read(t)
+             && !(t.isPunctuation() && t.pToken() == token::END_LIST)
+            )
             {
+                is.putBack(t);
+                if (pi == 0)
+                {
+                    p[0] = p0[0];
+                    p[1] = p0[1];
+                    p[2] = p0[2];
+                    p[3] = p0[3];
+                }
+                else
+                {
+                    is >> p;
+                }
+                is >> celli >> tetFacei >> tetPti;
+                label n = 0;
                 c.append
                 (
-                    new particle
-                    (
-                        mesh,
-                        barycentric(p[0], p[1], p[2], p[3]),
-                        readLabel(is),
-                        readLabel(is),
-                        readLabel(is)
-                    )
+                    new particle(mesh, p, celli, tetFacei, tetPti, n)
                 );
-            }
-            else
-            {
-                c.append(new particle(mesh, is, false));
+                pi++;
             }
         }
         else
         {
-            c.append
+            token t;
+            vector p;
+            label celli;
+            while
             (
-                new particle
-                (
-                    mesh,
-                    pi++ == 0 ? vector(p[0], p[1], p[2]) : vector(is),
-                    readLabel(is)
-                )
-            );
+                is.read(t)
+             && !(t.isPunctuation() && t.pToken() == token::END_LIST)
+            )
+            {
+                is.putBack(t);
+                if (pi == 0)
+                {
+                    p[0] = p0[0];
+                    p[1] = p0[1];
+                    p[2] = p0[2];
+                }
+                else
+                {
+                    is >> p;
+                }
+                is >> celli;
+                label n = 0;
+                c.append(new particle(mesh, p, celli, n));
+                pi++;
+            }
         }
-        is  >> lastToken;
+    }
+    else
+    {
+        format = NEW;
+        for (label i = 0; i < nParticles; i++)
+        {
+            label n = 0;
+            c.append(new particle(is, false));
+        }
+        // Read beginning of contents
+        is.readEndList
+        (
+            "IOPosition<CloudType>::readData(Istream&, CloudType&)"
+        );
     }
 
     return format;
@@ -199,12 +230,15 @@ int main(int argc, char *argv[])
 
     bool revert = args.optionFound("revert");
 
-    const wordList regionNames(selectRegionNames(args, runTime));
+    #include "setRegionNames.H"
 
     forAll(regionNames, regioni)
     {
         const word& regionName = regionNames[regioni];
-        const word& regionDir = Foam::regionDir(regionName);
+        const word& regionDir =
+            regionName == polyMesh::defaultRegion
+          ? word::null
+          : regionName;
 
         Info<< "\n\nConverting lagrangian positions for region " << regionName << nl
             << endl;
@@ -215,17 +249,18 @@ int main(int argc, char *argv[])
             // Set time for global database
             runTime.setTime(timeDirs[timei], timei);
 
-            Info<< "Time = " << runTime.timeName() << endl;
+            Info<< "Time = " << runTime.name() << endl;
 
             fvMesh mesh
             (
                 IOobject
                 (
                     regionName,
-                    runTime.timeName(),
+                    runTime.name(),
                     runTime,
                     IOobject::MUST_READ
-                )
+                ),
+                false
             );
             mesh.tetBasePtIs();
 
@@ -248,16 +283,27 @@ int main(int argc, char *argv[])
                     fileType::directory
                 );
             }
+            {
+                List<fileNameList> procClouds(Pstream::nProcs());
+                procClouds[Pstream::myProcNo()] = cloudDirs;
+                Pstream::gatherList(procClouds);
+                HashSet<fileName> cloudSet;
+                forAll(procClouds, proci)
+                {
+                    cloudSet.insert(procClouds[proci]);
+                }
+                cloudDirs = cloudSet.toc();
+                Pstream::scatter(cloudDirs);
+            }
 
             forAll(cloudDirs, i)
             {
-
                 IOobject positionsIO
                 (
                     IOobject
                     (
                         "positions",
-                        runTime.timeName(),
+                        runTime.name(),
                         cloud::prefix/cloudDirs[i],
                         mesh,
                         IOobject::NO_READ,
@@ -265,26 +311,39 @@ int main(int argc, char *argv[])
                         false
                     )
                 );
+
                 word cloudType;
                 IDLList<particle> tmp;
                 Cloud<particle> c(mesh, cloudDirs[i], tmp);
                 IOPosition<Cloud<particle>> ioP(c);
 
-                IFstream is(positionsIO.objectPath());
-                positionsIO.readHeader(is);
-                cloudType = positionsIO.headerClassName();
+                IFstream is(positionsIO.objectPath(false));
+                bool write = true;
+                positionFormat format = NEW;
+                if (is.good())
+                {
+                    positionsIO.readHeader(is);
+                    cloudType = positionsIO.headerClassName();
 
-                positionFormat format = readCloud(mesh, c, ioP, is);
+                    format = readCloud(mesh, c, ioP, is);
+                }
+                else
+                {
+                    write = false;
+                }
 
-                bool write =
-                    (!revert && (format == NEW))
-                 || (revert && (format == OLD));
+                write =
+                    write
+                 && (
+                        (!revert && (format == NEW))
+                     || (revert && (format == OLD))
+                    );
 
                 if (write)
                 {
                     Info << "\tWriting positions file" << endl;
 
-                    OFstream positionsOS(positionsIO.objectPath());
+                    OFstream positionsOS(positionsIO.objectPath(false));
                     positionsIO.writeHeader
                     (
                         positionsOS,
@@ -308,7 +367,7 @@ int main(int argc, char *argv[])
                         else
                         {
                             positionsOS
-                                << pIter().position()
+                                << pIter().position(mesh)
                                 << token::SPACE << pIter().cell()
                                 << nl;
                         }

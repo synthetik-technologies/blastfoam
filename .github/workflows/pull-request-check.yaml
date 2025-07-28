@@ -46,7 +46,7 @@ jobs:
           path: ${{ github.workspace }}/blastfoam_*.deb
           retention-days: 31
 
-  install-and-validate:
+  run-validation-tests:
     strategy:
       fail-fast: false
       matrix:
@@ -74,12 +74,14 @@ jobs:
           - solver: blastFoam
             tutorial: delayedDetonation
           - solver: blastFoam
-            tutorial: movingCrane
+            tutorial: movingCone
           - solver: blastFoam
             tutorial: shockTubeTabulated
           - solver: blastReactingFoam
             tutorial: obliqueShock
           - solver: setRefinedFields
+            tutorial: setRefinedFields
+          - solver: initializeAtmosphere
             tutorial: .
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Validate ${{ matrix.solver }} on ${{ matrix.validation }} ${{ matrix.tutorial }}
@@ -100,7 +102,7 @@ jobs:
       - name: Run ${{ matrix.solver }}
         shell: bash -l {0}
         run: |
-          source /opt/openfoam9/etc/bashrc
+          source /opt/openfoam12/etc/bashrc
           source /opt/blastfoam/etc/bashrc
           echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
           if [ -n "${{ matrix.validation }}" ]; then

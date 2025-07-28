@@ -96,6 +96,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -129,6 +130,12 @@ public:
 
         //- Calculate stress surfaceField
         virtual void correct(surfaceSymmTensorField& sigma);
+
+        //- Return the Piola stress tensor
+        virtual tmp<volTensorField> P(const volSymmTensorField& sigma) const;
+
+        //- Return the face Piola stress tensor
+        virtual tmp<surfaceTensorField> P(const surfaceSymmTensorField& sigma) const;
 };
 
 

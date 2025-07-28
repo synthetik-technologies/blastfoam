@@ -25,247 +25,85 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "globalPolyPatch.H"
+#include "syncTools.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::patchPointToGlobal
+Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::faceToPoint
 (
-    const Field<Type>& pField
+    const Field<Type>& fFld
 ) const
 {
-    if (pField.size() != patch().nPoints())
-    {
-        FatalErrorInFunction
-            << "Patch field does not correspond to patch points.  Patch size: "
-            << patch().nPoints() << " field size: " << pField.size()
-            << abort(FatalError);
-    }
-
-    tmp<Field<Type> > tgField
-    (
-        new Field<Type>(globalPatch().nPoints(), pTraits<Type>::zero)
-    );
-    Field<Type>& gField = tgField.ref();
-
-
-    if (Pstream::parRun())
-    {
-        // PC, 16/12/17
-        // We have removed duplicate points so multiple local processor points
-        // may map to the same global point, which we will account for using
-        // the nPoints field
-        scalarField nPoints(gField.size(), 0.0);
-
-        const labelList& addr = pointToGlobalAddr();
-
-        forAll(addr, i)
-        {
-            const label globalPointID = addr[i];
-            gField[globalPointID] = pField[i];
-            nPoints[globalPointID] += 1.0;
-        }
-
-        // Global comm
-        reduce(gField, sumOp<List<Type> >());
-        reduce(nPoints, sumOp<List<scalar> >());
-        gField /= nPoints;
-    }
-    else
-    {
-        gField = pField;
-    }
-    return tgField;
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::patchPointToGlobal
-(
-    const tmp<Field<Type>>& pField
-) const
-{
-    return patchPointToGlobal(pField());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::globalPointToPatch
-(
-    const Field<Type>& gField
-) const
-{
-    if (gField.size() != globalPatch().nPoints())
-    {
-        FatalErrorInFunction
-            << "Patch field does not correspond to global patch points.  "
-            << "Global patch size: " << globalPatch().nPoints()
-            << " field size: " << gField.size()
-            << abort(FatalError);
-    }
-
-    if (Pstream::parRun())
-    {
-        return tmp<Field<Type>>
-        (
-            new Field<Type>(gField, pointToGlobalAddr())
-        );
-    }
-    return tmp<Field<Type>>(new Field<Type>(gField));
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::globalPointToPatch
-(
-    const tmp<Field<Type>>& gField
-) const
-{
-    return globalPointToPatch(gField());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::patchFaceToGlobal
-(
-    const Field<Type>& pField
-) const
-{
-    if (pField.size() != patch().size())
+    const primitivePatch& patch = physicalPatch();
+    if (fFld.size() != patch.size())
     {
         FatalErrorInFunction
             << "Patch field does not correspond to patch faces.  Patch size: "
-            << patch().size() << " field size: " << pField.size()
+            << patch.size() << " field size: " << fFld.size()
             << abort(FatalError);
     }
 
-    tmp<Field<Type> > tgField
-    (
-        new Field<Type>(globalPatch().size(), pTraits<Type>::zero)
-    );
-    Field<Type>& gField = tgField.ref();
+    tmp<Field<Type>> tpFld(new Field<Type>(patch.nPoints()));
+    Field<Type>& pFld = tpFld.ref();
 
-    if (Pstream::parRun())
+    // point to face addressing
+    const labelListList& pointFaces = patch.pointFaces();
+
+    // Compute face to point weights (inverse distance)
+    const List<scalarField>& weights = faceToPointWeights();
+    forAll(pointFaces, pointi)
     {
-        const labelList& addr = faceToGlobalAddr();
-
-        forAll (addr, i)
+        const labelList& pfs = pointFaces[pointi];
+        const scalarField& ws = weights[pointi];
+        Type sumWF = Zero;
+        forAll(pfs, pfi)
         {
-            gField[addr[i]] = pField[i];
+            sumWF += ws[pfi]*fFld[pfs[pfi]];
         }
-
-        // Global comm
-        reduce(gField, sumOp<List<Type> >());
-    }
-    else
-    {
-        gField = pField;
+        pFld[pointi] = sumWF;
     }
 
-    return tgField;
-}
+    syncTools::syncPointList
+    (
+        mesh_,
+        polyPatch_.meshPoints(),
+        pFld,
+        plusEqOp<Type>(),
+        pTraits<Type>::zero
+    );
 
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::patchFaceToGlobal
-(
-    const tmp<Field<Type>>& pField
-) const
-{
-    return patchFaceToGlobal(pField());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::globalFaceToPatch
-(
-    const Field<Type>& gField
-) const
-{
-    if (gField.size() != globalPatch().size())
-    {
-        FatalErrorInFunction
-            << "Patch field does not correspond to global patch faces.  "
-            << "Global patch size: " << globalPatch().size()
-            << " field size: " << gField.size()
-            << abort(FatalError);
-    }
-
-    if (Pstream::parRun())
-    {
-        return tmp<Field<Type>>
-        (
-            new Field<Type>(gField, faceToGlobalAddr())
-        );
-    }
-    return tmp<Field<Type>>(new Field<Type>(gField));
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::globalFaceToPatch
-(
-    const tmp<Field<Type>>& gField
-) const
-{
-    return globalFaceToPatch(gField());
+    pFld /= faceToPointSumWeights();
+    return tpFld;
 }
 
 
 template<class Type>
 Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::faceToPoint
 (
-    const Field<Type>& fField
+    const tmp<Field<Type>>& tfFld
 ) const
 {
-    if (fField.size() != patch().size())
-    {
-        FatalErrorInFunction
-            << "Patch field does not correspond to patch faces.  Patch size: "
-            << patch().size() << " field size: " << fField.size()
-            << abort(FatalError);
-    }
-
-    if (Pstream::parRun())
-    {
-        return
-            globalPointToPatch
-            (
-                interpolator().faceToPointInterpolate
-                (
-                    patchFaceToGlobal(fField)
-                )
-            );
-    }
-    return localInterpolator().faceToPointInterpolate(fField);
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::faceToPoint
-(
-    const tmp<Field<Type>>& fField
-) const
-{
-    return faceToPoint(fField());
+    return faceToPoint(tfFld());
 }
 
 
 template<class Type>
 Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::pointToFace
 (
-    const Field<Type>& pField
+    const Field<Type>& pFld
 ) const
 {
-    if (pField.size() != patch().nPoints())
+    if (pFld.size() != polyPatch_.nPoints())
     {
         FatalErrorInFunction
-            << "Patch field does not correspond to patch points.  Patch size: "
-            << patch().nPoints() << " field size: " << pField.size()
+            << "Patch field does not correspond to patch points. "
+            << "Patch size: "
+            << physicalPatch().nPoints() << " field size: " << pFld.size()
             << abort(FatalError);
     }
 
-    return localInterpolator().pointToFaceInterpolate(pField());
+    return pointToFaceInterpolator().pointToFaceInterpolate(pFld);
 }
 
 

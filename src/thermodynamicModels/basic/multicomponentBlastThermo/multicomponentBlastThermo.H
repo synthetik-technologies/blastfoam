@@ -66,12 +66,14 @@ class multicomponentBlastThermo
     //- Name of master thermo class
     word masterName_;
 
+    //- Are the mass fractions normalized
+    bool normalise_;
 
 protected:
 //- Protected data
 
     //- Mass transfer rates passed from an external source
-    PtrListDictionary<volScalarField> massTransferRates_;
+    PtrListDictionary<volScalarField::Internal> massTransferRates_;
 
     //- Sources to solve implicitly
     PtrListDictionary<fvScalarMatrix> implicitSources_;
@@ -89,22 +91,24 @@ protected:
     // Private data
         const fvMesh& mesh_;
         PtrList<volScalarField>& Y_;
-        PtrListDictionary<volScalarField>& massTransferRates_;
+        PtrListDictionary<volScalarField::Internal>& massTransferRates_;
         PtrListDictionary<fvScalarMatrix>& implicitSources_;
         const List<bool>& active_;
         const volScalarField& alphaRho_;
         const surfaceScalarField& alphaRhoPhi_;
+        bool normalize_;
 
     public:
         integrator
         (
             const fvMesh& mesh,
             PtrList<volScalarField>& Y,
-            PtrListDictionary<volScalarField>& massTransferRates,
+            PtrListDictionary<volScalarField::Internal>& massTransferRates,
             PtrListDictionary<fvScalarMatrix>& implicitSources,
             const List<bool>& active,
             const word& alphaRhoName,
-            const word& alphaRhoPhiName
+            const word& alphaRhoPhiName,
+            const bool normalize
         );
 
         virtual ~integrator();
@@ -112,6 +116,11 @@ protected:
         virtual void update();
         virtual void solve();
         virtual void postUpdate();
+
+        bool normalize() const
+        {
+            return normalize_;
+        }
     };
 
     autoPtr<integrator> integratorPtr_;
@@ -127,10 +136,6 @@ protected:
     {
         return alphaRhoPhiPtr_();
     }
-
-    //- Correct mass fractions
-    void correct();
-
 
 
 public:
@@ -169,9 +174,6 @@ public:
         //- Initialize models
         virtual void initializeModels();
 
-        //- Update the mixtures
-        virtual void updateMixture() = 0;
-
         //- Pre update step
         virtual void update();
 
@@ -183,7 +185,19 @@ public:
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
-        virtual void addDelta(const word& name, tmp<volScalarField>& delta);
+        virtual void clearDeltas();
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void clearSources();
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, tmp<volScalarField>&& delta);
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, tmp<volScalarField::Internal>&& delta);
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
@@ -193,56 +207,30 @@ public:
         //  i.e. mass transfer
         virtual void addSource(const word& name, tmp<fvScalarMatrix>& source);
 
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addSource(const word& name, tmp<fvScalarMatrix>&& source);
+
 
      // Access
+
+        //- Return if the composition is normalised
+        bool normalise() const
+        {
+            return normalise_;
+        }
+
+        //- Access if the composition is normalised
+        bool& normalise()
+        {
+            return normalise_;
+        }
 
         //- Return the composition of the multi-component mixture
         virtual basicSpecieBlastMixture& composition() = 0;
 
         //- Return the composition of the multi-component mixture
         virtual const basicSpecieBlastMixture& composition() const = 0;
-
-        //- Flame temperature [K]
-        virtual scalar flameT(const label speciei) const = 0;
-
-        //- Return the pressure of a cell
-        virtual scalar cellp(const label celli) const = 0;
-
-        //- Pressure [kg/m/s^2]
-        virtual scalar p
-        (
-            const label speciei,
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const = 0;
-
-        //- Density [kg/m^3]
-        virtual tmp<volScalarField> p
-        (
-            const label speciei,
-            const volScalarField& rho,
-            const volScalarField& e,
-            const volScalarField& T
-        ) const = 0;
-
-        //- Return derivative of pressure w.r.t. density
-        virtual scalar dpdRho
-        (
-            const label speciei,
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const = 0;
-
-        //- Return derivative of pressure w.r.t. Temperature
-        virtual scalar dpdT
-        (
-            const label speciei,
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const = 0;
 
         //- Return the name of the thermo physics
         virtual word thermoName() const = 0;

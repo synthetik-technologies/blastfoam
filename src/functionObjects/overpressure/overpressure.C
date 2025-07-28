@@ -54,10 +54,7 @@ Foam::functionObjects::overpressure::overpressure
     pRef_("pRef", dimPressure, dict),
     store_(dict.lookupOrDefault("store", false))
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
+    read(dict);
     if (store_)
     {
         obr_.store
@@ -67,7 +64,7 @@ Foam::functionObjects::overpressure::overpressure
                 IOobject
                 (
                     resultName_,
-                    obr_.time().timeName(),
+                    obr_.time().name(),
                     obr_
                 ),
                 this->mesh_,
@@ -92,35 +89,37 @@ bool Foam::functionObjects::overpressure::read
     const dictionary& dict
 )
 {
-    word origName = pName_;
-    bool origStore = store_;
-    dict.readIfPresent("pName", pName_);
-    dict.readIfPresent("store", store_);
-
-    bool change = false;
-    if ((origName != pName_ && origStore) || (origStore && !store_))
+    if (!p0Ptr_.valid() && dict.lookupOrDefault("nonUniformPRef", false))
     {
-        change = true;
-        clearObject(resultName_);
+        typeIOobject<volScalarField> p0IO
+        (
+            IOobject::groupName("p0", IOobject::group(pName_)),
+            mesh_.time().name(),
+            mesh_,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        );
+        if (p0IO.headerOk())
+        {
+            p0Ptr_.set(new volScalarField(p0IO, mesh_));
+        }
+        else
+        {
+            p0IO.readOpt() = IOobject::NO_READ;
+            p0Ptr_.set
+            (
+                new volScalarField
+                (
+                    p0IO,
+                    mesh_.lookupObject<volScalarField>(pName_)
+                )
+            );
+        }
     }
 
-    resultName_ = IOobject::groupName("overpressure", IOobject::group(pName_));
-    if (store_ && change)
+    if (!p0Ptr_.valid())
     {
-        obr_.store
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    resultName_,
-                    obr_.time().timeName(),
-                    obr_
-                ),
-                this->mesh_,
-                dimensionedScalar("0", dimPressure, Zero)
-            )
-        );
+        pRef_.read(dict);
     }
 
     return true;
@@ -135,15 +134,25 @@ bool Foam::functionObjects::overpressure::execute()
 
         if (store_)
         {
-            lookupObjectRef<volScalarField>(resultName_) = p - pRef_;
+            if (p0Ptr_.valid())
+            {
+                lookupObjectRef<volScalarField>(resultName_) = p - p0Ptr_();
+            }
+            else
+            {
+                lookupObjectRef<volScalarField>(resultName_) = p - pRef_;
+            }
             return true;
         }
 
-        return store
-        (
-            resultName_,
-            p - pRef_
-        );
+        if (p0Ptr_.valid())
+        {
+            return store(resultName_, p - p0Ptr_());
+        }
+        else
+        {
+            return store(resultName_, p - pRef_);
+        }
     }
     else
     {

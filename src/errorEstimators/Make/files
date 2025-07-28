@@ -1,14 +1,16 @@
 errorEstimator/errorEstimator.C
 errorEstimator/errorEstimatorNew.C
 
-cellSize/cellSize.C
-fieldValue/fieldValue.C
-densityGradient/densityGradient.C
-delta/delta.C
-scaledDelta/scaledDelta.C
-Lohner/Lohner.C
-multicomponentError/multicomponent.C
+cellSize/cellSizeErrorEstimator.C
+fieldValue/fieldValueErrorEstimator.C
+densityGradient/densityGradientErrorEstimator.C
+delta/deltaErrorEstimator.C
+scaledDelta/scaledDeltaErrorEstimator.C
+Lohner/LohnerErrorEstimator.C
+multicomponent/multicomponentErrorEstimator.C
+volumeFraction/volumeFractionErrorEstimator.C
+slave/slaveErrorEstimator.C
 
 fvPatchFields/derived/coupledMaxError/coupledMaxErrorFvPatchScalarField.C
 
-LIB = $(BLAST_LIBBIN)/liberrorEstimate
+LIB = $(BLAST_LIBBIN)/liberrorEstimators

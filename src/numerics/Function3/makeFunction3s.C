@@ -30,7 +30,9 @@ License
 #include "ZeroConstant3.H"
 #include "OneConstant3.H"
 #include "Scale3.H"
+#include "Component3.H"
 #include "CodedFunction3.H"
+#include "LookupTable3.H"
 
 #include "fieldTypes.H"
 
@@ -43,15 +45,20 @@ License
     makeFunction3Type(ZeroConstant, Type);                                     \
     makeFunction3Type(OneConstant, Type);                                      \
     makeFunction3Type(Scale, Type);                                            \
+    makeFunction3Type(Component, Type);                                        \
     makeFunction3Type(Coded, Type);
 
 namespace Foam
 {
     makeFunction3(label);
     makeFunction3Type(None, label);
+    makeFunction3Type(ZeroConstant, label);
+    makeFunction3Type(OneConstant, label);
     makeFunction3Type(Constant, label);
 
     makeFunction3s(scalar);
+    makeFunction3Type(LookupTable, scalar);
+
     makeFunction3s(vector);
     makeFunction3s(sphericalTensor);
     makeFunction3s(symmTensor);

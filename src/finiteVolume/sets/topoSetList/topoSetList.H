@@ -42,7 +42,7 @@ SourceFiles
 #include "faceZoneSet.H"
 #include "pointZoneSet.H"
 #include "NamedEnum.H"
-#include "RefineBalanceMeshObject.H"
+#include "DemandDrivenMeshObject.H"
 #include "topoSetSource.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -51,10 +51,10 @@ namespace Foam
 {
 
 class topoSetList;
-typedef MeshObject
+typedef DemandDrivenMeshObject
 <
     polyMesh,
-    DistributeableMeshObject,
+    RepatchableMeshObject,
     topoSetList
 > TopoSetList;
 
@@ -74,7 +74,8 @@ public:
         INTERNAL,
         INTERFACE,
         BOUNDARY,
-        INTERFACE_AND_BOUNDARY
+        INTERFACE_AND_BOUNDARY,
+        UNKNOWN
     };
     static const NamedEnum<SelectionType, 5> selectionNames;
 
@@ -188,7 +189,7 @@ public:
             const boolList& flipMap,
             labelList& newFaces,
             boolList& newFlipMap,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         ) const;
 
         //- Extract selected faces (return indices to keep)
@@ -196,7 +197,7 @@ public:
         (
             const dictionary& dict,
             const labelList& faces,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         ) const;
 
         //- Extract selected faces after getting the kept indices
@@ -206,7 +207,7 @@ public:
         (
             const dictionary& dict,
             const topoSet& faces,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         ) const;
 
         //- Extract selected points
@@ -214,7 +215,7 @@ public:
         (
             const dictionary& dict,
             const labelList& points,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         ) const;
 
         //- Extract selected points
@@ -222,7 +223,7 @@ public:
         (
             const dictionary& dict,
             const topoSet& points,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         ) const;
 
         //- Clear all sets
@@ -243,10 +244,13 @@ public:
         {}
 
         //- Update any stored data for new labels. Not implemented.
-        virtual void updateMesh(const mapPolyMesh& morphMap);
+        virtual void topoChange(const polyTopoChangeMap& morphMap);
+
+        //- Update any stored data for new labels. Not implemented.
+        virtual void mapMesh(const polyMeshMap& morphMap);
 
         //- Distribute sets
-        virtual void distribute(const mapDistributePolyMesh& map);
+        virtual void distribute(const polyDistributionMap& map);
 
         //- Send the cellZones to the mesh, by default zones are removed here
         void transferZones(const bool remove = true);
@@ -277,7 +281,7 @@ public:
             const polyMesh& mesh,
             const dictionary& dict,
             const labelList& faces,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         );
 
         //- Extract selected faces (return indices to keep)
@@ -289,7 +293,7 @@ public:
             const boolList& flipMap,
             labelList& newFaces,
             boolList& newFlipMap,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         );
 
         //- Extract selected faces after getting the kept indices
@@ -300,7 +304,7 @@ public:
             const polyMesh& mesh,
             const dictionary& dict,
             const topoSet& faces,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         );
 
         //- Extract selected points
@@ -309,7 +313,7 @@ public:
             const polyMesh& mesh,
             const dictionary& dict,
             const labelList& points,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         );
 
         //- Extract selected points
@@ -318,7 +322,7 @@ public:
             const polyMesh& mesh,
             const dictionary& dict,
             const topoSet& points,
-            const bool defaultAll = false
+            const SelectionType defaultType = UNKNOWN
         );
 };
 

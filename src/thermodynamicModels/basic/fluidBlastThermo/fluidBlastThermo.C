@@ -44,16 +44,18 @@ Foam::fluidBlastThermo::fluidBlastThermo
     const fvMesh& mesh,
     const dictionary& dict,
     const word& phaseName,
-    const word&
+    const word& masterName,
+    const bool requireRho
 )
 :
+    physicalProperties(mesh, phaseName),
     blastThermo(mesh, dict, phaseName),
     p_
     (
         blastThermo::lookupOrConstruct
         (
             mesh,
-            phasePropertyName("p", phaseName),
+            basicThermo::phasePropertyName("p", phaseName),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
             dimPressure,
@@ -64,8 +66,8 @@ Foam::fluidBlastThermo::fluidBlastThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:mu", phaseName),
-            mesh.time().timeName(),
+            basicThermo::phasePropertyName("thermo:mu", phaseName),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -75,24 +77,62 @@ Foam::fluidBlastThermo::fluidBlastThermo
     (
         IOobject
         (
-            phasePropertyName("speedOfSound", phaseName),
-            mesh.time().timeName(),
+            basicThermo::phasePropertyName("speedOfSound", phaseName),
+            mesh.time().name(),
             mesh
         ),
         mesh,
         dimensionedScalar(dimVelocity, 0.0)
     )
-{}
+{
+    if (requireRho && !this->rho_.headerOk())
+    {
+        FatalErrorInFunction
+            << this->rho_.name() << " must be proved for single phase simulations"
+            << ", i.e. " << this->rho_.path()/this->rho_.name()
+            << endl
+            << abort(FatalError);
+    }
+    this->properties().dictionary::operator=(dict);
+
+    // Make sure the physicalProperties file is not reread
+    this->properties().checkOut();
+    this->properties().readOpt() = IOobject::MUST_READ;
+    this->properties().checkIn();
+}
 
 
 void Foam::fluidBlastThermo::initializeFields()
 {
-    if (!e_.typeHeaderOk<volScalarField>(true))
+    if (!e_.headerOk())
     {
+        const word initType
+        (
+            this->lookupOrDefault<word>("eInitialization", "pRho")
+        );
+
         //- Calculate internal energy if it was not read
-        e_ == this->calce(p_);
+        if (initType == "pRho")
+        {
+            e_ == this->calce(p_);
+        }
+        else if (initType == "TRho")
+        {
+            p_ == this->pRhoT();
+            e_ == this->he(p_, T_);
+        }
+        else
+        {
+            FatalIOErrorInFunction(*this)
+                << "Invalid method of internal energy initialization" << nl
+                << "Valid methods are:" << nl
+                << "    pRho" << nl
+                << "    TRho" << nl
+                << endl
+                << abort(FatalIOError);
+        }
     }
-    correct();
+    this->correct();
 }
 
 
@@ -100,13 +140,13 @@ void Foam::fluidBlastThermo::initializeFields()
 
 Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
 (
-    const label nPhases,
     const fvMesh& mesh,
     const dictionary& dict,
+    const word& thermoType,
     const word& phaseName
 )
 {
-    if (nPhases <= 1)
+    if (thermoType == word::null)
     {
         return blastThermo::New<fluidBlastThermo>
         (
@@ -119,19 +159,51 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
         );
     }
 
-    word fluidType("twoPhaseFluid");
-    if (nPhases > 2)
-    {
-        fluidType = "multiphaseFluid";
-    }
-
     phaseConstructorTable::iterator cstrIter =
-        phaseConstructorTablePtr_->find(fluidType);
+        phaseConstructorTablePtr_->find(thermoType);
 
     if (cstrIter == phaseConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown number of fluids " << endl
+            << "Unknown fluidThermo type " << endl
+            << phaseConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(mesh, dict, phaseName);
+}
+
+
+Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
+(
+    const fvMesh& mesh,
+    const word& thermoType,
+    const word& phaseName
+)
+{
+    const IOdictionary dict
+    (
+        physicalProperties::findModelDict(mesh, phaseName)
+    );
+
+    if (thermoType == word::null)
+    {
+        return blastThermo::New<fluidBlastThermo>
+        (
+            mesh,
+            dict.optionalSubDict("mixture"),
+            phaseName,
+            phaseName
+        );
+    }
+
+    phaseConstructorTable::iterator cstrIter =
+        phaseConstructorTablePtr_->find(thermoType);
+
+    if (cstrIter == phaseConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown fluidThermo type " << endl
             << phaseConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
@@ -154,6 +226,35 @@ void Foam::fluidBlastThermo::updateRho()
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::pRhoT() const
+{
+    tmp<volScalarField> tp
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("p", this->phaseName()),
+            this->rho_.mesh(),
+            dimensionedScalar(dimPressure, 0.0)
+        )
+    );
+    volScalarField& p = tp.ref();
+    forAll(p, celli)
+    {
+        p[celli] = this->cellpRhoT(celli);
+    }
+
+    volScalarField::Boundary& bp = p.boundaryFieldRef();
+    forAll(bp, patchi)
+    {
+        forAll(bp[patchi], facei)
+        {
+            bp[patchi][facei] = this->patchFacepRhoT(patchi, facei);
+        }
+    }
+    return tp;
+}
+
+
 Foam::volScalarField& Foam::fluidBlastThermo::p()
 {
     return p_;
@@ -163,6 +264,19 @@ Foam::volScalarField& Foam::fluidBlastThermo::p()
 const Foam::volScalarField& Foam::fluidBlastThermo::p() const
 {
     return p_;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::renameRho()
+{
+    rho_.rename
+    (
+        basicThermo::phasePropertyName
+        (
+            Foam::typedName<fluidBlastThermo>("rho")
+        )
+    );
+    return rho_;
 }
 
 
@@ -178,18 +292,9 @@ Foam::volScalarField& Foam::fluidBlastThermo::speedOfSound()
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::mu() const
+const Foam::volScalarField& Foam::fluidBlastThermo::mu() const
 {
     return mu_;
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::fluidBlastThermo::mu
-(
-    const label patchi
-) const
-{
-    return mu_.boundaryField()[patchi];
 }
 
 
@@ -200,4 +305,6 @@ Foam::scalar Foam::fluidBlastThermo::cellnu
 {
     return mu_[celli]/cellrho(celli);
 }
+
+
 // ************************************************************************* //

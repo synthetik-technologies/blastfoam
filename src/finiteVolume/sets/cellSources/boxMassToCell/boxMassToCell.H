@@ -75,7 +75,7 @@ class boxMassToCell
         {
             vector span(dict.lookup<vector>("span"));
             p1 = centre() - span/2.0;
-            p2 = centre() - span/2.0;
+            p2 = centre() + span/2.0;
         }
 
         return treeBoundBoxList({treeBoundBox(p1, p2)});
@@ -99,6 +99,14 @@ public:
 
     //- Destructor
     virtual ~boxMassToCell();
+
+    // Member Functions
+
+        virtual void applyToSet
+        (
+            const topoSetSource::setAction action,
+            topoSet&
+        ) const;
 };
 
 

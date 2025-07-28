@@ -24,6 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "objectMotionState.H"
+#include "transform.H"
+#include "unitConversion.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -56,7 +58,13 @@ Foam::objectMotionState::objectMotionState
     a_(dict.lookupOrDefault("acceleration", vector::zero)),
     pi_(dict.lookupOrDefault("angularMomentum", vector::zero)),
     tau_(dict.lookupOrDefault("torque", vector::zero))
-{}
+{
+    if (!dict.found("orientation") && dict.found("angle"))
+    {
+        vector theta(dict.lookup("angle"));
+        Q_ = (Rz(degToRad(theta.z())) & Ry(degToRad(theta.y()))) & Rx(degToRad(theta.x()));
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

@@ -25,7 +25,7 @@ defaultFieldValues
 
 regions
 (
-    sphericalMassToCell // Use cylinder for 3D
+    hemisphericalMassToCell
     {
         centre (0.0 0 1.0);
         mass   25.0;
@@ -42,6 +42,13 @@ regions
         (
             volScalarFieldValue alpha.c4    1
         );
+    }
+
+    boxToCell
+    {
+        box (1 -2.375 -1) (1.25 2.375 3.875);
+        level 1;
+        refineInternal yes;
     }
 );
 

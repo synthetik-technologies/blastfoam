@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -44,6 +44,10 @@ Description
 
         // Standard linear interpolation with Minmod limiter
         reconstruct(e)   Minmod;
+
+        // No own and neighbour reconstruction use same field
+        reconstruct(alpha)   none;
+        interpolate(alpha)   CICSAM 0.5;
     }
     \endverbatim
 
@@ -56,6 +60,7 @@ SourceFiles
 #ifndef ReconstructionScheme_H
 #define ReconstructionScheme_H
 
+#include "reconstruction.H"
 #include "fvMesh.H"
 #include "autoPtr.H"
 #include "volFieldsFwd.H"
@@ -75,6 +80,8 @@ namespace Foam
 
 template<class Type>
 class ReconstructionScheme
+:
+    public reconstruction
 {
 protected:
 
@@ -83,6 +90,9 @@ protected:
 
     //- Reference to fields to interpolate
     const GeometricField<Type, fvPatchField, volMesh>& phi_;
+
+    //- Overwrite existing data
+    bool overwrite_;
 
     //- Calculate the limiter
     virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
@@ -102,9 +112,10 @@ public:
             dictionary,
             (
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
-                Istream& is
+                Istream& is,
+                const bool overwrite
             ),
-            (phi, is)
+            (phi, is, overwrite)
         );
 
         declareRunTimeSelectionTable
@@ -114,9 +125,10 @@ public:
             LinearMesh,
             (
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
-                Istream& is
+                Istream& is,
+                const bool overwrite
             ),
-            (phi, is)
+            (phi, is, overwrite)
         );
 
         declareRunTimeSelectionTable
@@ -126,9 +138,10 @@ public:
             QuadraticMesh,
             (
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
-                Istream& is
+                Istream& is,
+                const bool overwrite
             ),
-            (phi, is)
+            (phi, is, overwrite)
         );
 
 
@@ -139,12 +152,49 @@ public:
         ReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         )
         :
             mesh_(phi.mesh()),
-            phi_(phi)
-        {}
+            phi_(phi),
+            overwrite_
+            (
+                overwrite
+             || !phi.mesh().template foundObject
+                <
+                    GeometricField<Type, fvsPatchField, surfaceMesh>
+                >(ownName())
+             || !phi.mesh().template foundObject
+                <
+                    GeometricField<Type, fvsPatchField, surfaceMesh>
+                >(neiName())
+            )
+        {
+            if (overwrite != overwrite_)
+            {
+                DebugInfo
+                    << "Attempt to used cached fields "
+                    << ownName() << " " << neiName() << ": "
+                    <<  (
+                            !phi.mesh().template foundObject
+                            <
+                                GeometricField<Type, fvsPatchField, surfaceMesh>
+                            >(ownName())
+                          ? word(ownName() + " not found")
+                          : word(ownName() + " found")
+                        )
+                    <<  ", "
+                    <<  (
+                            !phi.mesh().template foundObject
+                            <
+                                GeometricField<Type, fvsPatchField, surfaceMesh>
+                            >(neiName())
+                          ? word(neiName() + " not found")
+                          : word(neiName() + " found")
+                        ) << endl;
+            }
+        }
 
 
     // Selectors
@@ -154,7 +204,15 @@ public:
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             const word& name,
-            const word& phaseName = word::null
+            const bool overwrite
+        );
+
+        static autoPtr<ReconstructionScheme<Type>> New
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& phi,
+            const word& name,
+            const word& phaseName,
+            const bool overwrite
         );
 
         //- Disallow default bitwise copy construction
@@ -165,6 +223,21 @@ public:
     {}
 
     // Member Functions
+
+        using reconstruction::ownName;
+        using reconstruction::neiName;
+
+        //- Return the name of the owner field
+        word ownName() const;
+
+        //- Return the name of the neighbour field
+        word neiName() const;
+
+        //- Return if pure upwinding is used
+        virtual bool upwind() const
+        {
+            return false;
+        }
 
         //- Return the owner and neighbor interpolated fields
         virtual void interpolateOwnNei
@@ -181,6 +254,12 @@ public:
         virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
         interpolateNei() const = 0;
 
+        //- Return the upwind interpolated field based on face flux
+        virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        interpolate
+        (
+            const surfaceScalarField& faceFlux
+        ) const;
 
     // Member Operators
 
@@ -188,6 +267,31 @@ public:
         void operator=(const ReconstructionScheme&) = delete;
 };
 
+
+template<class LimiterFunc>
+class noneLimiter
+:
+    public LimiterFunc
+{
+public:
+
+    noneLimiter(Istream& is)
+    {}
+
+    scalar limiter
+    (
+        const scalar cdWeight,
+        const scalar faceFlux,
+        const typename LimiterFunc::phiType& phiP,
+        const typename LimiterFunc::phiType& phiN,
+        const typename LimiterFunc::gradPhiType& gradcP,
+        const typename LimiterFunc::gradPhiType& gradcN,
+        const vector& d
+    ) const
+    {
+        return 1;
+    }
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -197,8 +301,12 @@ public:
 
 // Add the patch constructor functions to the hash tables
 
+#define declareReconstructionScheme(SCHEME, TYPE)                              \
+typedef SCHEME##ReconstructionScheme<TYPE> SCHEME##ReconstructionScheme##TYPE;
+
+
 #define defineReconstructionTable(TABLE, SCHEME, TYPE)                         \
-typedef SCHEME##ReconstructionScheme<TYPE> SCHEME##ReconstructionScheme##TYPE; \
+declareReconstructionScheme(SCHEME, TYPE)                                      \
 defineNamedTemplateTypeNameAndDebug(SCHEME##ReconstructionScheme##TYPE, 0);    \
 defineTemplateRunTimeSelectionTable                                            \
 (                                                                              \
@@ -224,6 +332,16 @@ makeReconstructionSchemeType(SCHEME, SS, sphericalTensor)                      \
 makeReconstructionSchemeType(SCHEME, SS, symmTensor)                           \
 makeReconstructionSchemeType(SCHEME, SS, tensor)
 
+
+
+
+#define declareReconstructionSchemes(SCHEME)                                    \
+                                                                               \
+declareReconstructionScheme(SCHEME, scalar)                                     \
+declareReconstructionScheme(SCHEME, vector)                                     \
+declareReconstructionScheme(SCHEME, sphericalTensor)                            \
+declareReconstructionScheme(SCHEME, symmTensor)                                 \
+declareReconstructionScheme(SCHEME, tensor)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

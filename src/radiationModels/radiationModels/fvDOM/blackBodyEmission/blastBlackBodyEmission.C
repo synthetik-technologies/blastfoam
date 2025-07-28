@@ -153,6 +153,7 @@ Foam::radiationModels::blastBlackBodyEmission::blastBlackBodyEmission
         "blackBodyEmissivePower",
         Function1s::tableBase::boundsHandling::clamp,
         linearInterpolationWeights::typeName,
+        autoPtr<TableReader<scalar>>(nullptr),
         emissivePowerTable
     ),
     C1_("C1", dimensionSet(1, 4, 3, 0, 0, 0, 0), 3.7419e-16),
@@ -170,7 +171,7 @@ Foam::radiationModels::blastBlackBodyEmission::blastBlackBodyEmission
                 IOobject
                 (
                     "bLambda_" + Foam::name(lambdaI) ,
-                    T.mesh().time().timeName(),
+                    T.mesh().time().name(),
                     T.mesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE

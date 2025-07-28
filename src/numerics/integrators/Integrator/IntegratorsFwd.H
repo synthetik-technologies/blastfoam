@@ -41,11 +41,11 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-typedef Integrator<scalar> scalarIntegrator;
-typedef Integrator<vector> vectorIntegrator;
-typedef Integrator<symmTensor> symmTensorIntegrator;
-typedef Integrator<sphericalTensor> sphericalTensorIntegrator;
-typedef Integrator<tensor> tensorIntegrator;
+typedef Integrator<scalar, scalar> scalarIntegrator;
+typedef Integrator<vector, vector> vectorIntegrator;
+typedef Integrator<symmTensor, symmTensor> symmTensorIntegrator;
+typedef Integrator<sphericalTensor, sphericalTensor> sphericalTensorIntegrator;
+typedef Integrator<tensor, tensor> tensorIntegrator;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

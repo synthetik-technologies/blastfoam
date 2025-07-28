@@ -31,7 +31,6 @@ License
 #include "fixedGradientFvPatchFields.H"
 #include "wedgePolyPatch.H"
 #include "UautoPtr.H"
-#include "crackerFvMesh.H"
 #include "solidSubMeshes.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -87,20 +86,6 @@ Foam::solidSubMeshes& Foam::mechanicalModel::solSubMeshes()
     return solSubMeshes_();
 }
 
-void Foam::mechanicalModel::makeVolToPoint() const
-{
-    if (volToPointPtr_)
-    {
-        FatalErrorIn
-        (
-            "void Foam::mechanicalModel::makeVolToPoint() const"
-        )   << "pointer already set" << abort(FatalError);
-    }
-
-    volToPointPtr_ = new volPointInterpolation(mesh());
-}
-
-
 void Foam::mechanicalModel::calcImpKfcorr() const
 {
     if (impKfcorrPtr_)
@@ -118,7 +103,7 @@ void Foam::mechanicalModel::calcImpKfcorr() const
             IOobject
             (
                 "impKfcorr",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
@@ -197,7 +182,6 @@ const Foam::surfaceScalarField& Foam::mechanicalModel::impKfcorr() const
 
 void Foam::mechanicalModel::clearOut()
 {
-    deleteDemandDrivenData(volToPointPtr_);
     deleteDemandDrivenData(impKfcorrPtr_);
 
     // Clear the list of mechanical laws
@@ -238,7 +222,6 @@ Foam::mechanicalModel::mechanicalModel
     incremental_(incremental),
     cellZoneNames_(),
     solSubMeshes_(),
-    volToPointPtr_(),
     impKfcorrPtr_(NULL)
 {
     Info<< "Creating the mechanicalModel" << endl;
@@ -278,6 +261,7 @@ Foam::mechanicalModel::mechanicalModel
                 (
                     lawEntries[lawI].keyword(),
                     meshPtr(),
+                    mesh_,
                     lawEntries[lawI].dict(),
                     nonLinGeom
                 )
@@ -296,6 +280,7 @@ Foam::mechanicalModel::mechanicalModel
                 (
                     lawEntries[lawI].keyword(),
                     meshPtr(),
+                    mesh_,
                     lawEntries[lawI].dict(),
                     nonLinGeom
                 )
@@ -308,21 +293,31 @@ Foam::mechanicalModel::mechanicalModel
                 << "created for a solidModel with nonLinGeom = "
                 << nonLinGeom << abort(FatalError);
         }
-        laws[lawI].baseMeshRegionName() = mesh.name();
-    }
-
-    // Check: currently crackerFvMesh only works with a single material
-    // The challenge here is to update the subMesh and subMesh fields when a
-    // topo-change (crack) occurs in the base mesh
-    if (isA<crackerFvMesh>(mesh) && laws.size() > 1)
-    {
-        FatalErrorInFunction
-            << "Currently the crackerFvMesh can only be used with a single "
-            << "material in mechanicalProperties"
-            << abort(FatalError);
     }
 }
 
+
+Foam::mechanicalModel::mechanicalModel(const fvMesh& mesh)
+:
+    IOdictionary
+    (
+        IOobject
+        (
+            "mechanicalProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        )
+    ),
+    PtrList<mechanicalLaw>(),
+    mesh_(mesh),
+    planeStress_(false),
+    incremental_(false),
+    cellZoneNames_(),
+    solSubMeshes_(),
+    impKfcorrPtr_(nullptr)
+{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -342,12 +337,7 @@ const Foam::fvMesh& Foam::mechanicalModel::mesh() const
 
 const Foam::volPointInterpolation& Foam::mechanicalModel::volToPoint() const
 {
-    if (!volToPointPtr_)
-    {
-        makeVolToPoint();
-    }
-
-    return *volToPointPtr_;
+    return volPointInterpolation::New(mesh_);
 }
 
 
@@ -363,16 +353,9 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::impK() const
     // Accumulate data for all fields
     tmp<volScalarField> tresult
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
+            "impK",
             mesh(),
             dimensionedScalar("zero", dimPressure, 0)
         )
@@ -400,8 +383,8 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::impK() const
 Foam::tmp<Foam::surfaceScalarField> Foam::mechanicalModel::impKf() const
 {
     // Linear interpolation actually seems to give the best convergence
-    const volScalarField impK(this->impK());
-    const word interpName = "interpolate(" + impK.name() + ')';
+    tmp<volScalarField> impK(this->impK());
+    const word interpName = "interpolate(" + impK().name() + ')';
     return fvc::interpolate(impK, interpName);
 }
 
@@ -446,7 +429,7 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::bulkModulus() const
             IOobject
             (
                 "bulkModulus",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -492,7 +475,7 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::elasticModulus() const
             IOobject
             (
                 "elasticModulus",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -538,7 +521,7 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::shearModulus() const
             IOobject
             (
                 "shearModulus",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -620,6 +603,63 @@ void Foam::mechanicalModel::correct(surfaceSymmTensorField& sigma)
     );
 }
 
+
+Foam::tmp<Foam::volTensorField>
+Foam::mechanicalModel::P(const volSymmTensorField& sigma) const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    if (laws.size() == 1)
+    {
+        return laws[0].P(sigma);
+    }
+
+    NotImplemented;
+    return laws[0].P(sigma);
+    // // Accumulate data for all fields
+    // forAll(laws, lawI)
+    // {
+    //     laws[lawI].correct(solSubMeshes().subMeshSigma()[lawI]);
+    // }
+    //
+    // // Map subMesh fields to the base field
+    // solSubMeshes().mapSubMeshVolFields<symmTensor>
+    // (
+    //     solSubMeshes().subMeshSigma(), sigma
+    // );
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::mechanicalModel::P(const surfaceSymmTensorField& sigma) const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    if (laws.size() == 1)
+    {
+        return laws[0].P(sigma);
+    }
+
+    NotImplemented;
+    return laws[0].P(sigma);
+    // // Reset sigma before performing the accumulatation as interface values
+    // // will be added for each material
+    // // This is not necessary for volFields as they store no value on the
+    // // interface
+    // sigma = Zero;
+    //
+    // // Accumulate data for all fields
+    // forAll(laws, lawI)
+    // {
+    //     laws[lawI].correct(solSubMeshes().subMeshSigmaf()[lawI]);
+    // }
+    //
+    // // Map subMesh fields to the base field
+    // solSubMeshes().mapSubMeshSurfaceFields<symmTensor>
+    // (
+    //     solSubMeshes().subMeshSigmaf(), sigma
+    // );
+}
 
 void Foam::mechanicalModel::grad
 (
@@ -844,11 +884,30 @@ void Foam::mechanicalModel::interpolate
 )
 {
     const PtrList<mechanicalLaw>& laws = *this;
-
     if (laws.size() == 1)
     {
-        volToPoint().interpolateDisplacement(D, pointD);
-        pointD.correctBoundaryConditions();
+        volToPoint().interpolate(D, pointD);
+
+        if (D.member() == "D")
+        {
+            twoDPointCorrector::New(mesh()).correctPoints
+            (
+                pointD.primitiveFieldRef()
+            );
+        }
+        else
+        {
+            twoDPointCorrector::New(mesh()).correctDisplacement
+            (
+                (
+                    mesh().points()
+                  + mesh().lookupObject<pointVectorField>("pointD").primitiveField()
+                )(),
+                pointD.primitiveFieldRef()
+            );
+        }
+        pointConstraints::setPatchFields(pointD);
+
         return;
     }
 
@@ -860,7 +919,10 @@ void Foam::mechanicalModel::interpolate
     forAll(laws, lawI)
     {
         // Interpolate the subMeshD to the subMeshPointD
-        solSubMeshes().subMeshVolToPoint()[lawI].interpolate
+        volPointInterpolation::New
+        (
+            solSubMeshes().subMeshes()[lawI].subMesh()
+        ).interpolate
         (
             solSubMeshes().subMeshD()[lawI],
             solSubMeshes().subMeshPointD()[lawI]
@@ -936,9 +998,9 @@ Foam::tmp<Foam::volVectorField> Foam::mechanicalModel::RhieChowCorrection
 }
 
 
-Foam::scalar Foam::mechanicalModel::residual()
+Foam::scalar Foam::mechanicalModel::residual() const
 {
-    PtrList<mechanicalLaw>& laws = *this;
+    const PtrList<mechanicalLaw>& laws = *this;
 
     scalar maxResidual = 0.0;
 
@@ -948,6 +1010,21 @@ Foam::scalar Foam::mechanicalModel::residual()
     }
 
     return maxResidual;
+}
+
+
+Foam::scalar Foam::mechanicalModel::relResidual() const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    scalar maxRelResidual = 0.0;
+
+    forAll(laws, lawI)
+    {
+        maxRelResidual = max(maxRelResidual, laws[lawI].relResidual());
+    }
+
+    return maxRelResidual;
 }
 
 
@@ -962,10 +1039,10 @@ void Foam::mechanicalModel::updateTotalFields()
 }
 
 
-Foam::scalar Foam::mechanicalModel::newDeltaT()
+Foam::scalar Foam::mechanicalModel::newDeltaT() const
 {
     // Find the minimum time-step of all the mechanical laws
-    PtrList<mechanicalLaw>& laws = *this;
+    const PtrList<mechanicalLaw>& laws = *this;
 
     // Initial set deltaT to as large as possible and then check
     // if any mechanical law wants a smaller time-step

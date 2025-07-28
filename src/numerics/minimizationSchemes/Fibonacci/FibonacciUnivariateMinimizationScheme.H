@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::FibonacciUnivariateMinimizationScheme
+    Foam::minimizationSchemes::univariate::Fibonacci
 
 Description
     Univariate minimization using the Fibonacci method
@@ -50,12 +50,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class FibonacciUnivariateMinimizationScheme Declaration
+            Class minimizationSchemes::univariate::Fibonacci Declaration
 \*---------------------------------------------------------------------------*/
 
-class FibonacciUnivariateMinimizationScheme
+class Fibonacci
 :
     public univariateMinimizationScheme
 {
@@ -70,14 +74,42 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        FibonacciUnivariateMinimizationScheme
+        Fibonacci
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        Fibonacci
+        (
+            const scalarUnivariateEquation& eqn,
+            const Fibonacci& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new Fibonacci(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new Fibonacci(eqns, *this)
+            );
+        }
+
     //- Destructor
-    virtual ~FibonacciUnivariateMinimizationScheme()
+    virtual ~Fibonacci()
     {}
 
 
@@ -95,12 +127,14 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const FibonacciUnivariateMinimizationScheme&) = delete;
+        void operator=(const Fibonacci&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

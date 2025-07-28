@@ -44,6 +44,7 @@ SourceFiles
 
 #include "fluidThermo.H"
 #include "blastThermo.H"
+#include "physicalProperties.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -55,8 +56,9 @@ namespace Foam
 
 class fluidBlastThermo
 :
+    public physicalProperties,
     public blastThermo,
-    public fluidThermo
+    virtual public fluidThermo
 {
 protected:
 
@@ -103,7 +105,8 @@ public:
         const fvMesh&,
         const dictionary& dict,
         const word& phaseName,
-        const word& masterName = word::null
+        const word& masterName = word::null,
+        const bool requireRho = true
     );
 
     //- Initialize models
@@ -145,9 +148,17 @@ public:
         //- Standard selection based on fvMesh
         static autoPtr<fluidBlastThermo> New
         (
-            const label,
             const fvMesh&,
             const dictionary&,
+            const word& thermoType,
+            const word& phaseName = word::null
+        );
+
+        //- Standard selection based on fvMesh
+        static autoPtr<fluidBlastThermo> New
+        (
+            const fvMesh&,
+            const word& thermoType,
             const word& phaseName = word::null
         );
 
@@ -158,6 +169,18 @@ public:
 
     // Access functions
 
+        //- Properties dictionary
+        virtual const IOdictionary& properties() const
+        {
+            return *this;
+        }
+
+        //- Non-const access the properties dictionary
+        virtual IOdictionary& properties()
+        {
+            return *this;
+        }
+
         // Access to thermodynamic state variables
 
             //- Pressure [Pa]
@@ -166,6 +189,15 @@ public:
 
             //- Pressure [Pa]
             virtual const volScalarField& p() const;
+
+            virtual tmp<volScalarField> rho() const
+            {
+                return rho_;
+            }
+
+            //- Rename and return the thermodynamic density field [kg/m^3]
+            //  This is used by solvers which create a separate continuity rho
+            virtual tmp<volScalarField> renameRho();
 
 
         // Fields derived from thermodynamic state variables
@@ -214,47 +246,6 @@ public:
                 return blastThermo::gamma(T, patchi);
             }
 
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [W/m/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField& alphat
-            ) const
-            {
-                return blastThermo::kappaEff(alphat);
-            }
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
-            {
-                return blastThermo::kappaEff(alphat, patchi);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const
-            {
-                return blastThermo::alphaEff(alphat);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
-            {
-                return blastThermo::alphaEff(alphat, patchi);
-            }
-
             using blastThermo::gamma;
             using blastThermo::he;
 
@@ -287,6 +278,17 @@ public:
                 const bool limit = true
             ) const = 0;
 
+            //- Calculate pressure for patch and face [Pa]
+            virtual scalar patchFacepRhoT
+            (
+                const label patchi,
+                const label facei,
+                const bool limit = true
+            ) const = 0;
+
+            //- Calculate the pressure
+            virtual tmp<volScalarField> pRhoT() const;
+
             //- Return the speed of sound
             virtual const volScalarField& speedOfSound() const;
 
@@ -309,11 +311,9 @@ public:
         // Access to transport state variables
 
             //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> mu() const;
+            virtual const volScalarField& mu() const;
 
-            //- Dynamic viscosity of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> mu(const label patchi) const;
-
+            //- Kinematic viscosity of [m^2/s]
             using fluidThermo::nu;
 
             //- Kinematic viscosity of [m^2/s]
@@ -324,6 +324,17 @@ public:
 
             //- Kinematic viscosity of mixture for cell [m^2/s]
             virtual scalar cellnu(const label celli) const;
+
+
+        //- Read thermophysical properties dictionary
+        virtual bool read()
+        {
+            return blastThermo::read();
+        }
+        virtual bool read(const dictionary& dict)
+        {
+            return blastThermo::read(dict);
+        }
 };
 
 

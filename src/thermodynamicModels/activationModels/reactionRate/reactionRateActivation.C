@@ -47,7 +47,7 @@ Foam::activationModels::reactionRateActivation::reactionRateActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, false),
+    activationModel(mesh, dict, phaseName, 0),
     w_("w", dimDensity/dimTime, dict)
 {}
 

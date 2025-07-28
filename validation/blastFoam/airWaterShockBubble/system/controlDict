@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         4e-4;
+endTime         5e-4;
 
 deltaT          1e-7;
 
@@ -69,4 +69,5 @@ functions
         field rho;
     }
 }
+
 // ************************************************************************* //

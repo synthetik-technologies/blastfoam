@@ -101,10 +101,6 @@ class eConstThermo
         //- Reference sensible enthalpy around which to linearise [J/kg]
         scalar Esref_;
 
-        //- Flame temperature [K]
-        scalar flameT_;
-
-
         //- Construct from components
         inline eConstThermo
         (
@@ -112,8 +108,7 @@ class eConstThermo
             const scalar Cv,
             const scalar Hf,
             const scalar Tref,
-            const scalar Esref,
-            const scalar flameT
+            const scalar Esref
         );
 
 
@@ -170,14 +165,6 @@ public:
             const scalar T
         ) const;
 
-        //- Sensible thermal internal energy [J/kg]
-        inline scalar Ets
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
-
         //- Absolute internal energy [J/kg]
         inline scalar Ea
         (
@@ -186,22 +173,19 @@ public:
             const scalar T
         ) const;
 
+        //- Heat capacity at constant volume of mixture [J/kg/K]
+        inline scalar Cvt(const scalar T) const;
+
+        //- Sensible thermal internal energy [J/kg]
+        inline scalar Est(const scalar T) const;
+
         //- Absolute thermal internal energy [J/kg]
-        inline scalar Eta
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+        inline scalar Eat(const scalar T) const;
 
         #include "EtoHFuncs.H"
 
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
-
-        //- Flame temperature [K]
-        inline scalar flameT() const;
-
 
         //- Entropy [J/kg/K]
         inline scalar S(const scalar p, const scalar T) const;

@@ -94,7 +94,7 @@ Foam::surfacesToCell::surfacesToCell
                 {
                     pointField points(triSurfaces_[i].points());
                     t.transformPosition(points, points);
-                    triSurfaces_[i].movePoints(points);
+                    triSurfaces_[i].setPoints(points);
                 }
                 surfaces_.set
                 (
@@ -127,7 +127,7 @@ Foam::surfacesToCell::surfacesToCell
             {
                 pointField points(triSurfaces_[0].points());
                 t.transformPosition(points, points);
-                triSurfaces_[0].movePoints(points);
+                triSurfaces_[0].setPoints(points);
             }
             surfaces_.append
             (

@@ -42,6 +42,7 @@ SourceFiles
 
 #include "fvPatchFields.H"
 #include "fixedGradientFvPatchFields.H"
+#include "tractionBase.H"
 #include "Switch.H"
 #include "Function1.H"
 
@@ -56,15 +57,11 @@ namespace Foam
 
 class solidTractionFvPatchVectorField
 :
-    public fixedGradientFvPatchVectorField
+    public fixedGradientFvPatchVectorField,
+    public tractionBase
 {
+private:
     // Private Data
-
-        //- Traction
-        vectorField traction_;
-
-        //- Pressure
-        scalarField pressure_;
 
         //- Traction time series
         autoPtr<Function1<vector>> tractionSeries_;
@@ -75,11 +72,8 @@ class solidTractionFvPatchVectorField
         //- Second order accuracy correction
         Switch secondOrder_;
 
-        //- Limiter coefficient for snGrad correction
-        scalar limitCoeff_;
-
         //- Optional: under-relaxation factor
-        scalar relaxFac_;
+        autoPtr<Function1<scalar>> relaxFac_;
 
 
 public:
@@ -102,7 +96,8 @@ public:
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const dictionary&
+            const dictionary&,
+            const bool mustRead = true
         );
 
         //- Construct by mapping given
@@ -112,7 +107,7 @@ public:
             const solidTractionFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy
@@ -146,45 +141,32 @@ public:
 
         // Access
 
-            virtual const vectorField& traction() const
+            //- Return if second order
+            inline bool secondOrder() const
             {
-                return traction_;
-            }
-
-            virtual vectorField& traction()
-            {
-                return traction_;
-            }
-
-            virtual const scalarField& pressure() const
-            {
-                return pressure_;
-            }
-
-            virtual scalarField& pressure()
-            {
-                return pressure_;
+                return secondOrder_;
             }
 
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
+            //- Map the given fvPatchField onto this fvPatchField
+            virtual void map
             (
-                const fvPatchFieldMapper&
+                const fvPatchField<vector>&,
+                const fieldMapper&
             );
 
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
-            (
-                const fvPatchVectorField&,
-                const labelList&
-            );
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset(const fvPatchField<vector>&);
 
 
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
+
+        //- Update pressure and traction
+        virtual bool updateFields();
 
         //- Evaluate the patch field
         virtual void evaluate

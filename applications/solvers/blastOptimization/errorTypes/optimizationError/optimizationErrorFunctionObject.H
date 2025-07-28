@@ -1,0 +1,126 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2023-2025
+     \\/     M anipulation  | Synthetik Applied Technologies
+-------------------------------------------------------------------------------
+License
+    This file is derivative work of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::functionObjects::optimizationError
+
+Description
+    Calculates and writes the Mach number as a volScalarField.
+
+See also
+    Foam::functionObjects::fvMeshFunctionObject
+
+SourceFiles
+    optimizationErrorFucntionObject.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef functionObjects_optimizationError_H
+#define functionObjects_optimizationError_H
+
+#include "fvMeshFunctionObject.H"
+#include "errorType.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace functionObjects
+{
+
+/*---------------------------------------------------------------------------*\
+                         Class optimizationError Declaration
+\*---------------------------------------------------------------------------*/
+
+class optimizationError
+:
+    public fvMeshFunctionObject
+{
+    // Private Member data
+
+        //- Output file name
+        fileName output_;
+
+        //- Error criteria
+        PtrList<errorType> errors_;
+
+
+public:
+
+    //- Runtime type information
+    TypeName("optimizationError");
+
+    // Constructors
+
+        //- Construct for given objectRegistry and dictionary.
+        //  Allow the possibility to load fields from files
+        optimizationError
+        (
+            const word& name,
+            const Time& runTime,
+            const dictionary& dict
+        );
+
+        //- Disallow default bitwise copy construction
+        optimizationError(const optimizationError&) = delete;
+
+
+    //- Destructor
+    virtual ~optimizationError();
+
+
+    // Member Functions
+
+        //- Reuired Fields
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        }
+
+        //- Read the field average data
+        virtual bool read(const dictionary&);
+
+        //- Calculate the field averages
+        virtual bool execute();
+
+        //- Write the error to the given file
+        virtual bool write();
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const optimizationError&) = delete;
+};
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace functionObjects
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //

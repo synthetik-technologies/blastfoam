@@ -30,14 +30,10 @@ License
 #include "uniformDimensionedFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const fvPatch& p,
@@ -47,7 +43,8 @@ hydrostaticPressureFvPatchVectorField
     solidTractionFvPatchVectorField(p, iF),
     pRef_(0.0),
     hRef_(0.0),
-    rho_(1.0)
+    rho_(1.0),
+    phFunc_(nullptr)
 {
     fvPatchVectorField::operator=(patchInternalField());
     gradient() = vector::zero;
@@ -56,7 +53,7 @@ hydrostaticPressureFvPatchVectorField
 }
 
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const fvPatch& p,
@@ -65,10 +62,28 @@ hydrostaticPressureFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(p, iF),
-    pRef_(dict.lookup<scalar>("pRef")),
-    hRef_(dict.lookup<scalar>("hRef")),
-    rho_(dict.lookup<scalar>("rho"))
+    pRef_(0.0),
+    hRef_(0.0),
+    rho_(1.0),
+    phFunc_(nullptr)
 {
+    if (dict.found("phFunc"))
+    {
+        phFunc_ = Function1<scalar>::New
+        (
+            "phFunc",
+            this->db().time().userUnits(),
+            dimPressure,
+            dict
+        );
+    }
+    else
+    {
+        dict.lookup("pRef") >> pRef_;
+        dict.lookup("hRef") >> hRef_;
+        dict.lookup("rho") >> rho_;
+    }
+
     if (dict.found("value"))
     {
         Field<vector>::operator=(vectorField("value", dict, p.size()));
@@ -83,26 +98,27 @@ hydrostaticPressureFvPatchVectorField
 }
 
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const hydrostaticPressureFvPatchVectorField& hpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     solidTractionFvPatchVectorField(hpvf, p, iF, mapper),
     pRef_(hpvf.pRef_),
     hRef_(hpvf.hRef_),
-    rho_(hpvf.rho_)
+    rho_(hpvf.rho_),
+    phFunc_(hpvf.phFunc_, false)
 {
     traction() = vector::zero;
     pressure() = 0.0;
 }
 
 
-hydrostaticPressureFvPatchVectorField::
+Foam::hydrostaticPressureFvPatchVectorField::
 hydrostaticPressureFvPatchVectorField
 (
     const hydrostaticPressureFvPatchVectorField& hpvf,
@@ -112,7 +128,8 @@ hydrostaticPressureFvPatchVectorField
     solidTractionFvPatchVectorField(hpvf, iF),
     pRef_(hpvf.pRef_),
     hRef_(hpvf.hRef_),
-    rho_(hpvf.rho_)
+    rho_(hpvf.rho_),
+    phFunc_(hpvf.phFunc_, false)
 {
     traction() = vector::zero;
     pressure() = 0.0;
@@ -121,46 +138,61 @@ hydrostaticPressureFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void hydrostaticPressureFvPatchVectorField::updateCoeffs()
+bool Foam::hydrostaticPressureFvPatchVectorField::updateFields()
 {
-    if (updated())
-    {
-        return;
-    }
-
     const uniformDimensionedVectorField& g =
         this->patch().boundaryMesh().mesh().lookupObject
         <
             uniformDimensionedVectorField
         >("g");
-    vector dir(g.value()/mag(g.value()));
 
     vectorField x(this->patch().Cf());
     if (!lookupSolidModel(this->patch().boundaryMesh().mesh()).movingMesh())
     {
         x += this->patch().lookupPatchField<volVectorField, vector>("D");
-        if (internalField().name() == "DD")
-        {
-            x += this->patch().lookupPatchField<volVectorField, vector>("DD");
-        }
     }
     else
     {
         x += this->patch().lookupPatchField<volVectorField, vector>("DD");
     }
 
-    scalarField gh((x + dir*hRef_) & g.value());
-    this->pressure() = pRef_ + rho_*gh;
+    if (phFunc_.valid())
+    {
+        scalarField h((x & g.value())/mag(g.value()) + hRef_);
+        forAll(h, i)
+        {
+            h[i] = phFunc_->value(h[i]);
+        }
+        this->pressure() = h;
+    }
+    else
+    {
+        scalarField gh((x & g.value()) + mag(g.value())*hRef_);
+        this->pressure() = pRef_ + rho_*gh;
+    }
 
-    solidTractionFvPatchVectorField::updateCoeffs();
+    return false;
+}
+
+
+void Foam::hydrostaticPressureFvPatchVectorField::write(Ostream& os) const
+{
+    solidTractionFvPatchVectorField::write(os);
+    writeEntry(os, "pRef", pRef_);
+    writeEntry(os, "hRef", hRef_);
+    writeEntry(os, "rho", rho_);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchVectorField, hydrostaticPressureFvPatchVectorField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        hydrostaticPressureFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

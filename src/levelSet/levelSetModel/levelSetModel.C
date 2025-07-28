@@ -26,11 +26,17 @@ License
 #include "levelSetModel.H"
 #include "surfaceFields.H"
 #include "fvc.H"
+#include "fvm.H"
 #include "distributedTriSurfaceMesh.H"
 #include "volPointInterpolation.H"
 #include "meshSizeObject.H"
 #include "zeroGradientFvPatchFields.H"
+#include "fixedGradientFvPatchFields.H"
 #include "gaussGrad.H"
+#include "cutPolyIsoSurface.H"
+#include "upwind.H"
+#include "fluxSchemeBase.H"
+#include "MeshedSurface.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -66,18 +72,33 @@ const Foam::NamedEnum<Foam::levelSetModel::truncation, 3>
 Foam::levelSetModel::levelSetModel
 (
     volScalarField& alpha,
+    const surfaceScalarField& phi,
+    const dictionary& dict,
+    const bool mustRead
+)
+:
+    levelSetModel(alpha, dict, mustRead)
+{
+    phiPtr_.set(&phi);
+}
+
+
+Foam::levelSetModel::levelSetModel
+(
+    volScalarField& alpha,
     const dictionary& dict,
     const bool mustRead
 )
 :
     mesh_(alpha.mesh()),
     alpha_(alpha),
+    phiPtr_(nullptr),
     levelSet_
     (
         IOobject
         (
             IOobject::groupName("levelSet", alpha.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -91,7 +112,7 @@ Foam::levelSetModel::levelSetModel
         IOobject
         (
             IOobject::groupName("H", alpha.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -105,7 +126,7 @@ Foam::levelSetModel::levelSetModel
         IOobject
         (
             IOobject::groupName("nHatf", alpha_.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -116,32 +137,15 @@ Foam::levelSetModel::levelSetModel
         IOobject
         (
             IOobject::groupName("curvature", alpha_.group()),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
         dimensionedScalar(dimless/dimLength, 0)
     ),
     epsilon0_("epsilon", dimless, dict),
-    epsilon_
-    (
-        IOobject
-        (
-            IOobject::groupName("levelSet::epsilon", alpha_.group()),
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_,
-        dimensionedScalar(dimLength, 0),
-        extrapolatedCalculatedFvPatchScalarField::typeName
-    ),
-    useDistributed_(dict.lookupOrDefault("useDistributed", true)),
-    filterType_
-    (
-        dict.found("filtering")
-      ? isoSurface::filterTypeNames_.read(dict.lookup("filtering"))
-      : isoSurface::filterType::full
-    ),
+    epsilon_("epsilon", dimLength, 0.0),
+    useDistributed_(dict.lookupOrDefault("useDistributed", false)),
     lsFunc_
     (
         dict.found("levelSetFunction")
@@ -159,8 +163,21 @@ Foam::levelSetModel::levelSetModel
         truncation_ == truncation::CUTOFF
       ? dict.lookup<scalar>("cutOffValue")
       : 0.0
-    )
+    ),
+    solveH_(true)
 {
+    volScalarField::Boundary& bls(levelSet_.boundaryFieldRef());
+    forAll(bls, patchi)
+    {
+        if(isA<fixedGradientFvPatchScalarField>(bls[patchi]))
+        {
+            dynamicCast<fixedGradientFvPatchScalarField>
+            (
+                bls[patchi]
+            ).gradient() = -1.0;
+        }
+    }
+
     updateEpsilon();
     if (Pstream::parRun())
     {
@@ -172,18 +189,18 @@ Foam::levelSetModel::levelSetModel
                 distributedTriSurfaceMesh::FROZEN
             ]
         );
-        triMeshDict_.set("mergeDistance", min(epsilon_).value()*1e-3);
+        triMeshDict_.set("mergeDistance", epsilon_.value()*1e-3);
     }
 
-    if (levelSet_.headerOk())
+    if (levelSet_.headerOk() && !H_.headerOk())
     {
         correct(true);
     }
-    else if (H_.headerOk())
+    else if (H_.headerOk() && !levelSet_.headerOk())
     {
         correct(false);
     }
-    else
+    else if (!H_.headerOk() && !levelSet_.headerOk())
     {
         if (mustRead)
         {
@@ -193,6 +210,7 @@ Foam::levelSetModel::levelSetModel
         levelSet_ = calcLevelSet(alpha, 0.5);
         correct(true);
     }
+
 }
 
 
@@ -211,9 +229,8 @@ void Foam::levelSetModel::updateEpsilon()
         (
             "dx",
             dimLength,
-            min(meshSizeObject::New(mesh_).dx())
+            gMin(meshSizeObject::New(mesh_).dx())
         )*epsilon0_;
-    epsilon_.correctBoundaryConditions();
 }
 
 
@@ -291,12 +308,9 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
         {
             if (info[celli].hit())
             {
-                ls[celli] =
-                    min
-                    (
-                        ls[celli],
-                        mag(info[celli].hitPoint() - mesh.C()[celli])
-                    );
+                nearestDistSqr[celli] =
+                    magSqr(info[celli].hitPoint() - mesh.C()[celli]);
+                ls[celli] = sqrt(nearestDistSqr[celli]);
             }
         }
     }
@@ -325,31 +339,33 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
     );
 
     // Contour the volume fraction at 0.5
-
-    isoSurface contour
+    cutPolyIsoSurface contour
     (
         mesh_,
-        isoField,
         pointIsoField,
-        isoValue,
-        filterType_
+        isoValue
+    );
+    MeshedSurface<face> surf
+    (
+        pointField(contour.points()),
+        faceList(contour.faces())
     );
 
     // Make sure the isoSurface is meshed with triangles
-    contour.triangulate();
+    surf.triangulate();
 
     // Copy faces to a triFaceList
-    triFaceList triFaces(contour.size());
-    forAll(contour, facei)
+    triFaceList triFaces(surf.size());
+    forAll(surf, facei)
     {
-        triFaces[facei][0] = contour[facei][0];
-        triFaces[facei][1] = contour[facei][1];
-        triFaces[facei][2] = contour[facei][2];
+        triFaces[facei][0] = surf[facei][0];
+        triFaces[facei][1] = surf[facei][1];
+        triFaces[facei][2] = surf[facei][2];
     }
 
     // Create a searchable triSufaceMesh
     autoPtr<triSurfaceMesh> triMeshPtr;
-    triSurface tri(triFaces, contour.points());
+    triSurface tri(move(triFaces), surf.points());
     if (Pstream::parRun() && useDistributed_)
     {
         triMeshDict_.set("bounds", List<boundBox>(1, mesh_.bounds()));
@@ -360,7 +376,7 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
                 IOobject
                 (
                     "contour_" + isoField.name(),
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_
                 ),
                 tri,
@@ -377,7 +393,7 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
                 IOobject
                 (
                     "contour_" + isoField.name(),
-                    mesh_.time().timeName(),
+                    mesh_.time().name(),
                     mesh_
                 ),
                 tri
@@ -418,10 +434,23 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::calcLevelSet
     {
         ls[celli] =
             mag(mesh_.C()[celli] - hitPoints[celli].rawPoint())
-           *(alpha_[celli] > 0.5 ? 1.0 : -1.0);
+           *(isoField[celli] > isoValue ? 1.0 : -1.0);
+    }
+
+    volScalarField::Boundary& bls = ls.boundaryFieldRef();
+    forAll(bls, patchi)
+    {
+        const pointField& pCf = mesh_.Cf().boundaryField()[patchi];
+        const scalarField& palpha = isoField.boundaryField()[patchi];
+        triMesh.findNearest(pCf, nearestDistSqr, hitPoints);
+        forAll(bls[patchi], facei)
+        {
+            bls[patchi][facei] =
+                mag(pCf[facei] - hitPoints[facei].rawPoint())
+               *(palpha[facei] > isoValue ? 1.0 : -1.0);
+        }
     }
     ls.correctBoundaryConditions();
-
     return tls;
 }
 
@@ -434,27 +463,19 @@ void Foam::levelSetModel::redistance()
 
 void Foam::levelSetModel::correct(const bool updateH)
 {
-    updateEpsilon();
-
     if (updateH)
     {
         H_ = calcH(levelSet_);
+        H_.correctBoundaryConditions();
     }
     else
     {
         levelSet_ = calcLevelSet(H_);
+        levelSet_.correctBoundaryConditions();
     }
 
-    surfaceVectorField gradLevelSet(fvc::interpolate(fvc::grad(levelSet_)));
-    nHatf_ =
-        (
-            gradLevelSet
-           /max
-            (
-                mag(gradLevelSet),
-                dimensionedScalar(gradLevelSet.dimensions(), 1e-6)
-            )
-        ) & mesh_.Sf();
+    surfaceVectorField gradLevelSetf(fvc::interpolate(fvc::grad(levelSet_)));
+    nHatf_ = (gradLevelSetf/max(mag(gradLevelSetf), small)) & mesh_.Sf();
 
     // Update curvature
     K_ = -fvc::div(nHatf_);
@@ -466,7 +487,7 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::nearInterface() const
     return volScalarField::New
     (
         IOobject::groupName("nearInterface", levelSet_.group()),
-        pos0(mag(levelSet_) + 2.0*epsilon_)
+        pos0(epsilon_ - mag(levelSet_))
     );
 }
 
@@ -475,6 +496,7 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::alpha() const
 {
     tmp<volScalarField> tH(H_);
     switch (truncation_)
+
     {
         case truncation::NONE:
         {
@@ -482,8 +504,8 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::alpha() const
         }
         case truncation::CUTOFF:
         {
-            volScalarField cond(pos(mag(levelSet_) - sqrt(2.0)/2.0*epsilon_));
-            tH = cond*sign(levelSet_) + (1.0 - cond)*levelSet_;
+            volScalarField cond(pos(mag(H_) - cutOff_));
+            tH = cond*sign(H_) + (1.0 - cond)*H_;
             break;
         }
         case truncation::TANH:
@@ -531,5 +553,153 @@ Foam::tmp<Foam::volVectorField> Foam::levelSetModel::nHat() const
         )
     );
 }
+
+
+void Foam::levelSetModel::update()
+{
+    updateEpsilon();
+}
+
+
+void Foam::levelSetModel::solve()
+{
+    // const surfaceScalarField& phi = phiPtr_();
+    // if (solveH_)
+    // {
+    //     tmp<surfaceScalarField> tHf;
+    //     if (fluxSchemeBase::foundFluxScheme(phi))
+    //     {
+    //         tHf = fluxSchemeBase::findFluxScheme(phi).interpolate(H_);
+    //     }
+    //     else
+    //     {
+    //         tHf = fvc::interpolate(H_);
+    //     }
+    //     const surfaceScalarField& Hf(tHf());
+    //
+    //     surfaceScalarField gamma
+    //     (
+    //         IOobject::groupName("gamma", phi.group()),
+    //         mag
+    //         (
+    //             phi/mesh_.magSf()
+    //             // H_.mesh().lookupObject<volVectorField>
+    //             // (
+    //             //     IOobject::groupName("U", phi.group())
+    //             // )
+    //         )
+    //     );
+    //
+    //
+    //     volScalarField deltaH
+    //     (
+    //         IOobject::groupName("deltaH", alpha_.group()),
+    //         fvc::div(phi*Hf)- H_*fvc::div(phi)
+    //       // - fvc::laplacian(gamma*fvc::interpolate(epsilon_), H_)
+    //       // + fvc::div(gamma*Hf*(1.0 - Hf)*nHatf_)
+    //     );
+    //
+    //     volScalarField HOld(H_);
+    //     this->storeAndBlendOld(HOld, false);
+    //     this->storeAndBlendDelta(deltaH);
+    //
+    //     H_ = HOld - mesh_.time().deltaT()*deltaH;
+    //     H_.maxMin(-1.0, 1.0);
+    //     H_.correctBoundaryConditions();
+    //
+    //     deltaH = (H_ - HOld)/mesh_.time().deltaT();
+    //     deltaH = this->calcAndStoreDelta(deltaH);
+    //     correct(false);
+    // }
+    // else
+    // {
+    //     // Level set function is smooth so we do not need to worry about shocks
+    //     // volScalarField deltaLevelSet
+    //     // (
+    //     //     IOobject::groupName("deltaLevelSet", alpha_.group()),
+    //     //     fvc::div(phi, levelSet_)
+    //     //   - levelSet_*fvc::div(phi)
+    //     // );
+    //     //
+    //     // this->storeAndBlendOld(levelSet_, false);
+    //     // this->storeAndBlendDelta(deltaLevelSet);
+    //     // levelSet_ -= mesh_.time().deltaT()*deltaLevelSet;
+    //     // levelSet_.correctBoundaryConditions();
+    //     //
+    //     // Info<<levelSet_.average().value()<<endl;
+    //
+    //     // H_ = calcH(levelSet_);
+    //     // volScalarField levelSet(calcLevelSet(H_));
+    //     dimensionedScalar dTau(dimLength, 0.1*min(meshSizeObject::New(mesh_).dx()));
+    //     label nIter(epsilon_.value()/dTau.value());
+    //     volScalarField S0("S0", sign(levelSet_));
+    //     volScalarField nearInterface(this->nearInterface());
+    //     if (mesh_.time().outputTime())
+    //     {
+    //         nearInterface.write();
+    //     }
+    //     for (label i = 0; i < nIter; i++)
+    //     {
+    //     //     levelSet.storePrevIter();
+    //         levelSet_ += S0*(1.0 - mag(fvc::grad(levelSet_)))*dTau*nearInterface;
+    //     }
+    //     //     levelSet.correctBoundaryConditions();
+    // //
+    // //         // // levelSet_ += S0*(1.0 - mag(fvc::grad(levelSet_)));
+    // //         //
+    // //         // // volVectorField gradLevelSet(fvc::grad(levelSet_));
+    // //         // // levelSet_ -= 0.5*S0*(1.0 - mag(gradLevelSet))/fvc::laplacian(S0, levelSet_);
+    // //         //
+    // //         // surfaceVectorField gradLevelSetf
+    // //         // (
+    // //         //     upwind<vector>(mesh_, fvc::interpolate(S0)).interpolate
+    // //         //     (
+    // //         //         fvc::grad(levelSet_)
+    // //         //     )
+    // //         // );
+    // //         // volVectorField gradLevelSet(fvc::grad(levelSet_));
+    // //         //
+    // //         // surfaceScalarField w
+    // //         // (
+    // //         //     "w",
+    // //         //     ((gradLevelSetf/max(mag(gradLevelSetf), small)) & mesh_.Sf())*S0f
+    // //         // );
+    // //         // volScalarField divW(fvc::div(w));
+    // //         // // forAll(divW, celli)
+    // //         // // {
+    // //         // //     divW[celli] = stabilise(divW[celli], 1e-10);
+    // //         // // }
+    // //         //
+    // //         // // levelSet_ -=
+    // //         // //     (fvc::div(w, levelSet_) - fvc::div(w)*levelSet_ - S0)
+    // //         // //    *dimensionedScalar(dimLength, 0.5);
+    // //         // fvScalarMatrix levelSetEqn
+    // //         // (
+    // //         //     fvm::SuSp(volScalarField::New("one", mesh_, dx), levelSet_)
+    // //         //   + fvm::div(w, levelSet_)
+    // //         //   - fvm::Sp(divW, levelSet_)
+    // //         //  ==
+    // //         //     S0
+    // //         // );
+    // //         // levelSetEqn.relax(0.5);
+    // //         // //
+    // //         // //
+    // //         // levelSetEqn.solve();
+    // //         // // levelSet_.relax(0.5);
+    // //         // Info<<levelSet_.average().value()<<" "<<(mag(levelSet_-levelSet_.prevIter()))().average().value()<<endl;
+    // //         Info<<max(mag(mag(fvc::grad(levelSet))-1.0)).value()<<endl;
+    // //     }
+    //     // H_ = calcH(levelSet);
+    // //
+    //     correct(true);
+    // }
+    // // FatalErrorInFunctfion<<exit(FatalError);
+    // // Info<<levelSet_.average()<<endl;
+}
+
+
+void Foam::levelSetModel::postUpdate()
+{}
+
 
 // ************************************************************************* //

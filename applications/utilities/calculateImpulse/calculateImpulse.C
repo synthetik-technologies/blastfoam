@@ -32,6 +32,7 @@ Description
 #include "IFstream.H"
 #include "OFstream.H"
 #include "SortableList.H"
+#include "scalarField.H"
 
 using namespace Foam;
 

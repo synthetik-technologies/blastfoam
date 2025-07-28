@@ -42,12 +42,12 @@ Foam::scalar Foam::CICSAM::limiter
 (
     const scalar cdWeight,
     const scalar faceFlux,
-    const scalar& phiP,
-    const scalar& phiN,
+    const scalar phiP,
+    const scalar phiN,
     const vector& gradcP,
     const vector& gradcN,
     const scalar Cof,
-    const vector d
+    const vector& d
 ) const
 {
     // Additional stabilisation for phi out of bounds
@@ -74,14 +74,14 @@ Foam::scalar Foam::CICSAM::limiter
     );
 
     // Calculate CICSAM face value
-    scalar phif = w*phiP + (1 - w)*phiN;
+    scalar phif = w*phiP + (1.0 - w)*phiN;
 
     // Calculate UD and CD face value
     scalar phiU = faceFlux >= 0 ? phiP : phiN;
-    scalar phiCD = cdWeight*phiP + (1 - cdWeight)*phiN;
+    scalar phiCD = cdWeight*phiP + (1.0 - cdWeight)*phiN;
 
     // Calculate the effective limiter for the CICSAM interpolation
-    scalar CLimiter = (phif - phiU)/stabilise(phiCD - phiU, SMALL);
+    scalar CLimiter = (phif - phiU)/stabilise(phiCD - phiU, small);
 
     // Limit the limiter between upwind and downwind
     return max(min(CLimiter, 2), 0);
@@ -92,25 +92,25 @@ Foam::scalar Foam::CICSAM::weight
 (
     const scalar cdWeight,
     const scalar faceFlux,
-    const scalar& phiP,
-    const scalar& phiN,
+    const scalar phiP,
+    const scalar phiN,
     const vector& gradcP,
     const vector& gradcN,
     const scalar Cof,
-    const vector d
+    const vector& d
 ) const
 {
     // Additional 0-1 stabilisation.  HJ, 23/Nov/2011
     if
     (
-        (faceFlux > 0 && (phiP < lowerBound_ || phiN > upperBound_))
+        (faceFlux > 0 && (phiP <= lowerBound_ || phiN >= upperBound_))
     )
     {
         return 1;
     }
     else if
     (
-        (faceFlux < 0 && (phiN < lowerBound_ || phiP > upperBound_))
+        (faceFlux < 0 && (phiN <= lowerBound_ || phiP >= upperBound_))
     )
     {
         return 0;
@@ -125,69 +125,73 @@ Foam::scalar Foam::CICSAM::weight
 
     if (faceFlux > 0)
     {
-        costheta = mag((gradcP & d)/(mag(gradcP)*mag(d) + SMALL));
+        costheta = mag((gradcP & d)/(mag(gradcP)*mag(d) + small));
 
-        phiupw = phiN - 2*(gradcP & d);
+        phiupw = phiN - 2.0*(gradcP & d);
 
-        phiupw = max(min(phiupw, 1.0), 0.0);
+        phiupw = max(min(phiupw, 1), 0);
 
         if ((phiN - phiupw) > 0)
         {
-            phict = (phiP - phiupw)/(phiN - phiupw + SMALL);
+            phict = (phiP - phiupw)/(phiN - phiupw + small);
         }
         else
         {
-            phict = (phiP - phiupw)/(phiN - phiupw - SMALL);
+            phict = (phiP - phiupw)/(phiN - phiupw - small);
         }
     }
     else
     {
-        costheta = mag((gradcN & d)/(mag(gradcN)*mag(d) + SMALL));
+        costheta = mag((gradcN & d)/(mag(gradcN)*mag(d) + small));
 
-        phiupw = phiP + 2*(gradcN & d);
+        phiupw = phiP + 2.0*(gradcN & d);
 
-        phiupw = max(min(phiupw, 1.0), 0.0);
+        phiupw = max(min(phiupw, 1), 0);
 
         if ((phiP - phiupw) > 0)
         {
-            phict = (phiN - phiupw)/(phiP - phiupw + SMALL);
+            phict = (phiN - phiupw)/(phiP - phiupw + small);
         }
         else
         {
-            phict = (phiN - phiupw)/(phiP - phiupw - SMALL);
+            phict = (phiN - phiupw)/(phiP - phiupw - small);
         }
     }
 
 
     // Calculate the weighting factors for CICSAM
 
-    scalar cicsamFactor = (k_ + SMALL)/(1 - k_ + SMALL);
+    scalar cicsamFactor = (k_ + small)/(1 - k_ + small);
 
-    costheta = min(1.0, cicsamFactor*(costheta));
-    costheta = (cos(2*(acos(costheta))) + 1)/2;
+    costheta = min(1, cicsamFactor*(costheta));
+    costheta = (cos(2.0*(acos(costheta))) + 1.0)/2.0;
 
-    scalar k1 = (3*Cof*Cof - 3*Cof)/(2*Cof*Cof + 6*Cof - 8);
+    scalar k1 = 3.0*Cof*(Cof - 1.0)/(2.0*Cof*Cof + 6.0*Cof - 8.0);
     scalar k2 = Cof;
-    scalar k3 = (3*Cof + 5)/(2*Cof + 6);
+    scalar k3 = (3.0*Cof + 5.0)/(2.0*Cof + 6.0);
     scalar weight;
 
-    if (phict > 0 && phict <= k1)             // use blended scheme 1
+    if (phict == 1)
     {
-        scalar phifCM = phict/(Cof + SMALL);
-        weight = (phifCM - phict)/(1 - phict);
+        weight = phict >= k3 ? 1 : 0;
+    }
+    else if (phict > 0 && phict <= k1)      // use blended scheme 1
+    {
+        scalar phifCM = phict/(Cof + small);
+        weight = (phifCM - phict)/(1.0 - phict);
     }
     else if (phict > k1 && phict <= k2)     // use blended scheme 2
     {
-        scalar phifHC = phict/(Cof + SMALL);
-        scalar phifUQ = (8*Cof*phict + (1 - Cof)*(6*phict + 3))/8;
-        scalar phifCM = costheta*phifHC + (1 - costheta)*phifUQ;
-        weight = (phifCM - phict)/(1 - phict);
+        scalar phifHC = phict/(Cof + small);
+        scalar phifUQ = (8.0*Cof*phict + (1.0 - Cof)*(6.0*phict + 3.0))/8.0;
+        scalar phifCM = costheta*phifHC + (1.0 - costheta)*phifUQ;
+        weight = (phifCM - phict)/(1.0 - phict);
     }
-    else if (phict > k2 && phict < k3)     // use blended scheme 3
+    else if (phict > k2 && phict < k3)      // use blended scheme 3
     {
-        scalar phifUQ = (8*Cof*phict + (1 - Cof)*(6*phict + 3))/8;
-        scalar phifCM = costheta + (1 - costheta)*phifUQ;
-        weight = (phifCM - phict)/(1 - phict);
+        scalar phifUQ = (8.0*Cof*phict + (1.0 - Cof)*(6.0*phict + 3.0))/8.0;
+        scalar phifCM = costheta + (1.0 - costheta)*phifUQ;
+        weight = (phifCM - phict)/(1.0 - phict);
     }
     else if (phict >= k3 && phict <= 1)     // use downwind
     {
@@ -221,14 +225,9 @@ Foam::tmp<Foam::surfaceScalarField> Foam::CICSAM::limiter
 
     tmp<surfaceScalarField> tLimiter
     (
-        new surfaceScalarField
+        surfaceScalarField::New
         (
-            IOobject
-            (
-                type() + "Limiter(" + phi.name() + ')',
-                mesh.time().timeName(),
-                mesh
-            ),
+            type() + "Limiter(" + phi.name() + ')',
             mesh,
             dimless
         )
@@ -239,19 +238,10 @@ Foam::tmp<Foam::surfaceScalarField> Foam::CICSAM::limiter
 
     volVectorField gradc(fvc::grad(phi));
 
-/*
-    surfaceScalarField Cof =
-        mesh.time().deltaT()
-       *upwind<scalar>(mesh, faceFlux_).interpolate
-        (
-            fvc::surfaceIntegrate(faceFlux_)
-        );
-*/
-
     surfaceScalarField Cof
     (
-        0.5 * mesh.time().deltaT()
-        *upwind<scalar>(mesh, faceFlux_).interpolate
+        0.5*mesh.time().deltaT()
+       *upwind<scalar>(mesh, faceFlux_).interpolate
         (
             fvc::surfaceIntegrate(mag(faceFlux_))
         )
@@ -265,7 +255,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::CICSAM::limiter
 
     const vectorField& C = mesh.C();
 
-    scalarField& pLim = lim.ref();
+    scalarField& pLim = lim.primitiveFieldRef();
 
     forAll(pLim, faceI)
     {
@@ -346,124 +336,6 @@ Foam::tmp<Foam::surfaceScalarField> Foam::CICSAM::limiter
     }
 
     return tLimiter;
-}
-
-
-
-Foam::tmp<Foam::surfaceScalarField> Foam::CICSAM::weights
-(
-    const volScalarField& phi
-) const
-{
-    const fvMesh& mesh = this->mesh();
-
-    tmp<surfaceScalarField> tWeightingFactors
-    (
-        new surfaceScalarField(mesh.surfaceInterpolation::weights())
-    );
-    //Note: Changing this line may mess up conversion to old API style
-    surfaceScalarField& weightingFactors = tWeightingFactors.ref();
-
-    volVectorField gradc(fvc::grad(phi));
-
-    surfaceScalarField Cof
-    (
-        mesh.time().deltaT()
-       *upwind<scalar>(mesh, faceFlux_).interpolate
-        (
-            fvc::surfaceIntegrate(faceFlux_)
-        )
-    );
-
-    const surfaceScalarField& CDweights = mesh.surfaceInterpolation::weights();
-
-    const UList<label>& owner = mesh.owner();
-    const UList<label>& neighbour = mesh.neighbour();
-
-    const vectorField& C = mesh.C();
-
-    scalarField& w = weightingFactors.ref();
-
-    forAll(w, faceI)
-    {
-        label own = owner[faceI];
-        label nei = neighbour[faceI];
-
-        w[faceI] = weight
-        (
-            CDweights[faceI],
-            this->faceFlux_[faceI],
-            phi[own],
-            phi[nei],
-            gradc[own],
-            gradc[nei],
-            Cof[faceI],
-            C[nei] - C[own]
-        );
-    }
-
-    surfaceScalarField::Boundary& bWeights =
-        weightingFactors.boundaryFieldRef();
-
-    forAll(bWeights, patchi)
-    {
-        scalarField& pWeights = bWeights[patchi];
-
-        if (bWeights[patchi].coupled())
-        {
-            const scalarField& pCDweights = CDweights.boundaryField()[patchi];
-
-            const scalarField& pFaceFlux =
-                this->faceFlux_.boundaryField()[patchi];
-
-            scalarField pphiP
-            (
-                phi.boundaryField()[patchi].patchInternalField()
-            );
-
-            scalarField pphiN
-            (
-                phi.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            vectorField pGradcP
-            (
-                gradc.boundaryField()[patchi].patchInternalField()
-            );
-
-            vectorField pGradcN
-            (
-                gradc.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            const scalarField& pCof = Cof.boundaryField()[patchi];
-
-            // Build the d-vectors
-            // Better version of d-vectors: Zeljko Tukovic, 25/Apr/2010
-            vectorField pd(bWeights[patchi].patch().delta());
-
-            forAll(pWeights, faceI)
-            {
-                pWeights[faceI] = weight
-                (
-                    pCDweights[faceI],
-                    pFaceFlux[faceI],
-                    pphiP[faceI],
-                    pphiN[faceI],
-                    pGradcP[faceI],
-                    pGradcN[faceI],
-                    pCof[faceI],
-                    pd[faceI]
-                );
-            }
-        }
-        else
-        {
-            pWeights = 1.0;
-        }
-    }
-
-    return tWeightingFactors;
 }
 
 

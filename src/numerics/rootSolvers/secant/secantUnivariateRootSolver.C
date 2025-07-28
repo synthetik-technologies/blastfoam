@@ -30,31 +30,22 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(secantUnivariateRootSolver, 0);
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        secantUnivariateRootSolver,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        secantUnivariateRootSolver,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        secantUnivariateRootSolver,
-        dictionaryTwo
-    );
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(secant, 0);
+    addToRunTimeSelectionTable(univariateRootSolver, secant, dictionaryZero);
+    addToRunTimeSelectionTable(univariateRootSolver, secant, dictionaryOne);
+    addToRunTimeSelectionTable(univariateRootSolver, secant, dictionaryTwo);
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::secantUnivariateRootSolver::secantUnivariateRootSolver
+Foam::rootSolvers::univariate::secant::secant
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -64,15 +55,25 @@ Foam::secantUnivariateRootSolver::secantUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::secant::secant
+(
+    const scalarMultivariateEquation& eqn,
+    const secant& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::secantUnivariateRootSolver::~secantUnivariateRootSolver()
+Foam::rootSolvers::univariate::secant::~secant()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::secantUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::secant::findRoot
 (
     const scalar x0,
     const scalar x1,

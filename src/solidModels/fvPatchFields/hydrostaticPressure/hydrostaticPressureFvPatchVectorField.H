@@ -40,6 +40,7 @@ SourceFiles
 #define hydrostaticPressureFvPatchVectorField_H
 
 #include "fvPatchFields.H"
+#include "Function1.H"
 #include "solidTractionFvPatchVectorField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -63,6 +64,10 @@ class hydrostaticPressureFvPatchVectorField
 
     //- Reference density
     scalar rho_;
+
+    //- Optional pressure vs height function
+    autoPtr<Function1<scalar>> phFunc_;
+
 
 public:
 
@@ -94,7 +99,7 @@ public:
             const hydrostaticPressureFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy
@@ -123,7 +128,10 @@ public:
         }
 
         //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
+        virtual bool updateFields();
+
+        //- Write
+        virtual void write(Ostream&) const;
 };
 
 

@@ -105,7 +105,7 @@ public:
             const fixedDisplacementZeroShearFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy
@@ -143,18 +143,16 @@ public:
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
-            (
-                const fvPatchFieldMapper&
-            );
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
+            //- Map the given fvPatchField onto this fvPatchField
+            virtual void map
             (
                 const fvPatchField<vector>&,
-                const labelList&
+                const fieldMapper&
             );
+
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset(const fvPatchField<vector>&);
 
 
         // Evaluation functions

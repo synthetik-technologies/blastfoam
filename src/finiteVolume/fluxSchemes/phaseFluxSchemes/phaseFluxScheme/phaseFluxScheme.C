@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -38,15 +38,17 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluxScheme::phaseFluxScheme
-(
-    const fvMesh& mesh,
-    const word& name
-)
+Foam::phaseFluxScheme::phaseFluxScheme(const surfaceScalarField& phi)
 :
-    fluxSchemeBase(mesh, name),
-    dict_(mesh.schemesDict().subDict("fluxSchemes").subDict(name)),
-    phases_(1, name)
+    fluxSchemeBase(phi),
+    phaseName_(phi.group()),
+    dict_
+    (
+        phi.mesh().schemes().dict().subDict
+        (
+            "fluxSchemes"
+        ).subDict(phaseName_)
+    )
 {}
 
 
@@ -76,8 +78,8 @@ void Foam::phaseFluxScheme::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("fluxScheme::Uf", this->group()),
-                mesh_.time().timeName(),
+                fieldName("Uf"),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -90,8 +92,8 @@ void Foam::phaseFluxScheme::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("fluxScheme::pf", this->group()),
-                mesh_.time().timeName(),
+                fieldName("pf"),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -104,8 +106,8 @@ void Foam::phaseFluxScheme::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("phaseFluxScheme::alphaf", this->group()),
-                mesh_.time().timeName(),
+                fieldName("alphaf"),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -121,7 +123,7 @@ Foam::tmp<Foam::surfaceVectorField> Foam::phaseFluxScheme::Uf() const
         return Uf_();
     }
     FatalErrorInFunction
-        << IOobject::groupName("phaseFluxScheme::Uf", this->group())
+        << fieldName("Uf")
         << " has not been set." << nl
         << abort(FatalError);
 
@@ -136,7 +138,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::pf() const
         return pf_();
     }
     FatalErrorInFunction
-        << IOobject::groupName("phaseFluxScheme::pf", this->group())
+        << fieldName("pf")
         << " has not been set." << nl
         << abort(FatalError);
 
@@ -151,11 +153,161 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::alphaf() const
         return alphaf_();
     }
     FatalErrorInFunction
-        << IOobject::groupName("phaseFluxScheme::alphaf", this->group())
+        << fieldName("alphaf")
         << " has not been set." << nl
         << abort(FatalError);
 
     return alphaf_;
+}
+
+
+void Foam::phaseFluxScheme::update
+(
+    const surfaceScalarField& alphaOwn,
+    const surfaceScalarField& alphaNei,
+    const surfaceScalarField& rhoOwn,
+    const surfaceScalarField& rhoNei,
+    const volVectorField& U,
+    const volScalarField& e,
+    const volScalarField& p,
+    const volScalarField& c,
+    surfaceScalarField& phi,
+    surfaceScalarField& alphaPhi,
+    surfaceScalarField& alphaRhoPhi,
+    surfaceVectorField& alphaRhoUPhi,
+    surfaceScalarField& alphaRhoEPhi
+)
+{
+    createSavedFields();
+
+    autoPtr<ReconstructionScheme<vector>> ULimiter
+    (
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> eLimiter
+    (
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> pLimiter
+    (
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
+    );
+    autoPtr<ReconstructionScheme<scalar>> cLimiter
+    (
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
+    );
+
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::ownName(IOobject::groupName("alphaRho", phaseName_))
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::ownName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
+            alphaOwn*rhoOwn
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::neiName(IOobject::groupName("alphaRho", phaseName_))
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::neiName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
+            alphaNei*rhoNei
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
+
+    tmp<surfaceVectorField> tUOwn;
+    tmp<surfaceVectorField> tUNei;
+    ULimiter->interpolateOwnNei(tUOwn, tUNei);
+    const surfaceVectorField& UOwn = tUOwn();
+    const surfaceVectorField& UNei = tUNei();
+
+    tmp<surfaceScalarField> teOwn;
+    tmp<surfaceScalarField> teNei;
+    eLimiter->interpolateOwnNei(teOwn, teNei);
+    const surfaceScalarField& eOwn = teOwn();
+    const surfaceScalarField& eNei = teNei();
+
+    tmp<surfaceScalarField> tpOwn;
+    tmp<surfaceScalarField> tpNei;
+    pLimiter->interpolateOwnNei(tpOwn, tpNei);
+    const surfaceScalarField& pOwn = tpOwn();
+    const surfaceScalarField& pNei = tpNei();
+
+    tmp<surfaceScalarField> tcOwn;
+    tmp<surfaceScalarField> tcNei;
+    cLimiter->interpolateOwnNei(tcOwn, tcNei);
+    const surfaceScalarField& cOwn = tcOwn();
+    const surfaceScalarField& cNei = tcNei();
+
+    preUpdate(p);
+    forAll(UOwn, facei)
+    {
+        calculateFluxes
+        (
+            alphaOwn[facei], alphaNei[facei],
+            rhoOwn[facei], rhoNei[facei],
+            UOwn[facei], UNei[facei],
+            eOwn[facei], eNei[facei],
+            pOwn[facei], pNei[facei],
+            cOwn[facei], cNei[facei],
+            mesh_.Sf()[facei],
+            phi[facei],
+            alphaPhi[facei],
+            alphaRhoPhi[facei],
+            alphaRhoUPhi[facei],
+            alphaRhoEPhi[facei],
+            facei
+        );
+    }
+
+    forAll(U.boundaryField(), patchi)
+    {
+        forAll(U.boundaryField()[patchi], facei)
+        {
+            calculateFluxes
+            (
+                alphaOwn.boundaryField()[patchi][facei],
+                alphaNei.boundaryField()[patchi][facei],
+                rhoOwn.boundaryField()[patchi][facei],
+                rhoNei.boundaryField()[patchi][facei],
+                UOwn.boundaryField()[patchi][facei],
+                UNei.boundaryField()[patchi][facei],
+                eOwn.boundaryField()[patchi][facei],
+                eNei.boundaryField()[patchi][facei],
+                pOwn.boundaryField()[patchi][facei],
+                pNei.boundaryField()[patchi][facei],
+                cOwn.boundaryField()[patchi][facei],
+                cNei.boundaryField()[patchi][facei],
+                mesh_.Sf().boundaryField()[patchi][facei],
+                phi.boundaryFieldRef()[patchi][facei],
+                alphaPhi.boundaryFieldRef()[patchi][facei],
+                alphaRhoPhi.boundaryFieldRef()[patchi][facei],
+                alphaRhoUPhi.boundaryFieldRef()[patchi][facei],
+                alphaRhoEPhi.boundaryFieldRef()[patchi][facei],
+                facei, patchi
+            );
+        }
+    }
+    postUpdate();
 }
 
 
@@ -174,151 +326,64 @@ void Foam::phaseFluxScheme::update
     surfaceScalarField& alphaRhoEPhi
 )
 {
-    createSavedFields();
-
     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
     (
-        ReconstructionScheme<scalar>::New(alpha, "alpha")
+        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        ReconstructionScheme<scalar>::New(rho, "rho")
+        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U")
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e")
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p")
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound")
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
     );
 
     tmp<surfaceScalarField> talphaOwn;
     tmp<surfaceScalarField> talphaNei;
     alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
-    const surfaceScalarField& alphaOwn = talphaOwn();
-    const surfaceScalarField& alphaNei = talphaNei();
 
     tmp<surfaceScalarField> trhoOwn;
     tmp<surfaceScalarField> trhoNei;
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
-    const surfaceScalarField& rhoOwn = trhoOwn();
-    const surfaceScalarField& rhoNei = trhoNei();
 
-    tmp<surfaceVectorField> tUOwn;
-    tmp<surfaceVectorField> tUNei;
-    ULimiter->interpolateOwnNei(tUOwn, tUNei);
-    const surfaceVectorField& UOwn = tUOwn();
-    const surfaceVectorField& UNei = tUNei();
-
-    tmp<surfaceScalarField> teOwn;
-    tmp<surfaceScalarField> teNei;
-    eLimiter->interpolateOwnNei(teOwn, teNei);
-    const surfaceScalarField& eOwn = teOwn();
-    const surfaceScalarField& eNei = teNei();
-
-    tmp<surfaceScalarField> tpOwn;
-    tmp<surfaceScalarField> tpNei;
-    pLimiter->interpolateOwnNei(tpOwn, tpNei);
-    const surfaceScalarField& pOwn = tpOwn();
-    const surfaceScalarField& pNei = tpNei();
-
-    tmp<surfaceScalarField> tcOwn;
-    tmp<surfaceScalarField> tcNei;
-    cLimiter->interpolateOwnNei(tcOwn, tcNei);
-    const surfaceScalarField& cOwn = tcOwn();
-    const surfaceScalarField& cNei = tcNei();
-
-    preUpdate(p);
-    forAll(UOwn, facei)
-    {
-        if (alphaOwn[facei] < 1e-10 && alphaNei[facei] < 1e-10)
-        {
-            phi[facei] = 0.0;
-            alphaPhi[facei] = 0.0;
-            alphaRhoPhi[facei] = 0.0;
-            alphaRhoUPhi[facei] = Zero;
-            alphaRhoEPhi[facei] = 0.0;
-        }
-        else
-        {
-            calculateFluxes
-            (
-                alphaOwn[facei], alphaNei[facei],
-                rhoOwn[facei], rhoNei[facei],
-                UOwn[facei], UNei[facei],
-                eOwn[facei], eNei[facei],
-                pOwn[facei], pNei[facei],
-                cOwn[facei], cNei[facei],
-                mesh_.Sf()[facei],
-                phi[facei],
-                alphaPhi[facei],
-                alphaRhoPhi[facei],
-                alphaRhoUPhi[facei],
-                alphaRhoEPhi[facei],
-                facei
-            );
-        }
-    }
-
-    forAll(U.boundaryField(), patchi)
-    {
-        forAll(U.boundaryField()[patchi], facei)
-        {
-            if
-            (
-                alphaOwn.boundaryField()[patchi][facei] < 1e-10
-             && alphaNei.boundaryField()[patchi][facei] < 1e-10
-            )
-            {
-                phi.boundaryFieldRef()[patchi][facei] = 0.0;
-                alphaPhi.boundaryFieldRef()[patchi][facei] = 0.0;
-                alphaRhoPhi.boundaryFieldRef()[patchi][facei] = 0.0;
-                alphaRhoUPhi.boundaryFieldRef()[patchi][facei] = Zero;
-                alphaRhoEPhi.boundaryFieldRef()[patchi][facei] = 0.0;
-            }
-            else
-            {
-                calculateFluxes
-                (
-                    alphaOwn.boundaryField()[patchi][facei],
-                    alphaNei.boundaryField()[patchi][facei],
-                    rhoOwn.boundaryField()[patchi][facei],
-                    rhoNei.boundaryField()[patchi][facei],
-                    UOwn.boundaryField()[patchi][facei],
-                    UNei.boundaryField()[patchi][facei],
-                    eOwn.boundaryField()[patchi][facei],
-                    eNei.boundaryField()[patchi][facei],
-                    pOwn.boundaryField()[patchi][facei],
-                    pNei.boundaryField()[patchi][facei],
-                    cOwn.boundaryField()[patchi][facei],
-                    cNei.boundaryField()[patchi][facei],
-                    mesh_.Sf().boundaryField()[patchi][facei],
-                    phi.boundaryFieldRef()[patchi][facei],
-                    alphaPhi.boundaryFieldRef()[patchi][facei],
-                    alphaRhoPhi.boundaryFieldRef()[patchi][facei],
-                    alphaRhoUPhi.boundaryFieldRef()[patchi][facei],
-                    alphaRhoEPhi.boundaryFieldRef()[patchi][facei],
-                    facei, patchi
-                );
-            }
-        }
-    }
-    postUpdate();
+    update
+    (
+        talphaOwn(),
+        talphaNei(),
+        trhoOwn(),
+        trhoNei(),
+        U,
+        e,
+        p,
+        c,
+        phi,
+        alphaPhi,
+        alphaRhoPhi,
+        alphaRhoUPhi,
+        alphaRhoEPhi
+    );
 }
+
 
 void Foam::phaseFluxScheme::update
 (
-    const volScalarField& alpha,
-    const volScalarField& rho,
+    const surfaceScalarField& alphaOwn,
+    const surfaceScalarField& alphaNei,
+    const surfaceScalarField& rhoOwn,
+    const surfaceScalarField& rhoNei,
     const volVectorField& U,
     const volScalarField& e,
     const volScalarField& p,
@@ -330,44 +395,66 @@ void Foam::phaseFluxScheme::update
 )
 {
     createSavedFields();
-    const word phaseName(U.group());
 
-    autoPtr<ReconstructionScheme<scalar>> alphaLimiter
-    (
-        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName)
-    );
-    autoPtr<ReconstructionScheme<scalar>> rhoLimiter
-    (
-        ReconstructionScheme<scalar>::New(rho, "rho", phaseName)
-    );
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U", phaseName)
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e", phaseName)
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p", phaseName)
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName)
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
     );
 
-    tmp<surfaceScalarField> talphaOwn;
-    tmp<surfaceScalarField> talphaNei;
-    alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
-    const surfaceScalarField& alphaOwn = talphaOwn();
-    const surfaceScalarField& alphaNei = talphaNei();
-
-    tmp<surfaceScalarField> trhoOwn;
-    tmp<surfaceScalarField> trhoNei;
-    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
-    const surfaceScalarField& rhoOwn = trhoOwn();
-    const surfaceScalarField& rhoNei = trhoNei();
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::ownName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            )
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::ownName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
+            alphaOwn*rhoOwn
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
+    if
+    (
+        mesh_.cacheTemporaryObject
+        (
+            reconstruction::neiName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            )
+        )
+    )
+    {
+        surfaceScalarField alphaRhoNei
+        (
+            reconstruction::neiName
+            (
+                IOobject::groupName("alphaRho", phaseName_)
+            ),
+            alphaNei*rhoNei
+        );
+        mesh_.cacheTemporaryObject(alphaRhoNei);
+    }
 
     tmp<surfaceVectorField> tUOwn;
     tmp<surfaceVectorField> tUNei;
@@ -393,10 +480,10 @@ void Foam::phaseFluxScheme::update
     const surfaceScalarField& cOwn = tcOwn();
     const surfaceScalarField& cNei = tcNei();
 
+    scalar alphaPhi;
     preUpdate(p);
     forAll(UOwn, facei)
     {
-        scalar alphaPhi;
         calculateFluxes
         (
             alphaOwn[facei], alphaNei[facei],
@@ -419,15 +506,6 @@ void Foam::phaseFluxScheme::update
     {
         forAll(U.boundaryField()[patchi], facei)
         {
-            if
-            (
-                alphaOwn.boundaryField()[patchi][facei] < 1e-10
-             && alphaNei.boundaryField()[patchi][facei] < 1e-10
-            )
-            {
-                continue;
-            }
-            scalar alphaPhi;
             calculateFluxes
             (
                 alphaOwn.boundaryField()[patchi][facei],
@@ -458,286 +536,67 @@ void Foam::phaseFluxScheme::update
 
 void Foam::phaseFluxScheme::update
 (
-    const UPtrList<volScalarField>& alphas,
-    const UPtrList<volScalarField>& rhos,
+    const volScalarField& alpha,
+    const volScalarField& rho,
     const volVectorField& U,
     const volScalarField& e,
     const volScalarField& p,
     const volScalarField& c,
     surfaceScalarField& phi,
-    surfaceScalarField& alphaPhi,
     surfaceScalarField& alphaRhoPhi,
-    PtrList<surfaceScalarField>& alphaPhis,
-    PtrList<surfaceScalarField>& alphaRhoPhis,
     surfaceVectorField& alphaRhoUPhi,
     surfaceScalarField& alphaRhoEPhi
 )
 {
-    createSavedFields();
-    const word phaseName(U.group());
-
-    // Interpolate fields
-    PtrList<surfaceScalarField> alphasOwn(alphas.size());
-    PtrList<surfaceScalarField> alphasNei(alphas.size());
-
-    PtrList<surfaceScalarField> rhosOwn(alphas.size());
-    PtrList<surfaceScalarField> rhosNei(alphas.size());
-
-    surfaceScalarField alphaOwn
+    autoPtr<ReconstructionScheme<scalar>> alphaLimiter
     (
-        IOobject
-        (
-            IOobject::groupName("alphaOwn", phaseName),
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_,
-        dimensionedScalar("0", dimless, 0.0)
+        ReconstructionScheme<scalar>::New(alpha, "alpha", phaseName_, true)
     );
-    surfaceScalarField alphaNei
+    autoPtr<ReconstructionScheme<scalar>> rhoLimiter
     (
-        IOobject
-        (
-            IOobject::groupName("alphaNei", phaseName),
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_,
-        dimensionedScalar("0", dimless, 0.0)
+        ReconstructionScheme<scalar>::New(rho, "rho", phaseName_, true)
     );
-
-    surfaceScalarField rhoOwn
-    (
-        IOobject
-        (
-            IOobject::groupName("rhoNei", phaseName),
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_,
-        dimensionedScalar("0", dimDensity, 0.0)
-    );
-    surfaceScalarField rhoNei
-    (
-        IOobject
-        (
-            IOobject::groupName("rhoNei", phaseName),
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        mesh_,
-        dimensionedScalar("0", dimDensity, 0.0)
-    );
-
-    forAll(alphas, phasei)
-    {
-        const word phaseNamei(alphas[phasei].group());
-        autoPtr<ReconstructionScheme<scalar>> alphaLimiter
-        (
-            ReconstructionScheme<scalar>::New
-            (
-                alphas[phasei],
-                "alpha",
-                phaseNamei
-            )
-        );
-        tmp<surfaceScalarField> talphaOwn;
-        tmp<surfaceScalarField> talphaNei;
-        alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
-        alphasOwn.set(phasei, talphaOwn);
-        alphasNei.set(phasei, talphaNei);
-        alphaOwn += alphasOwn[phasei];
-        alphaNei += alphasNei[phasei];
-
-        autoPtr<ReconstructionScheme<scalar>> rhoLimiter
-        (
-            ReconstructionScheme<scalar>::New
-            (
-                rhos[phasei],
-                "rho",
-                phaseNamei
-            )
-        );
-        tmp<surfaceScalarField> trhoIOwn;
-        tmp<surfaceScalarField> trhoINei;
-        rhoLimiter->interpolateOwnNei(trhoIOwn, trhoINei);
-        rhosOwn.set(phasei, trhoIOwn);
-        rhosNei.set(phasei, trhoINei);
-
-        rhoOwn += alphasOwn[phasei]*rhosOwn[phasei];
-        rhoNei += alphasNei[phasei]*rhosNei[phasei];
-    }
-    rhoOwn /= max(alphaOwn, 1e-10);
-    rhoNei /= max(alphaNei, 1e-10);
-
     autoPtr<ReconstructionScheme<vector>> ULimiter
     (
-        ReconstructionScheme<vector>::New(U, "U", phaseName)
+        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> eLimiter
     (
-        ReconstructionScheme<scalar>::New(e, "e", phaseName)
+        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> pLimiter
     (
-        ReconstructionScheme<scalar>::New(p, "p", phaseName)
+        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
     );
     autoPtr<ReconstructionScheme<scalar>> cLimiter
     (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName)
+        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
     );
 
-    tmp<surfaceVectorField> tUOwn;
-    tmp<surfaceVectorField> tUNei;
-    ULimiter->interpolateOwnNei(tUOwn, tUNei);
-    const surfaceVectorField& UOwn = tUOwn();
-    const surfaceVectorField& UNei = tUNei();
+    tmp<surfaceScalarField> talphaOwn;
+    tmp<surfaceScalarField> talphaNei;
+    alphaLimiter->interpolateOwnNei(talphaOwn, talphaNei);
 
-    tmp<surfaceScalarField> teOwn;
-    tmp<surfaceScalarField> teNei;
-    eLimiter->interpolateOwnNei(teOwn, teNei);
-    const surfaceScalarField& eOwn = teOwn();
-    const surfaceScalarField& eNei = teNei();
+    tmp<surfaceScalarField> trhoOwn;
+    tmp<surfaceScalarField> trhoNei;
+    rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
 
-    tmp<surfaceScalarField> tpOwn;
-    tmp<surfaceScalarField> tpNei;
-    pLimiter->interpolateOwnNei(tpOwn, tpNei);
-    const surfaceScalarField& pOwn = tpOwn();
-    const surfaceScalarField& pNei = tpNei();
-
-    tmp<surfaceScalarField> tcOwn;
-    tmp<surfaceScalarField> tcNei;
-    cLimiter->interpolateOwnNei(tcOwn, tcNei);
-    const surfaceScalarField& cOwn = tcOwn();
-    const surfaceScalarField& cNei = tcNei();
-
-    preUpdate(p);
-    forAll(UOwn, facei)
-    {
-        if (alphaOwn[facei] < small && alphaNei[facei] < small)
-        {
-            continue;
-        }
-        scalarList alphasiOwn(alphas.size());
-        scalarList alphasiNei(alphas.size());
-        scalarList rhosiOwn(alphas.size());
-        scalarList rhosiNei(alphas.size());
-
-        scalarList alphaPhisi(alphas.size());
-        scalarList alphaRhoPhisi(alphas.size());
-
-        forAll(alphas, phasei)
-        {
-            alphasiOwn[phasei] = alphasOwn[phasei][facei];
-            alphasiNei[phasei] = alphasNei[phasei][facei];
-            rhosiOwn[phasei] = rhosOwn[phasei][facei];
-            rhosiNei[phasei] = rhosNei[phasei][facei];
-        }
-
-        calculateFluxes
-        (
-            alphaOwn[facei], alphaNei[facei],
-            rhoOwn[facei], rhoNei[facei],
-            alphasiOwn, alphasiNei,
-            rhosiOwn, rhosiNei,
-            UOwn[facei], UNei[facei],
-            eOwn[facei], eNei[facei],
-            pOwn[facei], pNei[facei],
-            cOwn[facei], cNei[facei],
-            mesh_.Sf()[facei],
-            phi[facei],
-            alphaPhisi,
-            alphaRhoPhisi,
-            alphaRhoUPhi[facei],
-            alphaRhoEPhi[facei],
-            facei
-        );
-
-        alphaRhoPhi[facei] = 0.0;
-        alphaPhi[facei] = 0.0;
-        forAll(alphas, phasei)
-        {
-            alphaPhis[phasei][facei] = alphaPhisi[phasei];
-            alphaRhoPhis[phasei][facei] = alphaRhoPhisi[phasei];
-            alphaRhoPhi[facei] += alphaRhoPhisi[phasei];
-            alphaPhi[facei] += alphaPhisi[phasei];
-        }
-    }
-
-    forAll(U.boundaryField(), patchi)
-    {
-        forAll(U.boundaryField()[patchi], facei)
-        {
-            if
-            (
-                alphaOwn.boundaryField()[patchi][facei] < small
-             && alphaNei.boundaryField()[patchi][facei] < small)
-            {
-                continue;
-            }
-            scalarList alphasiOwn(alphas.size());
-            scalarList alphasiNei(alphas.size());
-            scalarList rhosiOwn(alphas.size());
-            scalarList rhosiNei(alphas.size());
-
-            scalarList alphaPhisi(alphas.size());
-            scalarList alphaRhoPhisi(alphas.size());
-
-            forAll(alphas, phasei)
-            {
-                alphasiOwn[phasei] =
-                    alphasOwn[phasei].boundaryField()[patchi][facei];
-                alphasiNei[phasei] =
-                    alphasNei[phasei].boundaryField()[patchi][facei];
-                rhosiOwn[phasei] =
-                    rhosOwn[phasei].boundaryField()[patchi][facei];
-                rhosiNei[phasei] =
-                    rhosNei[phasei].boundaryField()[patchi][facei];
-            }
-
-            calculateFluxes
-            (
-                alphaOwn.boundaryField()[patchi][facei],
-                alphaNei.boundaryField()[patchi][facei],
-                rhoOwn.boundaryField()[patchi][facei],
-                rhoNei.boundaryField()[patchi][facei],
-                alphasiOwn,
-                alphasiNei,
-                rhosiOwn,
-                rhosiNei,
-                UOwn.boundaryField()[patchi][facei],
-                UNei.boundaryField()[patchi][facei],
-                eOwn.boundaryField()[patchi][facei],
-                eNei.boundaryField()[patchi][facei],
-                pOwn.boundaryField()[patchi][facei],
-                pNei.boundaryField()[patchi][facei],
-                cOwn.boundaryField()[patchi][facei],
-                cNei.boundaryField()[patchi][facei],
-                mesh_.Sf().boundaryField()[patchi][facei],
-                phi.boundaryFieldRef()[patchi][facei],
-                alphaPhisi,
-                alphaRhoPhisi,
-                alphaRhoUPhi.boundaryFieldRef()[patchi][facei],
-                alphaRhoEPhi.boundaryFieldRef()[patchi][facei],
-                facei, patchi
-            );
-
-            alphaPhi.boundaryFieldRef()[patchi][facei] = 0.0;
-            alphaRhoPhi.boundaryFieldRef()[patchi][facei] = 0.0;
-            forAll(alphas, phasei)
-            {
-                alphaPhis[phasei].boundaryFieldRef()[patchi][facei] =
-                    alphaPhisi[phasei];
-                alphaRhoPhis[phasei].boundaryFieldRef()[patchi][facei] =
-                    alphaRhoPhisi[phasei];
-                alphaPhi.boundaryFieldRef()[patchi][facei] +=
-                    alphaPhisi[phasei];
-                alphaRhoPhi.boundaryFieldRef()[patchi][facei] +=
-                    alphaRhoPhisi[phasei];
-            }
-        }
-    }
-    postUpdate();
+    update
+    (
+        talphaOwn(),
+        talphaNei(),
+        trhoOwn(),
+        trhoNei(),
+        U,
+        e,
+        p,
+        c,
+        phi,
+        alphaRhoPhi,
+        alphaRhoUPhi,
+        alphaRhoEPhi
+    );
 }
+
 
 // ************************************************************************* //

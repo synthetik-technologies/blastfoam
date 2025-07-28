@@ -1,0 +1,75 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
+-------------------------------------------------------------------------------
+License
+    This file is derivative work of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "timeIntegratorCoeffs.H"
+#include "dictionary.H"
+
+// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::timeIntegratorCoeffs> Foam::timeIntegratorCoeffs::New
+(
+    const dictionary& dict,
+    const bool embedded
+)
+{
+    ITstream is(dict.lookup("timeIntegrator"));
+    word timeIntegratorType(is);
+    Info<< "Selecting timeIntegrator: " << timeIntegratorType << endl;
+
+    if (embedded)
+    {
+        dictionaryEmbeddedConstructorTable::iterator cstrIter =
+            dictionaryEmbeddedConstructorTablePtr_->find(timeIntegratorType);
+
+        if (cstrIter == dictionaryEmbeddedConstructorTablePtr_->end())
+        {
+            FatalErrorInFunction
+                << "Unknown embedded timeIntegrator type "
+                << timeIntegratorType << endl << endl
+                << "Valid embedded timeIntegrators are : " << endl
+                << dictionaryEmbeddedConstructorTablePtr_->sortedToc()
+                << exit(FatalError);
+        }
+        return cstrIter()(is);
+    }
+    else
+    {
+        dictionaryConstructorTable::iterator cstrIter =
+            dictionaryConstructorTablePtr_->find(timeIntegratorType);
+
+        if (cstrIter == dictionaryConstructorTablePtr_->end())
+        {
+            FatalErrorInFunction
+                << "Unknown timeIntegrator type "
+                << timeIntegratorType << endl << endl
+                << "Valid timeIntegrator types are : " << endl
+                << dictionaryConstructorTablePtr_->sortedToc()
+                << exit(FatalError);
+        }
+        return cstrIter()(is);
+    }
+}
+
+// ************************************************************************* //

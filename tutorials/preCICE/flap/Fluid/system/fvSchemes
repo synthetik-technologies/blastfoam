@@ -8,7 +8,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme AUSM+;
+fluxScheme Kurganov;
 
 ddtSchemes
 {
@@ -35,7 +35,7 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default         cubic;
+    default         linear;
     reconstruct(alpha)  vanLeer;
     reconstruct(rho)    vanLeer;
     reconstruct(U)      vanLeerV;

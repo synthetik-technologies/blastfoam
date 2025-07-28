@@ -40,13 +40,9 @@ namespace phaseFluxSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluxSchemes::HLL::HLL
-(
-    const fvMesh& mesh,
-    const word& name
-)
+Foam::phaseFluxSchemes::HLL::HLL(const surfaceScalarField& phi)
 :
-    phaseFluxScheme(mesh, name)
+    phaseFluxScheme(phi)
 {}
 
 
@@ -80,8 +76,8 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::SOwn", this->group()),
-                mesh_.time().timeName(),
+                fieldName("SOwn"),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -94,8 +90,8 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::SNei", this->group()),
-                mesh_.time().timeName(),
+                fieldName("SNei"),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -108,8 +104,8 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::UvOwn", this->group()),
-                mesh_.time().timeName(),
+                fieldName("UvOwn"),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -122,8 +118,8 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
         (
             IOobject
             (
-                IOobject::groupName("HLL::UvNei", this->group()),
-                mesh_.time().timeName(),
+                fieldName("UvNei"),
+                mesh_.time().name(),
                 mesh_
             ),
             mesh_,
@@ -277,179 +273,9 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
 }
 
 
-void Foam::phaseFluxSchemes::HLL::calculateFluxes
-(
-    const scalar& alphaOwn, const scalar& alphaNei,
-    const scalar& rhoO, const scalar& rhoN,
-    const scalarList& alphasOwn, const scalarList& alphasNei,
-    const scalarList& rhosOwn, const scalarList& rhosNei,
-    const vector& UOwn, const vector& UNei,
-    const scalar& eOwn, const scalar& eNei,
-    const scalar& pOwn, const scalar& pNei,
-    const scalar& cOwn, const scalar& cNei,
-    const vector& Sf,
-    scalar& phi,
-    scalarList& alphaPhis,
-    scalarList& alphaRhoPhis,
-    vector& alphaRhoUPhi,
-    scalar& alphaRhoEPhi,
-    const label facei, const label patchi
-)
-{
-    scalar magSf = mag(Sf);
-    vector normal = Sf/magSf;
-
-    const scalar vMesh(meshPhi(facei, patchi)/magSf);
-    scalar UvOwn((UOwn & normal) - vMesh);
-    scalar UvNei((UNei & normal) - vMesh);
-
-    scalar rhoOwn = max(rhoO, 1e-10);
-    scalar rhoNei = max(rhoN, 1e-10);
-
-    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
-    scalar HOwn(EOwn + pOwn/rhoOwn);
-
-    scalar ENei = eNei + 0.5*magSqr(UNei);
-    scalar HNei(ENei + pNei/rhoNei);
-
-    scalar SOwn(stabilise(min(UvOwn - cOwn, UvNei - cNei), small));
-    scalar SNei(stabilise(max(UvOwn + cOwn, UvNei + cNei), small));
-
-    this->save(facei, patchi, SOwn, SOwn_);
-    this->save(facei, patchi, SNei, SNei_);
-    this->save(facei, patchi, UvOwn, UvOwn_);
-    this->save(facei, patchi, UvNei, UvNei_);
-
-    // Owner values
-    scalar alpha;
-    vector U;
-    scalar p;
-
-    if (SOwn >= 0)
-    {
-        phi = this->save(facei, patchi, UOwn, Uf_) & normal;
-        scalar alphaRhoPhi = alphaOwn*rhoOwn*UvOwn;
-        alphaRhoUPhi = alphaRhoPhi*UOwn + alphaOwn*pOwn*normal;
-        alphaRhoEPhi = alphaRhoPhi*HOwn;
-
-        forAll(alphasOwn, phasei)
-        {
-            alphaPhis[phasei] = alphasOwn[phasei]*UvOwn;
-            alphaRhoPhis[phasei] = alphaPhis[phasei]*rhosOwn[phasei];
-        }
-
-        alpha = alphaOwn;
-        U = UOwn;
-        p = pOwn;
-    }
-    else if (SOwn < 0 && SNei > 0)
-    {
-        const scalar rDeltaS(1.0/(SNei - SOwn));
-
-        const scalar alphaRhoOwn = alphaOwn*rhoOwn;
-        const scalar alphaRhoNei = alphaNei*rhoNei;
-
-        const vector alphaRhoUOwn = alphaRhoOwn*UOwn;
-        const vector alphaRhoUNei = alphaRhoNei*UNei;
-
-        const scalar alphaRhoEOwn = alphaRhoOwn*EOwn;
-        const scalar alphaRhoENei = alphaRhoNei*ENei;
-
-        const scalar alphaRhoPhiOwn = alphaRhoOwn*UvOwn;
-        const scalar alphaRhoPhiNei = alphaRhoNei*UvNei;
-
-        const vector alphaRhoUPhiOwn = alphaRhoUOwn*UvOwn + alphaOwn*pOwn*normal;
-        const vector alphaRhoUPhiNei = alphaRhoUNei*UvNei + alphaNei*pNei*normal;
-
-        const scalar alphaRhoEPhiOwn = alphaRhoPhiOwn*HOwn;
-        const scalar alphaRhoEPhiNei = alphaRhoPhiNei*HNei;
-
-        alphaRhoUPhi =
-            (
-                SNei*alphaRhoUPhiOwn - SOwn*alphaRhoUPhiNei
-              + SOwn*SNei*(alphaRhoUNei - alphaRhoUOwn)
-            )*rDeltaS;
-
-        alphaRhoEPhi =
-            (
-                SNei*alphaRhoEPhiOwn - SOwn*alphaRhoEPhiNei
-              + SOwn*SNei*(alphaRhoENei - alphaRhoEOwn)
-            )*rDeltaS;
-
-        forAll(alphasOwn, phasei)
-        {
-            const scalar alphaRhoIOwn = alphasOwn[phasei]*rhosOwn[phasei];
-            const scalar alphaRhoINei = alphasNei[phasei]*rhosNei[phasei];
-
-            const scalar alphaPhiIOwn = alphasOwn[phasei]*UvOwn;
-            const scalar alphaPhiINei = alphasNei[phasei]*UvNei;
-
-            const scalar alphaRhoPhiIOwn = alphaRhoOwn*UvOwn;
-            const scalar alphaRhoPhiINei = alphaRhoNei*UvNei;
-
-            alphaPhis[phasei] =
-                (
-                    SNei*alphaPhiIOwn - SOwn*alphaPhiINei
-                  + SOwn*SNei*(alphasNei[phasei] - alphasOwn[phasei])
-                )*rDeltaS;
-
-            alphaRhoPhis[phasei] =
-                (
-                    SNei*alphaRhoPhiIOwn - SOwn*alphaRhoPhiINei
-                  + SOwn*SNei*(alphaRhoINei - alphaRhoIOwn)
-                )*rDeltaS;
-        }
-
-        alpha = 0.5*(alphaOwn + alphaNei);
-        U = 0.5*(UOwn + UNei);
-//             (
-//                 SNei*alphaRhoUNei - SOwn*alphaRhoUOwn
-//               + alphaRhoUPhiOwn - alphaRhoUPhiNei
-//             )
-//             /(
-//                 SNei*alphaRhoNei - SOwn*alphaRhoOwn
-//               + alphaRhoPhiOwn - alphaRhoPhiNei
-//             );
-        p = 0.5*(pOwn + pNei);
-    }
-    else
-    {
-        phi = this->save(facei, patchi, UNei, Uf_) & normal;
-        scalar alphaRhoPhi = alphaNei*rhoNei*UvNei;
-        alphaRhoUPhi = alphaRhoPhi*UNei + alphaNei*pNei*normal;
-        alphaRhoEPhi = alphaRhoPhi*HNei;
-
-        forAll(alphasOwn, phasei)
-        {
-            alphaPhis[phasei] = alphasNei[phasei]*UvNei;
-            alphaRhoPhis[phasei] = alphaPhis[phasei]*rhosNei[phasei];
-        }
-
-        alpha = alphaNei;
-        U = UNei;
-        p = pNei;
-    }
-
-    this->save(facei, patchi, alpha, alphaf_);
-    this->save(facei, patchi, U, Uf_);
-    this->save(facei, patchi, p, pf_);
-
-    phi *= magSf;
-    alphaRhoUPhi *= magSf;
-    alphaRhoEPhi *= magSf;
-    alphaRhoEPhi += vMesh*magSf*alpha*p;
-    forAll(alphasOwn, phasei)
-    {
-        alphaPhis[phasei] *= magSf;
-        alphaRhoPhis[phasei] *= magSf;
-    }
-}
-
-
 Foam::scalar Foam::phaseFluxSchemes::HLL::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
-    const bool rho,
     const label facei, const label patchi
 ) const
 {
@@ -472,5 +298,35 @@ Foam::scalar Foam::phaseFluxSchemes::HLL::interpolate
         return fNei;
     }
 }
+
+
+Foam::scalar Foam::phaseFluxSchemes::HLL::calculateFlux
+(
+    const scalar& fOwn, const scalar& fNei,
+    const scalar& phi,
+    const label facei, const label patchi
+) const
+{
+    scalar SOwn = getValue(facei, patchi, SOwn_);
+    scalar SNei = getValue(facei, patchi, SNei_);
+    if (SOwn >= 0)
+    {
+        return fOwn;
+    }
+    else if (SOwn < 0 && SNei >= 0)
+    {
+        return
+            (
+                SNei*fOwn*getValue(facei, patchi, UvOwn_)
+              - SOwn*fNei*getValue(facei, patchi, UvNei_)
+              + SOwn*SNei*(fNei - fOwn)
+            )/(SNei - SOwn);
+    }
+    else
+    {
+        return fNei;
+    }
+}
+
 
 // ************************************************************************* //

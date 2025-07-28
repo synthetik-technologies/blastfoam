@@ -42,9 +42,11 @@ SourceFiles
 #define Function3_H
 
 #include "dictionary.H"
+#include "unitConversion.H"
 #include "tmp.H"
 #include "typeInfo.H"
 #include "Field.H"
+#include "vector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,6 +58,41 @@ template<class Type> class Function3;
 template<class Type> Ostream& operator<<(Ostream&, const Function3<Type>&);
 
 /*---------------------------------------------------------------------------*\
+                 Class Function2s::unitConversions Declaration
+\*---------------------------------------------------------------------------*/
+
+namespace Function3s
+{
+struct unitConversions
+{
+    // Public Data
+
+        //- Unit conversion for x-axis values
+        unitConversion x;
+
+        //- Unit conversion for y-axis values
+        unitConversion y;
+
+        //- Unit conversion for z-axis values
+        unitConversion z;
+
+        //- Unit conversion for result values
+        unitConversion value;
+};
+}
+
+
+// Global Functions
+
+//- Generate an error in an context where unit conversions are not supported
+void assertNoConvertUnits
+(
+    const word& typeName,
+    const Function3s::unitConversions& units,
+    const dictionary& dict
+);
+
+/*---------------------------------------------------------------------------*\
                           Class Function3 Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -64,6 +101,12 @@ class Function3
 :
     public tmp<Function3<Type>>::refCount
 {
+public:
+    // Protected Member Functions
+
+        //- Read the value
+        static Type readValue(const unitConversion& units, Istream& is);
+
 
 protected:
 
@@ -88,9 +131,10 @@ public:
         dictionary,
         (
             const word& name,
+            const Function3s::unitConversions& units,
             const dictionary& dict
         ),
-        (name, dict)
+        (name, units, dict)
     );
 
 
@@ -106,12 +150,24 @@ public:
         virtual tmp<Function3<Type>> clone() const = 0;
 
 
-    //- Selector
-    static autoPtr<Function3<Type>> New
-    (
-        const word& name,
-        const dictionary& dict
-    );
+    //- Selectors
+
+        static autoPtr<Function3<Type>> New
+        (
+            const word& name,
+            const Function3s::unitConversions& units,
+            const dictionary& dict
+        );
+
+        static autoPtr<Function3<Type>> New
+        (
+            const word& name,
+            const unitConversion& xUnits,
+            const unitConversion& yUnits,
+            const unitConversion& zUnits,
+            const unitConversion& valueUnits,
+            const dictionary& dict
+        );
 
 
     //- Destructor
@@ -138,6 +194,9 @@ public:
             const scalarField& y,
             const scalarField& z
         ) const = 0;
+
+        //- Return value as a function of two scalar fields
+        virtual tmp<Field<Type>> value(const Field<vector>& X) const = 0;
 
         //- Write in dictionary format
         virtual void write(Ostream& os) const = 0;
@@ -206,6 +265,9 @@ public:
             const scalarField& y,
             const scalarField& z
         ) const;
+
+        //- Return value as a function of two scalar fields
+        virtual tmp<Field<Type>> value(const Field<vector>& X) const;
 };
 
 

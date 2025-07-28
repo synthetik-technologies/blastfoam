@@ -59,11 +59,12 @@ Foam::thermoBasePatchField::thermoBasePatchField
 Foam::thermoBasePatchField::thermoBasePatchField
 (
     const fvPatch& p,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& defaultGroup
 )
 :
     patch_(p),
-    phaseName_(dict.lookupOrDefault<word>("phase", word::null))
+    phaseName_(dict.lookupOrDefault<word>("phase", defaultGroup))
 {}
 
 
@@ -88,20 +89,15 @@ Foam::thermoBasePatchField::~thermoBasePatchField()
 
 const Foam::fluidThermo& Foam::thermoBasePatchField::thermo() const
 {
-    const fluidThermo& fThermo =
+    return
         patch_.db().lookupObject<fluidThermo>
         (
             IOobject::groupName
             (
-                basicThermo::dictName,
+                physicalProperties::typeName,
                 phaseName_
             )
         );
-    if (!thermoPtr_.valid())
-    {
-        thermoPtr_.set(&fThermo);
-    }
-    return fThermo;
 }
 
 
@@ -118,12 +114,35 @@ Foam::tmp<Foam::scalarField> Foam::thermoBasePatchField::psi() const
 }
 
 
+Foam::tmp<Foam::scalarField> Foam::thermoBasePatchField::psiIf() const
+{
+    const fluidThermo& fThermo = thermo();
+    if (isA<fluidBlastThermo>(fThermo))
+    {
+        return
+            fThermo.p().boundaryField()[patch_.index()].patchInternalField()
+           /fThermo.rho(patch_.index());
+    }
+    return fThermo.psi().boundaryField()[patch_.index()].patchInternalField();
+}
+
+
 Foam::tmp<Foam::scalarField> Foam::thermoBasePatchField::gamma() const
 {
     const fluidThermo& fThermo = thermo();
     return fThermo.gamma
     (
         fThermo.T().boundaryField()[patch_.index()],
+        patch_.index()
+    );
+}
+
+Foam::tmp<Foam::scalarField> Foam::thermoBasePatchField::gammaIf() const
+{
+    const fluidThermo& fThermo = thermo();
+    return fThermo.gamma
+    (
+        fThermo.T().boundaryField()[patch_.index()].patchInternalField(),
         patch_.index()
     );
 }
@@ -150,6 +169,21 @@ Foam::tmp<Foam::scalarField> Foam::thermoBasePatchField::speedOfSound() const
             ).speedOfSound().boundaryField()[patch_.index()];
     }
     return sqrt(gamma()/psi());
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::thermoBasePatchField::speedOfSoundIf() const
+{
+    const fluidThermo& fThermo = thermo();
+    if (isA<fluidBlastThermo>(fThermo))
+    {
+        return
+            dynamicCast<const fluidBlastThermo>
+            (
+                fThermo
+            ).speedOfSound().boundaryField()[patch_.index()];
+    }
+    return sqrt(gammaIf()/psiIf());
 }
 
 

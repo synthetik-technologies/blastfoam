@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -33,19 +33,40 @@ template<class Type>
 Foam::QuadraticMUSCLReconstructionScheme<Type>::QuadraticMUSCLReconstructionScheme
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
+    Istream& is,
+    const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is),
-    gradPhis_(pTraits<Type>::nComponents),
-    hessPhis_(pTraits<Type>::nComponents)
+    ReconstructionScheme<Type>(phi, is, overwrite),
+    gradPhis_(0),
+    hessPhis_(0),
+    bound_(true),
+    extrapolate_(false)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::QuadraticMUSCLReconstructionScheme<Type>::~QuadraticMUSCLReconstructionScheme()
+{}
+
+// * * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::QuadraticMUSCLReconstructionScheme<Type>::constructGradPhis() const
 {
+    gradPhis_.setSize(pTraits<Type>::nComponents);
+    hessPhis_.setSize(pTraits<Type>::nComponents);
     tmp<fv::gradScheme<scalar>> lgradientScheme
     (
         fv::gradScheme<scalar>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("limitedGradMUSCL")
+            this->mesh_.schemes().grad
+            (
+                "limitedGrad(" + this->phi_.name() + ")"
+            )
         )
     );
     tmp<fv::gradScheme<vector>> hgradientScheme
@@ -53,7 +74,10 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::QuadraticMUSCLReconstructionSche
         fv::gradScheme<vector>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("limitedHessMUSCL")
+            this->mesh_.schemes().grad
+            (
+                "limitedHess(" + this->phi_.name() + ")"
+            )
         )
     );
     for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
@@ -77,29 +101,24 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::QuadraticMUSCLReconstructionSche
             hgradientScheme().grad(gradPhis_[cmpti])
         );
     }
-
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::QuadraticMUSCLReconstructionScheme<Type>::~QuadraticMUSCLReconstructionScheme()
-{}
-
-// * * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * //
 
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
 {
+    if (gradPhis_.size() != pTraits<Type>::nComponents)
+    {
+        constructGradPhis();
+    }
+
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> GeoField;
     tmp<GeoField> tphiOwn
     (
         GeoField::New
         (
-            this->phi_.name() + "Own",
+            this->ownName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
@@ -107,7 +126,6 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
     GeoField& phiOwn = tphiOwn.ref();
 
     const labelList& owner = this->mesh_.owner();
-    const labelList& neighbour = this->mesh_.neighbour();
     const vectorField& cc = this->mesh_.C();
     const vectorField& fc = this->mesh_.Cf();
 
@@ -117,8 +135,6 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
     forAll(owner, facei)
     {
         label own = owner[facei];
-        label nei = neighbour[facei];
-
         vector drOwn(fc[facei] - cc[own]);
 
         for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
@@ -131,18 +147,27 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
                   + ((drOwn & hessPhis_[cmpti][own]) & drOwn)*0.5
                 );
         }
-
-        // Hard limit to min/max of owner/neighbour values
-        phiOwn[facei] =
-            min
-            (
-                max(this->phi_[own], this->phi_[nei]),
+    }
+    if (bound_)
+    {
+        const labelList& neighbour = this->mesh_.neighbour();
+        forAll(owner, facei)
+        {
+            label own = owner[facei];
+            label nei = neighbour[facei];
+            phiOwn[facei] =
+                min
+                (
+                    phiOwn[facei],
+                    max(this->phi_[own], (this->phi_[nei]))
+                );
+            phiOwn[facei] =
                 max
                 (
                     phiOwn[facei],
-                    min(this->phi_[own], this->phi_[nei])
-                )
-            );
+                    min(this->phi_[own], (this->phi_[nei]))
+                );
+        }
     }
 
     typename GeoField::Boundary& bphiOwn = phiOwn.boundaryFieldRef();
@@ -150,7 +175,9 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
     {
         const fvPatch& patch = this->mesh_.boundary()[patchi];
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
-        if (patch.coupled())
+        Field<Type>& pphiOwn = phiOwn.boundaryFieldRef()[patchi];
+
+        if (pphi.coupled())
         {
             Field<Type>& pphiOwn = bphiOwn[patchi];
             Field<Type> pphipOwn(pphi.patchInternalField());
@@ -189,18 +216,61 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateOwn() const
                         );
                 }
             }
+            if (bound_)
+            {
+                forAll(pphipOwn, facei)
+                {
+                    pphiOwn[facei] =
+                        min
+                        (
+                            pphiOwn[facei],
+                            max(pphipOwn[facei], pphipNei[facei])
+                        );
+                    pphiOwn[facei] =
+                        max
+                        (
+                            pphiOwn[facei],
+                            min(pphipOwn[facei], pphipNei[facei])
+                        );
+                }
+            }
+        }
+        else if (!pphi.fixesValue() && extrapolate_)
+        {
+            Field<Type> pphiI(pphi.patchInternalField());
+            const Field<Type>& plim(limOwn.boundaryField()[patchi]);
+            vectorField pdelta(patch.fvPatch::delta());
 
-            // Hard limit to min/max of owner/neighbour values
-            pphiOwn =
-                min
+            for
+            (
+                direction cmpti = 0;
+                cmpti < pTraits<Type>::nComponents;
+                cmpti++
+            )
+            {
+                Field<vector> pgradPhi
                 (
-                    max(pphipOwn, pphipNei),
-                    max
-                    (
-                        min(pphipOwn, pphipNei),
-                        pphiOwn
-                    )
+                    gradPhis_[cmpti].boundaryField()[patchi].patchInternalField()
                 );
+                Field<tensor> phessPhi
+                (
+                    hessPhis_[cmpti].boundaryField()[patchi].patchInternalField()
+                );
+
+                forAll(pphi, facei)
+                {
+                    setComponent(pphiOwn[facei], cmpti) =
+                        component(pphiI[facei], cmpti)
+                      + component(plim[facei], cmpti)
+                       *(
+                            (pdelta[facei] & pgradPhi[facei])
+                          + (
+                                (pdelta[facei] & phessPhi[facei])
+                              & pdelta[facei]
+                            )*0.5
+                        );
+                }
+            }
         }
         else
         {
@@ -215,19 +285,23 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateNei() const
 {
+    if (gradPhis_.size() != pTraits<Type>::nComponents)
+    {
+        constructGradPhis();
+    }
+
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> GeoField;
     tmp<GeoField> tphiNei
     (
         GeoField::New
         (
-            this->phi_.name() + "Nei",
+            this->neiName(),
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
     );
     GeoField& phiNei = tphiNei.ref();
 
-    const labelList& owner = this->mesh_.owner();
     const labelList& neighbour = this->mesh_.neighbour();
     const vectorField& cc = this->mesh_.C();
     const vectorField& fc = this->mesh_.Cf();
@@ -240,10 +314,9 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateNei() const
 
     forAll(neighbour, facei)
     {
-        label own = owner[facei];
         label nei = neighbour[facei];
-
         vector drNei(fc[facei] - cc[nei]);
+
         for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
         {
             setComponent(phiNei[facei], cmpti) =
@@ -254,18 +327,27 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateNei() const
                   + ((drNei & hessPhis_[cmpti][nei]) & drNei)*0.5
                 );
         }
-
-        // Hard limit to min/max of owner/neighbour values
-        phiNei[facei] =
-            min
-            (
-                max(this->phi_[own], this->phi_[nei]),
+    }
+    if (bound_)
+    {
+        const labelList& owner = this->mesh_.owner();
+        forAll(owner, facei)
+        {
+            label own = owner[facei];
+            label nei = neighbour[facei];
+            phiNei[facei] =
+                min
+                (
+                    phiNei[facei],
+                    max(this->phi_[own], (this->phi_[nei]))
+                );
+            phiNei[facei] =
                 max
                 (
                     phiNei[facei],
-                    min(this->phi_[own], this->phi_[nei])
-                )
-            );
+                    min(this->phi_[own], (this->phi_[nei]))
+                );
+        }
     }
 
     typename GeoField::Boundary& bphiNei = phiNei.boundaryFieldRef();
@@ -274,7 +356,7 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateNei() const
     {
         const fvPatch& patch = this->mesh_.boundary()[patchi];
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
-        if (patch.coupled())
+        if (pphi.coupled())
         {
             Field<Type>& pphiNei = bphiNei[patchi];
             Field<Type> pphipOwn(pphi.patchInternalField());
@@ -313,18 +395,63 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::interpolateNei() const
                         );
                 }
             }
+            if (bound_)
+            {
+                forAll(pphipOwn, facei)
+                {
+                    pphiNei[facei] =
+                        min
+                        (
+                            pphiNei[facei],
+                            max(pphipOwn[facei], pphipNei[facei])
+                        );
+                    pphiNei[facei] =
+                        max
+                        (
+                            pphiNei[facei],
+                            min(pphipOwn[facei], pphipNei[facei])
+                        );
+                }
+            }
+        }
+        else if (!pphi.fixesValue() && extrapolate_)
+        {
+            Field<Type>& pphiNei = phiNei.boundaryFieldRef()[patchi];
+            Field<Type> pphiI(pphi.patchInternalField());
 
-            // Hard limit to min/max of owner/neighbour values
-            pphiNei =
-                min
+            const Field<Type>& plim(limNei.boundaryField()[patchi]);
+            vectorField pdelta(patch.fvPatch::delta());
+
+            for
+            (
+                direction cmpti = 0;
+                cmpti < pTraits<Type>::nComponents;
+                cmpti++
+            )
+            {
+                Field<vector> pgradPhi
                 (
-                    max(pphipOwn, pphipNei),
-                    max
-                    (
-                        min(pphipOwn, pphipNei),
-                        pphiNei
-                    )
+                    gradPhis_[cmpti].boundaryField()[patchi].patchInternalField()
                 );
+                Field<tensor> phessPhi
+                (
+                    hessPhis_[cmpti].boundaryField()[patchi].patchInternalField()
+                );
+
+                forAll(pphi, facei)
+                {
+                    setComponent(pphiNei[facei], cmpti) =
+                        component(pphiI[facei], cmpti)
+                      + component(plim[facei], cmpti)
+                       *(
+                            (pdelta[facei] & pgradPhi[facei])
+                          + (
+                                (pdelta[facei] & phessPhi[facei])
+                              & pdelta[facei]
+                            )*0.5
+                        );
+                }
+            }
         }
         else
         {

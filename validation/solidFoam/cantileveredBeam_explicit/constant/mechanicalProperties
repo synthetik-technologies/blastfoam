@@ -20,9 +20,10 @@ mechanical
 (
     steel
     {
-        type linearElastic;
+        type            linearElastic;
         E               200e9;
         nu              0.3;
+        rho             7800;
     }
 );
 

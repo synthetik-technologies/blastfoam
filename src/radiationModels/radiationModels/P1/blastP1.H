@@ -80,7 +80,7 @@ class blastP1
 public:
 
     //- Runtime type information
-    TypeName("P1");
+    TypeName("blastP1");
 
 
     // Constructors

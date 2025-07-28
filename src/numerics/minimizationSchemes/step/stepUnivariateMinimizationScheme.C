@@ -30,37 +30,42 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(stepUnivariateMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(step, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        stepUnivariateMinimizationScheme,
+        step,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        stepUnivariateMinimizationScheme,
+        step,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        stepUnivariateMinimizationScheme,
+        step,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        stepUnivariateMinimizationScheme,
+        step,
         dictionaryTwo
     );
 }
-
+}
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
+Foam::minimizationSchemes::univariate::step::step
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -71,7 +76,7 @@ Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
     (
         dict.lookupOrDefault<scalar>
         (
-            "dx",
+            "stepSize",
             (eqn_.upper() - eqn_.lower())/100.0
         )
     ),
@@ -81,9 +86,22 @@ Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
 }
 
 
+Foam::minimizationSchemes::univariate::step::step
+(
+    const scalarUnivariateEquation& eqn,
+    const step& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver),
+    dx_(solver.dx_),
+    f_(solver.f_)
+{}
+
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::step::minimize
 (
     const scalar,
     const scalar x0,
@@ -129,7 +147,7 @@ Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
         eqn_.limit(xUpper);
         yUpper = eqn_.fx(xUpper, li);
 
-        if (convergedX(xLower, xUpper) && convergedY(yLower, yUpper))
+        if (converged(xLower, xUpper, yLower, yUpper))
         {
             break;
         }

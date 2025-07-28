@@ -55,7 +55,7 @@ displacementVelocityFvPatchVectorField::displacementVelocityFvPatchVectorField
     const displacementVelocityFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     fixedValueFvPatchVectorField(ptf, p, iF, mapper)
@@ -94,7 +94,7 @@ void displacementVelocityFvPatchVectorField::updateCoeffs()
     }
 
 
-//     if (internalField().name() == "DD")
+    if (internalField().name() == "DD")
     {
         // Incremental approach, so we wil set the increment of displacement for
         // this time-step
@@ -107,22 +107,22 @@ void displacementVelocityFvPatchVectorField::updateCoeffs()
            /db().time().deltaTValue()
         );
     }
-//     else
-//     {
-//         // Lookup the old time total displacement
-//         const volVectorField& D = db().lookupObject<volVectorField>("D");
-//         const volVectorField& Dold = D.oldTime();
-//
-//         // The new total displacement is equal to Dold plus the increment of
-//         // displacement based on the current velocity and time-step
-//         Field<vector>::operator=
-//         (
-//             (
-//                 D.boundaryField()[patch().index()]
-//               - Dold.boundaryField()[patch().index()]
-//             )/db().time().deltaTValue()
-//         );
-//     }
+    else
+    {
+        // Lookup the old time total displacement
+        const volVectorField& D = db().lookupObject<volVectorField>("D");
+        const volVectorField& Dold = D.oldTime();
+
+        // The new total displacement is equal to Dold plus the increment of
+        // displacement based on the current velocity and time-step
+        Field<vector>::operator=
+        (
+            (
+                D.boundaryField()[patch().index()]
+              - Dold.boundaryField()[patch().index()]
+            )/db().time().deltaTValue()
+        );
+    }
 
     fixedValueFvPatchVectorField::updateCoeffs();
 }

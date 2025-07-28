@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -42,7 +42,8 @@ Foam::meshSizeObject::meshSizeObject(const polyMesh& mesh)
 :
     MeshSizeObject(mesh),
     dxPtr_(nullptr),
-    dXPtr_(nullptr)
+    dXPtr_(nullptr),
+    minDXPtr_(nullptr)
 {}
 
 
@@ -58,6 +59,7 @@ bool Foam::meshSizeObject::movePoints()
 {
     dxPtr_.clear();
     dXPtr_.clear();
+    minDXPtr_.clear();
     return true;
 }
 
@@ -71,62 +73,46 @@ void Foam::meshSizeObject::calcDx() const
             << abort(FatalError);
     }
 
-    dxPtr_.set(new scalarField(mesh_.nCells(), 0.0));
+    dxPtr_.set(new scalarField(this->mesh().nCells(), 0.0));
     scalarField& dx = dxPtr_();
-    const Vector<label>& geoD = mesh_.geometricD();
+    const Vector<label>& geoD = this->mesh().geometricD();
 
-    if (mesh_.nGeometricD() != 3)
+    if (this->mesh().nGeometricD() == 1)
     {
-        const Vector<label>& solD = mesh_.solutionD();
-        vector validD(Zero);
-        forAll(solD, cmpti)
+        const labelListList& cellPoints = this->mesh().cellPoints();
+        const pointField& points = this->mesh().points();
+        label cmpti = -1;
+        for (label i = 0; i < 3; i++)
         {
-            if (geoD[cmpti] < 0)
+            if (geoD[i] > 0)
             {
-                validD[cmpti] = 1.0;
+                cmpti = i;
             }
         }
-
-        const vectorField& Sf = mesh_.faceAreas();
-        const scalarField& magSf = mesh_.magFaceAreas();
-        const labelList& own = mesh_.faceOwner();
-        const labelList& nei = mesh_.faceNeighbour();
-        labelList nFaces(dxPtr_->size(), 0);
-
-        for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+        forAll(cellPoints, celli)
         {
-            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
+            dx[celli] = boundBox(points, cellPoints[celli], false).span()[cmpti];
+        }
+    }
+    else if (this->mesh().nGeometricD() == 2)
+    {
+        forAll(this->mesh().boundaryMesh(), patchi)
+        {
+            const polyPatch& pp = mesh().boundaryMesh()[patchi];
+            if (isA<wedgePolyPatch>(pp) || isA<emptyPolyPatch>(pp))
             {
-                dx[own[facei]] += magSf[facei];
-                dx[nei[facei]] += magSf[facei];
-
-                nFaces[own[facei]]++;
-                nFaces[own[facei]]++;
+                const List<label>& faceCells = pp.faceCells();
+                forAll(faceCells, fi)
+                {
+                    dx[faceCells[fi]] += sqrt(pp.magFaceAreas()[fi]);
+                }
             }
         }
-
-        for
-        (
-            label facei = mesh_.nInternalFaces();
-            facei < mesh_.nFaces();
-            facei++
-        )
-        {
-            if (mag(Sf[facei]/magSf[facei] & validD) > 0.5)
-            {
-                dx[own[facei]] += magSf[facei];
-                nFaces[own[facei]]++;
-            }
-        }
-
-        forAll(dx, celli)
-        {
-            dx[celli] = sqrt(dx[celli]/scalar(nFaces[celli]));
-        }
+        dx /= 2.0;
     }
     else
     {
-        dx = cbrt(mesh_.cellVolumes());
+        dx = cbrt(this->mesh().cellVolumes());
     }
 }
 
@@ -139,12 +125,12 @@ void Foam::meshSizeObject::calcDX() const
             <<"dX already set"
             << abort(FatalError);
     }
-    dXPtr_.set(new vectorField(mesh_.nCells(), vector::one));
+    dXPtr_.set(new vectorField(this->mesh().nCells(), vector::one));
     vectorField& dX = dXPtr_();
 
-    const cellList& cells = mesh_.cells();
-    const scalarField& V = mesh_.cellVolumes();
-    const vectorField& Sf = mesh_.faceAreas();
+    const cellList& cells = this->mesh().cells();
+    const scalarField& V = this->mesh().cellVolumes();
+    const vectorField& Sf = this->mesh().faceAreas();
 
     forAll(dX, celli)
     {
@@ -156,6 +142,31 @@ void Foam::meshSizeObject::calcDX() const
             sumMagSf += cmptMag(Sf[c[fi]]);
         }
         dX[celli] = cmptDivide(dX[celli], sumMagSf);
+    }
+}
+
+
+void Foam::meshSizeObject::calcMinDX() const
+{
+    if (minDXPtr_.valid())
+    {
+        FatalErrorInFunction
+            <<"dX already set"
+            << abort(FatalError);
+    }
+    minDXPtr_.set(new scalarField(this->mesh().nCells(), great));
+    scalarField& minDX = minDXPtr_();
+    const vectorField& DX = this->dX();
+
+    for (label cmpti = 0; cmpti < 3; cmpti++)
+    {
+        if (this->mesh().geometricD()[cmpti] > 0)
+        {
+            forAll(minDX, celli)
+            {
+                minDX[celli] = min(minDX[celli], DX[celli][cmpti]);
+            }
+        }
     }
 }
 

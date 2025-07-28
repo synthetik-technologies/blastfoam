@@ -28,32 +28,32 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::BooleIntegrator<Type>::BooleIntegrator
+template<class Type, class Adapt>
+Foam::BooleIntegrator<Type, Adapt>::BooleIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
 )
 :
-    Integrator<Type>(eqn, dict)
+    Integrator<Type, Adapt>(eqn, dict)
 {}
 
 
-template<class Type>
-Foam::BooleIntegrator<Type>::BooleIntegrator
+template<class Type, class Adapt>
+Foam::BooleIntegrator<Type, Adapt>::BooleIntegrator
 (
     const equationType& eqn,
     const integrator& inter
 )
 :
-    Integrator<Type>(eqn, inter)
+    Integrator<Type, Adapt>(eqn, inter)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::BooleIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::BooleIntegrator<Type, Adapt>::integrate_
 (
     const scalar dx,
     const Type& f0,
@@ -67,8 +67,8 @@ Type Foam::BooleIntegrator<Type>::integrate_
 }
 
 
-template<class Type>
-Type Foam::BooleIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::BooleIntegrator<Type, Adapt>::integrate_
 (
     const Type& Q,
     const scalar x0,
@@ -117,8 +117,8 @@ Type Foam::BooleIntegrator<Type>::integrate_
 }
 
 
-template<class Type>
-Type Foam::BooleIntegrator<Type>::integrate
+template<class Type, class Adapt>
+Type Foam::BooleIntegrator<Type, Adapt>::integrate
 (
     const scalar X0,
     const scalar X1,

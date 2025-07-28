@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -49,15 +49,28 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
 )
 :
     diameterModel(mesh, dict, phaseName),
-    rate_(reactionRate::New(mesh, dict)),
+    rate_(diameterReactionRate::New(*this, dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
-    TName_(dict.lookupOrDefault("TName", word("T"))),
+    TName_(dict.lookupOrDefault("TName", IOobject::groupName("T", phaseName))),
+    N_
+    (
+        IOobject
+        (
+            IOobject::groupName("N", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", inv(dimVolume), 1.0)
+    ),
     dVdt_
     (
         IOobject
         (
             IOobject::groupName("dVdt", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -75,6 +88,20 @@ Foam::diameterModels::reactingDiameterModel::~reactingDiameterModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::diameterModels::reactingDiameterModel::update()
+{
+    const volScalarField& alpha =
+        this->d_.mesh().lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", this->d_.group())
+        );
+
+    N_ =
+        alpha
+       /max(this->V(), dimensionedScalar(dimVolume, small));
+}
+
 
 void Foam::diameterModels::reactingDiameterModel::solve()
 {
@@ -106,7 +133,7 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const volScalarField dOld(this->d_);
     this->storeAndBlendOld(this->d_);
 
-    volScalarField dDdt(-2.0*rate_->k(pi, T));
+    volScalarField dDdt(-2.0*rate_->dDdt(pi, T));
     this->blendDelta(dDdt);
 
     const dimensionedScalar& dT(this->d_.time().deltaT());
@@ -147,7 +174,8 @@ Foam::diameterModels::reactingDiameterModel::dMdt() const
             IOobject::groupName("rho", this->d_.group())
         )
     );
-    return dVdt_*rho;
+
+    return dVdt_*rho*N_;
 }
 
 // ************************************************************************* //

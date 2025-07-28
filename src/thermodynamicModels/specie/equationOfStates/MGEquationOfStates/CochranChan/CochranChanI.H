@@ -66,8 +66,8 @@ Foam::scalar Foam::CochranChan<Specie>::Pi
           - A_/((1.0 - Epsilon1_)*rho0_)*(pow(rho0_/rhos, 1.0 - Epsilon1_) - 1.0)
           + B_/((1.0 - Epsilon2_)*rho0_)*(pow(rho0_/rhos, 1.0 - Epsilon2_) - 1.0)
         )
-      - A_*pow(rho0_/rhos, -Epsilon1_) + B_*pow(rho0_/rhos, -Epsilon2_)
-      - e0_*rho*Gamma0_;
+      - A_*pow(rho0_/rhos, -Epsilon1_) + B_*pow(rho0_/rhos, -Epsilon2_);
+      // - e0_*rho*Gamma0_;
 }
 
 
@@ -94,7 +94,7 @@ Foam::scalar Foam::CochranChan<Specie>::delta
               *(Epsilon2_ - Gamma0_ - 1.0)/rhos
              + Gamma0_/rho0_
             )/(Epsilon2_ - 1.0)
-          - Gamma0_*e0_
+          // - Gamma0_*e0_
         )/Gamma0_;
 }
 
@@ -212,7 +212,8 @@ Foam::scalar Foam::CochranChan<Specie>::dpdv
 {
     scalar V(rho0_/max(rho, 1e-10));
     return
-      - Gamma0_*(e + e0_)*sqr(rho)
+      // - Gamma0_*(e + e0_)*sqr(rho)
+      - Gamma0_*e*sqr(rho)
       - rho*Epsilon1_*A_*pow(V, -Epsilon1_)
       - rho*Epsilon2_*B_*pow(V, -Epsilon2_);
 }
@@ -318,14 +319,26 @@ Foam::scalar Foam::CochranChan<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::S
+Foam::scalar Foam::CochranChan<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

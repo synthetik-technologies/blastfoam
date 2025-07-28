@@ -4,6 +4,23 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 #------------------------------------------------------------------------------
 
+if [ -z $WM_PROJECT_VERSION ]
+then
+    echo "OpenFOAM is not currently installed. Please install "
+    echo "OpenFOAM-$BLAST_OF_VERISION before compiling blastFOAM"
+
+    exit 1
+fi
+
+if [ "$WM_PROJECT_VERSION" != "$BLAST_OF_VERSION" ]
+then
+    echo "Compilation of blastFoam requires OpenFOAM-$BLAST_OF_VERSION"
+    echo "but OpenFOAM-$WM_PROJECT_VERSION is currently in use."
+    echo "Canceling compiling"
+
+    exit 1
+fi
+
 src/Allwmake $targetType $*
 
 applications/Allwmake $targetType $*

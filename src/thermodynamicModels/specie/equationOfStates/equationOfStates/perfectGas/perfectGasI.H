@@ -239,13 +239,24 @@ Foam::scalar Foam::perfectGas<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::perfectGas<Specie>::S
+Foam::scalar Foam::perfectGas<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     return -this->R()*log(p/Pstd);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::perfectGas<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    return this->R()*log(T*Pstd/(Tstd*p));
 }
 
 

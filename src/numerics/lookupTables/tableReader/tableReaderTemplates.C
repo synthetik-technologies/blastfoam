@@ -24,81 +24,95 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "tableReader.H"
+#include "UautoPtr.H"
+#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
 template<class Type>
-bool Foam::readComponent
+const Foam::dictionary& Foam::readComponent
 (
     const dictionary& parentDict,
     const word& name,
-    word& modType,
-    Field<Type>& values,
-    const List<List<string>>& Table
+    autoPtr<Modifier<Type>>& mod,
+    List<Type>& values,
+    const bool canRead
 )
 {
-    Switch isReal = true;
-
-    List<List<string>> table(Table);
-    if (parentDict.found(name + "File"))
+    UautoPtr<const entryTable> tablePtr;
+    UautoPtr<const dictionary> dictPtr;
+    if (parentDict.found(name + "File") && canRead)
     {
-        table = read2DTable
+        tablePtr.set
         (
-            parentDict.lookup<fileName>(name + "File"),
-            parentDict.lookupOrDefault<string>(name + "Delim", ","),
-            parentDict.lookupOrDefault<label>(name + "StartRow", 0),
-            parentDict.lookupOrDefault<Switch>(name + "FlipTable", false)
+            &read2DTable
+            (
+                parentDict.lookup<fileName>(name + "File"),
+                readDelim(parentDict, name + "Delim", token::COMMA),
+                parentDict.lookupOrDefault<label>(name + "StartRow", 0),
+                parentDict.lookupOrDefault<Switch>(name + "FlipTable", false)
+            )
         );
     }
-    bool readFromTable = table.size();
+    else if (parentDict.found("file") && canRead)
+    {
+        tablePtr.set
+        (
+            &read2DTable
+            (
+                parentDict.lookup<fileName>("file"),
+                readDelim(parentDict, "delim", token::COMMA),
+                parentDict.lookupOrDefault<label>("startRow", 0),
+                parentDict.lookupOrDefault<Switch>("flipTable", false)
+            )
+        );
+    }
+
+    bool readFromTable = tablePtr.valid();
 
     label col = -1;
     label row = -1;
-    label scale = 1;
+    scalar scale = 1;
+    Type offset(Zero);
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
-        modType = dict.lookupOrDefault<word>("mod", "none");
-        if (modType != "none")
-        {
-            isReal = dict.lookup<Switch>("isReal");
-        }
+        dictPtr.set(&dict);
+        mod = Modifier<Type>::New
+        (
+            dict.lookupOrDefault<word>("mod", "none"),
+            dict
+        );
+        mod->readReal(dict, "isReal");
 
-        if (dict.found("scale"))
-        {
-            scale = dict.lookup<scalar>("scale");
-        }
+        dict.readIfPresent("scale", scale);
+        dict.readIfPresent("offset", offset);
 
-        if (readFromTable)
-        {
-            if (dict.found("col"))
-            {
-                col = dict.lookup<label>("col");
-            }
-            else if (dict.found("row"))
-            {
-                row = dict.lookup<label>("row");
-            }
-        }
+        if (!canRead)
+        {}
         else if (dict.found(name))
         {
-            values = dict.lookup<Field<Type>>(name);
+            values = dict.lookup<List<Type>>(name);
+            readFromTable = false;
         }
         else if (dict.found("file"))
         {
-            table = read2DTable
+            tablePtr.reset
             (
-                dict.lookup<fileName>("file"),
-                dict.lookupOrDefault<string>("delim", ","),
-                dict.lookupOrDefault<label>("startRow", 0),
-                dict.lookupOrDefault<Switch>("flipTable", false)
+                &read2DTable
+                (
+                    dict.lookup<fileName>("file"),
+                    readDelim(dict, "delim", token::COMMA),
+                    dict.lookupOrDefault<label>("startRow", 0),
+                    dict.lookupOrDefault<Switch>("flipTable", false)
+                )
             );
 
-            if (table.size() == 1)
+            if (tablePtr->m() == 1)
             {
                 row = 0;
             }
-            else if (table[0].size() == 1)
+            else if (tablePtr->n() == 1)
             {
                 col = 0;
             }
@@ -128,6 +142,8 @@ bool Foam::readComponent
             label ny = dict.lookup<label>("n");
             Type miny = dict.lookup<Type>("min");
             Type dy(Zero);
+            if (!canRead)
+            {}
             if (dict.found("delta"))
             {
                 dy = dict.lookup<Type>("delta");
@@ -148,66 +164,90 @@ bool Foam::readComponent
             {
                 values[j] = miny + dy*j;
             }
+            readFromTable = false;
         }
-        else
+        else if (!readFromTable)
         {
             FatalIOErrorInFunction(dict)
                 << "Could not determine construction method of " << name << nl
-                << "Pease provide a file to read from or (n, min, delta/max)" << endl
+                << "Pease provide a file to read from or (n, min, delta/max)"
+                << endl
                 << abort(FatalIOError);
+        }
+
+        if (readFromTable && col < 0 && row < 0)
+        {
+            if (dict.found("col"))
+            {
+                col = dict.lookup<label>("col");
+            }
+            else if (dict.found("row"))
+            {
+                row = dict.lookup<label>("row");
+            }
         }
     }
     else if (parentDict.found("n" + name.capitalise()))
     {
-        modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
-        if (modType != "none")
-        {
-            isReal = parentDict.lookup<Switch>(name + "IsReal");
-        }
+        parentDict.readIfPresent(name + "Scale", scale);
+        parentDict.readIfPresent(name + "Offset", offset);
+        mod = Modifier<Type>::New
+        (
+            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            parentDict
+        );
+        mod->readReal(parentDict, name + "IsReal");
 
-        label ny = parentDict.lookup<label>("n" + name.capitalise());
-        Type miny = parentDict.lookup<Type>("min" + name.capitalise());
-        Type dy(Zero);
-        if (parentDict.found("delta" + name.capitalise()))
+        if (canRead)
         {
-            dy = parentDict.lookup<Type>("delta" + name.capitalise());
-        }
-        else if (parentDict.found("max" + name.capitalise()))
-        {
-            dy =
-                (
-                    parentDict.lookup<Type>("max" + name.capitalise())
-                  - miny
-                )/scalar(ny);
-        }
-        else
-        {
-            FatalIOErrorInFunction(parentDict)
-                << "Either delta" << name.capitalise()
-                << " or max" << name.capitalise() << " must be provided" <<endl
-                << abort(FatalIOError);
-        }
+            label ny = parentDict.lookup<label>("n" + name.capitalise());
+            Type miny = parentDict.lookup<Type>("min" + name.capitalise());
+            Type dy(Zero);
+            if (parentDict.found("delta" + name.capitalise()))
+            {
+                dy = parentDict.lookup<Type>("delta" + name.capitalise());
+            }
+            else if (parentDict.found("max" + name.capitalise()))
+            {
+                dy =
+                    (
+                        parentDict.lookup<Type>("max" + name.capitalise())
+                    - miny
+                    )/scalar(ny);
+            }
+            else
+            {
+                FatalIOErrorInFunction(parentDict)
+                    << "Either delta" << name.capitalise()
+                    << " or max" << name.capitalise() << " must be provided"
+                    << endl
+                    << abort(FatalIOError);
+            }
 
-        values.resize(ny);
-        forAll(values, j)
-        {
-            values[j] = miny + dy*j;
+            values.resize(ny);
+            forAll(values, j)
+            {
+                values[j] = miny + dy*j;
+            }
+            readFromTable = false;
         }
     }
-    else if (parentDict.found(name) || readFromTable)
+    else if (parentDict.found(name) || readFromTable || !canRead)
     {
-        if (readFromTable)
-        {}
-        else
+        parentDict.readIfPresent(name + "Scale", scale);
+        parentDict.readIfPresent(name + "Offset", offset);
+        if (parentDict.found(name))
         {
-            values = parentDict.lookup<Field<Type>>(name);
+            values = parentDict.lookup<List<Type>>(name);
+            readFromTable = false;
         }
 
-        modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
-        if (modType != "none")
-        {
-            isReal = parentDict.lookup<Switch>(name + "IsReal");
-        }
+        mod = Modifier<Type>::New
+        (
+            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            parentDict
+        );
+        mod->readReal(parentDict, name + "IsReal");
     }
     else
     {
@@ -225,13 +265,14 @@ bool Foam::readComponent
 
     if (readFromTable)
     {
+        const entryTable& table = tablePtr();
         if (col >= 0 || row >= 0)
         {}
-        else if (table.size() == 1)
+        else if (table.m() == 1)
         {
             row = 0;
         }
-        else if (table[0].size() == 1)
+        else if (table.n() == 1)
         {
             col = 0;
         }
@@ -250,9 +291,9 @@ bool Foam::readComponent
             else
             {
                 FatalIOErrorInFunction(parentDict)
-                    << "Looking up a component of a 2D table requires either" << nl
-                    << "a row (" << rowName << ") or column (" << colName << ")" << nl
-                    << " to be specified" << endl
+                    << "Looking up a component of a 2D table requires either "
+                    << "a row (" << rowName << ") or column (" << colName << ") "
+                    << "to be specified" << endl
                     << abort(FatalIOError);
             }
         }
@@ -271,14 +312,21 @@ bool Foam::readComponent
                 << "Could not determine how to read table" << endl
                 << abort(FatalIOError);
         }
-
     }
-
-    if (scale != 1.0)
+    if (canRead)
     {
-        values = scale*values;
+        forAll(values, i)
+        {
+            values[i] = values[i]*scale + offset;
+        }
+        if (!mod->isReal())
+        {
+            mod->Inv(values);
+            mod->setReal();
+        }
     }
-    return isReal;
+
+    return dictPtr.valid() ? dictPtr() : parentDict;
 }
 
 
@@ -286,8 +334,8 @@ template<class Type>
 void Foam::read1DTable
 (
     const fileName& file,
-    const string& delim,
-    Field<Type>& values,
+    const token::punctuationToken delim,
+    List<Type>& values,
     const bool determineSize
 )
 {
@@ -335,12 +383,12 @@ void Foam::read1DTable
 }
 
 
-template<class Type, template<class> class ListType>
+template<class Type>
 void Foam::read2DTable
 (
     const fileName& file,
-    const string& delim,
-    List<ListType<Type>>& data,
+    const token::punctuationToken delim,
+    List2D<Type>& data,
     const bool flip,
     const bool determineSize
 )
@@ -360,9 +408,9 @@ void Foam::read2DTable
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    label ny = -1;
     label nx = 0;
-    DynamicList<ListType<Type>> tdata(10);
+    label ny = -1;
+    DynamicList<List<Type>> tdata(data.n());
     while (is.good())
     {
         string line;
@@ -370,11 +418,11 @@ void Foam::read2DTable
         removeComments(line);
 
         string lineEntry = line;
-        lineEntry.replaceAll(delim, " ");
+        lineEntry.replaceAll(delim, token::SPACE);
         lineEntry = '(' + lineEntry + ')';
         IStringStream iss(lineEntry);
 
-        Field<Type> lineVals(iss);
+        List<Type> lineVals(iss);
 
         if (!lineVals.size())
         {
@@ -398,46 +446,37 @@ void Foam::read2DTable
 
     if (flip)
     {
-        label t = nx;
-        nx = ny;
-        ny = t;
+        Swap(nx, ny);
     }
 
     if (!determineSize)
     {
-        if (data.size() != nx)
+        if (data.m() != nx)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the x direction." << nl
-                << "    Input: " << data.size() << nl
+                << "    Input: " << data.m() << nl
                 << "    Read: " << nx << nl
                 << abort(FatalError);
         }
-        if (data[0].size() != ny)
+        if (data.n() != ny)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the y direction." << nl
-                << "    Input: " << data[0].size() << nl
+                << "    Input: " << data.n() << nl
                 << "    Read: " << ny << nl
                 << abort(FatalError);
         }
     }
 
-    if (!flip)
+    data = tdata;
+    if (flip)
     {
-        data.transfer(tdata);
-        return;
-    }
-    forAll(data, i)
-    {
-        forAll(data[i], j)
-        {
-            data[i][j] = tdata[j][i];
-        }
+        data.flip();
     }
 }
 
@@ -445,7 +484,7 @@ void Foam::read2DTable
 template<class Type>
 Foam::List<Type> Foam::readColumn
 (
-    const List<List<string>>& entries,
+    const entryTable& entries,
     const label col
 )
 {
@@ -455,19 +494,19 @@ Foam::List<Type> Foam::readColumn
             << "Trying to read from a table but no data was read." << endl
             << abort(FatalError);
     }
-    if (col >= entries.first().size())
+    if (col >= entries.n())
     {
         FatalErrorInFunction
-            << "Only " << entries.first().size() << " columns were read, "
+            << "Only " << entries.n() << " columns were read, "
             << "but column " << col << " was requested" << endl
             << abort(FatalError);
     }
 
-    List<Type> vals(entries.size());
+    List<Type> vals(entries.m());
     Type v;
-    forAll(entries, i)
+    forAll(vals, i)
     {
-        IStringStream(entries[i][col])() >> v;
+        ITstream("column", entries(i, col))() >> v;
         vals[i] = v;
     }
     return vals;
@@ -477,7 +516,7 @@ Foam::List<Type> Foam::readColumn
 template<class Type>
 Foam::List<Type> Foam::readRow
 (
-    const List<List<string>>& entries,
+    const entryTable& entries,
     const label row
 )
 {
@@ -487,32 +526,32 @@ Foam::List<Type> Foam::readRow
             << "Trying to read from a table but no data was read." << endl
             << abort(FatalError);
     }
-    if (row >= entries.size())
+    if (row >= entries.m())
     {
         FatalErrorInFunction
-            << "Only " << entries.size() << " columns were read, "
+            << "Only " << entries.m() << " columns were read, "
             << " but row " << row << " was requested" << endl
             << abort(FatalError);
     }
 
-    List<Type> vals(entries[row].size());
+    List<Type> vals(entries.n());
     Type v;
-    forAll(entries[row], j)
+    forAll(vals, j)
     {
-        IStringStream(entries[row][j])() >> v;
+        ITstream("row", entries(row, j))() >> v;
         vals[j] = v;
     }
     return vals;
 }
 
 
-template<class Type, template<class> class ListType1, template<class> class ListType2>
+template<class Type>
 void Foam::read3DTable
 (
     const fileName& file,
-    const string& delim,
-    const string& rowDelim,
-    List<ListType1<ListType2<Type>>>& data,
+    const token::punctuationToken delim,
+    const token::punctuationToken rowDelim,
+    List3D<Type>& data,
     const bool flip,
     const bool determineSize
 )
@@ -532,7 +571,7 @@ void Foam::read3DTable
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    List<ListType1<ListType2<Type>>> tdata;
+    List<List<List<Type>>> tdata;
     label nx = 0;
     label ny = -1;
     label nz = -1;
@@ -567,7 +606,7 @@ void Foam::read3DTable
                 << abort(FatalError);
         }
 
-        ListType1<ListType2<Type>> yzvals(strings.size());
+        List<List<Type>> yzvals(strings.size());
         forAll(strings, j)
         {
             string lineEntry = strings[j];
@@ -575,7 +614,7 @@ void Foam::read3DTable
             lineEntry = '(' + lineEntry + ')';
             IStringStream iss(lineEntry);
 
-            ListType2<Type> zvals(iss);
+            List<Type> zvals(iss);
             if (!yzvals.size())
             {
                 continue;
@@ -601,74 +640,48 @@ void Foam::read3DTable
 
     if (flip)
     {
-        label t = nx;
-        nx = nz;
-        nz = t;
+        Swap(nx, nz);
     }
 
     if (!determineSize)
     {
-        if (data.size() != nx)
+        if (data.m() != nx)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the x direction." << nl
-                << "    Input: " << data.size() << nl
+                << "    Input: " << data.m() << nl
                 << "    Read: " << nx << nl
                 << abort(FatalError);
         }
-        if (data[0].size() != ny)
+        if (data.n() != ny)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the y direction." << nl
-                << "    Input: " << data[0].size() << nl
+                << "    Input: " << data.n() << nl
                 << "    Read: " << ny << nl
                 << abort(FatalError);
         }
-        if (data[0][0].size() != nz)
+        if (data.l() != nz)
         {
             FatalErrorInFunction
                 << file << ":" << nl
                 << "Size of input list is different that the size of the "
                 << "read table in the z direction." << nl
-                << "    Input: " << data[0][0].size() << nl
+                << "    Input: " << data.l() << nl
                 << "    Read: " << nz << nl
                 << abort(FatalError);
         }
     }
-    else
-    {
-        data.resize(nx);
-        forAll(data, i)
-        {
-            data[i].resize(ny);
-            forAll(data[i], j)
-            {
-                data[i][j].resize(nz);
-            }
-        }
-    }
 
-    if (!flip)
+    data = tdata;
+    if (flip)
     {
-        data.transfer(tdata);
+        data.flip();
         return;
-    }
-
-
-    // Data needs to be correctly allocated before reading
-    forAll(data, i)
-    {
-        forAll(data[i], j)
-        {
-            forAll(data[i][j], k)
-            {
-                data[i][j][k] = tdata[k][j][i];
-            }
-        }
     }
 }
 

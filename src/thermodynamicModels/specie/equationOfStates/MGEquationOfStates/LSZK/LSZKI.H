@@ -265,14 +265,26 @@ Foam::scalar Foam::LSZK<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::S
+Foam::scalar Foam::LSZK<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

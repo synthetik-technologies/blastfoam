@@ -1,0 +1,8 @@
+blastOptimization.C
+entries/optimizationEntry.C
+entries/variableEntry.C
+entries/parameterEntry.C
+entries/commandEntry.C
+optimizationEquation.C
+
+EXE = $(BLAST_APPBIN)/blastOptimization

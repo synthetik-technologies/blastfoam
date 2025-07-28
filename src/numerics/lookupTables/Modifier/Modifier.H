@@ -36,6 +36,8 @@ SourceFiles
 #define Modifiers_H
 
 #include "scalar.H"
+#include "runTimeSelectionTables.H"
+#include "dictionary.H"
 #include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -53,23 +55,132 @@ class Modifier
 {
 public:
 
-    virtual word type() const = 0;
+    enum RealType
+    {
+        UNKNOWN,
+        REAL,
+        MODIFIED
+    };
 
-    virtual ~Modifier()
+protected:
+    // Protected data
+
+        //- Optionally read "isReal" flag"
+        RealType isReal_;
+
+public:
+
+    TypeName("Modifier");
+
+    Modifier()
+    :
+        isReal_(UNKNOWN)
+    {}
+    Modifier(const dictionary& dict)
+    :
+        isReal_(UNKNOWN)
     {}
 
+    virtual ~Modifier() {}
+
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        Modifier,
+        null,
+        (),
+        ()
+    );
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        Modifier,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
     static autoPtr<Modifier<Type>> New(const word& mod);
+    static autoPtr<Modifier<Type>> New(const word& mod, const dictionary& dict);
+
     virtual autoPtr<Modifier<Type>> clone() const = 0;
 
     virtual Type operator()(const Type&) const = 0;
-    virtual Type inv(const Type&) const = 0;
+    virtual void Mod(UList<Type>&) const;
 
-    virtual bool needMod() const = 0;
+    virtual Type inv(const Type&) const = 0;
+    virtual void Inv(UList<Type>&) const;
+
+    virtual bool needMod() const
+    {
+        return true;
+    }
+
+    virtual bool isReal() const
+    {
+        if (isReal_ == UNKNOWN)
+        {
+            FatalErrorInFunction
+                << "Unable to determine if the read data is real" << endl
+                << abort(FatalError);
+        }
+        return isReal_ == REAL;
+    }
+    virtual void setReal()
+    {
+        isReal_ = REAL;
+    }
+    virtual void setMod()
+    {
+        isReal_ = MODIFIED;
+    }
+    virtual void readReal(const dictionary& dict, const word& entry)
+    {
+        isReal_ = dict.template lookup<bool>(entry) ? REAL : MODIFIED;
+    }
 };
 
-// Specilization of scalar modifier
-template<>
-autoPtr<Modifier<scalar>> Modifier<scalar>::New(const word& mod);
+#define defineModifierType(Type)                                               \
+typedef Modifier<Type> Type##Modifier;                                         \
+defineTemplateTypeNameAndDebug(Type##Modifier, 0);                             \
+defineTemplateRunTimeSelectionTable(Type##Modifier, null);                     \
+defineTemplateRunTimeSelectionTable(Type##Modifier, dictionary);
+
+#define addDictModifier(Mod, Type)                                             \
+defineTypeNameAndDebug(Mod, 0);                                                \
+addToRunTimeSelectionTable(Type##Modifier, Mod, dictionary);
+
+#define addDictModifierType(Mod, Type)                                         \
+typedef Mod<Type> Type##Mod;                                                   \
+defineNamedTemplateTypeNameAndDebug(Type##Mod, 0);                             \
+addToRunTimeSelectionTable(Type##Modifier, Type##Mod, dictionary);
+
+#define addModifier(Mod, Type)                                                 \
+defineTypeNameAndDebug(Mod, 0);                                                \
+addToRunTimeSelectionTable(Type##Modifier, Mod, null);                         \
+addToRunTimeSelectionTable(Type##Modifier, Mod, dictionary);
+
+#define addModifierType(Mod, Type)                                             \
+typedef Mod<Type> Type##Mod;                                                   \
+defineNamedTemplateTypeNameAndDebug(Type##Mod, 0);                             \
+addToRunTimeSelectionTable(Type##Modifier, Type##Mod, null);                   \
+addToRunTimeSelectionTable(Type##Modifier, Type##Mod, dictionary);
+
+#define addDictModifiers(Mod)                                                  \
+addDictModifierType(Mod, scalar)                                               \
+addDictModifierType(Mod, vector)                                               \
+addDictModifierType(Mod, symmTensor)                                           \
+addDictModifierType(Mod, sphericalTensor)                                      \
+addDictModifierType(Mod, tensor)
+
+#define addModifiers(Mod)                                                      \
+addModifierType(Mod, scalar)                                                   \
+addModifierType(Mod, vector)                                                   \
+addModifierType(Mod, symmTensor)                                               \
+addModifierType(Mod, sphericalTensor)                                          \
+addModifierType(Mod, tensor)
 
 /*---------------------------------------------------------------------------*\
                         Templated modifiers Declaration
@@ -85,10 +196,18 @@ class None
 {
 public:
 
-    virtual word type() const
+    TypeName("none");
+
+    None()
     {
-        return "none";
+        this->isReal_ = Modifier<Type>::REAL;
     }
+    None(const dictionary& dict)
+    {
+        this->isReal_ = Modifier<Type>::REAL;
+    }
+
+
 
     virtual autoPtr<Modifier<Type>> clone() const
     {
@@ -99,16 +218,31 @@ public:
     {
         return x;
     }
+    virtual void Mod(UList<Type>&) const
+    {}
 
     inline Type inv(const Type& x) const
     {
         return x;
     }
+    virtual void Inv(UList<Type>&) const
+    {}
 
     inline bool needMod() const
     {
         return false;
     }
+
+    inline bool isReal() const
+    {
+        return true;
+    }
+    inline void setReal()
+    {}
+    inline void setMod()
+    {}
+    virtual void readReal(const dictionary& dict, const word& entry)
+    {}
 };
 
 
@@ -123,10 +257,9 @@ class Ln
 {
 public:
 
-    virtual word type() const
-    {
-        return "ln";
-    }
+    TypeName("ln");
+
+    using Modifier<scalar>::Modifier;
 
     virtual autoPtr<Modifier<scalar>> clone() const
     {
@@ -135,17 +268,12 @@ public:
 
     inline scalar operator()(const scalar& x) const
     {
-        return log(x);
+        return log(max(x, small));
     }
 
     inline scalar inv(const scalar& x) const
     {
         return exp(x);
-    }
-
-    inline bool needMod() const
-    {
-        return true;
     }
 };
 
@@ -156,10 +284,9 @@ class Exp
 {
 public:
 
-    virtual word type() const
-    {
-        return "exp";
-    }
+    TypeName("exp");
+
+    using Modifier<scalar>::Modifier;
 
     virtual autoPtr<Modifier<scalar>> clone() const
     {
@@ -173,12 +300,7 @@ public:
 
     inline scalar inv(const scalar& x) const
     {
-        return log(x);
-    }
-
-    inline bool needMod() const
-    {
-        return true;
+        return log(max(x, small));
     }
 };
 
@@ -189,10 +311,9 @@ class Log10
 {
 public:
 
-    virtual word type() const
-    {
-        return "log10";
-    }
+    TypeName("log10");
+
+    using Modifier<scalar>::Modifier;
 
     virtual autoPtr<Modifier<scalar>> clone() const
     {
@@ -201,17 +322,12 @@ public:
 
     inline scalar operator()(const scalar& x) const
     {
-        return log10(x);
+        return log10(max(x, small));
     }
 
     inline scalar inv(const scalar& x) const
     {
         return pow(10.0, x);
-    }
-
-    inline bool needMod() const
-    {
-        return true;
     }
 };
 
@@ -222,10 +338,9 @@ class Pow10
 {
 public:
 
-    virtual word type() const
-    {
-        return "pow10";
-    }
+    TypeName("pow10");
+
+    using Modifier<scalar>::Modifier;
 
     virtual autoPtr<Modifier<scalar>> clone() const
     {
@@ -239,12 +354,7 @@ public:
 
     inline scalar inv(const scalar& x) const
     {
-        return log10(x);
-    }
-
-    inline bool needMod() const
-    {
-        return true;
+        return log10(max(x, small));
     }
 };
 
@@ -253,6 +363,11 @@ public:
 
 } // End namespace modifiers
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "ModifierTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

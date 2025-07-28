@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -58,10 +58,41 @@ protected:
 // Protected data
 
     //- Gradient of field
-    PtrList<GeometricField<vector, fvPatchField, volMesh>> gradPhis_;
+    mutable PtrList<GeometricField<vector, fvPatchField, volMesh>> gradPhis_;
 
     //- Hessian of field
-    PtrList<GeometricField<tensor, fvPatchField, volMesh>> hessPhis_;
+    mutable PtrList<GeometricField<tensor, fvPatchField, volMesh>> hessPhis_;
+
+    //- Bound face values
+    bool bound_;
+
+    //- Extrapolate boundaries
+    bool extrapolate_;
+
+    inline tmp<volVectorField> gradient
+    (
+        const volScalarField&,
+        const label diri
+    ) const
+    {
+        return gradPhis_[diri];
+    }
+
+    //- Read optional inputs
+    void read(Istream& is)
+    {
+        if (is.good())
+        {
+            bound_ = readBool(is);
+        }
+        if (is.good())
+        {
+            extrapolate_ = readBool(is);
+        }
+    }
+
+    //- Construct gradients
+    void constructGradPhis() const;
 
 
 public:
@@ -76,7 +107,8 @@ public:
         QuadraticMUSCLReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         );
 
     //- Destructor

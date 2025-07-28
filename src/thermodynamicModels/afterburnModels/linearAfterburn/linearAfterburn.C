@@ -48,9 +48,9 @@ Foam::afterburnModels::linearAfterburn::linearAfterburn
 )
 :
     afterburnModel(mesh, dict, phaseName),
-    Q0_("Q0", sqr(dimVelocity), dict),
-    tStart_(dimensionedScalar::lookupOrDefault("tStart", dict, dimTime, 0.0)),
-    tEnd_("tEnd", dimTime, dict)
+    Q0_("Q0", sqr(dimVelocity), dict_),
+    tStart_(dimensionedScalar::lookupOrDefault("tStart", dict_, dimTime, 0.0)),
+    tEnd_("tEnd", dimTime, dict_)
 {}
 
 
@@ -65,24 +65,13 @@ Foam::afterburnModels::linearAfterburn::~linearAfterburn()
 Foam::tmp<Foam::volScalarField>
 Foam::afterburnModels::linearAfterburn::ESource() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "linearAfterburn:Esource",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            Q0_/(tEnd_ - tStart_)
-           *pos(this->time() - tStart_)
-           *pos(tEnd_ - this->time())
-        )
+        type() + ":Esource",
+        mesh_,
+        Q0_/(tEnd_ - tStart_)
+        *pos(this->t() - tStart_)
+        *pos(tEnd_ - this->t())
     );
 }
 

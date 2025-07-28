@@ -39,7 +39,8 @@ inline Foam::solidJWL<Specie>::solidJWL
     const scalar R1,
     const scalar R2,
     const scalar pRef,
-    const scalar e0
+    const scalar e0,
+    const scalar eRef
 )
 :
     Specie(sp),
@@ -50,7 +51,8 @@ inline Foam::solidJWL<Specie>::solidJWL
     R1_(R1),
     R2_(R2),
     pRef_(pRef),
-    e0_(e0)
+    e0_(e0),
+    eRef_(eRef)
 {}
 
 
@@ -65,7 +67,6 @@ Foam::scalar Foam::solidJWL<Specie>::Pi
     return
         A_*(omega_/(R1_*V) - 1.0)*exp(-R1_*V)
       + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V)
-      - omega_*rho*e0_
       - pRef_;
 
 }
@@ -86,7 +87,6 @@ Foam::scalar Foam::solidJWL<Specie>::delta
            *(omega_*(1.0/(R1_*rho0_) + 1.0/rhos) - R1_*rho0_/sqr(rhos))
           + B_*exp(-R2_*rho0_/rhos)
            *(omega_*(1.0/(R2_*rho0_) + 1.0/rhos) - R2_*rho0_/sqr(rhos))
-          + omega_*e0_
         )/omega_;
 }
 
@@ -108,7 +108,8 @@ inline Foam::solidJWL<Specie>::solidJWL
     R1_(pf.R1_),
     R2_(pf.R2_),
     pRef_(pf.pRef_),
-    e0_(pf.e0_)
+    e0_(pf.e0_),
+    eRef_(pf.eRef_)
 {}
 
 
@@ -150,8 +151,8 @@ Foam::scalar Foam::solidJWL<Specie>::p
 {
     return
         limit
-      ? max(omega_*rho*e - Pi(rho, e), 0.0)
-      : omega_*rho*e - Pi(rho, e);
+      ? max(omega_*rho*(e - eRef_) - Pi(rho, e), 0.0)
+      : omega_*rho*(e - eRef_) - Pi(rho, e);
 }
 
 
@@ -210,7 +211,7 @@ Foam::scalar Foam::solidJWL<Specie>::dpdv
            *(R1_*rho0_ - omega_*rho*(1.0 + rho/R1_/rho0_))
           + B_*exp(-R2_*rho0_/rhos)
            *(R2_*rho0_ - omega_*rho*(1.0 + rho/R2_/rho0_))
-          + omega_*(e + e0_)*sqr(rhos)
+          + omega_*(e - eRef_)*sqr(rhos)
         );
 }
 
@@ -308,14 +309,26 @@ Foam::scalar Foam::solidJWL<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::S
+Foam::scalar Foam::solidJWL<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -343,6 +356,7 @@ inline void Foam::solidJWL<Specie>::operator+=
         R2_ = Y1*R2_ + Y2*pf.R2_;
         pRef_ = Y1*pRef_ + Y2*pf.pRef_;
         e0_ = Y1*e0_ + Y2*pf.e0_;
+        eRef_ = Y1*eRef_ + Y2*pf.eRef_;
     }
 }
 
@@ -381,7 +395,8 @@ inline Foam::solidJWL<Specie> Foam::operator+
             pf1.R1_,
             pf1.R2_,
             pf1.pRef_,
-            pf1.e0_
+            pf1.e0_,
+            pf1.eRef_
         );
     }
     else
@@ -398,7 +413,8 @@ inline Foam::solidJWL<Specie> Foam::operator+
             Y1*pf1.R1_ + Y2*pf2.R1_,
             Y1*pf1.R2_ + Y2*pf2.R2_,
             Y1*pf1.pref_ + Y2*pf2.pRef_,
-            Y1*pf1.e0_ + Y2*pf2.e0_
+            Y1*pf1.e0_ + Y2*pf2.e0_,
+            Y1*pf1.eRef_ + Y2*pf2.eRef_
         );
     }
 }
@@ -421,7 +437,8 @@ inline Foam::solidJWL<Specie> Foam::operator*
         pf.R1_,
         pf.R2_,
         pf.pRef_,
-        pf.e0_
+        pf.e0_,
+        pf.eRef_
     );
 }
 
@@ -452,7 +469,8 @@ inline Foam::solidJWL<Specie> Foam::operator==
         Y2*pf2.R1_ - Y1*pf1.R1_,
         Y2*pf2.R2_ - Y1*pf1.R2_,
         Y2*pf2.pRef_ - Y1*pf1.pRef_,
-        Y2*pf2.e0_ - Y1*pf1.e0_
+        Y2*pf2.e0_ - Y1*pf1.e0_,
+        Y2*pf2.eRef_ - Y1*pf1.eRef_
     );
 }
 

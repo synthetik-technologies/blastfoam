@@ -60,7 +60,7 @@ public:
     static label nCmpts()
     {
         NotImplemented;
-        return great;
+        return 0;
     }
 
     template<class Type>

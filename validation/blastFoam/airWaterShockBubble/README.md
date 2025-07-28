@@ -5,7 +5,7 @@
 This problem is meant to show the interaction of a strong shock in water and an air bubble. The shock wave has a Mach number of 1.422, and is traveling in water. The post-shock region is initially at rest and includes an air bubble with a radius of 0.2 m. Results are compared to the original results of Shyue 1999 and Zheng 2008.
 
 
-The calculation took approx. 10 minute to run on a four core desktop at the reference resolution (e.g. 24x20 cells with a maximum refinement level of 4). Reference solution and plots from this run are in the "referencePlots" directory. The user run results must be viewed using a graphical viewer.
+The calculation took approx. 10 minute to run on a four core desktop at the reference resolution (e.g. 96x80 cells with a maximum refinement level of 2). Reference solution and plots from this run are in the "referencePlots" directory. The user run results must be viewed using a graphical viewer.
 
 
 ## Reference

@@ -555,6 +555,23 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
         {
             return Eest;
         }
+        scalar Test = T;
+        scalar Tnew = Test;
+        scalar pNew;
+        int    iter = 0;
+        do
+        {
+            Test = Tnew;
+            pNew = ThermoType::p(rho, Eest, Test, false); // Do not limit p
+            Tnew -= (pNew - p)/stabilise(dpdT(rho, Eest, Test), small);
+            if (iter++ > maxIter_)
+            {
+                FatalErrorInFunction
+                    << "Maximum number of iterations exceeded: " << maxIter_
+                    << abort(FatalError);
+            }
+        } while (mag((pNew - p)/p) > relTol_);
+        return ThermoType::Es(rho, Eest, Tnew);
     }
     else
     {
@@ -566,26 +583,74 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
     scalar Enew = Eest;
     scalar pNew;
-    scalar Test = T;
     int    iter = 0;
     do
     {
         Eest = Enew;
-        pNew = ThermoType::p(rho, Eest, Test, false); // Do not limit p
+        pNew = ThermoType::p(rho, Eest, T, false); // Do not limit p
         Enew -= (pNew - p)/stabilise(dpde(rho, Eest, T), small);
-        if (ThermoType::temperatureBased())
-        {
-            Test = TRhoE(Test, rho, Enew);
-        }
         if (iter++ > maxIter_)
         {
             FatalErrorInFunction
                 << "Maximum number of iterations exceeded: " << maxIter_
                 << abort(FatalError);
         }
-
     } while (mag((pNew - p)/p) > relTol_);
     return Enew;
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPTOffset
+(
+    const scalar rho,
+    const scalar p,
+    const scalar T,
+    const scalar eOffset
+) const
+{
+    //- Simple method to calculate initial density
+    //  Should be modified to solve the 2D problem for
+    //  density and internal energy
+    scalar rhoEst = rho;
+    scalar rhoNew = rhoEst;
+    scalar pNew = p;
+
+    // Initial guess since e probably isnt  know yet and may vary with density
+    scalar E = T;
+    if (ThermoType::enthalpy())
+    {
+        E *= ThermoType::Cp(rhoEst, 0.0, T);
+    }
+    else
+    {
+        E *= ThermoType::Cv(rhoEst, 0.0, T);
+    }
+    E = ThermoType::Es(rhoEst, E, T) + eOffset;
+
+    label iter = 0;
+    do
+    {
+        rhoEst = rhoNew;
+
+        scalar dpdRho(-ThermoType::dpdv(rhoEst, E, T)/sqr(max(rhoEst, 1e-10)));
+        pNew = ThermoType::p(rhoEst, E, T, false); // Do not limit p
+        rhoNew = rhoEst - (pNew - p)/stabilise(dpdRho, small);
+
+        // Update internal energy if required
+        if (!ThermoType::temperatureBased())
+        {
+            E = ThermoType::Es(rhoEst, E, T) + eOffset;
+        }
+
+        // If density is less than 0, reduce by half
+        if (rhoNew < 1e-10)
+        {
+            rhoNew = rhoEst/2.0;
+        }
+    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
+
+    return rhoNew;
 }
 
 
@@ -597,41 +662,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
     const scalar T
 ) const
 {
-    //- Simple method to calculate initial density
-    //  Should be modified to solve the 2D problem for
-    //  density and internal energy
-    scalar Rhoest = rho;
-    scalar Rhonew = Rhoest;
-    scalar pNew = p;
-    scalar E = T; //- Initial guess
-    if (ThermoType::enthalpy())
-    {
-        E *= ThermoType::Cp(Rhoest, 0.0, T);
-    }
-    else
-    {
-        E *= ThermoType::Cv(Rhoest, 0.0, T);
-    }
-    E = ThermoType::Es(Rhoest, E, T);
-
-    int    iter = 0;
-    do
-    {
-        Rhoest = Rhonew;
-
-        scalar dpdRho(-ThermoType::dpdv(Rhoest, E, T)/sqr(max(Rhoest, 1e-10)));
-        pNew = ThermoType::p(Rhoest, E, T, false); // Do not limit p
-        Rhonew =
-            Rhoest - (pNew - p)/stabilise(dpdRho, small);
-        E = ThermoType::Es(Rhoest, E, T);
-
-        if (Rhonew < 1e-10)
-        {
-            Rhonew = Rhoest/2.0;
-        }
-    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
-
-    return Rhonew;
+    return rhoPTOffset(rho, p, T, 0.0);
 }
 
 

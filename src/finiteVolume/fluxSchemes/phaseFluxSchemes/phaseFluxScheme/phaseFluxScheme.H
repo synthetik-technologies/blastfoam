@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -53,13 +53,28 @@ class phaseFluxScheme
 :
     public fluxSchemeBase
 {
+public:
+
+    //- Return the flux scheme
+    static const phaseFluxScheme& findFluxScheme
+    (
+        const surfaceScalarField& phi
+    )
+    {
+        return dynamicCast<const phaseFluxScheme>
+        (
+            fluxSchemeBase::findFluxScheme(phi)
+        );
+    }
+
+
 protected:
+
+    //- Phase name
+    const word phaseName_;
 
     //- Dictionary for phase fluxScheme
     const dictionary& dict_;
-
-    //- Included phases
-    wordList phases_;
 
     //- Saved interpolated alpha field
     tmp<surfaceScalarField> alphaf_;
@@ -90,27 +105,6 @@ protected:
             const label facei, const label patchi = -1
         ) = 0;
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
-        (
-            const scalar& alphaOwn, const scalar& alphaNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& alphaRhoUPhi,
-            scalar& alphaRhoEPhi,
-            const label facei, const label patchi = -1
-        ) = 0;
-
-
 
         //- Update fields before calculating fluxes
         virtual void preUpdate(const volScalarField& p)
@@ -119,6 +113,12 @@ protected:
         //- Correct fluxes
         virtual void postUpdate()
         {}
+
+        //- Return the name of a give field
+        word fieldName(const word& name) const
+        {
+            return IOobject::groupName(type() + ":" + name, phaseName_);
+        }
 
 
 public:
@@ -134,20 +134,24 @@ public:
             autoPtr,
             phaseFluxScheme,
             dictionary,
-            (const fvMesh& mesh, const word& name),
-            (mesh, name)
+            (
+                const surfaceScalarField& phi
+            ),
+            (phi)
         );
         declareRunTimeSelectionTable
         (
             autoPtr,
             phaseFluxScheme,
             solid,
-            (const fvMesh& mesh, const word& name),
-            (mesh, name)
+            (
+                const surfaceScalarField& phi
+            ),
+            (phi)
         );
 
     // Constructor
-    phaseFluxScheme(const fvMesh& mesh, const word& name);
+    phaseFluxScheme(const surfaceScalarField& phi);
 
 
     //- Destructor
@@ -159,31 +163,17 @@ public:
         //- General selector
         static autoPtr<phaseFluxScheme> New
         (
-            const fvMesh& mesh,
-            const word& name
+            const surfaceScalarField& phi
         );
 
         //- Solid specific selection
         static autoPtr<phaseFluxScheme> NewSolid
         (
-            const fvMesh& mesh,
-            const word& name
+            const surfaceScalarField& phi
         );
 
 
     // Member Functions
-
-        //- Return the phases belonging to this flux scheme
-        virtual const wordList& phases() const
-        {
-            return phases_;
-        }
-
-        //- Access the phases belonging to this flux scheme
-        virtual wordList& phases()
-        {
-            return phases_;
-        }
 
         //- Clear savedFields
         virtual void clear();
@@ -194,8 +184,10 @@ public:
         //- Update
         void update
         (
-            const volScalarField& alpha,
-            const volScalarField& rho,
+            const surfaceScalarField& alphaOwn,
+            const surfaceScalarField& alphaNei,
+            const surfaceScalarField& rhoOwn,
+            const surfaceScalarField& rhoNei,
             const volVectorField& U,
             const volScalarField& e,
             const volScalarField& p,
@@ -217,6 +209,7 @@ public:
             const volScalarField& p,
             const volScalarField& c,
             surfaceScalarField& phi,
+            surfaceScalarField& alphaPhi,
             surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& alphaRhoUPhi,
             surfaceScalarField& alphaRhoEPhi
@@ -225,17 +218,31 @@ public:
         //- Update
         void update
         (
-            const UPtrList<volScalarField>& alphas,
-            const UPtrList<volScalarField>& rhos,
+            const surfaceScalarField& alphaOwn,
+            const surfaceScalarField& alphaNei,
+            const surfaceScalarField& rhoOwn,
+            const surfaceScalarField& rhoNei,
             const volVectorField& U,
             const volScalarField& e,
             const volScalarField& p,
             const volScalarField& c,
             surfaceScalarField& phi,
-            surfaceScalarField& alphaPhi,
             surfaceScalarField& alphaRhoPhi,
-            PtrList<surfaceScalarField>& alphaPhis,
-            PtrList<surfaceScalarField>& alphaRhoPhis,
+            surfaceVectorField& alphaRhoUPhi,
+            surfaceScalarField& alphaRhoEPhi
+        );
+
+        //- Update
+        void update
+        (
+            const volScalarField& alpha,
+            const volScalarField& rho,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p,
+            const volScalarField& c,
+            surfaceScalarField& phi,
+            surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& alphaRhoUPhi,
             surfaceScalarField& alphaRhoEPhi
         );

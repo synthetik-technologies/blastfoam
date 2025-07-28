@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "Constant.H"
+#include "Constant3.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -33,6 +33,7 @@ template<class Type>
 Foam::autoPtr<Foam::Function3<Type>> Foam::Function3<Type>::New
 (
     const word& name,
+    const Function3s::unitConversions& units,
     const dictionary& dict
 )
 {
@@ -56,7 +57,7 @@ Foam::autoPtr<Foam::Function3<Type>> Foam::Function3<Type>::New
                 << exit(FatalError);
         }
 
-        return cstrIter()(name, coeffsDict);
+        return cstrIter()(name, units, coeffsDict);
     }
     else
     {
@@ -70,7 +71,7 @@ Foam::autoPtr<Foam::Function3<Type>> Foam::Function3<Type>::New
             is.putBack(firstToken);
             return autoPtr<Function3<Type>>
             (
-                new Function3s::Constant<Type>(name, is)
+                new Function3s::Constant<Type>(name, units, is)
             );
         }
         else
@@ -92,9 +93,28 @@ Foam::autoPtr<Foam::Function3<Type>> Foam::Function3<Type>::New
                 << exit(FatalError);
         }
 
-        return cstrIter()(name, dict);
+        return cstrIter()(name, units, dict);
     }
 }
 
+
+template<class Type>
+Foam::autoPtr<Foam::Function3<Type>> Foam::Function3<Type>::New
+(
+    const word& name,
+    const unitConversion& xUnits,
+    const unitConversion& yUnits,
+    const unitConversion& zUnits,
+    const unitConversion& units,
+    const dictionary& dict
+)
+{
+    return New
+    (
+        name,
+        {xUnits, yUnits, zUnits, units},
+        dict
+    );
+}
 
 // ************************************************************************* //

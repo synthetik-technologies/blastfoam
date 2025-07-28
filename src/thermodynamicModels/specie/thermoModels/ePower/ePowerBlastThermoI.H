@@ -134,19 +134,6 @@ inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Es
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Ets
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return
-        c0_*(pow(T, n0_ + 1) - pow(Tstd, n0_ + 1))/(pow(Tref_, n0_)*(n0_ + 1));
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Ea
 (
     const scalar rho,
@@ -159,14 +146,33 @@ inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Ea
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Eta
+inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Cvt
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Ets(rho, e, T) + Hf();
+    return c0_*pow(T/Tref_, n0_);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Est
+(
+    const scalar T
+) const
+{
+    return
+        c0_*(pow(T, n0_ + 1) - pow(Tstd, n0_ + 1))/(pow(Tref_, n0_)*(n0_ + 1));
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Eat
+(
+    const scalar T
+) const
+{
+    return Est(T) + Hf();
 }
 
 
@@ -174,14 +180,6 @@ template<class EquationOfState>
 inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Hf() const
 {
     return Hf_;
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::ePowerThermo<EquationOfState>::flameT() const
-{
-    NotImplemented;
-    return 0.0;
 }
 
 
@@ -194,14 +192,13 @@ inline Foam::scalar Foam::ePowerThermo<EquationOfState>::S
 {
     return
         c0_*(pow(T, n0_) - pow(Tstd, n0_))/(pow(Tref_, n0_)*n0_)
-      + EquationOfState::S(p, T);
+      + EquationOfState::Sv(p, T);
 }
 
 
 template<class EquationOfState>
 inline Foam::scalar Foam::ePowerThermo<EquationOfState>::Gstd
 (
-    const scalar p,
     const scalar T
 ) const
 {

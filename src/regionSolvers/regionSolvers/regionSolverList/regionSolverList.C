@@ -1,0 +1,552 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
+-------------------------------------------------------------------------------
+License
+    This file is derivative work of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "regionSolverList.H"
+#include "regionSolver.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineTypeNameAndDebug(regionSolverList, 0);
+}
+
+
+// * * * * * * * * * * * * Private Members Functions * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::regionSolverList::regionSolverList(const Time& runTime)
+:
+    PtrListDictionary<regionSolver>(0),
+    runTime_(runTime),
+    solution_(runTime_),
+    regionMeshes_(0),
+    changed_(0, true),
+    fixedMapping_(solutionControls().lookupOrDefault<bool>("fixedMapping", true)),
+    iterNo_(0)
+{
+    List<Pair<word>> regionSolvers;
+    if (runTime_.controlDict().isDict("regionSolvers"))
+    {
+        const dictionary& regionSolversDict =
+            runTime_.controlDict().subDict("regionSolvers");
+        forAllConstIter(dictionary, regionSolversDict, iter)
+        {
+            regionSolvers.append({iter().keyword(), word(iter().stream())});
+        }
+    }
+
+    // Set list sizes
+    this->setSize(regionSolvers.size());
+    regionMeshes_.setSize(regionSolvers.size());
+    changed_.setSize(regionSolvers.size(), true);
+    forAll(regionSolvers, regioni)
+    {
+        regionMeshes_.set
+        (
+            regioni,
+            new fvMesh
+            (
+                IOobject
+                (
+                    regionSolvers[regioni].first(),
+                    runTime_.name(),
+                    runTime_,
+                    IOobject::MUST_READ
+                ),
+                false
+            )
+        );
+    }
+
+    bool requireNonFixedMapping = false;
+    forAll(regionSolvers, regioni)
+    {
+        regionMeshes_[regioni].postConstruct
+        (
+            true,
+            fvMesh::stitchType::geometric
+        );
+        if
+        (
+            regionMeshes_[regioni].dynamic()
+         || regionMeshes_[regioni].distributing()
+        )
+        {
+            requireNonFixedMapping = true;
+        }
+    }
+    if (fixedMapping_ && requireNonFixedMapping)
+    {
+        if (solutionControls().found("fixedMapping"))
+        {
+            WarningInFunction
+                << "Fixed mapping but topological changes require non-fixed "
+                << "mapping, overriding" << endl;
+        }
+        fixedMapping_ = false;
+    }
+
+
+    // Clearing of global patches is handled internally
+    globalPolyBoundaryMesh::clearOnMovement = false;
+    forAll(regionMeshes_, regioni)
+    {
+        this->set
+        (
+            regioni,
+            regionMeshes_[regioni].name(),
+            regionSolver::New
+            (
+                regionSolvers[regioni].second(),
+                regionMeshes_[regioni],
+                *this
+            )
+        );
+    }
+
+    labelList map(identityMap(regionMeshes_.size()));
+    if (solutionControls().found("solveOrder"))
+    {
+        wordList solveOrder(solutionControls().lookup("solveOrder"));
+        HashTable<label> rMap;
+        forAll(solveOrder, i)
+        {
+            rMap.insert(solveOrder[i], i);
+        }
+        forAll(regionMeshes_, regioni)
+        {
+            map[regioni] = rMap[regionMeshes_[regioni].name()];
+        }
+    }
+    else
+    {
+        bool predictSolids =
+            solutionControls().lookupOrDefault<bool>("predictSolids", true);
+        label regioni = 0;
+        forAll(regionMeshes_, i)
+        {
+            if (operator[](i).isSolid() == predictSolids)
+            {
+                map[i] = regioni++;
+            }
+        }
+        forAll(regionMeshes_, i)
+        {
+            if (operator[](i).isSolid() != predictSolids)
+            {
+                map[i] = regioni++;
+            }
+        }
+    }
+    this->reorder(map);
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::regionSolverList::~regionSolverList()
+{}
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::regionSolverList::converged() const
+{
+    bool allUnknown = true;
+    forAll(*this, regioni)
+    {
+        switch (operator[](regioni).convergence())
+        {
+            case NOT_CONVERGED:
+                return false;
+            case CONVERGED:
+            case FULL_CONVERGENCE:
+                allUnknown = false;
+                break;
+            default:
+                break;
+        }
+    }
+    return !allUnknown;
+}
+
+
+Foam::Convergence Foam::regionSolverList::convergence() const
+{
+    bool allUnknown = true;
+    bool allFull = true;
+    forAll(*this, regioni)
+    {
+        switch (operator[](regioni).convergence())
+        {
+            case NOT_CONVERGED:
+                return NOT_CONVERGED;
+            case CONVERGED:
+                allFull = false;
+                allUnknown = false;
+                break;
+            case FULL_CONVERGENCE:
+                allUnknown = false;
+                break;
+            default:
+                break;
+        }
+    }
+    return
+        allUnknown
+      ? UNKNOWN_CONVERGENCE
+      : (
+            allFull ? FULL_CONVERGENCE : CONVERGED
+        );
+}
+
+void Foam::regionSolverList::initialiseDisplacement()
+{
+    // Make sure all regions are setup
+    forAll(*this, regioni)
+    {
+        operator[](regioni).initialiseFields();
+    }
+
+    if (debug)
+    {
+        const_cast<Time&>(runTime_).setTime
+        (
+            runTime_.value() + runTime_.deltaTValue(),
+            runTime_.timeIndex()
+        );
+    }
+
+    update(true);
+
+    // Initialize meshes
+    iterNo_ = 0;
+    Info<< endl;
+    IOobject::writeDivider(Info)
+        << "Initial unrelaxed displacement iteration" << nl << endl;
+    forAll(*this, regioni)
+    {
+        Info<< operator[](regioni).name() << ": " << endl;
+        operator[](regioni).initialiseMesh(FIRST_ITER);
+        Info<< endl;
+    }
+
+    // Set displacement field names
+    initialise();
+
+    clear();
+
+    label nInitialCorrectors =
+        solutionControls().lookup<label>("nInitialCorrectors");
+
+    Convergence converged = UNKNOWN_CONVERGENCE;
+    do
+    {
+        if (debug)
+        {
+            const_cast<Time&>(runTime_).writeNow();
+            const_cast<Time&>(runTime_).setTime
+            (
+                runTime_.value()+runTime_.deltaTValue(),
+                runTime_.timeIndex()
+            );
+        }
+
+        Info<< endl;
+        IOobject::writeDivider(Info)
+            << "Initial correction iteration: " << iterNo_ << nl << endl;
+
+        // Force updating of mapping
+        update(true);
+
+        // Initialize meshes
+        forAll(*this, regioni)
+        {
+            operator[](regioni).moveMesh(MID_ITER);
+        }
+
+        converged = convergence();
+
+        // Allow iterations to stop if the error is very small
+        if (converged == FULL_CONVERGENCE)
+        {
+            break;
+        }
+    } while (iterNo_++ < nInitialCorrectors && converged <= NOT_CONVERGED);
+
+    if (debug)
+    {
+        const_cast<Time&>(runTime_).writeNow();
+        const_cast<Time&>(runTime_).setTime
+        (
+            runTime_.value()+runTime_.deltaTValue(),
+            runTime_.timeIndex()
+        );
+
+    }
+
+    if (converged >= CONVERGED)
+    {
+        Info<< "Converged initial displacement in " << iterNo_
+            << " iterations" << nl << endl;
+    }
+    else if (converged == NOT_CONVERGED)
+    {
+        Info<< "*** Initial displacement did not converge" << nl << endl;
+    }
+
+    // Final update with no relaxation
+    Info<< "Final unrelaxed iteration" << nl << endl;
+    forAll(*this, regioni)
+    {
+        operator[](regioni).initialiseMesh(FINAL_ITER);
+    }
+
+    if (debug)
+    {
+        const_cast<Time&>(runTime_).writeNow();
+    }
+}
+
+
+void Foam::regionSolverList::update(const bool force)
+{
+    forAll(*this, regioni)
+    {
+        if (changed_[regioni] || force)
+        {
+            operator[](regioni).update();
+        }
+    }
+    changed_ = false;
+}
+
+
+bool Foam::regionSolverList::changeMesh()
+{
+    forAll(*this, regioni)
+    {
+        changed_[regioni] = operator[](regioni).changeMesh();
+    }
+    bool changed = anyChanged();
+
+    // Mapping ALWAYS needs to be updated if there have been changes
+    // Update immediately
+    update();
+
+    return changed;
+}
+
+
+void Foam::regionSolverList::initialiseMesh(const IterType iter)
+{
+    forAll(*this, regioni)
+    {
+        operator[](regioni).initialiseMesh(iter);
+    }
+}
+
+
+void Foam::regionSolverList::initialiseFields()
+{
+    forAll(*this, regioni)
+    {
+        operator[](regioni).initialiseFields();
+    }
+}
+
+
+void Foam::regionSolverList::initialise()
+{
+    forAll(*this, regioni)
+    {
+        if (operator[](regioni).isSolid())
+        {
+            operator[](regioni).initialise();
+        }
+    }
+    update(true);
+    forAll(*this, regioni)
+    {
+        if (!operator[](regioni).isSolid())
+        {
+            operator[](regioni).initialise();
+        }
+    }
+//     update(true);
+}
+
+
+bool Foam::regionSolverList::moveMesh(const IterType iter)
+{
+    bool anyMoved = false;
+    forAll(*this, regioni)
+    {
+        bool regionMoved = operator[](regioni).moveMesh(iter);
+        anyMoved = anyMoved || regionMoved;
+    }
+    return anyMoved;
+}
+
+
+void Foam::regionSolverList::solve()
+{
+    label nOuterCorrectors = 1;
+    if
+    (
+        !solutionControls().found("explicit")
+     || !solutionControls().lookup<bool>("explicit")
+    )
+    {
+        nOuterCorrectors = solutionControls().lookup<label>("nOuterCorrectors");
+    }
+
+    iterNo_ = 0;
+    bool finished = false;
+    bool cleanup = nOuterCorrectors < 2;
+    bool hasMoved = false;
+
+    Convergence converged = UNKNOWN_CONVERGENCE;
+    do
+    {
+        Info<< "********************************************" << nl
+            << "Outer iteration: " << iterNo_ << nl
+            << "********************************************" << nl << endl;
+
+        // Mark if relaxation is allowed
+        // FINAL_ITER: no relaxation
+        // MID_ITER: Relaxation is allowed
+        IterType iter =
+            (cleanup || iterNo_ == nOuterCorrectors-1)
+          ? FINAL_ITER
+          : (iterNo_ == 0 ? FIRST_ITER : MID_ITER);
+
+        if (cleanup)
+        {
+            finished = true;
+        }
+
+
+        forAll(*this, regioni)
+        {
+            Info<< "********************" << nl
+                << "Solving region "
+                << operator[](regioni).mesh().name() << nl
+                << "********************" << nl << endl;
+            bool regionHasMoved = operator[](regioni).moveMesh(iter);
+            hasMoved = hasMoved || regionHasMoved;
+            operator[](regioni).solve();
+
+            Info<< endl;
+
+        }
+
+        iterNo_++;
+
+        converged = convergence();
+
+        // Allow iterations to stop if the error is very small
+        if (converged == FULL_CONVERGENCE)
+        {
+            break;
+        }
+        // Convergence is met, but the relaxation need to be stopped for
+        // full motion
+        else if (converged == CONVERGED)
+        {
+            cleanup = true;
+        }
+        else if (!converged && iterNo_ < nOuterCorrectors-1)
+        {
+            finished = false;
+            cleanup = false;
+        }
+
+    } while (!finished && iterNo_ < nOuterCorrectors);
+
+    if (nOuterCorrectors == 1)
+    {}
+    else if (convergence() >= CONVERGED)
+    {
+        Info<< "All regions converged in " << iterNo_
+            << " iterations" << nl << endl;
+    }
+    else if (convergence() == NOT_CONVERGED)
+    {
+        Info<< "*** Regions did not converge" << nl << endl;
+    }
+
+    update(hasMoved && !fixedMapping_);
+    clear();
+
+
+    Info<< endl;
+    IOobject::writeDivider(Info) << nl << endl;
+}
+
+
+void Foam::regionSolverList::clear()
+{
+    forAll(*this, regioni)
+    {
+        operator[](regioni).clear();
+    }
+}
+
+
+Foam::scalar Foam::regionSolverList::CoNum() const
+{
+    scalar co = 0.0;
+    forAll(*this, regioni)
+    {
+        co = max(co, operator[](regioni).CoNum());
+    }
+    return co;
+}
+
+
+Foam::scalar Foam::regionSolverList::maxCo() const
+{
+    scalar co = great;
+    forAll(*this, regioni)
+    {
+        co = min(co, operator[](regioni).maxCo());
+    }
+    return co;
+}
+
+
+Foam::scalar Foam::regionSolverList::newDeltaT() const
+{
+    scalar deltaT = great;
+    forAll(*this, regioni)
+    {
+        deltaT = min(deltaT, operator[](regioni).newDeltaT());
+    }
+    return deltaT;
+}
+
+// ************************************************************************* //

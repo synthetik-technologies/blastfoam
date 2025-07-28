@@ -41,11 +41,10 @@ p="$VALIDATIONDATAROOT/p_3D.csv"
 rho="$VALIDATIONDATAROOT/rho_3D.csv"
 U="$VALIDATIONDATAROOT/U_3D.csv"
 
-pBlast="../postProcessing/sampleDict/0.05/Centerline_p*"
-UBlast="../postProcessing/sampleDict/0.05/Centerline_U*"
+blastFoam="../postProcessing/sampleDict/0.05/Centerline.xy"
 
-createEps "p" "Pressure [Pa]" $p 2 $pBlast 2
-createEps "rho" "Density [kg/m^3]" $rho 2 $pBlast 3
-createEps "U" "X-Velocity [m/s]" $U 2 $UBlast 2
+createEps "p" "Pressure [Pa]" $p 2 $blastFoam 2
+createEps "rho" "Density [kg/m^3]" $rho 2 $blastFoam 3
+createEps "U" "X-Velocity [m/s]" $U 2 $blastFoam 4
 
 echo Done

@@ -1,0 +1,24 @@
+feMesh1.C
+feMesh1Geometry.C
+
+feBoundaryMesh1/feBoundaryMesh1.C
+
+fePatches=fePatches
+$(fePatches)/fePatch1/fePatch1.C
+$(fePatches)/fePatch1/fePatch1Geometry.C
+
+basicFePatches=$(fePatches)/basic
+$(basicFePatches)/generic/genericFePatch1.C
+$(basicFePatches)/coupled/coupledFePatch1.C
+
+constraintFePatches=$(fePatches)/constraint
+$(constraintFePatches)/empty/emptyFePatch1.C
+$(constraintFePatches)/internal/internalFePatch1.C
+$(constraintFePatches)/wedge/wedgeFePatch1.C
+$(constraintFePatches)/processor/processorFePatch1.C
+$(constraintFePatches)/symmetry/symmetryFePatch1.C
+
+derivedFePatches=$(fePatches)/derived
+$(derivedFePatches)/wall/wallFePatch1.C
+
+LIB = $(BLAST_LIBBIN)/libblastFeMesh1

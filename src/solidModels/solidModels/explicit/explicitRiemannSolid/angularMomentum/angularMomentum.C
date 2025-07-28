@@ -116,7 +116,7 @@ void angularMomentum::AMconservation
     const scalarField& V = mesh_.V();
     const dimensionedScalar deltaT(mesh_.time().deltaT());
 
-    tmp<GeometricField<vector, fvPatchField, volMesh> > tvf_x
+    tmp<GeometricField<vector, fvPatchField, volMesh> > txAM
     (
         GeometricField<vector, fvPatchField, volMesh>::New
         (
@@ -125,7 +125,7 @@ void angularMomentum::AMconservation
             dimensioned<vector>("x", x.dimensions(), Zero)
         )
     );
-    GeometricField<vector, fvPatchField, volMesh>& xAM = tvf_x.ref();
+    GeometricField<vector, fvPatchField, volMesh>& xAM = txAM.ref();
 
     tmp<GeometricField<vector, fvPatchField, volMesh> > trhoUAM
     (
@@ -145,9 +145,8 @@ void angularMomentum::AMconservation
 
     else if (RKstage == 1)
     {
-        xAM = x.oldTime() + (deltaT/2.0)*(rhoU.oldTime()/rho_);
+        xAM = 0.5*(x + x.oldTime());
         rhoUAM = rhoU.oldTime() + (deltaT*rhsRhoU.prevIter());
-        xAM = xAM + ((deltaT*(rhoUAM/rho_))/2.0);
     }
 
     tensor K_LL = tensor::zero;
@@ -172,23 +171,20 @@ void angularMomentum::AMconservation
                 -xAMi.y(), xAMi.x(), 0
             );
 
-        K_BB += -V[celli];
+        K_BB -= V[celli];
 
-        R_L += (V[celli]*rhsAMi) + ((V[celli]*rhsRhoUi) ^ xAMi);
+        R_L += V[celli]*(rhsAMi + (rhsRhoUi ^ xAMi));
     }
 
-    if (Pstream::parRun())
-    {
-        reduce(K_LL, sumOp<tensor>());
-        reduce(K_LB, sumOp<tensor>());
-        reduce(K_BB, sumOp<scalar>());
-        reduce(R_L, sumOp<vector>());
-    }
+    reduce(K_LL, sumOp<tensor>());
+    reduce(K_LB, sumOp<tensor>());
+    reduce(K_BB, sumOp<scalar>());
+    reduce(R_L, sumOp<vector>());
 
     tensor LHS = K_LL - ((K_LB & K_LB)/K_BB);
 
     // Only include axes that are not geometricD
-    vector RHS = cmptMultiply(R_L, invalidD_);
+    vector RHS = cmptMultiply(R_L, validD_);
 
     vector lambda = stabInv(LHS) & RHS;
     vector beta = (-K_LB & lambda)/K_BB;
@@ -198,11 +194,6 @@ void angularMomentum::AMconservation
         rhsRhoU[celli] += (lambda ^ xAM[celli]) + beta;
     }
 
-    volVectorField::Boundary& prhsRhoU(rhsRhoU.boundaryFieldRef());
-    forAll(prhsRhoU, patchi)
-    {
-        prhsRhoU[patchi] += (lambda ^ xAM.boundaryField()[patchi]) + beta;
-    }
     if (RKstage == 0)
     {
         rhsRhoU.storePrevIter();

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -65,15 +65,6 @@ Foam::MUSCLReconstructionScheme<Type, MUSCLType, Limiter, LimitFunc>::calcLimite
 
     const vectorField& C = this->mesh_.C();
 
-    tmp<fv::gradScheme<scalar>> gradientScheme
-    (
-        fv::gradScheme<scalar>::New
-        (
-            this->mesh_,
-            this->mesh_.gradScheme(word("grad(" + this->phi_.name() + ")"))
-        )
-    );
-
     for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
     {
         volScalarField phiCmpt(this->phi_.component(cmpti));
@@ -84,7 +75,7 @@ Foam::MUSCLReconstructionScheme<Type, MUSCLType, Limiter, LimitFunc>::calcLimite
             lPhi = tlPhi();
 
         tmp<GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh>>
-            tgradc(gradientScheme().grad(lPhi));
+            tgradc(this->gradient(lPhi, cmpti));
         const GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh>&
             gradc = tgradc();
 

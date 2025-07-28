@@ -171,11 +171,22 @@ public:
             const bool limit = true
         ) const;
 
+        //- Calculate pressure for cell [Pa]
+        virtual scalar patchFacepRhoT
+        (
+            const label patchi,
+            const label facei,
+            const bool limit = true
+        ) const;
+
         //- Calculate Gamma = dpde
         virtual tmp<volScalarField> Gamma() const;
 
         //- Gamma = dpde for cell []
         virtual scalar cellGamma(const label celli) const;
+
+        //- Gamma = dpde for cell []
+        virtual scalar patchFaceGamma(const label patchi, const label facei) const;
 
         //- Derivative of pressure w.r.t density for cell
         virtual scalar celldpdRho(const label celli) const;

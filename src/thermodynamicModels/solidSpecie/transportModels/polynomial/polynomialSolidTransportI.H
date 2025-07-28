@@ -91,6 +91,16 @@ inline Foam::scalar Foam::polynomialSolidTransport<Thermo, PolySize>::mu
 
 
 template<class Thermo, int PolySize>
+inline Foam::scalar Foam::polynomialSolidTransport<Thermo, PolySize>::kappaT
+(
+    const scalar T
+) const
+{
+    return kappaCoeffs_.value(T);
+}
+
+
+template<class Thermo, int PolySize>
 inline Foam::scalar Foam::polynomialSolidTransport<Thermo, PolySize>::kappa
 (
     const scalar rho,

@@ -27,6 +27,7 @@ License
 
 #include "CodedEquation.H"
 #include "adaptiveTypes.H"
+#include "stringOps.H"
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -46,6 +47,20 @@ Foam::wordList Foam::CodedEquation<Type>::codeKeys() const
 
 
 template<class Type>
+Foam::wordList Foam::CodedEquation<Type>::codeDictVars() const
+{
+    return
+    {
+        word::null,
+        word::null,
+        word::null,
+        word::null,
+        word::null
+    };
+}
+
+
+template<class Type>
 void Foam::CodedEquation<Type>::prepare
 (
     dynamicCode& dynCode,
@@ -59,6 +74,9 @@ void Foam::CodedEquation<Type>::prepare
     // Set TemplateType filter variables
     dynCode.setFilterVariable("TemplateType", pTraits<Type>::typeName);
 
+    // Make verbose if debugging
+    dynCode.setFilterVariable("verbose", Foam::name(bool(debug)));
+
     // Compile filtered C template
     dynCode.addCompileFile(codeTemplateC("CodedEquation"));
 
@@ -68,7 +86,6 @@ void Foam::CodedEquation<Type>::prepare
     // Debugging: make verbose
     if (debug)
     {
-        dynCode.setFilterVariable("verbose", "true");
         Info<<"compile " << codeName() << " sha1: "
             << context.sha1() << endl;
     }
@@ -101,12 +118,12 @@ Foam::autoPtr<Foam::equation<Type>>
 Foam::CodedEquation<Type>::compileNew()
 {
     this->updateLibrary();
-    return regEquation<Type, Equation>::New
-    (
-        codeName(),
-        this->obr_,
-        codeDict()
-    );
+    return
+        Equation<Type>::New
+        (
+            codeName(),
+            codeDict()
+        );
 }
 
 
@@ -130,7 +147,7 @@ Foam::CodedEquation<Type>::expandCodeDict
     forAll(codes, i)
     {
         verbatimString str(dict[codes[i]]);
-        stringOps::inplaceExpand(str, cDict, true, true);
+        stringOps::inplaceExpandEntry(str, cDict, true, true);
         dict.set(primitiveEntry(codes[i], str));
     }
     return cDict;
@@ -139,13 +156,9 @@ Foam::CodedEquation<Type>::expandCodeDict
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::CodedEquation<Type>::CodedEquation
-(
-    const objectRegistry& obr,
-    const dictionary& dict
-)
+Foam::CodedEquation<Type>::CodedEquation(const dictionary& dict)
 :
-    regEquation<Type, Equation>(obr, dict),
+    Equation<Type>(dict),
     codedBase("test", expandCodeDict(dict)),
     nDerivatives_(dict.lookup<label>("nDerivatives"))
 {
@@ -159,6 +172,19 @@ Foam::CodedEquation<Type>::CodedEquation
     {
         setEnv("FOAM_CODE_TEMPLATES", origCODE_TEMPLATE_DIR, true);
     }
+}
+
+template<class Type>
+Foam::CodedEquation<Type>::CodedEquation
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
+:
+    CodedEquation<Type>(dict)
+{
+    this->setObr(obr);
+    redirectEquationPtr_->setObr(obr);
 }
 
 

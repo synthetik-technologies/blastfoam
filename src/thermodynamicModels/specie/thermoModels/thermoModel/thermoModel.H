@@ -220,6 +220,16 @@ public:
             const scalar T
         ) const;
 
+        //- Initialize internal energy
+        inline scalar rhoPTOffset
+        (
+            const scalar rho,
+            const scalar p,
+            const scalar T,
+            const scalar eOffset
+        ) const;
+
+
 
     // Mass specific derived properties
 

@@ -42,6 +42,7 @@ SourceFiles
 
 #include "solidThermo.H"
 #include "blastThermo.H"
+#include "physicalProperties.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -53,13 +54,20 @@ namespace Foam
 
 class solidBlastThermo
 :
+    public physicalProperties,
     public blastThermo,
     public solidThermo
 {
 protected:
 
-    //- Return the anisotropic Kappa in the local coordinate system
-    tmp<volSymmTensorField> KappaLocal() const;
+    //- Anisotropic thermal conductivity [W/m/K]
+    autoPtr<volVectorField> KappaPtr_;
+
+    //- Thermal conductivity for enthalpy of mixture [kg/m/s]
+    volVectorField& KappaRef()
+    {
+        return KappaPtr_();
+    }
 
 
 public:
@@ -106,11 +114,36 @@ public:
             const word& phaseName = word::null
         );
 
+        //- Standard selection based on fvMesh
+        static autoPtr<solidBlastThermo> New
+        (
+            const fvMesh&,
+            const word& phaseName = word::null
+        );
+
 
     //- Destructor
     virtual ~solidBlastThermo();
 
     // Member Functions
+
+        //- Properties dictionary
+        virtual const IOdictionary& properties() const
+        {
+            return *this;
+        }
+
+        //- Non-const access the properties dictionary
+        virtual IOdictionary& properties()
+        {
+            return *this;
+        }
+
+        //- The dpdt term should not be included in the enthalpy equation
+        virtual Switch dpdt() const
+        {
+            return false;
+        }
 
         // Fields derived from thermodynamic state variables
 
@@ -146,46 +179,6 @@ public:
             //- Kinematic viscosity [m^2/s]
             virtual tmp<volScalarField> nu() const;
 
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [W/m/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField& alphat
-            ) const
-            {
-                return blastThermo::kappaEff(alphat);
-            }
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
-            {
-                return blastThermo::kappaEff(alphat, patchi);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const
-            {
-                return blastThermo::alphaEff(alphat);
-            }
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const
-            {
-                return blastThermo::alphaEff(alphat, patchi);
-            }
 
             using blastThermo::gamma;
             using blastThermo::he;
@@ -217,13 +210,21 @@ public:
 
             //- Anisotropic thermal conductivity for patch
             //  in the local coordinate system [W/m/K]
-            virtual tmp<symmTensorField> KappaLocal(const label patchi) const;
+            virtual const volVectorField& Kappa() const
+            {
+                return KappaPtr_();
+            }
 
-            //- Return the heat flux [W]
-            virtual tmp<surfaceScalarField> q() const;
 
-            //- Return the source term for the energy equation
-            virtual tmp<fvScalarMatrix> divq(volScalarField& he) const;
+        //- Read thermophysical properties dictionary
+        virtual bool read()
+        {
+            return blastThermo::read();
+        }
+        virtual bool read(const dictionary& dict)
+        {
+            return blastThermo::read(dict);
+        }
 };
 
 

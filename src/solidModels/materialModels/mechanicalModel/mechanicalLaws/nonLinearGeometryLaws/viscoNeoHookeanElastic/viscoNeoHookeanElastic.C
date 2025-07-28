@@ -50,11 +50,12 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     EInf_(dict.lookup("EInfinity")),
     E_(dict.lookup("E")),
     tau_(dict.lookup("relaxationTimes")),
@@ -80,7 +81,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
         IOobject
         (
             "s",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -93,7 +94,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
         IOobject
         (
             "sf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -106,7 +107,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
         IOobject
         (
             "transformNeeded",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -119,7 +120,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
         IOobject
         (
             "transformFbar",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -132,7 +133,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
         IOobject
         (
             "transformNeededf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -145,7 +146,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
         IOobject
         (
             "transformFbarf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -308,7 +309,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
                 IOobject
                 (
                     "transformH" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -326,7 +327,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
                 IOobject
                 (
                     "transformHf" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -353,7 +354,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
                 IOobject
                 (
                     "h" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -371,7 +372,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
                 IOobject
                 (
                     "hf" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -382,8 +383,8 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
         );
 
         // We need to store the old time field
-        h_[MaxwellModelI].storeOldTime();
-        hf_[MaxwellModelI].storeOldTime();
+        h_[MaxwellModelI].storeOldTimes();
+        hf_[MaxwellModelI].storeOldTimes();
     }
 
 
@@ -400,7 +401,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
                 IOobject
                 (
                     "H" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -418,7 +419,7 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
                 IOobject
                 (
                     "Hf" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -430,8 +431,8 @@ Foam::viscoNeoHookeanElastic::viscoNeoHookeanElastic
     }
 
     // Store the old time s field
-    s_.storeOldTime();
-    sf_.storeOldTime();
+    s_.storeOldTimes();
+    sf_.storeOldTimes();
 }
 
 

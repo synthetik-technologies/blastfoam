@@ -35,6 +35,7 @@ Foam::Murnaghan<Specie>::Murnaghan
 :
     Specie(dict),
     rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
+    rhoMin_(dict.subDict("equationOfState").lookupOrDefault("rhoMin", 0.0)),
     pRef_(dict.subDict("equationOfState").lookup<scalar>("pRef")),
     K0_(0.0),
     kappa_(0.0),
@@ -63,6 +64,11 @@ Foam::Murnaghan<Specie>::Murnaghan
     {
         K0Prime_ =  eosDict.lookupOrDefault<scalar>("K0Prime", 1.0 + small);
         n_ = K0Prime_;
+    }
+
+    if (!dict.subDict("equationOfState").found("rhoMin"))
+    {
+        rhoMin_ = 0.9*rho0_;//pow(-pRef_*kappa_*n_ + 1.0, 1.0/n_);
     }
 }
 

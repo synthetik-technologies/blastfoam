@@ -46,7 +46,7 @@ Foam::multivariateIntegrator::multivariateIntegrator
         dict.lookupOrDefault<List<scalar>>
         (
             "tolerance",
-            List<scalar>(n, 1e-4)
+            List<scalar>(n, 1e-6)
         )
     ),
     absTolerance_
@@ -54,7 +54,7 @@ Foam::multivariateIntegrator::multivariateIntegrator
         dict.lookupOrDefault<List<scalar>>
         (
             "absTolerance",
-            List<scalar>(n, 1e-6)
+            List<scalar>(n, 0.0)
         )
     ),
     maxSplits_
@@ -85,7 +85,7 @@ void Foam::multivariateIntegrator::reset(const List<scalar>& dx) const
     {
         forAll(minDx_, i)
         {
-            minDx_[i] = mag(dx[i])/scalar(pow(2, maxSplits_[i]));
+            minDx_[i] = mag(dx[i])/scalar(pow(label(2), maxSplits_[i]));
             intervals_[i] = 1;
         }
     }

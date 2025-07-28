@@ -52,7 +52,6 @@ boundary
             (3 0 4 7)
         );
     }
-
 );
 
 mergePatchPairs

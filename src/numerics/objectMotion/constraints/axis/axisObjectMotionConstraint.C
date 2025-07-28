@@ -60,6 +60,19 @@ Foam::objectMotionConstraints::axis::axis
 }
 
 
+
+Foam::objectMotionConstraints::axis::axis
+(
+    const word& name,
+    const vector& axis,
+    const movingObject& motion
+)
+:
+    objectMotionConstraint(name, motion),
+    axis_(axis)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::objectMotionConstraints::axis::~axis()

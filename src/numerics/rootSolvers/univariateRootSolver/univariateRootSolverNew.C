@@ -46,6 +46,11 @@ Foam::autoPtr<Foam::univariateRootSolver> Foam::univariateRootSolver::New
 {
     label nDeriv = eqn.nDerivatives();
     Info<< "Selecting univariate root solver: " << rootSolverType << endl;
+    const dictionary& coeffDict = dict.optionalSubDict
+    (
+        rootSolverType + "Coeffs"
+    );
+
     if (nDeriv <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =
@@ -54,13 +59,14 @@ Foam::autoPtr<Foam::univariateRootSolver> Foam::univariateRootSolver::New
         if (cstrIter == dictionaryZeroConstructorTablePtr_->end())
         {
             FatalErrorInFunction
-                << "Unknown univariateRootSolver type "
-                << rootSolverType << nl << nl
-                << "Valid univariateRootSolver for no derivatives are : " << endl
+                << "Unknown univariateRootSolver type " << rootSolverType
+                << nl
+                << "Valid univariateRootSolver for no derivatives are: "
+                << endl
                 << dictionaryZeroConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<univariateRootSolver>(cstrIter()(eqn, dict));
+        return autoPtr<univariateRootSolver>(cstrIter()(eqn, coeffDict));
     }
     else if (nDeriv == 1)
     {
@@ -70,13 +76,14 @@ Foam::autoPtr<Foam::univariateRootSolver> Foam::univariateRootSolver::New
         if (cstrIter == dictionaryOneConstructorTablePtr_->end())
         {
             FatalErrorInFunction
-                << "Unknown univariateRootSolver type "
-                << rootSolverType << nl << nl
-                << "Valid univariateRootSolver for one derivative are : " << endl
+                << "Unknown univariateRootSolver type "<< rootSolverType
+                << nl
+                << "Valid univariateRootSolver for one derivative are: "
+                << endl
                 << dictionaryOneConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<univariateRootSolver>(cstrIter()(eqn, dict));
+        return autoPtr<univariateRootSolver>(cstrIter()(eqn, coeffDict));
     }
     else
     {
@@ -86,13 +93,13 @@ Foam::autoPtr<Foam::univariateRootSolver> Foam::univariateRootSolver::New
         if (cstrIter == dictionaryTwoConstructorTablePtr_->end())
         {
             FatalErrorInFunction
-                << "Unknown univariateRootSolver type "
-                << rootSolverType << nl << nl
-                << "Valid univariateRootSolver for are : " << endl
+                << "Unknown univariateRootSolver type " << rootSolverType
+                << nl
+                << "Valid univariateRootSolver for are: " << endl
                 << dictionaryTwoConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<univariateRootSolver>(cstrIter()(eqn, dict));
+        return autoPtr<univariateRootSolver>(cstrIter()(eqn, coeffDict));
     }
 }
 

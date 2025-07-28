@@ -26,6 +26,7 @@ License
 
 #include "solidTractions.H"
 #include "addToRunTimeSelectionTable.H"
+#include "fvc.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 
@@ -33,8 +34,9 @@ License
 
 namespace Foam
 {
+namespace functionObjects
+{
     defineTypeNameAndDebug(solidTractions, 0);
-
     addToRunTimeSelectionTable
     (
         functionObject,
@@ -42,188 +44,102 @@ namespace Foam
         dictionary
     );
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-bool Foam::solidTractions::writeData()
-{
-    if (time_.outputTime())
-    {
-        Info<< name_ << " functionObject: writing traction field" << nl << endl;
-
-        // Lookup the solid mesh
-        const fvMesh* meshPtr = NULL;
-        if (time_.foundObject<fvMesh>("solid"))
-        {
-            meshPtr = &(time_.lookupObject<fvMesh>("solid"));
-        }
-        else
-        {
-            meshPtr = &(time_.lookupObject<fvMesh>("region0"));
-        }
-        const fvMesh& mesh = *meshPtr;
-
-        // Lookup the stress field
-        const volSymmTensorField& sigma =
-            mesh.lookupObject<volSymmTensorField>("sigma");
-
-        if
-        (
-            mesh.foundObject<volVectorField>("DD")
-         && mesh.foundObject<volTensorField>("relF")
-        )
-        {
-            // Updated Lagrangian
-            // The mesh has been moved to the deformed configuration
-
-            // Create the traction
-            volVectorField traction
-            (
-                IOobject
-                (
-                    "traction",
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedVector("zero", dimPressure, vector::zero)
-            );
-
-            forAll(traction.boundaryField(), patchI)
-            {
-                if (!traction.boundaryField()[patchI].coupled())
-                {
-                    // It is assumed that sigma is the true (Cauchy) stress
-                    traction.boundaryFieldRef()[patchI] =
-                        mesh.boundary()[patchI].nf()
-                      & sigma.boundaryField()[patchI];
-                }
-            }
-
-            traction.write();
-        }
-        else if (mesh.foundObject<volTensorField>("F"))
-        {
-            // Total Lagrangian
-            // The mesh is in its initial configuration
-
-            // Lookup the inverse deformation gradient
-            const volTensorField& Finv =
-                mesh.lookupObject<volTensorField>("Finv");
-
-            // Create the traction
-            volVectorField traction
-            (
-                IOobject
-                (
-                    "traction",
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedVector("zero", dimPressure, vector::zero)
-            );
-
-            forAll(traction.boundaryField(), patchI)
-            {
-                if (!traction.boundaryField()[patchI].coupled())
-                {
-                    vectorField nCurrent
-                    (
-                        Finv.boundaryField()[patchI].T()
-                      & mesh.boundary()[patchI].nf()
-                    );
-                    nCurrent /= mag(nCurrent);
-
-                   // It is assumed that sigma is the true (Cauchy) stress
-                   traction.boundaryFieldRef()[patchI] =
-                      nCurrent & sigma.boundaryField()[patchI];
-                }
-            }
-
-            traction.write();
-        }
-        else
-        {
-            // Small strain approach
-
-            // Create the traction
-            volVectorField traction
-            (
-                IOobject
-                (
-                    "traction",
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedVector("zero", dimPressure, vector::zero)
-            );
-
-            forAll(traction.boundaryField(), patchI)
-            {
-                if (!traction.boundaryField()[patchI].coupled())
-                {
-                    traction.boundaryFieldRef()[patchI] =
-                        mesh.boundary()[patchI].nf()
-                      & sigma.boundaryField()[patchI];
-                }
-            }
-
-            traction.write();
-        }
-    }
-
-    return true;
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::solidTractions::solidTractions
+Foam::functionObjects::solidTractions::solidTractions
 (
     const word& name,
     const Time& t,
     const dictionary& dict
 )
 :
-    functionObject(name),
-    name_(name),
-    time_(t)
+    fvMeshFunctionObject(name, t, dict)
 {
-    Info<< "Creating " << this->name() << " function object" << endl;
+    read(dict);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::solidTractions::start()
+bool Foam::functionObjects::solidTractions::read(const dictionary& dict)
 {
-    return writeData();
+    return fvMeshFunctionObject::read(dict);
 }
 
 
-bool Foam::solidTractions::execute()
+bool Foam::functionObjects::solidTractions::execute()
 {
-    return writeData();
+    // Lookup the stress field
+    tmp<surfaceSymmTensorField> tsigmaf;
+    if (mesh_.foundObject<surfaceSymmTensorField>("sigmaf"))
+    {
+        tsigmaf = tmp<surfaceSymmTensorField>
+        (
+            mesh_.lookupObject<surfaceSymmTensorField>("sigmaf")
+        );
+    }
+    else
+    {
+        tsigmaf = fvc::interpolate
+        (
+            mesh_.lookupObject<volSymmTensorField>("sigma")
+        );
+    }
+    const surfaceSymmTensorField& sigmaf = tsigmaf();
+
+    if (mesh_.foundObject<volTensorField>("Ff"))
+    {
+        // Total Lagrangian (face based)
+        // The mesh is in its initial configuration
+
+        // Lookup the inverse deformation gradient
+        const surfaceTensorField& Ffinv =
+            mesh_.lookupObject<surfaceTensorField>("Ffinv");
+
+        return store
+        (
+            "traction",
+            (
+                (Ffinv.T() & (mesh_.Sf()/mesh_.magSf()))
+              & sigmaf
+            )
+        );
+    }
+    else if (mesh_.foundObject<volTensorField>("F"))
+    {
+        // Total Lagrangian
+        // The mesh is in its initial configuration
+
+        // Lookup the inverse deformation gradient
+        const volTensorField& Finv =
+            mesh_.lookupObject<volTensorField>("Finv");
+
+        return store
+        (
+            "traction",
+            (
+                (fvc::interpolate(Finv.T()) & (mesh_.Sf()/mesh_.magSf()))
+              & sigmaf
+            )
+        );
+    }
+    else
+    {
+        return store
+        (
+            "traction",
+            ((mesh_.Sf()/mesh_.magSf()) & sigmaf)
+        );
+    }
 }
 
 
-bool Foam::solidTractions::read(const dictionary& dict)
-{
-    return true;
-}
 
-
-bool Foam::solidTractions::write()
+bool Foam::functionObjects::solidTractions::write()
 {
-    return writeData();
+    return writeObject("traction");
 }
 
 // ************************************************************************* //

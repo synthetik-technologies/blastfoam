@@ -64,18 +64,6 @@ protected:
         //- Number of location to pre sample
         label nSample_;
 
-        //- Is the solution converged in x
-        bool convergedXScale(const scalar error, const scalar s) const;
-
-        //- Is the solution converged in x
-        bool convergedX(const scalar x1, const scalar x2) const;
-
-        //- Is the solution converged in y
-        bool convergedYScale(const scalar error, const scalar s) const;
-
-        //- Is the solution converged in y
-        bool convergedY(const scalar y1, const scalar y2) const;
-
         //- Print information about the current step
         void printStepInformation(const scalar val) const;
 
@@ -88,7 +76,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeNameNoDebug("univariateMinimizationScheme");
+    TypeName("univariateMinimizationScheme");
 
     // Declare run-time constructor selection table
 
@@ -127,6 +115,13 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        univariateMinimizationScheme
+        (
+            const scalarUnivariateEquation& eqn,
+            const univariateMinimizationScheme& solver
+        );
+
         //- Disallow default bitwise copy construction
         univariateMinimizationScheme(const univariateMinimizationScheme&) = delete;
 
@@ -136,9 +131,23 @@ public:
         //- Select null constructed
         static autoPtr<univariateMinimizationScheme> New
         (
+            const word& type,
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
+
+        //- Select null constructed
+        static autoPtr<univariateMinimizationScheme> New
+        (
+            const scalarUnivariateEquation& eqn,
+            const dictionary& dict
+        );
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const = 0;
 
 
     //- Destructor
@@ -151,14 +160,8 @@ public:
         //- Return the x tolerance
         inline scalar xTolerance() const;
 
-        //- Return the y tolerance
-        inline scalar yTolerance() const;
-
         //- Return the x error
         inline scalar xError() const;
-
-        //- Return the y error
-        inline scalar yError() const;
 
         using minimizationScheme::solve;
 

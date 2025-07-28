@@ -1,0 +1,20 @@
+regionSolver/regionSolver.C
+regionSolver/regionSolverNew.C
+
+regionSolverList/regionSolverList.C
+
+acceleration/accelerationScheme/accelerationScheme.C
+acceleration/fieldAccelerationScheme/fieldAccelerationScheme.C
+acceleration/fieldAccelerationSchemeList/fieldAccelerationSchemeList.C
+
+acceleration/AccelerationSchemeBase/AccelerationSchemeBases.C
+acceleration/AccelerationSchemeBase/PatchFieldSelectors/patchFieldSelectorBase.C
+acceleration/None/NoAccelerationSchemes.C
+acceleration/Fixed/FixedAccelerationSchemes.C
+acceleration/Aitken/AitkenAccelerationSchemes.C
+acceleration/IQNILS/IQNILSAccelerationSchemes.C
+
+fluidRegionSolver/fluidRegionSolver.C
+
+
+LIB = $(BLAST_LIBBIN)/libregionSolvers

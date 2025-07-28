@@ -39,6 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseFluxScheme.H"
+#include "TadmorPhaseFluxScheme.H"
 
 namespace Foam
 {
@@ -51,16 +52,13 @@ namespace phaseFluxSchemes
 
 class Kurganov
 :
-    public phaseFluxScheme
+    public Tadmor
 {
 
     // Saved variables
 
-        tmp<surfaceScalarField> aPhivOwn_;
-        tmp<surfaceScalarField> aPhivNei_;
         tmp<surfaceScalarField> aOwn_;
         tmp<surfaceScalarField> aNei_;
-        tmp<surfaceScalarField> aSf_;
 
 
     // Private functions
@@ -82,31 +80,10 @@ class Kurganov
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
-        (
-            const scalar& alphaOwn, const scalar& alphaNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& alphaRhoUPhi,
-            scalar& alphaRhoEPhi,
-            const label facei, const label patchi = -1
-        );
-
         //- Interpolate field
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool rho,
             const label facei, const label patchi = -1
         ) const;
 
@@ -117,7 +94,7 @@ public:
     TypeName("Kurganov");
 
     // Constructor
-    Kurganov(const fvMesh& mesh, const word& name);
+    Kurganov(const surfaceScalarField& phi);
 
 
     //- Destructor

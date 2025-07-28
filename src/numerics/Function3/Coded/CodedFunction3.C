@@ -45,6 +45,13 @@ Foam::wordList Foam::Function3s::Coded<Type>::codeKeys() const
 
 
 template<class Type>
+Foam::wordList Foam::Function3s::Coded<Type>::codeDictVars() const
+{
+    return {word::null, word::null};
+}
+
+
+template<class Type>
 void Foam::Function3s::Coded<Type>::prepare
 (
     dynamicCode& dynCode,
@@ -61,6 +68,9 @@ void Foam::Function3s::Coded<Type>::prepare
 
     // Copy filtered H template
     dynCode.addCopyFile(codeTemplateH("codedFunction3"));
+
+    // Make verbose if debugging
+    dynCode.setFilterVariable("verbose", Foam::name(bool(debug)));
 
     // Debugging: make verbose
     if (debug)
@@ -103,7 +113,7 @@ Foam::Function3s::Coded<Type>::compileNew()
     dictionary redirectDict(dict_, codeDict());
     redirectDict.set(codeName(), codeName());
 
-    return Function3<Type>::New(codeName(), redirectDict);
+    return Function3<Type>::New(codeName(), units_, redirectDict);
 }
 
 
@@ -116,7 +126,7 @@ const Foam::dictionary& Foam::Function3s::Coded<Type>::expandCodeDict
     dictionary& dict = const_cast<dictionary&>(cDict);
 
     verbatimString str(dict["code"]);
-    stringOps::inplaceExpand(str, cDict, true, true);
+    stringOps::inplaceExpandEntry(str, cDict, true, true);
     dict.set(primitiveEntry("code", str));
     return cDict;
 }
@@ -128,12 +138,18 @@ template<class Type>
 Foam::Function3s::Coded<Type>::Coded
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :
     Function3<Type>(name),
-    codedBase(name, expandCodeDict(dict)),
-    dict_(dict)
+    codedBase
+    (
+        dict.lookupOrDefault("name", name),
+        expandCodeDict(dict)
+    ),
+    dict_(dict),
+    units_(units)
 {
     const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
     fileName tempDir(getEnv("BLAST_DIR")/"etc/codeTemplates");
@@ -154,7 +170,8 @@ Foam::Function3s::Coded<Type>::Coded(const Coded<Type>& cf1)
 :
     Function3<Type>(cf1),
     codedBase(cf1),
-    dict_(cf1.dict_)
+    dict_(cf1.dict_),
+    units_(cf1.units_)
 {
     const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
     fileName tempDir(getEnv("BLAST_DIR")/"etc/codeTemplates");
@@ -193,9 +210,30 @@ Foam::tmp<Foam::Field<Type>> Foam::Function3s::Coded<Type>::value
     const scalarField& z
 ) const
 {
-    return redirectFunction3Ptr_->value(x, y, z);
+    return
+        units_.value.toStandard
+        (
+            redirectFunction3Ptr_->value
+            (
+                units_.x.toUser(x),
+                units_.y.toUser(y),
+                units_.z.toUser(z)
+            )
+        );
 }
 
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::Function3s::Coded<Type>::value
+(
+    const Field<vector>& X
+) const
+{
+    return units_.value.toStandard
+    (
+        redirectFunction3Ptr_->value(units_.x.toUser(X))
+    );
+}
 
 template<class Type>
 void Foam::Function3s::Coded<Type>::write(Ostream& os) const

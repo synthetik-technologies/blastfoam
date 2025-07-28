@@ -48,7 +48,7 @@ void linearLeastSquares::setData
 }
 
 template<>
-void linearLeastSquares::setData
+inline void linearLeastSquares::setData
 (
     const scalar& x,
     UList<scalar>& xi
@@ -65,7 +65,17 @@ void linearLeastSquares::setData
 }
 
 template<>
-void linearLeastSquares::setData
+inline void linearLeastSquares::setData
+(
+    const List<scalar>& x,
+    UList<scalar>& xi
+)
+{
+    xi.shallowCopy(x);
+}
+
+template<>
+inline void linearLeastSquares::setData
 (
     const UList<scalar>& x,
     UList<scalar>& xi
@@ -103,7 +113,7 @@ void Foam::linearLeastSquares::findCoeffs
         }
     }
     RectangularMatrix<scalar> MT(M.T());
-    coeffs.coeffsRef() = SVDinv(MT*M)*MT*y;
+    coeffs.coeffsRef() = SVDinv(MT*M, small)*MT*y;
 }
 
 
@@ -154,20 +164,20 @@ void Foam::linearLeastSquares::findCoeffs
         setData(x[i], xi);
         forAll(xi, j) // Linear coefficients
         {
-            M(i, j+1) = x[i][j];
+            M(i, j+1) = xi[j];
         }
     }
 
     // Apply weights
     RectangularMatrix<scalar> MT(M.T());
-    forAll(w, i)
+    for (label i=0; i<MT.m(); i++)
     {
         for (label j=0; j<MT.n(); j++)
         {
-            MT(i, j) *= w[i];
+            MT(i, j) *= w[j];
         }
     }
-    coeffs.coeffsRef() = SVDinv(MT*M)*MT*y;
+    coeffs.coeffsRef() = SVDinv(MT*M, small)*MT*y;
 }
 
 template<class VarType>

@@ -43,6 +43,7 @@ SourceFiles
 
 #include "multicomponentBlastThermo.H"
 #include "mixtureBlastThermo.H"
+#include "fluidMulticomponentThermo.H"
 
 namespace Foam
 {
@@ -50,7 +51,8 @@ namespace Foam
 template<class Thermo>
 class multicomponentFluidBlastThermo
 :
-    public Thermo
+    public Thermo,
+    virtual public fluidMulticomponentThermo
 {
     //- Calculate thermodynamic fields
     void calculate();
@@ -156,11 +158,22 @@ public:
             const bool limit = true
         ) const;
 
+        //- Calculate pressure for cell [Pa]
+        virtual scalar patchFacepRhoT
+        (
+            const label patchi,
+            const label facei,
+            const bool limit = true
+        ) const;
+
         //- Calculate Gamma = dpde
         virtual tmp<volScalarField> Gamma() const;
 
         //- Gamma = dpde for cell []
         virtual scalar cellGamma(const label celli) const;
+
+        //- Gamma = dpde for cell []
+        virtual scalar patchFaceGamma(const label patchi, const label facei) const;
 
         //- Derivative of pressure w.r.t density for cell
         virtual scalar celldpdRho(const label celli) const;
@@ -189,6 +202,32 @@ public:
         //- Calculate the speed of sound
         virtual tmp<volScalarField> calcSpeedOfSound() const;
 
+        //- Does the mixture include this specie?
+        inline bool containsSpecie(const word& specieName) const
+        {
+            return multicomponentBlastThermo::containsSpecie(specieName);
+        }
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, tmp<volScalarField>& delta)
+        {
+            multicomponentBlastThermo::addDelta(name, delta);
+        }
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, const volScalarField::Internal& delta)
+        {
+            multicomponentBlastThermo::addDelta(name, delta);
+        }
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addSource(const word& name, tmp<fvScalarMatrix>& source)
+        {
+            multicomponentBlastThermo::addSource(name, source);
+        }
+
 
         // Specie thermo properties
 
@@ -201,7 +240,7 @@ public:
             }
 
             //- Pressure [kg/m/s^2]
-            virtual scalar p
+            virtual scalar pi
             (
                 const label speciei,
                 const scalar rho,
@@ -210,7 +249,7 @@ public:
             ) const;
 
             //- Density [kg/m^3]
-            virtual tmp<volScalarField> p
+            virtual tmp<volScalarField> pi
             (
                 const label speciei,
                 const volScalarField& rho,
@@ -219,7 +258,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. density
-            virtual scalar dpdRho
+            virtual scalar dpdRhoi
             (
                 const label speciei,
                 const scalar rho,
@@ -228,7 +267,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. Temperature
-            virtual scalar dpdT
+            virtual scalar dpdTi
             (
                 const label speciei,
                 const scalar rho,
@@ -242,7 +281,7 @@ public:
             using Thermo::baseThermo::mu;
 
             //- Dynamic viscosity [kg/m/s]
-            virtual scalar mu
+            virtual scalar mui
             (
                 const label speciei,
                 const scalar p,
@@ -250,7 +289,7 @@ public:
             ) const;
 
             //- Dynamic viscosity [kg/m/s]
-            virtual scalar mu
+            virtual scalar mui
             (
                 const label speciei,
                 const scalar rho,
@@ -259,7 +298,7 @@ public:
             ) const;
 
             //- Dynamic viscosity [kg/m/s]
-            virtual tmp<volScalarField> mu
+            virtual tmp<volScalarField> mui
             (
                 const label speciei,
                 const volScalarField& p,
@@ -267,7 +306,7 @@ public:
             ) const;
 
             //- Dynamic viscosity [kg/m/s]
-            virtual tmp<volScalarField> mu
+            virtual tmp<volScalarField> mui
             (
                 const label speciei,
                 const volScalarField& rho,

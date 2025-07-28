@@ -53,13 +53,27 @@ class fluxScheme
 :
     public fluxSchemeBase
 {
+public:
+
+    //- Return the flux scheme
+    static const fluxScheme& findFluxScheme
+    (
+        const surfaceScalarField& phi
+    )
+    {
+        return dynamicCast<const fluxScheme>
+        (
+            fluxSchemeBase::findFluxScheme(phi)
+        );
+    }
+
 protected:
 
     //- Dictionary for fluxScheme
     const dictionary& dict_;
 
     //- Saved interpolated U field
-    tmp<surfaceVectorField> Uf_;
+    mutable tmp<surfaceVectorField> Uf_;
 
 
     // Protected Functions
@@ -75,25 +89,6 @@ protected:
             const vector& Sf,
             scalar& phi,
             scalar& rhoPhi,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
-            const label facei, const label patchi = -1
-        ) = 0;
-
-        //- Update
-        virtual void calculateFluxes
-        (
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhosPhis,
             vector& rhoUPhi,
             scalar& rhoEPhi,
             const label facei, const label patchi = -1
@@ -119,6 +114,13 @@ protected:
         {}
 
 
+        //- Return the name of a give field
+        word fieldName(const word& name) const
+        {
+            return type() + ":" + name;
+        }
+
+
 public:
 
     //- Runtime type information
@@ -132,8 +134,8 @@ public:
             autoPtr,
             fluxScheme,
             singlePhase,
-            (const fvMesh& mesh),
-            (mesh)
+            (const surfaceScalarField& phi),
+            (phi)
         );
 
         declareRunTimeSelectionTable
@@ -141,8 +143,8 @@ public:
             autoPtr,
             fluxScheme,
             multiphase,
-            (const fvMesh& mesh),
-            (mesh)
+            (const surfaceScalarField& phi),
+            (phi)
         );
 
         declareRunTimeSelectionTable
@@ -150,12 +152,12 @@ public:
             autoPtr,
             fluxScheme,
             interface,
-            (const fvMesh& mesh),
-            (mesh)
+            (const surfaceScalarField& phi),
+            (phi)
         );
 
     // Constructor
-    fluxScheme(const fvMesh& mesh);
+    fluxScheme(const surfaceScalarField& phi);
 
 
     //- Destructor
@@ -164,9 +166,9 @@ public:
 
     // Selectors
 
-        static autoPtr<fluxScheme> NewSingle(const fvMesh& mesh);
-        static autoPtr<fluxScheme> NewMulti(const fvMesh& mesh);
-        static autoPtr<fluxScheme> NewInterface(const fvMesh& mesh);
+        static autoPtr<fluxScheme> NewSingle(const surfaceScalarField& phi);
+        static autoPtr<fluxScheme> NewMulti(const surfaceScalarField& phi);
+        static autoPtr<fluxScheme> NewInterface(const surfaceScalarField& phi);
 
 
     // Member Functions
@@ -176,6 +178,21 @@ public:
 
         //- Allocate saved fields
         virtual void createSavedFields();
+
+        //- Single phase flux
+        void update
+        (
+            const surfaceScalarField& rhoOwn,
+            const surfaceScalarField& rhoNei,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p,
+            const volScalarField& c,
+            surfaceScalarField& phi,
+            surfaceScalarField& rhoPhi,
+            surfaceVectorField& rhoUPhi,
+            surfaceScalarField& rhoEPhi
+        );
 
         //- Single phase flux
         void update
@@ -191,42 +208,6 @@ public:
             surfaceScalarField& rhoEPhi
         );
 
-        //- Multiphase fluxes
-        void update
-        (
-            const PtrList<volScalarField>& alphas,
-            const UPtrList<volScalarField>& rhos,
-            const volVectorField& U,
-            const volScalarField& e,
-            const volScalarField& p,
-            const volScalarField& c,
-            surfaceScalarField& phi,
-            PtrList<surfaceScalarField>& alphaPhis,
-            PtrList<surfaceScalarField>& alphaRhoPhis,
-            surfaceScalarField& rhoPhi,
-            surfaceVectorField& rhoUPhi,
-            surfaceScalarField& rhoEPhi
-        );
-
-        //- Two phase fluxes
-        void update
-        (
-            const volScalarField& alpha,
-            const volScalarField& rho1,
-            const volScalarField& rho2,
-            const volVectorField& U,
-            const volScalarField& e,
-            const volScalarField& p,
-            const volScalarField& c,
-            surfaceScalarField& phi,
-            surfaceScalarField& alphaPhi,
-            surfaceScalarField& alphaRhoPhi1,
-            surfaceScalarField& alphaRhoPhi2,
-            surfaceScalarField& alphaRhoPhi,
-            surfaceVectorField& rhoUPhi,
-            surfaceScalarField& rhoEPhi
-        );
-
         //- Calculate energy flux for an addition internal energy
         tmp<surfaceScalarField> energyFlux
         (
@@ -238,19 +219,6 @@ public:
 
         //- Return interpolated U field
         tmp<surfaceVectorField> Uf() const;
-
-        //- Return Anti-diffustion coefficient for a given volume fraction
-        //  and update anti-diffusion flux
-        virtual tmp<surfaceScalarField> snGradAlpha
-        (
-            const volScalarField& alpha
-        ) const;
-
-        //- Return Anti-diffustion coefficient for a given volume fraction
-        virtual tmp<surfaceScalarField> AD
-        (
-            const volScalarField& alpha
-        ) const;
 };
 
 

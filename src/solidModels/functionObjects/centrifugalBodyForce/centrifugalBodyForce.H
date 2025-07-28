@@ -22,7 +22,7 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    centrifugalBodyForce
+    functionObjects::centrifugalBodyForce
 
 Description
     FunctionObject applys centrifugal body force
@@ -38,15 +38,15 @@ SourceFiles
 #ifndef centrifugalBodyForce_H
 #define centrifugalBodyForce_H
 
-#include "functionObject.H"
+#include "fvMeshFunctionObject.H"
 #include "dictionary.H"
-#include "fvMesh.H"
-#include "OFstream.H"
 #include "dimensionedVector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
+{
+namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
@@ -55,35 +55,13 @@ namespace Foam
 
 class centrifugalBodyForce
 :
-    public functionObject
+    public fvMeshFunctionObject
 {
     // Private data
-
-        //- Name
-        const word name_;
-
-        //- Reference to main object registry
-        const Time& time_;
-
-        //- Region name
-        word regionName_;
 
         //- Angular velocity
         dimensionedVector angularVelocity_;
 
-    // Private Member Functions
-
-        //- Write data
-        bool setBodyForce();
-
-        //- Disallow default bitwise copy construct
-        centrifugalBodyForce
-        (
-            const centrifugalBodyForce&
-        );
-
-        //- Disallow default bitwise assignment
-        void operator=(const centrifugalBodyForce&);
 
 public:
 
@@ -103,20 +81,17 @@ public:
 
     // Member Functions
 
-        //- start is called at the start of the time-loop
-        virtual bool start();
+        //- Read and set the function object if its data has changed
+        virtual bool read(const dictionary& dict);
+
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        }
 
         //- execute is called at each ++ or += of the time-loop
         virtual bool execute();
-
-        //- Called when time was set at the end of the Time::operator++
-        virtual bool timeSet()
-        {
-            return true;
-        }
-
-        //- Read and set the function object if its data has changed
-        virtual bool read(const dictionary& dict);
 
         //- Write
         virtual bool write();
@@ -125,6 +100,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

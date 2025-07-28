@@ -62,7 +62,7 @@ interpolationSchemes
     reconstruct(e)      quadraticMUSCL Minmod;
     reconstruct(p)      quadraticMUSCL Minmod;
     reconstruct(speedOfSound) quadraticMUSCL Minmod;
-    "reconstruct\(Y.*\)" quadraticMUSCL Minmod;
+    reconstruct(scalar)  quadraticMUSCL Minmod;
     reconstruct(Theta)  quadraticMUSCL Minmod;
 }
 

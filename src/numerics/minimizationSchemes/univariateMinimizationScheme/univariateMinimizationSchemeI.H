@@ -25,25 +25,13 @@ License
 
 inline Foam::scalar Foam::univariateMinimizationScheme::xTolerance() const
 {
-    return xTolerances_[0];
-}
-
-
-inline Foam::scalar Foam::univariateMinimizationScheme::yTolerance() const
-{
-    return yTolerances_[0];
+    return xAbsTolerances_[0];
 }
 
 
 inline Foam::scalar Foam::univariateMinimizationScheme::xError() const
 {
-    return xErrors_[0];
-}
-
-
-inline Foam::scalar Foam::univariateMinimizationScheme::yError() const
-{
-    return yErrors_[0];
+    return xAbsErrors_[0];
 }
 
 

@@ -38,8 +38,8 @@ inline Foam::eTabulatedThermo<EquationOfState>::eTabulatedThermo
 :
     EquationOfState(st),
     eTable_(eTable),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x())),
+    Tlow_(min(eTable_.y())),
+    Thigh_(max(eTable_.y())),
     Hf_(Hf)
 {}
 
@@ -98,18 +98,6 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Es
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Ets
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return eTable_.lookup(rho, T);
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Ea
 (
     const scalar rho,
@@ -122,29 +110,41 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Ea
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Eta
+inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Cvt
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Ets(rho, e, T) + Hf_;
+    NotImplemented;
+    return 0;
 }
 
+
+template<class EquationOfState>
+inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Est
+(
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Eat
+(
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
 
 template<class EquationOfState>
 inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::Hf() const
 {
     return Hf_;
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::flameT() const
-{
-    NotImplemented;
-    return 0.0;
 }
 
 

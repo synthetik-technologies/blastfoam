@@ -24,16 +24,16 @@ defaultFieldValues
     volVectorFieldValue U (0 0 0)
 );
 
-
+x (0 0 0);
 regions
 (
     sphereToCell // Use cylinder for 3D
     {
-        centre (0 0 0);
-        radius 0.143;
+        centre  $!x;
+        radius  0.143;
         backup
         {
-            centre (0 0 0);
+            centre $!x;
             radius 1.0;
         }
         refineInternal yes;

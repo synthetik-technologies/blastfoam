@@ -93,6 +93,26 @@ typename Table::iterator Foam::blastThermo::lookupCstrIter
                         {"specie", "specieBlast"}
                     };
             }
+            else if (type == "cavitating")
+            {
+                const dictionary& lDict =
+                    thermoDict.subDict("liquid").subDict("thermoType");
+                const dictionary& vDict =
+                    thermoDict.subDict("vapor").subDict("thermoType");
+                thermoTypeDict.add("liquid", lDict);
+                thermoTypeDict.add("vapor", vDict);
+
+                entries =
+                    {
+                        {"lTransport", lDict.lookup("transport")},
+                        {"vTransport", vDict.lookup("transport")},
+                        {"lThermo", lDict.lookup("thermo")},
+                        {"vThermo", vDict.lookup("thermo")},
+                        {"lEquationOfState", lDict.lookup("equationOfState")},
+                        {"vEquationOfState", vDict.lookup("equationOfState")},
+                        {"specie", "specieBlast"}
+                    };
+            }
             else
             {
                 thermoTypeDict = thermoDict.subDict("thermoType");
@@ -224,6 +244,21 @@ typename Table::iterator Foam::blastThermo::lookupCstrIter
         const word uthermoTypeName(readThermoType(uThermoTypeDict));
         const word rthermoTypeName(readThermoType(rThermoTypeDict));
         thermoTypeName = uthermoTypeName + ',' + rthermoTypeName;
+    }
+    else if (type == "cavitating")
+    {
+        const dictionary& lThermoTypeDict
+        (
+            thermoDict.subDict("liquid").subDict("thermoType")
+        );
+        const dictionary& vThermoTypeDict
+        (
+            thermoDict.subDict("vapor").subDict("thermoType")
+        );
+
+        const word lthermoTypeName(readThermoType(lThermoTypeDict));
+        const word vthermoTypeName(readThermoType(vThermoTypeDict));
+        thermoTypeName = lthermoTypeName + ',' + vthermoTypeName;
     }
     else
     {

@@ -30,44 +30,61 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(particleSwarmMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+    defineTypeNameAndDebug(particleSwarm, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        particleSwarmMinimizationScheme,
+        particleSwarm,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        particleSwarmMinimizationScheme,
+        particleSwarm,
         dictionaryMultivariate
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::particleSwarmMinimizationScheme::particleSwarmMinimizationScheme
+Foam::minimizationSchemes::particleSwarm::particleSwarm
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
     minimizationScheme(eqns, dict),
-    rand_(0),
+    rand_(dict.lookupOrDefault<label>("seed", 127)),
     particles_(dict.lookupOrDefault<label>("nParticles", 100)),
     cLocal_(dict.lookup<scalar>("cLocal")),
     cGlobal_(dict.lookup<scalar>("cGlobal")),
     vWeight_(dict.lookup<scalar>("vWeight"))
+{}
 
+
+Foam::minimizationSchemes::particleSwarm::particleSwarm
+(
+    const scalarUnivariateEquation& eqns,
+    const particleSwarm& solver
+)
+:
+    minimizationScheme(eqns, solver),
+    rand_(solver.rand_),
+    particles_(solver.particles_),
+    cLocal_(solver.cLocal_),
+    cGlobal_(solver.cGlobal_),
+    vWeight_(solver.vWeight_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
-Foam::particleSwarmMinimizationScheme::minimize
+Foam::minimizationSchemes::particleSwarm::minimize
 (
     const scalarList& x0,
     const scalarList& xLow,

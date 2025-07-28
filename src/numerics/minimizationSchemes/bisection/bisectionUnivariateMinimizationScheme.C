@@ -30,37 +30,43 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(bisectionUnivariateMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(bisection, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        bisectionUnivariateMinimizationScheme,
+        bisection,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        bisectionUnivariateMinimizationScheme,
+        bisection,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        bisectionUnivariateMinimizationScheme,
+        bisection,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        bisectionUnivariateMinimizationScheme,
+        bisection,
         dictionaryTwo
     );
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::bisectionUnivariateMinimizationScheme::bisectionUnivariateMinimizationScheme
+Foam::minimizationSchemes::univariate::bisection::bisection
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -72,9 +78,19 @@ Foam::bisectionUnivariateMinimizationScheme::bisectionUnivariateMinimizationSche
 }
 
 
+Foam::minimizationSchemes::univariate::bisection::bisection
+(
+    const scalarUnivariateEquation& eqn,
+    const bisection& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::bisection::minimize
 (
     const scalar x,
     const scalar x1,
@@ -90,7 +106,7 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (convergedX(xLow, xHigh) && convergedY(yLow, yHigh))
+        if (converged(xLow, xHigh, yLow, yHigh))
         {
             break;
         }

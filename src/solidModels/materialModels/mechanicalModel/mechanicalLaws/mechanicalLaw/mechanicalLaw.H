@@ -32,7 +32,7 @@ Description
 
 SourceFiles
     mechanicalLaw.C
-    newMechanicalLaw.C
+    mechanicalLawNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -149,6 +149,31 @@ namespace Foam
         IOobject::READ_IF_PRESENT,                                             \
         IOobject::AUTO_WRITE                                                   \
     );
+
+#define defineVolSurfaceFieldFuncsNoWrite(fieldName, Type, dimType)            \
+    defineVolSurfaceField(fieldName, Type);                                    \
+    volSurfaceFieldFuncs                                                       \
+    (                                                                          \
+        fieldName,                                                             \
+        makeField,                                                             \
+        Type,                                                                  \
+        dimType,                                                               \
+        IOobject::NO_READ,                                                     \
+        IOobject::NO_WRITE                                                     \
+    );
+
+#define defineVolSurfaceFieldTypeFuncsNoWrite(fieldName, Type, dimType)        \
+    defineVolSurfaceField(fieldName, Type);                                    \
+    volSurfaceFieldFuncs                                                       \
+    (                                                                          \
+        fieldName,                                                             \
+        makeTypeField,                                                         \
+        Type,                                                                  \
+        dimType,                                                               \
+        IOobject::NO_READ,                                                     \
+        IOobject::NO_WRITE                                                     \
+    );
+
 /*---------------------------------------------------------------------------*\
                          Class mechanicalLaw Declaration
 \*---------------------------------------------------------------------------*/
@@ -163,11 +188,11 @@ class mechanicalLaw
         //- Const reference to mesh
         const fvMesh& mesh_;
 
+        //- Const reference to the base regionMesh
+        const fvMesh& baseMesh_;
+
         //- Mechanical law dictionary
         const dictionary dict_;
-
-        //- Name of the baseMesh region
-        word baseMeshRegionName_;
 
         //- Nonlinear geometry enumerator
         const nonLinearGeometry::nonLinearType nonLinGeom_;
@@ -468,6 +493,12 @@ protected:
             return nonLinGeom_;
         }
 
+        //- Return if relative deformation is used
+        bool relative() const
+        {
+            return nonLinGeom_ == nonLinearGeometry::UPDATED_LAGRANGIAN;
+        }
+
         //- Functions used to return autoPtrs to fields
         //  this replaces the makeFieldName functions
 
@@ -522,10 +553,11 @@ public:
             (
                 const word name,
                 const fvMesh& mesh,
+                const fvMesh& baseMesh,
                 const dictionary& dict,
                 const nonLinearGeometry::nonLinearType& nonLinGeom
             ),
-            (name, mesh, dict, nonLinGeom)
+            (name, mesh, baseMesh, dict, nonLinGeom)
         );
 
         //- Mechanical law for nonlinear geometry i.e. finite strains and
@@ -538,10 +570,11 @@ public:
             (
                 const word name,
                 const fvMesh& mesh,
+                const fvMesh& baseMesh,
                 const dictionary& dict,
                 const nonLinearGeometry::nonLinearType& nonLinGeom
             ),
-            (name, mesh, dict, nonLinGeom)
+            (name, mesh, baseMesh, dict, nonLinGeom)
         );
 
 
@@ -552,6 +585,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -561,6 +595,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -573,6 +608,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -595,7 +631,7 @@ public:
         //- Is this model stored on the master model mesh
         bool isBaseRegion() const
         {
-            return mesh().name() == baseMeshRegionName_;
+            return &mesh_ == &baseMesh_;
         }
 
         //- Return the implicit stiffness
@@ -625,41 +661,36 @@ public:
         //- Calculate the stress
         virtual void correct(surfaceSymmTensorField& sigma);
 
+        //- Return the Piola stress tensor
+        virtual tmp<volTensorField> P(const volSymmTensorField& sigma) const;
+
+        //- Return the face Piola stress tensor
+        virtual tmp<surfaceTensorField> P(const surfaceSymmTensorField& sigma) const;
+
         //- Return material residual i.e. a measured of how convergence of
         //  the material model
-        virtual scalar residual();
+        virtual scalar residual() const;
+
+        //- Return relative material residual i.e. a measured of how convergence of
+        //  the material model
+        virtual scalar relResidual() const;
 
         //- Update total accumulated fields
         virtual void updateTotalFields()
         {}
 
         //- Return the desired new time-step
-        virtual scalar newDeltaT();
+        virtual scalar newDeltaT() const;
 
         void setUseSolidDeformation()
         {
             useSolidDeformation_ = true;
         }
 
-        //- Access the base mesh region name
-        word& baseMeshRegionName()
-        {
-            return baseMeshRegionName_;
-        }
-
-        //- Return the base mesh region name
-        const word& baseMeshRegionName() const
-        {
-            return baseMeshRegionName_;
-        }
-
         //- Return const access to the base mesh
         const fvMesh& baseMesh() const
         {
-            return mesh().time().lookupObject<fvMesh>
-            (
-                baseMeshRegionName_
-            );
+            return baseMesh_;
         }
 };
 

@@ -97,12 +97,12 @@ class CICSAM
         (
             const scalar cdWeight,
             const scalar faceFlux,
-            const scalar& phiP,
-            const scalar& phiN,
+            const scalar phiP,
+            const scalar phiN,
             const vector& gradcP,
             const vector& gradcN,
             const scalar Cof,
-            const vector d
+            const vector& d
         ) const;
 
         //- Calculate individual weight
@@ -110,12 +110,12 @@ class CICSAM
         (
             const scalar cdWeight,
             const scalar faceFlux,
-            const scalar& phiP,
-            const scalar& phiN,
+            const scalar phiP,
+            const scalar phiN,
             const vector& gradcP,
             const vector& gradcN,
             const scalar Cof,
-            const vector d
+            const vector& d
         ) const;
 
 public:
@@ -190,12 +190,6 @@ public:
 
         //- Return the interpolation limiter
         virtual tmp<surfaceScalarField> limiter
-        (
-            const volScalarField&
-        ) const;
-
-        //- Return the interpolation weighting factors
-        virtual tmp<surfaceScalarField> weights
         (
             const volScalarField&
         ) const;

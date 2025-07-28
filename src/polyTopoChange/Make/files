@@ -1,0 +1,38 @@
+newCellCuts/newCellCuts.C
+newRefinementIterator/newRefinementIterator.C
+
+locationMapper/locationMapper.C
+
+polyMeshRefiner/polyMeshRefiner.C
+polyMeshRefiner/polyMeshRefinerNew.C
+
+# Directional refinement
+polyMeshRefiner/polyMeshDirectionalRefiner/polyMeshDirectionalRefiner.C
+
+
+# Hex refinement
+polyMeshRefiner/polyMeshHexRefiner/polyMeshHexRefiner.C
+hexRef = polyMeshRefiner/polyMeshHexRefiner/hexRef
+$(hexRef)/hexRefRefinementHistory.C
+$(hexRef)/hexRefData.C
+$(hexRef)/hexRef.C
+$(hexRef)/hexRefNew.C
+$(hexRef)/hexRef3D/hexRef3D.C
+$(hexRef)/hexRef2D/hexRef2D.C
+$(hexRef)/hexRef2DAxi/hexRef2DAxi.C
+$(hexRef)/hexRef1D/hexRef1D.C
+
+
+# Polyhedral refinement
+polyMeshRefiner/polyMeshPolyRefiner/polyMeshPolyRefiner.C
+polyMeshRefiner/polyMeshPolyRefiner/polyhedralRefinement/polyhedralRefinement.C
+polyMeshRefiner/polyMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
+polyMeshRefiner/polyMeshPolyRefiner/refinement/refinement.C
+
+meshTools/blastMeshTools.C
+#meshTools/blastSyncTools.C
+
+MeshFields/MeshField/MeshFields.C
+MeshFields/MeshFieldUpdater/MeshFieldUpdaters.C
+
+LIB = $(BLAST_LIBBIN)/libblastPolyTopoChange

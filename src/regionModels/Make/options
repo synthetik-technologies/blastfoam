@@ -1,20 +1,26 @@
+ifdef EIGEN_DIR
+    RBF_INC = \
+        -Wno-old-style-cast -Wno-deprecated-declarations \
+        -DUSE_EIGEN -I$(EIGEN_DIR)
+endif
+
 EXE_INC = \
     -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/fileFormats/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
-    -I$(LIB_SRC)/transportModels/lnInclude \
+    -I$(LIB_SRC)/physicalProperties/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
-    -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/thermophysicalTransportModel/lnInclude \
     -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude
+    $(RBF_INC)
 
 LIB_LIBS = \
     -lmeshTools \
     -lfileFormats \
     -L$(BLAST_LIBBIN) \
-    -lblastNumerics \
-    -lblastThermodynamics
+    -lblastNumerics

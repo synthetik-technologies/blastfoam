@@ -54,18 +54,6 @@ class interpolationSchemes
         //- Mesh
         const fvMesh& mesh_;
 
-        //- Cell owners
-        const labelUList& own_;
-
-        //- Material cell centre coordinates
-        const volVectorField& C_;
-
-        //- Material face centre coordinates
-        const surfaceVectorField& Cf_;
-
-        //- Material nodal coordinates
-        const pointField& points_;
-
 
 private:
 
@@ -99,20 +87,7 @@ public:
             tmp<volVectorField> surfaceToVol
             (
                 const surfaceVectorField&,
-                const pointVectorField&
-            ) const;
-
-            //- Helper: push master point data to collocated points
-            //  (Borrowed from volPointInterpolation class in OpenFOAM)
-            template<class Type>
-            void pushUntransformedData(List<Type>&) const;
-
-            //- Add separated contributions
-            //  (Borrowed from volPointInterpolation class in OpenFOAM)
-            template<class Type>
-            void addSeparated
-            (
-                GeometricField<Type, pointPatchField, pointMesh>&
+                const pointVectorField& pointU
             ) const;
 
             // Volume to point interpolation for vectorField
@@ -121,7 +96,7 @@ public:
                 const volVectorField& U,
                 const volTensorField& gradU,
                 pointVectorField& pU,
-                const bool interpBoundaries
+                const bool interpBoundaries = false
             ) const;
 
             //- Point to surface interpolation

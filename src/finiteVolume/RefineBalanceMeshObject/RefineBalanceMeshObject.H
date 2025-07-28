@@ -39,9 +39,8 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "fvMesh.H"
-#include "MeshObject.H"
-#include "mapDistributePolyMesh.H"
+#include "MeshObjects.H"
+#include "DemandDrivenMeshObject.H"
 
 namespace Foam
 {
@@ -58,36 +57,26 @@ public:
     (
         objectRegistry& obr
     );
-
-    template<class Mesh>
-    static void distribute
-    (
-        objectRegistry& obr,
-        const mapDistributePolyMesh& map
-    );
 };
 
 template<class Mesh>
-class DistributeableMeshObject
+class preDistributeableMeshObject
 :
-    public PatchMeshObject<Mesh>
+    public RepatchableMeshObject<Mesh>
 {
 public:
 
-    DistributeableMeshObject(const word& typeName, const objectRegistry& obr)
+    preDistributeableMeshObject(const word& typeName, const objectRegistry& obr)
     :
-        PatchMeshObject<Mesh>(typeName, obr)
+        RepatchableMeshObject<Mesh>(typeName, obr)
     {}
 
-    DistributeableMeshObject(const word& typeName, const IOobject& io)
+    preDistributeableMeshObject(const word& typeName, const IOobject& io)
     :
-        PatchMeshObject<Mesh>(typeName, io)
+        RepatchableMeshObject<Mesh>(typeName, io)
     {}
 
-    virtual void preDistribute()
-    {}
-
-    virtual void distribute(const mapDistributePolyMesh& map) = 0;
+    virtual void preDistribute() = 0;
 };
 
 

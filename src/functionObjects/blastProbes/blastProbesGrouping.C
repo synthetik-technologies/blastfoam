@@ -44,6 +44,12 @@ void Foam::blastProbes::clearFieldGroups()
     surfaceSphericalTensorFields_.clear();
     surfaceSymmTensorFields_.clear();
     surfaceTensorFields_.clear();
+
+    pointScalarFields_.clear();
+    pointVectorFields_.clear();
+    pointSphericalTensorFields_.clear();
+    pointSymmTensorFields_.clear();
+    pointTensorFields_.clear();
 }
 
 
@@ -103,6 +109,31 @@ Foam::label Foam::blastProbes::appendFieldGroup
         surfaceTensorFields_.append(fieldName);
         return 1;
     }
+    else if (fieldType == pointScalarField::typeName)
+    {
+        pointScalarFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointVectorField::typeName)
+    {
+        pointVectorFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointSphericalTensorField::typeName)
+    {
+        pointSphericalTensorFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointSymmTensorField::typeName)
+    {
+        pointSymmTensorFields_.append(fieldName);
+        return 1;
+    }
+    else if (fieldType == pointTensorField::typeName)
+    {
+        pointTensorFields_.append(fieldName);
+        return 1;
+    }
 
     return 0;
 }
@@ -113,35 +144,13 @@ Foam::label Foam::blastProbes::classifyFields()
     label nFields = 0;
     clearFieldGroups();
 
-    if (loadFromFiles_)
+    // Check currently available fields
+    forAll(fieldSelection_, fieldi)
     {
-        // check files for a particular time
-        IOobjectList objects(mesh_, mesh_.time().timeName());
-        wordList allFields = objects.sortedNames();
+        const word& fieldName = fieldSelection_[fieldi];
 
-        labelList indices = findStrings(fieldSelection_, allFields);
-
-        forAll(indices, fieldi)
+        if (mesh_.objectRegistry::found(fieldName))
         {
-            const word& fieldName = allFields[indices[fieldi]];
-
-            nFields += appendFieldGroup
-            (
-                fieldName,
-                objects.find(fieldName)()->headerClassName()
-            );
-        }
-    }
-    else
-    {
-        // check currently available fields
-        wordList allFields = mesh_.sortedNames();
-        labelList indices = findStrings(fieldSelection_, allFields);
-
-        forAll(indices, fieldi)
-        {
-            const word& fieldName = allFields[indices[fieldi]];
-
             nFields += appendFieldGroup
             (
                 fieldName,

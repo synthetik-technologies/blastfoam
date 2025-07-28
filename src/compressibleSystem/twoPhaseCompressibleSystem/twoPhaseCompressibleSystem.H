@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2022
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -39,7 +39,7 @@ SourceFiles
 
 #include "compressibleBlastSystem.H"
 #include "twoPhaseFluidBlastThermo.H"
-#include "interfaceProperties.H"
+// #include "phaseChangeModel.H"
 
 
 namespace Foam
@@ -53,7 +53,8 @@ class twoPhaseCompressibleSystem
 :
     public compressibleBlastSystem
 {
-// Private data
+protected:
+// Protected data
 
     //- Primitative variables
 
@@ -91,23 +92,49 @@ class twoPhaseCompressibleSystem
         surfaceScalarField alphaRhoPhi1_;
 
         //- Phase 2 mass flux
-        surfaceScalarField alphaRhoPhi2_;\
+        surfaceScalarField alphaRhoPhi2_;
 
 
-    //- Surface tension model
-    autoPtr<interfaceProperties> interfacePtr_;
+    //- Cavitation model (optional)
+    // autoPtr<phaseChangeModel> phaseChange_;
 
 
-    //- Allocate models
-    virtual void setModels();
+    //- Transport phase densities
+    bool transportPhaseDensity_;
+
+    //- Calculate reconstructed phaseDensity (alphaRho) with density
+    bool densityReconstruction_;
+
+    //- Use MULES volume fraction flux limiting
+    bool MUSLESLimiting_;
+
+
+    // Protected member functions
+
+        // Update fluxes given interpolated alphas and alphaRhos
+        void updateFluxes
+        (
+            const surfaceScalarField& alpha1Own,
+            const surfaceScalarField& alpha1Nei,
+
+            const surfaceScalarField& alphaRho1Own,
+            const surfaceScalarField& alphaRho1Nei,
+
+            const surfaceScalarField& alphaRho2Own,
+            const surfaceScalarField& alphaRho2Nei
+        );
 
 
 public:
 
-    TypeName("twoPhaseCompressibleSystem");
+    TypeName("twoPhase");
 
     // Constructor
-    twoPhaseCompressibleSystem(const fvMesh& mesh);
+    twoPhaseCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
 
     //- Destructor

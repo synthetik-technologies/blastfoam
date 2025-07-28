@@ -40,7 +40,8 @@ SourceFiles
 #include "globalPolyPatch.H"
 #include "regIOobject.H"
 #include "HashPtrTable.H"
-#include "MeshObject.H"
+#include "MeshObjects.H"
+#include "DemandDrivenMeshObject.H"
 #include "PtrListDictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,10 +53,10 @@ class pointPatch;
 class coupledGlobalPolyPatch;
 
 class globalPolyBoundaryMesh;
-typedef MeshObject
+typedef DemandDrivenMeshObject
 <
     polyMesh,
-    PatchMeshObject,
+    RepatchableMeshObject,
     globalPolyBoundaryMesh
 > GlobalPolyBoundaryMesh;
 
@@ -67,15 +68,27 @@ class globalPolyBoundaryMesh
 :
     public GlobalPolyBoundaryMesh
 {
+public:
+
+    // Flag if all patches should be cleared when moving the mesh
+    static bool clearOnMovement;
+
+private:
 // Private member data
 
-    HashTable<dictionary> interfaceDicts_;
+    mutable HashTable<dictionary> interfaceDicts_;
 
     // Table of mapped patch selectors
     mutable HashPtrTable<globalPolyPatch> patches_;
 
     //- Displacement Field names
     HashTable<word> displacementFields_;
+
+    //- Inverse displacement flags
+    HashTable<bool> inverseDisplacement_;
+
+    //- Was mapping read from regionProperties
+    mutable bool readFromRP_;
 
 
 public:
@@ -97,24 +110,68 @@ public:
     virtual ~globalPolyBoundaryMesh();
 
 
-    // Move points
-    virtual bool movePoints();
+    // Member functions
 
-    //- Update mesh
-    virtual void updateMesh(const mapPolyMesh& mpm);
+        // Access
 
-    //- Reorder patches
-    virtual void reorderPatches
-    (
-        const labelUList& newToOld,
-        const bool validBoundary
-    );
+            //- Return patches
+            const HashPtrTable<globalPolyPatch>& patches() const
+            {
+                return patches_;
+            }
 
-    //- Set the displacement field name for a region
-    void setDisplacementField(const word&, const word&);
+            //- Access patches
+            HashPtrTable<globalPolyPatch>& patches()
+            {
+                return patches_;
+            }
 
-    //- Inserted patch at patchi
-    virtual void addPatch(const label patchi);
+            //- Does the patch have an associated global patch
+            bool isGlobal(const polyPatch&) const;
+
+            //- Is the given patch coupled to another region
+            bool isCoupled(const polyPatch&) const;
+
+            //- Return coupled patch indices
+            labelList coupledPatches() const;
+
+
+        // Edit
+
+            // Force update of mapping
+            void update();
+
+            // Move points
+            virtual bool movePoints();
+
+            //- Distribute
+            virtual void distribute(const polyDistributionMap& mpm);
+
+            //- Update mesh
+            virtual void topoChange(const polyTopoChangeMap& mpm);
+
+            //- Update mesh
+            virtual void mapMesh(const polyMeshMap& mpm);
+
+            //- Reorder patches
+            virtual void reorderPatches
+            (
+                const labelUList& newToOld,
+                const bool validBoundary
+            );
+
+            //- Set the displacement field name for a region
+            void setDisplacementField(const word&, const word&);
+
+            //- Set the inverse displacement flag for a region
+            void setInverseDisplacement(const word&, const bool);
+
+            //- Inserted patch at patchi
+            virtual void addPatch(const label patchi);
+
+            //- Clear mappings
+            void clearOut();
+
 
     // Operators
 
@@ -135,6 +192,9 @@ public:
 
         //- Return the coupledGlobalPolyPatch for the given pointPatch
         const coupledGlobalPolyPatch& operator()(const pointPatch&) const;
+
+    // Write the patches
+    virtual bool write() const;
 };
 
 

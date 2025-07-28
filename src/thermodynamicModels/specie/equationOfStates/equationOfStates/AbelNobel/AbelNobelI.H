@@ -226,7 +226,7 @@ Foam::scalar Foam::AbelNobel<Specie>::H
     const scalar T
 ) const
 {
-    return 0.0;
+    return this->R()*T*b_*rho/(1.0 - b_*rho);
 }
 
 
@@ -244,13 +244,33 @@ Foam::scalar Foam::AbelNobel<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobel<Specie>::S
+Foam::scalar Foam::AbelNobel<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
-    return 0.0;
+    return -this->R()*log(p/Pstd);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::AbelNobel<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    return
+        this->R()
+       *(
+            log(T*Pstd/(Tstd*p))
+          + log
+            (
+                (1.0 - b_*rho(p, T))
+               /(1.0 - b_*rho(Pstd, Tstd))
+            )
+        );
 }
 
 
@@ -259,18 +279,18 @@ Foam::scalar Foam::AbelNobel<Specie>::S
 template<class Specie>
 inline void Foam::AbelNobel<Specie>::operator+=
 (
-    const AbelNobel<Specie>& pf
+    const AbelNobel<Specie>& an
 )
 {
-    scalar Y1 = this->Y();
-    Specie::operator+=(pf);
+    scalar X1 = this->Y()/this->W();
+    Specie::operator+=(an);
 
     if (mag(this->Y()) > SMALL)
     {
-        Y1 /= this->Y();
-        const scalar Y2 = pf.Y()/this->Y();
+        X1 *= this->W()/this->Y();
+        const scalar X2 = this->W()*an.Y()/(an.W()*this->Y());
 
-        b_ = Y1*b_ + Y2*pf.b_;
+        b_ = X1*b_ + X2*an.b_;
     }
 }
 
@@ -287,14 +307,14 @@ inline void Foam::AbelNobel<Specie>::operator*=(const scalar s)
 template<class Specie>
 inline Foam::AbelNobel<Specie> Foam::operator+
 (
-    const AbelNobel<Specie>& pf1,
-    const AbelNobel<Specie>& pf2
+    const AbelNobel<Specie>& an1,
+    const AbelNobel<Specie>& an2
 )
 {
     Specie sp
     (
-        static_cast<const Specie&>(pf1)
-      + static_cast<const Specie&>(pf2)
+        static_cast<const Specie&>(an1)
+      + static_cast<const Specie&>(an2)
     );
 
     if (mag(sp.Y()) < SMALL)
@@ -302,18 +322,18 @@ inline Foam::AbelNobel<Specie> Foam::operator+
         return AbelNobel<Specie>
         (
             sp,
-            pf1.b_
+            an1.b_
         );
     }
     else
     {
-        const scalar Y1 = pf1.Y()/sp.Y();
-        const scalar Y2 = pf2.Y()/sp.Y();
+        const scalar X1 = sp.W()*an1.Y()/(an1.W()*sp.Y());
+        const scalar X2 = sp.W()*an2.Y()/(an2.W()*sp.Y());
 
         return AbelNobel<Specie>
         (
             sp,
-            Y1*pf1.b_ + Y2*pf2.b_
+            X1*an1.b_ + X2*an2.b_
         );
     }
 }

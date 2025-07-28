@@ -14,3 +14,5 @@ uniformDimensionedVectorField g
 
 autoPtr<solidModel> solidPtr(solidModel::New(mesh));
 solidModel& solid = solidPtr();
+
+::Foam::fvModels& fvModels = fvModels::New(mesh);

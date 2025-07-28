@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2022
+    \\  /    A nd           | Copyright (C) 2020-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -45,20 +45,21 @@ Foam::atmosphereModels::table::table
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 :
-    atmosphereModel(mesh, dict, zoneID),
+    atmosphereModel(mesh, dict, zoneName),
     pTable_(dict_.subDict("pTable"), "h", "p"),
-    TTable_(dict_.subDict("TTable"), "h", "T"),
-    correct_(dict_.lookupOrDefault("correct", false))
-{
-    const_cast<dictionary&>(dict_).set
+    setT_(dict_.lookupOrDefault("setT", dict.isDict("TTable"))),
+    TTable_
     (
-        "pRef",
-        pTable_.lookup(gMin(h_))
-    );
-}
+        setT_ ? dict_.subDict("TTable") : dict_.optionalSubDict("TTable"),
+        "h",
+        "T",
+        setT_
+    ),
+    correct_(dict_.lookupOrDefault("correct", false))
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -74,15 +75,17 @@ void Foam::atmosphereModels::table::createAtmosphere
     fluidBlastThermo& thermo
 ) const
 {
+    volScalarField h("h", -(g_ & mesh_.C())/mag(g_) + hRef_);
+
     volScalarField& p = thermo.p();
     volScalarField& T = thermo.T();
 
     // Optional setting of only some cells
     labelList cells
     (
-        zoneID_ >= 0
-      ? labelList(mesh_.cellZones()[zoneID_])
-      : identity(mesh_.nCells())
+        !zoneName_.empty()
+      ? labelList(mesh_.cellZones()[zoneName_])
+      : identityMap(mesh_.nCells())
     );
 
     // Create a hash set for easier searching of selected cells
@@ -91,13 +94,11 @@ void Foam::atmosphereModels::table::createAtmosphere
     // Set the internal values
     forAll(cells, i)
     {
-        p[cells[i]] = pTable_.lookup(h_[cells[i]]);
-        T[cells[i]] = TTable_.lookup(h_[cells[i]]);
+        p[cells[i]] = pTable_.lookup(h[cells[i]]);
     }
 
     // The the boundary values that have their owner face included in the set
     volScalarField::Boundary& bp = p.boundaryFieldRef();
-    volScalarField::Boundary& bT = T.boundaryFieldRef();
     forAll(bp, patchi)
     {
         const labelList& fCells = bp[patchi].patch().faceCells();
@@ -106,19 +107,46 @@ void Foam::atmosphereModels::table::createAtmosphere
             if (cSet.found(fCells[facei]))
             {
                 bp[patchi][facei] =
-                    pTable_.lookup(h_.boundaryField()[patchi][facei]);
-                bT[patchi][facei] =
-                    TTable_.lookup(h_.boundaryField()[patchi][facei]);
+                    pTable_.lookup(h.boundaryField()[patchi][facei]);
+            }
+        }
+    }
+
+    if (setT_)
+    {
+        forAll(cells, i)
+        {
+            T[cells[i]] = TTable_.lookup(h[cells[i]]);
+        }
+
+        // The the boundary values that have their owner face included in the set
+        volScalarField::Boundary& bT = T.boundaryFieldRef();
+        forAll(bp, patchi)
+        {
+            const labelList& fCells = bp[patchi].patch().faceCells();
+            forAll(fCells, facei)
+            {
+                if (cSet.found(fCells[facei]))
+                {
+                    bT[patchi][facei] =
+                        TTable_.lookup(h.boundaryField()[patchi][facei]);
+                }
             }
         }
     }
 
     // Correct boundary conditions
     p.correctBoundaryConditions();
-    T.correctBoundaryConditions();
 
-    // Correct density
-    thermo.updateRho(p);
+    if (setT_)
+    {
+        T.correctBoundaryConditions();
+        thermo.updateRho(p);
+    }
+    else
+    {
+        thermo.he() = thermo.calce(p);
+    }
 
     // Correct of thermodynamic variables
     thermo.correct();
@@ -126,6 +154,11 @@ void Foam::atmosphereModels::table::createAtmosphere
     // Equalibriate the pressure field
     if (correct_)
     {
+        const_cast<dictionary&>(dict_).set
+        (
+            "pRef",
+            pTable_.lookup(min(h).value())
+        );
         hydrostaticInitialisation(thermo);
     }
 }

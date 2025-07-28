@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::ShubertPiyavskiiMinimizationScheme
+    Foam::univariateMinimizationSchemes::ShubertPiyavskii
 
 Description
     Find root using the ShubertPiyavskii method
@@ -44,12 +44,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace univariateMinimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class ShubertPiyavskiiMinimizationScheme Declaration
+                        Class ShubertPiyavskii Declaration
 \*---------------------------------------------------------------------------*/
 
-class ShubertPiyavskiiMinimizationScheme
+class ShubertPiyavskii
 :
     public univariateMinimizationScheme
 {
@@ -70,18 +72,43 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        ShubertPiyavskiiMinimizationScheme
+        ShubertPiyavskii
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
-        //- Disallow default bitwise copy construction
-        ShubertPiyavskiiMinimizationScheme(const minimizationScheme&) = delete;
+        //- Copy constructor
+        basis
+        (
+            const scalarUnivariateEquation& eqn,
+            const basis& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new basis(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new basis(eqns, *this)
+            );
+        }
 
 
     //- Destructor
-    virtual ~ShubertPiyavskiiMinimizationScheme()
+    virtual ~ShubertPiyavskii()
     {}
 
 
@@ -99,12 +126,13 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const ShubertPiyavskiiMinimizationScheme&) = delete;
+        void operator=(const ShubertPiyavskii&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariateMinimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

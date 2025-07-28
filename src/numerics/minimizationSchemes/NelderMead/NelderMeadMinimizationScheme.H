@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NelderMeadMinimizationScheme
+    Foam:minimizationSchemes::NelderMead
 
 Description
     Gradient free minimization scheme of Nelder-Mead
@@ -44,19 +44,20 @@ SourceFiles
 
 #include "minimizationScheme.H"
 #include "typeInfo.H"
-#include "Random.H"
 #include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-        Class NelderMeadMinimizationScheme Declaration
+                        Class NelderMead Declaration
 \*---------------------------------------------------------------------------*/
 
-class NelderMeadMinimizationScheme
+class NelderMead
 :
     public minimizationScheme
 {
@@ -121,14 +122,31 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        NelderMeadMinimizationScheme
+        NelderMead
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        NelderMead
+        (
+            const scalarUnivariateEquation& eqn,
+            const NelderMead& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new NelderMead(eqns, *this));
+        }
+
+
     //- Destructor
-    virtual ~NelderMeadMinimizationScheme()
+    virtual ~NelderMead()
     {}
 
 
@@ -148,6 +166,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

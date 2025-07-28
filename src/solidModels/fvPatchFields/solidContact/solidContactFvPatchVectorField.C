@@ -436,11 +436,9 @@ Foam::solidContactFvPatchVectorField::solidContactFvPatchVectorField
     {
         rigidMaster_ = Switch(dict.lookup("rigidMaster"));
 
-        if (debug)
-        {
-            Info<< "    writePointDistanceFields: " << writePointDistanceFields_
-                << endl;
-        }
+        DebugInfo
+            << "    writePointDistanceFields: " << writePointDistanceFields_
+            << endl;
 
         if (scaleFaceTractionsNearDownstreamPatch_)
         {
@@ -923,13 +921,8 @@ Foam::solidContactFvPatchVectorField::frictionModelForThisSlave()
 }
 
 
-void Foam::solidContactFvPatchVectorField::updateCoeffs()
+bool Foam::solidContactFvPatchVectorField::updateFields()
 {
-    if (this->updated())
-    {
-        return;
-    }
-
     if (curTimeIndex_ != this->db().time().timeIndex())
     {
         // Update old quantities at the start of a new time-step
@@ -1022,6 +1015,7 @@ void Foam::solidContactFvPatchVectorField::updateCoeffs()
                         shadowPatchIndices()[shadPatchI]
                     ];
             }
+
 
             // Master zone DD
             const vectorField zoneDD(zone().patchFaceToGlobal(patchDD));
@@ -1205,7 +1199,7 @@ void Foam::solidContactFvPatchVectorField::updateCoeffs()
         }
     }
 
-    solidTractionFvPatchVectorField::updateCoeffs();
+    return true;
 }
 
 

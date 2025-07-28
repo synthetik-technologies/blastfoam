@@ -28,31 +28,31 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::TrapezoidalMultivariateIntegrator<Type>::TrapezoidalMultivariateIntegrator
+template<class Type, class Adapt>
+Foam::TrapezoidalMultivariateIntegrator<Type, Adapt>::TrapezoidalMultivariateIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
 )
 :
-    MultivariateIntegrator<Type>(eqn, dict)
+    MultivariateIntegrator<Type, Adapt>(eqn, dict)
 {}
 
 
-template<class Type>
-Foam::TrapezoidalMultivariateIntegrator<Type>::TrapezoidalMultivariateIntegrator
+template<class Type, class Adapt>
+Foam::TrapezoidalMultivariateIntegrator<Type, Adapt>::TrapezoidalMultivariateIntegrator
 (
     const equationType& eqn,
     const multivariateIntegrator& inter
 )
 :
-    MultivariateIntegrator<Type>(eqn, inter)
+    MultivariateIntegrator<Type, Adapt>(eqn, inter)
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::TrapezoidalMultivariateIntegrator<Type>::integrateFunc
+template<class Type, class Adapt>
+Type Foam::TrapezoidalMultivariateIntegrator<Type, Adapt>::integrateFunc
 (
     const scalarList& x0,
     const scalarList& x1,
@@ -70,8 +70,8 @@ Type Foam::TrapezoidalMultivariateIntegrator<Type>::integrateFunc
 }
 
 
-template<class Type>
-void Foam::TrapezoidalMultivariateIntegrator<Type>::addCorners
+template<class Type, class Adapt>
+void Foam::TrapezoidalMultivariateIntegrator<Type, Adapt>::addCorners
 (
     const label diri,
     const scalarList& dx,
@@ -93,8 +93,8 @@ void Foam::TrapezoidalMultivariateIntegrator<Type>::addCorners
     }
 }
 
-template<class Type>
-Type Foam::TrapezoidalMultivariateIntegrator<Type>::integrate
+template<class Type, class Adapt>
+Type Foam::TrapezoidalMultivariateIntegrator<Type, Adapt>::integrate
 (
     const scalarList& x0,
     const scalarList& x1,

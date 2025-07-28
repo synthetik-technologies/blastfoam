@@ -63,22 +63,11 @@ Foam::afterburnModels::noAfterburn::~noAfterburn()
 Foam::tmp<Foam::volScalarField>
 Foam::afterburnModels::noAfterburn::ESource() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "noAfterburn:ESource",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            dimensionedScalar("0", sqr(dimVelocity)/dimTime, 0.0)
-        )
+        type() + ":ESource",
+        mesh_,
+        dimensionedScalar("0", sqr(dimVelocity)/dimTime, 0.0)
     );
 }
 

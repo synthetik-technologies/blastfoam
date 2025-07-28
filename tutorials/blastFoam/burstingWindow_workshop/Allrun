@@ -6,13 +6,32 @@ cd ${0%/*} || exit 1    # run from this directory
 
 paraFoam -builtin -touch
 
+# -- Extract surface features
 runApplication surfaceFeatures
+
+#-- Create the base mesh
 runApplication blockMesh
+
+# -- Decompose the case
 runApplication decomposePar -copyZero
+
+# -- Refine and snap geometry
 runParallel snappyHexMesh -overwrite
-runParallel topoSet
-runParallel createBaffles -overwrite
-runParallel setRefinedFields
+
+# -- Refine the window
+runParallel addInternalPatch -noFields
+
+runParallel splitBaffles -overwrite
+
+# -- Add internal patch
+runParallel -s master addEmptyPatch windowsBurst wall -overwrite -noFields
+runParallel -s slave addEmptyPatch windowsBurst_slave wall -overwrite -noFields
+
+# -- Create overlapping couple patches for "internal" faces
+runParallel createNonConformalCouples windowsBurst windowsBurst_slave -overwrite
+
+# -- Set the charge
+runParallel setRefinedFields -debug
 
 # -- run the calc
-runParallel $(getApplication)
+# runParallel $(getApplication)

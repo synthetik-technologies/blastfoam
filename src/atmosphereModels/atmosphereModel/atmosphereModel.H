@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2022
+    \\  /    A nd           | Copyright (C) 2020-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -64,20 +64,11 @@ protected:
     //- Gravitational acceleration
     uniformDimensionedVectorField g_;
 
-    //- Normal vector for gravitational acceleration
-    vector normal_;
-
     //- Elevation of lowest point in mesh
-    uniformDimensionedScalarField baseElevation_;
-
-    //- Height field
-    volScalarField h_;
+    uniformDimensionedScalarField hRef_;
 
     //- Saved zoneID to set
-    const label zoneID_;
-
-    //- Fixed pressure patches
-    wordReList fixedPatches_;
+    const word zoneName_;
 
     //- Stabilize fields
     void hydrostaticInitialisation
@@ -101,13 +92,13 @@ public:
             (
                 const fvMesh& mesh,
                 const dictionary& dict,
-                const label zoneID
+                const word& zoneName
             ),
-            (mesh, dict, zoneID)
+            (mesh, dict, zoneName)
         );
 
     // Constructor
-    atmosphereModel(const fvMesh&, const dictionary&, const label);
+    atmosphereModel(const fvMesh&, const dictionary&, const word&);
 
 
     //- Destructor
@@ -121,7 +112,7 @@ public:
         (
             const fvMesh& mesh,
             const dictionary& dict,
-            const label zoneID = -1
+            const word& zoneName = word::null
         );
 
         //- COnstruct given a model type and dictionary
@@ -130,13 +121,21 @@ public:
             const word& atmosphereModelType,
             const fvMesh& mesh,
             const dictionary& dict,
-            const label zoneID = -1
+            const word& zoneName = word::null
         );
 
 
     // Member Functions
 
+        //- Return the coefficient dictionary
+        const dictionary& dict() const
+        {
+            return dict_;
+        }
+
         virtual void createAtmosphere(fluidBlastThermo& thermo) const = 0;
+
+        virtual bool needReference() const = 0;
 };
 
 

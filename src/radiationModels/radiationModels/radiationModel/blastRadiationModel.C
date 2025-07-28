@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "blastRadiationModel.H"
+#include "fvmSup.H"
 #include "blastAbsorptionEmissionModel.H"
 #include "scatterModel.H"
 #include "sootModel.H"
@@ -40,13 +41,29 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+const Foam::blastRadiationModel&
+Foam::blastRadiationModel::readRadiationProperties(const word& type)
+{
+    radiationModel::readOpt() = IOobject::MUST_READ;
+    radiationModel::read();
+
+    coeffs_ = subOrEmptyDict(type + "Coeffs");
+    solverFreq_ = 1;
+
+    return *this;
+}
+
+
 void Foam::blastRadiationModel::initialise()
 {
-    solverFreq_ = max(1, lookupOrDefault<label>("solverFreq", 1));
+    const dictionary& radDict(*this);
+    Info<<radDict<<endl;
+
+    solverFreq_ = max(1, radDict.lookupOrDefault<label>("solverFreq", 1));
 
     absorptionEmission_.reset
     (
-        radiationModels::blastAbsorptionEmissionModel::New(*this, mesh_).ptr()
+        radiationModels::blastAbsorptionEmissionModel::New(radDict, mesh_).ptr()
     );
     bAbsorptionEmission_.reset
     (
@@ -56,9 +73,9 @@ void Foam::blastRadiationModel::initialise()
         )
     );
 
-    scatter_.reset(radiationModels::scatterModel::New(*this, mesh_).ptr());
+    scatter_.reset(radiationModels::scatterModel::New(radDict, mesh_).ptr());
 
-    soot_.reset(radiationModels::sootModel::New(*this, mesh_).ptr());
+    soot_.reset(radiationModels::sootModel::New(radDict, mesh_).ptr());
 }
 
 
@@ -71,13 +88,22 @@ Foam::blastRadiationModel::blastRadiationModel(const volScalarField& T)
 {}
 
 
-Foam::blastRadiationModel::blastRadiationModel(const word& type, const volScalarField& T)
+Foam::blastRadiationModel::blastRadiationModel
+(
+    const word& type,
+    const volScalarField& T
+)
 :
     radiationModel(T),
-    radODE_(*this, T.mesh())
+    radODE_(readRadiationProperties(type), T.mesh())
 {
+    // Read radiationProperties
+    this->readOpt() = IOobject::MUST_READ;
+    static_cast<IOdictionary&>(*this) = IOdictionary(static_cast<const IOobject&>(*this));
+
     coeffs_ = subOrEmptyDict(type + "Coeffs");
     solverFreq_ = 1;
+
     initialise();
 }
 
@@ -90,10 +116,14 @@ Foam::blastRadiationModel::blastRadiationModel
 )
 :
     radiationModel(T),
-    radODE_(*this, T.mesh())
+    radODE_(readRadiationProperties(type), T.mesh())
 {
+    // Copy the constructing dictionary
+    static_cast<dictionary&>(*this) = dict;
+
     coeffs_ = subOrEmptyDict(type + "Coeffs");
     solverFreq_ = 1;
+
     initialise();
 }
 
@@ -105,6 +135,65 @@ Foam::blastRadiationModel::~blastRadiationModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::fvScalarMatrix> Foam::blastRadiationModel::Sh
+(
+    const basicThermo& thermo,
+    const volScalarField& he
+) const
+{
+    if (radODE_.solve())
+    {
+        tmp<fvScalarMatrix> theEqn
+        (
+            new fvScalarMatrix(he, dimEnergy/dimTime)
+        );
+        fvScalarMatrix& heEqn = theEqn.ref();
+        scalarField& heSource = heEqn.source();
+
+        scalarField heNew(he);
+        tmp<volScalarField> trho(thermo.rho());
+        const volScalarField& rho = trho();
+        const scalarField& V = he.mesh().V();
+
+        const scalar dt = he.mesh().time().deltaTValue();
+        radODE_.solve(dt, rho, heNew);
+
+        forAll(heSource, celli)
+        {
+            heSource[celli] +=
+                rho[celli]*V[celli]
+               *(heNew[celli] - he[celli])/dt;
+        }
+
+        return theEqn;
+    }
+
+    const volScalarField Cpv(thermo.Cpv());
+    const volScalarField T3(pow3(T_));
+
+    return
+    (
+        Ru()
+      - fvm::Sp(4.0*Rp()*T3/Cpv, he)
+      - Rp()*T3*(T_ - 4.0*he/Cpv)
+    );
+}
+
+
+Foam::tmp<Foam::fvScalarMatrix> Foam::blastRadiationModel::ST
+(
+    const dimensionedScalar& rhoCp,
+    volScalarField& T
+) const
+{
+    return
+    (
+        Ru()/rhoCp
+      - fvm::Sp(Rp()*pow3(T)/rhoCp, T)
+    );
+}
+
 
 Foam::tmp<Foam::volScalarField> Foam::blastRadiationModel::calcRhoE
 (
@@ -118,12 +207,11 @@ Foam::tmp<Foam::volScalarField> Foam::blastRadiationModel::calcRhoE
     if (radODE_.solve())
     {
         Info<< "Solving radiation ODE" << endl;
-        tmp<volScalarField> rhoENew(rho*e);
-        volScalarField K(rhoE - rhoENew());
+        volScalarField eNew(e);
+        volScalarField K(rhoE - rho*e);
 
-        radODE_.solve(dt.value(), rhoENew.ref());
-        rhoENew.ref() += K;
-        return rhoENew;
+        radODE_.solve(dt.value(), rho, eNew.primitiveFieldRef());
+        return eNew*rho + K;
     }
 
     volScalarField T3(pow3(T_));
@@ -134,7 +222,7 @@ Foam::tmp<Foam::volScalarField> Foam::blastRadiationModel::calcRhoE
     (
         (rhoE - dt*this->Rp()*T3*(T_ - 4.0*e/Cv))/den
     );
-    eNew.ref() += dt*this->Ru()/den();
+    eNew.internalFieldRef() += dt*this->Ru()/den();
     return rho*eNew;
 }
 

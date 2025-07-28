@@ -62,7 +62,7 @@ Foam::radiationModels::blastRadiativeIntensityRay::blastRadiativeIntensityRay
         IOobject
         (
             "I" + name(rayId),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -75,7 +75,7 @@ Foam::radiationModels::blastRadiativeIntensityRay::blastRadiativeIntensityRay
         IOobject
         (
             "qr" + name(rayId),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -88,7 +88,7 @@ Foam::radiationModels::blastRadiativeIntensityRay::blastRadiativeIntensityRay
         IOobject
         (
             "qin" + name(rayId),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -101,7 +101,7 @@ Foam::radiationModels::blastRadiativeIntensityRay::blastRadiativeIntensityRay
         IOobject
         (
             "qem" + name(rayId),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -178,17 +178,17 @@ Foam::radiationModels::blastRadiativeIntensityRay::blastRadiativeIntensityRay
 
     forAll(ILambda_, lambdaI)
     {
-        IOobject IHeader
+        typeIOobject<volScalarField> IHeader
         (
             intensityPrefix + "_" + name(rayId) + "_" + name(lambdaI),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         );
 
         // Check if field exists and can be read
-        if (IHeader.typeHeaderOk<volScalarField>(true))
+        if (IHeader.headerOk())
         {
             ILambda_.set
             (
@@ -208,7 +208,7 @@ Foam::radiationModels::blastRadiativeIntensityRay::blastRadiativeIntensityRay
                         IOobject
                         (
                             "IDefault",
-                            mesh_.time().timeName(),
+                            mesh_.time().name(),
                             mesh_,
                             IOobject::MUST_READ,
                             IOobject::NO_WRITE

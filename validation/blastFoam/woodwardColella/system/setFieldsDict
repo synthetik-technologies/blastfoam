@@ -19,7 +19,6 @@ defaultFieldValues
 (
     volScalarFieldValue rho 1.0
     volScalarFieldValue p 0.01
-    volScalarFieldValue T -1
 );
 
 regions

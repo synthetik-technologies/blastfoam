@@ -31,19 +31,22 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(NewtonRaphsonRootSolver, 0);
+namespace rootSolvers
+{
+    defineTypeNameAndDebug(NewtonRaphson, 0);
     addToRunTimeSelectionTable
     (
         rootSolver,
-        NewtonRaphsonRootSolver,
+        NewtonRaphson,
         dictionaryOne
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::NewtonRaphsonRootSolver::NewtonRaphsonRootSolver
+Foam::rootSolvers::NewtonRaphson::NewtonRaphson
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -54,15 +57,26 @@ Foam::NewtonRaphsonRootSolver::NewtonRaphsonRootSolver
 {}
 
 
+Foam::rootSolvers::NewtonRaphson::NewtonRaphson
+(
+    const scalarMultivariateEquation& eqn,
+    const NewtonRaphson& solver
+)
+:
+    rootSolver(eqn, solver),
+    beta_(solver.beta_)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::NewtonRaphsonRootSolver::~NewtonRaphsonRootSolver()
+Foam::rootSolvers::NewtonRaphson::~NewtonRaphson()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonRootSolver::findRoots
+Foam::tmp<Foam::scalarField> Foam::rootSolvers::NewtonRaphson::findRoots
 (
     const scalarList& x0,
     const scalarList& xLow,

@@ -53,7 +53,7 @@ Foam::convectiveFluxFvPatchScalarField::convectiveFluxFvPatchScalarField
     const convectiveFluxFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
@@ -119,7 +119,10 @@ Foam::convectiveFluxFvPatchScalarField::convectiveFluxFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::convectiveFluxFvPatchScalarField::evaluate(const Pstream::commsTypes)
+void Foam::convectiveFluxFvPatchScalarField::evaluate
+(
+    const Pstream::commsTypes
+)
 {
     if (!this->updated())
     {
@@ -141,8 +144,8 @@ void Foam::convectiveFluxFvPatchScalarField::evaluate(const Pstream::commsTypes)
     fvPatchField<scalar>::evaluate();
 }
 
-Foam::tmp<Foam::Field<Foam::scalar> > Foam::convectiveFluxFvPatchScalarField::
-snGrad() const
+Foam::tmp<Foam::Field<Foam::scalar>>
+Foam::convectiveFluxFvPatchScalarField::snGrad() const
 {
     scalarField delta(1.0/this->patch().deltaCoeffs() + SMALL);
     scalarField TP(this->patchInternalField());
@@ -166,8 +169,8 @@ snGrad() const
 }
 
 
-Foam::tmp<Foam::Field<Foam::scalar> > Foam::convectiveFluxFvPatchScalarField::
-gradientInternalCoeffs() const
+Foam::tmp<Foam::Field<Foam::scalar>>
+Foam::convectiveFluxFvPatchScalarField::gradientInternalCoeffs() const
 {
     scalarField delta(1.0/this->patch().deltaCoeffs() + SMALL);
 
@@ -186,8 +189,8 @@ gradientInternalCoeffs() const
 }
 
 
-Foam::tmp<Foam::Field<Foam::scalar> > Foam::convectiveFluxFvPatchScalarField::
-gradientBoundaryCoeffs() const
+Foam::tmp<Foam::Field<Foam::scalar>>
+Foam::convectiveFluxFvPatchScalarField::gradientBoundaryCoeffs() const
 {
     scalarField delta(1.0/this->patch().deltaCoeffs() + SMALL);
 

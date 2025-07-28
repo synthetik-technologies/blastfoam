@@ -46,11 +46,12 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     EInf_(dict.lookup("EInfinity")),
     E_(dict.lookup("E")),
     tau_(dict.lookup("relaxationTimes")),
@@ -67,7 +68,7 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
         IOobject
         (
             "s",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -80,7 +81,7 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
         IOobject
         (
             "sf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -123,15 +124,8 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
     // Check E_ and tau_ are the same length
     if (E_.size() != tau_.size())
     {
-        FatalErrorIn
-        (
-            "Foam::viscousHookeanElastic::viscousHookeanElastic\n"
-            "(\n"
-            "    const word& name,\n"
-            "    const fvMesh& mesh,\n"
-            "    const dictionary& dict\n"
-            ")"
-        )   << "The E and relaxationTimes lists should have the same length!"
+        FatalErrorInFunction
+            << "The E and relaxationTimes lists should have the same length!"
             << abort(FatalError);
     }
 
@@ -150,30 +144,16 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
     // Check all the relaxation times are positive
     if (min(tau_) < SMALL)
     {
-        FatalErrorIn
-        (
-            "Foam::viscousHookeanElastic::viscousHookeanElastic\n"
-            "(\n"
-            "    const word& name,\n"
-            "    const fvMesh& mesh,\n"
-            "    const dictionary& dict\n"
-            ")"
-        )   << "All relaxation times should be positive!"
+        FatalErrorInFunction
+            << "All relaxation times should be positive!"
             << abort(FatalError);
     }
 
     // Check all the E values are positive
     if (min(E_) < SMALL)
     {
-        FatalErrorIn
-        (
-            "Foam::viscousHookeanElastic::viscousHookeanElastic\n"
-            "(\n"
-            "    const word& name,\n"
-            "    const fvMesh& mesh,\n"
-            "    const dictionary& dict\n"
-            ")"
-        )   << "All values of stiffness E should be positive!"
+        FatalErrorInFunction
+            << "All values of stiffness E should be positive!"
             << abort(FatalError);
     }
 
@@ -206,7 +186,7 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
                 IOobject
                 (
                     "h" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -224,7 +204,7 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
                 IOobject
                 (
                     "hf" + Foam::name(MaxwellModelI),
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -249,15 +229,8 @@ Foam::viscousHookeanElastic::viscousHookeanElastic
     // Check for physical Poisson's ratio
     if (nu_.value() < -1.0 || nu_.value() > 0.5)
     {
-        FatalErrorIn
-        (
-            "Foam::viscousHookeanElastic::viscousHookeanElastic\n"
-            "(\n"
-            "    const word& name,\n"
-            "    const fvMesh& mesh,\n"
-            "    const dictionary& dict\n"
-            ")"
-        )   << "Unphysical Poisson's ratio: nu should be >= -1.0 and <= 0.5"
+        FatalErrorInFunction
+            << "Unphysical Poisson's ratio: nu should be >= -1.0 and <= 0.5"
             << abort(FatalError);
     }
 
@@ -569,19 +542,11 @@ void Foam::viscousHookeanElastic::correct(surfaceSymmTensorField& sigma)
 }
 
 
-Foam::scalar Foam::viscousHookeanElastic::residual()
+Foam::scalar Foam::viscousHookeanElastic::residual() const
 {
     // Calculate residual based on change in internal variables
-
     scalar res = 0.0;
-
-    if
-    (
-        mesh().time().lookupObject<fvMesh>
-        (
-            baseMeshRegionName()
-        ).foundObject<surfaceTensorField>("Ff")
-    )
+    if (this->baseMesh().foundObject<surfaceTensorField>("Ff"))
     {
         forAll(hf_, MaxwellModelI)
         {
@@ -596,11 +561,6 @@ Foam::scalar Foam::viscousHookeanElastic::residual()
                             hf_[MaxwellModelI].primitiveField()
                           - hf_[MaxwellModelI].prevIter().primitiveField()
                         )
-                    )
-                   /gMax
-                    (
-                        SMALL
-                      + mag(hf_[MaxwellModelI].prevIter().primitiveField())
                     )
                 );
         }
@@ -623,11 +583,6 @@ Foam::scalar Foam::viscousHookeanElastic::residual()
                           - h_[MaxwellModelI].prevIter().primitiveField()
                         )
                     )
-                   /gMax
-                    (
-                        SMALL
-                      + mag(h_[MaxwellModelI].prevIter().primitiveField())
-                    )
                 );
         }
 
@@ -635,5 +590,70 @@ Foam::scalar Foam::viscousHookeanElastic::residual()
     }
 }
 
+
+Foam::scalar Foam::viscousHookeanElastic::relResidual() const
+{
+    // Calculate residual based on change in internal variables
+    scalarField residuals(gamma_.size());
+    scalarField refValues(gamma_.size(), 0.0);
+    if (this->baseMesh().foundObject<surfaceTensorField>("Ff"))
+    {
+        forAll(hf_, modelI)
+        {
+            residuals[modelI] =
+                gMax
+                (
+                    mag
+                    (
+                        hf_[modelI].primitiveField()
+                      - hf_[modelI].prevIter().primitiveField()
+                    )
+                );
+            refValues[modelI] =
+                max
+                (
+                    gMax(mag(hf_[modelI].prevIter().primitiveField())),
+                    gMax(mag(hf_[modelI].oldTime().primitiveField()))
+                );
+        }
+    }
+    else
+    {
+        forAll(h_, modelI)
+        {
+            residuals[modelI] =
+                gMax
+                (
+                    mag
+                    (
+                        h_[modelI].primitiveField()
+                      - h_[modelI].prevIter().primitiveField()
+                    )
+                );
+            refValues[modelI] =
+                max
+                (
+                    gMax(mag(h_[modelI].prevIter().primitiveField())),
+                    gMax(mag(h_[modelI].oldTime().primitiveField()))
+                );
+        }
+    }
+
+    scalar maxRelResidual = 0;
+    forAll(residuals, modelI)
+    {
+        if (refValues[modelI] > small)
+        {
+            maxRelResidual =
+                max
+                (
+                    maxRelResidual,
+                    residuals[modelI]/refValues[modelI]
+                );
+        }
+    }
+    return maxRelResidual;
+
+}
 
 // ************************************************************************* //

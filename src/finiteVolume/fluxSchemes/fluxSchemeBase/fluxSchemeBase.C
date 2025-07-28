@@ -24,6 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluxSchemeBase.H"
+#include "fluxScheme.H"
+#include "phaseFluxScheme.H"
 #include "ReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -35,20 +37,111 @@ namespace Foam
 }
 
 
+const Foam::fluxSchemeBase& Foam::fluxSchemeBase::findFluxScheme
+(
+    const surfaceScalarField& phi
+)
+{
+    const fvMesh& mesh = phi.mesh();
+    const word phaseFluxName
+    (
+        IOobject::groupName(fluxSchemeBase::typeName, phi.group())
+    );
+    if (mesh.foundObject<fluxScheme>(fluxSchemeBase::typeName))
+    {
+        return mesh.lookupObject<fluxScheme>(fluxSchemeBase::typeName);
+    }
+    else if (mesh.foundObject<phaseFluxScheme>(phaseFluxName))
+    {
+        return mesh.lookupObject<phaseFluxScheme>(phaseFluxName);
+    }
+    else
+    {
+        // If the phase name is not the primary phase
+        // check all of the included phases
+        HashTable<const fluxSchemeBase*> schemes
+        (
+            mesh.lookupClass<fluxSchemeBase>()
+        );
+        forAllConstIter
+        (
+            HashTable<const fluxSchemeBase*>,
+            schemes,
+            iter
+        )
+        {
+            if (iter()->phases().found(phi.group()))
+            {
+                return *iter();
+            }
+        }
+    }
+
+    FatalErrorInFunction
+        << "Could not determine a fluxScheme to use for " << phi.name() << endl
+        << abort(FatalError);
+    return mesh.lookupObject<phaseFluxScheme>(phaseFluxName);
+}
+
+
+bool Foam::fluxSchemeBase::foundFluxScheme
+(
+    const surfaceScalarField& phi
+)
+{
+    const fvMesh& mesh = phi.mesh();
+    const word phaseFluxName
+    (
+        IOobject::groupName(fluxSchemeBase::typeName, phi.group())
+    );
+    if (mesh.foundObject<fluxScheme>(fluxSchemeBase::typeName))
+    {
+        return true;
+    }
+    else if (mesh.foundObject<phaseFluxScheme>(phaseFluxName))
+    {
+        return true;
+    }
+    else
+    {
+        // If the phase name is not the primary phase
+        // check all of the included phases
+        HashTable<const fluxSchemeBase*> schemes
+        (
+            mesh.lookupClass<fluxSchemeBase>()
+        );
+        forAllConstIter
+        (
+            HashTable<const fluxSchemeBase*>,
+            schemes,
+            iter
+        )
+        {
+            if (iter()->phases().found(phi.group()))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fluxSchemeBase::fluxSchemeBase(const fvMesh& mesh, const word& phaseName)
+Foam::fluxSchemeBase::fluxSchemeBase(const surfaceScalarField& phi)
 :
     regIOobject
     (
         IOobject
         (
-            IOobject::groupName("fluxScheme", phaseName),
-            mesh.time().timeName(),
-            mesh
+            IOobject::groupName("fluxScheme", phi.group()),
+            phi.mesh().time().name(),
+            phi.mesh()
         )
     ),
-    mesh_(mesh)
+    mesh_(phi.mesh()),
+    phi_(phi)
 {}
 
 
@@ -59,6 +152,37 @@ Foam::fluxSchemeBase::~fluxSchemeBase()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::upwindFlux() const
+{
+    tmp<surfaceScalarField> tuFlux
+    (
+        surfaceScalarField::New
+        (
+            IOobject::groupName("upwindFlux", phi_.group()),
+            phi_.mesh(),
+            dimensionedScalar(phi_.dimensions(), Zero)
+        )
+    );
+    surfaceScalarField& uFlux = tuFlux.ref();
+     forAll(uFlux , facei)
+    {
+        uFlux[facei] = this->interpolate(1.0, -1.0, facei);
+    }
+
+    surfaceScalarField::Boundary& buFlux = uFlux.boundaryFieldRef();
+    forAll(buFlux, patchi)
+    {
+        scalarField& puFlux = buFlux[patchi];
+        forAll(puFlux, facei)
+        {
+            puFlux[facei] = this->interpolate(1.0, -1.0, facei, patchi);
+        }
+    }
+    return tuFlux;
+}
+
+
+template<>
 Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
 (
     const volScalarField& f,
@@ -67,7 +191,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
 {
     autoPtr<ReconstructionScheme<scalar>> fLimiter
     (
-        ReconstructionScheme<scalar>::New(f, fName)
+        ReconstructionScheme<scalar>::New(f, fName, true)
     );
 
     tmp<surfaceScalarField> tfOwn;
@@ -87,12 +211,10 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
         )
     );
     surfaceScalarField& ff = tff.ref();
-    const bool isDensity = (f.dimensions() == dimDensity);
 
     forAll(fOwn, facei)
     {
-        ff[facei] =
-            interpolate(fOwn[facei], fNei[facei], isDensity, facei);
+        ff[facei] = interpolate(fOwn[facei], fNei[facei], facei);
     }
 
     forAll(ff.boundaryField(), patchi)
@@ -105,55 +227,12 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
             pff[facei] =
                 interpolate
                 (
-                    pfOwn[facei],
-                    pfNei[facei],
-                    isDensity,
+                    pfOwn[facei], pfNei[facei],
                     facei, patchi
                 );
         }
     }
     return tff;
-}
-
-
-Foam::tmp<Foam::surfaceVectorField> Foam::fluxSchemeBase::interpolate
-(
-    const volVectorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
-}
-
-
-Foam::tmp<Foam::surfaceSymmTensorField> Foam::fluxSchemeBase::interpolate
-(
-    const volSymmTensorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
-}
-
-
-Foam::tmp<Foam::surfaceSphericalTensorField>
-Foam::fluxSchemeBase::interpolate
-(
-    const volSphericalTensorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
-}
-
-
-Foam::tmp<Foam::surfaceTensorField> Foam::fluxSchemeBase::interpolate
-(
-    const volTensorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
 }
 
 

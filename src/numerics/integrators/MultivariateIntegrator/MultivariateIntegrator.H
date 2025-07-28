@@ -116,7 +116,7 @@ public:
                     Class MultivariateIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class MultivariateIntegrator
 :
     public multivariateIntegrator
@@ -149,8 +149,8 @@ protected:
                 return false;
             }
             return
-                adaptiveError::error<Type>(t1, t2)
-              < max(adaptiveError::mag<Type>(t1), absTolerance_[i])*tol;
+                adaptiveError::error<Adapt>(t1, t2)
+              < max(adaptiveError::mag<Adapt>(t1), absTolerance_[i])*tol;
         }
 
         virtual Type integrateFunc
@@ -243,21 +243,21 @@ public:
         //- Disallow default bitwise copy construction
         MultivariateIntegrator
         (
-            const MultivariateIntegrator<Type>&
+            const MultivariateIntegrator<Type, Adapt>&
         ) = delete;
 
 
     // Selectors
 
         //- Select null constructed
-        static autoPtr<MultivariateIntegrator<Type>> New
+        static autoPtr<MultivariateIntegrator<Type, Adapt>> New
         (
             const equationType& eqn,
             const dictionary& dict
         );
 
         //- Select null constructed
-        static autoPtr<MultivariateIntegrator<Type>> New
+        static autoPtr<MultivariateIntegrator<Type, Adapt>> New
         (
             const word& integratorTypeName,
             const equationType& eqn,
@@ -265,7 +265,7 @@ public:
         );
 
         //- Select null constructed
-        static autoPtr<MultivariateIntegrator<Type>> New
+        static autoPtr<MultivariateIntegrator<Type, Adapt>> New
         (
             const equationType& eqn,
             const multivariateIntegrator& inter
@@ -282,7 +282,7 @@ public:
         //- Return if the integration is adaptive
         bool adaptive() const
         {
-            return adaptiveError::adaptive<Type>(this->adaptive_);
+            return adaptiveError::adaptive<Adapt>(this->adaptive_);
         }
 
         //- Set the equation to integrate
@@ -303,7 +303,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const MultivariateIntegrator<Type>&) = delete;
+        void operator=(const MultivariateIntegrator<Type, Adapt>&) = delete;
 };
 
 
@@ -319,23 +319,45 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define makeMultivariateIntegrator(Type)                                       \
-    defineNamedTemplateTypeNameAndDebug(MultivariateIntegrator<Type>, 0);      \
+#define makeMultivariateIntegrator(Type, Adapt)                                \
+    typedef MultivariateIntegrator<Type, Adapt>                                \
+        MultivariateIntegrator##Type##Adapt;                                   \
+    defineNamedTemplateTypeNameAndDebug                                        \
+    (                                                                          \
+        MultivariateIntegrator##Type##Adapt,                                   \
+        0                                                                      \
+    );                                                                         \
                                                                                \
-    defineTemplateRunTimeSelectionTable(MultivariateIntegrator<Type>, dictionary);\
-    defineTemplateRunTimeSelectionTable(MultivariateIntegrator<Type>, inputs);
+    defineTemplateRunTimeSelectionTable                                        \
+    (                                                                          \
+        MultivariateIntegrator##Type##Adapt,                                   \
+        dictionary                                                             \
+    );                                                                         \
+    defineTemplateRunTimeSelectionTable                                        \
+    (                                                                          \
+        MultivariateIntegrator##Type##Adapt,                                   \
+        inputs                                                                 \
+    );
 
 
-#define makeMultivariateIntegratorType(MultivariateIntegratorType, Type)       \
-    defineNamedTemplateTypeNameAndDebug(MultivariateIntegratorType<Type>, 0);  \
+#define makeMultivariateIntegratorType(MultivariateIntegratorType, Type, Adapt)\
+    typedef MultivariateIntegratorType<Type, Adapt>                            \
+        MultivariateIntegratorType##Type##Adapt;                               \
+    defineNamedTemplateTypeNameAndDebug                                        \
+    (                                                                          \
+        MultivariateIntegratorType##Type##Adapt,                               \
+        0                                                                      \
+    );                                                                         \
                                                                                \
-    MultivariateIntegrator<Type>::                                             \
-        adddictionaryConstructorToTable<MultivariateIntegratorType<Type>>      \
-        add##MultivariateIntegratorType##Type##dictionary##ConstructorToTable_;\
+    MultivariateIntegrator<Type, Adapt>::adddictionaryConstructorToTable       \
+    <                                                                          \
+        MultivariateIntegratorType<Type, Adapt>                                \
+    > add##MultivariateIntegratorType##Type##Adapt##dictionary##ConstructorToTable_;  \
                                                                                \
-    MultivariateIntegrator<Type>::                                             \
-        addinputsConstructorToTable<MultivariateIntegratorType<Type>>          \
-        add##MultivariateIntegratorType##Type##inputs##ConstructorToTable_;
+    MultivariateIntegrator<Type, Adapt>::addinputsConstructorToTable           \
+    <                                                                          \
+        MultivariateIntegratorType<Type, Adapt>                                \
+    > add##MultivariateIntegratorType##Type##Adapt##inputs##ConstructorToTable_;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

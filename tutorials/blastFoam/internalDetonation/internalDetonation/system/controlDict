@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0.005;
+endTime         1e-5;
 
 deltaT          1e-8;
 
@@ -50,5 +50,16 @@ adjustTimeStep  yes;
 maxCo           0.5;
 
 maxDeltaT       1;
+
+functions
+{
+    probes
+    {
+        type blastProbes;
+        fields (p);
+        probeLocations ((0 0 0));
+        adjustLocations yes;
+    }
+}
 
 // ************************************************************************* //

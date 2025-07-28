@@ -10,12 +10,22 @@ vtkTimeSeries/vtkTimeSeriesWriter/vtkTimeSeriesSurfaceWriter.C
 laplacian/laplacian.C
 Schlieren/Schlieren.C
 shadowgraph/shadowgraph.C
+stopProbes/stopProbes.C
+
+#blastSampledSurfaces/blastSampledSurfaces.C
+#blastSampledSurfaces/blastSampledSurfacesGrouping.C
+#blastSampledSurfaces/blastSampledSurface/blastSampledSurface.C
+#blastSampledSurfaces/blastSampledPatch/blastSampledPatch.C
 
 # Blast specific
 impulse/impulse.C
+blastCourantNo/blastCourantNo.C
 blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 timeOfArrival/timeOfArrival.C
+blastQuantities/blastQuantities.C
+TExposure/TExposure.C
+thermalImpulse/thermalImpulse.C
 
 LIB = $(BLAST_LIBBIN)/libblastFunctionObjects

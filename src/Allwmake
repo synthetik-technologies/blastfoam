@@ -9,20 +9,26 @@ wmake $targetType finiteVolume
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
+wmake $targetType MomentumTransportModels
 wmake $targetType compressibleSystem
-wmake $targetType dynamicMesh
+wmake $targetType polyTopoChange
 
 wmake $targetType functionObjects
+wmake $targetType regionModels
 
 wmake $targetType errorEstimators
-wmake $targetType dynamicFvMesh
+wmake $targetType fvMotionSolvers
+wmake $targetType fvMeshTopoChangers
+wmake $targetType fvMeshDistributors
 
 wmake $targetType atmosphereModels
 
-wmake $targetType regionModels
 wmake $targetType solidModels
-
 wmake $targetType levelSet
+wmake $targetType FieldSetTypes
+
+# -- Region models and
+regionSolvers/Allwmake
 
 # -- Optional library for use with solids4foam
 solids4Foam/Allwmake

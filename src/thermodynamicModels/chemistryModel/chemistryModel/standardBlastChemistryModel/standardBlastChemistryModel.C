@@ -65,7 +65,7 @@ standardBlastChemistryModel
                 IOobject
                 (
                     "RR." + Y_[fieldi].name(),
-                    this->mesh().time().timeName(),
+                    this->mesh().time().name(),
                     this->mesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE

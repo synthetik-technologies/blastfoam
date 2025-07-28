@@ -58,7 +58,7 @@ class nonLinearPlasticModel
 
         //- Elastic left Cauchy-Green trial strain tensor with volumetric term
         //  removed. Trial means that plasticity is neglected.
-        defineVolSurfaceFieldTypeFuncs
+        defineVolSurfaceFieldTypeFuncsNoWrite
         (
             bEbarTrial,
             symmTensor,
@@ -100,6 +100,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );

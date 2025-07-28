@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      Kurganov;
+fluxScheme      HLLC;
 
 ddtSchemes
 {
@@ -25,12 +25,13 @@ ddtSchemes
 
 gradSchemes
 {
-    default         cellMDLimited leastSquares 1;
+    default         cellLimited leastSquares 1;
 }
 
 divSchemes
 {
     default         none;
+    div(devTau) Gauss linear;
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
     div(alphaRhoPhi.tnt,lambda.tnt) Riemann;
     div(alphaRhoPhi.RDX,lambda.RDX) Riemann
@@ -45,17 +46,9 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             cubic;
-    reconstruct(alpha)  vanLeer;
-    reconstruct(rho)    vanLeer;
-    reconstruct(U)      vanLeerV;
-    reconstruct(e)      vanLeer;
-    reconstruct(p)      vanLeer;
-    reconstruct(speedOfSound)      vanLeer;
-    "reconstruct\(lambda.*\)" vanLeer;
-
-    reconstruct(k)      vanLeer;
-    reconstruct(epsilon) vanLeer;
+    default             linear;
+    reconstruct(scalar) vanLeer;
+    reconstruct(vector) vanLeerV;
 }
 
 snGradSchemes

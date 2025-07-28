@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::bisectionUnivariateMinimizationScheme
+    Foam::univariateMinimizationSchemes::bisection
 
 Description
     Univariate minimization using the bisection method
@@ -43,12 +43,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class bisectionUnivariateMinimizationScheme Declaration
+                    Class bisection Declaration
 \*---------------------------------------------------------------------------*/
 
-class bisectionUnivariateMinimizationScheme
+class bisection
 :
     public univariateMinimizationScheme
 {
@@ -59,16 +63,44 @@ public:
 
     // Constructors
 
-        //- Construct for given univariateUnivariateMinimizationScheme
-        bisectionUnivariateMinimizationScheme
+        //- Constructor
+        bisection
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        bisection
+        (
+            const scalarUnivariateEquation& eqn,
+            const bisection& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new bisection(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new bisection(eqns, *this)
+            );
+        }
+
 
     //- Destructor
-    virtual ~bisectionUnivariateMinimizationScheme()
+    virtual ~bisection()
     {}
 
 
@@ -86,12 +118,14 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const bisectionUnivariateMinimizationScheme&) = delete;
+        void operator=(const bisection&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

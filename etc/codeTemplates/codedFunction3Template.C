@@ -68,6 +68,7 @@ Foam::Function3s::${typeName}Function3${TemplateType}::
 ${typeName}Function3${TemplateType}
 (
     const word& entryName,
+    const unitConversions& units,
     const dictionary& dict
 )
 :
@@ -78,7 +79,7 @@ ${typeName}Function3${TemplateType}
     topDict_(dict.topDict()),
     dict_(topDict_, dict)
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Construct ${typeName} sha1: ${SHA1sum} from dictionary\n";
     }
@@ -97,7 +98,7 @@ ${typeName}Function3${TemplateType}
     ),
     dict_(f3.dict_)
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Construct ${typeName} sha1: ${SHA1sum} as copy\n";
     }
@@ -109,7 +110,7 @@ ${typeName}Function3${TemplateType}
 Foam::Function3s::${typeName}Function3${TemplateType}::
 ~${typeName}Function3${TemplateType}()
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Destroy ${typeName} sha1: ${SHA1sum}\n";
     }

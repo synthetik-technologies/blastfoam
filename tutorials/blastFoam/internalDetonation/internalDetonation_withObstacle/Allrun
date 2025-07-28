@@ -10,17 +10,6 @@ paraFoam -builtin -touch
 # -- Create the mesh for the fluid
 runApplication blockMesh
 
-# -- Create outlet patch face set
-runApplication -s patch setRefinedFields -noFields -overwrite -noRefine
-
-# -- Create outlet patch
-runApplication createPatch -overwrite
-
-# -- Create face zone for the window
-# runApplication -s windows setRefinedFields -noFields -overwrite -noRefine
-
-# -- Create baffles
-# runApplication createBaffles -overwrite
 
 # -- Select cells to remove ("walls")
 runApplication -s cells setRefinedFields -noFields -overwrite -noRefine

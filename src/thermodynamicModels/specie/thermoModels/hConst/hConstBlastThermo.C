@@ -37,8 +37,7 @@ Foam::hConstThermo<EquationOfState>::hConstThermo(const dictionary& dict)
     Cp_(dict.subDict("thermodynamics").lookup<scalar>("Cp")),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
     Tref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Tref", Tstd)),
-    Hsref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Hsref", Cp_*Tref_)),
-    flameT_(dict.subDict("thermodynamics").lookupOrDefault("flameT", Hf_/Cp_))
+    Hsref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Hsref", Cp_*Tref_))
 {}
 
 
@@ -59,10 +58,6 @@ void Foam::hConstThermo<EquationOfState>::write(Ostream& os) const
     if (Hsref_ != 0)
     {
         dict.add("Hsref", Hsref_);
-    }
-    if (flameT_ != 0)
-    {
-        dict.add("flameT", flameT_);
     }
     os  << indent << dict.dictName() << dict;
 }

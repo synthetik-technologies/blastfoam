@@ -48,10 +48,10 @@ namespace Foam
                         Class MidPointIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class MidPointIntegrator
 :
-    public Integrator<Type>
+    public Integrator<Type, Adapt>
 {
     typedef Equation<Type> equationType;
 
@@ -88,7 +88,7 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        MidPointIntegrator(const MidPointIntegrator<Type>&) = delete;
+        MidPointIntegrator(const MidPointIntegrator<Type, Adapt>&) = delete;
 
 
     //- Destructor
@@ -109,7 +109,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const MidPointIntegrator<Type>&) = delete;
+        void operator=(const MidPointIntegrator<Type, Adapt>&) = delete;
 };
 
 

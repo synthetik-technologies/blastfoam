@@ -29,15 +29,19 @@ License
 
 Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationScheme::New
 (
+    const word& univariateMinimizationSchemeTypeName,
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 {
-    word univariateMinimizationSchemeTypeName(dict.lookup("solver"));
-    label nDeriv = eqn.nDerivatives();
+    const label nDeriv = eqn.nDerivatives();
     DebugInfo
         << "Selecting root solver "
         << univariateMinimizationSchemeTypeName << endl;
+    const dictionary& coeffDict = dict.optionalSubDict
+    (
+        univariateMinimizationSchemeTypeName + "Coeffs"
+    );
 
     if (nDeriv <= 0)
     {
@@ -51,12 +55,16 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
         {
             FatalErrorInFunction
                 << "Unknown univariateMinimizationScheme type "
-                << univariateMinimizationSchemeTypeName << nl << nl
-                << "Valid univariateMinimizationSchemes for no derivatives are : " << endl
+                << univariateMinimizationSchemeTypeName << nl
+                << "Valid univariateMinimizationSchemes for no "
+                << "derivatives are: " << endl
                 << dictionaryZeroConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<univariateMinimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<univariateMinimizationScheme>
+        (
+            cstrIter()(eqn, coeffDict)
+        );
     }
     else if (nDeriv == 1)
     {
@@ -67,12 +75,16 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
         {
             FatalErrorInFunction
                 << "Unknown univariateMinimizationScheme type "
-                << univariateMinimizationSchemeTypeName << nl << nl
-                << "Valid univariateMinimizationSchemes for one derivative are : " << endl
+                << univariateMinimizationSchemeTypeName << nl
+                << "Valid univariateMinimizationSchemes for one "
+                << "derivative are:" << endl
                 << dictionaryOneConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<univariateMinimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<univariateMinimizationScheme>
+        (
+            cstrIter()(eqn, coeffDict)
+        );
     }
     dictionaryTwoConstructorTable::iterator cstrIter =
         dictionaryTwoConstructorTablePtr_->find(univariateMinimizationSchemeTypeName);
@@ -81,13 +93,26 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
     {
         FatalErrorInFunction
             << "Unknown univariateMinimizationScheme type "
-            << univariateMinimizationSchemeTypeName << nl << nl
-            << "Valid univariateMinimizationSchemes for are : " << endl
+            << univariateMinimizationSchemeTypeName << nl
+            << "Valid univariateMinimizationSchemes for two "
+            << "derivatives are:" << endl
             << dictionaryTwoConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
-    return autoPtr<univariateMinimizationScheme>(cstrIter()(eqn, dict));
+    return autoPtr<univariateMinimizationScheme>
+    (
+        cstrIter()(eqn, coeffDict)
+    );
 }
 
+
+Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationScheme::New
+(
+    const scalarUnivariateEquation& eqn,
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("solver"), eqn, dict);
+}
 
 // ************************************************************************* //

@@ -112,13 +112,16 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::limit
     const scalar Told
 ) const
 {
-    if (janafThermo<EquationOfState>::debug && (T < Tlow_ || T > Thigh_))
+    if (T < Tlow_ || T > Thigh_)
     {
-        WarningInFunction
-            << "attempt to use janafThermo<EquationOfState>"
-               " out of temperature range "
-            << Tlow_ << " -> " << Thigh_ << ";  T = " << T
-            << endl;
+        if (janafThermo<EquationOfState>::debug)
+        {
+            WarningInFunction
+                << "attempt to use janafThermo<EquationOfState>"
+                << " out of temperature range "
+                << Tlow_ << " -> " << Thigh_ << ";  T = " << T
+                << endl;
+        }
 
         return min(max(T, Tlow_), Thigh_);
     }
@@ -199,10 +202,29 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Ha
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::Hta
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Hs
 (
     const scalar rho,
     const scalar e,
+    const scalar T
+) const
+{
+    return Ha(rho, e, T) - Hf();
+}
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Cpt
+(
+    const scalar T
+) const
+{
+    const coeffArray& a = coeffs(T);
+    return ((((a[4]*T + a[3])*T + a[2])*T + a[1])*T + a[0]);
+}
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Hat
+(
     const scalar T
 ) const
 {
@@ -214,28 +236,13 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Hta
     );
 }
 
-
 template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::Hs
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Hst
 (
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
-    return Ha(rho, e, T) - Hf();
-}
-
-
-template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::Hts
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return Hta(rho, e, T) - Hf();
+    return Hat(T) - Hf();
 }
 
 
@@ -255,14 +262,6 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Hf() const
 
 
 template<class EquationOfState>
-inline Foam::scalar Foam::janafThermo<EquationOfState>::flameT() const
-{
-    NotImplemented;
-    return 0;
-}
-
-
-template<class EquationOfState>
 inline Foam::scalar Foam::janafThermo<EquationOfState>::S
 (
     const scalar p,
@@ -274,7 +273,7 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::S
     (
         (((a[4]/4.0*T + a[3]/3.0)*T + a[2]/2.0)*T + a[1])*T + a[0]*log(T)
       + a[6]
-    ) + EquationOfState::S(p, T);
+    ) + EquationOfState::Sp(p, T);
 }
 
 

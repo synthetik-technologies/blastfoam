@@ -2,39 +2,45 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  dev
+    \\  /    A nd           | Version:  12
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
     format      ascii;
     class       dictionary;
+    location    "constant";
     object      dynamicMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
-errorEstimator  densityGradient;
+topoChanger
+{
+    errorEstimator  densityGradient;
+    beginUnrefine   1e-05;
+    refineInterval  3;
+    lowerRefineLevel 0.1;
+    unrefineLevel   0.1;
+    nBufferLayers   3;
+    maxRefinement   3;
+    dumpLevel       true;
+    type            hexRefiner;
+    libs            1 ( "libblastFvMeshTopoChangers.so" );
+}
 
-// When can unrefinement start
-beginUnrefine 1e-5;
+distributor
+{
+    errorEstimator  densityGradient;
+    beginUnrefine   1e-05;
+    refineInterval  3;
+    lowerRefineLevel 0.1;
+    unrefineLevel   0.1;
+    nBufferLayers   3;
+    maxRefinement   3;
+    dumpLevel       true;
+    type            redistributor;
+    libs            1 ( "libblastFvMeshDistributors.so" );
+}
 
-// How often to refine
-refineInterval  3;
 
-// Refine field in between lower..upper
-lowerRefineLevel 0.1;
-
-// If value < unrefineLevel unrefine
-unrefineLevel   0.1;
-
-// Have slower than 2:1 refinement
-nBufferLayers   3;
-
-// Refine cells only up to maxRefinement levels
-maxRefinement   3;
-
-// Write the refinement level as a volScalarField
-dumpLevel       true;
 // ************************************************************************* //

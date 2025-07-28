@@ -28,32 +28,32 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::TrapezoidalIntegrator<Type>::TrapezoidalIntegrator
+template<class Type, class Adapt>
+Foam::TrapezoidalIntegrator<Type, Adapt>::TrapezoidalIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
 )
 :
-    Integrator<Type>(eqn, dict)
+    Integrator<Type, Adapt>(eqn, dict)
 {}
 
 
-template<class Type>
-Foam::TrapezoidalIntegrator<Type>::TrapezoidalIntegrator
+template<class Type, class Adapt>
+Foam::TrapezoidalIntegrator<Type, Adapt>::TrapezoidalIntegrator
 (
     const equationType& eqn,
     const integrator& inter
 )
 :
-    Integrator<Type>(eqn, inter)
+    Integrator<Type, Adapt>(eqn, inter)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::TrapezoidalIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::TrapezoidalIntegrator<Type, Adapt>::integrate_
 (
     const scalar dx,
     const Type& f0,
@@ -64,8 +64,8 @@ Type Foam::TrapezoidalIntegrator<Type>::integrate_
 }
 
 
-template<class Type>
-Type Foam::TrapezoidalIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::TrapezoidalIntegrator<Type, Adapt>::integrate_
 (
     const Type& Q,
     const scalar x0,
@@ -103,8 +103,8 @@ Type Foam::TrapezoidalIntegrator<Type>::integrate_
 }
 
 
-template<class Type>
-Type Foam::TrapezoidalIntegrator<Type>::integrate
+template<class Type, class Adapt>
+Type Foam::TrapezoidalIntegrator<Type, Adapt>::integrate
 (
     const scalar X0,
     const scalar X1,

@@ -25,21 +25,9 @@ boundaryField
         type            slip;
     }
 
-    windows_master
+    ".*windows.*"
     {
-        type            burstCyclicAMI;
-        intactPatch
-        {
-            type      slip;
-        }
-    }
-    windows_slave
-    {
-        type            burstCyclicAMI;
-        intactPatch
-        {
-            type      slip;
-        }
+        type            slip;
     }
 
     outlet

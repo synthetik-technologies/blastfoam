@@ -235,6 +235,9 @@ public:
 
         //- Get selections from a given set, based on what setType this is
         void updateSets();
+
+        //- Check if elements have been selected
+        bool check() const;
 };
 
 

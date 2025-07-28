@@ -28,31 +28,31 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::MidPointMultivariateIntegrator<Type>::MidPointMultivariateIntegrator
+template<class Type, class Adapt>
+Foam::MidPointMultivariateIntegrator<Type, Adapt>::MidPointMultivariateIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
 )
 :
-    MultivariateIntegrator<Type>(eqn, dict)
+    MultivariateIntegrator<Type, Adapt>(eqn, dict)
 {}
 
 
-template<class Type>
-Foam::MidPointMultivariateIntegrator<Type>::MidPointMultivariateIntegrator
+template<class Type, class Adapt>
+Foam::MidPointMultivariateIntegrator<Type, Adapt>::MidPointMultivariateIntegrator
 (
     const equationType& eqn,
     const multivariateIntegrator& inter
 )
 :
-    MultivariateIntegrator<Type>(eqn, inter)
+    MultivariateIntegrator<Type, Adapt>(eqn, inter)
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::MidPointMultivariateIntegrator<Type>::integrateFunc
+template<class Type, class Adapt>
+Type Foam::MidPointMultivariateIntegrator<Type, Adapt>::integrateFunc
 (
     const scalarList& x0,
     const scalarList& x1,
@@ -65,8 +65,8 @@ Type Foam::MidPointMultivariateIntegrator<Type>::integrateFunc
 }
 
 
-template<class Type>
-Type Foam::MidPointMultivariateIntegrator<Type>::integrate
+template<class Type, class Adapt>
+Type Foam::MidPointMultivariateIntegrator<Type, Adapt>::integrate
 (
     const scalarList& x0,
     const scalarList& x1,

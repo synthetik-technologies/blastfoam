@@ -30,25 +30,28 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(gradientDescentMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+    defineTypeNameAndDebug(gradientDescent, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        gradientDescentMinimizationScheme,
+        gradientDescent,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        gradientDescentMinimizationScheme,
+        gradientDescent,
         dictionaryMultivariate
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
+Foam::minimizationSchemes::gradientDescent::gradientDescent
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
@@ -58,10 +61,20 @@ Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
 {}
 
 
+Foam::minimizationSchemes::gradientDescent::gradientDescent
+(
+    const scalarUnivariateEquation& eqns,
+    const gradientDescent& solver
+)
+:
+    minimizationScheme(eqns, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
-Foam::gradientDescentMinimizationScheme::minimize
+Foam::minimizationSchemes::gradientDescent::minimize
 (
     const scalarList& x0,
     const scalarList& xLow,
@@ -72,33 +85,20 @@ Foam::gradientDescentMinimizationScheme::minimize
     tmp<scalarField> txNew(new scalarField(x0));
     scalarField& xNew = txNew.ref();
     scalarField xOld(xNew);
-    scalar fx(eqns_.fX(x0, li));
     scalarField grad(x0.size(), 0.0);
     eqns_.dfdX(x0, li, grad);
-    scalarField gradOld(grad);
-    scalar alpha;
+
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xOld = xNew;
-        if (stepi_ <= 1)
-        {
-        alpha = lineSearch(xOld, grad, li, fx);
-        }
-        else
-        {
-            alpha = lineSearch(xOld, grad, gradOld, li, fx);
-        }
-        xNew = xOld - alpha*grad;
-
+        lineSearcher().search(xOld, grad, li, xNew);
         eqns_.limit(xNew);
 
-        if (convergedXScale(xNew, xOld))
+        if (convergedX(xNew, xOld))
         {
             break;
         }
 
-        gradOld = grad;
-        fx = eqns_.fX(xNew, li);
         eqns_.dfdX(xNew, li, grad);
         printStepInformation(xNew);
     }

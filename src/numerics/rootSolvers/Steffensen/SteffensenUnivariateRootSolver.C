@@ -30,31 +30,37 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(SteffensenUnivariateRootSolver, 0);
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(Steffensen, 0);
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        SteffensenUnivariateRootSolver,
+        Steffensen,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        SteffensenUnivariateRootSolver,
+        Steffensen,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        SteffensenUnivariateRootSolver,
+        Steffensen,
         dictionaryTwo
     );
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::SteffensenUnivariateRootSolver::SteffensenUnivariateRootSolver
+Foam::rootSolvers::univariate::Steffensen::Steffensen
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -64,15 +70,25 @@ Foam::SteffensenUnivariateRootSolver::SteffensenUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::Steffensen::Steffensen
+(
+    const scalarMultivariateEquation& eqn,
+    const Steffensen& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::SteffensenUnivariateRootSolver::~SteffensenUnivariateRootSolver()
+Foam::rootSolvers::univariate::Steffensen::~Steffensen()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::SteffensenUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::Steffensen::findRoot
 (
     const scalar x0,
     const scalar x1,

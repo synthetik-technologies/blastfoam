@@ -3,9 +3,9 @@
 createEps()
 {
     echo "creating $1 plot"
-    clx="$3/Centerlinex_overpressureMax_impulseMax_timeOfArrival.xy"
-    cly="$3/Centerliney_overpressureMax_impulseMax_timeOfArrival.xy"
-    cl="$3/Centerline_overpressureMax_impulseMax_timeOfArrival.xy"
+    clx="$3/Centerlinex.xy"
+    cly="$3/Centerliney.xy"
+    cl="$3/Centerline.xy"
     gnuplot<<EOF
 
     set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\

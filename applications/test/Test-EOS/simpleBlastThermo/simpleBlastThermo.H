@@ -229,9 +229,6 @@ public:
             //- Heat of formation [J/kg]
             virtual scalar Hf() const = 0;
 
-            //- Flame temperature [K]
-            virtual scalar flameT() const = 0;
-
 
             //- Entropy [J/kg/K]
             virtual scalar S
@@ -549,12 +546,6 @@ public:
             virtual scalar Hf() const
             {
                 return ThermoType::Hf();
-            }
-
-            //- Flame temperature [K]
-            virtual scalar flameT() const
-            {
-                return ThermoType::flameT();
             }
 
 

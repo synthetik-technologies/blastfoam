@@ -149,11 +149,22 @@ public:
             const bool limit = true
         ) const;
 
+        //- Calculate pressure for cell [Pa]
+        virtual scalar patchFacepRhoT
+        (
+            const label patchi,
+            const label facei,
+            const bool limit = true
+        ) const;
+
         //- Calculate Gamma = dpde
         virtual tmp<volScalarField> Gamma() const;
 
         //- Gamma = dpde for cell []
         virtual scalar cellGamma(const label celli) const;
+
+        //- Gamma = dpde for cell []
+        virtual scalar patchFaceGamma(const label patchi, const label facei) const;
 
         //- Derivative of pressure w.r.t density for cell
         virtual scalar celldpdRho(const label celli) const;
@@ -175,9 +186,6 @@ public:
 
         //- Calculate internal energy for a cell
         virtual scalar calcCelle(const scalar p, const label) const;
-
-        //- Calculate the pressure
-        virtual tmp<volScalarField> calcp() const;
 
         //- Calculate the speed of sound
         virtual tmp<volScalarField> calcSpeedOfSound() const;

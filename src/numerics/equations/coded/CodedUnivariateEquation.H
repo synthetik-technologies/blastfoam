@@ -34,7 +34,6 @@ Description
 #ifndef CodedUnivariateEquation_H
 #define CodedUnivariateEquation_H
 
-#include "regEquation.H"
 #include "UnivariateEquation.H"
 #include "scalarField.H"
 #include "dictionary.H"
@@ -57,7 +56,7 @@ namespace Foam
 template<class Type>
 class CodedUnivariateEquation
 :
-    public regEquation<Type, UnivariateEquation>,
+    public UnivariateEquation<Type>,
     public codedBase
 {
     // Private Data
@@ -73,6 +72,9 @@ class CodedUnivariateEquation
 
         //- Get the keywords associated with source code
         virtual wordList codeKeys() const;
+
+         //- Get the name of the dictionary variables in the source code
+        virtual wordList codeDictVars() const;
 
         //- Adapt the context for the current object
         virtual void prepare
@@ -93,8 +95,19 @@ class CodedUnivariateEquation
 
 public:
 
-    //- Construct from dictionary
-    CodedUnivariateEquation(const objectRegistry& obr, const dictionary& dict);
+    TypeName("coded");
+
+    // Constructors
+
+        //- Construct from dictionary
+        CodedUnivariateEquation(const dictionary& dict);
+
+        //- Construct from dictionary and object registry
+        CodedUnivariateEquation
+        (
+            const objectRegistry& obr,
+            const dictionary& dict
+        );
 
 
     //- Destructor
@@ -112,7 +125,7 @@ public:
         //- Return the function value
         virtual inline Type fX
         (
-            const UList<scalar>& x,
+            const typename UnivariateEquation<Type>::VarType& x,
             const label li
         ) const
         {
@@ -122,7 +135,7 @@ public:
         //- Return the function value
         virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename UnivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& dfdx
         ) const
@@ -130,8 +143,14 @@ public:
             redirectEquationPtr_->dfdX(x, li, dfdx);
         }
 
+        //- Set the pointer to the object registry
+        virtual void setObr(const objectRegistry& obr)
+        {
+            UnivariateEquation<Type>::setObr(obr);
+            redirectEquationPtr_->setObr(obr);
+        }
+
         //- Write data to dictionary stream
-        using regIOobject::write;
         virtual void write(Ostream& os) const
         {
             writeCode(os);

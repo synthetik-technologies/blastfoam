@@ -45,7 +45,7 @@ createU()
     set xrange [0:1]
     plot    "$1" using 1:2 title 'Woodward \& Colella'\
                 with points linewidth 8 linecolor rgb 'black',\
-            "$2" using 1:2 title 'blastFOAM'\
+            "$2" using 1:4 title 'blastFOAM'\
                 with lines lt 1 linewidth 2 linecolor rgb 'black'
 EOF
 }
@@ -114,30 +114,12 @@ for i in "${!times[@]}"
 do
     echo "Creating U at time: ${times[i]}"
     uVal="$VALIDATIONDATAROOT/u_${times[i]}.csv"
-    UBlastFOAM="../postProcessing/sampleDict/${times[i]}/Centerline_U*"
-
-    createU $uVal $UBlastFOAM ${times[i]} ${positions[i]}
-    # or do whatever with individual element of the array
-done
-
-
-
-## now loop through the above array
-for i in "${!times[@]}"
-do
-    echo "Creating rho at time: ${times[i]}"
     rhoVal="$VALIDATIONDATAROOT/rho_${times[i]}.csv"
-    rhoBlastFOAM="../postProcessing/sampleDict/${times[i]}/Centerline_p*"
+    blastFOAM="../postProcessing/sampleDict/${times[i]}/Centerline.xy"
 
-    createRho $rhoVal $rhoBlastFOAM ${times[i]} ${positions[i]}
+    createU $uVal $blastFOAM ${times[i]} ${positions[i]}
+    createRho $rhoVal $blastFOAM ${times[i]} ${positions[i]}
     # or do whatever with individual element of the array
 done
-
-
-
-
-
-# createEpsRho $rhoVal $pRhoBlastFOAM
-# createEpsUx $uVal $UBlastFOAM
 
 echo Done

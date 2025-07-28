@@ -50,6 +50,12 @@ inline exponentialSolidTransport<Thermo> operator*
     const scalar,
     const exponentialSolidTransport<Thermo>&
 );
+template<class Thermo>
+inline exponentialSolidTransport<Thermo> operator+
+(
+    const exponentialSolidTransport<Thermo>&,
+    const exponentialSolidTransport<Thermo>&
+);
 
 template<class Thermo>
 Ostream& operator<<
@@ -128,6 +134,9 @@ public:
         static const bool isotropic = true;
 
         //- Isotropic thermal conductivity [W/m/K]
+        inline scalar kappaT(const scalar T) const;
+
+        //- Isotropic thermal conductivity [W/m/K]
         inline scalar kappa
         (
             const scalar rho,
@@ -167,6 +176,13 @@ public:
             const scalar,
             const exponentialSolidTransport&
         );
+
+        friend exponentialSolidTransport operator+ <Thermo>
+        (
+            const exponentialSolidTransport&,
+            const exponentialSolidTransport&
+        );
+
 
     // Ostream Operator
 

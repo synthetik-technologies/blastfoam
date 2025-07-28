@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::gradientDescentMinimizationScheme
+    Foam::minimizationSchemes::gradientDescent
 
 Description
     Minimization scheme using either gradient computed using a finite
@@ -51,12 +51,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-        Class gradientDescentMinimizationScheme Declaration
+                    Class gradientDescent Declaration
 \*---------------------------------------------------------------------------*/
 
-class gradientDescentMinimizationScheme
+class gradientDescent
 :
     public minimizationScheme
 {
@@ -68,14 +70,34 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        gradientDescentMinimizationScheme
+        gradientDescent
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        gradientDescent
+        (
+            const scalarUnivariateEquation& eqn,
+            const gradientDescent& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>
+            (
+                new gradientDescent(eqns, *this)
+            );
+        }
+
+
     //- Destructor
-    virtual ~gradientDescentMinimizationScheme()
+    virtual ~gradientDescent()
     {}
 
 
@@ -95,6 +117,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

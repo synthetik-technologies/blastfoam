@@ -26,6 +26,7 @@ License
 #include "topoSetList.H"
 #include "topoSetSource.H"
 #include "coupledPolyPatch.H"
+#include "polyDistributionMap.H"
 #include "syncTools.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -115,12 +116,12 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
     const polyMesh& mesh,
     const dictionary& dict,
     const topoSet& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     labelHashSet facesToKeep
     (
-        extractSelectedFaces(mesh, dict, faces.toc(), defaultAll)
+        extractSelectedFaces(mesh, dict, faces.toc(), defaultType)
     );
 
     autoPtr<topoSet> selectedFaces
@@ -133,6 +134,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
             faces
         )
     );
+
     if (isA<faceZoneSet>(faces))
     {
         const faceZoneSet& origFzs = dynamicCast<const faceZoneSet>(faces);
@@ -146,7 +148,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
             origFzs.flipMap(),
             fzs.addressing(),
             fzs.flipMap(),
-            defaultAll
+            defaultType
         );
         fzs.updateSet();
     }
@@ -159,7 +161,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
             mesh,
             dict,
             faces.toc(),
-            defaultAll
+            defaultType
         );
         static_cast<labelHashSet&>(selectedFaces()) = labelHashSet(addressing);
         selectedFaces->sync(mesh);
@@ -173,7 +175,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
     const polyMesh& mesh,
     const dictionary& dict,
     const labelList& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     labelList newFaces;
@@ -186,7 +188,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
         boolList(faces.size(), false),
         newFaces,
         flipMap,
-        defaultAll
+        defaultType
     );
     return newFaces;
 }
@@ -200,12 +202,19 @@ void Foam::topoSetList::extractSelectedFaces
     const boolList& flipMap,
     labelList& newFaces,
     boolList& newFlipMap,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     const SelectionType sType =
-        defaultAll
-      ? selectionNames[dict.lookupOrDefault<word>("selectionMode", "all")]
+        defaultType != UNKNOWN
+      ? selectionNames
+        [
+            dict.lookupOrDefault<word>
+            (
+                "selectionMode",
+                selectionNames[defaultType]
+            )
+        ]
       : selectionNames[dict.lookup<word>("selectionMode")];
 
     // Return if the selection is empty of all faces are selected
@@ -261,6 +270,14 @@ void Foam::topoSetList::extractSelectedFaces
         {
             const label patchi =
                 mesh.boundaryMesh().findIndex(patchNames[i]);
+            if (patchi < 0)
+            {
+                FatalErrorInFunction
+                    << patchNames[i] << " is not a valid patch" << nl
+                    << "Valid patches are:" << nl
+                    << mesh.boundaryMesh().names() << endl
+                    << abort(FatalError);
+            }
             const polyPatch& pp = mesh.boundaryMesh()[patchi];
 
             forAll(pp, fi)
@@ -337,12 +354,19 @@ Foam::labelList Foam::topoSetList::extractSelectedPoints
     const polyMesh& mesh,
     const dictionary& dict,
     const labelList& points,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     const SelectionType sType =
-        defaultAll
-      ? selectionNames[dict.lookupOrDefault<word>("selectionMode", "all")]
+        defaultType != UNKNOWN
+      ? selectionNames
+        [
+            dict.lookupOrDefault<word>
+            (
+                "selectionMode",
+                selectionNames[defaultType]
+            )
+        ]
       : selectionNames[dict.lookup("selectionMode")];
 
     // Return if the selection is empty of all points are selected
@@ -448,7 +472,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
     const polyMesh& mesh,
     const dictionary& dict,
     const topoSet& points,
-    const bool defaultAll
+    const SelectionType defaultType
 )
 {
     autoPtr<topoSet> selectedPoints
@@ -463,7 +487,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
     );
     selectedPoints->set
     (
-        extractSelectedPoints(mesh, dict, points.toc(), defaultAll)
+        extractSelectedPoints(mesh, dict, points.toc(), defaultType)
     );
     selectedPoints->sync(mesh);
     return selectedPoints;
@@ -474,24 +498,15 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
 
 Foam::topoSetList::topoSetList(const polyMesh& mesh)
 :
-    TopoSetList
-    (
-        mesh,
-        IOobject
-        (
-            typeName,
-            mesh.facesInstance(),
-            mesh
-        )
-    )
+    TopoSetList(mesh)
 {
-    wordList cellZoneNames = mesh.cellZones().names();
+    wordList cellZoneNames = mesh.cellZones().toc();
     forAll(mesh.cellZones(), czi)
     {
         const cellZone& cz = mesh.cellZones()[czi];
         cellZoneSet* czs = new cellZoneSet
         (
-            mesh_,
+            this->mesh(),
             cz.name(),
             cz.size()
         );
@@ -502,13 +517,13 @@ Foam::topoSetList::topoSetList(const polyMesh& mesh)
         cellZones_.insert(cellZoneNames[czi]);
     }
 
-    wordList faceZoneNames = mesh.faceZones().names();
+    wordList faceZoneNames = mesh.faceZones().toc();
     forAll(mesh.faceZones(), fzi)
     {
         const faceZone& fz = mesh.faceZones()[fzi];
         faceZoneSet* fzs = new faceZoneSet
         (
-            mesh_,
+            this->mesh(),
             fz.name(),
             fz.size()
         );
@@ -520,13 +535,13 @@ Foam::topoSetList::topoSetList(const polyMesh& mesh)
         faceZones_.insert(faceZoneNames[fzi]);
     }
 
-    wordList pointZoneNames = mesh.pointZones().names();
+    wordList pointZoneNames = mesh.pointZones().toc();
     forAll(mesh.pointZones(), pzi)
     {
         const pointZone& pz = mesh.pointZones()[pzi];
         pointZoneSet* pzs = new pointZoneSet
         (
-            mesh_,
+            this->mesh(),
             pz.name(),
             pz.size()
         );
@@ -566,13 +581,13 @@ void Foam::topoSetList::updateCells
         topoSet::New
         (
             setType,
-            mesh_,
+            this->mesh(),
             setType,
             selectedCells.size()
         )
     );
     selectedCellSet().set(selectedCells);
-    selectedCellSet().sync(mesh_);
+    selectedCellSet().sync(this->mesh());
 
     PtrList<dictionary> setDicts(dict.lookup(setDictName));
     forAll(setDicts, seti)
@@ -608,7 +623,7 @@ void Foam::topoSetList::updateFaces
         topoSet::New
         (
             setType,
-            mesh_,
+            this->mesh(),
             setType,
             selectedFaces.size()
         )
@@ -633,7 +648,7 @@ void Foam::topoSetList::updateFaces
     {
         selectedFaceSet->set(selectedFaces);
     }
-    selectedFaceSet->sync(mesh_);
+    selectedFaceSet->sync(this->mesh());
 
     PtrList<dictionary> setDicts(dict.lookup(setDictName));
     forAll(setDicts, seti)
@@ -647,7 +662,7 @@ void Foam::topoSetList::updateFaces
             (
                 setDicts[seti],
                 selectedFaceSet(),
-                false
+                UNKNOWN
             )(),
             setDicts[seti]
         );
@@ -673,13 +688,13 @@ void Foam::topoSetList::updatePoints
         topoSet::New
         (
             setType,
-            mesh_,
+            this->mesh(),
             setType,
             selectedPoints.size()
         )
     );
     selectedPointSet().set(selectedPoints);
-    selectedPointSet().sync(mesh_);
+    selectedPointSet().sync(this->mesh());
 
     PtrList<dictionary> setDicts(dict.lookup(setDictName));
     forAll(setDicts, seti)
@@ -693,7 +708,7 @@ void Foam::topoSetList::updatePoints
             (
                 setDicts[seti],
                 selectedPointSet(),
-                false
+                UNKNOWN
             )(),
             setDicts[seti]
         );
@@ -745,7 +760,7 @@ void Foam::topoSetList::modifyTopoSet
         topoSets.set
         (
             setName,
-            topoSet::New(setType, mesh_, setName, selectedSet.size()).ptr()
+            topoSet::New(setType, this->mesh(), setName, selectedSet.size()).ptr()
         );
     }
     else if (action == topoSetSource::CLEAR)
@@ -753,7 +768,7 @@ void Foam::topoSetList::modifyTopoSet
         topoSets.set
         (
             setName,
-            topoSet::New(setType, mesh_, setName, 0).ptr()
+            topoSet::New(setType, this->mesh(), setName, 0).ptr()
         );
     }
     else
@@ -771,7 +786,7 @@ void Foam::topoSetList::modifyTopoSet
                         topoSet::New
                         (
                             setType,
-                            mesh_,
+                            this->mesh(),
                             sourceName,
                             IOobject::MUST_READ
                         ).ptr()
@@ -783,7 +798,7 @@ void Foam::topoSetList::modifyTopoSet
                     topoSet::New
                     (
                         setType,
-                        mesh_,
+                        this->mesh(),
                         setName,
                         *topoSets[sourceName]
                     ).ptr()
@@ -799,7 +814,7 @@ void Foam::topoSetList::modifyTopoSet
                     topoSet::New
                     (
                         setType,
-                        mesh_,
+                        this->mesh(),
                         setName,
                         IOobject::MUST_READ
                     ).ptr()
@@ -845,7 +860,7 @@ void Foam::topoSetList::modifyTopoSet
                 topoSet::New
                 (
                     setType,
-                    mesh_,
+                    this->mesh(),
                     currentSet.name() + "_old2",
                     selectedSet.size()
                 )
@@ -859,7 +874,7 @@ void Foam::topoSetList::modifyTopoSet
                 sourcePtr = topoSet::New
                 (
                     setType,
-                    mesh_,
+                    this->mesh(),
                     sourceName,
                     IOobject::MUST_READ
                 ).ptr();
@@ -896,7 +911,7 @@ void Foam::topoSetList::modifyTopoSet
 
         case topoSetSource::INVERT:
         {
-            currentSet.invert(currentSet.maxSize(mesh_));
+            currentSet.invert(currentSet.maxSize(this->mesh()));
 
             if (isZone)
             {
@@ -932,7 +947,7 @@ void Foam::topoSetList::modifyTopoSet
     }
 
     // Synchronise for coupled patches.
-    currentSet.sync(mesh_);
+    currentSet.sync(this->mesh());
 }
 
 
@@ -941,7 +956,7 @@ Foam::labelList Foam::topoSetList::extractInterfaceCells
     const labelList& cells
 ) const
 {
-    return extractInterfaceCells(mesh_, cells);
+    return extractInterfaceCells(this->mesh(), cells);
 }
 
 
@@ -950,7 +965,7 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractInterfaceCells
     const topoSet& cells
 ) const
 {
-    return extractInterfaceCells(mesh_, cells);
+    return extractInterfaceCells(this->mesh(), cells);
 }
 
 
@@ -959,10 +974,10 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
 (
     const dictionary& dict,
     const topoSet& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
-    return extractSelectedFaces(mesh_, dict, faces, defaultAll);
+    return extractSelectedFaces(this->mesh(), dict, faces, defaultType);
 }
 
 
@@ -974,18 +989,18 @@ void Foam::topoSetList::extractSelectedFaces
     const boolList& flipMap,
     labelList& newFaces,
     boolList& newFlipMap,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
     extractSelectedFaces
     (
-        mesh_,
+        this->mesh(),
         dict,
         faces,
         flipMap,
         newFaces,
         newFlipMap,
-        defaultAll
+        defaultType
     );
 }
 
@@ -995,15 +1010,15 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
 (
     const dictionary& dict,
     const labelList& faces,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
     return extractSelectedFaces
     (
-        mesh_,
+        this->mesh(),
         dict,
         faces,
-        defaultAll
+        defaultType
     );
 }
 
@@ -1012,10 +1027,10 @@ Foam::labelList Foam::topoSetList::extractSelectedPoints
 (
     const dictionary& dict,
     const labelList& points,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
-    return extractSelectedPoints(mesh_, dict, points, defaultAll);
+    return extractSelectedPoints(this->mesh(), dict, points, defaultType);
 }
 
 
@@ -1023,10 +1038,10 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedPoints
 (
     const dictionary& dict,
     const topoSet& points,
-    const bool defaultAll
+    const SelectionType defaultType
 ) const
 {
-    return extractSelectedPoints(mesh_, dict, points, defaultAll);
+    return extractSelectedPoints(this->mesh(), dict, points, defaultType);
 }
 
 
@@ -1048,20 +1063,37 @@ void Foam::topoSetList::clear()
 
 
 
-void Foam::topoSetList::updateMesh(const mapPolyMesh& morphMap)
+void Foam::topoSetList::topoChange(const polyTopoChangeMap& morphMap)
 {
     forAllConstIter(HashPtrTable<topoSet>, cellTopoSets_, iter)
     {
-        iter()->updateMesh(morphMap);
+        iter()->topoChange(morphMap);
     }
     forAllConstIter(HashPtrTable<topoSet>, faceTopoSets_, iter)
     {
-        iter()->updateMesh(morphMap);
+        iter()->topoChange(morphMap);
     }
     forAllConstIter(HashPtrTable<topoSet>, pointTopoSets_, iter)
     {
-        iter()->updateMesh(morphMap);
+        iter()->topoChange(morphMap);
     }
+}
+
+
+void Foam::topoSetList::mapMesh(const polyMeshMap& morphMap)
+{
+//     forAllConstIter(HashPtrTable<topoSet>, cellTopoSets_, iter)
+//     {
+//         iter()->mapMesh(morphMap);
+//     }
+//     forAllConstIter(HashPtrTable<topoSet>, faceTopoSets_, iter)
+//     {
+//         iter()->mapMesh(morphMap);
+//     }
+//     forAllConstIter(HashPtrTable<topoSet>, pointTopoSets_, iter)
+//     {
+//         iter()->mapMesh(morphMap);
+//     }
 }
 
 
@@ -1073,7 +1105,7 @@ void Foam::topoSetList::reorderPatches
 {}
 
 
-void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
+void Foam::topoSetList::distribute(const polyDistributionMap& map)
 {
     forAllConstIter(HashPtrTable<topoSet>, cellTopoSets_, iter)
     {
@@ -1088,7 +1120,7 @@ void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
             labelList addr(iter()->toc());
             map.distributeFaceIndices(addr);
             static_cast<labelHashSet&>(*iter()) = addr;
-            iter()->sync(mesh_);
+            iter()->sync(this->mesh());
         }
     }
     forAllConstIter(HashPtrTable<topoSet>, faceTopoSets_, iter)
@@ -1096,7 +1128,7 @@ void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
         if (isA<faceZoneSet>(*iter()))
         {
             faceZoneSet& fzs = dynamicCast<faceZoneSet>(*iter());
-            boolList flipMap(mesh_.nFaces(), false);
+            boolList flipMap(map.nOldFaces(), false);
             forAll(fzs.addressing(), fi)
             {
                 flipMap[fzs.addressing()[fi]] = fzs.flipMap()[fi];
@@ -1116,7 +1148,7 @@ void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
             labelList addr(iter()->toc());
             map.distributeFaceIndices(addr);
             static_cast<labelHashSet&>(*iter()) = addr;
-            iter()->sync(mesh_);
+            iter()->sync(this->mesh());
         }
     }
     forAllConstIter(HashPtrTable<topoSet>, pointTopoSets_, iter)
@@ -1132,7 +1164,7 @@ void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
             labelList addr(iter()->toc());
             map.distributePointIndices(addr);
             static_cast<labelHashSet&>(*iter()) = addr;
-            iter()->sync(mesh_);
+            iter()->sync(this->mesh());
         }
     }
 }
@@ -1155,14 +1187,8 @@ void Foam::topoSetList::transferZones(const bool remove)
                 (
                     czIter()->name(),
                     czIter()->toc(),
-                    zonei,
-                    mesh_.cellZones()
+                    this->mesh().cellZones()
                 );
-            if (remove)
-            {
-                cellTopoSets_.erase(czIter);
-            }
-
         }
     }
 
@@ -1179,14 +1205,8 @@ void Foam::topoSetList::transferZones(const bool remove)
                     fzIter()->name(),
                     fzIter()->toc(),
                     dynamicCast<const faceZoneSet>(*fzIter()).flipMap(),
-                    zonei,
-                    mesh_.faceZones()
+                    this->mesh().faceZones()
                 );
-            if (remove)
-            {
-                faceTopoSets_.erase(fzIter);
-            }
-
         }
     }
 
@@ -1202,21 +1222,9 @@ void Foam::topoSetList::transferZones(const bool remove)
                 (
                     pzIter()->name(),
                     pzIter()->toc(),
-                    zonei,
-                    mesh_.pointZones()
+                    this->mesh().pointZones()
                 );
-            if (remove)
-            {
-                pointTopoSets_.erase(pzIter);
-            }
-
         }
-    }
-    if (remove)
-    {
-        cellZones_.clear();
-        faceZones_.clear();
-        pointZones_.clear();
     }
 
 
@@ -1234,12 +1242,52 @@ void Foam::topoSetList::transferZones(const bool remove)
         {
             Info << "Adding pointZones " << pointZones_ << endl;
         }
-        polyMesh& mesh = const_cast<polyMesh&>(mesh_);
+        polyMesh& mesh = const_cast<polyMesh&>(this->mesh());
         mesh.pointZones().clear();
         mesh.faceZones().clear();
         mesh.cellZones().clear();
 
         mesh.addZones(meshPointZones, meshFaceZones, meshCellZones);
+    }
+
+    if (remove)
+    {
+        forAll(cellZones, zonei)
+        {
+            const word& zoneName = cellZones[zonei];
+            HashPtrTable<topoSet>::iterator czIter =
+                cellTopoSets_.find(zoneName);
+            if (czIter != cellTopoSets_.end())
+            {
+                cellTopoSets_.erase(czIter);
+            }
+        }
+
+        forAll(faceZones, zonei)
+        {
+            const word& zoneName = faceZones[zonei];
+            HashPtrTable<topoSet>::iterator fzIter =
+                faceTopoSets_.find(zoneName);
+            if (fzIter != faceTopoSets_.end())
+            {
+                faceTopoSets_.erase(fzIter);
+            }
+        }
+
+        forAll(pointZones, zonei)
+        {
+            const word& zoneName = pointZones[zonei];
+            HashPtrTable<topoSet>::iterator pzIter =
+                pointTopoSets_.find(zoneName);
+            if (pzIter != pointTopoSets_.end())
+            {
+                pointTopoSets_.erase(pzIter);
+            }
+        }
+
+        cellZones_.clear();
+        faceZones_.clear();
+        pointZones_.clear();
     }
 }
 
@@ -1249,7 +1297,7 @@ bool Foam::topoSetList::writeSets() const
     List<cellZone*> meshCellZones;
     List<faceZone*> meshFaceZones;
     List<pointZone*> meshPointZones;
-    label cellZonei = 0;
+
     forAllConstIter
     (
         HashPtrTable<topoSet>,
@@ -1265,20 +1313,18 @@ bool Foam::topoSetList::writeSets() const
                 (
                     iter()->name(),
                     iter()->toc(),
-                    cellZonei++,
-                    mesh_.cellZones()
+                    this->mesh().cellZones()
                 )
             );
         }
         else if (cellSets_.found(iter()->name()))
         {
             DebugInfo<< "Writing cell set " << iter()->name() << endl;
-            iter()->instance() = mesh_.facesInstance();
+            iter()->instance() = this->mesh().facesInstance();
             iter()->write();
         }
     }
 
-    label faceZonei = 0;
     forAllConstIter
     (
         HashPtrTable<topoSet>,
@@ -1295,20 +1341,18 @@ bool Foam::topoSetList::writeSets() const
                     iter()->name(),
                     iter()->toc(),
                     boolList(iter()->size(), false),
-                    faceZonei++,
-                    mesh_.faceZones()
+                    this->mesh().faceZones()
                 )
             );
         }
         else if (faceSets_.found(iter()->name()))
         {
             DebugInfo<< "Writing face set " << iter()->name() << endl;
-            iter()->instance() = mesh_.facesInstance();
+            iter()->instance() = this->mesh().facesInstance();
             iter()->write();
         }
     }
 
-    label pointZonei = 0;
     forAllConstIter
     (
         HashPtrTable<topoSet>,
@@ -1324,33 +1368,33 @@ bool Foam::topoSetList::writeSets() const
                 (
                     iter()->name(),
                     iter()->toc(),
-                    pointZonei++,
-                    mesh_.pointZones()
+                    this->mesh().pointZones()
                 )
             );
         }
         else if (pointSets_.found(iter()->name()))
         {
             DebugInfo<< "Writing point set " << iter()->name() << endl;
-            iter()->instance() = mesh_.facesInstance();
+            iter()->instance() = this->mesh().facesInstance();
             iter()->write();
         }
     }
-    if (cellZonei || faceZonei || pointZonei)
+
+    if (meshCellZones.size() || meshFaceZones.size() || meshPointZones.size())
     {
-        if (cellZonei && debug)
+        if (meshCellZones.size() && debug)
         {
             Info << "Adding cellZones " << cellZones_ << endl;
         }
-        if (faceZonei && debug)
+        if (meshFaceZones.size() && debug)
         {
             Info << "Adding faceZones " << faceZones_ << endl;
         }
-        if (pointZonei && debug)
+        if (meshPointZones.size() && debug)
         {
             Info << "Adding pointZones " << pointZones_ << endl;
         }
-        polyMesh& mesh = const_cast<polyMesh&>(mesh_);
+        polyMesh& mesh = const_cast<polyMesh&>(this->mesh());
         mesh.pointZones().clear();
         mesh.faceZones().clear();
         mesh.cellZones().clear();

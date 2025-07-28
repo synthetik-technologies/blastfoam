@@ -26,7 +26,7 @@ solvers
     {
         solver          PBiCGStab;
         preconditioner  DIC;
-        nSweeps         3;;
+        nSweeps         3;
         tolerance       1e-09;
         relTol          0;
         minIter         1;

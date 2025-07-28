@@ -84,7 +84,7 @@ Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlasticRubin::Ibar
             IOobject
             (
                 "Ibar",
-                mesh().time().timeName(),
+                mesh().time().name(),
                 mesh(),
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
@@ -194,11 +194,12 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     mu_("zero", dimPressure, 0.0),
     k_("zero", dimPressure, 0.0),
     kappa_
@@ -206,7 +207,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "yieldStress",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -220,7 +221,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "P",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -233,7 +234,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "Je",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -246,7 +247,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "bEbarTrial",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -259,7 +260,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "bEbar",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -272,7 +273,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "lambda",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -285,7 +286,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         IOobject
         (
             "activeYield",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -509,7 +510,7 @@ void Foam::neoHookeanElasticMisesPlasticRubin::correct
 }
 
 
-Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::residual()
+Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::residual() const
 {
     // Note: we remove mag(I) when we normalise the residual so that the
     // residual is like a strain residual
@@ -521,7 +522,15 @@ Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::residual()
                 lambda_.primitiveField()
               - lambda_.prevIter().primitiveField()
             )
-        )/0.1;
+        );
+}
+
+
+Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::relResidual() const
+{
+    // Note: we remove mag(I) when we normalise the residual so that the
+    // residual is like a strain residual
+    return residual()/0.1;
 }
 
 
@@ -576,7 +585,7 @@ void Foam::neoHookeanElasticMisesPlasticRubin::updateTotalFields()
     Info<< "    " << numCellsYielding << " cells are actively yielding"
         << nl << endl;
 
-    if (mesh().time().outputTime())
+    if (mesh().time().writeTime())
     {
         Info<< "Writing tauEq" << endl;
 
@@ -603,7 +612,7 @@ void Foam::neoHookeanElasticMisesPlasticRubin::updateTotalFields()
 }
 
 
-Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::newDeltaT()
+Foam::scalar Foam::neoHookeanElasticMisesPlasticRubin::newDeltaT() const
 {
     return mesh().time().endTime().value();
 }

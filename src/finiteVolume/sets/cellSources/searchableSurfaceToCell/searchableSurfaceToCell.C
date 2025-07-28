@@ -44,15 +44,6 @@ namespace Foam
 }
 
 
-Foam::topoSetSource::addToUsageTable Foam::searchableSurfaceToCell::usage_
-(
-    searchableSurfaceToCell::typeName,
-    "\n    Usage: searchableSurfaceToCell surface\n\n"
-    "    Select all cells that are inside the surface "
-    "\n"
-);
-
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::searchableSurfaceToCell::combine

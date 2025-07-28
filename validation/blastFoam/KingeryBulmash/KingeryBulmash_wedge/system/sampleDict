@@ -30,6 +30,8 @@ fields
     overpressureMax
     impulseMax
     timeOfArrival
+    positivePhaseDuration
+    negativePhaseDuration
 );
 
 

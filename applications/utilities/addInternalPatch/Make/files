@@ -1,0 +1,3 @@
+addInternalPatch.C
+
+EXE = $(BLAST_APPBIN)/addInternalPatch

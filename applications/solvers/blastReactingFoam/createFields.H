@@ -13,10 +13,24 @@ uniformDimensionedVectorField g
     dimensionedVector(dimAcceleration, Zero)
 );
 
-autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
-reactingCompressibleSystem fluid(mesh);
-integrator->addSystem(fluid);
+IOdictionary physicalProperties
+(
+    IOobject
+    (
+        ::Foam::physicalProperties::typeName,
+        runTime.constant(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::NO_WRITE,
+        false
+    )
+);
+fvTimeIntegrator integrator(mesh);
+reactingCompressibleSystem fluid(physicalProperties, mesh);
+integrator.addSystem(fluid);
 
 const volScalarField& p = fluid.p();
 const volScalarField& T = fluid.T();
 fluid.update();
+
+const ::Foam::fvModels& fvModels = integrator.models();

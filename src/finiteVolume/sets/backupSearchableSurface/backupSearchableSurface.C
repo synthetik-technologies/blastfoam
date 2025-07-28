@@ -175,7 +175,7 @@ Foam::labelList Foam::backupSearchableSurface::selectPoints
             }
         }
     }
-    return move(selected);
+    return selected;
 }
 
 

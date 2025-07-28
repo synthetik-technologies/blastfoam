@@ -106,7 +106,7 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
     // Get the coupling information from the mappedPatchBase
     const mappedPatchBase& mpp =
         refCast<const mappedPatchBase>(this->patch().patch());
-    const fvMesh& nbrMesh = refCast<const fvMesh>(mpp.sampleMesh());
+    const fvMesh& nbrMesh = refCast<const fvMesh>(mpp.nbrMesh());
 
     scalarField::operator=(this->patchInternalField());
 
@@ -120,7 +120,7 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
 
         nbrErrorEst.update();
 
-        const label samplePatchi = mpp.samplePolyPatch().index();
+        const label samplePatchi = mpp.nbrPolyPatch().index();
         scalarField nbrError
         (
             nbrErrorEst.error().boundaryField()
@@ -129,7 +129,7 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
             ].patchInternalField()
         );
 
-        mpp.distribute(nbrError);
+        mpp.fromNeighbour(nbrError);
 
         scalarField::operator=(max(nbrError, *this));
 

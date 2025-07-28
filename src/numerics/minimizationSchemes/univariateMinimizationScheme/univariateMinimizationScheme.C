@@ -29,62 +29,17 @@ License
 
 namespace Foam
 {
-    defineTypeName(univariateMinimizationScheme);
+    defineTypeNameAndDebug
+    (
+        univariateMinimizationScheme,
+        minimizationScheme::debug
+    );
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryZero);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryOne);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryTwo);
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool Foam::univariateMinimizationScheme::convergedXScale
-(
-    const scalar error,
-    const scalar s
-) const
-{
-    xErrors_[0] = mag(error);
-    xRelErrors_[0] = xErrors_[0]/max(mag(s), small);
-    return converged(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
-}
-
-
-bool Foam::univariateMinimizationScheme::convergedX
-(
-    const scalar x1,
-    const scalar x2
-) const
-{
-    xErrors_[0] = mag(x2 - x1);
-    xRelErrors_[0] = xErrors_[0]/stabilise(min(mag(x1), mag(x2)), small);
-    return converged(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
-}
-
-
-
-bool Foam::univariateMinimizationScheme::convergedYScale
-(
-    const scalar error,
-    const scalar s
-) const
-{
-    yErrors_[0] = mag(error);
-    yRelErrors_[0] = yErrors_[0]/max(mag(s), small);
-    return converged(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
-}
-
-
-bool Foam::univariateMinimizationScheme::convergedY
-(
-    const scalar y1,
-    const scalar y2
-) const
-{
-    yErrors_[0] = mag(y2 - y1);
-    yRelErrors_[0] = yErrors_[0]/stabilise(min(mag(y1), mag(y2)), small);
-    return converged(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
-}
-
 
 void Foam::univariateMinimizationScheme::printStepInformation
 (
@@ -93,15 +48,15 @@ void Foam::univariateMinimizationScheme::printStepInformation
 {
     if (debug > 2)
     {
-        DebugInfo<< "Step: " << stepi_ << ":" << nl
-            << "    Error (abs/rel): "
-            << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+        Info<< "Step: " << stepi_ << ":" << nl
+            << "    x-error (abs/rel): "
+            << xAbsErrors_[0] << ", " << xRelErrors_[0] << endl;
         if (checkY_)
         {
-            Info<< "    Delta (abs/rel): "
-                << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+            Info<< "    Y-error (abs/rel): "
+                << yAbsError_ << ", " << yRelError_ << endl;
         }
-        Info<< "    Minimum: " << val << endl;
+        Info<< "    Value: " << val << endl;
     }
 }
 
@@ -114,10 +69,10 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
         return val;
     }
     bool converged =
-        (xErrors_[0] - xTolerances_[0] <= 0.0)
+        (xAbsErrors_[0] - xAbsTolerances_[0] <= 0.0)
      || (xRelErrors_[0] - xRelTolerances_[0] <= 0.0)
-     || (yErrors_[0] - yTolerances_[0] <= 0.0)
-     || (yRelErrors_[0] - yRelTolerances_[0] <= 0.0);
+     || (yAbsError_ - yAbsTolerance_ <= 0.0)
+     || (yRelError_ - yRelTolerance_ <= 0.0);
 
     if (converged)
     {
@@ -135,14 +90,14 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
             << "Did not converge in "
             << stepi_ << " iterations" << endl;
     }
-    Info<< "    Final error (abs/rel): "
-        << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+    Info<< "    Final x-error (abs/rel): "
+        << xAbsErrors_[0] << ", " << xRelErrors_[0] << endl;
     if (checkY_)
     {
-        Info<< "    Final delta (abs/rel): "
-            << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+        Info<< "    Final y-error (abs/rel): "
+            << yAbsError_ << ", " << yRelError_ << endl;
     }
-    Info<< "    Minimum: " << val << endl;
+    Info<< "    Value: " << val << endl;
     return val;
 }
 
@@ -199,7 +154,21 @@ Foam::univariateMinimizationScheme::univariateMinimizationScheme
     nSample_(dict.lookupOrDefault<label>("nSample", 0))
 {
     nSamples_ = 0;
+    debug = minimizationScheme::debug;
 }
+
+
+Foam::univariateMinimizationScheme::univariateMinimizationScheme
+(
+    const scalarUnivariateEquation& eqn,
+    const univariateMinimizationScheme& solver
+)
+:
+    minimizationScheme(eqn, solver),
+    eqn_(dynamicCast<const scalarEquation>(eqn)),
+    nSample_(solver.nSample_)
+{}
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

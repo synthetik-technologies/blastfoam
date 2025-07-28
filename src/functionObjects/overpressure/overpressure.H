@@ -66,6 +66,9 @@ class overpressure
         //- Name of Result field
         word resultName_;
 
+        //- Saved initial pressure
+        autoPtr<volScalarField> p0Ptr_;
+
         //- Reference pressure
         dimensionedScalar pRef_;
 
@@ -101,6 +104,12 @@ public:
 
         //- Read the field average data
         virtual bool read(const dictionary&);
+
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return {pName_};
+        }
 
         //- Calculate the field averages
         virtual bool execute();

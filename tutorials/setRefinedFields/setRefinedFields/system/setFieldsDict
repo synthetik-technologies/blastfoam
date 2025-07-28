@@ -17,15 +17,16 @@ FoamFile
 
 // Refiner type (hexRefiner or polyRefiner)
 refiner polyRefiner;
+dumpLevel true;
 
 // Included parameters file
-#include "$FOAM_CASE/parameters";
+#include "$FOAM_CASE/parameters"
 
 // Fields to refine
 fields (test0);
 
 // Number of refined cells between levels
-nBufferLayers 3;
+nBufferLayers 1;
 
 // Values set before each refinement iteration
 defaultFieldValues
@@ -75,8 +76,8 @@ defaultFieldValues
             // (0 0 0) instead of vector(0, 0, 0)
             atmBoundaryLayer atmbl
             (
-                dict_.topDict().lookup<vector>("uDir"),   // flowDir
-                dict_.topDict().lookup<vector>("zDir"),   // zDir
+                vector(1, 0, 0),   // flowDir
+                vector(0, 0, 1),   // zDir
                 $uRef,   // read from parameters
                 $zRef,   // read from parameters
                 scalarField(1, $z0), // read from parameters
@@ -119,7 +120,7 @@ regions
     {
         p1 (0.5 0.5 0);
         p2 (0.5 0.5 1);
-        radius 0.05;
+        radius 0.01;
 
         // When the actual shape is too small to be seen initially
         // a backup region can be used to expand the initial search region
@@ -134,7 +135,7 @@ regions
         refineInternal yes;
 
         // This is the maximum number of sub-divisions for this set
-        level 4;
+        level 7;
 
         // Create face zones
         // zones are used for some mesh types, and for creating baffles
@@ -257,7 +258,7 @@ regions
         // option
         // The "Copy data to cell zones" can be used to view fields in
         // these zones
-        cellSet
+        cellSets
         (
             {
                 // Subset cells from the cells cellZone, aka only cells

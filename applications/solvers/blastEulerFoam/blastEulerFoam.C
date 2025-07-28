@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -32,11 +32,14 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
+#include "argList.H"
+#include "timeSelector.H"
+#include "fvMesh.H"
 #include "phaseSystem.H"
 #include "wedgeFvPatch.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
+
+using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,11 +48,13 @@ int main(int argc, char *argv[])
     scalar CoNum = 0.0;
     #include "postProcess.H"
 
-    #include "setRootCaseLists.H"
+    #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
+    maxCo = min(maxCo, integrator.maxCo());
+    scalar mDotCoNum = 0.0;
     #include "EigenCourantNos.H"
     #include "setInitialDeltaT.H"
 
@@ -58,27 +63,29 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
     while (runTime.run())
     {
-        integrator->preUpdateMesh();
+        integrator.preUpdateMesh();
 
         //- Refine mesh
-       refineMesh(mesh);
+        mesh.update();
 
         #include "readTimeControls.H"
+        maxCo = min(maxCo, integrator.maxCo());
+
         #include "EigenCourantNos.H"
         #include "setDeltaT.H"
 
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         //- Move mesh
-        mesh.update();
+        mesh.move();
 
         //- Integrate the hyperbolic fluxes
-        integrator->integrate();
+        integrator.integrate();
 
         fluid.printInfo();
 
-        integrator->clear();
+        integrator.clear();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"

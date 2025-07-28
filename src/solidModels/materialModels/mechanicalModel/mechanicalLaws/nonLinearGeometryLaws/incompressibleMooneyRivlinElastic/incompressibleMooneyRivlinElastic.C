@@ -47,11 +47,12 @@ Foam::incompressibleMooneyRivlinElastic::incompressibleMooneyRivlinElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     c10_(dict.lookup("c10")),
     c01_(dict.lookup("c01")),
     c11_(dict.lookup("c11")),

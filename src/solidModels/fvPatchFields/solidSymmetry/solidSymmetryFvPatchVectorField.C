@@ -28,14 +28,10 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
+Foam::solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -46,12 +42,12 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 {}
 
 
-solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
+Foam::solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 (
     const solidSymmetryFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     symmetryFvPatchField<vector>(ptf, p, iF, mapper),
@@ -59,17 +55,8 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 {
     if (!isType<symmetryFvPatch>(this->patch()))
     {
-        FatalErrorIn
-        (
-            "solidSymmetryFvPatchVectorField::"
-            "solidSymmetryFvPatchVectorField\n"
-            "(\n"
-            "    const solidSymmetryFvPatchVectorField& ptf,\n"
-            "    const fvPatch& p,\n"
-            "    const DimensionedField<vector, volMesh>& iF,\n"
-            "    const fvPatchFieldMapper& mapper\n"
-            ")\n"
-        )   << "\n    patch type '" << p.type()
+        FatalErrorInFunction
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << internalField().name()
@@ -79,7 +66,7 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 }
 
 
-solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
+Foam::solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -89,28 +76,20 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
     symmetryFvPatchField<vector>(p, iF, dict),
     secondOrder_(false)
 {
-    Info << "Symmetry boundary condition with non-orthogonal correction"
+    DebugInfo
+        << "Symmetry boundary condition with non-orthogonal correction"
         << endl;
 
     if (dict.found("secondOrder"))
     {
         secondOrder_ = Switch(dict.lookup("secondOrder"));
-        Info<< "Second order correction: " << secondOrder_ << endl;
+        DebugInfo<< "Second order correction: " << secondOrder_ << endl;
     }
 
     if (!isType<symmetryFvPatch>(p))
     {
-        FatalIOErrorIn
-        (
-            "solidSymmetryFvPatchVectorField::"
-            "solidSymmetryFvPatchVectorField\n"
-            "(\n"
-            "    const fvPatch& p,\n"
-            "    const Field<vector>& field,\n"
-            "    const dictionary& dict\n"
-            ")\n",
-            dict
-        )   << "\n    patch type '" << p.type()
+        FatalIOErrorInFunction(dict)
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << internalField().name()
@@ -120,7 +99,7 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 }
 
 
-solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
+Foam::solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 (
     const solidSymmetryFvPatchVectorField& ptf,
     const DimensionedField<vector, volMesh>& iF
@@ -131,8 +110,10 @@ solidSymmetryFvPatchVectorField::solidSymmetryFvPatchVectorField
 {}
 
 
-// return gradient at boundary
-tmp<Field<vector> > solidSymmetryFvPatchVectorField::snGrad() const
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::solidSymmetryFvPatchVectorField::snGrad() const
 {
     // Unit normals
     const vectorField nHat(patch().nf());
@@ -179,9 +160,10 @@ tmp<Field<vector> > solidSymmetryFvPatchVectorField::snGrad() const
 }
 
 
-// Evaluate the field on the patch
-void solidSymmetryFvPatchVectorField::
-evaluate(const Pstream::commsTypes)
+void Foam::solidSymmetryFvPatchVectorField::evaluate
+(
+    const Pstream::commsTypes
+)
 {
     if (!this->updated())
     {
@@ -239,8 +221,7 @@ evaluate(const Pstream::commsTypes)
 }
 
 
-// Write
-void solidSymmetryFvPatchVectorField::write(Ostream& os) const
+void Foam::solidSymmetryFvPatchVectorField::write(Ostream& os) const
 {
     fvPatchVectorField::write(os);
     writeEntry(os, "secondOrder", secondOrder_);
@@ -250,10 +231,14 @@ void solidSymmetryFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchVectorField, solidSymmetryFvPatchVectorField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        solidSymmetryFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

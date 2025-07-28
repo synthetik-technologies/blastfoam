@@ -67,7 +67,12 @@ public:
     // Constructors
 
         //- Construct from name and dictionary
-        None(const word& name, const dictionary& dict);
+        None
+        (
+            const word& name,
+            const unitConversions& units,
+            const dictionary& dict
+        );
 
 
     //- Destructor

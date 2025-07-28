@@ -151,6 +151,9 @@ public:
 
 protected:
 
+        //- Phase name
+        word phaseName_;
+
         //- Progress variable
         volScalarField lambda_;
 
@@ -163,6 +166,9 @@ protected:
         //- Exponent used to blend reacted and unreacted states (\lambda^m)
         scalar lambdaExp_;
 
+        //- Has the model been initialize yet?
+        //  If the model has not be initialize, always return 0 for lambda
+        bool initialized_;
 
         //- Reference to phase mass
         UautoPtr<const volScalarField> alphaRhoPtr_;
@@ -173,10 +179,19 @@ protected:
         //- Maximum change in lambda per time step
         scalar maxDLambda_;
 
+        //- Is the reaction finished
+        bool finished_;
+
         //- Is the change in lambda limited
         bool limit_;
 
-        //- Stored changes in lambda
+        //- Saved old alphaRhoLambda
+        tmp<volScalarField> alphaRhoLambdaOld_;
+
+        //- Stored change in alphaRhoLambda
+        tmp<volScalarField> deltaAlphaRhoLambda_;
+
+        //- Stored changes in lambda due to burn
         tmp<volScalarField> ddtLambda_;
 
 
@@ -186,7 +201,7 @@ protected:
         virtual tmp<volScalarField> delta() const = 0;
 
         //- Correct lambda field after advection
-        virtual void correct()
+        virtual void correct(volScalarField& lambda)
         {}
 
         //- Return the list of detonation points read from the
@@ -195,7 +210,7 @@ protected:
         (
             const dictionary& dict,
             const volScalarField& alpha,
-            const bool needDetonationPoints
+            const label needDetonationPoints
         ) const;
 
         //- Return the center of centerOfMass
@@ -230,7 +245,7 @@ public:
         const fvMesh& mesh,
         const dictionary& dict,
         const word& phaseName,
-        const bool needDetonationPoints
+        const label needDetonationPoints
     );
 
 
@@ -254,8 +269,7 @@ public:
         virtual void initializeModels();
 
         //- Update
-        virtual void update()
-        {}
+        virtual void update();
 
         //- Solve sub-step stepi
         virtual void solve();
@@ -277,32 +291,20 @@ public:
         }
 
         //- Return lambda to the m power for blending
-        inline tmp<volScalarField> lambdaPow() const
-        {
-            return pow(lambda_, lambdaExp_);
-        }
+        tmp<volScalarField> lambdaPow() const;
 
         //- Return lambda to the m power for blending for patchi
-        inline tmp<scalarField> lambdaPow(const label patchi) const
-        {
-            return pow(lambda_.boundaryField()[patchi], lambdaExp_);
-        }
+        tmp<scalarField> lambdaPow(const label patchi) const;
 
         //- Return ambda to the m power for blending for celli
-        inline scalar cellLambdaPow(const label celli) const
-        {
-            return pow(lambda_[celli], lambdaExp_);
-        }
+        scalar cellLambdaPow(const label celli) const;
 
         //- Return lambda to the m power for blending for patchi and facei
-        inline scalar patchFaceLambdaPow
+        scalar patchFaceLambdaPow
         (
             const label patchi,
             const label facei
-        ) const
-        {
-            return pow(lambda_.boundaryField()[patchi][facei], lambdaExp_);
-        }
+        ) const;
 
         //- Return energy source
         virtual tmp<volScalarField> ddtLambda() const;

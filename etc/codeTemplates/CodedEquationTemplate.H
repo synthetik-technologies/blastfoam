@@ -33,7 +33,6 @@ SourceFiles
 #define CodedEquationTemplate_H
 
 #include "EquationsFwd.H"
-#include "regEquation.H"
 
 //{{{ begin codeInclude
 ${codeInclude}
@@ -50,7 +49,7 @@ namespace Foam
 
 class ${typeName}_${TemplateType}Equation
 :
-    public regEquation<${TemplateType}, Equation>
+    public Equation<${TemplateType}>
 {
 public:
 
@@ -63,7 +62,6 @@ public:
         //- Construct from entry name and dictionary
         ${typeName}_${TemplateType}Equation
         (
-            const objectRegistry& obr,
             const dictionary&
         );
 

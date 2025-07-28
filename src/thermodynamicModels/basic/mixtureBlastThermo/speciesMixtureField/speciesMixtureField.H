@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "volFields.H"
-#include "RefineBalanceMeshObject.H"
+#include "DemandDrivenMeshObject.H"
 #include "PtrList.H"
 
 namespace Foam
@@ -56,11 +56,10 @@ namespace Foam
 template<class ThermoType>
 class speciesMixtureField
 :
-    public PtrList<ThermoType>,
-    public MeshObject
+    public DemandDrivenMeshObject
     <
         fvMesh,
-        DistributeableMeshObject,
+        UpdateableMeshObject,
         speciesMixtureField<ThermoType>
     >
 
@@ -79,11 +78,14 @@ class speciesMixtureField
     //- Temporary storage for the cell/face mixture thermo data
     mutable ThermoType mixture_;
 
+    //- Stored thermo states at cell centres
+    mutable PtrList<ThermoType> cellMixtures_;
+
     //- Stored thermo state at boundaries
-    PtrList<ThermoType> faceMixtures_;
+    mutable PtrList<ThermoType> faceMixtures_;
 
     //- Start indexes of patches
-    labelList start_;
+    mutable labelList start_;
 
     //- Return label index
     label patchFaceIndex(const label patchi, const label facei) const
@@ -104,8 +106,11 @@ class speciesMixtureField
     }
 
     //- Update size of fields
-    void updateCells();
-    void updatePatches(const bool validBoundary);
+    mutable bool needCellUpdate_;
+    void updateCells() const;
+
+    mutable bool needPatchUpdate_;
+    void updatePatches(const bool validBoundary) const;
 
 
 public:
@@ -148,6 +153,10 @@ public:
             const label facei
         ) const
         {
+            if (needPatchUpdate_)
+            {
+                updatePatches(true);
+            }
             return faceMixtures_[patchFaceIndex(patchi, facei)];
         }
 
@@ -158,18 +167,30 @@ public:
             const label facei
         )
         {
+            if (needPatchUpdate_)
+            {
+                updatePatches(true);
+            }
             return faceMixtures_[patchFaceIndex(patchi, facei)];
         }
 
         //- List operators
         const ThermoType& operator[](const label i) const
         {
-            return PtrList<ThermoType>::operator[](i);
+            if (needCellUpdate_)
+            {
+                updateCells();
+            }
+            return cellMixtures_[i];
         }
 
         ThermoType& operator[](const label i)
         {
-            return PtrList<ThermoType>::operator[](i);
+            if (needCellUpdate_)
+            {
+                updateCells();
+            }
+            return cellMixtures_[i];
         }
 
         virtual bool writeData(Ostream&) const
@@ -202,17 +223,24 @@ public:
         {}
 
         //- Distribute the intact field
-        virtual void distribute(const mapDistributePolyMesh&)
+        virtual void distribute(const polyDistributionMap&)
         {
-            updateCells();
-            updatePatches(true);
+            needCellUpdate_ = true;
+            needPatchUpdate_ = true;
         }
 
-        //- Update the intact field after mapping
-        virtual void updateMesh(const mapPolyMesh& mpm)
+        //- Update topology using the given map
+        virtual void topoChange(const polyTopoChangeMap& map)
         {
-            updateCells();
-            updatePatches(true);
+            needCellUpdate_ = true;
+            needPatchUpdate_ = true;
+        }
+
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap& map)
+        {
+            needCellUpdate_ = true;
+            needPatchUpdate_ = true;
         }
 };
 
