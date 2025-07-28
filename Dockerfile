@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 AS openfoam
+FROM ubuntu:24.04 AS openfoam
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
   && apt-get install -y wget software-properties-common \
@@ -7,7 +7,7 @@ RUN apt-get update \
   && apt-get update
 RUN apt-get -y install openfoam12
 
-FROM ubuntu:20.04 as prod
+FROM ubuntu:24.04 as prod
 SHELL [ "/bin/bash", "-c" ]
 ARG DEBIAN_FRONTEND=noninteractive
 COPY --from=openfoam /opt/openfoam12 /opt/openfoam12

@@ -74,12 +74,14 @@ jobs:
           - solver: blastFoam
             tutorial: delayedDetonation
           - solver: blastFoam
-            tutorial: movingCrane
+            tutorial: movingCone
           - solver: blastFoam
             tutorial: shockTubeTabulated
           - solver: blastReactingFoam
             tutorial: obliqueShock
           - solver: setRefinedFields
+            tutorial: setRefinedFields
+          - solver: initializeAtmosphere
             tutorial: .
     runs-on: ["self-hosted", "deb", "openfoam"]
     name: Validate ${{ matrix.solver }} on ${{ matrix.validation }} ${{ matrix.tutorial }}
