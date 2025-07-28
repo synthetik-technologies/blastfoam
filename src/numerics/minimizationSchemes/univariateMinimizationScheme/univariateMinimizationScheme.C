@@ -50,11 +50,11 @@ void Foam::univariateMinimizationScheme::printStepInformation
     {
         Info<< "Step: " << stepi_ << ":" << nl
             << "    x-error (abs/rel): "
-            << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+            << xAbsErrors_[0] << ", " << xRelErrors_[0] << endl;
         if (checkY_)
         {
             Info<< "    Y-error (abs/rel): "
-                << yError_ << ", " << yRelError_ << endl;
+                << yAbsError_ << ", " << yRelError_ << endl;
         }
         Info<< "    Value: " << val << endl;
     }
@@ -69,9 +69,9 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
         return val;
     }
     bool converged =
-        (xErrors_[0] - xTolerances_[0] <= 0.0)
+        (xAbsErrors_[0] - xAbsTolerances_[0] <= 0.0)
      || (xRelErrors_[0] - xRelTolerances_[0] <= 0.0)
-     || (yError_ - yTolerance_ <= 0.0)
+     || (yAbsError_ - yAbsTolerance_ <= 0.0)
      || (yRelError_ - yRelTolerance_ <= 0.0);
 
     if (converged)
@@ -91,11 +91,11 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
             << stepi_ << " iterations" << endl;
     }
     Info<< "    Final x-error (abs/rel): "
-        << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+        << xAbsErrors_[0] << ", " << xRelErrors_[0] << endl;
     if (checkY_)
     {
         Info<< "    Final y-error (abs/rel): "
-            << yError_ << ", " << yRelError_ << endl;
+            << yAbsError_ << ", " << yRelError_ << endl;
     }
     Info<< "    Value: " << val << endl;
     return val;

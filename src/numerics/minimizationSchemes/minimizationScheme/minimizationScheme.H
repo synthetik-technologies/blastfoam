@@ -64,13 +64,13 @@ protected:
         const scalarUnivariateEquation& eqns_;
 
         //- Absolute convergence tolerances for x
-        scalarField xTolerances_;
+        scalarField xAbsTolerances_;
 
         //- Relative convergence tolerances for x
         scalarField xRelTolerances_;
 
         //- Absolute convergence tolerance for y
-        scalar yTolerance_;
+        scalar yAbsTolerance_;
 
         //- Relative convergence tolerance for y
         scalar yRelTolerance_;
@@ -85,13 +85,13 @@ protected:
         mutable label stepi_;
 
         //- Current absolute x errors
-        mutable scalarList xErrors_;
+        mutable scalarList xAbsErrors_;
 
         //- Current relative x errors
         mutable scalarList xRelErrors_;
 
         //- Current absolute delta y error
-        mutable scalar yError_;
+        mutable scalar yAbsError_;
 
         //- Current relative delta y error
         mutable scalar yRelError_;

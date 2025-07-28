@@ -166,8 +166,8 @@ Foam::minimizationSchemes::NelderMead::minimize
         xReflection = xMean + reflectionCoeff_*(xMean - xHigh);
         if
         (
-            max(pos(xReflection - xTolerances_ - xMax))
-         || max(neg(xReflection + xTolerances_ - xMin))
+            max(pos(xReflection - xAbsTolerances_ - xMax))
+         || max(neg(xReflection + xAbsTolerances_ - xMin))
         )
         {
             yReflection = great;
@@ -225,8 +225,8 @@ Foam::minimizationSchemes::NelderMead::minimize
             xTmp = xMean + contractionCoeff_*(xHigh - xMean);
             if
             (
-                max(pos(xTmp - xTolerances_ - xMax))
-             || max(neg(xTmp + xTolerances_ - xMin))
+                max(pos(xTmp - xAbsTolerances_ - xMax))
+             || max(neg(xTmp + xAbsTolerances_ - xMin))
             )
             {
                 yTmp = great;

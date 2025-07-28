@@ -175,13 +175,17 @@ Foam::rootSolver::rootSolver
     eqns_(eqns),
     xTols_
     (
-        dict.lookupOrDefault<scalarList>
+        dict.lookupOrDefaultBackwardsCompatible<scalarList>
         (
-            "xTolerances",
+            {"xTolerances", "tolerances"},
             scalarList
             (
                 eqns.nVar(),
-                dict.lookupOrDefault("xTolerance", 1e-6)
+                dict.lookupOrDefaultBackwardsCompatible
+                (
+                    {"xTolerance", "tolerance"},
+                    1e-6
+                )
             )
         )
     ),
@@ -199,13 +203,17 @@ Foam::rootSolver::rootSolver
     ),
     xAbsTols_
     (
-        dict.lookupOrDefault<scalarList>
+        dict.lookupOrDefaultBackwardsCompatible<scalarList>
         (
-            "xAbsTolerances",
+            {"xAbsTolerances", "absTolerances"},
             scalarList
             (
                 eqns.nVar(),
-                dict.lookupOrDefault("xAbsTolerance", 0.0)
+                dict.lookupOrDefaultBackwardsCompatible
+                (
+                    {"xAbsTolerance", "absTolerance"},
+                    0.0
+                )
             )
         )
     ),

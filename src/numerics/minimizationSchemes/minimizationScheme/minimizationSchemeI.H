@@ -31,13 +31,13 @@ inline Foam::label Foam::minimizationScheme::nSteps() const
 
 inline Foam::scalarList& Foam::minimizationScheme::xErrors() const
 {
-    return xErrors_;
+    return xAbsErrors_;
 }
 
 
 inline Foam::scalar& Foam::minimizationScheme::yError() const
 {
-    return yError_;
+    return yAbsError_;
 }
 
 // ************************************************************************* //
