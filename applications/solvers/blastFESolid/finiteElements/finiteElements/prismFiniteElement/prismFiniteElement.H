@@ -51,7 +51,7 @@ namespace finiteElements
 
 class prism
 :
-    public FiniteElement<ElementType::PRISM>
+    public FiniteElementBase<ElementType::PRISM>
 {
     //- Reference to segment element
     const segment& seg_;

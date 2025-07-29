@@ -55,7 +55,7 @@ namespace finiteElements
 
 Foam::finiteElements::hexahedron::hexahedron(const label order)
 :
-    FiniteElement<ElementType::HEX>
+    FiniteElementBase<ElementType::HEX>
     (
         order,
         (order + 1)*(order + 1)*(order + 1)

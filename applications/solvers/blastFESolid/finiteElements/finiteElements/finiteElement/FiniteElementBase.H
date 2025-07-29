@@ -22,18 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::FiniteElement
+    Foam::FiniteElementBase
 
 Description
     Templated class for finite element based on element type
 
 SourceFiles
-    FiniteElement.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FiniteElement_H
-#define FiniteElement_H
+#ifndef FiniteElementBase_H
+#define FiniteElementBase_H
 
 #include "finiteElement.H"
 
@@ -43,18 +42,18 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class FiniteElement Declaration
+                    Class FiniteElementBase Declaration
 \*---------------------------------------------------------------------------*/
 
 template<ElementType::Type T>
-class FiniteElement
+class FiniteElementBase
 :
     public finiteElement
 {
 public:
 
     //- Construct from order and size
-    inline FiniteElement(const label order, const label size)
+    inline FiniteElementBase(const label order, const label size)
     :
         finiteElement(order, size, T)
     {}
@@ -100,7 +99,7 @@ public:
 
 
 template<class Element>
-class ShellFiniteElement
+class ShellFiniteElementBase
 :
     public Element
 {

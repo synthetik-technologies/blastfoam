@@ -50,7 +50,7 @@ namespace finiteElements
 
 class tetrahedron
 :
-    public FiniteElement<ElementType::TET>
+    public FiniteElementBase<ElementType::TET>
 {
     //- Reference to segment element
     const segment& seg_;

@@ -51,7 +51,7 @@ namespace finiteElements
 
 class pyramid
 :
-    public FiniteElement<ElementType::PYR>
+    public FiniteElementBase<ElementType::PYR>
 {
     //- Create uniform geometry
     virtual void createUniformGeometry() const;

@@ -58,7 +58,7 @@ namespace finiteElements
 
 Foam::finiteElements::tetrahedron::tetrahedron(const label order)
 :
-    FiniteElement<ElementType::TET>
+    FiniteElementBase<ElementType::TET>
     (
         order,
         (order + 1)*(order + 2)*(order + 3)/6

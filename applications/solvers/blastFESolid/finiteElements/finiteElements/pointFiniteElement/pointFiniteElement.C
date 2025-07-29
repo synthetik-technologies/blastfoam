@@ -46,7 +46,7 @@ namespace finiteElements
 
 Foam::finiteElements::point::point(const label order)
 :
-    FiniteElement<ElementType::PT>(order, 1)
+    FiniteElementBase<ElementType::PT>(order, 1)
 {}
 
 

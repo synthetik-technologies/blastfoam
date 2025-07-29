@@ -57,7 +57,7 @@ namespace finiteElements
 
 Foam::finiteElements::quadrilateral::quadrilateral(const label order)
 :
-    FiniteElement<ElementType::QUAD>
+    FiniteElementBase<ElementType::QUAD>
     (
         order,
         (order + 1)*(order + 1)

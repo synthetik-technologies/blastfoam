@@ -68,7 +68,7 @@ Foam::label Foam::finiteElements::triangle::calcNFaceNodes(const label o)
 
 Foam::finiteElements::triangle::triangle(const label order)
 :
-    FiniteElement<ElementType::TRI>
+    FiniteElementBase<ElementType::TRI>
     (
         order,
         (order + 1)*(order + 2)/2

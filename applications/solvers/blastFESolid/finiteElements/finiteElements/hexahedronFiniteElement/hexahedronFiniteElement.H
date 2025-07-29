@@ -50,7 +50,7 @@ namespace finiteElements
 
 class hexahedron
 :
-    public FiniteElement<ElementType::HEX>
+    public FiniteElementBase<ElementType::HEX>
 {
     //- Reference to segment element
     const segment& seg_;

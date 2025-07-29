@@ -50,7 +50,7 @@ namespace finiteElements
 
 class triangle
 :
-    public FiniteElement<ElementType::TRI>
+    public FiniteElementBase<ElementType::TRI>
 {
     //- Reference to segment element
     const segment& seg_;

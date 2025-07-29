@@ -34,7 +34,7 @@ SourceFiles
 #ifndef pointFiniteElement_H
 #define pointFiniteElement_H
 
-#include "FiniteElement.H"
+#include "FiniteElementBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,7 +49,7 @@ namespace finiteElements
 
 class point
 :
-    public FiniteElement<ElementType::PT>
+    public FiniteElementBase<ElementType::PT>
 {
     //- Create uniform geometry
     virtual void createUniformGeometry() const

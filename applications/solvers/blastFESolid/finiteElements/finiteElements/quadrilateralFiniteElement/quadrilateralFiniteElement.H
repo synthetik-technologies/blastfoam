@@ -50,7 +50,7 @@ namespace finiteElements
 
 class quadrilateral
 :
-    public FiniteElement<ElementType::QUAD>
+    public FiniteElementBase<ElementType::QUAD>
 {
     //- Reference to segment element
     const segment& seg_;

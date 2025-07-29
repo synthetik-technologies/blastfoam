@@ -56,7 +56,7 @@ namespace finiteElements
 
 Foam::finiteElements::pyramid::pyramid(const label order)
 :
-    FiniteElement<ElementType::PYR>
+    FiniteElementBase<ElementType::PYR>
     (
         order,
         5

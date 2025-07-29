@@ -55,7 +55,7 @@ namespace finiteElements
 
 Foam::finiteElements::segment::segment(const label order)
 :
-    FiniteElement<ElementType::SEG>(order, order+1),
+    FiniteElementBase<ElementType::SEG>(order, order+1),
     w_(this->nNodes(), 0.0)
 {
     CmptList<vector> x(nodes_, vector::X);

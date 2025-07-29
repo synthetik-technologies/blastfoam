@@ -35,7 +35,7 @@ SourceFiles
 #ifndef segmentFiniteElement_H
 #define segmentFiniteElement_H
 
-#include "FiniteElement.H"
+#include "FiniteElementBase.H"
 #include "CmptList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -51,7 +51,7 @@ namespace finiteElements
 
 class segment
 :
-    public FiniteElement<ElementType::SEG>
+    public FiniteElementBase<ElementType::SEG>
 {
     //- Save weights
     List<scalar> w_;

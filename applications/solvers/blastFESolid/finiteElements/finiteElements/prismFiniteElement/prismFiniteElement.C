@@ -55,7 +55,7 @@ namespace finiteElements
 
 Foam::finiteElements::prism::prism(const label order)
 :
-    FiniteElement<ElementType::PRISM>
+    FiniteElementBase<ElementType::PRISM>
     (
         order,
         (order + 1)*(order + 1)*(order + 2)/2.0
