@@ -115,7 +115,7 @@ jobs:
           ls -lh ../blastfoam_*
 
       - name: Upload Debian Package Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: blastfoam-package
           path: |

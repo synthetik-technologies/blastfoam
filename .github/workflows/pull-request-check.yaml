@@ -94,7 +94,7 @@ jobs:
           echo "Package built: $PACKAGE_NAME"
 
       - name: Output Debian Package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: blastfoam_untested.deb
           path: ${{ github.workspace }}/blastfoam_*.deb
@@ -225,7 +225,7 @@ jobs:
 
       - name: Upload Validation Plots
         if: env.SCENARIO_TYPE == 'validation'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: validation-plots
           path: blastfoam-src/validation/${{ env.SOLVER }}/${{ env.SCENARIO }}/validation/*.eps
