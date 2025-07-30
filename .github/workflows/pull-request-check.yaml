@@ -67,6 +67,12 @@ jobs:
         run: |
           set -xo pipefail
 
+          export LD_LIBRARY_PATH=$BLASTFOAM_DIR/lib:$LD_LIBRARY_PATH
+
+          # Optional: force dpkg-shlibdeps to look into this dir
+          echo "/opt/blastfoam/lib" | sudo tee /etc/ld.so.conf.d/blastfoam.conf
+          sudo ldconfig
+
           echo "Building BlastFoam package..."
           debuild --no-lintian -i -nc -us -uc -b --jobs=auto
         #* Debuild Flags
@@ -82,7 +88,7 @@ jobs:
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         id: package-info
         run: |
-          PACKAGE_NAME=$(find . -maxdepth 1 -name "blastfoam_*.deb" | head -1)
+          PACKAGE_NAME=$(find .. -maxdepth 1 -name "blastfoam_*.deb" | head -1)
           if [ -z "$PACKAGE_NAME" ]; then
             echo "No .deb package found, build may have failed."
             exit 1
@@ -95,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: blastfoam_untested.deb
-          path: blastfoam_*.deb
+          path: ../blastfoam_*.deb
           retention-days: 31
 
   run-validation-tests:
