@@ -2,35 +2,81 @@ name: Testing
 
 on: pull_request
 
+concurrency:
+  group: testing-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read            # needed for checkout
+  packages: read            # needed for pulling from GHCR
+
+env:
+  OPENFOAM_DIR: /opt/openfoam12
+  BLASTFOAM_DIR: /opt/blastfoam
+
 jobs:
   build:
-    runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: blastfoam-src
+        shell: bash
     steps:
       - name: Checkout blastFOAM
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: blastfoam-src
+    
+      - name: Cache APT packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: openfoam12-apt-${{ runner.os }}-v1
+          restore-keys: |
+            openfoam12-apt-${{ runner.os }}-
+            openfoam12-apt-
+      
+      - name: Install OpenFOAM 12
+        run: |
+          sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
+          sudo add-apt-repository -y http://dl.openfoam.org/ubuntu
+          sudo apt-get update
+          sudo apt-get install -y openfoam12
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+      
+      - name: Verify OpenFOAM installation
+        run: |
+          set -euxo pipefail
+          source ${{ env.OPENFOAM_DIR }}/etc/bashrc
+          echo "OpenFOAM version: $(foamVersion)"
+          echo "OpenFOAM path: $WM_PROJECT_DIR"
+
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
         #* in the next step if the files remain unchanged.
         run: |
           tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 \
             --numeric-owner --sort=name Makefile applications debian etc src
+
       - name: Check Cache
         #* Checks the cache tarball and only rebuilds if there were changes
         id: check-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: blastfoam_*.deb
           key: ${{ hashFiles('blastfoam-src/checksum.tar.gz') }}
-      - name: Build from makefile
+
+      - name: Build BlastFoam package from makefile
         #* This builds the package from the makefile ONLY if the cache tarball is changed.
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
-        run: debuild --no-lintian -i -nc -us -uc -b --jobs=auto
+        run: |
+          set -euxo pipefail
+          source ${{ env.OPENFOAM_DIR }}/etc/bashrc
+
+          echo "Building BlastFoam package..."
+          debuild --no-lintian -i -nc -us -uc -b --jobs=auto
         #* Debuild Flags
         #* --no-lintian: Do not run lintian on the package
         #* -i: Install the package
@@ -39,6 +85,14 @@ jobs:
         #* -uc: Do not sign the changes file
         #* -b: Build binary package
         #* --jobs=10: Run 10 jobs in parallel
+      
+      - name: Get package information
+        id: package-info
+        run: |
+          PACKAGE_NAME=$(ls blastfoam_*.deb | head -1)
+          echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "Package built: $PACKAGE_NAME"
+
       - name: Output Debian Package
         uses: actions/upload-artifact@v3
         with:
@@ -47,80 +101,135 @@ jobs:
           retention-days: 31
 
   run-validation-tests:
+    name: Validate ${{ matrix.solver }} on [${{ matrix.scenario_type }}] ${{ matrix.scenario_name }}
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         include:
           - solver: blastFoam
-            validation: "rateStick"
+            scenario_type: validation
+            scenario_name: rateStick
           - solver: blastFoam
-            validation: Sod_shockTube
+            scenario_type: validation
+            scenario_name: Sod_shockTube
           - solver: blastFoam
-            validation: solidImpact #* uses code templates
+            scenario_type: validation
+            scenario_name: solidImpact #* uses code templates
           - solver: blastFoam
-            validation: "Sedov/Sedov_2D"
+            scenario_type: validation
+            scenario_name: Sedov/Sedov_2D
           - solver: blastFoam
-            validation: "Sedov/Sedov_3D"
+            scenario_type: validation
+            scenario_name: Sedov/Sedov_3D
           - solver: blastFoam
-            validation: "KingeryBulmash/KingeryBulmash_wedge"
+            scenario_type: validation
+            scenario_name: KingeryBulmash/KingeryBulmash_wedge
           - solver: blastEulerFoam
-            validation: shockTube_dilute
+            scenario_type: validation
+            scenario_name: shockTube_dilute
           - solver: blastEulerFoam
-            validation: shockTube_dense
-          - solver: blastEulerFoam
-            validation: shockTube_bidisperse
+            scenario_type: validation
+            scenario_name: shockTube_dense
+          - solver: blastEulerFoam    
+            scenario_type: validation
+            scenario_name: shockTube_bidisperse
           - solver: blastFoam
-            tutorial: building3DWorkshop
+            scenario_type: tutorial
+            scenario_name: building3DWorkshop
           - solver: blastFoam
-            tutorial: delayedDetonation
+            scenario_type: tutorial
+            scenario_name: delayedDetonation
           - solver: blastFoam
-            tutorial: movingCone
+            scenario_type: tutorial
+            scenario_name: movingCrane
           - solver: blastFoam
-            tutorial: shockTubeTabulated
+            scenario_type: tutorial
+            scenario_name: shockTubeTabulated
           - solver: blastReactingFoam
-            tutorial: obliqueShock
+            scenario_type: tutorial
+            scenario_name: obliqueShock
           - solver: setRefinedFields
-            tutorial: setRefinedFields
-          - solver: initializeAtmosphere
-            tutorial: .
-    runs-on: ["self-hosted", "deb", "openfoam"]
-    name: Validate ${{ matrix.solver }} on ${{ matrix.validation }} ${{ matrix.tutorial }}
-    needs:
-      - build
+            scenario_type: tutorial
+            scenario_name: .
+    needs: build
+    defaults:
+      run:
+        shell: bash
     steps:
+      - name: Cache APT packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: openfoam12-apt-${{ runner.os }}-v1
+          restore-keys: |
+            openfoam12-apt-${{ runner.os }}-
+            openfoam12-apt-
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg2 software-properties-common
+      
+      - name: Install OpenFOAM 12
+        run: |
+          sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
+          sudo add-apt-repository -y http://dl.openfoam.org/ubuntu
+          sudo apt-get update
+          sudo apt-get install -y openfoam12
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+      
+      - name: Verify OpenFOAM installation
+        run: |
+          set -euxo pipefail
+          source ${{ env.OPENFOAM_DIR }}/etc/bashrc
+          echo "OpenFOAM version: $(foamVersion)"
+
       - name: Download Debian Package
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: blastfoam_untested.deb
           path: ${{ github.workspace }}
+
       - name: Install Debian Package
-        run: sudo dpkg -i blastfoam_*.deb
+        run: |
+          set -euxo pipefail
+          sudo dpkg -i blastfoam_*.deb
+          # Verify installation
+          dpkg -l | grep blastfoam || echo "Package not found in dpkg list"
+
       - name: Checkout blastFOAM
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: blastfoam-src
+
       - name: Run ${{ matrix.solver }}
         shell: bash -l {0}
         run: |
-          source /opt/openfoam12/etc/bashrc
-          source /opt/blastfoam/etc/bashrc
+          source $OPENFOAM_DIR/etc/bashrc
+          source $BLASTFOAM_DIR/etc/bashrc
+
+          echo "SCENARIO_TYPE=${{ matrix.scenario_type }}" >> $GITHUB_ENV
+          echo "SCENARIO=${{ matrix.scenario_name }}" >> $GITHUB_ENV
           echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
-          if [ -n "${{ matrix.validation }}" ]; then
-            ./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.validation }}/Allrun
-            echo "TYPE=validation" >> $GITHUB_ENV
-            echo "SCENARIO=${{ matrix.validation }}" >> $GITHUB_ENV
+
+          if [ "${{ matrix.scenario_type }}" = "validation" ]; then
+            SCENARIO_PATH=./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario_name }}
           else
-           ./blastfoam-src/tutorials/${{ matrix.solver }}/${{ matrix.tutorial }}/Allrun
-           echo "TYPE=tutorials" >> $GITHUB_ENV
-           echo "SCENARIO=${{ matrix.tutorial }}" >> $GITHUB_ENV
+            SCENARIO_PATH=./blastfoam-src/tutorials/${{ matrix.solver }}/${{ matrix.scenario_name }}
           fi
+
+          chmod +x $SCENARIO_PATH/Allrun
+          $SCENARIO_PATH/Allrun
+
       - name: Upload Validation Plots
-        if: env.TYPE == 'validation'
+        if: env.SCENARIO_TYPE == 'validation'
         uses: actions/upload-artifact@v3
         with:
           name: validation-plots
-          path: |
-            blastfoam-src/${{ env.TYPE }}/${{ env.SOLVER }}/${{ env.SCENARIO }}/validation/*.eps
+          path: blastfoam-src/validation/${{ env.SOLVER }}/${{ env.SCENARIO }}/validation/*.eps
           retention-days: 30
+
       - name: Uninstall Debian Package
         run: sudo dpkg -r blastfoam
