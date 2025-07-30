@@ -70,7 +70,7 @@ jobs:
         #* This builds the package from the makefile ONLY if the cache tarball is changed.
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         run: |
-          set -exo pipefail
+          set -xo pipefail
           source ${{ env.OPENFOAM_DIR }}/etc/bashrc
 
           echo "Building BlastFoam package..."
@@ -191,7 +191,7 @@ jobs:
 
       - name: Install Debian Package
         run: |
-          set -exo pipefail
+          set -xo pipefail
           sudo dpkg -i blastfoam_*.deb
           # Verify installation
           dpkg -l | grep blastfoam || echo "Package not found in dpkg list"
