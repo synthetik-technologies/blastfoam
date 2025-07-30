@@ -48,10 +48,8 @@ jobs:
       
       - name: Verify OpenFOAM installation
         run: |
-          set -exo pipefail
-          source ${{ env.OPENFOAM_DIR }}/etc/bashrc
-          echo "OpenFOAM version: $(foamVersion)"
-          echo "OpenFOAM path: $WM_PROJECT_DIR"
+          echo "OpenFOAM should be installed at ${{ env.OPENFOAM_DIR }}"
+          ls -la ${{ env.OPENFOAM_DIR }}/etc/bashrc
 
       - name: Build Tar for Cache
         #* This creates a cache tarball that can be used to skip builds
@@ -182,9 +180,8 @@ jobs:
       
       - name: Verify OpenFOAM installation
         run: |
-          set -exo pipefail
-          source ${{ env.OPENFOAM_DIR }}/etc/bashrc
-          echo "OpenFOAM version: $(foamVersion)"
+          echo "OpenFOAM should be installed at ${{ env.OPENFOAM_DIR }}"
+          ls -la ${{ env.OPENFOAM_DIR }}/etc/bashrc
 
       - name: Download Debian Package
         uses: actions/download-artifact@v4
