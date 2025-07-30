@@ -1,4 +1,9 @@
-name: Deployment
+name: Deployment [${{ github.ref_name }}]
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
 
 on:
   push:
@@ -16,63 +21,107 @@ concurrency:
 jobs:
   version:
     name: Semantic Version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
-      version: ${{ env.VERSION }}
+      version: ${{ steps.set.outputs.version }}
     steps:
-      - name: Install DevScripts
-        run: sudo apt install devscripts
-      - name: Version
-        id: version
-        uses: synthetik-technologies/actions/composites/semantic-versioning@v1.2.1
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-          github_token: ${{ secrets.SYN_BOT_READ_WRITE }}
+          fetch-depth: 0 #* Fetch all history for accurate versioning
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*' #* Use latest LTS version of Node.js
+      
+      - name: Run Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.BLASTFOAM_PAT }}
+
+      - name: Set Version Output
+        id: set
+        run: echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ env.VERSION }}
 
   build:
-    runs-on: ["self-hosted", "deb", "openfoam"]
     name: Build BlastFoam
+    runs-on: ubuntu-24.04
     needs: [version]
     if: ${{ needs.version.outputs.version != '' }}
     defaults:
       run:
         working-directory: blastfoam-src
+        shell: bash
     steps:
       - name: Checkout blastFOAM
         uses: actions/checkout@v3
         with:
           path: blastfoam-src
           ref: ${{ github.ref }}
-      - name: Build Tar for Cache
-        #* This creates a cache tarball that can be used to skip builds
-        #* in the next step if the files remain unchanged.
+    
+      - name: Compute Cache Key
+        id: cache-key
         run: |
-          tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 \
-            --numeric-owner --sort=name Makefile applications debian etc src
-      - name: Check Cache
-        #* Checks the cache tarball and only rebuilds if there were changes
+          echo "key=blastfoam-${{ hashFiles('../checksum.tar.gz') }}" >> $GITHUB_OUTPUT
+      
+      - name: Restore Build Cache
         id: check-cache
         uses: actions/cache@v3
         with:
-          path: blastfoam_*.deb
-          key: ${{ hashFiles('blastfoam-src/checksum.tar.gz') }}
-      - name: Build from makefile
-        #* This builds the package from the makefile ONLY if the cache tarball is changed.
-        if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
-        run: debuild --no-lintian -i -nc -us -uc -b --jobs=auto
-        #* Debuild Flags
-        #* --no-lintian: Do not run lintian on the package
-        #* -i: Install the package
-        #* -nc: Do not clean the build directory (this removes '.orig' files from tests)
-        #* -us: Do not sign the package
-        #* -uc: Do not sign the changes file
-        #* -b: Build binary package
-        #* --jobs=10: Run 10 jobs in parallel
+          path: blastfoam-src/blastfoam_*.deb
+          key: ${{ steps.cache-key.outputs.key }}
+      
+      - name: Build Debian Package
+        if: steps.check-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "Building .deb package..."
+          debuild --no-lintian -i -nc -us -uc -b --jobs=auto
 
-      - name: Output Debian Package
+      # - name: Build Tar for Cache
+      #   #* This creates a cache tarball that can be used to skip builds
+      #   #* in the next step if the files remain unchanged.
+      #   run: |
+      #     tar -czf checksum.tar.gz --mtime='UTC 2019-01-01' --group=0 --owner=0 \
+      #       --numeric-owner --sort=name Makefile applications debian etc src
+
+      # - name: Check Cache
+      #   #* Checks the cache tarball and only rebuilds if there were changes
+      #   id: check-cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: blastfoam_*.deb
+      #     key: ${{ hashFiles('blastfoam-src/checksum.tar.gz') }}
+
+      # - name: Build from makefile
+      #   #* This builds the package from the makefile ONLY if the cache tarball is changed.
+      #   if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
+      #   run: debuild --no-lintian -i -nc -us -uc -b --jobs=auto
+      #   #* Debuild Flags
+      #   #* --no-lintian: Do not run lintian on the package
+      #   #* -i: Install the package
+      #   #* -nc: Do not clean the build directory (this removes '.orig' files from tests)
+      #   #* -us: Do not sign the package
+      #   #* -uc: Do not sign the changes file
+      #   #* -b: Build binary package
+      #   #* --jobs=10: Run 10 jobs in parallel
+
+      - name: List Artifacts
+        run: |
+          echo "Output files:"
+          ls -lh ../blastfoam_*
+
+      - name: Upload Debian Package Artifact
         uses: actions/upload-artifact@v3
         with:
           name: blastfoam-package
-          path: ${{ github.workspace }}/blastfoam_*.deb
+          path: |
+            ${{ github.workspace }}/blastfoam_*.deb
+            ${{ github.workspace }}/blastfoam_*.changes
+            ${{ github.workspace }}/blastfoam_*.build
           retention-days: 7
 
   release-deb:
@@ -80,55 +129,88 @@ jobs:
     needs:
       - build
       - version
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-24.04
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.BLASTFOAM_PAT }}
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.ref }}
-      - uses: actions/download-artifact@v3
-        with:
-          name: blastfoam-package
-      - run: gh release upload "v${{ needs.version.outputs.version }}" blastfoam_${{ needs.version.outputs.version }}*.deb
-
-  build-docker:
-    name: Build Docker Image
-    needs:
-      - build
-      - version
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: Checkout blastFOAM
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
           ref: ${{ github.ref }}
-      - name: Download Debian Package
+
+      - name: Download Debian package artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: blastfoam-package
+
+      - name: Verify package files
+        run: ls -lh blastfoam_${{ needs.version.outputs.version }}*.deb
+
+      - name: Upload Debian package to GitHub releasee
+        run: |
+          # Check if release exists, create if not
+          if ! gh release view "v${{ needs.version.outputs.version }}" > /dev/null 2>&1; then
+            gh release create "v${{ needs.version.outputs.version }}" --title "Release v${{ needs.version.outputs.version }}" --notes "Automated release of BlastFoam version ${{ needs.version.outputs.version }}"
+          fi
+
+          # Upload deb package(s) (allow multiple files matching pattern)
+          gh release upload "v${{ needs.version.outputs.version }}" blastfoam_${{ needs.version.outputs.version }}*.deb --clobber
+          # gh release upload "v${{ needs.version.outputs.version }}" blastfoam_${{ needs.version.outputs.version }}*.changes --clobber
+          # gh release upload "v${{ needs.version.outputs.version }}" blastfoam_${{ needs.version.outputs.version }}*.build --clobber
+          echo "Debian package uploaded to release v${{ needs.version.outputs.version }}"
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+      - version
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout blastFOAM source
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Download Debian Package artifact
         uses: actions/download-artifact@v3
         with:
           name: blastfoam-package
           path: ${{ github.workspace }}
-      - uses: docker/login-action@v2
+      
+      - name: Set up QEMU (for multi-platform builds)
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and Push Image
-        uses: synthetik-technologies/actions/composites/docker-build-push@v1.2.0
+          password: ${{ secrets.BLASTFOAM_PAT }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
         with:
-          ssh-key-needed: "false"
-          image: blastfoam-dev
-          image-registry: ghcr.io/synthetik-technologies
-          version: ${{ needs.version.outputs.version }}
+          context: ${{ github.workspace }}
+          push: true
+          tags: ghcr.io/synthetik-technologies/blastfoam-dev:${{ needs.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
 
   push-public-release:
+    if: github.ref_name == 'main' #* only run on main
     needs:
       - version
       - build
       - build-docker
       - release-deb
     uses: ./.github/workflows/public-deployment.yaml
-    if: github.ref_name == 'main' #* only run on main
     with:
       prod_repo: synthetik-technologies/blastfoam
       tag: ${{ needs.version.outputs.version }}
