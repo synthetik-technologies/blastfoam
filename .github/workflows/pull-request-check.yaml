@@ -93,15 +93,16 @@ jobs:
             echo "No .deb package found, build may have failed."
             exit 1
           fi
-          echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-          echo "Package built: $PACKAGE_NAME"
+          echo "Found package: $PACKAGE_NAME"
+          cp "$PACKAGE_NAME" ./  # <-- move/copy to current workspace
+          echo "package-name=$(basename "$PACKAGE_NAME")" >> $GITHUB_OUTPUT
 
       - name: Output Debian Package
         if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: blastfoam_untested.deb
-          path: ../blastfoam_*.deb
+          path: blastfoam_*.deb
           retention-days: 31
 
   run-validation-tests:
