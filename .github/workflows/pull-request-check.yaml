@@ -79,17 +79,23 @@ jobs:
         #* --jobs=10: Run 10 jobs in parallel
       
       - name: Get package information
+        if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         id: package-info
         run: |
-          PACKAGE_NAME=$(ls blastfoam_*.deb | head -1)
+          PACKAGE_NAME=$(find . -maxdepth 1 -name "blastfoam_*.deb" | head -1)
+          if [ -z "$PACKAGE_NAME" ]; then
+            echo "No .deb package found, build may have failed."
+            exit 1
+          fi
           echo "package-name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "Package built: $PACKAGE_NAME"
 
       - name: Output Debian Package
+        if: ${{ steps.check-cache.outputs.cache-hit != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: blastfoam_untested.deb
-          path: ${{ github.workspace }}/blastfoam_*.deb
+          path: blastfoam_*.deb
           retention-days: 31
 
   run-validation-tests:
@@ -159,6 +165,13 @@ jobs:
         with:
           name: blastfoam_untested.deb
           path: ${{ github.workspace }}
+
+      - name: Verify Package Downloaded
+        run: |
+          if ! ls blastfoam_*.deb 2>/dev/null; then
+            echo "No .deb package found. Did the cache hit and skip the build?"
+            exit 1
+          fi
 
       - name: Install Debian Package
         run: |
