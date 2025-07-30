@@ -47,6 +47,11 @@ jobs:
         with:
           path: blastfoam_*.deb
           key: ${{ hashFiles('blastfoam-src/checksum.tar.gz') }}
+      
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y devscripts build-essential fakeroot lintian
 
       - name: Build BlastFoam package from makefile
         #* This builds the package from the makefile ONLY if the cache tarball is changed.
