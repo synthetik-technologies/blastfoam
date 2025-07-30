@@ -48,7 +48,7 @@ jobs:
       
       - name: Verify OpenFOAM installation
         run: |
-          set -euxo pipefail
+          set -exo pipefail
           source ${{ env.OPENFOAM_DIR }}/etc/bashrc
           echo "OpenFOAM version: $(foamVersion)"
           echo "OpenFOAM path: $WM_PROJECT_DIR"
@@ -182,7 +182,7 @@ jobs:
       
       - name: Verify OpenFOAM installation
         run: |
-          set -euxo pipefail
+          set -exo pipefail
           source ${{ env.OPENFOAM_DIR }}/etc/bashrc
           echo "OpenFOAM version: $(foamVersion)"
 
