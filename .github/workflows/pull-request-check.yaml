@@ -83,8 +83,7 @@ jobs:
           cp "$PACKAGE_NAME" ./  # copy to workspace
           echo "package-name=$(basename "$PACKAGE_NAME")" >> $GITHUB_OUTPUT
 
-      - name: Output Debian Package
-        if: steps.check-cache.outputs.cache-hit != 'true'
+      - name: Upload Debian Package Artifact (always)
         uses: actions/upload-artifact@v4
         with:
           name: blastfoam_untested.deb
