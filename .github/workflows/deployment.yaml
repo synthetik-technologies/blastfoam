@@ -1,4 +1,4 @@
-name: Deployment [${{ github.ref_name }}]
+name: Deployment
 
 permissions:
   contents: write
