@@ -76,7 +76,7 @@ jobs:
           - solver: blastFoam
             tutorial: movingCone
           - solver: blastFoam
-            tutorial: shockTubeTabulated
+            tutorial: shockTube_tabulated
           - solver: blastReactingFoam
             tutorial: obliqueShock
           - solver: setRefinedFields
