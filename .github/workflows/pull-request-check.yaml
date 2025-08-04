@@ -162,7 +162,7 @@ jobs:
       - name: Verify Package Downloaded
         run: |
           if ! ls blastfoam_*.deb 2>/dev/null; then
-            echo "No .deb package found. Did the cache hit and skip the build?"
+            echo "❌ No .deb package found. Validation tests cannot run without it."
             exit 1
           fi
 
@@ -177,18 +177,27 @@ jobs:
         with:
           path: blastfoam-src
 
-      - name: Run ${{ matrix.solver }}
+      - name: Set Environment Variables
         run: |
-          source $BLASTFOAM_DIR/etc/bashrc
-
           echo "SCENARIO_TYPE=${{ matrix.scenario_type }}" >> $GITHUB_ENV
           echo "SCENARIO=${{ matrix.scenario_name }}" >> $GITHUB_ENV
           echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
+          echo "SAFE_SCENARIO=$(echo '${{ matrix.scenario_name }}' | tr '/' '_')" >> $GITHUB_ENV
 
-          if [ "${{ matrix.scenario_type }}" = "validation" ]; then
-            SCENARIO_PATH=./blastfoam-src/validation/${{ matrix.solver }}/${{ matrix.scenario_name }}
+      - name: Run ${{ matrix.solver }}
+        shell: bash
+        run: |
+          source $BLASTFOAM_DIR/etc/bashrc
+
+          if [ "$SCENARIO_TYPE" = "validation" ]; then
+            SCENARIO_PATH=./blastfoam-src/validation/$SOLVER/$SCENARIO
           else
-            SCENARIO_PATH=./blastfoam-src/tutorials/${{ matrix.solver }}/${{ matrix.scenario_name }}
+            SCENARIO_PATH=./blastfoam-src/tutorials/$SOLVER/$SCENARIO
+          fi
+
+          if [ ! -x "$SCENARIO_PATH/Allrun" ]; then
+            echo "❌ Allrun script not found or not executable at $SCENARIO_PATH"
+            exit 1
           fi
 
           chmod +x "$SCENARIO_PATH/Allrun"
@@ -198,14 +207,9 @@ jobs:
         if: env.SCENARIO_TYPE == 'validation'
         uses: actions/upload-artifact@v4
         with:
-          name: validation-plots-${{ env.SOLVER }}-${{ env.SCENARIO }}
+          name: validation-plots-${{ env.SOLVER }}-${{ env.SAFE_SCENARIO }}
           path: blastfoam-src/validation/${{ env.SOLVER }}/${{ env.SCENARIO }}/validation/*.eps
           retention-days: 30
 
       - name: Uninstall Debian Package
-        run: |
-          if dpkg -s blastfoam &>/dev/null; then
-            sudo dpkg -r blastfoam
-          else
-            echo "blastfoam not installed; skipping uninstall"
-          fi
+        run: sudo dpkg -r blastfoam || echo "blastfoam package not found for removal"
