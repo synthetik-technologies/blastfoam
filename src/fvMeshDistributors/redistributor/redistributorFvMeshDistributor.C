@@ -606,13 +606,13 @@ bool Foam::fvMeshDistributors::redistributor::update()
     if
     (
         balance_
+     && mesh.topoChanged()
      && (
             force_
          || (
                 timeIndex_ == mesh.time().startTimeIndex()
              || (
                     timeIndex_ != mesh.time().timeIndex()
-                 && mesh.topoChanged()
                  && (iter_ % balanceInterval_ == 0)
                 )
             )

@@ -50,8 +50,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     fieldPtr_(lookupOrRead(fieldName)),
     selectedIndices_(selectedIndices),
     noInternal_(false),
-    evaluateBoundaries_(false),
-    averageInterpolation_(false),
+    evaluateBoundaries_(0),
     write_(write),
     good_(fieldPtr_.valid())
 {
@@ -80,10 +79,21 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
                 noInternal_ = true;
                 break;
             case fieldSetOptions::EvaluateBoundaries:
-                evaluateBoundaries_ = true;
+            {
+                wordReList patchNames(is);
+                labelHashSet patches;
+                forAll(patches, i)
+                {
+                    patches.insert
+                    (
+                        mesh.boundaryMesh().findIndices(patchNames[i])
+                    );
+                }
+                evaluateBoundaries_ = patches.sortedToc();
                 break;
-            case fieldSetOptions::AverageInterpolation:
-                averageInterpolation_ = true;
+            }
+            case fieldSetOptions::EvaluateAllBoundaries:
+                evaluateBoundaries_ = identityMap(mesh.boundaryMesh().size());
                 break;
             default:
                 FatalErrorInFunction
@@ -119,7 +129,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     fieldPtr_(nullptr),
     selectedIndices_(selectedIndices),
     noInternal_(false),
-    evaluateBoundaries_(false),
+    evaluateBoundaries_(),
     write_(false),
     good_(false)
 {}
@@ -320,6 +330,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrRead(const word& fieldName) const
         fPtr->store(fPtr);
         return &mesh_.lookupObjectRef<GeoField>(fieldName);
     }
+
     return nullptr;
 }
 
@@ -342,8 +353,19 @@ Foam::FieldSetType<Type, Patch, Mesh>::lookupOrConstruct
     // Check field exists
     GeoField* fPtr
     (
-        new GeoField(fieldName, fld)
+        new GeoField
+        (
+            IOobject
+            (
+                fieldName,
+                mesh_.time().name(),
+                mesh_
+            ),
+            mesh_,
+            dimensioned<Type>(fld.dimensions(), Zero)
+        )
     );
+    (*fPtr) = fld;
     fPtr->store(fPtr);
     return &mesh_.lookupObjectRef<GeoField>(fieldName);
 }
@@ -399,14 +421,45 @@ void Foam::VolFieldSetType<Type>::setField()
         }
         else
         {
-            this->fieldPtr_->boundaryFieldRef()[patchi] =
-                this->fieldPtr_->boundaryField()[patchi].patchInternalField();
+            fieldBf[patchi] = fieldBf[patchi].patchInternalField();
         }
     }
 
-    if (this->evaluateBoundaries_)
+    if
+    (
+        Pstream::defaultCommsType == Pstream::commsTypes::blocking
+     || Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+    )
     {
-        this->fieldPtr_->correctBoundaryConditions();
+        label nReq = Pstream::nRequests();
+        forAll(this->evaluateBoundaries_, i)
+        {
+            const label patchi = this->evaluateBoundaries_[i];
+            fieldBf[patchi].initEvaluate(Pstream::defaultCommsType);
+        }
+
+        if
+        (
+            Pstream::parRun()
+         && Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+        )
+        {
+            Pstream::waitRequests(nReq);
+        }
+
+        forAll(this->evaluateBoundaries_, i)
+        {
+            const label patchi = this->evaluateBoundaries_[i];
+            fieldBf[patchi].evaluate(Pstream::defaultCommsType);
+        }
+    }
+    else
+    {
+        //Scheduled patch updates not supported
+        FatalErrorInFunction
+            << "Unsuported communications type "
+            << Pstream::commsTypeNames[Pstream::defaultCommsType]
+            << exit(FatalError);
     }
 
     if (this->write_)
@@ -571,10 +624,46 @@ void Foam::PointFieldSetType<Type>::setField()
         }
     }
 
-    if (this->evaluateBoundaries_)
+    if
+    (
+        Pstream::defaultCommsType == Pstream::commsTypes::blocking
+     || Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+    )
     {
-        this->fieldPtr_->correctBoundaryConditions();
+        label nReq = Pstream::nRequests();
+        forAll(this->evaluateBoundaries_, i)
+        {
+            const label patchi = this->evaluateBoundaries_[i];
+            fieldBf[patchi].initEvaluate(Pstream::defaultCommsType);
+        }
+
+        if
+        (
+            Pstream::parRun()
+         && Pstream::defaultCommsType == Pstream::commsTypes::nonBlocking
+        )
+        {
+            Pstream::waitRequests(nReq);
+        }
+
+        forAll(this->evaluateBoundaries_, i)
+        {
+            const label patchi = this->evaluateBoundaries_[i];
+            fieldBf[patchi].evaluate(Pstream::defaultCommsType);
+        }
     }
+    else
+    {
+        //Scheduled patch updates not supported
+        FatalErrorInFunction
+            << "Unsuported communications type "
+            << Pstream::commsTypeNames[Pstream::defaultCommsType]
+            << exit(FatalError);
+    }
+    // if (this->evaluateBoundaries_)
+    // {
+    //     this->fieldPtr_->correctBoundaryConditions();
+    // }
 
     if (this->write_)
     {

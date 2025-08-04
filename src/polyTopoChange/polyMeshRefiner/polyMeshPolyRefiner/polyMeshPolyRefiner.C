@@ -246,7 +246,7 @@ void Foam::polyMeshPolyRefiner::readDict(const dictionary& dict)
         WarningInFunction
             << "Using " << nRefinementBufferLayers_
             << " refinement buffer layers" << nl
-            << "Make sure that the number of refinement buffer layers is "
+            << "    Make sure that the number of refinement buffer layers is "
             << "at least 3 in order to avoid problems with edge level "
             << "in 2 dimensional cases"
             << endl;
@@ -262,7 +262,7 @@ void Foam::polyMeshPolyRefiner::readDict(const dictionary& dict)
         WarningInFunction
             << "Using " << nUnrefinementBufferLayers_
             << " unrefinement buffer layers" << nl
-            << "Make sure that the number of unrefinement buffer layers is "
+            << "    Make sure that the number of unrefinement buffer layers is "
             << "at least 2 in order to avoid problems with edge level "
             << "inconsistency when refinement and unrefinement are performed in "
             << "same iteration."

@@ -29,9 +29,9 @@ runParallel setRefinedFields
 runParallel $(getApplication)
 
 #- Sample all times with twice the time resolution
-runParallel -s ground blastToVTK ground -dt 2.5e-5 \
-     -interpolationScheme cubicClamp
-runParallel -s walls blastToVTK walls -dt 2.5e-5 \
+runParallel -s ground blastToVTK ground -dt 5e-5 \
+     -interpolationScheme linearClamp
+runParallel -s walls blastToVTK walls -dt 5e-5 \
      -interpolationScheme linearClamp
 
 runApplication calculateImpulse pressureProbes
