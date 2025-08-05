@@ -184,6 +184,7 @@ jobs:
           echo "SAFE_SCENARIO=$(echo '${{ matrix.scenario_name }}' | tr '/' '_')" >> $GITHUB_ENV
 
       - name: Run ${{ matrix.solver }}
+        id: run_solver
         shell: bash
         run: |
           source $BLASTFOAM_DIR/etc/bashrc
@@ -201,6 +202,14 @@ jobs:
 
           chmod +x "$SCENARIO_PATH/Allrun"
           "$SCENARIO_PATH/Allrun"
+
+      - name: Upload Logs if Failed
+        if: steps.run_solver.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: error-logs-${{ env.SCENARIO_TYPE }}-${{ env.SOLVER }}-${{ env.SAFE_SCENARIO }}
+          path: blastfoam-src/${{ env.SCENARIO_TYPE }}/${{ env.SOLVER }}/${{ env.SCENARIO }}/log.*
+          retention-days: 30
 
       - name: Upload Validation Plots
         if: env.SCENARIO_TYPE == 'validation'
