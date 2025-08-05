@@ -235,3 +235,7 @@ jobs:
 
       - name: Uninstall Debian Package
         run: sudo dpkg -r blastfoam || echo "blastfoam package not found for removal"
+      
+      - name: Fail job if solver step failed
+        if: steps.run_solver.outcome == 'failure'
+        run: exit 1
