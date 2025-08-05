@@ -283,16 +283,14 @@ jobs:
           blastEulerFoam shockTube_bidisperse
           EOF
           )
-          for line in $scenarios; do
-            solver=$(echo $line | cut -d' ' -f1)
-            name=$(echo $line | cut -d' ' -f2-)
+          while IFS= read -r line; do
+            solver=$(echo "$line" | cut -d' ' -f1)
+            name=$(echo "$line" | cut -d' ' -f2-)
             safe_name=$(echo "$name" | tr '/' '_')
 
             echo "🔹 Running $solver on validation $name"
 
-            type="validation"
             path="./blastfoam-src/validation/$solver/$name"
-            artifact_base="validation"            
 
             if [ ! -x "$path/Allrun" ]; then
               echo "❌ Missing Allrun: $path"
@@ -303,17 +301,15 @@ jobs:
             if ! "$path/Allrun"; then
               echo "❌ Scenario failed: $name"
 
-              # Attempt to upload logs
               echo "📤 Uploading logs for failed scenario: $name"
-              log_dir="$path"
               mkdir -p tmp-logs/$safe_name
-              cp "$log_dir"/log.* tmp-logs/$safe_name/ 2>/dev/null || echo "⚠️ No logs found for $name"
+              cp "$path"/log.* tmp-logs/$safe_name/ 2>/dev/null || echo "⚠️ No logs found for $name"
             fi
-
 
             mkdir -p tmp-validation-plots/$safe_name
             cp -v "$path"/validation/*.eps tmp-validation-plots/$safe_name/ 2>/dev/null || true
-          done
+
+          done <<< "$scenarios"
 
       - name: Upload validation plots
         uses: actions/upload-artifact@v4
@@ -371,16 +367,14 @@ jobs:
           EOF
           )
 
-          for line in $scenarios; do
-            solver=$(echo $line | cut -d' ' -f1)
-            name=$(echo $line | cut -d' ' -f2-)
+          while IFS= read -r line; do
+            solver=$(echo "$line" | cut -d' ' -f1)
+            name=$(echo "$line" | cut -d' ' -f2-)
             safe_name=$(echo "$name" | tr '/' '_')
 
             echo "🔹 Running $solver on tutorial $name"
 
-            type="tutorial"
             path="./blastfoam-src/tutorials/$solver/$name"
-            artifact_base="tutorials"
 
             if [ ! -x "$path/Allrun" ]; then
               echo "❌ Missing Allrun: $path"
@@ -391,13 +385,11 @@ jobs:
             if ! "$path/Allrun"; then
               echo "❌ Scenario failed: $name"
 
-              # Attempt to upload logs
               echo "📤 Uploading logs for failed scenario: $name"
-              log_dir="$path"
               mkdir -p tmp-logs/$safe_name
-              cp "$log_dir"/log.* tmp-logs/$safe_name/ 2>/dev/null || echo "⚠️ No logs found for $name"
+              cp "$path"/log.* tmp-logs/$safe_name/ 2>/dev/null || echo "⚠️ No logs found for $name"
             fi
-          done
+          done <<< "$scenarios"
       
       - name: Upload failed tutorial logs
         if: always()
