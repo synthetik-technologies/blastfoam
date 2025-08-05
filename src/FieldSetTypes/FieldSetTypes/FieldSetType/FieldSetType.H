@@ -78,13 +78,10 @@ protected:
     bool noInternal_;
 
     //- Evaluate boundaries
-    bool evaluateBoundaries_;
+    labelList evaluateBoundaries_;
 
     //- Boundaries to set
     wordHashSet boundaries_;
-
-    //- Average interpolated value
-    bool averageInterpolation_;
 
     //- Write after setting fields
     bool write_;

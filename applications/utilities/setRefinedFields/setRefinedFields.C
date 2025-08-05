@@ -62,7 +62,7 @@ using namespace Foam;
 void calcFaceDiff
 (
     volScalarField& error,
-    const PtrList<volScalarField>& fields
+    const UPtrList<volScalarField>& fields
 )
 {
     volScalarField errorOrig(error);
@@ -133,9 +133,11 @@ void updateProcessorBoundaries(GeoField& fld)
 
         forAll(fld.boundaryField(), patchi)
         {
-            if (isA<processorPolyPatch>(mesh.boundaryMesh()[patchi]))
+            if (mesh.boundaryMesh()[patchi].coupled())
             {
-                fld.boundaryFieldRef()[patchi].initEvaluate
+                typename GeoField::Patch& pf =
+                    fld.boundaryFieldRefNoStoreOldTimes()[patchi];
+                pf.initEvaluate
                 (
                     Pstream::defaultCommsType
                 );
@@ -154,9 +156,11 @@ void updateProcessorBoundaries(GeoField& fld)
 
         forAll(fld.boundaryField(), patchi)
         {
-            if (isA<processorPolyPatch>(mesh.boundaryMesh()[patchi]))
+            if (mesh.boundaryMesh()[patchi].coupled())
             {
-                fld.boundaryFieldRef()[patchi].evaluate
+                typename GeoField::Patch& pf =
+                    fld.boundaryFieldRefNoStoreOldTimes()[patchi];
+                pf.evaluate
                 (
                     Pstream::defaultCommsType
                 );
@@ -176,14 +180,19 @@ void updateProcessorBoundaries(GeoField& fld)
 
 //- Read and add fields to the database
 template<class Type, template<class> class Patch, class Mesh>
-void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
+void readGeoFields
+(
+    const fvMesh& mesh,
+    const IOobjectList& objects,
+    wordHashSet& readFields
+)
 {
     typedef GeometricField<Type, Patch, Mesh> FieldType;
 
     IOobjectList fields = objects.lookupClass(FieldType::typeName);
     forAllIter(IOobjectList, fields, fieldIter)
     {
-        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        if (!mesh.found(fieldIter()->name()))
         {
             typeIOobject<FieldType> fieldTargetIOobject
             (
@@ -205,6 +214,7 @@ void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
                     )
                 );
                 fPtr->store(fPtr);
+                readFields.insert(fieldIter()->name());
             }
         }
     }
@@ -213,13 +223,18 @@ void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
 
 //- Read and add fields to the database
 template<class Type>
-void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
+void readPointFields
+(
+    const fvMesh& mesh,
+    const IOobjectList& objects,
+    wordHashSet& readFields
+)
 {
     typedef GeometricField<Type, pointPatchField, pointMesh> FieldType;
     IOobjectList fields = objects.lookupClass(FieldType::typeName);
     forAllIter(IOobjectList, fields, fieldIter)
     {
-        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        if (!mesh.found(fieldIter()->name()))
         {
             typeIOobject<FieldType> fieldTargetIOobject
             (
@@ -241,6 +256,7 @@ void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
                     )
                 );
                 fPtr->store(fPtr);
+                readFields.insert(fieldIter()->name());
             }
         }
     }
@@ -250,26 +266,36 @@ void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
 //- Read and add all fields to the database
 void readAndAddAllFields(const fvMesh& mesh)
 {
+    wordHashSet readFields;
+
     // Get all fields present at the current time
     IOobjectList objects(mesh, mesh.time().name());
 
-    readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<symmTensor, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<sphericalTensor, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<tensor, fvPatchField, volMesh>(mesh, objects);
+    #define ReadGeoFieldsType(Type, Patch, Mesh) \
+    readGeoFields<Type, Patch, Mesh>(mesh, objects, readFields);
 
-    readGeoFields<scalar, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<vector, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<symmTensor, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<sphericalTensor, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<tensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    FOR_ALL_FIELD_TYPES(ReadGeoFieldsType, fvPatchField, volMesh)
+    FOR_ALL_FIELD_TYPES(ReadGeoFieldsType, fvsPatchField, surfaceMesh)
 
-    readPointFields<scalar>(mesh, objects);
-    readPointFields<vector>(mesh, objects);
-    readPointFields<symmTensor>(mesh, objects);
-    readPointFields<sphericalTensor>(mesh, objects);
-    readPointFields<tensor>(mesh, objects);
+    #define ReadPointFieldsType(Type, Patch, Mesh) \
+    readPointFields<Type>(mesh, objects, readFields);
+
+    FOR_ALL_FIELD_TYPES(ReadPointFieldsType, pointPatchField, pointMesh)
+
+    forAllConstIter(IOobjectList, objects, iter)
+    {
+        if
+        (
+            !readFields.found(iter()->name())
+         && mesh.found(iter()->name())
+         && iter()->headerClassName() != mesh[iter()->name()]->type()
+        )
+        {
+            WarningInFunction
+                << "Found " << iter()->name() << " in "
+                << mesh.time().name() << " but already exists in db" << endl;
+        }
+    }
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -372,10 +398,6 @@ int main(int argc, char *argv[])
             << "Cannot overwrite mesh in debug mode" << endl
             << abort(FatalError);
     }
-    if (overwrite)
-    {
-        mesh.setInstance(runTime.constant());
-    }
 
     //- Is the mesh balanced
     autoPtr<polyMeshRefiner> refiner;
@@ -469,62 +491,7 @@ int main(int argc, char *argv[])
     bool refine = refiner.valid();
     bool balance = balancer.valid();
 
-    wordList fieldNames;
-    if (!noFields)
-    {
-        fieldNames = setFieldsDict.lookupOrDefault("fields", wordList());
-    }
-    PtrList<volScalarField> fields(fieldNames.size());
-    label fi = 0;
-    forAll(fields, fieldi)
-    {
-        // Check the current time directory
-        typeIOobject<volScalarField> fieldHeader
-        (
-            fieldNames[fieldi],
-            runTime.name(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        );
-
-        if (fieldHeader.headerOk())
-        {
-            fields.set
-            (
-                fi++,
-                new volScalarField(fieldHeader, mesh)
-            );
-        }
-        else
-        {
-            WarningInFunction
-                << "Field " << fieldNames[fieldi] << " specified for "
-                << "setting refinement was not found. " << endl;
-        }
-    }
-    fields.resize(fi);
     const scalar angleFraction = calcAngleFraction(mesh);
-
-    // Read in all fields to allow resizing
-    if
-    (
-        updateAll
-     || (
-            balance
-         && !args.optionFound("noUpdateAll")
-         && !noFields
-        )
-    )
-    {
-        readAndAddAllFields(mesh);
-    }
-    else if (balance)
-    {
-        WarningInFunction
-            << "Balancing will occur, but all fields are not set to be "
-            << "updated. If this is wanted, use \"-updateAll\"" << endl;
-    }
 
     //- List of sources (and backups if present)
     // Stored to reduce the number of reads
@@ -649,14 +616,84 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Read Fields with refinement
+    wordList fieldNames;
+    if (!noFields)
+    {
+        fieldNames = setFieldsDict.lookupOrDefault("fields", wordList());
+    }
+    UPtrList<volScalarField> fields(fieldNames.size());
+    label fi = 0;
+    forAll(fields, fieldi)
+    {
+        volScalarField* fldPtr = nullptr;
+        if (mesh.foundObject<volScalarField>(fieldNames[fieldi]))
+        {
+            fldPtr = &mesh.lookupObjectRef<volScalarField>(fieldNames[fieldi]);
+        }
+        else
+        {
+            // Check the current time directory
+            typeIOobject<volScalarField> fieldHeader
+            (
+                fieldNames[fieldi],
+                runTime.name(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            );
+
+            if (fieldHeader.headerOk())
+            {
+                fldPtr = new volScalarField(fieldHeader, mesh);
+            }
+            else
+            {
+                WarningInFunction
+                    << "Field " << fieldNames[fieldi] << " specified for "
+                    << "setting refinement was not found. " << endl;
+            }
+        }
+
+        if (fldPtr)
+        {
+            fields.set(fi++, fldPtr);
+        }
+    }
+    fields.resize(fi);
+
+    // Read in all fields to allow resizing
+    if
+    (
+        updateAll
+     || (
+            balance
+         && !args.optionFound("noUpdateAll")
+         && !noFields
+        )
+    )
+    {
+        readAndAddAllFields(mesh);
+    }
+    else if (balance)
+    {
+        WarningInFunction
+            << "Balancing will occur, but all fields are not set to be "
+            << "updated. If this is wanted, use \"-updateAll\"" << endl;
+    }
+
+
+
     // Flag for final iteration
     bool end = false;
 
     // Flag to initiate end
     bool prepareToStop = (maxIter == 1);
 
+    label refIter = 0;
     while(!end)
     {
+        Info<< "Refinement iteration " << refIter++ << endl;
         if (debug)
         {
             runTime++;
@@ -1060,11 +1097,14 @@ int main(int argc, char *argv[])
             }
 
             // Write fields and mesh if using debug
+
             if (debug)
             {
                 mesh.setInstance(runTime.name());
-                bool writeOk = (mesh.write() && refiner->write());
-                volScalarField scalarMaxCellLevel
+                mesh.write();
+                refiner->write();
+
+                tmp<volScalarField> tscalarMaxCellLevel
                 (
                     volScalarField::New
                     (
@@ -1074,7 +1114,18 @@ int main(int argc, char *argv[])
                         extrapolatedCalculatedFvPatchField<scalar>::typeName
                     )
                 );
-                volScalarField vCellLevel
+                volScalarField& scalarMaxCellLevel = tscalarMaxCellLevel.ref();
+                forAll(cellLevel, celli)
+                {
+                    scalarMaxCellLevel[celli] = maxCellLevel[celli];
+                }
+                scalarMaxCellLevel.correctBoundaryConditions();
+                scalarMaxCellLevel.write();
+                error.write();
+            }
+            if (debug || setFieldsDict.lookupOrDefault("dumpLevel", false))
+            {
+                tmp<volScalarField> tvCellLevel
                 (
                     volScalarField::New
                     (
@@ -1084,20 +1135,34 @@ int main(int argc, char *argv[])
                         extrapolatedCalculatedFvPatchField<scalar>::typeName
                     )
                 );
-
+                volScalarField& vCellLevel = tvCellLevel.ref();
                 forAll(cellLevel, celli)
                 {
-                    scalarMaxCellLevel[celli] = maxCellLevel[celli];
                     vCellLevel[celli] = cellLevel[celli];
                 }
-                scalarMaxCellLevel.correctBoundaryConditions();
                 vCellLevel.correctBoundaryConditions();
-                writeOk =
-                    writeOk
-                 && scalarMaxCellLevel.write()
-                 && vCellLevel.write()
-                 && error.write();
+                vCellLevel.write();
 
+                tmp<pointScalarField> tpPointLevel
+                (
+                    pointScalarField::New
+                    (
+                        "pointLevel",
+                        pointMesh::New(mesh),
+                        dimensionedScalar(dimless, 0)
+                    )
+                );
+                pointScalarField& pPointLevel = tpPointLevel.ref();
+                const labelList& pointLevel = refiner->pointLevel();
+                forAll(pointLevel, pointi)
+                {
+                    pPointLevel[pointi] = pointLevel[pointi];
+                }
+                pPointLevel.write();
+
+            }
+            if (debug)
+            {
                 Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
                     << "  ClockTime = " << runTime.elapsedClockTime() << " s"
                     << nl << endl;
@@ -1120,6 +1185,14 @@ int main(int argc, char *argv[])
 
                         // Update sets and zones
                         topoSets.distribute(map);
+
+                        // Distribute polyMesh data
+                        mesh.polyMesh::distribute(map);
+
+                        meshObjects::distribute<fvMesh>(mesh, map);
+                        meshObjects::distribute<lduMesh>(mesh, map);
+
+                        runTime.functionObjects().distribute(map);
                     }
                 }
                 prepareToStop = !refined;

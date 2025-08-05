@@ -132,7 +132,8 @@ const volScalarField& mechanicalEnergies::viscousPressure
         );
     }
 
-    const volScalarField& L = meshSizeObject::New(mesh_).dx(mesh_);
+    tmp<volScalarField> tL(meshSizeObject::New(mesh_).dx(mesh_));
+    const volScalarField& L = tL();
     volScalarField epsilonDot(tr(fvc::ddt(gradD))/3.0);
 
     viscousPressurePtr_() =

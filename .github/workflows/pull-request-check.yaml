@@ -132,16 +132,16 @@ jobs:
             scenario_name: delayedDetonation
           - solver: blastFoam
             scenario_type: tutorial
-            scenario_name: movingCrane
+            scenario_name: movingCone
           - solver: blastFoam
             scenario_type: tutorial
-            scenario_name: shockTubeTabulated
+            scenario_name: shockTube_tabulated
           - solver: blastReactingFoam
             scenario_type: tutorial
             scenario_name: obliqueShock
           - solver: setRefinedFields
             scenario_type: tutorial
-            scenario_name: .
+            scenario_name: setRefinedFields
     needs: build
     defaults:
       run:
