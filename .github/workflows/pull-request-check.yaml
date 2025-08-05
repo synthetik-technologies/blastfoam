@@ -204,12 +204,25 @@ jobs:
           chmod +x "$SCENARIO_PATH/Allrun"
           "$SCENARIO_PATH/Allrun"
 
+      - name: Compute artifact path
+        if: steps.run_solver.outcome == 'failure'
+        id: compute_path
+        shell: bash
+        run: |
+          if [ "$SCENARIO_TYPE" = "tutorial" ]; then
+            PATH_DIR="tutorials"
+          else
+            PATH_DIR="$SCENARIO_TYPE"
+          fi
+
+          echo "path_dir=$PATH_DIR" >> "$GITHUB_OUTPUT"
+
       - name: Upload Logs if Failed
         if: steps.run_solver.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: error-logs-${{ env.SCENARIO_TYPE }}-${{ env.SOLVER }}-${{ env.SAFE_SCENARIO }}
-          path: blastfoam-src/${{ env.SCENARIO_TYPE }}/${{ env.SOLVER }}/${{ env.SCENARIO }}/log.*
+          path: blastfoam-src/${{ steps.compute_path.outputs.path_dir }}/${{ env.SOLVER }}/${{ env.SCENARIO }}/log.*
           retention-days: 30
 
       - name: Upload Validation Plots
