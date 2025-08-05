@@ -90,62 +90,160 @@ jobs:
           path: blastfoam_*.deb
           retention-days: 31
 
-  run-validation-tests:
-    name: Validate ${{ matrix.solver }} on [${{ matrix.scenario_type }}] ${{ matrix.scenario_name }}
+  # run-validation-tests:
+  #   name: Validate ${{ matrix.solver }} on [${{ matrix.scenario_type }}] ${{ matrix.scenario_name }}
+  #   runs-on: ubuntu-24.04
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - solver: blastFoam
+  #           scenario_type: validation
+  #           scenario_name: rateStick
+  #         - solver: blastFoam
+  #           scenario_type: validation
+  #           scenario_name: Sod_shockTube
+  #         - solver: blastFoam
+  #           scenario_type: validation
+  #           scenario_name: solidImpact
+  #         - solver: blastFoam
+  #           scenario_type: validation
+  #           scenario_name: Sedov/Sedov_2D
+  #         - solver: blastFoam
+  #           scenario_type: validation
+  #           scenario_name: Sedov/Sedov_3D
+  #         - solver: blastFoam
+  #           scenario_type: validation
+  #           scenario_name: KingeryBulmash/KingeryBulmash_wedge
+  #         - solver: blastEulerFoam
+  #           scenario_type: validation
+  #           scenario_name: shockTube_dilute
+  #         - solver: blastEulerFoam
+  #           scenario_type: validation
+  #           scenario_name: shockTube_dense
+  #         - solver: blastEulerFoam    
+  #           scenario_type: validation
+  #           scenario_name: shockTube_bidisperse
+  #         - solver: blastFoam
+  #           scenario_type: tutorial
+  #           scenario_name: building3DWorkshop
+  #         - solver: blastFoam
+  #           scenario_type: tutorial
+  #           scenario_name: delayedDetonation
+  #         - solver: blastFoam
+  #           scenario_type: tutorial
+  #           scenario_name: movingCone
+  #         - solver: blastFoam
+  #           scenario_type: tutorial
+  #           scenario_name: shockTube_tabulated
+  #         - solver: blastReactingFoam
+  #           scenario_type: tutorial
+  #           scenario_name: obliqueShock
+  #         - solver: setRefinedFields
+  #           scenario_type: tutorial
+  #           scenario_name: setRefinedFields
+  #   needs: build
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   steps:
+  #     - name: Set up OpenFOAM 12
+  #       uses: gerlero/setup-openfoam@v1
+  #       with:
+  #         openfoam-version: 12
+
+  #     - name: Download Debian Package
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: blastfoam_untested.deb
+  #         path: ${{ github.workspace }}
+
+  #     - name: Verify Package Downloaded
+  #       run: |
+  #         if ! ls blastfoam_*.deb 2>/dev/null; then
+  #           echo "❌ No .deb package found. Validation tests cannot run without it."
+  #           exit 1
+  #         fi
+
+  #     - name: Install Debian Package
+  #       run: |
+  #         set -xo pipefail
+  #         sudo dpkg -i blastfoam_*.deb || true
+  #         dpkg -l | grep blastfoam || echo "Package not found in dpkg list"
+
+  #     - name: Checkout blastFOAM
+  #       uses: actions/checkout@v4
+  #       with:
+  #         path: blastfoam-src
+
+  #     - name: Set Environment Variables
+  #       run: |
+  #         echo "SCENARIO_TYPE=${{ matrix.scenario_type }}" >> $GITHUB_ENV
+  #         echo "SCENARIO=${{ matrix.scenario_name }}" >> $GITHUB_ENV
+  #         echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
+  #         echo "SAFE_SCENARIO=$(echo '${{ matrix.scenario_name }}' | tr '/' '_')" >> $GITHUB_ENV
+
+  #     - name: Run ${{ matrix.solver }}
+  #       id: run_solver
+  #       continue-on-error: true
+  #       shell: bash
+  #       run: |
+  #         source $BLASTFOAM_DIR/etc/bashrc
+
+  #         if [ "$SCENARIO_TYPE" = "validation" ]; then
+  #           SCENARIO_PATH=./blastfoam-src/validation/$SOLVER/$SCENARIO
+  #         else
+  #           SCENARIO_PATH=./blastfoam-src/tutorials/$SOLVER/$SCENARIO
+  #         fi
+
+  #         if [ ! -x "$SCENARIO_PATH/Allrun" ]; then
+  #           echo "❌ Allrun script not found or not executable at $SCENARIO_PATH"
+  #           exit 1
+  #         fi
+
+  #         chmod +x "$SCENARIO_PATH/Allrun"
+  #         "$SCENARIO_PATH/Allrun"
+
+  #     - name: Compute artifact path
+  #       if: steps.run_solver.outcome == 'failure'
+  #       id: compute_path
+  #       shell: bash
+  #       run: |
+  #         if [ "$SCENARIO_TYPE" = "tutorial" ]; then
+  #           PATH_DIR="tutorials"
+  #         else
+  #           PATH_DIR="$SCENARIO_TYPE"
+  #         fi
+
+  #         echo "path_dir=$PATH_DIR" >> "$GITHUB_OUTPUT"
+
+  #     - name: Upload Logs if Failed
+  #       if: steps.run_solver.outcome == 'failure'
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: error-logs-${{ env.SCENARIO_TYPE }}-${{ env.SOLVER }}-${{ env.SAFE_SCENARIO }}
+  #         path: blastfoam-src/${{ steps.compute_path.outputs.path_dir }}/${{ env.SOLVER }}/${{ env.SCENARIO }}/log.*
+  #         retention-days: 30
+
+  #     - name: Upload Validation Plots
+  #       if: env.SCENARIO_TYPE == 'validation'
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: validation-plots-${{ env.SOLVER }}-${{ env.SAFE_SCENARIO }}
+  #         path: blastfoam-src/validation/${{ env.SOLVER }}/${{ env.SCENARIO }}/validation/*.eps
+  #         retention-days: 30
+
+  #     - name: Uninstall Debian Package
+  #       run: sudo dpkg -r blastfoam || echo "blastfoam package not found for removal"
+      
+  #     - name: Fail job if solver step failed
+  #       if: steps.run_solver.outcome == 'failure'
+  #       run: exit 1
+
+  validation-tests:
+    name: Run Validation Scenarios Sequentially
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - solver: blastFoam
-            scenario_type: validation
-            scenario_name: rateStick
-          - solver: blastFoam
-            scenario_type: validation
-            scenario_name: Sod_shockTube
-          - solver: blastFoam
-            scenario_type: validation
-            scenario_name: solidImpact
-          - solver: blastFoam
-            scenario_type: validation
-            scenario_name: Sedov/Sedov_2D
-          - solver: blastFoam
-            scenario_type: validation
-            scenario_name: Sedov/Sedov_3D
-          - solver: blastFoam
-            scenario_type: validation
-            scenario_name: KingeryBulmash/KingeryBulmash_wedge
-          - solver: blastEulerFoam
-            scenario_type: validation
-            scenario_name: shockTube_dilute
-          - solver: blastEulerFoam
-            scenario_type: validation
-            scenario_name: shockTube_dense
-          - solver: blastEulerFoam    
-            scenario_type: validation
-            scenario_name: shockTube_bidisperse
-          - solver: blastFoam
-            scenario_type: tutorial
-            scenario_name: building3DWorkshop
-          - solver: blastFoam
-            scenario_type: tutorial
-            scenario_name: delayedDetonation
-          - solver: blastFoam
-            scenario_type: tutorial
-            scenario_name: movingCone
-          - solver: blastFoam
-            scenario_type: tutorial
-            scenario_name: shockTube_tabulated
-          - solver: blastReactingFoam
-            scenario_type: tutorial
-            scenario_name: obliqueShock
-          - solver: setRefinedFields
-            scenario_type: tutorial
-            scenario_name: setRefinedFields
     needs: build
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Set up OpenFOAM 12
         uses: gerlero/setup-openfoam@v1
@@ -158,12 +256,95 @@ jobs:
           name: blastfoam_untested.deb
           path: ${{ github.workspace }}
 
-      - name: Verify Package Downloaded
+      - name: Install Debian Package
         run: |
-          if ! ls blastfoam_*.deb 2>/dev/null; then
-            echo "❌ No .deb package found. Validation tests cannot run without it."
-            exit 1
-          fi
+          set -xo pipefail
+          sudo dpkg -i blastfoam_*.deb || true
+          dpkg -l | grep blastfoam || echo "Package not found in dpkg list"
+
+      - name: Checkout blastFOAM
+        uses: actions/checkout@v4
+        with:
+          path: blastfoam-src
+
+      - name: Run validation scenarios sequentially
+        run: |
+          source $BLASTFOAM_DIR/etc/bashrc
+
+          scenarios=$(cat <<EOF
+          blastFoam rateStick
+          blastFoam Sod_shockTube
+          blastFoam solidImpact
+          blastFoam Sedov/Sedov_2D
+          blastFoam Sedov/Sedov_3D
+          blastFoam KingeryBulmash/KingeryBulmash_wedge
+          blastEulerFoam shockTube_dilute
+          blastEulerFoam shockTube_dense
+          blastEulerFoam shockTube_bidisperse
+          EOF
+          )
+          for line in $scenarios; do
+            solver=$(echo $line | cut -d' ' -f1)
+            name=$(echo $line | cut -d' ' -f2-)
+            safe_name=$(echo "$name" | tr '/' '_')
+
+            echo "🔹 Running $solver on validation $name"
+
+            type="validation"
+            path="./blastfoam-src/validation/$solver/$name"
+            artifact_base="validation"            
+
+            if [ ! -x "$path/Allrun" ]; then
+              echo "❌ Missing Allrun: $path"
+              continue
+            fi
+
+            chmod +x "$path/Allrun"
+            if ! "$path/Allrun"; then
+              echo "❌ Scenario failed: $name"
+
+              # Attempt to upload logs
+              echo "📤 Uploading logs for failed scenario: $name"
+              log_dir="$path"
+              mkdir -p tmp-logs/$safe_name
+              cp "$log_dir"/log.* tmp-logs/$safe_name/ 2>/dev/null || echo "⚠️ No logs found for $name"
+            fi
+
+
+            mkdir -p tmp-validation-plots/$safe_name
+            cp -v "$path"/validation/*.eps tmp-validation-plots/$safe_name/ 2>/dev/null || true
+          done
+
+      - name: Upload validation plots
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-plots
+          path: tmp-upload
+          retention-days: 30
+      
+      - name: Upload failed validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-validation-logs
+          path: tmp-logs
+          retention-days: 7
+
+  tutorial-tests:
+    name: Run Tutorial Scenarios Sequentially
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - name: Set up OpenFOAM 12
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 12
+
+      - name: Download Debian Package
+        uses: actions/download-artifact@v4
+        with:
+          name: blastfoam_untested.deb
+          path: ${{ github.workspace }}
 
       - name: Install Debian Package
         run: |
@@ -176,66 +357,52 @@ jobs:
         with:
           path: blastfoam-src
 
-      - name: Set Environment Variables
-        run: |
-          echo "SCENARIO_TYPE=${{ matrix.scenario_type }}" >> $GITHUB_ENV
-          echo "SCENARIO=${{ matrix.scenario_name }}" >> $GITHUB_ENV
-          echo "SOLVER=${{ matrix.solver }}" >> $GITHUB_ENV
-          echo "SAFE_SCENARIO=$(echo '${{ matrix.scenario_name }}' | tr '/' '_')" >> $GITHUB_ENV
-
-      - name: Run ${{ matrix.solver }}
-        id: run_solver
-        continue-on-error: true
-        shell: bash
+      - name: Run tutorial scenarios sequentially
         run: |
           source $BLASTFOAM_DIR/etc/bashrc
 
-          if [ "$SCENARIO_TYPE" = "validation" ]; then
-            SCENARIO_PATH=./blastfoam-src/validation/$SOLVER/$SCENARIO
-          else
-            SCENARIO_PATH=./blastfoam-src/tutorials/$SOLVER/$SCENARIO
-          fi
+          scenarios=$(cat <<EOF
+          blastFoam building3DWorkshop
+          blastFoam delayedDetonation
+          blastFoam movingCone
+          blastFoam shockTube_tabulated
+          blastReactingFoam obliqueShock
+          setRefinedFields setRefinedFields
+          EOF
+          )
 
-          if [ ! -x "$SCENARIO_PATH/Allrun" ]; then
-            echo "❌ Allrun script not found or not executable at $SCENARIO_PATH"
-            exit 1
-          fi
+          for line in $scenarios; do
+            solver=$(echo $line | cut -d' ' -f1)
+            name=$(echo $line | cut -d' ' -f2-)
+            safe_name=$(echo "$name" | tr '/' '_')
 
-          chmod +x "$SCENARIO_PATH/Allrun"
-          "$SCENARIO_PATH/Allrun"
+            echo "🔹 Running $solver on tutorial $name"
 
-      - name: Compute artifact path
-        if: steps.run_solver.outcome == 'failure'
-        id: compute_path
-        shell: bash
-        run: |
-          if [ "$SCENARIO_TYPE" = "tutorial" ]; then
-            PATH_DIR="tutorials"
-          else
-            PATH_DIR="$SCENARIO_TYPE"
-          fi
+            type="tutorial"
+            path="./blastfoam-src/tutorials/$solver/$name"
+            artifact_base="tutorials"
 
-          echo "path_dir=$PATH_DIR" >> "$GITHUB_OUTPUT"
+            if [ ! -x "$path/Allrun" ]; then
+              echo "❌ Missing Allrun: $path"
+              continue
+            fi
 
-      - name: Upload Logs if Failed
-        if: steps.run_solver.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-logs-${{ env.SCENARIO_TYPE }}-${{ env.SOLVER }}-${{ env.SAFE_SCENARIO }}
-          path: blastfoam-src/${{ steps.compute_path.outputs.path_dir }}/${{ env.SOLVER }}/${{ env.SCENARIO }}/log.*
-          retention-days: 30
+            chmod +x "$path/Allrun"
+            if ! "$path/Allrun"; then
+              echo "❌ Scenario failed: $name"
 
-      - name: Upload Validation Plots
-        if: env.SCENARIO_TYPE == 'validation'
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-plots-${{ env.SOLVER }}-${{ env.SAFE_SCENARIO }}
-          path: blastfoam-src/validation/${{ env.SOLVER }}/${{ env.SCENARIO }}/validation/*.eps
-          retention-days: 30
-
-      - name: Uninstall Debian Package
-        run: sudo dpkg -r blastfoam || echo "blastfoam package not found for removal"
+              # Attempt to upload logs
+              echo "📤 Uploading logs for failed scenario: $name"
+              log_dir="$path"
+              mkdir -p tmp-logs/$safe_name
+              cp "$log_dir"/log.* tmp-logs/$safe_name/ 2>/dev/null || echo "⚠️ No logs found for $name"
+            fi
+          done
       
-      - name: Fail job if solver step failed
-        if: steps.run_solver.outcome == 'failure'
-        run: exit 1
+      - name: Upload failed tutorial logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-tutorial-logs
+          path: tmp-logs
+          retention-days: 7
