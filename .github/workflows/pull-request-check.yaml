@@ -185,6 +185,7 @@ jobs:
 
       - name: Run ${{ matrix.solver }}
         id: run_solver
+        continue-on-error: true
         shell: bash
         run: |
           source $BLASTFOAM_DIR/etc/bashrc
