@@ -140,6 +140,10 @@ void Foam::fvMeshTopoChangers::burst::addProcessorCyclicPatches
     // Add the processor cyclic patches
     forAll(patchData_, couplei)
     {
+        if (!patchData_[couplei].coupled())
+        {
+            continue;
+        }
         const Pair<word> origPatchNames
         (
             patchData_[couplei].burstMasterPatch(),
