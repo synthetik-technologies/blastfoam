@@ -93,6 +93,10 @@ protected:
         PtrList<volScalarField>& Y_;
         PtrListDictionary<volScalarField::Internal>& massTransferRates_;
         PtrListDictionary<fvScalarMatrix>& implicitSources_;
+
+        PtrList<volScalarField> alphaRhoYOld_;
+        PtrList<volScalarField> alphaRhoYDelta_;
+
         const List<bool>& active_;
         const volScalarField& alphaRho_;
         const surfaceScalarField& alphaRhoPhi_;

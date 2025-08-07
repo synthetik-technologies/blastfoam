@@ -101,6 +101,8 @@ Foam::multicomponentBlastThermo::integrator::integrator
     Y_(Y),
     massTransferRates_(massTransferRates),
     implicitSources_(implicitSources),
+    alphaRhoYOld_(Y.size()),
+    alphaRhoYDelta_(Y.size()),
     active_(active),
     alphaRho_(mesh_.lookupObject<volScalarField>(alphaRhoName)),
     alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName)),
@@ -403,7 +405,50 @@ void Foam::multicomponentBlastThermo::addSource
 
 
 void Foam::multicomponentBlastThermo::integrator::update()
-{}
+{
+    forAll(Y_, i)
+    {
+        if (active_[i])
+        {
+            volScalarField& Y = Y_[i];
+
+            // Store old specie mass
+            if (alphaRhoYOld_.set(i))
+            {
+                alphaRhoYOld_[i] = alphaRho_*Y;
+            }
+            else
+            {
+                alphaRhoYOld_.set(i, alphaRho_*Y);
+            }
+
+            // Calculate and store delta
+            if (alphaRhoYDelta_.set(i))
+            {
+                alphaRhoYDelta_[i] =
+                    fvc::div
+                    (
+                        alphaRhoPhi_,
+                        Y,
+                        "div(" + alphaRhoPhi_.name() + ",Yi)"
+                    );
+            }
+            else
+            {
+                alphaRhoYDelta_.set
+                (
+                    i,
+                    fvc::div
+                    (
+                        alphaRhoPhi_,
+                        Y,
+                        "div(" + alphaRhoPhi_.name() + ",Yi)"
+                    )
+                );
+            }
+        }
+    }
+}
 
 
 void Foam::multicomponentBlastThermo::integrator::solve()
@@ -411,8 +456,7 @@ void Foam::multicomponentBlastThermo::integrator::solve()
     const dimensionedScalar& dT(mesh_.time().deltaT());
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
 
-    const volScalarField& alphaRho = alphaRho_;
-    tmp<volScalarField> talphaRho0(max(alphaRho_.prevIter(), residualAlphaRho));
+    tmp<volScalarField> talphaRho0(max(alphaRho_, residualAlphaRho));
     const volScalarField& alphaRho0 = talphaRho0();
 
     forAll(Y_, i)
@@ -420,15 +464,7 @@ void Foam::multicomponentBlastThermo::integrator::solve()
         if (active_[i])
         {
             volScalarField& Y = Y_[i];
-            volScalarField deltaAlphaRhoY
-            (
-                fvc::div
-                (
-                    alphaRhoPhi_,
-                    Y,
-                    "div(" + alphaRhoPhi_.name() + ",Yi)"
-                )
-            );
+            volScalarField deltaAlphaRhoY(alphaRhoYDelta_[i]);
             if (massTransferRates_.PtrList<volScalarField::Internal>::set(i))
             {
                 deltaAlphaRhoY.internalFieldRef() -= massTransferRates_[i];
@@ -440,12 +476,12 @@ void Foam::multicomponentBlastThermo::integrator::solve()
                 normalize_ = true;
             }
 
-            // Not conservative, but alphaRho*Yi is
-            volScalarField alphaRhoY(alphaRho*Y);
-            this->storeAndBlendOld(alphaRhoY);
+            // Yi is not conservative, but alphaRho*Yi is
+            volScalarField alphaRhoYOld(alphaRhoYOld_[i]);
+            this->storeAndBlendOld(alphaRhoYOld);
             this->storeAndBlendDelta(deltaAlphaRhoY);
 
-            Y = (alphaRhoY - dT*deltaAlphaRhoY)/alphaRho0;
+            Y = (alphaRhoYOld - dT*deltaAlphaRhoY)/alphaRho0;
             Y.max(0.0);
             Y.correctBoundaryConditions();
         }
