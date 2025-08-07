@@ -45,9 +45,39 @@ template<class Thermo>
 Foam::sutherlandTransport<Thermo>::sutherlandTransport(const dictionary& dict)
 :
     Thermo(dict),
-    As_(readCoeff("As", dict)),
-    Ts_(readCoeff("Ts", dict))
-{}
+    As_(0),
+    Ts_(0)
+{
+    const dictionary& transportDict = dict.subDict("transport");
+
+    if (transportDict.found("As") && transportDict.found("Ts"))
+    {
+        transportDict.readIfPresent("As", As_);
+        transportDict.readIfPresent("Ts", Ts_);
+    }
+    else if
+    (
+        transportDict.found("mu0")
+     && transportDict.found("T0")
+     && transportDict.found("S")
+    )
+    {
+        const scalar mu0 = transportDict.lookup<scalar>("mu0");
+        const scalar T0 = transportDict.lookup<scalar>("T0");
+        const scalar S = transportDict.lookup<scalar>("S");
+
+        Ts_ = S;
+        As_ = mu0/pow(T0, 1.5)*(T0 + S);
+    }
+    else
+    {
+        FatalIOErrorInFunction(transportDict)
+            << "Missing entries, please provide either" << nl
+            << "    As and Ts" << nl
+            << "    mu0, T0, S" << endl
+            << abort(FatalIOError);
+    }
+}
 
 
 template<class Thermo>
