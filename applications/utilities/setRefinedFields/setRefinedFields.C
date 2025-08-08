@@ -44,6 +44,7 @@ Description
 #include "topoSetList.H"
 #include "volFields.H"
 #include "systemDict.H"
+#include "timeIOdictionary.H"
 
 #include "polyMeshHexRefiner.H"
 #include "redistributorFvMeshDistributor.H"
@@ -368,6 +369,38 @@ int main(int argc, char *argv[])
 
     //- Select time
     instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
+    if (timeDirs.size() != 1)
+    {
+        FatalErrorInFunction
+            << "Only 1 time can be selected" << endl
+            << abort(FatalError);
+    }
+    else if (timeDirs[0].name() != runTime.name())
+    {
+        // Read time directory to make sure the time index is correct
+        const instant& inst = timeDirs[0];
+        timeIOdictionary timeDict
+        (
+            IOobject
+            (
+                "time",
+                inst.name(),
+                "uniform",
+                runTime,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE,
+                false
+            )
+        );
+
+        label timeIndex = timeDict.lookupOrDefault
+        (
+            "index",
+            runTime.timeIndex()
+        );
+        runTime.setTime(inst.value(), timeIndex);
+    }
+
 
     #include "createRegionMeshNoChangers.H"
 
