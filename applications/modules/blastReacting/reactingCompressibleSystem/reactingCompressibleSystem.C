@@ -65,7 +65,8 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     ),
     p_(thermo_->p()),
     T_(thermo_->T()),
-    e_(thermo_->he())
+    e_(thermo_->he()),
+    odeCombustion_(false)
 {
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
@@ -104,6 +105,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
                 turbulence_()
             ).ptr()
         );
+        odeCombustion_ = dict.lookupOrDefault("odeCombustion", false);
     }
 
     typeIOobject<IOdictionary> radIO
@@ -141,12 +143,18 @@ Foam::reactingCompressibleSystem::~reactingCompressibleSystem()
 
 void Foam::reactingCompressibleSystem::solve()
 {
+    if (reaction_.valid() && (odeCombustion_ || this->step() == 1))
+    {
+        reaction_->correct();
+    }
+
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
     (
         fvc::div(rhoEPhi_)
       - (rhoU_ & g_)
+      - reaction_->Qdot()
     );
 
     //- Store changed in mass, momentum and energy
@@ -172,33 +180,23 @@ void Foam::reactingCompressibleSystem::solve()
     if (reaction_.valid())
     {
         PtrList<volScalarField>& Ys = thermo_->Y();
-        volScalarField Yt
-        (
-            volScalarField::New
-            (
-                "Yt",
-                mesh(),
-                0.0
-            )
-        );
         forAll(Ys, i)
         {
             if (thermo_->solveSpecie(i))
             {
                 volScalarField deltaRhoY
                 (
-                    fvc::div(fluxScheme_->flux(Ys[i], rho0, phi_, false))
+                    fvc::div(rhoPhi_, Ys[i], "div(" + rhoPhi_.name() + ",Yi)")
                 );
+                deltaRhoY.internalFieldRef() -= reaction_->R(i);
 
-                volScalarField rhoYi(rho0*Ys[i]);
-                this->storeAndBlendOld(rhoYi);
+                volScalarField rhoYiOld(rho0*Ys[i]);
+                this->storeAndBlendOld(rhoYiOld);
                 this->storeAndBlendDelta(deltaRhoY);
 
-                Ys[i] = (rhoYi - dT*deltaRhoY)/rho_;
-                Ys[i].correctBoundaryConditions();
-
+                Ys[i] = (rhoYiOld - dT*deltaRhoY)/rho_;
                 Ys[i].max(0.0);
-                Yt += Ys[i];
+                Ys[i].correctBoundaryConditions();
             }
         }
     }
@@ -228,32 +226,34 @@ void Foam::reactingCompressibleSystem::postUpdate()
         constraints().constrain(rho_);
     }
 
-    // Update internal energy
-    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
-
     // Solve momentum
     fvVectorMatrix UEqn
     (
         fvm::ddt(rho_, U_) - fvc::ddt(rhoU_)
+      + turbulence_->divDevTau(U_)
      ==
-        turbulence_->divDevTau(U_)
-      + models().source(rho_, U_)
+        models().source(rho_, U_)
     );
+
+    rhoE_ -=
+        rho_.mesh().time().deltaT()
+       *(U_ & fvc::div(turbulence_->devTau()));
+
+    // Update internal energy
+    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
+
 
     fvScalarMatrix eEqn
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_.prevIter(), e_)
+      + thermophysicalTransport_->divq(e_)
      ==
-        thermophysicalTransport_->divq(e_)
-      + models().source(rho_, e_)
+        models().source(rho_, e_)
     );
 
     if (reaction_.valid())
     {
         Info<< "Solving reactions" << endl;
-        reaction_->correct();
-
-        eEqn -= reaction_->Qdot();
 
         PtrList<volScalarField>& Y = thermo_->Y();
         forAll(Y, i)
@@ -267,8 +267,8 @@ void Foam::reactingCompressibleSystem::postUpdate()
                   - fvc::ddt(rho_.prevIter(), Yi)
                   + thermophysicalTransport_->divj(Yi)
                  ==
-                    reaction_->R(Yi)
-                  + models().source(rho_, Yi)
+                    // reaction_->R(Yi)
+                    models().source(rho_, Yi)
                 );
 
                 constraints().constrain(YiEqn);
@@ -332,6 +332,8 @@ void Foam::reactingCompressibleSystem::update()
 
 void Foam::reactingCompressibleSystem::decode()
 {
+    thermo_->normaliseY();
+
     thermo_->rho() = rho_;
 
     U_.internalFieldRef() = rhoU_()/rho_();

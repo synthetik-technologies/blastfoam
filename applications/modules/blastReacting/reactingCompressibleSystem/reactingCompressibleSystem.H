@@ -85,6 +85,9 @@ protected:
         //- Radiation model
         autoPtr<radiationModel> radiation_;
 
+        //- Solve combustion each ode step
+        bool odeCombustion_;
+
 
     //- Allocate models
     virtual void setModels()
