@@ -183,7 +183,8 @@ Foam::combustionModels::singleStep::singleStep
     calculateqFuel();
     if (this->coeffs().found("qFuel"))
     {
-        qFuel_ = this->coeffs().lookup<scalar>("qFuel", sqr(dimVelocity));
+        qFuel_.value() =
+            this->coeffs().lookup<scalar>("qFuel", sqr(dimVelocity));
     }
 
     Info << "Fuel heat of combustion: " << qFuel_.value() << endl;
