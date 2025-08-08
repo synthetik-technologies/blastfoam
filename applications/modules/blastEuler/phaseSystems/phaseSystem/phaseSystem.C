@@ -1083,13 +1083,6 @@ void Foam::phaseSystem::update()
     decode();
     forAll(phaseModels_, phasei)
     {
-        if (isA<multicomponentBlastThermo>(phaseModels_[phasei].thermo()))
-        {
-            dynamicCast<multicomponentBlastThermo>
-            (
-                phaseModels_[phasei].thermo()
-            ).clearDeltas();
-        }
         phaseModels_[phasei].update();
     }
 
