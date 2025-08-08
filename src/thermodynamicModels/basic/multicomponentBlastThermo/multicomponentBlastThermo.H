@@ -230,6 +230,12 @@ public:
             return normalise_;
         }
 
+        //- Return the master phase name
+        virtual const word& masterName() const
+        {
+            return masterName_;
+        }
+
         //- Return the composition of the multi-component mixture
         virtual basicSpecieBlastMixture& composition() = 0;
 

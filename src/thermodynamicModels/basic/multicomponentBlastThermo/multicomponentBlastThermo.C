@@ -203,6 +203,8 @@ void Foam::multicomponentBlastThermo::solve()
     {
         defaultSpeciei_ = -1;
     }
+
+    clearDeltas();
 }
 
 
@@ -214,6 +216,8 @@ void Foam::multicomponentBlastThermo::postUpdate()
         defaultSpeciei_ = -1;
     }
     correctMassFractions();
+
+    clearSources();
 }
 
 
@@ -249,7 +253,6 @@ void Foam::multicomponentBlastThermo::addDelta
 {
     if (this->containsSpecie(name))
     {
-        defaultSpeciei_ = -1;
         const label speciei = species_[name];
         if (!massTransferRates_.PtrList<volScalarField::Internal>::set(speciei))
         {
@@ -287,7 +290,6 @@ void Foam::multicomponentBlastThermo::addDelta
 {
     if (this->containsSpecie(name))
     {
-        defaultSpeciei_ = -1;
         const label speciei = species_[name];
         if (!massTransferRates_.PtrList<volScalarField::Internal>::set(speciei))
         {
@@ -324,7 +326,6 @@ void Foam::multicomponentBlastThermo::addDelta
 {
     if (this->containsSpecie(name))
     {
-        defaultSpeciei_ = -1;
         const label speciei = species_[name];
         if (!massTransferRates_.PtrList<volScalarField::Internal>::set(speciei))
         {
@@ -360,7 +361,6 @@ void Foam::multicomponentBlastThermo::addSource
 {
     if (species_.found(name))
     {
-        defaultSpeciei_ = -1;
         if (implicitSources_.found(name))
         {
             implicitSources_[name] += source;
@@ -557,7 +557,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
             YEqn.solve("Yi");
             Yi.max(0.0);
             constraints().constrain(Yi);
-
+            Yi.correctBoundaryConditions();
         }
     }
 }
