@@ -133,11 +133,26 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
+        //- Return energy source given the current volume fraction
+        virtual tmp<volScalarField> ESource
+        (
+            const volScalarField& alpha
+        ) const;
+
         //- Return initial energy source
         virtual tmp<volScalarField> initESource() const;
 
+        //- Return initial energy source given the current volume fraction
+        virtual tmp<volScalarField> initESource
+        (
+            const volScalarField& alpha
+        ) const;
+
 
     //- Thermodynamic and transport functions
+
+        //- Return if inviscid
+        virtual bool inviscid() const;
 
         using Thermo::updateRho;
 

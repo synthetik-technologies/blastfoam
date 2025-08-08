@@ -58,13 +58,14 @@ inline Foam::ChemicallyActivatedReactionRate
 >::ChemicallyActivatedReactionRate
 (
     const speciesTable& species,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :
-    k0_(species, dict),
-    kInf_(species, dict),
-    F_(dict),
-    thirdBodyEfficiencies_(species, dict)
+    k0_(species, dims, dict.subDict("k0")),
+    kInf_(species, dims, dict.subDict("kInf")),
+    F_(dict.subDict("F")),
+    thirdBodyEfficiencies_(species, dict.subDict("thirdBodyEfficiencies"))
 {
     forAll(thirdBodyEfficiencies_, i)
     {

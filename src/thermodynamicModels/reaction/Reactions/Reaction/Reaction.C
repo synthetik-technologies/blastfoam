@@ -278,6 +278,29 @@ Foam::Reaction<ReactionThermo>::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+template<class ThermoType>
+Foam::dimensionSet Foam::Reaction<ThermoType>::kfDims() const
+{
+    scalar order = 0;
+    forAll(lhs(), i)
+    {
+        order += lhs()[i].exponent;
+    }
+    return pow(dimMoles/dimVolume, 1 - order)/dimTime;
+}
+
+
+template<class ThermoType>
+Foam::dimensionSet Foam::Reaction<ThermoType>::krDims() const
+{
+    scalar order = 0;
+    forAll(rhs(), i)
+    {
+        order += rhs()[i].exponent;
+    }
+    return pow(dimMoles/dimVolume, 1 - order)/dimTime;
+}
+
 template<class ReactionThermo>
 void Foam::Reaction<ReactionThermo>::write(Ostream& os) const
 {

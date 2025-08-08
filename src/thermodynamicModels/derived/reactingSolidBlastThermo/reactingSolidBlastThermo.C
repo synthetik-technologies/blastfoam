@@ -46,8 +46,15 @@ Foam::reactingSolidBlastThermo<Thermo>::reactingSolidBlastThermo
         phaseName,
         masterName
     ),
-    chemistry_(basicBlastChemistryModel::New(*this)),
-    odeChemistry_(dict.lookupOrDefault<bool>("odeChemistry", false))
+    combustion_(blastCombustionModel::NewSolid(*this)),
+    odeCombustion_
+    (
+        dict.lookupOrDefaultBackwardsCompatible
+        (
+            {"odeCombustion", "odeChemistry"},
+            false
+        )
+    )
 {}
 
 
@@ -69,8 +76,15 @@ Foam::reactingSolidBlastThermo<Thermo>::reactingSolidBlastThermo
         phaseName,
         masterName
     ),
-    chemistry_(basicBlastChemistryModel::New(*this)),
-    odeChemistry_(dict.lookupOrDefault<bool>("odeChemistry", false))
+    combustion_(blastCombustionModel::NewSolid(*this)),
+    odeCombustion_
+    (
+        dict.lookupOrDefaultBackwardsCompatible
+        (
+            {"odeCombustion", "odeChemistry"},
+            false
+        )
+    )
 {}
 
 
@@ -87,15 +101,15 @@ Foam::reactingSolidBlastThermo<Thermo>::~reactingSolidBlastThermo()
 template<class Thermo>
 void Foam::reactingSolidBlastThermo<Thermo>::solve()
 {
-    if (this->step() == 1 || odeChemistry_)
+    if (this->step() == 1 || odeCombustion_)
     {
-        chemistry_->solve(this->T().time().deltaTValue());
+        combustion_->correct();
     }
     forAll(this->species_, speciei)
     {
         if (this->solveSpecie(speciei))
         {
-            this->addDelta(this->species_[speciei], chemistry_->RR(speciei));
+            this->addDelta(this->species_[speciei], combustion_->R(speciei));
         }
     }
     multicomponentSolidBlastThermo<Thermo>::solve();
@@ -113,7 +127,7 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::reactingSolidBlastThermo<Thermo>::ESource() const
 {
-    return chemistry_->Qdot();
+    return combustion_->Qdot();
 }
 
 

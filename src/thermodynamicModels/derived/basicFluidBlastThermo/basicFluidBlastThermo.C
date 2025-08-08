@@ -401,6 +401,14 @@ Foam::basicFluidBlastThermo<Thermo>::ESource() const
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::ESource(const volScalarField&) const
+{
+    return ESource();
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
 Foam::basicFluidBlastThermo<Thermo>::initESource() const
 {
     return tmp<volScalarField>
@@ -412,6 +420,14 @@ Foam::basicFluidBlastThermo<Thermo>::initESource() const
             dimensionedScalar("0", dimEnergy/dimMass, 0.0)
         )
     );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::initESource(const volScalarField&) const
+{
+    return initESource();
 }
 
 

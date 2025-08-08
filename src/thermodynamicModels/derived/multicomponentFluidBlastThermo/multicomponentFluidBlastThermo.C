@@ -461,6 +461,17 @@ Foam::multicomponentFluidBlastThermo<Thermo>::ESource() const
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
+Foam::multicomponentFluidBlastThermo<Thermo>::ESource
+(
+    const volScalarField& alpha
+) const
+{
+    return ESource();
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidBlastThermo<Thermo>::initESource() const
 {
     return volScalarField::New
@@ -469,6 +480,31 @@ Foam::multicomponentFluidBlastThermo<Thermo>::initESource() const
         this->rho_.mesh(),
         dimensionedScalar("0", dimEnergy/dimMass, 0.0)
     );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentFluidBlastThermo<Thermo>::initESource
+(
+    const volScalarField& alpha
+) const
+{
+    return initESource();
+}
+
+
+template<class Thermo>
+bool Foam::multicomponentFluidBlastThermo<Thermo>::inviscid() const
+{
+    forAll(this->speciesData_, i)
+    {
+        if (!this->speciesData_[i].inviscid())
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 

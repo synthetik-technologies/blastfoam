@@ -34,8 +34,8 @@ inline Foam::LandauTellerReactionRate::LandauTellerReactionRate
     const scalar C
 )
 :
-    A_(A),
     beta_(beta),
+    A_(A),
     Ta_(Ta),
     B_(B),
     C_(C)
@@ -45,14 +45,21 @@ inline Foam::LandauTellerReactionRate::LandauTellerReactionRate
 inline Foam::LandauTellerReactionRate::LandauTellerReactionRate
 (
     const speciesTable&,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :
-    A_(dict.lookup<scalar>("A")),
-    beta_(dict.lookup<scalar>("beta")),
-    Ta_(dict.lookup<scalar>("Ta")),
-    B_(dict.lookup<scalar>("B")),
-    C_(dict.lookup<scalar>("C"))
+    beta_(dict.lookup<scalar>("beta", dimless)),
+    A_(dict.lookup<scalar>("A", dims/pow(dimTemperature, beta_))),
+    Ta_
+    (
+        dict.found("Ta") || !dict.found("Ea")
+      ? dict.lookup<scalar>("Ta", dimTemperature)
+      : dict.lookup<scalar>("Ea", dimEnergy/dimMoles)
+       /constant::physicoChemical::RR.value()
+    ),
+    B_(dict.lookup<scalar>("B", cbrt(dimTemperature))),
+    C_(dict.lookup<scalar>("C", sqr(cbrt(dimTemperature))))
 {}
 
 

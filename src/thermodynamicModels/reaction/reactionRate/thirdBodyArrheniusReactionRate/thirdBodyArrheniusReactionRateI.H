@@ -46,12 +46,14 @@ inline Foam::thirdBodyArrheniusReactionRate::thirdBodyArrheniusReactionRate
 inline Foam::thirdBodyArrheniusReactionRate::thirdBodyArrheniusReactionRate
 (
     const speciesTable& species,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :
     ArrheniusReactionRate
     (
         species,
+        dims,
         dict
     ),
     thirdBodyEfficiencies_(species, dict)

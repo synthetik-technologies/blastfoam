@@ -310,6 +310,9 @@ public:
 
         // Access to transport state variables
 
+            //- Return if inviscid
+            virtual bool inviscid() const = 0;
+
             //- Dynamic viscosity of mixture [kg/m/s]
             virtual const volScalarField& mu() const;
 

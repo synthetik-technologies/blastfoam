@@ -59,8 +59,8 @@ class JanevReactionRate
 {
     // Private Data
 
-        scalar A_;
         scalar beta_;
+        scalar A_;
         scalar Ta_;
 
         static const label nb_ = 9;
@@ -84,6 +84,7 @@ public:
         inline JanevReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

@@ -22,19 +22,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::basicBlastChemistryModel
+    Foam::blastChemistryModel
 
 Description
     Base class for chemistry models
 
 SourceFiles
-    basicBlastChemistryModelI.H
-    basicBlastChemistryModel.C
+    blastChemistryModelI.H
+    blastChemistryModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicBlastChemistryModel_H
-#define basicBlastChemistryModel_H
+#ifndef blastChemistryModel_H
+#define blastChemistryModel_H
 
 #include "multicomponentBlastThermo.H"
 #include "blastThermo.H"
@@ -48,10 +48,10 @@ namespace Foam
 class fvMesh;
 
 /*---------------------------------------------------------------------------*\
-                     class basicBlastChemistryModel Declaration
+                     class blastChemistryModel Declaration
 \*---------------------------------------------------------------------------*/
 
-class basicBlastChemistryModel
+class blastChemistryModel
 :
     public IOdictionary
 {
@@ -90,14 +90,14 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("basicBlastChemistryModel");
+    TypeName("blastChemistryModel");
 
 
     //- Declare run-time constructor selection tables
     declareRunTimeSelectionTable
     (
         autoPtr,
-        basicBlastChemistryModel,
+        blastChemistryModel,
         thermo,
         (const blastThermo& thermo),
         (thermo)
@@ -107,23 +107,23 @@ public:
     // Constructors
 
         //- Construct from thermo
-        basicBlastChemistryModel(const blastThermo& thermo);
+        blastChemistryModel(const blastThermo& thermo);
 
         //- Disallow default bitwise copy construction
-        basicBlastChemistryModel(const basicBlastChemistryModel&) = delete;
+        blastChemistryModel(const blastChemistryModel&) = delete;
 
 
     // Selectors
 
         //- Select based on fluid reaction thermo
-        static autoPtr<basicBlastChemistryModel> New
+        static autoPtr<blastChemistryModel> New
         (
             const blastThermo& thermo
         );
 
 
     //- Destructor
-    virtual ~basicBlastChemistryModel();
+    virtual ~blastChemistryModel();
 
 
     // Member Functions
@@ -197,7 +197,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const basicBlastChemistryModel&) = delete;
+        void operator=(const blastChemistryModel&) = delete;
 };
 
 
@@ -207,7 +207,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicBlastChemistryModelI.H"
+#include "blastChemistryModelI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

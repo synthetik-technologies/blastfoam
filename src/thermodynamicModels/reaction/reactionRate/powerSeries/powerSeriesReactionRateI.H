@@ -29,13 +29,11 @@ inline Foam::powerSeriesReactionRate::powerSeriesReactionRate
 (
     const scalar A,
     const scalar beta,
-    const scalar Ta,
     const FixedList<scalar, nCoeff_> coeffs
 )
 :
-    A_(A),
     beta_(beta),
-    Ta_(Ta),
+    A_(A),
     coeffs_(coeffs)
 {}
 
@@ -43,12 +41,12 @@ inline Foam::powerSeriesReactionRate::powerSeriesReactionRate
 inline Foam::powerSeriesReactionRate::powerSeriesReactionRate
 (
     const speciesTable&,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :
-    A_(dict.lookup<scalar>("A")),
-    beta_(dict.lookup<scalar>("beta")),
-    Ta_(dict.lookup<scalar>("Ta")),
+    beta_(dict.lookup<scalar>("beta", dimless)),
+    A_(dict.lookup<scalar>("A", dims/pow(dimTemperature, beta_))),
     coeffs_(dict.lookup("coeffs"))
 {}
 
@@ -156,7 +154,6 @@ inline void Foam::powerSeriesReactionRate::write(Ostream& os) const
 {
     writeEntry(os, "A", A_);
     writeEntry(os, "beta", beta_);
-    writeEntry(os, "Ta", Ta_);
     writeEntry(os, "coeffs", coeffs_);
 }
 

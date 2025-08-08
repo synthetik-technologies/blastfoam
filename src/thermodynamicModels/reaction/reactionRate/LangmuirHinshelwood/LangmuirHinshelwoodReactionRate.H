@@ -86,6 +86,7 @@ public:
         inline LangmuirHinshelwoodReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

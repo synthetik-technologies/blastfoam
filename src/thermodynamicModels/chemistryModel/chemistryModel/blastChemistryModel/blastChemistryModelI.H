@@ -25,33 +25,33 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline const Foam::fvMesh& Foam::basicBlastChemistryModel::mesh() const
+inline const Foam::fvMesh& Foam::blastChemistryModel::mesh() const
 {
     return mesh_;
 }
 
 
 inline const Foam::multicomponentBlastThermo&
-Foam::basicBlastChemistryModel::mixture() const
+Foam::blastChemistryModel::mixture() const
 {
     return mixture_;
 }
 
 
-inline const Foam::blastThermo& Foam::basicBlastChemistryModel::thermo() const
+inline const Foam::blastThermo& Foam::blastChemistryModel::thermo() const
 {
     return thermo_;
 }
 
 
-inline Foam::Switch Foam::basicBlastChemistryModel::chemistry() const
+inline Foam::Switch Foam::blastChemistryModel::chemistry() const
 {
     return chemistry_;
 }
 
 
 inline const Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
-Foam::basicBlastChemistryModel::deltaTChem() const
+Foam::blastChemistryModel::deltaTChem() const
 {
     return deltaTChem_;
 }

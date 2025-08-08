@@ -52,8 +52,8 @@ NonEquilibriumReversibleReaction
 )
 :
     Reaction<ReactionThermo>(species, thermoDatabase, dict),
-    fk_(species, dict.subDict("forward")),
-    rk_(species, dict.subDict("reverse"))
+    fk_(species, this->kfDims(), dict.subDict("forward")),
+    rk_(species, this->krDims(), dict.subDict("reverse"))
 {}
 
 
@@ -68,8 +68,8 @@ NonEquilibriumReversibleReaction
 )
 :
     Reaction<ReactionThermo>(species, thermoDatabase, dict),
-    fk_(species, ob, dict.subDict("forward")),
-    rk_(species, ob, dict.subDict("reverse"))
+    fk_(species, ob, this->kfDims(), dict.subDict("forward")),
+    rk_(species, ob, this->krDims(), dict.subDict("reverse"))
 {}
 
 

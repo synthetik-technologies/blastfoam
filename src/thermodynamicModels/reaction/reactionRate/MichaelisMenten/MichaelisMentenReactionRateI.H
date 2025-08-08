@@ -28,12 +28,13 @@ License
 inline Foam::MichaelisMentenReactionRate::MichaelisMentenReactionRate
 (
     const speciesTable& st,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :
     species_(st),
-    Vmax_(dict.lookup<scalar>("Vmax")),
-    Km_(dict.lookup<scalar>("Km")),
+    Vmax_(dict.lookup<scalar>("Vmax", dims*dimMoles/dimVolume)),
+    Km_(dict.lookup<scalar>("Km", dimMoles/dimVolume)),
     s_(st[dict.lookup("S")])
 {
     beta_.append(Tuple2<label, scalar>(s_, 1.0));

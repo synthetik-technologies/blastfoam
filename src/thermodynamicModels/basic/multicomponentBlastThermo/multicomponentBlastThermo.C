@@ -223,6 +223,7 @@ void Foam::multicomponentBlastThermo::postUpdate()
 
 void Foam::multicomponentBlastThermo::clearDeltas()
 {
+    Info<<"clear"<<endl;
     forAll(massTransferRates_, i)
     {
         if (massTransferRates_.PtrList<volScalarField::Internal>::set(i))

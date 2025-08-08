@@ -285,6 +285,9 @@ public:
 
         // Fields derived from thermodynamic state variables
 
+            //- Return if inviscid
+            virtual bool inviscid() const;
+
             //- Recompute the density
             virtual void updateRho(const volScalarField&);
 

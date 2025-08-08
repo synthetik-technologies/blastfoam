@@ -50,7 +50,7 @@ ReversibleReaction
 )
 :
     Reaction<ReactionThermo>(species, thermoDatabase, dict),
-    k_(species, dict)
+    k_(species, this->kfDims(), dict)
 {}
 
 
@@ -65,7 +65,7 @@ ReversibleReaction
 )
 :
     Reaction<ReactionThermo>(species, thermoDatabase, dict),
-    k_(species, ob, dict)
+    k_(species, ob, this->kfDims(), dict)
 {}
 
 

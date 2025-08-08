@@ -64,7 +64,7 @@ License
                                                                                \
     addToRunTimeSelectionTable                                                 \
     (                                                                          \
-        basicBlastChemistryModel,                                              \
+        blastChemistryModel,                                                   \
         Solver##Model##Thermo##ThermoPhysics,                                  \
         thermo                                                                 \
     )

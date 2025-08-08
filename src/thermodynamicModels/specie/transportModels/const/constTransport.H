@@ -137,6 +137,12 @@ public:
             return "const<" + Thermo::typeName() + '>';
         }
 
+        //- Return if inviscid
+        inline bool inviscid() const
+        {
+            return mu_ < vSmall;
+        }
+
         //- Dynamic viscosity [kg/m/s]
         inline scalar mu
         (

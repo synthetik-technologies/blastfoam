@@ -261,10 +261,16 @@ public:
     // Member Functions
 
         //- Return energy source
-        virtual tmp<volScalarField> ESource() const = 0;
+        virtual tmp<volScalarField> ESource
+        (
+            const volScalarField& alpha
+        ) const = 0;
 
         //- Return initial energy source
-        virtual tmp<volScalarField> initESource() const = 0;
+        virtual tmp<volScalarField> initESource
+        (
+            const volScalarField& alpha
+        ) const = 0;
 
         // Mass Transfer
 

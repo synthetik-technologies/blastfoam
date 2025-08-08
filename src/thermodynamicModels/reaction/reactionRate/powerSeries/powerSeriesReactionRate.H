@@ -59,9 +59,8 @@ class powerSeriesReactionRate
 {
     // Private Data
 
-        scalar A_;
         scalar beta_;
-        scalar Ta_;
+        scalar A_;
 
         static const label nCoeff_ = 4;
         FixedList<scalar, nCoeff_> coeffs_;
@@ -76,7 +75,6 @@ public:
         (
             const scalar A,
             const scalar beta,
-            const scalar Ta,
             const FixedList<scalar, nCoeff_> coeffs
         );
 
@@ -84,6 +82,7 @@ public:
         inline powerSeriesReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

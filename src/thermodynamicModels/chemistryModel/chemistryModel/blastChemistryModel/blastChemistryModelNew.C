@@ -23,13 +23,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicBlastChemistryModel.H"
+#include "blastChemistryModel.H"
 #include "basicThermo.H"
 #include "compileTemplate.H"
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::basicBlastChemistryModel> Foam::basicBlastChemistryModel::New
+Foam::autoPtr<Foam::blastChemistryModel> Foam::blastChemistryModel::New
 (
     const blastThermo& thermo
 )
@@ -98,7 +98,7 @@ Foam::autoPtr<Foam::basicBlastChemistryModel> Foam::basicBlastChemistryModel::Ne
         if
         (
             dynamicCode::allowSystemOperations
-         && !dynamicCode::resolveTemplate(basicBlastChemistryModel::typeName).empty()
+         && !dynamicCode::resolveTemplate(blastChemistryModel::typeName).empty()
         )
         {
             List<Pair<word>> substitutions
@@ -111,7 +111,7 @@ Foam::autoPtr<Foam::basicBlastChemistryModel> Foam::basicBlastChemistryModel::Ne
 
             compileTemplate BlastChemistryModel
             (
-                basicBlastChemistryModel::typeName,
+                blastChemistryModel::typeName,
                 chemSolverNameName,
                 substitutions
             );
@@ -121,7 +121,7 @@ Foam::autoPtr<Foam::basicBlastChemistryModel> Foam::basicBlastChemistryModel::Ne
             {
                 FatalErrorInFunction
                     << "Compilation and linkage of "
-                    << basicBlastChemistryModel::typeName << " type " << nl
+                    << blastChemistryModel::typeName << " type " << nl
                     << "chemistryType" << chemistryTypeDict << nl << nl
                     << "failed." << exit(FatalError);
             }
@@ -192,7 +192,7 @@ Foam::autoPtr<Foam::basicBlastChemistryModel> Foam::basicBlastChemistryModel::Ne
         }
     }
 
-    return autoPtr<basicBlastChemistryModel>(cstrIter()(thermo));
+    return autoPtr<blastChemistryModel>(cstrIter()(thermo));
 }
 
 

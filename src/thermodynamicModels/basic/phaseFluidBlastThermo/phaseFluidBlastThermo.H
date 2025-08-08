@@ -166,6 +166,9 @@ public:
 
         // Access to derived thermodynamic variables
 
+            //- Return if inviscid
+            virtual bool inviscid() const = 0;
+
             //- Calculate density
             virtual void updateRho
             (

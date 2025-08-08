@@ -1523,6 +1523,17 @@ Foam::cavitatingFluidBlastThermo<Thermo>::ESource() const
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
+Foam::cavitatingFluidBlastThermo<Thermo>::ESource
+(
+    const volScalarField& alpha
+) const
+{
+    return alpha*ESource();
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
 Foam::cavitatingFluidBlastThermo<Thermo>::initESource() const
 {
     return volScalarField::New
@@ -1532,6 +1543,17 @@ Foam::cavitatingFluidBlastThermo<Thermo>::initESource() const
         this->rho_.mesh(),
         dimensionedScalar("0", dimEnergy/dimMass, 0.0)
     );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::cavitatingFluidBlastThermo<Thermo>::initESource
+(
+    const volScalarField& alpha
+) const
+{
+    return alpha*initESource();
 }
 
 

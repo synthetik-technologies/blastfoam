@@ -398,6 +398,12 @@ void Foam::twoPhaseFluidBlastThermo::update()
 }
 
 
+bool Foam::twoPhaseFluidBlastThermo::inviscid() const
+{
+    return thermo1_->inviscid() && thermo2_->inviscid();
+}
+
+
 void Foam::twoPhaseFluidBlastThermo::updateRho(const volScalarField& p)
 {
     thermo1_->updateRho(this->alpha1(), p);
@@ -466,7 +472,9 @@ void Foam::twoPhaseFluidBlastThermo::addSource
 Foam::tmp<Foam::volScalarField>
 Foam::twoPhaseFluidBlastThermo::ESource() const
 {
-    return this->alpha1()*thermo1_->ESource() + this->alpha2()*thermo2_->ESource();
+    return
+        thermo1_->ESource(this->alpha1())
+      + thermo2_->ESource(this->alpha2());
 }
 
 
@@ -490,7 +498,8 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
             eInit[celli] = cellhe(Tinit, celli);
         }
         eInit +=
-            this->alpha1()*thermo1_->initESource() + this->alpha2()*thermo2_->initESource();
+            thermo1_->initESource(this->alpha1())
+          * thermo2_->initESource(this->alpha2());
     }
     else
     {

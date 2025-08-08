@@ -44,8 +44,10 @@ ${saturationPressure}/Antoine/AntoineSaturationPressureModel.C
 ${saturationPressure}/AntoineExtended/AntoineExtendedSaturationPressureModel.C
 ${saturationPressure}/Tetens/TetensSaturationPressureModel.C
 
-chemistryModel/chemistryModel/basicBlastChemistryModel/basicBlastChemistryModel.C
-chemistryModel/chemistryModel/basicBlastChemistryModel/basicBlastChemistryModelNew.C
+
+# Chemisty models
+chemistryModel/chemistryModel/blastChemistryModel/blastChemistryModel.C
+chemistryModel/chemistryModel/blastChemistryModel/blastChemistryModelNew.C
 
 chemistryModel/chemistrySolver/chemistrySolver/blastChemistrySolvers.C
 chemistryModel/chemistrySolver/none/noBlastChemistrySolvers.C
@@ -53,6 +55,24 @@ chemistryModel/chemistrySolver/EulerImplicit/EulerImplicitBlastChemistrySolvers.
 chemistryModel/chemistrySolver/ode/odeBlastChemistrySolvers.C
 
 chemistryModel/reactions/makeReactions.C
+
+# Combustion models
+combustionModels/combustionModel/blastCombustionModel.C
+combustionModels/combustionModel/blastCombustionModelNew.C
+combustionModels/noCombustion/noCombustionBlastCombustionModel.C
+combustionModels/singleStep/singleStepBlastCombustionModel.C
+combustionModels/infinitelyFastChemistry/infinitelyFastChemistryBlastCombustionModel.C
+combustionModels/diffusion/diffusionBlastCombustionModel.C
+combustionModels/FSD/FSDBlastCombustionModel.C
+combustionModels/laminar/laminarBlastCombustionModel.C
+combustionModels/PaSR/PaSRBlastCombustionModel.C
+combustionModels/EDC/EDCBlastCombustionModel.C
+combustionModels/zone/zoneBlastCombustionModel.C
+
+reactionRateFlameAreaModels=combustionModels/FSD/reactionRateFlameAreaModels
+$(reactionRateFlameAreaModels)/reactionRateFlameAreaModel/reactionRateFlameAreaModel.C
+$(reactionRateFlameAreaModels)/reactionRateFlameAreaModel/reactionRateFlameAreaModelNew.C
+$(reactionRateFlameAreaModels)/relaxation/relaxationReactionRateFlameAreaModel.C
 
 activationModels/activationModel/activationModel.C
 activationModels/activationModel/newActivationModel.C

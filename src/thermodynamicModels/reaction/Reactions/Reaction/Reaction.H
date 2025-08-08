@@ -222,6 +222,15 @@ public:
             virtual void postEvaluate() const = 0;
 
 
+        // Dimensions
+
+            //- Dimensions of the forward rate
+            dimensionSet kfDims() const;
+
+            //- Dimensions of the reverse rate
+            dimensionSet krDims() const;
+
+
         // Reaction rate coefficients
 
             //- Net reaction rate for individual species

@@ -88,6 +88,7 @@ public:
         inline MichaelisMentenReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

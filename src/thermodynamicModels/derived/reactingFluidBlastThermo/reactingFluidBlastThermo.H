@@ -42,7 +42,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "multicomponentFluidBlastThermo.H"
-#include "basicBlastChemistryModel.H"
+#include "blastCombustionModel.H"
 
 namespace Foam
 {
@@ -58,11 +58,11 @@ class reactingFluidBlastThermo
 {
 // Private member data
 
-    //- Chemistry model
-    autoPtr<basicBlastChemistryModel> chemistry_;
+    //- Combustion model
+    autoPtr<blastCombustionModel> combustion_;
 
-    //- Solve chemistry at all ode steps
-    bool odeChemistry_;
+    //- Solve combustion at all ode steps
+    bool odeCombustion_;
 
 
 public:
@@ -106,6 +106,12 @@ public:
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
+
+        //- Return energy source given the current volume fraction
+        virtual tmp<volScalarField> ESource
+        (
+            const volScalarField& alpha
+        ) const;
 };
 
 

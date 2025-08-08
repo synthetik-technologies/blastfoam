@@ -38,7 +38,7 @@ SourceFiles
 #ifndef standardBlastChemistryModel_H
 #define standardBlastChemistryModel_H
 
-#include "basicBlastChemistryModel.H"
+#include "blastChemistryModel.H"
 #include "ReactionList.H"
 #include "ODESystem.H"
 #include "volFields.H"
@@ -59,7 +59,7 @@ class fvMesh;
 template<class BasicThermo, class ThermoType>
 class standardBlastChemistryModel
 :
-    public basicBlastChemistryModel,
+    public blastChemistryModel,
     public ODESystem
 {
     // Private Member Functions

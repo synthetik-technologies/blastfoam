@@ -31,6 +31,7 @@ License
 inline Foam::LangmuirHinshelwoodReactionRate::LangmuirHinshelwoodReactionRate
 (
     const speciesTable& st,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :

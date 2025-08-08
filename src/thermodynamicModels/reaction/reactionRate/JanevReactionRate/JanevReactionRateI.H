@@ -33,8 +33,8 @@ inline Foam::JanevReactionRate::JanevReactionRate
     const FixedList<scalar, nb_> b
 )
 :
-    A_(A),
     beta_(beta),
+    A_(A),
     Ta_(Ta),
     b_(b)
 {}
@@ -43,12 +43,19 @@ inline Foam::JanevReactionRate::JanevReactionRate
 inline Foam::JanevReactionRate::JanevReactionRate
 (
     const speciesTable&,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :
-    A_(dict.lookup<scalar>("A")),
-    beta_(dict.lookup<scalar>("beta")),
-    Ta_(dict.lookup<scalar>("Ta")),
+    beta_(dict.lookup<scalar>("beta", dimless)),
+    A_(dict.lookup<scalar>("A", dims/pow(dimTemperature, beta_))),
+    Ta_
+    (
+        dict.found("Ta") || !dict.found("Ea")
+      ? dict.lookup<scalar>("Ta", dimTemperature)
+      : dict.lookup<scalar>("Ea", dimEnergy/dimMoles)
+       /constant::physicoChemical::RR.value()
+    ),
     b_(dict.lookup("b"))
 {}
 

@@ -28,10 +28,10 @@ License
 #ifndef forBlastGasses_H
 #define forBlastGasses_H
 
+#include "thermoModel.H"
+
 #include "constTransport.H"
 #include "sutherlandTransport.H"
-
-#include "thermoModel.H"
 
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
@@ -45,9 +45,6 @@ License
 #include "idealGas.H"
 #include "stiffenedGas.H"
 #include "vanderWaals.H"
-#include "LSZK.H"
-#include "BKW.H"
-#include "DoanNickel.H"
 #include "JWL.H"
 
 #include "specieBlast.H"
@@ -60,10 +57,7 @@ License
 #define forGasEqns(Mu, Cp, Macro, Args...)                                  \
     forThermo(Mu, Cp, idealGas, specieBlast, Macro, Args);                  \
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
-    forThermo(Mu, Cp, LSZK, specieBlast, Macro, Args);                      \
-    forThermo(Mu, Cp, BKW, specieBlast, Macro, Args);                       \
-    forThermo(Mu, Cp, JWL, specieBlast, Macro, Args);                       \
-    forThermo(Mu, Cp, DoanNickel, specieBlast, Macro, Args)
+    forThermo(Mu, Cp, JWL, specieBlast, Macro, Args);
 
 #define forGasThermos(Mu, Macro, Args...)                                   \
     forGasEqns(Mu, eConstThermo, Macro, Args);                              \

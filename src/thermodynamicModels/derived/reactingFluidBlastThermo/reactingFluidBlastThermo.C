@@ -46,8 +46,15 @@ Foam::reactingFluidBlastThermo<Thermo>::reactingFluidBlastThermo
         phaseName,
         masterName
     ),
-    chemistry_(basicBlastChemistryModel::New(*this)),
-    odeChemistry_(dict.lookupOrDefault<bool>("odeChemistry", false))
+    combustion_(blastCombustionModel::NewFluid(*this)),
+    odeCombustion_
+    (
+        dict.lookupOrDefaultBackwardsCompatible
+        (
+            {"odeCombustion", "odeChemistry"},
+            false
+        )
+    )
 {}
 
 
@@ -69,8 +76,15 @@ Foam::reactingFluidBlastThermo<Thermo>::reactingFluidBlastThermo
         phaseName,
         masterName
     ),
-    chemistry_(basicBlastChemistryModel::New(*this)),
-    odeChemistry_(dict.lookupOrDefault<bool>("odeChemistry", false))
+    combustion_(blastCombustionModel::NewFluid(*this)),
+    odeCombustion_
+    (
+        dict.lookupOrDefaultBackwardsCompatible
+        (
+            {"odeCombustion", "odeChemistry"},
+            false
+        )
+    )
 {}
 
 
@@ -86,15 +100,16 @@ Foam::reactingFluidBlastThermo<Thermo>::~reactingFluidBlastThermo()
 template<class Thermo>
 void Foam::reactingFluidBlastThermo<Thermo>::update()
 {
-    if (this->step() == 1 || odeChemistry_)
+    if (this->step() == 1 || odeCombustion_)
     {
-        chemistry_->solve(this->T().time().deltaTValue());
+        combustion_->correct();
     }
+
     forAll(this->species_, speciei)
     {
         if (this->solveSpecie(speciei))
         {
-            this->addDelta(this->species_[speciei], chemistry_->RR(speciei));
+            this->addDelta(this->species_[speciei], combustion_->R(speciei));
         }
     }
     multicomponentFluidBlastThermo<Thermo>::update();
@@ -118,8 +133,18 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::reactingFluidBlastThermo<Thermo>::ESource() const
 {
-    return chemistry_->Qdot();
+    return combustion_->Qdot();
 }
 
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::reactingFluidBlastThermo<Thermo>::ESource
+(
+    const volScalarField& alpha
+) const
+{
+    return alpha*ESource();
+}
 
 // ************************************************************************* //

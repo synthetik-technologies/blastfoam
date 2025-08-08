@@ -88,6 +88,7 @@ public:
         inline FallOffReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

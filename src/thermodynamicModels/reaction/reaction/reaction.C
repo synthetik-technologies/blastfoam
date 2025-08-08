@@ -88,6 +88,24 @@ Foam::reaction::reaction
 }
 
 
+Foam::reaction::reaction
+(
+    const speciesTable& species,
+    const string& str
+)
+:
+    name_("un-named-reaction-" + Foam::name(getNewReactionID())),
+    species_(species)
+{
+    specieCoeffs::setLRhs
+    (
+        IStringStream(str)(),
+        species_,
+        lhs_,
+        rhs_
+    );
+}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::reaction::write(Ostream& os) const

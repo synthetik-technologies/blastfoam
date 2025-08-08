@@ -35,11 +35,7 @@ License
 #include "eConstBlastThermo.H"
 #include "ePolynomialBlastThermo.H"
 
-#include "perfectGas.H"
-#include "AbelNobel.H"
 #include "JWLC.H"
-
-#include "vanderWaals.H"
 #include "JWL.H"
 #include "LSZK.H"
 #include "BKW.H"
@@ -59,9 +55,7 @@ License
 
 #define forDetrGasEqns(uMu, rMu, uCp, rCp, uEos, Macro, Args...)            \
     forDetThermo(uMu, rMu, uCp, rCp, uEos, JWLC, specieBlast, Macro, Args); \
-    forDetThermo(uMu, rMu, uCp, rCp, uEos, JWL, specieBlast, Macro, Args);  \
-    forDetThermo(uMu, rMu, uCp, rCp, uEos, LSZK, specieBlast, Macro, Args); \
-    forDetThermo(uMu, rMu, uCp, rCp, uEos, BKW, specieBlast, Macro, Args);
+    forDetThermo(uMu, rMu, uCp, rCp, uEos, JWL, specieBlast, Macro, Args);
 
 
 #define forDetuGasEqns(uMu, rMu, uCp, rCp, Macro, Args...)                  \

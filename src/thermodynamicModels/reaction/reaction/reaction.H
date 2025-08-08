@@ -110,6 +110,13 @@ public:
             const dictionary& dict
         );
 
+        //- Construct from dictionary
+        reaction
+        (
+            const speciesTable& species,
+            const string& str
+        );
+
 
     //- Destructor
     ~reaction()

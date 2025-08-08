@@ -42,7 +42,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "multicomponentSolidBlastThermo.H"
-#include "basicBlastChemistryModel.H"
+#include "blastCombustionModel.H"
 
 namespace Foam
 {
@@ -58,11 +58,11 @@ class reactingSolidBlastThermo
 {
 // Private member data
 
-    //- Chemistry model
-    autoPtr<basicBlastChemistryModel> chemistry_;
+    //- Combustion model
+    autoPtr<blastCombustionModel> combustion_;
 
-    //- Solve chemistry at all ode steps
-    bool odeChemistry_;
+    //- Solve combustion at all ode steps
+    bool odeCombustion_;
 
 
 public:

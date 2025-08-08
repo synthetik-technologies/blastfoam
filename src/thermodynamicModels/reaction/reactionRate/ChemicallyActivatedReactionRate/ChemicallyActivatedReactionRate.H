@@ -89,6 +89,7 @@ public:
         inline ChemicallyActivatedReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

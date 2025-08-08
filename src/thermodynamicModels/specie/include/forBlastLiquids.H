@@ -36,7 +36,6 @@ License
 #include "ePolynomialBlastThermo.H"
 
 #include "Tait.H"
-#include "BWR.H"
 #include "linearTillotson.H"
 #include "Tillotson.H"
 
@@ -49,7 +48,6 @@ License
 
 #define forLiquidEqns(Mu, Cp, Macro, Args...)                               \
     forThermo(Mu, Cp, Tait, specieBlast, Macro, Args);                      \
-    forThermo(Mu, Cp, BWR, specieBlast, Macro, Args);                       \
     forThermo(Mu, Cp, linearTillotson, specieBlast, Macro, Args);                      \
     forThermo(Mu, Cp, Tillotson, specieBlast, Macro, Args);                 \
 

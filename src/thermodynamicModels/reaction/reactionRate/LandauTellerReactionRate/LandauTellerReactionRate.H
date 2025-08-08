@@ -58,8 +58,8 @@ class LandauTellerReactionRate
 {
     // Private Data
 
-        scalar A_;
         scalar beta_;
+        scalar A_;
         scalar Ta_;
         scalar B_;
         scalar C_;
@@ -83,6 +83,7 @@ public:
         inline LandauTellerReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

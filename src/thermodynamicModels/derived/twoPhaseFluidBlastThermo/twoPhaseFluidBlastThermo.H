@@ -196,6 +196,9 @@ public:
 
         // Fields derived from thermodynamic state variables
 
+            //- Return if inviscid
+            virtual bool inviscid() const;
+
             //- Calculate pressure for cell [Pa]
             virtual scalar cellpRhoT
             (

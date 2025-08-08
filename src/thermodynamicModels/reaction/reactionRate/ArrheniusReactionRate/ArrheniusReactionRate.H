@@ -60,8 +60,8 @@ class ArrheniusReactionRate
 {
     // Private Data
 
-        scalar A_;
         scalar beta_;
+        scalar A_;
         scalar Ta_;
 
 
@@ -81,6 +81,7 @@ public:
         inline ArrheniusReactionRate
         (
             const speciesTable& species,
+            const dimensionSet& dims,
             const dictionary& dict
         );
 

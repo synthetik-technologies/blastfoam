@@ -52,11 +52,12 @@ inline Foam::FallOffReactionRate<ReactionRate, FallOffFunction>::
 FallOffReactionRate
 (
     const speciesTable& species,
+    const dimensionSet& dims,
     const dictionary& dict
 )
 :
-    k0_(species, dict.subDict("k0")),
-    kInf_(species, dict.subDict("kInf")),
+    k0_(species, dims, dict.subDict("k0")),
+    kInf_(species, dims, dict.subDict("kInf")),
     F_(dict.subDict("F")),
     thirdBodyEfficiencies_(species, dict.subDict("thirdBodyEfficiencies"))
 {

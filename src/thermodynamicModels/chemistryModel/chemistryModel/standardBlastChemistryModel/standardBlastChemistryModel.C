@@ -36,7 +36,7 @@ standardBlastChemistryModel
     const blastThermo& thermo
 )
 :
-    basicBlastChemistryModel(thermo),
+    blastChemistryModel(thermo),
     ODESystem(),
     mixture_
     (
@@ -47,7 +47,7 @@ standardBlastChemistryModel
     reactions_(mixture_.species(), specieThermos_, this->mesh(), *this),
     nSpecie_(Y_.size()),
     nReaction_(reactions_.size()),
-    Treact_(basicBlastChemistryModel::template lookupOrDefault<scalar>("Treact", 0)),
+    Treact_(blastChemistryModel::template lookupOrDefault<scalar>("Treact", 0)),
     RR_(nSpecie_),
     c_(nSpecie_),
     dcdt_(nSpecie_),
@@ -465,7 +465,7 @@ Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::solve
     const DeltaTType& deltaT
 )
 {
-    basicBlastChemistryModel::correct();
+    blastChemistryModel::correct();
 
     scalar deltaTMin = great;
 

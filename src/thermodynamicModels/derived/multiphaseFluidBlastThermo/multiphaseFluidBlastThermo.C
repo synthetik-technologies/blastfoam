@@ -414,6 +414,19 @@ void Foam::multiphaseFluidBlastThermo::postUpdate()
 }
 
 
+bool Foam::multiphaseFluidBlastThermo::inviscid() const
+{
+    forAll(thermos_, phasei)
+    {
+        if (!thermos_[phasei].inviscid())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 void Foam::multiphaseFluidBlastThermo::updateRho(const volScalarField& p)
 {
     thermos_[0].updateRho(volumeFractions_[0], p);
@@ -493,10 +506,10 @@ void Foam::multiphaseFluidBlastThermo::addSource
 
 Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidBlastThermo::ESource() const
 {
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].ESource());
+    tmp<volScalarField> tmpF(thermos_[0].ESource(volumeFractions_[0]));
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].ESource();
+        tmpF.ref() += thermos_[phasei].ESource(volumeFractions_[phasei]);
     }
     return tmpF;
 }
@@ -516,7 +529,7 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
         }
         forAll(volumeFractions_, phasei)
         {
-            eInit += volumeFractions_[phasei]*thermos_[phasei].initESource();
+            eInit += thermos_[phasei].initESource(volumeFractions_[phasei]);
         }
     }
     else

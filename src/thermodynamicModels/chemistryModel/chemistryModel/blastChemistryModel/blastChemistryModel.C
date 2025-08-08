@@ -23,25 +23,25 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicBlastChemistryModel.H"
+#include "blastChemistryModel.H"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 
 namespace Foam
 {
-    defineTypeNameAndDebug(basicBlastChemistryModel, 0);
-    defineRunTimeSelectionTable(basicBlastChemistryModel, thermo);
+    defineTypeNameAndDebug(blastChemistryModel, 0);
+    defineRunTimeSelectionTable(blastChemistryModel, thermo);
 }
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
-void Foam::basicBlastChemistryModel::correct()
+void Foam::blastChemistryModel::correct()
 {}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::basicBlastChemistryModel::basicBlastChemistryModel
+Foam::blastChemistryModel::blastChemistryModel
 (
     const blastThermo& mixture
 )
@@ -81,7 +81,7 @@ Foam::basicBlastChemistryModel::basicBlastChemistryModel
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::basicBlastChemistryModel::~basicBlastChemistryModel()
+Foam::blastChemistryModel::~blastChemistryModel()
 {}
 
 
