@@ -30,6 +30,7 @@ Description
 
 #include "argList.H"
 #include "IFstream.H"
+#include "tableReader.H"
 
 #include "EquationsFwd.H"
 #include "univariateRootSolver.H"
@@ -41,10 +42,12 @@ Description
 #include "rootSolver.H"
 #include "MultivariateIntegratorsFwd.H"
 #include "minimizationScheme.H"
+#include "nonLinearLeastSquares.H"
 
 #include "CodedEquation.H"
 #include "CodedUnivariateEquation.H"
 #include "CodedMultivariateEquation.H"
+#include "CodedCoefficientEquation.H"
 
 #include "Time.H"
 
@@ -71,6 +74,7 @@ enum EqnType
     SINGLE,
     UNI,
     MULTI,
+    COEFFICIENT,
     UNKNOWN
 };
 
@@ -88,6 +92,10 @@ EqnType getEqnType(const string& fxStr)
 
 EqnType getEqnType(const argList& args)
 {
+    if (args.optionFound("regression"))
+    {
+        return COEFFICIENT;
+    }
     if (args.optionFound("P"))
     {
         return SINGLE;
@@ -98,6 +106,10 @@ EqnType getEqnType(const argList& args)
 
 EqnType getEqnType(const dictionary& dict)
 {
+    if (dict.lookupOrDefault("regression", false))
+    {
+        return COEFFICIENT;
+    }
     if (dict.found("P"))
     {
         return SINGLE;
@@ -107,6 +119,22 @@ EqnType getEqnType(const dictionary& dict)
 
 
 label calcNVar(const string& fxStr)
+{
+    IStringStream is(fxStr);
+    label maxI = -1;
+    while (is.good())
+    {
+        char t(readChar(is));
+        if (t == token::BEGIN_SQR)
+        {
+            label i(readLabel(is));
+            maxI = max(i, maxI);
+        }
+    }
+    return maxI + 1;
+}
+
+label calcNCoeff(const string& fxStr)
 {
     IStringStream is(fxStr);
     label maxI = -1;
@@ -251,6 +279,14 @@ void setEquationFuncDict
                 "return " + args.optionRead<string>("d3fdx3") + ";"
             );
         }
+        if (args.optionFound("coeffJ"))
+        {
+            dict.set
+            (
+                "coeffJ_code",
+                "return " + args.optionRead<string>("coeffJ") + ";"
+            );
+        }
     }
     else if (args.optionFound("P"))
     {
@@ -350,7 +386,6 @@ void setEquationSolverDict
         evaluationDict.set("x", word("(" + xName + ")"));
         dict.set("evaluationCoeffs", evaluationDict);
         dict.set("evaluate", true);
-        Info<<dict<<endl;
     }
     else if (args.optionFound("evals"))
     {
@@ -541,6 +576,46 @@ void setUnivariateFuncDict
     dict.set("nVar", nVar);
 }
 
+void setCoefficientFuncDict
+(
+    const argList& args,
+    dictionary& dict
+)
+{
+    dict.set("fx_code", "return " + args.optionRead<string>("fx") +";");
+    dict.set("eqnString", args.optionRead<string>("fx"));
+    dict.set
+    (
+        "dfdx_code",
+        splitEquations("dfdx", (args.optionLookup("dfdx"))())
+    );
+    dict.set
+    (
+        "coeffJ_code",
+        splitEquations("coeffJ", (args.optionLookup("coeffJ"))())
+    );
+
+    dict.set("name", string(args.optionLookupOrDefault<word>("name", "f")));
+
+    Pair<scalarList> bounds;
+    label nVar = -1;
+    if (args.optionFound("bounds"))
+    {
+        bounds = args.optionRead<Pair<scalarList>>("bounds");
+        nVar = bounds[0].size();
+    }
+    else
+    {
+        nVar = calcNVar(args.optionRead<string>("fx"));
+        bounds[0].setSize(nVar, -great);
+        bounds[1].setSize(nVar, great);
+    }
+    dict.set("bounds", bounds);
+    dict.set("lowerBounds", bounds[0]);
+    dict.set("upperBounds", bounds[1]);
+    dict.set("nVar", nVar);
+}
+
 
 label nUnivariateEquationDerivatives(dictionary& dict)
 {
@@ -664,6 +739,9 @@ int main(int argc, char *argv[])
     argList::addOption("integrate", "Integrate function");
     argList::addOption("integrator", "Integration scheme");
 
+    argList::addBoolOption("regression", "Compute coefficients of a regression");
+
+
     argList::addBoolOption("time", "Construct time");
 
     #include "setRootCase.H"
@@ -752,6 +830,10 @@ int main(int argc, char *argv[])
         {
             setUnivariateFuncDict(args, funcDictPtr());
         }
+        else if (eqnType == COEFFICIENT)
+        {
+            setCoefficientFuncDict(args, funcDictPtr());
+        }
         else
         {
             setEquationFuncDict(args, funcDictPtr(), P);
@@ -808,12 +890,60 @@ int main(int argc, char *argv[])
     }
     const dictionary& dict = dictPtr();
 
+    if (eqnType == COEFFICIENT)
+    {
+        CodedCoefficientEquation<scalar> eqn(runTime, funcDictPtr);
+        nonLinearLeastSquares solver;
 
-    if (eqnType == UNI)
+        const entryTable data
+        (
+            read2DTable
+            (
+                funcDictPtr->lookup<fileName>("file"),
+                readDelim(funcDictPtr(), "delim", token::COMMA),
+                funcDictPtr->lookupOrDefault<label>("startRow", 0),
+                funcDictPtr->lookupOrDefault<Switch>("flipTable", false)
+            )
+        );
+        List<scalarField> txs(funcDictPtr->lookup<label>("nVars"));
+        forAll(txs, i)
+        {
+            txs[i] = readColumn<scalar>
+            (
+                data,
+                funcDictPtr->lookup<label>("x" + Foam::name(i) + "Col")
+            );
+        }
+        List<scalarList> xs(txs[0].size(), scalarList(txs.size()));
+        forAll(txs, i)
+        {
+            forAll(txs[i], j)
+            {
+                xs[j][i] = txs[i][j];
+            }
+        }
+
+        scalarField y
+        (
+            readColumn<scalar>(data, funcDictPtr->lookup<label>("yCol"))
+        );
+        solver.findCoeffs(eqn, xs, y);
+
+        Info<< "Coefficients: " << eqn.coeffs() << endl;
+
+        scalar residual = 0;
+        forAll(xs, i)
+        {
+            residual += magSqr(eqn.fX(xs[i], 0) - y[i]);
+        }
+        Info<< "Residual=" << Foam::sqrt(residual/scalar(xs.size())) << endl;
+    }
+    else if (eqnType == UNI)
     {
         const word name = funcDictPtr->lookupOrDefault<word>("name", "f");
 
         CodedUnivariateEquation<scalar> eqn(runTime, funcDictPtr());
+
         Info << nl << endl;
 
         if (eqn.eqnString() != "undefined")
@@ -915,6 +1045,7 @@ int main(int argc, char *argv[])
         const word name = funcDictPtr->lookupOrDefault<word>("name", "f");
 
         CodedEquation<scalar> eqn(runTime, funcDictPtr());
+
         Info << nl << endl;
 
         Info<< "************************************" << nl
@@ -936,8 +1067,7 @@ int main(int argc, char *argv[])
                 Info<< name << "(" << xs[i] << ") = "
                     << eqn.fx(xs[i], 0) << endl;
                 if (nDerivatives > 0)
-                {        eqn.setObr(runTime);
-
+                {
                     Info<< "d" << name << "dx(" << xs[i] << ") = "
                         << eqn.dfdx(xs[i], 0) << endl;
                 }
