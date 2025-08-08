@@ -20,12 +20,13 @@ thermoType
 {
     transport       sutherland;
     thermo          janaf;
-    equationOfState VanderWaals;
+    equationOfState perfectGas;
 }
 
 calculateDensity yes;
 
 species         ( O2 H2O CH4 CO2 N2 );
+defaultSpecie   N2;
 
 O2
 {
@@ -157,7 +158,6 @@ N2
     }
 }
 
-defaultSpecie   N2;
 
 
 // ************************************************************************* //
