@@ -53,7 +53,7 @@ class MidPointMultivariateIntegrator
 :
     public MultivariateIntegrator<Type, Adapt>
 {
-    typedef univariateEquation<Type> equationType;
+    using typename MultivariateIntegrator<Type, Adapt>::equationType;
 
     virtual Type integrateFunc
     (

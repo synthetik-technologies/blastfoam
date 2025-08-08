@@ -55,7 +55,7 @@ class GaussianMultivariateIntegrator
 {
 // Private data
 
-    typedef univariateEquation<Type> equationType;
+    using typename MultivariateIntegrator<Type, Adapt>::equationType;
 
     //- Gauss weights
     List<scalarList> ws_;

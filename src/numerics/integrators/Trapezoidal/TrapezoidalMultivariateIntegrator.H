@@ -25,7 +25,7 @@ Class
     Foam::TrapezoidalMultivariateIntegrator
 
 Description
-    Mid-point integration
+    Trapezoidal integration
 
 SourceFiles
     TrapezoidalMultivariateIntegrator.C
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class TrapezoidalMultivariateIntegrator Declaration
+                Class TrapezoidalMultivariateIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type, class Adapt>
@@ -53,7 +53,7 @@ class TrapezoidalMultivariateIntegrator
 :
     public MultivariateIntegrator<Type, Adapt>
 {
-    typedef univariateEquation<Type> equationType;
+    using typename MultivariateIntegrator<Type, Adapt>::equationType;
 
     virtual Type integrateFunc
     (

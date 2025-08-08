@@ -55,7 +55,7 @@ class GaussianIntegrator
 {
 // Private data
 
-    typedef Equation<Type> equationType;
+    using typename Integrator<Type, Adapt>::equationType;
 
     //- Gauss weights
     scalarList ws_;

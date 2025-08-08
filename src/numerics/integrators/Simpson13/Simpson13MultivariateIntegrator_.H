@@ -53,7 +53,7 @@ class Simpson13Integrator
 :
     public Integrator<Type>
 {
-    typedef univariateEquation<Type> equationType;
+    using typename MultivariateIntegrator<Type, Adapt>::equationType;
 
         //- Basic integration method
         virtual Type integrate_

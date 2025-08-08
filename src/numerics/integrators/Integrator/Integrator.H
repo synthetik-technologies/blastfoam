@@ -124,7 +124,7 @@ protected:
 
     // Protected data
 
-        typedef Equation<Type> equationType;
+        typedef equation<Type> equationType;
 
         //- Reference to Equation
         UautoPtr<const equationType> eqnPtr_;

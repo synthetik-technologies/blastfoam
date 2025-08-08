@@ -53,7 +53,7 @@ class TrapezoidalIntegrator
 :
     public Integrator<Type, Adapt>
 {
-    typedef Equation<Type> equationType;
+    using typename Integrator<Type, Adapt>::equationType;
 
         //- Solve the root
         virtual Type integrate_

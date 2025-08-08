@@ -53,7 +53,7 @@ class MidPointIntegrator
 :
     public Integrator<Type, Adapt>
 {
-    typedef Equation<Type> equationType;
+    using typename Integrator<Type, Adapt>::equationType;
 
     //- Recursive integration
     virtual Type integrate_

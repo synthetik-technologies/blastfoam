@@ -15,6 +15,7 @@ equations/univariate/univariateEquations.C
 equations/multivariate/multivariateEquations.C
 
 equations/coded/codedEquations.C
+equations/coefficients/coded/codedCoefficientEquations.C
 
 rootSolvers/rootSolver/rootSolver.C
 rootSolvers/rootSolver/rootSolverNew.C
