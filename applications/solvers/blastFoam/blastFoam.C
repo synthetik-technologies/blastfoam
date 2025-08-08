@@ -48,9 +48,6 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
     #include "createTime.H"
 
-    Info<< "Create mesh for time = "
-        << runTime.name() << nl << endl;
-
     #include "createRegionMesh.H"
 
     #include "createFields.H"
