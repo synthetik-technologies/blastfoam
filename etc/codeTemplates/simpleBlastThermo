@@ -15,6 +15,7 @@ FoamFile
 
 transport
 (
+    inviscid
     const
     sutherland
     polynomial

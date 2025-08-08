@@ -81,25 +81,25 @@ public:
     // Member functions
 
         //- Set the number of coefficients
-        inline void setN(const label n)
+        virtual inline void setN(const label n)
         {
             coeffs_.setSize(n);
         }
 
         //- Return the number of coefficients
-        inline label n() const
+        virtual inline label n() const
         {
             return coeffs_.size();
         }
 
         //- Return the coefficients
-        const Field<scalar>& coeffs() const
+        virtual const Field<scalar>& coeffs() const
         {
             return coeffs_;
         }
 
         //- Access the coefficients
-        Field<scalar>& coeffsRef()
+        virtual Field<scalar>& coeffsRef()
         {
             return coeffs_;
         }

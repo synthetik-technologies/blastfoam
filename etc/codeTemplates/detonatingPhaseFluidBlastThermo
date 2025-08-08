@@ -15,6 +15,7 @@ FoamFile
 
 uTransport
 (
+    inviscid
     const
     sutherland
     polynomial
@@ -26,6 +27,7 @@ uTransport
 
 rTransport
 (
+    inviscid
     const
     sutherland
     polynomial
