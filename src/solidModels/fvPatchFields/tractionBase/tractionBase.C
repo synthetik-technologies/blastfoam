@@ -97,8 +97,8 @@ void Foam::tractionBase::map
 )
 {
     const tractionBase& tb = dynamicCast<const tractionBase>(ptf);
-    mapper(traction_, tb.traction_);
-    mapper(pressure_, tb.pressure_);
+    mapper(traction_, tb.traction_, vector::zero);
+    mapper(pressure_, tb.pressure_, 0.0);
 }
 
 

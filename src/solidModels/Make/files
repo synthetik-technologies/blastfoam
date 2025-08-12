@@ -131,49 +131,58 @@ functionObjects/solidTractions/solidTractions.C
 functionObjects/centrifugalBodyForce/centrifugalBodyForce.C
 functionObjects/vonMisesStress/vonMisesStress.C
 
-# # fvMeshTopoChangers/simpleCracker/simpleCrackerFvMeshTopoChanger.C
-# # fvMeshTopoChangers/cracker/crackerFvMeshTopoChanger.C
-# # fvMeshTopoChangers/refineCracker/refineCrackerFvMesheTopoChangers.C
-#
-# fvMeshTopoChangers/simpleCracker/simpleCohesiveZone/simpleCohesiveZoneFvPatchVectorField.C
-#
-# simpleCohesiveZones = fvMeshTopoChangers/simpleCracker/simpleCohesiveZone/simpleCohesiveZoneLaws
-# $(simpleCohesiveZones)/simpleCohesiveZoneLaw/simpleCohesiveZoneLaw.C
-# $(simpleCohesiveZones)/Dugdale/DugdaleSimpleCohesiveZoneLaw.C
-# $(simpleCohesiveZones)/linear/linearSimpleCohesiveZoneLaw.C
-#
-# fvMeshTopoChangers/cracker/cohesivePolyPatch/cohesivePolyPatch.C
-# fvMeshTopoChangers/cracker/cohesivePointPatch/cohesivePointPatch.C
-# fvMeshTopoChangers/cracker/cohesiveFvPatch/cohesiveFvPatch.C
-# fvMeshTopoChangers/cracker/faceCracker/faceCracker.C
-# fvMeshTopoChangers/cracker/faceCracker/detachFaceCracker.C
-#
-# fvMeshTopoChangers/cracker/solidCohesive/solidCohesiveFvPatchVectorFields.C
-#
-# cohesiveZoneModels = fvMeshTopoChangers/cracker/solidCohesive/cohesiveZoneModels
-# $(cohesiveZoneModels)/cohesiveZoneModel/cohesiveZoneModel.C
-# $(cohesiveZoneModels)/cohesiveZoneModel/newCohesiveZoneModel.C
-# $(cohesiveZoneModels)/modeICohesiveZoneModel/modeICohesiveZoneModel.C
-# $(cohesiveZoneModels)/fixedMixedModeCohesiveZoneModel/fixedMixedModeCohesiveZoneModel.C
-# $(cohesiveZoneModels)/variableMixedModeCohesiveZoneModel/variableMixedModeCohesiveZoneModel.C
-#
-# faceBreakerLaws = fvMeshTopoChangers/cracker/faceBreakerLaws
-# $(faceBreakerLaws)/faceBreakerLaw/faceBreakerLaw.C
-# $(faceBreakerLaws)/faceBreakerLaw/newFaceBreakerLaw.C
-# $(faceBreakerLaws)/cohesiveZoneInitiation/cohesiveZoneInitiation.C
-#
-# crackPathLimiters = $(faceBreakerLaws)/faceBreakerLaw/crackPathLimiters
-# $(crackPathLimiters)/crackPathLimiter/crackPathLimiter.C
-# $(crackPathLimiters)/crackPathLimiter/newCrackPathLimiter.C
-# $(crackPathLimiters)/boundingBox/boundingBoxCrackPathLimiter.C
-# $(crackPathLimiters)/noLimiter/noCrackPathLimiter.C
-#
-# # fvMeshTopoChangers/cellRemoval/cellRemovalFvMeshTopoChanger.C
-#
-# cellRemovalLaws = fvMeshTopoChangers/cellRemoval/cellRemovalLaws
-# $(cellRemovalLaws)/cellRemovalLaw/cellRemovalLaw.C
-# $(cellRemovalLaws)/cellRemovalLaw/newCellRemovalLaw.C
-# $(cellRemovalLaws)/epsilonPEqCellRemovalLaw/epsilonPEqCellRemovalLaw.C
-# $(cellRemovalLaws)/stressCellRemovalLaw/stressCellRemovalLaw.C
+# Simple cracker
+simpleCracker = fvMeshTopoChangers/simpleCracker
+$(simpleCracker)/simpleCrackerFvMeshTopoChanger.C
+
+simpleCohesiveZone = $(simpleCracker)/simpleCohesiveZone
+$(simpleCohesiveZone)/simpleCohesiveZoneFvPatchVectorField.C
+
+simpleCohesiveZoneLaws = $(simpleCohesiveZone)/simpleCohesiveZoneLaws
+$(simpleCohesiveZoneLaws)/simpleCohesiveZoneLaw/simpleCohesiveZoneLaw.C
+$(simpleCohesiveZoneLaws)/Dugdale/DugdaleSimpleCohesiveZoneLaw.C
+$(simpleCohesiveZoneLaws)/linear/linearSimpleCohesiveZoneLaw.C
+
+
+# Cracker
+cracker = fvMeshTopoChangers/cracker
+$(cracker)/crackerFvMeshTopoChanger.C
+# $(cracker)/refineCrackerFvMesheTopoChangers.C
+
+$(cracker)/cohesivePolyPatch/cohesivePolyPatch.C
+$(cracker)/cohesivePointPatch/cohesivePointPatch.C
+$(cracker)/cohesiveFvPatch/cohesiveFvPatch.C
+$(cracker)/faceCracker/faceCracker.C
+$(cracker)/faceCracker/detachFaceCracker.C
+
+$(cracker)/solidCohesive/solidCohesiveFvPatchVectorFields.C
+
+cohesiveZoneModels = $(cracker)/solidCohesive/cohesiveZoneModels
+$(cohesiveZoneModels)/cohesiveZoneModel/cohesiveZoneModel.C
+$(cohesiveZoneModels)/cohesiveZoneModel/cohesiveZoneModelNew.C
+$(cohesiveZoneModels)/modeICohesiveZoneModel/modeICohesiveZoneModel.C
+$(cohesiveZoneModels)/fixedMixedModeCohesiveZoneModel/fixedMixedModeCohesiveZoneModel.C
+$(cohesiveZoneModels)/variableMixedModeCohesiveZoneModel/variableMixedModeCohesiveZoneModel.C
+
+faceBreakerLaws = fvMeshTopoChangers/cracker/faceBreakerLaws
+$(faceBreakerLaws)/faceBreakerLaw/faceBreakerLaw.C
+$(faceBreakerLaws)/faceBreakerLaw/faceBreakerLawNew.C
+$(faceBreakerLaws)/cohesiveZoneInitiation/cohesiveZoneInitiation.C
+
+crackPathLimiters = $(faceBreakerLaws)/faceBreakerLaw/crackPathLimiters
+$(crackPathLimiters)/crackPathLimiter/crackPathLimiter.C
+$(crackPathLimiters)/crackPathLimiter/crackPathLimiterNew.C
+$(crackPathLimiters)/boundingBox/boundingBoxCrackPathLimiter.C
+$(crackPathLimiters)/noLimiter/noCrackPathLimiter.C
+
+
+# Cell removal
+fvMeshTopoChangers/cellRemoval/cellRemovalFvMeshTopoChanger.C
+
+cellRemovalLaws = fvMeshTopoChangers/cellRemoval/cellRemovalLaws
+$(cellRemovalLaws)/cellRemovalLaw/cellRemovalLaw.C
+$(cellRemovalLaws)/cellRemovalLaw/cellRemovalLawNew.C
+$(cellRemovalLaws)/epsilonPEq/epsilonPEqCellRemovalLaw.C
+$(cellRemovalLaws)/stress/stressCellRemovalLaw.C
 
 LIB = $(BLAST_LIBBIN)/libblastSolidModels
