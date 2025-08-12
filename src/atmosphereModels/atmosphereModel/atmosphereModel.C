@@ -97,7 +97,8 @@ void Foam::atmosphereModel::hydrostaticInitialisation
 {
     volScalarField p(thermo.p());
 
-    const volScalarField& rho = thermo.rho();
+    tmp<volScalarField> trho(thermo.rho());
+    const volScalarField& rho = trho();
     const fvMesh& mesh = p.mesh();
 
     volScalarField gh("gh", (g_ & mesh_.C()) + mag(g_)*hRef_);
