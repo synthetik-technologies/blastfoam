@@ -297,6 +297,7 @@ void Foam::phaseModel::solveAlphaRho()
         IOobject::groupName("deltaAlphaRho", name_),
         fvc::div(alphaRhoPhi_)
     );
+    this->fvTimeInt_->addDeltaSource(alphaRho_.name(), deltaAlphaRho);
     if (fluid_.hasMassTransfer(*this))
     {
         forAll(fluid_.phases(), phasei)
@@ -334,6 +335,7 @@ void Foam::phaseModel::solve()
                 IOobject::groupName("deltaAlpha", name_),
                 fvc::div(alphaPhiPtr_()) - alpha*fvc::div(fluid_.phi())
             );
+        this->fvTimeInt_->addDeltaSource(alpha.name(), deltaAlpha.ref());
     }
 
     volVectorField deltaAlphaRhoU
@@ -343,6 +345,7 @@ void Foam::phaseModel::solve()
       - fluid_.PI()*gradAlpha()
       - (*this)*rho()*fluid_.g() // alphaRho has already been updated
     );
+    this->fvTimeInt_->addDeltaSource(alphaRhoU_.name(), deltaAlphaRhoU);
 
     volScalarField deltaAlphaRhoE
     (
@@ -352,6 +355,7 @@ void Foam::phaseModel::solve()
       - fluid_.PI()*(fluid_.U() & gradAlpha())
       - (alphaRhoU_ & fluid_.g())
     );
+    this->fvTimeInt_->addDeltaSource(alphaRhoE_.name(), deltaAlphaRhoE);
 
     if (fluid_.hasMassTransfer(*this))
     {

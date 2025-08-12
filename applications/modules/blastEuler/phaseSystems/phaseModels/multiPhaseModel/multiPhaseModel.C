@@ -352,9 +352,15 @@ void Foam::multiPhaseModel::solve()
         (
             fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
         );
+        this->fvTimeInt_->addDeltaSource(alphas_[phasei].name(), deltaAlpha);
         this->storeAndBlendDelta(deltaAlpha);
 
         volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
+        this->fvTimeInt_->addDeltaSource
+        (
+            alphaRhos_[phasei].name(),
+            deltaAlphaRho
+        );
         this->storeAndBlendDelta(deltaAlphaRho);
 
         this->storeAndBlendOld(alphas_[phasei]);
