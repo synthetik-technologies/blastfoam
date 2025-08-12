@@ -58,26 +58,26 @@ Foam::FieldSetTypes::InitialValue<Type, FSType>::InitialValue
       : nullptr
     )
 {
-    if (!origFieldPtr_.valid())
-    {
-        typedef typename FSType<Type>::FieldType FieldType;
-        FieldType* origFieldPtr
-        (
-            new FieldType
-            (
-                IOobject::groupName(fieldName, "orig"),
-                *(this->fieldPtr_)
-            )
-         );
-        origFieldPtr->store(origFieldPtr);
-
-        origFieldPtr_.set
-        (
-            this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
-        );
-    }
     if (this->good_)
     {
+        if (!origFieldPtr_.valid())
+        {
+            typedef typename FSType<Type>::FieldType FieldType;
+            FieldType* origFieldPtr
+            (
+                new FieldType
+                (
+                    IOobject::groupName(fieldName, "orig"),
+                    *(this->fieldPtr_)
+                )
+            );
+            origFieldPtr->store(origFieldPtr);
+            origFieldPtr_.set
+            (
+                this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
+            );
+        }
+
         this->setField();
     }
 }
