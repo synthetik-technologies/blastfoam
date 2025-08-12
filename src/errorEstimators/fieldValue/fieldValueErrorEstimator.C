@@ -86,7 +86,14 @@ void Foam::errorEstimators::fieldValue::update(const bool scale)
     }
 
     const labelHashSet& eCells = this->errorCells();
-    error_ = this->getFieldValue(fieldName_, eCells);
+
+    tmp<volScalarField> terrorFld(this->getFieldValue(fieldName_, eCells));
+    const volScalarField& errorFld = terrorFld();
+
+    forAllConstIter(labelHashSet, eCells, iter)
+    {
+        error_[iter.key()] = errorFld[iter.key()];
+    }
 
     if (scale)
     {
