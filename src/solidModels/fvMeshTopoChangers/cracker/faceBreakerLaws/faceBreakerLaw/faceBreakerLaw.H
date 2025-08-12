@@ -32,7 +32,7 @@ Authors
 
 SourceFiles
     faceBreakerLaw.C
-    newCellRemovalLaw.C
+    faceBreakerLawNew.C
 
 \*---------------------------------------------------------------------------*/
 

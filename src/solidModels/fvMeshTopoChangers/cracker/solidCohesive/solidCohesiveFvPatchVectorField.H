@@ -113,7 +113,7 @@ public:
             const SolidCohesiveFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy
@@ -167,17 +167,18 @@ public:
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
+            //- Map the given fvPatchField onto this fvPatchField
+            virtual void map
             (
-                const fvPatchFieldMapper&
+                const fvPatchVectorField& ptf,
+                const fieldMapper&
             );
 
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset
             (
-                const fvPatchVectorField&,
-                const labelList&
+                const fvPatchVectorField&
             );
 
 

@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "cellRemovalFvMesh.H"
+#include "cellRemovalFvMeshTopoChanger.H"
 #include "fvPatchField.H"
 #include "calculatedFvPatchField.H"
 
@@ -31,9 +31,9 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
+void Foam::fvMeshTopoChangers::cellRemoval::updateVolFieldsExposedFaces
 (
-    const mapPolyMesh& map,
+    const polyTopoChangeMap& map,
     const labelList& exposedFaces,
     const labelList& patchFaceMap
 ) const
@@ -50,7 +50,7 @@ void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
     // Read volField objects from object registry
     HashTable<const VolTypeField*> fields
     (
-        thisDb().template lookupClass<VolTypeField>()
+        mesh().thisDb().template lookupClass<VolTypeField>()
     );
 
     forAllConstIter
@@ -67,11 +67,11 @@ void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
 
         // Check if there is a surface field by the same name suffixed with 'f'
         const word ffieldName("interpolate(" + field.name() + ")");
-        if (foundObject<SurfTypeField>(ffieldName))
+        if (mesh().thisDb().foundObject<SurfTypeField>(ffieldName))
         {
 
             SurfTypeField& surfaceField =
-                lookupObjectRef<SurfTypeField>(ffieldName);
+                mesh().thisDb().lookupObjectRef<SurfTypeField>(ffieldName);
 
             DebugInfo<< "    Using " << surfaceField.name()
                 << " for correction" << endl;
@@ -97,14 +97,14 @@ void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
                         << abort(FatalError);
                 }
 
-                const label start = boundaryMesh()[patchID].start();
+                const label start = mesh().boundaryMesh()[patchID].start();
 
                 // Get local face ID
                 const label newLocalFaceID = newFaceID - start;
 
                 // Get face cell ID
                 const label faceCellID =
-                    boundaryMesh()[patchID].faceCells()[newLocalFaceID];
+                    mesh().boundaryMesh()[patchID].faceCells()[newLocalFaceID];
 
                 // Set the new face value to be the previous face value
                 bfield[patchID][newLocalFaceID] = field[faceCellID];
@@ -124,14 +124,14 @@ void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
                 // Find the patch ID
                 const label patchID = patchFaceMap[fi];
 
-                const label start = boundaryMesh()[patchID].start();
+                const label start = mesh().boundaryMesh()[patchID].start();
 
                 // Get local face ID
                 const label newLocalFaceID = newFaceID - start;
 
                 // Get face cell ID
                 const label faceCellID =
-                    boundaryMesh()[patchID].faceCells()[newLocalFaceID];
+                    mesh().boundaryMesh()[patchID].faceCells()[newLocalFaceID];
 
                 // Set the new face value to be the face cell value
                 bfield[patchID][newLocalFaceID] = field[faceCellID];
@@ -142,7 +142,7 @@ void Foam::cellRemovalFvMesh::updateVolFieldsExposedFaces
 
 
 template<class Type, template<class> class Patch, class Mesh>
-void Foam::cellRemovalFvMesh::saveGeoFields
+void Foam::fvMeshTopoChangers::cellRemoval::saveGeoFields
 (
     objectRegistry& obr
 ) const

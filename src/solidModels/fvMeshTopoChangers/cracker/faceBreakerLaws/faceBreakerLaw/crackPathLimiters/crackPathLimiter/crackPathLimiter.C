@@ -43,12 +43,10 @@ defineRunTimeSelectionTable(crackPathLimiter, dictionary);
 
 crackPathLimiter::crackPathLimiter
 (
-    const word& name,
     const fvMesh& mesh,
     const dictionary& dict
 )
 :
-    name_(name),
     mesh_(mesh)
 {}
 

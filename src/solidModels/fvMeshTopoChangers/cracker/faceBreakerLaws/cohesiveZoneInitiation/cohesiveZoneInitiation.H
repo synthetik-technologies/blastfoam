@@ -64,10 +64,7 @@ class cohesiveZoneInitiation
     // Private data
 
         // Patch index of the cohesive patch
-        mutable label* cohesivePatchIDPtr_;
-
-        // Allow cracks along coupled faces
-        const Switch allowCoupledFaces_;
+        mutable label cohesivePatchID_;
 
         // List of internal faces to break
         mutable labelList* facesToBreakPtr_;
@@ -92,9 +89,6 @@ class cohesiveZoneInitiation
 
 
     // Private Member Functions
-
-        //- Calculate the cohesive patch ID
-        void calcCohesivePatchID() const;
 
         //- Return cohesive patch ID
         label cohesivePatchID() const;

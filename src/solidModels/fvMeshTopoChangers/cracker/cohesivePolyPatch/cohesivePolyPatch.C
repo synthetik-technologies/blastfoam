@@ -98,19 +98,6 @@ cohesivePolyPatch::cohesivePolyPatch
 {}
 
 
-Foam::cohesivePolyPatch::cohesivePolyPatch
-(
-    const cohesivePolyPatch& pp,
-    const polyBoundaryMesh& bm,
-    const label index,
-    const labelUList& mapAddressing,
-    const label newStart
-)
-:
-    polyPatch(pp, bm, index, mapAddressing, newStart)
-{}
-
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 cohesivePolyPatch::~cohesivePolyPatch()

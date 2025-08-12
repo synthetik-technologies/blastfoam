@@ -22,11 +22,11 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    cellRemovalLaw
+    cohesiveZoneModel
 
 \*---------------------------------------------------------------------------*/
 
-#include "cellRemovalLaw.H"
+#include "cohesiveZoneModel.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 
@@ -37,40 +37,40 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-autoPtr<cellRemovalLaw> cellRemovalLaw::New
+autoPtr<cohesiveZoneModel> cohesiveZoneModel::New
 (
-    const word& name,
-    fvMesh& mesh,
+    const fvPatch& patch,
     const dictionary& dict
 )
 {
-    word rheoTypeName = dict.lookup(cellRemovalLaw::typeName);
+    word lawTypeName;
+    const dictionary* coeffDictPtr = &dict;
+    if (dict.isDict(typeName))
+    {
+        coeffDictPtr = &dict.subDict(typeName);
+        lawTypeName = coeffDictPtr->lookup<word>("type");
+    }
+    else
+    {
+        lawTypeName = dict.lookup<word>(typeName);
+        coeffDictPtr = &dict.optionalSubDict(lawTypeName + "Coeffs");
+    }
 
-    Info<< "Selecting meshFailure model " << rheoTypeName << endl;
-
+    Info<< "Selecting cohesive zone model: " << lawTypeName << endl;
     dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(rheoTypeName);
+        dictionaryConstructorTablePtr_->find(lawTypeName);
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalIOErrorInFunction(dict)
-            << "Unknown cellRemovalLaw type "
-            << rheoTypeName << endl << endl
-            << "Valid  cellRemovalLaws are : " << endl
+        FatalErrorInFunction
+            << "Unknown cohesiveZoneModel type "
+            << lawTypeName << endl << endl
+            << "Valid  cohesiveZoneModels are : " << endl
             << dictionaryConstructorTablePtr_->toc()
-            << abort(FatalIOError);
+            << exit(FatalIOError);
     }
 
-    return
-        autoPtr<cellRemovalLaw>
-        (
-            cstrIter()
-            (
-                name,
-                mesh,
-                dict.optionalSubDict(rheoTypeName + "Coeffs")
-            )
-        );
+    return autoPtr<cohesiveZoneModel>(cstrIter()(patch, *coeffDictPtr));
 }
 
 

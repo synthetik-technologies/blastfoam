@@ -21,49 +21,48 @@ License
     You should have received a copy of the GNU General Public License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
+
 \*---------------------------------------------------------------------------*/
 
-#include "faceBreakerLaw.H"
-#include "volFields.H"
-#include "surfaceFields.H"
+#include "cellRemovalLaw.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-namespace Foam
-{
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-autoPtr<faceBreakerLaw> faceBreakerLaw::New
+Foam::autoPtr<Foam::cellRemovalLaw> Foam::cellRemovalLaw::New
 (
     const word& name,
     const fvMesh& mesh,
     const dictionary& dict
 )
 {
-    word lawTypeName = dict.lookup("faceBreaker");
+    const word cellRemovalLawType(dict.lookup(cellRemovalLaw::typeName));
 
-    Info<< "Selecting face breaker law: " << lawTypeName << endl;
+    Info<< "Selecting cellRemoval law " << cellRemovalLawType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(lawTypeName);
+        dictionaryConstructorTablePtr_->find(cellRemovalLawType);
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalIOErrorInFunction(dict)
-            << "Unknown faceBreakerLaw type "
-            << lawTypeName << endl << endl
-            << "Valid  faceBreakerLaws are : " << endl
+            << "Unknown cellRemovalLaw type "
+            << cellRemovalLawType << endl << endl
+            << "Valid  cellRemovalLaws are : " << endl
             << dictionaryConstructorTablePtr_->toc()
-            << exit(FatalIOError);
+            << abort(FatalIOError);
     }
 
-    return autoPtr<faceBreakerLaw>(cstrIter()(name, mesh, dict));
+    return
+        autoPtr<cellRemovalLaw>
+        (
+            cstrIter()
+            (
+                name,
+                mesh,
+                dict.optionalSubDict(cellRemovalLawType + "Coeffs")
+            )
+        );
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

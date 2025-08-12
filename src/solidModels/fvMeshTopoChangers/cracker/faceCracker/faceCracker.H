@@ -37,9 +37,8 @@ SourceFiles
 #ifndef faceCracker_H
 #define faceCracker_H
 
-#include "polyMeshModifier.H"
-#include "polyPatchID.H"
-#include "ZoneIDs.H"
+#include "polyMesh.H"
+#include "polyTopoChange.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,16 +58,17 @@ typedef HashTable
 \*---------------------------------------------------------------------------*/
 
 class faceCracker
-:
-    public polyMeshModifier
 {
     // Private data
 
-        //- Crack face zone ID
-        faceZoneID crackZoneID_;
+        //- Reference to polyMesh
+        const polyMesh& mesh_;
 
-        //- Crack patch ID.  Holds faces after cracking
-        polyPatchID crackPatchID_;
+        //- Crack face zone name
+        word crackZone_;
+
+        //- Crack patch Name
+        word crackPatch_;
 
         //- List of boundary faces to move to the crack patch
         mutable labelList coupledFacesToBreak_;
@@ -84,12 +84,6 @@ class faceCracker
 
         //- Disallow default bitwise assignment
         void operator=(const faceCracker&);
-
-        //- Check validity of construction data
-        void checkDefinition();
-
-        //- Detach faces
-        void detachFaceCracker(polyTopoChange&) const;
 
         //- Detach internal faces
         void detachInternalFaces(polyTopoChange&) const;
@@ -108,9 +102,7 @@ public:
         //- Construct from components
         faceCracker
         (
-            const word& name,
-            const label index,
-            const polyTopoChanger& mme,
+            const polyMesh& mesh,
             const word& faceZoneName,
             const word& crackPatchName
         );
@@ -118,10 +110,8 @@ public:
         //- Construct from dictionary
         faceCracker
         (
-            const word& name,
-            const dictionary& dict,
-            const label index,
-            const polyTopoChanger& mesh
+            const polyMesh& mesh,
+            const dictionary& dict
         );
 
 
@@ -133,9 +123,9 @@ public:
     // Member Functions
 
         //- Return master patch ID
-        const polyPatchID& crackPatchID() const
+        const word& crackPatch() const
         {
-            return crackPatchID_;
+            return crackPatch_;
         }
 
         //- Set faces to break, where an internal face is converted into two
@@ -143,6 +133,7 @@ public:
         //  to the crack patch
         void setBreak
         (
+            polyMesh& mesh,
             const labelList& facesToBreak,
             const boolList& faceFlip,
             const labelList& coupledFacesToBreak
@@ -153,18 +144,6 @@ public:
 
         //- Set topological change
         virtual void setRefinement(polyTopoChange&) const;
-
-        //- Modify motion points to comply with the topological change
-        virtual void modifyMotionPoints(pointField& motionPoints) const;
-
-        //- Force recalculation of locally stored data on topological change
-        virtual void updateMesh(const mapPolyMesh&);
-
-        //- Write
-        virtual void write(Ostream&) const;
-
-        //- Write dictionary
-        virtual void writeDict(Ostream&) const;
 };
 
 

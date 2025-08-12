@@ -39,7 +39,7 @@ Authors
 
 SourceFiles
     cohesiveZoneModel.C
-    newCohesiveZoneModel.C
+    cohesiveZoneModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -98,11 +98,10 @@ public:
             cohesiveZoneModel,
             dictionary,
             (
-                const word name,
                 const fvPatch& patch,
                 const dictionary& dict
             ),
-            (name, patch, dict)
+            (patch, dict)
         );
 
 
@@ -111,7 +110,6 @@ public:
         //- Return a reference to the selected meshFailure model
         static autoPtr<cohesiveZoneModel> New
         (
-            const word& name,
             const fvPatch& patch,
             const dictionary& dict
         );
@@ -122,7 +120,6 @@ public:
         //- Construct from dictionary
         cohesiveZoneModel
         (
-            const word& name,
             const fvPatch& patch,
             const dictionary& dict
         );
@@ -144,26 +141,18 @@ public:
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
-            (
-                const fvPatchFieldMapper& mapper
-            ) = 0;
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
+            //- Map the given cohesiveZoneModel onto this cohesiveZoneModel
+            virtual void map
             (
                 const cohesiveZoneModel& czm,
-                const labelList& addr
+                const fieldMapper& mapper
             ) = 0;
 
-        // Access functions
+            //- Reset the cohesiveZoneModel to the given cohesiveZoneModel
+            //  Used for mesh to mesh mapping
+            virtual void reset(const cohesiveZoneModel& czm) = 0;
 
-            //- Return name
-            const word& name() const
-            {
-                return name_;
-            }
+        // Access functions
 
             //- Return const reference to the fvPatch
             const fvPatch& patch() const
@@ -226,21 +215,12 @@ protected:
 
     // Protected Data
 
-        //- Run-time selectable cohesive zone model
-        mutable autoPtr<cohesiveZoneModel> cohesiveZoneModelPtr_;
-
         //- Reference to patch
         const fvPatch& patch_;
 
-        //- Constructing dictionary
-        const dictionary dict_;
+        //- Run-time selectable cohesive zone model
+        autoPtr<cohesiveZoneModel> cohesiveZoneModelPtr_;
 
-private:
-
-    // Private Member Functions
-
-        //- Set the cohesive zone model
-        void calcCohesiveZone() const;
 
 public:
 
@@ -288,18 +268,16 @@ public:
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
+            //- Map the given cohesiveZoneModel onto this cohesiveZoneModel
+            virtual void map
             (
-                const fvPatchFieldMapper& mapper
+                const cohesiveZoneModelMaster& czmm,
+                const fieldMapper& mapper
             );
 
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
-            (
-                const cohesiveZoneModelMaster& czm,
-                const labelList& addr
-            );
+            //- Reset the cohesiveZoneModel to the given cohesiveZoneModel
+            //  Used for mesh to mesh mapping
+            virtual void reset(const cohesiveZoneModelMaster& czmm);
 
     //- Write
     void write(Ostream& os) const;

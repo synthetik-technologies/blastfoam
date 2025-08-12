@@ -95,7 +95,6 @@ public:
         //- Construct from dictionary
         none
         (
-            const word& name,
             const fvMesh& mesh,
             const dictionary& dict
         );

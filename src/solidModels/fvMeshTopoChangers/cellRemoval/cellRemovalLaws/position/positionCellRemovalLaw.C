@@ -51,8 +51,7 @@ Foam::positionCellRemovalLaw::positionCellRemovalLaw
     const dictionary& dict
 )
 :
-    cellRemovalLaw(name, mesh, dict),
-    exposedPatch_(dict.lookup("exposedPatch"))
+    cellRemovalLaw(name, mesh, dict)
 {
     if (exposedFacesPatchID() < 0)
     {

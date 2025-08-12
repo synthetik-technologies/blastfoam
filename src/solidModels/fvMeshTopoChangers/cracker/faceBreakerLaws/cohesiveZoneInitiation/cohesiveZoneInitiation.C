@@ -25,7 +25,7 @@ License
 
 #include "cohesiveZoneInitiation.H"
 #include "addToRunTimeSelectionTable.H"
-#include "crackerFvMesh.H"
+#include "crackerFvMeshTopoChanger.H"
 #include "solidCohesiveFvPatchVectorField.H"
 #include "cohesivePolyPatch.H"
 #include "lookupSolidModel.H"
@@ -44,81 +44,48 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-
-void Foam::cohesiveZoneInitiation::calcCohesivePatchID() const
+Foam::label Foam::cohesiveZoneInitiation::cohesivePatchID() const
 {
-    if (cohesivePatchIDPtr_)
+    if (cohesivePatchID_ < 0)
     {
-        FatalErrorInFunction
-            << "pointer already set" << abort(FatalError);
-    }
-
-    const fvMesh& mesh = this->mesh();
-
-    cohesivePatchIDPtr_ = new label(-1);
-    label& cohesivePatchID = *cohesivePatchIDPtr_;
-
-    forAll (mesh.boundaryMesh(), patchI)
-    {
-        if (mesh.boundaryMesh()[patchI].type() == cohesivePolyPatch::typeName)
+        const fvMesh& mesh = this->mesh();
+        forAll (mesh.boundaryMesh(), patchI)
         {
-            cohesivePatchID = patchI;
-            break;
+            if
+            (
+                mesh.boundaryMesh()[patchI].type()
+             == cohesivePolyPatch::typeName
+            )
+            {
+                cohesivePatchID_ = patchI;
+                break;
+            }
+        }
+
+        if (cohesivePatchID_ == -1)
+        {
+            FatalErrorInFunction
+                << "boundary patch of type cohesive not found"
+                << abort(FatalError);
         }
     }
 
-    if (cohesivePatchID == -1)
-    {
-        FatalErrorInFunction
-            << "boundary patch of type cohesive not found"
-            << abort(FatalError);
-    }
-}
-
-
-Foam::label Foam::cohesiveZoneInitiation::cohesivePatchID() const
-{
-    if (!cohesivePatchIDPtr_)
-    {
-        calcCohesivePatchID();
-    }
-
-    return *cohesivePatchIDPtr_;
+    return cohesivePatchID_;
 }
 
 
 const Foam::cohesiveZoneModel&
 Foam::cohesiveZoneInitiation::cohesiveZone() const
 {
-    // Const reference to the mesh
-    const fvMesh& mesh = this->mesh();
-
     // Lookup the solidModel object
-    const solidModel& solMod = lookupSolidModel(mesh);
+    const solidModel& solMod = lookupSolidModel(this->mesh());
 
     // Lookup displacement field
-    if (solMod.incremental())
-    {
-        return
-            refCast<const cohesiveZoneModelMaster>
-            (
-                mesh.lookupObject<volVectorField>
-                (
-                    "DD"
-                ).boundaryField()[cohesivePatchID()]
-            ).cohesiveZone();
-    }
-    else
-    {
-        return
-            refCast<const cohesiveZoneModelMaster>
-            (
-                mesh.lookupObject<volVectorField>
-                (
-                    "D"
-                ).boundaryField()[cohesivePatchID()]
-            ).cohesiveZone();
-    }
+    return
+        refCast<const cohesiveZoneModelMaster>
+        (
+            solMod.solutionD().boundaryField()[cohesivePatchID()]
+        ).cohesiveZone();
 }
 
 
@@ -138,20 +105,11 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
     // the face, so a value greater than or equal to 1.0 indicates that the face
     // should break.
 
-    int nFacesToBreak = 0;
-    int nCoupledFacesToBreak = 0;
+    label nFacesToBreak = 0;
+    label nCoupledFacesToBreak = 0;
 
     // Cast the mesh to a crackerFvMesh
-
-    if (!isA<crackerFvMesh>(this->mesh()))
-    {
-        FatalErrorInFunction
-            << "Mesh should be of type: " << crackerFvMesh::typeName
-            << abort(FatalError);
-    }
-
-    const crackerFvMesh& mesh =
-        dynamicCast<const crackerFvMesh>(this->mesh());
+    const fvMesh& mesh = this->mesh();
 
     // Face unit normals
     const surfaceVectorField n(mesh.Sf()/mesh.magSf());
@@ -160,7 +118,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
     cohesiveZone().updateMeshTraction();
     surfaceScalarField tracFrac
     (
-            cohesiveZone().initiationTractionFraction()
+        cohesiveZone().initiationTractionFraction()
     );
     const surfaceVectorField& traction = cohesiveZone().meshTraction();
 
@@ -173,7 +131,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
 
     const scalar maxTracFrac = gMax(tracFrac.internalField());
 
-    DebugInfo<< nl << "Max traction fraction: " << maxTracFrac << endl;
+    DebugInfo<< "Max traction fraction: " << maxTracFrac << endl;
 
     label faceToBreakIndex = -1;
     scalar faceToBreakTracFrac = 0.0;
@@ -238,7 +196,7 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
     scalar coupledFaceToBreakTracFrac = 0.0;
     scalar maxCoupledTracFrac = 0.0;
 
-    if (allowCoupledFaces_ && Pstream::parRun())
+    if (Pstream::parRun())
     {
         forAll(mesh.boundary(), patchI)
         {
@@ -522,7 +480,6 @@ void Foam::cohesiveZoneInitiation::calcAllFacesToBreak() const
 
 void Foam::cohesiveZoneInitiation::clearOut()
 {
-    deleteDemandDrivenData(cohesivePatchIDPtr_);
     deleteDemandDrivenData(facesToBreakPtr_);
     deleteDemandDrivenData(coupledFacesToBreakPtr_);
     deleteDemandDrivenData(facesToBreakTractionsPtr_);
@@ -544,36 +501,15 @@ Foam::cohesiveZoneInitiation::cohesiveZoneInitiation
 )
 :
     faceBreakerLaw(name, mesh, dict),
-    cohesivePatchIDPtr_(NULL),
-    allowCoupledFaces_(dict.lookupOrDefault<Switch>("allowCoupledFaces", true)),
+    cohesivePatchID_(-1),
     facesToBreakPtr_(NULL),
     coupledFacesToBreakPtr_(NULL),
     facesToBreakTractionsPtr_(NULL),
     coupledFacesToBreakTractionsPtr_(NULL),
     facesToBreakNormalsPtr_(NULL),
     coupledFacesToBreakNormalsPtr_(NULL),
-    pathLimiterPtr_(NULL)
-{
-    if (!allowCoupledFaces_)
-    {
-        WarningInFunction
-            << name << ": allowCoupledFaces is false" << endl;
-    }
-
-    // If specified, create crackPathLimiter
-    if (dict.found("crackPathLimiter"))
-    {
-        pathLimiterPtr_ =
-            crackPathLimiter::New
-            (
-                "law", mesh, dict.optionalSubDict(typeName + "Coeffs")
-            );
-    }
-    else
-    {
-        Info<< "crackPathLimiter not specified" << endl;
-    }
-}
+    pathLimiterPtr_(crackPathLimiter::New(mesh, dict))
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

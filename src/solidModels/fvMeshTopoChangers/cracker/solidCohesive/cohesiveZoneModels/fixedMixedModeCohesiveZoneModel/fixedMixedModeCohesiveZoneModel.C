@@ -26,8 +26,8 @@ License
 #include "fixedMixedModeCohesiveZoneModel.H"
 #include "addToRunTimeSelectionTable.H"
 #include "cohesiveZoneInitiation.H"
-#include "directFvPatchFieldMapper.H"
-#include "crackerFvMesh.H"
+#include "crackerFvMeshTopoChanger.H"
+#include "generalFieldMapper.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -98,7 +98,8 @@ Foam::vector Foam::fixedMixedModeCohesiveZoneModel::unloadingDamageTraction
 
 void Foam::fixedMixedModeCohesiveZoneModel::calcPenaltyFactor() const
 {
-    if (patch().size())
+    const label totalSize = returnReduce(patch().size(), sumOp<label>());
+    if (totalSize)
     {
         // Calculate penalty factor similar to standardPenalty contact model
         // approx penaltyFactor from mechanical properties
@@ -125,14 +126,15 @@ void Foam::fixedMixedModeCohesiveZoneModel::calcPenaltyFactor() const
         scalar cellVolume = 0.0;
 
         const volScalarField::Internal& V = mesh.V();
-        const unallocLabelList& faceCells =
+        const labelList& faceCells =
             mesh.boundary()[patchID].faceCells();
 
         forAll(mesh.boundary()[patchID], facei)
         {
             cellVolume += V[faceCells[facei]];
         }
-        cellVolume /= patch().size();
+        reduce(cellVolume, sumOp<scalar>());
+        cellVolume /= scalar(totalSize);
 
         // Approximate penalty factor based on:
         // Hallquist, Goudreau, Benson - 1985 - Sliding interfaces with
@@ -151,16 +153,15 @@ void Foam::fixedMixedModeCohesiveZoneModel::calcPenaltyFactor() const
 // Construct from dictionary
 Foam::fixedMixedModeCohesiveZoneModel::fixedMixedModeCohesiveZoneModel
 (
-    const word& name,
     const fvPatch& patch,
     const dictionary& dict
 )
 :
-    cohesiveZoneModel(name, patch, dict),
+    cohesiveZoneModel(patch, dict),
     sigmaMax_("sigmaMax", dimPressure, dict),
     GIc_("GIc", dimensionSet(1, 0, -2, 0, 0, 0, 0), dict),
     deltaC_(2.0*GIc_/sigmaMax_),
-    cracked_(patch.size(), false),
+    cracked_(patch.size(), 0),
     initTraction_(patch.size(), vector::zero),
     deltaN_(patch.size(), 0.0),
     deltaS_(patch.size(), vector::zero),
@@ -217,7 +218,7 @@ Foam::fixedMixedModeCohesiveZoneModel::fixedMixedModeCohesiveZoneModel
     // Read optional fields
     if (dict.found("cracked"))
     {
-        cracked_ = Field<bool>("cracked", dict, patch.size());
+        cracked_ = Field<label>("cracked", dict, patch.size());
     }
 
     if (dict.found("initDirection"))
@@ -297,55 +298,46 @@ Foam::fixedMixedModeCohesiveZoneModel::crackingAndDamage() const
 }
 
 
-void Foam::fixedMixedModeCohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
+void Foam::fixedMixedModeCohesiveZoneModel::map
+(
+    const cohesiveZoneModel& czm,
+    const fieldMapper& mapper
+)
 {
-    {
-        scalarField cracked(cracked_.size(), 1.0);
-        forAll(cracked, i)
-        {
-            cracked[i] = cracked_[i] ? 1.0 : 0.0;
-        }
-        m(cracked, cracked);
-        cracked_.resize(cracked.size());
-        forAll(cracked, i)
-        {
-            cracked_[i] = cracked_[i] > 0.5;
-        }
-    }
-    const label nNewFaces = cracked_.size() - initTraction_.size();
+    const fixedMixedModeCohesiveZoneModel& fmmczm =
+        dynamicCast<const fixedMixedModeCohesiveZoneModel>(czm);
 
-    m(initTraction_, initTraction_);
-    m(deltaN_, deltaN_);
-    m(deltaS_, deltaS_);
-    m(unloadingDeltaEff_, unloadingDeltaEff_);
+    mapper(cracked_, fmmczm.cracked_);
+
+    const label nNewFaces = cracked_.size() - deltaN_.size();
+
+    mapper(initTraction_, fmmczm.initTraction_);
+    mapper(deltaN_, fmmczm.deltaN_, 0.0);
+    mapper(deltaS_, fmmczm.deltaS_, vector::zero);
+    mapper(unloadingDeltaEff_, fmmczm.unloadingDeltaEff_, vector::zero);
 
     // Only perform mapping if the number of faces on the patch has changed
     if
     (
         nNewFaces > 0
-     && (
-            isA<directFvPatchFieldMapper>(m)
-         || (
-                isA<generalFvPatchFieldMapper>(m)
-             && dynamicCast<const generalFvPatchFieldMapper&>(m).direct()
-            )
-        )
-
+     && isA<generalFieldMapper>(mapper)
+     && dynamicCast<const generalFieldMapper&>(mapper).direct()
     )
     {
         const labelList& addressing =
-            isA<directFvPatchFieldMapper>(m)
-          ? dynamicCast<const directFvPatchFieldMapper>(m).addressing()
-          : dynamicCast<const generalFvPatchFieldMapper&>
+            dynamicCast<const generalFieldMapper&>
             (
-                m
+                mapper
             ).directAddressing();
         const label patchSize = patch().size();
 
         // Lookup the faceBreaker law from the crackerFvMesh
         // Cast mesh to a crackerFvMesh
         const faceBreakerLaw& faceBreaker =
-            dynamicCast<const crackerFvMesh>(this->mesh()).faceBreaker();
+            this->mesh().thisDb().lookupObject
+            <
+                fvMeshTopoChangers::cracker
+            >(fvMeshTopoChangers::cracker::typeName).faceBreaker();
 
         if (!isA<cohesiveZoneInitiation>(faceBreaker))
         {
@@ -371,7 +363,7 @@ void Foam::fixedMixedModeCohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
         if (initTracs.size() > 1 || initCoupledTracs.size() > 1)
         {
             FatalErrorInFunction
-                << name() << " expects only 1 faces to be broken at a time"
+                << typeName << " expects only 1 faces to be broken at a time"
                 << abort(FatalError);
         }
 
@@ -505,20 +497,19 @@ void Foam::fixedMixedModeCohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
 }
 
 
-void Foam::fixedMixedModeCohesiveZoneModel::rmap
+void Foam::fixedMixedModeCohesiveZoneModel::reset
 (
-    const cohesiveZoneModel& czm,
-    const labelList& addr
+    const cohesiveZoneModel& czm
 )
 {
     const fixedMixedModeCohesiveZoneModel& fmmczm =
         refCast<const fixedMixedModeCohesiveZoneModel>(czm);
 
-    cracked_.rmap(fmmczm.cracked_, addr);
-    initTraction_.rmap(fmmczm.initTraction_, addr);
-    deltaN_.rmap(fmmczm.deltaN_, addr);
-    deltaS_.rmap(fmmczm.deltaS_, addr);
-    unloadingDeltaEff_.rmap(fmmczm.unloadingDeltaEff_, addr);
+    cracked_.reset(fmmczm.cracked_);
+    initTraction_.reset(fmmczm.initTraction_);
+    deltaN_.reset(fmmczm.deltaN_);
+    deltaS_.reset(fmmczm.deltaS_);
+    unloadingDeltaEff_.reset(fmmczm.unloadingDeltaEff_);
 }
 
 
@@ -554,7 +545,7 @@ void Foam::fixedMixedModeCohesiveZoneModel::updateOldFields()
         }
 
         // Flag cracked faces
-        bool& faceCracked = cracked_[faceI];
+        label& faceCracked = cracked_[faceI];
 
         const scalar faceMagDeltaEff = magDeltaEff[faceI];
 
@@ -756,7 +747,7 @@ Foam::fixedMixedModeCohesiveZoneModel::initiationTractionFraction() const
                 IOobject
                 (
                     "tractionFraction",
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE

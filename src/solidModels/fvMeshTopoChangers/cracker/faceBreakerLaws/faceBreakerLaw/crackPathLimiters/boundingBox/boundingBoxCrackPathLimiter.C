@@ -56,7 +56,7 @@ void Foam::crackPathLimiters::boundingBox::calcFacesAllowedToBreak() const
             IOobject
             (
                 "facesAllowedToBreak",
-                mesh.time().timeName(),
+                mesh.time().name(),
                 mesh,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
@@ -116,12 +116,11 @@ void Foam::crackPathLimiters::boundingBox::calcFacesAllowedToBreak() const
 // Construct from dictionary
 Foam::crackPathLimiters::boundingBox::boundingBox
 (
-    const word& name,
     const fvMesh& mesh,
     const dictionary& dict
 )
 :
-    crackPathLimiter(name, mesh, dict),
+    crackPathLimiter(mesh, dict),
     facesAllowedToBreakPtr_(NULL),
     boundingBoxes_(dict.lookup("boundingBoxes"))
 {}
@@ -167,7 +166,7 @@ bool Foam::crackPathLimiters::boundingBox::write() const
         IOobject
         (
             "crackLimiterBoxes",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -178,11 +177,11 @@ bool Foam::crackPathLimiters::boundingBox::write() const
 
     scalarField& crackLimiterBoxesI =
         crackLimiterBoxes.primitiveFieldRef();
-    const unallocLabelList& owner = mesh.owner();
-    const unallocLabelList& neighbour = mesh.neighbour();
+    const labelList& owner = mesh.owner();
+    const labelList& neighbour = mesh.neighbour();
 
-    const surfaceScalarField& facesAllowedToBreak =
-        this->facesAllowedToBreak();
+    tmp<surfaceScalarField> tfacesAllowedToBreak(this->facesAllowedToBreak());
+    const surfaceScalarField& facesAllowedToBreak = tfacesAllowedToBreak;
     forAll(facesAllowedToBreak, faceI)
     {
         if (facesAllowedToBreak[faceI] > SMALL)

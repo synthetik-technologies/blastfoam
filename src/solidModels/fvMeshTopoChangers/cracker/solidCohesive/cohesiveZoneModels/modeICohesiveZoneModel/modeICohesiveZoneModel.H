@@ -66,7 +66,7 @@ class modeICohesiveZoneModel
         //  PC: it might make sense to move this field to the base class
         //  1 = cracked
         //  0 = damaged but not cracked
-        Field<bool> cracked_;
+        Field<label> cracked_;
 
         //- Current patch normal traction
         scalarField tractionN_;
@@ -131,7 +131,6 @@ public:
         //- Construct from dictionary
         modeICohesiveZoneModel
         (
-            const word& name,
             const fvPatch& patch,
             const dictionary& dict
         );
@@ -159,18 +158,16 @@ public:
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
-            (
-                const fvPatchFieldMapper& mapper
-            );
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
+            //- Map the given cohesiveZoneModel onto this cohesiveZoneModel
+            virtual void map
             (
                 const cohesiveZoneModel& czm,
-                const labelList& addr
+                const fieldMapper& mapper
             );
+
+            //- Reset the cohesiveZoneModel to the given cohesiveZoneModel
+            //  Used for mesh to mesh mapping
+            virtual void reset(const cohesiveZoneModel& czm);
 
         // Access functions
 

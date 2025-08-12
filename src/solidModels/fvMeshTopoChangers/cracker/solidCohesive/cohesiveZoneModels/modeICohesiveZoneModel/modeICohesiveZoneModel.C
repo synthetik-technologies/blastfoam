@@ -26,7 +26,7 @@ License
 #include "modeICohesiveZoneModel.H"
 #include "addToRunTimeSelectionTable.H"
 #include "solidCohesiveFvPatchVectorField.H"
-#include "directFvPatchFieldMapper.H"
+#include "generalFieldMapper.H"
 #include "fvc.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -57,7 +57,8 @@ Foam::vector Foam::modeICohesiveZoneModel::damageTractionN
 
 void Foam::modeICohesiveZoneModel::calcPenaltyFactor() const
 {
-    if (patch().size())
+    const label totalSize = returnReduce(patch().size(), sumOp<label>());
+    if (totalSize)
     {
         // Calculate penalty factor similar to standardPenalty contact model
         // approx penaltyFactor from mechanical properties
@@ -84,14 +85,14 @@ void Foam::modeICohesiveZoneModel::calcPenaltyFactor() const
         scalar cellVolume = 0.0;
 
         const volScalarField::Internal& V = mesh.V();
-        const unallocLabelList& faceCells =
-            mesh.boundary()[patchID].faceCells();
+        const labelList& faceCells = mesh.boundary()[patchID].faceCells();
 
         forAll(mesh.boundary()[patchID], facei)
         {
             cellVolume += V[faceCells[facei]];
         }
-        cellVolume /= patch().size();
+        reduce(cellVolume, sumOp<scalar>());
+        cellVolume /= scalar(totalSize);
 
         // Approximate penalty factor based on:
         // Hallquist, Goudreau, Benson - 1985 - Sliding interfaces with
@@ -110,15 +111,14 @@ void Foam::modeICohesiveZoneModel::calcPenaltyFactor() const
 // Construct from dictionary
 Foam::modeICohesiveZoneModel::modeICohesiveZoneModel
 (
-    const word& name,
     const fvPatch& patch,
     const dictionary& dict
 )
 :
-    cohesiveZoneModel(name, patch, dict),
+    cohesiveZoneModel(patch, dict),
     sigmaMax_("sigmaMax", dimPressure, dict),
     GIc_("GIc", dimensionSet(1, 0, -2, 0, 0, 0, 0), dict),
-    cracked_(patch.size(), false),
+    cracked_(patch.size(), 0),
     tractionN_(patch.size(), 0.0),
     oldTractionN_(patch.size(), 0.0),
     deltaN_(patch.size(), 0.0),
@@ -132,7 +132,7 @@ Foam::modeICohesiveZoneModel::modeICohesiveZoneModel
 {
     if (dict.found("cracked"))
     {
-        cracked_ = Field<bool>("cracked", dict, patch.size());
+        cracked_ = Field<label>("cracked", dict, patch.size());
     }
 
     if (dict.found("tractionN"))
@@ -232,53 +232,40 @@ Foam::modeICohesiveZoneModel::crackingAndDamage() const
 }
 
 
-void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
+void Foam::modeICohesiveZoneModel::map
+(
+    const cohesiveZoneModel& czm,
+    const fieldMapper& mapper
+)
 {
-    {
-        scalarField cracked(cracked_.size(), 1.0);
-        forAll(cracked, i)
-        {
-            cracked[i] = cracked_[i] ? 1.0 : 0.0;
-        }
-        m(cracked, cracked);
-        cracked_.resize(cracked.size());
-        forAll(cracked, i)
-        {
-            cracked_[i] = cracked_[i] > 0.5;
-        }
-    }
+    const modeICohesiveZoneModel& mIczm =
+        dynamicCast<const modeICohesiveZoneModel>(czm);
+
+    mapper(cracked_, mIczm.cracked_);
+
     const label nNewFaces = cracked_.size() - tractionN_.size();
 
-    m(tractionN_, tractionN_);
-    m(oldTractionN_, oldTractionN_);
-    m(deltaN_, deltaN_);
-    m(oldDeltaN_, oldDeltaN_);
-    m(deltaEff_, deltaEff_);
-    m(unloadingDeltaEff_, unloadingDeltaEff_);
-    m(GI_, GI_);
-    m(oldGI_, oldGI_);
+    mapper(tractionN_, mIczm.tractionN_, 0.0);
+    mapper(oldTractionN_, mIczm.oldTractionN_, 0.0);
+    mapper(deltaN_, mIczm.deltaN_, 0.0);
+    mapper(oldDeltaN_, mIczm.oldDeltaN_, 0.0);
+    mapper(deltaEff_, mIczm.deltaEff_, 0.0);
+    mapper(unloadingDeltaEff_, mIczm.unloadingDeltaEff_, 0.0);
+    mapper(GI_, mIczm.GI_, 0.0);
+    mapper(oldGI_, mIczm.oldGI_, 0.0);
 
     // Only perform mapping if the number of faces on the patch has changed
-
    if
     (
         nNewFaces > 0
-     && (
-            isA<directFvPatchFieldMapper>(m)
-         || (
-                isA<generalFvPatchFieldMapper>(m)
-             && dynamicCast<const generalFvPatchFieldMapper&>(m).direct()
-            )
-        )
-
+     && isA<generalFieldMapper>(mapper)
+     && dynamicCast<const generalFieldMapper&>(mapper).direct()
     )
     {
         const labelList& addressing =
-            isA<directFvPatchFieldMapper>(m)
-          ? dynamicCast<const directFvPatchFieldMapper>(m).addressing()
-          : dynamicCast<const generalFvPatchFieldMapper&>
+            dynamicCast<const generalFieldMapper&>
             (
-                m
+                mapper
             ).directAddressing();
         const label patchSize = patch().size();
 
@@ -286,7 +273,7 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
         {
             label i = 0;
 
-            cracked_[i] = false;
+            cracked_[i] = 0;
             tractionN_[i] = 0.0;
             oldTractionN_[i] = 0.0;
             deltaN_[i] = 0.0;
@@ -300,7 +287,7 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
         {
             label i = 1;
 
-            cracked_[i] = false;
+            cracked_[i] = 0;
             tractionN_[i] = 0.0;
             oldTractionN_[i] = 0.0;
             deltaN_[i] = 0.0;
@@ -314,7 +301,7 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
         {
             label i = 0;
 
-            cracked_[i] = false;
+            cracked_[i] = 0;
             tractionN_[i] = 0.0;
             oldTractionN_[i] = 0.0;
             deltaN_[i] = 0.0;
@@ -326,7 +313,7 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
 
             i = 1;
 
-            cracked_[i] = false;
+            cracked_[i] = 0;
             tractionN_[i] = 0.0;
             oldTractionN_[i] = 0.0;
             deltaN_[i] = 0.0;
@@ -342,7 +329,7 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
             {
                 if (addressing[i] == 0)
                 {
-                    cracked_[i] = false;
+                    cracked_[i] = 0;
                     tractionN_[i] = 0.0;
                     oldTractionN_[i] = 0.0;
                     deltaN_[i] = 0.0;
@@ -358,24 +345,23 @@ void Foam::modeICohesiveZoneModel::autoMap(const fvPatchFieldMapper& m)
 }
 
 
-void Foam::modeICohesiveZoneModel::rmap
+void Foam::modeICohesiveZoneModel::reset
 (
-    const cohesiveZoneModel& czm,
-    const labelList& addr
+    const cohesiveZoneModel& czm
 )
 {
     const modeICohesiveZoneModel& mIczm =
         refCast<const modeICohesiveZoneModel>(czm);
 
-    cracked_.rmap(mIczm.cracked_, addr);
-    tractionN_.rmap(mIczm.tractionN_, addr);
-    oldTractionN_.rmap(mIczm.oldTractionN_, addr);
-    deltaN_.rmap(mIczm.deltaN_, addr);
-    oldDeltaN_.rmap(mIczm.oldDeltaN_, addr);
-    unloadingDeltaEff_.rmap(mIczm.unloadingDeltaEff_, addr);
-    deltaEff_.rmap(mIczm.deltaEff_, addr);
-    GI_.rmap(mIczm.GI_, addr);
-    oldGI_.rmap(mIczm.oldGI_, addr);
+    cracked_.reset(mIczm.cracked_);
+    tractionN_.reset(mIczm.tractionN_);
+    oldTractionN_.reset(mIczm.oldTractionN_);
+    deltaN_.reset(mIczm.deltaN_);
+    oldDeltaN_.reset(mIczm.oldDeltaN_);
+    unloadingDeltaEff_.reset(mIczm.unloadingDeltaEff_);
+    deltaEff_.reset(mIczm.deltaEff_);
+    GI_.reset(mIczm.GI_);
+    oldGI_.reset(mIczm.oldGI_);
 }
 
 
@@ -422,7 +408,7 @@ void Foam::modeICohesiveZoneModel::updateTraction
     forAll(traction, faceI)
     {
         vector& faceTrac = traction[faceI];
-        bool& faceCracked = cracked_[faceI];
+        label& faceCracked = cracked_[faceI];
 
         const scalar faceDeltaN = deltaN_[faceI];
         const scalar faceDeltaEff = deltaEff_[faceI];
@@ -433,7 +419,7 @@ void Foam::modeICohesiveZoneModel::updateTraction
         // Check propagation criterion for new cracked faces
         if (!faceCracked && (faceGI/faceGIc) > 1.0)
         {
-            Pout<< "Face " << faceI << " is fully cracked" << endl;
+            if (debug) Pout<< "Face " << faceI << " is fully cracked" << endl;
             faceCracked = true;
         }
 
@@ -605,7 +591,7 @@ Foam::modeICohesiveZoneModel::initiationTractionFraction() const
                 IOobject
                 (
                     "tractionFraction",
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE

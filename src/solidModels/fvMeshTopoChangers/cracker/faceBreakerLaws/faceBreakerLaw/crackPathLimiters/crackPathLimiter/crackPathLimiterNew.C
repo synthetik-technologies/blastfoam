@@ -22,11 +22,11 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    cohesiveZoneModel
+    crackPathLimiter
 
 \*---------------------------------------------------------------------------*/
 
-#include "cohesiveZoneModel.H"
+#include "noCrackPathLimiter.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 
@@ -37,31 +37,41 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-autoPtr<cohesiveZoneModel> cohesiveZoneModel::New
+autoPtr<crackPathLimiter> crackPathLimiter::New
 (
-    const word& name,
-    const fvPatch& patch,
+    const fvMesh& mesh,
     const dictionary& dict
 )
 {
-    word lawTypeName = dict.lookup("type");
+    word lawTypeName(crackPathLimiters::none::typeName);
+    const dictionary* coeffDictPtr = &dict;
+    if (dict.isDict(typeName))
+    {
+        coeffDictPtr = &dict.subDict(typeName);
+        lawTypeName = coeffDictPtr->lookup<word>("type");
+    }
+    else if (dict.found(typeName))
+    {
+        lawTypeName = dict.lookup<word>(typeName);
+        coeffDictPtr = &dict.optionalSubDict(lawTypeName + "Coeffs");
+    }
 
-    Info<< "Selecting cohesive zone model: " << lawTypeName << endl;
+    Info<< "Selecting crack path limiter: " << lawTypeName << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(lawTypeName);
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalErrorInFunction
-            << "Unknown cohesiveZoneModel type "
+        FatalIOErrorInFunction(dict)
+            << "Unknown crackPathLimiter type "
             << lawTypeName << endl << endl
-            << "Valid  cohesiveZoneModels are : " << endl
+            << "Valid  crackPathLimiters are : " << endl
             << dictionaryConstructorTablePtr_->toc()
             << exit(FatalIOError);
     }
 
-    return autoPtr<cohesiveZoneModel>(cstrIter()(name, patch, dict));
+    return autoPtr<crackPathLimiter>(cstrIter()(mesh, *coeffDictPtr));
 }
 
 

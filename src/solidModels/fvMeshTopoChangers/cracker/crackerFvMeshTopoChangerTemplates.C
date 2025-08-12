@@ -23,13 +23,14 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "crackerFvMesh.H"
+#include "crackerFvMeshTopoChanger.H"
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::tmp<Foam::Field<Type> > Foam::crackerFvMesh::globalCrackField
+Foam::tmp<Foam::Field<Type>>
+Foam::fvMeshTopoChangers::cracker::globalCrackField
 (
     const Field<Type>& localCrackField
 ) const
@@ -41,7 +42,7 @@ Foam::tmp<Foam::Field<Type> > Foam::crackerFvMesh::globalCrackField
 
     label globalIndex = this->localCrackStart();
 
-    label localCrackSize = boundaryMesh()[crackPatchID_.index()].size();
+    label localCrackSize = mesh().boundaryMesh()[crackPatch_].size();
 
     for (label i=0; i<localCrackSize; i++)
     {
@@ -55,7 +56,7 @@ Foam::tmp<Foam::Field<Type> > Foam::crackerFvMesh::globalCrackField
 
 
 template<class Type>
-void Foam::crackerFvMesh::updateVolFieldBrokenFaces
+void Foam::fvMeshTopoChangers::cracker::updateVolFieldBrokenFaces
 (
     const labelList& faceMap,
     const labelList& facesToBreak,
@@ -68,7 +69,7 @@ void Foam::crackerFvMesh::updateVolFieldBrokenFaces
 
     // Cast the mesh to a crackerFvMesh
 
-    const crackerFvMesh& mesh = refCast<const crackerFvMesh>(*this);
+    const fvMesh& mesh = this->mesh();
 
     // Read volField objects from object registry
     HashTable<const GeometricField<Type, fvPatchField, volMesh>*> fields
@@ -78,9 +79,10 @@ void Foam::crackerFvMesh::updateVolFieldBrokenFaces
     );
 
 
-    const label cohesivePatchID = crackPatchID_.index();
-    const label start = mesh.boundaryMesh()[cohesivePatchID].start();
-    const label cohesivePatchSize = mesh.boundaryMesh()[cohesivePatchID].size();
+    const label cohesivePatchID = mesh.boundaryMesh().findIndex(crackPatch_);
+    const polyPatch& cohesivePatch = mesh().boundaryMesh()[cohesivePatchID];
+    const label start = cohesivePatch.start();
+    const label cohesivePatchSize = cohesivePatch.size();
 
     for
     (
@@ -105,7 +107,7 @@ void Foam::crackerFvMesh::updateVolFieldBrokenFaces
         );
 
         // Global crack fields
-        Field<Type> gFieldpI(mesh.globalCrackField(fieldpI));
+        Field<Type> gFieldpI(this->globalCrackField(fieldpI));
 
         // Check if there is a surface equivalent to the vol field
         bool surfaceFieldExists = false;
@@ -134,9 +136,9 @@ void Foam::crackerFvMesh::updateVolFieldBrokenFaces
         }
 
         // Initialise field on new cohesive face
-        const labelList& gcfa = mesh.globalCrackFaceAddressing();
+        const labelList& gcfa = this->globalCrackFaceAddressing();
 
-        label globalIndex = mesh.localCrackStart();
+        label globalIndex = this->localCrackStart();
 
         for (label i = 0; i < cohesivePatchSize; i++)
         {

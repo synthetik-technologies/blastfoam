@@ -23,9 +23,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "cellRemovalFvMesh.H"
+#include "cellRemovalFvMeshTopoChanger.H"
 #include "regionSplit.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChangeMap.H"
 #include "removeCells.H"
 #include "polyTopoChange.H"
 #include "volMesh.H"
@@ -37,31 +37,31 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(cellRemovalFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicFvMesh, cellRemovalFvMesh, IOobject);
+namespace fvMeshTopoChangers
+{
+    defineTypeNameAndDebug(cellRemoval, 0);
+    addToRunTimeSelectionTable(fvMeshTopoChanger, cellRemoval, fvMesh);
 }
-
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-// Construct from components
-Foam::cellRemovalFvMesh::cellRemovalFvMesh
+Foam::fvMeshTopoChangers::cellRemoval::cellRemoval
 (
-    const IOobject& io
+    fvMesh& mesh,
+    const dictionary& dict
 )
 :
-    dynamicFvMesh(io),
-    dict_(dynamicMeshDict().optionalSubDict(type() + "Coeffs")),
+    fvMeshTopoChanger(mesh),
     removeDeadCells_
     (
-        dict_.lookupOrDefault<Switch>
+        dict.lookupOrDefault<Switch>
         (
             "removeDeadCells",
             false
         )
     ),
-    lawPtr_(cellRemovalLaw::New("law", *this, dict_)),
-    curIndex_(-1),
+    lawPtr_(cellRemovalLaw::New("law", mesh, dict)),
     saveSubset_(false),
     subsetter_(nullptr)
 {}
@@ -69,22 +69,18 @@ Foam::cellRemovalFvMesh::cellRemovalFvMesh
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::cellRemovalFvMesh::~cellRemovalFvMesh()
+Foam::fvMeshTopoChangers::cellRemoval::~cellRemoval()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::cellRemovalFvMesh::update()
+bool Foam::fvMeshTopoChangers::cellRemoval::update()
 {
-    if (curIndex_ == this->time().timeIndex())
-    {
-        return false;
-    }
-    curIndex_ = this->time().timeIndex();
+    fvMesh& mesh = this->mesh();
 
     // Check if there are cells to remove
-    labelList cellsToRemove(lawPtr_->cellsToRemove());
+    labelList cellsToRemove(lawPtr_->cellsToRemove().toc());
 
     const label nCellsToRemove =
         returnReduce(cellsToRemove.size(), sumOp<label>());
@@ -108,16 +104,16 @@ bool Foam::cellRemovalFvMesh::update()
     if (saveSubset_)
     {
         // Create the subsetter
-        subsetter_.set(new fvMeshSubset(*this));
+        subsetter_.set(new fvMeshSubset(mesh));
 
         // Subset the mesh
         subsetter_->setLargeCellSubset(cellsToRemove);
 
         // Rename the mesh
-        subsetter_->subMesh().polyMesh::rename(this->name() + "_removed");
+        subsetter_->subMesh().polyMesh::rename(mesh.name() + "_removed");
 
         // Lookup the solid model
-        const solidModel& solid = lookupSolidModel(*this);
+        const solidModel& solid = lookupSolidModel(mesh);
 
         // If the mesh is not moving, move the subset mesh to the deformed
         // geometry
@@ -126,18 +122,18 @@ bool Foam::cellRemovalFvMesh::update()
             subsetter_->subMesh().movePoints
             (
                 subsetter_->subMesh().points()
-                + pointField(solid.pointD(), subsetter_->pointMap())
+              + pointField(solid.pointD(), subsetter_->pointMap())
             );
         }
 
         #define saveGeoFieldTypes(Type, Patch, Mesh) \
-            saveGeoFields<Type, Patch, Mesh>(*this);
+            saveGeoFields<Type, Patch, Mesh>(mesh);
 
         FOR_ALL_FIELD_TYPES(saveGeoFieldTypes, fvPatchField, volMesh)
         #undef saveGeoFieldTypes
     }
 
-    const label nOldCells = returnReduce(this->nCells(), sumOp<label>());
+    const label nOldCells = returnReduce(mesh.nCells(), sumOp<label>());
 
     // Exposed faces will be inserted into the open patch
     Info<< nl << "Selected " << nCellsToRemove
@@ -146,7 +142,7 @@ bool Foam::cellRemovalFvMesh::update()
     // Find faces that will be exposed
     // These faces will become boundary faces
 
-    removeCells cellRemover(*this);
+    removeCells cellRemover(mesh);
     const labelList facesToExpose
     (
         cellRemover.getExposedFaces(cellsToRemove)
@@ -157,7 +153,7 @@ bool Foam::cellRemovalFvMesh::update()
         << " internal faces that will be exposed" << endl;
 
     // Set actions in cell remover
-    polyTopoChange meshMod(*this);
+    polyTopoChange meshMod(mesh);
     cellRemover.setRefinement
     (
         cellsToRemove,
@@ -172,16 +168,10 @@ bool Foam::cellRemovalFvMesh::update()
 
     // Change the mesh
     DebugInfo<< "Performing mesh change" << endl;
-    autoPtr<mapPolyMesh> map = meshMod.changeMesh(*this, true);
+    autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh);
 
     // Update mesh fields e.g. U, sigma, etc.
-    this->updateMesh(map);
-
-    // Move mesh (since morphing does not do this)
-    if (map().hasMotionPoints())
-    {
-        fvMesh::movePoints(map().preMotionPoints());
-    }
+    mesh.topoChange(map);
 
     labelList pfMap(patchFaceMap(map, facesToExpose));
 
@@ -194,13 +184,13 @@ bool Foam::cellRemovalFvMesh::update()
     updateVolFieldsExposedFaces<sphericalTensor>(map, facesToExpose, pfMap);
 
     Info<< "Changed from " << nOldCells << " cells to "
-            << returnReduce(this->nCells(), sumOp<label>()) << " cells"<<endl;
+            << returnReduce(mesh.nCells(), sumOp<label>()) << " cells"<<endl;
 
     return nCellsToRemove > 0;
 }
 
 
-Foam::label Foam::cellRemovalFvMesh::addDeadCells
+Foam::label Foam::fvMeshTopoChangers::cellRemoval::addDeadCells
 (
     labelList& cellsToRemove
 )
@@ -208,15 +198,16 @@ Foam::label Foam::cellRemovalFvMesh::addDeadCells
     const label nOldCellsToRemove = cellsToRemove.size();
 
     // Lookup the solid model
-    const solidModel& solid = lookupSolidModel(*this);
+    const fvMesh& mesh = this->mesh();
+    const solidModel& solid = lookupSolidModel(mesh);
     const volVectorField& D = solid.solutionD();
-    const cellList& cells = this->cells();
-    const labelList& owner = this->faceOwner();
-    const labelList& neighbour = this->faceNeighbour();
-    PackedBoolList markedCells(this->nCells(), true);
-    PackedBoolList markedFaces(this->nFaces(), true);
-    PackedBoolList visitedCells(this->nCells());
-    PackedBoolList visitedFaces(this->nFaces());
+    const cellList& cells = mesh.cells();
+    const labelList& owner = mesh.faceOwner();
+    const labelList& neighbour = mesh.faceNeighbour();
+    PackedBoolList markedCells(mesh.nCells(), true);
+    PackedBoolList markedFaces(mesh.nFaces(), true);
+    PackedBoolList visitedCells(mesh.nCells());
+    PackedBoolList visitedFaces(mesh.nFaces());
 
     // Faces to visit on the next pass
     labelHashSet newFacesToVisit;
@@ -229,7 +220,7 @@ Foam::label Foam::cellRemovalFvMesh::addDeadCells
     {
         if (D.boundaryField()[patchi].fixesValue())
         {
-            const polyPatch& patch = this->boundaryMesh()[patchi];
+            const polyPatch& patch = mesh.boundaryMesh()[patchi];
             const labelList& faceCells = patch.faceCells();
             forAll(patch, fi)
             {
@@ -306,7 +297,7 @@ Foam::label Foam::cellRemovalFvMesh::addDeadCells
             }
             else if
             (
-                facei < this->nInternalFaces()
+                facei < mesh.nInternalFaces()
              && !visitedCells.get(neighbour[facei])
             )
             {
@@ -359,7 +350,7 @@ Foam::label Foam::cellRemovalFvMesh::addDeadCells
 }
 
 
-void Foam::cellRemovalFvMesh::syncVisitedFaces
+void Foam::fvMeshTopoChangers::cellRemoval::syncVisitedFaces
 (
     PackedBoolList& visited,
     PackedBoolList& marked,
@@ -368,21 +359,24 @@ void Foam::cellRemovalFvMesh::syncVisitedFaces
 {
     if (Pstream::parRun())
     {
+        const label nInternalFaces = mesh().nInternalFaces();
+        const polyBoundaryMesh& bmesh = mesh().boundaryMesh();
+
         // Current state of boundary faces
         // 0: Not visited
         // 1: Visited and marked
         // 2: Visited and unmarked
-        labelList boundaryState(this->nFaces() - this->nInternalFaces(), 0);
-        forAll(boundaryMesh(), patchi)
+        labelList boundaryState(mesh().nFaces() - nInternalFaces, 0);
+        forAll(bmesh, patchi)
         {
-            const polyPatch& patch = boundaryMesh()[patchi];
+            const polyPatch& patch = bmesh[patchi];
             const label start = patch.start();
             forAll(patch, fi)
             {
                 const label facei = start + fi;
                 if (visited.get(facei))
                 {
-                    boundaryState[facei - this->nInternalFaces()] =
+                    boundaryState[facei - nInternalFaces] =
                         marked.get(facei) ? 1 : 2;
                 }
             }
@@ -390,19 +384,19 @@ void Foam::cellRemovalFvMesh::syncVisitedFaces
 
         syncTools::syncBoundaryFaceList
         (
-            *this,
+            mesh(),
             boundaryState,
             maxEqOp<label>()
         );
 
-        forAll(boundaryMesh(), patchi)
+        forAll(bmesh, patchi)
         {
-            const polyPatch& patch = boundaryMesh()[patchi];
+            const polyPatch& patch = bmesh[patchi];
             const label start = patch.start();
             forAll(patch, fi)
             {
                 const label facei = start + fi;
-                const label bfacei = facei - this->nInternalFaces();
+                const label bfacei = facei - nInternalFaces;
                 if (boundaryState[bfacei] > 0)
                 {
                     if (visited.set(facei))
@@ -420,9 +414,9 @@ void Foam::cellRemovalFvMesh::syncVisitedFaces
 }
 
 
-Foam::labelList Foam::cellRemovalFvMesh::patchFaceMap
+Foam::labelList Foam::fvMeshTopoChangers::cellRemoval::patchFaceMap
 (
-    const mapPolyMesh& mpm,
+    const polyTopoChangeMap& mpm,
     const labelList& exposedFaces
 ) const
 {
@@ -438,7 +432,7 @@ Foam::labelList Foam::cellRemovalFvMesh::patchFaceMap
         label newFaceID = revFaceMap[exposedFaces[fi]];
 
         // Find the patch ID
-        const label patchID = boundaryMesh().whichPatch(newFaceID);
+        const label patchID = mesh().boundaryMesh().whichPatch(newFaceID);
 
         if (patchID == -1)
         {
@@ -452,5 +446,23 @@ Foam::labelList Foam::cellRemovalFvMesh::patchFaceMap
 
     return map;
 }
+
+
+void Foam::fvMeshTopoChangers::cellRemoval::topoChange
+(
+    const polyTopoChangeMap& map
+)
+{}
+
+
+void Foam::fvMeshTopoChangers::cellRemoval::mapMesh(const polyMeshMap& map)
+{}
+
+
+void Foam::fvMeshTopoChangers::cellRemoval::distribute
+(
+    const polyDistributionMap& map
+)
+{}
 
 // ************************************************************************* //

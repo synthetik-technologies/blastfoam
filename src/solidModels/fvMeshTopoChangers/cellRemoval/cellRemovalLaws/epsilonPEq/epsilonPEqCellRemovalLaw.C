@@ -34,80 +34,57 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(epsilonPEqCellRemovalLaw, 0);
+namespace cellRemovalLaws
+{
+    defineTypeNameAndDebug(epsilonPEq, 0);
     addToRunTimeSelectionTable
     (
-        cellRemovalLaw, epsilonPEqCellRemovalLaw, dictionary
+        cellRemovalLaw, epsilonPEq, dictionary
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-// Construct from dictionary
-Foam::epsilonPEqCellRemovalLaw::epsilonPEqCellRemovalLaw
+Foam::cellRemovalLaws::epsilonPEq::epsilonPEq
 (
     const word& name,
-    fvMesh& mesh,
+    const fvMesh& mesh,
     const dictionary& dict
 )
 :
     cellRemovalLaw(name, mesh, dict),
     epsilonPEqCrit_(readScalar(dict.lookup("epsilonPEqCritical"))),
-    epsilonPEqName_(dict.lookupOrDefault<word>("epsilonPEqName", "epsilonPEq")),
-    exposedPatch_(dict.lookup("exposedPatch"))
-{
-    if (exposedFacesPatchID() < 0)
-    {
-        FatalIOErrorInFunction(dict)
-            << exposedPatch_ << " is not a valid patch. Valid patches are " << nl
-            << mesh.boundaryMesh().names() << endl
-            << abort(FatalIOError);
-    }
-}
+    epsilonPEqName_(dict.lookupOrDefault<word>("epsilonPEqName", "epsilonPEq"))
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * * //
 
-Foam::epsilonPEqCellRemovalLaw::~epsilonPEqCellRemovalLaw()
+Foam::cellRemovalLaws::epsilonPEq::~epsilonPEq()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-Foam::labelList Foam::epsilonPEqCellRemovalLaw::cellsToRemove()
+Foam::labelHashSet Foam::cellRemovalLaws::epsilonPEq::cellsToRemove()
 {
     // Lookup the plastic equivalent strain
-    if (mesh().foundObject<volScalarField>(epsilonPEqName_))
+    const volScalarField& epsilonPEq =
+        mesh_.lookupObject<volScalarField>(epsilonPEqName_);
+
+    labelHashSet cellsToRemoveSet;
+    forAll(epsilonPEq, cellI)
     {
-        const volScalarField& epsilonPEq =
-            mesh().lookupObject<volScalarField>(epsilonPEqName_);
-
-        // Find cells with epsilonPEq greater than the critical value
-        const scalarField& epsilonPEqI = epsilonPEq.internalField();
-
-        labelHashSet cellsToRemove;
-
-        forAll(epsilonPEqI, cellI)
+        if (epsilonPEq[cellI] > epsilonPEqCrit_)
         {
-            if (epsilonPEqI[cellI] > epsilonPEqCrit_)
-            {
-                cellsToRemove.insert(cellI);
-            }
+            cellsToRemoveSet.insert(cellI);
         }
+    }
 
-        return cellsToRemove.toc();
-    }
-    else
-    {
-        return labelList(0);
-    }
+    return cellsToRemoveSet;
 }
 
-
-Foam::label Foam::epsilonPEqCellRemovalLaw::exposedFacesPatchID()
-{
-    return mesh().boundaryMesh()[exposedPatch_].index();
-}
 
 // ************************************************************************* //

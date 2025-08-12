@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "simpleCrackerFvMesh.H"
+#include "simpleCrackerFvMeshTopoChanger.H"
 #include "volMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "simpleCohesiveZoneFvPatchVectorField.H"
@@ -33,52 +33,46 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(simpleCrackerFvMesh, 0);
+namespace fvMeshTopoChangers
+{
+    defineTypeNameAndDebug(simpleCracker, 0);
     addToRunTimeSelectionTable
     (
-        dynamicFvMesh,
-        simpleCrackerFvMesh,
-        IOobject
+        fvMeshTopoChanger,
+        simpleCracker,
+        fvMesh
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-// Construct from components
-Foam::simpleCrackerFvMesh::simpleCrackerFvMesh
+Foam::fvMeshTopoChangers::simpleCracker::simpleCracker
 (
-    const IOobject& io
+    fvMesh& mesh,
+    const dictionary& dict
 )
 :
-    dynamicFvMesh(io)
+    fvMeshTopoChanger(mesh)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::simpleCrackerFvMesh::~simpleCrackerFvMesh()
+Foam::fvMeshTopoChangers::simpleCracker::~simpleCracker()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::simpleCrackerFvMesh::update()
+bool Foam::fvMeshTopoChangers::simpleCracker::update()
 {
     // Lookup the solidModel object
-    const solidModel& solMod = lookupSolidModel(*this);
+    const solidModel& solMod = lookupSolidModel(mesh());
 
     // Lookup displacement field
-    const volVectorField* DPtr = NULL;
-    if (solMod.incremental())
-    {
-        DPtr = &lookupObject<volVectorField>("DD");
-    }
-    else
-    {
-        DPtr = &lookupObject<volVectorField>("D");
-    }
-    const volVectorField& D = *DPtr;
+    const volVectorField& D = solMod.solutionD();
 
     // Find cohesive patch and update crack
 
@@ -111,6 +105,24 @@ bool Foam::simpleCrackerFvMesh::update()
     Info<< nl << "Breaking " << nFacesToBreak << " faces" << nl << endl;
     return nFacesToBreak > 0;
 }
+
+
+void Foam::fvMeshTopoChangers::simpleCracker::topoChange
+(
+    const polyTopoChangeMap& map
+)
+{}
+
+
+void Foam::fvMeshTopoChangers::simpleCracker::mapMesh(const polyMeshMap& map)
+{}
+
+
+void Foam::fvMeshTopoChangers::simpleCracker::distribute
+(
+    const polyDistributionMap& map
+)
+{}
 
 
 // ************************************************************************* //

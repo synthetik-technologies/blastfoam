@@ -21,12 +21,9 @@ License
     You should have received a copy of the GNU General Public License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    crackPathLimiter
-
 \*---------------------------------------------------------------------------*/
 
-#include "crackPathLimiter.H"
+#include "faceBreakerLaw.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 
@@ -37,16 +34,16 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-autoPtr<crackPathLimiter> crackPathLimiter::New
+autoPtr<faceBreakerLaw> faceBreakerLaw::New
 (
     const word& name,
     const fvMesh& mesh,
     const dictionary& dict
 )
 {
-    word lawTypeName = dict.lookup("crackPathLimiter");
+    const word lawTypeName(dict.lookup("faceBreaker"));
 
-    Info<< "Selecting crack path limiter: " << lawTypeName << endl;
+    Info<< "Selecting face breaker law: " << lawTypeName << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(lawTypeName);
@@ -54,14 +51,14 @@ autoPtr<crackPathLimiter> crackPathLimiter::New
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalIOErrorInFunction(dict)
-            << "Unknown crackPathLimiter type "
+            << "Unknown faceBreakerLaw type "
             << lawTypeName << endl << endl
-            << "Valid  crackPathLimiters are : " << endl
+            << "Valid  faceBreakerLaws are : " << endl
             << dictionaryConstructorTablePtr_->toc()
             << exit(FatalIOError);
     }
 
-    return autoPtr<crackPathLimiter>(cstrIter()(name, mesh, dict));
+    return autoPtr<faceBreakerLaw>(cstrIter()(name, mesh, dict));
 }
 
 

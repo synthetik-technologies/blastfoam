@@ -23,10 +23,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "crackerFvMesh.H"
+#include "crackerFvMeshTopoChanger.H"
 #include "addToRunTimeSelectionTable.H"
-#include "mapPolyMesh.H"
-//#include "materialInterface.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 
@@ -34,54 +32,23 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(crackerFvMesh, 0);
-    addToRunTimeSelectionTable(topoChangerFvMesh, crackerFvMesh, IOobject);
+namespace fvMeshTopoChangers
+{
+    defineTypeNameAndDebug(cracker, 0);
+    addToRunTimeSelectionTable(fvMeshTopoChanger, cracker, fvMesh);
+}
 }
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::crackerFvMesh::removeZones()
-{
-    if (debug)
-    {
-        InfoInFunction
-            << "Removing point, face and cell zones."
-            << endl;
-    }
-
-    // Remove the zones and reset writing
-    meshPointZones& pZones =
-        const_cast<meshPointZones&>(this->pointZones());
-    pZones.clear();
-    pZones.setSize(0);
-    pZones.writeOpt() = IOobject::NO_WRITE;
-
-    meshFaceZones& fZones =
-        const_cast<meshFaceZones&>(this->faceZones());
-    fZones.clear();
-    fZones.setSize(0);
-    fZones.writeOpt() = IOobject::NO_WRITE;
-
-    meshCellZones& cZones =
-        const_cast<meshCellZones&>(this->cellZones());
-    cZones.clear();
-    cZones.setSize(0);
-    cZones.writeOpt() = IOobject::NO_WRITE;
-
-    polyMesh::clearOut();
-}
-
-
-void Foam::crackerFvMesh::addZonesAndModifiers()
+void Foam::fvMeshTopoChangers::cracker::addZonesAndModifiers()
 {
     // Add zones and modifiers for motion action
+    DebugInfo<< "Adding topo modifier to the mesh" << endl;
 
-    Info<< "Time = " << time().timeName() << endl
-        << "Adding topo modifier to the mesh" << endl;
-
-    const word crackPatchName(dict_.lookup("crackPatch"));
-    const label crackPatchIndex = boundaryMesh().findPatchID(crackPatchName);
+    const label crackPatchIndex =
+        mesh().boundaryMesh().findIndex(crackPatch_);
 
     if (crackPatchIndex < 0)
     {
@@ -91,114 +58,84 @@ void Foam::crackerFvMesh::addZonesAndModifiers()
     }
 
     // Add zones
-    if (faceZones().findZoneID(crackPatchName + "Zone") == -1)
+    if (mesh().faceZones().findIndex(crackPatch_ + "Zone") == -1)
     {
-        Info << "Adding the crack faceZone" << endl;
+        DebugInfo<< "Adding the crack faceZone" << endl;
 
         // Copy points zones from the mesh
 
-        List<pointZone*> pz(pointZones().size());
-
-        forAll(pz, zoneI)
+        const pointZoneList& pzs = mesh().pointZones();
+        List<pointZone*> newPzs(pzs.size());
+        forAll(pzs, zoneI)
         {
-            pz[zoneI] =
-                new pointZone
-                (
-                    pointZones()[zoneI],
-                    pointZones()[zoneI],
-                    zoneI,
-                    pointZones()
-                );
+            newPzs[zoneI] = pzs[zoneI].clone(pzs).ptr();
         }
 
         // Copy face zones from the mesh and add a crack zone at the end
 
-        List<faceZone*> fz(faceZones().size() + 1);
-
-        for (label zoneI = 0; zoneI < fz.size() - 1; zoneI++)
+        const faceZoneList& fzs = mesh().faceZones();
+        List<faceZone*> newFzs(fzs.size() + 1);
+        forAll(fzs, zoneI)
         {
-            fz[zoneI] =
-                new faceZone
-                (
-                    faceZones()[zoneI],
-                    faceZones()[zoneI],
-                    faceZones()[zoneI].flipMap(),
-                    zoneI,
-                    faceZones()
-                );
+            newFzs[zoneI] = fzs[zoneI].clone(fzs).ptr();
         }
 
         // Add crack face zone at the end
-        fz[fz.size() - 1] =
+        newFzs[newFzs.size() - 1] =
             new faceZone
             (
-                crackPatchName + "Zone",
+                crackPatch_ + "Zone",
                 labelList(0),
                 boolList(0),
-                fz.size() - 1,
-                faceZones()
+                fzs
             );
 
         // Copy cell zones from the mesh
 
-        List<cellZone*> cz(cellZones().size());
-
-        forAll(cz, zoneI)
+        const cellZoneList& czs = mesh().cellZones();
+        List<cellZone*> newCzs(czs.size());
+        forAll(czs, zoneI)
         {
-            cz[zoneI] =
-                new cellZone
-                (
-                    cellZones()[zoneI],
-                    cellZones()[zoneI],
-                    zoneI,
-                    cellZones()
-                );
+            newCzs[zoneI] = czs[zoneI].clone(czs).ptr();
         }
 
         // Remove previous zones
-        removeZones();
+        mesh().pointZones().clear();
+        mesh().faceZones().clear();
+        mesh().cellZones().clear();
 
         // Add the zones to the mesh
-        addZones(pz, fz, cz);
+        mesh().addZones(newPzs, newFzs, newCzs);
     }
     else
     {
-        Info << "Face zones already present" << endl;
+        DebugInfo<< "Face zones already present" << endl;
     }
 
     // Add a topology modifier
-    if (topoChanger_.size() == 0)
+    if (!topoChanger_.valid())
     {
-        Info << "Adding topology modifiers" << endl;
-        topoChanger_.setSize(1);
+        DebugInfo<< "Adding topology modifiers" << endl;
         topoChanger_.set
         (
-            0,
             new faceCracker
             (
-                "cracker",
-                0,
-                topoChanger_,
-                crackPatchName + "Zone",
-                crackPatchName //,
-                //openPatchName
+                mesh(),
+                word(crackPatch_ + "Zone"),
+                crackPatch_
             )
         );
-
-        topoChanger_.writeOpt() = IOobject::AUTO_WRITE;
     }
     else
     {
-        Info<< "void crackerFvMesh::addZonesAndModifiers() : "
-            << "Modifiers already present."
-            << endl;
+        DebugInfo<< "Modifiers already present." << endl;
     }
 
     // Write mesh
-    write();
+    mesh().write();
 }
 
-void Foam::crackerFvMesh::makeRegions() const
+void Foam::fvMeshTopoChangers::cracker::makeRegions() const
 {
     // It is an error to attempt to recalculate
     // if the pointer is already set
@@ -209,10 +146,10 @@ void Foam::crackerFvMesh::makeRegions() const
             << abort(FatalError);
     }
 
-    regionsPtr_ = new regionSplit(*this);
+    regionsPtr_ = new regionSplit(mesh());
 }
 
-void Foam::crackerFvMesh::makeNCellsInRegion() const
+void Foam::fvMeshTopoChangers::cracker::makeNCellsInRegion() const
 {
     // It is an error to attempt to recalculate
     // if the pointer is already set
@@ -235,7 +172,8 @@ void Foam::crackerFvMesh::makeNCellsInRegion() const
     }
 }
 
-void Foam::crackerFvMesh::makeGlobalCrackFaceCentresAndSizes() const
+void
+Foam::fvMeshTopoChangers::cracker::makeGlobalCrackFaceCentresAndSizes() const
 {
     // It is an error to attempt to recalculate
     // if the pointer is already set
@@ -247,58 +185,23 @@ void Foam::crackerFvMesh::makeGlobalCrackFaceCentresAndSizes() const
     }
 
 
+    // Crack patch
+    const label crackPatchID = mesh().boundaryMesh().findIndex(crackPatch_);
+    const polyPatch& crackPatch = mesh().boundaryMesh()[crackPatchID];
+
     // Number of faces in global crack
     labelList sizes(Pstream::nProcs(), 0);
-    sizes[Pstream::myProcNo()] = boundaryMesh()[crackPatchID_.index()].size();
+    sizes[Pstream::myProcNo()] = crackPatch.size();
+    Pstream::gatherList(sizes);
+    Pstream::scatterList(sizes);
 
-    if (Pstream::parRun())
-    {
-        for (label procI = 0; procI < Pstream::nProcs(); procI++)
-        {
-            if (procI != Pstream::myProcNo())
-            {
-                // Parallel data exchange
-                {
-                    OPstream toProc
-                    (
-                        Pstream::commsTypes::blocking,
-                        procI,
-                        sizeof(label)
-                    );
+    const label globalCrackSize = sum(sizes);
 
-                    toProc << sizes[Pstream::myProcNo()];
-                }
-            }
-        }
+    globalCrackFaceCentresPtr_ = new vectorField(globalCrackSize, Zero);
+    vectorField& crackFaceCentres = *globalCrackFaceCentresPtr_;
 
-        for (label procI = 0; procI < Pstream::nProcs(); procI++)
-        {
-            if (procI != Pstream::myProcNo())
-            {
-                // Parallel data exchange
-                {
-                    IPstream fromProc
-                    (
-                        Pstream::commsTypes::blocking,
-                        procI,
-                        sizeof(label)
-                    );
-
-                    fromProc >> sizes[procI];
-                }
-            }
-        }
-    }
-
-    label globalCrackSize = sum(sizes);
-
-    globalCrackFaceCentresPtr_ =
-        new vectorField(globalCrackSize, vector::zero);
-    vectorField& globalCrackFaceCentres = *globalCrackFaceCentresPtr_;
-
-    globalCrackFaceSizesPtr_ =
-        new scalarField(globalCrackSize, 0);
-    scalarField& globalCrackFaceSizes = *globalCrackFaceSizesPtr_;
+    globalCrackFaceSizesPtr_ = new scalarField(globalCrackSize, 0.0);
+    scalarField& crackFaceSizes = *globalCrackFaceSizesPtr_;
 
     localCrackStart_ = 0;
     for (label procI = 0; procI < Pstream::myProcNo(); procI++)
@@ -306,36 +209,28 @@ void Foam::crackerFvMesh::makeGlobalCrackFaceCentresAndSizes() const
         localCrackStart_ += sizes[procI];
     }
 
-//     const vectorField& crackCf =
-//         boundaryMesh()[crackPatchID_.index()].faceCentres();
-    const vectorField crackCf
-    (
-        boundaryMesh()[crackPatchID_.index()].faceCentres()
-    );
+    const vectorField::subField crackCf =
+        mesh().boundaryMesh()[crackPatchID].faceCentres();
 
     // Calc face sizes
-//     const vectorField& crackSf =
-//         boundaryMesh()[crackPatchID_.index()].faceAreas();
-    const vectorField crackSf
-    (
-        boundaryMesh()[crackPatchID_.index()].faceAreas()
-    );
+    const vectorField::subField crackSf =
+        mesh().boundaryMesh()[crackPatchID].faceAreas();
 
-    scalarField delta(crackSf.size(), 0);
-
-    if (nGeometricD() == 3)
+    scalarField delta(crackSf.size(), 0.0);
+    if (mesh().nGeometricD() == 3)
     {
         delta = Foam::sqrt(mag(crackSf));
     }
     else
     {
         scalar thickness = 0.0;
-        const Vector<label>& directions = geometricD();
-        for (direction dir = 0; dir < directions.nComponents; dir++)
+        const Vector<label>& directions = mesh().geometricD();
+        const vector span = mesh().bounds().span();
+        for (direction dir = 0; dir < vector::nComponents; dir++)
         {
             if (directions[dir] == -1)
             {
-                thickness = bounds().span()[dir];
+                thickness = span[dir];
                 break;
             }
         }
@@ -343,27 +238,44 @@ void Foam::crackerFvMesh::makeGlobalCrackFaceCentresAndSizes() const
         delta = mag(crackSf)/thickness;
     }
 
-    label j=0;
-    for
-    (
-        label i=localCrackStart_;
-        i<(localCrackStart_ + sizes[Pstream::myProcNo()]);
-        i++
-    )
-    {
-        globalCrackFaceCentres[i] = crackCf[j];
-        globalCrackFaceSizes[i] = delta[j];
-        j++;
-    }
 
-    // Parallel data exchange: collect crack face centres and sizes
-    // on all processors
-    reduce(globalCrackFaceCentres, sumOp<List<vector>>());
-    reduce(globalCrackFaceSizes, sumOp<List<scalar>>());
+    if (Pstream::parRun())
+    {
+        List<vectorField> globalCrackFaceCentres(Pstream::nProcs());
+        globalCrackFaceCentres[Pstream::myProcNo()] = crackCf;
+
+        List<scalarField> globalCrackFaceSizes(Pstream::nProcs());
+        globalCrackFaceSizes[Pstream::myProcNo()] = delta;
+
+        Pstream::gatherList(globalCrackFaceCentres);
+        Pstream::scatterList(globalCrackFaceCentres);
+        Pstream::gatherList(globalCrackFaceSizes);
+        Pstream::scatterList(globalCrackFaceSizes);
+
+        label facei = 0;
+        forAll(globalCrackFaceCentres, proci)
+        {
+            const vectorField& gCrackFaceCentres =
+                globalCrackFaceCentres[proci];
+            const scalarField& gCrackFaceSizes =
+                globalCrackFaceSizes[proci];
+            forAll(gCrackFaceCentres, fi)
+            {
+                crackFaceCentres[facei] = gCrackFaceCentres[fi];
+                crackFaceSizes[facei] = gCrackFaceSizes[fi];
+                facei++;
+            }
+        }
+    }
+    else
+    {
+        crackFaceCentres = crackCf;
+        crackFaceSizes = delta;
+    }
 }
 
 
-void Foam::crackerFvMesh::makeGlobalCrackFaceAddressing() const
+void Foam::fvMeshTopoChangers::cracker::makeGlobalCrackFaceAddressing() const
 {
     // It is an error to attempt to recalculate
     // if the pointer is already set
@@ -412,25 +324,7 @@ void Foam::crackerFvMesh::makeGlobalCrackFaceAddressing() const
 }
 
 
-void Foam::crackerFvMesh::makeFaceBreakerLaw() const
-{
-    if (lawPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "pointer already set" << abort(FatalError);
-    }
-
-    lawPtr_ =
-        faceBreakerLaw::New
-        (
-            "law",
-            *this,
-            dict_.optionalSubDict(faceBreakerLaw::typeName + "Coeffs")
-        );
-}
-
-
-void Foam::crackerFvMesh::perturbFieldOnNewCrackFaces
+void Foam::fvMeshTopoChangers::cracker::perturbFieldOnNewCrackFaces
 (
     const labelList& faceMap,
     const labelList& facesToBreak,
@@ -442,9 +336,9 @@ void Foam::crackerFvMesh::perturbFieldOnNewCrackFaces
     const labelHashSet facesToBreakSet(facesToBreak);
     const labelHashSet coupledFacesToBreakSet(coupledFacesToBreak);
 
-    // Cast the mesh to a crackerFvMesh
+    // Cast the mesh to a cracker
 
-    const crackerFvMesh& mesh = refCast<const crackerFvMesh>(*this);
+    const fvMesh& mesh = this->mesh();
 
     // Lookup field from object registry
     volVectorField& field
@@ -458,28 +352,27 @@ void Foam::crackerFvMesh::perturbFieldOnNewCrackFaces
         )
     );
 
-    const label cohesivePatchID = crackPatchID_.index();
-    const label start = mesh.boundaryMesh()[cohesivePatchID].start();
-    const label cohesivePatchSize = mesh.boundaryMesh()[cohesivePatchID].size();
+    const polyPatch& crackPatch = mesh().boundaryMesh()[crackPatch_];
+    const label crackPatchID = crackPatch.index();
+    const label start = crackPatch.start();
 
     Info<< "    Perturbing " << fieldName << " on new crack faces" << endl;
 
     // Local crack field
     Field<vector> fieldpI
     (
-        field.boundaryField()[cohesivePatchID].patchInternalField()
+        field.boundaryField()[crackPatchID].patchInternalField()
     );
 
     // Global crack fields
-    Field<vector> gFieldpI(mesh.globalCrackField(fieldpI));
+    Field<vector> gFieldpI(this->globalCrackField(fieldpI));
 
-    //const labelList& gcfa = mesh.globalCrackFaceAddressing();
+    volVectorField::Patch& pf =
+        field.boundaryFieldRefNoStoreOldTimes()[crackPatchID];
 
-    label globalIndex = mesh.localCrackStart();
-
-    for (label i = 0; i < cohesivePatchSize; i++)
+    forAll(crackPatch, fi)
     {
-        label oldFaceIndex = faceMap[start + i];
+        label oldFaceIndex = faceMap[start + fi];
 
         if
         (
@@ -493,16 +386,7 @@ void Foam::crackerFvMesh::perturbFieldOnNewCrackFaces
             // new crack face
             // We will add a small displacement in the negative face normal
             // direction
-            const vector& faceN =
-                mesh.boundaryMesh()[cohesivePatchID].faceNormals()[i];
-
-            field.boundaryFieldRef()[cohesivePatchID][i] -= 1e-12*faceN;
-
-            globalIndex++;
-        }
-        else
-        {
-            globalIndex++;
+            pf[fi] -= 1e-12*crackPatch.faceNormals()[fi];
         }
     }
 }
@@ -510,21 +394,35 @@ void Foam::crackerFvMesh::perturbFieldOnNewCrackFaces
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-// Construct from components
-Foam::crackerFvMesh::crackerFvMesh
+Foam::fvMeshTopoChangers::cracker::cracker
 (
-    const IOobject& io
+    fvMesh& mesh,
+    const dictionary& dict
 )
 :
-    topoChangerFvMesh(io),
-    dict_(dynamicMeshDict().optionalSubDict(type() + "Coeffs")),
-    topoChangeMap_(),
-    crackPatchID_
+    regIOobject
     (
-        dict_.lookup<word>("crackPatch"),
-        boundaryMesh()
+        IOobject
+        (
+            type(),
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        )
     ),
-    lawPtr_(NULL),
+    fvMeshTopoChanger(mesh),
+    dict_(dict),
+    crackPatch_(dict.lookup<word>("crackPatch")),
+    lawPtr_
+    (
+        faceBreakerLaw::New
+        (
+            "law",
+            mesh,
+            dict.optionalSubDict(faceBreakerLaw::typeName + "Coeffs")
+        )
+    ),
     regionsPtr_(NULL),
     nCellsInRegionPtr_(NULL),
     globalCrackFaceCentresPtr_(NULL),
@@ -539,7 +437,7 @@ Foam::crackerFvMesh::crackerFvMesh
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::crackerFvMesh::~crackerFvMesh()
+Foam::fvMeshTopoChangers::cracker::~cracker()
 {
     deleteDemandDrivenData(regionsPtr_);
     deleteDemandDrivenData(nCellsInRegionPtr_);
@@ -551,20 +449,19 @@ Foam::crackerFvMesh::~crackerFvMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::crackerFvMesh::setBreak
+void Foam::fvMeshTopoChangers::cracker::setBreak
 (
     const labelList& facesToBreak,
     const boolList& faceFlip,
     const labelList& coupledFacesToBreak
 )
 {
-    faceCracker& fc = refCast<faceCracker>(topoChanger_[0]);
 
-    fc.setBreak(facesToBreak, faceFlip, coupledFacesToBreak);
+    topoChanger_->setBreak(mesh(), facesToBreak, faceFlip, coupledFacesToBreak);
 }
 
 
-bool Foam::crackerFvMesh::update()
+bool Foam::fvMeshTopoChangers::cracker::update()
 {
     // Clearout the law demand driven data
     faceBreaker().clearOut();
@@ -594,21 +491,23 @@ bool Foam::crackerFvMesh::update()
         setBreak(facesToBreak, facesToBreakFlip, coupledFacesToBreak);
 
         // Perform mesh topological change to break the faces
-        topoChangeMap_ = topoChanger_.changeMesh(true);
+        polyTopoChange meshMod(mesh());
+        topoChanger_->setRefinement(meshMod);
 
-        if (topoChangeMap_.valid())
+        autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh());
+        mesh().topoChange(map);
+
         {
             deleteDemandDrivenData(regionsPtr_);
             deleteDemandDrivenData(nCellsInRegionPtr_);
             deleteDemandDrivenData(globalCrackFaceCentresPtr_);
             deleteDemandDrivenData(globalCrackFaceSizesPtr_);
-            localCrackStart_ = -1;
             deleteDemandDrivenData(globalCrackFaceAddressingPtr_);
         }
 
         // Update field values on the new crack faces
 
-        const labelList& faceMap = topoChangeMap().faceMap();
+        const labelList& faceMap = map->faceMap();
 
         DebugInfo<< "Updating field values on newly broken faces" << endl;
 
@@ -666,7 +565,7 @@ bool Foam::crackerFvMesh::update()
 }
 
 
-const Foam::regionSplit& Foam::crackerFvMesh::regions() const
+const Foam::regionSplit& Foam::fvMeshTopoChangers::cracker::regions() const
 {
     if (!regionsPtr_)
     {
@@ -677,7 +576,7 @@ const Foam::regionSplit& Foam::crackerFvMesh::regions() const
 }
 
 
-Foam::label Foam::crackerFvMesh::nCellsInRegion(label regI) const
+Foam::label Foam::fvMeshTopoChangers::cracker::nCellsInRegion(label regI) const
 {
     if (!nCellsInRegionPtr_)
     {
@@ -695,13 +594,8 @@ Foam::label Foam::crackerFvMesh::nCellsInRegion(label regI) const
 }
 
 
-const Foam::mapPolyMesh& Foam::crackerFvMesh::topoChangeMap() const
-{
-    return topoChangeMap_();
-}
-
-
-const Foam::vectorField& Foam::crackerFvMesh::globalCrackFaceCentres() const
+const Foam::vectorField&
+Foam::fvMeshTopoChangers::cracker::globalCrackFaceCentres() const
 {
     if (!globalCrackFaceCentresPtr_)
     {
@@ -712,7 +606,8 @@ const Foam::vectorField& Foam::crackerFvMesh::globalCrackFaceCentres() const
 }
 
 
-const Foam::scalarField& Foam::crackerFvMesh::globalCrackFaceSizes() const
+const Foam::scalarField&
+Foam::fvMeshTopoChangers::cracker::globalCrackFaceSizes() const
 {
     if (!globalCrackFaceSizesPtr_)
     {
@@ -723,7 +618,8 @@ const Foam::scalarField& Foam::crackerFvMesh::globalCrackFaceSizes() const
 }
 
 
-const Foam::labelList& Foam::crackerFvMesh::globalCrackFaceAddressing() const
+const Foam::labelList&
+Foam::fvMeshTopoChangers::cracker::globalCrackFaceAddressing() const
 {
     if (!globalCrackFaceAddressingPtr_)
     {
@@ -734,7 +630,8 @@ const Foam::labelList& Foam::crackerFvMesh::globalCrackFaceAddressing() const
 }
 
 
-Foam::label Foam::crackerFvMesh::localCrackStart() const
+Foam::label
+Foam::fvMeshTopoChangers::cracker::localCrackStart() const
 {
     if (localCrackStart_ == -1)
     {
@@ -745,45 +642,43 @@ Foam::label Foam::crackerFvMesh::localCrackStart() const
 }
 
 
-Foam::label Foam::crackerFvMesh::globalCrackSize() const
+Foam::label
+Foam::fvMeshTopoChangers::cracker::globalCrackSize() const
 {
     return globalCrackFaceCentres().size();
 }
 
 
-const Foam::faceBreakerLaw& Foam::crackerFvMesh::faceBreaker() const
+const Foam::faceBreakerLaw&
+Foam::fvMeshTopoChangers::cracker::faceBreaker() const
 {
-    if (!lawPtr_.valid())
-    {
-        makeFaceBreakerLaw();
-    }
-
     return lawPtr_();
 }
 
 
-Foam::faceBreakerLaw& Foam::crackerFvMesh::faceBreaker()
+Foam::faceBreakerLaw&
+Foam::fvMeshTopoChangers::cracker::faceBreaker()
 {
-    if (!lawPtr_.valid())
-    {
-        makeFaceBreakerLaw();
-    }
-
     return lawPtr_();
 }
 
 
-bool Foam::crackerFvMesh::writeObject
+void Foam::fvMeshTopoChangers::cracker::topoChange
 (
-    IOstream::streamFormat fmt,
-    IOstream::versionNumber ver,
-    IOstream::compressionType cmp,
-    const bool write
-) const
-{
-    return
-        topoChangerFvMesh::writeObject(fmt, ver, cmp, write)
-     && faceBreaker().write();
-}
+    const polyTopoChangeMap& map
+)
+{}
+
+
+void Foam::fvMeshTopoChangers::cracker::mapMesh(const polyMeshMap& map)
+{}
+
+
+void Foam::fvMeshTopoChangers::cracker::distribute
+(
+    const polyDistributionMap& map
+)
+{}
+
 
 // ************************************************************************* //

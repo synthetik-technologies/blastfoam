@@ -218,18 +218,17 @@ class simpleCohesiveZoneFvPatchVectorField
 
         // Mapping functions
 
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
+           //- Map (and resize as needed) from self given a mapping object
+            //  Used to update fields following mesh topology change
+            virtual void map
             (
-                const fvPatchFieldMapper&
+                const fvPatchVectorField& ptf,
+                const fieldMapper& mapper
             );
 
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
-            (
-                const fvPatchField<vector>&,
-                const labelList&
-            );
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset(const fvPatchVectorField&);
 
 
         // Evaluation functions

@@ -34,83 +34,63 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(stressCellRemovalLaw, 0);
+namespace cellRemovalLaws
+{
+    defineTypeNameAndDebug(stress, 0);
     addToRunTimeSelectionTable
     (
-        cellRemovalLaw, stressCellRemovalLaw, dictionary
+        cellRemovalLaw, stress, dictionary
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::stressCellRemovalLaw::stressCellRemovalLaw
+Foam::cellRemovalLaws::stress::stress
 (
     const word& name,
-    fvMesh& mesh,
+    const fvMesh& mesh,
     const dictionary& dict
 )
 :
     cellRemovalLaw(name, mesh, dict),
     vonMises_(dict.lookupOrDefault("vonMises", true)),
     stressCrit_(dict.lookup<scalar>("criticalStress")),
-    sigmaName_(dict.lookupOrDefault<word>("sigmaName", "sigma")),
-    exposedPatch_(dict.lookup("exposedPatch"))
-{
-    if (exposedFacesPatchID() < 0)
-    {
-        FatalIOErrorInFunction(dict)
-            << exposedPatch_ << " is not a valid patch. Valid patches are " << nl
-            << mesh.boundaryMesh().names() << endl
-            << abort(FatalIOError);
-    }
-}
+    sigmaName_(dict.lookupOrDefault<word>("sigmaName", "sigma"))
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * * //
 
-Foam::stressCellRemovalLaw::~stressCellRemovalLaw()
+Foam::cellRemovalLaws::stress::~stress()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-Foam::labelList Foam::stressCellRemovalLaw::cellsToRemove()
+Foam::labelHashSet Foam::cellRemovalLaws::stress::cellsToRemove()
 {
     // Lookup the plastic equivalent strain
-    if (mesh().foundObject<volSymmTensorField>(sigmaName_))
+    const symmTensorField& sigma =
+        mesh_.lookupObject<volSymmTensorField>(sigmaName_);
+    const scalarField stress
+    (
+        vonMises_
+      ? sqrt((3.0/2.0)*magSqr(dev(sigma)))
+      : mag(sigma)
+    );
+
+    labelHashSet cellsToRemoveSet;
+    forAll(stress, cellI)
     {
-        const symmTensorField& sigma =
-            mesh().lookupObject<volSymmTensorField>(sigmaName_);
-        const scalarField stress
-        (
-            vonMises_
-          ? sqrt((3.0/2.0)*magSqr(dev(sigma)))
-          : mag(sigma)
-        );
-
-        labelHashSet cellsToRemove;
-
-        forAll(stress, cellI)
+        if (stress[cellI] > stressCrit_)
         {
-            if (stress[cellI] > stressCrit_)
-            {
-                cellsToRemove.insert(cellI);
-            }
+            cellsToRemoveSet.insert(cellI);
         }
-
-        return cellsToRemove.toc();
     }
-    else
-    {
-        return labelList(0);
-    }
-}
 
-
-Foam::label Foam::stressCellRemovalLaw::exposedFacesPatchID()
-{
-    return mesh().boundaryMesh()[exposedPatch_].index();
+    return cellsToRemoveSet;
 }
 
 // ************************************************************************* //

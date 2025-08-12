@@ -22,94 +22,87 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    epsilonPEqCellRemovalLaw
+    Foam::simpleCrackerFvMesh
 
 Description
-    Cell removal law which selects cells with an equivalent plastic strain
-    greater than the specified critical equivalent value.
+    Dynamic mesh class that calls the updateCrack function of the simple
+    cohesiveZoneIncremental mode-I boundary conditions.
 
-Author
-    Philip Cardif, UCD/UT. All rights reserved.
+    Note: uses const_cast to call updateCrack.
 
 SourceFiles
-    epsilonPEqCellRemovalLaw.C
+    simpleCrackerFvMesh.C
+
+Author
+    Philip Cardiff, UCD. All rights reserved, UT. All rights reserved.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef epsilonPEqCellRemovalLaw_H
-#define epsilonPEqCellRemovalLaw_H
+#ifndef simpleCrackerFvMesh_H
+#define simpleCrackerFvMesh_H
 
-#include "cellRemovalLaw.H"
+#include "fvMeshTopoChanger.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace fvMeshTopoChangers
+{
 
 /*---------------------------------------------------------------------------*\
-                         Class epsilonPEqCellRemovalLaw Declaration
+                           Class simpleCracker Declaration
 \*---------------------------------------------------------------------------*/
 
-class epsilonPEqCellRemovalLaw
+class simpleCracker
 :
-    public cellRemovalLaw
+    public fvMeshTopoChanger
 {
-    // Private Data Member
-
-        // Critical value of epsilonPEq
-        const scalar epsilonPEqCrit_;
-
-        // Name of the equivalent plastic strain field
-        const word epsilonPEqName_;
-
-        // Index of patch to put exposed faces in
-        const word exposedPatch_;
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        epsilonPEqCellRemovalLaw(const epsilonPEqCellRemovalLaw&);
+        simpleCracker(const simpleCracker&);
 
         //- Disallow default bitwise assignment
-        void operator=(const epsilonPEqCellRemovalLaw&);
+        void operator=(const simpleCracker&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("epsilonPEq");
-
-    // Static data members
+    TypeName("simpleCracker");
 
 
     // Constructors
 
-        //- Construct from dictionary
-        epsilonPEqCellRemovalLaw
-        (
-            const word& name,
-            fvMesh& mesh,
-            const dictionary& dict
-        );
+        //- Construct from IOobject
+        explicit simpleCracker(fvMesh& mesh, const dictionary& dict);
 
 
     // Destructor
 
-        virtual ~epsilonPEqCellRemovalLaw();
+        virtual ~simpleCracker();
 
 
     // Member Functions
 
-        // Return list of cell IDs to be removed
-        virtual labelList cellsToRemove();
+        //- Update the mesh for both mesh motion and topology change
+        virtual bool update();
 
-        // Return patch index for the faces to be exposed
-        virtual label exposedFacesPatchID();
+        //- Update corresponding to the given map
+        virtual void topoChange(const polyTopoChangeMap&);
+
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap&);
+
+        //- Update corresponding to the given distribution map
+        virtual void distribute(const polyDistributionMap&);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace fvMeshTopoChangers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

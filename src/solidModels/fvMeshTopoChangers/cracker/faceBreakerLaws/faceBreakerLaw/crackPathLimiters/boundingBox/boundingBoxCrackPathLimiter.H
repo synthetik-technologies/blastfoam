@@ -105,7 +105,6 @@ public:
         //- Construct from dictionary
         boundingBox
         (
-            const word& name,
             const fvMesh& mesh,
             const dictionary& dict
         );

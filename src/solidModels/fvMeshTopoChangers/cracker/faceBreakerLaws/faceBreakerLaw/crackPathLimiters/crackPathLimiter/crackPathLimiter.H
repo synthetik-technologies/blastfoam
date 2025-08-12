@@ -36,7 +36,7 @@ Authors
 
 SourceFiles
     crackPathLimiter.C
-    newCrackPathLimiter.C
+    crackPathLimiterNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -62,9 +62,6 @@ namespace Foam
 class crackPathLimiter
 {
     // Private data
-
-        //- Name
-        const word name_;
 
         //- Reference to mesh
         const fvMesh& mesh_;
@@ -101,11 +98,10 @@ public:
             crackPathLimiter,
             dictionary,
             (
-                const word name,
                 const fvMesh& mesh,
                 const dictionary& dict
             ),
-            (name, mesh, dict)
+            (mesh, dict)
         );
 
 
@@ -114,7 +110,6 @@ public:
         //- Return a reference to the selected meshFailure model
         static autoPtr<crackPathLimiter> New
         (
-            const word& name,
             const fvMesh& mesh,
             const dictionary& dict
         );
@@ -125,7 +120,6 @@ public:
         //- Construct from dictionary
         crackPathLimiter
         (
-            const word& name,
             const fvMesh& mesh,
             const dictionary& dict
         );
@@ -138,12 +132,6 @@ public:
 
 
     // Member Functions
-
-        //- Return name
-        const word& name() const
-        {
-            return name_;
-        }
 
         // Return list of faces allowed to break
         virtual tmp<surfaceScalarField> facesAllowedToBreak() const = 0;

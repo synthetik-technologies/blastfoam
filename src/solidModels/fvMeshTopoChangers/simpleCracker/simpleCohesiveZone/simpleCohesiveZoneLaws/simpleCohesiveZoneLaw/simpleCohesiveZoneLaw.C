@@ -85,7 +85,7 @@ Foam::simpleCohesiveZoneLaw::simpleCohesiveZoneLaw
 :
     simpleCohesiveZoneLawCoeffs_
     (
-        dict.subDict(simpleCohesiveZoneLawName + "Coeffs")
+        dict.optionalSubDict(simpleCohesiveZoneLawName + "Coeffs")
     ),
     GIc_(simpleCohesiveZoneLawCoeffs_.lookup("GIc")),
     sigmaMax_(simpleCohesiveZoneLawCoeffs_.lookup("sigmaMax"))

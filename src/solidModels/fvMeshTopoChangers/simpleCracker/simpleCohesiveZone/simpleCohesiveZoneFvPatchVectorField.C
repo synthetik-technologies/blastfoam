@@ -34,7 +34,7 @@ InClass
 #include "pointFields.H"
 #include "wallFvPatch.H"
 #include "lookupSolidModel.H"
-#include "simpleCrackerFvMesh.H"
+#include "simpleCrackerFvMeshTopoChanger.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -154,16 +154,16 @@ simpleCohesiveZoneFvPatchVectorField
     initiationTraction_(p.size(), vector::zero),
     breakOnlyOneFace_(dict.lookupOrDefault<Switch>("breakOnlyOneFace", false))
 {
-    if (!isA<simpleCrackerFvMesh>(patch().boundaryMesh().mesh()))
-    {
-        FatalErrorIn
-        (
-            "simpleCohesiveZoneFvPatchVectorField::"
-            "simpleCohesiveZoneFvPatchVectorField"
-        )   << "The " << type() << " boundary condition must be used"
-            << " with the " << simpleCrackerFvMesh::typeName
-            << " dynamicFvMesh" << abort(FatalError);
-    }
+    // if (!isA<simpleCrackerFvMesh>(patch().boundaryMesh().mesh()))
+    // {
+    //     FatalErrorIn
+    //     (
+    //         "simpleCohesiveZoneFvPatchVectorField::"
+    //         "simpleCohesiveZoneFvPatchVectorField"
+    //     )   << "The " << type() << " boundary condition must be used"
+    //         << " with the " << simpleCrackerFvMesh::typeName
+    //         << " dynamicFvMesh" << abort(FatalError);
+    // }
 
     if (dict.found("totRefValue"))
     {
@@ -271,64 +271,58 @@ simpleCohesiveZoneFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void simpleCohesiveZoneFvPatchVectorField::autoMap
+void simpleCohesiveZoneFvPatchVectorField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchVectorField& ptf,
+    const fieldMapper& mapper
 )
 {
-    // if (cohesiveLawPtr_.empty())
-    // {
-    //     FatalErrorInFunction
-    //         << "NULL cohesive law"
-    //         << abort(FatalError);
-    // }
+     solidDirectionMixedFvPatchVectorField::map(ptf, mapper);
 
-    solidDirectionMixedFvPatchVectorField::autoMap(m);
-    tractionBase::autoMap(m);
+    const simpleCohesiveZoneFvPatchVectorField& sczfvpf =
+        refCast<const simpleCohesiveZoneFvPatchVectorField>(ptf);
 
-    m(totRefValue_, totRefValue_);
-    m(crackIndicator_, crackIndicator_);
-    m(damageIndicator_, damageIndicator_);
-    m(separationDistance_, separationDistance_);
-    m(oldSeparationDistance_, oldSeparationDistance_);
-    m(unloadingSeparationDistance_, unloadingSeparationDistance_);
-    m(initiationTraction_, initiationTraction_);
+    mapper(totRefValue_, sczfvpf.totRefValue_);
+    mapper(crackIndicator_, sczfvpf.crackIndicator_);
+    mapper(damageIndicator_, sczfvpf.damageIndicator_);
+    mapper(separationDistance_, sczfvpf.separationDistance_);
+    mapper(oldSeparationDistance_, sczfvpf.oldSeparationDistance_);
+    mapper(unloadingSeparationDistance_, sczfvpf.unloadingSeparationDistance_);
+    mapper(initiationTraction_, sczfvpf.initiationTraction_);
 }
 
 
 // Reverse-map the given fvPatchField onto this fvPatchField
-void simpleCohesiveZoneFvPatchVectorField::rmap
+void simpleCohesiveZoneFvPatchVectorField::reset
 (
-    const fvPatchField<vector>& ptf,
-    const labelList& addr
+    const fvPatchField<vector>& ptf
 )
 {
-    solidDirectionMixedFvPatchVectorField::rmap(ptf, addr);
+    solidDirectionMixedFvPatchVectorField::reset(ptf);
 
-    const simpleCohesiveZoneFvPatchVectorField& dmptf =
+    const simpleCohesiveZoneFvPatchVectorField& sczfvpf =
         refCast<const simpleCohesiveZoneFvPatchVectorField>(ptf);
-    tractionBase::rmap(dmptf, addr);
+    tractionBase::reset(sczfvpf);
 
-    if (cohesiveLawPtr_.empty() && dmptf.cohesiveLawPtr_.valid())
+    if (cohesiveLawPtr_.empty() && sczfvpf.cohesiveLawPtr_.valid())
     {
-        cohesiveLawPtr_.set(dmptf.cohesiveLawPtr_().clone().ptr());
+        cohesiveLawPtr_.set(sczfvpf.cohesiveLawPtr_().clone().ptr());
     }
 
-    totRefValue_.rmap(dmptf.totRefValue_, addr);
-    crackIndicator_.rmap(dmptf.crackIndicator_, addr);
-    damageIndicator_.rmap(dmptf.damageIndicator_, addr);
-    relaxationFactor_ = dmptf.relaxationFactor_;
-    separationDistance_.rmap(dmptf.separationDistance_, addr);
-    oldSeparationDistance_.rmap(dmptf.oldSeparationDistance_, addr);
-    unloadingSeparationDistance_.rmap
+    totRefValue_.reset(sczfvpf.totRefValue_);
+    crackIndicator_.reset(sczfvpf.crackIndicator_);
+    damageIndicator_.reset(sczfvpf.damageIndicator_);
+    relaxationFactor_ = sczfvpf.relaxationFactor_;
+    separationDistance_.reset(sczfvpf.separationDistance_);
+    oldSeparationDistance_.reset(sczfvpf.oldSeparationDistance_);
+    unloadingSeparationDistance_.reset
     (
-        dmptf.unloadingSeparationDistance_, addr
+        sczfvpf.unloadingSeparationDistance_
     );
-    explicitSeparationDistance_ = dmptf.explicitSeparationDistance_;
-    curTimeIndex_ = dmptf.curTimeIndex_;
-    initiationTraction_.rmap(dmptf.initiationTraction_, addr);
-    breakOnlyOneFace_ = dmptf.breakOnlyOneFace_;
+    explicitSeparationDistance_ = sczfvpf.explicitSeparationDistance_;
+    curTimeIndex_ = sczfvpf.curTimeIndex_;
+    initiationTraction_.reset(sczfvpf.initiationTraction_);
+    breakOnlyOneFace_ = sczfvpf.breakOnlyOneFace_;
 }
 
 

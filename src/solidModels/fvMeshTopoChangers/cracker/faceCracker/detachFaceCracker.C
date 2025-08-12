@@ -27,30 +27,15 @@ License
 #include "polyMesh.H"
 #include "primitiveMesh.H"
 #include "polyTopoChange.H"
-#include "polyTopoChanger.H"
-#include "polyAddPoint.H"
-#include "polyAddFace.H"
-#include "polyModifyFace.H"
 #include "processorPolyPatch.H"
 #include "labelPair.H"
 #include "globalMeshData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::faceCracker::detachFaceCracker
-(
-    polyTopoChange& ref
-) const
-{
-    FatalErrorInFunction
-        << "No longer implemented: use instead detachInternalFaces"
-        << "and detachCoupledFaces" << abort(FatalError);
-}
-
-
 void Foam::faceCracker::detachInternalFaces
 (
-    polyTopoChange& ref
+    polyTopoChange& meshMod
 ) const
 {
     // Method
@@ -78,10 +63,10 @@ void Foam::faceCracker::detachInternalFaces
     // 1) Check if edges of the face to break are internal:
     //        Three edge types: standard edges, proc edges, global edges.
 
-    const polyMesh& mesh = topoChanger().mesh();
-    const meshFaceZones& zoneMesh = mesh.faceZones();
+    const faceZoneList& faceZones = mesh_.faceZones();
+    const faceZone& crackZone = faceZones[crackZone_];
 
-    if (zoneMesh[crackZoneID_.index()].size() > 1)
+    if (crackZone.size() > 1)
     {
         FatalErrorInFunction
             << "Only one internal face can be broken at a time"
@@ -95,28 +80,28 @@ void Foam::faceCracker::detachInternalFaces
         face faceToBreak(0);
         bool faceToBreakFlip = false;
         labelList curFaceEdges(0);
-        const labelList& faceOwn = mesh.faceOwner();
+        const labelList& faceOwn = mesh_.faceOwner();
         label faceCellID = -1;
-        if (zoneMesh[crackZoneID_.index()].size())
+        if (crackZone.size())
         {
-            faceToBreakID = zoneMesh[crackZoneID_.index()][0];
-            faceToBreak = mesh.faces()[faceToBreakID];
-            faceToBreakFlip = zoneMesh[crackZoneID_.index()].flipMap()[0];
-            curFaceEdges = mesh.faceEdges()[faceToBreakID];
+            faceToBreakID = crackZone[0];
+            faceToBreak = mesh_.faces()[faceToBreakID];
+            faceToBreakFlip = crackZone.flipMap()[0];
+            curFaceEdges = mesh_.faceEdges()[faceToBreakID];
             faceCellID = faceOwn[faceToBreakID];
 
             if (debug)
             {
                 Pout<< "Breaking internal face : "
-                    << mesh.faceCentres()[faceToBreakID] << endl;
+                    << mesh_.faceCentres()[faceToBreakID] << endl;
             }
         }
         boolList edgeIsInternal(faceToBreak.nEdges(), true);
-        const labelListList& edgeFaces = mesh.edgeFaces();
-        const edgeList& edges = mesh.edges();
-        const labelList& faceNei = mesh.faceNeighbour();
-        const faceList& faces = mesh.faces();
-        const labelListList& pointFaces = mesh.pointFaces();
+        const labelListList& edgeFaces = mesh_.edgeFaces();
+        const edgeList& edges = mesh_.edges();
+        const labelList& faceNei = mesh_.faceNeighbour();
+        const faceList& faces = mesh_.faces();
+        const labelListList& pointFaces = mesh_.pointFaces();
 
         // Edges shared by two processors
         labelList procEdge(edgeIsInternal.size(), -1);
@@ -125,10 +110,10 @@ void Foam::faceCracker::detachInternalFaces
 
         // Edges of processor boundaries shared by more than two processors (so
         // called global edges)
-        const labelList& glEdges = mesh.globalData().sharedEdgeLabels();
-        const labelList& glEdgeAddr = mesh.globalData().sharedEdgeAddr();
-        const labelList& glPoints = mesh.globalData().sharedPointLabels();
-        const labelList& glPointAddr = mesh.globalData().sharedPointAddr();
+        const labelList& glEdges = mesh_.globalData().sharedEdgeLabels();
+        const labelList& glEdgeAddr = mesh_.globalData().sharedEdgeAddr();
+        const labelList& glPoints = mesh_.globalData().sharedPointLabels();
+        const labelList& glPointAddr = mesh_.globalData().sharedPointAddr();
         labelHashSet sharedEdgeSet;
 
         // Check internal edges fully on the current processor
@@ -141,12 +126,12 @@ void Foam::faceCracker::detachInternalFaces
             {
                 const label faceID = curEdgeFaces[fI];
 
-                if (!mesh.isInternalFace(faceID))
+                if (!mesh_.isInternalFace(faceID))
                 {
                     const label patchID =
-                        mesh.boundaryMesh().whichPatch(faceID);
+                        mesh_.boundaryMesh().whichPatch(faceID);
 
-                    const polyPatch& ppatch = mesh.boundaryMesh()[patchID];
+                    const polyPatch& ppatch = mesh_.boundaryMesh()[patchID];
 
                     if (!isA<processorPolyPatch>(ppatch))
                     {
@@ -194,9 +179,9 @@ void Foam::faceCracker::detachInternalFaces
             boolList receivedProcEdgeIsInternal(0);
 
             // Send edges to the neighbour processor to be checked
-            forAll(mesh.boundaryMesh(), patchI)
+            forAll(mesh_.boundaryMesh(), patchI)
             {
-                const polyPatch& ppatch = mesh.boundaryMesh()[patchI];
+                const polyPatch& ppatch = mesh_.boundaryMesh()[patchI];
 
                 if (isA<processorPolyPatch>(ppatch))
                 {
@@ -238,9 +223,9 @@ void Foam::faceCracker::detachInternalFaces
 
 
             // Receive edges from the neighbour processor
-            forAll(mesh.boundaryMesh(), patchI)
+            forAll(mesh_.boundaryMesh(), patchI)
             {
-                const polyPatch& ppatch = mesh.boundaryMesh()[patchI];
+                const polyPatch& ppatch = mesh_.boundaryMesh()[patchI];
 
                 if (isA<processorPolyPatch>(ppatch))
                 {
@@ -296,22 +281,22 @@ void Foam::faceCracker::detachInternalFaces
                 const label edgePatchID = receivedProcEdgePatch[eI];
 
                 const labelList& curMeshEdges =
-                    mesh.boundaryMesh()[edgePatchID].meshEdges();
+                    mesh_.boundaryMesh()[edgePatchID].meshEdges();
 
                 const labelList& curFaces = edgeFaces[curMeshEdges[edgeID]];
 
                 forAll(curFaces, faceI)
                 {
-                    if (!mesh.isInternalFace(curFaces[faceI]))
+                    if (!mesh_.isInternalFace(curFaces[faceI]))
                     {
                         const label patchID =
-                            mesh.boundaryMesh().whichPatch(curFaces[faceI]);
+                            mesh_.boundaryMesh().whichPatch(curFaces[faceI]);
 
                         if
                         (
                            !isA<processorPolyPatch>
                             (
-                                mesh.boundaryMesh()[patchID]
+                                mesh_.boundaryMesh()[patchID]
                             )
                         )
                         {
@@ -326,9 +311,9 @@ void Foam::faceCracker::detachInternalFaces
             // Now send the receivedProcEdgeIsInternal list back to the
             // neighbour processor
 
-            forAll(mesh.boundaryMesh(), patchI)
+            forAll(mesh_.boundaryMesh(), patchI)
             {
-                const polyPatch& ppatch = mesh.boundaryMesh()[patchI];
+                const polyPatch& ppatch = mesh_.boundaryMesh()[patchI];
 
                 if (isA<processorPolyPatch>(ppatch))
                 {
@@ -373,9 +358,9 @@ void Foam::faceCracker::detachInternalFaces
             receivedProcEdgePatch.setSize(0);
             receivedProcEdgeIsInternal.setSize(0);
 
-            forAll(mesh.boundaryMesh(), patchI)
+            forAll(mesh_.boundaryMesh(), patchI)
             {
-                const polyPatch& ppatch = mesh.boundaryMesh()[patchI];
+                const polyPatch& ppatch = mesh_.boundaryMesh()[patchI];
 
                 if (isA<processorPolyPatch>(ppatch))
                 {
@@ -449,7 +434,7 @@ void Foam::faceCracker::detachInternalFaces
 
             // Note: we use a labelList instead of a boolList because there is
             // no reduce(..., orOp<boolList>(...)) function
-            labelList checkSharedEdge(mesh.globalData().nGlobalEdges(), 0);
+            labelList checkSharedEdge(mesh_.globalData().nGlobalEdges(), 0);
 
             forAll(sharedEdges, eI)
             {
@@ -465,7 +450,7 @@ void Foam::faceCracker::detachInternalFaces
 
             reduce(checkSharedEdge, maxOp<labelList>());
 
-            labelList internalSharedEdge(mesh.globalData().nGlobalEdges(), 1);
+            labelList internalSharedEdge(mesh_.globalData().nGlobalEdges(), 1);
 
             forAll(checkSharedEdge, glEdgeI)
             {
@@ -485,16 +470,16 @@ void Foam::faceCracker::detachInternalFaces
                         {
                             const label faceID = curFaces[fI];
 
-                            if (!mesh.isInternalFace(faceID))
+                            if (!mesh_.isInternalFace(faceID))
                             {
                                 const label patchID =
-                                    mesh.boundaryMesh().whichPatch(faceID);
+                                    mesh_.boundaryMesh().whichPatch(faceID);
 
                                 if
                                 (
                                    !isA<processorPolyPatch>
                                     (
-                                        mesh.boundaryMesh()[patchID]
+                                        mesh_.boundaryMesh()[patchID]
                                     )
                                 )
                                 {
@@ -538,7 +523,7 @@ void Foam::faceCracker::detachInternalFaces
         // Print out which edges are internal
         if (debug)
         {
-            const pointField& points = mesh.points();
+            const pointField& points = mesh_.points();
 
             Pout<< nl << "internal edges:" << endl;
 
@@ -589,9 +574,9 @@ void Foam::faceCracker::detachInternalFaces
 
         const labelList pointsToAddNoSync = pointsToAddSet.toc();
 
-        forAll(mesh.boundaryMesh(), patchI)
+        forAll(mesh_.boundaryMesh(), patchI)
         {
-            const polyPatch& ppatch = mesh.boundaryMesh()[patchI];
+            const polyPatch& ppatch = mesh_.boundaryMesh()[patchI];
 
             if (isA<processorPolyPatch>(ppatch))
             {
@@ -629,9 +614,9 @@ void Foam::faceCracker::detachInternalFaces
         // Receive pointsToAdd from the neighbour processor
         labelList pointsToAddFromNeiProc(0);
 
-        forAll(mesh.boundaryMesh(), patchI)
+        forAll(mesh_.boundaryMesh(), patchI)
         {
-            const polyPatch& ppatch = mesh.boundaryMesh()[patchI];
+            const polyPatch& ppatch = mesh_.boundaryMesh()[patchI];
 
             if (isA<processorPolyPatch>(ppatch))
             {
@@ -702,7 +687,7 @@ void Foam::faceCracker::detachInternalFaces
 
         const labelList sharedPointsToAdd = sharedPointsToAddSet.toc();
 
-        labelList checkSharedPoint(mesh.globalData().nGlobalPoints(), 0);
+        labelList checkSharedPoint(mesh_.globalData().nGlobalPoints(), 0);
 
         forAll(sharedPointsToAdd, pI)
         {
@@ -744,7 +729,7 @@ void Foam::faceCracker::detachInternalFaces
         // Print points-to-add
         if (debug)
         {
-            const pointField& points = mesh.points();
+            const pointField& points = mesh_.points();
 
             Pout<< nl << "pointsToAdd: " << endl;
 
@@ -781,16 +766,16 @@ void Foam::faceCracker::detachInternalFaces
                 {
                     const label faceID = curPointFaces[fI];
 
-                    if (!mesh.isInternalFace(faceID))
+                    if (!mesh_.isInternalFace(faceID))
                     {
                         const label patchID =
-                            mesh.boundaryMesh().whichPatch(faceID);
+                            mesh_.boundaryMesh().whichPatch(faceID);
 
                         if
                         (
                             !isA<processorPolyPatch>
                             (
-                                mesh.boundaryMesh()[patchID]
+                                mesh_.boundaryMesh()[patchID]
                             )
                         )
                         {
@@ -848,7 +833,7 @@ void Foam::faceCracker::detachInternalFaces
             checkedFaces.insert(faceToBreakID);
             facesToModifySet.erase(faceToBreakID);
 
-            const cellList& cells = mesh.cells();
+            const cellList& cells = mesh_.cells();
 
             // Cell-face-cell walk
             do
@@ -870,7 +855,7 @@ void Foam::faceCracker::detachInternalFaces
                             facesToModifySet.erase(faceID);
 
                             // Add neighbour cell to cellsToCheck
-                            if (mesh.isInternalFace(faceID))
+                            if (mesh_.isInternalFace(faceID))
                             {
                                 label neiCellID = faceNei[faceID];
                                 if (neiCellID == cellID)
@@ -909,7 +894,7 @@ void Foam::faceCracker::detachInternalFaces
                 forAll(facesToModify, fI)
                 {
                     Pout<< "Modify face "
-                        << mesh.faceCentres()[facesToModify[fI]]
+                        << mesh_.faceCentres()[facesToModify[fI]]
                         << endl;
                 }
             }
@@ -918,22 +903,18 @@ void Foam::faceCracker::detachInternalFaces
             // 4) If faces were modified
             //        Add the points-to-add
 
-            const pointField& points = mesh.points();
+            const pointField& points = mesh_.points();
 
             forAll(pointsToAdd, pI)
             {
                 const label pointID = pointsToAdd[pI];
 
                 addedPoints[pI] =
-                    ref.setAction
+                    meshMod.addPoint
                     (
-                        polyAddPoint
-                        (
-                            points[pointID],           // point
-                            pointID,                   // master point
-                            -1,                        // zone ID
-                            true                       // supports a cell
-                        )
+                        points[pointID],           // point
+                        pointID,                   // master point
+                        true                       // supports a cell
                     );
 
                 if (debug)
@@ -969,40 +950,28 @@ void Foam::faceCracker::detachInternalFaces
                     }
                 }
 
-                if (mesh.isInternalFace(faceID))
+                if (mesh_.isInternalFace(faceID))
                 {
-                    ref.setAction
+                    meshMod.modifyFace
                     (
-                        polyModifyFace
-                        (
-                            newFace,                    // face
-                            faceID,                     // master face
-                            faceOwn[faceID],            // owner
-                            faceNei[faceID],            // neighbour
-                            false,                      // flip flux
-                            -1,                         // patch for face
-                            false,                      // remove from zone
-                            -1,                         // zone for face
-                            false                       // face zone flip
-                        )
+                        newFace,                    // face
+                        faceID,                     // master face
+                        faceOwn[faceID],            // owner
+                        faceNei[faceID],            // neighbour
+                        false,                      // flip flux
+                        -1                          // patch for face
                     );
                 }
                 else
                 {
-                    ref.setAction
+                    meshMod.modifyFace
                     (
-                        polyModifyFace
-                        (
-                            newFace,                     // face
-                            faceID,                      // master face
-                            faceOwn[faceID],             // owner
-                            -1,                          // neighbour
-                            false,                       // flip flux
-                            mesh.boundaryMesh().whichPatch(faceID), // patch
-                            false,                        // remove from zone
-                            -1,                           // zone for face
-                            false                         // face zone flip
-                        )
+                        newFace,                     // face
+                        faceID,                      // master face
+                        faceOwn[faceID],             // owner
+                        -1,                          // neighbour
+                        false,                       // flip flux
+                        mesh_.boundaryMesh().whichPatch(faceID) // patch
                     );
                 }
             }
@@ -1019,43 +988,33 @@ void Foam::faceCracker::detachInternalFaces
         {
             const label faceCellID = faceOwn[faceToBreakID];
             const label faceNeiCellID = faceNei[faceToBreakID];
+            const label crackPatchID =
+                mesh_.boundaryMesh().findIndex(crackPatch_);
 
             if (faceToBreakFlip)
             {
                 // Face needs to be flipped for the master patch
-                ref.setAction
+                meshMod.modifyFace
                 (
-                    polyModifyFace
-                    (
-                        faceToBreak.reverseFace(), // modified face
-                        faceToBreakID,           // label of face being modified
-                        faceNeiCellID,            // owner
-                        -1,                       // neighbour
-                        true,                     // face flip
-                        crackPatchID_.index(),    // patch for face
-                        false,                    // remove from zone
-                        crackZoneID_.index(),     // zone for face
-                        !faceToBreakFlip          // face flip in zone
-                    )
+                    faceToBreak.reverseFace(), // modified face
+                    faceToBreakID,            // label of face being modified
+                    faceNeiCellID,            // owner
+                    -1,                       // neighbour
+                    true,                     // face flip
+                    crackPatchID              // patch for face
                 );
             }
             else
             {
                 // No flip
-                ref.setAction
+                meshMod.modifyFace
                 (
-                    polyModifyFace
-                    (
-                        faceToBreak,              // modified face
-                        faceToBreakID,           // label of face being modified
-                        faceCellID,               // owner
-                        -1,                       // neighbour
-                        false,                    // face flip
-                        crackPatchID_.index(),    // patch for face
-                        false,                    // remove from zone
-                        crackZoneID_.index(),     // zone for face
-                        faceToBreakFlip           // face flip in zone
-                    )
+                    faceToBreak,              // modified face
+                    faceToBreakID,            // label of face being modified
+                    faceCellID,               // owner
+                    -1,                       // neighbour
+                    false,                    // face flip
+                    crackPatchID              // patch for face
                 );
             }
 
@@ -1084,7 +1043,7 @@ void Foam::faceCracker::detachInternalFaces
 
             if (min(newFace) == -1)
             {
-                FatalErrorIn("detachInternalFace()")
+                FatalErrorInFunction
                     << "newFace: " << newFace << nl
                     << "oldFace.reverseFace(): " << oldFace.reverseFace() << nl
                     << "addedPoints: " << addedPoints << nl
@@ -1095,41 +1054,27 @@ void Foam::faceCracker::detachInternalFaces
             if (faceToBreakFlip)
             {
                 // Add slave face
-                ref.setAction
+                meshMod.addFace
                 (
-                    polyAddFace
-                    (
-                        newFace,                        // face
-                        faceCellID,                     // owner
-                        -1,                             // neighbour
-                        -1,                             // master point
-                        -1,                             // master edge
-                        faceToBreakID,                  // master face
-                        false,                          // flip flux
-                        crackPatchID_.index(),          // new patch index
-                        -1,                             // zone for face
-                        false                           // zone flip
-                    )
+                    newFace,                        // face
+                    faceCellID,                     // owner
+                    -1,                             // neighbour
+                    faceToBreakID,                  // master face
+                    false,                          // flip flux
+                    crackPatchID                    // new patch index
                 );
             }
             else
             {
                 // Add renumbered face into the slave patch
-                ref.setAction
+                meshMod.addFace
                 (
-                    polyAddFace
-                    (
-                        newFace,                        // face
-                        faceNeiCellID,                  // owner
-                        -1,                             // neighbour
-                        -1,                             // master point
-                        -1,                             // master edge
-                        faceToBreakID,                  // master face
-                        true,                           // flip flux
-                        crackPatchID_.index(),          // new patch index
-                        -1,                             // zone for face
-                        false                           // face flip in zone
-                    )
+                    newFace,                        // face
+                    faceNeiCellID,                  // owner
+                    -1,                             // neighbour
+                    faceToBreakID,                  // master face
+                    true,                           // flip flux
+                    crackPatchID                    // new patch index
                 );
             }
         }
@@ -1139,7 +1084,7 @@ void Foam::faceCracker::detachInternalFaces
 
 void Foam::faceCracker::detachCoupledFaces
 (
-    polyTopoChange& ref
+    polyTopoChange& meshMod
 ) const
 {
     // Method
@@ -1159,7 +1104,7 @@ void Foam::faceCracker::detachCoupledFaces
 
     if (debug)
     {
-        Pout<< nl << "detachCoupledFaces" << nl << endl;
+        InfoInFunction<< "detachCoupledFaces" << nl << endl;
     }
 
     // 1) Check if edges of the face to break are internal:
@@ -1167,49 +1112,52 @@ void Foam::faceCracker::detachCoupledFaces
 
     if (coupledFacesToBreak_.size() > 1)
     {
-        FatalErrorIn("faceCracker::detachCoupledFaces()")
+        FatalErrorInFunction
             << "Only one coupled face can be broken at a time"
             << abort(FatalError);
     }
 
     {
-        const polyMesh& mesh = topoChanger().mesh();
+        const polyBoundaryMesh& bmesh = mesh_.boundaryMesh();
+        const labelListList& edgeFaces = mesh_.edgeFaces();
+        const labelListList& pointFaces = mesh_.pointFaces();
+        const faceList& faces = mesh_.faces();
+        const edgeList& edges = mesh_.edges();
+        const labelList& faceOwn = mesh_.faceOwner();
+        const labelList& faceNei = mesh_.faceNeighbour();
 
         label faceToBreakID = -1;
         face faceToBreak(0);
         labelList curFaceEdges(0);
         label procPatchID = -1;
         label faceCellID = -1;
-        const labelList& faceOwn = mesh.faceOwner();
+        const label crackPatchID = bmesh.findIndex(crackPatch_);
         if (coupledFacesToBreak_.size())
         {
             faceToBreakID = coupledFacesToBreak_[0];
-            faceToBreak = mesh.faces()[faceToBreakID];
-            curFaceEdges = mesh.faceEdges()[faceToBreakID];
-            procPatchID = mesh.boundaryMesh().whichPatch(faceToBreakID);
+            faceToBreak = mesh_.faces()[faceToBreakID];
+            curFaceEdges = mesh_.faceEdges()[faceToBreakID];
+            procPatchID = mesh_.boundaryMesh().whichPatch(faceToBreakID);
             faceCellID = faceOwn[faceToBreakID];
 
             if (debug)
             {
                 Pout<< "Breaking coupled face : "
-                    << mesh.faceCentres()[faceToBreakID] << endl;
+                    << mesh_.faceCentres()[faceToBreakID] << endl;
             }
         }
         boolList edgeIsInternal(faceToBreak.nEdges(), true);
-        const labelListList& edgeFaces = mesh.edgeFaces();
-        const labelListList& pointFaces = mesh.pointFaces();
-        const faceList& faces = mesh.faces();
-        const edgeList& edges = mesh.edges();
-        const labelList& faceNei = mesh.faceNeighbour();
+
 
         // Edges shared by two processors
         labelList procEdge(edgeIsInternal.size(), -1);
 
         // Edges of processor boundaries shared by more than two processors
-        const labelList& glEdges = mesh.globalData().sharedEdgeLabels();
-        const labelList& glEdgeAddr = mesh.globalData().sharedEdgeAddr();
-        const labelList& glPoints = mesh.globalData().sharedPointLabels();
-        const labelList& glPointAddr = mesh.globalData().sharedPointAddr();
+        const globalMeshData& globalData = mesh_.globalData();
+        const labelList& glEdges = globalData.sharedEdgeLabels();
+        const labelList& glEdgeAddr = globalData.sharedEdgeAddr();
+        const labelList& glPoints = globalData.sharedPointLabels();
+        const labelList& glPointAddr = globalData.sharedPointAddr();
         labelHashSet sharedEdgeSet;
 
         // Check if edges are internal on the current processor
@@ -1222,12 +1170,11 @@ void Foam::faceCracker::detachCoupledFaces
             {
                 const label faceID = curEdgeFaces[fI];
 
-                if (!mesh.isInternalFace(faceID))
+                if (!mesh_.isInternalFace(faceID))
                 {
-                    const label patchID =
-                        mesh.boundaryMesh().whichPatch(faceID);
+                    const label patchID = bmesh.whichPatch(faceID);
 
-                    const polyPatch& ppatch = mesh.boundaryMesh()[patchID];
+                    const polyPatch& ppatch = bmesh[patchID];
 
                     if (!isA<processorPolyPatch>(ppatch))
                     {
@@ -1264,7 +1211,7 @@ void Foam::faceCracker::detachCoupledFaces
         // An edge is only internal if it is internal on both processors
         if (faceToBreakID != -1)
         {
-            const polyPatch& ppatch = mesh.boundaryMesh()[procPatchID];
+            const polyPatch& ppatch = bmesh[procPatchID];
             const processorPolyPatch& procPatch =
                 refCast<const processorPolyPatch>(ppatch);
             labelList receivedProcEdge(procEdge.size(), -1);
@@ -1354,7 +1301,7 @@ void Foam::faceCracker::detachCoupledFaces
 
             // Note: we use a labelList instead of a boolList because there is
             // no reduce(..., orOp<boolList>(...)) function
-            labelList checkSharedEdge(mesh.globalData().nGlobalEdges(), 0);
+            labelList checkSharedEdge(globalData.nGlobalEdges(), 0);
 
             forAll(sharedEdges, eI)
             {
@@ -1370,7 +1317,7 @@ void Foam::faceCracker::detachCoupledFaces
 
             reduce(checkSharedEdge, maxOp<labelList>());
 
-            labelList internalSharedEdge(mesh.globalData().nGlobalEdges(), 1);
+            labelList internalSharedEdge(globalData.nGlobalEdges(), 1);
 
             forAll(checkSharedEdge, glEdgeI)
             {
@@ -1390,18 +1337,11 @@ void Foam::faceCracker::detachCoupledFaces
                         {
                             const label faceID = curFaces[fI];
 
-                            if (!mesh.isInternalFace(faceID))
+                            if (!mesh_.isInternalFace(faceID))
                             {
-                                const label patchID =
-                                    mesh.boundaryMesh().whichPatch(faceID);
+                                const label patchID = bmesh.whichPatch(faceID);
 
-                                if
-                                (
-                                   !isA<processorPolyPatch>
-                                    (
-                                        mesh.boundaryMesh()[patchID]
-                                    )
-                                )
+                                if (!isA<processorPolyPatch>(bmesh[patchID]))
                                 {
                                     // The edge belongs to a boundary face
                                     internalSharedEdge[glEdgeI] = 0;
@@ -1494,7 +1434,7 @@ void Foam::faceCracker::detachCoupledFaces
 
         const labelList sharedPointsToAdd = sharedPointsToAddSet.toc();
 
-        labelList checkSharedPoint(mesh.globalData().nGlobalPoints(), 0);
+        labelList checkSharedPoint(globalData.nGlobalPoints(), 0);
 
         forAll(sharedPointsToAdd, pI)
         {
@@ -1535,7 +1475,7 @@ void Foam::faceCracker::detachCoupledFaces
         // Print points-to-add
         if (debug)
         {
-            const pointField& points = mesh.points();
+            const pointField& points = mesh_.points();
 
             Pout<< nl << "pointsToAdd: " << endl;
 
@@ -1571,18 +1511,11 @@ void Foam::faceCracker::detachCoupledFaces
                 {
                     const label faceID = curPointFaces[fI];
 
-                    if (!mesh.isInternalFace(faceID))
+                    if (!mesh_.isInternalFace(faceID))
                     {
-                        const label patchID =
-                            mesh.boundaryMesh().whichPatch(faceID);
+                        const label patchID = bmesh.whichPatch(faceID);
 
-                        if
-                        (
-                            !isA<processorPolyPatch>
-                            (
-                                mesh.boundaryMesh()[patchID]
-                            )
-                        )
+                        if (!isA<processorPolyPatch>(bmesh[patchID]))
                         {
                             // This will be the master face
                             masterFaceID = faceID;
@@ -1635,7 +1568,7 @@ void Foam::faceCracker::detachCoupledFaces
                 cellsToCheck.append(faceCellID);
                 labelHashSet checkedFaces(20);
 
-                const cellList& cells = mesh.cells();
+                const cellList& cells = mesh_.cells();
 
                 // Cell-face-cell walk
                 do
@@ -1657,7 +1590,7 @@ void Foam::faceCracker::detachCoupledFaces
                                 facesToModifySet.erase(faceID);
 
                                 // Add neighbour cell to cellsToCheck
-                                if (mesh.isInternalFace(faceID))
+                                if (mesh_.isInternalFace(faceID))
                                 {
                                     label neiCellID = faceNei[faceID];
                                     if (neiCellID == cellID)
@@ -1690,7 +1623,7 @@ void Foam::faceCracker::detachCoupledFaces
                 forAll(facesToModify, fI)
                 {
                     Pout<< "Modify face "
-                        << mesh.faceCentres()[facesToModify[fI]]
+                        << mesh_.faceCentres()[facesToModify[fI]]
                         << endl;
                 }
             }
@@ -1700,22 +1633,18 @@ void Foam::faceCracker::detachCoupledFaces
             //        Add the points-to-add
 
             labelList addedPoints(pointsToAdd.size(), -1);
-            const pointField& points = mesh.points();
+            const pointField& points = mesh_.points();
 
             forAll(pointsToAdd, pI)
             {
                 const label pointID = pointsToAdd[pI];
 
                 addedPoints[pI] =
-                    ref.setAction
+                    meshMod.addPoint
                     (
-                        polyAddPoint
-                        (
-                            points[pointID],           // point
-                            pointID,                   // master point
-                            -1,                        // zone ID
-                            true                       // supports a cell
-                        )
+                        points[pointID],           // point
+                        pointID,                   // master point
+                        true                       // supports a cell
                     );
             }
 
@@ -1746,40 +1675,28 @@ void Foam::faceCracker::detachCoupledFaces
                     }
                 }
 
-                if (mesh.isInternalFace(faceID))
+                if (mesh_.isInternalFace(faceID))
                 {
-                    ref.setAction
+                    meshMod.modifyFace
                     (
-                        polyModifyFace
-                        (
-                            newFace,                    // face
-                            faceID,                     // master face
-                            faceOwn[faceID],            // owner
-                            faceNei[faceID],            // neighbour
-                            false,                      // flip flux
-                            -1,                         // patch for face
-                            false,                      // remove from zone
-                            -1,                         // zone for face
-                            false                       // face zone flip
-                        )
+                        newFace,                    // face
+                        faceID,                     // master face
+                        faceOwn[faceID],            // owner
+                        faceNei[faceID],            // neighbour
+                        false,                      // flip flux
+                        -1                          // patch for face
                     );
                 }
                 else
                 {
-                    ref.setAction
+                    meshMod.modifyFace
                     (
-                        polyModifyFace
-                        (
-                            newFace,                     // face
-                            faceID,                      // master face
-                            faceOwn[faceID],             // owner
-                            -1,                          // neighbour
-                            false,                       // flip flux
-                            mesh.boundaryMesh().whichPatch(faceID), // patch
-                            false,                       // remove from zone
-                            -1,                          // zone for face
-                            false                        // face zone flip
-                        )
+                        newFace,                     // face
+                        faceID,                      // master face
+                        faceOwn[faceID],             // owner
+                        -1,                          // neighbour
+                        false,                       // flip flux
+                        bmesh.whichPatch(faceID)     // patch
                     );
                 }
             }
@@ -1790,20 +1707,14 @@ void Foam::faceCracker::detachCoupledFaces
 
         if (faceToBreakID != -1)
         {
-            ref.setAction
+            meshMod.modifyFace
             (
-                polyModifyFace
-                (
-                    faceToBreak,                 // face
-                    faceToBreakID,               // master face
-                    faceCellID,                  // owner
-                    -1,                          // neighbour
-                    false,                       // flip flux
-                    crackPatchID_.index(),       // patch
-                    false,                       // remove from zone
-                    -1,                          // zone for face
-                    false                        // face zone flip
-                )
+                faceToBreak,                 // face
+                faceToBreakID,               // master face
+                faceCellID,                  // owner
+                -1,                          // neighbour
+                false,                       // flip flux
+                crackPatchID                 // patch
             );
         }
 

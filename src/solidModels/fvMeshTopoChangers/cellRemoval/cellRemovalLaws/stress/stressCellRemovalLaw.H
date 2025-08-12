@@ -22,7 +22,7 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    stressCellRemovalLaw
+    Foam::cellRemovalLaws::stress
 
 Description
     Cell removal law which selects cells with an stress
@@ -42,12 +42,14 @@ SourceFiles
 
 namespace Foam
 {
+namespace cellRemovalLaws
+{
 
 /*---------------------------------------------------------------------------*\
-                         Class stressCellRemovalLaw Declaration
+                         Class stress Declaration
 \*---------------------------------------------------------------------------*/
 
-class stressCellRemovalLaw
+class stress
 :
     public cellRemovalLaw
 {
@@ -62,16 +64,13 @@ class stressCellRemovalLaw
         // Name of the equivalent plastic strain field
         const word sigmaName_;
 
-        // Index of patch to put exposed faces in
-        const word exposedPatch_;
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        stressCellRemovalLaw(const stressCellRemovalLaw&);
+        stress(const stress&);
 
         //- Disallow default bitwise assignment
-        void operator=(const stressCellRemovalLaw&);
+        void operator=(const stress&);
 
 
 public:
@@ -79,37 +78,32 @@ public:
     //- Runtime type information
     TypeName("stress");
 
-    // Static data members
-
-
     // Constructors
 
         //- Construct from dictionary
-        stressCellRemovalLaw
+        stress
         (
             const word& name,
-            fvMesh& mesh,
+            const fvMesh& mesh,
             const dictionary& dict
         );
 
 
     // Destructor
 
-        virtual ~stressCellRemovalLaw();
+        virtual ~stress();
 
 
     // Member Functions
 
         // Return list of cell IDs to be removed
-        virtual labelList cellsToRemove();
-
-        // Return patch index for the faces to be exposed
-        virtual label exposedFacesPatchID();
+        virtual labelHashSet cellsToRemove();
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace cellRemovalLaws
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

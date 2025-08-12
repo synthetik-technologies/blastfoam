@@ -27,8 +27,8 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "lookupSolidModel.H"
-#include "directFvPatchFieldMapper.H"
-#include "crackerFvMesh.H"
+#include "crackerFvMeshTopoChanger.H"
+#include "generalFieldMapper.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -60,22 +60,32 @@ void SolidCohesiveFvPatchVectorField<SolidTraction>::updateDelta()
 
     // Cast mesh to a crackerMesh
 
-    if (!isA<crackerFvMesh>(mesh))
+    if
+    (
+        !mesh.foundObject<fvMeshTopoChangers::cracker>
+        (
+            fvMeshTopoChangers::cracker::typeName
+        )
+    )
     {
         FatalErrorInFunction
-            << "Mesh should be of type: " << crackerFvMesh::typeName
+            << "Must use " << fvMeshTopoChangers::cracker::typeName
+            << " topoChanger" << endl
             << abort(FatalError);
     }
 
-    const crackerFvMesh& crackerMesh =
-        dynamicCast<const crackerFvMesh>(mesh);
+    const fvMeshTopoChangers::cracker& cracker =
+        mesh.lookupObject<fvMeshTopoChangers::cracker>
+        (
+            fvMeshTopoChangers::cracker::typeName
+        );
 
     // Get global crack patch displacement field
-    const vectorField globalDisp(crackerMesh.globalCrackField(disp));
+    const vectorField globalDisp(cracker.globalCrackField(disp));
 
     // Update delta
-    const labelList& gcfa = crackerMesh.globalCrackFaceAddressing();
-    label globalIndex = crackerMesh.localCrackStart();
+    const labelList& gcfa = cracker.globalCrackFaceAddressing();
+    label globalIndex = cracker.localCrackStart();
 
     forAll(delta_, faceI)
     {
@@ -148,7 +158,7 @@ SolidCohesiveFvPatchVectorField
     const SolidCohesiveFvPatchVectorField& cpf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     SolidTraction(cpf, p, iF, mapper),
@@ -181,21 +191,22 @@ SolidCohesiveFvPatchVectorField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class SolidTraction>
-void SolidCohesiveFvPatchVectorField<SolidTraction>::autoMap
+void SolidCohesiveFvPatchVectorField<SolidTraction>::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchVectorField& ptf,
+    const fieldMapper& mapper
 )
 {
-    const vectorField tractionOld(this->traction());
-    SolidTraction::autoMap(m);
-    cohesiveZoneModelMaster::autoMap(m);
+    SolidTraction::map(ptf, mapper);
+
+    const SolidCohesiveFvPatchVectorField<SolidTraction>& scfpvf =
+        dynamicCast<const SolidCohesiveFvPatchVectorField<SolidTraction>>(ptf);
 
     const label nOldFaces = delta_.size();
     const label nNewFaces = this->traction().size() - nOldFaces;
 
-    Field<scalar> test(delta_.size(), 1.0);
-    m(delta_, delta_);
-    m(test, test);
+    cohesiveZoneModelMaster::map(scfpvf, mapper);
+    mapper(delta_, delta_);
 
     // Only perform mapping if the number of faces on the patch has changed
 
@@ -204,23 +215,15 @@ void SolidCohesiveFvPatchVectorField<SolidTraction>::autoMap
     if
     (
         nNewFaces > 0
-     && (
-            isA<directFvPatchFieldMapper>(m)
-         || (
-                isA<generalFvPatchFieldMapper>(m)
-             && dynamicCast<const generalFvPatchFieldMapper&>(m).direct()
-            )
-        )
-
+     && isA<generalFieldMapper>(mapper)
+     && dynamicCast<const generalFieldMapper&>(mapper).direct()
     )
     {
 
         const labelList& addressing =
-            isA<directFvPatchFieldMapper>(m)
-          ? dynamicCast<const directFvPatchFieldMapper>(m).addressing()
-          : dynamicCast<const generalFvPatchFieldMapper&>
+            dynamicCast<const generalFieldMapper&>
             (
-                m
+                mapper
             ).directAddressing();
         const label patchSize = this->patch().size();
 
@@ -275,20 +278,18 @@ void SolidCohesiveFvPatchVectorField<SolidTraction>::autoMap
 
 
 template<class SolidTraction>
-void SolidCohesiveFvPatchVectorField<SolidTraction>::rmap
+void SolidCohesiveFvPatchVectorField<SolidTraction>::reset
 (
-    const fvPatchVectorField& ptf,
-    const labelList& addr
+    const fvPatchVectorField& ptf
 )
 {
-    SolidTraction::rmap(ptf, addr);
+    SolidTraction::reset(ptf);
 
-    const SolidCohesiveFvPatchVectorField& scptf =
-        refCast<const SolidCohesiveFvPatchVectorField>(ptf);
+    const SolidCohesiveFvPatchVectorField<SolidTraction>& scfpvf =
+        refCast<const SolidCohesiveFvPatchVectorField<SolidTraction>>(ptf);
 
-    cohesiveZoneModelMaster::rmap(scptf, addr);
-
-    delta_.rmap(scptf.delta_, addr);
+    cohesiveZoneModelMaster::reset(scfpvf);
+    delta_.reset(scfpvf.delta_);
 }
 
 

@@ -30,33 +30,50 @@ Class
 #include "volFields.H"
 #include "fvc.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-defineTypeNameAndDebug(cellRemovalLaw, 0);
-defineRunTimeSelectionTable(cellRemovalLaw, dictionary);
+    defineTypeNameAndDebug(cellRemovalLaw, 0);
+    defineRunTimeSelectionTable(cellRemovalLaw, dictionary);
+}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-cellRemovalLaw::cellRemovalLaw
+Foam::cellRemovalLaw::cellRemovalLaw
 (
     const word& name,
-    fvMesh& mesh,
+    const fvMesh& mesh,
     const dictionary& dict
 )
 :
     name_(name),
-    mesh_(mesh)
+    mesh_(mesh),
+    exposedPatch_(dict.lookup("exposedPatch"))
+{
+    if (exposedFacesPatchID() < 0)
+    {
+        FatalIOErrorInFunction(dict)
+            << exposedPatch_ << " is not a valid patch. Valid patches are " << nl
+            << mesh.boundaryMesh().names() << endl
+            << abort(FatalIOError);
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * * //
+
+Foam::cellRemovalLaw::~cellRemovalLaw()
 {}
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-} // End namespace Foam
+Foam::label Foam::cellRemovalLaw::exposedFacesPatchID() const
+{
+    return mesh_.boundaryMesh()[exposedPatch_].index();
+}
+
 
 // ************************************************************************* //

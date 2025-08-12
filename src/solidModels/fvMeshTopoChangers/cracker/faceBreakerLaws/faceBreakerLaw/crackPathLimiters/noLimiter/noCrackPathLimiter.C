@@ -41,12 +41,11 @@ namespace crackPathLimiters
 
 Foam::crackPathLimiters::none::none
 (
-    const word& name,
     const fvMesh& mesh,
     const dictionary& dict
 )
 :
-    crackPathLimiter(name, mesh, dict)
+    crackPathLimiter(mesh, dict)
 {}
 
 

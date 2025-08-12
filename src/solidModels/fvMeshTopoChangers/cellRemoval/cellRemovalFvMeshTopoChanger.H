@@ -22,7 +22,7 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::cellRemovalFvMesh
+    Foam::fvMeshTopoChangers::cellRemoval
 
 Description
     Mesh allowing cell removal based on a run-time selectable cell removal law.
@@ -35,34 +35,32 @@ Author
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellRemovalFvMesh_H
-#define cellRemovalFvMesh_H
+#ifndef cellRemovalFvMeshTopoChanger_H
+#define cellRemovalFvMeshTopoChanger_H
 
-#include "dynamicFvMesh.H"
+#include "fvMeshTopoChanger.H"
 #include "surfaceFields.H"
-#include "mapPolyMesh.H"
 #include "cellRemovalLaw.H"
-
+#include "polyTopoChangeMap.H"
 #include "fvMeshSubset.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace fvMeshTopoChangers
+{
 
 /*---------------------------------------------------------------------------*\
-                           Class cellRemovalFvMesh Declaration
+                           Class cellRemoval Declaration
 \*---------------------------------------------------------------------------*/
 
-class cellRemovalFvMesh
+class cellRemoval
 :
-    public dynamicFvMesh
+    public fvMeshTopoChanger
 {
 protected:
     // Protected Data Members
-
-        //- Settings dictionary
-        dictionary dict_;
 
         //- Remove dead cells: these are small islands of cells which have
         //  become disconnected from the main mesh. We define an island as a
@@ -72,9 +70,6 @@ protected:
 
         //- Law for governing which cells are removed
         autoPtr<cellRemovalLaw> lawPtr_;
-
-        //- Current time index
-        label curIndex_;
 
         //- Flag to save the subset cells
         mutable bool saveSubset_;
@@ -88,7 +83,7 @@ protected:
         //- Compute the map from face index to patch index for exposed faces
         labelList patchFaceMap
         (
-            const mapPolyMesh& mpm,
+            const polyTopoChangeMap& mpm,
             const labelList& exposedFaces
         ) const;
 
@@ -109,7 +104,7 @@ protected:
         template<class Type>
         void updateVolFieldsExposedFaces
         (
-            const mapPolyMesh& map,
+            const polyTopoChangeMap& map,
             const labelList& exposedFaces,
             const labelList& patchFaceMap
         ) const;
@@ -119,27 +114,27 @@ protected:
         void saveGeoFields(objectRegistry&) const;
 
         //- Disallow default bitwise copy construct
-        cellRemovalFvMesh(const cellRemovalFvMesh&);
+        cellRemoval(const cellRemoval&);
 
         //- Disallow default bitwise assignment
-        void operator=(const cellRemovalFvMesh&);
+        void operator=(const cellRemoval&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("cellRemovalFvMesh");
+    TypeName("cellRemoval");
 
 
     // Constructors
 
         //- Construct from IOobject
-        explicit cellRemovalFvMesh(const IOobject& io);
+        explicit cellRemoval(fvMesh& mesh, const dictionary& dict);
 
 
     // Destructor
 
-        virtual ~cellRemovalFvMesh();
+        virtual ~cellRemoval();
 
 
     // Member Functions
@@ -170,17 +165,27 @@ public:
         {
             return subsetter_->subMesh();
         }
+
+        //- Update corresponding to the given map
+        virtual void topoChange(const polyTopoChangeMap&);
+
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap&);
+
+        //- Update corresponding to the given distribution map
+        virtual void distribute(const polyDistributionMap&);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace fvMeshTopoChangers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#   include "cellRemovalFvMeshTemplates.C"
+#   include "cellRemovalFvMeshTopoChangerTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

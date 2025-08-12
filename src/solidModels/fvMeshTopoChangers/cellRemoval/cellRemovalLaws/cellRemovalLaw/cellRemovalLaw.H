@@ -57,15 +57,21 @@ namespace Foam
 
 class cellRemovalLaw
 {
+protected:
+
     // Private data
 
         //- Name
         const word name_;
 
         //- Reference to stress field
-        fvMesh& mesh_;
+        const fvMesh& mesh_;
+
+        // Index of patch to put exposed faces in
+        const word exposedPatch_;
 
 
+private:
     // Private Member Functions
 
         //- Disallow copy construct
@@ -74,20 +80,6 @@ class cellRemovalLaw
         //- Disallow default bitwise assignment
         void operator=(const cellRemovalLaw&);
 
-
-protected:
-
-        //- Return reference to mesh
-        fvMesh& mesh()
-        {
-            return mesh_;
-        }
-
-        //- Return const reference to mesh
-        const fvMesh& mesh() const
-        {
-            return mesh_;
-        }
 
 public:
 
@@ -104,7 +96,7 @@ public:
             dictionary,
             (
                 const word name,
-                fvMesh& mesh,
+                const fvMesh& mesh,
                 const dictionary& dict
             ),
             (name, mesh, dict)
@@ -117,7 +109,7 @@ public:
         static autoPtr<cellRemovalLaw> New
         (
             const word& name,
-            fvMesh& mesh,
+            const fvMesh& mesh,
             const dictionary& dict
         );
 
@@ -128,15 +120,14 @@ public:
         cellRemovalLaw
         (
             const word& name,
-            fvMesh& mesh,
+            const fvMesh& mesh,
             const dictionary& dict
         );
 
 
     // Destructor
 
-        virtual ~cellRemovalLaw()
-        {}
+        virtual ~cellRemovalLaw();
 
 
     // Member Functions
@@ -148,10 +139,10 @@ public:
         }
 
         // Return list of cell IDs to be removed
-        virtual labelList cellsToRemove() = 0;
+        virtual labelHashSet cellsToRemove() = 0;
 
         // Return list of patch indices for the faces to be removed
-        virtual label exposedFacesPatchID() = 0;
+        virtual label exposedFacesPatchID() const;
 };
 
 

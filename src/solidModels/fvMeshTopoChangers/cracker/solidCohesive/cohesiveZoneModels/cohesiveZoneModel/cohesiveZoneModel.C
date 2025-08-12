@@ -44,19 +44,17 @@ namespace Foam
 
 Foam::cohesiveZoneModel::cohesiveZoneModel
 (
-    const word& name,
     const fvPatch& patch,
     const dictionary& dict
 )
 :
-    name_(name),
     patch_(patch),
     traction_
     (
         IOobject
         (
-            "traction",
-            patch.boundaryMesh().mesh().time().timeName(),
+            typeName + ":traction",
+            patch.boundaryMesh().mesh().time().name(),
             patch.boundaryMesh().mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -69,7 +67,6 @@ Foam::cohesiveZoneModel::cohesiveZoneModel
 
 Foam::cohesiveZoneModel::cohesiveZoneModel(const cohesiveZoneModel& czm)
 :
-    name_(czm.name_),
     patch_(czm.patch_),
     traction_(czm.traction_)
 {}
@@ -81,7 +78,7 @@ Foam::cohesiveZoneModelMaster::cohesiveZoneModelMaster
 )
 :
     patch_(p),
-    dict_(NULL)
+    cohesiveZoneModelPtr_(nullptr)
 {}
 
 
@@ -92,7 +89,7 @@ Foam::cohesiveZoneModelMaster::cohesiveZoneModelMaster
 )
 :
     patch_(p),
-    dict_(dict)
+    cohesiveZoneModelPtr_(cohesiveZoneModel::New(patch_, dict))
 {}
 
 
@@ -102,15 +99,11 @@ Foam::cohesiveZoneModelMaster::cohesiveZoneModelMaster
     const cohesiveZoneModelMaster& czm
 )
 :
-    patch_(p),
-    dict_(czm.dict_)
+    patch_(p)
 {
     if (czm.cohesiveZoneModelPtr_.valid())
     {
-        cohesiveZoneModelPtr_.set
-        (
-            czm.cohesiveZoneModelPtr_->clone().ptr()
-        );
+        cohesiveZoneModelPtr_ = czm.cohesiveZoneModelPtr_->clone();
     }
 }
 
@@ -156,30 +149,9 @@ void Foam::cohesiveZoneModel::updateMeshTraction() const
 }
 
 
-void Foam::cohesiveZoneModelMaster::calcCohesiveZone() const
-{
-    if (cohesiveZoneModelPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "pointer already set" << abort(FatalError);
-    }
-
-    cohesiveZoneModelPtr_ =
-        cohesiveZoneModel::New
-        (
-            "type", patch_, dict_.subDict("cohesiveZoneModel")
-        );
-}
-
-
 const Foam::cohesiveZoneModel&
 Foam::cohesiveZoneModelMaster::cohesiveZone() const
 {
-    if (!cohesiveZoneModelPtr_.valid())
-    {
-        calcCohesiveZone();
-    }
-
     return cohesiveZoneModelPtr_();
 }
 
@@ -187,35 +159,30 @@ Foam::cohesiveZoneModelMaster::cohesiveZone() const
 Foam::cohesiveZoneModel&
 Foam::cohesiveZoneModelMaster::cohesiveZone()
 {
-    if (!cohesiveZoneModelPtr_.valid())
-    {
-        calcCohesiveZone();
-    }
-
     return cohesiveZoneModelPtr_();
 }
 
-void Foam::cohesiveZoneModelMaster::autoMap
+void Foam::cohesiveZoneModelMaster::map
 (
-    const fvPatchFieldMapper& m
+    const cohesiveZoneModelMaster& czmm,
+    const fieldMapper& m
 )
 {
     if (cohesiveZoneModelPtr_.valid())
     {
-        cohesiveZoneModelPtr_->autoMap(m);
+        cohesiveZoneModelPtr_->map(czmm.cohesiveZone(), m);
     }
 }
 
 
-void Foam::cohesiveZoneModelMaster::rmap
+void Foam::cohesiveZoneModelMaster::reset
 (
-    const cohesiveZoneModelMaster& czmm,
-    const labelList& addr
+    const cohesiveZoneModelMaster& czmm
 )
 {
     if (cohesiveZoneModelPtr_.valid())
     {
-        cohesiveZoneModelPtr_->rmap(czmm.cohesiveZone(), addr);
+        cohesiveZoneModelPtr_->reset(czmm.cohesiveZone());
     }
 }
 

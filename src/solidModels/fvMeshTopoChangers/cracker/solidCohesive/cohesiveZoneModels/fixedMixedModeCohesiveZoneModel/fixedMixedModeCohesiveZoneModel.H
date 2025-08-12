@@ -79,7 +79,7 @@ class fixedMixedModeCohesiveZoneModel
         //- If a face has cracked:
         //  1 = cracked
         //  0 = damaged but not cracked
-        Field<bool> cracked_;
+        Field<label> cracked_;
 
         //- Initiation traction: this is the traction the face initiated at
         vectorField initTraction_;
@@ -163,7 +163,6 @@ public:
         //- Construct from dictionary
         fixedMixedModeCohesiveZoneModel
         (
-            const word& name,
             const fvPatch& patch,
             const dictionary& dict
         );
@@ -192,16 +191,16 @@ public:
         // Mapping functions
 
             //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
+            virtual void map
             (
-                const fvPatchFieldMapper& mapper
+                const cohesiveZoneModel& czm,
+                const fieldMapper& mapper
             );
 
             //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
+            virtual void reset
             (
-                const cohesiveZoneModel& czm,
-                const labelList& addr
+                const cohesiveZoneModel& czm
             );
 
         // Access functions

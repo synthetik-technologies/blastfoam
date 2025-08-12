@@ -22,7 +22,7 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    crackerFvMesh
+    Foam::fvMeshTopoChangers::crackerFvMesh
 
 Description
     A mesh allowing topological detachment on internal faces of the mesh, based
@@ -39,12 +39,13 @@ Author
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef crackerFvMesh_H
-#define crackerFvMesh_H
+#ifndef crackerFvMeshTopoChanger_H
+#define crackerFvMeshTopoChanger_H
 
-#include "topoChangerFvMesh.H"
+#include "fvMeshTopoChanger.H"
 #include "regionSplit.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChange.H"
+#include "polyTopoChangeMap.H"
 #include "faceCracker.H"
 #include "faceBreakerLaw.H"
 
@@ -52,26 +53,29 @@ Author
 
 namespace Foam
 {
+namespace fvMeshTopoChangers
+{
 
 /*---------------------------------------------------------------------------*\
-                         Class crackerFvMesh Declaration
+                         Class cracker Declaration
 \*---------------------------------------------------------------------------*/
 
-class crackerFvMesh
+class cracker
 :
-    public topoChangerFvMesh
+    public regIOobject,
+    public fvMeshTopoChanger
 {
     // Private data
 
         //- Settings dictionary
         dictionary dict_;
 
-        //- Last topology mapper
-        autoPtr<mapPolyMesh> topoChangeMap_;
-
         //- Crack patch Index
         //  This patch holds the faces after cracking
-        polyPatchID crackPatchID_;
+        word crackPatch_;
+
+        //- Face cracker
+        autoPtr<faceCracker> topoChanger_;
 
         //- Law for governing which faces are broken
         mutable autoPtr<faceBreakerLaw> lawPtr_;
@@ -97,13 +101,14 @@ class crackerFvMesh
         //- Global crack face addressing
         mutable labelList* globalCrackFaceAddressingPtr_;
 
+
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        crackerFvMesh(const crackerFvMesh&);
+        cracker(const cracker&);
 
         //- Disallow default bitwise assignment
-        void operator=(const crackerFvMesh&);
+        void operator=(const cracker&);
 
         //- Remove point, face and cell zones
         void removeZones();
@@ -122,9 +127,6 @@ class crackerFvMesh
 
         //- Make global crack face addressing
         void makeGlobalCrackFaceAddressing() const;
-
-        //- Make the face breaker law
-        void makeFaceBreakerLaw() const;
 
         //- Update field values on the newly broken faces
         template<class Type>
@@ -148,18 +150,18 @@ class crackerFvMesh
 public:
 
     //- Runtime type information
-    TypeName("crackerFvMesh")
+    TypeName("cracker")
 
 
     // Constructors
 
         //- Construct from IOobject
-        explicit crackerFvMesh(const IOobject& io);
+        cracker(fvMesh& mesh, const dictionary& dict);
 
 
     // Destructor
 
-        virtual ~crackerFvMesh();
+        virtual ~cracker();
 
 
     // Member Functions
@@ -184,9 +186,6 @@ public:
 
         //- Get number of cells in region
         label nCellsInRegion(label regI) const;
-
-        //- Get mapper
-        const mapPolyMesh& topoChangeMap() const;
 
         //- Get global crack face centres
         const vectorField& globalCrackFaceCentres() const;
@@ -216,28 +215,31 @@ public:
         //- Return reference to the faceBreakerLaw
         faceBreakerLaw& faceBreaker();
 
+        //- Update corresponding to the given map
+        virtual void topoChange(const polyTopoChangeMap&);
 
-    // Writing
+        //- Update from another mesh using the given map
+        virtual void mapMesh(const polyMeshMap&);
 
-        //- Write using given format, version and compression
-        virtual bool writeObject
-        (
-            IOstream::streamFormat fmt,
-            IOstream::versionNumber ver,
-            IOstream::compressionType cmp,
-            const bool write = true
-        ) const;
+        //- Update corresponding to the given distribution map
+        virtual void distribute(const polyDistributionMap&);
+
+        virtual bool writeData(Ostream&) const
+        {
+            return true;
+        }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace fvMeshTopoChangers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#   include "crackerFvMeshTemplates.C"
+#   include "crackerFvMeshTopoChangerTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
