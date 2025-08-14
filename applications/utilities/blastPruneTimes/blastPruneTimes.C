@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    times =
+    const List<instant>& selectedTimes =
         args.optionFound("invert")
       ? prunedTimes
       : timesToKeep;
@@ -256,13 +256,12 @@ int main(int argc, char *argv[])
                     args.path()/(word("processor") + name(proci))
                 );
 
-                forAll(times, ti)
+                forAll(selectedTimes, ti)
                 {
                     const fileName procTimePath
                     (
-                        fileHandler().filePath(procPath/times[ti].name())
+                        fileHandler().filePath(procPath/selectedTimes[ti].name())
                     );
-
                     if (isDir(procTimePath))
                     {
                         if (verbose)
@@ -307,11 +306,11 @@ int main(int argc, char *argv[])
         }
         else
         {
-            forAll(times, ti)
+            forAll(selectedTimes, ti)
             {
                 const fileName timePath
                 (
-                    fileHandler().filePath(args.path()/times[ti].name())
+                    fileHandler().filePath(args.path()/selectedTimes[ti].name())
                 );
 
                 if (verbose)
@@ -324,9 +323,9 @@ int main(int argc, char *argv[])
     }
     else
     {
-        forAll(times, ti)
+        forAll(selectedTimes, ti)
         {
-            Info<< times[ti].name() << endl;
+            Info<< selectedTimes[ti].name() << endl;
         }
     }
 
