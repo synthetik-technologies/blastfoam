@@ -62,8 +62,8 @@ void Foam::basicSpecieBlastMixture::normaliseMassFractions()
     {
         FatalErrorInFunction
             << "Sum of mass fractions is zero for species " << species() << nl
-            << "Min(Sum of mass fractions):
-            << "    InternalField = " << gMin(Yt()) << nl;
+            << "Min(Sum of mass fractions): " << nl
+            << "    InternalField = " << gMin(Yt()) << nl
             << "    BoundaryField = " << gMin(Yt.boundaryField()) << endl
             << exit(FatalError);
     }
@@ -105,8 +105,8 @@ void Foam::basicSpecieBlastMixture::correctMassFractions()
         {
             FatalErrorInFunction
             << "Sum of mass fractions is zero for species " << species() << nl
-            << "Min(Sum of mass fractions):
-            << "    InternalField = " << gMin(Yt()) << nl;
+            << "Min(Sum of mass fractions):" << nl
+            << "    InternalField = " << gMin(Yt()) << nl
             << "    BoundaryField = " << gMin(Yt.boundaryField()) << endl
             << exit(FatalError);
         }
