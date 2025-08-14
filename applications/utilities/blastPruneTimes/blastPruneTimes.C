@@ -185,32 +185,6 @@ int main(int argc, char *argv[])
         minDt*1e-3
     );
 
-    scalar nextTime = startTime;
-
-//     // Make sure the first time in the selected times is less than the starting time
-//     if (times.size())
-//     {
-//         scalar tByDt(times[0].value()/dt);
-//         if (mag(label(tByDt) - tByDt) < tolerance)
-//         {
-//             nextTime = times[0].value();
-//         }
-//         else
-//         {
-//             forAll(times, ti)
-//             {
-//                 if (times[ti].value() > startTime)
-//                 {
-//                     nextTime += dt;
-//                 }
-//                 else
-//                 {
-//                     break;
-//                 }
-//             }
-//         }
-//     }
-
     // Space times
     forAll(times, ti)
     {
@@ -223,7 +197,7 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        scalar tByDt(times[ti].value()/dt);
+        scalar tByDt((times[ti].value() - startTime)/dt);
         if (mag(round(tByDt) - tByDt) < tolerance)
         {
             timesToKeep.append(times[ti]);
