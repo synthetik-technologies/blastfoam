@@ -49,7 +49,8 @@ Foam::simpleBlastThermo::~simpleBlastThermo()
 
 Foam::autoPtr<Foam::simpleBlastThermo> Foam::simpleBlastThermo::New
 (
-    const dictionary& dict
+    const dictionary& dict,
+    const word& specie
 )
 {
     dictionaryConstructorTable::iterator cstrIter =
@@ -59,7 +60,14 @@ Foam::autoPtr<Foam::simpleBlastThermo> Foam::simpleBlastThermo::New
             dictionaryConstructorTablePtr_
         );
 
-    return cstrIter()(dict);
+    if (specie.empty())
+    {
+        return cstrIter()(dict);
+    }
+    else
+    {
+        return cstrIter()(dict.subDict(specie));
+    }
 }
 
 

@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
     argList::addOption("dict", "Dictionary to read from");
     argList::addOption("entry", "Path in dictionary to read from");
     argList::addBoolOption("calcDensity", "Calculate density");
+    argList::addOption("specie", "Name of specie");
     argList::addOption("p", "Pressure [Pa]");
     argList::addOption("rho", "Density [kg/m^3]");
     argList::addOption("T", "Temperature [K]");
@@ -92,7 +93,14 @@ int main(int argc, char *argv[])
 
     // scalar T = 60;
 
-    autoPtr<simpleBlastThermo> eosPtr(simpleBlastThermo::New(dict));
+    autoPtr<simpleBlastThermo> eosPtr
+    (
+        simpleBlastThermo::New
+        (
+            dict,
+            args.optionLookupOrDefault("specie", word::null)
+        )
+    );
     simpleBlastThermo& eos = eosPtr();
 
     scalar p = -1;
@@ -136,7 +144,6 @@ int main(int argc, char *argv[])
         e = eos.initializeEnergy(p, rho, e, T);
         T = eos.TRhoE(T, rho, e);
     }
-CWACfdde1!
 
     Info<< "Initial values: " << nl << incrIndent
         << indent << "p: " << p << nl

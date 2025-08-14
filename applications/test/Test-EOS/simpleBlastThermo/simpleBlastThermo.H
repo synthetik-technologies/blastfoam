@@ -112,7 +112,11 @@ public:
 
     // Selectors
 
-        static autoPtr<simpleBlastThermo> New(const dictionary& dict);
+        static autoPtr<simpleBlastThermo> New
+        (
+            const dictionary& dict,
+            const word& specie
+        );
 
     //- Destructor
     virtual ~simpleBlastThermo();
