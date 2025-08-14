@@ -61,7 +61,10 @@ void Foam::basicSpecieBlastMixture::normaliseMassFractions()
     if (mag(min(Yt).value()) < rootVSmall)
     {
         FatalErrorInFunction
-            << "Sum of mass fractions is zero for species " << species()
+            << "Sum of mass fractions is zero for species " << species() << nl
+            << "Min(Sum of mass fractions):
+            << "    InternalField = " << gMin(Yt()) << nl;
+            << "    BoundaryField = " << gMin(Yt.boundaryField()) << endl
             << exit(FatalError);
     }
 
@@ -101,8 +104,11 @@ void Foam::basicSpecieBlastMixture::correctMassFractions()
         if (mag(min(Yt).value()) < rootVSmall)
         {
             FatalErrorInFunction
-                << "Sum of mass fractions is zero for species " << species()
-                << exit(FatalError);
+            << "Sum of mass fractions is zero for species " << species() << nl
+            << "Min(Sum of mass fractions):
+            << "    InternalField = " << gMin(Yt()) << nl;
+            << "    BoundaryField = " << gMin(Yt.boundaryField()) << endl
+            << exit(FatalError);
         }
         forAll(Y_, i)
         {
@@ -274,6 +280,16 @@ Foam::basicSpecieBlastMixture::basicSpecieBlastMixture
                     tYdefault()
                 )
             );
+        }
+
+        volScalarField& Y = Y_[i];
+        volScalarField::Boundary& bY = Y.boundaryFieldRefNoStoreOldTimes();
+        forAll(bY, patchi)
+        {
+            if (!bY[patchi].fixesValue())
+            {
+                bY[patchi] = bY[patchi].patchInternalField();
+            }
         }
     }
 
