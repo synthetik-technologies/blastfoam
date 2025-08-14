@@ -28,6 +28,8 @@ License
 
 #include "multicomponentBlastThermo.H"
 #include "fluidMulticomponentThermophysicalTransportModel.H"
+#include "fluxSchemeBase.H"
+#include "ReconstructionScheme.H"
 #include "fvc.H"
 #include "fvm.H"
 
@@ -406,6 +408,16 @@ void Foam::multicomponentBlastThermo::addSource
 
 void Foam::multicomponentBlastThermo::integrator::update()
 {
+    const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhi_);
+    autoPtr<ReconstructionScheme<scalar>> alphaRhoLimiter
+    (
+        ReconstructionScheme<scalar>::New(alphaRho_, alphaRho_.name(), false)
+    );
+
+    tmp<surfaceScalarField> talphaRhoOwn, talphaRhoNei;
+    alphaRhoLimiter->interpolateOwnNei(talphaRhoOwn, talphaRhoNei);
+    const surfaceScalarField& alphaRhoOwn = talphaRhoOwn();
+    const surfaceScalarField& alphaRhoNei = talphaRhoNei();
     forAll(Y_, i)
     {
         if (active_[i])
@@ -422,15 +434,31 @@ void Foam::multicomponentBlastThermo::integrator::update()
                 alphaRhoYOld_.set(i, alphaRho_*Y);
             }
 
+            autoPtr<ReconstructionScheme<scalar>> YLimiter
+            (
+                ReconstructionScheme<scalar>::New
+                (
+                    Y,
+                    IOobject::groupName("Yi", alphaRho_.group()),
+                    true
+                )
+            );
+
+            tmp<surfaceScalarField> YOwn, YNei;
+            YLimiter->interpolateOwnNei(YOwn, YNei);
+
             // Calculate and store delta
             if (alphaRhoYDelta_.set(i))
             {
                 alphaRhoYDelta_[i] =
                     fvc::div
                     (
-                        alphaRhoPhi_,
-                        Y,
-                        "div(" + alphaRhoPhi_.name() + ",Yi)"
+                        flux.flux
+                        (
+                            (YOwn*alphaRhoOwn)(),
+                            (YNei*alphaRhoNei)(),
+                            flux.phi()
+                        )
                     );
             }
             else
@@ -440,9 +468,12 @@ void Foam::multicomponentBlastThermo::integrator::update()
                     i,
                     fvc::div
                     (
-                        alphaRhoPhi_,
-                        Y,
-                        "div(" + alphaRhoPhi_.name() + ",Yi)"
+                        flux.flux
+                        (
+                            (YOwn*alphaRhoOwn)(),
+                            (YNei*alphaRhoNei)(),
+                            flux.phi()
+                        )
                     )
                 );
             }
