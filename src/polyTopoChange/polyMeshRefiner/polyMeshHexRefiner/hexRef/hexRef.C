@@ -41,6 +41,7 @@ License
 #include "refinementDistanceData.H"
 #include "degenerateMatcher.H"
 #include "wedgePolyPatch.H"
+#include "localIOdictionary.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -3262,7 +3263,17 @@ bool Foam::hexRef::write(const bool w) const
     bool writeOk =
         cellLevel_.write(w)
      && pointLevel_.write(w);
-     // && level0Edge_.write(w);
+
+     if (w)
+     {
+        localIOdictionary level0EdgeDict
+        (
+            level0Edge_
+        );
+        level0EdgeDict.set("dimensions", level0Edge_.dimensions());
+        level0EdgeDict.set("value", level0Edge_.value());
+        writeOk = writeOk && level0EdgeDict.regIOobject::write();
+     }
 
     if (returnReduce(history_.active(), orOp<bool>()))
     {

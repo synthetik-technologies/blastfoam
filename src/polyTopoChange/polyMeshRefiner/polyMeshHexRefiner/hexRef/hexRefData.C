@@ -33,6 +33,7 @@ License
 #include "syncTools.H"
 #include "hexRefRefinementHistory.H"
 #include "fvMesh.H"
+#include "localIOdictionary.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -353,7 +354,13 @@ bool Foam::hexRefData::write() const
     }
     if (level0EdgePtr_.valid())
     {
-        ok = ok && level0EdgePtr_().write();
+        localIOdictionary level0EdgeDict
+        (
+            level0EdgePtr_()
+        );
+        level0EdgeDict.set("dimensions", level0EdgePtr_->dimensions());
+        level0EdgeDict.set("value", level0EdgePtr_->value());
+        ok = ok && level0EdgeDict.regIOobject::write();
     }
     if (refHistoryPtr_.valid())
     {
