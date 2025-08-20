@@ -65,7 +65,7 @@ class HLL
         tmp<surfaceScalarField> SNei_;
         tmp<surfaceScalarField> UvOwn_;
         tmp<surfaceScalarField> UvNei_;
-
+        
     // Private functions
 
         //- Calcualte fluxes
@@ -79,12 +79,19 @@ class HLL
             const scalar& cOwn, const scalar& cNei,
             const vector& Sf,
             scalar& phi,
-            scalar& alphaPhi,
             scalar& alphaRhoPhi,
             vector& alphaRhoUPhi,
             scalar& alphaRhoEPhi,
             const label facei, const label patchi = -1
         );
+
+        //- Calcualte interpolated alpha values
+        //  U \cdot (\sum_i Sf_i alphaf_1) + \sum_i alphaf_corr,i
+        virtual scalar calculateAlphaCorrector
+        (
+            const scalar& alphaOwn, const scalar& alphaNei,
+            const label facei, const label patchi = -1
+        ) const;
 
         //- Interpolate field
         virtual scalar interpolate

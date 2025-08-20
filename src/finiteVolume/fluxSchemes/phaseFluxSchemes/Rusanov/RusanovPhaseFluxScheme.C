@@ -25,7 +25,7 @@
 
 \*---------------------------------------------------------------------------*/
 
-#include "TadmorPhaseFluxScheme.H"
+#include "RusanovPhaseFluxScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -34,15 +34,15 @@ namespace Foam
 {
 namespace phaseFluxSchemes
 {
-    defineTypeNameAndDebug(Tadmor, 0);
-    addToRunTimeSelectionTable(phaseFluxScheme, Tadmor, dictionary);
+    defineTypeNameAndDebug(Rusanov, 0);
+    addToRunTimeSelectionTable(phaseFluxScheme, Rusanov, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluxSchemes::Tadmor::Tadmor
+Foam::phaseFluxSchemes::Rusanov::Rusanov
 (
     const surfaceScalarField& phi
 )
@@ -53,56 +53,41 @@ Foam::phaseFluxSchemes::Tadmor::Tadmor
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::phaseFluxSchemes::Tadmor::~Tadmor()
+Foam::phaseFluxSchemes::Rusanov::~Rusanov()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::phaseFluxSchemes::Tadmor::clear()
+void Foam::phaseFluxSchemes::Rusanov::clear()
 {
     phaseFluxScheme::clear();
-    aPhivOwn_.clear();
-    aPhivNei_.clear();
+    lambda_.clear();
 }
 
 
-void Foam::phaseFluxSchemes::Tadmor::createSavedFields()
+void Foam::phaseFluxSchemes::Rusanov::createSavedFields()
 {
     phaseFluxScheme::createSavedFields();
 
-    aPhivOwn_ = tmp<surfaceScalarField>
+    lambda_ = tmp<surfaceScalarField>
     (
         new surfaceScalarField
         (
             IOobject
             (
-                fieldName("aPhivOwn"),
+                fieldName("lambda"),
                 mesh_.time().name(),
                 mesh_
             ),
             mesh_,
-            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-        )
-    );
-    aPhivNei_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                fieldName("aPhivNei"),
-                mesh_.time().name(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+            dimensionedScalar("0", dimVelocity, 0.0)
         )
     );
 }
 
 
-void Foam::phaseFluxSchemes::Tadmor::calculateFluxes
+void Foam::phaseFluxSchemes::Rusanov::calculateFluxes
 (
     const scalar& alphaOwn, const scalar& alphaNei,
     const scalar& rhoOwn, const scalar& rhoNei,
@@ -118,76 +103,72 @@ void Foam::phaseFluxSchemes::Tadmor::calculateFluxes
     const label facei, const label patchi
 )
 {
-    scalar magSf = mag(Sf);
+    const scalar magSf = mag(Sf);
 
-    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
-    scalar ENei = eNei + 0.5*magSqr(UNei);
+    const scalar alphaRhoOwn = alphaOwn*rhoOwn;
+    const scalar alphaRhoNei = alphaNei*rhoNei;
+
+    const scalar EOwn = eOwn + 0.5*magSqr(UOwn);
+    const scalar ENei = eNei + 0.5*magSqr(UNei);
 
     scalar phivOwn(UOwn & Sf);
     scalar phivNei(UNei & Sf);
 
-    scalar cSfOwn(cOwn*magSf);
-    scalar cSfNei(cNei*magSf);
+    const scalar phiMesh = meshPhi(facei, patchi);
+    phivOwn -= phiMesh;
+    phivNei -= phiMesh;
 
-    const scalar vMesh(meshPhi(facei, patchi));
-    phivOwn -= vMesh;
-    phivNei -= vMesh;
+    const scalar lambda = max(mag(phivOwn) + cOwn, mag(phivNei) + cNei);
+    const scalar phiLambda = lambda*magSf;
 
-    scalar aOwn(max(max(phivOwn + cSfOwn, phivNei + cSfNei), 0.0));
-    scalar aNei(min(min(phivOwn - cSfOwn, phivNei - cSfNei), 0.0));
-
-    scalar amaxSf(max(mag(aNei), mag(aOwn)));
-    scalar aSf(-0.5*amaxSf);
-
-    phivOwn *= 0.5;
-    phivNei *= 0.5;
-
-    scalar aphivOwn(phivOwn - aSf);
-    scalar aphivNei(phivNei + aSf);
-
-    this->save(facei, patchi, aphivOwn, aPhivOwn_);
-    this->save(facei, patchi, aphivNei, aPhivNei_);
-
+    this->save(facei, patchi, lambda, lambda_);
     this->save(facei, patchi, 0.5*(alphaOwn + alphaNei), alphaf_);
     this->save(facei, patchi, 0.5*(alphaOwn + alphaNei), deltaAlphaf_);
     this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
 
-    phi = aphivOwn + aphivNei;
 
-    alphaRhoPhi = aphivOwn*alphaOwn*rhoOwn + aphivNei*alphaNei*rhoNei;
+
+    phi = 0.5*(phivOwn + phivNei);
+
+    alphaRhoPhi =
+        0.5*(phivOwn*alphaRhoOwn + phivNei*alphaRhoNei)
+      - phiLambda*(alphaRhoNei - alphaRhoOwn);
 
     alphaRhoUPhi =
     (
-        (
-            aphivOwn*alphaOwn*rhoOwn*UOwn
-          + aphivNei*alphaNei*rhoNei*UNei
+        0.5
+       *(
+            phivOwn*alphaOwn*rhoOwn*UOwn
+          + phivNei*alphaNei*rhoNei*UNei
+          + (alphaOwn*pOwn + alphaNei*pNei)*Sf
         )
-      + 0.5*(alphaOwn*pOwn + alphaNei*pNei)*Sf
+      - phiLambda*(alphaRhoNei*UNei - alphaRhoOwn*UOwn)
     );
 
     alphaRhoEPhi =
     (
-        aphivOwn*(alphaOwn*(rhoOwn*EOwn + pOwn))
-      + aphivNei*(alphaNei*(rhoNei*ENei + pNei))
-      + aSf*(alphaOwn*pOwn - alphaNei*pNei)
-      + vMesh*0.5*(alphaOwn*pOwn + alphaNei*pNei)
+        0.5
+       *(
+            phivOwn*(alphaRhoOwn*EOwn + alphaOwn*pOwn)
+          + phivNei*(alphaRhoNei*ENei + alphaNei*pNei)
+          + phiMesh*(alphaOwn*pOwn + alphaNei*pNei)
+        )
+      - phiLambda*(alphaRhoNei*ENei - alphaRhoOwn*EOwn)
     );
 }
 
 
-Foam::scalar Foam::phaseFluxSchemes::Tadmor::calculateAlphaCorrector
+Foam::scalar Foam::phaseFluxSchemes::Rusanov::calculateAlphaCorrector
 (
     const scalar& alphaOwn, const scalar& alphaNei,
     const label facei, const label patchi
 ) const
 {
-    NotImplemented;
-
-    return 0.0;
+    return -getValue(facei, patchi, lambda_)*(alphaNei - alphaOwn);
 }
 
 
-Foam::scalar Foam::phaseFluxSchemes::Tadmor::calculateFlux
+Foam::scalar Foam::phaseFluxSchemes::Rusanov::calculateFlux
 (
     const scalar& fOwn, const scalar& fNei,
     const scalar& phi,
@@ -195,12 +176,14 @@ Foam::scalar Foam::phaseFluxSchemes::Tadmor::calculateFlux
 ) const
 {
     return
-        getValue(facei, patchi, aPhivOwn_)*fOwn
-      + getValue(facei, patchi, aPhivNei_)*fNei;
+        0.5*phi*(fOwn + fNei)
+      - getValue(facei, patchi, lambda_)
+       *(fNei - fOwn)
+       *getValue(facei, patchi, mesh_.magSf());
 }
 
 
-Foam::scalar Foam::phaseFluxSchemes::Tadmor::interpolate
+Foam::scalar Foam::phaseFluxSchemes::Rusanov::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
     const label facei, const label patchi

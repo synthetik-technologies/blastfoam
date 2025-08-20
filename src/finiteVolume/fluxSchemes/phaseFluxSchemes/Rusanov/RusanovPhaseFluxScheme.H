@@ -25,17 +25,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::phaseFluxSchemes::Tadmor
+    Foam::phaseFluxSchemes::Rusanov
 
 Description
 
 SourceFiles
-    TadmorPhaseFluxScheme.C
+    RusanovPhaseFluxScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TadmorPhaseFluxScheme_H
-#define TadmorPhaseFluxScheme_H
+#ifndef RusanovPhaseFluxScheme_H
+#define RusanovPhaseFluxScheme_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,18 +47,17 @@ namespace phaseFluxSchemes
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class Tadmor Declaration
+                           Class Rusanov Declaration
 \*---------------------------------------------------------------------------*/
 
-class Tadmor
+class Rusanov
 :
     public phaseFluxScheme
 {
 protected:
     // Saved variables
 
-        tmp<surfaceScalarField> aPhivOwn_;
-        tmp<surfaceScalarField> aPhivNei_;
+        tmp<surfaceScalarField> lambda_;
 
 
     // Private functions
@@ -106,14 +105,14 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("Tadmor");
+    TypeName("Rusanov");
 
     // Constructor
-    Tadmor(const surfaceScalarField& phi);
+    Rusanov(const surfaceScalarField& phi);
 
 
     //- Destructor
-    virtual ~Tadmor();
+    virtual ~Rusanov();
 
 
     // Member Functions

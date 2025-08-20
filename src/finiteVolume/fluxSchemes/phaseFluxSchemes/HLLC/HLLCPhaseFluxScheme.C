@@ -124,7 +124,6 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     const scalar& cOwn, const scalar& cNei,
     const vector& Sf,
     scalar& phi,
-    scalar& alphaPhi,
     scalar& alphaRhoPhi,
     vector& alphaRhoUPhi,
     scalar& alphaRhoEPhi,
@@ -137,7 +136,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar ENei = eNei + 0.5*magSqr(UNei);
 
-    const scalar vMesh(meshPhi(facei, patchi)/magSf);
+    const scalar phiMesh = meshPhi(facei, patchi);
+    const scalar vMesh = phiMesh/magSf;
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
@@ -151,8 +151,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     vector UTilde(UOwn*wOwn + UNei*wNei);
     scalar UvTilde(UTilde & normal);
 
-    scalar SOwn(stabilise(min(UvOwn - cOwn, UvTilde - cTilde), small));
-    scalar SNei(stabilise(max(UvNei + cNei, UvTilde + cTilde), small));
+    scalar SOwn(min(UvOwn - cOwn, UvTilde - cTilde));
+    scalar SNei(max(UvNei + cNei, UvTilde + cTilde));
 
     scalar SStar
     (
@@ -173,62 +173,101 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     this->save(facei, patchi, SStar, SStar_);
 
     // Owner values
-    scalar alpha;
-    scalar rho;
+    scalar alpha, delta, rho, E, p;
     vector U;
-    scalar E;
-    scalar p;
     scalar f = 1.0;
 
     if (SOwn >= 0)
     {
         alpha = alphaOwn;
+        delta = alphaOwn;
         rho = rhoOwn;
-        phi = UvOwn;
+        phi = UvOwn*magSf;
         U = UOwn;
         E = EOwn;
         p = pOwn;
     }
     else if (SStar > 0)
     {
-        f = (SOwn - UvOwn)/(SOwn - SStar);
+        const scalar rDeltaS = 1.0/(SOwn - SStar);
+        f = (SOwn - UvOwn)*rDeltaS;
         alpha = alphaOwn;
+        delta = alphaOwn;//-alphaOwn*(SStar*rDeltaS + 1.0);
         rho = rhoOwn*f;
-        phi = SStar;
+        phi = SStar*magSf;
         U = (UOwn - UvOwn*normal) + SStar*normal;
-        E = EOwn + (pStar*SStar - pOwn*UvOwn)/(rhoOwn*(SOwn - UvOwn));
+        E =
+            EOwn
+          + (pStar*SStar - pOwn*UvOwn)
+           /stabilise(rhoOwn*(SOwn - UvOwn), small);
         p = pStar;
     }
     else if (SNei > 0)
     {
-        f = (SNei - UvNei)/(SNei - SStar);
+        const scalar rDeltaS = 1.0/(SNei - SStar);
+        f = (SNei - UvNei)*rDeltaS;
         alpha = alphaNei;
+        delta = alphaNei;//-alphaNei*(SStar*rDeltaS + 1.0);
         rho = rhoNei*f;
-        phi = SStar;
+        phi = SStar*magSf;
         U = (UNei - UvNei*normal) + SStar*normal;
-        E = ENei + (pStar*SStar - pNei*UvNei)/(rhoNei*(SNei - UvNei));
+        E =
+            ENei
+          + (pStar*SStar - pNei*UvNei)
+           /stabilise(rhoNei*(SNei - UvNei), small);
         p = pStar;
     }
     else
     {
         alpha = alphaNei;
+        delta = alphaNei;
         rho = rhoNei;
-        phi = UvNei;
+        phi = UvNei*magSf;
         U = UNei;
         E = ENei;
         p = pNei;
     }
 
     this->save(facei, patchi, alpha, alphaf_);
+    this->save(facei, patchi, delta, deltaAlphaf_);
     this->save(facei, patchi, U, Uf_);
     this->save(facei, patchi, p, pf_);
 
-    phi *= magSf;
-    alphaPhi = alpha*phi;
-    alphaRhoPhi = rho*alphaPhi;
+    alphaRhoPhi = alpha*rho*phi;
     alphaRhoUPhi = alphaRhoPhi*U + alpha*p*Sf;
-    alphaRhoEPhi = alphaPhi*(rho*E + p) + vMesh*magSf*p*alpha;
+    alphaRhoEPhi = alpha*phi*(rho*E + p) + phiMesh*alpha*p;
     phi *= f;
+}
+
+
+Foam::scalar Foam::phaseFluxSchemes::HLLC::calculateAlphaCorrector
+(
+    const scalar& alphaOwn, const scalar& alphaNei,
+    const label facei, const label patchi
+) const
+{
+    NotImplemented;
+
+    const scalar SOwn = this->getValue(facei, patchi, SOwn_);
+    const scalar SNei = this->getValue(facei, patchi, SNei_);
+    const scalar SStar = this->getValue(facei, patchi, SStar_);
+
+    if (SOwn >= 0)
+    {
+        return 0.0;
+    }
+    else if (SStar > 0)
+    {
+        return SStar*SOwn*alphaOwn/(SOwn - SStar);
+    }
+    else if (SNei > 0)
+    {
+        return SStar*SNei*alphaNei/(SNei - SStar);
+    }
+    else
+    {
+        return 0.0;
+    }
 }
 
 

@@ -79,6 +79,9 @@ protected:
     //- Saved interpolated alpha field
     tmp<surfaceScalarField> alphaf_;
 
+    //- Saved face values for \delta field (i.e. VI \cdot \nabla (alpha))
+    tmp<surfaceScalarField> deltaAlphaf_;
+
     //- Saved interpolated U field
     tmp<surfaceVectorField> Uf_;
 
@@ -98,12 +101,19 @@ protected:
             const scalar& cOwn, const scalar& cNei,
             const vector& Sf,
             scalar& phi,
-            scalar& alphaPhi,
             scalar& alphaRhoPhi,
             vector& alphaRhoUPhi,
             scalar& alphaRhoEPhi,
             const label facei, const label patchi = -1
         ) = 0;
+
+        //- Calcualte interpolated alpha values
+        //  U \cdot (\sum_i Sf_i alphaf_1) + \sum_i alphaf_corr,i
+        virtual scalar calculateAlphaCorrector
+        (
+            const scalar& alphaOwn, const scalar& alphaNei,
+            const label facei, const label patchi = -1
+        ) const = 0;
 
 
         //- Update fields before calculating fluxes
@@ -193,43 +203,10 @@ public:
             const volScalarField& p,
             const volScalarField& c,
             surfaceScalarField& phi,
-            surfaceScalarField& alphaPhi,
             surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& alphaRhoUPhi,
-            surfaceScalarField& alphaRhoEPhi
-        );
-
-        //- Update
-        void update
-        (
-            const volScalarField& alpha,
-            const volScalarField& rho,
-            const volVectorField& U,
-            const volScalarField& e,
-            const volScalarField& p,
-            const volScalarField& c,
-            surfaceScalarField& phi,
-            surfaceScalarField& alphaPhi,
-            surfaceScalarField& alphaRhoPhi,
-            surfaceVectorField& alphaRhoUPhi,
-            surfaceScalarField& alphaRhoEPhi
-        );
-
-        //- Update
-        void update
-        (
-            const surfaceScalarField& alphaOwn,
-            const surfaceScalarField& alphaNei,
-            const surfaceScalarField& rhoOwn,
-            const surfaceScalarField& rhoNei,
-            const volVectorField& U,
-            const volScalarField& e,
-            const volScalarField& p,
-            const volScalarField& c,
-            surfaceScalarField& phi,
-            surfaceScalarField& alphaRhoPhi,
-            surfaceVectorField& alphaRhoUPhi,
-            surfaceScalarField& alphaRhoEPhi
+            surfaceScalarField& alphaRhoEPhi,
+            const scalar rAlpha
         );
 
         //- Update
@@ -244,8 +221,15 @@ public:
             surfaceScalarField& phi,
             surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& alphaRhoUPhi,
-            surfaceScalarField& alphaRhoEPhi
+            surfaceScalarField& alphaRhoEPhi,
+            const scalar rAlpha
         );
+
+        //- Alpha grad correction
+        tmp<volScalarField> alphaCorrector
+        (
+            const volScalarField& alpha
+        ) const;
 
         //- Return interpolated U field
         tmp<surfaceVectorField> Uf() const;
@@ -255,6 +239,9 @@ public:
 
         //- Return interpolated volume fraction field
         tmp<surfaceScalarField> alphaf() const;
+
+        //- Return interpolated phase density field
+        tmp<surfaceScalarField> deltaAlphaf() const;
 };
 
 

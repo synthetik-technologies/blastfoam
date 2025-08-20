@@ -112,7 +112,6 @@ void Foam::phaseFluxSchemes::Kurganov::calculateFluxes
     const scalar& cOwn, const scalar& cNei,
     const vector& Sf,
     scalar& phi,
-    scalar& alphaPhi,
     scalar& alphaRhoPhi,
     vector& alphaRhoUPhi,
     scalar& alphaRhoEPhi,
@@ -158,9 +157,10 @@ void Foam::phaseFluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
 
+    this->save(facei, patchi, aOwn*alphaOwn + aNei*alphaNei, alphaf_);
+    this->save(facei, patchi, aOwn*alphaOwn + aNei*alphaNei, deltaAlphaf_);
     this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
 
-    alphaPhi = aphivOwn*alphaOwn + aphivNei*alphaNei;
     alphaRhoPhi = aphivOwn*alphaOwn*rhoOwn + aphivNei*alphaNei*rhoNei;
 
     alphaRhoUPhi =
@@ -179,6 +179,18 @@ void Foam::phaseFluxSchemes::Kurganov::calculateFluxes
       + aSf*(alphaOwn*pOwn - alphaNei*pNei)
       + vMesh*0.5*(alphaOwn*pOwn + alphaNei*pNei)
     );
+}
+
+
+Foam::scalar Foam::phaseFluxSchemes::Kurganov::calculateAlphaCorrector
+(
+    const scalar& alphaOwn, const scalar& alphaNei,
+    const label facei, const label patchi
+) const
+{
+    NotImplemented;
+
+    return 0.0;
 }
 
 
