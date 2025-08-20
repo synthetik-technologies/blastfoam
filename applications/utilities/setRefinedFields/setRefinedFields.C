@@ -1288,6 +1288,10 @@ int main(int argc, char *argv[])
     {
         refiner.clear();
     }
+    else if (refiner.valid())
+    {
+        refiner->write();
+    }
 
     // Write all fields
     if (!noWrite && updateAll)
