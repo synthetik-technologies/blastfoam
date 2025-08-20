@@ -322,9 +322,7 @@ Foam::polyMeshRefiner::polyMeshRefiner(polyMesh& mesh)
         (
             typeName,
             mesh.facesInstance(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         )
     ),
 
@@ -376,7 +374,7 @@ Foam::polyMeshRefiner::polyMeshRefiner
             mesh.facesInstance(),
             mesh,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         )
     ),
 
@@ -814,13 +812,7 @@ void Foam::polyMeshRefiner::extendMarkedCellsAcrossPoints
 }
 
 
-bool Foam::polyMeshRefiner::writeObject
-(
-    IOstream::streamFormat fmt,
-    IOstream::versionNumber ver,
-    IOstream::compressionType cmp,
-    const bool write
-) const
+bool Foam::polyMeshRefiner::write(const bool write) const
 {
     return true;
 }

@@ -521,16 +521,10 @@ void Foam::polyMeshPolyRefiner::apply
 }
 
 
-bool Foam::polyMeshPolyRefiner::writeObject
-(
-    IOstream::streamFormat fmt,
-    IOstream::versionNumber ver,
-    IOstream::compressionType cmp,
-    const bool write
-) const
+bool Foam::polyMeshPolyRefiner::write(const bool write) const
 {
     return
-        polyMeshRefiner::writeObject(fmt, ver, cmp, write)
+        polyMeshRefiner::write(write)
      && refiner_->write();
 }
 

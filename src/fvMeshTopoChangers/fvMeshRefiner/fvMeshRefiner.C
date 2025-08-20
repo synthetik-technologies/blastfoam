@@ -147,6 +147,7 @@ void Foam::fvMeshTopoChangers::fvMeshRefiner::distribute(const polyDistributionM
 
 bool Foam::fvMeshTopoChangers::fvMeshRefiner::write(const bool write) const
 {
+    refiner_->write(write);
     if (dumpLevel_ && write)
     {
         volScalarField scalarCellLevel

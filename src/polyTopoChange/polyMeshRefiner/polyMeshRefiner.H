@@ -394,14 +394,8 @@ public:
             return true;
         }
 
-        //- Write using given format, version and compression
-        virtual bool writeObject
-        (
-            IOstream::streamFormat fmt,
-            IOstream::versionNumber ver,
-            IOstream::compressionType cmp,
-            const bool write = true
-        ) const;
+        //- Write object
+        virtual bool write(const bool write = true) const;
 
 
     // Member Operators

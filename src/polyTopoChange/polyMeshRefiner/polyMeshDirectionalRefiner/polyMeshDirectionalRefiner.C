@@ -641,20 +641,14 @@ void Foam::polyMeshDirectionalRefiner::distribute
 }
 
 
-bool Foam::polyMeshDirectionalRefiner::writeObject
-(
-    IOstream::streamFormat fmt,
-    IOstream::versionNumber ver,
-    IOstream::compressionType cmp,
-    const bool write
-) const
+bool Foam::polyMeshDirectionalRefiner::write(const bool write) const
 {
     // Force refinement data to go to the current time directory.
     const_cast<labelIOList&>(cellLevel_).instance() = mesh_.facesInstance();
     const_cast<labelIOList&>(pointLevel_).instance() = mesh_.facesInstance();
 
     return
-        polyMeshRefiner::writeObject(fmt, ver, cmp, write)
+        polyMeshRefiner::write(write)
      && cellLevel_.write()
      && pointLevel_.write();
 }

@@ -1650,17 +1650,10 @@ bool Foam::polyMeshHexRefiner::refine
 }
 
 
-bool Foam::polyMeshHexRefiner::writeObject
-(
-    IOstream::streamFormat fmt,
-    IOstream::versionNumber ver,
-    IOstream::compressionType cmp,
-    const bool write
-) const
+bool Foam::polyMeshHexRefiner::write(const bool write) const
 {
 
-    bool writeOk =
-        polyMeshRefiner::writeObject(fmt, ver, cmp, write);
+    bool writeOk = polyMeshRefiner::write(write);
 
     if (changedSinceWrite_)
     {
