@@ -570,6 +570,31 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::calcCelle
 }
 
 
+Foam::scalar Foam::multiphaseFluidBlastThermo::cellSpeedOfSound
+(
+    const scalar p,
+    const label celli
+) const
+{
+    scalar rhoByGamma = 0.0;
+    scalar cSqrRhoByGamma = 0.0;
+    forAll(thermos_, phasei)
+    {
+        scalar alphai(volumeFractions_[phasei][celli]);
+        scalar rhoi(rhos_[phasei][celli]);
+        if (alphai > residualAlpha_.value())
+        {
+            const scalar rhoXi =
+                alphai*rhoi/(thermos_[phasei].cellGamma(celli) - 1.0);
+            rhoByGamma += rhoXi;
+            cSqrRhoByGamma +=
+                rhoXi*sqrt(thermos_[phasei].cellSpeedOfSound(p, celli));
+        }
+    }
+    return sqrt(cSqrRhoByGamma/max(rhoByGamma, residualAlpha_.value()));
+}
+
+
 Foam::scalar Foam::multiphaseFluidBlastThermo::cellpRhoT
 (
     const label celli,

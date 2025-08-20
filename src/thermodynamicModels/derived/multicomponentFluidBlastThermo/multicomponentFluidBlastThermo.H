@@ -166,6 +166,13 @@ public:
             const volScalarField& p
         );
 
+        //- Calculate the speed of sound in a cell
+        virtual scalar cellSpeedOfSound
+        (
+            const scalar p,
+            const label celli
+        ) const;
+
         //- Calculate pressure for cell [Pa]
         virtual scalar cellpRhoT
         (

@@ -278,6 +278,11 @@ public:
             return residualAlpha()*residualRho();
         }
 
+        scalar TLow() const
+        {
+            return TLow_;
+        }
+
         // Access functions
 
             //- Properties dictionary

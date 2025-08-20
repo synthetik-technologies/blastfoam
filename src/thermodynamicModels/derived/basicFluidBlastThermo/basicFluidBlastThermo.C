@@ -478,6 +478,26 @@ Foam::basicFluidBlastThermo<Thermo>::patchFaceGamma
 
 
 template<class Thermo>
+Foam::scalar Foam::basicFluidBlastThermo<Thermo>::cellSpeedOfSound
+(
+    const scalar p,
+    const label celli
+) const
+{
+    return sqrt
+    (
+        Thermo::thermoType::cSqr
+        (
+            p,
+            this->rho_[celli],
+            this->e_[celli],
+            this->T_[celli]
+        )
+    );
+}
+
+
+template<class Thermo>
 Foam::scalar Foam::basicFluidBlastThermo<Thermo>::cellpRhoT
 (
     const label celli,

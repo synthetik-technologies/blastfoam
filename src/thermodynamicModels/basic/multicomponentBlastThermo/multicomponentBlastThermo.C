@@ -227,6 +227,7 @@ void Foam::multicomponentBlastThermo::clearDeltas()
 {
     forAll(massTransferRates_, i)
     {
+        massTransferRates_.PtrList<volScalarField::Internal>::set(i, nullptr);
         if (massTransferRates_.PtrList<volScalarField::Internal>::set(i))
         {
             massTransferRates_[i] = Zero;
@@ -239,6 +240,7 @@ void Foam::multicomponentBlastThermo::clearSources()
 {
     forAll(implicitSources_, i)
     {
+        implicitSources_.PtrList<fvScalarMatrix>::set(i, nullptr);
         if (implicitSources_.PtrList<fvScalarMatrix>::set(i))
         {
             implicitSources_[i] *= 0;
@@ -425,21 +427,15 @@ void Foam::multicomponentBlastThermo::integrator::update()
             volScalarField& Y = Y_[i];
 
             // Store old specie mass
-            if (alphaRhoYOld_.set(i))
-            {
-                alphaRhoYOld_[i] = alphaRho_*Y;
-            }
-            else
-            {
-                alphaRhoYOld_.set(i, alphaRho_*Y);
-            }
+            alphaRhoYOld_.set(i, alphaRho_*Y);
 
             autoPtr<ReconstructionScheme<scalar>> YLimiter
             (
                 ReconstructionScheme<scalar>::New
                 (
                     Y,
-                    IOobject::groupName("Yi", alphaRho_.group()),
+                    "Yi",
+                    alphaRho_.group(),
                     true
                 )
             );
@@ -448,35 +444,19 @@ void Foam::multicomponentBlastThermo::integrator::update()
             YLimiter->interpolateOwnNei(YOwn, YNei);
 
             // Calculate and store delta
-            if (alphaRhoYDelta_.set(i))
-            {
-                alphaRhoYDelta_[i] =
-                    fvc::div
-                    (
-                        flux.flux
-                        (
-                            (YOwn*alphaRhoOwn)(),
-                            (YNei*alphaRhoNei)(),
-                            flux.phi()
-                        )
-                    );
-            }
-            else
-            {
-                alphaRhoYDelta_.set
+            alphaRhoYDelta_.set
+            (
+                i,
+                fvc::div
                 (
-                    i,
-                    fvc::div
+                    flux.flux
                     (
-                        flux.flux
-                        (
-                            (YOwn*alphaRhoOwn)(),
-                            (YNei*alphaRhoNei)(),
-                            flux.phi()
-                        )
+                        (YOwn*alphaRhoOwn)(),
+                        (YNei*alphaRhoNei)(),
+                        flux.phi()
                     )
-                );
-            }
+                )
+            );
         }
     }
 }

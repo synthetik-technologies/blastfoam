@@ -269,7 +269,7 @@ Foam::scalar Foam::PengRobinson<Specie>::dpdT
 {
     const scalar Vm = this->W()/max(rho, 1e-10);
     const scalar Tr = T/Tc_;
-    const scalar dalphadT = (1.0 + kappa_*(1.0 - sqrt(Tr)))*kappa_/sqrt(Tc_*Tr);
+    const scalar dalphadT = (1.0 + kappa_*(1.0 - sqrt(Tr)))*kappa_/sqrt(Tc_*T);
 
     return RR/(Vm - b_) + a_*dalphadT/(sqr(Vm) + 2.0*b_*Vm - sqr(b_));
 }
@@ -320,26 +320,26 @@ Foam::scalar Foam::PengRobinson<Specie>::Cv
     const scalar T
 ) const
 {
-    const scalar sqrtTr = sqrt(T/Tc_);
-    const scalar sqrt2 = sqrt(2.0);
-    return
-        a_*kappa_*(1.0 + kappa_)/(2.0*sqrt(Tc_)*pow3(sqrtTr))
-       *log((1.0 + (1.0 - sqrt2)*b_*rho)/(1.0 + (1.0 - sqrt2)*b_*rho)) // Double check
-       /(2.0*sqrt2*b_*this->W());
-
-    // const scalar p = this->pRhoT(rho, T);
-    // const scalar B = b_*p/(RR*T);
-    // const scalar Z = this->Z(p, T);
-
-    // const scalar app = kappa_*a_*(1 + kappa_)/(2*sqrt(pow3(T)*Tc_));
-
-    // const scalar root2 = sqrt(2.0);
-
+    // const scalar sqrtTr = sqrt(T/Tc_);
+    // const scalar sqrt2 = sqrt(2.0);
     // return
-    // (
-    //     app*(T/(2*root2*b_))*log((Z + (root2 + 1)*B)/(Z - (root2 - 1)*B))
-    //   - RR
-    // )/this->W();
+    //     a_*kappa_*(1.0 + kappa_)/(2.0*sqrt(Tc_)*pow3(sqrtTr))
+    //    *log((1.0 + (1.0 - sqrt2)*b_*rho)/(1.0 + (1.0 - sqrt2)*b_*rho)) // Double check
+    //    /(2.0*sqrt2*b_*this->W());
+
+    const scalar p = this->pRhoT(rho, T);
+    const scalar B = b_*p/(RR*T);
+    const scalar Z = this->Z(p, T);
+
+    const scalar app = kappa_*a_*(1 + kappa_)/(2*sqrt(pow3(T)*Tc_));
+
+    const scalar root2 = sqrt(2.0);
+
+    return
+    (
+        app*(T/(2*root2*b_))*log((Z + (root2 + 1)*B)/(Z - (root2 - 1)*B))
+      - RR
+    )/this->W();
 }
 
 
@@ -351,7 +351,33 @@ Foam::scalar Foam::PengRobinson<Specie>::Cp
     const scalar T
 ) const
 {
-    return Cv(rho, e, T) - T*sqr(dpdT(rho, e, T))/dpdv(rho, e, T) - this->R();
+    // return Cv(rho, e, T) - T*sqr(dpdT(rho, e, T))/dpdv(rho, e, T) - this->R();
+    const scalar p = this->pRhoT(rho, T);
+    const scalar Tr = T/Tc_;
+    const scalar a = 0.45724*sqr(RR*Tc_)/Pc_;
+    const scalar b = 0.07780*RR*Tc_/Pc_;
+    const scalar kappa = 0.37464 + 1.54226*omega_ - 0.26992*sqr(omega_);
+    const scalar alpha = sqr(1 + kappa*(1 - sqrt(Tr)));
+
+    const scalar A = a*alpha*p/sqr(RR*T);
+    const scalar B = b*p/(RR*T);
+
+    const scalar Z = this->Z(p, T);
+
+    const scalar ap = kappa*a*(kappa/Tc_ - (1 + kappa)/sqrt(T*Tc_));
+    const scalar app = kappa*a*(1 + kappa)/(2*sqrt(pow3(T)*Tc_));
+
+    const scalar M = (sqr(Z) + 2*B*Z - sqr(B))/(Z - B);
+    const scalar N = ap*B/(b*RR);
+
+    const scalar root2 = sqrt(2.0);
+
+    return
+    (
+        app*(T/(2*root2*b))*log((Z + (root2 + 1)*B)/(Z - (root2 - 1)*B))
+      + RR*sqr(M - N)/(sqr(M) - 2*A*(Z + B))
+      - RR
+    )/this->W();
 }
 
 
@@ -392,22 +418,22 @@ Foam::scalar Foam::PengRobinson<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
-    return dpdT(rho, e, T)/max(rho, 1e-10);
+    // return dpdT(rho, e, T)/max(rho, 1e-10);
 
-    // const scalar p = this->pRhoT(rho, T);
-    // const scalar Tr = T/Tc_;
-    // const scalar alpha = sqr(1 + kappa_*(1 - sqrt(Tr)));
+    const scalar p = this->pRhoT(rho, T);
+    const scalar Tr = T/Tc_;
+    const scalar alpha = sqr(1 + kappa_*(1 - sqrt(Tr)));
 
-    // const scalar A = alpha*a_*p/sqr(RR*T);
-    // const scalar B = b_*p/(RR*T);
+    const scalar A = alpha*a_*p/sqr(RR*T);
+    const scalar B = b_*p/(RR*T);
 
-    // const scalar Z = this->Z(p, T);
+    const scalar Z = this->Z(p, T);
 
-    // const scalar ap = kappa_*a_*(kappa_/Tc_ - (1 + kappa_)/sqrt(T*Tc_));
-    // const scalar M = (sqr(Z) + 2*B*Z - sqr(B))/(Z - B);
-    // const scalar N = ap*B/(b_*RR);
+    const scalar ap = kappa_*a_*(kappa_/Tc_ - (1 + kappa_)/sqrt(T*Tc_));
+    const scalar M = (sqr(Z) + 2*B*Z - sqr(B))/(Z - B);
+    const scalar N = ap*B/(b_*RR);
 
-    // return this->R()*sqr(M - N)/(sqr(M) - 2*A*(Z + B));
+    return this->R()*sqr(M - N)/(sqr(M) - 2*A*(Z + B));
 }
 
 

@@ -509,6 +509,26 @@ bool Foam::multicomponentFluidBlastThermo<Thermo>::inviscid() const
 
 
 template<class Thermo>
+Foam::scalar Foam::multicomponentFluidBlastThermo<Thermo>::cellSpeedOfSound
+(
+    const scalar p,
+    const label celli
+) const
+{
+    return sqrt
+    (
+        this->cellMixture(celli).cSqr
+        (
+            p,
+            this->rho_[celli],
+            this->e_[celli],
+            this->T_[celli]
+        )
+    );
+}
+
+
+template<class Thermo>
 Foam::scalar Foam::multicomponentFluidBlastThermo<Thermo>::cellpRhoT
 (
     const label celli,

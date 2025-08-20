@@ -885,6 +885,35 @@ Foam::detonatingFluidBlastThermo<Thermo>::patchFaceGamma
 
 template<class Thermo>
 Foam::scalar
+Foam::detonatingFluidBlastThermo<Thermo>::cellSpeedOfSound
+(
+    const scalar p,
+    const label celli
+) const
+{
+    const scalar& x = this->cellx(celli);
+    const scalar rho = this->rho_[celli];
+    const scalar e = this->e_[celli];
+    const scalar T = this->T_[celli];
+    if (x < small)
+    {
+        return sqrt(Thermo::thermoType1::cSqr(p, rho, e, T));
+    }
+    else if ((1.0 - x) < small)
+    {
+        return sqrt(Thermo::thermoType2::cSqr(p, rho, e, T));
+    }
+
+    return sqrt
+    (
+        Thermo::thermoType2::cSqr(p, rho, e, T)*x
+      + Thermo::thermoType1::cSqr(p, rho, e, T)*(1.0 - x)
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
 Foam::detonatingFluidBlastThermo<Thermo>::celldpdRho(const label celli) const
 {
     const scalar& x = this->cellx(celli);

@@ -38,14 +38,35 @@ Foam::PengRobinson<Specie>::PengRobinson
 :
     Specie(dict),
     Tc_(dict.subDict("equationOfState").lookup<scalar>("Tc")),
-    Vc_(dict.subDict("equationOfState").lookup<scalar>("Vc")),
+    Vc_(1.0),
     Pc_(dict.subDict("equationOfState").lookup<scalar>("Pc")),
     omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
-    Zc_(Pc_*Vc_/(RR*Tc_)),
-    a_(0.45724*sqr(RR*Tc_)/Pc_),
-    b_(0.07780*RR*Tc_/Pc_),
-    kappa_(0.37464 + 1.54226*omega_ - 0.26992*sqr(omega_))
-{}
+    Zc_(1.0),
+    a_(1.0),
+    b_(1.0),
+    kappa_(1.0)
+{
+    if (dict.subDict("equationOfState").found("Vc"))
+    {
+        dict.subDict("equationOfState").readIfPresent("Vc", Vc_);
+        Zc_ = Pc_*Vc_/(RR*Tc_);
+    }
+    else if (dict.subDict("equationOfState").found("Zc"))
+    {
+        Zc_ = dict.subDict("equationOfState").readIfPresent("Zc", Zc_);
+        Vc_ = Zc_*(RR*Tc_)/Pc_;
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Either Vc or Zc must be provided" << endl
+            << abort(FatalIOError);
+    }
+
+    a_ = 0.45724*sqr(RR*Tc_)/Pc_;
+    b_ = 0.07780*RR*Tc_/Pc_;
+    kappa_ = 0.37464 + 1.54226*omega_ - 0.26992*sqr(omega_);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

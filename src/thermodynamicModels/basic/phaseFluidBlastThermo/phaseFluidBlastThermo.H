@@ -198,6 +198,13 @@ public:
             //- Calculate the pressure
             virtual tmp<volScalarField> pRhoT() const ;
 
+            //- Calculate the speed of sound in a cell
+            virtual scalar cellSpeedOfSound
+            (
+                const scalar p,
+                const label celli
+            ) const = 0;
+
 
             //- Calculate pressure for cell [Pa]
             virtual scalar cellpRhoT

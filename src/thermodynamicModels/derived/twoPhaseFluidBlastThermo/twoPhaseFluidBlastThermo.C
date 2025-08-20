@@ -499,7 +499,7 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
         }
         eInit +=
             thermo1_->initESource(this->alpha1())
-          * thermo2_->initESource(this->alpha2());
+          + thermo2_->initESource(this->alpha2());
     }
     else
     {
@@ -527,6 +527,42 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::calcCelle
         TEqn_.reset(celli);
     }
     return cellhe(Tinit, celli);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellSpeedOfSound
+(
+    const scalar p,
+    const label celli
+) const
+{
+    if (this->alpha2()[celli] < thermo2_->residualAlpha().value())
+    {
+        return thermo1_->cellSpeedOfSound(p, celli);
+    }
+    if (this->alpha1()[celli] < thermo1_->residualAlpha().value())
+    {
+        return thermo2_->cellSpeedOfSound(p, celli);
+    }
+    scalar alphaRhoXi1
+    (
+        this->alpha1()[celli]
+       *this->rho1_[celli]
+       /(thermo1_->cellGamma(celli) - 1.0)
+    );
+    scalar alphaRhoXi2
+    (
+        this->alpha2()[celli]
+       *this->rho2_[celli]
+       /(thermo2_->cellGamma(celli) - 1.0)
+    );
+
+    return
+        sqrt
+        (
+            alphaRhoXi1*sqr(thermo1_->cellSpeedOfSound(p, celli))
+          + alphaRhoXi2*sqr(thermo2_->cellSpeedOfSound(p, celli))
+        )/(alphaRhoXi1 + alphaRhoXi2);
 }
 
 

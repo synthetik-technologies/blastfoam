@@ -312,6 +312,13 @@ public:
             //- Gamma = dpde for cell []
             virtual scalar patchFaceGamma(const label patchi, const label facei) const;
 
+            //- Calculate the speed of sound in a cell
+            virtual scalar cellSpeedOfSound
+            (
+                const scalar p,
+                const label celli
+            ) const;
+
             //- Derivative of pressure w.r.t density for cel
             virtual scalar celldpdRho(const label celli) const;
 
