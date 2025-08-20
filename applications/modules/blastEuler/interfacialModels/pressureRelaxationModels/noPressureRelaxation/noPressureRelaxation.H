@@ -22,24 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::pressureRelaxationODE
+    Foam::noPressureRelaxation
 
 Description
     Basic ode solver for coupling phases with pressureRelaxation
 
 SourceFiles
-    pressureRelaxationODE.C
+    noPressureRelaxation.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pressureRelaxationODE_H
-#define pressureRelaxationODE_H
+#ifndef noPressureRelaxation_H
+#define noPressureRelaxation_H
 
 #include "pressureRelaxationSolver.H"
-#include "ODESystem.H"
-#include "ODESolver.H"
-#include "volFields.H"
-#include "simpleMatrix.H"
 #include "phaseSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -48,47 +44,29 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class pressureRelaxationODE Declaration
+                      Class noPressureRelaxation Declaration
 \*---------------------------------------------------------------------------*/
 
-class pressureRelaxationODE
+class noPressureRelaxation
 :
-    public pressureRelaxationSolver,
-    public ODESystem
+    public pressureRelaxationSolver
 {
     // Private Member Functions
 
         //- Disallow copy constructor
-        pressureRelaxationODE(const pressureRelaxationODE&);
+        noPressureRelaxation(const noPressureRelaxation&);
 
         //- Disallow default bitwise assignment
-        void operator=(const pressureRelaxationODE&);
-
-
-protected:
-    // Protected data
-
-        //- Temporary field (u1 v1 w1, u2 v2 w2 ...)
-        scalarField q_;
-
-        //- Temporary rate-of-change of variables field
-        scalarField dqdt_;
-
-        //- Stored time step
-        volScalarField::Internal deltaT_;
-
-        //- Ode solver
-        autoPtr<ODESolver> odeSolver_;
-
+        void operator=(const noPressureRelaxation&);
 
 public:
 
-    TypeName("ode");
+    TypeName("none");
 
     // Constructors
 
         //- Construct from thermo
-        pressureRelaxationODE
+        noPressureRelaxation
         (
             const dictionary& dict,
             phaseSystem& fluid,
@@ -98,38 +76,13 @@ public:
 
 
     //- Destructor
-    virtual ~pressureRelaxationODE();
+    virtual ~noPressureRelaxation();
 
 
     // Member Functions
 
         //- Solve the reaction system for the given time step
         virtual bool solve(const scalar& deltaT);
-
-    // ODE functions (overriding abstract functions in ODE.H)
-
-            //- Number of ODE's to solve
-            virtual label nEqns() const
-            {
-                return nEqns_;
-            }
-
-            virtual void derivatives
-            (
-                const scalar t,
-                const scalarField& q,
-                const label li,
-                scalarField& dqdt
-            ) const;
-
-            virtual void jacobian
-            (
-                const scalar t,
-                const scalarField& q,
-                const label li,
-                scalarField& dqdt,
-                scalarSquareMatrix& J
-            ) const;
 };
 
 

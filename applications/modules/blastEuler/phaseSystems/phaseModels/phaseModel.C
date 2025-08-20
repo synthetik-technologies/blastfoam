@@ -207,25 +207,6 @@ Foam::phaseModel::~phaseModel()
 void Foam::phaseModel::solveAlpha(const bool s)
 {
     solveAlpha_ = s;
-    if (alphaPhiPtr_.valid() || !s)
-    {
-        return;
-    }
-
-    alphaPhiPtr_.set
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("alphaPhi", name_),
-                this->mesh().time().name(),
-                this->mesh()
-            ),
-            this->mesh(),
-            dimensionedScalar("0", phi_.dimensions(), 0.0)
-        )
-    );
 }
 
 
@@ -317,174 +298,6 @@ void Foam::phaseModel::solveAlphaRho()
     alphaRho_.storePrevIter();
     alphaRho_ -= this->mesh().time().deltaT()*deltaAlphaRho;
     alphaRho_.max(0);
-    alphaRho_.correctBoundaryConditions();
-}
-
-
-void Foam::phaseModel::solve()
-{
-    dimensionedScalar dT = rho().time().deltaT();
-
-    tmp<volScalarField> deltaAlpha;
-    if (solveAlpha_)
-    {
-        volScalarField& alpha(*this);
-        deltaAlpha =
-            volScalarField::New
-            (
-                IOobject::groupName("deltaAlpha", name_),
-                fvc::div(alphaPhiPtr_()) - alpha*fvc::div(fluid_.phi())
-            );
-        this->fvTimeInt_->addDeltaSource(alpha.name(), deltaAlpha.ref());
-    }
-
-    volVectorField deltaAlphaRhoU
-    (
-        IOobject::groupName("deltaAlphaRhoU", name_),
-        fvc::div(alphaRhoUPhi_)
-      - fluid_.PI()*gradAlpha()
-      - (*this)*rho()*fluid_.g() // alphaRho has already been updated
-    );
-    this->fvTimeInt_->addDeltaSource(alphaRhoU_.name(), deltaAlphaRhoU);
-
-    volScalarField deltaAlphaRhoE
-    (
-        IOobject::groupName("deltaAlphaRhoE", name_),
-        fvc::div(alphaRhoEPhi_)
-      - ESource()
-      - fluid_.PI()*(fluid_.U() & gradAlpha())
-      - (alphaRhoU_ & fluid_.g())
-    );
-    this->fvTimeInt_->addDeltaSource(alphaRhoE_.name(), deltaAlphaRhoE);
-
-    if (fluid_.hasMassTransfer(*this))
-    {
-        forAll(fluid_.phases(), phasei)
-        {
-            const phaseModel& otherPhase = fluid_.phases()[phasei];
-            if (&otherPhase != this && fluid_.hasMassTransfer(*this, otherPhase))
-            {
-                volScalarField mD(fluid_.mDot(*this, otherPhase));
-                volScalarField alphaD(fluid_.mDotByRho(*this, otherPhase));
-                if (solveAlpha_)
-                {
-                    deltaAlpha.ref() -= alphaD;
-                }
-                deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
-                deltaAlphaRhoE -=
-                    fluid_.mDotE(mD, *this, otherPhase)
-                  - alphaD*p();
-            }
-        }
-    }
-    this->storeAndBlendDelta(deltaAlphaRhoU);
-    this->storeAndBlendDelta(deltaAlphaRhoE);
-
-
-    this->storeAndBlendOld(alphaRhoU_);
-    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs_);
-    alphaRhoU_.correctBoundaryConditions();
-
-    this->storeAndBlendOld(alphaRhoE_);
-    alphaRhoE_ -= dT*deltaAlphaRhoE;
-    alphaRhoE_.correctBoundaryConditions();
-
-    // Transport volume fraction if required
-    if (solveAlpha_)
-    {
-        this->storeAndBlendDelta(deltaAlpha.ref());
-
-        volScalarField& alpha(*this);
-        this->storeAndBlendOld(alpha);
-
-        alpha -= dT*deltaAlpha;
-        alpha.max(0);
-        alpha.correctBoundaryConditions();
-    }
-}
-
-
-void Foam::phaseModel::postUpdate()
-{
-    if (turbulence_.valid())
-    {
-        turbulence_->predict();
-    }
-    if (thermophysicalTransport_.valid())
-    {
-        thermophysicalTransport_->predict();
-    }
-
-    dimensionedScalar smallAlphaRho(residualAlphaRho());
-    if (needSolve(U_.name()) || turbulence_.valid())
-    {
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
-          + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
-         ==
-            models().source(*this, rho(), U_)
-        );
-        if (turbulence_.valid())
-        {
-            UEqn += turbulence_->divDevTau(U_);
-            alphaRhoE_ +=
-                rho().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate
-                    (
-                        rho().mesh().Sf(),
-                        turbulence_->devTau()
-                    )
-                  & flux().Uf()
-                );
-        }
-        constraints().constrain(UEqn);
-        UEqn.solve();
-        constraints().constrain(U_);
-
-        alphaRhoU_ = alphaRho_*U_;
-
-        he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
-    }
-
-    // Solve thermal energy diffusion
-    if (needSolve(he().name()) || turbulence_.valid())
-    {
-        fvScalarMatrix eEqn
-        (
-            fvm::ddt(alphaRho_, he())
-          - fvc::ddt(alphaRho_.prevIter(), he())
-          + fvc::ddt(smallAlphaRho, he())
-          - fvm::ddt(smallAlphaRho, he())
-         ==
-            models().source(*this, rho(), he())
-        );
-
-        if (turbulence_.valid())
-        {
-            // Add thermal energy diffusion
-            eEqn += thermophysicalTransport_->divq(he());
-        }
-        constraints().constrain(eEqn);
-        eEqn.solve();
-        constraints().constrain(he());
-
-        alphaRhoE_ = alphaRho_*(he() + 0.5*magSqr(U_));
-    }
-
-    if (turbulence_.valid())
-    {
-        turbulence_->correct();
-    }
-    if (thermophysicalTransport_.valid())
-    {
-        thermophysicalTransport_->correct();
-    }
-
-    thermo().postUpdate();
-    thermo().correct();
 }
 
 
@@ -517,11 +330,7 @@ void Foam::phaseModel::update()
 
 Foam::tmp<Foam::surfaceScalarField> Foam::phaseModel::alphaPhi() const
 {
-    if (alphaPhiPtr_.valid())
-    {
-        return alphaPhiPtr_();
-    }
-    return this->phi_*fvc::interpolate(*this);
+    return this->fluid_.phi()*flux().alphaf();
 }
 
 

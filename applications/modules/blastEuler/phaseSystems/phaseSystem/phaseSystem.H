@@ -199,6 +199,22 @@ public:
 
         static const dimensionedScalar zeroMDot;
 
+        enum PIPressure
+        {
+            VOLUME,
+            TOTAL,
+        };
+        const static NamedEnum<PIPressure, 2> PIPressureNames_;
+
+        enum PVRelaxation
+        {
+            NONE,
+            MODEL,
+            ODE,
+            INSTANT
+        };
+        const static NamedEnum<PVRelaxation, 4> PVRelaxationNames_;
+
 
 protected:
 
@@ -236,8 +252,14 @@ protected:
         //- Mixture flux
         surfaceScalarField phi_;
 
+        //- Mixture mass flux
+        surfaceScalarField rhoPhi_;
+
         //- Mixture pressure
         volScalarField p_;
+
+        //- Interfacial pressure type
+        PIPressure PIModel_;
 
         //- Total mixture pressure
         autoPtr<volScalarField> PIPtr_;
@@ -274,6 +296,12 @@ protected:
 
 
         // Sub Models
+
+            //- Velocity relaxation type
+            PVRelaxation VRelaxation_;
+
+            //- Pressure relaxation type
+            PVRelaxation PRelaxation_;
 
             //- Blending methods
             blendingMethodTable blendingMethods_;
@@ -463,6 +491,9 @@ public:
         {
             return PIPtr_.valid() ? PIPtr_() : p_;
         }
+
+        //- Return the interfacial pressure
+        scalar cellPI(const label celli) const;
 
         //- Return gravitational acceleration
         const uniformDimensionedVectorField& g() const

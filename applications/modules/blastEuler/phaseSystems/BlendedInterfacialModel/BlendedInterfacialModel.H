@@ -176,6 +176,18 @@ public:
 
     // Member Functions
 
+        //- Return phase 1
+        const phaseModel& phase1() const
+        {
+            return phase1_;
+        }
+
+        //- Return phase 2
+        const phaseModel& phase2() const
+        {
+            return phase2_;
+        }
+
         //- Add the used pairs to the table
         void addPairs(phasePair::dictTable& pairs) const;
 

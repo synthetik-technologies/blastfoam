@@ -213,7 +213,6 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
     const scalar& cOwn, const scalar& cNei,
     const vector& Sf,
     scalar& phi,
-    scalar& alphaPhi,
     scalar& alphaRhoPhi,
     vector& alphaRhoUPhi,
     scalar& alphaRhoEPhi,
@@ -352,6 +351,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
     }
 
     this->save(facei, patchi, alpha, alphaf_);
+    // this->save(facei, patchi, alpha, deltaAlphaf_);
     this->save(facei, patchi, U, Uf_);
     this->save(facei, patchi, pf, pf_);
 
@@ -362,9 +362,19 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
         alphaRhoPhi/max(alpha, 1e-6)/rho,
         phi_
     );
-    alphaPhi = alphaRhoPhi/rho;
     alphaRhoUPhi = alphaRhoPhi*U + pf*Sf;
     alphaRhoEPhi = alphaRhoPhi*e;
+}
+
+
+Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::calculateAlphaCorrector
+(
+    const scalar& alphaOwn, const scalar& alphaNei,
+    const label facei, const label patchi
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 

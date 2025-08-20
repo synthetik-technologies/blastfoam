@@ -147,9 +147,6 @@ protected:
             //- Volumetric flux of the phase
             surfaceScalarField phi_;
 
-            //- Volume fraction flux
-            autoPtr<surfaceScalarField> alphaPhiPtr_;
-
             //- Phasic mass flux
             surfaceScalarField alphaRhoPhi_;
 
@@ -409,10 +406,10 @@ public:
             virtual void update();
 
             //- Solve sub-step stepi
-            virtual void solve();
+            virtual void solve() = 0;
 
             //- Solve viscous and source terms
-            virtual void postUpdate();
+            virtual void postUpdate() = 0;
 
 
         //- Return conserved quantities
@@ -516,7 +513,7 @@ public:
             }
 
             //- Constant access to phasic momentum
-            virtual tmp<volVectorField> alphaRhoU() const
+            virtual const volVectorField& alphaRhoU() const
             {
                 return alphaRhoU_;
             }
@@ -528,7 +525,7 @@ public:
             }
 
             //- Constant access to phasic total energy
-            virtual tmp<volScalarField> alphaRhoE() const
+            virtual const volScalarField& alphaRhoE() const
             {
                 return alphaRhoE_;
             }
@@ -600,6 +597,16 @@ public:
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const = 0;
+
+            //- Return cell pressure
+            virtual scalar cellpRhoT(const label celli) const = 0;
+
+            //- Return cell speedOfSound
+            virtual scalar cellSpeedOfSound
+            (
+                const scalar p,
+                const label celli
+            ) const = 0;
 
 
         //- Return the PTE production

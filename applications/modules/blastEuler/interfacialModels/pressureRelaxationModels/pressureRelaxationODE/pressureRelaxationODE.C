@@ -36,12 +36,20 @@ namespace Foam
         pressureRelaxationODE,
         dictionary
     );
+    addNamedToRunTimeSelectionTable
+    (
+        pressureRelaxationSolver,
+        pressureRelaxationODE,
+        dictionary,
+        model
+    );
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::pressureRelaxationODE::pressureRelaxationODE
 (
+    const dictionary& dict,
     phaseSystem& fluid,
     interfacialPressureModelTable& interfacialPressureModels,
     pressureRelaxationModelTable& pressureRelaxationModels
@@ -51,12 +59,9 @@ Foam::pressureRelaxationODE::pressureRelaxationODE
     (
         fluid,
         interfacialPressureModels,
-        pressureRelaxationModels,
-        true,
-        true
+        pressureRelaxationModels
     ),
     ODESystem(),
-    dict_(fluid.subDict("pressureSolverCoeffs")),
     q_(),
     dqdt_(),
     deltaT_
@@ -97,7 +102,7 @@ Foam::pressureRelaxationODE::pressureRelaxationODE
         }
     }
 
-    odeSolver_ = ODESolver::New(*this, dict_);
+    odeSolver_ = ODESolver::New(*this, dict);
 }
 
 
@@ -118,42 +123,33 @@ void Foam::pressureRelaxationODE::derivatives
     scalarField& dqdt
 ) const
 {
-    dqdt = scalarField(nEqns_, 0.0);
-    forAll(thermos_, phasei)
-    {
-        thermos_[phasei].rhoRef()[li] =
-            phaseModels_[phasei].alphaRho()[li]
-           /max(phaseModels_[phasei][li], 1e-10);
-    }
+    dqdt.setSize(nEqns_);
+    dqdt = 0.0;
     forAll(interfacialPressureModels_, pairi)
     {
         const interfacialPressureModel& ip =
             interfacialPressureModels_[pairi];
-        const phasePair& pair(ip.pair());
-        const phaseModel& phase1(pair.phase1());
-        const phaseModel& phase2(pair.phase2());
+        const phasePair& pair = ip.pair();
+        const phaseModel& phase1 = pair.phase1();
+        const phaseModel& phase2 = pair.phase2();
 
         const label a1i = phaseIndicies_[phase1.index()];
         const label e1i = phaseModels_.size() + a1i;
         const label a2i = phaseIndicies_[phase2.index()];
         const label e2i = phaseModels_.size() + a2i;
-        const scalar p1 = thermos_[a1i].cellpRhoT(li);
-        const scalar p2 = thermos_[a2i].cellpRhoT(li);
-        if
-        (
-            phase1.alphaRho()[li] < 1e-10
-         || phase2.alphaRho()[li] < 1e-10
-        )
+        const scalar p1 = thermos_[a1i].p()[li];
+        const scalar p2 = thermos_[a2i].p()[li];
+        if(q[a1i] > 1e-6 && q[a2i] < 1e-6)
         {
-            continue;
-        }
-        const scalar PI = ip.cellPI(li);
-        const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
+            const scalar PI = ip.cellPI(li);
+            const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
 
-        dqdt[a1i] += mu*(p1 - p2);
-        dqdt[e1i] += PI*mu*(p2 - p1)/phase1.alphaRho()[li];
-        dqdt[a2i] += mu*(p2 - p1);
-        dqdt[e2i] += PI*mu*(p1 - p2)/phase2.alphaRho()[li];
+
+            dqdt[a1i] += mu*(p1 - p2);
+            dqdt[e1i] += PI*mu*(p2 - p1)/max(phase1.alphaRho()[li], 1e-6);
+            dqdt[a2i] += mu*(p2 - p1);
+            dqdt[e2i] += PI*mu*(p1 - p2)/max(phase2.alphaRho()[li], 1e-6);
+        }
     }
 }
 
@@ -169,12 +165,6 @@ void Foam::pressureRelaxationODE::jacobian
 {
     dqdt = 0.0;
     J = scalarSquareMatrix(nEqns_, 0.0);
-    forAll(thermos_, phasei)
-    {
-        thermos_[phasei].rhoRef()[li] =
-            phaseModels_[phasei].alphaRho()[li]
-           /max(phaseModels_[phasei][li], 1e-10);
-    }
     forAll(interfacialPressureModels_, pairi)
     {
         const interfacialPressureModel& ip =
@@ -187,73 +177,89 @@ void Foam::pressureRelaxationODE::jacobian
         const label e1i = phaseModels_.size() + a1i;
         const label a2i = phaseIndicies_[phase2.index()];
         const label e2i = phaseModels_.size() + a2i;
-        const scalar p1 = thermos_[a1i].cellpRhoT(li);
-        const scalar p2 = thermos_[a2i].cellpRhoT(li);
+        const scalar p1 = thermos_[a1i].p()[li];
+        const scalar p2 = thermos_[a2i].p()[li];
 
-        if (phase1[li] < 1e-10 || phase2[li] < 1e-10)
+        if (phase1[li] > 1e-6 && phase2[li] > 1e-6)
         {
-            continue;
+            const scalar alphaRho1 = phase1.alphaRho()[li];
+            const scalar alphaRho2 = phase2.alphaRho()[li];
+
+            const scalar dPIdAlpha1 = ip.celldPIdAlpha(li, phase1.index());
+            const scalar dPIdAlpha2 = ip.celldPIdAlpha(li, phase2.index());
+            const scalar dPIde1 = ip.celldPIde(li, phase1.index());
+            const scalar dPIde2 = ip.celldPIde(li, phase2.index());
+            const scalar dp1de1 = thermos_[a1i].celldpde(li);
+            const scalar dp2de2 = thermos_[a2i].celldpde(li);
+
+            const scalar PI = ip.cellPI(li);
+            const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
+
+            dqdt[a1i] += mu*(p1 - p2);
+            dqdt[e1i] += PI*mu*(p2 - p1)/alphaRho1;
+            dqdt[a2i] += mu*(p2 - p1);
+            dqdt[e2i] += PI*mu*(p1 - p2)/alphaRho2;
+
+    //         J[a1i][a1i] += 0.0;
+            J[e1i][a1i] += mu*dPIdAlpha1*(p2 - p1)/alphaRho1;
+
+    //         J[a1i][a2i] += 0.0;
+            J[e1i][a2i] += mu*dPIdAlpha2*(p2 - p1)/alphaRho1;
+
+            J[a1i][e1i] += mu*dp1de1;
+            J[e1i][e1i] += mu*(dPIde1*(p2 - p1) - PI*dp1de1)/alphaRho1;
+
+            J[a1i][e2i] -= mu*dp2de2;
+            J[e1i][e2i] += mu*(dPIde2*(p2 - p1) + PI*dp2de2)/alphaRho1;
+
+    //         J[a2i][a2i] -= 0.0;
+            J[e2i][a2i] += mu*dPIdAlpha2*(p1 - p2)/alphaRho2;
+
+    //         J[a2i][a1i] -= 0.0;
+            J[e2i][a1i] += dPIdAlpha1*mu*(p1 - p2)/alphaRho2;
+
+            J[a2i][e2i] += mu*dp2de2;
+            J[e2i][e2i] += mu*(dPIde2*(p1 - p2) - PI*dp2de2)/alphaRho2;
+
+            J[a2i][e1i] -= mu*dp1de1;
+            J[e2i][e1i] += mu*(dPIde1*(p1 - p2) + PI*dp1de1)/alphaRho2;
         }
-
-        const scalar alphaRho1 = phase1.alphaRho()[li];
-        const scalar alphaRho2 = phase2.alphaRho()[li];
-
-        const scalar dPIdAlpha1 = ip.celldPIdAlpha(li, phase1.index());
-        const scalar dPIdAlpha2 = ip.celldPIdAlpha(li, phase2.index());
-        const scalar dPIde1 = ip.celldPIde(li, phase1.index());
-        const scalar dPIde2 = ip.celldPIde(li, phase2.index());
-        const scalar dp1de1 = thermos_[a1i].celldpde(li);
-        const scalar dp2de2 = thermos_[a2i].celldpde(li);
-
-        const scalar PI = ip.cellPI(li);
-        const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
-
-        dqdt[a1i] += mu*(p1 - p2);
-        dqdt[e1i] += PI*mu*(p2 - p1)/alphaRho1;
-        dqdt[a2i] += mu*(p2 - p1);
-        dqdt[e2i] += PI*mu*(p1 - p2)/alphaRho2;
-
-//         J[a1i][a1i] += 0.0;
-        J[e1i][a1i] += mu*dPIdAlpha1*(p2 - p1)/alphaRho1;
-
-//         J[a1i][a2i] += 0.0;
-        J[e1i][a2i] += mu*dPIdAlpha2*(p2 - p1)/alphaRho1;
-
-        J[a1i][e1i] += mu*dp1de1;
-        J[e1i][e1i] += mu*(dPIde1*(p2 - p1) - PI*dp1de1)/alphaRho1;
-
-        J[a1i][e2i] -= mu*dp2de2;
-        J[e1i][e2i] += mu*(dPIde2*(p2 - p1) + PI*dp2de2)/alphaRho1;
-
-//         J[a2i][a2i] -= 0.0;
-        J[e2i][a2i] += mu*dPIdAlpha2*(p1 - p2)/alphaRho2;
-
-//         J[a2i][a1i] -= 0.0;
-        J[e2i][a1i] += dPIdAlpha1*mu*(p1 - p2)/alphaRho2;
-
-        J[a2i][e2i] += mu*dp2de2;
-        J[e2i][e2i] += mu*(dPIde2*(p1 - p2) - PI*dp2de2)/alphaRho2;
-
-        J[a2i][e1i] -= mu*dp1de1;
-        J[e2i][e1i] += mu*(dPIde1*(p1 - p2) + PI*dp1de1)/alphaRho2;
     }
 }
 
 
-Foam::scalar Foam::pressureRelaxationODE::solve
+bool Foam::pressureRelaxationODE::solve
 (
     const scalar& deltaT
 )
 {
+    List<scalar> KEs(phaseModels_.size());
     forAll(phaseModels_[0], celli)
     {
         forAll(phaseModels_, phasei)
         {
             const phaseModel& phase = phaseModels_[phasei];
-            const label ai = phaseIndicies_[phasei];
-            const label ei = phaseModels_.size() + ai;
+            const label ai = phasei;
+            const label ei = phaseModels_.size() + phasei;
             q_[ai] = max(min(phase[celli], 1.0), 0.0);
-            q_[ei] = phase.he()[celli];
+
+            if (q_[ai] > phase.residualAlpha().value())
+            {
+                const scalar alphaRho = phase.alphaRho()[celli];
+                KEs[phasei] = 0.5*magSqr(phase.alphaRhoU()[celli]/alphaRho);
+                thermos_[phasei].rhoRef()[celli] = alphaRho/q_[ai];
+                q_[ei] =
+                    phase.alphaRhoE()[celli]/alphaRho
+                  - KEs[phasei];
+                thermos_[phasei].he()[celli] = q_[ei];
+                thermos_[phasei].T()[celli] = thermos_[phasei].cellThe
+                (
+                    q_[ei],
+                    thermos_[phasei].T()[celli],
+                    celli
+                );
+                thermos_[phasei].p()[celli] = thermos_[phasei].cellpRhoT(celli);
+            }
         }
 
         scalar timeLeft = deltaT;
@@ -266,21 +272,35 @@ Foam::scalar Foam::pressureRelaxationODE::solve
 
             forAll(phaseModels_, phasei)
             {
-                phaseModel& phase = phaseModels_[phasei];
-                const label ai = phaseIndicies_[phase.index()];
-                const label ei = phaseModels_.size() + ai;
-                phase[celli] = max(min(q_[ai], 1.0), 0.0);
-                phase.rho()[celli] =
-                    phase.alphaRho()[celli]/max(phase[celli], 1e-10);
-                phase.he()[celli] = q_[ei];
+                const label ai = phasei;
+                const label ei = phaseModels_.size() + phasei;
+                if (q_[ai] > phaseModels_[phasei].residualAlpha().value())
+                {
+                    thermos_[phasei].rhoRef()[celli] =
+                        phaseModels_[phasei].alphaRho()[celli]/q_[ai];
+                    thermos_[phasei].he()[celli] = q_[ei];
+                    thermos_[phasei].T()[celli] = thermos_[phasei].cellThe
+                    (
+                        q_[ei],
+                        thermos_[phasei].T()[celli],
+                        celli
+                    );
+                    thermos_[phasei].p()[celli] =
+                        thermos_[phasei].cellpRhoT(celli);
+                }
             }
         }
+
+        forAll(phaseModels_, phasei)
+        {
+            const label ei = phaseModels_.size() + phasei;
+
+            phaseModels_[phasei].alphaRhoE()[celli] =
+                phaseModels_[phasei].alphaRho()[celli]*(q_[ei] + KEs[phasei]);
+        }
     }
-    forAll(thermos_, phasei)
-    {
-        thermos_[phasei].correct();
-    }
-    return min(deltaT_).value();
+
+    return true;
 }
 
 

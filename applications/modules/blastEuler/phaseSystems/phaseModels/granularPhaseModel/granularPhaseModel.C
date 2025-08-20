@@ -343,7 +343,8 @@ void Foam::granularPhaseModel::update()
         phi_,
         alphaRhoPhi_,
         alphaRhoUPhi_,
-        alphaRhoEPhi_
+        alphaRhoEPhi_,
+        residualAlpha().value()
     );
 
     //- Calculate PTE flux by using Riemann flux scheme to interpolate

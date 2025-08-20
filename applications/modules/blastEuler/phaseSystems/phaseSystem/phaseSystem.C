@@ -56,6 +56,29 @@ namespace Foam
 const Foam::dimensionedScalar
 Foam::phaseSystem::zeroMDot(dimDensity/dimTime, 0.0);
 
+template<>
+const char* Foam::NamedEnum<Foam::phaseSystem::PIPressure, 2>::names[] =
+    {
+        "volume",
+        "total"
+    };
+
+template<>
+const char* Foam::NamedEnum<Foam::phaseSystem::PVRelaxation, 4>::names[] =
+    {
+        "none",
+        "model",
+        "ode",
+        "instant"
+    };
+
+const Foam::NamedEnum<Foam::phaseSystem::PIPressure, 2>
+Foam::phaseSystem::PIPressureNames_;
+
+const Foam::NamedEnum<Foam::phaseSystem::PVRelaxation, 4>
+Foam::phaseSystem::PVRelaxationNames_;
+
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 void Foam::phaseSystem::generatePairs
@@ -121,10 +144,34 @@ const volScalarField& var = stabAlphaRhos[Phase.index()];
 
 void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 {
+    if (VRelaxation_ == NONE)
+    {
+        return;
+    }
+
     if (dragODE_.valid())
     {
         Info<< "Solving drag ODE system" <<endl;
         dragODE_->solve(deltaT.value());
+    }
+    else if (VRelaxation_ == INSTANT)
+    {
+        volVectorField VI(fluidPhaseModels_[0].alphaRhoU());
+        volScalarField fluidRho(fluidPhaseModels_[0].alphaRho());
+        for (label i = 1; i < fluidPhaseModels_.size(); i++)
+        {
+            VI += fluidPhaseModels_[i].alphaRhoU();
+            fluidRho += fluidPhaseModels_[i].alphaRho();
+        }
+        fluidRho.max(1e-6);
+        VI /= fluidRho;
+
+        forAll(fluidPhaseModels_, i)
+        {
+            phaseModel& phase = fluidPhaseModels_[i];
+            phase.alphaRhoE() += 0.5*phase.alphaRho()*magSqr(VI - phase.U());
+            phase.alphaRhoU() += phase.alphaRho()*(VI - phase.U());
+        }
     }
 
     UiTable Uis;
@@ -179,15 +226,27 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 (phase1.U() - phase2.U())/XiD
                 *(1.0/(Kd*XiD*deltaT + 1.0) - 1.0)
             );
+
+            const volVectorField U1Old(phase1.alphaRhoU()/alphaRho1);
             phase1.alphaRhoU() += deltaM;
             if (phase1.totalEnergy())
             {
-                phase1.alphaRhoE() += deltaM & (*Uis[pair]);
+                const volVectorField U1New(phase1.alphaRhoU()/alphaRho1);
+                // phase1.alphaRhoE() += deltaM & (*Uis[pair]);
+                phase1.alphaRhoE() +=
+                    0.5*phase1.alphaRho()
+                   *((U1New - U1Old) & ((*Uis[pair]) - U1Old));
             }
+
+            const volVectorField U2Old(phase2.alphaRhoU()/alphaRho2);
             phase2.alphaRhoU() -= deltaM;
             if (phase2.totalEnergy())
             {
-                phase2.alphaRhoE() -= deltaM & (*Uis[pair]);
+                const volVectorField U2New(phase2.alphaRhoU()/alphaRho2);
+                // phase2.alphaRhoE() -= deltaM & (*Uis[pair]);
+                phase2.alphaRhoE() +=
+                    0.5*phase2.alphaRho()
+                   *((U2New - U2Old) & ((*Uis[pair]) - U2Old));
             }
         }
 
@@ -443,12 +502,13 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
 
 void Foam::phaseSystem::relaxPressure(const dimensionedScalar& deltaT)
 {
-    if (pressureSolver_->solve())
+    if (pressureSolver_.valid())
     {
         Info<< "Solving pressure relaxation" <<endl;
-        pressureSolver_->solve(deltaT.value());
-
-        encode();
+        if (pressureSolver_->solve(deltaT.value()))
+        {
+            decode();
+        }
     }
 }
 
@@ -526,7 +586,8 @@ void Foam::phaseSystem::calcMixtureVariables()
         if (PIPtr_.valid())
         {
             PIPtr_() +=
-                phase*(phase.p() + phase.rho()*magSqr(phase.U() - U_));
+                phase*phase.p()
+              + phase.alphaRho()*magSqr(phase.U() - U_);
         }
     }
     p_ /= sumAlpha;
@@ -536,11 +597,13 @@ void Foam::phaseSystem::calcMixtureVariables()
 
 void Foam::phaseSystem::calcMixtureFluxes()
 {
+    rhoPhi_ = Zero;
     phi_ = Zero;
     forAll(phaseModels_, phasei)
     {
         const phaseModel& phase = phaseModels_[phasei];
-        phi_ += phase.alphaPhi();
+        rhoPhi_ += phase.alphaRhoPhi();
+        phi_ += phase.flux().alphaf()*phase.phi();
     }
 }
 
@@ -607,6 +670,18 @@ Foam::phaseSystem::phaseSystem
         ),
         fvc::flux(U_)
     ),
+    rhoPhi_
+    (
+        IOobject
+        (
+            "rhoPhi",
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        fvc::flux(U_*rho_)
+    ),
 
     p_
     (
@@ -620,6 +695,8 @@ Foam::phaseSystem::phaseSystem
         ),
         mesh
     ),
+
+    PIModel_(VOLUME),
 
     T_
     (
@@ -658,7 +735,15 @@ Foam::phaseSystem::phaseSystem
 
     master_(masterSystemList::New(mesh)),
 
-    dragODE_(nullptr)
+    dragODE_(nullptr),
+
+    VRelaxation_
+    (
+        this->found("VRelaxation")
+      ? PVRelaxationNames_.read(this->lookup("VRelaxation"))
+      : MODEL
+    ),
+    PRelaxation_(NONE)
 {
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
@@ -748,42 +833,81 @@ Foam::phaseSystem::phaseSystem
 
     if (nFluids > 1)
     {
-        PIPtr_.set
-        (
-            new volScalarField
+        if (this->found("PIModel"))
+        {
+            PIModel_ = PIPressureNames_.read(this->lookup("PIModel"));
+        }
+        if (PIModel_ == TOTAL)
+        {
+            PIPtr_.set
             (
-                IOobject
+                new volScalarField
                 (
-                    "PI",
-                    mesh.time().name(),
-                    mesh
-                ),
-                mesh,
-                dimensionedScalar(dimPressure, 0.0)
-            )
+                    IOobject
+                    (
+                        "PI",
+                        mesh.time().name(),
+                        mesh
+                    ),
+                    mesh,
+                    dimensionedScalar(dimPressure, 0.0)
+                )
+            );
+        }
+
+        pressureSolver_ = pressureRelaxationSolver::New
+        (
+            *this,
+            interfacialPressureModels_,
+            pressureRelaxationModels_
         );
+        PRelaxation_ = PVRelaxationNames_[pressureSolver_->type()];
+
+        if (VRelaxation_ == INSTANT)
+        {
+            DynamicList<phasePairKey> pairsToRemove(dragModels_.size());
+            forAllConstIter(dragModelTable, dragModels_, iter)
+            {
+                if
+                (
+                    !iter()->phase1().slavePressure()
+                 && !iter()->phase2().slavePressure()
+                )
+                {
+                    pairsToRemove.append(iter.key());
+                }
+            }
+            forAll(pairsToRemove, i)
+            {
+                dragModels_.erase(dragModels_.find(pairsToRemove[i]));
+            }
+        }
     }
 
-    if (lookupOrDefault<Switch>("solveDragODE", false))
+    if (VRelaxation_ == ODE)
     {
         dragODE_.set(new dragODE(*this, dragModels_));
     }
 
-    pressureSolver_ = pressureRelaxationSolver::New
-    (
-        *this,
-        interfacialPressureModels_,
-        pressureRelaxationModels_
-
-    );
-
     if (phaseModels_.size() == 2)
     {
+        scalar minAlpha1 = 0.0;
+        scalar maxAlpha1 = 1.0;
+        if (!phaseModels_[0].slavePressure())
+        {
+            minAlpha1 = phaseModels_[0].residualAlpha().value();
+        }
+        if (!phaseModels_[1].slavePressure())
+        {
+            maxAlpha1 = 1.0 - phaseModels_[1].residualAlpha().value();
+        }
+
         if (phaseModels_[1].slavePressure())
         {
             phaseModels_[1].solveAlpha(true);
             phaseModels_[0].solveAlpha(false);
 
+            phaseModels_[1].maxMin(1.0 - maxAlpha1, 1.0 - minAlpha1);
             dynamicCast<volScalarField>(phaseModels_[0]) ==
                 1.0 - phaseModels_[1];
         }
@@ -792,6 +916,7 @@ Foam::phaseSystem::phaseSystem
             phaseModels_[0].solveAlpha(true);
             phaseModels_[1].solveAlpha(false);
 
+            phaseModels_[0].maxMin(minAlpha1, maxAlpha1);
             dynamicCast<volScalarField>(phaseModels_[1]) ==
                 1.0 - phaseModels_[0];
         }
@@ -905,7 +1030,6 @@ void Foam::phaseSystem::decode()
         volScalarField& alpha1(phaseModels_[0]);
         volScalarField& alpha2(phaseModels_[1]);
 
-
         if (phaseModels_[1].slavePressure())
         {
             alpha1 == 1.0 - alpha2;
@@ -914,9 +1038,6 @@ void Foam::phaseSystem::decode()
         {
             alpha2 == 1.0 - alpha1;
         }
-
-        phaseModels_[0].decode();
-        phaseModels_[1].decode();
     }
     else
     {
@@ -1020,52 +1141,28 @@ void Foam::phaseSystem::decode()
             // const label fixedPhase = alphas.indices()[0];
             // phaseModels_[fixedPhase][celli] = 1.0 - sumAlpha;
         }
-
-        forAll(phaseModels_, phasei)
-        {
-            // phaseModels_[phasei].correctVolumeFraction();
-            phaseModels_[phasei].correctBoundaryConditions();
-            phaseModels_[phasei].decode();
-        }
     }
 
-    master_.update();
-
-    calcMixtureVariables();
-
+    // Final correction of volume fraction
+    // Decode now that volume fraction has been calculated
     forAll(phaseModels_, phasei)
     {
-        phaseModel& phase(phaseModels_[phasei]);
-        if (!phase.slavePressure())
-        {
-            phase.p() = p_;
-        }
+        // phaseModels_[phasei].correctVolumeFraction();
+        phaseModels_[phasei].correctBoundaryConditions();
+        phaseModels_[phasei].decode();
     }
-    encode();
+
+    // Update all masterSystems
+    master_.update();
+
+    // Update total quantities
+    calcMixtureVariables();
 }
 
 
 Foam::tmp<Foam::surfaceScalarField> Foam::phaseSystem::phi() const
 {
-    tmp<surfaceScalarField> phiTmp
-    (
-        surfaceScalarField::New
-        (
-            "phi",
-            mesh(),
-            dimensionedScalar
-            (
-                dimDensity*dimArea*dimVelocity,
-                0.0
-            )
-        )
-    );
-    forAll(phaseModels_, phasei)
-    {
-        phiTmp.ref() += phaseModels_[phasei].alphaRhoPhi();
-    }
-    phiTmp.ref() /= fvc::interpolate(rho_);
-    return phiTmp;
+    return phi_;
 }
 
 
@@ -1161,12 +1258,18 @@ void Foam::phaseSystem::solve()
     }
 
     master_.solve();
+
+    if (PRelaxation_ == INSTANT)
+    {
+        pressureSolver_->solve(time().deltaTValue());
+    }
 }
 
 
 void Foam::phaseSystem::postUpdate()
 {
     decode();
+
     forAll(phaseModels_, phasei)
     {
         DebugInfo
@@ -1182,9 +1285,9 @@ void Foam::phaseSystem::postUpdate()
 
     master_.postUpdate();
 
-    decode();
-
     relaxPressure(deltaT);
+
+    decode();
 }
 
 
@@ -1281,6 +1384,51 @@ void Foam::phaseSystem::printInfo() const
 
 }
 
+
+Foam::scalar Foam::phaseSystem::cellPI(const label celli) const
+{
+    scalar PI = 0.0;
+    if (PIModel_ == VOLUME)
+    {
+        forAll(fluidPhaseModels_, phasei)
+        {
+            const phaseModel& phase(fluidPhaseModels_[phasei]);
+            PI += phase[celli]*phase.p()[celli];
+        }
+    }
+    else if (PIModel_ == TOTAL)
+    {
+        vector VI = Zero;
+        scalar rho = 0.0;
+        forAll(fluidPhaseModels_, phasei)
+        {
+            const phaseModel& phase(fluidPhaseModels_[phasei]);
+            VI += phase.alphaRhoU()[celli];
+            rho += phase.alphaRho()[celli];
+        }
+        VI /= max(rho, 1e-6);
+
+        forAll(fluidPhaseModels_, phasei)
+        {
+            const phaseModel& phase(fluidPhaseModels_[phasei]);
+            PI +=
+                phase[celli]*phase.p()[celli]
+              + phase.alphaRho()[celli]
+               *magSqr
+                (
+                    phase.alphaRhoU()[celli]
+                   /max
+                    (
+                        phase.alphaRho()[celli],
+                        phase.residualAlphaRho().value()
+                    )
+                  - VI
+                );
+        }
+
+    }
+    return PI;
+}
 
 Foam::tmp<Foam::volScalarField>
 Foam::phaseSystem::E(const phasePairKey& key) const

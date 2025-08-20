@@ -219,6 +219,22 @@ public:
             return thermoPtr_->speedOfSound();
         }
 
+        //- Return cell pressure
+        virtual scalar cellpRhoT(const label celli) const
+        {
+            return thermoPtr_->cellpRhoT(celli);
+        }
+
+        //- Return cell speedOfSound
+        virtual scalar cellSpeedOfSound
+        (
+            const scalar p,
+            const label celli
+        ) const
+        {
+            return thermoPtr_->cellSpeedOfSound(p, celli);
+        }
+
         //- Correct thermodynamic quantities
         virtual void correctThermo();
 };

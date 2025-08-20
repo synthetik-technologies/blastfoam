@@ -93,11 +93,17 @@ protected:
         //- Reference to phase system
         const phaseSystem& fluid_;
 
+        //- Indices of included phases
+        labelList includedPhases_;
+
         //- Reference to phase models
         mutable phaseModelList phaseModels_;
 
         //- Local indexes of phases
         Map<label> phaseIndicies_;
+
+        //- Residual alpha values
+        scalarList residualAlphas_;
 
         //- Reference to fluid thermo models
         mutable UPtrList<fluidBlastThermo> thermos_;
@@ -125,11 +131,12 @@ public:
             pressureRelaxationSolver,
             dictionary,
             (
+                const dictionary& dict,
                 phaseSystem& fluid,
                 interfacialPressureModelTable& interfacialPressureModels,
                 pressureRelaxationModelTable& pressureRelaxationModels
             ),
-            (fluid, interfacialPressureModels, pressureRelaxationModels)
+            (dict, fluid, interfacialPressureModels, pressureRelaxationModels)
         );
 
     // Constructors
@@ -139,17 +146,19 @@ public:
         (
             phaseSystem& fluid,
             interfacialPressureModelTable& interfacialPressureModels,
-            pressureRelaxationModelTable& pressureRelaxationModels,
-            const bool needIPModels,
-            const bool needPRModels
+            pressureRelaxationModelTable& pressureRelaxationModels
+        );
+        pressureRelaxationSolver
+        (
+            phaseSystem& fluid,
+            interfacialPressureModelTable& interfacialPressureModels
         );
 
         //- Construct from thermo
         pressureRelaxationSolver
         (
             phaseSystem& fluid,
-            interfacialPressureModelTable& interfacialPressureModels,
-            pressureRelaxationModelTable& pressureRelaxationModels
+            const bool needPhases
         );
 
 
@@ -167,14 +176,15 @@ public:
 
     // Member Functions
 
-        bool solve() const
+        //- Return if instant relaxation
+        virtual bool instant() const
         {
-            return solvePressureRelaxation_;
+            return false;
         }
 
         //- Solve the reaction system for the given time step
         //  and return the characteristic time
-        virtual scalar solve(const scalar& deltaT)
+        virtual bool solve(const scalar& deltaT)
         {
             return deltaT;
         }

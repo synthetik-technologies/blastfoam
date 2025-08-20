@@ -130,10 +130,10 @@ void Foam::multiPhaseModel::updateFluxes
         p_,
         speedOfSound(),
         phi_,
-        alphaPhiPtr_(),
         alphaRhoPhi_,
         alphaRhoUPhi_,
-        alphaRhoEPhi_
+        alphaRhoEPhi_,
+        residualAlpha().value()
     );
 
     // fluxScheme_->update
@@ -152,12 +152,6 @@ void Foam::multiPhaseModel::updateFluxes
 
     forAll(alphaRhoPhis_, phasei)
     {
-        alphaPhis_[phasei] = fluxScheme_->flux
-        (
-            alphasOwn[phasei],
-            alphasNei[phasei],
-            phi_
-        );
         alphaRhoPhis_[phasei] = fluxScheme_->flux
         (
             alphaRhosOwn[phasei],
@@ -344,13 +338,68 @@ void Foam::multiPhaseModel::solve()
         NotImplemented;
     }
 
-    dimensionedScalar dT = rho_.time().deltaT();
+    // Solve momentum and energy transport
+    const dimensionedScalar dT = rho().time().deltaT();
+
+    tmp<volVectorField> tgradAlpha = this->gradAlpha();
+    const volVectorField& gradAlpha = tgradAlpha();
+
+
+    volVectorField deltaAlphaRhoU
+    (
+        IOobject::groupName("deltaAlphaRhoU", name_),
+        fvc::div(alphaRhoUPhi_)
+      - fluid_.PI()*gradAlpha
+      - (*this)*rho()*fluid_.g() // alphaRho has already been updated
+    );
+    this->fvTimeInt_->addDeltaSource(alphaRhoU_.name(), deltaAlphaRhoU);
+
+    volScalarField deltaAlphaRhoE
+    (
+        IOobject::groupName("deltaAlphaRhoE", name_),
+        fvc::div(alphaRhoEPhi_)
+      - ESource()
+      - fluid_.PI()*(fluid_.U() & gradAlpha)
+      - (alphaRhoU_ & fluid_.g())
+    );
+    this->fvTimeInt_->addDeltaSource(alphaRhoE_.name(), deltaAlphaRhoE);
+
+    // if (fluid_.hasMassTransfer(*this))
+    // {
+    //     forAll(fluid_.phases(), phasei)
+    //     {
+    //         const phaseModel& otherPhase = fluid_.phases()[phasei];
+    //         if (&otherPhase != this && fluid_.hasMassTransfer(*this, otherPhase))
+    //         {
+    //             volScalarField mD(fluid_.mDot(*this, otherPhase));
+    //             volScalarField alphaD(fluid_.mDotByRho(*this, otherPhase));
+    //             deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
+    //             deltaAlphaRhoE -=
+    //                 fluid_.mDotE(mD, *this, otherPhase)
+    //               - alphaD*p();
+    //         }
+    //     }
+    // }
+    this->storeAndBlendDelta(deltaAlphaRhoU);
+    this->storeAndBlendDelta(deltaAlphaRhoE);
+
+
+    this->storeAndBlendOld(alphaRhoU_);
+    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs_);
+    alphaRhoU_.correctBoundaryConditions();
+
+    this->storeAndBlendOld(alphaRhoE_);
+    alphaRhoE_ -= dT*deltaAlphaRhoE;
+    alphaRhoE_.correctBoundaryConditions();
+
+
     dynamicCast<volScalarField>(*this) = 0.0;
     forAll(alphas_, phasei)
     {
         volScalarField deltaAlpha
         (
             fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
+          // + fluxScheme_->alphaCorrector(alphas_[phasei])
         );
         this->fvTimeInt_->addDeltaSource(alphas_[phasei].name(), deltaAlpha);
         this->storeAndBlendDelta(deltaAlpha);
@@ -375,13 +424,24 @@ void Foam::multiPhaseModel::solve()
         *this += alphas_[phasei];
     }
 
+
+    // Solve thermodynamic models (activation and afterburn)
     thermoPtr_->solve();
-    phaseModel::solve();
 }
 
 
 void Foam::multiPhaseModel::postUpdate()
 {
+    // Viscous
+    if (turbulence_.valid())
+    {
+        turbulence_->predict();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->predict();
+    }
+
     // Solve phase mass
     bool needUpdate = false;
     alphaRho_.storePrevIter();
@@ -442,7 +502,95 @@ void Foam::multiPhaseModel::postUpdate()
         }
         rho_ = alphaRho_/Foam::max(*this, residualAlpha());
     }
-    phaseModel::postUpdate();
+
+
+    volScalarField& alpha(*this);
+    if (needSolve(alpha.name()) && solveAlpha_)
+    {
+        //- Solve momentum equation (implicit stresses)
+        fvScalarMatrix alphaEqn
+        (
+            fvm::ddt(alpha) - fvc::ddt(alpha)
+         ==
+            models().source(alpha)
+        );
+        constraints().constrain(alphaEqn);
+        alphaEqn.solve();
+        constraints().constrain(alpha);
+    }
+
+    alphaRho_.storePrevIter();
+
+    dimensionedScalar smallAlphaRho(residualAlphaRho());
+    if (needSolve(U_.name()) || turbulence_.valid())
+    {
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
+          + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
+         ==
+            models().source(*this, rho(), U_)
+        );
+        if (turbulence_.valid())
+        {
+            UEqn += turbulence_->divDevTau(U_);
+            alphaRhoE_ +=
+                rho().time().deltaT()
+               *fvc::div
+                (
+                    fvc::dotInterpolate
+                    (
+                        rho().mesh().Sf(),
+                        turbulence_->devTau()
+                    )
+                  & flux().Uf()
+                );
+        }
+        constraints().constrain(UEqn);
+        UEqn.solve();
+        constraints().constrain(U_);
+
+        alphaRhoU_ = alphaRho_*U_;
+
+        he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
+    }
+
+    // Solve thermal energy diffusion
+    if (needSolve(he().name()) || turbulence_.valid())
+    {
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(alphaRho_, he())
+          - fvc::ddt(alphaRho_.prevIter(), he())
+          + fvc::ddt(smallAlphaRho, he())
+          - fvm::ddt(smallAlphaRho, he())
+         ==
+            models().source(*this, rho(), he())
+        );
+
+        if (turbulence_.valid())
+        {
+            // Add thermal energy diffusion
+            eEqn += thermophysicalTransport_->divq(he());
+        }
+        constraints().constrain(eEqn);
+        eEqn.solve();
+        constraints().constrain(he());
+
+        alphaRhoE_ = alphaRho_*(he() + 0.5*magSqr(U_));
+    }
+
+    if (turbulence_.valid())
+    {
+        turbulence_->correct();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->correct();
+    }
+
+    thermo().postUpdate();
+    thermo().correct();
 }
 
 

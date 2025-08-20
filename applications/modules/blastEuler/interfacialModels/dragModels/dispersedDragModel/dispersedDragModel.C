@@ -29,7 +29,7 @@ License
 #include "dispersedDragModel.H"
 #include "BlendedInterfacialModel.H"
 #include "phasePair.H"
-#include "swarmCorrection.H"
+#include "noSwarm.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 
@@ -55,7 +55,12 @@ Foam::dragModels::dispersedDragModel::dispersedDragModel
 )
 :
     dragModel(dict, pair, registerObject),
-    swarmCorrection_(swarmCorrection::New(dict, pair))
+    swarmCorrection_
+    (
+        dict.isDict(swarmCorrection::typeName)
+      ? swarmCorrection::New(dict, pair)
+      : autoPtr<swarmCorrection>(new swarmCorrections::noSwarm(dict, pair))
+    )
 {}
 
 

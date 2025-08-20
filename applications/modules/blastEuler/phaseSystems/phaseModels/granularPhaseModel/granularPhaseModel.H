@@ -333,6 +333,25 @@ public:
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const;
 
+            //- Return cell pressure
+            virtual scalar cellpRhoT(const label celli) const
+            {
+                NotImplemented;
+                return 0.0;
+            }
+
+            //- Return cell speedOfSound
+            virtual scalar cellSpeedOfSound
+            (
+                const scalar p,
+                const label celli
+            ) const
+            {
+                NotImplemented;
+                return 0.0;
+            }
+
+
 
         //- Return the PTE production
         virtual tmp<volScalarField>

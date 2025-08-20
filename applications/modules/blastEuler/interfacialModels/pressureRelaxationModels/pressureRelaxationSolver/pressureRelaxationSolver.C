@@ -32,13 +32,6 @@ namespace Foam
 {
     defineTypeNameAndDebug(pressureRelaxationSolver, 0);
     defineRunTimeSelectionTable(pressureRelaxationSolver, dictionary);
-    addNamedToRunTimeSelectionTable
-    (
-        pressureRelaxationSolver,
-        pressureRelaxationSolver,
-        dictionary,
-        none
-    );
 }
 
 
@@ -50,8 +43,6 @@ Foam::pressureRelaxationSolver::New
     pressureRelaxationModelTable& pressureRelaxationModels
 )
 {
-    word relaxationType("none");
-
     label nFluids = 0;
     forAll(fluid.phases(), phasei)
     {
@@ -60,12 +51,16 @@ Foam::pressureRelaxationSolver::New
             nFluids++;
         }
     }
-    if (nFluids > 1)
+    if (nFluids < 2)
     {
-        relaxationType = fluid.lookup<word>("pressureRelaxationSolver");
-        Info<< "Selecting pressureRelaxationSolver: "
-            << relaxationType << endl;
+        return autoPtr<pressureRelaxationSolver>
+        (
+            new pressureRelaxationSolver(fluid, false)
+        );
     }
+    const dictionary& solverDict = fluid.subDict("pressureRelaxationSolver");
+    const word relaxationType = solverDict.lookup<word>("type");
+    Info<< "Selecting " << typeName <<  ": " << relaxationType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(relaxationType);
@@ -80,7 +75,13 @@ Foam::pressureRelaxationSolver::New
             << exit(FatalError);
     }
 
-    return cstrIter()(fluid, interfacialPressureModels, pressureRelaxationModels);
+    return cstrIter()
+    (
+        solverDict.optionalSubDict(relaxationType + "Coeffs"),
+        fluid,
+        interfacialPressureModels,
+        pressureRelaxationModels
+    );
 }
 
 
@@ -90,41 +91,110 @@ Foam::pressureRelaxationSolver::pressureRelaxationSolver
 (
     phaseSystem& fluid,
     interfacialPressureModelTable& interfacialPressureModels,
-    pressureRelaxationModelTable& pressureRelaxationModels,
-    const bool needIPModels,
-    const bool needPRModels
+    pressureRelaxationModelTable& pressureRelaxationModels
+)
+:
+    pressureRelaxationSolver(fluid, interfacialPressureModels)
+{
+    forAll(includedPhases_, i)
+    {
+        const phaseModel& phaseI = fluid.phases()[includedPhases_[i]];
+        for (label j = i+1; j < includedPhases_.size(); j++)
+        {
+            const phaseModel& phaseJ = fluid.phases()[includedPhases_[j]];
+            phasePairKey key(phaseI.name(), phaseJ.name());
+
+            if (!pressureRelaxationModels.found(key))
+            {
+                FatalErrorInFunction
+                    << "Did not find pressureRelaxationModel for "
+                    << key << endl
+                    << abort(FatalError);
+            }
+            pressureRelaxationModels_.append
+            (
+                &pressureRelaxationModels[key]()
+            );
+        }
+    }
+}
+
+
+Foam::pressureRelaxationSolver::pressureRelaxationSolver
+(
+    phaseSystem& fluid,
+    interfacialPressureModelTable& interfacialPressureModels
+)
+:
+    pressureRelaxationSolver(fluid, true)
+{
+    //- Add unorded phase pairs with vaild pressureRelaxation models
+    forAll(includedPhases_, i)
+    {
+        const phaseModel& phaseI = fluid.phases()[includedPhases_[i]];
+        for (label j = i+1; j < includedPhases_.size(); j++)
+        {
+            const phaseModel& phaseJ = fluid.phases()[includedPhases_[j]];
+            phasePairKey key(phaseI.name(), phaseJ.name());
+
+            if (!interfacialPressureModels.found(key))
+            {
+                FatalErrorInFunction
+                    << "Did not find interfacialPressureModel for "
+                    << key << endl
+                    << abort(FatalError);
+            }
+            interfacialPressureModels_.append
+            (
+                &interfacialPressureModels[key]()
+            );
+        }
+    }
+}
+
+
+Foam::pressureRelaxationSolver::pressureRelaxationSolver
+(
+    phaseSystem& fluid,
+    const bool needPhases
 )
 :
     solvePressureRelaxation_(false),
     fluid_(fluid),
-    phaseModels_(),
-    phaseIndicies_(),
-    thermos_(),
-    interfacialPressureModels_(interfacialPressureModels.size()),
-    pressureRelaxationModels_(pressureRelaxationModels.size()),
+    includedPhases_(0),
+    phaseModels_(0),
+    phaseIndicies_(0),
+    thermos_(0),
+    interfacialPressureModels_(0),
+    pressureRelaxationModels_(0),
     nEqns_(0)
 {
-    labelList phases;
+    if (!needPhases)
+    {
+        return;
+    }
+
     forAll(fluid.phases(), phasei)
     {
         if (!fluid.phases()[phasei].slavePressure())
         {
-            phases.append(phasei);
+            includedPhases_.append(phasei);
         }
     }
-    if (phases.size() <= 1)
+    if (includedPhases_.size() <= 1)
     {
         return;
     }
 
     solvePressureRelaxation_ = true;
-    phaseModels_.setSize(phases.size());
-    thermos_.setSize(phases.size());
+    phaseModels_.setSize(includedPhases_.size());
+    thermos_.setSize(includedPhases_.size());
+    residualAlphas_.setSize(includedPhases_.size());
 
     hashedWordList includedPhases;
-    forAll(phases, phasei)
+    forAll(includedPhases_, phasei)
     {
-        const phaseModel& phase = fluid.phases()[phases[phasei]];
+        const phaseModel& phase = fluid.phases()[includedPhases_[phasei]];
         if (phase.slavePressure())
         {
             FatalErrorInFunction
@@ -137,7 +207,7 @@ Foam::pressureRelaxationSolver::pressureRelaxationSolver
         phaseModels_.set
         (
             phasei,
-            &fluid.phases()[phases[phasei]]
+            &fluid.phases()[includedPhases_[phasei]]
         );
         thermos_.set
         (
@@ -147,82 +217,9 @@ Foam::pressureRelaxationSolver::pressureRelaxationSolver
                 IOobject::groupName(physicalProperties::typeName, phase.group())
             )
         );
-    }
-
-    //- Add unorded phase pairs with vaild pressureRelaxation models
-    if (needIPModels)
-    {
-        label pairi = 0;
-        forAll(phases, i)
-        {
-            const phaseModel& phaseI = fluid.phases()[phases[i]];
-            for (label j = i+1; j < phases.size(); j++)
-            {
-                const phaseModel& phaseJ = fluid.phases()[phases[j]];
-                phasePairKey key(phaseI.name(), phaseJ.name());
-
-                if (!interfacialPressureModels.found(key))
-                {
-                    FatalErrorInFunction
-                        << "Did not find interfacialPressureModel for "
-                        << key << endl
-                        << abort(FatalError);
-                }
-                interfacialPressureModels_.set
-                (
-                    pairi++,
-                    &interfacialPressureModels[key]()
-                );
-            }
-        }
-        interfacialPressureModels_.resize(pairi);
-    }
-
-    if (needPRModels)
-    {
-        label pairi = 0;
-        forAll(phases, i)
-        {
-            const phaseModel& phaseI = fluid.phases()[phases[i]];
-            for (label j = i+1; j < phases.size(); j++)
-            {
-                const phaseModel& phaseJ = fluid.phases()[phases[j]];
-                phasePairKey key(phaseI.name(), phaseJ.name());
-
-                if (!pressureRelaxationModels.found(key))
-                {
-                    FatalErrorInFunction
-                        << "Did not find pressureRelaxationModel for "
-                        << key << endl
-                        << abort(FatalError);
-                }
-                pressureRelaxationModels_.set
-                (
-                    pairi++,
-                    &pressureRelaxationModels[key]()
-                );
-            }
-        }
+        residualAlphas_[phasei] = phaseModels_[phasei].residualAlpha().value();
     }
 }
-
-
-Foam::pressureRelaxationSolver::pressureRelaxationSolver
-(
-    phaseSystem& fluid,
-    interfacialPressureModelTable& interfacialPressureModels,
-    pressureRelaxationModelTable& pressureRelaxationModels
-)
-:
-    solvePressureRelaxation_(false),
-    fluid_(fluid),
-    phaseModels_(0),
-    phaseIndicies_(0),
-    thermos_(0),
-    interfacialPressureModels_(0),
-    pressureRelaxationModels_(0),
-    nEqns_(0)
-{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
