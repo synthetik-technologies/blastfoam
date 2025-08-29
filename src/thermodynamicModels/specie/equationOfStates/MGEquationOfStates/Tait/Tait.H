@@ -104,16 +104,6 @@ class Tait
         scalar gamma_;
 
 
-    // Private member functions
-
-        //- Return deviation from ideal gas pressure
-        inline scalar Pi
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
-
-
 public:
 
     // Constructors
@@ -180,6 +170,9 @@ public:
 
         //- Return density given temperature and pressure
         inline scalar rho(const scalar p, const scalar T) const;
+
+        //- Return energy given pressure and density
+        inline scalar ePRho(const scalar p, const scalar rho) const;
 
         //- Return the MieGruniesen coefficient
         inline scalar Gamma

@@ -122,6 +122,17 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return pTable_.reverseLookupY(p, rho);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdv
 (
     const scalar rho,

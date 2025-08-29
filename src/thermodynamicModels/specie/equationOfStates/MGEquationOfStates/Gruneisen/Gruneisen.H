@@ -108,40 +108,19 @@ class Gruneisen
     // Private member functions
 
         //- Return deviation from ideal gas pressure
-        inline scalar Pi
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
+        inline scalar Pi(const scalar rho) const;
 
         //- Return derivative of deviation from ideal gas pressure
-        inline scalar dPidRho
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
+        inline scalar dPidRho(const scalar rho) const;
 
         //- Return non-ideal speed of sound
-        inline scalar delta
-        (
-            const scalar p,
-            const scalar rho,
-            const scalar e
-        ) const;
+        inline scalar delta(const scalar p, const scalar rho) const;
 
         //- Gamma function
-        inline scalar GammaMG
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
+        inline scalar GammaMG(const scalar rho) const;
 
         //- Derivative of Gamma function
-        inline scalar dGammaMGdRho
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
+        inline scalar dGammaMGdRho(const scalar rho) const;
 
 
 public:
@@ -214,6 +193,9 @@ public:
 
         //- Return density given temperature and pressure
         inline scalar rho(const scalar p, const scalar T) const;
+
+        //- Return energy given pressure and density
+        inline scalar ePRho(const scalar p, const scalar rho) const;
 
         //- Return the MieGruniesen coefficient
         inline scalar Gamma

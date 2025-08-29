@@ -88,7 +88,7 @@ Foam::scalar Foam::DoanNickel<Specie>::GammaMG
           + c_*exp(-e/E2_)*(1.0 - f1)
           + d_*exp(-e/E3_)*f2
           + g_*f3
-        )*pow(rhoByRho0, A) + 1.0;
+        )*pow(rhoByRho0, A);
 }
 
 
@@ -307,8 +307,8 @@ Foam::scalar Foam::DoanNickel<Specie>::p
 {
     return
         limit
-      ? max((GammaMG(rho, e) - 1.0)*rho*e, 0.0)
-      : (GammaMG(rho, e) - 1.0)*rho*e;
+      ? max((GammaMG(rho, e) )*rho*e, 0.0)
+      : (GammaMG(rho, e))*rho*e;
 }
 
 
@@ -321,6 +321,35 @@ Foam::scalar Foam::DoanNickel<Specie>::rho
 {
     NotImplemented;
     return 0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    const scalar T = 300;
+
+    scalar Eest = p/(a_*max(rho, 1e-10));
+    scalar Enew = Eest;
+    scalar pNew;
+    int    iter = 0;
+    do
+    {
+        Eest = Enew;
+        pNew = this->p(rho, Eest, T, false); // Do not limit p
+        Enew -= (pNew - p)/stabilise(dpde(rho, Eest, T), small);
+        if (iter++ > 100)
+        {
+            FatalErrorInFunction
+                << "Maximum number of iterations exceeded: " << 100
+                << abort(FatalError);
+        }
+    } while (mag((pNew - p)/p) > 1e-4);
+    return Enew;
 }
 
 
@@ -347,7 +376,7 @@ Foam::scalar Foam::DoanNickel<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar gamma(GammaMG(rho, e));
+    scalar gamma = GammaMG(rho, e) + 1.0;
     scalar h(gamma*p/((gamma - 1.0)*max(rho, 1e-10)));
     return (h - delta(p, rho, e))*(gamma - 1.0);
 }
@@ -361,7 +390,7 @@ Foam::scalar Foam::DoanNickel<Specie>::dpdv
     const scalar T
 ) const
 {
-    return -sqr(rho)*(dGammadRho(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*e);
+    return -sqr(rho)*(dGammadRho(rho, e)*rho*e + GammaMG(rho, e)*e);
 }
 
 
@@ -374,7 +403,7 @@ Foam::scalar Foam::DoanNickel<Specie>::dpde
 ) const
 {
     //- Unscale the change in internal energy
-    return 1e-6*dGammade(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*rho;
+    return 1e-6*dGammade(rho, e)*rho*e + GammaMG(rho, e) *rho;
 }
 
 
@@ -424,7 +453,7 @@ Foam::scalar Foam::DoanNickel<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
-    scalar gamma(this->GammaMG(rho, e));
+    scalar gamma(this->GammaMG(rho, e) + 1.0);
     return this->eBased_ ? (gamma - 1.0)*CpCv : CpCv*(gamma - 1.0)/gamma;
 }
 

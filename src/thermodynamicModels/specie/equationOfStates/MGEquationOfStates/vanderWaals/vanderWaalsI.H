@@ -49,11 +49,7 @@ inline Foam::vanderWaals<Specie>::vanderWaals
 
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::vanderWaals<Specie>::Pi(const scalar rho) const
 {
     return
         (1.0 - (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10))*a_*sqr(rho)
@@ -82,13 +78,9 @@ Foam::scalar Foam::vanderWaals<Specie>::delta
 
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::GammaMG
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::vanderWaals<Specie>::GammaMG(const scalar rho) const
 {
-    return (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10) + 1.0;
+    return (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10);
 }
 
 
@@ -147,8 +139,8 @@ Foam::scalar Foam::vanderWaals<Specie>::p
 {
     return
         limit
-      ? max((GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e), 0.0)
-      : (GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e);
+      ? max(GammaMG(rho)*rho*e - Pi(rho), 0.0)
+      : GammaMG(rho)*rho*e - Pi(rho);
 }
 
 
@@ -165,6 +157,17 @@ Foam::scalar Foam::vanderWaals<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + Pi(rho))/(GammaMG(rho)*max(rho, 1e-10));
+}
+
+
+template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::Gamma
 (
     const scalar rho,
@@ -173,7 +176,7 @@ Foam::scalar Foam::vanderWaals<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return GammaMG(rho, e);
+    return GammaMG(rho);
 }
 
 
@@ -187,9 +190,9 @@ Foam::scalar Foam::vanderWaals<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar G(GammaMG(rho, e));
-    scalar h((G*p + Pi(rho, e))/((G - 1.0)*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*(G - 1.0);
+    scalar G = GammaMG(rho);
+    scalar h = ((G + 1.0)*p + Pi(rho))/(G*max(rho, 1e-10));
+    return (h - delta(p, rho, e))*G;
 }
 
 
@@ -220,7 +223,7 @@ Foam::scalar Foam::vanderWaals<Specie>::dpde
     const scalar T
 ) const
 {
-    return (GammaMG(rho, e) - 1.0)*rho;
+    return GammaMG(rho)*rho;
 }
 
 
@@ -270,8 +273,8 @@ Foam::scalar Foam::vanderWaals<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
-    scalar G(this->GammaMG(rho, e));
-    return this->eBased_ ? (G - 1.0)*CpCv : CpCv*(G - 1.0)/G;
+    scalar G = this->GammaMG(rho);
+    return this->eBased_ ? G*CpCv : CpCv*G/(G + 1.0);
 }
 
 

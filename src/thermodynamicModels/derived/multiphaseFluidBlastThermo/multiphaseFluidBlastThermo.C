@@ -585,7 +585,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellSpeedOfSound
         if (alphai > residualAlpha_.value())
         {
             const scalar rhoXi =
-                alphai*rhoi/(thermos_[phasei].cellGamma(celli) - 1.0);
+                alphai*rhoi/thermos_[phasei].cellGamma(celli);
             rhoByGamma += rhoXi;
             cSqrRhoByGamma +=
                 rhoXi*sqrt(thermos_[phasei].cellSpeedOfSound(p, celli));
@@ -608,7 +608,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellpRhoT
         scalar alphai(volumeFractions_[phasei][celli]);
         if (alphai > residualAlpha_.value())
         {
-            scalar Xi(alphai/(thermos_[phasei].cellGamma(celli) - 1.0));
+            scalar Xi(alphai/thermos_[phasei].cellGamma(celli));
             rGamma += Xi;
             pByGamma += Xi*thermos_[phasei].cellpRhoT(celli, limit);
         }
@@ -632,7 +632,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::patchFacepRhoT
         if (alphai > residualAlpha_.value())
         {
             const scalar Xi =
-                alphai/(thermos_[phasei].patchFaceGamma(patchi, facei) - 1.0);
+                alphai/thermos_[phasei].patchFaceGamma(patchi, facei);
             rGamma += Xi;
             pByGamma += Xi*thermos_[phasei].patchFacepRhoT(patchi, facei, limit);
         }
@@ -680,7 +680,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::celldpdRho(const label celli) con
         scalar alphai(volumeFractions_[phasei][celli]);
         if (alphai > residualAlpha_.value())
         {
-            scalar Xi(alphai/(thermos_[phasei].cellGamma(celli) - 1.0));
+            scalar Xi(alphai/thermos_[phasei].cellGamma(celli));
             rGamma += Xi;
             dpdRho += Xi*thermos_[phasei].celldpdRho(celli);
         }
@@ -698,7 +698,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::celldpde(const label celli) const
         scalar alphai(volumeFractions_[phasei][celli]);
         if (alphai > residualAlpha_.value())
         {
-            scalar Xi(alphai/(thermos_[phasei].cellGamma(celli) - 1.0));
+            scalar Xi(alphai/thermos_[phasei].cellGamma(celli));
             rGamma += Xi;
             dpde += Xi*thermos_[phasei].celldpde(celli);
         }
@@ -716,7 +716,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::celldpdT(const label celli) const
         scalar alphai(volumeFractions_[phasei][celli]);
         if (alphai > residualAlpha_.value())
         {
-            scalar Xi(alphai/(thermos_[phasei].cellGamma(celli) - 1.0));
+            scalar Xi(alphai/thermos_[phasei].cellGamma(celli));
             rGamma += Xi;
             dpdT += Xi*thermos_[phasei].celldpdT(celli);
         }

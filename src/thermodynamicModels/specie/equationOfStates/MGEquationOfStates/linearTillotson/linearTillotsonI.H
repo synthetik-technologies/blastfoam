@@ -56,11 +56,7 @@ inline Foam::linearTillotson<Specie>::linearTillotson
 
 
 template<class Specie>
-Foam::scalar Foam::linearTillotson<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::linearTillotson<Specie>::Pi(const scalar rho) const
 {
     scalar mu(rho/rho0_ - 1.0);
     return
@@ -76,8 +72,7 @@ template<class Specie>
 Foam::scalar Foam::linearTillotson<Specie>::delta
 (
     const scalar p,
-    const scalar rho,
-    const scalar e
+    const scalar rho
 ) const
 {
     scalar mu(rho/rho0_ - 1.0);
@@ -188,6 +183,27 @@ Foam::scalar Foam::linearTillotson<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    scalar mu(rho/rho0_ - 1.0);
+    return
+        p
+      - (
+            p0_
+          + A_*mu
+          + B_*sqr(mu)
+          + C_*pow3(mu)
+        )/(omega_*max(rho, 1e-10))
+      + e0_;
+
+}
+
+
+template<class Specie>
 Foam::scalar Foam::linearTillotson<Specie>::Gamma
 (
     const scalar rho,
@@ -196,7 +212,7 @@ Foam::scalar Foam::linearTillotson<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return omega_ + 1.0;
+    return omega_;
 }
 
 
@@ -210,8 +226,8 @@ Foam::scalar Foam::linearTillotson<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h(((omega_ + 1.0)*p + Pi(rho, e))/(omega_*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*omega_;
+    scalar h(((omega_ + 1.0)*p + Pi(rho))/(omega_*max(rho, 1e-10)));
+    return (h - delta(p, rho))*omega_;
 }
 
 

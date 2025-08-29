@@ -57,11 +57,7 @@ inline Foam::solidJWL<Specie>::solidJWL
 
 
 template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::solidJWL<Specie>::Pi(const scalar rho) const
 {
     scalar V(rho0_/max(rho, 1e-10));
     return
@@ -76,8 +72,7 @@ template<class Specie>
 Foam::scalar Foam::solidJWL<Specie>::delta
 (
     const scalar p,
-    const scalar rho,
-    const scalar e
+    const scalar rho
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -151,8 +146,8 @@ Foam::scalar Foam::solidJWL<Specie>::p
 {
     return
         limit
-      ? max(omega_*rho*(e - eRef_) - Pi(rho, e), 0.0)
-      : omega_*rho*(e - eRef_) - Pi(rho, e);
+      ? max(omega_*rho*(e - eRef_) - Pi(rho), 0.0)
+      : omega_*rho*(e - eRef_) - Pi(rho);
 }
 
 
@@ -169,6 +164,17 @@ Foam::scalar Foam::solidJWL<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + Pi(rho))/(omega_*max(rho, 1e-10));
+}
+
+
+template<class Specie>
 Foam::scalar Foam::solidJWL<Specie>::Gamma
 (
     const scalar rho,
@@ -177,7 +183,7 @@ Foam::scalar Foam::solidJWL<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return omega_ + 1.0;
+    return omega_;
 }
 
 
@@ -191,8 +197,8 @@ Foam::scalar Foam::solidJWL<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h(((omega_ + 1.0)*p + Pi(rho, e))/(omega_*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*omega_;
+    scalar h = ((omega_ + 1.0)*p + Pi(rho))/(omega_*max(rho, 1e-10));
+    return (h - delta(p, rho))*omega_;
 }
 
 
@@ -287,7 +293,7 @@ Foam::scalar Foam::solidJWL<Specie>::E
 ) const
 {
     scalar rhos = max(rho, 1e-10);
-    scalar V(rho0_/rhos);
+    scalar V = rho0_/rhos;
     return (A_/R1_*exp(-R1_*V) + B_/R2_*exp(-R2_*V))/rho0_ - e0_;
 }
 

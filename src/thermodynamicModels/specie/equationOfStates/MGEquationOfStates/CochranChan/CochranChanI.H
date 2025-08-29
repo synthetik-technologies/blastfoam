@@ -53,11 +53,7 @@ inline Foam::CochranChan<Specie>::CochranChan
 
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::CochranChan<Specie>::Pi(const scalar rho) const
 {
     scalar rhos(max(rho, 1e-10));
     return
@@ -75,8 +71,7 @@ template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::delta
 (
     const scalar p,
-    const scalar rho,
-    const scalar e
+    const scalar rho
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -157,8 +152,8 @@ Foam::scalar Foam::CochranChan<Specie>::p
 {
     return
         limit
-      ? max(Gamma0_*rho*e - Pi(rho, e), 0.0)
-      : Gamma0_*rho*e - Pi(rho, e);
+      ? max(Gamma0_*rho*e - Pi(rho), 0.0)
+      : Gamma0_*rho*e - Pi(rho);
 }
 
 
@@ -175,6 +170,17 @@ Foam::scalar Foam::CochranChan<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + Pi(rho))/(Gamma0_*rho);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::Gamma
 (
     const scalar rho,
@@ -183,7 +189,7 @@ Foam::scalar Foam::CochranChan<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return Gamma0_ + 1.0;
+    return Gamma0_ ;
 }
 
 
@@ -197,8 +203,8 @@ Foam::scalar Foam::CochranChan<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h(((Gamma0_ + 1.0)*p + Pi(rho, e))/(Gamma0_*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*Gamma0_;
+    scalar h(((Gamma0_ + 1.0)*p + Pi(rho))/(Gamma0_*max(rho, 1e-10)));
+    return (h - delta(p, rho))*Gamma0_;
 }
 
 

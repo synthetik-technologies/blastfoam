@@ -373,7 +373,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                     t1.Gamma(rhoi, ei, Ti)*x1 + t1.Gamma(rhoi, ei, Ti)*x2;
                 pi = t1.p(rhoi, ei, Ti)*x1 + t2.p(rhoi, ei, Ti)*x2;
             }
-            scalar Xii = alphai/(Gamma - 1.0);
+            scalar Xii = alphai/Gamma;
             pXiSum[celli] += pi*Xii;
             XiSum[celli] += Xii;
         }
@@ -455,7 +455,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                         t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
                     pi = t1.p(rhoi, ei, Ti)*x1 + t2.p(rhoi, ei, Ti)*x2;
                 }
-                scalar Xii = alphai/(Gamma - 1.0);
+                scalar Xii = alphai/Gamma;
                 ppXiSum[facei] += pi*Xii;
                 pxiSum[facei] += Xii;
             }
@@ -506,7 +506,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                 Gamma =
                     t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
             }
-            cSqrRhoXiSum[celli] += cSqr*rhoi*alphai/(Gamma - 1.0);
+            cSqrRhoXiSum[celli] += cSqr*rhoi*alphai/Gamma;
         }
     }
 
@@ -553,7 +553,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                     Gamma =
                         t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
                 }
-                pcSqrRhoXiSum[facei] += cSqr*rhoi*alphai/(Gamma - 1.0);
+                pcSqrRhoXiSum[facei] += cSqr*rhoi*alphai/Gamma;
             }
         }
     }

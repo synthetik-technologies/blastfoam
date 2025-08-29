@@ -23,21 +23,19 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-
 Class
-    Foam::perfectGas
+    Foam::MieGruneisen
 
 Description
-    Ideal gas equation of state based on temperature
+    Equation of state for an ideal gas using the Mie Grunsien form
 
 SourceFiles
-    perfectGas.C
-    perfectGasI.H
+    MieGruneisen.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef perfectGasBlast_H
-#define perfectGasBlast_H
+#ifndef MieGruneisenBlast_H
+#define MieGruneisenBlast_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,70 +46,94 @@ namespace Foam
 
 // Forward declaration of friend functions and operators
 
-template<class Specie> class perfectGas;
+template<class Specie> class MieGruneisen;
 
 template<class Specie>
-inline perfectGas<Specie> operator+
+inline MieGruneisen<Specie> operator+
 (
-    const perfectGas<Specie>&,
-    const perfectGas<Specie>&
+    const MieGruneisen<Specie>&,
+    const MieGruneisen<Specie>&
 );
 
 template<class Specie>
-inline perfectGas<Specie> operator*
+inline MieGruneisen<Specie> operator*
 (
     const scalar,
-    const perfectGas<Specie>&
+    const MieGruneisen<Specie>&
 );
 
 template<class Specie>
-inline perfectGas<Specie> operator==
+inline MieGruneisen<Specie> operator==
 (
-    const perfectGas<Specie>&,
-    const perfectGas<Specie>&
+    const MieGruneisen<Specie>&,
+    const MieGruneisen<Specie>&
 );
 
 template<class Specie>
 Ostream& operator<<
 (
     Ostream&,
-    const perfectGas<Specie>&
+    const MieGruneisen<Specie>&
 );
 
+
 /*---------------------------------------------------------------------------*\
-                           Class perfectGas Declaration
+                           Class MieGruneisen Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Specie>
-class perfectGas
+class MieGruneisen
 :
     public Specie
 {
+// Private data
+
+    //- Reference density
+    scalar rho0_;
+
+    //- Pressure offset
+    scalar pInf_;
+
+    //- Reference speed of sound
+    scalar c0_;
+
+    //- Grunsien parameter
+    scalar Gamma_;
+
+    // Private member functions
+
+        //- Return deviation from ideal gas pressure
+        inline scalar Pi(const scalar rho) const;
+
 public:
 
     // Constructors
 
         //- Construct from components
-        inline perfectGas
+        inline MieGruneisen
         (
-            const Specie& sp
+            const Specie& sp,
+            const scalar rho0,
+            const scalar pInf,
+            const scalar c0,
+            const scalar Gamma
         );
 
         //- Construct from dictionary
-        perfectGas(const dictionary& dict);
+        MieGruneisen(const dictionary& dict);
 
         //- Construct as named copy
-        inline perfectGas
+        inline MieGruneisen
         (
             const word& name,
-            const perfectGas&
+            const MieGruneisen&
         );
 
         //- Construct and return a clone
-        inline autoPtr<perfectGas> clone() const;
+        inline autoPtr<MieGruneisen> clone() const;
 
         // Selector from dictionary
-        inline static autoPtr<perfectGas> New
+        inline static autoPtr<MieGruneisen> New
         (
             const dictionary& dict
         );
@@ -123,23 +145,23 @@ public:
         static word typeName()
         {
             return
-                "perfectGas<"
-            + word(Specie::typeName_()) + '>';
+                "MieGruneisen<"
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is temperature used
-        static bool temperatureBased()
-        {
-            return true;
-        }
-
-        //- Is this a solid equation of state
-        static bool solid()
+        static inline bool temperatureBased()
         {
             return false;
         }
 
-        //- Return pressure optionally limited pressure
+        //- Is this a solid equation of state
+        static inline bool solid()
+        {
+            return false;
+        }
+
+        //- Return pressure
         inline scalar p
         (
             const scalar rho,
@@ -148,40 +170,29 @@ public:
             const bool limit = true
         ) const;
 
-        //- Return unlimited pressure
-        inline scalar pRhoT
-        (
-            const scalar rho,
-            const scalar T
-        ) const;
-
         //- Return density given temperature and pressure
         inline scalar rho(const scalar p, const scalar T) const;
 
         //- Return energy given pressure and density
-        inline scalar ePRho(const scalar p, const scalar rho) const
-        {
-            NotImplemented;
-            return 0.0;
-        }
+        inline scalar ePRho(const scalar p, const scalar rho) const;
 
-        //- Gamma function
+        //- Return the MieGruniesen coefficient
         inline scalar Gamma
         (
             const scalar rho,
             const scalar e,
             const scalar T,
-            const scalar cv
+            const scalar Cv
         ) const;
 
-        //- Return non-ideal speed of sound
+        //- Return the speed of sound
         inline scalar cSqr
         (
             const scalar p,
             const scalar rho,
             const scalar e,
             const scalar T,
-            const scalar cv
+            const scalar Cv
         ) const;
 
         //- Return derivative of pressure w.r.t density
@@ -192,16 +203,16 @@ public:
             const scalar T
         ) const;
 
-        //- Return derivative of pressure w.r.t. Temperature
-        inline scalar dpdT
+        //- Return derivative of pressure w.r.t. internal energy
+        inline scalar dpde
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Return derivative of pressure w.r.t. internal energy
-        inline scalar dpde
+        //- Return derivative of pressure w.r.t. Temperature
+        inline scalar dpdT
         (
             const scalar rho,
             const scalar e,
@@ -264,28 +275,28 @@ public:
 
     // Member operators
 
-        inline void operator+=(const perfectGas&);
+        inline void operator+=(const MieGruneisen&);
         inline void operator*=(const scalar);
 
 
     // Friend operators
 
-        friend perfectGas operator+ <Specie>
+        friend MieGruneisen operator+ <Specie>
         (
-            const perfectGas&,
-            const perfectGas&
+            const MieGruneisen&,
+            const MieGruneisen&
         );
 
-        friend perfectGas operator* <Specie>
+        friend MieGruneisen operator* <Specie>
         (
             const scalar s,
-            const perfectGas&
+            const MieGruneisen&
         );
 
-        friend perfectGas operator== <Specie>
+        friend MieGruneisen operator== <Specie>
         (
-            const perfectGas&,
-            const perfectGas&
+            const MieGruneisen&,
+            const MieGruneisen&
         );
 
 
@@ -294,10 +305,9 @@ public:
         friend Ostream& operator<< <Specie>
         (
             Ostream&,
-            const perfectGas&
+            const MieGruneisen&
         );
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -305,10 +315,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "perfectGasI.H"
+#include "MieGruneisenI.H"
 
 #ifdef NoRepository
-    #include "perfectGas.C"
+    #include "MieGruneisen.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -45,11 +45,7 @@ inline Foam::LSZK<Specie>::LSZK
 
 
 template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::LSZK<Specie>::Pi(const scalar rho) const
 {
     return -a_*pow(rho, b_);
 }
@@ -59,8 +55,7 @@ template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::delta
 (
     const scalar p,
-    const scalar rho,
-    const scalar e
+    const scalar rho
 ) const
 {
     return -a_*b_*pow(rho, b_ - 1.0)/(gamma_ - 1.0);
@@ -121,8 +116,8 @@ Foam::scalar Foam::LSZK<Specie>::p
 {
     return
         limit
-      ? max((gamma_ - 1.0)*rho*e - Pi(rho, e), 0.0)
-      : (gamma_ - 1.0)*rho*e - Pi(rho, e);
+      ? max((gamma_ - 1.0)*rho*e - Pi(rho), 0.0)
+      : (gamma_ - 1.0)*rho*e - Pi(rho);
 }
 
 
@@ -139,6 +134,16 @@ Foam::scalar Foam::LSZK<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + Pi(rho))/((gamma_ - 1.0)*max(rho, 1e-10));
+}
+
+template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::Gamma
 (
     const scalar rho,
@@ -147,7 +152,7 @@ Foam::scalar Foam::LSZK<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return gamma_;
+    return gamma_ - 1.0;
 }
 
 
@@ -161,8 +166,8 @@ Foam::scalar Foam::LSZK<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h((gamma_*p + Pi(rho, e))/((gamma_ - 1.0)*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*(gamma_ - 1.0);
+    scalar h = (gamma_*p + Pi(rho))/((gamma_ - 1.0)*max(rho, 1e-10));
+    return (h - delta(p, rho))*(gamma_ - 1.0);
 }
 
 

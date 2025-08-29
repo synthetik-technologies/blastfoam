@@ -165,6 +165,9 @@ public:
             //- Return density given temperature and pressure
             inline scalar rho(const scalar p, const scalar T) const;
 
+            //- Return energy given pressure and density
+            inline scalar ePRho(const scalar p, const scalar rho) const;
+
             //- Return derivative of pressure w.r.t. specific volume
             inline scalar dpdv
             (

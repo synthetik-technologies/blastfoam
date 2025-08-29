@@ -101,8 +101,7 @@ Foam::scalar Foam::Tillotson<Specie>::GammaMG
     scalar x(e*sqr(rho0_) + e0_*sqr(rho));
     return
         (a_*x + b_*e0_*sqr(rho))/x
-      - b_*e*e0_*sqr(rho*rho0_)/sqr(x)
-      + 1.0;
+      - b_*e*e0_*sqr(rho*rho0_)/sqr(x);
 }
 
 
@@ -186,6 +185,35 @@ Foam::scalar Foam::Tillotson<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::Tillotson<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    const scalar T = 300;
+
+    scalar Eest = e0_;
+    scalar Enew = Eest;
+    scalar pNew;
+    int    iter = 0;
+    do
+    {
+        Eest = Enew;
+        pNew = this->p(rho, Eest, T, false); // Do not limit p
+        Enew -= (pNew - p)/stabilise(dpde(rho, Eest, T), small);
+        if (iter++ > 100)
+        {
+            FatalErrorInFunction
+                << "Maximum number of iterations exceeded: " << 100
+                << abort(FatalError);
+        }
+    } while (mag((pNew - p)/p) > 1e-4);
+    return Enew;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::Gamma
 (
     const scalar rho,
@@ -209,8 +237,8 @@ Foam::scalar Foam::Tillotson<Specie>::cSqr
 ) const
 {
     scalar G(GammaMG(rho, e));
-    scalar h((G*p + Pi(rho, e))/((G - 1.0)*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*(G - 1.0);
+    scalar h = ((G + 1.0)*p + Pi(rho, e))/(G*max(rho, 1e-10));
+    return (h - delta(p, rho, e))*G;
 }
 
 
@@ -299,7 +327,7 @@ Foam::scalar Foam::Tillotson<Specie>::CpMCv
 ) const
 {
     scalar G(this->GammaMG(rho, e));
-    return this->eBased_ ? (G - 1.0)*CpCv : CpCv*(G - 1.0)/G;
+    return this->eBased_ ? G*CpCv : CpCv*G/(G + 1.0);
 }
 
 

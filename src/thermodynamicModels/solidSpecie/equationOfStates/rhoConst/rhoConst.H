@@ -151,6 +151,13 @@ public:
             return rho0_;
         }
 
+        //- Return energy given pressure and density
+        inline scalar ePRho(const scalar p, const scalar rho) const
+        {
+            NotImplemented;
+            return 0.0;
+        }
+
         //- Return deviation from ideal gas pressure
         inline scalar p
         (

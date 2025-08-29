@@ -29,61 +29,68 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Specie>
-inline Foam::AbelNobelSG<Specie>::AbelNobelSG
+inline Foam::MieGruneisen<Specie>::MieGruneisen
 (
     const Specie& sp,
-    const scalar b,
-    const scalar gamma,
+    const scalar rho0,
     const scalar pInf,
-    const scalar Cv
+    const scalar c0,
+    const scalar Gamma
 )
 :
     Specie(sp),
-    b_(b),
-    gamma_(gamma),
+    rho0_(rho0),
     pInf_(pInf),
-    Cv_(Cv)
+    c0_(c0),
+    Gamma_(Gamma)
 {}
+
+
+template<class Specie>
+Foam::scalar Foam::MieGruneisen<Specie>::Pi(const scalar rho) const
+{
+    return pInf_ + Gamma_*(rho*c0_ + pInf_);
+}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
-inline Foam::AbelNobelSG<Specie>::AbelNobelSG
+inline Foam::MieGruneisen<Specie>::MieGruneisen
 (
     const word& name,
-    const AbelNobelSG<Specie>& pf
+    const MieGruneisen<Specie>& pf
 )
 :
     Specie(name, pf),
-    b_(pf.b_),
-    gamma_(pf.gamma_),
+    rho0_(pf.rho0_),
     pInf_(pf.pInf_),
-    Cv_(pf.Cv_)
+    c0_(pf.c0_),
+    Gamma_(pf.Gamma_)
 {}
 
 
 template<class Specie>
-inline Foam::autoPtr<Foam::AbelNobelSG<Specie>>
-Foam::AbelNobelSG<Specie>::clone() const
+inline Foam::autoPtr<Foam::MieGruneisen<Specie>>
+Foam::MieGruneisen<Specie>::clone() const
 {
-    return autoPtr<AbelNobelSG<Specie>>
+    return autoPtr<MieGruneisen<Specie>>
     (
-        new AbelNobelSG<Specie>(*this)
+        new MieGruneisen<Specie>(*this)
     );
 }
 
 
 template<class Specie>
-inline Foam::autoPtr<Foam::AbelNobelSG<Specie>>
-Foam::AbelNobelSG<Specie>::New
+inline Foam::autoPtr<Foam::MieGruneisen<Specie>>
+Foam::MieGruneisen<Specie>::New
 (
     const dictionary& dict
 )
 {
-    return autoPtr<AbelNobelSG<Specie>>
+    return autoPtr<MieGruneisen<Specie>>
     (
-        new AbelNobelSG<Specie>(dict)
+        new MieGruneisen<Specie>(dict)
     );
 }
 
@@ -91,7 +98,7 @@ Foam::AbelNobelSG<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::p
+Foam::scalar Foam::MieGruneisen<Specie>::p
 (
     const scalar rho,
     const scalar e,
@@ -99,49 +106,88 @@ Foam::scalar Foam::AbelNobelSG<Specie>::p
     const bool limit
 ) const
 {
-    return limit ? max(pRhoT(rho, T), pCav_) : pRhoT(rho, T);
+    scalar pMG = Gamma_*rho*e - Pi(rho);
+    return limit ? max(pMG, 0.0) : pMG;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::pRhoT
-(
-    const scalar rho,
-    const scalar T
-) const
-{
-    return
-        rho*(gamma_ - 1.0)*Cv_*T/(1.0 - b_*rho) - pInf_ ;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::rho
+Foam::scalar Foam::MieGruneisen<Specie>::rho
 (
     const scalar p,
     const scalar T
 ) const
 {
-    return
-        (p + pInf_)
-       /((gamma_ - 1.0)*Cv_*T + b_*(p + pInf_));
+    NotImplemented;
+    return 0;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::dpdv
+Foam::scalar Foam::MieGruneisen<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + Pi(rho))/(Gamma_*max(rho, 1e-10));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::MieGruneisen<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    return Gamma_;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::MieGruneisen<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    scalar h = ((Gamma_ + 1.0)*p + Pi(rho))/(Gamma_*max(rho, 1e-10));
+    return (h - c0_)*Gamma_;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::MieGruneisen<Specie>::dpdv
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    return -(gamma_ - 1.0)*Cv_*T*sqr(rho/(1.0 - b_*rho));
+    return -sqr(rho)*(Gamma_*(e - c0_));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::dpde
+Foam::scalar Foam::MieGruneisen<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Gamma_*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::MieGruneisen<Specie>::dpdT
 (
     const scalar rho,
     const scalar e,
@@ -154,49 +200,7 @@ Foam::scalar Foam::AbelNobelSG<Specie>::dpde
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::dpdT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return rho*(gamma_ - 1.0)*Cv_/(1.0 - b_*rho);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::Gamma
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T,
-    const scalar cv
-) const
-{
-    return max(dpdT(rho, e, T)/(cv*max(rho, 1e-10)), small);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::cSqr
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T,
-    const scalar cv
-) const
-{
-    return
-        gamma_*(p + pInf_)/max(rho, 1e-10)/(1.0 - b_*rho);
-//         (sqr(dpdT(rho, e, T))*T/cv - dpdv(rho, e, T))
-//        /sqr(max(rho, 1e-10));
-}
-
-
-template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::E
+Foam::scalar Foam::MieGruneisen<Specie>::Cp
 (
     const scalar rho,
     const scalar e,
@@ -208,7 +212,7 @@ Foam::scalar Foam::AbelNobelSG<Specie>::E
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::Cv
+Foam::scalar Foam::MieGruneisen<Specie>::Cv
 (
     const scalar rho,
     const scalar e,
@@ -220,31 +224,7 @@ Foam::scalar Foam::AbelNobelSG<Specie>::Cv
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::Cp
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::H
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::CpMCv
+Foam::scalar Foam::MieGruneisen<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
@@ -252,12 +232,37 @@ Foam::scalar Foam::AbelNobelSG<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
-    return this->R();
+    return this->eBased_ ? Gamma_*CpCv : CpCv*Gamma_/(Gamma_ + 1.0);
 }
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::Sp
+Foam::scalar Foam::MieGruneisen<Specie>::E
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return c0_ + pInf_/max(rho, 1e-10);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::MieGruneisen<Specie>::H
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::MieGruneisen<Specie>::Sp
 (
     const scalar p,
     const scalar T
@@ -269,7 +274,7 @@ Foam::scalar Foam::AbelNobelSG<Specie>::Sp
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobelSG<Specie>::Sv
+Foam::scalar Foam::MieGruneisen<Specie>::Sv
 (
     const scalar p,
     const scalar T
@@ -283,26 +288,27 @@ Foam::scalar Foam::AbelNobelSG<Specie>::Sv
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Specie>
-inline void Foam::AbelNobelSG<Specie>::operator+=
+inline void Foam::MieGruneisen<Specie>::operator+=
 (
-    const AbelNobelSG<Specie>& an
+    const MieGruneisen<Specie>& pf
 )
 {
-    scalar X1 = this->Y()/this->W();
-    Specie::operator+=(an);
-
-    if (mag(this->Y()) > SMALL)
-    {
-        X1 *= this->W()/this->Y();
-        const scalar X2 = this->W()*an.Y()/(an.W()*this->Y());
-
-        b_ = X1*b_ + X2*an.b_;
-    }
+    NotImplemented;
+//     scalar Y1 = this->Y();
+//     Specie::operator+=(pf);
+//
+//     if (mag(this->Y()) > SMALL)
+//     {
+//         Y1 /= this->Y();
+//         const scalar Y2 = pf.Y()/this->Y();
+//
+//         gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+//     }
 }
 
 
 template<class Specie>
-inline void Foam::AbelNobelSG<Specie>::operator*=(const scalar s)
+inline void Foam::MieGruneisen<Specie>::operator*=(const scalar s)
 {
     Specie::operator*=(s);
 }
@@ -311,64 +317,65 @@ inline void Foam::AbelNobelSG<Specie>::operator*=(const scalar s)
 // * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
 
 template<class Specie>
-inline Foam::AbelNobelSG<Specie> Foam::operator+
+inline Foam::MieGruneisen<Specie> Foam::operator+
 (
-    const AbelNobelSG<Specie>& an1,
-    const AbelNobelSG<Specie>& an2
+    const MieGruneisen<Specie>& pf1,
+    const MieGruneisen<Specie>& pf2
 )
 {
     NotImplemented;
-    return an1;
+    return pf1;
 //     Specie sp
 //     (
-//         static_cast<const Specie&>(an1)
-//       + static_cast<const Specie&>(an2)
+//         static_cast<const Specie&>(pf1)
+//       + static_cast<const Specie&>(pf2)
 //     );
+//
 //     if (mag(sp.Y()) < SMALL)
 //     {
-//         return AbelNobelSG<Specie>
+//         return MieGruneisen<Specie>
 //         (
 //             sp,
-//             an1.b_
+//             pf1.gamma_
 //         );
 //     }
 //     else
 //     {
-//         const scalar X1 = sp.W()*an1.Y()/(an1.W()*sp.Y());
-//         const scalar X2 = sp.W()*an2.Y()/(an2.W()*sp.Y());
+//         const scalar Y1 = pf1.Y()/sp.Y();
+//         const scalar Y2 = pf2.Y()/sp.Y();
 //
-//         return AbelNobelSG<Specie>
+//         return MieGruneisen<Specie>
 //         (
 //             sp,
-//             X1*an1.b_ + X2*an2.b_
+//             Y1*pf1.gamma_ + Y2*pf2.gamma_
 //         );
 //     }
 }
 
 
 template<class Specie>
-inline Foam::AbelNobelSG<Specie> Foam::operator*
+inline Foam::MieGruneisen<Specie> Foam::operator*
 (
     const scalar s,
-    const AbelNobelSG<Specie>& pf
+    const MieGruneisen<Specie>& pf
 )
 {
+
     NotImplemented;
     return pf;
-//     return AbelNobelSG<Specie>
+//     return MieGruneisen<Specie>
 //     (
 //         s*static_cast<const Specie&>(pf),
-//         pf.b_,
-//         pf.
+//         pf.gamma_
 //     );
 }
 
 
 template<class Specie>
-inline Foam::AbelNobelSG<Specie> Foam::operator==
+inline Foam::MieGruneisen<Specie> Foam::operator==
 (
-    const AbelNobelSG<Specie>& pf1,
-    const AbelNobelSG<Specie>& pf2
+    const MieGruneisen<Specie>& pf1,
+    const MieGruneisen<Specie>& pf2
 )
 {
     NotImplemented;
@@ -382,10 +389,10 @@ inline Foam::AbelNobelSG<Specie> Foam::operator==
 //     const scalar Y1 = pf1.Y()/sp.Y();
 //     const scalar Y2 = pf2.Y()/sp.Y();
 //
-//     return AbelNobelSG<Specie>
+//     return MieGruneisen<Specie>
 //     (
 //         sp,
-//         Y2*pf2.b_ - Y1*pf1.b_
+//         Y2*pf2.gamma_ - Y1*pf1.gamma_
 //     );
 }
 

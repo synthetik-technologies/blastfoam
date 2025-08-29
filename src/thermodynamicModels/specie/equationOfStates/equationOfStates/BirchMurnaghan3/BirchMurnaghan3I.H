@@ -141,7 +141,7 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::Gamma
     const scalar cv
 ) const
 {
-    return Gamma_ + 1.0;
+    return Gamma_;
 }
 
 

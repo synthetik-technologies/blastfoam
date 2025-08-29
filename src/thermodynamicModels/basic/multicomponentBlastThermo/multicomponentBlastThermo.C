@@ -447,6 +447,7 @@ void Foam::multicomponentBlastThermo::integrator::update()
             alphaRhoYDelta_.set
             (
                 i,
+                // fvc::div(alphaRhoPhi_, Y, "div("+alphaRhoPhi_.name()+",Yi)")
                 fvc::div
                 (
                     flux.flux

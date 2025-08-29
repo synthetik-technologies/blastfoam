@@ -544,7 +544,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 {
     if (rho < small)
     {
-        return 0.0;
+        return e;
     }
 
     scalar Eest = ThermoType::Es(rho, e, T);
@@ -575,28 +575,8 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
     }
     else
     {
-        if (mag(ThermoType::dpde(rho, e, T)) < small)
-        {
-            return Eest;
-        }
+        return ThermoType::ePRho(p, rho);
     }
-
-    scalar Enew = Eest;
-    scalar pNew;
-    int    iter = 0;
-    do
-    {
-        Eest = Enew;
-        pNew = ThermoType::p(rho, Eest, T, false); // Do not limit p
-        Enew -= (pNew - p)/stabilise(dpde(rho, Eest, T), small);
-        if (iter++ > maxIter_)
-        {
-            FatalErrorInFunction
-                << "Maximum number of iterations exceeded: " << maxIter_
-                << abort(FatalError);
-        }
-    } while (mag((pNew - p)/p) > relTol_);
-    return Enew;
 }
 
 

@@ -53,11 +53,7 @@ inline Foam::Gruneisen<Specie>::Gruneisen
 
 
 template<class Specie>
-Foam::scalar Foam::Gruneisen<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::Gruneisen<Specie>::Pi(const scalar rho) const
 {
     scalar mu(rho/rho0_ - 1.0);
     if (mu <= 0)
@@ -81,11 +77,7 @@ Foam::scalar Foam::Gruneisen<Specie>::Pi
 
 
 template<class Specie>
-Foam::scalar Foam::Gruneisen<Specie>::dPidRho
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::Gruneisen<Specie>::dPidRho(const scalar rho) const
 {
     scalar mu(rho/rho0_ - 1.0);
     if (rho <= rho0_)
@@ -124,33 +116,24 @@ template<class Specie>
 Foam::scalar Foam::Gruneisen<Specie>::delta
 (
     const scalar p,
-    const scalar rho,
-    const scalar e
+    const scalar rho
 ) const
 {
+    const scalar G = GammaMG(rho);
     return
-      - (p + Pi(rho, e))*dGammaMGdRho(rho, e)
-       /sqr(GammaMG(rho, e) - 1.0)
-     + dPidRho(rho, e)/(GammaMG(rho, e) - 1.0);
+      - (p + Pi(rho))*dGammaMGdRho(rho)/sqr(G)
+     + dPidRho(rho)/G;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Gruneisen<Specie>::GammaMG
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::Gruneisen<Specie>::GammaMG(const scalar rho) const
 {
-    return Gamma_ + a_*(rho/rho0_ - 1.0) + 1.0;
+    return Gamma_ + a_*(rho/rho0_ - 1.0);
 }
 
 template<class Specie>
-Foam::scalar Foam::Gruneisen<Specie>::dGammaMGdRho
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::Gruneisen<Specie>::dGammaMGdRho(const scalar rho) const
 {
     return a_/rho0_;
 }
@@ -211,7 +194,7 @@ Foam::scalar Foam::Gruneisen<Specie>::p
     const bool limit
 ) const
 {
-    scalar pMG = (GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e);
+    scalar pMG = GammaMG(rho)*rho*e - Pi(rho);
     return limit ? max(pMG, 0.0) : pMG;
 }
 
@@ -228,6 +211,18 @@ Foam::scalar Foam::Gruneisen<Specie>::rho
 }
 
 
+
+template<class Specie>
+Foam::scalar Foam::Gruneisen<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + Pi(rho))/(GammaMG(rho)*max(rho, 1e-10));
+}
+
+
 template<class Specie>
 Foam::scalar Foam::Gruneisen<Specie>::Gamma
 (
@@ -237,7 +232,7 @@ Foam::scalar Foam::Gruneisen<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return GammaMG(rho, e);
+    return GammaMG(rho);
 }
 
 
@@ -251,9 +246,9 @@ Foam::scalar Foam::Gruneisen<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar G = GammaMG(rho, e);
-    scalar h((G*p + Pi(rho, e))/((G - 1.0)*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*(G - 1.0);
+    scalar G = GammaMG(rho);
+    scalar h = ((G + 1.0)*p + Pi(rho))/(G*max(rho, 1e-10));
+    return (h - delta(p, rho))*G;
 }
 
 
@@ -268,9 +263,9 @@ Foam::scalar Foam::Gruneisen<Specie>::dpdv
     return
       - sqr(rho)
        *(
-           GammaMG(rho, e)*e
-         + dGammaMGdRho(rho, e)*rho*e
-         - dPidRho(rho, e)
+           GammaMG(rho)*e
+         + dGammaMGdRho(rho)*rho*e
+         - dPidRho(rho)
         );
 }
 
@@ -283,7 +278,7 @@ Foam::scalar Foam::Gruneisen<Specie>::dpde
     const scalar T
 ) const
 {
-    return GammaMG(rho, e)*rho;
+    return GammaMG(rho)*rho;
 }
 
 
@@ -333,8 +328,8 @@ Foam::scalar Foam::Gruneisen<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
-    scalar G = GammaMG(rho, e);
-    return this->eBased_ ? (G - 1.0)*CpCv : CpCv*(G - 1.0)/G;
+    scalar G = GammaMG(rho);
+    return this->eBased_ ? G*CpCv : CpCv*G/(G + 1.0);
 }
 
 

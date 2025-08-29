@@ -57,11 +57,7 @@ inline Foam::JWL<Specie>::JWL
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
+Foam::scalar Foam::JWL<Specie>::Pi(const scalar rho) const
 {
     if (rho < rhoCutOff_)
     {
@@ -80,8 +76,7 @@ template<class Specie>
 Foam::scalar Foam::JWL<Specie>::delta
 (
     const scalar p,
-    const scalar rho,
-    const scalar e
+    const scalar rho
 ) const
 {
     if (rho < rhoCutOff_)
@@ -160,8 +155,8 @@ Foam::scalar Foam::JWL<Specie>::p
 {
     return
         limit
-      ? max(omega_*rho*e - Pi(rho, e), 0.0)
-      : omega_*rho*e - Pi(rho, e);
+      ? max(omega_*rho*e - Pi(rho), 0.0)
+      : omega_*rho*e - Pi(rho);
 }
 
 
@@ -178,6 +173,17 @@ Foam::scalar Foam::JWL<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::JWL<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + Pi(rho))/(omega_*max(rho, 1e-10));
+}
+
+
+template<class Specie>
 Foam::scalar Foam::JWL<Specie>::Gamma
 (
     const scalar rho,
@@ -186,7 +192,7 @@ Foam::scalar Foam::JWL<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return rho < rhoCutOff_ ? gammaIdeal_ : omega_ + 1.0;
+    return rho < rhoCutOff_ ? gammaIdeal_ - 1.0 : omega_;
 }
 
 
@@ -210,8 +216,8 @@ Foam::scalar Foam::JWL<Specie>::cSqr
     }
     else
     {
-        scalar h(((omega_ + 1.0)*p + Pi(rho, e))/(omega_*rho));
-        return (h - delta(p, rho, e))*omega_;
+        scalar h(((omega_ + 1.0)*p + Pi(rho))/(omega_*rho));
+        return (h - delta(p, rho))*omega_;
     }
 }
 
@@ -328,7 +334,7 @@ Foam::scalar Foam::JWL<Specie>::E
     }
 
     const scalar rhos = max(rho, 1e-10);
-    const scalar V= rho0_/rhos;
+    const scalar V = rho0_/rhos;
     return (A_/R1_*exp(-R1_*V) + B_/R2_*exp(-R2_*V))/rho0_ - e0_;
 }
 

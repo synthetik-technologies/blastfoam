@@ -89,7 +89,7 @@ Foam::scalar Foam::rhoConst<Specie>::Gamma
     const scalar cv
 ) const
 {
-    return 1.0;
+    return small;
 }
 
 

@@ -145,7 +145,7 @@ Foam::scalar Foam::JWLC<Specie>::Gamma
     const scalar cv
 ) const
 {
-    return omega_ + 1.0;
+    return omega_;
 }
 
 

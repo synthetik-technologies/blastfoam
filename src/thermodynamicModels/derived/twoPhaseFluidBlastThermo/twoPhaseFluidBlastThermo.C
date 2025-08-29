@@ -548,13 +548,13 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::cellSpeedOfSound
     (
         this->alpha1()[celli]
        *this->rho1_[celli]
-       /(thermo1_->cellGamma(celli) - 1.0)
+       /thermo1_->cellGamma(celli)
     );
     scalar alphaRhoXi2
     (
         this->alpha2()[celli]
        *this->rho2_[celli]
-       /(thermo2_->cellGamma(celli) - 1.0)
+       /thermo2_->cellGamma(celli)
     );
 
     return
@@ -582,11 +582,11 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::cellpRhoT
     }
     scalar alphaXi1
     (
-        this->alpha1()[celli]/(thermo1_->cellGamma(celli) - 1.0)
+        this->alpha1()[celli]/thermo1_->cellGamma(celli)
     );
     scalar alphaXi2
     (
-        this->alpha2()[celli]/(thermo2_->cellGamma(celli) - 1.0)
+        this->alpha2()[celli]/thermo2_->cellGamma(celli)
     );
 
     return
@@ -614,8 +614,8 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFacepRhoT
     {
         return thermo2_->patchFacepRhoT(patchi, facei, limit);
     }
-    const scalar alphaXi1 = a1/(thermo1_->patchFaceGamma(patchi, facei) - 1.0);
-    const scalar alphaXi2 = a2/(thermo2_->patchFaceGamma(patchi, facei) - 1.0);
+    const scalar alphaXi1 = a1/thermo1_->patchFaceGamma(patchi, facei);
+    const scalar alphaXi2 = a2/thermo2_->patchFaceGamma(patchi, facei);
 
     return
         (
@@ -635,14 +635,8 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpdRho(const label celli) const
     {
         return thermo2_->celldpdRho(celli);
     }
-    scalar alphaXi1
-    (
-        this->alpha1()[celli]/(thermo1_->cellGamma(celli) - 1.0)
-    );
-    scalar alphaXi2
-    (
-        this->alpha2()[celli]/(thermo2_->cellGamma(celli) - 1.0)
-    );
+    scalar alphaXi1 = this->alpha1()[celli]/thermo1_->cellGamma(celli);
+    scalar alphaXi2 = this->alpha2()[celli]/thermo2_->cellGamma(celli);
 
     return
         (
@@ -662,14 +656,8 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpde(const label celli) const
     {
         return thermo2_->celldpde(celli);
     }
-    scalar alphaXi1
-    (
-        this->alpha1()[celli]/(thermo1_->cellGamma(celli) - 1.0)
-    );
-    scalar alphaXi2
-    (
-        this->alpha2()[celli]/(thermo2_->cellGamma(celli) - 1.0)
-    );
+    scalar alphaXi1 = this->alpha1()[celli]/thermo1_->cellGamma(celli);
+    scalar alphaXi2 = this->alpha2()[celli]/thermo2_->cellGamma(celli);
 
     return
         (
@@ -689,14 +677,8 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpdT(const label celli) const
     {
         return thermo2_->celldpdT(celli);
     }
-    scalar alphaXi1
-    (
-        this->alpha1()[celli]/(thermo1_->cellGamma(celli) - 1.0)
-    );
-    scalar alphaXi2
-    (
-        this->alpha2()[celli]/(thermo2_->cellGamma(celli) - 1.0)
-    );
+    scalar alphaXi1 = this->alpha1()[celli]/thermo1_->cellGamma(celli);
+    scalar alphaXi2 = this->alpha2()[celli]/thermo2_->cellGamma(celli);
 
     return
         (
@@ -708,8 +690,11 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpdT(const label celli) const
 Foam::scalar Foam::twoPhaseFluidBlastThermo::cellGamma(const label celli) const
 {
     return
-        this->alpha1()[celli]*thermo1_->cellGamma(celli)
-      + this->alpha2()[celli]*thermo2_->cellGamma(celli);
+        1.0
+       /(
+            this->alpha1()[celli]/thermo1_->cellGamma(celli)
+          + this->alpha2()[celli]/thermo2_->cellGamma(celli)
+        );
 }
 
 
@@ -720,8 +705,13 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFaceGamma
 ) const
 {
     return
-        alpha1_.boundaryField()[patchi][facei]*thermo1_->patchFaceGamma(patchi, facei)
-      + alpha2_.boundaryField()[patchi][facei]*thermo2_->patchFaceGamma(patchi, facei);
+        1.0
+       /(
+            alpha1_.boundaryField()[patchi][facei]
+           /thermo1_->patchFaceGamma(patchi, facei)
+          + alpha2_.boundaryField()[patchi][facei]
+           /thermo2_->patchFaceGamma(patchi, facei)
+        );
 }
 
 

@@ -425,7 +425,7 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
                     tv.Gamma(rhoi, ei, Ti)*xv + tv.Gamma(rhoi, ei, Ti)*xl;
                 pi = pSat;
             }
-            scalar Xii = alphai/(Gamma - 1.0);
+            scalar Xii = alphai/Gamma;
             pXiSum[celli] += pi*Xii;
             XiSum[celli] += Xii;
         }
@@ -520,7 +520,7 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
                         tv.Gamma(rhoi, ei, Ti)*xv + tl.Gamma(rhoi, ei, Ti)*xl;
                     pi = pSat;
                 }
-                scalar Xii = alphai/(Gamma - 1.0);
+                scalar Xii = alphai/Gamma;
                 ppXiSum[facei] += pi*Xii;
                 pxiSum[facei] += Xii;
             }
@@ -581,7 +581,7 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                 Gamma =
                     tv.Gamma(rhoi, ei, Ti)*xv + tl.Gamma(rhoi, ei, Ti)*xl;
             }
-            cSqrRhoXiSum[celli] += cSqr*rhoi*alphai/(Gamma - 1.0);
+            cSqrRhoXiSum[celli] += cSqr*rhoi*alphai/Gamma;
         }
     }
 
@@ -638,7 +638,7 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                     Gamma =
                         tv.Gamma(rhoi, ei, Ti)*xv + tl.Gamma(rhoi, ei, Ti)*xl;
                 }
-                pcSqrRhoXiSum[facei] += cSqr*rhoi*alphai/(Gamma - 1.0);
+                pcSqrRhoXiSum[facei] += cSqr*rhoi*alphai/Gamma;
             }
         }
     }

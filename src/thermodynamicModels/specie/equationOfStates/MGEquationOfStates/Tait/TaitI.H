@@ -46,16 +46,6 @@ inline Foam::Tait<Specie>::Tait
 {}
 
 
-template<class Specie>
-Foam::scalar Foam::Tait<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    return gamma_*(b_ - a_);
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -111,8 +101,8 @@ Foam::scalar Foam::Tait<Specie>::p
 {
     return
         limit
-      ? max((gamma_ - 1.0)*rho*e - Pi(rho, e), 0.0)
-      : (gamma_ - 1.0)*rho*e - Pi(rho, e);
+      ? max((gamma_ - 1.0)*rho*e - gamma_*(b_ - a_), 0.0)
+      : (gamma_ - 1.0)*rho*e - gamma_*(b_ - a_);
 }
 
 
@@ -129,6 +119,17 @@ Foam::scalar Foam::Tait<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::Tait<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return (p + gamma_*(b_ - a_))/((gamma_ - 1.0)*max(rho, 1e-10));
+}
+
+
+template<class Specie>
 Foam::scalar Foam::Tait<Specie>::Gamma
 (
     const scalar rho,
@@ -137,7 +138,7 @@ Foam::scalar Foam::Tait<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return gamma_;
+    return gamma_ - 1.0;
 }
 
 
@@ -151,8 +152,7 @@ Foam::scalar Foam::Tait<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h((gamma_*p + Pi(rho, e))/((gamma_ - 1.0)*max(rho, 1e-10)));
-    return h*(gamma_ - 1.0);
+    return gamma_*(p + b_ - a_)/max(rho, 1e-10);
 }
 
 

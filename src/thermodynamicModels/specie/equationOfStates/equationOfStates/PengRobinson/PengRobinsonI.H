@@ -205,7 +205,7 @@ Foam::scalar Foam::PengRobinson<Specie>::Gamma
     const scalar cv
 ) const
 {
-    return max(dpdT(rho, e, T)/(cv*max(rho, 1e-10)), small) + 1.0;
+    return max(dpdT(rho, e, T)/(cv*max(rho, 1e-10)), small);
 }
 
 

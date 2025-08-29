@@ -107,29 +107,6 @@ class stiffenedGas
         scalar minRho_;
 
 
-        //- Return deviation from ideal gas pressure
-        inline scalar Pi
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
-
-        //- Return non-ideal speed of sound
-        inline scalar delta
-        (
-            const scalar p,
-            const scalar rho,
-            const scalar e
-        ) const;
-
-        //- Gamma function
-        inline scalar GammaMG
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
-
-
 public:
 
     // Constructors
@@ -204,6 +181,9 @@ public:
 
         //- Return density given temperature and pressure
         inline scalar rho(const scalar p, const scalar T) const;
+
+        //- Return energy given pressure and density
+        inline scalar ePRho(const scalar p, const scalar rho) const;
 
         //- Return the speed of sound
         inline scalar cSqr

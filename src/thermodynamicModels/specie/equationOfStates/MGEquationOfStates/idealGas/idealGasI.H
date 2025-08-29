@@ -110,6 +110,17 @@ Foam::scalar Foam::idealGas<Specie>::rho
 
 
 template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::ePRho
+(
+    const scalar p,
+    const scalar rho
+) const
+{
+    return p/((gamma_ - 1.0)*max(rho, 1e-10));
+}
+
+
+template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::Gamma
 (
     const scalar rho,
@@ -118,7 +129,7 @@ Foam::scalar Foam::idealGas<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return gamma_;
+    return gamma_ - 1.0;
 }
 
 

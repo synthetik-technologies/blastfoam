@@ -122,7 +122,7 @@ Foam::scalar Foam::perfectGas<Specie>::Gamma
     const scalar cv
 ) const
 {
-    return this->R()/cv + 1.0;
+    return this->R()/cv;
 }
 
 
