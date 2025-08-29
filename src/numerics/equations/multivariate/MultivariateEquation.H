@@ -215,10 +215,10 @@ protected:
         scalarField upperLimits_;
 
         //- Number in input variables
-        const label nVar_;
+        label nVar_;
 
         //- Number of equations
-        const label nEqns_;
+        label nEqns_;
 
         //- Finite difference step size
         mutable scalarField dX_;

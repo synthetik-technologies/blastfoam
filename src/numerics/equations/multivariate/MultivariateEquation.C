@@ -73,7 +73,7 @@ void Foam::MultivariateEquation<Type>::calculateJacobian
     RectangularMatrix<Type>& J
 ) const
 {
-    List<Type> f1(nVar_);
+    List<Type> f1(nEqns_);
     J.setSize(nEqns_, nVar_);
     for (label cmptj = 0; cmptj < nVar_; cmptj++)
     {
@@ -175,8 +175,9 @@ void Foam::MultivariateEquation<Type>::jacobian
 ) const
 {
     fx.resize(nEqns_);
-    this->FX(x, li, fx);
-    calculateJacobian(x, li, fx, J);
+    typename multivariateEquation<Type>::VarType x0(x-dX_*0.5);
+    this->FX(x0, li, fx);
+    calculateJacobian(x0, li, fx, J);
 }
 
 
