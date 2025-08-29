@@ -30,6 +30,10 @@ License
 
 Foam::string Foam::equationBase::mergeStrings(const List<string>& eqns) const
 {
+    if (!eqns.size())
+    {
+        return string::null;
+    }
     OStringStream os;
     os << word(eqns[0]);
     for (label i = 1; i < eqns.size(); i++)
