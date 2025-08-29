@@ -125,7 +125,7 @@ Foam::scalar Foam::rootSolvers::univariate::Brent::findRoot
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (mag(y0 - y2)  < yTol() && mag(y1 - y2) < yTol())
+        if (mag(y0 - y2)  < small && mag(y1 - y2) < small)
         {
             xNew =
                 x0*y1*y2/((y0 - y1)*(y0 - y2))
@@ -134,12 +134,12 @@ Foam::scalar Foam::rootSolvers::univariate::Brent::findRoot
         }
         else
         {
-            xNew = x1 - y1*(x1 - x0)/stabilise((y1 - y0), yTol());
+            xNew = x1 - y1*(x1 - x0)/stabilise((y1 - y0), small);
         }
         eqn_.limit(xNew);
 
         // Use bisection method if satisfies the conditions.
-        scalar delta = mag(xTol()*x1);
+        scalar delta = mag(relTolerance()*x1);
         scalar min1 = mag(xNew - x1);
         scalar min2 = mag(x1 - x2);
         scalar min3 = mag(x2 - x3);
@@ -162,7 +162,7 @@ Foam::scalar Foam::rootSolvers::univariate::Brent::findRoot
 
         scalar yNew = eqn_.fx(xNew, li);
 
-        if (converged(x0, x1, yNew))
+        if (converged(x0, x1))
         {
             break;
         }

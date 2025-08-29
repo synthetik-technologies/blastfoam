@@ -117,7 +117,7 @@ Foam::scalar Foam::rootSolvers::univariate::bisection::findRoot
             xHigh = xMean;
         }
 
-        if (converged(xLow, xHigh, y))
+        if (converged(xLow, xHigh))
         {
             break;
         }

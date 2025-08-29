@@ -97,7 +97,7 @@ Foam::scalar Foam::rootSolvers::univariate::secant::findRoot
         xLow = xHigh;
         xHigh = xNew;
 
-        if (converged(xHigh, xLow, yHigh))
+        if (converged(xHigh, xLow))
         {
             break;
         }

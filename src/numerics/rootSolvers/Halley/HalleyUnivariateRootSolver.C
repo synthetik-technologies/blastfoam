@@ -87,11 +87,11 @@ Foam::scalar Foam::rootSolvers::univariate::Halley::findRoot
     scalar fpp = eqn_.d2fdx2(xNew, li);
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, yTol());
+        xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, small);
         eqn_.limit(xNew);
         f = eqn_.fx(xNew, li);
 
-        if (converged(xNew, xOld, f))
+        if (converged(xNew, xOld))
         {
             break;
         }

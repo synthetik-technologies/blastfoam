@@ -101,7 +101,7 @@ Foam::scalar Foam::rootSolvers::univariate::NewtonRaphson::findRoot
         eqn_.limit(xNew);
         y = eqn_.fx(xNew, li);
 
-        if (converged(xNew, xOld, y))
+        if (converged(xNew, xOld))
         {
             break;
         }

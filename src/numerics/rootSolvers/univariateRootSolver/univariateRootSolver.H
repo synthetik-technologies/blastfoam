@@ -68,18 +68,13 @@ protected:
         void initialise(const scalar x) const;
 
         //- Is the solution converged
-        bool converged
-        (
-            const scalar dx,
-            const scalar y
-        ) const;
+        bool converged(const scalar dx) const;
 
         //- Is the solution converged
         bool converged
         (
             const scalar x0,
-            const scalar x1,
-            const scalar y
+            const scalar x1
         ) const;
 
         //- Print information about the current step
@@ -172,28 +167,22 @@ public:
     // Member Functions
 
         //- Return the x error
-        inline scalar xError() const;
-
-        //- Return the y error
-        inline scalar yError() const;
+        inline scalar error() const;
 
         //- Return the x tolerance
-        inline scalar xTol() const;
+        inline scalar tolerance() const;
 
-        //- Access the x tolerance
-        inline scalar& xTol();
+        //- Return the relative x tolerance
+        inline scalar relTolerance() const;
+
+        //- Access the relative x tolerance
+        inline scalar& relTolerance();
 
         //- Return the absolute x tolerance
-        inline scalar xAbsTol() const;
+        inline scalar absTolerance() const;
 
         //- Access the absolute x tolerance
-        inline scalar& xAbsTol();
-
-        //- Return the y tolerance
-        inline scalar yTol() const;
-
-        //- Access the y tolerance
-        inline scalar& yTol();
+        inline scalar& absTolerance();
 
         using rootSolver::solve;
 

@@ -58,17 +58,14 @@ protected:
         //- Reference to scalarMultivariateEquation
         const scalarMultivariateEquation& eqns_;
 
-        //- Position convergence tolerance
-        scalarField xTols_;
+        //- Absolute convergence tolerances
+        scalarField absTolerances_;
 
-        //- Function convergence tolerance
-        scalarField yTols_;
+        //- Relative convergence tolerances
+        scalarField relTolerances_;
 
-        //- Absolute position convergence tolerances
-        scalarField xAbsTols_;
-
-        //- Normalised position convergence tolerances
-        mutable scalarField xRelTols_;
+        //- Used convergence tolerance
+        mutable scalarField tolerances_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -77,10 +74,8 @@ protected:
         mutable label stepi_;
 
         //- Current x errors
-        mutable scalarField xErrors_;
+        mutable scalarField errors_;
 
-        //- Current y errors
-        mutable scalarField yErrors_;
 
 
     // Protected member function
@@ -91,16 +86,14 @@ protected:
         //- Is the solution converged
         bool converged
         (
-            const scalarList& dx,
-            const scalarList& y
+            const scalarList& dx
         ) const;
 
         //- Is the solution converged
         bool converged
         (
             const scalarList& x0,
-            const scalarList& x1,
-            const scalarList& y
+            const scalarList& x1
         ) const;
 
         //- Print information about the current step
@@ -195,31 +188,25 @@ public:
     // Member Functions
 
         //- Return the tolerances
-        inline const scalarField& xTols() const;
-
-        //- Access the tolerances
-        inline scalarField& xTols();
-
-        //- Return the absolute tolerances
-        inline const scalarField& xAbsTols() const;
-
-        //- Access the absolute tolerances
-        inline scalarField& xAbsTols();
+        inline const scalarField& tolerances() const;
 
         //- Return the relative tolerances
-        inline const scalarField& yTols() const;
+        inline const scalarField& relTolerances() const;
 
         //- Access the relative tolerances
-        inline scalarField& yTols();
+        inline scalarField& relTolerances();
+
+        //- Return the absolute tolerances
+        inline const scalarField& absTolerances() const;
+
+        //- Access the absolute tolerances
+        inline scalarField& absTolerances();
 
         //- Return the step number
         inline label nSteps() const;
 
         //- Return the x errors
-        inline const scalarList& xErrors() const;
-
-        //- Return the y errors
-        inline const scalarList& yErrors() const;
+        inline const scalarList& errors() const;
 
         //- Find the roots of the equation
         virtual tmp<scalarField> solve() const;

@@ -39,32 +39,28 @@ namespace Foam
 
 void Foam::univariateRootSolver::initialise(const scalar x) const
 {
-    xRelTols_[0] = max(xTols_[0]*mag(x), xAbsTols_[0]);
+    tolerances_[0] = max(relTolerances_[0]*mag(x), absTolerances_[0]);
 }
 
 
 bool Foam::univariateRootSolver::converged
 (
-    const scalar dx,
-    const scalar y
+    const scalar dx
 ) const
 {
-    xErrors_[0] = mag(dx);
-    yErrors_[0] = mag(y);
-    return xErrors_[0] < xTols_[0] && yErrors_[0] < yTols_[0];
+    errors_[0] = mag(dx);
+    return errors_[0] < tolerances_[0];
 }
 
 
 bool Foam::univariateRootSolver::converged
 (
     const scalar x0,
-    const scalar x1,
-    const scalar y
+    const scalar x1
 ) const
 {
-    xErrors_[0] = mag(x1 - x0);
-    yErrors_[0] = mag(y);
-    return xErrors_[0] < xRelTols_[0] && yErrors_[0] < yTols_[0];
+    errors_[0] = mag(x1 - x0);
+    return errors_[0] < tolerances_[0];
 }
 
 
@@ -75,7 +71,7 @@ void Foam::univariateRootSolver::printStepInformation(const scalar val) const
     {
         Info<< "Step " << stepi_
             << ", est= " << val
-            << ", error=" << xErrors_[0] << "/" << yErrors_[0] << endl;
+            << ", error=" << errors_[0] << endl;
     }
 }
 
@@ -90,14 +86,12 @@ Foam::univariateRootSolver::printFinalInformation(const scalar val) const
 
     bool converged =
         (stepi_ < maxSteps_)
-     && xErrors_[0] - xRelTols_[0] <= 0.0
-     && yErrors_[0] - yTols_[0] <= 0.0;
+     && (errors_[0] - tolerances_[0] <= 0.0);
 
     if (converged && debug > 1)
     {
         Info<< indent << "Converged in " << stepi_ << " iterations" << nl
-            << indent << "Final x error=" << xErrors_[0] << nl
-            << indent << "Final y error=" << yErrors_[0] << nl
+            << indent << "Final x error=" << errors_[0] << nl
             << indent << "Root=" << val << endl;
     }
     else if (!converged)
@@ -108,14 +102,14 @@ Foam::univariateRootSolver::printFinalInformation(const scalar val) const
                 << "Did not converge due to bounds"
                 << ", tried " << stepi_ << " iterations"
                 << ", est=" << val
-                << ", error=" << xErrors_[0] << "/" << yErrors_[0] << endl;
+                << ", error=" << errors_[0] << endl;
         }
         else
         {
             WarningInFunction
                 << "Did not converge in " << stepi_ << " iterations"
                 << ", roots=" << val
-                << ", errors=" << xErrors_[0] << "/" << yErrors_[0] << endl;
+                << ", errors=" << errors_[0] << endl;
         }
     }
     return val;

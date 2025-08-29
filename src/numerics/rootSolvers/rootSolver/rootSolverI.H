@@ -23,39 +23,33 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::scalarField& Foam::rootSolver::xTols() const
+inline const Foam::scalarField& Foam::rootSolver::tolerances() const
 {
-    return xTols_;
+    return tolerances_;
 }
 
 
-inline Foam::scalarField& Foam::rootSolver::xTols()
+inline const Foam::scalarField& Foam::rootSolver::relTolerances() const
 {
-    return xTols_;
+    return relTolerances_;
 }
 
 
-inline const Foam::scalarField& Foam::rootSolver::xAbsTols() const
+inline Foam::scalarField& Foam::rootSolver::relTolerances()
 {
-    return xAbsTols_;
+    return relTolerances_;
 }
 
 
-inline Foam::scalarField& Foam::rootSolver::xAbsTols()
+inline const Foam::scalarField& Foam::rootSolver::absTolerances() const
 {
-    return xAbsTols_;
+    return absTolerances_;
 }
 
 
-inline const Foam::scalarField& Foam::rootSolver::yTols() const
+inline Foam::scalarField& Foam::rootSolver::absTolerances()
 {
-    return yTols_;
-}
-
-
-inline Foam::scalarField& Foam::rootSolver::yTols()
-{
-    return yTols_;
+    return absTolerances_;
 }
 
 
@@ -65,15 +59,9 @@ inline Foam::label Foam::rootSolver::nSteps() const
 }
 
 
-inline const Foam::scalarList& Foam::rootSolver::xErrors() const
+inline const Foam::scalarList& Foam::rootSolver::errors() const
 {
-    return xErrors_;
-}
-
-
-inline const Foam::scalarList& Foam::rootSolver::yErrors() const
-{
-    return yErrors_;
+    return errors_;
 }
 
 

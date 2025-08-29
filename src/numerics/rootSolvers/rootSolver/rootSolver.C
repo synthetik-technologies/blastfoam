@@ -39,35 +39,25 @@ namespace Foam
 
 void Foam::rootSolver::initialise(const scalarList& x) const
 {
+    tolerances_ = absTolerances_;
     forAll(x, i)
     {
-        xRelTols_[i] = max(xTols_[i]*mag(x[i]), xAbsTols_[i]);
+        tolerances_[i] = max(relTolerances_[i]*mag(x[i]), tolerances_[i]);
     }
 }
 
 
 bool Foam::rootSolver::converged
 (
-    const scalarList& dx,
-    const scalarList& y
+    const scalarList& dx
 ) const
 {
     bool good = true;
 
-    forAll(y, i)
-    {
-        yErrors_[i] = mag(y[i]);
-        if (yErrors_[i] > yTols_[i] )
-        {
-           good = false;
-        }
-
-    }
-
     forAll(dx, i)
     {
-        xErrors_[i] = mag(dx[i]);
-        if (xErrors_[i] > xRelTols_[i])
+        errors_[i] = mag(dx[i]);
+        if (errors_[i] > tolerances_[i])
         {
             good = false;
         }
@@ -80,37 +70,21 @@ bool Foam::rootSolver::converged
 bool Foam::rootSolver::converged
 (
     const scalarList& x0,
-    const scalarList& x1,
-    const scalarList& y
+    const scalarList& x1
 ) const
 {
     bool good = true;
 
-    forAll(y, i)
-    {
-        yErrors_[i] = mag(y[i]);
-        if (yErrors_[i] > yTols_[i] )
-        {
-           good = false;
-        }
-
-    }
-
-    bool zeroDiff = true;
     forAll(x0, i)
     {
-        xErrors_[i] = mag(x0[i] - x1[i]);
-        if (xErrors_[i] > xRelTols_[i])
+        errors_[i] = mag(x0[i] - x1[i]);
+        if (errors_[i] > tolerances_[i])
         {
             good = false;
-            if (xErrors_[i] > vSmall)
-            {
-                zeroDiff = false;
-            }
         }
 
     }
-    return zeroDiff || good;
+    return good;
 }
 
 
@@ -120,7 +94,7 @@ void Foam::rootSolver::printStepInformation(const scalarList& vals) const
     {
         Info<< "Step " << stepi_
             << ", est= " << vals
-            << ", error=" << xErrors_ << "/" << yErrors_ << endl;
+            << ", error=" << errors_ << endl;
     }
 }
 
@@ -133,14 +107,12 @@ void Foam::rootSolver::printFinalInformation(const scalarList& vals) const
 
     bool converged =
         (stepi_ < maxSteps_)
-     && max(xErrors_ - xRelTols_) <= 0.0
-     && max(yErrors_ - yTols_) <= 0.0;
+     && max(errors_ - tolerances_) <= 0.0;
 
     if (converged && debug > 1)
     {
         Info<< indent << "Converged in " << stepi_ << " iterations" << nl
-            << indent << "Final x errors=" << xErrors_ << nl
-            << indent << "Final y errors=" << yErrors_ << nl
+            << indent << "Final errors=" << errors_ << nl
             << indent << "Roots=" << vals << endl;
     }
     else if (!converged)
@@ -151,14 +123,14 @@ void Foam::rootSolver::printFinalInformation(const scalarList& vals) const
                 << "Did not converge due to bounds"
                 << ", tried " << stepi_ << " iterations"
                 << ", est=" << vals
-                << ", errors=" << xErrors_ << "/" << yErrors_ << endl;
+                << ", errors=" << errors_ <<endl;
         }
         else
         {
             WarningInFunction
                 << "Did not converge in " << stepi_ << " iterations"
                 << ", roots=" << vals
-                << ", errors=" << xErrors_ << "/" << yErrors_ << endl;
+                << ", errors=" << errors_ << endl;
         }
     }
 }
@@ -173,35 +145,7 @@ Foam::rootSolver::rootSolver
 )
 :
     eqns_(eqns),
-    xTols_
-    (
-        dict.lookupOrDefaultBackwardsCompatible<scalarList>
-        (
-            {"xTolerances", "tolerances"},
-            scalarList
-            (
-                eqns.nVar(),
-                dict.lookupOrDefaultBackwardsCompatible
-                (
-                    {"xTolerance", "tolerance"},
-                    1e-6
-                )
-            )
-        )
-    ),
-    yTols_
-    (
-        dict.lookupOrDefault<scalarList>
-        (
-            "yTolerances",
-            scalarList
-            (
-                eqns.nEqns(),
-                dict.lookupOrDefault("yTolerance", 1e-6)
-            )
-        )
-    ),
-    xAbsTols_
+    absTolerances_
     (
         dict.lookupOrDefaultBackwardsCompatible<scalarList>
         (
@@ -217,11 +161,26 @@ Foam::rootSolver::rootSolver
             )
         )
     ),
-    xRelTols_(xTols_),
+    relTolerances_
+    (
+        dict.lookupOrDefaultBackwardsCompatible<scalarList>
+        (
+            {"xTolerances", "tolerances", "relTolerances"},
+            scalarList
+            (
+                eqns.nVar(),
+                dict.lookupOrDefaultBackwardsCompatible
+                (
+                    {"xTolerance", "tolerance", "relTolerance"},
+                    1e-6
+                )
+            )
+        )
+    ),
+    tolerances_(relTolerances_),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
-    xErrors_(eqns.nVar(), great),
-    yErrors_(eqns.nEqns(), great)
+    errors_(eqns.nVar(), great)
 {}
 
 
@@ -232,14 +191,12 @@ Foam::rootSolver::rootSolver
 )
 :
     eqns_(eqns),
-    xTols_(solver.xTols_),
-    yTols_(solver.yTols_),
-    xAbsTols_(solver.xAbsTols_),
-    xRelTols_(solver.xRelTols_),
+    absTolerances_(solver.absTolerances_),
+    relTolerances_(solver.relTolerances_),
+    tolerances_(solver.tolerances_),
     maxSteps_(solver.maxSteps_),
     stepi_(0),
-    xErrors_(eqns.nVar(), great),
-    yErrors_(eqns.nEqns(), great)
+    errors_(eqns.nVar(), great)
 {}
 
 

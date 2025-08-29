@@ -23,52 +23,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalar Foam::univariateRootSolver::xError() const
+inline Foam::scalar Foam::univariateRootSolver::error() const
 {
-    return xErrors_[0];
+    return errors_[0];
 }
 
 
-inline Foam::scalar Foam::univariateRootSolver::yError() const
+inline Foam::scalar Foam::univariateRootSolver::tolerance() const
 {
-    return yErrors_[0];
+    return tolerances_[0];
 }
 
 
-inline Foam::scalar Foam::univariateRootSolver::xTol() const
+inline Foam::scalar Foam::univariateRootSolver::relTolerance() const
 {
-    return xTols_[0];
+    return relTolerances_[0];
 }
 
 
-inline Foam::scalar& Foam::univariateRootSolver::xTol()
+inline Foam::scalar& Foam::univariateRootSolver::relTolerance()
 {
-    return xTols_[0];
+    return relTolerances_[0];
 }
 
 
-inline Foam::scalar Foam::univariateRootSolver::xAbsTol() const
+inline Foam::scalar Foam::univariateRootSolver::absTolerance() const
 {
-    return xAbsTols_[0];
+    return absTolerances_[0];
 }
 
 
-inline Foam::scalar& Foam::univariateRootSolver::xAbsTol()
+inline Foam::scalar& Foam::univariateRootSolver::absTolerance()
 {
-    return xAbsTols_[0];
+    return absTolerances_[0];
 }
-
-
-inline Foam::scalar Foam::univariateRootSolver::yTol() const
-{
-    return yTols_[0];
-}
-
-
-inline Foam::scalar& Foam::univariateRootSolver::yTol()
-{
-    return yTols_[0];
-}
-
 
 // ************************************************************************* //

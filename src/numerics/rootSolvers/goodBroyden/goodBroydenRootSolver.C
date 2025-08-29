@@ -111,7 +111,10 @@ Foam::rootSolvers::goodBroyden::findRoots
     scalarRectangularMatrix Jinv(SVDinv(J));
 
     scalarRectangularMatrix dx(x.size(), 1);
-    scalarRectangularMatrix df(x.size(), 1);
+    scalarRectangularMatrix df(f.size(), 1);
+
+    const scalarList& lower = eqns_.lowerLimits();
+    const scalarList& upper = eqns_.upperLimits();
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
@@ -123,13 +126,25 @@ Foam::rootSolvers::goodBroyden::findRoots
         x -= Jinv*f;
 
         // Limit to the bounds to the equation
-        eqns_.limit(x);
+        // eqns_.limit(x);
+        scalar fac = 0.5;
+        forAll(x, i)
+        {
+            if (x[i] < lower[i])
+            {
+                x[i] = (1.0 - fac)*xOld[i] + fac*lower[i];
+            }
+            else if (x[i] > upper[i])
+            {
+                x[i] = (1.0 - fac)*xOld[i] + fac*upper[i];
+            }
+        }
 
         // update f
         eqns_.FX(x, li, f);
 
         // Check for convergence
-        if (converged(xOld, x, f))
+        if (converged(xOld, x))
         {
             break;
         }
@@ -138,6 +153,9 @@ Foam::rootSolvers::goodBroyden::findRoots
         forAll(dx, i)
         {
             dx(i, 0) = x[i] - xOld[i];
+        }
+        forAll(df, i)
+        {
             df(i, 0) = f[i] - fOld[i];
         }
 

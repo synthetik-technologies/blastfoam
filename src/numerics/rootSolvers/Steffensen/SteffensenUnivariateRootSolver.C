@@ -109,7 +109,7 @@ Foam::scalar Foam::rootSolvers::univariate::Steffensen::findRoot
         eqn_.limit(xNew);
 
         fx = eqn_.fx(xNew, li);
-        if (converged(xNew, xOld, fx))
+        if (converged(xNew, xOld))
         {
             break;
         }

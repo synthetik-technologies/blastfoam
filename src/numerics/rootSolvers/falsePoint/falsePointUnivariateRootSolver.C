@@ -110,7 +110,7 @@ Foam::scalar Foam::rootSolvers::univariate::falsePoint::findRoot
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xNew = (xHigh*yLow - xLow*yHigh)/stabilise(yLow - yHigh, 1e-10);
+        xNew = (xHigh*yLow - xLow*yHigh)/stabilise(yLow - yHigh, small);
         eqn_.limit(xNew);
         scalar yNew = eqn_.fx(xNew, li);
 
@@ -138,7 +138,7 @@ Foam::scalar Foam::rootSolvers::univariate::falsePoint::findRoot
             xHigh = xNew;
             yHigh = yNew;
         }
-        if (converged(xHigh, xLow, yNew))
+        if (converged(xHigh, xLow))
         {
             break;
         }
