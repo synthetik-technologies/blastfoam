@@ -18,11 +18,4 @@ derivedFvPatchFields/maxwellSlipU/maxwellSlipUFvPatchVectorField.C
 derivedFvPatchFields/smoluchowskiJumpT/smoluchowskiJumpTFvPatchScalarField.C
 derivedFvPatchFields/mixedFixedValueSlip/mixedFixedValueSlipFvPatchFields.C
 
-phaseChange/phaseChangeModel/phaseChangeModel.C
-phaseChange/phaseChangeModel/phaseChangeModelNew.C
-phaseChange/cavitation/cavitationModel/cavitationModel.C
-phaseChange/cavitation/SchnerrSauer/SchnerrSauer.C
-phaseChange/cavitation/Merkle/Merkle.C
-phaseChange/cavitation/Kunz/Kunz.C
-
 LIB = $(BLAST_LIBBIN)/libcompressibleSystems
