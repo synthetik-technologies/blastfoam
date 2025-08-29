@@ -98,7 +98,7 @@ const Foam::entryTable& Foam::read2DTable
     token t(is);
 
     // Start from "startLine"
-    while (is.good() && t.lineNumber() < startLine)
+    while (is.good() && t.lineNumber() <= startLine)
     {
         is >> t;
     }
