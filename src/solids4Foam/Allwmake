@@ -4,8 +4,14 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 #------------------------------------------------------------------------------
 
+
 if [ ! -z "$SOLIDS_4_FOAM_DIR" ]
 then
+    echo "\n*********************"
+    echo "solid4Foam does not currently support OpenFOAM-$WM_PROJECT_VERSION"
+    echo "*********************\n"
+    exit 0
+
     if test -f "${FOAM_USER_LIBBIN}/libsolids4FoamModels.so"
     then
         echo "Making blast fluidModel for solids4foam"
@@ -18,14 +24,14 @@ then
         echo "Have you complied solids4Foam?"
         echo
     fi
-else
-    echo
-    echo "Not compiling solids4foam module"
-    echo "    Download and compile solids4foam and add"
-    echo "    \"export SOLIDS_4_FOAM_DIR=YOUR_PATH\" to your ~/.bashrc"
-    echo "    add \"libs (\"libblastSolids4Foam.so\"); to a case"
-    echo "    controlDict to use"
-    echo
+# else
+#     echo
+#     echo "Not compiling solids4foam module"
+#     echo "    Download and compile solids4foam and add"
+#     echo "    \"export SOLIDS_4_FOAM_DIR=YOUR_PATH\" to your ~/.bashrc"
+#     echo "    add \"libs (\"libblastSolids4Foam.so\"); to a case"
+#     echo "    controlDict to use"
+#     echo
 fi
 # -----------------------------------------------------------------------------
 
