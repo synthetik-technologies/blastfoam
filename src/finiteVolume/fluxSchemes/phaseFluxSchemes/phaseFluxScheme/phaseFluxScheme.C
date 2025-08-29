@@ -64,6 +64,7 @@ void Foam::phaseFluxScheme::clear()
     Uf_.clear();
     pf_.clear();
     alphaf_.clear();
+    deltaAlphaf_.clear();
 }
 
 void Foam::phaseFluxScheme::createSavedFields()

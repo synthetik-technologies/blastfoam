@@ -18,6 +18,7 @@ fluxSchemes/fluxSchemes/Rusanov/RusanovFluxScheme.C
 
 fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxSchemeNew.C
+fluxSchemes/phaseFluxSchemes/Rusanov/RusanovPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/HLL/HLLPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/HLLC/HLLCPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Kurganov/KurganovPhaseFluxScheme.C
