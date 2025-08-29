@@ -3266,10 +3266,10 @@ bool Foam::hexRef::write(const bool w) const
 
      if (w)
      {
-        localIOdictionary level0EdgeDict
-        (
-            level0Edge_
-        );
+        IOobject level0IO(level0Edge_);
+        level0IO.registerObject() = false;
+
+        localIOdictionary level0EdgeDict(level0IO);
         level0EdgeDict.set("dimensions", level0Edge_.dimensions());
         level0EdgeDict.set("value", level0Edge_.value());
         writeOk = writeOk && level0EdgeDict.regIOobject::write();
