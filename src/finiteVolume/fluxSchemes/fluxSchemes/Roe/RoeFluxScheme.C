@@ -119,8 +119,8 @@ void Foam::fluxSchemes::Roe::calculateFluxes
     // U Row
     vector KU1(UTilde - cTilde*normal);
     vector KU2(UTilde);
-    vector KU3((UTilde - deltaUv*normal));
-    vector KU4((UTilde + cTilde*normal));
+    vector KU3(deltaU - deltaUv*normal);
+    vector KU4(UTilde + cTilde*normal);
 
     // E row
     scalar KE1(HTilde - cTilde*UvTilde);
