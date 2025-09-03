@@ -41,11 +41,8 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(rho)    limitedCubic 1;
-    reconstruct(U)      limitedCubicV 1;
-    reconstruct(e)      limitedCubic 1;
-    reconstruct(p)      limitedCubic 1;
-    reconstruct(speedOfSound)      limitedCubic 1;
+    reconstruct(scalar) vanLeer;
+    reconstruct(vector) vanLeerV;
 }
 
 snGradSchemes

@@ -7,5 +7,6 @@ cd ${0%/*} || exit 1    # run from this directory
 cleanCase
 
 rm -f validation/*.eps
+rm -f 2D_Riemann_blastFoam.png
 
 # ----------------------------------------------------------------- end-of-file

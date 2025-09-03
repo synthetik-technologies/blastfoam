@@ -16,7 +16,7 @@ FoamFile
 
 topoChanger
 {
-    type            polyRefiner;
+    type            hexRefiner;
     errorEstimator  densityGradient;
     scaledDeltaField rho;
 
