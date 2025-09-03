@@ -27,7 +27,7 @@ if ! command -v pvpython >/dev/null 2>&1
 then
     echo "pvpython could not be found, no creating images"
 else
-    pvpython postProcess.py
+    ( cd validation && pvpython postProcess.py )
 fi
 
 # ----------------------------------------------------------------- end-of-file
