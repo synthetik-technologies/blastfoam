@@ -73,18 +73,25 @@ void Foam::MultivariateEquation<Type>::calculateJacobian
     RectangularMatrix<Type>& J
 ) const
 {
-    List<Type> f1(nEqns_);
+    List<Type> f1(nEqns_), f2(nEqns_);
     J.setSize(nEqns_, nVar_);
+    typename multivariateEquation<Type>::VarType x1(x0);
+    typename multivariateEquation<Type>::VarType x2(x0);
+    const scalarField& lower = this->lowerLimits_;
+    const scalarField& upper = this->upperLimits_;
     for (label cmptj = 0; cmptj < nVar_; cmptj++)
     {
-        scalarList x1(x0);
-        x1[cmptj] += dX_[cmptj];
+        x1[cmptj] = max(x0[cmptj] - 0.5*dX_[cmptj], lower[cmptj]);
+        x2[cmptj] = min(x0[cmptj] + 0.5*dX_[cmptj], upper[cmptj]);
         this->FX(x1, li, f1);
+        this->FX(x2, li, f2);
         for (label cmpti = 0; cmpti < nEqns_; cmpti++)
         {
             J(cmpti, cmptj) =
-                (f1[cmpti] - f0[cmpti])/(x1[cmptj] - x0[cmptj]);
+                (f2[cmpti] - f1[cmpti])/(x2[cmptj] - x1[cmptj]);
         }
+        x1[cmptj] = x0[cmptj];
+        x2[cmptj] = x0[cmptj];
     }
 }
 
@@ -175,9 +182,8 @@ void Foam::MultivariateEquation<Type>::jacobian
 ) const
 {
     fx.resize(nEqns_);
-    typename multivariateEquation<Type>::VarType x0(x-dX_*0.5);
-    this->FX(x0, li, fx);
-    calculateJacobian(x0, li, fx, J);
+    this->FX(x, li, fx);
+    calculateJacobian(x, li, fx, J);
 }
 
 
