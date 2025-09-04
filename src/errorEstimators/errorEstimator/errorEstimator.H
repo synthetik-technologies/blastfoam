@@ -41,6 +41,7 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "dictionary.H"
+#include "Function1.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -81,12 +82,12 @@ protected:
         scalar upperUnrefine_;
 
         //- Optional specification of max level for an error estimator
-        HashTable<label> maxLevel_;
-        label defaultMaxLevel_;
+        HashPtrTable<Function1<scalar>> maxLevel_;
+        autoPtr<Function1<scalar>> defaultMaxLevel_;
 
         //- Optional specification of smallest cell
-        HashTable<scalar> minDx_;
-        scalar defaultMinDx_;
+        HashPtrTable<Function1<scalar>> minDx_;
+        autoPtr<Function1<scalar>> defaultMinDx_;
 
         //- Override error based on this estimator
         //  (used with multicomponent)
@@ -213,9 +214,10 @@ public:
             return error_;
         }
 
-        label maxLevel() const
+        //- Return maximum level of refinement
+        virtual label maxLevel() const
         {
-            return defaultMaxLevel_;
+            return round(defaultMaxLevel_->value(mesh_.time().value()));
         }
 
         //- Return override status

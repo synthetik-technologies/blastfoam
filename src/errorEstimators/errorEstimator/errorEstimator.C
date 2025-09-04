@@ -196,35 +196,102 @@ void Foam::errorEstimator::readMaxRefinement(const dictionary& dict)
 {
     if (dict.found("maxZoneRefinement"))
     {
-        dict.lookup("maxZoneRefinement") >> maxLevel_;
-        forAllConstIter(HashTable<label>, maxLevel_, iter)
+        ITstream is(dict.lookup("maxZoneRefinement"));
+        while (is.good())
         {
-            if (!mesh_.cellZones().found(iter.key()))
+
+            const word zoneName(is);
+            if (!mesh_.cellZones().found(zoneName))
             {
                 FatalIOErrorInFunction(dict)
-                    << iter.key() << " is not a cell zone, valid option are"
+                    << zoneName << " is not a cell zone, valid option are"
                     << nl
                     << mesh_.cellZones().toc() << endl
                     << abort(FatalIOError);
             }
+
+            token t(is);
+            autoPtr<Function1<scalar>> f;
+            if (t.isNumber())
+            {
+                maxLevel_.insert
+                (
+                    zoneName,
+                    new Function1s::Constant<scalar>
+                    (
+                        IOobject::groupName("minDx", zoneName),
+                        t.number()
+                    )
+                );
+            }
+            else
+            {
+                is.putBack(t);
+                dictionary funcDict(is);
+                maxLevel_.insert
+                (
+                    zoneName,
+                    Function1<scalar>::New
+                    (
+                        IOobject::groupName("maxLevel", zoneName),
+                        dimless,
+                        mesh_.time().userUnits(),
+                        funcDict
+                    ).ptr()
+                );
+            }
         }
+
     }
     if (dict.found("minZoneDx"))
     {
-        dict.lookup("minZoneDx") >> minDx_;
-        forAllConstIter(HashTable<scalar>, minDx_, iter)
+        ITstream is(dict.lookup("minZoneDx"));
+        while (is.good())
         {
-            if (!mesh_.cellZones().found(iter.key()))
+
+            const word zoneName(is);
+            if (!mesh_.cellZones().found(zoneName))
             {
                 FatalIOErrorInFunction(dict)
-                    << iter.key() << " is not a cell zone, valid option are"
+                    << zoneName << " is not a cell zone, valid option are"
                     << nl
                     << mesh_.cellZones().toc() << endl
                     << abort(FatalIOError);
             }
+
+            token t(is);
+            autoPtr<Function1<scalar>> f;
+            if (t.isNumber())
+            {
+                minDx_.insert
+                (
+                    zoneName,
+                    new Function1s::Constant<scalar>
+                    (
+                        IOobject::groupName("minDx", zoneName),
+                        t.number()
+                    )
+                );
+            }
+            else
+            {
+                is.putBack(t);
+                dictionary funcDict(is);
+                minDx_.insert
+                (
+                    zoneName,
+                    Function1<scalar>::New
+                    (
+                        IOobject::groupName("minDx", zoneName),
+                        dimLength,
+                        mesh_.time().userUnits(),
+                        funcDict
+                    ).ptr()
+                );
+            }
         }
     }
-    forAllConstIter(HashTable<label>, maxLevel_, iter)
+    forAllConstIter(HashPtrTable<Function1<scalar>>, maxLevel_, iter)
     {
         if (minDx_.found(iter.key()))
         {
@@ -237,13 +304,25 @@ void Foam::errorEstimator::readMaxRefinement(const dictionary& dict)
 
     if (dict.found("maxRefinement"))
     {
-        defaultMaxLevel_ = dict.lookup<label>("maxRefinement");
-        defaultMinDx_ = -1;
+        defaultMaxLevel_ = Function1<scalar>::New
+            (
+                "maxRefinement",
+                dimless,
+                mesh_.time().userUnits(),
+                dict
+            );
+        defaultMinDx_.clear();
     }
     else if (dict.found("minDx"))
     {
-        defaultMaxLevel_ = -1;
-        defaultMinDx_ = dict.lookup<scalar>("minDx");
+        defaultMaxLevel_.clear();
+        defaultMinDx_ = Function1<scalar>::New
+            (
+                "minDx",
+                dimLength,
+                mesh_.time().userUnits(),
+                dict
+            );
     }
     else
     {
@@ -283,8 +362,8 @@ Foam::errorEstimator::errorEstimator
     lowerUnrefine_(0.0),
     upperRefine_(0.0),
     upperUnrefine_(0.0),
-    maxLevel_(-1),
-    minDx_(-1),
+    maxLevel_(),
+    minDx_(),
     override_(false),
     cZones_(),
     hasDefault_(false),
@@ -311,6 +390,8 @@ void Foam::errorEstimator::read(const dictionary& dict)
 
     readCellZones(dict);
     readMaxRefinement(dict);
+
+    Info<<maxLevel()<<endl;
 
 
 }
@@ -448,31 +529,35 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
     const labelHashSet& eCells = errorCells();
     labelList maxLevel(mesh_.nCells(), 0);
 
-    if (defaultMaxLevel_ >= 0)
+    const scalar t = mesh_.time().value();
+
+    if (defaultMaxLevel_.valid())
     {
-        maxLevel = defaultMaxLevel_;
+        const label ml = floor(defaultMaxLevel_->value(t));
+
+        maxLevel = ml;
         if (cZones_.size())
         {
             const labelHashSet& eCells = errorCells();
             maxLevel = 0;
             forAllConstIter(labelHashSet, eCells, iter)
             {
-                maxLevel[iter.key()] = defaultMaxLevel_;
+                maxLevel[iter.key()] = ml;
             }
         }
     }
 
-    forAllConstIter(HashTable<label>, maxLevel_, iter)
+    forAllConstIter(HashPtrTable<Function1<scalar>>, maxLevel_, iter)
     {
         const cellZone& zone = mesh_.cellZones()[iter.key()];
         forAll(zone, ci)
         {
             const label celli = zone[ci];
-            maxLevel[celli] = max(maxLevel[celli], iter());
+            maxLevel[celli] = max(maxLevel[celli], floor(iter()->value(t)));
         }
     }
 
-    if (defaultMaxLevel_ < 0 || minDx_.size())
+    if (defaultMinDx_.valid() || minDx_.size())
     {
         const labelIOList& cellLevel
         (
@@ -480,13 +565,15 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
         );
         const scalarField& dx = meshSizeObject::New(mesh_).dx();
 
-        if (defaultMaxLevel_ < 0)
+        const scalar mdx = defaultMinDx_->value(t);
+
+        if (defaultMinDx_.valid())
         {
             forAllConstIter(labelHashSet, eCells, iter)
             {
                 const label celli = iter.key();
                 label level = cellLevel[celli];
-                if (dx[celli] > defaultMinDx_ && error_[celli] > 0)
+                if (dx[celli] > mdx && error_[celli] > 0)
                 {
                     level++;
                 }
@@ -494,14 +581,15 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
             }
         }
 
-        forAllConstIter(HashTable<scalar>, minDx_, iter)
+        forAllConstIter(HashPtrTable<Function1<scalar>>, minDx_, iter)
         {
             const cellZone& zone = mesh_.cellZones()[iter.key()];
+            const scalar mdx = iter()->value(t);
             forAll(zone, ci)
             {
                 const label celli = zone[ci];
                 label level = cellLevel[celli];
-                if (dx[celli] > iter() && error_[celli] > 0)
+                if (dx[celli] > mdx && error_[celli] > 0)
                 {
                     level++;
                 }
@@ -535,7 +623,7 @@ bool Foam::errorEstimator::writeData(Ostream&) const
         }
         maxLevel.write();
 
-        if (defaultMinDx_ > 0 || minDx_.size())
+        if (defaultMinDx_.valid() > 0 || minDx_.size())
         {
             const meshSizeObject& mso = meshSizeObject::New(mesh_);
             const_cast<meshSizeObject&>(mso).movePoints();

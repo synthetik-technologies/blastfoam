@@ -87,11 +87,17 @@ void Foam::errorEstimators::multicomponent::read(const dictionary& dict)
     {
         errors_[i].read(errorEntries[i].dict());
     }
-    defaultMaxLevel_ = 0;
-    forAll(names_, i)
+}
+
+
+Foam::label Foam::errorEstimators::multicomponent::maxLevel() const
+{
+    label maxL = 0;
+    forAll(errors_, i)
     {
-        defaultMaxLevel_ = max(defaultMaxLevel_, errors_[i].maxLevel());
+        maxL = max(errors_[i].maxLevel(), maxL);
     }
+    return maxL;
 }
 
 

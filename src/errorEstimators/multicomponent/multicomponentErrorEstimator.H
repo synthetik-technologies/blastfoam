@@ -86,6 +86,9 @@ public:
         //- Update error
         virtual void update(const bool scale = true);
 
+        //- Return maximum level of refinement
+        virtual label maxLevel() const;
+
         //- Return non constant reference to error field
         virtual labelList maxRefinement() const;
 
