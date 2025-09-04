@@ -23,104 +23,83 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "massTransferModel.H"
+#include "MassoniMassTransfer.H"
+#include "phaseSystem.H"
 #include "phasePair.H"
-#include "BlendedInterfacialModel.H"
+#include "heatTransferModel.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(massTransferModel, 0);
-    defineBlendedInterfacialModelTypeNameAndDebug(massTransferModel, 0);
-    defineRunTimeSelectionTable(massTransferModel, dictionary);
+namespace massTransferModels
+{
+    defineTypeNameAndDebug(Massoni, 0);
+    addToRunTimeSelectionTable(massTransferModel, Massoni, dictionary);
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::massTransferModel::massTransferModel
+Foam::massTransferModels::Massoni::Massoni
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
-    regIOobject
-    (
-        IOobject
-        (
-            IOobject::groupName(typeName, pair.name()),
-            pair.phase1().mesh().time().name(),
-            pair.phase1().mesh()
-        )
-    ),
-    pair_(pair)
+    massTransferModel(dict, pair),
+    Tsat_(saturationTemperatureModel::New("saturationTemperature", dict))
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::massTransferModel::~massTransferModel()
+Foam::massTransferModels::Massoni::~Massoni()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::massTransferModel::Y
-(
-    const phaseModel& phase,
-    const word& name
-) const
-{
-    if (&phase == &(pair_.phase1()))
-    {
-        return phase1Y(name);
-    }
-    else
-    {
-        return phase2Y(name);
-    }
-}
-
-
-Foam::hashedWordList Foam::massTransferModel::species
-(
-    const phaseModel& phase
-) const
-{
-    if (&phase == &(pair_.phase1()))
-    {
-        return phase1Species();
-    }
-    else
-    {
-        return phase2Species();
-    }
-}
-
-
 Foam::tmp<Foam::volScalarField>
-Foam::massTransferModel::phase1Y(const word& name) const
+Foam::massTransferModels::Massoni::K() const
 {
-    return volScalarField::New
+    const phaseModel& phase1 = pair_.phase1();
+    const phaseModel& phase2 = pair_.phase2();
+    const volScalarField& p = phase1.fluid().p();
+    const volScalarField Tsat(Tsat_->Tsat(p));
+
+    const blendedHeatTransferModel& ht =
+        phase1.fluid().lookupBlendedInterfacialModel<blendedHeatTransferModel>
+        (
+            pair_
+        );
+    tmp<volScalarField> tQ
     (
-        IOobject::groupName("Yi", name),
-        pair_.phase1().mesh(),
-        dimensionedScalar(dimless, 0.0)
+        volScalarField::New
+        (
+            "Q",
+            phase1.mesh(),
+            dimensionedScalar(dimDensity/dimTime*sqr(dimVelocity), 0.0)
+        )
     );
+    volScalarField Q = tQ.ref();
+    if (ht.hasModel(phase1))
+    {
+        Q += ht.model(phase1).K()*(Tsat - phase1.thermo().T());
+    }
+    if (ht.hasModel(phase2))
+    {
+        Q += ht.model(phase2).K()*(Tsat - phase2.thermo().T());
+    }
+    return
+        tQ/stabilise
+        (
+            phase1.thermo().ha(p, Tsat) + 0.5*magSqr(phase1.U())
+          - phase2.thermo().ha(p, Tsat) - 0.5*magSqr(phase2.U()),
+            dimensionedScalar(sqr(dimVelocity), small)
+        );
 }
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::massTransferModel::phase2Y(const word& name) const
-{
-    return volScalarField::New
-    (
-        IOobject::groupName("Yi", name),
-        pair_.phase1().mesh(),
-        dimensionedScalar(dimless, 0.0)
-    );
-}
-
 
 // ************************************************************************* //

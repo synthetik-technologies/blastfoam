@@ -61,18 +61,29 @@ class reactingParticleMassTransfer
 {
 // Private data
 
+    //- Reacting phase name
+    word reactingPhase_;
+
+    //- Flag if the first phase is the reacting phase
+    bool reactingIs1_;
+
     //- Name of species to transfer mass from
-    hashedWordList reactingSpecies_;
+    hashedWordList phase1Species_;
 
-    //- Fraction of the reacting species produced
-    HashTable<scalar, word> reactingYi_;
+    //- Fraction of the phase1 species produced
+    HashTable<scalar, word> phase1Yi_;
 
-    //- Name of product species
-    hashedWordList productSpecies_;
+    //- Name of phase2 species
+    hashedWordList phase2Species_;
 
     //- Fraction of the product species produced
-    HashTable<scalar, word> productYi_;
+    HashTable<scalar, word> phase2Yi_;
 
+    //- Return the reacting phase model
+    inline const phaseModel& reactingPhase() const
+    {
+        return reactingIs1_ ? pair_.phase1() : pair_.phase2();
+    }
 
 public:
 
@@ -99,22 +110,22 @@ public:
         //- Return the mass transfer rate
         virtual tmp<volScalarField> K() const;
 
-        //- Return the dispersed phase mass fraction of a given phase
-        virtual tmp<volScalarField> dispersedYi(const word& name) const;
+        //- Return the phase1 species of a given phase
+        virtual tmp<volScalarField> phase1Y(const word& name) const;
 
-        //- Return the continuous phase mass fraction of a given phase
-        virtual tmp<volScalarField> continuousYi(const word& name) const;
+        //- Return the phase1 species of a given phase
+        virtual tmp<volScalarField> phase2Y(const word& name) const;
 
         //- Return the names of the dispersed phase mass fractions
-        virtual hashedWordList dispersedSpecies() const
+        virtual hashedWordList phase1Species() const
         {
-            return reactingSpecies_;
+            return phase1Species_;
         }
 
         //- Return the names of the continuous phase mass fractions
-        virtual hashedWordList continuousSpecies() const
+        virtual hashedWordList phase2Species() const
         {
-            return productSpecies_;
+            return phase2Species_;
         }
 };
 

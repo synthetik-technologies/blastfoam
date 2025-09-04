@@ -23,104 +23,72 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "massTransferModel.H"
+#include "cavitationMassTransfer.H"
+#include "phaseSystem.H"
 #include "phasePair.H"
-#include "BlendedInterfacialModel.H"
+#include "zeroGradientFvPatchFields.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(massTransferModel, 0);
-    defineBlendedInterfacialModelTypeNameAndDebug(massTransferModel, 0);
-    defineRunTimeSelectionTable(massTransferModel, dictionary);
+namespace massTransferModels
+{
+    defineTypeNameAndDebug(cavitation, 0);
+    addToRunTimeSelectionTable(massTransferModel, cavitation, dictionary);
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::massTransferModel::massTransferModel
+Foam::massTransferModels::cavitation::cavitation
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
-    regIOobject
+    massTransferModel(dict, pair),
+    cavitation_
     (
-        IOobject
+        cavitationModel::New
         (
-            IOobject::groupName(typeName, pair.name()),
-            pair.phase1().mesh().time().name(),
-            pair.phase1().mesh()
+            dict,
+            pair.phase1(),
+            pair.phase1().fluidThermo(),
+            pair.phase2(),
+            pair.phase2().fluidThermo()
         )
-    ),
-    pair_(pair)
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::massTransferModel::~massTransferModel()
+Foam::massTransferModels::cavitation::~cavitation()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::massTransferModel::Y
-(
-    const phaseModel& phase,
-    const word& name
-) const
-{
-    if (&phase == &(pair_.phase1()))
-    {
-        return phase1Y(name);
-    }
-    else
-    {
-        return phase2Y(name);
-    }
-}
-
-
-Foam::hashedWordList Foam::massTransferModel::species
-(
-    const phaseModel& phase
-) const
-{
-    if (&phase == &(pair_.phase1()))
-    {
-        return phase1Species();
-    }
-    else
-    {
-        return phase2Species();
-    }
-}
-
-
 Foam::tmp<Foam::volScalarField>
-Foam::massTransferModel::phase1Y(const word& name) const
+Foam::massTransferModels::cavitation::K() const
 {
-    return volScalarField::New
-    (
-        IOobject::groupName("Yi", name),
-        pair_.phase1().mesh(),
-        dimensionedScalar(dimless, 0.0)
-    );
+    tmp<volScalarField> tResult =
+        volScalarField::New
+        (
+            IOobject::groupName(typedName("dmdt"), pair_.name()),
+            pair_.phase1().mesh(),
+            dimDensity/dimTime,
+            zeroGradientFvPatchField<scalar>::typeName
+        );
+
+    const Pair<tmp<volScalarField::Internal>> mDots(cavitation_->mDots());
+    tResult.ref().internalFieldRef() = mDots[0] - mDots[1];
+    tResult.ref().correctBoundaryConditions();
+
+    return tResult;
 }
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::massTransferModel::phase2Y(const word& name) const
-{
-    return volScalarField::New
-    (
-        IOobject::groupName("Yi", name),
-        pair_.phase1().mesh(),
-        dimensionedScalar(dimless, 0.0)
-    );
-}
-
 
 // ************************************************************************* //

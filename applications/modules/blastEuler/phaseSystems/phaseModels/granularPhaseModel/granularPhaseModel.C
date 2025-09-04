@@ -82,12 +82,13 @@ Foam::granularPhaseModel::granularPhaseModel
         ),
         1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
     ),
-    fluxScheme_(phaseFluxScheme::NewSolid(phi_)),
+    fluxScheme_(),
     surfTModel_(surfaceTemperatureModel::New(phaseDict_, *this))
 {
     kineticTheorySystem_.addPhase(*this);
     thermoPtr_->read(phaseDict_);
 
+    fluxScheme_ = phaseFluxScheme::NewSolid(phi_, residualAlpha().value());
     fluid.mesh().addTemporaryObject(reconstruction::ownName(alphaRho_.name()));
     fluid.mesh().addTemporaryObject(reconstruction::neiName(alphaRho_.name()));
 }
@@ -165,7 +166,6 @@ void Foam::granularPhaseModel::solve()
     //- Solve momentum transport
     this->storeAndBlendOld(alphaRhoU_);
     alphaRhoU_ -= dT*deltaAlphaRhoU;
-    alphaRhoU_.correctBoundaryConditions();
 
     //- Add energy from thermodynaics
     deltaAlphaRhoE -= ESource();
@@ -174,25 +174,21 @@ void Foam::granularPhaseModel::solve()
     // Solve thermal energy transport
     this->storeAndBlendOld(alphaRhoE_);
     alphaRhoE_ -= dT*deltaAlphaRhoE;
-    alphaRhoE_.correctBoundaryConditions();
 
     //- Solve pseudo thermal energy transport
     this->storeAndBlendOld(alphaRhoPTE_);
     this->storeAndBlendDelta(deltaAlphaRhoPTE);
     alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
-    alphaRhoPTE_.correctBoundaryConditions();
 
 
     //- Update volume fraction since density is known
     alphaRho_.max(0.0);
     this->internalFieldRef() = alphaRho_()/rho_();
-    this->correctBoundaryConditions();
 }
 
 
 void Foam::granularPhaseModel::postUpdate()
 {
-    dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
     volScalarField& alpha(*this);
 
     if (needSolve(alpha.name()))
@@ -235,7 +231,8 @@ void Foam::granularPhaseModel::postUpdate()
         fvVectorMatrix UEqn
         (
             fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
-          + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
+          + fvm::ddt(this->residualAlphaRho(), U_)
+          - fvc::ddt(this->residualAlphaRho(), U_)
          ==
             models().source(alpha, rho(), U_)
         );
@@ -259,7 +256,8 @@ void Foam::granularPhaseModel::postUpdate()
         fvScalarMatrix eEqn
         (
             fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRhoE_)
-          + fvm::ddt(smallAlphaRho, he()) - fvc::ddt(smallAlphaRho, he())
+          + fvm::ddt(this->residualAlphaRho(), he())
+          - fvc::ddt(this->residualAlphaRho(), he())
         ==
             models().source(alpha, rho(), he())
         );
@@ -280,8 +278,8 @@ void Foam::granularPhaseModel::postUpdate()
            *(
                 fvm::ddt(alpha, rho(), Theta_)
               - fvc::ddt(alphaRho_.prevIter(), Theta_)
-              + fvm::ddt(smallAlphaRho, Theta_)
-              - fvc::ddt(smallAlphaRho, Theta_)
+              + fvm::ddt(this->residualAlphaRho(), Theta_)
+              - fvc::ddt(this->residualAlphaRho(), Theta_)
             )
          ==
             models().source(alpha, rho(), Theta_)
@@ -343,8 +341,7 @@ void Foam::granularPhaseModel::update()
         phi_,
         alphaRhoPhi_,
         alphaRhoUPhi_,
-        alphaRhoEPhi_,
-        residualAlpha().value()
+        alphaRhoEPhi_
     );
 
     //- Calculate PTE flux by using Riemann flux scheme to interpolate

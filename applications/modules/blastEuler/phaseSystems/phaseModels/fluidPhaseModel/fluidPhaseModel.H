@@ -122,6 +122,9 @@ public:
             //- Update viscous terms
             virtual void postUpdate();
 
+            //- Correct delta terms
+            virtual void correctDeltas();
+
         //- Return the flux scheme
         virtual const phaseFluxScheme& flux() const
         {

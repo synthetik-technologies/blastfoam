@@ -99,6 +99,8 @@ protected:
         //- Reference to phase models
         mutable phaseModelList phaseModels_;
 
+        UPtrList<const phaseModel> fixedPhaseModels_;
+
         //- Local indexes of phases
         Map<label> phaseIndicies_;
 

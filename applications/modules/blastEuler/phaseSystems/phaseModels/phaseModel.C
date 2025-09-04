@@ -218,56 +218,9 @@ void Foam::phaseModel::solveD()
         return;
     }
 
-    //- Update diameterModel
-    volScalarField PI
-    (
-        volScalarField::New
-        (
-            IOobject::groupName("PI", name_),
-            fluid_.mesh(),
-            dimensionedScalar(dimPressure, 0.0)
-        )
-    );
-    tmp<volScalarField> sumAlpha
-    (
-        volScalarField::New
-        (
-            IOobject::groupName("sumAlpha", name_),
-            fluid_.mesh(),
-            dimensionedScalar(dimless, 0.0)
-        )
-    );
-
-    forAll(fluid_.phases(), phasei)
-    {
-        const phaseModel& otherPhase = fluid_.phases()[phasei];
-        if
-        (
-            fluid_.foundInterfacialModel<interfacialPressureModel>
-            (
-                *this,
-                otherPhase,
-                false
-            )
-        )
-        {
-            PI +=
-                fluid_.lookupInterfacialModel<interfacialPressureModel>
-                (
-                    *this,
-                    otherPhase,
-                    false
-                ).PI()
-               *otherPhase;
-            sumAlpha.ref() += otherPhase;
-        }
-    }
-
-    PI /= Foam::max(sumAlpha, this->residualAlpha());
-
     // Evolve the diameter model using the interfacial pressure and the
     // surface temperature
-    dPtr_->solve(PI, Ts());
+    dPtr_->solve(fluid_.p(), Ts());
 }
 
 

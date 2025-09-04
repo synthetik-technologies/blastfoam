@@ -52,31 +52,33 @@ Foam::instantPressureRelaxation::instantPressureRelaxation
     pressureRelaxationSolver(fluid, true),
     ScalarMultivariateEquation
     (
-        2*phaseModels_.size(),
-        scalarField(2*phaseModels_.size(), 0.0),
-        scalarField(2*phaseModels_.size(), great)
+        phaseModels_.size() + 1,
+        scalarField(phaseModels_.size() + 1, 0.0),
+        scalarField(phaseModels_.size() + 1, great)
     ),
-    alphaPIEqn_(phaseModels_, thermos_),
-    simpleEqn_(phaseModels_, thermos_, alpha0_, e0_, Pi0_)
-    // rootSolver_(rootSolver::New(*this, dict)),
-    // uniRootSolver_(univariateRootSolver::New(simpleEqn_, dict)),
-    // integrator_(scalarIntegrator::New(alphaPIEqn_, dict))
+    useRootSolver_
+    (
+        phaseModels_.size() > 2
+     || dict.lookupOrDefault<bool>("useRootSolver", true)
+    )
 {
-    scalarField ll(this->lowerLimits());
-    for (label i = phaseModels_.size(); i < ll.size(); i++)
+    if (useRootSolver_)
     {
-        ll[i] = -great;
-    }
-    this->setLowerLimits(ll);
+        // Set dX values
+        this->dX_ = 1e-6;
+        this->dX_.last() = 1.0;
 
-    scalarField ul(this->upperLimits());
-    for (label i = 0; i < phaseModels_.size(); i++)
-    {
-        ul[i] = 1.0;
-    }
-    this->setUpperLimits(ul);
+        // Set number of equation (alpha1->alphaN, PI)
+        pressureRelaxationSolver::nEqns_ = phaseModels_.size() + 1;
 
-    pressureRelaxationSolver::nEqns_ = phaseModels_.size()*2;
+        // No upper limit for any
+        rootSolver_ = rootSolver::New(*this, dict);
+
+        rootSolver_->relTolerances() = 1e-10;
+        rootSolver_->relTolerances().last() = 1e-10;
+        rootSolver_->absTolerances() = small;
+    }
+
 }
 
 
@@ -88,300 +90,11 @@ Foam::instantPressureRelaxation::~instantPressureRelaxation()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::instantPressureRelaxation::FX
-(
-    const ScalarMultivariateEquation::VarType& alphaPI,
-    const label li,
-    scalarList& fx
-) const
-{
-    // fx.setSize(nEqns());
-    // fx = 0.0;
-    // scalar sumAlpha = 0;
-    //
-    // forAll(phaseModels_, phasei)
-    // {
-    //     scalar alphaRho = phaseModels_[phasei].alphaRho()[li];
-    //     if (alphaRho < 1e-10)
-    //     {
-    //         continue;
-    //     }
-    //     const scalar alpha = alphaPI[phasei];
-    //     const scalar rho = alphaRho/max(alpha, 1e-6);
-    //     thermos_[phasei].rhoRef()[li] = rho;
-    //     scalar e = thermos_[phasei].calcCelle(alphaPI.last(), li);
-    //     thermos_[phasei].he()[li] = e;
-    //     const scalar pi = thermos_[phasei].cellpRhoT(li, false);
-    //
-    //     fx[phasei] = pi - alphaPI.last();
-    //
-    //         // 2.0*rhoPI[phasei]*rho0_[phasei]*(e - e0_[phasei])
-    //       // + (rhoPI.last() + PI0_)*(rhoPI[phasei] - rho0_[phasei]);
-    //     sumAlpha += alpha;
-    // }
-    // fx.last() = 1.0 - sumAlpha;
-}
-
-
-void Foam::instantPressureRelaxation::jacobian
-(
-    const ScalarMultivariateEquation::VarType& rhoPI,
-    const label li,
-    scalarList& fx,
-    RectangularMatrix<scalar>& J
-) const
-{
-    // J.setSize(nEqns(), nEqns());
-    // fx.setSize(nEqns(), 0.0);
-    // scalar sumAlpha = 0;
-    // fx = 0.0;
-    // J = Zero;
-    //
-    // forAll(phaseModels_, phasei)
-    // {
-    //     const scalar alphaRho = phaseModels_[phasei].alphaRho()[li];
-    //     if (alphaRho < 1e-10)
-    //     {
-    //         continue;
-    //     }
-    //     const scalar rhos = max(rhoPI[phasei], 1e-10);
-    //     const scalar alpha = alphaRho/rhos;
-    //     thermos_[phasei].rhoRef()[li] = rhoPI[phasei];
-    //     scalar e = thermos_[phasei].calcCelle(rhoPI.last(), li);
-    //     thermos_[phasei].he()[li] = e;
-    //
-    //     const scalar pi = thermos_[phasei].cellpRhoT(li, false);
-    //     const scalar dpdRho = thermos_[phasei].celldpdRho(li);
-    //     const scalar dAlphadRho = -alphaRho/sqr(rhos);
-    //
-    //     fx[phasei] = pi - rhoPI.last();
-    //     J(phasei, phasei) = thermos_[phasei].celldpdRho(li);
-    //     J(phasei, phaseModels_.size()) = -1.0;
-    //     J(phaseModels_.size(), phasei) = dAlphadRho;
-    //
-    //     sumAlpha += alpha;
-    // }
-    //
-    // // forAll(phaseModels_, phasei)
-    // // {
-    // //     scalar alphaRho = phaseModels_[phasei].alphaRho()[li];
-    // //     if (alphaRho < 1e-10)
-    // //     {
-    // //         continue;
-    // //     }
-    // //     scalar alpha = alphaRho/max(rhoPI[phasei], 1e-10);
-    // //     thermos_[phasei].rho()[li] = rhoPI[phasei];
-    // //     scalar e = thermos_[phasei].calcCelle(rhoPI.last(), li);
-    // //     thermos_[phasei].he()[li] = e;
-    // //
-    // //     fx[phasei] =
-    // //         2.0*rhoPI[phasei]*rho0_[phasei]*(e - e0_[phasei])
-    // //       + (rhoPI.last() + PI0_)*(rhoPI[phasei] - rho0_[phasei]);
-    // //
-    // //     J(phasei, phasei) =
-    // //         2.0*rho0_[phasei]
-    // //        *(
-    // //             (e - e0_[phasei])
-    // //           + rhoPI[phasei]*thermos_[phasei].celldpde(li)
-    // //         );
-    // //     J(phasei, phaseModels_.size()) = -alphaRho/sqr(rhoPI[phasei]);
-    // //     J(phaseModels_.size(), phasei) = rho0_[phasei] - rhoPI[phasei];
-    // //
-    // //     sumAlpha += alpha;
-    // // }
-    // // fx.last() = sumAlpha - 1.0;
-    // J(phaseModels_.size(), phaseModels_.size()) = small;
-}
-
-
-void Foam::instantPressureRelaxation::relax1
-(
-    const scalar deltaT
-)
-{
-    const bool print = false;
-    scalar D = 2.0;
-    scalar eps = 0.5;
-    const label maxIter = 1000;
-    const scalar pRelTol = 1e-8;
-    const scalar pAbsTol = 1.0;
-    phaseModel& phase1 = phaseModels_[0];
-    phaseModel& phase2 = phaseModels_[1];
-
-    fluidBlastThermo& thermo1 = thermos_[0];
-    fluidBlastThermo& thermo2 = thermos_[1];
-
-    const scalar rAlpha1 = phase1.residualAlpha().value();
-    const scalar rAlpha2 = phase2.residualAlpha().value();
-
-    bool end = false;
-
-    //Procedure 1
-    forAll(phase1, celli)
-    {
-        scalar& alpha1 = phase1[celli];
-        scalar& alpha2 = phase2[celli];
-
-        if (alpha1 < rAlpha1 || alpha2 < rAlpha2)
-        {
-            continue;
-        }
-
-        const scalar alpha10 = alpha1;
-        const scalar alpha20 = alpha2;
-
-        const scalar alphaRho1 = phase1.alphaRho()[celli];
-        const scalar alphaRho2 = phase2.alphaRho()[celli];
-
-        scalar& rho1 = thermo1.rhoRef()[celli];
-        scalar& rho2 = thermo2.rhoRef()[celli];
-
-        rho1 = alphaRho1/max(alpha1, rAlpha1);
-        rho2 = alphaRho2/max(alpha2, rAlpha2);
-
-        scalar& e1 = thermo1.he()[celli];
-        scalar& e2 = thermo2.he()[celli];
-
-        scalar& T1 = thermo1.T()[celli];
-        scalar& T2 = thermo2.T()[celli];
-
-        scalar& alphaRhoE1 = phase1.alphaRhoE()[celli];
-        scalar& alphaRhoE2 = phase2.alphaRhoE()[celli];
-
-        const scalar alphaRhoE10 = alphaRhoE1;
-        const scalar alphaRhoE20 = alphaRhoE2;
-
-        const scalar KE1 = 0.5*magSqr(phase1.alphaRhoU()[celli]/alphaRho1);
-        const scalar KE2 = 0.5*magSqr(phase2.alphaRhoU()[celli]/alphaRho2);
-
-        e1 = (alphaRhoE1)/max(alphaRho1, rAlpha1) - KE1;
-        e2 = (alphaRhoE2)/max(alphaRho2, rAlpha2) - KE2;
-
-        // T1 = max(thermo1.cellThe(e1, T1, rho1), small);
-        // T2 = max(thermo2.cellThe(e2, T2, rho2), small);
-
-        scalar& p1 = thermo1.p()[celli];
-        scalar& p2 = thermo2.p()[celli];
-
-        p1 = phase1.cellpRhoT(celli);
-        p2 = phase2.cellpRhoT(celli);
-
-        scalar PI = fluid_.cellPI(celli);
-
-        scalar dPI = p1 - p2;
-
-        if (mag(dPI)/PI < pRelTol)
-        {
-            continue;
-        }
-
-        scalar dPIOld = dPI;
-
-        scalar dalpha =
-            eps
-           *min
-            (
-                max(rAlpha1, alpha1),
-                max(rAlpha2, alpha2)
-            );
-        if (alpha1 + dalpha > 1)
-        {
-            dalpha *= -1.0;
-        }
-        const scalar dalpha0 = dalpha;
-
-        scalar delta = 0.0;
-
-        if(print)
-            Info<<"alpha0: "<<alpha10<<" "<<alpha20<<endl
-                <<"rho0: "<<rho1<<" "<<rho2<<endl
-                <<"p0: "<<p1<<" "<<p2<<" "<<PI<<endl;
-
-        if (p1 < small || p2 < small)
-        {
-            end = true;
-        }
-        label iter = 0;
-        OStringStream os;
-        do
-        {
-            alpha1 += dalpha;
-            alpha2 = 1.0 - alpha1;
-
-            delta += dalpha*PI;
-
-            rho1 = alphaRho1/max(alpha1, rAlpha1);
-            rho2 = alphaRho2/max(alpha2, rAlpha2);
-
-            alphaRhoE1 = alphaRhoE10 - delta;
-            alphaRhoE2 = alphaRhoE20 + delta;
-
-            e1 = alphaRhoE1/max(alphaRho1, rAlpha1) - KE1;
-            e2 = alphaRhoE2/max(alphaRho2, rAlpha2) - KE2;
-
-            if(print)
-                Info<<"iter " << iter<<":"<<nl
-                << "    alpha: " << alpha1 << " "<<alpha2<<nl
-                << "    alphaRho: " << alphaRho1 << " "<<alphaRho2<<nl
-                << "    alphaRhoE: " << alphaRhoE1 << " "<<alphaRhoE2<<nl
-                << "    alphaRhoe: " << alphaRhoE1-KE1 << " "<<alphaRhoE2-KE2<<nl
-                << "    rho: " << rho1 << " "<<rho2<<nl
-                << "    e: " << e1 << " "<<e2<<endl
-                << "    T: " << T1 << " "<<T2<<endl;
-
-            // T1 = max(thermo1.cellThe(e1, T1, celli), small);
-            // T2 = max(thermo2.cellThe(e2, T2, celli), small);
-
-            p1 = thermo1.cellpRhoT(celli);
-            p2 = thermo2.cellpRhoT(celli);
-            PI = fluid_.cellPI(celli);
-
-            dPI = p1 - p2;
-
-            if(print)Info<<"    p: " <<PI <<" "<<p1<<" "<<p2<<nl
-                <<"    error: "<<dPI<<" "<<dPI/PI<<endl;
-
-            if (mag(dPI/PI) < pRelTol || D < small)
-            {
-                break;
-            }
-
-            // Info<<D<<" "<<dPI<<" "<<dPIOld<<endl;
-            if (dPI*dPIOld < 0)
-            {
-                dalpha = dalpha/D;
-            }
-            else if (mag(dPI) > mag(dPIOld))
-            {
-                dalpha = -dalpha/D;
-            }
-            dPIOld = dPI;
-
-            // Info<<"   dalpha: "<<dalpha<<" "<<alpha1+dalpha<<endl;
-            if (alpha1 + dalpha >= 1 - mag(dalpha))
-            {
-                dalpha = (1.0 - alpha1)/D;
-                // Info<<"   dalpha+: "<<dalpha<<endl;
-            }
-            if (alpha1 + dalpha <= mag(dalpha))
-            {
-                dalpha = alpha1/D;
-                // Info<<"   dalpha-: "<<dalpha<<endl;
-            }
-        } while (++iter < maxIter);
-
-        phase1.alphaRhoE()[celli] = alpha1*rho1*(e1 + KE1);
-        phase2.alphaRhoE()[celli] = alpha2*rho2*(e2 + KE2);
-    }
-}
-
-
 void Foam::instantPressureRelaxation::relax4
 (
     const scalar deltaT
 )
 {
-    const bool print = false;
     const label maxIter = 100;
     const scalar pRelTol = 1e-6;
     phaseModel& phase1 = phaseModels_[0];
@@ -396,8 +109,6 @@ void Foam::instantPressureRelaxation::relax4
     const scalar rAlphaRho1 = phase1.residualAlphaRho().value();
     const scalar rAlphaRho2 = phase2.residualAlphaRho().value();
 
-    bool end = false;
-
     forAll(phase1, celli)
     {
         scalar& alpha1 = phase1[celli];
@@ -410,17 +121,12 @@ void Foam::instantPressureRelaxation::relax4
         (
             alpha1 < rAlpha1
          || alpha2 < rAlpha2
-         // || alphaRho1 < rAlphaRho1
-         // || alphaRho2 < rAlphaRho2
+         || alphaRho1 < rAlphaRho1
+         || alphaRho2 < rAlphaRho2
         )
         {
             continue;
         }
-
-        OStringStream os;
-
-        const scalar alpha10 = alpha1;
-        const scalar alpha20 = alpha2;
 
         scalar& rho1 = thermo1.rhoRef()[celli];
         scalar& rho2 = thermo2.rhoRef()[celli];
@@ -440,18 +146,11 @@ void Foam::instantPressureRelaxation::relax4
         scalar& T1 = thermo1.T()[celli];
         scalar& T2 = thermo2.T()[celli];
 
-        if(print)
-            os<<"alpha0: "<<alpha10<<" "<<alpha20<<endl
-                <<"rho0: "<<rho1<<" "<<rho2<<endl
-                <<"alphaRho0: "<<alphaRho1<<" "<<alphaRho2<<endl
-                <<"e0: "<<e1<<" "<<e2<<endl;
-
-        scalar e1Test = thermo1.cellhe(small, celli);
+        scalar e1Test = thermo1.cellhe(thermo1.TLow(), celli);
         if (e1 < e1Test)
         {
             e1 = e1Test;
-            T1 = small;
-            if (print) Info<<"corr1: "<<e1<<endl;
+            T1 = thermo1.TLow();
         }
         else
         {
@@ -463,7 +162,6 @@ void Foam::instantPressureRelaxation::relax4
         {
             e2 = e2Test;
             T2 = thermo2.TLow();
-            if (print) Info<<"corr2: "<<e2<<endl;
         }
         else
         {
@@ -489,13 +187,7 @@ void Foam::instantPressureRelaxation::relax4
             continue;
         }
 
-        if(print)
-            Pout<<"p0: "<<PI<<" "<<p1<<" "<<p2<<endl
-                <<"e0: "<<e1<<" "<<e2<<endl
-                <<"T0: "<<T1<<" "<<T2<<endl;
-
         label iter = 0;
-        label iter1 = 0;
         do
         {
             scalar dalpha = dPI/(C1 + C2);
@@ -527,59 +219,110 @@ void Foam::instantPressureRelaxation::relax4
             rho1 = alphaRho1/max(alpha1, rAlpha1);
             rho2 = alphaRho2/max(alpha2, rAlpha2);
 
-            if(print)
-                Pout<<"iter " << iter1<<":"<<nl
-                << "    alpha: " << alpha1 << " "<<alpha2<<nl
-                << "    alphaRho: " << alphaRho1 << " "<<alphaRho2<<nl
-                << "    rho: " << rho1 << " "<<rho2<<nl
-                << "    p: " <<PI <<" "<<p1<<" "<<p2<<nl
-                << "    e: " << e1 << " "<<e2<<endl
-                << "    T: " << T1 << " "<<T2<<endl;
-
-
-
             e1 = thermo1.calcCelle(p1, celli);
             e2 = thermo2.calcCelle(p2, celli);
 
-            // T1 = max(thermo1.cellThe(e1, T1, celli), small);
-            // T2 = max(thermo2.cellThe(e2, T2, celli), small);
-
-            // p1 = thermo1.cellpRhoT(celli);
-            // p2 = thermo2.cellpRhoT(celli);
-
             PI = fluid_.cellPI(celli);
 
-            const scalar dPIRel = dPI/PI;
-
-            if(print)
-                os<<"    p: " <<PI <<" "<<p1<<" "<<p2<<nl
-                <<"    error: "<<dPI<<" "<<dPIRel<<endl;
-
-            if (mag(dPIRel) < pRelTol)
+            if (mag(dPI/PI) < pRelTol)
             {
                 break;
             }
 
             C1 = sqr(phase1.cellSpeedOfSound(PI, celli))*rho1/alpha1;
             C2 = sqr(phase2.cellSpeedOfSound(PI, celli))*rho2/alpha2;
-            iter1++;
 
             dPIOld = dPI;
         } while (++iter < maxIter);
 
         phase1.alphaRhoE()[celli] = alpha1*rho1*(e1 + KE1);
         phase2.alphaRhoE()[celli] = alpha2*rho2*(e2 + KE2);
-
-        if (mag(dPI) > small && print && iter1 > 1)
-        {
-            os<<"nIter = " << iter<<": "<<alpha1<<" "<<alpha10<<endl;
-            Info<<word(os.str())<<endl;
-            end = true;
-        }
     }
-    if (end)
-        std::exit(0);
 }
+
+
+void Foam::instantPressureRelaxation::FX
+(
+    const ScalarMultivariateEquation::VarType& alphaPI,
+    const label li,
+    scalarList& fx
+) const
+{
+    fx.setSize(nEqns());
+    fx = 0.0;
+
+    const scalar PI = alphaPI.last();
+    scalar sumAlpha = 0;
+
+    forAll(rho0_, i)
+    {
+        const label phasei = phases_[i];
+
+        const scalar alpha = alphaPI[i];
+        const scalar rho = alphaRho0_[i]/max(alpha, phaseModels_[phasei].residualAlpha().value());
+
+        // const scalar rho = alphaPI[i];
+        // const scalar alpha = alphaRho0_[i]/max(rho, small);
+
+        thermos_[phasei].rhoRef()[li] = rho;
+
+        const scalar e = thermos_[phasei].calcCelle(PI, li);
+        thermos_[phasei].he()[li] = e;
+
+        fx[i] =
+        (
+            alphaRho0_[i]*(e - e0_[i])
+          + 0.5*(PI + PI0_)*(alpha - alpha0_[i])
+        );///max(PI, small);
+
+        // fx[i] =
+        //     (
+        //         2.0*rho*rho0_[i]*(e - e0_[i])
+        //       + (PI + PI0_)*(rho - rho0_[i])
+        //     );
+
+        sumAlpha += alpha;
+    }
+    fx.last() = (sumAlpha - alphaMax_);
+}
+
+
+// void Foam::instantPressureRelaxation::jacobian
+// (
+//     const typename ScalarMultivariateEquation::VarType& alphaPI,
+//     const label li,
+//     scalarList& fx,
+//     RectangularMatrix<scalar>& J
+// ) const
+// {
+//     fx.setSize(nEqns());
+//     fx = 0.0;
+//     J = Zero;
+//
+//     const scalar PI = alphaPI.last();
+//     scalar sumAlpha = 0;
+//
+//     forAll(rho0_, i)
+//     {
+//         const label phasei = phases_[i];
+//         const scalar alpha = alphaPI[i];
+//         const scalar rho = alphaRho0_[i]/max(alpha, small);
+//         thermos_[phasei].rhoRef()[li] = rho;
+//
+//         const scalar e = thermos_[phasei].calcCelle(PI, li);
+//         thermos_[phasei].he()[li] = e;
+//
+//         fx[i] =
+//             alphaRho0_[i]*(e - e0_[i])
+//           + 0.5*(PI + PI0_)*(alpha - alpha0_[i]);
+//         J(i, i) = 0.5*(PI + PI0_);
+//         J(i, alphaPI.size()-1) = PI;
+//
+//         sumAlpha += alpha;
+//     }
+//     fx.last() = (sumAlpha - alphaMax_)*PI;
+//     J(alphaPI.size()-1, alphaPI.size()-1) = sumAlpha - alphaMax_;
+// }
 
 
 bool Foam::instantPressureRelaxation::solve
@@ -587,40 +330,371 @@ bool Foam::instantPressureRelaxation::solve
     const scalar& deltaT
 )
 {
-    // alpha0_.setSize(phaseModels_.size());
-    // e0_.setSize(phaseModels_.size());
-    // Pi0_.setSize(phaseModels_.size());
-    //
-    // // scalarField alpha_e(phaseModels_.size() + 1);
-    // forAll(phaseModels_[0], celli)
-    // {
-    //     // if (celli !=84)
-    //     // {
-    //     //     continue;
-    //     // }
-    //     forAll(phaseModels_, phasei)
-    //     {
-    //         alpha0_[phasei] = phaseModels_[phasei][celli];
-    //         e0_[phasei] = phaseModels_[phasei].he()[celli];
-    //         Pi0_[phasei] = thermos_[phasei].p()[celli];
-    //         // alphaPI[phasei] = alpha0_[phasei];
-    //     }
-    //     // PI0_ = fluid_.PI()[celli];
-    //     // alphaPI.last() = fluid;
-    //
-    //     // alphaPI = rootSolver_->solve(alphaPI, celli);
-    //
-    //     scalar alpha = alpha0_[0];
-    //     // if (alpha0_[0] > 1e-6 && alpha0_[0] < 1.0 - 1e-6)
-    //     {
-    //         alpha = uniRootSolver_->solve(alpha, 0.0, 1.0, celli);
-    //     }
-    // }
-    // // std::exit(0);
+    if (!useRootSolver_)
+    {
+        relax4(deltaT);
+        return true;
+    }
 
-    // relax1(deltaT);
-    relax4(deltaT);
+
+    DynamicList<scalar> KEs(phaseModels_.size());
+    DynamicList<scalar> alphaPI(phaseModels_.size() + 1);
+    DynamicList<scalar> lower(phaseModels_.size() + 1, 0.0);
+    DynamicList<scalar> upper(phaseModels_.size() + 1, great);
+    DynamicList<scalar> dX(phaseModels_.size() + 1);
+    const scalarField relTols(rootSolver_->relTolerances());
+    const scalarField absTols(rootSolver_->absTolerances());
+    DynamicList<label> inds(phaseModels_.size() + 1);
+    forAll(phaseModels_[0], celli)
+    {
+        // Clear temporary variables
+        alpha0_.clear();
+        alphaRho0_.clear();
+        rho0_.clear();
+        e0_.clear();
+        KEs.clear();
+        alphaPI.clear();
+        phases_.clear();
+        dX.clear();
+        lower.clear();
+        upper.clear();
+        inds.clear();
+
+        // Look for non-negligible phases
+        alphaMax_ = 1.0;
+        forAll(fixedPhaseModels_, i)
+        {
+            alphaMax_ -= fixedPhaseModels_[i][celli];
+        }
+
+        forAll(phaseModels_, phasei)
+        {
+            const phaseModel& phase = phaseModels_[phasei];
+            const scalar alpha = phase[celli];
+            const scalar alphaRho = phase.alphaRho()[celli];
+            if
+            (
+                alpha > phase.residualAlpha().value()
+             && alphaRho > phase.residualAlphaRho().value()
+            )
+            {
+                fluidBlastThermo& thermo = thermos_[phasei];
+                const scalar rho = alphaRho/alpha;
+                thermo.rhoRef()[celli] = rho;
+
+                scalar& e = thermo.he()[celli];
+                KEs.append(0.5*magSqr(phase.alphaRhoU()[celli]/alphaRho));
+
+                e = phase.alphaRhoE()[celli]/alphaRho - KEs.last();
+
+                scalar& T = thermo.T()[celli];
+                scalar eTest = thermo.cellhe(thermo.TLow(), celli);
+                if (e < eTest)
+                {
+                    e = eTest;
+                    T = thermo.TLow();
+                }
+                else
+                {
+                    T = thermo.cellThe(e, T, celli);
+                }
+
+                thermo.p()[celli] = phase.cellpRhoT(celli);
+
+                phases_.append(phasei);
+
+                alpha0_.append(alpha);
+                alphaRho0_.append(alphaRho);
+                rho0_.append(rho);
+                e0_.append(e);
+
+                alphaPI.append(alpha);
+                dX.append(phase.residualAlpha().value());
+                lower.append(0.0);
+                upper.append(1.0);
+                inds.append(phasei);
+
+                // alphaPI.append(rho);
+                // dX.append(rho*1e-4);
+                // lower.append(0.0);
+                // upper.append(great);
+                // inds.append(phasei);
+            }
+        }
+
+        if (phases_.size() < 2) continue;
+
+        // Update interfacial pressure
+        PI0_ = fluid_.cellPI(celli);
+
+        // Check if pressure actually needs to be relaxed
+        scalar maxdPI = 0.0;
+        forAll(phases_, i)
+        {
+            maxdPI = max
+            (
+                maxdPI,
+                mag(thermos_[phases_[i]].p()[celli] - PI0_)
+            );
+        }
+
+        if (maxdPI < PI0_*1e-6)
+        {
+            continue;
+        }
+
+        // Add interfacial pressure info
+        alphaPI.append(PI0_);
+        dX.append(max(PI0_*1e-4, 1.0));
+        lower.append(small);
+        upper.append(great);
+        inds.append(phaseModels_.size());
+
+
+        // Update number of variables, equations, and set bounds and dX terms
+        pressureRelaxationSolver::nEqns_ = alphaPI.size();
+        ScalarMultivariateEquation::nEqns_ = alphaPI.size();
+        ScalarMultivariateEquation::nVar_ = ScalarMultivariateEquation::nEqns_;
+
+        this->dX_ = dX;
+        this->setLowerLimits(lower);
+        this->setUpperLimits(upper);
+
+        // Update tolerances (subset of original tolerances)
+        rootSolver_->absTolerances() = scalarField(absTols, inds);
+        rootSolver_->relTolerances() = scalarField(relTols, inds);
+
+        // Root solve
+        alphaPI = rootSolver_->solve(alphaPI, celli);
+
+        // Transfer final information
+        forAll(rho0_, i)
+        {
+            const label phasei = phases_[i];
+            phaseModel& phase = phaseModels_[phasei];
+            fluidBlastThermo& thermo = thermos_[phasei];
+
+            const scalar alphaRho = alphaRho0_[i];
+
+            phase[celli] = alphaPI[i];
+            const scalar rho =
+                alphaRho0_[i]/max(alphaPI[i], phase.residualAlpha().value());
+
+            // const scalar rho = alphaPI[i];
+            // phase[celli] = alphaRho0_[i]/max(rho, small);
+
+            thermo.rhoRef()[celli] = rho;
+            phase.he()[celli] =
+                max
+                (
+                    thermo.calcCelle(alphaPI.last(), celli),
+                    thermo.cellhe(thermo.TLow(), celli)
+                );
+            phase.alphaRhoE()[celli] = alphaRho*(phase.he()[celli] + KEs[i]);
+        }
+    }
+
+    rootSolver_->absTolerances() = absTols;
+    rootSolver_->relTolerances() = relTols;
+
     return true;
 }
 
+// void Foam::instantPressureRelaxation::FX
+// (
+//     const ScalarMultivariateEquation::VarType& rhoPI,
+//     const label li,
+//     scalarList& fx
+// ) const
+// {
+//     fx.setSize(nEqns());
+//     fx = 0.0;
+//
+//     const scalar PI = rhoPI.last();
+//     scalar sumAlpha = 0;
+//
+//     forAll(rho0_, i)
+//     {
+//         const label phasei = phases_[i];
+//         const scalar alpha = rhoPI[i];
+//         const scalar rho = rhoPI[i + phases_.size()];
+//         thermos_[phasei].rhoRef()[li] = rho;
+//         const scalar e = thermos_[phasei].calcCelle(PI, li);
+//
+//         fx[i] = alpha*rho - alphaRho0_[i];
+//         fx[i + phases_.size()] =
+//             (e*alpha*rho - e0_[i]*alphaRho0_[i])
+//           + (alpha - alpha0_[i])*0.5*(PI0_ + PI);
+//
+//         sumAlpha += alpha;
+//     }
+//     fx.last() = sumAlpha - alphaMax_;
+// }
+//
+//
+// bool Foam::instantPressureRelaxation::solve
+// (
+//     const scalar& deltaT
+// )
+// {
+//     // // relax1(deltaT);
+//     if (!useRootSolver_)
+//     {
+//         relax4(deltaT);
+//         return true;
+//     }
+//
+//
+//     DynamicList<scalar> KEs(phaseModels_.size());
+//     DynamicList<scalar> rhoPI(2*phaseModels_.size() + 1);
+//     DynamicList<scalar> lower(2*phaseModels_.size() + 1, 0.0);
+//     DynamicList<scalar> upper(2*phaseModels_.size() + 1, great);
+//     DynamicList<scalar> dX(2*phaseModels_.size() + 1);
+//     const scalarField relTols(rootSolver_->relTolerances());
+//     const scalarField absTols(rootSolver_->absTolerances());
+//     DynamicList<label> inds(2*phaseModels_.size());
+//     forAll(phaseModels_[0], celli)
+//     {
+//         alpha0_.clear();
+//         alphaRho0_.clear();
+//         rho0_.clear();
+//         e0_.clear();
+//         KEs.clear();
+//         rhoPI.clear();
+//         phases_.clear();
+//         dX.clear();
+//         lower.clear();
+//         upper.clear();
+//         inds.clear();
+//
+//         // Look for non-negligible phases
+//         forAll(phaseModels_, phasei)
+//         {
+//             const phaseModel& phase = phaseModels_[phasei];
+//             const scalar alpha = phase[celli];
+//             const scalar alphaRho = phase.alphaRho()[celli];
+//             if
+//             (
+//                 alpha > phase.residualAlpha().value()
+//              && alphaRho > phase.residualAlphaRho().value()
+//             )
+//             {
+//                 fluidBlastThermo& thermo = thermos_[phasei];
+//                 const scalar rho =
+//                     alphaRho/max(alpha, phase.residualAlpha().value());
+//                 thermo.rhoRef()[celli] = rho;
+//
+//                 scalar& e = thermo.he()[celli];
+//                 KEs.append
+//                 (
+//                     0.5*magSqr(phase.alphaRhoU()[celli]/max(alphaRho, 1e-6))
+//                 );
+//
+//                 e = phase.alphaRhoE()[celli]/max(alphaRho, 1e-6) - KEs.last();
+//
+//                 scalar& T = thermo.T()[celli];
+//
+//                 scalar eTest = thermo.cellhe(small, celli);
+//                 if (e < eTest)
+//                 {
+//                     e = eTest;
+//                     T = small;
+//                 }
+//                 else
+//                 {
+//                     T = thermo.cellThe(e, T, celli);
+//                 }
+//
+//                 thermo.p()[celli] = phase.cellpRhoT(celli);
+//
+//                 alpha0_.append(alpha);
+//                 alphaRho0_.append(alphaRho);
+//                 rho0_.append(rho);
+//                 e0_.append(e);
+//                 rhoPI.append(alpha);
+//
+//                 phases_.append(phasei);
+//                 inds.append(phasei);
+//
+//                 dX.append(max(alpha*1e-4, 1e-6));
+//                 upper.append(1.0);
+//                 // lower.append(phase.residualRho().value());
+//             }
+//         }
+//         if (phases_.size() < 2) continue;
+//
+//         // Update interfacial pressure
+//         PI0_ = fluid_.PI()[celli];
+//
+//         // Check if pressure actually needs to be relaxed
+//         scalar maxdPI = 0.0;
+//         forAll(phases_, i)
+//         {
+//             maxdPI = max
+//             (
+//                 maxdPI,
+//                 mag(thermos_[phases_[i]].p()[celli] - PI0_)
+//             );
+//         }
+//
+//         if (maxdPI < PI0_*1e-6)
+//         {
+//             continue;
+//         }
+//
+//         // Add the additional density information
+//         forAll(phases_, i)
+//         {
+//             rhoPI.append(rho0_[i]);
+//             dX.append(max(rho0_[i]*1e-4, phaseModels_[phases_[i]].residualRho().value()));
+//             upper.append(great);
+//             inds.append(phases_[i] + phaseModels_.size());
+//         }
+//
+//         // Add interfacial pressure info
+//         rhoPI.append(PI0_);
+//         dX.append(PI0_*1e-4);
+//         upper.append(great);
+//         inds.append(2*phaseModels_.size());
+//         // lower.append(0);
+//
+//         // Update number of variables, equations, and set bounds and dX terms
+//         ScalarMultivariateEquation::nEqns_ = 2*phases_.size() + 1;
+//         ScalarMultivariateEquation::nVar_ = ScalarMultivariateEquation::nEqns_;
+//
+//         lower.setSize(this->nVar());
+//         // upper.setSize(this->nVar());
+//
+//         this->dX_ = dX;
+//         this->setLowerLimits(lower);
+//         this->setUpperLimits(upper);
+//
+//         // Update tolerances
+//         rootSolver_->absTolerances() = scalarField(absTols, inds);
+//         rootSolver_->relTolerances() = scalarField(relTols, inds);
+//
+//
+//         rhoPI = rootSolver_->solve(rhoPI, celli);
+//         forAll(rho0_, i)
+//         {
+//             const label phasei = phases_[i];
+//             phaseModel& phase = phaseModels_[phasei];
+//             fluidBlastThermo& thermo = thermos_[phasei];
+//
+//             const scalar alphaRho = alphaRho0_[i];
+//             phase[celli] = rhoPI[i];
+//             thermo.rhoRef()[celli] = rhoPI[i + phases_.size()];
+//             phase.he()[celli] = thermo.calcCelle(rhoPI.last(), celli);
+//             phase.alphaRhoE()[celli] =
+//                 alphaRho*(phase.he()[celli] + KEs[i]);
+//         }
+//     }
+//
+//     rootSolver_->absTolerances() = absTols;
+//     rootSolver_->relTolerances() = relTols;
+//
+//     // relax1(deltaT);
+//     // relax4(deltaT);
+//     return true;
+// }
 // ************************************************************************* //

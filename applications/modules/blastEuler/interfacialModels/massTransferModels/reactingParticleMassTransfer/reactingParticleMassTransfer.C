@@ -50,24 +50,62 @@ reactingParticleMassTransfer
     const phasePair& pair
 )
 :
-    massTransferModel(dict, pair)
+    massTransferModel(dict, pair),
+    reactingPhase_
+    (
+        pair.ordered()
+      ? pair.dispersed().name()
+      : dict.lookup<word>("reactingPhase")
+    ),
+    reactingIs1_(pair.phase1().name() == reactingPhase_)
 {
-    if (dict.found("reactingSpecies"))
+    const phaseModel& phase1 = pair.phase1();
+    if (dict.found(phase1.name() + "Species"))
     {
+        List<Tuple2<word, scalar>> table(dict.lookup(phase1.name() + "Species"));
+        forAll(table, i)
+        {
+            phase1Yi_.insert(table[i].first(), table[i].second());
+            phase1Species_.append(table[i].first());
+        }
+    }
+    else if (dict.found("reactingSpecies"))
+    {
+        HashTable<scalar, word>& reactingYi =
+            reactingIs1_ ? phase1Yi_ : phase2Yi_;
+        hashedWordList& reactingSpecies =
+            reactingIs1_ ? phase1Species_ : phase2Species_;
+
         List<Tuple2<word, scalar>> table(dict.lookup("reactingSpecies"));
         forAll(table, i)
         {
-            reactingYi_.insert(table[i].first(), table[i].second());
-            reactingSpecies_.append(table[i].first());
+            reactingYi.insert(table[i].first(), table[i].second());
+            reactingSpecies.append(table[i].first());
         }
     }
-    if (dict.found("productSpecies"))
+
+    const phaseModel& phase2 = pair.phase2();
+    if (dict.found(phase2.name() + "Species"))
     {
+        List<Tuple2<word, scalar>> table(dict.lookup(phase2.name() + "Species"));
+        forAll(table, i)
+        {
+            phase2Yi_.insert(table[i].first(), table[i].second());
+            phase2Species_.append(table[i].first());
+        }
+    }
+    else if (dict.found("productSpecies"))
+    {
+        HashTable<scalar, word>& productYi =
+            reactingIs1_ ? phase2Yi_ : phase1Yi_;
+        hashedWordList& productSpecies =
+            reactingIs1_ ? phase2Species_ : phase1Species_;
+
         List<Tuple2<word, scalar>> table(dict.lookup("productSpecies"));
         forAll(table, i)
         {
-            productYi_.insert(table[i].first(), table[i].second());
-            productSpecies_.append(table[i].first());
+            productYi.insert(table[i].first(), table[i].second());
+            productSpecies.append(table[i].first());
         }
     }
 }
@@ -84,21 +122,20 @@ Foam::massTransferModels::reactingParticleMassTransfer::~reactingParticleMassTra
 Foam::tmp<Foam::volScalarField>
 Foam::massTransferModels::reactingParticleMassTransfer::K() const
 {
-    const diameterModel& dModel = pair_.dispersed().dModel();
-    return dModel.dMdt();
+    return reactingPhase().dModel().dMdt();
 }
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::massTransferModels::reactingParticleMassTransfer::dispersedYi
+Foam::massTransferModels::reactingParticleMassTransfer::phase1Y
 (
     const word& name
 ) const
 {
     scalar value = 0;
-    if (reactingSpecies_.found(name))
+    if (phase1Species_.found(name))
     {
-        value = reactingYi_[name];
+        value = phase1Yi_[name];
     }
     return volScalarField::New
     (
@@ -110,15 +147,15 @@ Foam::massTransferModels::reactingParticleMassTransfer::dispersedYi
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::massTransferModels::reactingParticleMassTransfer::continuousYi
+Foam::massTransferModels::reactingParticleMassTransfer::phase2Y
 (
     const word& name
 ) const
 {
     scalar value = 0;
-    if (productSpecies_.found(name))
+    if (phase2Species_.found(name))
     {
-        value = productYi_[name];
+        value = phase2Yi_[name];
     }
     return volScalarField::New
     (

@@ -52,8 +52,24 @@ Foam::blendingMethods::noBlending::noBlending
 )
 :
     blendingMethod(dict),
-    continuousPhase_(dict.lookup("continuousPhase"))
-{}
+    continuousPhase_(dict.lookupOrDefault("continuousPhase", word::null)),
+    dispersedPhase_(dict.lookupOrDefault("dispersedPhase", word::null))
+{
+    if (continuousPhase_.empty() && dispersedPhase_.empty())
+    {
+        FatalIOErrorInFunction(dict)
+            << "Either continuousPhase or dispersedPhase must be provided"
+            << endl
+            << abort(FatalIOError);
+    }
+    else if (!continuousPhase_.empty() && !dispersedPhase_.empty())
+    {
+        FatalIOErrorInFunction(dict)
+            << "Either continuousPhase or dispersedPhase must be provided, "
+            << "not both" << endl
+            << abort(FatalIOError);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -76,7 +92,9 @@ Foam::tmp<Foam::volScalarField> Foam::blendingMethods::noBlending::f1
     (
         "f",
         mesh,
-        dimensionedScalar(dimless, phase2.name() == continuousPhase_)
+        continuousPhase_.empty()
+      ? dimensionedScalar(dimless, phase1.name() == dispersedPhase_)
+      : dimensionedScalar(dimless, phase2.name() == continuousPhase_)
     );
 }
 
@@ -88,7 +106,12 @@ Foam::scalar Foam::blendingMethods::noBlending::f1i
     const phaseModel& phase2
 ) const
 {
-    return scalar(phase2.name() == continuousPhase_);
+    return scalar
+    (
+        continuousPhase_.empty()
+      ? phase1.name() == dispersedPhase_
+      : phase2.name() == continuousPhase_
+    );
 }
 
 
@@ -104,7 +127,9 @@ Foam::tmp<Foam::volScalarField> Foam::blendingMethods::noBlending::f2
     (
         "f",
         mesh,
-        dimensionedScalar(dimless, phase1.name() == continuousPhase_)
+        continuousPhase_.empty()
+      ? dimensionedScalar(dimless, phase2.name() == dispersedPhase_)
+      : dimensionedScalar(dimless, phase1.name() == continuousPhase_)
     );
 }
 
@@ -115,7 +140,12 @@ Foam::scalar Foam::blendingMethods::noBlending::f2i
     const phaseModel& phase2
 ) const
 {
-    return scalar(phase1.name() == continuousPhase_);
+    return scalar
+    (
+        continuousPhase_.empty()
+      ? phase2.name() == dispersedPhase_
+      : phase1.name() == continuousPhase_
+    );
 }
 
 

@@ -20,6 +20,7 @@ dragModels/dragODE/dragODE.C
 heatTransferModels/heatTransferModel/heatTransferModel.C
 heatTransferModels/heatTransferModel/heatTransferModelNew.C
 heatTransferModels/sphericalHeatTransfer/sphericalHeatTransfer.C
+heatTransferModels/constantCoefficient/constantCoefficientHeatTransfer.C
 heatTransferModels/NuHeatTransfer/NuHeatTransfer.C
 heatTransferModels/noneNu/noneNu.C
 heatTransferModels/RanzMarshall/RanzMarshall.C
@@ -77,6 +78,8 @@ massTransferModels/massTransferModel/massTransferModel.C
 massTransferModels/massTransferModel/massTransferModelNew.C
 massTransferModels/noMassTransfer/noMassTransfer.C
 massTransferModels/reactingParticleMassTransfer/reactingParticleMassTransfer.C
+massTransferModels/Massoni/MassoniMassTransfer.C
+massTransferModels/cavitation/cavitationMassTransfer.C
 
 aspectRatioModels/aspectRatioModel/aspectRatioModel.C
 aspectRatioModels/aspectRatioModel/aspectRatioModelNew.C

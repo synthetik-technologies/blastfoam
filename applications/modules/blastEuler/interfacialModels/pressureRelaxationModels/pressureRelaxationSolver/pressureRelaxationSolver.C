@@ -163,6 +163,7 @@ Foam::pressureRelaxationSolver::pressureRelaxationSolver
     fluid_(fluid),
     includedPhases_(0),
     phaseModels_(0),
+    fixedPhaseModels_(0),
     phaseIndicies_(0),
     thermos_(0),
     interfacialPressureModels_(0),
@@ -179,6 +180,10 @@ Foam::pressureRelaxationSolver::pressureRelaxationSolver
         if (!fluid.phases()[phasei].slavePressure())
         {
             includedPhases_.append(phasei);
+        }
+        else
+        {
+            fixedPhaseModels_.append(&fluid.phases()[phasei]);
         }
     }
     if (includedPhases_.size() <= 1)

@@ -340,7 +340,7 @@ bool Foam::phaseSystem::foundBlendedInterfacialModel(const phasePair& key) const
             IOobject::groupName
             (
                 BlendedModelType::typeName,
-                key.name()
+                key.phasePair::name()
             )
         )
      || mesh().foundObject<BlendedModelType>
@@ -371,10 +371,9 @@ Foam::phaseSystem::lookupBlendedInterfacialModel(const phasePair& key) const
         IOobject::groupName
         (
             BlendedModelType::typeName,
-            key.name()
+            key.phasePair::name()
         )
     );
-
     if (mesh().foundObject<BlendedModelType>(name))
     {
         return mesh().lookupObject<BlendedModelType>(name);

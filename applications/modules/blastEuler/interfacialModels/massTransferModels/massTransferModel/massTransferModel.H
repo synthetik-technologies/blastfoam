@@ -119,22 +119,28 @@ public:
         //- Return the mass transfer
         virtual tmp<volScalarField> K() const = 0;
 
-        //- Return the dispersed phase mass fraction of a given phase
-        virtual tmp<volScalarField> dispersedYi(const word& name) const;
+        //- Return the species of a given phase
+        tmp<volScalarField> Y(const phaseModel& phase, const word& name) const;
 
-        //- Return the continuous phase mass fraction of a given phase
-        virtual tmp<volScalarField> continuousYi(const word& name) const;
+        //- Return the phase1 species of a given phase
+        virtual tmp<volScalarField> phase1Y(const word& name) const;
 
-        //- Return the names of the dispersed phase mass fractions
-        virtual hashedWordList dispersedSpecies() const
+        //- Return the phase1 species of a given phase
+        virtual tmp<volScalarField> phase2Y(const word& name) const;
+
+        //- Return the names of the given species
+        virtual hashedWordList species(const phaseModel& phase) const;
+
+        //- Return the names of the dispersed phase species
+        virtual hashedWordList phase1Species() const
         {
-            return hashedWordList();
+            return hashedWordList::null();
         }
 
-        //- Return the names of the continuous phase mass fractions
-        virtual hashedWordList continuousSpecies() const
+        //- Return the names of the continuous phase species
+        virtual hashedWordList phase2Species() const
         {
-            return hashedWordList();
+            return hashedWordList::null();
         }
 
         //- Dummy write for regIOobject

@@ -121,8 +121,10 @@ void Foam::multiPhaseModel::updateFluxes
 
     fluxScheme_->update
     (
+        *this,
         alphaOwn,
         alphaNei,
+        rho_,
         rhoOwn,
         rhoNei,
         U_,
@@ -132,8 +134,7 @@ void Foam::multiPhaseModel::updateFluxes
         phi_,
         alphaRhoPhi_,
         alphaRhoUPhi_,
-        alphaRhoEPhi_,
-        residualAlpha().value()
+        alphaRhoEPhi_
     );
 
     // fluxScheme_->update
@@ -152,6 +153,12 @@ void Foam::multiPhaseModel::updateFluxes
 
     forAll(alphaRhoPhis_, phasei)
     {
+        alphaPhis_[phasei] = fluxScheme_->flux
+        (
+            alphasOwn[phasei],
+            alphasNei[phasei],
+            phi_
+        );
         alphaRhoPhis_[phasei] = fluxScheme_->flux
         (
             alphaRhosOwn[phasei],
@@ -398,8 +405,9 @@ void Foam::multiPhaseModel::solve()
     {
         volScalarField deltaAlpha
         (
-            fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
-          // + fluxScheme_->alphaCorrector(alphas_[phasei])
+            fvc::div(alphaPhis_[phasei])
+          - alphas_[phasei]*fvc::div(phi_)
+          + fluxScheme_->alphaCorrector(alphas_[phasei])
         );
         this->fvTimeInt_->addDeltaSource(alphas_[phasei].name(), deltaAlpha);
         this->storeAndBlendDelta(deltaAlpha);
@@ -596,41 +604,6 @@ void Foam::multiPhaseModel::postUpdate()
 
 void Foam::multiPhaseModel::update()
 {
-    // fluxScheme_->update
-    // (
-    //     *this,
-    //     rho_,
-    //     U_,
-    //     e_,
-    //     p_,
-    //     speedOfSound(),
-    //     phi_,
-    //     alphaPhiPtr_(),
-    //     alphaRhoPhi_,
-    //     alphaRhoUPhi_,
-    //     alphaRhoEPhi_
-    // );
-    //
-    // forAll(alphaRhoPhis_, phasei)
-    // {
-    //     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
-    //     (
-    //         ReconstructionScheme<scalar>::New
-    //         (
-    //             alphas_[phasei],
-    //             "alpha",
-    //             alphas_[phasei].group(),
-    //             true
-    //         )
-    //     );
-    //     surfaceScalarField alphaOwn(alphaLimiter->interpolateOwn());
-    //     surfaceScalarField alphaNei(alphaLimiter->interpolateNei());
-    //
-    //     alphaPhis_[phasei] = fluxScheme_->flux(alphaOwn, alphaNei, phi_);
-    //     alphaRhoPhis_[phasei] = fluxScheme_->flux(rhos_[phasei], alphaOwn, alphaNei, phi_);
-    // }
-    decode();
-
     PtrList<surfaceScalarField> alphasOwn(alphas_.size());
     PtrList<surfaceScalarField> alphasNei(alphas_.size());
     PtrList<surfaceScalarField> alphaRhosOwn(alphas_.size());
@@ -800,7 +773,7 @@ void Foam::multiPhaseModel::scaleVolumeFraction
 {
     forAll(alphas_, phasei)
     {
-        alphas_[celli] /= sumAlpha;
+        alphas_[phasei][celli] /= sumAlpha;
     }
     (*this)[celli] /= sumAlpha;
 }
@@ -812,17 +785,12 @@ void Foam::multiPhaseModel::correctVolumeFraction
     const label celli
 )
 {
-    scalar sumAlpha = 0.0;
+    scalar sumAlpha = ::Foam::max((*this)[celli], residualAlpha().value());
     forAll(alphas_, phasei)
     {
-        sumAlpha += alphas_[phasei][celli];
+        alphas_[phasei][celli] *= alpha/sumAlpha;
     }
-    sumAlpha = ::Foam::max(sumAlpha, residualAlpha().value());
 
-    forAll(alphas_, phasei)
-    {
-        alphas_[celli] *= alpha/sumAlpha;
-    }
 
     (*this)[celli] = alpha;
 }

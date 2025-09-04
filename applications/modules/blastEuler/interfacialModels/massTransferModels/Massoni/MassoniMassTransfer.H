@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2014-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021-2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,101 +22,78 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::blendingMethods::noBlending
+    Foam::massTransferModels::Massoni
 
 Description
+    The change in volume of the diameterModel is used to determine mass
+    transfer. Particles are assumed to be incompresssible.
 
 SourceFiles
-    noBlending.C
+    MassoniMassTransfer.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef noBlending_H
-#define noBlending_H
+#ifndef MassoniMassTransfer_H
+#define MassoniMassTransfer_H
 
-#include "blendingMethod.H"
+#include "massTransferModel.H"
+#include "phasePair.H"
+#include "saturationTemperatureModel.H"
+#include "HashTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace blendingMethods
+
+class phasePair;
+
+namespace massTransferModels
 {
 
 /*---------------------------------------------------------------------------*\
-                         Class noBlending Declaration
+                   Class Massoni Declaration
 \*---------------------------------------------------------------------------*/
 
-class noBlending
+class Massoni
 :
-    public blendingMethod
+    public massTransferModel
 {
-    // Private Data
 
-        //- Name of the continuous phase
-        const word continuousPhase_;
-
-        //- Name of the dispersed phase
-        const word dispersedPhase_;
+    //- Saturation temperature
+    autoPtr<saturationTemperatureModel> Tsat_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("none");
+    TypeName("Massoni");
 
 
     // Constructors
 
-        //- Construct from a dictionary and two phases
-        noBlending
+        //- Construct from components
+        Massoni
         (
             const dictionary& dict,
-            const wordList& phaseNames
+            const phasePair& pair
         );
 
 
     //- Destructor
-    ~noBlending();
+    virtual ~Massoni();
 
 
     // Member Functions
 
-        //- Factor for first phase
-        virtual tmp<volScalarField> f1
-        (
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
-
-        //- Factor for first phase for a cell
-        virtual scalar f1i
-        (
-            const label celli,
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
-
-        //- Factor for second phase
-        virtual tmp<volScalarField> f2
-        (
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
-
-        //- Factor for second phase for a cell
-        virtual scalar f2i
-        (
-            const label celli,
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
+        //- Return the mass transfer rate
+        virtual tmp<volScalarField> K() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace blendingMethods
+} // End namespace massTransferModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

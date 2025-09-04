@@ -2,11 +2,13 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2014-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2025-06-09 Jeff Heylmun:    Added cell based returns
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,101 +24,77 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::blendingMethods::noBlending
+    Foam::heatTransferModels::constantCoefficient
 
 Description
+    Constant heat transfer coefficient
 
 SourceFiles
-    noBlending.C
+    constantCoefficient.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef noBlending_H
-#define noBlending_H
+#ifndef constantCoefficient_H
+#define constantCoefficient_H
 
-#include "blendingMethod.H"
+#include "heatTransferModel.H"
+#include "NuHeatTransfer.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace blendingMethods
+
+class phasePair;
+
+namespace heatTransferModels
 {
 
 /*---------------------------------------------------------------------------*\
-                         Class noBlending Declaration
+                          Class constantCoefficient Declaration
 \*---------------------------------------------------------------------------*/
 
-class noBlending
+class constantCoefficient
 :
-    public blendingMethod
+    public heatTransferModel
 {
-    // Private Data
 
-        //- Name of the continuous phase
-        const word continuousPhase_;
-
-        //- Name of the dispersed phase
-        const word dispersedPhase_;
-
+    // Heat transfer coefficient
+    dimensionedScalar Kh_;
 
 public:
 
     //- Runtime type information
-    TypeName("none");
+    TypeName("constantCoefficient");
 
 
     // Constructors
 
-        //- Construct from a dictionary and two phases
-        noBlending
+        //- Construct from components
+        constantCoefficient
         (
             const dictionary& dict,
-            const wordList& phaseNames
+            const phasePair& pair
         );
 
 
     //- Destructor
-    ~noBlending();
+    virtual ~constantCoefficient();
 
 
     // Member Functions
 
-        //- Factor for first phase
-        virtual tmp<volScalarField> f1
-        (
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
+        //- The heat transfer function K used in the enthalpy equation
+        virtual tmp<volScalarField> K() const;
 
-        //- Factor for first phase for a cell
-        virtual scalar f1i
-        (
-            const label celli,
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
-
-        //- Factor for second phase
-        virtual tmp<volScalarField> f2
-        (
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
-
-        //- Factor for second phase for a cell
-        virtual scalar f2i
-        (
-            const label celli,
-            const phaseModel& phase1,
-            const phaseModel& phase2
-        ) const;
+        //- The heat transfer function K used in the enthalpy equation
+        virtual scalar cellK(const label celli) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace blendingMethods
+} // End namespace heatTransferModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

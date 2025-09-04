@@ -2,11 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021-2022
+    \\  /    A nd           | Copyright (C) 2020
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is a derived work of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,33 +23,40 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "massTransferModel.H"
+#include "noDiameterModel.H"
+#include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::massTransferModel>
-Foam::massTransferModel::New(const dictionary& dict, const phasePair& pair)
+namespace Foam
 {
-    word massTransferModelType(dict.lookup("type"));
-
-    Info<< "Selecting massTransferModel: "
-        << massTransferModelType << endl;
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(massTransferModelType);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
-    {
-        FatalErrorInFunction
-            << "Unknown massTransferModelType type "
-            << massTransferModelType << endl << endl
-            << "Valid massTransferModelType types are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    return cstrIter()(dict, pair);
+namespace diameterModels
+{
+    defineTypeNameAndDebug(none, 0);
+    addToRunTimeSelectionTable(diameterModel, none, dictionary);
+}
 }
 
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::diameterModels::none::none
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& phaseName
+)
+:
+    diameterModel(mesh, dict, phaseName)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::diameterModels::none::~none()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 // ************************************************************************* //

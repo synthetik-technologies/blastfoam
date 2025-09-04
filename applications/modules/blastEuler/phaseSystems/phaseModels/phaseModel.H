@@ -300,6 +300,12 @@ public:
         //- Determine if alpha is solved
         virtual void solveAlpha(const bool s);
 
+        //- Determine if alpha is solved
+        bool solveAlpha() const
+        {
+            return solveAlpha_;
+        }
+
         //- Return the name of this phase
         const word& name() const
         {
@@ -410,6 +416,10 @@ public:
 
             //- Solve viscous and source terms
             virtual void postUpdate() = 0;
+
+            //- Correct delta terms
+            virtual void correctDeltas()
+            {}
 
 
         //- Return conserved quantities
