@@ -83,8 +83,8 @@ void Foam::singlePhaseCompressibleSystem::solve()
 
     volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
     this->fvTimeInt_->addDeltaSource(rho_.name(), deltaRho);
-    this->storeAndBlendDelta(deltaRho);
 
+    this->storeAndBlendDelta(deltaRho);
     this->storeAndBlendOld(rho);
 
     rho.storePrevIter();

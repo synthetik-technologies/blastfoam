@@ -76,9 +76,7 @@ Foam::rootSolvers::badBroyden::badBroyden
 :
     rootSolver(eqns, solver),
     dX_(solver.dX_)
-{
-    eqns_.setDX(dX_);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -103,7 +101,7 @@ Foam::rootSolvers::badBroyden::findRoots
     scalarField& x = xTmp.ref();
 
     scalarField xOld(x0);
-    scalarRectangularMatrix J(eqns_.nEqns(), x0.size(), 0.0);
+    scalarRectangularMatrix J(eqns_.nEqns(), x0.size());
     scalarField fOld(eqns_.nEqns());
     eqns_.jacobian(x0, li, fOld, J);
     scalarField f(fOld);
