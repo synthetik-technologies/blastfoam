@@ -47,7 +47,7 @@ Foam::diameterModels::constantMassDiameter::constantMassDiameter
     const word& phaseName
 )
 :
-    diameterModel(mesh, dict, phaseName),
+    diameter(mesh, dict, phaseName),
     rho0_("rho0", dimDensity, dict),
     d0_("d0", dimLength, dict),
     M0_(Foam::constant::mathematical::pi/6.0*pow3(d0_)*rho0_)

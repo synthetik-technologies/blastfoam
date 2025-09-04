@@ -51,7 +51,7 @@ namespace diameterModels
 
 class reactingDiameterModel
 :
-    public diameterModel
+    public diameter
 {
 // Private data
 

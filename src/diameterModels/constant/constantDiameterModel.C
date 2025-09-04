@@ -47,7 +47,7 @@ Foam::diameterModels::constantDiameter::constantDiameter
     const word& phaseName
 )
 :
-    diameterModel(mesh, dict, phaseName)
+    diameter(mesh, dict, phaseName)
 {
     dimensionedScalar d("d", dimLength, dict);
     this->d_ = d;

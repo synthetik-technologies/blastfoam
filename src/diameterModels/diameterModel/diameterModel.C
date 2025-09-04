@@ -48,7 +48,18 @@ Foam::diameterModel::diameterModel
     (
         IOobject::groupName("diameterModel", phaseName),
         mesh
-    ),
+    )
+{}
+
+
+Foam::diameterModels::diameter::diameter
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& phaseName
+)
+:
+    diameterModel(mesh, dict, phaseName),
     d_
     (
         IOobject
@@ -64,15 +75,20 @@ Foam::diameterModel::diameterModel
     )
 {}
 
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::diameterModel::~diameterModel()
 {}
 
+
+Foam::diameterModels::diameter::~diameter()
+{}
+
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::diameterModel::requireD() const
+void Foam::diameterModels::diameter::requireD() const
 {
     typeIOobject<volScalarField> dHeader
     (
@@ -90,19 +106,19 @@ void Foam::diameterModel::requireD() const
     }
 }
 
-Foam::tmp<Foam::volScalarField> Foam::diameterModel::A() const
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::A() const
 {
     return Foam::constant::mathematical::pi*sqr(d_);
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::diameterModel::V() const
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::V() const
 {
     return Foam::constant::mathematical::pi*pow3(d_)/6.0;
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::diameterModel::dVdD() const
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::dVdD() const
 {
     return Foam::constant::mathematical::pi*sqr(d_)/3.0;
 }
@@ -126,7 +142,7 @@ void Foam::diameterModel::postUpdate()
 {}
 
 
-Foam::tmp<Foam::volScalarField> Foam::diameterModel::dMdt() const
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::dMdt() const
 {
     return volScalarField::New
     (
@@ -136,7 +152,7 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::dMdt() const
     );
 }
 
-Foam::tmp<Foam::volScalarField> Foam::diameterModel::LDratio() const
+Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::LDratio() const
 {
     return volScalarField::New
     (
@@ -147,7 +163,7 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::LDratio() const
 }
 
 Foam::scalar
-Foam::diameterModel::LDratio(const label celli) const
+Foam::diameterModels::diameter::LDratio(const label celli) const
 {
     return 1.0;
 }

@@ -53,7 +53,7 @@ Foam::autoPtr<Foam::diameterModel> Foam::diameterModel::New
     return cstrIter()
     (
         mesh,
-        dict.subDict(diameterModelType + "DiameterCoeffs"),
+        dict.optionalSubDict(diameterModelType + "DiameterCoeffs"),
         phaseName
     );
 

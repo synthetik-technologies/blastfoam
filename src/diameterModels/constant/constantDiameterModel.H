@@ -50,7 +50,7 @@ namespace diameterModels
 
 class constantDiameter
 :
-    public diameterModel
+    public diameter
 {
 
 public:

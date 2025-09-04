@@ -50,7 +50,7 @@ namespace diameterModels
 
 class constantMassDiameter
 :
-    public diameterModel
+    public diameter
 {
 // Private data
 

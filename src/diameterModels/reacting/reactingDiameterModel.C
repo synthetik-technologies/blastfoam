@@ -48,7 +48,7 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
     const word& phaseName
 )
 :
-    diameterModel(mesh, dict, phaseName),
+    diameter(mesh, dict, phaseName),
     rate_(diameterReactionRate::New(*this, dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     TName_(dict.lookupOrDefault("TName", IOobject::groupName("T", phaseName))),

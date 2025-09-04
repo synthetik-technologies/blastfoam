@@ -55,16 +55,6 @@ class diameterModel
 :
     public timeIntegrationSystem
 {
-protected:
-
-    // Protected data
-
-        //- Diameter
-        volScalarField d_;
-
-    //- Make sure the diameter field has been read
-    void requireD() const;
-
 public:
 
     //- Runtime type information
@@ -130,7 +120,61 @@ public:
         }
 
         //- Return effective diameter
-        const volScalarField& d() const
+        virtual const volScalarField& d() const  = 0;
+
+        //- Return surface area
+        virtual tmp<volScalarField> A() const = 0;
+
+        //- Return volume
+        virtual tmp<volScalarField> V() const = 0;
+
+        //- Return derivative of volume w.r.t diameter
+        virtual tmp<volScalarField> dVdD() const = 0;
+
+        //- Return change in radius per unit time
+        //  Only used in mass transfer
+        virtual tmp<volScalarField> dMdt() const = 0;
+        
+        //- Return the length to diameter ratio
+        virtual tmp<volScalarField> LDratio() const = 0;
+
+        //- Return the length to diameter ratio for a cell
+        virtual scalar LDratio(const label celli) const = 0;
+};
+
+namespace diameterModels
+{
+class diameter
+:
+    public diameterModel
+{
+protected:
+
+    // Protected data
+
+        //- Diameter
+        volScalarField d_;
+
+    //- Make sure the diameter field has been read
+    void requireD() const;
+
+public:
+
+    // Constructor
+    diameter
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& phaseName
+    );
+
+    //- Destructor
+    virtual ~diameter();
+
+    // Member Functions
+
+        //- Return effective diameter
+        virtual const volScalarField& d() const
         {
             return d_;
         }
@@ -147,7 +191,7 @@ public:
         //- Return change in radius per unit time
         //  Only used in mass transfer
         virtual tmp<volScalarField> dMdt() const;
-        
+
         //- Return the length to diameter ratio
         virtual tmp<volScalarField> LDratio() const;
 
@@ -155,6 +199,10 @@ public:
         virtual scalar LDratio(const label celli) const;
 };
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+}// End namespace diameterModels
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
