@@ -103,9 +103,9 @@ Foam::scalar Foam::rootSolvers::univariate::Ridder::findRoot
           + (xMean - x0)*sign(y0 - y1)
            *yMean/sqrt(max(sqr(yMean) - y0*y1, small));
 
-        eqn_.limit(xNew);
+        eqn_.limitChange(x0, xNew, boundsFac_);
         scalar yNew = eqn_.fx(xNew, li);
-        if (converged(min(mag(xNew - x0), mag(xNew - x1)), yNew))
+        if (converged(min(mag(xNew - x0), mag(xNew - x1))))
         {
             break;
         }

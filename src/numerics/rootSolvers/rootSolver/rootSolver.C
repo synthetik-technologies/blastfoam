@@ -145,6 +145,7 @@ Foam::rootSolver::rootSolver
 )
 :
     eqns_(eqns),
+    boundsFac_(dict.lookupOrDefault("boundSafteyFactor", 0.5)),
     absTolerances_
     (
         dict.lookupOrDefaultBackwardsCompatible<scalarList>
@@ -156,7 +157,7 @@ Foam::rootSolver::rootSolver
                 dict.lookupOrDefaultBackwardsCompatible
                 (
                     {"xAbsTolerance", "absTolerance"},
-                    0.0
+                    small
                 )
             )
         )
@@ -178,7 +179,14 @@ Foam::rootSolver::rootSolver
         )
     ),
     tolerances_(relTolerances_),
-    maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
+    maxSteps_
+    (
+        dict.lookupOrDefaultBackwardsCompatible<label>
+        (
+            {"maxSteps", "maxIter"},
+            100
+        )
+    ),
     stepi_(0),
     errors_(eqns.nVar(), great)
 {}

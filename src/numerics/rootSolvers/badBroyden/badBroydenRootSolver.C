@@ -103,7 +103,7 @@ Foam::rootSolvers::badBroyden::findRoots
     scalarField& x = xTmp.ref();
 
     scalarField xOld(x0);
-    scalarRectangularMatrix J(eqns_.nEqns(), x0.size());
+    scalarRectangularMatrix J(eqns_.nEqns(), x0.size(), 0.0);
     scalarField fOld(eqns_.nEqns());
     eqns_.jacobian(x0, li, fOld, J);
     scalarField f(fOld);
@@ -111,9 +111,6 @@ Foam::rootSolvers::badBroyden::findRoots
 
     scalarRectangularMatrix dx(x.size(), 1);
     scalarRectangularMatrix df(f.size(), 1);
-
-    const scalarList& lower = eqns_.lowerLimits();
-    const scalarList& upper = eqns_.upperLimits();
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
@@ -125,18 +122,7 @@ Foam::rootSolvers::badBroyden::findRoots
         x -= Jinv*f;
 
         // Limit to the bounds to the equation
-        // eqns_.limit(x);
-        forAll(x, i)
-        {
-            if (x[i] < lower[i])
-            {
-                x[i] = 0.5*(xOld[i] + lower[i]);
-            }
-            else if (x[i] > upper[i])
-            {
-                x[i] = 0.5*(xOld[i] + upper[i]);
-            }
-        }
+        eqns_.limitChange(xOld, x, boundsFac_);
 
         // update f
         eqns_.FX(x, li, f);

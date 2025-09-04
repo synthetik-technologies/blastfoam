@@ -82,30 +82,36 @@ Foam::scalar Foam::rootSolvers::univariate::secant::findRoot
 ) const
 {
     initialise(x0);
-    scalar xNew = x0;
-    scalar xLow = x1;
-    scalar xHigh = x2;
+    scalar dx = relTolerance()*mag(x0) + absTolerance();
+    scalar xPrev = x0 - dx;
+    if (xPrev < eqn_.lower())
+    {
+        xPrev = x0 + dx;
+    }
+
+    scalar x = x0;
+    scalar yPrev = eqn_.fx(xPrev, li);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar yHigh = eqn_.fx(xHigh, li);
-        xNew =
-            xHigh - yHigh*(xHigh - xLow)
-           /stabilise(yHigh - eqn_.fx(xLow, li), small);
-        eqn_.limit(xNew);
+        scalar y = eqn_.fx(x, li);
+        scalar xNew = x - y*(x - xPrev)/stabilise(y - yPrev, small);
+        eqn_.limitChange(x, xNew, boundsFac_);
 
-        xLow = xHigh;
-        xHigh = xNew;
+        xPrev = x;
+        x = xNew;
 
-        if (converged(xHigh, xLow))
+        yPrev = y;
+
+        if (converged(x, xPrev))
         {
             break;
         }
-        printStepInformation(xNew);
+        printStepInformation(x);
 
     }
 
-    return printFinalInformation(xNew);
+    return printFinalInformation(x);
 }
 
 // ************************************************************************* //

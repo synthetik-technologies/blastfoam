@@ -98,7 +98,7 @@ Foam::scalar Foam::rootSolvers::univariate::NewtonRaphson::findRoot
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xNew = xOld - y/stabilise(eqn_.dfdx(xOld, li), small);
-        eqn_.limit(xNew);
+        eqn_.limitChange(xOld, xNew, boundsFac_);
         y = eqn_.fx(xNew, li);
 
         if (converged(xNew, xOld))

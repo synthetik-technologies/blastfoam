@@ -88,7 +88,7 @@ Foam::scalar Foam::rootSolvers::univariate::Halley::findRoot
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, small);
-        eqn_.limit(xNew);
+        eqn_.limitChange(xOld, xNew, boundsFac_);
         f = eqn_.fx(xNew, li);
 
         if (converged(xNew, xOld))

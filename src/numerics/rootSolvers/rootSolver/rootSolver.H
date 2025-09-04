@@ -58,6 +58,9 @@ protected:
         //- Reference to scalarMultivariateEquation
         const scalarMultivariateEquation& eqns_;
 
+        //- Saftey factor when bounds of equation are crossed
+        scalar boundsFac_;
+
         //- Absolute convergence tolerances
         scalarField absTolerances_;
 

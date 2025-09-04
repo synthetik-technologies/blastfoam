@@ -122,7 +122,7 @@ Foam::scalar Foam::rootSolvers::univariate::step::findRoot
             x += dx;
         }
         eqn_.limit(x);
-        if (converged(dx, y))
+        if (converged(dx))
         {
             break;
         }

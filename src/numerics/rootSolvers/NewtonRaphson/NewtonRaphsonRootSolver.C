@@ -92,9 +92,6 @@ Foam::tmp<Foam::scalarField> Foam::rootSolvers::NewtonRaphson::findRoots
     RectangularMatrix<scalar> J(xNew.size());
     eqns_.jacobian(xOld, li, f, J);
 
-    const scalarList& lower = eqns_.lowerLimits();
-    const scalarList& upper = eqns_.upperLimits();
-
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         scalarField delta(-(SVDinv(J)*f));
@@ -107,19 +104,8 @@ Foam::tmp<Foam::scalarField> Foam::rootSolvers::NewtonRaphson::findRoots
 
         xNew = xOld + delta;
 
-        scalar fac = 0.5;
-        // eqns_.limit(xNew);
-        forAll(xNew, i)
-        {
-            if (xNew[i] < lower[i])
-            {
-                xNew[i] = (1.0 - fac)*xOld[i] + fac*lower[i];
-            }
-            else if (xNew[i] > upper[i])
-            {
-                xNew[i] = (1.0 - fac)*xOld[i] + fac*upper[i];
-            }
-        }
+        // Limit to the bounds to the equation
+        eqns_.limitChange(xOld, xNew, boundsFac_);
 
         if (converged(xOld, xNew))
         {
