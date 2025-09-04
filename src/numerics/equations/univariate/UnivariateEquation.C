@@ -171,6 +171,38 @@ void Foam::UnivariateEquation<Type>::calculateGradient
 
 
 template<class Type>
+void Foam::UnivariateEquation<Type>::limit(scalarList& x) const
+{
+    forAll(x, i)
+    {
+        x[i] = max(lowerLimits_[i], min(upperLimits_[i], x[i]));
+    }
+}
+
+
+template<class Type>
+void Foam::UnivariateEquation<Type>::limitChange
+(
+    const scalarList& x0,
+    scalarList& x,
+    const scalar f
+) const
+{
+    forAll(x, i)
+    {
+        if (x[i] < lowerLimits_[i])
+        {
+            x[i] = (1.0 - f)*x0[i] + f*lowerLimits_[i];
+        }
+        else if (x[i] > upperLimits_[i])
+        {
+            x[i] = (1.0 - f)*x0[i] + f*upperLimits_[i];
+        }
+    }
+}
+
+
+template<class Type>
 void Foam::UnivariateEquation<Type>::FX
 (
     const typename univariateEquation<Type>::VarType& x,

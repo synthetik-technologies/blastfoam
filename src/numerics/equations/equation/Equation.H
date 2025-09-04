@@ -143,6 +143,16 @@ public:
         using univariateEquation<Type>::limit;
         virtual void limit(scalar& x) const = 0;
 
+        //- Limit the value of x to the range of the equation
+        //  given the old value and weight of limit value
+        using univariateEquation<Type>::limitChange;
+        virtual void limitChange
+        (
+            const scalar x0,
+            scalar& x,
+            const scalar f
+        ) const = 0;
+
         virtual Type fx(const scalar x, const label li) const = 0;
 
         //- Calculate the first derivative of the equation
@@ -329,9 +339,37 @@ public:
         {
             x = max(min(upper_, x), lower_);
         }
-        virtual void limit(scalarField& x) const
+        virtual void limit(scalarList& x) const
         {
             limit(x[0]);
+        }
+
+        //- Limit the value of x to the range of the equation
+        //  given the old value and weight of limit value
+        virtual void limitChange
+        (
+            const scalar x0,
+            scalar& x,
+            const scalar f
+        ) const
+        {
+            if (x > upper_)
+            {
+                x = (1.0 - f)*x0 + f*upper_;
+            }
+            else if (x < lower_)
+            {
+                x = (1.0 - f)*x0 + f*lower_;
+            }
+        }
+        virtual void limitChange
+        (
+            const scalarList& x0,
+            scalarList& x,
+            const scalar f
+        ) const
+        {
+            limitChange(x0[0], x[0], f);
         }
 
         // //- Calculate the first derivative of the equation

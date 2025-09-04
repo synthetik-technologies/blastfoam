@@ -247,10 +247,16 @@ public:
         }
 
         //- Limit the value of x to the range of the equation
-        virtual void limit(scalarField& x) const
-        {
-            x = max(min(upperLimits_, x), lowerLimits_);
-        }
+        virtual void limit(scalarList& x) const;
+
+        //- Limit the value of x to the range of the equation
+        //  given the old value and weight of limit value
+        virtual void limitChange
+        (
+            const scalarList& x0,
+            scalarList& x,
+            const scalar f
+        ) const;
 
 
         //- Calculate the gradient
