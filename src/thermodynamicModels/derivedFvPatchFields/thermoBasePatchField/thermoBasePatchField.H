@@ -60,9 +60,14 @@ protected:
         //- Reference to the patch
         const fvPatch& patch_;
 
+        //- Determine phase from internal field
+        bool determinePhase_;
+
         //- Name of the velocity field
         word phaseName_;
 
+        //- Copy construct from patch
+        thermoBasePatchField(const thermoBasePatchField&);
 
 public:
 
@@ -72,14 +77,21 @@ public:
 
     // Constructors
 
+
+
         //- Construct from patch
-        thermoBasePatchField(const fvPatch&);
+        thermoBasePatchField
+        (
+            const thermoBasePatchField&,
+            const fvPatch&,
+            const word&
+        );
 
         //- Construct from patch and internal field
         thermoBasePatchField
         (
             const fvPatch&,
-            const DimensionedField<scalar, volMesh>&
+            const word&
         );
 
         //- Construct from patch and dictionary
@@ -88,14 +100,6 @@ public:
             const fvPatch&,
             const dictionary&,
             const word&
-        );
-
-        //- Construct from patch, internal field, and dictionary
-        thermoBasePatchField
-        (
-            const fvPatch&,
-            const DimensionedField<scalar, volMesh>&,
-            const dictionary&
         );
 
 

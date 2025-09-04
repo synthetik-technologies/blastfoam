@@ -371,7 +371,6 @@ Foam::wordList Foam::blastThermo::splitThermoName
         cmpts.append(newStr);
     }
 
-    Info<<cmpts[1]<<endl;
     wordList cmptsFinal(6);
     if (cmpts[1] == "detonating")
     {

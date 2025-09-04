@@ -157,7 +157,7 @@ Foam::scalar Foam::MieGruneisen<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h = ((Gamma_ + 1.0)*p + Pi(rho))/(Gamma_*max(rho, 1e-10));
+    const scalar h = ((Gamma_ + 1.0)*p + Pi(rho))/(Gamma_*max(rho, 1e-10));
     return (h - c0_)*Gamma_;
 }
 

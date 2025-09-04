@@ -38,22 +38,42 @@ namespace Foam
 Foam::thermoBasePatchField::thermoBasePatchField
 (
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF
+    const word& defaultGroup
 )
 :
     patch_(p),
-    phaseName_(iF.group())
+    determinePhase_(true),
+    phaseName_(defaultGroup)
 {}
 
 
 Foam::thermoBasePatchField::thermoBasePatchField
 (
-    const fvPatch& p
+    const thermoBasePatchField& tbpf,
+    const fvPatch& p,
+    const word& defaultGroup
 )
 :
     patch_(p),
-    phaseName_(word::null)
-{}
+    determinePhase_(tbpf.determinePhase_),
+    phaseName_(tbpf.phaseName_)
+{
+    if
+    (
+        determinePhase_
+     && p.boundaryMesh().mesh().foundObject<basicThermo>
+        (
+            IOobject::groupName
+            (
+                physicalProperties::typeName,
+                defaultGroup
+            )
+        )
+    )
+    {
+        phaseName_ = defaultGroup;
+    }
+}
 
 
 Foam::thermoBasePatchField::thermoBasePatchField
@@ -64,20 +84,26 @@ Foam::thermoBasePatchField::thermoBasePatchField
 )
 :
     patch_(p),
+    determinePhase_(dict.lookupOrDefault("determinePhase", true)),
     phaseName_(dict.lookupOrDefault<word>("phase", defaultGroup))
-{}
+{
+    if
+    (
+        determinePhase_
+     && p.boundaryMesh().mesh().foundObject<basicThermo>
+        (
+            IOobject::groupName
+            (
+                physicalProperties::typeName,
+                defaultGroup
+            )
+        )
+    )
+    {
+        phaseName_ = defaultGroup;
+    }
+}
 
-
-Foam::thermoBasePatchField::thermoBasePatchField
-(
-    const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF,
-    const dictionary& dict
-)
-:
-    patch_(p),
-    phaseName_(dict.lookupOrDefault<word>("phase", iF.group()))
-{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 

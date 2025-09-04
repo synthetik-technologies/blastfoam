@@ -189,7 +189,7 @@ Foam::scalar Foam::CochranChan<Specie>::Gamma
     const scalar Cv
 ) const
 {
-    return Gamma0_ ;
+    return Gamma0_;
 }
 
 
@@ -203,7 +203,7 @@ Foam::scalar Foam::CochranChan<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h(((Gamma0_ + 1.0)*p + Pi(rho))/(Gamma0_*max(rho, 1e-10)));
+    const scalar h = ((Gamma0_ + 1.0)*p + Pi(rho))/(Gamma0_*max(rho, 1e-10));
     return (h - delta(p, rho))*Gamma0_;
 }
 

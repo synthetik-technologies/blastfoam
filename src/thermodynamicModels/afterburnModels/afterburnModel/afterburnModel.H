@@ -30,7 +30,7 @@ Description
 
 SourceFiles
     afterburnModel.C
-    newAfterburnModel.C
+    afterburnModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

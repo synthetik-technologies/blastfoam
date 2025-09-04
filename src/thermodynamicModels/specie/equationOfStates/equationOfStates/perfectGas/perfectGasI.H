@@ -136,7 +136,7 @@ Foam::scalar Foam::perfectGas<Specie>::cSqr
     const scalar cv
 ) const
 {
-    return Gamma(rho, e, T, cv)*T*this->R();
+    return (Gamma(rho, e, T, cv) + 1.0)*T*this->R();
 }
 
 

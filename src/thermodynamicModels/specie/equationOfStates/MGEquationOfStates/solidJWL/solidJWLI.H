@@ -197,7 +197,7 @@ Foam::scalar Foam::solidJWL<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h = ((omega_ + 1.0)*p + Pi(rho))/(omega_*max(rho, 1e-10));
+    const scalar h = ((omega_ + 1.0)*p + Pi(rho))/(omega_*max(rho, 1e-10));
     return (h - delta(p, rho))*omega_;
 }
 

@@ -29,7 +29,7 @@ Description
 
 SourceFiles
     activationModel.C
-    newactivationModel.C
+    activationModelNew.C
 
 \*---------------------------------------------------------------------------*/
 

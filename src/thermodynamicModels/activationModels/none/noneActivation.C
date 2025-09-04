@@ -88,7 +88,11 @@ Foam::activationModels::noneActivation::initESource() const
     return volScalarField::New
     (
         "noActivation:initESource",
-        e0_*lambda_
+        (
+            lambda_.mesh().time().restart()
+          ? dimensionedScalar(e0_.dimensions(), 0.0)
+          : e0_
+        )*lambda_
     );
 }
 

@@ -20,7 +20,7 @@ derived/basicFluidBlastThermo/basicFluidBlastThermos.C
 derived/basicFluidBlastThermo/basicPhaseFluidBlastThermos.C
 derived/basicSolidBlastThermo/basicSolidBlastThermos.C
 
-#derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
+derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
 derived/detonatingFluidBlastThermo/detonatingPhaseFluidBlastThermos.C
 derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 
@@ -65,7 +65,7 @@ $(reactionRateFlameAreaModels)/reactionRateFlameAreaModel/reactionRateFlameAreaM
 $(reactionRateFlameAreaModels)/relaxation/relaxationReactionRateFlameAreaModel.C
 
 activationModels/activationModel/activationModel.C
-activationModels/activationModel/newActivationModel.C
+activationModels/activationModel/activationModelNew.C
 activationModels/none/noneActivation.C
 activationModels/linear/linearActivation.C
 activationModels/programmedIgnition/programmedIgnitionActivation.C
@@ -74,7 +74,7 @@ activationModels/pressureBased/pressureBasedActivation.C
 activationModels/reactionRate/reactionRateActivation.C
 
 afterburnModels/afterburnModel/afterburnModel.C
-afterburnModels/afterburnModel/newAfterburnModel.C
+afterburnModels/afterburnModel/afterburnModelNew.C
 afterburnModels/constantAfterburn/constantAfterburn.C
 afterburnModels/linearAfterburn/linearAfterburn.C
 afterburnModels/MillerAfterburn/MillerAfterburn.C

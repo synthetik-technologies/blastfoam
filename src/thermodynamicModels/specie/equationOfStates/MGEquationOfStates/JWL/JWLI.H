@@ -179,7 +179,12 @@ Foam::scalar Foam::JWL<Specie>::ePRho
     const scalar rho
 ) const
 {
-    return (p + Pi(rho))/(omega_*max(rho, 1e-10));
+    return
+        (p + Pi(rho))
+       /(
+           (rho < rhoCutOff_ ? gammaIdeal_ - 1.0 : omega_)
+          *max(rho, 1e-10)
+        );
 }
 
 
@@ -216,7 +221,7 @@ Foam::scalar Foam::JWL<Specie>::cSqr
     }
     else
     {
-        scalar h(((omega_ + 1.0)*p + Pi(rho))/(omega_*rho));
+        const scalar h = ((omega_ + 1.0)*p + Pi(rho))/(omega_*rho);
         return (h - delta(p, rho))*omega_;
     }
 }

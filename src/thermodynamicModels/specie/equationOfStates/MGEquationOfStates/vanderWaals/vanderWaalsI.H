@@ -190,8 +190,8 @@ Foam::scalar Foam::vanderWaals<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar G = GammaMG(rho);
-    scalar h = ((G + 1.0)*p + Pi(rho))/(G*max(rho, 1e-10));
+    const scalar G = GammaMG(rho);
+    const scalar h = ((G + 1.0)*p + Pi(rho))/(G*max(rho, 1e-10));
     return (h - delta(p, rho, e))*G;
 }
 

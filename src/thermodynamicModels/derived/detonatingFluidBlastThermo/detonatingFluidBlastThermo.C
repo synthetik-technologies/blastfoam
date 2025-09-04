@@ -56,11 +56,15 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
 
         if (x2 < this->residualFac_)
         {
-            Ti = t1.TRhoE(Ti, rhoi, ei);
-            if (Ti < this->TLow_)
+            const scalar eTest = t1.Es(rhoi, ei, this->TLow_);
+            if (ei < eTest)
             {
-                ei = t1.Es(rhoi, ei, this->TLow_);
+                ei = eTest;
                 Ti = this->TLow_;
+            }
+            else
+            {
+                Ti = t1.TRhoE(Ti, rhoi, ei);
             }
 
             const scalar pi = t1.p(rhoi, ei, Ti);
@@ -75,11 +79,15 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
         }
         else if (x1 < this->residualFac_)
         {
-            Ti = t2.TRhoE(Ti, rhoi, ei);
-            if (Ti < this->TLow_)
+            const scalar eTest = t2.Es(rhoi, ei, this->TLow_);
+            if (ei < eTest)
             {
-                ei = t2.Es(rhoi, ei, this->TLow_);
+                ei = eTest;
                 Ti = this->TLow_;
+            }
+            else
+            {
+                Ti = t2.TRhoE(Ti, rhoi, ei);
             }
 
             const scalar pi = t2.p(rhoi, ei, Ti);
@@ -94,15 +102,20 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
         }
         else
         {
-            Ti =
-                t1.TRhoE(Ti, rhoi, ei)*x1
-              + t2.TRhoE(Ti, rhoi, ei)*x2;
-            if (Ti < this->TLow_)
+
+            const scalar eTest =
+                t1.Es(rhoi, ei, this->TLow_)*x1
+              + t2.Es(rhoi, ei, this->TLow_)*x2;
+            if (ei < eTest)
             {
-                ei =
-                    t1.Es(rhoi, ei, this->TLow_)*x1
-                  + t2.Es(rhoi, ei, this->TLow_)*x2;
+                ei = eTest;
                 Ti = this->TLow_;
+            }
+            else
+            {
+                Ti =
+                    t1.TRhoE(Ti, rhoi, ei)*x1
+                  + t2.TRhoE(Ti, rhoi, ei)*x2;
             }
 
             const scalar pi =
@@ -233,11 +246,15 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
 
                 if (x2 < this->residualFac_)
                 {
-                    Ti = t1.TRhoE(Ti, rhoi, ei);
+                    const scalar eTest = t1.Es(rhoi, ei, Ti);
                     if (Ti < this->TLow_)
                     {
                         Ti = this->TLow_;
-                        ei = t1.Es(rhoi, ei, Ti);
+                        ei = eTest;
+                    }
+                    else
+                    {
+                        Ti = t1.TRhoE(Ti, rhoi, ei);
                     }
                     pCp[facei] = t1.Cp(rhoi, ei, Ti);
                     pCv[facei] = t1.Cv(rhoi, ei, Ti);
@@ -247,11 +264,15 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                 }
                 else if (x1 < this->residualFac_)
                 {
-                    Ti = t2.TRhoE(Ti, rhoi, ei);
+                    const scalar eTest = t2.Es(rhoi, ei, Ti);
                     if (Ti < this->TLow_)
                     {
                         Ti = this->TLow_;
-                        ei = t2.Es(rhoi, ei, Ti);
+                        ei = eTest;
+                    }
+                    else
+                    {
+                        Ti = t2.TRhoE(Ti, rhoi, ei);
                     }
                     pCp[facei] = t2.Cp(rhoi, ei, Ti);
                     pCv[facei] = t2.Cv(rhoi, ei, Ti);
@@ -261,15 +282,19 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                 }
                 else
                 {
-                    Ti =
-                        t1.TRhoE(Ti, rhoi, ei)*x1
-                      + t2.TRhoE(Ti, rhoi, ei)*x2;
-                    if (Ti < this->TLow_)
+                    const scalar eTest =
+                        t1.Es(rhoi, ei, this->TLow_)*x1
+                      + t2.Es(rhoi, ei, this->TLow_)*x2;
+                    if (ei < eTest)
                     {
+                        ei = eTest;
                         Ti = this->TLow_;
-                        ei =
-                            t1.Es(rhoi, ei, Ti)*x1
-                          + t1.Es(rhoi, ei, Ti)*x2;
+                    }
+                    else
+                    {
+                        Ti =
+                            t1.TRhoE(Ti, rhoi, ei)*x1
+                          + t2.TRhoE(Ti, rhoi, ei)*x2;
                     }
                     pCp[facei] =
                         t1.Cp(rhoi, ei, Ti)*x1

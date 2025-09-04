@@ -166,7 +166,7 @@ Foam::scalar Foam::LSZK<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar h = (gamma_*p + Pi(rho))/((gamma_ - 1.0)*max(rho, 1e-10));
+    const scalar h = (gamma_*p + Pi(rho))/((gamma_ - 1.0)*max(rho, 1e-10));
     return (h - delta(p, rho))*(gamma_ - 1.0);
 }
 
