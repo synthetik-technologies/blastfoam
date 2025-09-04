@@ -125,7 +125,7 @@ public:
 
 
     //- Runtime type information
-    TypeName("comnpressible::kOmegaSSTDES");
+    TypeName("compressible::kOmegaSSTDES");
 
 
     // Constructors
