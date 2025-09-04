@@ -97,62 +97,62 @@ Foam::scalar Foam::rootSolvers::univariate::Brent::findRoot
 ) const
 {
     initialise(x);
-    scalar x0 = xLow;
-    scalar x1 = xHigh;
-    scalar xNew = x;
-    scalar y0 = eqn_.fx(x0, li);
-    scalar y1 = eqn_.fx(x1, li);
+    scalar xa = xLow;
+    scalar xb = xHigh;
+    scalar ya = eqn_.fx(xa, li);
+    scalar yb = eqn_.fx(xb, li);
 
-    if (!eqn_.containsRoot(y0, y1))
+    if (!eqn_.containsRoot(ya, yb))
     {
         return x;
     }
 
-    if (mag(y0) < mag(y1))
+    if (mag(ya) < mag(yb))
     {
-        scalar xtmp = x0;
-        scalar ytmp = y0;
-        x0 = x1;
-        y0 = y1;
-        x1 = xtmp;
-        y1 = ytmp;
+        Swap(xa, xb);
+        Swap(ya, yb);
     }
 
-    scalar x2 = x0;
-    scalar y2 = y0;
-    scalar x3 = x2;
+    const scalar delta = relTolerance()*mag(x) + absTolerance();
+
+    scalar xc = xa;
+    scalar yc = ya;
+    scalar xd = xc;
+    scalar xNew = x;
     bool bisection = true;
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (mag(y0 - y2)  < small && mag(y1 - y2) < small)
+        if (mag(ya - yc) > small && mag(yb - yc) > small)
         {
             xNew =
-                x0*y1*y2/((y0 - y1)*(y0 - y2))
-              + x1*y0*y2/((y1 - y0)*(y1 - y2))
-              + x2*y0*y1/((y2 - y0)*(y2 - y1));
+                xa*yb*yc/((ya - yb)*(ya - yc))
+              + xb*ya*yc/((yb - ya)*(yb - yc))
+              + xc*ya*yb/((yc - ya)*(yc - yb));
         }
         else
         {
-            xNew = x1 - y1*(x1 - x0)/stabilise((y1 - y0), small);
+            xNew = xb - yb*(xb - xa)/stabilise(yb - ya, small);
         }
+
         eqn_.limit(xNew);
 
         // Use bisection method if satisfies the conditions.
-        scalar delta = mag(relTolerance()*x1);
-        scalar min1 = mag(xNew - x1);
-        scalar min2 = mag(x1 - x2);
-        scalar min3 = mag(x2 - x3);
+        scalar xab = 0.25*(3.0*xa + xb);
+        scalar min1 = mag(xNew - xb);
+        scalar min2 = mag(xb - xc);
+        scalar min3 = mag(xc - xd);
+
         if
         (
-            (xNew < (3.0*x0 + x1)/4.0 && xNew > x1)
-         || (bisection && min1 >= min2/2.0)
-         || (!bisection && min1 >= min3/2.0)
+            ((xab - xNew)*(xNew - xb) < 0)
+         || (bisection && min1 >= min2*0.5)
+         || (!bisection && min1 >= min3*0.5)
          || (bisection && min2 < delta)
          || (!bisection && min3 < delta)
         )
         {
-            xNew = (x0 + x1)/2.0;
+            xNew = (xa + xb)*0.5;
             bisection = true;
         }
         else
@@ -160,35 +160,33 @@ Foam::scalar Foam::rootSolvers::univariate::Brent::findRoot
             bisection = false;
         }
 
-        scalar yNew = eqn_.fx(xNew, li);
-
-        if (converged(x0, x1))
+        if (converged(xa, xb))
         {
             break;
         }
 
-        x3 = x2;
-        x2 = x1;
+        scalar yNew = eqn_.fx(xNew, li);
 
-        if (y0*yNew < 0)
+
+        xd = xc;
+        xc = xb;
+        yc = yb;
+
+        if (ya*yNew < 0)
         {
-            x1 = xNew;
-            y1 = yNew;
+            xb = xNew;
+            yb = yNew;
         }
         else
         {
-            x0 = xNew;
-            y0 = yNew;
+            xa = xNew;
+            ya = yNew;
         }
 
-        if (mag(y0) < mag(y1))
+        if (mag(ya) < mag(yb))
         {
-            scalar xtmp = x0;
-            scalar ytmp = y0;
-            x0 = x1;
-            y0 = y1;
-            x1 = xtmp;
-            y1 = ytmp;
+            Swap(xa, xb);
+            Swap(ya, yb);
         }
         printStepInformation(xNew);
     }
