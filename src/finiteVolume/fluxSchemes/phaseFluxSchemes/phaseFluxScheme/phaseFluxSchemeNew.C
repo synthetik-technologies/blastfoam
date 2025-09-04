@@ -29,7 +29,8 @@ License
 
 Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::New
 (
-    const surfaceScalarField& phi
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
 )
 {
     const word fluxSchemeType
@@ -55,13 +56,14 @@ Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::New
             << exit(FatalError);
     }
 
-    return cstrIter()(phi);
+    return cstrIter()(phi, residualAlpha);
 }
 
 
 Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::NewSolid
 (
-    const surfaceScalarField& phi
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
 )
 {
     const word fluxSchemeType
@@ -87,7 +89,7 @@ Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::NewSolid
             << exit(FatalError);
     }
 
-    return cstrIter()(phi);
+    return cstrIter()(phi, residualAlpha);
 }
 
 

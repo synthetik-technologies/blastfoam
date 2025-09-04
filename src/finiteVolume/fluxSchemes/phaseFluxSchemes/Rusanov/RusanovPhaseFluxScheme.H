@@ -108,7 +108,11 @@ public:
     TypeName("Rusanov");
 
     // Constructor
-    Rusanov(const surfaceScalarField& phi);
+    Rusanov
+    (
+        const surfaceScalarField& phi,
+        const scalar residualAlpha
+    );
 
 
     //- Destructor

@@ -178,7 +178,11 @@ public:
     TypeName("AUSM+Up");
 
     // Costructor
-    AUSMPlusUp(const surfaceScalarField& phi);
+    AUSMPlusUp
+    (
+        const surfaceScalarField& phi,
+        const scalar residualAlpha
+    );
 
 
     //- Destructor

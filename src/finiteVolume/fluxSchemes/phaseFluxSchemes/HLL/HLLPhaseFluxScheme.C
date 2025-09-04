@@ -40,9 +40,13 @@ namespace phaseFluxSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluxSchemes::HLL::HLL(const surfaceScalarField& phi)
+Foam::phaseFluxSchemes::HLL::HLL
+(
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
+)
 :
-    phaseFluxScheme(phi)
+    phaseFluxScheme(phi, residualAlpha)
 {}
 
 
@@ -68,6 +72,10 @@ void Foam::phaseFluxSchemes::HLL::createSavedFields()
     phaseFluxScheme::createSavedFields();
     if (SOwn_.valid())
     {
+        SOwn_.ref() = Zero;
+        SNei_.ref() = Zero;
+        UvOwn_.ref() = Zero;
+        UvNei_.ref() = Zero;
         return;
     }
     SOwn_ = tmp<surfaceScalarField>
@@ -133,10 +141,10 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
 (
     const scalar& alphaOwn, const scalar& alphaNei,
     const scalar& rhoO, const scalar& rhoN,
-    const vector& UOwn, const vector& UNei,
-    const scalar& eOwn, const scalar& eNei,
-    const scalar& pOwn, const scalar& pNei,
-    const scalar& cOwn, const scalar& cNei,
+    const vector& UO, const vector& UN,
+    const scalar& eO, const scalar& eN,
+    const scalar& pO, const scalar& pN,
+    const scalar& cO, const scalar& cN,
     const vector& Sf,
     scalar& phi,
     scalar& alphaRhoPhi,
@@ -145,16 +153,26 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
     const label facei, const label patchi
 )
 {
-    const scalar magSf = mag(Sf);
-    const vector normal = Sf/magSf;
+    scalar magSf = mag(Sf);
+    vector normal = Sf/magSf;
+    const bool ownValid = alphaOwn > 1e-6;
+    const scalar rhoOwn = ownValid ? rhoO : small;
+    const vector UOwn = ownValid ? UO : vector::zero;
+    const scalar eOwn = ownValid ? eO : 0.0;
+    const scalar pOwn = ownValid ? pO : 0.0;
+    const scalar cOwn = ownValid ? cO : 0.0;
+
+    const bool neiValid = alphaNei > 1e-6;
+    const scalar rhoNei = neiValid ? rhoN : small;
+    const vector UNei = neiValid ? UN : vector::zero;
+    const scalar eNei = neiValid ? eN : 0.0;
+    const scalar pNei = neiValid ? pN : 0.0;
+    const scalar cNei = neiValid ? cN : 0.0;
 
     const scalar phiMesh = meshPhi(facei, patchi);
     const scalar vMesh = phiMesh/magSf;
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
-
-    scalar rhoOwn = max(rhoO, 1e-10);
-    scalar rhoNei = max(rhoN, 1e-10);
 
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar HOwn(EOwn + pOwn/rhoOwn);
@@ -162,8 +180,8 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
     scalar ENei = eNei + 0.5*magSqr(UNei);
     scalar HNei(ENei + pNei/rhoNei);
 
-    scalar SOwn(min(min(UvOwn - cOwn, UvNei - cNei), 0.0));
-    scalar SNei(max(max(UvOwn + cOwn, UvNei + cNei), 0.0));
+    scalar SOwn(min(UvOwn - cOwn, UvNei - cNei));
+    scalar SNei(max(UvOwn + cOwn, UvNei + cNei));
 
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
@@ -171,7 +189,7 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
     this->save(facei, patchi, UvNei, UvNei_);
 
     // Owner values
-    scalar alpha, delta, p;
+    scalar alpha, p;
     vector U;
 
     if (SOwn >= 0)
@@ -181,7 +199,6 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
         alphaRhoEPhi = alphaRhoPhi*HOwn + phiMesh*alphaOwn*pOwn;
 
         alpha = alphaOwn;
-        delta = alphaOwn;
         U = UOwn;
         p = pOwn;
     }
@@ -227,18 +244,16 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
               + SOwn*SNei*(alphaRhoENei - alphaRhoEOwn)*magSf
             )*rDeltaS;
 
-        delta = (SNei*alphaOwn - SOwn*alphaNei)*rDeltaS;
-        alpha = 0.5*(alphaOwn + alphaNei);
+        alpha = (SNei*alphaOwn - SOwn*alphaNei)*rDeltaS;
+
         U = // alphaRhoU_hll / alphaRho_hll
             (
                 (SNei*alphaRhoUNei - SOwn*alphaRhoUOwn)*magSf
               + alphaRhoUPhiOwn - alphaRhoUPhiNei
             )
-           /stabilise
-            (
+            /(
                 (SNei*alphaRhoNei - SOwn*alphaRhoOwn)*magSf
-              + alphaRhoPhiOwn - alphaRhoPhiNei,
-                small
+              + alphaRhoPhiOwn - alphaRhoPhiNei
             );
         p = 0.5*(pOwn + pNei);
     }
@@ -249,13 +264,11 @@ void Foam::phaseFluxSchemes::HLL::calculateFluxes
         alphaRhoEPhi = alphaRhoPhi*HNei + phiMesh*alphaNei*pNei;
 
         alpha = alphaNei;
-        delta = alphaNei;
         U = UNei;
         p = pNei;
     }
 
     this->save(facei, patchi, alpha, alphaf_);
-    this->save(facei, patchi, delta, deltaAlphaf_);
     phi = this->save(facei, patchi, U, Uf_) & Sf;
     this->save(facei, patchi, p, pf_);
 }

@@ -76,11 +76,11 @@ protected:
     //- Dictionary for phase fluxScheme
     const dictionary& dict_;
 
+    //- Residual alpha value
+    const scalar residualAlpha_;
+
     //- Saved interpolated alpha field
     tmp<surfaceScalarField> alphaf_;
-
-    //- Saved face values for \delta field (i.e. VI \cdot \nabla (alpha))
-    tmp<surfaceScalarField> deltaAlphaf_;
 
     //- Saved interpolated U field
     tmp<surfaceVectorField> Uf_;
@@ -145,9 +145,10 @@ public:
             phaseFluxScheme,
             dictionary,
             (
-                const surfaceScalarField& phi
+                const surfaceScalarField& phi,
+                const scalar residualAlpha
             ),
-            (phi)
+            (phi, residualAlpha)
         );
         declareRunTimeSelectionTable
         (
@@ -155,13 +156,18 @@ public:
             phaseFluxScheme,
             solid,
             (
-                const surfaceScalarField& phi
+                const surfaceScalarField& phi,
+                const scalar residualAlpha
             ),
-            (phi)
+            (phi, residualAlpha)
         );
 
     // Constructor
-    phaseFluxScheme(const surfaceScalarField& phi);
+    phaseFluxScheme
+    (
+        const surfaceScalarField& phi,
+        const scalar residualAlpha
+    );
 
 
     //- Destructor
@@ -173,13 +179,15 @@ public:
         //- General selector
         static autoPtr<phaseFluxScheme> New
         (
-            const surfaceScalarField& phi
+            const surfaceScalarField& phi,
+            const scalar residualAlpha
         );
 
         //- Solid specific selection
         static autoPtr<phaseFluxScheme> NewSolid
         (
-            const surfaceScalarField& phi
+            const surfaceScalarField& phi,
+            const scalar residualAlpha
         );
 
 
@@ -194,8 +202,10 @@ public:
         //- Update
         void update
         (
+            const volScalarField& alpha,
             const surfaceScalarField& alphaOwn,
             const surfaceScalarField& alphaNei,
+            const volScalarField& rho,
             const surfaceScalarField& rhoOwn,
             const surfaceScalarField& rhoNei,
             const volVectorField& U,
@@ -205,8 +215,7 @@ public:
             surfaceScalarField& phi,
             surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& alphaRhoUPhi,
-            surfaceScalarField& alphaRhoEPhi,
-            const scalar rAlpha
+            surfaceScalarField& alphaRhoEPhi
         );
 
         //- Update
@@ -221,8 +230,7 @@ public:
             surfaceScalarField& phi,
             surfaceScalarField& alphaRhoPhi,
             surfaceVectorField& alphaRhoUPhi,
-            surfaceScalarField& alphaRhoEPhi,
-            const scalar rAlpha
+            surfaceScalarField& alphaRhoEPhi
         );
 
         //- Alpha grad correction
@@ -239,9 +247,6 @@ public:
 
         //- Return interpolated volume fraction field
         tmp<surfaceScalarField> alphaf() const;
-
-        //- Return interpolated phase density field
-        tmp<surfaceScalarField> deltaAlphaf() const;
 };
 
 

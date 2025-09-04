@@ -147,10 +147,11 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
 
 Foam::phaseFluxSchemes::AUSMPlusUp::AUSMPlusUp
 (
-    const surfaceScalarField& phi
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
 )
 :
-    phaseFluxScheme(phi),
+    phaseFluxScheme(phi, residualAlpha),
     beta_(dict_.lookupOrDefault("beta", 0.125)),
     fa_(dict_.lookupOrDefault("fa", 1.0)),
     D_(dict_.lookupOrDefault("D", 1.0)),
@@ -184,6 +185,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::createSavedFields()
     phaseFluxScheme::createSavedFields();
     if (phi_.valid())
     {
+        phi_.ref() = Zero;
         return;
     }
     phi_ = tmp<surfaceScalarField>

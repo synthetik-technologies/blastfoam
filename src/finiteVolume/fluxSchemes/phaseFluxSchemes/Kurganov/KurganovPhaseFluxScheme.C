@@ -42,9 +42,13 @@ namespace phaseFluxSchemes
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluxSchemes::Kurganov::Kurganov(const surfaceScalarField& phi)
+Foam::phaseFluxSchemes::Kurganov::Kurganov
+(
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
+)
 :
-    Tadmor(phi)
+    Tadmor(phi, residualAlpha)
 {}
 
 
@@ -69,6 +73,8 @@ void Foam::phaseFluxSchemes::Kurganov::createSavedFields()
     Tadmor::createSavedFields();
     if (aOwn_.valid())
     {
+        aOwn_.ref() = Zero;
+        aNei_.ref() = Zero;
         return;
     }
 
@@ -158,7 +164,6 @@ void Foam::phaseFluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aNei, aNei_);
 
     this->save(facei, patchi, aOwn*alphaOwn + aNei*alphaNei, alphaf_);
-    this->save(facei, patchi, aOwn*alphaOwn + aNei*alphaNei, deltaAlphaf_);
     this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
 
     alphaRhoPhi = aphivOwn*alphaOwn*rhoOwn + aphivNei*alphaNei*rhoNei;

@@ -44,10 +44,11 @@ namespace phaseFluxSchemes
 
 Foam::phaseFluxSchemes::Tadmor::Tadmor
 (
-    const surfaceScalarField& phi
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
 )
 :
-    phaseFluxScheme(phi)
+    phaseFluxScheme(phi, residualAlpha)
 {}
 
 
@@ -70,6 +71,12 @@ void Foam::phaseFluxSchemes::Tadmor::clear()
 void Foam::phaseFluxSchemes::Tadmor::createSavedFields()
 {
     phaseFluxScheme::createSavedFields();
+    if (aPhivOwn_.valid())
+    {
+        aPhivOwn_.ref() = Zero;
+        aPhivNei_.ref() = Zero;
+        return;
+    }
 
     aPhivOwn_ = tmp<surfaceScalarField>
     (
@@ -149,7 +156,6 @@ void Foam::phaseFluxSchemes::Tadmor::calculateFluxes
     this->save(facei, patchi, aphivNei, aPhivNei_);
 
     this->save(facei, patchi, 0.5*(alphaOwn + alphaNei), alphaf_);
-    this->save(facei, patchi, 0.5*(alphaOwn + alphaNei), deltaAlphaf_);
     this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
 
     phi = aphivOwn + aphivNei;

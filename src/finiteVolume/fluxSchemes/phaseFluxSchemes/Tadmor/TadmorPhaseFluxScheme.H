@@ -109,7 +109,11 @@ public:
     TypeName("Tadmor");
 
     // Constructor
-    Tadmor(const surfaceScalarField& phi);
+    Tadmor
+    (
+        const surfaceScalarField& phi,
+        const scalar residualAlpha
+    );
 
 
     //- Destructor

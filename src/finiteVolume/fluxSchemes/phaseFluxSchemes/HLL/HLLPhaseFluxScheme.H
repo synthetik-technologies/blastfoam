@@ -115,7 +115,11 @@ public:
     TypeName("HLL");
 
     // Constructor
-    HLL(const surfaceScalarField& phi);
+    HLL
+    (
+        const surfaceScalarField& phi,
+        const scalar residualAlpha
+    );
 
 
     //- Destructor

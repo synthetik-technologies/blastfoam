@@ -101,7 +101,11 @@ public:
     TypeName("Kurganov");
 
     // Constructor
-    Kurganov(const surfaceScalarField& phi);
+    Kurganov
+    (
+        const surfaceScalarField& phi,
+        const scalar residualAlpha
+    );
 
 
     //- Destructor

@@ -114,7 +114,11 @@ public:
     TypeName("HLLC");
 
     // Constructor
-    HLLC(const surfaceScalarField& phi);
+    HLLC
+    (
+        const surfaceScalarField& phi,
+        const scalar residualAlpha
+    );
 
 
     //- Destructor

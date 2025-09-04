@@ -38,7 +38,11 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluxScheme::phaseFluxScheme(const surfaceScalarField& phi)
+Foam::phaseFluxScheme::phaseFluxScheme
+(
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
+)
 :
     fluxSchemeBase(phi),
     phaseName_(phi.group()),
@@ -48,7 +52,8 @@ Foam::phaseFluxScheme::phaseFluxScheme(const surfaceScalarField& phi)
         (
             "fluxSchemes"
         ).subDict(phaseName_)
-    )
+    ),
+    residualAlpha_(residualAlpha)
 {}
 
 
@@ -64,13 +69,15 @@ void Foam::phaseFluxScheme::clear()
     Uf_.clear();
     pf_.clear();
     alphaf_.clear();
-    deltaAlphaf_.clear();
 }
 
 void Foam::phaseFluxScheme::createSavedFields()
 {
     if (Uf_.valid())
     {
+        Uf_.ref() = Zero;
+        pf_.ref() = Zero;
+        alphaf_.ref() = Zero;
         return;
     }
     Uf_ = tmp<surfaceVectorField>
@@ -108,20 +115,6 @@ void Foam::phaseFluxScheme::createSavedFields()
             IOobject
             (
                 fieldName("alphaf"),
-                mesh_.time().name(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("0", dimless, Zero)
-        )
-    );
-    deltaAlphaf_ = tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                fieldName("deltaAlphaf"),
                 mesh_.time().name(),
                 mesh_
             ),
@@ -174,24 +167,12 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::alphaf() const
 }
 
 
-Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::deltaAlphaf() const
-{
-    if (deltaAlphaf_.valid())
-    {
-        return deltaAlphaf_();
-    }
-    FatalErrorInFunction
-        << fieldName("deltaAlpha") << " has not been set." << nl
-        << abort(FatalError);
-
-    return deltaAlphaf_;
-}
-
-
 void Foam::phaseFluxScheme::update
 (
+    const volScalarField& alpha,
     const surfaceScalarField& alphaOwn,
     const surfaceScalarField& alphaNei,
+    const volScalarField& rho,
     const surfaceScalarField& rhoOwn,
     const surfaceScalarField& rhoNei,
     const volVectorField& U,
@@ -201,8 +182,7 @@ void Foam::phaseFluxScheme::update
     surfaceScalarField& phi,
     surfaceScalarField& alphaRhoPhi,
     surfaceVectorField& alphaRhoUPhi,
-    surfaceScalarField& alphaRhoEPhi,
-    const scalar rAlpha
+    surfaceScalarField& alphaRhoEPhi
 )
 {
     createSavedFields();
@@ -270,31 +250,35 @@ void Foam::phaseFluxScheme::update
     tmp<surfaceVectorField> tUOwn;
     tmp<surfaceVectorField> tUNei;
     ULimiter->interpolateOwnNei(tUOwn, tUNei);
+    // phaseFluxScheme::correctPhaseFields(alpha, U, tUOwn.ref(), tUNei.ref(), residualAlpha_);
     const surfaceVectorField& UOwn = tUOwn();
     const surfaceVectorField& UNei = tUNei();
 
     tmp<surfaceScalarField> teOwn;
     tmp<surfaceScalarField> teNei;
     eLimiter->interpolateOwnNei(teOwn, teNei);
+    // phaseFluxScheme::correctPhaseFields(alpha, e, teOwn.ref(), teNei.ref(), residualAlpha_);
     const surfaceScalarField& eOwn = teOwn();
     const surfaceScalarField& eNei = teNei();
 
     tmp<surfaceScalarField> tpOwn;
     tmp<surfaceScalarField> tpNei;
     pLimiter->interpolateOwnNei(tpOwn, tpNei);
+    // phaseFluxScheme::correctPhaseFields(alpha, p, tpOwn.ref(), tpNei.ref(), residualAlpha_);
     const surfaceScalarField& pOwn = tpOwn();
     const surfaceScalarField& pNei = tpNei();
 
     tmp<surfaceScalarField> tcOwn;
     tmp<surfaceScalarField> tcNei;
     cLimiter->interpolateOwnNei(tcOwn, tcNei);
+    // phaseFluxScheme::correctPhaseFields(alpha, c, tcOwn.ref(), tcNei.ref(), residualAlpha_);
     const surfaceScalarField& cOwn = tcOwn();
     const surfaceScalarField& cNei = tcNei();
 
     preUpdate(p);
     forAll(UOwn, facei)
     {
-        if (alphaOwn[facei] < rAlpha && alphaNei[facei] < rAlpha)
+        if (alphaOwn[facei] < residualAlpha_ && alphaNei[facei] < residualAlpha_)
         {
             phi[facei] = Zero;
             alphaRhoPhi[facei] = Zero;
@@ -325,8 +309,8 @@ void Foam::phaseFluxScheme::update
         {
             if
             (
-                alphaOwn.boundaryField()[patchi][facei] < rAlpha
-             && alphaNei.boundaryField()[patchi][facei] < rAlpha
+                alphaOwn.boundaryField()[patchi][facei] < residualAlpha_
+             && alphaNei.boundaryField()[patchi][facei] < residualAlpha_
             )
             {
                 phi.boundaryFieldRef()[patchi][facei] = Zero;
@@ -373,8 +357,7 @@ void Foam::phaseFluxScheme::update
     surfaceScalarField& phi,
     surfaceScalarField& alphaRhoPhi,
     surfaceVectorField& alphaRhoUPhi,
-    surfaceScalarField& alphaRhoEPhi,
-    const scalar rAlpha
+    surfaceScalarField& alphaRhoEPhi
 )
 {
     autoPtr<ReconstructionScheme<scalar>> alphaLimiter
@@ -385,22 +368,6 @@ void Foam::phaseFluxScheme::update
     (
         ReconstructionScheme<scalar>::New(rho, "rho", phaseName_, true)
     );
-    autoPtr<ReconstructionScheme<vector>> ULimiter
-    (
-        ReconstructionScheme<vector>::New(U, "U", phaseName_, true)
-    );
-    autoPtr<ReconstructionScheme<scalar>> eLimiter
-    (
-        ReconstructionScheme<scalar>::New(e, "e", phaseName_, true)
-    );
-    autoPtr<ReconstructionScheme<scalar>> pLimiter
-    (
-        ReconstructionScheme<scalar>::New(p, "p", phaseName_, true)
-    );
-    autoPtr<ReconstructionScheme<scalar>> cLimiter
-    (
-        ReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName_, true)
-    );
 
     tmp<surfaceScalarField> talphaOwn;
     tmp<surfaceScalarField> talphaNei;
@@ -409,11 +376,14 @@ void Foam::phaseFluxScheme::update
     tmp<surfaceScalarField> trhoOwn;
     tmp<surfaceScalarField> trhoNei;
     rhoLimiter->interpolateOwnNei(trhoOwn, trhoNei);
+    // phaseFluxScheme::correctPhaseFields(alpha, rho, trhoOwn.ref(), trhoNei.ref(), residualAlpha_);
 
     update
     (
+        alpha,
         talphaOwn(),
         talphaNei(),
+        rho,
         trhoOwn(),
         trhoNei(),
         U,
@@ -423,8 +393,7 @@ void Foam::phaseFluxScheme::update
         phi,
         alphaRhoPhi,
         alphaRhoUPhi,
-        alphaRhoEPhi,
-        rAlpha
+        alphaRhoEPhi
     );
 }
 

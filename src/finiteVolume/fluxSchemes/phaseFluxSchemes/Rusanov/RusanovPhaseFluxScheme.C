@@ -44,10 +44,11 @@ namespace phaseFluxSchemes
 
 Foam::phaseFluxSchemes::Rusanov::Rusanov
 (
-    const surfaceScalarField& phi
+    const surfaceScalarField& phi,
+    const scalar residualAlpha
 )
 :
-    phaseFluxScheme(phi)
+    phaseFluxScheme(phi, residualAlpha)
 {}
 
 
@@ -69,6 +70,11 @@ void Foam::phaseFluxSchemes::Rusanov::clear()
 void Foam::phaseFluxSchemes::Rusanov::createSavedFields()
 {
     phaseFluxScheme::createSavedFields();
+    if (lambda_.valid())
+    {
+        lambda_.ref() = Zero;
+        return;
+    }
 
     lambda_ = tmp<surfaceScalarField>
     (
@@ -123,7 +129,6 @@ void Foam::phaseFluxSchemes::Rusanov::calculateFluxes
 
     this->save(facei, patchi, lambda, lambda_);
     this->save(facei, patchi, 0.5*(alphaOwn + alphaNei), alphaf_);
-    this->save(facei, patchi, 0.5*(alphaOwn + alphaNei), deltaAlphaf_);
     this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
 
 
