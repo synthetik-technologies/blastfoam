@@ -1121,7 +1121,7 @@ int main(int argc, char *argv[])
             {
                 if (cellLevel[celli] == maxCellLevel[celli])
                 {
-                    error[celli] = 0.0;
+                    error[celli] = min(error[celli], 0.0);
                 }
                 else if (cellLevel[celli] > maxCellLevel[celli])
                 {
