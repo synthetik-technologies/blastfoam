@@ -95,7 +95,9 @@ Foam::phaseModel::phaseModel
         (
             IOobject::groupName("alphaRho", name_),
             fluid.mesh().time().name(),
-            fluid.mesh()
+            fluid.mesh(),
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         fluid.mesh(),
         dimensionedScalar("0", dimDensity, 0.0)
@@ -106,7 +108,9 @@ Foam::phaseModel::phaseModel
         (
             IOobject::groupName("alphaRhoU", name_),
             fluid.mesh().time().name(),
-            fluid.mesh()
+            fluid.mesh(),
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         fluid.mesh(),
         dimensionedVector("0", dimDensity*dimVelocity, Zero),
@@ -118,7 +122,9 @@ Foam::phaseModel::phaseModel
         (
             IOobject::groupName("alphaRhoE", name_),
             fluid.mesh().time().name(),
-            fluid.mesh()
+            fluid.mesh(),
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         fluid.mesh(),
         dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)

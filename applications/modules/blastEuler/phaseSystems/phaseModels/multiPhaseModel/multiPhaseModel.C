@@ -805,6 +805,7 @@ void Foam::multiPhaseModel::decode()
 
     forAll(alphas_, phasei)
     {
+        alphas_[phasei].correctBoundaryConditions();
         alphaRhos_[phasei].max(0);
         rhos_[phasei] =
             alphaRhos_[phasei]

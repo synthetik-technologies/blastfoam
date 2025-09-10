@@ -68,7 +68,9 @@ Foam::granularPhaseModel::granularPhaseModel
         (
             IOobject::groupName("alphaRhoPTE", name_),
             fluid.mesh().time().name(),
-            fluid.mesh()
+            fluid.mesh(),
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         1.5*(*this)*rho_*this->Theta_
     ),
