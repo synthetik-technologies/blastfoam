@@ -53,18 +53,74 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::MassIntegrated
     ),
     phaseName_(readPhaseName(is, fieldName)),
     value_(pTraits<Type>(is)),
-    rhoPtr_
-    (
-        this->template lookupOrRead<volScalarField>
-        (
-            IOobject::groupName("rho", phaseName_)
-        )
-    )
+    rhoPtr_(nullptr)
 //     thermo_(lookupOrConstructThermo(mesh, phaseName_))
 {
     if (this->good_)
     {
+        autoPtr<volScalarField> rhoStorage;
+        if (is.good())
+        {
+            token t(is);
+            Info<<t<<endl;
+            if (t.isWord())
+            {
+                rhoPtr_ =
+                    this->template lookupOrRead<volScalarField>(t.wordToken());
+                if (!rhoPtr_)
+                {
+                    is.putBack(t);
+                }
+            }
+            else if (t.isNumber())
+            {
+                rhoStorage.set
+                (
+                    new volScalarField
+                    (
+                        IOobject
+                        (
+                            IOobject::groupName("rho", phaseName_),
+                            mesh.time().name(),
+                            mesh,
+                            IOobject::NO_READ,
+                            IOobject::NO_WRITE,
+                            false
+                        ),
+                        mesh,
+                        dimensionedScalar(dimDensity, t.number())
+                    )
+                );
+                rhoPtr_ = &rhoStorage();
+            }
+            else
+            {
+                is.putBack(t);
+            }
+        }
+
+        if (!rhoPtr_)
+        {
+            rhoPtr_ = this->template lookupOrRead<volScalarField>
+            (
+                IOobject::groupName("rho", phaseName_)
+            );
+        }
+
+        if (!rhoPtr_)
+        {
+            FatalIOErrorInFunction(is)
+                << "Could not find "
+                << IOobject::groupName("rho", phaseName_)
+                << " and no denity field or value was provided. "
+                << "Options for speciftying density are:"  << nl
+                << "    field value rhoName (word)" << nl
+                << "    field value rhoValue (number)" << nl
+                << endl
+                << exit(FatalIOError);
+        }
         const volScalarField& rho(*rhoPtr_);
+
         scalar mass(0.0);
         forAll(selectedIndices, i)
         {
@@ -78,6 +134,12 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::MassIntegrated
         {
             this->value_ /= mass;
             this->setField();
+        }
+
+        if (rhoStorage.valid())
+        {
+            rhoStorage.clear();
+            rhoPtr_ = nullptr;
         }
     }
 }
