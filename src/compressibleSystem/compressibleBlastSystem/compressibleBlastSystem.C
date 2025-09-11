@@ -133,9 +133,16 @@ void Foam::compressibleBlastSystem::solve()
     this->storeAndBlendOld(rhoU_);
     this->storeAndBlendOld(rhoE_);
 
+    if (this->LTS())
+    {
+        deltaRhoU /= corDeltaT();
+        deltaRhoE /= corDeltaT();
+    }
+
     //- Store changed in momentum and energy
     this->storeAndBlendDelta(deltaRhoU);
     this->storeAndBlendDelta(deltaRhoE);
+
 
     //- Solve for momentum and energy
     dimensionedScalar dT = rho_.time().deltaT();

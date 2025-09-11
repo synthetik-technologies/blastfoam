@@ -471,6 +471,15 @@ void Foam::multicomponentBlastThermo::integrator::solve()
     tmp<volScalarField> talphaRho0(max(alphaRho_, residualAlphaRho));
     const volScalarField& alphaRho0 = talphaRho0();
 
+    tmp<volScalarField> tcorDeltaT;
+    if (mesh_.foundObject<volScalarField>("corDeltaT"))
+    {
+        tcorDeltaT = tmp<volScalarField>
+        (
+            mesh_.lookupObject<volScalarField>("corDeltaT")
+        );
+    }
+
     forAll(Y_, i)
     {
         if (active_[i])
@@ -486,6 +495,11 @@ void Foam::multicomponentBlastThermo::integrator::solve()
             if (this->fvTimeInt_->addDeltaSource(Y.name(), deltaAlphaRhoY))
             {
                 normalize_ = true;
+            }
+
+            if (tcorDeltaT.valid())
+            {
+                deltaAlphaRhoY /= tcorDeltaT();
             }
 
             // Yi is not conservative, but alphaRho*Yi is

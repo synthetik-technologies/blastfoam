@@ -105,6 +105,123 @@ void Foam::compressibleSystem::addSources
 }
 
 
+
+void Foam::compressibleSystem::updateCorDeltaT()
+{
+    if (fv::localEulerDdt::enabled(mesh()))
+    {
+        if (!corDeltaTPtr_.valid())
+        {
+            corDeltaTPtr_.set
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        "corDeltaT",
+                        mesh().time().name(),
+                        mesh(),
+                        IOobject::NO_READ,
+                        IOobject::AUTO_WRITE
+                    ),
+                    mesh(),
+                    1.0
+                )
+            );
+            localRDeltaTPtr_.set
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        fv::localEulerDdt::rDeltaTName,
+                        mesh().time().name(),
+                        mesh()
+                    ),
+                    mesh(),
+                    1.0/mesh().time().deltaT()
+                )
+            );
+        }
+
+        const dimensionedScalar& deltaT = mesh().time().deltaT();
+        const surfaceScalarField& magSf = mesh().magSf();
+        surfaceScalarField amaxSf(fvc::interpolate(speedOfSound())*magSf);
+
+        // Remove wave speed from wedge boundaries
+        forAll(amaxSf.boundaryField(), patchi)
+        {
+            if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
+            {
+                amaxSf.boundaryFieldRef() = Zero;
+            }
+        }
+        amaxSf += mag(this->phi());
+
+        surfaceScalarField Co
+        (
+            mesh().surfaceInterpolation::deltaCoeffs()
+          *(amaxSf/mesh().magSf())
+          *deltaT
+        );
+
+        const scalar maxCo = mesh().time().controlDict().lookupOrDefault
+        (
+            "maxCo",
+            fvTimeInt_->maxCo()
+        );
+        surfaceScalarField cofrDeltaT(max(Co/maxCo, scalar(1)));
+
+        tmp<volScalarField> tcorDeltaT
+        (
+            volScalarField::New
+            (
+                "CorDeltaT",
+                mesh(),
+                dimensionedScalar(cofrDeltaT.dimensions(), 0),
+                extrapolatedCalculatedFvPatchScalarField::typeName
+            )
+        );
+
+        volScalarField& corDeltaT = corDeltaTPtr_();
+
+        const labelUList& owner = mesh().owner();
+        const labelUList& neighbour = mesh().neighbour();
+
+        forAll(owner, facei)
+        {
+            corDeltaT[owner[facei]] =
+                max(corDeltaT[owner[facei]], cofrDeltaT[facei]);
+
+            corDeltaT[neighbour[facei]] =
+                max(corDeltaT[neighbour[facei]], cofrDeltaT[facei]);
+        }
+
+        const surfaceScalarField::Boundary& cofrDeltaTbf =
+            cofrDeltaT.boundaryField();
+
+        forAll(cofrDeltaTbf, patchi)
+        {
+            const fvsPatchScalarField& pcofrDeltaT = cofrDeltaTbf[patchi];
+            const fvPatch& p = pcofrDeltaT.patch();
+            const labelUList& faceCells = p.patch().faceCells();
+
+            forAll(pcofrDeltaT, patchFacei)
+            {
+                corDeltaT[faceCells[patchFacei]] = max
+                (
+                    corDeltaT[faceCells[patchFacei]],
+                    pcofrDeltaT[patchFacei]
+                );
+            }
+        }
+
+        corDeltaT.correctBoundaryConditions();
+        localRDeltaTPtr_() = corDeltaT/mesh().time().deltaT();
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::compressibleSystem::compressibleSystem
@@ -256,6 +373,8 @@ void Foam::compressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
+
+    updateCorDeltaT();
 }
 
 

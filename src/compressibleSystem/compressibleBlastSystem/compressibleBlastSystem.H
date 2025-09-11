@@ -87,11 +87,11 @@ protected:
         virtual void setModels();
 
         //- Add source terms to momentum and energy equations
-            virtual void addSources
-            (
-                volVectorField::Internal& rhoUSource,
-                volScalarField::Internal& rhoESource
-            ) const;
+        virtual void addSources
+        (
+            volVectorField::Internal& rhoUSource,
+            volScalarField::Internal& rhoESource
+        ) const;
 
 
 public:

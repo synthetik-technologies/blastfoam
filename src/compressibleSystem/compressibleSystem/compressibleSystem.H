@@ -116,6 +116,11 @@ protected:
         tmp<fvScalarMatrix> extESource_;
 
 
+    //- DeltaT cor for LTS cases
+    autoPtr<volScalarField> corDeltaTPtr_;
+    autoPtr<volScalarField> localRDeltaTPtr_;
+
+
         // Protected member functions
 
             //- Allocate models
@@ -127,6 +132,21 @@ protected:
                 volVectorField::Internal& rhoUSource,
                 volScalarField::Internal& rhoESource
             ) const;
+
+            //- Update corDeltaT (if using LTS)
+            void updateCorDeltaT();
+
+            //- Return if LTS is in use
+            bool LTS() const
+            {
+                return corDeltaTPtr_.valid();
+            }
+
+            //- Return corDeltaT
+            const volScalarField& corDeltaT()
+            {
+                return corDeltaTPtr_();
+            }
 
 public:
 
