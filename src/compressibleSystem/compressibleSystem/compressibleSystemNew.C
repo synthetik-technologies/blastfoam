@@ -73,11 +73,19 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 
     if (phases.size() < 2)
     {
+        const word systemType
+        (
+            physicalPropertiesDict.lookupOrDefault
+            (
+                "compressibleSystem",
+                singlePhaseCompressibleSystem::typeName
+            )
+        );
         return New
         (
             physicalPropertiesDict,
             mesh,
-            singlePhaseCompressibleSystem::typeName,
+            systemType,
             singlePhaseConstructorTablePtr_
         );
     }
