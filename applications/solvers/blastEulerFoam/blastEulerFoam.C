@@ -69,7 +69,17 @@ int main(int argc, char *argv[])
         mesh.update();
 
         #include "readTimeControls.H"
-        maxCo = min(maxCo, integrator.maxCo());
+
+        // Warn if using too high of a courant number
+        static bool hasWarned = false;
+        if (maxCo > integrator.maxCo() && !hasWarned)
+        {
+            WarningInFunction
+                << integrator.type() << " has a maximum stable Courant number "
+                << "of " << integrator.maxCo() << " but a maximum Courant "
+                << "number of " << maxCo << " has been specified" << endl;
+            hasWarned = true;
+        }
 
         #include "EigenCourantNos.H"
         #include "setDeltaT.H"
