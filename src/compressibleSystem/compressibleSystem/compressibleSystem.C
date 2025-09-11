@@ -26,6 +26,7 @@ License
 #include "compressibleSystem.H"
 #include "uniformDimensionedFields.H"
 #include "fvm.H"
+#include "fvcSmooth.H"
 #include "MULES.H"
 #include "fvcMeshPhi.H"
 #include "wedgeFvPatch.H"
@@ -158,66 +159,55 @@ void Foam::compressibleSystem::updateCorDeltaT()
         }
         amaxSf += mag(this->phi());
 
-        surfaceScalarField Co
-        (
-            mesh().surfaceInterpolation::deltaCoeffs()
-          *(amaxSf/mesh().magSf())
-          *deltaT
-        );
-
-        const scalar maxCo = mesh().time().controlDict().lookupOrDefault
-        (
-            "maxCo",
-            fvTimeInt_->maxCo()
-        );
-        surfaceScalarField cofrDeltaT(max(Co/maxCo, scalar(1)));
-
-        tmp<volScalarField> tcorDeltaT
-        (
-            volScalarField::New
+        const dictionary& controlDict = mesh().time().controlDict();
+        scalar maxCo = controlDict.lookupOrDefault("maxCo", fvTimeInt_->maxCo());
+        scalar rDeltaTSmoothingCoeff =
+            controlDict.lookupOrDefault("rDeltaTSmoothingCoeff", 0.02);
+        scalar minDeltaT = controlDict.lookupOrDefault("minDeltaT", small);
+        scalar maxDeltaT = controlDict.lookupOrDefault("maxDeltaT", great);
+        if (mesh().solution().isDict("PIMPLE"))
+        {
+            const dictionary& pimpleDict =
+                mesh().solution().subDict("PIMPLE");
+            pimpleDict.readIfPresent("maxCo", maxCo);
+            pimpleDict.readIfPresent
             (
-                "CorDeltaT",
-                mesh(),
-                dimensionedScalar(cofrDeltaT.dimensions(), 0),
-                extrapolatedCalculatedFvPatchScalarField::typeName
-            )
-        );
+                "rDeltaTSmoothingCoeff",
+                rDeltaTSmoothingCoeff
+            );
+            pimpleDict.readIfPresent("minDeltaT", minDeltaT);
+            pimpleDict.readIfPresent("maxDeltaT", maxDeltaT);
+        }
 
         volScalarField& corDeltaT = corDeltaTPtr_();
+        volScalarField& rDeltaT = localRDeltaTPtr_();
 
-        const labelUList& owner = mesh().owner();
-        const labelUList& neighbour = mesh().neighbour();
+        rDeltaT.internalFieldRef() =
+            fvc::surfaceSum(amaxSf)()()/((2*maxCo)*mesh().V());
+        rDeltaT.max(1.0/maxDeltaT);
+        rDeltaT.min(1.0/minDeltaT);
 
-        forAll(owner, facei)
+        rDeltaT.correctBoundaryConditions();
+
+        if (rDeltaTSmoothingCoeff > 0)
         {
-            corDeltaT[owner[facei]] =
-                max(corDeltaT[owner[facei]], cofrDeltaT[facei]);
-
-            corDeltaT[neighbour[facei]] =
-                max(corDeltaT[neighbour[facei]], cofrDeltaT[facei]);
+            fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
         }
 
-        const surfaceScalarField::Boundary& cofrDeltaTbf =
-            cofrDeltaT.boundaryField();
+        corDeltaT = rDeltaT*deltaT;
 
-        forAll(cofrDeltaTbf, patchi)
-        {
-            const fvsPatchScalarField& pcofrDeltaT = cofrDeltaTbf[patchi];
-            const fvPatch& p = pcofrDeltaT.patch();
-            const labelUList& faceCells = p.patch().faceCells();
+        Info<< "Flow time scale min/max = "
+            << 1.0/gMax(rDeltaT.primitiveField()) << ", "
+            << 1.0/gMin(rDeltaT.primitiveField()) << endl;
 
-            forAll(pcofrDeltaT, patchFacei)
-            {
-                corDeltaT[faceCells[patchFacei]] = max
-                (
-                    corDeltaT[faceCells[patchFacei]],
-                    pcofrDeltaT[patchFacei]
-                );
-            }
-        }
+        // Update the boundary values of the reciprocal time-step
+        rDeltaT.correctBoundaryConditions();
 
-        corDeltaT.correctBoundaryConditions();
-        localRDeltaTPtr_() = corDeltaT/mesh().time().deltaT();
+        fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
+
+        Info<< "Smoothed flow time scale min/max = "
+            << 1.0/gMax(rDeltaT.primitiveField()) << ", "
+            << 1.0/gMin(rDeltaT.primitiveField()) << endl;
     }
 }
 
