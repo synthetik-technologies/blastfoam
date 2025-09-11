@@ -477,14 +477,16 @@ Foam::fvMeshDistributors::redistributor::redistributor
     decomp_(nullptr),
     balance_(Pstream::nProcs() > 1),
     force_(false),
-    balanceInterval_(10),
+    balanceInterval_(1),
     beginBalance_(0),
     endBalance_(great),
     maxImbalance_(0.1),
     timeIndex_(mesh.time().timeIndex()),
     iter_(0)
 {
-    if
+    if (!dict().lookupOrDefault("useConstraints", true))
+    {}
+    else if
     (
         mesh.foundObject<polyMeshHexRefiner>(polyMeshRefiner::typeName)
      && !constraintFound(hexRefRefinementHistoryConstraint::typeName)
@@ -552,7 +554,9 @@ Foam::fvMeshDistributors::redistributor::redistributor
     timeIndex_(mesh.time().timeIndex()),
     iter_(0)
 {
-    if
+    if (!bDict.lookupOrDefault("useConstraints", true))
+    {}
+    else if
     (
         mesh.foundObject<polyMeshHexRefiner>(polyMeshRefiner::typeName)
      && !constraintFound(hexRefRefinementHistoryConstraint::typeName)
@@ -703,6 +707,10 @@ bool Foam::fvMeshDistributors::redistributor::update()
         }
 
         return true;
+    }
+    else if (balance_ && mesh.topoChanged())
+    {
+        iter_++;
     }
 
     return false;
