@@ -62,7 +62,6 @@ Foam::FieldSetTypes::MassIntegrated<Type, FSType>::MassIntegrated
         if (is.good())
         {
             token t(is);
-            Info<<t<<endl;
             if (t.isWord())
             {
                 rhoPtr_ =
