@@ -167,15 +167,13 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     scalar SNei(max(UvOwn + cOwn, UvNei + cNei));
 
 
-    scalar SStar
-    (
+    scalar SStar =
         (
             pNei - pOwn
           + rhoOwn*UvOwn*(SOwn - UvOwn)
           - rhoNei*UvNei*(SNei - UvNei)
         )
-       /stabilise(rhoOwn*(SOwn - UvOwn) - rhoNei*(SNei - UvNei), small)
-    );
+       /stabilise(rhoOwn*(SOwn - UvOwn) - rhoNei*(SNei - UvNei), small);
     scalar pStar =
         0.5
        *(
