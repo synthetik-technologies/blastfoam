@@ -121,7 +121,7 @@ jobs:
   #         - solver: blastEulerFoam
   #           scenario_type: validation
   #           scenario_name: shockTube_dense
-  #         - solver: blastEulerFoam    
+  #         - solver: blastEulerFoam
   #           scenario_type: validation
   #           scenario_name: shockTube_bidisperse
   #         - solver: blastFoam
@@ -235,7 +235,7 @@ jobs:
 
   #     - name: Uninstall Debian Package
   #       run: sudo dpkg -r blastfoam || echo "blastfoam package not found for removal"
-      
+
   #     - name: Fail job if solver step failed
   #       if: steps.run_solver.outcome == 'failure'
   #       run: exit 1
@@ -270,6 +270,7 @@ jobs:
       - name: Run validation scenarios sequentially
         run: |
           source $BLASTFOAM_DIR/etc/bashrc
+          export OMPI_MCA_rmaps_base_oversubscribe=1
 
           scenarios=$(cat <<EOF
           blastFoam rateStick
@@ -317,7 +318,7 @@ jobs:
           name: validation-plots
           path: tmp-upload
           retention-days: 30
-      
+
       - name: Upload failed validation logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -356,6 +357,7 @@ jobs:
       - name: Run tutorial scenarios sequentially
         run: |
           source $BLASTFOAM_DIR/etc/bashrc
+          export OMPI_MCA_rmaps_base_oversubscribe=1
 
           scenarios=$(cat <<EOF
           blastFoam building3DWorkshop
@@ -390,7 +392,7 @@ jobs:
               cp "$path"/log.* tmp-logs/$safe_name/ 2>/dev/null || echo "⚠️ No logs found for $name"
             fi
           done <<< "$scenarios"
-      
+
       - name: Upload failed tutorial logs
         if: always()
         uses: actions/upload-artifact@v4
