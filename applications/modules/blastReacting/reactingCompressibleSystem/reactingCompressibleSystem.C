@@ -154,8 +154,11 @@ void Foam::reactingCompressibleSystem::solve()
     (
         fvc::div(rhoEPhi_)
       - (rhoU_ & g_)
-      - reaction_->Qdot()
     );
+    if (reaction_.valid())
+    {
+        deltaRhoE -= reaction_->Qdot();
+    }
 
     //- Store changed in mass, momentum and energy
     this->storeAndBlendDelta(deltaRho);
