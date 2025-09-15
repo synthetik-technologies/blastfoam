@@ -271,6 +271,7 @@ jobs:
         run: |
           source $BLASTFOAM_DIR/etc/bashrc
           export OMPI_MCA_rmaps_base_oversubscribe=1
+          export MPI_BUFFER_SIZE=100000000
 
           scenarios=$(cat <<EOF
           blastFoam rateStick
@@ -358,6 +359,7 @@ jobs:
         run: |
           source $BLASTFOAM_DIR/etc/bashrc
           export OMPI_MCA_rmaps_base_oversubscribe=1
+          export MPI_BUFFER_SIZE=100000000
 
           scenarios=$(cat <<EOF
           blastFoam building3DWorkshop
