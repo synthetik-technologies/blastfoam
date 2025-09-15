@@ -429,7 +429,7 @@ void Foam::multiPhaseModel::solve()
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
 
-        *this += alphas_[phasei];
+        (*this) += alphas_[phasei];
     }
 
 
@@ -767,15 +767,15 @@ void Foam::multiPhaseModel::update()
 
 void Foam::multiPhaseModel::scaleVolumeFraction
 (
-    const scalar sumAlpha,
+    const scalar scale,
     const label celli
 )
 {
     forAll(alphas_, phasei)
     {
-        alphas_[phasei][celli] /= sumAlpha;
+        alphas_[phasei][celli] *= scale;
     }
-    (*this)[celli] /= sumAlpha;
+    (*this)[celli] *= scale;
 }
 
 
@@ -785,14 +785,18 @@ void Foam::multiPhaseModel::correctVolumeFraction
     const label celli
 )
 {
-    scalar sumAlpha = ::Foam::max((*this)[celli], residualAlpha().value());
+    scalar sumAlpha = 0.0;
+    forAll(alphas_, phasei)
+    {
+        sumAlpha += alphas_[phasei][celli];
+    }
+    sumAlpha = Foam::max(sumAlpha, this->residualAlpha().value());
+
     forAll(alphas_, phasei)
     {
         alphas_[phasei][celli] *= alpha/sumAlpha;
     }
-
-
-    (*this)[celli] = alpha;
+     (*this)[celli] = alpha;
 }
 
 

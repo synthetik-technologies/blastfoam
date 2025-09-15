@@ -266,7 +266,7 @@ void Foam::phaseModel::scaleVolumeFraction
     const label celli
 )
 {
-    (*this)[celli] /= sumAlpha;
+    (*this)[celli] *= sumAlpha;
 }
 
 

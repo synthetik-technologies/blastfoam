@@ -1117,6 +1117,14 @@ void Foam::phaseSystem::decode()
                     );
                 }
             }
+            else if (fluidPhaseModels_.size() == 1)
+            {
+                fluidPhaseModels_[0].correctVolumeFraction
+                (
+                    1.0 - fixedAlpha,
+                    celli
+                );
+            }
             else
             {
                 scalar fluidAlpha = 0.0;
@@ -1124,14 +1132,18 @@ void Foam::phaseSystem::decode()
                 {
                     fluidAlpha += max(fluidPhaseModels_[i][celli], 0.0);
                 }
-                scalar scale = (1.0 - fixedAlpha)/max(fluidAlpha, 1e-6);
-                forAll(fluidPhaseModels_, i)
+                scalar scale =
+                    max((1.0 - fixedAlpha)/max(fluidAlpha, 1e-6), 0.0);
+                if (scale > small)
                 {
-                    fluidPhaseModels_[i].scaleVolumeFraction
-                    (
-                        scale,
-                        celli
-                    );
+                    forAll(fluidPhaseModels_, i)
+                    {
+                        fluidPhaseModels_[i].scaleVolumeFraction
+                        (
+                            scale,
+                            celli
+                        );
+                    }
                 }
             }
         }
