@@ -69,7 +69,7 @@ products
     thermodynamics
     {
         Cv              2100;
-        Hf              1.5e+06;
+        Hf              -1.5e+06;
     }
 }
 
