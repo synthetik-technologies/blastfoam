@@ -1,0 +1,237 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::RASModels::RNGkEpsilon_comp
+
+Description
+    Renormalisation group k-epsilon turbulence model for incompressible and
+    compressible flows.
+
+    Reference:
+    \verbatim
+        Yakhot, V., Orszag, S. A., Thangam, S.,
+        Gatski, T. B., & Speziale, C. G. (1992).
+        Development of turbulence models for shear flows
+        by a double expansion technique.
+        Physics of Fluids A: Fluid Dynamics (1989-1993), 4(7), 1510-1520.
+
+    For the RDT-based compression term:
+        El Tahry, S. H. (1983).
+        k-epsilon equation for compressible reciprocating engine flows.
+        Journal of Energy, 7(4), 345-353.
+
+    Compressibility correction:
+        Kaul, U. K., (2011)
+        "Effect of Inflow Boundary Conditions on the Turbulence Solution
+        in Internal Flows,"
+        AIAA Journal, 49(2), 426-432
+    \endverbatim
+
+    The default model coefficients are
+    \verbatim
+        RNGkEpsilon_compCoeffs
+        {
+            Cmu         0.0845;
+            C1          1.42;
+            C2          1.68;
+            C3          0;
+            sigmak      0.71942;
+            sigmaEps    0.71942;
+            eta0        4.38;
+            beta        0.012;
+        }
+    \endverbatim
+
+SourceFiles
+    RNGkEpsilon_comp.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef RNGkEpsilon_comp_H
+#define RNGkEpsilon_comp_H
+
+#include "RASModel.H"
+#include "eddyViscosity.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace RASModels
+{
+
+/*---------------------------------------------------------------------------*\
+                         Class RNGkEpsilon_comp Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class BasicMomentumTransportModel>
+class RNGkEpsilon_comp
+:
+    public eddyViscosity<RASModel<BasicMomentumTransportModel>>
+{
+
+protected:
+
+    // Protected data
+
+        // Model coefficients
+
+            dimensionedScalar Cmu_;
+            dimensionedScalar C1_;
+            dimensionedScalar C2_;
+            dimensionedScalar C3_;
+            dimensionedScalar sigmak_;
+            dimensionedScalar sigmaEps_;
+            dimensionedScalar eta0_;
+            dimensionedScalar beta_;
+
+
+        // Fields
+
+            volScalarField k_;
+            volScalarField epsilon_;
+
+
+    // Protected Member Functions
+
+        //- Bound epsilon and return Cmu*sqr(k) for nut
+        tmp<volScalarField> boundEpsilon();
+
+        //- Correct the eddy-viscosity nut
+        virtual void correctNut();
+
+        //- Source term for the k equation
+        virtual tmp<fvScalarMatrix> kSource() const;
+
+        //- Source term for the epsilon equation
+        virtual tmp<fvScalarMatrix> epsilonSource() const;
+
+
+public:
+
+    typedef typename BasicMomentumTransportModel::alphaField alphaField;
+    typedef typename BasicMomentumTransportModel::rhoField rhoField;
+
+
+    //- Runtime type information
+    TypeName("compressible::RNGkEpsilon");
+
+
+    // Constructors
+
+        //- Construct from components
+        RNGkEpsilon_comp
+        (
+            const alphaField& alpha,
+            const rhoField& rho,
+            const volVectorField& U,
+            const surfaceScalarField& alphaRhoPhi,
+            const surfaceScalarField& phi,
+            const viscosity& viscosity,
+            const word& type = "RNGkEpsilon"
+        );
+
+        //- Disallow default bitwise copy construction
+        RNGkEpsilon_comp(const RNGkEpsilon_comp&) = delete;
+
+
+    //- Destructor
+    virtual ~RNGkEpsilon_comp()
+    {}
+
+
+    // Member Functions
+
+        //- Re-read model coefficients if they have changed
+        virtual bool read();
+
+        //- Return the effective diffusivity for k
+        tmp<volScalarField> DkEff() const
+        {
+            return volScalarField::New
+            (
+                "DkEff",
+                (this->nut_/sigmak_ + this->nu())
+            );
+        }
+
+        //- Return the effective diffusivity for epsilon
+        tmp<volScalarField> DepsilonEff() const
+        {
+            return volScalarField::New
+            (
+                "DepsilonEff",
+                (this->nut_/sigmaEps_ + this->nu())
+            );
+        }
+
+        //- Return the turbulence kinetic energy
+        virtual tmp<volScalarField> k() const
+        {
+            return k_;
+        }
+
+        //- Return the turbulence kinetic energy dissipation rate
+        virtual tmp<volScalarField> epsilon() const
+        {
+            return epsilon_;
+        }
+
+        //- Return the turbulence specific dissipation rate
+        virtual tmp<volScalarField> omega() const
+        {
+            return volScalarField::New
+            (
+                "omega",
+                epsilon_/(Cmu_*k_)
+            );
+        }
+
+        //- Solve the turbulence equations and correct the turbulence viscosity
+        virtual void correct();
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const RNGkEpsilon_comp&) = delete;
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace RASModels
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "RNGkEpsilon_comp.C"
+#endif
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //

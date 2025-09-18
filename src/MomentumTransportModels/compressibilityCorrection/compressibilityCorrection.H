@@ -98,10 +98,23 @@ public:
         bool read(const dictionary&);
 
         //- Return tubulent Mach number
-        tmp<volScalarField::Internal> Mt
+        static tmp<volScalarField::Internal> Mt
         (
             const volScalarField& k
-        ) const;
+        );
+
+        //- Return tubulent Mach number squared
+        static tmp<volScalarField::Internal> MtSqr
+        (
+            const volScalarField& k
+        );
+
+        //- Return tubulent Mach number squared divided by k
+        //  for use with implicit sources
+        static tmp<volScalarField::Internal> MtSqrByk
+        (
+            const volScalarField& k
+        );
 
         //- Return compressible correction factor
         tmp<volScalarField::Internal> Fcorr

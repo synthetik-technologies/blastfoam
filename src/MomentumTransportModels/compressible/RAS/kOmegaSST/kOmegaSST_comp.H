@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2021-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2016-2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2025-06-09 Jeff Heylmun     : Derived from compressibilityCorrection
+2025-06-09 Jeff Heylmun     : Derived from compressible::kOmegaSST
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -24,46 +24,26 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::RASModels::kOmega2006_comp
+    Foam::RASModels::kOmegaSST_comp
 
 Description
-    Standard (2006) high Reynolds-number k-omega turbulence model for
-    incompressible and compressible flows.
+    Specialisation for RAS of the generic kOmegaSSTBase base class.
+    For more information, see Description of kOmegaSSTBase.H
 
-    References:
-    \verbatim
-        Wilcox, D. C. (2006).
-        Turbulence modeling for CFD, 3rd edition
-        La Canada, CA: DCW industries, Inc.
-
-        Wilcox, D. C. (2008).
-        Formulation of the kw turbulence model revisited.
-        AIAA journal, 46(11), 2823-2838.
-    \endverbatim
-
-    The default model coefficients are
-    \verbatim
-        compressible::kOmega2006Coeffs
-        {
-            Cmu         0.09;
-            beta0       0.0708;
-            gamma       0.52;
-            Clim        0.875;
-            alphak      0.6;
-            alphaOmega  0.5;
-        }
-    \endverbatim
+See also
+    Foam::compressible::kOmegaSST
 
 SourceFiles
-    kOmega2006_comp.C
+    kOmegaSST_comp.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kOmega2006_comp_H
-#define kOmega2006_comp_H
+#ifndef kOmegaSST_comp_H
+#define kOmegaSST_comp_H
 
-#include "kOmega2006.H"
-#include "compressibilityCorrection.H"
+#include "kOmegaSSTBase_comp.H"
+#include "RASModel.H"
+#include "eddyViscosity.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -73,22 +53,18 @@ namespace RASModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class kOmega2006_comp Declaration
+                          Class kOmegaSST Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class BasicMomentumTransportModel>
-class kOmega2006_comp
+class kOmegaSST_comp
 :
-    public kOmega2006<BasicMomentumTransportModel>,
-    public ::Foam::compressible::correction
+    public ::Foam::compressible::kOmegaSST
+    <
+        eddyViscosity<RASModel<BasicMomentumTransportModel>>,
+        BasicMomentumTransportModel
+    >
 {
-    // Private Member Functions
-
-        void correctNut(const volTensorField& gradU);
-
-        tmp<volScalarField::Internal> beta(const volTensorField& gradU) const;
-
-        tmp<volScalarField::Internal> CDkOmega() const;
 
 public:
 
@@ -97,13 +73,13 @@ public:
 
 
     //- Runtime type information
-    TypeName("compressible::kOmega2006");
+    TypeName("compressible::kOmegaSST");
 
 
     // Constructors
 
         //- Construct from components
-        kOmega2006_comp
+        kOmegaSST_comp
         (
             const alphaField& alpha,
             const rhoField& rho,
@@ -111,22 +87,13 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = typeName
+            const word& type = "kOmegaSST"
         );
 
 
     //- Destructor
-    virtual ~kOmega2006_comp()
+    virtual ~kOmegaSST_comp()
     {}
-
-
-    // Member Functions
-
-        //- Read RASProperties dictionary
-        virtual bool read();
-
-        //- Solve the turbulence equations and correct the turbulence viscosity
-        virtual void correct();
 };
 
 
@@ -136,12 +103,12 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #ifdef NoRepository
-    #include "kOmega2006_comp.C"
+    #include "kOmegaSST_comp.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #endif
 
 // ************************************************************************* //

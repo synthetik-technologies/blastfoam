@@ -2,13 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2022 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2025-06-09 Jeff Heylmun     : Derived from compressibilityCorrection
--------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -24,41 +22,44 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::RASModels::kOmega_comp
+    Foam::RASModels::LaheyKEpsilon_comp
 
 Description
-    Standard high Reynolds-number k-omega turbulence model for
-    incompressible and compressible flows.
+    Continuous-phase k-epsilon model including bubble-generated turbulence.
 
-    References:
+    Reference:
     \verbatim
-        Wilcox, D. C. (1998).
-        Turbulence modeling for CFD
-        (Vol. 2, pp. 103-217). La Canada, CA: DCW industries.
+        Lahey Jr, R. T. (2005).
+        The simulation of multidimensional multiphase flows.
+        Nuclear Engineering and Design, 235(10), 1043-1060.
     \endverbatim
 
     The default model coefficients are
     \verbatim
-        compressible::kOmegaCoeffs
+        LaheyKEpsilon_compCoeffs
         {
-            betaStar    0.09;
-            gamma       0.52;
-            beta        0.072;
-            alphak      0.5;
-            alphaOmega  0.5;
+            Cmu             0.09;
+            C1              1.44;
+            C2              1.92;
+            C3              0;
+            C4              1.92;
+            sigmak          1.0;
+            sigmaEps        1.3;
+            Cp              0.25;
+            Cmub            0.6;
+            alphaInversion  0.3;
         }
     \endverbatim
 
 SourceFiles
-    kOmega_comp.C
+    LaheyKEpsilon_comp.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kOmega_comp_H
-#define kOmega_comp_H
+#ifndef LaheyKEpsilon_comp_H
+#define LaheyKEpsilon_comp_H
 
-#include "kOmega.H"
-#include "compressibilityCorrection.H"
+#include "kEpsilon_comp.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -68,15 +69,47 @@ namespace RASModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class kOmega_comp Declaration
+                        Class LaheyKEpsilon_comp Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class BasicMomentumTransportModel>
-class kOmega_comp
+class LaheyKEpsilon_comp
 :
-    public kOmega<BasicMomentumTransportModel>,
-    public ::Foam::compressible::correction
+    public kEpsilon_comp<BasicMomentumTransportModel>
 {
+    // Private Data
+
+        mutable const phaseCompressibleMomentumTransportModel
+            *gasTurbulencePtr_;
+
+
+    // Private Member Functions
+
+        //- Return the turbulence model for the gas phase
+        const phaseCompressibleMomentumTransportModel& gasTurbulence() const;
+
+
+protected:
+
+    // Protected data
+
+        // Model coefficients
+
+            dimensionedScalar alphaInversion_;
+            dimensionedScalar Cp_;
+            dimensionedScalar C4_;
+            dimensionedScalar Cmub_;
+
+
+    // Protected Member Functions
+
+        virtual void correctNut();
+        tmp<volScalarField> bubbleG() const;
+        tmp<volScalarField> phaseTransferCoeff() const;
+        virtual tmp<fvScalarMatrix> kSource() const;
+        virtual tmp<fvScalarMatrix> epsilonSource() const;
+
+
 public:
 
     typedef typename BasicMomentumTransportModel::alphaField alphaField;
@@ -84,13 +117,13 @@ public:
 
 
     //- Runtime type information
-    TypeName("compressible::kOmega");
+    TypeName("compressible::LaheyKEpsilon");
 
 
     // Constructors
 
         //- Construct from components
-        kOmega_comp
+        LaheyKEpsilon_comp
         (
             const alphaField& alpha,
             const rhoField& rho,
@@ -98,22 +131,31 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = typeName
+            const word& type = "LaheyKEpsilon"
         );
+
+        //- Disallow default bitwise copy construction
+        LaheyKEpsilon_comp(const LaheyKEpsilon_comp&) = delete;
 
 
     //- Destructor
-    virtual ~kOmega_comp()
+    virtual ~LaheyKEpsilon_comp()
     {}
 
 
     // Member Functions
 
-        //- Read RASProperties dictionary
+        //- Read model coefficients if they have changed
         virtual bool read();
 
         //- Solve the turbulence equations and correct the turbulence viscosity
         virtual void correct();
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const LaheyKEpsilon_comp&) = delete;
 };
 
 
@@ -123,8 +165,9 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #ifdef NoRepository
-    #include "kOmega_comp.C"
+    #include "LaheyKEpsilon_comp.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

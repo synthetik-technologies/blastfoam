@@ -1,4 +1,4 @@
 compressibilityCorrection/compressibilityCorrection.C
-compressibleMomentumTransportModels_comp.C
+compressible/compressibleMomentumTransportModels_comp.C
 
 LIB = $(BLAST_LIBBIN)/libblastCompressibleMomentumTransportModels

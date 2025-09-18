@@ -37,6 +37,15 @@ License
 // RAS models
 // -------------------------------------------------------------------------- //
 
+#include "kEpsilon_comp.H"
+makeRASModel(kEpsilon_comp);
+
+#include "realizableKE_comp.H"
+makeRASModel(realizableKE_comp);
+
+#include "RNGkEpsilon_comp.H"
+makeRASModel(RNGkEpsilon_comp);
+
 #include "kOmega_comp.H"
 makeRASModel(kOmega_comp);
 

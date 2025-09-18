@@ -1,0 +1,233 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::RASModels::realizableKE_comp
+
+Description
+    Realizable k-epsilon turbulence model for incompressible and compressible
+    flows.
+
+    References:
+    \verbatim
+        Shih, T. H., Liou, W. W., Shabbir, A., Yang, Z., & Zhu, J. (1994).
+        A new k-epsilon eddy viscosity model for high Reynolds number
+        turbulent flows: Model development and validation.
+        NASA STI/Recon Technical Report N, 95, 11442.
+
+        Shih, T. H., Liou, W. W., Shabbir, A., Yang, Z., & Zhu, J. (1995).
+        A New k-epsilon Eddy Viscosity Model for High Reynolds Number
+        Turbulent Flows.
+        Computers and Fluids, 24(3), 227-238.
+
+        Compressibility correction:
+            Kaul, U. K., (2011)
+            "Effect of Inflow Boundary Conditions on the Turbulence Solution
+            in Internal Flows,"
+            AIAA Journal, 49(2), 426-432
+    \endverbatim
+
+    The default model coefficients are
+    \verbatim
+        realizableKE_compCoeffs
+        {
+            A0          4.0;
+            C2          1.9;
+            sigmak      1.0;
+            sigmaEps    1.2;
+        }
+    \endverbatim
+
+SourceFiles
+    realizableKE_comp.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef realizableKE_comp_H
+#define realizableKE_comp_H
+
+#include "RASModel.H"
+#include "eddyViscosity.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace RASModels
+{
+
+/*---------------------------------------------------------------------------*\
+                        Class realizableKE_comp Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class BasicMomentumTransportModel>
+class realizableKE_comp
+:
+    public eddyViscosity<RASModel<BasicMomentumTransportModel>>
+{
+
+protected:
+
+    // Protected data
+
+        // Model coefficients
+
+            dimensionedScalar A0_;
+            dimensionedScalar C2_;
+            dimensionedScalar sigmak_;
+            dimensionedScalar sigmaEps_;
+
+
+        // Fields
+
+            volScalarField k_;
+            volScalarField epsilon_;
+
+
+   // Protected Member Functions
+
+        //- Bound epsilon
+        void boundEpsilon();
+
+        tmp<volScalarField> rCmu
+        (
+            const volTensorField& gradU,
+            const volScalarField& S2,
+            const volScalarField& magS
+        );
+
+        //- Correct the eddy-viscosity nut
+        virtual void correctNut
+        (
+            const volTensorField& gradU,
+            const volScalarField& S2,
+            const volScalarField& magS
+        );
+
+        //- Correct the eddy-viscosity nut
+        virtual void correctNut();
+
+        //- Source term for the k equation
+        virtual tmp<fvScalarMatrix> kSource() const;
+
+        //- Source term for the epsilon equation
+        virtual tmp<fvScalarMatrix> epsilonSource() const;
+
+
+public:
+
+    typedef typename BasicMomentumTransportModel::alphaField alphaField;
+    typedef typename BasicMomentumTransportModel::rhoField rhoField;
+
+
+    //- Runtime type information
+    TypeName("compressible::realizableKE");
+
+    // Constructors
+
+        //- Construct from components
+        realizableKE_comp
+        (
+            const alphaField& alpha,
+            const rhoField& rho,
+            const volVectorField& U,
+            const surfaceScalarField& alphaRhoPhi,
+            const surfaceScalarField& phi,
+            const viscosity& viscosity,
+            const word& type = "realizableKE"
+        );
+
+
+    //- Destructor
+    virtual ~realizableKE_comp()
+    {}
+
+
+    // Member Functions
+
+        //- Re-read model coefficients if they have changed
+        virtual bool read();
+
+        //- Return the effective diffusivity for k
+        tmp<volScalarField> DkEff() const
+        {
+            return volScalarField::New
+            (
+                "DkEff",
+                (this->nut_/sigmak_ + this->nu())
+            );
+        }
+
+        //- Return the effective diffusivity for epsilon
+        tmp<volScalarField> DepsilonEff() const
+        {
+            return volScalarField::New
+            (
+                "DepsilonEff",
+                (this->nut_/sigmaEps_ + this->nu())
+            );
+        }
+
+        //- Return the turbulence kinetic energy
+        virtual tmp<volScalarField> k() const
+        {
+            return k_;
+        }
+
+        //- Return the turbulence kinetic energy dissipation rate
+        virtual tmp<volScalarField> epsilon() const
+        {
+            return epsilon_;
+        }
+
+        //- Return the turbulence specific dissipation rate
+        virtual tmp<volScalarField> omega() const
+        {
+            return volScalarField::New
+            (
+                "omega",
+                epsilon_/(0.09*k_)
+            );
+        }
+
+        //- Solve the turbulence equations and correct the turbulence viscosity
+        virtual void correct();
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace RASModels
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "realizableKE_comp.C"
+#endif
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //

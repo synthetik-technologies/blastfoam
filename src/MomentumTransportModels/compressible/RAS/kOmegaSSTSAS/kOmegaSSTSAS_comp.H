@@ -136,7 +136,7 @@ public:
 
 
     //- Runtime type information
-    TypeName("compressible::kOmegaSSTSAS");
+    TypeName("compressible::kOmegaSSTLM");
 
 
     // Constructors
@@ -150,7 +150,7 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = typeName
+            const word& type = "kOmegaSSTLM"
         );
 
         //- Disallow default bitwise copy construction

@@ -1,0 +1,285 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2013-2023 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "LaheyKEpsilon_comp.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
+#include "phaseSystem.H"
+#include "dispersedDragModel.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace RASModels
+{
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class BasicMomentumTransportModel>
+LaheyKEpsilon_comp<BasicMomentumTransportModel>::LaheyKEpsilon_comp
+(
+    const alphaField& alpha,
+    const rhoField& rho,
+    const volVectorField& U,
+    const surfaceScalarField& alphaRhoPhi,
+    const surfaceScalarField& phi,
+    const viscosity& viscosity,
+    const word& type
+)
+:
+    kEpsilon_comp<BasicMomentumTransportModel>
+    (
+        alpha,
+        rho,
+        U,
+        alphaRhoPhi,
+        phi,
+        viscosity,
+        type
+    ),
+
+    gasTurbulencePtr_(nullptr),
+
+    alphaInversion_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "alphaInversion",
+            this->coeffDict_,
+            0.3
+        )
+    ),
+
+    Cp_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "Cp",
+            this->coeffDict_,
+            0.25
+        )
+    ),
+
+    C4_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "C4",
+            this->coeffDict_,
+            this->C2_.value()
+        )
+    ),
+
+    Cmub_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "Cmub",
+            this->coeffDict_,
+            0.6
+        )
+    )
+{
+    if (type == typeName)
+    {
+        this->printCoeffs(type);
+    }
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class BasicMomentumTransportModel>
+bool LaheyKEpsilon_comp<BasicMomentumTransportModel>::read()
+{
+    if (kEpsilon_comp<BasicMomentumTransportModel>::read())
+    {
+        alphaInversion_.readIfPresent(this->coeffDict());
+        Cp_.readIfPresent(this->coeffDict());
+        C4_.readIfPresent(this->coeffDict());
+        Cmub_.readIfPresent(this->coeffDict());
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+template<class BasicMomentumTransportModel>
+const phaseCompressibleMomentumTransportModel&
+LaheyKEpsilon_comp<BasicMomentumTransportModel>::gasTurbulence() const
+{
+    if (!gasTurbulencePtr_)
+    {
+        const volVectorField& U = this->U_;
+
+        const phaseModel& liquid =
+            refCast<const phaseModel>(this->properties());
+        const phaseSystem& fluid = liquid.fluid();
+        const phaseModel& gas = fluid.otherPhase(liquid);
+
+        gasTurbulencePtr_ =
+           &U.db().lookupObject
+            <
+                phaseCompressibleMomentumTransportModel
+            >
+            (
+                IOobject::groupName
+                (
+                    momentumTransportModel::typeName,
+                    gas.name()
+                )
+            );
+    }
+
+    return *gasTurbulencePtr_;
+}
+
+
+template<class BasicMomentumTransportModel>
+void LaheyKEpsilon_comp<BasicMomentumTransportModel>::correctNut()
+{
+    const phaseCompressibleMomentumTransportModel& gasTurbulence =
+        this->gasTurbulence();
+
+    const phaseModel& liquid = refCast<const phaseModel>(this->properties());
+    const phaseSystem& fluid = liquid.fluid();
+    const phaseModel& gas = fluid.otherPhase(liquid);
+
+    this->nut_ =
+        this->Cmu_*sqr(this->k_)/this->epsilon_
+      + Cmub_*gas.d()*gasTurbulence.alpha()
+       *(mag(this->U_ - gasTurbulence.U()));
+
+    this->nut_.correctBoundaryConditions();
+    fvConstraints::New(this->mesh_).constrain(this->nut_);
+}
+
+
+template<class BasicMomentumTransportModel>
+tmp<volScalarField> LaheyKEpsilon_comp<BasicMomentumTransportModel>::bubbleG() const
+{
+    const phaseCompressibleMomentumTransportModel& gasTurbulence =
+        this->gasTurbulence();
+
+    const phaseModel& liquid = refCast<const phaseModel>(this->properties());
+    const phaseSystem& fluid = liquid.fluid();
+    const phaseModel& gas = fluid.otherPhase(liquid);
+
+    const dragModels::dispersedDragModel& drag =
+        fluid.lookupInterfacialModel<dragModels::dispersedDragModel>
+        (dispersedPhaseInterface(gas, liquid));
+
+    volScalarField magUr(mag(this->U_ - gasTurbulence.U()));
+
+    tmp<volScalarField> bubbleG
+    (
+        Cp_
+       *(
+            pow3(magUr)
+          + pow(drag.CdRe()*liquid.fluidThermo().nu()/gas.d(), 4.0/3.0)
+           *pow(magUr, 5.0/3.0)
+        )
+       *gas
+       /gas.d()
+    );
+
+    return bubbleG;
+}
+
+
+template<class BasicMomentumTransportModel>
+tmp<volScalarField>
+LaheyKEpsilon_comp<BasicMomentumTransportModel>::phaseTransferCoeff() const
+{
+    const volVectorField& U = this->U_;
+    const alphaField& alpha = this->alpha_;
+    const rhoField& rho = this->rho_;
+
+    const momentumTransportModel& gasTurbulence = this->gasTurbulence();
+
+    return
+    (
+        max(alphaInversion_ - alpha, scalar(0))
+       *rho
+       *min(gasTurbulence.epsilon()/gasTurbulence.k(), 1.0/U.time().deltaT())
+    );
+}
+
+
+template<class BasicMomentumTransportModel>
+tmp<fvScalarMatrix> LaheyKEpsilon_comp<BasicMomentumTransportModel>::kSource() const
+{
+    const alphaField& alpha = this->alpha_;
+    const rhoField& rho = this->rho_;
+
+    const phaseCompressibleMomentumTransportModel& gasTurbulence =
+        this->gasTurbulence();
+
+    const volScalarField phaseTransferCoeff(this->phaseTransferCoeff());
+
+    return
+        alpha*rho*bubbleG()
+      + phaseTransferCoeff*gasTurbulence.k()
+      - fvm::Sp(phaseTransferCoeff, this->k_);
+}
+
+
+template<class BasicMomentumTransportModel>
+tmp<fvScalarMatrix>
+LaheyKEpsilon_comp<BasicMomentumTransportModel>::epsilonSource() const
+{
+    const alphaField& alpha = this->alpha_;
+    const rhoField& rho = this->rho_;
+
+    const phaseCompressibleMomentumTransportModel& gasTurbulence =
+        this->gasTurbulence();
+
+    const volScalarField phaseTransferCoeff(this->phaseTransferCoeff());
+
+    return
+        alpha*rho*this->C4_*this->epsilon_*bubbleG()/this->k_
+      + phaseTransferCoeff*gasTurbulence.epsilon()
+      - fvm::Sp(phaseTransferCoeff, this->epsilon_);
+}
+
+
+template<class BasicMomentumTransportModel>
+void LaheyKEpsilon_comp<BasicMomentumTransportModel>::correct()
+{
+    kEpsilon_comp<BasicMomentumTransportModel>::correct();
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace RASModels
+} // End namespace Foam
+
+// ************************************************************************* //

@@ -80,9 +80,16 @@ bool Foam::compressible::correction::read(const dictionary& dict)
 Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::Mt
 (
     const volScalarField& k
-) const
+)
 {
-    const basicThermo& thermo = basicThermo::lookupThermo(k);
+    const basicThermo& thermo = k.mesh().lookupObject<basicThermo>
+    (
+        IOobject::groupName
+        (
+            physicalProperties::typeName,
+            k.group()
+        )
+    );
     if (isA<fluidBlastThermo>(thermo))
     {
         return
@@ -97,13 +104,83 @@ Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::Mt
     else
     {
         FatalErrorInFunction
-            << "Only fluidThermo thermodynamic models can be used with compressible::kOmegaSST "
-            << "models" << endl
+            << "Only fluidThermo thermodynamic models can be used with "
+            << "compressibility corrections" << endl
             << abort(FatalError);
     }
-    return sqrt(2.0*k());
+    return tmp<volScalarField::Internal>();
 }
 
+
+Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::MtSqr
+(
+    const volScalarField& k
+)
+{
+    const basicThermo& thermo = k.mesh().lookupObject<basicThermo>
+    (
+        IOobject::groupName
+        (
+            physicalProperties::typeName,
+            k.group()
+        )
+    );
+    if (isA<fluidBlastThermo>(thermo))
+    {
+        return
+            2.0*k()
+           /sqr(dynamicCast<const fluidBlastThermo>(thermo).speedOfSound()());
+    }
+    else if (isA<fluidThermo>(thermo))
+    {
+        const fluidThermo& fluid = dynamicCast<const fluidThermo>(thermo);
+        return 2.0*k()/(fluid.Cp()()/fluid.Cv()()/fluid.psi()());
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Only fluidThermo thermodynamic models can be used with "
+            << "compressibility corrections" << endl
+            << abort(FatalError);
+    }
+    return tmp<volScalarField::Internal>();
+}
+
+
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::MtSqrByk
+(
+    const volScalarField& k
+)
+{
+    const basicThermo& thermo = k.mesh().lookupObject<basicThermo>
+    (
+        IOobject::groupName
+        (
+            physicalProperties::typeName,
+            k.group()
+        )
+    );
+    if (isA<fluidBlastThermo>(thermo))
+    {
+        return
+            2.0
+            /sqr(dynamicCast<const fluidBlastThermo>(thermo).speedOfSound()());
+    }
+    else if (isA<fluidThermo>(thermo))
+    {
+        const fluidThermo& fluid = dynamicCast<const fluidThermo>(thermo);
+        return 2.0/(fluid.Cp()()/fluid.Cv()()/fluid.psi()());
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Only fluidThermo thermodynamic models can be used with "
+            << "compressibility corrections" << endl
+            << abort(FatalError);
+    }
+    return tmp<volScalarField::Internal>();
+}
 
 Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::Fcorr
 (
