@@ -1731,8 +1731,7 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
        *(
             phase2.thermo().he()()
           + phase2.p()()/max(phase2.rho()(), phase2.residualRho())
-          + hc2()()
-          + hc1()()
+          + (hc2()() - hc1()())
         )
       + mD12
        *(
