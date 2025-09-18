@@ -15,8 +15,11 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
+    -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
     -I../phaseSystems/lnInclude \
     -I../interfacialModels/lnInclude
 
 LIB_LIBS = \
-    -lphaseCompressibleMomentumTransportModels
+    -lphaseCompressibleMomentumTransportModels \
+    -L$(BLAST_LIBBIN) \
+    -lblastCompressibleMomentumTransportModels

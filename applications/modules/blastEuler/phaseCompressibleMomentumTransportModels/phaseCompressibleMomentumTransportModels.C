@@ -33,6 +33,27 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Compressible variations
+#include "kEpsilon_comp.H"
+makeRASModel(kEpsilon_comp);
+
+#include "RNGkEpsilon_comp.H"
+makeRASModel(RNGkEpsilon_comp);
+
+#include "kOmegaSST_comp.H"
+makeRASModel(kOmegaSST_comp);
+
+#include "LaheyKEpsilon_comp.H"
+makeRASModel(LaheyKEpsilon_comp);
+
+#include "kOmegaSSTSato_comp.H"
+makeRASModel(kOmegaSSTSato_comp);
+
+#include "continuousGasKEpsilon_comp.H"
+makeRASModel(continuousGasKEpsilon_comp);
+
+
+// Normal models
 #include "LaheyKEpsilon.H"
 makeRASModel(LaheyKEpsilon);
 
