@@ -117,7 +117,7 @@ public:
 
 
     //- Runtime type information
-    TypeName("compressible::LaheyKEpsilon");
+    CompressibleTypeName("LaheyKEpsilon");
 
 
     // Constructors
@@ -131,7 +131,7 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = "LaheyKEpsilon"
+            const word& type = baseName()
         );
 
         //- Disallow default bitwise copy construction

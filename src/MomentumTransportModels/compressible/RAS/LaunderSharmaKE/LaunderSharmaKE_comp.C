@@ -23,7 +23,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "realizableKE_comp.H"
+#include "LaunderSharmaKE_comp.H"
+#include "fvcMagSqrGradGrad.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
 #include "bound.H"
@@ -35,76 +36,44 @@ namespace Foam
 namespace RASModels
 {
 
-// * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * * //
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class BasicMomentumTransportModel>
-void realizableKE_comp<BasicMomentumTransportModel>::boundEpsilon()
+tmp<volScalarField> LaunderSharmaKE_comp<BasicMomentumTransportModel>::fMu() const
 {
-    epsilon_ = max(epsilon_, 0.09*sqr(k_)/(this->nutMaxCoeff_*this->nu()));
+    return exp(-3.4/sqr(scalar(1) + sqr(k_)/(this->nu()*epsilon_)/50.0));
 }
 
 
 template<class BasicMomentumTransportModel>
-tmp<volScalarField> realizableKE_comp<BasicMomentumTransportModel>::rCmu
-(
-    const volTensorField& gradU,
-    const volScalarField& S2,
-    const volScalarField& magS
-)
+tmp<volScalarField> LaunderSharmaKE_comp<BasicMomentumTransportModel>::f2() const
 {
-    tmp<volSymmTensorField> tS = dev(symm(gradU));
-    const volSymmTensorField& S = tS();
-
-    const volScalarField W
-    (
-        (2*sqrt(2.0))*((S&S)&&S)
-       /(
-            magS*S2
-          + dimensionedScalar(dimensionSet(0, 0, -3, 0, 0), small)
-        )
-    );
-
-    tS.clear();
-
-    const volScalarField phis
-    (
-        (1.0/3.0)*acos(min(max(sqrt(6.0)*W, -scalar(1)), scalar(1)))
-    );
-    const volScalarField As(sqrt(6.0)*cos(phis));
-    const volScalarField Us(sqrt(S2/2.0 + magSqr(skew(gradU))));
-
-    return 1.0/(A0_ + As*Us*k_/epsilon_);
+    return
+        scalar(1)
+      - 0.3*exp(-min(sqr(sqr(k_)/(this->nu()*epsilon_)), scalar(50.0)));
 }
 
 
 template<class BasicMomentumTransportModel>
-void realizableKE_comp<BasicMomentumTransportModel>::correctNut
-(
-    const volTensorField& gradU,
-    const volScalarField& S2,
-    const volScalarField& magS
-)
+void LaunderSharmaKE_comp<BasicMomentumTransportModel>::boundEpsilon()
+{
+    epsilon_ = max(epsilon_, Cmu_*sqr(k_)/(this->nutMaxCoeff_*this->nu()));
+}
+
+
+template<class BasicMomentumTransportModel>
+void LaunderSharmaKE_comp<BasicMomentumTransportModel>::correctNut()
 {
     boundEpsilon();
-    this->nut_ = rCmu(gradU, S2, magS)*sqr(k_)/epsilon_;
+    this->nut_ = Cmu_*fMu()*sqr(k_)/epsilon_;
     this->nut_.correctBoundaryConditions();
     fvConstraints::New(this->mesh_).constrain(this->nut_);
 }
 
 
 template<class BasicMomentumTransportModel>
-void realizableKE_comp<BasicMomentumTransportModel>::correctNut()
-{
-    const volTensorField gradU(fvc::grad(this->U_));
-    const volScalarField S2(typedName("S2"), 2*magSqr(dev(symm(gradU))));
-    const volScalarField magS(typedName("magS"), sqrt(S2));
-
-    correctNut(gradU, S2, magS);
-}
-
-
-template<class BasicMomentumTransportModel>
-tmp<fvScalarMatrix> realizableKE_comp<BasicMomentumTransportModel>::kSource() const
+tmp<fvScalarMatrix>
+LaunderSharmaKE_comp<BasicMomentumTransportModel>::kSource() const
 {
     return tmp<fvScalarMatrix>
     (
@@ -120,7 +89,7 @@ tmp<fvScalarMatrix> realizableKE_comp<BasicMomentumTransportModel>::kSource() co
 
 template<class BasicMomentumTransportModel>
 tmp<fvScalarMatrix>
-realizableKE_comp<BasicMomentumTransportModel>::epsilonSource() const
+LaunderSharmaKE_comp<BasicMomentumTransportModel>::epsilonSource() const
 {
     return tmp<fvScalarMatrix>
     (
@@ -137,7 +106,7 @@ realizableKE_comp<BasicMomentumTransportModel>::epsilonSource() const
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasicMomentumTransportModel>
-realizableKE_comp<BasicMomentumTransportModel>::realizableKE_comp
+LaunderSharmaKE_comp<BasicMomentumTransportModel>::LaunderSharmaKE_comp
 (
     const alphaField& alpha,
     const rhoField& rho,
@@ -158,13 +127,23 @@ realizableKE_comp<BasicMomentumTransportModel>::realizableKE_comp
         phi,
         viscosity
     ),
-    A0_
+
+    Cmu_
     (
         dimensioned<scalar>::lookupOrAddToDict
         (
-            "A0",
+            "Cmu",
             this->coeffDict_,
-            4.0
+            0.09
+        )
+    ),
+    C1_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "C1",
+            this->coeffDict_,
+            1.44
         )
     ),
     C2_
@@ -173,7 +152,16 @@ realizableKE_comp<BasicMomentumTransportModel>::realizableKE_comp
         (
             "C2",
             this->coeffDict_,
-            1.9
+            1.92
+        )
+    ),
+    C3_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "C3",
+            this->coeffDict_,
+            0
         )
     ),
     sigmak_
@@ -191,7 +179,7 @@ realizableKE_comp<BasicMomentumTransportModel>::realizableKE_comp
         (
             "sigmaEps",
             this->coeffDict_,
-            1.2
+            1.3
         )
     ),
 
@@ -207,6 +195,7 @@ realizableKE_comp<BasicMomentumTransportModel>::realizableKE_comp
         ),
         this->mesh_
     ),
+
     epsilon_
     (
         IOobject
@@ -233,12 +222,14 @@ realizableKE_comp<BasicMomentumTransportModel>::realizableKE_comp
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class BasicMomentumTransportModel>
-bool realizableKE_comp<BasicMomentumTransportModel>::read()
+bool LaunderSharmaKE_comp<BasicMomentumTransportModel>::read()
 {
     if (eddyViscosity<RASModel<BasicMomentumTransportModel>>::read())
     {
-        A0_.readIfPresent(this->coeffDict());
+        Cmu_.readIfPresent(this->coeffDict());
+        C1_.readIfPresent(this->coeffDict());
         C2_.readIfPresent(this->coeffDict());
+        C3_.readIfPresent(this->coeffDict());
         sigmak_.readIfPresent(this->coeffDict());
         sigmaEps_.readIfPresent(this->coeffDict());
 
@@ -252,7 +243,7 @@ bool realizableKE_comp<BasicMomentumTransportModel>::read()
 
 
 template<class BasicMomentumTransportModel>
-void realizableKE_comp<BasicMomentumTransportModel>::correct()
+void LaunderSharmaKE_comp<BasicMomentumTransportModel>::correct()
 {
     if (!this->turbulence_)
     {
@@ -273,34 +264,18 @@ void realizableKE_comp<BasicMomentumTransportModel>::correct()
 
     eddyViscosity<RASModel<BasicMomentumTransportModel>>::correct();
 
-    volScalarField::Internal divU
-    (
-        typedName("divU"),
-        fvc::div(fvc::absolute(this->phi(), U))()
-    );
+    volScalarField divU(fvc::div(fvc::absolute(this->phi(), U)));
 
-    const volTensorField gradU(fvc::grad(U));
-    const volScalarField S2(typedName("S2"), 2*magSqr(dev(symm(gradU))));
-    const volScalarField magS(typedName("magS"), sqrt(S2));
+    // Calculate parameters and coefficients for Launder-Sharma low-Reynolds
+    // number model
 
-    const volScalarField::Internal eta
-    (
-        typedName("eta"), magS()*k_()/epsilon_()
-    );
-    const volScalarField::Internal C1
-    (
-        typedName("C1"),
-        max(eta/(scalar(5) + eta), scalar(0.43))
-    );
+    volScalarField E(2.0*this->nu()*nut*fvc::magSqrGradGrad(U));
+    volScalarField D(2.0*this->nu()*magSqr(fvc::grad(sqrt(k_))));
 
-    const volScalarField::Internal G
-    (
-        this->GName(),
-        nut*(gradU.v() && dev(twoSymm(gradU.v())))
-    );
+    tmp<volTensorField> tgradU = fvc::grad(U);
+    volScalarField G(this->GName(), nut*(tgradU() && dev(twoSymm(tgradU()))));
+    tgradU.clear();
 
-    // Update epsilon and G at the wall
-    epsilon_.boundaryFieldRef().updateCoeffs();
 
     // Dissipation equation
     tmp<fvScalarMatrix> epsEqn
@@ -309,12 +284,10 @@ void realizableKE_comp<BasicMomentumTransportModel>::correct()
       + fvm::div(alphaRhoPhi, epsilon_)
       - fvm::laplacian(alpha*rho*DepsilonEff(), epsilon_)
      ==
-        C1*alpha()*rho()*magS()*epsilon_()
-      - fvm::Sp
-        (
-            C2_*alpha()*rho()*epsilon_()/(k_() + sqrt(this->nu()()*epsilon_())),
-            epsilon_
-        )
+        C1_*alpha*rho*G*epsilon_/k_
+      - fvm::SuSp(((2.0/3.0)*C1_ - C3_)*alpha*rho*divU, epsilon_)
+      - fvm::Sp(C2_*f2()*alpha*rho*epsilon_/k_, epsilon_)
+      + alpha*rho*E
       + epsilonSource()
       + fvModels.source(alpha, rho, epsilon_)
     );
@@ -328,21 +301,23 @@ void realizableKE_comp<BasicMomentumTransportModel>::correct()
 
 
     // Turbulent kinetic energy equation
-
     tmp<fvScalarMatrix> kEqn
     (
         fvm::ddt(alpha, rho, k_)
       + fvm::div(alphaRhoPhi, k_)
       - fvm::laplacian(alpha*rho*DkEff(), k_)
      ==
-        alpha()*rho()*G
-      - fvm::SuSp(2.0/3.0*alpha()*rho()*divU, k_)
+        alpha*rho*G - fvm::SuSp(2.0/3.0*alpha*rho*divU, k_)
       - fvm::Sp
         (
-            alpha()*rho()*epsilon_()
-           *(1.0/k_() + compressible::correction::MtSqrByk(k_)),
+            alpha()*rho()
+           *(
+                (epsilon_() + D_)/k_
+              + epsilon_()*compressible::correction::MtSqrByk(k_))
+            ),
             k_
         )
+      // - fvm::Sp(alpha*rho*(epsilon_ + D)/k_, k_)
       + kSource()
       + fvModels.source(alpha, rho, k_)
     );
@@ -353,7 +328,7 @@ void realizableKE_comp<BasicMomentumTransportModel>::correct()
     fvConstraints.constrain(k_);
     bound(k_, this->kMin_);
 
-    correctNut(gradU, S2, magS);
+    correctNut();
 }
 
 

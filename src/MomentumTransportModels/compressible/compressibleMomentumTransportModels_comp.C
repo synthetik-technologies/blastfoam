@@ -61,6 +61,8 @@ makeRASModel(kOmegaSSTSAS_comp);
 #include "kOmegaSSTLM_comp.H"
 makeRASModel(kOmegaSSTLM_comp);
 
+#include "buoyantKEpsilon_comp.H"
+makeRASModel(buoyantKEpsilon_comp);
 
 // -------------------------------------------------------------------------- //
 // LES models

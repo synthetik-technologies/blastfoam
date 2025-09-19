@@ -22,49 +22,47 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::RASModels::realizableKE_comp
+    Foam::RASModels::LaunderSharmaKE_comp
 
 Description
-    Realizable k-epsilon turbulence model for incompressible and compressible
-    flows.
+    Launder and Sharma low-Reynolds k-epsilon turbulence model for
+    incompressible and compressible and combusting flows including
+    rapid distortion theory (RDT) based compression term.
 
     References:
     \verbatim
-        Shih, T. H., Liou, W. W., Shabbir, A., Yang, Z., & Zhu, J. (1994).
-        A new k-epsilon eddy viscosity model for high Reynolds number
-        turbulent flows: Model development and validation.
-        NASA STI/Recon Technical Report N, 95, 11442.
+        Launder, B. E., & Sharma, B. I. (1974).
+        Application of the energy-dissipation model of turbulence to the
+        calculation of flow near a spinning disc.
+        Letters in heat and mass transfer, 1(2), 131-137.
 
-        Shih, T. H., Liou, W. W., Shabbir, A., Yang, Z., & Zhu, J. (1995).
-        A New k-epsilon Eddy Viscosity Model for High Reynolds Number
-        Turbulent Flows.
-        Computers and Fluids, 24(3), 227-238.
-
-        Compressibility correction:
-            Kaul, U. K., (2011)
-            "Effect of Inflow Boundary Conditions on the Turbulence Solution
-            in Internal Flows,"
-            AIAA Journal, 49(2), 426-432
+        For the RDT-based compression term:
+        El Tahry, S. H. (1983).
+        k-epsilon equation for compressible reciprocating engine flows.
+        Journal of Energy, 7(4), 345-353.
     \endverbatim
 
     The default model coefficients are
     \verbatim
-        realizableKE_compCoeffs
+        LaunderSharmaKE_compCoeffs
         {
-            A0          4.0;
-            C2          1.9;
-            sigmak      1.0;
-            sigmaEps    1.2;
+            Cmu         0.09;
+            C1          1.44;
+            C2          1.92;
+            C3          0;
+            alphah      1.0;    // only for compressible
+            alphahk     1.0;    // only for compressible
+            alphaEps    0.76923;
         }
     \endverbatim
 
 SourceFiles
-    realizableKE_comp.C
+    LaunderSharmaKE_comp.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef realizableKE_comp_H
-#define realizableKE_comp_H
+#ifndef LaunderSharmaKE_comp_H
+#define LaunderSharmaKE_comp_H
 
 #include "RASModel.H"
 #include "eddyViscosity.H"
@@ -78,23 +76,24 @@ namespace RASModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class realizableKE_comp Declaration
+                       Class LaunderSharmaKE_comp Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class BasicMomentumTransportModel>
-class realizableKE_comp
+class LaunderSharmaKE_comp
 :
     public eddyViscosity<RASModel<BasicMomentumTransportModel>>
 {
-
 protected:
 
     // Protected data
 
         // Model coefficients
 
-            dimensionedScalar A0_;
+            dimensionedScalar Cmu_;
+            dimensionedScalar C1_;
             dimensionedScalar C2_;
+            dimensionedScalar C3_;
             dimensionedScalar sigmak_;
             dimensionedScalar sigmaEps_;
 
@@ -105,25 +104,13 @@ protected:
             volScalarField epsilon_;
 
 
-   // Protected Member Functions
+    // Private Member Functions
+
+        tmp<volScalarField> fMu() const;
+        tmp<volScalarField> f2() const;
 
         //- Bound epsilon
         void boundEpsilon();
-
-        tmp<volScalarField> rCmu
-        (
-            const volTensorField& gradU,
-            const volScalarField& S2,
-            const volScalarField& magS
-        );
-
-        //- Correct the eddy-viscosity nut
-        virtual void correctNut
-        (
-            const volTensorField& gradU,
-            const volScalarField& S2,
-            const volScalarField& magS
-        );
 
         //- Correct the eddy-viscosity nut
         virtual void correctNut();
@@ -142,12 +129,13 @@ public:
 
 
     //- Runtime type information
-    CompressibleTypeName("realizableKE");
+    CompressibleTypeName("LaunderSharmaKE");
+
 
     // Constructors
 
         //- Construct from components
-        realizableKE_comp
+        LaunderSharmaKE_comp
         (
             const alphaField& alpha,
             const rhoField& rho,
@@ -158,9 +146,12 @@ public:
             const word& type = baseName()
         );
 
+        //- Disallow default bitwise copy construction
+        LaunderSharmaKE_comp(const LaunderSharmaKE_comp&) = delete;
+
 
     //- Destructor
-    virtual ~realizableKE_comp()
+    virtual ~LaunderSharmaKE_comp()
     {}
 
 
@@ -207,12 +198,18 @@ public:
             return volScalarField::New
             (
                 "omega",
-                epsilon_/(0.09*k_)
+                epsilon_/(Cmu_*k_)
             );
         }
 
         //- Solve the turbulence equations and correct the turbulence viscosity
         virtual void correct();
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const LaunderSharmaKE_comp&) = delete;
 };
 
 
@@ -224,7 +221,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "realizableKE_comp.C"
+    #include "LaunderSharmaKE_comp.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

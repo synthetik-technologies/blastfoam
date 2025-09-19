@@ -103,7 +103,7 @@ LaheyKEpsilon_comp<BasicMomentumTransportModel>::LaheyKEpsilon_comp
         )
     )
 {
-    if (type == typeName)
+    if (type == typeName || type == baseName())
     {
         this->printCoeffs(type);
     }

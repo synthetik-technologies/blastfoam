@@ -87,7 +87,7 @@ continuousGasKEpsilon_comp<BasicMomentumTransportModel>::continuousGasKEpsilon_c
         )
     )
 {
-    if (type == typeName)
+    if (type == typeName || type == baseName())
     {
         this->printCoeffs(type);
     }

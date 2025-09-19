@@ -80,7 +80,7 @@ kOmegaSSTSato_comp<BasicMomentumTransportModel>::kOmegaSSTSato_comp
         )
     )
 {
-    if (type == typeName)
+    if (type == typeName || type == baseName())
     {
         this->printCoeffs(type);
     }

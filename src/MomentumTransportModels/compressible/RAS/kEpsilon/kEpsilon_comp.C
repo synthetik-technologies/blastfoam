@@ -27,7 +27,6 @@ License
 #include "fvModels.H"
 #include "fvConstraints.H"
 #include "bound.H"
-#include "compressibilityCorrection.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -35,6 +34,15 @@ namespace Foam
 {
 namespace RASModels
 {
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+// template<class BasicMomentumTransportModel>
+// const word kEpsilon_comp<BasicMomentumTransportModel>::baseName
+// (
+//     typeName_()
+// );
+
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -194,7 +202,7 @@ kEpsilon_comp<BasicMomentumTransportModel>::kEpsilon_comp
     bound(k_, this->kMin_);
     boundEpsilon();
 
-    if (type == typeName)
+    if (type == typeName || type == baseName())
     {
         this->printCoeffs(type);
     }

@@ -63,7 +63,7 @@ kOmegaSST_comp<BasicMomentumTransportModel>::kOmegaSST_comp
         viscosity
     )
 {
-    if (type == typeName)
+    if (type == typeName || type == baseName())
     {
         this->printCoeffs(type);
     }

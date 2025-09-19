@@ -75,6 +75,7 @@ SourceFiles
 
 #include "RASModel.H"
 #include "eddyViscosity.H"
+#include "compressibilityCorrection.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -133,7 +134,7 @@ public:
 
 
     //- Runtime type information
-    TypeName("compressible::kEpsilon");
+    CompressibleTypeName("kEpsilon");
 
 
     // Constructors
@@ -147,7 +148,7 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = "kEpsilon"
+            const word& type = baseName()
         );
 
         //- Disallow default bitwise copy construction

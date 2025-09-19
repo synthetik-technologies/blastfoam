@@ -120,7 +120,7 @@ kOmegaSSTDES_comp<BasicMomentumTransportModel>::kOmegaSSTDES_comp
     ),
     FSST_(this->coeffDict_.lookupOrDefault("FSST", 2))
 {
-    if (type == typeName)
+    if (type == typeName || type == baseName())
     {
         this->printCoeffs(type);
     }

@@ -27,7 +27,6 @@ License
 #include "fvModels.H"
 #include "fvConstraints.H"
 #include "bound.H"
-#include "compressibilityCorrection.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -213,7 +212,7 @@ RNGkEpsilon_comp<BasicMomentumTransportModel>::RNGkEpsilon_comp
     bound(k_, this->kMin_);
     boundEpsilon();
 
-    if (type == typeName)
+    if (type == typeName || type == baseName())
     {
         this->printCoeffs(type);
     }

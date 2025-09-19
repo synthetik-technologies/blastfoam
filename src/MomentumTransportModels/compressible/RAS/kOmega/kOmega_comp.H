@@ -84,7 +84,7 @@ public:
 
 
     //- Runtime type information
-    TypeName("compressible::kOmega");
+    CompressibleTypeName("kOmega");
 
 
     // Constructors
@@ -98,7 +98,7 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = "kOmega"
+            const word& type = baseName()
         );
 
 

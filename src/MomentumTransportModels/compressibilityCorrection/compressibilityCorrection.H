@@ -152,12 +152,17 @@ public:
 };
 
 
+#define CompressibleTypeName(Name)                                             \
+    TypeName("compressible::" Name);                                           \
+    static word baseName() {return Name;}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace compressible
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #endif
 
 // ************************************************************************* //
