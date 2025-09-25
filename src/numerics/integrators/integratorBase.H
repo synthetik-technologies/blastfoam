@@ -84,9 +84,9 @@ public:
         }
 
         //- Access the number of steps
-        virtual void setAdaptive()
+        virtual void setAdaptive(const bool tf)
         {
-            adaptive_ = true;
+            adaptive_ = tf;
         }
 };
 

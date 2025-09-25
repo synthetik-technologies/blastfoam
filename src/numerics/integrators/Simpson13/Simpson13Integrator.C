@@ -94,6 +94,7 @@ Type Foam::Simpson13Integrator<Type, Adapt>::integrate_
     const Type fx0(integrate_(xm - x0, f0, f0m, fm));
     const Type fx1(integrate_(x1 - xm, fm, fm1, f1));
     const Type fx(fx0 + fx1);
+
     if (this->converged(fx, Q, dx, tol))
     {
         return fx;
@@ -143,7 +144,7 @@ Type Foam::Simpson13Integrator<Type, Adapt>::integrate
     dx /= scalar(this->nIntervals_);
     scalar x12 = X0 + 0.5*dx;
     scalar x1 = X0 + dx;
-    Type f0(this->eqnPtr_->fx(x1, li));
+    Type f0(this->eqnPtr_->fx(X0, li));
     Type f1(this->eqnPtr_->fx(x1, li));
     Type res
     (

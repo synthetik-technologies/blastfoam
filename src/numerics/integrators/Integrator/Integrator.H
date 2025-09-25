@@ -152,11 +152,13 @@ protected:
                     static_cast<const Adapt&>(t1),
                     static_cast<const Adapt&>(t2)
                 )
-              < max
+              <
+                max
                 (
                     adaptiveError::mag<Adapt>(static_cast<const Adapt&>(t1)),
-                    absTolerance_
-                )*tol;
+                    adaptiveError::mag<Adapt>(static_cast<const Adapt&>(t2))
+                )*tol
+              + absTolerance_;
         }
 
 
