@@ -1204,6 +1204,9 @@ int main(int argc, char *argv[])
             // Update mesh (return if mesh changes)
             if (!end)
             {
+                // Transfer zones to the mesh
+                topoSets.transferZones(true);
+
                 const bool refined = refiner->refine(error, maxCellLevel);
                 if (refined && balance)
                 {
