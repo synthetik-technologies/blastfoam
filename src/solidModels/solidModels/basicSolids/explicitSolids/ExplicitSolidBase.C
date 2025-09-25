@@ -347,7 +347,7 @@ void Foam::solidModels::ExplicitSolidBase<IncrementalSolid>::solveMomentum()
 {
     Info<< "Solving the momentum equation" << endl;
 
-    this->enforceLinear() = false;
+    this->enforceLinear(false);
 
     tmp<volVectorField> stab;
 

@@ -55,7 +55,7 @@ Also see:
 #ifndef explicitRiemannSolid_H
 #define explicitRiemannSolid_H
 
-#include "solidModel.H"
+#include "DSolidModel.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "pointFields.H"
@@ -83,7 +83,7 @@ namespace solidModels
 
 class explicitRiemannSolid
 :
-    public solidModel
+    public DSolidModel
 {
     // Private data
 

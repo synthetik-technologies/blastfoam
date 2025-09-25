@@ -28,8 +28,8 @@ License
 #define iterativeSolidModels_H
 
 #include "IterativeSolidModel.H"
-#include "solidModel.H"
-#include "unsSolidModel.H"
+#include "DSolidModel.H"
+#include "unsDSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,8 +39,8 @@ namespace solidModels
 {
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-typedef IterativeSolidModel<solidModel> iterativeSolid;
-typedef IterativeSolidModel<unsSolidModel> unsIterativeSolid;
+typedef IterativeSolidModel<DSolidModel> iterativeSolid;
+typedef IterativeSolidModel<unsDSolidModel> unsIterativeSolid;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -192,7 +192,7 @@ bool explicitTotalLagrangianSolid::evolve()
     return true;
     Info<< "Solving the momentum equation" << endl;
 
-    this->enforceLinear() = false;
+    this->enforceLinear(false);
 
     tmp<volVectorField> stab;
 

@@ -104,7 +104,7 @@ Foam::solidModels::explicitSolid::explicitSolid
     const bool isSolid
 )
 :
-    ExplicitSolidBase<IncrementalSolid<solidModel>>
+    ExplicitSolidBase<IncrementalSolid<DSolidModel>>
     (
         type,
         mesh,

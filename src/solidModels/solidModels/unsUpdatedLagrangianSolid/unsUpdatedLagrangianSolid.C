@@ -85,10 +85,11 @@ bool unsUpdatedLagrangianSolid::evolve()
         (
             fvm::d2dt2(rho(), DD())
           + fvc::d2dt2(rho().oldTime(), D().oldTime())
-         == fvm::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
+         ==
+            fvm::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
           - fvc::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
 
-          //- Relative Piola (relative to current configuration)
+          // Relative Piola (relative to current configuration)
           + fvc::div(this->Pf() & mesh().Sf())
 
           + rho()*g()

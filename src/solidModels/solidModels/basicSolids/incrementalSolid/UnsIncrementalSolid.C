@@ -63,7 +63,7 @@ Foam::solidModels::UnsIncrementalSolid<UnsSolidModel>::UnsIncrementalSolid
     UnsSolidModel(type, mesh, nonLinear, incremental(), isSolid),
     impKf_("impKf", this->mechanical().impKf())
 {
-    this->DDisRequired(type);
+    this->isRequired(this->DD(), type);
 
     // Interpolate D to pointD
     this->mechanical().interpolate(this->D(), this->pointD(), false);
@@ -77,14 +77,16 @@ Foam::solidModels::UnsIncrementalSolid<UnsSolidModel>::UnsIncrementalSolid
         this->gradDf()
     );
 
-    this->gradD().storePrevIter();
-    this->gradDf().storePrevIter();
+    this->gradD().storeOldTimes();
+    this->gradDf().storeOldTimes();
 
-    this->pointDD() = Zero;
-    this->gradDD() = Zero;
-    this->gradDD().storePrevIter();
-    this->gradDDf() = Zero;
-    this->gradDDf().storePrevIter();
+    this->mechanical().grad
+    (
+        this->DD(),
+        this->pointDD(),
+        this->gradDD(),
+        this->gradDDf()
+    );
 }
 
 

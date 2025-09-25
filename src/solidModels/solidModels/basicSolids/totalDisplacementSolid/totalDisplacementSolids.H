@@ -30,7 +30,6 @@ License
 #include "TotalDisplacementSolid.H"
 #include "UnsTotalDisplacementSolid.H"
 #include "iterativeSolidModels.H"
-#include "unsSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

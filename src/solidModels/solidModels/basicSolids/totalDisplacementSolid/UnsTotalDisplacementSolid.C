@@ -72,7 +72,7 @@ UnsTotalDisplacementSolid
     UnsSolidModel(type, mesh, nonLinear, incremental(), isSolid),
     impKf_("impKf", this->mechanical().impKf())
 {
-    this->DisRequired(type);
+    this->isRequired(this->D(), type);
 
     // Interpolate D to pointD
     this->mechanical().interpolate(this->D(), this->pointD(), false);

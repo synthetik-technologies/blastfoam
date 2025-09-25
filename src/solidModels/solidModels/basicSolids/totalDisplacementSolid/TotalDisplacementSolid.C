@@ -64,7 +64,7 @@ Foam::solidModels::TotalDisplacementSolid<SolidModel>::TotalDisplacementSolid
     impK_("impK", this->mechanical().impK()),
     impKf_("impKf", this->mechanical().impKf())
 {
-    this->DisRequired(type);
+    this->isRequired(this->D(), type);
 
     // For consistent restarts, we will calculate the gradient field
     this->mechanical().grad(this->D(), this->gradD());

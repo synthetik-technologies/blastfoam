@@ -2,7 +2,8 @@ basicSolids=solidModels/basicSolids
 $(basicSolids)/solidModel/solidModel.C
 $(basicSolids)/solidModel/lookupSolidModel.C
 $(basicSolids)/solidModel/solidModelNew.C
-$(basicSolids)/solidModel/unsSolidModel.C
+$(basicSolids)/solidModel/unsDSolidModel.C
+$(basicSolids)/solidModel/DSolidModel.C
 $(basicSolids)/explicitSolids/explicitSolid.C
 $(basicSolids)/explicitSolids/unsExplicitSolid.C
 $(basicSolids)/explicitSolids/explicitNonLinearSolid.C

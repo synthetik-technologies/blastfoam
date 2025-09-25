@@ -63,11 +63,13 @@ Foam::solidModels::IncrementalSolid<SolidModel>::IncrementalSolid
     impK_("impK", this->mechanical().impK()),
     impKf_("impKf", this->mechanical().impKf())
 {
-    this->DDisRequired(type);
+    this->isRequired(this->DD(), type);
 
     // For consistent restarts, we will calculate the gradient field
     this->mechanical().grad(this->D(), this->gradD());
-    this->gradD().storePrevIter();
+    this->gradD().storeOldTimes();
+
+    this->mechanical().grad(this->DD(), this->gradDD());
 }
 
 

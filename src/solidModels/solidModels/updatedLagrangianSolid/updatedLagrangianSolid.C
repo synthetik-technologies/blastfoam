@@ -72,7 +72,7 @@ bool updatedLagrangianSolid::evolve()
     Info<< "Solving the updated Lagrangian form of the momentum equation for DD"
         << endl;
 
-    enforceLinear() = false;
+    enforceLinear(false);
 
     // Momentum equation loop
     do

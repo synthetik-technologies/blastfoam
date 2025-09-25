@@ -34,14 +34,15 @@ namespace Foam
 
 template<>
 const char*
-Foam::NamedEnum<Foam::nonLinearGeometry::nonLinearType, 3>::names[] =
+Foam::NamedEnum<Foam::nonLinearGeometry::nonLinearType, 4>::names[] =
 {
+    "none",
     "linearGeometry",
     "updatedLagrangian",
     "totalLagrangian"
 };
 
-const Foam::NamedEnum<Foam::nonLinearGeometry::nonLinearType, 3>
+const Foam::NamedEnum<Foam::nonLinearGeometry::nonLinearType, 4>
 Foam::nonLinearGeometry::nonLinearNames_;
 
 

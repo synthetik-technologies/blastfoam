@@ -36,7 +36,7 @@ SourceFiles
 #ifndef UnsTotalDisplacementSolid_H
 #define UnsTotalDisplacementSolid_H
 
-#include "unsSolidModel.H"
+#include "unsDSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

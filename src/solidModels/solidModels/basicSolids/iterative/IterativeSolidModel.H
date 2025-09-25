@@ -139,6 +139,7 @@ class IterativeSolidModel
 
 protected:
 
+        // Read from dictionary
         virtual void readDict();
 
         //- Apply fixed or Aitken's adaptive under-relaxation to the field

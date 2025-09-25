@@ -56,7 +56,7 @@ unsExplicitLinearSolid::unsExplicitLinearSolid
     UnsLinearGeomSolid<unsExplicitSolid>(typeName, mesh)
 {
     a_.oldTime();
-    U().oldTime();
+    this->U().oldTime();
 
     // Update stress
     update();

@@ -119,7 +119,7 @@ bool totalLagrangianTotalDisplacementSolid::evolve()
     Info<< "Solving the total Lagrangian form of the momentum equation for D"
         << endl;
 
-    enforceLinear() = false;
+    this->enforceLinear(false);
     // Momentum equation loop
     do
     {
@@ -142,7 +142,7 @@ bool totalLagrangianTotalDisplacementSolid::evolve()
         DEqn.relax();
 
         // Enforce any cell displacements
-        solidModel::setCellDisps(DEqn);
+        setCellDisps(DEqn);
 
         // Solve the linear system
         solverPerfD = DEqn.solve();

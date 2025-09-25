@@ -36,7 +36,7 @@ SourceFiles
 #ifndef UnsUpdatedLagrangianGeomSolid_H
 #define UnsUpdatedLagrangianGeomSolid_H
 
-#include "unsSolidModel.H"
+#include "unsDSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -23,20 +23,20 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    unsSolidModel
+    unsDSolidModel
 
 Description
     Base class for unstructured solid models
 
 SourceFiles
-    unsSolidModel.C
+    unsDSolidModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unsSolidModel_H
-#define unsSolidModel_H
+#ifndef unsDSolidModel_H
+#define unsDSolidModel_H
 
-#include "solidModel.H"
+#include "DSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,9 +49,9 @@ namespace solidModels
                         Class unsSolidModel Declaration
 \*---------------------------------------------------------------------------*/
 
-class unsSolidModel
+class unsDSolidModel
 :
-    public solidModel
+    public DSolidModel
 {
     // Protected data
 
@@ -70,7 +70,7 @@ public:
     // Constructors
 
         //- Construct from components
-        unsSolidModel
+        unsDSolidModel
         (
             const word& type,
             fvMesh& mesh,
@@ -81,7 +81,7 @@ public:
 
     // Destructor
 
-        virtual ~unsSolidModel()
+        virtual ~unsDSolidModel()
         {}
 
 
@@ -130,8 +130,8 @@ public:
             }
 
             //- Access face stress
-            using solidModel::sigma;
-            inline const symmTensorField& sigma(const fvPatch& patch) const
+            using DSolidModel::sigma;
+            const symmTensorField& sigma(const fvPatch& patch) const
             {
                 return sigmaf_.boundaryField()[patch.index()];
             }

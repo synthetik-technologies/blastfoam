@@ -94,21 +94,23 @@ public:
         //- Return nonlinear geometry enumerator
         virtual nonLinearGeometry::nonLinearType nonLinGeom() const
         {
-            return nonLinearGeometry::LINEAR_GEOMETRY;
+            return nonLinearGeometry::NONE;
         }
 
         //- Each solidModel must indicate whether D or DD is the primary
         //  solution variable
         virtual const volVectorField& solutionD() const
         {
-            return D();
+            NotImplemented;
+            return NullObjectRef<volVectorField>();
         }
 
         //- Each solidModel must indicate whether gradD or gradDD
         //  is the primary solution variable
         virtual const volTensorField& solutionGradD() const
         {
-            return gradD();
+            NotImplemented;
+            return NullObjectRef<volTensorField>();
         }
 
         //- Update fields
@@ -126,6 +128,56 @@ public:
         {
             return tmp<scalarField>(new scalarField(patch.size(), great));
         }
+
+        // Member Functions
+
+        // Access
+
+            //- Return const reference to D
+            virtual const volVectorField& D() const
+            {
+                NotImplemented;
+                return NullObjectRef<volVectorField>();
+            }
+
+            //- Return const reference to U
+            virtual const volVectorField& U() const
+            {
+                NotImplemented;
+                return NullObjectRef<volVectorField>();
+            }
+
+            //- Return const reference to pointD
+            virtual const pointVectorField& pointD() const
+            {
+                NotImplemented;
+                return NullObjectRef<pointVectorField>();
+            }
+
+            //- Return const reference to sigma
+            virtual const volSymmTensorField& sigma() const
+            {
+                NotImplemented;
+                return NullObjectRef<volSymmTensorField>();
+            }
+
+            //- Return the patch stress
+            virtual const symmTensorField& sigma(const fvPatch& patch) const
+            {
+                NotImplemented;
+                return NullObjectRef<symmTensorField>();
+            }
+
+
+            //- Return enforceLinear switch
+            virtual bool enforceLinear() const
+            {
+                return false;
+            }
+
+            //- Return enforceLinear switch
+            virtual void enforceLinear(const bool tf)
+            {}
 };
 
 

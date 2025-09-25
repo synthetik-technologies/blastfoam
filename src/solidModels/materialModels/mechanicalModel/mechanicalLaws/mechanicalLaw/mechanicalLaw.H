@@ -481,7 +481,7 @@ protected:
 
 
         //- Lookup the enforceLinear Switch in the solidModel
-        const Switch& enforceLinear() const;
+        bool enforceLinear() const;
 
         //- Does the solver use an incremental approach
         //  i.e. does it solve for DD as opposed to D

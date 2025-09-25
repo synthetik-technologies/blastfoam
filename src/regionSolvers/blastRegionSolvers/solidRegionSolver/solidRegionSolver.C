@@ -56,8 +56,14 @@ Foam::regionSolvers::solid::solid
     regionSolver(mesh, regions),
     solid_(solidModel::New(mesh_))
 {
-    // Add Displacement field to track error
-    accelerationSchemes_.addField(solid_->D());
+    if (solid_->nonLinGeom() != nonLinearGeometry::NONE)
+    {
+        // Add Displacement field to track error
+        accelerationSchemes_.addField
+        (
+            const_cast<volVectorField&>(solid_->D())
+        );
+    }
 }
 
 
@@ -76,10 +82,13 @@ void Foam::regionSolvers::solid::initialiseFields()
 {
     solidTractionFvPatchVectorField::canRelax = false;
 
-    const_cast<volVectorField&>
-    (
-        solid_->solutionD()
-    ).correctBoundaryConditions();
+    if (solid_->nonLinGeom() != nonLinearGeometry::NONE)
+    {
+        const_cast<volVectorField&>
+        (
+            solid_->solutionD()
+        ).correctBoundaryConditions();
+    }
     solid_->update();
 }
 
@@ -90,10 +99,13 @@ void Foam::regionSolvers::solid::initialise()
 
     solid_->initialize();
 
-    const_cast<volVectorField&>
-    (
-        solid_->solutionD()
-    ).correctBoundaryConditions();
+    if (solid_->nonLinGeom() != nonLinearGeometry::NONE)
+    {
+        const_cast<volVectorField&>
+        (
+            solid_->solutionD()
+        ).correctBoundaryConditions();
+    }
     solid_->update();
 }
 
@@ -110,7 +122,11 @@ bool Foam::regionSolvers::solid::moveMesh(const IterType iter)
     }
 
     regionSolver::moveMesh(iter);
-    return mesh_.moving() || max(mag(solid_->U())).value() > small;
+    if (solid_->nonLinGeom() != nonLinearGeometry::NONE)
+    {
+        return mesh_.moving() || max(mag(solid_->U())).value() > small;
+    }
+    return mesh_.moving();
 }
 
 
@@ -118,37 +134,43 @@ void Foam::regionSolvers::solid::solve()
 {
     SolverPerformance<vector>::debug = 0;
 
-    solid_->D().storePrevIter();
+    if (solid_->nonLinGeom() != nonLinearGeometry::NONE)
+    {
+        solid_->D().storePrevIter();
+    }
     solid_->evolve();
 
     accelerationSchemes_.updateError();
 
-    const volVectorField& D = solid_->solutionD();
-
-    vector forceSum = Zero;
-    Info<< "External forces:" << incrIndent << endl;
-    forAll(D.boundaryField(), patchi)
+    if (solid_->nonLinGeom() != nonLinearGeometry::NONE)
     {
-        const fvPatchVectorField& pD = D.boundaryField()[patchi];
-        if (isA<coupledSolidTractionFvPatchVectorField>(pD))
+        const volVectorField& D = solid_->solutionD();
+
+        vector forceSum = Zero;
+        Info<< "External forces:" << incrIndent << endl;
+        forAll(D.boundaryField(), patchi)
         {
-            const coupledSolidTractionFvPatchVectorField& cst =
-                dynamicCast<const coupledSolidTractionFvPatchVectorField>(pD);
-            forceSum += cst.force();
-            Info<< indent << pD.patch().name() << ":" << nl << incrIndent
-                << indent << "solid = " << cst.force() << nl
-                << indent << "fluid = " << cst.forceNbr() << decrIndent << endl;
+            const fvPatchVectorField& pD = D.boundaryField()[patchi];
+            if (isA<coupledSolidTractionFvPatchVectorField>(pD))
+            {
+                const coupledSolidTractionFvPatchVectorField& cst =
+                    dynamicCast<const coupledSolidTractionFvPatchVectorField>(pD);
+                forceSum += cst.force();
+                Info<< indent << pD.patch().name() << ":" << nl << incrIndent
+                    << indent << "solid = " << cst.force() << nl
+                    << indent << "fluid = " << cst.forceNbr() << decrIndent << endl;
+            }
+            else if (isA<solidTractionFvPatchVectorField>(pD))
+            {
+                const solidTractionFvPatchVectorField& st =
+                    dynamicCast<const solidTractionFvPatchVectorField>(pD);
+                forceSum += st.force();
+                Info<< indent << pD.patch().name() << ": "
+                    << st.force() << endl;
+            }
         }
-        else if (isA<solidTractionFvPatchVectorField>(pD))
-        {
-            const solidTractionFvPatchVectorField& st =
-                dynamicCast<const solidTractionFvPatchVectorField>(pD);
-            forceSum += st.force();
-            Info<< indent << pD.patch().name() << ": "
-                << st.force() << endl;
-        }
+        Info<< indent << "Total: " << forceSum << decrIndent << nl << endl;
     }
-    Info<< indent << "Total: " << forceSum << decrIndent << nl << endl;
 
     // Turn solver information back on
     SolverPerformance<vector>::debug = 1;
@@ -188,7 +210,7 @@ Foam::scalar Foam::regionSolvers::solid::maxCo() const
 
 Foam::scalar Foam::regionSolvers::solid::newDeltaT() const
 {
-    return min(regionSolver::newDeltaT(), solid_->mechanical().newDeltaT());
+    return min(regionSolver::newDeltaT(), solid_->newDeltaT());
 }
 
 

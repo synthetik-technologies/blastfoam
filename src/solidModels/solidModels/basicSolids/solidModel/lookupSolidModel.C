@@ -33,28 +33,33 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-const solidModel& lookupSolidModel(const objectRegistry& obReg)
+const solidModel& lookupSolidModel(const objectRegistry& obr)
 {
-    return lookupSolidModel(obReg, obReg.name());
+    return lookupSolidModel(obr, obr.name());
 }
 
 
+const DSolidModel& lookupDSolidModel(const objectRegistry& obr)
+{
+    return lookupDSolidModel(obr, obr.name());
+}
+
 const solidModel& lookupSolidModel
 (
-    const objectRegistry& obReg,
+    const objectRegistry& obr,
     const word& baseMeshRegionName
 )
 {
-    if (obReg.foundObject<solidModel>("solidProperties"))
+    if (obr.foundObject<solidModel>("solidProperties"))
     {
-        return obReg.lookupObject<solidModel>
+        return obr.lookupObject<solidModel>
         (
             "solidProperties"
         );
     }
-    else if (obReg.parent().foundObject<solidModel>("solidProperties"))
+    else if (obr.parent().foundObject<solidModel>("solidProperties"))
     {
-        return obReg.parent().lookupObject<solidModel>
+        return obr.parent().lookupObject<solidModel>
         (
             "solidProperties"
         );
@@ -63,7 +68,7 @@ const solidModel& lookupSolidModel
     {
         HashTable<const objectRegistry*> obrs
         (
-            obReg.parent().lookupClass<objectRegistry>()
+            obr.parent().lookupClass<objectRegistry>()
         );
 
         forAllConstIter
@@ -89,15 +94,26 @@ const solidModel& lookupSolidModel
 
     FatalErrorInFunction
         << "Could not find " << solidModel::typeName
-        << "for region " << obReg.name() << nl << nl
+        << "for region " << obr.name() << nl << nl
         << "solidModels in the objectRegistry: "
-        << obReg.lookupClass<solidModel>().toc() << nl << nl
+        << obr.lookupClass<solidModel>().toc() << nl << nl
         << "solidModels in the parent objectRegistry:"
-        << obReg.parent().lookupClass<solidModel>().toc() << abort(FatalError);
+        << obr.parent().lookupClass<solidModel>().toc() << abort(FatalError);
 
     // Keep the compiler happy
-    return obReg.lookupObject<solidModel>("none");
+    return obr.lookupObject<solidModel>("none");
 }
+
+
+const DSolidModel& lookupDSolidModel
+(
+    const objectRegistry& obr,
+    const word& baseMeshRegionName
+)
+{
+    return refCast<const DSolidModel>(lookupSolidModel(obr, baseMeshRegionName));
+}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

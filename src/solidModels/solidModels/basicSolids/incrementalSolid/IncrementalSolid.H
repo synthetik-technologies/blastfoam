@@ -36,7 +36,7 @@ SourceFiles
 #ifndef IncrementalSolid_H
 #define IncrementalSolid_H
 
-#include "solidModel.H"
+#include "DSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -120,7 +120,7 @@ void UnsTotalLagrangianGeomSolid<IncrementalModel>::update
     else
     {
         // Total deformation gradient
-        Ff_ = I + this->solutionGradDf().T();
+        Ff_ = I + this->gradDf().T();
     }
 
     // Jacobian of the deformation gradient

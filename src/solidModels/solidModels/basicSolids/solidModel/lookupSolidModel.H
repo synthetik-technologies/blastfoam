@@ -43,7 +43,7 @@ Author
 #ifndef lookupSolidModel_H
 #define lookupSolidModel_H
 
-#include "solidModel.H"
+#include "DSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,7 +54,15 @@ namespace Foam
 
 const solidModel& lookupSolidModel(const objectRegistry& obReg);
 
+const DSolidModel& lookupDSolidModel(const objectRegistry& obReg);
+
 const solidModel& lookupSolidModel
+(
+    const objectRegistry& obReg,
+    const word& obName
+);
+
+const DSolidModel& lookupDSolidModel
 (
     const objectRegistry& obReg,
     const word& obName

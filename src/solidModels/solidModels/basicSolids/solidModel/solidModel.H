@@ -71,7 +71,8 @@ class solidModel
 //     public physicsModel,
     public IOdictionary
 {
-    // Private data
+protected:
+    // Protected data
 
         //- Mesh
         fvMesh& mesh_;
@@ -79,74 +80,15 @@ class solidModel
         //- Derived solidModel type
         const word type_;
 
-        //- Mechanical model
-        mechanicalModel mechanical_;
-
         //- Thermal model
         thermalModel thermal_;
 
-        //- Total displacement field
-        volVectorField D_;
-
-        //- Increment of displacement field
-        //  DD = D - D.oldTime()
-        volVectorField DD_;
-
-        //- Velocity field
-        volVectorField U_;
-
-        //- Point total displacement field
-        pointVectorField pointD_;
-
-        //- Point increment of displacement field
-        //  pointDD = pointD - pointD.oldTime()
-        pointVectorField pointDD_;
-
-        //- Gradient of total displacement
-        volTensorField gradD_;
-
-        //- Gradient of the displacement increment
-        volTensorField gradDD_;
-
-        //- Stress field
-        //  This is the engineering stress for linear geometry approaches, and
-        //  true (Cauchy) stress for nonlinear geometry (large strain)
-        //  approaches
-        volSymmTensorField sigma_;
-
-        //- Gravitational acceleration
-        const uniformDimensionedVectorField g_;
-
-        //- Stabilisation term for momentum equation
-        autoPtr<momentumStabilisation> stabilisationPtr_;
-
-        //- Switch to enable/disable enforce linear to help convergence
-        Switch enforceLinear_;
-
-        //- Reference to globalPolyBoundaryMesh
+        //- Reference to globalPolyBoundaryMesh object
         globalPolyBoundaryMesh& globalPatches_;
 
-        //- Optional: set displacement at internal cells
-        mutable autoPtr<setCellDisplacements> setCellDispsPtr_;
 
-
-    // Private Member Functions
-
-        //- Disable solution in the out-of-plane direction for axisymmetric
-        //  cases
-        void checkWedges() const;
-
-        //- For calculating the position of the patch/face zone in the deformed
-        //  configuration, we need to move the mesh by the point displacement
-        //  field. For moving mesh approach (updated Lagrangian) we need the
-        //  pointDD field, whereas for linear geometry (small strain) and total
-        //  Lagrangian approaches, we need the pointD field. This function will
-        //  check which field to return
-        const pointVectorField& pointDorPointDD() const;
-
-        //- Make setCellDisplacements
-        void makeSetCellDisps() const;
-
+private:
+    // Private member functions
 
         //- Disallow default bitwise copy construct
         solidModel(const solidModel&);
@@ -159,42 +101,26 @@ protected:
 
     // Protected member functions
 
+        // Check wedge definition
+        static void checkWedges(const volVectorField& D);
+
+        // Return point boundary conditions
+        static wordList pointDBoundaryTypes(const volVectorField& D);
+
+        //- This function will check that the field was read from disk
+        void isRequired(const volVectorField& D, const word& type) const;
+
+        // Read from dictionary
+        virtual void readDict();
+
         //- Return non-const reference to solidModelCoeffs dictionary
         dictionary& solidModelDict();
 
         //- Return non-const reference to the thermal model
         thermalModel& thermal();
 
-        //- Return non-const reference to the mechanical model
-        mechanicalModel& mechanical();
-
         //- Return non-const reference to the density
         volScalarField& rho();
-
-        //- Optional: cells can be forced to a specified displacement in the
-        //  linear system
-        void setCellDisps(fvVectorMatrix& DEqn);
-
-        //- Return const reference to stabilisation
-        const momentumStabilisation& stabilisation() const
-        {
-            return stabilisationPtr_();
-        }
-
-        //- Set the displacement fields if a velocity was read
-        void displacementFromVelocity
-        (
-            volVectorField& disp,
-            volVectorField& ddisp
-        );
-
-        //- Return boundary types for pointD/pointDD fields
-        wordList pointDBoundaryTypes(const volVectorField& D) const;
-
-        virtual void readDict();
-
-        //- Construct null
-        solidModel(const word& type, fvMesh& mesh);
 
 
 public:
@@ -235,8 +161,6 @@ public:
         (
             const word& type,
             fvMesh& mesh,
-            const nonLinearGeometry::nonLinearType nonlinear,
-            const bool incremental,
             const bool isSolid = true
         );
 
@@ -259,44 +183,44 @@ public:
 
         // Access
 
+            //- Return time
+            inline const Time& runTime() const
+            {
+                return mesh_.time();
+            }
+
             //- Return mesh
-            const fvMesh& mesh() const
+            inline const fvMesh& mesh() const
             {
                 return mesh_;
             }
 
             //- Return non-const mesh
-            fvMesh& mesh()
+            inline fvMesh& mesh()
             {
                 return mesh_;
             }
 
             //- Return point mesh
-            const pointMesh& pMesh() const
+            inline const pointMesh& pMesh() const
             {
                 return pointMesh::New(mesh_);
             }
 
             //- Return non-const point mesh
-            pointMesh& pMesh()
+            inline pointMesh& pMesh()
             {
                 return pointMesh::New(mesh_);
             }
 
-            //- Return time
-            const Time& runTime() const
-            {
-                return mesh_.time();
-            }
-
             //- Return the global polyPatches
-            const globalPolyBoundaryMesh& globalPatches() const
+            inline const globalPolyBoundaryMesh& globalPatches() const
             {
                 return globalPatches_;
             }
 
             //- Access the global polyPatches
-            globalPolyBoundaryMesh& globalPatches()
+            inline globalPolyBoundaryMesh& globalPatches()
             {
                 return globalPatches_;
             }
@@ -313,113 +237,17 @@ public:
             //- Return const reference to the thermal model
             const thermalModel& thermal() const;
 
-            //- Return const reference to the mechanical model
-            const mechanicalModel& mechanical() const;
-
-            //- Return non-const reference to D
-            virtual volVectorField& D()
-            {
-                return D_;
-            }
-
             //- Return const reference to D
-            virtual const volVectorField& D() const
-            {
-                return D_;
-            }
-
-            //- Return non-const reference to DD
-            virtual volVectorField& DD()
-            {
-                return DD_;
-            }
-
-            //- Return const reference to DD
-            virtual const volVectorField& DD() const
-            {
-                return DD_;
-            }
-
-            //- Return non-const reference to U
-            virtual volVectorField& U()
-            {
-                return U_;
-            }
+            virtual const volVectorField& D() const = 0;
 
             //- Return const reference to U
-            virtual const volVectorField& U() const
-            {
-                return U_;
-            }
-
-            //- Return non-const reference to pointD
-            virtual pointVectorField& pointD()
-            {
-                return pointD_;
-            }
+            virtual const volVectorField& U() const = 0;
 
             //- Return const reference to pointD
-            virtual const pointVectorField& pointD() const
-            {
-                return pointD_;
-            }
-
-            //- Return non-const reference to pointDD
-            virtual pointVectorField& pointDD()
-            {
-                return pointDD_;
-            }
-
-            //- Return const reference to pointDD
-            virtual const pointVectorField& pointDD() const
-            {
-                return pointDD_;
-            }
-
-            //- Return non-const reference to gradD
-            virtual volTensorField& gradD()
-            {
-                return gradD_;
-            }
-
-            //- Return const reference to gradD
-            virtual const volTensorField& gradD() const
-            {
-                return gradD_;
-            }
-
-            //- Return non-const reference to gradDD
-            virtual volTensorField& gradDD()
-            {
-                return gradDD_;
-            }
-
-            //- Return const reference to gradDD
-            virtual const volTensorField& gradDD() const
-            {
-                return gradDD_;
-            }
-
-            //- Return non-const reference to sigma
-            virtual volSymmTensorField& sigma()
-            {
-                return sigma_;
-            }
-
-            //- Return const reference to sigma
-            virtual const volSymmTensorField& sigma() const
-            {
-                return sigma_;
-            }
+            virtual const pointVectorField& pointD() const = 0;
 
             //- Return nonlinear geometry enumerator
             virtual nonLinearGeometry::nonLinearType nonLinGeom() const = 0;
-
-            //- Return const reference to the gravitational acceleration
-            const uniformDimensionedVectorField& g() const
-            {
-                return g_;
-            }
 
             //- Each solidModel must indicate whether D or DD is the primary
             //  solution variable
@@ -430,16 +258,10 @@ public:
             virtual const volTensorField& solutionGradD() const = 0;
 
             //- Return enforceLinear switch
-            const Switch& enforceLinear() const
-            {
-                return enforceLinear_;
-            }
+            virtual bool enforceLinear() const = 0;
 
             //- Return enforceLinear switch
-            Switch& enforceLinear()
-            {
-                return enforceLinear_;
-            }
+            virtual void enforceLinear(const bool tf) = 0;
 
             //- Does this model take an incremental approach?
             //  i.e. does it solve for DD instead of D?
@@ -468,26 +290,16 @@ public:
             }
 
 
-            //- This function will check that the D field was read from disk
-            virtual void DisRequired(const word& type);
-
-            //- This function will check that the DD field was read from disk
-            virtual void DDisRequired(const word& type);
-
-            //- Return a reference to setCellDisplacements
-            const setCellDisplacements& setCellDisps() const;
-
-
         // Edit
 
             //- Update fields
             virtual void update(const bool correctSigma = true) = 0;
 
             //- Check if solid model is diverging using the Jacobian field
-            virtual Switch& checkEnforceLinear(const volScalarField& J);
+            virtual bool checkEnforceLinear(const volScalarField& J);
 
             //- Check if solid model is diverging using the Jacobian field
-            virtual Switch& checkEnforceLinear(const surfaceScalarField& J);
+            virtual bool checkEnforceLinear(const surfaceScalarField& J);
 
             //- Evolve the solid model
             virtual bool evolve() = 0;
@@ -508,16 +320,13 @@ public:
             virtual tmp<scalarField> impK(const fvPatch& patch) const = 0;
 
             //- Return the patch stress
-            virtual const symmTensorField& sigma(const fvPatch& patch) const
-            {
-                return sigma_.boundaryField()[patch.index()];
-            }
+            virtual const symmTensorField& sigma(const fvPatch& patch) const = 0;
 
             //- Update total accumulated fields
             virtual void updateTotalFields();
 
             //- Return the desired new time-step size
-            virtual scalar newDeltaT();
+            virtual scalar newDeltaT() const;
 
             //- Move the mesh to the deformed configuration
             virtual void moveMesh

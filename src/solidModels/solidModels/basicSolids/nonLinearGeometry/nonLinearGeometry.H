@@ -59,12 +59,13 @@ public:
         //- Non-linear solver options
         enum nonLinearType
         {
+            NONE,
             LINEAR_GEOMETRY,
             UPDATED_LAGRANGIAN,
             TOTAL_LAGRANGIAN
         };
 
-        static const NamedEnum<nonLinearType, 3> nonLinearNames_;
+        static const NamedEnum<nonLinearType, 4> nonLinearNames_;
 };
 
 

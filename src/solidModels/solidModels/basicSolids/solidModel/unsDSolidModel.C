@@ -24,19 +24,11 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "unsSolidModel.H"
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace solidModels
-{
+#include "unsDSolidModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-unsSolidModel::unsSolidModel
+Foam::solidModels::unsDSolidModel::unsDSolidModel
 (
     const word& type,
     fvMesh& mesh,
@@ -45,7 +37,7 @@ unsSolidModel::unsSolidModel
     const bool isSolid
 )
 :
-    solidModel(type, mesh, nonlinear, incremental, isSolid),
+    DSolidModel(type, mesh, nonlinear, incremental, isSolid),
     sigmaf_
     (
         IOobject
@@ -82,15 +74,5 @@ unsSolidModel::unsSolidModel
         dimensionedTensor("0", dimless, tensor::zero)
     )
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace solidModels
-
-} // End namespace Foam
 
 // ************************************************************************* //

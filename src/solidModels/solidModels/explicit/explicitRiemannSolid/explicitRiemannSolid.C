@@ -269,7 +269,7 @@ explicitRiemannSolid::explicitRiemannSolid
     const nonLinearGeometry::nonLinearType& nonLinear
 )
 :
-    solidModel(type, mesh, nonLinear, incremental()),
+    DSolidModel(type, mesh, nonLinear, incremental()),
     F_
     (
         IOobject
@@ -440,7 +440,7 @@ explicitRiemannSolid::explicitRiemannSolid
         xN_.primitiveFieldRef() += mesh.points();
         xN_.correctBoundaryConditions();
     }
-    DDisRequired(type);
+    this->isRequired(DD(), type);
     if (!useStabilisation_)
     {
         stabilisation().setMethods(momentumStabilisation::NONE, dictionary());
@@ -609,7 +609,7 @@ bool explicitRiemannSolid::evolve()
     Info<< "Evolving solid solver" << endl;
     const dimensionedScalar& deltaT = mesh().time().deltaT();
 
-    enforceLinear() = false;
+    enforceLinear(false);
 
     volVectorField rhoURHS
     (

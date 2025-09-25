@@ -36,7 +36,7 @@ SourceFiles
 #ifndef TotalDisplacementSolid_H
 #define TotalDisplacementSolid_H
 
-#include "solidModel.H"
+#include "DSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

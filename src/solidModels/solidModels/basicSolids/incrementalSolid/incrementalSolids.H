@@ -30,7 +30,8 @@ License
 #include "IncrementalSolid.H"
 #include "UnsIncrementalSolid.H"
 #include "iterativeSolidModels.H"
-#include "unsSolidModel.H"
+#include "DSolidModel.H"
+#include "unsDSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -38,6 +39,7 @@ namespace Foam
 {
 namespace solidModels
 {
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 typedef IncrementalSolid<iterativeSolid> incrementalSolid;

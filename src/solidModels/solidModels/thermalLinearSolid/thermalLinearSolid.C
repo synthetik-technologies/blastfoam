@@ -267,7 +267,7 @@ bool thermalLinearSolid::evolve()
         DEqn.relax();
 
         // Enforce any cell displacements
-        solidModel::setCellDisps(DEqn);
+        setCellDisps(DEqn);
 
         // Solve the linear system
         solverPerfD = DEqn.solve();

@@ -131,7 +131,7 @@ bool unsTotalLagrangianTotalDisplacementSolid::evolve()
     scalar curConvergenceTolerance = solutionTol();
 
     // Reset enforceLinear switch
-    enforceLinear() = false;
+    enforceLinear(false);
 
     do
     {

@@ -36,7 +36,7 @@ SourceFiles
 #ifndef LinearGeomSolid_H
 #define LinearGeomSolid_H
 
-#include "solidModel.H"
+#include "DSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

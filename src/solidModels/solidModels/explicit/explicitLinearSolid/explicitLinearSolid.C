@@ -55,7 +55,7 @@ explicitLinearSolid::explicitLinearSolid(fvMesh& mesh)
     update();
 
     // Update initial acceleration
-    a_ = fvc::div(sigma(), "div(sigma)")/rho();
+    a_ = fvc::div(this->sigma(), "div(sigma)")/rho();
     a_.correctBoundaryConditions();
 }
 

@@ -36,7 +36,7 @@ SourceFiles
 #ifndef TotalLagrangianGeomSolid_H
 #define TotalLagrangianGeomSolid_H
 
-#include "solidModel.H"
+#include "DSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

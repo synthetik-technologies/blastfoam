@@ -854,7 +854,7 @@ void Foam::mechanicalLaw::updateSigmaHyd
 }
 
 
-const Foam::Switch& Foam::mechanicalLaw::enforceLinear() const
+bool Foam::mechanicalLaw::enforceLinear() const
 {
     // Lookup the solideModel
     const solidModel& solMod = lookupSolidModel(baseMesh());

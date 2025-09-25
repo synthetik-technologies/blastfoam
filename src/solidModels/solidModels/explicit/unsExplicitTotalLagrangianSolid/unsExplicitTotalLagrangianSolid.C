@@ -54,15 +54,15 @@ unsExplicitTotalLagrangianSolid::unsExplicitTotalLagrangianSolid
     UnsTotalLagrangianGeomSolid<unsExplicitNonLinearSolid>(typeName, mesh)
 {
     a_.oldTime();
-    U().oldTime();
+    this->U().oldTime();
 
     // Update stress
     update();
 
     // Update initial acceleration
     a_.primitiveFieldRef() =
-        fvc::div(sigma(), "div(sigma)")().internalField()
-       /(rho().internalField());
+        fvc::div(this->sigma(), "div(sigma)")().internalField()
+       /(this->rho().internalField());
     a_.correctBoundaryConditions();
 }
 

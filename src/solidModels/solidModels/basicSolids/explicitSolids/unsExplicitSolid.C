@@ -76,7 +76,7 @@ Foam::solidModels::unsExplicitSolid::unsExplicitSolid
     const bool isSolid
 )
 :
-    ExplicitSolidBase<UnsIncrementalSolid<unsSolidModel>>
+    ExplicitSolidBase<UnsIncrementalSolid<unsDSolidModel>>
     (
         type,
         mesh,

@@ -83,7 +83,7 @@ bool totalLagrangianSolid::evolve()
         << endl;
 
     // Reset enforceLinear switch
-    enforceLinear() = false;
+    enforceLinear(false);
 
     this->DD().correctBoundaryConditions();
     this->update();
@@ -111,7 +111,7 @@ bool totalLagrangianSolid::evolve()
         DDEqn.relax();
 
         // Enforce any cell displacements
-        solidModel::setCellDisps(DDEqn);
+        setCellDisps(DDEqn);
 
         // Solve the linear system
         solverPerfDD = DDEqn.solve();

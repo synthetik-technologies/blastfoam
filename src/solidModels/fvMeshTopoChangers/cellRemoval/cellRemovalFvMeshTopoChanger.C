@@ -199,7 +199,7 @@ Foam::label Foam::fvMeshTopoChangers::cellRemoval::addDeadCells
 
     // Lookup the solid model
     const fvMesh& mesh = this->mesh();
-    const solidModel& solid = lookupSolidModel(mesh);
+    const DSolidModel& solid = lookupDSolidModel(mesh);
     const volVectorField& D = solid.solutionD();
     const cellList& cells = mesh.cells();
     const labelList& owner = mesh.faceOwner();

@@ -37,7 +37,7 @@ SourceFiles
 #define UnsLinearGeomSolid_H
 
 #include "LinearGeomSolid.H"
-#include "unsSolidModel.H"
+#include "unsDSolidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

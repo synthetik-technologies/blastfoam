@@ -52,7 +52,7 @@ namespace solidModels
 
 class explicitSolid
 :
-    public ExplicitSolidBase<IncrementalSolid<solidModel>>
+    public ExplicitSolidBase<IncrementalSolid<DSolidModel>>
 {
 protected:
 
