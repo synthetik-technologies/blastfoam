@@ -187,7 +187,7 @@ Foam::scalar Foam::rhoConst<Specie>::H
     const scalar T
 ) const
 {
-    return 0.0;
+    return pRef_/rho;
 }
 
 
