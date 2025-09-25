@@ -1710,7 +1710,6 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
                 {
                     hc2 = mt.Y(phase2, specieName)*thermo2.hfi(speciei);
                 }
-
             }
         }
     }
@@ -1725,19 +1724,9 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
         hc2 = phase2.thermo().hc();
     }
 
-    // Add e + p/rho since some eos may not correctly compute
     mDotEi =
-        mD21
-       *(
-            phase2.thermo().he()()
-          + phase2.p()()/max(phase2.rho()(), phase2.residualRho())
-          + (hc2()() - hc1()())
-        )
-      + mD12
-       *(
-            phase1.thermo().he()()
-          + phase1.p()()/max(phase1.rho()(), phase1.residualRho())
-        );
+        mD21*(phase2.thermo().hs()() + (hc2()() - hc1()()))
+      + mD12*phase1.thermo().hs()();
 
     // Add kinetic energy contributions
     if (phase1.totalEnergy())
