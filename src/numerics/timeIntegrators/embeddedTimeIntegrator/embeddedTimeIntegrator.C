@@ -161,33 +161,36 @@ void Foam::embeddedTimeIntegrator::integrate()
         }
 
         err = 0.0;
-        forAll(systems_, i)
+        if (adjust_)
         {
-            err =
-                max
-                (
-                    err,
-                    dynamicCast<embeddedTimeIntegrationSystemBase>
-                    (
-                        systems_[i]
-                    ).error()
-                );
-        }
-
-        if (err > 1 && adjust_)
-        {
-            scalar scale =
-                max(safeScale_*pow(err, -alphaDec_), minScale_);
-            dt *= scale;
-            const_cast<Time&>(runTime).setDeltaTNoAdjust(dt);
-
-            reset();
-
-            if (dt < vSmall)
+            forAll(systems_, i)
             {
-                FatalErrorInFunction
-                    << "0 sized time step" << endl
-                    << abort(FatalError);
+                err =
+                    max
+                    (
+                        err,
+                        dynamicCast<embeddedTimeIntegrationSystemBase>
+                        (
+                            systems_[i]
+                        ).error()
+                    );
+            }
+
+            if (err > 1 && adjust_)
+            {
+                scalar scale =
+                    max(safeScale_*pow(err, -alphaDec_), minScale_);
+                dt *= scale;
+                const_cast<Time&>(runTime).setDeltaTNoAdjust(dt);
+
+                reset();
+
+                if (dt < vSmall)
+                {
+                    FatalErrorInFunction
+                        << "0 sized time step" << endl
+                        << abort(FatalError);
+                }
             }
         }
     } while (err > 1);
