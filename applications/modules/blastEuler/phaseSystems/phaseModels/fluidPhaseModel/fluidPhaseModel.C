@@ -175,8 +175,7 @@ void Foam::fluidPhaseModel::solve()
                 deltaAlphaRho -= mD;
                 deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
                 deltaAlphaRhoE -=
-                    fluid_.mDotE(mD, *this, otherPhase)
-                  - alphaD*p();
+                    fluid_.mDotE(mD, *this, otherPhase);
             }
         }
     }
