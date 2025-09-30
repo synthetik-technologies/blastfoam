@@ -36,8 +36,8 @@ transport
 }
 thermodynamics
 {
-    type        eConst;
     Cv          1.78575;           // Heat capacity
+    Cp          2.5;
     Hf          0.0;
 }
 

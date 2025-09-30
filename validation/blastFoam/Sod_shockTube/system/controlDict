@@ -42,9 +42,9 @@ runTimeModifiable true;
 
 adjustTimeStep  yes;
 
-deltaT          1e-6;
+deltaT          1e-3;
 
-maxCo           0.125;
+maxCo           0.5;
 
 // ************************************************************************* //
 
