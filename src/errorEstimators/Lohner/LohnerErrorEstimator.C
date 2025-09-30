@@ -50,11 +50,8 @@ Foam::errorEstimators::Lohner::Lohner
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_
-    (
-        dict.lookupBackwardsCompatible({typeName + "Name", "field"})
-    ),
-    epsilon_(readScalar(dict.lookup("epsilon")))
+    fieldName_(this->lookupFieldName(dict, typeName)),
+    epsilon_(dict.lookup<scalar>("epsilon"))
 {
     this->read(dict);
 }

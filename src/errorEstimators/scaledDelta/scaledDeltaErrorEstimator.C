@@ -49,10 +49,7 @@ Foam::errorEstimators::scaledDelta::scaledDelta
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_
-    (
-        dict.lookupBackwardsCompatible({typeName + "Field", "field"})
-    ),
+    fieldName_(this->lookupFieldName(dict, typeName)),
     minVal_(dict.lookupOrDefault<scalar>("minValue", small)),
     offset_(dict.lookupOrDefault<scalar>("offset", 0.0))
 {

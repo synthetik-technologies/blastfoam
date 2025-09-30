@@ -48,10 +48,7 @@ Foam::errorEstimators::fieldValue::fieldValue
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_
-    (
-        dict.lookupBackwardsCompatible({typeName + "Name", "field"})
-    )
+    fieldName_(this->lookupFieldName(dict, typeName))
 {
     this->read(dict);
 }

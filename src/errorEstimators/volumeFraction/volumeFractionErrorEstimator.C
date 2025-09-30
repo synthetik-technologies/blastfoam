@@ -92,7 +92,7 @@ void Foam::errorEstimators::volumeFraction::update(const bool scale)
 
     if (!refineFaces_)
     {
-         if (scale)
+        if (scale)
         {
             normalize(error_, eCells);
         }

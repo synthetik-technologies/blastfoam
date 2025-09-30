@@ -146,6 +146,17 @@ protected:
         //- Read cell zones
         void readMaxRefinement(const dictionary& dict);
 
+        static word lookupFieldName
+        (
+            const dictionary& dict,
+            const word& tn
+        )
+        {
+            return dict.lookupBackwardsCompatible
+            (
+                {tn + "Field", "field"}
+            );
+        }
 
 public:
 
