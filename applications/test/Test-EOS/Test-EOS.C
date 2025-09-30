@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
         << endl << decrIndent;
 
     Info<< "Derived and recalculated: " << nl << incrIndent
-        << indent <<"gamma: "<< eos.Gamma(rho, e, T) << nl
+        << indent <<"gamma: "<< eos.Gamma(rho, e, T) + 1.0 << nl
         << indent <<"speed of sound: "<< Foam::sqrt(eos.cSqr(p, rho, e, T)) << nl
         << indent <<"Cp: "<< eos.Cp(rho, e, T) << nl
         << indent <<"Cv: "<< eos.Cv(rho, e, T) << nl
