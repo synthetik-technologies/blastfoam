@@ -201,11 +201,11 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate
                 const scalar Ti(pT[facei]);
                 const scalar Xii = alphai/t.Gamma(rhoi, ei, Ti);
 
-                ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
-                palphaCp[facei] = t.Cp(rhoi, ei, Ti)*alphai;
-                palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai;
-                palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai;
-                palphaKappa[facei] = t.kappa(rhoi, ei, Ti)*alphai;
+                ppXiSum[facei] += t.p(rhoi, ei, Ti)*Xii;
+                palphaCp[facei] += t.Cp(rhoi, ei, Ti)*alphai;
+                palphaCv[facei] += t.Cv(rhoi, ei, Ti)*alphai;
+                palphaMu[facei] += t.mu(rhoi, ei, Ti)*alphai;
+                palphaKappa[facei] += t.kappa(rhoi, ei, Ti)*alphai;
                 pxiSum[facei] += Xii;
             }
         }
