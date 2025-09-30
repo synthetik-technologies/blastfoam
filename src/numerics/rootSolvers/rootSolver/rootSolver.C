@@ -42,7 +42,7 @@ void Foam::rootSolver::initialise(const scalarList& x) const
     tolerances_ = absTolerances_;
     forAll(x, i)
     {
-        tolerances_[i] = max(relTolerances_[i]*mag(x[i]), tolerances_[i]);
+        tolerances_[i] = max(relTolerances_[i]*mag(x[i]), absTolerances_[i]);
     }
 }
 
