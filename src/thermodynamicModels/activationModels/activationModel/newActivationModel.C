@@ -50,7 +50,11 @@ Foam::autoPtr<Foam::activationModel> Foam::activationModel::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict.subDict("initiation"), phaseName);
+    const dictionary& modelDict =
+        dict.isDict(activationModelType + "ActivationCoeffs")
+      ? dict.subDict(activationModelType + "ActivationCoeffs")
+      : dict.subDict("initiation");
+    return cstrIter()(mesh, modelDict, phaseName);
 
 }
 

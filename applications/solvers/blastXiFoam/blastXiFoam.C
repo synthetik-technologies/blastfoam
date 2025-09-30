@@ -51,15 +51,16 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
+#include "argList.H"
+#include "fvMesh.H"
+#include "volFields.H"
 #include "psiuCompressibleSystem.H"
-#include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "fluxScheme.H"
-#include "timeIntegrator.H"
-#include "laminarFlameSpeed.H"
-#include "ignition.H"
-#include "Switch.H"
+#include "fvTimeIntegrator.H"
+#include "timeSelector.H"
+
+using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -69,15 +70,14 @@ int main(int argc, char *argv[])
 
     fluxSchemeBase::needEnergyFlux = true;
 
-    #include "setRootCaseLists.H"
+    #include "setRootCase.H"
     #include "createTime.H"
     #include "createMesh.H"
     #include "createControl.H"
-    #include "readCombustionProperties.H"
     #include "createFields.H"
     #include "createFieldRefs.H"
     #include "createTimeControls.H"
-
+    maxCo = min(maxCo, integrator.maxCo());
     scalar CoNum = fluid.CoNum();
     #include "setInitialDeltaT.H"
 
@@ -87,20 +87,39 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        // Update fvModels and constraints
+        integrator.preUpdateMesh();
+
+        // Refine the mesh
+        mesh.update();
+
+        // Update Courant number
         CoNum = fluid.CoNum();
         #include "readTimeControls.H"
+        maxCo = min(maxCo, integrator.maxCo());
+
         #include "setDeltaT.H"
 
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         Info<< "Calculating Fluxes" << endl;
-        integrator->integrate();
+        integrator.integrate();
 
-        #include "ftEqn.H"
-        #include "bEqn.H"
+//         #include "ftEqn.H"
+//         #include "bEqn.H"
 
-        integrator->clear();
+        Info<< "    max(p) = " << max(p).value()
+            << ", min(p) = " << min(p).value() << nl
+            << "    max(T) = " << max(T).value()
+            << ", min(T) = " << min(T).value() << nl
+            << "    max(b) = " << max(b).value()
+            << ", min(b) = " << min(b).value() << nl
+            << "    Combustion progress = "
+            << 100*(scalar(1) - b)().weightedAverage(mesh.V()).value() << "%"
+            << endl;
+
+        integrator.clear();
 
         runTime.write();
 

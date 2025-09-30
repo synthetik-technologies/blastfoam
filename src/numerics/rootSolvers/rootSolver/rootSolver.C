@@ -175,13 +175,17 @@ Foam::rootSolver::rootSolver
     eqns_(eqns),
     xTols_
     (
-        dict.lookupOrDefault<scalarList>
+        dict.lookupOrDefaultBackwardsCompatible<scalarList>
         (
-            "xTolerances",
+            {"xTolerances", "tolerances"},
             scalarList
             (
                 eqns.nVar(),
-                dict.lookupOrDefault("xTolerance", 1e-6)
+                dict.lookupOrDefaultBackwardsCompatible
+                (
+                    {"xTolerance", "tolerance"},
+                    1e-6
+                )
             )
         )
     ),
@@ -199,18 +203,40 @@ Foam::rootSolver::rootSolver
     ),
     xAbsTols_
     (
-        dict.lookupOrDefault<scalarList>
+        dict.lookupOrDefaultBackwardsCompatible<scalarList>
         (
-            "xAbsTolerances",
+            {"xAbsTolerances", "absTolerances"},
             scalarList
             (
                 eqns.nVar(),
-                dict.lookupOrDefault("xAbsTolerance", 1e-6)
+                dict.lookupOrDefaultBackwardsCompatible
+                (
+                    {"xAbsTolerance", "absTolerance"},
+                    0.0
+                )
             )
         )
     ),
     xRelTols_(xTols_),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
+    stepi_(0),
+    xErrors_(eqns.nVar(), great),
+    yErrors_(eqns.nEqns(), great)
+{}
+
+
+Foam::rootSolver::rootSolver
+(
+    const scalarMultivariateEquation& eqns,
+    const rootSolver& solver
+)
+:
+    eqns_(eqns),
+    xTols_(solver.xTols_),
+    yTols_(solver.yTols_),
+    xAbsTols_(solver.xAbsTols_),
+    xRelTols_(solver.xRelTols_),
+    maxSteps_(solver.maxSteps_),
     stepi_(0),
     xErrors_(eqns.nVar(), great),
     yErrors_(eqns.nEqns(), great)

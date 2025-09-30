@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -54,7 +54,7 @@ Foam::diameterModel::diameterModel
         IOobject
         (
             IOobject::groupName("d", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -74,18 +74,18 @@ Foam::diameterModel::~diameterModel()
 
 void Foam::diameterModel::requireD() const
 {
-    IOobject dHeader
+    typeIOobject<volScalarField> dHeader
     (
         d_.name(),
-        d_.time().timeName(),
+        d_.time().name(),
         d_.mesh(),
         IOobject::MUST_READ
     );
-    if (!dHeader.typeHeaderOk<volScalarField>(true))
+    if (!dHeader.headerOk())
     {
         FatalErrorInFunction
             << this->type() << " diameter model requires the " << d_.name()
-            << "field to be specified"
+            << " field to be specified"
             << abort(FatalError);
     }
 }
@@ -99,6 +99,12 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::A() const
 Foam::tmp<Foam::volScalarField> Foam::diameterModel::V() const
 {
     return Foam::constant::mathematical::pi*pow3(d_)/6.0;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::diameterModel::dVdD() const
+{
+    return Foam::constant::mathematical::pi*sqr(d_)/3.0;
 }
 
 
@@ -128,6 +134,22 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::dMdt() const
         d_.mesh(),
         dimensionedScalar(dimMass/dimTime, 0.0)
     );
+}
+
+Foam::tmp<Foam::volScalarField> Foam::diameterModel::LDratio() const
+{
+    return volScalarField::New
+    (
+        IOobject::groupName("LDratio", d_.group()),
+        d_.mesh(),
+        dimensionedScalar(dimless, 1.0)
+    );
+}
+
+Foam::scalar
+Foam::diameterModel::LDratio(const label celli) const
+{
+    return 1.0;
 }
 
 // ************************************************************************* //

@@ -1,0 +1,21 @@
+ElementType/ElementType.C
+GaussianQuadrature/GaussianQuadrature.C
+integrationPoint/integrationPoint.C
+integrationRule/integrationRule.C
+
+finiteElements/finiteElement/finiteElement.C
+finiteElements/finiteElement/finiteElementVTKOps.C
+
+finiteElements/pointFiniteElement/pointFiniteElement.C
+finiteElements/segmentFiniteElement/segmentFiniteElement.C
+finiteElements/triangleFiniteElement/triangleFiniteElement.C
+finiteElements/quadrilateralFiniteElement/quadrilateralFiniteElement.C
+finiteElements/tetrahedronFiniteElement/tetrahedronFiniteElement.C
+finiteElements/hexahedronFiniteElement/hexahedronFiniteElement.C
+finiteElements/prismFiniteElement/prismFiniteElement.C
+finiteElements/pyramidFiniteElement/pyramidFiniteElement.C
+
+element/element.C
+
+LIB = $(BLAST_LIBBIN)/libblastFiniteElements
+

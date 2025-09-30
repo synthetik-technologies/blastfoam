@@ -48,10 +48,10 @@ namespace Foam
                         Class Simpson38Integrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class Simpson38Integrator
 :
-    public Integrator<Type>
+    public Integrator<Type, Adapt>
 {
 // Private data
 
@@ -106,7 +106,7 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        Simpson38Integrator(const Simpson38Integrator<Type>&) = delete;
+        Simpson38Integrator(const Simpson38Integrator<Type, Adapt>&) = delete;
 
 
     //- Destructor
@@ -124,7 +124,7 @@ public:
         ) const;
 
         //- Disallow default bitwise assignment
-        void operator=(const Simpson38Integrator<Type>&) = delete;
+        void operator=(const Simpson38Integrator<Type, Adapt>&) = delete;
 };
 
 

@@ -74,7 +74,12 @@ public:
         OneConstant(const word& name);
 
         //- Construct from name and dictionary
-        OneConstant(const word& name, const dictionary& dict);
+        OneConstant
+        (
+            const word& name,
+            const unitConversions& units,
+            const dictionary& dict
+        );
 
 
     //- Destructor

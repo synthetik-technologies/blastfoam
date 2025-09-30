@@ -34,7 +34,7 @@ Description
 #ifndef CodedEquation_H
 #define CodedEquation_H
 
-#include "regEquation.H"
+#include "Equation.H"
 #include "dictionary.H"
 
 #include "codedBase.H"
@@ -55,7 +55,7 @@ namespace Foam
 template<class Type>
 class CodedEquation
 :
-    public regEquation<Type, Equation>,
+    public Equation<Type>,
     public codedBase
 {
     // Private Data
@@ -71,6 +71,9 @@ class CodedEquation
 
         //- Get the keywords associated with source code
         virtual wordList codeKeys() const;
+
+         //- Get the name of the dictionary variables in the source code
+        virtual wordList codeDictVars() const;
 
         //- Adapt the context for the current object
         virtual void prepare
@@ -91,8 +94,16 @@ class CodedEquation
 
 public:
 
-    //- Construct from dictionary
-    CodedEquation(const objectRegistry& obr, const dictionary& dict);
+    TypeName("coded");
+
+    // Constructors
+
+        //- Construct from dictionary
+        CodedEquation(const dictionary& dict);
+
+        //- Construct from dictionary and object registry
+        CodedEquation(const objectRegistry& obr, const dictionary& dict);
+
 
     //- Destructor
     virtual ~CodedEquation();
@@ -146,8 +157,14 @@ public:
             return redirectEquationPtr_->d3fdx3(x, li);
         }
 
+        //- Set the pointer to the object registry
+        virtual void setObr(const objectRegistry& obr)
+        {
+            Equation<Type>::setObr(obr);
+            redirectEquationPtr_->setObr(obr);
+        }
+
         //- Write data to dictionary stream
-        using regIOobject::write;
         virtual void write(Ostream& os) const
         {
             writeCode(os);

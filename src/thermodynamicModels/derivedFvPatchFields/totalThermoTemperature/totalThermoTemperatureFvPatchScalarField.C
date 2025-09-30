@@ -122,28 +122,32 @@ totalThermoTemperatureFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::totalThermoTemperatureFvPatchScalarField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchScalarField::autoMap(m);
-    m(T0_, T0_);
-}
-
-
-void Foam::totalThermoTemperatureFvPatchScalarField::rmap
+void Foam::totalThermoTemperatureFvPatchScalarField::map
 (
     const fvPatchScalarField& ptf,
-    const labelList& addr
+    const fvPatchFieldMapper& mapper
 )
 {
-    fixedValueFvPatchScalarField::rmap(ptf, addr);
+    fixedValueFvPatchScalarField::map(ptf, mapper);
 
     const totalThermoTemperatureFvPatchScalarField& tiptf =
         refCast<const totalThermoTemperatureFvPatchScalarField>(ptf);
 
-    T0_.rmap(tiptf.T0_, addr);
+    mapper(T0_, tiptf.T0_);
+}
+
+
+void Foam::totalThermoTemperatureFvPatchScalarField::reset
+(
+    const fvPatchScalarField& ptf
+)
+{
+    fixedValueFvPatchScalarField::reset(ptf);
+
+    const totalThermoTemperatureFvPatchScalarField& tiptf =
+        refCast<const totalThermoTemperatureFvPatchScalarField>(ptf);
+
+    T0_.reset(tiptf.T0_);
 }
 
 

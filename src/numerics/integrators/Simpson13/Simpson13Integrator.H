@@ -48,10 +48,10 @@ namespace Foam
                         Class Simpson13Integrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class Simpson13Integrator
 :
-    public Integrator<Type>
+    public Integrator<Type, Adapt>
 {
     typedef Equation<Type> equationType;
 
@@ -99,7 +99,7 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        Simpson13Integrator(const Simpson13Integrator<Type>&) = delete;
+        Simpson13Integrator(const Simpson13Integrator<Type, Adapt>&) = delete;
 
 
     //- Destructor
@@ -117,7 +117,7 @@ public:
         ) const;
 
         //- Disallow default bitwise assignment
-        void operator=(const Simpson13Integrator<Type>&) = delete;
+        void operator=(const Simpson13Integrator<Type, Adapt>&) = delete;
 };
 
 

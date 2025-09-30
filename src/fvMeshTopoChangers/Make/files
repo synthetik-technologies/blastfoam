@@ -1,0 +1,18 @@
+# fvMesh refinement
+fvMeshRefiner/fvMeshRefiner.C
+fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
+fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
+fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C
+
+#Burst
+burst/burstFvMeshTopoChanger.C
+burst/burstModels/burstModel/burstModel.C
+burst/burstModels/field/fieldBurstModel.C
+burst/burstModels/impulse/impulseBurstModel.C
+burst/burstModels/pressure/pressureBurstModel.C
+burst/burstModels/pressureImpulse/pressureImpulseBurstModel.C
+
+# List (modified)
+list/blastListFvMeshTopoChanger.C
+
+LIB = $(BLAST_LIBBIN)/libblastFvMeshTopoChangers

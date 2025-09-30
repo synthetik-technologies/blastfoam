@@ -43,19 +43,29 @@ mechanics::mechanics
     const operations& ops
 )
 :
-    MeshObject<fvMesh, MoveableMeshObject, mechanics>(F.mesh()),
     mesh_(F.mesh()),
 
     ops_(ops),
 
     F_(F),
 
+    relF_
+    (
+        IOobject
+        (
+            "relF",
+            mesh_.time().name(),
+            mesh_
+        ),
+        F_ & inv(F_.oldTime())
+    ),
+
     invF_
     (
         IOobject
         (
-            "invF",
-            mesh_.time().timeName(),
+            "Finv",
+            mesh_.time().name(),
             mesh_
         ),
         inv(F_)
@@ -66,12 +76,23 @@ mechanics::mechanics
         IOobject
         (
             "J",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         det(F_)
+    ),
+
+    relJ_
+    (
+        IOobject
+        (
+            "relJ",
+            mesh_.time().name(),
+            mesh_
+        ),
+        det(relF_)
     ),
 
     N_("N", mesh_.Sf()/mesh_.magSf()),
@@ -81,7 +102,7 @@ mechanics::mechanics
         IOobject
         (
             "n",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_.Sf()/mesh_.magSf()
@@ -92,7 +113,7 @@ mechanics::mechanics
         IOobject
         (
             "stabRhoU",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -104,7 +125,7 @@ mechanics::mechanics
         IOobject
         (
             "stabTraction",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -116,7 +137,7 @@ mechanics::mechanics
         IOobject
         (
             "stretch",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_
         ),
         mesh_,
@@ -134,29 +155,30 @@ mechanics::~mechanics()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
-bool mechanics::movePoints()
-{
-    N_ = mesh_.Sf()/mesh_.magSf();
-    return true;
-}
-
 void mechanics::correctN()
 {
+    if (mesh_.changing())
+    {
+        N_ = mesh_.Sf()/mesh_.magSf();
+    }
+
     surfaceTensorField invFf(fvc::interpolate(invF_));
-    n_ = (invFf.T() & N_)/(mag(invFf.T() & N_));
+
+    n_ = (invFf.T() & N_)/mag(invFf.T() & N_);
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-void mechanics::correctDeformation(const bool useOldTime)
+void mechanics::correctDeformation()
 {
     // Spatial normals
     correctN();
 
     J_ = det(F_);
     invF_ = inv(F_);
+    relF_ = F_ & invF_.oldTime();
+    relJ_ = det(relF_);
 
     // Stretch
     volTensorField C(F_.T() & F_);
@@ -165,13 +187,13 @@ void mechanics::correctDeformation(const bool useOldTime)
         ops_.eigenStructure(C[celli]);
         stretch_[celli] = sqrt(cmptMin(ops_.eigenValue()));
     }
-    const volTensorField::Boundary& pC(C.boundaryField());
+    const volTensorField::Boundary& bC(C.boundaryField());
     volScalarField::Boundary& pstretch = stretch_.boundaryFieldRef();
-    forAll(pC, patchi)
+    forAll(bC, patchi)
     {
-        forAll(pC[patchi], facei)
+        forAll(bC[patchi], facei)
         {
-            ops_.eigenStructure(pC[patchi][facei]);
+            ops_.eigenStructure(bC[patchi][facei]);
             pstretch[patchi][facei] = sqrt(cmptMin(ops_.eigenValue()));
         }
     }

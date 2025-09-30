@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -52,16 +52,24 @@ class singlePhaseCompressibleSystem
 {
 public:
 
-    TypeName("singlePhaseCompressibleSystem");
+    TypeName("singlePhase");
 
     // Constructor
-    singlePhaseCompressibleSystem(const fvMesh& mesh);
+    singlePhaseCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const bool initialize = true
+    );
 
     //- Destructor
     virtual ~singlePhaseCompressibleSystem();
 
 
     // Member functions
+
+        //- Decode primative variables
+        virtual void decode();
 
         //- Solve sub-step stepi
         virtual void solve();

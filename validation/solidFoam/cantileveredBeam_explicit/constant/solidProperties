@@ -15,39 +15,26 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel explicitLinear;
+solidModel explicitTotalLagrangian;
 
-explicitLinearCoeffs
-{}
-
-linearGeometryTotalDisplacementCoeffs
+".*xplicit.*"
 {
-    // Maximum number of momentum correctors
-    nCorrectors     2000;
-
-    // Solution tolerance for displacement
-    solutionTolerance 1e-06;
-
-    // Alternative solution tolerance for displacement
-    alternativeTolerance 1e-06;
-
-    // Material law solution tolerance
-    materialTolerance 1e-05;
-
-    // Write frequency for the residuals
-    infoFrequency   100;
-}
-"explicitNonLinearTotalLagrangianCoeffs|explicitNonLinearUpdatedLagrangianCoeffs|explicitLinearTotalDisplacementCoeffs|explicitUnsLinearTotalDisplacementCoeffs|explicitUnsNonLinearTotalLagrangianTotalDisplacementCoeffs"
-{
-//     JSTScaleFactor 0.027;
+    dynamicRelaxation yes;
+    methods (JST);
+    JSTScaleFactor 1e-5;
+    relaxationScale 0.95;
+    startRelaxation 0.01;
+    nRelaxationSteps 10;
 }
 
-// "explicit.*"
-// {
-//     incompressiblilityCoefficient 1;
-//     angularMomentumConservation yes;
-//     JSTScaleFactor 0;
-// }
+".*RiemannCoeffs"
+{
+    angularMomentumConservation yes;
+    dynamicRelaxation yes;
+    relaxationScale 0.5;
+    startRelaxation 0.01;
+    nRelaxationSteps 100;
+}
 
 
 // ************************************************************************* //

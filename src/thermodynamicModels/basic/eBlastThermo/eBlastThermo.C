@@ -259,8 +259,28 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::he
 
 
 template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::scalarField>
+Foam::eBlastThermo<BasicThermo, ThermoType>::he
+(
+    const scalarField& T,
+    const fvSource& source
+) const
+{
+    return cellSetProperty
+    (
+        &ThermoType::Es,
+        source.cells(),
+        blastThermo::cellSetScalarList(this->rho_, source.cells()),
+        blastThermo::cellSetScalarList(this->e_, source.cells()),
+        T
+    );
+}
+
+
+
+template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::eBlastThermo<BasicThermo, ThermoType>::cellHE
+Foam::eBlastThermo<BasicThermo, ThermoType>::cellhe
 (
     const scalar T,
     const label celli
@@ -278,7 +298,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::cellHE
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::eBlastThermo<BasicThermo, ThermoType>::patchFaceHE
+Foam::eBlastThermo<BasicThermo, ThermoType>::patchFacehe
 (
     const scalar T,
     const label patchi,
@@ -458,20 +478,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::hc() const
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::flameT() const
-{
-    return volScalarFieldProperty
-    (
-        "flameT",
-        dimTemperature,
-        &ThermoType::flameT
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::THE() const
+Foam::eBlastThermo<BasicThermo, ThermoType>::The() const
 {
     return volScalarFieldProperty
     (
@@ -487,7 +494,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::THE() const
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::THE
+Foam::eBlastThermo<BasicThermo, ThermoType>::The
 (
     const volScalarField& he,
     const volScalarField& p,
@@ -496,7 +503,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::THE
 {
     return volScalarFieldProperty
     (
-        "THE",
+        "The",
         dimTemperature,
         &ThermoType::TRhoE,
         T,
@@ -508,7 +515,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::THE
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::scalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::THE
+Foam::eBlastThermo<BasicThermo, ThermoType>::The
 (
     const scalarField& he,
     const scalarField& T,
@@ -528,7 +535,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::THE
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::scalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::THE
+Foam::eBlastThermo<BasicThermo, ThermoType>::The
 (
     const scalarField& he,
     const scalarField& T,
@@ -548,7 +555,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::THE
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::eBlastThermo<BasicThermo, ThermoType>::cellTHE
+Foam::eBlastThermo<BasicThermo, ThermoType>::cellThe
 (
     const scalar he,
     const scalar T,

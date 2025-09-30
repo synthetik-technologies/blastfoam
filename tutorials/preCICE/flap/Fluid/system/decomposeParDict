@@ -7,11 +7,20 @@ FoamFile
     object decomposeParDict;
 }
 
-    numberOfSubdomains 4;
+numberOfSubdomains 4;
 
-    method scotch;
+method scotch;
 
-    distributed false;
-    roots
-    (
-    );
+distributed false;
+roots
+(
+);
+
+constraints
+{
+    faces
+    {
+        type preserveFaceZones;
+        zones (protectedFaces);
+    }
+}

@@ -92,7 +92,7 @@ void Foam::reactingFluidBlastThermo<Thermo>::update()
     }
     forAll(this->species_, speciei)
     {
-        if (this->active(speciei))
+        if (this->solveSpecie(speciei))
         {
             this->addDelta(this->species_[speciei], chemistry_->RR(speciei));
         }

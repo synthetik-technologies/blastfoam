@@ -29,10 +29,13 @@ License
 
 Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewSingle
 (
-    const fvMesh& mesh
+    const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType(mesh.schemesDict().lookup<word>("fluxScheme"));
+    const word fluxSchemeType
+    (
+        phi().mesh().schemes().dict().lookup<word>("fluxScheme")
+    );
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 
@@ -49,16 +52,19 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewSingle
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh);
+    return cstrIter()(phi);
 }
 
 
 Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewMulti
 (
-    const fvMesh& mesh
+    const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType(mesh.schemesDict().lookup<word>("fluxScheme"));
+    const word fluxSchemeType
+    (
+        phi.mesh().schemes().dict().lookup<word>("fluxScheme")
+    );
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 
@@ -75,16 +81,19 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewMulti
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh);
+    return cstrIter()(phi);
 }
 
 
 Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewInterface
 (
-    const fvMesh& mesh
+    const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType(mesh.schemesDict().lookup<word>("fluxScheme"));
+    const word fluxSchemeType
+    (
+        phi.mesh().schemes().dict().lookup<word>("fluxScheme")
+    );
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 
@@ -101,7 +110,7 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewInterface
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh);
+    return cstrIter()(phi);
 }
 
 

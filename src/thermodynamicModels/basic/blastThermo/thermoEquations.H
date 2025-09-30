@@ -69,9 +69,9 @@ class fluidEEquation
     scalar p_;
 
 public:
-    fluidEEquation(fluidBlastThermo& thermo)
+    fluidEEquation(fluidBlastThermo& thermo, const dictionary& dict)
     :
-        ScalarEquation(-great, great),
+        ScalarEquation(-great, great, dict, "EEqn"),
         thermo_(thermo),
         e_(&thermo.he()),
         eOld_(0.0),
@@ -137,9 +137,9 @@ class fluidTEquation
     scalar p_;
 
 public:
-    fluidTEquation(fluidBlastThermo& thermo)
+    fluidTEquation(fluidBlastThermo& thermo, const dictionary& dict)
     :
-        ScalarEquation(-great, great),
+        ScalarEquation(-great, great, dict, "TEqn"),
         thermo_(thermo),
         e_(&thermo.he()),
         T_(&thermo.T()),
@@ -157,9 +157,10 @@ public:
     // Save the old energy
     void save(const scalar p, const label li)
     {
+        p_ = p;
         TOld_ = (*T_)[li];
         eOld_ = (*e_)[li];
-        p_ = p;
+        (*e_)[li] = thermo_.cellhe(TOld_, li);
     }
 
     // Revert to the old energy
@@ -173,7 +174,7 @@ public:
     inline scalar fx(const scalar T, const label li) const
     {
         (*T_)[li] = T;
-        (*e_)[li] = thermo_.cellHE(T, li);
+        (*e_)[li] = thermo_.cellhe(T, li);
         return thermo_.cellpRhoT(li, false) - p_;
     }
 
@@ -181,7 +182,7 @@ public:
     inline scalar dfdx(const scalar T, const label li) const
     {
         (*T_)[li] = T;
-        (*e_)[li] = thermo_.cellHE(T, li);
+        (*e_)[li] = thermo_.cellhe(T, li);
         return thermo_.celldpdT(li);
     }
 };
@@ -209,10 +210,11 @@ public:
     THEEquation
     (
         fluidBlastThermo& thermo,
-        const scalar TLow
+        const scalar TLow,
+        const dictionary& dict
     )
     :
-        ScalarEquation(-great, great),
+        ScalarEquation(TLow, great, dict, "THEEqn"),
         thermo_(thermo),
         he_(thermo.he()),
         patchi_(-1)
@@ -242,8 +244,8 @@ public:
     {
         return
             patchi_ == -1
-          ? thermo_.cellHE(T, li) - he_[li]
-          : thermo_.patchFaceHE(T, patchi_, li)
+          ? thermo_.cellhe(T, li) - he_[li]
+          : thermo_.patchFacehe(T, patchi_, li)
           - he_.boundaryField()[patchi_][li];
     }
 

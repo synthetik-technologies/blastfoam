@@ -134,7 +134,19 @@ word readXs(Istream& is)
             os << t << token::SPACE;
         }
     }
-    return os.str();
+    return word(os.str());
+}
+
+word readX(Istream& is)
+{
+    OStringStream os;
+    word str;
+    token t(is);
+    if (t.good())
+    {
+        os << t << token::SPACE;
+    }
+    return word(os.str());
 }
 
 
@@ -150,7 +162,7 @@ List<scalar> readSingleX(Istream& is)
             xs.append(t.number());
         }
     }
-    return move(xs);
+    return xs;
 }
 
 
@@ -200,7 +212,7 @@ List<scalarList> readMultiX(Istream& is)
             }
         }
     }
-    return move(xs);
+    return xs;
 }
 
 
@@ -330,10 +342,20 @@ void setEquationSolverDict
     dictionary& dict
 )
 {
+
     if (args.optionFound("eval"))
     {
         dictionary evaluationDict;
-        evaluationDict.set("x", readXs((args.optionLookup("eval")())));
+        word xName(readX((args.optionLookup("eval")())));
+        evaluationDict.set("x", word("(" + xName + ")"));
+        dict.set("evaluationCoeffs", evaluationDict);
+        dict.set("evaluate", true);
+        Info<<dict<<endl;
+    }
+    else if (args.optionFound("evals"))
+    {
+        dictionary evaluationDict;
+        evaluationDict.set("x", readXs((args.optionLookup("evals")())));
         dict.set("evaluationCoeffs", evaluationDict);
         dict.set("evaluate", true);
     }
@@ -628,7 +650,8 @@ int main(int argc, char *argv[])
     argList::addOption("d3fdx3", "Third derivative function");
     argList::addOption("P", "Polynomial coeffs");
 
-    argList::addOption("eval", "Evaluate the function at the given values");
+    argList::addOption("eval", "Evaluate the function at the given value");
+    argList::addOption("evals", "Evaluate the function at the given values");
 
     argList::addOption("findRoots", "Find nearest root");
     argList::addOption("findAllRoots", "Find all roots");
@@ -838,9 +861,9 @@ int main(int argc, char *argv[])
 
 
             Pair<scalarList> bounds(integrationDict.lookup("bounds"));
-            autoPtr<MultivariateIntegrator<scalar>> integrator
+            autoPtr<MultivariateIntegrator<scalar, scalar>> integrator
             (
-                MultivariateIntegrator<scalar>::New(eqn, integrationDict)
+                MultivariateIntegrator<scalar, scalar>::New(eqn, integrationDict)
             );
             Info<<"Integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl
@@ -894,13 +917,10 @@ int main(int argc, char *argv[])
         CodedEquation<scalar> eqn(runTime, funcDictPtr());
         Info << nl << endl;
 
-        if (eqn.name() != "undefined")
-        {
-            Info<< "************************************" << nl
-                << name << "(x) = " << eqn.eqnString() << nl
-                << "************************************" << nl
-                << endl;
-        }
+        Info<< "************************************" << nl
+            << name << "(x) = " << eqn.eqnString() << nl
+            << "************************************" << nl
+            << endl;
 
         if (dict.lookupOrDefault("evaluate", false))
         {
@@ -916,7 +936,8 @@ int main(int argc, char *argv[])
                 Info<< name << "(" << xs[i] << ") = "
                     << eqn.fx(xs[i], 0) << endl;
                 if (nDerivatives > 0)
-                {
+                {        eqn.setObr(runTime);
+
                     Info<< "d" << name << "dx(" << xs[i] << ") = "
                         << eqn.dfdx(xs[i], 0) << endl;
                 }
@@ -1015,9 +1036,9 @@ int main(int argc, char *argv[])
 
 
             Pair<scalar> bounds(integrationDict.lookup("bounds"));
-            autoPtr<Integrator<scalar>> integrator
+            autoPtr<Integrator<scalar, scalar>> integrator
             (
-                Integrator<scalar>::New(eqn, dictPtr())
+                Integrator<scalar, scalar>::New(eqn, dictPtr())
             );
             Info<< "Integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl

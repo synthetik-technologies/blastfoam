@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -125,7 +125,7 @@ Foam::scalar Foam::VanderWaals<Specie>::rho
         a_*b_,
         -a_,
         this->R()*T + p*b_,
-        p
+        -p
     ).roots()[0];
 }
 
@@ -241,7 +241,7 @@ Foam::scalar Foam::VanderWaals<Specie>::H
     const scalar T
 ) const
 {
-    return this->E(rho, e, T) + this->R()*T*b_*rho/(1.0 - b_*rho) - a_*rho;
+    return -2.0*a_*rho + this->R()*T*(1.0/(1.0 - b_*rho) - 1.0);
 }
 
 
@@ -254,17 +254,43 @@ Foam::scalar Foam::VanderWaals<Specie>::CpMCv
     const scalar CpCv
 ) const
 {
-    return this->R()/(1.0 - b_*rho);
+    return
+        sqr(this->R())*T
+       /(this->R()*T + 2.0*a_*rho*(b_*rho*(2.0 - b_*rho) - 1.0));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::VanderWaals<Specie>::S
+Foam::scalar Foam::VanderWaals<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
+    //TODO
+    NotImplemented;
+    const scalar rho = this->rho(p, T);
+    return
+        this->R()
+       *(
+          - log(p/Pstd)
+          + (
+              - log(1.0 - b_*rho)/(b_*rho) - 1
+              + log(1.0/(1 - b_*rho) - a_*rho/this->R()*T)
+            )
+        );
+}
+
+
+template<class Specie>
+Foam::scalar Foam::VanderWaals<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    //TODO
+    NotImplemented;
     const scalar rho = this->rho(p, T);
     return
         this->R()
@@ -295,8 +321,7 @@ inline void Foam::VanderWaals<Specie>::operator+=
         const scalar X2 = this->W()*vw.Y()/(vw.W()*this->Y());
 
         Tc_ = X1*Tc_ + X2*vw.Tc_;
-        scalar Vc = 3.0*(X1*b_ + X2*vw.b_);
-        Pc_ = 3.0/8.0*RR*Tc_/Vc;
+        Pc_ = X1*Pc_ + X2*vw.Pc_;
         a_ = 27.0*sqr(Tc_*this->R())/(64.0*Pc_);
         b_ = this->R()*Tc_/8.0/Pc_;
     }
@@ -339,14 +364,11 @@ inline Foam::VanderWaals<Specie> Foam::operator+
         const scalar X1 = sp.W()*vw1.Y()/(vw1.W()*sp.Y());
         const scalar X2 = sp.W()*vw2.Y()/(vw2.W()*sp.Y());
 
-        const scalar Tc = X1*vw1.Tc_ + X2*vw2.Tc_;
-        const scalar Vc = 3.0*(X1*vw1.b_ + X2*vw2.b_);
-
         return VanderWaals<Specie>
         (
             sp,
-            Tc,
-            3.0/8.0*sp.R()*Tc/Vc
+            X1*vw1.Tc_ + X2*vw2.Tc_,
+            X1*vw1.Pc_ + X2*vw2.Pc_
         );
     }
 }
@@ -384,14 +406,11 @@ inline Foam::VanderWaals<Specie> Foam::operator==
     const scalar X1 = sp.W()*vw1.Y()/(vw1.W()*sp.Y());
     const scalar X2 = sp.W()*vw2.Y()/(vw2.W()*sp.Y());
 
-    const scalar Tc = X2*vw2.Tc_ - X1*vw1.Tc_;
-    const scalar Vc = 3.0*(X2*vw2.b_ - X2*vw1.b_);
-
     return VanderWaals<Specie>
     (
         sp,
-        Tc,
-        3.0/8.0*sp.R()*Tc/Vc
+        X2*vw2.Tc_ - X1*vw1.Tc_,
+        X2*vw2.Pc_ - X1*vw1.Pc_
     );
 }
 

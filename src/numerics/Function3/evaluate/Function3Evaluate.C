@@ -34,9 +34,9 @@ void Foam::evaluate
 (
     GeometricField<Type, PatchField, GeoMesh>& result,
     const Function3<Type>& func,
-    const GeometricField<Type, PatchField, GeoMesh>& x,
-    const GeometricField<Type, PatchField, GeoMesh>& y,
-    const GeometricField<Type, PatchField, GeoMesh>& z
+    const GeometricField<scalar, PatchField, GeoMesh>& x,
+    const GeometricField<scalar, PatchField, GeoMesh>& y,
+    const GeometricField<scalar, PatchField, GeoMesh>& z
 )
 {
     result.primitiveFieldRef() = func.value(x(), y(), z());
@@ -44,13 +44,13 @@ void Foam::evaluate
     typename GeometricField<Type, PatchField, GeoMesh>::Boundary& bresult =
         result.boundaryFieldRef();
 
-    const typename GeometricField<Type, PatchField, GeoMesh>::Boundary& bx =
+    const typename GeometricField<scalar, PatchField, GeoMesh>::Boundary& bx =
         x.boundaryField();
 
-    const typename GeometricField<Type, PatchField, GeoMesh>::Boundary& by =
+    const typename GeometricField<scalar, PatchField, GeoMesh>::Boundary& by =
         y.boundaryField();
 
-    const typename GeometricField<Type, PatchField, GeoMesh>::Boundary& bz =
+    const typename GeometricField<scalar, PatchField, GeoMesh>::Boundary& bz =
         z.boundaryField();
 
     forAll(bresult, patchi)
@@ -66,13 +66,36 @@ void Foam::evaluate
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::evaluate
+(
+    GeometricField<Type, PatchField, GeoMesh>& result,
+    const Function3<Type>& func,
+    const GeometricField<vector, PatchField, GeoMesh>& X
+)
+{
+    result.primitiveFieldRef() = func.value(X());
+
+    typename GeometricField<Type, PatchField, GeoMesh>::Boundary& bresult =
+        result.boundaryFieldRef();
+
+    const typename GeometricField<vector, PatchField, GeoMesh>::Boundary& bX =
+        X.boundaryField();
+
+    forAll(bresult, patchi)
+    {
+        bresult[patchi] = func.value(bX[patchi]);
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>> Foam::evaluate
 (
     const Function3<Type>& func,
     const dimensionSet& dims,
-    const GeometricField<Type, PatchField, GeoMesh>& x,
-    const GeometricField<Type, PatchField, GeoMesh>& y,
-    const GeometricField<Type, PatchField, GeoMesh>& z
+    const GeometricField<scalar, PatchField, GeoMesh>& x,
+    const GeometricField<scalar, PatchField, GeoMesh>& y,
+    const GeometricField<scalar, PatchField, GeoMesh>& z
 )
 {
     tmp<GeometricField<Type, PatchField, GeoMesh>> tresult
@@ -80,7 +103,7 @@ Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>> Foam::evaluate
         GeometricField<Type, PatchField, GeoMesh>::New
         (
             func.name()
-          + '(' + x.name() + ',' + y.name() + ',' + z.name() ')',
+          + '(' + x.name() + ',' + y.name() + ',' + z.name() + ')',
             x.mesh(),
             dims
         )
@@ -91,5 +114,29 @@ Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>> Foam::evaluate
     return tresult;
 }
 
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>> Foam::evaluate
+(
+    const Function3<Type>& func,
+    const dimensionSet& dims,
+    const GeometricField<vector, PatchField, GeoMesh>& X
+)
+{
+    tmp<GeometricField<Type, PatchField, GeoMesh>> tresult
+    (
+        GeometricField<Type, PatchField, GeoMesh>::New
+        (
+            func.name()
+          + '(' + X.name() + ')',
+            X.mesh(),
+            dims
+        )
+    );
+
+    evaluate(tresult.ref(), func, X);
+
+    return tresult;
+}
 
 // ************************************************************************* //

@@ -35,11 +35,11 @@ SourceFiles
 #ifndef extendedNLevelGlobalCellToCellStencil_H
 #define extendedNLevelGlobalCellToCellStencil_H
 
-#include "MeshObject.H"
+#include "DemandDrivenMeshObject.H"
 #include "PackedBoolList.H"
 #include "labelPair.H"
 #include "globalIndex.H"
-#include "mapDistribute.H"
+#include "polyDistributionMap.H"
 #include "DynamicList.H"
 #include "volFields.H"
 #include "cellStencil.H"
@@ -59,10 +59,10 @@ using PairMap = HashTable<Type, labelPair, Hash<labelPair>>;
 template<class StencilType>
 class extendedNLevelGlobalCellToCellStencil
 :
-    public MeshObject
+    public DemandDrivenMeshObject
     <
         polyMesh,
-        UpdateableMeshObject,
+        TopoChangeableMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >
 {
@@ -89,7 +89,7 @@ public:
         //  Used for distributing
         mutable labelListList cellCells_;
 
-        mutable autoPtr<mapDistribute> mapPtr_;
+        mutable autoPtr<distributionMap> mapPtr_;
 
         //- Non local stencil cells
         mutable Map<label> nonlocalCells_;
@@ -125,7 +125,7 @@ public:
         ) const;
 
         void createMap() const;
-        const mapDistribute& map() const;
+        const distributionMap& map() const;
 
 public:
 
@@ -156,7 +156,10 @@ public:
     // Member Functions
 
         //- Build a mapDistribute for the supplied destination processor data
-        static autoPtr<mapDistribute> buildMap(const List<label>& toProc);
+        static autoPtr<distributionMap> buildMap
+        (
+            const List<label>& toProc
+        );
 
         //- Update after refining and balancing
         virtual void calcStencil() const;
@@ -183,7 +186,9 @@ public:
         //- Callback for geometry motion
         virtual bool movePoints();
 
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void distribute(const polyDistributionMap& map);
+        virtual void topoChange(const polyTopoChangeMap& mpm);
+        virtual void mapMesh(const polyMeshMap& map);
 
         inline const globalIndex& gIndex() const
         {
@@ -251,12 +256,12 @@ public:
         void collectNbrData(Map<Type>& mapFld) const;
 
         //- Reduce data data to the master cell
-        template<class Type, class BinaryOp>
+        template<class Type, class BinaryEqOp>
         void reduce
         (
             const Map<Type>& mapFld,
             UList<Type>& fld,
-            const BinaryOp& bop
+            const BinaryEqOp& bop
         ) const;
 
         //- Sum surface field contributions to create cell values

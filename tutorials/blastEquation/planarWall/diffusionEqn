@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-name diffusionOpt;
+ diffusionOpt;
 lowerBound  1e-6;
 upperBound  1.0;
 
@@ -38,8 +38,12 @@ codeLibs
 codeInclude
 #{
 #include "Time.H"
-#include "fvCFD.H"
+#include "fvMesh.H"
+#include "volFields.H"
+#include "IFstream.H"
 #include "lookupTables1D.H"
+#include "fvmLaplacian.H"
+#include "fvmDdt.H"
 #};
 
 fx_code
@@ -47,7 +51,7 @@ fx_code
     // Cast the object registry to Time
     Time& runTime
     (
-        const_cast<Time&>(dynamicCast<const Time>(this->obr_))
+        const_cast<Time&>(dynamicCast<const Time>(this->obr()))
     );
 
     // Reset the time to 0
@@ -59,7 +63,7 @@ fx_code
         IOobject
         (
             fvMesh::defaultRegion,
-            runTime.timeName(),
+            runTime.name(),
             runTime,
             IOobject::MUST_READ
         )
@@ -71,7 +75,7 @@ fx_code
         IOobject
         (
             "c",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::MUST_READ,
             IOobject::NO_WRITE
@@ -85,7 +89,7 @@ fx_code
         IOobject
         (
             "error",
-            runTime.timeName(),
+            runTime.name(),
             mesh
         ),
         mesh,

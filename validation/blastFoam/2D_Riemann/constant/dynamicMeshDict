@@ -14,25 +14,34 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
-errorEstimator  scaledDelta;
-scaledDeltaField rho;
+topoChanger
+{
+    type            polyRefiner;
+    errorEstimator  densityGradient;
+    scaledDeltaField rho;
 
-// How often to refine
-refineInterval  3;
+    // How often to refine
+    refineInterval  3;
 
-// Refine with error above
-lowerRefineLevel 1e-2;
+    // Refine with error above
+    lowerRefineLevel 1e-2;
 
-// If value < unrefineLevel unrefine
-unrefineLevel   1e-2;
+    // If value < unrefineLevel unrefine
+    unrefineLevel   1e-2;
 
-// Have slower than 2:1 refinement
-nBufferLayers   1;
+    // Have slower than 2:1 refinement
+    nBufferLayers   1;
 
-// Refine cells only up to maxRefinement levels
-maxRefinement   3;
+    // Refine cells only up to maxRefinement levels
+    maxRefinement   3;
 
-// Write the refinement level as a volScalarField
-dumpLevel       true;
+    // Write the refinement level as a volScalarField
+    dumpLevel       true;
+}
+
+distributor
+{
+    type redistributor;
+    balanceInterval 1;
+}
 // ************************************************************************* //

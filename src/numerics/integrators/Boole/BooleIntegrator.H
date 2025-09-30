@@ -48,10 +48,10 @@ namespace Foam
                         Class BooleIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class BooleIntegrator
 :
-    public Integrator<Type>
+    public Integrator<Type, Adapt>
 {
 // Private data
 
@@ -108,7 +108,7 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        BooleIntegrator(const BooleIntegrator<Type>&) = delete;
+        BooleIntegrator(const BooleIntegrator<Type, Adapt>&) = delete;
 
 
     //- Destructor
@@ -126,7 +126,7 @@ public:
         ) const;
 
         //- Disallow default bitwise assignment
-        void operator=(const BooleIntegrator<Type>&) = delete;
+        void operator=(const BooleIntegrator<Type, Adapt>&) = delete;
 };
 
 

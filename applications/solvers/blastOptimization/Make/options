@@ -1,0 +1,9 @@
+EXE_INC = \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
+    -I./errorTypes/lnInclude \
+    -Ientries
+
+EXE_LIBS = \
+    -lfiniteVolume \
+    -L$(BLAST_LIBBIN) \
+    -lblastNumerics

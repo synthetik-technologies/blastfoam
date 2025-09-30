@@ -61,8 +61,6 @@ void Foam::thermoLinearElastic::makeTrunTime()
             Time::controlDictName,
             mesh().time().rootPath(),
             Tpath,
-            "system",
-            "constant",
             true
         )
     );
@@ -99,7 +97,7 @@ void Foam::thermoLinearElastic::makeTmesh()
             IOobject
             (
                 fvMesh::defaultRegion,
-                TrunTime().timeName(),
+                TrunTime().name(),
                 TrunTime(),
                 IOobject::MUST_READ
             )
@@ -150,7 +148,7 @@ bool Foam::thermoLinearElastic::readTField()
     if (debug)
     {
         Info<< nl << "Attempting to read T from time = "
-            << mesh().time().timeName() << nl << endl;
+            << mesh().time().name() << nl << endl;
     }
 
     // Only attempt to read the T field from disk once per time-step
@@ -161,15 +159,15 @@ bool Foam::thermoLinearElastic::readTField()
         // Set TrunTime to be the same as the main case
         TrunTime().setTime(mesh().time());
 
-        IOobject Theader
+        typeIOobject<volScalarField> Theader
         (
             "T",
-            TrunTime().timeName(),
+            TrunTime().name(),
             Tmesh(),
             IOobject::MUST_READ
         );
 
-        if (Theader.typeHeaderOk<volScalarField>())
+        if (Theader.headerOk())
         {
             Info<< nl << "Reading T field from time = "
                 << Tmesh().time().timePath() << nl << endl;
@@ -190,7 +188,7 @@ bool Foam::thermoLinearElastic::readTField()
                         IOobject
                         (
                             "T",
-                            mesh().time().timeName(),
+                            mesh().time().name(),
                             mesh(),
                             IOobject::NO_READ,
                             IOobject::NO_WRITE
@@ -216,7 +214,7 @@ bool Foam::thermoLinearElastic::readTField()
                     IOobject
                     (
                         "TbaseMesh",
-                        baseMesh().time().timeName(),
+                        baseMesh().time().name(),
                         baseMesh(),
                         IOobject::NO_READ,
                         IOobject::NO_WRITE
@@ -267,11 +265,12 @@ Foam::thermoLinearElastic::thermoLinearElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    linearElastic(name, mesh, dict, nonLinGeom),
+    linearElastic(name, mesh, baseMesh, dict, nonLinGeom),
     alpha_(dict.lookup("alpha")),
     T0_(dict.lookup("T0")),
     TPtr_(),

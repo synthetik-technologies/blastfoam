@@ -27,14 +27,9 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
+Foam::solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
@@ -44,12 +39,12 @@ solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 {}
 
 
-solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
+Foam::solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 (
     const solidSymmetryFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     symmetryFvPatchField<scalar>(ptf, p, iF, mapper)
@@ -67,7 +62,7 @@ solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 }
 
 
-solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
+Foam::solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -76,7 +71,8 @@ solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 :
     symmetryFvPatchField<scalar>(p, iF, dict)
 {
-    Info << "Symmetry boundary condition with non-orthogonal correction"
+    DebugInfo
+        << "Symmetry boundary condition with non-orthogonal correction"
         << endl;
 
     if (!isType<symmetryFvPatch>(p))
@@ -92,7 +88,7 @@ solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 }
 
 
-solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
+Foam::solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 (
     const solidSymmetryFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
@@ -102,8 +98,10 @@ solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 {}
 
 
-// return gradient at boundary
-tmp<Field<scalar> > solidSymmetryFvPatchScalarField::snGrad() const
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::Field<Foam::scalar>>
+Foam::solidSymmetryFvPatchScalarField::snGrad() const
 {
     vectorField nHat(this->patch().nf());
 
@@ -127,9 +125,10 @@ tmp<Field<scalar> > solidSymmetryFvPatchScalarField::snGrad() const
 }
 
 
-// Evaluate the field on the patch
-void solidSymmetryFvPatchScalarField::
-evaluate(const Pstream::commsTypes)
+void Foam::solidSymmetryFvPatchScalarField::evaluate
+(
+    const Pstream::commsTypes
+)
 {
     if (!this->updated())
     {
@@ -160,8 +159,7 @@ evaluate(const Pstream::commsTypes)
 }
 
 
-// Write
-void solidSymmetryFvPatchScalarField::write(Ostream& os) const
+void Foam::solidSymmetryFvPatchScalarField::write(Ostream& os) const
 {
     fvPatchScalarField::write(os);
     writeEntry(os, "value", *this);
@@ -170,10 +168,14 @@ void solidSymmetryFvPatchScalarField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchScalarField, solidSymmetryFvPatchScalarField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchScalarField,
+        solidSymmetryFvPatchScalarField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

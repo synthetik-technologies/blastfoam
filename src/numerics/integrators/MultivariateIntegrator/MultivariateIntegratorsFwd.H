@@ -40,11 +40,16 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-typedef MultivariateIntegrator<scalar> scalarMultivariateIntegrator;
-typedef MultivariateIntegrator<vector> vectorMultivariateIntegrator;
-typedef MultivariateIntegrator<symmTensor> symmTensorMultivariateIntegrator;
-typedef MultivariateIntegrator<sphericalTensor> sphericalTensorMultivariateIntegrator;
-typedef MultivariateIntegrator<tensor> tensorMultivariateIntegrator;
+typedef MultivariateIntegrator<scalar, scalar>
+    scalarMultivariateIntegrator;
+typedef MultivariateIntegrator<vector, vector>
+    vectorMultivariateIntegrator;
+typedef MultivariateIntegrator<symmTensor, symmTensor>
+    symmTensorMultivariateIntegrator;
+typedef MultivariateIntegrator<sphericalTensor, sphericalTensor>
+    sphericalTensorMultivariateIntegrator;
+typedef MultivariateIntegrator<tensor, tensor>
+    tensorMultivariateIntegrator;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

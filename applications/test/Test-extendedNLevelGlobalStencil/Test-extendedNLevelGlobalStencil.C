@@ -1,7 +1,9 @@
-#include "fvCFD.H"
+#include "argList.H"
+#include "volFields.H"
+#include "surfaceFields.H"
 #include "fvMesh.H"
 #include "extendedNLevelGlobalCellToCellStencils.H"
-#include "Random.H"
+#include "randomGenerator.H"
 
 using namespace Foam;
 
@@ -14,17 +16,17 @@ void setCells
     volScalarField& levels
 )
 {
+    const globalIndex& gI = stencil.gIndex();
     const Map<cellStencil>& cellCells(stencil.cellCellMap());
     if (cellCells.found(gCelli))
     {
-	   const cellStencil& cs = cellCells[gCelli];
-    	// for (label leveli = nLevels; leveli >= 0; leveli--)
-    	{
-                const labelList& ls = cs.localStencil();
-                forAll(ls, i)
-                {
-                    levels[ls[i]] = leveli;
-                }
+        const cellStencil& cs = cellCells[gCelli];
+        forAll(cs, i)
+        {
+            if (gI.isLocal(cs[i]))
+            {
+                levels[gI.toLocal(cs[i])] = leveli;
+            }
         }
     }
 }
@@ -42,7 +44,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "CFC",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -55,7 +57,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "CEC",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -68,7 +70,7 @@ int main(int argc, char *argv[])
         IOobject
         (
             "CPC",
-            runTime.timeName(),
+            runTime.name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -79,7 +81,7 @@ int main(int argc, char *argv[])
 
     const globalIndex gIndex(mesh.nCells());
 
-    Random ranGen(123);
+    randomGenerator ranGen(123);
     const label nCells = returnReduce(mesh.nCells(), sumOp<label>());
     const label nSamples = min(25, nCells);
 

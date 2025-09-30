@@ -16,7 +16,7 @@ runApplication snappyHexMesh -overwrite
 runApplication createPatch -overwrite
 
 # -- Set initial conditions
-runApplication setRefinedFields
+runApplication setRefinedFields -noRefine
 
 # -- Initialize the pressure in the water region
 runApplication -s water initializeAtmosphere -zone waterRegion -type hydrostatic

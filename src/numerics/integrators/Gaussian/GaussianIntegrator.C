@@ -29,14 +29,14 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::GaussianIntegrator<Type>::GaussianIntegrator
+template<class Type, class Adapt>
+Foam::GaussianIntegrator<Type, Adapt>::GaussianIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
 )
 :
-    Integrator<Type>(eqn, dict),
+    Integrator<Type, Adapt>(eqn, dict),
     ws_(0),
     xs_(0)
 {
@@ -44,23 +44,23 @@ Foam::GaussianIntegrator<Type>::GaussianIntegrator
 }
 
 
-template<class Type>
-Foam::GaussianIntegrator<Type>::GaussianIntegrator
+template<class Type, class Adapt>
+Foam::GaussianIntegrator<Type, Adapt>::GaussianIntegrator
 (
     const equationType& eqn,
     const integrator& inter
 )
 :
-    Integrator<Type>(eqn, inter),
-    ws_(dynamicCast<const GaussianIntegrator<Type>>(inter).ws_),
-    xs_(dynamicCast<const GaussianIntegrator<Type>>(inter).xs_)
+    Integrator<Type, Adapt>(eqn, inter),
+    ws_(dynamicCast<const GaussianIntegrator<Type, Adapt>>(inter).ws_),
+    xs_(dynamicCast<const GaussianIntegrator<Type, Adapt>>(inter).xs_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::GaussianIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::GaussianIntegrator<Type, Adapt>::integrate_
 (
     const scalar dx,
     const PtrList<Type>& fs
@@ -75,8 +75,8 @@ Type Foam::GaussianIntegrator<Type>::integrate_
 }
 
 
-template<class Type>
-Type Foam::GaussianIntegrator<Type>::integrate_
+template<class Type, class Adapt>
+Type Foam::GaussianIntegrator<Type, Adapt>::integrate_
 (
     const Type& Q,
     const scalar x0,
@@ -127,8 +127,8 @@ Type Foam::GaussianIntegrator<Type>::integrate_
 }
 
 
-template<class Type>
-Type Foam::GaussianIntegrator<Type>::integrate
+template<class Type, class Adapt>
+Type Foam::GaussianIntegrator<Type, Adapt>::integrate
 (
     const scalar x0,
     const scalar x1,

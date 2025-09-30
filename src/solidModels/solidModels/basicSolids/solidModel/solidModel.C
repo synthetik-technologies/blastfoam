@@ -30,11 +30,12 @@ License
 #include "twoDPointCorrector.H"
 #include "RectangularMatrix.H"
 #include "solidTractionFvPatchVectorField.H"
-#include "primitivePatchInterpolation.H"
+#include "PrimitivePatchInterpolation.H"
 #include "volPointInterpolation.H"
 #include "calculatedPointPatchFields.H"
 #include "fixedValuePointPatchFields.H"
 #include "fixedValueFvPatchFields.H"
+#include "globalPolyBoundaryMesh.H"
 #include "fvm.H"
 
 #include "fvcGradf.H"
@@ -203,24 +204,21 @@ void Foam::solidModel::makeSetCellDisps() const
 {
     if (setCellDispsPtr_.valid())
     {
-        FatalErrorIn(type() + "::makeSetCellDisps() const")
-            << "pointer already set!" << abort(FatalError);
+        FatalErrorInFunction
+            << "pointer already set!"
+            << abort(FatalError);
     }
 
-    if (solidModelDict().found("cellDisplacements"))
+    if (this->found("cellDisplacements"))
     {
         setCellDispsPtr_.set
         (
-            new setCellDisplacements
-            (
-                mesh(), solidModelDict().subDict("cellDisplacements")
-            )
+            new setCellDisplacements(mesh(), *this)
         );
     }
     else
     {
-        dictionary dict;
-        setCellDispsPtr_.set(new setCellDisplacements(mesh(), dict));
+        setCellDispsPtr_.set(new setCellDisplacements(mesh()));
     }
 }
 
@@ -252,7 +250,7 @@ Foam::mechanicalModel& Foam::solidModel::mechanical()
 
 Foam::volScalarField& Foam::solidModel::rho()
 {
-    return rho_;
+    return thermal_.rho();
 }
 
 
@@ -265,273 +263,6 @@ void Foam::solidModel::setCellDisps(fvVectorMatrix& DEqn)
 }
 
 
-void Foam::solidModel::relaxField(volVectorField& D, int iCorr)
-{
-    if (relaxationMethod_ == "fixed")
-    {
-        // Fixed under-relaxation
-        D.relax();
-    }
-    else if (relaxationMethod_ == "Aitken")
-    {
-        // See Aitken method at:
-        // http://empire-multiphysics.com/projects/empire/wiki/Aitken_Relaxation
-        // and
-        // A partitioned solution approach for electro-thermo-
-        // problems, Patrick Erbts, Stefan Hartmann, Alexander Duster.
-
-        // Store aitkenResidual previous iteration
-        aitkenResidual_.storePrevIter();
-
-        // Calculate new aitkenResidual
-        aitkenResidual_ = D.prevIter() - D;
-
-        if (iCorr == 0)
-        {
-            // Fixed under-relaxation is applied on the first iteration
-            aitkenAlpha_ = 1.0;
-
-            if (mesh().relaxField(D.name()))
-            {
-                aitkenAlpha_ =
-                    mesh().fieldRelaxationFactor(D.name());
-            }
-        }
-        else
-        {
-            const volVectorField aitkenResidualDelta
-            (
-                aitkenResidual_.prevIter() - aitkenResidual_
-            );
-
-            // Update the relaxation factor field
-            aitkenAlpha_ =
-                aitkenAlpha_*(aitkenResidual_.prevIter() & aitkenResidualDelta)
-               /(
-                    magSqr(aitkenResidualDelta)
-                  + dimensionedScalar("SMALL", dimLength*dimLength, SMALL)
-                );
-
-            // Bound alpha between 0.0 and 2.0
-            // This may not be necessary but it seems to help convergence
-            aitkenAlpha_ = max(0.0, min(2.0, aitkenAlpha_));
-        }
-
-        // Relax the field
-        D -= aitkenAlpha_*aitkenResidual_;
-    }
-    else if (relaxationMethod_ == "QuasiNewton")
-    {
-        // This method is a modified form of the IQNILS by Degroote et al.
-
-        // J. Degroote, K.-J. Bathe and J. Vierendeels.
-        // A fluid solid interaction solver with IQN-ILS coupling algorithm.
-        // Performance of a new partitioned procedure versus a monolithic
-        // procedure in fluid-solid interaction. Computers & Solids
-
-        if (iCorr == 0 || iCorr % QuasiNewtonRestartFreq_ == 0)
-        {
-            // Clean up data from old time steps
-
-            if (debug)
-            {
-                Info<< "Modes before clean-up : " << QuasiNewtonT_.size();
-            }
-
-            while (true)
-            {
-                if (QuasiNewtonT_.size())
-                {
-                    if
-                    (
-                        runTime().timeIndex() > QuasiNewtonT_[0]
-                     || iCorr % QuasiNewtonRestartFreq_ == 0
-                    )
-                    {
-                        for (label i = 0; i < QuasiNewtonT_.size() - 1; i++)
-                        {
-                            QuasiNewtonT_[i] = QuasiNewtonT_[i + 1];
-                            QuasiNewtonV_[i] = QuasiNewtonV_[i + 1];
-                            QuasiNewtonW_[i] = QuasiNewtonW_[i + 1];
-                        }
-
-                        QuasiNewtonT_.remove();
-                        QuasiNewtonV_.remove();
-                        QuasiNewtonW_.remove();
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            if (debug)
-            {
-                Info<< ", modes after clean-up : " << QuasiNewtonT_.size()
-                    << endl;
-            }
-        }
-        else if (iCorr == 1 || iCorr % QuasiNewtonRestartFreq_ == 1)
-        {
-            // Set reference in the first coupling iteration
-            unrelaxedDRef_ = D;
-            DRef_ = D.prevIter();
-        }
-        else
-        {
-            // Store the input vector field, defined as the previous iteration
-            // D field (after relaxation) minus the Dp previous iteration field
-            // in the first iteration (after relaxation)
-            QuasiNewtonV_.append
-            (
-                (D - D.prevIter()) - (unrelaxedDRef_ - DRef_)
-            );
-
-            // V should be (from FSI paper):
-            // DeltaR^{k-1} = R^{k-1} - R^k = DPrevIt.PrevIt - DPrevIter
-            // DeltaR^{k-2} = R^{k-2} - R^k = D.PI.PI.PI - D.PI
-            // ...
-            // DeltaR^{0} =  R^0 - R^k = DRef - D.prevIter
-            // Or in the general paper:
-            // V_i = p_k - p_i    for i = 0, 1, ..., k - 1
-            // V_{k-1} = p_k - p_{k-1} = D.PI - D.PI.PI
-            // V_{k-2} = p_k - p_{k-2} = D.PI - D.PI.PI.PI
-            // ...
-            // V_{0} = p_k - p_{0} = D.PI - DRef
-            // BUT, the implemented code does this:
-            // V_i = p_{i+1} - p_0    for i = 0, 1, ..., k - 1
-            // V_{k-1} = p_{k} - p_0 = D.PI - DRef
-            // V_{k-2} = p_{k-1} - p_0 = D.PI{k-1} - DRef
-            // ...
-            // V_{0} = p_{1} - p_{0} = D.PI_1 - DRef
-            // This means that we just append  the following line each
-            // iteration:
-            // V_{k-1} = p_{k} - p_0 = D.PI - DRef
-            // It this equivalent?
-            // We could try implementing it as described in the paper, but this
-            // will require D and D.prevIter and their history
-
-            // Store the output vector field, defined as the current iteration
-            // D field (before relaxation) minus the D field in the first
-            // iteration (before relaxation)
-            QuasiNewtonW_.append(D - unrelaxedDRef_);
-
-            // Store the time index
-            QuasiNewtonT_.append(runTime().timeIndex());
-        }
-
-        if (QuasiNewtonT_.size() > 1)
-        {
-            // Consider QuasiNewtonV as a matrix V
-            // with as columns the items
-            // in the DynamicList and calculate the QR-decomposition of V
-            // with modified Gram-Schmidt
-            label cols = QuasiNewtonV_.size();
-            RectangularMatrix<scalar> R(cols, cols, 0.0);
-            RectangularMatrix<scalar> C(cols, 1);
-            RectangularMatrix<scalar> Rcolsum(1, cols);
-            // philipc: do need for dynamic list for Q
-            //DynamicList<vectorField> Q(cols);
-            List<vectorField> Q(cols);
-
-            for (label i = 0; i < cols; i++)
-            {
-                //Q.append(QuasiNewtonV_[cols - 1 - i]);
-                Q[i] = QuasiNewtonV_[cols - 1 - i];
-            }
-
-            for (label i = 0; i < cols; i++)
-            {
-                // Normalize column i
-                R[i][i] = Foam::sqrt(sum(Q[i] & Q[i]));
-                Q[i] /= R[i][i];
-
-                // Orthogonalize columns to the right of column i
-                for (label j = i+1; j < cols; j++)
-                {
-                    R[i][j] = sum(Q[i] & Q[j]);
-                    Q[j] -= R[i][j]*Q[i];
-                }
-
-                // Project minus the residual vector on the Q
-                C[i][0] =
-                    sum
-                    (
-                        Q[i]
-                      & (
-                          D.prevIter().primitiveField()
-                        - D.primitiveField()
-                        )
-                    );
-            }
-
-            // Solve the upper triangular system
-            for (label j = 0; j < cols; j++)
-            {
-                Rcolsum[0][j] = 0.0;
-                for (label i = 0; i < (j + 1); i++)
-                {
-                    Rcolsum[0][j] += cmptMag(R[i][j]);
-                }
-            }
-            scalar epsilon = 1.0E-10*max(Rcolsum);
-            for (label i = 0; i < cols; i++)
-            {
-                if (cmptMag(R[i][i]) > epsilon)
-                {
-                    for (label j = i + 1; j < cols; j++)
-                    {
-                        R[i][j] /= R[i][i];
-                    }
-                    C[i][0] /= R[i][i];
-                    R[i][i] = 1.0;
-                }
-            }
-            for (label j = (cols - 1); j >= 0; j--)
-            {
-                if (cmptMag(R[j][j]) > epsilon)
-                {
-                    for (label i = 0; i < j; i++)
-                    {
-                        C[i][0] -= C[j][0]*R[i][j];
-                    }
-                }
-                else
-                {
-                    C[j][0] = 0.0;
-                }
-            }
-
-            // Update D
-            for (label i = 0; i < cols; i++)
-            {
-                D.primitiveFieldRef() += QuasiNewtonW_[i]*C[cols - 1 - i][0];
-            }
-
-            D.correctBoundaryConditions();
-        }
-        else
-        {
-            // Fixed under-relaxation during startup
-            D.relax();
-        }
-    }
-    else
-    {
-        FatalErrorIn
-        (
-            "void Foam::solidModel::relaxField(volVectorField& D, int iCorr)"
-        )   << "relaxationMethod '" << relaxationMethod_ << "' unknown!"
-            << " Options are fixed, Aitken or QuasiNewton" << abort(FatalError);
-    }
-}
-
-
 Foam::wordList Foam::solidModel::pointDBoundaryTypes
 (
     const volVectorField& D
@@ -540,13 +271,13 @@ Foam::wordList Foam::solidModel::pointDBoundaryTypes
     wordList bTypes
     (
         D.boundaryField().size(),
-        calculatedPointPatchVectorField::typeName
+        "calculated"
     );
     forAll(D.boundaryField(), patchi)
     {
         if (isA<fixedValueFvPatchVectorField>(D.boundaryField()[patchi]))
         {
-            bTypes[patchi] = fixedValuePointPatchVectorField::typeName;
+            bTypes[patchi] = "fixedValue";
         }
     }
     return bTypes;
@@ -555,7 +286,11 @@ Foam::wordList Foam::solidModel::pointDBoundaryTypes
 
 Foam::dictionary& Foam::solidModel::solidModelDict()
 {
-    return this->subDict(type_ + "Coeffs");
+    if (this->isDict(type_ + "Coeffs"))
+    {
+        return this->subDict(type_ + "Coeffs");
+    }
+    return *this;
 }
 
 
@@ -578,30 +313,179 @@ void Foam::solidModel::displacementFromVelocity
     // If U is found calculate D and DD
     if (!U().headerOk())
     {
-        ddisp.ref() = U()*mesh_.time().deltaT();
-        disp.oldTime().ref() = -ddisp;
+        ddisp.primitiveFieldRef() = U()*mesh_.time().deltaT();
+        disp.oldTimeRef().primitiveFieldRef() -= ddisp;
 
         // Call this function on the old times
         displacementFromVelocity
         (
-            disp.oldTime(),
-            ddisp.oldTime()
+            disp.oldTimeRef(),
+            ddisp.oldTimeRef()
         );
     }
 }
 
+void Foam::solidModel::readDict()
+{}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::solidModel::solidModel(const word& type, fvMesh& mesh)
+:
+    IOdictionary
+    (
+        IOobject
+        (
+            "solidProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::AUTO_WRITE
+        )
+    ),
+    mesh_(mesh),
+    type_(type),
+    mechanical_(mesh),
+    thermal_(mesh, true),
+    D_
+    (
+        IOobject
+        (
+            "D",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedVector("zero", dimLength, vector::zero)
+    ),
+    DD_
+    (
+        IOobject
+        (
+            "DD",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedVector("zero", dimLength, vector::zero)
+    ),
+    U_
+    (
+        IOobject
+        (
+            "U",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedVector("0", dimLength/dimTime, vector::zero)
+    ),
+    pointD_
+    (
+        IOobject
+        (
+            "pointD",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        pMesh(),
+        dimensionedVector("0", dimLength, Zero)
+    ),
+    pointDD_
+    (
+        IOobject
+        (
+            "pointDD",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        pMesh(),
+        dimensionedVector("0", dimLength, Zero)
+    ),
+    gradD_
+    (
+        IOobject
+        (
+            "grad(" + D_.name() + ")",
+            mesh.time().name(),
+            mesh
+        ),
+        mesh,
+        dimensionedTensor("0", dimless, tensor::zero)
+    ),
+    gradDD_
+    (
+        IOobject
+        (
+            "grad(" + DD_.name() + ")",
+            mesh.time().name(),
+            mesh
+        ),
+        mesh,
+        dimensionedTensor("0", dimless, tensor::zero)
+    ),
+    sigma_
+    (
+        IOobject
+        (
+            "sigma",
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
+    ),
+    g_
+    (
+        IOobject
+        (
+            "g",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedVector("g", dimAcceleration, Zero)
+    ),
+    stabilisationPtr_(new momentumStabilisation(solidModelDict())),
+    enforceLinear_(false),
+    globalPatches_(globalPolyBoundaryMesh::New(mesh))
+{
+    globalPatches_.setDisplacementField(mesh_.name(), "none");
+
+    if (!pointD_.headerOk())
+    {
+        mechanical().volToPoint().interpolate(D_, pointD_);
+    }
+    if (!pointDD_.headerOk())
+    {
+        mechanical().volToPoint().interpolate(DD_, pointDD_);
+    }
+}
+
 
 Foam::solidModel::solidModel
 (
     const word& type,
-    dynamicFvMesh& mesh,
+    fvMesh& mesh,
     const nonLinearGeometry::nonLinearType nonlinear,
     const bool incremental,
     const bool isSolid
 )
 :
-//     physicsModel(type, runTime),
     IOdictionary
     (
         IOobject
@@ -617,14 +501,12 @@ Foam::solidModel::solidModel
     type_(type),
     mechanical_(mesh, nonlinear, incremental),
     thermal_(mesh, isSolid),
-    Dheader_("D", mesh.time().timeName(), mesh, IOobject::MUST_READ),
-    DDheader_("DD", mesh.time().timeName(), mesh, IOobject::MUST_READ),
     D_
     (
         IOobject
         (
             "D",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -637,9 +519,9 @@ Foam::solidModel::solidModel
         IOobject
         (
             "DD",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
-            !incremental ? IOobject::NO_READ : IOobject::READ_IF_PRESENT,
+            IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         mesh,
@@ -650,7 +532,7 @@ Foam::solidModel::solidModel
         IOobject
         (
             "U",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -658,41 +540,40 @@ Foam::solidModel::solidModel
         mesh,
         dimensionedVector("0", dimLength/dimTime, vector::zero)
     ),
-    pMesh_(mesh),
     pointD_
     (
         IOobject
         (
             "pointD",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         pMesh(),
         dimensionedVector("0", dimLength, Zero),
-        pointDBoundaryTypes(D_)
+        pointDBoundaryTypes(incremental ? DD_ : D_)
     ),
     pointDD_
     (
         IOobject
         (
             "pointDD",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         pMesh(),
         dimensionedVector("0", dimLength, Zero),
-        pointDBoundaryTypes(DD_)
+        pointDBoundaryTypes(incremental ? DD_ : D_)
     ),
     gradD_
     (
         IOobject
         (
             "grad(" + D_.name() + ")",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -703,7 +584,7 @@ Foam::solidModel::solidModel
         IOobject
         (
             "grad(" + DD_.name() + ")",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -714,7 +595,7 @@ Foam::solidModel::solidModel
         IOobject
         (
             "sigma",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -722,7 +603,6 @@ Foam::solidModel::solidModel
         mesh,
         dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
     ),
-    rho_(thermal_.rho()),
     g_
     (
         IOobject
@@ -735,147 +615,71 @@ Foam::solidModel::solidModel
         ),
         dimensionedVector("g", dimAcceleration, Zero)
     ),
-    stabilisationPtr_(),
-    solutionTol_
-    (
-        solidModelDict().lookupOrDefault<scalar>("solutionTolerance", 1e-06)
-    ),
-    alternativeTol_
-    (
-        solidModelDict().lookupOrDefault<scalar>("alternativeTolerance", 1e-07)
-    ),
-    materialTol_
-    (
-        solidModelDict().lookupOrDefault<scalar>("materialTolerance", 1e-05)
-    ),
-    infoFrequency_
-    (
-        solidModelDict().lookupOrDefault<int>("infoFrequency", 100)
-    ),
-    nCorr_(solidModelDict().lookupOrDefault<int>("nCorrectors", 10000)),
-    minCorr_(solidModelDict().lookupOrDefault<int>("minCorrectors", 1)),
-    maxIterReached_(0),
-    residualFilePtr_(),
-    writeResidualField_
-    (
-        solidModelDict().lookupOrDefault<Switch>("writeResidualField", false)
-    ),
+    stabilisationPtr_(new momentumStabilisation(solidModelDict())),
     enforceLinear_(false),
-    relaxationMethod_
-    (
-        solidModelDict().lookupOrDefault<word>("relaxationMethod", "fixed")
-    ),
-    aitkenAlpha_
-    (
-        IOobject
-        (
-            "aitkenAlpha",
-            mesh.time().constant(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("one", dimless, 1.0)
-    ),
-    aitkenResidual_
-    (
-        IOobject
-        (
-            "aitkenResidual",
-            mesh.time().constant(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedVector("zero", dimLength, vector::zero)
-    ),
-    QuasiNewtonRestartFreq_
-    (
-        solidModelDict().lookupOrDefault<int>("QuasiNewtonRestartFrequency", 25)
-    ),
-    QuasiNewtonV_(QuasiNewtonRestartFreq_ + 2),
-    QuasiNewtonW_(QuasiNewtonRestartFreq_ + 2),
-    QuasiNewtonT_(QuasiNewtonRestartFreq_ + 2),
-    DRef_
-    (
-        IOobject
-        (
-            "DRef",
-            mesh.time().constant(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedVector("zero", dimLength, vector::zero)
-    ),
-    unrelaxedDRef_
-    (
-        IOobject
-        (
-            "unrelaxedDRef",
-            mesh.time().constant(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedVector("zero", dimLength, vector::zero)
-    ),
     globalPatches_(globalPolyBoundaryMesh::New(mesh))
 {
-    if (nonlinear != nonLinearGeometry::UPDATED_LAGRANGIAN)
+    globalPatches_.setDisplacementField(mesh_.name(), "none");
+
+    if (!pointD_.headerOk())
     {
-        globalPatches_.setDisplacementField(mesh.name(), "D");
+        mechanical().volToPoint().interpolate(D_, pointD_);
+    }
+    if (!pointDD_.headerOk())
+    {
+        mechanical().volToPoint().interpolate(DD_, pointDD_);
     }
 
-    // Print out the relaxation factor
-    Info<< "    under-relaxation method: " << relaxationMethod_ << endl;
-    if (relaxationMethod_ == "QuasiNewton")
-    {
-        Info<< "        restart frequency: " << QuasiNewtonRestartFreq_ << endl;
-    }
-
-    // If requested, create the residual file
-    if (solidModelDict().lookupOrDefault<Switch>("residualFile", false))
-    {
-        if (Pstream::master())
-        {
-            Info<< "Creating residual.dat" << endl;
-            residualFilePtr_.set
-            (
-                new OFstream(mesh.time().path()/"residual.dat")
-            );
-        }
-    }
-
-    // Create stabilisation object
-
-    if (!solidModelDict().found("stabilisation"))
-    {
-        // If the stabilisation sub-dict is not found, we will add it with
-        // default settings
-        dictionary stabDict;
-        stabDict.add("type", "RhieChow");
-        stabDict.add("scaleFactor", 0.1);
-        solidModelDict().add("stabilisation", stabDict);
-    }
-
-    stabilisationPtr_.set
-    (
-        new momentumStabilisation
-        (
-            solidModelDict().subDict("stabilisation")
-        )
-    );
 
     // If the case is axisymmetric, we will disable solving in the out-of-plane
     // direction
     // PC, 12-Nov-18: disabling the 3rd direction slows down convergence a lot
     // in some elastic cases: disabled for now
     //checkWedges();
+
+    if
+    (
+        solidModelDict().lookupOrDefault
+        (
+            "initializeDisplacementFromVelocity",
+            false
+        )
+     && !mesh.time().restart()
+    )
+    {
+        typeIOobject<volVectorField> omegaIO
+        (
+            "omega",
+            mesh_.time().name(),
+            mesh_,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        );
+        if (omegaIO.headerOk())
+        {
+            dimensionedVector xc
+            (
+                "centreOfRotation",
+                dimLength,
+                solidModelDict()
+            );
+            volVectorField omega(omegaIO, mesh_);
+            U_ = omega ^ (mesh_.C() - xc);
+        }
+        else if (solidModelDict().found("omega"))
+        {
+            dimensionedVector xc
+            (
+                "centreOfRotation",
+                dimLength,
+                solidModelDict()
+            );
+            dimensionedVector omega("omega", inv(dimTime), solidModelDict());
+            U_ = omega ^ (mesh_.C() - xc);
+        }
+
+        displacementFromVelocity(D_, DD_);
+    }
 }
 
 
@@ -887,9 +691,23 @@ Foam::solidModel::~solidModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::solidModel::initialize()
+{
+    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
+    {
+        globalPatches_.setDisplacementField(mesh_.name(), "pointD");
+    }
+    else
+    {
+        globalPatches_.setDisplacementField(mesh_.name(), "none");
+    }
+    globalPatches_.setInverseDisplacement(this->mesh().name(), false);
+    globalPatches_.update();
+}
+
 const Foam::volScalarField& Foam::solidModel::rho() const
 {
-    return rho_;
+    return thermal_.rho();
 }
 
 const Foam::thermalModel& Foam::solidModel::thermal() const
@@ -912,7 +730,6 @@ void Foam::solidModel::DisRequired(const word& type)
             << type << " requires the 'D' field to be specified!"
             << abort(FatalError);
     }
-    displacementFromVelocity(D_, DD_);
 }
 
 
@@ -924,79 +741,6 @@ void Foam::solidModel::DDisRequired(const word& type)
             << type << " requires the 'DD' field to be specified!"
             << abort(FatalError);
     }
-    displacementFromVelocity(D_, DD_);
-}
-
-
-Foam::vector Foam::solidModel::pointU(const label pointID) const
-{
-    pointVectorField pointU
-    (
-        IOobject
-        (
-            "pointU",
-            runTime().timeName(),
-            mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        pMesh_,
-        dimensionedVector("0", dimVelocity, vector::zero)
-    );
-
-    mechanical().volToPoint().interpolate(U(), pointU);
-
-    return pointU.internalField()[pointID];
-}
-
-
-Foam::tmp<Foam::vectorField>
-Foam::solidModel::faceZonePointDisplacementIncrement
-(
-    const polyPatch& pp
-) const
-{
-    // Create patch point field
-    const vectorField patchPointDispIncr
-    (
-        pointDD().internalField(),
-        globalPatches_[pp].patch().meshPoints()
-    );
-
-    // Return the global patch field
-    return globalPatches_[pp].patchPointToGlobal(patchPointDispIncr);
-}
-
-
-Foam::tmp<Foam::vectorField>
-Foam::solidModel::faceZonePointDisplacementOld
-(
-    const polyPatch& pp
-) const
-{
-    // Create patch point field
-    const vectorField patchPointDispOld
-    (
-        pointD().oldTime().internalField(),
-        globalPatches_[pp].patch().meshPoints()
-    );
-
-    // Return the global patch field
-    return globalPatches_[pp].patchPointToGlobal(patchPointDispOld);
-}
-
-
-Foam::tmp<Foam::vectorField> Foam::solidModel::faceZoneAcceleration
-(
-    const polyPatch& pp
-) const
-{
-    const volVectorField a(fvc::d2dt2(D()));
-
-    return globalPatches_[pp].patchFaceToGlobal
-    (
-        a.boundaryField()[globalPatches_[pp].patch().index()]
-    );
 }
 
 
@@ -1004,126 +748,33 @@ void Foam::solidModel::updateTotalFields()
 {
     thermal().correct();
     mechanical().updateTotalFields();
-
-    //- Clear global Patches since displacement may have changed
-    globalPatches_.movePoints();
 }
 
 
-void Foam::solidModel::end()
+Foam::tmp<Foam::vectorField> Foam::solidModel::tractionBoundarySnGrad
+(
+    const vectorField& traction,
+    const scalarField& pressure,
+    const fvPatch& patch
+) const
 {
-    if (maxIterReached_ > 0)
-    {
-        WarningIn(type() + "::end()")
-            << "The maximum momentum correctors were reached in "
-            << maxIterReached_ << " time-steps" << nl << endl;
-    }
-    else
-    {
-        Info<< "The momentum equation converged in all time-steps"
-            << nl << endl;
-    }
-}
+    const symmTensorField& psigma = this->sigma(patch);
+    vectorField n(this->nf(patch));
 
-
-Foam::autoPtr<Foam::solidModel> Foam::solidModel::New(dynamicFvMesh& mesh)
-{
-    word solidModelTypeName;
-
-    // Enclose the creation of the dictionary to ensure it is
-    // deleted before the fluid model is created, otherwise the dictionary
-    // is entered in the database twice
-    {
-        IOdictionary solidProperties
-        (
-            IOobject
-            (
-                "solidProperties",
-                mesh.time().constant(),
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE
-            )
-        );
-
-        solidProperties.lookup("solidModel")
-            >> solidModelTypeName;
-    }
-
-    Info<< "Selecting solidModel " << solidModelTypeName << endl;
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(solidModelTypeName);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
-    {
-        FatalErrorInFunction
-            << "Unknown solidModel " << solidModelTypeName << endl << endl
-            << "Valid solidModel types are :" << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    return autoPtr<solidModel>(cstrIter()(mesh));
-}
-
-
-Foam::autoPtr<Foam::solidModel> Foam::solidModel::NewLU(dynamicFvMesh& mesh)
-{
-    word solidModelTypeName;
-
-    // Enclose the creation of the dictionary to ensure it is
-    // deleted before the fluid model is created, otherwise the dictionary
-    // is entered in the database twice
-    {
-        IOdictionary solidProperties
-        (
-            IOobject
-            (
-                "solidProperties",
-                mesh.time().constant(),
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE
-            )
-        );
-
-        solidProperties.lookup("solidModel")
-            >> solidModelTypeName;
-    }
-
-    Info<< "Selecting solidModel " << solidModelTypeName << endl;
-
-    lagrangianConstructorTable::iterator cstrIter =
-        lagrangianConstructorTablePtr_->find(solidModelTypeName);
-
-    if (cstrIter == lagrangianConstructorTablePtr_->end())
-    {
-        FatalErrorIn
-        (
-            "solidModel::NewLU(Time&, const word&)"
-        )   << "Unknown lagrangian solidModel type " << solidModelTypeName
-            << endl << endl
-            << "Valid lagrangian solidModel types are :" << endl
-            << lagrangianConstructorTablePtr_->toc()
-            << exit(FatalError);
-    }
-
-    return autoPtr<solidModel>(cstrIter()(mesh));
+    // Return patch snGrad
+    return
+        (traction - n*pressure - (n & psigma))/this->impK(patch)
+      + (patch.nf() & (this->solutionGradD().boundaryField()[patch.index()]));
 }
 
 
 Foam::Switch& Foam::solidModel::checkEnforceLinear(const volScalarField& J)
 {
     scalar minJ = min(J).value();
-    reduce(minJ, minOp<scalar>());
-
     scalar maxJ = max(J).value();
-    reduce(maxJ, maxOp<scalar>());
-
     if ((minJ < 0.01) || (maxJ > 100))
     {
-        Info<< "Enforcing linear geometry: "
+        DebugInfo<< "Enforcing linear geometry: "
             << "minJ: " << minJ << ", maxJ: " << maxJ << endl;
 
         // Enable enforce linear to try improve convergence
@@ -1137,14 +788,10 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const volScalarField& J)
 Foam::Switch& Foam::solidModel::checkEnforceLinear(const surfaceScalarField& J)
 {
     scalar minJ = min(J).value();
-    reduce(minJ, minOp<scalar>());
-
     scalar maxJ = max(J).value();
-    reduce(maxJ, maxOp<scalar>());
-
     if ((minJ < 0.01) || (maxJ > 100))
     {
-        Info<< "Enforcing linear geometry: "
+        DebugInfo<< "Enforcing linear geometry: "
             << "minJ: " << minJ << ", maxJ: " << maxJ << endl;
 
         // Enable enforce linear to try improve convergence
@@ -1155,57 +802,52 @@ Foam::Switch& Foam::solidModel::checkEnforceLinear(const surfaceScalarField& J)
 }
 
 
-void Foam::solidModel::writeFields(const Time& runTime)
+bool Foam::solidModel::read()
 {
-    // Write strain fields
-    // Currently only defined for linear geometry
-    if (nonLinGeom() == nonLinearGeometry::LINEAR_GEOMETRY)
+    if (regIOobject::read())
     {
-        // Total strain
-        volSymmTensorField epsilon("epsilon", symm(gradD()));
-        epsilon.write();
+        readDict();
 
-        // Equivalent strain
-        volScalarField epsilonEq
-        (
-            "epsilonEq", sqrt((2.0/3.0)*magSqr(dev(epsilon)))
-        );
-        epsilonEq.write();
-
-        Info<< "Max epsilonEq = " << gMax(epsilonEq) << endl;
+        return true;
     }
-
-    // Calculate equivalent (von Mises) stress
-    volScalarField sigmaEq
-    (
-        "sigmaEq", sqrt((3.0/2.0)*magSqr(dev(sigma())))
-    );
-    sigmaEq.write();
-
-    Info<< "Max sigmaEq (von Mises stress) = " << gMax(sigmaEq) << endl;
-
-    // If asked, write the residual field
-    if (writeResidualField_)
+    else
     {
-        const volVectorField& D = solutionD();
-        scalar denom =
-            gMax(mag(D.primitiveField() - D.oldTime().primitiveField()));
-        if (denom < SMALL)
-        {
-            denom = max(gMax(mag(D.primitiveField())), SMALL);
-        }
-
-        const volVectorField residualD
-        (
-            "residualD",
-            (D - D.prevIter())/denom
-        );
-
-        Info<< "Writing residualD field" << endl;
-        residualD.write();
+        return false;
     }
+}
 
-//     physicsModel::writeFields(runTime);
+
+// bool Foam::solidModel::readIfModified()
+// {
+//     if (regIOobject::readIfModified())
+//     {
+//         // Clear current settings except fluxRequired
+//         readDict();
+//
+//         return true;
+//     }
+//     else
+//     {
+//         return false;
+//     }
+// }
+
+
+bool Foam::solidModel::write(const bool write) const
+{
+    return true;
+}
+
+
+bool Foam::solidModel::writeObject
+(
+    IOstream::streamFormat fmt,
+    IOstream::versionNumber ver,
+    IOstream::compressionType cmp,
+    const bool write
+) const
+{
+    return this->write(write);
 }
 
 
@@ -1324,32 +966,21 @@ void Foam::solidModel::moveMesh
     // Not need anymore as globalFaceZones are not used
     //updateGlobalFaceZoneNewPoints(pointDDI, newPoints);
 
-    twoDPointCorrector twoDCorrector(mesh());
-    twoDCorrector.correctPoints(newPoints);
-    twoDCorrector.correctPoints(pointDDI);
+    const twoDPointCorrector& corrector = twoDPointCorrector::New(mesh());
+    corrector.correctPoints(newPoints);
+    corrector.correctPoints(pointDDI);
     mesh().movePoints(newPoints);
     mesh().V00();
-    mesh().moving(false);
-    mesh().setPhi().writeOpt() = IOobject::NO_WRITE;
+    // mesh().moving(false);
+    const_cast<surfaceScalarField&>(mesh().phi()).writeOpt() =
+        IOobject::NO_WRITE;
 }
 
 
 const Foam::dictionary& Foam::solidModel::solidModelDict() const
 {
-    return this->subDict(type_ + "Coeffs");
+    return this->optionalSubDict(type_ + "Coeffs");
 }
 
-
-void Foam::solidModel::readIfPresent()
-{
-    const dictionary& dict = solidModelDict();
-    dict.readIfPresent("solutionTolerance", solutionTol_);
-    dict.readIfPresent("alternativeTolerance", alternativeTol_);
-    dict.readIfPresent("materialTolerance", materialTol_);
-    dict.readIfPresent("infoFrequency", infoFrequency_);
-    dict.readIfPresent("nCorrectors", nCorr_);
-    dict.readIfPresent("minCorrectors", minCorr_);
-    dict.readIfPresent("writeResidualField", writeResidualField_);
-}
 
 // ************************************************************************* //

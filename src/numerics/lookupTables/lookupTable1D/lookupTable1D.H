@@ -48,8 +48,17 @@ SourceFiles
 #include "indexing.H"
 #include "interpolationWeights1D.H"
 
+#include "EquationsFwd.H"
+#include "univariateRootSolver.H"
+#include "NewtonRaphsonUnivariateRootSolver.H"
+
+
 namespace Foam
 {
+
+// Forward declaration of friend functions and operators
+template<class Type> class lookupTable1D;
+template<class Type> Ostream& operator<<(Ostream&, const lookupTable1D<Type>&);
 
 /*---------------------------------------------------------------------------*\
                            Class lookupTable1D Declaration
@@ -61,15 +70,19 @@ class lookupTable1D
 protected:
 // Protected data
 
+    //- Names of components
+    word xName_;
+    word fName_;
+
     //- Modifiers
     autoPtr<Modifier<Type>> mod_;
     autoPtr<Modifier<scalar>> modX_;
 
     //- Data
-    Field<Type> data_;
+    List<Type> data_;
 
     //- List of x values in the given space
-    Field<scalar> xModValues_;
+    List<scalar> xModValues_;
 
     //- Lookup indexes
     autoPtr<indexer> indexing_;
@@ -78,10 +91,10 @@ protected:
     autoPtr<interpolationWeight1D> interpolator_;
 
     //- Real data
-    Field<Type>* realDataPtr_;
+    List<Type>* realDataPtr_;
 
     //- List of x values in real space
-    Field<scalar>* xValuesPtr_;
+    List<scalar>* xValuesPtr_;
 
     //- Current index (used to access location in list after lookup)
     mutable label index_;
@@ -92,29 +105,116 @@ protected:
     //- Current interpolation weight
     mutable DynamicList<scalar> weights_;
 
+    //- Current derivative interpolation weights
+    mutable DynamicList<scalar> dweights_;
+
+
+    // Equation to evaulate the table
+    class equation1D
+    :
+        public Equation<Type>
+    {
+        const lookupTable1D<Type>& table_;
+
+    public:
+
+        equation1D(const lookupTable1D<Type>& table)
+        :
+            Equation<Type>(2),
+            table_(table)
+        {}
+
+        label nDerivatives() const
+        {
+            return 1;
+        }
+
+        inline Type fx(const scalar x, const label li) const
+        {
+            return table_.lookup(x);
+        }
+
+        inline Type dfdx(const scalar x, const label li) const
+        {
+            return table_.dFdX(x);
+        }
+        inline Type d2fdx2(const scalar x, const label li) const
+        {
+            return table_.d2FdX2(x);
+        }
+    };
+
+    // Equation to used to find a give component
+    class errorEquation
+    :
+        public Equation<Type>
+    {
+        const lookupTable1D<Type>& table_;
+        Type f_;
+
+    public:
+
+        errorEquation(const lookupTable1D<Type>& table)
+        :
+            Equation<Type>(),
+            table_(table)
+        {
+            this->setLower(min(table_.x()));
+            this->setUpper(max(table_.x()));
+        }
+
+        void set(const Type& f)
+        {
+            f_ = f;
+        }
+        label nDerivatives() const
+        {
+            return 2;
+        }
+
+        virtual Type fx(const scalar x, const label li) const
+        {
+            return table_.lookup(x) - f_;
+        }
+        virtual Type dfdx(const scalar x, const label li) const
+        {
+            return table_.dFdX(x);
+        }
+        virtual Type d2fdx2(const scalar x, const label li) const
+        {
+            return table_.d2FdX2(x);
+        }
+    };
+
+
+    //- Error equation
+    mutable autoPtr<errorEquation> error_;
+
+    //- Root solver
+    mutable autoPtr<univariateRootSolver> solver_;
 
     // Protected member functions
 
         // Return the real data
-        inline const Field<scalar>& fValues() const
+        inline const List<scalar>& fValues() const
         {
             return *realDataPtr_;
         }
 
         // Access the real data values
-        inline Field<scalar>& fValues()
+        inline List<scalar>& fValues()
         {
             return *realDataPtr_;
         }
 
         // Return the real x values
-        inline const Field<scalar>& xValues() const
+        inline const List<scalar>& xValues() const
         {
             return *xValuesPtr_;
         }
 
         // Access the real x values
-        inline Field<scalar>& xValues()
+        inline List<scalar>& xValues()
         {
             return *xValuesPtr_;
         }
@@ -169,22 +269,52 @@ public:
 
         // Access data
 
-            //- Access current index
+            //- Return x name
+            const word& xName() const
+            {
+                return xName_;
+            }
+
+            //- Access x name
+            word& xName()
+            {
+                return xName_;
+            }
+
+            //- Return f name
+            const word& fName() const
+            {
+                return fName_;
+            }
+
+            //- Access f name
+            word& fName()
+            {
+                return fName_;
+            }
+
+            //- Return current index
             label index() const
             {
                 return index_;
             }
 
-            //- Access current interpolation indices
+            //- Return current interpolation indices
             const labelList& indices() const
             {
                 return indices_;
             }
 
-            //- Access current interpolation indices
+            //- Return current interpolation weights
             const scalarList& weights() const
             {
                 return weights_;
+            }
+
+            //- Return current derivative of interpolation weights
+            const scalarList& dweights() const
+            {
+                return dweights_;
             }
 
             //- Return the modifier
@@ -199,26 +329,26 @@ public:
                 return modX_();
             }
 
-            //- Const access to real x values
-            const Field<scalar>& x() const
+            //- Return to real x values
+            const List<scalar>& x() const
             {
                 return xValues();
             }
 
-            //- Const access to modified x values
-            const Field<scalar>& xMod() const
+            //- Return to modified x values
+            const List<scalar>& xMod() const
             {
                 return xModValues_;
             }
 
-            //- Const access to modified data values
-            const Field<Type>& fMod() const
+            //- Return to modified data values
+            const List<Type>& fMod() const
             {
                 return data_;
             }
 
             //- Return the real data
-            const Field<Type>& f() const
+            const List<Type>& f() const
             {
                 return fValues();
             }
@@ -237,6 +367,9 @@ public:
 
         //- Update index and weight
         void update(const scalar x) const;
+
+        //- Update derivative index and weight
+        void updateDDx(const scalar x) const;
 
         //- Lookup value
         Type lookup(const scalar x) const;
@@ -297,6 +430,55 @@ public:
             const bool isReal = true
         );
 
+        //- Return an equation using the table
+        autoPtr<equation<Type>> eqn() const
+        {
+            return autoPtr<equation<Type>>(new equation1D(*this));
+        }
+
+        //- Return an equation using the table
+        errorEquation& error() const
+        {
+            if (!error_.valid())
+            {
+                error_.set(new errorEquation(*this));
+            }
+            return error_();
+        }
+
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const word& type =
+                rootSolvers::univariate::NewtonRaphson::typeName,
+            const dictionary& dict = dictionary::null
+        ) const
+        {
+            if (!solver_.valid())
+            {
+                solver_ = univariateRootSolver::New
+                (
+                    type,
+                    error(),
+                    dict
+                );
+            }
+            return solver_();
+        }
+
+        //- Return an equation using the table
+        const univariateRootSolver& solver
+        (
+            const Type& fin,
+            const word& type =
+                rootSolvers::univariate::NewtonRaphson::typeName,
+            const dictionary& dict = dictionary::null
+        ) const
+        {
+            error().set(fin);
+            return solver(type, dict);
+        }
+
     //- Read from a given dictionary
     void read
     (
@@ -305,7 +487,53 @@ public:
         const word& yName,
         const bool canRead = true
     );
+
+    //- Read from a given dictionary
+    void readX
+    (
+        const dictionary& dict,
+        const word& xName,
+        const bool canRead = true
+    );
+
+    //- Read from a given dictionary
+    void readF
+    (
+        const dictionary& dict,
+        const word& yName,
+        const bool canRead = true
+    );
+
+    //- Write data to dictionary stream
+    virtual void write(Ostream& os, const word& dictName = word::null) const;
+
+
+    // Member Operators
+
+        //- Assignment
+        void operator=(const lookupTable1D<Type>&);
+
+
+    // IOstream Operators
+
+            //- Ostream Operator
+            friend Ostream& operator<< <Type>
+            (
+                Ostream& os,
+                const lookupTable1D<Type>& table
+            );
 };
+
+template<class Type>
+void writeEntry(Ostream& os, const lookupTable1D<Type>& table);
+
+template<class Type>
+void writeEntry
+(
+    Ostream& os,
+    const word& dictName,
+    const lookupTable1D<Type>& table
+);
 
 
 // Specilizations of scalar functions

@@ -30,8 +30,9 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(rhoPhi,Yi) Riemann;
+    div(rhoPhi,Yi)  Riemann;
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
+    div(devTau)     Gauss linear;
 }
 
 laplacianSchemes
@@ -48,6 +49,7 @@ interpolationSchemes
     reconstruct(e)      quadraticMUSCL Minmod;
     reconstruct(p)      quadraticMUSCL Minmod;
     reconstruct(speedOfSound) quadraticMUSCL Minmod;
+    "reconstruct\(.*\)" quadraticMUSCL Minmod;
 }
 
 snGradSchemes

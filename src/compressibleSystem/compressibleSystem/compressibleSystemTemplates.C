@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -29,8 +29,8 @@ License
 template<class SelectionTable>
 Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 (
-    const fvMesh& mesh,
     const dictionary& dict,
+    const fvMesh& mesh,
     const word& defaultType,
     SelectionTable* tablePtr
 )
@@ -59,7 +59,7 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
         }
     }
 
-    return cstrIter()(mesh);
+    return cstrIter()(dict, mesh);
 }
 
 

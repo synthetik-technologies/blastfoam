@@ -88,7 +88,7 @@ public:
             const solidTractionFreeFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Construct as copy
@@ -115,6 +115,8 @@ public:
                 new solidTractionFreeFvPatchVectorField(*this, iF)
             );
         }
+
+    virtual bool updateFields();
 };
 
 

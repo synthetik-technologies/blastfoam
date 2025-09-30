@@ -64,8 +64,8 @@ Also see:
 #include "operations.H"
 #include "mechanics.H"
 #include "gradientSchemes.H"
-#include "interpolationSchemes.H"
 #include "angularMomentum.H"
+#include "dynamicRelaxation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -113,9 +113,8 @@ class explicitRiemannSolid
 
         //- Material coordinates
         volVectorField x_;
-
-        //- Face displacement
-        surfaceVectorField Df_;
+        surfaceVectorField xf_;
+        pointVectorField xN_;
 
         //- Point displacement
         pointVectorField& pointD_;
@@ -144,14 +143,11 @@ class explicitRiemannSolid
         //- Mechanics
         mechanics mech_;
 
-        //- Interpolation schemes
-        interpolationSchemes interpSchemes_;
-
-        //- Gradients
-        gradientSchemes gradSchemes_;
-
         //- Angular momentum
         angularMomentum am_;
+
+        //- Dynamic relaxation
+        dynamicRelaxation relaxation_;
 
         //- Piola stress tensor
         volTensorField P_;
@@ -162,27 +158,31 @@ class explicitRiemannSolid
         //- Shear wave speed field
         volScalarField sWaveSpeed_;
 
-        //- Interpolated fields
-        surfaceVectorField rhoUOwn_;
-        surfaceVectorField rhoUNei_;
-        surfaceVectorField tractionOwn_;
-        surfaceVectorField tractionNei_;
+        //- Include stabilisation terms
+        bool useStabilisation_;
 
-        // Scale factor for Jameson-Schmidt-Turkel smoothing term
-        const scalar JSTScaleFactor_;
+        //- Include bulk viscosity
+        bool useBulkViscosity_;
 
         //- Energy calculation
         mechanicalEnergies energies_;
 
+        //- Use the penalised-TOUCH correction
+        bool pTouch_;
+
+        //- Use filtering (aka solve nodal linear momentum)
+        bool filter_;
+
         //- Stored impK
         volScalarField impK_;
+        surfaceScalarField impKf_;
+
+        //- Current time index
+        label curIndex_;
 
 
 
     // Private Member Functions
-
-        //- Update the stress field
-        void updateStress();
 
         //- Smooth the hydrostatic pressure field
         void solveGEqns
@@ -204,28 +204,10 @@ class explicitRiemannSolid
         void operator=(const explicitRiemannSolid&);
 
 
-protected:
-
-    // Protected member functions
-
-        //- Return nonlinear geometry enumerator
-        virtual nonLinearGeometry::nonLinearType nonLinGeom() const
-        {
-            return nonLinearGeometry::TOTAL_LAGRANGIAN;
-        }
-
-        //- Does this model take an incremental approach?
-        //  i.e. does it solve for DD instead of D?
-        //  This defaults to false but can be overwritten
-        virtual bool incremental() const
-        {
-            return false;
-        }
-
 public:
 
     //- Runtime type information
-    TypeName("explicitNonLinearGeometryRiemannrangian");
+    ClassName("explicitRiemann");
 
     // Constructors
 
@@ -233,7 +215,7 @@ public:
         explicitRiemannSolid
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const nonLinearGeometry::nonLinearType&
         );
 
@@ -247,39 +229,55 @@ public:
 
         // Access
 
+            //- Does this model take an incremental approach?
+            //  i.e. does it solve for DD instead of D?
+            //  This defaults to false but can be overwritten
+            virtual bool incremental() const
+            {
+                return true;
+            }
+
             //- Each solidModel must indicate whether D or DD is the primary
             //  solution variable
-            virtual volVectorField& solutionD()
+            virtual const volVectorField& solutionD() const
             {
-                // This model solves for D
-                return D();
+                return DD();
+            }
+
+            //- Each solidModel must indicate whether gradD or gradDD
+            //  is the primary solution variable
+            virtual const volTensorField& solutionGradD() const
+            {
+                return gradDD();
+            }
+
+            //- Return the patch implicit stiffness
+            virtual tmp<scalarField> impK(const fvPatch& patch) const
+            {
+                return impKf_.boundaryField()[patch.index()];
             }
 
         // Edit
 
-            //- Update the size of the time-step
-            virtual void setDeltaT(Time& runTime);
+            //- Decode
+            void decode();
+
+            //- Update fields
+            void update(const bool correctSigma = true);
 
             //- Evolve the solid solver and solve the mathematical model
             virtual bool evolve();
 
-            //- Traction boundary surface normal gradient
-            virtual tmp<vectorField> tractionBoundarySnGrad
-            (
-                const vectorField& traction,
-                const scalarField& pressure,
-                const fvPatch& patch
-            ) const;
+            virtual tmp<Foam::vectorField> nf(const fvPatch& patch) const
+            {
+                return mech_.n().boundaryField()[patch.index()];
+            }
 
             //- Return the current Courant number
             virtual scalar CoNum() const;
 
             //- Return the max Courant number
             virtual scalar maxCoNum() const;
-
-            //- End of the program
-            virtual void end()
-            {}
 };
 
 

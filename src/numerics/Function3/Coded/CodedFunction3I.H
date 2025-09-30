@@ -40,7 +40,15 @@ inline Type Foam::Function3s::Coded<Type>::value
     // Make sure library containing user-defined Function3 is up-to-date
     this->updateLibrary();
 
-    return redirectFunction3Ptr_->value(x, y, z);
+    return units_.value.toStandard
+        (
+            redirectFunction3Ptr_->value
+            (
+                units_.x.toUser(x),
+                units_.y.toUser(y),
+                units_.z.toUser(z)
+            )
+        );
 }
 
 

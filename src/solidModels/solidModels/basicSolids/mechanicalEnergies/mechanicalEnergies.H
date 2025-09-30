@@ -1,0 +1,257 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright held by original author
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM; if not, write to the Free Software Foundation,
+    Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+
+Class
+    mechanicalEnergies
+
+Description
+    Class used to calculate the energies involved in a solid mechanics
+    simulation, including the external work, internal strain energy, and
+    kinetic energy.
+
+    Energies are integrated using the trapezoidal rule.
+
+    The class also calculates a linear bulk viscous pressure term, which is used
+    to dissipate high frequency energy in explicit simulations.
+
+Author
+    Philip Cardiff, UCD.  All rights reserved.
+
+SourceFiles
+    mechanicalEnergies.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef mechanicalEnergies_H
+#define mechanicalEnergies_H
+
+#include "volFields.H"
+#include "momentumStabilisation.H"
+#include "OFstream.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+/*---------------------------------------------------------------------------*\
+                        Class mechanicalEnergies Declaration
+\*---------------------------------------------------------------------------*/
+
+class mechanicalEnergies
+{
+    // Private data
+
+        // Reference to mesh
+        const fvMesh& mesh_;
+
+        //- Accumulated external work
+        scalar externalWork_;
+
+        //- Accumulated external work old time
+        scalar externalWorkOldTime_;
+
+        //- Accumulated internal energy
+        scalar internalEnergy_;
+
+        //- Accumulated internal energy old time
+        scalar internalEnergyOldTime_;
+
+        //- Kinetic energy
+        scalar kineticEnergy_;
+
+        //- Kinetic energy at the previous time
+        scalar kineticEnergyOldTime_;
+
+        //- Accumulated energy dissipated due to Laplacian smoothing term
+        scalar smoothingEnergy_;
+
+        //- Accumulated energy dissipated due to Laplacian smoothing term old
+        //  time
+        scalar smoothingEnergyOldTime_;
+
+        //- Linear bulk viscosity energy
+        scalar bulkViscosityEnergy_;
+
+        //- Linear bulk viscosity energy old time
+        scalar bulkViscosityEnergyOldTime_;
+
+        //- Linear bulk viscosity coefficient
+        //  Defaults to 0.06, as in Abaqus
+        dimensionedScalar linearBulkViscosityCoeff_;
+
+        //- Quadratic bulk viscosity coefficient
+        //  Defaults to 1.2, as in Abaqus
+        dimensionedScalar quadraticBulkViscosityCoeff_;
+
+
+        //- Bulk viscosity stablisation pressure
+        mutable autoPtr<surfaceScalarField> viscousPressurefPtr_;
+
+        //- Bulk viscosity stablisation pressure
+        mutable autoPtr<volScalarField> viscousPressurePtr_;
+
+        //- Output file for the energies
+        mutable autoPtr<OFstream> energiesFilePtr_;
+
+        //- Time index to know when a new time step occurs
+        label curTimeIndex_;
+
+
+    // Private Member Functions
+
+        //- Disallow default bitwise copy construct
+        mechanicalEnergies(const mechanicalEnergies&);
+
+        //- Disallow default bitwise assignment
+        void operator=(const mechanicalEnergies&);
+
+public:
+
+    //- Runtime type information
+    TypeName("mechanicalEnergies");
+
+    // Constructors
+
+        //- Construct from components
+        mechanicalEnergies
+        (
+            const fvMesh& mesh,
+            const dictionary& dict
+        );
+
+    // Destructor
+
+        virtual ~mechanicalEnergies()
+        {}
+
+
+    // Member Functions
+
+        //- Viscous pressure
+        const volScalarField& viscousPressure
+        (
+            const volScalarField& rho,
+            const surfaceScalarField& waveSpeed,
+            const volTensorField& gradD
+        ) const;
+
+        //- Viscous pressure
+        const surfaceScalarField& viscousPressuref
+        (
+            const volScalarField& rho,
+            const surfaceScalarField& waveSpeed,
+            const volTensorField& gradD
+        ) const;
+
+        //- Volumetric strain
+        const volScalarField& epsilonVol
+        (
+            const volTensorField& gradD
+        );
+
+        //- Check global energy conservation
+        void checkEnergies
+        (
+            const volScalarField& rho,
+            const volVectorField& U,
+            const volVectorField& D,
+            const volVectorField& DD,
+            const volSymmTensorField& sigma,
+            const volTensorField& gradD,
+            const volTensorField& gradDD,
+            const momentumStabilisation& stabilisation,
+            const dimensionedVector& g
+        );
+
+        //- Return accumulated external work
+        scalar externalWork() const
+        {
+            return externalWork_;
+        }
+
+        //- Return accumulated external work old time
+        scalar externalWorkOldTime() const
+        {
+            return externalWorkOldTime_;
+        }
+
+        //- Return accumulated internal energy
+        scalar internalEnergy() const
+        {
+            return internalEnergy_;
+        }
+
+        //- Return accumulated internal energy old time
+        scalar internalEnergyOldTime() const
+        {
+            return internalEnergyOldTime_;
+        }
+
+        //- Return kinetic energy
+        scalar kineticEnergy() const
+        {
+            return kineticEnergy_;
+        }
+
+        //- Return Kinetic energy at the previous time
+        scalar kineticEnergyOldTime() const
+        {
+            return kineticEnergyOldTime_;
+        }
+
+        //- Return accumulated energy dissipated due to smoothing term
+        scalar smoothingEnergy() const
+        {
+            return smoothingEnergy_;
+        }
+
+        //- Return accumulated energy dissipated due to smoothing term old
+        //  time
+        scalar smoothingEnergyOldTime() const
+        {
+            return smoothingEnergyOldTime_;
+        }
+
+        //- Return Linear bulk viscosity energy
+        scalar bulkViscosityEnergy() const
+        {
+            return bulkViscosityEnergy_;
+        }
+
+        //- Return Linear bulk viscosity energy old time
+        scalar bulkViscosityEnergyOldTime() const
+        {
+            return bulkViscosityEnergyOldTime_;
+        }
+};
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //

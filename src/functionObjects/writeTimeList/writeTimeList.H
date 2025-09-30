@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 13-05-2020 Synthetik Applied Technologies: | Added writeTimeList functionObject
+11-06-2025 Synthetik Applied Technologies: | Added spaced times
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -28,7 +29,9 @@ Class
 
 Description
     Overrides write interval to write at a designated list of times. The normal
-    write interval specified in the control dict is still used.
+    write interval specified in the control dict is still used. Can specify a range
+    of times with startTime:dt:endTime or a spacing based on log, log10, exp, pow10,
+    or linear spacing with func(startTime:n:endTime). Duplicate times are removed.
 
     Example of function object specification:
     \verbatim
@@ -37,7 +40,15 @@ Description
         type                writeTimeList;
         libs                ("libblastFunctionObjects.so");
 
-        times (0.001 0.004 0.01);
+        times
+        (
+            0.001
+            0.004
+            0.01
+            0.01:0.01:0.1       // Linear spacing between 0.01 and 0.1 with dt of 0.01
+            linspace(0.1:9:10)  // linear spacing bewteen 0.1 and 1 with 9 times
+            log10(10:2:100)    // log10 spacing bewteen 10 and 100 with 2 times
+        );
     }
     \endverbatim
 
@@ -120,11 +131,17 @@ public:
         //- Read the field average data
         virtual bool read(const dictionary&);
 
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        }
+
         //- Update index
         virtual bool execute();
 
         //- Return time to next write
-        virtual scalar timeToNextWrite();
+        virtual scalar timeToNextAction();
 
         //- Write the field averages
         virtual bool write();

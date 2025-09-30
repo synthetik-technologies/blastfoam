@@ -38,19 +38,21 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "UautoPtr.H"
+#include "timeIntegrationSystemBase.H"
 #include "fvMesh.H"
 #include "Time.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class timeIntegrationSystem Declaration
+                    Class timeIntegrationSystem Declaration
 \*---------------------------------------------------------------------------*/
 
 class timeIntegrationSystem
+:
+    public timeIntegrationSystemBase
 {
 protected:
 // Protected data
@@ -58,45 +60,13 @@ protected:
         //- Constant reference to mesh
         UautoPtr<const fvMesh> meshPtr_;
 
-        //- Name of system
-        word name_;
-
         //- Stored reference to time integrator
-        UautoPtr<timeIntegrator> timeInt_;
-
-        //- Number of steps
-        label nSteps_;
-
-        //- Stored old field indexes
-        labelList oldIs_;
-
-        //- Number of stored fields
-        label nOld_;
-
-        //- Stored delta indexes
-        labelList deltaIs_;
-
-        //- Number of stored deltas
-        label nDelta_;
+        UautoPtr<const fvTimeIntegrator> fvTimeInt_;
 
         // Storage for fields
 
-            //- Store old fields
-            template<class FieldType>
-            void storeOld
-            (
-                FieldType& f,
-                PtrList<FieldType>& fList,
-                const bool conservative = true
-            );
-
-            //- Store delta fields
-            template<class FieldType>
-            void storeDelta
-            (
-                const FieldType& f,
-                PtrList<FieldType>& fList
-            );
+            using timeIntegrationSystemBase::storeOld;
+            using timeIntegrationSystemBase::storeDelta;
 
             //- Store old fields
             template<class FieldType>
@@ -111,39 +81,22 @@ protected:
             void storeDelta(const FieldType& f);
 
 
-        // storage for single quantities
-
-            //- Store old fields
-            //  moving keyword used for template function
-            template<class Type>
-            void storeOld(Type& f, List<Type>& fList, bool conservative = true);
-
-            //- Store delta fields
-            template<class Type>
-            void storeDelta(const Type& f, List<Type>& fList);
-
-
         // General functions
 
-            //- Combine old fields using time step coefficients
-            template<template<class> class ListType, class Type>
-            void blendOld
-            (
-                Type& f,
-                const ListType<Type>& fList
-            ) const;
+            using timeIntegrationSystemBase::blendOld;
+            using timeIntegrationSystemBase::blendDelta;
+            using timeIntegrationSystemBase::storeAndBlendOld;
+            using timeIntegrationSystemBase::storeAndBlendDelta;
+            using timeIntegrationSystemBase::calcDelta;
+            using timeIntegrationSystemBase::calcAndStoreDelta;
 
             //- Combine old fields using time step coefficients, looking up
             //  the saved fields
             template<class FieldType>
-            void blendOld(FieldType& f) const;
-
-            //- Combine delta fields using time step coefficients
-            template<template<class> class ListType, class Type>
-            void blendDelta
+            void blendOld
             (
-                Type& f,
-                const ListType<Type>& fList
+                FieldType& f,
+                const bool conservative = true
             ) const;
 
             //- Combine delta fields using time step coefficients, looking up
@@ -151,26 +104,13 @@ protected:
             template<class FieldType>
             void blendDelta(FieldType& f) const;
 
-            //- Combine old fields using time step coefficients
-            template<template<class> class ListType, class Type>
-            void storeAndBlendOld
-            (
-                Type& f,
-                ListType<Type>& fList,
-                const bool conservative = true
-            );
-
             //- Combine old fields using time step coefficients, looking up
             //  the saved fields
             template<class FieldType>
-            void storeAndBlendOld(FieldType& f, const bool conservative = true);
-
-            //- Combine delta fields using time step coefficients
-            template<template<class> class ListType, class Type>
-            void storeAndBlendDelta
+            void storeAndBlendOld
             (
-                Type& f,
-                ListType<Type>& fList
+                FieldType& f,
+                const bool conservative = true
             );
 
             //- Combine delta fields using time step coefficients, looking up
@@ -178,42 +118,15 @@ protected:
             template<class FieldType>
             void storeAndBlendDelta(FieldType& f);
 
-            //- Calculate the sub delta given the actual change
-            template<template<class> class ListType, class Type>
-            tmp<Type> calcDelta
-            (
-                const Type& f,
-                const ListType<Type>& fList
-            ) const;
-
             //- Calculate the sub delta given the actual change, looking up
             //  the saved fields
             template<class FieldType>
             tmp<FieldType> calcDelta(const FieldType& f) const;
 
-            //- Calculate the sub delta given the actual change
-            template<template<class> class ListType, class Type>
-            tmp<Type> calcAndStoreDelta
-            (
-                const Type& f,
-                ListType<Type>& fList
-            );
-
             //- Calculate the sub delta given the actual change, looking up
             //  the saved fields
             template<class FieldType>
             tmp<FieldType> calcAndStoreDelta(const FieldType& f);
-
-            //- Combine fields using time step coefficients
-            //  f must be the most recent value of the field
-            template<template<class> class ListType, class Type>
-            void blendSteps
-            (
-                const labelList& indices,
-                Type& f,
-                const ListType<Type>& fList,
-                const scalarList& scales
-            ) const;
 
             //- Add old fields for a given variable
             template<class FieldType>
@@ -232,13 +145,13 @@ public:
 
 
     // Constructor
-    timeIntegrationSystem();
-    timeIntegrationSystem
-    (
-        const word& name,
-        const fvMesh& mesh
-    );
-    void set(const word& name, const fvMesh& mesh);
+    timeIntegrationSystem(const word& name);
+    timeIntegrationSystem(const word& name, const fvMesh& mesh);
+
+    //- Set pointer to time integration system
+    using timeIntegrationSystemBase::set;
+    virtual void set(const fvMesh& mesh);
+    virtual void set(const timeIntegrator& integrator);
 
 
     //- Destructor
@@ -246,12 +159,6 @@ public:
 
 
     // Member functions
-
-        //- Return name of system
-        const word& name() const
-        {
-            return name_;
-        }
 
         //- Return the mesh
         const fvMesh& mesh() const
@@ -263,69 +170,29 @@ public:
         virtual void preUpdateMesh()
         {}
 
-        //- Update before each ode step
-        virtual void update() = 0;
-
-        //- Update after ode integration
-        virtual void postUpdate() = 0;
-
-        //- Solve sub-step stepi
-        virtual void solve() = 0;
-
-        //- Optional clearing step
-        virtual void clear()
-        {}
-
         //- Return the fvModels
         inline const fvModels& models() const
         {
-            return timeInt_->models();
+            return fvTimeInt_->models();
         }
 
         //- Access the fvModels
-        inline fvModels& models()
+        inline fvModels& modelsRef() const
         {
-            return timeInt_->models();
+            return fvTimeInt_->modelsRef();
         }
 
         //- Return the fvConstraints
         inline const fvConstraints& constraints() const
         {
-            return timeInt_->constraints();
+            return fvTimeInt_->constraints();
         }
 
         //- Is a field modified by fvModels or fvConstraints
         inline bool needSolve(const word& field) const
         {
-            return timeInt_->needSolve(field);
+            return fvTimeInt_->needSolve(field);
         }
-
-        //- Return the current step
-        label step() const;
-
-        //- Return old coefficients for the current step
-        scalarList a() const;
-
-        //- Return delta coefficients for the current step
-        scalarList b() const;
-
-        //- Return the time step fraction
-        scalar f() const;
-
-        //- Return the initial time fraction
-        scalar f0() const;
-
-        //- Is the current step the last
-        bool finalStep() const;
-
-        //- Current time for substep
-        dimensionedScalar time() const;
-
-        //- Current time step size
-        dimensionedScalar deltaT() const;
-
-        //- Dummy write for regIOobject
-        virtual bool writeData(Ostream& os) const;
 };
 
 

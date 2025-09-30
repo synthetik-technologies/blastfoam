@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2025 Synthetik Applied Technologies
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -25,19 +25,19 @@ Application
     blastFoam
 
 Description
-    Multiphase compressible solver that uses Riemann solver to construct
-    hyperbolic fluxes. Equation of states use the Mie–Grüneisen form.
+    Dilute particle solver coupled to blastFoam solver
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
-#include "zeroGradientFvPatchFields.H"
-#include "wedgeFvPatch.H"
+#include "argList.H"
+#include "fvMesh.H"
+#include "timeSelector.H"
 #include "coupledMultiphaseCompressibleSystem.H"
-#include "timeIntegrator.H"
+#include "fvTimeIntegrator.H"
 
-#include "parcelCloudList.H"
+#include "parcelClouds.H"
+
+using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,11 +45,15 @@ int main(int argc, char *argv[])
 {
     #include "postProcess.H"
 
-    #include "setRootCaseLists.H"
+    #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
+    maxCo = min(maxCo, integrator.maxCo());
+    scalar CoNum = fluid.CoNum();
+
+    #include "setInitialDeltaT.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -58,30 +62,36 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        integrator->preUpdateMesh();
+        integrator.preUpdateMesh();
+        if (mesh.dynamic() || mesh.distributing())
+        {
+            clouds.preUpdateMesh();
+        }
 
         //- Refine the mesh
-        refineMesh(mesh);
+        mesh.update();
 
         scalar CoNum = fluid.CoNum();
         #include "readTimeControls.H"
+        maxCo = min(maxCo, integrator.maxCo());
+
         #include "setDeltaT.H"
 
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         //- Move the mesh
-        mesh.update();
+        mesh.move();
 
         fluid.decode();
         clouds.evolve();
-        theta = clouds.theta();
+        alpha = clouds.alpha();
 
         fluid.eSource() = clouds.Sh(fluid.he());
         fluid.dragSource() = clouds.SU(fluid.U());
 
         Info<< "Calculating Fluxes" << endl;
-        integrator->integrate();
+        integrator.integrate();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
@@ -95,7 +105,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-        integrator->clear();
+        integrator.clear();
     }
 
     Info<< "End\n" << endl;

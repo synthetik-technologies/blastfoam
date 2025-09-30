@@ -79,25 +79,6 @@ class Roe
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
-        (
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
-            const label facei, const label patchi = -1
-        );
-
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux
         (
@@ -113,10 +94,16 @@ class Roe
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool isDensity,
             const label facei, const label patchi = -1
         ) const;
 
+        //- Calcualte flux given own/nei values
+        virtual scalar calculateFlux
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const scalar& phi,
+            const label facei, const label patchi = -1
+        ) const;
 
 public:
 
@@ -124,7 +111,7 @@ public:
     TypeName("Roe");
 
     // Constructor
-    Roe(const fvMesh& mesh);
+    Roe(const surfaceScalarField& phi);
 
 
     //- Destructor

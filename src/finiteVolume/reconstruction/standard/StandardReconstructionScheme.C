@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -46,7 +46,7 @@ Foam::StandardReconstructionScheme<Type>::lookupOrConstruct
                 IOobject
                 (
                     fieldName,
-                    this->mesh_.time().timeName(),
+                    this->mesh_.time().name(),
                     this->mesh_
                 ),
                 this->mesh_,
@@ -70,10 +70,11 @@ template<class Type>
 Foam::StandardReconstructionScheme<Type>::StandardReconstructionScheme
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
+    Istream& is,
+    const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is),
+    ReconstructionScheme<Type>(phi, is, overwrite),
     name_(is),
     own_(lookupOrConstruct("MUSCL:own", 1.0)),
     nei_(lookupOrConstruct("MUSCL:nei", -1.0))
@@ -111,14 +112,22 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::StandardReconstructionScheme<Type>::interpolateOwn() const
 {
-    return fvc::interpolate(this->phi_, own_, name_);
+    return GeometricField<Type, fvsPatchField, surfaceMesh>::New
+    (
+        this->ownName(),
+        fvc::interpolate(this->phi_, own_, name_)
+    );
 }
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::StandardReconstructionScheme<Type>::interpolateNei() const
 {
-    return fvc::interpolate(this->phi_, nei_, name_);
+    return GeometricField<Type, fvsPatchField, surfaceMesh>::New
+    (
+        this->neiName(),
+        fvc::interpolate(this->phi_, nei_, name_)
+    );
 }
 
 

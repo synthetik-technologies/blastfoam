@@ -95,4 +95,33 @@ const Foam::volScalarField& Foam::phaseFluidBlastThermo::p() const
     return p_;
 }
 
+
+Foam::tmp<Foam::volScalarField> Foam::phaseFluidBlastThermo::pRhoT() const
+{
+    tmp<volScalarField> tp
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("p", this->phaseName()),
+            this->rho_.mesh(),
+            dimensionedScalar(dimPressure, 0.0)
+        )
+    );
+    volScalarField& p = tp.ref();
+    forAll(p, celli)
+    {
+        p[celli] = this->cellpRhoT(celli);
+    }
+
+    volScalarField::Boundary& bp = p.boundaryFieldRef();
+    forAll(bp, patchi)
+    {
+        forAll(bp[patchi], facei)
+        {
+            bp[patchi][facei] = this->patchFacepRhoT(patchi, facei);
+        }
+    }
+    return tp;
+}
+
 // ************************************************************************* //

@@ -97,12 +97,13 @@ bool Foam::functionObjects::fieldMinMax::createMinMax
         return false;
     }
 
-    Log << "    Reading/initialising field " << computeFieldName << endl;
+    typedef typename FieldType::value_type Type;
+
+    Info << "    Reading/initialising field " << computeFieldName << endl;
     const FieldType& baseField = obr_.lookupObject<FieldType>(fieldName);
 
     // Store on registry
-    obr_.store
-    (
+    FieldType* fPtr =
         new FieldType
         (
             IOobject
@@ -115,16 +116,22 @@ bool Foam::functionObjects::fieldMinMax::createMinMax
               : IOobject::READ_IF_PRESENT,
                 IOobject::NO_WRITE
             ),
-            baseField,
-            baseField.boundaryField()
-        )
-    );
+            baseField.mesh(),
+            dimensioned<Type>(baseField.dimensions(), Zero)
+        );
+    if (!fPtr->headerOk())
+    {
+        (*fPtr) = baseField;
+    }
+
+    fPtr->store(fPtr);
+
     return true;
 }
 
 
 template<class FieldType>
-bool Foam::functionObjects::fieldMinMax::createOld
+bool Foam::functionObjects::fieldMinMax::storeOld
 (
     const word& fieldName
 )
@@ -134,24 +141,31 @@ bool Foam::functionObjects::fieldMinMax::createOld
     {
         const FieldType& f = obr_.lookupObject<FieldType>(computeFieldName);
 
-        // Store unregistered fields so fields are not updated with refinement
-        oldFields_.insert
-        (
-            computeFieldName,
-            new FieldType
+        if (!oldFields_.found(computeFieldName))
+        {
+            // Store unregistered fields so fields are not updated with refinement
+            oldFields_.set
             (
-                IOobject
+                computeFieldName,
+                new FieldType
                 (
-                    computeFieldName,
-                    obr_.time().timeName(),
-                    obr_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    false
-                ),
-                f
-            )
-        );
+                    IOobject
+                    (
+                        computeFieldName,
+                        obr_.time().name(),
+                        obr_,
+                        IOobject::NO_READ,
+                        IOobject::NO_WRITE,
+                        false
+                    ),
+                    f
+                )
+            );
+        }
+        else
+        {
+            dynamicCast<FieldType&>(*oldFields_[computeFieldName]).reset(f);
+        }
         return true;
     }
     return false;
@@ -167,7 +181,9 @@ bool Foam::functionObjects::fieldMinMax::update
     if (obr_.foundObject<FieldType>(fieldName))
     {
         const word computeFieldName(computedName(fieldName));
-        if (!oldFields_.found(computeFieldName))
+        objectRegistry::const_iterator oldIter =
+            obr_.find(computeFieldName);
+        if (oldIter == obr_.cend())
         {
             createMinMax<FieldType>(fieldName);
         }
@@ -189,35 +205,6 @@ bool Foam::functionObjects::fieldMinMax::update
                 baseField.boundaryField()[patchi]
             );
         }
-
-        if (cellMap_.valid())
-        {
-            const labelList& cellMap = cellMap_();
-            const labelList& rCellMap = rCellMap_();
-
-            const FieldType& fOld =
-                *dynamic_cast<const FieldType*>(oldFields_[computeFieldName]);
-
-            forAll(cellMap, i)
-            {
-                label celli = cellMap[i];
-                if (celli > -1)
-                {
-                    field[i] = compute(field[i], fOld[celli]);
-                }
-            }
-
-            forAll(rCellMap, i)
-            {
-                label index = rCellMap[i];
-
-                if (index < -1)
-                {
-                    label celli = -index-2;
-                    field[celli] = compute(field[celli], fOld[i]);
-                }
-            }
-        }
         return true;
     }
     return false;
@@ -225,10 +212,10 @@ bool Foam::functionObjects::fieldMinMax::update
 
 
 template<class FieldType>
-bool Foam::functionObjects::fieldMinMax::map
+bool Foam::functionObjects::fieldMinMax::mapField
 (
     const word& fieldName,
-    const mapPolyMesh& meshMap
+    const polyTopoChangeMap& map
 )
 {
     const word computeFieldName(computedName(fieldName));
@@ -236,33 +223,33 @@ bool Foam::functionObjects::fieldMinMax::map
     {
         FieldType& f = obr_.lookupObjectRef<FieldType>(computeFieldName);
 
-        if (cellMap_.valid())
+        const labelList& cellMap = map.cellMap();
+        const labelList& rCellMap = map.reverseCellMap();
+
+        HashPtrTable<regIOobject>::iterator fOldIter =
+            oldFields_.find(computeFieldName);
+        const FieldType& fOld =
+            *dynamic_cast<const FieldType*>(fOldIter());
+        forAll(cellMap, i)
         {
-            const labelList& cellMap = cellMap_();
-            const labelList& rCellMap = rCellMap_();
-
-            const FieldType& fOld =
-                *dynamic_cast<const FieldType*>(oldFields_[computeFieldName]);
-            forAll(cellMap, i)
+            label celli = cellMap[i];
+            if (celli > -1)
             {
-                label celli = cellMap[i];
-                if (celli > -1)
-                {
-                    f[i] = compute(f[i], fOld[celli]);
-                }
-            }
-
-            forAll(rCellMap, i)
-            {
-                label index = rCellMap[i];
-
-                if (index < -1)
-                {
-                    label celli = -index-2;
-                    f[celli] = compute(f[celli], fOld[i]);
-                }
+                f[i] = compute(f[i], fOld[celli]);
             }
         }
+
+        forAll(rCellMap, i)
+        {
+            label index = rCellMap[i];
+
+            if (index < -1)
+            {
+                label celli = -index-2;
+                f[celli] = compute(f[celli], fOld[i]);
+            }
+        }
+
         return true;
     }
     return false;

@@ -135,6 +135,17 @@ Foam::univariateRootSolver::univariateRootSolver
 {}
 
 
+Foam::univariateRootSolver::univariateRootSolver
+(
+    const scalarMultivariateEquation& eqn,
+    const univariateRootSolver& solver
+)
+:
+    rootSolver(eqn, solver),
+    eqn_(dynamicCast<const scalarEquation>(eqn))
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::univariateRootSolver::~univariateRootSolver()
@@ -142,6 +153,11 @@ Foam::univariateRootSolver::~univariateRootSolver()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::scalar Foam::univariateRootSolver::solveUni() const
+{
+    return solve(0.5*(eqn_.lower() + eqn_.upper()), eqn_.lower(), eqn_.upper(), 0);
+}
 
 Foam::scalar Foam::univariateRootSolver::solve(const scalar x0) const
 {
@@ -228,7 +244,7 @@ Foam::List<Foam::scalar> Foam::univariateRootSolver::solveAll
     }
     eqn.setLower(oldLower);
     eqn.setUpper(oldUpper);
-    return move(roots);
+    return roots;
 }
 
 

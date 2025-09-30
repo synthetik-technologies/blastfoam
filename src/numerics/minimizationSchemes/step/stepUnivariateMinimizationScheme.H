@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::stepUnivariateMinimizationScheme
+    Foam::minimizationSchemes::univariate::step
 
 Description
     Fine the minimum of a function by stepping by a given increment. If the
@@ -45,12 +45,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class stepUnivariateMinimizationScheme Declaration
+            Class minimizationSchemes::univariate::step Declaration
 \*---------------------------------------------------------------------------*/
 
-class stepUnivariateMinimizationScheme
+class step
 :
     public univariateMinimizationScheme
 {
@@ -71,14 +75,42 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        stepUnivariateMinimizationScheme
+        step
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        step
+        (
+            const scalarUnivariateEquation& eqn,
+            const step& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new step(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new step(eqns, *this)
+            );
+        }
+
     //- Destructor
-    virtual ~stepUnivariateMinimizationScheme()
+    virtual ~step()
     {}
 
 
@@ -96,12 +128,14 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const stepUnivariateMinimizationScheme&) = delete;
+        void operator=(const step&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -48,10 +48,10 @@ namespace Foam
                         Class TrapezoidalIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class TrapezoidalIntegrator
 :
-    public Integrator<Type>
+    public Integrator<Type, Adapt>
 {
     typedef Equation<Type> equationType;
 
@@ -97,7 +97,7 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        TrapezoidalIntegrator(const TrapezoidalIntegrator<Type>&) = delete;
+        TrapezoidalIntegrator(const TrapezoidalIntegrator<Type, Adapt>&) = delete;
 
 
     //- Destructor
@@ -119,7 +119,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const TrapezoidalIntegrator<Type>&) = delete;
+        void operator=(const TrapezoidalIntegrator<Type, Adapt>&) = delete;
 };
 
 

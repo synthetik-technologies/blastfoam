@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::goodBroydenRootSolver
+    Foam::rootSolvers::goodBroyden
 
 Description
     Find multivariateRoot using the goodBroyden method. The inverse jacobian
@@ -30,7 +30,7 @@ Description
     and its inverse is needed
 
 SourceFiles
-    multivariateRootSolver.C
+    goodBroydenRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,15 +45,19 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class goodBroydenRootSolver Declaration
+                    Class rootSolvers::goodBroyden Declaration
 \*---------------------------------------------------------------------------*/
 
-class goodBroydenRootSolver
+class goodBroyden
 :
     public rootSolver
 {
+    scalarField dX_;
+
 public:
 
     //- Runtime type information
@@ -62,21 +66,38 @@ public:
     // Constructors
 
         //- Construct for given multivariateRootSolver
-        goodBroydenRootSolver
+        goodBroyden
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
-        //- Disallow default bitwise copy construction
-        goodBroydenRootSolver
+        //- Copy construct for given multivariateRootSolver
+        goodBroyden
         (
-            const goodBroydenRootSolver&
+            const scalarMultivariateEquation& eqn,
+            const goodBroyden& solver
+        );
+
+
+        //- Disallow default bitwise copy construction
+        goodBroyden
+        (
+            const goodBroyden&
         ) = delete;
+
+        //- Clone the solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new goodBroyden(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~goodBroydenRootSolver();
+    virtual ~goodBroyden();
 
 
     // Member Functions
@@ -94,6 +115,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

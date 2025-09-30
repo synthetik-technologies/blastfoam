@@ -34,19 +34,23 @@ Description
 #include "backupSearchableSurface.H"
 #include "systemDict.H"
 #include "calcAngleFraction.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 
-#include "fvMeshHexRefiner.H"
+#include "polyMeshHexRefiner.H"
+#include "redistributorFvMeshDistributor.H"
+#include "polyDistributionMap.H"
 #include "topoSetList.H"
 #include "levelSetModel.H"
 #include "IOobjectList.H"
 #include "fvc.H"
+#include "pointFields.H"
 
 using namespace Foam;
 
 void setPhase
 (
-    autoPtr<fvMeshRefiner>& refiner,
+    autoPtr<polyMeshRefiner>& refiner,
+    autoPtr<fvMeshDistributors::redistributor>& balancer,
     fvMesh& mesh,
     volScalarField& alpha,
     levelSetModel& LSModel,
@@ -59,9 +63,11 @@ void setPhase
     // Stored to reduce the number of reads
     PtrList<backupSearchableSurface> regions
     (
-        dict.lookup("initialRegions"),
+        dict.lookup("regions"),
         backupSearchableSurface::iNew(mesh)
     );
+
+    const label nBufferLayers = dict.lookupOrDefault("nBufferLayers", 0);
 
     // Collection of searchable surfaces
     labelList levels(regions.size());
@@ -81,16 +87,11 @@ void setPhase
 
     // Maximum number of iterations
     label iter = 0;
-    label maxIter =
-        max
-        (
-            1,
-            max
-            (
-                2*maxLevel,
-                gMax(refiner->cellLevel())*2
-            )
-        );
+    label maxIter = 1;
+    if (mesh.dynamic())
+    {
+        maxIter = max(1, 2*maxLevel);
+    }
 
     // Flag for final iteration
     bool end = false;
@@ -103,22 +104,20 @@ void setPhase
         IOobject
         (
             "error",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
         -1.0
     );
 
-    while(!end)
+    while (!end)
     {
         if (maxIter <= iter)
         {
             prepareToStop = true;
             WarningInFunction << "Reach maximum number of iteration" << endl;
         }
-
-        error == -1.0;
 
         // Check if this is the final iteration so correct cell shapes are used
         if (prepareToStop)
@@ -195,7 +194,11 @@ void setPhase
         // Update error and mesh if not the final iteration
         if (refiner.valid())
         {
+            error == -1.0;
+
+            LSModel.updateEpsilon();
             LSModel.levelSet() = LSModel.calcLevelSet(alpha, surfaces);
+            LSModel.correct();
             alpha = LSModel.alpha();
 
             forAll(error, celli)
@@ -207,160 +210,181 @@ void setPhase
             }
 
             labelList maxCellLevel(mesh.nCells(), -1);
-            forAll(regions, regionI)
+            if (mesh.foundObject<labelIOList>("cellLevel"))
             {
-                // Set specified cells to be refined
-                labelList refineCells;
-                labelList refinePoints;
-                if (dict.lookupOrDefault("refineInternal", false))
-                {
-                    refineCells = savedCells[regionI];
-                }
-                else
-                {
-                    refineCells =
-                        topoSetList::extractInterfaceCells
-                        (
-                            mesh,
-                            savedCells[regionI]
-                        );
-                }
+                const labelIOList& cellLevel =
+                    mesh.lookupObject<labelIOList>("cellLevel");
 
-                if (dict.lookupOrDefault("refinePoints", false))
+                forAll(regions, regionI)
                 {
-                    labelList selectedPoints
-                    (
-                        regions[regionI].selectPoints(mesh.points())
-                    );
-                    refinePoints = topoSetList::extractSelectedPoints
-                    (
-                        mesh,
-                        dict,
-                        selectedPoints,
-                        false
-                    );
-                }
-
-                // Do not use the max level, use current
-                // Order is important in the definitions of regions
-                Switch overwriteLevel =
-                    regions[regionI].dict().lookupOrDefault<Switch>
-                    (
-                        "overwriteLevel",
-                        false
-                    );
-
-                // Set actual max cell level
-                const labelListList& pointCells = mesh.pointCells();
-                if (overwriteLevel)
-                {
-                    forAll(refineCells, celli)
+                    // Set specified cells to be refined
+                    labelList refineCells;
+                    labelList refinePoints;
+                    if (dict.lookupOrDefault("refineInternal", false))
                     {
-                        maxCellLevel[refineCells[celli]] = levels[regionI];
+                        refineCells = savedCells[regionI];
                     }
-                    forAll(refinePoints, pi)
+                    else
                     {
-                        const label pointi = refinePoints[pi];
-                        const labelList& pc = pointCells[pointi];
-                        forAll(pc, ci)
-                        {
-                            maxCellLevel[pc[ci]] = levels[regionI];
-                        }
-                    }
-                }
-                else
-                {
-                    forAll(refineCells, celli)
-                    {
-                        maxCellLevel[refineCells[celli]] =
-                            max
+                        refineCells =
+                            topoSetList::extractInterfaceCells
                             (
-                                maxCellLevel[refineCells[celli]],
-                                levels[regionI]
+                                mesh,
+                                savedCells[regionI]
                             );
                     }
-                    forAll(refinePoints, pi)
+
+                    if (dict.lookupOrDefault("refinePoints", false))
                     {
-                        const label pointi = refinePoints[pi];
-                        const labelList& pc = pointCells[pointi];
-                        forAll(pc, ci)
+                        labelList selectedPoints
+                        (
+                            regions[regionI].selectPoints(mesh.points())
+                        );
+                        refinePoints = topoSetList::extractSelectedPoints
+                        (
+                            mesh,
+                            dict,
+                            selectedPoints
+                        );
+                    }
+
+                    // Do not use the max level, use current
+                    // Order is important in the definitions of regions
+                    Switch overwriteLevel =
+                        regions[regionI].dict().lookupOrDefault<Switch>
+                        (
+                            "overwriteLevel",
+                            false
+                        );
+
+                    // Set actual max cell level
+                    const labelListList& pointCells = mesh.pointCells();
+                    if (overwriteLevel)
+                    {
+                        forAll(refineCells, celli)
                         {
-                            maxCellLevel[pc[ci]] =
+                            maxCellLevel[refineCells[celli]] = levels[regionI];
+                        }
+                        forAll(refinePoints, pi)
+                        {
+                            const label pointi = refinePoints[pi];
+                            const labelList& pc = pointCells[pointi];
+                            forAll(pc, ci)
+                            {
+                                maxCellLevel[pc[ci]] = levels[regionI];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        forAll(refineCells, celli)
+                        {
+                            maxCellLevel[refineCells[celli]] =
                                 max
                                 (
-                                    maxCellLevel[pc[ci]],
+                                    maxCellLevel[refineCells[celli]],
                                     levels[regionI]
                                 );
                         }
+                        forAll(refinePoints, pi)
+                        {
+                            const label pointi = refinePoints[pi];
+                            const labelList& pc = pointCells[pointi];
+                            forAll(pc, ci)
+                            {
+                                maxCellLevel[pc[ci]] =
+                                    max
+                                    (
+                                        maxCellLevel[pc[ci]],
+                                        levels[regionI]
+                                    );
+                            }
+                        }
                     }
-                }
 
-                forAll(refineCells, celli)
-                {
-                    error[refineCells[celli]] = 1.0;
-                }
-                forAll(refinePoints, pi)
-                {
-                    const label pointi = refinePoints[pi];
-                    const labelList& pc = pointCells[pointi];
-                    forAll(pc, ci)
+                    forAll(refineCells, celli)
                     {
-                        error[pc[ci]] = 1.0;
+                        error[refineCells[celli]] = 1.0;
+                    }
+                    forAll(refinePoints, pi)
+                    {
+                        const label pointi = refinePoints[pi];
+                        const labelList& pc = pointCells[pointi];
+                        forAll(pc, ci)
+                        {
+                            error[pc[ci]] = 1.0;
+                        }
+                    }
+
+                    // Extend refinement by nBufferLayers
+                    for
+                    (
+                        label i = 0;
+                        i < nBufferLayers + 1;
+                        i++
+                    )
+                    {
+                        polyMeshRefiner::extendMaxCellLevel
+                        (
+                            mesh,
+                            savedCells[regionI],
+                            maxCellLevel,
+                            levels[regionI]
+                        );
                     }
                 }
 
-                // Extend refinement by nBufferLayers
-                for
-                (
-                    label i = 0;
-                    i < refiner->nRefinementBufferLayers() + 1;
-                    i++
-                )
+                labelList maxRefinement(mesh.nCells(), maxLevel);
+
+                // Set the maxCell level
+                forAll(maxCellLevel, celli)
                 {
-                    fvMeshRefiner::extendMaxCellLevel
-                    (
-                        mesh,
-                        savedCells[regionI],
-                        maxCellLevel,
-                        levels[regionI]
-                    );
+                    if (maxCellLevel[celli] < 0)
+                    {
+                        maxCellLevel[celli] = maxRefinement[celli];
+                    }
+                }
+
+
+
+                forAll(error, celli)
+                {
+                    if (cellLevel[celli] > maxCellLevel[celli])
+                    {
+                        error = -1;
+                    }
                 }
             }
 
-            labelList maxRefinement(mesh.nCells(), maxLevel);
-
-            // Set the maxCell level
-            forAll(maxCellLevel, celli)
-            {
-                if (maxCellLevel[celli] < 0)
-                {
-                    maxCellLevel[celli] = maxRefinement[celli];
-                }
-            }
-
-            // Mark cells greater than the max cell level for unrefinment
-            const labelList& cellLevel = refiner->cellLevel();
-            forAll(error, celli)
-            {
-                if (cellLevel[celli] == maxCellLevel[celli])
-                {
-                    error[celli] = 0.0;
-                }
-                else if (cellLevel[celli] > maxCellLevel[celli])
-                {
-                    error[celli] = -1.0;
-                }
-            }
             // Update mesh (return if mesh changes)
             if (!end)
             {
-                prepareToStop = !refiner->refine(error, maxCellLevel);
+                const bool refined = refiner->refine(error, maxCellLevel);
+                if (refined && balancer.valid())
+                {
+                    // Balance the mesh, do not call "distribute" since the
+                    // mover, topoChanger, and disributor are not set, but
+                    // used without  checks
+                    autoPtr<polyDistributionMap> map =
+                        balancer->forceUpdate(false);
+                    if (map.valid())
+                    {
+                        refiner->distribute(map);
+
+                        // Update sets and zones
+                        // topoSets.distribute(map);
+                    }
+                }
+                LSModel.updateEpsilon();
+                prepareToStop = !refined;
             }
         }
         iter++;
     }
 
+    LSModel.updateEpsilon();
     LSModel.levelSet() = LSModel.calcLevelSet(alpha, surfaces);
+    LSModel.correct();
     alpha = LSModel.alpha();
 }
 
@@ -383,6 +407,11 @@ int main(int argc, char *argv[])
     );
     argList::addBoolOption
     (
+        "points0",
+        "Write points0 fields"
+    );
+    argList::addBoolOption
+    (
         "noRefine",
         "Do not refine"
     );
@@ -396,22 +425,26 @@ int main(int argc, char *argv[])
         "noHistory",
         "Do not write the history"
     );
+    argList::addBoolOption
+    (
+        "writeAll",
+        "write level set fields"
+    );
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
     #include "setRootCase.H"
-    #include "createTime.H"
+    #include "createTimeNoFunctionObjects.H"
 
     //- Select time
-    runTime.functionObjects().off();
     instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
 
-    #include "createNamedMesh.H"
+    #include "createRegionMeshNoChangers.H"
 
     // Store original mesh instance
     const fileName oldFacesInstance = mesh.facesInstance();
 
-    const dictionary levelSetProperties
+    dictionary levelSetProperties
     (
         systemDict("levelSetProperties", args, mesh)
     );
@@ -424,26 +457,93 @@ int main(int argc, char *argv[])
     bool noHistory(args.optionFound("noHistory"));
 
     //- Is the mesh balanced
-    autoPtr<fvMeshRefiner> refiner;
+    autoPtr<polyMeshRefiner> refiner;
+    autoPtr<fvMeshDistributors::redistributor> balancer;
     if (!noRefine)
     {
-        dictionary refineDict
+        dictionary& refineDict
         (
-            levelSetProperties.optionalSubDict
-            (
-                "refinerCoeffs"
-            )
+            levelSetProperties.isDict("refinerCoeffs")
+          ? levelSetProperties.subDict("refinerCoeffs")
+          : levelSetProperties
         );
-        if (args.optionFound("forceHex8"))
+
+        dictionary balanceDict = refineDict;
+
+        word refinerType("hexRefiner");
+        if (!refineDict.found("refiner"))
         {
-            refineDict.set("forceHex8", true);
-            refiner.set(new fvMeshHexRefiner(mesh, refineDict, true));
+            typeIOobject<IOdictionary> dynamicMeshDictIO
+            (
+                "dynamicMeshDict",
+                runTime.constant(),
+                runTime,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                false
+            );
+            if (dynamicMeshDictIO.headerOk())
+            {
+                IOdictionary dynamicMeshDict(dynamicMeshDictIO);
+                if
+                (
+                    dynamicMeshDict.isDict("topoChanger")
+                 && dynamicMeshDict.subDict("topoChanger").found("type")
+                )
+                {
+                    const word tcType
+                    (
+                        dynamicMeshDict.subDict("topoChanger").lookup("type")
+                    );
+                    if (tcType.find("Refiner") != string::npos)
+                    {
+                        refinerType = tcType;
+                    }
+                }
+                if (dynamicMeshDict.isDict("distributor"))
+                {
+                    balanceDict.merge(dynamicMeshDict.subDict("distributor"));
+                }
+            }
         }
         else
         {
-            refiner = fvMeshRefiner::New(mesh, refineDict, true);
+            refinerType = refineDict.lookup<word>("refiner");
         }
-        refiner->setForce(true);
+
+        refineDict.set("force", true);
+        if (args.optionFound("forceHex8"))
+        {
+            refineDict.set("forceHex8", true);
+            refiner.set(new polyMeshHexRefiner(mesh, refineDict));
+        }
+        else if (refineDict.found("refiner") || mesh.nGeometricD() > 1)
+        {
+            refineDict.set("refiner", refinerType);
+            refiner = polyMeshRefiner::New(mesh, refineDict);
+        }
+        else
+        {
+            IOWarningInFunction(refineDict)
+                << "A default refiner is no specified for " << mesh.nGeometricD()
+                << " geometricD so a refiner must be explicitily specified using the "
+                << "\"refiner\" keyword." << nl << endl;
+        }
+
+        if (refiner.valid())
+        {
+            if (Pstream::parRun())
+            {
+                if (!args.optionFound("noBalance"))
+                {
+                    balancer.set
+                    (
+                        new fvMeshDistributors::redistributor(mesh, balanceDict)
+                    );
+                }
+            }
+            refiner->setForce(true);
+        }
     }
 
     // Collect the phases to set
@@ -451,52 +551,35 @@ int main(int argc, char *argv[])
 
     PtrList<volScalarField> alphas(phases.size());
     PtrList<levelSetModel> LSModels(phases.size());
-    label phaseI = 0;
     forAll(phases, phasei)
     {
-        IOobject alphaIO
+        alphas.set
         (
-            IOobject::groupName("alpha", phases[phasei]),
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            phasei,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alpha", phases[phasei]),
+                    runTime.name(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                mesh
+            )
         );
-        if (alphaIO.typeHeaderOk<volScalarField>(true))
-        {
-            alphas.set
+        LSModels.set
+        (
+            phasei,
+            new levelSetModel
             (
-                phaseI,
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        IOobject::groupName("alpha", phases[phasei]),
-                        runTime.timeName(),
-                        mesh,
-                        IOobject::MUST_READ,
-                        IOobject::AUTO_WRITE
-                    ),
-                    mesh
-                )
-            );
-            LSModels.set
-            (
-                phaseI,
-                new levelSetModel
-                (
-                    alphas[phasei],
-                    levelSetProperties.subDict(phases[phasei]),
-                    false
-                )
-            );
-            phases[phaseI] = phases[phasei];
-            phaseI++;
-        }
+                alphas[phasei],
+                levelSetProperties.subDict(phases[phasei]),
+                false
+            )
+        );
     }
-    alphas.resize(phaseI);
-    LSModels.resize(phaseI);
-    phases.resize(phaseI);
 
     // Read in all fields to allow resizing
     if (updateAll)
@@ -512,6 +595,7 @@ int main(int argc, char *argv[])
         setPhase
         (
             refiner,
+            balancer,
             mesh,
             alphas[phasei],
             LSModels[phasei],
@@ -525,23 +609,21 @@ int main(int argc, char *argv[])
         mesh.setInstance(oldFacesInstance);
     }
 
-    bool writeMesh = false;
-    if (refiner.valid())
+    if (refiner.valid() && args.optionFound("points0"))
     {
-        //- Write points0 field to time directory
-        pointIOField points0
+        pointVectorField points0
         (
             IOobject
             (
                 "points0",
                 mesh.facesInstance(),
-                polyMesh::meshSubDir,
                 mesh
             ),
-            mesh.points()
+            pointMesh::New(mesh),
+            dimensionedVector(dimLength, vector::zero)
         );
+        points0.primitiveFieldRef() = mesh.points();
         points0.write();
-        writeMesh = true;
     }
 
     if (noHistory)
@@ -549,12 +631,13 @@ int main(int argc, char *argv[])
         refiner.clear();
     }
 
-    // Write all fields
-    runTime.write();
-    if (writeMesh)
+    if (!args.optionFound("writeAll"))
     {
-        mesh.write();
+        LSModels.clear();
     }
+
+    // Write all fields
+    runTime.writeNow();
 
     Info<< "\nEnd\n" << nl
         << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"

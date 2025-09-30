@@ -37,6 +37,10 @@ namespace Foam
     (
         mechanicalLaw, linearElastic, linGeomMechLaw
     );
+    addToRunTimeSelectionTable
+    (
+        mechanicalLaw, linearElastic, nonLinGeomMechLaw
+    );
 }
 
 
@@ -142,11 +146,12 @@ Foam::linearElastic::linearElastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     mu_("mu", dimPressure, 0.0),
     K_("K", dimPressure, 0.0),
     E_("E", dimPressure, 0.0),
@@ -333,7 +338,7 @@ const Foam::dimensionedScalar& Foam::linearElastic::lambda() const
 
 void Foam::linearElastic::correct(volSymmTensorField& sigma)
 {
-     // Calculate total strain
+    // Calculate total strain
     if (incremental())
     {
         // Lookup gradient of displacement increment
@@ -355,11 +360,8 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
     {
         if (mesh().solutionD()[vector::Z] > -1)
         {
-            FatalErrorIn
-            (
-                "void Foam::linearElasticMisesPlastic::"
-                "correct(volSymmTensorField& sigma)"
-            )   << "For planeStress, this material law assumes the empty "
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
                 << "direction is the Z direction!" << abort(FatalError);
         }
 
@@ -371,7 +373,7 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
         );
     }
 
-//     updateEpsilon(epsilonRef(), nu_/E_, sigma);
+    updateEpsilon(epsilonRef(), nu_/E_, sigma);
 
     // Hooke's law : partitioned deviatoric and dilation form
     const volScalarField trEpsilon(tr(epsilon()));
@@ -380,10 +382,46 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
 }
 
 
-void Foam::linearElastic::correct(surfaceSymmTensorField& sigma)
+void Foam::linearElastic::correct(surfaceSymmTensorField& sigmaf)
 {
     // Calculate total strain
-    updateEpsilon(epsilonfRef(), nu_/E_, sigma);
+    if (incremental())
+    {
+        // Lookup gradient of displacement increment
+        const surfaceTensorField& gradDDf =
+            mesh().lookupObject<surfaceTensorField>("grad(DD)f");
+
+        epsilonfRef() = epsilonf().oldTime() + symm(gradDDf);
+    }
+    else
+    {
+        // Lookup gradient of displacement
+        const surfaceTensorField& gradDf =
+            mesh().lookupObject<surfaceTensorField>("grad(D)f");
+
+        epsilonfRef() = symm(gradDf);
+    }
+    // For planeStress, correct strain in the out of plane direction
+    if (planeStress())
+    {
+        if (mesh().solutionD()[vector::Z] > -1)
+        {
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
+                << "direction is the Z direction!"
+                << abort(FatalError);
+        }
+
+        epsilonfRef().replace
+        (
+            symmTensor::ZZ,
+           -(nu_/E_)
+           *(sigmaf.component(symmTensor::XX) + sigmaf.component(symmTensor::YY))
+        );
+    }
+
+    // Calculate total strain
+    // updateEpsilon(epsilonfRef(), nu_/E_, sigma);
 
     // Hooke's law : standard form
     //sigma = 2.0*mu_*epsilonf_ + lambda_*tr(epsilonf_)*I + sigma0f();
@@ -391,8 +429,33 @@ void Foam::linearElastic::correct(surfaceSymmTensorField& sigma)
     // Hooke's law : partitioned deviatoric and dilation form
     const surfaceScalarField trEpsilon(tr(epsilonf()));
     calculateHydrostaticStress(sigmaHydfRef(), trEpsilon);
-    sigma = 2.0*mu_*dev(epsilonf()) + sigmaHydf()*I + sigma0f();
+    sigmaf = 2.0*mu_*dev(epsilonf()) + sigmaHydf()*I + sigma0f();
 }
 
+
+Foam::tmp<Foam::volTensorField>
+Foam::linearElastic::P(const volSymmTensorField& sigma) const
+{
+    const volTensorField& F = relative() ? this->relF() : this->F();
+    return volTensorField::New
+    (
+        "P",
+        mu_*(F + F.T() - ((2.0/3.0)*tr(F)*tensor::I))
+      + K_*(tr(F) - 3.0)*tensor::I
+    );
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::linearElastic::P(const surfaceSymmTensorField& sigma) const
+{
+    const surfaceTensorField& F = relative() ? this->relFf() : this->Ff();
+    return surfaceTensorField::New
+    (
+        "P",
+        mu_*(F + F.T() - ((2.0/3.0)*tr(F)*tensor::I))
+      + K_*(tr(F) - 3.0)*tensor::I
+    );
+}
 
 // ************************************************************************* //

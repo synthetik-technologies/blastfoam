@@ -14,25 +14,22 @@ runApplication surfaceFeatures
 runApplication blockMesh
 
 # -- Decompose the mesh
-runApplication decomposePar -copyZero
+runApplication -o decomposePar -copyZero -force
 
 # -- Cut out the stl
-runParallel snappyHexMesh -overwrite
+runParallel -o snappyHexMesh -overwrite
 
 # -- Add internal patch
-runParallel addEmptyPatch internalPatch internal -overwrite
+runParallel -o addEmptyPatch internalPatch internal -overwrite
 
 sourceCase="../axisymmetricCharge"
-if [ -d "$sourceCase/processor0" ];
-then
-    parSource="-parallelSource"
-fi
+sourceTime=$(foamListTimes -latestTime -case $sourceCase)
 
 # -- Set the initial conditions for the fluid
 #    rho is mapped for use with AMR
-runParallel rotateFields $sourceCase \
-    -sourceTime 1e-4 -additionalFields '(rho lambda.c4)' -uniform \
-    -refine $parSource
+runParallel -o rotateFields $sourceCase \
+    -sourceTime $sourceTime -additionalFields '(rho rhoU rhoE alphaRho.c4 alphaRho.air lambda.c4 impulse)' -uniform \
+    -refine -extend
 
 #- Run the calc
 runParallel $(getApplication)

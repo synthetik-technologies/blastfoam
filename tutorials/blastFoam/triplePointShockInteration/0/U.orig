@@ -1,16 +1,16 @@
 /*--------------------------------*- C++ -*----------------------------------*\
-| =========                 |                                                 |
-| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.3.0                                 |
-|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
-|    \\/     M anipulation  |                                                 |
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
     format      ascii;
     class       volVectorField;
-    object      U;
+    location    "0";
+    object      U.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -22,10 +22,12 @@ boundaryField
 {
     //- Set patchGroups for constraint patches
     #includeEtc "caseDicts/setConstraintTypes"
-    
+
     outlet
     {
         type            zeroGradient;
+        inletValue      uniform (0 0 0);
+        value           uniform (0 0 0);
     }
 
     /*ground
@@ -42,5 +44,6 @@ boundaryField
         type            wedge;
     }
 }
+
 
 // ************************************************************************* //

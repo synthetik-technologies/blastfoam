@@ -235,13 +235,24 @@ Foam::scalar Foam::idealGas<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::S
+Foam::scalar Foam::idealGas<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    return this->R()*log(T*Pstd/(Tstd*p));
 }
 
 

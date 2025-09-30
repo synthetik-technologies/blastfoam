@@ -24,21 +24,31 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "minimizationScheme.H"
-#include "univariateMinimizationScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::minimizationScheme>
 Foam::minimizationScheme::New
 (
+    const word& minimizationSchemeType,
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 {
-    word minimizationSchemeType(dict.lookup("solver"));
-    Info
-        << "Selecting minimization scheme: " << minimizationSchemeType << endl;
-    if (isA<scalarEquation>(eqn))
+    Info<< "Selecting minimization scheme: " << minimizationSchemeType
+        << endl;
+    const dictionary& coeffDict = dict.optionalSubDict
+    (
+        minimizationSchemeType + "Coeffs"
+    );
+    if
+    (
+        isA<scalarEquation>(eqn)
+     && !dictionaryMultivariateConstructorTablePtr_->found
+        (
+            minimizationSchemeType
+        )
+    )
     {
 
         dictionaryUnivariateConstructorTable::iterator cstrIter =
@@ -53,23 +63,40 @@ Foam::minimizationScheme::New
                 << dictionaryUnivariateConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<minimizationScheme>
+        (
+            cstrIter()(eqn, coeffDict)
+        );
     }
 
     dictionaryMultivariateConstructorTable::iterator cstrIter =
-        dictionaryMultivariateConstructorTablePtr_->find(minimizationSchemeType);
+        dictionaryMultivariateConstructorTablePtr_->find
+        (
+            minimizationSchemeType
+        );
 
     if (cstrIter == dictionaryMultivariateConstructorTablePtr_->end())
     {
         FatalErrorInFunction
             << "Unknown multivariate minimization scheme type "
             << minimizationSchemeType << nl << nl
-            << "Valid multivariate minimization schemes : " << endl
+            << "Valid multivariate minimization schemes:" << endl
             << dictionaryMultivariateConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
-    return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
+    return autoPtr<minimizationScheme>
+    (
+        cstrIter()(eqn, coeffDict)
+    );
 }
 
-
+Foam::autoPtr<Foam::minimizationScheme>
+Foam::minimizationScheme::New
+(
+    const scalarUnivariateEquation& eqn,
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("solver"), eqn, dict);
+}
 // ************************************************************************* //

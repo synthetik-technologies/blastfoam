@@ -29,7 +29,10 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "compressibleMomentumTransportModel.H"
 #include "incompressibleMomentumTransportModel.H"
+#include "globalPolyBoundaryMesh.H"
 #include "coupledGlobalPolyPatch.H"
+#include "vtkWritePolyData.H"
+#include "OSspecific.H"
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
@@ -78,19 +81,21 @@ Foam::coupledSolidTractionFvPatchVectorField::viscousStress
 
         return
             (
-                turb.devSigma()().boundaryField()[patch.index()]
-              & patch.nf()
+                patch.nf()
+              & turb.devSigma()().boundaryField()[patch.index()]
             )*rho(mesh, patch);
     }
     else
     {
+        // NotImplemented;
         // For laminar flows get the velocity
-        const fvPatchVectorField& Up
-        (
-            patch.lookupPatchField<volVectorField, vector>("U")
-        );
+        // const fvPatchVectorField& Up
+        // (
+        //     patch.lookupPatchField<volVectorField, vector>("U")
+        // );
 
-        return mu(mesh, patch)*Up.snGrad();
+        // return mu(mesh, patch)*Up.snGrad();
+        return tmp<vectorField>(new vectorField(patch.size(), Zero));
     }
 }
 
@@ -182,12 +187,9 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(p, iF),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())
-    ),
     pName_("p"),
-    pRef_(0.0)
+    pRef_(0.0),
+    cutOffPressure_(0)
 {}
 
 
@@ -196,16 +198,14 @@ coupledSolidTractionFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const dictionary& dict
+    const dictionary& dict,
+    const bool mustRead
 )
 :
-    solidTractionFvPatchVectorField(p, iF),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())
-    ),
+    solidTractionFvPatchVectorField(p, iF, dict, false),
     pName_(dict.lookupOrDefault("pName", word("p"))),
-    pRef_(dict.lookup<scalar>("pRef"))
+    pRef_(dict.lookup<scalar>("pRef")),
+    cutOffPressure_(dict.lookupOrDefault("cutOffPressure", 0.0))
 {}
 
 
@@ -215,16 +215,13 @@ coupledSolidTractionFvPatchVectorField
     const coupledSolidTractionFvPatchVectorField& tdpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     solidTractionFvPatchVectorField(tdpvf, p, iF, mapper),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())
-    ),
     pName_(tdpvf.pName_),
-    pRef_(tdpvf.pRef_)
+    pRef_(tdpvf.pRef_),
+    cutOffPressure_(tdpvf.cutOffPressure_)
 {}
 
 
@@ -236,42 +233,35 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(tdpvf, iF),
-    globalBoundary_
-    (
-        globalPolyBoundaryMesh::New(tdpvf.patch().boundaryMesh().mesh())
-    ),
     pName_(tdpvf.pName_),
-    pRef_(tdpvf.pRef_)
+    pRef_(tdpvf.pRef_),
+    cutOffPressure_(tdpvf.cutOffPressure_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::coupledSolidTractionFvPatchVectorField::autoMap
+void Foam::coupledSolidTractionFvPatchVectorField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchField<vector>& ptf,
+    const fieldMapper& mapper
 )
 {
-    solidTractionFvPatchVectorField::autoMap(m);
+    solidTractionFvPatchVectorField::map(ptf, mapper);
 }
 
 
-void Foam::coupledSolidTractionFvPatchVectorField::rmap
+void Foam::coupledSolidTractionFvPatchVectorField::reset
 (
-    const fvPatchVectorField& ptf,
-    const labelList& addr
+    const fvPatchVectorField& ptf
 )
 {
-    solidTractionFvPatchVectorField::rmap(ptf, addr);
+    solidTractionFvPatchVectorField::reset(ptf);
 }
 
-void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
-{
-    if (updated())
-    {
-        return;
-    }
 
+bool Foam::coupledSolidTractionFvPatchVectorField::updateFields()
+{
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
     int oldTag = UPstream::msgType();
@@ -279,7 +269,10 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
 
     // Get the coupling information from the mappedPatchBase
     const coupledGlobalPolyPatch& cgpp =
-        globalBoundary_(this->patch().patch());
+        globalPolyBoundaryMesh::New(this->patch().boundaryMesh().mesh())
+        (
+            this->patch().patch()
+        );
     const polyMesh& nbrMesh = cgpp.sampleMesh();
     const coupledGlobalPolyPatch& samplePatch =
         globalPolyBoundaryMesh::New(nbrMesh)(cgpp.samplePatch().patch());
@@ -288,23 +281,119 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
 
     //- Lookup viscous stress and pressure fields
-    vectorField nbrViscous(viscousStress(nbrMesh, sampleFvPatch));
+    vectorField viscousNbr(viscousStress(nbrMesh, sampleFvPatch));
 
-    const volScalarField& volNbrP =
+    const volScalarField& pNbr =
         nbrMesh.lookupObject<volScalarField>(pName_);
-    scalarField nbrP(volNbrP.boundaryField()[samplePatchi] - pRef_);
-    if (volNbrP.dimensions() != dimPressure)
+    scalarField ppNbr(pNbr.boundaryField()[samplePatchi]);
+
+    if (pNbr.dimensions() != dimPressure)
     {
-        nbrP /= rho(nbrMesh, sampleFvPatch);
+        ppNbr *= rho(nbrMesh, sampleFvPatch);
     }
 
-    this->pressure() = samplePatch.faceInterpolate(nbrP);
+    if (mag(pRef_) > small)
+    {
+        ppNbr -= pRef_;
+    }
+
+    if (cutOffPressure_ > 0)
+    {
+        forAll(ppNbr, i)
+        {
+            if (mag(ppNbr[i]) < cutOffPressure_)
+            {
+                ppNbr[i] = 0.0;
+            }
+        }
+    }
+
+//     if (debug == 2 || (debug && this->db().time().outputTime()))
+//     {
+//         vectorField tractionGlobal(samplePatch.patchFaceToGlobal(viscousNbr));
+//         vectorField tractionInterp
+//         (
+//             cgpp.patchToPatchInterpolator().transferFaces
+//             (
+//                 samplePatch.globalPatch(),
+//                 tractionGlobal
+//             )
+//         );
+//
+//         scalarField pGlobal(samplePatch.patchFaceToGlobal(ppNbr));
+//         scalarField pInterp
+//         (
+//             cgpp.patchToPatchInterpolator().transferFaces
+//             (
+//                 samplePatch.globalPatch(),
+//                 pGlobal
+//             )
+//         );
+//
+//         if (Pstream::master())
+//         {
+//             fileName path
+//             (
+//                 this->db().time().globalPath()
+//                /"VTK"
+//                /this->db().time().timeName()
+//             );
+//             mkDir(path);
+//             vtkWritePolyData::write
+//             (
+//                 path/"p_traction_interpolated.vtk",
+//                 "p_traction_interpolated",
+//                 false,
+//                 cgpp.globalPatch().points(),
+//                 labelList(),
+//                 edgeList(),
+//                 cgpp.globalPatch(),
+//                 "p",
+//                 false,
+//                 pInterp,
+//                 "traction",
+//                 false,
+//                 tractionInterp
+//
+//             );
+//             vtkWritePolyData::write
+//             (
+//                 path/"p_traction_actual.vtk",
+//                 "p_traction_actual",
+//                 false,
+//                 samplePatch.globalPatch().points(),
+//                 labelList(),
+//                 edgeList(),
+//                 samplePatch.globalPatch(),
+//                 "p",
+//                 false,
+//                 pGlobal,
+//                 "traction",
+//                 false,
+//                 tractionGlobal
+//             );
+//         }
+//     }
+
+    this->pressure() = samplePatch.faceInterpolate(ppNbr);
 
     // Flip sign since the boundary normal is opposite and the stress is dotted
     // with the neighbor boundary then mapped
-    this->traction() = -samplePatch.faceInterpolate(nbrViscous);
+    this->traction() = -samplePatch.faceInterpolate(viscousNbr);
 
-    solidTractionFvPatchVectorField::updateCoeffs();
+    // Integratre forces
+    updateForce();
+
+    forceNbr_ =
+        gSum
+        (
+            ppNbr*sampleFvPatch.Sf()
+          + viscousNbr*sampleFvPatch.magSf()
+        );
+
+    UPstream::msgType() = oldTag;
+
+    return true;
 }
 
 
@@ -313,6 +402,7 @@ void Foam::coupledSolidTractionFvPatchVectorField::write(Ostream& os) const
     solidTractionFvPatchVectorField::write(os);
     writeEntry(os, "pName", pName_);
     writeEntry(os, "pRef", pRef_);
+    writeEntryIfDifferent(os, "cutOffPressure", cutOffPressure_, 0.0);
 }
 
 

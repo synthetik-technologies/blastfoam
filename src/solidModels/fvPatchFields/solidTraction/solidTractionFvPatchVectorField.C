@@ -29,14 +29,9 @@ License
 #include "volFields.H"
 #include "lookupSolidModel.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidTractionFvPatchVectorField::
+Foam::solidTractionFvPatchVectorField::
 solidTractionFvPatchVectorField
 (
     const fvPatch& p,
@@ -44,37 +39,35 @@ solidTractionFvPatchVectorField
 )
 :
     fixedGradientFvPatchVectorField(p, iF),
-    traction_(p.size(), vector::zero),
-    pressure_(p.size(), 0.0),
+    tractionBase(p),
     tractionSeries_(),
     pressureSeries_(),
     secondOrder_(false),
-    limitCoeff_(1.0),
-    relaxFac_(1.0)
+    relaxFac_()
 {
     fvPatchVectorField::operator=(patchInternalField());
     gradient() = vector::zero;
 }
 
 
-solidTractionFvPatchVectorField::
+Foam::solidTractionFvPatchVectorField::
 solidTractionFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const dictionary& dict
+    const dictionary& dict,
+    const bool mustRead
 )
 :
     fixedGradientFvPatchVectorField(p, iF),
-    traction_(p.size(), vector::zero),
-    pressure_(p.size(), 0.0),
+    tractionBase(p, dict, false),
     tractionSeries_(),
     pressureSeries_(),
     secondOrder_(dict.lookupOrDefault<Switch>("secondOrder", false)),
-    limitCoeff_(dict.lookupOrDefault<scalar>("limitCoeff", 1.0)),
-    relaxFac_(dict.lookupOrDefault<scalar>("relaxationFactor", 1.0))
+    relaxFac_()
 {
-    Info<< "Creating " << type() << " boundary condition" << endl;
+    DebugInfo
+        << "Creating " << type() << " boundary condition" << endl;
 
     if (dict.found("gradient"))
     {
@@ -97,65 +90,79 @@ solidTractionFvPatchVectorField
     // Check if traction is time-varying
     if (dict.found("tractionSeries"))
     {
-        Info<< "    traction is time-varying" << endl;
-        tractionSeries_ = Function1<vector>::New("tractionSeries", dict);
-        traction_ = tractionSeries_->value(this->db().time().value());
+        DebugInfo<< "    traction is time-varying" << endl;
+        tractionSeries_ = Function1<vector>::New
+        (
+            "tractionSeries",
+            this->db().time().userUnits(),
+            dimPressure,
+            dict
+        );
+        this->traction() =
+            tractionSeries_->value(this->db().time().value());
     }
-    else
+    else if (mustRead)
     {
-        traction_ = vectorField("traction", dict, p.size());
+        this->traction() = vectorField("traction", dict, p.size());
     }
 
     // Check if pressure is time-varying
     if (dict.found("pressureSeries"))
     {
-        Info<< "    pressure is time-varying" << endl;
-        pressureSeries_ = Function1<scalar>::New("pressureSeries", dict);
-        pressure_ = pressureSeries_->value(this->db().time().value());
+        DebugInfo<< "    pressure is time-varying" << endl;
+        pressureSeries_ = Function1<scalar>::New
+        (
+            "pressureSeries",
+            this->db().time().userUnits(),
+            dimPressure,
+            dict
+        );
+        this->pressure() =
+            pressureSeries_->value(this->db().time().value());
     }
-    else
+    else if (mustRead)
     {
-        pressure_ = scalarField("pressure", dict, p.size());
+        this->pressure() = scalarField("pressure", dict, p.size());
+    }
+
+    if (dict.found("relaxationFactor"))
+    {
+        DebugInfo<< "    Using relaxationFactor" << endl;
+        relaxFac_ = Function1<scalar>::New
+        (
+            "relaxationFactor",
+            this->db().time().userUnits(),
+            dimless,
+            dict
+        );
     }
 
     if (secondOrder_)
     {
-        Info<< "    second order correction" << endl;
-    }
-
-    if (limitCoeff_)
-    {
-        Info<< "    limiter coefficient: " << limitCoeff_ << endl;
-    }
-
-    if (relaxFac_ < 1.0)
-    {
-        Info<< "    relaxation factor: " << relaxFac_ << endl;
+        DebugInfo<< "    second order correction" << endl;
     }
 }
 
 
-solidTractionFvPatchVectorField::
+Foam::solidTractionFvPatchVectorField::
 solidTractionFvPatchVectorField
 (
     const solidTractionFvPatchVectorField& stpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     fixedGradientFvPatchVectorField(stpvf, p, iF, mapper),
-    traction_(mapper(stpvf.traction_)),
-    pressure_(mapper(stpvf.pressure_)),
+    tractionBase(stpvf, p, mapper),
     tractionSeries_(stpvf.tractionSeries_, false),
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
-    limitCoeff_(stpvf.limitCoeff_),
-    relaxFac_(stpvf.relaxFac_)
+    relaxFac_(stpvf.relaxFac_, false)
 {}
 
 
-solidTractionFvPatchVectorField::
+Foam::solidTractionFvPatchVectorField::
 solidTractionFvPatchVectorField
 (
     const solidTractionFvPatchVectorField& stpvf,
@@ -163,81 +170,97 @@ solidTractionFvPatchVectorField
 )
 :
     fixedGradientFvPatchVectorField(stpvf, iF),
-    traction_(stpvf.traction_),
-    pressure_(stpvf.pressure_),
+    tractionBase(stpvf, this->patch()),
     tractionSeries_(stpvf.tractionSeries_, false),
     pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
-    limitCoeff_(stpvf.limitCoeff_),
-    relaxFac_(stpvf.relaxFac_)
+    relaxFac_(stpvf.relaxFac_, false)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void solidTractionFvPatchVectorField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedGradientFvPatchVectorField::autoMap(m);
-    m(traction_, traction_);
-    m(pressure_, pressure_);
-}
-
-
-// Reverse-map the given fvPatchField onto this fvPatchField
-void solidTractionFvPatchVectorField::rmap
+void Foam::solidTractionFvPatchVectorField::map
 (
     const fvPatchVectorField& ptf,
-    const labelList& addr
+    const fieldMapper& mapper
 )
 {
-    fixedGradientFvPatchVectorField::rmap(ptf, addr);
-
-    const solidTractionFvPatchVectorField& dmptf =
-        refCast<const solidTractionFvPatchVectorField>(ptf);
-
-    traction_.rmap(dmptf.traction_, addr);
-    pressure_.rmap(dmptf.pressure_, addr);
+    fixedGradientFvPatchVectorField::map(ptf, mapper);
+    tractionBase::map(ptf, mapper);
 }
 
 
-// Update the coefficients associated with the patch field
-void solidTractionFvPatchVectorField::updateCoeffs()
+void Foam::solidTractionFvPatchVectorField::reset
+(
+    const fvPatchVectorField& ptf
+)
+{
+    fixedGradientFvPatchVectorField::reset(ptf);
+    tractionBase::reset(ptf);
+}
+
+
+bool Foam::solidTractionFvPatchVectorField::updateFields()
+{
+    bool updateTraction = false;
+    if (tractionSeries_.valid())
+    {
+        this->traction() =
+            tractionSeries_->value(this->db().time().value());
+        updateTraction = true;
+    }
+
+    if (pressureSeries_.valid())
+    {
+        this->pressure() =
+            pressureSeries_->value(this->db().time().value());
+    }
+
+    updateForce();
+
+    return updateTraction;
+}
+
+
+void Foam::solidTractionFvPatchVectorField::updateCoeffs()
 {
     if (updated())
     {
         return;
     }
 
-    if (tractionSeries_.valid())
-    {
-        traction_ = tractionSeries_->value(this->db().time().value());
-    }
-
-    if (pressureSeries_.valid())
-    {
-        pressure_ = pressureSeries_->value(this->db().time().value());
-    }
+    updateFields();
 
     // Lookup the solidModel object
     const solidModel& solMod = lookupSolidModel(patch().boundaryMesh().mesh());
 
     // Set surface-normal gradient on the patch corresponding to the desired
     // traction
-    gradient() =
-        relaxFac_*solMod.tractionBoundarySnGrad
-        (
-            traction_, pressure_, patch()
-        );
-    gradient() += (1.0 - relaxFac_)*gradient();
+    if (relaxFac_.valid() && canRelax)
+    {
+        scalar relaxFac = relaxFac_->value(this->db().time().value());
+        gradient() =
+            relaxFac*solMod.tractionBoundarySnGrad
+            (
+                this->traction(), this->pressure(), patch()
+            )
+          + (1.0 - relaxFac)*gradient();
+    }
+    else
+    {
+        gradient() =
+            solMod.tractionBoundarySnGrad
+            (
+                this->traction(), this->pressure(), patch()
+            );
+    }
 
     fixedGradientFvPatchVectorField::updateCoeffs();
 }
 
 
-void solidTractionFvPatchVectorField::evaluate
+void Foam::solidTractionFvPatchVectorField::evaluate
 (
     const Pstream::commsTypes commsType
 )
@@ -255,13 +278,13 @@ void solidTractionFvPatchVectorField::evaluate
         );
 
     // Face unit normals
-    const vectorField n(patch().nf());
+    const vectorField n(this->patch().nf());
 
     // Delta vectors
     const vectorField delta(patch().delta());
 
     // Non-orthogonal correction vectors
-    const vectorField k((I - sqr(n)) & delta);
+    const vectorField k((tensor::I - sqr(n)) & delta);
 
     if (secondOrder_)
     {
@@ -277,7 +300,6 @@ void solidTractionFvPatchVectorField::evaluate
     }
     else
     {
-
         Field<vector>::operator=
         (
             patchInternalField()
@@ -290,7 +312,7 @@ void solidTractionFvPatchVectorField::evaluate
 }
 
 
-void solidTractionFvPatchVectorField::write(Ostream& os) const
+void Foam::solidTractionFvPatchVectorField::write(Ostream& os) const
 {
     // Bug-fix: courtesy of Michael@UW at https://www.cfd-online.com/Forums/
     // openfoam-cc-toolkits-fluid-structure-interaction/221892-solved-paraview
@@ -304,7 +326,7 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
     }
     else
     {
-        writeEntry(os, "traction", traction_);
+        writeEntry(os, "traction", this->traction());
     }
 
     if (pressureSeries_.valid())
@@ -313,21 +335,29 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
     }
     else
     {
-        writeEntry(os, "pressure", pressure_);
+        writeEntry(os, "pressure", this->pressure());
     }
+
+    if (relaxFac_.valid())
+    {
+        writeEntry(os, relaxFac_());
+    }
+
     writeEntry(os, "secondOrder", secondOrder_);
-    writeEntry(os, "limitCoeff", limitCoeff_);
-    writeEntry(os, "relaxFac", relaxFac_);
     writeEntry(os, "value", *this);
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchVectorField, solidTractionFvPatchVectorField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        solidTractionFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

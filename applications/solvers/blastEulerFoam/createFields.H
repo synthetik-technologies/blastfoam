@@ -1,8 +1,12 @@
 #include "readGravitationalAcceleration.H"
 
 Info<< "Creating phaseSystem\n" << endl;
-autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
+fvTimeIntegrator integrator(mesh);
 phaseSystem fluid(mesh);
-integrator->addSystem(fluid);
+integrator.addSystem(fluid);
+fluid.update();
 
 PtrList<phaseModel>& phases(fluid.phases());
+
+const ::Foam::fvModels& fvModels = integrator.models();
+const ::Foam::fvConstraints& fvConstraints = integrator.constraints();

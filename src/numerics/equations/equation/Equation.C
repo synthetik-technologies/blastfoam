@@ -26,6 +26,41 @@ License
 #include "Equation.H"
 #include "adaptiveTypes.H"
 
+// * * * * * * * * * * * * * * Static Data Functions * * * * * * * * * * * * //
+
+template<class Type>
+Foam::autoPtr<Foam::equation<Type>> Foam::equation<Type>::New
+(
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("type"), dict);
+}
+
+template<class Type>
+Foam::autoPtr<Foam::equation<Type>> Foam::equation<Type>::New
+(
+    const word& type,
+    const dictionary& dict
+)
+{
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(type);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown " << typeName << " type "
+            << type <<  nl << nl
+            << "Valid " << typeName << " types are:" << nl
+            << dictionaryConstructorTablePtr_->sortedToc() << nl
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -54,6 +89,22 @@ Foam::Equation<Type>::Equation
 
 
 template<class Type>
+Foam::Equation<Type>::Equation
+(
+    const scalar lower,
+    const scalar upper,
+    const dictionary& dict,
+    const string& eqnString
+)
+:
+    equation<Type>(eqnString, dict),
+    lower_(dict.lookupOrDefault("lowerBound", lower)),
+    upper_(dict.lookupOrDefault("upperBound", upper)),
+    dx_(dict.lookupOrDefault<scalar>("dx", 1e-6))
+{}
+
+
+template<class Type>
 Foam::Equation<Type>::Equation(const dictionary& dict)
 :
     equation<Type>(dict),
@@ -75,7 +126,7 @@ Foam::Equation<Type>::~Equation()
 template<class Type>
 Type Foam::Equation<Type>::fX
 (
-    const UList<scalar>& x,
+    const typename UnivariateEquation<Type>::VarType& x,
     const label li
 ) const
 {
@@ -86,7 +137,7 @@ Type Foam::Equation<Type>::fX
 template<class Type>
 void Foam::Equation<Type>::FX
 (
-    const UList<scalar>& x,
+    const typename MultivariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx
 ) const
@@ -98,7 +149,7 @@ void Foam::Equation<Type>::FX
 template<class Type>
 void Foam::Equation<Type>::dfdX
 (
-    const UList<scalar>& x,
+    const typename UnivariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& dfdx
 ) const
@@ -110,7 +161,7 @@ void Foam::Equation<Type>::dfdX
 template<class Type>
 void Foam::Equation<Type>::jacobian
 (
-    const UList<scalar>& x,
+    const typename MultivariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J
@@ -149,7 +200,7 @@ bool Foam::Equation<Type>::containsRoot
                 << "Solution is not bracked:" << nl
                 << "limits: (" << lower() << ","<< upper() << ")" << endl
                 << "f(x0)=" << y0 << ", f(x1)=" << y1 << endl
-                << abort(FatalError);
+                << endl;
             #endif
             return false;
         }

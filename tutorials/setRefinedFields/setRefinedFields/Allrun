@@ -71,6 +71,7 @@ if [ $tets -eq 1 ]; then
 
     # -- Remove cell zones creates by gmshToFoam
     runApplication removeZones -clear
+    rm -rf constant/polyMesh/cellZones
 
     # -- Set the correct boundary type
     runApplication -s boundary foamDictionary \
@@ -104,7 +105,10 @@ then
     runApplication decomposePar
 
     # -- Add internal patch
-    runParallel addEmptyPatch internalPatch internal -overwrite
+    runParallel addInternalPatch
+
+    # compile functions (sometimes they can misbehave)
+#     runApplication -s compile $(getApplication) -noRefine -noWrite
 
     # -- Run the case
     # the debug flag writes each intermediate refinement set

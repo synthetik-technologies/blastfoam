@@ -106,6 +106,12 @@ public:
         //- Read the field average data
         virtual bool read(const dictionary&);
 
+        //- Return names of fields to probe
+        virtual wordList fields() const
+        {
+            return {pName_};
+        }
+
         //- Calculate the field averages
         virtual bool execute();
 

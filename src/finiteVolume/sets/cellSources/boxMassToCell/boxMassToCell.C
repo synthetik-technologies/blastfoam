@@ -58,4 +58,24 @@ Foam::boxMassToCell::~boxMassToCell()
 {}
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::boxMassToCell::applyToSet
+(
+    const topoSetSource::setAction action,
+    topoSet& set
+) const
+{
+    labelHashSet oldSet(set);
+    boxToCell::applyToSet(action, set);
+
+    checkMass
+    (
+        action == topoSetSource::REMOVE
+      ? oldSet ^ set
+      : (action == topoSetSource::ADD ? set ^ oldSet : set),
+        mesh_
+    );
+}
+
 // ************************************************************************* //

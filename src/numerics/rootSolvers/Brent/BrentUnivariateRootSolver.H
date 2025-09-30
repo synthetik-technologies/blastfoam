@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::BrentUnivariateRootSolver
+    Foam::rootSolvers::univariate::Brent
 
 Description
     Univariate root finding using the method of Brent.
@@ -43,12 +43,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class BrentUnivariateRootSolver Declaration
+                    Class rootSolvers::univariate::Brent Declaration
 \*---------------------------------------------------------------------------*/
 
-class BrentUnivariateRootSolver
+class Brent
 :
     public univariateRootSolver
 {
@@ -60,18 +64,43 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        BrentUnivariateRootSolver
+        Brent
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        Brent
+        (
+            const scalarMultivariateEquation& eqn,
+            const Brent& solver
+        );
+
         //- Disallow default bitwise copy construction
-        BrentUnivariateRootSolver(const univariateRootSolver&) = delete;
+        Brent(const Brent&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new Brent(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new Brent(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~BrentUnivariateRootSolver();
+    virtual ~Brent();
 
 
     // Member Functions
@@ -89,6 +118,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

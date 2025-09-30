@@ -40,6 +40,7 @@ License
 
 #include "perfectGas.H"
 #include "AbelNobel.H"
+#include "VanderWaals.H"
 
 #include "idealGas.H"
 #include "stiffenedGas.H"
@@ -47,6 +48,7 @@ License
 #include "LSZK.H"
 #include "BKW.H"
 #include "DoanNickel.H"
+#include "JWL.H"
 
 #include "specieBlast.H"
 #include "rspecieBlast.H"
@@ -56,19 +58,17 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define forGasEqns(Mu, Cp, Macro, Args...)                                  \
-    forThermo(Mu, Cp, perfectGas, specieBlast, Macro, Args);                \
-    forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args);                 \
     forThermo(Mu, Cp, idealGas, specieBlast, Macro, Args);                  \
-    forThermo(Mu, Cp, stiffenedGas, specieBlast, Macro, Args);              \
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
     forThermo(Mu, Cp, LSZK, specieBlast, Macro, Args);                      \
     forThermo(Mu, Cp, BKW, specieBlast, Macro, Args);                       \
+    forThermo(Mu, Cp, JWL, specieBlast, Macro, Args);                       \
     forThermo(Mu, Cp, DoanNickel, specieBlast, Macro, Args)
 
 #define forGasThermos(Mu, Macro, Args...)                                   \
     forGasEqns(Mu, eConstThermo, Macro, Args);                              \
     forGasEqns(Mu, ePolynomialThermo, Macro, Args);                         \
-    forGasEqns(Mu, hConstThermo, Macro, Args)
+    forThermo(Mu, eConstThermo, stiffenedGas, specieBlast, Macro, Args);
 
 #define forGasTransports(Macro, Args...)                                    \
     forGasThermos(constTransport, Macro, Args);
@@ -81,12 +81,13 @@ License
 
 #define forCoeffGasEqns(Mu, Cp, Macro, Args...)                             \
     forThermo(Mu, Cp, perfectGas, specieBlast, Macro, Args);                \
-    forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args)
+    forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args);                 \
+    forThermo(Mu, Cp, VanderWaals, specieBlast, Macro, Args)
 
 #define forCoeffGasThermos(Mu, Macro, Args...)                              \
+    forCoeffGasEqns(Mu, eConstThermo, Macro, Args);                         \
     forCoeffGasEqns(Mu, hConstThermo, Macro, Args);                         \
-    forCoeffGasEqns(Mu, janafThermo, Macro, Args);                          \
-    forCoeffGasEqns(Mu, eConstThermo, Macro, Args)
+    forCoeffGasEqns(Mu, janafThermo, Macro, Args);
 
 #define forCoeffGasTransports(Macro, Args...)                               \
     forCoeffGasThermos(constTransport, Macro, Args);                        \

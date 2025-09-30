@@ -54,6 +54,8 @@ public:
 
     typedef Type EqnType;
 
+    TypeName("UnivariateEquation");
+
     // Constructors
 
         //- Null constructor
@@ -74,6 +76,39 @@ public:
             multivariateEquation<Type>(dict)
         {}
 
+        //- Construct given name and dictionary
+        univariateEquation(const string& eqnString, const dictionary& dict)
+        :
+            multivariateEquation<Type>(eqnString, dict)
+        {}
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        univariateEquation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
+    // Selectors
+
+        //- Select equation type from the constructing dictionary
+        static autoPtr<univariateEquation<Type>> New
+        (
+            const dictionary& dict
+        );
+
+        //- Select using given equation type
+        static autoPtr<univariateEquation<Type>> New
+        (
+            const word& type,
+            const dictionary& dict
+        );
+
 
     //- Destructor
     virtual ~univariateEquation()
@@ -85,14 +120,14 @@ public:
         //- Return the function value
         virtual Type fX
         (
-            const UList<scalar>& x,
+            const typename multivariateEquation<Type>::VarType& x,
             const label li
         ) const = 0;
 
         //- Return the function value
         virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename multivariateEquation<Type>::VarType& x,
             const label li,
             List<Type>& dfdx
         ) const = 0;
@@ -128,14 +163,6 @@ protected:
     //- Finite difference step size
     mutable scalarField dX_;
 
-    //- Calculate the gradient using a finite difference
-    void calculateGradient
-    (
-        const UList<scalar>& x0,
-        const label li,
-        List<Type>& grad
-    ) const;
-
 
 public:
 
@@ -149,6 +176,15 @@ public:
         (
             const scalarList& lowerLimit,
             const scalarList& upperLimit,
+            const string& eqnString = string::null
+        );
+
+        //- Construct given an equation string, bounds, and dictionary
+        UnivariateEquation
+        (
+            const scalarList& lowerLimit,
+            const scalarList& upperLimit,
+            const dictionary& dict,
             const string& eqnString = string::null
         );
 
@@ -220,7 +256,7 @@ public:
         //- Calculate the gradient
         virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename BaseEquation::VarType& x,
             const label li,
             List<Type>& dfdx
         ) const;
@@ -228,7 +264,7 @@ public:
         //- Calculate the gradient
         virtual void FX
         (
-            const UList<scalar>& x,
+            const typename BaseEquation::VarType& x,
             const label li,
             List<Type>& fx
         ) const;
@@ -236,7 +272,7 @@ public:
         //- Calculate the jacobian
         virtual void jacobian
         (
-            const UList<scalar>& x,
+            const typename BaseEquation::VarType& x,
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& J
@@ -251,6 +287,23 @@ public:
 
         //- Check if the solution is bracketed (compute bounds)
         virtual bool containsRoot(const label li) const;
+
+        //- Calculate the gradient using a finite difference
+        void calculateGradient
+        (
+            const typename univariateEquation<Type>::VarType& x0,
+            const label li,
+            List<Type>& grad
+        ) const;
+
+        //- Calculate the gradient using a finite difference
+        void calculateGradient
+        (
+            const Type& fx0,
+            const typename univariateEquation<Type>::VarType& x0,
+            const label li,
+            List<Type>& grad
+        ) const;
 };
 
 

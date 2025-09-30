@@ -23,6 +23,7 @@ defaultFieldValues
     volScalarFieldValue p           1e5
     volScalarFieldValue alpha.air   0
     volScalarFieldValue rho.water   1000
+    volScalarFieldValue rho.air     1
     volVectorFieldValue U           (0 0 0)
 );
 
@@ -32,7 +33,7 @@ regions
     boxToCell
     {
         boxes ((0.95 -1 -1) (1.25 1 1));
-        level 4;
+        level 2;
 
         fieldValues
         (
@@ -50,7 +51,7 @@ regions
 
         fieldValues
         (
-            volScalarFieldValue         alpha.air 1
+            volScalarFieldValue         alpha.air   1
         );
     }
 );

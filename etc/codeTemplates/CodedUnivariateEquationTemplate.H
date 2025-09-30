@@ -33,7 +33,6 @@ SourceFiles
 #define CodedUnivariateEquationTemplate_H
 
 #include "UnivariateEquationsFwd.H"
-#include "regEquation.H"
 
 //{{{ begin codeInclude
 ${codeInclude}
@@ -50,7 +49,7 @@ namespace Foam
 
 class ${typeName}_${TemplateType}UnivariateEquation
 :
-    public regEquation<${TemplateType}, UnivariateEquation>
+    public UnivariateEquation<${TemplateType}>
 {
 public:
 
@@ -63,7 +62,6 @@ public:
         //- Construct from entry name and dictionary
         ${typeName}_${TemplateType}UnivariateEquation
         (
-            const objectRegistry&,
             const dictionary&
         );
 
@@ -83,7 +81,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual ${TemplateType} fX
         (
-            const UList<scalar>& x,
+            const typename multivariateEquation<${TemplateType}>::VarType& x,
             const label li
         ) const
         {
@@ -95,7 +93,7 @@ public:
         //- Return value as a function of scalar variable
         inline virtual void dfdX
         (
-            const UList<scalar>& x,
+            const typename multivariateEquation<${TemplateType}>::VarType& x,
             const label li,
             List<${TemplateType}>& dfdx
         ) const
@@ -105,7 +103,6 @@ public:
 //}}} end code
         }
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

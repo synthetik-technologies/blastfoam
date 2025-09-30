@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -52,8 +52,7 @@ class blastRadiationModel;
 
 class compressibleBlastSystem
 :
-    public compressibleSystem,
-    public IOdictionary
+    public compressibleSystem
 {
 protected:
 // Protected data
@@ -82,20 +81,28 @@ protected:
         autoPtr<blastRadiationModel> radiation_;
 
 
-        //- External energy source matrix
-        tmp<fvScalarMatrix> extESource_;
-
-        //- Drag matrix
-        tmp<fvVectorMatrix> dragSource_;
+    // Protected member function
 
         //- Allocate models
         virtual void setModels();
+
+        //- Add source terms to momentum and energy equations
+            virtual void addSources
+            (
+                volVectorField::Internal& rhoUSource,
+                volScalarField::Internal& rhoESource
+            ) const;
 
 
 public:
 
     // Constructor
-    compressibleBlastSystem(const label, const fvMesh& mesh);
+    compressibleBlastSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const word& thermoType
+    );
 
     //- Destructor
     virtual ~compressibleBlastSystem();
@@ -115,36 +122,6 @@ public:
         //- Post update
         virtual void postUpdate();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const
-        {
-            return thermoPtr_->ESource();
-        }
-
-        //- Add external energy source
-        tmp<fvScalarMatrix>& eSource()
-        {
-            return extESource_;
-        }
-
-        //- Add external energy source
-        void addECoeff(const volScalarField::Internal& extEsrc);
-
-        //- Add external energy source
-        void addESource(const volScalarField::Internal& extEsrc);
-
-        //- Add external energy source
-        tmp<fvVectorMatrix>& dragSource()
-        {
-            return dragSource_;
-        }
-
-        //- Add to U coefficient
-        void addUCoeff(const volScalarField::Internal& coeff);
-
-        //- Add to U source
-        void addUSource(const volVectorField::Internal& src);
-
 
     // Member Access Functions
 
@@ -162,6 +139,12 @@ public:
 
         //- Const access to total mass
         virtual const volScalarField& rho() const
+        {
+            return rho_;
+        }
+
+        //- Const access to total mass
+        virtual volScalarField& rho()
         {
             return rho_;
         }

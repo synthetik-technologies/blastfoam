@@ -31,19 +31,21 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(NelderMeadMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+    defineTypeNameAndDebug(NelderMead, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        NelderMeadMinimizationScheme,
+        NelderMead,
         dictionaryMultivariate
     );
 }
-
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::NelderMeadMinimizationScheme::NelderMeadMinimizationScheme
+Foam::minimizationSchemes::NelderMead::NelderMead
 (
     const scalarUnivariateEquation& eqns,
     const dictionary& dict
@@ -53,7 +55,6 @@ Foam::NelderMeadMinimizationScheme::NelderMeadMinimizationScheme
     reflectionCoeff_(dict.lookupOrDefault<scalar>("reflectionCoeff", 1.0)),
     expansionCoeff_(dict.lookupOrDefault<scalar>("expansionCoeff", 2.0)),
     contractionCoeff_(dict.lookupOrDefault<scalar>("contractionCoeff", 0.5))
-
 {
     if (reflectionCoeff_ <= 0)
     {
@@ -81,10 +82,23 @@ Foam::NelderMeadMinimizationScheme::NelderMeadMinimizationScheme
 }
 
 
+Foam::minimizationSchemes::NelderMead::NelderMead
+(
+    const scalarUnivariateEquation& eqns,
+    const NelderMead& solver
+)
+:
+    minimizationScheme(eqns, solver),
+    reflectionCoeff_(solver.reflectionCoeff_),
+    expansionCoeff_(solver.expansionCoeff_),
+    contractionCoeff_(solver.contractionCoeff_)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
-Foam::NelderMeadMinimizationScheme::minimize
+Foam::minimizationSchemes::NelderMead::minimize
 (
     const scalarList& x0,
     const scalarList& xMin,
@@ -98,7 +112,17 @@ Foam::NelderMeadMinimizationScheme::minimize
     ys[0] = eqns_.fX(points[0], li);
     for (label i = 1; i < np; i++)
     {
-        points[i][i - 1] += (xMin[i-1] + xMax[i-1])*0.5;
+        // Handle symmetric cases
+        scalar xc = (xMin[i-1] + xMax[i-1])*0.5;
+        if (mag(xc) > small)
+        {
+            points[i][i - 1] += xc;
+        }
+        else
+        {
+            points[i][i - 1] += (xMax[i-1] - xMin[i-1])/2.0;
+        }
+
         eqns_.limit(points[i]);
         ys[i] = eqns_.fX(points[i], li);
     }
@@ -122,11 +146,6 @@ Foam::NelderMeadMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (convergedXScale(xStd, xMean))
-        {
-            break;
-        }
-
         // Sort values, point order is automatically updated since
         // the indirect list uses a reference to the sort map
         ys.sort();
@@ -147,8 +166,8 @@ Foam::NelderMeadMinimizationScheme::minimize
         xReflection = xMean + reflectionCoeff_*(xMean - xHigh);
         if
         (
-            max(pos(xReflection - xTolerances_ - xMax))
-         || max(neg(xReflection + xTolerances_ - xMin))
+            max(pos(xReflection - xAbsTolerances_ - xMax))
+         || max(neg(xReflection + xAbsTolerances_ - xMin))
         )
         {
             yReflection = great;
@@ -206,8 +225,8 @@ Foam::NelderMeadMinimizationScheme::minimize
             xTmp = xMean + contractionCoeff_*(xHigh - xMean);
             if
             (
-                max(pos(xTmp - xTolerances_ - xMax))
-             || max(neg(xTmp + xTolerances_ - xMin))
+                max(pos(xTmp - xAbsTolerances_ - xMax))
+             || max(neg(xTmp + xAbsTolerances_ - xMin))
             )
             {
                 yTmp = great;
@@ -247,6 +266,11 @@ Foam::NelderMeadMinimizationScheme::minimize
         xStd = sqrt(xVar);
 
         printStepInformation(xMean);
+
+        if (convergedXScale(xStd, xMean))
+        {
+            break;
+        }
     }
     xMean = points[0];
     printFinalInformation(xMean);

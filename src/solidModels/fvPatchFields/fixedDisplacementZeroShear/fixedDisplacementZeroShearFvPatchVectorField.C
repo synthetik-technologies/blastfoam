@@ -30,17 +30,12 @@ License
 #include "volFields.H"
 #include "lookupSolidModel.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-fixedDisplacementZeroShearFvPatchVectorField::
+Foam::fixedDisplacementZeroShearFvPatchVectorField::
 fixedDisplacementZeroShearFvPatchVectorField
 (
     const fvPatch& p,
@@ -54,23 +49,23 @@ fixedDisplacementZeroShearFvPatchVectorField
 {}
 
 
-fixedDisplacementZeroShearFvPatchVectorField::
+Foam::fixedDisplacementZeroShearFvPatchVectorField::
 fixedDisplacementZeroShearFvPatchVectorField
 (
-    const fixedDisplacementZeroShearFvPatchVectorField& ptf,
+    const fixedDisplacementZeroShearFvPatchVectorField& fdzspvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
-    solidDirectionMixedFvPatchVectorField(ptf, p, iF, mapper),
-    totalDisp_(mapper(ptf.totalDisp_)),
-    dispSeries_(ptf.dispSeries_, false),
-    forceZeroShearGrad_(ptf.forceZeroShearGrad_)
+    solidDirectionMixedFvPatchVectorField(fdzspvf, p, iF, mapper),
+    totalDisp_(mapper(fdzspvf.totalDisp_)),
+    dispSeries_(fdzspvf.dispSeries_, false),
+    forceZeroShearGrad_(fdzspvf.forceZeroShearGrad_)
 {}
 
 
-fixedDisplacementZeroShearFvPatchVectorField::
+Foam::fixedDisplacementZeroShearFvPatchVectorField::
 fixedDisplacementZeroShearFvPatchVectorField
 (
     const fvPatch& p,
@@ -89,11 +84,18 @@ fixedDisplacementZeroShearFvPatchVectorField
     // Check if displacement is time-varying
     if (dict.found("displacementSeries"))
     {
-        Info<< "    displacement is time-varying" << endl;
+        DebugInfo
+            << "    displacement is time-varying" << endl;
         dispSeries_ =
-            Function1<vector>::New("displacementSeries", dict);
+            Function1<vector>::New
+            (
+                "displacementSeries",
+                this->db().time().userUnits(),
+                dimLength,
+                dict
+            );
 
-        refValue() = dispSeries_->value(this->db().time().timeOutputValue());
+        refValue() = dispSeries_->value(this->db().time().value());
     }
     else if (dict.found("value"))
     {
@@ -101,11 +103,8 @@ fixedDisplacementZeroShearFvPatchVectorField
     }
     else
     {
-        FatalErrorIn
-        (
-            "fixedDisplacementZeroShearFvPatchVectorField::"
-            "fixedDisplacementZeroShearFvPatchVectorField"
-        )   << "value entry not found for patch " << patch().name()
+        FatalErrorInFunction
+            << "value entry not found for patch " << patch().name()
             << abort(FatalError);
     }
 
@@ -129,51 +128,52 @@ fixedDisplacementZeroShearFvPatchVectorField
 }
 
 
-fixedDisplacementZeroShearFvPatchVectorField::
+Foam::fixedDisplacementZeroShearFvPatchVectorField::
 fixedDisplacementZeroShearFvPatchVectorField
 (
-    const fixedDisplacementZeroShearFvPatchVectorField& ptf,
+    const fixedDisplacementZeroShearFvPatchVectorField& fdzspvf,
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    solidDirectionMixedFvPatchVectorField(ptf, iF),
-    totalDisp_(ptf.totalDisp_),
-    dispSeries_(ptf.dispSeries_),
-    forceZeroShearGrad_(ptf.forceZeroShearGrad_)
+    solidDirectionMixedFvPatchVectorField(fdzspvf, iF),
+    totalDisp_(fdzspvf.totalDisp_),
+    dispSeries_(fdzspvf.dispSeries_, false),
+    forceZeroShearGrad_(fdzspvf.forceZeroShearGrad_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void fixedDisplacementZeroShearFvPatchVectorField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    solidDirectionMixedFvPatchVectorField::autoMap(m);
-
-    m(totalDisp_, totalDisp_);
-}
-
-
-// Reverse-map the given fvPatchField onto this fvPatchField
-void fixedDisplacementZeroShearFvPatchVectorField::rmap
+void Foam::fixedDisplacementZeroShearFvPatchVectorField::map
 (
     const fvPatchField<vector>& ptf,
-    const labelList& addr
+    const fieldMapper& mapper
 )
 {
-    solidDirectionMixedFvPatchVectorField::rmap(ptf, addr);
+    solidDirectionMixedFvPatchVectorField::map(ptf, mapper);
 
-    const fixedDisplacementZeroShearFvPatchVectorField& dmptf =
+    const fixedDisplacementZeroShearFvPatchVectorField& fdzspvf =
         refCast<const fixedDisplacementZeroShearFvPatchVectorField>(ptf);
 
-    totalDisp_.rmap(dmptf.totalDisp_, addr);
+    mapper(totalDisp_, fdzspvf.totalDisp_);
 }
 
 
-void fixedDisplacementZeroShearFvPatchVectorField::updateCoeffs()
+void Foam::fixedDisplacementZeroShearFvPatchVectorField::reset
+(
+    const fvPatchField<vector>& ptf
+)
+{
+    solidDirectionMixedFvPatchVectorField::reset(ptf);
+
+    const fixedDisplacementZeroShearFvPatchVectorField& fdzspvf =
+        refCast<const fixedDisplacementZeroShearFvPatchVectorField>(ptf);
+
+    totalDisp_.reset(fdzspvf.totalDisp_);
+}
+
+
+void Foam::fixedDisplacementZeroShearFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())
     {
@@ -184,7 +184,7 @@ void fixedDisplacementZeroShearFvPatchVectorField::updateCoeffs()
 
     if (dispSeries_.valid())
     {
-        disp = dispSeries_->value(this->db().time().timeOutputValue());
+        disp = dispSeries_->value(this->db().time().value());
     }
 
     if (internalField().name() == "DD")
@@ -228,8 +228,10 @@ void fixedDisplacementZeroShearFvPatchVectorField::updateCoeffs()
 }
 
 
-// Write
-void fixedDisplacementZeroShearFvPatchVectorField::write(Ostream& os) const
+void Foam::fixedDisplacementZeroShearFvPatchVectorField::write
+(
+    Ostream& os
+) const
 {
     if (dispSeries_.valid())
     {
@@ -243,15 +245,13 @@ void fixedDisplacementZeroShearFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField
-(
-    fvPatchVectorField,
-    fixedDisplacementZeroShearFvPatchVectorField
-);
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        fixedDisplacementZeroShearFvPatchVectorField
+    );
+}
 
 // ************************************************************************* //

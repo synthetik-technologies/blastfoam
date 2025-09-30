@@ -52,7 +52,7 @@ void Foam::solidSubMeshes::makeSubMeshes() const
 
     labelList region(baseMesh().nCells(), -1);
 
-    const meshCellZones& cellZones = baseMesh().cellZones();
+    const cellZoneList& cellZones = baseMesh().cellZones();
     forAll(cellZoneNames_, matI)
     {
         const label cellZoneID = cellZones.findIndex(cellZoneNames_[matI]);
@@ -105,7 +105,7 @@ void Foam::solidSubMeshes::makeSubMeshes() const
                 IOobject
                 (
                     cellZoneNames_[matI],
-                    baseMesh().time().timeName(),
+                    baseMesh().time().name(),
                     baseMesh().time(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -197,35 +197,6 @@ void Foam::solidSubMeshes::makeSubMeshes() const
     }
 }
 
-
-void Foam::solidSubMeshes::makeSubMeshVolToPoint() const
-{
-    if (!subMeshVolToPoint_.empty())
-    {
-        FatalErrorInFunction
-            << "sub-meshes already exist" << abort(FatalError);
-    }
-
-    if (cellZoneNames_.size() == 1)
-    {
-        FatalErrorInFunction
-            << "There should be no need for subMeshes when there is only one "
-            << "material" << abort(FatalError);
-    }
-
-    subMeshVolToPoint_.setSize(cellZoneNames_.size());
-
-    forAll(subMeshVolToPoint_, matI)
-    {
-        subMeshVolToPoint_.set
-        (
-            matI,
-            new volPointInterp(subMeshes()[matI].subMesh())
-        );
-    }
-}
-
-
 void Foam::solidSubMeshes::checkCellZones() const
 {
     if (cellZoneNames_.size() == 1)
@@ -240,7 +211,7 @@ void Foam::solidSubMeshes::checkCellZones() const
         IOobject
         (
             "nCellZones",
-            baseMesh().time().timeName(),
+            baseMesh().time().name(),
             baseMesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -251,7 +222,7 @@ void Foam::solidSubMeshes::checkCellZones() const
 
     scalarField& nCellZonesI = nCellZones.primitiveFieldRef();
 
-    const meshCellZones& cellZones = baseMesh().cellZones();
+    const cellZoneList& cellZones = baseMesh().cellZones();
     forAll(cellZoneNames_, matI)
     {
         const label cellZoneID =
@@ -321,7 +292,7 @@ void Foam::solidSubMeshes::calcSubMeshSigma() const
                 IOobject
                 (
                     "sigma",
-                    subMeshes[matI].subMesh().time().timeName(),
+                    subMeshes[matI].subMesh().time().name(),
                     subMeshes[matI].subMesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -369,7 +340,7 @@ void Foam::solidSubMeshes::calcSubMeshSigmaf() const
                 IOobject
                 (
                     "sigmaf",
-                    subMeshes[matI].subMesh().time().timeName(),
+                    subMeshes[matI].subMesh().time().name(),
                     subMeshes[matI].subMesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -423,7 +394,7 @@ void Foam::solidSubMeshes::calcSubMeshD() const
                 IOobject
                 (
                     Dname,
-                    subMeshes[matI].subMesh().time().timeName(),
+                    subMeshes[matI].subMesh().time().name(),
                     subMeshes[matI].subMesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -472,7 +443,7 @@ void Foam::solidSubMeshes::calcSubMeshGradD() const
                 IOobject
                 (
                     gradDname,
-                    subMeshes[matI].subMesh().time().timeName(),
+                    subMeshes[matI].subMesh().time().name(),
                     subMeshes[matI].subMesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -521,7 +492,7 @@ void Foam::solidSubMeshes::calcSubMeshGradDf() const
                 IOobject
                 (
                     gradDname,
-                    subMeshes[matI].subMesh().time().timeName(),
+                    subMeshes[matI].subMesh().time().name(),
                     subMeshes[matI].subMesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -570,7 +541,7 @@ void Foam::solidSubMeshes::calcSubMeshPointD() const
                 IOobject
                 (
                     pointDname,
-                    subMeshes[matI].subMesh().time().timeName(),
+                    subMeshes[matI].subMesh().time().name(),
                     subMeshes[matI].subMesh(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
@@ -758,7 +729,7 @@ void Foam::solidSubMeshes::makeInterfaceBaseFaces() const
             IOobject
             (
                 "materials",
-                baseMesh().time().timeName(),
+                baseMesh().time().name(),
                 baseMesh(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
@@ -769,23 +740,10 @@ void Foam::solidSubMeshes::makeInterfaceBaseFaces() const
 
         scalarField& materialsI = materials.primitiveFieldRef();
 
-        const meshCellZones& cellZones = baseMesh().cellZones();
+        const cellZoneList& cellZones = baseMesh().cellZones();
         forAll(cellZoneNames_, matI)
         {
-            const label cellZoneID =
-                cellZones.findZoneID(cellZoneNames_[matI]);
-
-            if (cellZoneID < 0)
-            {
-                FatalErrorInFunction
-                    << "cellZone " << cellZoneNames_[matI]
-                    << " not found for material " << cellZoneNames_[matI]
-                    << abort(FatalError);
-            }
-
-            const labelList& curCellZone =
-                baseMesh().cellZones()[cellZoneID];
-
+            const cellZone& curCellZone = cellZones[cellZoneNames_[matI]];
             forAll(curCellZone, cI)
             {
                 const label cellID = curCellZone[cI];
@@ -796,8 +754,8 @@ void Foam::solidSubMeshes::makeInterfaceBaseFaces() const
         // Sync coupled boundaries
         materials.correctBoundaryConditions();
 
-        const unallocLabelList& owner = baseMesh().owner();
-        const unallocLabelList& neighbour = baseMesh().neighbour();
+        const labelUList& owner = baseMesh().owner();
+        const labelUList& neighbour = baseMesh().neighbour();
 
         labelHashSet interFacesSet;
 
@@ -879,23 +837,10 @@ void Foam::solidSubMeshes::makePointNumOfMaterials() const
 
     scalarField materialsI(baseMesh().nCells(), 0);
 
-    const meshCellZones& cellZones = baseMesh().cellZones();
+    const cellZoneList& cellZones = baseMesh().cellZones();
     forAll(cellZoneNames_, matI)
     {
-        const label cellZoneID =
-            cellZones.findIndex(cellZoneNames_[matI]);
-
-        if (cellZoneID < 0)
-        {
-            FatalErrorInFunction
-                << "cellZone " << cellZoneNames_[matI]
-                << " not found for material " << cellZoneNames_[matI]
-                << abort(FatalError);
-        }
-
-        const labelList& curCellZone =
-            baseMesh().cellZones()[cellZoneID];
-
+        const cellZone& curCellZone = cellZones[cellZoneNames_[matI]];
         forAll(curCellZone, cI)
         {
             const label cellID = curCellZone[cI];
@@ -948,23 +893,10 @@ void Foam::solidSubMeshes::makeIsolatedInterfacePoints() const
 
     scalarField materialsI(baseMesh().nCells(), 0);
 
-    const meshCellZones& cellZones = baseMesh().cellZones();
+    const cellZoneList& cellZones = baseMesh().cellZones();
     forAll(cellZoneNames_, matI)
     {
-        const label cellZoneID =
-            cellZones.findIndex(cellZoneNames_[matI]);
-
-        if (cellZoneID < 0)
-        {
-            FatalErrorInFunction
-                << "cellZone " << cellZoneNames_[matI]
-                << " not found for material " << cellZoneNames_[matI]
-                << abort(FatalError);
-        }
-
-        const labelList& curCellZone =
-            baseMesh().cellZones()[cellZoneID];
-
+        const cellZone& curCellZone = cellZones[cellZoneNames_[matI]];
         forAll(curCellZone, cI)
         {
             const label cellID = curCellZone[cI];
@@ -972,14 +904,14 @@ void Foam::solidSubMeshes::makeIsolatedInterfacePoints() const
         }
     }
 
-    pointMesh pMesh(baseMesh());
+    const pointMesh& pMesh = pointMesh::New(baseMesh());
 
     pointScalarField pointMaterials
     (
         IOobject
         (
             "pointMaterials",
-            baseMesh().time().timeName(),
+            baseMesh().time().name(),
             baseMesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -1170,7 +1102,7 @@ void Foam::solidSubMeshes::updateInterfaceShadowSigma
         IOobject
         (
             "baseSigmaForSyncing",
-            baseMesh().time().timeName(),
+            baseMesh().time().name(),
             baseMesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -1271,23 +1203,23 @@ void Foam::solidSubMeshes::updateInterfaceShadowSigma
                 const label baseLocalFaceID = baseFaceID - basePatchStart;
 
                 // Base mesh patch faceCells
-                const unallocLabelList& faceCells =
+                const labelUList& faceCells =
                     baseMesh().boundaryMesh()[basePatchID].faceCells();
 
                 // Store local stress on the baseMesh proc patch in the patch
                 // internal field
                 if (useVolFieldSigma)
                 {
-                    baseSigmaForSyncing[faceCells[baseLocalFaceID]]
-                      = subMeshSigma()
+                    baseSigmaForSyncing[faceCells[baseLocalFaceID]] =
+                        subMeshSigma()
                         [
                             subMeshI
                         ].boundaryField()[patchID][faceI];
                 }
                 else
                 {
-                    baseSigmaForSyncing[faceCells[baseLocalFaceID]]
-                      = subMeshSigmaf()
+                    baseSigmaForSyncing[faceCells[baseLocalFaceID]] =
+                        subMeshSigmaf()
                         [
                             subMeshI
                         ].boundaryField()[patchID][faceI];
@@ -1397,7 +1329,6 @@ void Foam::solidSubMeshes::calcBiMaterialInterfaceActive() const
 
 void Foam::solidSubMeshes::clearOut()
 {
-    subMeshVolToPoint_.clear();
     subMeshSigma_.clear();
     subMeshSigmaf_.clear();
     subMeshD_.clear();
@@ -1434,7 +1365,7 @@ Foam::solidSubMeshes::solidSubMeshes
         IOobject
         (
             typeName,
-            baseMesh.time().timeName(),
+            baseMesh.time().name(),
             baseMesh,
             IOobject::NO_READ,
             writeSubMeshes ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
@@ -1444,7 +1375,6 @@ Foam::solidSubMeshes::solidSubMeshes
     cellZoneNames_(cellZoneNames),
     incremental_(incremental),
     subsetMeshes_(),
-    subMeshVolToPoint_(),
     subMeshSigma_(),
     subMeshSigmaf_(),
     subMeshD_(),
@@ -1500,18 +1430,6 @@ Foam::solidSubMeshes::meshSubsetList& Foam::solidSubMeshes::subMeshes()
     }
 
     return subsetMeshes_;
-}
-
-
-const Foam::solidSubMeshes::volPointInterpList&
-Foam::solidSubMeshes::subMeshVolToPoint() const
-{
-    if (subMeshVolToPoint_.empty())
-    {
-        makeSubMeshVolToPoint();
-    }
-
-    return subMeshVolToPoint_;
 }
 
 
@@ -1756,10 +1674,10 @@ void Foam::solidSubMeshes::interpolateDtoSubMeshD
                 const label start = subMesh.boundaryMesh()[patchI].start();
 
                 // Base mesh owner cells
-                const unallocLabelList& baseOwn = mesh.owner();
+                const labelUList& baseOwn = mesh.owner();
 
                 // Base mesh neighbour cells
-                const unallocLabelList& baseNei = mesh.neighbour();
+                const labelUList& baseNei = mesh.neighbour();
 
                 // Base mesh face interpolation weights
                 const surfaceScalarField& baseWeights = mesh.weights();
@@ -2063,7 +1981,7 @@ void Foam::solidSubMeshes::correctBoundarySnGrad
                 const wedgePolyPatch& wedgePatch =
                     refCast<const wedgePolyPatch>(ppatch);
 
-                const vectorField& patchC = ppatch.faceCentres();
+                const SubField<vector> patchC = ppatch.faceCentres();
                 const vector& centreN = wedgePatch.centreNormal();
                 const vectorField Cn(subMesh.boundary()[patchI].Cn());
                 const scalarField d(((Cn - patchC) & centreN)/(n & centreN));
@@ -2147,7 +2065,7 @@ void Foam::solidSubMeshes::correctBoundarySnGradf
                 const wedgePolyPatch& wedgePatch =
                     refCast<const wedgePolyPatch>(ppatch);
 
-                const vectorField& patchC = ppatch.faceCentres();
+                const SubField<vector> patchC = ppatch.faceCentres();
                 const vector& centreN(wedgePatch.centreNormal());
                 const vectorField Cn(subMesh.boundary()[patchI].Cn());
                 const scalarField d(((Cn - patchC) & centreN)/(n & centreN));
@@ -2200,19 +2118,22 @@ void Foam::solidSubMeshes::moveSubMeshes()
             Info<< "    Moving subMesh " << subMeshes()[matI].subMesh().name()
                 << endl;
 
-            twoDPointCorrector twoDCorrector(subMeshes()[matI].subMesh());
+            const twoDPointCorrector& corrector2D =
+                twoDPointCorrector::New(subMeshes()[matI].subMesh());
             pointField newPoints
             (
                 subMeshes()[matI].subMesh().points() + subMeshPointD()[matI]
             );
-            twoDCorrector.correctPoints(newPoints);
+            corrector2D.correctPoints(newPoints);
 
             subMeshes()[matI].subMesh().movePoints(newPoints);
             subMeshes()[matI].subMesh().V00();
-            subMeshes()[matI].subMesh().moving(false);
+            // subMeshes()[matI].subMesh().moving(false);
 //             subMeshes()[matI].subMesh().changing(false);
-            subMeshes()[matI].subMesh().setPhi().writeOpt() =
-                IOobject::NO_WRITE;
+            const_cast<surfaceScalarField&>
+            (
+                subMeshes()[matI].subMesh().phi()
+            ).writeOpt() = IOobject::NO_WRITE;
         }
     }
 }

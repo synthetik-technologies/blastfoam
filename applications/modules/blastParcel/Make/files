@@ -1,0 +1,3 @@
+blastParcelSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastParcel

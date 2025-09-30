@@ -5,6 +5,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/numerics/lnInclude
 
 LIB_LIBS = \
+    -lfiniteVolume \
     -lmeshTools \
     -ltriSurface \
     -L$(BLAST_LIBBIN) \

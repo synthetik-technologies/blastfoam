@@ -1,0 +1,49 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volVectorField;
+    location    "0/flap";
+    object      DD.orig;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 0 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    flapBase
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+    flap_to_air
+    {
+        type            coupledSolidTraction;
+        traction        uniform (0 0 0);
+        pressure        uniform 0;
+        value           uniform (0 0 0);
+        pName           p;
+        pRef            90530.979;
+    }
+    defaultFaces
+    {
+        type            empty;
+    }
+    wedge
+    {
+        type solidWedge;
+        patchType wedge;
+    }
+}
+
+
+// ************************************************************************* //

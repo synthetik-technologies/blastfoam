@@ -14,30 +14,73 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
-errorEstimator  densityGradient;
+topoChanger
+{
+    type list;
 
-// How often to refine
-refineInterval  3;
+    topoChangers
+    {
+        burst
+        {
+            type burst;
+            patches
+            (
+                windows
+                {
+                    intactMasterPatch windowsIntact_master;
+                    intactSlavePatch windowsIntact_slave;
 
-// Refine field in between lower..upper
-lowerRefineLevel 0.1;
+                    burstMasterPatch windowsBurst_master;
+                    burstSlavePatch windowsBurst_slave;
 
-// If value < unrefineLevel unrefine
-unrefineLevel   0.1;
+                    partialBurst    yes;
+                    patchToPatch    nearest;
 
-// Have slower than 2:1 refinement
-nBufferLayers   3;
+                    burstModel      field;
+                    burstValues
+                    (
+                        p 4e7
+                        impulse 10000
+                    );
+                }
+            );
+        }
+        refinement
+        {
+            type        hexRefiner;
+            errorEstimator  densityGradient;
 
-// Refine cells only up to maxRefinement levels
-maxRefinement   2;
+            // How often to refine
+            refineInterval  3;
 
-// Write the refinement level as a volScalarField
-dumpLevel       true;
+            // Refine field in between lower..upper
+            lowerRefineLevel 0.1;
 
-protectedPatches
-(
-    windows_slave
-    windows_master
-);
+            // If value < unrefineLevel unrefine
+            unrefineLevel   0.1;
+
+            // Have slower than 2:1 refinement
+            nBufferLayers   3;
+
+            // Refine cells only up to maxRefinement levels
+            maxRefinement   2;
+
+            // Write the refinement level as a volScalarField
+            dumpLevel       true;
+
+            protectedPatches
+            (
+                windowsIntact_slave
+                windowsIntact_master
+                windowsBurst_slave
+                windowsBurst_master
+            );
+        }
+    }
+}
+
+stitcher
+{
+    type a;
+}
 // ************************************************************************* //

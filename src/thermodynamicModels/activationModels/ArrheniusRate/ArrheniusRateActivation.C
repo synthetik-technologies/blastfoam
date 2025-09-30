@@ -48,7 +48,7 @@ Foam::activationModels::ArrheniusRateActivation::ArrheniusRateActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, false),
+    activationModel(mesh, dict, phaseName, 0),
     rho0_
     (
         "rho0",
@@ -93,20 +93,16 @@ Foam::tmp<Foam::volScalarField>
 Foam::activationModels::ArrheniusRateActivation::delta() const
 {
     const volScalarField& T = lambda_.mesh().lookupObject<volScalarField>(TName_);
-    volScalarField R
+    tmp<volScalarField> tR
     (
-        IOobject
+        volScalarField::New
         (
-            IOobject::groupName("Arrhenius:R", lambda_.group()),
-            lambda_.time().timeName(),
+            IOobject::groupName(type() + ":R", lambda_.group()),
             lambda_.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            false
-        ),
-        lambda_.mesh(),
-        dimensionedScalar("0", inv(dimTime), 0.0)
+            dimensionedScalar("0", inv(dimTime), 0.0)
+        )
     );
+    volScalarField& R = tR.ref();
     scalar specieR(Foam::constant::thermodynamic::RR);
 
     forAll(R, celli)
@@ -128,8 +124,10 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
                 ALow_.value()
                *exp(-EaLow_.value()/(specieR*T[celli]));
         }
+        R[celli] *= (1.0 - lambda_[celli]);
     }
-    return R*(1.0 - lambda_);
+
+    return tR;
 }
 
 

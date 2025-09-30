@@ -47,34 +47,9 @@ Foam::activationModels::noneActivation::noneActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, false),
-    setLambda_(true)
+    activationModel(mesh, dict, phaseName, -1)
 {
-    if (detonationPoints_.size() == 0)
-    {
-        detonationPoints_.resize(1);
-        detonationPoints_.set
-        (
-            0,
-            new detonationPoint
-            (
-                returnReduce
-                (
-                    minMagSqr(mesh.C().primitiveField()),
-                    minMagSqrOp<vector>()
-                ),
-                0.0,
-                0.0
-            )
-        );
-    }
-    forAll(detonationPoints_, i)
-    {
-        if (!detonationPoints_[i].activated())
-        {
-            detonationPoints_[i].activated() = true;
-        }
-    }
+    lambda_ == 1.0;
 }
 
 
@@ -85,14 +60,14 @@ Foam::activationModels::noneActivation::~noneActivation()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::activationModels::noneActivation::solve()
+void Foam::activationModels::noneActivation::initializeModels()
 {
-    if (setLambda_)
-    {
-        lambda_ == 1.0;
-        setLambda_ = false;
-    }
+    initialized_ = true;
 }
+
+
+void Foam::activationModels::noneActivation::solve()
+{}
 
 
 Foam::tmp<Foam::volScalarField>
@@ -113,7 +88,7 @@ Foam::activationModels::noneActivation::initESource() const
     return volScalarField::New
     (
         "noActivation:initESource",
-        e0_*(1.0 - lambda_)
+        e0_*lambda_
     );
 }
 

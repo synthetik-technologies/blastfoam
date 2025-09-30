@@ -50,7 +50,8 @@ inline Foam::linearTillotson<Specie>::linearTillotson
     A_(A),
     B_(B),
     C_(C),
-    pCav_(pCav)
+    pCav_(pCav),
+    eRef_(calcE(rho0_))
 {}
 
 
@@ -90,6 +91,20 @@ Foam::scalar Foam::linearTillotson<Specie>::delta
 }
 
 
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::calcE(const scalar rho) const
+{
+    const scalar rhos = max(rho, 1e-10);
+    return
+        (A_ - B_ + C_ - p0_)/rhos
+      + 1.0/(2.0*pow3(rho0_))
+       *(
+            rho*(B_*2.0*rho0_ + C_*(rho - 6.0*rho0_))
+          + 2.0*sqr(rho0_)*(A_ - 2.0*B_ + 3.0*C_)*log(rhos)
+        );
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -107,7 +122,8 @@ inline Foam::linearTillotson<Specie>::linearTillotson
     A_(pf.A_),
     B_(pf.B_),
     C_(pf.C_),
-    pCav_(pf.pCav_)
+    pCav_(pf.pCav_),
+    eRef_(pf.eRef_)
 {}
 
 
@@ -248,7 +264,8 @@ Foam::scalar Foam::linearTillotson<Specie>::E
     const scalar T
 ) const
 {
-    return EcTable_.lookup(rho) - e0_;
+    return EcTable_.lookup(rho) + e0_;
+    // return calcE(rho) - eRef_ + e0_;
 }
 
 
@@ -297,19 +314,39 @@ Foam::scalar Foam::linearTillotson<Specie>::H
     const scalar T
 ) const
 {
-    return 0.0;
+    NotImplemented;
+    const scalar rhoByRho0 = rho/rho0_;
+    return
+        (
+          - 1.5*C_*sqr(rhoByRho0)
+          - rhoByRho0*(B_ - 3.0*C_)
+          + (B_ - 1.5*C_)
+        )/rho0_
+      - e*omega_*log(max(rhoByRho0, small));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::linearTillotson<Specie>::S
+Foam::scalar Foam::linearTillotson<Specie>::Sp
 (
     const scalar p,
     const scalar T
 ) const
 {
     NotImplemented;
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -338,6 +375,7 @@ inline void Foam::linearTillotson<Specie>::operator+=
         B_ = Y1*B_ + Y2*pf.B_;
         C_ = Y1*C_ + Y2*pf.C_;
         pCav_ = Y1*pCav_ + Y2*pf.pCav_;
+        eRef_ = calcE(rho0_);
     }
 }
 

@@ -8,15 +8,21 @@ wclean $targetType finiteVolume
 wclean $targetType diameterModels
 wclean $targetType thermodynamicModels
 wclean $targetType radiationModels
+wclean $targetType MomentumTransportModels
 wclean $targetType compressibleSystem
-wclean $targetType dynamicMesh
-wclean $targetType dynamicFvMesh
+
+wclean $targetType polyTopoChange
 wclean $targetType errorEstimators
+wclean $targetType fvMotionSolvers
+wclean $targetType fvMeshTopoChangers
+wclean $targetType fvMeshDistributors
+
 wclean $targetType functionObjects
 wclean $targetType atmosphereModels
 wclean $targetType regionModels
 wclean $targetType solidModels
 wclean $targetType levelSet
+wclean $targetType FieldSetTypes
 
 wclean $targetType solids4fFoam
 

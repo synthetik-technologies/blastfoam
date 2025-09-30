@@ -27,6 +27,7 @@ License
 
 #include "CodedUnivariateEquation.H"
 #include "adaptiveTypes.H"
+#include "stringOps.H"
 
 template<class Type>
 Foam::wordList Foam::CodedUnivariateEquation<Type>::codeKeys() const
@@ -36,6 +37,18 @@ Foam::wordList Foam::CodedUnivariateEquation<Type>::codeKeys() const
         "fx_code",
         "dfdx_code",
         "codeInclude"
+    };
+}
+
+
+template<class Type>
+Foam::wordList Foam::CodedUnivariateEquation<Type>::codeDictVars() const
+{
+    return
+    {
+        word::null,
+        word::null,
+        word::null
     };
 }
 
@@ -54,6 +67,9 @@ void Foam::CodedUnivariateEquation<Type>::prepare
     // Set TemplateType filter variables
     dynCode.setFilterVariable("TemplateType", pTraits<Type>::typeName);
 
+    // Make verbose if debugging
+    dynCode.setFilterVariable("verbose", Foam::name(bool(debug)));
+
     // Compile filtered C template
     dynCode.addCompileFile(codeTemplateC("CodedUnivariateEquation"));
 
@@ -63,7 +79,6 @@ void Foam::CodedUnivariateEquation<Type>::prepare
     // Debugging: make verbose
     if (debug)
     {
-        dynCode.setFilterVariable("verbose", "true");
         Info<<"compile " << codeName() << " sha1: "
             << context.sha1() << endl;
     }
@@ -96,10 +111,9 @@ Foam::autoPtr<Foam::univariateEquation<Type>>
 Foam::CodedUnivariateEquation<Type>::compileNew()
 {
     this->updateLibrary();
-    return regEquation<Type, UnivariateEquation>::New
+    return UnivariateEquation<Type>::New
     (
         codeName(),
-        this->obr_,
         codeDict()
     );
 }
@@ -123,7 +137,7 @@ Foam::CodedUnivariateEquation<Type>::expandCodeDict
     forAll(codes, i)
     {
         verbatimString str(dict[codes[i]]);
-        stringOps::inplaceExpand(str, cDict, true, true);
+        stringOps::inplaceExpandEntry(str, cDict, true, true);
         dict.set(primitiveEntry(codes[i], str));
     }
     return cDict;
@@ -134,11 +148,10 @@ Foam::CodedUnivariateEquation<Type>::expandCodeDict
 template<class Type>
 Foam::CodedUnivariateEquation<Type>::CodedUnivariateEquation
 (
-    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    regEquation<Type, UnivariateEquation>(obr, dict),
+    UnivariateEquation<Type>(dict),
     codedBase("test", expandCodeDict(dict)),
     nDerivatives_(dict.lookup<label>("nDerivatives"))
 {
@@ -152,6 +165,20 @@ Foam::CodedUnivariateEquation<Type>::CodedUnivariateEquation
     {
         setEnv("FOAM_CODE_TEMPLATES", origCODE_TEMPLATE_DIR, true);
     }
+}
+
+
+template<class Type>
+Foam::CodedUnivariateEquation<Type>::CodedUnivariateEquation
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
+:
+    CodedUnivariateEquation<Type>(dict)
+{
+    this->setObr(obr);
+    redirectEquationPtr_->setObr(obr);
 }
 
 

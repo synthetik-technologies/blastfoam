@@ -40,7 +40,21 @@ namespace Foam
 namespace radiationModels
 {
     defineTypeNameAndDebug(blastP1, 0);
-    addToBlastRadiationRunTimeSelectionTables(blastP1);
+    addNamedToRunTimeSelectionTable
+    (
+        blastRadiationModel,
+        blastP1,
+        dictionary,
+        P1
+    );
+
+    addNamedToRunTimeSelectionTable
+    (
+        blastRadiationModel,
+        blastP1,
+        T,
+        P1
+    );
 }
 }
 
@@ -49,13 +63,13 @@ namespace radiationModels
 
 Foam::radiationModels::blastP1::blastP1(const volScalarField& T)
 :
-    blastRadiationModel(typeName, T),
+    blastRadiationModel("P1", T),
     G_
     (
         IOobject
         (
             "G",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -67,7 +81,7 @@ Foam::radiationModels::blastP1::blastP1(const volScalarField& T)
         IOobject
         (
             "qr",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -79,8 +93,8 @@ Foam::radiationModels::blastP1::blastP1(const volScalarField& T)
     (
         IOobject
         (
-            "blastP1:a",
-            mesh_.time().timeName(),
+            "P1:a",
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -92,8 +106,8 @@ Foam::radiationModels::blastP1::blastP1(const volScalarField& T)
     (
         IOobject
         (
-            "blastP1:e",
-            mesh_.time().timeName(),
+            "P1:e",
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -105,8 +119,8 @@ Foam::radiationModels::blastP1::blastP1(const volScalarField& T)
     (
         IOobject
         (
-            "blastP1:E",
-            mesh_.time().timeName(),
+            "P1:E",
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -119,13 +133,13 @@ Foam::radiationModels::blastP1::blastP1(const volScalarField& T)
 
 Foam::radiationModels::blastP1::blastP1(const dictionary& dict, const volScalarField& T)
 :
-    blastRadiationModel(typeName, dict, T),
+    blastRadiationModel("P1", dict, T),
     G_
     (
         IOobject
         (
             "G",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
@@ -137,7 +151,7 @@ Foam::radiationModels::blastP1::blastP1(const dictionary& dict, const volScalarF
         IOobject
         (
             "qr",
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -149,8 +163,8 @@ Foam::radiationModels::blastP1::blastP1(const dictionary& dict, const volScalarF
     (
         IOobject
         (
-            "blastP1:a",
-            mesh_.time().timeName(),
+            "P1:a",
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -162,8 +176,8 @@ Foam::radiationModels::blastP1::blastP1(const dictionary& dict, const volScalarF
     (
         IOobject
         (
-            "blastP1:e",
-            mesh_.time().timeName(),
+            "P1:e",
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -175,8 +189,8 @@ Foam::radiationModels::blastP1::blastP1(const dictionary& dict, const volScalarF
     (
         IOobject
         (
-            "blastP1:E",
-            mesh_.time().timeName(),
+            "P1:E",
+            mesh_.time().name(),
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -225,7 +239,7 @@ void Foam::radiationModels::blastP1::calculate()
         IOobject
         (
             "gammaRad",
-            G_.mesh().time().timeName(),
+            G_.mesh().time().name(),
             G_.mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -278,12 +292,9 @@ Foam::scalar Foam::radiationModels::blastP1::cellRp(const label celli) const
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiationModels::blastP1::Ru() const
 {
-    const volScalarField::Internal& G =
-        G_();
-    const volScalarField::Internal E =
-        absorptionEmission_->ECont()()();
-    const volScalarField::Internal a =
-        absorptionEmission_->aCont()()();
+    const volScalarField::Internal& G = G_();
+    const volScalarField::Internal E(absorptionEmission_->ECont()()());
+    const volScalarField::Internal a(absorptionEmission_->aCont()()());
 
     return a*G - E;
 }

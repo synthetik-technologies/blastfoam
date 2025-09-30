@@ -52,8 +52,14 @@ class NoneReconstructionScheme
 :
     public ReconstructionScheme<Type>
 {
+    //- Saved token stream
+    tokenList tokens_;
+
+    //- Token stream
+    mutable ITstream is_;
+
     //- Surface interpolation scheme
-    tmp<surfaceInterpolationScheme<Type>> interp_;
+    mutable tmp<surfaceInterpolationScheme<Type>> interp_;
 
 
 protected:
@@ -80,13 +86,20 @@ public:
         NoneReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         );
 
     //- Destructor
     virtual ~NoneReconstructionScheme();
 
     // Member Functions
+
+        //- Return if pure upwinding is used
+        virtual bool upwind() const
+        {
+            return true;
+        }
 
         //- Return the owner interpolated field
         virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
@@ -95,6 +108,13 @@ public:
         //- Return the neighbor interpolated field
         virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
         interpolateNei() const;
+
+        //- Return the upwind interpolated field based on face flux
+        virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        interpolate
+        (
+            const surfaceScalarField& faceFlux
+        ) const;
 };
 
 

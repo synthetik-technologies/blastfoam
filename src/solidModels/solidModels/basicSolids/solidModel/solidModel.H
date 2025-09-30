@@ -41,7 +41,7 @@ SourceFiles
 #ifndef solidModel_H
 #define solidModel_H
 
-#include "dynamicFvMesh.H"
+#include "fvMesh.H"
 #include "IOdictionary.H"
 #include "scalarIOField.H"
 #include "autoPtr.H"
@@ -54,12 +54,13 @@ SourceFiles
 #include "setCellDisplacements.H"
 #include "OFstream.H"
 #include "fvMatricesFwd.H"
-#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+class globalPolyBoundaryMesh;
 
 /*---------------------------------------------------------------------------*\
                            Class solidModel Declaration
@@ -73,7 +74,7 @@ class solidModel
     // Private data
 
         //- Mesh
-        dynamicFvMesh& mesh_;
+        fvMesh& mesh_;
 
         //- Derived solidModel type
         const word type_;
@@ -84,12 +85,6 @@ class solidModel
         //- Thermal model
         thermalModel thermal_;
 
-        //- Total displacement field header
-        IOobject Dheader_;
-
-        //- Increment of displacement field header
-        IOobject DDheader_;
-
         //- Total displacement field
         volVectorField D_;
 
@@ -99,9 +94,6 @@ class solidModel
 
         //- Velocity field
         volVectorField U_;
-
-        //- Point mesh
-        pointMesh pMesh_;
 
         //- Point total displacement field
         pointVectorField pointD_;
@@ -122,73 +114,14 @@ class solidModel
         //  approaches
         volSymmTensorField sigma_;
 
-        //- Density
-        volScalarField& rho_;
-
         //- Gravitational acceleration
         const uniformDimensionedVectorField g_;
 
         //- Stabilisation term for momentum equation
         autoPtr<momentumStabilisation> stabilisationPtr_;
 
-        //- Solution standard tolerance
-        scalar solutionTol_;
-
-        //- Solution tighter tolerance
-        scalar alternativeTol_;
-
-        //- Material law tolerance
-        scalar materialTol_;
-
-        //- Write frequency for residuals information
-        int infoFrequency_;
-
-        //- Maximum number of momentum correctors
-        int nCorr_;
-
-        //- Minium number of momentum correctors
-        int minCorr_;
-
-        //- Number of times the maximum number of correctors was reached in the
-        //  momentum equation
-        int maxIterReached_;
-
-        //- Residual file
-        autoPtr<OFstream> residualFilePtr_;
-
-        //- Switch to write the residual field
-        Switch writeResidualField_;
-
         //- Switch to enable/disable enforce linear to help convergence
         Switch enforceLinear_;
-
-        //- Under-relaxation method
-        //  It can be 'fixed', 'Aitken' or 'QuasiNewton'
-        const word relaxationMethod_;
-
-        //- Aitken's under-relaxation factor field
-        volScalarField aitkenAlpha_;
-
-        //- Aitken's residual field
-        volVectorField aitkenResidual_;
-
-        //- Restart frequency for the Quasi-Newton method
-        const int QuasiNewtonRestartFreq_;
-
-        //- Quasi-Newton method input vector field
-        DynamicList<vectorField> QuasiNewtonV_;
-
-        //- Quasi-Newton method output vector field
-        DynamicList<vectorField> QuasiNewtonW_;
-
-        //- Quasi-Newton method time indices for the input-ouput fields
-        DynamicList<scalar> QuasiNewtonT_;
-
-        //- Reference D field used for Quasi-Newton method
-        volVectorField DRef_;
-
-        //- Reference D (without relaxation) field used for Quasi-Newton method
-        volVectorField unrelaxedDRef_;
 
         //- Reference to globalPolyBoundaryMesh
         globalPolyBoundaryMesh& globalPatches_;
@@ -214,8 +147,6 @@ class solidModel
         //- Make setCellDisplacements
         void makeSetCellDisps() const;
 
-        //- Return a reference to setCellDisplacements
-        const setCellDisplacements& setCellDisps() const;
 
         //- Disallow default bitwise copy construct
         solidModel(const solidModel&);
@@ -244,56 +175,6 @@ protected:
         //  linear system
         void setCellDisps(fvVectorMatrix& DEqn);
 
-        //- Apply fixed or Aitken's adaptive under-relaxation to the field
-        void relaxField(volVectorField& D, int iCorr);
-
-        //- Check if the equation has converged
-        template<class Type>
-        bool converged
-        (
-            const int iCorr,
-            const scalar solverPerfInitRes,
-            const int solverPerfNIters,
-            const GeometricField<Type, fvPatchField, volMesh>& vf,
-            const bool writeResiduals = true
-        );
-
-        //- Return solution standard tolerance
-        scalar solutionTol() const
-        {
-            return solutionTol_;
-        }
-
-        //- Return solution tighter tolerance
-        scalar alternativeTol() const
-        {
-            return alternativeTol_;
-        }
-
-        //- Return material law tolerance
-        scalar materialTol() const
-        {
-            return materialTol_;
-        }
-
-        //- Return write frequency for residuals information
-        int infoFrequency() const
-        {
-            return infoFrequency_;
-        }
-
-        //- Return maximum number of correctors
-        int nCorr() const
-        {
-            return nCorr_;
-        }
-
-        //- Return maxIterReached
-        int& maxIterReached()
-        {
-            return maxIterReached_;
-        }
-
         //- Return const reference to stabilisation
         const momentumStabilisation& stabilisation() const
         {
@@ -310,6 +191,12 @@ protected:
         //- Return boundary types for pointD/pointDD fields
         wordList pointDBoundaryTypes(const volVectorField& D) const;
 
+        virtual void readDict();
+
+        //- Construct null
+        solidModel(const word& type, fvMesh& mesh);
+
+
 public:
 
     //- Runtime type information
@@ -324,7 +211,7 @@ public:
             solidModel,
             dictionary,
             (
-                dynamicFvMesh& mesh
+                fvMesh& mesh
             ),
             (mesh)
         );
@@ -335,7 +222,7 @@ public:
             solidModel,
             lagrangian,
             (
-                dynamicFvMesh& mesh
+                fvMesh& mesh
             ),
             (mesh)
         );
@@ -347,7 +234,7 @@ public:
         solidModel
         (
             const word& type,
-            dynamicFvMesh& mesh,
+            fvMesh& mesh,
             const nonLinearGeometry::nonLinearType nonlinear,
             const bool incremental,
             const bool isSolid = true
@@ -357,10 +244,10 @@ public:
     // Selectors
 
         //- Select constructed from time
-        static autoPtr<solidModel> New(dynamicFvMesh& mesh);
+        static autoPtr<solidModel> New(fvMesh& mesh);
 
         //- Select constructed from time (moving meshes)
-        static autoPtr<solidModel> NewLU(dynamicFvMesh& mesh);
+        static autoPtr<solidModel> NewLU(fvMesh& mesh);
 
 
     // Destructor
@@ -373,13 +260,13 @@ public:
         // Access
 
             //- Return mesh
-            const dynamicFvMesh& mesh() const
+            const fvMesh& mesh() const
             {
                 return mesh_;
             }
 
             //- Return non-const mesh
-            dynamicFvMesh& mesh()
+            fvMesh& mesh()
             {
                 return mesh_;
             }
@@ -387,13 +274,13 @@ public:
             //- Return point mesh
             const pointMesh& pMesh() const
             {
-                return pMesh_;
+                return pointMesh::New(mesh_);
             }
 
             //- Return non-const point mesh
             pointMesh& pMesh()
             {
-                return pMesh_;
+                return pointMesh::New(mesh_);
             }
 
             //- Return time
@@ -408,6 +295,14 @@ public:
                 return globalPatches_;
             }
 
+            //- Access the global polyPatches
+            globalPolyBoundaryMesh& globalPatches()
+            {
+                return globalPatches_;
+            }
+
+            // Initialize global poly patch displacement
+            void initialize();
 
             //- Return const-reference to the density
             const volScalarField& rho() const;
@@ -481,9 +376,6 @@ public:
                 return pointDD_;
             }
 
-            //- Return velocity at a point
-            virtual vector pointU(const label pointID) const;
-
             //- Return non-const reference to gradD
             virtual volTensorField& gradD()
             {
@@ -531,25 +423,11 @@ public:
 
             //- Each solidModel must indicate whether D or DD is the primary
             //  solution variable
-            virtual volVectorField& solutionD() = 0;
+            virtual const volVectorField& solutionD() const = 0;
 
-            //- Face zone point displacement increment
-            virtual tmp<vectorField> faceZonePointDisplacementIncrement
-            (
-                const polyPatch& pp
-            ) const;
-
-            //- Face zone point displacement increment
-            virtual tmp<vectorField> faceZonePointDisplacementOld
-            (
-                const polyPatch& pp
-            ) const;
-
-            //- Face zone acceleration
-            virtual tmp<vectorField> faceZoneAcceleration
-            (
-                const polyPatch& pp
-            ) const;
+             //- Each solidModel must indicate whether gradD or gradDD
+            //  is the primary solution variable
+            virtual const volTensorField& solutionGradD() const = 0;
 
             //- Return enforceLinear switch
             const Switch& enforceLinear() const
@@ -596,7 +474,14 @@ public:
             //- This function will check that the DD field was read from disk
             virtual void DDisRequired(const word& type);
 
+            //- Return a reference to setCellDisplacements
+            const setCellDisplacements& setCellDisps() const;
+
+
         // Edit
+
+            //- Update fields
+            virtual void update(const bool correctSigma = true) = 0;
 
             //- Check if solid model is diverging using the Jacobian field
             virtual Switch& checkEnforceLinear(const volScalarField& J);
@@ -604,30 +489,32 @@ public:
             //- Check if solid model is diverging using the Jacobian field
             virtual Switch& checkEnforceLinear(const surfaceScalarField& J);
 
-            //- Update the size of the time-step
-            virtual void setDeltaT(Time& runTime)
-            {}
-
             //- Evolve the solid model
             virtual bool evolve() = 0;
 
             //- Traction boundary surface normal gradient
-            //  Given the user-specified boundary patch traction, this function
-            //  should return the surface normal gradient
-            //  This function is used by traction-type boundary conditions to
-            //  set the boundary gradient
+            //  uses tractionBoundary for boundary traction
             virtual tmp<Foam::vectorField> tractionBoundarySnGrad
             (
                 const vectorField& traction,
                 const scalarField& pressure,
                 const fvPatch& patch
-            ) const = 0;
+            ) const;
+
+            //- Boundary traction
+            virtual tmp<Foam::vectorField> nf(const fvPatch& patch) const = 0;
+
+            //- Return the patch implicit stiffness
+            virtual tmp<scalarField> impK(const fvPatch& patch) const = 0;
+
+            //- Return the patch stress
+            virtual const symmTensorField& sigma(const fvPatch& patch) const
+            {
+                return sigma_.boundaryField()[patch.index()];
+            }
 
             //- Update total accumulated fields
             virtual void updateTotalFields();
-
-            //- Write fields
-            virtual void writeFields(const Time& runTime);
 
             //- Return the desired new time-step size
             virtual scalar newDeltaT();
@@ -640,27 +527,33 @@ public:
                 pointVectorField& pointDD
             );
 
-            //- End of the program
-            virtual void end();
+            //- Read from dictionary
+            virtual bool read();
 
-            //- Read object
-            virtual void readIfPresent();
+//             //- Read from dictionary
+//             virtual bool readIfModified();
 
-            //- Write function must be defined for regIOobjects
+            //- Write fields
+            virtual bool write(const bool write = true) const;
+
             virtual bool writeData(Ostream&) const
             {
-                return false;
+                return true;
             }
+
+            virtual bool writeObject
+            (
+                IOstream::streamFormat fmt,
+                IOstream::versionNumber ver,
+                IOstream::compressionType cmp,
+                const bool write
+            ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-#ifdef NoRepository
-#   include "solidModelTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

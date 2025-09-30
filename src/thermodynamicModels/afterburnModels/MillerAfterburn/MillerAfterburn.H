@@ -95,6 +95,14 @@ private:
         dimensionedScalar a_;
         dimensionedScalar pMin_;
 
+
+
+        //- Saved old alphaRhoC
+        tmp<volScalarField> alphaRhoCOld_;
+
+        //- Stored change in alphaRhoC
+        tmp<volScalarField> deltaAlphaRhoC_;
+
         //- Stored rate of change in c (used for energy source)
         tmp<volScalarField> ddtC_;
 
@@ -121,6 +129,9 @@ public:
 
         //- Set pointers to mass and mass flux
         virtual void initializeModels();
+
+        //- Update
+        virtual void update();
 
         //- Solve sub-step stepi
         virtual void solve();

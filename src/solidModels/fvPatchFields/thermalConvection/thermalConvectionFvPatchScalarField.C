@@ -46,16 +46,16 @@ Foam::thermalConvectionFvPatchScalarField::thermalConvectionFvPatchScalarField
 
 Foam::thermalConvectionFvPatchScalarField::thermalConvectionFvPatchScalarField
 (
-    const thermalConvectionFvPatchScalarField& ptf,
+    const thermalConvectionFvPatchScalarField& tcpsf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
-    fixedValueFvPatchScalarField(ptf, p, iF, mapper),
-    DTName_(ptf.DTName_),
-    alpha_(mapper(ptf.alpha_)),
-    Tinf_(ptf.Tinf_)
+    fixedValueFvPatchScalarField(tcpsf, p, iF, mapper),
+    DTName_(tcpsf.DTName_),
+    alpha_(mapper(tcpsf.alpha_)),
+    Tinf_(tcpsf.Tinf_)
 {}
 
 
@@ -71,7 +71,7 @@ Foam::thermalConvectionFvPatchScalarField::thermalConvectionFvPatchScalarField
     alpha_("alpha", dict, p.size()),
     Tinf_("Tinf", dimTemperature, readScalar(dict.lookup("Tinf")))
 {
-    Info<< patch().name() << ": thermalConvection" << endl;
+    DebugInfo<< patch().name() << ": thermalConvection" << endl;
 
     fvPatchField<scalar>::operator=(patchInternalField());
 }
@@ -79,44 +79,45 @@ Foam::thermalConvectionFvPatchScalarField::thermalConvectionFvPatchScalarField
 
 Foam::thermalConvectionFvPatchScalarField::thermalConvectionFvPatchScalarField
 (
-    const thermalConvectionFvPatchScalarField& wbppsf,
+    const thermalConvectionFvPatchScalarField& tcpsf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchScalarField(wbppsf, iF),
-    DTName_(wbppsf.DTName_),
-    alpha_(wbppsf.alpha_),
-    Tinf_(wbppsf.Tinf_)
+    fixedValueFvPatchScalarField(tcpsf, iF),
+    DTName_(tcpsf.DTName_),
+    alpha_(tcpsf.alpha_),
+    Tinf_(tcpsf.Tinf_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void Foam::thermalConvectionFvPatchScalarField::autoMap
+void Foam::thermalConvectionFvPatchScalarField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchField<scalar>& ptf,
+    const fieldMapper& mapper
 )
 {
-    fixedValueFvPatchScalarField::autoMap(m);
-    m(alpha_, alpha_);
+    fixedValueFvPatchScalarField::map(ptf, mapper);
+
+    const thermalConvectionFvPatchScalarField& tcpsf =
+        refCast<const thermalConvectionFvPatchScalarField>(ptf);
+
+    mapper(alpha_, tcpsf.alpha_);
 }
 
 
-// Reverse-map the given fvPatchField onto this fvPatchField
-void Foam::thermalConvectionFvPatchScalarField::rmap
+void Foam::thermalConvectionFvPatchScalarField::reset
 (
-    const fvPatchField<scalar>& ptf,
-    const labelList& addr
+    const fvPatchField<scalar>& ptf
 )
 {
-    fixedValueFvPatchScalarField::rmap(ptf, addr);
+    fixedValueFvPatchScalarField::reset(ptf);
 
-    const thermalConvectionFvPatchScalarField& tiptf =
+    const thermalConvectionFvPatchScalarField& tcpsf =
         refCast<const thermalConvectionFvPatchScalarField>(ptf);
 
-    //alpha_.resize(tiptf.alpha_.size());
-    alpha_.rmap(tiptf.alpha_, addr);
+    alpha_.reset(tcpsf.alpha_);
 }
 
 

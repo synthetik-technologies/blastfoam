@@ -289,7 +289,19 @@ Foam::scalar Foam::JWLC<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::S
+Foam::scalar Foam::JWLC<Specie>::Sp
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::JWLC<Specie>::Sv
 (
     const scalar p,
     const scalar T

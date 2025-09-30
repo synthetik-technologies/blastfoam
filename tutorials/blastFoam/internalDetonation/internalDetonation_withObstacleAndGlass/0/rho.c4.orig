@@ -25,28 +25,7 @@ boundaryField
         type            zeroGradient;
     }
 
-    windows_master
-    {
-        type            burstCyclicAMI;
-        intactPatch
-        {
-            type      zeroGradient;
-        }
-    }
-    windows_slave
-    {
-        type            burstCyclicAMI;
-        intactPatch
-        {
-            type      zeroGradient;
-        }
-    }
-
-    baffles_master
-    {
-        type            zeroGradient;
-    }
-    baffles_slave
+    ".*windows.*"
     {
         type            zeroGradient;
     }

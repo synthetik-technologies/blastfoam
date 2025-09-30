@@ -44,16 +44,16 @@ Detailed instructions on how to install and use blastFoam are found in the [blas
 ### How to install OpenFOAM for Linux
 Compiling OpenFOAM is straight forward, and a more detailed guide to installation can be found [here]{https://openfoam.org/download/source/software-for-compilation}. Once the necessary dependencies have been installed
 
-1. Clone the OpenFOAM-9 repository
+1. Clone the OpenFOAM-12 repository
 ```bash
 cd $HOME/OpenFOAM
-git clone https://github.com/OpenFOAM/OpenFOAM-9.git
+git clone https://github.com/OpenFOAM/OpenFOAM-12.git
 ```
 
 2. Compile OpenFOAM
 ```bash
-cd OpenFOAM-9
-echo "source $HOME/OpenFOAM/OpenFOAM-9/etc/bashrc" >> ~/.bashrc
+cd OpenFOAM-12
+echo "source $HOME/OpenFOAM/OpenFOAM-12/etc/bashrc" >> ~/.bashrc
 source etc/bashrc
 ./Allwmake > log.Allwmake 2>&1
 ```
@@ -76,8 +76,8 @@ Compiling OpenFOAM on macOS is relatively straightforward. This [guide and repos
 
 ### How to install blastFoam
 
-1. Install OpenFOAM-9 (if not already installed, see above)
-See https://openfoam.org/version/9 for OpenFOAM installation instructions.
+1. Install OpenFOAM-12 (if not already installed, see above)
+See https://openfoam.org/version/12 for OpenFOAM installation instructions.
 
 2. Create the OpenFOAM directory
 ```bash
@@ -184,7 +184,37 @@ BiBTex:
 
 
 
+### blastFoam Version 7.0 Release Notes and Features
+***Due to changes within OpenFOAM all cases will need to be modified
+To help the process a new utility, blastConvertCaseFiles, has been added. The support is limited to single region cases that use blastFoam or blastEulerFoam. The new files written will have any comments removed, but the original files will be saved. Currently only blastFoam and blastEulerFoam cases with AMR and load balancing are supported.
 
+phaseProperties -> physicalProperties (blastFoam)
+phaseProperties -> phaseProperties, physicalProperties.phase1, physicalProperties.phase2, etc. (physicalProperties.* has the thermodynamic models)
+
+dynamicMeshDict: Needs topoChanger entry for AMR, need distributor entry for load balancing, and mover entry for mesh motion. ***Note: all OpenFOAM standard movers support AMR, the blastFvMotionSolvers library was added for this reason.
+
+burst patches have been replaced by the burst fvMeshTopoChanger. In order to use this, patches for both intact and burst conditions should be created. Initially the intact patch should have faces while the burst patch should be empty. If a coupled set of patches is used (i.e. internal baffles) the "createNonConformalCouples" utility should be used to create the additional patches required for the movement between either side of the "internal" faces on the burst patches.
+
+OpenFOAM version is now checked for compatibility. If you are using the specified version, but you are getting errors, resourceing your .bashrc file should fix the errors.
+
+reconstructParAll removed, basic reconstructPar replaces
+foamVTKTimeSeries can be used to create a vtk.series file for easier viewing in paraview
+
+
+
+Libraries:
+Not all solvers/modules directly link to the full library. Libraries can be dynamically linked at run time be add "libs ("libLib1.so" "libLib2.so" ... )" to either the dynamicMesh/(topoChanger/mover/distributor), functionObject dictionary, or directly in the main controlDict. Notable libraries are:
+
+Motion solvers: "libfvMeshMoversMotionSolver.so"
+fvMeshMovers: "libfvMotionSolvers.so"
+OpenFoam topoChangers: "libfvMeshTopoChangers.so"
+blastFoam fvMotionSolvers (AMR support): "libblastFvMotionSovlers.so"
+blastFoam topoChangers (refinement and burst): "libblastFvMeshTopoChangers.so"
+blastFoam redistributor (load balancing): "libblastFvMeshDistributors.so"
+blastFoam functionObjects: "libblastFoamFunctionObjects.so"
+
+
+### Previous Releases
 
 ### blastFoam Version 6.0 Release Notes and Features
 blastFoam 6.0 greatly improves the numerics library to include multivariate root finding, minimisation/optimisation, and numerical integration. The equation structure has also been improved and generalised. Lookup tables have also been greatly improved by adding support for mixed order interpolation and more general file readers. 3D lookup tables have also been implemented.
@@ -202,10 +232,8 @@ The setRefinedField utility has been expanded to include the option to set zones
 Time integration now supports restarting of time steps which is useful for FSI cases.
 
 
-### Previous Releases
-
 ### blastFoam Version 5.0 Release Notes and Features
-blastFoam 5.0 greatly improves compatibility of blastFoam thermodynamics with that of standard OpenFOAM. This results in the ability to use most standard OpenFOAM functionObjects and fvModels and constraints. This also includes the ability to compile new combinations of thermodynamic models at run-time. Additional thermodynamic models have been added including ePower, ePolynomial, eTabulated, hPower, hPolynomial, and hTabulated. Additional fluid transport models have been added including polynomial, logPolynomial, sutherland, WLF, and tabulated. Additional sold transport models have been added including exponential and polynomial.
+blastFoam 5.0 greatly improves compatibility of blastFoam thermodynamics with that of standard OpenFOAM. This results in the ability to use most standard OpenFOAM functionObjects and fvModels and constraints. This also includes the ability to compile new combinations of thearmodynamic models at run-time. Additional thermodynamic models have been added including ePower, ePolynomial, eTabulated, hPower, hPolynomial, and hTabulated. Additional fluid transport models have been added including polynomial, logPolynomial, sutherland, WLF, and tabulated. Additional sold transport models have been added including exponential and polynomial.
 
 Support for fvModels and fvConstraints has been added. This allows for sources that are not typically included in the solver, for example point mass sources.
 

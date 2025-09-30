@@ -53,6 +53,16 @@ Foam::tabulatedIsoSolidTransport<Thermo>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo>
+inline Foam::scalar Foam::tabulatedIsoSolidTransport<Thermo>::kappaT
+(
+    const scalar T
+) const
+{
+    return kappaTable_.lookup(T);
+}
+
+
+template<class Thermo>
 inline Foam::scalar Foam::tabulatedIsoSolidTransport<Thermo>::kappa
 (
     const scalar rho,

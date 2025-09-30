@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -31,10 +31,10 @@ Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 {
-    return New(dict.lookup<word>("type"), mesh, dict, zoneID);
+    return New(dict.lookup<word>("type"), mesh, dict, zoneName);
 }
 
 
@@ -43,7 +43,7 @@ Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
     const word& atmosphereModelType,
     const fvMesh& mesh,
     const dictionary& dict,
-    const label zoneID
+    const word& zoneName
 )
 {
     Info<< "Selecting atmosphereModel: " << atmosphereModelType << endl;
@@ -65,7 +65,7 @@ Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
     (
         mesh,
         dict.optionalSubDict(atmosphereModelType + "Coeffs"),
-        zoneID
+        zoneName
     );
 }
 

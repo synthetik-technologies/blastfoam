@@ -116,11 +116,12 @@ Foam::CowperSymondsPlastic<PlasticType>::CowperSymondsPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    PlasticType(name, mesh, dict, nonLinGeom),
+    PlasticType(name, mesh, baseMesh, dict, nonLinGeom),
     T_(),
     C_("C", dimless, dict),
     p_(dict.lookup<scalar>("p")),

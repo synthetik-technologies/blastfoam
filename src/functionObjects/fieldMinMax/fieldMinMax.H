@@ -73,7 +73,7 @@ SourceFiles
 #define functionObjects_fieldMinMax_H
 
 #include "fvMeshFunctionObject.H"
-#include "mapPolyMesh.H"
+#include "polyTopoChangeMap.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "HashPtrTable.H"
@@ -132,9 +132,6 @@ protected:
         //- Name of fields
         wordList fieldNames_;
 
-        autoPtr<labelList> cellMap_;
-        autoPtr<labelList> rCellMap_;
-
         //- Old field values
         HashPtrTable<regIOobject> oldFields_;
 
@@ -149,10 +146,10 @@ protected:
 
         //- Store old fields
         template<class FieldType>
-        bool map
+        bool mapField
         (
             const word& fName,
-            const mapPolyMesh&
+            const polyTopoChangeMap&
         );
 
         //- Update field max
@@ -161,7 +158,7 @@ protected:
 
         //- Create old field
         template<class FieldType>
-        bool createOld(const word& fieldName);
+        bool storeOld(const word& fieldName);
 
         //- Update field max
         template<class FieldType>
@@ -180,11 +177,6 @@ protected:
             const FieldType& b
         ) const;
 
-        //- Set all old fields and cell maps
-        void setOldFields(const mapPolyMesh& mpm);
-
-        //- Clear all old field and cell maps
-        void clearOldFields();
 
 public:
 
@@ -202,6 +194,15 @@ public:
             const dictionary&
         );
 
+        //- Construct from Time and dictionary
+        fieldMinMax
+        (
+            const word& name,
+            const Time& runTime,
+            const dictionary&,
+            const minMaxType mm
+        );
+
         //- Disallow default bitwise copy construction
         fieldMinMax(const fieldMinMax&) = delete;
 
@@ -215,8 +216,14 @@ public:
         //- Read the field average data
         virtual bool read(const dictionary&);
 
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return fieldNames_;
+        }
+
         //- Update mesh and store map
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void topoChange(const polyTopoChangeMap& mpm);
 
         //- Calculate the field averages
         virtual bool execute();
@@ -231,6 +238,48 @@ public:
         void operator=(const fieldMinMax&) = delete;
 };
 
+
+class fieldMin
+:
+    public fieldMinMax
+{
+public:
+
+    //- Runtime type information
+    TypeName("fieldMin");
+
+    fieldMin
+    (
+        const word& name,
+        const Time& runTime,
+        const dictionary& dict
+    )
+    :
+        fieldMinMax(name, runTime, dict, minMaxType::min)
+    {}
+};
+
+
+class fieldMax
+:
+    public fieldMinMax
+{
+public:
+
+    //- Runtime type information
+    TypeName("fieldMax");
+
+
+    fieldMax
+    (
+        const word& name,
+        const Time& runTime,
+        const dictionary& dict
+    )
+    :
+        fieldMinMax(name, runTime, dict, minMaxType::max)
+    {}
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

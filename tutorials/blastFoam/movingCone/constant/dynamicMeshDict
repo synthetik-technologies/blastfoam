@@ -15,29 +15,51 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   movingAdaptiveFvMesh;
-errorEstimator  densityGradient;
+mover
+{
+    libs
+    (
+        "libfvMeshMoversMotionSolver.so"
+        "libfvMotionSolvers.so"
+    );
+    type            motionSolver;
+    motionSolver    velocityComponentLaplacian;
 
-motionSolver    velocityComponentLaplacian;
+    component       x;
+    diffusivity     directional (1 200 0);
+}
 
-component       x;
-diffusivity     directional (1 200 0);
 
-// How often to refine
-refineInterval  5;
+topoChanger
+{
+    type            polyRefiner;
+    errorEstimator  densityGradient;
 
-// Refine field in between lower..upper (varies based on errorEstimator)
-lowerRefineLevel 0.01;
+    // How often to refine
+    refineInterval  5;
 
-// If value < unrefineLevel unrefine
-unrefineLevel   0.01;
+    // Refine field in between lower..upper (varies based on errorEstimator)
+    lowerRefineLevel 0.05;
 
-// Number of cells refined around high error cells
-nBufferLayers   1;
+    // If value < unrefineLevel unrefine
+    unrefineLevel   0.05;
 
-// Refine cells only up to maxRefinement levels
-maxRefinement  3;
+    // Number of cells refined around high error cells
+    nBufferLayers   1;
 
-// Write the refinement level as a volScalarField
-dumpLevel       true;
+    // Refine cells only up to maxRefinement levels
+    maxRefinement  2;
+
+    // Smallest cell size
+    minDx           5e-5;
+
+    // Write the refinement level as a volScalarField
+    dumpLevel       true;
+}
+
+distributor
+{
+    type redistributor;
+}
+
 // ************************************************************************* //

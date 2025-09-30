@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "scalar.H"
-#include "List.H"
+#include "FixedList.H"
 
 namespace Foam
 {
@@ -194,14 +194,6 @@ public:
             const scalar T
         ) const;
 
-        //- Sensible thermal enthalpy [J/kg]
-        inline scalar Hts
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
-
         //- Absolute enthalpy [J/kg]
         inline scalar Ha
         (
@@ -210,21 +202,19 @@ public:
             const scalar T
         ) const;
 
+        //- Heat capacity at constant pressure of mixture [J/kg/K]
+        inline scalar Cpt(const scalar T) const;
+
+        //- Sensible thermal enthalpy [J/kg]
+        inline scalar Hst(const scalar T) const;
+
         //- Absolute thermal enthalpy [J/kg]
-        inline scalar Hta
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+        inline scalar Hat(const scalar T) const;
 
         #include "HtoEFuncs.H"
 
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
-
-        //- Flame temperature [K]
-        inline scalar flameT() const;
 
         //- Entropy [J/kg/K]
         inline scalar S(const scalar p, const scalar T) const;

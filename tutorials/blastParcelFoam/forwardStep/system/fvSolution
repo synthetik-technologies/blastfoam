@@ -17,14 +17,14 @@ FoamFile
 
 solvers
 {
-    "(rho|rhoU|rhoE|velocityAbscissae.*)"
+    "(rho|rhoU|rhoE)"
     {
         solver          diagonal;
         tolerance       1e-10;
         relTol          0;
     }
 
-    "(U|e)"
+    "(U|e).*"
     {
         solver          PBiCGStab;
         preconditioner  DIC;
@@ -32,15 +32,7 @@ solvers
         relTol          0;
     }
 
-    "moment.*"
-    {
-        solver          PCG;
-        preconditioner  DIC;
-        tolerance       1e-12;
-        relTol          0;
-    }
-
-    "(k|epsilon)"
+    "(k|epsilon).*"
     {
         solver          PBiCGStab;
         preconditioner  DILU;
@@ -48,5 +40,8 @@ solvers
         relTol          0;
     }
 }
+
+PIMPLE
+{}
 
 // ************************************************************************* //

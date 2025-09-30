@@ -1,7 +1,8 @@
 EXE_INC= \
+    -DFULLDEBUG -ggdb3 -O0 -fdefault-inline\
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
-    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/applications/test/Test-EOS/simpleBlastThermo
 
@@ -9,6 +10,5 @@ EXE_LIBS = \
     -lfluidThermophysicalModels \
     -lsolidThermo \
     -L$(BLAST_LIBBIN) \
-    -lblastFiniteVolume \
-    -lblastThermodynamics \
+    -lblastNumerics \
     -lsimpleBlastThermo

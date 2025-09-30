@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::bisectionUnivariateRootSolver
+    Foam::rootSolvers::univariate::bisection
 
 Description
     Univariate root finding using the bisection method.
@@ -43,12 +43,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                        Class bisectionUnivariateRootSolver Declaration
+            Class rootSolvers::univariate::bisection Declaration
 \*---------------------------------------------------------------------------*/
 
-class bisectionUnivariateRootSolver
+class bisection
 :
     public univariateRootSolver
 {
@@ -60,18 +64,43 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        bisectionUnivariateRootSolver
+        bisection
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        bisection
+        (
+            const scalarMultivariateEquation& eqn,
+            const bisection& solver
+        );
+
         //- Disallow default bitwise copy construction
-        bisectionUnivariateRootSolver(const univariateRootSolver&) = delete;
+        bisection(const bisection&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new bisection(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new bisection(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~bisectionUnivariateRootSolver();
+    virtual ~bisection();
 
 
     // Member Functions
@@ -89,6 +118,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

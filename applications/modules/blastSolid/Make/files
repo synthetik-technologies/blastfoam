@@ -1,0 +1,3 @@
+blastSolidSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastSolid

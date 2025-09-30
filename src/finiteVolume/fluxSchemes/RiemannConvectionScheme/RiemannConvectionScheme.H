@@ -77,6 +77,16 @@ public:
 
     // Constructors
 
+        //- Construct from flux
+        RiemannConvectionScheme
+        (
+            const surfaceScalarField& faceFlux
+        )
+        :
+            convectionScheme<Type>(faceFlux.mesh(), faceFlux),
+            fluxSchemePtr_(&fluxSchemeBase::findFluxScheme(faceFlux))
+        {}
+
         //- Construct from flux and interpolation scheme
         RiemannConvectionScheme
         (
@@ -86,57 +96,8 @@ public:
         )
         :
             convectionScheme<Type>(mesh, faceFlux),
-            fluxSchemePtr_(nullptr)
-        {
-            const word phaseFluxName
-            (
-                IOobject::groupName(fluxSchemeBase::typeName, faceFlux.group())
-            );
-            if (mesh.foundObject<fluxScheme>(fluxSchemeBase::typeName))
-            {
-                fluxSchemePtr_.set
-                (
-                    &mesh.lookupObject<fluxScheme>(fluxSchemeBase::typeName)
-                );
-            }
-            else if (mesh.foundObject<phaseFluxScheme>(phaseFluxName))
-            {
-                fluxSchemePtr_.set
-                (
-                    &mesh.lookupObject<phaseFluxScheme>(phaseFluxName)
-                );
-            }
-            else
-            {
-                // If the phase name is not the primary phase
-                // check all of the included phases
-                HashTable<const phaseFluxScheme*> schemes
-                (
-                    mesh.lookupClass<phaseFluxScheme>()
-                );
-                forAllConstIter
-                (
-                    HashTable<const phaseFluxScheme*>,
-                    schemes,
-                    iter
-                )
-                {
-                    hashedWordList phases(iter()->phases());
-                    {
-                        if (phases.found(faceFlux.group()))
-                        {
-                            fluxSchemePtr_.set(iter());
-                        }
-                    }
-                }
-            }
-            if (!fluxSchemePtr_.valid())
-            {
-                FatalErrorInFunction
-                    << "Could not determine a fluxScheme to use"
-                    << abort(FatalError);
-            }
-        }
+            fluxSchemePtr_(&fluxSchemeBase::findFluxScheme(faceFlux))
+        {}
 
 
         //- Construct from flux and Istream
@@ -148,57 +109,8 @@ public:
         )
         :
             convectionScheme<Type>(mesh, faceFlux),
-            fluxSchemePtr_(nullptr)
-        {
-            const word phaseFluxName
-            (
-                IOobject::groupName(fluxSchemeBase::typeName, faceFlux.group())
-            );
-            if (mesh.foundObject<fluxScheme>(fluxSchemeBase::typeName))
-            {
-                fluxSchemePtr_.set
-                (
-                    &mesh.lookupObject<fluxScheme>(fluxSchemeBase::typeName)
-                );
-            }
-            else if (mesh.foundObject<phaseFluxScheme>(phaseFluxName))
-            {
-                fluxSchemePtr_.set
-                (
-                    &mesh.lookupObject<phaseFluxScheme>(phaseFluxName)
-                );
-            }
-            else
-            {
-                // If the phase name is not the primary phase
-                // check all of the included phases
-                HashTable<const phaseFluxScheme*> schemes
-                (
-                    mesh.lookupClass<phaseFluxScheme>()
-                );
-                forAllConstIter
-                (
-                    HashTable<const phaseFluxScheme*>,
-                    schemes,
-                    iter
-                )
-                {
-                    hashedWordList phases(iter()->phases());
-                    {
-                        if (phases.found(faceFlux.group()))
-                        {
-                            fluxSchemePtr_.set(iter());
-                        }
-                    }
-                }
-            }
-            if (!fluxSchemePtr_.valid())
-            {
-                FatalErrorInFunction
-                    << "Could not determine a fluxScheme to use"
-                    << abort(FatalError);
-            }
-        }
+            fluxSchemePtr_(&fluxSchemeBase::findFluxScheme(faceFlux))
+        {}
 
         //- Disallow default bitwise copy construction
         RiemannConvectionScheme(const RiemannConvectionScheme&) = delete;
@@ -216,6 +128,13 @@ public:
         (
             const surfaceScalarField&,
             const GeometricField<Type, fvPatchField, volMesh>&
+        ) const;
+
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> flux
+        (
+            const surfaceScalarField&,
+            const GeometricField<Type, fvPatchField, volMesh>&,
+            const volScalarField&
         ) const;
 
         tmp<fvMatrix<Type>> fvmDiv

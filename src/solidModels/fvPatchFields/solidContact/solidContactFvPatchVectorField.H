@@ -393,7 +393,7 @@ public:
         // Evaluation functions
 
             //- Update the coefficients associated with the patch field
-            virtual void updateCoeffs();
+            virtual bool updateFields();
 
 
         // Member functions

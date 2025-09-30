@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -42,7 +42,7 @@ SourceFiles
 #include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 #include "fluidThermo.H"
-#include "dynamicMomentumTransportModel.H"
+#include "compressibleMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 #include "fvModels.H"
@@ -94,20 +94,39 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         //- Turbulence model
-        autoPtr<compressible::momentumTransportModel> turbulence_;
+        autoPtr<compressibleMomentumTransportModel> turbulence_;
 
         //- Thermophysical transport model
         autoPtr<fluidThermophysicalTransportModel>
             thermophysicalTransport_;
 
         //- Gravitational acceleration
-        const uniformDimensionedVectorField& g_;
+        uniformDimensionedVectorField g_;
 
         //- Solution directions
         vector solutionDs_;
 
-        //- Allocate models
-        virtual void setModels();
+        //- Mass source
+        tmp<fvScalarMatrix> rhoSource_;
+
+        //- Drag source
+        tmp<fvVectorMatrix> dragSource_;
+
+        //- External energy source
+        tmp<fvScalarMatrix> extESource_;
+
+
+        // Protected member functions
+
+            //- Allocate models
+            virtual void setModels();
+
+            //- Add source terms to momentum and energy equations
+            virtual void addSources
+            (
+                volVectorField::Internal& rhoUSource,
+                volScalarField::Internal& rhoESource
+            ) const;
 
 public:
 
@@ -121,9 +140,10 @@ public:
             compressibleSystem,
             singlePhase,
             (
+                const dictionary& dict,
                 const fvMesh& mesh
             ),
-            (mesh)
+            (dict, mesh)
         );
         declareRunTimeSelectionTable
         (
@@ -131,9 +151,10 @@ public:
             compressibleSystem,
             twoPhase,
             (
+                const dictionary& dict,
                 const fvMesh& mesh
             ),
-            (mesh)
+            (dict, mesh)
         );
         declareRunTimeSelectionTable
         (
@@ -141,23 +162,51 @@ public:
             compressibleSystem,
             multiphase,
             (
+                const dictionary& dict,
                 const fvMesh& mesh
             ),
-            (mesh)
+            (dict, mesh)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            compressibleSystem,
+            coupled,
+            (
+                const dictionary& dict,
+                const fvMesh& mesh
+            ),
+            (dict, mesh)
         );
 
     // Constructor
-    compressibleSystem(const fvMesh& mesh);
+    compressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh
+    );
 
 
     // Selector
-        static autoPtr<compressibleSystem> New(const fvMesh& mesh);
+        static autoPtr<compressibleSystem> New
+        (
+            const fvMesh& mesh
+        );
+        static autoPtr<compressibleSystem> New
+        (
+            const word& type,
+            const fvMesh& mesh
+        );
+        static autoPtr<compressibleSystem> NewCoupled
+        (
+            const fvMesh& mesh
+        );
 
         template<class SelectionTable>
         static autoPtr<compressibleSystem> New
         (
-            const fvMesh& mesh,
             const dictionary& dict,
+            const fvMesh& mesh,
             const word& defaultType,
             SelectionTable* table
         );
@@ -197,6 +246,15 @@ public:
 
         //- Const access to total mass
         virtual const volScalarField& rho() const = 0;
+
+        //- Access to total mass
+        virtual volScalarField& rho() = 0;
+
+        //- Const access to total effective mass
+        virtual const volScalarField& rhoEff() const;
+
+        //- Access to total mass
+        virtual volScalarField& rhoEff();
 
         //- Const access to velocity
         inline const volVectorField& U() const;
@@ -240,11 +298,69 @@ public:
         //- Post update
         virtual void postUpdate();
 
+        //- Add external mass source
+        tmp<fvScalarMatrix>& rhoSource()
+        {
+            return rhoSource_;
+        }
+
+        //- Add external mass source
+        void addRhoCoeff(const volScalarField::Internal& coeff);
+
+        //- Add external mass source
+        void addRhoSource(const volScalarField::Internal& src);
+
+        //- Add external energy source
+        tmp<fvVectorMatrix>& dragSource()
+        {
+            return dragSource_;
+        }
+
+        //- Add to U coefficient
+        void addUCoeff(const volScalarField::Internal& coeff);
+
+        //- Add to U source
+        void addUSource(const volVectorField::Internal& src);
+
+        //- Add external energy source
+        tmp<fvScalarMatrix>& eSource()
+        {
+            return extESource_;
+        }
+
+        //- Add external energy source
+        void addECoeff(const volScalarField::Internal& extEsrc);
+
+        //- Add external energy source
+        void addESource(const volScalarField::Internal& extEsrc);
+
         //- Clear the flux scheme
         virtual void clear();
 
         //- Return the maximum Courant number
         virtual scalar CoNum() const;
+
+    // Coupling functions
+
+        //- Set a pointer to the dispersed phase volume fraction
+        virtual void setDispersedVolumeFraction(const volScalarField& alphad)
+        {
+            NotImplemented;
+        }
+
+        //- Return const access to volume fraction
+        virtual const volScalarField& volumeFraction() const
+        {
+            NotImplemented;
+            return rhoE_;
+        }
+
+        //- Non-cont access to volume fraction
+        virtual volScalarField& volumeFraction()
+        {
+            NotImplemented;
+            return rhoE_;
+        }
 };
 
 

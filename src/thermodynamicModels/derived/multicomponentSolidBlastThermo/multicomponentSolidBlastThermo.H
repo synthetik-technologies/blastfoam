@@ -123,7 +123,7 @@ public:
             virtual scalar cellp(const label celli) const;
 
             //- Pressure [kg/m/s^2]
-            virtual scalar p
+            virtual scalar pi
             (
                 const label speciei,
                 const scalar rho,
@@ -132,7 +132,7 @@ public:
             ) const;
 
             //- Density [kg/m^3]
-            virtual tmp<volScalarField> p
+            virtual tmp<volScalarField> pi
             (
                 const label speciei,
                 const volScalarField& rho,
@@ -141,7 +141,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. density
-            virtual scalar dpdRho
+            virtual scalar dpdRhoi
             (
                 const label speciei,
                 const scalar rho,
@@ -150,7 +150,7 @@ public:
             ) const;
 
             //- Return derivative of pressure w.r.t. Temperature
-            virtual scalar dpdT
+            virtual scalar dpdTi
             (
                 const label speciei,
                 const scalar rho,
@@ -159,13 +159,41 @@ public:
             ) const;
 
 
+        // Mass Transfer
+
+            //- Does the mixture include this specie?
+            inline bool containsSpecie(const word& specieName) const
+            {
+                return multicomponentBlastThermo::containsSpecie(specieName);
+            }
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, tmp<volScalarField>& delta)
+            {
+                multicomponentBlastThermo::addDelta(name, delta);
+            }
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addDelta(const word& name, const volScalarField::Internal& delta)
+            {
+                multicomponentBlastThermo::addDelta(name, delta);
+            }
+
+            //- Add an external change to a thermodynamic field if present
+            //  i.e. mass transfer
+            virtual void addSource(const word& name, tmp<fvScalarMatrix>& source)
+            {
+                multicomponentBlastThermo::addSource(name, source);
+            }
+
     //- Thermodynamic and transport functions
 
         //- Calculate density
         virtual void updateRho();
 
         //- Dynamic viscosity [kg/m/s]
-        virtual scalar mu
+        virtual scalar mui
         (
             const label speciei,
             const scalar p,
@@ -173,7 +201,7 @@ public:
         ) const;
 
         //- Dynamic viscosity [kg/m/s]
-        virtual scalar mu
+        virtual scalar mui
         (
             const label speciei,
             const scalar rho,
@@ -182,7 +210,7 @@ public:
         ) const;
 
         //- Dynamic viscosity [kg/m/s]
-        virtual tmp<volScalarField> mu
+        virtual tmp<volScalarField> mui
         (
             const label speciei,
             const volScalarField& p,
@@ -190,21 +218,12 @@ public:
         ) const;
 
         //- Dynamic viscosity [kg/m/s]
-        virtual tmp<volScalarField> mu
+        virtual tmp<volScalarField> mui
         (
             const label speciei,
             const volScalarField& rho,
             const volScalarField& e,
             const volScalarField& T
-        ) const;
-
-        //- Thermal conductivity [W/m/K]
-        virtual tmp<volVectorField> Kappa() const;
-
-        //- Anisotropic thermal conductivity [W/m/K]
-        virtual tmp<vectorField> Kappa
-        (
-            const label patchi
         ) const;
 
         //- Return true if thermal conductivity is isotropic

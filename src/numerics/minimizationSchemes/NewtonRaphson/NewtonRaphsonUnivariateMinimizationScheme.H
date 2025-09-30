@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NewtonRaphsonUnivariateMinimizationScheme
+    Foam::minimizationSchemes::univariate::NewtonRaphson
 
 Description
     Univariate minimization using the a Newton-Raphson method. First and
@@ -45,12 +45,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class NewtonRaphsonUnivariateMinimizationScheme Declaration
+                          Class NewtonRaphson Declaration
 \*---------------------------------------------------------------------------*/
 
-class NewtonRaphsonUnivariateMinimizationScheme
+class NewtonRaphson
 :
     public univariateMinimizationScheme
 {
@@ -62,15 +66,43 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        NewtonRaphsonUnivariateMinimizationScheme
+        NewtonRaphson
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        NewtonRaphson
+        (
+            const scalarUnivariateEquation& eqn,
+            const NewtonRaphson& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new NewtonRaphson(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new NewtonRaphson(eqns, *this)
+            );
+        }
+
 
     //- Destructor
-    virtual ~NewtonRaphsonUnivariateMinimizationScheme()
+    virtual ~NewtonRaphson()
     {}
 
 
@@ -88,12 +120,14 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const NewtonRaphsonUnivariateMinimizationScheme&) = delete;
+        void operator=(const NewtonRaphson&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

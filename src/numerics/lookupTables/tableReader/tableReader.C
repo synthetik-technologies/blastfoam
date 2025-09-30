@@ -25,6 +25,9 @@ License
 
 #include "tableReader.H"
 
+
+Foam::HashTable<Foam::entryTable> Foam::readTables;
+
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
 void Foam::removeComments(string& line)
@@ -37,14 +40,42 @@ void Foam::removeComments(string& line)
 }
 
 
-Foam::List<Foam::List<Foam::string>> Foam::read2DTable
+Foam::token::punctuationToken Foam::readDelim
+(
+    const dictionary& dict,
+    const word& name,
+    const token::punctuationToken delim
+)
+{
+    if (!dict.found(name))
+    {
+        return delim;
+    }
+    ITstream is = dict.lookup(name);
+    token t(is);
+    if (!t.isString() || t.stringToken().size() != 1)
+    {
+        FatalIOErrorInFunction(is)
+            << "Expected single quoted character but found " << t << endl
+            << abort(FatalIOError);
+    }
+    return token::punctuationToken(t.stringToken()[0]);
+}
+
+
+const Foam::entryTable& Foam::read2DTable
 (
     const fileName& file,
-    const string& delim,
+    const token::punctuationToken delim,
     const label startLine,
     const bool flip
 )
 {
+    if (readTables.found(file))
+    {
+        return readTables[file];
+    }
+
     fileName fNameExpanded(file);
     fNameExpanded.expand();
 
@@ -60,61 +91,80 @@ Foam::List<Foam::List<Foam::string>> Foam::read2DTable
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    label ny = -1;
-    label nx = 0;
-    label lineI = 0;
+    label nx = -1;
+    label ny = 0;
 
-    word line;
-    DynamicList<List<string>> tentries;
-    while (is.good())
+    DynamicList<List<List<token>>> tentries;
+    token t(is);
+
+    // Start from "startLine"
+    while (is.good() && t.lineNumber() < startLine)
     {
-        is.getLine(line);
-        if (lineI++ < startLine)
-        {
-            continue;
-        }
-        removeComments(line);
+        is >> t;
+    }
 
-        DynamicList<word> lineVals(line.size());
-        label stringi = 0;
-        for
+    while (is.good() && t.good())
+    {
+        // Current line number
+        const label lineNo = t.lineNumber();
+
+        // Remove comments
+        if
         (
-            string::const_iterator iter = line.begin();
-            iter != line.end();
-            ++iter
+            (t.isPunctuation() && t.pToken() == token::HASH)
+         || t.isFunctionName()
         )
         {
-            if (*iter != delim[0])
+            do
             {
-                lineVals(stringi) = lineVals(stringi) + *iter;
-            }
-            else
+                is >> t;
+            } while
+            (
+                (t.isPunctuation() && t.pToken() != token::NL)
+             && t.good()
+             && t.lineNumber() == lineNo
+            );
+            continue;
+        }
+
+        DynamicList<List<token>> lineVals;
+
+        // Loop until a new line is reached
+        while (t.good() && t.lineNumber() == lineNo)
+        {
+            // Add tokens until delimiter is reached
+            DynamicList<token> tokens;
+            while (t.good() && t.lineNumber() == lineNo)
             {
-                stringi++;
+                tokens.append(t);
+                is >> t;
+                // Read next token if this is the delimiter
+                if (t.isPunctuation() && t.pToken() == delim)
+                {
+                    is >> t;
+                    break;
+                }
             }
+            lineVals.append(tokens);
         }
 
         if (!lineVals.size())
         {
             continue;
         }
-        else if (ny < 0)
+        else if (nx < 0)
         {
-            ny = lineVals.size();
+            nx = lineVals.size();
         }
-        else if (lineVals.size() != ny)
+        else if (lineVals.size() != nx)
         {
             FatalErrorInFunction
                 << "Incompatible table rows" << endl
-                << line
                 << abort(FatalError);
         }
-        tentries.append(List<string>(lineVals.size()));
-        forAll(lineVals, i)
-        {
-            tentries[nx][i] = lineVals[i];
-        }
-        nx++;
+
+        tentries.append(lineVals);
+        ny++;
     }
 
     // If only one row is provided, assume this is the data
@@ -122,24 +172,15 @@ Foam::List<Foam::List<Foam::string>> Foam::read2DTable
     if (flip || nx == 1)
     {
         f = true;
-        label t = nx;
-        nx = ny;
-        ny = t;
     }
 
+    entryTable& entries = readTables(file);
+    entries = tentries;
+    if (f)
+    {
+        entries.flip();
+    }
 
-    if (!f)
-    {
-        return move(tentries);
-    }
-    List<List<string>> entries(nx, List<string>(ny));
-    forAll(entries, i)
-    {
-        forAll(entries[i], j)
-        {
-            entries[i][j] = tentries[j][i];
-        }
-    }
     return entries;
 }
 

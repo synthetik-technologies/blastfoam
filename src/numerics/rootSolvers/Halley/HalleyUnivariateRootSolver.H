@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::HalleyUnivariateRootSolver
+    Foam::rootSolvers::univariate::Halley
 
 Description
     Univariate root finding using the Halley method which requires first,
@@ -44,12 +44,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace rootSolvers
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
-                          Class HalleyUnivariateRootSolver Declaration
+                Class rootSolvers::univariate::Halley Declaration
 \*---------------------------------------------------------------------------*/
 
-class HalleyUnivariateRootSolver
+class Halley
 :
     public univariateRootSolver
 {
@@ -61,18 +65,43 @@ public:
     // Constructors
 
         //- Construct for given univariateRootSolver
-        HalleyUnivariateRootSolver
+        Halley
         (
             const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        Halley
+        (
+            const scalarMultivariateEquation& eqn,
+            const Halley& solver
+        );
+
         //- Disallow default bitwise copy construction
-        HalleyUnivariateRootSolver(const univariateRootSolver&) = delete;
+        Halley(const Halley&) = delete;
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<rootSolver>(new Halley(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateRootSolver> cloneUnivariate
+        (
+            const scalarMultivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateRootSolver>(new Halley(eqns, *this));
+        }
 
 
     //- Destructor
-    virtual ~HalleyUnivariateRootSolver();
+    virtual ~Halley();
 
 
     // Member Functions
@@ -90,6 +119,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace rootSolvers
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

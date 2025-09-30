@@ -9,72 +9,127 @@ on:
       tag:
         required: true
         type: string
+    secrets:
+      BLASTFOAM_PAT:
+        required: true
+      DOCKERHUB_JH:
+        required: true
+
+permissions:
+  contents: write           # needed for git push and GitHub releases
+  packages: "write"         # needed for pushing to GHCR
 
 jobs:
   code:
     name: Deploy Source Code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Private Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.SYN_BOT_READ_WRITE }}
+          token: ${{ secrets.BLASTFOAM_PAT }}
           ref: ${{ github.ref }}
 
-      - name: Push Code Publically
+      - name: Push Code Publicly
         run: |
-          git push --force "https://github.com/${{ inputs.prod_repo }}" HEAD:master
-          git push --force "https://github.com/${{ inputs.prod_repo }}" v${{ inputs.tag }}
+          set -euxo pipefail
+          echo "Pushing HEAD to master of public repository: '${{ inputs.prod_repo }}'"
+          git push --force-with-lease "https://github.com/${{ inputs.prod_repo }}" HEAD:master
+          echo "Pushing tag v${{ inputs.tag }} to public repository: '${{ inputs.prod_repo }}'"
+          git push --force-with-lease "https://github.com/${{ inputs.prod_repo }}" v${{ inputs.tag }}
 
-      - name: Copy Release Publically
+      - name: Copy Release Publicly
         env:
-          GH_TOKEN: ${{ secrets.SYN_BOT_READ_WRITE }}
+          GH_TOKEN: ${{ secrets.BLASTFOAM_PAT }}
         run: |
-          gh release download v${{ inputs.tag }} -p '*.deb'
-          ls -la
-          gh release view -R "${{ inputs.prod_repo }}" ${{ inputs.tag }} || gh release create -R "${{ inputs.prod_repo }}" -t v${{ inputs.tag }} v${{ inputs.tag }} #* View the release; if it doesn't exist create it
-          gh release upload -R "${{ inputs.prod_repo }}" v${{ inputs.tag }} *.deb
+          set -euxo pipefail
+
+          echo "Downloading Debian package from private release v${{ inputs.tag }}"
+          gh release download "v${{ inputs.tag }}" -p '*.deb'
+
+          echo "Verifying downloaded artifacts..."
+          if ! ls *.deb 1>/dev/null 2>&1; then
+            echo "❌ No .deb files found to upload. Exiting."
+            exit 1
+          fi
+
+          echo "Checking if release v${{ inputs.tag }} exists in '${{ inputs.prod_repo }}'"
+          if ! gh release view -R "${{ inputs.prod_repo }}" "v${{ inputs.tag }}" > /dev/null 2>&1; then
+            echo "Creating new release v${{ inputs.tag }} in '${{ inputs.prod_repo }}'"
+            gh release create -R "${{ inputs.prod_repo }}" \
+              --title "v${{ inputs.tag }}" \
+              --notes "Public release v${{ inputs.tag }} of BlastFOAM synced from private repo." \
+              "v${{ inputs.tag }}"
+          else
+            echo "Release v${{ inputs.tag }} already exists in '${{ inputs.prod_repo }}'"
+          fi
+
+          echo "Uploading Debian package(s) to release v${{ inputs.tag }} in '${{ inputs.prod_repo }}'"
+          gh release upload -R "${{ inputs.prod_repo }}" "v${{ inputs.tag }}" *.deb --clobber
+
+          echo "✅ Public release v${{ inputs.tag }} updated successfully in '${{ inputs.prod_repo }}'"
+
+
   docker:
     name: Deploy Docker Image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - name: Login to GitHub Registry
+      - name: Login to GitHub Container Registry (GHCR)
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ secrets.SYN_BOT_READ_WRITE }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.BLASTFOAM_PAT }}
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: jacobhoehler
-          password: ${{ secrets.DOCKERHUB_JH }}
-
-      - name: Construct Dev Tag
-        run: echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ inputs.tag }}" >> $GITHUB_ENV
-
-      - name: Pull Docker Image
-        run: docker pull ${{ env.DEV_IMAGE }}
-
-      - name: Create Image Tags
+      # - name: Login to DockerHub
+      #   uses: docker/login-action@v2
+      #   with:
+      #     username: jacobhoehler
+      #     password: ${{ secrets.DOCKERHUB_JH }}
+      
+      - name: Define image tags
         run: |
+          set -euxo pipefail
+
+          echo "DEV_IMAGE=ghcr.io/${{ github.repository }}:${{ inputs.tag }}" >> $GITHUB_ENV
           echo "GHCR_PROD_IMAGE=ghcr.io/${{ inputs.prod_repo }}:${{ inputs.tag }}" >> $GITHUB_ENV
           echo "GHCR_PROD_LATEST_IMAGE=ghcr.io/${{ inputs.prod_repo }}:latest" >> $GITHUB_ENV
-          echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
-          echo "DH_PROD_IMAGE=synthetik/blastfoam:${{ inputs.tag }}" >> $GITHUB_ENV
-
-      - name: Tag Images
+          # echo "DH_PROD_LATEST_IMAGE=synthetik/blastfoam:latest" >> $GITHUB_ENV
+          # echo "DH_PROD_IMAGE=synthetik/blastfoam:${{ inputs.tag }}" >> $GITHUB_ENV
+      
+      - name: Pull Dev Image
         run: |
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_IMAGE }}
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.GHCR_PROD_LATEST_IMAGE }}
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_IMAGE }}
-          docker tag ${{ env.DEV_IMAGE }} ${{ env.DH_PROD_LATEST_IMAGE }}
+          set -euxo pipefail
+          echo "Pulling dev image: $DEV_IMAGE"
+          docker pull "$DEV_IMAGE"
 
-      - name: Push Images
+      - name: Tag Image for Production
         run: |
-          docker push ${{ env.GHCR_PROD_IMAGE }}
-          docker push ${{ env.GHCR_PROD_LATEST_IMAGE }}
-          docker push ${{ env.DH_PROD_IMAGE }}
-          docker push ${{ env.DH_PROD_LATEST_IMAGE }}
+          set -euxo pipefail
+          echo "Tagging image for GHCR and DockerHub..."
+          docker tag "$DEV_IMAGE" "$GHCR_PROD_IMAGE"
+          docker tag "$DEV_IMAGE" "$GHCR_PROD_LATEST_IMAGE"
+          # docker tag "$DEV_IMAGE" "$DH_PROD_IMAGE"
+          # docker tag "$DEV_IMAGE" "$DH_PROD_LATEST_IMAGE"
+
+      - name: Push Image to GHCR and DockerHub
+        run: |
+          set -euxo pipefail
+          echo "Pushing to: $GHCR_PROD_IMAGE"
+          docker push "$GHCR_PROD_IMAGE"
+          echo "Pushing to: $GHCR_PROD_LATEST_IMAGE"
+          docker push "$GHCR_PROD_LATEST_IMAGE"
+          
+          # echo "Pushing to: $DH_PROD_IMAGE"
+          # docker push "$DH_PROD_IMAGE"
+          # echo "Pushing to: $DH_PROD_LATEST_IMAGE"
+          # docker push "$DH_PROD_LATEST_IMAGE"
+      
+      - name: ✅ Done
+        run: |
+          echo "Docker images pushed successfully!"
+          echo "GHCR Production Image: $GHCR_PROD_IMAGE"
+          echo "GHCR Production Latest Image: $GHCR_PROD_LATEST_IMAGE"
+          # echo "DockerHub Production Image: $DH_PROD_IMAGE"
+          # echo "DockerHub Production Latest Image: $DH_PROD_LATEST_IMAGE"

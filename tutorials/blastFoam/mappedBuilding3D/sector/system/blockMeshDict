@@ -16,12 +16,13 @@ FoamFile
 
 convertToMeters 1; // feet to meters
 
-R   1.0;
-x   #calc "$R*cos(Foam::constant::mathematical::pi/180.0)";
-y   #calc "$R*sin(Foam::constant::mathematical::pi/180.0)";
-ny  #calc "-$R*sin(Foam::constant::mathematical::pi/180.0)";
-z   #calc "$R*sin(Foam::constant::mathematical::pi/180.0) + 1.0";
-nz  #calc "-$R*sin(Foam::constant::mathematical::pi/180.0) + 1.0";
+R       1.0;
+theta   #calc   "Foam::constant::mathematical::pi/180.0";
+x       #calc   "$R*cos($theta)*cos($theta)";
+y       #calc   "$R*sin($theta)*cos($theta)";
+ny      #neg    $y;
+z       #calc   "$y + 1.0";
+nz      #calc   "$ny + 1.0";
 
 
 vertices

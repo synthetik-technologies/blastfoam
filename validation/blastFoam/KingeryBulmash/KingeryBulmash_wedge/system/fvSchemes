@@ -42,12 +42,9 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  vanAlbada;
-    reconstruct(rho)    vanAlbada;
-    reconstruct(U)      vanAlbadaV;
-    reconstruct(e)      vanAlbada;
-    reconstruct(p)      vanAlbada;
-    reconstruct(speedOfSound) vanAlbada;
+    reconstruct(rho)    quadraticMUSCL vanAlbada;
+    "reconstruct\(.*\)" quadraticMUSCL vanAlbada;
+    reconstruct(U)      quadraticMUSCL vanAlbada;
 }
 
 snGradSchemes

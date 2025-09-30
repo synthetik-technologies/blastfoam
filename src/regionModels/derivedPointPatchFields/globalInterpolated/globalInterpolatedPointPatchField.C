@@ -49,6 +49,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(Zero),
     nbrName_(word(iF.name()).replaceAll("point", word::null))
 {}
 
@@ -72,16 +73,35 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
-    nbrName_
-    (
-        dict.lookupOrDefault<word>
-        (
-            "nbrName",
-            word(iF.name()).replaceAll("point", word::null)
-        )
-    )
+    unmappedValue_(dict.lookupOrDefault<Type>("unmappedValue", Zero)),
+    nbrName_(dict.lookup<word>("nbrName"))
 {}
 
+
+template<class Type>
+Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
+(
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const word& nbrName
+)
+:
+    fixedValuePointPatchField<Type>(p, iF),
+    globalBoundary_
+    (
+        globalPolyBoundaryMesh::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )
+    ),
+    unmappedValue_(Zero),
+    nbrName_(nbrName)
+{
+    Field<Type>::operator=(this->patchInternalField());
+}
 
 
 template<class Type>
@@ -104,6 +124,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(ptf.unmappedValue_),
     nbrName_(ptf.nbrName_)
 {}
 
@@ -126,6 +147,7 @@ Foam::globalInterpolatedPointPatchField<Type>::globalInterpolatedPointPatchField
             )
         )
     ),
+    unmappedValue_(ptf.unmappedValue_),
     nbrName_(ptf.nbrName_)
 {}
 
@@ -146,7 +168,14 @@ void Foam::globalInterpolatedPointPatchField<Type>::updateCoeffs()
     UPstream::msgType() = oldTag+1;
 
     // Get the coupling information from the mappedPatchBase
-    const coupledGlobalPolyPatch& cgpp = globalBoundary_(this->patch());
+    const coupledGlobalPolyPatch& cgpp =
+        globalPolyBoundaryMesh::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                this->patch().boundaryMesh().mesh().thisDb()
+            )
+        )(this->patch());
     const polyMesh& nbrMesh = cgpp.sampleMesh();
     const coupledGlobalPolyPatch& samplePatch = cgpp.samplePatch();
     const label samplePatchi = samplePatch.patch().index();
@@ -156,7 +185,9 @@ void Foam::globalInterpolatedPointPatchField<Type>::updateCoeffs()
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    Field<Type>::operator=(samplePatch.faceToPointInterpolate(nbr));
+    Field<Type> mappedNbr(samplePatch.faceInterpolate(nbr));
+    cgpp.setUnmappedFace(mappedNbr, unmappedValue_);
+    Field<Type>::operator=(cgpp.faceToPoint(mappedNbr));
     fixedValuePointPatchField<Type>::updateCoeffs();
 
     // Restore tag
@@ -169,6 +200,13 @@ void Foam::globalInterpolatedPointPatchField<Type>::write(Ostream& os) const
 {
     fixedValuePointPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
+    writeEntryIfDifferent
+    (
+        os,
+        "unmappedValue",
+        unmappedValue_,
+        pTraits<Type>::zero
+    );
 }
 
 // ************************************************************************* //

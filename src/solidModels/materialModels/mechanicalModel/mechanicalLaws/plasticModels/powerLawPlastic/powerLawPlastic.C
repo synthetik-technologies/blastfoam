@@ -49,11 +49,12 @@ Foam::powerLawPlastic<PlasticType>::powerLawPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    PlasticType(name, mesh, dict, nonLinGeom),
+    PlasticType(name, mesh, baseMesh, dict, nonLinGeom),
     k_("k", dimPressure, -1.0),
     n_("n", dimless, -1.0),
     epsilonY_("epsilonY", dimless, 0.0)

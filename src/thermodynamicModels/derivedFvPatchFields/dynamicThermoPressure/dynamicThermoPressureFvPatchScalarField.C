@@ -104,28 +104,32 @@ Foam::dynamicThermoPressureFvPatchScalarField::dynamicThermoPressureFvPatchScala
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::dynamicThermoPressureFvPatchScalarField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchScalarField::autoMap(m);
-    m(p0_, p0_);
-}
-
-
-void Foam::dynamicThermoPressureFvPatchScalarField::rmap
+void Foam::dynamicThermoPressureFvPatchScalarField::map
 (
     const fvPatchScalarField& ptf,
-    const labelList& addr
+    const fvPatchFieldMapper& mapper
 )
 {
-    fixedValueFvPatchScalarField::rmap(ptf, addr);
+    fixedValueFvPatchScalarField::map(ptf, mapper);
 
     const dynamicThermoPressureFvPatchScalarField& tiptf =
         refCast<const dynamicThermoPressureFvPatchScalarField>(ptf);
 
-    p0_.rmap(tiptf.p0_, addr);
+    mapper(p0_, tiptf.p0_);
+}
+
+
+void Foam::dynamicThermoPressureFvPatchScalarField::reset
+(
+    const fvPatchScalarField& ptf
+)
+{
+    fixedValueFvPatchScalarField::reset(ptf);
+
+    const dynamicThermoPressureFvPatchScalarField& tiptf =
+        refCast<const dynamicThermoPressureFvPatchScalarField>(ptf);
+
+    p0_.reset(tiptf.p0_);
 }
 
 

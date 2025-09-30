@@ -3,23 +3,46 @@ globalPolyPatch/globalPolyPatch.C
 coupledGlobalPolyPatch/coupledGlobalPolyPatch.C
 globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
 
-patchToPatchMappings = coupledGlobalPolyPatch/patchToPatchMappings
-$(patchToPatchMappings)/patchToPatchMapping/patchToPatchMapping.C
-$(patchToPatchMappings)/primitive/primitivePatchToPatchMapping.C
-$(patchToPatchMappings)/directMap/directMapPatchToPatchMapping.C
 
-AMI = $(patchToPatchMappings)/ami
-$(AMI)/newAMIInterpolation/newAMIInterpolationName.C
-$(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
-$(AMI)/amiPatchToPatchMapping.C
+# Mapping methods
+patchToPatchMappings/patchToPatchMapping/patchToPatchMapping.C
+patchToPatchMappings/patchToPatchMapping/patchToPatchMappingParallelOps.C
 
-GGI = $(patchToPatchMappings)/ggi
-$(GGI)/ggiPatchToPatchMapping.C
-$(GGI)/GGIInterpolation/GGIInterpolationName.C
 
-#RBF = $(patchToPatchMappings)/rbf
+patchToPatchMappings/nearby/nearbyPatchToPatchMapping.C
+patchToPatchMappings/direct/directPatchToPatchMapping.C
+patchToPatchMappings/nearest/nearestPatchToPatchMapping.C
+patchToPatchMappings/inverseDistance/inverseDistancePatchToPatchMapping.C
+patchToPatchMappings/intersection/intersectionPatchToPatchMapping.C
+
+AMI = patchToPatchMappings/ami
+#$(AMI)/newAMIInterpolation/newAMIInterpolationName.C
+#$(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
+#$(AMI)/amiPatchToPatchMapping.C
+
+GGI = patchToPatchMappings/ggi
+#$(GGI)/GGIInterpolation/GGIInterpolationName.C
+#$(GGI)/ggiPatchToPatchMapping.C
+
+ifdef EIGEN_DIR
+RBF = patchToPatchMappings/rbf
 #$(RBF)/RBFInterpolation/RBFInterpolation.C
 #$(RBF)/rbfPatchToPatchMapping.C
+
+$(RBF)/RBFFunctions/RBFFunction/RBFFunction.C
+$(RBF)/RBFFunctions/RBFFunction/RBFFunctionNew.C
+$(RBF)/RBFFunctions/linear/linearRBFFunction.C
+$(RBF)/RBFFunctions/W2/W2RBFFunction.C
+$(RBF)/RBFFunctions/TPS/TPSRBFFunction.C
+$(RBF)/RBFFunctions/TPSC2/TPSC2RBFFunction.C
+$(RBF)/RBFFunctions/MQ/MQRBFFunction.C
+$(RBF)/RBFFunctions/IMQ/IMQRBFFunction.C
+$(RBF)/RBFFunctions/Gauss/GaussRBFFunction.C
+$(RBF)/RBFFunctions/WendlandC0/WendlandC0RBFFunction.C
+$(RBF)/RBFFunctions/WendlandC2/WendlandC2RBFFunction.C
+$(RBF)/RBFFunctions/WendlandC4/WendlandC4RBFFunction.C
+$(RBF)/RBFFunctions/WendlandC6/WendlandC6RBFFunction.C
+endif
 
 derivedFvPatchFields/globalMapped/globalMappedFvPatchFields.C
 derivedFvPatchFields/globalTemperatureCoupled/globalTemperatureCoupledFvPatchScalarField.C

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "simpleBlastThermo.H"
+#include "specieBlast.C"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 

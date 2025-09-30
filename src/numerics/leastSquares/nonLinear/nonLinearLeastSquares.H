@@ -61,6 +61,13 @@ class nonLinearLeastSquares
     template<class VarType>
     static void setData(const VarType& x, UList<scalar>& xi);
 
+    template<template<class> class ListType>
+    static void setData
+    (
+        const ListType<scalar>& x,
+        UList<scalar>& xi
+    );
+
 
 public:
 
@@ -76,7 +83,7 @@ public:
 
 
     //- Destructor
-    virtual ~nonLinearLeastSquares() 
+    virtual ~nonLinearLeastSquares()
     {}
 
 

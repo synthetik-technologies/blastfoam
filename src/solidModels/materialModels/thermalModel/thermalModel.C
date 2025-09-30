@@ -40,6 +40,7 @@ Author
 #include "volFields.H"
 #include "fvc.H"
 #include "solidSubMeshes.H"
+#include "solidThermophysicalTransportModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -61,7 +62,7 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
     (
         IOobject
         (
-            "thermophysicalProperties",
+            "physicalProperties",
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ,
@@ -99,12 +100,12 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
             (
                 fluidBlastThermo::New
                 (
-                    1,
                     mesh,
                     thermophysicalProperties.subDict
                     (
                         subMeshes[0].subMesh().name()
-                    )
+                    ),
+                    word::null
                 ).ptr()
             );
         }
@@ -116,7 +117,7 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
                     IOobject
                     (
                         "T",
-                        subMeshes[i].subMesh().time().timeName(),
+                        subMeshes[i].subMesh().time().name(),
                         subMeshes[i].subMesh()
                     ),
                     subMeshes[i].interpolate(thermoPtr_->T()),
@@ -147,12 +148,12 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
                     i,
                     fluidBlastThermo::New
                     (
-                        1,
                         subMeshes[i].subMesh(),
                         thermophysicalProperties.subDict
                         (
                             subMeshes[i].subMesh().name()
-                        )
+                        ),
+                        word::null
                     ).ptr()
                 );
             }
@@ -176,9 +177,20 @@ thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
         (
             fluidBlastThermo::New
             (
-                1,
                 mesh,
-                thermophysicalProperties
+                thermophysicalProperties,
+                word::null
+            ).ptr()
+        );
+    }
+
+    if (isSolid)
+    {
+        thermophysicalTransport_.set
+        (
+            solidThermophysicalTransportModel::New
+            (
+                refCast<solidThermo>(thermoPtr_())
             ).ptr()
         );
     }
@@ -200,7 +212,7 @@ const Foam::volScalarField& Foam::thermalModel::rho() const
 
 Foam::volScalarField& Foam::thermalModel::rho()
 {
-    return thermoPtr_->rho();
+    return thermoPtr_->rhoRef();
 }
 
 
@@ -213,6 +225,12 @@ Foam::tmp<Foam::volScalarField> Foam::thermalModel::C() const
 Foam::tmp<Foam::volScalarField> Foam::thermalModel::k() const
 {
     return thermoPtr_->kappa();
+}
+
+
+Foam::tmp<Foam::fvScalarMatrix> Foam::thermalModel::divq()
+{
+    return thermophysicalTransport_->divq(thermoPtr_->he());
 }
 
 
@@ -240,7 +258,7 @@ void Foam::thermalModel::correct()
         }
 
         // Map subMesh fields to the base mesh
-        subsetMeshes_->mapSubMeshVolFields<scalar>(rhos, thermoPtr_->rho());
+        subsetMeshes_->mapSubMeshVolFields<scalar>(rhos, thermoPtr_->rhoRef());
         subsetMeshes_->mapSubMeshVolFields<scalar>(hes, thermoPtr_->he());
 
         // Clear subMesh fields

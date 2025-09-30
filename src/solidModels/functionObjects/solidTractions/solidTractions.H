@@ -23,7 +23,7 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Class
-    solidTractions
+    functionObjects::solidTractions
 
 Description
     FunctionObject reports boundary traction as a volVectorField for
@@ -40,7 +40,7 @@ SourceFiles
 #ifndef solidTractions_H
 #define solidTractions_H
 
-#include "functionObject.H"
+#include "fvMeshFunctionObject.H"
 #include "dictionary.H"
 #include "fvMesh.H"
 #include "OFstream.H"
@@ -49,6 +49,8 @@ SourceFiles
 
 namespace Foam
 {
+namespace functionObjects
+{
 
 /*---------------------------------------------------------------------------*\
                         Class solidTractions Declaration
@@ -56,31 +58,8 @@ namespace Foam
 
 class solidTractions
 :
-    public functionObject
+    public fvMeshFunctionObject
 {
-    // Private data
-
-        //- Name
-        const word name_;
-
-        //- Reference to main object registry
-        const Time& time_;
-
-    // Private Member Functions
-
-        //- Write data
-        bool writeData();
-
-        //- Disallow default bitwise copy construct
-        solidTractions
-        (
-            const solidTractions&
-        );
-
-        //- Disallow default bitwise assignment
-        void operator=(const solidTractions&);
-
-
 public:
 
     //- Runtime type information
@@ -100,20 +79,17 @@ public:
 
     // Member Functions
 
-        //- start is called at the start of the time-loop
-        virtual bool start();
+        //- Read the controls
+        virtual bool read(const dictionary&);
 
-        //- execute is called at each ++ or += of the time-loop
-        virtual bool execute();
-
-        //- Called when time was set at the end of the Time::operator++
-        virtual bool timeSet()
+        //- Return the list of fields required
+        virtual wordList fields() const
         {
-            return true;
+            return wordList::null();
         }
 
-        //- Read and set the function object if its data has changed
-        virtual bool read(const dictionary& dict);
+        //- Calculate traction
+        virtual bool execute();
 
         //- Write
         virtual bool write();
@@ -122,6 +98,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -30,17 +30,11 @@ License
 #include "volFields.H"
 #include "lookupSolidModel.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
+Foam::solidDirectionMixedFvPatchVectorField::
+solidDirectionMixedFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -60,17 +54,18 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
                 solMod.solidModelDict().lookup("snGradLimitCoeff")
             );
 
-        Info<< "snGradLimitCoeff: " << limitCoeff_ << endl;
+        DebugInfo<< "snGradLimitCoeff: " << limitCoeff_ << endl;
     }
 }
 
 
-solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
+Foam::solidDirectionMixedFvPatchVectorField::
+solidDirectionMixedFvPatchVectorField
 (
     const solidDirectionMixedFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     directionMixedFvPatchVectorField(ptf, p, iF, mapper),
@@ -78,7 +73,8 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
 {}
 
 
-solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
+Foam::solidDirectionMixedFvPatchVectorField::
+solidDirectionMixedFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -88,8 +84,7 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
     directionMixedFvPatchVectorField(p, iF, dict),
     limitCoeff_(dict.lookupOrDefault<scalar>("limitCoeff", 1.0))
 {
-    Info<< "Creating " << type() << " boundary condition" << endl;
-    directionMixedFvPatchVectorField::evaluate();
+
 
     // Lookup the solidModel object
     const solidModel& solMod = lookupSolidModel(patch().boundaryMesh().mesh());
@@ -102,13 +97,14 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
                 solMod.solidModelDict().lookup("snGradLimitCoeff")
             );
 
-        Info<< "snGradLimitCoeff: " << limitCoeff_ << endl;
+        DebugInfo<< "snGradLimitCoeff: " << limitCoeff_ << endl;
     }
 
-    Info<< "Limiter coefficient: " << limitCoeff_ << endl;
+    DebugInfo<< "Limiter coefficient: " << limitCoeff_ << endl;
 }
 
-solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
+Foam::solidDirectionMixedFvPatchVectorField::
+solidDirectionMixedFvPatchVectorField
 (
     const solidDirectionMixedFvPatchVectorField& ptf,
     const DimensionedField<vector, volMesh>& iF
@@ -121,33 +117,34 @@ solidDirectionMixedFvPatchVectorField::solidDirectionMixedFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void solidDirectionMixedFvPatchVectorField::autoMap
+void Foam::solidDirectionMixedFvPatchVectorField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchVectorField& ptf,
+    const fvPatchFieldMapper& mapper
 )
 {
-    directionMixedFvPatchVectorField::autoMap(m);
+    directionMixedFvPatchVectorField::map(ptf, mapper);
 }
 
 
-// Reverse-map the given fvPatchField onto this fvPatchField
-void solidDirectionMixedFvPatchVectorField::rmap
+void Foam::solidDirectionMixedFvPatchVectorField::reset
 (
-    const fvPatchField<vector>& ptf,
-    const labelList& addr
+    const fvPatchField<vector>& ptf
 )
 {
-    directionMixedFvPatchVectorField::rmap(ptf, addr);
+    directionMixedFvPatchVectorField::reset(ptf);
 }
 
 
-void solidDirectionMixedFvPatchVectorField::updateCoeffs()
+void Foam::solidDirectionMixedFvPatchVectorField::updateCoeffs()
 {
     directionMixedFvPatchVectorField::updateCoeffs();
 }
 
-void solidDirectionMixedFvPatchVectorField::evaluate(const Pstream::commsTypes)
+void Foam::solidDirectionMixedFvPatchVectorField::evaluate
+(
+    const Pstream::commsTypes
+)
 {
     if (!this->updated())
     {
@@ -231,8 +228,8 @@ void solidDirectionMixedFvPatchVectorField::evaluate(const Pstream::commsTypes)
 }
 
 
-Foam::tmp<Foam::Field<vector> >
-solidDirectionMixedFvPatchVectorField::snGrad() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::solidDirectionMixedFvPatchVectorField::snGrad() const
 {
     const bool secondOrder_(false);
 
@@ -334,8 +331,8 @@ solidDirectionMixedFvPatchVectorField::snGrad() const
     )*patch().deltaCoeffs();
 }
 
-// Write
-void solidDirectionMixedFvPatchVectorField::write(Ostream& os) const
+
+void Foam::solidDirectionMixedFvPatchVectorField::write(Ostream& os) const
 {
     directionMixedFvPatchVectorField::write(os);
     writeEntry(os, "limitCoeff", limitCoeff_);
@@ -344,10 +341,14 @@ void solidDirectionMixedFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField(fvPatchVectorField, solidDirectionMixedFvPatchVectorField);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        solidDirectionMixedFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

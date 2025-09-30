@@ -35,7 +35,6 @@ SourceFiles
 #ifndef globalMappedPointPatchField_H
 #define globalMappedPointPatchField_H
 
-#include "Random.H"
 #include "fixedValuePointPatchFields.H"
 #include "globalPolyBoundaryMesh.H"
 
@@ -53,13 +52,27 @@ class globalMappedPointPatchField
 :
     public fixedValuePointPatchField<Type>
 {
-    // Private Data
+protected:
+    // Protected Data
 
         //- Reference to the global boundaryMesh
         const globalPolyBoundaryMesh& globalBoundary_;
 
         //- Name of neighbour displacement field
         const word nbrName_;
+
+        //- Unmapped value
+        Type unmappedValue_;
+
+        //- Remove initial field
+        bool useRefState_;
+
+        //- Reference displacement field
+        Field<Type> f0_;
+
+        //- Has the reference field been set
+        bool refSet_;
+
 
 
 public:
@@ -83,6 +96,15 @@ public:
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&,
             const dictionary&
+        );
+
+        //- Construct from patch, internal field and neighbour field name
+        globalMappedPointPatchField
+        (
+            const pointPatch&,
+            const DimensionedField<Type, pointMesh>&,
+            const word&,
+            const bool
         );
 
         //- Construct by mapping given globalMappedPointPatchField
@@ -122,6 +144,13 @@ public:
 
 
     // Member Functions
+
+        //- Map the given pointPatchField onto this pointPatchField
+        virtual void map(const pointPatchField<Type>&, const fieldMapper&);
+
+        //- Reset the pointPatchField to the given pointPatchField
+        //  Used for mesh to mesh mapping
+        virtual void reset(const pointPatchField<Type>&);
 
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();

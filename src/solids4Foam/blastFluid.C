@@ -45,7 +45,6 @@ namespace fluidModels
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTypeNameAndDebug(blastFluid, 0);
-addToRunTimeSelectionTable(physicsModel, blastFluid, fluid);
 addToRunTimeSelectionTable(fluidModel, blastFluid, dictionary);
 
 
@@ -72,6 +71,10 @@ blastFluid::blastFluid
 
     fluid_->update();
     integrator_->clear();
+     Info<< "max(p): " << max(p_).value()
+        << ", min(p): " << min(p_).value() << endl;
+    Info<< "max(T): " << max(T_).value()
+        << ", min(T): " << min(T_).value() << endl;
 }
 #else
 {}

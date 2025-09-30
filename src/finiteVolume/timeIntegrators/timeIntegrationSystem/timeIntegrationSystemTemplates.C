@@ -32,183 +32,54 @@ template<class FieldType>
 void Foam::timeIntegrationSystem::storeOld
 (
     FieldType& f,
-    PtrList<FieldType>& fList,
     const bool conservative
 )
 {
-    if (step() == 1)
+    if (conservative)
+    {
+        fvTimeInt_->conservativeFieldsRef().insert(f.name());
+    }
+    if (timeInt_->firstStep() && !timeInt_->restart())
     {
         f.storeOldTimes();
-
-        // Correct old field for mesh motion before storage
-        if (meshPtr_->moving() && conservative)
-        {
-            f.ref() *= timeInt_->V0byV();
-        }
     }
 
-    // Store fields if needed later
-    label i = oldIs_[step() - 1];
-    if (i != -1)
-    {
-        if (fList.set(i))
-        {
-            fList[i] = f;
-        }
-        else
-        {
-            fList.set
-            (
-                i,
-                FieldType::New
-                (
-                    f.name() + "_old_" + Foam::name(step() - 1),
-                    f
-                )
-            );
-        }
-    }
-}
-
-
-template<class FieldType>
-void Foam::timeIntegrationSystem::storeOld(FieldType& f, const bool conservative)
-{
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    storeOld(f, timeInt_->oldFields(f), conservative);
-}
-
-
-template<class FieldType>
-void Foam::timeIntegrationSystem::storeDelta
-(
-    const FieldType& f,
-    PtrList<FieldType>& fList
-)
-{
-    // Store fields if needed later
-    label i = deltaIs_[step() - 1];
-    if (i != -1)
-    {
-        if (fList.set(i))
-        {
-            fList[i] = f;
-        }
-        else
-        {
-            fList.set
-            (
-                i,
-                FieldType::New
-                (
-                    f.name() + "_delta_" + Foam::name(step() - 1),
-                    f
-                )
-            );
-        }
-    }
+    storeOld
+    (
+        f,
+        fvTimeInt_->oldFieldsRef(f),
+        conservative
+    );
 }
 
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::storeDelta(const FieldType& f)
 {
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    storeDelta(f, timeInt_->deltaFields(f));
-}
-
-
-template<class Type>
-void Foam::timeIntegrationSystem::storeOld
-(
-    Type& f,
-    List<Type>& fList,
-    const bool
-)
-{
-    // Store fields if needed later
-    if (oldIs_[step() - 1] != -1)
-    {
-        fList[oldIs_[step() - 1]] = f;
-    }
-}
-
-
-template<class Type>
-void Foam::timeIntegrationSystem::storeDelta
-(
-    const Type& f,
-    List<Type>& fList
-)
-{
-    // Store fields if needed later
-    if (deltaIs_[step() - 1] != -1)
-    {
-        fList[deltaIs_[step() - 1]] = f;
-    }
-}
-
-
-template<template<class> class ListType, class Type>
-void Foam::timeIntegrationSystem::blendOld
-(
-    Type& f,
-    const ListType<Type>& fList
-) const
-{
-    blendSteps(oldIs_, f, fList, a());
+    storeDelta(f(), fvTimeInt_->deltaFieldsRef(f));
 }
 
 
 template<class FieldType>
-void Foam::timeIntegrationSystem::blendOld(FieldType& f) const
-{
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    blendSteps(oldIs_, f, timeInt_->oldFields(f), a());
-}
-
-
-template<template<class> class ListType, class Type>
-void Foam::timeIntegrationSystem::blendDelta
+void Foam::timeIntegrationSystem::blendOld
 (
-    Type& f,
-    const ListType<Type>& fList
+    FieldType& f,
+    const bool conservative
 ) const
 {
-    blendSteps(deltaIs_, f, fList, b());
+    blendOld
+    (
+        f,
+        fvTimeInt_->oldFields(f),
+        conservative
+    );
 }
 
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::blendDelta(FieldType& f) const
 {
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    blendSteps(oldIs_, f, timeInt_->deltaFields(f), b());
-}
-
-
-template<template<class> class ListType, class Type>
-void Foam::timeIntegrationSystem::storeAndBlendOld
-(
-    Type& f,
-    ListType<Type>& fList,
-    const bool conservative
-)
-{
-    storeOld(f, fList, conservative);
-    blendSteps(oldIs_, f, fList, a());
+    blendDelta(f, fvTimeInt_->deltaFields(f));
 }
 
 
@@ -219,153 +90,69 @@ void Foam::timeIntegrationSystem::storeAndBlendOld
     const bool conservative
 )
 {
-    if (!timeInt_.valid())
+    if (conservative)
     {
-        return;
+        fvTimeInt_->conservativeFieldsRef().insert(f.name());
     }
-    storeAndBlendOld(f, timeInt_->oldFields(f), conservative);
+    storeAndBlendOld
+    (
+        f,
+        fvTimeInt_->oldFieldsRef(f),
+        conservative
+    );
 }
 
-
-template<template<class> class ListType, class Type>
-void Foam::timeIntegrationSystem::storeAndBlendDelta
-(
-    Type& f,
-    ListType<Type>& fList
-)
-{
-    storeDelta(f, fList);
-    blendSteps(deltaIs_, f, fList, b());
-}
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::storeAndBlendDelta(FieldType& f)
 {
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    storeAndBlendDelta(f, timeInt_->deltaFields(f));
-}
-
-template<template<class> class ListType, class Type>
-Foam::tmp<Type> Foam::timeIntegrationSystem::calcDelta
-(
-    const Type& f,
-    const ListType<Type>& fList
-) const
-{
-    tmp<Type> fN(new Type(f));
-    const scalarList& scales(b());
-    const labelList& indices(deltaIs_);
-
-    if (scales[step() - 1] == 0)
-    {
-        return fN*0.0;
-    }
-
-    // Remove old steps
-    for (label i = 0; i < step() - 1; i++)
-    {
-        label fi = indices[i];
-        if (fi != -1 && scales[i] != 0)
-        {
-            fN.ref() -= scales[i]*fList[fi];
-        }
-    }
-    fN.ref() /= scales[step() - 1];
-    return fN;
+    storeAndBlendDelta
+    (
+        f,
+        fvTimeInt_->deltaFieldsRef(f)
+    );
 }
 
 
 template<class FieldType>
-Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcDelta(const FieldType& f) const
+Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcDelta
+(
+    const FieldType& f
+) const
 {
-    if (!timeInt_.valid())
-    {
-        return FieldType::New(f.name(), f);
-    }
-    return calcDelta(f, timeInt_->deltaFields(f));
+    return calcDelta(f, fvTimeInt_->deltaFields(f));
 }
 
 
-template<template<class> class ListType, class Type>
-Foam::tmp<Type> Foam::timeIntegrationSystem::calcAndStoreDelta
+template<class FieldType>
+Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcAndStoreDelta
 (
-    const Type& f,
-    ListType<Type>& fList
+    const FieldType& f
 )
 {
-    tmp<Type> fN(calcDelta(f, fList));
-    storeDelta(fN(), fList);
-    return fN;
-}
-
-
-template<class FieldType>
-Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcAndStoreDelta(const FieldType& f)
-{
-    if (!timeInt_.valid())
-    {
-        return tmp<FieldType>(FieldType::New(f.name(), f));
-    }
-   return calcAndStoreDelta(f, timeInt_->deltaFields(f));
-}
-
-
-template<template<class> class ListType, class Type>
-void Foam::timeIntegrationSystem::blendSteps
-(
-    const labelList& indices,
-    Type& f,
-    const ListType<Type>& fList,
-    const scalarList& scales
-) const
-{
-    // Scale current step by weight
-    f *= scales[step() - 1];
-    for (label i = 0; i < step() - 1; i++)
-    {
-        label fi = indices[i];
-        if (fi != -1 && scales[i] != 0)
-        {
-            f += scales[i]*fList[fi];
-        }
-    }
+   return calcAndStoreDelta(f, fvTimeInt_->deltaFieldsRef(f));
 }
 
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::addOldField(const FieldType& f)
 {
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    timeInt_->addOldField(f);
+    fvTimeInt_->addOldField(f);
 }
 
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::addDeltaField(const FieldType& f)
 {
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    timeInt_->addDeltaField(f);
+    fvTimeInt_->addDeltaField(f);
 }
 
 
 template<class FieldType>
 void Foam::timeIntegrationSystem::addOldDeltaField(const FieldType& f)
 {
-    if (!timeInt_.valid())
-    {
-        return;
-    }
-    timeInt_->addOldField(f);
-    timeInt_->addDeltaField(f);
+    fvTimeInt_->addOldField(f);
+    fvTimeInt_->addDeltaField(f);
 }
 
 // ************************************************************************* //

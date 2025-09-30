@@ -320,7 +320,7 @@ Foam::scalar Foam::vanderWaals<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::S
+Foam::scalar Foam::vanderWaals<Specie>::Sp
 (
     const scalar p,
     const scalar T
@@ -329,6 +329,19 @@ Foam::scalar Foam::vanderWaals<Specie>::S
     NotImplemented;
     return 0;
 }
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::Sv
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 

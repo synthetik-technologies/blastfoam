@@ -1,0 +1,84 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      diffusionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Variables to optimize
+// format:
+//   - "path/to/file/path/in/file"
+//   - [0] index in a list (if part of a list, i.e. "(0 1 2)")
+//   - bounds of the variable
+//   - initial value
+
+variables
+(
+    "constant/physicalProperties/DTValue" (1e-5 1) 0.05
+);
+
+
+// Commands to run every time a new variable is set
+commands
+(
+    "laplacianFoam"
+);
+
+
+// Optimization solver
+minimizationScheme
+{
+    solver      NelderMead;
+
+    maxSteps    200;
+    tolerance   1e-6;
+    nParticles  10;
+    cLocal      0.1;
+    cGlobal     0.1;
+    vWeight     0.8;
+    x0          0.1;
+}
+
+solution
+{
+    interpolationScheme cubicClamp;
+    x (0.0 0.1111 0.2222 0.3333  0.4444 0.5556 0.6667 0.7778  0.8889  1.0000);
+    c (10.0 9.0091 8.1378 7.4910 7.1469 7.1469 7.4910 8.1378 9.0091 10.0);
+}
+
+log yes;
+
+results "error";
+errors
+(
+    value
+    {
+        type field;
+        field T;
+
+        // Use T as is
+        operator none;
+
+        // Hit target exactly
+        targetType target;
+        targetValue 6.0;
+
+        // Use the latest time value
+        timeReduction latest;
+
+        // Take the value at the given location
+        fieldReduction probe;
+        location (0.5 0.5 0.5);
+    }
+);
+// ************************************************************************* //

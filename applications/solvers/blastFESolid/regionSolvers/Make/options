@@ -1,0 +1,30 @@
+EXE_INC = \
+    -I$(LIB_SRC)/OpenFOAM/lnInclude \
+    -I$(LIB_SRC)/fileFormats/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/physicalProperties/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/incompressible/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
+    -I$(BLAST_DIR)/src/regionModels/lnInclude \
+    -I$(BLAST_DIR)/src/regionSolvers/regionSolvers/lnInclude \
+    -I../finiteElements/lnInclude \
+    -I../feMesh1/lnInclude \
+    -I../materialModels/lnInclude
+
+LIB_LIBS = \
+    -lmeshTools \
+    -lfileFormats \
+    -lmomentumTransportModels \
+    -lincompressibleMomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
+    -L$(BLAST_LIBBIN) \
+    -lblastNumerics \
+    -lblastRegionModels \
+    -lregionSolvers \
+    -lblastFiniteElements \
+    -lblastFeMesh1 \
+    -lblastFEMaterialModels

@@ -29,13 +29,15 @@ License
 
 Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::New
 (
-    const fvMesh& mesh,
-    const word& name
+    const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType
+    const word fluxSchemeType
     (
-        mesh.schemesDict().subDict("fluxSchemes").subDict(name).lookup("fluxScheme")
+        phi.mesh().schemes().dict().subDict("fluxSchemes").subDict
+        (
+            phi.group()
+        ).lookup("fluxScheme")
     );
 
     Info<< "Selecting phaseFluxScheme: " << fluxSchemeType << endl;
@@ -53,19 +55,21 @@ Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, name);
+    return cstrIter()(phi);
 }
 
 
 Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::NewSolid
 (
-    const fvMesh& mesh,
-    const word& name
+    const surfaceScalarField& phi
 )
 {
-    word fluxSchemeType
+    const word fluxSchemeType
     (
-        mesh.schemesDict().subDict("fluxSchemes").subDict(name).lookup("fluxScheme")
+        phi.mesh().schemes().dict().subDict("fluxSchemes").subDict
+        (
+            phi.group()
+        ).lookup("fluxScheme")
     );
 
     Info<< "Selecting phaseFluxScheme: " << fluxSchemeType << endl;
@@ -83,7 +87,7 @@ Foam::autoPtr<Foam::phaseFluxScheme> Foam::phaseFluxScheme::NewSolid
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, name);
+    return cstrIter()(phi);
 }
 
 

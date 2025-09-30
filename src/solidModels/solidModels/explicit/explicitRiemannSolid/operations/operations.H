@@ -74,10 +74,7 @@ public:
     // Constructors
 
         //- Construct from mesh
-        operations
-        (
-            const fvMesh&
-        );
+        operations(const fvMesh&);
 
 
     //- Destructor

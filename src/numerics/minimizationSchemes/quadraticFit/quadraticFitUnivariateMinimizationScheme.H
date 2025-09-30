@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::quadraticFitUnivariateMinimizationScheme
+    Foam::minimizationSchemes::univariate::quadraticFit
 
 Description
     Univariate minimization using an imposed quadratic fit
@@ -50,12 +50,16 @@ SourceFiles
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
+namespace univariate
+{
 
 /*---------------------------------------------------------------------------*\
                         Class quadraticFitUnivariateMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class quadraticFitUnivariateMinimizationScheme
+class quadraticFit
 :
     public univariateMinimizationScheme
 {
@@ -67,15 +71,43 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        quadraticFitUnivariateMinimizationScheme
+        quadraticFit
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        quadraticFit
+        (
+            const scalarUnivariateEquation& eqn,
+            const quadraticFit& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new quadraticFit(eqns, *this));
+        }
+
+        //- Clone the univariate root solver
+        virtual autoPtr<univariateMinimizationScheme> cloneUnivariate
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<univariateMinimizationScheme>
+            (
+                new quadraticFit(eqns, *this)
+            );
+        }
+
 
     //- Destructor
-    virtual ~quadraticFitUnivariateMinimizationScheme()
+    virtual ~quadraticFit()
     {}
 
 
@@ -93,12 +125,14 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const quadraticFitUnivariateMinimizationScheme&) = delete;
+        void operator=(const quadraticFit&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace univariate
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

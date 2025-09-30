@@ -9,7 +9,7 @@ createEps()
     ShyueData="validationData/Shyue1999_${fieldName}_${3}.csv"
     ZhengData="validationData/Zheng2008_${fieldName}_${3}.csv"
     foamTime="0.000${time}"
-    blastFoamData="../postProcessing/sampleDict/${foamTime}/centreLine_p_rho.xy"
+    blastFoamData="../postProcessing/sampleDict/${foamTime}/centreLine.xy"
     index=$4
 
     gnuplot<<EOF
@@ -19,7 +19,7 @@ createEps()
     set xlabel "X-Position (m)"
     set ylabel "${yTitle}"
     set grid
-    set key right top
+    set key left top box
     set size 2,2
     set autoscale
     set xrange [0:1.2]
@@ -40,14 +40,14 @@ then
     exit 1
 fi
 
-createEps "rho" "{/Symbol r} [kg/m^3]" 1 3 -200 1600
-createEps "rho" "{/Symbol r} [kg/m^3]" 2 3 -200 1600
-createEps "rho" "{/Symbol r} [kg/m^3]" 3 3 -200 1600
-createEps "rho" "{/Symbol r} [kg/m^3]" 4 3 -200 1600
+createEps "rho" "{/Symbol r} [kg/m^3]" 1 3 -100 1400
+createEps "rho" "{/Symbol r} [kg/m^3]" 2 3 -100 1400
+createEps "rho" "{/Symbol r} [kg/m^3]" 3 3 600 1700
+createEps "rho" "{/Symbol r} [kg/m^3]" 4 3 800 1600
 
-createEps "p" "Pressure [Pa]" 1 2 0 3e9
-createEps "p" "Pressure [Pa]" 2 2 0 3e9
-createEps "p" "Pressure [Pa]" 3 2 0 3e9
-createEps "p" "Pressure [Pa]" 4 2 0 3e9
+createEps "p" "Pressure [Pa]" 1 2 0 1.2e9
+createEps "p" "Pressure [Pa]" 2 2 0 1.2e9
+createEps "p" "Pressure [Pa]" 3 2 0 2.5e9
+createEps "p" "Pressure [Pa]" 4 2 0 4e9
 
 echo Done

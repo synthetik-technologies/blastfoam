@@ -36,7 +36,7 @@ regions
     cylinderToCell
     {
         p1 (0 0 0.005);
-        p2 (0 0 0.0055);
+        p2 (0 0 0.006);
         radius 1;
         fieldValues
         (

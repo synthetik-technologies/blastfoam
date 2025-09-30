@@ -32,29 +32,27 @@ License
 #include "pointMesh.H"
 #include "pointFields.H"
 #include "valuePointPatchFields.H"
+#include "movingObject.H"
+#include "uniformDimensionedFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * * * //
 
-void fixedDisplacementFvPatchVectorField::makeInterp() const
+void Foam::fixedDisplacementFvPatchVectorField::makeInterp() const
 {
     if (interpPtr_.valid())
     {
-        FatalErrorIn
-        (
-            "void fixedDisplacementFvPatchVectorField::makeInterp() const"
-        ) << "pointer already set" << abort(FatalError);
+        FatalErrorInFunction
+            << "pointer already set" << endl
+            << abort(FatalError);
     }
 
     interpPtr_.set(new primitivePatchInterpolation(patch().patch()));
 }
 
 
-primitivePatchInterpolation& fixedDisplacementFvPatchVectorField::interp()
+const Foam::fixedDisplacementFvPatchVectorField::primitivePatchInterpolation&
+Foam::fixedDisplacementFvPatchVectorField::interp() const
 {
     if (interpPtr_.empty())
     {
@@ -65,20 +63,14 @@ primitivePatchInterpolation& fixedDisplacementFvPatchVectorField::interp()
 }
 
 
-void fixedDisplacementFvPatchVectorField::setPointDisplacement
+void Foam::fixedDisplacementFvPatchVectorField::setPointDisplacement
 (
     const vectorField& faceDisp
 )
 {
     const fvMesh& mesh = patch().boundaryMesh().mesh();
 
-    if
-    (
-        mesh.foundObject<pointVectorField>
-        (
-            "point" + internalField().name()
-        )
-    )
+    if (mesh.foundObject<pointVectorField>("point" + internalField().name()))
     {
         const pointVectorField& pointD =
             mesh.lookupObject<pointVectorField>
@@ -104,10 +96,9 @@ void fixedDisplacementFvPatchVectorField::setPointDisplacement
                         pointD
                     ).boundaryFieldRef()[patch().index()]
                 );
-            Field<vector>& pD(patchPointD);
 
             // Interpolate face values to the points
-            pD = interp().faceToPointInterpolate(faceDisp);
+            patchPointD == interp().faceToPointInterpolate(faceDisp);
         }
     }
 }
@@ -115,7 +106,7 @@ void fixedDisplacementFvPatchVectorField::setPointDisplacement
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
+Foam::fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -124,26 +115,30 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
     fixedValueFvPatchVectorField(p, iF),
     totalDisp_(p.size(), vector::zero),
     dispSeries_(),
+    displacementName_(word::null),
+    regionName_(word::null),
     interpPtr_()
 {}
 
 
-fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
+Foam::fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
 (
     const fixedDisplacementFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     fixedValueFvPatchVectorField(ptf, p, iF, mapper),
     totalDisp_(mapper(ptf.totalDisp_)),
     dispSeries_(ptf.dispSeries_, false),
+    displacementName_(word::null),
+    regionName_(word::null),
     interpPtr_()
 {}
 
 
-fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
+Foam::fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -151,32 +146,41 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
 )
 :
     fixedValueFvPatchVectorField(p, iF, dict),
-    totalDisp_("value", dict, p.size()),
+    totalDisp_(*this),
     dispSeries_(),
+    displacementName_(word::null),
+    regionName_(word::null),
     interpPtr_()
 {
-    Info<< "Creating " << type() << " boundary condition" << endl;
-
     // Check if displacement is time-varying
     if (dict.found("displacementSeries"))
     {
-        Info<< "    displacement is time-varying" << endl;
+        DebugInfo
+            << "    displacement is time-varying" << endl;
         dispSeries_ =
             Function1<vector>::New
             (
                 "displacementSeries",
+                this->db().time().userUnits(),
+                dimLength,
                 dict
             );
 
         Field<vector>::operator=
         (
-            dispSeries_->value(this->db().time().timeOutputValue())
+            dispSeries_->value(this->db().time().value())
         );
     }
+    else if (dict.found("displacementName"))
+    {
+        dict.readIfPresent("displacementName", displacementName_);
+        dict.readIfPresent("displacementRegion", regionName_);
+    }
+
 }
 
 
-fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
+Foam::fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
 (
     const fixedDisplacementFvPatchVectorField& pivpvf,
     const DimensionedField<vector, volMesh>& iF
@@ -185,6 +189,8 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
     fixedValueFvPatchVectorField(pivpvf, iF),
     totalDisp_(pivpvf.totalDisp_),
     dispSeries_(pivpvf.dispSeries_, false),
+    displacementName_(pivpvf.displacementName_),
+    regionName_(pivpvf.regionName_),
     interpPtr_()
 {}
 
@@ -192,77 +198,108 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
 // * * * * * * * * * * * * * * * *  Destructors  * * * * * * * * * * * * * * //
 
 
-fixedDisplacementFvPatchVectorField::~fixedDisplacementFvPatchVectorField()
+Foam::fixedDisplacementFvPatchVectorField::~fixedDisplacementFvPatchVectorField()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void fixedDisplacementFvPatchVectorField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchVectorField::autoMap(m);
-
-    m(totalDisp_, totalDisp_);;
-}
-
-
-// Reverse-map the given fvPatchField onto this fvPatchField
-void fixedDisplacementFvPatchVectorField::rmap
+void Foam::fixedDisplacementFvPatchVectorField::map
 (
     const fvPatchField<vector>& ptf,
-    const labelList& addr
+    const fieldMapper& mapper
 )
 {
-    fixedValueFvPatchVectorField::rmap(ptf, addr);
+    fixedValueFvPatchVectorField::map(ptf, mapper);
 
-    const fixedDisplacementFvPatchVectorField& dmptf =
+    const fixedDisplacementFvPatchVectorField& fdpvf =
         refCast<const fixedDisplacementFvPatchVectorField>(ptf);
 
-    totalDisp_.rmap(dmptf.totalDisp_, addr);
+    mapper(totalDisp_, fdpvf.totalDisp_);
+    interpPtr_.clear();
 }
 
 
-void fixedDisplacementFvPatchVectorField::updateCoeffs()
+void Foam::fixedDisplacementFvPatchVectorField::reset
+(
+    const fvPatchField<vector>& ptf
+)
+{
+    fixedValueFvPatchVectorField::reset(ptf);
+
+    const fixedDisplacementFvPatchVectorField& fdpvf =
+        refCast<const fixedDisplacementFvPatchVectorField>(ptf);
+
+    totalDisp_.reset(fdpvf.totalDisp_);
+    interpPtr_.clear();
+}
+
+
+void Foam::fixedDisplacementFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())
     {
         return;
     }
 
-    vectorField disp(totalDisp_);
-
     if (dispSeries_.valid())
     {
-        disp = dispSeries_->value(this->db().time().value());
-    }
+        vectorField disp
+        (
+            this->size(),
+            dispSeries_->value(this->db().time().value())
+        );
+        if (internalField().name() == "DD")
+        {
+            // Incremental approach, so we wil set the increment of displacement
+            // Lookup the old displacement field and subtract it from the total
+            // displacement
+            const volVectorField& Dold =
+                db().lookupObject<volVectorField>("D").oldTime();
 
-    if (internalField().name() == "DD")
+            disp -= Dold.boundaryField()[patch().index()];
+        }
+        Field<vector>::operator=(disp);
+    }
+    else if (!displacementName_.empty())
     {
-        // Incremental approach, so we wil set the increment of displacement
-        // Lookup the old displacement field and subtract it from the total
-        // displacement
-        const volVectorField& Dold =
-            db().lookupObject<volVectorField>("D").oldTime();
-
-        disp -= Dold.boundaryField()[patch().index()];
+        const objectRegistry& obr =
+            !regionName_.empty()
+          ? db().time().lookupObject<objectRegistry>(regionName_)
+          : db();
+        if (obr.foundObject<movingObject>(displacementName_))
+        {
+            const movingObject& object =
+                obr.lookupObject<movingObject>(displacementName_);
+            Field<vector>::operator=
+            (
+                object.centreOfMass() - object.initialCentreOfMass()
+            );
+        }
+        else if
+        (
+            obr.foundObject<uniformDimensionedVectorField>(displacementName_)
+        )
+        {
+            const uniformDimensionedVectorField& disp =
+                obr.lookupObject<uniformDimensionedVectorField>
+                (
+                    displacementName_
+                );
+            Field<vector>::operator=(disp.value());
+        }
     }
-
-    Field<vector>::operator=(disp);
 
     fixedValueFvPatchVectorField::updateCoeffs();
 
     // If the corresponding point displacement field has a fixedValue type
     // boundary condition, then we wil update it
-    setPointDisplacement(disp);
+    setPointDisplacement(*this);
 }
 
 
-Foam::tmp<Foam::Field<vector> >
-fixedDisplacementFvPatchVectorField::snGrad() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::fixedDisplacementFvPatchVectorField::snGrad() const
 {
     //- fixedValue snGrad with no correction
     //  return (*this - patchInternalField())*this->patch().deltaCoeffs();
@@ -289,8 +326,8 @@ fixedDisplacementFvPatchVectorField::snGrad() const
     )*patch().deltaCoeffs();
 }
 
-tmp<Field<vector> >
-fixedDisplacementFvPatchVectorField::gradientBoundaryCoeffs() const
+Foam::tmp<Foam::Field<Foam::vector>>
+Foam::fixedDisplacementFvPatchVectorField::gradientBoundaryCoeffs() const
 {
     const fvPatchField<tensor>& gradField =
         patch().lookupPatchField<volTensorField, tensor>
@@ -314,11 +351,11 @@ fixedDisplacementFvPatchVectorField::gradientBoundaryCoeffs() const
     );
 }
 
-void fixedDisplacementFvPatchVectorField::write(Ostream& os) const
+void Foam::fixedDisplacementFvPatchVectorField::write(Ostream& os) const
 {
     if (dispSeries_.valid())
     {
-        writeEntry(os, "displacementSeries", dispSeries_());
+        writeEntry(os, dispSeries_());
     }
 
     fixedValueFvPatchVectorField::write(os);
@@ -327,14 +364,14 @@ void fixedDisplacementFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField
-(
-    fvPatchVectorField,
-    fixedDisplacementFvPatchVectorField
-);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        fixedDisplacementFvPatchVectorField
+    );
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

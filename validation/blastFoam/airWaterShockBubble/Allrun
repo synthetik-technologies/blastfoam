@@ -14,10 +14,11 @@ runApplication blockMesh
 runApplication decomposePar
 
 # -- Add internal patch
-runParallel addEmptyPatch internalPatch internal -overwrite
+runParallel addInternalPatch
 
 # -- Set initial conditions
-runParallel setRefinedFields
+runParallel setRefinedFields -updateAll
+runParallel initializeLevelSet -updateAll
 
 # -- run the calc
 runParallel $(getApplication)

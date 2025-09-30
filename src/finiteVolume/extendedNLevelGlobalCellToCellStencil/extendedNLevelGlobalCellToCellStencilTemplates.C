@@ -95,7 +95,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
     label constructSize = requests.size();
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     labelList sendCells(requestedCells);
@@ -138,7 +138,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectOwnerData
     label constructSize = requests.size();
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     labelList sendCells(requestedCells);
@@ -181,7 +181,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectNbrData
     label constructSize = requests.size();
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     labelList sendCells(requestedCells);
@@ -205,12 +205,12 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectNbrData
 
 
 template<class StencilType>
-template<class Type, class BinaryOp>
+template<class Type, class BinaryEqOp>
 void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
 (
     const Map<Type>& mapFld,
     UList<Type>& fld,
-    const BinaryOp& bop
+    const BinaryEqOp& bop
 ) const
 {
     if (!Pstream::parRun())
@@ -239,7 +239,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
     }
 
     // make the map
-    autoPtr<mapDistribute> map(buildMap(requests));
+    autoPtr<distributionMap> map(buildMap(requests));
 
     // Send requests
     map().distribute(sendCells);
@@ -249,7 +249,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reduce
     forAll(sendCells, i)
     {
         const label celli = sendCells[i];
-        fld[celli] = bop(fld[celli], sendData[i]);
+        bop(fld[celli], sendData[i]);
     }
 }
 
@@ -287,7 +287,7 @@ Foam::tmp
             IOobject
             (
                 fld.name(),
-                mesh.time().timeName(),
+                mesh.time().name(),
                 mesh
             ),
             mesh,
@@ -299,7 +299,7 @@ Foam::tmp
             )
         )
     );
-    WeightedFieldType& wf = twf();
+    WeightedFieldType& wf = twf.ref();
 
     forAll(wf, celli)
     {

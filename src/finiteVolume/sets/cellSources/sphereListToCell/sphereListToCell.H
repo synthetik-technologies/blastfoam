@@ -53,9 +53,6 @@ class sphereListToCell
 
     // Private Data
 
-        //- Add usage string
-        static addToUsageTable usage_;
-
         //- Centres
         List<vector> centres_;
 
@@ -95,13 +92,6 @@ public:
         (
             const polyMesh& mesh,
             const dictionary& dict
-        );
-
-        //- Construct from Istream
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            Istream&
         );
 
 

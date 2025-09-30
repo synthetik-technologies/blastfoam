@@ -1,0 +1,99 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      binary;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties.gas;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            multicomponent;
+
+species         ( ignitor air products );
+
+defaultSpecie   air;
+
+calculateDensity yes;
+
+thermoType
+{
+    transport       const;
+    thermo          eConst;
+    equationOfState AbelNobel;
+}
+
+ignitor
+{
+    equationOfState
+    {
+        b               0.00099;
+    }
+    specie
+    {
+        molWeight       22.935;
+    }
+    transport
+    {
+        mu              1.81e-05;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              1450;
+        Hf              0;
+    }
+}
+
+products
+{
+    equationOfState
+    {
+        b               0.00099;
+    }
+    specie
+    {
+        molWeight       21;
+    }
+    transport
+    {
+        mu              1.81e-05;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              2100;
+        Hf              1.5e+06;
+    }
+}
+
+air
+{
+    equationOfState
+    {
+        b               0.00102;
+    }
+    specie
+    {
+        molWeight       28.6689;
+    }
+    transport
+    {
+        mu              1.81e-05;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              1450;
+        Hf              0;
+    }
+}
+
+
+// ************************************************************************* //

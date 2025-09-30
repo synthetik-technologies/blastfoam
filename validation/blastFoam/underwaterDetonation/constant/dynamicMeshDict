@@ -2,36 +2,43 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  dev
+    \\  /    A nd           | Version:  12
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
-    format      ascii;
+    format      binary;
     class       dictionary;
+    location    "constant";
     object      dynamicMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
-errorEstimator  densityGradient;
+topoChanger
+{
+    type            hexRefiner;
+    libs            1 ( "libblastFvMeshTopoChangers.so" );
 
-// How often to refine
-refineInterval  1;
+    errorEstimator  densityGradient;
 
-// Refine field in between lower..upper
-lowerRefineLevel 1e-2;
+    refineInterval  1;
 
-// If value < unrefineLevel unrefine
-unrefineLevel   1e-2;
+    lowerRefineLevel 0.01;
 
-// Have slower than 2:1 refinement
-nBufferLayers   1;
+    unrefineLevel   0.01;
 
-// Refine cells only up to maxRefinement levels
-maxRefinement   5;
+    nBufferLayers   1;
 
-// Write the refinement level as a volScalarField
-dumpLevel       true;
+    maxRefinement   5;
+
+    dumpLevel       true;
+}
+
+distributor
+{
+    type            redistributor;
+    libs            1 ( "libblastFvMeshDistributors.so" );
+}
+
+
 // ************************************************************************* //

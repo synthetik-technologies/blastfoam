@@ -30,31 +30,22 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(stepUnivariateRootSolver, 0);
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        stepUnivariateRootSolver,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        stepUnivariateRootSolver,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        univariateRootSolver,
-        stepUnivariateRootSolver,
-        dictionaryTwo
-    );
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(step, 0);
+    addToRunTimeSelectionTable(univariateRootSolver, step, dictionaryZero);
+    addToRunTimeSelectionTable(univariateRootSolver, step, dictionaryOne);
+    addToRunTimeSelectionTable(univariateRootSolver, step, dictionaryTwo);
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::stepUnivariateRootSolver::stepUnivariateRootSolver
+Foam::rootSolvers::univariate::step::step
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -74,27 +65,39 @@ Foam::stepUnivariateRootSolver::stepUnivariateRootSolver
 {}
 
 
-Foam::stepUnivariateRootSolver::stepUnivariateRootSolver
+Foam::rootSolvers::univariate::step::step
 (
     const scalarMultivariateEquation& eqn,
     const scalar dx
 )
 :
-    univariateRootSolver(eqn, dictionary()),
+    univariateRootSolver(eqn, dictionary::null),
     dx_(dx),
     f_(0.5)
 {}
 
 
+Foam::rootSolvers::univariate::step::step
+(
+    const scalarMultivariateEquation& eqn,
+    const step& solver
+)
+:
+    univariateRootSolver(eqn, solver),
+    dx_(solver.dx_),
+    f_(solver.f_)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::stepUnivariateRootSolver::~stepUnivariateRootSolver()
+Foam::rootSolvers::univariate::step::~step()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::stepUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::step::findRoot
 (
     const scalar xm,
     const scalar x0,
@@ -118,6 +121,7 @@ Foam::scalar Foam::stepUnivariateRootSolver::findRoot
         {
             x += dx;
         }
+        eqn_.limit(x);
         if (converged(dx, y))
         {
             break;

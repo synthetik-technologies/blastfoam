@@ -48,10 +48,10 @@ namespace Foam
                         Class MidPointMultivariateIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
+template<class Type, class Adapt>
 class MidPointMultivariateIntegrator
 :
-    public MultivariateIntegrator<Type>
+    public MultivariateIntegrator<Type, Adapt>
 {
     typedef univariateEquation<Type> equationType;
 
@@ -87,7 +87,7 @@ public:
         //- Disallow default bitwise copy construction
         MidPointMultivariateIntegrator
         (
-            const MidPointMultivariateIntegrator<Type>&
+            const MidPointMultivariateIntegrator<Type, Adapt>&
         ) = delete;
 
 
@@ -109,7 +109,10 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const MidPointMultivariateIntegrator<Type>&) = delete;
+        void operator=
+        (
+            const MidPointMultivariateIntegrator<Type, Adapt>&
+        ) = delete;
 };
 
 

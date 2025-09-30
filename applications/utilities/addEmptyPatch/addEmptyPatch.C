@@ -30,7 +30,7 @@ Description
 #include "Time.H"
 #include "timeSelector.H"
 #include "fvMesh.H"
-#include "dynMeshTools.H"
+#include "blastMeshTools.H"
 #include "processorPolyPatch.H"
 
 using namespace Foam;
@@ -62,15 +62,15 @@ int main(int argc, char *argv[])
         "add the new patch as the first patch"
     );
 
+
     #include "addRegionOption.H"
     #include "setRootCase.H"
-    #include "createTime.H"
+    #include "createTimeNoFunctionObjects.H"
 
     //- Select time
-    runTime.functionObjects().off();
     instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
 
-    #include "createNamedMesh.H"
+    #include "createRegionMeshNoChangers.H"
 
     // Store face instance
     const word oldFacesInstance = mesh.facesInstance();
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
     // Find patch ID of specified patch
-    label patchID = pbm.findPatchID(patchName);
+    label patchID = pbm.findIndex(patchName);
     label startFace = mesh.nInternalFaces();
 
     if (patchID != -1)
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
         patchID,
         newPatch(),
         dictionary(),
-        patchType,
+        "zeroGradient",
         true
     );
     Info<< "Added " << patchName << " at index " << patchID << nl << endl;
@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
     else
     {
         runTime++;
-        mesh.setInstance(runTime.timeName());
+        mesh.setInstance(runTime.name());
     }
 
     Info<<"Writing mesh to " << mesh.facesInstance() << nl << endl;

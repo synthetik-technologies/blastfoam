@@ -130,7 +130,8 @@ public:
         virtual scalar solve
         (
             const scalar& deltaT,
-            volScalarField& rhoE
+            const scalarField& rho,
+            scalarField& rhoE
         );
 
     // ODE functions (overriding abstract functions in ODE.H)

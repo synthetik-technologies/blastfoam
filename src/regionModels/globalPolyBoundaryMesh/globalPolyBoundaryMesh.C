@@ -28,6 +28,7 @@ License
 #include "IOdictionary.H"
 #include "hashedWordList.H"
 #include "Time.H"
+#include "fvMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -36,6 +37,7 @@ namespace Foam
     defineTypeNameAndDebug(globalPolyBoundaryMesh, 0);
 }
 
+bool Foam::globalPolyBoundaryMesh::clearOnMovement = true;
 
 // * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
 
@@ -45,7 +47,8 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
 )
 :
     GlobalPolyBoundaryMesh(mesh),
-    interfaceDicts_()
+    interfaceDicts_(),
+    readFromRP_(false)
 {
     if (mesh.time().db().foundObject<IOdictionary>("regionProperties"))
     {
@@ -55,6 +58,7 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
         {
             interfaceDicts_ =
                 HashTable<dictionary>(regionProperties.lookup("interfaces"));
+            readFromRP_ = true;
         }
     }
 }
@@ -67,7 +71,8 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
 )
 :
     GlobalPolyBoundaryMesh(mesh),
-    interfaceDicts_(dict.lookupOrDefault("interfaces", HashTable<dictionary>()))
+    interfaceDicts_(dict.lookupOrDefault("interfaces", HashTable<dictionary>())),
+    readFromRP_(false)
 {}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -78,6 +83,56 @@ Foam::globalPolyBoundaryMesh::~globalPolyBoundaryMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::globalPolyBoundaryMesh::isGlobal(const polyPatch& pp) const
+{
+    return patches_.found(pp.name());
+}
+
+
+bool Foam::globalPolyBoundaryMesh::isCoupled(const polyPatch& pp) const
+{
+    const polyMesh& mesh = pp.boundaryMesh().mesh();
+    if (!interfaceDicts_.found(mesh.name()))
+    {
+        return false;
+    }
+    return interfaceDicts_[mesh.name()].found(pp.name());
+}
+
+
+Foam::labelList Foam::globalPolyBoundaryMesh::coupledPatches() const
+{
+    if (!interfaceDicts_.found(this->mesh().name()))
+    {
+        return labelList();
+    }
+    const dictionary& dict = interfaceDicts_[this->mesh().name()];
+    DynamicList<label> patches(this->mesh().boundaryMesh().size());
+    forAll(this->mesh().boundaryMesh(), patchi)
+    {
+        if (dict.isDict(this->mesh().boundaryMesh()[patchi].name()))
+        {
+            patches.append(this->mesh().boundaryMesh()[patchi].index());
+        }
+    }
+    return patches;
+}
+
+
+void Foam::globalPolyBoundaryMesh::update()
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->update();
+    }
+}
+
+
 bool Foam::globalPolyBoundaryMesh::movePoints()
 {
     forAllIter
@@ -87,13 +142,13 @@ bool Foam::globalPolyBoundaryMesh::movePoints()
         iter
     )
     {
-        iter()->movePoints();
+        iter()->movePoints(clearOnMovement);
     }
     return true;
 }
 
 
-void Foam::globalPolyBoundaryMesh::updateMesh(const mapPolyMesh& mpm)
+void Foam::globalPolyBoundaryMesh::distribute(const polyDistributionMap& map)
 {
     forAllIter
     (
@@ -102,7 +157,35 @@ void Foam::globalPolyBoundaryMesh::updateMesh(const mapPolyMesh& mpm)
         iter
     )
     {
-        iter()->updateMesh();
+        iter()->distribute(map);
+    }
+}
+
+
+void Foam::globalPolyBoundaryMesh::topoChange(const polyTopoChangeMap& map)
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->topoChange(map);
+    }
+}
+
+
+void Foam::globalPolyBoundaryMesh::mapMesh(const polyMeshMap& map)
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->mapMesh(map);
     }
 }
 
@@ -134,7 +217,81 @@ void Foam::globalPolyBoundaryMesh::setDisplacementField
     {
         displacementFields_.insert(region, name);
     }
+
+    // Update any patches that have already been added
+    polyMesh& mesh = this->db().time().lookupObjectRef<polyMesh>(region);
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        if (isGlobal(mesh.boundaryMesh()[patchi]))
+        {
+            patches_
+            [
+                mesh.boundaryMesh()[patchi].name()
+            ]->setDisplacementField(name);
+        }
+    }
 }
+
+
+void Foam::globalPolyBoundaryMesh::setInverseDisplacement
+(
+    const word& region,
+    const bool inv
+)
+{
+    if (inverseDisplacement_.found(region))
+    {
+        inverseDisplacement_[region] = inv;
+    }
+    else
+    {
+        inverseDisplacement_.insert(region, inv);
+    }
+
+    // Update any patches that have already been added
+    polyMesh& mesh = this->db().time().lookupObjectRef<polyMesh>(region);
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        if (isGlobal(mesh.boundaryMesh()[patchi]))
+        {
+            patches_
+            [
+                mesh.boundaryMesh()[patchi].name()
+            ]->setInverseDisplacement(inv);
+        }
+    }
+}
+
+
+void Foam::globalPolyBoundaryMesh::clearOut()
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->clearOut();
+    }
+}
+
+
+bool Foam::globalPolyBoundaryMesh::write() const
+{
+    bool good = true;
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        good = good && iter()->write();
+    }
+    return good;
+}
+
 
 // * * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * //
 
@@ -150,7 +307,7 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
     if (!patches_.found(pp.name()))
     {
         dictionary dict;
-        if (interfaceDicts_.found(mesh_.name()))
+        if (interfaceDicts_.found(mesh().name()))
         {
             const dictionary& mDict = interfaceDicts_[mesh().name()];
             if (mDict.found(pp.name()))
@@ -158,14 +315,14 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
                 dict = mDict.subDict(pp.name());
             }
         }
-        if (displacementFields_.found(mesh_.name()))
+        if (displacementFields_.found(mesh().name()))
         {
             if (!dict.found("displacementField"))
             {
                 dict.add
                 (
                     "displacementField",
-                    displacementFields_[mesh_.name()]
+                    displacementFields_[mesh().name()]
                 );
             }
         }
@@ -174,6 +331,14 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
             pp.name(),
             globalPolyPatch::New(dict, pp).ptr()
         );
+
+        if (inverseDisplacement_.found(mesh().name()))
+        {
+            patches_[pp.name()]->setInverseDisplacement
+            (
+                inverseDisplacement_[mesh().name()]
+            );
+        }
     }
 
     return *patches_[pp.name()];
@@ -198,39 +363,131 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
 {
     if (!interfaceDicts_.size())
     {
+        typeIOobject<IOdictionary> regionPropertiesIO
+        (
+            IOobject
+            (
+                "regionProperties",
+                mesh().time().constant(),
+                mesh().time(),
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                false
+            )
+        );
+        if (mesh().foundObject<IOdictionary>(regionPropertiesIO.name()))
+        {
+            const IOdictionary& regionProperties =
+                mesh().lookupObject<IOdictionary>(regionPropertiesIO.name());
+
+            if (regionProperties.found("interfaces"))
+            {
+                interfaceDicts_ =
+                    HashTable<dictionary>(regionProperties.lookup("interfaces"));
+                readFromRP_ = true;
+            }
+        }
+        else if (regionPropertiesIO.headerOk())
+        {
+            IOdictionary regionProperties(regionPropertiesIO);
+            if (regionProperties.found("interfaces"))
+            {
+                interfaceDicts_ =
+                    HashTable<dictionary>(regionProperties.lookup("interfaces"));
+                readFromRP_ = true;
+            }
+        }
+        else if (isA<fvMesh>(mesh()))
+        {
+            const fvSchemes& schemes =
+                dynamicCast<const fvMesh>(mesh()).schemes();
+            const entry& e =
+                schemes.dict().subDict("interpolationSchemes").lookupEntry
+                (
+                    pp.name(),
+                    false,
+                    false
+                );
+            interfaceDicts_(mesh().name()).set(pp.name(), e.dict());
+        }
+    }
+
+    bool missingInterpolation = false;
+    if (!interfaceDicts_.size())
+    {
+        if (readFromRP_)
+        {
+            FatalErrorInFunction
+                << "The interfaces is empty in regionProperties. "
+                << "This is the default, but a list of "
+                << "interfaces is necessary when using coupled patches."
+                << "Please specify the interfaces and their mapping methods."
+                << "i.e. " << nl
+                << "interfaces" << nl
+                << "(" << nl
+                << "    " << mesh().name()<< nl
+                << "    {" << nl
+                << "        " << pp.name() << nl
+                << "        {" << nl
+                << "            ..." << nl
+                << "        }" << nl
+                << "    }" << nl
+                << ");" << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            missingInterpolation = true;
+        }
+    }
+    if (!interfaceDicts_.found(mesh().name()))
+    {
+        if (readFromRP_)
+        {
+            FatalErrorInFunction
+                << mesh().name() << " was not found in the list of "
+                << "interfaces but a coupled patch was requested for the "
+                << "region." << nl
+                << "Please specify the region and interface mapping methods"
+                << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            missingInterpolation = true;
+        }
+    }
+    else if (!interfaceDicts_[mesh().name()].isDict(pp.name()))
+    {
+        if (readFromRP_)
+        {
+            FatalErrorInFunction
+                << pp.name() << " was not found in the list of interfaces "
+                << "for region " << mesh().name() << " "
+                << "but a coupled patch was requested. Please specify the "
+                << "mapping method for the patch" << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            missingInterpolation = true;
+        }
+    }
+
+    if (missingInterpolation)
+    {
         FatalErrorInFunction
-            << "The interfaces is empty in regionProperties." << nl
-            << "This is the default, but a list of" << nl
-            << "interfaces is necessary when using coupled patches." << nl
-            << "Please specify the interfaces and their mapping methods." << nl
+            << "No mapping was provided in fvSchemes/interpolationSchemes. "
+            << "Mapping is necessary when using coupled patches."
+            << "Please specify the coupled patch mapping methods."
             << "i.e. " << nl
-            << "interfaces" << nl
-            << "(" << nl
-            << "    " << mesh_.name()<< nl
+            << "interpolationSchemes" << nl
+            << "{" << nl
+            << "    " << pp.name() << nl
             << "    {" << nl
-            << "        " << pp.name() << nl
-            << "        {" << nl
-            << "            ..." << nl
-            << "        }" << nl
+            << "        ..." << nl
             << "    }" << nl
-            << ");" << endl
-            << abort(FatalError);
-    }
-    if (!interfaceDicts_.found(mesh_.name()))
-    {
-        FatalErrorInFunction
-            << mesh_.name() << " was not found in the list of interfaces" << nl
-            << "but a coupled patch was requested for the region." << nl
-            << "Please specify the region and interface mapping methods" << endl
-            << abort(FatalError);
-    }
-    else if (!interfaceDicts_[mesh_.name()].found(pp.name()))
-    {
-        FatalErrorInFunction
-            << pp.name() << " was not found in the list of interfaces" << nl
-            << "for region " << mesh_.name() << " "
-            << "but a coupled patch was requested. Please specify the" << nl
-            << "mapping method for the patch" << endl
+            << "}" << endl
             << abort(FatalError);
     }
 
@@ -248,24 +505,31 @@ Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
         dictionary& dict =
             const_cast<dictionary&>
             (
-                interfaceDicts_[mesh_.name()].subDict(pp.name())
+                interfaceDicts_[mesh().name()].subDict(pp.name())
             );
-        if (displacementFields_.found(mesh_.name()))
+        if (displacementFields_.found(mesh().name()))
         {
             if (!dict.found("displacementField"))
             {
                 dict.add
                 (
                     "displacementField",
-                    displacementFields_[mesh_.name()]
+                    displacementFields_[mesh().name()]
                 );
             }
         }
         patches_.insert
         (
             pp.name(),
-            new coupledGlobalPolyPatch(dict, pp)
+            coupledGlobalPolyPatch::New(dict, pp).ptr()
         );
+        if (inverseDisplacement_.found(mesh().name()))
+        {
+            patches_[pp.name()]->setInverseDisplacement
+            (
+                inverseDisplacement_[mesh().name()]
+            );
+        }
     }
 
 
@@ -278,4 +542,6 @@ Foam::globalPolyBoundaryMesh::operator()(const pointPatch& pp) const
 {
     return this->operator()(mesh().boundaryMesh()[pp.name()]);
 }
+
+
 // ************************************************************************* //

@@ -1,0 +1,9 @@
+motionSolvers/points0/blastPoints0MotionSolver.C
+motionSolvers/componentDisplacement/blastComponentDisplacementMotionSolver.C
+motionSolvers/displacement/blastDisplacementMotionSolver.C
+
+fvMotionSolvers/componentLaplacian/blastDisplacementComponentLaplacianFvMotionSolver.C
+fvMotionSolvers/laplacian/blastDisplacementLaplacianFvMotionSolver.C
+fvMotionSolvers/SBRStress/blastDisplacementSBRStressFvMotionSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastFvMotionSolvers

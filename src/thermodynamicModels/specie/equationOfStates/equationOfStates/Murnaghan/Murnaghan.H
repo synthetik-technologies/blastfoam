@@ -96,6 +96,9 @@ class Murnaghan
     //- Reference density
     scalar rho0_;
 
+    //- Minimum density
+    scalar rhoMin_;
+
     //- Reference pressure
     scalar pRef_;
 
@@ -272,12 +275,11 @@ public:
             const scalar CpCv
         ) const;
 
-        //- Entropy of mixture [J/kg/K]
-        inline scalar S
-        (
-            const scalar p,
-            const scalar T
-        ) const;
+        //- Return entropy contribution to the integral of Cp/T [J/kg/K]
+        inline scalar Sp(const scalar p, const scalar T) const;
+
+        //- Return entropy contribution to the integral of Cv/T [J/kg/K]
+        inline scalar Sv(const scalar p, const scalar T) const;
 
 
         // IO

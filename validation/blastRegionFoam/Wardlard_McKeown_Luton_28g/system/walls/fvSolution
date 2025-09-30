@@ -1,0 +1,36 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system/walls";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "(D|DD|T)"
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-09;
+        relTol          0.01;
+    }
+}
+
+PIMPLE
+{}
+
+relaxationFactors
+{
+//     D  0.9;
+//     DD 0.5;
+}
+// ************************************************************************* //

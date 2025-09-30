@@ -153,7 +153,7 @@ void Foam::mechanicalLaw::makeRelJ() const
 
     relJPtr_ = makeTypeField<scalar, fvPatchField, volMesh>
     (
-        "relJ", dimensionedScalar("relJ", dimless, Zero)
+        "relJ", dimensionedScalar("relJ", dimless, 1.0)
     );
 }
 
@@ -168,7 +168,7 @@ void Foam::mechanicalLaw::makeRelJf() const
 
     relJfPtr_ = makeTypeField<scalar, fvsPatchField, surfaceMesh>
     (
-        "relJf", dimensionedScalar("relJ", dimless, Zero)
+        "relJf", dimensionedScalar("relJ", dimless, 1.0)
     );
 }
 
@@ -190,7 +190,7 @@ void Foam::mechanicalLaw::makeSigmaHyd() const
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                solvePressureEqn_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
             ),
             mesh_,
             dimensionedScalar("zero", dimPressure, 0.0),
@@ -218,7 +218,7 @@ void Foam::mechanicalLaw::makeSigmaHydf() const
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                solvePressureEqn_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
             ),
             mesh_,
             dimensionedScalar("zero", dimPressure, 0.0)
@@ -257,16 +257,13 @@ void Foam::mechanicalLaw::makeGradSigmaHyd() const
 
 bool Foam::mechanicalLaw::planeStress() const
 {
-    if (mesh_.foundObject<IOdictionary>("mechanicalProperties"))
+    if (baseMesh().foundObject<IOdictionary>("mechanicalProperties"))
     {
         return
-            Switch
+            baseMesh().lookupObject<IOdictionary>
             (
-                mesh_.lookupObject<IOdictionary>
-                (
-                    "mechanicalProperties"
-                ).lookup("planeStress")
-            );
+                "mechanicalProperties"
+            ).lookup<bool>("planeStress");
     }
     else
     {
@@ -279,14 +276,15 @@ bool Foam::mechanicalLaw::planeStress() const
             IOobject
             (
                 "mechanicalProperties",
-                "constant",
-                mesh_.time(),
+                baseMesh().time().constant(),
+                baseMesh(),
                 IOobject::MUST_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                false
             )
         );
 
-        return Switch(mechProp.lookup("planeStress"));
+        return mechProp.lookup<bool>("planeStress");
     }
 }
 
@@ -501,7 +499,7 @@ Foam::volScalarField& Foam::mechanicalLaw::relJRef()
     }
     if (relJPtr_.empty())
     {
-        makeRelF();
+        makeRelJ();
     }
 
     return relJPtr_();
@@ -623,25 +621,32 @@ bool Foam::mechanicalLaw::updateF
         (
             baseMesh.lookupObject<volTensorField>("F")
         );
+        FRef().correctBoundaryConditions();
         relFRef() = subsetter.interpolate
         (
             baseMesh.lookupObject<volTensorField>("relF")
         );
+        relFRef().correctBoundaryConditions();
         relJRef() = subsetter.interpolate
         (
             baseMesh.lookupObject<volScalarField>("relJ")
         );
+        relJRef().correctBoundaryConditions();
         JRef() = subsetter.interpolate
         (
             baseMesh.lookupObject<volScalarField>("J")
         );
+        JRef().correctBoundaryConditions();
     }
 
     if (enforceLinear())
     {
-        WarningInFunction
-            << "Material linearity enforced for stability!"
-            << endl;
+        if (solidModel::debug)
+        {
+            WarningInFunction
+                << "Material linearity enforced for stability!"
+                << endl;
+        }
 
         // Check if the mathematical model is in total or updated
         // Lagrangian form
@@ -723,9 +728,12 @@ bool Foam::mechanicalLaw::updateFf
 
     if (enforceLinear())
     {
-        WarningInFunction
-            << "Material linearity enforced for stability!"
-            << endl;
+        if (solidModel::debug)
+        {
+            WarningInFunction
+                << "Material linearity enforced for stability!"
+                << endl;
+        }
 
         // Check if the mathematical model is in total or updated
         // Lagrangian form
@@ -849,7 +857,7 @@ void Foam::mechanicalLaw::updateSigmaHyd
 const Foam::Switch& Foam::mechanicalLaw::enforceLinear() const
 {
     // Lookup the solideModel
-    const solidModel& solMod = lookupSolidModel(mesh(), baseMeshRegionName_);
+    const solidModel& solMod = lookupSolidModel(baseMesh());
 
     return solMod.enforceLinear();
 }
@@ -858,7 +866,7 @@ const Foam::Switch& Foam::mechanicalLaw::enforceLinear() const
 bool Foam::mechanicalLaw::incremental() const
 {
     // Lookup the solideModel
-    const solidModel& solMod = lookupSolidModel(mesh(), baseMeshRegionName_);
+    const solidModel& solMod = lookupSolidModel(baseMesh());
 
     return solMod.incremental();
 }
@@ -870,21 +878,29 @@ Foam::mechanicalLaw::mechanicalLaw
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
     name_(name),
     mesh_(mesh),
+    baseMesh_(baseMesh),
     dict_(dict),
-    baseMeshRegionName_(mesh.name()),
     nonLinGeom_(nonLinGeom),
-    FPtr_(),
-    FfPtr_(),
-    relFPtr_(),
-    relFfPtr_(),
-    sigmaHydPtr_(),
-    gradSigmaHydPtr_(),
+
+    FPtr_(nullptr),
+    FfPtr_(nullptr),
+    relFPtr_(nullptr),
+    relFfPtr_(nullptr),
+    JPtr_(nullptr),
+    JfPtr_(nullptr),
+    relJPtr_(nullptr),
+    relJfPtr_(nullptr),
+    sigmaHydPtr_(nullptr),
+    sigmaHydfPtr_(nullptr),
+    gradSigmaHydPtr_(nullptr),
+
     useSolidDeformation_(false),
     usePlaneStress_(planeStress()),
     planeStressDir_(-1),
@@ -947,7 +963,14 @@ Foam::mechanicalLaw::mechanicalLaw
 
 Foam::tmp<Foam::surfaceScalarField> Foam::mechanicalLaw::impKf() const
 {
-    return fvc::interpolate(impK());
+    return tmp<surfaceScalarField>
+    (
+        surfaceScalarField::New
+        (
+            "impKf",
+            fvc::interpolate(impK())
+        )
+    );
 }
 
 
@@ -962,17 +985,136 @@ void Foam::mechanicalLaw::correct(surfaceSymmTensorField&)
 }
 
 
-Foam::scalar Foam::mechanicalLaw::residual()
+Foam::tmp<Foam::volTensorField>
+Foam::mechanicalLaw::P(const volSymmTensorField& sigma) const
+{
+    tmp<volTensorField> tPiola
+    (
+        volTensorField::New
+        (
+            "P",
+            mesh_,
+            dimensionedTensor(sigma.dimensions(), Zero)
+        )
+    );
+    volTensorField& Piola = tPiola.ref();
+
+    if (enforceLinear())
+    {
+        forAll(Piola, celli)
+        {
+            Piola[celli] = sigma[celli];
+        }
+        volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+        forAll(bPiola, patchi)
+        {
+            fvPatchTensorField& pPiola = bPiola[patchi];
+            const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+            forAll(pPiola, facei)
+            {
+                pPiola[facei] = psigma[facei];
+            }
+        }
+        return tPiola;
+    }
+
+    const volScalarField& J = relative() ? this->relJ() : this->J();
+    const volTensorField& F = relative() ? this->relF() : this->F();
+    forAll(Piola, celli)
+    {
+        Piola[celli] = J[celli]*(sigma[celli] & T(inv(F[celli])));
+    }
+    volTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+    forAll(bPiola, patchi)
+    {
+        fvPatchTensorField& pPiola = bPiola[patchi];
+        const fvPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+        const fvPatchScalarField& pJ = J.boundaryField()[patchi];
+        const fvPatchTensorField& pF = F.boundaryField()[patchi];
+        forAll(pPiola, facei)
+        {
+            pPiola[facei] = pJ[facei]*(psigma[facei] & T(inv(pF[facei])));
+        }
+    }
+
+    return tPiola;
+}
+
+
+Foam::tmp<Foam::surfaceTensorField>
+Foam::mechanicalLaw::P(const surfaceSymmTensorField& sigma) const
+{
+    tmp<surfaceTensorField> tPiola
+    (
+        surfaceTensorField::New
+        (
+            "P",
+            mesh_,
+            dimensionedTensor(sigma.dimensions(), Zero)
+        )
+    );
+    surfaceTensorField& Piola = tPiola.ref();
+
+    if (enforceLinear())
+    {
+        forAll(Piola, facei)
+        {
+            Piola[facei] = sigma[facei];
+        }
+        surfaceTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+        forAll(bPiola, patchi)
+        {
+            fvsPatchTensorField& pPiola = bPiola[patchi];
+            const fvsPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+            forAll(pPiola, facei)
+            {
+                pPiola[facei] = psigma[facei];
+            }
+        }
+        return tPiola;
+    }
+
+    const surfaceScalarField& J = relative() ? this->relJf() : this->Jf();
+    const surfaceTensorField& F = relative() ? this->relFf() : this->Ff();
+    forAll(Piola, facei)
+    {
+        Piola[facei] = J[facei]*(sigma[facei] & T(inv(F[facei])));
+    }
+    surfaceTensorField::Boundary& bPiola = Piola.boundaryFieldRef();
+    forAll(bPiola, patchi)
+    {
+        fvsPatchTensorField& pPiola = bPiola[patchi];
+        const fvsPatchSymmTensorField& psigma = sigma.boundaryField()[patchi];
+        const fvsPatchScalarField& pJ = J.boundaryField()[patchi];
+        const fvsPatchTensorField& pF = F.boundaryField()[patchi];
+        forAll(pPiola, facei)
+        {
+            pPiola[facei] = pJ[facei]*(psigma[facei] & T(inv(pF[facei])));
+        }
+    }
+
+    return tPiola;
+}
+
+
+Foam::scalar Foam::mechanicalLaw::residual() const
 {
     // Default to zero; this can be overwritten by any derived mechanical law
     return 0.0;
 }
 
 
-Foam::scalar Foam::mechanicalLaw::newDeltaT()
+Foam::scalar Foam::mechanicalLaw::relResidual() const
+{
+    // Default to zero; this can be overwritten by any derived mechanical law
+    return 0.0;
+}
+
+
+Foam::scalar Foam::mechanicalLaw::newDeltaT() const
 {
     // Default to a large number
-    return mesh_.time().endTime().value();
+    return great;
 }
 
 

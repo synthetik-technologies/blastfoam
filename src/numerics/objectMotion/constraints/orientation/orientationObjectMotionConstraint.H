@@ -71,6 +71,13 @@ public:
             const movingObject& motion
         );
 
+        //- Construct from components
+        orientation
+        (
+            const word& name,
+            const movingObject& motion
+        );
+
         //- Construct and return a clone
         virtual autoPtr<objectMotionConstraint> clone() const
         {

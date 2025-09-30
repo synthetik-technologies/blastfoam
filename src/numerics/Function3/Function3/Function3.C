@@ -25,6 +25,33 @@ License
 
 #include "Function3.H"
 
+// * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+template<class Type>
+Type Foam::Function3<Type>::readValue
+(
+    const unitConversion& defaultUnits,
+    Istream& is
+)
+{
+    // Read the units if they are before the value
+    unitConversion units(defaultUnits);
+    const bool haveUnits = units.readIfPresent(is);
+
+    // Read the value
+    const Type value = pTraits<Type>(is);
+
+    // Read the units if they are after the value
+    if (!haveUnits && !is.eof())
+    {
+        units.readIfPresent(is);
+    }
+
+    // Modify the value by the unit conversion and return
+    return units.toStandard(value);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -109,6 +136,29 @@ Foam::tmp<Foam::Field<Type>> Foam::FieldFunction3<Type, Function3Type>::value
     return tfld;
 }
 
+
+template<class Type, class Function3Type>
+Foam::tmp<Foam::Field<Type>> Foam::FieldFunction3<Type, Function3Type>::value
+(
+    const Field<vector>& X
+) const
+{
+    tmp<Field<Type>> tfld(new Field<Type>(X.size()));
+    Field<Type>& fld = tfld.ref();
+
+    forAll(X, i)
+    {
+        fld[i] =
+            refCast<const Function3Type>(*this).value
+            (
+                X[i].z(),
+                X[i].y(),
+                X[i].z()
+            );
+    }
+
+    return tfld;
+}
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 

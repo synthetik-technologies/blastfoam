@@ -109,6 +109,11 @@ public:
 
     // Member Functions
 
+        virtual wordList fields() const
+        {
+            return wordList::null();
+        }
+
         //- start is called at the start of the time-loop
         virtual bool start();
 

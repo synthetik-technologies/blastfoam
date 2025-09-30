@@ -1,0 +1,32 @@
+EXE_INC = \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
+    -I$(BLAST_DIR)/src/polyTopoChange/lnInclude \
+    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/generic/genericFields/lnInclude \
+    -I$(LIB_SRC)/generic/genericFvFields/lnInclude \
+    -I$(LIB_SRC)/physicalProperties/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/thermophysicalTransportModel/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/fluid/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/fluidThermo/lnInclude \
+    -I../
+
+EXE_LIBS = \
+    -lmeshTools \
+    -lfiniteVolume \
+    -lgenericFvFields \
+    -lmomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
+    -L$(BLAST_LIBBIN) \
+    -lerrorEstimators \
+    -lblastPolyTopoChange \
+    -lblastThermodynamics \
+    -lcompressibleSystems \

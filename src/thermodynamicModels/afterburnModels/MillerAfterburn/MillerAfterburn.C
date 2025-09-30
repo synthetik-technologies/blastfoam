@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "MillerAfterburn.H"
+#include "fluxSchemeBase.H"
 #include "fvc.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -73,7 +74,7 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
         IOobject
         (
             IOobject::groupName("c", phaseName),
-            mesh_.time().timeName(),
+            mesh_.time().name(),
             mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -82,24 +83,24 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
         0.0,
         "zeroGradient"
     ),
-    pScale_(dict.lookupOrDefault("pScale", 1.0)),
+    pScale_(dict_.lookupOrDefault("pScale", 1.0)),
     pName_(dict_.lookupOrDefault("pName", word("p"))),
     p_(mesh_.lookupObject<volScalarField>(pName_)),
     alphaRhoPtr_(nullptr),
     alphaRhoPhiPtr_(nullptr),
     Q0_("Q0", sqr(dimVelocity), dict_),
-    m_(readScalar(dict.lookup("m"))),
-    n_(readScalar(dict.lookup("n"))),
+    m_(readScalar(dict_.lookup("m"))),
+    n_(readScalar(dict_.lookup("n"))),
     a_("a", pow(dimPressure, -n_)/dimTime, dict_),
     pMin_("pMin", dimPressure, dict_)
 {
-    if (dict.found("tUnits"))
+    if (dict_.found("tUnits"))
     {
-        a_.value() *= pow(10.0, -tUnits[dict.lookup<word>("tUnits")]);
+        a_.value() *= pow(10.0, -tUnits[dict_.lookup<word>("tUnits")]);
     }
-    if (dict.found("pUnits") && !dict.found("pScale"))
+    if (dict_.found("pUnits") && !dict_.found("pScale"))
     {
-        pScale_ = pow(10.0, -pUnits[dict.lookup<word>("pUnits")]);
+        pScale_ = pow(10.0, -pUnits[dict_.lookup<word>("pUnits")]);
     }
 }
 
@@ -128,59 +129,121 @@ void Foam::afterburnModels::MillerAfterburn::initializeModels()
     (
         &c_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName)
     );
+
+    alphaRhoPtr_->mesh().addTemporaryObject
+    (
+        reconstruction::ownName(alphaRhoPtr_->name())
+    );
+    alphaRhoPtr_->mesh().addTemporaryObject
+    (
+        reconstruction::neiName(alphaRhoPtr_->name())
+    );
+}
+
+
+void Foam::afterburnModels::MillerAfterburn::update()
+{
+    const volScalarField& alphaRho = alphaRhoPtr_();
+    dimensionedScalar dT(this->mesh().time().deltaT());
+
+    alphaRhoCOld_ = alphaRho*c_;
+
+    volScalarField p(p_*pos(p_ - pMin_));
+    if (pScale_ != 1.0)
+    {
+        p *= pScale_;
+    }
+    p.max(small);
+
+    ddtC_ = a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_);
+    ddtC_.ref().max(0.0);
+
+    // Calculate the deltas using the current value
+    deltaAlphaRhoC_ =
+        fvc::div(alphaRhoPhiPtr_(), c_)
+      - ddtC_()*alphaRho;
 }
 
 
 void Foam::afterburnModels::MillerAfterburn::solve()
 {
-    // Do not include volume changes
-    volScalarField cOld(c_);
-    this->storeAndBlendOld(cOld, false);
-
-    tmp<volScalarField> p(p_*pos(p_ - pMin_));
-    if (pScale_ != 1.0)
+    if (!alphaRhoCOld_.valid())
     {
-        p.ref() *= pScale_;
+        return;
     }
-    p.ref().max(small);
-    volScalarField deltaC
-    (
-        a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_)
-    );
-    deltaC.max(0.0);
-    this->storeAndBlendDelta(deltaC);
 
-    //- Calculate advection
     const volScalarField& alphaRho = alphaRhoPtr_();
-    const surfaceScalarField& alphaRhoPhi = alphaRhoPhiPtr_();
+    dimensionedScalar dT(this->mesh().time().deltaT());
+    dimensionedScalar smallRho("small", dimDensity, 1e-6);
 
-    volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
-    this->storeAndBlendDelta(deltaAlphaRhoC);
+    this->storeAndBlendOld(alphaRhoCOld_.ref());
+    this->storeAndBlendDelta(deltaAlphaRhoC_.ref());
 
+    // volScalarField deltaLambda(ddtLambda_());
+    // this->blendDelta(deltaLambda);
 
-    dimensionedScalar dT = alphaRho.time().deltaT();
-    c_ = cOld + dT*deltaC;
-    c_.maxMin(0.0, 1.0);
-    c_.correctBoundaryConditions();
-
-    // Compute the limited change in c
-    ddtC_ = (Foam::max(c_ - cOld, 0.0)/dT);
-    volScalarField& ddtC = ddtC_.ref();
-
-    //- Compute actual delta for the time step knowing the blended value
-    //  Not limited to 0 since the delta coefficients can be negative
-    //  and store
-    ddtC = this->calcAndStoreDelta(ddtC);
-
-    //- Final update of c
+    //- Update lambda to include advection and reaction
+    //  d(alpha rho lambda)/dt = alpha rho d(lambda)/dt + lambda d(alpha rho)/dt
     c_ =
-        (
-            cOld*alphaRho.prevIter() - dT*deltaAlphaRhoC
-        )/max(alphaRho, dimensionedScalar(dimDensity, 1e-10))
-      + dT*ddtC;
+        (alphaRhoCOld_ - deltaAlphaRhoC_*dT)
+       /max(alphaRho, smallRho);
+      // + deltaLambda*dT;
     c_.maxMin(0.0, 1.0);
     c_.correctBoundaryConditions();
 }
+
+
+// void Foam::afterburnModels::MillerAfterburn::solve()
+// {
+//     const volScalarField& alphaRho = alphaRhoPtr_();
+//     dimensionedScalar dT(this->mesh().time().deltaT());
+//     dimensionedScalar smallAlphaRho("small", dimDensity, 1e-10);
+//
+//     // Calculate the deltas using the current value
+//     const fluxSchemeBase& flux = fluxSchemeBase::findFluxScheme(alphaRhoPhiPtr_());
+//     volScalarField deltaAlphaRhoC
+//     (
+//         fvc::div(flux.flux(c_, alphaRhoPtr_(), flux.phi(), false))
+//     );
+//     this->storeAndBlendDelta(deltaAlphaRhoC);
+//
+//     tmp<volScalarField> p(p_*pos(p_ - pMin_));
+//     if (pScale_ != 1.0)
+//     {
+//         p.ref() *= pScale_;
+//     }
+//     p.ref().max(small);
+//     volScalarField deltaC
+//     (
+//         a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_)
+//     );
+//     deltaC.max(0.0);
+//     this->storeAndBlendDelta(deltaC);
+//
+//     // Do not include volume changes
+//     this->storeAndBlendOld(c_, false);
+//     volScalarField cOld(c_);
+//
+//     c_ += deltaC*dT;
+//     c_.maxMin(0.0, 1.0);
+//     c_.correctBoundaryConditions();
+//
+//     // Compute the limited change in c
+//     ddtC_ = (Foam::max(c_ - cOld, 0.0)/dT);
+//     volScalarField& ddtC = ddtC_.ref();
+//
+//     //- Compute actual delta for the time step knowing the blended value
+//     //  Not limited to 0 since the delta coefficients can be negative
+//     //  and store
+//     ddtC = this->calcAndStoreDelta(ddtC);
+//
+//     //- Final update of c
+//     c_ =
+//         cOld*(2.0 - alphaRho/max(alphaRho.prevIter(), smallAlphaRho))
+//       + dT*(deltaC - deltaAlphaRhoC/max(alphaRho.prevIter(), smallAlphaRho));
+//     c_.maxMin(0.0, 1.0);
+//     c_.correctBoundaryConditions();
+// }
 
 
 Foam::tmp<Foam::volScalarField>

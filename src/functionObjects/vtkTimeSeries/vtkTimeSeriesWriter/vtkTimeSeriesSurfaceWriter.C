@@ -29,71 +29,18 @@ License
 #include "OFstream.H"
 #include "boolList.H"
 #include "OSspecific.H"
-#include "makeSurfaceWriterMethods.H"
 #include "vtkWritePolyData.H"
+#include "addToRunTimeSelectionTable.H"
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    makeSurfaceWriterType(vtkTimeSeriesSurfaceWriter);
+    defineTypeNameAndDebug(vtkTimeSeriesSurfaceWriter, 0);
+    addToRunTimeSelectionTable(surfaceWriter, vtkTimeSeriesSurfaceWriter, word);
+    addToRunTimeSelectionTable(surfaceWriter, vtkTimeSeriesSurfaceWriter, dict);
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-template<class Type>
-void Foam::vtkTimeSeriesSurfaceWriter::Write
-(
-    const fileName& outputDir,
-    const fileName& surfaceName,
-    const pointField& points,
-    const faceList& faces,
-    const word& fieldName,
-    const Field<Type>& values,
-    const bool isNodeValues
-) const
-{
-    if (!isDir(outputDir))
-    {
-        mkDir(outputDir);
-    }
-
-    if (!timeSeries_.valid())
-    {
-        timeSeries_.set(new vtkTimeSeries(outputDir, 1, true)); // Read
-    }
-
-    vtkWritePolyData::write
-    (
-        outputDir/fieldName + '_' + surfaceName + ".vtk",
-        "sampleSurface",
-        writeFormat_ == IOstream::BINARY,
-        points,
-        labelList(),
-        edgeList(),
-        faces,
-        fieldName,
-        isNodeValues,
-        values
-    );
-
-    // Remove 1 level from the end of the path
-    timeSeries_->insertFromPath(outputDir, 1);
-    timeSeries_->writeTimeSeries(fieldName + '_' + surfaceName);
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::vtkTimeSeriesSurfaceWriter::vtkTimeSeriesSurfaceWriter
-(
-    const IOstream::streamFormat writeFormat
-)
-:
-    surfaceWriter(writeFormat)
-{}
-
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -108,12 +55,25 @@ void Foam::vtkTimeSeriesSurfaceWriter::write
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
-    const faceList& faces
+    const faceList& faces,
+    const wordList& fieldNames,
+    const bool writePointValues
+    #define FieldTypeValuesConstArg(Type, nullArg) \
+        , const UPtrList<const Field<Type>>& field##Type##Values
+    FOR_ALL_FIELD_TYPES(FieldTypeValuesConstArg)
+    #undef FieldTypeValuesConstArg
 ) const
 {
-    if (!isDir(outputDir))
+    const fileName surfaceDir(outputDir/surfaceName);
+
+    if (!isDir(surfaceDir))
     {
-        mkDir(outputDir);
+        mkDir(surfaceDir);
+    }
+
+    if (!timeSeries_.valid())
+    {
+        timeSeries_.set(new vtkTimeSeries(outputDir, 1, true)); // Read
     }
 
     vtkWritePolyData::write
@@ -124,13 +84,18 @@ void Foam::vtkTimeSeriesSurfaceWriter::write
         points,
         labelList(),
         edgeList(),
-        faces
+        faces,
+        fieldNames,
+        boolList(fieldNames.size(), writePointValues),
+        UPtrList<const Field<label>>(fieldNames.size())
+        #define FieldTypeValuesParameter(Type, nullArg) , field##Type##Values
+        FOR_ALL_FIELD_TYPES(FieldTypeValuesParameter)
+        #undef FieldTypeValuesParameter
     );
+
+    // Remove 1 level from the end of the path
+    timeSeries_->insertFromPath(outputDir, 1);
+    timeSeries_->writeTimeSeries(surfaceName);
 }
-
-
-// Create write methods
-defineSurfaceWriterWriteFields(Foam::vtkTimeSeriesSurfaceWriter);
-
 
 // ************************************************************************* //

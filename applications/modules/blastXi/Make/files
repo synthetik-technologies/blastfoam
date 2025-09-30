@@ -1,0 +1,5 @@
+psiuCompressibleSystem/psiuCompressibleSystem.C
+blastXiSolver.C
+regionSolver/blastXiRegionSolver.C
+
+LIB = $(BLAST_LIBBIN)/libblastXi

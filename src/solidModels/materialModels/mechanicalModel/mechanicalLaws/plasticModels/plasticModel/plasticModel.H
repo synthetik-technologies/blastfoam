@@ -98,7 +98,7 @@ protected:
         );
 
         //- Incremental change of plastic strain
-        defineVolSurfaceFieldTypeFuncs
+        defineVolSurfaceFieldTypeFuncsNoWrite
         (
             DEpsilonP,
             symmTensor,
@@ -106,7 +106,7 @@ protected:
         );
 
         //- Equivalent plastic strain increment
-        defineVolSurfaceFieldTypeFuncs
+        defineVolSurfaceFieldTypeFuncsNoWrite
         (
             DEpsilonPEq,
             scalar,
@@ -114,7 +114,7 @@ protected:
         );
 
         //- Plastic multiplier increment - plastric strain scaled by sqrt(2/3)
-        defineVolSurfaceFieldTypeFuncs
+        defineVolSurfaceFieldTypeFuncsNoWrite
         (
             DLambda,
             scalar,
@@ -255,6 +255,7 @@ public:
         (
             const word& name,
             const fvMesh& mesh,
+            const fvMesh& baseMesh,
             const dictionary& dict,
             const nonLinearGeometry::nonLinearType& nonLinGeom
         );
@@ -278,13 +279,17 @@ public:
 
         //- Return material residual i.e. a measured of how convergence of
         //  the material model
-        virtual scalar residual();
+        virtual scalar residual() const;
+
+        //- Return relative material residual i.e. a measured of how convergence of
+        //  the material model
+        virtual scalar relResidual() const;
 
         //- Update the yield stress: called at end of time-step
         virtual void updateTotalFields();
 
         //- Return the desired new time-step
-        virtual scalar newDeltaT();
+        virtual scalar newDeltaT() const;
 };
 
 

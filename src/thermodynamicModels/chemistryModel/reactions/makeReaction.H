@@ -48,12 +48,12 @@ Description
                                                                                \
     defineTemplateTypeNameAndDebug(Reaction##ThermoPhysics, 0);                \
                                                                                \
-    defineTemplateRunTimeSelectionTable(Reaction##ThermoPhysics, dictionary)   \
+    defineTemplateRunTimeSelectionTable(Reaction##ThermoPhysics, dictionary);  \
     defineTemplateRunTimeSelectionTable                                        \
     (                                                                          \
         Reaction##ThermoPhysics,                                               \
         objectRegistry                                                         \
-    )
+    );
 
 
 #define makeReaction(ReactionType, ReactionRate, ThermoPhysics)                \
@@ -75,7 +75,7 @@ Description
         ReactionType##ThermoPhysics##ReactionRate##Base,                       \
         ReactionType##ThermoPhysics##ReactionRate,                             \
         dictionary                                                             \
-    )
+    );
 
 
 #define makeGeneralReaction(ReactionType, ReactionRate, ThermoPhysics)         \

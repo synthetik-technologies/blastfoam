@@ -35,10 +35,10 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Define all integrators for a given type
-#define makeMultivariateIntegratorTypes(Type)                                  \
-    makeMultivariateIntegratorType(MidPointMultivariateIntegrator, Type)       \
-    makeMultivariateIntegratorType(TrapezoidalMultivariateIntegrator, Type)    \
-    makeMultivariateIntegratorType(GaussianMultivariateIntegrator, Type)
+#define makeMultivariateIntegratorTypes(Type, Adapt)                                  \
+    makeMultivariateIntegratorType(MidPointMultivariateIntegrator, Type, Adapt)       \
+    makeMultivariateIntegratorType(TrapezoidalMultivariateIntegrator, Type, Adapt)    \
+    makeMultivariateIntegratorType(GaussianMultivariateIntegrator, Type, Adapt)
 
 
 
@@ -46,17 +46,17 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Make the base integrator type along with the actual models
-#define makeMultivariateIntegrators(Type)                                      \
-    makeMultivariateIntegrator(Type)                                           \
-    makeMultivariateIntegratorTypes(Type);
+#define makeMultivariateIntegrators(Type, Adapt)                                      \
+    makeMultivariateIntegrator(Type, Adapt)                                           \
+    makeMultivariateIntegratorTypes(Type, Adapt);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Macro with a dummy first input for use with some macro based construction
-#define makeMultivariateIntegratorsArg(Dummy, Type)                            \
-    makeMultivariateIntegrator(Type)                                           \
-    makeMultivariateIntegratorTypes(Type);
+#define makeMultivariateIntegratorsArg(Dummy, Type, Adapt)                            \
+    makeMultivariateIntegrator(Type, Adapt)                                           \
+    makeMultivariateIntegratorTypes(Type, Adapt);
 
 #endif
 

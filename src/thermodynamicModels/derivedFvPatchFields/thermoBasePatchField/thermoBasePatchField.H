@@ -63,9 +63,6 @@ protected:
         //- Name of the velocity field
         word phaseName_;
 
-        //- Pointer to the thermo class
-        mutable UautoPtr<const fluidThermo> thermoPtr_;
-
 
 public:
 
@@ -89,7 +86,8 @@ public:
         thermoBasePatchField
         (
             const fvPatch&,
-            const dictionary&
+            const dictionary&,
+            const word&
         );
 
         //- Construct from patch, internal field, and dictionary
@@ -116,14 +114,23 @@ public:
             //- Return the psi field
             tmp<scalarField> psi() const;
 
+            //- Return the psi internal field
+            tmp<scalarField> psiIf() const;
+
             //- Return the gamma field
             tmp<scalarField> gamma() const;
+
+            //- Return the gamma internal field
+            tmp<scalarField> gammaIf() const;
 
             //- Return the gamma field given a temperature
             tmp<scalarField> gamma(const scalarField& T) const;
 
             //- Return the speed of sound
             tmp<scalarField> speedOfSound() const;
+
+            //- Return the speed of sound
+            tmp<scalarField> speedOfSoundIf() const;
 
 
         //- Write

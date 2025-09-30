@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "timeIntegrationSystem.H"
-#include "basicThermo.H"
+#include "rhoThermo.H"
 #include "OSspecific.H"
 
 namespace Foam
@@ -57,14 +57,23 @@ class basicBlastThermo;
 class blastThermo
 :
     public timeIntegrationSystem,
-    public basicThermo::implementation
+    virtual public rhoThermo
 {
 protected:
 
     // Protected data
 
+        //- Reference to the mesh
+        const fvMesh& mesh_;
+
+        //- Constructing dictionary
+        const dictionary& dict_;
+
         //- Name of the phase
         const word phaseName_;
+
+        //- Temperature [K]
+        volScalarField T_;
 
         //- Internal energy
         volScalarField e_;
@@ -77,6 +86,9 @@ protected:
 
         //- Heat capacity at constant volume [J/kg/K]
         volScalarField Cv_;
+
+        //- Thermal conductivity [W/m/K]
+        volScalarField kappa_;
 
         //- Minimum temperature
         scalar TLow_;
@@ -115,10 +127,10 @@ protected:
                 return Cv_;
             }
 
-            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            volScalarField& alphaRef()
+            //- Thermal conductivity for enthalpy of mixture [kg/m/s]
+            volScalarField& kappaRef()
             {
-                return alpha_;
+                return kappa_;
             }
 
 
@@ -240,12 +252,23 @@ public:
         virtual tmp<volScalarField> ESource() const = 0;
 
         //- Return residual values
-        virtual dimensionedScalar residualAlpha() const
+        virtual const dimensionedScalar& residualAlpha() const
         {
             return residualAlpha_;
         }
 
-        virtual dimensionedScalar residualRho() const
+        virtual const dimensionedScalar& residualRho() const
+        {
+            return residualRho_;
+        }
+
+        //- Access residual values
+        virtual dimensionedScalar& residualAlpha()
+        {
+            return residualAlpha_;
+        }
+
+        virtual dimensionedScalar& residualRho()
         {
             return residualRho_;
         }
@@ -257,9 +280,28 @@ public:
 
         // Access functions
 
-            const word& phaseName() const
+            //- Properties dictionary
+            virtual const IOdictionary& properties() const = 0;
+
+            //- Non-const access the properties dictionary
+            virtual IOdictionary& properties() = 0;
+
+            //- Return const access to the mesh
+            virtual const fvMesh& mesh() const
+            {
+                return mesh_;
+            }
+
+            //- Phase name
+            virtual const word& phaseName() const
             {
                 return phaseName_;
+            }
+
+            //- Should the dpdt term be included in the enthalpy equation
+            virtual Switch dpdt() const
+            {
+                return false;
             }
 
             const word& masterName() const
@@ -280,9 +322,18 @@ public:
             }
 
 
+        // Mass transfer
+
+            //- Does the mixture include this specie?
+            virtual inline bool containsSpecie(const word& specieName) const
+            {
+                return false;
+            }
+
+
         // Fields derived from thermodynamic state variables
 
-            using basicThermo::implementation::he;
+            using rhoThermo::he;
 
             //- Return enthalpy/Internal energy [J/kg]
             virtual const volScalarField& he() const;
@@ -290,49 +341,65 @@ public:
             //- Return enthalpy/Internal energy [J/kg]
             virtual volScalarField& he();
 
+            //- Enthalpy of formation [J/kg]
+            virtual tmp<volScalarField> hc() const = 0;
+
             //- Enthalpy/Internal energy for a cell [J/kg]
-            virtual scalar cellHE
+            virtual scalar cellhe
             (
                 const scalar T,
                 const label celli
             ) const = 0;
 
             //- Enthalpy/Internal energy for patch and face [J/kg]
-            virtual scalar patchFaceHE
+            virtual scalar patchFacehe
             (
                 const scalar T,
                 const label patchi,
                 const label facei
             ) const = 0;
 
+            //- Temperature [K]
+            virtual const volScalarField& T() const
+            {
+                return T_;
+            }
+
+            //- Temperature [K]
+            //  Non-const access allowed for transport equations
+            virtual volScalarField& T()
+            {
+                return T_;
+            }
+
             //- Heat capacity at constant pressure [J/kg/K]
-            using basicThermo::Cp;
-            virtual tmp<volScalarField> Cp() const
+            using rhoThermo::Cp;
+            virtual const volScalarField& Cp() const
             {
                 return Cp_;
             }
 
             //- Heat capacity at constant volume [J/kg/K]
-            using basicThermo::Cv;
-            virtual tmp<volScalarField> Cv() const
+            using rhoThermo::Cv;
+            virtual const volScalarField& Cv() const
             {
                 return Cv_;
             }
 
             //- Heat capacity at constant volume [J/kg/K]
-            using basicThermo::Cpv;
-            virtual tmp<volScalarField> Cpv() const
+            using rhoThermo::Cpv;
+            virtual const volScalarField& Cpv() const
             {
                 return Cv_;
             }
 
-            using basicThermo::THE;
+            using rhoThermo::The;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual tmp<volScalarField> THE() const = 0;
+            virtual tmp<volScalarField> The() const = 0;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar cellTHE
+            virtual scalar cellThe
             (
                 const scalar he,
                 const scalar T0,
@@ -351,6 +418,9 @@ public:
             //- Return non-const access to the local density field [kg/m^3]
             virtual volScalarField& rho();
 
+            //- Return non-const access to the local density field [kg/m^3]
+            virtual volScalarField& rhoRef();
+
             //- Old-time density [kg/m^3]
             virtual tmp<volScalarField> rho0() const;
 
@@ -366,9 +436,6 @@ public:
                 const scalarField& T,
                 const label patchi
             ) const;
-
-            //- Flame temperature [k]
-            virtual tmp<volScalarField> flameT() const = 0;
 
             //- Return molecular weight
             virtual scalar cellW(const label) const = 0;
@@ -397,51 +464,14 @@ public:
             virtual tmp<volScalarField> nu() const = 0;
 
             //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> kappa() const;
+            virtual const volScalarField& kappa() const;
 
-            //- Thermal diffusivity for temperature of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappa(const label patchi) const;
-
-            //- Thermal diffusivity for temperature of mixture for cell [W/m/K]
-            virtual scalar cellkappa(const label cell) const;
-
-            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphahe() const;
-
-            //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> alphahe(const label patchi) const;
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [W/m/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField&
-            ) const;
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const;
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const;
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const;
 
         //- Read residual values
         virtual bool read();
+
+        //- Read residual values
+        virtual bool read(const dictionary& dict);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

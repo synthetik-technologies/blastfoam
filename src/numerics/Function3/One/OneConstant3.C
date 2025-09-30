@@ -40,6 +40,7 @@ template<class Type>
 Foam::Function3s::OneConstant<Type>::OneConstant
 (
     const word& name,
+    const unitConversions& units,
     const dictionary& dict
 )
 :

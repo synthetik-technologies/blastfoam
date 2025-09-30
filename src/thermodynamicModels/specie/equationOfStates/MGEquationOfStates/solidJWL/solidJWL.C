@@ -43,14 +43,21 @@ Foam::solidJWL<Specie>::solidJWL
     B_(dict.subDict("equationOfState").lookup<scalar>("B")),
     R1_(dict.subDict("equationOfState").lookup<scalar>("R1")),
     R2_(dict.subDict("equationOfState").lookup<scalar>("R2")),
-    pRef_(dict.subDict("equationOfState").lookup<scalar>("pRef"))
-{
-    e0_ =
+    pRef_(dict.subDict("equationOfState").lookup<scalar>("pRef")),
+    e0_
+    (
+        dict.subDict("equationOfState").lookupOrDefault<scalar>
         (
-          - A_*(omega_/(R1_) - 1.0)*exp(-R1_)
-          - B_*(omega_/(R2_) - 1.0)*exp(-R2_)
-        )/(rho0_*omega_);
-}
+            "e0",
+            (
+                A_*(omega_/(R1_) - 1.0)*exp(-R1_)
+              + B_*(omega_/(R2_) - 1.0)*exp(-R2_)
+            )/(rho0_*omega_)
+            // (A_/R1_*exp(-R1_) + B_/R2_ *exp(-R2_))/rho0_
+        )
+    ),
+    eRef_(dict.subDict("equationOfState").lookup<scalar>("eRef"))
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -68,6 +75,7 @@ void Foam::solidJWL<Specie>::write(Ostream& os) const
     dict.add("R1", R1_);
     dict.add("R2", R2_);
     dict.add("pRef", pRef_);
+    dict.add("eRef", eRef_);
     os  << indent << dict.dictName() << dict;
 }
 

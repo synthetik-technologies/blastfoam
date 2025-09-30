@@ -45,9 +45,9 @@ Foam::radiationModels::blastAbsorptionEmissionModel::New
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown blastAbsorptionEmissionModel type "
+            << "Unknown absorptionEmissionModel type "
             << modelType << nl << nl
-            << "Valid blastAbsorptionEmissionModel types are :" << nl
+            << "Valid absorptionEmissionModel types are :" << nl
             << dictionaryConstructorTablePtr_->sortedToc() << exit(FatalError);
     }
 

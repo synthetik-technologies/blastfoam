@@ -30,43 +30,51 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(FibonacciUnivariateMinimizationScheme, 0);
+namespace minimizationSchemes
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(Fibonacci, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        FibonacciUnivariateMinimizationScheme,
+        Fibonacci,
         dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        FibonacciUnivariateMinimizationScheme,
+        Fibonacci,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        FibonacciUnivariateMinimizationScheme,
+        Fibonacci,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        FibonacciUnivariateMinimizationScheme,
+        Fibonacci,
         dictionaryTwo
     );
 }
+}
+}
 
-const Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::goldenRatio =
+const Foam::scalar
+Foam::minimizationSchemes::univariate::Fibonacci::goldenRatio =
     (sqrt(5.0) + 1.0)/2.0;
 
-const Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::s =
+const Foam::scalar
+Foam::minimizationSchemes::univariate::Fibonacci::s =
     (1.0 - sqrt(5.0))/(1.0 + sqrt(5.0));
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::FibonacciUnivariateMinimizationScheme::FibonacciUnivariateMinimizationScheme
+Foam::minimizationSchemes::univariate::Fibonacci::Fibonacci
 (
     const scalarUnivariateEquation& eqn,
     const dictionary& dict
@@ -78,9 +86,18 @@ Foam::FibonacciUnivariateMinimizationScheme::FibonacciUnivariateMinimizationSche
 }
 
 
+Foam::minimizationSchemes::univariate::Fibonacci::Fibonacci
+(
+    const scalarUnivariateEquation& eqn,
+    const Fibonacci& solver
+)
+:
+    univariateMinimizationScheme(eqn, solver)
+{}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::minimizationSchemes::univariate::Fibonacci::minimize
 (
     const scalar x,
     const scalar x1,
@@ -112,7 +129,7 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
         eqn_.limit(c);
         yc = eqn_.fx(c, li);
 
-        if (convergedX(a, b) && convergedY(yc, yd))
+        if (converged(a, b, yc, yd))
         {
             break;
         }

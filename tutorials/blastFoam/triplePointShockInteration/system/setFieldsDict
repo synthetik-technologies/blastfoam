@@ -49,25 +49,6 @@ regions
             volScalarFieldValue rho.gas 0.125
         );
     }
-    
-    /*sphereToCell
-    {
-        centre (0 0 0);
-        radius 0.25;
-
-        backup
-        {
-            centre (0 0 0);
-            radius 1;
-        }
-        level 5;
-        refineInternal yes;
-
-        fieldValues
-        (
-            volScalarFieldValue alpha.c4 1
-        );
-    }*/
 );
 
 // ************************************************************************* //

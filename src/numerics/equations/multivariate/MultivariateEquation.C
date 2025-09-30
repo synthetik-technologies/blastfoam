@@ -26,18 +26,54 @@ License
 #include "MultivariateEquation.H"
 #include "adaptiveTypes.H"
 
+// * * * * * * * * * * * * * * Static Data Functions * * * * * * * * * * * * //
+
+template<class Type>
+Foam::autoPtr<Foam::multivariateEquation<Type>>
+Foam::multivariateEquation<Type>::New
+(
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("type"), dict);
+}
+
+template<class Type>
+Foam::autoPtr<Foam::multivariateEquation<Type>>
+Foam::multivariateEquation<Type>::New
+(
+    const word& type,
+    const dictionary& dict
+)
+{
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(type);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown " << typeName << " type "
+            << type <<  nl << nl
+            << "Valid " << typeName << " types are:" << nl
+            << dictionaryConstructorTablePtr_->sortedToc() << nl
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict);
+}
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type>
 void Foam::MultivariateEquation<Type>::calculateJacobian
 (
-    const UList<scalar>& x0,
+    const typename multivariateEquation<Type>::VarType& x0,
     const label li,
     const List<Type>& f0,
     RectangularMatrix<Type>& J
 ) const
 {
-    scalarList f1(nVar_);
+    List<Type> f1(nVar_);
     J.setSize(nEqns_, nVar_);
     for (label cmptj = 0; cmptj < nVar_; cmptj++)
     {
@@ -90,6 +126,25 @@ Foam::MultivariateEquation<Type>::MultivariateEquation
 
 
 template<class Type>
+Foam::MultivariateEquation<Type>::MultivariateEquation
+(
+    const label nEqns,
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits,
+    const dictionary& dict,
+    const List<string>& eqnStrings
+)
+:
+    multivariateEquation<Type>(eqnStrings, dict),
+    lowerLimits_(dict.lookupOrDefault("lowerBounds", lowerLimits)),
+    upperLimits_(dict.lookupOrDefault("upperBounds", upperLimits)),
+    nVar_(lowerLimits.size()),
+    nEqns_(nEqns),
+    dX_(dict.lookupOrDefault<scalarList>("dX", scalarList(nVar_, 1e-6)))
+{}
+
+
+template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation(const dictionary& dict)
 :
     multivariateEquation<Type>(dict),
@@ -113,7 +168,7 @@ Foam::MultivariateEquation<Type>::~MultivariateEquation()
 template<class Type>
 void Foam::MultivariateEquation<Type>::jacobian
 (
-    const UList<scalar>& x,
+    const typename multivariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J

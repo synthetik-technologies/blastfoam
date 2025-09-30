@@ -1,0 +1,3 @@
+Test-acceleration.C
+
+EXE = $(BLAST_APPBIN)/Test-acceleration

@@ -24,16 +24,23 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "CodedEquationTemplate.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(${typeName}_${TemplateType}Equation, 0);
-
-    regEquation<${TemplateType}, Equation>::
-    adddictionaryConstructorToTable<${typeName}_${TemplateType}Equation>
-        ${typeName}_${TemplateType}RegEquationConstructorToTable_;
+    defineTypeNameAndDebug
+    (
+        ${typeName}_${TemplateType}Equation,
+        0
+    );
+    addToRunTimeSelectionTable
+    (
+        ${TemplateType}Equation,
+        ${typeName}_${TemplateType}Equation,
+        dictionary
+    );
 }
 
 
@@ -64,13 +71,12 @@ extern "C"
 
 Foam::${typeName}_${TemplateType}Equation::${typeName}_${TemplateType}Equation
 (
-    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    regEquation<${TemplateType}, Equation>(obr, dict)
+    Equation<${TemplateType}>(dict)
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Construct ${typeName} sha1: ${SHA1sum} from dictionary\n";
     }
@@ -81,7 +87,7 @@ Foam::${typeName}_${TemplateType}Equation::${typeName}_${TemplateType}Equation
 
 Foam::${typeName}_${TemplateType}Equation::~${typeName}_${TemplateType}Equation()
 {
-    if (${verbose:-false})
+    if (${verbose})
     {
         Info<< "Destroy ${typeName} sha1: ${SHA1sum}\n";
     }

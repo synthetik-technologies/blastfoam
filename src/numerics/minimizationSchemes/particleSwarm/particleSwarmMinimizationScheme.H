@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::particleSwarmMinimizationScheme
+    Foam::minimizationSchemes::particleSwarm
 
 Description
     Gradient free minimization using a swarm of particles to randomly sample
@@ -45,19 +45,21 @@ SourceFiles
 
 #include "minimizationScheme.H"
 #include "typeInfo.H"
-#include "Random.H"
+#include "randomGenerator.H"
 #include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace minimizationSchemes
+{
 
 /*---------------------------------------------------------------------------*\
-        Class particleSwarmMinimizationScheme Declaration
+        Class particleSwarm Declaration
 \*---------------------------------------------------------------------------*/
 
-class particleSwarmMinimizationScheme
+class particleSwarm
 :
     public minimizationScheme
 {
@@ -74,7 +76,7 @@ public:
 private:
 
     //- Random number generator
-    mutable Random rand_;
+    mutable randomGenerator rand_;
 
     //- Particles
     mutable List<particle> particles_;
@@ -93,14 +95,30 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        particleSwarmMinimizationScheme
+        particleSwarm
         (
             const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
+        //- Copy constructor
+        particleSwarm
+        (
+            const scalarUnivariateEquation& eqn,
+            const particleSwarm& solver
+        );
+
+        //- Clone the root solver
+        virtual autoPtr<minimizationScheme> clone
+        (
+            const scalarUnivariateEquation& eqns
+        ) const
+        {
+            return autoPtr<minimizationScheme>(new particleSwarm(eqns, *this));
+        }
+
     //- Destructor
-    virtual ~particleSwarmMinimizationScheme()
+    virtual ~particleSwarm()
     {}
 
 
@@ -120,6 +138,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace minimizationSchemes
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

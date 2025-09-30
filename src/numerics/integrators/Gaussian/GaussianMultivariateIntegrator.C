@@ -29,14 +29,14 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::GaussianMultivariateIntegrator<Type>::GaussianMultivariateIntegrator
+template<class Type, class Adapt>
+Foam::GaussianMultivariateIntegrator<Type, Adapt>::GaussianMultivariateIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
 )
 :
-    MultivariateIntegrator<Type>(eqn, dict),
+    MultivariateIntegrator<Type, Adapt>(eqn, dict),
     ws_(eqn.nVar()),
     xs_(eqn.nVar())
 {
@@ -48,23 +48,35 @@ Foam::GaussianMultivariateIntegrator<Type>::GaussianMultivariateIntegrator
 }
 
 
-template<class Type>
-Foam::GaussianMultivariateIntegrator<Type>::GaussianMultivariateIntegrator
+template<class Type, class Adapt>
+Foam::GaussianMultivariateIntegrator<Type, Adapt>::GaussianMultivariateIntegrator
 (
     const equationType& eqn,
     const multivariateIntegrator& inter
 )
 :
-    MultivariateIntegrator<Type>(eqn, inter),
-    ws_(dynamicCast<const GaussianMultivariateIntegrator<Type>>(inter).ws_),
-    xs_(dynamicCast<const GaussianMultivariateIntegrator<Type>>(inter).xs_)
+    MultivariateIntegrator<Type, Adapt>(eqn, inter),
+    ws_
+    (
+        dynamicCast<const GaussianMultivariateIntegrator<Type, Adapt>>
+        (
+            inter
+        ).ws_
+    ),
+    xs_
+    (
+        dynamicCast<const GaussianMultivariateIntegrator<Type, Adapt>>
+        (
+            inter
+        ).xs_
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::GaussianMultivariateIntegrator<Type>::integrateFunc
+template<class Type, class Adapt>
+Type Foam::GaussianMultivariateIntegrator<Type, Adapt>::integrateFunc
 (
     const scalarList& x0,
     const scalarList& x1,
@@ -79,8 +91,8 @@ Type Foam::GaussianMultivariateIntegrator<Type>::integrateFunc
 }
 
 
-template<class Type>
-void Foam::GaussianMultivariateIntegrator<Type>::addCorners
+template<class Type, class Adapt>
+void Foam::GaussianMultivariateIntegrator<Type, Adapt>::addCorners
 (
     const label diri,
     const scalarList& x0,
@@ -112,8 +124,8 @@ void Foam::GaussianMultivariateIntegrator<Type>::addCorners
     fx = fx + w*this->eqnPtr_->fX(x, li);
 }
 
-template<class Type>
-Type Foam::GaussianMultivariateIntegrator<Type>::integrate
+template<class Type, class Adapt>
+Type Foam::GaussianMultivariateIntegrator<Type, Adapt>::integrate
 (
     const scalarList& x0,
     const scalarList& x1,

@@ -68,7 +68,7 @@ protected:
                 bAbsorptionEmission_;
 
         //- Radiation ode
-        radiationODE radODE_;
+        mutable radiationODE radODE_;
 
 private:
 
@@ -77,6 +77,8 @@ private:
         //- Initialise
         void initialise();
 
+        //- Read radiationProperies
+        const blastRadiationModel& readRadiationProperties(const word& type);
 
 public:
 
@@ -156,6 +158,20 @@ public:
 
             //- Source term component (constant)
             virtual scalar cellRu(const label celli) const = 0;
+
+            //- Energy source term
+            virtual tmp<fvScalarMatrix> Sh
+            (
+                const basicThermo& thermo,
+                const volScalarField& he
+            ) const;
+
+            //- Temperature source term
+            virtual tmp<fvScalarMatrix> ST
+            (
+                const dimensionedScalar& rhoCp,
+                volScalarField& T
+            ) const;
 
             //- Source term component (constant)
             virtual tmp<volScalarField> calcRhoE

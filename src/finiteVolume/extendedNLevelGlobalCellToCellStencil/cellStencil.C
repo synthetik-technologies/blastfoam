@@ -31,16 +31,14 @@ Foam::cellStencil::cellStencil()
 :
     labelList(0),
     localOwner_(-1),
-    centre_(Zero),
-    localStencil_()
+    centre_(Zero)
 {}
 
 Foam::cellStencil::cellStencil(const cellStencil& stencil)
 :
     labelList(stencil),
     localOwner_(stencil.localOwner_),
-    centre_(stencil.centre_),
-    localStencil_()
+    centre_(stencil.centre_)
 {}
 
 Foam::cellStencil::cellStencil
@@ -52,8 +50,7 @@ Foam::cellStencil::cellStencil
 :
     labelList(stencil),
     localOwner_(own),
-    centre_(centre),
-    localStencil_()
+    centre_(centre)
 {
     if (stencil.size())
     {
@@ -83,7 +80,6 @@ void Foam::cellStencil::update
     }
 
     const labelList& stencil(*this);
-    localStencil_.setSize(stencil.size(), -1);
 
     if (!this->size())
     {
@@ -104,16 +100,6 @@ void Foam::cellStencil::update
     {
         return;
     }
-
-    label li = 0;
-    forAll(*this, i)
-    {
-        if (idx.isLocal(labelList::operator[](i)))
-        {
-            localStencil_[li++] = idx.toLocal(labelList::operator[](i));
-        }
-    }
-    localStencil_.resize(li);
 }
 
 

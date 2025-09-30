@@ -38,7 +38,6 @@ SourceFiles
 #define coupledSolidTractionFvPatchVectorField_H
 
 #include "solidTractionFvPatchVectorField.H"
-#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,14 +54,17 @@ class coupledSolidTractionFvPatchVectorField
 {
     // Private Data
 
-        //- Selector for mapped patch type
-        const globalPolyBoundaryMesh& globalBoundary_;
-
         //- Name of neighbour pressure field
         const word pName_;
 
         //- Reference pressure
         scalar pRef_;
+
+        //- Cut off pressure
+        scalar cutOffPressure_;
+
+        //- Integrated force (neighbour)
+        vector forceNbr_;
 
 
     // Private functions
@@ -96,7 +98,8 @@ public:
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const dictionary&
+            const dictionary&,
+            const bool mustRead = true
         );
 
         //- Construct by mapping given
@@ -106,7 +109,7 @@ public:
             const coupledSolidTractionFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
-            const fvPatchFieldMapper&
+            const fieldMapper&
         );
 
         //- Copy constructor
@@ -135,18 +138,26 @@ public:
         }
 
 
-    // Member Functions
+        // Mapping functions
 
-        //- Map (and resize as needed) from self given a mapping object
-        //  Used to update fields following mesh topology change
-        virtual void autoMap(const fvPatchFieldMapper&);
+            //- Map the given fvPatchField onto this fvPatchField
+            virtual void map(const fvPatchField<vector>&, const fieldMapper&);
 
-        //- Reverse map the given fvPatchField onto this fvPatchField
-        //  Used to reconstruct fields
-        virtual void rmap(const fvPatchVectorField&, const labelList&);
+            //- Reset the fvPatchField to the given fvPatchField
+            //  Used for mesh to mesh mapping
+            virtual void reset(const fvPatchField<vector>&);
 
-        //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
+
+        // Evaluation
+
+            //- Return integrated force on neighbour patch
+            const vector& forceNbr() const
+            {
+                return forceNbr_;
+            }
+
+            //- Update pressure and traction
+            virtual bool updateFields();
 
         //- Write
         virtual void write(Ostream&) const;

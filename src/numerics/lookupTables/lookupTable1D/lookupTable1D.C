@@ -25,6 +25,7 @@ License
 
 #include "lookupTable1D.H"
 #include "tableReader.H"
+#include "List2D.H"
 #include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -32,6 +33,8 @@ License
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D()
 :
+    xName_("x"),
+    fName_("f"),
     mod_(Modifier<Type>::New("none")),
     modX_(Modifier<scalar>::New("none")),
     data_(),
@@ -49,6 +52,8 @@ Foam::lookupTable1D<Type>::lookupTable1D()
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D(const lookupTable1D<Type>& table)
 :
+    xName_(table.xName_),
+    fName_(table.fName_),
     mod_(table.mod_->clone()),
     modX_(table.modX_->clone()),
     data_(),
@@ -73,6 +78,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
     bool canRead
 )
 :
+    xName_(xName),
+    fName_(name),
     mod_(nullptr),
     modX_(nullptr),
     data_(),
@@ -100,6 +107,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
     const bool isReal
 )
 :
+    xName_("x"),
+    fName_("f"),
     mod_(Modifier<Type>::New(mod)),
     modX_(Modifier<scalar>::New(xMod)),
     data_(data),
@@ -125,10 +134,12 @@ Foam::lookupTable1D<Type>::lookupTable1D
     const bool isReal
 )
 :
+    xName_("x"),
+    fName_("f"),
     mod_(Modifier<Type>::New("none")),
     modX_(Modifier<scalar>::New(xMod)),
     data_(),
-    xModValues_(),
+    xModValues_(x),
     indexing_(nullptr),
     interpolator_(interpolationWeight1D::New(interpolationScheme, xModValues_)),
     realDataPtr_(nullptr),
@@ -187,6 +198,7 @@ void Foam::lookupTable1D<Type>::set
     setData(data, mod, isReal);
     interpolator_ =
         interpolationWeight1D::New(interpolationScheme, xModValues_);
+    interpolator_->validate();
 
 }
 
@@ -210,7 +222,7 @@ void Foam::lookupTable1D<Type>::setX
     }
     else
     {
-        xValuesPtr_ = new scalarField(x);
+        xValuesPtr_ = new scalarList(x);
         xModValues_ = x;
 
         if (isReal)
@@ -231,6 +243,13 @@ void Foam::lookupTable1D<Type>::setX
     indexing_ = indexer::New(xModValues_);
     if (interpolator_.valid())
     {
+        interpolator_->validate();
+        interpolator_->update();
+    }
+    else
+    {
+        interpolator_ =
+            interpolationWeight1D::New("linearClamp", xModValues_);
         interpolator_->validate();
     }
 }
@@ -268,7 +287,7 @@ void Foam::lookupTable1D<Type>::setData
         return;
     }
 
-    realDataPtr_ = new Field<Type>(data);
+    realDataPtr_ = new List<Type>(data);
     data_ = data;
     if (isReal)
     {
@@ -318,6 +337,24 @@ void Foam::lookupTable1D<Type>::update(const scalar x) const
         index_,
         indices_,
         weights_
+    );
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::updateDDx(const scalar x) const
+{
+    scalar xMod(modX_()(x));
+    index_ = indexing_->findIndex(xMod);
+    interpolator_->updateDWeights
+    (
+        x,
+        xMod,
+        index_,
+        this->x(),
+        indices_,
+        weights_,
+        dweights_
     );
 }
 
@@ -403,49 +440,186 @@ void Foam::lookupTable1D<Type>::read
     const bool canRead
 )
 {
-    List<List<string>> table;
-    if (dict.found("file"))
-    {
-        table = read2DTable
-        (
-            dict.lookup<fileName>("file"),
-            dict.lookupOrDefault<string>("delim", ","),
-            dict.lookupOrDefault<label>("startRow", 0),
-            dict.lookupOrDefault<Switch>("flipTable", false)
-        );
-    }
+    readX(dict, xName, canRead);
+    readF(dict, name, canRead);
+}
 
-    scalarField x;
-    word modXType;
-    bool isReal = readComponent<scalar>
+
+template<class Type>
+void Foam::lookupTable1D<Type>::readX
+(
+    const dictionary& dict,
+    const word& xName,
+    const bool canRead
+)
+{
+    xName_ = xName;
+
+    scalarList x;
+    const dictionary& xDict = readComponent<scalar>
     (
         dict,
         xName,
-        modXType,
+        modX_,
         x,
-        table
+        canRead
     );
+    if (canRead)
+    {
+        setX(x, true);
+    }
 
-    setX(x, modXType, isReal);
     interpolator_ =
         interpolationWeight1D::New
         (
-            dict.lookupOrDefault<word>("interpolationScheme", "linearClamp"),
-            xModValues_
+            xDict.found("interpolationScheme")
+          ? xDict.lookup<word>("interpolationScheme")
+          : dict.lookupOrDefault<word>("interpolationScheme", "linearClamp"),
+            xModValues_,
+            canRead
         );
-    interpolator_->validate();
+    if (canRead)
+    {
+        interpolator_->validate();
+    }
+}
 
-    Field<Type> data;
-    word modType;
-    isReal = readComponent<Type>
+
+template<class Type>
+void Foam::lookupTable1D<Type>::readF
+(
+    const dictionary& dict,
+    const word& name,
+    const bool canRead
+)
+{
+    fName_ = name;
+
+    List<Type> data;
+    readComponent<Type>
     (
         dict,
         name,
-        modType,
+        mod_,
         data,
-        table
+        canRead
     );
-    setData(data, modType, isReal);
+    if (canRead)
+    {
+        setData(data, true);
+    }
+
+    if (dict.found("rootSolver"))
+    {
+        this->solver
+        (
+            dict.lookup<word>("rootSolver"),
+            dict
+        );
+    }
+}
+
+
+template<class Type>
+void  Foam::lookupTable1D<Type>::write(Ostream& os, const word& dictName) const
+{
+    if (!dictName.empty())
+    {
+        os  << indent << dictName << nl
+            << indent << token::BEGIN_BLOCK << nl << incrIndent;
+    }
+
+    if (solver_.valid())
+    {
+        writeEntry(os, "rootSolver", solver_->type());
+    }
+
+    writeEntry(os, "interpolationScheme", interpolator_->type());
+
+    writeKeyword(os, word(xName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry(os, "mod", modX_->type());
+        writeEntry(os, xName_, static_cast<const scalarList&>(x()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    writeKeyword(os, word(fName_ + "Coeffs"))
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+
+        writeEntry(os, "mod", mod_->type());
+        writeEntry(os, fName_, static_cast<const List<Type>&>(f()));
+
+    os  << decrIndent << indent << token::END_BLOCK << endl;
+
+    if (!dictName.empty())
+    {
+        os  << decrIndent << indent << token::END_BLOCK << endl;
+    }
+}
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::lookupTable1D<Type>::operator=(const lookupTable1D<Type>& table)
+{
+    if (this == &table)
+    {
+        FatalErrorInFunction
+            << "attempted assignment to self"
+            << abort(FatalError);
+    }
+
+    xName_ = table.xName_;
+    fName_ = table.fName_;
+
+    mod_ = table.mod_->clone();
+    modX_ = table.modX_->clone();
+
+    interpolator_ = table.interpolator_->clone(xModValues_);
+    set(table.xModValues_, table.data_, false);
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Functions  * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::writeEntry(Ostream& os, const lookupTable1D<Type>& table)
+{
+    table.write(os);
+}
+
+
+template<class Type>
+void  Foam::writeEntry
+(
+    Ostream& os,
+    const word& dictName,
+    const lookupTable1D<Type>& table
+)
+{
+    table.write(os, dictName);
+}
+
+
+// * * * * * * * * * * * * * *  IOStream operators * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const lookupTable1D<Type>& f1
+)
+{
+    // Check state of Ostream
+    os.check
+    (
+        "Ostream& operator<<(Ostream&, const lookupTable1D<Type>&)"
+    );
+
+    f1.write(os);
+
+    return os;
 }
 
 // ************************************************************************* //

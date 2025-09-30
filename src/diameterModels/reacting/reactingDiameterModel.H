@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "diameterModel.H"
-#include "reactionRate.H"
+#include "diameterReactionRate.H"
 
 namespace Foam
 {
@@ -56,13 +56,16 @@ class reactingDiameterModel
 // Private data
 
     //- Reaction rate model
-    autoPtr<reactionRate> rate_;
+    autoPtr<diameterReactionRate> rate_;
 
     //- Name of pressure field
     const word pName_;
 
     //- Name of temperature field
     const word TName_;
+
+    //- Number density
+    volScalarField N_;
 
     //- Stored change in volume per unit time
     volScalarField dVdt_;
@@ -85,6 +88,9 @@ public:
     virtual ~reactingDiameterModel();
 
     // ODE functions
+
+        //- Update number density
+        virtual void update();
 
         //- Solve sub-step stepi
         virtual void solve();

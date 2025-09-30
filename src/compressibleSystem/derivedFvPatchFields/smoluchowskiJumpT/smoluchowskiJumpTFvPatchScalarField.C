@@ -129,28 +129,33 @@ Foam::smoluchowskiJumpTFvPatchScalarField::smoluchowskiJumpTFvPatchScalarField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 // Map from self
-void Foam::smoluchowskiJumpTFvPatchScalarField::autoMap
+void Foam::smoluchowskiJumpTFvPatchScalarField::map
 (
-    const fvPatchFieldMapper& m
+    const fvPatchScalarField& ptf,
+    const fieldMapper& mapper
 )
 {
-    mixedFvPatchScalarField::autoMap(m);
-    m(Twall_, Twall_);
+    mixedFvPatchScalarField::map(ptf, mapper);
+
+    const smoluchowskiJumpTFvPatchScalarField& sjpf =
+        refCast<const smoluchowskiJumpTFvPatchScalarField>(ptf);
+
+    mapper(Twall_, sjpf.Twall_);
 }
 
 
 // Reverse-map the given fvPatchField onto this fvPatchField
-void Foam::smoluchowskiJumpTFvPatchScalarField::rmap
+void Foam::smoluchowskiJumpTFvPatchScalarField::reset
 (
-    const fvPatchField<scalar>& ptf,
-    const labelList& addr
+    const fvPatchField<scalar>& ptf
 )
 {
-    mixedFvPatchField<scalar>::rmap(ptf, addr);
-    const smoluchowskiJumpTFvPatchScalarField& dmptf =
+    mixedFvPatchField<scalar>::reset(ptf);
+
+    const smoluchowskiJumpTFvPatchScalarField& sjpf =
         refCast<const smoluchowskiJumpTFvPatchScalarField>(ptf);
 
-    Twall_.rmap(dmptf.Twall_, addr);
+    Twall_.reset(sjpf.Twall_);
 }
 
 
@@ -165,11 +170,19 @@ void Foam::smoluchowskiJumpTFvPatchScalarField::updateCoeffs()
     const fluidThermo& thermo =
         db().lookupObject<fluidThermo>
         (
-            IOobject::groupName(basicThermo::dictName, internalField().group())
+            IOobject::groupName
+            (
+                physicalProperties::typeName,
+                internalField().group()
+            )
         );
     const label patchi = patch().index();
-    const scalarField& pmu = thermo.mu(patchi);
-    const scalarField& prho = thermo.rho(patchi);
+
+    const scalarField& pmu = thermo.mu().boundaryField()[patchi];
+
+    const tmp<scalarField> tprho(thermo.rho(patchi));
+    const scalarField& prho = tprho();
+
     const scalarField& pT = thermo.T().boundaryField()[patchi];
 
     Field<scalar> C2

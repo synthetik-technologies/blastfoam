@@ -5,6 +5,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 
 wmake -all $targetType utilities
+wmake -all $targetType modules
 wmake -all $targetType solvers
 
 # -----------------------------------------------------------------------------

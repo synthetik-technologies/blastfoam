@@ -61,14 +61,15 @@ SourceFiles
 #ifndef principalStresses_H
 #define principalStresses_H
 
-#include "functionObject.H"
+#include "fvMeshFunctionObject.H"
 #include "dictionary.H"
-#include "fvMesh.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
+{
+namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
@@ -77,20 +78,8 @@ namespace Foam
 
 class principalStresses
 :
-    public functionObject
+    public fvMeshFunctionObject
 {
-    // Private data
-
-        //- Name
-        const word name_;
-
-        //- Reference to main object registry
-        const Time& runTime_;
-
-        //- Reference to mesh region
-        const fvMesh& mesh_;
-
-
     // Private Member Functions
 
         //- Calculate and set principal stress vectors
@@ -101,18 +90,6 @@ class principalStresses
             vector& sigmaMid,
             vector& sigmaMin
         );
-
-        //- Write data
-        bool writeData();
-
-        //- Disallow default bitwise copy construct
-        principalStresses
-        (
-            const principalStresses&
-        );
-
-        //- Disallow default bitwise assignment
-        void operator=(const principalStresses&);
 
 
 public:
@@ -134,20 +111,17 @@ public:
 
     // Member Functions
 
-        //- start is called at the start of the time-loop
-        virtual bool start();
+        //- Read and set the function object if its data has changed
+        virtual bool read(const dictionary& dict);
+
+        //- Return the list of fields required
+        virtual wordList fields() const
+        {
+            return {"sigma"};
+        }
 
         //- execute is called at each ++ or += of the time-loop
         virtual bool execute();
-
-        //- Called when time was set at the end of the Time::operator++
-        virtual bool timeSet()
-        {
-            return true;
-        }
-
-        //- Read and set the function object if its data has changed
-        virtual bool read(const dictionary& dict);
 
         //- Write
         virtual bool write();
@@ -156,6 +130,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

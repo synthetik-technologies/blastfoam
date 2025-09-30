@@ -1,0 +1,39 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      levelSetProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+refineCoeffs
+{
+}
+phases (air);
+air
+{
+    epsilon 0.25;
+    // truncation cutOff;
+    // cutOffValue  0.9;
+    regions
+    (
+        searchableCylinder
+        {
+            point1 (0.7 0 -1);
+            point2 (0.7 0 1);
+            radius 0.2;
+            level 4;
+        }
+    );
+}
+// ************************************************************************* //

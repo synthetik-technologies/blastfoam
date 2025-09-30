@@ -20,7 +20,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "standAlonePatch.H"
-#include "vtkWritePolyData.H"
+#include "PatchTools.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -32,57 +32,32 @@ Foam::standAlonePatch Foam::standAlonePatch::createGlobalPatch
 {
     if (!Pstream::parRun())
     {
-        return standAlonePatch(patch, patch.points());
+        return standAlonePatch(patch.localFaces(), patch.localPoints());
     }
 
-    List<List<point>> gPoints(Pstream::nProcs());
-    faceListList gFaces(Pstream::nProcs());
+    labelList pointToGlobal;
+    labelList uniqueMeshPointLabels;
+    autoPtr<globalIndex> globalPoints;
+    autoPtr<globalIndex> globalFaces;
+    faceList mergedFaces;
+    pointField mergedPoints;
 
-    // Insert my points
-    gPoints[Pstream::myProcNo()] = patch.points();
+    PatchTools::gatherAndMerge
+    (
+        patch.boundaryMesh().mesh(),
+        patch.localFaces(),
+        patch.meshPoints(),
+        patch.meshPointMap(),
 
-    // Insert my faces
-    gFaces[Pstream::myProcNo()] = patch;
+        pointToGlobal,
+        uniqueMeshPointLabels,
+        globalPoints,
+        globalFaces,
 
-    // Communicate points
-    Pstream::gatherList(gPoints);
-    Pstream::scatterList(gPoints);
-
-    // Communicate faces
-    Pstream::gatherList(gFaces);
-    Pstream::scatterList(gFaces);
-
-    label nPoints = 0;
-    label nFaces = 0;
-    forAll(gPoints, proci)
-    {
-        nPoints += gPoints[proci].size();
-        nFaces += gFaces[proci].size();
-    }
-    pointField ps(nPoints);
-    faceList fs(nFaces);
-
-    label pi = 0;
-    label fi = 0;
-    forAll(gPoints, proci)
-    {
-        const label start = pi;
-        forAll(gPoints[proci], pj)
-        {
-            ps[pi++] = gPoints[proci][pj];
-        }
-        forAll(gFaces[proci], fj)
-        {
-            fs[fi] = gFaces[proci][fj];
-            face& f = fs[fi];
-            forAll(f, fpi)
-            {
-                f[fpi] = gFaces[proci][fj][fpi] + start;
-            }
-            fi++;
-        }
-    }
-    return standAlonePatch(move(fs), move(ps));
+        mergedFaces,
+        mergedPoints
+    );
+    return standAlonePatch(move(mergedFaces), move(mergedPoints));
 }
 
 // ************************************************************************* //

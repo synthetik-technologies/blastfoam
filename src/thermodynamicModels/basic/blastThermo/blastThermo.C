@@ -35,9 +35,7 @@ License
 #include "mixedEnergyFvPatchScalarField.H"
 #include "mixedEnergyCalculatedTemperatureFvPatchScalarField.H"
 #include "fixedJumpFvPatchFields.H"
-#include "fixedJumpAMIFvPatchFields.H"
 #include "energyJumpFvPatchScalarField.H"
-#include "energyJumpAMIFvPatchScalarField.H"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 
@@ -60,22 +58,9 @@ Foam::wordList Foam::blastThermo::heBoundaryBaseTypes()
         {
             hbt[patchi] = "immersed";
         }
-        else if (isA<fixedJumpFvPatchScalarField>(tbf[patchi]))
+        else if (tbf[patchi].overridesConstraint())
         {
-            const fixedJumpFvPatchScalarField& pf =
-                dynamic_cast<const fixedJumpFvPatchScalarField&>(tbf[patchi]);
-
-            hbt[patchi] = pf.interfaceFieldType();
-        }
-        else if (isA<fixedJumpAMIFvPatchScalarField>(tbf[patchi]))
-        {
-            const fixedJumpAMIFvPatchScalarField& pf =
-                dynamic_cast<const fixedJumpAMIFvPatchScalarField&>
-                (
-                    tbf[patchi]
-                );
-
-            hbt[patchi] = pf.interfaceFieldType();
+            hbt[patchi] = tbf[patchi].patch().type();
         }
     }
 
@@ -122,10 +107,6 @@ Foam::wordList Foam::blastThermo::heBoundaryTypes()
         {
             hbt[patchi] = energyJumpFvPatchScalarField::typeName;
         }
-        else if (isA<fixedJumpAMIFvPatchScalarField>(tbf[patchi]))
-        {
-            hbt[patchi] = energyJumpAMIFvPatchScalarField::typeName;
-        }
 
         if
         (
@@ -155,20 +136,30 @@ Foam::blastThermo::blastThermo
         IOobject::groupName("blastThermo", phaseName),
         mesh
     ),
-    basicThermo::implementation(mesh, dict, phaseName),
+    mesh_(mesh),
+    dict_(dict),
     phaseName_(phaseName),
+    T_
+    (
+        IOobject
+        (
+            phasePropertyName("T", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
+    ),
     e_
     (
         IOobject
         (
-            basicThermo::phasePropertyName
-            (
-                "e", phaseName
-            ),
-            mesh.time().timeName(),
+            phasePropertyName("e", phaseName),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE//IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar(dimEnergy/dimMass, 0.0),
@@ -180,7 +171,7 @@ Foam::blastThermo::blastThermo
         IOobject
         (
             IOobject::groupName("rho", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -193,7 +184,7 @@ Foam::blastThermo::blastThermo
         IOobject
         (
             IOobject::groupName("Cp", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
@@ -204,11 +195,24 @@ Foam::blastThermo::blastThermo
         IOobject
         (
             IOobject::groupName("Cv", phaseName),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh
         ),
         mesh,
         dimensionedScalar(dimEnergy/dimMass/dimTemperature, Zero)
+    ),
+    kappa_
+    (
+        IOobject
+        (
+            phasePropertyName("kappa", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimTime/dimLength/dimTemperature, Zero)
     ),
     TLow_
     (
@@ -230,8 +234,14 @@ Foam::blastThermo::~blastThermo()
 
 bool Foam::blastThermo::read()
 {
-    this->residualRho_.read(*this);
-    this->residualAlpha_.read(*this);
+    return this->read(this->properties());
+}
+
+
+bool Foam::blastThermo::read(const dictionary& dict)
+{
+    this->residualRho_.read(dict);
+    this->residualAlpha_.read(dict);
     return true;
 }
 
@@ -260,13 +270,13 @@ Foam::word Foam::blastThermo::readThermoType(const dictionary& dict)
 Foam::wordList Foam::blastThermo::splitThermoName
 (
     const word& thermoName,
-    const int nCmpt
+    const label nCmpt
 )
 {
     wordList cmpts(nCmpt);
 
     string::size_type beg=0, end=0, endb=0, endc=0;
-    int i = 0;
+    label i = 0;
 
     while
     (
@@ -296,7 +306,7 @@ Foam::wordList Foam::blastThermo::splitThermoName
             // is greater than nCmpt return an empty list
             if (i == nCmpt)
             {
-                return wordList();
+                return cmpts;
             }
         }
         beg = end + 1;
@@ -304,10 +314,10 @@ Foam::wordList Foam::blastThermo::splitThermoName
 
     // If the number of number of components in the name is not equal to nCmpt
     // return an empty list
-    if (i + 1 != nCmpt)
-    {
-        return wordList();
-    }
+    // if (i + 1 != nCmpt)
+    // {
+    //     return wordList();
+    // }
 
     if (beg < thermoName.size())
     {
@@ -361,8 +371,18 @@ Foam::wordList Foam::blastThermo::splitThermoName
         cmpts.append(newStr);
     }
 
+    Info<<cmpts[1]<<endl;
     wordList cmptsFinal(6);
-    if (cmpts[0] == "detonating")
+    if (cmpts[1] == "detonating")
+    {
+        cmptsFinal[0] = cmpts[0];
+        cmptsFinal[1] = cmpts[1];
+        cmptsFinal[2] = cmpts[2] + '/' + cmpts[6];
+        cmptsFinal[3] = cmpts[3] + '/' + cmpts[7];
+        cmptsFinal[4] = cmpts[4] + '/' + cmpts[8];
+        cmptsFinal[5] = cmpts[5] + '/' + cmpts[9];
+    }
+    else if (cmpts[1] == "cavitating")
     {
         cmptsFinal[0] = cmpts[0];
         cmptsFinal[1] = cmpts[1];
@@ -399,24 +419,24 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
     if (!mesh.foundObject<volScalarField>(name))
     {
         volScalarField* fPtr = nullptr;
-        IOobject io
+        typeIOobject<volScalarField> io
         (
             name,
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             wOpt
         );
-        IOobject baseIo
+        typeIOobject<volScalarField> baseIo
         (
             baseName,
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             wOpt
         );
 
-        if (io.typeHeaderOk<volScalarField>(true))
+        if (io.headerOk())
         {
             io.readOpt() = IOobject::MUST_READ;
             fPtr =
@@ -438,7 +458,7 @@ Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
                     baseField.boundaryField()
                 );
         }
-        else if (baseIo.typeHeaderOk<volScalarField>(true) && allowNoGroup)
+        else if (baseIo.headerOk() && allowNoGroup)
         {
             baseIo.readOpt() = IOobject::MUST_READ;
             fPtr =
@@ -517,6 +537,12 @@ Foam::volScalarField& Foam::blastThermo::rho()
 }
 
 
+Foam::volScalarField& Foam::blastThermo::rhoRef()
+{
+    return rho_;
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::blastThermo::rho0() const
 {
     return rho_.oldTime();
@@ -539,89 +565,9 @@ Foam::tmp<Foam::scalarField> Foam::blastThermo::gamma
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::kappa() const
+const Foam::volScalarField& Foam::blastThermo::kappa() const
 {
-    return volScalarField::New("kappa", Cp_*this->alpha_);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::kappa
-(
-    const label patchi
-) const
-{
-    return
-        this->Cp(this->T_.boundaryField()[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-Foam::scalar Foam::blastThermo::cellkappa(const label celli) const
-{
-    return this->cellCp(this->T_[celli], celli)*this->alpha_[celli];
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::alphahe() const
-{
-    return volScalarField::New
-    (
-        "alphahe",
-        this->gamma()*this->alpha_
-    );
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::alphahe
-(
-    const label patchi
-) const
-{
-    return
-        this->gamma(this->T_.boundaryField()[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return Cp_*(this->alpha_ + alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        this->Cp(this->T_.boundaryField()[patchi], patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return this->gamma()*(this->alpha_ + alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::blastThermo::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        this->gamma(this->T_.boundaryField()[patchi], patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
+    return kappa_;
 }
 
 // ************************************************************************* //

@@ -33,7 +33,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     const volScalarField& T
 )
 {
-    IOobject radIO
+    typeIOobject<IOdictionary> radIO
     (
         "radiationProperties",
         T.time().constant(),
@@ -44,7 +44,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     );
 
     word modelType("none");
-    if (radIO.typeHeaderOk<IOdictionary>(false))
+    if (radIO.headerOk())
     {
         IOdictionary(radIO).lookup("radiationModel") >> modelType;
     }
@@ -79,7 +79,7 @@ Foam::autoPtr<Foam::blastRadiationModel> Foam::blastRadiationModel::New
     const volScalarField& T
 )
 {
-    const word modelType(dict.lookup<word>("blastRadiationModel"));
+    const word modelType(dict.lookup<word>("radiationModel"));
 
     Info<< "Selecting blastRadiationModel " << modelType << endl;
 

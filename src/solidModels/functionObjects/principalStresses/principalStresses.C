@@ -33,8 +33,9 @@ License
 
 namespace Foam
 {
+namespace functionObjects
+{
     defineTypeNameAndDebug(principalStresses, 0);
-
     addToRunTimeSelectionTable
     (
         functionObject,
@@ -42,12 +43,13 @@ namespace Foam
         dictionary
     );
 }
+}
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 
-void Foam::principalStresses::calculateEigenValues
+void Foam::functionObjects::principalStresses::calculateEigenValues
 (
     const symmTensor& sigma,
     vector& sigmaMax,
@@ -158,172 +160,155 @@ void Foam::principalStresses::calculateEigenValues
     }
 }
 
-bool Foam::principalStresses::writeData()
-{
-    if (runTime_.outputTime())
-    {
-        // Lookup stress tensor
-        const volSymmTensorField& sigma =
-            mesh_.lookupObject<volSymmTensorField>("sigma");
-
-        // Calculate principal stress vectors
-
-        volVectorField sigmaMax
-        (
-            IOobject
-            (
-                "sigmaMax",
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedVector("sigmaMaxVal", dimPressure, vector::zero)
-        );
-
-        volVectorField sigmaMid
-        (
-            IOobject
-            (
-                "sigmaMid",
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedVector("sigmaMaxVal", dimPressure, vector::zero)
-        );
-
-        volVectorField sigmaMin
-        (
-            IOobject
-            (
-                "sigmaMin",
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedVector("sigmaMaxVal", dimPressure, vector::zero)
-        );
-
-        // References to internalFields for efficiency
-        const symmTensorField& sigmaI = sigma.primitiveField();
-        vectorField& sigmaMaxI = sigmaMax.primitiveFieldRef();
-        vectorField& sigmaMidI = sigmaMid.primitiveFieldRef();
-        vectorField& sigmaMinI = sigmaMin.primitiveFieldRef();
-
-        forAll (sigmaI, cellI)
-        {
-            calculateEigenValues
-            (
-                sigmaI[cellI],
-                sigmaMaxI[cellI],
-                sigmaMidI[cellI],
-                sigmaMinI[cellI]
-            );
-        }
-
-        forAll(sigmaMax.boundaryField(), patchI)
-        {
-            if
-            (
-                !sigmaMax.boundaryField()[patchI].coupled()
-             && mesh_.boundaryMesh()[patchI].type() != "empty"
-            )
-            {
-                const symmTensorField& pSigma = sigma.boundaryField()[patchI];
-                vectorField& pSigmaMax = sigmaMax.boundaryFieldRef()[patchI];
-                vectorField& pSigmaMid = sigmaMid.boundaryFieldRef()[patchI];
-                vectorField& pSigmaMin = sigmaMin.boundaryFieldRef()[patchI];
-
-                forAll(pSigmaMax, faceI)
-                {
-                    calculateEigenValues
-                    (
-                        pSigma[faceI],
-                        pSigmaMax[faceI],
-                        pSigmaMid[faceI],
-                        pSigmaMin[faceI]
-                    );
-                }
-            }
-        }
-
-        sigmaMax.correctBoundaryConditions();
-        sigmaMid.correctBoundaryConditions();
-        sigmaMin.correctBoundaryConditions();
-
-        sigmaMax.write();
-        sigmaMid.write();
-        sigmaMin.write();
-
-        Info<< "Principal stresses: max = " << gMax(mag(sigmaMax)()) << endl;
-    }
-
-    return true;
-}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::principalStresses::principalStresses
+Foam::functionObjects::principalStresses::principalStresses
 (
     const word& name,
     const Time& t,
     const dictionary& dict
 )
 :
-    functionObject(name),
-    name_(name),
-    runTime_(t),
-    mesh_
-    (
-        runTime_.lookupObject<fvMesh>
-        (
-            dict.lookupOrDefault<word>("region", "region0")
-        )
-    )
+    fvMeshFunctionObject(name, t, dict)
 {
-    Info<< "Creating " << this->name() << " function object" << endl;
+    read(dict);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::principalStresses::start()
+bool Foam::functionObjects::principalStresses::read(const dictionary& dict)
 {
-    if (runTime_.outputTime())
+    return fvMeshFunctionObject::read(dict);
+}
+
+
+bool Foam::functionObjects::principalStresses::execute()
+{
+    // Calculate principal stress vectors
+    tmp<volVectorField> tsigmaMax
+    (
+        new volVectorField
+        (
+            IOobject
+            (
+                "sigmaMax",
+                time_.name(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedVector(dimPressure, vector::zero)
+        )
+    );
+    volVectorField& sigmaMax = tsigmaMax.ref();
+
+
+    tmp<volVectorField> tsigmaMin
+    (
+        new volVectorField
+        (
+            IOobject
+            (
+                "sigmaMin",
+                time_.name(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedVector(dimPressure, vector::zero)
+        )
+    );
+    volVectorField& sigmaMin = tsigmaMin.ref();
+
+
+    tmp<volVectorField> tsigmaMid
+    (
+        new volVectorField
+        (
+            IOobject
+            (
+                "sigmaMid",
+                time_.name(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedVector(dimPressure, vector::zero)
+        )
+    );
+    volVectorField& sigmaMid = tsigmaMid.ref();
+
+    // Lookup stress tensor
+    const volSymmTensorField& sigma =
+        mesh_.lookupObject<volSymmTensorField>("sigma");
+
+    // References to internalFields for efficiency
+    const symmTensorField& sigmaI = sigma.primitiveField();
+    vectorField& sigmaMaxI = sigmaMax.primitiveFieldRef();
+    vectorField& sigmaMidI = sigmaMid.primitiveFieldRef();
+    vectorField& sigmaMinI = sigmaMin.primitiveFieldRef();
+
+    scalar maxSigmaMag = 0.0;
+    forAll (sigmaI, cellI)
     {
-        return writeData();
+        calculateEigenValues
+        (
+            sigmaI[cellI],
+            sigmaMaxI[cellI],
+            sigmaMidI[cellI],
+            sigmaMinI[cellI]
+        );
+        maxSigmaMag = max(maxSigmaMag, mag(sigmaMaxI[cellI]));
     }
 
-    return true;
-}
-
-
-bool Foam::principalStresses::execute()
-{
-    if (runTime_.outputTime())
+    forAll(sigmaMax.boundaryField(), patchI)
     {
-        return writeData();
+        if
+        (
+            !sigma.boundaryField()[patchI].coupled()
+         && !isA<emptyPolyPatch>(mesh_.boundaryMesh()[patchI])
+        )
+        {
+            const symmTensorField& pSigma = sigma.boundaryField()[patchI];
+            vectorField& pSigmaMax = sigmaMax.boundaryFieldRef()[patchI];
+            vectorField& pSigmaMid = sigmaMid.boundaryFieldRef()[patchI];
+            vectorField& pSigmaMin = sigmaMin.boundaryFieldRef()[patchI];
+
+            forAll(pSigmaMax, faceI)
+            {
+                calculateEigenValues
+                (
+                    pSigma[faceI],
+                    pSigmaMax[faceI],
+                    pSigmaMid[faceI],
+                    pSigmaMin[faceI]
+                );
+
+                maxSigmaMag = max(maxSigmaMag, mag(pSigmaMax[faceI]));
+            }
+        }
     }
 
+    sigmaMax.correctBoundaryConditions();
+    sigmaMid.correctBoundaryConditions();
+    sigmaMin.correctBoundaryConditions();
+
+    Info<< "Principal stresses: max = "
+        << returnReduce(maxSigmaMag, maxOp<scalar>()) << endl;
+
+    store(tsigmaMax);
+    store(tsigmaMin);
+    store(tsigmaMid);
+
     return true;
 }
 
 
-bool Foam::principalStresses::read(const dictionary& dict)
+bool Foam::functionObjects::principalStresses::write()
 {
-    return true;
-}
-
-
-bool Foam::principalStresses::write()
-{
-    return writeData();
+    return
+        writeObject("sigamMax")
+     && writeObject("sigamMid")
+     && writeObject("sigamMin");
 }
 
 // ************************************************************************* //

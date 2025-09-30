@@ -404,11 +404,12 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    mechanicalLaw(name, mesh, dict, nonLinGeom),
+    mechanicalLaw(name, mesh, baseMesh, dict, nonLinGeom),
     E_("E", dimPressure, dict),
     nu_("nu", dimless, dict),
     lambda_
@@ -459,7 +460,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "sigmaEff",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -472,7 +473,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "sigmaEfff",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -485,7 +486,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "DEpsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -498,7 +499,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "DEpsilonPf",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -511,7 +512,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "epsilonP",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -524,7 +525,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "epsilonPEq",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
@@ -537,7 +538,7 @@ Foam::linearElasticMohrCoulombPlastic::linearElasticMohrCoulombPlastic
         IOobject
         (
             "activeYield",
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
@@ -652,7 +653,7 @@ void Foam::linearElasticMohrCoulombPlastic::correct(volSymmTensorField& sigma)
         IOobject
         (
             "DEpsilon",
-            mesh().time().timeName(),
+            mesh().time().name(),
             mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -750,7 +751,7 @@ void Foam::linearElasticMohrCoulombPlastic::correct
         IOobject
         (
             "DEpsilon",
-            mesh().time().timeName(),
+            mesh().time().name(),
             mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
@@ -834,7 +835,7 @@ void Foam::linearElasticMohrCoulombPlastic::correct
 }
 
 
-Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual()
+Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual() const
 {
     // Calculate residual based on change in plastic strain increment
     if
@@ -851,7 +852,7 @@ Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual()
                     sigmaEfff_.primitiveField()
                   - sigmaEfff_.prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(sigmaEfff_.primitiveField()));
+            );
     }
     else
     {
@@ -863,8 +864,42 @@ Foam::scalar Foam::linearElasticMohrCoulombPlastic::residual()
                     sigmaEff_.primitiveField()
                   - sigmaEff_.prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(sigmaEff_.primitiveField()));
+            );
     }
+}
+
+
+Foam::scalar Foam::linearElasticMohrCoulombPlastic::relResidual() const
+{
+    // Calculate residual based on change in plastic strain increment
+    scalar sigmaEffRef = 0.0;
+    if
+    (
+        mesh().foundObject<surfaceVectorField>("grad(D)f")
+     || mesh().foundObject<surfaceVectorField>("grad(DD)f")
+    )
+    {
+        sigmaEffRef =
+            max
+            (
+                gMax(mag(sigmaEfff_.prevIter().primitiveField())),
+                gMax(mag(sigmaEfff_.oldTime().primitiveField()))
+            );
+    }
+    else
+    {
+        sigmaEffRef =
+            max
+            (
+                gMax(mag(sigmaEff_.prevIter().primitiveField())),
+                gMax(mag(sigmaEff_.oldTime().primitiveField()))
+            );
+    }
+    if (sigmaEffRef > small)
+    {
+        return residual()/sigmaEffRef;
+    }
+    return 0.0;
 }
 
 
@@ -882,7 +917,7 @@ void Foam::linearElasticMohrCoulombPlastic::updateTotalFields()
         IOobject
         (
             "DEpsilon",
-            mesh().time().timeName(),
+            mesh().time().name(),
             mesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE

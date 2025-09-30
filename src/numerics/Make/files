@@ -10,7 +10,11 @@ lookupTables/lookupTable3D/lookupTables3D.C
 equations/adaptiveTypes.C
 equations/equationBase/equationBase.C
 
-equations/regEquation/regEquations.C
+equations/equation/equations.C
+equations/univariate/univariateEquations.C
+equations/multivariate/multivariateEquations.C
+
+equations/coded/codedEquations.C
 
 rootSolvers/rootSolver/rootSolver.C
 rootSolvers/rootSolver/rootSolverNew.C
@@ -40,9 +44,20 @@ integrators/MultivariateIntegrator/MultivariateIntegrators.C
 
 minimizationSchemes/minimizationScheme/minimizationScheme.C
 minimizationSchemes/minimizationScheme/minimizationSchemeNew.C
+
+minimizationSchemes/lineSearch/lineSearch/lineSearch.C
+minimizationSchemes/lineSearch/lineSearchEquation/lineSearchEquation.C
+minimizationSchemes/lineSearch/cmptLineSearchEquation/cmptLineSearchEquation.C
+minimizationSchemes/lineSearch/exactLineSearch/exactLineSearch.C
+minimizationSchemes/lineSearch/approximateLineSearch/approximateLineSearch.C
+
 minimizationSchemes/gradientDescent/gradientDescentMinimizationScheme.C
 minimizationSchemes/particleSwarm/particleSwarmMinimizationScheme.C
 minimizationSchemes/NelderMead/NelderMeadMinimizationScheme.C
+minimizationSchemes/basis/basisMinimizationScheme.C
+minimizationSchemes/cyclicCoordinate/cyclicCoordinateMinimizationScheme.C
+minimizationSchemes/Powell/PowellMinimizationScheme.C
+minimizationSchemes/HookeJeeves/HookeJeevesMinimizationScheme.C
 
 minimizationSchemes/univariateMinimizationScheme/univariateMinimizationScheme.C
 minimizationSchemes/univariateMinimizationScheme/univariateMinimizationSchemeNew.C
@@ -57,43 +72,21 @@ minimizationSchemes/NewtonRaphson/NewtonRaphsonUnivariateMinimizationScheme.C
 leastSquares/linear/linearLeastSquares.C
 leastSquares/nonLinear/nonLinearLeastSquares.C
 
+# Algorithms
 algorithms/polygon/clipping/SutherlandHodgman.C
 algorithms/polygon/pointInPolygon/HormannAgathos.C
 algorithms/rotation/RodriguesRotation.C
-eigenSolver/eigenSolver.C
-polynomialRoots/polynomialRoots.C
-
-octree = algorithms/octree
-$(octree)/octreeName.C
-$(octree)/octreeDataPoint.C
-$(octree)/octreeDataPointTreeLeaf.C
-$(octree)/octreeDataEdges.C
-$(octree)/octreeDataCell.C
-$(octree)/octreeDataFace.C
-$(octree)/octreeDataBoundBox.C
-$(octree)/treeNodeName.C
-$(octree)/treeLeafName.C
-
-RBFFunctions/RBFFunction/RBFFunction.C
-RBFFunctions/RBFFunction/RBFFunctionNew.C
-RBFFunctions/linear/linearRBFFunction.C
-RBFFunctions/W2/W2RBFFunction.C
-RBFFunctions/TPS/TPSRBFFunction.C
-RBFFunctions/IMQB/IMQBRBFFunction.C
-RBFFunctions/Gauss/GaussRBFFunction.C
-RBFFunctions/WendlandC0/WendlandC0RBFFunction.C
-RBFFunctions/WendlandC2/WendlandC2RBFFunction.C
-RBFFunctions/WendlandC4/WendlandC4RBFFunction.C
-RBFFunctions/WendlandC6/WendlandC6RBFFunction.C
+algorithms/eigenSolver/eigenSolver.C
+algorithms/polynomialRoots/polynomialRoots.C
 
 
+# Object motion
 objectMotion/movingObject/movingObject.C
 objectMotion/objectMotionState/objectMotionState.C
 objectMotion/objectMotionState/objectMotionStateIO.C
 
-
+# Object motion restraints
 restraints = objectMotion/restraints
-
 $(restraints)/objectMotionRestraint/objectMotionRestraint.C
 $(restraints)/objectMotionRestraint/objectMotionRestraintNew.C
 $(restraints)/linearAxialAngularSpring/linearAxialAngularSpringObjectMotionRestraint.C
@@ -103,8 +96,8 @@ $(restraints)/axialAngularSpring/axialAngularSpringObjectMotionRestraint.C
 $(restraints)/linearDamper/linearDamperObjectMotionRestraint.C
 $(restraints)/sphericalAngularDamper/sphericalAngularDamperObjectMotionRestraint.C
 
+# Object motion constraints
 constraints = objectMotion/constraints
-
 $(constraints)/objectMotionConstraint/objectMotionConstraint.C
 $(constraints)/objectMotionConstraint/objectMotionConstraintNew.C
 $(constraints)/axis/axisObjectMotionConstraint.C
@@ -113,7 +106,7 @@ $(constraints)/orientation/orientationObjectMotionConstraint.C
 $(constraints)/plane/planeObjectMotionConstraint.C
 $(constraints)/point/pointObjectMotionConstraint.C
 
-
+# Object motion solvers
 solvers = objectMotion/motionSolvers
 $(solvers)/objectMotionSolver/objectMotionSolver.C
 $(solvers)/objectMotionSolver/objectMotionSolverNew.C
@@ -122,7 +115,50 @@ $(solvers)/symplectic/symplecticObjectMotionSolver.C
 $(solvers)/CrankNicolson/CrankNicolsonObjectMotionSolver.C
 $(solvers)/Newmark/NewmarkObjectMotionSolver.C
 
+# Function3s
 Function3/makeFunction3s.C
+Function3/Function3/Function3UnitConversions.C
+
+# Function 4s
+Function4/makeFunction4s.C
+Function4/Function4/Function4UnitConversions.C
+
+
+# Time integrators
+timeIntegrators/timeIntegrator/timeIntegrator.C
+timeIntegrators/timeIntegrationSystemBase/timeIntegrationSystemBase.C
+timeIntegrators/embeddedTimeIntegrator/embeddedTimeIntegrator.C
+timeIntegrators/embeddedTimeIntegrationSystemBase/embeddedTimeIntegrationSystemBase.C
+
+# Time integration coefficients
+timeIntegrators/timeIntegratorCoeffs/timeIntegratorCoeffs.C
+timeIntegrators/timeIntegratorCoeffs/timeIntegratorCoeffsNew.C
+timeIntegrators/Euler/EulerTimeIntegratorCoeffs.C
+timeIntegrators/RK1SSP/RK1SSPTimeIntegratorCoeffs.C
+timeIntegrators/RKF12/RKF12TimeIntegratorCoeffs.C
+
+timeIntegrators/genericRK2/genericRK2TimeIntegratorCoeffs.C
+timeIntegrators/RK2/RK2TimeIntegratorCoeffs.C
+timeIntegrators/Heun/HeunTimeIntegratorCoeffs.C
+timeIntegrators/Ralston2/Ralston2TimeIntegratorCoeffs.C
+timeIntegrators/RK2SSP/RK2SSPTimeIntegratorCoeffs.C
+
+timeIntegrators/RKBS23/RKBS23TimeIntegratorCoeffs.C
+timeIntegrators/genericRK3/genericRK3TimeIntegratorCoeffs.C
+timeIntegrators/Kutta3/Kutta3TimeIntegratorCoeffs.C
+timeIntegrators/Heun3/Heun3TimeIntegratorCoeffs.C
+timeIntegrators/Ralston3/Ralston3TimeIntegratorCoeffs.C
+timeIntegrators/RK3SSP/RK3SSPTimeIntegratorCoeffs.C
+
+timeIntegrators/RK4/RK4TimeIntegratorCoeffs.C
+timeIntegrators/RK4SSP/RK4SSPTimeIntegratorCoeffs.C
+timeIntegrators/RKF45/RKF45TimeIntegratorCoeffs.C
+timeIntegrators/RKDP45/RKDP45TimeIntegratorCoeffs.C
+timeIntegrators/RKCK45/RKCK45TimeIntegratorCoeffs.C
+
+timeIntegrators/RK6/RK6TimeIntegratorCoeffs.C
+timeIntegrators/RK8/RK8TimeIntegratorCoeffs.C
+timeIntegrators/AdamsBashforth/AdamsBashforthTimeIntegratorCoeffs.C
 
 
 LIB = $(BLAST_LIBBIN)/libblastNumerics

@@ -23,26 +23,24 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fieldValue.H"
+#include "errorEstimator.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::errorEstimator::getFieldValueType
+Foam::tmp<Foam::volScalarField> Foam::errorEstimator::getFieldValueType
 (
     const word& name,
-    volScalarField& f
+    const labelHashSet& eCells
 ) const
 {
     typedef GeometricField<Type, fvPatchField, volMesh> thisType;
 
     if (mesh_.foundObject<thisType>(name))
     {
-        const thisType& x = mesh_.lookupObject<thisType>(name);
-        f.primitiveFieldRef() =  mag(x.primitiveField());
-        f.boundaryFieldRef() = mag(x.boundaryField());
+        return mag(mesh_.lookupObject<thisType>(name));
     }
-    return;
+    return tmp<volScalarField>();
 }
 
 // ************************************************************************* //

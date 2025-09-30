@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -81,19 +81,49 @@ protected:
         PtrList<surfaceScalarField> alphaRhoPhis_;
 
 
+    //- Transport phase densities
+    bool transportPhaseDensity_;
+
+    //- Calculate reconstructed phaseDensity (alphaRho) with density
+    bool densityReconstruction_;
+
+    //- Use MULES volume fraction flux limiting
+    bool MUSLESLimiting_;
+
+    //- Phase to not modify volume fraction of
+    labelList adjustablePhases_;
+
+    //- Sharpen volume fraction fields
+    List<bool> sharpen_;
+
         //- Calculate new alpha and rho fields
         virtual void calcAlphas();
+
+        // Update fluxes given interpolated alphas and alphaRhos
+        void updateFluxes
+        (
+            const PtrList<surfaceScalarField>& alphasOwn,
+            const PtrList<surfaceScalarField>& alphasNei,
+
+            const PtrList<surfaceScalarField>& alphaRhosOwn,
+            const PtrList<surfaceScalarField>& alphaRhosNei
+        );
+
+        //- Return the index of the phase with the given name
+        label whichPhase(const word& phaseName) const;
 
 
 public:
 
-    TypeName("multiphaseCompressibleSystem");
+    TypeName("multiphase");
 
     // Constructor
-    multiphaseCompressibleSystem(const fvMesh& mesh);
-
-    // Constructor
-    multiphaseCompressibleSystem(const fvMesh& mesh, const bool);
+    multiphaseCompressibleSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh,
+        const bool initialize = true
+    );
 
 
     //- Destructor

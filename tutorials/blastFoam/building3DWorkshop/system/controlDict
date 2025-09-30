@@ -81,6 +81,14 @@ functions
             impulse
         );
     }
+    exposure
+    {
+        type                TExposure;
+
+        writeControl        writeTime;
+        burnModel           Henriques;
+        source              WeaverStoll;
+    }
 
     surfaces
     {
@@ -148,6 +156,7 @@ functions
         writeInterval       1;
         adjustLocations     yes;
         append yes;
+        writeVTK yes;
         probeLocations
         (
             // probe locations in ( x y z ) format

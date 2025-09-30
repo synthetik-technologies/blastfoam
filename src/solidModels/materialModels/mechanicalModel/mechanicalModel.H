@@ -89,9 +89,6 @@ class mechanicalModel
         //- Sub-meshes for each mechanicalLaw
         mutable autoPtr<solidSubMeshes> solSubMeshes_;
 
-        //- Volume field to point field interpolator for the base mesh
-        mutable volPointInterpolation* volToPointPtr_;
-
        //- The implicit stiffness surface field for Rhie-Chow correction
         mutable surfaceScalarField* impKfcorrPtr_;
 
@@ -133,6 +130,9 @@ public:
             const nonLinearGeometry::nonLinearType& nonLinGeom,
             const bool incremental = false
         );
+
+        //- Construct null
+        mechanicalModel(const fvMesh& mesh);
 
 
     //- Destructor
@@ -177,9 +177,13 @@ public:
             //- Return shear modulus
             tmp<volScalarField> shearModulus() const;
 
-            //- Return material residual i.e. a measured of how convergence of
+            //- Return absolute material residual i.e. a measured of how convergence of
             //  the material model
-            scalar residual();
+            scalar residual() const;
+
+            //- Return relative material residual i.e. a measured of how convergence of
+            //  the material model
+            scalar relResidual() const;
 
         // Edit
 
@@ -188,6 +192,12 @@ public:
 
             //- Calculate the stress surfaceField
             void correct(surfaceSymmTensorField& sigma);
+
+            //- Return the Piola stress tensor
+            tmp<volTensorField> P(const volSymmTensorField& sigma) const;
+
+            //- Return the face Piola stress tensor
+            tmp<surfaceTensorField> P(const surfaceSymmTensorField& sigma) const;
 
             //- Update the gradient of displacement vol field
             void grad
@@ -249,7 +259,7 @@ public:
             void updateTotalFields();
 
             //- Return the desired new time-step size
-            scalar newDeltaT();
+            scalar newDeltaT() const;
 
             //- Move subMeshes
             void moveSubMeshes();

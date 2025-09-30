@@ -30,17 +30,10 @@ License
 #include "volFields.H"
 #include "lookupSolidModel.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-displacementOrTractionFvPatchVectorField::
+Foam::displacementOrTractionFvPatchVectorField::
 displacementOrTractionFvPatchVectorField
 (
     const fvPatch& p,
@@ -56,13 +49,13 @@ displacementOrTractionFvPatchVectorField
 {}
 
 
-displacementOrTractionFvPatchVectorField::
+Foam::displacementOrTractionFvPatchVectorField::
 displacementOrTractionFvPatchVectorField
 (
     const displacementOrTractionFvPatchVectorField& ptf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper& mapper
+    const fieldMapper& mapper
 )
 :
     solidDirectionMixedFvPatchVectorField(ptf, p, iF, mapper),
@@ -74,7 +67,7 @@ displacementOrTractionFvPatchVectorField
 {}
 
 
-displacementOrTractionFvPatchVectorField::
+Foam::displacementOrTractionFvPatchVectorField::
 displacementOrTractionFvPatchVectorField
 (
     const fvPatch& p,
@@ -92,41 +85,50 @@ displacementOrTractionFvPatchVectorField
     // Check if displacement is time-varying
     if (dict.found("displacementSeries") && dict.found("constantDisplacement"))
     {
-        FatalErrorIn
-        (
-            "displacementOrTractionFvPatchVectorField::"
-            "displacementOrTractionFvPatchVectorField"
-        )   << "constantDisplacement or displacementSeries can be specified, "
+        FatalErrorInFunction
+            << "constantDisplacement or displacementSeries can be specified, "
             << "not both!" << abort(FatalError);
     }
     else if (dict.found("displacementSeries"))
     {
-        Info<< type() << ": " << patch().name()
+        DebugInfo
+            << type() << ": " << patch().name()
             << " displacement is time-varying" << endl;
         displacementSeries_ =
-            Function1<vector>::New("displacementSeries", dict);
+            Function1<vector>::New
+            (
+                "displacementSeries",
+                this->db().time().userUnits(),
+                dimLength,
+                dict
+            );
     }
     else
     {
-        constantDisplacement_ = vectorField("constantDisplacement", dict, p.size());
+        constantDisplacement_ =
+            vectorField("constantDisplacement", dict, p.size());
     }
 
     // Check if traction is time-varying
     if (dict.found("tractionSeries") && dict.found("constantTraction"))
     {
-        FatalErrorIn
-        (
-            "displacementOrTractionFvPatchVectorField::"
-            "displacementOrTractionFvPatchVectorField"
-        )   << "constantTraction or tractionSeries can be specified, "
+        FatalErrorInFunction
+            << "constantTraction or tractionSeries can be specified, "
             << "not both!" << abort(FatalError);
     }
     else if (dict.found("tractionSeries"))
     {
-        Info<< type() << ": " << patch().name()
+        DebugInfo
+            << type() << ": " << patch().name()
             << " traction is time-varying" << endl;
         tractionSeries_ =
-            Function1<vector>::New("tractionSeries", dict);
+            Function1<vector>::New
+            (
+                "tractionSeries",
+                this->db().time().userUnits(),
+                dimPressure,
+                dict
+            );
     }
     else
     {
@@ -151,11 +153,8 @@ displacementOrTractionFvPatchVectorField
     }
     else
     {
-        FatalErrorIn
-        (
-            "displacementOrTractionFvPatchVectorField::"
-            "displacementOrTractionFvPatchVectorField"
-        )   << "value or refValue entry must be specified for patch "
+        FatalErrorInFunction
+            << "value or refValue entry must be specified for patch "
             << patch().name() << abort(FatalError);
     }
 
@@ -222,18 +221,15 @@ displacementOrTractionFvPatchVectorField
         }
         else if (specifyNormalDirection_[faceI] != 0)
         {
-            FatalErrorIn
-            (
-                "displacementOrTractionFvPatchVectorField::"
-                "displacementOrTractionFvPatchVectorField() "
-            )   << "specifyNormalDirection can only be -1, 0 or 1"
+            FatalErrorInFunction
+                << "specifyNormalDirection can only be -1, 0 or 1"
                 << abort(FatalError);
         }
     }
 }
 
 
-displacementOrTractionFvPatchVectorField::
+Foam::displacementOrTractionFvPatchVectorField::
 displacementOrTractionFvPatchVectorField
 (
     const displacementOrTractionFvPatchVectorField& ptf,
@@ -251,39 +247,40 @@ displacementOrTractionFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// Map from self
-void displacementOrTractionFvPatchVectorField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    solidDirectionMixedFvPatchVectorField::autoMap(m);
-
-    m(constantDisplacement_, constantDisplacement_);
-    m(constantTraction_, constantTraction_);
-    //m(specifyNormalDirection_, specifyNormalDirection_);
-}
-
-
-// Reverse-map the given fvPatchField onto this fvPatchField
-void displacementOrTractionFvPatchVectorField::rmap
+void Foam::displacementOrTractionFvPatchVectorField::map
 (
     const fvPatchField<vector>& ptf,
-    const labelList& addr
+    const fieldMapper& mapper
 )
 {
-    solidDirectionMixedFvPatchVectorField::rmap(ptf, addr);
+    solidDirectionMixedFvPatchVectorField::map(ptf, mapper);
 
     const displacementOrTractionFvPatchVectorField& dmptf =
         refCast<const displacementOrTractionFvPatchVectorField>(ptf);
 
-    constantDisplacement_.rmap(dmptf.constantDisplacement_, addr);
-    constantTraction_.rmap(dmptf.constantTraction_, addr);
-    specifyNormalDirection_.rmap(dmptf.specifyNormalDirection_, addr);
+    mapper(constantDisplacement_, dmptf.constantDisplacement_);
+    mapper(constantTraction_, dmptf.constantTraction_);
+    mapper(specifyNormalDirection_, dmptf.specifyNormalDirection_);
 }
 
 
-void displacementOrTractionFvPatchVectorField::updateCoeffs()
+void Foam::displacementOrTractionFvPatchVectorField::reset
+(
+    const fvPatchField<vector>& ptf
+)
+{
+    solidDirectionMixedFvPatchVectorField::reset(ptf);
+
+    const displacementOrTractionFvPatchVectorField& dmptf =
+        refCast<const displacementOrTractionFvPatchVectorField>(ptf);
+
+    constantDisplacement_.reset(dmptf.constantDisplacement_);
+    constantTraction_.reset(dmptf.constantTraction_);
+    specifyNormalDirection_.reset(dmptf.specifyNormalDirection_);
+}
+
+
+void Foam::displacementOrTractionFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())
     {
@@ -297,7 +294,7 @@ void displacementOrTractionFvPatchVectorField::updateCoeffs()
 
     if (displacementSeries_.valid())
     {
-        disp = displacementSeries_->value(db().time().timeOutputValue());
+        disp = displacementSeries_->value(db().time().value());
     }
 
     // Lookup the solidModel object
@@ -323,7 +320,7 @@ void displacementOrTractionFvPatchVectorField::updateCoeffs()
 
     if (tractionSeries_.valid())
     {
-        traction = tractionSeries_->value(db().time().timeOutputValue());
+        traction = tractionSeries_->value(db().time().value());
     }
 
     // Iteratively set gradient to enforce the specified traction
@@ -339,8 +336,10 @@ void displacementOrTractionFvPatchVectorField::updateCoeffs()
 }
 
 
-// Write
-void displacementOrTractionFvPatchVectorField::write(Ostream& os) const
+void Foam::displacementOrTractionFvPatchVectorField::write
+(
+    Ostream& os
+) const
 {
     if (displacementSeries_.valid())
     {
@@ -366,15 +365,14 @@ void displacementOrTractionFvPatchVectorField::write(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makePatchTypeField
-(
-    fvPatchVectorField,
-    displacementOrTractionFvPatchVectorField
-);
+namespace Foam
+{
+    makePatchTypeField
+    (
+        fvPatchVectorField,
+        displacementOrTractionFvPatchVectorField
+    );
+}
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

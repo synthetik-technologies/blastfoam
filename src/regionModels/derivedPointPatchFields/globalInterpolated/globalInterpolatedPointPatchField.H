@@ -56,6 +56,9 @@ class globalInterpolatedPointPatchField
 
         const globalPolyBoundaryMesh& globalBoundary_;
 
+        //- Unmapped value
+        Type unmappedValue_;
+
         //- Name of neighbour field
         const word nbrName_;
 
@@ -81,6 +84,14 @@ public:
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&,
             const dictionary&
+        );
+
+        //- Construct from patch, internal field and neighbour field name
+        globalInterpolatedPointPatchField
+        (
+            const pointPatch&,
+            const DimensionedField<Type, pointMesh>&,
+            const word&
         );
 
         //- Construct by mapping given globalInterpolatedPointPatchField

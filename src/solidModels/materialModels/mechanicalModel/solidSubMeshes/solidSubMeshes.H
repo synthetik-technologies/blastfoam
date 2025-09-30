@@ -49,7 +49,6 @@ Author
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "fvMeshSubset.H"
-#include "volPointInterpolation.H"
 // #include "newFvMeshSubset.H"
 // #include "newLeastSquaresVolPointInterpolation.H"
 
@@ -70,9 +69,6 @@ public:
     typedef fvMeshSubset meshSubset;
     typedef PtrList<meshSubset> meshSubsetList;
 
-    typedef volPointInterpolation volPointInterp;
-    typedef PtrList<volPointInterp> volPointInterpList;
-
 private:
     // Private data
 
@@ -88,9 +84,6 @@ private:
 
         //- Mesh subsetters
         mutable meshSubsetList subsetMeshes_;
-
-        //- Volume field to point field interpolator for each sub-mesh
-        mutable volPointInterpList subMeshVolToPoint_;
 
         //- Stress volField for each sub-mesh
         mutable PtrList<volSymmTensorField> subMeshSigma_;
@@ -145,9 +138,6 @@ private:
 
         //- Make material sub-meshes
         void makeSubMeshes() const;
-
-        //- Make subMesh vol-to-point interpolators
-        void makeSubMeshVolToPoint() const;
 
         //- Check the cell zones are defined for each sub-mesh
         void checkCellZones() const;
@@ -259,9 +249,6 @@ public:
 
             //- Return a non-const reference to the subMeshes
            meshSubsetList& subMeshes();
-
-            //- Return a const reference to the vol-to-point interpolators
-            const volPointInterpList& subMeshVolToPoint() const;
 
             //- Return the subMesh sigma volFields
             PtrList<volSymmTensorField>& subMeshSigma();

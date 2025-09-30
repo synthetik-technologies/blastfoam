@@ -60,6 +60,15 @@ Foam::objectMotionConstraints::orientation::orientation
 }
 
 
+Foam::objectMotionConstraints::orientation::orientation
+(
+    const word& name,
+    const movingObject& motion
+)
+:
+    objectMotionConstraint(name, motion)
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::objectMotionConstraints::orientation::~orientation()

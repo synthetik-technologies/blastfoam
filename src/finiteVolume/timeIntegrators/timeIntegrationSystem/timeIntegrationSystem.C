@@ -28,55 +28,53 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::timeIntegrationSystem::timeIntegrationSystem(const word& name)
+:
+    timeIntegrationSystemBase(name),
+    meshPtr_(nullptr),
+    fvTimeInt_(nullptr)
+{}
+
 Foam::timeIntegrationSystem::timeIntegrationSystem
 (
     const word& name,
     const fvMesh& mesh
 )
 :
+    timeIntegrationSystemBase(name, mesh),
     meshPtr_(&mesh),
-    name_(name),
-    timeInt_
+    fvTimeInt_
     (
-        meshPtr_->foundObject<timeIntegrator>("globalTimeIntegrator")
-      ? &meshPtr_->lookupObjectRef<timeIntegrator>("globalTimeIntegrator")
+        this->timeInt_.valid()
+      ? dynamic_cast<const fvTimeIntegrator*>(this->timeInt_.ptr())
       : nullptr
-    ),
-    nSteps_(timeInt_.valid() ? timeInt_->nSteps() : 0),
-    oldIs_(timeInt_.valid() ? timeInt_->oldIs() : labelList()),
-    nOld_(timeInt_.valid() ? timeInt_->nOld() : 0),
-    deltaIs_(timeInt_.valid() ? timeInt_->deltaIs() : labelList()),
-    nDelta_(timeInt_.valid() ? timeInt_->nDelta() : 0)
+    )
 {}
 
-Foam::timeIntegrationSystem::timeIntegrationSystem()
-:
-    meshPtr_(nullptr),
-    name_(word::null),
-    timeInt_(nullptr),
-    nSteps_(0),
-    oldIs_(0),
-    nOld_(0),
-    deltaIs_(0),
-    nDelta_(0)
-{}
 
-void Foam::timeIntegrationSystem::set(const word& name, const fvMesh& mesh)
+void Foam::timeIntegrationSystem::set(const fvMesh& mesh)
 {
-    meshPtr_.reset(&mesh);
-    name_ = name;
-    if (meshPtr_->foundObject<timeIntegrator>("globalTimeIntegrator"))
+    timeIntegrationSystemBase::set(mesh);
+    if (!meshPtr_.valid())
     {
-        timeInt_.reset
+        meshPtr_.reset(&mesh);
+    }
+    if (!fvTimeInt_.valid())
+    {
+        fvTimeInt_.reset
         (
-            &meshPtr_->lookupObjectRef<timeIntegrator>("globalTimeIntegrator")
+            dynamic_cast<const fvTimeIntegrator*>(this->timeInt_.ptr())
         );
+    }
+}
 
-        nSteps_ = timeInt_->nSteps();
-        oldIs_ = timeInt_->oldIs();
-        nOld_ = timeInt_->nOld();
-        deltaIs_ = timeInt_->deltaIs();
-        nDelta_ = timeInt_->nDelta();
+
+void Foam::timeIntegrationSystem::set(const timeIntegrator& integrator)
+{
+    timeIntegrationSystemBase::set(integrator);
+    if (!fvTimeInt_.valid())
+    {
+        fvTimeInt_.reset(dynamic_cast<const fvTimeIntegrator*>(&integrator));
     }
 }
 
@@ -88,59 +86,6 @@ Foam::timeIntegrationSystem::~timeIntegrationSystem()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::label Foam::timeIntegrationSystem::step() const
-{
-    return timeInt_.valid() ? timeInt_->step() : 1;
-}
-
-
-Foam::scalarList Foam::timeIntegrationSystem::a() const
-{
-    return timeInt_.valid() ? timeInt_->a() : scalarList(1, 1.0);
-}
-
-
-Foam::scalarList Foam::timeIntegrationSystem::b() const
-{
-    return timeInt_.valid() ? timeInt_->b() : scalarList(1, 1.0);
-}
-
-
-Foam::scalar Foam::timeIntegrationSystem::f() const
-{
-    return timeInt_.valid() ? timeInt_->f() : 1.0;
-}
-
-
-Foam::scalar Foam::timeIntegrationSystem::f0() const
-{
-    return timeInt_.valid() ? timeInt_->f0() : 0.0;
-}
-
-
-bool Foam::timeIntegrationSystem::finalStep() const
-{
-    return timeInt_.valid() ? timeInt_->finalStep() : true;
-}
-
-
-Foam::dimensionedScalar Foam::timeIntegrationSystem::time() const
-{
-    return meshPtr_->time() - meshPtr_->time().deltaT()*(1.0 - f());
-}
-
-
-Foam::dimensionedScalar Foam::timeIntegrationSystem::deltaT() const
-{
-    return meshPtr_->time().deltaT()*f();
-}
-
-
-bool Foam::timeIntegrationSystem::writeData(Ostream& os) const
-{
-    return os.good();
-}
 
 
 // ************************************************************************* //

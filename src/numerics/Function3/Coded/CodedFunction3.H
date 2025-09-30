@@ -87,11 +87,17 @@ class Coded
         //- The dynamically generated Function3 pointer
         mutable autoPtr<Function3<Type>> redirectFunction3Ptr_;
 
+        //- Cache of the unit conversions
+        const unitConversions units_;
+
 
     // Private Member Functions
 
         //- Get the keywords associated with source code
         virtual wordList codeKeys() const;
+
+        //- Get the name of the dictionary variables in the source code
+        virtual wordList codeDictVars() const;
 
         //- Adapt the context for the current object
         virtual void prepare(dynamicCode&, const dynamicCodeContext&) const;
@@ -118,6 +124,7 @@ public:
         Coded
         (
             const word& name,
+            const unitConversions& units,
             const dictionary& dict
         );
 
@@ -148,6 +155,12 @@ public:
             const scalarField& x,
             const scalarField& y,
             const scalarField& z
+        ) const;
+
+        //- Return value as a function of two scalar fields
+        virtual tmp<Field<Type>> value
+        (
+            const Field<vector>& X
         ) const;
 
         //- Write data to dictionary stream

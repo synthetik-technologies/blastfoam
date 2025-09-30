@@ -157,11 +157,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
     {
         const scalar x2 = this->cellx(celli);
         const scalar x1 = 1.0 - x2;
-        if (x2 < residualActivation_)
+        if (x2 < residualFac_)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
         }
-        else if (x1 < residualActivation_)
+        else if (x1 < residualFac_)
         {
             psi[celli] = (this->*psiMethod2)(args[celli] ...);
         }
@@ -184,12 +184,12 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
         {
             const scalar x2 = xp()[facei];
             const scalar x1 = 1.0 - x2;
-            if (x2 < residualActivation_)
+            if (x2 < residualFac_)
             {
                 pPsi[facei] =
                     (this->*psiMethod1)(args.boundaryField()[patchi][facei] ...);
             }
-            else if (x1 < residualActivation_)
+            else if (x1 < residualFac_)
             {
                 pPsi[facei] =
                     (this->*psiMethod2)(args.boundaryField()[patchi][facei] ...);
@@ -234,11 +234,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellSetProperty
     {
         const scalar x2 = this->cellx(cells[celli]);
         const scalar x1 = 1.0 - x2;
-        if (x2 < residualActivation_)
+        if (x2 < residualFac_)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
         }
-        else if (x1 < residualActivation_)
+        else if (x1 < residualFac_)
         {
             psi[celli] = (this->*psiMethod2)(args[celli] ...);
         }
@@ -277,11 +277,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
     {
         const scalar x2 = px[facei];
         const scalar x1 = 1.0 - x2;
-        if (x2 < residualActivation_)
+        if (x2 < residualFac_)
         {
              psi[facei] = (this->*psiMethod1)(args[facei] ...);
         }
-        else if (x1 < residualActivation_)
+        else if (x1 < residualFac_)
         {
             psi[facei] = (this->*psiMethod2)(args[facei] ...);
         }
@@ -312,11 +312,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellProperty
 
     const scalar x2 = this->cellx(celli);
     const scalar x1 = 1.0 - x2;
-    if (x2 < residualActivation_)
+    if (x2 < residualFac_)
     {
         psi = (this->*psiMethod1)(args ...);
     }
-    else if (x1 < residualActivation_)
+    else if (x1 < residualFac_)
     {
         psi = (this->*psiMethod2)(args ...);
     }
@@ -347,11 +347,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFacePropert
 
     const scalar x2 = this->patchFacex(patchi, facei);
     const scalar x1 = 1.0 - x2;
-    if (x2 < residualActivation_)
+    if (x2 < residualFac_)
     {
         psi = (this->*psiMethod1)(args ...);
     }
-    else if (x1 < residualActivation_)
+    else if (x1 < residualFac_)
     {
         psi = (this->*psiMethod2)(args ...);
     }
@@ -388,7 +388,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedBlastThermo
     ),
     Thermo1(dict1),
     Thermo2(dict2),
-    residualActivation_(dict.lookupOrDefault("residualActivation", 1e-10))
+    residualFac_(1e-10)
 {}
 
 
@@ -471,8 +471,28 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
 
 
 template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::tmp<Foam::scalarField>
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
+(
+    const scalarField& T,
+    const fvSource& source
+) const
+{
+    return blendedCellSetProperty
+    (
+        &Thermo1::Es,
+        &Thermo2::Es,
+        source.cells(),
+        blastThermo::cellSetScalarList(this->rho_, source.cells()),
+        blastThermo::cellSetScalarList(this->e_, source.cells()),
+        T
+    );
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellHE
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellhe
 (
     const scalar T,
     const label celli
@@ -492,7 +512,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellHE
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::patchFaceHE
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::patchFacehe
 (
     const scalar T,
     const label patchi,
@@ -683,25 +703,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hc() const
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::flameT() const
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::The() const
 {
     return blendedVolScalarFieldProperty
     (
-        "flameT",
-        dimTemperature,
-        &Thermo1::flameT,
-        &Thermo2::flameT
-    );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE() const
-{
-    return blendedVolScalarFieldProperty
-    (
-        "THE",
+        "The",
         dimTemperature,
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
@@ -714,7 +720,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE() const
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::The
 (
     const volScalarField& he,
     const volScalarField& p,
@@ -723,7 +729,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 {
     return blendedVolScalarFieldProperty
     (
-        "THE",
+        "The",
         dimTemperature,
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
@@ -736,7 +742,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::scalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::The
 (
     const scalarField& he,
     const scalarField& T,
@@ -757,7 +763,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::scalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::The
 (
     const scalarField& he,
     const scalarField& T,
@@ -778,7 +784,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellTHE
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellThe
 (
     const scalar he,
     const scalar T,

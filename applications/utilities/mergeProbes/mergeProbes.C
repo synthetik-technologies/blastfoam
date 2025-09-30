@@ -32,6 +32,7 @@ Description
 #include "IFstream.H"
 #include "OFstream.H"
 #include "SortableList.H"
+#include "scalarList.H"
 
 using namespace Foam;
 
@@ -51,114 +52,191 @@ int main(int argc, char *argv[])
     );
     argList::addOption
     (
-        "probeName",
+        "fieldNames",
         "Name of probe to merge"
+    );
+    argList::addOption
+    (
+        "times",
+        "List of times to include"
+    );
+    argList::addBoolOption
+    (
+        "local",
+        "Path to probe is directly specified"
     );
 
     #include "setRootCase.H"
 
     bool force(args.optionFound("force"));
-    wordList probeNames(args.optionLookupOrDefault("probeNames", wordList()));
-    word probeDirName(args.argRead<fileName>(1));
+    wordRe probeDirName(args.argRead<wordRe>(1), wordRe::compOption::detect);
+    wordList fieldNames(args.optionLookupOrDefault("fieldNames", wordList()));
 
-    // Create the processor databases
-    fileName postProcessDir
+    // Create the probe databases
+    fileName postProcessingDir
     (
-        args.caseName()/fileName("postProcessing")
+        args.optionFound("local")
+      ? probeDirName
+      : args.rootPath()/args.caseName()/fileName("postProcessing")
     );
-    fileName probesDir(args.rootPath()/postProcessDir/probeDirName);
-    wordList times(readDir(probesDir, fileType::directory));
-    SortableList<scalar> sTimes(times.size());
 
-    // Sort times
+    //- Read a directory and return the entries as a string list
+    fileNameList ppDirs
+    (
+        readDir(postProcessingDir, fileType::directory, false, false)
+    );
+    fileNameList probeDirs;
+    forAll(ppDirs, i)
     {
-        forAll(sTimes, ti)
+        if (probeDirName.match(ppDirs[i].name()))
         {
-            IStringStream is(times[ti]);
-            sTimes[ti] = readScalar(is);
-        }
-        sTimes.sort();
-        wordList oldTimes(times);
-        forAll(sTimes, ti)
-        {
-            times[ti] = oldTimes[sTimes.indices()[ti]];
+            probeDirs.append(postProcessingDir/ppDirs[i]);
         }
     }
-    sTimes.append(great);
 
-    // Get full list of probes
-    if (!args.optionFound("probeNames"))
+    forAll(probeDirs, i)
     {
-        fileName probeDir(probesDir/times[0]);
-        probeNames = wordList(readDir(probeDir, fileType::file));
-    }
-    if (!force)
-    {
-        wordList writtenProbes;
-        forAll(probeNames, probei)
+        const fileName& probeDir = probeDirs[i];
+        if (!isDir(probeDir))
         {
-            if (!isFile(probesDir/probeNames[probei]))
+            FatalErrorInFunction
+                << "Provided probe directory, " << probeDir
+                << ", does not exist" << endl
+                << exit(FatalError);
+        }
+
+
+        Info<< "Merge probes in directory: " << probeDir.name()
+            << incrIndent << endl;
+
+        wordList times;
+        SortableList<scalar> sTimes;
+        if (args.optionFound("times"))
+        {
+            sTimes = args.optionRead<scalarList>("times");
+            sTimes.sort();
+
+            times.setSize(sTimes.size());
+            forAll(sTimes, ti)
             {
-                writtenProbes.append(probeNames[probei]);
+                times[ti] = Foam::Time::timeName(sTimes[ti]);
             }
-            else
+        }
+        else
+        {
+            times = wordList(readDir(probeDir, fileType::directory));
+            if (!times.size())
             {
-                WarningInFunction
-                    << probeNames[probei] << " already found. Skipping probe."
-                    << endl;
+                FatalErrorInFunction
+                    << "No times were found for probe " << probeDir << endl
+                    << exit(FatalError);
+            }
+            sTimes.setSize(times.size());
+
+            // Sort times
+            forAll(sTimes, ti)
+            {
+                IStringStream is(times[ti]);
+                sTimes[ti] = readScalar(is);
+            }
+            sTimes.sort();
+            wordList oldTimes(times);
+            forAll(sTimes, ti)
+            {
+                times[ti] = oldTimes[sTimes.indices()[ti]];
             }
         }
-    }
-
-    Info<< "Merging probes: " << nl
-        << probeNames << endl;
-
-    // Create outputs
-    PtrList<OFstream> outputs(probeNames.size());
-    forAll(outputs, probei)
-    {
-        outputs.set(probei, new OFstream(probesDir/probeNames[probei]));
-    }
-
-    scalar nextTime = -1.0;
-    bool header = true;
-    forAll(times, timei)
-    {
-        nextTime = sTimes[timei + 1];
-        fileName probeDir(probesDir/times[timei]);
-
-        forAll(probeNames, probei)
+        Info<< indent << "Merging times:" << nl << incrIndent;
+        forAll(times, ti)
         {
-            IFstream stream(probeDir/probeNames[probei]);
+            Info << indent << times[ti] << nl;
+        }
+        Info<< decrIndent << endl;
+        sTimes.append(great);
 
-            while (stream.good())
+        // Get full list of probes
+        if (!args.optionFound("fieldNames"))
+        {
+            fileName probe0Dir(probeDir/times[0]);
+            fieldNames = wordList(readDir(probe0Dir, fileType::file));
+        }
+        if (!force)
+        {
+            wordList writtenProbes;
+            forAll(fieldNames, probei)
             {
-                string line;
-                stream.getLine(line);
-
-                if (line[0] == '#')
+                if (!isFile(probeDir/fieldNames[probei]))
                 {
-                    if (header)
-                    {
-                        outputs[probei] << word(line) << nl;
-                    }
-                    continue;
-                }
-                header = false;
-
-                IStringStream is(line);
-                scalar t = readScalar(is);
-
-                if (t < nextTime)
-                {
-                    outputs[probei] << word(line) << nl;
+                    writtenProbes.append(fieldNames[probei]);
                 }
                 else
                 {
-                    break;
+                    Warning << nl
+                        << (probeDir/fieldNames[probei])
+                        << " already found. Skipping probe." << nl
+                        << endl;
+                }
+            }
+            fieldNames = writtenProbes;
+        }
+
+        Info<< indent << "Probes to merge:" << nl << incrIndent;
+        forAll(fieldNames, probei)
+        {
+            Info << indent << fieldNames[probei] << nl;
+        }
+        Info<< decrIndent << endl;
+
+
+        // Create outputs
+        PtrList<OFstream> outputs(fieldNames.size());
+        forAll(outputs, probei)
+        {
+            outputs.set(probei, new OFstream(probeDir/fieldNames[probei]));
+        }
+
+        scalar nextTime = -1.0;
+        bool header = true;
+        forAll(times, timei)
+        {
+            nextTime = sTimes[timei + 1];
+            fileName probeTimeDir(probeDir/times[timei]);
+
+            forAll(fieldNames, probei)
+            {
+                IFstream stream(probeTimeDir/fieldNames[probei]);
+
+                while (stream.good())
+                {
+                    string line;
+                    stream.getLine(line);
+
+                    if (line[0] == '#')
+                    {
+                        if (header)
+                        {
+                            outputs[probei] << word(line) << nl;
+                        }
+                        continue;
+                    }
+                    header = false;
+
+                    IStringStream is(line);
+                    scalar t = readScalar(is);
+
+                    if (t < nextTime)
+                    {
+                        outputs[probei] << word(line) << nl;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
         }
+
+        Info<< decrIndent << endl;
     }
 
     Info<< nl << "Done." << endl;

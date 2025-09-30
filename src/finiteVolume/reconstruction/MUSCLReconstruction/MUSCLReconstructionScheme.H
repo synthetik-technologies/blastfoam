@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
+    \\  /    A nd           | Copyright (C) 2020-2024
      \\/     M anipulation  | Synthetik Applied Technology
 -------------------------------------------------------------------------------
 License
@@ -81,12 +81,15 @@ public:
         MUSCLReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            Istream& is
+            Istream& is,
+            const bool overwrite
         )
         :
-            MUSCLType(phi, is),
+            MUSCLType(phi, is, overwrite),
             Limiter(is)
-        {}
+        {
+            MUSCLType::read(is);
+        }
 
     //- Destructor
     virtual ~MUSCLReconstructionScheme()

@@ -26,6 +26,44 @@ License
 #include "UnivariateEquation.H"
 #include "adaptiveTypes.H"
 
+// * * * * * * * * * * * * * * Static Data Functions * * * * * * * * * * * * //
+
+template<class Type>
+Foam::autoPtr<Foam::univariateEquation<Type>>
+Foam::univariateEquation<Type>::New
+(
+    const dictionary& dict
+)
+{
+    return New(dict.lookup<word>("type"), dict);
+}
+
+template<class Type>
+Foam::autoPtr<Foam::univariateEquation<Type>>
+Foam::univariateEquation<Type>::New
+(
+    const word& type,
+    const dictionary& dict
+)
+{
+
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(type);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown " << typeName << " type "
+            << type <<  nl << nl
+            << "Valid " << typeName << " types are:" << nl
+            << dictionaryConstructorTablePtr_->sortedToc() << nl
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -59,13 +97,36 @@ Foam::UnivariateEquation<Type>::UnivariateEquation
 
 
 template<class Type>
+Foam::UnivariateEquation<Type>::UnivariateEquation
+(
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits,
+    const dictionary& dict,
+    const string& eqnString
+)
+:
+    univariateEquation<Type>(eqnString, dict),
+    lowerLimits_(dict.lookupOrDefault("lowerBounds", lowerLimits)),
+    upperLimits_(dict.lookupOrDefault("upperBounds", upperLimits)),
+    nVar_(lowerLimits.size()),
+    dX_
+    (
+        dict.found("dx")
+      ? scalarList(nVar_, dict.lookup<scalar>("dx"))
+      : dict.lookupOrDefault<scalarList>("dX", scalarList(nVar_, 1e-6))
+    )
+{}
+
+
+template<class Type>
 Foam::UnivariateEquation<Type>::UnivariateEquation(const dictionary& dict)
 :
-    univariateEquation<Type>(dict),
-    lowerLimits_(dict.lookup("lowerBounds")),
-    upperLimits_(dict.lookup("upperBounds")),
-    nVar_(lowerLimits_.size()),
-    dX_(dict.lookupOrDefault("dx", scalarList(nVar_, 1e-6)))
+    UnivariateEquation<Type>
+    (
+        dict.lookup("lowerBounds"),
+        dict.lookup("upperBounds"),
+        dict
+    )
 {}
 
 
@@ -81,12 +142,24 @@ Foam::UnivariateEquation<Type>::~UnivariateEquation()
 template<class Type>
 void Foam::UnivariateEquation<Type>::calculateGradient
 (
-    const UList<scalar>& x0,
+    const typename univariateEquation<Type>::VarType& x0,
     const label li,
     List<Type>& grad
 ) const
 {
-    const Type fx0(this->fX(x0, li));
+    calculateGradient(this->fX(x0, li), x0, li, grad);
+}
+
+
+template<class Type>
+void Foam::UnivariateEquation<Type>::calculateGradient
+(
+    const Type& fx0,
+    const typename univariateEquation<Type>::VarType& x0,
+    const label li,
+    List<Type>& grad
+) const
+{
     scalarList x1(x0);
     for (label cmpti = 0; cmpti < nVar_; cmpti++)
     {
@@ -100,7 +173,7 @@ void Foam::UnivariateEquation<Type>::calculateGradient
 template<class Type>
 void Foam::UnivariateEquation<Type>::FX
 (
-    const UList<scalar>& x,
+    const typename univariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx
 ) const
@@ -112,7 +185,7 @@ void Foam::UnivariateEquation<Type>::FX
 template<class Type>
 void Foam::UnivariateEquation<Type>::dfdX
 (
-    const UList<scalar>& x,
+    const typename univariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& dfdx
 ) const
@@ -124,7 +197,7 @@ void Foam::UnivariateEquation<Type>::dfdX
 template<class Type>
 void Foam::UnivariateEquation<Type>::jacobian
 (
-    const UList<scalar>& x,
+    const typename univariateEquation<Type>::VarType& x,
     const label li,
     List<Type>& fx,
     RectangularMatrix<Type>& J

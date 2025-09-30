@@ -116,7 +116,7 @@ Foam::solidDisplacements::solidDisplacements
     const dictionary& dict
 )
 :
-    functionObject(name),
+    functionObject(name, t),
     name_(name),
     time_(t),
     historyPatchID_(-1),
@@ -133,8 +133,8 @@ Foam::solidDisplacements::solidDisplacements
     }
     else
     {
-        WarningIn(this->name() + " function object constructor")
-            << "solidDisplacements: historyPatch not specified" << endl;
+        WarningInFunction
+            << "historyPatch not specified" << endl;
     }
 
     // Lookup the solid mesh
@@ -149,7 +149,7 @@ Foam::solidDisplacements::solidDisplacements
     }
     const fvMesh& mesh = *meshPtr;
 
-    historyPatchID_ = mesh.boundaryMesh().findPatchID(historyPatchName);
+    historyPatchID_ = mesh.boundaryMesh().findIndex(historyPatchName);
 
     if (historyPatchID_ == -1)
     {

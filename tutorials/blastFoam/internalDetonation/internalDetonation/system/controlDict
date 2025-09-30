@@ -51,4 +51,15 @@ maxCo           0.5;
 
 maxDeltaT       1;
 
+functions
+{
+    probes
+    {
+        type blastProbes;
+        fields (p);
+        probeLocations ((0 0 0));
+        adjustLocations yes;
+    }
+}
+
 // ************************************************************************* //

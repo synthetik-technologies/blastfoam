@@ -14,24 +14,58 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
-errorEstimator  densityGradient;
+topoChanger
+{
+    type list;
 
-// How often to refine
-refineInterval  3;
+    topoChangers
+    {
+        refinement
+        {
+            type            hexRefiner;
+            errorEstimator  densityGradient;
 
-// Refine field in between lower..upper
-lowerRefineLevel 0.1;
+            // How often to refine
+            refineInterval  3;
 
-// If value < unrefineLevel unrefine
-unrefineLevel   0.1;
+            // Refine field in between lower..upper
+            lowerRefineLevel 0.1;
 
-// Have slower than 2:1 refinement
-nBufferLayers   2;
+            // If value < unrefineLevel unrefine
+            unrefineLevel   0.1;
 
-// Refine cells only up to maxRefinement levels
-maxRefinement   1;
+            // Have slower than 2:1 refinement
+            nBufferLayers   2;
 
-// Write the refinement level as a volScalarField
-dumpLevel       true;
+            // Refine cells only up to maxRefinement levels
+            maxRefinement   1;
+
+            // Write the refinement level as a volScalarField
+            dumpLevel       true;
+        }
+        burst
+        {
+            type burst;
+
+            patches
+            (
+                windows
+                {
+                    intactMasterPatch windows;
+                    intactSlavePatch windows_slave;
+                    burstMasterPatch windowsBurst;
+                    burstSlavePatch windowsBurst_slave;
+
+
+                    burstModel      pressure;
+                    partialBurst    yes;
+                    pBurst          5e6;
+                    useDelta        yes;
+
+                    patchToPatch    nearest;
+                }
+            );
+        }
+    }
+}
 // ************************************************************************* //

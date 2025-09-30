@@ -25,30 +25,9 @@ boundaryField
         type            zeroGradient;
     }
 
-    windows_master
+    ".*windows.*"
     {
-        type            burstCyclicAMI;
-        intactPatch
-        {
-            type      zeroGradient;
-        }
-    }
-    windows_slave
-    {
-        type            burstCyclicAMI;
-        intactPatch
-        {
-            type      zeroGradient;
-        }
-    }
-
-    baffles_master
-    {
-        type      zeroGradient;
-    }
-    baffles_slave
-    {
-        type      zeroGradient;
+        type            zeroGradient;
     }
 
     outlet

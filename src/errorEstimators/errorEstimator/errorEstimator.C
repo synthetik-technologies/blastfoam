@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2022
+    \\  /    A nd           | Copyright (C) 2019-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -29,6 +29,7 @@ License
 #include "timeControlFunctionObject.H"
 #include "probes.H"
 #include "blastProbes.H"
+#include "cellSet.H"
 #include "meshSizeObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -59,7 +60,8 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
                 isA<mappedPatchBase>(mesh.boundary()[patchi])
             )
             {
-                boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
+                boundaryTypes[patchi] =
+                    coupledMaxErrorFvPatchScalarField::typeName;
             }
             if (debug)
             {
@@ -74,7 +76,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
                 IOobject
                 (
                     errorName,
-                    mesh.time().timeName(),
+                    mesh.time().name(),
                     mesh
                 ),
                 mesh,
@@ -106,6 +108,153 @@ bool Foam::errorEstimator::updateCurTimeIndex(const bool unset) const
 }
 
 
+Foam::labelHashSet Foam::errorEstimator::errorCells() const
+{
+    if (cZones_.size())
+    {
+        const cellZoneList& zones = mesh_.cellZones();
+        labelHashSet cells;
+        if (hasDefault_)
+        {
+            cellSet allCells
+            (
+                mesh_,
+                "allCells",
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            );
+            forAll(zones, i)
+            {
+                allCells.insert(zones[i]);
+            }
+            allCells.invert(mesh_.nCells());
+            cells = allCells;
+        }
+
+        forAll(cZones_, i)
+        {
+            cells.insert(mesh_.cellZones()[cZones_[i]]);
+        }
+        return cells;
+    }
+    return identityMap(mesh_.nCells());
+}
+
+
+template<>
+Foam::tmp<Foam::volScalarField> Foam::errorEstimator::getFieldValueType<Foam::scalar>
+(
+    const word& name,
+    const labelHashSet& eCells
+) const
+{
+    typedef GeometricField<scalar, fvPatchField, volMesh> thisType;
+
+    if (mesh_.foundObject<thisType>(name))
+    {
+        return mesh_.lookupObject<thisType>(name);
+    }
+    return tmp<volScalarField>();
+}
+
+
+void Foam::errorEstimator::readCellZones(const dictionary& dict)
+{
+    wordList zones;
+    if (dict.found("zones"))
+    {
+        dict.readIfPresent("zones", zones);
+    }
+    else if (dict.found("zone"))
+    {
+        zones.setSize(1);
+        dict.readIfPresent("zone", zones[0]);
+    }
+    hasDefault_ = false;
+    forAll(zones, i)
+    {
+        if (zones[i] == "default")
+        {
+            hasDefault_ = true;
+        }
+        else if (!mesh_.cellZones().found(zones[i]))
+        {
+            FatalIOErrorInFunction(dict)
+                << zones[i] << " is not a valid cell zone. Use \"default\" "
+                << "to use all cell not belonging to a cell zone or " << nl
+                << mesh_.cellZones().toc() << endl
+                << abort(FatalIOError);
+        }
+        else
+        {
+            cZones_.append(zones[i]);
+        }
+    }
+}
+
+void Foam::errorEstimator::readMaxRefinement(const dictionary& dict)
+{
+    if (dict.found("maxZoneRefinement"))
+    {
+        dict.lookup("maxZoneRefinement") >> maxLevel_;
+        forAllConstIter(HashTable<label>, maxLevel_, iter)
+        {
+            if (!mesh_.cellZones().found(iter.key()))
+            {
+                FatalIOErrorInFunction(dict)
+                    << iter.key() << " is not a cell zone, valid option are"
+                    << nl
+                    << mesh_.cellZones().toc() << endl
+                    << abort(FatalIOError);
+            }
+        }
+    }
+    if (dict.found("minZoneDx"))
+    {
+        dict.lookup("minZoneDx") >> minDx_;
+        forAllConstIter(HashTable<scalar>, minDx_, iter)
+        {
+            if (!mesh_.cellZones().found(iter.key()))
+            {
+                FatalIOErrorInFunction(dict)
+                    << iter.key() << " is not a cell zone, valid option are"
+                    << nl
+                    << mesh_.cellZones().toc() << endl
+                    << abort(FatalIOError);
+            }
+        }
+    }
+    forAllConstIter(HashTable<label>, maxLevel_, iter)
+    {
+        if (minDx_.found(iter.key()))
+        {
+            FatalIOErrorInFunction(dict)
+                << "Both maxRefinement and minDx were specified for "
+                << iter.key() << ", only one should be specified" << endl
+                << abort(FatalIOError);
+        }
+    }
+
+    if (dict.found("maxRefinement"))
+    {
+        defaultMaxLevel_ = dict.lookup<label>("maxRefinement");
+        defaultMinDx_ = -1;
+    }
+    else if (dict.found("minDx"))
+    {
+        defaultMaxLevel_ = -1;
+        defaultMinDx_ = dict.lookup<scalar>("minDx");
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Either maxRefinement or minDx must be specified" << endl
+            << abort(FatalIOError);
+    }
+
+    override_ = dict.lookupOrDefault("override", false);
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::errorEstimator::errorEstimator
@@ -120,7 +269,7 @@ Foam::errorEstimator::errorEstimator
         IOobject
         (
             IOobject::groupName(typeName, name),
-            mesh.time().timeName(),
+            mesh.time().name(),
             mesh,
             IOobject::NO_READ,
             debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE,
@@ -136,6 +285,9 @@ Foam::errorEstimator::errorEstimator
     upperUnrefine_(0.0),
     maxLevel_(-1),
     minDx_(-1),
+    override_(false),
+    cZones_(),
+    hasDefault_(false),
     refineProbes_(dict.lookupOrDefault("refineProbes", true)),
     force_(false),
     curTimeIndex_(-1)
@@ -157,39 +309,50 @@ void Foam::errorEstimator::read(const dictionary& dict)
     upperRefine_ = dict.lookupOrDefault("upperRefineLevel", great);
     upperUnrefine_ = dict.lookupOrDefault("upperUnrefineLevel", great);
 
-    if (dict.found("maxRefinement"))
-    {
-        maxLevel_ = dict.lookup<label>("maxRefinement");
-        minDx_ = -1;
-    }
-    else if (dict.found("minDx"))
-    {
-        minDx_ = dict.lookup<scalar>("minDx");
-        maxLevel_ = -1;
-    }
-    else
-    {
-        FatalIOErrorInFunction(dict)
-            << "Either maxRefinement or minDx must be specified" << endl
-            << abort(FatalIOError);
-    }
+    readCellZones(dict);
+    readMaxRefinement(dict);
+
+
 }
 
 
-void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
+Foam::tmp<Foam::volScalarField> Foam::errorEstimator::getFieldValue
+(
+    const word& name,
+    const labelHashSet& eCells
+) const
 {
-    this->getFieldValueType<scalar>(name, f);
-    this->getFieldValueType<vector>(name, f);
-    this->getFieldValueType<symmTensor>(name, f);
-    this->getFieldValueType<sphericalTensor>(name, f);
-    this->getFieldValueType<tensor>(name, f);
+    tmp<volScalarField> tfld;
+
+    #define GetFieldValueType(Type, name, eCells)           \
+    tfld = this->getFieldValueType<Type>(name, eCells);     \
+    if (tfld.valid()) return tfld;
+
+    FOR_ALL_FIELD_TYPES(GetFieldValueType, name, eCells);
+
+    #undef GetFieldValueType
+
+    if (mesh_.time().timeIndex() > 0)
+    {
+        FatalErrorInFunction
+            << name << " is not a registered field" << endl
+            << abort(FatalError);
+    }
+
+    return tfld;
 }
 
 
-void Foam::errorEstimator::normalize(volScalarField& error)
+void Foam::errorEstimator::normalize
+(
+    volScalarField& error,
+    const labelHashSet& eCells
+)
 {
-    forAll(error, celli)
+    error_.correctBoundaryConditions();
+    forAllConstIter(labelHashSet, eCells, iter)
     {
+        const label celli = iter.key();
         if
         (
             error[celli] < lowerUnrefine_
@@ -209,6 +372,41 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         else
         {
             error[celli] = 0.0;
+        }
+    }
+
+    volScalarField::Boundary& berror = error.boundaryFieldRef();
+    forAll(berror, patchi)
+    {
+        fvPatchScalarField& perror = berror[patchi];
+        const labelList& faceCells = perror.patch().faceCells();
+
+        forAll(perror, facei)
+        {
+            const label celli = faceCells[facei];
+            if (eCells.found(celli))
+            {
+                if
+                (
+                    perror[facei] < lowerUnrefine_
+                 || perror[facei] > upperUnrefine_
+                )
+                {
+                    error[celli] = max(error[celli], -1.0);
+                }
+                else if
+                (
+                    perror[facei] > lowerRefine_
+                 && perror[facei] < upperRefine_
+                )
+                {
+                    error[celli] = max(error[celli], 1.0);
+                }
+                else
+                {
+                    error[celli] = max(error[celli], 0.0);
+                }
+            }
         }
     }
 
@@ -235,8 +433,9 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         }
         forAll(pts, j)
         {
-            label celli = mesh_.findCell(pts[j], polyMesh::FACE_PLANES);
-            if (celli >= 0)
+            const label celli =
+                mesh_.findCell(pts[j], polyMesh::FACE_PLANES);
+            if (celli >= 0 && eCells.found(celli))
             {
                 error[celli] = 1.0;
             }
@@ -246,33 +445,71 @@ void Foam::errorEstimator::normalize(volScalarField& error)
 
 Foam::labelList Foam::errorEstimator::maxRefinement() const
 {
-    if (maxLevel_ >= 0 || !mesh_.foundObject<labelIOList>("cellLevel"))
-    {
-        return labelList(mesh_.nCells(), maxLevel_);
-    }
+    const labelHashSet& eCells = errorCells();
+    labelList maxLevel(mesh_.nCells(), 0);
 
-    const labelIOList& cellLevel
-    (
-        mesh_.lookupObject<labelIOList>("cellLevel")
-    );
-    labelList maxLevel(cellLevel);
-    vector validD(mesh_.geometricD());
-    for (label cmpti = 0; cmpti < 3; cmpti++)
+    if (defaultMaxLevel_ >= 0)
     {
-        if (validD[cmpti] < 0)
+        maxLevel = defaultMaxLevel_;
+        if (cZones_.size())
         {
-            validD[cmpti] = great;
+            const labelHashSet& eCells = errorCells();
+            maxLevel = 0;
+            forAllConstIter(labelHashSet, eCells, iter)
+            {
+                maxLevel[iter.key()] = defaultMaxLevel_;
+            }
         }
     }
-    const scalarField& dx(meshSizeObject::New(mesh_).dx());
 
-    forAll(dx, celli)
+    forAllConstIter(HashTable<label>, maxLevel_, iter)
     {
-        if (dx[celli] > minDx_ && error_[celli] > 0)
+        const cellZone& zone = mesh_.cellZones()[iter.key()];
+        forAll(zone, ci)
         {
-            maxLevel[celli]++;
+            const label celli = zone[ci];
+            maxLevel[celli] = max(maxLevel[celli], iter());
         }
-    };
+    }
+
+    if (defaultMaxLevel_ < 0 || minDx_.size())
+    {
+        const labelIOList& cellLevel
+        (
+            mesh_.lookupObject<labelIOList>("cellLevel")
+        );
+        const scalarField& dx = meshSizeObject::New(mesh_).dx();
+
+        if (defaultMaxLevel_ < 0)
+        {
+            forAllConstIter(labelHashSet, eCells, iter)
+            {
+                const label celli = iter.key();
+                label level = cellLevel[celli];
+                if (dx[celli] > defaultMinDx_ && error_[celli] > 0)
+                {
+                    level++;
+                }
+                maxLevel[celli] = (maxLevel[celli], level);
+            }
+        }
+
+        forAllConstIter(HashTable<scalar>, minDx_, iter)
+        {
+            const cellZone& zone = mesh_.cellZones()[iter.key()];
+            forAll(zone, ci)
+            {
+                const label celli = zone[ci];
+                label level = cellLevel[celli];
+                if (dx[celli] > iter() && error_[celli] > 0)
+                {
+                    level++;
+                }
+                maxLevel[celli] = max(maxLevel[celli], level);
+            }
+        }
+    }
+
     return maxLevel;
 }
 
@@ -298,7 +535,7 @@ bool Foam::errorEstimator::writeData(Ostream&) const
         }
         maxLevel.write();
 
-        // if (minDx_ > 0)
+        if (defaultMinDx_ > 0 || minDx_.size())
         {
             const meshSizeObject& mso = meshSizeObject::New(mesh_);
             const_cast<meshSizeObject&>(mso).movePoints();

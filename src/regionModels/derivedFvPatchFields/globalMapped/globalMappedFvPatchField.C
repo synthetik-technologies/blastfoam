@@ -77,6 +77,22 @@ Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
 template<class Type>
 Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
 (
+    const fvPatch& p,
+    const DimensionedField<Type, volMesh>& iF,
+    const word& nbrName
+)
+:
+    fixedValueFvPatchField<Type>(p, iF),
+    globalBoundary_(globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())),
+    nbrName_(nbrName)
+{
+    fvPatchField<Type>::operator==(this->patchInternalField());
+}
+
+
+template<class Type>
+Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
+(
     const globalMappedFvPatchField<Type>& ptf,
     const DimensionedField<Type, volMesh>& iF
 )
@@ -93,27 +109,6 @@ Foam::globalMappedFvPatchField<Type>::globalMappedFvPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::globalMappedFvPatchField<Type>::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchField<Type>::autoMap(m);
-}
-
-
-template<class Type>
-void Foam::globalMappedFvPatchField<Type>::rmap
-(
-    const fvPatchField<Type>& ptf,
-    const labelList& addr
-)
-{
-    fixedValueFvPatchField<Type>::rmap(ptf, addr);
-}
-
-
-template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::globalMappedFvPatchField<Type>::patchNeighbourField() const
 {
@@ -128,7 +123,7 @@ Foam::globalMappedFvPatchField<Type>::patchNeighbourField() const
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    return cgpp.faceInterpolate(nbr.patchInternalField());
+    return samplePatch.faceInterpolate(nbr.patchInternalField());
 
 }
 
@@ -148,7 +143,7 @@ void Foam::globalMappedFvPatchField<Type>::updateCoeffs()
 
     // Get the coupling information from the mappedPatchBase
     const coupledGlobalPolyPatch& cgpp =
-        globalBoundary_(this->patch().patch());
+        globalBoundary_(this->patch().name());
     const polyMesh& nbrMesh = cgpp.sampleMesh();
     const coupledGlobalPolyPatch& samplePatch = cgpp.samplePatch();
     const label samplePatchi = samplePatch.patch().index();

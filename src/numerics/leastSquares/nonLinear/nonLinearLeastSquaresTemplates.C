@@ -47,6 +47,23 @@ void nonLinearLeastSquares::setData
 }
 
 
+template<template<class> class ListType>
+void nonLinearLeastSquares::setData
+(
+    const ListType<scalar>& x,
+    UList<scalar>& xi
+)
+{
+    xi.shallowCopy
+    (
+        UList<scalar>
+        (
+            const_cast<scalar*>(x.cdata()),
+            x.size()
+        )
+    );
+}
+
 template<>
 void nonLinearLeastSquares::setData
 (

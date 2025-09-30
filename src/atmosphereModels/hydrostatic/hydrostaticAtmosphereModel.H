@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2022
+    \\  /    A nd           | Copyright (C) 2020-2025
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -60,7 +60,7 @@ public:
     TypeName("hydrostatic");
 
     // Constructor
-    hydrostatic(const fvMesh&, const dictionary&, const label);
+    hydrostatic(const fvMesh&, const dictionary&, const word&);
 
     //- Destructor
     virtual ~hydrostatic();
@@ -70,6 +70,11 @@ public:
 
         //- Create atmosphere
         virtual void createAtmosphere(fluidBlastThermo& thermo) const;
+
+        virtual bool needReference() const
+        {
+            return !dict_.found("fixedPatches");
+        }
 };
 
 

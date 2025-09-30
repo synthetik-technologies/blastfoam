@@ -110,11 +110,12 @@ Foam::JohnsonCookPlastic<PlasticType>::JohnsonCookPlastic
 (
     const word& name,
     const fvMesh& mesh,
+    const fvMesh& baseMesh,
     const dictionary& dict,
     const nonLinearGeometry::nonLinearType& nonLinGeom
 )
 :
-    PlasticType(name, mesh, dict, nonLinGeom),
+    PlasticType(name, mesh, baseMesh, dict, nonLinGeom),
     T_(),
     A_("A", dimPressure, dict),
     B_("B", dimPressure, dict),

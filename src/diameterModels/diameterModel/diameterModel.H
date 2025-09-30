@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2025
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -29,7 +29,7 @@ Description
 
 SourceFiles
     diameterModel.C
-    newDiameterModel.C
+    diameterModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -141,9 +141,18 @@ public:
         //- Return volume
         virtual tmp<volScalarField> V() const;
 
+        //- Return derivative of volume w.r.t diameter
+        virtual tmp<volScalarField> dVdD() const;
+
         //- Return change in radius per unit time
         //  Only used in mass transfer
         virtual tmp<volScalarField> dMdt() const;
+        
+        //- Return the length to diameter ratio
+        virtual tmp<volScalarField> LDratio() const;
+
+        //- Return the length to diameter ratio for a cell
+        virtual scalar LDratio(const label celli) const;
 };
 
 

@@ -39,6 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fluxScheme.H"
+#include "TadmorFluxScheme.H"
 
 namespace Foam
 {
@@ -51,16 +52,13 @@ namespace fluxSchemes
 
 class Kurganov
 :
-    public fluxScheme
+    public Tadmor
 {
 
     // Saved variables
 
-        tmp<surfaceScalarField> aPhivOwn_;
-        tmp<surfaceScalarField> aPhivNei_;
         tmp<surfaceScalarField> aOwn_;
         tmp<surfaceScalarField> aNei_;
-        tmp<surfaceScalarField> aSf_;
 
 
     // Private functions
@@ -81,25 +79,6 @@ class Kurganov
             const label facei, const label patchi = -1
         );
 
-        //- Calcualte fluxes
-        virtual void calculateFluxes
-        (
-            const scalarList& alphasOwn, const scalarList& alphasNei,
-            const scalarList& rhosOwn, const scalarList& rhosNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const scalar& cOwn, const scalar& cNei,
-            const vector& Sf,
-            scalar& phi,
-            scalarList& alphaPhis,
-            scalarList& alphaRhoPhis,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
-            const label facei, const label patchi = -1
-        );
-
         //- Calculate energy flux for an addition internal energy
         virtual scalar energyFlux
         (
@@ -115,7 +94,6 @@ class Kurganov
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
-            const bool isDensity,
             const label facei, const label patchi = -1
         ) const;
 
@@ -126,7 +104,7 @@ public:
     TypeName("Kurganov");
 
     // Constructor
-    Kurganov(const fvMesh& mesh);
+    Kurganov(const surfaceScalarField& phi);
 
 
     //- Destructor

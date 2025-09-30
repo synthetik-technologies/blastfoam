@@ -152,6 +152,13 @@ public:
             const dictionary& dict
         );
 
+        //- Copy constructor
+        rootSolver
+        (
+            const scalarMultivariateEquation& eqns,
+            const rootSolver& solver
+        );
+
         //- Disallow default bitwise copy construction
         rootSolver(const rootSolver&) = delete;
 
@@ -171,6 +178,14 @@ public:
             const scalarMultivariateEquation& eqns,
             const dictionary& dict
         );
+
+
+
+        //- Clone the root solver
+        virtual autoPtr<rootSolver> clone
+        (
+            const scalarMultivariateEquation& eqns
+        ) const = 0;
 
 
     //- Destructor

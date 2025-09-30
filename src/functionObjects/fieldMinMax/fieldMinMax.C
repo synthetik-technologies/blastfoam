@@ -35,17 +35,12 @@ namespace Foam
 {
 namespace functionObjects
 {
+    defineTypeNameAndDebug(fieldMin, 0);
+    defineTypeNameAndDebug(fieldMax, 0);
     defineTypeNameAndDebug(fieldMinMax, 0);
+    addToRunTimeSelectionTable(functionObject, fieldMin, dictionary);
+    addToRunTimeSelectionTable(functionObject, fieldMax, dictionary);
     addToRunTimeSelectionTable(functionObject, fieldMinMax, dictionary);
-
-    // Add old name
-    addNamedToRunTimeSelectionTable
-    (
-        functionObject,
-        fieldMinMax,
-        dictionary,
-        fieldMax
-    );
 }
 }
 
@@ -88,20 +83,30 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     fvMeshFunctionObject(name, runTime, dict),
     restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
     mode_(modeType::cmpt),
-    minMax_(minMaxType::max),
+    minMax_(minMaxTypeNames_[dict.lookupOrDefault<word>("minMax", "max")]),
     minMaxName_(minMax_ == minMaxType::min ? "Min" : "Max"),
-    fieldNames_(dict.lookup("fields")),
-
-    cellMap_(nullptr),
-    rCellMap_(nullptr)
+    fieldNames_(dict.lookup("fields"))
 {
-    if (!dict.lookupOrDefault("executeAtStart", false))
-    {
-        executeAtStart_ = false;
-    }
     read(dict);
 }
 
+Foam::functionObjects::fieldMinMax::fieldMinMax
+(
+    const word& name,
+    const Time& runTime,
+    const dictionary& dict,
+    const minMaxType mm
+)
+:
+    fvMeshFunctionObject(name, runTime, dict),
+    restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
+    mode_(modeType::cmpt),
+    minMax_(mm),
+    minMaxName_(minMax_ == minMaxType::min ? "Min" : "Max"),
+    fieldNames_(dict.lookup("fields"))
+{
+    read(dict);
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -118,9 +123,7 @@ bool Foam::functionObjects::fieldMinMax::read(const dictionary& dict)
     Log << type() << " " << name() << ":" << nl;
 
     dict.readIfPresent("restartOnRestart", restartOnRestart_);
-    mode_ = modeTypeNames_[dict.lookupOrDefault<word>("mode", "component")];
-    minMax_ = minMaxTypeNames_[dict.lookupOrDefault<word>("minMax", "max")];
-    minMaxName_ = minMax_ == minMaxType::min ? "Min" : "Max";
+    mode_ = modeTypeNames_[dict.lookupOrDefault<word>("mode", "component")];    minMaxName_ = minMax_ == minMaxType::min ? "Min" : "Max";
 
     Log << endl;
 
@@ -128,7 +131,10 @@ bool Foam::functionObjects::fieldMinMax::read(const dictionary& dict)
 }
 
 
-void Foam::functionObjects::fieldMinMax::updateMesh(const mapPolyMesh& mpm)
+void Foam::functionObjects::fieldMinMax::topoChange
+(
+    const polyTopoChangeMap& map
+)
 {
     forAll(fieldNames_, fieldi)
     {
@@ -136,9 +142,10 @@ void Foam::functionObjects::fieldMinMax::updateMesh(const mapPolyMesh& mpm)
         #define MapFields(Type, Patch, Mesh)                \
         found =                                             \
             found                                           \
-         || map<GeometricField<Type, Patch, Mesh>>          \
+         || mapField<GeometricField<Type, Patch, Mesh>>     \
             (                                               \
-                fieldNames_[fieldi], mpm                    \
+                fieldNames_[fieldi],                        \
+                map                                         \
             );
 
         FOR_ALL_FIELD_TYPES(MapFields, fvPatchField, volMesh);
@@ -152,7 +159,28 @@ void Foam::functionObjects::fieldMinMax::updateMesh(const mapPolyMesh& mpm)
         }
     }
 
-    setOldFields(mpm);
+    forAll(fieldNames_, fieldi)
+    {
+        bool found = false;
+        #define StoreOldFields(Type, Patch, Mesh)           \
+        found =                                             \
+            found                                           \
+            || storeOld<GeometricField<Type, Patch, Mesh>>     \
+            (                                               \
+                fieldNames_[fieldi]                         \
+            );
+
+        FOR_ALL_FIELD_TYPES(StoreOldFields, fvPatchField, volMesh);
+        FOR_ALL_FIELD_TYPES(StoreOldFields, fvsPatchField, surfaceMesh);
+
+        #undef StoreOldFields
+
+        if (!found)
+        {
+            cannotFindObject(fieldNames_[fieldi]);
+        }
+    }
+
 }
 
 
@@ -180,55 +208,41 @@ bool Foam::functionObjects::fieldMinMax::execute()
         }
     }
 
-    return true;
-}
-
-
-void Foam::functionObjects::fieldMinMax::clearOldFields()
-{
-    if (cellMap_.valid())
+    if (mesh_.dynamic())
     {
-        cellMap_.clear();
-        rCellMap_.clear();
-
-        oldFields_.clear();
-    }
-}
-
-
-void Foam::functionObjects::fieldMinMax::setOldFields(const mapPolyMesh& mpm)
-{
-    clearOldFields();
-
-    forAll(fieldNames_, fieldi)
-    {
-        bool found = false;
-        #define SetOldFields(Type, Patch, Mesh)             \
-        found =                                             \
-            found                                           \
-         || createOld<GeometricField<Type, Patch, Mesh>>    \
-            (                                               \
-                fieldNames_[fieldi]                         \
-            );
-
-        FOR_ALL_FIELD_TYPES(SetOldFields, fvPatchField, volMesh);
-        FOR_ALL_FIELD_TYPES(SetOldFields, fvsPatchField, surfaceMesh);
-
-        #undef SetOldFields
-
-        if (!found)
+        forAll(fieldNames_, fieldi)
         {
-            cannotFindObject(fieldNames_[fieldi]);
+            bool found = false;
+            #define StoreOldFields(Type, Patch, Mesh)           \
+            found =                                             \
+                found                                           \
+             || storeOld<GeometricField<Type, Patch, Mesh>>     \
+                (                                               \
+                    fieldNames_[fieldi]                         \
+                );
+
+            FOR_ALL_FIELD_TYPES(StoreOldFields, fvPatchField, volMesh);
+            FOR_ALL_FIELD_TYPES(StoreOldFields, fvsPatchField, surfaceMesh);
+
+            #undef StoreOldFields
+
+            if (!found)
+            {
+                cannotFindObject(fieldNames_[fieldi]);
+            }
         }
     }
-
-    cellMap_.set(new labelList(mpm.cellMap()));
-    rCellMap_.set(new labelList(mpm.reverseCellMap()));
+    return true;
 }
 
 
 bool Foam::functionObjects::fieldMinMax::write()
 {
+    if (obr_.time().timeIndex() == obr_.time().startTimeIndex())
+    {
+        return true;
+    }
+
     bool good = true;
     forAll(fieldNames_, fieldi)
     {

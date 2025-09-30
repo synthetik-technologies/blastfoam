@@ -26,7 +26,7 @@ patches
         // Dictionary to construct new patch from
         patchInfo
         {
-            type pach;
+            type patch;
         }
 
         // How to construct: either from 'patches' or 'set'

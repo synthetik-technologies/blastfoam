@@ -30,25 +30,31 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(NewtonRaphsonUnivariateRootSolver, 0);
+namespace rootSolvers
+{
+namespace univariate
+{
+    defineTypeNameAndDebug(NewtonRaphson, 0);
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        NewtonRaphsonUnivariateRootSolver,
+        NewtonRaphson,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateRootSolver,
-        NewtonRaphsonUnivariateRootSolver,
+        NewtonRaphson,
         dictionaryTwo
     );
+}
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
+Foam::rootSolvers::univariate::NewtonRaphson::NewtonRaphson
 (
     const scalarMultivariateEquation& eqn,
     const dictionary& dict
@@ -58,15 +64,25 @@ Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
 {}
 
 
+Foam::rootSolvers::univariate::NewtonRaphson::NewtonRaphson
+(
+    const scalarMultivariateEquation& eqn,
+    const NewtonRaphson& solver
+)
+:
+    univariateRootSolver(eqn, solver)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::NewtonRaphsonUnivariateRootSolver::~NewtonRaphsonUnivariateRootSolver()
+Foam::rootSolvers::univariate::NewtonRaphson::~NewtonRaphson()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::NewtonRaphsonUnivariateRootSolver::findRoot
+Foam::scalar Foam::rootSolvers::univariate::NewtonRaphson::findRoot
 (
     const scalar x0,
     const scalar x1,

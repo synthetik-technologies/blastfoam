@@ -56,7 +56,7 @@ bool Foam::functionObjects::blastMachNo::calc()
     (
         foundObject<fluidBlastThermo>
         (
-            IOobject::groupName(fluidBlastThermo::typeName, phaseName_)
+            IOobject::groupName(physicalProperties::typeName, phaseName_)
         )
     )
     {
@@ -64,7 +64,7 @@ bool Foam::functionObjects::blastMachNo::calc()
         (
             lookupObject<fluidBlastThermo>
             (
-                IOobject::groupName(fluidBlastThermo::typeName, phaseName_)
+                IOobject::groupName(physicalProperties::typeName, phaseName_)
             ).speedOfSound()
         );
 
@@ -78,7 +78,7 @@ bool Foam::functionObjects::blastMachNo::calc()
     (
         foundObject<fluidThermo>
         (
-            IOobject::groupName(fluidThermo::typeName, phaseName_)
+            IOobject::groupName(physicalProperties::typeName, phaseName_)
         )
     )
     {
@@ -86,7 +86,7 @@ bool Foam::functionObjects::blastMachNo::calc()
         (
             lookupObject<fluidThermo>
             (
-                IOobject::groupName(fluidThermo::typeName, phaseName_)
+                IOobject::groupName(physicalProperties::typeName, phaseName_)
             )
         );
         tmp<volScalarField> speedOfSound

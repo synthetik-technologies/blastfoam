@@ -41,23 +41,29 @@ Author
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "dynamicBlastFvMesh.H"
+#include "argList.H"
+#include "timeSelector.H"
 #include "solidModel.H"
+
+using namespace  Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
+    #include "addRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+
+    Info<< "Create mesh for time = "
+        << runTime.name() << nl << endl;
+
+    #include "createRegionMesh.H"
+
     #include "createFields.H"
     #include "createTimeControls.H"
     {
-        scalar dTOld(runTime.deltaTValue());
-        solid.setDeltaT(runTime);
-        runTime.setDeltaT(min(runTime.deltaTValue(), dTOld));
+        runTime.setDeltaT(min(solid.newDeltaT(), runTime.deltaTValue()));
     }
     scalar CoNum = solid.CoNum();
 
@@ -69,16 +75,17 @@ int main(int argc, char *argv[])
     {
         #include "readTimeControls.H"
 
-        refineMesh(mesh);
+        fvModels.preUpdateMesh();
+
+        mesh.update();
 
         CoNum = solid.CoNum();
         maxCo = min(maxCo, solid.maxCoNum());
         Info<< "Max Courant Number = " << CoNum << endl;
         #include "setDeltaT.H"
-//         solid.setDeltaT(runTime);
-//         #include "setDeltaT.H"
+
         runTime++;
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.name() << nl << endl;
 
         solid.evolve();
 
