@@ -52,15 +52,7 @@ Foam::rootSolvers::univariate::step::step
 )
 :
     univariateRootSolver(eqn, dict),
-    dx_
-    (
-        dict.lookupOrDefault<scalar>
-        (
-            "dx",
-            (eqn_.upper() - eqn_.lower())
-           /ceil(maxSteps_/10)
-        )
-    ),
+    dx_(dict.lookupOrDefault<scalar>("dx", -1.0)),
     f_(dict.lookupOrDefault<scalar>("f", 0.5))
 {}
 
@@ -107,13 +99,14 @@ Foam::scalar Foam::rootSolvers::univariate::step::findRoot
 {
     initialise(xm);
     scalar x = x0;
-    scalar dx = dx_;
+    scalar dx = dx_ > 0 ? dx_ : (x1 - x0)/ceil(maxSteps_/100);
     scalar yLower = eqn_.fx(x0, li);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar y = eqn_.fx(x + dx, li);
-        if (y*yLower < 0)
+        scalar xNew = x + dx;
+        scalar y = eqn_.fx(xNew, li);
+        if (y*yLower < 0 || xNew >= x1 || xNew <= x0)
         {
             dx *= f_;
         }
@@ -121,7 +114,7 @@ Foam::scalar Foam::rootSolvers::univariate::step::findRoot
         {
             x += dx;
         }
-        eqn_.limit(x);
+
         if (converged(dx))
         {
             break;
