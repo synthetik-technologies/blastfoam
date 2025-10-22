@@ -501,8 +501,10 @@ int main(int argc, char *argv[])
         else
         {
             IOWarningInFunction(refineDict)
-                << "A default refiner is no specified for " << mesh.nGeometricD()
-                << " geometricD so a refiner must be explicitily specified using the "
+                << "A default refiner is no specified for "
+                << mesh.nGeometricD()
+                << " geometricD so a refiner must be explicitily "
+                << specified using the "
                 << "\"refiner\" keyword." << nl << endl;
         }
 
@@ -723,16 +725,16 @@ int main(int argc, char *argv[])
     // Flag to initiate end
     bool prepareToStop = (maxIter == 1);
 
+    if (debug)
+    {
+        runTime++;
+        Info<< "Time = " << runTime.name() << nl << endl;
+    }
+
     label refIter = 0;
-    while(!end)
+    while (!end)
     {
         Info<< "Refinement iteration " << refIter++ << endl;
-        if (debug)
-        {
-            runTime++;
-            Info<< "Time = " << runTime.name() << nl << endl;
-        }
-
         if (maxIter <= iter)
         {
             prepareToStop = true;
@@ -1130,10 +1132,8 @@ int main(int argc, char *argv[])
             }
 
             // Write fields and mesh if using debug
-
             if (debug)
             {
-                mesh.setInstance(runTime.name());
                 mesh.write();
                 refiner->write();
 
@@ -1154,46 +1154,15 @@ int main(int argc, char *argv[])
                 }
                 scalarMaxCellLevel.correctBoundaryConditions();
                 scalarMaxCellLevel.write();
+
                 error.write();
             }
             if (debug || setFieldsDict.lookupOrDefault("dumpLevel", false))
             {
-                tmp<volScalarField> tvCellLevel
-                (
-                    volScalarField::New
-                    (
-                        "cellLevel",
-                        mesh,
-                        dimensionedScalar(dimless, 0),
-                        extrapolatedCalculatedFvPatchField<scalar>::typeName
-                    )
-                );
-                volScalarField& vCellLevel = tvCellLevel.ref();
-                forAll(cellLevel, celli)
-                {
-                    vCellLevel[celli] = cellLevel[celli];
-                }
-                vCellLevel.correctBoundaryConditions();
-                vCellLevel.write();
-
-                tmp<pointScalarField> tpPointLevel
-                (
-                    pointScalarField::New
-                    (
-                        "pointLevel",
-                        pointMesh::New(mesh),
-                        dimensionedScalar(dimless, 0)
-                    )
-                );
-                pointScalarField& pPointLevel = tpPointLevel.ref();
-                const labelList& pointLevel = refiner->pointLevel();
-                forAll(pointLevel, pointi)
-                {
-                    pPointLevel[pointi] = pointLevel[pointi];
-                }
-                pPointLevel.write();
-
+                refiner->writeVolFields(mesh);
             }
+
+
             if (debug)
             {
                 Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
@@ -1204,6 +1173,12 @@ int main(int argc, char *argv[])
             // Update mesh (return if mesh changes)
             if (!end)
             {
+
+                if (debug)
+                {
+                    runTime++;
+                }
+
                 // Transfer zones to the mesh
                 topoSets.transferZones(true);
 
