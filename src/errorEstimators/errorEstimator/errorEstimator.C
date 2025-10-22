@@ -390,10 +390,6 @@ void Foam::errorEstimator::read(const dictionary& dict)
 
     readCellZones(dict);
     readMaxRefinement(dict);
-
-    Info<<maxLevel()<<endl;
-
-
 }
 
 
