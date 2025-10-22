@@ -323,7 +323,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::hs() const
     (
         "hs",
         dimEnergy/dimMass,
-        &ThermoType::Es,
+        &ThermoType::Hs,
         this->rho_,
         this->e_,
         this->T_
@@ -343,7 +343,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::hs
     (
         "hs",
         dimEnergy/dimMass,
-        &ThermoType::Es,
+        &ThermoType::Hs,
         this->rho_,
         this->e_,
         T
@@ -361,7 +361,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::hs
 {
     return cellSetProperty
     (
-        &ThermoType::Es,
+        &ThermoType::Hs,
         cells,
         blastThermo::cellSetScalarList(this->rho_, cells),
         blastThermo::cellSetScalarList(this->e_, cells),
@@ -380,7 +380,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::hs
 {
     return patchFieldProperty
     (
-        &ThermoType::Es,
+        &ThermoType::Hs,
         patchi,
         this->rho_.boundaryField()[patchi],
         this->e_.boundaryField()[patchi],
