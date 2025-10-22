@@ -160,7 +160,10 @@ void Foam::compressibleSystem::updateCorDeltaT()
         amaxSf += mag(this->phi());
 
         const dictionary& controlDict = mesh().time().controlDict();
-        scalar maxCo = controlDict.lookupOrDefault("maxCo", fvTimeInt_->maxCo());
+        scalar maxCo =
+            controlDict.lookupOrDefault("adjustDeltaT", false)
+          ? controlDict.lookupOrDefault("maxLocalCo", fvTimeInt_->maxCo())
+          : controlDict.lookupOrDefault("maxCo", fvTimeInt_->maxCo());
         scalar rDeltaTSmoothingCoeff =
             controlDict.lookupOrDefault("rDeltaTSmoothingCoeff", 0.02);
         scalar minDeltaT = controlDict.lookupOrDefault("minDeltaT", small);
@@ -189,25 +192,20 @@ void Foam::compressibleSystem::updateCorDeltaT()
 
         rDeltaT.correctBoundaryConditions();
 
-        if (rDeltaTSmoothingCoeff > 0)
-        {
-            fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
-        }
-
-        corDeltaT = rDeltaT*deltaT;
-
         Info<< "Flow time scale min/max = "
             << 1.0/gMax(rDeltaT.primitiveField()) << ", "
             << 1.0/gMin(rDeltaT.primitiveField()) << endl;
 
-        // Update the boundary values of the reciprocal time-step
-        rDeltaT.correctBoundaryConditions();
+        if (rDeltaTSmoothingCoeff > 0)
+        {
+            fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
 
-        fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
+            Info<< "Smoothed flow time scale min/max = "
+                << 1.0/gMax(rDeltaT.primitiveField()) << ", "
+                << 1.0/gMin(rDeltaT.primitiveField()) << endl;
+        }
 
-        Info<< "Smoothed flow time scale min/max = "
-            << 1.0/gMax(rDeltaT.primitiveField()) << ", "
-            << 1.0/gMin(rDeltaT.primitiveField()) << endl;
+        corDeltaT = rDeltaT*deltaT;
     }
 }
 
