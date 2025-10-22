@@ -48,6 +48,7 @@ namespace Foam
 {
 
 class fvMeshRefiner;
+class fvMesh;
 
 
 /*---------------------------------------------------------------------------*\
@@ -396,6 +397,9 @@ public:
 
         //- Write object
         virtual bool write(const bool write = true) const;
+
+        //- Write volume fields
+        virtual bool writeVolFields(const fvMesh& mesh) const;
 
 
     // Member Operators

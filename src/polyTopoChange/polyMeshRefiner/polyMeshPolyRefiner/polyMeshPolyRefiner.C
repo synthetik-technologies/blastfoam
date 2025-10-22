@@ -27,6 +27,8 @@ License
 #include "polyTopoChange.H"
 #include "prismatic2DRefinement.H"
 #include "polyhedralRefinement.H"
+#include "volFields.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -526,6 +528,33 @@ bool Foam::polyMeshPolyRefiner::write(const bool write) const
     return
         polyMeshRefiner::write(write)
      && refiner_->write();
+}
+
+
+bool Foam::polyMeshPolyRefiner::writeVolFields(const fvMesh& mesh) const
+{
+    bool writeOk = polyMeshRefiner::writeVolFields(mesh);
+
+    // Write parent cells
+    // if (refiner_->historyActive())
+    {
+        tmp<volScalarField> tscalarParentCells
+        (
+            volScalarField::New
+            (
+                "parentCells",
+                mesh,
+                dimensionedScalar(dimless, 0),
+                extrapolatedCalculatedFvPatchField<scalar>::typeName
+            )
+        );
+        tscalarParentCells.ref().primitiveFieldRef() =
+            scalarList(refiner_->parentCells());
+        tscalarParentCells.ref().correctBoundaryConditions();
+        writeOk = tscalarParentCells().write() && writeOk;
+    }
+
+    return writeOk;
 }
 
 

@@ -101,6 +101,9 @@ protected:
             //- Switch whether to use edge based consistency on refinement
             bool edgeBasedConsistency_;
 
+            //- Is refinement history active
+            mutable bool historyActive_;
+
 
     // Protected Pure Virtual Member Functions
 
@@ -118,7 +121,7 @@ protected:
             (
                 polyTopoChange& meshMod,
                 const labelList& splitPointsToUnrefine
-            ) const = 0;
+            ) const;
 
 
     // Protected Member Functions
@@ -251,6 +254,13 @@ public:
                 return parentCells_;
             }
 
+            //- Return if history is active
+            bool historyActive() const
+            {
+                return historyActive_;
+            }
+
+
         // Edit
 
             //- Set cells to refine given a list of refinement
@@ -274,6 +284,12 @@ public:
                 const labelList& unrefinementPointCandidates,
                 const bool maxSet
             ) const = 0;
+
+            //- Update protected cells
+            virtual void updateProtectedCells
+            (
+                PackedBoolList& protectedCells
+            ) = 0;
 
 
         // Inherited interface from polyMeshModifier

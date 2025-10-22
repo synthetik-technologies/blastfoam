@@ -79,6 +79,10 @@ class prismatic2DRefinement
 :
     public refinement
 {
+public:
+    template<class Type>
+    using PointCellTable = HashTable<Type, Pair<label>, Hash<Pair<label>>>;
+
 private:
 
     // Private Member Functions
@@ -113,12 +117,7 @@ private:
             //  necessary mapping
             void setNewFaceNeighbours
             (
-                const HashTable
-                <
-                    label,
-                    Pair<label>,
-                    Hash<FixedList<label, 2> >
-                >& pointCellToAddedCellMap,
+                const PointCellTable<label>& pointCellToAddedCellMap,
                 const labelListList& cellAddedCells,
                 const label& faceI,
                 const label& pointI,
@@ -191,14 +190,6 @@ protected:
                 const labelList& cellsToRefine
             ) const;
 
-            //- Set unrefinement instruction
-            virtual void setUnrefinement
-            (
-                polyTopoChange& ref,
-                const labelList& splitPointsToUnrefine
-            ) const;
-
-
 public:
 
     //- Runtime type information
@@ -235,6 +226,12 @@ public:
                 const labelList& unrefinementPointCandidates,
                 const bool maxSet
             ) const;
+
+            //- Update protected cells
+            virtual void updateProtectedCells
+            (
+                PackedBoolList& protectedCells
+            );
 };
 
 

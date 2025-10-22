@@ -221,12 +221,7 @@ void Foam::prismatic2DRefinement::appendFaceSplitInfo
 
 void Foam::prismatic2DRefinement::setNewFaceNeighbours
 (
-    const HashTable
-    <
-        label,
-        Pair<label>,
-        Hash<FixedList<label, 2> >
-    >& pointCellToAddedCellMap,
+    const PointCellTable<label>& pointCellToAddedCellMap,
     const labelListList& cellAddedCells,
     const label& faceI,
     const label& pointI,
@@ -557,21 +552,16 @@ void Foam::prismatic2DRefinement::setRefinement
     const labelList& cellsToRefine
 ) const
 {
-    DynamicList<label> newCellLevel(cellLevel_.size());
-    forAll(cellLevel_, celli)
-    {
-        newCellLevel.append(cellLevel_[celli]);
-    }
-    DynamicList<label> newPointLevel(pointLevel_.size());
-    forAll(pointLevel_, pointi)
-    {
-        newPointLevel.append(pointLevel_[pointi]);
-    }
+    DynamicList<label> newCellLevel(cellLevel_);
+    DynamicList<label> newPointLevel(pointLevel_);
 
     locationMapper& locMapper(locationMapper::NewRef(mesh_));
     locMapper.clearOut();
 
     // PART 1: Mark cells for refinement
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Marking cells to refine." << endl;
 
     // Bool list that marks cells which will be refined
     PackedBoolList refineCellsMask(mesh_.nCells(), false);
@@ -597,8 +587,7 @@ void Foam::prismatic2DRefinement::setRefinement
             }
         }
 
-        Pout<< FUNCTION_NAME << nl
-            << "Writing " << splitCells.size()
+        Pout<< "Writing " << splitCells.size()
             << " cells to split to cellSet " << splitCells.objectPath()
             << endl;
 
@@ -607,13 +596,9 @@ void Foam::prismatic2DRefinement::setRefinement
 
 
     // PART 2: Mark edges for refinement and add points to edge centres
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Allocating edge midpoints."
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Allocating edge midpoints." << endl;
 
     // First mark faces and edges on special patches (empty or wedge).
     // This data is used in PART 2 (collecting edges) and also PART 3
@@ -785,8 +770,7 @@ void Foam::prismatic2DRefinement::setRefinement
             }
         }
 
-        Pout<< FUNCTION_NAME << nl
-            << "Writing centres of edges to split to file " << str.name()
+        Pout<< "Writing centres of edges to split to file " << str.name()
             << endl;
     }
 
@@ -799,13 +783,10 @@ void Foam::prismatic2DRefinement::setRefinement
     //    split into two faces. For each of these faces, collect the two edges
     //    found on opposing sides of the special patch (empty or wedge).
 
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Allocating face midpoints and collecting faces that are"
-            << " not on special patch (empty or wedge)."
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Allocating face midpoints and collecting faces that are "
+        << "not on special patch (empty or wedge)." << endl;
 
     // Determine faces the should only have 3 anchorPoints on non-special
     // patches in axis-symmetric cases
@@ -821,6 +802,7 @@ void Foam::prismatic2DRefinement::setRefinement
 
     // Cells with an axis face/point/edge
     PackedBoolList axisCell(mesh_.nCells(), false);
+
     if (mesh_.nSolutionD() == 3)
     {
         const labelListList& edgeFaces = mesh_.edgeFaces();
@@ -899,18 +881,14 @@ void Foam::prismatic2DRefinement::setRefinement
     labelList faceAnchorLevel(mesh_.nFaces());
     for (label faceI = 0; faceI < mesh_.nFaces(); ++faceI)
     {
-        if (faceOnPatchToCut[faceI] || axisFace.get(faceI))
-        {
-            // Face on special patch, at least 3 points need to have
-            // level <= anchor level
-            faceAnchorLevel[faceI] = getAnchorLevel(faceI, 3);
-        }
-        else
-        {
-            // Face not on special patch, at least 4 points need to have
-            // level <= anchor level
-            faceAnchorLevel[faceI] = getAnchorLevel(faceI, 4);
-        }
+        // Face on special patch, at least 3 points need to have
+        // Face not on special patch, at least 4 points need to have
+        // level <= anchor level
+        faceAnchorLevel[faceI] = getAnchorLevel
+        (
+            faceI,
+            (faceOnPatchToCut[faceI] || axisFace.get(faceI)) ? 3 : 4
+        );
     }
 
     // Split faces on special patches (empty or wedge) will be collected in
@@ -1123,8 +1101,7 @@ void Foam::prismatic2DRefinement::setRefinement
             }
         }
 
-        Pout<< FUNCTION_NAME << nl
-            << "Writing " << splitNFaces.size()
+        Pout<< "Writing " << splitNFaces.size()
             << " faces to split in N to faceSet " << splitNFaces.objectPath()
             << endl;
 
@@ -1140,8 +1117,7 @@ void Foam::prismatic2DRefinement::setRefinement
             splitTwoFaces.insert(splitFacesIntoTwo[i]);
         }
 
-        Pout<< FUNCTION_NAME << nl
-            << "Writing " << splitTwoFaces.size()
+        Pout<< "Writing " << splitTwoFaces.size()
             << " faces to split in two to faceSet "
             << splitTwoFaces.objectPath() << endl;
 
@@ -1162,12 +1138,9 @@ void Foam::prismatic2DRefinement::setRefinement
 
 
     // PART 4: Get corner and anchor points for all cells
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Finding cell anchorPoints" << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Finding cell anchorPoints" << endl;
 
     // Loop through all cells and check whether at least 6 anchor points
     // have been found (minimum requirement for a triangular prism)
@@ -1266,13 +1239,9 @@ void Foam::prismatic2DRefinement::setRefinement
 
 
     // PART 5: Add the cells
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << " Adding cells."
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << " Adding cells." << endl;
 
     // We should have exactly n new cells per each split cell, where n is the
     // number of anchor points in a cell divided by two. In order to determine
@@ -1281,12 +1250,11 @@ void Foam::prismatic2DRefinement::setRefinement
     // polyhedralRefinement when we had 1 point = 1 cell. Here, we have two
     // points that correspond to a single cell, one on one side of the special
     // patch and the other on other side. This information will be collected in
-    // a HashTable<label, Pair<label> >, where the key will be a pair of
+    // a PointCellTable<label>, where the key will be a pair of
     // global point index and global cell index, while the value is local index
     // into cellAddedCells list
     labelListList cellAddedCells(mesh_.nCells());
-    HashTable<label, Pair<label>, Hash<FixedList<label, 2> > >
-        pointCellToAddedCellMap(6*cellsToRefine.size());
+    PointCellTable<label> pointCellToAddedCellMap(6*cellsToRefine.size());
 
     // Get mesh data
     const cellList& meshCells = mesh_.cells();
@@ -1442,13 +1410,9 @@ void Foam::prismatic2DRefinement::setRefinement
     // 6.3. Existing faces that do not get split but only edges get split
     // 6.4. Existing faces that do not get split but get new owner/neighbour
     // 6.5. New internal faces inside split cells
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Marking faces to be handled"
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Marking faces to be handled" << endl;
 
     // Get all faces to split:
     // a) All faces of a cell being split
@@ -1522,11 +1486,9 @@ void Foam::prismatic2DRefinement::setRefinement
     // PART 6.1. Add/modify faces for each face on special patch that is being
     // split
 
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Splitting faces on special patches (empty or wedge)" << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Splitting faces on special patches (empty or wedge)" << endl;
 
     forAll(faceMidPoint, faceI)
     {
@@ -1655,13 +1617,9 @@ void Foam::prismatic2DRefinement::setRefinement
 
     // PART 6.2. Add/modify faces for each face not on special patch that is
     // being split into two
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Splitting faces not on special patches (empty or wedge)"
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Splitting faces not on special patches (empty or wedge)" << endl;
 
     // Loop through faces that are not on special patch. These will be split
     // into two faces only
@@ -1949,13 +1907,9 @@ void Foam::prismatic2DRefinement::setRefinement
 
     // PART 6.3. Modify faces that do not get split but have edges that are
     // being split
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Modifying faces with split edges"
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Modifying faces with split edges" << endl;
 
     forAll(edgeMidPoint, edgeI)
     {
@@ -2043,13 +1997,9 @@ void Foam::prismatic2DRefinement::setRefinement
 
     // PART 6.4: Modify faces that do not get split but whose owner/neighbour
     // change due to splitting
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Changing owner/neighbour for otherwise unaffected faces"
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Changing owner/neighbour for otherwise unaffected faces" << endl;
 
     forAll(facesToSplit, faceI)
     {
@@ -2087,13 +2037,9 @@ void Foam::prismatic2DRefinement::setRefinement
 
 
     // PART 6.5. Add new internal faces inside split cells
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Adding new internal faces for split cells"
-            << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::setRefinement: "
+        << "Adding new internal faces for split cells" << endl;
 
     // Mark-up filed for visited cells (since we are going through faces)
     boolList cellsToSplit(mesh_.nCells(), true);
@@ -2459,231 +2405,6 @@ void Foam::prismatic2DRefinement::setRefinement
 }
 
 
-void Foam::prismatic2DRefinement::setUnrefinement
-(
-    polyTopoChange& meshMod,
-    const labelList& splitPointsToUnrefine
-) const
-{
-    // Get point cells necessary for debug and face removal
-    const labelListList& meshPointCells = mesh_.pointCells();
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Checking validity of cellLevel before setting unrefinement."
-            << endl;
-
-        forAll(cellLevel_, cellI)
-        {
-            if (cellLevel_[cellI] < 0)
-            {
-                FatalErrorInFunction
-                    << "Illegal cell level " << cellLevel_[cellI]
-                    << " for cell " << cellI
-                    << abort(FatalError);
-            }
-        }
-
-        // Write split points into a point set
-        pointSet pSet
-        (
-            mesh_,
-            "splitPoints",
-            labelHashSet(splitPointsToUnrefine)
-        );
-        pSet.write();
-
-        // Write split point cells into a cell set
-        cellSet cSet
-        (
-            mesh_,
-            "splitPointCells",
-            splitPointsToUnrefine.size()
-        );
-
-        forAll(splitPointsToUnrefine, i)
-        {
-            // Get point cells and insert them into cell set
-            const labelList& pCells = meshPointCells[splitPointsToUnrefine[i]];
-
-            forAll(pCells, j)
-            {
-                cSet.insert(pCells[j]);
-            }
-        }
-        cSet.write();
-
-        Pout<< FUNCTION_NAME << nl
-            << "Writing " << pSet.size()
-            << " points and "
-            << cSet.size() << " cells for unrefinement to" << nl
-            << "pointSet " << pSet.objectPath() << nl
-            << "cellSet " << cSet.objectPath()
-            << endl;
-    }
-
-    // Create lists needed by face remover
-    labelList cellRegion;
-    labelList cellRegionMaster;
-    labelList facesToRemove;
-
-    // Memory management
-    {
-        // Mark faces on special patches (empty or wedge) to exclude them
-        boolList faceOnPatchToCut(mesh_.nFaces(), false);
-
-        // Get boundary
-        const polyBoundaryMesh& boundaryMesh = mesh_.boundaryMesh();
-
-        // Loop through all patches
-        forAll (boundaryMesh, patchI)
-        {
-            // Get current patch
-            const polyPatch& curPatch = boundaryMesh[patchI];
-
-            // Check whether this patch is special (empty or wedge)
-            if (isA<emptyPolyPatch>(curPatch) || isA<wedgePolyPatch>(curPatch))
-            {
-                // Get start and end face labels
-                const label startFaceI = curPatch.start();
-                const label endFaceI = startFaceI + curPatch.size();
-
-                // Mark all the faces and edges on the patch
-                for (label faceI = startFaceI; faceI < endFaceI; ++faceI)
-                {
-                    // Mark face
-                    faceOnPatchToCut[faceI] = true;
-                }
-            }
-        }
-
-
-        // Collect split faces in the hash set, guess size to prevent excessive
-        // resizing
-        labelHashSet splitFaces(12*splitPointsToUnrefine.size());
-
-        // Get point faces
-        const labelListList& meshPointFaces = mesh_.pointFaces();
-
-        forAll(splitPointsToUnrefine, i)
-        {
-            // Loop through all faces of this point and insert face index
-            const labelList& pFaces = meshPointFaces[splitPointsToUnrefine[i]];
-
-            forAll(pFaces, j)
-            {
-                // Get face index
-                const label& faceI = pFaces[j];
-
-                if (!faceOnPatchToCut[faceI])
-                {
-                    // Face is not on special patch, insert it into hash set
-                    splitFaces.insert(faceI);
-                }
-            }
-        }
-
-        // Check with faceRemover what faces will get removed. Note that this
-        // can be more (but never less) than splitFaces provided.
-        faceRemover_.compatibleRemoves
-        (
-            splitFaces.toc(),   // Pierced faces
-
-            cellRegion,         // Region merged into (-1 for no region)
-            cellRegionMaster,   // Master cell for region
-            facesToRemove       // List of faces to be removed
-        );
-
-        if (facesToRemove.size() != splitFaces.size())
-        {
-            FatalErrorInFunction
-                << "Either the initial set of split points to unrefine does not"
-                << " seem to be consistent or there are no mid points of"
-                << " refined cells."
-                << abort(FatalError);
-        }
-    }
-
-//     // Find point region master for every cell region.  This is the central point
-//     // from which the coarse cell will be made
-//     // The property of the point region master is that all cells that touch it
-//     // have the same cell region index
-//     // HJ, 6/Sep/2019
-//     labelList pointRegionMaster(cellRegionMaster.size(), label(-1));
-//
-//     // Get point-cell addressing
-//     const labelListList& pc = mesh_.pointCells();
-//
-//     forAll (splitPointsToUnrefine, i)
-//     {
-//         const labelList& curPc = pc[splitPointsToUnrefine[i]];
-//
-//         label curRegion = -1;
-//
-//         forAll (curPc, curPcI)
-//         {
-//             if (curRegion == -1)
-//             {
-//                 // First region found.  Grab it
-//                 curRegion = cellRegion[curPc[curPcI]];
-//             }
-//             else
-//             {
-//                 // Region already found.  Check that all other cells that
-//                 // touch this point have the same region
-//                 if (curRegion != cellRegion[curPc[curPcI]])
-//                 {
-//                     // Error: different region cells touching in split point
-//                     // This is not a valid unrefinement pattern
-//                     FatalErrorInFunction
-//                         << "Different region cells touching in split point."
-//                         << abort(FatalError);
-//                 }
-//             }
-//         }
-//
-//         // Record point region master
-//         if (curRegion > -1)
-//         {
-//             pointRegionMaster[curRegion] = splitPointsToUnrefine[i];
-//         }
-//         else
-//         {
-//             // Error: Cannot find region for point
-//             FatalErrorInFunction
-//                 << "Different region cells touching in split point."
-//                 << abort(FatalError);
-//         }
-//     }
-
-    // Insert all commands to combine cells
-    faceRemover_.setRefinement
-    (
-        facesToRemove,
-        cellRegion,
-        cellRegionMaster,
-        meshMod
-    );
-
-    {
-        // Update refinementLevelIndicator for all cells that will be unrefined
-        labelList newCellLevel(cellLevel_);
-        forAll(splitPointsToUnrefine, i)
-        {
-            // Get point cells and mark them for unrefinement
-            const labelList& pCells = meshPointCells[splitPointsToUnrefine[i]];
-
-            forAll(pCells, j)
-            {
-                newCellLevel[pCells[j]] = cellLevel_[pCells[j]] - 1;
-            }
-        }
-        cellLevel_.transfer(newCellLevel);
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::prismatic2DRefinement::prismatic2DRefinement
@@ -2715,11 +2436,9 @@ Foam::labelList Foam::prismatic2DRefinement::consistentUnrefinement
     const bool maxSet
 ) const
 {
-    if (debug)
-    {
-        InfoInFunction
-            << "Setting split points to unrefine." << endl;
-    }
+    DebugInfo
+        << "prismatic2DRefinement::consistentUnrefinement: "
+        << "Setting split points to unrefine." << endl;
 
     // Get necessary mesh data
     const label nPoints = mesh_.nPoints();
@@ -2952,6 +2671,14 @@ Foam::labelList Foam::prismatic2DRefinement::consistentUnrefinement
     }
 
     return newPointsToUnrefine;
+}
+
+
+void Foam::prismatic2DRefinement::updateProtectedCells
+(
+    PackedBoolList& protectedCells
+)
+{
 }
 
 

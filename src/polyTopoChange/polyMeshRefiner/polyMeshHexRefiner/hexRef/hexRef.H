@@ -78,6 +78,11 @@ class polyDistributionMap;
 
 class hexRef
 {
+public:
+
+    template<class Type>
+    using CellPointTable = HashTable<Type, labelPair, Hash<labelPair>>;
+
 protected:
     // Protected data
 
@@ -108,6 +113,9 @@ protected:
         //- Cell shapes when seen as split hexes
         mutable autoPtr<cellShapeList> cellShapesPtr_;
 
+        //- Has the mesh changed since the last write
+        mutable bool changedSinceWrite_;
+
 
     // Protected Member Functions
 
@@ -136,15 +144,18 @@ protected:
             label& nei
         ) const;
 
-
         //- Get index of minimum pointlevel.
         label findMinLevel(const labelList& f) const;
+
         //- Get maximum pointlevel.
         label findMaxLevel(const labelList& f) const;
+
         //- Count number of vertices <= anchorLevel
         label countAnchors(const labelList&, const label) const;
+
         //- Debugging: dump cell as .obj file
         void dumpCell(const label celli) const;
+
         //- Find index of point with wantedLevel, starting from fp.
         label findLevel
         (
@@ -155,7 +166,7 @@ protected:
             const label wantedLevel
         ) const;
 
-        ////- Print levels of list of points.
+        //- Print levels of list of points.
         //void printLevels(Ostream&, const labelList&) const;
 
         //- If p0 and p1 are existing vertices check if edge is split and insert
@@ -392,6 +403,25 @@ public:
             {
                 return level0Edge_.value();
             }
+
+            //- Has there been any changes since the last write
+            bool changedSinceWrite() const
+            {
+                return changedSinceWrite_;
+            }
+
+            //- Set setUnchanged
+            void setUnchanged() const
+            {
+                changedSinceWrite_ = false;
+            }
+
+            //- Set changed
+            void setChanged() const
+            {
+                changedSinceWrite_ = true;
+            }
+
 
         // Refinement
 

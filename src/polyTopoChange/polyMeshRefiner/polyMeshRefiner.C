@@ -33,6 +33,10 @@ License
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
 #include "hexRef3D.H"
+#include "fvMesh.H"
+#include "volFields.H"
+#include "pointFields.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 #include "RefineBalanceMeshObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -816,5 +820,44 @@ bool Foam::polyMeshRefiner::write(const bool write) const
 {
     return true;
 }
+
+
+bool Foam::polyMeshRefiner::writeVolFields(const fvMesh& mesh) const
+{
+    bool writeOk = true;
+    {
+        tmp<volScalarField> tscalarCellLevel
+        (
+            volScalarField::New
+            (
+                "cellLevel",
+                mesh,
+                dimensionedScalar(dimless, 0),
+                extrapolatedCalculatedFvPatchField<scalar>::typeName
+            )
+        );
+        tscalarCellLevel.ref().primitiveFieldRef() =
+            scalarList(this->cellLevel());
+        tscalarCellLevel.ref().correctBoundaryConditions();
+        writeOk = tscalarCellLevel().write() && writeOk;
+    }
+
+    {
+        tmp<pointScalarField> tscalarPointLevel
+        (
+            pointScalarField::New
+            (
+                "pointLevel",
+                pointMesh::New(mesh),
+                dimensionedScalar(dimless, 0.0)
+            )
+        );
+        tscalarPointLevel.ref().primitiveFieldRef() =
+            scalarList(this->pointLevel());
+        writeOk = tscalarPointLevel().write() && writeOk;
+    }
+    return writeOk;
+}
+
 
 // ************************************************************************* //

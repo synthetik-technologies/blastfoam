@@ -569,6 +569,7 @@ Foam::label Foam::polyhedralRefinement::storeMidPointInfo
         const edge& faceMids = midPointToFaceMids[edgeMidPointI];
 
         label otherFaceMidPointI = faceMids.otherVertex(faceMidPointI);
+        // Info<<"other: "<<cellI<<" "<<faceMids<<" "<<anchors<<" "<<faceMidPointI<<" "<<otherFaceMidPointI<<endl;
 
         // Create face consistent with anchorI being the owner.
         // Note that the edges between the edge mid point and the face mids
@@ -731,6 +732,7 @@ void Foam::polyhedralRefinement::insertEdgeSplit
 
     if (p0 < nPoints && p1 < nPoints)
     {
+        // Info<<p0<<" "<<p1<<endl;
         label edgeI = meshTools::findEdge(mesh_, p0, p1);
 
         if (edgeI != -1 && edgeMidPoint[edgeI] != -1)
@@ -1822,195 +1824,6 @@ void Foam::polyhedralRefinement::setRefinement
 }
 
 
-void Foam::polyhedralRefinement::setUnrefinement
-(
-    polyTopoChange& meshMod,
-    const labelList& splitPointsToUnrefine
-) const
-{
-    // Get point cells necessary for debug and face removal
-    const labelListList& meshPointCells = mesh_.pointCells();
-
-    if (debug)
-    {
-        Pout<< FUNCTION_NAME << nl
-            << "Checking validity of cellLevel before setting unrefinement."
-            << endl;
-
-        forAll(cellLevel_, cellI)
-        {
-            if (cellLevel_[cellI] < 0)
-            {
-                FatalErrorInFunction
-                    << "Illegal cell level " << cellLevel_[cellI]
-                    << " for cell " << cellI
-                    << abort(FatalError);
-            }
-        }
-
-        // Write split points into a point set
-        pointSet pSet
-        (
-            mesh_,
-            "splitPoints",
-            labelHashSet(splitPointsToUnrefine)
-        );
-        pSet.write();
-
-        // Write split point cells into a cell set
-        cellSet cSet
-        (
-            mesh_,
-            "splitPointCells",
-            splitPointsToUnrefine.size()
-        );
-
-        forAll(splitPointsToUnrefine, i)
-        {
-            // Get point cells and insert them into cell set
-            const labelList& pCells = meshPointCells[splitPointsToUnrefine[i]];
-
-            forAll(pCells, j)
-            {
-                cSet.insert(pCells[j]);
-            }
-        }
-        cSet.write();
-
-        Pout<< FUNCTION_NAME << nl
-            << "Writing " << pSet.size()
-            << " points and "
-            << cSet.size() << " cells for unrefinement to" << nl
-            << "pointSet " << pSet.objectPath() << nl
-            << "cellSet " << cSet.objectPath()
-            << endl;
-    }
-
-    // Create lists needed by face remover
-    labelList cellRegion;
-    labelList cellRegionMaster;
-    labelList facesToRemove;
-
-    // Memory management
-    {
-        // Collect split faces in the hash set, guess size to prevent excessive
-        // resizing
-        labelHashSet splitFaces(12*splitPointsToUnrefine.size());
-
-        // Get point faces
-        const labelListList& meshPointFaces = mesh_.pointFaces();
-
-        forAll(splitPointsToUnrefine, i)
-        {
-            // Loop through all faces of this point and insert face index
-            const labelList& pFaces = meshPointFaces[splitPointsToUnrefine[i]];
-
-            forAll(pFaces, j)
-            {
-                splitFaces.insert(pFaces[j]);
-            }
-        }
-
-        // Check with faceRemover what faces will get removed. Note that this
-        // can be more (but never less) than splitFaces provided.
-        faceRemover_.compatibleRemoves
-        (
-            splitFaces.toc(),   // Pierced faces
-
-            cellRegion,         // Region merged into (-1 for no region)
-            cellRegionMaster,   // Master cell for region
-            facesToRemove       // List of faces to be removed
-        );
-
-        if (facesToRemove.size() != splitFaces.size())
-        {
-            FatalErrorInFunction
-                << "Either the initial set of split points to unrefine does not"
-                << " seem to be consistent or there are no mid points of"
-                << " refined cells."
-                << abort(FatalError);
-        }
-    }
-
-    // Find point region master for every cell region.  This is the central point
-    // from which the coarse cell will be made
-    // The property of the point region master is that all cells that touch it
-    // have the same cell region index
-    // HJ, 6/Sep/2019
-    labelList pointRegionMaster(cellRegionMaster.size(), label(-1));
-
-    // Get point-cell addressing
-    const labelListList& pc = mesh_.pointCells();
-
-    forAll (splitPointsToUnrefine, i)
-    {
-        const labelList& curPc = pc[splitPointsToUnrefine[i]];
-
-        label curRegion = -1;
-
-        forAll (curPc, curPcI)
-        {
-            if (curRegion == -1)
-            {
-                // First region found.  Grab it
-                curRegion = cellRegion[curPc[curPcI]];
-            }
-            else
-            {
-                // Region already found.  Check that all other cells that
-                // touch this point have the same region
-                if (curRegion != cellRegion[curPc[curPcI]])
-                {
-                    // Error: different region cells touching in split point
-                    // This is not a valid unrefinement pattern
-                    FatalErrorInFunction
-                        << "Different region cells touching in split point."
-                        << abort(FatalError);
-                }
-            }
-        }
-
-        // Record point region master
-        if (curRegion > -1)
-        {
-            pointRegionMaster[curRegion] = splitPointsToUnrefine[i];
-        }
-        else
-        {
-            // Error: Cannot find region for point
-            FatalErrorInFunction
-                << "Different region cells touching in split point."
-                << abort(FatalError);
-        }
-    }
-
-    // Insert all commands to combine cells
-    faceRemover_.setRefinement
-    (
-        facesToRemove,
-        cellRegion,
-//         pointRegionMaster,
-        cellRegionMaster,
-        meshMod
-    );
-
-    // Remove the 8 cells that originated from merging around the split point
-    // and adapt cell levels (not that pointLevels stay the same since points
-    // either get removed or stay at the same position.
-    forAll(splitPointsToUnrefine, i)
-    {
-        label pointi = splitPointsToUnrefine[i];
-
-        const labelList& pCells = mesh_.pointCells(pointi);
-
-        forAll(pCells, j)
-        {
-            cellLevel_[pCells[j]]--;
-        }
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::polyhedralRefinement::polyhedralRefinement
@@ -2260,6 +2073,14 @@ Foam::labelList Foam::polyhedralRefinement::consistentUnrefinement
     }
 
     return newPointsToUnrefine;
+}
+
+
+void Foam::polyhedralRefinement::updateProtectedCells
+(
+    PackedBoolList& protectedCells
+)
+{
 }
 
 

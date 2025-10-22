@@ -108,9 +108,6 @@ protected:
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
 
-        //- Has the mesh changed since the last write
-        mutable bool changedSinceWrite_;
-
 
     // Protected Member Functions
 

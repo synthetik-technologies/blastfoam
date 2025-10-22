@@ -541,9 +541,6 @@ void Foam::polyMeshHexRefiner::topoChange(const polyTopoChangeMap& mpm)
     polyMeshRefiner::topoChange(mpm);
     meshCutter_->topoChange(mpm);
     hasMapped_ = true;
-
-    changedSinceWrite_ = true;
-
 }
 
 
@@ -568,9 +565,6 @@ void Foam::polyMeshHexRefiner::distribute
         map.distributeCellData(protectedCell);
         protectedCell_ = protectedCell;
     }
-
-    changedSinceWrite_ = true;
-
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -586,8 +580,7 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
     meshCutter_(hexRef::New(mesh_, read)),
 
     nProtected_(0),
-    protectedCell_(mesh_.nCells(), 0),
-    changedSinceWrite_(false)
+    protectedCell_(mesh_.nCells(), 0)
 {
     nProtected_ = 0;
 
@@ -1018,8 +1011,7 @@ Foam::polyMeshHexRefiner::polyMeshHexRefiner
     ),
 
     nProtected_(0),
-    protectedCell_(mesh_.nCells(), 0),
-    changedSinceWrite_(false)
+    protectedCell_(mesh_.nCells(), 0)
 {
     // Read static part of dictionary
     readDict(dict);
@@ -1655,7 +1647,7 @@ bool Foam::polyMeshHexRefiner::write(const bool write) const
 
     bool writeOk = polyMeshRefiner::write(write);
 
-    if (changedSinceWrite_)
+    if (meshCutter_->changedSinceWrite())
     {
         // Force refinement data to go to the current time directory.
         const_cast<hexRef&>(meshCutter_()).setInstance(mesh_.time().name());
@@ -1680,6 +1672,9 @@ bool Foam::polyMeshHexRefiner::write(const bool write) const
 
             writeOk = protectedCells.write(write) && writeOk;
         }
+
+        // Reset changed status
+        meshCutter_->setUnchanged();
     }
 
     return writeOk;

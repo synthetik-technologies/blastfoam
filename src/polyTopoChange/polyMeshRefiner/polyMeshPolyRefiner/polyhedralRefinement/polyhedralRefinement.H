@@ -181,13 +181,6 @@ protected:
                 const labelList& cellsToRefine
             ) const;
 
-            //- Set unrefinement instruction
-            virtual void setUnrefinement
-            (
-                polyTopoChange& meshMod,
-                const labelList& splitPointsToUnrefine
-            ) const;
-
 
 public:
 
@@ -225,6 +218,12 @@ public:
                 const labelList& unrefinementPointCandidates,
                 const bool maxSet
             ) const;
+
+            //- Update protected cells
+            virtual void updateProtectedCells
+            (
+                PackedBoolList& protectedCells
+            );
 };
 
 

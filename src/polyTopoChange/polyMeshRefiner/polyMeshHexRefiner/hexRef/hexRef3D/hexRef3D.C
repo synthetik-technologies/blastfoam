@@ -816,7 +816,8 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                  && pointLevel_[e[1]] <= cellLevel_[celli]
                 )
                 {
-                    edgeMidPoint[edgeI] = 12345;    // mark need for splitting
+                    // mark need for splitting
+                    edgeMidPoint[edgeI] = labelMax;
                 }
             }
         }
@@ -958,7 +959,8 @@ Foam::labelListList Foam::hexRef3D::setRefinement
              || newNeiLevel > faceAnchorLevel[facei]
             )
             {
-                faceMidPoint[facei] = 12345;    // mark to be split
+                // mark to be split
+                faceMidPoint[facei] = labelMax;
             }
         }
     }
@@ -1003,7 +1005,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                  || newNeiLevel[i] > faceAnchorLevel[facei]
                 )
                 {
-                    faceMidPoint[facei] = 12345;    // mark to be split
+                    faceMidPoint[facei] = labelMax;    // mark to be split
                 }
             }
         }

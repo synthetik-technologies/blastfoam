@@ -159,6 +159,9 @@ public:
         //- Write using given format, version and compression
         virtual bool write(const bool write = true) const;
 
+        //- Write volume fields
+        virtual bool writeVolFields(const fvMesh& mesh) const;
+
 
     // Member Operators
 

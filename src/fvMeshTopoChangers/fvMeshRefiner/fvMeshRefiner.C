@@ -150,30 +150,7 @@ bool Foam::fvMeshTopoChangers::fvMeshRefiner::write(const bool write) const
     refiner_->write(write);
     if (dumpLevel_ && write)
     {
-        volScalarField scalarCellLevel
-        (
-            volScalarField::New
-            (
-                "cellLevel",
-                mesh(),
-                dimensionedScalar(dimless, 0),
-                zeroGradientFvPatchField<scalar>::typeName
-            )
-        );
-        scalarCellLevel.primitiveFieldRef() = scalarList(refiner_->cellLevel());
-        scalarCellLevel.correctBoundaryConditions();
-
-        pointScalarField scalarPointLevel
-        (
-            pointScalarField::New
-            (
-                "pointLevel",
-                pointMesh::New(mesh()),
-                dimensionedScalar(dimless, 0.0)
-            )
-        );
-        scalarPointLevel.primitiveFieldRef() = scalarList(refiner_->pointLevel());
-        return scalarCellLevel.write() && scalarPointLevel.write();
+        refiner_->writeVolFields(mesh());
     }
     return true;
 }

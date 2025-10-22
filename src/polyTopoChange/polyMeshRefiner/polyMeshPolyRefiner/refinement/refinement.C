@@ -28,6 +28,8 @@ License
 #include "polyTopoChange.H"
 #include "syncTools.H"
 #include "meshTools.H"
+#include "cellSet.H"
+#include "pointSet.H"
 #include "blastMeshTools.H"
 #include "polyTopoChangeMap.H"
 #include "polyDistributionMap.H"
@@ -596,6 +598,159 @@ Foam::label Foam::refinement::edgeConsistentUnrefinement
 }
 
 
+void Foam::refinement::setUnrefinement
+(
+    polyTopoChange& meshMod,
+    const labelList& splitPointsToUnrefine
+) const
+{
+    // Get point cells necessary for debug and face removal
+    const labelListList& meshPointCells = mesh_.pointCells();
+
+    if (debug)
+    {
+        Pout<< FUNCTION_NAME << nl
+            << "Checking validity of cellLevel before setting unrefinement."
+            << endl;
+
+        forAll(cellLevel_, cellI)
+        {
+            if (cellLevel_[cellI] < 0)
+            {
+                FatalErrorInFunction
+                    << "Illegal cell level " << cellLevel_[cellI]
+                    << " for cell " << cellI
+                    << abort(FatalError);
+            }
+        }
+
+        // Write split points into a point set
+        pointSet pSet
+        (
+            mesh_,
+            "splitPoints",
+            labelHashSet(splitPointsToUnrefine)
+        );
+        pSet.write();
+
+        // Write split point cells into a cell set
+        cellSet cSet
+        (
+            mesh_,
+            "splitPointCells",
+            splitPointsToUnrefine.size()
+        );
+
+        forAll(splitPointsToUnrefine, i)
+        {
+            // Get point cells and insert them into cell set
+            const labelList& pCells = meshPointCells[splitPointsToUnrefine[i]];
+
+            forAll(pCells, j)
+            {
+                cSet.insert(pCells[j]);
+            }
+        }
+        cSet.write();
+
+        Pout<< FUNCTION_NAME << nl
+            << "Writing " << pSet.size()
+            << " points and "
+            << cSet.size() << " cells for unrefinement to" << nl
+            << "pointSet " << pSet.objectPath() << nl
+            << "cellSet " << cSet.objectPath()
+            << endl;
+    }
+
+    // Mesh data
+    const label nInternalFaces = mesh_.nInternalFaces();
+    const labelList& owner = mesh_.faceOwner();
+    const labelList& neighbour = mesh_.faceNeighbour();
+
+    // Create lists needed by face remover
+    labelList cellRegion;
+    labelList cellRegionMaster;
+    labelList facesToRemove;
+
+    // Memory management
+    {
+        // Collect split faces in the hash set, guess size to prevent excessive
+        // resizing
+        labelHashSet splitFaces(12*splitPointsToUnrefine.size());
+
+        // Get point faces
+        const labelListList& meshPointFaces = mesh_.pointFaces();
+
+        forAll(splitPointsToUnrefine, i)
+        {
+            // Loop through all faces of this point and insert face index
+            const labelList& pFaces = meshPointFaces[splitPointsToUnrefine[i]];
+
+            forAll(pFaces, fi)
+            {
+                const label& facei = pFaces[fi];
+                if
+                (
+                    facei < nInternalFaces
+                 && (
+                        parentCells_[owner[facei]]
+                     == parentCells_[neighbour[facei]]
+                    )
+                )
+                {
+                    splitFaces.insert(facei);
+                }
+            }
+        }
+
+        // Check with faceRemover what faces will get removed. Note that this
+        // can be more (but never less) than splitFaces provided.
+        faceRemover_.compatibleRemoves
+        (
+            splitFaces.toc(),   // Pierced faces
+
+            cellRegion,         // Region merged into (-1 for no region)
+            cellRegionMaster,   // Master cell for region
+            facesToRemove       // List of faces to be removed
+        );
+
+        if (facesToRemove.size() != splitFaces.size())
+        {
+            FatalErrorInFunction
+                << "Either the initial set of split points to unrefine does not"
+                << " seem to be consistent or there are no mid points of"
+                << " refined cells."
+                << abort(FatalError);
+        }
+    }
+
+    // Insert all commands to combine cells
+    faceRemover_.setRefinement
+    (
+        facesToRemove,
+        cellRegion,
+        cellRegionMaster,
+        meshMod
+    );
+
+    // Update cells that have atleast one of their faces removed
+    {
+        labelList newCellLevel(cellLevel_);
+        forAll(facesToRemove, fi)
+        {
+            const label facei = facesToRemove[fi];
+
+            const label own = owner[facei];
+            const label nei = neighbour[facei];
+
+            newCellLevel[own] = cellLevel_[own] - 1;
+            newCellLevel[nei] = cellLevel_[nei] - 1;
+        }
+        cellLevel_.transfer(newCellLevel);
+    }
+}
+
+
 Foam::label Foam::refinement::getCellClusters(labelList& clusters) const
 {
     // Count up the number of clusters that have been refined atleast once
@@ -692,7 +847,8 @@ Foam::refinement::refinement
     edgeBasedConsistency_
     (
         dict.lookupOrDefault<Switch>("edgeBasedConsistency", true)
-    )
+    ),
+    historyActive_(false)
 {
     if (!parentCells_.headerOk())
     {
@@ -701,6 +857,10 @@ Foam::refinement::refinement
         {
             parentCells_[celli] = gI.toGlobal(parentCells_[celli]);
         }
+    }
+    else
+    {
+        historyActive_ = true;
     }
     DebugInfo<< "Created pointLevel and cellLevel" << endl;
 
@@ -807,6 +967,8 @@ Foam::autoPtr<Foam::polyTopoChangeMap> Foam::refinement::refine
     const labelList& cellsToRefine
 )
 {
+    historyActive_ = true;
+
     polyTopoChange meshMod(mesh);
     this->setRefinement(meshMod, cellsToRefine);
     autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh);
@@ -825,6 +987,11 @@ Foam::autoPtr<Foam::polyTopoChangeMap> Foam::refinement::unrefine
     const labelList& splitPointsToUnrefine
 )
 {
+    if (!historyActive_)
+    {
+        return autoPtr<polyTopoChangeMap>();
+    }
+
     polyTopoChange meshMod(mesh);
     this->setUnrefinement(meshMod, splitPointsToUnrefine);
     autoPtr<polyTopoChangeMap> map = meshMod.changeMesh(mesh);
@@ -837,6 +1004,7 @@ Foam::autoPtr<Foam::polyTopoChangeMap> Foam::refinement::unrefine
 
     return map;
 }
+
 
 void Foam::refinement::topoChange(const polyTopoChangeMap& map)
 {
@@ -883,10 +1051,7 @@ void Foam::refinement::topoChange(const polyTopoChangeMap& map)
             // Map data
             const labelList& cellMap = map.cellMap();
 
-            label newParentIndex = gMax(parentCells_)+1;
-
             labelList newCellLevel(cellMap.size());
-            labelList newParentCells(cellMap.size(), -1);
             forAll(cellMap, newCelli)
             {
                 label oldCelli = cellMap[newCelli];
@@ -894,20 +1059,19 @@ void Foam::refinement::topoChange(const polyTopoChangeMap& map)
                 if (oldCelli == -1)
                 {
                     newCellLevel[newCelli] = -1;
-                    newParentCells[newCelli] = newParentIndex++;
                 }
                 else
                 {
                     newCellLevel[newCelli] = cellLevel_[oldCelli];
-                    newParentCells[newCelli] = parentCells_[oldCelli];
                 }
             }
             cellLevel_.transfer(newCellLevel);
-            parentCells_.transfer(newParentCells);
         }
 
-        // Update the parent cells
+        if (historyActive_)
         {
+            // Update the parent cells
+
             // Map data
             const labelList& cellMap = map.cellMap();
 
@@ -929,31 +1093,97 @@ void Foam::refinement::topoChange(const polyTopoChangeMap& map)
             }
             parentCells_.transfer(newParentCells);
         }
+        else
+        {
+            globalIndex gI(mesh_.nCells());
+            parentCells_.setSize(mesh_.nCells());
+            forAll(parentCells_, celli)
+            {
+                parentCells_[celli] = gI.toGlobal(parentCells_[celli]);
+            }
+
+        }
+
 
         const labelList& reversePointMap = map.reversePointMap();
-        if (reversePointMap.size() == pointLevel_.size())
+
+        // History is active so handle point point levels
+        if (historyActive_)
         {
-            // Assume it is after refine that this routine is called.
-            meshTools::reorder
-            (
-                reversePointMap,
-                mesh_.nPoints(),
-                -1,
-                pointLevel_
-            );
+            if (reversePointMap.size() == pointLevel_.size())
+            {
+                // Assume it is after refine that this routine is called.
+                meshTools::reorder
+                (
+                    reversePointMap,
+                    mesh_.nPoints(),
+                    -1,
+                    pointLevel_
+                );
+            }
+            else
+            {
+                // Map data
+                const labelList& pointMap = map.pointMap();
+
+                labelList newPointLevel(pointMap.size());
+
+                forAll(pointMap, newPointi)
+                {
+                    label oldPointi = pointMap[newPointi];
+
+                    if (oldPointi == -1)
+                    {
+                        FatalErrorInFunction
+                            << "Problem : point " << newPointi
+                            << " at " << mesh_.points()[newPointi]
+                            << " does not originate from another point"
+                            << " (i.e. is inflated)." << nl
+                            << "Hence we cannot determine the new pointLevel"
+                            << " for it." << abort(FatalError);
+                        newPointLevel[newPointi] = -1;
+                    }
+                    else
+                    {
+                        newPointLevel[newPointi] = pointLevel_[oldPointi];
+                    }
+                }
+                pointLevel_.transfer(newPointLevel);
+            }
         }
+
+        // History is not active so add new points with the maximum level
+        // of its neighbours
         else
         {
             // Map data
             const labelList& pointMap = map.pointMap();
-
             labelList newPointLevel(pointMap.size());
 
             forAll(pointMap, newPointi)
             {
-                label oldPointi = pointMap[newPointi];
-
-                if (oldPointi == -1)
+                const label oldPointi = pointMap[newPointi];
+                if
+                (
+                    reversePointMap[oldPointi] == oldPointi
+                 && oldPointi != newPointi
+                )
+                {
+                    label maxLevel = 0;
+                    const labelList& pEdges = mesh_.pointEdges()[newPointi];
+                    forAll(pEdges, ei)
+                    {
+                        const edge& e = mesh_.edges()[pEdges[ei]];
+                        const label oldPointj =
+                            pointMap[e.otherVertex(newPointi)];
+                        if (oldPointj != -1)
+                        {
+                            maxLevel = max(maxLevel, pointLevel_[oldPointj]);
+                        }
+                    }
+                    newPointLevel[newPointi] = maxLevel;
+                }
+                else if (oldPointi == -1)
                 {
                     FatalErrorInFunction
                        << "Problem : point " << newPointi
@@ -1109,8 +1339,14 @@ bool Foam::refinement::write() const
     // Mark files as changed
     setInstance(mesh_.facesInstance());
 
+    bool writeOk = true;
+    if (historyActive_)
+    {
+        writeOk = parentCells_.write();
+    }
+
     // Write necessary data before writing dictionary
-    return cellLevel_.write() && pointLevel_.write() && parentCells_.write();
+    return writeOk && cellLevel_.write() && pointLevel_.write();
 }
 
 

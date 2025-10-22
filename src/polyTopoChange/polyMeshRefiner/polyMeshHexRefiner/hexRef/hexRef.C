@@ -282,65 +282,6 @@ Foam::scalar Foam::hexRef::getLevel0EdgeLength() const
     return level0Size;
 }
 
-
-// Check whether pointi is an anchor on celli.
-// If it is not check whether any other point on the face is an anchor cell.
-Foam::label Foam::hexRef::getAnchorCell
-(
-    const labelListList& cellAnchorPoints,
-    const labelListList& cellAddedCells,
-    const label celli,
-    const label facei,
-    const label pointi
-) const
-{
-    if (cellAnchorPoints[celli].size())
-    {
-        label index = findIndex(cellAnchorPoints[celli], pointi);
-
-        if (index != -1)
-        {
-            return cellAddedCells[celli][index];
-        }
-
-
-        // pointi is not an anchor cell.
-        // Maybe we are already a refined face so check all the face
-        // vertices.
-        const face& f = mesh_.faces()[facei];
-
-        forAll(f, fp)
-        {
-            label index = findIndex(cellAnchorPoints[celli], f[fp]);
-
-            if (index != -1)
-            {
-                return cellAddedCells[celli][index];
-            }
-        }
-
-        // Problem.
-        dumpCell(celli);
-        Perr<< "cell:" << celli << " anchorPoints:" << cellAnchorPoints[celli]
-            << endl;
-
-        FatalErrorInFunction
-            << "Could not find point " << pointi
-            << " in the anchorPoints for cell " << celli << endl
-            << "Does your original mesh obey the 2:1 constraint and"
-            << " did you use consistentRefinement to make your cells to refine"
-            << " obey this constraint as well?"
-            << abort(FatalError);
-
-        return -1;
-    }
-    else
-    {
-        return celli;
-    }
-}
-
-
 // Get new owner and neighbour
 void Foam::hexRef::getFaceNeighbours
 (
@@ -1124,7 +1065,8 @@ Foam::hexRef::hexRef(const polyMesh& mesh, const bool readHistory)
     ),
     faceRemover_(mesh_, GREAT),     // merge boundary faces wherever possible
     savedPointLevel_(0),
-    savedCellLevel_(0)
+    savedCellLevel_(0),
+    changedSinceWrite_(false)
 {
     if (readHistory)
     {
@@ -1254,7 +1196,8 @@ Foam::hexRef::hexRef
     ),
     faceRemover_(mesh_, GREAT),     // merge boundary faces wherever possible
     savedPointLevel_(0),
-    savedCellLevel_(0)
+    savedCellLevel_(0),
+    changedSinceWrite_(false)
 {
     if (history_.active() && history_.visibleCells().size() != mesh_.nCells())
     {
@@ -1364,7 +1307,8 @@ Foam::hexRef::hexRef
     ),
     faceRemover_(mesh_, GREAT),     // merge boundary faces wherever possible
     savedPointLevel_(0),
-    savedCellLevel_(0)
+    savedCellLevel_(0),
+    changedSinceWrite_(false)
 {
     if
     (
@@ -2435,6 +2379,8 @@ void Foam::hexRef::topoChange
             << endl;
     }
 
+    changedSinceWrite_ = true;
+
     {
         const labelList& reverseCellMap = map.reverseCellMap();
 
@@ -2628,6 +2574,8 @@ void Foam::hexRef::subset
     const labelList& cellMap
 )
 {
+    changedSinceWrite_ = true;
+
     // Update celllevel
     if (debug)
     {
@@ -2713,6 +2661,8 @@ void Foam::hexRef::distribute(const polyDistributionMap& map)
             << " Updating various lists"
             << endl;
     }
+
+    changedSinceWrite_ = true;
 
     // Update celllevel
     map.distributeCellData(cellLevel_);
@@ -3260,6 +3210,8 @@ const Foam::cellShapeList& Foam::hexRef::cellShapes() const
 // Write refinement to polyMesh directory.
 bool Foam::hexRef::write(const bool w) const
 {
+    const_cast<hexRef&>(*this).setInstance(mesh_.facesInstance());
+
     bool writeOk =
         cellLevel_.write(w)
      && pointLevel_.write(w);
