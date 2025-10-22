@@ -98,7 +98,7 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = baseName()
+            const word& type = typeName
         );
 
 

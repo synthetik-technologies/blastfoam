@@ -62,12 +62,7 @@ kOmega_comp<BasicMomentumTransportModel>::kOmega_comp
         type
     ),
     ::Foam::compressible::correction(this->coeffDict_)
-{
-    if (type == typeName || type == baseName())
-    {
-        this->printCoeffs(type);
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
