@@ -72,8 +72,9 @@ void Foam::singlePhaseCompressibleSystem::decode()
 {
     this->rhoEff().correctBoundaryConditions();
     compressibleBlastSystem::decode();
-
 }
+
+
 void Foam::singlePhaseCompressibleSystem::solve()
 {
     compressibleBlastSystem::solve();

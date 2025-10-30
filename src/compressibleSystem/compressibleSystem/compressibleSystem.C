@@ -150,52 +150,51 @@ void Foam::compressibleSystem::updateCorDeltaT()
         surfaceScalarField amaxSf(fvc::interpolate(speedOfSound())*magSf);
 
         // Remove wave speed from wedge boundaries
-        forAll(amaxSf.boundaryField(), patchi)
+        surfaceScalarField::Boundary& bamaxSf = amaxSf.boundaryFieldRef();
+        forAll(bamaxSf, patchi)
         {
             if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
             {
-                amaxSf.boundaryFieldRef() = Zero;
+                bamaxSf[patchi] = Zero;
             }
         }
         amaxSf += mag(this->phi());
 
-        const dictionary& controlDict = mesh().time().controlDict();
-        scalar maxCo =
-            controlDict.lookupOrDefault("adjustDeltaT", false)
-          ? controlDict.lookupOrDefault("maxLocalCo", fvTimeInt_->maxCo())
-          : controlDict.lookupOrDefault("maxCo", fvTimeInt_->maxCo());
-        scalar rDeltaTSmoothingCoeff =
-            controlDict.lookupOrDefault("rDeltaTSmoothingCoeff", 0.02);
-        scalar minDeltaT = controlDict.lookupOrDefault("minDeltaT", small);
-        scalar maxDeltaT = controlDict.lookupOrDefault("maxDeltaT", great);
-        if (mesh().solution().isDict("PIMPLE"))
-        {
-            const dictionary& pimpleDict =
-                mesh().solution().subDict("PIMPLE");
-            pimpleDict.readIfPresent("maxCo", maxCo);
-            pimpleDict.readIfPresent
-            (
-                "rDeltaTSmoothingCoeff",
-                rDeltaTSmoothingCoeff
-            );
-            pimpleDict.readIfPresent("minDeltaT", minDeltaT);
-            pimpleDict.readIfPresent("maxDeltaT", maxDeltaT);
-        }
+        const dictionary& pimpleDict =
+                mesh().solution().subOrEmptyDict("PIMPLE");
+        const scalar maxCo =
+            pimpleDict.lookupOrDefault("maxCo", fvTimeInt_->maxCo()/2.0);
 
-        volScalarField& corDeltaT = corDeltaTPtr_();
+        // Calulate rDeltaT (local)
         volScalarField& rDeltaT = localRDeltaTPtr_();
-
         rDeltaT.internalFieldRef() =
             fvc::surfaceSum(amaxSf)()()/((2*maxCo)*mesh().V());
-        rDeltaT.max(1.0/maxDeltaT);
-        rDeltaT.min(1.0/minDeltaT);
 
+        scalar minRDeltaT(gMin(rDeltaT.primitiveField()));
+        if (pimpleDict.found("maxDeltaT"))
+        {
+            const scalar clipRDeltaT =
+                1.0/pimpleDict.lookup<scalar>("maxDeltaT");
+            rDeltaT.max(clipRDeltaT);
+            minRDeltaT = max(minRDeltaT, clipRDeltaT);
+        }
+        scalar maxRDeltaT(gMax(rDeltaT.primitiveField()));
+        if (pimpleDict.found("minDeltaT"))
+        {
+            const scalar clipRDeltaT =
+                1.0/pimpleDict.lookup<scalar>("minDeltaT");
+            rDeltaT.min(clipRDeltaT);
+            maxRDeltaT = min(maxRDeltaT, clipRDeltaT);
+        }
         rDeltaT.correctBoundaryConditions();
 
         Info<< "Flow time scale min/max = "
-            << 1.0/gMax(rDeltaT.primitiveField()) << ", "
-            << 1.0/gMin(rDeltaT.primitiveField()) << endl;
+            << 1.0/maxRDeltaT << ", "
+            << 1.0/minRDeltaT << endl;
 
+
+        const scalar rDeltaTSmoothingCoeff =
+            pimpleDict.lookupOrDefault("rDeltaTSmoothingCoeff", 0.02);
         if (rDeltaTSmoothingCoeff > 0)
         {
             fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
@@ -205,6 +204,7 @@ void Foam::compressibleSystem::updateCorDeltaT()
                 << 1.0/gMin(rDeltaT.primitiveField()) << endl;
         }
 
+        volScalarField& corDeltaT = corDeltaTPtr_();
         corDeltaT = rDeltaT*deltaT;
     }
 }
@@ -583,11 +583,12 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
     surfaceScalarField amaxSf(fvc::interpolate(speedOfSound())*magSf);
 
     // Remove wave speed from wedge boundaries
-    forAll(amaxSf.boundaryField(), patchi)
+    surfaceScalarField::Boundary& bamaxSf = amaxSf.boundaryFieldRef();
+    forAll(bamaxSf, patchi)
     {
         if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
         {
-            amaxSf.boundaryFieldRef() = Zero;
+            bamaxSf[patchi] = Zero;
         }
     }
     amaxSf += mag(fvc::flux(this->U()));

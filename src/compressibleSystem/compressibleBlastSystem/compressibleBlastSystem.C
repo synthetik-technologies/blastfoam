@@ -218,9 +218,22 @@ void Foam::compressibleBlastSystem::postUpdate()
 
         if (turbulence_.valid())
         {
-            rhoE_ -=
-                rho_.mesh().time().deltaT()
-               *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
+            if (this->LTS())
+            {
+                rhoE_ -=
+                    rho_.mesh().time().deltaT()
+                   /corDeltaT()
+                   *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
+            }
+            else
+            {
+                rhoE_ -=
+                    rho_.mesh().time().deltaT()
+                  *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
+            }
+            // rhoE_ -=
+            //     rho_.mesh().time().deltaT()
+            //    *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
                // *(U_ & fvc::div(turbulence_->devTau()));
                // *fvc::div
                //  (
