@@ -220,7 +220,8 @@ void Foam::compressibleBlastSystem::postUpdate()
         {
             rhoE_ -=
                 rho_.mesh().time().deltaT()
-               *(U_ & fvc::div(turbulence_->devTau()));
+               *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
+               // *(U_ & fvc::div(turbulence_->devTau()));
                // *fvc::div
                //  (
                //      fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
