@@ -2076,12 +2076,4 @@ Foam::labelList Foam::polyhedralRefinement::consistentUnrefinement
 }
 
 
-void Foam::polyhedralRefinement::updateProtectedCells
-(
-    PackedBoolList& protectedCells
-)
-{
-}
-
-
 // ************************************************************************* //

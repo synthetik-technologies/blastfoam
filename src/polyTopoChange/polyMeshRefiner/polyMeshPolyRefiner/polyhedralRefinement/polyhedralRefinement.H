@@ -218,12 +218,6 @@ public:
                 const labelList& unrefinementPointCandidates,
                 const bool maxSet
             ) const;
-
-            //- Update protected cells
-            virtual void updateProtectedCells
-            (
-                PackedBoolList& protectedCells
-            );
 };
 
 

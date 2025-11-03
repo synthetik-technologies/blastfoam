@@ -2673,13 +2673,4 @@ Foam::labelList Foam::prismatic2DRefinement::consistentUnrefinement
     return newPointsToUnrefine;
 }
 
-
-void Foam::prismatic2DRefinement::updateProtectedCells
-(
-    PackedBoolList& protectedCells
-)
-{
-}
-
-
 // ************************************************************************* //

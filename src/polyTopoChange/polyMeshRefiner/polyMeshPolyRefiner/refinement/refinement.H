@@ -285,12 +285,6 @@ public:
                 const bool maxSet
             ) const = 0;
 
-            //- Update protected cells
-            virtual void updateProtectedCells
-            (
-                PackedBoolList& protectedCells
-            ) = 0;
-
 
         // Inherited interface from polyMeshModifier
 
