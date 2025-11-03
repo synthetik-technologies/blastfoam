@@ -137,6 +137,14 @@ Foam::hexRefRefinementHistory::splitCell8::splitCell8(const splitCell8& sc)
 {}
 
 
+
+void Foam::hexRefRefinementHistory::splitCell8::clear()
+{
+    parent_ = -1;
+    addedCellsPtr_.clear();
+}
+
+
 // * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * * //
 
 void Foam::hexRefRefinementHistory::splitCell8::operator=(const splitCell8& s)
@@ -1730,6 +1738,17 @@ void Foam::hexRefRefinementHistory::combineCells
     splitCell8& parentSplit = splitCells_[parentIndex];
     parentSplit.addedCellsPtr_.reset(nullptr);
     visibleCells_[masterCelli] = parentIndex;
+}
+
+
+void Foam::hexRefRefinementHistory::clear()
+{
+    forAll(visibleCells_, cellI)
+    {
+        visibleCells_[cellI] = cellI;
+        splitCells_[cellI].clear();
+    }
+    active_ = false;
 }
 
 

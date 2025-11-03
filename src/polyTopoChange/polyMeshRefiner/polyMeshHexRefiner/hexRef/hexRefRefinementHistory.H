@@ -131,6 +131,9 @@ public:
         //- Construct as deep copy
         splitCell8(const splitCell8&);
 
+        //- Clear
+        void clear();
+
         //- Copy operator since autoPtr otherwise 'steals' storage.
         void operator=(const splitCell8& s);
 
@@ -399,6 +402,9 @@ public:
                 const List<labelPair>& explicitConnections,
                 labelList& decomposition
             ) const;
+
+            //- Clear history
+            void clear();
 
 
     // IOstream Operators

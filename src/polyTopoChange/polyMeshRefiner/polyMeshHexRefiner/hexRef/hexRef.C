@@ -3206,6 +3206,13 @@ const Foam::cellShapeList& Foam::hexRef::cellShapes() const
 }
 
 
+void Foam::hexRef::clearHistory()
+{
+    cellLevel_ = 0;
+    pointLevel_ = 0;
+    history_.clear();
+}
+
 
 // Write refinement to polyMesh directory.
 bool Foam::hexRef::write(const bool w) const

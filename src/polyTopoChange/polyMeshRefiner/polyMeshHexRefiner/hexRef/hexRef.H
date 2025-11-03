@@ -404,6 +404,12 @@ public:
                 return level0Edge_.value();
             }
 
+            //- Set typical edge length between unrefined points
+            void setLevel0EdgeLength(const scalar l0)
+            {
+                level0Edge_.value() = l0;
+            }
+
             //- Has there been any changes since the last write
             bool changedSinceWrite() const
             {
@@ -421,6 +427,9 @@ public:
             {
                 changedSinceWrite_ = true;
             }
+
+            //- Clear history
+            void clearHistory();
 
 
         // Refinement
@@ -535,6 +544,7 @@ public:
 
             //- Utility: get hexes as cell shapes
             const cellShapeList& cellShapes() const;
+
 
 
         // Unrefinement (undoing refinement, not arbitrary coarsening)
