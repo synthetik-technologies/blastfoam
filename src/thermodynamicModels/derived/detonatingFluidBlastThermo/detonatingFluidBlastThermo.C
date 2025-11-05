@@ -349,9 +349,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
         const scalar Ti = T[celli];
         if (alphai > this->residualAlpha_.value())
         {
-            scalar Gamma = alphai;
-            scalar pi;
-
+            scalar Gamma, pi;
             if (x2 < this->residualFac_)
             {
                 alphaCp[celli] += t1.Cp(rhoi, ei, Ti)*alphai;
@@ -427,12 +425,12 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
-                const scalar& rhoi(prho[facei]);
-                const scalar& ei(phe[facei]);
-                const scalar& Ti(pT[facei]);
-                scalar Gamma;
-                scalar pi;
 
+                const scalar rhoi = prho[facei];
+                const scalar ei = phe[facei];
+                const scalar Ti = pT[facei];
+
+                scalar Gamma, pi;
                 if (x2 < this->residualFac_)
                 {
                     palphaCp[facei] += t1.Cp(rhoi, ei, Ti)*alphai;
@@ -506,13 +504,13 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
         {
             const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
+
             const scalar pi = this->p_[celli];
             const scalar rhoi = this->rho_[celli];
             const scalar ei = this->e_[celli];
             const scalar Ti = this->T_[celli];
-            scalar cSqr;
-            scalar Gamma;
 
+            scalar cSqr, Gamma;
             if (x2 < this->residualFac_)
             {
                 cSqr = t1.cSqr(pi, rhoi, ei, Ti);
@@ -553,13 +551,13 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
+
                 const scalar pi = pp[facei];
                 const scalar rhoi = prho[facei];
                 const scalar ei = phe[facei];
                 const scalar Ti = pT[facei];
-                scalar cSqr;
-                scalar Gamma;
 
+                scalar cSqr, Gamma;
                 if (x2 < this->residualFac_)
                 {
                     cSqr = t1.cSqr(pi, rhoi, ei, Ti);

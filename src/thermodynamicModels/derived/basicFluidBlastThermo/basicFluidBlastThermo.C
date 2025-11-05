@@ -34,6 +34,7 @@ template<class Thermo>
 void Foam::basicFluidBlastThermo<Thermo>::calculate()
 {
     const typename Thermo::thermoType& t(*this);
+
     scalarField& eI = this->heRef().primitiveFieldRef();
     scalarField& TI = this->TRef().primitiveFieldRef();
     scalarField& pI = this->pRef().primitiveFieldRef();
@@ -45,8 +46,8 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
 
     forAll(this->rho_, celli)
     {
-        const scalar& rhoi(this->rho_[celli]);
-        scalar& ei(eI[celli]);
+        const scalar rhoi = this->rho_[celli];
+        scalar& ei = eI[celli];
         scalar& Ti = TI[celli];
 
         // Update temperature
@@ -57,7 +58,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
             Ti = this->TLow_;
         }
 
-        scalar pi = t.p(rhoi, ei, Ti);
+        const scalar pi = t.p(rhoi, ei, Ti);
         pI[celli] = pi;
         CpI[celli] = t.Cp(rhoi, ei, Ti);
         CvI[celli] = t.Cv(rhoi, ei, Ti);
@@ -95,11 +96,11 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
         {
             forAll(prho, facei)
             {
-                const scalar rhoi(prho[facei]);
+                const scalar rhoi = prho[facei];
+                const scalar Ti = pT[facei];
                 scalar& ei = phe[facei];
-                scalar& Ti = pT[facei];
 
-                phe[facei] = t.Es(rhoi, ei, pT[facei]);
+                phe[facei] = t.Es(rhoi, ei, Ti);
                 pCp[facei] = t.Cp(rhoi, ei, Ti);
                 pCv[facei] = t.Cv(rhoi, ei, Ti);
                 pmu[facei] = t.mu(rhoi, ei, Ti);
@@ -112,7 +113,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
         {
             forAll(prho, facei)
             {
-                const scalar rhoi(prho[facei]);
+                const scalar rhoi = prho[facei];
                 scalar& ei = phe[facei];
                 scalar& Ti = pT[facei];
 
@@ -155,10 +156,10 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate
         const scalar vfi = alpha[celli];
         if (vfi > this->residualAlpha_.value())
         {
-            const scalar alphai(alpha[celli]);
-            const scalar rhoi(this->rho_[celli]);
-            const scalar ei(he[celli]);
-            const scalar Ti(T[celli]);
+            const scalar alphai = alpha[celli];
+            const scalar rhoi = this->rho_[celli];
+            const scalar ei = he[celli];
+            const scalar Ti = T[celli];
             const scalar Xii = alphai/t.Gamma(rhoi, ei, Ti);
 
             alphaCp[celli] += t.Cp(rhoi, ei, Ti)*alphai;
@@ -193,12 +194,12 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate
 
         forAll(palpha, facei)
         {
-            const scalar alphai(palpha[facei]);
+            const scalar alphai = palpha[facei];
             if (alphai > this->residualAlpha_.value())
             {
-                const scalar rhoi(prho[facei]);
-                const scalar ei(phe[facei]);
-                const scalar Ti(pT[facei]);
+                const scalar rhoi = prho[facei];
+                const scalar ei = phe[facei];
+                const scalar Ti = pT[facei];
                 const scalar Xii = alphai/t.Gamma(rhoi, ei, Ti);
 
                 ppXiSum[facei] += t.p(rhoi, ei, Ti)*Xii;

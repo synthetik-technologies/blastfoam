@@ -32,7 +32,7 @@ License
 template<class Thermo>
 void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
 {
-    const scalarField& rhoCells = this->rho_.primitiveFieldRef();
+    const scalarField& rhoCells = this->rho_.primitiveField();
     scalarField& heCells = this->heRef();
     scalarField& TCells = this->TRef().primitiveFieldRef();
     scalarField& CpCells = this->CpRef().primitiveFieldRef();
@@ -47,6 +47,7 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
     {
         const scalar x2 = this->cellx(celli);
         const scalar x1 = 1.0 - x2;
+
         const scalar rhoi = this->rho_[celli];
         scalar& ei = heCells[celli];
         scalar& Ti = TCells[celli];
@@ -155,8 +156,8 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
-                const scalar rhoi(prho[facei]);
 
+                const scalar rhoi = prho[facei];
                 scalar& ei = phe[facei];
                 scalar& Ti = pT[facei];
 
@@ -214,8 +215,8 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
-                const scalar rhoi(prho[facei]);
 
+                const scalar rhoi = prho[facei];
                 scalar& ei = phe[facei];
                 scalar& Ti = pT[facei];
 

@@ -34,7 +34,7 @@ template<class Thermo>
 void Foam::basicSolidBlastThermo<Thermo>::calculate()
 {
     const typename Thermo::thermoType& t(*this);
-    const scalarField& rhoCells = this->rho_.primitiveFieldRef();
+    const scalarField& rhoCells = this->rho_.primitiveField();
     scalarField& heCells = this->heRef();
     scalarField& TCells = this->TRef().primitiveFieldRef();
     scalarField& CpCells = this->CpRef().primitiveFieldRef();
@@ -43,8 +43,8 @@ void Foam::basicSolidBlastThermo<Thermo>::calculate()
 
     forAll(this->rho_, celli)
     {
-        const scalar& rhoi(rhoCells[celli]);
-        scalar& ei(heCells[celli]);
+        const scalar rhoi = rhoCells[celli];
+        scalar& ei = heCells[celli];
         scalar& Ti = TCells[celli];
 
         // Update temperature
@@ -85,9 +85,9 @@ void Foam::basicSolidBlastThermo<Thermo>::calculate()
         {
             forAll(prho, facei)
             {
-                const scalar rhoi(prho[facei]);
-                scalar& ei(phe[facei]);
-                const scalar Ti(pT[facei]);
+                const scalar rhoi = prho[facei];
+                const scalar Ti = pT[facei];
+                scalar& ei = phe[facei];
 
                 ei = t.Es(rhoi, ei, Ti);
 
@@ -100,9 +100,9 @@ void Foam::basicSolidBlastThermo<Thermo>::calculate()
         {
             forAll(prho, facei)
             {
-                const scalar rhoi(prho[facei]);
-                scalar& ei(phe[facei]);
-                scalar& Ti(pT[facei]);
+                const scalar rhoi = prho[facei];
+                scalar& ei = phe[facei];
+                scalar& Ti = pT[facei];
 
                 Ti = t.TRhoE(Ti, rhoi, ei);
                 if (Ti < this->TLow_)

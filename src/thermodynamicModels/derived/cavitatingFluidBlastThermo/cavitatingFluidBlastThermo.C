@@ -36,20 +36,22 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate()
     const typename Thermo::thermoType1& tl(*this);
     const typename Thermo::thermoType2& tv(*this);
 
-    volScalarField::Internal& CpI = this->CpRef().internalFieldRef();
-    volScalarField::Internal& CvI = this->CvRef().internalFieldRef();
-    volScalarField::Internal& muI = this->muRef().internalFieldRef();
-    volScalarField::Internal& kappaI = this->kappaRef().internalFieldRef();
-    volScalarField::Internal& pI = this->pRef().internalFieldRef();
-    volScalarField::Internal& cI = this->speedOfSoundRef().internalFieldRef();
+    scalarField& eI = this->heRef().primitiveFieldRef();
+    scalarField& TI = this->TRef().primitiveFieldRef();
+    scalarField& CpI = this->CpRef().internalFieldRef();
+    scalarField& CvI = this->CvRef().internalFieldRef();
+    scalarField& muI = this->muRef().internalFieldRef();
+    scalarField& kappaI = this->kappaRef().internalFieldRef();
+    scalarField& pI = this->pRef().internalFieldRef();
+    scalarField& cI = this->speedOfSoundRef().internalFieldRef();
 
     forAll(this->rho_, celli)
     {
-        scalar& ei(this->heRef()[celli]);
-        scalar& Ti(this->TRef()[celli]);
+        scalar& ei = eI[celli];
+        scalar& Ti = TI[celli];
 
 
-        const scalar rhoi(this->rho_[celli]);
+        const scalar rhoi = this->rho_[celli];
         const scalar xv = this->cellx(celli);
         const scalar xl = 1.0 - xv;
 
@@ -148,8 +150,7 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate()
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pp =
-            this->pRef().boundaryField()[patchi];
+        const fvPatchScalarField& pp = this->pRef().boundaryField()[patchi];
         const fvPatchScalarField& px = x_.boundaryField()[patchi];
 
         fvPatchScalarField& pT = bT[patchi];
@@ -164,14 +165,14 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate()
         {
             forAll(pT, facei)
             {
-                const scalar rhoi(prho[facei]);
+                const scalar rhoi = prho[facei];
                 scalar& ei = phe[facei];
                 scalar& Ti = pT[facei];
 
                 const scalar xv = px[facei];
                 const scalar xl = 1.0 - xv;
 
-                const scalar pi(pp[facei]);
+                const scalar pi = pp[facei];
 
                 if (xl < this->residualFac_)
                 {
@@ -240,12 +241,12 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate()
         {
             forAll(pT, facei)
             {
-                const scalar rhoi(prho[facei]);
+                const scalar rhoi = prho[facei];
 
                 const scalar xv = px[facei];
                 const scalar xl = 1.0 - xv;
 
-                const scalar pi(pp[facei]);
+                const scalar pi = pp[facei];
 
                 scalar& ei = phe[facei];
                 scalar& Ti = pT[facei];

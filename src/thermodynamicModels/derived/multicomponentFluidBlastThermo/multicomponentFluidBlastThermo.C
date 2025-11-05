@@ -63,7 +63,7 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate()
             Ti = this->TLow_;
         }
 
-        scalar pi = t.p(rhoi, ei, Ti);
+        const scalar pi = t.p(rhoi, ei, Ti);
         pCells[celli] = pi;
         CpCells[celli] = t.Cp(rhoi, ei, Ti);
         CvCells[celli] = t.Cv(rhoi, ei, Ti);
@@ -173,10 +173,10 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
             const typename Thermo::thermoType& t =
                 this->cellMixture(celli);
 
-            const scalar alphai(alpha[celli]);
-            const scalar rhoi(this->rho_[celli]);
-            const scalar ei(he[celli]);
-            const scalar Ti(T[celli]);
+            const scalar alphai = alpha[celli];
+            const scalar rhoi = this->rho_[celli];
+            const scalar ei = he[celli];
+            const scalar Ti = T[celli];
             const scalar Xii = alphai/t.Gamma(rhoi, ei, Ti);
 
             alphaCp[celli] += t.Cp(rhoi, ei, Ti)*alphai;
@@ -211,9 +211,9 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
                 const typename Thermo::thermoType& t =
                     this->patchFaceMixture(patchi, facei);
 
-                const scalar rhoi(prho[facei]);
-                const scalar ei(phe[facei]);
-                const scalar Ti(pT[facei]);
+                const scalar rhoi = prho[facei];
+                const scalar ei = phe[facei];
+                const scalar Ti = pT[facei];
                 const scalar Xii = alphai/t.Gamma(rhoi, ei, Ti);
 
                 ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
