@@ -100,21 +100,25 @@ Foam::scalar Foam::rootSolvers::univariate::bisection::findRoot
     scalar xLow = x1;
     scalar xHigh = x2;
     scalar y = eqn_.fx(xMean, li);
+    scalar yLow = eqn_.fx(xLow, li);
+    scalar yHigh = eqn_.fx(xHigh, li);
 
-    if (!eqn_.containsRoot(li))
+    if (!eqn_.containsRoot(yLow, yHigh))
     {
         return x0;
     }
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (y > 0)
+        if (y*yHigh < 0)
         {
             xLow = xMean;
+            yLow = y;
         }
         else
         {
             xHigh = xMean;
+            yHigh = y;
         }
 
         if (converged(xLow, xHigh))

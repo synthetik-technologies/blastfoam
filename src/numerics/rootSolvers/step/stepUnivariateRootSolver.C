@@ -104,15 +104,35 @@ Foam::scalar Foam::rootSolvers::univariate::step::findRoot
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
+        // New position
         scalar xNew = x + dx;
-        scalar y = eqn_.fx(xNew, li);
-        if (y*yLower < 0 || xNew >= x1 || xNew <= x0)
+
+        // Limit position based on bounds
+        if (xNew < x0)
+        {
+            xNew = x0;
+        }
+        else if (xNew > x1)
+        {
+            xNew = x1;
+        }
+
+        // Update dx (if limited)
+        dx = xNew - x;
+
+        // Value at new position
+        const scalar y = eqn_.fx(xNew, li);
+
+        // If root between x and xNew scale step size and retry
+        if (y*yLower < 0)
         {
             dx *= f_;
         }
+
+        // Advance to the next position
         else
         {
-            x += dx;
+            x = xNew;
         }
 
         if (converged(dx))
