@@ -105,16 +105,18 @@ void Foam::compressibleBlastSystem::decode()
     U_.internalFieldRef() = rhoU_()/rhoEff()();
     U_.correctBoundaryConditions();
 
+    K_ = 0.5*magSqr(U_);
+
     rhoU_.correctBoundaryConditions();
     rhoU_.boundaryFieldRef() =
         rhoEff().boundaryField()*U_.boundaryField();
 
-    e_.internalFieldRef() = rhoE_()/rhoEff()() - 0.5*magSqr(U_());
+    e_.internalFieldRef() = rhoE_()/rhoEff()() - K_();
     e_.correctBoundaryConditions();
     thermoPtr_->correct();
 
     //- Update total energy because the e field may have been modified
-    rhoE_ = rhoEff()*(e_ + 0.5*magSqr(U_));
+    rhoE_ = rhoEff()*(e_ + K_);
 }
 
 
@@ -162,8 +164,15 @@ void Foam::compressibleBlastSystem::postUpdate()
         thermophysicalTransport_->predict();
     }
 
+    tmp<surfaceVectorField> devTau;
     if (needSolve(U_.name()) || turbulence_.valid() || dragSource_.valid())
     {
+        tmp<fvVectorMatrix> divDevTau;
+        if (turbulence_.valid())
+        {
+            divDevTau = turbulence_->divDevTau(U_);
+        }
+
         // Solve momentum
         fvVectorMatrix UEqn
         (
@@ -176,15 +185,23 @@ void Foam::compressibleBlastSystem::postUpdate()
         {
             UEqn -= dragSource_;
         }
-
-        if (turbulence_.valid())
+        if (divDevTau.valid())
         {
-            UEqn += turbulence_->divDevTau(U_);
+            UEqn += divDevTau;
         }
+
+        UEqn.relax();
+
         constraints().constrain(UEqn);
         UEqn.solve();
         constraints().constrain(U_);
 
+        if (divDevTau.valid())
+        {
+            devTau = divDevTau().flux();
+        }
+
+        K_ = 0.5*magSqr(U_);
         rhoU_ = rhoEff()*U_;
     }
 
@@ -197,6 +214,7 @@ void Foam::compressibleBlastSystem::postUpdate()
      || extESource_.valid()
     )
     {
+        // e_ = rhoE_/rhoEff() - 0.5*magSqr(U_);
 //         if (radiation_.valid())
 //         {
 //             radiation_->correct();
@@ -211,62 +229,43 @@ void Foam::compressibleBlastSystem::postUpdate()
 //                 );
 //         }
 
-        if (dragSource_.valid())
-        {
-            rhoE_ += (dragSource_ & U_) & U_;
-        }
-
-        if (turbulence_.valid())
-        {
-            if (this->LTS())
-            {
-                rhoE_ -=
-                    rho_.mesh().time().deltaT()
-                   /corDeltaT()
-                   *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
-            }
-            else
-            {
-                rhoE_ -=
-                    rho_.mesh().time().deltaT()
-                  *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
-            }
-            // rhoE_ -=
-            //     rho_.mesh().time().deltaT()
-            //    *fvc::div(turbulence_->devTau() & U_, "div(devTau)");
-               // *(U_ & fvc::div(turbulence_->devTau()));
-               // *fvc::div
-               //  (
-               //      fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-               //    & fluxScheme_->Uf()
-               //  );
-        }
-        e_ = rhoE_/rhoEff() - 0.5*magSqr(U_);
-
-        fvScalarMatrix eEqn
+        fvScalarMatrix EEqn
         (
-            fvm::ddt(rhoEff(), e_) - fvc::ddt(rhoEff().prevIter(), e_)
+            fvm::ddt(rhoEff(), e_) - fvc::ddt(rhoE_)
+          + fvc::ddt(rhoEff(), K_)
          ==
             models().source(rhoEff(), e_)
         );
-        if (extESource_.valid())
+
+        if (devTau.valid())
         {
-            eEqn -= extESource_;
+            EEqn += fvc::div(devTau & flux().Uf());
         }
         if (thermophysicalTransport_.valid())
         {
-            eEqn += thermophysicalTransport_->divq(e_);
+            EEqn += thermophysicalTransport_->divq(e_);
+        }
+        if (dragSource_.valid())
+        {
+            EEqn -= (dragSource_ & U_) & U_;
+        }
+        if (extESource_.valid())
+        {
+            EEqn -= extESource_;
         }
         if (radiation_.valid())
         {
             radiation_->correct();
-            eEqn += radiation_->Sh(thermo(), e_);
+            EEqn += radiation_->Sh(thermo(), e_);
         }
-        constraints().constrain(eEqn);
-        eEqn.solve();
+
+        EEqn.relax();
+
+        constraints().constrain(EEqn);
+        EEqn.solve();
         constraints().constrain(e_);
 
-        rhoE_ = rhoEff()*(e_ + 0.5*magSqr(U_));
+        rhoE_ = rhoEff()*(e_ + K_);
     }
 
     this->thermo().postUpdate();

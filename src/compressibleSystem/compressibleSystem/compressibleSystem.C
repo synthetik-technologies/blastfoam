@@ -65,6 +65,8 @@ void Foam::compressibleSystem::setModels()
         );
         turbulence_->validate();
 
+        mesh().schemes().setFluxRequired(U_.name());
+
         if (isA<multicomponentThermo>(this->thermo()))
         {
             thermophysicalTransport_ =
@@ -231,6 +233,16 @@ Foam::compressibleSystem::compressibleSystem
         ),
         mesh
     ),
+    K_
+    (
+        IOobject
+        (
+            "K",
+            mesh.time().name(),
+            mesh
+        ),
+        0.5*magSqr(U_)
+    ),
     rhoU_
     (
         IOobject
@@ -242,8 +254,7 @@ Foam::compressibleSystem::compressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector("0", dimDensity*dimVelocity, Zero),
-        "zeroGradient"
+        dimensionedVector("0", dimDensity*dimVelocity, Zero)
     ),
     rhoE_
     (
@@ -341,6 +352,7 @@ Foam::compressibleSystem::~compressibleSystem()
 
 void Foam::compressibleSystem::encode()
 {
+    K_ = 0.5*magSqr(U_);
     rhoU_ = rhoEff()*U_;
     rhoE_ = rhoEff()*(he() + 0.5*magSqr(U_));
 }
@@ -362,7 +374,7 @@ void Foam::compressibleSystem::update()
         rhoEPhi_
     );
 
-    updateCorDeltaT();
+    if (step() == 0) updateCorDeltaT();
 }
 
 

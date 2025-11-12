@@ -74,6 +74,8 @@ protected:
         //- Internal energy
         volScalarField& e_;
 
+        autoPtr<volScalarField> KPtr_;
+
 
     //- Fluxes
 

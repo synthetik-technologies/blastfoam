@@ -67,6 +67,9 @@ protected:
         //- Velocity
         volVectorField U_;
 
+        //- Kinetic energy
+        volScalarField K_;
+
     //- Conserved variables
 
         //- Momentum
