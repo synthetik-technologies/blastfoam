@@ -503,9 +503,8 @@ int main(int argc, char *argv[])
             IOWarningInFunction(refineDict)
                 << "A default refiner is no specified for "
                 << mesh.nGeometricD()
-                << " geometricD so a refiner must be explicitily "
-                << specified using the "
-                << "\"refiner\" keyword." << nl << endl;
+                << " geometricD so a refiner must be explicitily specified "
+                << "using the \"refiner\" keyword." << nl << endl;
         }
 
         if (refiner.valid())
