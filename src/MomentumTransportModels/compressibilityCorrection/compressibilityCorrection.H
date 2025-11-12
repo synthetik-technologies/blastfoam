@@ -149,6 +149,22 @@ public:
             const volScalarField::Internal& omega,
             const volScalarField::Internal& betaStar
         ) const;
+
+        //- Limit epsilon based on length scale
+        static void limitEpsilon_L
+        (
+            const volScalarField& k,
+            const volScalarField& y,
+            volScalarField& epsilon
+        );
+
+        //- Limit omega based on length scale
+        static void limitOmega_L
+        (
+            const volScalarField& k,
+            const volScalarField& y,
+            volScalarField& omega
+        );
 };
 
 

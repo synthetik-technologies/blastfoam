@@ -236,4 +236,69 @@ void Foam::compressible::correction::limitG
 }
 
 
+void Foam::compressible::correction::limitEpsilon_L
+(
+    const volScalarField& k,
+    const volScalarField& y,
+    volScalarField& epsilon
+)
+{
+    forAll(epsilon, celli)
+    {
+        const scalar cbrtk = cbrt(k[celli]);
+        if (2.5*y[celli] < cbrtk/epsilon[celli])
+        {
+            epsilon[celli] = cbrtk/(2.5*y[celli]);
+        }
+    }
+    volScalarField::Boundary& bepsilon = epsilon.boundaryFieldRef();
+    forAll(bepsilon, patchi)
+    {
+        scalarField& pepsilon = bepsilon[patchi];
+        const scalarField& py = y.boundaryField()[patchi];
+        const scalarField& pk = k.boundaryField()[patchi];
+        forAll(pepsilon, fi)
+        {
+            const scalar cbrtk = cbrt(pk[fi]);
+            if (2.5*py[fi] < cbrtk/pepsilon[fi])
+            {
+                pepsilon[fi] = cbrtk/(2.5*py[fi]);
+            }
+        }
+    }
+}
+
+
+void Foam::compressible::correction::limitOmega_L
+(
+    const volScalarField& k,
+    const volScalarField& y,
+    volScalarField& omega
+)
+{
+    forAll(omega, celli)
+    {
+        const scalar sqrtk = sqrt(k[celli]);
+        if (2.5*y[celli] < sqrtk/omega[celli])
+        {
+            omega[celli] = sqrtk/(2.5*y[celli]);
+        }
+    }
+    volScalarField::Boundary& bomega = omega.boundaryFieldRef();
+    forAll(bomega, patchi)
+    {
+        scalarField& pomega = bomega[patchi];
+        const scalarField& py = y.boundaryField()[patchi];
+        const scalarField& pk = k.boundaryField()[patchi];
+        forAll(pomega, fi)
+        {
+            const scalar sqrtk = sqrt(pk[fi]);
+            if (2.5*py[fi] < sqrtk/pomega[fi])
+            {
+                pomega[fi] = sqrtk/(2.5*py[fi]);
+            }
+        }
+    }
+}
+
 // ************************************************************************* //
