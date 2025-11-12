@@ -106,6 +106,9 @@ protected:
             dimensionedScalar sigmak_;
             dimensionedScalar sigmaEps_;
 
+        //- Limit epsilon based on length scale
+        bool limitEpsilon_;
+
         // Fields
 
             volScalarField k_;

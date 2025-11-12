@@ -39,7 +39,7 @@ Description
 
     The default model coefficients are
     \verbatim
-        compressible::kOmegaCoeffs
+        kOmegaCoeffs
         {
             betaStar    0.09;
             gamma       0.52;
@@ -77,6 +77,11 @@ class kOmega_comp
     public kOmega<BasicMomentumTransportModel>,
     public ::Foam::compressible::correction
 {
+protected:
+
+    //- Limit omega based on length
+    bool limitOmega_;
+
 public:
 
     typedef typename BasicMomentumTransportModel::alphaField alphaField;

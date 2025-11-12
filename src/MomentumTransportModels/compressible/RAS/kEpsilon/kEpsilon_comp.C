@@ -173,7 +173,14 @@ kEpsilon_comp<BasicMomentumTransportModel>::kEpsilon_comp
             1.3
         )
     ),
-
+    limitEpsilon_
+    (
+        this->coeffDict_.template lookupOrAddDefault<bool>
+        (
+            "limitEpsilon",
+            true
+        )
+    ),
     k_
     (
         IOobject
@@ -222,6 +229,7 @@ bool kEpsilon_comp<BasicMomentumTransportModel>::read()
         C3_.readIfPresent(this->coeffDict());
         sigmak_.readIfPresent(this->coeffDict());
         sigmaEps_.readIfPresent(this->coeffDict());
+        this->coeffDict().readIfPresent("limitEpsilon", limitEpsilon_);
 
         return true;
     }
@@ -315,6 +323,15 @@ void kEpsilon_comp<BasicMomentumTransportModel>::correct()
     solve(kEqn);
     fvConstraints.constrain(k_);
     bound(k_, this->kMin_);
+    if (limitEpsilon_)
+    {
+        compressible::correction::limitEpsilon_L
+        (
+            this->k_,
+            this->y(),
+            this->epsilon_
+        );
+    }
 
     correctNut();
 }

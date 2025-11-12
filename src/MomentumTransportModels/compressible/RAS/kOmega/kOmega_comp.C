@@ -61,7 +61,15 @@ kOmega_comp<BasicMomentumTransportModel>::kOmega_comp
         viscosity,
         type
     ),
-    ::Foam::compressible::correction(this->coeffDict_)
+    ::Foam::compressible::correction(this->coeffDict_),
+    limitOmega_
+    (
+        this->coeffDict_.template lookupOrAddDefault<bool>
+        (
+            "limitOmega",
+            true
+        )
+    )
 {}
 
 
@@ -72,6 +80,7 @@ bool kOmega_comp<BasicMomentumTransportModel>::read()
 {
     if (kOmega<BasicMomentumTransportModel>::read())
     {
+        this->coeffDict().readIfPresent("limitOmega", limitOmega_);
         return ::Foam::compressible::correction::read(this->coeffDict_);
     }
     else
@@ -180,6 +189,15 @@ void kOmega_comp<BasicMomentumTransportModel>::correct()
     solve(kEqn);
     fvConstraints.constrain(this->k_);
     bound(this->k_, this->kMin_);
+    if (limitOmega_)
+    {
+        this->limitOmega_L
+        (
+            this->k_,
+            this->y(),
+            this->omega_
+        );
+    }
     this->boundOmega();
 
     this->correctNut();
