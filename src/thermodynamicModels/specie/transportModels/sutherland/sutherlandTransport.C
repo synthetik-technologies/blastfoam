@@ -38,6 +38,78 @@ Foam::scalar Foam::sutherlandTransport<Thermo>::readCoeff
     return dict.subDict("transport").lookup<scalar>(coeffName);
 }
 
+template<class Thermo>
+void Foam::sutherlandTransport<Thermo>::readCoeffs(const dictionary& dict)
+{
+    const dictionary& transportDict = dict.subDict("transport");
+
+    if (transportDict.found("As") && transportDict.found("Ts"))
+    {
+        transportDict.readIfPresent("As", Amu_);
+        transportDict.readIfPresent("Ts", Smu_);
+    }
+
+    else if
+    (
+        transportDict.found("Amu")
+     && transportDict.found("Smu")
+     && transportDict.found("Akappa")
+     && transportDict.found("Skappa")
+    )
+    {
+        transportDict.readIfPresent("Amu", Amu_);
+        transportDict.readIfPresent("Tmu", Smu_);
+
+        transportDict.readIfPresent("Akappa", Ak_);
+        transportDict.readIfPresent("Tkappa", Sk_);
+    }
+
+    else if
+    (
+        transportDict.found("m0")
+     && transportDict.found("S")
+     && transportDict.found("T0")
+    )
+    {
+        const scalar T0 = transportDict.lookup<scalar>("T0");
+        const scalar mu0 = transportDict.lookup<scalar>("mu0");
+        Smu_ = transportDict.lookup<scalar>("S");
+        Amu_ = mu0/pow(T0, 1.5)*(T0 + Smu_);
+
+        Sk_ = -1;
+        Ak_ = -1;
+    }
+    else if
+    (
+        transportDict.found("T0")
+     && transportDict.found("mu0")
+     && transportDict.found("Smu")
+     && transportDict.found("kappa0")
+     && transportDict.found("Skappa")
+    )
+    {
+        const scalar T0 = transportDict.lookup<scalar>("T0");
+        const scalar mu0 = transportDict.lookup<scalar>("mu0");
+        Smu_ = transportDict.lookup<scalar>("Smu");
+        const scalar kappa0 = transportDict.lookup<scalar>("kappa0");
+        Sk_ = transportDict.lookup<scalar>("Skappa");
+
+        Amu_ = mu0/pow(T0, 1.5)*(T0 + Smu_);
+
+        Ak_ = kappa0/pow(T0, 1.5)*(T0 + Sk_);
+    }
+    else
+    {
+        FatalIOErrorInFunction(transportDict)
+            << "Missing entries, please provide either" << nl
+            << "    As and Ts" << nl
+            << "    T0, mu0, and S" << nl
+            << "    Amu, Smu, Ak, and Sk" << nl
+            << "    mu0, Smu, kappa0, Sk, and T0" << endl
+            << abort(FatalIOError);
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -45,38 +117,12 @@ template<class Thermo>
 Foam::sutherlandTransport<Thermo>::sutherlandTransport(const dictionary& dict)
 :
     Thermo(dict),
-    As_(0),
-    Ts_(0)
+    Amu_(0),
+    Smu_(0),
+    Ak_(-1),
+    Sk_(-1)
 {
-    const dictionary& transportDict = dict.subDict("transport");
-
-    if (transportDict.found("As") && transportDict.found("Ts"))
-    {
-        transportDict.readIfPresent("As", As_);
-        transportDict.readIfPresent("Ts", Ts_);
-    }
-    else if
-    (
-        transportDict.found("mu0")
-     && transportDict.found("T0")
-     && transportDict.found("S")
-    )
-    {
-        const scalar mu0 = transportDict.lookup<scalar>("mu0");
-        const scalar T0 = transportDict.lookup<scalar>("T0");
-        const scalar S = transportDict.lookup<scalar>("S");
-
-        Ts_ = S;
-        As_ = mu0/pow(T0, 1.5)*(T0 + S);
-    }
-    else
-    {
-        FatalIOErrorInFunction(transportDict)
-            << "Missing entries, please provide either" << nl
-            << "    As and Ts" << nl
-            << "    mu0, T0, S" << endl
-            << abort(FatalIOError);
-    }
+    readCoeffs(dict);
 }
 
 
@@ -88,9 +134,13 @@ Foam::sutherlandTransport<Thermo>::sutherlandTransport
 )
 :
     Thermo(t),
-    As_(readCoeff("As", dict)),
-    Ts_(readCoeff("Ts", dict))
-{}
+    Amu_(0),
+    Smu_(0),
+    Ak_(-1),
+    Sk_(-1)
+{
+    readCoeffs(dict);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -104,8 +154,18 @@ void Foam::sutherlandTransport<Thermo>::write(Ostream& os) const
     Thermo::write(os);
 
     dictionary dict("transport");
-    dict.add("As", As_);
-    dict.add("Ts", Ts_);
+    if (Ak_ > 0)
+    {
+        dict.add("Amu", Amu_);
+        dict.add("Smu", Smu_);
+        dict.add("Akappa", Ak_);
+        dict.add("Skappa", Sk_);
+    }
+    else
+    {
+        dict.add("As", Amu_);
+        dict.add("Ts", Smu_);
+    }
 
     os  << indent << dict.dictName() << dict
         << decrIndent << token::END_BLOCK << nl;

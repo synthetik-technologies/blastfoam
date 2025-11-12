@@ -105,7 +105,8 @@ class sutherlandTransport
     // Private Data
 
         // Sutherland's coefficients
-        scalar As_, Ts_;
+        scalar Amu_, Smu_;
+        scalar Ak_, Sk_;
 
 
     // Private Member Functions
@@ -114,12 +115,17 @@ class sutherlandTransport
         //  given two viscosities and temperatures
         inline void calcCoeffs
         (
-            const scalar mu1, const scalar T1,
-            const scalar mu2, const scalar T2
+            const scalar mu1, const scalar Smu1,
+            const scalar kappa1, const scalar Sk1,
+            const scalar mu2, const scalar Smu2,
+            const scalar kappa2, const scalar Sk2
         );
 
         //- Read coefficient from dictionary
         scalar readCoeff(const word& coeffName, const dictionary& dict);
+
+        //- Read coefficient from dictionary
+        void readCoeffs(const dictionary& dict);
 
 
 public:
@@ -130,16 +136,20 @@ public:
         inline sutherlandTransport
         (
             const Thermo& t,
-            const scalar As,
-            const scalar Ts
+            const scalar Amu,
+            const scalar Smu,
+            const scalar Ak,
+            const scalar Sk
         );
 
         //- Construct from two viscosities
         inline sutherlandTransport
         (
             const Thermo& t,
-            const scalar mu1, const scalar T1,
-            const scalar mu2, const scalar T2
+            const scalar mu1, const scalar Smu1,
+            const scalar kappa1, const scalar Sk1,
+            const scalar mu2, const scalar Smu2,
+            const scalar kappa2, const scalar Sk2
         );
 
         //- Construct as named copy
