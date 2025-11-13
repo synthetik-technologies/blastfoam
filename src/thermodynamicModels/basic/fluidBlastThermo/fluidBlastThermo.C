@@ -66,7 +66,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
     (
         IOobject
         (
-            basicThermo::phasePropertyName("thermo:mu", phaseName),
+            basicThermo::phasePropertyName("mu", phaseName),
             mesh.time().name(),
             mesh
         ),
