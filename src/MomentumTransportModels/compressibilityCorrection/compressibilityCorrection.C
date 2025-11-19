@@ -28,20 +28,44 @@ License
 #include "fluidBlastThermo.H"
 
 
+template<>
+const char* Foam::NamedEnum
+<
+    Foam::compressible::correction::CC_Method,
+    Foam::compressible::correction::CC_Method::SIZE
+>::names[] =
+{
+    "Sarkar",
+    "Zeman"
+};
+const Foam::NamedEnum
+<
+    Foam::compressible::correction::CC_Method,
+    Foam::compressible::correction::CC_Method::SIZE
+> Foam::compressible::correction::CC_MethodNames_;
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::compressible::correction::correction
 (
-    dictionary& dict
+    dictionary& dict,
+    const CC_Method defaultMethod
 )
 :
+    method_
+    (
+        dict.found("method")
+      ? CC_MethodNames_.read(dict.lookup("method"))
+      : defaultMethod
+    ),
     XiStar_
     (
         dimensionedScalar::lookupOrAddToDict
         (
             "XiStar",
             dict,
-            2.0
+            method_ == SARKAR ? 1.5 : 2.0
         )
     ),
 
@@ -63,6 +87,17 @@ Foam::compressible::correction::correction
             dict,
             20.0
         )
+    ),
+
+
+    alphaSarkar_
+    (
+        dimensionedScalar::lookupOrAddToDict
+        (
+            "alphaSarkar",
+            dict,
+            0.5
+        )
     )
 {}
 
@@ -74,6 +109,39 @@ bool Foam::compressible::correction::read(const dictionary& dict)
     XiStar_.readIfPresent(dict);
     Mat0_.readIfPresent(dict);
     return true;
+}
+
+
+Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::a
+(
+    const volVectorField& U
+)
+{
+    const basicThermo& thermo = U.mesh().lookupObject<basicThermo>
+    (
+        IOobject::groupName
+        (
+            physicalProperties::typeName,
+            U.group()
+        )
+    );
+    if (isA<fluidBlastThermo>(thermo))
+    {
+        return dynamicCast<const fluidBlastThermo>(thermo).speedOfSound()();
+    }
+    else if (isA<fluidThermo>(thermo))
+    {
+        const fluidThermo& fluid = dynamicCast<const fluidThermo>(thermo);
+        return sqrt(fluid.Cp()()/fluid.Cv()()/fluid.psi()());
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Only fluidThermo thermodynamic models can be used with "
+            << "compressibility corrections" << endl
+            << abort(FatalError);
+    }
+    return tmp<volScalarField::Internal>();
 }
 
 
@@ -187,13 +255,25 @@ Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::Fcorr
     const volScalarField& k
 ) const
 {
-    volScalarField::Internal Mat(Mt(k));
-    return (sqr(Mat) - sqr(Mat0_))*pos(Mat - Mat0_);
-
-    // alphaSarkar_ = 0.5;
-    // return (1.0/(1.0 + alphaSarkar_*sqr(Mat));
-
+    switch (method_)
+    {
+        case SARKAR:
+        {
+            return 1.0/(1.0 + alphaSarkar_*sqr(Mt(k)));
+        }
+        case ZEMAN:
+        {
+            volScalarField::Internal Mat(Mt(k));
+            return (sqr(Mat) - sqr(Mat0_))*pos(Mat - Mat0_);
+        }
+        default:
+        {
+            NotImplemented;
+        }
+    }
+    return tmp<volScalarField::Internal>();
 }
+
 
 void Foam::compressible::correction::correct
 (

@@ -61,7 +61,7 @@ kOmega_comp<BasicMomentumTransportModel>::kOmega_comp
         viscosity,
         type
     ),
-    ::Foam::compressible::correction(this->coeffDict_),
+    ::Foam::compressible::correction(this->coeffDict_, SARKAR),
     limitOmega_
     (
         this->coeffDict_.template lookupOrAddDefault<bool>
@@ -131,7 +131,10 @@ void kOmega_comp<BasicMomentumTransportModel>::correct()
     volScalarField::Internal G
     (
         this->GName(),
-        nut.v()*(dev(twoSymm(tgradU().v())) && tgradU().v())
+        (
+            nut.v()*dev(twoSymm(tgradU().v()))
+            - (2.0/3.0)*this->k_()*symmTensor::I
+        ) && tgradU().v()
     );
     tgradU.clear();
 

@@ -117,7 +117,7 @@ kOmega2006_comp<BasicMomentumTransportModel>::kOmega2006_comp
         viscosity,
         type
     ),
-    ::Foam::compressible::correction(this->coeffDict_)
+    ::Foam::compressible::correction(this->coeffDict_, SARKAR)
 {}
 
 

@@ -64,11 +64,23 @@ namespace compressible
 
 class correction
 {
+public:
+    enum CC_Method
+    {
+        SARKAR,
+        ZEMAN,
+
+        SIZE
+    };
+    static const NamedEnum<CC_Method, CC_Method::SIZE> CC_MethodNames_;
+
 protected:
 
     // Protected data
 
         // Model coefficients
+
+            CC_Method method_;
 
             dimensionedScalar XiStar_;
 
@@ -76,13 +88,14 @@ protected:
 
             dimensionedScalar rProdLim_;
 
+            dimensionedScalar alphaSarkar_;
 
 public:
 
     // Constructors
 
         //- Construct from components
-        correction(dictionary& dict);
+        correction(dictionary& dict, const CC_Method defaultMethod);
 
         //- Disallow default bitwise copy construction
         correction(const correction&) = delete;
@@ -96,6 +109,12 @@ public:
 
         //- Read RASProperties dictionary
         bool read(const dictionary&);
+
+        //- Return speed of sound
+        static tmp<volScalarField::Internal> a
+        (
+            const volVectorField& U
+        );
 
         //- Return tubulent Mach number
         static tmp<volScalarField::Internal> Mt

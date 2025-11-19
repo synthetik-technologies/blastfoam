@@ -37,6 +37,9 @@ License
 // RAS models
 // -------------------------------------------------------------------------- //
 
+#include "SpalartAllmaras_comp.H"
+makeRASModel(SpalartAllmaras_comp);
+
 #include "kEpsilon_comp.H"
 makeRASModel(kEpsilon_comp);
 

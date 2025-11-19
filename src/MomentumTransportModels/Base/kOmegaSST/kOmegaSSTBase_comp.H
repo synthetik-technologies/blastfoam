@@ -131,6 +131,8 @@ class kOmegaSST
 {
 protected:
 
+    scalar F2Max_;
+
     // Protected Member Functions
 
         //- Return k production rate
@@ -138,6 +140,8 @@ protected:
         (
             const volScalarField::Internal& G
         ) const;
+
+        virtual tmp<volScalarField> F2() const;
 
 
 public:
@@ -175,14 +179,7 @@ public:
         virtual bool read();
 
         //- Solve the turbulence equations and correct the turbulence viscosity
-        virtual void correct()
-        {
-            ::Foam::kOmegaSST
-            <
-                MomentumTransportModel,
-                BasicMomentumTransportModel
-            >::correct();
-        }
+        virtual void correct();
 
 };
 
