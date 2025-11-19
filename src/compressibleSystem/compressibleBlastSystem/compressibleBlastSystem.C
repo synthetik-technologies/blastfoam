@@ -122,6 +122,18 @@ void Foam::compressibleBlastSystem::decode()
 
 void Foam::compressibleBlastSystem::solve()
 {
+    if (explicitViscosity_)
+    {
+        if (turbulence_.valid())
+        {
+            turbulence_->predict();
+        }
+        if (thermophysicalTransport_.valid())
+        {
+            thermophysicalTransport_->predict();
+        }
+    }
+
     //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU("deltaRhoU", fvc::div(rhoUPhi_));
     this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
@@ -130,6 +142,20 @@ void Foam::compressibleBlastSystem::solve()
     this->fvTimeInt_->addDeltaSource(rhoE_.name(), deltaRhoE);
 
     this->addSources(deltaRhoU, deltaRhoE);
+
+    if (explicitViscosity_ && turbulence_.valid())
+    {
+        tmp<volSymmTensorField> tdevTau(turbulence_->devTau());
+        tdevTau.ref() += (2.0/3.0)*rhoEff()*turbulence_->k()*symmTensor::I;
+
+        deltaRhoU += fvc::div(tdevTau());
+        deltaRhoE += fvc::div
+            (
+                fvc::dotInterpolate(mesh().Sf(), tdevTau)
+              & flux().Uf()
+            )
+          + fvc::div(thermophysicalTransport_->q()*mesh().magSf());
+    }
 
     //- Store old values
     this->storeAndBlendOld(rhoU_);
@@ -165,12 +191,18 @@ void Foam::compressibleBlastSystem::postUpdate()
     }
 
     tmp<surfaceVectorField> devTau;
-    if (needSolve(U_.name()) || turbulence_.valid() || dragSource_.valid())
+    if
+    (
+        needSolve(U_.name())
+     || (!explicitViscosity_ && turbulence_.valid())
+     || dragSource_.valid())
     {
         tmp<fvVectorMatrix> divDevTau;
-        if (turbulence_.valid())
+        if (!explicitViscosity_ && turbulence_.valid())
         {
-            divDevTau = turbulence_->divDevTau(U_);
+            divDevTau =
+                turbulence_->divDevTau(U_)
+              + fvc::grad((2.0/3.0)*rhoEff()*turbulence_->k());
         }
 
         // Solve momentum
@@ -198,7 +230,13 @@ void Foam::compressibleBlastSystem::postUpdate()
 
         if (divDevTau.valid())
         {
-            devTau = divDevTau().flux();
+            // devTau = divDevTau().flux();
+            devTau = fvc::dotInterpolate
+            (
+                mesh().Sf(),
+                turbulence_->devTau()
+              + (2.0/3.0)*rhoEff()*turbulence_->k()*symmTensor::I
+            );
         }
 
         K_ = 0.5*magSqr(U_);
@@ -209,7 +247,7 @@ void Foam::compressibleBlastSystem::postUpdate()
     if
     (
         needSolve(e_.name())
-     || turbulence_.valid()
+     || (!explicitViscosity_ && turbulence_.valid())
      || radiation_.valid()
      || extESource_.valid()
     )
@@ -231,7 +269,8 @@ void Foam::compressibleBlastSystem::postUpdate()
 
         fvScalarMatrix EEqn
         (
-            fvm::ddt(rhoEff(), e_) - fvc::ddt(rhoE_)
+            fvm::ddt(rhoEff(), e_)
+          - fvc::ddt(rhoE_) // Advection only
           + fvc::ddt(rhoEff(), K_)
          ==
             models().source(rhoEff(), e_)
@@ -239,9 +278,13 @@ void Foam::compressibleBlastSystem::postUpdate()
 
         if (devTau.valid())
         {
-            EEqn += fvc::div(devTau & flux().Uf());
+            // tmp<volScalarField> tk(turbulence_->k());
+            // const volScalarField& k = tk();
+            EEqn +=
+                fvc::div(devTau & flux().Uf());
+              // + fvc::ddt(rhoEff(), k);
         }
-        if (thermophysicalTransport_.valid())
+        if (!explicitViscosity_ && thermophysicalTransport_.valid())
         {
             EEqn += thermophysicalTransport_->divq(e_);
         }

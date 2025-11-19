@@ -118,6 +118,9 @@ protected:
         //- External energy source
         tmp<fvScalarMatrix> extESource_;
 
+        //- Treat viscosity explicitly
+        bool explicitViscosity_;
+
 
     //- DeltaT cor for LTS cases
     autoPtr<volScalarField> corDeltaTPtr_;

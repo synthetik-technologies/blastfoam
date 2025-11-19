@@ -90,6 +90,10 @@ void Foam::compressibleSystem::setModels()
             );
         }
     }
+    else
+    {
+        explicitViscosity_ = false;
+    }
 }
 
 
@@ -328,7 +332,8 @@ Foam::compressibleSystem::compressibleSystem
         ),
         dimensionedVector(dimAcceleration, Zero)
     ),
-    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
+    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0),
+    explicitViscosity_(dict.lookupOrDefault("explicitViscosity", false))
 {
     scalar emptyDirV
     (
@@ -627,6 +632,40 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
         Info<< "for region " << mesh().name() << " ";
     }
     Info<< "Mean = " << meanCoNum << ", Max = "<< CoNum << endl;
+
+    // Check diffusion number
+    if (explicitViscosity_)
+    {
+        surfaceScalarField deltaCoeffSqr(magSf*mesh().deltaCoeffs());
+
+        // Remove wave speed from wedge boundaries
+        surfaceScalarField::Boundary& bdeltaCoeffSqr =
+            deltaCoeffSqr.boundaryFieldRef();
+        forAll(bdeltaCoeffSqr, patchi)
+        {
+            if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
+            {
+                bdeltaCoeffSqr[patchi] = Zero;
+            }
+        }
+
+        const volScalarField::Internal DiNumvf
+        (
+            fvc::surfaceSum
+            (
+                deltaCoeffSqr
+               *fvc::interpolate(turbulence_->nuEff())
+            )()()
+           /(mesh().V())
+           *mesh().time().deltaT()
+        );
+         const scalar meanDiNum = gAverage(DiNumvf);
+        const scalar maxDiNum = gMax(DiNumvf);
+
+        Info<< "Diffusion Number mean: " << meanDiNum
+            << " max: " << maxDiNum << endl;
+
+    }
     return CoNum;
 }
 
