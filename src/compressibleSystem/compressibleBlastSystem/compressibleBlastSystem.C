@@ -117,11 +117,7 @@ void Foam::compressibleBlastSystem::decode()
 
     //- Update total energy because the e field may have been modified
     rhoE_ = rhoEff()*(e_ + K_);
-}
 
-
-void Foam::compressibleBlastSystem::solve()
-{
     if (explicitViscosity_)
     {
         if (turbulence_.valid())
@@ -133,7 +129,11 @@ void Foam::compressibleBlastSystem::solve()
             thermophysicalTransport_->predict();
         }
     }
+}
 
+
+void Foam::compressibleBlastSystem::solve()
+{
     //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU("deltaRhoU", fvc::div(rhoUPhi_));
     this->fvTimeInt_->addDeltaSource(rhoU_.name(), deltaRhoU);
@@ -195,48 +195,56 @@ void Foam::compressibleBlastSystem::postUpdate()
     (
         needSolve(U_.name())
      || (!explicitViscosity_ && turbulence_.valid())
-     || dragSource_.valid())
+     || dragSource_.valid()
+    )
     {
         tmp<fvVectorMatrix> divDevTau;
-        if (!explicitViscosity_ && turbulence_.valid())
+        for (label iter = 0; iter < 2; iter++)
         {
-            divDevTau =
-                turbulence_->divDevTau(U_)
-              + fvc::grad((2.0/3.0)*rhoEff()*turbulence_->k());
-        }
+            if (!explicitViscosity_ && turbulence_.valid())
+            {
+                divDevTau =
+                    turbulence_->divDevTau(U_)
+                  + fvc::grad((2.0/3.0)*rhoEff()*turbulence_->k());
+            }
 
-        // Solve momentum
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(rhoEff(), U_) - fvc::ddt(rhoU_)
-         ==
-            models().source(rhoEff(), U_)
-        );
-
-        if (dragSource_.valid())
-        {
-            UEqn -= dragSource_;
-        }
-        if (divDevTau.valid())
-        {
-            UEqn += divDevTau;
-        }
-
-        UEqn.relax();
-
-        constraints().constrain(UEqn);
-        UEqn.solve();
-        constraints().constrain(U_);
-
-        if (divDevTau.valid())
-        {
-            // devTau = divDevTau().flux();
-            devTau = fvc::dotInterpolate
+            // Solve momentum
+            fvVectorMatrix UEqn
             (
-                mesh().Sf(),
-                turbulence_->devTau()
-              + (2.0/3.0)*rhoEff()*turbulence_->k()*symmTensor::I
+                fvm::ddt(rhoEff(), U_) - fvc::ddt(rhoU_)
+            ==
+                models().source(rhoEff(), U_)
             );
+
+            if (dragSource_.valid())
+            {
+                UEqn -= dragSource_;
+            }
+            if (divDevTau.valid())
+            {
+                UEqn += divDevTau();
+            }
+
+            UEqn.relax();
+
+            constraints().constrain(UEqn);
+            UEqn.solve();
+            constraints().constrain(U_);
+        }
+
+        if (divDevTau.valid())
+        {
+            devTau = divDevTau().flux();
+            // devTau =
+            //     fvc::dotInterpolate
+            //     (
+            //         mesh().Sf(),
+            //         turbulence_->devTau()
+            //     )
+            //   + fvc::interpolate
+            //     (
+            //         (2.0/3.0)*rhoEff()*turbulence_->k()
+            //     )*mesh().Sf();
         }
 
         K_ = 0.5*magSqr(U_);

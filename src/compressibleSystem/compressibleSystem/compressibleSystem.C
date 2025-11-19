@@ -659,12 +659,13 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
            /(mesh().V())
            *mesh().time().deltaT()
         );
-         const scalar meanDiNum = gAverage(DiNumvf);
+        const scalar meanDiNum = gAverage(DiNumvf);
         const scalar maxDiNum = gMax(DiNumvf);
 
         Info<< "Diffusion Number mean: " << meanDiNum
             << " max: " << maxDiNum << endl;
 
+        CoNum = max(CoNum, maxDiNum);
     }
     return CoNum;
 }
