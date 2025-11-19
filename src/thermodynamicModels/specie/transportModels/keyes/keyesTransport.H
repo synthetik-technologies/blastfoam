@@ -22,45 +22,46 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::sutherlandTransport
+    Foam::keyesTransport
 
 Description
     Transport package using Sutherland's formula for viscosity:
 
     \verbatim
-        mu = As*sqrt(T)/(1 + Ts/T)
+        mu = mu0*sqrt(T)/(1 + (B/T)*10^(-C/T))
     \endverbatim
 
     and the thermal conductivity (for gases) is obtained from:
 
     \verbatim
-        kappa = mu*Cv*(1.32 + 1.77*R/Cv)
+        kappa = mu*Cp/Pr
     \endverbatim
 
 Usage
     \table
         Property     | Description
-        As           | Sutherland constant kg/(ms K^1/2)
-        Ts           | Sutherland temperature [K]
+        mu0          | Reference viscosity
+        B            | Reference temperature [K]
+        C            | Power [K]
     \endtable
 
-    Example specification of sutherlandTransport for air:
+    Example specification of keyesTransport for air:
     \verbatim
     transport
     {
-        As              1.458e-06;
-        Ts              110.4;
+        mu0             1.458e-06;
+        B               110.4;
     }
     \endverbatim
 
 SourceFiles
-    sutherlandTransportI.H
-    sutherlandTransport.C
+    keyesTransportI.H
+    keyesTransport.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sutherlandTransport_H
-#define sutherlandTransport_H
+#ifndef keyesTransport_H
+#define keyesTransport_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -69,60 +70,49 @@ namespace Foam
 
 // Forward declaration of friend functions and operators
 
-template<class Thermo> class sutherlandTransport;
+template<class Thermo> class keyesTransport;
 
 template<class Thermo>
-inline sutherlandTransport<Thermo> operator+
+inline keyesTransport<Thermo> operator+
 (
-    const sutherlandTransport<Thermo>&,
-    const sutherlandTransport<Thermo>&
+    const keyesTransport<Thermo>&,
+    const keyesTransport<Thermo>&
 );
 
 template<class Thermo>
-inline sutherlandTransport<Thermo> operator*
+inline keyesTransport<Thermo> operator*
 (
     const scalar,
-    const sutherlandTransport<Thermo>&
+    const keyesTransport<Thermo>&
 );
 
 template<class Thermo>
 Ostream& operator<<
 (
     Ostream&,
-    const sutherlandTransport<Thermo>&
+    const keyesTransport<Thermo>&
 );
 
 
 /*---------------------------------------------------------------------------*\
-                     Class sutherlandTransport Declaration
+                     Class keyesTransport Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
-class sutherlandTransport
+class keyesTransport
 :
     public Thermo
 {
     // Private Data
 
         // Sutherland's coefficients
-        scalar Amu_, Smu_;
-        scalar Ak_, Sk_;
+        scalar mu0_, B_, C_;
 
         // Optional Prandtl number
         scalar rPr_;
 
 
     // Private Member Functions
-
-        //- Calculate the Sutherland coefficients
-        //  given two viscosities and temperatures
-        inline void calcCoeffs
-        (
-            const scalar mu1, const scalar Smu1,
-            const scalar kappa1, const scalar Sk1,
-            const scalar mu2, const scalar Smu2,
-            const scalar kappa2, const scalar Sk2
-        );
 
         //- Read coefficient from dictionary
         scalar readCoeff(const word& coeffName, const dictionary& dict);
@@ -136,40 +126,29 @@ public:
     // Constructors
 
         //- Construct from components
-        inline sutherlandTransport
+        inline keyesTransport
         (
             const Thermo& t,
-            const scalar Amu,
-            const scalar Smu,
-            const scalar Ak,
-            const scalar Sk,
+            const scalar mu0,
+            const scalar T0,
+            const scalar C,
             const scalar rPr
         );
 
-        //- Construct from two viscosities
-        inline sutherlandTransport
-        (
-            const Thermo& t,
-            const scalar mu1, const scalar Smu1,
-            const scalar kappa1, const scalar Sk1,
-            const scalar mu2, const scalar Smu2,
-            const scalar kappa2, const scalar Sk2
-        );
-
         //- Construct as named copy
-        inline sutherlandTransport(const word&, const sutherlandTransport&);
+        inline keyesTransport(const word&, const keyesTransport&);
 
         //- Construct from dictionary
-        sutherlandTransport(const dictionary& dict);
+        keyesTransport(const dictionary& dict);
 
         //- Construct from base thermo and dictionary
-        sutherlandTransport(const Thermo& t,const dictionary& dict);
+        keyesTransport(const Thermo& t,const dictionary& dict);
 
         //- Construct and return a clone
-        inline autoPtr<sutherlandTransport> clone() const;
+        inline autoPtr<keyesTransport> clone() const;
 
         // Selector from dictionary
-        inline static autoPtr<sutherlandTransport> New(const dictionary& dict);
+        inline static autoPtr<keyesTransport> New(const dictionary& dict);
 
 
     // Member Functions
@@ -177,7 +156,7 @@ public:
         //- Return the instantiated type name
         static word typeName()
         {
-            return "sutherland<" + Thermo::typeName() + '>';
+            return "keyes<" + Thermo::typeName() + '>';
         }
 
         //- Return if inviscid
@@ -208,22 +187,22 @@ public:
 
     // Member Operators
 
-        inline void operator+=(const sutherlandTransport&);
+        inline void operator+=(const keyesTransport&);
         inline void operator*=(const scalar);
 
 
     // Friend operators
 
-        friend sutherlandTransport operator+ <Thermo>
+        friend keyesTransport operator+ <Thermo>
         (
-            const sutherlandTransport&,
-            const sutherlandTransport&
+            const keyesTransport&,
+            const keyesTransport&
         );
 
-        friend sutherlandTransport operator* <Thermo>
+        friend keyesTransport operator* <Thermo>
         (
             const scalar,
-            const sutherlandTransport&
+            const keyesTransport&
         );
 
 
@@ -232,7 +211,7 @@ public:
         friend Ostream& operator<< <Thermo>
         (
             Ostream&,
-            const sutherlandTransport&
+            const keyesTransport&
         );
 };
 
@@ -243,10 +222,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "sutherlandTransportI.H"
+#include "keyesTransportI.H"
 
 #ifdef NoRepository
-    #include "sutherlandTransport.C"
+    #include "keyesTransport.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -43,70 +43,75 @@ void Foam::sutherlandTransport<Thermo>::readCoeffs(const dictionary& dict)
 {
     const dictionary& transportDict = dict.subDict("transport");
 
-    if (transportDict.found("As") && transportDict.found("Ts"))
-    {
-        transportDict.readIfPresent("As", Amu_);
-        transportDict.readIfPresent("Ts", Smu_);
-    }
-
-    else if
+    if
     (
-        transportDict.found("Amu")
-     && transportDict.found("Smu")
-     && transportDict.found("Akappa")
-     && transportDict.found("Skappa")
+        transportDict.found("Ts")
+     || transportDict.found("Smu")
+     || transportDict.found("S")
     )
     {
-        transportDict.readIfPresent("Amu", Amu_);
-        transportDict.readIfPresent("Tmu", Smu_);
-
-        transportDict.readIfPresent("Akappa", Ak_);
-        transportDict.readIfPresent("Tkappa", Sk_);
+        Smu_ = transportDict.lookupBackwardsCompatible<scalar>
+        (
+            {"Smu", "Ts", "S"}
+        );
+    }
+    else
+    {
+        FatalIOErrorInFunction(transportDict)
+            << "Could not determine Smu. Please provide, Ts, Smu, or S" << endl
+            << abort(FatalIOError);
     }
 
+    if
+    (
+        transportDict.found("As")
+     || transportDict.found("Amu")
+    )
+    {
+        Amu_ = transportDict.lookupBackwardsCompatible<scalar>({"Amu", "As"});
+    }
     else if
     (
-        transportDict.found("m0")
-     && transportDict.found("S")
+        transportDict.found("mu0")
      && transportDict.found("T0")
     )
     {
         const scalar T0 = transportDict.lookup<scalar>("T0");
         const scalar mu0 = transportDict.lookup<scalar>("mu0");
-        Smu_ = transportDict.lookup<scalar>("S");
         Amu_ = mu0/pow(T0, 1.5)*(T0 + Smu_);
+    }
+    else
+    {
+        FatalIOErrorInFunction(transportDict)
+            << "Either As/Amu or mu0 and T0 must be provided" << endl
+            << abort(FatalIOError);
+    }
 
-        Sk_ = -1;
-        Ak_ = -1;
+    // Read kappa information
+    if (transportDict.found("Pr"))
+    {
+        rPr_ = 1.0/transportDict.lookup<scalar>("Pr");
+    }
+    else if
+    (
+        transportDict.found("Akappa")
+     && transportDict.found("Skappa")
+    )
+    {
+        transportDict.readIfPresent("Akappa", Ak_);
+        transportDict.readIfPresent("Skappa", Sk_);
     }
     else if
     (
         transportDict.found("T0")
-     && transportDict.found("mu0")
-     && transportDict.found("Smu")
      && transportDict.found("kappa0")
      && transportDict.found("Skappa")
     )
     {
         const scalar T0 = transportDict.lookup<scalar>("T0");
-        const scalar mu0 = transportDict.lookup<scalar>("mu0");
-        Smu_ = transportDict.lookup<scalar>("Smu");
         const scalar kappa0 = transportDict.lookup<scalar>("kappa0");
         Sk_ = transportDict.lookup<scalar>("Skappa");
-
-        Amu_ = mu0/pow(T0, 1.5)*(T0 + Smu_);
-
-        Ak_ = kappa0/pow(T0, 1.5)*(T0 + Sk_);
-    }
-    else
-    {
-        FatalIOErrorInFunction(transportDict)
-            << "Missing entries, please provide either" << nl
-            << "    As and Ts" << nl
-            << "    T0, mu0, and S" << nl
-            << "    Amu, Smu, Ak, and Sk" << nl
-            << "    mu0, Smu, kappa0, Sk, and T0" << endl
-            << abort(FatalIOError);
+        Ak_ = Sk_ > 0 ? kappa0/pow(T0, 1.5)*(T0 + Sk_) : -1;
     }
 }
 
@@ -120,7 +125,8 @@ Foam::sutherlandTransport<Thermo>::sutherlandTransport(const dictionary& dict)
     Amu_(0),
     Smu_(0),
     Ak_(-1),
-    Sk_(-1)
+    Sk_(-1),
+    rPr_(-1)
 {
     readCoeffs(dict);
 }
@@ -137,7 +143,8 @@ Foam::sutherlandTransport<Thermo>::sutherlandTransport
     Amu_(0),
     Smu_(0),
     Ak_(-1),
-    Sk_(-1)
+    Sk_(-1),
+    rPr_(-1)
 {
     readCoeffs(dict);
 }
@@ -165,6 +172,11 @@ void Foam::sutherlandTransport<Thermo>::write(Ostream& os) const
     {
         dict.add("As", Amu_);
         dict.add("Ts", Smu_);
+    }
+
+    if (rPr_ > 0)
+    {
+        dict.add("Pr", 1.0/rPr_);
     }
 
     os  << indent << dict.dictName() << dict

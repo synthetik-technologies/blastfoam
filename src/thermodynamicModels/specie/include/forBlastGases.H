@@ -32,6 +32,7 @@ License
 
 #include "constTransport.H"
 #include "sutherlandTransport.H"
+#include "keyesTransport.H"
 
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
@@ -85,7 +86,8 @@ License
 
 #define forCoeffGasTransports(Macro, Args...)                               \
     forCoeffGasThermos(constTransport, Macro, Args);                        \
-    forCoeffGasThermos(sutherlandTransport, Macro, Args)
+    forCoeffGasThermos(sutherlandTransport, Macro, Args)                    \
+    forCoeffGasThermos(keyesTransport, Macro, Args)
 
 #define forCoeffGases(Macro, Args...)                                       \
     forCoeffGasTransports(Macro, Args)

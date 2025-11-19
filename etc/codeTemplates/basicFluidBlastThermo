@@ -18,6 +18,7 @@ transport
     inviscid
     const
     sutherland
+    keyes
     polynomial
     logPolynomial
     WLF

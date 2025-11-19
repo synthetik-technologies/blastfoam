@@ -53,6 +53,7 @@ inline void Foam::sutherlandTransport<Thermo>::calcCoeffs
         (kappa2rootSk1 - kappa1rootSk2)
        /(kappa1rootSk2/Sk1 - kappa2rootSk1/Sk2);
     Ak_ = kappa1*(1.0 + Sk_/Sk1)/rootSk1;
+    rPr_ = -1.0;
 }
 
 
@@ -65,14 +66,16 @@ inline Foam::sutherlandTransport<Thermo>::sutherlandTransport
     const scalar Amu,
     const scalar Smu,
     const scalar Ak,
-    const scalar Sk
+    const scalar Sk,
+    const scalar rPr
 )
 :
     Thermo(t),
     Amu_(Amu),
     Smu_(Smu),
     Ak_(Ak),
-    Sk_(Sk)
+    Sk_(Sk),
+    rPr_(rPr)
 {}
 
 
@@ -101,7 +104,8 @@ inline Foam::sutherlandTransport<Thermo>::sutherlandTransport
     Amu_(st.Amu_),
     Smu_(st.Smu_),
     Ak_(st.Ak_),
-    Sk_(st.Sk_)
+    Sk_(st.Sk_),
+    rPr_(st.rPr_)
 {}
 
 
@@ -152,14 +156,18 @@ inline Foam::scalar Foam::sutherlandTransport<Thermo>::kappa
     const scalar T
 ) const
 {
-    if (Ak_ < 0)
+    if (Ak_ > 0)
     {
-        scalar Cv_ = this->Cv(rho, e, T);
-        return mu(rho, e, T)*Cv_*(1.32 + 1.77*this->R()/Cv_);
+        return Ak_*::sqrt(T)/(1.0 + Sk_/T);
+    }
+    else if (rPr_ > 0)
+    {
+        return mu(rho, e, T)*this->Cp(rho, e, T)*rPr_;
     }
     else
     {
-        return Ak_*::sqrt(T)/(1.0 + Sk_/T);
+        scalar Cv_ = this->Cv(rho, e, T);
+        return mu(rho, e, T)*Cv_*(1.32 + 1.77*this->R()/Cv_);
     }
 }
 
@@ -193,6 +201,7 @@ inline void Foam::sutherlandTransport<Thermo>::operator+=
 
         Ak_ = Y1*Ak_ + Y2*st.Ak_;
         Sk_ = Y1*Sk_ + Y2*st.Sk_;
+        rPr_ = 1.0/(Y1/rPr_ + Y2/st.rPr_);
     }
 }
 
@@ -237,7 +246,8 @@ inline Foam::sutherlandTransport<Thermo> Foam::operator+
             st1.Amu_,
             st1.Smu_,
             st1.Ak_,
-            st1.Sk_
+            st1.Sk_,
+            st1.rPr_
         );
     }
     else
@@ -251,7 +261,8 @@ inline Foam::sutherlandTransport<Thermo> Foam::operator+
             Y1*st1.Amu_ + Y2*st2.Amu_,
             Y1*st1.Smu_ + Y2*st2.Smu_,
             Y1*st1.Ak_ + Y2*st2.Ak_,
-            Y1*st1.Sk_ + Y2*st2.Sk_
+            Y1*st1.Sk_ + Y2*st2.Sk_,
+            1.0/(Y1/st1.rPr_ + Y2/st2.rPr_)
         );
     }
 }
@@ -270,7 +281,8 @@ inline Foam::sutherlandTransport<Thermo> Foam::operator*
         st.Amu_,
         st.Smu_,
         st.Ak_,
-        st.Sk_
+        st.Sk_,
+        st.rPr_
     );
 }
 
