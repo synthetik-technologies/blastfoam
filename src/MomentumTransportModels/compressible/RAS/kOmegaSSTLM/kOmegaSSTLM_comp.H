@@ -127,7 +127,10 @@ protected:
             label maxLambdaIter_;
 
             //- Stabilisation for division by the magnitude of the velocity
-            const dimensionedScalar deltaU_;
+            const dimensionedScalar stabU_;
+
+            //- Stabilisation for division by the boundary layer thickness
+            const dimensionedScalar stabDelta_;
 
 
         // Fields
@@ -140,6 +143,10 @@ protected:
 
             //- Effective intermittency
             volScalarField::Internal gammaIntEff_;
+
+            //- Transition onset momentum-thickness Reynolds number
+            // (based on freestream conditions)
+            mutable volScalarField::Internal ReThetat0_;
 
 
     // Protected Member Functions

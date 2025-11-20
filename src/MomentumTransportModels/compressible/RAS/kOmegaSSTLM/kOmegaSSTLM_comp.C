@@ -84,7 +84,10 @@ tmp<volScalarField::Internal> kOmegaSSTLM_comp<BasicMomentumTransportModel>::Fth
     const volScalarField::Internal& omega = this->omega_();
     const volScalarField::Internal& y = this->y()();
 
-    const volScalarField::Internal delta(375*Omega*nu*ReThetat_()*y/sqr(Us));
+    const volScalarField::Internal delta
+    (
+        max(375*Omega*nu*ReThetat_()*y/sqr(Us), stabDelta_)
+    );
     const volScalarField::Internal ReOmega(sqr(y)*omega/nu);
     const volScalarField::Internal Fwake(exp(-sqr(ReOmega/1e5)));
 
@@ -207,37 +210,33 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::ReThetat0
     const volScalarField::Internal& nu
 ) const
 {
-    tmp<volScalarField::Internal> tReThetat0
-    (
-        volScalarField::Internal::New
-        (
-            this->groupName("ReThetat0"),
-            this->mesh_,
-            dimless
-        )
-    );
-    volScalarField::Internal& ReThetat0 = tReThetat0.ref();
-
     const volScalarField& k = this->k_;
 
     label maxIter = 0;
 
-    forAll(ReThetat0, celli)
+    forAll(ReThetat0_, celli)
     {
         const scalar Tu
         (
             max(100*sqrt((2.0/3.0)*k[celli])/Us[celli], scalar(0.027))
         );
 
-        // Initialise lambda to zero.
-        // If lambda were cached between time-steps convergence would be faster
-        // starting from the previous time-step value.
-        scalar lambda = 0;
+        // Use previous ReTheta0 to compute lambda
+        scalar lambda =
+            max
+            (
+                min
+                (
+                    (sqr(ReThetat0_[celli]/Us[celli]))
+                   *nu[celli]*dUsds[celli],
+                    0.1
+                ),
+                -0.1
+            );
 
         scalar lambdaErr;
         scalar thetat;
         label iter = 0;
-
         do
         {
             // Previous iteration lambda for convergence test
@@ -290,21 +289,24 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::ReThetat0
 
             lambdaErr = mag(lambda - lambda0);
 
-            maxIter = max(maxIter, ++iter);
-
+            iter++;
         } while (lambdaErr > lambdaErr_);
 
-        ReThetat0[celli] = max(thetat*Us[celli]/nu[celli], scalar(20));
+        maxIter = max(maxIter, iter);
+
+        ReThetat0_[celli] = max(thetat*Us[celli]/nu[celli], scalar(20));
     }
 
+    reduce(maxIter, maxOp<label>());
     if (maxIter > maxLambdaIter_)
     {
         WarningInFunction
-            << "Number of lambda iterations exceeds maxLambdaIter("
+            << "Number of lambda iterations (" << maxIter
+            << ") exceeds maxLambdaIter("
             << maxLambdaIter_ << ')'<< endl;
     }
 
-    return tReThetat0;
+    return ReThetat0_;
 }
 
 
@@ -419,7 +421,8 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::kOmegaSSTLM_comp
     (
         this->coeffDict_.lookupOrDefault("maxLambdaIter", 10)
     ),
-    deltaU_("deltaU", dimVelocity, small),
+    stabU_("stabU", dimVelocity, small),
+    stabDelta_("stabDelta", dimLength, small),
 
     ReThetat_
     (
@@ -457,6 +460,19 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::kOmegaSSTLM_comp
         ),
         this->mesh_,
         dimensionedScalar(dimless, 0)
+    ),
+
+
+    ReThetat0_
+    (
+        IOobject
+        (
+            this->groupName("ReThetat0"),
+            this->runTime_.name(),
+            this->mesh_
+        ),
+        this->mesh_,
+        dimensionedScalar(dimless, 0.0)
     )
 {}
 
@@ -509,7 +525,7 @@ void kOmegaSSTLM_comp<BasicMomentumTransportModel>::correctReThetatGammaInt()
     tmp<volTensorField> tgradU = fvc::grad(U);
     const volScalarField::Internal Omega(sqrt(2*magSqr(skew(tgradU()()))));
     const volScalarField::Internal S(sqrt(2*magSqr(symm(tgradU()()))));
-    const volScalarField::Internal Us(max(mag(U()), deltaU_));
+    const volScalarField::Internal Us(max(mag(U()), stabU_));
     const volScalarField::Internal dUsds((U() & (U() & tgradU()()))/sqr(Us));
     tgradU.clear();
 
