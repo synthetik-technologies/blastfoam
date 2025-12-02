@@ -84,7 +84,8 @@ namespace RASModels
 template<class BasicMomentumTransportModel>
 class realizableKE_comp
 :
-    public eddyViscosity<RASModel<BasicMomentumTransportModel>>
+    public eddyViscosity<RASModel<BasicMomentumTransportModel>>,
+    public compressible::correction
 {
 
 protected:

@@ -87,7 +87,8 @@ namespace RASModels
 template<class BasicMomentumTransportModel>
 class SpalartAllmaras_comp
 :
-    public eddyViscosity<RASModel<BasicMomentumTransportModel>>
+    public eddyViscosity<RASModel<BasicMomentumTransportModel>>,
+    public compressible::correction
 {
 protected:
 
@@ -104,6 +105,8 @@ protected:
             dimensionedScalar Cw2_;
             dimensionedScalar Cw3_;
             dimensionedScalar Cv1_;
+            dimensionedScalar Ct3_;
+            dimensionedScalar Ct4_;
             dimensionedScalar Cs_;
             dimensionedScalar C5_;
 
@@ -125,8 +128,14 @@ protected:
             const volScalarField::Internal& fv1
         ) const;
 
+        tmp<volScalarField::Internal> ft2
+        (
+            const volScalarField::Internal& chi
+        ) const;
+
         tmp<volScalarField::Internal> Stilda
         (
+            const volTensorField::Internal& gradU,
             const volScalarField::Internal& chi,
             const volScalarField::Internal& fv1
         ) const;

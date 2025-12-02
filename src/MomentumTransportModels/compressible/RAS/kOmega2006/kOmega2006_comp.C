@@ -117,7 +117,7 @@ kOmega2006_comp<BasicMomentumTransportModel>::kOmega2006_comp
         viscosity,
         type
     ),
-    ::Foam::compressible::correction(this->coeffDict_, SARKAR)
+    compressible::correction(this->coeffDict_, MODEL::K_OMEGA, *this)
 {}
 
 
@@ -128,7 +128,8 @@ bool kOmega2006_comp<BasicMomentumTransportModel>::read()
 {
     if (kOmega2006<BasicMomentumTransportModel>::read())
     {
-        return ::Foam::compressible::correction::read(this->coeffDict_);
+        compressible::correction::read(this->coeffDict_);
+        return true;
     }
     else
     {
@@ -159,6 +160,19 @@ void kOmega2006_comp<BasicMomentumTransportModel>::correct()
 
     eddyViscosity<RASModel<BasicMomentumTransportModel>>::correct();
 
+    tmp<volScalarField::Internal> tMt, tbetaC, tbetaCStar;
+    compressible::correction::blendBeta
+    (
+        this->beta0_,
+        this->betaStar_,
+        tMt,
+        tbetaC,
+        tbetaCStar
+    );
+    const volScalarField::Internal& betaC = tbetaC();
+    const volScalarField::Internal& betaCStar = tbetaCStar();
+
+
     volScalarField::Internal divU
     (
         typedName("divU"),
@@ -167,28 +181,10 @@ void kOmega2006_comp<BasicMomentumTransportModel>::correct()
 
     const volTensorField gradU(fvc::grad(U));
 
-    tmp<volScalarField::Internal> beta(this->beta(gradU));
-    tmp<volScalarField::Internal> betaStar;
-    Foam::compressible::correction::correct
-    (
-        this->k_,
-        this->betaStar_,
-        beta,
-        betaStar
-    );
-
     volScalarField::Internal G
     (
         this->GName(),
         nut.v()*(dev(twoSymm(gradU.v())) && gradU.v())
-    );
-
-    ::Foam::compressible::correction::limitG
-    (
-        G,
-        this->k_,
-        this->omega_,
-        betaStar
     );
 
     // Update omega and G at the wall
@@ -203,7 +199,7 @@ void kOmega2006_comp<BasicMomentumTransportModel>::correct()
      ==
         this->gamma_*alpha()*rho()*G*this->omega_()/this->k_()
       - fvm::SuSp(((2.0/3.0)*this->gamma_)*alpha()*rho()*divU, this->omega_)
-      - fvm::Sp(beta*alpha()*rho()*this->omega_(), this->omega_)
+      - fvm::Sp(betaC*alpha()*rho()*this->omega_(), this->omega_)
       + alpha()*rho()*this->CDkOmega()
       + this->omegaSource()
       + fvModels.source(alpha, rho, this->omega_)
@@ -226,8 +222,9 @@ void kOmega2006_comp<BasicMomentumTransportModel>::correct()
      ==
         alpha()*rho()*G
       - fvm::SuSp((2.0/3.0)*alpha()*rho()*divU, this->k_)
-      - fvm::Sp(betaStar*alpha()*rho()*this->omega_(), this->k_)
+      - fvm::Sp(betaCStar*alpha()*rho()*this->omega_(), this->k_)
       + this->kSource()
+      + alpha()*rho()*this->pressureDialationSource(G, tMt)
       + fvModels.source(alpha, rho, this->k_)
     );
 

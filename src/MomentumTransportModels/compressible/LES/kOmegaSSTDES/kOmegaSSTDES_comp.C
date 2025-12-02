@@ -134,7 +134,7 @@ bool kOmegaSSTDES_comp<BasicMomentumTransportModel>::read()
 {
     if
     (
-        kOmegaSST
+        ::Foam::compressible::kOmegaSST
         <
             LESeddyViscosity<BasicMomentumTransportModel>,
             BasicMomentumTransportModel

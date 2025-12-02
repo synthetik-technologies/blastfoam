@@ -32,7 +32,6 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
 // -------------------------------------------------------------------------- //
 // RAS models
 // -------------------------------------------------------------------------- //
@@ -51,6 +50,9 @@ makeRASModel(RNGkEpsilon_comp);
 
 #include "kOmega_comp.H"
 makeRASModel(kOmega_comp);
+
+#include "kOmegaBSL_comp.H"
+makeRASModel(kOmegaBSL_comp);
 
 #include "kOmega2006_comp.H"
 makeRASModel(kOmega2006_comp);

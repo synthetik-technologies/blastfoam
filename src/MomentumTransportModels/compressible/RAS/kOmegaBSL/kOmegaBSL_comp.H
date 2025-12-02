@@ -2,11 +2,13 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2023 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2016-2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2025-06-09 Jeff Heylmun     : Derived from compressible::kOmegaSST
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,59 +24,64 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::RASModels::kEpsilon_comp
+    Foam::RASModels::kOmegaBSL_comp
 
 Description
-    Standard k-epsilon turbulence model for incompressible and compressible
-    flows including rapid distortion theory (RDT) based compression term.
-    Includes compressibility correction based on the Chien k-epsilon model
+    Base line k-omega model
 
-    Reference:
+    References:
     \verbatim
-        Standard model:
-            Launder, B. E., & Spalding, D. B. (1972).
-            Lectures in mathematical models of turbulence.
+        //TODO
+        Langtry, R. B., & Menter, F. R. (2009).
+        Correlation-based transition modeling for unstructured parallelized
+        computational fluid dynamics codes.
+        AIAA journal, 47(12), 2894-2906.
 
-            Launder, B. E., & Spalding, D. B. (1974).
-            The numerical computation of turbulent flows.
-            Computer methods in applied mechanics and engineering,
-            3(2), 269-289.
+        Menter, F. R., Langtry, R., & Volker, S. (2006).
+        Transition modelling for general purpose CFD codes.
+        Flow, turbulence and combustion, 77(1-4), 277-303.
 
-        For the RDT-based compression term:
-            El Tahry, S. H. (1983).
-            k-epsilon equation for compressible reciprocating engine flows.
-            Journal of Energy, 7(4), 345-353.
-
-        Compressibility correction:
-            Kaul, U. K., (2011)
-            "Effect of Inflow Boundary Conditions on the Turbulence Solution
-            in Internal Flows,"
-            AIAA Journal, 49(2), 426-432
+        Langtry, R. B. (2006).
+        A correlation-based transition model using local variables for
+        unstructured parallelized CFD codes.
+        Phd. Thesis, Universität Stuttgart.
     \endverbatim
 
-    The default model coefficients are
+    The model coefficients are
     \verbatim
-        kEpsilonCoeffs
+        compressible::kOmegaSSTLMCoeffs
         {
-            Cmu         0.09;
-            C1          1.44;
-            C2          1.92;
-            C3          0;
-            sigmak      1.0;
-            sigmaEps    1.3;
+            // Default SST coefficients
+            alphaK1     0.85;
+            alphaK2     1;
+            alphaOmega1 0.5;
+            alphaOmega2 0.856;
+            beta1       0.075;
+            beta2       0.0828;
+            betaStar    0.09;
+            gamma1      5/9;
+            gamma2      0.44;
+            a1          0.31;
+            b1          1;
+            c1          10;
+            F3          no;
+
+            lambdaErr   1e-6;
+            maxLambdaIter 10;
         }
     \endverbatim
 
 SourceFiles
-    kEpsilon_comp.C
+    kOmegaBSL_comp.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kEpsilon_comp_H
-#define kEpsilon_comp_H
+#ifndef kOmegaBSL_comp_H
+#define kOmegaBSL_comp_H
 
-#include "kEpsilon.H"
+#include "kOmegaSSTBase_comp.H"
 #include "eddyViscosity.H"
+#include "RASModel.H"
 #include "compressibilityCorrection.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -85,25 +92,32 @@ namespace RASModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class kEpsilon_comp Declaration
+                         Class kOmegaBSL_comp Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class BasicMomentumTransportModel>
-class kEpsilon_comp
+class kOmegaBSL_comp
 :
-    public kEpsilon<BasicMomentumTransportModel>,
-    public compressible::correction
+    public ::Foam::compressible::kOmegaSST
+    <
+        eddyViscosity<RASModel<BasicMomentumTransportModel>>,
+        BasicMomentumTransportModel
+    >
 {
 protected:
 
-
-    // Protected Member Functions
-
-        //- Bound epsilon and return Cmu*sqr(k) for nut
-        tmp<volScalarField> boundEpsilon();
-
-        //- Correct the eddy-viscosity nut
+        virtual void correctNut
+        (
+            const volScalarField& S2,
+            const volScalarField& F2
+        );
         virtual void correctNut();
+
+        // //- Return k production rate
+        // virtual tmp<volScalarField::Internal> Pk
+        // (
+        //     const volScalarField::Internal& G
+        // ) const;
 
 
 public:
@@ -113,13 +127,13 @@ public:
 
 
     //- Runtime type information
-    CompressibleTypeName("kEpsilon");
+    CompressibleTypeName("kOmegaBSL");
 
 
     // Constructors
 
         //- Construct from components
-        kEpsilon_comp
+        kOmegaBSL_comp
         (
             const alphaField& alpha,
             const rhoField& rho,
@@ -127,31 +141,26 @@ public:
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
             const viscosity& viscosity,
-            const word& type = baseName()
+            const word& type = baseName(),
+            const HashTable<scalar>& defaults = HashTable<scalar>()
         );
 
         //- Disallow default bitwise copy construction
-        kEpsilon_comp(const kEpsilon_comp&) = delete;
+        kOmegaBSL_comp(const kOmegaBSL_comp&) = delete;
 
 
     //- Destructor
-    virtual ~kEpsilon_comp()
+    virtual ~kOmegaBSL_comp()
     {}
 
 
     // Member Functions
 
-        //- Re-read model coefficients if they have changed
-        virtual bool read();
-
         //- Solve the turbulence equations and correct the turbulence viscosity
         virtual void correct();
 
-
-    // Member Operators
-
         //- Disallow default bitwise assignment
-        void operator=(const kEpsilon_comp&) = delete;
+        void operator=(const kOmegaBSL_comp&) = delete;
 };
 
 
@@ -163,7 +172,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "kEpsilon_comp.C"
+    #include "kOmegaBSL_comp.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -158,6 +158,8 @@ realizableKE_comp<BasicMomentumTransportModel>::realizableKE_comp
         phi,
         viscosity
     ),
+    compressible::correction(this->coeffDict_, MODEL::K_EPSILON, *this),
+
     A0_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -242,6 +244,8 @@ bool realizableKE_comp<BasicMomentumTransportModel>::read()
         sigmak_.readIfPresent(this->coeffDict());
         sigmaEps_.readIfPresent(this->coeffDict());
 
+        compressible::correction::read(this->coeffDict());
+
         return true;
     }
     else
@@ -312,7 +316,8 @@ void realizableKE_comp<BasicMomentumTransportModel>::correct()
         C1*alpha()*rho()*magS()*epsilon_()
       - fvm::Sp
         (
-            C2_*alpha()*rho()*epsilon_()/(k_() + sqrt(this->nu()()*epsilon_())),
+            C2_*alpha()*rho()*epsilon_()
+           /(k_() + sqrt(this->nu()()*epsilon_())),
             epsilon_
         )
       + epsilonSource()
@@ -339,10 +344,10 @@ void realizableKE_comp<BasicMomentumTransportModel>::correct()
       - fvm::SuSp(2.0/3.0*alpha()*rho()*divU, k_)
       - fvm::Sp
         (
-            alpha()*rho()*epsilon_()
-           *(1.0/k_() + compressible::correction::MtSqrByk(k_)),
+            alpha()*rho()*epsilon_()*(1.0/k_() + this->MtSqrByk()),
             k_
         )
+      + this->pressureDialationSource(G)
       + kSource()
       + fvModels.source(alpha, rho, k_)
     );

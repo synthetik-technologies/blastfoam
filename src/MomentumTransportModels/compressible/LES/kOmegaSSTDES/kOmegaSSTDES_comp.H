@@ -73,7 +73,7 @@ namespace LESModels
 template<class BasicMomentumTransportModel>
 class kOmegaSSTDES_comp
 :
-    public Foam::compressible::kOmegaSST
+    public ::Foam::compressible::kOmegaSST
     <
         LESeddyViscosity<BasicMomentumTransportModel>,
         BasicMomentumTransportModel

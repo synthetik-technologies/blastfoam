@@ -37,6 +37,28 @@ namespace Foam
 namespace RASModels
 {
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+template<class BasicMomentumTransportModel>
+void kOmega_comp<BasicMomentumTransportModel>::boundOmega()
+{
+    this->omega_ = max
+    (
+        this->omega_,
+        this->k_/(this->nutMaxCoeff_*this->nu())
+    );
+}
+
+template<class BasicMomentumTransportModel>
+void kOmega_comp<BasicMomentumTransportModel>::correctNut()
+{
+    this->nut_ = this->k_/this->omega_;
+    this->nut_.correctBoundaryConditions();
+    fvConstraints::New(this->mesh_).constrain(this->nut_);
+}
+
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasicMomentumTransportModel>
@@ -61,14 +83,11 @@ kOmega_comp<BasicMomentumTransportModel>::kOmega_comp
         viscosity,
         type
     ),
-    ::Foam::compressible::correction(this->coeffDict_, SARKAR),
-    limitOmega_
+    ::Foam::compressible::correction
     (
-        this->coeffDict_.template lookupOrAddDefault<bool>
-        (
-            "limitOmega",
-            true
-        )
+        this->coeffDict_,
+        MODEL::K_OMEGA,
+        *this
     )
 {}
 
@@ -80,8 +99,7 @@ bool kOmega_comp<BasicMomentumTransportModel>::read()
 {
     if (kOmega<BasicMomentumTransportModel>::read())
     {
-        this->coeffDict().readIfPresent("limitOmega", limitOmega_);
-        return ::Foam::compressible::correction::read(this->coeffDict_);
+        return compressible::correction::read(this->coeffDict_);
     }
     else
     {
@@ -112,15 +130,17 @@ void kOmega_comp<BasicMomentumTransportModel>::correct()
 
     eddyViscosity<RASModel<BasicMomentumTransportModel>>::correct();
 
-    tmp<volScalarField::Internal> beta, betaStar;
-    ::Foam::compressible::correction::correct
+    tmp<volScalarField::Internal> tMt, tbetaC, tbetaCStar;
+    blendBeta
     (
-        this->k_,
         this->beta_,
         this->betaStar_,
-        beta,
-        betaStar
+        tMt,
+        tbetaC,
+        tbetaCStar
     );
+    const volScalarField::Internal& betaC = tbetaC();
+    const volScalarField::Internal& betaCStar = tbetaCStar();
 
     volScalarField::Internal divU
     (
@@ -138,13 +158,13 @@ void kOmega_comp<BasicMomentumTransportModel>::correct()
     );
     tgradU.clear();
 
-    ::Foam::compressible::correction::limitG
-    (
-        G,
-        this->k_,
-        this->omega_,
-        betaStar
-    );
+    // ::Foam::compressible::correction::limitG
+    // (
+    //     G,
+    //     this->k_,
+    //     this->omega_,
+    //     betaStar
+    // );
 
     // Update omega and G at the wall
     this->omega_.boundaryFieldRef().updateCoeffs();
@@ -160,7 +180,7 @@ void kOmega_comp<BasicMomentumTransportModel>::correct()
      ==
         this->gamma_*alpha()*rho()*G*this->omega_()/this->k_()
       - fvm::SuSp(((2.0/3.0)*this->gamma_)*alpha()*rho()*divU, this->omega_)
-      - fvm::Sp(beta*alpha()*rho()*this->omega_(), this->omega_)
+      - fvm::Sp(betaC*alpha()*rho()*this->omega_(), this->omega_)
       + this->omegaSource()
       + fvModels.source(alpha, rho, this->omega_)
     );
@@ -168,7 +188,7 @@ void kOmega_comp<BasicMomentumTransportModel>::correct()
     omegaEqn.ref().relax();
     fvConstraints.constrain(omegaEqn.ref());
     omegaEqn.ref().boundaryManipulate(this->omega_.boundaryFieldRef());
-    solve(omegaEqn);
+    Foam::solve(omegaEqn);
     fvConstraints.constrain(this->omega_);
     this->boundOmega();
 
@@ -182,26 +202,17 @@ void kOmega_comp<BasicMomentumTransportModel>::correct()
      ==
         alpha()*rho()*G
       - fvm::SuSp((2.0/3.0)*alpha()*rho()*divU, this->k_)
-      - fvm::Sp(betaStar*alpha()*rho()*this->omega_(), this->k_)
+      - fvm::Sp(betaCStar*alpha()*rho()*this->omega_(), this->k_)
       + this->kSource()
+      + alpha()*rho()*this->pressureDialationSource(G, tMt)
       + fvModels.source(alpha, rho, this->k_)
     );
 
     kEqn.ref().relax();
     fvConstraints.constrain(kEqn.ref());
-    solve(kEqn);
+    Foam::solve(kEqn);
     fvConstraints.constrain(this->k_);
     bound(this->k_, this->kMin_);
-    if (limitOmega_)
-    {
-        this->limitOmega_L
-        (
-            this->k_,
-            this->y(),
-            this->omega_
-        );
-    }
-    this->boundOmega();
 
     this->correctNut();
 }

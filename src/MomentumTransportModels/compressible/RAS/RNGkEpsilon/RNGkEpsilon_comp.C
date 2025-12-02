@@ -110,6 +110,7 @@ RNGkEpsilon_comp<BasicMomentumTransportModel>::RNGkEpsilon_comp
         phi,
         viscosity
     ),
+    compressible::correction(this->coeffDict_, MODEL::K_EPSILON, *this),
 
     Cmu_
     (
@@ -235,6 +236,8 @@ bool RNGkEpsilon_comp<BasicMomentumTransportModel>::read()
         eta0_.readIfPresent(this->coeffDict());
         beta_.readIfPresent(this->coeffDict());
 
+        compressible::correction::read(this->coeffDict());
+
         return true;
     }
     else
@@ -333,10 +336,10 @@ void RNGkEpsilon_comp<BasicMomentumTransportModel>::correct()
       - fvm::SuSp((2.0/3.0)*alpha()*rho()*divU, k_)
       - fvm::Sp
         (
-            alpha()*rho()*epsilon_()
-           *(1.0/k_() + compressible::correction::MtSqrByk(k_)),
+            alpha()*rho()*epsilon_()*(1.0/k_() + this->MtSqrByk()),
             k_
         )
+      + this->pressureDialationSource(G)
       + kSource()
       + fvModels.source(alpha, rho, k_)
     );

@@ -23,9 +23,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "kEpsilon_comp.H"
+#include "SpalartAllmaras_comp.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
+#include "fluxScheme.H"
 #include "bound.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -75,8 +76,24 @@ SpalartAllmaras_comp<BasicMomentumTransportModel>::fv2
 
 template<class BasicMomentumTransportModel>
 tmp<volScalarField::Internal>
+SpalartAllmaras_comp<BasicMomentumTransportModel>::ft2
+(
+    const volScalarField::Internal& chi
+) const
+{
+    return volScalarField::Internal::New
+    (
+        typedName("ft2"),
+        Ct3_*exp(-Ct4_*sqr(chi))
+    );
+}
+
+
+template<class BasicMomentumTransportModel>
+tmp<volScalarField::Internal>
 SpalartAllmaras_comp<BasicMomentumTransportModel>::Stilda
 (
+    const volTensorField::Internal& gradU,
     const volScalarField::Internal& chi,
     const volScalarField::Internal& fv1
 ) const
@@ -84,7 +101,7 @@ SpalartAllmaras_comp<BasicMomentumTransportModel>::Stilda
     const volScalarField::Internal Omega
     (
         typedName("Omega"),
-        ::sqrt(2.0)*mag(skew(fvc::grad(this->U_)().v()))
+        ::sqrt(2.0)*mag(skew(gradU))
     );
 
     return volScalarField::Internal::New
@@ -94,7 +111,7 @@ SpalartAllmaras_comp<BasicMomentumTransportModel>::Stilda
             max
             (
                 Omega
-              + fv2(chi, fv1)*nuTilda_/sqr(kappa_*this->y()()),
+              + fv2(chi, fv1)*nuTilda_()/sqr(kappa_*this->y()()),
                 Cs_*Omega
             )
         )
@@ -127,7 +144,11 @@ SpalartAllmaras_comp<BasicMomentumTransportModel>::fw
         )
     );
 
-    const volScalarField::Internal g(typedName("g"), r + Cw2_*(pow6(r) - r));
+    const volScalarField::Internal g
+    (
+        typedName("g"),
+        r + Cw2_*(pow6(r) - r)
+    );
 
     return volScalarField::Internal::New
     (
@@ -179,6 +200,12 @@ SpalartAllmaras_comp<BasicMomentumTransportModel>::SpalartAllmaras_comp
         alphaRhoPhi,
         phi,
         viscosity
+    ),
+    compressible::correction
+    (
+        this->coeffDict_,
+        MODEL::OTHER,
+        *this
     ),
 
     sigmaNut_
@@ -246,6 +273,24 @@ SpalartAllmaras_comp<BasicMomentumTransportModel>::SpalartAllmaras_comp
             7.1
         )
     ),
+    Ct3_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "Ct3",
+            this->coeffDict_,
+            1.2
+        )
+    ),
+    Ct4_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "Ct4",
+            this->coeffDict_,
+            0.5
+        )
+    ),
     Cs_
     (
         dimensioned<scalar>::lookupOrAddToDict
@@ -301,7 +346,10 @@ bool SpalartAllmaras_comp<BasicMomentumTransportModel>::read()
         Cw2_.readIfPresent(this->coeffDict());
         Cw3_.readIfPresent(this->coeffDict());
         Cv1_.readIfPresent(this->coeffDict());
+        Ct3_.readIfPresent(this->coeffDict());
+        Ct4_.readIfPresent(this->coeffDict());
         Cs_.readIfPresent(this->coeffDict());
+        C5_.readIfPresent(this->coeffDict());
 
         return true;
     }
@@ -395,24 +443,28 @@ void SpalartAllmaras_comp<BasicMomentumTransportModel>::correct()
     const volScalarField chi(this->chi());
     const volScalarField fv1(this->fv1(chi));
 
-    const volScalarField::Internal Stilda(this->Stilda(chi, fv1));
     const volVectorField gradNuTilda(fvc::grad(nuTilda_));
     const volTensorField gradU(fvc::grad(this->U()));
+    const volScalarField::Internal Stilda(this->Stilda(gradU, chi, fv1));
+    const volScalarField::Internal ft2(this->ft2(chi));
 
     tmp<fvScalarMatrix> nuTildaEqn
     (
         fvm::ddt(alpha, rho, nuTilda_)
       + fvm::div(alphaRhoPhi, nuTilda_)
       - fvm::laplacian(alpha*rho*DnuTildaEff(), nuTilda_)
-      - Cb2_/sigmaNut_*alpha*rho*magSqr(gradNuTilda)
+      - alpha*rho*(Cb2_/sigmaNut_)*magSqr(gradNuTilda)
      ==
-        // Cb1_*alpha()*rho()*(1.0 - ft2)*Stilda*nuTilda_()
-        Cb1_*alpha()*rho()*Stilda*nuTilda_()
+        alpha()*rho()*Cb1_*(1.0 - ft2)*Stilda*nuTilda_()
       - fvm::Sp
         (
-            Cw1_*alpha()*rho()*fw(Stilda)*nuTilda_()/sqr(this->y()()),
+            alpha()*rho()
+           *(Cw1_*fw(Stilda) - (Cb1_/sqr(kappa_))*ft2)
+           *nuTilda_()/sqr(this->y()()),
             nuTilda_
         )
+
+        // Compressiblity correction
       - (this->nu() + nuTilda_)/sigmaNut_
        *(fvc::grad(rho) & gradNuTilda)
 
@@ -425,14 +477,14 @@ void SpalartAllmaras_comp<BasicMomentumTransportModel>::correct()
             fvm::Sp
             (
                 C5_*alpha()*rho()*nuTilda_()*(gradU() && gradU())
-               /sqr(compressible::correction::a(this->U())),
+               /sqr(this->speedOfSound()),
                 nuTilda_
             );
     }
 
     nuTildaEqn.ref().relax();
     fvConstraints.constrain(nuTildaEqn.ref());
-    solve(nuTildaEqn);
+    Foam::solve(nuTildaEqn);
     fvConstraints.constrain(nuTilda_);
     bound(nuTilda_, dimensionedScalar(nuTilda_.dimensions(), 0));
     nuTilda_.correctBoundaryConditions();

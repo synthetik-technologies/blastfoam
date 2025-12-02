@@ -89,7 +89,8 @@ namespace RASModels
 template<class BasicMomentumTransportModel>
 class RNGkEpsilon_comp
 :
-    public eddyViscosity<RASModel<BasicMomentumTransportModel>>
+    public eddyViscosity<RASModel<BasicMomentumTransportModel>>,
+    public compressible::correction
 {
 
 protected:

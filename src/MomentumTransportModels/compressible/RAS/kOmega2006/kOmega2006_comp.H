@@ -80,8 +80,10 @@ template<class BasicMomentumTransportModel>
 class kOmega2006_comp
 :
     public kOmega2006<BasicMomentumTransportModel>,
-    public ::Foam::compressible::correction
+    public compressible::correction
 {
+    // Model coefficient
+
     // Private Member Functions
 
         void correctNut(const volTensorField& gradU);

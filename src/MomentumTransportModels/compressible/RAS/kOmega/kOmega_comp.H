@@ -79,8 +79,14 @@ class kOmega_comp
 {
 protected:
 
-    //- Limit omega based on length
-    bool limitOmega_;
+    // Protected Member Functions
+
+        //- Bound omega
+        void boundOmega();
+
+        //- Correct the eddy-viscosity nut
+        virtual void correctNut();
+
 
 public:
 
