@@ -112,12 +112,6 @@ protected:
         // Update coefficients
         virtual void update();
 
-        //- Update all stored systems
-        virtual void updateAll();
-
-        //- Post update of all stored systems
-        virtual void postUpdateAll();
-
         //- Initialize ODE sizes
         virtual void initialize();
 
@@ -210,8 +204,14 @@ public:
             //- Add a system to the
             virtual void addSystem(timeIntegrationSystemBase& system);
 
+            //- Update all stored systems
+            virtual void updateAll();
+
             //- Integrate fluxes in time
-            virtual void integrate();
+            virtual void integrate(const bool doImplicit = true);
+
+            //- Solve implicit
+            virtual void solveImplicit();
 
             //- Clear all ODE fields (old/delta)
             virtual void clear();

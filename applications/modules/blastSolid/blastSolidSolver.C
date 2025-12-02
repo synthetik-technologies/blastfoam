@@ -60,11 +60,22 @@ Foam::scalar Foam::solvers::blastSolid::CoNum() const
 }
 
 
-void Foam::solvers::blastSolid::solve()
+
+Foam::scalar Foam::solvers::blastSolid::DiNum() const
+{
+    return 0.0;
+}
+
+
+void Foam::solvers::blastSolid::solveExplicit()
 {
     Info<< "Calculating Fluxes" << endl;
     solidPtr_->evolve();
 }
+
+
+void Foam::solvers::blastSolid::solveImplicit()
+{}
 
 
 void Foam::solvers::blastSolid::postSolve()

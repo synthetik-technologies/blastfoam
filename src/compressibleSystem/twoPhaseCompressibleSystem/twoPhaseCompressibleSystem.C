@@ -524,12 +524,11 @@ void Foam::twoPhaseCompressibleSystem::update()
     thermo_.update();
 }
 
-void Foam::twoPhaseCompressibleSystem::postUpdate()
+void Foam::twoPhaseCompressibleSystem::postImplicit()
 {
     this->decode();
 
     bool updateRho = false;
-    rho_.storePrevIter();
 
     // Solve volume fraction
     if (needSolve(alpha1_.name()))
@@ -596,7 +595,7 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
         rho_ = alphaRho1_ + alphaRho2_;
     }
 
-    compressibleBlastSystem::postUpdate();
+    compressibleBlastSystem::postImplicit();
 }
 
 
@@ -663,9 +662,9 @@ void Foam::twoPhaseCompressibleSystem::encode()
 }
 
 
-void Foam::twoPhaseCompressibleSystem::storeFluxDeltas()
+void Foam::twoPhaseCompressibleSystem::storeExplicit()
 {
-    compressibleBlastSystem::storeFluxDeltas();
+    compressibleBlastSystem::storeExplicit();
 
     alpha1Advection_ = fvc::ddt(alpha1_);
     alphaRho1Advection_ = fvc::ddt(alphaRho1_);

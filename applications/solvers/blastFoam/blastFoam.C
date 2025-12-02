@@ -54,8 +54,11 @@ int main(int argc, char *argv[])
     #include "createTimeControls.H"
     maxCo = min(maxCo, integrator.maxCo());
     scalar CoNum = fluid->CoNum();
+    scalar DiNum = fluid->DiNum();
 
     #include "setInitialDeltaT.H"
+    scalar maxDi =
+        runTime.controlDict().lookupOrDefault<scalar>("maxDi", maxCo);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     Info<< "\nStarting time loop\n" << endl;
@@ -69,7 +72,11 @@ int main(int argc, char *argv[])
 
         //- Set the new time step and advance
         CoNum = fluid->CoNum();
+        DiNum = fluid->DiNum();
+
         #include "readTimeControls.H"
+        maxDi = runTime.controlDict().lookupOrDefault<scalar>("maxDi", maxCo);
+
 
         // Warn if using too high of a courant number
         static bool hasWarned = false;
@@ -82,7 +89,26 @@ int main(int argc, char *argv[])
             hasWarned = true;
         }
 
-        #include "setDeltaT.H"
+        // #include "setDeltaT.H"
+        if (adjustTimeStep)
+        {
+            scalar deltaT = 1.2*runTime.deltaTValue();
+
+            if (CoNum > small)
+            {
+                deltaT = min(deltaT, maxCo/CoNum*runTime.deltaTValue());
+            }
+            if (DiNum > small)
+            {
+                deltaT = min(deltaT, maxDi/DiNum*runTime.deltaTValue());
+            }
+
+            deltaT = min(min(deltaT, fvModels.maxDeltaT()), maxDeltaT);
+
+            runTime.setDeltaT(deltaT);
+
+            Info<< "deltaT = " <<  runTime.deltaTValue() << endl;
+        }
 
         runTime++;
         Info<< "Time = " << runTime.name() << nl << endl;
@@ -90,8 +116,8 @@ int main(int argc, char *argv[])
         //- Move the mesh
         mesh.move();
 
-        Info<< "Calculating Fluxes" << endl;
-        integrator.integrate();
+        integrator.integrate(true);
+
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << nl

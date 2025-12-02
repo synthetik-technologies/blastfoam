@@ -61,6 +61,9 @@ protected:
         //- Maximum allowed Courant number
         scalar maxCo_;
 
+        //- Maximum allowed Diffusion number
+        scalar maxDi_;
+
         //- Maximum time-step
         scalar maxDeltaT_;
 
@@ -76,6 +79,9 @@ protected:
 
         //- Return the current Courant number
         virtual scalar CoNum() const = 0;
+
+        //- Return the current Diffusion number
+        virtual scalar DiNum() const = 0;
 
 public:
 
@@ -102,8 +108,11 @@ public:
         //- Return the current maximum time-step for stable solution
         virtual scalar maxDeltaT() const;
 
-        //- Solve
-        virtual void solve() = 0;
+        //- Solve explicit
+        virtual void solveExplicit() = 0;
+
+        //- Solve Implicit
+        virtual void solveImplicit() = 0;
 
         //- Called at the start of the time-step, before the PIMPLE loop
         virtual void preSolve();

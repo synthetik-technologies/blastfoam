@@ -1,7 +1,7 @@
 #include "readGravitationalAcceleration.H"
 
 Info<< "Creating phaseSystem\n" << endl;
-fvTimeIntegrator integrator(mesh);
+fvTimeIntegrator integrator(mesh, true);
 phaseSystem fluid(mesh);
 integrator.addSystem(fluid);
 fluid.update();

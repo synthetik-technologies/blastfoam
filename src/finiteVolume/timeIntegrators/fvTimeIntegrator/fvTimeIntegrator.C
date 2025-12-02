@@ -27,6 +27,7 @@ License
 #include "timeIntegrationSystem.H"
 #include "pointFields.H"
 #include "surfaceFields.H"
+#include "pimpleSingleRegionControl.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -99,6 +100,98 @@ void Foam::fvTimeIntegrator::update()
     forAll(systems_, i)
     {
         systems_[i].save();
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::fvTimeIntegrator::fvTimeIntegrator(fvMesh& mesh, const bool usePimple)
+:
+    timeIntegrator(mesh, mesh.schemes().dict().subDict("ddtSchemes")),
+    mesh_(mesh),
+    V0Ptr_(nullptr),
+    VPtr_(nullptr),
+    V0ByVPtr_(nullptr),
+    modelsPtr_(nullptr),
+    constraintsPtr_(nullptr),
+    solveFields_()
+{
+    if
+    (
+        usePimple
+     && mesh.solution().isDict("PIMPLE")
+     && mesh.solution().subDict("PIMPLE").lookupOrDefault<label>
+        (
+            "nOuterCorrectors",
+            1
+        ) >= 2
+    )
+    {
+        pimpleNoControlPtr_.set(new pimpleNoLoopControl(mesh));
+        pimplePtr_.set
+        (
+            new pimpleSingleRegionControl(pimpleNoControlPtr_())
+        );
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::fvTimeIntegrator::~fvTimeIntegrator()
+{}
+
+
+// * * * * * * * * * * * * * * * Public Functions  * * * * * * * * * * * * * //
+
+
+void Foam::fvTimeIntegrator::createModels() const
+{
+    DebugInfo<< "Creating fvModels and fvConstraints" << endl;
+    modelsPtr_.set(&fvModels::New(const_cast<fvMesh&>(mesh_)));
+    constraintsPtr_.set(&fvConstraints::New(mesh_));
+
+    const PtrList<fvModel>& models(modelsPtr_());
+    forAll(models, modeli)
+    {
+        wordList fields(models[modeli].addSupFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+
+    const PtrList<fvConstraint>& constraints(constraintsPtr_());
+    forAll(constraints, modeli)
+    {
+        wordList fields(constraints[modeli].constrainedFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+    DebugInfo<< "Fields to solve:" << nl<< solveFields_ << endl;
+}
+
+
+void Foam::fvTimeIntegrator::preUpdateMesh()
+{
+    DebugInfo<< "Post Update" << endl;
+    forAll(systems_, i)
+    {
+        systems_[i].preUpdateMesh();
+    }
+
+    if (modelsPtr_.valid())
+    {
+        modelsPtr_->preUpdateMesh();
     }
 }
 
@@ -188,99 +281,30 @@ void Foam::fvTimeIntegrator::updateAll()
 }
 
 
-void Foam::fvTimeIntegrator::postUpdateAll()
+void Foam::fvTimeIntegrator::solveImplicit()
 {
-    forAll(systems_, i)
+    if (pimplePtr_.valid())
     {
-        Info<< "Post-updating " << systems_[i].name() << ":" << endl;
-        systems_[i].postUpdate();
+        while (pimplePtr_->loop())
+        {
+            forAll(systems_, i)
+            {
+                systems_[i].postImplicit();
+            }
+        }
     }
-    Info<< endl;
+    else
+    {
+        forAll(systems_, i)
+        {
+            systems_[i].postImplicit();
+        }
+    }
 
     if (modelsPtr_.valid())
     {
         modelsPtr_->correct();
     }
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::fvTimeIntegrator::fvTimeIntegrator(const fvMesh& mesh)
-:
-    timeIntegrator(mesh, mesh.schemes().dict().subDict("ddtSchemes")),
-    mesh_(mesh),
-    V0Ptr_(nullptr),
-    VPtr_(nullptr),
-    V0ByVPtr_(nullptr),
-    modelsPtr_(nullptr),
-    constraintsPtr_(nullptr),
-    solveFields_()
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::fvTimeIntegrator::~fvTimeIntegrator()
-{}
-
-
-// * * * * * * * * * * * * * * * Public Functions  * * * * * * * * * * * * * //
-
-
-void Foam::fvTimeIntegrator::createModels() const
-{
-    DebugInfo<< "Creating fvModels and fvConstraints" << endl;
-    modelsPtr_.set(&fvModels::New(const_cast<fvMesh&>(mesh_)));
-    constraintsPtr_.set(&fvConstraints::New(mesh_));
-
-    const PtrList<fvModel>& models(modelsPtr_());
-    forAll(models, modeli)
-    {
-        wordList fields(models[modeli].addSupFields());
-        forAll(fields, fieldi)
-        {
-            if (!solveFields_.found(fields[fieldi]))
-            {
-                solveFields_.append(fields[fieldi]);
-            }
-        }
-    }
-
-    const PtrList<fvConstraint>& constraints(constraintsPtr_());
-    forAll(constraints, modeli)
-    {
-        wordList fields(constraints[modeli].constrainedFields());
-        forAll(fields, fieldi)
-        {
-            if (!solveFields_.found(fields[fieldi]))
-            {
-                solveFields_.append(fields[fieldi]);
-            }
-        }
-    }
-    DebugInfo<< "Fields to solve:" << nl<< solveFields_ << endl;
-}
-
-
-void Foam::fvTimeIntegrator::preUpdateMesh()
-{
-    DebugInfo<< "Post Update" << endl;
-    forAll(systems_, i)
-    {
-        systems_[i].preUpdateMesh();
-    }
-
-    if (modelsPtr_.valid())
-    {
-        modelsPtr_->preUpdateMesh();
-    }
-}
-
-
-void Foam::fvTimeIntegrator::integrate()
-{
-    timeIntegrator::integrate();
 
     if (!obr_.time().subCycling())
     {
@@ -292,7 +316,6 @@ void Foam::fvTimeIntegrator::integrate()
         #undef ClearSourceTypes
     }
 }
-
 
 void Foam::fvTimeIntegrator::clear()
 {

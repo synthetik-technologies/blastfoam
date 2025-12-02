@@ -76,6 +76,9 @@ protected:
         //- Read maximum Courant number
         virtual scalar CoNum() const;
 
+        //- Read maximum Diffusion number
+        virtual scalar DiNum() const;
+
 
 public:
 
@@ -100,7 +103,8 @@ public:
     // Member Functions
 
         //- Solve
-        virtual void solve();
+        virtual void solveExplicit();
+        virtual void solveImplicit();
 
         //- Called at the start of the time-step, before the PIMPLE loop
         virtual void preSolve();

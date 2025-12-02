@@ -326,14 +326,6 @@ public:
                 return false;
             }
 
-            //- Store explicit deltas
-            virtual void storeFluxDeltas()
-            {}
-
-            //- Clear stored data
-            virtual void clear()
-            {}
-
 
         // Mass transfer
 

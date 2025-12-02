@@ -117,8 +117,20 @@ public:
         virtual void clearODEFields()
         {}
 
-        //- Post update
-        virtual void postUpdate()
+        //- Explicit post update
+        virtual void postExplicit()
+        {}
+
+        //- Implicit post update
+        virtual void postImplicit()
+        {}
+
+        //- Store explicit deltas
+        virtual void storeExplicit()
+        {}
+
+        //- Clear stored data
+        virtual void clear()
         {}
 
         //- Return energy source

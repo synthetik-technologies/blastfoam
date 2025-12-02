@@ -89,8 +89,14 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Post update
-        virtual void postUpdate();
+       //- Explicit post update
+        virtual void postExplicit();
+
+        //- Implicit post update
+        virtual void postImplicit();
+
+        //- Save explicit changes
+        virtual void storeExplicit();
 
         //- Remove stored fields
         virtual void clear();

@@ -415,7 +415,16 @@ public:
             virtual void solve() = 0;
 
             //- Solve viscous and source terms
-            virtual void postUpdate() = 0;
+            virtual void postExplicit() = 0;
+
+            //- Solve viscous and source terms
+            virtual void postImplicit() = 0;
+
+            //- Store explicit deltas
+            virtual void storeExplicit() = 0;
+
+            //- Clear cached data
+            virtual void clear() = 0;
 
             //- Correct delta terms
             virtual void correctDeltas()

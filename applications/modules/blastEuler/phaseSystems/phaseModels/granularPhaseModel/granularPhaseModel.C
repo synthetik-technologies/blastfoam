@@ -189,31 +189,34 @@ void Foam::granularPhaseModel::solve()
 }
 
 
-void Foam::granularPhaseModel::postUpdate()
+void Foam::granularPhaseModel::postExplicit()
+{}
+
+
+void Foam::granularPhaseModel::postImplicit()
 {
     volScalarField& alpha(*this);
 
-    if (needSolve(alpha.name()))
-    {
-        //- Solve momentum equation (implicit stresses)
-        fvScalarMatrix alphaEqn
-        (
-            fvm::ddt(alpha) - fvc::ddt(alpha)
-         ==
-            models().source(alpha)
-        );
-        constraints().constrain(alphaEqn);
-        alphaEqn.solve();
-        constraints().constrain(alpha);
-    }
+    // if (needSolve(alpha.name()))
+    // {
+    //     //- Solve momentum equation (implicit stresses)
+    //     fvScalarMatrix alphaEqn
+    //     (
+    //         fvm::ddt(alpha) - alphaAdvection_()
+    //      ==
+    //         models().source(alpha)
+    //     );
+    //     constraints().constrain(alphaEqn);
+    //     alphaEqn.solve();
+    //     constraints().constrain(alpha);
+    // }
 
-    alphaRho_.storePrevIter();
     if (needSolve(rho().name()))
     {
         //- Solve momentum equation (implicit stresses)
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(alpha, rho()) - fvc::ddt(alphaRho_)
+            fvm::ddt(alpha, rho()) - alphaRhoAdvection_()
           + fvm::ddt(residualAlpha(), rho())
           - fvc::ddt(residualAlpha(), rho())
          ==
@@ -232,7 +235,7 @@ void Foam::granularPhaseModel::postUpdate()
         //- Solve momentum equation (implicit stresses)
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
+            fvm::ddt(alpha, rho(), U_) - alphaRhoUAdvection_()
           + fvm::ddt(this->residualAlphaRho(), U_)
           - fvc::ddt(this->residualAlphaRho(), U_)
          ==
@@ -257,7 +260,7 @@ void Foam::granularPhaseModel::postUpdate()
     {
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRhoE_)
+            fvm::ddt(alpha, rho(), he()) - alphaRhoEAdvection_()
           + fvm::ddt(this->residualAlphaRho(), he())
           - fvc::ddt(this->residualAlphaRho(), he())
         ==
@@ -279,10 +282,10 @@ void Foam::granularPhaseModel::postUpdate()
             1.5
            *(
                 fvm::ddt(alpha, rho(), Theta_)
-              - fvc::ddt(alphaRho_.prevIter(), Theta_)
               + fvm::ddt(this->residualAlphaRho(), Theta_)
               - fvc::ddt(this->residualAlphaRho(), Theta_)
             )
+          - alphaRhoPTEAdvection_()
          ==
             models().source(alpha, rho(), Theta_)
         );
@@ -324,9 +327,9 @@ void Foam::granularPhaseModel::postUpdate()
         alphaRhoPTE_ = 1.5*alphaRho_*Theta_;
     }
 
-    thermoPtr_->postUpdate();
-    surfTModel_->postUpdate();
-    dPtr_->postUpdate();
+    thermoPtr_->postImplicit();
+    surfTModel_->postImplicit();
+    dPtr_->postImplicit();
 }
 
 
@@ -440,6 +443,27 @@ void Foam::granularPhaseModel::encode()
     alphaRhoU_ = alphaRho_*U_;
     alphaRhoE_ = alphaRho_*e_;
     alphaRhoPTE_ = 1.5*alphaRho_*Theta_;
+}
+
+
+void Foam::granularPhaseModel::storeExplicit()
+{
+    alphaRhoAdvection_ = fvc::ddt(alphaRho_);
+    alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
+    alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
+    alphaRhoPTEAdvection_ = fvc::ddt(alphaRhoPTE_);
+    thermoPtr_->storeExplicit();
+}
+
+
+void Foam::granularPhaseModel::clear()
+{
+    fluxScheme_->clear();
+    alphaRhoAdvection_.clear();
+    alphaRhoUAdvection_.clear();
+    alphaRhoEAdvection_.clear();
+    alphaRhoPTEAdvection_.clear();
+    thermoPtr_->clear();
 }
 
 

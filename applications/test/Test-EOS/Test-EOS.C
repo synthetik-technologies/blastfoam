@@ -164,6 +164,7 @@ int main(int argc, char *argv[])
         << indent << "e(p, rho, T): " << eos.initializeEnergy(p, rho, e, T) << nl
         << indent << "rho(p, T): " << eos.rhoPT(rho, p, T) << nl
         << indent << "T(rho, e): " << eos.TRhoE(T, rho, e) << nl
+        << indent << "mu(rho, e, T): " << eos.mu(rho, e, T) << nl
         << endl;
 
     return 0;

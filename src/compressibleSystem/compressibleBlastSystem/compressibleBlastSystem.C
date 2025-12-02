@@ -171,25 +171,25 @@ void Foam::compressibleBlastSystem::solve()
 }
 
 
-void Foam::compressibleBlastSystem::postUpdate()
+void Foam::compressibleBlastSystem::postImplicit()
 {
     if (radiation_.valid())
     {
         radiation_->correct();
     }
-    compressibleSystem::postUpdate();
+    compressibleSystem::postImplicit();
 
-    this->thermo().postUpdate();
+    this->thermo().postImplicit();
     this->thermo().correct();
     constraints().constrain(p_);
     p_.correctBoundaryConditions();
 }
 
 
-void Foam::compressibleBlastSystem::storeFluxDeltas()
+void Foam::compressibleBlastSystem::storeExplicit()
 {
-    compressibleSystem::storeFluxDeltas();
-    thermoPtr_->storeFluxDeltas();
+    compressibleSystem::storeExplicit();
+    thermoPtr_->storeExplicit();
 }
 
 

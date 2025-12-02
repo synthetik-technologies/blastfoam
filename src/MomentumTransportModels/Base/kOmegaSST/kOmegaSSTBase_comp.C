@@ -38,21 +38,43 @@ namespace compressible
 
 // * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * * //
 
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+void
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::boundOmega()
+{
+    omega_ = max(omega_, k_/(this->nutMaxCoeff_*this->nu()));
+}
+
 
 template<class MomentumTransportModel, class BasicMomentumTransportModel>
-tmp<volScalarField::Internal>
-kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::Pk
+tmp<volScalarField>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::F1
 (
-    const volScalarField::Internal& G
+    const volScalarField& CDkOmega
 ) const
 {
-    return
-        correction::Fcorr(this->k_)
-       *::Foam::kOmegaSST
-        <
-            MomentumTransportModel,
-            BasicMomentumTransportModel
-        >::Pk(G);
+    tmp<volScalarField> CDkOmegaPlus = max
+    (
+        CDkOmega,
+        CDkOmegaMin_
+        // dimensionedScalar(dimless/sqr(dimTime), 1.0e-10)
+    );
+
+    tmp<volScalarField> arg1 = min
+    (
+        min
+        (
+            max
+            (
+                (scalar(1)/betaStar_)*sqrt(k_)/(omega_*this->y()),
+                scalar(500)*this->nu()/(sqr(this->y())*omega_)
+            ),
+            (4*alphaOmega2_)*k_/(CDkOmegaPlus*sqr(this->y()))
+        ),
+        arg1Max_
+    );
+
+    return tanh(pow4(arg1));
 }
 
 template<class MomentumTransportModel, class BasicMomentumTransportModel>
@@ -63,13 +85,135 @@ kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::F2() const
     (
         max
         (
-            (scalar(2)/this->betaStar_)*sqrt(this->k_)/(this->omega_*this->y()),
-            scalar(500)*this->nu()/(sqr(this->y())*this->omega_)
+            (scalar(2)/betaStar_)*sqrt(k_)/(omega_*this->y()),
+            scalar(500)*this->nu()/(sqr(this->y())*omega_)
         ),
-        F2Max_
+        arg2Max_
     );
 
     return tanh(sqr(arg2));
+}
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+tmp<volScalarField>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::F3() const
+{
+    tmp<volScalarField> arg3 = min
+    (
+        150*this->nu()/(omega_*sqr(this->y())),
+        arg3Max_
+    );
+
+    return 1 - tanh(pow4(arg3));
+}
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+tmp<volScalarField>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::F23() const
+{
+    tmp<volScalarField> f23(F2());
+
+    if (F3_)
+    {
+        f23.ref() *= F3();
+    }
+
+    return f23;
+}
+
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+void kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::correctNut
+(
+    const volScalarField& S2,
+    const volScalarField& F2
+)
+{
+    this->nut_ = a1_*k_/max(a1_*omega_, b1_*F2*sqrt(S2));
+    this->nut_.correctBoundaryConditions();
+    fvConstraints::New(this->mesh_).constrain(this->nut_);
+}
+
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+void kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::
+correctNut()
+{
+    correctNut(2*magSqr(symm(fvc::grad(this->U_))), F23());
+}
+
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+tmp<volScalarField::Internal>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::Pk
+(
+    const volScalarField::Internal& G
+) const
+{
+    return min(G, (c1_*betaStar_)*this->k_()*this->omega_());
+}
+
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+tmp<volScalarField::Internal>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::epsilonByk
+(
+    const volScalarField::Internal& F1,
+    const volScalarField::Internal& F2
+) const
+{
+    return betaStar_*omega_();
+}
+
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+tmp<fvScalarMatrix>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::kSource() const
+{
+    return tmp<fvScalarMatrix>
+    (
+        new fvScalarMatrix
+        (
+            k_,
+            dimVolume*this->rho_.dimensions()*k_.dimensions()/dimTime
+        )
+    );
+}
+
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+tmp<fvScalarMatrix>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::
+omegaSource() const
+{
+    return tmp<fvScalarMatrix>
+    (
+        new fvScalarMatrix
+        (
+            omega_,
+            dimVolume*this->rho_.dimensions()*omega_.dimensions()/dimTime
+        )
+    );
+}
+
+
+template<class MomentumTransportModel, class BasicMomentumTransportModel>
+tmp<fvScalarMatrix>
+kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::Qsas
+(
+    const volScalarField::Internal& S2,
+    const volScalarField::Internal& gamma,
+    const volScalarField::Internal& beta
+) const
+{
+    return tmp<fvScalarMatrix>
+    (
+        new fvScalarMatrix
+        (
+            omega_,
+            dimVolume*this->rho_.dimensions()*omega_.dimensions()/dimTime
+        )
+    );
 }
 
 
@@ -84,10 +228,11 @@ kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::kOmegaSST
     const volVectorField& U,
     const surfaceScalarField& alphaRhoPhi,
     const surfaceScalarField& phi,
-    const viscosity& viscosity
+    const viscosity& viscosity,
+    const HashTable<scalar>& defaults
 )
 :
-    ::Foam::kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>
+    MomentumTransportModel
     (
         type,
         alpha,
@@ -97,16 +242,212 @@ kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::kOmegaSST
         phi,
         viscosity
     ),
-    correction(this->coeffDict_, SARKAR),
-    F2Max_
+    compressible::correction(this->coeffDict_, MODEL::K_OMEGA, *this),
+
+    alphaK1_
     (
-        this->coeffDict_.lookupOrAddDefault
+        lookupOrAddToDict
         (
-            "F2Max",
-            great
+            "alphaK1",
+            this->coeffDict_,
+            defaults,
+            0.85
         )
+    ),
+    alphaK2_
+    (
+        lookupOrAddToDict
+        (
+            "alphaK2",
+            this->coeffDict_,
+            defaults,
+            1.0
+        )
+    ),
+    alphaOmega1_
+    (
+        lookupOrAddToDict
+        (
+            "alphaOmega1",
+            this->coeffDict_,
+            defaults,
+            0.5
+        )
+    ),
+    alphaOmega2_
+    (
+        lookupOrAddToDict
+        (
+            "alphaOmega2",
+            this->coeffDict_,
+            defaults,
+            0.856
+        )
+    ),
+
+    beta1_
+    (
+        lookupOrAddToDict
+        (
+            "beta1",
+            this->coeffDict_,
+            defaults,
+            0.075
+        )
+    ),
+    beta2_
+    (
+        lookupOrAddToDict
+        (
+            "beta2",
+            this->coeffDict_,
+            defaults,
+            0.0828
+        )
+    ),
+    betaStar_
+    (
+        lookupOrAddToDict
+        (
+            "betaStar",
+            this->coeffDict_,
+            defaults,
+            0.09
+        )
+    ),
+
+    kappa_
+    (
+        lookupOrAddToDict
+        (
+            "kappa",
+            this->coeffDict_,
+            defaults,
+            0.41
+        )
+    ),
+
+    gamma1_
+    (
+        "gamma1",
+        beta1_/betaStar_ - sqr(kappa_)*alphaOmega1_/sqrt(betaStar_)
+    ),
+    gamma2_
+    (
+        "gamma2",
+        beta2_/betaStar_ - sqr(kappa_)*alphaOmega2_/sqrt(betaStar_)
+    ),
+
+    a1_
+    (
+        lookupOrAddToDict
+        (
+            "a1",
+            this->coeffDict_,
+            defaults,
+            0.31
+        )
+    ),
+    b1_
+    (
+        lookupOrAddToDict
+        (
+            "b1",
+            this->coeffDict_,
+            defaults,
+            1.0
+        )
+    ),
+    c1_
+    (
+        lookupOrAddToDict
+        (
+            "c1",
+            this->coeffDict_,
+            defaults,
+            20.0
+        )
+    ),
+    F3_
+    (
+        Switch::lookupOrAddToDict
+        (
+            "F3",
+            this->coeffDict_,
+            false
+        )
+    ),
+
+    arg1Max_
+    (
+        lookupOrAddToDict
+        (
+            "arg1Max",
+            this->coeffDict_,
+            defaults,
+            10.0
+        )
+    ),
+    arg2Max_
+    (
+        lookupOrAddToDict
+        (
+            "arg2Max",
+            this->coeffDict_,
+            defaults,
+            10.0
+        )
+    ),
+    arg3Max_
+    (
+        lookupOrAddToDict
+        (
+            "arg3Max",
+            this->coeffDict_,
+            defaults,
+            10.0
+        )
+    ),
+    CDkOmegaMin_
+    (
+        lookupOrAddToDict
+        (
+            "CDkOmegaMin",
+            this->coeffDict_,
+            defaults,
+            dimless/sqr(dimTime),
+            1.0e-10
+        )
+    ),
+
+    k_
+    (
+        IOobject
+        (
+            this->groupName("k"),
+            this->runTime_.name(),
+            this->mesh_,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        this->mesh_
+    ),
+    omega_
+    (
+        IOobject
+        (
+            this->groupName("omega"),
+            this->runTime_.name(),
+            this->mesh_,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        this->mesh_
     )
-{}
+{
+    bound(k_, this->kMin_);
+    boundOmega();
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -119,7 +460,34 @@ bool kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::read()
 {
     if (MomentumTransportModel::read())
     {
-        return correction::read(this->coeffDict_);
+        alphaK1_.readIfPresent(this->coeffDict());
+        alphaK2_.readIfPresent(this->coeffDict());
+        alphaOmega1_.readIfPresent(this->coeffDict());
+        alphaOmega2_.readIfPresent(this->coeffDict());
+        beta1_.readIfPresent(this->coeffDict());
+        beta2_.readIfPresent(this->coeffDict());
+        betaStar_.readIfPresent(this->coeffDict());
+
+        kappa_.readIfPresent(this->coeffDict());
+
+        gamma1_ =
+            beta1_/betaStar_ - sqr(kappa_)*alphaOmega1_/sqrt(betaStar_);
+        gamma2_ =
+            beta2_/betaStar_ - sqr(kappa_)*alphaOmega2_/sqrt(betaStar_);
+
+        a1_.readIfPresent(this->coeffDict());
+        b1_.readIfPresent(this->coeffDict());
+        c1_.readIfPresent(this->coeffDict());
+        F3_.readIfPresent("F3", this->coeffDict());
+
+        arg1Max_.readIfPresent(this->coeffDict());
+        arg2Max_.readIfPresent(this->coeffDict());
+        arg3Max_.readIfPresent(this->coeffDict());
+        CDkOmegaMin_.readIfPresent(this->coeffDict());
+
+        compressible::correction::read(this->coeffDict());
+
+        return true;
     }
     else
     {
@@ -157,14 +525,7 @@ void kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::correct()
 
     tmp<volTensorField> tgradU = fvc::grad(U);
     volScalarField S2(2*magSqr(symm(tgradU())));
-    volScalarField::Internal GbyNu
-    (
-        (
-            dev(twoSymm(tgradU()()))
-          - (2.0/3.0)/nut()*this->k_()*symmTensor::I
-        )
-     && tgradU()()
-    );
+    volScalarField::Internal GbyNu(dev(twoSymm(tgradU()())) && tgradU()());
     volScalarField::Internal G(this->GName(), nut()*GbyNu);
     tgradU.clear();
 
@@ -216,7 +577,7 @@ void kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::correct()
         omegaEqn.ref().relax();
         fvConstraints.constrain(omegaEqn.ref());
         omegaEqn.ref().boundaryManipulate(this->omega_.boundaryFieldRef());
-        solve(omegaEqn);
+        Foam::solve(omegaEqn);
         fvConstraints.constrain(this->omega_);
         this->boundOmega();
     }
@@ -237,7 +598,7 @@ void kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::correct()
 
     kEqn.ref().relax();
     fvConstraints.constrain(kEqn.ref());
-    solve(kEqn);
+    Foam::solve(kEqn);
     fvConstraints.constrain(this->k_);
     bound(this->k_, this->kMin_);
     this->boundOmega();

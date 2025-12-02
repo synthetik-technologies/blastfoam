@@ -99,7 +99,7 @@ void Foam::singlePhaseCompressibleSystem::decode()
 }
 
 
-void Foam::singlePhaseCompressibleSystem::postUpdate()
+void Foam::singlePhaseCompressibleSystem::postImplicit()
 {
     this->decode();
 
@@ -125,13 +125,13 @@ void Foam::singlePhaseCompressibleSystem::postUpdate()
         constraints().constrain(rho);
     }
 
-    compressibleBlastSystem::postUpdate();
+    compressibleBlastSystem::postImplicit();
 }
 
 
-void Foam::singlePhaseCompressibleSystem::storeFluxDeltas()
+void Foam::singlePhaseCompressibleSystem::storeExplicit()
 {
-    compressibleBlastSystem::storeFluxDeltas();
+    compressibleBlastSystem::storeExplicit();
 
     rhoAdvection_ = fvc::ddt(rhoEff());
 }

@@ -204,6 +204,10 @@ public:
             return IOobject::groupName(n, phaseName_);
         }
 
+        //- Store explicit changes
+        virtual void storeExplicit()
+        {}
+
         //- Return the name of the phase
         const word& phaseName() const
         {

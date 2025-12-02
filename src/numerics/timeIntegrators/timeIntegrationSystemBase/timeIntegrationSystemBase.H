@@ -229,11 +229,17 @@ public:
         //- Update before each ode step
         virtual void update() = 0;
 
-        //- Update after ode integration
-        virtual void postUpdate() = 0;
-
         //- Solve sub-step stepi
         virtual void solve() = 0;
+
+        //- Explicit update after ode integration
+        virtual void postExplicit() = 0;
+
+        //- Store explicit variables
+        virtual void storeExplicit() = 0;
+
+        //- Implicit update after ode integration
+        virtual void postImplicit() = 0;
 
         //- Optional clearing step
         virtual void clear()

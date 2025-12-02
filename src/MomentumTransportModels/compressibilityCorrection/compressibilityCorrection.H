@@ -50,6 +50,8 @@ SourceFiles
 
 #include "dimensionedScalar.H"
 #include "volFields.H"
+#include "viscosity.H"
+#include "momentumTransportModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,37 +67,58 @@ namespace compressible
 class correction
 {
 public:
-    enum CC_Method
+
+    enum MODEL
     {
-        SARKAR,
+        K_EPSILON,
+        K_OMEGA,
+        OTHER
+    };
+
+    enum F_CC_Method
+    {
+        NONE,
+        WILCOX,
         ZEMAN,
 
-        SIZE
+        SIZE_F
     };
-    static const NamedEnum<CC_Method, CC_Method::SIZE> CC_MethodNames_;
+    static const NamedEnum
+    <
+        F_CC_Method,
+        F_CC_Method::SIZE_F
+    > F_CC_MethodNames_;
 
 protected:
 
-    // Protected data
+    // Reference to turbulence model
+    const ::Foam::momentumTransportModel& turb_;
 
-        // Model coefficients
+    //- Compressibility correction
+    F_CC_Method FMethod_;
+    dimensionedScalar XiStar_;
+    dimensionedScalar lambda_;
+    dimensionedScalar Mt0_;
 
-            CC_Method method_;
 
-            dimensionedScalar XiStar_;
+    // Pressure dialation
+    bool pressureDilation_;
+    dimensionedScalar alphaK2_;
+    dimensionedScalar alphaK3_;
 
-            dimensionedScalar Mat0_;
-
-            dimensionedScalar rProdLim_;
-
-            dimensionedScalar alphaSarkar_;
 
 public:
 
     // Constructors
 
         //- Construct from components
-        correction(dictionary& dict, const CC_Method defaultMethod);
+        correction
+        (
+            dictionary& dict,
+            const MODEL model,
+            const ::Foam::momentumTransportModel& turb,
+            const F_CC_Method ccMethod = F_CC_Method::NONE
+        );
 
         //- Disallow default bitwise copy construction
         correction(const correction&) = delete;
@@ -107,83 +130,59 @@ public:
 
     // Member Functions
 
-        //- Read RASProperties dictionary
-        bool read(const dictionary&);
+        //- Read from dictionary
+        bool read(const dictionary& dict);
 
         //- Return speed of sound
-        static tmp<volScalarField::Internal> a
-        (
-            const volVectorField& U
-        );
+        tmp<volScalarField::Internal> speedOfSound() const;
 
         //- Return tubulent Mach number
-        static tmp<volScalarField::Internal> Mt
-        (
-            const volScalarField& k
-        );
+        tmp<volScalarField::Internal> Mt() const;
 
         //- Return tubulent Mach number squared
-        static tmp<volScalarField::Internal> MtSqr
-        (
-            const volScalarField& k
-        );
+        tmp<volScalarField::Internal> MtSqr() const;
 
         //- Return tubulent Mach number squared divided by k
         //  for use with implicit sources
-        static tmp<volScalarField::Internal> MtSqrByk
-        (
-            const volScalarField& k
-        );
+        tmp<volScalarField::Internal> MtSqrByk() const;
 
-        //- Return compressible correction factor
+        //  for use with implicit sources
+        tmp<volScalarField::Internal> Fcorr() const;
         tmp<volScalarField::Internal> Fcorr
         (
-            const volScalarField& k
+            tmp<volScalarField::Internal>& tMt
+        ) const;
+        tmp<volScalarField::Internal> Fcorr
+        (
+            const volScalarField::Internal& Mt
         ) const;
 
-        //- Return compressible beta star
-        void correct
+        //- Set compressible beta and betaStar
+        template<class BetaType, class BetaStarType>
+        void blendBeta
         (
-            const volScalarField& k,
-            const dimensionedScalar& betaStar0,
+            const BetaType& beta0,
+            const BetaStarType& betaStar0,
+            tmp<volScalarField::Internal>& tMt,
             tmp<volScalarField::Internal>& beta,
             tmp<volScalarField::Internal>& betaStar
+        ) const
+        {
+            tmp<volScalarField::Internal> tF(Fcorr(tMt));
+            beta = beta0 - betaStar0*XiStar_*tF();
+            betaStar = betaStar0*(1.0 + XiStar_*tF());
+        }
+
+        //- Pressure dialation source
+        tmp<volScalarField::Internal> pressureDialationSource
+        (
+            const volScalarField::Internal& G
         ) const;
-
-        //- Return compressible beta star
-        void correct
+        tmp<volScalarField::Internal> pressureDialationSource
         (
-            const volScalarField& k,
-            const dimensionedScalar& beta0,
-            const dimensionedScalar& betaStar0,
-            tmp<volScalarField::Internal>& beta,
-            tmp<volScalarField::Internal>& betaStar
+            const volScalarField::Internal& G,
+            tmp<volScalarField::Internal>& tMt
         ) const;
-
-        //- Return limited production source
-        void limitG
-        (
-            volScalarField::Internal& G,
-            const volScalarField::Internal& k,
-            const volScalarField::Internal& omega,
-            const volScalarField::Internal& betaStar
-        ) const;
-
-        //- Limit epsilon based on length scale
-        static void limitEpsilon_L
-        (
-            const volScalarField& k,
-            const volScalarField& y,
-            volScalarField& epsilon
-        );
-
-        //- Limit omega based on length scale
-        static void limitOmega_L
-        (
-            const volScalarField& k,
-            const volScalarField& y,
-            volScalarField& omega
-        );
 };
 
 

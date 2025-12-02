@@ -405,11 +405,38 @@ void Foam::multiphaseFluidBlastThermo::solve()
 }
 
 
-void Foam::multiphaseFluidBlastThermo::postUpdate()
+void Foam::multiphaseFluidBlastThermo::postExplicit()
 {
     forAll(phases_, phasei)
     {
-        thermos_[phasei].postUpdate();
+        thermos_[phasei].postExplicit();
+    }
+}
+
+
+void Foam::multiphaseFluidBlastThermo::postImplicit()
+{
+    forAll(phases_, phasei)
+    {
+        thermos_[phasei].postImplicit();
+    }
+}
+
+
+void Foam::multiphaseFluidBlastThermo::storeExplicit()
+{
+    forAll(phases_, phasei)
+    {
+        thermos_[phasei].storeExplicit();
+    }
+}
+
+
+void Foam::multiphaseFluidBlastThermo::clear()
+{
+    forAll(phases_, phasei)
+    {
+        thermos_[phasei].clear();
     }
 }
 

@@ -44,7 +44,7 @@ namespace solvers
 Foam::solvers::blastEuler::blastEuler(fvMesh& mesh)
 :
     explicitSolver(mesh),
-    integrator_(mesh),
+    integrator_(mesh, false),
     fluid_(mesh)
 {
     integrator_.addSystem(fluid_);
@@ -192,10 +192,22 @@ Foam::scalar Foam::solvers::blastEuler::CoNum() const
 }
 
 
-void Foam::solvers::blastEuler::solve()
+Foam::scalar Foam::solvers::blastEuler::DiNum() const
+{
+    return 0.0;
+}
+
+
+void Foam::solvers::blastEuler::solveExplicit()
 {
     Info<< "Calculating Fluxes" << endl;
-    integrator_.integrate();
+    integrator_.integrate(false);
+}
+
+
+void Foam::solvers::blastEuler::solveImplicit()
+{
+    integrator_.solveImplicit();
 }
 
 

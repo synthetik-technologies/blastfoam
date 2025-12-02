@@ -127,11 +127,29 @@ void Foam::masterSystemList::solve()
 }
 
 
-void Foam::masterSystemList::postUpdate()
+void Foam::masterSystemList::postExplicit()
 {
     forAll(*this, i)
     {
-        (*this)[i].postUpdate();
+        (*this)[i].postExplicit();
+    }
+}
+
+
+void Foam::masterSystemList::postImplicit()
+{
+    forAll(*this, i)
+    {
+        (*this)[i].postImplicit();
+    }
+}
+
+
+void Foam::masterSystemList::storeExplicit()
+{
+    forAll(*this, i)
+    {
+        (*this)[i].storeExplicit();
     }
 }
 

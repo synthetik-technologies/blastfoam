@@ -50,7 +50,7 @@ Foam::regionSolvers::blastEuler::blastEuler
 )
 :
     fluid(mesh, regions),
-    integrator_(mesh),
+    integrator_(mesh, true),
     fluid_(mesh)
 {
     integrator_.addSystem(fluid_);

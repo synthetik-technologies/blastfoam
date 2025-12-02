@@ -196,12 +196,6 @@ public:
             const label facei
         ) const;
 
-        //- Solve sub-step stepi
-        virtual void solve();
-
-        //- Post update
-        virtual void postUpdate();
-
         //- Return the composition of the multi-component mixture
         virtual basicSpecieBlastMixture& composition()
         {

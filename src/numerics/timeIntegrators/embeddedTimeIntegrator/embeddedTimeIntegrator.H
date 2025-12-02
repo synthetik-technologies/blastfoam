@@ -124,7 +124,7 @@ public:
             virtual void addSystem(timeIntegrationSystemBase& system);
 
             //- Integrate with adaptive time stepping
-            virtual void integrate();
+            virtual void integrate(const bool doImplicit);
 
 };
 

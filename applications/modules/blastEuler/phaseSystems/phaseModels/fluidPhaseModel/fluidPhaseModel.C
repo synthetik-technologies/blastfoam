@@ -65,6 +65,16 @@ Foam::fluidPhaseModel::fluidPhaseModel
     e_(thermoPtr_->he()),
     T_(thermoPtr_->T()),
     p_(thermoPtr_->p()),
+    K_
+    (
+        IOobject
+        (
+            IOobject::groupName("K", phaseName),
+            fluid.mesh().time().name(),
+            fluid.mesh()
+        ),
+        0.5*magSqr(U_)
+    ),
     fluxScheme_()
 {
     thermoPtr_->read(phaseDict_);
@@ -80,6 +90,10 @@ Foam::fluidPhaseModel::fluidPhaseModel
             phi_,
             *this
         );
+
+
+    fluid.mesh().schemes().setFluxRequired(U_.name());
+
     this->thermophysicalTransport_ =
         PhaseThermophysicalTransportModel
         <
@@ -221,7 +235,11 @@ void Foam::fluidPhaseModel::solve()
 }
 
 
-void Foam::fluidPhaseModel::postUpdate()
+void Foam::fluidPhaseModel::postExplicit()
+{}
+
+
+void Foam::fluidPhaseModel::postImplicit()
 {
     volScalarField& alpha(*this);
     if (needSolve(alpha.name()) && solveAlpha_)
@@ -229,7 +247,7 @@ void Foam::fluidPhaseModel::postUpdate()
         //- Solve momentum equation (implicit stresses)
         fvScalarMatrix alphaEqn
         (
-            fvm::ddt(alpha) - fvc::ddt(alpha)
+            fvm::ddt(alpha) - alphaAdvection_()
          ==
             models().source(alpha)
         );
@@ -238,13 +256,12 @@ void Foam::fluidPhaseModel::postUpdate()
         constraints().constrain(alpha);
     }
 
-    alphaRho_.storePrevIter();
     if (needSolve(rho().name()))
     {
         //- Solve momentum equation (implicit stresses)
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(alpha, rho()) - fvc::ddt(alphaRho_)
+            fvm::ddt(alpha, rho()) - alphaRhoAdvection_()
           + fvm::ddt(this->residualAlpha(), rho())
           - fvc::ddt(this->residualAlpha(), rho())
          ==
@@ -267,65 +284,71 @@ void Foam::fluidPhaseModel::postUpdate()
         thermophysicalTransport_->predict();
     }
 
+    tmp<surfaceVectorField> devTau;
     if (needSolve(U_.name()) || turbulence_.valid())
     {
+        tmp<fvVectorMatrix> divDevTau;
+        if (/*!explicitViscosity_ &&*/ turbulence_.valid())
+        {
+            divDevTau = turbulence_->divDevTau(U_);
+        }
+
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
+            fvm::ddt(alpha, rho(), U_) - alphaRhoUAdvection_()
           + fvc::ddt(this->residualAlphaRho(), U_)
           - fvm::ddt(this->residualAlphaRho(), U_)
          ==
             models().source(*this, rho(), U_)
         );
-        if (turbulence_.valid())
+
+        if (divDevTau.valid())
         {
-            UEqn += turbulence_->divDevTau(U_);
-            alphaRhoE_ +=
-                rho().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate
-                    (
-                        rho().mesh().Sf(),
-                        turbulence_->devTau()
-                    )
-                  & flux().Uf()
-                );
+            UEqn += divDevTau();
         }
+
+        UEqn.relax();
+
         constraints().constrain(UEqn);
         UEqn.solve();
         constraints().constrain(U_);
 
-        alphaRhoU_ = alphaRho_*U_;
+        if (divDevTau.valid())
+        {
+            devTau = divDevTau().flux();
+        }
 
-        he() =
-            alphaRhoE_/Foam::max(alphaRho_, this->residualAlphaRho())
-          - 0.5*magSqr(U_);
+        K_ = 0.5*magSqr(U_);
+        alphaRhoU_ = alphaRho_*U_;
     }
 
     // Solve thermal energy diffusion
     if (needSolve(he().name()) || turbulence_.valid())
     {
-        fvScalarMatrix eEqn
+        fvScalarMatrix EEqn
         (
-            fvm::ddt(alphaRho_, he())
-          - fvc::ddt(alphaRho_.prevIter(), he())
+            fvm::ddt(alpha, rho(), he()) - alphaRhoEAdvection_()
+          + fvc::ddt(alpha, rho(), K_)
           + fvc::ddt(this->residualAlphaRho(), he())
           - fvm::ddt(this->residualAlphaRho(), he())
          ==
             models().source(*this, rho(), he())
         );
 
-        if (turbulence_.valid())
+        if (devTau.valid())
         {
-            // Add thermal energy diffusion
-            eEqn += thermophysicalTransport_->divq(he());
+            EEqn +=
+                fvc::div(devTau & flux().Uf())
+              + thermophysicalTransport_->divq(he());
         }
-        constraints().constrain(eEqn);
-        eEqn.solve();
+
+        EEqn.relax();
+
+        constraints().constrain(EEqn);
+        EEqn.solve();
         constraints().constrain(he());
 
-        alphaRhoE_ = alphaRho_*(he() + 0.5*magSqr(U_));
+        alphaRhoE_ = alphaRho_*(he() + K_);
     }
 
     if (turbulence_.valid())
@@ -337,8 +360,32 @@ void Foam::fluidPhaseModel::postUpdate()
         thermophysicalTransport_->correct();
     }
 
-    thermo().postUpdate();
+    thermo().postImplicit();
     thermo().correct();
+}
+
+
+void Foam::fluidPhaseModel::storeExplicit()
+{
+    if (solveAlpha_)
+    {
+        alphaAdvection_ = fvc::ddt(*this);
+    }
+    alphaRhoAdvection_ = fvc::ddt(alphaRho_);
+    alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
+    alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
+    thermoPtr_->storeExplicit();
+}
+
+
+void Foam::fluidPhaseModel::clear()
+{
+    fluxScheme_->clear();
+    alphaAdvection_.clear();
+    alphaRhoAdvection_.clear();
+    alphaRhoUAdvection_.clear();
+    alphaRhoEAdvection_.clear();
+    thermoPtr_->clear();
 }
 
 
@@ -443,6 +490,8 @@ void Foam::fluidPhaseModel::decode()
     constraints.constrain(U_);
     U_.correctBoundaryConditions();
 
+    K_ = 0.5*magSqr(U_);
+
     alphaRhoU_.correctBoundaryConditions();
     alphaRhoU_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
@@ -455,14 +504,14 @@ void Foam::fluidPhaseModel::decode()
         const scalar alphaRho = alphaRho_[celli];
         if (alphaRho > rAlphaRho)
         {
-            e_[celli] = alphaRhoE_[celli]/alphaRho - 0.5*magSqr(U_[celli]);
+            e_[celli] = alphaRhoE_[celli]/alphaRho - K_[celli];
         }
         // else
         // {
         //     e_[celli] = thermoPtr_->cellhe(thermoPtr_->TLow(), celli);
         // }
     }
-    // e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
+    // e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - K_();
     phaseFluxScheme::correctPhaseFields(alpha, e_, rAlpha);
     constraints.constrain(e_);
     e_.correctBoundaryConditions();
@@ -471,7 +520,7 @@ void Foam::fluidPhaseModel::decode()
     thermoPtr_->correct();
 
     // Update total energy because e may have changed
-    alphaRhoE_ == alphaRho_*(e_ + 0.5*magSqr(U_));
+    alphaRhoE_ == alphaRho_*(e_ + K_);
 
     // Limit speed of sound in cells with low volume fraction
     volScalarField& c = thermoPtr_->speedOfSound();
@@ -494,9 +543,11 @@ void Foam::fluidPhaseModel::decode()
 
 void Foam::fluidPhaseModel::encode()
 {
+    K_ = 0.5*magSqr(U_);
+
     alphaRho_ = (*this)*rho_;
     alphaRhoU_ = alphaRho_*U_;
-    alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
+    alphaRhoE_ = alphaRho_*(e_ + K_);
 }
 
 

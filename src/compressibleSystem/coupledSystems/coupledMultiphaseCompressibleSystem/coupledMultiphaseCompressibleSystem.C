@@ -162,13 +162,11 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 }
 
 
-void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
+void Foam::coupledMultiphaseCompressibleSystem::postImplicit()
 {
     this->decode();
 
-    alphaRho_.storePrevIter();
-
-    compressibleBlastSystem::postUpdate();
+    multiphaseCompressibleSystem::postImplicit();
 }
 
 

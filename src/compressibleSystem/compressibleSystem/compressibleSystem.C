@@ -568,7 +568,10 @@ void Foam::compressibleSystem::solve()
 }
 
 
-void Foam::compressibleSystem::postUpdate()
+void Foam::compressibleSystem::postExplicit()
+{}
+
+void Foam::compressibleSystem::postImplicit()
 {
     if (turbulence_.valid())
     {
@@ -674,7 +677,7 @@ const Foam::volScalarField& Foam::compressibleSystem::rhoEff() const
 }
 
 
-void Foam::compressibleSystem::storeFluxDeltas()
+void Foam::compressibleSystem::storeExplicit()
 {
     rhoEAdvection_ = fvc::ddt(rhoE_);
     rhoUAdvection_ = fvc::ddt(rhoU_);

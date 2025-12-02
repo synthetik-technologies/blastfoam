@@ -42,7 +42,7 @@ namespace solvers
 Foam::solvers::blastParcel::blastParcel(fvMesh& mesh)
 :
     explicitSolver(mesh),
-    integrator_(mesh),
+    integrator_(mesh, false),
     fluidPtr_(coupledCompressibleSystem::New(mesh)),
     clouds_
     (
@@ -87,6 +87,12 @@ Foam::scalar Foam::solvers::blastParcel::CoNum() const
 }
 
 
+Foam::scalar Foam::solvers::blastParcel::DiNum() const
+{
+    return fluidPtr_->DiNum();
+}
+
+
 void Foam::solvers::blastParcel::preSolve()
 {
     integrator_.preUpdateMesh();
@@ -97,7 +103,7 @@ void Foam::solvers::blastParcel::preSolve()
     explicitSolver::preSolve();
 }
 
-void Foam::solvers::blastParcel::solve()
+void Foam::solvers::blastParcel::solveExplicit()
 {
     fluidPtr_->decode();
     clouds_.evolve();
@@ -107,7 +113,13 @@ void Foam::solvers::blastParcel::solve()
     fluidPtr_->dragSource() = clouds_.SU(fluidPtr_->U());
 
     Info<< "Calculating Fluxes" << endl;
-    integrator_.integrate();
+    integrator_.integrate(false);
+}
+
+
+void Foam::solvers::blastParcel::solveImplicit()
+{
+    integrator_.solveImplicit();
 }
 
 

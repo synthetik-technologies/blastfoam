@@ -326,6 +326,26 @@ void Foam::psiuCompressibleSystem::solve()
       - divSigmaDotU
     );
 
+    // if (explicitViscosity_ && turbulence_.valid())
+    {
+        volSymmTensorField devTau(turbulence_->devTau());
+        volScalarField divTauDotU
+        (
+            fvc::div
+            (
+                fvc::dotInterpolate(rho_.mesh().Sf(), devTau)
+              & fluxScheme_->Uf()
+            )
+        );
+
+        deltaRhoU += fvc::div(devTau);
+        deltaRhoE +=
+           (thermophysicalTransport_->divq(e_) & e_) + divTauDotU;
+        deltaRhoEu +=
+            (thermophysicalTransport_->divq(eu_) & eu_) + divTauDotU;
+    }
+
+
     //- Store changed in mass, momentum and energy
     this->storeAndBlendDelta(deltaRho);
     this->storeAndBlendDelta(deltaRhoU);
@@ -557,76 +577,129 @@ void Foam::psiuCompressibleSystem::solve()
 }
 
 
-void Foam::psiuCompressibleSystem::postUpdate()
+void Foam::psiuCompressibleSystem::solveImplicit()
 {
-    turbulence_->predict();
-    thermophysicalTransport_->predict();
-
-    rhoEff().storePrevIter();
-
+    if (turbulence_.valid())
     {
-        // Solve momentum
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(rhoEff(), U_) - fvc::ddt(rhoU_)
-          + turbulence_->divDevTau(U_)
-         ==
-            models().source(rhoEff(), U_)
-        );
+        turbulence_->predict();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->predict();
+    }
 
-        constraints().constrain(UEqn);
-        UEqn.solve();
-        constraints().constrain(U_);
+    tmp<surfaceVectorField> devTau;
+    if (needSolve_U())
+    {
+        tmp<fvVectorMatrix> divDevTau;
+        for (label iter = 0; iter < 2; iter++)
+        {
+            if (!explicitViscosity_ && turbulence_.valid())
+            {
+                divDevTau =
+                    turbulence_->divDevTau(U_);
+                  // + fvc::grad((2.0/3.0)*rhoEff()*turbulence_->k());
+            }
 
+            // Solve momentum
+            fvVectorMatrix UEqn
+            (
+                fvm::ddt(rhoEff(), U_)
+              - rhoUAdvection_() // Change from advection
+            ==
+                models().source(rhoEff(), U_)
+            );
+
+            if (divDevTau.valid())
+            {
+                UEqn += divDevTau();
+            }
+            addUSource(UEqn);
+
+            UEqn.relax();
+
+            constraints().constrain(UEqn);
+            UEqn.solve();
+            constraints().constrain(U_);
+        }
+
+        if (divDevTau.valid())
+        {
+            devTau = divDevTau().flux();
+        }
+
+        // Update kinetic energy and momentum
+        K_ = 0.5*magSqr(U_);
         rhoU_ = rhoEff()*U_;
     }
 
     // Solve thermal energy diffusion
+    if (needSolve_E())
     {
-        // Add kinetic energy
-        rhoE_ -=
-            rho_.mesh().time().deltaT()
-           *(U_ & fvc::div(turbulence_->devTau()));
-
-        e_ = rhoE_/rhoEff() - 0.5*magSqr(U_);
-
-        fvScalarMatrix eEqn
+        volScalarField& he = thermo().he();
+        fvScalarMatrix EEqn
         (
-            fvm::ddt(rhoEff(), e_) - fvc::ddt(rhoEff().prevIter(), e_)
-          + thermophysicalTransport_->divq(e_)
+            fvm::ddt(rhoEff(), he)
+          - rhoEAdvection_()        // Explicit advection contribtion
+          + fvc::ddt(rhoEff(), K_)  // Change in kinetic energy
          ==
-            models().source(rhoEff(), e_)
+            models().source(rhoEff(), he)
         );
 
-        constraints().constrain(eEqn);
-        eEqn.solve();
-        constraints().constrain(e_);
+        if (devTau.valid())
+        {
+            EEqn +=
+                fvc::div(devTau & flux().Uf())
+              + thermophysicalTransport_->divq(he);
+        }
 
-        rhoE_ = rhoEff()*(e_ + 0.5*magSqr(U_));
+        EEqn.relax();
+
+        constraints().constrain(EEqn);
+        EEqn.solve();
+        constraints().constrain(he);
+
+        // Update total energy
+        rhoE_ = rhoEff()*(he + K_);
     }
 
-    // Solve un burnt energy
+    // Solve thermal energy diffusion
+    if (needSolve_E())
     {
-        // Add kinetic energy
-        rhoEu_ -=
-            rho_.mesh().time().deltaT()
-           *(U_ & fvc::div(turbulence_->devTau()));
-
-        eu_ = rhoEu_/rhoEff() - 0.5*magSqr(U_);
-
-        fvScalarMatrix euEqn
+        fvScalarMatrix EuEqn
         (
-            fvm::ddt(rhoEff(), eu_) - fvc::ddt(rhoEff().prevIter(), eu_)
-          + thermophysicalTransport_->divq(eu_)
+            fvm::ddt(rhoEff(), eu_)
+          - rhoEuAdvection_()        // Explicit advection contribtion
+          + fvc::ddt(rhoEff(), K_)  // Change in kinetic energy
          ==
             models().source(rhoEff(), eu_)
         );
 
-        constraints().constrain(euEqn);
-        euEqn.solve();
+        if (devTau.valid())
+        {
+            EuEqn +=
+                fvc::div(devTau & flux().Uf())
+              + thermophysicalTransport_->divq(eu_);
+        }
+
+        EuEqn.relax();
+
+        constraints().constrain(EuEqn);
+        EuEqn.solve();
         constraints().constrain(eu_);
 
-        rhoEu_ = rhoEff()*(eu_ + 0.5*magSqr(U_));
+        // Update total energy
+        rhoEu_ = rhoEff()*(eu_ + K_);
+    }
+
+    if (turbulence_.valid())
+    {
+        turbulence_->correct();
+    }
+
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->correct();
     }
 
     if (thermo_->containsSpecie("ft"))
@@ -634,7 +707,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
         volScalarField& ft = thermo_->Y("ft");
         fvScalarMatrix ftEqn
         (
-            fvm::ddt(rhoEff(), ft) - fvc::ddt(rhoEff().prevIter(), ft)
+            fvm::ddt(rhoEff(), ft) - rhoftAdvection_()
           + thermophysicalTransport_->divq(ft)
          ==
             models().source(rhoEff(), ft)
@@ -698,7 +771,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
         Info<< "Max St-Courant Number = " << StCoNum << endl;
         fvScalarMatrix bEqn
         (
-            fvm::ddt(rho_, b_) - fvc::ddt(rho_, b_)
+            fvm::ddt(rho_, b_) - rhobAdvection_()
           - fvm::laplacian(thermophysicalTransport_->DEff(b_), b_)
         );
 
@@ -814,7 +887,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
 
             fvScalarMatrix SuEqn
             (
-                fvm::ddt(rho_, Su_) - fvc::ddt(rho_, Su_)
+                fvm::ddt(rho_, Su_) - rhoSuAdvection_()
             ==
               - fvm::SuSp(-rho_*Rc*Su0/Su_, Su_)
               - fvm::SuSp(rho_*(sigmas + Rc), Su_)
@@ -907,7 +980,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 fvScalarMatrix XiEqn
                 (
-                    fvm::ddt(rho_, Xi_) - fvc::ddt(rho_, Xi_)
+                    fvm::ddt(rho_, Xi_) - rhoXiAdvection_()
                  ==
                     rho_*R
                   - fvm::Sp(rho_*(R - G), Xi_)
@@ -978,11 +1051,13 @@ void Foam::psiuCompressibleSystem::decode()
     U_.internalFieldRef() = rhoU_()/rho_();
     U_.correctBoundaryConditions();
 
-    e_.internalFieldRef() = rhoE_()/rho_() - 0.5*magSqr(U_());
+    K_ = 0.5*magSqr(U_);
+
+    e_.internalFieldRef() = rhoE_()/rho_() - K_();
     e_.correctBoundaryConditions();
 
 
-    eu_.internalFieldRef() = rhoEu_()/rho_() - 0.5*magSqr(U_());
+    eu_.internalFieldRef() = rhoEu_()/rho_() - K_();
     forAll(b_, i)
     {
         if (b_[i] < 0.0001)
@@ -1000,26 +1075,56 @@ void Foam::psiuCompressibleSystem::decode()
 
     rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
     rhoE_.boundaryFieldRef() =
-        rho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
+        rho_.boundaryField()*(e_.boundaryField() + K_.boundaryField());
 
     rhoEu_.boundaryFieldRef() =
-        rho_.boundaryField()
-       *(
-            eu_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
+        rho_.boundaryField()*(eu_.boundaryField() + K_.boundaryField());
+}
+
+
+void Foam::psiuCompressibleSystem::storeExplicit()
+{
+    compressibleSystem::storeExplicit();
+
+    rhoAdvection_ = fvc::ddt(rho_);
+    rhoEuAdvection_ = fvc::ddt(rhoEu_);
+
+    if (thermo_->containsSpecie("ft"))
+    {
+        rhoftAdvection_ = fvc::ddt(rho_, thermo_->Y("ft"));
+    }
+    rhobAdvection_ = fvc::ddt(rho_, b_);
+
+    if (SuModel_ == "transport")
+    {
+        rhoSuAdvection_ = fvc::ddt(rho_, Su_);
+    }
+    if (XiModel_ == "transport")
+    {
+        rhoXiAdvection_ = fvc::ddt(rho_, Xi_);
+    }
+}
+
+
+void Foam::psiuCompressibleSystem::clear()
+{
+    compressibleSystem::clear();
+
+    rhoAdvection_.clear();
+    rhoEuAdvection_.clear();
+    rhoftAdvection_.clear();
+    rhobAdvection_.clear();
+    rhoSuAdvection_.clear();
+    rhoXiAdvection_.clear();
 }
 
 
 void Foam::psiuCompressibleSystem::encode()
 {
+    K_ = 0.5*magSqr(U_);
     rhoU_ = rho_*U_;
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-    rhoEu_ = rho_*(eu_ + 0.5*magSqr(U_));
+    rhoE_ = rho_*(e_ + K_);
+    rhoEu_ = rho_*(eu_ + K_);
 }
 
 

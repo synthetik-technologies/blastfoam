@@ -91,12 +91,20 @@ public:
         virtual void solve()
         {}
 
-        //- Remove stored fields
-        virtual void clearODEFields()
+        //- Explicit post update
+        virtual void postExplicit()
         {}
 
-        //- Post update
-        virtual void postUpdate()
+        //- Implicit post update
+        virtual void postImplicit()
+        {}
+
+        //- Store explicit deltas
+        virtual void storeExplicit()
+        {}
+
+        //- Clear stored data
+        virtual void clear()
         {}
 
 

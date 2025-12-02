@@ -352,8 +352,11 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Post update
-        virtual void postUpdate();
+        //- Explicit post update
+        virtual void postExplicit();
+
+        //- Implicit post update
+        virtual void postImplicit();
 
         //- Add external mass source
         tmp<fvScalarMatrix>& rhoSource()
@@ -392,7 +395,7 @@ public:
         void addESource(const volScalarField::Internal& extEsrc);
 
         //- Store changes from advection
-        virtual void storeFluxDeltas() = 0;
+        virtual void storeExplicit() = 0;
 
         //- Clear the flux scheme
         virtual void clear();

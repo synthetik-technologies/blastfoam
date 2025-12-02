@@ -42,7 +42,7 @@ namespace solvers
 Foam::solvers::blast::blast(fvMesh& mesh)
 :
     explicitSolver(mesh),
-    integrator_(mesh),
+    integrator_(mesh, false),
     fluidPtr_(compressibleSystem::New(mesh))
 {
     integrator_.addSystem(fluidPtr_());
@@ -63,10 +63,22 @@ Foam::scalar Foam::solvers::blast::CoNum() const
 }
 
 
-void Foam::solvers::blast::solve()
+Foam::scalar Foam::solvers::blast::DiNum() const
+{
+    return fluidPtr_->DiNum();
+}
+
+
+void Foam::solvers::blast::solveExplicit()
 {
     Info<< "Calculating Fluxes" << endl;
-    integrator_.integrate();
+    integrator_.integrate(false); // No implicit
+}
+
+
+void Foam::solvers::blast::solveImplicit()
+{
+    integrator_.solveImplicit();
 }
 
 

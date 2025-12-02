@@ -111,10 +111,28 @@ public:
             multicomponentBlastThermo::solve();
         }
 
-        //- Post update
-        virtual void postUpdate()
+        //- Explicit post update
+        virtual void postExplicit()
         {
-            multicomponentBlastThermo::postUpdate();
+            multicomponentBlastThermo::postExplicit();
+        }
+
+        //- Implicit post update
+        virtual void postImplicit()
+        {
+            multicomponentBlastThermo::postImplicit();
+        }
+
+        //- Store explicit deltas
+        virtual void storeExplicit()
+        {
+            multicomponentBlastThermo::storeExplicit();
+        }
+
+        //- Clear stored data
+        virtual void clear()
+        {
+            multicomponentBlastThermo::clear();
         }
 
     // Specie thermo properties

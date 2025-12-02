@@ -124,19 +124,25 @@ public:
             multicomponentBlastThermo::solve();
         }
 
-        //- Post update
-        virtual void postUpdate()
+        //- Explicit post update
+        virtual void postExplicit()
         {
-            multicomponentBlastThermo::postUpdate();
+            multicomponentBlastThermo::postExplicit();
         }
 
-        //- Store explicit fluxes
-        virtual void storeFluxDeltas()
+        //- Implicit post update
+        virtual void postImplicit()
         {
-            multicomponentBlastThermo::storeFluxDeltas();
+            multicomponentBlastThermo::postImplicit();
         }
 
-        //- Clear store data
+        //- Store explicit deltas
+        virtual void storeExplicit()
+        {
+            multicomponentBlastThermo::storeExplicit();
+        }
+
+        //- Clear stored data
         virtual void clear()
         {
             multicomponentBlastThermo::clear();

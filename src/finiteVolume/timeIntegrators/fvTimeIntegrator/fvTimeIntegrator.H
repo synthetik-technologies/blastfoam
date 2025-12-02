@@ -52,6 +52,11 @@ SourceFiles
 namespace Foam
 {
 
+
+class pimpleNoLoopControl;
+class pimpleSingleRegionControl;
+
+
 /*---------------------------------------------------------------------------*\
                            Class timeIntegrator Declaration
 \*---------------------------------------------------------------------------*/
@@ -74,7 +79,7 @@ protected:
 // Protected variables
 
     //- Reference to mesh
-    const fvMesh& mesh_;
+    fvMesh& mesh_;
 
     //- Current step old volume
     autoPtr<volScalarField::Internal> V0Ptr_;
@@ -90,6 +95,9 @@ protected:
 
     //- fvConstraints
     mutable UautoPtr<const fvConstraints> constraintsPtr_;
+
+    autoPtr<pimpleNoLoopControl> pimpleNoControlPtr_;
+    autoPtr<pimpleSingleRegionControl> pimplePtr_;
 
     //- List of fields that have models or constraints
     mutable hashedWordList solveFields_;
@@ -143,12 +151,6 @@ protected:
 
         // Update coefficients
         virtual void update();
-
-        //- Update all stored systems
-        virtual void updateAll();
-
-        //- Post update of all stored systems
-        virtual void postUpdateAll();
 
         //- Insert a list of old fields into the given hash table
         template<class FieldType>
@@ -225,26 +227,22 @@ public:
     TypeName("fvTimeIntegrator");
 
     // Constructor
-    fvTimeIntegrator(const fvMesh& mesh);
+    fvTimeIntegrator(fvMesh& mesh, const bool usePimple);
 
 
     //- Destructor
     virtual ~fvTimeIntegrator();
-
-
-    // Selectors
-
-        //- Return a reference to a timeIntegrator object
-        static fvTimeIntegrator& NewRef(const fvMesh& mesh);
-
 
     // Member Functions
 
         //- Update anything that needs to be done before mesh updates
         void preUpdateMesh();
 
-        //- Integrate fluxes in time
-        virtual void integrate();
+        //- Update all stored systems
+        virtual void updateAll();
+
+        //- Solve implicit
+        virtual void solveImplicit();
 
         //- Clear all ODE fields (old/delta)
         virtual void clear();

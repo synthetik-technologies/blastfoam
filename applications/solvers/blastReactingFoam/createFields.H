@@ -25,7 +25,7 @@ IOdictionary physicalProperties
         false
     )
 );
-fvTimeIntegrator integrator(mesh);
+fvTimeIntegrator integrator(mesh, true);
 reactingCompressibleSystem fluid(physicalProperties, mesh);
 integrator.addSystem(fluid);
 

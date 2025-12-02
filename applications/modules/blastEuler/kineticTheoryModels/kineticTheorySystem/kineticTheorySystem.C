@@ -762,9 +762,21 @@ void Foam::kineticTheorySystem::solve()
 }
 
 
-void Foam::kineticTheorySystem::postUpdate()
+void Foam::kineticTheorySystem::postExplicit()
 {
-    frictionalStressModel_->postUpdate();
+    frictionalStressModel_->postExplicit();
+}
+
+
+void Foam::kineticTheorySystem::postImplicit()
+{
+    frictionalStressModel_->postImplicit();
+}
+
+
+void Foam::kineticTheorySystem::storeExplicit()
+{
+    frictionalStressModel_->storeExplicit();
 }
 
 

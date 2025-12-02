@@ -210,9 +210,15 @@ void Foam::multicomponentBlastThermo::solve()
 }
 
 
-void Foam::multicomponentBlastThermo::postUpdate()
+void Foam::multicomponentBlastThermo::postExplicit()
 {
-    integratorPtr_->postUpdate();
+    integratorPtr_->postExplicit();
+}
+
+
+void Foam::multicomponentBlastThermo::postImplicit()
+{
+    integratorPtr_->postImplicit();
     if (integratorPtr_->normalize())
     {
         defaultSpeciei_ = -1;
@@ -220,6 +226,18 @@ void Foam::multicomponentBlastThermo::postUpdate()
     correctMassFractions();
 
     clearSources();
+}
+
+
+void Foam::multicomponentBlastThermo::storeExplicit()
+{
+    integratorPtr_->storeExplicit();
+}
+
+
+void Foam::multicomponentBlastThermo::clear()
+{
+    integratorPtr_->clear();
 }
 
 
@@ -246,18 +264,6 @@ void Foam::multicomponentBlastThermo::clearSources()
             implicitSources_[i] *= 0;
         }
     }
-}
-
-
-void Foam::multicomponentBlastThermo::storeFluxDeltas()
-{
-    integratorPtr_->storeFluxDeltas();
-}
-
-
-void Foam::multicomponentBlastThermo::clear()
-{
-    integratorPtr_->clear();
 }
 
 
@@ -527,7 +533,11 @@ void Foam::multicomponentBlastThermo::integrator::solve()
 }
 
 
-void Foam::multicomponentBlastThermo::integrator::postUpdate()
+void Foam::multicomponentBlastThermo::integrator::postExplicit()
+{}
+
+
+void Foam::multicomponentBlastThermo::integrator::postImplicit()
 {
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
 
@@ -600,7 +610,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
     }
 }
 
-void Foam::multicomponentBlastThermo::integrator::storeFluxDeltas()
+void Foam::multicomponentBlastThermo::integrator::storeExplicit()
 {
     alphaRhoYAdvection_.setSize(Y_.size());
     forAll(alphaRhoYAdvection_, i)

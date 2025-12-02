@@ -54,10 +54,11 @@ blastDisplacementLaplacianFvMotionSolver
 (
     const word& name,
     const polyMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& type
 )
 :
-    blastDisplacementMotionSolver(name, mesh, dict, typeName),
+    blastDisplacementMotionSolver(name, mesh, dict, type),
     fvMotionSolver(mesh),
     cellDisplacement_
     (

@@ -841,7 +841,22 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::solve()
 
 
 template<class Thermo>
-void Foam::cavitatingFluidBlastThermo<Thermo>::postUpdate()
+void Foam::cavitatingFluidBlastThermo<Thermo>::postExplicit()
+{}
+
+
+template<class Thermo>
+void Foam::cavitatingFluidBlastThermo<Thermo>::postImplicit()
+{}
+
+
+template<class Thermo>
+void Foam::cavitatingFluidBlastThermo<Thermo>::storeExplicit()
+{}
+
+
+template<class Thermo>
+void Foam::cavitatingFluidBlastThermo<Thermo>::clear()
 {}
 
 

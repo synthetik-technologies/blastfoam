@@ -120,8 +120,9 @@ protected:
 
         virtual void update();
         virtual void solve();
-        virtual void postUpdate();
-        void storeFluxDeltas();
+        virtual void postExplicit();
+        virtual void postImplicit();
+        virtual void storeExplicit();
         virtual void clear();
 
         bool normalize() const
@@ -187,13 +188,16 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Post update
-        virtual void postUpdate();
+        //- Explicit post update
+        virtual void postExplicit();
 
-        //- Store explicit fluxes
-        virtual void storeFluxDeltas();
+        //- Implicit post update
+        virtual void postImplicit();
 
-        //- Clear fields
+        //- Store explicit deltas
+        virtual void storeExplicit();
+
+        //- Clear stored data
         virtual void clear();
 
         //- Add an external change to a thermodynamic field if present

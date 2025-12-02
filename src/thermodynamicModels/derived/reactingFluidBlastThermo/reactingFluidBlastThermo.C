@@ -115,19 +115,6 @@ void Foam::reactingFluidBlastThermo<Thermo>::update()
     multicomponentFluidBlastThermo<Thermo>::update();
 }
 
-template<class Thermo>
-void Foam::reactingFluidBlastThermo<Thermo>::solve()
-{
-    multicomponentFluidBlastThermo<Thermo>::solve();
-}
-
-
-template<class Thermo>
-void Foam::reactingFluidBlastThermo<Thermo>::postUpdate()
-{
-    multicomponentFluidBlastThermo<Thermo>::postUpdate();
-}
-
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>

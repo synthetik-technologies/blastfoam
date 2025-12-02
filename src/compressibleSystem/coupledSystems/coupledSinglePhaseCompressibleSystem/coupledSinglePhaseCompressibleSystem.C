@@ -111,9 +111,9 @@ void Foam::coupledSinglePhaseCompressibleSystem::solve()
 }
 
 
-void Foam::coupledSinglePhaseCompressibleSystem::postUpdate()
+void Foam::coupledSinglePhaseCompressibleSystem::postImplicit()
 {
-    singlePhaseCompressibleSystem::postUpdate();
+    singlePhaseCompressibleSystem::postImplicit();
 }
 
 

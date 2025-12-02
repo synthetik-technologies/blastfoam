@@ -692,10 +692,34 @@ void Foam::detonatingFluidBlastThermo<Thermo>::solve()
 
 
 template<class Thermo>
-void Foam::detonatingFluidBlastThermo<Thermo>::postUpdate()
+void Foam::detonatingFluidBlastThermo<Thermo>::postExplicit()
 {
-    activation_->postUpdate();
-    afterburn_->postUpdate();
+    activation_->postExplicit();
+    afterburn_->postExplicit();
+}
+
+
+template<class Thermo>
+void Foam::detonatingFluidBlastThermo<Thermo>::postImplicit()
+{
+    activation_->postImplicit();
+    afterburn_->postImplicit();
+}
+
+
+template<class Thermo>
+void Foam::detonatingFluidBlastThermo<Thermo>::storeExplicit()
+{
+    activation_->storeExplicit();
+    afterburn_->storeExplicit();
+}
+
+
+template<class Thermo>
+void Foam::detonatingFluidBlastThermo<Thermo>::clear()
+{
+    activation_->clear();
+    afterburn_->clear();
 }
 
 

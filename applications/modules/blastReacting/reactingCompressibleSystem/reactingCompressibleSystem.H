@@ -75,9 +75,9 @@ protected:
         //- Internal energy
         volScalarField& e_;
 
-        //- Thermo turbulence model
-        autoPtr<fluidMulticomponentThermophysicalTransportModel>
-            thermophysicalTransport_;
+        // //- Thermo turbulence model
+        // autoPtr<fluidMulticomponentThermophysicalTransportModel>
+        //     thermophysicalTransport_;
 
         //- Chemistry
         autoPtr<combustionModel> reaction_;
@@ -88,6 +88,9 @@ protected:
         //- Solve combustion each ode step
         bool odeCombustion_;
 
+    //- Cached changes from advection
+    tmp<volScalarField> rhoAdvection_;
+    List<tmp<volScalarField>> rhoYAdvection_;
 
     //- Allocate models
     virtual void setModels()
@@ -124,7 +127,13 @@ public:
         virtual void solve();
 
         //- Post update
-        virtual void postUpdate();
+        virtual void postImplicit();
+
+        //- Store changes from advection
+        virtual void storeExplicit();
+
+        //- Clear temporary variables
+        virtual void clear();
 
 
     // Member Access Functions

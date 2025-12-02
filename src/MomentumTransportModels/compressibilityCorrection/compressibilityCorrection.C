@@ -31,18 +31,19 @@ License
 template<>
 const char* Foam::NamedEnum
 <
-    Foam::compressible::correction::CC_Method,
-    Foam::compressible::correction::CC_Method::SIZE
+    Foam::compressible::correction::F_CC_Method,
+    Foam::compressible::correction::F_CC_Method::SIZE_F
 >::names[] =
 {
-    "Sarkar",
+    "none",
+    "Wilcox",
     "Zeman"
 };
 const Foam::NamedEnum
 <
-    Foam::compressible::correction::CC_Method,
-    Foam::compressible::correction::CC_Method::SIZE
-> Foam::compressible::correction::CC_MethodNames_;
+    Foam::compressible::correction::F_CC_Method,
+    Foam::compressible::correction::F_CC_Method::SIZE_F
+> Foam::compressible::correction::F_CC_MethodNames_;
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -50,88 +51,155 @@ const Foam::NamedEnum
 Foam::compressible::correction::correction
 (
     dictionary& dict,
-    const CC_Method defaultMethod
+    const MODEL model,
+    const momentumTransportModel& turb,
+    const F_CC_Method ccMethod
 )
 :
-    method_
-    (
-        dict.found("method")
-      ? CC_MethodNames_.read(dict.lookup("method"))
-      : defaultMethod
-    ),
-    XiStar_
-    (
-        dimensionedScalar::lookupOrAddToDict
-        (
-            "XiStar",
-            dict,
-            method_ == SARKAR ? 1.5 : 2.0
-        )
-    ),
+    turb_(turb),
 
-    Mat0_
-    (
-        dimensionedScalar::lookupOrAddToDict
-        (
-            "Mat0",
-            dict,
-            0.25
-        )
-    ),
+    FMethod_(ccMethod),
+    XiStar_("XiStar", dimless, 2.0),
+    lambda_("lambda", dimless, 0.66),
+    Mt0_("Mt0", dimless, 0.25),
 
-    rProdLim_
-    (
-        dimensionedScalar::lookupOrAddToDict
-        (
-            "rProdLim",
-            dict,
-            20.0
-        )
-    ),
+    pressureDilation_(false),
+    alphaK2_("alphaK2", dimless, 0.15),
+    alphaK3_("alphaK3", dimless, 0.2)
+{
+    if (model == MODEL::K_OMEGA)
+    {
+        FMethod_ = F_CC_MethodNames_
+        [
+            dict.lookupOrAddDefault<word>
+            (
+                "compressibilityCorrection",
+                F_CC_MethodNames_[FMethod_]
+            )
+        ];
+
+        switch (FMethod_)
+        {
+            case F_CC_Method::NONE:
+            {
+                break;
+            }
+            case F_CC_Method::WILCOX:
+            {
+                XiStar_ =
+                    dimensioned<scalar>::lookupOrAddToDict
+                    (
+                        "XiStar",
+                        dict,
+                        2.0
+                    );
+                Mt0_ =
+                    dimensioned<scalar>::lookupOrAddToDict
+                    (
+                        "Mt0",
+                        dict,
+                        0.25
+                    );
+                break;
+            }
+            case F_CC_Method::ZEMAN:
+            {
+                XiStar_ =
+                    dimensioned<scalar>::lookupOrAddToDict
+                    (
+                        "XiStar",
+                        dict,
+                        0.75
+                    );
+                lambda_ =
+                    dimensioned<scalar>::lookupOrAddToDict
+                    (
+                        "lambda",
+                        dict,
+                        0.66
+                    );
+                Mt0_ =
+                    dimensioned<scalar>::lookupOrAddToDict
+                    (
+                        "Mt0",
+                        dict,
+                        0.2
+                    );
+                break;
+            }
+            default:
+            {
+                NotImplemented;
+            }
+        }
+    }
+    else if (model == MODEL::K_EPSILON)
+    {
+        pressureDilation_ =
+            dict.lookupOrAddDefault("pressureDilation", false);
+    }
 
 
-    alphaSarkar_
-    (
-        dimensionedScalar::lookupOrAddToDict
-        (
-            "alphaSarkar",
-            dict,
-            0.5
-        )
-    )
-{}
+    if (pressureDilation_)
+    {
+        alphaK2_ =
+            dimensioned<scalar>::lookupOrAddToDict
+            (
+                "alphaK2",
+                dict,
+                0.15
+            );
+        alphaK3_ =
+            dimensioned<scalar>::lookupOrAddToDict
+            (
+                "alphaK3",
+                dict,
+                0.3
+            );
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::compressible::correction::read(const dictionary& dict)
 {
+    if (dict.found("compressibilityCorrection"))
+    {
+        FMethod_ =
+            F_CC_MethodNames_
+            [
+                dict.lookup("compressibilityCorrection")
+            ];
+    }
     XiStar_.readIfPresent(dict);
-    Mat0_.readIfPresent(dict);
+    lambda_.readIfPresent(dict);
+    Mt0_.readIfPresent(dict);
+
+    dict.readIfPresent
+    (
+        "pressureDilation",
+        pressureDilation_
+    );
+
+    alphaK2_.readIfPresent(dict);
+    alphaK3_.readIfPresent(dict);
+
     return true;
+
 }
 
-
-Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::a
-(
-    const volVectorField& U
-)
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::speedOfSound() const
 {
-    const basicThermo& thermo = U.mesh().lookupObject<basicThermo>
-    (
-        IOobject::groupName
-        (
-            physicalProperties::typeName,
-            U.group()
-        )
-    );
-    if (isA<fluidBlastThermo>(thermo))
+    const viscosity& visc = turb_.properties();
+    if (isA<fluidBlastThermo>(visc))
     {
-        return dynamicCast<const fluidBlastThermo>(thermo).speedOfSound()();
+        return dynamicCast<const fluidBlastThermo>(visc).speedOfSound()();
     }
-    else if (isA<fluidThermo>(thermo))
+    else if (isA<fluidThermo>(visc))
     {
-        const fluidThermo& fluid = dynamicCast<const fluidThermo>(thermo);
+        const fluidThermo& fluid = dynamicCast<const fluidThermo>(visc);
         return sqrt(fluid.Cp()()/fluid.Cv()()/fluid.psi()());
     }
     else
@@ -145,28 +213,21 @@ Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::a
 }
 
 
-Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::Mt
-(
-    const volScalarField& k
-)
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::Mt() const
 {
-    const basicThermo& thermo = k.mesh().lookupObject<basicThermo>
-    (
-        IOobject::groupName
-        (
-            physicalProperties::typeName,
-            k.group()
-        )
-    );
-    if (isA<fluidBlastThermo>(thermo))
+    const viscosity& visc = turb_.properties();
+    tmp<volScalarField> tk = turb_.k();
+    const volScalarField& k = tk();
+    if (isA<fluidBlastThermo>(visc))
     {
         return
             sqrt(2.0*k())
-           /(dynamicCast<const fluidBlastThermo>(thermo).speedOfSound()());
+           /(dynamicCast<const fluidBlastThermo>(visc).speedOfSound()());
     }
-    else if (isA<fluidThermo>(thermo))
+    else if (isA<fluidThermo>(visc))
     {
-        const fluidThermo& fluid = dynamicCast<const fluidThermo>(thermo);
+        const fluidThermo& fluid = dynamicCast<const fluidThermo>(visc);
         return sqrt(2.0*k()/(fluid.Cp()()/fluid.Cv()()/fluid.psi()()));
     }
     else
@@ -180,28 +241,20 @@ Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::Mt
 }
 
 
-Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::MtSqr
-(
-    const volScalarField& k
-)
+Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::MtSqr() const
 {
-    const basicThermo& thermo = k.mesh().lookupObject<basicThermo>
-    (
-        IOobject::groupName
-        (
-            physicalProperties::typeName,
-            k.group()
-        )
-    );
-    if (isA<fluidBlastThermo>(thermo))
+    const viscosity& visc = turb_.properties();
+    tmp<volScalarField> tk = turb_.k();
+    const volScalarField& k = tk();
+    if (isA<fluidBlastThermo>(visc))
     {
         return
             2.0*k()
-           /sqr(dynamicCast<const fluidBlastThermo>(thermo).speedOfSound()());
+           /sqr(dynamicCast<const fluidBlastThermo>(visc).speedOfSound()());
     }
-    else if (isA<fluidThermo>(thermo))
+    else if (isA<fluidThermo>(visc))
     {
-        const fluidThermo& fluid = dynamicCast<const fluidThermo>(thermo);
+        const fluidThermo& fluid = dynamicCast<const fluidThermo>(visc);
         return 2.0*k()/(fluid.Cp()()/fluid.Cv()()/fluid.psi()());
     }
     else
@@ -216,28 +269,18 @@ Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::MtSqr
 
 
 Foam::tmp<Foam::volScalarField::Internal>
-Foam::compressible::correction::MtSqrByk
-(
-    const volScalarField& k
-)
+Foam::compressible::correction::MtSqrByk() const
 {
-    const basicThermo& thermo = k.mesh().lookupObject<basicThermo>
-    (
-        IOobject::groupName
-        (
-            physicalProperties::typeName,
-            k.group()
-        )
-    );
-    if (isA<fluidBlastThermo>(thermo))
+    const viscosity& visc = turb_.properties();
+    if (isA<fluidBlastThermo>(visc))
     {
         return
             2.0
-            /sqr(dynamicCast<const fluidBlastThermo>(thermo).speedOfSound()());
+            /sqr(dynamicCast<const fluidBlastThermo>(visc).speedOfSound()());
     }
-    else if (isA<fluidThermo>(thermo))
+    else if (isA<fluidThermo>(visc))
     {
-        const fluidThermo& fluid = dynamicCast<const fluidThermo>(thermo);
+        const fluidThermo& fluid = dynamicCast<const fluidThermo>(visc);
         return 2.0/(fluid.Cp()()/fluid.Cv()()/fluid.psi()());
     }
     else
@@ -250,135 +293,103 @@ Foam::compressible::correction::MtSqrByk
     return tmp<volScalarField::Internal>();
 }
 
-Foam::tmp<Foam::volScalarField::Internal> Foam::compressible::correction::Fcorr
+
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::Fcorr() const
+{
+    tmp<volScalarField::Internal> tMt;
+    return Fcorr(tMt);
+}
+
+
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::Fcorr
 (
-    const volScalarField& k
+    tmp<volScalarField::Internal>& tMt
 ) const
 {
-    switch (method_)
+    if (FMethod_ == F_CC_Method::NONE)
     {
-        case SARKAR:
+        return volScalarField::Internal::New
+        (
+            "Fcorr",
+            turb_.mesh(),
+            0.0
+        );
+    }
+    if (!tMt.valid())
+    {
+        tMt = this->Mt();
+    }
+    return Fcorr(tMt());
+}
+
+
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::Fcorr
+(
+    const volScalarField::Internal& Mt
+) const
+{
+    switch (FMethod_)
+    {
+        case F_CC_Method::NONE:
         {
-            return 1.0/(1.0 + alphaSarkar_*sqr(Mt(k)));
+            return volScalarField::Internal::New
+            (
+                "Fcorr",
+                Mt.mesh(),
+                0.0
+            );
         }
-        case ZEMAN:
+        case F_CC_Method::WILCOX:
         {
-            volScalarField::Internal Mat(Mt(k));
-            return (sqr(Mat) - sqr(Mat0_))*pos(Mat - Mat0_);
+            return max(sqr(Mt) - sqr(Mt0_), 0.0);
+        }
+        case F_CC_Method::ZEMAN:
+        {
+            return max(1.0 - exp(-sqr((Mt - Mt0_)/lambda_)), 0.0);
         }
         default:
         {
             NotImplemented;
+            return tmp<volScalarField::Internal>();
         }
     }
-    return tmp<volScalarField::Internal>();
 }
 
 
-void Foam::compressible::correction::correct
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::pressureDialationSource
 (
-    const volScalarField& k,
-    const dimensionedScalar& beta0,
-    const dimensionedScalar& betaStar0,
-    tmp<volScalarField::Internal>& beta,
-    tmp<volScalarField::Internal>& betaStar
+    const volScalarField::Internal& G
 ) const
 {
-    const volScalarField::Internal f(Fcorr(k));
-    betaStar = betaStar0*(1.0 + XiStar_*f);
-    beta = beta0 - betaStar()*XiStar_*Fcorr(k);
+    tmp<volScalarField::Internal> tMt;
+    return pressureDialationSource(G, tMt);
 }
 
 
-void Foam::compressible::correction::correct
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::compressible::correction::pressureDialationSource
 (
-    const volScalarField& k,
-    const dimensionedScalar& betaStar0,
-    tmp<volScalarField::Internal>& beta,
-    tmp<volScalarField::Internal>& betaStar
+    const volScalarField::Internal& G,
+    tmp<volScalarField::Internal>& tMt
 ) const
 {
-    const volScalarField::Internal f(Fcorr(k));
-    betaStar = betaStar0*(1.0 + XiStar_*f);
-    beta = beta - betaStar()*XiStar_*Fcorr(k);
+    if (!pressureDilation_)
+    {
+        return volScalarField::Internal::New
+        (
+            "pressureDilation",
+            G.mesh(),
+            dimensionedScalar(G.dimensions(), 0.0)
+        );
+    }
+
+    if (!tMt.valid()) tMt = this->Mt();
+    return sqr(tMt())*(-alphaK2_*G + alphaK3_*turb_.epsilon()()());
 }
 
-
-void Foam::compressible::correction::limitG
-(
-    volScalarField::Internal& G,
-    const volScalarField::Internal& k,
-    const volScalarField::Internal& omega,
-    const volScalarField::Internal& betaStar
-) const
-{
-    G = min(G, rProdLim_*betaStar*k*omega);
-}
-
-
-void Foam::compressible::correction::limitEpsilon_L
-(
-    const volScalarField& k,
-    const volScalarField& y,
-    volScalarField& epsilon
-)
-{
-    forAll(epsilon, celli)
-    {
-        const scalar cbrtk = cbrt(k[celli]);
-        if (2.5*y[celli] < cbrtk/epsilon[celli])
-        {
-            epsilon[celli] = cbrtk/(2.5*y[celli]);
-        }
-    }
-    volScalarField::Boundary& bepsilon = epsilon.boundaryFieldRef();
-    forAll(bepsilon, patchi)
-    {
-        scalarField& pepsilon = bepsilon[patchi];
-        const scalarField& py = y.boundaryField()[patchi];
-        const scalarField& pk = k.boundaryField()[patchi];
-        forAll(pepsilon, fi)
-        {
-            const scalar cbrtk = cbrt(pk[fi]);
-            if (2.5*py[fi] < cbrtk/pepsilon[fi])
-            {
-                pepsilon[fi] = cbrtk/(2.5*py[fi]);
-            }
-        }
-    }
-}
-
-
-void Foam::compressible::correction::limitOmega_L
-(
-    const volScalarField& k,
-    const volScalarField& y,
-    volScalarField& omega
-)
-{
-    forAll(omega, celli)
-    {
-        const scalar sqrtk = sqrt(k[celli]);
-        if (2.5*y[celli] < sqrtk/omega[celli])
-        {
-            omega[celli] = sqrtk/(2.5*y[celli]);
-        }
-    }
-    volScalarField::Boundary& bomega = omega.boundaryFieldRef();
-    forAll(bomega, patchi)
-    {
-        scalarField& pomega = bomega[patchi];
-        const scalarField& py = y.boundaryField()[patchi];
-        const scalarField& pk = k.boundaryField()[patchi];
-        forAll(pomega, fi)
-        {
-            const scalar sqrtk = sqrt(pk[fi]);
-            if (2.5*py[fi] < sqrtk/pomega[fi])
-            {
-                pomega[fi] = sqrtk/(2.5*py[fi]);
-            }
-        }
-    }
-}
 
 // ************************************************************************* //

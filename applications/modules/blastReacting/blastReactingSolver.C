@@ -42,7 +42,7 @@ namespace solvers
 Foam::solvers::blastReacting::blastReacting(fvMesh& mesh)
 :
     explicitSolver(mesh),
-    integrator_(mesh),
+    integrator_(mesh, false),
     fluid_
     (
         IOdictionary
@@ -78,10 +78,22 @@ Foam::scalar Foam::solvers::blastReacting::CoNum() const
 }
 
 
-void Foam::solvers::blastReacting::solve()
+Foam::scalar Foam::solvers::blastReacting::DiNum() const
+{
+    return fluid_.DiNum();
+}
+
+
+void Foam::solvers::blastReacting::solveExplicit()
 {
     Info<< "Calculating Fluxes" << endl;
-    integrator_.integrate();
+    integrator_.integrate(false);
+}
+
+
+void Foam::solvers::blastReacting::solveImplicit()
+{
+    integrator_.solveImplicit();
 }
 
 

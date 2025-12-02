@@ -1317,28 +1317,47 @@ void Foam::phaseSystem::solve()
 }
 
 
-void Foam::phaseSystem::postUpdate()
+void Foam::phaseSystem::postExplicit()
 {
     decode();
 
     forAll(phaseModels_, phasei)
     {
-        DebugInfo
-            << "Post update " << phaseModels_[phasei].name() << ":" << endl;
-        phaseModels_[phasei].postUpdate();
+        phaseModels_[phasei].postExplicit();
     }
-
-    decode();
 
     const dimensionedScalar& deltaT(mesh_.time().deltaT());
     relaxVelocity(deltaT);
     relaxTemperature(deltaT);
 
-    master_.postUpdate();
+    master_.postExplicit();
+}
 
-    relaxPressure(deltaT);
+
+void Foam::phaseSystem::postImplicit()
+{
+    decode();
+
+    forAll(phaseModels_, phasei)
+    {
+        phaseModels_[phasei].postImplicit();
+    }
+    master_.postImplicit();
+
+    relaxPressure(mesh_.time().deltaT());
 
     decode();
+}
+
+
+void Foam::phaseSystem::storeExplicit()
+{
+    // Clear flux schemes
+    forAll(phaseModels_, phasei)
+    {
+        phaseModels_[phasei].storeExplicit();
+    }
+    master_.storeExplicit();
 }
 
 
@@ -1347,7 +1366,7 @@ void Foam::phaseSystem::clear()
     // Clear flux schemes
     forAll(phaseModels_, phasei)
     {
-        phaseModels_[phasei].flux().clear();
+        phaseModels_[phasei].clear();
     }
     master_.clear();
 }
@@ -1725,8 +1744,8 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
     }
 
     mDotEi =
-        mD21*(phase2.thermo().hs()() + (hc2()() - hc1()()))
-      + mD12*phase1.thermo().hs()();
+        mD21*(phase2.he() + (hc2()() - hc1()()))
+      + mD12*phase1.he()();
 
     // Add kinetic energy contributions
     if (phase1.totalEnergy())

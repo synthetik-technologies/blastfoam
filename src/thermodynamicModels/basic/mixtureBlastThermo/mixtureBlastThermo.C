@@ -354,21 +354,6 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::patchFaceMixture
 
 
 template<class BasicThermo, class ThermoType>
-void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::solve()
-{
-    multicomponentBlastThermo::solve();
-}
-
-
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::postUpdate()
-{
-    multicomponentBlastThermo::postUpdate();
-}
-
-
-template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::he
 (

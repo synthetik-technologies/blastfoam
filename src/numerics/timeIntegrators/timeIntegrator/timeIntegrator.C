@@ -50,26 +50,6 @@ void Foam::timeIntegrator::update()
 }
 
 
-void Foam::timeIntegrator::updateAll()
-{
-    forAll(systems_, i)
-    {
-        systems_[i].update();
-    }
-}
-
-
-void Foam::timeIntegrator::postUpdateAll()
-{
-    forAll(systems_, i)
-    {
-        Info<< "Post-updating " << systems_[i].name() << ":" << endl;
-        systems_[i].postUpdate();
-    }
-    Info<< endl;
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::timeIntegrator::timeIntegrator
@@ -165,7 +145,16 @@ void Foam::timeIntegrator::addSystem(timeIntegrationSystemBase& system)
 }
 
 
-void Foam::timeIntegrator::integrate()
+void Foam::timeIntegrator::updateAll()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].update();
+    }
+}
+
+
+void Foam::timeIntegrator::integrate(const bool doImplicit)
 {
     if (obr_.time().subCycling())
     {
@@ -205,8 +194,31 @@ void Foam::timeIntegrator::integrate()
     }
     stepi_ = coeffs_->nSteps()-1;
 
-    this->postUpdateAll();
+    forAll(systems_, i)
+    {
+        systems_[i].postExplicit();
+    }
+
+    forAll(systems_, i)
+    {
+        systems_[i].storeExplicit();
+    }
+
     stepi_ = -1;
+
+    if (doImplicit)
+    {
+        solveImplicit();
+    }
+}
+
+
+void Foam::timeIntegrator::solveImplicit()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].postImplicit();
+    }
 }
 
 

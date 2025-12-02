@@ -76,7 +76,7 @@ Description
 
     The default model coefficients are
     \verbatim
-        compressible::kOmegaSSTCoeffs
+        kOmegaSSTCoeffs
         {
             alphaK1     0.85;
             alphaK2     1.0;
@@ -91,8 +91,6 @@ Description
             b1          1.0;
             c1          10.0;
             F3          no;
-
-            alpha       0.5;
         }
     \endverbatim
 
@@ -126,14 +124,170 @@ namespace compressible
 template<class MomentumTransportModel, class BasicMomentumTransportModel>
 class kOmegaSST
 :
-    public ::Foam::kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>,
-    public correction
+    public MomentumTransportModel,
+    public compressible::correction
 {
 protected:
 
-    scalar F2Max_;
+    // Protected data
+
+        // Model coefficients
+
+            dimensionedScalar alphaK1_;
+            dimensionedScalar alphaK2_;
+
+            dimensionedScalar alphaOmega1_;
+            dimensionedScalar alphaOmega2_;
+
+            dimensionedScalar beta1_;
+            dimensionedScalar beta2_;
+
+            dimensionedScalar betaStar_;
+
+            dimensionedScalar kappa_;
+
+            dimensionedScalar gamma1_;
+            dimensionedScalar gamma2_;
+
+            dimensionedScalar a1_;
+            dimensionedScalar b1_;
+            dimensionedScalar c1_;
+
+            Switch F3_;
+
+            dimensionedScalar arg1Max_;
+            dimensionedScalar arg2Max_;
+            dimensionedScalar arg3Max_;
+            dimensionedScalar CDkOmegaMin_;
+
+        // Fields
+
+            volScalarField k_;
+            volScalarField omega_;
+
 
     // Protected Member Functions
+
+
+        static dimensionedScalar lookupOrAddToDict
+        (
+            const word& name,
+            dictionary& dict,
+            const HashTable<scalar>& defaults,
+            const dimensionSet& dims,
+            const scalar& defaultValue
+        )
+        {
+            if (dict.found(name))
+            {
+                return dimensionedScalar
+                (
+                    name,
+                    dims,
+                    dict.lookup<scalar>(name)
+                );
+            }
+            scalar val = defaultValue;
+            if (defaults.found(name))
+            {
+                val = defaults[name];
+            }
+            dict.set(name, val);
+            return dimensionedScalar(name, dims, val);
+        }
+        static dimensionedScalar lookupOrAddToDict
+        (
+            const word& name,
+            dictionary& dict,
+            const HashTable<scalar>& defaults,
+            const scalar& defaultValue
+        )
+        {
+            return lookupOrAddToDict
+            (
+                name,
+                dict,
+                defaults,
+                dimless,
+                defaultValue
+            );
+        }
+        static HashTable<scalar> mergeDefaults
+        (
+            const HashTable<scalar>& t1,
+            const HashTable<scalar>& t2
+        )
+        {
+            HashTable<scalar> t12(t1);
+            forAllConstIter(HashTable<scalar>, t2, iter)
+            {
+                t12.insert(iter.key(), iter());
+            }
+            return t12;
+        }
+
+
+        virtual tmp<volScalarField> F1(const volScalarField& CDkOmega) const;
+        virtual tmp<volScalarField> F2() const;
+        virtual tmp<volScalarField> F3() const;
+        virtual tmp<volScalarField> F23() const;
+
+        tmp<volScalarField> blend
+        (
+            const volScalarField& F1,
+            const dimensionedScalar& psi1,
+            const dimensionedScalar& psi2
+        ) const
+        {
+            return F1*(psi1 - psi2) + psi2;
+        }
+
+        tmp<volScalarField::Internal> blend
+        (
+            const volScalarField::Internal& F1,
+            const dimensionedScalar& psi1,
+            const dimensionedScalar& psi2
+        ) const
+        {
+            return F1*(psi1 - psi2) + psi2;
+        }
+
+        tmp<volScalarField> alphaK(const volScalarField& F1) const
+        {
+            return blend(F1, alphaK1_, alphaK2_);
+        }
+
+        tmp<volScalarField> alphaOmega(const volScalarField& F1) const
+        {
+            return blend(F1, alphaOmega1_, alphaOmega2_);
+        }
+
+        tmp<volScalarField::Internal> beta
+        (
+            const volScalarField::Internal& F1
+        ) const
+        {
+            return blend(F1, beta1_, beta2_);
+        }
+
+        tmp<volScalarField::Internal> gamma
+        (
+            const volScalarField::Internal& F1
+        ) const
+        {
+            return blend(F1, gamma1_, gamma2_);
+        }
+
+        //- Bound omega
+        void boundOmega();
+
+        virtual void correctNut
+        (
+            const volScalarField& S2,
+            const volScalarField& F2
+        );
+
+        virtual void correctNut();
 
         //- Return k production rate
         virtual tmp<volScalarField::Internal> Pk
@@ -141,7 +295,24 @@ protected:
             const volScalarField::Internal& G
         ) const;
 
-        virtual tmp<volScalarField> F2() const;
+        //- Return epsilon/k which for standard RAS is betaStar*omega
+        virtual tmp<volScalarField::Internal> epsilonByk
+        (
+            const volScalarField::Internal& F1,
+            const volScalarField::Internal& F2
+        ) const;
+
+        virtual tmp<fvScalarMatrix> kSource() const;
+
+        virtual tmp<fvScalarMatrix> omegaSource() const;
+
+        virtual tmp<fvScalarMatrix> Qsas
+        (
+            const volScalarField::Internal& S2,
+            const volScalarField::Internal& gamma,
+            const volScalarField::Internal& beta
+        ) const;
+
 
 
 public:
@@ -161,7 +332,8 @@ public:
             const volVectorField& U,
             const surfaceScalarField& alphaRhoPhi,
             const surfaceScalarField& phi,
-            const viscosity& viscosity
+            const viscosity& viscosity,
+            const HashTable<scalar>& defaults = HashTable<scalar>()
         );
 
         //- Disallow default bitwise copy construction
@@ -175,11 +347,59 @@ public:
 
     // Member Functions
 
-        //- Read RASProperties dictionary
+        //- Re-read model coefficients if they have changed
         virtual bool read();
+
+        //- Return the effective diffusivity for k
+        tmp<volScalarField> DkEff(const volScalarField& F1) const
+        {
+            return volScalarField::New
+            (
+                "DkEff",
+                alphaK(F1)*this->nut_ + this->nu()
+            );
+        }
+
+        //- Return the effective diffusivity for omega
+        tmp<volScalarField> DomegaEff(const volScalarField& F1) const
+        {
+            return volScalarField::New
+            (
+                "DomegaEff",
+                alphaOmega(F1)*this->nut_ + this->nu()
+            );
+        }
+
+        //- Return the turbulence kinetic energy
+        virtual tmp<volScalarField> k() const
+        {
+            return k_;
+        }
+
+        //- Return the turbulence kinetic energy dissipation rate
+        virtual tmp<volScalarField> epsilon() const
+        {
+            return volScalarField::New
+            (
+                "epsilon",
+                betaStar_*k_*omega_
+            );
+        }
+
+        //- Return the turbulence kinetic energy dissipation rate
+        virtual tmp<volScalarField> omega() const
+        {
+            return omega_;
+        }
 
         //- Solve the turbulence equations and correct the turbulence viscosity
         virtual void correct();
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const kOmegaSST&) = delete;
 
 };
 

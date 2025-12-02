@@ -125,7 +125,7 @@ void Foam::embeddedTimeIntegrator::addSystem
 }
 
 
-void Foam::embeddedTimeIntegrator::integrate()
+void Foam::embeddedTimeIntegrator::integrate(const bool doImplicit)
 {
     const Time& runTime = obr_.time();
 
@@ -221,7 +221,24 @@ void Foam::embeddedTimeIntegrator::integrate()
         deltaT_ = runTime.deltaTValue();
     }
 
-    this->postUpdateAll();
+    forAll(systems_, i)
+    {
+        systems_[i].postExplicit();
+    }
+
+    forAll(systems_, i)
+    {
+        systems_[i].storeExplicit();
+    }
+
+    if (doImplicit)
+    {
+        forAll(systems_, i)
+        {
+            systems_[i].postImplicit();
+        }
+    }
+
     stepi_ = -1;
 }
 

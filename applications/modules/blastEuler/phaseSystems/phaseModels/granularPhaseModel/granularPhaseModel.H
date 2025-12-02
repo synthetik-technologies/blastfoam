@@ -108,6 +108,12 @@ protected:
         //- Surface temperature model
         autoPtr<surfaceTemperatureModel> surfTModel_;
 
+        //- Cached advection changes
+        tmp<volScalarField> alphaRhoAdvection_;
+        tmp<volVectorField> alphaRhoUAdvection_;
+        tmp<volScalarField> alphaRhoEAdvection_;
+        tmp<volScalarField> alphaRhoPTEAdvection_;
+
 
 public:
 
@@ -187,8 +193,17 @@ public:
             //- Solve sub-step stepi
             virtual void solve();
 
-            //- Update viscous terms
-            virtual void postUpdate();
+            //- Solve viscous and source terms
+            virtual void postExplicit();
+
+            //- Solve viscous and source terms
+            virtual void postImplicit();
+
+            //- Store explicit deltas
+            virtual void storeExplicit();
+
+            //- Clear cached data
+            virtual void clear();
 
 
         //- Return the flux scheme

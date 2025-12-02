@@ -73,12 +73,17 @@ Foam::solvers::explicitSolver::~explicitSolver()
 
 bool Foam::solvers::explicitSolver::read()
 {
-    const_cast<dictionary&>(pimple.dict()).set("nOuterCorrectors", 1);
+    if (!pimple.dict().found("nOuterCorrectors"))
+    {
+        const_cast<dictionary&>(pimple.dict()).set("nOuterCorrectors", 1);
+    }
 
     solver::read();
 
     maxCo_ =
         runTime.controlDict().lookupOrDefault<scalar>("maxCo", 0.5);
+    maxDi_ =
+        runTime.controlDict().lookupOrDefault<scalar>("maxDi", 0.5);
 
     maxDeltaT_ =
         runTime.controlDict().found("maxDeltaT")
@@ -92,12 +97,18 @@ bool Foam::solvers::explicitSolver::read()
 Foam::scalar Foam::solvers::explicitSolver::maxDeltaT() const
 {
     const scalar Co = this->CoNum();
+    const scalar Di = this->DiNum();
 
     scalar deltaT = min(fvModels().maxDeltaT(), maxDeltaT_);
 
     if (maxCo_ < vGreat && Co > small)
     {
         deltaT = min(deltaT, maxCo_/Co*runTime.deltaTValue());
+    }
+
+    if (maxDi_ < vGreat && Di > small)
+    {
+        deltaT = min(deltaT, maxDi_/Di*runTime.deltaTValue());
     }
 
     return deltaT;
@@ -107,6 +118,8 @@ Foam::scalar Foam::solvers::explicitSolver::maxDeltaT() const
 void Foam::solvers::explicitSolver::preSolve()
 {
     mesh_.update();
+
+    this->solveExplicit();
 }
 
 
@@ -128,7 +141,6 @@ void Foam::solvers::explicitSolver::prePredictor()
 
 void Foam::solvers::explicitSolver::momentumPredictor()
 {
-    this->solve();
 }
 
 void Foam::solvers::explicitSolver::thermophysicalPredictor()
@@ -140,7 +152,9 @@ void Foam::solvers::explicitSolver::pressureCorrector()
 
 
 void Foam::solvers::explicitSolver::postCorrector()
-{}
+{
+    this->solveImplicit();
+}
 
 
 void Foam::solvers::explicitSolver::postSolve()

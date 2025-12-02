@@ -56,7 +56,8 @@ class blastDisplacementLaplacianFvMotionSolver
     public blastDisplacementMotionSolver,
     public fvMotionSolver
 {
-    // Private Data
+protected:
+    // Protected Data
 
         //- Cell-centre motion field
         mutable volVectorField cellDisplacement_;
@@ -86,7 +87,8 @@ public:
         (
             const word& name,
             const polyMesh&,
-            const dictionary&
+            const dictionary&,
+            const word& type = typeName
         );
 
         //- Disallow default bitwise copy construction

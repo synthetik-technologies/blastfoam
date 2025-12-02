@@ -459,8 +459,14 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
+        //- Solve relaxation terms
+        virtual void postExplicit();
+
         //- Solve viscous terms
-        virtual void postUpdate();
+        virtual void postImplicit();
+
+        //- Store explicit changes
+        virtual void storeExplicit();
 
         //- Clear flux schemes
         virtual void clear();

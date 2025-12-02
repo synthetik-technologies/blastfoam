@@ -98,9 +98,6 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Post update
-        virtual void postUpdate();
-
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 };

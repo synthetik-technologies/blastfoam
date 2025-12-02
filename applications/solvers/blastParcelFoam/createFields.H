@@ -13,7 +13,7 @@ uniformDimensionedVectorField g
     dimensionedVector(dimAcceleration, Zero)
 );
 
-fvTimeIntegrator integrator(mesh);
+fvTimeIntegrator integrator(mesh, true);
 autoPtr<compressibleSystem> fluidPtr(coupledCompressibleSystem::New(mesh));
 compressibleSystem& fluid = fluidPtr();
 coupledCompressibleSystem& coupledFluid =

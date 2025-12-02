@@ -1,4 +1,4 @@
-fvTimeIntegrator integrator(mesh);
+fvTimeIntegrator integrator(mesh, true);
 
 IOdictionary physicalProperties
 (

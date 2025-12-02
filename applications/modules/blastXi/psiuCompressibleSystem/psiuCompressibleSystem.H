@@ -123,6 +123,14 @@ protected:
         //- Ignition model
         ignition ign_;
 
+        //- Cached changes from advection
+        tmp<volScalarField> rhoAdvection_;
+        tmp<volScalarField> rhoEuAdvection_;
+        tmp<volScalarField> rhoftAdvection_;
+        tmp<volScalarField> rhobAdvection_;
+        tmp<volScalarField> rhoXiAdvection_;
+        tmp<volScalarField> rhoSuAdvection_;
+
         // Thermophysical transport
         autoPtr
         <
@@ -203,7 +211,13 @@ public:
         virtual void solve();
 
         //- Set old lists and fluxes (initialization of fields)
-        virtual void postUpdate();
+        virtual void solveImplicit();
+
+        //- Store changes from advection
+        virtual void storeExplicit();
+
+        //- Clear temporary variables
+        virtual void clear();
 
 
     // Member Access Functions

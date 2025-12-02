@@ -60,7 +60,7 @@ Foam::regionSolvers::blast::blast
         ),
         dimensionedVector(dimAcceleration, Zero)
     ),
-    integrator_(mesh_),
+    integrator_(mesh_, true),
     fluid_(compressibleSystem::New(mesh_))
 {
     integrator_.addSystem(fluid_());
@@ -88,7 +88,7 @@ Foam::regionSolvers::blast::blast
         ),
         dimensionedVector(dimAcceleration, Zero)
     ),
-    integrator_(mesh_),
+    integrator_(mesh_, true),
     fluid_(compressibleSystem::New(type, mesh_))
 {
     integrator_.addSystem(fluid_());

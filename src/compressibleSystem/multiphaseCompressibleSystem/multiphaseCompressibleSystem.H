@@ -150,10 +150,10 @@ public:
         virtual void update();
 
         //- Solve implicit terms
-        virtual void postUpdate();
+        virtual void postImplicit();
 
         //- Store changes from advection
-        virtual void storeFluxDeltas();
+        virtual void storeExplicit();
 
         //- Clear temporary variables
         virtual void clear();

@@ -116,7 +116,7 @@ public:
         virtual void solve();
 
         //- Solve implicit terms
-        virtual void postUpdate();
+        virtual void postImplicit();
 };
 
 

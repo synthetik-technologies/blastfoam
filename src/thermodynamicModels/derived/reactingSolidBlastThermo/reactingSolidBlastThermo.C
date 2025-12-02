@@ -117,13 +117,6 @@ void Foam::reactingSolidBlastThermo<Thermo>::solve()
 
 
 template<class Thermo>
-void Foam::reactingSolidBlastThermo<Thermo>::postUpdate()
-{
-    multicomponentSolidBlastThermo<Thermo>::postUpdate();
-}
-
-
-template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::reactingSolidBlastThermo<Thermo>::ESource() const
 {

@@ -151,8 +151,17 @@ public:
             //- Solve sub-step stepi
             virtual void solve();
 
-            //- Update viscous terms
-            virtual void postUpdate();
+            //- Solve viscous and source terms
+            virtual void postExplicit();
+
+            //- Solve viscous and source terms
+            virtual void postImplicit();
+
+            //- Store explicit deltas
+            virtual void storeExplicit();
+
+            //- Clear cached data
+            virtual void clear();
 };
 
 

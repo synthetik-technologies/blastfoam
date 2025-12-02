@@ -1,4 +1,4 @@
-fvTimeIntegrator integrator(mesh);
+fvTimeIntegrator integrator(mesh, true);
 autoPtr<compressibleSystem> fluid
 (
     compressibleSystem::New(mesh)

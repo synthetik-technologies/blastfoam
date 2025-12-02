@@ -78,8 +78,17 @@ protected:
         //- Pressure
         volScalarField& p_;
 
+        //- Kinetic energy
+        volScalarField K_;
+
         //- Flux scheme
         autoPtr<phaseFluxScheme> fluxScheme_;
+
+        //- Cached advection changes
+        tmp<volScalarField> alphaAdvection_;
+        tmp<volScalarField> alphaRhoAdvection_;
+        tmp<volVectorField> alphaRhoUAdvection_;
+        tmp<volScalarField> alphaRhoEAdvection_;
 
         virtual tmp<volScalarField> ESource() const;
 
@@ -119,8 +128,17 @@ public:
             //- Solve sub-step stepi
             virtual void solve();
 
-            //- Update viscous terms
-            virtual void postUpdate();
+            //- Solve viscous and source terms
+            virtual void postExplicit();
+
+            //- Solve viscous and source terms
+            virtual void postImplicit();
+
+            //- Store explicit deltas
+            virtual void storeExplicit();
+
+            //- Clear cached data
+            virtual void clear();
 
             //- Correct delta terms
             virtual void correctDeltas();

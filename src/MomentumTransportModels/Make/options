@@ -1,4 +1,5 @@
 EXE_INC = \
+    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/physicalProperties/lnInclude \

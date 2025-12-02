@@ -123,7 +123,17 @@ public:
         virtual void update() = 0;
 
         //- Update after ode integration
-        virtual void postUpdate() = 0;
+        virtual void postExplicit()
+        {}
+
+        virtual void postImplicit()
+        {}
+
+        virtual void storeExplicit()
+        {}
+
+        virtual void clear()
+        {}
 
         //- Solve sub-step stepi
         virtual void solve() = 0;

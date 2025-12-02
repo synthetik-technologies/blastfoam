@@ -543,7 +543,7 @@ void Foam::multiphaseCompressibleSystem::update()
 }
 
 
-void Foam::multiphaseCompressibleSystem::postUpdate()
+void Foam::multiphaseCompressibleSystem::postImplicit()
 {
     this->decode();
 
@@ -572,7 +572,6 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
     }
 
     // Solve phase 1 mass
-    rho_.storePrevIter();
     rho_ = dimensionedScalar(dimDensity, 0.0);
     forAll(rhos_, phasei)
     {
@@ -597,7 +596,7 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
         rho_ += alphaRhos_[phasei];
     }
 
-    compressibleBlastSystem::postUpdate();
+    compressibleBlastSystem::postImplicit();
 }
 
 
@@ -715,9 +714,9 @@ void Foam::multiphaseCompressibleSystem::encode()
 }
 
 
-void Foam::multiphaseCompressibleSystem::storeFluxDeltas()
+void Foam::multiphaseCompressibleSystem::storeExplicit()
 {
-    compressibleBlastSystem::storeFluxDeltas();
+    compressibleBlastSystem::storeExplicit();
 
     alphaAdvection_.setSize(alphas_.size());
     alphaRhoAdvection_.setSize(alphaRhos_.size());
