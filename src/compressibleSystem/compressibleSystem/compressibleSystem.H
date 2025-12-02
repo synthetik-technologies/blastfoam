@@ -121,10 +121,17 @@ protected:
         //- Treat viscosity explicitly
         bool explicitViscosity_;
 
+        //- Use explicit time integration for turbulence models
+        bool odeTurbulence_;
+
 
     //- DeltaT cor for LTS cases
     autoPtr<volScalarField> corDeltaTPtr_;
     autoPtr<volScalarField> localRDeltaTPtr_;
+
+    //- Changes from advection
+    tmp<volVectorField> rhoUAdvection_;
+    tmp<volScalarField> rhoEAdvection_;
 
 
         // Protected member functions
@@ -153,6 +160,30 @@ protected:
             {
                 return corDeltaTPtr_();
             }
+
+            //- Return if U need to be implicitly solved
+            virtual bool needSolve_U() const
+            {
+                return
+                       needSolve(U_.name())
+                    || (!explicitViscosity_ && turbulence_.valid())
+                    || dragSource_.valid();
+            }
+
+            //- Add source terms to UEqn
+            virtual void addUSource(fvVectorMatrix& UEqn) const;
+
+            //- Return if E need to be implicitly solved
+            virtual bool needSolve_E() const
+            {
+                return
+                    needSolve(thermo().he().name())
+                 || (!explicitViscosity_ && turbulence_.valid())
+                 || extESource_.valid();
+            }
+
+            //- Add source terms to EEqn
+            virtual void addESource(fvScalarMatrix& EEqn) const;
 
 public:
 
@@ -360,11 +391,18 @@ public:
         //- Add external energy source
         void addESource(const volScalarField::Internal& extEsrc);
 
+        //- Store changes from advection
+        virtual void storeFluxDeltas() = 0;
+
         //- Clear the flux scheme
         virtual void clear();
 
         //- Return the maximum Courant number
         virtual scalar CoNum() const;
+
+        //- Return the maximum Diffusion number
+        virtual scalar DiNum() const;
+
 
     // Coupling functions
 

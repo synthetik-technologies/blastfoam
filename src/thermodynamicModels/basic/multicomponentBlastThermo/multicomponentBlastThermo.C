@@ -249,6 +249,18 @@ void Foam::multicomponentBlastThermo::clearSources()
 }
 
 
+void Foam::multicomponentBlastThermo::storeFluxDeltas()
+{
+    integratorPtr_->storeFluxDeltas();
+}
+
+
+void Foam::multicomponentBlastThermo::clear()
+{
+    integratorPtr_->clear();
+}
+
+
 void Foam::multicomponentBlastThermo::addDelta
 (
     const word& name,
@@ -558,7 +570,7 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
             fvScalarMatrix YEqn
             (
                 fvm::ddt(alphaRho_, Yi)
-              - fvc::ddt(alphaRho_.prevIter(), Yi)
+              - alphaRhoYAdvection_[i]()
              ==
                 models().source(alphaRho_, Yi)
             );
@@ -588,5 +600,22 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
     }
 }
 
+void Foam::multicomponentBlastThermo::integrator::storeFluxDeltas()
+{
+    alphaRhoYAdvection_.setSize(Y_.size());
+    forAll(alphaRhoYAdvection_, i)
+    {
+        alphaRhoYAdvection_[i] = fvc::ddt(alphaRho_, Y_[i]);
+    }
+}
+
+
+void Foam::multicomponentBlastThermo::integrator::clear()
+{
+    forAll(alphaRhoYAdvection_, i)
+    {
+        alphaRhoYAdvection_[i].clear();
+    }
+}
 
 // ************************************************************************* //

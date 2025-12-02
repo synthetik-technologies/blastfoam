@@ -96,6 +96,7 @@ protected:
 
         PtrList<volScalarField> alphaRhoYOld_;
         PtrList<volScalarField> alphaRhoYDelta_;
+        List<tmp<volScalarField>> alphaRhoYAdvection_;
 
         const List<bool>& active_;
         const volScalarField& alphaRho_;
@@ -120,6 +121,8 @@ protected:
         virtual void update();
         virtual void solve();
         virtual void postUpdate();
+        void storeFluxDeltas();
+        virtual void clear();
 
         bool normalize() const
         {
@@ -186,6 +189,12 @@ public:
 
         //- Post update
         virtual void postUpdate();
+
+        //- Store explicit fluxes
+        virtual void storeFluxDeltas();
+
+        //- Clear fields
+        virtual void clear();
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer

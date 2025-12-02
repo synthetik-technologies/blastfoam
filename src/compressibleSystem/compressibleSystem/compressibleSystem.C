@@ -53,16 +53,100 @@ void Foam::compressibleSystem::setModels()
 {
     if (Foam::max(this->thermo().mu()).value() > small)
     {
-        turbulence_ =
-        (
-            compressible::momentumTransportModel::New
+        {
+            dictionary turbulenceDict;
+            {
+                typeIOobject<IOdictionary> momentumTransport
+                (
+                    momentumTransportModel::typeName,
+                    this->mesh().time().constant(),
+                    this->mesh(),
+                    IOobject::MUST_READ_IF_MODIFIED,
+                    IOobject::NO_WRITE,
+                    false
+                );
+
+                if (momentumTransport.headerOk())
+                {
+                    turbulenceDict = IOdictionary(momentumTransport);
+                }
+                else
+                {
+                    typeIOobject<IOdictionary> turbulenceProperties
+                    (
+                        "turbulenceProperties",
+                        this->mesh().time().constant(),
+                        this->mesh(),
+                        IOobject::MUST_READ_IF_MODIFIED,
+                        IOobject::NO_WRITE,
+                        false
+                    );
+
+                    if (turbulenceProperties.headerOk())
+                    {
+                        turbulenceDict = IOdictionary(turbulenceProperties);
+                    }
+                    else
+                    {
+                        turbulenceDict = IOdictionary(momentumTransport);
+                    }
+                }
+            }
+            const word modelType
             (
-                rhoEff(),
-                U(),
-                rhoPhi(),
-                this->thermo()
+                turbulenceDict.lookup("simulationType")
+            );
+
+            Info<< "Selecting turbulence model type " << modelType << endl;
+
+            compressibleMomentumTransportModel::
+            dictionaryConstructorTable::iterator cstrIter =
+                compressibleMomentumTransportModel::
+                dictionaryConstructorTablePtr_->find(modelType);
+
+            if
+            (
+                cstrIter
+             == compressibleMomentumTransportModel::
+                dictionaryConstructorTablePtr_->end()
             )
-        );
+            {
+                FatalErrorInFunction
+                    << "Unknown "
+                    << compressibleMomentumTransportModel::typeName
+                    << " type "
+                    << modelType << nl << nl
+                    << "Valid "
+                    << compressibleMomentumTransportModel::typeName
+                    << " types:" << endl
+                    << compressibleMomentumTransportModel::
+                        dictionaryConstructorTablePtr_->sortedToc()
+                    << exit(FatalError);
+            }
+
+            turbulence_ = autoPtr<compressibleMomentumTransportModel>
+            (
+                cstrIter()
+                (
+                    geometricOneField(),
+                    rhoEff(),
+                    U(),
+                    rhoPhi(),
+                    phi(),
+                    thermo()
+                )
+            );
+        }
+        // turbulence_ =
+        //     momentumTransportModel::New<compressibleMomentumTransportModel>
+        //     (
+        //         geometricOneField(),
+        //         rhoEff(),
+        //         U(),
+        //         rhoPhi(),
+        //         phi(),
+        //         this->thermo()
+        //     );
         turbulence_->validate();
 
         mesh().schemes().setFluxRequired(U_.name());
@@ -74,7 +158,10 @@ void Foam::compressibleSystem::setModels()
                 fluidMulticomponentThermophysicalTransportModel::New
                 (
                     turbulence_,
-                    dynamicCast<const fluidMulticomponentThermo>(this->thermo())
+                    dynamicCast<const fluidMulticomponentThermo>
+                    (
+                        this->thermo()
+                    )
                 ).ptr()
             );
         }
@@ -108,6 +195,21 @@ void Foam::compressibleSystem::addSources
     {
         rhoUSource -= g_*rhoEff()();
         rhoESource -= g_ & rhoU_();
+    }
+
+    if (explicitViscosity_ && turbulence_.valid())
+    {
+        tmp<volSymmTensorField> tdevTau(turbulence_->devTau());
+        // tdevTau.ref() += (2.0/3.0)*rhoEff()*turbulence_->k()*symmTensor::I;
+
+        rhoUSource += fvc::div(tdevTau());
+        rhoESource +=
+            fvc::div
+            (
+                fvc::dotInterpolate(mesh().Sf(), tdevTau)
+              & flux().Uf()
+            )
+          + fvc::div(thermophysicalTransport_->q()*mesh().magSf());
     }
 }
 
@@ -176,6 +278,36 @@ void Foam::compressibleSystem::updateCorDeltaT()
         rDeltaT.internalFieldRef() =
             fvc::surfaceSum(amaxSf)()()/((2*maxCo)*mesh().V());
 
+        if (explicitViscosity_)
+        {
+            surfaceScalarField deltaCoeffSqr(magSf*mesh().deltaCoeffs());
+
+            // Remove wave speed from wedge boundaries
+            surfaceScalarField::Boundary& bdeltaCoeffSqr =
+                deltaCoeffSqr.boundaryFieldRef();
+            forAll(bdeltaCoeffSqr, patchi)
+            {
+                if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
+                {
+                    bdeltaCoeffSqr[patchi] = Zero;
+                }
+            }
+
+            rDeltaT.internalFieldRef() =
+            (
+                max
+                (
+                    rDeltaT.internalField(),
+                    fvc::surfaceSum
+                    (
+                        deltaCoeffSqr
+                       *fvc::interpolate(turbulence_->nuEff())
+                    )()()
+                   /(mesh().V())
+                )
+            );
+        }
+
         scalar minRDeltaT(gMin(rDeltaT.primitiveField()));
         if (pimpleDict.found("maxDeltaT"))
         {
@@ -212,6 +344,27 @@ void Foam::compressibleSystem::updateCorDeltaT()
 
         volScalarField& corDeltaT = corDeltaTPtr_();
         corDeltaT = rDeltaT*deltaT;
+    }
+}
+
+
+void Foam::compressibleSystem::addUSource(fvVectorMatrix& UEqn) const
+{
+    if (dragSource_.valid())
+    {
+        UEqn -= dragSource_;
+    }
+}
+
+void Foam::compressibleSystem::addESource(fvScalarMatrix& EEqn) const
+{
+    if (dragSource_.valid())
+    {
+        EEqn -= (dragSource_ & U_) & U_;
+    }
+    if (extESource_.valid())
+    {
+        EEqn -= extESource_;
     }
 }
 
@@ -378,7 +531,6 @@ void Foam::compressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
-
     if (step() == 0) updateCorDeltaT();
 }
 
@@ -418,63 +570,95 @@ void Foam::compressibleSystem::solve()
 
 void Foam::compressibleSystem::postUpdate()
 {
-    // Solve momentum
-    if (needSolve(U_.name()) || turbulence_.valid())
+    if (turbulence_.valid())
     {
+        turbulence_->predict();
+    }
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->predict();
+    }
+
+    tmp<surfaceVectorField> devTau;
+    if (needSolve_U())
+    {
+        tmp<fvVectorMatrix> divDevTau;
+        if (!explicitViscosity_ && turbulence_.valid())
+        {
+            divDevTau =
+                turbulence_->divDevTau(U_);
+                // + fvc::grad((2.0/3.0)*rhoEff()*turbulence_->k());
+        }
+
+        // Solve momentum
         fvVectorMatrix UEqn
         (
-            fvm::ddt(rhoEff(), U_) - fvc::ddt(rhoU_)
+            fvm::ddt(rhoEff(), U_) - rhoUAdvection_()
         ==
             models().source(rhoEff(), U_)
         );
-        if (turbulence_.valid())
+
+        if (divDevTau.valid())
         {
-            UEqn += turbulence_->divDevTau(U_);
-            rhoE_ +=
-                rhoEff().mesh().time().deltaT()
-                *fvc::div
-                (
-                    fvc::dotInterpolate(rhoEff().mesh().Sf(), turbulence_->devTau())
-                  & fluxScheme_->Uf()
-                );
+            UEqn += divDevTau();
         }
+        addUSource(UEqn);
+
+        UEqn.relax();
+
         constraints().constrain(UEqn);
         UEqn.solve();
         constraints().constrain(U_);
 
-        rhoU_ = rhoEff()*U_;
+        if (divDevTau.valid())
+        {
+            devTau = divDevTau().flux();
+        }
 
-        //- Update internal energy
-        he() = rhoE_/rhoEff() - 0.5*magSqr(U_);
+        // Update kinetic energy and momentum
+        K_ = 0.5*magSqr(U_);
+        rhoU_ = rhoEff()*U_;
     }
 
     // Solve thermal energy diffusion
-    if (needSolve(he().name()) || turbulence_.valid())
+    if (needSolve_E())
     {
-        fvScalarMatrix eEqn
+        volScalarField& he = thermo().he();
+        fvScalarMatrix EEqn
         (
-            fvm::ddt(rhoEff(), he()) - fvc::ddt(rhoEff().prevIter(), he())
-        ==
-            models().source(rhoEff(), he())
+            fvm::ddt(rhoEff(), he)
+          - rhoEAdvection_()        // Explicit advection contribtion
+          + fvc::ddt(rhoEff(), K_)  // Change in kinetic energy
+         ==
+            models().source(rhoEff(), he)
         );
-        if (turbulence_.valid())
-        {
-            eEqn += thermophysicalTransport_->divq(he());
-        }
-        constraints().constrain(eEqn);
-        eEqn.solve();
-        constraints().constrain(he());
 
-        rhoE_ = rhoEff()*(he() + 0.5*magSqr(U_));
+        if (devTau.valid())
+        {
+            EEqn +=
+                fvc::div(devTau & flux().Uf())
+              + thermophysicalTransport_->divq(he);
+        }
+
+        EEqn.relax();
+
+        constraints().constrain(EEqn);
+        EEqn.solve();
+        constraints().constrain(he);
+
+        // Update total energy
+        rhoE_ = rhoEff()*(he + K_);
     }
 
     if (turbulence_.valid())
     {
         turbulence_->correct();
     }
-    this->thermo().correct();
-    constraints().constrain(thermo().p());
-    thermo().p().correctBoundaryConditions();
+
+    if (thermophysicalTransport_.valid())
+    {
+        thermophysicalTransport_->correct();
+    }
 }
 
 
@@ -490,9 +674,18 @@ const Foam::volScalarField& Foam::compressibleSystem::rhoEff() const
 }
 
 
+void Foam::compressibleSystem::storeFluxDeltas()
+{
+    rhoEAdvection_ = fvc::ddt(rhoE_);
+    rhoUAdvection_ = fvc::ddt(rhoU_);
+}
+
+
 void Foam::compressibleSystem::clear()
 {
     fluxScheme_->clear();
+    rhoEAdvection_.clear();
+    rhoUAdvection_.clear();
 }
 
 
@@ -633,9 +826,17 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
     }
     Info<< "Mean = " << meanCoNum << ", Max = "<< CoNum << endl;
 
+    return CoNum;
+}
+
+
+Foam::scalar Foam::compressibleSystem::DiNum() const
+{
     // Check diffusion number
+    scalar DiNum = 0.0;
     if (explicitViscosity_)
     {
+        const surfaceScalarField& magSf = mesh().magSf();
         surfaceScalarField deltaCoeffSqr(magSf*mesh().deltaCoeffs());
 
         // Remove wave speed from wedge boundaries
@@ -665,9 +866,9 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
         Info<< "Diffusion Number mean: " << meanDiNum
             << " max: " << maxDiNum << endl;
 
-        CoNum = max(CoNum, maxDiNum);
+        DiNum = maxDiNum;
     }
-    return CoNum;
+    return DiNum;
 }
 
 // ************************************************************************* //

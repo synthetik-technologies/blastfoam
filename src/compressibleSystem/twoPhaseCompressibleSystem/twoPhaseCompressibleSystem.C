@@ -121,6 +121,127 @@ void Foam::twoPhaseCompressibleSystem::updateFluxes
 }
 
 
+void Foam::twoPhaseCompressibleSystem::solveMass()
+{
+    // Update changes in volume fraction and phase mass
+    volScalarField divU(fvc::div(phi_));
+    volScalarField deltaAlpha
+    (
+        fvc::div(alphaPhi_) - alpha1_*divU
+    );
+    this->fvTimeInt_->addDeltaSource(alpha1_.name(), deltaAlpha);
+
+    volScalarField deltaAlphaRho1(fvc::div(alphaRhoPhi1_));
+    this->fvTimeInt_->addDeltaSource(alphaRho1_.name(), deltaAlphaRho1);
+
+    volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
+    this->fvTimeInt_->addDeltaSource(alphaRho2_.name(), deltaAlphaRho2);
+
+    // Delta T value
+    dimensionedScalar dT = rho_.time().deltaT();
+
+    // if (phaseChange_.valid())
+    // {
+    //     Pair<tmp<volScalarField::Internal>> mDots(phaseChange_->mDots());
+    //     Info<<min(mDots.first()()).dimensions()<<" "<<max(mDots.first()()).value()<<endl;
+    //     // Info<<min(alphaRho1_()/dT).value()<<" "<<max(alphaRho1_()/dT).value()<<endl;
+    //     Info<<min(mDots.second()()).dimensions()<<" "<<max(mDots.second()()).value()<<endl;
+    //     // Info<<min(alphaRho2_()/dT).value()<<" "<<max(alphaRho2_()/dT).value()<<endl;
+    //     // mDots.first().ref() = min(mDots.first()(), alphaRho2_()/dT);
+    //     // mDots.second().ref() = min(mDots.second()(), alphaRho1_()/dT);
+    //
+    //     volScalarField::Internal mDot
+    //     (
+    //         "mDot",
+    //         mDots.first()() - mDots.second()()
+    //         // min
+    //         // (
+    //         //     max
+    //         //     (
+    //         //         mDots.first()() - mDots.second()(),
+    //         //         -alphaRho1_()/dT
+    //         //     ),
+    //         //     alphaRho2_()/dT
+    //         // )
+    //     );
+    //     Info<<max(mDot).value()<<" "<<min(mDot).value()<<endl;
+    //
+    //     deltaAlphaRho1.ref() -= mDot;
+    //     deltaAlphaRho2.ref() += mDot;
+    //
+    //     volScalarField::Internal dAlpha
+    //     (
+    //         "dAlpha",
+    //         mDots.first()/max(rho2_(), thermo_.thermo(1).residualRho())
+    //       - mDots.second()/max(rho1_(), thermo_.thermo(0).residualRho())
+    //     );
+    //     Info<<max(dAlpha).value()<<" "<<min(dAlpha).value()<<endl;
+    //     deltaAlpha.ref() -= dAlpha;
+    // }
+
+    // Blend old values
+    this->storeAndBlendOld(alpha1_, false);
+    this->storeAndBlendOld(alphaRho1_);
+    alphaRho1_.storePrevIter();
+
+    this->storeAndBlendOld(alphaRho2_);
+    alphaRho2_.storePrevIter();
+
+    // Update "old" total density
+    rho_ = alphaRho1_ + alphaRho2_;
+    rho_.storePrevIter();
+
+
+    // Blend deltas
+    this->storeAndBlendDelta(deltaAlpha);
+    this->storeAndBlendDelta(deltaAlphaRho1);
+    this->storeAndBlendDelta(deltaAlphaRho2);
+
+
+    // Update phase 1 volume fraction
+    alpha1_ -= dT*deltaAlpha;
+    alpha1_.maxMin(0.0, 1.0);
+    alpha1_.correctBoundaryConditions();
+    alpha2_ = 1.0 - alpha1_;
+
+    // Update phase 1 mass
+    alphaRho1_ -= dT*deltaAlphaRho1;
+    alphaRho1_.correctBoundaryConditions();
+
+    // Update phase 2 mass
+    alphaRho2_ -= dT*deltaAlphaRho2;
+    alphaRho2_.correctBoundaryConditions();
+
+    // Update "new" total density
+    rho_ = alphaRho1_ + alphaRho2_;
+
+
+    // Primitive transport of phase densities
+    if (transportPhaseDensity_)
+    {
+        volScalarField deltaRho1
+        (
+            fvc::div(fluxScheme_->flux(rho1_, phi_)) - rho1_*divU
+        );
+        this->fvTimeInt_->addDeltaSource(rho1_.name(), deltaRho1);
+
+        volScalarField deltaRho2
+        (
+            fvc::div(fluxScheme_->flux(rho2_, phi_)) - rho2_*divU
+        );
+        this->fvTimeInt_->addDeltaSource(rho2_.name(), deltaRho2);
+
+        this->storeAndBlendOld(rho1_);
+        this->storeAndBlendOld(rho2_);
+        this->storeAndBlendDelta(deltaRho1);
+        this->storeAndBlendDelta(deltaRho2);
+
+        rho1_ -= dT*deltaRho1;
+        rho2_ -= dT*deltaRho2;
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
@@ -403,144 +524,19 @@ void Foam::twoPhaseCompressibleSystem::update()
     thermo_.update();
 }
 
-
-void Foam::twoPhaseCompressibleSystem::solve()
-{
-    compressibleBlastSystem::solve();
-
-    // Update changes in volume fraction and phase mass
-    volScalarField divU(fvc::div(phi_));
-    volScalarField deltaAlpha
-    (
-        fvc::div(alphaPhi_) - alpha1_*divU
-    );
-    this->fvTimeInt_->addDeltaSource(alpha1_.name(), deltaAlpha);
-
-    volScalarField deltaAlphaRho1(fvc::div(alphaRhoPhi1_));
-    this->fvTimeInt_->addDeltaSource(alphaRho1_.name(), deltaAlphaRho1);
-
-    volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
-    this->fvTimeInt_->addDeltaSource(alphaRho2_.name(), deltaAlphaRho2);
-
-    // Delta T value
-    dimensionedScalar dT = rho_.time().deltaT();
-
-    // if (phaseChange_.valid())
-    // {
-    //     Pair<tmp<volScalarField::Internal>> mDots(phaseChange_->mDots());
-    //     Info<<min(mDots.first()()).dimensions()<<" "<<max(mDots.first()()).value()<<endl;
-    //     // Info<<min(alphaRho1_()/dT).value()<<" "<<max(alphaRho1_()/dT).value()<<endl;
-    //     Info<<min(mDots.second()()).dimensions()<<" "<<max(mDots.second()()).value()<<endl;
-    //     // Info<<min(alphaRho2_()/dT).value()<<" "<<max(alphaRho2_()/dT).value()<<endl;
-    //     // mDots.first().ref() = min(mDots.first()(), alphaRho2_()/dT);
-    //     // mDots.second().ref() = min(mDots.second()(), alphaRho1_()/dT);
-    //
-    //     volScalarField::Internal mDot
-    //     (
-    //         "mDot",
-    //         mDots.first()() - mDots.second()()
-    //         // min
-    //         // (
-    //         //     max
-    //         //     (
-    //         //         mDots.first()() - mDots.second()(),
-    //         //         -alphaRho1_()/dT
-    //         //     ),
-    //         //     alphaRho2_()/dT
-    //         // )
-    //     );
-    //     Info<<max(mDot).value()<<" "<<min(mDot).value()<<endl;
-    //
-    //     deltaAlphaRho1.ref() -= mDot;
-    //     deltaAlphaRho2.ref() += mDot;
-    //
-    //     volScalarField::Internal dAlpha
-    //     (
-    //         "dAlpha",
-    //         mDots.first()/max(rho2_(), thermo_.thermo(1).residualRho())
-    //       - mDots.second()/max(rho1_(), thermo_.thermo(0).residualRho())
-    //     );
-    //     Info<<max(dAlpha).value()<<" "<<min(dAlpha).value()<<endl;
-    //     deltaAlpha.ref() -= dAlpha;
-    // }
-
-    // Blend old values
-    this->storeAndBlendOld(alpha1_, false);
-    this->storeAndBlendOld(alphaRho1_);
-    alphaRho1_.storePrevIter();
-
-    this->storeAndBlendOld(alphaRho2_);
-    alphaRho2_.storePrevIter();
-
-    // Update "old" total density
-    rho_ = alphaRho1_ + alphaRho2_;
-    rho_.storePrevIter();
-
-
-    // Blend deltas
-    this->storeAndBlendDelta(deltaAlpha);
-    this->storeAndBlendDelta(deltaAlphaRho1);
-    this->storeAndBlendDelta(deltaAlphaRho2);
-
-
-    // Update phase 1 volume fraction
-    alpha1_ -= dT*deltaAlpha;
-    alpha1_.maxMin(0.0, 1.0);
-    alpha1_.correctBoundaryConditions();
-    alpha2_ = 1.0 - alpha1_;
-
-    // Update phase 1 mass
-    alphaRho1_ -= dT*deltaAlphaRho1;
-    alphaRho1_.correctBoundaryConditions();
-
-    // Update phase 2 mass
-    alphaRho2_ -= dT*deltaAlphaRho2;
-    alphaRho2_.correctBoundaryConditions();
-
-    // Update "new" total density
-    rho_ = alphaRho1_ + alphaRho2_;
-
-
-    // Primitive transport of phase densities
-    if (transportPhaseDensity_)
-    {
-        volScalarField deltaRho1
-        (
-            fvc::div(fluxScheme_->flux(rho1_, phi_)) - rho1_*divU
-        );
-        this->fvTimeInt_->addDeltaSource(rho1_.name(), deltaRho1);
-
-        volScalarField deltaRho2
-        (
-            fvc::div(fluxScheme_->flux(rho2_, phi_)) - rho2_*divU
-        );
-        this->fvTimeInt_->addDeltaSource(rho2_.name(), deltaRho2);
-
-        this->storeAndBlendOld(rho1_);
-        this->storeAndBlendOld(rho2_);
-        this->storeAndBlendDelta(deltaRho1);
-        this->storeAndBlendDelta(deltaRho2);
-
-        rho1_ -= dT*deltaRho1;
-        rho2_ -= dT*deltaRho2;
-    }
-
-    thermo_.solve();
-}
-
-
 void Foam::twoPhaseCompressibleSystem::postUpdate()
 {
     this->decode();
 
     bool updateRho = false;
+    rho_.storePrevIter();
 
     // Solve volume fraction
     if (needSolve(alpha1_.name()))
     {
         fvScalarMatrix alphaEqn
         (
-            fvm::ddt(alpha1_) - fvc::ddt(alpha1_)
+            fvm::ddt(alpha1_) - alpha1Advection_()
         ==
             models().source(alpha1_)
         );
@@ -552,9 +548,6 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
         alpha1_.correctBoundaryConditions();
         alpha2_ = 1.0 - alpha1_;
 
-        alphaRho1_ = alpha1_*rho1_;
-        alphaRho2_ = alpha2_*rho2_;
-
         updateRho = true;
     }
     // Solve phase 1 mass
@@ -562,7 +555,7 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
     {
         fvScalarMatrix alphaRho1Eqn
         (
-            fvm::ddt(alpha1_, rho1_) - fvc::ddt(alphaRho1_)
+            fvm::ddt(alpha1_, rho1_) - alphaRho1Advection_()
           + fvm::ddt(thermoPtr_->residualAlpha(), rho1_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho1_)
         ==
@@ -582,7 +575,7 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
     {
         fvScalarMatrix alphaRho2Eqn
         (
-            fvm::ddt(alpha2_, rho2_) - fvc::ddt(alphaRho2_)
+            fvm::ddt(alpha2_, rho2_) - alphaRho2Advection_()
           + fvm::ddt(thermoPtr_->residualAlpha(), rho2_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho2_)
         ==
@@ -600,7 +593,6 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
     // Update phase masses
     if (updateRho)
     {
-        rho_.storePrevIter();
         rho_ = alphaRho1_ + alphaRho2_;
     }
 
@@ -668,6 +660,26 @@ void Foam::twoPhaseCompressibleSystem::encode()
     alphaRho2_ = alpha2_*rho2_;
     rho_ = alphaRho1_ + alphaRho2_;
     compressibleBlastSystem::encode();
+}
+
+
+void Foam::twoPhaseCompressibleSystem::storeFluxDeltas()
+{
+    compressibleBlastSystem::storeFluxDeltas();
+
+    alpha1Advection_ = fvc::ddt(alpha1_);
+    alphaRho1Advection_ = fvc::ddt(alphaRho1_);
+    alphaRho2Advection_ = fvc::ddt(alphaRho2_);
+}
+
+
+void Foam::twoPhaseCompressibleSystem::clear()
+{
+    compressibleBlastSystem::clear();
+
+    alpha1Advection_.clear();
+    alphaRho1Advection_.clear();
+    alphaRho2Advection_.clear();
 }
 
 // ************************************************************************* //

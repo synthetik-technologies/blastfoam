@@ -81,6 +81,11 @@ protected:
         PtrList<surfaceScalarField> alphaRhoPhis_;
 
 
+    //- Cached changes from advection
+    List<tmp<volScalarField>> alphaAdvection_;
+    List<tmp<volScalarField>> alphaRhoAdvection_;
+
+
     //- Transport phase densities
     bool transportPhaseDensity_;
 
@@ -112,6 +117,9 @@ protected:
         //- Return the index of the phase with the given name
         label whichPhase(const word& phaseName) const;
 
+        //- Solve for density and volume fraction fields
+        virtual void solveMass();
+
 
 public:
 
@@ -141,11 +149,14 @@ public:
         //- Update fluxes
         virtual void update();
 
-        //- Solve a sub-step
-        virtual void solve();
-
         //- Solve implicit terms
         virtual void postUpdate();
+
+        //- Store changes from advection
+        virtual void storeFluxDeltas();
+
+        //- Clear temporary variables
+        virtual void clear();
 };
 
 

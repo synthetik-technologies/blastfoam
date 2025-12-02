@@ -95,6 +95,11 @@ protected:
         surfaceScalarField alphaRhoPhi2_;
 
 
+    //- Cached changes from advection
+    tmp<volScalarField> alpha1Advection_;
+    tmp<volScalarField> alphaRho1Advection_;
+    tmp<volScalarField> alphaRho2Advection_;
+
     //- Cavitation model (optional)
     // autoPtr<phaseChangeModel> phaseChange_;
 
@@ -124,6 +129,9 @@ protected:
             const surfaceScalarField& alphaRho2Nei
         );
 
+        //- Solve for density and volume fraction fields
+        virtual void solveMass();
+
 
 public:
 
@@ -152,11 +160,14 @@ public:
         //- Update fluxes
         void update();
 
-        //- Solve sub-step stepi
-        virtual void solve();
-
         //- Solve implicit terms
         virtual void postUpdate();
+
+        //- Store changes from advection
+        virtual void storeFluxDeltas();
+
+        //- Clear temporary variables
+        virtual void clear();
 };
 
 

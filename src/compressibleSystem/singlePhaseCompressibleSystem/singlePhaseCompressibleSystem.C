@@ -39,6 +39,30 @@ namespace Foam
     );
 }
 
+// * * * * * * * * * * * * Protected Members Functions * * * * * * * * * * * //
+
+void Foam::singlePhaseCompressibleSystem::solveMass()
+{
+    volScalarField& rho = this->rhoEff();
+    dimensionedScalar dT = rho.time().deltaT();
+
+    volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
+    this->fvTimeInt_->addDeltaSource(rho_.name(), deltaRho);
+
+    if (this->LTS())
+    {
+        deltaRho /= corDeltaT();
+    }
+
+    this->storeAndBlendDelta(deltaRho);
+    this->storeAndBlendOld(rho);
+
+    rho.storePrevIter();
+
+    rho -= dT*deltaRho;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
@@ -75,33 +99,6 @@ void Foam::singlePhaseCompressibleSystem::decode()
 }
 
 
-void Foam::singlePhaseCompressibleSystem::solve()
-{
-    compressibleBlastSystem::solve();
-
-    volScalarField& rho = this->rhoEff();
-    dimensionedScalar dT = rho.time().deltaT();
-
-    volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
-    this->fvTimeInt_->addDeltaSource(rho_.name(), deltaRho);
-
-    if (this->LTS())
-    {
-        deltaRho /= corDeltaT();
-    }
-
-    this->storeAndBlendDelta(deltaRho);
-    this->storeAndBlendOld(rho);
-
-    rho.storePrevIter();
-
-    rho -= dT*deltaRho;
-    rho.correctBoundaryConditions();
-
-    thermoPtr_->solve();
-}
-
-
 void Foam::singlePhaseCompressibleSystem::postUpdate()
 {
     this->decode();
@@ -113,7 +110,7 @@ void Foam::singlePhaseCompressibleSystem::postUpdate()
     {
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(rho) - fvc::ddt(rho)
+            fvm::ddt(rho) - rhoAdvection_()
          ==
             models().source(rho)
         );
@@ -129,6 +126,22 @@ void Foam::singlePhaseCompressibleSystem::postUpdate()
     }
 
     compressibleBlastSystem::postUpdate();
+}
+
+
+void Foam::singlePhaseCompressibleSystem::storeFluxDeltas()
+{
+    compressibleBlastSystem::storeFluxDeltas();
+
+    rhoAdvection_ = fvc::ddt(rhoEff());
+}
+
+
+void Foam::singlePhaseCompressibleSystem::clear()
+{
+    compressibleBlastSystem::clear();
+
+    rhoAdvection_.clear();
 }
 
 // ************************************************************************* //

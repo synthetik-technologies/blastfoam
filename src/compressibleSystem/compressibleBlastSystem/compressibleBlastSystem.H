@@ -95,6 +95,20 @@ protected:
             volScalarField::Internal& rhoESource
         ) const;
 
+        //- Return if E need to be implicitly solved
+        virtual bool needSolve_E() const
+        {
+            return
+                compressibleSystem::needSolve_E()
+             || radiation_.valid();
+        }
+
+        //- Add source terms to EEqn
+        virtual void addESource(fvScalarMatrix& EEqn) const;
+
+        //- Solve for density field
+        virtual void solveMass() = 0;
+
 
 public:
 
@@ -123,6 +137,12 @@ public:
 
         //- Post update
         virtual void postUpdate();
+
+        //- Store changes from advection
+        virtual void storeFluxDeltas() = 0;
+
+        //- Clear the flux scheme
+        virtual void clear();
 
 
     // Member Access Functions

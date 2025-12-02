@@ -298,6 +298,77 @@ Foam::label Foam::multiphaseCompressibleSystem::whichPhase
     return findIndex(thermo_.phaseNames(), phaseName);
 }
 
+void Foam::multiphaseCompressibleSystem::solveMass()
+{
+    dimensionedScalar dT = rho_.time().deltaT();
+
+    // Divergence of volumetric flux
+    volScalarField divPhi(fvc::div(phi_));
+
+    rho_ = Zero;
+    forAll(alphaRhos_, phasei)
+    {
+        volScalarField deltaAlpha
+        (
+            fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*divPhi
+        );
+        this->fvTimeInt_->addDeltaSource(alphas_[phasei].name(), deltaAlpha);
+
+        volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
+        this->fvTimeInt_->addDeltaSource
+        (
+            alphaRhos_[phasei].name(),
+            deltaAlphaRho
+        );
+
+        // Blend old values
+        this->storeAndBlendOld(alphas_[phasei], false);
+        this->storeAndBlendOld(alphaRhos_[phasei]);
+        rho_ += alphaRhos_[phasei];
+
+        // Blend deltas
+        this->storeAndBlendDelta(deltaAlpha);
+        this->storeAndBlendDelta(deltaAlphaRho);
+
+        // Solve volume fraction
+        alphas_[phasei] -= dT*deltaAlpha;
+        alphas_[phasei].maxMin(0.0, 1.0);
+        alphas_[phasei].correctBoundaryConditions();
+
+        // Solve phase mass transport
+        alphaRhos_[phasei].storePrevIter();
+        alphaRhos_[phasei] -= dT*deltaAlphaRho;
+        alphaRhos_[phasei].correctBoundaryConditions();
+
+        if (transportPhaseDensity_)
+        {
+            volScalarField deltaRho
+            (
+                IOobject::groupName("deltaRho", rhos_[phasei].group()),
+                fvc::div(fluxScheme_->flux(rhos_[phasei], phi_))
+              - rhos_[phasei]*divPhi
+            );
+
+            this->storeAndBlendDelta(deltaRho);
+            this->storeAndBlendOld(rhos_[phasei], false);
+
+            //- Solve volume fraction
+            rhos_[phasei] -= dT*deltaRho;
+            rhos_[phasei].correctBoundaryConditions();
+        }
+    }
+
+    // Store "old" total density
+    rho_.storePrevIter();
+
+    //- Compute new density
+    rho_ = Zero;
+    forAll(alphas_, phasei)
+    {
+        rho_ += alphaRhos_[phasei];
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -472,84 +543,6 @@ void Foam::multiphaseCompressibleSystem::update()
 }
 
 
-void Foam::multiphaseCompressibleSystem::solve()
-{
-    // Solve momentum and energy
-    compressibleBlastSystem::solve();
-
-    dimensionedScalar dT = rho_.time().deltaT();
-
-    // Divergence of volumetric flux
-    volScalarField divPhi(fvc::div(phi_));
-
-    rho_ = Zero;
-    forAll(alphaRhos_, phasei)
-    {
-        volScalarField deltaAlpha
-        (
-            fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*divPhi
-        );
-        this->fvTimeInt_->addDeltaSource(alphas_[phasei].name(), deltaAlpha);
-
-        volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
-        this->fvTimeInt_->addDeltaSource
-        (
-            alphaRhos_[phasei].name(),
-            deltaAlphaRho
-        );
-
-        // Blend old values
-        this->storeAndBlendOld(alphas_[phasei], false);
-        this->storeAndBlendOld(alphaRhos_[phasei]);
-        rho_ += alphaRhos_[phasei];
-
-        // Blend deltas
-        this->storeAndBlendDelta(deltaAlpha);
-        this->storeAndBlendDelta(deltaAlphaRho);
-
-        // Solve volume fraction
-        alphas_[phasei] -= dT*deltaAlpha;
-        alphas_[phasei].maxMin(0.0, 1.0);
-        alphas_[phasei].correctBoundaryConditions();
-
-        // Solve phase mass transport
-        alphaRhos_[phasei].storePrevIter();
-        alphaRhos_[phasei] -= dT*deltaAlphaRho;
-        alphaRhos_[phasei].correctBoundaryConditions();
-
-        if (transportPhaseDensity_)
-        {
-            volScalarField deltaRho
-            (
-                IOobject::groupName("deltaRho", rhos_[phasei].group()),
-                fvc::div(fluxScheme_->flux(rhos_[phasei], phi_))
-              - rhos_[phasei]*divPhi
-            );
-
-            this->storeAndBlendDelta(deltaRho);
-            this->storeAndBlendOld(rhos_[phasei], false);
-
-            //- Solve volume fraction
-            rhos_[phasei] -= dT*deltaRho;
-            rhos_[phasei].correctBoundaryConditions();
-        }
-    }
-
-    // Store "old" total density
-    rho_.storePrevIter();
-
-    //- Compute new density
-    rho_ = Zero;
-    forAll(alphas_, phasei)
-    {
-        rho_ += alphaRhos_[phasei];
-    }
-
-    // Solve thermo
-    thermoPtr_->solve();
-}
-
-
 void Foam::multiphaseCompressibleSystem::postUpdate()
 {
     this->decode();
@@ -564,7 +557,7 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
 
             fvScalarMatrix alphaEqn
             (
-                fvm::ddt(alphas_[phasei]) - fvc::ddt(alphas_[phasei])
+                fvm::ddt(alphas_[phasei]) - alphaAdvection_[phasei]()
              ==
                 models().source(alphas_[phasei])
             );
@@ -590,7 +583,7 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
             dimensionedScalar rAlpha(thermo_.thermo(phasei).residualAlpha());
             fvScalarMatrix alphaRhoEqn
             (
-                fvm::ddt(alpha, rho) - fvc::ddt(alphaRhos_[phasei])
+                fvm::ddt(alpha, rho) - alphaRhoAdvection_[phasei]()
               + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
             ==
                 models().source(alpha, rho)
@@ -719,6 +712,32 @@ void Foam::multiphaseCompressibleSystem::encode()
         rho_ += alphaRhos_[phasei];
     }
     compressibleBlastSystem::encode();
+}
+
+
+void Foam::multiphaseCompressibleSystem::storeFluxDeltas()
+{
+    compressibleBlastSystem::storeFluxDeltas();
+
+    alphaAdvection_.setSize(alphas_.size());
+    alphaRhoAdvection_.setSize(alphaRhos_.size());
+    forAll(alphas_, phasei)
+    {
+        alphaAdvection_[phasei] = fvc::ddt(alphas_[phasei]);
+        alphaRhoAdvection_[phasei] = fvc::ddt(alphaRhos_[phasei]);
+    }
+}
+
+
+void Foam::multiphaseCompressibleSystem::clear()
+{
+    compressibleBlastSystem::clear();
+
+    forAll(alphas_, phasei)
+    {
+        alphaAdvection_[phasei].clear();
+        alphaRhoAdvection_[phasei].clear();
+    }
 }
 
 // ************************************************************************* //

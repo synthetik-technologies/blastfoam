@@ -144,6 +144,10 @@ public:
         {
             return false;
         }
+        virtual void clear()
+        {
+            return blastThermo::clear();
+        }
 
         // Fields derived from thermodynamic state variables
 

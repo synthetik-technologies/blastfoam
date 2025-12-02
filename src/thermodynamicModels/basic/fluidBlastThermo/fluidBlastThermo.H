@@ -180,6 +180,10 @@ public:
         {
             return *this;
         }
+        virtual void clear()
+        {
+            return blastThermo::clear();
+        }
 
         // Access to thermodynamic state variables
 

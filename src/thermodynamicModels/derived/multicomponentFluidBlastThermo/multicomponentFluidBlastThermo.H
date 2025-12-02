@@ -130,6 +130,18 @@ public:
             multicomponentBlastThermo::postUpdate();
         }
 
+        //- Store explicit fluxes
+        virtual void storeFluxDeltas()
+        {
+            multicomponentBlastThermo::storeFluxDeltas();
+        }
+
+        //- Clear store data
+        virtual void clear()
+        {
+            multicomponentBlastThermo::clear();
+        }
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 

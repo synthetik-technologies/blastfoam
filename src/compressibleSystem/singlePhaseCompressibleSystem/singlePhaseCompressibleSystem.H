@@ -50,6 +50,14 @@ class singlePhaseCompressibleSystem
 :
     public compressibleBlastSystem
 {
+protected:
+
+    //- Cached changes from advection
+    tmp<volScalarField> rhoAdvection_;
+
+    //- Solve for density field
+    virtual void solveMass();
+
 public:
 
     TypeName("singlePhase");
@@ -71,11 +79,14 @@ public:
         //- Decode primative variables
         virtual void decode();
 
-        //- Solve sub-step stepi
-        virtual void solve();
-
         //- Solve implicit terms
         virtual void postUpdate();
+
+        //- Store changes from advection
+        virtual void storeFluxDeltas();
+
+        //- Clear temporary variables
+        virtual void clear();
 };
 
 

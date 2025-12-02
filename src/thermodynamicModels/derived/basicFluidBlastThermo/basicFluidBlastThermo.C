@@ -69,6 +69,8 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
 
     this->pRef().correctBoundaryConditions();
 
+    const volScalarField::Boundary& brho = this->rho_.boundaryField();
+    volScalarField::Boundary& bp = this->pRef().boundaryFieldRef();
     volScalarField::Boundary& bhe = this->heRef().boundaryFieldRef();
     volScalarField::Boundary& bT = this->TRef().boundaryFieldRef();
     volScalarField::Boundary& bCp = this->CpRef().boundaryFieldRef();
@@ -80,9 +82,8 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
 
     forAll(this->rho_.boundaryField(), patchi)
     {
-        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pp = this->pRef().boundaryField()[patchi];
-
+        const fvPatchScalarField& prho = brho[patchi];
+        fvPatchScalarField& pp = bp[patchi];
         fvPatchScalarField& pT = bT[patchi];
         fvPatchScalarField& phe = bhe[patchi];
         fvPatchScalarField& pCp = bCp[patchi];
@@ -91,22 +92,11 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
         fvPatchScalarField& pkappa = bkappa[patchi];
         fvPatchScalarField& pspeedOfSound = bspeedOfSound[patchi];
 
-
         if (pT.fixesValue())
         {
             forAll(prho, facei)
             {
-                const scalar rhoi = prho[facei];
-                const scalar Ti = pT[facei];
-                scalar& ei = phe[facei];
-
-                phe[facei] = t.Es(rhoi, ei, Ti);
-                pCp[facei] = t.Cp(rhoi, ei, Ti);
-                pCv[facei] = t.Cv(rhoi, ei, Ti);
-                pmu[facei] = t.mu(rhoi, ei, Ti);
-                pkappa[facei] = t.kappa(rhoi, ei, Ti);
-                pspeedOfSound[facei] =
-                    sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
+                phe[facei] = t.Es(prho[facei], phe[facei], pT[facei]);
             }
         }
         else
@@ -123,14 +113,30 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
                     ei = t.Es(rhoi, ei, this->TLow_);
                     Ti = this->TLow_;
                 }
-
-                pCp[facei] = t.Cp(rhoi, ei, Ti);
-                pCv[facei] = t.Cv(rhoi, ei, Ti);
-                pmu[facei] = t.mu(rhoi, ei, Ti);
-                pkappa[facei] = t.kappa(rhoi, ei, Ti);
-                pspeedOfSound[facei] =
-                    sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
             }
+        }
+
+        if (isA<calculatedFvPatchField<scalar>>(pp))
+        {
+            forAll(pp, facei)
+            {
+                pp[facei] = t.p(prho[facei], phe[facei], pT[facei]);
+            }
+        }
+
+
+        forAll(prho, facei)
+        {
+            const scalar rhoi = prho[facei];
+            const scalar ei = phe[facei];
+            const scalar Ti = pT[facei];
+
+            pCp[facei] = t.Cp(rhoi, ei, Ti);
+            pCv[facei] = t.Cv(rhoi, ei, Ti);
+            pmu[facei] = t.mu(rhoi, ei, Ti);
+            pkappa[facei] = t.kappa(rhoi, ei, Ti);
+            pspeedOfSound[facei] =
+                sqrt(max(t.cSqr(pp[facei], rhoi, ei, Ti), small));
         }
     }
 }
