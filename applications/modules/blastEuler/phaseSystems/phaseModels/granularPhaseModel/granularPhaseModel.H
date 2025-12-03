@@ -195,13 +195,13 @@ public:
             virtual void solve();
 
             //- Solve viscous and source terms
-            virtual void postExplicit();
-
-            //- Solve viscous and source terms
-            virtual void postImplicit();
+            virtual void solveExplicit();
 
             //- Store explicit deltas
             virtual void storeExplicit();
+
+            //- Solve viscous and source terms
+            virtual void solveImplicit();
 
             //- Post update
             virtual void postUpdate();

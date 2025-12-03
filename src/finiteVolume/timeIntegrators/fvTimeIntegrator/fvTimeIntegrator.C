@@ -39,7 +39,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * * Protected Functions * * * * * * * * * * * * * //
 
-void Foam::fvTimeIntegrator::update()
+void Foam::fvTimeIntegrator::updateCoeffs()
 {
     if (coeffs_->update(curTimeIndex_, time().value()))
     {
@@ -196,7 +196,7 @@ void Foam::fvTimeIntegrator::preUpdateMesh()
 }
 
 
-void Foam::fvTimeIntegrator::updateAll()
+void Foam::fvTimeIntegrator::update()
 {
     // Set use a linear change in volume
     // All fields are scaled according to the true volume
@@ -289,7 +289,7 @@ void Foam::fvTimeIntegrator::solveImplicit()
         {
             forAll(systems_, i)
             {
-                systems_[i].postImplicit();
+                systems_[i].solveImplicit();
             }
         }
     }
@@ -297,7 +297,7 @@ void Foam::fvTimeIntegrator::solveImplicit()
     {
         forAll(systems_, i)
         {
-            systems_[i].postImplicit();
+            systems_[i].solveImplicit();
         }
     }
 }

@@ -568,10 +568,24 @@ void Foam::compressibleSystem::solve()
 }
 
 
-void Foam::compressibleSystem::postExplicit()
+void Foam::compressibleSystem::solveExplicit()
 {}
 
-void Foam::compressibleSystem::postImplicit()
+
+void Foam::compressibleSystem::storeExplicit()
+{
+    if (needSolve_U())
+    {
+        rhoUAdvection_ = fvc::ddt(rhoU_);
+    }
+
+    if (needSolve_E())
+    {
+        rhoEAdvection_ = fvc::ddt(rhoE_);
+    }
+}
+
+void Foam::compressibleSystem::solveImplicit()
 {
     if (turbulence_.valid())
     {
@@ -674,20 +688,6 @@ Foam::volScalarField& Foam::compressibleSystem::rhoEff()
 const Foam::volScalarField& Foam::compressibleSystem::rhoEff() const
 {
     return rho();
-}
-
-
-void Foam::compressibleSystem::storeExplicit()
-{
-    if (needSolve_U())
-    {
-        rhoUAdvection_ = fvc::ddt(rhoU_);
-    }
-
-    if (needSolve_E())
-    {
-        rhoEAdvection_ = fvc::ddt(rhoE_);
-    }
 }
 
 

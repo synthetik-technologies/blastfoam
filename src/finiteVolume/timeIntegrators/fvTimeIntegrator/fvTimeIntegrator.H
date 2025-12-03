@@ -150,7 +150,7 @@ protected:
     // Private member functions
 
         // Update coefficients
-        virtual void update();
+        virtual void updateCoeffs();
 
         //- Insert a list of old fields into the given hash table
         template<class FieldType>
@@ -239,7 +239,7 @@ public:
         void preUpdateMesh();
 
         //- Update all stored systems
-        virtual void updateAll();
+        virtual void update();
 
         //- Solve implicit
         virtual void solveImplicit();

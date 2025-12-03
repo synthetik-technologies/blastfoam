@@ -123,13 +123,13 @@ public:
         virtual void update() = 0;
 
         //- Update after ode integration
-        virtual void postExplicit()
-        {}
-
-        virtual void postImplicit()
+        virtual void solveExplicit()
         {}
 
         virtual void storeExplicit()
+        {}
+
+        virtual void solveImplicit()
         {}
 
         virtual void clear()

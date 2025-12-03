@@ -353,10 +353,16 @@ public:
         virtual void solve();
 
         //- Explicit post update
-        virtual void postExplicit();
+        virtual void solveExplicit();
+
+        //- Store changes from advection
+        virtual void storeExplicit() = 0;
 
         //- Implicit post update
-        virtual void postImplicit();
+        virtual void solveImplicit();
+
+        //- Clear the flux scheme
+        virtual void clear();
 
         //- Add external mass source
         tmp<fvScalarMatrix>& rhoSource()
@@ -393,12 +399,6 @@ public:
 
         //- Add external energy source
         void addESource(const volScalarField::Internal& extEsrc);
-
-        //- Store changes from advection
-        virtual void storeExplicit() = 0;
-
-        //- Clear the flux scheme
-        virtual void clear();
 
         //- Return the maximum Courant number
         virtual scalar CoNum() const;

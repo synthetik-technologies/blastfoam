@@ -151,23 +151,13 @@ void Foam::activationModels::ArrheniusRateActivation::solve()
 }
 
 
-void Foam::activationModels::ArrheniusRateActivation::postExplicit()
+void Foam::activationModels::ArrheniusRateActivation::solveExplicit()
 {
     if (dModel_.valid())
     {
-        dModel_->postExplicit();
+        dModel_->solveExplicit();
     }
-    activationModel::postExplicit();
-}
-
-
-void Foam::activationModels::ArrheniusRateActivation::postImplicit()
-{
-    if (dModel_.valid())
-    {
-        dModel_->postImplicit();
-    }
-    activationModel::postImplicit();
+    activationModel::solveExplicit();
 }
 
 
@@ -178,6 +168,16 @@ void Foam::activationModels::ArrheniusRateActivation::storeExplicit()
         dModel_->storeExplicit();
     }
     activationModel::storeExplicit();
+}
+
+
+void Foam::activationModels::ArrheniusRateActivation::solveImplicit()
+{
+    if (dModel_.valid())
+    {
+        dModel_->solveImplicit();
+    }
+    activationModel::solveImplicit();
 }
 
 

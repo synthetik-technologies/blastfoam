@@ -122,11 +122,11 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Post update
-        virtual void postImplicit();
-
         //- Store changes from advection
         virtual void storeExplicit();
+
+        //- Post update
+        virtual void solveImplicit();
 
         //- Clear temporary variables
         virtual void clear();

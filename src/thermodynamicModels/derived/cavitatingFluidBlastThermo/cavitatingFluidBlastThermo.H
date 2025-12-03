@@ -157,16 +157,20 @@ public:
         virtual void solve();
 
         //- Explicit post update
-        virtual void postExplicit();
-
-        //- Implicit post update
-        virtual void postImplicit();
+        virtual void solveExplicit()
+        {}
 
         //- Store explicit deltas
-        virtual void storeExplicit();
+        virtual void storeExplicit()
+        {}
+
+        //- Implicit post update
+        virtual void solveImplicit()
+        {}
 
         //- Clear stored data
-        virtual void clear();
+        virtual void clear()
+        {}
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;

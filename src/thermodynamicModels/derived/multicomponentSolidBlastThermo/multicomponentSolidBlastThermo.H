@@ -112,21 +112,21 @@ public:
         }
 
         //- Explicit post update
-        virtual void postExplicit()
+        virtual void solveExplicit()
         {
-            multicomponentBlastThermo::postExplicit();
-        }
-
-        //- Implicit post update
-        virtual void postImplicit()
-        {
-            multicomponentBlastThermo::postImplicit();
+            multicomponentBlastThermo::solveExplicit();
         }
 
         //- Store explicit deltas
         virtual void storeExplicit()
         {
             multicomponentBlastThermo::storeExplicit();
+        }
+
+        //- Implicit post update
+        virtual void solveImplicit()
+        {
+            multicomponentBlastThermo::solveImplicit();
         }
 
         //- Clear stored data

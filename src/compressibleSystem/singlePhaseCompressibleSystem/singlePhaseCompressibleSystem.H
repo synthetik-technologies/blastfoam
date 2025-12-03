@@ -79,11 +79,11 @@ public:
         //- Decode primative variables
         virtual void decode();
 
-        //- Solve implicit terms
-        virtual void postImplicit();
-
         //- Store changes from advection
         virtual void storeExplicit();
+
+        //- Solve implicit terms
+        virtual void solveImplicit();
 
         //- Clear temporary variables
         virtual void clear();

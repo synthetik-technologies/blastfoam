@@ -125,17 +125,8 @@ void Foam::embeddedTimeIntegrator::addSystem
 }
 
 
-void Foam::embeddedTimeIntegrator::integrate
-(
-    const bool doExplicit,
-    const bool doSave,
-    const bool doImplicit,
-    const bool doPost,
-    const bool doClear
-)
+void Foam::embeddedTimeIntegrator::preUpdate()
 {
-    const Time& runTime = obr_.time();
-
 //     if (runTime.timeIndex() == curTimeIndex_)
 //     {
 //         reset();
@@ -147,8 +138,26 @@ void Foam::embeddedTimeIntegrator::integrate
         curTimeIndex_ = obr_.time().timeIndex();
         restart_ = false;
 
-        update();
+        updateCoeffs();
     }
+
+    forAll(systems_, i)
+    {
+        systems_[i].preUpdate();
+    }
+}
+
+
+void Foam::embeddedTimeIntegrator::integrate
+(
+    const bool doExplicit,
+    const bool doSave,
+    const bool doImplicit,
+    const bool doPost,
+    const bool doClear
+)
+{
+    const Time& runTime = obr_.time();
 
     preUpdate();
 
@@ -162,7 +171,7 @@ void Foam::embeddedTimeIntegrator::integrate
         // Update and store original fields
         for (stepi_ = 0; stepi_ < coeffs_->nSteps(); stepi_++)
         {
-            this->updateAll();
+            this->update();
             forAll(systems_, i)
             {
                 systems_[i].solve();

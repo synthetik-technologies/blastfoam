@@ -189,11 +189,47 @@ void Foam::granularPhaseModel::solve()
 }
 
 
-void Foam::granularPhaseModel::postExplicit()
+void Foam::granularPhaseModel::solveExplicit()
 {}
 
 
-void Foam::granularPhaseModel::postImplicit()
+void Foam::granularPhaseModel::storeExplicit()
+{
+    const volScalarField& alpha = *this;
+    if (needSolve(alpha.name()))
+    {
+        alphaAdvection_ = fvc::ddt(alpha);
+    }
+
+    if (needSolve(rho().name()))
+    {
+        alphaRhoAdvection_ = fvc::ddt(alphaRho_);
+    }
+
+    // Solve momentum
+    if (needSolve(U_.name()) || this->includeViscosity())
+    {
+        alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
+    }
+
+    // Solve thermal energy
+    if (needSolve(he().name()))
+    {
+        alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
+    }
+
+    //- Solve granular temperature equation including solid stress and
+    //  conductivity
+    if (needSolve(Theta_.name()) || this->includeViscosity())
+    {
+        alphaRhoPTEAdvection_ = fvc::ddt(alphaRhoPTE_);
+    }
+
+    thermoPtr_->storeExplicit();
+}
+
+
+void Foam::granularPhaseModel::solveImplicit()
 {
     volScalarField& alpha(*this);
 
@@ -327,9 +363,9 @@ void Foam::granularPhaseModel::postImplicit()
         alphaRhoPTE_ = 1.5*alphaRho_*Theta_;
     }
 
-    thermoPtr_->postImplicit();
-    surfTModel_->postImplicit();
-    dPtr_->postImplicit();
+    thermoPtr_->solveImplicit();
+    surfTModel_->solveImplicit();
+    dPtr_->solveImplicit();
 }
 
 
@@ -443,42 +479,6 @@ void Foam::granularPhaseModel::encode()
     alphaRhoU_ = alphaRho_*U_;
     alphaRhoE_ = alphaRho_*e_;
     alphaRhoPTE_ = 1.5*alphaRho_*Theta_;
-}
-
-
-void Foam::granularPhaseModel::storeExplicit()
-{
-    const volScalarField& alpha = *this;
-    if (needSolve(alpha.name()))
-    {
-        alphaAdvection_ = fvc::ddt(alpha);
-    }
-
-    if (needSolve(rho().name()))
-    {
-        alphaRhoAdvection_ = fvc::ddt(alphaRho_);
-    }
-
-    // Solve momentum
-    if (needSolve(U_.name()) || this->includeViscosity())
-    {
-        alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
-    }
-
-    // Solve thermal energy
-    if (needSolve(he().name()))
-    {
-        alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
-    }
-
-    //- Solve granular temperature equation including solid stress and
-    //  conductivity
-    if (needSolve(Theta_.name()) || this->includeViscosity())
-    {
-        alphaRhoPTEAdvection_ = fvc::ddt(alphaRhoPTE_);
-    }
-
-    thermoPtr_->storeExplicit();
 }
 
 

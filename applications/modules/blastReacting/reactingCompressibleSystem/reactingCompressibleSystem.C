@@ -82,12 +82,14 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
 
     mesh.schemes().setFluxRequired(U_.name());
 
-    thermophysicalTransport_ =
+    thermophysicalTransport_.set
+    (
         fluidMulticomponentThermophysicalTransportModel::New
         (
             turbulence_(),
             thermo_()
-        );
+        ).ptr()
+    );
 
     if (thermo_->Y().size() > 1)
     {
@@ -202,7 +204,25 @@ void Foam::reactingCompressibleSystem::solve()
 }
 
 
-void Foam::reactingCompressibleSystem::postImplicit()
+void Foam::reactingCompressibleSystem::storeExplicit()
+{
+    compressibleSystem::storeExplicit();
+
+    rhoAdvection_ = fvc::ddt(rho_);
+
+    if (reaction_.valid())
+    {
+        PtrList<volScalarField>& Y = thermo_->Y();
+        rhoYAdvection_.setSize(Y.size());
+        forAll(Y, phasei)
+        {
+            rhoYAdvection_[phasei] = fvc::ddt(rho_, Y[phasei]);
+        }
+    }
+}
+
+
+void Foam::reactingCompressibleSystem::solveImplicit()
 {
     this->decode();
 
@@ -251,7 +271,7 @@ void Foam::reactingCompressibleSystem::postImplicit()
     }
 
     // Viscous terms if not using explicit viscosity
-    compressibleSystem::postImplicit();
+    compressibleSystem::solveImplicit();
 
     // Update thermo
     thermo_->correct();
@@ -307,24 +327,6 @@ void Foam::reactingCompressibleSystem::decode()
     rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
     rhoE_.boundaryFieldRef() =
         rho_.boundaryField()*(e_.boundaryField() + K_.boundaryField());
-}
-
-
-void Foam::reactingCompressibleSystem::storeExplicit()
-{
-    compressibleSystem::storeExplicit();
-
-    rhoAdvection_ = fvc::ddt(rho_);
-
-    if (reaction_.valid())
-    {
-        PtrList<volScalarField>& Y = thermo_->Y();
-        rhoYAdvection_.setSize(Y.size());
-        forAll(Y, phasei)
-        {
-            rhoYAdvection_[phasei] = fvc::ddt(rho_, Y[phasei]);
-        }
-    }
 }
 
 

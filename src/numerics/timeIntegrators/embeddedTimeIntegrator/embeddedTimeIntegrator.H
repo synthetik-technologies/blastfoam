@@ -123,6 +123,9 @@ public:
             //- Add a system to the
             virtual void addSystem(timeIntegrationSystemBase& system);
 
+            //- Pre update step
+            virtual void preUpdate();
+
             //- Integrate with adaptive time stepping
             using timeIntegrator::integrate;
             virtual void integrate

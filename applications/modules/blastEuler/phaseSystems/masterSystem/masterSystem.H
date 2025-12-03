@@ -241,15 +241,15 @@ public:
         {}
 
         //- Explicit post update
-        virtual void postExplicit()
-        {}
-
-        //- Implicit post update
-        virtual void postImplicit()
+        virtual void solveExplicit()
         {}
 
         //- Save explicit changes
         virtual void storeExplicit()
+        {}
+
+        //- Implicit post update
+        virtual void solveImplicit()
         {}
 
         //- Post Update

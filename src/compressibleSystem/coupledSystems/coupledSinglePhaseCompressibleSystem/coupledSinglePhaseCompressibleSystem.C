@@ -111,12 +111,6 @@ void Foam::coupledSinglePhaseCompressibleSystem::solve()
 }
 
 
-void Foam::coupledSinglePhaseCompressibleSystem::postImplicit()
-{
-    singlePhaseCompressibleSystem::postImplicit();
-}
-
-
 void Foam::coupledSinglePhaseCompressibleSystem::decode()
 {
     if (alphadPtr_.valid())

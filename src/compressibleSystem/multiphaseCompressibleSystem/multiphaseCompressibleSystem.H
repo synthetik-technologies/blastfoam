@@ -149,11 +149,11 @@ public:
         //- Update fluxes
         virtual void update();
 
-        //- Solve implicit terms
-        virtual void postImplicit();
-
         //- Store changes from advection
         virtual void storeExplicit();
+
+        //- Solve implicit terms
+        virtual void solveImplicit();
 
         //- Clear temporary variables
         virtual void clear();

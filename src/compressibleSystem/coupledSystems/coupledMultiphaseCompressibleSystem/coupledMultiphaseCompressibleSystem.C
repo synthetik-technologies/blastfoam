@@ -162,14 +162,6 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 }
 
 
-void Foam::coupledMultiphaseCompressibleSystem::postImplicit()
-{
-    this->decode();
-
-    multiphaseCompressibleSystem::postImplicit();
-}
-
-
 void Foam::coupledMultiphaseCompressibleSystem::calcAlphas()
 {}
 

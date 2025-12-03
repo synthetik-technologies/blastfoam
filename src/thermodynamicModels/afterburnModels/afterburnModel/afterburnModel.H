@@ -129,15 +129,15 @@ public:
         {}
 
         //- Explicit post update
-        virtual void postExplicit()
-        {}
-
-        //- Implicit post update
-        virtual void postImplicit()
+        virtual void solveExplicit()
         {}
 
         //- Store explicit changes
         virtual void storeExplicit()
+        {}
+
+        //- Implicit post update
+        virtual void solveImplicit()
         {}
 
         //- Return pressure

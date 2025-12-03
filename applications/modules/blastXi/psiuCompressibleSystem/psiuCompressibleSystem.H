@@ -210,11 +210,11 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void solveImplicit();
-
         //- Store changes from advection
         virtual void storeExplicit();
+
+        //- Set old lists and fluxes (initialization of fields)
+        virtual void solveImplicit();
 
         //- Clear temporary variables
         virtual void clear();

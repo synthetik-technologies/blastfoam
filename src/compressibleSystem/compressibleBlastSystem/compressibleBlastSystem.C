@@ -171,15 +171,15 @@ void Foam::compressibleBlastSystem::solve()
 }
 
 
-void Foam::compressibleBlastSystem::postImplicit()
+void Foam::compressibleBlastSystem::solveImplicit()
 {
     if (radiation_.valid())
     {
         radiation_->correct();
     }
-    compressibleSystem::postImplicit();
+    compressibleSystem::solveImplicit();
 
-    this->thermo().postImplicit();
+    this->thermo().solveImplicit();
     this->thermo().correct();
     constraints().constrain(p_);
     p_.correctBoundaryConditions();

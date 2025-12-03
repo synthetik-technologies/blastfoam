@@ -438,10 +438,14 @@ void Foam::multiPhaseModel::solve()
 }
 
 
-void Foam::multiPhaseModel::postExplicit()
+void Foam::multiPhaseModel::solveExplicit()
 {}
 
-void Foam::multiPhaseModel::postImplicit()
+
+void Foam::multiPhaseModel::storeExplicit()
+{}
+
+void Foam::multiPhaseModel::solveImplicit()
 {
     // Viscous
     if (turbulence_.valid())
@@ -600,13 +604,9 @@ void Foam::multiPhaseModel::postImplicit()
         thermophysicalTransport_->correct();
     }
 
-    thermo().postImplicit();
+    thermo().solveImplicit();
     thermo().correct();
 }
-
-
-void Foam::multiPhaseModel::storeExplicit()
-{}
 
 
 void Foam::multiPhaseModel::clear()

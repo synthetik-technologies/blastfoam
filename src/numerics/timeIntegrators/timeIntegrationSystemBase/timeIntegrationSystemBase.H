@@ -237,13 +237,13 @@ public:
         virtual void solve() = 0;
 
         //- Explicit update after ode integration
-        virtual void postExplicit() = 0;
+        virtual void solveExplicit() = 0;
 
         //- Store explicit variables
         virtual void storeExplicit() = 0;
 
         //- Implicit update after ode integration
-        virtual void postImplicit() = 0;
+        virtual void solveImplicit() = 0;
 
         //- Update after solving
         virtual void postUpdate()

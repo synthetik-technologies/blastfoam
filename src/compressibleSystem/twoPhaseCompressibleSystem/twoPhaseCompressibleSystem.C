@@ -524,7 +524,29 @@ void Foam::twoPhaseCompressibleSystem::update()
     thermo_.update();
 }
 
-void Foam::twoPhaseCompressibleSystem::postImplicit()
+
+void Foam::twoPhaseCompressibleSystem::storeExplicit()
+{
+    compressibleBlastSystem::storeExplicit();
+
+    if (needSolve(alpha1_.name()))
+    {
+        alpha1Advection_ = fvc::ddt(alpha1_);
+    }
+
+    if (needSolve(rho1_.name()))
+    {
+        alphaRho1Advection_ = fvc::ddt(alphaRho1_);
+    }
+
+    if (needSolve(rho2_.name()))
+    {
+        alphaRho2Advection_ = fvc::ddt(alphaRho2_);
+    }
+}
+
+
+void Foam::twoPhaseCompressibleSystem::solveImplicit()
 {
     this->decode();
 
@@ -595,7 +617,7 @@ void Foam::twoPhaseCompressibleSystem::postImplicit()
         rho_ = alphaRho1_ + alphaRho2_;
     }
 
-    compressibleBlastSystem::postImplicit();
+    compressibleBlastSystem::solveImplicit();
 }
 
 
@@ -659,27 +681,6 @@ void Foam::twoPhaseCompressibleSystem::encode()
     alphaRho2_ = alpha2_*rho2_;
     rho_ = alphaRho1_ + alphaRho2_;
     compressibleBlastSystem::encode();
-}
-
-
-void Foam::twoPhaseCompressibleSystem::storeExplicit()
-{
-    compressibleBlastSystem::storeExplicit();
-
-    if (needSolve(alpha1_.name()))
-    {
-        alpha1Advection_ = fvc::ddt(alpha1_);
-    }
-
-    if (needSolve(rho1_.name()))
-    {
-        alphaRho1Advection_ = fvc::ddt(alphaRho1_);
-    }
-
-    if (needSolve(rho2_.name()))
-    {
-        alphaRho2Advection_ = fvc::ddt(alphaRho2_);
-    }
 }
 
 

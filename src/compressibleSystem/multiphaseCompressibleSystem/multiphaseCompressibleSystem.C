@@ -540,7 +540,27 @@ void Foam::multiphaseCompressibleSystem::update()
 }
 
 
-void Foam::multiphaseCompressibleSystem::postImplicit()
+void Foam::multiphaseCompressibleSystem::storeExplicit()
+{
+    compressibleBlastSystem::storeExplicit();
+
+    alphaAdvection_.setSize(alphas_.size());
+    alphaRhoAdvection_.setSize(alphaRhos_.size());
+    forAll(alphas_, phasei)
+    {
+        if (needSolve(alphas_[phasei].name()))
+        {
+            alphaAdvection_[phasei] = fvc::ddt(alphas_[phasei]);
+        }
+        if (needSolve(rhos_[phasei].name()))
+        {
+            alphaRhoAdvection_[phasei] = fvc::ddt(alphaRhos_[phasei]);
+        }
+    }
+}
+
+
+void Foam::multiphaseCompressibleSystem::solveImplicit()
 {
     this->decode();
 
@@ -593,7 +613,7 @@ void Foam::multiphaseCompressibleSystem::postImplicit()
         rho_ += alphaRhos_[phasei];
     }
 
-    compressibleBlastSystem::postImplicit();
+    compressibleBlastSystem::solveImplicit();
 }
 
 
@@ -708,26 +728,6 @@ void Foam::multiphaseCompressibleSystem::encode()
         rho_ += alphaRhos_[phasei];
     }
     compressibleBlastSystem::encode();
-}
-
-
-void Foam::multiphaseCompressibleSystem::storeExplicit()
-{
-    compressibleBlastSystem::storeExplicit();
-
-    alphaAdvection_.setSize(alphas_.size());
-    alphaRhoAdvection_.setSize(alphaRhos_.size());
-    forAll(alphas_, phasei)
-    {
-        if (needSolve(alphas_[phasei].name()))
-        {
-            alphaAdvection_[phasei] = fvc::ddt(alphas_[phasei]);
-        }
-        if (needSolve(rhos_[phasei].name()))
-        {
-            alphaRhoAdvection_[phasei] = fvc::ddt(alphaRhos_[phasei]);
-        }
-    }
 }
 
 

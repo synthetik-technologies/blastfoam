@@ -210,15 +210,21 @@ void Foam::multicomponentBlastThermo::solve()
 }
 
 
-void Foam::multicomponentBlastThermo::postExplicit()
+void Foam::multicomponentBlastThermo::solveExplicit()
 {
-    integratorPtr_->postExplicit();
+    integratorPtr_->solveExplicit();
 }
 
 
-void Foam::multicomponentBlastThermo::postImplicit()
+void Foam::multicomponentBlastThermo::storeExplicit()
 {
-    integratorPtr_->postImplicit();
+    integratorPtr_->storeExplicit();
+}
+
+
+void Foam::multicomponentBlastThermo::solveImplicit()
+{
+    integratorPtr_->solveImplicit();
     if (integratorPtr_->normalize())
     {
         defaultSpeciei_ = -1;
@@ -226,12 +232,6 @@ void Foam::multicomponentBlastThermo::postImplicit()
     correctMassFractions();
 
     clearSources();
-}
-
-
-void Foam::multicomponentBlastThermo::storeExplicit()
-{
-    integratorPtr_->storeExplicit();
 }
 
 
@@ -533,17 +533,42 @@ void Foam::multicomponentBlastThermo::integrator::solve()
 }
 
 
-void Foam::multicomponentBlastThermo::integrator::postExplicit()
+void Foam::multicomponentBlastThermo::integrator::solveExplicit()
 {}
 
+void Foam::multicomponentBlastThermo::integrator::storeExplicit()
+{
+    bool hasTtm =
+        mesh_.foundObject<fluidMulticomponentThermophysicalTransportModel>
+        (
+            IOobject::groupName("thermophysicalTransport", alphaRho_.group())
+        );
+    alphaRhoYAdvection_.setSize(Y_.size());
+    forAll(Y_, i)
+    {
+        if
+        (
+            active_[i]
+         && (
+                hasTtm
+             || implicitSources_.PtrList<fvScalarMatrix>::set(i)
+            )
+        )
+        {
+            alphaRhoYAdvection_[i] = fvc::ddt(alphaRho_, Y_[i]);
+        }
+    }
+}
 
-void Foam::multicomponentBlastThermo::integrator::postImplicit()
+
+void Foam::multicomponentBlastThermo::integrator::solveImplicit()
 {
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
 
     bool isPhase = alphaRho_.group() != word::null;
 
-    UautoPtr<const fluidMulticomponentThermophysicalTransportModel> thermophysicalTransportPtr;
+    UautoPtr<const fluidMulticomponentThermophysicalTransportModel>
+        thermophysicalTransportPtr;
     if
     (
         mesh_.foundObject<fluidMulticomponentThermophysicalTransportModel>
@@ -607,15 +632,6 @@ void Foam::multicomponentBlastThermo::integrator::postImplicit()
             constraints().constrain(Yi);
             Yi.correctBoundaryConditions();
         }
-    }
-}
-
-void Foam::multicomponentBlastThermo::integrator::storeExplicit()
-{
-    alphaRhoYAdvection_.setSize(Y_.size());
-    forAll(alphaRhoYAdvection_, i)
-    {
-        alphaRhoYAdvection_[i] = fvc::ddt(alphaRho_, Y_[i]);
     }
 }
 

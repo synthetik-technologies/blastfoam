@@ -135,11 +135,11 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Implicit post update
-        virtual void postImplicit();
-
         //- Store changes from advection
         virtual void storeExplicit() = 0;
+
+        //- Implicit post update
+        virtual void solveImplicit();
 
         //- Clear the flux scheme
         virtual void clear();

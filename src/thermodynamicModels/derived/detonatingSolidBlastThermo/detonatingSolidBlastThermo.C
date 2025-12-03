@@ -383,18 +383,10 @@ void Foam::detonatingSolidBlastThermo<Thermo>::solve()
 
 
 template<class Thermo>
-void Foam::detonatingSolidBlastThermo<Thermo>::postExplicit()
+void Foam::detonatingSolidBlastThermo<Thermo>::solveExplicit()
 {
-    activation_->postExplicit();
-    afterburn_->postExplicit();
-}
-
-
-template<class Thermo>
-void Foam::detonatingSolidBlastThermo<Thermo>::postImplicit()
-{
-    activation_->postImplicit();
-    afterburn_->postImplicit();
+    activation_->solveExplicit();
+    afterburn_->solveExplicit();
 }
 
 
@@ -403,6 +395,14 @@ void Foam::detonatingSolidBlastThermo<Thermo>::storeExplicit()
 {
     activation_->storeExplicit();
     afterburn_->storeExplicit();
+}
+
+
+template<class Thermo>
+void Foam::detonatingSolidBlastThermo<Thermo>::solveImplicit()
+{
+    activation_->solveImplicit();
+    afterburn_->solveImplicit();
 }
 
 

@@ -76,7 +76,7 @@ Foam::scalar Foam::rhoConst<Specie>::p
     const bool limit
 ) const
 {
-    return pRef_;
+    return 0.0;
 }
 
 
@@ -187,7 +187,7 @@ Foam::scalar Foam::rhoConst<Specie>::H
     const scalar T
 ) const
 {
-    return pRef_/rho;
+    return 0.0;// pRef_/rho;
 }
 
 

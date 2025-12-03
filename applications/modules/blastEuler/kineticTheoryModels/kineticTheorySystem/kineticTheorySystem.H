@@ -288,9 +288,9 @@ public:
         virtual void solve();
 
         //- Post update
-        virtual void postExplicit();
-        virtual void postImplicit();
+        virtual void solveExplicit();
         virtual void storeExplicit();
+        virtual void solveImplicit();
 
         //- Remove stored fields
         virtual void clear();

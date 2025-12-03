@@ -154,13 +154,13 @@ public:
         virtual void update()
         {}
 
-        virtual void postExplicit()
-        {}
-
-        virtual void postImplicit()
+        virtual void solveExplicit()
         {}
 
         virtual void storeExplicit()
+        {}
+
+        virtual void solveImplicit()
         {}
 
         virtual void solve()

@@ -138,14 +138,6 @@ void Foam::diameterModel::solve(const volScalarField& p, const volScalarField& T
 }
 
 
-void Foam::diameterModel::postExplicit()
-{}
-
-
-void Foam::diameterModel::postImplicit()
-{}
-
-
 Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::dMdt() const
 {
     return volScalarField::New

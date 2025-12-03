@@ -104,27 +104,6 @@ public:
 
     // Member functions
 
-//         //- Update before mesh changes
-//         virtual void preUpdateMesh()
-//         {}
-//
-//         //- Save before solving
-//         virtual void save()
-//         {}
-
-//         //- Update before each ode step
-//         virtual void update() = 0;
-//
-//         //- Update after ode integration
-//         virtual void postUpdate() = 0;
-//
-//         //- Solve sub-step stepi
-//         virtual void solve() = 0;
-//
-//         //- Optional clearing step
-//         virtual void clear()
-//         {}
-
         //- Reset variables when retrying time step
         virtual void reset() = 0;
 

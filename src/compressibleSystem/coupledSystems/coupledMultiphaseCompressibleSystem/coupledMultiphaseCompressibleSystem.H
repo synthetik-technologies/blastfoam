@@ -114,9 +114,6 @@ public:
 
         //- Solve a sub-step
         virtual void solve();
-
-        //- Solve implicit terms
-        virtual void postImplicit();
 };
 
 

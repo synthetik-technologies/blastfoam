@@ -99,7 +99,18 @@ void Foam::singlePhaseCompressibleSystem::decode()
 }
 
 
-void Foam::singlePhaseCompressibleSystem::postImplicit()
+void Foam::singlePhaseCompressibleSystem::storeExplicit()
+{
+    compressibleBlastSystem::storeExplicit();
+
+    if (needSolve(rhoEff().name()) || rhoSource_.valid())
+    {
+        rhoAdvection_ = fvc::ddt(rhoEff());
+    }
+}
+
+
+void Foam::singlePhaseCompressibleSystem::solveImplicit()
 {
     this->decode();
 
@@ -125,18 +136,7 @@ void Foam::singlePhaseCompressibleSystem::postImplicit()
         constraints().constrain(rho);
     }
 
-    compressibleBlastSystem::postImplicit();
-}
-
-
-void Foam::singlePhaseCompressibleSystem::storeExplicit()
-{
-    compressibleBlastSystem::storeExplicit();
-
-    if (needSolve(rhoEff().name()) || rhoSource_.valid())
-    {
-        rhoAdvection_ = fvc::ddt(rhoEff());
-    }
+    compressibleBlastSystem::solveImplicit();
 }
 
 

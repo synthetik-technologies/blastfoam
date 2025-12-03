@@ -415,13 +415,13 @@ public:
             virtual void solve() = 0;
 
             //- Solve viscous and source terms
-            virtual void postExplicit() = 0;
-
-            //- Solve viscous and source terms
-            virtual void postImplicit() = 0;
+            virtual void solveExplicit() = 0;
 
             //- Store explicit deltas
             virtual void storeExplicit() = 0;
+
+            //- Solve viscous and source terms
+            virtual void solveImplicit() = 0;
 
             //- Clear cached data
             virtual void clear() = 0;

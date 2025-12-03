@@ -37,7 +37,7 @@ namespace Foam
 // * * * * * * * * * * * * * * Protected Functions * * * * * * * * * * * * * //
 
 
-void Foam::timeIntegrator::update()
+void Foam::timeIntegrator::updateCoeffs()
 {
     if (coeffs_->update(curTimeIndex_, time().value()))
     {
@@ -145,7 +145,7 @@ void Foam::timeIntegrator::addSystem(timeIntegrationSystemBase& system)
 }
 
 
-void Foam::timeIntegrator::updateAll()
+void Foam::timeIntegrator::update()
 {
     forAll(systems_, i)
     {
@@ -156,6 +156,30 @@ void Foam::timeIntegrator::updateAll()
 
 void Foam::timeIntegrator::preUpdate()
 {
+    if (obr_.time().subCycling())
+    {
+        curTimeIndex_ = obr_.time().timeIndex();
+        restart_ = false;
+        updateCoeffs();
+    }
+    else if
+    (
+        obr_.time().timeIndex() == curTimeIndex_
+     && !obr_.time().subCycling()
+    )
+    {
+        reset();
+        restart_ = true;
+        Info<< "Restarting time step" << endl;
+    }
+    else
+    {
+        curTimeIndex_ = obr_.time().timeIndex();
+        restart_ = false;
+
+        updateCoeffs();
+    }
+
     forAll(systems_, i)
     {
         systems_[i].preUpdate();
@@ -178,37 +202,13 @@ void Foam::timeIntegrator::integrate
     const bool doClear
 )
 {
-    if (obr_.time().subCycling())
-    {
-        curTimeIndex_ = obr_.time().timeIndex();
-        restart_ = false;
-        update();
-    }
-    else if
-    (
-        obr_.time().timeIndex() == curTimeIndex_
-     && !obr_.time().subCycling()
-    )
-    {
-        reset();
-        restart_ = true;
-        Info<< "Restarting time step" << endl;
-    }
-    else
-    {
-        curTimeIndex_ = obr_.time().timeIndex();
-        restart_ = false;
-
-        update();
-    }
-
     preUpdate();
 
     // Update and store original fields
     for (stepi_ = 0; stepi_ < coeffs_->nSteps(); stepi_++)
     {
         Info<< coeffs_->type() << ": step " << stepi_ << endl;
-        this->updateAll();
+        this->update();
         forAll(systems_, i)
         {
             Info<< "Solving " << systems_[i].name() << ":" << endl;
@@ -251,7 +251,7 @@ void Foam::timeIntegrator::solveExplicit()
 {
     forAll(systems_, i)
     {
-        systems_[i].postExplicit();
+        systems_[i].solveExplicit();
     }
 }
 
@@ -269,7 +269,7 @@ void Foam::timeIntegrator::solveImplicit()
 {
     forAll(systems_, i)
     {
-        systems_[i].postImplicit();
+        systems_[i].solveImplicit();
     }
 }
 

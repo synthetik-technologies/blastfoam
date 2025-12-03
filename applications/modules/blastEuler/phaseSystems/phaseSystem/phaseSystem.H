@@ -460,13 +460,13 @@ public:
         virtual void solve();
 
         //- Solve relaxation terms
-        virtual void postExplicit();
-
-        //- Solve viscous terms
-        virtual void postImplicit();
+        virtual void solveExplicit();
 
         //- Store explicit changes
         virtual void storeExplicit();
+
+        //- Solve viscous terms
+        virtual void solveImplicit();
 
         //- Post update
         virtual void postUpdate();

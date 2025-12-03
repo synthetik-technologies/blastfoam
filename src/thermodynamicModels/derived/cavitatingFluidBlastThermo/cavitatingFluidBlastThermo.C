@@ -841,26 +841,6 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::solve()
 
 
 template<class Thermo>
-void Foam::cavitatingFluidBlastThermo<Thermo>::postExplicit()
-{}
-
-
-template<class Thermo>
-void Foam::cavitatingFluidBlastThermo<Thermo>::postImplicit()
-{}
-
-
-template<class Thermo>
-void Foam::cavitatingFluidBlastThermo<Thermo>::storeExplicit()
-{}
-
-
-template<class Thermo>
-void Foam::cavitatingFluidBlastThermo<Thermo>::clear()
-{}
-
-
-template<class Thermo>
 void Foam::cavitatingFluidBlastThermo<Thermo>::updateRho(const volScalarField& p)
 {
     const typename Thermo::thermoType1& tl(*this);

@@ -120,9 +120,9 @@ protected:
 
         virtual void update();
         virtual void solve();
-        virtual void postExplicit();
-        virtual void postImplicit();
+        virtual void solveExplicit();
         virtual void storeExplicit();
+        virtual void solveImplicit();
         virtual void clear();
 
         bool normalize() const
@@ -189,13 +189,13 @@ public:
         virtual void solve();
 
         //- Explicit post update
-        virtual void postExplicit();
-
-        //- Implicit post update
-        virtual void postImplicit();
+        virtual void solveExplicit();
 
         //- Store explicit deltas
         virtual void storeExplicit();
+
+        //- Implicit post update
+        virtual void solveImplicit();
 
         //- Clear stored data
         virtual void clear();

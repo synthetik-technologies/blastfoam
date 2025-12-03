@@ -235,15 +235,42 @@ void Foam::fluidPhaseModel::solve()
 }
 
 
-void Foam::fluidPhaseModel::postExplicit()
+void Foam::fluidPhaseModel::solveExplicit()
+{}
+
+
+void Foam::fluidPhaseModel::storeExplicit()
 {
-    Info<<"postExplicit"<<endl;
+    thermoPtr_->storeExplicit();
+
+    if
+    (
+        solveAlpha_
+     && needSolve(static_cast<const volScalarField&>(*this).name())
+    )
+    {
+        alphaAdvection_ = fvc::ddt(*this);
+    }
+
+    if (needSolve(rho().name()))
+    {
+        alphaRhoAdvection_ = fvc::ddt(alphaRho_);
+    }
+
+    if (needSolve(U_.name()) || turbulence_.valid())
+    {
+        alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
+    }
+
+    if (needSolve(he().name()) || turbulence_.valid())
+    {
+        alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
+    }
 }
 
 
-void Foam::fluidPhaseModel::postImplicit()
+void Foam::fluidPhaseModel::solveImplicit()
 {
-    Info<<"postImplicit"<<endl;
     volScalarField& alpha(*this);
     if (needSolve(alpha.name()) && solveAlpha_)
     {
@@ -363,39 +390,8 @@ void Foam::fluidPhaseModel::postImplicit()
         thermophysicalTransport_->correct();
     }
 
-    thermo().postImplicit();
+    thermo().solveImplicit();
     thermo().correct();
-}
-
-
-void Foam::fluidPhaseModel::storeExplicit()
-{
-    thermoPtr_->storeExplicit();
-
-    Info<<"store"<<endl;
-    if
-    (
-        solveAlpha_
-     && needSolve(static_cast<const volScalarField&>(*this).name())
-    )
-    {
-        alphaAdvection_ = fvc::ddt(*this);
-    }
-
-    if (needSolve(rho().name()))
-    {
-        alphaRhoAdvection_ = fvc::ddt(alphaRho_);
-    }
-
-    if (needSolve(U_.name()) || turbulence_.valid())
-    {
-        alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
-    }
-
-    if (needSolve(he().name()) || turbulence_.valid())
-    {
-        alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
-    }
 }
 
 
@@ -406,7 +402,6 @@ void Foam::fluidPhaseModel::postUpdate()
 
 void Foam::fluidPhaseModel::clear()
 {
-    Info<<"clear"<<endl;
     fluxScheme_->clear();
     alphaAdvection_.clear();
     alphaRhoAdvection_.clear();

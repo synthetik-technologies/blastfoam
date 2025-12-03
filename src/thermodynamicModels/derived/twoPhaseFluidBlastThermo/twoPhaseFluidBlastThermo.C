@@ -391,17 +391,10 @@ void Foam::twoPhaseFluidBlastThermo::update()
 }
 
 
-void Foam::twoPhaseFluidBlastThermo::postExplicit()
+void Foam::twoPhaseFluidBlastThermo::solveExplicit()
 {
-    thermo1_->postExplicit();
-    thermo2_->postExplicit();
-}
-
-
-void Foam::twoPhaseFluidBlastThermo::postImplicit()
-{
-    thermo1_->postImplicit();
-    thermo2_->postImplicit();
+    thermo1_->solveExplicit();
+    thermo2_->solveExplicit();
 }
 
 
@@ -409,6 +402,13 @@ void Foam::twoPhaseFluidBlastThermo::storeExplicit()
 {
     thermo1_->storeExplicit();
     thermo2_->storeExplicit();
+}
+
+
+void Foam::twoPhaseFluidBlastThermo::solveImplicit()
+{
+    thermo1_->solveImplicit();
+    thermo2_->solveImplicit();
 }
 
 

@@ -110,7 +110,7 @@ protected:
     // Protected member functions
 
         // Update coefficients
-        virtual void update();
+        virtual void updateCoeffs();
 
         //- Initialize ODE sizes
         virtual void initialize();
@@ -205,7 +205,7 @@ public:
             virtual void addSystem(timeIntegrationSystemBase& system);
 
             //- Update all stored systems
-            virtual void updateAll();
+            virtual void update();
 
             //- Post update
             virtual void preUpdate();
@@ -221,11 +221,11 @@ public:
                 const bool doClear
             );
 
-            //- Save explicit changes
-            virtual void storeExplicit();
-
             //- Solve implicit
             virtual void solveExplicit();
+
+            //- Save explicit changes
+            virtual void storeExplicit();
 
             //- Solve implicit
             virtual void solveImplicit();
