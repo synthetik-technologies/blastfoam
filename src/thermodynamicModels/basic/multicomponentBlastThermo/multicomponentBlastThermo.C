@@ -539,7 +539,7 @@ void Foam::multicomponentBlastThermo::integrator::solveExplicit()
 void Foam::multicomponentBlastThermo::integrator::storeExplicit()
 {
     bool hasTtm =
-        mesh_.foundObject<fluidMulticomponentThermophysicalTransportModel>
+        mesh_.foundObject<thermophysicalTransportModel>
         (
             IOobject::groupName("thermophysicalTransport", alphaRho_.group())
         );
@@ -548,11 +548,13 @@ void Foam::multicomponentBlastThermo::integrator::storeExplicit()
     {
         if
         (
-            active_[i]
-         && (
-                hasTtm
-             || implicitSources_.PtrList<fvScalarMatrix>::set(i)
-            )
+            (
+                active_[i]
+             && (
+                    hasTtm
+                 || implicitSources_.PtrList<fvScalarMatrix>::set(i)
+                )
+            ) || this->needSolve(Y_[i].name())
         )
         {
             alphaRhoYAdvection_[i] = fvc::ddt(alphaRho_, Y_[i]);
@@ -567,11 +569,11 @@ void Foam::multicomponentBlastThermo::integrator::solveImplicit()
 
     bool isPhase = alphaRho_.group() != word::null;
 
-    UautoPtr<const fluidMulticomponentThermophysicalTransportModel>
+    UautoPtr<const fluidThermophysicalTransportModel>
         thermophysicalTransportPtr;
     if
     (
-        mesh_.foundObject<fluidMulticomponentThermophysicalTransportModel>
+        mesh_.foundObject<fluidThermophysicalTransportModel>
         (
             IOobject::groupName("thermophysicalTransport", alphaRho_.group())
         )
@@ -579,7 +581,7 @@ void Foam::multicomponentBlastThermo::integrator::solveImplicit()
     {
         thermophysicalTransportPtr.set
         (
-            &mesh_.lookupObject<fluidMulticomponentThermophysicalTransportModel>
+            &mesh_.lookupObject<fluidThermophysicalTransportModel>
             (
                 IOobject::groupName("thermophysicalTransport", alphaRho_.group())
             )
