@@ -118,8 +118,6 @@ Foam::scalar Foam::solvers::explicitSolver::maxDeltaT() const
 void Foam::solvers::explicitSolver::preSolve()
 {
     mesh_.update();
-
-    this->solveExplicit();
 }
 
 
@@ -137,7 +135,12 @@ void Foam::solvers::explicitSolver::motionCorrector()
 
 
 void Foam::solvers::explicitSolver::prePredictor()
-{}
+{
+    if (pimple.firstIter())
+    {
+        this->solveExplicit();
+    }
+}
 
 void Foam::solvers::explicitSolver::momentumPredictor()
 {
