@@ -629,7 +629,7 @@ void Foam::multicomponentBlastThermo::integrator::solveImplicit()
             }
 
             constraints().constrain(YEqn);
-            YEqn.solve("Yi");
+            YEqn.solve(IOobject::groupName("Yi", alphaRho_.group()));
             Yi.max(0.0);
             constraints().constrain(Yi);
             Yi.correctBoundaryConditions();
