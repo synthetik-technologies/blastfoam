@@ -71,34 +71,25 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
 
-    Switch useChemistry
-    (
-        thermo_->Y().size() > 1
-    );
-
-    turbulence_.set
-    (
+    turbulence_ =
         compressible::momentumTransportModel::New
         (
             rho_,
             U_,
             rhoPhi_,
             thermo_()
-        ).ptr()
-    );
+        );
 
     mesh.schemes().setFluxRequired(U_.name());
 
-    thermophysicalTransport_.set
-    (
+    thermophysicalTransport_ =
         fluidMulticomponentThermophysicalTransportModel::New
         (
             turbulence_(),
             thermo_()
-        ).ptr()
-    );
+        );
 
-    if (useChemistry)
+    if (thermo_->Y().size() > 1)
     {
         reaction_.set
         (
@@ -151,6 +142,13 @@ void Foam::reactingCompressibleSystem::solve()
         reaction_->correct();
     }
 
+    // Save current density for "old" value of specie masses
+    tmp<volScalarField> trho0;
+    if (reaction_.valid())
+    {
+        trho0 = volScalarField::New("rho0", rho_);
+    }
+
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_));
     volScalarField deltaRhoE(fvc::div(rhoEPhi_));
@@ -161,28 +159,25 @@ void Foam::reactingCompressibleSystem::solve()
 
     addSources(deltaRhoU, deltaRhoE);
 
+    //- Store and blend old values
+    this->storeAndBlendOld(rho_);
+    this->storeAndBlendOld(rhoU_);
+    this->storeAndBlendOld(rhoE_);
+
     //- Store changed in mass, momentum and energy
     this->storeAndBlendDelta(deltaRho);
     this->storeAndBlendDelta(deltaRhoU);
     this->storeAndBlendDelta(deltaRhoE);
 
-    //- Store old values
-    const volScalarField rho0(rho_);
-    this->storeAndBlendOld(rho_);
-    const volScalarField rhoPrev(rho_);
 
-    this->storeAndBlendOld(rhoU_);
-    this->storeAndBlendOld(rhoE_);
-
-
-    dimensionedScalar dT = rho_.time().deltaT();
+    const dimensionedScalar& dT = rho_.time().deltaT();
     rho_ -= dT*deltaRho;
-
     rhoU_ -= dT*deltaRhoU;
     rhoE_ -= dT*deltaRhoE;
 
     if (reaction_.valid())
     {
+        const volScalarField& rho0 = trho0();
         PtrList<volScalarField>& Ys = thermo_->Y();
         forAll(Ys, i)
         {
@@ -212,7 +207,6 @@ void Foam::reactingCompressibleSystem::postImplicit()
     this->decode();
 
     // Solve mass
-    rho_.storePrevIter();
     if (needSolve(rho_.name()))
     {
         fvScalarMatrix rhoEqn
@@ -239,8 +233,7 @@ void Foam::reactingCompressibleSystem::postImplicit()
                 volScalarField& Yi = Y[i];
                 fvScalarMatrix YiEqn
                 (
-                    fvm::ddt(rho_, Yi)
-                  - rhoYAdvection_[i]()
+                    fvm::ddt(rho_, Yi) - rhoYAdvection_[i]()
                   + thermophysicalTransport_->divj(Yi)
                  ==
                     // reaction_->R(Yi)
@@ -257,6 +250,7 @@ void Foam::reactingCompressibleSystem::postImplicit()
         thermo_->normaliseY();
     }
 
+    // Viscous terms if not using explicit viscosity
     compressibleSystem::postImplicit();
 
     // Update thermo

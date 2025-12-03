@@ -75,10 +75,6 @@ protected:
         //- Internal energy
         volScalarField& e_;
 
-        // //- Thermo turbulence model
-        // autoPtr<fluidMulticomponentThermophysicalTransportModel>
-        //     thermophysicalTransport_;
-
         //- Chemistry
         autoPtr<combustionModel> reaction_;
 
