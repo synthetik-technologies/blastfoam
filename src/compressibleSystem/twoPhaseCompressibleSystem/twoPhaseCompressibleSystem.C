@@ -666,9 +666,20 @@ void Foam::twoPhaseCompressibleSystem::storeExplicit()
 {
     compressibleBlastSystem::storeExplicit();
 
-    alpha1Advection_ = fvc::ddt(alpha1_);
-    alphaRho1Advection_ = fvc::ddt(alphaRho1_);
-    alphaRho2Advection_ = fvc::ddt(alphaRho2_);
+    if (needSolve(alpha1_.name()))
+    {
+        alpha1Advection_ = fvc::ddt(alpha1_);
+    }
+
+    if (needSolve(rho1_.name()))
+    {
+        alphaRho1Advection_ = fvc::ddt(alphaRho1_);
+    }
+
+    if (needSolve(rho2_.name()))
+    {
+        alphaRho2Advection_ = fvc::ddt(alphaRho2_);
+    }
 }
 
 

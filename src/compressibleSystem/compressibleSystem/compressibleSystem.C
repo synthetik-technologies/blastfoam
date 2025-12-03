@@ -679,8 +679,15 @@ const Foam::volScalarField& Foam::compressibleSystem::rhoEff() const
 
 void Foam::compressibleSystem::storeExplicit()
 {
-    rhoEAdvection_ = fvc::ddt(rhoE_);
-    rhoUAdvection_ = fvc::ddt(rhoU_);
+    if (needSolve_U())
+    {
+        rhoUAdvection_ = fvc::ddt(rhoU_);
+    }
+
+    if (needSolve_E())
+    {
+        rhoEAdvection_ = fvc::ddt(rhoE_);
+    }
 }
 
 

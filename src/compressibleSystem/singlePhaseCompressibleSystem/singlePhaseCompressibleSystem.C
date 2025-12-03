@@ -133,7 +133,10 @@ void Foam::singlePhaseCompressibleSystem::storeExplicit()
 {
     compressibleBlastSystem::storeExplicit();
 
-    rhoAdvection_ = fvc::ddt(rhoEff());
+    if (needSolve(rhoEff().name()) || rhoSource_.valid())
+    {
+        rhoAdvection_ = fvc::ddt(rhoEff());
+    }
 }
 
 

@@ -358,9 +358,6 @@ void Foam::multiphaseCompressibleSystem::solveMass()
         }
     }
 
-    // Store "old" total density
-    rho_.storePrevIter();
-
     //- Compute new density
     rho_ = Zero;
     forAll(alphas_, phasei)
@@ -722,8 +719,14 @@ void Foam::multiphaseCompressibleSystem::storeExplicit()
     alphaRhoAdvection_.setSize(alphaRhos_.size());
     forAll(alphas_, phasei)
     {
-        alphaAdvection_[phasei] = fvc::ddt(alphas_[phasei]);
-        alphaRhoAdvection_[phasei] = fvc::ddt(alphaRhos_[phasei]);
+        if (needSolve(alphas_[phasei].name()))
+        {
+            alphaAdvection_[phasei] = fvc::ddt(alphas_[phasei]);
+        }
+        if (needSolve(rhos_[phasei].name()))
+        {
+            alphaRhoAdvection_[phasei] = fvc::ddt(alphaRhos_[phasei]);
+        }
     }
 }
 
