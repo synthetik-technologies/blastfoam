@@ -89,7 +89,14 @@ Foam::scalar Foam::solvers::blastXi::DiNum() const
 void Foam::solvers::blastXi::solveExplicit()
 {
     Info<< "Calculating Fluxes" << endl;
-    integrator_.integrate(false);
+    integrator_.integrate
+    (
+        true,   // doExplicit
+        true,   // doStore
+        false,  // doImplicit
+        false,  // doPost
+        false   // doClear
+    );
 }
 
 void Foam::solvers::blastXi::solveImplicit()
@@ -105,6 +112,7 @@ void Foam::solvers::blastXi::postSolve()
         << "max(T): " << max(fluid_.T()).value()
         << ", min(T): " << min(fluid_.T()).value() << endl;
 
+    integrator_.postUpdate();
     integrator_.clear();
 }
 

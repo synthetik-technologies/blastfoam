@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         //- Move the mesh
         mesh.move();
 
-        integrator.integrate(true);
+        integrator.integrate();
 
 
         Info<< "max(p): " << max(p).value()
@@ -129,8 +129,6 @@ int main(int argc, char *argv[])
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
-
-        integrator.clear();
     }
 
     Info<< "End\n" << endl;

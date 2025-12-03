@@ -244,6 +244,9 @@ public:
         //- Solve implicit
         virtual void solveImplicit();
 
+        //- Post update
+        virtual void postUpdate();
+
         //- Clear all ODE fields (old/delta)
         virtual void clear();
 

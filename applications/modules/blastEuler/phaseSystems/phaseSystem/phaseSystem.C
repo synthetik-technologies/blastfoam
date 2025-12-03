@@ -1372,6 +1372,16 @@ void Foam::phaseSystem::clear()
 }
 
 
+void Foam::phaseSystem::postUpdate()
+{
+    forAll(phaseModels_, phasei)
+    {
+        phaseModels_[phasei].postUpdate();
+    }
+    master_.postUpdate();
+}
+
+
 void Foam::phaseSystem::printInfo() const
 {
     Info<< "Total statistics:" << endl << incrIndent

@@ -154,6 +154,15 @@ void Foam::masterSystemList::storeExplicit()
 }
 
 
+void Foam::masterSystemList::postUpdate()
+{
+    forAll(*this, i)
+    {
+        (*this)[i].postUpdate();
+    }
+}
+
+
 void Foam::masterSystemList::clear()
 {
     forAll(*this, i)

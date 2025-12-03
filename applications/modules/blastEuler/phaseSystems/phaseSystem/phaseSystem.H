@@ -468,6 +468,9 @@ public:
         //- Store explicit changes
         virtual void storeExplicit();
 
+        //- Post update
+        virtual void postUpdate();
+
         //- Clear flux schemes
         virtual void clear();
 

@@ -226,6 +226,10 @@ public:
         virtual void save()
         {}
 
+        //- Update before ode integration
+        virtual void preUpdate()
+        {}
+
         //- Update before each ode step
         virtual void update() = 0;
 
@@ -240,6 +244,10 @@ public:
 
         //- Implicit update after ode integration
         virtual void postImplicit() = 0;
+
+        //- Update after solving
+        virtual void postUpdate()
+        {}
 
         //- Optional clearing step
         virtual void clear()

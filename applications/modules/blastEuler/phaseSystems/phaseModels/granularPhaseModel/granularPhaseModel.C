@@ -197,19 +197,19 @@ void Foam::granularPhaseModel::postImplicit()
 {
     volScalarField& alpha(*this);
 
-    // if (needSolve(alpha.name()))
-    // {
-    //     //- Solve momentum equation (implicit stresses)
-    //     fvScalarMatrix alphaEqn
-    //     (
-    //         fvm::ddt(alpha) - alphaAdvection_()
-    //      ==
-    //         models().source(alpha)
-    //     );
-    //     constraints().constrain(alphaEqn);
-    //     alphaEqn.solve();
-    //     constraints().constrain(alpha);
-    // }
+    if (needSolve(alpha.name()))
+    {
+        //- Solve momentum equation (implicit stresses)
+        fvScalarMatrix alphaEqn
+        (
+            fvm::ddt(alpha) - alphaAdvection_()
+         ==
+            models().source(alpha)
+        );
+        constraints().constrain(alphaEqn);
+        alphaEqn.solve();
+        constraints().constrain(alpha);
+    }
 
     if (needSolve(rho().name()))
     {
@@ -448,11 +448,43 @@ void Foam::granularPhaseModel::encode()
 
 void Foam::granularPhaseModel::storeExplicit()
 {
-    alphaRhoAdvection_ = fvc::ddt(alphaRho_);
-    alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
-    alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
-    alphaRhoPTEAdvection_ = fvc::ddt(alphaRhoPTE_);
+    const volScalarField& alpha = *this;
+    if (needSolve(alpha.name()))
+    {
+        alphaAdvection_ = fvc::ddt(alpha);
+    }
+
+    if (needSolve(rho().name()))
+    {
+        alphaRhoAdvection_ = fvc::ddt(alphaRho_);
+    }
+
+    // Solve momentum
+    if (needSolve(U_.name()) || this->includeViscosity())
+    {
+        alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
+    }
+
+    // Solve thermal energy
+    if (needSolve(he().name()))
+    {
+        alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
+    }
+
+    //- Solve granular temperature equation including solid stress and
+    //  conductivity
+    if (needSolve(Theta_.name()) || this->includeViscosity())
+    {
+        alphaRhoPTEAdvection_ = fvc::ddt(alphaRhoPTE_);
+    }
+
     thermoPtr_->storeExplicit();
+}
+
+
+void Foam::granularPhaseModel::postUpdate()
+{
+    thermoPtr_->postUpdate();
 }
 
 

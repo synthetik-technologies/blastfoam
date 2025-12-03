@@ -154,7 +154,29 @@ void Foam::timeIntegrator::updateAll()
 }
 
 
-void Foam::timeIntegrator::integrate(const bool doImplicit)
+void Foam::timeIntegrator::preUpdate()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].preUpdate();
+    }
+}
+
+
+void Foam::timeIntegrator::integrate()
+{
+    integrate(true, true, true, true, true);
+}
+
+
+void Foam::timeIntegrator::integrate
+(
+    const bool doExplicit,
+    const bool doStore,
+    const bool doImplicit,
+    const bool doPost,
+    const bool doClear
+)
 {
     if (obr_.time().subCycling())
     {
@@ -180,6 +202,8 @@ void Foam::timeIntegrator::integrate(const bool doImplicit)
         update();
     }
 
+    preUpdate();
+
     // Update and store original fields
     for (stepi_ = 0; stepi_ < coeffs_->nSteps(); stepi_++)
     {
@@ -194,21 +218,49 @@ void Foam::timeIntegrator::integrate(const bool doImplicit)
     }
     stepi_ = coeffs_->nSteps()-1;
 
-    forAll(systems_, i)
-    {
-        systems_[i].postExplicit();
-    }
-
-    forAll(systems_, i)
-    {
-        systems_[i].storeExplicit();
-    }
-
     stepi_ = -1;
+
+    if (doExplicit)
+    {
+        solveExplicit();
+    }
+
+    if (doStore)
+    {
+        storeExplicit();
+    }
 
     if (doImplicit)
     {
         solveImplicit();
+    }
+
+    if (doPost)
+    {
+        postUpdate();
+    }
+
+    if (doClear)
+    {
+        clear();
+    }
+}
+
+
+void Foam::timeIntegrator::solveExplicit()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].postExplicit();
+    }
+}
+
+
+void Foam::timeIntegrator::storeExplicit()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].storeExplicit();
     }
 }
 
@@ -218,6 +270,15 @@ void Foam::timeIntegrator::solveImplicit()
     forAll(systems_, i)
     {
         systems_[i].postImplicit();
+    }
+}
+
+
+void Foam::timeIntegrator::postUpdate()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].postUpdate();
     }
 }
 

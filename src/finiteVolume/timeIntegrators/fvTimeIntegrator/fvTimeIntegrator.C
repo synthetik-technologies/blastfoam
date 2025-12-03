@@ -300,7 +300,11 @@ void Foam::fvTimeIntegrator::solveImplicit()
             systems_[i].postImplicit();
         }
     }
+}
 
+
+void Foam::fvTimeIntegrator::postUpdate()
+{
     if (modelsPtr_.valid())
     {
         modelsPtr_->correct();

@@ -252,6 +252,10 @@ public:
         virtual void storeExplicit()
         {}
 
+        //- Post Update
+        virtual void postUpdate()
+        {}
+
         //- Remove stored fields
         virtual void clear()
         {}

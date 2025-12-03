@@ -207,11 +207,31 @@ public:
             //- Update all stored systems
             virtual void updateAll();
 
+            //- Post update
+            virtual void preUpdate();
+
             //- Integrate fluxes in time
-            virtual void integrate(const bool doImplicit = true);
+            virtual void integrate();
+            virtual void integrate
+            (
+                const bool doExplicit,
+                const bool doSave,
+                const bool doImplicit,
+                const bool doPost,
+                const bool doClear
+            );
+
+            //- Save explicit changes
+            virtual void storeExplicit();
+
+            //- Solve implicit
+            virtual void solveExplicit();
 
             //- Solve implicit
             virtual void solveImplicit();
+
+            //- Post update
+            virtual void postUpdate();
 
             //- Clear all ODE fields (old/delta)
             virtual void clear();

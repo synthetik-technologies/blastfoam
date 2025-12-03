@@ -71,91 +71,23 @@ Foam::scalar Foam::solvers::blastEuler::CoNum() const
     {
         surfaceScalarField amaxSf
         (
-            surfaceScalarField::New
-            (
-                IOobject::groupName("amaxSf", phases[phasei].name()),
-                mesh_,
-                dimensionedScalar(dimVelocity*dimArea, Zero)
-            )
+            fvc::interpolate(phases[phasei].speedOfSound())*mesh_.magSf()
         );
 
-        tmp<volScalarField> tc(phases[phasei].speedOfSound());
-        const volScalarField& c = tc();
-        const volVectorField& U = phases[phasei].U();
-
-        const scalarField& magSf = mesh_.magSf();
-        const labelList& owner = mesh_.faceOwner();
-        const labelList& neighbour = mesh_.faceNeighbour();
-        forAll(neighbour, facei)
-        {
-            amaxSf[facei] =
-                sqrt
-                (
-                    max
-                    (
-                        magSqr(U[owner[facei]]) + sqr(c[owner[facei]]),
-                        magSqr(U[neighbour[facei]]) + sqr(c[neighbour[facei]])
-                    )
-                )*magSf[facei];
-        }
-
         // Remove wave speed from wedge boundaries
-        surfaceScalarField::Boundary& bamaxSf = amaxSf.boundaryFieldRef();
         forAll(amaxSf.boundaryField(), patchi)
         {
-            const fvPatch& patch = mesh_.boundary()[patchi];
-            const scalarField& pmagSf = patch.magSf();
-            const labelList& faceCells = patch.faceCells();
-            const fvPatchVectorField& pU = U.boundaryField()[patchi];
-            const fvPatchScalarField& pc = c.boundaryField()[patchi];
-            fvsPatchScalarField& pamaxSf = bamaxSf[patchi];
-            if (patch.coupled())
+            if (isA<wedgeFvPatch>(mesh_.boundary()[patchi]))
             {
-                const vectorField nbrU(pU.patchNeighbourField());
-                const scalarField nbrc(pc.patchNeighbourField());
-                forAll(pU, fi)
-                {
-                    const label own = faceCells[fi];
-                    pamaxSf[fi] =
-                        sqrt
-                        (
-                            max
-                            (
-                                magSqr(U[own]) + sqr(c[own]),
-                                magSqr(nbrU[fi]) + sqr(nbrc[fi])
-                            )
-                        )*pmagSf[fi];
-                }
-            }
-            else if (!isA<wedgeFvPatch>(patch) && !isA<emptyFvPatch>(patch))
-            {
-                if
-                (
-                    (mesh_.dynamic() || mesh_.distributing())
-                 && (mesh_.moving())
-                )
-                {
-                    forAll(pU, fi)
-                    {
-                        const label own = faceCells[fi];
-                        pamaxSf[fi] = (mag(U[own]) + c[own])*pmagSf[fi];
-                    }
-                }
-                else
-                {
-                    forAll(pU, fi)
-                    {
-                        pamaxSf[fi] = (mag(pU[fi]) + pc[fi])*pmagSf[fi];
-                    }
-                }
+                amaxSf.boundaryFieldRef() = Zero;
             }
         }
+        amaxSf += mag(fvc::flux(phases[phasei].U()));
 
         scalarField sumAmaxSf
         (
             fvc::surfaceSum(amaxSf)().primitiveField()
         );
-
 
         sumPhi +=
             fvc::surfaceSum
@@ -164,9 +96,9 @@ Foam::scalar Foam::solvers::blastEuler::CoNum() const
             )().primitiveField();
 
         phaseCoNums[phasei] =
-            0.5*gMax(sumAmaxSf/V)*mesh_.time().deltaTValue();
+            0.5*gMax(sumAmaxSf/V)*runTime.deltaTValue();
         meanPhaseCoNums[phasei] =
-            0.5*(gSum(amaxSf)/gSum(V))*mesh_.time().deltaTValue();
+            0.5*(gSum(amaxSf)/gSum(V))*runTime.deltaTValue();
     }
 
     scalar maxCoNum = 0.5*gMax(sumPhi/V)*mesh_.time().deltaTValue();
@@ -188,6 +120,66 @@ Foam::scalar Foam::solvers::blastEuler::CoNum() const
             << ", max = " << phaseCoNums[phasei] << nl;
     }
     Info<< endl << decrIndent;
+
+    // bool hasMassTransfer = false;
+    // forAll(phases, phasei)
+    // {
+    //     const phaseModel& phase = phases[phasei];
+    //
+    //     if (fluid.hasMassTransfer(phase))
+    //     {
+    //         hasMassTransfer = true;
+    //         break;
+    //     }
+    // }
+
+    // mDotCoNum = 0.0;
+    // if (hasMassTransfer)
+    // {
+    //     Info<< "Maximum phase Courant numbers based on mass transfer:" << endl
+    //         << incrIndent;
+    //
+    //     const dimensionedScalar zeroMDot(dimDensity/dimTime, 0.0);
+    //     forAll(phases, phasei)
+    //     {
+    //         const phaseModel& phase = phases[phasei];
+    //
+    //         if (fluid.hasMassTransfer(phase))
+    //         {
+    //             volScalarField totalMDot
+    //             (
+    //                 volScalarField::New
+    //                 (
+    //                     IOobject::groupName("mDot", phase.name()),
+    //                     mesh,
+    //                     dimensionedScalar(dimDensity/dimTime, 0.0)
+    //                 )
+    //             );
+    //             forAll(phases, phasej)
+    //             {
+    //                 const phaseModel& otherPhase = phases[phasej];
+    //                 if (&otherPhase != &phase)
+    //                 {
+    //                     totalMDot += fluid.mDot(phase, otherPhase);
+    //                 }
+    //             }
+    //             scalar mDotCo =
+    //                 mag
+    //                 (
+    //                     gMaxMagSqr
+    //                     (
+    //                         (
+    //                             totalMDot*runTime.deltaTValue()
+    //                            /max(phase.alphaRho(), phase.residualAlphaRho())
+    //                         )()
+    //                     )
+    //                 );
+    //             Info<< indent << phase.name() << ": " << mDotCo << nl;
+    //             mDotCoNum = max(mDotCoNum, mDotCo);
+    //         }
+    //     }
+    //     Info<< endl << decrIndent;
+    // }
     return max(phaseCoNums);
 }
 
@@ -201,7 +193,14 @@ Foam::scalar Foam::solvers::blastEuler::DiNum() const
 void Foam::solvers::blastEuler::solveExplicit()
 {
     Info<< "Calculating Fluxes" << endl;
-    integrator_.integrate(false);
+    integrator_.integrate
+    (
+        true,   // doExplicit
+        true,   // doStore
+        false,  // doImplicit
+        false,  // doPost
+        false   // doClear
+    );
 }
 
 
@@ -213,8 +212,10 @@ void Foam::solvers::blastEuler::solveImplicit()
 
 void Foam::solvers::blastEuler::postSolve()
 {
-    fluid_.printInfo();
+    integrator_.postUpdate();
     integrator_.clear();
+
+    fluid_.printInfo();
 }
 
 

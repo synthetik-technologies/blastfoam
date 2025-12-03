@@ -129,8 +129,6 @@ int main(int argc, char *argv[])
             << 100*(scalar(1) - b)().weightedAverage(mesh.V()).value() << "%"
             << endl;
 
-        integrator.clear();
-
         runTime.write();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"

@@ -236,11 +236,14 @@ void Foam::fluidPhaseModel::solve()
 
 
 void Foam::fluidPhaseModel::postExplicit()
-{}
+{
+    Info<<"postExplicit"<<endl;
+}
 
 
 void Foam::fluidPhaseModel::postImplicit()
 {
+    Info<<"postImplicit"<<endl;
     volScalarField& alpha(*this);
     if (needSolve(alpha.name()) && solveAlpha_)
     {
@@ -367,19 +370,43 @@ void Foam::fluidPhaseModel::postImplicit()
 
 void Foam::fluidPhaseModel::storeExplicit()
 {
-    if (solveAlpha_)
+    thermoPtr_->storeExplicit();
+
+    Info<<"store"<<endl;
+    if
+    (
+        solveAlpha_
+     && needSolve(static_cast<const volScalarField&>(*this).name())
+    )
     {
         alphaAdvection_ = fvc::ddt(*this);
     }
-    alphaRhoAdvection_ = fvc::ddt(alphaRho_);
-    alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
-    alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
-    thermoPtr_->storeExplicit();
+
+    if (needSolve(rho().name()))
+    {
+        alphaRhoAdvection_ = fvc::ddt(alphaRho_);
+    }
+
+    if (needSolve(U_.name()) || turbulence_.valid())
+    {
+        alphaRhoUAdvection_ = fvc::ddt(alphaRhoU_);
+    }
+
+    if (needSolve(he().name()) || turbulence_.valid())
+    {
+        alphaRhoEAdvection_ = fvc::ddt(alphaRhoE_);
+    }
 }
 
 
+void Foam::fluidPhaseModel::postUpdate()
+{
+    thermoPtr_->postUpdate();
+}
+
 void Foam::fluidPhaseModel::clear()
 {
+    Info<<"clear"<<endl;
     fluxScheme_->clear();
     alphaAdvection_.clear();
     alphaRhoAdvection_.clear();

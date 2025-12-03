@@ -92,8 +92,6 @@ int main(int argc, char *argv[])
 
         integrator.integrate();
 
-        integrator.clear();
-
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
         Info<< "max(T): " << max(T).value()

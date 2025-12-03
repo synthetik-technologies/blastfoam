@@ -137,6 +137,9 @@ public:
             //- Store explicit deltas
             virtual void storeExplicit();
 
+            //- Post update
+            virtual void postUpdate();
+
             //- Clear cached data
             virtual void clear();
 

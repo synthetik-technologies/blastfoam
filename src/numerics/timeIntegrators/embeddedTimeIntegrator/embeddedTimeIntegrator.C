@@ -125,7 +125,14 @@ void Foam::embeddedTimeIntegrator::addSystem
 }
 
 
-void Foam::embeddedTimeIntegrator::integrate(const bool doImplicit)
+void Foam::embeddedTimeIntegrator::integrate
+(
+    const bool doExplicit,
+    const bool doSave,
+    const bool doImplicit,
+    const bool doPost,
+    const bool doClear
+)
 {
     const Time& runTime = obr_.time();
 
@@ -142,6 +149,8 @@ void Foam::embeddedTimeIntegrator::integrate(const bool doImplicit)
 
         update();
     }
+
+    preUpdate();
 
     const scalar t0 = runTime.value() - runTime.deltaTValue();
     scalar dt = runTime.deltaTValue();
@@ -220,26 +229,32 @@ void Foam::embeddedTimeIntegrator::integrate(const bool doImplicit)
     {
         deltaT_ = runTime.deltaTValue();
     }
+    stepi_ = -1;
 
-    forAll(systems_, i)
+    if (doExplicit)
     {
-        systems_[i].postExplicit();
+        solveExplicit();
     }
 
-    forAll(systems_, i)
+    if (doSave)
     {
-        systems_[i].storeExplicit();
+        storeExplicit();
     }
 
     if (doImplicit)
     {
-        forAll(systems_, i)
-        {
-            systems_[i].postImplicit();
-        }
+        solveImplicit();
     }
 
-    stepi_ = -1;
+    if (doPost)
+    {
+        postUpdate();
+    }
+
+    if (doClear)
+    {
+        clear();
+    }
 }
 
 // ************************************************************************* //

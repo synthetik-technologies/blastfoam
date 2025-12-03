@@ -113,7 +113,14 @@ void Foam::solvers::blastParcel::solveExplicit()
     fluidPtr_->dragSource() = clouds_.SU(fluidPtr_->U());
 
     Info<< "Calculating Fluxes" << endl;
-    integrator_.integrate(false);
+    integrator_.integrate
+    (
+        true,   // doExplicit
+        true,   // doStore
+        false,  // doImplicit
+        false,  // doPost
+        false   // doClear
+    );
 }
 
 
@@ -130,6 +137,7 @@ void Foam::solvers::blastParcel::postSolve()
         << "max(T): " << max(fluidPtr_->T()).value()
         << ", min(T): " << min(fluidPtr_->T()).value() << endl;
 
+    integrator_.postUpdate();
     integrator_.clear();
 }
 

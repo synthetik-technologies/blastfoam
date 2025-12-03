@@ -109,6 +109,7 @@ protected:
         autoPtr<surfaceTemperatureModel> surfTModel_;
 
         //- Cached advection changes
+        tmp<volScalarField> alphaAdvection_;
         tmp<volScalarField> alphaRhoAdvection_;
         tmp<volVectorField> alphaRhoUAdvection_;
         tmp<volScalarField> alphaRhoEAdvection_;
@@ -201,6 +202,9 @@ public:
 
             //- Store explicit deltas
             virtual void storeExplicit();
+
+            //- Post update
+            virtual void postUpdate();
 
             //- Clear cached data
             virtual void clear();
