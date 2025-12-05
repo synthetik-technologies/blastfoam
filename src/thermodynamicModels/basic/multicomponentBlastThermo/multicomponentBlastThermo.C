@@ -628,10 +628,15 @@ void Foam::multicomponentBlastThermo::integrator::solveImplicit()
                 YEqn += thermophysicalTransportPtr->divj(Yi);
             }
 
+            YEqn.relax();
+
             constraints().constrain(YEqn);
+
             YEqn.solve(IOobject::groupName("Yi", alphaRho_.group()));
-            Yi.max(0.0);
+
             constraints().constrain(Yi);
+
+            Yi.max(0.0);
             Yi.correctBoundaryConditions();
         }
     }

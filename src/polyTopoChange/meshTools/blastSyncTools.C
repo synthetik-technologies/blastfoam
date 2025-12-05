@@ -28,5 +28,9 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+namespace Foam
+{
+    bool blastSyncTools::isBalancing = false;
+}
 
 // ************************************************************************* //

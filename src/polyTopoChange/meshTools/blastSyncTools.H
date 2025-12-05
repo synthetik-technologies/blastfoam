@@ -71,6 +71,8 @@ public:
     //- Helper: push master point data to collocated points
     template<class Type>
     static void pushUntransformedData(const polyMesh&, Field<Type>&);
+
+    static bool isBalancing;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

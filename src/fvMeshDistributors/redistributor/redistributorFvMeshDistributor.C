@@ -412,6 +412,8 @@ Foam::fvMeshDistributors::redistributor::distribute
 
 
 
+    blastSyncTools::isBalancing = true;
+
     mesh.time().checkOut(static_cast<polyMesh&>(mesh));
 
     // Mesh distribution engine
@@ -424,11 +426,13 @@ Foam::fvMeshDistributors::redistributor::distribute
     );
 
     mesh.time().checkIn(static_cast<polyMesh&>(mesh));
+    blastSyncTools::isBalancing = false;
 
+    returnReduce(true, andOp<bool>());
     if (dist)
     {
         // Distribute the mesh data
-       mesh.distribute(map);
+        mesh.distribute(map);
 
         // Correct values on all coupled patches
         blastSyncTools::correctProcessorBoundaries<volScalarField>(mesh);
