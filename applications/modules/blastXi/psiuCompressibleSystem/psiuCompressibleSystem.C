@@ -152,6 +152,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             rhoPhi_,
             thermo_()
         );
+    mesh.schemes().setFluxRequired(U_.name());
     thermophysicalTransport_.set
     (
         new turbulenceThermophysicalTransportModels::unityLewisEddyDiffusivity
