@@ -43,12 +43,12 @@ solution
     {
         rho                 cell;
         U                   cellPoint;
-        thermo:mu           cell;
+        mu                  cell;
         p                   cell;
         T                   cell;
         Cp                  cell;
         kappa               cell;
-        a cell;
+        a                   cell;
     }
 
     integrationSchemes
