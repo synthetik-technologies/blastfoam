@@ -31,7 +31,7 @@ createEpsRho()
     set xlabel "X-Position (m)"
     set ylabel "Density [kg/m^3]"
     set grid
-    set key right top
+    set key left top
     set size 2,2
     set autoscale
     set xrange [0:1]

@@ -24,8 +24,6 @@ fluxSchemes
     particles
     {
         fluxScheme          AUSM+Up;
-        alphaMinFriction    0.5;
-        alphaMax            0.63;
     }
 }
 
@@ -54,7 +52,7 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default linear;
+    default             linear;
     reconstruct(alpha)  quadraticMUSCL vanAlbada;
     reconstruct(rho)    quadraticMUSCL vanAlbada;
     reconstruct(U)      quadraticMUSCL vanAlbada;

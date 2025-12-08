@@ -24,10 +24,10 @@ runParallel initializeLevelSet -updateAll
 runParallel $(getApplication)
 
 # -- Sample
-runParallel -o postProcess -func sampleDict -time 0.0001
-runParallel -o postProcess -func sampleDict -time 0.0002
-runParallel -o postProcess -func sampleDict -time 0.0003
-runParallel -o postProcess -func sampleDict -time 0.0004
+runParallel -o foamPostProcess -func sampleDict -time 0.0001
+runParallel -o foamPostProcess -func sampleDict -time 0.0002
+runParallel -o foamPostProcess -func sampleDict -time 0.0003
+runParallel -o foamPostProcess -func sampleDict -time 0.0004
 
 # -- Create graphs
 ( cd validation && ./createGraphs )

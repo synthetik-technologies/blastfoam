@@ -15,19 +15,13 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phaseType            fluid;
-diameterModel constant;
-constantDiameterCoeffs
-{
-    d           0;
-}
-
 type basic;
+calculateDensity yes;
 thermoType
 {
     transport   const;
     thermo      eConst;
-    equationOfState idealGas;
+    equationOfState perfectGas;
 }
 equationOfState
 {
@@ -44,7 +38,6 @@ transport
 }
 thermodynamics
 {
-    type        eConst;
     Cv          718;
     Hf          0;
 }

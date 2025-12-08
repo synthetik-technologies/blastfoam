@@ -42,7 +42,7 @@ interpolationSchemes
 {
     default             linear;
     reconstruct(rho)    quadraticMUSCL Minmod;
-    reconstruct(U)      quadraticMUSCL MinmodV;
+    reconstruct(U)      quadraticMUSCL Minmod;
     reconstruct(e)      quadraticMUSCL Minmod;
     reconstruct(p)      quadraticMUSCL Minmod;
     reconstruct(speedOfSound)      quadraticMUSCL Minmod;

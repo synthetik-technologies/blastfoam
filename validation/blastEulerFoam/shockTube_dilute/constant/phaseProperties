@@ -41,11 +41,7 @@ particles
 gas
 {
     phaseType            fluid;
-    diameterModel constant;
-    constantDiameterCoeffs
-    {
-        d           0;
-    }
+    diameterModel none;
 
     residualRho     1e-6;
     residualAlpha   1e-10;

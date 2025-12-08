@@ -1,33 +1,26 @@
 #!/bin/bash -i
 cd ${0%/*} || exit 1    # run from this directory
 
-# source ~/.bashrc
-#
-# # Source tutorial run functions
-# . $WM_PROJECT_DIR/bin/tools/RunFunctions
-#
-# # -- Create paraview file
-# paraFoam -builtin -touch
-#
-# # -- Create mesh
-# runApplication blockMesh
-#
-# # -- Decompose the case
-# runApplication decomposePar
-#
-# # -- Add internal patch
-# runParallel addEmptyPatch internalPatch internal -overwrite
-#
-# # -- Set initial conditions
-# runParallel setRefinedFields
-#
-# # -- run the calc
-# runParallel $(getApplication)
-if ! command -v pvpython >/dev/null 2>&1
-then
-    echo "pvpython could not be found, no creating images"
-else
-    ( cd validation && pvpython postProcess.py )
-fi
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create mesh
+runApplication blockMesh
+
+# -- Decompose the case
+runApplication decomposePar
+
+# -- Add internal patch
+runParallel addEmptyPatch internalPatch internal -overwrite
+
+# -- Set initial conditions
+runParallel setRefinedFields
+
+# -- run the calc
+runParallel $(getApplication)
+
 
 # ----------------------------------------------------------------- end-of-file

@@ -15,15 +15,6 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phaseType        granular;
-diameterModel constant;
-constantDiameterCoeffs
-{
-    d           10e-6;
-}
-alphaMax    0.63;
-alphaMinFriction 0.5;
-
 type basic;
 thermoType
 {
@@ -45,7 +36,6 @@ transport
 }
 thermodynamics
 {
-    type        eConst;
     Cv          718;           // Heat capacity
     Hf          0.0;
 }
