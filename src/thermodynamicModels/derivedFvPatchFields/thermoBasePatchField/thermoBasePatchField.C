@@ -42,8 +42,20 @@ Foam::thermoBasePatchField::thermoBasePatchField
 )
 :
     patch_(p),
-    determinePhase_(true),
+    determinePhase_(false),
     phaseName_(defaultGroup)
+{}
+
+
+Foam::thermoBasePatchField::thermoBasePatchField
+(
+    const thermoBasePatchField& tbpf,
+    const fvPatch& p
+)
+:
+    patch_(p),
+    determinePhase_(false),
+    phaseName_(tbpf.phaseName_)
 {}
 
 

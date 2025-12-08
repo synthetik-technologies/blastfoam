@@ -97,7 +97,12 @@ Foam::dynamicThermoPressureFvPatchScalarField::dynamicThermoPressureFvPatchScala
 )
 :
     fixedValueFvPatchScalarField(tppsf, iF),
-    thermoBasePatchField(tppsf, this->patch(), iF.group()),
+    thermoBasePatchField
+    (
+        tppsf,
+        this->patch(),
+        isNull(iF) ? tppsf.phaseName_ : iF.group()
+    ),
     p0_(tppsf.p0_)
 {}
 

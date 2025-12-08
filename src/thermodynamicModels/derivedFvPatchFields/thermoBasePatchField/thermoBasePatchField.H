@@ -87,6 +87,13 @@ public:
             const word&
         );
 
+        //- Construct from copy and patch
+        thermoBasePatchField
+        (
+            const thermoBasePatchField&,
+            const fvPatch&
+        );
+
         //- Construct from patch and internal field
         thermoBasePatchField
         (

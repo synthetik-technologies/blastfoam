@@ -113,7 +113,12 @@ totalThermoTemperatureFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(tppsf, iF),
-    thermoBasePatchField(tppsf, this->patch(), iF.group()),
+    thermoBasePatchField
+    (
+        tppsf,
+        this->patch(),
+        isNull(iF) ? tppsf.phaseName_ : iF.group()
+    ),
     UName_(tppsf.UName_),
     phiName_(tppsf.phiName_),
     T0_(tppsf.T0_)

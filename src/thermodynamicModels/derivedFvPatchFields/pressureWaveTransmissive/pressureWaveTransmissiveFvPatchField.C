@@ -85,7 +85,12 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(ptpsf, iF),
-    thermoBasePatchField(ptpsf, ptpsf.patch(), iF.group())
+    thermoBasePatchField
+    (
+        ptpsf,
+        ptpsf.patch(),
+        isNull(iF) ? ptpsf.phaseName_ : iF.group()
+    )
 {}
 
 
