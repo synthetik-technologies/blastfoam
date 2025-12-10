@@ -139,18 +139,17 @@ Foam::tmp<Foam::scalarField> Foam::surfaceReactionRates::pressureBased::k
     scalarField& K = tmpk.ref();
     if (mag(pExponent_.value()) > vSmall)
     {
-        forAll(K, fi)
-        {
-            K[fi] *= pow(p[fi]*pScale_, pExponent_.value());
-        }
+        K *= pow(p*pScale_, pExponent_.value());
     }
     if (mag(offset_.value()) > vSmall)
     {
-        forAll(K, fi)
-        {
-            K[fi] += offset_.value();
-        }
+        K += offset_.value();
     }
+    if (mag(pMin_.value()) > vSmall)
+    {
+        K *= pos(p - pMin_.value());
+    }
+
     return tmpk;
 }
 
