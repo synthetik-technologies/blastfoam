@@ -30,14 +30,14 @@ Description
     Constant heat transfer coefficient
 
 SourceFiles
-    constantCoefficient.C
+    constantCoefficientHeatTransfer.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantCoefficient_H
-#define constantCoefficient_H
+#ifndef constantCoefficientHeatTransfer_H
+#define constantCoefficientHeatTransfer_H
 
-#include "heatTransferModel.H"
+#include "dispersedHeatTransferModel.H"
 #include "NuHeatTransfer.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -56,7 +56,7 @@ namespace heatTransferModels
 
 class constantCoefficient
 :
-    public heatTransferModel
+    public dispersedHeatTransferModel
 {
 
     // Heat transfer coefficient
@@ -85,10 +85,10 @@ public:
     // Member Functions
 
         //- The heat transfer function K used in the enthalpy equation
-        virtual tmp<volScalarField> K() const;
+        virtual tmp<volScalarField> Ki() const;
 
         //- The heat transfer function K used in the enthalpy equation
-        virtual scalar cellK(const label celli) const;
+        virtual scalar cellKi(const label celli) const;
 };
 
 

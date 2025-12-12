@@ -25,7 +25,7 @@ License
 
 #include "swarmCorrection.H"
 #include "phasePair.H"
-#include "noSwarm.H"
+#include "noSwarmCorrection.H"
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
@@ -38,7 +38,10 @@ Foam::swarmCorrection::New
 {
     if (!dict.isDict(typeName))
     {
-        return autoPtr<swarmCorrection>(new swarmCorrections::noSwarm(dict, pair));
+        return autoPtr<swarmCorrection>
+        (
+            new swarmCorrections::noSwarm(dict, pair)
+        );
     }
     const dictionary& swarmDict = dict.subDict(typeName);
     word swarmCorrectionType(swarmDict.lookup("type"));

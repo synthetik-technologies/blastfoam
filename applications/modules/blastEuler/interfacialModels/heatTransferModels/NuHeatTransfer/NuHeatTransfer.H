@@ -37,7 +37,7 @@ SourceFiles
 #ifndef NuHeatTransfer_H
 #define NuHeatTransfer_H
 
-#include "heatTransferModel.H"
+#include "dispersedHeatTransferModel.H"
 #include "NusseltNumberModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -56,7 +56,7 @@ namespace heatTransferModels
 
 class NuHeatTransfer
 :
-    public heatTransferModel
+    public dispersedHeatTransferModel
 {
 protected:
 // Protected data

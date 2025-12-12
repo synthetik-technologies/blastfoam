@@ -90,11 +90,21 @@ public:
         //- Drag coefficient
         virtual tmp<volScalarField> CdRe() const = 0;
 
+        //- Drag coefficient
+        virtual scalar cellCdRe(const label) const = 0;
+
         //- Return the phase-intensive drag coefficient Ki
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
         virtual tmp<volScalarField> Ki() const;
+
+        //- Return the phase-intensive drag coefficient Ki
+        //  used in the momentum equations
+        //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
+        //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
+        virtual scalar cellKi(const label) const;
+
 
         //- Return the drag coefficient K
         //  used in the momentum equations
@@ -106,21 +116,27 @@ public:
         //  used in the face-momentum equations
         virtual tmp<surfaceScalarField> Kf() const;
 
-
-        //- Drag coefficient
-        virtual scalar cellCdRe(const label) const = 0;
-
-        //- Return the phase-intensive drag coefficient Ki
-        //  used in the momentum equations
-        //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
-        //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
-        virtual scalar cellKi(const label) const;
-
         //- Return the drag coefficient K
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
         virtual scalar cellK(const label) const;
+
+        //- Return the drag coefficient K
+        //  used in the momentum equations
+        //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
+        //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
+        virtual tmp<volScalarField> stabK() const;
+
+        //- Return the drag coefficient Kf
+        //  used in the face-momentum equations
+        virtual tmp<surfaceScalarField> stabKf() const;
+
+        //- Return the drag coefficient K
+        //  used in the momentum equations
+        //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
+        //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
+        virtual scalar cellStabK(const label) const;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

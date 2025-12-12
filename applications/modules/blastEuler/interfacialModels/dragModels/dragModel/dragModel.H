@@ -146,6 +146,23 @@ public:
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
         virtual scalar cellK(const label) const = 0;
 
+        //- Return the drag coefficient K
+        //  used in the momentum equations
+        //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
+        //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
+        virtual tmp<volScalarField> stabK() const = 0;
+
+        //- Return the drag coefficient Kf
+        //  used in the face-momentum equations
+        virtual tmp<surfaceScalarField> stabKf() const = 0;
+
+        //- Return the drag coefficient K
+        //  used in the momentum equations
+        //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
+        //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
+        virtual scalar cellStabK(const label) const = 0;
+
+
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const;
 };
@@ -168,6 +185,18 @@ public:
 
 
     // Member Functions
+
+        //- Return the drag coefficient K
+        tmp<volScalarField> stabK() const;
+
+        //- Return the drag coefficient Kf
+        tmp<surfaceScalarField> stabKf() const;
+
+        //- Return the blended cell force coefficient
+        scalar cellStabK
+        (
+            const label
+        ) const;
 
         //- Return the drag coefficient K
         tmp<volScalarField> K() const;

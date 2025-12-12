@@ -49,7 +49,7 @@ Foam::heatTransferModels::constantCoefficient::constantCoefficient
     const phasePair& pair
 )
 :
-    heatTransferModel(dict, pair),
+    dispersedHeatTransferModel(dict, pair),
     Kh_("Kh", dimK, dict.lookup<scalar>("Kh"))
 {}
 
@@ -62,18 +62,22 @@ Foam::heatTransferModels::constantCoefficient::~constantCoefficient()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::heatTransferModels::constantCoefficient::K() const
+Foam::tmp<Foam::volScalarField>
+Foam::heatTransferModels::constantCoefficient::Ki() const
 {
     return volScalarField::New
     (
-        typeName + ":K",
+        typeName + ":Ki",
         pair_.phase1().mesh(),
         Kh_
     );
 }
 
 
-Foam::scalar Foam::heatTransferModels::constantCoefficient::cellK(const label celli) const
+Foam::scalar Foam::heatTransferModels::constantCoefficient::cellKi
+(
+    const label celli
+) const
 {
     return Kh_.value();
 }

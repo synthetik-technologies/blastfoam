@@ -45,8 +45,8 @@ cohesionModel/none/noneCohesion.C
 derivedFvPatchFields/JohnsonJacksonParticleTheta/JohnsonJacksonParticleThetaFvPatchScalarField.C
 derivedFvPatchFields/JohnsonJacksonParticleSlip/JohnsonJacksonParticleSlipFvPatchVectorField.C
 
-dragModels/Syamlal/Syamlal.C
-dragModels/Chao/Chao.C
+dragModels/Syamlal/SyamlalDrag.C
+dragModels/Chao/ChaoDrag.C
 
 fluxSchemes/AUSMPlusUp/AUSMPlusUpPhaseFluxScheme.C
 fluxSchemes/KimLimitedScheme/KimLimitedScheme.C

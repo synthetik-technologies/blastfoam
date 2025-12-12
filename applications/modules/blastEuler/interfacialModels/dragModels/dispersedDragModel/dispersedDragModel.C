@@ -29,7 +29,7 @@ License
 #include "dispersedDragModel.H"
 #include "BlendedInterfacialModel.H"
 #include "phasePair.H"
-#include "noSwarm.H"
+#include "noSwarmCorrection.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 
@@ -85,30 +85,6 @@ Foam::dragModels::dispersedDragModel::Ki() const
 }
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::dragModels::dispersedDragModel::K() const
-{
-    return
-        max
-        (
-            pair_.dispersed(),
-            pair_.dispersed().residualAlpha()
-        )*Ki();
-}
-
-
-Foam::tmp<Foam::surfaceScalarField>
-Foam::dragModels::dispersedDragModel::Kf() const
-{
-    return
-        max
-        (
-            fvc::interpolate(pair_.dispersed()),
-            pair_.dispersed().residualAlpha()
-        )*fvc::interpolate(Ki());
-}
-
-
 Foam::scalar Foam::dragModels::dispersedDragModel::cellKi
 (
     const label celli
@@ -124,7 +100,31 @@ Foam::scalar Foam::dragModels::dispersedDragModel::cellKi
 }
 
 
-Foam::scalar Foam::dragModels::dispersedDragModel::cellK
+Foam::tmp<Foam::volScalarField>
+Foam::dragModels::dispersedDragModel::stabK() const
+{
+    return
+        max
+        (
+            pair_.dispersed(),
+            pair_.dispersed().residualAlpha()
+        )*Ki();
+}
+
+
+Foam::tmp<Foam::surfaceScalarField>
+Foam::dragModels::dispersedDragModel::stabKf() const
+{
+    return
+        max
+        (
+            fvc::interpolate(pair_.dispersed()),
+            pair_.dispersed().residualAlpha()
+        )*fvc::interpolate(Ki());
+}
+
+
+Foam::scalar Foam::dragModels::dispersedDragModel::cellStabK
 (
     const label celli
 ) const
@@ -135,6 +135,31 @@ Foam::scalar Foam::dragModels::dispersedDragModel::cellK
             pair_.dispersed()[celli],
             pair_.dispersed().residualAlpha().value()
         )*cellKi(celli);
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::dragModels::dispersedDragModel::K() const
+{
+    return pair_.dispersed()*Ki();
+}
+
+
+Foam::tmp<Foam::surfaceScalarField>
+Foam::dragModels::dispersedDragModel::Kf() const
+{
+    return
+        fvc::interpolate(pair_.dispersed())
+       *fvc::interpolate(Ki());
+}
+
+
+Foam::scalar Foam::dragModels::dispersedDragModel::cellK
+(
+    const label celli
+) const
+{
+    return pair_.dispersed()[celli]*cellKi(celli);
 }
 
 

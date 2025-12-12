@@ -1,0 +1,114 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+2017-05-18 Jeff Heylmun:    Added support of polydisperse phase models
+2025-06-09 Jeff Heylmun:    Added cell based returns
+-------------------------------------------------------------------------------
+License
+    This file is a derivative work of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "WenYuDrag.H"
+#include "phasePair.H"
+#include "addToRunTimeSelectionTable.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace dragModels
+{
+    defineTypeNameAndDebug(WenYu, 0);
+    addToRunTimeSelectionTable(dragModel, WenYu, dictionary);
+}
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::dragModels::WenYu::WenYu
+(
+    const dictionary& dict,
+    const phasePair& pair,
+    const bool registerObject
+)
+:
+    dispersedDragModel(dict, pair, registerObject),
+    residualRe_("residualRe", dimless, dict)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::dragModels::WenYu::~WenYu()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe() const
+{
+    volScalarField alpha2
+    (
+        max
+        (
+            pair_.continuous(),
+            pair_.continuous().residualAlpha()
+        )
+    );
+
+    volScalarField Res(alpha2*pair_.Re());
+    volScalarField CdsRes
+    (
+        neg(Res - 1000)*24.0*(1.0 + 0.15*pow(Res, 0.687))
+      + pos0(Res - 1000)*0.44*max(Res, residualRe_)
+    );
+
+    return
+        CdsRes
+       *pow(alpha2, -2.65);
+}
+
+
+Foam::scalar Foam::dragModels::WenYu::cellCdRe(const label celli) const
+{
+    scalar alpha2
+    (
+        max
+        (
+            pair_.continuous()[celli],
+            pair_.continuous().residualAlpha().value()
+        )
+    );
+
+    scalar Res(alpha2*pair_.cellRe(celli));
+    scalar CdsRes
+    (
+        neg(Res - 1000)*24.0*(1.0 + 0.15*pow(Res, 0.687))
+      + pos0(Res - 1000)*0.44*max(Res, residualRe_.value())
+    );
+
+    return
+        CdsRes
+       *pow(alpha2, -2.65);
+}
+
+// ************************************************************************* //

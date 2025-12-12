@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "surfaceTemperatureModel.H"
-#include "isoThermalSurfaceTemperatureModel.H"
+#include "isoThermalSurfaceTemperature.H"
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 

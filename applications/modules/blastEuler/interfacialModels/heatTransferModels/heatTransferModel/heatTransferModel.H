@@ -62,9 +62,6 @@ protected:
         //- Phase pair
         const phasePair& pair_;
 
-        //- Residual phase fraction
-        const dimensionedScalar residualAlpha_;
-
 
 public:
 
@@ -122,6 +119,18 @@ public:
         //    ddt(alpha1*rho1*ha) + ... = ... K*(Ta - Tb)
         //    ddt(alpha2*rho2*hb) + ... = ... K*(Tb - Ta)
         //  with a specified residual volume fraction
+        virtual tmp<volScalarField> stabK() const = 0;
+
+        //- The heat transfer function K used in the enthalpy equation
+        //    ddt(alpha1*rho1*ha) + ... = ... K*(Ta - Tb)
+        //    ddt(alpha2*rho2*hb) + ... = ... K*(Tb - Ta)
+        //  with a specified residual volume fraction
+        virtual scalar cellStabK(const label celli) const = 0;
+
+        //- The heat transfer function K used in the enthalpy equation
+        //    ddt(alpha1*rho1*ha) + ... = ... K*(Ta - Tb)
+        //    ddt(alpha2*rho2*hb) + ... = ... K*(Tb - Ta)
+        //  with a specified residual volume fraction
         virtual tmp<volScalarField> K() const = 0;
 
         //- The heat transfer function K used in the enthalpy equation
@@ -153,10 +162,16 @@ public:
 
     // Member Functions
 
-        //- Return the drag coefficient K
+        //- Return the heat transfer coefficient K
+        tmp<volScalarField> stabK() const;
+
+        //- Return the blended cell heat transfer coefficient
+        scalar cellStabK(const label) const;
+
+        //- Return the heat transfer coefficient K
         tmp<volScalarField> K() const;
 
-        //- Return the blended cell force coefficient
+        //- Return the blended cell heat transfer coefficient
         scalar cellK(const label) const;
 };
 

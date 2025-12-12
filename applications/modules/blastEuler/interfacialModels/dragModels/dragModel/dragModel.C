@@ -105,6 +105,24 @@ bool Foam::dragModel::writeData(Ostream& os) const
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::blendedDragModel::stabK() const
+{
+    return this->evaluate(&dragModel::stabK, "K", dragModel::dimK, false);
+}
+
+
+Foam::tmp<Foam::surfaceScalarField> Foam::blendedDragModel::stabKf() const
+{
+    return this->evaluate(&dragModel::stabKf, "Kf", dragModel::dimK, false);
+}
+
+
+Foam::scalar Foam::blendedDragModel::cellStabK(const label celli) const
+{
+    return this->evaluate(&dragModel::cellStabK, false, celli);
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::blendedDragModel::K() const
 {
     return this->evaluate(&dragModel::K, "K", dragModel::dimK, false);

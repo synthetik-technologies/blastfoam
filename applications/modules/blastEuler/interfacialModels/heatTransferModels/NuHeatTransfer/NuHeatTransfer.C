@@ -48,7 +48,7 @@ Foam::heatTransferModels::NuHeatTransfer::NuHeatTransfer
     const phasePair& pair
 )
 :
-    heatTransferModel(dict, pair),
+    dispersedHeatTransferModel(dict, pair),
     NuModel_(NusseltNumberModel::New(dict, pair))
 {}
 

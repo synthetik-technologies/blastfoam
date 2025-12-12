@@ -49,19 +49,7 @@ Foam::heatTransferModel::heatTransferModel
     const phasePair& pair
 )
 :
-    pair_(pair),
-    residualAlpha_
-    (
-        "residualAlpha",
-        dimless,
-        dict.lookupOrDefault<scalar>
-        (
-            "residualAlpha",
-            pair_.ordered()
-          ? pair_.dispersed().residualAlpha().value()
-          : pair_.phase1().residualAlpha().value()
-        )
-    )
+    pair_(pair)
 {}
 
 
@@ -72,6 +60,24 @@ Foam::heatTransferModel::~heatTransferModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::blendedHeatTransferModel::stabK() const
+{
+    return this->evaluate
+    (
+        &heatTransferModel::stabK,
+        "K",
+        heatTransferModel::dimK,
+        false
+    );
+}
+
+
+Foam::scalar Foam::blendedHeatTransferModel::cellStabK(const label celli) const
+{
+    return this->evaluate(&heatTransferModel::cellStabK, false, celli);
+}
+
 
 Foam::tmp<Foam::volScalarField> Foam::blendedHeatTransferModel::K() const
 {
