@@ -239,7 +239,6 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
             }
         }
 
-
         if
         (
             (phase1.granular() && !phase2.granular())

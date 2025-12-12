@@ -360,13 +360,82 @@ void Foam::BlendedInterfacialModel<ModelType>::correctFixedFluxBCs
 
 template<class ModelType>
 Foam::tmp<Foam::volScalarField>
+Foam::BlendedInterfacialModel<ModelType>::stabK
+(
+    const label nodei,
+    const label nodej
+) const
+{
+    return evaluate
+    (
+        &ModelType::stabK,
+        "K",
+        ModelType::dimK,
+        false,
+        nodei,
+        nodej
+    );
+}
+
+
+template<class ModelType>
+Foam::scalar
+Foam::BlendedInterfacialModel<ModelType>::cellStabK
+(
+    const label celli,
+    const label nodei,
+    const label nodej
+) const
+{
+    return evaluate
+    (
+        &ModelType::cellStabK,
+        "cellK",
+        false,
+        celli,
+        nodei,
+        nodej
+    );
+}
+
+
+template<class ModelType>
+Foam::tmp<Foam::surfaceScalarField>
+Foam::BlendedInterfacialModel<ModelType>::stabKf
+(
+    const label nodei,
+    const label nodej
+) const
+{
+    return evaluate
+    (
+        &ModelType::stabKf,
+        "Kf",
+        ModelType::dimK,
+        false,
+        nodei,
+        nodej
+    );
+}
+
+
+template<class ModelType>
+Foam::tmp<Foam::volScalarField>
 Foam::BlendedInterfacialModel<ModelType>::K
 (
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::K, "K", ModelType::dimK, false, nodei, nodej);
+    return evaluate
+    (
+        &ModelType::K,
+        "K",
+        ModelType::dimK,
+        false,
+        nodei,
+        nodej
+    );
 }
 
 
@@ -379,7 +448,15 @@ Foam::BlendedInterfacialModel<ModelType>::cellK
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::cellK, "cellK", false, celli, nodei, nodej);
+    return evaluate
+    (
+        &ModelType::cellK,
+        "cellK",
+        false,
+        celli,
+        nodei,
+        nodej
+    );
 }
 
 
@@ -391,7 +468,15 @@ Foam::BlendedInterfacialModel<ModelType>::Kf
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::Kf, "Kf", ModelType::dimK, false, nodei, nodej);
+    return evaluate
+    (
+        &ModelType::Kf,
+        "Kf",
+        ModelType::dimK,
+        false,
+        nodei,
+        nodej
+    );
 }
 
 

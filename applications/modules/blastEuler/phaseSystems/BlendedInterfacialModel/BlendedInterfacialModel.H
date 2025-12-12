@@ -204,27 +204,55 @@ public:
         template<class GeoField>
         void correctFixedFluxBCs(GeoField& field) const;
 
-        //- Return the blended force coefficient
-        tmp<volScalarField> K
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        // Stabilised force coefficients
 
-        //- Return the blended force coefficient
-        scalar cellK
-        (
-            const label,
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+            //- Return the blended force coefficient
+            tmp<volScalarField> stabK
+            (
+                const label nodei = -1,
+                const label nodej = -1
+            ) const;
 
-        //- Return the face blended force coefficient
-        tmp<surfaceScalarField> Kf
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+            //- Return the blended force coefficient
+            scalar cellStabK
+            (
+                const label,
+                const label nodei = -1,
+                const label nodej = -1
+            ) const;
+
+            //- Return the face blended force coefficient
+            tmp<surfaceScalarField> stabKf
+            (
+                const label nodei = -1,
+                const label nodej = -1
+            ) const;
+
+
+        // Un-modified force coefficients
+
+            //- Return the blended force coefficient
+            tmp<volScalarField> K
+            (
+                const label nodei = -1,
+                const label nodej = -1
+            ) const;
+
+            //- Return the blended force coefficient
+            scalar cellK
+            (
+                const label,
+                const label nodei = -1,
+                const label nodej = -1
+            ) const;
+
+            //- Return the face blended force coefficient
+            tmp<surfaceScalarField> Kf
+            (
+                const label nodei = -1,
+                const label nodej = -1
+            ) const;
+
 
         //- Return the blended force
         template<class Type>

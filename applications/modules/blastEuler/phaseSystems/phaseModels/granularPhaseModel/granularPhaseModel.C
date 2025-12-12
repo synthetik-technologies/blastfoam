@@ -157,10 +157,6 @@ void Foam::granularPhaseModel::solve()
     //- Solve phase mass transport
     phaseModel::solveAlphaRho();
 
-    //- Solve thermodynamics to get energy production
-    thermoPtr_->solve();
-    surfTModel_->solve();
-
     //- Blend deltas
     deltaAlphaRhoU = cmptMultiply(deltaAlphaRhoU, solutionDs_);
     this->storeAndBlendDelta(deltaAlphaRhoU);
@@ -186,6 +182,10 @@ void Foam::granularPhaseModel::solve()
     //- Update volume fraction since density is known
     alphaRho_.max(0.0);
     this->internalFieldRef() = alphaRho_()/rho_();
+
+    //- Solve thermodynamics to get energy production
+    thermoPtr_->solve();
+    surfTModel_->solve();
 }
 
 
