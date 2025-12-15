@@ -266,8 +266,9 @@ void Foam::thermalModel::correct()
         hes.clear();
     }
 
+    thermoPtr_->he().correctBoundaryConditions();
     thermoPtr_->correct();
-    thermoPtr_->T().correctBoundaryConditions();
+    // thermoPtr_->T().correctBoundaryConditions();
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
