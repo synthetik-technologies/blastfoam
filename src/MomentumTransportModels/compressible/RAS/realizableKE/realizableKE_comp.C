@@ -347,7 +347,7 @@ void realizableKE_comp<BasicMomentumTransportModel>::correct()
             alpha()*rho()*epsilon_()*(1.0/k_() + this->MtSqrByk()),
             k_
         )
-      + this->pressureDialationSource(G)
+      + alpha()*rho()*this->pressureDialationSource(G)
       + kSource()
       + fvModels.source(alpha, rho, k_)
     );

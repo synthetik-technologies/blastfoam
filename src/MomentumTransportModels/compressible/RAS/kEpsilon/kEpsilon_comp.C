@@ -198,7 +198,7 @@ void kEpsilon_comp<BasicMomentumTransportModel>::correct()
             ),
             this->k_
         )
-      + this->pressureDialationSource(G)
+      + alpha()*rho()*this->pressureDialationSource(G)
       + this->kSource()
       + fvModels.source(alpha, rho, this->k_)
     );
