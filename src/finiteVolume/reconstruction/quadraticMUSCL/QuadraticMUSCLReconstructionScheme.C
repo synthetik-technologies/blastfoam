@@ -32,12 +32,13 @@ License
 template<class Type>
 Foam::QuadraticMUSCLReconstructionScheme<Type>::QuadraticMUSCLReconstructionScheme
 (
+    const fvSchemes& schemes,
     const GeometricField<Type, fvPatchField, volMesh>& phi,
     Istream& is,
     const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is, overwrite),
+    ReconstructionScheme<Type>(schemes, phi, is, overwrite),
     gradPhis_(0),
     hessPhis_(0),
     bound_(true),
@@ -56,6 +57,9 @@ Foam::QuadraticMUSCLReconstructionScheme<Type>::~QuadraticMUSCLReconstructionSch
 template<class Type>
 void Foam::QuadraticMUSCLReconstructionScheme<Type>::constructGradPhis() const
 {
+    const word gradName("limitedGrad(" + this->phi_.name() + ")");
+    const word hessName("limitedHess(" + this->phi_.name() + ")");
+
     gradPhis_.setSize(pTraits<Type>::nComponents);
     hessPhis_.setSize(pTraits<Type>::nComponents);
     tmp<fv::gradScheme<scalar>> lgradientScheme
@@ -63,10 +67,7 @@ void Foam::QuadraticMUSCLReconstructionScheme<Type>::constructGradPhis() const
         fv::gradScheme<scalar>::New
         (
             this->mesh_,
-            this->mesh_.schemes().grad
-            (
-                "limitedGrad(" + this->phi_.name() + ")"
-            )
+            this->schemes_.grad(gradName)
         )
     );
     tmp<fv::gradScheme<vector>> hgradientScheme
@@ -74,31 +75,24 @@ void Foam::QuadraticMUSCLReconstructionScheme<Type>::constructGradPhis() const
         fv::gradScheme<vector>::New
         (
             this->mesh_,
-            this->mesh_.schemes().grad
-            (
-                "limitedHess(" + this->phi_.name() + ")"
-            )
+            this->schemes_.grad(hessName)
         )
     );
     for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
     {
-        tmp<volScalarField> phiCmpt
-        (
-            volScalarField::New
-            (
-                this->phi_.name() + "_" + Foam::name(cmpti),
-                this->phi_.component(cmpti)
-            )
-        );
         gradPhis_.set
         (
             cmpti,
-            lgradientScheme().grad(phiCmpt)
+            lgradientScheme().calcGrad
+            (
+                this->phi_.component(cmpti),
+                gradName
+            )
         );
         hessPhis_.set
         (
             cmpti,
-            hgradientScheme().grad(gradPhis_[cmpti])
+            hgradientScheme().calcGrad(gradPhis_[cmpti], hessName)
         );
     }
 }

@@ -85,6 +85,8 @@ class ReconstructionScheme
 {
 protected:
 
+    const fvSchemes& schemes_;
+
     //- Const reference to mesh
     const fvMesh& mesh_;
 
@@ -111,11 +113,12 @@ public:
             ReconstructionScheme,
             dictionary,
             (
+                const fvSchemes& schemes,
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
                 Istream& is,
                 const bool overwrite
             ),
-            (phi, is, overwrite)
+            (schemes, phi, is, overwrite)
         );
 
         declareRunTimeSelectionTable
@@ -124,11 +127,12 @@ public:
             ReconstructionScheme,
             LinearMesh,
             (
+                const fvSchemes& schemes,
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
                 Istream& is,
                 const bool overwrite
             ),
-            (phi, is, overwrite)
+            (schemes, phi, is, overwrite)
         );
 
         declareRunTimeSelectionTable
@@ -137,11 +141,12 @@ public:
             ReconstructionScheme,
             QuadraticMesh,
             (
+                const fvSchemes& schemes,
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
                 Istream& is,
                 const bool overwrite
             ),
-            (phi, is, overwrite)
+            (schemes, phi, is, overwrite)
         );
 
 
@@ -151,11 +156,13 @@ public:
         //- Construct from mesh and faceFlux and limiter scheme
         ReconstructionScheme
         (
+            const fvSchemes& schemes,
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             Istream& is,
             const bool overwrite
         )
         :
+            schemes_(schemes),
             mesh_(phi.mesh()),
             phi_(phi),
             overwrite_
@@ -207,8 +214,26 @@ public:
             const bool overwrite
         );
 
+        //- Return new tmp interpolation scheme
         static autoPtr<ReconstructionScheme<Type>> New
         (
+            const fvSchemes& schemes,
+            const GeometricField<Type, fvPatchField, volMesh>& phi,
+            const word& name,
+            const bool overwrite
+        );
+
+        static autoPtr<ReconstructionScheme<Type>> New
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& phi,
+            const word& name,
+            const word& phaseName,
+            const bool overwrite
+        );
+
+        static autoPtr<ReconstructionScheme<Type>> New
+        (
+            const fvSchemes& schemes,
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             const word& name,
             const word& phaseName,

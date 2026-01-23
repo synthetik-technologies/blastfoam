@@ -26,6 +26,10 @@ License
 #include "ReconstructionScheme.H"
 #include "StandardReconstructionScheme.H"
 
+#include "LimitedScheme.H"
+#include "Limited01.H"
+#include "Minmod.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -42,6 +46,29 @@ defineNamedTemplateTypeNameAndDebug
     0
 );
 defineNamedTemplateTypeNameAndDebug(StandardReconstructionScheme<tensor>, 0);
+
+
+
+
+makeLLimitedSurfaceInterpolationTypeScheme
+(
+    limitedMinmod,
+    LimitedLimiter,
+    MinmodLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+)
+
+makeLLimitedSurfaceInterpolationTypeScheme
+(
+    Minmod01,
+    Limited01Limiter,
+    MinmodLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -26,6 +26,7 @@ fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
 
 reconstruction/reconstructionScheme/reconstruction.C
 reconstruction/reconstructionScheme/ReconstructionSchemes.C
+reconstruction/ownNeiSurfaceFields/ownNeiSurfaceFields.C
 reconstruction/none/NoneReconstructionSchemes.C
 reconstruction/standard/StandardReconstructionSchemes.C
 reconstruction/upwindMUSCL/UpwindMUSCLReconstructionSchemes.C

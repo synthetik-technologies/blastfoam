@@ -85,6 +85,7 @@ public:
         //- Construct from mesh interpolation scheme name (provided in New)
         NoneReconstructionScheme
         (
+            const fvSchemes& schemes,
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             Istream& is,
             const bool overwrite

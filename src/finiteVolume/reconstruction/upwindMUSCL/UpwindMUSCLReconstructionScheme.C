@@ -30,12 +30,13 @@ License
 template<class Type>
 Foam::UpwindMUSCLReconstructionScheme<Type>::UpwindMUSCLReconstructionScheme
 (
+    const fvSchemes& schemes,
     const GeometricField<Type, fvPatchField, volMesh>& phi,
     Istream& is,
     const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is, overwrite)
+    ReconstructionScheme<Type>(schemes, phi, is, overwrite)
 {}
 
 
