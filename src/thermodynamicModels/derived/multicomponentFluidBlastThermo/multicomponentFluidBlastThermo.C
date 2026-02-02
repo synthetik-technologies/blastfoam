@@ -179,10 +179,10 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
             const scalar Ti = T[celli];
             const scalar Xii = alphai/t.Gamma(rhoi, ei, Ti);
 
-            alphaCp[celli] += t.Cp(rhoi, ei, Ti)*alphai;
-            alphaCv[celli] += t.Cv(rhoi, ei, Ti)*alphai;
-            alphaMu[celli] += t.mu(rhoi, ei, Ti)*alphai;
-            alphaKappa[celli] += t.kappa(rhoi, ei, Ti)*alphai;
+            alphaCp[celli] += t.Cp(rhoi, ei, Ti)*alphai*rhoi;
+            alphaCv[celli] += t.Cv(rhoi, ei, Ti)*alphai*rhoi;
+            alphaMu[celli] += t.mu(rhoi, ei, Ti)*alphai*rhoi;
+            alphaKappa[celli] += t.kappa(rhoi, ei, Ti)*alphai*rhoi;
             pXiSum[celli] += t.p(rhoi, ei, Ti)*Xii;
             XiSum[celli] += Xii;
         }
@@ -217,10 +217,10 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
                 const scalar Xii = alphai/t.Gamma(rhoi, ei, Ti);
 
                 ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
-                palphaCp[facei] = t.Cp(rhoi, ei, Ti)*alphai;
-                palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai;
-                palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai;
-                palphaKappa[facei] = t.kappa(rhoi, ei, Ti)*alphai;
+                palphaCp[facei] = t.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai*rhoi;
+                palphaKappa[facei] = t.kappa(rhoi, ei, Ti)*alphai*rhoi;
                 pxiSum[facei] += Xii;
             }
         }
