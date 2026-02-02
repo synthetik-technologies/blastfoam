@@ -51,9 +51,10 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
     scalarField& TCells = T_.primitiveFieldRef();
     scalarField& heCells = this->he().primitiveFieldRef();
 
-    THEEqn_.setCells();
+    THEEqn_.setCell();
     forAll(TCells, celli)
     {
+        THEEqn_.setHE(heCells[celli]);
         TCells[celli] = THESolver_->solve(TCells[celli], celli);
         if (TCells[celli] <= this->TLow_)
         {
@@ -86,6 +87,7 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         {
             forAll(pT, facei)
             {
+                THEEqn_.setHE(phe[facei]);
                 pT[facei] = THESolver_->solve(pT[facei], facei);
                 if (pT[facei] < TLow_)
                 {
@@ -158,9 +160,21 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         pXiSum,
         XiSum
     );
+
+    this->Cp_ /= rho_;
+    this->Cv_ /= rho_;
+    this->kappa_ /= rho_;
+    this->mu_ /= rho_;
+
+    this->Cp_.dimensions().reset(dimEnergy/dimMass/dimTemperature);
+    this->Cv_.dimensions().reset(dimEnergy/dimMass/dimTemperature);
+    this->kappa_.dimensions().reset(dimThermalConductivity);
+    this->mu_.dimensions().reset(dimensionSet(1, -1, -1, 0, 0));
+
     XiSum.max(small);
     this->p_ = pXiSum/XiSum;
     this->p_.correctBoundaryConditions();
+
 
     thermo1_->calculateSpeedOfSound
     (
@@ -173,7 +187,6 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         cSqrRhoXiSum
     );
 
-    cSqrRhoXiSum.max(small);
     this->speedOfSound_ =
         sqrt
         (
@@ -743,8 +756,10 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::he
 ) const
 {
     return
-        this->alpha1()*thermo1_->he(p, T)
-      + this->alpha2()*thermo2_->he(p, T);
+        (
+            this->alpha1()*rho1_*thermo1_->he(p, T)
+          + this->alpha2()*rho2_*thermo2_->he(p, T)
+        )/rho_;
 }
 
 
@@ -755,8 +770,14 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::he
 ) const
 {
     return
-        UIndirectList<scalar>(this->alpha1()(), cells)()*thermo1_->he(T, cells)
-      + UIndirectList<scalar>(this->alpha2()(), cells)()*thermo2_->he(T, cells);
+        (
+            scalarField(this->alpha1(), cells)
+           *scalarField(rho1_, cells)
+           *thermo1_->he(T, cells)
+          + scalarField(this->alpha2(), cells)
+           *scalarField(rho2_, cells)
+           *thermo2_->he(T, cells)
+        )/scalarField(rho_, cells);
 }
 
 
@@ -767,8 +788,14 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::he
 ) const
 {
     return
-        this->alpha1().boundaryField()[patchi]*thermo1_->he(T, patchi)
-      + this->alpha2().boundaryField()[patchi]*thermo2_->he(T, patchi);
+        (
+            this->alpha1().boundaryField()[patchi]
+           *rho1_.boundaryField()[patchi]
+           *thermo1_->he(T, patchi)
+          + this->alpha2().boundaryField()[patchi]
+           *rho2_.boundaryField()[patchi]
+           *thermo2_->he(T, patchi)
+        )/rho_.boundaryField()[patchi];
 }
 
 
@@ -779,10 +806,14 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::he
 ) const
 {
     return
-        scalarField(this->alpha1(), source.cells())
-       *thermo1_->he(T, source)
-      + scalarField(this->alpha2(), source.cells())
-       *thermo2_->he(T, source);
+        (
+            scalarField(this->alpha1(), source.cells())
+           *scalarField(rho1_, source.cells())
+           *thermo1_->he(T, source)
+          + scalarField(this->alpha2(), source.cells())
+           *scalarField(rho2_, source.cells())
+           *thermo2_->he(T, source)
+        )/scalarField(rho_, source.cells());
 }
 
 
@@ -841,7 +872,11 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFacehe
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::hs() const
 {
-    return this->alpha1()*thermo1_->hs() + this->alpha2()*thermo2_->hs();
+    return
+        (
+            this->alpha1()*rho1_*thermo1_->hs()
+          + this->alpha2()*rho2_*thermo2_->hs()
+        )/rho_;
 }
 
 
@@ -851,7 +886,11 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::hs
     const volScalarField& T
 ) const
 {
-    return this->alpha1()*thermo1_->hs(p, T) + this->alpha2()*thermo2_->hs(p, T);
+    return
+        (
+            this->alpha1()*rho1_*thermo1_->hs(p, T)
+          + this->alpha2()*rho2_*thermo2_->hs(p, T)
+        )/rho_;
 }
 
 
@@ -862,8 +901,14 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::hs
 ) const
 {
     return
-        UIndirectList<scalar>(this->alpha1()(), cells)()*thermo1_->hs(T, cells)
-      + UIndirectList<scalar>(this->alpha2()(), cells)()*thermo2_->hs(T, cells);
+        (
+            scalarField(this->alpha1()(), cells)
+           *scalarField(rho1_, cells)
+           *thermo1_->hs(T, cells)
+          + scalarField(this->alpha2()(), cells)
+           *scalarField(rho2_, cells)
+           *thermo2_->hs(T, cells)
+        )/scalarField(rho_, cells);
 }
 
 
@@ -874,14 +919,24 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::hs
 ) const
 {
     return
-        this->alpha1().boundaryField()[patchi]*thermo1_->hs(T, patchi)
-      + this->alpha2().boundaryField()[patchi]*thermo2_->hs(T, patchi);
+        (
+            this->alpha1().boundaryField()[patchi]
+           *rho1_.boundaryField()[patchi]
+           *thermo1_->hs(T, patchi)
+          + this->alpha2().boundaryField()[patchi]
+          *rho2_.boundaryField()[patchi]
+          *thermo2_->hs(T, patchi)
+        )/rho_.boundaryField()[patchi];
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::ha() const
 {
-    return this->alpha1()*thermo1_->ha() + this->alpha2()*thermo2_->ha();
+    return
+        (
+            this->alpha1()*rho1_*thermo1_->ha()
+          + this->alpha2()*rho2_*thermo2_->ha()
+        )/rho_;
 }
 
 
@@ -891,7 +946,11 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::ha
     const volScalarField& T
 ) const
 {
-    return this->alpha1()*thermo1_->ha(p, T) + this->alpha2()*thermo2_->ha(p, T);
+    return
+        (
+            this->alpha1()*rho1_*thermo1_->ha(p, T)
+          + this->alpha2()*rho2_*thermo2_->ha(p, T)
+        )/rho_;
 }
 
 
@@ -902,8 +961,14 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::ha
 ) const
 {
     return
-        UIndirectList<scalar>(this->alpha1()(), cells)()*thermo1_->ha(T, cells)
-      + UIndirectList<scalar>(this->alpha2()(), cells)()*thermo2_->ha(T, cells);
+        (
+            scalarField(this->alpha1()(), cells)
+           *scalarField(rho1_, cells)
+           *thermo1_->ha(T, cells)
+          + scalarField(this->alpha2()(), cells)
+           *scalarField(rho2_, cells)
+           *thermo2_->ha(T, cells)
+        )/scalarField(rho_, cells);
 }
 
 
@@ -914,24 +979,28 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::ha
 ) const
 {
     return
-        this->alpha1().boundaryField()[patchi]*thermo1_->ha(T, patchi)
-      + this->alpha2().boundaryField()[patchi]*thermo2_->ha(T, patchi);
+        (
+            this->alpha1().boundaryField()[patchi]
+           *rho1_.boundaryField()[patchi]
+           *thermo1_->ha(T, patchi)
+          + this->alpha2().boundaryField()[patchi]
+           *rho2_.boundaryField()[patchi]
+           *thermo2_->ha(T, patchi)
+        )/rho_.boundaryField()[patchi];
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::hc() const
 {
     return
-        this->alpha1()*thermo1_->hc()
-      + this->alpha2()*thermo2_->hc();
+        this->alpha1()*rho1_*thermo1_->hc()
+      + this->alpha2()*rho2_*thermo2_->hc();
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::The() const
 {
-    return
-        this->alpha1()*thermo1_->The()
-      + this->alpha2()*thermo2_->The();
+    return The(this->he(), this->p(), this->T());
 }
 
 
@@ -942,9 +1011,38 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::The
     const volScalarField& T0
 ) const
 {
-    return
-        this->alpha1()*thermo1_->The(he, p, T0)
-      + this->alpha2()*thermo2_->The(he, p, T0);
+    tmp<volScalarField> tthe
+    (
+        volScalarField::New
+        (
+            "the",
+            rho_.mesh(),
+            dimensionedScalar(dimTemperature, 0.0)
+        )
+    );
+    volScalarField& the = tthe.ref();
+
+    THEEqn_.setCell();
+    forAll(the, celli)
+    {
+        THEEqn_.setHE(he[celli]);
+        the[celli] = THESolver_->solve(T0[celli], celli);
+    }
+
+    volScalarField::Boundary& bthe = the.boundaryFieldRef();
+    forAll(bthe, patchi)
+    {
+        THEEqn_.setPatch(patchi);
+        scalarField& pthe = bthe[patchi];
+        const scalarField& phe = he.boundaryField()[patchi];
+        const scalarField& pT = T0.boundaryField()[patchi];
+        forAll(pthe, facei)
+        {
+            THEEqn_.setHE(phe[facei]);
+            pthe[facei] = THESolver_->solve(pT[facei], facei);
+        }
+    }
+    return tthe;
 }
 
 
@@ -956,9 +1054,15 @@ Foam::twoPhaseFluidBlastThermo::The
     const labelList& cells
 ) const
 {
-    return
-        scalarField(this->alpha1(), cells)*thermo1_->The(he, T, cells)
-      + scalarField(this->alpha2(), cells)*thermo2_->The(he, T, cells);
+    THEEqn_.setCell();
+    tmp<scalarField> tthe(new scalarField(cells.size()));
+    scalarField& the = tthe.ref();
+    forAll(the, i)
+    {
+        THEEqn_.setHE(he[i]);
+        the[i] = THESolver_->solve(T[i], cells[i]);
+    }
+    return tthe;
 }
 
 
@@ -970,9 +1074,15 @@ Foam::twoPhaseFluidBlastThermo::The
     const label patchi
 ) const
 {
-    return
-        this->alpha1().boundaryField()[patchi]*thermo1_->The(he, T, patchi)
-      + this->alpha2().boundaryField()[patchi]*thermo2_->The(he, T, patchi);
+    THEEqn_.setPatch(patchi);
+    tmp<scalarField> tthe(new scalarField(he.size()));
+    scalarField& the = tthe.ref();
+    forAll(he, facei)
+    {
+        THEEqn_.setHE(he[facei]);
+        the[facei] = THESolver_->solve(T[facei], facei);
+    }
+    return tthe;
 }
 
 
@@ -983,9 +1093,9 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::cellThe
     const label celli
 ) const
 {
-    return
-        this->alpha1()[celli]*thermo1_->cellThe(he, T, celli)
-      + this->alpha2()[celli]*thermo2_->cellThe(he, T, celli);
+    THEEqn_.setCell();
+    THEEqn_.setHE(he);
+    return THESolver_->solve(T, celli);
 }
 
 
@@ -1128,7 +1238,12 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFaceCpv
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::W() const
 {
-    return rho_/(this->alpha1()*rho1_/thermo1_->W() + this->alpha2()*rho2_/thermo2_->W());
+    return
+        rho_
+       /(
+            this->alpha1()*rho1_/thermo1_->W()
+          + this->alpha2()*rho2_/thermo2_->W()
+        );
 }
 
 
