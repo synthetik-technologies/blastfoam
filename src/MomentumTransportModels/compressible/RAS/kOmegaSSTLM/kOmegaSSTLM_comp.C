@@ -213,8 +213,20 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::ReThetat0
     const volScalarField& k = this->k_;
 
     label maxIter = 0;
+    label nExceed = 0;
 
-    forAll(ReThetat0_, celli)
+    tmp<volScalarField::Internal> tReThetat0
+    (
+        volScalarField::Internal::New
+        (
+            this->groupName("ReThetat0"),
+            this->mesh_,
+            dimless
+        )
+    );
+    volScalarField::Internal& ReThetat0 = tReThetat0.ref();
+
+    forAll(ReThetat0, celli)
     {
         const scalar Tu
         (
@@ -222,17 +234,7 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::ReThetat0
         );
 
         // Use previous ReTheta0 to compute lambda
-        scalar lambda =
-            max
-            (
-                min
-                (
-                    (sqr(ReThetat0_[celli]/Us[celli]))
-                   *nu[celli]*dUsds[celli],
-                    0.1
-                ),
-                -0.1
-            );
+        scalar& lambda = lambda_[celli];
 
         scalar lambdaErr;
         scalar thetat;
@@ -242,22 +244,20 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::ReThetat0
             // Previous iteration lambda for convergence test
             const scalar lambda0 = lambda;
 
+            const scalar Flambda =
+                dUsds[celli] <= 0
+              ? 1.0
+              + (
+                    12.986*lambda
+                  + 123.66*sqr(lambda)
+                  + 405.689*pow3(lambda)
+                )*exp(-pow(Tu/1.5, 1.5))
+              : 1.0
+              + 0.275*(1 - exp(-35*lambda))
+               *exp(-Tu*2.0);
+
             if (Tu <= 1.3)
             {
-                const scalar Flambda =
-                    dUsds[celli] <= 0
-                  ?
-                    1
-                  - (
-                     - 12.986*lambda
-                     - 123.66*sqr(lambda)
-                     - 405.689*pow3(lambda)
-                    )*exp(-pow(Tu/1.5, 1.5))
-                  :
-                    1
-                  + 0.275*(1 - exp(-35*lambda))
-                   *exp(-Tu/0.5);
-
                 thetat =
                     (1173.51 - 589.428*Tu + 0.2196/sqr(Tu))
                    *Flambda*nu[celli]
@@ -265,48 +265,38 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::ReThetat0
             }
             else
             {
-                const scalar Flambda =
-                    dUsds[celli] <= 0
-                  ?
-                    1
-                  - (
-                      -12.986*lambda
-                      -123.66*sqr(lambda)
-                      -405.689*pow3(lambda)
-                    )*exp(-pow(Tu/1.5, 1.5))
-                  :
-                    1
-                  + 0.275*(1 - exp(-35*lambda))
-                   *exp(-2*Tu);
-
                 thetat =
                     331.50*pow((Tu - 0.5658), -0.671)
                    *Flambda*nu[celli]/Us[celli];
             }
 
-            lambda = sqr(thetat)/nu[celli]*dUsds[celli];
-            lambda = max(min(lambda, 0.1), -0.1);
-
+            lambda = max(min(sqr(thetat)/nu[celli]*dUsds[celli], 0.1), -0.1);
             lambdaErr = mag(lambda - lambda0);
 
             iter++;
         } while (lambdaErr > lambdaErr_);
 
+        if (iter > maxLambdaIter_)
+        {
+            nExceed++;
+        }
+
         maxIter = max(maxIter, iter);
 
-        ReThetat0_[celli] = max(thetat*Us[celli]/nu[celli], scalar(20));
+        ReThetat0[celli] = max(thetat*Us[celli]/nu[celli], scalar(20));
     }
 
     reduce(maxIter, maxOp<label>());
+    reduce(nExceed, sumOp<label>());
     if (maxIter > maxLambdaIter_)
     {
         WarningInFunction
-            << "Number of lambda iterations (" << maxIter
-            << ") exceeds maxLambdaIter("
-            << maxLambdaIter_ << ')'<< endl;
+            << nExceed << " cells exceded maxLambdaIter ("
+            << maxLambdaIter_ << "), maximum numer of iterations was "
+            << maxIter << endl;
     }
 
-    return ReThetat0_;
+    return tReThetat0;
 }
 
 
@@ -463,11 +453,11 @@ kOmegaSSTLM_comp<BasicMomentumTransportModel>::kOmegaSSTLM_comp
     ),
 
 
-    ReThetat0_
+    lambda_
     (
         IOobject
         (
-            this->groupName("ReThetat0"),
+            this->groupName("lambda"),
             this->runTime_.name(),
             this->mesh_
         ),
