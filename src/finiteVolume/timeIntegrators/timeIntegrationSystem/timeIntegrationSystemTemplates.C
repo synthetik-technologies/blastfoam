@@ -39,7 +39,7 @@ void Foam::timeIntegrationSystem::storeOld
     {
         fvTimeInt_->conservativeFieldsRef().insert(f.name());
     }
-    if (timeInt_->firstStep() && !timeInt_->restart())
+    if (storeOld_ && timeInt_->firstStep() && !timeInt_->restart())
     {
         f.storeOldTimes();
     }
