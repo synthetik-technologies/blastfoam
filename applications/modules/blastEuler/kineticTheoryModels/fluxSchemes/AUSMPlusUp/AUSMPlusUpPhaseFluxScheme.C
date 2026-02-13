@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "AUSMPlusUpPhaseFluxScheme.H"
+#include "masterSystem.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -104,30 +105,32 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::postUpdate()
 
 void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
 {
-    if (!mesh_.foundObject<kineticTheorySystem>(kineticTheorySystem::typeName))
+    HashTable<const masterSystem*> systems(mesh_.lookupClass<masterSystem>());
+    if (!systems.size())
     {
         limit_ = false;
         return;
     }
-    const kineticTheorySystem& kt =
-    (
-        mesh_.lookupObject<kineticTheorySystem>
-        (
-            kineticTheorySystem::typeName
-        )
-    );
 
-    const volScalarField& alphap(kt.alpha());
-    word ktName;
-    if (kt.polydisperse())
+    const masterSystem* systemPtr = nullptr;
+    forAllConstIter(HashTable<const masterSystem*>, systems, iter)
     {
-        ktName = alphap.group();
+        if (iter()->contains(this->phaseName_))
+        {
+            systemPtr = iter();
+            break;
+        }
     }
-    else
+    if (!systemPtr || !systemPtr->hasPacking())
     {
-        ktName = this->group();
+        limit_ = false;
+        return;
     }
 
+    const masterSystem& system = *systemPtr;
+
+    const volScalarField& alphap = system.alpha();
+    Info<<"limit: "<<alphap.name()<<endl;
     autoPtr<ReconstructionScheme<scalar>> alphapLimiter
     (
         ReconstructionScheme<scalar>::New(alphap, "alpha", true)
@@ -136,9 +139,8 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
     alphapOwn_ = alphapLimiter->interpolateOwn();
     alphapNei_ = alphapLimiter->interpolateNei();
 
-    alphaMaxf_ = fvc::interpolate(kt.alphaMax());
-    alphaMinFrictionf_ =
-        fvc::interpolate(kt.alphaMinFriction());
+    alphaMaxf_ = fvc::interpolate(system.alphaMax());
+    alphaMinFrictionf_ = fvc::interpolate(system.alphaMinFriction());
 
     limit_ = true;
 }

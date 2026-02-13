@@ -44,7 +44,6 @@ SourceFiles
 #define AUSMPlusUpPhaseFluxScheme_H
 
 #include "phaseFluxScheme.H"
-#include "kineticTheorySystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
