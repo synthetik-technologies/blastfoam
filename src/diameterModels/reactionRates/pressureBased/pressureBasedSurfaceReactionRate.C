@@ -45,12 +45,14 @@ namespace surfaceReactionRates
 Foam::surfaceReactionRates::pressureBased::pressureBased(const dictionary& dict)
 :
     surfaceReactionRate(dict),
-    pScale_(dict.lookup<scalar>("pScale")),
     pExponent_("pExponent", dimless, dict),
     pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict),
     pMin_("pMin", dimPressure, dict.lookupOrDefault<scalar>("pMin", 0.0)),
     offset_("offset", dimLength/dimTime, dict.lookupOrDefault<scalar>("offset", 0.0))
-{}
+{
+    // Convert pressure coefficient
+    pCoeff_ *= setPCoeffUnits(dict, pExponent_.value());
+}
 
 
 Foam::surfaceReactionRates::pressureBased::pressureBased
@@ -95,7 +97,7 @@ Foam::scalar Foam::surfaceReactionRates::pressureBased::k
     scalar K = pCoeff_.value();
     if (mag(pExponent_.value()) > vSmall)
     {
-        K *= pow(p*pScale_, pExponent_.value());
+        K *= pow(p, pExponent_.value());
     }
     return offset_.value() + K;
 }
@@ -119,7 +121,7 @@ Foam::tmp<Foam::volScalarField> Foam::surfaceReactionRates::pressureBased::k
     volScalarField& K = tmpk.ref();
     if (mag(pExponent_.value()) > vSmall)
     {
-        K *= pow(p*pScale_, pExponent_);
+        K *= pow(p, pExponent_);
     }
     if (offset_.value() > vSmall)
     {
@@ -139,7 +141,7 @@ Foam::tmp<Foam::scalarField> Foam::surfaceReactionRates::pressureBased::k
     scalarField& K = tmpk.ref();
     if (mag(pExponent_.value()) > vSmall)
     {
-        K *= pow(p*pScale_, pExponent_.value());
+        K *= pow(p, pExponent_.value());
     }
     if (mag(offset_.value()) > vSmall)
     {
@@ -151,6 +153,87 @@ Foam::tmp<Foam::scalarField> Foam::surfaceReactionRates::pressureBased::k
     }
 
     return tmpk;
+}
+
+Foam::scalar
+Foam::surfaceReactionRates::pressureBased::setPCoeffUnits
+(
+    const dictionary& dict,
+    const scalar pExponent
+)
+{
+    bool foundPScale = dict.found("pScale");
+
+    if (foundPScale && dict.found("pCoeffUnits"))
+    {
+        FatalErrorInFunction
+            << "Both \"pScale\" and \"pCoeffUnits\" were specified."
+            << endl
+            << "User must only specify one for proper conversion!"
+            << endl
+            << abort(FatalError);
+    }
+
+    if (foundPScale)
+    {
+        scalar pScale = dict.lookup<scalar>("pScale");
+        return pow(pScale, pExponent);
+    }
+    else
+    {
+        // Convert units
+        PtrList<unitConversion> pCoeffUnits;
+
+        ITstream& is = dict.lookup("pCoeffUnits");
+
+        // Read the BEGIN_LIST
+        is.readBeginList("pCoeffUnits");
+
+        while (!is.empty())
+        {
+            // Peek next token
+            token t(is);
+
+            // Stop at ')'
+            if (t.isPunctuation() && t.pToken() == token::END_LIST)
+            {
+                break;
+            }
+
+            // Put token back so unitConversion can read it
+            is.putBack(t);
+
+            // Construct directly from stream
+            pCoeffUnits.append(new unitConversion(is));
+        }
+
+        scalar factor = 1.0;
+
+        if (pCoeffUnits.size() > 0)
+        {
+            bool setPressure = false;
+            bool setVelocity = false;
+            forAll(pCoeffUnits, j)
+            {
+                const unitConversion& conv = pCoeffUnits[j];
+
+                if (conv.dimensions() == dimPressure && !setPressure)
+                {
+                    factor *= pow(conv.toStandard(1.0), -pExponent);
+                    setPressure = true;
+                }
+                else if (conv.dimensions() == dimVelocity && !setVelocity)
+                {
+                    factor *= conv.toStandard(1.0);
+                    setVelocity = true;
+                }
+
+                if (setVelocity && setPressure) break;
+            }
+        }
+
+        return factor;
+    }
 }
 
 // ************************************************************************* //
