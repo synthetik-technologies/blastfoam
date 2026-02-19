@@ -46,9 +46,24 @@ Foam::surfaceReactionRates::pressureBased::pressureBased(const dictionary& dict)
 :
     surfaceReactionRate(dict),
     pExponent_("pExponent", dimless, dict),
-    pCoeff_("pCoeff", pow(dimPressure, -pExponent_)*dimLength/dimTime, dict),
-    pMin_("pMin", dimPressure, dict.lookupOrDefault<scalar>("pMin", 0.0)),
-    offset_("offset", dimLength/dimTime, dict.lookupOrDefault<scalar>("offset", 0.0))
+    pCoeff_
+    (
+        "pCoeff",
+        pow(dimPressure, -pExponent_)*dimLength/dimTime,
+        dict.lookup<scalar>("pCoeff") // No units, handled later
+    ),
+    pMin_
+    (
+        "pMin",
+        dimPressure,
+        dict.lookupOrDefault<scalar>("pMin", dimPressure, 0.0)
+    ),
+    offset_
+    (
+        "offset",
+        dimLength/dimTime,
+        dict.lookupOrDefault<scalar>("offset", dimLength, 0.0)
+    )
 {
     // Convert pressure coefficient
     pCoeff_ *= setPCoeffUnits(dict, pExponent_.value());
@@ -185,31 +200,23 @@ Foam::surfaceReactionRates::pressureBased::setPCoeffUnits
         PtrList<unitConversion> pCoeffUnits;
 
         ITstream& is = dict.lookup("pCoeffUnits");
-
-        // Read the BEGIN_LIST
-        is.readBeginList("pCoeffUnits");
-
-        while (!is.empty())
+        while (is.good())
         {
-            // Peek next token
-            token t(is);
-
-            // Stop at ')'
-            if (t.isPunctuation() && t.pToken() == token::END_LIST)
-            {
-                break;
-            }
-
-            // Put token back so unitConversion can read it
-            is.putBack(t);
-
             // Construct directly from stream
             pCoeffUnits.append(new unitConversion(is));
         }
 
         scalar factor = 1.0;
 
-        if (pCoeffUnits.size() > 0)
+        if (pCoeffUnits.size() > 2)
+        {
+            FatalIOErrorInFunction(dict)
+                << "Only pressure and velocity unit conversions can be provided, "
+                << "but found "
+                << pCoeffUnits << endl
+                << exit(FatalIOError);
+        }
+        else if (pCoeffUnits.size())
         {
             bool setPressure = false;
             bool setVelocity = false;
@@ -226,6 +233,13 @@ Foam::surfaceReactionRates::pressureBased::setPCoeffUnits
                 {
                     factor *= conv.toStandard(1.0);
                     setVelocity = true;
+                }
+                else
+                {
+                    FatalIOErrorInFunction(dict)
+                        << "Only pressure or velocity units can be used, but found "
+                        << conv.dimensions() << endl
+                        << exit(FatalIOError);
                 }
 
                 if (setVelocity && setPressure) break;
