@@ -765,10 +765,18 @@ Foam::multiphaseFluidBlastThermo::he
     const volScalarField& T
 ) const
 {
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].he(p, T));
+    tmp<volScalarField> tmpF
+    (
+        volumeFractions_[0]
+       *rhos_[0]
+       *thermos_[0].he(p, T)
+    );
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].he(p, T);
+        tmpF.ref() +=
+            volumeFractions_[phasei]
+           *rhos_[phasei]
+           *thermos_[phasei].he(p, T);
     }
     return massNormalise(tmpF);
 }
