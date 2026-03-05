@@ -130,7 +130,6 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
     const masterSystem& system = *systemPtr;
 
     const volScalarField& alphap = system.alpha();
-    Info<<"limit: "<<alphap.name()<<endl;
     autoPtr<ReconstructionScheme<scalar>> alphapLimiter
     (
         ReconstructionScheme<scalar>::New(alphap, "alpha", true)
