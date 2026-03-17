@@ -243,12 +243,16 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculateSpeedOfSound
             const typename Thermo::thermoType& t =
                 this->cellMixture(celli);
             cSqrRhoXiSum[celli] +=
-                t.cSqr
+                max
                 (
-                    this->p_[celli],
-                    this->rho_[celli],
-                    this->e_[celli],
-                    this->T_[celli]
+                    t.cSqr
+                    (
+                        this->p_[celli],
+                        this->rho_[celli],
+                        this->e_[celli],
+                        this->T_[celli]
+                    ),
+                    small
                 )*this->rho_[celli]*vfi
                /(
                    t.Gamma
@@ -279,7 +283,7 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculateSpeedOfSound
                     this->patchFaceMixture(patchi, facei);
 
                 pcSqrRhoXiSum[facei] +=
-                    t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei])
+                    max(t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei]), small)
                    *palpha[facei]*prho[facei]
                    /t.Gamma(prho[facei], phe[facei], pT[facei]);
             }

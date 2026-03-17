@@ -234,12 +234,16 @@ void Foam::basicFluidBlastThermo<Thermo>::calculateSpeedOfSound
         if (alphai > this->residualAlpha_.value())
         {
             cSqrRhoXiSum[celli] +=
-                t.cSqr
+                max
                 (
-                    this->p_[celli],
-                    this->rho_[celli],
-                    this->e_[celli],
-                    this->T_[celli]
+                    t.cSqr
+                    (
+                        this->p_[celli],
+                        this->rho_[celli],
+                        this->e_[celli],
+                        this->T_[celli]
+                    ),
+                    small
                 )*this->rho_[celli]*alphai
                /(
                    t.Gamma
@@ -268,7 +272,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculateSpeedOfSound
             if (palpha[facei] > this->residualAlpha_.value())
             {
                 pcSqrRhoXiSum[facei] +=
-                    t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei])
+                    max(t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei]), small)
                    *palpha[facei]*prho[facei]
                    /t.Gamma(prho[facei], phe[facei], pT[facei]);
             }
