@@ -112,14 +112,22 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::StandardReconstructionScheme<Type>::interpolateOwn() const
 {
-    return ownScheme_().interpolate(this->phi_);
+    return Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>::New
+    (
+        this->ownName(),
+        ownScheme_().interpolate(this->phi_)
+    );
 }
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::StandardReconstructionScheme<Type>::interpolateNei() const
 {
-    return neiScheme_().interpolate(this->phi_);
+    return Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>::New
+    (
+        this->neiName(),
+        neiScheme_().interpolate(this->phi_)
+    );
 }
 
 
