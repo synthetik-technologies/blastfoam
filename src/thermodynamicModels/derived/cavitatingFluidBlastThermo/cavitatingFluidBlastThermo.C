@@ -346,7 +346,7 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
     volScalarField& alphaCp,
     volScalarField& alphaCv,
     volScalarField& alphaMu,
-    volScalarField& alphaAlphah,
+    volScalarField& alphaKappa,
     volScalarField& pXiSum,
     volScalarField& XiSum
 )
@@ -373,21 +373,19 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
 
             if (xl < this->residualFac_)
             {
-                alphaCp[celli] += tv.Cp(rhoi, ei, Ti)*alphai;
-                alphaCv[celli] += tv.Cv(rhoi, ei, Ti)*alphai;
-                alphaMu[celli] += tv.mu(rhoi, ei, Ti)*alphai;
-                alphaAlphah[celli] +=
-                    tv.kappa(rhoi, ei, Ti)/tv.Cp(rhoi, ei, Ti)*alphai;
+                alphaCp[celli] += tv.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                alphaCv[celli] += tv.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                alphaMu[celli] += tv.mu(rhoi, ei, Ti)*alphai*rhoi;
+                alphaKappa[celli] += tv.kappa(rhoi, ei, Ti)*alphai*rhoi;
                 Gamma = tv.Gamma(rhoi, ei, Ti);
                 pi = tv.p(rhoi, ei, Ti);
             }
             else if (xv < this->residualFac_)
             {
-                alphaCp[celli] += tl.Cp(rhoi, ei, Ti)*alphai;
-                alphaCv[celli] += tl.Cv(rhoi, ei, Ti)*alphai;
-                alphaMu[celli] += tl.mu(rhoi, ei, Ti)*alphai;
-                alphaAlphah[celli] +=
-                    tl.kappa(rhoi, ei, Ti)/tl.Cp(rhoi, ei, Ti)*alphai;
+                alphaCp[celli] += tl.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                alphaCv[celli] += tl.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                alphaMu[celli] += tl.mu(rhoi, ei, Ti)*alphai*rhoi;
+                alphaKappa[celli] += tl.kappa(rhoi, ei, Ti)*alphai*rhoi;
 
                 Gamma = tl.Gamma(rhoi, ei, Ti);
                 pi = tl.p(rhoi, ei, Ti);
@@ -405,22 +403,22 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
                     (
                         tv.Cp(rhoi, ei, Ti)*xv*fv
                       + tl.Cp(rhoi, ei, Ti)*xl*fl
-                    )*alphai;
+                    )*alphai*rhoi;
                 alphaCv[celli] +=
                     (
                         tv.Cv(rhoi, ei, Ti)*xv*fv
                       + tl.Cv(rhoi, ei, Ti)*xl*fl
-                    )*alphai;
+                    )*alphai*rhoi;
                 alphaMu[celli] +=
                     (
                         tv.mu(rhoi, ei, Ti)*xv
                       + tl.mu(rhoi, ei, Ti)*xl
-                    )*alphai;
-                alphaAlphah[celli] +=
+                    )*alphai*rhoi;
+                alphaKappa[celli] +=
                     (
-                        tv.kappa(rhoi, ei, Ti)/tv.Cp(rhoi, ei, Ti)*xv
-                      + tl.kappa(rhoi, ei, Ti)/tl.Cp(rhoi, ei, Ti)*xl
-                    )*alphai;
+                        tv.kappa(rhoi, ei, Ti)*xv
+                      + tl.kappa(rhoi, ei, Ti)*xl
+                    )*alphai*rhoi;
 
                 Gamma =
                     tv.Gamma(rhoi, ei, Ti)*xv + tv.Gamma(rhoi, ei, Ti)*xl;
@@ -443,8 +441,7 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
         fvPatchScalarField& palphaCp = alphaCp.boundaryFieldRef()[patchi];
         fvPatchScalarField& palphaCv = alphaCv.boundaryFieldRef()[patchi];
         fvPatchScalarField& palphaMu = alphaMu.boundaryFieldRef()[patchi];
-        fvPatchScalarField& palphaAlphah =
-            alphaAlphah.boundaryFieldRef()[patchi];
+        fvPatchScalarField& palphaKappa = alphaKappa.boundaryFieldRef()[patchi];
         fvPatchScalarField& ppXiSum = pXiSum.boundaryFieldRef()[patchi];
         fvPatchScalarField& pxiSum = XiSum.boundaryFieldRef()[patchi];
 
@@ -467,22 +464,20 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
 
                 if (xl < this->residualFac_)
                 {
-                    palphaCp[facei] += tv.Cp(rhoi, ei, Ti)*alphai;
-                    palphaCv[facei] += tv.Cv(rhoi, ei, Ti)*alphai;
-                    palphaMu[facei] += tv.mu(rhoi, ei, Ti)*alphai;
-                    palphaAlphah[facei] +=
-                        tv.kappa(rhoi, ei, Ti)/tv.Cp(rhoi, ei, Ti)*alphai;
+                    palphaCp[facei] += tv.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaCv[facei] += tv.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaMu[facei] += tv.mu(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaKappa[facei] += tv.kappa(rhoi, ei, Ti)*alphai*rhoi;
 
                     Gamma = tv.Gamma(rhoi, ei, Ti);
                     pi = tv.p(rhoi, ei, Ti);
                 }
                 else if (xv < this->residualFac_)
                 {
-                    palphaCp[facei] += tl.Cp(rhoi, ei, Ti)*alphai;
-                    palphaCv[facei] += tl.Cv(rhoi, ei, Ti)*alphai;
-                    palphaMu[facei] += tl.mu(rhoi, ei, Ti)*alphai;
-                    palphaAlphah[facei] +=
-                        tl.kappa(rhoi, ei, Ti)/tl.Cp(rhoi, ei, Ti)*alphai;
+                    palphaCp[facei] += tl.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaCv[facei] += tl.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaMu[facei] += tl.mu(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaKappa[facei] += tl.kappa(rhoi, ei, Ti)*alphai*rhoi;
 
                     Gamma = tl.Gamma(rhoi, ei, Ti);
                     pi = tl.p(rhoi, ei, Ti);
@@ -500,22 +495,22 @@ void Foam::cavitatingFluidBlastThermo<Thermo>::calculate
                         (
                             tv.Cp(rhoi, ei, Ti)*xv*fv
                           + tl.Cp(rhoi, ei, Ti)*xl*fl
-                        )*alphai;
+                        )*alphai*rhoi;
                     palphaCv[facei] +=
                         (
                             tv.Cv(rhoi, ei, Ti)*xv*fv
                           + tl.Cv(rhoi, ei, Ti)*xl*fl
-                        )*alphai;
+                        )*alphai*rhoi;
                     palphaMu[facei] +=
                         (
                             tv.mu(rhoi, ei, Ti)*xv
                           + tl.mu(rhoi, ei, Ti)*xl
-                        )*alphai;
-                    palphaAlphah[facei] +=
+                        )*alphai*rhoi;
+                    palphaKappa[facei] +=
                         (
-                            tv.kappa(rhoi, ei, Ti)/tv.Cp(rhoi, ei, Ti)*xv
-                          + tl.kappa(rhoi, ei, Ti)/tl.Cp(rhoi, ei, Ti)*xl
-                        )*alphai;
+                            tv.kappa(rhoi, ei, Ti)*xv
+                          + tl.kappa(rhoi, ei, Ti)*xl
+                        )*alphai*rhoi;
 
                     Gamma =
                         tv.Gamma(rhoi, ei, Ti)*xv + tl.Gamma(rhoi, ei, Ti)*xl;

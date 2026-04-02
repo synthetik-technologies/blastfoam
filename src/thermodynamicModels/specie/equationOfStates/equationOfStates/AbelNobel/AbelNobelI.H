@@ -343,13 +343,13 @@ template<class Specie>
 inline Foam::AbelNobel<Specie> Foam::operator*
 (
     const scalar s,
-    const AbelNobel<Specie>& pf
+    const AbelNobel<Specie>& an
 )
 {
     return AbelNobel<Specie>
     (
-        s*static_cast<const Specie&>(pf),
-        pf.b_
+        s*static_cast<const Specie&>(an),
+        an.b_
     );
 }
 
@@ -357,23 +357,23 @@ inline Foam::AbelNobel<Specie> Foam::operator*
 template<class Specie>
 inline Foam::AbelNobel<Specie> Foam::operator==
 (
-    const AbelNobel<Specie>& pf1,
-    const AbelNobel<Specie>& pf2
+    const AbelNobel<Specie>& an1,
+    const AbelNobel<Specie>& an2
 )
 {
     Specie sp
     (
-        static_cast<const Specie&>(pf1)
-     == static_cast<const Specie&>(pf2)
+        static_cast<const Specie&>(an1)
+     == static_cast<const Specie&>(an2)
     );
 
-    const scalar Y1 = pf1.Y()/sp.Y();
-    const scalar Y2 = pf2.Y()/sp.Y();
+    const scalar X1 = sp.W()*an1.Y()/(an1.W()*sp.Y());
+    const scalar X2 = sp.W()*an2.Y()/(an2.W()*sp.Y());
 
     return AbelNobel<Specie>
     (
         sp,
-        Y2*pf2.b_ - Y1*pf1.b_
+        X2*an2.b_ - X1*an1.b_
     );
 }
 

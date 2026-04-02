@@ -32,6 +32,8 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+addLimiterFreeScheme(none);
+
 defineNamedTemplateTypeNameAndDebug(NoneReconstructionScheme<scalar>, 0);
 ReconstructionScheme<scalar>::adddictionaryConstructorToTable
     <

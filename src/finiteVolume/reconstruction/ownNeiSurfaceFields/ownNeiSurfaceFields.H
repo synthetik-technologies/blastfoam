@@ -21,52 +21,88 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::ownNeiSurfaceFields
+
+Description
+    Holder for own (1.0) and nei (-1.0) surface fields
+
+SourceFiles
+    ownNeiSurfaceFields.C
+
 \*---------------------------------------------------------------------------*/
 
-#include "UpwindMUSCLReconstructionScheme.H"
+#ifndef ownNeiSurfaceFields_H
+#define ownNeiSurfaceFields_H
+
+#include "DemandDrivenMeshObject.H"
+#include "surfaceFields.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+/*---------------------------------------------------------------------------*\
+                        Class ownNeiSurfaceFields Declaration
+\*---------------------------------------------------------------------------*/
 
-addLimiterFreeScheme(upwindMUSCL);
-
-defineNamedTemplateTypeNameAndDebug(UpwindMUSCLReconstructionScheme<scalar>, 0);
-ReconstructionScheme<scalar>::adddictionaryConstructorToTable
+class ownNeiSurfaceFields
+:
+    public DemandDrivenMeshObject
     <
-        UpwindMUSCLReconstructionScheme<scalar>
-    > addupwindMUSCLscalardictinoaryConstructorToTable_;
+        fvMesh,
+        MoveableMeshObject,
+        ownNeiSurfaceFields
+    >
+{
+    surfaceScalarField own_;
+    surfaceScalarField nei_;
 
-defineNamedTemplateTypeNameAndDebug(UpwindMUSCLReconstructionScheme<vector>, 0);
-ReconstructionScheme<vector>::adddictionaryConstructorToTable
-    <
-        UpwindMUSCLReconstructionScheme<vector>
-    > addupwindMUSCLvectordictinoaryConstructorToTable_;
 
-defineNamedTemplateTypeNameAndDebug(UpwindMUSCLReconstructionScheme<symmTensor>, 0);
-ReconstructionScheme<symmTensor>::adddictionaryConstructorToTable
-    <
-        UpwindMUSCLReconstructionScheme<symmTensor>
-    > addupwindMUSCLsymmTensordictinoaryConstructorToTable_;
+public:
 
-defineNamedTemplateTypeNameAndDebug
-(
-    UpwindMUSCLReconstructionScheme<sphericalTensor>,
-    0
-);
-ReconstructionScheme<sphericalTensor>::adddictionaryConstructorToTable
+    friend class DemandDrivenMeshObject
     <
-        UpwindMUSCLReconstructionScheme<sphericalTensor>
-    > addupwindMUSCLsphericalTensordictinoaryConstructorToTable_;
+        fvMesh,
+        MoveableMeshObject,
+        ownNeiSurfaceFields
+    >;
 
-defineNamedTemplateTypeNameAndDebug(UpwindMUSCLReconstructionScheme<tensor>, 0);
-ReconstructionScheme<tensor>::adddictionaryConstructorToTable
-    <
-        UpwindMUSCLReconstructionScheme<tensor>
-    > addupwindMUSCLtensordictinoaryConstructorToTable_;
+    //- Runtime type information
+    TypeName("ownNeiSurfaceFields");
+
+
+    // Constructors
+
+        //- Construct from mesh
+        ownNeiSurfaceFields(const fvMesh&);
+
+    //- Destructor
+    virtual ~ownNeiSurfaceFields();
+
+
+    // Member Functions
+
+        //- Return the owner interpolated field
+        inline const surfaceScalarField& own() const
+        {
+            return own_;
+        }
+
+        //- Return the neighbor interpolated field
+        inline const surfaceScalarField& nei() const
+        {
+            return nei_;
+        }
+
+        //- Move points
+        virtual bool movePoints()
+        {
+            return true;
+        }
+};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -74,5 +110,7 @@ ReconstructionScheme<tensor>::adddictionaryConstructorToTable
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

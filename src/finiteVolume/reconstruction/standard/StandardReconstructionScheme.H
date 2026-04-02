@@ -36,6 +36,8 @@ SourceFiles
 #define StandardReconstructionScheme_H
 
 #include "ReconstructionScheme.H"
+#include "ownNeiSurfaceFields.H"
+#include "limitedSurfaceInterpolationScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -58,10 +60,10 @@ protected:
     word name_;
 
     //- Owner interpolation field
-    const surfaceScalarField& own_;
+    const ownNeiSurfaceFields& ownNei_;
 
-    //- Neighbour interpolation field
-    const surfaceScalarField& nei_;
+    tmp<surfaceInterpolationScheme<Type>> ownScheme_;
+    tmp<surfaceInterpolationScheme<Type>> neiScheme_;
 
     //- Return reference to field if found in db
     const surfaceScalarField& lookupOrConstruct
@@ -90,6 +92,7 @@ public:
         //- Construct from mesh interpolation scheme name (provided in New)
         StandardReconstructionScheme
         (
+            const fvSchemes& schemes,
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             Istream& is,
             const bool overwrite

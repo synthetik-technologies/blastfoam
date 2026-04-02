@@ -164,11 +164,22 @@ public:
         //- Add phase to list of kinetic theory phases.
         virtual void addPhase(phaseModel&);
 
-        //- Return the minimum volume fraction frictional stresses are
-        //  present
-        const volScalarField& alphaMinFriction() const
+        //- Return if limit by packing
+        virtual bool hasPacking() const
+        {
+            return true;
+        }
+
+        //- Return the minimum volume fraction packing stresses are present
+        virtual tmp<volScalarField> alphaMinFriction() const
         {
             return alphaMinFriction_;
+        }
+
+        //- Return the minimum volume fraction packing stresses are present
+        virtual scalar alphaMinFriction(const label celli) const
+        {
+            return alphaMinFriction_[celli];
         }
 
         //- Coefficients of restitutions between granular phases

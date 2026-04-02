@@ -120,6 +120,14 @@ public:
         const word& thermoType
     );
 
+    // Constructor
+    compressibleBlastSystem
+    (
+        const dictionary& dict,
+        const fvMesh& mesh,
+        autoPtr<fluidBlastThermo> thermoPtr
+    );
+
     //- Destructor
     virtual ~compressibleBlastSystem();
 

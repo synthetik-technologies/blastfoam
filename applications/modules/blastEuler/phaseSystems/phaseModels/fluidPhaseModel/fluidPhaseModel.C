@@ -194,6 +194,22 @@ void Foam::fluidPhaseModel::solve()
         }
     }
 
+    if (explicitViscosity_ && turbulence_.valid())
+    {
+        tmp<volSymmTensorField> tdevTau(turbulence_->devTau());
+        // tdevTau.ref() += (2.0/3.0)*rhoEff()*turbulence_->k()*symmTensor::I;
+
+        deltaAlphaRhoU += fvc::div(tdevTau());
+        deltaAlphaRhoE +=
+            fvc::div
+            (
+                fvc::dotInterpolate(mesh().Sf(), tdevTau)
+              & flux().Uf()
+            )
+          + fvc::div(thermophysicalTransport_->q()*mesh().magSf());
+    }
+
+
     // Transport volume fraction if required
     if (solveAlpha_)
     {
@@ -315,10 +331,10 @@ void Foam::fluidPhaseModel::solveImplicit()
     }
 
     tmp<surfaceVectorField> devTau;
-    if (needSolve(U_.name()) || turbulence_.valid())
+    if (needSolve(U_.name()) || (turbulence_.valid() && !explicitViscosity_))
     {
         tmp<fvVectorMatrix> divDevTau;
-        if (/*!explicitViscosity_ &&*/ turbulence_.valid())
+        if (!explicitViscosity_ && turbulence_.valid())
         {
             divDevTau = turbulence_->divDevTau(U_);
         }
@@ -338,8 +354,9 @@ void Foam::fluidPhaseModel::solveImplicit()
         }
 
         UEqn.relax();
-
         constraints().constrain(UEqn);
+        UEqn.boundaryManipulate(U_.boundaryFieldRef());
+
         UEqn.solve();
         constraints().constrain(U_);
 
@@ -375,6 +392,7 @@ void Foam::fluidPhaseModel::solveImplicit()
         EEqn.relax();
 
         constraints().constrain(EEqn);
+        EEqn.boundaryManipulate(he().boundaryFieldRef());
         EEqn.solve();
         constraints().constrain(he());
 
@@ -496,9 +514,10 @@ void Foam::fluidPhaseModel::decode()
     rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
 
-    alphaRho_.correctBoundaryConditions();
-    alphaRho_.boundaryFieldRef() ==
-        (*this).boundaryField()*rho_.boundaryField();
+    alphaRho_ == (*this)*rho_;
+    // alphaRho_.correctBoundaryConditions();
+    // alphaRho_.boundaryFieldRef() ==
+    //     (*this).boundaryField()*rho_.boundaryField();
     volScalarField alphaRhoLimited(Foam::max(alphaRho_, residualAlphaRho()));
 
 
@@ -514,9 +533,10 @@ void Foam::fluidPhaseModel::decode()
 
     K_ = 0.5*magSqr(U_);
 
-    alphaRhoU_.correctBoundaryConditions();
-    alphaRhoU_.boundaryFieldRef() ==
-        (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
+    alphaRhoU_ == alphaRho_*U_;
+    // alphaRhoU_.correctBoundaryConditions();
+    // alphaRhoU_.boundaryFieldRef() ==
+    //     (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
 
 
     // Update internal energy

@@ -32,6 +32,13 @@ inline const Foam::Time& Foam::timeIntegrator::time() const
 }
 
 
+inline const Foam::timeIntegratorCoeffs& Foam::timeIntegrator::coeffs() const
+{
+    return coeffs_();
+}
+
+
+
 inline bool Foam::timeIntegrator::restart() const
 {
     return restart_;

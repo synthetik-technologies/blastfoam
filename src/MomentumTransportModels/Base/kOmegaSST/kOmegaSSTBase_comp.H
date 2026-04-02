@@ -109,6 +109,7 @@ SourceFiles
 #include "fvm.H"
 #include "kOmegaSSTBase.H"
 #include "compressibilityCorrection.H"
+#include "plane.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -159,6 +160,10 @@ protected:
             dimensionedScalar arg2Max_;
             dimensionedScalar arg3Max_;
             dimensionedScalar CDkOmegaMin_;
+
+            //- Turbulent transition by specified point and direction
+            bool transition_;
+            plane transitionPlane_;
 
         // Fields
 
@@ -351,7 +356,7 @@ public:
         virtual bool read();
 
         //- Return the effective diffusivity for k
-        tmp<volScalarField> DkEff(const volScalarField& F1) const
+        virtual tmp<volScalarField> DkEff(const volScalarField& F1) const
         {
             return volScalarField::New
             (
@@ -361,7 +366,7 @@ public:
         }
 
         //- Return the effective diffusivity for omega
-        tmp<volScalarField> DomegaEff(const volScalarField& F1) const
+        virtual tmp<volScalarField> DomegaEff(const volScalarField& F1) const
         {
             return volScalarField::New
             (
