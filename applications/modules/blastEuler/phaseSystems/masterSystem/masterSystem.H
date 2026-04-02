@@ -227,6 +227,15 @@ public:
             return alphaMax_[celli];
         }
 
+        //- Return if limit by packing
+        virtual bool hasPacking() const = 0;
+
+        //- Return the minimum volume fraction packing stresses are present
+        virtual tmp<volScalarField> alphaMinFriction() const = 0;
+
+        //- Return the minimum volume fraction packing stresses are present
+        virtual scalar alphaMinFriction(const label celli) const = 0;
+
         //- Initialize the model after everything is constructed
         virtual void initialize();
 

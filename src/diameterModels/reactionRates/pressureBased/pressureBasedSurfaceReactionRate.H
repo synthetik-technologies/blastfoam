@@ -54,9 +54,6 @@ class pressureBased
 {
 // Private data
 
-    //- Pressure scaling coefficient
-    scalar pScale_;
-
     //- Pressure exponent
     dimensionedScalar pExponent_;
 
@@ -122,6 +119,13 @@ public:
             const fvPatchScalarField& p,
             const fvPatchScalarField& T
         ) const;
+
+        //- Conversion factor for pressure coefficient
+        static scalar setPCoeffUnits
+        (
+            const dictionary& dict,
+            const scalar pExponent
+        );
 };
 
 

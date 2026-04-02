@@ -80,12 +80,13 @@ public:
         //- Construct from mesh and faceFlux and limiter scheme
         MUSCLReconstructionScheme
         (
+            const fvSchemes& schemes,
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             Istream& is,
             const bool overwrite
         )
         :
-            MUSCLType(phi, is, overwrite),
+            MUSCLType(schemes, phi, is, overwrite),
             Limiter(is)
         {
             MUSCLType::read(is);

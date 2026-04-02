@@ -150,7 +150,23 @@ kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::Pk
     const volScalarField::Internal& G
 ) const
 {
-    return min(G, (c1_*betaStar_)*this->k_()*this->omega_());
+    tmp<volScalarField::Internal> tP
+    (
+        min(G, (c1_*betaStar_)*this->k_()*this->omega_())
+    );
+    if (transition_)
+    {
+        volScalarField::Internal& P = tP.ref();
+        const volVectorField& C = this->mesh_.C();
+        forAll(P, celli)
+        {
+            if (transitionPlane_.signedDistance(C[celli]) < 0)
+            {
+                P[celli] = 0.0;
+            }
+        }
+    }
+    return tP;
 }
 
 
@@ -418,6 +434,16 @@ kOmegaSST<MomentumTransportModel, BasicMomentumTransportModel>::kOmegaSST
             dimless/sqr(dimTime),
             1.0e-10
         )
+    ),
+    transition_(this->coeffDict_.template lookupOrAddDefault("transition", false)),
+    transitionPlane_
+    (
+        transition_
+      ? this->coeffDict_.template lookup<point>("transitionPoint")
+      : vector::zero,
+        transition_
+      ? this->coeffDict_.template lookup<point>("transitionDirection")
+      : vector::zero
     ),
 
     k_

@@ -111,7 +111,7 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::cellgs0
         1.0
        /(
            1.0
-         - cbrt(min(phase1[celli], kt_->alphaMinFriction()[celli])/phase1.alphaMax())
+         - cbrt(min(phase1[celli], kt_->alphaMinFriction(celli))/phase1.alphaMax())
         );
 }
 
@@ -168,7 +168,7 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::cellgs0prime
             min
             (
                 max(phase1[celli], scalar(1e-3)),
-                kt_->alphaMinFriction()[celli]
+                kt_->alphaMinFriction(celli)
             )/phase1.alphaMax()
         )
     );

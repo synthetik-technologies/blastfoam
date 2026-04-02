@@ -38,7 +38,8 @@ SourceFiles
 
 #include "autoPtr.H"
 #include "typeInfo.H"
-
+#include "HashSet.H"
+#include "fvSchemes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,6 +54,26 @@ class fvMesh;
 
 class reconstruction
 {
+public:
+    static wordHashSet* limiterFreeSchemesPtr;
+
+    static wordHashSet& limiterFreeSchemes();
+
+    static void destroyLimiterFreeSchemes();
+
+    class AddLimiterFreeScheme
+    {
+    public:
+        AddLimiterFreeScheme(const word& name)
+        {
+            limiterFreeSchemes().insert(name);
+        }
+        ~AddLimiterFreeScheme()
+        {
+            destroyLimiterFreeSchemes();
+        }
+    };
+
 public:
 
     //- Runtime type information
@@ -73,7 +94,7 @@ public:
         (
             const word& name,
             const word& type,
-            const fvMesh&,
+            const fvSchemes& schemes,
             const bool fail,
             const bool overwrite
         );
@@ -82,7 +103,7 @@ public:
             const word& name,
             const word& phaseName,
             const word& type,
-            const fvMesh&,
+            const fvSchemes& schemes,
             const bool fail,
             const bool overwrite
         );
@@ -94,6 +115,8 @@ public:
         static word neiName(const word&);
 };
 
+#define addLimiterFreeScheme(Type)                  \
+reconstruction::AddLimiterFreeScheme add##Type##LimiterFree(#Type)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -136,6 +136,17 @@ protected:
 
         // Protected member functions
 
+            static void calcRDeltaT
+            (
+                const dictionary& dict,
+                const surfaceScalarField& phi,
+                const volScalarField& speedOfSound,
+                const tmp<volScalarField>& DiEff,
+                const scalar maxCo,
+                const scalar maxDi,
+                volScalarField& rDeltaT
+            );
+
             //- Allocate models
             virtual void setModels();
 
@@ -147,7 +158,7 @@ protected:
             ) const;
 
             //- Update corDeltaT (if using LTS)
-            void updateCorDeltaT();
+            virtual void updateCorDeltaT();
 
             //- Return if LTS is in use
             bool LTS() const
@@ -345,6 +356,9 @@ public:
 
         //- Encode conserved variables
         virtual void encode();
+
+        //- Update before intergration
+        virtual void preUpdate();
 
         //- Update fluxes
         virtual void update();

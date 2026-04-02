@@ -209,7 +209,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
         phaseModel& phase1 = phaseModels_[pair.phase1().name()];
         phaseModel& phase2 = phaseModels_[pair.phase2().name()];
 
-        volScalarField Kd(dragModelIter()->K());
+        volScalarField Kd(dragModelIter()->stabK());
 
         StabAlphaRho(phase1, alphaRho1);
 

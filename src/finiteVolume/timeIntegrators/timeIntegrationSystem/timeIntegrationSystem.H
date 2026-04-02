@@ -63,6 +63,9 @@ protected:
         //- Stored reference to time integrator
         UautoPtr<const fvTimeIntegrator> fvTimeInt_;
 
+        //- Store old times when starting integration loop
+        bool storeOld_;
+
         // Storage for fields
 
             using timeIntegrationSystemBase::storeOld;

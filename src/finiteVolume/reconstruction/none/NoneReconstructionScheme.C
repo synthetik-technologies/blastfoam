@@ -32,12 +32,13 @@ License
 template<class Type>
 Foam::NoneReconstructionScheme<Type>::NoneReconstructionScheme
 (
+    const fvSchemes& schemes,
     const GeometricField<Type, fvPatchField, volMesh>& phi,
     Istream& is,
     const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is, overwrite),
+    ReconstructionScheme<Type>(schemes, phi, is, overwrite),
     tokens_(),
     is_(is.name(), tokens_)
 {

@@ -88,7 +88,8 @@ makeLMUSCLReconstruction
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", MUSCL, MUSCLLimiter)
 makeLMUSCLReconstruction
 (
-    Quadratic, "quadraticMUSCL",
+    Quadratic,
+    "quadraticMUSCL",
     limitedMUSCL,
     LimitedLimiter,
     MUSCLLimiter,
@@ -98,7 +99,8 @@ makeLMUSCLReconstruction
 )
 makeLMUSCLReconstruction
 (
-    Quadratic, "quadraticMUSCL",
+    Quadratic,
+    "quadraticMUSCL",
     MUSCL01,
     Limited01Limiter,
     MUSCLLimiter,
@@ -108,6 +110,28 @@ makeLMUSCLReconstruction
 )
 
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", Minmod, MinmodLimiter)
+makeLMUSCLReconstruction
+(
+    Quadratic,
+    "quadraticMUSCL",
+    limitedMinmod,
+    LimitedLimiter,
+    MinmodLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
+makeLMUSCLReconstruction
+(
+    Quadratic,
+    "quadraticMUSCL",
+    Minmod01,
+    Limited01Limiter,
+    MinmodLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
 
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", OSPRE, OSPRELimiter)
 
@@ -116,13 +140,36 @@ makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", QUICK, QUICKLimiter)
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", SFCD, SFCDLimiter)
 
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", SuperBee, SuperBeeLimiter)
+makeLMUSCLReconstruction
+(
+    Quadratic,
+    "quadraticMUSCL",
+    limitedSuperBee,
+    LimitedLimiter,
+    SuperBeeLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
+makeLMUSCLReconstruction
+(
+    Quadratic,
+    "quadraticMUSCL",
+    SuperBee01,
+    Limited01Limiter,
+    SuperBeeLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
 
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", UMIST, UMISTLimiter)
 
 makeMUSCLReconstruction(Quadratic, "quadraticMUSCL", limitedCubic, limitedCubicLimiter)
 makeLMUSCLReconstruction
 (
-    Quadratic, "quadraticMUSCL",
+    Quadratic,
+    "quadraticMUSCL",
     limitedLimitedCubic,
     LimitedLimiter,
     limitedCubicLimiter,
@@ -132,7 +179,8 @@ makeLMUSCLReconstruction
 )
 makeLMUSCLReconstruction
 (
-    Quadratic, "quadraticMUSCL",
+    Quadratic,
+    "quadraticMUSCL",
     limitedCubic01,
     Limited01Limiter,
     limitedCubicLimiter,

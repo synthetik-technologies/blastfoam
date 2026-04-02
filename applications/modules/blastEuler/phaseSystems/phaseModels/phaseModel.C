@@ -163,7 +163,8 @@ Foam::phaseModel::phaseModel
         fluid.mesh(),
         dimensionedScalar("0", dimVelocity*alphaRhoUPhi_.dimensions(), 0.0)
     ),
-    solutionDs_((vector(fluid.mesh().solutionD()) + vector::one)/2.0)
+    solutionDs_((vector(fluid.mesh().solutionD()) + vector::one)/2.0),
+    explicitViscosity_(phaseDict_.lookupOrDefault("explicitViscosity", false))
 
 {
     scalar emptyDirV

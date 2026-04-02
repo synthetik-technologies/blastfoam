@@ -69,34 +69,34 @@ Foam::StandardReconstructionScheme<Type>::lookupOrConstruct
 template<class Type>
 Foam::StandardReconstructionScheme<Type>::StandardReconstructionScheme
 (
+    const fvSchemes& schemes,
     const GeometricField<Type, fvPatchField, volMesh>& phi,
     Istream& is,
     const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is, overwrite),
+    ReconstructionScheme<Type>(schemes, phi, is, overwrite),
     name_(is),
-    own_(lookupOrConstruct("MUSCL:own", 1.0)),
-    nei_(lookupOrConstruct("MUSCL:nei", -1.0))
-{
-    if (this->mesh_.template foundObject<IOdictionary>("surfaceFields"))
-    {
-        IOdictionary& surfaceFields
+    ownNei_(ownNeiSurfaceFields::New(phi.mesh())),
+    ownScheme_
+    (
+        surfaceInterpolationScheme<Type>::New
         (
-            this->mesh_.template lookupObjectRef<IOdictionary>("surfaceFields")
-        );
-        surfaceFields.subDict(pTraits<scalar>::typeName).set
+            this->phi_.mesh(),
+            ownNei_.own(),
+            this->schemes_.interpolation(name_)
+        )
+    ),
+    neiScheme_
+    (
+        surfaceInterpolationScheme<Type>::New
         (
-            own_.name(),
-            Switch(false)
-        );
-        surfaceFields.subDict(pTraits<scalar>::typeName).set
-        (
-            nei_.name(),
-            Switch(false)
-        );
-    }
-}
+            this->phi_.mesh(),
+            ownNei_.nei(),
+            this->schemes_.interpolation(name_)
+        )
+    )
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -112,10 +112,10 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::StandardReconstructionScheme<Type>::interpolateOwn() const
 {
-    return GeometricField<Type, fvsPatchField, surfaceMesh>::New
+    return Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>::New
     (
         this->ownName(),
-        fvc::interpolate(this->phi_, own_, name_)
+        ownScheme_().interpolate(this->phi_)
     );
 }
 
@@ -123,10 +123,10 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::StandardReconstructionScheme<Type>::interpolateNei() const
 {
-    return GeometricField<Type, fvsPatchField, surfaceMesh>::New
+    return Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>::New
     (
         this->neiName(),
-        fvc::interpolate(this->phi_, nei_, name_)
+        neiScheme_().interpolate(this->phi_)
     );
 }
 

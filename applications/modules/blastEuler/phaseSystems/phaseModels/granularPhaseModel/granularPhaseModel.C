@@ -423,9 +423,10 @@ void Foam::granularPhaseModel::decode()
     const volScalarField& alpha = *this;
 
     //- Correct phase mass at boundaries
-    alphaRho_.correctBoundaryConditions();
-    alphaRho_.boundaryFieldRef() ==
-        alpha.boundaryField()*rho_.boundaryField();
+    alphaRho_ = alpha*rho_;
+    // alphaRho_.correctBoundaryConditions();
+    // alphaRho_.boundaryFieldRef() ==
+    //     alpha.boundaryField()*rho_.boundaryField();
 
     //- Store limited phase mass (only used for division)
     volScalarField alphaRhoLimited(Foam::max(alpha, residualAlpha())*rho_);
@@ -435,14 +436,14 @@ void Foam::granularPhaseModel::decode()
     if (constraints.constrainsField(U_.name()))
     {
         constraints.constrain(U_);
-        alphaRhoU_.internalFieldRef() = (*this)()*rho_()*U_;
     }
     U_.correctBoundaryConditions();
 
     //- Correct momentum at boundaries
-    alphaRhoU_.correctBoundaryConditions();
-    alphaRhoU_.boundaryFieldRef() ==
-        alphaRho_.boundaryField()*U_.boundaryField();
+    alphaRhoU_ == alphaRho_*U_;
+    // alphaRhoU_.correctBoundaryConditions();
+    // alphaRhoU_.boundaryFieldRef() ==
+    //     alphaRho_.boundaryField()*U_.boundaryField();
 
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
@@ -456,13 +457,13 @@ void Foam::granularPhaseModel::decode()
     if (constraints.constrainsField(Theta_.name()))
     {
         constraints.constrain(Theta_);
-        alphaRhoPTE_.internalFieldRef() = 1.5*alpha()*rho_()*Theta_();
     }
     Theta_.correctBoundaryConditions();
 
-    alphaRhoPTE_.correctBoundaryConditions();
-    alphaRhoPTE_.boundaryFieldRef() ==
-        1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
+    alphaRhoPTE_ == 1.5*alphaRho_*Theta_;
+    // alphaRhoPTE_.correctBoundaryConditions();
+    // alphaRhoPTE_.boundaryFieldRef() ==
+    //     1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
 
     thermoPtr_->correct();
 

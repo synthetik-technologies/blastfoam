@@ -110,6 +110,13 @@ protected:
               ? tf/max(sumVfPtr_(), residualAlpha_)
               : tf;
         }
+        inline tmp<volScalarField> massNormalise(tmp<volScalarField>& tf) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? tf/(max(sumVfPtr_(), residualAlpha_)*max(rho_, residualRho_))
+              : tf/rho_;
+        }
 
         //- Return the field normalized by the sumVfPtr field if it is set
         inline tmp<scalarField> normalise
@@ -123,6 +130,25 @@ protected:
               ? tf/max(sumVfPtr_->boundaryField()[patchi], residualAlpha_.value())
               : tf;
         }
+        inline tmp<scalarField> massNormalise
+        (
+            tmp<scalarField>& tf,
+            const label patchi
+        ) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? tf
+               /(
+                    max
+                    (
+                        sumVfPtr_->boundaryField()[patchi],
+                        residualAlpha_.value()
+                    )
+                   *max(rho_.boundaryField()[patchi], residualRho_.value())
+                )
+              : tf/rho_.boundaryField()[patchi];
+        }
 
         //- Return the field normalized by the sumVfPtr field if it is set
         inline tmp<scalarField> normalise
@@ -134,12 +160,31 @@ protected:
             return
                 sumVfPtr_.valid()
               ? tf
-                /max
+               /max
                 (
-                    UIndirectList<scalar>(sumVfPtr_(), cells)(),
+                    scalarField(sumVfPtr_(), cells),
                     residualAlpha_.value()
                 )
               : tf;
+        }
+        inline tmp<scalarField> massNormalise
+        (
+            tmp<scalarField>& tf,
+            const labelList& cells
+        ) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? tf
+               /(
+                    max
+                    (
+                        scalarField(sumVfPtr_(), cells),
+                        residualAlpha_.value()
+                    )
+                   *max(scalarField(rho_, cells), residualRho_.value())
+                )
+              : tf/scalarField(rho_, cells);
         }
 
         //- Return a cell normalized by the sumVfPtr field if it is set
@@ -153,6 +198,21 @@ protected:
                 sumVfPtr_.valid()
               ? f/max(sumVfPtr_()[celli], residualAlpha_.value())
               : f;
+        }
+        inline scalar cellMassNormalise
+        (
+            const scalar f,
+            const label celli
+        ) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? f
+               /(
+                    max(sumVfPtr_()[celli], residualAlpha_.value())
+                   *max(rho_[celli], residualRho_.value())
+                )
+              : f/rho_[celli];
         }
 
         //- Return a cell normalized by the sumVfPtr field if it is set
@@ -173,6 +233,30 @@ protected:
                 )
               : f;
         }
+        inline scalar patchFaceMassNormalise
+        (
+            const scalar f,
+            const label patchi,
+            const label facei
+        ) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? f
+               /(
+                    max
+                    (
+                        sumVfPtr_().boundaryField()[patchi][facei],
+                        residualAlpha_.value()
+                    )
+                   *max
+                    (
+                        rho_.boundaryField()[patchi][facei],
+                        residualRho_.value()
+                    )
+                )
+              : f/rho_.boundaryField()[patchi][facei];
+        }
 
         //- Return the field normalized by the sumVfPtr field if it is set
         inline void normalise(volScalarField& f) const
@@ -180,6 +264,19 @@ protected:
             if (sumVfPtr_.valid())
             {
                 f /= max(sumVfPtr_(), residualAlpha_);
+            }
+        }
+        inline void massNormalise(volScalarField& f) const
+        {
+            if (sumVfPtr_.valid())
+            {
+                f /=
+                    max(sumVfPtr_(), residualAlpha_)
+                   *max(rho_, residualRho_);
+            }
+            else
+            {
+                f /= rho_;
             }
         }
 

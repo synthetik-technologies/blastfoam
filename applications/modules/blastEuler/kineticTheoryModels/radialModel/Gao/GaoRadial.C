@@ -116,7 +116,7 @@ Foam::kineticTheoryModels::radialModels::Gao::cellgs0
         1.0
        /(
            1.0
-         - cbrt(min(phase1[celli], kt_->alphaMinFriction()[celli])/phase1.alphaMax())
+         - cbrt(min(phase1[celli], kt_->alphaMinFriction(celli))/phase1.alphaMax())
         )
     );
     scalar g2
@@ -124,7 +124,7 @@ Foam::kineticTheoryModels::radialModels::Gao::cellgs0
         1.0
        /(
            1.0
-         - cbrt(min(phase2[celli], kt_->alphaMinFriction()[celli])/phase2.alphaMax())
+         - cbrt(min(phase2[celli], kt_->alphaMinFriction(celli))/phase2.alphaMax())
         )
     );
 
@@ -168,7 +168,7 @@ Foam::kineticTheoryModels::radialModels::Gao::cellgs0prime
     (
         cbrt
         (
-            min(max(phase1[celli], scalar(1e-3)), kt_->alphaMinFriction()[celli])
+            min(max(phase1[celli], scalar(1e-3)), kt_->alphaMinFriction(celli))
            /phase1.alphaMax()
         )
     );

@@ -165,6 +165,8 @@ int main(int argc, char *argv[])
         << indent << "rho(p, T): " << eos.rhoPT(rho, p, T) << nl
         << indent << "T(rho, e): " << eos.TRhoE(T, rho, e) << nl
         << indent << "mu(rho, e, T): " << eos.mu(rho, e, T) << nl
+        << indent << "kappa(rho, e, T): " << eos.kappa(rho, e, T) << nl
+        << indent << "Pr(rho, e, T): " << eos.mu(rho, e, T)*eos.Cp(rho, e, T)/eos.kappa(rho, e, T) << nl
         << endl;
 
     return 0;

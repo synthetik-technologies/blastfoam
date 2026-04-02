@@ -31,6 +31,25 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(reconstruction, 0);
+
+    wordHashSet* reconstruction::limiterFreeSchemesPtr = nullptr;
+
+    wordHashSet& reconstruction::limiterFreeSchemes()
+    {
+        if (!limiterFreeSchemesPtr)
+        {
+            limiterFreeSchemesPtr = new wordHashSet();
+        }
+        return *limiterFreeSchemesPtr;
+    }
+
+    void reconstruction::destroyLimiterFreeSchemes()
+    {
+        if (limiterFreeSchemesPtr)
+        {
+            deleteDemandDrivenData(limiterFreeSchemesPtr);
+        }
+    }
 }
 
 
@@ -45,7 +64,7 @@ Foam::word Foam::reconstruction::scheme
 (
     const word& name,
     const word& type,
-    const fvMesh& mesh,
+    const fvSchemes& schemes,
     const bool fail,
     const bool overwrite
 )
@@ -55,7 +74,7 @@ Foam::word Foam::reconstruction::scheme
         IOobject::member(name),
         IOobject::group(name),
         type,
-        mesh,
+        schemes,
         fail,
         overwrite
     );
@@ -67,13 +86,13 @@ Foam::word Foam::reconstruction::scheme
     const word& baseName,
     const word& phaseName,
     const word& type,
-    const fvMesh& mesh,
+    const fvSchemes& schemes,
     const bool fail,
     const bool overwrite
 )
 {
     const dictionary& interpDict =
-        mesh.schemes().dict().subDict("interpolationSchemes");
+        schemes.dict().subDict("interpolationSchemes");
     const word name(IOobject::groupName(baseName, phaseName));
     word baseScheme(scheme(baseName));
     word nameScheme(scheme(name));

@@ -146,7 +146,7 @@ protected:
 
             //- Transition onset momentum-thickness Reynolds number
             // (based on freestream conditions)
-            mutable volScalarField::Internal ReThetat0_;
+            mutable volScalarField::Internal lambda_;
 
 
     // Protected Member Functions

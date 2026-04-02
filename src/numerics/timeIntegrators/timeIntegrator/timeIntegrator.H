@@ -103,8 +103,14 @@ protected:
     //- Current time index
     label curTimeIndex_;
 
+    //- Enable resetting fields after restart
+    bool restartFields_;
+
     //- Is this a restarted time step
     bool restart_;
+
+    //- Print step information
+    mutable bool print_;
 
 
     // Protected member functions
@@ -143,6 +149,9 @@ public:
 
             //- Return the Time object
             inline const Time& time() const;
+
+            //- Return the Time object
+            inline const timeIntegratorCoeffs& coeffs() const;
 
             //- Return if on a restarted time step
             inline bool restart() const;
@@ -198,6 +207,17 @@ public:
             //- Return max Courant number
             inline scalar maxCo() const;
 
+            //- Set restartFields flag
+            void restartFields(const bool tf)
+            {
+                restartFields_ = tf;
+            }
+
+            //- Set restartFields flag
+            void print(const bool tf) const
+            {
+                print_ = tf;
+            }
 
         // Edit
 

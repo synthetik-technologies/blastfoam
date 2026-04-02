@@ -187,11 +187,9 @@ public:
     }
 };
 
-
 /*---------------------------------------------------------------------------*\
                         Class THEEquation Declaration
 \*---------------------------------------------------------------------------*/
-
 
 class THEEquation
 :
@@ -201,9 +199,9 @@ class THEEquation
     const blastThermo& thermo_;
 
     //- Constant reference to the internal energy field
-    const volScalarField& he_;
+    scalar he_;
 
-    //- Current patch index
+    //- Patch index
     label patchi_;
 
 public:
@@ -216,7 +214,7 @@ public:
     :
         ScalarEquation(TLow, great, dict, "THEEqn"),
         thermo_(thermo),
-        he_(thermo.he()),
+        he_(0.0),
         patchi_(-1)
     {}
 
@@ -226,16 +224,22 @@ public:
         return 1;
     }
 
-    //- Set the current patch index
-    void setPatch(const label patchi)
+    //- Set he
+    void setHE(const scalar he)
     {
-        patchi_ = patchi;
+        he_ = he;
     }
 
-    //- Set the current patch index to -1
-    void setCells()
+    //- Set the current patch index
+    void setCell()
     {
         patchi_ = -1;
+    }
+
+    //- Set the current patch index
+    void setPatch(const scalar patchi)
+    {
+        patchi_ = patchi;
     }
 
     //- Return the difference between the calculated internal energy and the
@@ -243,10 +247,11 @@ public:
     inline scalar fx(const scalar T, const label li) const
     {
         return
-            patchi_ == -1
-          ? thermo_.cellhe(T, li) - he_[li]
-          : thermo_.patchFacehe(T, patchi_, li)
-          - he_.boundaryField()[patchi_][li];
+            (
+                patchi_ == -1
+              ? thermo_.cellhe(T, li)
+              : thermo_.patchFacehe(T, patchi_, li)
+            ) - he_;
     }
 
     //- Return the derivative of temperature w.r.t. internal energy

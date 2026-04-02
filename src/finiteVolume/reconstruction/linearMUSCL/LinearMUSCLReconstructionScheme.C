@@ -32,12 +32,13 @@ License
 template<class Type>
 Foam::LinearMUSCLReconstructionScheme<Type>::LinearMUSCLReconstructionScheme
 (
+    const fvSchemes& schemes,
     const GeometricField<Type, fvPatchField, volMesh>& phi,
     Istream& is,
     const bool overwrite
 )
 :
-    ReconstructionScheme<Type>(phi, is, overwrite),
+    ReconstructionScheme<Type>(schemes, phi, is, overwrite),
     gradPhis_(0),
     bound_(true),
     extrapolate_(false)
@@ -56,15 +57,13 @@ template<class Type>
 void Foam::LinearMUSCLReconstructionScheme<Type>::constructGradPhis() const
 {
     gradPhis_.setSize(pTraits<Type>::nComponents);
+    const word gradName("limitedGrad(" + this->phi_.name() + ")");
     tmp<fv::gradScheme<scalar>> lgradientScheme
     (
         fv::gradScheme<scalar>::New
         (
             this->mesh_,
-            this->mesh_.schemes().grad
-            (
-                "limitedGrad(" + this->phi_.name() + ")"
-            )
+            this->schemes_.grad(gradName)
         )
     );
     for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
@@ -72,7 +71,11 @@ void Foam::LinearMUSCLReconstructionScheme<Type>::constructGradPhis() const
         gradPhis_.set
         (
             cmpti,
-            lgradientScheme().grad(this->phi_.component(cmpti))
+            lgradientScheme().calcGrad
+            (
+                this->phi_.component(cmpti),
+                gradName
+            )
         );
     }
 }

@@ -97,6 +97,24 @@ Foam::compressibleBlastSystem::compressibleBlastSystem
 }
 
 
+Foam::compressibleBlastSystem::compressibleBlastSystem
+(
+    const dictionary& dict,
+    const fvMesh& mesh,
+    autoPtr<fluidBlastThermo> thermoPtr
+)
+:
+    compressibleSystem(dict, mesh),
+    thermoPtr_(thermoPtr),
+    rho_(thermoPtr_().rhoRef()),
+    p_(thermoPtr_->p()),
+    T_(thermoPtr_->T()),
+    e_(thermoPtr_->he())
+{
+    thermoPtr_->validate("compressibleBlastSystem", "e");
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::compressibleBlastSystem::~compressibleBlastSystem()

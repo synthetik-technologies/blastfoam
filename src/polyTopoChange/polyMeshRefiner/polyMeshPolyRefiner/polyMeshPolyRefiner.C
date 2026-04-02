@@ -443,7 +443,7 @@ bool Foam::polyMeshPolyRefiner::refine
                     pointsToUnrefine
                 );
 
-                if (!hasMapped_)
+                if (map.valid() && !hasMapped_)
                 {
                     this->topoChange(map());
                 }

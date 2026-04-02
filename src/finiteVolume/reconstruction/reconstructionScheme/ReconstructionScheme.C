@@ -154,6 +154,7 @@ Foam::ReconstructionScheme<Type>::New
 {
     return New
     (
+        phi.mesh().schemes(),
         phi,
         IOobject::member(fieldName),
         IOobject::group(fieldName),
@@ -166,6 +167,50 @@ template<class Type>
 Foam::autoPtr<Foam::ReconstructionScheme<Type>>
 Foam::ReconstructionScheme<Type>::New
 (
+    const fvSchemes& schemes,
+    const GeometricField<Type, fvPatchField, volMesh>& phi,
+    const word& fieldName,
+    const bool overwrite
+)
+{
+    return New
+    (
+        schemes,
+        phi,
+        IOobject::member(fieldName),
+        IOobject::group(fieldName),
+        overwrite
+    );
+}
+
+
+
+template<class Type>
+Foam::autoPtr<Foam::ReconstructionScheme<Type>>
+Foam::ReconstructionScheme<Type>::New
+(
+    const GeometricField<Type, fvPatchField, volMesh>& phi,
+    const word& fieldName,
+    const word& phaseName,
+    const bool overwrite
+)
+{
+    return New
+    (
+        phi.mesh().schemes(),
+        phi,
+        fieldName,
+        phaseName,
+        overwrite
+    );
+}
+
+
+template<class Type>
+Foam::autoPtr<Foam::ReconstructionScheme<Type>>
+Foam::ReconstructionScheme<Type>::New
+(
+    const fvSchemes& schemes,
     const GeometricField<Type, fvPatchField, volMesh>& phi,
     const word& fieldName,
     const word& phaseName,
@@ -179,12 +224,12 @@ Foam::ReconstructionScheme<Type>::New
             fieldName,
             phaseName,
             pTraits<Type>::typeName,
-            phi.mesh(),
+            schemes,
             debug,
             overwrite
         )
     );
-    Istream& is(phi.mesh().schemes().interpolation(schemeKey));
+    Istream& is(schemes.interpolation(schemeKey));
     word order(is);
     word scheme(order);
     typedef surfaceInterpolationScheme<Type> sISType;
@@ -198,6 +243,7 @@ Foam::ReconstructionScheme<Type>::New
         (
             new StandardReconstructionScheme<Type>
             (
+                schemes,
                 phi,
                 IStringStream(schemeKey)(),
                 overwrite
@@ -205,7 +251,12 @@ Foam::ReconstructionScheme<Type>::New
         );
     }
 
-    if (is.good() && scheme != "none" && scheme != "upwindMUSCL" && scheme != "THINC")
+    if
+    (
+        is.good()
+     && !reconstruction::limiterFreeSchemesPtr->found(scheme)
+     //scheme != "none" && scheme != "upwindMUSCL" && scheme != "THINC"
+    )
     {
         token t(is);
         if (t.isWord())
@@ -234,7 +285,7 @@ Foam::ReconstructionScheme<Type>::New
             << exit(FatalIOError);
     }
 
-    return cstrIter()(phi, is, overwrite);
+    return cstrIter()(schemes, phi, is, overwrite);
 }
 
 // ************************************************************************* //

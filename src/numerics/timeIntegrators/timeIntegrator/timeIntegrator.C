@@ -84,7 +84,9 @@ Foam::timeIntegrator::timeIntegrator
     deltaIs_(0),
     nDelta_(0),
     curTimeIndex_(-1),
-    restart_(false)
+    restartFields_(true),
+    restart_(false),
+    print_(true)
 {
     if (!embedded)
     {
@@ -164,13 +166,14 @@ void Foam::timeIntegrator::preUpdate()
     }
     else if
     (
-        obr_.time().timeIndex() == curTimeIndex_
+        restartFields_
+     && obr_.time().timeIndex() == curTimeIndex_
      && !obr_.time().subCycling()
     )
     {
         reset();
         restart_ = true;
-        Info<< "Restarting time step" << endl;
+        DebugInfo<< "Restarting time step" << endl;
     }
     else
     {
@@ -207,13 +210,13 @@ void Foam::timeIntegrator::integrate
     // Update and store original fields
     for (stepi_ = 0; stepi_ < coeffs_->nSteps(); stepi_++)
     {
-        Info<< coeffs_->type() << ": step " << stepi_ << endl;
+        if (print_) Info<< coeffs_->type() << ": step " << stepi_ << endl;
         this->update();
         forAll(systems_, i)
         {
-            Info<< "Solving " << systems_[i].name() << ":" << endl;
+            if (print_) Info<< "Solving " << systems_[i].name() << ":" << endl;
             systems_[i].solve();
-            Info<< endl;
+            if (print_) Info<< endl;
         }
     }
     stepi_ = coeffs_->nSteps()-1;

@@ -183,7 +183,12 @@ void Foam::fvTimeIntegrator::createModels() const
 
 void Foam::fvTimeIntegrator::preUpdateMesh()
 {
-    DebugInfo<< "Post Update" << endl;
+    DebugInfo<< "Pre Update" << endl;
+    if (pimplePtr_.valid())
+    {
+        pimplePtr_->read();
+    }
+
     forAll(systems_, i)
     {
         systems_[i].preUpdateMesh();

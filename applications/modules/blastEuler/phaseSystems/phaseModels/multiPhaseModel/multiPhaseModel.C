@@ -818,7 +818,7 @@ void Foam::multiPhaseModel::decode()
     const fvConstraints& constraints = this->constraints();
 
     // Calculate densities
-    alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
+    alphaRho_ = Zero;
 
     forAll(alphas_, phasei)
     {
@@ -833,10 +833,11 @@ void Foam::multiPhaseModel::decode()
             );
         rhos_[phasei].correctBoundaryConditions();
 
-        alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
+        alphaRhos_[phasei] == alphas_[phasei]*rhos_[phasei];
 
         alphaRho_ += alphaRhos_[phasei];
     }
+
     volScalarField& alpha = *this;
     this->correctBoundaryConditions();
 
@@ -848,13 +849,13 @@ void Foam::multiPhaseModel::decode()
     if (constraints.constrainsField(U_.name()))
     {
         constraints.constrain(U_);
-        alphaRhoU_.internalFieldRef() = (*this)()*rho_()*U_;
     }
     U_.correctBoundaryConditions();
 
-    alphaRhoU_.correctBoundaryConditions();
-    alphaRhoU_.boundaryFieldRef() ==
-        alphaRho_.boundaryField()*U_.boundaryField();
+    alphaRhoU_ == alphaRho_*U_;
+    // alphaRhoU_.correctBoundaryConditions();
+    // alphaRhoU_.boundaryFieldRef() ==
+    //     alphaRho_.boundaryField()*U_.boundaryField();
 
     e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
     constraints.constrain(e_);

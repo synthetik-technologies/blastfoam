@@ -352,19 +352,19 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
             scalar Gamma, pi;
             if (x2 < this->residualFac_)
             {
-                alphaCp[celli] += t1.Cp(rhoi, ei, Ti)*alphai;
-                alphaCv[celli] += t1.Cv(rhoi, ei, Ti)*alphai;
-                alphaMu[celli] += t1.mu(rhoi, ei, Ti)*alphai;
-                alphaKappa[celli] += t1.kappa(rhoi, ei, Ti)*alphai;
+                alphaCp[celli] += t1.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                alphaCv[celli] += t1.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                alphaMu[celli] += t1.mu(rhoi, ei, Ti)*alphai*rhoi;
+                alphaKappa[celli] += t1.kappa(rhoi, ei, Ti)*alphai*rhoi;
                 Gamma = t1.Gamma(rhoi, ei, Ti);
                 pi = t1.p(rhoi, ei, Ti);
             }
             else if (x1 < this->residualFac_)
             {
-                alphaCp[celli] += t2.Cp(rhoi, ei, Ti)*alphai;
-                alphaCv[celli] += t2.Cv(rhoi, ei, Ti)*alphai;
-                alphaMu[celli] += t2.mu(rhoi, ei, Ti)*alphai;
-                alphaKappa[celli] += t2.kappa(rhoi, ei, Ti)*alphai;
+                alphaCp[celli] += t2.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                alphaCv[celli] += t2.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                alphaMu[celli] += t2.mu(rhoi, ei, Ti)*alphai*rhoi;
+                alphaKappa[celli] += t2.kappa(rhoi, ei, Ti)*alphai*rhoi;
 
                 Gamma = t2.Gamma(rhoi, ei, Ti);
                 pi = t2.p(rhoi, ei, Ti);
@@ -375,22 +375,22 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                     (
                         t1.Cp(rhoi, ei, Ti)*x1
                       + t2.Cp(rhoi, ei, Ti)*x2
-                    )*alphai;
+                    )*alphai*rhoi;
                 alphaCv[celli] +=
                     (
                         t1.Cv(rhoi, ei, Ti)*x1
                       + t2.Cv(rhoi, ei, Ti)*x2
-                    )*alphai;
+                    )*alphai*rhoi;
                 alphaMu[celli] +=
                     (
                         t1.mu(rhoi, ei, Ti)*x1
                       + t2.mu(rhoi, ei, Ti)*x2
-                    )*alphai;
+                    )*alphai*rhoi;
                 alphaKappa[celli] +=
                     (
                         t1.kappa(rhoi, ei, Ti)*x1
                       + t2.kappa(rhoi, ei, Ti)*x2
-                    )*alphai;
+                    )*alphai*rhoi;
 
                 Gamma =
                     t1.Gamma(rhoi, ei, Ti)*x1 + t1.Gamma(rhoi, ei, Ti)*x2;
@@ -433,20 +433,20 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                 scalar Gamma, pi;
                 if (x2 < this->residualFac_)
                 {
-                    palphaCp[facei] += t1.Cp(rhoi, ei, Ti)*alphai;
-                    palphaCv[facei] += t1.Cv(rhoi, ei, Ti)*alphai;
-                    palphaMu[facei] += t1.mu(rhoi, ei, Ti)*alphai;
-                    palphaKappa[facei] += t1.kappa(rhoi, ei, Ti)*alphai;
+                    palphaCp[facei] += t1.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaCv[facei] += t1.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaMu[facei] += t1.mu(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaKappa[facei] += t1.kappa(rhoi, ei, Ti)*alphai*rhoi;
 
                     Gamma = t1.Gamma(rhoi, ei, Ti);
                     pi = t1.p(rhoi, ei, Ti);
                 }
                 else if (x1 < this->residualFac_)
                 {
-                    palphaCp[facei] += t2.Cp(rhoi, ei, Ti)*alphai;
-                    palphaCv[facei] += t2.Cv(rhoi, ei, Ti)*alphai;
-                    palphaMu[facei] += t2.mu(rhoi, ei, Ti)*alphai;
-                    palphaKappa[facei] += t2.kappa(rhoi, ei, Ti)*alphai;
+                    palphaCp[facei] += t2.Cp(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaCv[facei] += t2.Cv(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaMu[facei] += t2.mu(rhoi, ei, Ti)*alphai*rhoi;
+                    palphaKappa[facei] += t2.kappa(rhoi, ei, Ti)*alphai*rhoi;
 
                     Gamma = t2.Gamma(rhoi, ei, Ti);
                     pi = t2.p(rhoi, ei, Ti);
@@ -457,22 +457,22 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                         (
                             t1.Cp(rhoi, ei, Ti)*x1
                           + t2.Cp(rhoi, ei, Ti)*x2
-                        )*alphai;
+                        )*alphai*rhoi;
                     palphaCv[facei] +=
                         (
                             t1.Cv(rhoi, ei, Ti)*x1
                           + t2.Cv(rhoi, ei, Ti)*x2
-                        )*alphai;
+                        )*alphai*rhoi;
                     palphaMu[facei] +=
                         (
                             t1.mu(rhoi, ei, Ti)*x1
                           + t2.mu(rhoi, ei, Ti)*x2
-                        )*alphai;
+                        )*alphai*rhoi;
                     palphaKappa[facei] +=
                         (
                             t1.kappa(rhoi, ei, Ti)*x1
                           + t2.kappa(rhoi, ei, Ti)*x2
-                        )*alphai;
+                        )*alphai*rhoi;
 
                     Gamma =
                         t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
@@ -529,7 +529,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                 Gamma =
                     t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
             }
-            cSqrRhoXiSum[celli] += cSqr*rhoi*alphai/Gamma;
+            cSqrRhoXiSum[celli] += max(cSqr, small)*rhoi*alphai/Gamma;
         }
     }
 
@@ -576,7 +576,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                     Gamma =
                         t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
                 }
-                pcSqrRhoXiSum[facei] += cSqr*rhoi*alphai/Gamma;
+                pcSqrRhoXiSum[facei] += max(cSqr, small)*rhoi*alphai/Gamma;
             }
         }
     }

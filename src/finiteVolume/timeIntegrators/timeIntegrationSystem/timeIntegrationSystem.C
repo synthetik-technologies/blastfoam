@@ -32,7 +32,8 @@ Foam::timeIntegrationSystem::timeIntegrationSystem(const word& name)
 :
     timeIntegrationSystemBase(name),
     meshPtr_(nullptr),
-    fvTimeInt_(nullptr)
+    fvTimeInt_(nullptr),
+    storeOld_(true)
 {}
 
 Foam::timeIntegrationSystem::timeIntegrationSystem
@@ -48,7 +49,8 @@ Foam::timeIntegrationSystem::timeIntegrationSystem
         this->timeInt_.valid()
       ? dynamic_cast<const fvTimeIntegrator*>(this->timeInt_.ptr())
       : nullptr
-    )
+    ),
+    storeOld_(true)
 {}
 
 

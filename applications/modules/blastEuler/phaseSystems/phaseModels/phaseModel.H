@@ -179,6 +179,9 @@ protected:
         //- Solution vector
         vector solutionDs_;
 
+        //- Treat viscosity explicitly
+        bool explicitViscosity_;
+
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;
 

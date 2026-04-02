@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ArrheniusSurfaceReactionRate.H"
+#include "physicoChemicalConstants.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -46,7 +47,13 @@ Foam::surfaceReactionRates::Arrhenius::Arrhenius(const dictionary& dict)
     surfaceReactionRate(dict),
     A_("A", inv(dimTime), dict),
     beta_("beta", dimless, dict),
-    Ta_("Ta", dimTemperature, dict)
+    Ta_
+    (
+        dict.found("Ta") || !dict.found("Ea")
+      ? dict.lookup<scalar>("Ta", dimTemperature)
+      : dict.lookup<scalar>("Ea", dimEnergy/dimMoles)
+       /constant::physicoChemical::RR.value()
+    )
 {}
 
 

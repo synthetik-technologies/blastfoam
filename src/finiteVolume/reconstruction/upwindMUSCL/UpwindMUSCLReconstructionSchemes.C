@@ -32,6 +32,8 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+addLimiterFreeScheme(upwindMUSCL);
+
 defineNamedTemplateTypeNameAndDebug(UpwindMUSCLReconstructionScheme<scalar>, 0);
 ReconstructionScheme<scalar>::adddictionaryConstructorToTable
     <

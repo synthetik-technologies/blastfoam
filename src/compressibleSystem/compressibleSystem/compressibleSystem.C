@@ -47,6 +47,69 @@ namespace Foam
 }
 
 
+void Foam::compressibleSystem::calcRDeltaT
+(
+    const dictionary& dict,
+    const surfaceScalarField& phi,
+    const volScalarField& speedOfSound,
+    const tmp<volScalarField>& DiEff,
+    const scalar maxCo,
+    const scalar maxDi,
+    volScalarField& rDeltaT
+)
+{
+    const fvMesh& mesh = phi.mesh();
+    const dimensionedScalar& deltaT = mesh.time().deltaT();
+    const surfaceScalarField& magSf = mesh.magSf();
+    surfaceScalarField amaxSf(linearInterpolate(speedOfSound)*magSf);
+
+    // Remove wave speed from wedge boundaries
+    surfaceScalarField::Boundary& bamaxSf = amaxSf.boundaryFieldRef();
+    forAll(bamaxSf, patchi)
+    {
+        if (isA<wedgeFvPatch>(mesh.boundary()[patchi]))
+        {
+            bamaxSf[patchi] = Zero;
+        }
+    }
+    amaxSf += mag(phi);
+
+    volScalarField::Internal amaxSfSum(fvc::surfaceSum(amaxSf)());
+
+    // Calulate rDeltaT (local)
+    rDeltaT.internalFieldRef() = amaxSfSum/((2.0*maxCo)*mesh.V());
+
+    if (DiEff.valid())
+    {
+        surfaceScalarField deltaCoeffSqr(magSf*mesh.deltaCoeffs());
+
+        // Remove wave speed from wedge boundaries
+        surfaceScalarField::Boundary& bdeltaCoeffSqr =
+            deltaCoeffSqr.boundaryFieldRef();
+        forAll(bdeltaCoeffSqr, patchi)
+        {
+            if (isA<wedgeFvPatch>(mesh.boundary()[patchi]))
+            {
+                bdeltaCoeffSqr[patchi] = Zero;
+            }
+        }
+        volScalarField::Internal maxDeltaSqrSum
+        (
+            fvc::surfaceSum(deltaCoeffSqr*linearInterpolate(DiEff))()
+        );
+
+        rDeltaT.internalFieldRef() =
+        (
+            max
+            (
+                rDeltaT.internalField(),
+                maxDeltaSqrSum/(maxDi*mesh.V())
+            )
+        );
+    }
+}
+
+
 // * * * * * * * * * * * * Private Members Functions * * * * * * * * * * * * //
 
 void Foam::compressibleSystem::setModels()
@@ -181,6 +244,9 @@ void Foam::compressibleSystem::setModels()
     {
         explicitViscosity_ = false;
     }
+
+    updateCorDeltaT();
+    storeExplicit();
 }
 
 
@@ -272,42 +338,30 @@ void Foam::compressibleSystem::updateCorDeltaT()
                 mesh().solution().subOrEmptyDict("PIMPLE");
         const scalar maxCo =
             pimpleDict.lookupOrDefault("maxCo", fvTimeInt_->maxCo()/2.0);
+        const scalar maxDi = pimpleDict.lookupOrDefault("maxDi", maxCo);
 
-        // Calulate rDeltaT (local)
         volScalarField& rDeltaT = localRDeltaTPtr_();
-        rDeltaT.internalFieldRef() =
-            fvc::surfaceSum(amaxSf)()()/((2*maxCo)*mesh().V());
-
+        tmp<volScalarField> tDiEff;
         if (explicitViscosity_)
         {
-            surfaceScalarField deltaCoeffSqr(magSf*mesh().deltaCoeffs());
-
-            // Remove wave speed from wedge boundaries
-            surfaceScalarField::Boundary& bdeltaCoeffSqr =
-                deltaCoeffSqr.boundaryFieldRef();
-            forAll(bdeltaCoeffSqr, patchi)
-            {
-                if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
-                {
-                    bdeltaCoeffSqr[patchi] = Zero;
-                }
-            }
-
-            rDeltaT.internalFieldRef() =
+            tDiEff = max
             (
-                max
-                (
-                    rDeltaT.internalField(),
-                    fvc::surfaceSum
-                    (
-                        deltaCoeffSqr
-                       *fvc::interpolate(turbulence_->nuEff())
-                    )()()
-                   /(mesh().V())
-                )
+                turbulence_->nuEff(),
+                thermophysicalTransport_->kappaEff()/(rhoEff()*thermo().Cp())
             );
         }
+        calcRDeltaT
+        (
+            pimpleDict,
+            fvc::flux(U_),
+            speedOfSound(),
+            tDiEff,
+            maxCo,
+            maxDi,
+            localRDeltaTPtr_()
+        );
 
+        // Clip
         scalar minRDeltaT(gMin(rDeltaT.primitiveField()));
         if (pimpleDict.found("maxDeltaT"))
         {
@@ -331,6 +385,7 @@ void Foam::compressibleSystem::updateCorDeltaT()
             << 1.0/minRDeltaT << endl;
 
 
+        // Smooth
         const scalar rDeltaTSmoothingCoeff =
             pimpleDict.lookupOrDefault("rDeltaTSmoothingCoeff", 0.02);
         if (rDeltaTSmoothingCoeff > 0)
@@ -342,8 +397,7 @@ void Foam::compressibleSystem::updateCorDeltaT()
                 << 1.0/gMin(rDeltaT.primitiveField()) << endl;
         }
 
-        volScalarField& corDeltaT = corDeltaTPtr_();
-        corDeltaT = rDeltaT*deltaT;
+        corDeltaTPtr_() = rDeltaT*deltaT;
     }
 }
 
@@ -516,6 +570,12 @@ void Foam::compressibleSystem::encode()
 }
 
 
+void Foam::compressibleSystem::preUpdate()
+{
+    updateCorDeltaT();
+}
+
+
 void Foam::compressibleSystem::update()
 {
     decode();
@@ -531,7 +591,6 @@ void Foam::compressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
-    if (step() == 0) updateCorDeltaT();
 }
 
 
@@ -653,7 +712,7 @@ void Foam::compressibleSystem::solveImplicit()
         if (devTau.valid())
         {
             EEqn +=
-                fvc::div(devTau & flux().Uf())
+                fvc::div(devTau & linearInterpolate(U_))//flux().Uf())
               + thermophysicalTransport_->divq(he);
         }
 
@@ -865,7 +924,14 @@ Foam::scalar Foam::compressibleSystem::DiNum() const
             fvc::surfaceSum
             (
                 deltaCoeffSqr
-               *fvc::interpolate(turbulence_->nuEff())
+               *linearInterpolate
+                (
+                    max
+                    (
+                        turbulence_->nuEff(),
+                        thermophysicalTransport_->kappaEff()/(rhoEff()*thermo().Cp())
+                    )
+                )
             )()()
            /(mesh().V())
            *mesh().time().deltaT()

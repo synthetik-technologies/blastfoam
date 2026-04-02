@@ -50,7 +50,6 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
 // Define types and runtime selection tables
 defineReconstructionTable(Linear, LinearMUSCL, scalar);
 defineReconstructionTable(Linear, LinearMUSCL, vector);
@@ -109,6 +108,28 @@ makeLMUSCLReconstruction
 );
 
 makeMUSCLReconstruction(Linear, "linearMUSCL", Minmod, MinmodLimiter);
+makeLMUSCLReconstruction
+(
+    Linear,
+    "linearMUSCL",
+    limitedMinmod,
+    LimitedLimiter,
+    MinmodLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
+makeLMUSCLReconstruction
+(
+    Linear,
+    "linearMUSCL",
+    Minmod01,
+    Limited01Limiter,
+    MinmodLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
 
 makeMUSCLReconstruction(Linear, "linearMUSCL", OSPRE, OSPRELimiter);
 
@@ -171,6 +192,28 @@ makeLMUSCLReconstruction
 makeMUSCLReconstruction(Linear, "linearMUSCL", vanAlbada, vanAlbadaLimiter);
 
 makeMUSCLReconstruction(Linear, "linearMUSCL", vanLeer, vanLeerLimiter);
+makeLMUSCLReconstruction
+(
+    Linear,
+    "linearMUSCL",
+    limitedVanLeer,
+    LimitedLimiter,
+    vanLeerLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
+makeLMUSCLReconstruction
+(
+    Linear,
+    "linearMUSCL",
+    vanLeer01,
+    Limited01Limiter,
+    vanLeerLimiter,
+    NVDTVD,
+    magSqr,
+    scalar
+);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
