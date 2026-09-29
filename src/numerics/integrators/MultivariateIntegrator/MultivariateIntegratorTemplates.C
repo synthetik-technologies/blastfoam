@@ -214,7 +214,7 @@ Type Foam::MultivariateIntegrator<Type>::integrate_
         return Q;
     }
     label fi = 0;
-    PtrList<Type> fxs(pow(2, X0.size()));
+    PtrList<Type> fxs(pow(label(2), X0.size()));
     scalarList x0(X0);
     scalarList x1(X1);
     addMidsToInt

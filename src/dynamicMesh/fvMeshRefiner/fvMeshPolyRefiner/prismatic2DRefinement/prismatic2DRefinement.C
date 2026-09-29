@@ -711,7 +711,7 @@ void Foam::prismatic2DRefinement::setRefinement
         mesh_,
         edgeMidPoint,
         maxEqOp<label>(),
-        -1
+        label(-1)
     );
 
     // Now that the refinement trigger is synced, introduce edge points

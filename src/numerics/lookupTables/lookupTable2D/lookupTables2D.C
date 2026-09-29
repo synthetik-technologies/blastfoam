@@ -37,7 +37,7 @@ Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundi
     const label j = ij_.y();
     if (f < data_[0][j])
     {
-        return labelList(1, 0);
+        return labelList(1, label(0));
     }
 
     DynamicList<label> Is(data_.size());
@@ -78,7 +78,7 @@ Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundj
     label& j = ij_.y();
     if (data_[i][0] > f)
     {
-        return labelList(1, 0);
+        return labelList(1, label(0));
     }
 
     DynamicList<label> Js(data_[i].size());
