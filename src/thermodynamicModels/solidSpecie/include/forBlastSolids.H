@@ -36,6 +36,9 @@ License
 #include "hConstBlastThermo.H"
 
 #include "rhoConst.H"
+#include "Murnaghan.H"
+#include "BirchMurnaghan2.H"
+#include "BirchMurnaghan3.H"
 
 #include "specieBlast.H"
 #include "rspecieBlast.H"
@@ -45,7 +48,10 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define forSolidEqns(Mu, Cp, Macro, Args...)                                \
-    forThermo(Mu, Cp, rhoConst, specieBlast, Macro, Args);
+    forThermo(Mu, Cp, rhoConst, specieBlast, Macro, Args);                  \
+    forThermo(Mu, Cp, Murnaghan, specieBlast, Macro, Args);                 \
+    forThermo(Mu, Cp, BirchMurnaghan2, specieBlast, Macro, Args);           \
+    forThermo(Mu, Cp, BirchMurnaghan3, specieBlast, Macro, Args);
 
 #define forSolidThermos(Mu, Macro, Args...)                                 \
     forSolidEqns(Mu, eConstThermo, Macro, Args);                            \

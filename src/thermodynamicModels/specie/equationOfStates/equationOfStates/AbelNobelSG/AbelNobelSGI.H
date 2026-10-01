@@ -288,15 +288,15 @@ inline void Foam::AbelNobelSG<Specie>::operator+=
     const AbelNobelSG<Specie>& an
 )
 {
-    scalar X1 = this->Y()/this->W();
+    scalar Y1 = this->Y();
     Specie::operator+=(an);
 
     if (mag(this->Y()) > SMALL)
     {
-        X1 *= this->W()/this->Y();
-        const scalar X2 = this->W()*an.Y()/(an.W()*this->Y());
+        Y1 /= this->Y();
+        const scalar Y2 = an.Y()/this->Y();
 
-        b_ = X1*b_ + X2*an.b_;
+        b_ = Y1*b_ + Y2*an.b_;
     }
 }
 

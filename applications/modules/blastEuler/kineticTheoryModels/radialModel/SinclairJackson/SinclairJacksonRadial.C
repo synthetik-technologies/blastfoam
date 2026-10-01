@@ -86,12 +86,8 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::gs0
                 dimensionedScalar(dimless, 0.0)
             );
     }
-    return
-        1.0
-       /(
-           1.0
-         - cbrt(min(phase1, kt_->alphaMinFriction())/phase1.alphaMax())
-        );
+    const volScalarField u(cbrt(min(phase1, kt_->alphaMinFriction())/phase1.alphaMax()));
+    return 1.0/max(1.0 - u, 1e-4);
 }
 
 
@@ -107,12 +103,8 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::cellgs0
     {
         return 0.0;
     }
-    return
-        1.0
-       /(
-           1.0
-         - cbrt(min(phase1[celli], kt_->alphaMinFriction(celli))/phase1.alphaMax())
-        );
+    const scalar u = cbrt(min(phase1[celli], kt_->alphaMinFriction(celli))/phase1.alphaMax());
+    return 1.0/max(1.0 - u, 1e-4);
 }
 
 
@@ -133,19 +125,19 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::gs0prime
                 dimensionedScalar(dimless, 0.0)
             );
     }
-    volScalarField aByaMax
+    const volScalarField aByaMax
     (
         cbrt
         (
             min
             (
-                max(phase1, scalar(1e-3)),
+                max(phase1, scalar(1e-4)),
                 kt_->alphaMinFriction()
             )/phase1.alphaMax()
         )
     );
 
-    return (1.0/(3*phase1.alphaMax()))/sqr(aByaMax - sqr(aByaMax));
+    return (1.0/(3.0*phase1.alphaMax()))/max(sqr(aByaMax - sqr(aByaMax)), 1e-6);
 }
 
 
@@ -161,19 +153,19 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::cellgs0prime
     {
         return 0.0;
     }
-    scalar aByaMax
+    const scalar aByaMax
     (
         cbrt
         (
             min
             (
-                max(phase1[celli], scalar(1e-3)),
+                max(phase1[celli], scalar(1e-4)),
                 kt_->alphaMinFriction(celli)
             )/phase1.alphaMax()
         )
     );
 
-    return (1.0/(3*phase1.alphaMax()))/sqr(aByaMax - sqr(aByaMax));
+    return (1.0/(3.0*phase1.alphaMax()))/max(sqr(aByaMax - sqr(aByaMax)), 1e-6);
 }
 
 

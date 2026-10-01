@@ -65,9 +65,6 @@ protected:
         //- Reference to the mixture
         const multicomponentBlastThermo& mixture_;
 
-        //- Reference to the thermo
-        const blastThermo& thermo_;
-
         //- Chemistry activation switch
         Switch chemistry_;
 
@@ -99,7 +96,7 @@ public:
         autoPtr,
         blastChemistryModel,
         thermo,
-        (const blastThermo& thermo),
+        (const multicomponentBlastThermo& thermo),
         (thermo)
     );
 
@@ -107,7 +104,7 @@ public:
     // Constructors
 
         //- Construct from thermo
-        blastChemistryModel(const blastThermo& thermo);
+        blastChemistryModel(const multicomponentBlastThermo& thermo);
 
         //- Disallow default bitwise copy construction
         blastChemistryModel(const blastChemistryModel&) = delete;
@@ -118,7 +115,7 @@ public:
         //- Select based on fluid reaction thermo
         static autoPtr<blastChemistryModel> New
         (
-            const blastThermo& thermo
+            const multicomponentBlastThermo& thermo
         );
 
 
@@ -135,7 +132,7 @@ public:
         inline const multicomponentBlastThermo& mixture() const;
 
         //- Return const access to the thermo
-        inline const blastThermo& thermo() const;
+        inline const multicomponentBlastThermo& thermo() const;
 
         //- Chemistry activation switch
         inline Switch chemistry() const;

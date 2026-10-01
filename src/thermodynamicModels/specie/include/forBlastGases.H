@@ -47,6 +47,7 @@ License
 #include "stiffenedGas.H"
 #include "vanderWaals.H"
 #include "JWL.H"
+#include "eJWLC.H"
 
 #include "specieBlast.H"
 #include "rspecieBlast.H"
@@ -56,9 +57,10 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define forGasEqns(Mu, Cp, Macro, Args...)                                  \
-    forThermo(Mu, Cp, idealGas, specieBlast, Macro, Args);                  \
+    forThermo(Mu, Cp, idealGas,  specieBlast, Macro, Args);                  \
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
-    forThermo(Mu, Cp, JWL, specieBlast, Macro, Args);
+    forThermo(Mu, Cp, JWL,       specieBlast, Macro, Args);                  \
+    forThermo(Mu, Cp, eJWLC,     specieBlast, Macro, Args);
 
 #define forGasThermos(Mu, Macro, Args...)                                   \
     forGasEqns(Mu, eConstThermo, Macro, Args);                              \

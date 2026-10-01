@@ -226,6 +226,16 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 *(1.0/(Kd*XiD*deltaT + 1.0) - 1.0)
             );
 
+            const scalar rAlpha1 = phase1.residualAlpha().value();
+            const scalar rAlpha2 = phase2.residualAlpha().value();
+            forAll(deltaM, celli)
+            {
+                if (phase1[celli] <= rAlpha1 || phase2[celli] <= rAlpha2)
+                {
+                    deltaM[celli] = Zero;
+                }
+            }
+
             phase1.alphaRhoU() += deltaM;
             if (phase1.totalEnergy())
             {
@@ -287,9 +297,21 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 )
             );
 
+            const scalar rAlphaP = particles->residualAlpha().value();
+            const scalar rAlphaG = gas->residualAlpha().value();
+            volScalarField deltaPTE
+            (
+                1.5*particles->alphaRho()*(ThetaStarStar - ThetaOld)
+            );
+            forAll(deltaPTE, celli)
+            {
+                if ((*particles)[celli] <= rAlphaP || (*gas)[celli] <= rAlphaG)
+                {
+                    deltaPTE[celli] = 0.0;
+                }
+            }
 
-            gas->alphaRhoE() -=
-                1.5*particles->alphaRho()*(ThetaStarStar - ThetaOld);
+            gas->alphaRhoE() -= deltaPTE;
             particles->alphaRhoPTE() =
                 1.5*particles->alphaRho()*ThetaStarStar;
         }
@@ -482,6 +504,16 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
            *(exp(-Kh*Xie*deltaT) - 1.0)
         );
 
+        const scalar rAlpha1 = phase1.residualAlpha().value();
+        const scalar rAlpha2 = phase2.residualAlpha().value();
+        forAll(deltaE, celli)
+        {
+            if (phase1[celli] <= rAlpha1 || phase2[celli] <= rAlpha2)
+            {
+                deltaE[celli] = 0.0;
+            }
+        }
+
         phase1.alphaRhoE() += deltaE;
         phase2.alphaRhoE() -= deltaE;
     }
@@ -528,10 +560,27 @@ void Foam::phaseSystem::calcMixtureVariables()
         const volScalarField& alphaRho = phase.alphaRho();
         rho_ += alphaRho;
         alphaRhoU += phase.alphaRhoU();
-        alphaRhoT += alphaRho*phase.T();
     }
-    U_ = alphaRhoU/rho_;
-    T_ = alphaRhoT/rho_;
+    const volScalarField rhoLim(max(rho_, dimensionedScalar(dimDensity, small)));
+    U_ = alphaRhoU/rhoLim;
+
+    forAll(T_, celli)
+    {
+        scalar activeRho = 0.0;
+        scalar activeRhoT = 0.0;
+        forAll(phaseModels_, phasei)
+        {
+            const phaseModel& phase = phaseModels_[phasei];
+            const scalar rAlpha = phase.residualAlpha().value();
+            if (phase[celli] > rAlpha)
+            {
+                const scalar aRho = phase.alphaRho()[celli];
+                activeRho += aRho;
+                activeRhoT += aRho*phase.T()[celli];
+            }
+        }
+        T_[celli] = activeRho > small ? (activeRhoT / activeRho) : 288.15;
+    }
 
     if (fluidPhaseModels_.size() == 1)
     {
@@ -578,7 +627,9 @@ void Foam::phaseSystem::calcMixtureVariables()
               + phase.alphaRho()*magSqr(phase.U() - U_);
         }
     }
+    sumAlpha.max(1e-12);
     p_ /= sumAlpha;
+    sumAlphaRho.max(dimensionedScalar("0", dimDensity, 1e-12));
     kappa_ = sumAlphaRhoKappa/sumAlphaRho;
 }
 
@@ -1067,6 +1118,14 @@ Foam::phaseSystem::~phaseSystem()
 
 void Foam::phaseSystem::decode()
 {
+    //- 1. Decode slave (granular) phases first to calculate compressed density and alpha
+    forAll(slavePhaseModels_, i)
+    {
+        slavePhaseModels_[i].correctBoundaryConditions();
+        slavePhaseModels_[i].decode();
+    }
+
+    //- 2. Adjust carrier fluid volume fractions so sum(alpha) = 1
     if (phaseModels_.size() == 2)
     {
         phaseModel& phase1 = phaseModels_[0];
@@ -1099,11 +1158,12 @@ void Foam::phaseSystem::decode()
             }
             if (fixedAlpha >= 1)
             {
+                const scalar scale = 1.0/fixedAlpha;
                 forAll(slavePhaseModels_, i)
                 {
                     slavePhaseModels_[i].scaleVolumeFraction
                     (
-                        fixedAlpha,
+                        scale,
                         celli
                     );
                 }
@@ -1148,11 +1208,11 @@ void Foam::phaseSystem::decode()
         }
     }
 
-    // Decode now that volume fraction has been calculated
-    forAll(phaseModels_, phasei)
+    //- 3. Decode fluid phases now that carrier volume fractions are updated
+    forAll(fluidPhaseModels_, i)
     {
-        phaseModels_[phasei].correctBoundaryConditions();
-        phaseModels_[phasei].decode();
+        fluidPhaseModels_[i].correctBoundaryConditions();
+        fluidPhaseModels_[i].decode();
     }
 
     // Update all masterSystems

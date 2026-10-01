@@ -67,6 +67,9 @@ class reactingDiameterModel
     //- Number density
     volScalarField N_;
 
+    //- Initial diameter field
+    volScalarField d0_;
+
     //- Stored change in volume per unit time
     volScalarField dVdt_;
 
@@ -97,6 +100,18 @@ public:
 
         //- Solve sub-step stepi given pressure and temperature fields
         virtual void solve(const volScalarField& p, const volScalarField& T);
+
+        //- Return initial unburned diameter field
+        virtual const volScalarField& d0() const
+        {
+            return d0_;
+        }
+
+        //- Return initial unburned diameter for a cell
+        virtual scalar celld0(const label celli) const
+        {
+            return d0_[celli];
+        }
 
         //- Return change in radius per unit time
         //  Only used in mass transfer

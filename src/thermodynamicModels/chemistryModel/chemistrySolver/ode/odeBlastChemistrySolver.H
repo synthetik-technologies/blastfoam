@@ -71,7 +71,7 @@ public:
     // Constructors
 
         //- Construct from thermo
-        odeBlastChemistrySolver(const blastThermo& thermo);
+        odeBlastChemistrySolver(const multicomponentBlastThermo& thermo);
 
 
     //- Destructor

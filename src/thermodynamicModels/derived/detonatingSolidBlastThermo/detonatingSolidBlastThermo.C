@@ -60,6 +60,11 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                 ei = t1.Es(rhoi, ei, this->TLow_);
                 Ti = this->TLow_;
             }
+            else if (Ti > 10000.0)
+            {
+                Ti = 10000.0;
+                ei = t1.Es(rhoi, ei, Ti);
+            }
 
             CpCells[celli] = t1.Cp(rhoi, ei, Ti);
             CvCells[celli] = t1.Cv(rhoi, ei, Ti);
@@ -78,6 +83,11 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                 ei = t2.Es(rhoi, ei, this->TLow_);
                 Ti = this->TLow_;
             }
+            else if (Ti > 10000.0)
+            {
+                Ti = 10000.0;
+                ei = t2.Es(rhoi, ei, Ti);
+            }
 
             CpCells[celli] = t2.Cp(rhoi, ei, Ti);
             CvCells[celli] = t2.Cv(rhoi, ei, Ti);
@@ -90,15 +100,20 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
         }
         else
         {
-            Ti =
-                t1.TRhoE(Ti, rhoi, ei)*x1
-              + t2.TRhoE(Ti, rhoi, ei)*x2;
-            if (Ti < this->TLow_)
+            const scalar eTest =
+                t1.Es(rhoi, ei, this->TLow_)*x1
+              + t2.Es(rhoi, ei, this->TLow_)*x2;
+            if (ei < eTest)
             {
-                ei =
-                    t1.Es(rhoi, ei, this->TLow_)*x1
-                  + t2.Es(rhoi, ei, this->TLow_)*x2;
+                ei = eTest;
                 Ti = this->TLow_;
+            }
+            else
+            {
+                const scalar CvMix =
+                    t1.Cv(rhoi, ei, Ti)*x1
+                  + t2.Cv(rhoi, ei, Ti)*x2;
+                Ti = min(10000.0, max(this->TLow_, this->TLow_ + (ei - eTest)/max(CvMix, small)));
             }
 
             CpCells[celli] =
@@ -228,6 +243,11 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                         Ti = this->TLow_;
                         ei = t1.Es(rhoi, ei, Ti);
                     }
+                    else if (Ti > 10000.0)
+                    {
+                        Ti = 10000.0;
+                        ei = t1.Es(rhoi, ei, Ti);
+                    }
                     pCp[facei] = t1.Cp(rhoi, ei, Ti);
                     pCv[facei] = t1.Cv(rhoi, ei, Ti);
                     pkappa[facei] = t1.kappa(rhoi, ei, Ti);
@@ -245,6 +265,11 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                         Ti = this->TLow_;
                         ei = t2.Es(rhoi, ei, Ti);
                     }
+                    else if (Ti > 10000.0)
+                    {
+                        Ti = 10000.0;
+                        ei = t2.Es(rhoi, ei, Ti);
+                    }
                     pCp[facei] = t2.Cp(rhoi, ei, Ti);
                     pCv[facei] = t2.Cv(rhoi, ei, Ti);
                     pkappa[facei] = t2.kappa(rhoi, ei, Ti);
@@ -256,15 +281,20 @@ void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
                 }
                 else
                 {
-                    Ti =
-                        t1.TRhoE(Ti, rhoi, ei)*x1
-                      + t2.TRhoE(Ti, rhoi, ei)*x2;
-                    if (Ti < this->TLow_)
+                    const scalar eTest =
+                        t1.Es(rhoi, ei, this->TLow_)*x1
+                      + t2.Es(rhoi, ei, this->TLow_)*x2;
+                    if (ei < eTest)
                     {
+                        ei = eTest;
                         Ti = this->TLow_;
-                        ei =
-                            t1.Es(rhoi, ei, Ti)*x1
-                          + t2.Es(rhoi, ei, Ti)*x2;
+                    }
+                    else
+                    {
+                        const scalar CvMix =
+                            t1.Cv(rhoi, ei, Ti)*x1
+                          + t2.Cv(rhoi, ei, Ti)*x2;
+                        Ti = min(10000.0, max(this->TLow_, this->TLow_ + (ei - eTest)/max(CvMix, small)));
                     }
                     pCp[facei] =
                         t1.Cp(rhoi, ei, Ti)*x1

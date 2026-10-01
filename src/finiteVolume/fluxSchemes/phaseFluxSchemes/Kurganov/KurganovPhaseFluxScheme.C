@@ -36,6 +36,7 @@ namespace phaseFluxSchemes
 {
     defineTypeNameAndDebug(Kurganov, 0);
     addToRunTimeSelectionTable(phaseFluxScheme, Kurganov, dictionary);
+    addToRunTimeSelectionTable(phaseFluxScheme, Kurganov, solid);
 }
 }
 

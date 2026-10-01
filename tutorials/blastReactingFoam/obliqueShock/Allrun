@@ -10,7 +10,13 @@ paraFoam -builtin -touch
 # - Create the mesh
 runApplication blockMesh
 
+# -- Decompose the mesh
+runApplication decomposePar
+
+# -- Add internal patch
+runParallel addEmptyPatch internalPatch internal -overwrite
+
 # -- run the calc
-runApplication $(getApplication)
+runParallel $(getApplication)
 
 # ----------------------------------------------------------------- end-of-file

@@ -332,12 +332,22 @@ void Foam::multiphaseCompressibleSystem::solveMass()
 
         // Solve volume fraction
         alphas_[phasei] -= dT*deltaAlpha;
+        tmp<fvScalarMatrix> tAlphaEqn = models().source(alphas_[phasei]);
+        if (tAlphaEqn.valid())
+        {
+            alphas_[phasei].primitiveFieldRef() -= dT.value() * tAlphaEqn().source() / mesh().V().primitiveField();
+        }
         alphas_[phasei].maxMin(0.0, 1.0);
         alphas_[phasei].correctBoundaryConditions();
 
         // Solve phase mass transport
         alphaRhos_[phasei].storePrevIter();
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
+        tmp<fvScalarMatrix> tAlphaRhoEqn = models().source(alphas_[phasei], rhos_[phasei]);
+        if (tAlphaRhoEqn.valid())
+        {
+            alphaRhos_[phasei].primitiveFieldRef() -= dT.value() * tAlphaRhoEqn().source() / mesh().V().primitiveField();
+        }
         alphaRhos_[phasei].correctBoundaryConditions();
 
         if (transportPhaseDensity_)

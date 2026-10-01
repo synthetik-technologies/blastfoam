@@ -56,6 +56,29 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewSingle
 }
 
 
+Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewSingle
+(
+    const surfaceScalarField& phi,
+    const word& fluxSchemeType
+)
+{
+    singlePhaseConstructorTable::iterator cstrIter =
+        singlePhaseConstructorTablePtr_->find(fluxSchemeType);
+
+    if (cstrIter == singlePhaseConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown singlePhase fluxScheme type "
+            << fluxSchemeType << endl << endl
+            << "Valid fluxScheme types are : " << endl
+            << singlePhaseConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(phi);
+}
+
+
 Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewMulti
 (
     const surfaceScalarField& phi
@@ -68,6 +91,29 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewMulti
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 
+    multiphaseConstructorTable::iterator cstrIter =
+        multiphaseConstructorTablePtr_->find(fluxSchemeType);
+
+    if (cstrIter == multiphaseConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown multiphase fluxScheme type "
+            << fluxSchemeType << endl << endl
+            << "Valid fluxScheme types are : " << endl
+            << multiphaseConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(phi);
+}
+
+
+Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::NewMulti
+(
+    const surfaceScalarField& phi,
+    const word& fluxSchemeType
+)
+{
     multiphaseConstructorTable::iterator cstrIter =
         multiphaseConstructorTablePtr_->find(fluxSchemeType);
 

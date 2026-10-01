@@ -58,6 +58,19 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     {
         THEEqn_.setHE(heCells[celli]);
         TCells[celli] = THESolver_->solve(TCells[celli], celli);
+        if (TCells[celli] < 200.0)
+        {
+            Info<< "CELL DEBUG: celli = " << celli 
+                << ", T = " << TCells[celli] 
+                << ", he = " << heCells[celli]
+                << ", rho = " << rho_[celli]
+                << ", volumeFractions: ";
+            forAll(volumeFractions_, phasei)
+            {
+                Info<< volumeFractions_[phasei].name() << "=" << volumeFractions_[phasei][celli] << " ";
+            }
+            Info<< endl;
+        }
         if (TCells[celli] < this->TLow_)
         {
             TCells[celli] = this->TLow_;

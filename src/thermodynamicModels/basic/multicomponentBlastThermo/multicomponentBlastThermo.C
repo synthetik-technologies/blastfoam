@@ -159,7 +159,7 @@ void Foam::multicomponentBlastThermo::initializeModels()
     {
         alphaRhoName = IOobject::groupName("alphaRho", phaseName_);
     }
-    else if
+    if
     (
         mesh.foundObject<volScalarField>
         (
@@ -169,6 +169,12 @@ void Foam::multicomponentBlastThermo::initializeModels()
     {
         alphaRhoName = IOobject::groupName("alphaRho", masterName_);
     }
+
+    alphaRhoPtr_.set(&mesh.lookupObject<volScalarField>(alphaRhoName));
+    alphaRhoPhiPtr_.set
+    (
+        &mesh.lookupObject<surfaceScalarField>(alphaRhoPhiName)
+    );
 
     integratorPtr_.reset
     (

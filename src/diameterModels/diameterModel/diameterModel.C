@@ -108,19 +108,19 @@ void Foam::diameterModels::diameter::requireD() const
 
 Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::A() const
 {
-    return Foam::constant::mathematical::pi*sqr(d_);
+    return Foam::constant::mathematical::pi*sqr(max(d_, dimensionedScalar(dimLength, 1e-10)));
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::V() const
 {
-    return Foam::constant::mathematical::pi*pow3(d_)/6.0;
+    return Foam::constant::mathematical::pi*pow3(max(d_, dimensionedScalar(dimLength, 1e-10)))/6.0;
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::diameterModels::diameter::dVdD() const
 {
-    return Foam::constant::mathematical::pi*sqr(d_)/3.0;
+    return Foam::constant::mathematical::pi*sqr(max(d_, dimensionedScalar(dimLength, 1e-10)))/3.0;
 }
 
 
@@ -163,5 +163,17 @@ Foam::diameterModels::diameter::LDratio(const label celli) const
 {
     return 1.0;
 }
+
+const Foam::volScalarField& Foam::diameterModel::d0() const
+{
+    return d();
+}
+
+
+Foam::scalar Foam::diameterModel::celld0(const label celli) const
+{
+    return d()[celli];
+}
+
 
 // ************************************************************************* //

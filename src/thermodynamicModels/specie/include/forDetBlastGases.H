@@ -36,6 +36,7 @@ License
 #include "ePolynomialBlastThermo.H"
 
 #include "JWLC.H"
+#include "eJWLC.H"
 #include "JWL.H"
 #include "LSZK.H"
 #include "BKW.H"
@@ -54,8 +55,9 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define forDetrGasEqns(uMu, rMu, uCp, rCp, uEos, Macro, Args...)            \
-    forDetThermo(uMu, rMu, uCp, rCp, uEos, JWLC, specieBlast, Macro, Args); \
-    forDetThermo(uMu, rMu, uCp, rCp, uEos, JWL, specieBlast, Macro, Args);
+    forDetThermo(uMu, rMu, uCp, rCp, uEos, JWLC,  specieBlast, Macro, Args); \
+    forDetThermo(uMu, rMu, uCp, rCp, uEos, eJWLC, specieBlast, Macro, Args); \
+    forDetThermo(uMu, rMu, uCp, rCp, uEos, JWL,   specieBlast, Macro, Args);
 
 
 #define forDetuGasEqns(uMu, rMu, uCp, rCp, Macro, Args...)                  \

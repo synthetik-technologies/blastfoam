@@ -1,0 +1,25 @@
+// pressurePhaseChange fvModels definition
+phaseChange
+{
+    type            pressurePhaseChange;
+    sourcePhase     compBAl;
+    targetPhase     gas;
+    pThreshold      1.00e+07;
+    pRange          1.00e+06;
+    tau             1e-4;
+    targetFractions
+    {
+        N2           0.131798;
+        CO           0.054463;
+        H2O          0.080026;
+        CO2          0.011443;
+        CH4          0.013036;
+        C2N2         0.073031;
+        C2H4         0.016972;
+        C2H2         0.014925;
+        HCN          0.109440;
+        C(d)         0.043722;
+        Al2O3(s)     0.451144;
+    }
+    isMoleFraction  false;
+}

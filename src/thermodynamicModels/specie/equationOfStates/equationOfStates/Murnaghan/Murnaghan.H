@@ -102,6 +102,9 @@ class Murnaghan
     //- Reference pressure
     scalar pRef_;
 
+    //- Maximum pressure
+    scalar pMax_;
+
     //- Coefficients
     scalar K0_;
     scalar kappa_;
@@ -123,6 +126,7 @@ public:
             const Specie& sp,
             const scalar rho0,
             const scalar pRef,
+            const scalar pMax,
             const scalar K0,
             const scalar kappa,
             const scalar K0Prime,
@@ -190,6 +194,12 @@ public:
 
         //- Return density given temperature and pressure
         inline scalar rho(const scalar p, const scalar T) const;
+
+        //- Return reference density
+        inline scalar rho0() const
+        {
+            return rho0_;
+        }
 
         //- Return energy given pressure and density
         inline scalar ePRho(const scalar p, const scalar rho) const

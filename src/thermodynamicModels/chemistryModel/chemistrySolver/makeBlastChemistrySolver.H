@@ -40,7 +40,8 @@ License
         Model##Thermo##ThermoPhysics,                                          \
         (                                                                      \
             word(Model##Thermo##ThermoPhysics::typeName_())                    \
-          + "<" + ThermoPhysics::typeName() + ">"                              \
+          + "<" + Thermo::typeName                                             \
+          + "<" + ThermoPhysics::typeName() + ">>"                             \
         ).c_str(),                                                             \
         0                                                                      \
     )
@@ -57,7 +58,8 @@ License
         (                                                                      \
             word(Solver##Model##Thermo##ThermoPhysics::typeName_())            \
           + "<" + word(Model<Thermo, ThermoPhysics>::typeName_())              \
-          + "<" + ThermoPhysics::typeName() + ">>"                             \
+          + "<" + Thermo::typeName                                             \
+          + "<" + ThermoPhysics::typeName() + ">>>"                            \
         ).c_str(),                                                             \
         0                                                                      \
     );                                                                         \

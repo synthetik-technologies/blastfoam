@@ -33,7 +33,7 @@ template<class ChemistryModel>
 Foam::EulerImplicitBlastChemistrySolver<ChemistryModel>::
 EulerImplicitBlastChemistrySolver
 (
-    const blastThermo& thermo
+    const multicomponentBlastThermo& thermo
 )
 :
     blastChemistrySolver<ChemistryModel>(thermo),

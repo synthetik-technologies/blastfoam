@@ -34,6 +34,7 @@ namespace phaseFluxSchemes
 {
     defineTypeNameAndDebug(HLLC, 0);
     addToRunTimeSelectionTable(phaseFluxScheme, HLLC, dictionary);
+    addToRunTimeSelectionTable(phaseFluxScheme, HLLC, solid);
 }
 }
 
@@ -166,90 +167,117 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     scalar SOwn(min(UvOwn - cOwn, UvNei - cNei));
     scalar SNei(max(UvOwn + cOwn, UvNei + cNei));
 
-
-    scalar SStar =
-        (
-            pNei - pOwn
-          + rhoOwn*UvOwn*(SOwn - UvOwn)
-          - rhoNei*UvNei*(SNei - UvNei)
-        )
-       /stabilise(rhoOwn*(SOwn - UvOwn) - rhoNei*(SNei - UvNei), small);
-    scalar pStar =
-        0.5
-       *(
-            pOwn + rhoOwn*(SOwn - UvOwn)*(SStar - UvOwn)
-          + pNei + rhoNei*(SNei - UvNei)*(SStar - UvNei)
-        );
+    const scalar denom = rhoOwn*(SOwn - UvOwn) - rhoNei*(SNei - UvNei);
+    scalar SStar = 0.5*(UvOwn + UvNei);
+    if (mag(denom) > 1e-8 && (cOwn > 1e-4 || cNei > 1e-4 || mag(pNei - pOwn) > 1e-4))
+    {
+        SStar =
+            (
+                pNei - pOwn
+              + rhoOwn*UvOwn*(SOwn - UvOwn)
+              - rhoNei*UvNei*(SNei - UvNei)
+            )/denom;
+    }
+    scalar pStarOwn(pOwn + rhoOwn*(SOwn - UvOwn)*(SStar - UvOwn));
+    scalar pStarNei(pNei + rhoNei*(SNei - UvNei)*(SStar - UvNei));
 
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
     this->save(facei, patchi, SStar, SStar_);
 
     // Owner values
-    scalar alpha, rho, E, p;
-    vector U;
+    const vector rhoUOwn = rhoOwn*UOwn;
+    const scalar rhoEOwn = rhoOwn*EOwn;
+
+    const vector rhoUPhiOwn = rhoUOwn*UvOwn + pOwn*normal;
+    const scalar rhoEPhiOwn = (rhoEOwn + pOwn)*UvOwn;
+
+    // Neighbour values
+    const vector rhoUNei = rhoNei*UNei;
+    const scalar rhoENei = rhoNei*ENei;
+
+    const vector rhoUPhiNei = rhoUNei*UvNei + pNei*normal;
+    const scalar rhoEPhiNei = (rhoENei + pNei)*UvNei;
+
+    scalar alpha;
+    scalar rhoPhi;
+    vector rhoUPhi;
+    scalar rhoEPhi;
+    scalar p;
     scalar f = 1.0;
 
     if (SOwn >= 0)
     {
         alpha = alphaOwn;
-        rho = rhoOwn;
-        phi = UvOwn*magSf;
-        U = UOwn;
-        E = EOwn;
+        phi = UvOwn;
+        rhoPhi = rhoOwn*phi;
+        rhoUPhi = rhoUPhiOwn;
+        rhoEPhi = rhoEPhiOwn;
         p = pOwn;
+        this->save(facei, patchi, UOwn, Uf_);
     }
-    else if (SStar > 0)
+    else if (SNei <= 0)
     {
-        const scalar rDeltaS = 1.0/(SOwn - SStar);
-        f = (SOwn - UvOwn)*rDeltaS;
-
-        alpha = alphaOwn;
-        rho = rhoOwn*f;
-        phi = SStar*magSf;
-        U = (UOwn - UvOwn*normal) + SStar*normal;
-        E =
-            EOwn
-          + (SStar - UvOwn)
-           *(SStar + pOwn/stabilise(rhoOwn*(SOwn - UvOwn), small));
-          // + (pStar*SStar - pOwn*UvOwn)
-           // /stabilise(rhoOwn*(SOwn - UvOwn), small);
-        p = pStar;
-    }
-    else if (SNei > 0)
-    {
-        const scalar rDeltaS = 1.0/(SNei - SStar);
-        f = (SNei - UvNei)*rDeltaS;
         alpha = alphaNei;
-        rho = rhoNei*f;
-        phi = SStar*magSf;
-        U = (UNei - UvNei*normal) + SStar*normal;
-        E =
-            ENei
-          + (SStar - UvNei)
-           *(SStar + pNei/stabilise(rhoNei*(SNei - UvNei), small));
-          // + (pStar*SStar - pNei*UvNei)
-           // /stabilise(rhoNei*(SNei - UvNei), small);
-        p = pStar;
+        phi = UvNei;
+        rhoPhi = rhoNei*phi;
+        rhoUPhi = rhoUPhiNei;
+        rhoEPhi = rhoEPhiNei;
+        p = pNei;
+        this->save(facei, patchi, UNei, Uf_);
+    }
+    else if (mag(SOwn - SStar) > small && SStar > 0)
+    {
+        f = (SOwn - UvOwn)/stabilise(SOwn - SStar, small);
+        phi = SStar*f;
+        alpha = alphaOwn;
+        rhoPhi = rhoOwn*phi;
+
+        vector rhoUStar = f*rhoOwn*(UOwn - (UvOwn - SStar)*normal);
+        scalar rhoEStar =
+            f*rhoOwn*EOwn + (pStarOwn*SStar - pOwn*UvOwn)/stabilise(SOwn - UvOwn, small);
+
+        rhoUPhi = rhoUPhiOwn + SOwn*(rhoUStar - rhoUOwn);
+        rhoEPhi = rhoEPhiOwn + SOwn*(rhoEStar - rhoEOwn);
+
+        p = pStarOwn;
+        this->save(facei, patchi, UOwn - (UvOwn - phi)*normal, Uf_);
+    }
+    else if (mag(SNei - SStar) > small && SStar < 0)
+    {
+        f = (SNei - UvNei)/stabilise(SNei - SStar, small);
+        phi = SStar*f;
+        alpha = alphaNei;
+        rhoPhi = rhoNei*phi;
+
+        vector rhoUStar = f*rhoNei*(UNei - (UvNei - SStar)*normal);
+        scalar rhoEStar =
+            f*rhoNei*ENei + (pStarNei*SStar - pNei*UvNei)/stabilise(SNei - UvNei, small);
+
+        rhoUPhi = rhoUPhiNei + SNei*(rhoUStar - rhoUNei);
+        rhoEPhi = rhoEPhiNei + SNei*(rhoEStar - rhoENei);
+
+        p = pStarNei;
+        this->save(facei, patchi, UNei - (UvNei - phi)*normal, Uf_);
     }
     else
     {
-        alpha = alphaNei;
-        rho = rhoNei;
-        phi = UvNei*magSf;
-        U = UNei;
-        E = ENei;
-        p = pNei;
+        alpha = 0.5*(alphaOwn + alphaNei);
+        phi = 0.5*(UvOwn + UvNei);
+        rhoPhi = 0.5*(rhoOwn*UvOwn + rhoNei*UvNei);
+        rhoUPhi = 0.5*(rhoUPhiOwn + rhoUPhiNei);
+        rhoEPhi = 0.5*(rhoEPhiOwn + rhoEPhiNei);
+        p = 0.5*(pOwn + pNei);
+        this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
     }
 
     this->save(facei, patchi, alpha, alphaf_);
-    this->save(facei, patchi, U, Uf_);
     this->save(facei, patchi, p, pf_);
 
-    alphaRhoPhi = alpha*rho*phi;
-    alphaRhoUPhi = alphaRhoPhi*U + alpha*p*Sf;
-    alphaRhoEPhi = alpha*phi*(rho*E + p) + phiMesh*alpha*p;
-    phi *= f;
+    alphaRhoPhi = alpha*rhoPhi*magSf;
+    alphaRhoUPhi = alpha*rhoUPhi*magSf;
+    alphaRhoEPhi = alpha*rhoEPhi*magSf + phiMesh*alpha*p;
+    phi *= magSf;
 }
 
 

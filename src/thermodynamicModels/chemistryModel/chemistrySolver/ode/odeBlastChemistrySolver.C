@@ -30,7 +30,7 @@ License
 template<class ChemistryModel>
 Foam::odeBlastChemistrySolver<ChemistryModel>::odeBlastChemistrySolver
 (
-    const blastThermo& thermo
+    const multicomponentBlastThermo& thermo
 )
 :
     blastChemistrySolver<ChemistryModel>(thermo),

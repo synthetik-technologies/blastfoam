@@ -409,14 +409,16 @@ void Foam::fluidPhaseModel::solveImplicit()
     }
 
     thermo().solveImplicit();
-    thermo().correct();
+
+    this->decode();
 }
 
 
 void Foam::fluidPhaseModel::postUpdate()
 {
-    thermoPtr_->postUpdate();
+    phaseModel::postUpdate();
 }
+
 
 void Foam::fluidPhaseModel::clear()
 {
@@ -494,23 +496,30 @@ void Foam::fluidPhaseModel::correctDeltas()
 void Foam::fluidPhaseModel::decode()
 {
     const fvConstraints& constraints = this->constraints();
+    volScalarField& alpha = *this;
 
-    this->correctBoundaryConditions();
-    const volScalarField& alpha = *this;
-    volScalarField alphaLimited(Foam::max(*this, residualAlpha()));
-    const scalar rAlpha(residualAlpha().value());
+    const scalar rAlpha = this->residualAlpha().value();
+    const scalar rAlphaRho = this->residualAlphaRho().value();
 
     // Update density (only if alpha > residual)
     forAll(*this, celli)
     {
-        const scalar alpha = (*this)[celli];
-        if (alpha > rAlpha)
+        const scalar alphai = (*this)[celli];
+        if (alphai > 1e-3 && alphaRho_[celli] > 1e-3*thermo().residualRho().value())
         {
-            rho_[celli] = alphaRho_[celli]/alpha;
+            rho_[celli] = alphaRho_[celli]/alphai;
+        }
+        else if (alphai > rAlpha && alphaRho_[celli] > rAlphaRho)
+        {
+            const scalar rhoDecoded = alphaRho_[celli]/alphai;
+            const scalar blend = (alphai - rAlpha)/(1e-3 - rAlpha);
+            rho_[celli] = blend*rhoDecoded + (1.0 - blend)*thermo().residualRho().value();
+        }
+        else
+        {
+            rho_[celli] = thermo().residualRho().value();
         }
     }
-    // rho_.internalFieldRef() = alphaRho_()/alphaLimited();
-    phaseFluxScheme::correctPhaseFields(alpha, rho_, rAlpha);
     rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
 
@@ -518,66 +527,109 @@ void Foam::fluidPhaseModel::decode()
     // alphaRho_.correctBoundaryConditions();
     // alphaRho_.boundaryFieldRef() ==
     //     (*this).boundaryField()*rho_.boundaryField();
-    volScalarField alphaRhoLimited(Foam::max(alphaRho_, residualAlphaRho()));
-
 
     // Update velocity
-    U_.internalFieldRef() = alphaRhoU_()/(alphaRhoLimited());
-    phaseFluxScheme::correctPhaseFields(alpha, U_, rAlpha);
+    forAll(U_, celli)
+    {
+        if (alpha[celli] > 1e-2 && alphaRho_[celli] > 1e-2*thermo().residualRho().value())
+        {
+            const vector UDecoded = alphaRhoU_[celli]/alphaRho_[celli];
+            const scalar magU = mag(UDecoded);
+            if (magU > 20000.0)
+            {
+                U_[celli] = (20000.0/magU)*UDecoded;
+            }
+            else
+            {
+                U_[celli] = UDecoded;
+            }
+        }
+        else if (alpha[celli] > rAlpha && alphaRho_[celli] > rAlphaRho)
+        {
+            const vector UDecoded = alphaRhoU_[celli]/alphaRho_[celli];
+            const scalar magU = mag(UDecoded);
+            if (magU > 20000.0)
+            {
+                U_[celli] = Zero;
+            }
+            else
+            {
+                const scalar blend = (alpha[celli] - rAlpha)/(1e-2 - rAlpha);
+                U_[celli] = blend*UDecoded;
+            }
+        }
+        else
+        {
+            U_[celli] = Zero;
+        }
+    }
     if (constraints.constrainsField(U_.name()))
     {
         constraints.constrain(U_);
     }
-    constraints.constrain(U_);
     U_.correctBoundaryConditions();
 
     K_ = 0.5*magSqr(U_);
 
     alphaRhoU_ == alphaRho_*U_;
-    // alphaRhoU_.correctBoundaryConditions();
-    // alphaRhoU_.boundaryFieldRef() ==
-    //     (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
 
-
-    // Update internal energy
-    const scalar rAlphaRho = this->residualAlphaRho().value();
+    const scalar alphaCutoff = 0.01;
     forAll(e_, celli)
     {
         const scalar alphaRho = alphaRho_[celli];
-        if (alphaRho > rAlphaRho)
+        const scalar TMinPhys = Foam::max(100.0, thermoPtr_->TLow());
+        const scalar eMin = thermoPtr_->cellhe(TMinPhys, celli);
+        const scalar eMax = thermoPtr_->cellhe(thermoPtr_->THigh(), celli);
+        if (alpha[celli] > alphaCutoff && alphaRho > rAlphaRho)
         {
-            e_[celli] = alphaRhoE_[celli]/alphaRho - K_[celli];
+            const scalar eDecoded = alphaRhoE_[celli]/alphaRho - K_[celli];
+            e_[celli] = Foam::min(eMax, Foam::max(eMin, eDecoded));
+            alphaRhoE_[celli] = alphaRho_[celli]*(e_[celli] + K_[celli]);
         }
-        // else
-        // {
-        //     e_[celli] = thermoPtr_->cellhe(thermoPtr_->TLow(), celli);
-        // }
+        else
+        {
+            const scalar eRef = thermoPtr_->cellhe(288.15, celli);
+            e_[celli] = eRef;
+            alphaRhoE_[celli] = alphaRho_[celli]*(eRef + K_[celli]);
+        }
     }
-    // e_.internalFieldRef() = alphaRhoE_()/alphaRhoLimited() - K_();
-    phaseFluxScheme::correctPhaseFields(alpha, e_, rAlpha);
     constraints.constrain(e_);
     e_.correctBoundaryConditions();
 
     // Correct thermo (T, mu, alpha, etc)
     thermoPtr_->correct();
 
+    // Reset T in cells where phase does not exist
+    volScalarField& T = thermoPtr_->T();
+    const scalar TMinPhys = Foam::max(100.0, thermoPtr_->TLow());
+    forAll(T, celli)
+    {
+        if (alpha[celli] <= alphaCutoff || alphaRho_[celli] <= rAlphaRho)
+        {
+            T[celli] = 288.15;
+            e_[celli] = thermoPtr_->cellhe(288.15, celli);
+            alphaRhoE_[celli] = alphaRho_[celli]*(e_[celli] + K_[celli]);
+        }
+    }
+    T.max(TMinPhys);
+    T.min(thermoPtr_->THigh());
+    T.correctBoundaryConditions();
+
     // Update total energy because e may have changed
     alphaRhoE_ == alphaRho_*(e_ + K_);
 
-    // Limit speed of sound in cells with low volume fraction
+    // Set speed of sound in dilute cells
     volScalarField& c = thermoPtr_->speedOfSound();
     forAll(c, celli)
     {
-        if (alpha[celli] < rAlpha || alphaRho_[celli] < rAlphaRho)
+        if (alpha[celli] <= rAlpha || alphaRho_[celli] <= rAlphaRho)
         {
             c[celli] = small;
             p_[celli] = small;
         }
     }
-    phaseFluxScheme::correctPhaseFields(alpha, c, rAlpha);
     c.correctBoundaryConditions();
 
-    // phaseFluxScheme::correctPhaseFields(alpha, p_, rAlpha);
     constraints.constrain(p_);
     p_.correctBoundaryConditions();
 }

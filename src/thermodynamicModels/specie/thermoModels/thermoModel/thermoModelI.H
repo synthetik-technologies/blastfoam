@@ -102,8 +102,10 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
             << endl;
     }
 
+    scalar Tprev = 0.0;
     do
     {
+        Tprev = Test;
         Test = Tnew;
         Tnew =
             (this->*limit)
@@ -115,6 +117,12 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
 
         absError = mag((Tnew - Test));
         relError = absError/max(Tnew, small);
+
+        if (iter > 2 && mag(Tnew - Tprev) <= 1e-6*max(Tnew, 1.0))
+        {
+            Tnew = 0.5*(Tnew + Test);
+            break;
+        }
 
         if (diagnostics)
         {

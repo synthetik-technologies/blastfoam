@@ -96,10 +96,7 @@ Foam::combustionModels::EDC::EDC
     timeIndex_(-1),
     chemistryPtr_
     (
-        blastChemistryModel::New
-        (
-            dynamicCast<const blastThermo>(thermo)
-        )
+        blastChemistryModel::New(thermo)
     )
 {}
 

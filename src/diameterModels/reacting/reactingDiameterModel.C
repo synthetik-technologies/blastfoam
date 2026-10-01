@@ -65,6 +65,7 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
         mesh,
         dimensionedScalar("0", inv(dimVolume), 1.0)
     ),
+    d0_(this->d_),
     dVdt_
     (
         IOobject
@@ -97,9 +98,28 @@ void Foam::diameterModels::reactingDiameterModel::update()
             IOobject::groupName("alpha", this->d_.group())
         );
 
+    forAll(this->d_, celli)
+    {
+        if (alpha[celli] <= 1e-4)
+        {
+            this->d_[celli] = d0_[celli];
+        }
+        else
+        {
+            this->d_[celli] = Foam::max(1e-10, Foam::min(this->d_[celli], d0_[celli]));
+        }
+    }
+    this->d_.correctBoundaryConditions();
+
+    const dimensionedScalar piBy6
+    (
+        "piBy6",
+        dimless,
+        constant::mathematical::pi/6.0
+    );
     N_ =
         alpha
-       /max(this->V(), dimensionedScalar(dimVolume, small));
+       /max(piBy6*pow3(d0_), dimensionedScalar(dimVolume, small));
 }
 
 
@@ -123,6 +143,12 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const volScalarField& T
 )
 {
+    const volScalarField& alpha =
+        this->d_.mesh().lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", this->d_.group())
+        );
+
     volScalarField VOld
     (
         IOobject::groupName("V", this->d_.group()),
@@ -140,7 +166,18 @@ void Foam::diameterModels::reactingDiameterModel::solve
 
     //- Change dRdt to dDdt
     this->d_ += dT*dDdt;
-    this->d_.max(1e-10);
+    forAll(this->d_, celli)
+    {
+        if (alpha[celli] <= 1e-4)
+        {
+            this->d_[celli] = d0_[celli];
+        }
+        else
+        {
+            this->d_[celli] = Foam::max(1e-10, Foam::min(this->d_[celli], d0_[celli]));
+        }
+    }
+    this->d_.correctBoundaryConditions();
 
     dVdt_ = (this->V() - VOld)/dT;
     dDdt = (this->d_ - dOld)/dT;
@@ -160,7 +197,26 @@ void Foam::diameterModels::reactingDiameterModel::solve
     volScalarField deltaPhid(fvc::div(phi, d_) - d_*fvc::div(phi));
     this->storeAndBlendDelta(deltaPhid);
     this->d_ = dOld - dT*(deltaPhid - dDdt);
-    this->d_.max(1e-10);
+    forAll(this->d_, celli)
+    {
+        if (alpha[celli] <= 1e-4)
+        {
+            this->d_[celli] = d0_[celli];
+        }
+        else
+        {
+            this->d_[celli] = Foam::max(1e-10, Foam::min(this->d_[celli], dOld[celli]));
+        }
+    }
+    this->d_.correctBoundaryConditions();
+
+    dVdt_ = (this->V() - VOld)/dT;
+    dVdt_.min(0.0);
+    dDdt = (this->d_ - dOld)/dT;
+    dDdt.min(0.0);
+
+    dDdt = this->calcAndStoreDelta(dDdt);
+    dVdt_ = this->calcAndStoreDelta(dVdt_);
 }
 
 

@@ -51,11 +51,20 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
         scalar& Ti = TI[celli];
 
         // Update temperature
-        Ti = t.TRhoE(Ti, rhoi, ei);
-        if (Ti < this->TLow_)
+        const scalar eTest = t.Es(rhoi, ei, this->TLow_);
+        if (ei < eTest)
         {
-            ei = t.Es(rhoi, ei, this->TLow_);
+            ei = eTest;
             Ti = this->TLow_;
+        }
+        else
+        {
+            Ti = t.TRhoE(Ti, rhoi, ei);
+            if (Ti > 10000.0)
+            {
+                Ti = 10000.0;
+                ei = t.Es(rhoi, ei, Ti);
+            }
         }
 
         const scalar pi = t.p(rhoi, ei, Ti);
@@ -107,11 +116,20 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate()
                 scalar& ei = phe[facei];
                 scalar& Ti = pT[facei];
 
-                Ti = t.TRhoE(Ti, rhoi, ei);
-                if (Ti < this->TLow_)
+                const scalar eTest = t.Es(rhoi, ei, this->TLow_);
+                if (ei < eTest)
                 {
-                    ei = t.Es(rhoi, ei, this->TLow_);
+                    ei = eTest;
                     Ti = this->TLow_;
+                }
+                else
+                {
+                    Ti = t.TRhoE(Ti, rhoi, ei);
+                    if (Ti > 10000.0)
+                    {
+                        Ti = 10000.0;
+                        ei = t.Es(rhoi, ei, Ti);
+                    }
                 }
             }
         }

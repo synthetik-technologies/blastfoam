@@ -75,7 +75,7 @@ Foam::kineticTheoryModels::viscosityModels::Gidaspow::nu
 {
     const scalar sqrtPi = sqrt(constant::mathematical::pi);
 
-    return da*sqrt(Theta)*
+    return da*sqrt(max(Theta, dimensionedScalar(sqr(dimVelocity), small)))*
     (
         (4.0/5.0)*sqr(phase)*g0*(1.0 + e)/sqrtPi
       + (1.0/15.0)*sqrtPi*g0*(1.0 + e)*sqr(phase)

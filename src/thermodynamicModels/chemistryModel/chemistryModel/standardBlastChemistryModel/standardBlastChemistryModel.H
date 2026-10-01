@@ -159,7 +159,7 @@ public:
     // Constructors
 
         //- Construct from thermo
-        standardBlastChemistryModel(const blastThermo& thermo);
+        standardBlastChemistryModel(const multicomponentBlastThermo& thermo);
 
         //- Disallow default bitwise copy construction
         standardBlastChemistryModel(const standardBlastChemistryModel&) = delete;

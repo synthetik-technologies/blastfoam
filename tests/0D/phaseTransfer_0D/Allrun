@@ -1,0 +1,13 @@
+#!/bin/sh
+cd "${0%/*}" || exit
+. "${WM_PROJECT_DIR:?}"/bin/tools/RunFunctions
+
+# Clean polyMesh and time directories
+rm -rf 0.* [1-9]* postProcessing log.* constant/polyMesh
+
+# Re-generate 0 fields
+python3 ../setup_case.py
+
+# Run mesh generation and solver
+runApplication blockMesh
+runApplication $(getApplication)

@@ -33,7 +33,7 @@ template<class BasicThermo, class ThermoType>
 Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::
 standardBlastChemistryModel
 (
-    const blastThermo& thermo
+    const multicomponentBlastThermo& thermo
 )
 :
     blastChemistryModel(thermo),
@@ -486,7 +486,7 @@ Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::solve
     {
         scalar Ti = T[celli];
 
-        if (Ti > Treact_)
+        if (Ti > Treact_ && mixture_.alphaRho()[celli] > SMALL)
         {
             const scalar rhoi = rho0[celli];
             scalar pi = this->mixture().cellp(celli);

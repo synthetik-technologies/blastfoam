@@ -54,8 +54,23 @@ Foam::reactingFluidBlastThermo<Thermo>::reactingFluidBlastThermo
             {"odeCombustion", "odeChemistry"},
             false
         )
+    ),
+    Qdot_
+    (
+        IOobject
+        (
+            IOobject::groupName("Qdot", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, 0)
     )
-{}
+{
+    this->correctMassFractions();
+}
 
 
 template<class Thermo>
@@ -84,8 +99,23 @@ Foam::reactingFluidBlastThermo<Thermo>::reactingFluidBlastThermo
             {"odeCombustion", "odeChemistry"},
             false
         )
+    ),
+    Qdot_
+    (
+        IOobject
+        (
+            IOobject::groupName("Qdot", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, 0)
     )
-{}
+{
+    this->correctMassFractions();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -105,6 +135,8 @@ void Foam::reactingFluidBlastThermo<Thermo>::update()
         combustion_->correct();
     }
 
+    Qdot_ = combustion_->Qdot();
+
     forAll(this->species_, speciei)
     {
         if (this->solveSpecie(speciei))
@@ -120,7 +152,7 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::reactingFluidBlastThermo<Thermo>::ESource() const
 {
-    return combustion_->Qdot();
+    return Qdot_;
 }
 
 

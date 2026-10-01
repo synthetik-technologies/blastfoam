@@ -1,0 +1,187 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( compBAl Al gas );
+
+TLow            200.0;
+
+compBAl
+{
+    type            detonating;
+    reactants
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState Murnaghan;
+        }
+        equationOfState
+        {
+	    rho0            1624.45;
+            n               6.0;
+            kappa           12.61e9;
+            Gamma           1.22;
+            pRef            101325;
+            pMax            1e11;
+        }
+        specie
+        {
+            molWeight       70.21;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1030;
+            Hf              0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState eJWLC;
+        }
+        equationOfState
+        {
+	    rho0            1624.45;
+	    A               275e9;
+	    B               1.412e9;
+            C               1.043e9;
+            R1              3.433;
+            R2              0.7416;
+            omega           0.2387;
+            pMax            1e11;
+            Cv              1410.19;
+            T_CJ            3432.97;
+            rho_CJ          2286.93;
+            E0              -5.484e6;
+        }
+        specie
+        {
+	  molWeight       35.9;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1410;
+            Hf              0;
+        }
+    }
+    activationModel linear;
+    initiation
+    {
+        E0              0;
+        points          ( ( 0.01 0.005 0.005 ) );
+        vDet            7612;
+    }
+    residualRho     1e-12;
+    residualAlpha   1e-12;
+    TLow            200.0;
+}
+
+gas
+{
+  /*      type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;
+        a               0;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        Cv              718;
+        Hf              0;
+	}*/
+        type            reacting;
+    thermoType
+    {
+        transport       const;
+        thermo          hConst;
+        equationOfState perfectGas;
+    }
+    
+    #include "thermo.constGas"
+    defaultSpecie   N2;
+    
+    residualRho     1e-12;
+    residualAlpha   1e-12;
+    TLow            200.0;
+}
+
+Al
+{
+    type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState Murnaghan;
+    }
+    equationOfState
+    {
+        rho0            2700;
+        n               4.4;
+        kappa           76e9;
+        Gamma           2.0;
+        pRef            101325;
+        pMax            1e11;
+    }
+    specie
+    {
+        molWeight       26.98;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        Cv              900;
+        Hf              0;
+    }
+    residualRho     1e-12;
+    residualAlpha   1e-12;
+    TLow            200.0;
+}
+
+// ************************************************************************* //

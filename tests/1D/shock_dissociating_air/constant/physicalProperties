@@ -1,0 +1,46 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            basic;
+
+thermoType
+{
+    transport       sutherland;
+    thermo          janaf;
+    equationOfState perfectGas;
+}
+
+specie
+{
+    molWeight       28.97;
+}
+
+thermodynamics
+{
+    Tlow            200;
+    Thigh           6000;
+    Tcommon         1000;
+    highCpCoeffs    ( 3.088538 0.00130434 -4.75532e-07 8.34944e-11 -5.5738e-15 -988.136 5.39434 );
+    lowCpCoeffs     ( 3.28067 0.00134928 -3.2518e-06 4.7327e-09 -2.1156e-12 -1017.61 4.38809 );
+}
+
+transport
+{
+    As              1.458e-06;
+    Ts              110.4;
+}
+
+// ************************************************************************* //

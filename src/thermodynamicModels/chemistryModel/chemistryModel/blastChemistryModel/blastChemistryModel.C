@@ -43,14 +43,14 @@ void Foam::blastChemistryModel::correct()
 
 Foam::blastChemistryModel::blastChemistryModel
 (
-    const blastThermo& mixture
+    const multicomponentBlastThermo& mixture
 )
 :
     IOdictionary
     (
         IOobject
         (
-            IOobject::groupName("chemistryProperties", mixture.phaseName()),
+            IOobject::groupName("chemistryProperties", mixture.masterName()),
             mixture.mesh().time().constant(),
             mixture.mesh(),
             IOobject::MUST_READ_IF_MODIFIED,
@@ -58,8 +58,7 @@ Foam::blastChemistryModel::blastChemistryModel
         )
     ),
     mesh_(mixture.mesh()),
-    mixture_(dynamicCast<const multicomponentBlastThermo>(mixture)),
-    thermo_(refCast<const blastThermo>(mixture)),
+    mixture_(mixture),
     chemistry_(lookup("chemistry")),
     deltaTChemIni_(lookup<scalar>("initialChemicalTimeStep")),
     deltaTChemMax_(lookupOrDefault("maxChemicalTimeStep", great)),
@@ -67,7 +66,7 @@ Foam::blastChemistryModel::blastChemistryModel
     (
         IOobject
         (
-            thermo_.phasePropertyName("deltaTChem"),
+            IOobject::groupName("deltaTChem", mixture.masterName()),
             mesh().time().constant(),
             mesh(),
             IOobject::NO_READ,

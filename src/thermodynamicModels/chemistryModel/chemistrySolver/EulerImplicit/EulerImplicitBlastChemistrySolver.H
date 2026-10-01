@@ -87,7 +87,7 @@ public:
     // Constructors
 
         //- Construct from thermo
-        EulerImplicitBlastChemistrySolver(const blastThermo& thermo);
+        EulerImplicitBlastChemistrySolver(const multicomponentBlastThermo& thermo);
 
 
     //- Destructor

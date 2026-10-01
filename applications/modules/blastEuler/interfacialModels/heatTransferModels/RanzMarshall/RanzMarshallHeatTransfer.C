@@ -64,22 +64,30 @@ Foam::heatTransferModels::RanzMarshall::~RanzMarshall()
 Foam::tmp<Foam::volScalarField>
 Foam::heatTransferModels::RanzMarshall::Ki() const
 {
+    const volScalarField& d = pair_.dispersed().d();
+    const volScalarField& d0 = pair_.dispersed().d0();
+    const volScalarField dEff = max(d, d0);
     return
         6.0
        *pair_.continuous().thermo().kappa()
        *this->NuModel_->Nu()
-       /sqr(pair_.dispersed().d());
+       *d
+       /pow3(dEff);
 }
 
 
 Foam::scalar
 Foam::heatTransferModels::RanzMarshall::cellKi(const label celli) const
 {
+    const scalar d = pair_.dispersed().celld(celli);
+    const scalar d0 = pair_.dispersed().celld0(celli);
+    const scalar dEff = max(d, d0);
     return
         6.0
        *pair_.continuous().thermo().kappa()[celli]
        *this->NuModel_->cellNu(celli)
-       /sqr(pair_.dispersed().celld(celli));
+       *d
+       /pow3(dEff);
 }
 
 

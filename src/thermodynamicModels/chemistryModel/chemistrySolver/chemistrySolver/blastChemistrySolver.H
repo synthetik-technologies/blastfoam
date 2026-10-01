@@ -37,7 +37,7 @@ SourceFiles
 
 #include "IOdictionary.H"
 #include "scalarField.H"
-#include "blastThermo.H"
+#include "multicomponentBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,7 +59,7 @@ public:
     // Constructors
 
         //- Construct from thermo
-        blastChemistrySolver(const blastThermo& thermo);
+        blastChemistrySolver(const multicomponentBlastThermo& thermo);
 
 
     //- Destructor

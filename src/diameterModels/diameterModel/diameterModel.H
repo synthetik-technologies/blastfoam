@@ -131,6 +131,12 @@ public:
         //- Return effective diameter
         virtual const volScalarField& d() const  = 0;
 
+        //- Return initial/reference diameter
+        virtual const volScalarField& d0() const;
+
+        //- Return initial/reference diameter for a cell
+        virtual scalar celld0(const label celli) const;
+
         //- Return surface area
         virtual tmp<volScalarField> A() const = 0;
 

@@ -81,7 +81,7 @@ Foam::kineticTheoryModels::conductivityModels::Gidaspow::kappa
 {
     const scalar sqrtPi = sqrt(constant::mathematical::pi);
 
-    return rho1*da*sqrt(Theta)*
+    return rho1*da*sqrt(max(Theta, dimensionedScalar(sqr(dimVelocity), small)))*
     (
         2.0*sqr(phase)*g0*(1.0 + e)/sqrtPi
       + (9.0/8.0)*sqrtPi*g0*0.5*(1.0 + e)*sqr(phase)

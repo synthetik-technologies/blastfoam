@@ -32,6 +32,7 @@ License
 #include "noSwarmCorrection.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
+#include "zeroGradientFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -75,13 +76,32 @@ Foam::dragModels::dispersedDragModel::~dispersedDragModel()
 Foam::tmp<Foam::volScalarField>
 Foam::dragModels::dispersedDragModel::Ki() const
 {
-    return
-        0.75
-       *CdRe()
-       *swarmCorrection_->Cs()
-       *pair_.continuous().rho()
-       *pair_.continuous().nu()
-       /sqr(pair_.dispersed().d());
+    tmp<volScalarField> tKi
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "Ki",
+                pair_.continuous().mesh().time().name(),
+                pair_.continuous().mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            pair_.continuous().mesh(),
+            dimensionedScalar(dimDensity/dimTime, 0.0),
+            zeroGradientFvPatchScalarField::typeName
+        )
+    );
+    volScalarField& ki = tKi.ref();
+
+    forAll(ki, celli)
+    {
+        ki[celli] = cellKi(celli);
+    }
+    ki.correctBoundaryConditions();
+    return tKi;
 }
 
 
@@ -90,25 +110,57 @@ Foam::scalar Foam::dragModels::dispersedDragModel::cellKi
     const label celli
 ) const
 {
+    const scalar d = pair_.dispersed().celld(celli);
+    const scalar d0 = pair_.dispersed().celld0(celli);
+    const scalar dEff = max(d, d0);
     return
         0.75
        *cellCdRe(celli)
        *swarmCorrection_->cellCs(celli)
        *pair_.continuous().rho()[celli]
-       *pair_.continuous().cellnu(celli)
-       /sqr(pair_.dispersed().celld(celli));
+       *max(pair_.continuous().cellnu(celli), 1e-15)
+       *(d*d)
+       /pow4(dEff);
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::dragModels::dispersedDragModel::stabK() const
 {
-    return
-        max
+    tmp<volScalarField> tstabK
+    (
+        new volScalarField
         (
-            pair_.dispersed(),
-            pair_.dispersed().residualAlpha()
-        )*Ki();
+            IOobject
+            (
+                "stabK",
+                pair_.continuous().mesh().time().name(),
+                pair_.continuous().mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            pair_.continuous().mesh(),
+            dimensionedScalar(dimDensity/dimTime, 0.0),
+            zeroGradientFvPatchScalarField::typeName
+        )
+    );
+    volScalarField& stabK = tstabK.ref();
+
+    const volScalarField& alphaD = pair_.dispersed();
+    const scalar rAlphaD = pair_.dispersed().residualAlpha().value();
+    const volScalarField& alphaC = pair_.continuous();
+    const scalar rAlphaC = pair_.continuous().residualAlpha().value();
+
+    forAll(stabK, celli)
+    {
+        if (alphaD[celli] > rAlphaD && alphaC[celli] > rAlphaC)
+        {
+            stabK[celli] = max(alphaD[celli], rAlphaD)*cellKi(celli);
+        }
+    }
+    stabK.correctBoundaryConditions();
+    return tstabK;
 }
 
 
@@ -129,12 +181,20 @@ Foam::scalar Foam::dragModels::dispersedDragModel::cellStabK
     const label celli
 ) const
 {
-    return
-        max
-        (
-            pair_.dispersed()[celli],
-            pair_.dispersed().residualAlpha().value()
-        )*cellKi(celli);
+    if
+    (
+        pair_.dispersed()[celli] > pair_.dispersed().residualAlpha().value()
+     && pair_.continuous()[celli] > pair_.continuous().residualAlpha().value()
+    )
+    {
+        return
+            max
+            (
+                pair_.dispersed()[celli],
+                pair_.dispersed().residualAlpha().value()
+            )*cellKi(celli);
+    }
+    return 0.0;
 }
 
 

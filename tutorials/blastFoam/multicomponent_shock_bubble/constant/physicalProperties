@@ -1,0 +1,100 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( air bubble );
+
+air
+{
+    type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState perfectGas;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              1.8e-05;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              717;
+        Hf              0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+bubble
+{
+    type            multicomponent;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState perfectGas;
+    }
+    
+    species         ( He O2 );
+    
+    He
+    {
+        specie
+        {
+            molWeight       4.0026;
+        }
+        transport
+        {
+            mu              1.96e-05;
+            Pr              0.67;
+        }
+        thermodynamics
+        {
+            Cv              3117;
+            Hf              0;
+        }
+    }
+
+    O2
+    {
+        specie
+        {
+            molWeight       31.998;
+        }
+        transport
+        {
+            mu              2.0e-05;
+            Pr              0.7;
+        }
+        thermodynamics
+        {
+            Cv              658;
+            Hf              0;
+        }
+    }
+
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+
+// ************************************************************************* //

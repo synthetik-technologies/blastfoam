@@ -116,6 +116,9 @@ public:
         //- Calculate density
         virtual void updateRho();
 
+        //- Calculate density given a pressure field
+        virtual void updateRho(const volScalarField& p);
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 

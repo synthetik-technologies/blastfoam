@@ -108,6 +108,18 @@ Foam::word Foam::phasePair::name() const
 }
 
 
+const Foam::volScalarField& Foam::phasePair::d0() const
+{
+    return dispersed().d0();
+}
+
+
+Foam::scalar Foam::phasePair::celld0(const label celli) const
+{
+    return dispersed().celld0(celli);
+}
+
+
 Foam::word Foam::phasePair::otherName() const
 {
     word name1(first());
@@ -136,7 +148,7 @@ Foam::tmp<Foam::volVectorField> Foam::phasePair::Ur() const
 
 Foam::tmp<Foam::volScalarField> Foam::phasePair::Re() const
 {
-    return magUr()*dispersed().d()/continuous().nu();
+    return magUr()*dispersed().d()/max(continuous().nu(), dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 1e-15));
 }
 
 
@@ -237,10 +249,11 @@ Foam::vector Foam::phasePair::cellUr(const label celli) const
 
 Foam::scalar Foam::phasePair::cellRe(const label celli) const
 {
+    const scalar nuVal = max(continuous().cellnu(celli), 1e-15);
     return
         cellmagUr(celli)
-       *dispersed().celld(celli)
-       /continuous().cellnu(celli);
+       *max(dispersed().celld(celli), 1e-10)
+       /nuVal;
 }
 
 

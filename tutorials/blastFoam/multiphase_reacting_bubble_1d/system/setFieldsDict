@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+defaultFieldValues
+(
+    volScalarFieldValue alpha.air 1.0
+    volScalarFieldValue alpha.bubble 0.0
+    volScalarFieldValue rho.air 0.1742
+    volScalarFieldValue rho.bubble 0.1732
+    volScalarFieldValue p 1e5
+    volScalarFieldValue T 2000
+    volVectorFieldValue U (100 0 0)
+    volScalarFieldValue CH4.bubble 0.0
+    volScalarFieldValue O2.bubble 0.0
+    volScalarFieldValue N2.bubble 1.0
+    volScalarFieldValue H2O.bubble 0.0
+    volScalarFieldValue CO2.bubble 0.0
+);
+
+regions
+(
+    // Bubble region (Methane + Oxygen) - now a block for 1D
+    boxToCell
+    {
+        box (0.35 -1 -1) (0.45 1 1);
+        fieldValues
+        (
+            volScalarFieldValue alpha.air 0.0
+            volScalarFieldValue alpha.bubble 1.0
+            volScalarFieldValue rho.bubble 0.1732
+            volScalarFieldValue T 2000
+            volScalarFieldValue CH4.bubble 0.2
+            volScalarFieldValue O2.bubble 0.8
+            volScalarFieldValue N2.bubble 0.0
+            volScalarFieldValue H2O.bubble 0.0
+            volScalarFieldValue CO2.bubble 0.0
+        );
+    }
+);
+
+// ************************************************************************* //

@@ -185,6 +185,12 @@ public:
         //- Return density given temperature and pressure
         inline scalar rho(const scalar p, const scalar T) const;
 
+        //- Return reference density
+        inline scalar rho0() const
+        {
+            return rho0_;
+        }
+
         //- Return energy given pressure and density
         inline scalar ePRho(const scalar p, const scalar rho) const
         {

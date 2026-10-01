@@ -100,7 +100,7 @@ bool Foam::activationModel::detonationPoint::check
     const volScalarField& alphaRho
 )
 {
-    if (activated_)
+    if (activated_ || delay_ > alphaRho.mesh().time().value())
     {
         return true;
     }

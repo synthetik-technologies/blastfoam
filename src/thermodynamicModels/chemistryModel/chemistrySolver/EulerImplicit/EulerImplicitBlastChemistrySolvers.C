@@ -31,6 +31,8 @@ License
 #include "forBlastGases.H"
 #include "makeBlastChemistrySolver.H"
 
+#include "phaseFluidBlastThermo.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -40,6 +42,13 @@ namespace Foam
         makeChemistrySolvers,
         EulerImplicitBlastChemistrySolver,
         fluidBlastThermo
+    );
+
+    forCoeffGases
+    (
+        makeChemistrySolvers,
+        EulerImplicitBlastChemistrySolver,
+        phaseFluidBlastThermo
     );
 }
 

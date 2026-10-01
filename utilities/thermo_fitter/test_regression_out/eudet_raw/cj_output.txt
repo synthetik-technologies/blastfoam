@@ -1,0 +1,55 @@
+Explosive: COMP-B:0.7 Al:0.3
+Initial Density: 1820 kg/m^3
+Initial Specific Energy (e0): 5916.62 J/kg (0.0107683 GPa)
+--- Active (Non-frozen) Phase Details ---
+Mass Fraction in Mixture (Y_eq): 0.919
+Molar Mass (W_eq, kg/mol): 0.0371206
+Reference Density (rho0_eq, kg/m^3): 1769.25
+CJ State Density (rho_cj_eq, kg/m^3): 2361.14
+Reference Specific Energy (e0_eq, J/kg): 6441.42 (0.0113965 GPa)
+Elemental Abundances (mol/kg_eq):
+  H           : 20.0078
+  C           : 15.8678
+  N           : 16.269
+  O           : 20.1927
+  Al          : 8.83206
+
+Compound molecular mass (kg/mol): 0.0702671
+
+--- Inert Constraints ---
+Constraints: Al(s):0.27
+
+--- CJ State ---
+CJ Pressure (Pa): 2.07589e+10
+CJ Temperature (K): 5375.25
+CJ Volume (m^3/kg): 0.000416944
+CJ Velocity (m/s): 6877.21
+Internal Energy (J/kg): 1.38127e+06
+Entropy (J/K/kg): 6320.14
+CJ Composition (mass fractions):
+  N2: 0.120886
+  CO: 0.0499536
+  H2O: 0.0734009
+  CO2: 0.0104958
+  CH4: 0.0119566
+  C2N2: 0.0669846
+  C2H4: 0.0155673
+  C2H2: 0.0136892
+  HCN: 0.100379
+  C(d): 0.0401023
+  Al(s): 0.081
+  Al2O3(s): 0.413793
+
+--- JWL Parameters ---
+A (GPa): 175.906
+B (GPa): 1.40151
+C (GPa): 1.6935
+R1: 3.08087
+R2: 0.57568
+omega: 0.153597
+Cv (J/kg/K): 1810.62
+E0 (J/kg): -9.14546e+06
+E0 (GPa): -16.1806
+GurneyEnergy (J/kg): 9.14546e+06
+GurneyVelocity (m/s): 4276.79
+RMS Error: 0.0828704

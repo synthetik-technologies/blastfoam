@@ -58,7 +58,8 @@ Foam::JWL<Specie>::JWL
     B_(dict.subDict("equationOfState").lookup<scalar>("B")),
     R1_(dict.subDict("equationOfState").lookup<scalar>("R1")),
     R2_(dict.subDict("equationOfState").lookup<scalar>("R2")),
-    e0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("e0", 0.0))
+    e0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("e0", 0.0)),
+    pMax_(dict.subDict("equationOfState").lookupOrDefault<scalar>("pMax", 1e15))
 {}
 
 
@@ -77,6 +78,7 @@ void Foam::JWL<Specie>::write(Ostream& os) const
     dict.add("R1", R1_);
     dict.add("R2", R2_);
     dict.add("e0", e0_);
+    dict.add("pMax", pMax_);
     os  << indent << dict.dictName() << dict;
 }
 

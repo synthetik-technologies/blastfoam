@@ -1,0 +1,100 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            detonating;
+reactants
+{
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState Murnaghan;
+    }
+    equationOfState
+    {
+        rho0            1820;
+        n               5.17;
+        K0              12.6e9;
+        Gamma           1.22;
+        pRef            101325;
+        pMax            1e11;
+    }
+    specie
+    {
+        molWeight       70.21;
+    }
+    transport
+    {
+        mu              1e-04;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              1030;
+        Hf              0;
+    }
+}
+products
+{
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState eJWLC;
+    }
+    equationOfState
+    {
+        rho0            1820;
+        A               1732.51e9;
+        B               11.7173e9;
+        C               0.831709e9;
+        R1              5.8162;
+        R2              1.51614;
+        omega           0.24273;
+        pMax            1e11;
+        Cv              1410.19;
+        T_CJ            3432.97;
+        rho_CJ          2286.93;
+        E0              -3.65138e6;
+    }
+    specie
+    {
+        molWeight       35.9;
+    }
+    transport
+    {
+        mu              1e-04;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              1410;
+        Hf              0;
+    }
+}
+activationModel nodeProgrammed;
+initiation
+{
+    E0              0;
+    points          ( ( 0.0505 0.005 0.005 ) );
+    vDet            7612;
+    Pcj             1.55e10;
+    burnModel       programmed;
+}
+residualRho     1820;
+residualAlpha   1e-06;
+
+// ************************************************************************* //

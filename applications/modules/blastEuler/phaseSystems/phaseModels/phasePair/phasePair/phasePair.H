@@ -122,6 +122,12 @@ public:
         //- Other pair name
         virtual word otherName() const;
 
+        //- Dispersed phase initial diameter
+        const volScalarField& d0() const;
+
+        //- Dispersed phase initial diameter for a cell
+        scalar celld0(const label celli) const;
+
         //- Average density
         tmp<volScalarField> rho() const;
 

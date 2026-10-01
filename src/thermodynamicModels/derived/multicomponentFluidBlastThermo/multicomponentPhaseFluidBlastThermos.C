@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "phaseFluidBlastThermo.H"
-#include "multicomponentFluidBlastThermo.H"
+#include "multicomponentPhaseFluidBlastThermo.H"
 #include "mixtureBlastThermo.H"
 #include "forBlastGases.H"
 #include "makeBlastThermo.H"
@@ -39,7 +39,7 @@ namespace Foam
     (
         makeThermo,
         phaseFluidBlastThermo,
-        multicomponentFluidBlastThermo,
+        multicomponentPhaseFluidBlastThermo,
         mixtureBlastThermo
     );
 }

@@ -101,18 +101,62 @@ void Foam::basicSpecieBlastMixture::correctMassFractions()
             Yt += Y_[i];
         }
 
-        if (mag(min(Yt).value()) < rootVSmall)
+        // Only normalize where Yt > 0.
+        // In empty cells, set default composition.
+        forAll(Yt, celli)
         {
-            FatalErrorInFunction
-            << "Sum of mass fractions is zero for species " << species() << nl
-            << "Min(Sum of mass fractions):" << nl
-            << "    InternalField = " << gMin(Yt()) << nl
-            << "    BoundaryField = " << gMin(Yt.boundaryField()) << endl
-            << exit(FatalError);
+            if (Yt[celli] > rootVSmall)
+            {
+                forAll(Y_, i)
+                {
+                    Y_[i][celli] /= Yt[celli];
+                }
+            }
+            else
+            {
+                forAll(Y_, i)
+                {
+                    Y_[i][celli] = 0.0;
+                }
+                if (defaultSpeciei_ >= 0)
+                {
+                    Y_[defaultSpeciei_][celli] = 1.0;
+                }
+                else
+                {
+                    Y_[0][celli] = 1.0;
+                }
+            }
         }
-        forAll(Y_, i)
+
+        forAll(Yt.boundaryField(), patchi)
         {
-            Y_[i] /= Yt;
+            fvPatchScalarField& bYt = Yt.boundaryFieldRef()[patchi];
+            forAll(bYt, facei)
+            {
+                if (bYt[facei] > rootVSmall)
+                {
+                    forAll(Y_, i)
+                    {
+                        Y_[i].boundaryFieldRef()[patchi][facei] /= bYt[facei];
+                    }
+                }
+                else
+                {
+                    forAll(Y_, i)
+                    {
+                        Y_[i].boundaryFieldRef()[patchi][facei] = 0.0;
+                    }
+                    if (defaultSpeciei_ >= 0)
+                    {
+                        Y_[defaultSpeciei_].boundaryFieldRef()[patchi][facei] = 1.0;
+                    }
+                    else
+                    {
+                        Y_[0].boundaryFieldRef()[patchi][facei] = 1.0;
+                    }
+                }
+            }
         }
     }
     else
@@ -137,7 +181,36 @@ void Foam::basicSpecieBlastMixture::correctMassFractions()
         }
 
         Y()[defaultSpeciei_] = 1.0 - Ysum;
+
+        // In cells where Ysum was too large, clamp and re-normalize.
+        // In empty cells, the logic Y[default] = 1 - 0 correctly handles it.
         Y()[defaultSpeciei_].max(0);
+        
+        // Re-check for empty cells in case Yt is still zero
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", Y_[0].group()),
+                Y_[0].mesh(),
+                0.0,
+                calculatedFvPatchScalarField::typeName
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+        forAll(Y_, i) { Yt += Y_[i]; }
+        
+        forAll(Yt, celli)
+        {
+            if (Yt[celli] < rootVSmall)
+            {
+                Y_[defaultSpeciei_][celli] = 1.0;
+            }
+            else
+            {
+                forAll(Y_, i) { Y_[i][celli] /= Yt[celli]; }
+            }
+        }
     }
 }
 
@@ -156,7 +229,7 @@ Foam::basicSpecieBlastMixture::basicSpecieBlastMixture
     species_(specieNames),
     defaultSpecieName_
     (
-        (species_.size() && phaseName.empty())
+        species_.size()
       ? thermoDict.lookupBackwardsCompatible<word>
         (
             {"defaultSpecie", "inertSpecie"}

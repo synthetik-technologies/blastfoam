@@ -1,0 +1,56 @@
+Explosive: RDX:0.42 TNT:0.28 Al:0.3
+Initial Density: 1820 kg/m^3
+Initial Specific Energy (e0): 52606.8 J/kg
+Compound molecular mass (kg/mol): 0.070213
+
+--- Inert Constraints ---
+Constraints: Al(s):0.9
+
+--- CJ State ---
+CJ Pressure (Pa): 2.15329e+10
+CJ Temperature (K): 3432.62
+CJ Volume (m^3/kg): 0.000437268
+CJ Velocity (m/s): 7612.3
+Internal Energy (J/kg): 1.26042e+06
+Entropy (J/K/kg): 5660.89
+CJ Composition (mass fractions):
+  N2: 0.196765
+  H2O: 0.00216387
+  CO2: 0.341224
+  NH3: 0.0026991
+  C2N2: 0.0194097
+  CH3OH: 0.045618
+  C3H8: 0.0603199
+  C(diamond): 0.00306557
+  Al(s): 0.27
+  Al2O3(s): 0.0566839
+
+--- Freeze-out Point ---
+Temperature (K): 1757.52
+Pressure (Pa): 7.81812e+08
+Density (kg/m^3): 866.724
+Composition (mass fractions):
+  N2: 0.207335
+  CO: 0.16837
+  H2O: 0.0732687
+  CO2: 0.153667
+  NH3: 0.00399373
+  CH4: 0.0308131
+  C2H6: 0.0010903
+  C(graphite): 0.0331268
+  Al(s): 0.27
+  Al2O3(s): 0.0566839
+
+--- JWL Parameters ---
+A (GPa): 1732.51
+B (GPa): 11.7173
+C (GPa): 0.831709
+R1: 5.8162
+R2: 1.51614
+omega: 0.24273
+Cv (J/kg/K): 1410.19
+E0 (J/kg): -3.65138e+06
+E0 (GPa): -6.64552
+GurneyEnergy (J/kg): 3.65138e+06
+GurneyVelocity (m/s): 2702.36
+RMS Error: 0.0439335

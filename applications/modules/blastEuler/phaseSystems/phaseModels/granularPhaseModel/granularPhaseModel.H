@@ -248,10 +248,10 @@ public:
                 return Theta_;
             }
 
-            //- Return the thermophysical pressure
+            //- Return the granular pressure
             virtual const volScalarField& p() const
             {
-                return fluid_.p();
+                return Ps_;
             }
 
             //- Return non-const access to the thermodynamic pressure

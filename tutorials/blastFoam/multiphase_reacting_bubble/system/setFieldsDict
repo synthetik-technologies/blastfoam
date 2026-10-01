@@ -1,0 +1,68 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+defaultFieldValues
+(
+    volScalarFieldValue alpha.air 1.0
+    volScalarFieldValue alpha.bubble 0.0
+    volScalarFieldValue rho.air 1.161
+    volScalarFieldValue rho.bubble 1.069
+    volScalarFieldValue p 1e5
+    volScalarFieldValue T 300
+    volVectorFieldValue U (0 0 0)
+    volScalarFieldValue CH4.bubble 0.2
+    volScalarFieldValue O2.bubble 0.8
+    volScalarFieldValue N2.bubble 0.0
+    volScalarFieldValue H2O.bubble 0.0
+    volScalarFieldValue CO2.bubble 0.0
+);
+
+regions
+(
+    // Post-shock region (Air)
+    boxToCell
+    {
+        box (-1 -1 -1) (0.1 1 1);
+        fieldValues
+        (
+            volScalarFieldValue p 1e6
+            volScalarFieldValue T 600
+            volScalarFieldValue rho.air 5.8
+            volVectorFieldValue U (500 0 0)
+        );
+    }
+
+    // Bubble region (Methane + Oxygen)
+    sphereToCell
+    {
+        centre (0.4 0.1 0.005);
+        radius 0.05;
+        fieldValues
+        (
+            volScalarFieldValue alpha.air 0.0
+            volScalarFieldValue alpha.bubble 1.0
+            volScalarFieldValue rho.bubble 1.069
+            volScalarFieldValue CH4.bubble 0.2
+            volScalarFieldValue O2.bubble 0.8
+            volScalarFieldValue N2.bubble 0.0
+            volScalarFieldValue H2O.bubble 0.0
+            volScalarFieldValue CO2.bubble 0.0
+        );
+    }
+);
+
+// ************************************************************************* //

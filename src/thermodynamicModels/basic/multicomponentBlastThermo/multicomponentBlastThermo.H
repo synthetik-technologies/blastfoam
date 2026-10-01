@@ -132,8 +132,9 @@ protected:
     };
 
     autoPtr<integrator> integratorPtr_;
+public:
 
-    // Return the mass field
+    //- Return the mass field
     const volScalarField& alphaRho() const
     {
         return alphaRhoPtr_();
@@ -146,9 +147,8 @@ protected:
     }
 
 
-public:
+    // Member Functions
 
-    // Constructor
     multicomponentBlastThermo
     (
         const fvMesh& mesh,
@@ -257,6 +257,33 @@ public:
 
         //- Return the name of the thermo physics
         virtual word thermoName() const = 0;
+
+        //- Return temperature [K]
+        virtual const volScalarField& T() const = 0;
+
+        //- Return density [kg/m^3]
+        virtual tmp<volScalarField> rho() const = 0;
+
+        //- Return internal energy/enthalpy [J/kg]
+        virtual const volScalarField& he() const = 0;
+
+        //- Return heat capacity at constant pressure [J/kg/K]
+        virtual const volScalarField& CpRef() const = 0;
+
+        //- Return heat capacity at constant pressure [J/kg/K]
+        virtual volScalarField& CpRef() = 0;
+
+        //- Return heat capacity at constant volume [J/kg/K]
+        virtual const volScalarField& CvRef() const = 0;
+
+        //- Return heat capacity at constant volume [J/kg/K]
+        virtual volScalarField& CvRef() = 0;
+
+        //- Return thermal conductivity [W/m/K]
+        virtual const volScalarField& kappaRef() const = 0;
+
+        //- Return thermal conductivity [W/m/K]
+        virtual volScalarField& kappaRef() = 0;
 };
 
 

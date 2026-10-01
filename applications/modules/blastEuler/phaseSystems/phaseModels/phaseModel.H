@@ -486,6 +486,18 @@ public:
                 return dPtr_->d()[celli];
             }
 
+            //- Return initial/reference diameter
+            virtual const volScalarField& d0() const
+            {
+                return dPtr_->d0();
+            }
+
+            //- Return initial/reference diameter for celli
+            virtual scalar celld0(const label celli) const
+            {
+                return dPtr_->celld0(celli);
+            }
+
             //- Return the thermophysical pressure
             virtual const volScalarField& p() const = 0;
 
