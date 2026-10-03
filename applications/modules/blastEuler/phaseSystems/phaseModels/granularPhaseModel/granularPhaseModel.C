@@ -424,8 +424,9 @@ void Foam::granularPhaseModel::decode()
     const fvConstraints& constraints = this->constraints();
     volScalarField& alpha = *this;
 
-    const scalar rAlpha = Foam::max(residualAlpha().value(), 1e-3);
-    const scalar rAlphaRho = Foam::max(residualAlphaRho().value(), 1e-3*thermo().residualRho().value());
+    const scalar rAlpha = residualAlpha().value();
+    const scalar rAlphaRho = residualAlphaRho().value();
+    const scalar blendAlpha = Foam::max(10.0*rAlpha, 1e-5);
 
     //- Update grain material density from fluid mixture pressure and EOS
     const volScalarField& pFluid = fluid_.p();
@@ -454,7 +455,7 @@ void Foam::granularPhaseModel::decode()
     //- Calculate velocity from momentum
     forAll(U_, celli)
     {
-        if (alpha[celli] > 1e-2 && alphaRho_[celli] > 1e-2*thermo().residualRho().value())
+        if (alpha[celli] > blendAlpha && alphaRho_[celli] > blendAlpha*thermo().residualRho().value())
         {
             const vector UDecoded = alphaRhoU_[celli]/alphaRho_[celli];
             const scalar magU = mag(UDecoded);
@@ -477,7 +478,7 @@ void Foam::granularPhaseModel::decode()
             }
             else
             {
-                const scalar blend = (alpha[celli] - rAlpha)/(1e-2 - rAlpha);
+                const scalar blend = (alpha[celli] - rAlpha)/(blendAlpha - rAlpha);
                 U_[celli] = blend*UDecoded;
             }
         }
@@ -496,7 +497,7 @@ void Foam::granularPhaseModel::decode()
     alphaRhoU_ = alphaRho_*U_;
 
     //- Calculate energy from total energy
-    const scalar alphaCutoff = 0.01;
+    const scalar alphaCutoff = rAlpha;
     forAll(e_, celli)
     {
         const scalar alphaRho = alphaRho_[celli];

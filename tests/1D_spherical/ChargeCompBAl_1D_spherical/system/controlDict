@@ -1,0 +1,102 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     blastEulerFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         20e-06;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-06;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+deltaT          1e-9;
+
+maxCo           0.2;
+
+// ************************************************************************* //
+
+functions
+{
+    sampleLine
+    {
+        type            sets;
+        libs            (sampling);
+        interpolationScheme cell;
+        setFormat       raw;
+        executeControl  writeTime;
+        writeControl    writeTime;
+        sets
+        (
+            lineX
+            {
+                type    lineUniform;
+                axis    x;
+                start   (0 0 0);
+                end     (0.2 0 0);
+                nPoints 400;
+            }
+        );
+        fields          (p T U rho alpha.gas alpha.compBAl alpha.Al rho.gas rho.compBAl rho.Al U.gas U.compBAl U.Al);
+    }
+
+    pressureProbes
+    {
+        type           blastProbes;
+        writeControl   timeStep;
+        writeInterval  1;
+        adjustLocations yes;
+
+        probeLocations
+        (
+            (0.01 0 0)
+            (0.02 0 0)
+            (0.03 0 0)
+            (0.04 0 0)
+            (0.05 0 0)
+            (0.08 0 0)
+            (0.10 0 0)
+            (0.15 0 0)
+        );
+        fields
+        (
+            p
+            alpha.compBAl
+            alpha.gas
+            alpha.Al
+        );
+    }
+}

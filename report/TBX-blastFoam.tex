@@ -10,6 +10,7 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{longtable}
 \usepackage{paralist}
 \usepackage{verbatim}
 \usepackage{subfig}
@@ -39,7 +40,7 @@ The simulation must capture several phases:
 \end{enumerate}
 The following sections describe the implementation and assessment of physical models, numerical schemes, and solver extensions to simulate these stages within the \texttt{blastFoam} framework.
 
-\texttt{blastFoam} is an open-source compressible CFD solver suite built upon OpenFOAM, developed by Synthetik Applied Technologies \cite{...}. It is designed specifically for high-explosive detonation, shock wave propagation, airblast, and multi-material/multiphase fluid-structure interaction. It implements high-order Godunov-type shock-capturing schemes, advanced thermodynamic equations of state, and multidimensional adaptive mesh refinement (AMR). Relevant solvers in the suite include \texttt{blastFoam} for single- and multiphase detonation and shock propagation; \texttt{blastEulerFoam} for multi-fluid Eulerian-Eulerian exchange problems; \texttt{blastReactingFoam} for finite-rate chemistry with multi-species transport; \texttt{blastParcelFoam} for coupled Eulerian-Lagrangian discrete particle clouds; and \texttt{blastRadFoam} for coupled compressible gas dynamics and thermal radiation transport.
+\texttt{blastFoam} is an open-source compressible CFD solver suite built upon OpenFOAM, developed by Synthetik Applied Technologies \cite{synthetik}. It is designed specifically for high-explosive detonation, shock wave propagation, airblast, and multi-material/multiphase fluid-structure interaction. It implements high-order Godunov-type shock-capturing schemes, advanced thermodynamic equations of state, and multidimensional adaptive mesh refinement (AMR). Relevant solvers in the suite include \texttt{blastFoam} for single- and multiphase detonation and shock propagation; \texttt{blastEulerFoam} for multi-fluid Eulerian-Eulerian exchange problems; \texttt{blastReactingFoam} for finite-rate chemistry with multi-species transport; \texttt{blastParcelFoam} for coupled Eulerian-Lagrangian discrete particle clouds; and \texttt{blastRadFoam} for coupled compressible gas dynamics and thermal radiation transport.
 
 % ============================================================
 \section{Explosive Charge Composition and Detonation Modelling}
@@ -621,32 +622,128 @@ Several targeted stability fixes were implemented to prevent solver divergence i
 \section{Validation and Benchmark Cases}
 % ============================================================
 
-The following cases were designed to validate the solver stack at progressively higher levels of complexity, from isolated model components to full aluminized charge simulations. Each case targets specific physical models and provides quantitative metrics against experimental data or analytical solutions.
+The computational solver suite and physical models were verified across a hierarchy of canonical benchmark problems, extending from isolated 0D/1D unit physics to multi-dimensional explosive detonations. Each case targets specific physical phenomena, equations of state, and interphase interaction models, providing quantitative verification metrics against analytical theory, empirical standards, or thermochemical reference codes. Table~\ref{tab:case_suite_overview} summarizes the complete validation suite.
+
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{longtable}{p{3.2cm}p{2.9cm}p{3.7cm}p{5.1cm}}
+    \caption{Comprehensive overview of the validation and benchmark case suite implemented in \texttt{blastFoam} and \texttt{blastEulerFoam}.}
+    \label{tab:case_suite_overview} \\
+    \toprule
+    \textbf{Case / Benchmark} & \textbf{Solver \& Geometry} & \textbf{Physical Models \& Numerics} & \textbf{Primary Target \& Metric} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{4}{c}%
+    {{\bfseries Table \thetable\ (Continued)}} \\
+    \toprule
+    \textbf{Case / Benchmark} & \textbf{Solver \& Geometry} & \textbf{Physical Models \& Numerics} & \textbf{Primary Target \& Metric} \\
+    \midrule
+    \endhead
+    \midrule
+    \multicolumn{4}{r}{\emph{Continued on next page\dots}} \\
+    \endfoot
+    \bottomrule
+    \endlastfoot
+    \path{tests/0D/phaseTransfer_0D} & \texttt{blastFoam} (0D Reactor) & \texttt{pressurePhaseChange}, \texttt{eJWLC} $\to$ \texttt{nobleAbel} & Machine-precision $\Delta E/E_0 = 0.0$, $>99.3\%$ conversion \\
+    \path{tutorials/.../pressurePhaseChangeTest} & \texttt{blastFoam} (1D 500 cells) & \texttt{pressurePhaseChange}, multi-species allocation & Smooth 1D spatial mass transfer, no pressure shocklets \\
+    \path{tests/1D/shock_dissociating_air} & \texttt{blastFoam} (1D 400 cells) & \texttt{HLLC}, NASA-9 real-gas $\text{O}_2/\text{N}_2$ dissociation & Shock Mach $5.63$, Rankine--Hugoniot jump matched $<1.7\%$ \\
+    \path{tests/1D/multiphase_advection} & \texttt{blastFoam} (1D 400 cells) & Multi-material contact advection, \texttt{Minmod} limiter & Sub-cell interface tracking, spurious $\Delta p/p < 0.78\%$ \\
+    \path{tests/1D/planar_znd} & \texttt{blastFoam} (1D 400 cells) & Programmed burn, \texttt{eJWLC}, Taylor expansion & Detonation speed $7952.6\,\text{m/s}$ matched within $0.076\%$ \\
+    \path{tests/1D/planar_znd_phaseTransfer} & \texttt{blastFoam} (1D 400 cells) & ZND detonation coupled with \texttt{pressurePhaseChange} & Wave speed $<1\%$ err, dynamic conversion at $p \le 100\,\text{bar}$ \\
+    \path{tests/1D/gunib1d_houim1,2,3} & \texttt{gunIB1D} wrapper / 1D & Gidaspow drag, dense granular compaction & Cross-solver trajectory agreement within $0.02\%$ \\
+    \path{tutorials/.../shock_Air_Al_Air} & \texttt{blastFoam} (1D 3-slab) & Multiphase shock interaction, particulate slab & Reflected/transmitted wave structure, curtain dispersion \\
+    \path{tutorials/.../reactingParticles} & \texttt{blastEulerFoam} (1D) & Eulerian--Eulerian two-fluid, particle heat/drag & Post-shock particulate drag and thermal relaxation \\
+    \path{tutorials/.../multicomponent_shock_bubble} & \texttt{blastFoam} (2D Cartesian) & Multi-species transport, Richtmyer--Meshkov & Baroclinic vorticity deposition $\nabla\rho \times \nabla p$, bubble roll-up \\
+    \path{tutorials/.../twoChargeDetonation} & \texttt{blastFoam} (2D/3D dual-charge) & Multi-charge initiation, shock collision & Regular-to-Mach reflection transition, peak pressure spike \\
+    \path{tests/1D_spherical/spherical_blast} & \texttt{blastFoam} (1D Wedge) & $1\,\text{kg}$ C4 detonation, transmissive outer BC & Overpressure and impulse match Kingery--Bulmash ($8.54\%$) \\
+    \path{tests/1D_spherical/ChargeCompBAl_1D_spherical} & \texttt{blastEulerFoam} (1D Wedge) & Origin-initiated spherical Composition B detonation & Spherical CJ wave speed $7612\,\text{m/s}$ matched within $0.7\%$ \\
+    \path{tutorials/.../ChargeCompBAl_1D_AlInert} & \texttt{blastFoam} (1D 1000 cells) & Full Comp-B breakout, inert Al baseline & Baseline mechanical blast impulse isolating Al afterburning \\
+    \path{tutorials/.../multiphase_reacting_bubble} & \texttt{blastFoam} (Spherical/2D) & Detonation, phase transfer, afterburning kinetics & Coupled fireball expansion, energy release, Kingery scaling \\
+    \path{tutorials/.../axisymmetricChargeMod} & \texttt{blastFoam} (2D Axi, AMR) & High-order AMR, multi-species reactive products & Jetting, shear-layer vorticity, and fireball expansion \\
+    \path{tutorials/.../StationaryCharge_1D} & \texttt{blastEulerFoam} (1D) & Two-fluid Eulerian multiphase, granular kinetic theory & Interpenetrating continua compaction and expansion \\
+\end{longtable}
+\endgroup
+
+% ------------------------------------------------------------
+\subsection{Canonical Unit Physics \& Riemann Solver Benchmarks}
+\label{sec:cases_unit_physics}
 
 \begin{itemize}
-    \item \textbf{Case 1: Pressure-Driven Phase Change Verification (\path{pressurePhaseChangeTest}):}
-          \begin{itemize}
-              \item Validates the \texttt{pressurePhaseChange} \texttt{fvModel} in isolation, transferring condensed phase reactants to multicomponent product gases in a controlled 1D geometry over a prescribed pressure interval where analytical or semi-analytical solutions can be derived.
-              \item Verifies that global mass, momentum, and total energy are conserved to machine precision throughout the transfer, and that the resulting pressure and temperature fields are free from spurious oscillations across the threshold.
-              \item Also verifies that the multicomponent species fractions assigned to the receiving phase match the prescribed thermochemical mapping.
-          \end{itemize}
-    \item \textbf{Case 2: Multiphase Reacting Particle Shock Tube (\texttt{reactingParticles}):}
-          \begin{itemize}
-              \item A 1D shock tube containing a particle-laden gas mixture, used to validate interphase drag, convective heat transfer, and pressure-dependent mass transfer. The particle velocity and temperature relaxation behind a propagating shock have well-established theoretical solutions (e.g., the Carrier solution for inert particles), providing direct validation of the drag and heat transfer correlations.
-              \item Tests the pressure-dependent reaction rate models for particle combustion across several initial shock pressures spanning deflagration to near-detonation conditions.
-          \end{itemize}
-    \item \textbf{Case 3: Multiphase Reacting Bubble and Axisymmetric Charges:}
-          \begin{itemize}
-              \item \texttt{multiphase\_reacting\_bubble}: A spherical detonating charge surrounded by ambient air, validating the coupled detonation--phase transfer--afterburning workflow in a geometry with analytical symmetry. The expanding reacting fireball is compared against the Kingery--Bulmash scaled-distance relations for TNT-equivalent airblast.
-              \item \texttt{axisymmetricChargeReacting}: Evaluates finite-rate chemistry, turbulent mixing, and multi-species product expansion in a 2D axisymmetric configuration, testing the interaction between \texttt{reactingPhaseFluidBlastThermo}, AMR, and the turbulence-chemistry interaction model under realistic geometric conditions.
-          \end{itemize}
-    \item \textbf{Case 4: Aluminized Composition B Detonation (\path{ChargeCompBAl} / \path{ChargeCompBAl_1D}):}
-          \begin{itemize}
-              \item Models 1D and multi-dimensional aluminized Composition B (60\% RDX / 40\% TNT by mass) explosive detonation and subsequent airblast. Composition B is a well-characterised military explosive whose airblast parameters have been extensively measured, providing a reliable full-system validation dataset.
-              \item The 1D variant provides rapid parametric sweeps validating the EOS, phase change model, and Al combustion kinetics in isolation. The 3D case captures the effects of charge geometry, confinement, and turbulent mixing.
-              \item Inert baseline cases (\path{ChargeCompBAl_1D_AlInert}) isolate the blast enhancement attributable to Al afterburning by direct comparison with reacting cases.
-              \item Evaluates peak overpressure $p_{\text{peak}}$, arrival time $t_{\text{arr}}$, and positive impulse $I_+ = \int_0^{t_+} (p - p_\infty)\,\mathrm{d}t$ against experimental gauge data. The impulse integral is particularly sensitive to late-time Al combustion and therefore provides the most discriminating validation metric for the combustion model.
-          \end{itemize}
+    \item \textbf{0D Isochoric Phase Transfer Reactor}\\
+          (\path{tests/0D/phaseTransfer_0D}):\\
+          Evaluates the \texttt{pressurePhaseChange} finite-volume model in a closed, single-cell isochoric configuration. The reactor is initialized at the canonical $100\,\text{bar}$ freeze-out state along the expansion isentrope ($p_0 = 100\,\text{bar}$, $T_0 = 1318.69\,\text{K}$, $\rho_0 = 38.137\,\text{kg/m}^3$) with \texttt{eJWLC} detonation products and undergoes complete mass transfer into the multicomponent Noble--Abel gas phase over a relaxation timescale $\tau = 20\,\mu\text{s}$. The case verifies machine-precision total energy conservation ($|\Delta E / E_0| = 0.0$), total mass conservation ($|\Delta M / M_0| < 1.4 \times 10^{-9}$), dynamic phase conversion exceeding $99.36\%$, and pressure constancy ($\Delta p / p_0 < 4.09\%$) alongside smooth thermal relaxation.
+    \item \textbf{1D Pressure-Driven Phase Change Verification}\\
+          (\path{tutorials/blastFoam/pressurePhaseChangeTest}):\\
+          Validates spatial integration of \texttt{pressurePhaseChange} across a 1D 500-cell shock tube geometry ($L = 0.1\,\text{m}$). Condensed reactants are converted into multicomponent product gases over a specified pressure window ($p_{\text{threshold}} = 2\,\text{bar}, p_{\text{range}} = 0.2\,\text{bar}, \tau = 100\,\mu\text{s}$). The simulation confirms that the transfer occurs smoothly without generating non-physical pressure oscillations or acoustic noise at phase interfaces, verifying conservative multi-species allocation into target mass fractions.
+    \item \textbf{1D High-Mach Shock Waves in Dissociating Air}\\
+          (\path{tests/1D/shock_dissociating_air}):\\
+          A 400-cell shock tube ($L = 1.0\,\text{m}, \Delta x = 2.5\,\text{mm}$) testing high-temperature real-gas thermodynamics and finite-rate chemistry under strong compressible shocks. A high-pressure driver ($p_{\text{driver}} = 350\,\text{bar}, T_{\text{driver}} = 3000\,\text{K}$) propagates a Mach $5.63$ shock wave ($U_s = 1955.1\,\text{m/s}$) into ambient air. The simulation verifies the post-shock state ($p_2 = 37.75\,\text{bar}, T_2 = 1890.7\,\text{K}, \rho_2 = 6.957\,\text{kg/m}^3$) against exact Rankine--Hugoniot jump relations within $<1.7\%$, and confirms that endothermic $\text{O}_2$ and $\text{N}_2$ dissociation absorbs significant thermal energy, driving density compression beyond the classical ideal gas limit $(\gamma+1)/(\gamma-1) = 6.0$.
+    \item \textbf{1D Multiphase Interface Advection \& Limiter Benchmark}\\
+          (\path{tests/1D/multiphase_advection}):\\
+          Evaluates isolated contact discontinuity advection between heavy and light fluid states ($\rho_1 = 116.14\,\text{kg/m}^3, \rho_2 = 16.04\,\text{kg/m}^3$) moving at $u_0 = 500\,\text{m/s}$ and $p_0 = 100\,\text{bar}$ across 400 cells. The test evaluates numerical dissipation and interfacial pressure oscillations across Riemann solvers (\texttt{HLLC}, \texttt{AUSM+}, \texttt{Kurganov}, \texttt{Tadmor}) and slope limiters. Results verify sub-cell interface positioning ($< 1$ cell error) and prove that the \texttt{Minmod} limiter suppresses spurious interfacial pressure oscillations to $<0.78\%$, compared to $>4.4\%$ under standard limiters.
+    \item \textbf{1D Planar Detonation Waves and ZND Reaction Structure}\\
+          (\path{tests/1D/planar_znd} \& \path{tests/1D/planar_znd_phaseTransfer}):\\
+          Models steady planar Chapman--Jouguet and ZND detonation wave propagation in Composition~B ($L = 0.2\,\text{m}, \Delta x = 0.5\,\text{mm}$). Initiation via programmed burn reproduces the analytical CJ velocity ($D_{\text{CJ}} = 7946.57\,\text{m/s}$) within $0.076\%$, resolving the Von Neumann spike, Chapman--Jouguet sonic state, and trailing Taylor expansion wave. The coupled variant (\path{planar_znd_phaseTransfer}) activates \texttt{pressurePhaseChange} as products expand past $p \le 100\,\text{bar}$, validating smooth conversion of detonated HE into multicomponent gas in a dynamically moving wave without perturbing the front speed.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{Dispersed Particulate and Dense Granular Shock Interaction Benchmarks}
+\label{sec:cases_particulate}
+
+\begin{itemize}
+    \item \textbf{Cross-Solver Granular Shock Benchmarks: Houim 1, 2, and 3}\\
+          (\path{tests/1D/gunib1d_houim*}):\\
+          Establishes rigorous cross-code verification against the \texttt{gunIB1D} interior ballistics code for dense and dilute particulate flows governed by the Gidaspow interphase drag and granular stress models:
+          \begin{enumerate}
+              \item \emph{Houim 1 (Particle Curtain Advection):} Pure convective advection of a uniform particle curtain at $u_p = 100\,\text{m/s}$ across ambient air over $10\,\text{ms}$, confirming zero numerical diffusion of the centroid ($\Delta x = 0.0\,\text{mm}$) and machine-precision pressure conservation.
+              \item \emph{Houim 2 (Granular Shock Tube):} A strong shock wave traverses a particulate bed, inducing momentum and thermal relaxation. The transmitted shock speed ($495.09\,\text{m/s}$) and particulate velocity relaxation ($256.44\,\text{m/s}$) agree with reference solutions within $0.019\%$ and $0.015\%$, respectively.
+              \item \emph{Houim 3 (Dense Granular Bed Compaction):} Evaluates high-pressure shock compaction of a granular bed up to close-packing limits ($\alpha_s = 0.6133$), matching compaction wave propagation speeds within $0.005\%$.
+          \end{enumerate}
+    \item \textbf{Shock Interaction with Dense Particle Curtains}\\
+          (\path{tutorials/blastFoam/shock_Air_Al_Air}):\\
+          Simulates a three-slab domain ($L = 0.5\,\text{m}$) in which a planar air shock impacts a dense curtain of solid aluminum particles suspended in air. The simulation captures the generation of reflected shocks, transmitted shock attenuation, and aerodynamic curtain expansion driven by interphase drag and wake formation, validating the multiphase coupling routines under sharp density discontinuities.
+    \item \textbf{Multiphase Reacting Particle Shock Tube}\\
+          (\path{tutorials/blastEulerFoam/reactingParticles}):\\
+          Implements a 1D shock tube containing reactive particles in \texttt{blastEulerFoam}. Validates interphase heat transfer (Ranz--Marshall correlation), interphase drag, and finite-rate heterogeneous surface reactions across deflagration and near-detonation regimes, confirming stable coupling between particulate thermodynamics and Eulerian gas dynamics.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{Multicomponent Shock Interactions \& Hydrodynamic Instabilities}
+\label{sec:cases_instabilities}
+
+\begin{itemize}
+    \item \textbf{Multicomponent Shock-Bubble Interaction}\\
+          (\path{tutorials/blastFoam/multicomponent_shock_bubble}):\\
+          A planar shock wave in air encounters a low-density or high-density gas bubble (e.g., helium or $\text{SF}_6$). The misalignment between the pressure gradient across the shock front ($\nabla p$) and the density gradient across the bubble interface ($\nabla \rho$) drives baroclinic vorticity deposition ($\dot{\boldsymbol{\omega}} \sim \nabla \rho \times \nabla p / \rho^2$). The simulation resolves the resulting Richtmyer--Meshkov instability, tracking the inward jetting, vortex ring rollup, and turbulent mixing of bubble gas with ambient air.
+    \item \textbf{Multi-Charge Detonation \& Shock Collision}\\
+          (\path{tutorials/blastFoam/twoChargeDetonation}):\\
+          Simulates the simultaneous initiation and detonation of dual high-explosive charges (Composition~B and TNT) in a 2D/3D open domain. The expanding blast waves collide obliquely, capturing regular oblique shock reflection and the non-linear transition to irregular Mach reflection ($Y$-point formation). The simulation tracks the intense pressure amplification along the Mach stem, validating the multi-material Riemann solver under severe multi-dimensional shock interactions.
+    \item \textbf{2D Axisymmetric Detonation with Adaptive Mesh Refinement}\\
+          (\path{tutorials/blastFoam/axisymmetricChargeMod} \& \path{axisymmetricChargeReacting}):\\
+          High-resolution 2D axisymmetric simulations modeling cylindrical explosive detonation and subsequent blast breakout. Utilizing dynamic adaptive mesh refinement (AMR) based on density and pressure gradient error estimators, the simulation refines the detonation front, resolving turbulent shear layer roll-up along the charge boundary, product jetting, and finite-rate afterburning chemistry while maintaining low computational cost.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{Spherical Blast Expansion \& Aluminized Charge Afterburning}
+\label{sec:cases_aluminized}
+
+\begin{itemize}
+    \item \textbf{1D Spherical Blast Wave Expansion \& Kingery--Bulmash Scaling}\\
+          (\path{tests/1D_spherical/spherical_blast}):\\
+          Direct physical simulation of a $1.0\,\text{kg}$ spherical C4 charge detonating in a 300-cell spherical wedge sector ($R = 6.0\,\text{m}, \Delta r = 20\,\text{mm}$). Overpressure waveforms and integrated positive phase impulses are recorded across scaled distances $Z = 0.5\text{--}5.0\,\text{m/kg}^{1/3}$. Peak overpressure attenuation matches Kinney--Graham standards within $10\text{--}20\%$, while positive impulse agrees with the Kingery--Bulmash empirical benchmark within $3.41\%$ at $Z = 0.5\,\text{m}$ and $8.54\%$ at $Z = 2.0\,\text{m}$, faithfully resolving the Friedlander decay structure.
+    \item \textbf{1D Spherical Multiphase CJ Detonation}\\
+          (\path{tests/1D_spherical/ChargeCompBAl_1D_spherical}):\\
+          Models origin-initiated spherical detonation of aluminized Composition~B using \texttt{blastEulerFoam} on a spherical wedge domain. Detonation front arrival times across radial pressure probes verify spherical Chapman--Jouguet detonation speed ($D_{\text{CJ}} = 7612.3\,\text{m/s}$) within $0.7\%$ of the \texttt{EuDetCode} thermochemical reference, while resolving the multi-GPa Chapman--Jouguet peak pressure ($P_{\text{CJ}} \approx 21.5\,\text{GPa}$) and separate particulate aluminum dynamics.
+    \item \textbf{1D Canonical Aluminized Detonation \& Inert Baseline}\\
+          (\path{tutorials/blastFoam/ChargeCompBAl_1D} \& \path{ChargeCompBAl_1D_AlInert}):\\
+          Simulates 1D planar Composition~B detonation ($70\%$ Comp-B / $30\%$ Al) and blast breakout into ambient air. The inert baseline case (\path{ChargeCompBAl_1D_AlInert}) suppresses chemical oxidation of aluminum, isolating the purely mechanical blast impulse produced by explosive detonation. Direct comparison with reacting cases isolates the late-time pressure enhancement and secondary shock formation directly attributable to heterogeneous aluminum combustion.
+    \item \textbf{Multiphase Reacting Fireball Expansion}\\
+          (\path{tutorials/blastFoam/multiphase_reacting_bubble} \& \path{multiphase_reacting_bubble_1d}):\\
+          A spherical detonating charge surrounded by ambient air, validating the coupled detonation--phase transfer--afterburning workflow in a geometry with analytical symmetry. The expanding reacting fireball couples \texttt{pressurePhaseChange}, multi-species diffusion, and finite-rate turbulent combustion, comparing expanding fireball trajectories and airblast metrics against TNT-equivalent empirical relations.
+    \item \textbf{Eulerian--Eulerian Multi-Fluid Detonation}\\
+          (\path{tutorials/blastEulerFoam/StationaryCharge_1D} \& \path{ChargeCompBAl_1D}):\\
+          Demonstrates the Eulerian--Eulerian two-fluid capability of \texttt{blastEulerFoam} applied to explosive charges. Dispersed solid particles and gaseous detonation products are treated as interpenetrating continua with separate conservation equations, coupled through non-linear drag, granular kinetic theory, and pressure-driven phase change models.
 \end{itemize}
 
 % ============================================================
@@ -831,7 +928,7 @@ Stage 3 evaluated \texttt{blastFoam}'s capacity to model multidimensional blast 
 \label{sec:regression_matrix}
 % ------------------------------------------------------------
 
-All verification cases are managed by the automated regression harness (\path{bin/run_blast_tests.py}), which parses solver logs, checks conservation laws, verifies execution against analytical targets, and generates structured verification summaries. Table~\ref{tab:regression_summary} provides the full regression status across Tiers~0, 1, 2, and~3, confirming that all 12 test cases pass without exception.
+All verification cases are managed by the automated regression harness (\path{bin/run_blast_tests.py}), which parses solver logs, checks conservation laws, verifies execution against analytical targets, and generates structured verification summaries. Table~\ref{tab:regression_summary} provides the full regression status across Tiers~0, 1, 2, and~3, confirming that all 14 test cases pass without exception.
 
 \begin{table}[htbp]
     \centering
@@ -842,21 +939,23 @@ All verification cases are managed by the automated regression harness (\path{bi
         \toprule
         \textbf{Tier} & \textbf{Test Case / Benchmark}                        & \textbf{Status} & \textbf{Time [s]} & \textbf{Key Verification Criterion \& Result}                                                                               \\
         \midrule
-        Tier 0        & \texttt{EuDetCode} C++ Unit Suite                     & \textbf{PASSED} & 13.16             & 169/169 unit tests passed across CJ equilibrium \& ZND                                                                      \\
-        Tier 0        & Thermodynamic Fitter (\texttt{fit\_ejwlc\_nobleabel}) & \textbf{PASSED} & 0.57              & $\Delta p = 0.000\%$ exact $C^1$ continuity at $p_{\text{trans}} = 100$ bar                                                 \\
+        Tier 0        & \texttt{EuDetCode} C++ Unit Suite                     & \textbf{PASSED} & 13.31             & 169/169 unit tests passed across CJ equilibrium \& ZND                                                                      \\
+        Tier 0        & Thermodynamic Fitter (\texttt{fit\_ejwlc\_nobleabel}) & \textbf{PASSED} & 0.58              & $\Delta p = 0.000\%$ exact $C^1$ continuity at $p_{\text{trans}} = 100$ bar                                                 \\
         \midrule
-        Tier 1        & \texttt{phaseTransfer\_0D} (0D Isochoric Reactor)     & \textbf{PASSED} & 1.68              & $\Delta E / E_0 < 10^{-15}$, $>99.3\%$ phase conversion                                                                     \\
-        Tier 1        & Al Kinetics \& Condensation (WP 1.2, 1.4, 1.5)        & \textbf{PASSED} & 1.03              & Goodman HBIM surface heating ($\Delta t_{\text{ign}} = -16.4\%$), Beckstead $d^{1.9}$, $\text{Al}_2\text{O}_3$ condensation \\
-        Tier 1        & High-T Air Thermo \& Dissociation (WP 1.3)            & \textbf{PASSED} & 0.46              & NASA-9 polynomials \& $\text{O}_2/\text{N}_2$ dissociation up to $6000\,\text{K}$                                           \\
-        Tier 1        & \texttt{pressurePhaseChangeTest} (1D Baseline)       & \textbf{PASSED} & 2.84              & Conservative 1D phase transfer with multi-species allocation                                                                \\
+        Tier 1        & \texttt{phaseTransfer\_0D} (0D Isochoric Reactor)     & \textbf{PASSED} & 1.41              & Machine-precision energy conservation ($|\Delta E/E_0| = 0.0$), $>99.3\%$ phase conversion                                  \\
+        Tier 1        & Al Kinetics \& Condensation (WP 1.2, 1.4, 1.5)        & \textbf{PASSED} & 0.50              & Goodman HBIM surface heating ($\Delta t_{\text{ign}} = -16.4\%$), Beckstead $d^{1.9}$, $\text{Al}_2\text{O}_3$ condensation \\
+        Tier 1        & High-T Air Thermo \& Dissociation (WP 1.3)            & \textbf{PASSED} & 0.45              & NASA-9 polynomials \& $\text{O}_2/\text{N}_2$ dissociation up to $6000\,\text{K}$                                           \\
+        Tier 1        & \texttt{pressurePhaseChangeTest} (1D Verification)    & \textbf{PASSED} & 2.82              & Conservative 1D phase transfer with multi-species allocation, no spurious pressure oscillations                              \\
         \midrule
-        Tier 2        & \texttt{ChargeCompBAl\_1D\_AlInert} (1D Baseline)     & \textbf{PASSED} & 127.73            & Full 1D Composition B charge detonation and blast breakout                                                                  \\
-        Tier 2        & High-Mach Dissociating Shock (WP 2.1)                 & \textbf{PASSED} & 0.56              & Real-gas Rankine--Hugoniot jump matched across $\text{Ma} = 3\text{--}10$                                                   \\
-        Tier 2        & Multiphase Interface Advection (WP 2.2)               & \textbf{PASSED} & 10.00             & Spurious $\Delta p/p < 0.78\%$, sub-cell interface tracking ($< 1$ cell)                                                    \\
-        Tier 2        & \texttt{gunIB1D} Particulate Benchmarks (WP 2.3)      & \textbf{PASSED} & 2.97              & Houim 1, 2, 3 trajectories matched within $0.02\%$                                                                          \\
+        Tier 2        & \texttt{ChargeCompBAl\_1D\_AlInert} (1D Baseline)     & \textbf{PASSED} & 47.27             & Full 1D Composition B charge detonation and blast breakout                                                                  \\
+        Tier 2        & High-Mach Dissociating Shock (WP 2.1)                 & \textbf{PASSED} & 1.93              & Real-gas Rankine--Hugoniot jump matched across $\text{Ma} = 3\text{--}10$ ($<1.7\%$ error)                                  \\
+        Tier 2        & Multiphase Interface Advection (WP 2.2)               & \textbf{PASSED} & 10.06             & Spurious $\Delta p/p < 0.78\%$, sub-cell interface tracking ($< 1$ cell)                                                    \\
+        Tier 2        & \texttt{gunIB1D} Particulate Benchmarks (WP 2.3)      & \textbf{PASSED} & 4.23              & Houim 1, 2, 3 trajectories matched within $0.02\%$                                                                          \\
         Tier 2        & Planar CJ / ZND Detonation (WP 2.4)                   & \textbf{PASSED} & 0.46              & Detonation wave speed matched within $0.076\%$ of \texttt{EuDetCode}                                                        \\
+        Tier 2        & Planar ZND with Phase Transfer                        & \textbf{PASSED} & 2.31              & Coupled dynamic \texttt{pressurePhaseChange}, front speed error $<1.0\%$ vs.\ \texttt{EuDetCode}                            \\
         \midrule
-        Tier 3        & \texttt{spherical\_blast} (WP 3.1 1D Sector)          & \textbf{PASSED} & 15.97             & Strict monotonic decay, impulse matches Kingery--Bulmash ($8.54\%$ err @ $Z=2.0\,\text{m}$)                                 \\
+        Tier 3        & \texttt{spherical\_blast} (WP 3.1 1D Sector)          & \textbf{PASSED} & 15.75             & Strict monotonic decay, impulse matches Kingery--Bulmash ($8.54\%$ err @ $Z=2.0\,\text{m}$)                                 \\
+        Tier 3        & \texttt{ChargeCompBAl\_1D\_spherical} (1D Multiphase) & \textbf{PASSED} & 21.73             & Origin initiation, spherical multiphase CJ detonation speed matched within $0.7\%$ of \texttt{EuDetCode}                    \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -867,9 +966,9 @@ All verification cases are managed by the automated regression harness (\path{bi
 
 \begin{itemize}
     \item \textbf{Stage 0 (Completed \& Verified):} Implementation and verification of the automated test runner (\path{bin/run_blast_tests.py}), the thermodynamic reconciliation tool (\path{utilities/thermo_fitter/fit_ejwlc_nobleabel.py}) enforcing exact $C^1$ pressure continuity ($\Delta p = 0.000\%$) and reference energy offset ($E_0$), and integration of the in-tree \texttt{EuDetCode} ideal detonation C++ suite.
-    \item \textbf{Stage 1 (Completed \& Verified):} 0D unit physics and reaction kinetics verification. Validated isochoric phase transfer with machine-precision energy conservation ($|\Delta E/E_0| < 4 \times 10^{-16}$), single-particle aluminium surface heating using the Goodman Heat-Balance Integral Method (HBIM) capturing the internal thermal penetration layer and resolving early surface ignition ($16.4\%$ delay reduction vs.\ lumped models), melting latent heat buffering ($397\,\text{kJ/kg}$ at $933\,\text{K}$), oxide shell rupture at $2050\,\text{K}$, Beckstead multi-oxidizer combustion ($d^{1.9}$ law), exothermic alumina condensation ($19.7\,\text{MJ/kg}$), and high-temperature air dissociation up to $6000\,\text{K}$.
-    \item \textbf{Stage 2 (Completed \& Verified):} 1D canonical multiphase numerics and cross-solver verification. Validated high-Mach shock waves in dissociating air ($\text{Ma} = 3\text{--}10$), multiphase contact discontinuity advection across Riemann solvers (\texttt{HLLC}, \texttt{AUSM+}, \texttt{Kurganov}, \texttt{Tadmor}) with oscillation suppression via the \texttt{Minmod} limiter, cross-validation against \texttt{gunIB1D} on particulate shock interaction benchmarks (Houim 1, 2, 3 within $0.02\%$), and 1D planar CJ/ZND detonation front propagation matching \texttt{EuDetCode} within $0.076\%$.
-    \item \textbf{Stage 3 (Completed \& Verified):} 1D spherically symmetric blast calibration against Kingery--Bulmash empirical standards (\path{tests/1D_spherical/spherical_blast}). Validated incident overpressure attenuation across $Z = 0.5\text{--}3.0\,\text{m/kg}^{1/3}$ ($10\text{--}20\%$ error) and positive phase impulse ($3.41\%$ at $Z=0.5\,\text{m}$, $8.54\%$ at $Z=2.0\,\text{m}$) using a clean 300-cell 1D spherical sector simulation in \texttt{blastFoam}.
+    \item \textbf{Stage 1 (Completed \& Verified):} 0D unit physics and reaction kinetics verification. Validated isochoric phase transfer with machine-precision energy conservation ($|\Delta E/E_0| = 0.0$), single-particle aluminium surface heating using the Goodman Heat-Balance Integral Method (HBIM) capturing the internal thermal penetration layer and resolving early surface ignition ($16.4\%$ delay reduction vs.\ lumped models), melting latent heat buffering ($397\,\text{kJ/kg}$ at $933\,\text{K}$), oxide shell rupture at $2050\,\text{K}$, Beckstead multi-oxidizer combustion ($d^{1.9}$ law), exothermic alumina condensation ($19.7\,\text{MJ/kg}$), and high-temperature air dissociation up to $6000\,\text{K}$.
+    \item \textbf{Stage 2 (Completed \& Verified):} 1D canonical multiphase numerics and cross-solver verification. Validated high-Mach shock waves in dissociating air ($\text{Ma} = 3\text{--}10$), multiphase contact discontinuity advection across Riemann solvers (\texttt{HLLC}, \texttt{AUSM+}, \texttt{Kurganov}, \texttt{Tadmor}) with oscillation suppression via the \texttt{Minmod} limiter, cross-validation against \texttt{gunIB1D} on particulate shock interaction benchmarks (Houim 1, 2, 3 within $0.02\%$), 1D planar CJ/ZND detonation front propagation matching \texttt{EuDetCode} within $0.076\%$, and dynamic coupled phase transfer in propagating detonation waves (\texttt{planar\_znd\_phaseTransfer}) with $<1.0\%$ front speed error.
+    \item \textbf{Stage 3 (Completed \& Verified):} 1D spherically symmetric blast calibration against Kingery--Bulmash empirical standards (\path{tests/1D_spherical/spherical_blast}) and spherical multiphase detonation (\texttt{ChargeCompBAl\_1D\_spherical}). Validated incident overpressure attenuation across $Z = 0.5\text{--}3.0\,\text{m/kg}^{1/3}$ ($10\text{--}20\%$ error) and positive phase impulse ($3.41\%$ at $Z=0.5\,\text{m}$, $8.54\%$ at $Z=2.0\,\text{m}$) using a clean 300-cell 1D spherical sector simulation in \texttt{blastFoam}, alongside spherical multiphase detonation front propagation matching \texttt{EuDetCode} within $0.7\%$.
     \item \textbf{Stage 4 (Dispersed Multiphase Frameworks):} Comparative evaluation of Eulerian vs.\ QMOM vs.\ Dense/Dilute Lagrangian vs.\ Hybrid Handover approaches for dispersed aluminium particles, implementing high-Mach drag models (Henderson / Carlson--Hoglund) and dynamic parcel seeding.
     \item \textbf{Stage 5 (Multi-D Instabilities \& Radiation):} 2D axisymmetric charge detonation, Richtmyer--Meshkov and Rayleigh--Taylor instability-driven turbulent mixing, adaptive mesh refinement (AMR), and thermal radiation coupling via \texttt{blastRadFoam}.
     \item \textbf{Stage 6 (Final Validation \& Downselection):}\\

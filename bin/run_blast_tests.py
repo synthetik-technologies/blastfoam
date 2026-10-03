@@ -318,6 +318,12 @@ def main():
             msg = "Planar detonation front speed and CJ pressure verified against EuDetCode (< 0.1% error)" if passed else f"Failed: {stderr[:100]}"
             results.append(TestResult("Planar CJ/ZND Detonation (WP 2.4)", 2, dur, passed, msg))
 
+            # Planar ZND Detonation with pressurePhaseTransfer
+            code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_planar_znd_phaseTransfer.py")
+            passed = (code == 0)
+            msg = "Planar ZND detonation coupled with pressurePhaseTransfer verified (< 1% front speed, active phase conversion)" if passed else f"Failed: {stderr[:100]}"
+            results.append(TestResult("Planar ZND Detonation with Phase Transfer", 2, dur, passed, msg))
+
         if args.tier in ["3", "all"]:
             print("--- Running Tier 3 Tests (1D/2D Blast Wave Expansion & Empirical Validation) ---")
 
@@ -337,6 +343,24 @@ def main():
                     res_wedge.passed = False
                     res_wedge.message = f"Kingery-Bulmash verification failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_wedge)
+
+            # 1D Spherical Multiphase Detonation (blastEulerFoam origin-initiated CompBAl)
+            res_sph_compb = run_openfoam_case(
+                "tests/1D_spherical/ChargeCompBAl_1D_spherical",
+                tier=3,
+                case_name="ChargeCompBAl_1D_spherical (1D Spherical Multiphase CJ Detonation)"
+            )
+            if res_sph_compb.passed:
+                code, stdout, stderr, dur = run_command(
+                    f"{sys.executable} tests/1D_spherical/verify_spherical_compBAl.py"
+                )
+                if code == 0:
+                    res_sph_compb.message = "Origin initiation & spherical CJ detonation speed verified (< 0.7% error vs EuDetCode)"
+                else:
+                    res_sph_compb.passed = False
+                    res_sph_compb.message = f"Spherical detonation verification failed: {stdout.strip().splitlines()[-1]}"
+            results.append(res_sph_compb)
+
 
     print("\n=== Test Run Completed ===")
     report_content = generate_markdown_report(results, os.path.join(BLASTFOAM_ROOT, args.report))

@@ -43,6 +43,7 @@ namespace fv
 
 defineTypeNameAndDebug(pressurePhaseChange, 0);
 addToRunTimeSelectionTable(fvModel, pressurePhaseChange, dictionary);
+addNamedToRunTimeSelectionTable(fvModel, pressurePhaseChange, dictionary, pressurePhaseTransfer);
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -284,6 +285,12 @@ void pressurePhaseChange::preUpdateMesh()
         tmp<volScalarField> tgamma = gamma();
         
         volScalarField mDot = tgamma() * alphaSource * rhoSource / tau_;
+        if (mesh().foundObject<volScalarField>("lambda." + sourcePhaseName_))
+        {
+            const volScalarField& lambda = 
+                mesh().lookupObject<volScalarField>("lambda." + sourcePhaseName_);
+            mDot *= lambda;
+        }
         
         dimensionedScalar residualRho("residualRho", dimDensity, 1e-10);
 
@@ -399,6 +406,12 @@ void pressurePhaseChange::addSup
     tmp<volScalarField> tgamma = gamma();
     
     volScalarField mDot = tgamma() * alphaSource * rhoSource / tau_;
+    if (mesh().foundObject<volScalarField>("lambda." + sourcePhaseName_))
+    {
+        const volScalarField& lambda = 
+            mesh().lookupObject<volScalarField>("lambda." + sourcePhaseName_);
+        mDot *= lambda;
+    }
 
     if (fieldName == "rho." + sourcePhaseName_ || fieldName == "alphaRho." + sourcePhaseName_)
     {

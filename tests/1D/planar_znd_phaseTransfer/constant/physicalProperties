@@ -1,0 +1,134 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( HE gas );
+
+TLow            200.0;
+
+HE
+{
+    type            detonating;
+    reactants
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState Murnaghan;
+        }
+        equationOfState
+        {
+            rho0            1720.0;
+            n               7.4;
+            kappa           3.9e+11;
+            Gamma           0.35;
+            pRef            101325;
+            pMax            1e11;
+        }
+        specie
+        {
+            molWeight       65.0;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1030;
+            Hf              0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport       const;
+            thermo          eConst;
+            equationOfState eJWLC;
+        }
+        equationOfState
+        {
+            rho0            1720.0;
+            A               5.2423e11;
+            B               7.678e9;
+            C               1.082e9;
+            R1              4.2;
+            R2              1.1;
+            omega           0.34;
+            pMax            1e11;
+            Cv              1410.19;
+            T_CJ            3890.97;
+            rho_CJ          2227.8;
+            E0              -8.5e6;
+        }
+        specie
+        {
+            molWeight       28.0;
+        }
+        transport
+        {
+            mu              0;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cv              1410;
+            Hf              0;
+        }
+    }
+    activationModel linear;
+    initiation
+    {
+        E0              0;
+        points          ( ( 0.0 0.0005 0.0005 ) );
+        vDet            7946.57;
+        Pcj             2.47571e+10;
+    }
+    residualRho     1e-12;
+    residualAlpha   1e-12;
+    TLow            200.0;
+}
+
+gas
+{
+    type            basic;
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState perfectGas;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        Cv              718;
+        Hf              0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+// ************************************************************************* //
