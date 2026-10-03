@@ -94,3 +94,14 @@ doc/Doxygen/DTAGS
 
 # Ignore the test directory
 /tutorialsTest
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz

@@ -361,6 +361,23 @@ def main():
                     res_sph_compb.message = f"Spherical detonation verification failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_sph_compb)
 
+            # 1D Spherical Reacting Multiphase Detonation (blastEulerFoam with gas-phase reactions)
+            res_sph_react = run_openfoam_case(
+                "tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting",
+                tier=3,
+                case_name="ChargeCompBAl_1D_spherical_reacting (1D Spherical Detonation + Gas Reactions)"
+            )
+            if res_sph_react.passed:
+                code, stdout, stderr, dur = run_command(
+                    f"{sys.executable} tests/1D_spherical/verify_spherical_compBAl_reacting.py"
+                )
+                if code == 0:
+                    res_sph_react.message = "Origin initiation, spherical CJ speed & gas-phase reactions verified (< 0.5% error vs EuDetCode)"
+                else:
+                    res_sph_react.passed = False
+                    res_sph_react.message = f"Reacting spherical detonation verification failed: {stdout.strip().splitlines()[-1]}"
+            results.append(res_sph_react)
+
 
     print("\n=== Test Run Completed ===")
     report_content = generate_markdown_report(results, os.path.join(BLASTFOAM_ROOT, args.report))

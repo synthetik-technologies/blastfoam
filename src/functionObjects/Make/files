@@ -1,5 +1,7 @@
 # General
 fieldMinMax/fieldMinMax.C
+temporalMax/temporalMax.C
+temporalIntegral/temporalIntegral.C
 writeTimeList/writeTimeList.C
 conservedQuantities/conservedQuantities.C
 blastProbes/blastProbes.C

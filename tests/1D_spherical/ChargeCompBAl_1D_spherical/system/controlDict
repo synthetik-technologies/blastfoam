@@ -99,4 +99,14 @@ functions
             alpha.Al
         );
     }
+
+    radialPeakPressure
+    {
+        type            temporalMax;
+        libs            ("libblastFunctionObjects.so");
+        field           p;
+        centre          (0 0 0);
+        writeControl    writeTime;
+        outputRadial    true;
+    }
 }

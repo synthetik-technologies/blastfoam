@@ -1,0 +1,70 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fluxSchemes
+{
+    gas
+    {
+        fluxScheme  HLLC;
+    }
+    solid
+    {
+        fluxScheme  AUSM+Up;
+    }
+}
+
+ddtSchemes
+{
+    default         Euler;
+    timeIntegrator  RK2SSP;
+}
+
+gradSchemes
+{
+    default         leastSquares;
+}
+
+divSchemes
+{
+    default         none;
+    div((((alpha.gas*rho.gas)*nuEff.gas)*dev2(T(grad(U.gas))))) Gauss linear;
+    "div\(sigma.solid.*\)" Gauss linear;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default             cubic;
+    reconstruct(alpha)  Minmod;
+    reconstruct(rho)    Minmod;
+    reconstruct(U)      MinmodV;
+    reconstruct(e)      Minmod;
+    reconstruct(p)      Minmod;
+    reconstruct(speedOfSound) Minmod;
+    reconstruct(Theta)  Minmod;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+
+// ************************************************************************* //

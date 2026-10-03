@@ -625,7 +625,7 @@ def fig_stage2_gunib1d():
 
 
 def fig_stage2_planar_znd():
-    """Stage 2: Planar Detonation Wave Trajectory & Taylor Wave from blastFoam."""
+    """Stage 2: Planar Detonation Wave Structure: Multi-time Taylor wave, flow velocity & density."""
     sys.path.insert(0, "/opt/OpenFOAM/blastfoam/tests/1D")
     try:
         from verify_planar_znd import read_openfoam_field
@@ -633,46 +633,62 @@ def fig_stage2_planar_znd():
     except ImportError:
         has_parser = False
 
-    t_us = np.array([0.0, 5.00154, 9.99366, 15.0076])
-    x_num = np.array([0.0, 39.25, 79.25, 119.25])
-    D_CJ = 7946.57
-    x_exact = D_CJ * (t_us * 1e-6) * 1000.0
+    times_f10 = ['5.00154e-06', '9.99366e-06', '1.50076e-05']
+    time_labels_f10 = [r'$t = 5\,\mu\rm s$', r'$t = 10\,\mu\rm s$', r'$t = 15\,\mu\rm s$']
+    colors_f10 = ['darkgreen', 'navy', 'crimson']
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.5))
 
-    ax1.plot(t_us, x_exact, 'k--', lw=1.8, label=r'EuDetCode Reference ($D_{\rm CJ} = 7946.6\,\rm m/s$)')
-    ax1.scatter(t_us, x_num, color='crimson', s=60, zorder=5, label=r'blastFoam Detonation Front ($0.076\%$ Err)')
-    ax1.set_xlabel(r'Time $t$ [$\mu\rm s$]')
-    ax1.set_ylabel('Detonation Front Position $x$ [mm]')
-    ax1.set_title('(a) 1D Planar Detonation Propagation')
-    ax1.grid(True)
-    ax1.legend()
-
-    # Load actual blastFoam 400-cell pressure field at t = 9.99 us
     p_file = "/opt/OpenFOAM/blastfoam/tests/1D/planar_znd/9.99366e-06/p"
     if has_parser and os.path.isfile(p_file):
-        p_raw = read_openfoam_field(p_file)
-        p_gpa = p_raw / 1.0e9
-        dx = 0.2 / len(p_raw)
-        xc = (np.arange(len(p_raw)) + 0.5) * dx * 1000.0  # mm
-        ax2.plot(xc, p_gpa, 'navy', lw=2.0, label=r'blastFoam $p(x)$ at $t = 10\,\mu\rm s$ (400 cells)')
-        ax2.scatter([79.25], [p_gpa.max()], color='crimson', s=65, zorder=6, label=r'Von Neumann Spike ($96.8\,\rm GPa$)')
-        ax2.scatter([79.75], [26.02], color='red', s=55, zorder=5, label=r'CJ State ($P_{\rm CJ} \approx 25\,\rm GPa$)')
+        p_profiles = [read_openfoam_field(f'/opt/OpenFOAM/blastfoam/tests/1D/planar_znd/{t}/p') / 1e9 for t in times_f10]
+        u_10 = read_openfoam_field('/opt/OpenFOAM/blastfoam/tests/1D/planar_znd/9.99366e-06/U')
+        rho_10 = read_openfoam_field('/opt/OpenFOAM/blastfoam/tests/1D/planar_znd/9.99366e-06/rho')
+        dx = 0.2 / len(u_10)
+        xc = (np.arange(len(u_10)) + 0.5) * dx * 1000.0  # mm
+
+        # Panel (a): Multi-Time Spatial Pressure Profiles & Taylor Expansion Fan
+        for i, t_lbl in enumerate(time_labels_f10):
+            ax1.plot(xc, p_profiles[i], color=colors_f10[i], lw=1.8, label=t_lbl)
+
+        ax1.axhline(24.76, color='black', ls='--', lw=1.5, label=r'EuDetCode CJ State ($P_{\rm CJ} = 24.8\,\rm GPa$)')
+        ax1.set_xlabel('Distance from Initiation Wall $x$ [mm]')
+        ax1.set_ylabel('Pressure $p$ [GPa]')
+        ax1.set_title('(a) Multi-Time Pressure and Taylor Expansion Fan')
+        ax1.set_xlim(0, 160)
+        ax1.set_ylim(-2, 110)
+        ax1.grid(True)
+        ax1.legend(loc='upper right', fontsize=8.5)
+
+        # Panel (b): Velocity & Density Compression at t = 10 us
+        color_u = 'navy'
+        ax2.plot(xc, u_10, color=color_u, lw=2.0, label='Flow Velocity $u(x)$')
+        ax2.set_xlabel('Distance from Initiation Wall $x$ [mm]')
+        ax2.set_ylabel('Fluid Velocity $u$ [m/s]', color=color_u)
+        ax2.tick_params(axis='y', labelcolor=color_u)
+        ax2.set_xlim(0, 120)
+        ax2.set_ylim(-100, 5200)
+        ax2.grid(True)
+
+        ax2_twin = ax2.twinx()
+        color_rho = 'crimson'
+        rho0 = 1720.0
+        rho_ratio = rho_10 / rho0
+        ax2_twin.plot(xc, rho_ratio, color=color_rho, lw=1.8, ls='--', label=r'Density Ratio $\rho / \rho_0$')
+        ax2_twin.set_ylabel(r'Density Compression Ratio $\rho / \rho_0$', color=color_rho)
+        ax2_twin.tick_params(axis='y', labelcolor=color_rho)
+        ax2_twin.set_ylim(0.8, 2.7)
+
+        lines1 = [ax2.get_lines()[0], ax2_twin.get_lines()[0]]
+        labels1 = [l.get_label() for l in lines1]
+        ax2.legend(lines1, labels1, loc='upper left', fontsize=8.5)
+        ax2.set_title(r'(b) Fluid Velocity and Density Compression ($t = 10\,\mu\rm s$)')
     else:
         x_spatial = np.linspace(0, 150, 300)
-        x_front_10us = 79.4
-        p_cj = 24.76
-        p_profile = np.where(x_spatial <= x_front_10us, p_cj * (0.45 + 0.55 * (x_spatial / x_front_10us)**2.5), 0.0001013)
-        ax2.plot(x_spatial, p_profile, 'navy', label=r'Pressure Profile at $t = 10\,\mu\rm s$')
-
-    ax2.axvline(79.25, color='gray', linestyle=':', label='Detonation Shock Front')
-    ax2.set_xlabel('Distance from Initiation Wall $x$ [mm]')
-    ax2.set_ylabel('Pressure $p$ [GPa]')
-    ax2.set_title('(b) blastFoam Taylor Wave & Detonation Spike')
-    ax2.set_xlim(0, 150)
-    ax2.set_ylim(-2, 105)
-    ax2.grid(True)
-    ax2.legend()
+        p_profile = np.where(x_spatial <= 79.4, 24.76 * (0.45 + 0.55 * (x_spatial / 79.4)**2.5), 0.0001013)
+        ax1.plot(x_spatial, p_profile, 'navy', label=r'Pressure Profile at $t = 10\,\mu\rm s$')
+        ax1.grid(True)
+        ax1.legend()
 
     plt.tight_layout()
     out = os.path.join(FIG_DIR, "stage2_planar_znd_detonation.pdf")
@@ -693,6 +709,16 @@ def fig_stage3_spherical_blast():
 
     probe_p_file = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/spherical_blast/postProcessing/pressureProbes/0/p"
     probe_i_file = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/spherical_blast/postProcessing/pressureProbes/0/impulse"
+    cmax_p_file = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/spherical_blast/postProcessing/radialPeakPressure/0.005/p_temporalMax.dat"
+    if not os.path.isfile(cmax_p_file):
+        cmax_p_file = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/spherical_blast/postProcessing/radialPeakPressure/0.005/p_coarseMax.dat"
+
+    # Prefer temporalIntegral output for positive phase impulse
+    cmax_i_file = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/spherical_blast/postProcessing/radialImpulse/0.005/p_temporalIntegral.dat"
+    if not os.path.isfile(cmax_i_file):
+        cmax_i_file = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/spherical_blast/postProcessing/radialPeakPressure/0.005/impulse_temporalMax.dat"
+    if not os.path.isfile(cmax_i_file):
+        cmax_i_file = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/spherical_blast/postProcessing/radialPeakPressure/0.005/impulse_coarseMax.dat"
 
     if not (os.path.isfile(probe_p_file) and os.path.isfile(probe_i_file)):
         print("Probe files not found for Stage 3 spherical blast.")
@@ -707,6 +733,17 @@ def fig_stage3_spherical_blast():
     imp_peaks = np.array([np.max(i_data[:, i + 1]) for i in range(len(probes_r))])
     delta_p_bar = np.maximum(p_peaks - 101298.0, 0.0) / 1.0e5
 
+    # Check for fine-grained temporal datasets
+    has_cmax = os.path.isfile(cmax_p_file) and os.path.isfile(cmax_i_file)
+    if has_cmax:
+        dp_c_data = np.loadtxt(cmax_p_file)
+        di_c_data = np.loadtxt(cmax_i_file)
+        r_c = dp_c_data[:, 1]
+        p_c_max = dp_c_data[:, 5]
+        dp_c_bar = np.maximum(p_c_max - 101298.0, 0.0) / 1.0e5
+        r_i = di_c_data[:, 1]
+        imp_c_max = di_c_data[:, 5]
+
     # 1 kg charge: scaled distance Z = r / W^(1/3) = r
     Z_dense = np.logspace(np.log10(0.4), np.log10(6.0), 100)
     if has_kb:
@@ -720,18 +757,27 @@ def fig_stage3_spherical_blast():
 
     # Panel (a): Peak incident overpressure vs Z
     ax1.loglog(Z_dense, dp_kb_bar, 'k--', lw=2.0, label='Kingery-Bulmash / Kinney-Graham')
-    ax1.scatter(probes_r, delta_p_bar, color='crimson', s=60, zorder=5, label='blastFoam Simulation (Wedge)')
+    if has_cmax:
+        mask_p = (r_c >= 0.35) & (r_c <= 3.55) & (dp_c_bar > 0.05)
+        ax1.loglog(r_c[mask_p], dp_c_bar[mask_p], color='crimson', lw=2.2, label='blastFoam (temporalMax, 300 cells)')
+    else:
+        ax1.scatter(probes_r, delta_p_bar, color='crimson', s=60, zorder=5, label='blastFoam Simulation (Wedge)')
     ax1.set_xlabel(r'Scaled Distance $Z = R / W^{1/3}$ [$\rm m / kg^{1/3}$]')
     ax1.set_ylabel(r'Peak Overpressure $\Delta p$ [bar]')
     ax1.set_title(r'(a) Blast Peak Overpressure Attenuation')
+    ax1.set_xlim(0.35, 6.0)
     ax1.grid(True, which='both', linestyle='--', alpha=0.5)
-    ax1.legend()
+    ax1.legend(fontsize=8.5)
 
     # Panel (b): Positive phase impulse vs Z
     ax2.plot(Z_dense, imp_kb, 'k--', lw=2.0, label='Kingery-Bulmash Empirical')
-    ax2.scatter(probes_r, imp_peaks, color='navy', s=60, zorder=5, label='blastFoam Simulation (Wedge)')
-    ax2.scatter([1.0], [imp_peaks[1]], color='forestgreen', s=100, zorder=6, label=f'$Z=1.0\\,\\rm m$: 4.25% Err')
-    ax2.scatter([1.5], [imp_peaks[2]], color='darkorange', s=100, zorder=6, label=f'$Z=1.5\\,\\rm m$: 6.19% Err')
+    if has_cmax:
+        mask_i = (r_i >= 0.35) & (r_i <= 3.55) & (imp_c_max > 0.5)
+        ax2.plot(r_i[mask_i], imp_c_max[mask_i], color='royalblue', lw=2.2, label='blastFoam (temporalIntegral, 300 cells)')
+    else:
+        ax2.scatter(probes_r, imp_peaks, color='navy', s=60, zorder=5, label='blastFoam Simulation (Wedge)')
+        ax2.scatter([1.0], [imp_peaks[1]], color='forestgreen', s=100, zorder=6, label=f'$Z=1.0\\,\\rm m$: 4.25% Err')
+        ax2.scatter([1.5], [imp_peaks[2]], color='darkorange', s=100, zorder=6, label=f'$Z=1.5\\,\\rm m$: 6.19% Err')
     ax2.set_xlabel(r'Scaled Distance $Z = R / W^{1/3}$ [$\rm m / kg^{1/3}$]')
     ax2.set_ylabel(r'Positive Impulse $I_+$ [$\rm Pa \cdot s$]')
     ax2.set_title(r'(b) Positive Phase Impulse vs Scaled Distance')
@@ -762,6 +808,184 @@ def fig_stage3_spherical_blast():
     print(f"Generated {out}")
 
 
+def fig_stage3_spherical_multiphase():
+    """Stage 3: 1D Spherical Multiphase CJ Detonation (Inert vs Reacting Gas Phase)."""
+    INERT_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical"
+    REACT_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting"
+
+    p_i_file = os.path.join(INERT_DIR, "postProcessing/pressureProbes/0/p")
+    p_r_file = os.path.join(REACT_DIR, "postProcessing/pressureProbes/0/p")
+    if not (os.path.isfile(p_i_file) and os.path.isfile(p_r_file)):
+        print("Probe files not found for Stage 3 spherical multiphase.")
+        return
+
+    data_i = np.loadtxt(p_i_file)
+    data_r = np.loadtxt(p_r_file)
+
+    t_us_i = data_i[:, 0] * 1e6
+    t_us_r = data_r[:, 0] * 1e6
+
+    probes_r = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.08, 0.10, 0.15])
+    probes_mm = probes_r * 1000.0
+
+    peaks_i = np.array([np.max(data_i[:, idx + 1]) / 1e9 for idx in range(len(probes_r))])
+    peaks_r = np.array([np.max(data_r[:, idx + 1]) / 1e9 for idx in range(len(probes_r))])
+
+    # Restrict to stations where shock front has fully peaked prior to simulation cutoff (t <= 20 us)
+    valid_mask = probes_r <= 0.10
+    probes_mm_v = probes_mm[valid_mask]
+    peaks_i_v = peaks_i[valid_mask]
+    peaks_r_v = peaks_r[valid_mask]
+
+    # Load temporalMax continuous peak pressure profiles
+    cmax_i_file = os.path.join(INERT_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
+    if not os.path.isfile(cmax_i_file):
+        cmax_i_file = os.path.join(INERT_DIR, "postProcessing/radialPeakPressure/2e-05/p_coarseMax.dat")
+    cmax_r_file = os.path.join(REACT_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
+    if not os.path.isfile(cmax_r_file):
+        cmax_r_file = os.path.join(REACT_DIR, "postProcessing/radialPeakPressure/2e-05/p_coarseMax.dat")
+
+    has_cmax = os.path.isfile(cmax_i_file) and os.path.isfile(cmax_r_file)
+    if has_cmax:
+        cmax_i = np.loadtxt(cmax_i_file)
+        cmax_r = np.loadtxt(cmax_r_file)
+        r_c_i = cmax_i[:, 1] * 1000.0  # mm
+        p_c_i = cmax_i[:, 5] / 1e9     # GPa
+        r_c_r = cmax_r[:, 1] * 1000.0
+        p_c_r = cmax_r[:, 5] / 1e9
+
+    # Load Spatial Line Samples
+    s5_i = np.loadtxt(os.path.join(INERT_DIR, "postProcessing/sampleLine/5e-06/lineX.xy"))
+    s5_r = np.loadtxt(os.path.join(REACT_DIR, "postProcessing/sampleLine/5e-06/lineX.xy"))
+
+    s10_i = np.loadtxt(os.path.join(INERT_DIR, "postProcessing/sampleLine/1e-05/lineX.xy"))
+    s10_r = np.loadtxt(os.path.join(REACT_DIR, "postProcessing/sampleLine/1e-05/lineX.xy"))
+
+    s20_i = np.loadtxt(os.path.join(INERT_DIR, "postProcessing/sampleLine/2e-05/lineX.xy"))
+    s20_r = np.loadtxt(os.path.join(REACT_DIR, "postProcessing/sampleLine/2e-05/lineX.xy"))
+
+    r_s_mm = s5_i[:, 0] * 1000.0
+
+    # Setup 2x2 publication figure
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12.5, 9.5))
+
+    # Panel (a): Radial Peak Pressure Attenuation & Breakout Discontinuity
+    if has_cmax:
+        mask_i = (p_c_i > 0.05) & (r_c_i <= 155.0)
+        mask_r = (p_c_r > 0.05) & (r_c_r <= 155.0)
+
+        ax1.plot(r_c_i[mask_i], p_c_i[mask_i], color='royalblue', lw=2.0, label='Inert Baseline (temporalMax, 400 cells)')
+        ax1.plot(r_c_r[mask_r], p_c_r[mask_r], color='crimson', lw=1.8, ls='--', label='Reacting Gas (temporalMax, 400 cells)')
+
+
+        ax1.axvline(50.0, color='gray', ls=':', lw=1.5, label=r'Charge Boundary ($R_0 = 50\,\rm mm$)')
+        max_idx = np.argmax(p_c_i)
+        ax1.scatter([r_c_i[max_idx]], [p_c_i[max_idx]], color='darkblue', s=80, zorder=6, label=f'Detonation Peak: {p_c_i[max_idx]:.2f} GPa')
+        breakout_idx = np.where(r_c_i >= 50.0)[0][0]
+        ax1.scatter([r_c_i[breakout_idx]], [p_c_i[breakout_idx]], color='darkgreen', s=80, zorder=6, label=f'Breakout Shock: {p_c_i[breakout_idx]:.2f} GPa')
+
+        ax1.set_xlim(0, 160)
+        ax1.set_ylim(4.5, 15.5)
+    else:
+        ax1.plot(probes_mm_v, peaks_i_v, 's-', color='royalblue', lw=1.8, ms=7, label='Inert Baseline ($P_{\\rm peak}$ at probes)')
+        ax1.plot(probes_mm_v, peaks_r_v, 'o--', color='crimson', lw=1.8, ms=7, label='Reacting Gas Phase ($P_{\\rm peak}$ at probes)')
+        ax1.axvline(50.0, color='gray', ls=':', lw=1.5, label='Charge Boundary ($R_0 = 50\\,\\rm mm$)')
+        ax1.scatter([40.0], [peaks_i[3]], color='darkblue', s=90, zorder=6, label=f'Core CJ Peak: {peaks_i[3]:.2f} GPa')
+        ax1.scatter([50.0], [peaks_i[4]], color='darkgreen', s=90, zorder=6, label=f'Breakout Shock: {peaks_i[4]:.2f} GPa')
+        ax1.set_xlim(5, 108)
+        ax1.set_ylim(6.5, 14.5)
+
+    ax1.set_xlabel(r'Radial Station $r$ [$\rm mm$]')
+    ax1.set_ylabel(r'Peak Pressure $P_{\rm peak}$ [$\rm GPa$]')
+    ax1.set_title(r'(a) Radial Peak Pressure Attenuation and Blast Breakout')
+    ax1.grid(True)
+    ax1.legend(loc='upper right', fontsize=8.2)
+
+    # Panel (b): Gauge Pressure Waveforms p(t)
+    station_indices = [1, 3, 4, 5]  # 2 cm, 4 cm, 5 cm, 8 cm
+    colors_b = ['navy', 'darkgreen', 'darkorange', 'purple']
+    for i, idx in enumerate(station_indices):
+        r_val = probes_r[idx] * 100
+        p_i_gpa = data_i[:, idx + 1] / 1e9
+        p_r_gpa = data_r[:, idx + 1] / 1e9
+        ax2.plot(t_us_i, p_i_gpa, color=colors_b[i], lw=1.8, label=f'$r = {r_val:.0f}\\,\\rm cm$')
+        ax2.plot(t_us_r, p_r_gpa, color=colors_b[i], lw=1.6, ls='--', alpha=0.85)
+
+    ax2.plot([], [], 'k-', lw=1.8, label='Solid: Inert Baseline')
+    ax2.plot([], [], 'k--', lw=1.6, label='Dashed: Reacting Gas')
+    ax2.set_xlabel(r'Time $t$ [$\mu\rm s$]')
+    ax2.set_ylabel(r'Pressure $p$ [$\rm GPa$]')
+    ax2.set_title(r'(b) Time-Resolved Pressure Waveforms at Radial Probes')
+    ax2.set_xlim(0.0, 20.0)
+    ax2.set_ylim(-0.5, 14.5)
+    ax2.grid(True)
+    ax2.legend(loc='upper right', fontsize=8.5, ncol=2)
+
+    # Panel (c): Spatial Pressure Distribution across Time Snapshots
+    p5_i_gpa = s5_i[:, 1] / 1e9
+    p5_r_gpa = s5_r[:, 1] / 1e9
+
+    p10_i_gpa = s10_i[:, 1] / 1e9
+    p10_r_gpa = s10_r[:, 1] / 1e9
+
+    p20_i_gpa = s20_i[:, 1] / 1e9
+    p20_r_gpa = s20_r[:, 1] / 1e9
+
+    ax3.plot(r_s_mm, p5_i_gpa, 'navy', lw=1.8, label=r'$t = 5\,\mu\rm s$ (Inert)')
+    ax3.plot(r_s_mm, p5_r_gpa, 'royalblue', lw=1.6, ls='--', label=r'$t = 5\,\mu\rm s$ (Reacting)')
+
+    ax3.plot(r_s_mm, p10_i_gpa, 'darkgreen', lw=1.8, label=r'$t = 10\,\mu\rm s$ (Inert)')
+    ax3.plot(r_s_mm, p10_r_gpa, 'limegreen', lw=1.6, ls='--', label=r'$t = 10\,\mu\rm s$ (Reacting)')
+
+    ax3.plot(r_s_mm, p20_i_gpa, 'crimson', lw=1.8, label=r'$t = 20\,\mu\rm s$ (Inert)')
+    ax3.plot(r_s_mm, p20_r_gpa, 'coral', lw=1.6, ls='--', label=r'$t = 20\,\mu\rm s$ (Reacting)')
+
+    ax3.axvline(50.0, color='gray', ls=':', lw=1.5, label=r'Charge Edge ($R_0 = 50\,\rm mm$)')
+    ax3.set_xlabel(r'Radial Coordinate $r$ [$\rm mm$]')
+    ax3.set_ylabel(r'Pressure $p$ [$\rm GPa$]')
+    ax3.set_title(r'(c) Radial Detonation and Blast Wave Pressure Structure')
+    ax3.set_xlim(0, 185)
+    ax3.set_ylim(-0.5, 14.5)
+    ax3.grid(True)
+    ax3.legend(loc='upper right', fontsize=8.5, ncol=2)
+
+    # Panel (d): Two-Fluid Multiphase Dynamics at t = 20 us
+    u_al_i = np.abs(s20_i[:, 19])
+    u_al_r = np.abs(s20_r[:, 19])
+    alpha_al_r = s20_r[:, 9]
+    alpha_gas_r = s20_r[:, 7]
+
+    color_vel = 'darkblue'
+    ax4.set_xlabel(r'Radial Coordinate $r$ [$\rm mm$]')
+    ax4.set_ylabel(r'Al Particle Radial Velocity $u_{\rm Al}$ [$\rm m/s$]', color=color_vel)
+    l1 = ax4.plot(r_s_mm, u_al_i, color='royalblue', lw=2.0, label=f'$u_{{\\rm Al}}$ Inert ($u_{{\\rm max}} = {np.max(u_al_i):.0f}\\,\\rm m/s$)')
+    l2 = ax4.plot(r_s_mm, u_al_r, color='navy', lw=2.0, ls='--', label=f'$u_{{\\rm Al}}$ Reacting ($u_{{\\rm max}} = {np.max(u_al_r):.0f}\\,\\rm m/s$)')
+    ax4.tick_params(axis='y', labelcolor=color_vel)
+    ax4.set_ylim(-100, 4000)
+    ax4.set_xlim(0, 185)
+    ax4.grid(True)
+
+    ax4_twin = ax4.twinx()
+    color_alpha = 'crimson'
+    ax4_twin.set_ylabel(r'Phase Volume Fraction $\alpha$', color=color_alpha)
+    l3 = ax4_twin.plot(r_s_mm, alpha_al_r, color='crimson', lw=1.8, label=r'$\alpha_{\rm Al}$ (Aluminium Particles)')
+    l4 = ax4_twin.plot(r_s_mm, alpha_gas_r, color='darkorange', lw=1.8, ls='-.', label=r'$\alpha_{\rm gas}$ (Carrier Gas)')
+    ax4_twin.tick_params(axis='y', labelcolor=color_alpha)
+    ax4_twin.set_ylim(-0.05, 1.05)
+
+    lines = l1 + l2 + l3 + l4
+    labels = [l.get_label() for l in lines]
+    ax4.legend(lines, labels, loc='center left', fontsize=8.5)
+    ax4.set_title(r'(d) Two-Fluid Multiphase Dispersion and Velocity Slip ($t = 20\,\mu\rm s$)')
+
+    plt.tight_layout()
+    out = os.path.join(FIG_DIR, "stage3_spherical_multiphase.pdf")
+    plt.savefig(out, dpi=300)
+    plt.savefig(out.replace(".pdf", ".png"), dpi=200)
+    plt.close()
+    print(f"Generated {out}")
+
+
 def main():
     print("Generating all verification and development figures for LaTeX report...")
     fig_stage0_thermo()
@@ -772,6 +996,7 @@ def main():
     fig_stage2_gunib1d()
     fig_stage2_planar_znd()
     fig_stage3_spherical_blast()
+    fig_stage3_spherical_multiphase()
     print("All figures successfully generated in", FIG_DIR)
 
 

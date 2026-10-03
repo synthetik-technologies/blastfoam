@@ -84,5 +84,27 @@ functions
             impulse
         );
     }
+
+    radialPeakPressure
+    {
+        type            temporalMax;
+        libs            ("libblastFunctionObjects.so");
+        field           p;
+        centre          (0 0 1.0);
+        writeControl    writeTime;
+        outputRadial    true;
+    }
+
+    radialImpulse
+    {
+        type            temporalIntegral;
+        libs            ("libblastFunctionObjects.so");
+        field           p;
+        pRef            101298;
+        positiveOnly    true;
+        centre          (0 0 1.0);
+        writeControl    writeTime;
+        outputRadial    true;
+    }
 }
 

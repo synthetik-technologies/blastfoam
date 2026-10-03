@@ -349,17 +349,48 @@ void pressurePhaseChange::preUpdateMesh()
         // alphaRho.Phase for source
         integrator.addSource("alphaRho." + sourcePhaseName_, SrhoSource);
 
-        // Energy source for rhoE
+        // Energy source for rhoE or per-phase alphaRhoE
         tmp<volScalarField> tEOff = energyOffset();
         const volScalarField& eOff = tEOff();
-        volScalarField::Internal SrhoE
-        (
-            IOobject("SrhoE", mesh().time().name(), mesh()),
-            mesh(),
-            dimensionedScalar("SrhoE", dimEnergy/dimVolume/dimTime, 0.0)
-        );
-        SrhoE.primitiveFieldRef() = -mDot.primitiveField() * eOff.primitiveField();
-        integrator.addSource("rhoE", SrhoE);
+        if (mesh().foundObject<volScalarField::Internal>("rhoE"))
+        {
+            volScalarField::Internal SrhoE
+            (
+                IOobject("SrhoE", mesh().time().name(), mesh()),
+                mesh(),
+                dimensionedScalar("SrhoE", dimEnergy/dimVolume/dimTime, 0.0)
+            );
+            SrhoE.primitiveFieldRef() = -mDot.primitiveField() * eOff.primitiveField();
+            integrator.addSource("rhoE", SrhoE);
+        }
+        else
+        {
+            for (const targetPhase& tp : targetPhases_)
+            {
+                if (mesh().foundObject<volScalarField::Internal>("alphaRhoE." + tp.name))
+                {
+                    volScalarField::Internal SalphaRhoETarget
+                    (
+                        IOobject("SalphaRhoETarget", mesh().time().name(), mesh()),
+                        mesh(),
+                        dimensionedScalar("SalphaRhoETarget", dimEnergy/dimVolume/dimTime, 0.0)
+                    );
+                    SalphaRhoETarget.primitiveFieldRef() = -mDot.primitiveField() * tp.fraction * eOff.primitiveField();
+                    integrator.addSource("alphaRhoE." + tp.name, SalphaRhoETarget);
+                }
+            }
+            if (mesh().foundObject<volScalarField::Internal>("alphaRhoE." + sourcePhaseName_))
+            {
+                volScalarField::Internal SalphaRhoESource
+                (
+                    IOobject("SalphaRhoESource", mesh().time().name(), mesh()),
+                    mesh(),
+                    dimensionedScalar("SalphaRhoESource", dimEnergy/dimVolume/dimTime, 0.0)
+                );
+                SalphaRhoESource.primitiveFieldRef() = mDot.primitiveField() * eOff.primitiveField();
+                integrator.addSource("alphaRhoE." + sourcePhaseName_, SalphaRhoESource);
+            }
+        }
 
         // Alpha source [1/s]
         if (mesh().foundObject<volScalarField>("alpha." + sourcePhaseName_))
