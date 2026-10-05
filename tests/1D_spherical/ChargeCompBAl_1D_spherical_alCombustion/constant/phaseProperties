@@ -19,7 +19,7 @@ phases          ( Al compBAl gas );
 
 transportPhaseDensity true;
 
-VRelaxation     ode;
+VRelaxation     instant;
 
 Al
 {

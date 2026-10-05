@@ -25,7 +25,9 @@ species
     CH4
     C2H6
     C(gr)
+    Al
     Al2O3(s)
+    H2
 );
 
 reactions
@@ -46,6 +48,42 @@ reactions
         A        2.2e12;
         beta     0;
         Ta       20130;
+    }
+
+    Al_O2_Reaction
+    {
+        type     irreversibleArrhenius;
+        reaction "4Al + 3O2 = 2Al2O3(s)";
+        A        1.0e13;
+        beta     0;
+        Ta       15000;
+    }
+
+    Al_CO2_Reaction
+    {
+        type     irreversibleArrhenius;
+        reaction "2Al + 3CO2 = Al2O3(s) + 3CO";
+        A        6.0e12;
+        beta     0;
+        Ta       19000;
+    }
+
+    Al_H2O_Reaction
+    {
+        type     irreversibleArrhenius;
+        reaction "2Al + 3H2O = Al2O3(s) + 3H2";
+        A        8.0e12;
+        beta     0;
+        Ta       17500;
+    }
+
+    H2Reaction
+    {
+        type     irreversibleArrhenius;
+        reaction "2H2 + O2 = 2H2O";
+        A        2.0e13;
+        beta     0;
+        Ta       16000;
     }
 }
 

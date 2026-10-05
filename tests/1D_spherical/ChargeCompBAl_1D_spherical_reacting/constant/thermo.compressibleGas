@@ -17,7 +17,9 @@ species
     CH4
     C2H6
     C(gr)
+    Al
     Al2O3(s)
+    H2
 );
 
 O2
@@ -278,6 +280,56 @@ Al2O3(s)
         Tcommon         1000;
         highCpCoeffs    ( 12.7937 0.00262194 -8.5447e-07 1.25866e-10 -6.81566e-15 -207238 -64.4442 );
         lowCpCoeffs     ( -1.82115 0.0543666 -6.21334e-05 3.32185e-08 -6.74907e-12 -202271 7.42065 );
+    }
+    transport
+    {
+        As              1.0e-6;
+        Ts              100;
+    }
+}
+
+Al
+{
+    specie
+    {
+        molWeight       26.9815;
+    }
+    equationOfState
+    {
+        b               9.94e-05;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           6000;
+        Tcommon         1000;
+        highCpCoeffs    ( 2.53152 -4.16003e-05 2.40956e-08 -7.15421e-12 8.68511e-16 38941.1 5.39171 );
+        lowCpCoeffs     ( 3.11147 -0.00357363 8.02692e-06 -7.89637e-09 2.83935e-12 38864.2 2.83632 );
+    }
+    transport
+    {
+        As              1.0e-6;
+        Ts              100;
+    }
+}
+
+H2
+{
+    specie
+    {
+        molWeight       2.01588;
+    }
+    equationOfState
+    {
+        b               7.7e-04;
+    }
+    thermodynamics
+    {
+        Tlow            200;
+        Thigh           6000;
+        Tcommon         1000;
+        highCpCoeffs    ( 3.33728 -4.94025e-05 4.99457e-07 -1.79566e-10 2.00255e-14 -950.159 -3.20502 );
+        lowCpCoeffs     ( 2.34433 0.00798052 -1.94782e-05 2.01572e-08 -7.37612e-12 -917.935 0.68301 );
     }
     transport
     {

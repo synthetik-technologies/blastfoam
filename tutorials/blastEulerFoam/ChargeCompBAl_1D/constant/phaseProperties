@@ -19,6 +19,8 @@ phases          ( Al compBAl gas );
 
 transportPhaseDensity true;
 
+VRelaxation     instant;
+
 Al
 {
     phaseType       granular;
