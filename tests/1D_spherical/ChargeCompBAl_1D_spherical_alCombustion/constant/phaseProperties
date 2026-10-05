@@ -1,0 +1,239 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( Al compBAl gas );
+
+transportPhaseDensity true;
+
+VRelaxation     ode;
+
+Al
+{
+    phaseType       granular;
+    diameterModel   reacting;
+    reactingDiameterCoeffs
+    {
+        d               3e-5;
+        reactionRate    pressureBased;
+        offset          0;
+        pMin            2e5;
+        pScale          1e-6;
+        pExponent       0.7;
+        pCoeff          5e-5;
+    }
+
+    alphaMax        0.63;
+    alphaMinFriction 0.5;
+
+    kineticTheoryCoeffs
+    {
+        e               0.999;
+    }
+    residualAlpha   1e-6;
+    residualRho     2700;
+}
+
+compBAl
+{
+    phaseType       fluid;
+
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+
+    residualRho     1820;
+    residualAlpha   1e-6;
+}
+
+gas
+{
+    phaseType       fluid;
+
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+
+    residualRho     1.2;
+    residualAlpha   1e-6;
+}
+
+blending
+{
+    default
+    {
+        type            none;
+        continuousPhase gas;
+    }
+}
+
+interfacialPressure
+(
+    (gas and Al)
+    {
+        type            single;
+        phase           gas;
+    }
+
+    (compBAl and Al)
+    {
+        type            single;
+        phase           compBAl;
+    }
+
+    (compBAl and gas)
+    {
+      type            totalPressure;
+    }
+);
+
+interfacialVelocity
+(
+    (gas and Al)
+    {
+        type            single;
+        phase           Al;
+    }
+
+    (compBAl and Al)
+    {
+        type            single;
+        phase           Al;
+    }
+
+    (compBAl and gas)
+    {
+        type            massAveraged;
+    }
+);
+
+massTransfer
+(
+);
+
+aspectRatio
+(
+);
+
+solveDragODE on;
+dragODECoeffs
+{
+    solver          seulex;
+    relTol          1e-3;
+    solveODE        true;
+    alphaCutoff     1e-2;
+}
+
+drag
+(
+    (Al in gas)
+    {
+        type            GidaspowErgunWenYu;
+        residualRe      1e-3;
+        alphaCutoff     1e-2;
+        swarmCorrection
+        {
+            type            none;
+        }
+    }
+    (Al in compBAl)
+    {
+        type            GidaspowErgunWenYu;
+        residualRe      1e-3;
+        alphaCutoff     1e-2;
+        swarmCorrection
+        {
+            type            none;
+        }
+    }
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+    (Al in gas)
+    {
+        type            RanzMarshall;
+        NuModel         Gunn;
+    }
+
+    (Al in compBAl)
+    {
+        type            RanzMarshall;
+        NuModel         Gunn;
+    }
+);
+
+interfacialPressure
+(
+    (compBAl and gas)
+    {
+        type            totalPressure;
+    }
+);
+
+lift
+(
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    alphaMax            0.63;
+    residualAlpha       1e-8;
+    alphaMinFriction    0.5;
+
+    radialModel         SinclairJackson;
+    viscosityModel      none;
+    conductivityModel   Syamlal;
+    granularPressureModel Lun;
+    frictionalStressModel JohnsonJackson;
+
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           0.05;
+    }
+}
+
+pressureRelaxationSolver
+{
+    type            none;
+}
+
+pressureRelaxation
+(
+);
+
+// ************************************************************************* //

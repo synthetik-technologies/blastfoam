@@ -378,6 +378,24 @@ def main():
                     res_sph_react.message = f"Reacting spherical detonation verification failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_sph_react)
 
+            # 1D Spherical Detonation with Aluminium Combustion (blastEulerFoam with empirical burn-rate law)
+            res_sph_al = run_openfoam_case(
+                "tests/1D_spherical/ChargeCompBAl_1D_spherical_alCombustion",
+                tier=3,
+                case_name="ChargeCompBAl_1D_spherical_alCombustion (1D Spherical Detonation + Al Combustion)"
+            )
+            if res_sph_al.passed:
+                code, stdout, stderr, dur = run_command(
+                    f"{sys.executable} tests/1D_spherical/verify_spherical_compBAl_alCombustion.py"
+                )
+                if code == 0:
+                    res_sph_al.message = "Origin initiation, spherical CJ speed & Al burn-rate regression verified (< 0.5% error vs EuDetCode)"
+                else:
+                    res_sph_al.passed = False
+                    res_sph_al.message = f"Al-combustion spherical detonation verification failed: {stdout.strip().splitlines()[-1]}"
+            results.append(res_sph_al)
+
+
 
     print("\n=== Test Run Completed ===")
     report_content = generate_markdown_report(results, os.path.join(BLASTFOAM_ROOT, args.report))

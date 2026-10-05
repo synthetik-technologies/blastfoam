@@ -61,6 +61,14 @@ Foam::dragModels::dispersedDragModel::dispersedDragModel
         dict.isDict(swarmCorrection::typeName)
       ? swarmCorrection::New(dict, pair)
       : autoPtr<swarmCorrection>(new swarmCorrections::noSwarm(dict, pair))
+    ),
+    alphaCutoff_
+    (
+        dict.lookupOrDefault<scalar>
+        (
+            "alphaCutoff",
+            dict.lookupOrDefault<scalar>("alphaMin", 0.0)
+        )
     )
 {}
 
@@ -151,10 +159,12 @@ Foam::dragModels::dispersedDragModel::stabK() const
     const scalar rAlphaD = pair_.dispersed().residualAlpha().value();
     const volScalarField& alphaC = pair_.continuous();
     const scalar rAlphaC = pair_.continuous().residualAlpha().value();
+    const scalar cutoffD = max(rAlphaD, alphaCutoff_);
+    const scalar cutoffC = max(rAlphaC, alphaCutoff_);
 
     forAll(stabK, celli)
     {
-        if (alphaD[celli] > rAlphaD && alphaC[celli] > rAlphaC)
+        if (alphaD[celli] > cutoffD && alphaC[celli] > cutoffC)
         {
             stabK[celli] = max(alphaD[celli], rAlphaD)*cellKi(celli);
         }
@@ -167,6 +177,19 @@ Foam::dragModels::dispersedDragModel::stabK() const
 Foam::tmp<Foam::surfaceScalarField>
 Foam::dragModels::dispersedDragModel::stabKf() const
 {
+    const scalar cutoffD = max(pair_.dispersed().residualAlpha().value(), alphaCutoff_);
+    const scalar cutoffC = max(pair_.continuous().residualAlpha().value(), alphaCutoff_);
+    if (alphaCutoff_ > 0.0)
+    {
+        return
+            pos0(fvc::interpolate(pair_.dispersed()) - cutoffD)
+           *pos0(fvc::interpolate(pair_.continuous()) - cutoffC)
+           *max
+            (
+                fvc::interpolate(pair_.dispersed()),
+                pair_.dispersed().residualAlpha()
+            )*fvc::interpolate(Ki());
+    }
     return
         max
         (
@@ -181,10 +204,12 @@ Foam::scalar Foam::dragModels::dispersedDragModel::cellStabK
     const label celli
 ) const
 {
+    const scalar cutoffD = max(pair_.dispersed().residualAlpha().value(), alphaCutoff_);
+    const scalar cutoffC = max(pair_.continuous().residualAlpha().value(), alphaCutoff_);
     if
     (
-        pair_.dispersed()[celli] > pair_.dispersed().residualAlpha().value()
-     && pair_.continuous()[celli] > pair_.continuous().residualAlpha().value()
+        pair_.dispersed()[celli] > cutoffD
+     && pair_.continuous()[celli] > cutoffC
     )
     {
         return
@@ -201,6 +226,13 @@ Foam::scalar Foam::dragModels::dispersedDragModel::cellStabK
 Foam::tmp<Foam::volScalarField>
 Foam::dragModels::dispersedDragModel::K() const
 {
+    if (alphaCutoff_ > 0.0)
+    {
+        return
+            pos0(pair_.dispersed() - alphaCutoff_)
+           *pos0(pair_.continuous() - alphaCutoff_)
+           *pair_.dispersed()*Ki();
+    }
     return pair_.dispersed()*Ki();
 }
 
@@ -208,6 +240,14 @@ Foam::dragModels::dispersedDragModel::K() const
 Foam::tmp<Foam::surfaceScalarField>
 Foam::dragModels::dispersedDragModel::Kf() const
 {
+    if (alphaCutoff_ > 0.0)
+    {
+        return
+            pos0(fvc::interpolate(pair_.dispersed()) - alphaCutoff_)
+           *pos0(fvc::interpolate(pair_.continuous()) - alphaCutoff_)
+           *fvc::interpolate(pair_.dispersed())
+           *fvc::interpolate(Ki());
+    }
     return
         fvc::interpolate(pair_.dispersed())
        *fvc::interpolate(Ki());
@@ -219,6 +259,12 @@ Foam::scalar Foam::dragModels::dispersedDragModel::cellK
     const label celli
 ) const
 {
+    const scalar cutoffD = max(pair_.dispersed().residualAlpha().value(), alphaCutoff_);
+    const scalar cutoffC = max(pair_.continuous().residualAlpha().value(), alphaCutoff_);
+    if (pair_.dispersed()[celli] <= cutoffD || pair_.continuous()[celli] <= cutoffC)
+    {
+        return 0.0;
+    }
     return pair_.dispersed()[celli]*cellKi(celli);
 }
 

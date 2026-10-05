@@ -63,6 +63,9 @@ protected:
         //- Swarm correction
         autoPtr<swarmCorrection> swarmCorrection_;
 
+        //- Cutoff volume fraction below which drag is zero
+        scalar alphaCutoff_;
+
 
 public:
 
@@ -137,6 +140,12 @@ public:
         //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
         virtual scalar cellStabK(const label) const;
+
+        //- Return the cutoff volume fraction below which drag is zero
+        scalar alphaCutoff() const
+        {
+            return alphaCutoff_;
+        }
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

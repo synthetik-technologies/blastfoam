@@ -19,6 +19,8 @@ phases          ( Al compBAl gas );
 
 transportPhaseDensity true;
 
+VRelaxation     ode;
+
 Al
 {
     phaseType       granular;
@@ -131,11 +133,13 @@ aspectRatio
 (
 );
 
-solveDragODE off;
+solveDragODE on;
 dragODECoeffs
 {
     solver          seulex;
     relTol          1e-3;
+    solveODE        true;
+    alphaCutoff     1e-3;
 }
 
 drag
@@ -144,6 +148,7 @@ drag
     {
         type            GidaspowErgunWenYu;
         residualRe      1e-3;
+        alphaCutoff     1e-3;
         swarmCorrection
         {
             type            none;
@@ -153,6 +158,7 @@ drag
     {
         type            GidaspowErgunWenYu;
         residualRe      1e-3;
+        alphaCutoff     1e-3;
         swarmCorrection
         {
             type            none;

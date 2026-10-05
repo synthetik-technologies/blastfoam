@@ -809,18 +809,25 @@ def fig_stage3_spherical_blast():
 
 
 def fig_stage3_spherical_multiphase():
-    """Stage 3: 1D Spherical Multiphase CJ Detonation (Inert vs Reacting Gas Phase)."""
+    """Stage 3: 1D Spherical Multiphase Detonation (Inert vs Reacting vs Al-Combustion)."""
     INERT_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical"
     REACT_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting"
+    ALCOMB_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical_alCombustion"
 
     p_i_file = os.path.join(INERT_DIR, "postProcessing/pressureProbes/0/p")
     p_r_file = os.path.join(REACT_DIR, "postProcessing/pressureProbes/0/p")
+    p_a_file = os.path.join(ALCOMB_DIR, "postProcessing/pressureProbes/0/p")
+
     if not (os.path.isfile(p_i_file) and os.path.isfile(p_r_file)):
         print("Probe files not found for Stage 3 spherical multiphase.")
         return
 
     data_i = np.loadtxt(p_i_file)
     data_r = np.loadtxt(p_r_file)
+    has_al = os.path.isfile(p_a_file)
+    if has_al:
+        data_a = np.loadtxt(p_a_file)
+        t_us_a = data_a[:, 0] * 1e6
 
     t_us_i = data_i[:, 0] * 1e6
     t_us_r = data_r[:, 0] * 1e6
@@ -831,12 +838,6 @@ def fig_stage3_spherical_multiphase():
     peaks_i = np.array([np.max(data_i[:, idx + 1]) / 1e9 for idx in range(len(probes_r))])
     peaks_r = np.array([np.max(data_r[:, idx + 1]) / 1e9 for idx in range(len(probes_r))])
 
-    # Restrict to stations where shock front has fully peaked prior to simulation cutoff (t <= 20 us)
-    valid_mask = probes_r <= 0.10
-    probes_mm_v = probes_mm[valid_mask]
-    peaks_i_v = peaks_i[valid_mask]
-    peaks_r_v = peaks_r[valid_mask]
-
     # Load temporalMax continuous peak pressure profiles
     cmax_i_file = os.path.join(INERT_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
     if not os.path.isfile(cmax_i_file):
@@ -844,6 +845,7 @@ def fig_stage3_spherical_multiphase():
     cmax_r_file = os.path.join(REACT_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
     if not os.path.isfile(cmax_r_file):
         cmax_r_file = os.path.join(REACT_DIR, "postProcessing/radialPeakPressure/2e-05/p_coarseMax.dat")
+    cmax_a_file = os.path.join(ALCOMB_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
 
     has_cmax = os.path.isfile(cmax_i_file) and os.path.isfile(cmax_r_file)
     if has_cmax:
@@ -854,29 +856,59 @@ def fig_stage3_spherical_multiphase():
         r_c_r = cmax_r[:, 1] * 1000.0
         p_c_r = cmax_r[:, 5] / 1e9
 
+    has_cmax_a = has_cmax and os.path.isfile(cmax_a_file)
+    if has_cmax_a:
+        cmax_a = np.loadtxt(cmax_a_file)
+        r_c_a = cmax_a[:, 1] * 1000.0
+        p_c_a = cmax_a[:, 5] / 1e9
+
     # Load Spatial Line Samples
     s5_i = np.loadtxt(os.path.join(INERT_DIR, "postProcessing/sampleLine/5e-06/lineX.xy"))
     s5_r = np.loadtxt(os.path.join(REACT_DIR, "postProcessing/sampleLine/5e-06/lineX.xy"))
-
     s10_i = np.loadtxt(os.path.join(INERT_DIR, "postProcessing/sampleLine/1e-05/lineX.xy"))
     s10_r = np.loadtxt(os.path.join(REACT_DIR, "postProcessing/sampleLine/1e-05/lineX.xy"))
-
     s20_i = np.loadtxt(os.path.join(INERT_DIR, "postProcessing/sampleLine/2e-05/lineX.xy"))
     s20_r = np.loadtxt(os.path.join(REACT_DIR, "postProcessing/sampleLine/2e-05/lineX.xy"))
+    s20_a_file = os.path.join(ALCOMB_DIR, "postProcessing/sampleLine/2e-05/lineX.xy")
+    has_s20_a = os.path.isfile(s20_a_file)
+    s20_a = np.loadtxt(s20_a_file) if has_s20_a else None
 
     r_s_mm = s5_i[:, 0] * 1000.0
 
+    # Helper function to read scalar field
+    def read_openfoam_field(path):
+        if not os.path.isfile(path):
+            return None
+        with open(path, 'r') as f:
+            lines = [l.strip() for l in f if l.strip()]
+        if '(' in lines:
+            s = lines.index('(') + 1
+            e = lines.index(')')
+            return np.array([float(x) for x in lines[s:e]])
+        return None
+
+    # Load particle diameter fields from alCombustion case
+    d5_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "5e-06/d.Al"))
+    d10_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "1e-05/d.Al"))
+    d20_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "2e-05/d.Al"))
+    a5_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "5e-06/alpha.Al"))
+    a10_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "1e-05/alpha.Al"))
+    a20_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "2e-05/alpha.Al"))
+    ALPHA_THRESHOLD = 1e-4
+
     # Setup 2x2 publication figure
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12.5, 9.5))
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(13.0, 9.8))
 
     # Panel (a): Radial Peak Pressure Attenuation & Breakout Discontinuity
     if has_cmax:
         mask_i = (p_c_i > 0.05) & (r_c_i <= 155.0)
         mask_r = (p_c_r > 0.05) & (r_c_r <= 155.0)
 
-        ax1.plot(r_c_i[mask_i], p_c_i[mask_i], color='royalblue', lw=2.0, label='Inert Baseline (temporalMax, 400 cells)')
-        ax1.plot(r_c_r[mask_r], p_c_r[mask_r], color='crimson', lw=1.8, ls='--', label='Reacting Gas (temporalMax, 400 cells)')
-
+        ax1.plot(r_c_i[mask_i], p_c_i[mask_i], color='royalblue', lw=2.2, label='Inert Baseline')
+        ax1.plot(r_c_r[mask_r], p_c_r[mask_r], color='crimson', lw=1.8, ls='--', label='Reacting Gas Phase')
+        if has_cmax_a:
+            mask_a = (p_c_a > 0.05) & (r_c_a <= 155.0)
+            ax1.plot(r_c_a[mask_a], p_c_a[mask_a], color='forestgreen', lw=1.8, ls='-.', label='Al Combustion (Burn-Rate Law)')
 
         ax1.axvline(50.0, color='gray', ls=':', lw=1.5, label=r'Charge Boundary ($R_0 = 50\,\rm mm$)')
         max_idx = np.argmax(p_c_i)
@@ -886,20 +918,12 @@ def fig_stage3_spherical_multiphase():
 
         ax1.set_xlim(0, 160)
         ax1.set_ylim(4.5, 15.5)
-    else:
-        ax1.plot(probes_mm_v, peaks_i_v, 's-', color='royalblue', lw=1.8, ms=7, label='Inert Baseline ($P_{\\rm peak}$ at probes)')
-        ax1.plot(probes_mm_v, peaks_r_v, 'o--', color='crimson', lw=1.8, ms=7, label='Reacting Gas Phase ($P_{\\rm peak}$ at probes)')
-        ax1.axvline(50.0, color='gray', ls=':', lw=1.5, label='Charge Boundary ($R_0 = 50\\,\\rm mm$)')
-        ax1.scatter([40.0], [peaks_i[3]], color='darkblue', s=90, zorder=6, label=f'Core CJ Peak: {peaks_i[3]:.2f} GPa')
-        ax1.scatter([50.0], [peaks_i[4]], color='darkgreen', s=90, zorder=6, label=f'Breakout Shock: {peaks_i[4]:.2f} GPa')
-        ax1.set_xlim(5, 108)
-        ax1.set_ylim(6.5, 14.5)
 
     ax1.set_xlabel(r'Radial Station $r$ [$\rm mm$]')
     ax1.set_ylabel(r'Peak Pressure $P_{\rm peak}$ [$\rm GPa$]')
     ax1.set_title(r'(a) Radial Peak Pressure Attenuation and Blast Breakout')
     ax1.grid(True)
-    ax1.legend(loc='upper right', fontsize=8.2)
+    ax1.legend(loc='upper right', fontsize=8.0)
 
     # Panel (b): Gauge Pressure Waveforms p(t)
     station_indices = [1, 3, 4, 5]  # 2 cm, 4 cm, 5 cm, 8 cm
@@ -909,34 +933,35 @@ def fig_stage3_spherical_multiphase():
         p_i_gpa = data_i[:, idx + 1] / 1e9
         p_r_gpa = data_r[:, idx + 1] / 1e9
         ax2.plot(t_us_i, p_i_gpa, color=colors_b[i], lw=1.8, label=f'$r = {r_val:.0f}\\,\\rm cm$')
-        ax2.plot(t_us_r, p_r_gpa, color=colors_b[i], lw=1.6, ls='--', alpha=0.85)
+        ax2.plot(t_us_r, p_r_gpa, color=colors_b[i], lw=1.5, ls='--', alpha=0.8)
+        if has_al:
+            p_a_gpa = data_a[:, idx + 1] / 1e9
+            ax2.plot(t_us_a, p_a_gpa, color=colors_b[i], lw=1.2, ls=':', alpha=0.7)
 
     ax2.plot([], [], 'k-', lw=1.8, label='Solid: Inert Baseline')
-    ax2.plot([], [], 'k--', lw=1.6, label='Dashed: Reacting Gas')
+    ax2.plot([], [], 'k--', lw=1.5, label='Dashed: Reacting Gas')
+    if has_al:
+        ax2.plot([], [], 'k:', lw=1.2, label='Dotted: Al Combustion')
     ax2.set_xlabel(r'Time $t$ [$\mu\rm s$]')
     ax2.set_ylabel(r'Pressure $p$ [$\rm GPa$]')
     ax2.set_title(r'(b) Time-Resolved Pressure Waveforms at Radial Probes')
     ax2.set_xlim(0.0, 20.0)
     ax2.set_ylim(-0.5, 14.5)
     ax2.grid(True)
-    ax2.legend(loc='upper right', fontsize=8.5, ncol=2)
+    ax2.legend(loc='upper right', fontsize=8.0, ncol=2)
 
     # Panel (c): Spatial Pressure Distribution across Time Snapshots
     p5_i_gpa = s5_i[:, 1] / 1e9
     p5_r_gpa = s5_r[:, 1] / 1e9
-
     p10_i_gpa = s10_i[:, 1] / 1e9
     p10_r_gpa = s10_r[:, 1] / 1e9
-
     p20_i_gpa = s20_i[:, 1] / 1e9
     p20_r_gpa = s20_r[:, 1] / 1e9
 
     ax3.plot(r_s_mm, p5_i_gpa, 'navy', lw=1.8, label=r'$t = 5\,\mu\rm s$ (Inert)')
     ax3.plot(r_s_mm, p5_r_gpa, 'royalblue', lw=1.6, ls='--', label=r'$t = 5\,\mu\rm s$ (Reacting)')
-
     ax3.plot(r_s_mm, p10_i_gpa, 'darkgreen', lw=1.8, label=r'$t = 10\,\mu\rm s$ (Inert)')
     ax3.plot(r_s_mm, p10_r_gpa, 'limegreen', lw=1.6, ls='--', label=r'$t = 10\,\mu\rm s$ (Reacting)')
-
     ax3.plot(r_s_mm, p20_i_gpa, 'crimson', lw=1.8, label=r'$t = 20\,\mu\rm s$ (Inert)')
     ax3.plot(r_s_mm, p20_r_gpa, 'coral', lw=1.6, ls='--', label=r'$t = 20\,\mu\rm s$ (Reacting)')
 
@@ -947,36 +972,84 @@ def fig_stage3_spherical_multiphase():
     ax3.set_xlim(0, 185)
     ax3.set_ylim(-0.5, 14.5)
     ax3.grid(True)
-    ax3.legend(loc='upper right', fontsize=8.5, ncol=2)
+    ax3.legend(loc='upper right', fontsize=8.0, ncol=2)
 
-    # Panel (d): Two-Fluid Multiphase Dynamics at t = 20 us
-    u_al_i = np.abs(s20_i[:, 19])
-    u_al_r = np.abs(s20_r[:, 19])
-    alpha_al_r = s20_r[:, 9]
-    alpha_gas_r = s20_r[:, 7]
+    # Panel (d): Empirical Burn-Rate Al Particle Diameter Regression & Multiphase Dispersion
+    if d20_a is not None and has_cmax_a:
+        # Radial coordinates of 400 cells
+        r_cells = r_c_a
+        d_init_um = np.where(r_cells <= 50.0, 30.0, np.nan)
+        l_d0 = ax4.plot(r_cells, d_init_um, 'k--', lw=1.5, label=r'Initial $d_0 = 30.0\,\mu\rm m$ ($r \leq 50\,\rm mm$)')
 
-    color_vel = 'darkblue'
-    ax4.set_xlabel(r'Radial Coordinate $r$ [$\rm mm$]')
-    ax4.set_ylabel(r'Al Particle Radial Velocity $u_{\rm Al}$ [$\rm m/s$]', color=color_vel)
-    l1 = ax4.plot(r_s_mm, u_al_i, color='royalblue', lw=2.0, label=f'$u_{{\\rm Al}}$ Inert ($u_{{\\rm max}} = {np.max(u_al_i):.0f}\\,\\rm m/s$)')
-    l2 = ax4.plot(r_s_mm, u_al_r, color='navy', lw=2.0, ls='--', label=f'$u_{{\\rm Al}}$ Reacting ($u_{{\\rm max}} = {np.max(u_al_r):.0f}\\,\\rm m/s$)')
-    ax4.tick_params(axis='y', labelcolor=color_vel)
-    ax4.set_ylim(-100, 4000)
-    ax4.set_xlim(0, 185)
-    ax4.grid(True)
+        if d5_a is not None and a5_a is not None and len(d5_a) == len(r_cells):
+            d5_masked = np.where(a5_a >= ALPHA_THRESHOLD, d5_a * 1e6, np.nan)
+            ax4.plot(r_cells, d5_masked, color='steelblue', lw=1.8, label=r'$d_{\rm Al}(r)$ at $5\,\mu\rm s$')
+        if d10_a is not None and a10_a is not None and len(d10_a) == len(r_cells):
+            d10_masked = np.where(a10_a >= ALPHA_THRESHOLD, d10_a * 1e6, np.nan)
+            ax4.plot(r_cells, d10_masked, color='forestgreen', lw=1.8, label=r'$d_{\rm Al}(r)$ at $10\,\mu\rm s$')
+        if len(d20_a) == len(r_cells) and a20_a is not None:
+            d20_masked = np.where(a20_a >= ALPHA_THRESHOLD, d20_a * 1e6, np.nan)
+            ax4.plot(r_cells, d20_masked, color='purple', lw=2.2, label=r'$d_{\rm Al}(r)$ at $20\,\mu\rm s$ ($r_b \propto p^{0.7}$)')
 
-    ax4_twin = ax4.twinx()
-    color_alpha = 'crimson'
-    ax4_twin.set_ylabel(r'Phase Volume Fraction $\alpha$', color=color_alpha)
-    l3 = ax4_twin.plot(r_s_mm, alpha_al_r, color='crimson', lw=1.8, label=r'$\alpha_{\rm Al}$ (Aluminium Particles)')
-    l4 = ax4_twin.plot(r_s_mm, alpha_gas_r, color='darkorange', lw=1.8, ls='-.', label=r'$\alpha_{\rm gas}$ (Carrier Gas)')
-    ax4_twin.tick_params(axis='y', labelcolor=color_alpha)
-    ax4_twin.set_ylim(-0.05, 1.05)
+        ax4.set_xlabel(r'Radial Coordinate $r$ [$\rm mm$]')
+        ax4.set_ylabel(r'Al Particle Diameter $d_{\rm Al}$ [$\mu\rm m$]', color='purple')
+        ax4.tick_params(axis='y', labelcolor='purple')
+        ax4.set_ylim(28.0, 30.5)
+        ax4.set_xlim(0, 185)
+        ax4.axvline(50.0, color='gray', ls=':', lw=1.5)
+        ax4.grid(True)
 
-    lines = l1 + l2 + l3 + l4
-    labels = [l.get_label() for l in lines]
-    ax4.legend(lines, labels, loc='center left', fontsize=8.5)
-    ax4.set_title(r'(d) Two-Fluid Multiphase Dispersion and Velocity Slip ($t = 20\,\mu\rm s$)')
+        ax4_twin = ax4.twinx()
+        color_alpha = 'crimson'
+        if s20_a is not None:
+            alpha_al_plot = s20_a[:, 9]
+            alpha_gas_plot = s20_a[:, 7]
+        else:
+            alpha_al_plot = s20_r[:, 9]
+            alpha_gas_plot = s20_r[:, 7]
+
+        ax4_twin.set_ylabel(r'Phase Volume Fraction $\alpha$', color=color_alpha)
+        l_a1 = ax4_twin.plot(r_s_mm, alpha_al_plot, color='crimson', lw=1.6, ls='-', label=r'$\alpha_{\rm Al}$ ($20\,\mu\rm s$)')
+        l_a2 = ax4_twin.plot(r_s_mm, alpha_gas_plot, color='darkorange', lw=1.6, ls='-.', label=r'$\alpha_{\rm gas}$ ($20\,\mu\rm s$)')
+        ax4_twin.tick_params(axis='y', labelcolor=color_alpha)
+        ax4_twin.set_ylim(-0.05, 1.05)
+
+        h1, l1 = ax4.get_legend_handles_labels()
+        h2, l2 = ax4_twin.get_legend_handles_labels()
+        ax4.legend(h1 + h2, l1 + l2, loc='lower right', fontsize=7.5, framealpha=0.9)
+        ax4.set_title(r'(d) Physical Al Diameter Regression ($\alpha_{\rm Al} \geq 10^{-4}$)')
+    else:
+        # Fallback to velocity and alpha
+        alpha_al_i = s20_i[:, 9]
+        alpha_al_r = s20_r[:, 9]
+        alpha_gas_r = s20_r[:, 7]
+        u_al_i = np.where(alpha_al_i >= ALPHA_THRESHOLD, np.abs(s20_i[:, 19]), np.nan)
+        u_al_r = np.where(alpha_al_r >= ALPHA_THRESHOLD, np.abs(s20_r[:, 19]), np.nan)
+
+        color_vel = 'darkblue'
+        ax4.set_xlabel(r'Radial Coordinate $r$ [$\rm mm$]')
+        ax4.set_ylabel(r'Al Particle Radial Velocity $u_{\rm Al}$ [$\rm m/s$]', color=color_vel)
+        u_max_i = np.nanmax(u_al_i) if np.any(~np.isnan(u_al_i)) else 0.0
+        u_max_r = np.nanmax(u_al_r) if np.any(~np.isnan(u_al_r)) else 0.0
+        l1 = ax4.plot(r_s_mm, u_al_i, color='royalblue', lw=2.0, label=f'$u_{{\\rm Al}}$ Inert ($u_{{\\rm max}} = {u_max_i:.0f}\\,\\rm m/s$)')
+        l2 = ax4.plot(r_s_mm, u_al_r, color='navy', lw=2.0, ls='--', label=f'$u_{{\\rm Al}}$ Reacting ($u_{{\\rm max}} = {u_max_r:.0f}\\,\\rm m/s$)')
+        ax4.tick_params(axis='y', labelcolor=color_vel)
+        ax4.set_ylim(-100, 4000)
+        ax4.set_xlim(0, 185)
+        ax4.grid(True)
+
+        ax4_twin = ax4.twinx()
+        color_alpha = 'crimson'
+        ax4_twin.set_ylabel(r'Phase Volume Fraction $\alpha$', color=color_alpha)
+        l3 = ax4_twin.plot(r_s_mm, alpha_al_r, color='crimson', lw=1.8, label=r'$\alpha_{\rm Al}$ (Aluminium Particles)')
+        l4 = ax4_twin.plot(r_s_mm, alpha_gas_r, color='darkorange', lw=1.8, ls='-.', label=r'$\alpha_{\rm gas}$ (Carrier Gas)')
+        ax4_twin.tick_params(axis='y', labelcolor=color_alpha)
+        ax4_twin.set_ylim(-0.05, 1.05)
+
+        lines = l1 + l2 + l3 + l4
+        labels = [l.get_label() for l in lines]
+        ax4.legend(lines, labels, loc='center left', fontsize=8.5)
+        ax4.set_title(r'(d) Two-Fluid Multiphase Dispersion and Velocity Slip ($\alpha_{\rm Al} \geq 10^{-4}$)')
 
     plt.tight_layout()
     out = os.path.join(FIG_DIR, "stage3_spherical_multiphase.pdf")

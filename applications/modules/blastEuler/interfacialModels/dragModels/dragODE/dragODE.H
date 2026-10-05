@@ -98,6 +98,9 @@ protected:
         //- Solve drag with ode
         Switch solveDrag_;
 
+        //- Cutoff volume fraction below which drag is zero
+        scalar alphaCutoff_;
+
         //- Reference to phase system
         const phaseSystem& fluid_;
 

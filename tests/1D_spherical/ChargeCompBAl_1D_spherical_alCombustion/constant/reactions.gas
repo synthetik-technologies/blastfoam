@@ -1,0 +1,52 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      reactions.gas;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+species
+(
+    O2
+    N2
+    CO
+    H2O
+    CO2
+    NH3
+    CH4
+    C2H6
+    C(gr)
+    Al2O3(s)
+);
+
+reactions
+{
+    methaneReaction
+    {
+        type     irreversibleArrhenius;
+        reaction "CH4 + 2O2 = CO2 + 2H2O";
+        A        5.2e13;
+        beta     0;
+        Ta       14906;
+    }
+
+    COReaction
+    {
+        type     irreversibleArrhenius;
+        reaction "2CO + O2 = 2CO2";
+        A        2.2e12;
+        beta     0;
+        Ta       20130;
+    }
+}
+
+// ************************************************************************* //

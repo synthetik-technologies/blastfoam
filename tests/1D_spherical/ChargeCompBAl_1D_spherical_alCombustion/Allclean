@@ -1,0 +1,20 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial clean functions if available
+if [ -n "$WM_PROJECT_DIR" ] && [ -f "$WM_PROJECT_DIR/bin/tools/CleanFunctions" ]; then
+    . $WM_PROJECT_DIR/bin/tools/CleanFunctions
+    cleanCase
+fi
+
+rm -rf [1-9]* 0.[0-9]* postProcessing log.* constant/polyMesh dynamicCode *.foam
+
+# Clean non-.orig fields in 0
+for f in 0/*; do
+    case "$f" in
+        *.orig) ;;
+        *) rm -rf "$f" ;;
+    esac
+done
+
+# ----------------------------------------------------------------- end-of-file

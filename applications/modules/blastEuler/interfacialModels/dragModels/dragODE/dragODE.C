@@ -90,6 +90,14 @@ Foam::dragODE::dragODE(phaseSystem& fluid, dragModelTable& dragModels)
     ODESystem(),
     dict_(fluid.subDict("dragODECoeffs")),
     solveDrag_(dict_.lookupOrDefault("solveODE", false)),
+    alphaCutoff_
+    (
+        dict_.lookupOrDefault<scalar>
+        (
+            "alphaCutoff",
+            dict_.lookupOrDefault<scalar>("alphaMin", 0.0)
+        )
+    ),
     fluid_(fluid),
     phaseModels_(fluid.phases()),
     dragModels_(dragModels.size()),
@@ -156,13 +164,26 @@ void Foam::dragODE::derivatives
         const phaseModel& phase1(pair.phase1());
         const phaseModel& phase2(pair.phase2());
 
+        const scalar rAlpha1 = Foam::max(phase1.residualAlpha().value(), alphaCutoff_);
+        const scalar rAlpha2 = Foam::max(phase2.residualAlpha().value(), alphaCutoff_);
+
+        if (phase1[li] <= rAlpha1 || phase2[li] <= rAlpha2)
+        {
+            continue;
+        }
+
+        const scalar drag = dragModels_[pairi].cellK(li);
+        if (drag <= 0.0)
+        {
+            continue;
+        }
+
         const scalar alphaRho1 =
             Foam::max(phase1.alphaRho()[li], 1e-6);
 
         const scalar alphaRho2 =
             Foam::max(phase2.alphaRho()[li], 1e-6);
 
-        const scalar drag = dragModels_[pairi].cellK(li);
         const scalar drag1 = drag/alphaRho1;
         const scalar drag2 = drag/alphaRho2;
 
@@ -214,13 +235,26 @@ void Foam::dragODE::jacobian
         const phaseModel& phase1(pair.phase1());
         const phaseModel& phase2(pair.phase2());
 
+        const scalar rAlpha1 = Foam::max(phase1.residualAlpha().value(), alphaCutoff_);
+        const scalar rAlpha2 = Foam::max(phase2.residualAlpha().value(), alphaCutoff_);
+
+        if (phase1[li] <= rAlpha1 || phase2[li] <= rAlpha2)
+        {
+            continue;
+        }
+
+        const scalar drag = dragModels_[pairi].cellK(li);
+        if (drag <= 0.0)
+        {
+            continue;
+        }
+
         const scalar alphaRho1 =
             Foam::max(phase1.alphaRho()[li], 1e-6);
 
         const scalar alphaRho2 =
             Foam::max(phase2.alphaRho()[li], 1e-6);
 
-        const scalar drag = dragModels_[pairi].cellK(li);
         const scalar drag1 = drag/alphaRho1;
         const scalar drag2 = drag/alphaRho2;
 
@@ -285,6 +319,29 @@ Foam::scalar Foam::dragODE::solve
 {
     forAll(phaseModels_[0], celli)
     {
+        bool hasActiveDrag = false;
+        forAll(phasePairs_, pairi)
+        {
+            const phasePair& pair(phasePairs_[pairi]);
+            const phaseModel& phase1(pair.phase1());
+            const phaseModel& phase2(pair.phase2());
+
+            const scalar rAlpha1 = Foam::max(phase1.residualAlpha().value(), alphaCutoff_);
+            const scalar rAlpha2 = Foam::max(phase2.residualAlpha().value(), alphaCutoff_);
+            if (phase1[celli] > rAlpha1 && phase2[celli] > rAlpha2)
+            {
+                if (dragModels_[pairi].cellK(celli) > 0.0)
+                {
+                    hasActiveDrag = true;
+                    break;
+                }
+            }
+        }
+        if (!hasActiveDrag)
+        {
+            continue;
+        }
+
         scalarList oldKs(phaseModels_.size());
         forAll(oldKs, phasei)
         {
