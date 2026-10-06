@@ -5,96 +5,83 @@
     \\  /    A nd           | Version:  12
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
-FoamFile
-{
-    format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      physicalProperties;
+FoamFile {
+  format ascii;
+  class dictionary;
+  location "constant";
+  object physicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type            detonating;
-reactants
-{
-    thermoType
-    {
-        transport       const;
-        thermo          eConst;
-        equationOfState Murnaghan;
-    }
-    equationOfState
-    {
-        rho0            1820;
-        n               5.17;
-        K0              12.6e9;
-        Gamma           1.22;
-        pRef            101325;
-        pMax            1e11;
-    }
-    specie
-    {
-        molWeight       70.21;
-    }
-    transport
-    {
-        mu              1e-04;
-        Pr              0.7;
-    }
-    thermodynamics
-    {
-        Cv              1030;
-        Hf              0;
-    }
+type detonating;
+reactants {
+  thermoType {
+    transport const;
+    thermo eConst;
+    equationOfState Murnaghan;
+  }
+  equationOfState {
+    rho0 1624.45;
+    n 6.0;
+    K0 12.61e9;
+    Gamma 1.22;
+    pRef 101325;
+    pMax 1e11;
+  }
+  specie { molWeight 70.21; }
+  transport {
+    mu 1e-04;
+    Pr 0.7;
+  }
+  thermodynamics {
+    Cv 1030;
+    Hf 0;
+  }
 }
-products
-{
-    thermoType
-    {
-        transport       const;
-        thermo          eConst;
-        equationOfState eJWLC;
-    }
-    equationOfState
-    {
-        rho0            1820;
-        A               1732.51e9;
-        B               11.7173e9;
-        C               0.831709e9;
-        R1              5.8162;
-        R2              1.51614;
-        omega           0.24273;
-        pMax            1e11;
-        Cv              1410.19;
-        T_CJ            3432.62;
-        rho_CJ          2286.93;
-        E0              -3.65138e6;
-    }
-    specie
-    {
-        molWeight       35.9;
-    }
-    transport
-    {
-        mu              1e-04;
-        Pr              0.7;
-    }
-    thermodynamics
-    {
-        Cv              1410;
-        Hf              0;
-    }
+products {
+  thermoType {
+    transport const;
+    thermo eConst;
+    equationOfState eJWLC;
+  }
+  equationOfState {
+    rho0 1624.45;
+    A 365.113e9;
+    B 2.656e9;
+    C 1.043e9;
+    R1 3.83395;
+    R2 0.8997;
+    omega 0.2387;
+    pMax 1e11;
+    Cv 1450;
+    T_CJ 3432.62;
+    rho_CJ 2098.7;
+    E0 -668384.95;
+  }
+  specie { molWeight 38.24; }
+  transport {
+    mu 1e-04;
+    Pr 0.7;
+  }
+  thermodynamics {
+    Cv 1450;
+    Hf 0;
+  }
 }
 activationModel nodeProgrammed;
-initiation
-{
-    E0              0;
-    points          ( ( 0 0 0 ) );
-    vDet            7612.3;
-    Pcj             2.15329e+10;
-    burnModel       programmed;
+initiation {
+  // Detonation energy release (read here; a top-level e0 is ignored).
+  // The products E0 is on the gas-phase (JANAF) reference from the 100 bar
+  // phase transfer match, so e0 must lift the reactants onto it:
+  // e0 = e_s(V_CJ) - Cv_r*T0 - 0.5*p_CJ*(1/rho0 - 1/rho_CJ)
+  //    = 6.1116e6 - 0.2966e6 - 1.4977e6 J/kg
+  e0 4.3173e6;
+  points ((0 0 0));
+  vDet 7612.3;
+  Pcj 2.15329e+10;
+  burnModel programmed;
 }
-residualRho     1820;
-residualAlpha   1e-06;
+residualRho 1e-06;
+residualAlpha 1e-06;
 
 // ************************************************************************* //

@@ -1,0 +1,40 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      fvModels;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phaseChange
+{
+    type            pressurePhaseChange;
+    sourcePhase     compBAl;
+    targetPhase     gas;
+    pInterval       (50e5 150e5); // Transfer occurs across [50 bar, 150 bar] interval centered at 100 bar
+    tau             2e-5;
+    targetFractions
+    {
+        N2          0.28466454;
+        CO          0.23116680;
+        H2O         0.10059566;
+        CO2         0.21098004;
+        NH3         0.00548327;
+        CH4         0.04230543;
+        C2H6        0.00149695;
+        C(gr)       0.04548207;
+        Al2O3(s)    0.07782524;
+    }
+    isMoleFraction  false;
+}
+
+// ************************************************************************* //

@@ -1,13 +1,33 @@
 #!/usr/bin/env python3
 """
-setup_case.py: Generates initial condition fields for tests/0D/phaseTransfer_0D.
+setup_case.py: Generates initial condition fields for tests/0D/phaseTransfer_0D
+(2-phase: compBAl products + gas) or, with --three-phase, for
+tests/0D/phaseTransfer_0D_3phase (compBAl products + inert Al + gas).
 """
 
 import os
+import sys
 
-CASE_DIR = "/opt/OpenFOAM/blastfoam/tests/0D/phaseTransfer_0D"
+THREE_PHASE = "--three-phase" in sys.argv[1:]
+
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+CASE_DIR = os.path.join(
+    TESTS_DIR, "phaseTransfer_0D_3phase" if THREE_PHASE else "phaseTransfer_0D"
+)
 ZERO_DIR = os.path.join(CASE_DIR, "0")
 os.makedirs(ZERO_DIR, exist_ok=True)
+
+# 100 bar freeze-out state of the reactive products (eJWLC isentrope)
+P0 = 1.0e7
+T0 = 1318.69
+RHO_PROD = 38.137262
+E_PROD = 430110.0
+
+# Inert Al: 90% of the 30 wt% Al in 70/30 Comp-B/Al, i.e. 27% of total mass,
+# in thermal and mechanical equilibrium with the products. Murnaghan and
+# eConst parameters must match constant/physicalProperties of the 3-phase case.
+Y_AL = 0.27
+AL_RHO0, AL_K0, AL_N, AL_PREF, AL_CV = 2700.0, 72.7e9, 4.3, 101325.0, 900.0
 
 HEADER = """/*--------------------------------*- C++ -*----------------------------------*\\
   =========                 |
@@ -62,20 +82,43 @@ def write_field(filename, obj, cls, dims, val, b_sides="symmetry"):
         ))
 
 
+if THREE_PHASE:
+    # Murnaghan: p = pRef + K0/n*((rho/rho0)^n - 1)
+    rho_al = AL_RHO0*(1.0 + AL_N*(P0 - AL_PREF)/AL_K0)**(1.0/AL_N)
+    # eConst + Murnaghan: e = Cv*T + E_eos(rho)
+    e_al = (
+        AL_CV*T0
+      + AL_K0/(AL_N*rho_al)*((rho_al/AL_RHO0)**AL_N/(AL_N - 1.0) + 1.0)
+      - AL_K0/((AL_N - 1.0)*AL_RHO0)
+    )
+    v_prod = (1.0 - Y_AL)/RHO_PROD
+    v_al = Y_AL/rho_al
+    alpha_al = v_al/(v_prod + v_al)
+    alpha_comp = 1.0 - alpha_al
+    e_mix = (1.0 - Y_AL)*E_PROD + Y_AL*e_al
+else:
+    alpha_comp = 1.0
+    e_mix = E_PROD
+
 # Write fields
 write_field("p", "p", "volScalarField", "[1 -1 -2 0 0 0 0]", "1.0e7", "symmetry")
-write_field("T", "T", "volScalarField", "[0 0 0 1 0 0 0]", "1318.69", "symmetry")
+write_field("T", "T", "volScalarField", "[0 0 0 1 0 0 0]", f"{T0}", "symmetry")
 write_field("U", "U", "volVectorField", "[0 1 -1 0 0 0 0]", "(0 0 0)", "symmetry")
 
-write_field("alpha.compBAl", "alpha.compBAl", "volScalarField", "[0 0 0 0 0 0 0]", "1", "symmetry")
+write_field("alpha.compBAl", "alpha.compBAl", "volScalarField", "[0 0 0 0 0 0 0]", f"{alpha_comp:.10g}", "symmetry")
 write_field("alpha.gas", "alpha.gas", "volScalarField", "[0 0 0 0 0 0 0]", "0", "symmetry")
 write_field("lambda.compBAl", "lambda.compBAl", "volScalarField", "[0 0 0 0 0 0 0]", "1", "symmetry")
 
-write_field("rho.compBAl", "rho.compBAl", "volScalarField", "[1 -3 0 0 0 0 0]", "38.137262", "symmetry")
-write_field("rho.gas", "rho.gas", "volScalarField", "[1 -3 0 0 0 0 0]", "38.137262", "symmetry")
+write_field("rho.compBAl", "rho.compBAl", "volScalarField", "[1 -3 0 0 0 0 0]", f"{RHO_PROD}", "symmetry")
+write_field("rho.gas", "rho.gas", "volScalarField", "[1 -3 0 0 0 0 0]", f"{RHO_PROD}", "symmetry")
 
-# Specific internal energy consistent with 100 bar transfer point (p=100 bar, e=430110.0 J/kg)
-write_field("e", "e", "volScalarField", "[0 2 -2 0 0 0 0]", "430110.0", "symmetry")
+if THREE_PHASE:
+    write_field("alpha.Al", "alpha.Al", "volScalarField", "[0 0 0 0 0 0 0]", f"{alpha_al:.10g}", "symmetry")
+    write_field("rho.Al", "rho.Al", "volScalarField", "[1 -3 0 0 0 0 0]", f"{rho_al:.8f}", "symmetry")
+
+# Mixture specific internal energy consistent with the 100 bar transfer point
+# (products: e=430110.0 J/kg; plus inert Al at T0 for the 3-phase case)
+write_field("e", "e", "volScalarField", "[0 2 -2 0 0 0 0]", f"{e_mix:.1f}", "symmetry")
 
 # Gas species (EuDetCode freeze-out composition normalized to 1.0)
 species_fractions = {
@@ -94,4 +137,4 @@ species_fractions = {
 for sp, val in species_fractions.items():
     write_field(sp, sp, "volScalarField", "[0 0 0 0 0 0 0]", val, "symmetry")
 
-print("Generated 0/ directory fields in tests/0D/phaseTransfer_0D")
+print(f"Generated 0/ directory fields in {os.path.relpath(CASE_DIR, os.path.dirname(TESTS_DIR))}")

@@ -3,14 +3,21 @@
 verify_0d_phase_transfer.py: Verification script for WP 1.1 (0D Phase Transfer).
 
 Evaluates mass conservation, total energy conservation, and smooth asymptotic
-phase fraction transition in tests/0D/phaseTransfer_0D.
+phase fraction transition in tests/0D/phaseTransfer_0D or, with --three-phase,
+in tests/0D/phaseTransfer_0D_3phase (additionally verifying that the inert Al
+phase mass is unchanged by the products -> gas transfer).
 """
 
 import os
 import sys
 import numpy as np
 
-CASE_DIR = "/opt/OpenFOAM/blastfoam/tests/0D/phaseTransfer_0D"
+THREE_PHASE = "--three-phase" in sys.argv[1:]
+
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+CASE_DIR = os.path.join(
+    TESTS_DIR, "phaseTransfer_0D_3phase" if THREE_PHASE else "phaseTransfer_0D"
+)
 POST_DIR = os.path.join(CASE_DIR, "postProcessing")
 
 
@@ -28,9 +35,13 @@ def verify_phase_transfer():
     t_e, E_tot = load_vol_integrate("totalEnergy")
     t_p, p_arr = load_vol_integrate("pressure")
     t_T, T_arr = load_vol_integrate("temperature")
+    if THREE_PHASE:
+        _, m_al = load_vol_integrate("massAl")
+    else:
+        m_al = np.zeros_like(m_comp)
 
     # 1. Total mass conservation
-    m_total = m_comp + m_gas
+    m_total = m_comp + m_gas + m_al
     initial_mass = m_total[0]
     final_mass = m_total[-1]
     rel_mass_err = np.max(np.abs(m_total - initial_mass)) / initial_mass
@@ -40,10 +51,13 @@ def verify_phase_transfer():
     final_energy = E_tot[-1]
     rel_energy_err = np.max(np.abs(E_tot - initial_energy)) / initial_energy
 
-    # 3. Phase transition completion
-    initial_comp_frac = m_comp[0] / m_total[0]
-    final_comp_frac = m_comp[-1] / m_total[-1]
-    final_gas_frac = m_gas[-1] / m_total[-1]
+    # 3. Phase transition completion (relative to the transferable mass,
+    #    i.e. excluding the inert Al)
+    m_transferable = m_comp + m_gas
+    initial_comp_frac = m_comp[0] / m_transferable[0]
+    final_comp_frac = m_comp[-1] / m_transferable[-1]
+    final_gas_frac = m_gas[-1] / m_transferable[-1]
+    rel_al_err = np.max(np.abs(m_al - m_al[0])) / m_al[0] if THREE_PHASE else 0.0
 
     # 4. Pressure and Temperature thermodynamic states
     p_init_bar = p_arr[0] / 1e5
@@ -53,7 +67,7 @@ def verify_phase_transfer():
 
     # Display results
     print("=" * 60)
-    print("WP 1.1: 0D Phase Transfer Verification Analysis")
+    print(f"WP 1.1: 0D Phase Transfer Verification Analysis ({os.path.basename(CASE_DIR)})")
     print("=" * 60)
     print(f"Time range:                  {t_e[0]:.2e} s to {t_e[-1]:.2e} s ({len(t_e)} steps)")
     print(f"Initial total mass:          {initial_mass:.8e} kg")
@@ -65,6 +79,9 @@ def verify_phase_transfer():
     print(f"Initial compBAl mass frac:   {initial_comp_frac * 100:.2f}%")
     print(f"Final compBAl mass frac:     {final_comp_frac * 100:.4f}% (< 1% remaining)")
     print(f"Final gas mass frac:         {final_gas_frac * 100:.4f}% (> 99% converted)")
+    if THREE_PHASE:
+        print(f"Inert Al mass frac:          {m_al[0] / m_total[0] * 100:.2f}% of total")
+        print(f"Max relative Al mass error:  {rel_al_err:.4e}")
     max_p_dev = np.max(np.abs(p_arr - p_arr[0])) / p_arr[0]
     print(f"Initial pressure:            {p_init_bar:.2f} bar")
     print(f"Final equilibrium pressure:  {p_final_bar:.2f} bar")
@@ -92,6 +109,13 @@ def verify_phase_transfer():
         passed = False
     else:
         print("PASS: Dynamic phase conversion verified (> 99% converted smoothly)")
+
+    if THREE_PHASE:
+        if rel_al_err > 1e-10:
+            print("FAIL: Inert Al phase mass changed during transfer")
+            passed = False
+        else:
+            print("PASS: Inert Al phase mass unchanged (not involved in transfer)")
 
     if max_p_dev > 0.05:
         print(f"FAIL: Pressure deviation exceeded 5% ({max_p_dev * 100:.2f}%)")

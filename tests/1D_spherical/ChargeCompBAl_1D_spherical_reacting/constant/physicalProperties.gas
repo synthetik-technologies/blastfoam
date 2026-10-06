@@ -23,6 +23,10 @@ thermoType
 }
 
 #include "thermo.compressibleGas"
+// Cap the decode energy clamp at the JANAF fit range; the default
+// (1e5 K) gives a nonsensical eMax that pins all gas cells at TLow
+THigh           5000;
+
 defaultSpecie   N2;
 
 residualRho     1e-06;

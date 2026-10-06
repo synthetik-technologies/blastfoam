@@ -33,7 +33,7 @@ compBAl
         {
 	    rho0            1624.45;
             n               6.0;
-            kappa           12.61e9;
+            K0              12.61e9;
             Gamma           1.22;
             pRef            101325;
             pMax            1e11;
@@ -160,7 +160,7 @@ Al
     {
         rho0            2700;
         n               4.4;
-        kappa           76e9;
+        K0              76e9;
         Gamma           2.0;
         pRef            101325;
         pMax            1e11;

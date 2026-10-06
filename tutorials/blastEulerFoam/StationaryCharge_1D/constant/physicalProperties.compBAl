@@ -95,7 +95,7 @@ initiation
     Pcj             1.55e10;
     burnModel       programmed;
 }
-residualRho     1820;
+residualRho     1e-06;
 residualAlpha   1e-06;
 
 // ************************************************************************* //

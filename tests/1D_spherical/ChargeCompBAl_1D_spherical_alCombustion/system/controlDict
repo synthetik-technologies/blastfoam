@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         20e-06;
+endTime         40e-06;
 
 writeControl    adjustableRunTime;
 
@@ -70,7 +70,7 @@ functions
                 nPoints 400;
             }
         );
-        fields          (p T U rho alpha.gas alpha.compBAl alpha.Al rho.gas rho.compBAl rho.Al U.gas U.compBAl U.Al);
+        fields          (p T.gas U rho alpha.gas alpha.compBAl alpha.Al rho.gas rho.compBAl rho.Al U.gas U.compBAl U.Al);
     }
 
     pressureProbes

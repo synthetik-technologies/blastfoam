@@ -29,9 +29,9 @@ compBAl
         }
         equationOfState
         {
-            rho0            1624.45;
+            rho0            1820;
             n               6.0;
-            kappa           12.61e9;
+            K0              12.61e9;
             Gamma           1.22;
             pRef            101325;
             pMax            1e11;
@@ -69,7 +69,7 @@ compBAl
             R2              0.8997;
             omega           0.2387;
             pMax            1e11;
-            Cv              153.3;
+            Cv              1450;
             T_CJ            3432.62;
             rho_CJ          2098.7;
             e0              -583640;
@@ -85,7 +85,7 @@ compBAl
         }
         thermodynamics
         {
-            Cv              153.3;
+            Cv              1450;
             Hf              0;
         }
     }
