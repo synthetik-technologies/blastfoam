@@ -839,13 +839,19 @@ def fig_stage3_spherical_multiphase():
     peaks_r = np.array([np.max(data_r[:, idx + 1]) / 1e9 for idx in range(len(probes_r))])
 
     # Load temporalMax continuous peak pressure profiles
-    cmax_i_file = os.path.join(INERT_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
-    if not os.path.isfile(cmax_i_file):
-        cmax_i_file = os.path.join(INERT_DIR, "postProcessing/radialPeakPressure/2e-05/p_coarseMax.dat")
-    cmax_r_file = os.path.join(REACT_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
-    if not os.path.isfile(cmax_r_file):
-        cmax_r_file = os.path.join(REACT_DIR, "postProcessing/radialPeakPressure/2e-05/p_coarseMax.dat")
-    cmax_a_file = os.path.join(ALCOMB_DIR, "postProcessing/radialPeakPressure/2e-05/p_temporalMax.dat")
+    def get_latest_cmax_file(case_dir):
+        for t in ["4e-05", "2e-05", "1e-05"]:
+            f1 = os.path.join(case_dir, f"postProcessing/radialPeakPressure/{t}/p_temporalMax.dat")
+            if os.path.isfile(f1):
+                return f1
+            f2 = os.path.join(case_dir, f"postProcessing/radialPeakPressure/{t}/p_coarseMax.dat")
+            if os.path.isfile(f2):
+                return f2
+        return ""
+
+    cmax_i_file = get_latest_cmax_file(INERT_DIR)
+    cmax_r_file = get_latest_cmax_file(REACT_DIR)
+    cmax_a_file = get_latest_cmax_file(ALCOMB_DIR)
 
     has_cmax = os.path.isfile(cmax_i_file) and os.path.isfile(cmax_r_file)
     if has_cmax:
@@ -873,6 +879,14 @@ def fig_stage3_spherical_multiphase():
     has_s20_a = os.path.isfile(s20_a_file)
     s20_a = np.loadtxt(s20_a_file) if has_s20_a else None
 
+    s40_i_file = os.path.join(INERT_DIR, "postProcessing/sampleLine/4e-05/lineX.xy")
+    s40_r_file = os.path.join(REACT_DIR, "postProcessing/sampleLine/4e-05/lineX.xy")
+    s40_a_file = os.path.join(ALCOMB_DIR, "postProcessing/sampleLine/4e-05/lineX.xy")
+    has_s40 = os.path.isfile(s40_i_file) and os.path.isfile(s40_r_file)
+    s40_i = np.loadtxt(s40_i_file) if has_s40 else None
+    s40_r = np.loadtxt(s40_r_file) if has_s40 else None
+    s40_a = np.loadtxt(s40_a_file) if os.path.isfile(s40_a_file) else None
+
     r_s_mm = s5_i[:, 0] * 1000.0
 
     # Helper function to read scalar field
@@ -891,9 +905,11 @@ def fig_stage3_spherical_multiphase():
     d5_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "5e-06/d.Al"))
     d10_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "1e-05/d.Al"))
     d20_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "2e-05/d.Al"))
+    d40_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "4e-05/d.Al"))
     a5_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "5e-06/alpha.Al"))
     a10_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "1e-05/alpha.Al"))
     a20_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "2e-05/alpha.Al"))
+    a40_a = read_openfoam_field(os.path.join(ALCOMB_DIR, "4e-05/alpha.Al"))
     ALPHA_THRESHOLD = 1e-4
 
     # Setup 2x2 publication figure
@@ -901,13 +917,13 @@ def fig_stage3_spherical_multiphase():
 
     # Panel (a): Radial Peak Pressure Attenuation & Breakout Discontinuity
     if has_cmax:
-        mask_i = (p_c_i > 0.05) & (r_c_i <= 155.0)
-        mask_r = (p_c_r > 0.05) & (r_c_r <= 155.0)
+        mask_i = (p_c_i >= 0.0) & (r_c_i <= 165.0)
+        mask_r = (p_c_r >= 0.0) & (r_c_r <= 165.0)
 
         ax1.plot(r_c_i[mask_i], p_c_i[mask_i], color='royalblue', lw=2.2, label='Inert Baseline')
         ax1.plot(r_c_r[mask_r], p_c_r[mask_r], color='crimson', lw=1.8, ls='--', label='Reacting Gas Phase')
         if has_cmax_a:
-            mask_a = (p_c_a > 0.05) & (r_c_a <= 155.0)
+            mask_a = (p_c_a >= 0.0) & (r_c_a <= 165.0)
             ax1.plot(r_c_a[mask_a], p_c_a[mask_a], color='forestgreen', lw=1.8, ls='-.', label='Al Combustion (Burn-Rate Law)')
 
         ax1.axvline(50.0, color='gray', ls=':', lw=1.5, label=r'Charge Boundary ($R_0 = 50\,\rm mm$)')
@@ -916,8 +932,8 @@ def fig_stage3_spherical_multiphase():
         breakout_idx = np.where(r_c_i >= 50.0)[0][0]
         ax1.scatter([r_c_i[breakout_idx]], [p_c_i[breakout_idx]], color='darkgreen', s=80, zorder=6, label=f'Breakout Shock: {p_c_i[breakout_idx]:.2f} GPa')
 
-        ax1.set_xlim(0, 160)
-        ax1.set_ylim(4.5, 15.5)
+        ax1.set_xlim(0, 165)
+        ax1.set_ylim(0.0, 15.5)
 
     ax1.set_xlabel(r'Radial Station $r$ [$\rm mm$]')
     ax1.set_ylabel(r'Peak Pressure $P_{\rm peak}$ [$\rm GPa$]')
@@ -945,7 +961,7 @@ def fig_stage3_spherical_multiphase():
     ax2.set_xlabel(r'Time $t$ [$\mu\rm s$]')
     ax2.set_ylabel(r'Pressure $p$ [$\rm GPa$]')
     ax2.set_title(r'(b) Time-Resolved Pressure Waveforms at Radial Probes')
-    ax2.set_xlim(0.0, 20.0)
+    ax2.set_xlim(0.0, max(20.0, np.max(t_us_i)))
     ax2.set_ylim(-0.5, 14.5)
     ax2.grid(True)
     ax2.legend(loc='upper right', fontsize=8.0, ncol=2)
@@ -964,18 +980,23 @@ def fig_stage3_spherical_multiphase():
     ax3.plot(r_s_mm, p10_r_gpa, 'limegreen', lw=1.6, ls='--', label=r'$t = 10\,\mu\rm s$ (Reacting)')
     ax3.plot(r_s_mm, p20_i_gpa, 'crimson', lw=1.8, label=r'$t = 20\,\mu\rm s$ (Inert)')
     ax3.plot(r_s_mm, p20_r_gpa, 'coral', lw=1.6, ls='--', label=r'$t = 20\,\mu\rm s$ (Reacting)')
+    if has_s40:
+        p40_i_gpa = s40_i[:, 1] / 1e9
+        p40_r_gpa = s40_r[:, 1] / 1e9
+        ax3.plot(r_s_mm, p40_i_gpa, 'purple', lw=1.8, label=r'$t = 40\,\mu\rm s$ (Inert)')
+        ax3.plot(r_s_mm, p40_r_gpa, 'magenta', lw=1.6, ls='--', label=r'$t = 40\,\mu\rm s$ (Reacting)')
 
     ax3.axvline(50.0, color='gray', ls=':', lw=1.5, label=r'Charge Edge ($R_0 = 50\,\rm mm$)')
     ax3.set_xlabel(r'Radial Coordinate $r$ [$\rm mm$]')
     ax3.set_ylabel(r'Pressure $p$ [$\rm GPa$]')
     ax3.set_title(r'(c) Radial Detonation and Blast Wave Pressure Structure')
-    ax3.set_xlim(0, 185)
+    ax3.set_xlim(0, 195)
     ax3.set_ylim(-0.5, 14.5)
     ax3.grid(True)
-    ax3.legend(loc='upper right', fontsize=8.0, ncol=2)
+    ax3.legend(loc='upper right', fontsize=7.5, ncol=2)
 
     # Panel (d): Empirical Burn-Rate Al Particle Diameter Regression & Multiphase Dispersion
-    if d20_a is not None and has_cmax_a:
+    if has_cmax_a and (d20_a is not None or d40_a is not None):
         # Radial coordinates of 400 cells
         r_cells = r_c_a
         d_init_um = np.where(r_cells <= 50.0, 30.0, np.nan)
@@ -987,36 +1008,46 @@ def fig_stage3_spherical_multiphase():
         if d10_a is not None and a10_a is not None and len(d10_a) == len(r_cells):
             d10_masked = np.where(a10_a >= ALPHA_THRESHOLD, d10_a * 1e6, np.nan)
             ax4.plot(r_cells, d10_masked, color='forestgreen', lw=1.8, label=r'$d_{\rm Al}(r)$ at $10\,\mu\rm s$')
-        if len(d20_a) == len(r_cells) and a20_a is not None:
+        if d20_a is not None and a20_a is not None and len(d20_a) == len(r_cells):
             d20_masked = np.where(a20_a >= ALPHA_THRESHOLD, d20_a * 1e6, np.nan)
-            ax4.plot(r_cells, d20_masked, color='purple', lw=2.2, label=r'$d_{\rm Al}(r)$ at $20\,\mu\rm s$ ($r_b \propto p^{0.7}$)')
+            ax4.plot(r_cells, d20_masked, color='darkorange', lw=1.8, label=r'$d_{\rm Al}(r)$ at $20\,\mu\rm s$')
+        if d40_a is not None and a40_a is not None and len(d40_a) == len(r_cells):
+            d40_masked = np.where(a40_a >= ALPHA_THRESHOLD, d40_a * 1e6, np.nan)
+            ax4.plot(r_cells, d40_masked, color='purple', lw=2.2, label=r'$d_{\rm Al}(r)$ at $40\,\mu\rm s$ ($r_b \propto p^{0.7}$)')
 
         ax4.set_xlabel(r'Radial Coordinate $r$ [$\rm mm$]')
         ax4.set_ylabel(r'Al Particle Diameter $d_{\rm Al}$ [$\mu\rm m$]', color='purple')
         ax4.tick_params(axis='y', labelcolor='purple')
-        ax4.set_ylim(28.0, 30.5)
-        ax4.set_xlim(0, 185)
+        ax4.set_ylim(27.0, 30.5)
+        ax4.set_xlim(0, 195)
         ax4.axvline(50.0, color='gray', ls=':', lw=1.5)
         ax4.grid(True)
 
         ax4_twin = ax4.twinx()
         color_alpha = 'crimson'
-        if s20_a is not None:
+        if s40_a is not None:
+            alpha_al_plot = s40_a[:, 9]
+            alpha_gas_plot = s40_a[:, 7]
+            l_a1 = ax4_twin.plot(r_s_mm, alpha_al_plot, color='crimson', lw=1.6, ls='-', label=r'$\alpha_{\rm Al}$ ($40\,\mu\rm s$)')
+            l_a2 = ax4_twin.plot(r_s_mm, alpha_gas_plot, color='saddlebrown', lw=1.6, ls='-.', label=r'$\alpha_{\rm gas}$ ($40\,\mu\rm s$)')
+        elif s20_a is not None:
             alpha_al_plot = s20_a[:, 9]
             alpha_gas_plot = s20_a[:, 7]
+            l_a1 = ax4_twin.plot(r_s_mm, alpha_al_plot, color='crimson', lw=1.6, ls='-', label=r'$\alpha_{\rm Al}$ ($20\,\mu\rm s$)')
+            l_a2 = ax4_twin.plot(r_s_mm, alpha_gas_plot, color='saddlebrown', lw=1.6, ls='-.', label=r'$\alpha_{\rm gas}$ ($20\,\mu\rm s$)')
         else:
             alpha_al_plot = s20_r[:, 9]
             alpha_gas_plot = s20_r[:, 7]
+            l_a1 = ax4_twin.plot(r_s_mm, alpha_al_plot, color='crimson', lw=1.6, ls='-', label=r'$\alpha_{\rm Al}$ ($20\,\mu\rm s$)')
+            l_a2 = ax4_twin.plot(r_s_mm, alpha_gas_plot, color='saddlebrown', lw=1.6, ls='-.', label=r'$\alpha_{\rm gas}$ ($20\,\mu\rm s$)')
 
         ax4_twin.set_ylabel(r'Phase Volume Fraction $\alpha$', color=color_alpha)
-        l_a1 = ax4_twin.plot(r_s_mm, alpha_al_plot, color='crimson', lw=1.6, ls='-', label=r'$\alpha_{\rm Al}$ ($20\,\mu\rm s$)')
-        l_a2 = ax4_twin.plot(r_s_mm, alpha_gas_plot, color='darkorange', lw=1.6, ls='-.', label=r'$\alpha_{\rm gas}$ ($20\,\mu\rm s$)')
         ax4_twin.tick_params(axis='y', labelcolor=color_alpha)
         ax4_twin.set_ylim(-0.05, 1.05)
 
         h1, l1 = ax4.get_legend_handles_labels()
         h2, l2 = ax4_twin.get_legend_handles_labels()
-        ax4.legend(h1 + h2, l1 + l2, loc='lower right', fontsize=7.5, framealpha=0.9)
+        ax4.legend(h1 + h2, l1 + l2, loc='lower right', fontsize=7.2, framealpha=0.9)
         ax4.set_title(r'(d) Physical Al Diameter Regression ($\alpha_{\rm Al} \geq 10^{-4}$)')
     else:
         # Fallback to velocity and alpha
@@ -1059,6 +1090,112 @@ def fig_stage3_spherical_multiphase():
     print(f"Generated {out}")
 
 
+def fig_stage3_species_integrals():
+    """Stage 3: Domain-integrated gaseous Al and product species mass vs time
+    for the reacting 1D spherical cases (reacting and alCombustion)."""
+    cases = [
+        ("ChargeCompBAl_1D_spherical_reacting", "Reacting Gas Phase"),
+        ("ChargeCompBAl_1D_spherical_alCombustion", "Al Combustion (Burn-Rate Law)"),
+    ]
+    base = "/opt/OpenFOAM/blastfoam/tests/1D_spherical"
+    species = [
+        ("Al.gas", r"Al(g)", "black", "-"),
+        ("Al2O3(s).gas", r"Al$_2$O$_3$", "crimson", "-"),
+        ("CO.gas", r"CO", "darkorange", "--"),
+        ("CO2.gas", r"CO$_2$", "forestgreen", "--"),
+        ("H2O.gas", r"H$_2$O", "royalblue", "-."),
+        ("H2.gas", r"H$_2$", "purple", "-."),
+        ("O2.gas", r"O$_2$", "gray", ":"),
+    ]
+    FLOOR = 1e-24  # g, floor for log-scale display of (near-)zero species
+
+    def read_field(path, n_cells):
+        if not os.path.isfile(path):
+            return None
+        with open(path, "r") as f:
+            content = f.read()
+        if "internalField" not in content:
+            return None
+        part = content.split("internalField")[1].split(";")[0].strip()
+        if part.startswith("uniform"):
+            return np.full(n_cells, float(part.split()[1]))
+        lines = [l.strip() for l in part.split("\n") if l.strip()]
+        if "(" not in lines:
+            return None
+        s = lines.index("(") + 1
+        e = lines.index(")")
+        return np.array([float(x) for x in lines[s:e]])
+
+    fig, axes = plt.subplots(1, 2, figsize=(13.0, 4.8), sharey=True)
+    any_data = False
+    for ax, (cname, title) in zip(axes, cases):
+        casedir = os.path.join(base, cname)
+        time_dirs = []
+        if os.path.isdir(casedir):
+            for d in os.listdir(casedir):
+                try:
+                    time_dirs.append((float(d), d))
+                except ValueError:
+                    pass
+        time_dirs.sort()
+
+        # Full-sphere shell volumes for the uniform 400-cell radial mesh (R = 0.2 m)
+        n_cells = 400
+        r_edges = np.linspace(0.0, 0.2, n_cells + 1)
+        shell_vols = (4.0 / 3.0) * np.pi * (r_edges[1:]**3 - r_edges[:-1]**3)
+
+        t_us = []
+        masses = {sp[0]: [] for sp in species}
+        m_al_solid = []
+        for t_val, t_str in time_dirs:
+            arho_g = read_field(os.path.join(casedir, t_str, "alphaRho.gas"), n_cells)
+            if arho_g is None:
+                continue
+            t_us.append(t_val * 1e6)
+            for sp in species:
+                y = read_field(os.path.join(casedir, t_str, sp[0]), n_cells)
+                masses[sp[0]].append(np.sum(y * arho_g * shell_vols) * 1e3 if y is not None else 0.0)
+            arho_al = read_field(os.path.join(casedir, t_str, "alphaRho.Al"), n_cells)
+            m_al_solid.append(np.sum(arho_al * shell_vols) * 1e3 if arho_al is not None else np.nan)
+
+        if len(t_us) == 0:
+            ax.text(0.5, 0.5, "No data", transform=ax.transAxes, ha="center")
+            ax.set_title(title)
+            continue
+        any_data = True
+        t_us = np.array(t_us)
+
+        for key, label, color, ls in species:
+            m = np.maximum(np.array(masses[key]), FLOOR)
+            ax.semilogy(t_us, m, color=color, ls=ls, lw=1.8, label=label)
+
+        m_al_solid = np.array(m_al_solid)
+        if np.all(np.isfinite(m_al_solid)):
+            consumed = m_al_solid[0] - m_al_solid
+            if np.max(consumed) > 1e-6 * m_al_solid[0]:
+                ax.semilogy(t_us, np.maximum(consumed, FLOOR), color="saddlebrown", lw=2.2, ls="-",
+                            alpha=0.6, label=r"Particulate Al consumed")
+
+        ax.set_xlabel(r"Time $t$ [$\mu\rm s$]")
+        ax.set_title(title)
+        ax.set_xlim(0.0, t_us[-1])
+        ax.set_ylim(FLOOR, 1e3)
+        ax.grid(True, which="both", alpha=0.4)
+        ax.legend(loc="center right", fontsize=8.0, ncol=2)
+
+    axes[0].set_ylabel(r"Domain-integrated mass [$\rm g$] (full sphere)")
+    if not any_data:
+        plt.close()
+        print("No species data found for Stage 3 species integrals.")
+        return
+    plt.tight_layout()
+    out = os.path.join(FIG_DIR, "stage3_spherical_species.pdf")
+    plt.savefig(out, dpi=300)
+    plt.savefig(out.replace(".pdf", ".png"), dpi=200)
+    plt.close()
+    print(f"Generated {out}")
+
+
 def main():
     print("Generating all verification and development figures for LaTeX report...")
     fig_stage0_thermo()
@@ -1070,6 +1207,7 @@ def main():
     fig_stage2_planar_znd()
     fig_stage3_spherical_blast()
     fig_stage3_spherical_multiphase()
+    fig_stage3_species_integrals()
     print("All figures successfully generated in", FIG_DIR)
 
 
