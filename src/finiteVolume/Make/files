@@ -61,8 +61,6 @@ finiteVolume/logExpVolFields/logVolFields.C
 
 calcAngleFraction/calcAngleFraction.C
 
-fvModels/pressurePhaseChange/pressurePhaseChange.C
-
 sets/cellSources/cylinderListToCell/cylinderListToCell.C
 sets/cellSources/sphereListToCell/sphereListToCell.C
 sets/cellSources/massToCell/massToCell.C
