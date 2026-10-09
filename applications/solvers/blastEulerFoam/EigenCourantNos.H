@@ -98,16 +98,14 @@
                         totalMDot += fluid.mDot(phase, otherPhase);
                     }
                 }
+                volScalarField lossMDot(max(-totalMDot, dimensionedScalar(totalMDot.dimensions(), 0.0)));
                 scalar mDotCo =
-                    mag
+                    gMax
                     (
-                        gMaxMagSqr
                         (
-                            (
-                                totalMDot*runTime.deltaTValue()
-                               /max(phase.alphaRho(), phase.residualAlphaRho())
-                            )()
-                        )
+                            lossMDot*runTime.deltaTValue()
+                           /max(phase.alphaRho(), phase.residualAlphaRho())
+                        )()
                     );
                 Info<< indent << phase.name() << ": " << mDotCo << nl;
                 mDotCoNum = max(mDotCoNum, mDotCo);
