@@ -8,7 +8,8 @@ Verification criteria at the final time (5 us):
 1. All phases at rest: |U_k| < 5 m/s where alpha_k > 1e-3 (the failure
    mode being tested gives 1e2-2e4 m/s).
 2. Phase densities unchanged (< 0.1%) where alpha_k > 1e-3.
-3. Pressure bounded everywhere: p < 10 bar, and air within 1% of p0.
+3. Pressure bounded everywhere: p < 10 bar, and pure air (no explosive or Al
+   in the cell) within 1% of p0.
    The start-up adjustment of the discrete interface sends a decaying
    acoustic wave of a few bar into the explosive (a density change of
    ~0.005%); the failure mode being tested gives 1e8-1e10 Pa.
@@ -113,7 +114,10 @@ def main():
             print(f"FAIL: {k} density changed by more than 0.1%")
             passed = False
 
-    air = alpha["gas"] > 0.99
+    # Pure-air cells. The mixed interface cell, where the phases relax to
+    # pressure and temperature equilibrium (a few-percent adjustment of a
+    # cell holding trace explosive), is covered by the P_MAX bound only.
+    air = alpha["compBAl"] + alpha["Al"] < 1e-6
     p_air = np.max(np.abs(p[air] - P0))/P0
     print(f"Max pressure:                {np.max(p):.6g} Pa")
     print(f"Max air pressure deviation:  {p_air*100:.3f}%")

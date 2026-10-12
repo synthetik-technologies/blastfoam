@@ -15,6 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Volume (pressure) equilibration of all non-carrier fluid phases
+alphaDilute     1;
+
 phases          ( Al compBAl gas );
 
 transportPhaseDensity true;
@@ -168,6 +171,14 @@ virtualMass
 
 heatTransfer
 (
+    // Products/gas temperature relaxation in numerically mixed cells
+    // (with alphaDilute 1: pressure and temperature equilibrium)
+    (compBAl in gas)
+    {
+        type            constantCoefficient;
+        Kh              1e15;
+    }
+
     (Al in gas)
     {
         type            RanzMarshall;
