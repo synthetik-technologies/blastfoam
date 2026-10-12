@@ -5,6 +5,8 @@
 
 This checkout is a fork (`origin` = `github.com:kenoba/blastfoam`, branch `develop`). It extends blastFoam for aluminised-explosive detonation, phase transfer and afterburning modelling. Upstream `synthetik-technologies/blastfoam` is merged in periodically; the fork's local work starts after `71b97fd7`.
 
+The aluminised-charge problems target **blastEulerFoam** (multi-fluid: per-phase mass, momentum and total energy, with finite-rate velocity/temperature/pressure relaxation). blastFoam's two-/multiphase systems use a single mixture energy and velocity.
+
 ### Key Technologies
 - **OpenFOAM 12** (`BLAST_OF_VERSION=12`; the top-level `Allwmake` refuses other versions).
 - **C++** with OpenFOAM `wmake`; **MPI** for parallel runs; **Python 3 + numpy** for test verification and report tooling.
@@ -24,8 +26,8 @@ This checkout is a fork (`origin` = `github.com:kenoba/blastfoam`, branch `devel
     - `test/Test-*`: unit-test applications; not built by `Allwmake`.
 - `tests/`: the fork's verification cases (`0D/`, `1D/`, `1D_spherical/`), each with a `verify_*.py` script.
 - `tutorials/`: example cases. `validation/`: upstream validation cases.
-- `bin/run_blast_tests.py`: regression test runner. `utilities/` (top level): `thermo_fitter/` (eJWLC / Abel-Nobel fitter) and `generate_report_figures.py`.
-- `report/`: `development_plan.md` (staged plan with current status), `stage*_*.md` (per-stage plans), `TBX-blastFoam.tex` (technical report).
+- `bin/run_blast_tests.py`: regression test runner. `utilities/` (top level): `thermo_fitter/` (eJWLC / Abel-Nobel fitter `fit_ejwlc_nobleabel.py`; `compute_omegaT.py` computes the eJWLC `omegaT` for a case) and `generate_report_figures.py`.
+- `report/`: `development_plan.md` (staged plan with current status), `stage*_*.md` (per-stage plans), `dilute_phase_conservation_plan.md` (open decode-conservation work), `TBX-blastFoam.tex` (technical report).
 - `etc/`: `bashrc` and code templates. `Makefile`, `Dockerfile`, `debian/`: packaging.
 
 ## Building and Running
@@ -59,15 +61,16 @@ python3 bin/run_blast_tests.py --tier 0|1|2|3|all [--case <relpath>] [--report b
 - Paths are hard-coded to `/opt/OpenFOAM/blastfoam`.
 - `Allrun` scripts delete and regenerate time directories and fields. To try a case without touching the repository, copy it (with its `verify_*.py`, and for `tests/0D` also `setup_case.py`) to a scratch directory. The verifiers locate cases relative to their own directory.
 - External dependencies:
-    - Tier 0 and the planar ZND verifiers need an EuDetCode build at `modules/eudetcode` (git-ignored, not in the repo).
+    - Tier 0 and the planar ZND verifiers use the EuDetCode build in `external/eudetcode`, a separate git checkout not tracked by this repository (Tier 0 needs its GoogleTest binary `build/tests/eudetcode_tests`).
     - `tests/1D/verify_gunib1d_benchmarks.py` uses a local gunIB1D build.
-- `tests/0D/phaseTransfer_0D_3phase` is not in the runner; use `setup_case.py --three-phase` and `verify_0d_phase_transfer.py --three-phase`.
+- The 0D transfer tests (`tests/0D/phaseTransfer_0D`, `phaseTransfer_0D_3phase`) run blastEulerFoam; the 3-phase variant uses `setup_case.py --three-phase` and `verify_0d_phase_transfer.py --three-phase` (both in Tier 1).
 
 ## Development Conventions
 - **Coding style:** OpenFOAM C++ conventions (PascalCase types, camelCase functions and variables, 4-space indentation, OpenFOAM file headers).
 - **Verification:** new physics comes with a case under `tests/` and a `verify_*.py` script, registered in `bin/run_blast_tests.py`. Demonstration cases go in `tutorials/`.
 - **Commits:** fork work uses conventional commits (`feat(scope):`, `fix(scope):`, `docs(scope):`). Upstream uses `DEV:`, `BUG:`, `ENH:` and `PRJ:` prefixes.
 - **README:** `README.md` is generated from `INPUT.md` (readme2tex; see the comment at the top of `INPUT.md`). Edit `INPUT.md`.
+- **Conservation in blastEulerFoam:** interphase transfer must move mass, momentum and energy together. The phase `decode()` functions (`fluidPhaseModel`, `granularPhaseModel`) still reset dilute phases (α < 0.01) by rewriting `alphaRho`, `alphaRhoU` and `alphaRhoE`, which is not conservative (1–2% energy loss in the 0D tests). Removing the resets exposes spurious pressures at stiff solid/gas interfaces; see `report/dilute_phase_conservation_plan.md` before changing `decode()`. Do not blend primitives without changing the conserved fields: the fluxes are built from the primitives.
 - **Keep docs in sync:** after code changes, update `UPDATES.md` (changelog relative to `71b97fd7`) and the Status columns in `report/development_plan.md`.
 
 ## Key Files

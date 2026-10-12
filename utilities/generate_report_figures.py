@@ -123,44 +123,54 @@ def fig_stage0_thermo():
 
 def fig_stage1_phase_transfer():
     """Stage 1: 0D Isochoric Phase Transfer Dynamics & Energy Conservation from blastFoam."""
-    post_dir = "/opt/OpenFOAM/blastfoam/tests/0D/phaseTransfer_0D/postProcessing"
+    # The case directory can be overridden to use a run outside the repository
+    case_dir = os.environ.get(
+        "PHASE_TRANSFER_0D_CASE",
+        "/opt/OpenFOAM/blastfoam/tests/0D/phaseTransfer_0D"
+    )
+    post_dir = os.path.join(case_dir, "postProcessing")
     m1_file = os.path.join(post_dir, "massCompBAl/0/volFieldValue.dat")
     m2_file = os.path.join(post_dir, "massGas/0/volFieldValue.dat")
     e_file = os.path.join(post_dir, "totalEnergy/0/volFieldValue.dat")
     p_file = os.path.join(post_dir, "pressure/0/volFieldValue.dat")
     T_file = os.path.join(post_dir, "temperature/0/volFieldValue.dat")
 
-    if (os.path.isfile(m1_file) and os.path.isfile(m2_file) and os.path.isfile(e_file)
-            and os.path.isfile(p_file) and os.path.isfile(T_file)):
-        d1 = np.loadtxt(m1_file, comments="#")
-        d2 = np.loadtxt(m2_file, comments="#")
-        de = np.loadtxt(e_file, comments="#")
-        dp = np.loadtxt(p_file, comments="#")
-        dT = np.loadtxt(T_file, comments="#")
-        t = d1[:, 0]
-        m_comp = d1[:, 1]
-        m_gas = d2[:, 1]
-        E_tot = de[:, 1]
-        p_bar = dp[:, 1] / 1.0e5
-        T_K = dT[:, 1]
-        m_tot = m_comp + m_gas
-        alpha_comp = m_comp / m_tot
-        alpha_gas = m_gas / m_tot
-        rel_energy_err = (E_tot - E_tot[0]) / E_tot[0]
-    else:
-        t = np.linspace(0, 0.0001, 201)
-        tau = 2.0e-5
-        alpha_comp = np.exp(-t / tau)
-        alpha_gas = 1.0 - alpha_comp
-        rel_energy_err = np.zeros_like(t)
-        p_bar = 100.00 + (100.64 - 100.00) * (1.0 - np.exp(-t / tau))
-        T_K = 831.04 + (1318.69 - 831.04) * np.exp(-t / tau)
+    for f in (m1_file, m2_file, e_file, p_file, T_file):
+        if not os.path.isfile(f):
+            raise FileNotFoundError(
+                f"Missing {f}: run tests/0D/phaseTransfer_0D first"
+            )
+
+    def load(path):
+        # volFieldValue output with one column per field (blastEulerFoam:
+        # per-phase alphaRhoE.<phase> and T.<phase>)
+        return np.loadtxt(path, comments="#", ndmin=2)
+
+    d1 = load(m1_file)
+    d2 = load(m2_file)
+    de = load(e_file)
+    dp = load(p_file)
+    dT = load(T_file)
+    t = d1[:, 0]
+    m_comp = d1[:, 1]
+    m_gas = d2[:, 1]
+    E_tot = de[:, 1:].sum(axis=1)
+    p_bar = dp[:, 1] / 1.0e5
+    T_comp = dT[:, -2]
+    T_gas = dT[:, -1]
+    m_tot = m_comp + m_gas
+    alpha_comp = m_comp / m_tot
+    alpha_gas = m_gas / m_tot
+    rel_energy_err = (E_tot - E_tot[0]) / E_tot[0]
+    # Phase temperatures are reference values where the phase is residual
+    T_comp = np.where(alpha_comp > 1e-6, T_comp, np.nan)
+    T_gas = np.where(alpha_gas > 1e-6, T_gas, np.nan)
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(11, 8.2))
 
     # (a) Phase fractions
-    ax1.plot(t * 1e3, alpha_comp, 'b-', lw=2.2, label=r'Detonating Phase $\alpha_{\rm eJWLC}$ (blastFoam)')
-    ax1.plot(t * 1e3, alpha_gas, 'r--', lw=2.2, label=r'Multicomponent Gas $\alpha_{\rm gas}$ (blastFoam)')
+    ax1.plot(t * 1e3, alpha_comp, 'b-', lw=2.2, label=r'Products $\alpha_{\rm eJWLC}$ (blastEulerFoam)')
+    ax1.plot(t * 1e3, alpha_gas, 'r--', lw=2.2, label=r'Multicomponent Gas $\alpha_{\rm gas}$ (blastEulerFoam)')
     ax1.axhline(0.99, color='gray', linestyle=':', label='99% Transfer Gate')
     ax1.set_xlabel('Time [ms]')
     ax1.set_ylabel('Mass / Volume Fraction [-]')
@@ -169,12 +179,13 @@ def fig_stage1_phase_transfer():
     ax1.legend(loc='best')
 
     # (b) Energy conservation
-    ax2.plot(t * 1e3, rel_energy_err, 'g-', marker='.', markersize=3, label=r'blastFoam Energy Error $\Delta E / E_0$')
+    ax2.plot(t * 1e3, rel_energy_err, 'g-', marker='.', markersize=3, label=r'blastEulerFoam Total Energy Error $\Delta E / E_0$')
     ax2.axhline(0, color='k', linestyle='-', alpha=0.5)
     ax2.set_xlabel('Time [ms]')
     ax2.set_ylabel(r'Relative Energy Conservation Error $[-]$')
-    ax2.set_ylim(-1e-15, 1e-15)
-    ax2.set_title(r'(b) Machine-Precision Energy Conservation')
+    lim = max(1e-9, 1.5*np.max(np.abs(rel_energy_err)))
+    ax2.set_ylim(-lim, lim)
+    ax2.set_title(r'(b) Total Energy Conservation (sum over phases)')
     ax2.grid(True)
     ax2.legend(loc='best')
 
@@ -182,7 +193,7 @@ def fig_stage1_phase_transfer():
     p_init = p_bar[0]
     p_final = p_bar[-1]
     ax3.plot(t * 1e3, p_bar, color='darkorange', lw=2.2, label=r'Reactor Pressure $p(t)$')
-    ax3.axhline(p_final, color='gray', linestyle='--', label=f'Equilibrium $p_{{\\rm eq}} = {p_final:.1f}\\,\\rm bar$')
+    ax3.axhline(p_final, color='gray', linestyle='--', label=f'Final $p = {p_final:.1f}\\,\\rm bar$')
     ax3.plot(0, p_init, 'o', color='darkorange', label=f'Initial $p_0 = {p_init:.1f}\\,\\rm bar$')
     ax3.set_xlabel('Time [ms]')
     ax3.set_ylabel('Pressure [bar]')
@@ -191,14 +202,11 @@ def fig_stage1_phase_transfer():
     ax3.legend(loc='best')
 
     # (d) Temperature evolution
-    T_init = T_K[0]
-    T_final = T_K[-1]
-    ax4.plot(t * 1e3, T_K, color='purple', lw=2.2, label=r'Reactor Temperature $T(t)$')
-    ax4.axhline(T_final, color='gray', linestyle='--', label=f'Equilibrium $T_{{\\rm eq}} = {T_final:.1f}\\,\\rm K$')
-    ax4.plot(0, T_init, 's', color='purple', label=f'Initial $T_0 = {T_init:.1f}\\,\\rm K$')
+    ax4.plot(t * 1e3, T_comp, color='purple', lw=2.2, label=r'Products $T_{\rm eJWLC}(t)$')
+    ax4.plot(t * 1e3, T_gas, color='teal', lw=2.2, ls='--', label=r'Gas $T_{\rm gas}(t)$')
     ax4.set_xlabel('Time [ms]')
     ax4.set_ylabel('Temperature [K]')
-    ax4.set_title('(d) Isochoric Temperature Relaxation $T(t)$')
+    ax4.set_title('(d) Phase Temperatures $T_k(t)$')
     ax4.grid(True)
     ax4.legend(loc='best')
 

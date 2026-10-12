@@ -2,7 +2,7 @@
 
 This document summarises the updates, new features, thermodynamic models, numerical changes and bug fixes in this fork relative to `origin/develop` (commit `71b97fd7c9195fdb342ed4230d258dd1dde80b55`, the last merge of upstream `synthetik-technologies/blastfoam`).
 
-*Last synchronised with the code at commit `c3294dc1` (2026-10-10).* Commits covered: `4cb49946`, `0a181853`, `124926e3`, `6f693f7b`, `4fd73e06`, `2971df46`, `68cbb94b`, `bdccfc0e`, `8b274c09`, `fa2c2283`, `c3294dc1`. See [Known issues](#7-known-issues) for open defects found while reviewing these changes.
+*Last synchronised with the code on 2026-10-10 (after `9efec4f1`, including the fixes in Section 7).* Commits covered: `4cb49946`, `0a181853`, `124926e3`, `6f693f7b`, `4fd73e06`, `2971df46`, `68cbb94b`, `bdccfc0e`, `8b274c09`, `fa2c2283`, `c3294dc1`. See [Known issues](#7-known-issues) for open defects found while reviewing these changes.
 
 ---
 
@@ -23,6 +23,7 @@ This document summarises the updates, new features, thermodynamic models, numeri
   - Analytic CJ-isentrope reference temperature, with $V_\text{CJ} = \rho_0/\rho_\text{CJ}$:
     $$T_s(V) = T_\text{CJ} \left(\frac{V_\text{CJ}}{V}\right)^\omega$$
   - Requires `Cv`, `T_CJ` and `rho_CJ` in the dictionary. Gives isentropic and off-isentropic temperatures when coupled with `eConst` caloric models.
+  - Optional `omegaT` (default `omega`, added 2026-10-10) is the exponent of $T_s(V)$. It changes only the energy–temperature relation, so $T_s$ can pass through both $T_\text{CJ}$ and the gas-EOS temperature at the transfer state without changing the pressure: $\omega_T = \ln(T_\text{CJ}/T_\text{ref})/\ln(V_\text{ref}/V_\text{CJ})$.
   - Registered in `src/thermodynamicModels/specie/include/forBlastGases.H` and `forDetBlastGases.H`.
 
 ### 1.3 Solid Equations of State
@@ -44,12 +45,10 @@ Location: `src/thermodynamicModels/fvModels/pressurePhaseChange/`, built into `l
   where $H$ is a hard step (`pos`). For $p_\text{lower} \le 0$ the one-sided form $\tfrac{1}{2}\left(1 + \tanh\tfrac{p_\text{upper} - p}{p_\text{range}}\right)H(p_\text{upper} + 2p_\text{range} - p)$ is used.
   - $p_\text{range}$ defaults to $\max(0.05\,(p_\text{upper} - p_\text{lower}),\,1\,\text{Pa})$; an explicit `pRange` (or `Prange`) overrides it.
 - Transfer rate $\dot m = \Gamma\,\alpha_s \rho_s/\tau$ (`tau`, default $10^{-4}$ s). Since `0a181853`, if a `lambda.<sourcePhase>` field exists (programmed burn), $\dot m$ is multiplied by it in the mass-source path.
-- `targetFractions` sets the target-phase species distribution. **These are always applied as mass fractions**; see Known issues for `isMoleFraction`.
-- Inter-phase energy offset $e_\text{off} = \sum_i Y_i\,h_{e,i}^\text{target}(T) - h_e^\text{source}(T)$, evaluated per cell and per boundary face, plus an optional constant `eOffset`.
-- Adds source terms to the phase continuity equations ($\alpha_i$, $\rho_i$, $\alpha\rho_i$) and to the energy equation:
-  - blastFoam (single mixture energy): net `rhoE` source $-\dot m\,e_\text{off}$.
-  - blastEulerFoam (`124926e3`): per-phase `alphaRhoE.<phase>` sources $\pm\dot m\,e_\text{off}$.
-  - No momentum source (`addSup` for vectors is a no-op).
+- `targetFractions` sets the target-phase species distribution, as mass fractions by default. With `isMoleFraction true` they are converted on first use to mass fractions, $Y_i = X_i W_i/\sum_j X_j W_j$, using the molecular weights of the target-phase thermo. The converted values are printed to the log. A target specie that is not in the phase, or a target phase without multicomponent thermo, is a fatal error.
+- Energy and momentum: all phases share an energy datum, reconciled through the products `E0` (offline, `utilities/thermo_fitter`). An optional constant datum shift `eOffset` [J/kg] (default 0) can be added to the transferred mass. No state-dependent offset is computed (see Section 7).
+  - blastEulerFoam (multi-fluid, per-phase `alphaRho`, `alphaRhoU`, `alphaRhoE`; since 2026-10-10): the transferred mass carries the source-phase velocity $\mathbf{u}_s$ and specific total energy $E_s = (\alpha\rho E)_s/(\alpha\rho)_s$. The source loses $\dot m(1, \mathbf{u}_s, E_s)$; each target gains $f_k\dot m(1, \mathbf{u}_s, E_s + e_\text{off})$. Volume moves with the mass ($\pm\dot m/\rho_s$), so internal (not enthalpy) energy is carried. Mass, momentum and datum-corrected energy are conserved exactly.
+  - blastFoam (single mixture energy and velocity): `rhoE` source $\dot m\,e_\text{off}$ only.
 - Note: the code was introduced in `4cb49946` as a new model. No `temperaturePhaseChange` model was ever committed to this repository's history.
 
 ---
@@ -73,7 +72,7 @@ Files under `applications/modules/blastEuler/` and `applications/solvers/blastEu
 - **Drag** (`interfacialModels/dragModels/dispersedDragModel`, `dragODE`):
   - (`4cb49946`) $K_i$ scales as $d^2/\max(d, d_0)^4$, with $\nu \ge 10^{-15}$.
   - (`6f693f7b`) New `alphaCutoff` (falls back to `alphaMin`, default 0): drag is zeroed where either phase is below $\max(\alpha_\text{residual}, \alpha_\text{cutoff})$. `dragODE` skips cells with no active drag.
-- **Heat transfer** (`RanzMarshall`, `spherical`): $K$ scales as $d/\max(d, d_0)^3$ instead of $1/d^2$.
+- **Heat transfer** (`RanzMarshall`, `spherical`): $K$ scales as $d/\max(d, d_0)^3$ instead of $1/d^2$. (2026-10-10) Fixed a dangling reference to the `tmp` returned by `d()`.
 - **Kinetic theory**:
   - `kineticTheorySystem` collisional `lambda` term rewritten per cell with residual-$\alpha$ guards.
   - Bounded denominators in the `CarnahanStarling` and `SinclairJackson` radial models.
@@ -83,16 +82,13 @@ Files under `applications/modules/blastEuler/` and `applications/solvers/blastEu
   - Velocity, pressure–temperature-equilibrium and temperature relaxation exchange are zeroed where either phase is residual.
   - Mixture temperature averages only active phases (fallback 288.15 K); mixture density is limited.
   - `decode()` decodes granular phases first, rescales the carrier volume fraction, then decodes fluid phases.
-- **`fluidPhaseModel` decode** (note: these modify the state non-conservatively):
-  - Density is blended towards `residualRho` for $\alpha < 10^{-3}$ (adds mass).
-  - Velocity is capped at 20000 m/s, and zeroed at small $\alpha$.
-  - Energy is clamped between $h_e(\max(100\,\text{K}, T_\text{low}))$ and $h_e(T_\text{high})$.
-  - Energy and temperature are reset to 288.15 K where $\alpha \le 0.01$.
-  - `solveImplicit` calls `decode()` instead of `thermo.correct()`.
+- **`fluidPhaseModel` decode**:
+  - (`4cb49946`) Density blending towards `residualRho` below $\alpha = 10^{-3}$, velocity blending to zero below $10^{-2}$, and an energy/temperature reset to 288.15 K below $\alpha = 0.01$, all written back to the conserved variables (non-conservative). `solveImplicit` calls `decode()` instead of `thermo.correct()`.
+  - These resets are still in place (see Section 7, Open). A conservative version was tried on 2026-10-11/12 and reverted: `report/dilute_phase_conservation_plan.md`.
 - **`granularPhaseModel`**:
   - Compressible granular density via `thermo.updateRho(p_fluid)`, limited by $\alpha \le \alpha_\text{max}$.
   - Pressure-gradient coupling term $\alpha_s\alpha_f\nabla p/(1 - \alpha_s)$.
-  - Same blended velocity/energy/$\Theta$ decode. (`0a181853` relaxed the thresholds to `residualAlpha`.)
+  - Blended velocity/energy/$\Theta$ decode (`0a181853` relaxed the thresholds to `residualAlpha`), not conservative; mass is removed where $\alpha$ exceeds `alphaMax`. Unchanged (see Section 7, Open).
 - **`phaseModel` / `phasePair`**: `d0()`/`celld0()` (initial diameter) accessors; guards on $\nu$ and $d$ in the Reynolds number.
 
 ---
@@ -133,7 +129,7 @@ Files under `applications/modules/blastEuler/` and `applications/solvers/blastEu
 - **`twoPhaseFluidBlastThermo`**:
   - `XiSum` clamped to $\ge 10^{-6}$ in the mixture pressure.
   - Sound speed uses $\max(c^2\rho\Xi_\text{sum}, \text{small})$.
-  - Prints a `Pout` diagnostic for every cell with $|p| > 10^{11}$ or NaN (not throttled).
+  - Per-cell `Pout` diagnostic for $|p| > 10^{11}$ or NaN, active only with the `twoPhaseFluid` debug switch (since 2026-10-10).
 
 ### 4.5 Diameter Models
 - `diameterModel` and `reactingDiameterModel`:
@@ -181,13 +177,12 @@ New or changed since `71b97fd`:
 
 ### 6.2 Verification Cases (`tests/`)
 - **0D**:
-  - `phaseTransfer_0D` (isochoric eJWLC products → JANAF gas).
-  - `phaseTransfer_0D_3phase` (`2971df46`: adds inert Murnaghan Al).
-  - `setup_case.py [--three-phase]` regenerates the `0/` fields; `verify_0d_phase_transfer.py [--three-phase]` checks the results.
+  - `phaseTransfer_0D` (isochoric eJWLC products → JANAF gas) and `phaseTransfer_0D_3phase` (`2971df46`: adds inert Al). Since 2026-10-10 both run **blastEulerFoam** (replacing the blastFoam versions): products as a `basic` eJWLC phase, gas as a reacting JANAF/Abel–Nobel phase, Al as a granular Murnaghan phase with RanzMarshall heat transfer. Both are in Tier 1 of `bin/run_blast_tests.py`.
+  - `setup_case.py [--three-phase]` regenerates the per-phase `0/` fields (all phases at 100 bar and `T0 = 825.76` K); `verify_0d_phase_transfer.py [--three-phase]` checks mass, momentum and total energy (sum over phases, tolerance 1e-8), pressure (5%) and conversion.
   - `verify_al_particle_kinetics.py` and `verify_highT_air_thermo.py` are standalone numpy models (they do not run a solver).
 - **1D**:
   - `multiphase_advection`, `planar_znd`, `shock_dissociating_air` (`4cb49946`); `planar_znd_phaseTransfer` (`0a181853`); `gunib1d_houim1/2/3` (`124926e3`).
-  - Each has a `verify_*.py`. The planar ZND verifiers and `verify_gunib1d_benchmarks.py` need the external EuDetCode and gunIB1D builds.
+  - Each has a `verify_*.py`. The planar ZND verifiers need the EuDetCode build in `external/eudetcode` (a separate checkout), and `verify_gunib1d_benchmarks.py` a local gunIB1D build.
 - **1D_spherical**:
   - `spherical_blast` (C4, Kingery-Bulmash, `4cb49946`).
   - `ChargeCompBAl_1D_spherical` (`0a181853`) and `_reacting` (`124926e3`).
@@ -203,16 +198,33 @@ New or changed since `71b97fd`:
 ### 6.3 Tooling
 - **`bin/run_blast_tests.py`**: tiered regression runner (`--tier 0|1|2|3|all`, `--case`, `--report`). It writes `blast_test_report.md`. Paths are hard-coded to `/opt/OpenFOAM/...`.
 - **`utilities/thermo_fitter/fit_ejwlc_nobleabel.py`**: eJWLC / Abel-Nobel thermodynamic reconciliation fitter.
+- **`utilities/thermo_fitter/compute_omegaT.py`** (2026-10-10): computes and optionally writes (`--write`) the eJWLC `omegaT` for a case: solves the products isentrope for $V_\text{trans}$ at the transfer pressure, takes $T_\text{trans}$ from the gas EOS with the transfer composition (`--gas-case` to take the gas from another case, `--inert Y:RHO` for fits that include inert material), and $\omega_T = \ln(T_\text{CJ}/T_\text{trans})/\ln(V_\text{trans}/V_\text{CJ})$.
 - **`utilities/generate_report_figures.py`**: figures for `report/TBX-blastFoam.tex`.
 
 ---
 
-## 7. Known Issues
-Found while synchronising this document (2026-10-10); not yet fixed.
-- **`pressurePhaseChange` ignores `isMoleFraction`**: `pressurePhaseChange.C:662` discards the result of `lookupOrDefault`, so `isMoleFraction_` stays `false` and `targetFractions` are always treated as mass fractions. Cases that set `isMoleFraction true` silently get the wrong composition (`tutorials/blastEulerFoam/{ChargeCompBAl,ChargeCompBAl_1D,StationaryCharge_1D}/constant/fvModels.disabled`).
-- **`pressurePhaseChange` does not conserve total energy exactly**:
-  - The blastFoam path adds a net energy source $-\dot m\,e_\text{off}$.
-  - The per-phase path moves only $\pm\dot m\,e_\text{off}$, not the transferred mass's own internal and kinetic energy.
-  - The `lambda.<phase>` factor is applied to the mass sources but not in the `addSup(rho, field, eqn)` (energy/alpha) path.
-- **Debug output left in**: `multiphaseFluidBlastThermo.C:63` prints a `CELL DEBUG` line for every cell with $T < 200$ K, and `twoPhaseFluidBlastThermo` prints every extreme-pressure cell.
-- **`tests/0D/phaseTransfer_0D` fails its pressure check** since `2971df46`: 16.48% deviation vs the 5% limit (passes at 4.09% with the old `Cv 153.3`).
+## 7. Known Issues & Fixes
+
+### Fixed (2026-10-10)
+- **`isMoleFraction` was ignored** (`pressurePhaseChange.C` discarded the lookup result, so mole fractions were silently applied as mass fractions). Mole fractions are now read and converted to mass fractions (Section 2.1). Verified: the 0D case run with equivalent mole fractions reproduces the mass-fraction run exactly. Affected inputs: `tutorials/blastEulerFoam/{ChargeCompBAl,ChargeCompBAl_1D,StationaryCharge_1D}/constant/fvModels.disabled`.
+- **Debug output**: the per-cell `CELL DEBUG` print in `multiphaseFluidBlastThermo::calculate()` was removed. The extreme-pressure print in `twoPhaseFluidBlastThermo` is now behind its debug switch.
+- **Energy offset**: `energyOffset()` was meant to compute a state-dependent offset $\sum_k f_k h_{e,k}(T) - h_{e,\text{source}}(T)$ at the shared temperature. It never ran, because it looked the thermo up under the wrong registry name (`"thermophysicalProperties"` instead of `physicalProperties`).
+  - When enabled for testing, it added energy in proportion to the JWL temperature error: about 480 kJ/kg and +56% pressure in the 0D case with the power-law isentrope temperature. A state-dependent offset is not a datum shift and is not energy-conservative.
+  - It was replaced by a constant datum shift only (`eOffset`, default 0; Section 2.1). Results of existing cases are unchanged, since the dynamic branch never ran.
+  - The datums are reconciled through the products `E0` (report Section 3.3).
+- **`tests/0D/phaseTransfer_0D` pressure check** (16.48% after `2971df46`'s products `Cv 153.3 → 1450`):
+  - Cause (blastFoam version): the single mixture energy shares one temperature between the phases, and the eJWLC power-law isentrope put the products at 1318.69 K where the gas EOS gives about 826 K. As the shared temperature relaxed, energy moved between the phases in proportion to $C_v$.
+  - Temperature fix: new optional eJWLC exponent `omegaT` (Section 1.2), keeping the EuDetCode `T_CJ`. `omegaT` was computed with `compute_omegaT.py` and set in all eJWLC cases: 0.355493 (products-only Comp-B/Al fit: 0D tests, `spherical_alCombustion`, `blastFoam/ChargeCompBAl_1D`), 0.375928/0.375955 (full Comp-B/Al fit with 27% inert Al: `spherical`, `spherical_reacting`, blastEulerFoam tutorials), 0.469442 (Comp-B into air: `planar_znd`, `planar_znd_phaseTransfer`), 0.353900 (`ChargeCompBAl_1D_AlInert`).
+  - The 0D tests now run blastEulerFoam (independent phase energies, so the shared-temperature effect no longer applies): 0.58% maximum pressure deviation, gas formed at 830.6 K, momentum exactly zero, energy conserved by the transfer to about 5e-9. The energy check still fails, from the dilute-phase decode reset at 91 µs (1.8% / 1.1% loss; Section 7, Open).
+- **`pressurePhaseChange` in blastEulerFoam moved mass without momentum or energy**: the source kept its momentum and energy while losing mass, and the targets received mass with neither. Now the transferred mass carries the source velocity and total energy (Section 2.1).
+- **`tests/0D/phaseTransfer_0D_3phase`** (107.9 bar initial pressure in the blastFoam version, from the mixture-energy closure with an energy-independent Murnaghan phase): in blastEulerFoam the phases have their own energies; the case starts at 100 bar and its pressure check passes (0.58%).
+- **Dangling `tmp` references** in `RanzMarshallHeatTransfer.C` and `sphericalHeatTransfer.C` (bound a reference to the temporary returned by `d()`).
+- **EuDetCode paths**: the test scripts and the fitter pointed at a non-existent `modules/eudetcode`. They now use `external/eudetcode`, a separate git checkout not tracked by this repository. `tests/1D/verify_planar_znd.py` passes against it (detonation velocity within 0.076%). Tier 0 still needs the EuDetCode GoogleTest binary (`build/tests/eudetcode_tests`), which is not built.
+- **0D verifier** (`verify_0d_phase_transfer.py`): energy conservation is checked on the datum-corrected energy, stored energy minus `eOffset` × transferred mass.
+
+### Open
+- **Non-conservative `fluidPhaseModel` / `granularPhaseModel` decode** (Section 3.3): dilute phases ($\alpha < 0.01$) have their density, velocity and energy reset, with the conserved variables rewritten. In the 0D transfer tests this destroys 1–2% of the total energy once the products fall below 1% volume fraction, so their energy check (< 1e-8) fails; the same resets act at every material interface and dilute region. A fully conservative decode conserves energy to ~5e-9 in the 0D tests, but then the unreacted solid/air interface of the 1D spherical Comp-B/Al cases produces spurious GPa pressures ahead of the detonation (trace phases with unreliable $\alpha\rho/\alpha$, stiff EOS, no pressure relaxation), and the spherical verifiers fail or the runs crash. Primitive-only blending, conservative relaxation of dilute phases, dilute-phase pressure equalisation and instant pressure relaxation were tried and reverted. Investigation and staged plan: `report/dilute_phase_conservation_plan.md`.
+- **`pressurePhaseChange` `lambda` factor**: applied to the mass sources but not in the `addSup(rho, field, eqn)` (energy/alpha) path, which is used only without a time integrator.
+- **`tutorials/blastFoam/ChargeCompBAl_1D_AlInert`** sets `E0 = -5.484e6` on the products and `eOffset = 5.484e6` in `fvModels`. The two cancel, so the transferred energy is as if `E0 = 0`: the datums are not reconciled for its `hConst` gas. It should use a calibrated `E0` and no `eOffset`.
+- **Possible double counting of Al** in the full Comp-B/Al cases (`spherical`, `spherical_reacting`, blastEulerFoam `ChargeCompBAl*`, `StationaryCharge_1D`): their eJWLC fit (ρ0 = 1820) includes the 27% inert Al in its mass, while they also carry a separate Al particle phase.
+- **blastFoam mixture closure**: in blastFoam two-/multiphase systems each phase EOS is evaluated with the mixture energy (Allaire-type closure, exact for Mie–Grüneisen phases only); a phase whose pressure is independent of energy (Murnaghan) is then inconsistent. Not relevant to the blastEulerFoam problems.
