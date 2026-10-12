@@ -1,6 +1,6 @@
 # Conservative Treatment of Dilute Phases and Material Interfaces in blastEulerFoam
 
-Status: **largely done** (2026-10-12). The decode resets are removed, and the conserved variables change only where a phase is residual. The 0D tests conserve energy to about 5e-9. The spherical verifiers, the new stationary-interface test and the blastEulerFoam tutorials pass. The open points are in Section 6.
+Status: **largely done** (2026-10-12; density floor and packing limit 2026-10-13). The decode resets are removed, and the conserved variables change only where a phase is residual. The 0D tests conserve energy to about 5e-9. The spherical verifiers, the new stationary-interface test and the blastEulerFoam tutorials pass. The open points are in Section 6.
 
 ## 1. Problem
 
@@ -27,7 +27,9 @@ With a fully conservative decode, the spherical Comp-B/Al cases produced spuriou
 ## 3. Implemented (2026-10-12)
 
 - **`fluidPhaseModel::decode()`:** conserved fields are modified only where $\alpha \le$ `residualAlpha` (reference state 288.15 K, as upstream). The velocity cap (20000 m/s) and the energy clamp to the thermo temperature range act on the primitives only.
-- **`granularPhaseModel::decode()`:** the same treatment. Where $\alpha$ reaches `alphaMax`, the grain density becomes `alphaRho/alphaMax` instead of mass being removed.
+- **`granularPhaseModel::decode()`:** the same treatment. Where $\alpha$ reaches `alphaMax`, the grain density becomes `alphaRho/alphaMax` instead of mass being removed. This is a last-resort bound: the packing limit must come from the frictional stress, which needs a small `alphaDeltaMin` (2026-10-13; see below).
+- **Fluid density floor removed (2026-10-13):** `fluidPhaseModel::decode()` no longer applies `rho.max(residualRho)` outside residual cells. `residualRho` is the reference density of residual cells only. With the gas `residualRho 1.2`, the floor acted in 34–90 cells of the spherical runs (gas $\alpha$ up to 0.76, decoded density down to 0.06 kg/m³) and overstated their pressure up to twentyfold.
+- **`alphaDeltaMin` (2026-10-13):** the JohnsonJackson frictional pressure is $F_r(\alpha-\alpha_\text{min})^\eta/\max(\alpha_\text{max}-\alpha, \alpha_{\Delta\min})^p$. With the upstream tutorial value `alphaDeltaMin 0.05` it is capped at about 10 kPa, so it cannot stop compaction and $\alpha$ runs into `alphaMax`. The original decode then deleted the excess mass (41% of the particles in `tests/1D/gunib1d_houim3`); the conservative decode stores it as overdense grains (Al up to 3620 kg/m³ at the centre of the spherical charge). `houim3` now uses $10^{-6}$ (compaction speed 183.8 m/s vs 185.25 m/s reference, mass conserved to 4e-12), and the Comp-B/Al tests and 1D tutorials use $10^{-3}$ (no cell reaches `alphaMax`; maximum Al density 3067 kg/m³).
 - **`granularPhaseModel::solve()`:** buoyancy $-\alpha_s\nabla p$ from the mixture fluid pressure `fluid_.p()`.
 - **`phaseSystem::equilibrateDiluteVolumes()`:** called in `decode()` after the fluid phases are decoded. For each cell and each dilute fluid phase $k$ (not the carrier $c$, the fluid phase with the largest $\alpha$):
   - A damped Newton iteration on the exchanged volume: $\Delta\alpha = (p_k - p_c)/(\rho_k c_k^2/\alpha_k + \rho_c c_c^2/\alpha_c)$, with backtracking while $|p_k - p_c|$ does not decrease.
@@ -53,22 +55,23 @@ With a fully conservative decode, the spherical Comp-B/Al cases produced spuriou
 
 `ChargeCompBAl_1D_spherical`, pressure probes (programmed burn, detonation velocity 7612 m/s):
 
-| Probe | Original decode (`HEAD` before this work) | Conservative decode, without dilute equilibration | Final (with dilute equilibration) |
-|---|---|---|---|
-| 1–4 cm (in the charge), peak | 11.1–13.5 GPa | 10.3–12.5 GPa | 10.3–12.5 GPa |
-| 5 cm (charge edge), peak | 2.18 GPa | 5.54 GPa | 2.21 GPa |
-| 8 cm, arrival (p > 100 bar) | 16.2 µs | 10.5 µs | 10.7 µs |
-| 8 cm, peak | 0.15 GPa (16.7 µs) | 0.49 GPa (17.2 µs) | 0.32 GPa (26.6 µs) |
-| 10 cm, arrival | 25.4 µs | 15.0 µs | 19.4 µs |
-| 10 cm, peak | 0.09 GPa (26.1 µs) | 0.27 GPa (31.7 µs) | 0.16 GPa (40 µs, end of run) |
-| Measured detonation velocity | 7650 m/s | 7640 m/s | 7640 m/s |
+| Probe | Original decode (`HEAD` before this work) | Conservative decode, without dilute equilibration | With dilute equilibration | Final (2026-10-13: no gas density floor, `alphaDeltaMin 1e-3`) |
+|---|---|---|---|---|
+| 1–4 cm (in the charge), peak | 11.1–13.5 GPa | 10.3–12.5 GPa | 10.3–12.5 GPa | 10.3–12.5 GPa |
+| 5 cm (charge edge), peak | 2.18 GPa | 5.54 GPa | 2.21 GPa | 1.45 GPa |
+| 8 cm, arrival (p > 100 bar) | 16.2 µs | 10.5 µs | 10.7 µs | 12.5 µs |
+| 8 cm, peak | 0.15 GPa (16.7 µs) | 0.49 GPa (17.2 µs) | 0.32 GPa (26.6 µs) | 33 MPa (30.6 µs, in the products) |
+| 10 cm, arrival | 25.4 µs | 15.0 µs | 19.4 µs | 17.9 µs |
+| 10 cm, peak | 0.09 GPa (26.1 µs) | 0.27 GPa (31.7 µs) | 0.16 GPa (40 µs, end of run) | 14 MPa (18.4 µs, air shock) |
+| 15 cm, arrival / peak | – | – | not reached | 32.3 µs / 13 MPa |
+| Measured detonation velocity | 7650 m/s | 7640 m/s | 7640 m/s | 7661 m/s |
 
-The air shock arrives much earlier without the resets: the original decode deleted the energy of the products expanding into the air. The averaged air-shock velocity over the first 3 cm is about 3 km/s with the resets and about 7 km/s without. In the final version the 8 and 10 cm probes peak well after the first arrival, i.e. a later compression (presumably the products/particle cloud) exceeds the leading shock; this has not been analysed. These near-field values have not been compared with experimental or reference data.
+The air shock arrives much earlier without the resets: the original decode deleted the energy of the products expanding into the air. The averaged air-shock velocity over the first 3 cm is about 3 km/s with the resets and about 7 km/s without. With the gas density floor the 8 and 10 cm probes peaked well after the first arrival at 0.16–0.32 GPa: gas held at 1.2 kg/m³ while its conserved density was far lower. Without the floor the air shock is self-consistent: it runs from 10 to 15 cm at about 3.5 km/s, matching its 140 bar peak (M ≈ 11). At 8 cm the later maximum (33 MPa) occurs inside the expanded products. These near-field values have not been compared with experimental or reference data.
 
 ## 6. Open
 
 - **Non-dilute mixed cells:** fluid phases with $\alpha >$ `alphaDilute` still undergo the same volumetric strain (no pressure relaxation). At the products/air contact after breakout, products at $\alpha \sim 0.1$–0.4 reach the 100 K temperature floor at GPa pressures, and the gas reaches its `residualRho` floor and 5000 K ceiling. A robust full pressure relaxation remains to be done.
-- **Gas `residualRho` floor:** `decode()` limits $\rho$ to at least `residualRho` (upstream behaviour). With `residualRho 1.2` for the gas, expanded gas below ambient density is clamped on the primitive side. The cases should use a much smaller `residualRho` for the gas.
+- **gunIB1D:** the local gunIB1D build stops with a floating-point exception on all three Houim cases, and `verify_gunib1d_benchmarks.py` points at `build/gunIB1D` and `Verification/`, which do not exist. The cross-solver comparison cannot be repeated.
 - **Interface start-up:** the discrete interface sends a decaying acoustic wave of a few bar into the explosive (density change ~0.002%).
 - `phaseTransfer_0D` WP 1.1 criterion $\Delta p/p < 0.01\%$ (currently 0.58–0.59%).
 - Possible double counting of Al in the full Comp-B/Al cases (`UPDATES.md`, Section 7).

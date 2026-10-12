@@ -86,10 +86,11 @@ Files under `applications/modules/blastEuler/` and `applications/solvers/blastEu
 - **`fluidPhaseModel` decode**:
   - (`4cb49946`) Density blending towards `residualRho` below $\alpha = 10^{-3}$, velocity blending to zero below $10^{-2}$, and an energy/temperature reset to 288.15 K below $\alpha = 0.01$, all written back to the conserved variables (non-conservative). `solveImplicit` calls `decode()` instead of `thermo.correct()`.
   - (2026-10-12) Made conservative: `alphaRho`, `alphaRhoU` and `alphaRhoE` are only modified where the phase is residual ($\alpha \le$ `residualAlpha`, reference state 288.15 K), as upstream. The velocity cap (20000 m/s) and the energy clamp to the thermo temperature range act on the primitive variables only.
+  - (2026-10-13) The decoded density is no longer bounded below by `residualRho` (upstream `rho.max(residualRho)`); `residualRho` is only the reference density of residual cells. The gas `residualRho 1.2` held expanded gas at ambient density in up to 90 cells of the spherical runs and overstated its pressure up to twentyfold.
 - **`granularPhaseModel`**:
   - Compressible granular density via `thermo.updateRho(p_fluid)`, limited by $\alpha \le \alpha_\text{max}$.
   - Pressure-gradient coupling term $\alpha_s\sum_f\alpha_f\nabla p_f/(1 - \alpha_s)$ (upstream: $\alpha_s\sum_f\nabla p_f$). (2026-10-12) Replaced by $\alpha_s\nabla p$ with the mixture fluid pressure: the individual fluid-phase pressures are not defined where those phases are absent, and their gradients made the Al at the unreacted charge/air interface compact and move (Section 7).
-  - Blended velocity/energy/$\Theta$ decode (`0a181853` relaxed the thresholds to `residualAlpha`). (2026-10-12) Made conservative as for `fluidPhaseModel`. Where $\alpha$ reaches `alphaMax`, the grain density becomes `alphaRho/alphaMax` instead of the mass being reduced.
+  - Blended velocity/energy/$\Theta$ decode (`0a181853` relaxed the thresholds to `residualAlpha`). (2026-10-12) Made conservative as for `fluidPhaseModel`. Where $\alpha$ reaches `alphaMax`, the grain density becomes `alphaRho/alphaMax` instead of the mass being reduced. The packing limit itself must come from the frictional stress (small `alphaDeltaMin`, Section 6.2).
 - **`phaseModel` / `phasePair`**: `d0()`/`celld0()` (initial diameter) accessors; guards on $\nu$ and $d$ in the Reynolds number.
 
 ---
@@ -136,6 +137,7 @@ Files under `applications/modules/blastEuler/` and `applications/solvers/blastEu
 - `diameterModel` and `reactingDiameterModel`:
   - New `d0()`/`celld0()` (initial diameter).
   - The reacting diameter is bounded to $[10^{-10}, d_0]$ and reset to $d_0$ where $\alpha \le 10^{-4}$.
+  - (2026-10-13) $d_0$ is a registered field `d0.<phase>` (read if present, written). It was a copy of `d.<phase>` under the same name, so it was neither mapped on mesh refinement nor restored on restart; `tutorials/blastEulerFoam/reactingParticles` (AMR) crashed with a division by zero in `RanzMarshall::Ki` at 2.6e-7 s.
   - Number density uses $\pi d_0^3/6$.
 
 ### 4.6 Flux Schemes
@@ -196,6 +198,7 @@ New or changed since `71b97fd`:
   - eJWLC products `Cv 153.3` → `1450`.
   - Charge densities made consistent with reactant $\rho_0$.
 - `68cbb94b` and `bdccfc0e` only extend run times.
+- **`alphaDeltaMin`** (2026-10-13): with the upstream tutorial value 0.05 the JohnsonJackson frictional pressure is capped at about 10 kPa and cannot stop compaction. `gunib1d_houim3` now uses $10^{-6}$ (compaction speed 183.8 m/s vs 185.25 m/s reference; the bed previously packed to `alphaMax`, and the original decode removed 41% of the particle mass). The Comp-B/Al tests (`1D_spherical/ChargeCompBAl_1D_spherical*`) and the 1D tutorials (`ChargeCompBAl_1D`, `StationaryCharge_1D`) use $10^{-3}$; the Al previously packed to `alphaMax` at the charge centre. The 2D `ChargeCompBAl` and the other upstream tutorials are unchanged.
 
 ### 6.3 Tooling
 - **`bin/run_blast_tests.py`**: tiered regression runner (`--tier 0|1|2|3|all`, `--case`, `--report`). It writes `blast_test_report.md`. Paths are hard-coded to `/opt/OpenFOAM/...`.
@@ -209,6 +212,8 @@ New or changed since `71b97fd`:
 
 ### Fixed (2026-10-10)
 - **`isMoleFraction` was ignored** (`pressurePhaseChange.C` discarded the lookup result, so mole fractions were silently applied as mass fractions). Mole fractions are now read and converted to mass fractions (Section 2.1). Verified: the 0D case run with equivalent mole fractions reproduces the mass-fraction run exactly. Affected inputs: `tutorials/blastEulerFoam/{ChargeCompBAl,ChargeCompBAl_1D,StationaryCharge_1D}/constant/fvModels.disabled`.
+- **`reactingDiameterModel` `d0`** (2026-10-13): not mapped on mesh refinement, which crashed `tutorials/blastEulerFoam/reactingParticles` (Section 4.5).
+- **Gas `residualRho` floor** (2026-10-13): removed outside residual cells (Section 3.3).
 - **Debug output**: the per-cell `CELL DEBUG` print in `multiphaseFluidBlastThermo::calculate()` was removed. The extreme-pressure print in `twoPhaseFluidBlastThermo` is now behind its debug switch.
 - **Energy offset**: `energyOffset()` was meant to compute a state-dependent offset $\sum_k f_k h_{e,k}(T) - h_{e,\text{source}}(T)$ at the shared temperature. It never ran, because it looked the thermo up under the wrong registry name (`"thermophysicalProperties"` instead of `physicalProperties`).
   - When enabled for testing, it added energy in proportion to the JWL temperature error: about 480 kJ/kg and +56% pressure in the 0D case with the power-law isentrope temperature. A state-dependent offset is not a datum shift and is not energy-conservative.
@@ -227,11 +232,12 @@ New or changed since `71b97fd`:
 - **Non-conservative `fluidPhaseModel` / `granularPhaseModel` decode** (2026-10-12): dilute phases ($\alpha < 0.01$) had their density, velocity and energy reset with the conserved variables rewritten. This destroyed 1.8% / 1.1% of the energy in the 0D tests and deleted the energy of the products expanding into the air in the spherical cases. Removing the resets exposed two causes of spurious GPa pressures that the resets had masked:
   - the granular buoyancy term built from the individual fluid-phase pressures (Section 3.3);
   - trace fluid phases at fluid/fluid contacts whose decoded density drifts (isostrain without pressure relaxation; fixed by `equilibrateDiluteVolumes()`).
-  Both decodes are now conservative. 0D energy is conserved to ~5e-9, and the spherical verifiers (0.36%, 0.36%, 0.64%), the new interface test and the blastEulerFoam tutorials pass. The spherical air shock is now considerably earlier and stronger (8 cm arrival 10.7 µs instead of 16.2 µs). Details, rejected approaches and remaining points: `report/dilute_phase_conservation_plan.md`.
+  Both decodes are now conservative. 0D energy is conserved to ~5e-9, and the spherical verifiers (0.64% each since 2026-10-13), the new interface test and the blastEulerFoam tutorials pass. With the gas density floor also removed (2026-10-13), the spherical air shock reaches 10 cm at 17.9 µs with 14 MPa (originally 25.4 µs and 90 MPa). Details, rejected approaches and remaining points: `report/dilute_phase_conservation_plan.md`.
 
 ### Open
 - **Pressure non-equilibrium in non-dilute mixed fluid cells**: without pressure relaxation, fluid phases with $\alpha > 0.01$ in the same cell undergo the same volumetric strain. At the products/air contact after breakout, products reach the 100 K temperature floor at GPa pressures. The upstream `instant` pressure relaxation collapses the time step. See `report/dilute_phase_conservation_plan.md` (Section 6).
-- **Gas `residualRho` floor**: `decode()` limits $\rho \ge$ `residualRho` (upstream). The gas phases use `residualRho 1.2`, so expanded gas below ambient density is clamped on the primitive side.
+- **`tutorials/blastEulerFoam/reactingParticles`**: after the `d0` fix it runs past 2.6e-7 s, but the time step becomes erratic within the first few hundred steps (down to 1e-15 s) and collapses to 1e-22 s near 2.7e-4 s (of 2.5e-3 s), followed by a floating-point exception in the gas thermo. The original decode behaves the same (collapse at 2.65e-4 s). Not analysed.
+- **gunIB1D comparison**: the local gunIB1D build (`/home/kevnor/Codes/gunIB1D/gunIB1D`) stops with a floating-point exception on all three Houim cases, and `verify_gunib1d_benchmarks.py` expects `build/gunIB1D` and `Verification/Houim*.info`, which do not exist. The WP 2.3 cross-solver comparison cannot be repeated.
 - **`pressurePhaseChange` `lambda` factor**: applied to the mass sources but not in the `addSup(rho, field, eqn)` (energy/alpha) path, which is used only without a time integrator.
 - **`tutorials/blastFoam/ChargeCompBAl_1D_AlInert`** sets `E0 = -5.484e6` on the products and `eOffset = 5.484e6` in `fvModels`. The two cancel, so the transferred energy is as if `E0 = 0`: the datums are not reconciled for its `hConst` gas. It should use a calibrated `E0` and no `eOffset`.
 - **Possible double counting of Al** in the full Comp-B/Al cases (`spherical`, `spherical_reacting`, blastEulerFoam `ChargeCompBAl*`, `StationaryCharge_1D`): their eJWLC fit (ρ0 = 1820) includes the 27% inert Al in its mass, while they also carry a separate Al particle phase.
