@@ -114,7 +114,7 @@ def run_tier0_tests():
     results = []
 
     # 1. EuDetCode C++ GoogleTest Suite
-    eudet_dir = os.path.join(BLASTFOAM_ROOT, "modules/eudetcode")
+    eudet_dir = os.path.join(BLASTFOAM_ROOT, "external/eudetcode")
     eudet_bin = os.path.join(eudet_dir, "build/tests/eudetcode_tests")
     if os.path.isfile(eudet_bin):
         code, stdout, stderr, dur = run_command("./build/tests/eudetcode_tests", cwd=eudet_dir, timeout=120)
@@ -234,23 +234,28 @@ def main():
 
         if args.tier in ["1", "all"]:
             print("--- Running Tier 1 Tests (0D Unit Physics Verification) ---")
-            # 1. 0D Isochoric Phase Transfer Reactor
-            res_0d = run_openfoam_case(
-                "tests/0D/phaseTransfer_0D",
-                tier=1,
-                case_name="phaseTransfer_0D (0D Isochoric eJWLC->Gas)"
-            )
-            if res_0d.passed:
-                # Run quantitative physics verifier
-                code, stdout, stderr, dur = run_command(
-                    f"{sys.executable} tests/0D/verify_0d_phase_transfer.py"
+            # 1. 0D isochoric phase transfer reactors (blastEulerFoam):
+            #    eJWLC products -> gas, without and with inert Al
+            for case, flag, label in [
+                ("phaseTransfer_0D", "", "phaseTransfer_0D (0D Isochoric eJWLC->Gas, blastEulerFoam)"),
+                ("phaseTransfer_0D_3phase", " --three-phase", "phaseTransfer_0D_3phase (0D eJWLC->Gas + inert Al, blastEulerFoam)"),
+            ]:
+                res_0d = run_openfoam_case(
+                    f"tests/0D/{case}",
+                    tier=1,
+                    case_name=label
                 )
-                if code == 0:
-                    res_0d.message = "Mass & machine-precision energy conservation verified (>99% transfer)"
-                else:
-                    res_0d.passed = False
-                    res_0d.message = f"Physics verification failed: {stdout.strip().splitlines()[-1]}"
-            results.append(res_0d)
+                if res_0d.passed:
+                    # Run quantitative physics verifier
+                    code, stdout, stderr, dur = run_command(
+                        f"{sys.executable} tests/0D/verify_0d_phase_transfer.py{flag}"
+                    )
+                    if code == 0:
+                        res_0d.message = "Mass, momentum & energy conservation, pressure continuity verified (>99% transfer)"
+                    else:
+                        res_0d.passed = False
+                        res_0d.message = f"Physics verification failed: {stdout.strip().splitlines()[-1]}"
+                results.append(res_0d)
 
             # 2. Aluminium Particle Heating, Ignition & Multi-Oxidizer Kinetics (WP 1.2, 1.4, 1.5)
             code, stdout, stderr, dur = run_command(

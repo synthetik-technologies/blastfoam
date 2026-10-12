@@ -1,0 +1,114 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( compBAl gas );
+
+transportPhaseDensity true;
+VRelaxation     instant;
+
+compBAl
+{
+    phaseType       fluid;
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+gas
+{
+    phaseType       fluid;
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+blending
+{
+    default
+    {
+        type            none;
+        continuousPhase gas;
+    }
+}
+
+interfacialPressure
+(
+    (compBAl and gas)
+    {
+        type            totalPressure;
+    }
+);
+
+interfacialVelocity
+(
+    (compBAl and gas)
+    {
+        type            massAveraged;
+    }
+);
+
+massTransfer
+(
+);
+
+aspectRatio
+(
+);
+
+solveDragODE off;
+
+drag
+(
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+);
+
+lift
+(
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+pressureRelaxationSolver
+{
+    type            none;
+}
+
+pressureRelaxation
+(
+);
+
+// ************************************************************************* //

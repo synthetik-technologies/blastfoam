@@ -7,14 +7,26 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      momentumTransport;
+    object      physicalProperties.gas;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-simulationType  laminar;
+type            reacting;
+thermoType
+{
+    transport       sutherland;
+    thermo          janaf;
+    equationOfState AbelNobel;
+}
+
+#include "thermo.compressibleGas"
+THigh           5000;
+defaultSpecie   N2;
+
+residualRho     1e-06;
+residualAlpha   1e-06;
 
 // ************************************************************************* //

@@ -1,0 +1,201 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases          ( Al compBAl gas );
+
+transportPhaseDensity true;
+VRelaxation     instant;
+
+Al
+{
+    phaseType       granular;
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               30e-6;
+    }
+    alphaMax        0.63;
+    alphaMinFriction 0.5;
+    kineticTheoryCoeffs
+    {
+        e               0.999;
+    }
+    residualAlpha   1e-6;
+    residualRho     2700;
+}
+
+compBAl
+{
+    phaseType       fluid;
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+gas
+{
+    phaseType       fluid;
+    diameterModel   constant;
+    constantDiameterCoeffs
+    {
+        d               0;
+    }
+    residualRho     1e-06;
+    residualAlpha   1e-06;
+}
+
+blending
+{
+    default
+    {
+        type            none;
+        continuousPhase gas;
+    }
+}
+
+interfacialPressure
+(
+    (compBAl and gas)
+    {
+        type            totalPressure;
+    }
+    (Al and gas)
+    {
+        type            single;
+        phase           gas;
+    }
+    (Al and compBAl)
+    {
+        type            single;
+        phase           compBAl;
+    }
+);
+
+interfacialVelocity
+(
+    (compBAl and gas)
+    {
+        type            massAveraged;
+    }
+    (Al and gas)
+    {
+        type            single;
+        phase           Al;
+    }
+    (Al and compBAl)
+    {
+        type            single;
+        phase           Al;
+    }
+);
+
+massTransfer
+(
+);
+
+aspectRatio
+(
+);
+
+solveDragODE off;
+
+drag
+(
+    (Al in gas)
+    {
+        type            GidaspowErgunWenYu;
+        residualRe      1e-3;
+        swarmCorrection
+        {
+            type            none;
+        }
+    }
+    (Al in compBAl)
+    {
+        type            GidaspowErgunWenYu;
+        residualRe      1e-3;
+        swarmCorrection
+        {
+            type            none;
+        }
+    }
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+    (Al in gas)
+    {
+        type            RanzMarshall;
+        NuModel         Gunn;
+    }
+    (Al in compBAl)
+    {
+        type            RanzMarshall;
+        NuModel         Gunn;
+    }
+);
+
+lift
+(
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    alphaMax            0.63;
+    residualAlpha       1e-8;
+    alphaMinFriction    0.5;
+    radialModel         SinclairJackson;
+    viscosityModel      none;
+    conductivityModel   Syamlal;
+    granularPressureModel Lun;
+    frictionalStressModel JohnsonJackson;
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           0.05;
+    }
+}
+
+pressureRelaxationSolver
+{
+    type            none;
+}
+
+pressureRelaxation
+(
+);
+
+// ************************************************************************* //

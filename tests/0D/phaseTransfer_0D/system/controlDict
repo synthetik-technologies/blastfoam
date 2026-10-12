@@ -22,7 +22,7 @@ DebugSwitches
     NewtonRaphson 2;
 }
 
-application     blastFoam;
+application     blastEulerFoam;
 
 startFrom       startTime;
 
@@ -90,7 +90,20 @@ functions
         libs            (fieldFunctionObjects);
         select          all;
         operation       volIntegrate;
-        fields          (rhoE);
+        fields          (alphaRhoE.compBAl alphaRhoE.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    momentum
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRhoU.compBAl alphaRhoU.gas);
         writeFields     false;
         writeControl    timeStep;
         writeInterval   1;
@@ -116,7 +129,7 @@ functions
         libs            (fieldFunctionObjects);
         select          all;
         operation       volAverage;
-        fields          (T);
+        fields          (T.compBAl T.gas);
         writeFields     false;
         writeControl    timeStep;
         writeInterval   1;

@@ -22,7 +22,7 @@ DebugSwitches
     NewtonRaphson 2;
 }
 
-application     blastFoam;
+application     blastEulerFoam;
 
 startFrom       startTime;
 
@@ -71,19 +71,6 @@ functions
         log             true;
     }
 
-    massAl
-    {
-        type            volFieldValue;
-        libs            (fieldFunctionObjects);
-        select          all;
-        operation       volIntegrate;
-        fields          (alphaRho.Al);
-        writeFields     false;
-        writeControl    timeStep;
-        writeInterval   1;
-        log             true;
-    }
-
     massGas
     {
         type            volFieldValue;
@@ -97,13 +84,39 @@ functions
         log             true;
     }
 
+    massAl
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRho.Al);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
     totalEnergy
     {
         type            volFieldValue;
         libs            (fieldFunctionObjects);
         select          all;
         operation       volIntegrate;
-        fields          (rhoE);
+        fields          (alphaRhoE.Al alphaRhoE.compBAl alphaRhoE.gas);
+        writeFields     false;
+        writeControl    timeStep;
+        writeInterval   1;
+        log             true;
+    }
+
+    momentum
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+        select          all;
+        operation       volIntegrate;
+        fields          (alphaRhoU.Al alphaRhoU.compBAl alphaRhoU.gas);
         writeFields     false;
         writeControl    timeStep;
         writeInterval   1;
@@ -129,7 +142,7 @@ functions
         libs            (fieldFunctionObjects);
         select          all;
         operation       volAverage;
-        fields          (T);
+        fields          (T.Al T.compBAl T.gas);
         writeFields     false;
         writeControl    timeStep;
         writeInterval   1;

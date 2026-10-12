@@ -17,17 +17,18 @@ CASE_DIR = os.path.join(
 ZERO_DIR = os.path.join(CASE_DIR, "0")
 os.makedirs(ZERO_DIR, exist_ok=True)
 
-# 100 bar freeze-out state of the reactive products (eJWLC isentrope)
+# 100 bar freeze-out state of the reactive products (eJWLC isentrope).
+# T0 is the gas-EOS temperature at this state; the eJWLC omegaT is set so
+# the products isentrope temperature gives the same value.
 P0 = 1.0e7
-T0 = 1318.69
+T0 = 825.76
 RHO_PROD = 38.137262
-E_PROD = 430110.0
 
 # Inert Al: 90% of the 30 wt% Al in 70/30 Comp-B/Al, i.e. 27% of total mass,
 # in thermal and mechanical equilibrium with the products. Murnaghan and
-# eConst parameters must match constant/physicalProperties of the 3-phase case.
+# eConst parameters must match constant/physicalProperties.Al of the 3-phase case.
 Y_AL = 0.27
-AL_RHO0, AL_K0, AL_N, AL_PREF, AL_CV = 2700.0, 72.7e9, 4.3, 101325.0, 900.0
+AL_RHO0, AL_K0, AL_N, AL_PREF = 2700.0, 72.7e9, 4.3, 101325.0
 
 HEADER = """/*--------------------------------*- C++ -*----------------------------------*\\
   =========                 |
@@ -85,29 +86,25 @@ def write_field(filename, obj, cls, dims, val, b_sides="symmetry"):
 if THREE_PHASE:
     # Murnaghan: p = pRef + K0/n*((rho/rho0)^n - 1)
     rho_al = AL_RHO0*(1.0 + AL_N*(P0 - AL_PREF)/AL_K0)**(1.0/AL_N)
-    # eConst + Murnaghan: e = Cv*T + E_eos(rho)
-    e_al = (
-        AL_CV*T0
-      + AL_K0/(AL_N*rho_al)*((rho_al/AL_RHO0)**AL_N/(AL_N - 1.0) + 1.0)
-      - AL_K0/((AL_N - 1.0)*AL_RHO0)
-    )
     v_prod = (1.0 - Y_AL)/RHO_PROD
     v_al = Y_AL/rho_al
     alpha_al = v_al/(v_prod + v_al)
     alpha_comp = 1.0 - alpha_al
-    e_mix = (1.0 - Y_AL)*E_PROD + Y_AL*e_al
 else:
     alpha_comp = 1.0
-    e_mix = E_PROD
 
-# Write fields
+# Write fields (blastEulerFoam: per-phase alpha, rho, U and T; each phase
+# energy is initialised from its own temperature)
+phases = (["Al"] if THREE_PHASE else []) + ["compBAl", "gas"]
 write_field("p", "p", "volScalarField", "[1 -1 -2 0 0 0 0]", "1.0e7", "symmetry")
 write_field("T", "T", "volScalarField", "[0 0 0 1 0 0 0]", f"{T0}", "symmetry")
 write_field("U", "U", "volVectorField", "[0 1 -1 0 0 0 0]", "(0 0 0)", "symmetry")
+for ph in phases:
+    write_field(f"T.{ph}", f"T.{ph}", "volScalarField", "[0 0 0 1 0 0 0]", f"{T0}", "symmetry")
+    write_field(f"U.{ph}", f"U.{ph}", "volVectorField", "[0 1 -1 0 0 0 0]", "(0 0 0)", "symmetry")
 
 write_field("alpha.compBAl", "alpha.compBAl", "volScalarField", "[0 0 0 0 0 0 0]", f"{alpha_comp:.10g}", "symmetry")
 write_field("alpha.gas", "alpha.gas", "volScalarField", "[0 0 0 0 0 0 0]", "0", "symmetry")
-write_field("lambda.compBAl", "lambda.compBAl", "volScalarField", "[0 0 0 0 0 0 0]", "1", "symmetry")
 
 write_field("rho.compBAl", "rho.compBAl", "volScalarField", "[1 -3 0 0 0 0 0]", f"{RHO_PROD}", "symmetry")
 write_field("rho.gas", "rho.gas", "volScalarField", "[1 -3 0 0 0 0 0]", f"{RHO_PROD}", "symmetry")
@@ -115,10 +112,9 @@ write_field("rho.gas", "rho.gas", "volScalarField", "[1 -3 0 0 0 0 0]", f"{RHO_P
 if THREE_PHASE:
     write_field("alpha.Al", "alpha.Al", "volScalarField", "[0 0 0 0 0 0 0]", f"{alpha_al:.10g}", "symmetry")
     write_field("rho.Al", "rho.Al", "volScalarField", "[1 -3 0 0 0 0 0]", f"{rho_al:.8f}", "symmetry")
+    write_field("Theta.Al", "Theta.Al", "volScalarField", "[0 2 -2 0 0 0 0]", "0", "symmetry")
 
-# Mixture specific internal energy consistent with the 100 bar transfer point
-# (products: e=430110.0 J/kg; plus inert Al at T0 for the 3-phase case)
-write_field("e", "e", "volScalarField", "[0 2 -2 0 0 0 0]", f"{e_mix:.1f}", "symmetry")
+write_field("Ydefault.gas", "Ydefault.gas", "volScalarField", "[0 0 0 0 0 0 0]", "0", "symmetry")
 
 # Gas species (EuDetCode freeze-out composition normalized to 1.0)
 species_fractions = {
