@@ -224,7 +224,7 @@ kineticTheory
         eta                     2;
         p                       5;
         phi                     28.5;
-        alphaDeltaMin           0.05;
+        alphaDeltaMin           1e-3;
     }
 }
 
