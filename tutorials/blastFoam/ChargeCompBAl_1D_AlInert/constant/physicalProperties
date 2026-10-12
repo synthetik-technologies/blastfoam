@@ -74,6 +74,7 @@ compBAl
             Cv              1410.19;
             T_CJ            3432.97;
             rho_CJ          2286.93;
+            omegaT          0.353900; // T_s through T_CJ and the gas-EOS T at transfer
             E0              -5.484e6;
         }
         specie

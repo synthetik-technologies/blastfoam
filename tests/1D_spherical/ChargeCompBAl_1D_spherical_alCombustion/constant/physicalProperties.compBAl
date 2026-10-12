@@ -56,6 +56,7 @@ products {
     Cv 1450;
     T_CJ 3432.62;
     rho_CJ 2098.7;
+    omegaT 0.355493; // T_s through T_CJ and the gas-EOS T at transfer
     E0 -668384.95;
   }
   specie { molWeight 38.24; }

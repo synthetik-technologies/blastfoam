@@ -49,7 +49,16 @@ Description
 
     The isentrope temperature reference:
     \f[
-        T_s(V) = T_\text{CJ} \left(\frac{V_\text{CJ}}{V}\right)^\omega
+        T_s(V) = T_\text{CJ} \left(\frac{V_\text{CJ}}{V}\right)^{\omega_T}
+    \f]
+    where the exponent \f$ \omega_T \f$ (\c omegaT, optional, default
+    \f$ \omega \f$) only sets the energy-temperature relation. Choosing
+    \f$ \omega_T \f$ so that \f$ T_s \f$ also matches a known temperature at
+    a second state, such as the gas-EOS temperature at the phase-transfer
+    pressure, keeps the JWL temperature consistent there without changing
+    the pressure or the CJ temperature:
+    \f[
+        \omega_T = \frac{\ln(T_\text{CJ}/T_\text{ref})}{\ln(V_\text{ref}/V_\text{CJ})}
     \f]
 
     is encoded in the EOS energy correction so that when paired with
@@ -158,6 +167,19 @@ class eJWLC
         //- Energy offset [J/kg]
         scalar E0_;
 
+
+        //- Exponent of the isentrope temperature T_s(V) [-]
+
+        //  Defaults to omega. A separate value lets T_s(V) pass through both
+
+        //  T_CJ and a reference temperature at another state (e.g. the gas-EOS
+
+        //  temperature at the phase-transfer state). It affects only the
+
+        //  energy-temperature relation, not the pressure.
+
+        scalar omegaT_;
+
     // Private helpers
 
         //- Dimensionless volume V = rho0/rho
@@ -191,7 +213,8 @@ public:
             const scalar T_CJ,
             const scalar rho_CJ,
             const scalar Cv,
-            const scalar E0
+            const scalar E0,
+            const scalar omegaT
         );
 
         //- Construct from dictionary

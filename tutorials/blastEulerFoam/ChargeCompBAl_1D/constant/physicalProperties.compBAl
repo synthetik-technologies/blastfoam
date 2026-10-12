@@ -68,6 +68,7 @@ products
         Cv              1410.19;
         T_CJ            3432.97;
         rho_CJ          2286.93;
+        omegaT          0.375955; // T_s through T_CJ and the gas-EOS T at transfer
         E0              -3.65138e6;
     }
     specie

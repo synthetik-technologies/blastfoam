@@ -74,6 +74,7 @@ HE
             Cv              1410.19;
             T_CJ            3890.97;
             rho_CJ          2227.8;
+            omegaT          0.469442; // T_s through T_CJ and the gas-EOS T at transfer
             E0              -8.5e6;
         }
         specie

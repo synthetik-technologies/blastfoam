@@ -44,7 +44,15 @@ Foam::eJWLC<Specie>::eJWLC
     T_CJ_(dict.subDict("equationOfState").lookup<scalar>("T_CJ")),
     rho_CJ_(dict.subDict("equationOfState").lookup<scalar>("rho_CJ")),
     Cv_(dict.subDict("equationOfState").lookup<scalar>("Cv")),
-    E0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("E0", 0.0))
+    E0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("E0", 0.0)),
+    omegaT_
+    (
+        dict.subDict("equationOfState").lookupOrDefault<scalar>
+        (
+            "omegaT",
+            omega_
+        )
+    )
 {}
 
 
@@ -66,6 +74,7 @@ void Foam::eJWLC<Specie>::write(Ostream& os) const
     dict.add("rho_CJ", rho_CJ_);
     dict.add("Cv",     Cv_);
     dict.add("E0",     E0_);
+    dict.add("omegaT", omegaT_);
     os  << indent << dict.dictName() << dict;
 }
 

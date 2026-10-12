@@ -59,9 +59,9 @@ inline Foam::scalar Foam::eJWLC<Specie>::es(const scalar V) const
 template<class Specie>
 inline Foam::scalar Foam::eJWLC<Specie>::Ts(const scalar V) const
 {
-    // T_s(V) = T_CJ * (V_CJ / V)^omega
+    // T_s(V) = T_CJ * (V_CJ / V)^omegaT
     const scalar V_CJ = rho0_/max(rho_CJ_, 1e-10);
-    return T_CJ_*pow(V_CJ/max(V, 1e-10), omega_);
+    return T_CJ_*pow(V_CJ/max(V, 1e-10), omegaT_);
 }
 
 
@@ -81,7 +81,8 @@ inline Foam::eJWLC<Specie>::eJWLC
     const scalar T_CJ,
     const scalar rho_CJ,
     const scalar Cv,
-    const scalar E0
+    const scalar E0,
+    const scalar omegaT
 )
 :
     Specie(sp),
@@ -95,7 +96,8 @@ inline Foam::eJWLC<Specie>::eJWLC
     T_CJ_(T_CJ),
     rho_CJ_(rho_CJ),
     Cv_(Cv),
-    E0_(E0)
+    E0_(E0),
+    omegaT_(omegaT)
 {}
 
 
@@ -117,7 +119,8 @@ inline Foam::eJWLC<Specie>::eJWLC
     T_CJ_(eos.T_CJ_),
     rho_CJ_(eos.rho_CJ_),
     Cv_(eos.Cv_),
-    E0_(eos.E0_)
+    E0_(eos.E0_),
+    omegaT_(eos.omegaT_)
 {}
 
 
@@ -412,6 +415,7 @@ inline void Foam::eJWLC<Specie>::operator+=
         rho_CJ_ = Y1*rho_CJ_+ Y2*eos.rho_CJ_;
         Cv_     = Y1*Cv_     + Y2*eos.Cv_;
         E0_     = Y1*E0_     + Y2*eos.E0_;
+        omegaT_ = Y1*omegaT_ + Y2*eos.omegaT_;
     }
 }
 
@@ -453,7 +457,8 @@ inline Foam::eJWLC<Specie> Foam::operator+
             eos1.T_CJ_,
             eos1.rho_CJ_,
             eos1.Cv_,
-            eos1.E0_
+            eos1.E0_,
+            eos1.omegaT_
         );
     }
     else
@@ -474,7 +479,8 @@ inline Foam::eJWLC<Specie> Foam::operator+
             Y1*eos1.T_CJ_    + Y2*eos2.T_CJ_,
             Y1*eos1.rho_CJ_  + Y2*eos2.rho_CJ_,
             Y1*eos1.Cv_      + Y2*eos2.Cv_,
-            Y1*eos1.E0_      + Y2*eos2.E0_
+            Y1*eos1.E0_      + Y2*eos2.E0_,
+            Y1*eos1.omegaT_  + Y2*eos2.omegaT_
         );
     }
 }
@@ -500,7 +506,8 @@ inline Foam::eJWLC<Specie> Foam::operator*
         eos.T_CJ_,
         eos.rho_CJ_,
         eos.Cv_,
-        eos.E0_
+        eos.E0_,
+        eos.omegaT_
     );
 }
 
@@ -534,7 +541,8 @@ inline Foam::eJWLC<Specie> Foam::operator==
         Y2*eos2.T_CJ_    - Y1*eos1.T_CJ_,
         Y2*eos2.rho_CJ_  - Y1*eos1.rho_CJ_,
         Y2*eos2.Cv_      - Y1*eos1.Cv_,
-        Y2*eos2.E0_      - Y1*eos1.E0_
+        Y2*eos2.E0_      - Y1*eos1.E0_,
+        Y2*eos2.omegaT_  - Y1*eos1.omegaT_
     );
 }
 
