@@ -188,17 +188,21 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         cSqrRhoXiSum
     );
 
-    // Debug output for extreme values
-    forAll(this->p_, celli)
+    // Debug output for extreme values (enable with DebugSwitches
+    // { twoPhaseFluid 1; })
+    if (debug)
     {
-        if (mag(this->p_[celli]) > 1e11 || std::isnan(this->p_[celli]))
+        forAll(this->p_, celli)
         {
-             Pout << "Extreme/NaN at cell " << celli << " at time " << twoPhases::mesh().time().name() << nl
-                  << "  p: " << this->p_[celli] << " rho: " << this->rho_[celli] << " T: " << this->T_[celli] << nl
-                  << "  alpha1: " << this->alpha1()[celli] << " rho1: " << rho1_[celli] << " p1: " << thermo1_->p()[celli] << nl
-                  << "  alpha2: " << this->alpha2()[celli] << " rho2: " << rho2_[celli] << " p2: " << thermo2_->p()[celli] << nl
-                  << "  XiSum: " << XiSum[celli] << " cSqrRhoXiSum: " << cSqrRhoXiSum[celli] << nl
-                  << "  thermo1 cSqr: " << sqr(thermo1_->cellSpeedOfSound(thermo1_->p()[celli], celli)) << " thermo2 cSqr: " << sqr(thermo2_->cellSpeedOfSound(thermo2_->p()[celli], celli)) << endl;
+            if (mag(this->p_[celli]) > 1e11 || std::isnan(this->p_[celli]))
+            {
+                 Pout << "Extreme/NaN at cell " << celli << " at time " << twoPhases::mesh().time().name() << nl
+                      << "  p: " << this->p_[celli] << " rho: " << this->rho_[celli] << " T: " << this->T_[celli] << nl
+                      << "  alpha1: " << this->alpha1()[celli] << " rho1: " << rho1_[celli] << " p1: " << thermo1_->p()[celli] << nl
+                      << "  alpha2: " << this->alpha2()[celli] << " rho2: " << rho2_[celli] << " p2: " << thermo2_->p()[celli] << nl
+                      << "  XiSum: " << XiSum[celli] << " cSqrRhoXiSum: " << cSqrRhoXiSum[celli] << nl
+                      << "  thermo1 cSqr: " << sqr(thermo1_->cellSpeedOfSound(thermo1_->p()[celli], celli)) << " thermo2 cSqr: " << sqr(thermo2_->cellSpeedOfSound(thermo2_->p()[celli], celli)) << endl;
+            }
         }
     }
 

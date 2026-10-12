@@ -69,7 +69,8 @@ Foam::heatTransferModels::sphericalHeatTransfer::~sphericalHeatTransfer()
 Foam::tmp<Foam::volScalarField>
 Foam::heatTransferModels::sphericalHeatTransfer::Ki() const
 {
-    const volScalarField& d = pair_.dispersed().d();
+    const tmp<volScalarField> td(pair_.dispersed().d());
+    const volScalarField& d = td();
     const volScalarField& d0 = pair_.dispersed().d0();
     const volScalarField dEff = max(d, d0);
     return
