@@ -507,7 +507,10 @@ void Foam::fluidPhaseModel::decode()
     // fluxes are built from it), so no blending is applied in dilute cells;
     // only the velocity magnitude and the energy are bounded.
 
-    // Update density (only if alpha > residual)
+    // Update density (only if alpha > residual). residualRho is the
+    // reference density of residual cells, not a lower bound: clamping the
+    // decoded density would make p inconsistent with the conserved mass
+    // (e.g. expanded gas below ambient density behind a blast).
     forAll(*this, celli)
     {
         const scalar alphai = (*this)[celli];
@@ -522,7 +525,6 @@ void Foam::fluidPhaseModel::decode()
             alphaRho_[celli] = alphai*rho_[celli];
         }
     }
-    rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField();

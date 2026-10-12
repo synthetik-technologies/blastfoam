@@ -65,7 +65,18 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
         mesh,
         dimensionedScalar("0", inv(dimVolume), 1.0)
     ),
-    d0_(this->d_),
+    d0_
+    (
+        IOobject
+        (
+            IOobject::groupName("d0", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        this->d_
+    ),
     dVdt_
     (
         IOobject
