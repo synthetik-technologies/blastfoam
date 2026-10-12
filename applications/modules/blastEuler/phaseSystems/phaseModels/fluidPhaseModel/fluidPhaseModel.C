@@ -501,66 +501,46 @@ void Foam::fluidPhaseModel::decode()
     const scalar rAlpha = this->residualAlpha().value();
     const scalar rAlphaRho = this->residualAlphaRho().value();
 
+    // The conserved variables (alphaRho, alphaRhoU, alphaRhoE) are only
+    // modified where the phase is residual (alpha <= residualAlpha). The
+    // primitive state must stay consistent with the conserved state (the
+    // fluxes are built from it), so no blending is applied in dilute cells;
+    // only the velocity magnitude and the energy are bounded.
+
     // Update density (only if alpha > residual)
     forAll(*this, celli)
     {
         const scalar alphai = (*this)[celli];
-        if (alphai > 1e-3 && alphaRho_[celli] > 1e-3*thermo().residualRho().value())
+        if (alphai > rAlpha && alphaRho_[celli] > rAlphaRho)
         {
             rho_[celli] = alphaRho_[celli]/alphai;
         }
-        else if (alphai > rAlpha && alphaRho_[celli] > rAlphaRho)
-        {
-            const scalar rhoDecoded = alphaRho_[celli]/alphai;
-            const scalar blend = (alphai - rAlpha)/(1e-3 - rAlpha);
-            rho_[celli] = blend*rhoDecoded + (1.0 - blend)*thermo().residualRho().value();
-        }
         else
         {
+            // Residual phase
             rho_[celli] = thermo().residualRho().value();
+            alphaRho_[celli] = alphai*rho_[celli];
         }
     }
     rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
+    alphaRho_.boundaryFieldRef() ==
+        (*this).boundaryField()*rho_.boundaryField();
 
-    alphaRho_ == (*this)*rho_;
-    // alphaRho_.correctBoundaryConditions();
-    // alphaRho_.boundaryFieldRef() ==
-    //     (*this).boundaryField()*rho_.boundaryField();
-
-    // Update velocity
+    // Update velocity, bounded by a maximum magnitude for robustness
+    const scalar UMax = 20000.0;
     forAll(U_, celli)
     {
-        if (alpha[celli] > 1e-2 && alphaRho_[celli] > 1e-2*thermo().residualRho().value())
+        if (alpha[celli] > rAlpha && alphaRho_[celli] > rAlphaRho)
         {
             const vector UDecoded = alphaRhoU_[celli]/alphaRho_[celli];
             const scalar magU = mag(UDecoded);
-            if (magU > 20000.0)
-            {
-                U_[celli] = (20000.0/magU)*UDecoded;
-            }
-            else
-            {
-                U_[celli] = UDecoded;
-            }
-        }
-        else if (alpha[celli] > rAlpha && alphaRho_[celli] > rAlphaRho)
-        {
-            const vector UDecoded = alphaRhoU_[celli]/alphaRho_[celli];
-            const scalar magU = mag(UDecoded);
-            if (magU > 20000.0)
-            {
-                U_[celli] = Zero;
-            }
-            else
-            {
-                const scalar blend = (alpha[celli] - rAlpha)/(1e-2 - rAlpha);
-                U_[celli] = blend*UDecoded;
-            }
+            U_[celli] = magU > UMax ? (UMax/magU)*UDecoded : UDecoded;
         }
         else
         {
             U_[celli] = Zero;
+            alphaRhoU_[celli] = Zero;
         }
     }
     if (constraints.constrainsField(U_.name()))
@@ -571,26 +551,26 @@ void Foam::fluidPhaseModel::decode()
 
     K_ = 0.5*magSqr(U_);
 
-    alphaRhoU_ == alphaRho_*U_;
-
-    const scalar alphaCutoff = 0.01;
+    // Update internal energy, bounded by the temperature limits of the thermo
+    const scalar TMinPhys = Foam::max(100.0, thermoPtr_->TLow());
     forAll(e_, celli)
     {
-        const scalar alphaRho = alphaRho_[celli];
-        const scalar TMinPhys = Foam::max(100.0, thermoPtr_->TLow());
-        const scalar eMin = thermoPtr_->cellhe(TMinPhys, celli);
-        const scalar eMax = thermoPtr_->cellhe(thermoPtr_->THigh(), celli);
-        if (alpha[celli] > alphaCutoff && alphaRho > rAlphaRho)
+        if (alpha[celli] > rAlpha && alphaRho_[celli] > rAlphaRho)
         {
-            const scalar eDecoded = alphaRhoE_[celli]/alphaRho - K_[celli];
+            const scalar eMin = thermoPtr_->cellhe(TMinPhys, celli);
+            const scalar eMax = thermoPtr_->cellhe(thermoPtr_->THigh(), celli);
+            // Kinetic energy of the conserved momentum (U may be blended)
+            const scalar KDecoded =
+                0.5*magSqr(alphaRhoU_[celli]/alphaRho_[celli]);
+            const scalar eDecoded =
+                alphaRhoE_[celli]/alphaRho_[celli] - KDecoded;
             e_[celli] = Foam::min(eMax, Foam::max(eMin, eDecoded));
-            alphaRhoE_[celli] = alphaRho_[celli]*(e_[celli] + K_[celli]);
         }
         else
         {
-            const scalar eRef = thermoPtr_->cellhe(288.15, celli);
-            e_[celli] = eRef;
-            alphaRhoE_[celli] = alphaRho_[celli]*(eRef + K_[celli]);
+            // Residual phase: reference state
+            e_[celli] = thermoPtr_->cellhe(288.15, celli);
+            alphaRhoE_[celli] = alphaRho_[celli]*(e_[celli] + K_[celli]);
         }
     }
     constraints.constrain(e_);
@@ -599,24 +579,25 @@ void Foam::fluidPhaseModel::decode()
     // Correct thermo (T, mu, alpha, etc)
     thermoPtr_->correct();
 
-    // Reset T in cells where phase does not exist
+    // Reset T in cells where the phase does not exist
     volScalarField& T = thermoPtr_->T();
-    const scalar TMinPhys = Foam::max(100.0, thermoPtr_->TLow());
     forAll(T, celli)
     {
-        if (alpha[celli] <= alphaCutoff || alphaRho_[celli] <= rAlphaRho)
+        if (alpha[celli] <= rAlpha || alphaRho_[celli] <= rAlphaRho)
         {
             T[celli] = 288.15;
-            e_[celli] = thermoPtr_->cellhe(288.15, celli);
-            alphaRhoE_[celli] = alphaRho_[celli]*(e_[celli] + K_[celli]);
         }
     }
     T.max(TMinPhys);
     T.min(thermoPtr_->THigh());
     T.correctBoundaryConditions();
 
-    // Update total energy because e may have changed
-    alphaRhoE_ == alphaRho_*(e_ + K_);
+    // Boundary values of the conserved fields follow the primitive fields
+    alphaRhoU_.boundaryFieldRef() ==
+        alphaRho_.boundaryField()*U_.boundaryField();
+    alphaRhoE_.boundaryFieldRef() ==
+        alphaRho_.boundaryField()
+       *(e_.boundaryField() + K_.boundaryField());
 
     // Set speed of sound in dilute cells
     volScalarField& c = thermoPtr_->speedOfSound();

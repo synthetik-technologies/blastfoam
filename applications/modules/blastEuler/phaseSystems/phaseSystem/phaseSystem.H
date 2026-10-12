@@ -303,6 +303,11 @@ protected:
             //- Pressure relaxation type
             PVRelaxation PRelaxation_;
 
+            //- Volume fraction below which a fluid phase is brought into
+            //  pressure equilibrium with the carrier fluid phase
+            //  (alphaDilute, default 0.01; 0 disables)
+            scalar alphaDilute_;
+
             //- Blending methods
             blendingMethodTable blendingMethods_;
 
@@ -449,6 +454,13 @@ public:
 
         //- Decode primative variables
         virtual void decode();
+
+        //- Bring dilute fluid phases (alpha < alphaDilute) towards pressure
+        //  equilibrium with the carrier fluid phase by exchanging volume,
+        //  with the p*dAlpha work exchanged between the two phases. Only the
+        //  volume fractions and total energies change, so mass, momentum and
+        //  total energy are conserved. Returns true if any cell changed.
+        bool equilibrateDiluteVolumes();
 
         //- Encode conserved variables
         virtual void encode();

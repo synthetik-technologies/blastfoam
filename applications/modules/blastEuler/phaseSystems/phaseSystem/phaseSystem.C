@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "phaseSystem.H"
+#include "fluidBlastThermo.H"
 #include "kineticTheorySystem.H"
 #include "aspectRatioModel.H"
 #include "dragModel.H"
@@ -782,7 +783,8 @@ Foam::phaseSystem::phaseSystem
       ? PVRelaxationNames_.read(this->lookup("VRelaxation"))
       : MODEL
     ),
-    PRelaxation_(NONE)
+    PRelaxation_(NONE),
+    alphaDilute_(lookupOrDefault<scalar>("alphaDilute", 0.01))
 {
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
@@ -1215,6 +1217,16 @@ void Foam::phaseSystem::decode()
         fluidPhaseModels_[i].decode();
     }
 
+    //- 4. Pressure equilibrium of dilute fluid phases, then decode again
+    if (equilibrateDiluteVolumes())
+    {
+        forAll(fluidPhaseModels_, i)
+        {
+            fluidPhaseModels_[i].correctBoundaryConditions();
+            fluidPhaseModels_[i].decode();
+        }
+    }
+
     // Update all masterSystems
     master_.update();
 
@@ -1228,6 +1240,195 @@ void Foam::phaseSystem::decode()
     //         fluidPhaseModels_[i].p() = p();
     //     }
     // }
+}
+
+
+bool Foam::phaseSystem::equilibrateDiluteVolumes()
+{
+    if (alphaDilute_ <= 0 || fluidPhaseModels_.size() < 2)
+    {
+        return false;
+    }
+
+    UPtrList<fluidBlastThermo> thermos(fluidPhaseModels_.size());
+    forAll(fluidPhaseModels_, i)
+    {
+        thermos.set
+        (
+            i,
+            &mesh_.lookupObjectRef<fluidBlastThermo>
+            (
+                IOobject::groupName
+                (
+                    physicalProperties::typeName,
+                    fluidPhaseModels_[i].name()
+                )
+            )
+        );
+    }
+
+    // Pressure of fluid phase i in celli at the given density and energy
+    auto cellp = [&](const label i, const scalar rho, const scalar e, const label celli)
+    {
+        fluidBlastThermo& thermo = thermos[i];
+        thermo.rhoRef()[celli] = rho;
+        thermo.he()[celli] = e;
+        thermo.T()[celli] = thermo.cellThe(e, thermo.T()[celli], celli);
+        return thermo.cellpRhoT(celli);
+    };
+
+    // rho*c^2/alpha of fluid phase i at the state last set by cellp
+    auto cellC = [&](const label i, const scalar p, const scalar alpha, const label celli)
+    {
+        fluidBlastThermo& thermo = thermos[i];
+        return
+            thermo.rhoRef()[celli]
+           *sqr(thermo.cellSpeedOfSound(p, celli))
+           /alpha;
+    };
+
+    const label maxIter = 50;
+    const label maxHalvings = 10;
+    const scalar pRelTol = 1e-6;
+    bool changed = false;
+
+    forAll(rho_, celli)
+    {
+        // Carrier: the fluid phase with the largest volume fraction
+        label c = 0;
+        forAll(fluidPhaseModels_, i)
+        {
+            if (fluidPhaseModels_[i][celli] > fluidPhaseModels_[c][celli])
+            {
+                c = i;
+            }
+        }
+        phaseModel& carrier = fluidPhaseModels_[c];
+
+        forAll(fluidPhaseModels_, k)
+        {
+            phaseModel& phase = fluidPhaseModels_[k];
+            const scalar alphak0 = phase[celli];
+            const scalar alphaRhok = phase.alphaRho()[celli];
+            if
+            (
+                k == c
+             || alphak0 >= alphaDilute_
+             || alphak0 <= phase.residualAlpha().value()
+             || alphaRhok <= phase.residualAlphaRho().value()
+            )
+            {
+                continue;
+            }
+
+            const scalar alphac0 = carrier[celli];
+            const scalar alphaRhoc = carrier.alphaRho()[celli];
+            const scalar Tk0 = thermos[k].T()[celli];
+            const scalar Tc0 = thermos[c].T()[celli];
+            // Energy bounds of the thermo temperature range
+            const scalar ekMin =
+                thermos[k].cellhe(thermos[k].TLow(), celli);
+            const scalar ekMax =
+                thermos[k].cellhe(thermos[k].THigh(), celli);
+            const scalar ecMin =
+                thermos[c].cellhe(thermos[c].TLow(), celli);
+            const scalar ecMax =
+                thermos[c].cellhe(thermos[c].THigh(), celli);
+
+            // Damped Newton iteration on the volume exchanged; the work of
+            // each increment is evaluated at the mean pressure, so total
+            // energy is conserved
+            scalar alphak = alphak0;
+            scalar alphac = alphac0;
+            const scalar ek0 = thermos[k].he()[celli];
+            const scalar ec0 = thermos[c].he()[celli];
+            scalar ek = ek0;
+            scalar ec = ec0;
+            scalar pk = cellp(k, alphaRhok/alphak, ek, celli);
+            scalar Ck = cellC(k, pk, alphak, celli);
+            scalar pc = cellp(c, alphaRhoc/alphac, ec, celli);
+            scalar Cc = cellC(c, pc, alphac, celli);
+
+            for (label iter = 0; iter < maxIter; iter++)
+            {
+                const scalar dp = pk - pc;
+                if (mag(dp) <= pRelTol*(mag(pk) + mag(pc)) + small)
+                {
+                    break;
+                }
+
+                scalar dAlpha = dp/max(Ck + Cc, small);
+
+                // At most double the dilute phase volume and take at most
+                // 10% of the carrier volume per iteration. The dilute phase
+                // is compressed by at most a factor of two per call:
+                // compressing e.g. trace gas in a detonating explosive to
+                // the carrier pressure can take it far outside the range of
+                // its equation of state.
+                dAlpha = min(dAlpha, alphak);
+                dAlpha = min(dAlpha, 0.1*alphac);
+                dAlpha = max(dAlpha, 0.5*alphak0 - alphak);
+                if (dAlpha == 0)
+                {
+                    break;
+                }
+
+                const scalar pI = 0.5*(pk + pc);
+                bool accepted = false;
+                scalar ekNew = ek, ecNew = ec, pkNew = pk, pcNew = pc;
+                for (label h = 0; h < maxHalvings; h++)
+                {
+                    ekNew = ek - pI*dAlpha/alphaRhok;
+                    ecNew = ec + pI*dAlpha/alphaRhoc;
+                    if
+                    (
+                        ekNew > ekMin && ekNew < ekMax
+                     && ecNew > ecMin && ecNew < ecMax
+                    )
+                    {
+                        pkNew = cellp(k, alphaRhok/(alphak + dAlpha), ekNew, celli);
+                        pcNew = cellp(c, alphaRhoc/(alphac - dAlpha), ecNew, celli);
+                        if (mag(pkNew - pcNew) < mag(dp))
+                        {
+                            accepted = true;
+                            break;
+                        }
+                    }
+                    dAlpha *= 0.5;
+                }
+                if (!accepted)
+                {
+                    break;
+                }
+
+                alphak += dAlpha;
+                alphac -= dAlpha;
+                ek = ekNew;
+                ec = ecNew;
+                pk = pkNew;
+                pc = pcNew;
+                Ck = cellC(k, pk, alphak, celli);
+                Cc = cellC(c, pc, alphac, celli);
+            }
+
+            // Restore the thermo temperatures (the cell is decoded again)
+            thermos[k].T()[celli] = Tk0;
+            thermos[c].T()[celli] = Tc0;
+
+            if (alphak == alphak0)
+            {
+                continue;
+            }
+
+            phase[celli] = alphak;
+            carrier[celli] = alphac;
+            phase.alphaRhoE()[celli] += alphaRhok*(ek - ek0);
+            carrier.alphaRhoE()[celli] += alphaRhoc*(ec - ec0);
+            changed = true;
+        }
+    }
+
+    return returnReduce(changed, orOp<bool>());
 }
 
 
