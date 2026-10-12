@@ -28,6 +28,9 @@ License
 #include "fvMesh.H"
 #include "volFields.H"
 #include "multiphaseFluidBlastThermo.H"
+#include "multicomponentBlastThermo.H"
+#include "twoPhaseFluidBlastThermo.H"
+#include "physicalProperties.H"
 #include "Time.H"
 #include "fvMatrices.H"
 #include "fvTimeIntegrator.H"
@@ -63,6 +66,7 @@ pressurePhaseChange::pressurePhaseChange
     pRange_(1e6),
     tau_(1e-4),
     isMoleFraction_(false),
+    fractionsConverted_(false),
     massRate_(0.0),
     eOffset_("eOffset", dimEnergy/dimMass, 0.0)
 {
@@ -97,97 +101,145 @@ tmp<volScalarField> pressurePhaseChange::gamma() const
 }
 
 
-tmp<volScalarField> pressurePhaseChange::energyOffset() const
+void pressurePhaseChange::lookupPhaseThermo
+(
+    const word& phaseName,
+    const phaseBlastThermo*& mixturePhasePtr,
+    const blastThermo*& phaseThermoPtr
+) const
 {
-    tmp<volScalarField> teOffset
+    mixturePhasePtr = nullptr;
+    phaseThermoPtr = nullptr;
+
+    // Per-phase thermo (blastEulerFoam)
+    const word phaseDictName
     (
-        volScalarField::New
-        (
-            "energyOffset",
-            mesh(),
-            eOffset_
-        )
+        IOobject::groupName(physicalProperties::typeName, phaseName)
     );
-    volScalarField& eOffset = teOffset.ref();
-
-    if (mesh().foundObject<multiphaseFluidBlastThermo>("thermophysicalProperties"))
+    if (mesh().foundObject<fluidBlastThermo>(phaseDictName))
     {
-        const multiphaseFluidBlastThermo& thermo = 
-            mesh().lookupObject<multiphaseFluidBlastThermo>("thermophysicalProperties");
+        phaseThermoPtr =
+            &mesh().lookupObject<fluidBlastThermo>(phaseDictName);
+        return;
+    }
 
-        const wordList& phaseNames = thermo.phaseNames();
-        
-        label sourcePhasei = -1;
-        forAll(phaseNames, i)
-        {
-            if (phaseNames[i] == sourcePhaseName_)
-            {
-                sourcePhasei = i;
-                break;
-            }
-        }
+    // Phase of the mixture thermo (blastFoam two-/multiphase systems)
+    if (!mesh().foundObject<fluidBlastThermo>(physicalProperties::typeName))
+    {
+        return;
+    }
 
-        if (sourcePhasei != -1)
+    const fluidBlastThermo& mixture =
+        mesh().lookupObject<fluidBlastThermo>(physicalProperties::typeName);
+
+    if (isA<multiphaseFluidBlastThermo>(mixture))
+    {
+        const multiphaseFluidBlastThermo& thermo =
+            refCast<const multiphaseFluidBlastThermo>(mixture);
+        forAll(thermo.phaseNames(), phasei)
         {
-            const volScalarField& T = mesh().lookupObject<volScalarField>("T");
-            scalarField& eOffsetCells = eOffset.primitiveFieldRef();
-            
-            forAll(eOffsetCells, celli)
+            if (thermo.thermo(phasei).phaseName() == phaseName)
             {
-                scalar TCell = T[celli];
-                scalar eSource = thermo.thermo(sourcePhasei).cellhe(TCell, celli);
-                scalar eTargets = 0.0;
-                for (const targetPhase& tp : targetPhases_)
-                {
-                    label targetPhasei = -1;
-                    forAll(phaseNames, i)
-                    {
-                        if (phaseNames[i] == tp.name)
-                        {
-                            targetPhasei = i;
-                            break;
-                        }
-                    }
-                    if (targetPhasei != -1)
-                    {
-                        eTargets += tp.fraction * thermo.thermo(targetPhasei).cellhe(TCell, celli);
-                    }
-                }
-                eOffsetCells[celli] = eTargets - eSource;
-            }
-            
-            forAll(eOffset.boundaryField(), patchi)
-            {
-                scalarField& peOffset = eOffset.boundaryFieldRef()[patchi];
-                const scalarField& pT = T.boundaryField()[patchi];
-                forAll(peOffset, facei)
-                {
-                    scalar TFace = pT[facei];
-                    scalar eSource = thermo.thermo(sourcePhasei).patchFacehe(TFace, patchi, facei);
-                    scalar eTargets = 0.0;
-                    for (const targetPhase& tp : targetPhases_)
-                    {
-                        label targetPhasei = -1;
-                        forAll(phaseNames, i)
-                        {
-                            if (phaseNames[i] == tp.name)
-                            {
-                                targetPhasei = i;
-                                break;
-                            }
-                        }
-                        if (targetPhasei != -1)
-                        {
-                            eTargets += tp.fraction * thermo.thermo(targetPhasei).patchFacehe(TFace, patchi, facei);
-                        }
-                    }
-                    peOffset[facei] = eTargets - eSource;
-                }
+                mixturePhasePtr = &thermo.thermo(phasei);
+                return;
             }
         }
     }
+    else if (isA<twoPhaseFluidBlastThermo>(mixture))
+    {
+        const twoPhaseFluidBlastThermo& thermo =
+            refCast<const twoPhaseFluidBlastThermo>(mixture);
+        for (label phasei = 0; phasei < 2; phasei++)
+        {
+            if (thermo.thermo(phasei).phaseName() == phaseName)
+            {
+                mixturePhasePtr = &thermo.thermo(phasei);
+                return;
+            }
+        }
+    }
+}
 
-    return teOffset;
+
+tmp<volScalarField> pressurePhaseChange::energyOffset() const
+{
+    // Constant energy-datum shift [J/kg] added to the transferred mass, for
+    // cases where the source EOS is deliberately kept on a different energy
+    // datum from the target phases. A state-dependent offset is not used:
+    // it would add or remove real energy rather than relabel the datum.
+    // Reconcile the datums through the source EOS E0 instead where possible.
+    return volScalarField::New("energyOffset", mesh(), eOffset_);
+}
+
+
+void pressurePhaseChange::convertMoleFractions() const
+{
+    if (!isMoleFraction_ || fractionsConverted_)
+    {
+        return;
+    }
+
+    for (targetPhase& tp : targetPhases_)
+    {
+        if (tp.targetFractions.empty())
+        {
+            continue;
+        }
+
+        // Find the multicomponent thermo of the target phase
+        const phaseBlastThermo* mixturePhasePtr = nullptr;
+        const blastThermo* phaseThermoPtr = nullptr;
+        lookupPhaseThermo(tp.name, mixturePhasePtr, phaseThermoPtr);
+
+        const multicomponentBlastThermo* compPtr =
+            mixturePhasePtr
+          ? dynamic_cast<const multicomponentBlastThermo*>(mixturePhasePtr)
+          : dynamic_cast<const multicomponentBlastThermo*>(phaseThermoPtr);
+
+        if (!compPtr)
+        {
+            FatalErrorInFunction
+                << "isMoleFraction is true but no multicomponent thermo "
+                << "was found for target phase " << tp.name
+                << " to provide species molecular weights"
+                << exit(FatalError);
+        }
+
+        const speciesTable& species = compPtr->species();
+
+        scalar sumXW = 0;
+        forAllConstIter(HashTable<scalar>, tp.targetFractions, iter)
+        {
+            if (!species.found(iter.key()))
+            {
+                FatalErrorInFunction
+                    << "Specie " << iter.key() << " in targetFractions "
+                    << "is not a specie of phase " << tp.name << nl
+                    << "Valid species are " << species
+                    << exit(FatalError);
+            }
+            sumXW += iter()*compPtr->WiValue(species[iter.key()]);
+        }
+
+        if (sumXW <= 0)
+        {
+            FatalErrorInFunction
+                << "Mole fractions for target phase " << tp.name
+                << " sum to zero" << exit(FatalError);
+        }
+
+        // Y_i = X_i W_i/sum_j(X_j W_j)
+        Info<< "    " << name() << ": target mass fractions for phase "
+            << tp.name << " (converted from mole fractions):" << nl;
+        forAllIter(HashTable<scalar>, tp.targetFractions, iter)
+        {
+            iter() *= compPtr->WiValue(species[iter.key()])/sumXW;
+            Info<< "        " << iter.key() << " " << iter() << nl;
+        }
+        Info<< endl;
+    }
+
+    fractionsConverted_ = true;
 }
 
 
@@ -268,6 +320,8 @@ bool pressurePhaseChange::addsSupToField(const word& fieldName) const
 void pressurePhaseChange::preUpdateMesh()
 {
     fvModel::preUpdateMesh();
+
+    convertMoleFractions();
 
     if (mesh().foundObject<fvTimeIntegrator>("timeIntegrator"))
     {
@@ -365,30 +419,105 @@ void pressurePhaseChange::preUpdateMesh()
         }
         else
         {
+            // Multi-fluid (blastEulerFoam): each phase carries its own
+            // momentum and total energy, so the transferred mass takes the
+            // source-phase velocity U_s and specific total energy
+            // E_s = alphaRhoE_s/alphaRho_s with it. The targets also receive
+            // the constant datum shift eOffset. Mass, momentum and
+            // (datum-corrected) energy are conserved exactly.
+            const word alphaRhoSName("alphaRho." + sourcePhaseName_);
+            const word alphaRhoESName("alphaRhoE." + sourcePhaseName_);
+            const word USName("U." + sourcePhaseName_);
+
+            if
+            (
+                !mesh().foundObject<volScalarField>(alphaRhoSName)
+             || !mesh().foundObject<volScalarField>(alphaRhoESName)
+             || !mesh().foundObject<volVectorField>(USName)
+            )
+            {
+                FatalErrorInFunction
+                    << "Cannot find " << alphaRhoSName << ", "
+                    << alphaRhoESName << " and " << USName
+                    << " for the per-phase energy and momentum transfer"
+                    << exit(FatalError);
+            }
+
+            const scalarField& alphaRhoS =
+                mesh().lookupObject<volScalarField>(alphaRhoSName);
+            const scalarField& alphaRhoES =
+                mesh().lookupObject<volScalarField>(alphaRhoESName);
+            const vectorField& US =
+                mesh().lookupObject<volVectorField>(USName);
+
+            const scalarField ES(alphaRhoES/max(alphaRhoS, small));
+            const scalarField& mDotI = mDot.primitiveField();
+            const scalarField& eOffI = eOff.primitiveField();
+
+            // Source phase: loses mDot*U_s and mDot*E_s
+            volScalarField::Internal SalphaRhoESource
+            (
+                IOobject("SalphaRhoESource", mesh().time().name(), mesh()),
+                mesh(),
+                dimensionedScalar(dimEnergy/dimVolume/dimTime, 0.0)
+            );
+            SalphaRhoESource.primitiveFieldRef() = mDotI*ES;
+            integrator.addSource(alphaRhoESName, SalphaRhoESource);
+
+            const word alphaRhoUSName("alphaRhoU." + sourcePhaseName_);
+            if (mesh().foundObject<volVectorField>(alphaRhoUSName))
+            {
+                volVectorField::Internal SalphaRhoUSource
+                (
+                    IOobject("SalphaRhoUSource", mesh().time().name(), mesh()),
+                    mesh(),
+                    dimensionedVector(dimDensity*dimVelocity/dimTime, Zero)
+                );
+                SalphaRhoUSource.primitiveFieldRef() = mDotI*US;
+                integrator.addSource(alphaRhoUSName, SalphaRhoUSource);
+            }
+
+            // Target phases: gain fraction*mDot*U_s and
+            // fraction*mDot*(E_s + eOffset)
             for (const targetPhase& tp : targetPhases_)
             {
-                if (mesh().foundObject<volScalarField::Internal>("alphaRhoE." + tp.name))
+                const word alphaRhoETName("alphaRhoE." + tp.name);
+                if (mesh().foundObject<volScalarField>(alphaRhoETName))
                 {
                     volScalarField::Internal SalphaRhoETarget
                     (
-                        IOobject("SalphaRhoETarget", mesh().time().name(), mesh()),
+                        IOobject
+                        (
+                            "SalphaRhoETarget",
+                            mesh().time().name(),
+                            mesh()
+                        ),
                         mesh(),
-                        dimensionedScalar("SalphaRhoETarget", dimEnergy/dimVolume/dimTime, 0.0)
+                        dimensionedScalar(dimEnergy/dimVolume/dimTime, 0.0)
                     );
-                    SalphaRhoETarget.primitiveFieldRef() = -mDot.primitiveField() * tp.fraction * eOff.primitiveField();
-                    integrator.addSource("alphaRhoE." + tp.name, SalphaRhoETarget);
+                    SalphaRhoETarget.primitiveFieldRef() =
+                        -tp.fraction*mDotI*(ES + eOffI);
+                    integrator.addSource(alphaRhoETName, SalphaRhoETarget);
                 }
-            }
-            if (mesh().foundObject<volScalarField::Internal>("alphaRhoE." + sourcePhaseName_))
-            {
-                volScalarField::Internal SalphaRhoESource
-                (
-                    IOobject("SalphaRhoESource", mesh().time().name(), mesh()),
-                    mesh(),
-                    dimensionedScalar("SalphaRhoESource", dimEnergy/dimVolume/dimTime, 0.0)
-                );
-                SalphaRhoESource.primitiveFieldRef() = mDot.primitiveField() * eOff.primitiveField();
-                integrator.addSource("alphaRhoE." + sourcePhaseName_, SalphaRhoESource);
+
+                const word alphaRhoUTName("alphaRhoU." + tp.name);
+                if (mesh().foundObject<volVectorField>(alphaRhoUTName))
+                {
+                    volVectorField::Internal SalphaRhoUTarget
+                    (
+                        IOobject
+                        (
+                            "SalphaRhoUTarget",
+                            mesh().time().name(),
+                            mesh()
+                        ),
+                        mesh(),
+                        dimensionedVector(dimDensity*dimVelocity/dimTime, Zero)
+                    );
+                    SalphaRhoUTarget.primitiveFieldRef() =
+                        -tp.fraction*mDotI*US;
+                    integrator.addSource(alphaRhoUTName, SalphaRhoUTarget);
+                }
             }
         }
 
@@ -427,6 +556,8 @@ void pressurePhaseChange::addSup
     {
         return;
     }
+
+    convertMoleFractions();
 
     const word& fieldName = field.name();
     const volScalarField& alphaSource = 
@@ -498,6 +629,8 @@ void pressurePhaseChange::addSup
     {
         return;
     }
+
+    convertMoleFractions();
 
     const word& fieldName = field.name();
     const volScalarField& alphaSource = 
@@ -659,7 +792,9 @@ bool pressurePhaseChange::read(const dictionary& dict)
         }
 
         tau_ = coeffs().lookupOrDefault<scalar>("tau", 1e-4);
-        coeffs().lookupOrDefault<bool>("isMoleFraction", isMoleFraction_);
+        isMoleFraction_ =
+            coeffs().lookupOrDefault<bool>("isMoleFraction", false);
+        fractionsConverted_ = false;
         scalar eOffsetVal = coeffs().lookupOrDefault<scalar>("eOffset", 0.0);
         eOffset_ = dimensionedScalar("eOffset", dimEnergy/dimMass, eOffsetVal);
 

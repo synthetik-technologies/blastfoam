@@ -48,6 +48,8 @@ namespace Foam
 {
 
 // Forward Declarations in namespace Foam
+class phaseBlastThermo;
+class blastThermo;
 class polyTopoChangeMap;
 class polyMeshMap;
 class polyDistributionMap;
@@ -77,7 +79,9 @@ class pressurePhaseChange
         word sourcePhaseName_;
 
         //- List of target phases
-        List<targetPhase> targetPhases_;
+        //  Mutable so mole fractions can be converted to mass fractions
+        //  on first use, once the target thermo is available
+        mutable List<targetPhase> targetPhases_;
 
         //- Lower pressure threshold [Pa]
         scalar pLower_;
@@ -94,10 +98,14 @@ class pressurePhaseChange
         //- Are fractions specified as mole fractions
         bool isMoleFraction_;
 
+        //- Have mole fractions been converted to mass fractions
+        mutable bool fractionsConverted_;
+
         //- Integrated mass transfer rate [kg/s]
         scalar massRate_;
 
-        //- Energy offset between reactant and product phases [J/kg]
+        //- Constant energy-datum shift between source and target phases
+        //  [J/kg] (optional, default 0)
         dimensionedScalar eOffset_;
 
 
@@ -106,8 +114,22 @@ class pressurePhaseChange
         //- Return the smearing factor Gamma(p)
         tmp<volScalarField> gamma() const;
 
-        //- Return the energy offset field [J/kg]
+        //- Find the thermo of the named phase: a phase of the mixture
+        //  thermo (blastFoam) or the per-phase thermo (blastEulerFoam).
+        //  Both pointers are null if the phase is not found.
+        void lookupPhaseThermo
+        (
+            const word& phaseName,
+            const phaseBlastThermo*& mixturePhasePtr,
+            const blastThermo*& phaseThermoPtr
+        ) const;
+
+        //- Return the energy offset field [J/kg]: the constant eOffset
         tmp<volScalarField> energyOffset() const;
+
+        //- Convert target mole fractions to mass fractions using the
+        //  target phase molecular weights (no-op for mass fractions)
+        void convertMoleFractions() const;
 
 
 public:
