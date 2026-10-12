@@ -400,6 +400,23 @@ def main():
                     res_sph_al.message = f"Al-combustion spherical detonation verification failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_sph_al)
 
+            # 1D Spherical stationary unreacted charge/air interface (blastEulerFoam)
+            res_sph_if = run_openfoam_case(
+                "tests/1D_spherical/ChargeCompBAl_1D_spherical_interface",
+                tier=3,
+                case_name="ChargeCompBAl_1D_spherical_interface (Stationary Charge/Air Interface)"
+            )
+            if res_sph_if.passed:
+                code, stdout, stderr, dur = run_command(
+                    f"{sys.executable} tests/1D_spherical/verify_spherical_interface.py"
+                )
+                if code == 0:
+                    res_sph_if.message = "Unreacted charge/air interface stays at rest; mass & energy conserved"
+                else:
+                    res_sph_if.passed = False
+                    res_sph_if.message = f"Interface verification failed: {stdout.strip().splitlines()[-1]}"
+            results.append(res_sph_if)
+
 
 
     print("\n=== Test Run Completed ===")

@@ -1,0 +1,35 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties.gas;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            reacting;
+thermoType
+{
+    transport       sutherland;
+    thermo          janaf;
+    equationOfState AbelNobel;
+}
+
+#include "thermo.compressibleGas"
+// Cap the decode energy clamp at the JANAF fit range; the default
+// (1e5 K) gives a nonsensical eMax that pins all gas cells at TLow
+THigh           5000;
+
+defaultSpecie   N2;
+
+residualRho     1e-06;
+residualAlpha   1e-06;
+
+// ************************************************************************* //

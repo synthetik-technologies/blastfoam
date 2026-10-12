@@ -1,0 +1,102 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            detonating;
+reactants
+{
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState Murnaghan;
+    }
+    equationOfState
+    {
+        rho0            1820;
+        n               5.17;
+        K0              12.6e9;
+        Gamma           1.22;
+        pRef            101325;
+        pMax            1e11;
+    }
+    specie
+    {
+        molWeight       70.21;
+    }
+    transport
+    {
+        mu              1e-04;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              1030;
+        Hf              0;
+    }
+}
+products
+{
+    thermoType
+    {
+        transport       const;
+        thermo          eConst;
+        equationOfState eJWLC;
+    }
+    equationOfState
+    {
+        rho0            1820;
+        A               1732.51e9;
+        B               11.7173e9;
+        C               0.831709e9;
+        R1              5.8162;
+        R2              1.51614;
+        omega           0.24273;
+        pMax            1e11;
+        Cv              1410.19;
+        T_CJ            3432.62;
+        rho_CJ          2286.93;
+        omegaT          0.375928; // T_s through T_CJ and the gas-EOS T at transfer
+        E0              -3.65138e6;
+    }
+    specie
+    {
+        molWeight       35.9;
+    }
+    transport
+    {
+        mu              1e-04;
+        Pr              0.7;
+    }
+    thermodynamics
+    {
+        Cv              1410;
+        Hf              0;
+    }
+}
+activationModel nodeProgrammed;
+initiation
+{
+    E0              0;
+    points          ( ( 0 0 0 ) );
+    delay           1;  // never initiated: stationary unreacted charge
+    vDet            7612.3;
+    Pcj             2.15329e+10;
+    burnModel       programmed;
+}
+residualRho     1e-06;
+residualAlpha   1e-06;
+
+// ************************************************************************* //
