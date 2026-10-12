@@ -27,7 +27,7 @@ The aluminised-charge problems target **blastEulerFoam** (multi-fluid: per-phase
 - `tests/`: the fork's verification cases (`0D/`, `1D/`, `1D_spherical/`), each with a `verify_*.py` script.
 - `tutorials/`: example cases. `validation/`: upstream validation cases.
 - `bin/run_blast_tests.py`: regression test runner. `utilities/` (top level): `thermo_fitter/` (eJWLC / Abel-Nobel fitter `fit_ejwlc_nobleabel.py`; `compute_omegaT.py` computes the eJWLC `omegaT` for a case) and `generate_report_figures.py`.
-- `report/`: `development_plan.md` (staged plan with current status), `stage*_*.md` (per-stage plans), `dilute_phase_conservation_plan.md` (open decode-conservation work), `TBX-blastFoam.tex` (technical report).
+- `report/`: `development_plan.md` (staged plan with current status), `stage*_*.md` (per-stage plans), `dilute_phase_conservation_plan.md` (conservative decode and dilute phases), `TBX-blastFoam.tex` (technical report).
 - `etc/`: `bashrc` and code templates. `Makefile`, `Dockerfile`, `debian/`: packaging.
 
 ## Building and Running
@@ -70,7 +70,7 @@ python3 bin/run_blast_tests.py --tier 0|1|2|3|all [--case <relpath>] [--report b
 - **Verification:** new physics comes with a case under `tests/` and a `verify_*.py` script, registered in `bin/run_blast_tests.py`. Demonstration cases go in `tutorials/`.
 - **Commits:** fork work uses conventional commits (`feat(scope):`, `fix(scope):`, `docs(scope):`). Upstream uses `DEV:`, `BUG:`, `ENH:` and `PRJ:` prefixes.
 - **README:** `README.md` is generated from `INPUT.md` (readme2tex; see the comment at the top of `INPUT.md`). Edit `INPUT.md`.
-- **Conservation in blastEulerFoam:** interphase transfer must move mass, momentum and energy together. The phase `decode()` functions (`fluidPhaseModel`, `granularPhaseModel`) still reset dilute phases (α < 0.01) by rewriting `alphaRho`, `alphaRhoU` and `alphaRhoE`, which is not conservative (1–2% energy loss in the 0D tests). Removing the resets exposes spurious pressures at stiff solid/gas interfaces; see `report/dilute_phase_conservation_plan.md` before changing `decode()`. Do not blend primitives without changing the conserved fields: the fluxes are built from the primitives.
+- **Conservation in blastEulerFoam:** interphase transfer must move mass, momentum and energy together. The phase `decode()` functions may modify the conserved variables (`alphaRho`, `alphaRhoU`, `alphaRhoE`) only where a phase is residual; bounds elsewhere act on the primitives only. Do not blend primitives without changing the conserved fields (the fluxes are built from the primitives). Dilute fluid phases are kept near pressure equilibrium by `phaseSystem::equilibrateDiluteVolumes()` (`alphaDilute`), which exchanges only volume and the pΔα work. Couple phases through the mixture pressure, not through individual phase pressures, which are undefined where a phase is absent. `tests/1D_spherical/ChargeCompBAl_1D_spherical_interface` checks this; background in `report/dilute_phase_conservation_plan.md`.
 - **Keep docs in sync:** after code changes, update `UPDATES.md` (changelog relative to `71b97fd7`) and the Status columns in `report/development_plan.md`.
 
 ## Key Files

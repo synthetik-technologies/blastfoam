@@ -1,10 +1,10 @@
 # Conservative Treatment of Dilute Phases and Material Interfaces in blastEulerFoam
 
-Status: **open** (investigation 2026-10-11/12; no change kept in the code).
+Status: **largely done** (2026-10-12). The decode resets are removed, and the conserved variables change only where a phase is residual. The 0D tests conserve energy to about 5e-9. The spherical verifiers, the new stationary-interface test and the blastEulerFoam tutorials pass. The open points are in Section 6.
 
 ## 1. Problem
 
-`fluidPhaseModel::decode()` (`4cb49946`) and `granularPhaseModel::decode()` modify the conserved variables of dilute phases:
+`fluidPhaseModel::decode()` (`4cb49946`) and `granularPhaseModel::decode()` modified the conserved variables of dilute phases:
 
 | Phase model | Action | Threshold |
 |---|---|---|
@@ -13,66 +13,62 @@ Status: **open** (investigation 2026-10-11/12; no change kept in the code).
 | `fluidPhaseModel` | energy reset to $h_e(288.15\,\text{K})$, `alphaRhoE` rewritten | $\alpha < 10^{-2}$ |
 | `granularPhaseModel` | blended velocity/energy/$\Theta$; mass removed where $\alpha > \alpha_\text{max}$ | `residualAlpha`, `alphaMax` |
 
-Mass, momentum and energy are not conserved. In `tests/0D/phaseTransfer_0D` and `_3phase`, the energy reset destroys 1.1–1.8% of the total energy in the last step, when the products fall below 1% volume fraction. The same resets act at every material interface, at the detonation front and in every dilute region.
+Mass, momentum and energy were not conserved. In `tests/0D/phaseTransfer_0D` and `_3phase`, the energy reset destroyed 1.8% and 1.1% of the total energy at 91 µs, when the products fell below 1% volume fraction. The same resets acted at every material interface and in every dilute region. In the spherical charge cases they deleted the energy of the products expanding into the air (Section 5).
 
-## 2. Why the resets cannot simply be removed
+## 2. Root causes found
 
-With the decode made fully conservative (conserved fields modified only where $\alpha \le$ `residualAlpha`), the 0D tests conserve energy to about 5e-9. The 1D spherical Comp-B/Al cases then fail. The detonation front itself still travels at the programmed-burn velocity (about 7600 m/s). The verifier's arrival detection ($p > 100$ bar) is triggered by spurious pressure precursors ahead of the front.
+With a fully conservative decode, the spherical Comp-B/Al cases produced spurious GPa pressure precursors ahead of the detonation and some runs crashed. The planar tutorial `ChargeCompBAl_1D` crashed at 18 µs. A stationary reproducer (Step 1) separated two causes.
 
-Root cause, from the state of `ChargeCompBAl_1D_spherical` at $t = 1\,\mu$s (cells 97–106 of 400, $r \approx 5$ cm, before the detonation arrives):
+1. **Granular buoyancy term.** The granular momentum equation used $-\alpha_s \sum_f \alpha_f \nabla p_f / (1-\alpha_s)$, built from the individual fluid-phase pressures. Upstream used $-\alpha_s\sum_f \nabla p_f$. A fluid phase's pressure is not defined where that phase is absent: the decode sets it to `small`. So at the unreacted charge/air interface, $\nabla p_\text{compBAl}$ and $\nabla p_\text{gas}$ were 1 atm jumps over one cell. The Al compacted and moved, and through $\sum\alpha = 1$ the fluid volume fractions were rescaled at constant $\alpha\rho$. That changed the decoded explosive density by percent levels, which the stiff Murnaghan EOS turns into GPa. With the charge made of compBAl only (no Al), the interface stayed at rest.
+   **Fix:** $-\alpha_s \nabla p$ with the mixture fluid pressure $p$. Together with the fluid $p_I\nabla\alpha_k$ terms, this gives the mixture momentum balance $\partial_t(\rho\mathbf{u}) + \nabla p = \dots$ and preserves a uniform-pressure state.
+2. **Trace fluid phases at fluid/fluid contacts.** The fluid $\alpha_k$ is advected with the mixture volumetric flux ($D\alpha_k/Dt = 0$) and there is no pressure relaxation, so all fluid phases in a cell undergo the same volumetric strain. In trace cells ($\alpha_k \sim 10^{-5}$–$10^{-2}$), $\alpha_k$ and $\alpha_k\rho_k$ also come from different discretisations. The decoded density $\alpha_k\rho_k/\alpha_k$ of a stiff phase then drifts: trace products ahead of the products/air contact reached 4000–10000 kg/m³ and 0.1–0.7 TPa.
+   **Fix:** dilute fluid phases ($\alpha_k <$ `alphaDilute`, default 0.01) are brought towards pressure equilibrium with the carrier fluid phase by exchanging volume (Section 3).
 
-- The unreacted solid/air interface at the charge edge disintegrates. The unreacted `compBAl` expands to 600–1240 kg/m³ (Murnaghan pressure at its floor of 0).
-- The granular Al there reaches $\Theta = 6\times10^5$–$3\times10^7$ m²/s² (granular pressure 0.7–1.8 GPa), with $T$ pinned at the 100 K / 10000 K limits.
-- Trace `compBAl` in the air cells decodes to 2000–2555 kg/m³, giving 1.7–11.6 GPa at $\alpha$ down to 1e-5.
-- The mixture pressure $p = \sum_k \alpha_k p_k$ carries these pressures into the air.
+## 3. Implemented (2026-10-12)
 
-Mechanism: in trace cells $\alpha_k$ and $\alpha_k\rho_k$ are both tiny and are transported independently, so $\rho_k = \alpha_k\rho_k/\alpha_k$ is unreliable. A stiff EOS (Murnaghan, eJWLC) or granular kinetic theory turns that error into GPa pressures. All cases run with `pressureRelaxationSolver { type none; }`, so nothing holds the stiff/gas interface in mechanical equilibrium. The original resets mask this.
+- **`fluidPhaseModel::decode()`:** conserved fields are modified only where $\alpha \le$ `residualAlpha` (reference state 288.15 K, as upstream). The velocity cap (20000 m/s) and the energy clamp to the thermo temperature range act on the primitives only.
+- **`granularPhaseModel::decode()`:** the same treatment. Where $\alpha$ reaches `alphaMax`, the grain density becomes `alphaRho/alphaMax` instead of mass being removed.
+- **`granularPhaseModel::solve()`:** buoyancy $-\alpha_s\nabla p$ from the mixture fluid pressure `fluid_.p()`.
+- **`phaseSystem::equilibrateDiluteVolumes()`:** called in `decode()` after the fluid phases are decoded. For each cell and each dilute fluid phase $k$ (not the carrier $c$, the fluid phase with the largest $\alpha$):
+  - A damped Newton iteration on the exchanged volume: $\Delta\alpha = (p_k - p_c)/(\rho_k c_k^2/\alpha_k + \rho_c c_c^2/\alpha_c)$, with backtracking while $|p_k - p_c|$ does not decrease.
+  - Each increment moves the work $\bar p\,\Delta\alpha$ ($\bar p$ the mean of the two pressures) from one phase's energy to the other's.
+  - Only $\alpha_k$, $\alpha_c$ and the two total energies change, so mass, momentum and total energy are conserved exactly. The phases are decoded again afterwards.
+  - Bounds: the energies stay within the thermo temperature range. Per iteration the dilute phase may at most double its volume and the carrier may give at most 10% of its volume. Per call the dilute phase may at most halve its volume. Compressing trace gas inside a detonating explosive to tens of GPa takes it outside the Abel–Nobel/chemistry range: `spherical_alCombustion` crashed in the gas chemistry at breakout without this bound.
+  - `alphaDilute` in `phaseProperties` (default 0.01; 0 disables).
+- **New test `tests/1D_spherical/ChargeCompBAl_1D_spherical_interface`** (`verify_spherical_interface.py`, Tier 3): the spherical charge, never initiated, for 5 µs. Criteria: all phases at rest (< 5 m/s where $\alpha > 10^{-3}$), phase densities within 0.1%, $p < 10$ bar everywhere, air within 1% of $p_0$, mass and energy within 1e-5. Before fix 1 the interface broke up within 1 µs (velocities up to 2e4 m/s, compBAl density +590%, 2.8e8 Pa).
 
-## 3. Approaches tried (all reverted)
+## 4. Approaches tried and rejected
 
-| Approach | Result on the spherical cases |
+| Approach | Result |
 |---|---|
-| Fully conservative decode | precursors (+10% apparent velocity, +24% for `alCombustion`); `reacting` crashes |
 | Blending of primitives only (conserved fields untouched) | unstable within 2e-7 s: the fluxes are built from primitives inconsistent with the conserved state |
-| Conservative pairwise relaxation of dilute phases ($\alpha < 0.01$ or $10^{-4}$) towards the carrier phase (velocity and temperature) | crashes, detonation velocity off; unexplained 2.5e-5 energy leak in `phaseTransfer_0D_3phase` |
-| Dilute fluid phases ($\alpha < 0.01$) take the carrier pressure in decode | precursors persist (−50% to +30%), crashes |
-| Instant pressure relaxation (`goodBroyden`) | runs, but $\Delta t$ collapses to about 1e-15 s at Courant number 0.2 (an effective wave speed of order 1e11 m/s) |
+| Conservative pairwise relaxation of dilute-phase velocity and temperature | crashes; unexplained 2.5e-5 energy leak in `phaseTransfer_0D_3phase` |
+| Dilute fluid phases take the carrier pressure (primitive only) | precursors persist, crashes: $p$ inconsistent with $\rho$ |
+| Upstream `instant` pressure relaxation (`goodBroyden`) | $\Delta t$ collapses to 1e-15–1e-20 s (relaxed states with unphysical wave speeds), before and after fix 1 |
+| Kapila compressibility term $\alpha_k(Z_W/Z_k - 1)\nabla\cdot\mathbf{u}$ in the fluid $\alpha$ equation | the planar tutorial crashed earlier (13 µs): the spurious $\nabla\cdot\mathbf{u}$ at the interface is absorbed by soft trace phases |
+| Dilute-volume equilibration by bisection over a wide bracket | spurious roots (non-monotonic $p$ with the work term); energy grew 150-fold in the 0D test |
+| Dilute-volume equilibration, one-sided (expansion only) | interface test failed: under-pressured trace gas in the charge reached the thermo clamps |
 
-The patch of the last state (conservative decode plus dilute-pressure equalisation) is not in the repository.
+## 5. Effect on the spherical charge results
 
-## 4. Plan
+`ChargeCompBAl_1D_spherical`, pressure probes (programmed burn, detonation velocity 7612 m/s):
 
-Each step has an exit criterion. The final acceptance criterion is: the conserved variables are modified only where $\alpha \le$ `residualAlpha`; the 0D tests conserve energy to < 1e-8; the three spherical verifiers and the blastEulerFoam tutorials pass.
+| Probe | Original decode (`HEAD` before this work) | Conservative decode, without dilute equilibration | Final (with dilute equilibration) |
+|---|---|---|---|
+| 1–4 cm (in the charge), peak | 11.1–13.5 GPa | 10.3–12.5 GPa | 10.3–12.5 GPa |
+| 5 cm (charge edge), peak | 2.18 GPa | 5.54 GPa | 2.21 GPa |
+| 8 cm, arrival (p > 100 bar) | 16.2 µs | 10.5 µs | 10.7 µs |
+| 8 cm, peak | 0.15 GPa (16.7 µs) | 0.49 GPa (17.2 µs) | 0.32 GPa (26.6 µs) |
+| 10 cm, arrival | 25.4 µs | 15.0 µs | 19.4 µs |
+| 10 cm, peak | 0.09 GPa (26.1 µs) | 0.27 GPa (31.7 µs) | 0.16 GPa (40 µs, end of run) |
+| Measured detonation velocity | 7650 m/s | 7640 m/s | 7640 m/s |
 
-### Step 1: Minimal reproducer and diagnostics
-- New case `tests/1D/stationaryInterface`: unreacted Comp-B/Al (eJWLC reactants with Murnaghan, granular Al) next to air at 1 atm, both at rest, no activation. The exact solution is the initial state.
-- Diagnostic (debug switch in `fluidPhaseModel` / `granularPhaseModel`): per-step mass, momentum and energy changed by `decode()`, summed per phase and written to the log.
-- Use the diagnostic to quantify the energy destroyed by the resets in the spherical cases and tutorials.
-- **Exit:** the reproducer shows the spurious pressures with the conservative decode, and the reset losses are known for each regression case.
+The air shock arrives much earlier without the resets: the original decode deleted the energy of the products expanding into the air. The averaged air-shock velocity over the first 3 cm is about 3 km/s with the resets and about 7 km/s without. In the final version the 8 and 10 cm probes peak well after the first arrival, i.e. a later compression (presumably the products/particle cloud) exceeds the leading shock; this has not been analysed. These near-field values have not been compared with experimental or reference data.
 
-### Step 2: Interface initialisation
-- Check the initial state at the charge edge: phase pressures, $\alpha$ sum, the granular $\Theta$, and whether `setRefinedFields` creates partially filled cells with inconsistent phase states.
-- **Exit:** the initial interface cells are in pressure equilibrium with consistent phase states.
+## 6. Open
 
-### Step 3: Consistent reconstruction of $\alpha$ and $\alpha\rho$
-- Review how the blastEuler flux schemes reconstruct the phase fields at faces. Reconstruct $\alpha_k$, $\rho_k$, $\mathbf{u}_k$ and $p_k$ (or $e_k$) and form the face fluxes from them, instead of limiting $\alpha_k$ and $\alpha_k\rho_k$ independently, so that the face density stays within the neighbouring cell densities.
-- Requirement: a uniform pressure and velocity across a material interface are preserved exactly (Abgrall's condition).
-- **Exit:** the stationary interface stays at rest with pressure perturbations < 1% of ambient for 10 µs, with the conservative decode.
-
-### Step 4: Pressure relaxation
-- Find the cause of the $\Delta t$ collapse with `instant` relaxation: which phase and cell gives the large wave speed, and whether the relaxed state is outside the EOS range.
-- Make the instant relaxation robust: bounded phase densities, a scalar Newton iteration on the common pressure instead of Broyden, a fall-back to the unrelaxed state when it fails. Alternatively a finite-rate (`ode`) relaxation with a stiff integrator.
-- **Exit:** the spherical cases run with pressure relaxation enabled and without a $\Delta t$ collapse.
-
-### Step 5: Granular phase at interfaces
-- Replace the non-conservative $\Theta$ and $\alpha_\text{max}$ handling: excess granular energy goes into the internal energy of the phase; at $\alpha_\text{max}$ the grain density is increased (`alphaRho/alphaMax`) rather than mass removed.
-- **Exit:** the granular phase conserves mass and energy in the reproducer and in `phaseTransfer_0D_3phase`.
-
-### Step 6: Remove the resets
-- Make both `decode()` functions conservative (the 2026-10-11 version: conserved fields modified only where $\alpha \le$ `residualAlpha`; velocity cap and energy clamp on primitives only).
-- Run the full regression (Tier 1 and 2, blastEulerFoam tutorials).
-- **Exit:** the final acceptance criterion above.
-
-## 5. Related open items
+- **Non-dilute mixed cells:** fluid phases with $\alpha >$ `alphaDilute` still undergo the same volumetric strain (no pressure relaxation). At the products/air contact after breakout, products at $\alpha \sim 0.1$–0.4 reach the 100 K temperature floor at GPa pressures, and the gas reaches its `residualRho` floor and 5000 K ceiling. A robust full pressure relaxation remains to be done.
+- **Gas `residualRho` floor:** `decode()` limits $\rho$ to at least `residualRho` (upstream behaviour). With `residualRho 1.2` for the gas, expanded gas below ambient density is clamped on the primitive side. The cases should use a much smaller `residualRho` for the gas.
+- **Interface start-up:** the discrete interface sends a decaying acoustic wave of a few bar into the explosive (density change ~0.002%).
 - `phaseTransfer_0D` WP 1.1 criterion $\Delta p/p < 0.01\%$ (currently 0.58–0.59%).
 - Possible double counting of Al in the full Comp-B/Al cases (`UPDATES.md`, Section 7).

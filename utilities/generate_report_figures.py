@@ -818,9 +818,12 @@ def fig_stage3_spherical_blast():
 
 def fig_stage3_spherical_multiphase():
     """Stage 3: 1D Spherical Multiphase Detonation (Inert vs Reacting vs Al-Combustion)."""
-    INERT_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical"
-    REACT_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting"
-    ALCOMB_DIR = "/opt/OpenFOAM/blastfoam/tests/1D_spherical/ChargeCompBAl_1D_spherical_alCombustion"
+    base = os.environ.get(
+        "SPHERICAL_1D_DIR", "/opt/OpenFOAM/blastfoam/tests/1D_spherical"
+    )
+    INERT_DIR = os.path.join(base, "ChargeCompBAl_1D_spherical")
+    REACT_DIR = os.path.join(base, "ChargeCompBAl_1D_spherical_reacting")
+    ALCOMB_DIR = os.path.join(base, "ChargeCompBAl_1D_spherical_alCombustion")
 
     p_i_file = os.path.join(INERT_DIR, "postProcessing/pressureProbes/0/p")
     p_r_file = os.path.join(REACT_DIR, "postProcessing/pressureProbes/0/p")
@@ -1105,7 +1108,9 @@ def fig_stage3_species_integrals():
         ("ChargeCompBAl_1D_spherical_reacting", "Reacting Gas Phase"),
         ("ChargeCompBAl_1D_spherical_alCombustion", "Al Combustion (Burn-Rate Law)"),
     ]
-    base = "/opt/OpenFOAM/blastfoam/tests/1D_spherical"
+    base = os.environ.get(
+        "SPHERICAL_1D_DIR", "/opt/OpenFOAM/blastfoam/tests/1D_spherical"
+    )
     species = [
         ("Al.gas", r"Al(g)", "black", "-"),
         ("Al2O3(s).gas", r"Al$_2$O$_3$", "crimson", "-"),
