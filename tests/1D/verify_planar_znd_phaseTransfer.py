@@ -18,8 +18,8 @@ import subprocess
 import numpy as np
 
 CASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "planar_znd_phaseTransfer")
-EUDET_BIN = "/opt/OpenFOAM/blastfoam/modules/eudetcode/build/src/DetonationStructure"
-ZND_PROFILE = "/opt/OpenFOAM/blastfoam/modules/eudetcode/znd_profile.dat"
+EUDET_BIN = "/opt/OpenFOAM/blastfoam/external/eudetcode/build/src/DetonationStructure"
+ZND_PROFILE = "/opt/OpenFOAM/blastfoam/external/eudetcode/znd_profile.dat"
 DX = 0.2 / 400.0  # 0.0005 m (0.5 mm)
 V_CELL = DX * 0.001 * 0.001  # Cell volume (1D unit depth)
 

@@ -3,7 +3,7 @@
 verify_planar_znd.py: Quantitative verification of 1D planar detonation
 propagating at CJ velocity into solid HE with eJWLC products.
 
-Cross-verifies blastFoam against modules/eudetcode/src/DetonationStructure.
+Cross-verifies blastFoam against external/eudetcode/src/DetonationStructure.
 Exit criteria (WP 2.4):
 - Detonation front position x_det(t) = D_CJ * t within mesh resolution (< 0.1%).
 - CJ detonation velocity and peak pressure match EuDetCode predictions.
@@ -15,8 +15,8 @@ import subprocess
 import numpy as np
 
 CASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "planar_znd")
-EUDET_BIN = "/opt/OpenFOAM/blastfoam/modules/eudetcode/build/src/DetonationStructure"
-ZND_PROFILE = "/opt/OpenFOAM/blastfoam/modules/eudetcode/znd_profile.dat"
+EUDET_BIN = "/opt/OpenFOAM/blastfoam/external/eudetcode/build/src/DetonationStructure"
+ZND_PROFILE = "/opt/OpenFOAM/blastfoam/external/eudetcode/znd_profile.dat"
 DX = 0.2 / 400.0  # 0.0005 m (0.5 mm)
 
 
@@ -72,7 +72,7 @@ def read_openfoam_field(path):
 def main():
     print("=" * 75)
     print("WP 2.4: 1D Planar CJ / ZND Detonation Verification")
-    print("Cross-verifying blastFoam with EuDetCode (modules/eudetcode)")
+    print("Cross-verifying blastFoam with EuDetCode (external/eudetcode)")
     print("=" * 75)
 
     ref = get_eudetcode_reference()

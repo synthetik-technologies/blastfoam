@@ -33,9 +33,9 @@ graph LR
   - Conservation diagnostics verify conservation error $< 10^{-12}$ per time step for closed volumes.
 
 ### WP 0.2: Thermochemical Fitter & Thermodynamic Reconciliation Script
-- **Objective**: Standardize the extraction of $(A, B, C, R_1, R_2, \omega, E_0, C_v)$ for `eJWLC` and $(b_{\text{mix}}, R_{\text{mix}}, c_{p,k}(T))$ for Noble-Abel from the in-tree [`modules/eudetcode`](file:///opt/OpenFOAM/blastfoam/modules/eudetcode) suite (`CJDetonation` tool).
+- **Objective**: Standardize the extraction of $(A, B, C, R_1, R_2, \omega, E_0, C_v)$ for `eJWLC` and $(b_{\text{mix}}, R_{\text{mix}}, c_{p,k}(T))$ for Noble-Abel from the in-tree [`external/eudetcode`](file:///opt/OpenFOAM/blastfoam/external/eudetcode) suite (`CJDetonation` tool).
 - **Formulation**:
-  - Run [`modules/eudetcode/src/CJDetonation`](file:///opt/OpenFOAM/blastfoam/modules/eudetcode) with `--inert` specification (e.g. `--inert "Al_solid:0.27"`) to extract CJ state $(\rho_{\text{CJ}}, p_{\text{CJ}}, T_{\text{CJ}}, e_{\text{CJ}}, D_{\text{CJ}})$ and CJ expansion isentrope $(p_s, v_s, T_s, e_s)$ for $V \in [1, 20]$ directly for reactive detonation products.
+  - Run [`external/eudetcode/src/CJDetonation`](file:///opt/OpenFOAM/blastfoam/external/eudetcode) with `--inert` specification (e.g. `--inert "Al_solid:0.27"`) to extract CJ state $(\rho_{\text{CJ}}, p_{\text{CJ}}, T_{\text{CJ}}, e_{\text{CJ}}, D_{\text{CJ}})$ and CJ expansion isentrope $(p_s, v_s, T_s, e_s)$ for $V \in [1, 20]$ directly for reactive detonation products.
   - Exclude inert portion of aluminium ($\alpha_{\text{Al}}$) from the gaseous product EOS isentrope.
   - Perform constrained non-linear least squares fit enforcing $C^1$ continuity at chosen freeze-out pressure $p_{\text{trans}} \approx 100\text{--}200\,\text{bar}$:
     $$\omega_{\text{JWL}} = \gamma_{\text{mix}}(T_{\text{trans}}) - 1, \quad C = p_{\text{trans}} V_{\text{trans}}^{\omega_{\text{JWL}} + 1}$$
@@ -43,12 +43,12 @@ graph LR
     $$E_0 = e_{\text{sensible, gas}}(T_{\text{trans}}) - v_0 \left[ \frac{A}{R_1} e^{-R_1 V_{\text{trans}}} + \frac{B}{R_2} e^{-R_2 V_{\text{trans}}} + \frac{C}{\omega} V_{\text{trans}}^{-\omega} \right]$$
   - Output ready-to-use OpenFOAM dictionaries (`thermophysicalProperties`, `fvModels`).
 - **Exit Criteria**:
-  - Synthetic test on 70% Comp-B / 30% Al using `modules/eudetcode` outputs yields $\Delta p = 0.000\%$ and $\Delta T = 0.000\%$ at $p_{\text{trans}} = 100\,\text{bar}$ with exact energy balance across all species.
+  - Synthetic test on 70% Comp-B / 30% Al using `external/eudetcode` outputs yields $\Delta p = 0.000\%$ and $\Delta T = 0.000\%$ at $p_{\text{trans}} = 100\,\text{bar}$ with exact energy balance across all species.
 
 ### WP 0.3: High-Pressure Direct Equilibrium EOS (BKW / exp-6) Pipeline
-- **Objective**: Build the framework for tabular or direct thermochemical equilibrium evaluation (BKW / exp-6 / THEOSTAR) within `blastFoam` by directly interfacing with [`modules/eudetcode`](file:///opt/OpenFOAM/blastfoam/modules/eudetcode) library functions or generating tabulated state spaces to explore eliminating two-stage phase transfer.
+- **Objective**: Build the framework for tabular or direct thermochemical equilibrium evaluation (BKW / exp-6 / THEOSTAR) within `blastFoam` by directly interfacing with [`external/eudetcode`](file:///opt/OpenFOAM/blastfoam/external/eudetcode) library functions or generating tabulated state spaces to explore eliminating two-stage phase transfer.
 - **Implementation**:
-  - Use `modules/eudetcode` EOS engines (BKW, THEOSTAR/Exp-6, JCZ3) to generate tabulated EOS datasets sampling $(\rho, e) \to (p, T, c, Y_k^{\text{eq}})$.
+  - Use `external/eudetcode` EOS engines (BKW, THEOSTAR/Exp-6, JCZ3) to generate tabulated EOS datasets sampling $(\rho, e) \to (p, T, c, Y_k^{\text{eq}})$.
   - 2D bicubic Hermite interpolation class in `src/thermodynamicModels/`.
 - **Exit Criteria**:
-  - Lookup table reproduces CJ isentrope and Hugoniot states within 0.5% of direct calculations from `modules/eudetcode/src/CJDetonation` and `modules/eudetcode/src/HugoniotCurve`.
+  - Lookup table reproduces CJ isentrope and Hugoniot states within 0.5% of direct calculations from `external/eudetcode/src/CJDetonation` and `external/eudetcode/src/HugoniotCurve`.

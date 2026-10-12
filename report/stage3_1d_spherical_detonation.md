@@ -54,12 +54,12 @@ graph TD
   - Reacting Al demonstrates $25\text{--}40\%$ increase in positive phase impulse over inert baseline.
 
 ### WP 3.5: Single-EOS Continuous Equilibrium (BKW / exp-6) Assessment
-- **Objective**: Evaluate whether direct thermochemical equilibrium EOS across both products and air (using [`modules/eudetcode`](file:///opt/OpenFOAM/blastfoam/modules/eudetcode) EOS models: BKW, THEOSTAR/Exp-6, or JCZ3) can replace the two-stage (`eJWLC` $\to$ `Noble-Abel`) transfer.
+- **Objective**: Evaluate whether direct thermochemical equilibrium EOS across both products and air (using [`external/eudetcode`](file:///opt/OpenFOAM/blastfoam/external/eudetcode) EOS models: BKW, THEOSTAR/Exp-6, or JCZ3) can replace the two-stage (`eJWLC` $\to$ `Noble-Abel`) transfer.
 - **Methodology**:
-  - Utilize `modules/eudetcode` library routines to compute multi-phase equilibrium states with Al heating along the expansion path.
+  - Utilize `external/eudetcode` library routines to compute multi-phase equilibrium states with Al heating along the expansion path.
   - Assess whether switching from instantaneous equilibrium to finite-rate chemistry at a threshold temperature/density is viable without artificial wave reflections.
 - **Assessment Criteria**:
   - Computational speed (CPU time per time step).
   - Robustness at extreme expansion ($V/V_0 > 100$) where dense-gas EOS approximations degrade.
 - **Decision Outcome**:
-  - Formal comparison report deciding whether to adopt BKW / THEOSTAR tables from `modules/eudetcode` or retain the calibrated `eJWLC` $\to$ `Noble-Abel` model for Stages 4–6.
+  - Formal comparison report deciding whether to adopt BKW / THEOSTAR tables from `external/eudetcode` or retain the calibrated `eJWLC` $\to$ `Noble-Abel` model for Stages 4–6.
