@@ -39,6 +39,9 @@ With a fully conservative decode, the spherical Comp-B/Al cases produced spuriou
   - `alphaDilute` in `phaseProperties` (default 0.01; 0 disables).
 - **New test `tests/1D_spherical/ChargeCompBAl_1D_spherical_interface`** (`verify_spherical_interface.py`, Tier 3): the spherical charge, never initiated, for 5 µs. Criteria: all phases at rest (< 5 m/s where $\alpha > 10^{-3}$), phase densities within 0.1%, $p < 10$ bar everywhere, air within 1% of $p_0$, mass and energy within 1e-5. Before fix 1 the interface broke up within 1 µs (velocities up to 2e4 m/s, compBAl density +590%, 2.8e8 Pa).
 
+- **Pressure and temperature relaxation in mixed cells (2026-10-13):** the inert and reacting spherical cases, the interface test and the 1D tutorials set `alphaDilute 1` (volume equilibration of every non-carrier fluid phase) and a `(compBAl in gas)` heat transfer of type `constantCoefficient` with `Kh 1e15`. `phaseSystem::relaxTemperature()` applies it as an exact exponential relaxation that conserves energy, so with this coefficient the temperatures equalise in one step. Result in the spherical reacting case: mixed cells within 1–15% in pressure and 10 K in temperature, and at 40 µs exactly in equilibrium (9.7 MPa, 3435 K). Planar tutorial at 20 µs: pressures within 1% and one common temperature, instead of products at 93 741 K beside gas at 124 K; the common temperature (about 9000 K) is still high. The interface test now measures the air criterion on cells without explosive or Al; the mixed interface cell (1.4e-6 explosive, warmed by 2 K, +1.4% pressure) is covered by the 10 bar bound.
+  - `spherical_alCombustion` keeps `alphaDilute 0.01` and no products/gas temperature relaxation. Its Al burn releases mass into the gas phase inside the detonating charge, where the trace gas ($\alpha \sim 10^{-4}$) sits near its covolume limit (7000–8000 kg/m³, 1e10 Pa). Relaxing it to the products temperature crashes the gas chemistry at breakout (RKCK45 floating-point exception; with `seulex` the gas temperature inversion fails). `alphaDilute 1` alone also crashes, at 7.3 µs.
+
 ## 4. Approaches tried and rejected
 
 | Approach | Result |
@@ -50,6 +53,7 @@ With a fully conservative decode, the spherical Comp-B/Al cases produced spuriou
 | Kapila compressibility term $\alpha_k(Z_W/Z_k - 1)\nabla\cdot\mathbf{u}$ in the fluid $\alpha$ equation | the planar tutorial crashed earlier (13 µs): the spurious $\nabla\cdot\mathbf{u}$ at the interface is absorbed by soft trace phases |
 | Dilute-volume equilibration by bisection over a wide bracket | spurious roots (non-monotonic $p$ with the work term); energy grew 150-fold in the 0D test |
 | Dilute-volume equilibration, one-sided (expansion only) | interface test failed: under-pressured trace gas in the charge reached the thermo clamps |
+| `alphaDilute 1` (volume equilibration of every non-carrier fluid phase, 2026-10-13) | runs (spherical, interface, `ChargeCompBAl_1D`), pressures equal within 0.8–1.5 after 10 µs, probes almost unchanged; but at the products/air contact the carrier (largest $\alpha$) is the products phase, which is a trace by mass (0.24 vs 18 kg/m³ of air): it expands to 0.3 kg/m³ at 1e5 K while the air is compressed to 90 kg/m³ at 250 K |
 
 ## 5. Effect on the spherical charge results
 
@@ -58,10 +62,10 @@ With a fully conservative decode, the spherical Comp-B/Al cases produced spuriou
 | Probe | Original decode (`HEAD` before this work) | Conservative decode, without dilute equilibration | With dilute equilibration | Final (2026-10-13: no gas density floor, `alphaDeltaMin 1e-3`) |
 |---|---|---|---|---|
 | 1–4 cm (in the charge), peak | 11.1–13.5 GPa | 10.3–12.5 GPa | 10.3–12.5 GPa | 10.3–12.5 GPa |
-| 5 cm (charge edge), peak | 2.18 GPa | 5.54 GPa | 2.21 GPa | 1.45 GPa |
+| 5 cm (charge edge), peak | 2.18 GPa | 5.54 GPa | 2.21 GPa | 1.45 GPa (1.40 GPa with p–T relaxation) |
 | 8 cm, arrival (p > 100 bar) | 16.2 µs | 10.5 µs | 10.7 µs | 12.5 µs |
 | 8 cm, peak | 0.15 GPa (16.7 µs) | 0.49 GPa (17.2 µs) | 0.32 GPa (26.6 µs) | 33 MPa (30.6 µs, in the products) |
-| 10 cm, arrival | 25.4 µs | 15.0 µs | 19.4 µs | 17.9 µs |
+| 10 cm, arrival | 25.4 µs | 15.0 µs | 19.4 µs | 17.9 µs (17.5 µs with p–T relaxation) |
 | 10 cm, peak | 0.09 GPa (26.1 µs) | 0.27 GPa (31.7 µs) | 0.16 GPa (40 µs, end of run) | 14 MPa (18.4 µs, air shock) |
 | 15 cm, arrival / peak | – | – | not reached | 32.3 µs / 13 MPa |
 | Measured detonation velocity | 7650 m/s | 7640 m/s | 7640 m/s | 7661 m/s |
@@ -70,7 +74,7 @@ The air shock arrives much earlier without the resets: the original decode delet
 
 ## 6. Open
 
-- **Non-dilute mixed cells:** fluid phases with $\alpha >$ `alphaDilute` still undergo the same volumetric strain (no pressure relaxation). At the products/air contact after breakout, products at $\alpha \sim 0.1$–0.4 reach the 100 K temperature floor at GPa pressures, and the gas reaches its `residualRho` floor and 5000 K ceiling. A robust full pressure relaxation remains to be done.
+- **Non-dilute mixed cells:** fluid phases with $\alpha >$ `alphaDilute` still undergo the same volumetric strain (no pressure relaxation). In the spherical case (2026-10-13 state) about 50 cells at the products/air contact are mixed; there the products are at 2–5000 times the gas pressure, and the entrained air is rarefied (down to 4e-4 kg/m³) at its 5000 K ceiling. Equilibrating all phases (`alphaDilute 1`, Section 4) equalises the pressures but leaves the energy split between the phases wrong (products that are a trace by mass reach 1e5 K). Done for the inert and reacting cases with products/gas temperature relaxation (Section 3); open for `spherical_alCombustion`, and the common temperature in the planar tutorial's mixed cells (about 9000 K) suggests numerical heating at the contact.
 - **gunIB1D:** the local gunIB1D build stops with a floating-point exception on all three Houim cases, and `verify_gunib1d_benchmarks.py` points at `build/gunIB1D` and `Verification/`, which do not exist. The cross-solver comparison cannot be repeated.
 - **Interface start-up:** the discrete interface sends a decaying acoustic wave of a few bar into the explosive (density change ~0.002%).
 - `phaseTransfer_0D` WP 1.1 criterion $\Delta p/p < 0.01\%$ (currently 0.58–0.59%).
