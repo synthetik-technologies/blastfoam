@@ -114,6 +114,10 @@ class pressurePhaseChange
         //- Return the smearing factor Gamma(p)
         tmp<volScalarField> gamma() const;
 
+        //- Return the mass transfer rate [kg/m3/s]:
+        //  Gamma(p)*alpha*rho/tau, times lambda of the source phase if present
+        tmp<volScalarField> mDot() const;
+
         //- Find the thermo of the named phase: a phase of the mixture
         //  thermo (blastFoam) or the per-phase thermo (blastEulerFoam).
         //  Both pointers are null if the phase is not found.

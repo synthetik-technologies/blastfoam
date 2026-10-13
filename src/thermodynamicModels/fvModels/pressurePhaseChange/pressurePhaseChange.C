@@ -101,6 +101,23 @@ tmp<volScalarField> pressurePhaseChange::gamma() const
 }
 
 
+tmp<volScalarField> pressurePhaseChange::mDot() const
+{
+    const volScalarField& alphaSource =
+        mesh().lookupObject<volScalarField>("alpha." + sourcePhaseName_);
+    const volScalarField& rhoSource =
+        mesh().lookupObject<volScalarField>("rho." + sourcePhaseName_);
+
+    tmp<volScalarField> tmDot(gamma()*alphaSource*rhoSource/tau_);
+    if (mesh().foundObject<volScalarField>("lambda." + sourcePhaseName_))
+    {
+        tmDot.ref() *=
+            mesh().lookupObject<volScalarField>("lambda." + sourcePhaseName_);
+    }
+    return tmDot;
+}
+
+
 void pressurePhaseChange::lookupPhaseThermo
 (
     const word& phaseName,
@@ -331,20 +348,10 @@ void pressurePhaseChange::preUpdateMesh()
                 mesh().lookupObject<fvTimeIntegrator>("timeIntegrator")
             );
 
-        const volScalarField& alphaSource = 
-            mesh().lookupObject<volScalarField>("alpha." + sourcePhaseName_);
         const volScalarField& rhoSource = 
             mesh().lookupObject<volScalarField>("rho." + sourcePhaseName_);
 
-        tmp<volScalarField> tgamma = gamma();
-        
-        volScalarField mDot = tgamma() * alphaSource * rhoSource / tau_;
-        if (mesh().foundObject<volScalarField>("lambda." + sourcePhaseName_))
-        {
-            const volScalarField& lambda = 
-                mesh().lookupObject<volScalarField>("lambda." + sourcePhaseName_);
-            mDot *= lambda;
-        }
+        const volScalarField mDot(this->mDot());
         
         dimensionedScalar residualRho("residualRho", dimDensity, 1e-10);
 
@@ -560,20 +567,7 @@ void pressurePhaseChange::addSup
     convertMoleFractions();
 
     const word& fieldName = field.name();
-    const volScalarField& alphaSource = 
-        mesh().lookupObject<volScalarField>("alpha." + sourcePhaseName_);
-    const volScalarField& rhoSource = 
-        mesh().lookupObject<volScalarField>("rho." + sourcePhaseName_);
-
-    tmp<volScalarField> tgamma = gamma();
-    
-    volScalarField mDot = tgamma() * alphaSource * rhoSource / tau_;
-    if (mesh().foundObject<volScalarField>("lambda." + sourcePhaseName_))
-    {
-        const volScalarField& lambda = 
-            mesh().lookupObject<volScalarField>("lambda." + sourcePhaseName_);
-        mDot *= lambda;
-    }
+    const volScalarField mDot(this->mDot());
 
     if (fieldName == "rho." + sourcePhaseName_ || fieldName == "alphaRho." + sourcePhaseName_)
     {
@@ -633,14 +627,10 @@ void pressurePhaseChange::addSup
     convertMoleFractions();
 
     const word& fieldName = field.name();
-    const volScalarField& alphaSource = 
-        mesh().lookupObject<volScalarField>("alpha." + sourcePhaseName_);
     const volScalarField& rhoSource = 
         mesh().lookupObject<volScalarField>("rho." + sourcePhaseName_);
 
-    tmp<volScalarField> tgamma = gamma();
-    
-    volScalarField mDot = tgamma() * alphaSource * rhoSource / tau_;
+    const volScalarField mDot(this->mDot());
     dimensionedScalar residualRho("residualRho", dimDensity, 1e-10);
 
     if (fieldName == "rhoE" || fieldName == "e" || fieldName == "he")
