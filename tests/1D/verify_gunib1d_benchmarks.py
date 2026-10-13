@@ -17,6 +17,7 @@ import re
 import shutil
 import sys
 import subprocess
+import atexit
 import tempfile
 import numpy as np
 
@@ -31,8 +32,7 @@ GUNIB1D_BIN = next(
     ),
     os.path.join(GUNIB1D_DIR, "gunIB1D"),
 )
-BLASTFOAM_DIR = "/opt/OpenFOAM/blastfoam"
-TESTS_1D_DIR = os.path.join(BLASTFOAM_DIR, "tests/1D")
+TESTS_1D_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def run_command(cmd, cwd=None, timeout=300):
@@ -55,14 +55,24 @@ def run_command(cmd, cwd=None, timeout=300):
 
 
 def run_gunib1d(case_rel_path):
-    """Run gunIB1D on a case in a temporary directory and return the output
-    directory (gunIB1D writes to <cwd>/<output.folder>)."""
-    info_file = os.path.join(GUNIB1D_DIR, case_rel_path)
+    """Run gunIB1D on a case (in Verification/, formerly Validation/) in a
+    temporary directory and return the output directory (gunIB1D writes to
+    <cwd>/<output.folder>)."""
+    candidates = [
+        os.path.join(GUNIB1D_DIR, d, case_rel_path)
+        for d in ("Verification", "Validation")
+    ]
+    info_file = next((f for f in candidates if os.path.isfile(f)), candidates[0])
     with open(info_file) as f:
         m = re.search(r'folder\s+"([^"]+)"', f.read())
-    folder = m.group(1) if m else os.path.splitext(os.path.basename(info_file))[0]
+    # Default output.folder: Output/<case name>
+    folder = (
+        m.group(1) if m
+        else os.path.join("Output", os.path.splitext(os.path.basename(info_file))[0])
+    )
 
     run_dir = tempfile.mkdtemp(prefix="gunib1d_")
+    atexit.register(shutil.rmtree, run_dir, ignore_errors=True)
     cmd = f"yes | {GUNIB1D_BIN} {info_file} --overwrite"
     code, stdout, stderr = run_command(cmd, cwd=run_dir, timeout=120)
     if code != 0:
@@ -376,7 +386,7 @@ def cross_solver(ref_passed):
 
     # 1. Houim 1
     print("\n--- 1. Houim 1 (Particle Curtain Pure Advection, Multi-Velocity) ---")
-    gun_out1 = run_gunib1d("Validation/Houim1.info")
+    gun_out1 = run_gunib1d("Houim1.info")
     bf_case1 = run_blast_euler_case("gunib1d_houim1", expected_time_dir="0.01")
     pass1, m1 = verify_houim1(gun_out1, bf_case1)
     if not pass1:
@@ -385,7 +395,7 @@ def cross_solver(ref_passed):
 
     # 2. Houim 2
     print("\n--- 2. Houim 2 (Two-Phase Granular Shock Tube, Multi-Velocity Drag) ---")
-    gun_out2 = run_gunib1d("Validation/Houim2.info")
+    gun_out2 = run_gunib1d("Houim2.info")
     bf_case2 = run_blast_euler_case("gunib1d_houim2", expected_time_dir="0.000184037")
     pass2, m2 = verify_houim2(gun_out2, bf_case2)
     if not pass2:
@@ -395,7 +405,7 @@ def cross_solver(ref_passed):
     # 3. Houim 3
     print("\n--- 3. Houim 3 (Dense Granular Compaction Shock Interaction) ---")
     bf_case3 = run_blast_euler_case("gunib1d_houim3", expected_time_dir="9.99976e-05")
-    gun_out3 = run_gunib1d("Validation/Houim3.info")
+    gun_out3 = run_gunib1d("Houim3.info")
     pass3, m3 = verify_houim3(gun_out3, bf_case3)
     if not pass3:
         all_passed = False
