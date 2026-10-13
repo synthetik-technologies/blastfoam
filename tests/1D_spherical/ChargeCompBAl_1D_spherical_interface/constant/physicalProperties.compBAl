@@ -25,9 +25,9 @@ reactants
     }
     equationOfState
     {
-        rho0            1820;
-        n               5.17;
-        K0              12.6e9;
+        rho0            1624.45;
+        n               6.0;
+        K0              12.61e9;
         Gamma           1.22;
         pRef            101325;
         pMax            1e11;
@@ -57,23 +57,25 @@ products
     }
     equationOfState
     {
-        rho0            1820;
-        A               1732.51e9;
-        B               11.7173e9;
-        C               0.831709e9;
-        R1              5.8162;
-        R2              1.51614;
-        omega           0.24273;
+        // Products-only fit (EuDetCode --jwl-products-only): the 27% inert
+        // Al is carried by the Al phase, so the fit excludes it
+        rho0            1624.45;
+        A               224.943e9;
+        B               2.77303e9;
+        C               1.47024e9;
+        R1              3.456;
+        R2              0.813403;
+        omega           0.302717;
         pMax            1e11;
-        Cv              1410.19;
-        T_CJ            3432.62;
-        rho_CJ          2286.93;
-        omegaT          0.375928; // T_s through T_CJ and the gas-EOS T at transfer
-        E0              -3.65138e6;
+        Cv              1450;
+        T_CJ            3844.39;
+        rho_CJ          2150.55;
+        omegaT          0.371065; // T_s through T_CJ and the gas-EOS T at transfer
+        E0              -503470.78;
     }
     specie
     {
-        molWeight       35.9;
+        molWeight       24.02;
     }
     transport
     {
@@ -82,18 +84,20 @@ products
     }
     thermodynamics
     {
-        Cv              1410;
+        Cv              1450;
         Hf              0;
     }
 }
 activationModel nodeProgrammed;
 initiation
 {
-    E0              0;
+    // Detonation energy release; the products E0 is on the gas-phase
+    // (JANAF) reference, see ChargeCompBAl_1D_spherical_alCombustion
+    e0              5.0174e6;
     points          ( ( 0 0 0 ) );
     delay           1;  // never initiated: stationary unreacted charge
-    vDet            7612.3;
-    Pcj             2.15329e+10;
+    vDet            7154.23;
+    Pcj             2.01512e+10;
     burnModel       programmed;
 }
 residualRho     1e-06;

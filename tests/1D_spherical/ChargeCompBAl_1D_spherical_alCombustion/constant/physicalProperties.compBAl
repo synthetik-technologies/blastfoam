@@ -46,20 +46,20 @@ products {
   }
   equationOfState {
     rho0 1624.45;
-    A 365.113e9;
-    B 2.656e9;
-    C 1.043e9;
-    R1 3.83395;
-    R2 0.8997;
-    omega 0.2387;
+    A 224.943e9;
+    B 2.77303e9;
+    C 1.47024e9;
+    R1 3.456;
+    R2 0.813403;
+    omega 0.302717;
     pMax 1e11;
     Cv 1450;
-    T_CJ 3432.62;
-    rho_CJ 2098.7;
-    omegaT 0.355493; // T_s through T_CJ and the gas-EOS T at transfer
-    E0 -668384.95;
+    T_CJ 3844.39;
+    rho_CJ 2150.55;
+    omegaT 0.371065; // T_s through T_CJ and the gas-EOS T at transfer
+    E0 -503470.78;
   }
-  specie { molWeight 38.24; }
+  specie { molWeight 24.02; }
   transport {
     mu 1e-04;
     Pr 0.7;
@@ -75,11 +75,11 @@ initiation {
   // The products E0 is on the gas-phase (JANAF) reference from the 100 bar
   // phase transfer match, so e0 must lift the reactants onto it:
   // e0 = e_s(V_CJ) - Cv_r*T0 - 0.5*p_CJ*(1/rho0 - 1/rho_CJ)
-  //    = 6.1116e6 - 0.2966e6 - 1.4977e6 J/kg
-  e0 4.3173e6;
+  //    = 6.8314e6 - 0.2966e6 - 1.5174e6 J/kg
+  e0 5.0174e6;
   points ((0 0 0));
-  vDet 7612.3;
-  Pcj 2.15329e+10;
+  vDet 7154.23;
+  Pcj 2.01512e+10;
   burnModel programmed;
 }
 residualRho 1e-06;

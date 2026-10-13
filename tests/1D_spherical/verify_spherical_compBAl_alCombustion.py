@@ -5,12 +5,14 @@ detonation in blastEulerFoam with aluminium combustion via the empirical burn-ra
 
 Verification criteria:
 1. Origin initiation: detonation starts at r=0 at t=0.
-2. Detonation propagation speed: matches EuDetCode D_CJ = 7612.3 m/s within 1.5%.
-3. Detonation peak pressure: reaches expected multi-GPa range (target CJ: 21.53 GPa).
+2. Detonation propagation speed: matches EuDetCode D_CJ = 7154.23 m/s within 1.5%.
+3. Detonation peak pressure: reaches expected multi-GPa range (target CJ: 20.15 GPa).
 4. Multiphase physics: discrete phase velocities and volume fractions for compBAl, Al, and gas.
 5. Gas-phase reaction chemistry: active reacting multicomponent gas phase with Qdot.gas field.
-6. Empirical burn-rate Al regression: d.Al field regresses under blast pressure from d0 = 1.0 mm
-   to d < 0.95 mm in the detonation core according to the pressureBased surface reaction rate.
+6. Al burns only with gas-phase oxidiser (pressureBased rate scaled by the oxidiser
+   fraction): no diameter regression (< 0.1%) where Al is surrounded by detonation
+   products only (gas fraction of the surrounding fluid < 1e-3), and Al vapour is
+   released into the gas phase where the Al meets shocked air.
 """
 
 import os
@@ -22,9 +24,10 @@ PROBE_FILE = os.path.join(CASE_DIR, "postProcessing", "pressureProbes", "0", "p"
 SAMPLE_FILE = os.path.join(CASE_DIR, "postProcessing", "sampleLine", "2e-05", "lineX.xy")
 QDOT_FILE = os.path.join(CASE_DIR, "2e-05", "Qdot.gas")
 D_AL_FILE = os.path.join(CASE_DIR, "2e-05", "d.Al")
+TIME_DIR = os.path.join(CASE_DIR, "2e-05")
 
-D_CJ_REF = 7612.3  # m/s from EuDetCode
-P_CJ_REF = 2.15329e10  # Pa from EuDetCode (21.53 GPa)
+D_CJ_REF = 7154.23  # m/s from EuDetCode
+P_CJ_REF = 2.01512e10  # Pa from EuDetCode (20.15 GPa)
 D0_REF = 3.0e-5  # m (physically calibrated initial particle diameter 30 um)
 
 
@@ -134,26 +137,23 @@ def verify_spherical_detonation_alCombustion():
     else:
         print(f"  FAIL: Qdot.gas field not found at {QDOT_FILE}")
 
-    # 5. Aluminium Empirical Burn-Rate Regression Verification
+    # 5. Aluminium burn with gas-phase oxidiser only
     print("-" * 72)
-    print("Aluminium Combustion (Empirical Burn-Rate Law) Verification:")
+    print("Aluminium Combustion (gas-phase oxidiser) Verification:")
     has_dal = os.path.isfile(D_AL_FILE)
     d_regressed = False
-    min_d_val = D0_REF
     if has_dal:
         d_vals = parse_openfoam_scalar_field(D_AL_FILE)
-        if d_vals is not None and len(d_vals) > 0:
-            min_d_val = np.min(d_vals)
-            max_d_val = np.max(d_vals)
-            mean_d_core = np.mean(d_vals[:100])
-            burn_pct = (D0_REF - min_d_val) / D0_REF * 100.0
-            print(f"  Initial particle diameter d0   : {D0_REF*1e6:.2f} um")
-            print(f"  Minimum regressed diameter d   : {min_d_val*1e6:.2f} um ({burn_pct:.2f}% diameter regression)")
-            print(f"  Core average diameter d(r<5cm) : {mean_d_core*1e6:.2f} um")
-            # Successful regression if diameter decreased by 1% to 15% in the early 20 us window
-            d_regressed = (0.85 * D0_REF <= min_d_val <= 0.99 * D0_REF)
-        else:
-            print(f"  WARNING: Could not parse scalar values from {D_AL_FILE}")
+        alpha_Al = parse_openfoam_scalar_field(os.path.join(TIME_DIR, "alpha.Al"))
+        alpha_gas = parse_openfoam_scalar_field(os.path.join(TIME_DIR, "alpha.gas"))
+        Y_Al = parse_openfoam_scalar_field(os.path.join(TIME_DIR, "Al.gas"))
+        f_ox = alpha_gas/np.maximum(1.0 - alpha_Al, 1e-12)
+        products_only = (alpha_Al > 1e-4) & (f_ox < 1e-3)
+        dmax_products = np.max((D0_REF - d_vals[products_only])/D0_REF)
+        print(f"  Initial particle diameter d0          : {D0_REF*1e6:.2f} um")
+        print(f"  Max regression in products-only cells : {dmax_products*100:.4f}% ({np.count_nonzero(products_only)} cells)")
+        print(f"  Max Al vapour mass fraction in gas    : {np.max(Y_Al):.3e}")
+        d_regressed = (dmax_products < 1e-3) and (np.max(Y_Al) > 1e-6)
     else:
         print(f"  FAIL: d.Al field not found at {D_AL_FILE}")
 
@@ -168,7 +168,7 @@ def verify_spherical_detonation_alCombustion():
     if not has_qdot:
         passed = False
     if not (has_dal and d_regressed):
-        print(f"FAIL: Al particle diameter regression under empirical burn-rate law not verified.")
+        print(f"FAIL: Al burning limited to gas-phase oxidiser not verified.")
         passed = False
 
     print("=" * 72)

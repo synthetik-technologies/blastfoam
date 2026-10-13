@@ -21,8 +21,8 @@ os.makedirs(ZERO_DIR, exist_ok=True)
 # T0 is the gas-EOS temperature at this state; the eJWLC omegaT is set so
 # the products isentrope temperature gives the same value.
 P0 = 1.0e7
-T0 = 825.76
-RHO_PROD = 38.137262
+T0 = 836.10
+RHO_PROD = 35.233992
 
 # Inert Al: 90% of the 30 wt% Al in 70/30 Comp-B/Al, i.e. 27% of total mass,
 # in thermal and mechanical equilibrium with the products. Murnaghan and
@@ -118,15 +118,16 @@ write_field("Ydefault.gas", "Ydefault.gas", "volScalarField", "[0 0 0 0 0 0 0]",
 
 # Gas species (EuDetCode freeze-out composition normalized to 1.0)
 species_fractions = {
-    "N2.gas": "0.28466454",
-    "CO.gas": "0.23116680",
-    "H2O.gas": "0.10059566",
-    "CO2.gas": "0.21098004",
-    "NH3.gas": "0.00548327",
-    "CH4.gas": "0.04230543",
-    "C2H6.gas": "0.00149695",
-    "C(gr).gas": "0.04548207",
-    "Al2O3(s).gas": "0.07782524",
+    "H2.gas": "0.00433265",
+    "N2.gas": "0.28739527",
+    "CO.gas": "0.28672579",
+    "H2O.gas": "0.11160467",
+    "CO2.gas": "0.15365548",
+    "NH3.gas": "0.00144386",
+    "CH4.gas": "0.02801544",
+    "C2H6.gas": "0.0",
+    "C(gr).gas": "0.04906294",
+    "Al2O3(s).gas": "0.07776391",
     "O2.gas": "0.0"
 }
 

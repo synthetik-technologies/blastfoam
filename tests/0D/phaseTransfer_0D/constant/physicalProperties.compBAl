@@ -27,22 +27,22 @@ thermoType
 equationOfState
 {
     rho0            1624.45;
-    A               365.113e9;
-    B               2.656e9;
-    C               1.043e9;
-    R1              3.83395;
-    R2              0.8997;
-    omega           0.2387;
+    A               224.943e9;
+    B               2.77303e9;
+    C               1.47024e9;
+    R1              3.456;
+    R2              0.813403;
+    omega           0.302717;
     pMax            1e11;
     Cv              1450;
-    T_CJ            3432.62;
-    rho_CJ          2098.7;
-    omegaT          0.355493; // T_s through T_CJ and the gas-EOS T at transfer
-    E0              -668384.95;
+    T_CJ            3844.39;
+    rho_CJ          2150.55;
+    omegaT          0.371065; // T_s through T_CJ and the gas-EOS T at transfer
+    E0              -503470.78;
 }
 specie
 {
-    molWeight       38.24;
+    molWeight       24.02;
 }
 transport
 {

@@ -27,7 +27,7 @@ CASE_DIR = os.path.join(
 )
 P0 = 101325.0
 P_MAX = 1e6
-RHO0 = {"compBAl": 1820.0, "Al": 2700.0}
+RHO0 = {"compBAl": 1624.45, "Al": 2700.0}
 PHASES = ("compBAl", "Al", "gas")
 
 

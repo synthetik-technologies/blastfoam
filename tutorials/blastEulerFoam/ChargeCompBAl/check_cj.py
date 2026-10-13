@@ -53,7 +53,7 @@ if __name__ == "__main__":
     omega = 0.28
     Cv = 1383
     E0_vol = 8.1e9
-    D = 7612
+    D = 7154.23
 
     print(f"Detonation Properties for:")
     print(f"rho0: {rho0} kg/m3")

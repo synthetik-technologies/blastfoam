@@ -5,8 +5,8 @@ in blastEulerFoam based on ChargeCompBAl_1D initiated at origin and calibrated t
 
 Verification criteria:
 1. Origin initiation: detonation starts at r=0 at t=0.
-2. Detonation propagation speed: matches EuDetCode D_CJ = 7612.3 m/s within 1.5%.
-3. Detonation peak pressure: reaches expected multi-GPa range (P_CJ = 21.53 GPa target).
+2. Detonation propagation speed: matches EuDetCode D_CJ = 7154.23 m/s within 1.5%.
+3. Detonation peak pressure: reaches expected multi-GPa range (P_CJ = 20.15 GPa target).
 4. Multiphase physics: discrete phase velocities and volume fractions for compBAl, Al, and gas.
 """
 
@@ -18,8 +18,8 @@ CASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ChargeCompB
 PROBE_FILE = os.path.join(CASE_DIR, "postProcessing", "pressureProbes", "0", "p")
 SAMPLE_FILE = os.path.join(CASE_DIR, "postProcessing", "sampleLine", "2e-05", "lineX.xy")
 
-D_CJ_REF = 7612.3  # m/s from EuDetCode
-P_CJ_REF = 2.15329e10  # Pa from EuDetCode (21.53 GPa)
+D_CJ_REF = 7154.23  # m/s from EuDetCode
+P_CJ_REF = 2.01512e10  # Pa from EuDetCode (20.15 GPa)
 
 
 def run_case_if_needed():

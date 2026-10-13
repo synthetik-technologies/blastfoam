@@ -34,6 +34,11 @@ Al
         pScale          1e-6;
         pExponent       0.7;
         pCoeff          5e-5;
+        // Burns only with gas-phase oxidiser: the rate is scaled by the gas
+        // fraction of the surrounding fluid and by min(1, Y_ox/YoxidiserRef)
+        oxidiserPhase   gas;
+        oxidiserSpecies (O2 CO2 H2O);
+        YoxidiserRef    0.24;
     }
 
     alphaMax        0.63;
@@ -180,11 +185,9 @@ virtualMass
 heatTransfer
 (
     // No (compBAl in gas) temperature relaxation and default alphaDilute
-    // (0.01): the Al burn releases mass into the gas phase inside the
-    // detonating charge, where that trace gas sits near its covolume limit;
-    // relaxing it to the products temperature, or equilibrating its volume
-    // fully (alphaDilute 1), takes it outside the gas thermo/chemistry range
-    // (crash at breakout). See report/dilute_phase_conservation_plan.md.
+    // (0.01): with them this case runs, but the unreacted charge/air
+    // interface becomes unstable at ~3 us and sends a ~0.8 kbar wave ahead
+    // of the detonation. See report/dilute_phase_conservation_plan.md.
     (Al in gas)
     {
         type            RanzMarshall;

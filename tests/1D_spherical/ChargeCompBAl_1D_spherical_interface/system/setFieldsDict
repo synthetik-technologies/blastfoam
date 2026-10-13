@@ -31,8 +31,8 @@ regions
         radius 0.05;
         fieldValues
         (
-            volScalarFieldValue alpha.compBAl 0.7
-            volScalarFieldValue alpha.Al 0.3
+            volScalarFieldValue alpha.compBAl 0.818
+            volScalarFieldValue alpha.Al 0.182
             volScalarFieldValue alpha.gas 0
             volScalarFieldValue lambda.compBAl 0
         );
