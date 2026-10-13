@@ -52,6 +52,17 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
     rate_(diameterReactionRate::New(*this, dict)),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     TName_(dict.lookupOrDefault("TName", IOobject::groupName("T", phaseName))),
+    oxidiserPhase_(dict.lookupOrDefault("oxidiserPhase", word::null)),
+    oxidiserSpecies_
+    (
+        dict.lookupOrDefault("oxidiserSpecies", wordList())
+    ),
+    YoxidiserRef_
+    (
+        oxidiserSpecies_.size()
+      ? dict.lookup<scalar>("YoxidiserRef")
+      : 1.0
+    ),
     N_
     (
         IOobject
@@ -97,6 +108,64 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
 
 Foam::diameterModels::reactingDiameterModel::~reactingDiameterModel()
 {}
+
+
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField>
+Foam::diameterModels::reactingDiameterModel::oxidiserFactor() const
+{
+    const fvMesh& mesh = this->d_.mesh();
+    const volScalarField& alpha =
+        mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", this->d_.group())
+        );
+    const volScalarField& alphaOx =
+        mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", oxidiserPhase_)
+        );
+
+    // Fraction of the fluid around the particles that carries the oxidiser
+    tmp<volScalarField> tf
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("oxidiserFactor", this->d_.group()),
+            min
+            (
+                max(alphaOx, scalar(0))
+               /max(1.0 - alpha, dimensionedScalar(dimless, small)),
+                scalar(1)
+            )
+        )
+    );
+
+    if (oxidiserSpecies_.size())
+    {
+        volScalarField Yox
+        (
+            volScalarField::New
+            (
+                "Yoxidiser",
+                mesh,
+                dimensionedScalar(dimless, 0)
+            )
+        );
+        forAll(oxidiserSpecies_, i)
+        {
+            Yox +=
+                mesh.lookupObject<volScalarField>
+                (
+                    IOobject::groupName(oxidiserSpecies_[i], oxidiserPhase_)
+                );
+        }
+        tf.ref() *= min(max(Yox, scalar(0))/YoxidiserRef_, scalar(1));
+    }
+
+    return tf;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -171,6 +240,10 @@ void Foam::diameterModels::reactingDiameterModel::solve
     this->storeAndBlendOld(this->d_);
 
     volScalarField dDdt(-2.0*rate_->dDdt(pi, T));
+    if (!oxidiserPhase_.empty())
+    {
+        dDdt *= oxidiserFactor();
+    }
     this->blendDelta(dDdt);
 
     const dimensionedScalar& dT(this->d_.time().deltaT());

@@ -27,6 +27,18 @@ Class
 Description
     Reacting diameter model used for mass transfer
 
+    With an optional oxidiser phase the burn rate is scaled by the fraction
+    of the surrounding fluid volume that this phase occupies and, with
+    oxidiser species, by min(1, sum of their mass fractions/YoxidiserRef):
+
+    \verbatim
+        oxidiserPhase   gas;
+        oxidiserSpecies (O2 CO2 H2O);   // optional
+        YoxidiserRef    0.24;           // full rate at this mass fraction
+    \endverbatim
+
+    Without oxidiserPhase the particles burn wherever the rate model allows.
+
 SourceFiles
     reactingDiameterModel.C
 
@@ -64,6 +76,15 @@ class reactingDiameterModel
     //- Name of temperature field
     const word TName_;
 
+    //- Phase carrying the oxidiser (empty: no oxidiser limit)
+    const word oxidiserPhase_;
+
+    //- Oxidiser species in the oxidiser phase (empty: the whole phase)
+    const wordList oxidiserSpecies_;
+
+    //- Oxidiser mass fraction that gives the full burn rate
+    const scalar YoxidiserRef_;
+
     //- Number density
     volScalarField N_;
 
@@ -72,6 +93,12 @@ class reactingDiameterModel
 
     //- Stored change in volume per unit time
     volScalarField dVdt_;
+
+
+    // Private Member Functions
+
+        //- Burn rate scaling by the available oxidiser, in [0, 1]
+        tmp<volScalarField> oxidiserFactor() const;
 
 public:
 
