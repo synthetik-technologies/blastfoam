@@ -462,6 +462,12 @@ public:
         //  total energy are conserved. Returns true if any cell changed.
         bool equilibrateDiluteVolumes();
 
+        //- Instantaneous velocity relaxation of the fluid phases to their
+        //  mass-averaged velocity. Each phase keeps its internal energy and
+        //  is heated by its own dissipation, so total energy is conserved;
+        //  kinetic energy beyond the energy of a trace phase is not counted.
+        void relaxFluidVelocitiesInstant();
+
         //- Encode conserved variables
         virtual void encode();
 

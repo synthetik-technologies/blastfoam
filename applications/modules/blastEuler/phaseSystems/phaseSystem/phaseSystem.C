@@ -143,6 +143,103 @@ if (!stabAlphaRhos.set(Phase.index()))                  \
 }                                                       \
 const volScalarField& var = stabAlphaRhos[Phase.index()];
 
+void Foam::phaseSystem::relaxFluidVelocitiesInstant()
+{
+    const label nFluids = fluidPhaseModels_.size();
+    UPtrList<fluidBlastThermo> thermos(nFluids);
+    forAll(fluidPhaseModels_, i)
+    {
+        thermos.set
+        (
+            i,
+            &mesh_.lookupObjectRef<fluidBlastThermo>
+            (
+                IOobject::groupName
+                (
+                    physicalProperties::typeName,
+                    fluidPhaseModels_[i].name()
+                )
+            )
+        );
+    }
+
+    scalarList m(nFluids), E(nFluids), Enew(nFluids);
+    forAll(rho_, celli)
+    {
+        scalar M = 0;
+        vector MU = Zero;
+        forAll(fluidPhaseModels_, i)
+        {
+            const phaseModel& phase = fluidPhaseModels_[i];
+            m[i] = phase.alphaRho()[celli];
+            E[i] = phase.alphaRhoE()[celli];
+            M += m[i];
+            MU += phase.alphaRhoU()[celli];
+        }
+        const vector VI = MU/max(M, 1e-6);
+        const scalar KI = 0.5*magSqr(VI);
+
+        // Each phase keeps its internal energy and is heated by its own
+        // dissipation, 0.5*alphaRho*|U - VI|^2, which conserves the total
+        // energy. The kinetic energy of a phase with little mass can exceed
+        // its total energy (its momentum comes from face fluxes weighted by
+        // the face volume fraction); where the internal energy would fall
+        // below the thermo range, that kinetic energy is not counted and the
+        // small remainder goes to the other phases by mass. Heating beyond
+        // the upper thermo limit is not applied.
+        scalar R = 0;
+        scalar Mvalid = 0;
+        forAll(fluidPhaseModels_, i)
+        {
+            const phaseModel& phase = fluidPhaseModels_[i];
+            if (m[i] <= phase.residualAlphaRho().value())
+            {
+                Enew[i] = E[i];
+                continue;
+            }
+            const vector U = phase.alphaRhoU()[celli]/m[i];
+            scalar e = (E[i] - 0.5*m[i]*magSqr(U))/m[i];
+            scalar D = 0.5*magSqr(U - VI);
+            const scalar eMin = thermos[i].cellhe(thermos[i].TLow(), celli);
+            const scalar eMax = thermos[i].cellhe(thermos[i].THigh(), celli);
+            if (e < eMin)
+            {
+                e = eMin;
+                D = 0;
+            }
+            const scalar eNew = Foam::min(e + D, Foam::max(eMax, e));
+            Enew[i] = m[i]*(eNew + KI);
+            if (e + D <= eMax)
+            {
+                R += E[i] - Enew[i];
+            }
+            Mvalid += m[i];
+        }
+
+        forAll(fluidPhaseModels_, i)
+        {
+            phaseModel& phase = fluidPhaseModels_[i];
+            scalar Ei = Enew[i];
+            if (Mvalid > small && m[i] > phase.residualAlphaRho().value())
+            {
+                Ei += m[i]/Mvalid*R;
+            }
+            phase.alphaRhoE()[celli] = Ei;
+            phase.alphaRhoU()[celli] = m[i]*VI;
+            phase.U()[celli] = VI;
+        }
+    }
+
+    forAll(fluidPhaseModels_, i)
+    {
+        phaseModel& phase = fluidPhaseModels_[i];
+        phase.U().correctBoundaryConditions();
+        phase.alphaRhoU().boundaryFieldRef() ==
+            phase.alphaRho().boundaryField()*phase.U().boundaryField();
+    }
+}
+
+
 void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 {
     if (VRelaxation_ == NONE)
@@ -157,24 +254,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
     }
     else if (VRelaxation_ == INSTANT)
     {
-        volVectorField VI(fluidPhaseModels_[0].alphaRhoU());
-        volScalarField fluidRho(fluidPhaseModels_[0].alphaRho());
-        for (label i = 1; i < fluidPhaseModels_.size(); i++)
-        {
-            VI += fluidPhaseModels_[i].alphaRhoU();
-            fluidRho += fluidPhaseModels_[i].alphaRho();
-        }
-        fluidRho.max(1e-6);
-        VI /= fluidRho;
-
-        forAll(fluidPhaseModels_, i)
-        {
-            phaseModel& phase = fluidPhaseModels_[i];
-            phase.alphaRhoE() +=
-                0.5*phase.alphaRho()*(magSqr(VI) - magSqr(phase.U()));
-            phase.alphaRhoU() = phase.alphaRho()*VI;// - phase.U());
-            phase.U() = VI;
-        }
+        relaxFluidVelocitiesInstant();
     }
 
     UiTable Uis;
@@ -237,16 +317,31 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 }
             }
 
+            // Work of the drag force at the interfacial velocity averaged
+            // over the implicit update, so that the work done on a phase
+            // moving with the interfacial velocity equals the change of its
+            // kinetic energy (the dissipation goes to the other phase)
+            volVectorField Ui(*Uis[pair]);
+            {
+                const volVectorField U1(phase1.U());
+                const volVectorField U2(phase2.U());
+                phase1.U() = U1 + deltaM/alphaRho1;
+                phase2.U() = U2 - deltaM/alphaRho2;
+                Ui = 0.5*(Ui + interfacialVelocityModels_[pair]->UI());
+                phase1.U() = U1;
+                phase2.U() = U2;
+            }
+
             phase1.alphaRhoU() += deltaM;
             if (phase1.totalEnergy())
             {
-                phase1.alphaRhoE() += deltaM & (*Uis[pair]);
+                phase1.alphaRhoE() += deltaM & Ui;
             }
 
             phase2.alphaRhoU() -= deltaM;
             if (phase2.totalEnergy())
             {
-                phase2.alphaRhoE() -= deltaM & (*Uis[pair]);
+                phase2.alphaRhoE() -= deltaM & Ui;
             }
         }
 
@@ -1542,24 +1637,7 @@ void Foam::phaseSystem::solve()
 
     if (VRelaxation_ == INSTANT)
     {
-        volVectorField VI(fluidPhaseModels_[0].alphaRhoU());
-        volScalarField fluidRho(fluidPhaseModels_[0].alphaRho());
-        for (label i = 1; i < fluidPhaseModels_.size(); i++)
-        {
-            VI += fluidPhaseModels_[i].alphaRhoU();
-            fluidRho += fluidPhaseModels_[i].alphaRho();
-        }
-        fluidRho.max(1e-6);
-        VI /= fluidRho;
-
-        forAll(fluidPhaseModels_, i)
-        {
-            phaseModel& phase = fluidPhaseModels_[i];
-            volVectorField U(phase.alphaRhoU()/max(phase.alphaRho(), phase.residualAlphaRho()));
-            phase.alphaRhoE() += 0.5*phase.alphaRho()*magSqr(VI - U);
-            phase.alphaRhoU() = phase.alphaRho()*VI;
-            phase.U() = VI;
-        }
+        relaxFluidVelocitiesInstant();
     }
 
     if (PRelaxation_ == INSTANT)
