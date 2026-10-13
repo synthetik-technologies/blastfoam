@@ -1059,7 +1059,7 @@ def fig_stage3_spherical_multiphase():
         h1, l1 = ax4.get_legend_handles_labels()
         h2, l2 = ax4_twin.get_legend_handles_labels()
         ax4.legend(h1 + h2, l1 + l2, loc='lower right', fontsize=7.2, framealpha=0.9)
-        ax4.set_title(r'(d) Physical Al Diameter Regression ($\alpha_{\rm Al} \geq 10^{-4}$)')
+        ax4.set_title(r'(d) Al Diameter, Gas-Phase Oxidiser Only ($\alpha_{\rm Al} \geq 10^{-4}$)')
     else:
         # Fallback to velocity and alpha
         alpha_al_i = s20_i[:, 9]
