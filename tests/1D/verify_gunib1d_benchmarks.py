@@ -13,12 +13,24 @@ Exit Criteria:
 """
 
 import os
+import re
+import shutil
 import sys
 import subprocess
+import tempfile
 import numpy as np
 
-GUNIB1D_DIR = "/home/kevnor/Codes/gunIB1D"
-GUNIB1D_BIN = os.path.join(GUNIB1D_DIR, "build/gunIB1D")
+GUNIB1D_DIR = os.environ.get("GUNIB1D_DIR", "/home/kevnor/Codes/gunIB1D")
+GUNIB1D_BIN = next(
+    (
+        b for b in (
+            os.path.join(GUNIB1D_DIR, "build/gunIB1D"),
+            os.path.join(GUNIB1D_DIR, "gunIB1D"),
+        )
+        if os.path.isfile(b)
+    ),
+    os.path.join(GUNIB1D_DIR, "gunIB1D"),
+)
 BLASTFOAM_DIR = "/opt/OpenFOAM/blastfoam"
 TESTS_1D_DIR = os.path.join(BLASTFOAM_DIR, "tests/1D")
 
@@ -43,16 +55,50 @@ def run_command(cmd, cwd=None, timeout=300):
 
 
 def run_gunib1d(case_rel_path):
-    """Run gunIB1D on a verification case and return output directory."""
-    case_name = os.path.splitext(os.path.basename(case_rel_path))[0]
-    out_dir = os.path.join(GUNIB1D_DIR, "Output", case_name)
-
+    """Run gunIB1D on a case in a temporary directory and return the output
+    directory (gunIB1D writes to <cwd>/<output.folder>)."""
     info_file = os.path.join(GUNIB1D_DIR, case_rel_path)
+    with open(info_file) as f:
+        m = re.search(r'folder\s+"([^"]+)"', f.read())
+    folder = m.group(1) if m else os.path.splitext(os.path.basename(info_file))[0]
+
+    run_dir = tempfile.mkdtemp(prefix="gunib1d_")
     cmd = f"yes | {GUNIB1D_BIN} {info_file} --overwrite"
-    code, stdout, stderr = run_command(cmd, cwd=GUNIB1D_DIR, timeout=120)
+    code, stdout, stderr = run_command(cmd, cwd=run_dir, timeout=120)
     if code != 0:
-        raise RuntimeError(f"gunIB1D failed on {case_rel_path}: {stderr}")
-    return out_dir
+        shutil.rmtree(run_dir, ignore_errors=True)
+        raise RuntimeError(
+            f"gunIB1D failed on {case_rel_path} (exit code {code}): "
+            f"{(stderr or stdout).strip().splitlines()[-1:] }"
+        )
+    return os.path.join(run_dir, folder)
+
+
+def verify_houim3_reference(bf_case_dir):
+    """Houim 3 without gunIB1D: blastEulerFoam compaction wave speed against
+    the Houim (2016) reference and conservation of the particle mass."""
+    ref_u_shock = 185.25
+    x_bed = 0.030
+    bf_time_dir = get_latest_time_dir(bf_case_dir)
+    t = float(os.path.basename(bf_time_dir))
+    p = read_openfoam_field(os.path.join(bf_time_dir, "p"))
+    alpha_s = read_openfoam_field(os.path.join(bf_time_dir, "alpha.solid"))
+    alpha_rho_s = read_openfoam_field(os.path.join(bf_time_dir, "alphaRho.solid"))
+    n = len(p)
+    x = (np.arange(n) + 0.5)*0.06/n
+    front = x[np.where(p > 1.2e5)[0][-1]]
+    u_shock = (front - x_bed)/t
+    err = abs(u_shock - ref_u_shock)/ref_u_shock*100.0
+
+    # Initial bed: alpha_s = 0.4, rho_s = 1470 for x > 0.030 (setFieldsDict)
+    m0 = 0.4*1470.0*np.count_nonzero(x > x_bed)
+    dm = abs(np.sum(alpha_rho_s) - m0)/m0
+
+    print("Houim 3 (blastEulerFoam against the Houim 2016 reference):")
+    print(f"  Compaction wave speed : {u_shock:.2f} m/s (Ref: {ref_u_shock:.2f}, Err: {err:.2f}%)")
+    print(f"  Peak alpha_s          : {np.max(alpha_s):.4f} (gunIB1D reference 0.6133)")
+    print(f"  Particle mass change  : {dm:.3e}")
+    return (err < 2.0) and (dm < 1e-8)
 
 
 def run_blast_euler_case(case_name, expected_time_dir=None):
@@ -308,15 +354,29 @@ def main():
     print("Cross-solver verification: blastEulerFoam (multi-velocity) vs gunIB1D")
     print("=" * 80)
 
-    if not os.path.isfile(GUNIB1D_BIN):
-        print(f"Error: gunIB1D binary not found at {GUNIB1D_BIN}")
+    # Houim 3 against the published reference, independent of gunIB1D
+    print("\n--- 0. Houim 3 reference check (no gunIB1D) ---")
+    bf_case3 = run_blast_euler_case("gunib1d_houim3", expected_time_dir="9.99976e-05")
+    ref_passed = verify_houim3_reference(bf_case3)
+    print(f"  Status: {'PASSED' if ref_passed else 'FAILED'}")
+
+    try:
+        cross_solver(ref_passed)
+    except RuntimeError as e:
+        print(f"\n[FAILURE] {e}")
+        print("Cross-solver comparison not run; only the Houim 3 reference check above was evaluated.")
         sys.exit(1)
 
-    all_passed = True
+
+def cross_solver(ref_passed):
+    if not os.path.isfile(GUNIB1D_BIN):
+        raise RuntimeError(f"gunIB1D binary not found at {GUNIB1D_BIN}")
+
+    all_passed = ref_passed
 
     # 1. Houim 1
     print("\n--- 1. Houim 1 (Particle Curtain Pure Advection, Multi-Velocity) ---")
-    gun_out1 = run_gunib1d("Verification/Houim1.info")
+    gun_out1 = run_gunib1d("Validation/Houim1.info")
     bf_case1 = run_blast_euler_case("gunib1d_houim1", expected_time_dir="0.01")
     pass1, m1 = verify_houim1(gun_out1, bf_case1)
     if not pass1:
@@ -325,7 +385,7 @@ def main():
 
     # 2. Houim 2
     print("\n--- 2. Houim 2 (Two-Phase Granular Shock Tube, Multi-Velocity Drag) ---")
-    gun_out2 = run_gunib1d("Verification/Houim2.info")
+    gun_out2 = run_gunib1d("Validation/Houim2.info")
     bf_case2 = run_blast_euler_case("gunib1d_houim2", expected_time_dir="0.000184037")
     pass2, m2 = verify_houim2(gun_out2, bf_case2)
     if not pass2:
@@ -334,8 +394,8 @@ def main():
 
     # 3. Houim 3
     print("\n--- 3. Houim 3 (Dense Granular Compaction Shock Interaction) ---")
-    gun_out3 = run_gunib1d("Verification/Houim3.info")
-    bf_case3 = run_blast_euler_case("gunib1d_houim3", expected_time_dir="9.99834e-05")
+    bf_case3 = run_blast_euler_case("gunib1d_houim3", expected_time_dir="9.99976e-05")
+    gun_out3 = run_gunib1d("Validation/Houim3.info")
     pass3, m3 = verify_houim3(gun_out3, bf_case3)
     if not pass3:
         all_passed = False
