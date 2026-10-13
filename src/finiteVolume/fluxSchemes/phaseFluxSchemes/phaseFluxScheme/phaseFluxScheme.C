@@ -53,7 +53,20 @@ Foam::phaseFluxScheme::phaseFluxScheme
             "fluxSchemes"
         ).subDict(phaseName_)
     ),
-    residualAlpha_(residualAlpha)
+    residualAlpha_(residualAlpha),
+    alphaTrace_(0),
+    rhoMix_(nullptr),
+    cMix_(nullptr),
+    UMix_(nullptr),
+    pMix_(nullptr),
+    rhoMixOwn_(0),
+    rhoMixNei_(0),
+    cMixOwn_(0),
+    cMixNei_(0),
+    UMixOwn_(Zero),
+    UMixNei_(Zero),
+    pMixOwn_(0),
+    pMixNei_(0)
 {}
 
 
@@ -164,6 +177,85 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::alphaf() const
         << abort(FatalError);
 
     return alphaf_;
+}
+
+
+void Foam::phaseFluxScheme::setMixture
+(
+    const scalar alphaTrace,
+    const volScalarField& rhoMix,
+    const volScalarField& cMix,
+    const volVectorField& UMix,
+    const volScalarField& pMix
+)
+{
+    alphaTrace_ = alphaTrace;
+    rhoMix_ = &rhoMix;
+    cMix_ = &cMix;
+    UMix_ = &UMix;
+    pMix_ = &pMix;
+}
+
+
+void Foam::phaseFluxScheme::setFaceMixture
+(
+    const label facei,
+    const label patchi
+)
+{
+    if (!mixtureValid())
+    {
+        return;
+    }
+
+    if (patchi < 0)
+    {
+        const label own = mesh_.owner()[facei];
+        const label nei = mesh_.neighbour()[facei];
+        rhoMixOwn_ = (*rhoMix_)[own];
+        rhoMixNei_ = (*rhoMix_)[nei];
+        cMixOwn_ = (*cMix_)[own];
+        cMixNei_ = (*cMix_)[nei];
+        UMixOwn_ = (*UMix_)[own];
+        UMixNei_ = (*UMix_)[nei];
+        pMixOwn_ = (*pMix_)[own];
+        pMixNei_ = (*pMix_)[nei];
+        return;
+    }
+
+    const label own = mesh_.boundary()[patchi].faceCells()[facei];
+    rhoMixOwn_ = (*rhoMix_)[own];
+    cMixOwn_ = (*cMix_)[own];
+    UMixOwn_ = (*UMix_)[own];
+    pMixOwn_ = (*pMix_)[own];
+    rhoMixNei_ = rhoMixPatch_[facei];
+    cMixNei_ = cMixPatch_[facei];
+    UMixNei_ = UMixPatch_[facei];
+    pMixNei_ = pMixPatch_[facei];
+}
+
+
+void Foam::phaseFluxScheme::setPatchMixture(const label patchi)
+{
+    if (!mixtureValid())
+    {
+        return;
+    }
+
+    if (rhoMix_->boundaryField()[patchi].coupled())
+    {
+        rhoMixPatch_ = rhoMix_->boundaryField()[patchi].patchNeighbourField();
+        cMixPatch_ = cMix_->boundaryField()[patchi].patchNeighbourField();
+        UMixPatch_ = UMix_->boundaryField()[patchi].patchNeighbourField();
+        pMixPatch_ = pMix_->boundaryField()[patchi].patchNeighbourField();
+    }
+    else
+    {
+        rhoMixPatch_ = rhoMix_->boundaryField()[patchi];
+        cMixPatch_ = cMix_->boundaryField()[patchi];
+        UMixPatch_ = UMix_->boundaryField()[patchi];
+        pMixPatch_ = pMix_->boundaryField()[patchi];
+    }
 }
 
 
@@ -286,6 +378,7 @@ void Foam::phaseFluxScheme::update
             alphaRhoEPhi[facei] = Zero;
             continue;
         }
+        setFaceMixture(facei);
         calculateFluxes
         (
             alphaOwn[facei], alphaNei[facei],
@@ -305,6 +398,7 @@ void Foam::phaseFluxScheme::update
 
     forAll(U.boundaryField(), patchi)
     {
+        setPatchMixture(patchi);
         forAll(U.boundaryField()[patchi], facei)
         {
             if
@@ -319,6 +413,7 @@ void Foam::phaseFluxScheme::update
                 alphaRhoEPhi.boundaryFieldRef()[patchi][facei] = Zero;
                 continue;
             }
+            setFaceMixture(facei, patchi);
             calculateFluxes
             (
                 alphaOwn.boundaryField()[patchi][facei],

@@ -725,6 +725,40 @@ void Foam::phaseSystem::calcMixtureVariables()
     }
     sumAlpha.max(1e-12);
     p_ /= sumAlpha;
+
+    if (alphaTrace_ > 0)
+    {
+        volScalarField sumAlphaRhoCSqr
+        (
+            volScalarField::New
+            (
+                "sumAlphaRhoCSqr",
+                mesh_,
+                dimensionedScalar(dimDensity*sqr(dimVelocity), 0)
+            )
+        );
+        volScalarField sumAlphaRhoFluid
+        (
+            volScalarField::New
+            (
+                "sumAlphaRhoFluid",
+                mesh_,
+                dimensionedScalar(dimDensity, 0)
+            )
+        );
+        forAll(fluidPhaseModels_, phasei)
+        {
+            const phaseModel& phase(fluidPhaseModels_[phasei]);
+            const volScalarField alphaRhoActive
+            (
+                phase.alphaRho()*pos(phase - phase.residualAlpha())
+            );
+            sumAlphaRhoCSqr += alphaRhoActive*sqr(phase.speedOfSound());
+            sumAlphaRhoFluid += alphaRhoActive;
+        }
+        sumAlphaRhoFluid.max(dimensionedScalar(dimDensity, small));
+        cMix_ = sqrt(sumAlphaRhoCSqr/sumAlphaRhoFluid);
+    }
     sumAlphaRho.max(dimensionedScalar("0", dimDensity, 1e-12));
     kappa_ = sumAlphaRhoKappa/sumAlphaRho;
 }
@@ -864,6 +898,18 @@ Foam::phaseSystem::phaseSystem
         )
     ),
 
+    cMix_
+    (
+        IOobject
+        (
+            "cMix",
+            mesh.time().name(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimVelocity, 0.0)
+    ),
+
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
 
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
@@ -879,7 +925,8 @@ Foam::phaseSystem::phaseSystem
       : MODEL
     ),
     PRelaxation_(NONE),
-    alphaDilute_(lookupOrDefault<scalar>("alphaDilute", 0.01))
+    alphaDilute_(lookupOrDefault<scalar>("alphaDilute", 0.01)),
+    alphaTrace_(lookupOrDefault<scalar>("alphaTrace", 0))
 {
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
@@ -944,6 +991,16 @@ Foam::phaseSystem::phaseSystem
             (
                 slavePhaseModels_.size() - 1,
                 &phaseModels_[phasei]
+            );
+        }
+    }
+    if (alphaTrace_ > 0 && fluidPhaseModels_.size() > 1)
+    {
+        forAll(fluidPhaseModels_, i)
+        {
+            fluidPhaseModels_[i].flux().setMixture
+            (
+                alphaTrace_, rho_, cMix_, U_, p_
             );
         }
     }

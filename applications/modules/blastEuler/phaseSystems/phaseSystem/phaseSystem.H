@@ -270,6 +270,10 @@ protected:
         //- Mixture thermal diffusivity
         volScalarField kappa_;
 
+        //- Frozen mixture speed of sound of the fluid phases,
+        //  sqrt(sum(alphaRho_k c_k^2)/sum(alphaRho_k))
+        volScalarField cMix_;
+
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
@@ -307,6 +311,11 @@ protected:
             //  pressure equilibrium with the carrier fluid phase
             //  (alphaDilute, default 0.01; 0 disables)
             scalar alphaDilute_;
+
+            //- Volume fraction below which a side of a face takes the
+            //  mixture impedance in the HLLC flux of a fluid phase
+            //  (alphaTrace, default 0: off)
+            scalar alphaTrace_;
 
             //- Blending methods
             blendingMethodTable blendingMethods_;

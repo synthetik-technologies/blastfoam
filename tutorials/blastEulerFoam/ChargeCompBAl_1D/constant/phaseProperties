@@ -18,6 +18,10 @@ FoamFile
 // Volume (pressure) equilibration of all non-carrier fluid phases
 alphaDilute     1;
 
+// Riemann problems of a fluid phase that is a trace on one side of a face
+// (alpha < alphaTrace) use the mixture impedance on that side
+alphaTrace      1e-3;
+
 phases          ( Al compBAl gas );
 
 transportPhaseDensity true;

@@ -162,24 +162,59 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
+    // Impedance states for the wave speeds and the star pressure. Where the
+    // phase is a trace on a side (alpha < alphaTrace) that side takes the
+    // mixture state, blended linearly in alpha/alphaTrace; at alpha <= 1e-6
+    // the mixture state replaces the vacuum state.
+    scalar rhoIOwn = rhoOwn, rhoINei = rhoNei;
+    scalar cIOwn = cOwn, cINei = cNei;
+    scalar pIOwn = pOwn, pINei = pNei;
+    scalar UvIOwn = UvOwn, UvINei = UvNei;
+    const bool traceFlux = mixtureValid();
+    if (traceFlux)
+    {
+        const scalar wOwn =
+            ownValid ? min(alphaOwn/alphaTrace_, 1.0) : 0.0;
+        const scalar wNei =
+            neiValid ? min(alphaNei/alphaTrace_, 1.0) : 0.0;
+        rhoIOwn = wOwn*rhoOwn + (1 - wOwn)*rhoMixOwn_;
+        rhoINei = wNei*rhoNei + (1 - wNei)*rhoMixNei_;
+        cIOwn = wOwn*cOwn + (1 - wOwn)*cMixOwn_;
+        cINei = wNei*cNei + (1 - wNei)*cMixNei_;
+        pIOwn = wOwn*pOwn + (1 - wOwn)*pMixOwn_;
+        pINei = wNei*pNei + (1 - wNei)*pMixNei_;
+        UvIOwn = wOwn*UvOwn + (1 - wOwn)*((UMixOwn_ & normal) - vMesh);
+        UvINei = wNei*UvNei + (1 - wNei)*((UMixNei_ & normal) - vMesh);
+    }
+
     // scalar SOwn(UvTilde - cTilde);
     // scalar SNei(UvTilde + cTilde);
-    scalar SOwn(min(UvOwn - cOwn, UvNei - cNei));
-    scalar SNei(max(UvOwn + cOwn, UvNei + cNei));
+    scalar SOwn(min(UvIOwn - cIOwn, UvINei - cINei));
+    scalar SNei(max(UvIOwn + cIOwn, UvINei + cINei));
 
-    const scalar denom = rhoOwn*(SOwn - UvOwn) - rhoNei*(SNei - UvNei);
-    scalar SStar = 0.5*(UvOwn + UvNei);
-    if (mag(denom) > 1e-8 && (cOwn > 1e-4 || cNei > 1e-4 || mag(pNei - pOwn) > 1e-4))
+    const scalar denom = rhoIOwn*(SOwn - UvIOwn) - rhoINei*(SNei - UvINei);
+    scalar SStar = 0.5*(UvIOwn + UvINei);
+    if
+    (
+        mag(denom) > 1e-8
+     && (cIOwn > 1e-4 || cINei > 1e-4 || mag(pINei - pIOwn) > 1e-4)
+    )
     {
         SStar =
             (
-                pNei - pOwn
-              + rhoOwn*UvOwn*(SOwn - UvOwn)
-              - rhoNei*UvNei*(SNei - UvNei)
+                pINei - pIOwn
+              + rhoIOwn*UvIOwn*(SOwn - UvIOwn)
+              - rhoINei*UvINei*(SNei - UvINei)
             )/denom;
     }
     scalar pStarOwn(pOwn + rhoOwn*(SOwn - UvOwn)*(SStar - UvOwn));
     scalar pStarNei(pNei + rhoNei*(SNei - UvNei)*(SStar - UvNei));
+    if (traceFlux)
+    {
+        // Common star pressure of the impedance states
+        pStarOwn = pIOwn + rhoIOwn*(SOwn - UvIOwn)*(SStar - UvIOwn);
+        pStarNei = pStarOwn;
+    }
 
     this->save(facei, patchi, SOwn, SOwn_);
     this->save(facei, patchi, SNei, SNei_);
@@ -237,8 +272,17 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
         scalar rhoEStar =
             f*rhoOwn*EOwn + (pStarOwn*SStar - pOwn*UvOwn)/stabilise(SOwn - UvOwn, small);
 
-        rhoUPhi = rhoUPhiOwn + SOwn*(rhoUStar - rhoUOwn);
-        rhoEPhi = rhoEPhiOwn + SOwn*(rhoEStar - rhoEOwn);
+        if (traceFlux)
+        {
+            // Star flux with the common star pressure
+            rhoUPhi = rhoUStar*SStar + pStarOwn*normal;
+            rhoEPhi = (rhoEStar + pStarOwn)*SStar;
+        }
+        else
+        {
+            rhoUPhi = rhoUPhiOwn + SOwn*(rhoUStar - rhoUOwn);
+            rhoEPhi = rhoEPhiOwn + SOwn*(rhoEStar - rhoEOwn);
+        }
 
         p = pStarOwn;
         this->save(facei, patchi, UOwn - (UvOwn - phi)*normal, Uf_);
@@ -254,8 +298,16 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
         scalar rhoEStar =
             f*rhoNei*ENei + (pStarNei*SStar - pNei*UvNei)/stabilise(SNei - UvNei, small);
 
-        rhoUPhi = rhoUPhiNei + SNei*(rhoUStar - rhoUNei);
-        rhoEPhi = rhoEPhiNei + SNei*(rhoEStar - rhoENei);
+        if (traceFlux)
+        {
+            rhoUPhi = rhoUStar*SStar + pStarNei*normal;
+            rhoEPhi = (rhoEStar + pStarNei)*SStar;
+        }
+        else
+        {
+            rhoUPhi = rhoUPhiNei + SNei*(rhoUStar - rhoUNei);
+            rhoEPhi = rhoEPhiNei + SNei*(rhoEStar - rhoENei);
+        }
 
         p = pStarNei;
         this->save(facei, patchi, UNei - (UvNei - phi)*normal, Uf_);
