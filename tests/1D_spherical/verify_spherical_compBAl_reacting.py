@@ -43,8 +43,32 @@ def energy_drift(case_dir, t_start=8e-6):
     """Relative change of the total energy of all phases (fluid total energy,
     Al thermal, kinetic and granular energy) from t_start to the last write
     before the shock reaches the outer boundary (closed domain). The
-    programmed burn releases energy until about 7 us."""
+    programmed burn releases energy until about 7 us.
+
+    The phase energies are sensible energies; the gas chemistry converts
+    chemical into sensible energy (heat release). The conserved energy adds
+    the formation enthalpy of the gas, sum(alpha*rho*Y_k*h_f,k), and
+    subtracts that of the products mass transferred into the gas (gas mass
+    gain minus the Al burnt, times the formation enthalpy of the
+    pressurePhaseChange target fractions). The change is relative to the
+    total (sensible) energy."""
     import re
+
+    # Formation enthalpies [J/kg] of the gas species (JANAF, at 298.15 K)
+    RU = 8314.462618
+    txt = open(os.path.join(case_dir, "constant", "thermo.compressibleGas")).read()
+    species = re.search(r"species\s*\((.*?)\);", txt, re.S).group(1).split()
+    hf = {}
+    for sp in species:
+        blk = txt[txt.index("\n" + sp + "\n"):][:2000]
+        W = float(re.search(r"molWeight\s+([0-9.eE+-]+)", blk).group(1))
+        a = [float(x) for x in re.search(r"lowCpCoeffs\s*\(([^)]*)\)", blk).group(1).split()]
+        T = 298.15
+        hf[sp] = RU/W*((((((a[4]/5*T + a[3]/4)*T + a[2]/3)*T + a[1]/2)*T + a[0])*T + a[5]))
+    fv = open(os.path.join(case_dir, "constant", "fvModels")).read()
+    tf = re.search(r"targetFractions\s*\{(.*?)\}", fv, re.S).group(1)
+    f = {m.group(1): float(m.group(2)) for m in re.finditer(r"(\S+)\s+([0-9.eE+-]+);", tf)}
+    hprod = sum(v*hf[k] for k, v in f.items())/sum(f.values())
 
     def field(t, name, n=400):
         text = open(os.path.join(case_dir, t, name)).read()
@@ -70,8 +94,13 @@ def energy_drift(case_dir, t_start=8e-6):
         e = sum(field(t, f"alphaRhoE.{p}") @ V for p in ("compBAl", "gas", "Al"))
         e += (0.5*field(t, "alphaRho.Al")*field(t, "U.Al")**2) @ V
         e += field(t, "alphaRhoPTE.Al") @ V
-        E.append((float(t), e))
-    return E[-1][0], E[-1][1]/E[0][1] - 1
+        alphaRhoGas = field(t, "alphaRho.gas")
+        echem = sum((alphaRhoGas*field(t, f"{k}.gas")) @ V*hf[k] for k in species)
+        mTransfer = alphaRhoGas @ V + field(t, "alphaRho.Al") @ V
+        E.append((float(t), e, echem, mTransfer))
+    t1, e1, c1, m1 = E[-1]
+    t0, e0, c0, m0 = E[0]
+    return t1, (e1 + c1 - (m1 - m0)*hprod - e0 - c0)/e0
 
 def run_case_if_needed():
     if not os.path.isfile(PROBE_FILE):

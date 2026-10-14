@@ -291,6 +291,14 @@ def main():
             msg = "blastChemicalEquilibrium (UV) vs EuDetCode and an independent solution: air, Comp-B/Al products (with C(gr), Al2O3(s)) and mixtures, 2500 - 20 000 K" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Chemical Equilibrium, UV (Phase C3)", 1, dur, passed, msg))
 
+            # Local chemical equilibrium in the gas chemistry (Phase C4)
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_equilibrium_chemistry.py"
+            )
+            passed = (code == 0)
+            msg = "Equilibrium above Teq in the chemistry model (blastFoam 0D: composition, T, mass, elements, energy to round-off; blastEulerFoam 0D transfer: energy incl. formation enthalpy to 4e-7)" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("Equilibrium Gas Chemistry (Phase C4)", 1, dur, passed, msg))
+
             # 4. 1D verification case
             results.append(run_openfoam_case(
                 "tutorials/blastFoam/pressurePhaseChangeTest",

@@ -111,3 +111,4 @@ doc/Doxygen/DTAGS
 tests/**/*.npz
 tests/0D/nasa9_thermo/
 tests/0D/equilibrium/
+tests/0D/equilibrium_chemistry/

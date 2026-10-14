@@ -24,9 +24,12 @@ chemistry           on;
 
 initialChemicalTimeStep 1e-08;
 
-// No reactions above this temperature (one-step mechanism without
-// dissociation; shocked air reaches the thermo limit)
-TreactMax       6000;
+// Local chemical equilibrium above Teq (at the cell's density and internal
+// energy); the one-step finite-rate mechanism below
+equilibrium
+{
+    Teq             2500;
+}
 
 EulerImplicitCoeffs
 {

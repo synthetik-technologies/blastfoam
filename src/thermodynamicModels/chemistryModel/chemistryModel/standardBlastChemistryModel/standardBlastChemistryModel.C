@@ -48,10 +48,10 @@ standardBlastChemistryModel
     nSpecie_(Y_.size()),
     nReaction_(reactions_.size()),
     Treact_(blastChemistryModel::template lookupOrDefault<scalar>("Treact", 0)),
-    TreactMax_
-    (
-        blastChemistryModel::template lookupOrDefault<scalar>("TreactMax", great)
-    ),
+    equilibrium_(),
+    Teq_(great),
+    nEquilibrium_(0),
+    nEquilibriumFailed_(0),
     RR_(nSpecie_),
     c_(nSpecie_),
     dcdt_(nSpecie_),
@@ -82,6 +82,32 @@ standardBlastChemistryModel
 
     Info<< "standardBlastChemistryModel: Number of species = " << nSpecie_
         << " and reactions = " << nReaction_ << endl;
+
+    if (blastChemistryModel::found("TreactMax"))
+    {
+        FatalIOErrorInFunction(*this)
+            << "TreactMax is no longer supported; use local chemical "
+            << "equilibrium above Teq instead:" << nl
+            << "    equilibrium { Teq 2500; }" << exit(FatalIOError);
+    }
+
+    if (blastChemistryModel::isDict("equilibrium"))
+    {
+        const dictionary& eqDict =
+            blastChemistryModel::subDict("equilibrium");
+        Teq_ = eqDict.lookup<scalar>("Teq");
+        equilibrium_.reset
+        (
+            new blastChemicalEquilibrium<ThermoType>
+            (
+                mixture_.species(),
+                specieThermos_,
+                eqDict
+            )
+        );
+        Info<< "    Local chemical equilibrium above Teq = " << Teq_
+            << " K, elements " << equilibrium_->elements() << endl;
+    }
 }
 
 
@@ -124,7 +150,10 @@ void Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::derivatives
     scalarField& dcdt
 ) const
 {
-    const scalar T = c[nSpecie_];
+    // Rates and heat capacities at a temperature bounded below: trial
+    // states of the stiff integrators can have T <= 0, where the Arrhenius
+    // factor exp(-Ta/T) overflows
+    const scalar T = max(c[nSpecie_], 200.0);
     const scalar p = c[nSpecie_ + 1];
 
     forAll(c_, i)
@@ -150,7 +179,7 @@ void Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::derivatives
         ccp += c_[i]*specieThermos_[i].cp(rho, e, T);
         dTdt -= dcdt[i]*specieThermos_[i].ha(rho, e, T);
     }
-    dTdt /= ccp;
+    dTdt /= max(ccp, vSmall);
 
     // dp/dt = 0 (pressure is assumed constant)
 }
@@ -166,7 +195,10 @@ void Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::jacobian
     scalarSquareMatrix& J
 ) const
 {
-    const scalar T = c[nSpecie_];
+    // Rates and heat capacities at a temperature bounded below: trial
+    // states of the stiff integrators can have T <= 0, where the Arrhenius
+    // factor exp(-Ta/T) overflows
+    const scalar T = max(c[nSpecie_], 200.0);
     const scalar p = c[nSpecie_ + 1];
 
     forAll(c_, i)
@@ -204,7 +236,7 @@ void Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::jacobian
         dccpdT += c_[i]*specieThermos_[i].dcpdT(rho, e, T);
         dTdt -= dcdt[i]*has_[i];
     }
-    dTdt /= ccp;
+    dTdt /= max(ccp, vSmall);
 
 
     // dp/dt = 0 (pressure is assumed constant)
@@ -485,16 +517,74 @@ Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::solve
     reactionEvaluationScope scope(*this);
 
     scalarField c0(nSpecie_);
+    scalarField Yeq(nSpecie_);
+    nEquilibrium_ = 0;
+    nEquilibriumFailed_ = 0;
 
     forAll(rho0, celli)
     {
         scalar Ti = T[celli];
 
-        if
-        (
-            Ti > Treact_ && Ti < TreactMax_
-         && mixture_.alphaRho()[celli] > SMALL
-        )
+        if (mixture_.alphaRho()[celli] <= SMALL)
+        {
+            for (label i=0; i<nSpecie_; i++)
+            {
+                RR_[i][celli] = 0;
+            }
+            continue;
+        }
+
+        // Local chemical equilibrium at the cell's density and absolute
+        // internal energy (conserves mass, elements and energy). Above Teq
+        // the composition is either set to equilibrium or kept frozen (if
+        // the solve fails, or if the equilibrium mixture is outside the
+        // range of its equation of state, e.g. beyond the Abel-Nobel
+        // covolume, where the energy cannot be inverted for T); the stiff
+        // finite-rate mechanism is not used above Teq
+        if (equilibrium_.valid() && Ti > Teq_)
+        {
+            const scalar rhoi = rho0[celli];
+            for (label i=0; i<nSpecie_; i++)
+            {
+                Yeq[i] = Y_[i].oldTime()[celli];
+            }
+            const scalarField Y0(Yeq);
+            const scalar ea = equilibrium_->Ea(Y0, rhoi, Ti);
+            scalar Tnew = Ti;
+            bool accept = equilibrium_->solveUV(rhoi, ea, Yeq, Tnew);
+            if (accept)
+            {
+                // solveUV returns fractions summing to one; keep the mass
+                Yeq *= sum(Y0);
+
+                ThermoType mix("mix", (Yeq[0]/sum(Yeq))*specieThermos_[0]);
+                for (label i=1; i<nSpecie_; i++)
+                {
+                    mix += (Yeq[i]/sum(Yeq))*specieThermos_[i];
+                }
+                accept = mix.p(rhoi, 0, Tnew, false) > 0;
+            }
+
+            if (accept)
+            {
+                for (label i=0; i<nSpecie_; i++)
+                {
+                    RR_[i][celli] = rhoi*(Yeq[i] - Y0[i])/deltaT[celli];
+                }
+                nEquilibrium_++;
+            }
+            else
+            {
+                for (label i=0; i<nSpecie_; i++)
+                {
+                    RR_[i][celli] = 0;
+                }
+                nEquilibriumFailed_++;
+            }
+            continue;
+        }
+
+        if (Ti > Treact_)
         {
             const scalar rhoi = rho0[celli];
             scalar pi = this->mixture().cellp(celli);
@@ -533,6 +623,23 @@ Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::solve
             {
                 RR_[i][celli] = 0;
             }
+        }
+    }
+
+    if (equilibrium_.valid())
+    {
+        const label nEq = returnReduce(nEquilibrium_, sumOp<label>());
+        const label nFail = returnReduce(nEquilibriumFailed_, sumOp<label>());
+        if (nEq + nFail > 0)
+        {
+            Info<< "Chemical equilibrium (T > " << Teq_ << " K): " << nEq
+                << " cells";
+            if (nFail > 0)
+            {
+                Info<< ", " << nFail << " frozen (not converged or outside"
+                    << " the equation of state)";
+            }
+            Info<< endl;
         }
     }
 
