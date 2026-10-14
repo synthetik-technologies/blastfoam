@@ -159,11 +159,13 @@ def gas_isentrope(pof, r, v_end, n=400):
     R, b = r["R_mix"], r["b_mix"]
 
     def cv(T):
-        # JANAF c_p - R of the mixture (c_v of the Abel-Nobel gas)
+        # c_p - R of the mixture (c_v of the Abel-Nobel gas), from the
+        # species enthalpies (JANAF or nasa9)
         c = 0.0
+        dT = 1e-3*T
         for sp, y in Y.items():
-            a, Rs, _, _ = pof.species_data(gas, sp, T)
-            c += y*Rs*(a[0] + T*(a[1] + T*(a[2] + T*(a[3] + T*a[4]))) - 1.0)
+            ha, Rs, _, _ = pof.species_data(gas, sp, T)
+            c += y*((ha(T + dT) - ha(T - dT))/(2*dT) - Rs)
         return c
 
     vs = np.geomspace(r["v_t"], v_end, n)

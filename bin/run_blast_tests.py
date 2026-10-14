@@ -300,8 +300,9 @@ def main():
             results.append(TestResult("Equilibrium Gas Chemistry (Phase C4)", 1, dur, passed, msg))
 
             # Finite-rate gas mechanism below Teq vs GRI-3.0 (Phase C6)
+            # 18 blastFoam/Cantera runs, about 20 min
             code, stdout, stderr, dur = run_command(
-                f"{sys.executable} tests/0D/verify_gas_kinetics.py"
+                f"{sys.executable} tests/0D/verify_gas_kinetics.py", timeout=3600
             )
             passed = (code == 0)
             msg = "GRI-3.0 H2/O2/CO/C1 subset (reversible, nasa9) in blastFoam 0D vs full GRI-3.0 (Cantera): products/air, 1200-2000 K, 1-50 bar; ignition within 25%, burnout T within 1%" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"

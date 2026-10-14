@@ -18,14 +18,45 @@ type            reacting;
 thermoType
 {
     transport       sutherland;
-    thermo          janaf;
+    thermo          nasa9;
     equationOfState AbelNobel;
 }
 
-#include "thermo.compressibleGas"
-// Decode temperature cap. Above the JANAF fit range (5000 K) the gas
-// properties are extrapolated with constant Cp (no dissociation), up to
-// the extrapolation limit of 10 x 5000 K
+// NASA-9 species data to 20 000 K (utilities/thermo_fitter/nasa9_species.py,
+// b and transport from ../ChargeCompBAl_1D_spherical_reacting/constant/
+// thermo.compressibleGas); local equilibrium above Teq, GRI-3.0 H2/O2/CO/C1
+// mechanism below (constant/chemistryProperties.gas, reactions.gas)
+species
+(
+    O2
+    N2
+    CO
+    H2O
+    CO2
+    NH3
+    CH4
+    C2H6
+    "C(gr)"
+    Al
+    "Al2O3(s)"
+    H2
+    O
+    N
+    NO
+    H
+    OH
+    AlO
+    HO2
+    H2O2
+    CH3
+    CH2O
+    HCO
+    CH3O
+);
+
+#include "thermo.nasa9Gas"
+// Decode temperature cap (the nasa9 data end at 20 000 K and are
+// extrapolated with constant Cp above)
 THigh           50000;
 
 defaultSpecie   N2;

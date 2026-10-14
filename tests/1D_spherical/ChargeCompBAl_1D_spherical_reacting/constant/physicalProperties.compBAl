@@ -70,8 +70,8 @@ products
         Cv              1450;
         T_CJ            3844.39;
         rho_CJ          2150.55;
-        omegaT          0.371065; // T_s through T_CJ and the gas-EOS T at transfer
-        E0              -503470.78;
+        omegaT          0.371066; // T_s through T_CJ and the gas-EOS T at transfer
+        E0              -507473.38;
     }
     specie
     {
@@ -92,8 +92,8 @@ activationModel nodeProgrammed;
 initiation
 {
     // Detonation energy release; the products E0 is on the gas-phase
-    // (JANAF) reference, see ChargeCompBAl_1D_spherical_alCombustion
-    e0              5.0174e6;
+    // (nasa9) reference, see ChargeCompBAl_1D_spherical_alCombustion
+    e0              5.0134e6;
     points          ( ( 0 0 0 ) );
     vDet            7154.23;
     Pcj             2.01512e+10;

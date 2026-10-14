@@ -56,8 +56,8 @@ products {
     Cv 1450;
     T_CJ 3844.39;
     rho_CJ 2150.55;
-    omegaT 0.371065; // T_s through T_CJ and the gas-EOS T at transfer
-    E0 -503470.78;
+    omegaT 0.371066; // T_s through T_CJ and the gas-EOS T at transfer
+    E0 -507473.38;
   }
   specie { molWeight 24.02; }
   transport {
@@ -72,11 +72,11 @@ products {
 activationModel nodeProgrammed;
 initiation {
   // Detonation energy release (read here; a top-level e0 is ignored).
-  // The products E0 is on the gas-phase (JANAF) reference from the 100 bar
+  // The products E0 is on the gas-phase (nasa9) reference from the 100 bar
   // phase transfer match, so e0 must lift the reactants onto it:
   // e0 = e_s(V_CJ) - Cv_r*T0 - 0.5*p_CJ*(1/rho0 - 1/rho_CJ)
-  //    = 6.8314e6 - 0.2966e6 - 1.5174e6 J/kg
-  e0 5.0174e6;
+  //    = 6.8274e6 - 0.2966e6 - 1.5174e6 J/kg
+  e0 5.0134e6;
   points ((0 0 0));
   vDet 7154.23;
   Pcj 2.01512e+10;

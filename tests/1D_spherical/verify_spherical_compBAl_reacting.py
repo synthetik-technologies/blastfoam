@@ -54,17 +54,16 @@ def energy_drift(case_dir, t_start=8e-6):
     total (sensible) energy."""
     import re
 
-    # Formation enthalpies [J/kg] of the gas species (JANAF, at 298.15 K)
-    RU = 8314.462618
-    txt = open(os.path.join(case_dir, "constant", "thermo.compressibleGas")).read()
-    species = re.search(r"species\s*\((.*?)\);", txt, re.S).group(1).split()
-    hf = {}
-    for sp in species:
-        blk = txt[txt.index("\n" + sp + "\n"):][:2000]
-        W = float(re.search(r"molWeight\s+([0-9.eE+-]+)", blk).group(1))
-        a = [float(x) for x in re.search(r"lowCpCoeffs\s*\(([^)]*)\)", blk).group(1).split()]
-        T = 298.15
-        hf[sp] = RU/W*((((((a[4]/5*T + a[3]/4)*T + a[2]/3)*T + a[1]/2)*T + a[0])*T + a[5]))
+    # Formation enthalpies [J/kg] of the gas species at 298.15 K, from the
+    # gas thermo of the case (JANAF or nasa9)
+    sys.path.insert(0, "/opt/OpenFOAM/blastfoam/utilities/thermo_fitter")
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "..", "..", "utilities", "thermo_fitter"))
+    import products_only_fit as pof
+    import compute_omegaT as co
+    gas = co.phase_dict(os.path.join(case_dir, "constant"), "gas")
+    species = [x.strip('"') for x in gas["species"] if x not in "()"]
+    hf = {sp: pof.species_data(gas, sp, 298.15)[0](298.15) for sp in species}
     fv = open(os.path.join(case_dir, "constant", "fvModels")).read()
     tf = re.search(r"targetFractions\s*\{(.*?)\}", fv, re.S).group(1)
     f = {m.group(1): float(m.group(2)) for m in re.finditer(r"(\S+)\s+([0-9.eE+-]+);", tf)}

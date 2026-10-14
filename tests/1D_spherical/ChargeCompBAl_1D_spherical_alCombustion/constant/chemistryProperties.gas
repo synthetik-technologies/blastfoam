@@ -25,7 +25,7 @@ chemistry           on;
 initialChemicalTimeStep 1e-08;
 
 // Local chemical equilibrium above Teq (at the cell's density and internal
-// energy); the one-step finite-rate mechanism below
+// energy); the GRI-3.0 H2/O2/CO/C1 mechanism (reactions.gas) below
 equilibrium
 {
     Teq             2500;

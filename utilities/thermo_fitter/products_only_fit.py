@@ -81,27 +81,56 @@ def parse_eudet(directory):
 
 
 def species_data(gas, sp, T):
+    """(Ha(T) function [J/kg], R, b, W) of a gas species; JANAF (Tcommon,
+    low/highCpCoeffs) or nasa9 (Tswitch, coeffs) thermodynamics, both with
+    constant Cp outside the fit range, as in blastFoam."""
     d = gas[sp]
     W = co.scalar(d["specie"]["molWeight"])
+    Rs = R_UNIVERSAL/W
     th = d["thermodynamics"]
-    hi = T > co.scalar(th["Tcommon"])
-    a = [float(x) for x in th["highCpCoeffs" if hi else "lowCpCoeffs"]
-         if x not in "()"]
     b = co.scalar(d.get("equationOfState", {}).get("b", [0.0]))
-    return a, R_UNIVERSAL/W, b, W
+    if "Tswitch" in th:
+        Ts = [float(x) for x in th["Tswitch"] if x not in "()"]
+        rows, cur = [], None
+        for x in th["coeffs"][1:-1]:
+            if x == "(":
+                cur = []
+            elif x == ")":
+                rows.append(cur)
+            else:
+                cur.append(float(x))
 
+        def fit(Tf):
+            a = rows[-1]
+            for i in range(len(rows) - 1):
+                if Tf < Ts[i + 1]:
+                    a = rows[i]
+                    break
+            cp = a[0]/Tf**2 + a[1]/Tf + a[2] + Tf*(a[3] + Tf*(a[4] + Tf*(a[5] + Tf*a[6])))
+            h = (-a[0]/Tf + a[1]*math.log(Tf) + a[7]
+                 + Tf*(a[2] + Tf*(a[3]/2 + Tf*(a[4]/3 + Tf*(a[5]/4 + Tf*a[6]/5)))))
+            return cp, h
 
-def Ha(a, Rs, T):
-    return Rs*(((((a[4]/5*T + a[3]/4)*T + a[2]/3)*T + a[1]/2)*T + a[0])*T
-               + a[5])
+        def ha(Tv):
+            Tf = min(max(Tv, Ts[0]), Ts[-1])
+            cp, h = fit(Tf)
+            return Rs*(h + cp*(Tv - Tf))
+    else:
+        Tc = co.scalar(th["Tcommon"])
+
+        def ha(Tv):
+            a = [float(x) for x in th["highCpCoeffs" if Tv > Tc else "lowCpCoeffs"]
+                 if x not in "()"]
+            return Rs*(((((a[4]/5*Tv + a[3]/4)*Tv + a[2]/3)*Tv + a[1]/2)*Tv + a[0])*Tv
+                       + a[5])
+    return ha, Rs, b, W
 
 
 def e_sensible(gas, Y, T):
     e = 0.0
     for sp, y in Y.items():
-        a, Rs, _, _ = species_data(gas, sp, T)
-        al, _, _, _ = species_data(gas, sp, T_STD)
-        e += y*(Ha(a, Rs, T) - Ha(al, Rs, T_STD) - Rs*T)
+        ha, Rs, _, _ = species_data(gas, sp, T)
+        e += y*(ha(T) - ha(T_STD) - Rs*T)
     return e
 
 
