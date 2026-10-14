@@ -129,6 +129,13 @@ protected:
         //- Temperature below which the reaction rates are assumed 0
         scalar Treact_;
 
+        //- Temperature above which the reaction rates are assumed 0
+        //  (TreactMax, default great). For mechanisms without dissociation,
+        //  whose rates are not meaningful at the temperatures of strongly
+        //  shocked gas; it also keeps the stiff ODE solve out of states at
+        //  the thermo temperature limit
+        scalar TreactMax_;
+
         //- List of reaction rate per specie [kg/m^3/s]
         PtrList<volScalarField::Internal> RR_;
 

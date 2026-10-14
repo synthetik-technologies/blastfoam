@@ -48,6 +48,10 @@ standardBlastChemistryModel
     nSpecie_(Y_.size()),
     nReaction_(reactions_.size()),
     Treact_(blastChemistryModel::template lookupOrDefault<scalar>("Treact", 0)),
+    TreactMax_
+    (
+        blastChemistryModel::template lookupOrDefault<scalar>("TreactMax", great)
+    ),
     RR_(nSpecie_),
     c_(nSpecie_),
     dcdt_(nSpecie_),
@@ -486,7 +490,11 @@ Foam::standardBlastChemistryModel<BasicThermo, ThermoType>::solve
     {
         scalar Ti = T[celli];
 
-        if (Ti > Treact_ && mixture_.alphaRho()[celli] > SMALL)
+        if
+        (
+            Ti > Treact_ && Ti < TreactMax_
+         && mixture_.alphaRho()[celli] > SMALL
+        )
         {
             const scalar rhoi = rho0[celli];
             scalar pi = this->mixture().cellp(celli);
