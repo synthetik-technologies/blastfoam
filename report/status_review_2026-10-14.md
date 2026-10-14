@@ -121,6 +121,10 @@ Progress (2026-10-14): A1 done (stage documents, development plan, report, `UPDA
 | B3 | WP 3.2 sweep: $p_\text{threshold} \in \{50, 100, 200, 500\}$ bar, $\tau \in \{10^{-7} \ldots 10^{-4}\}$ s | Gauge $p(t)$ variance < 1.5% for 100–200 bar, or a documented sensitivity |
 | B4 | Product afterburning: CO/H2 + air in the reacting case (current 1-step reactions; then a reduced CO/H2/O2 mechanism) | $\dot Q_\text{gas}$ in the mixing layer; afterburn energy vs CO/H2 inventory |
 
+Progress (2026-10-14): B1 done for the spherical `_reacting` and `_alCombustion` cases (transfer below 100 bar, τ = 20 µs, `seulex` chemistry); the products burn with the air and the `_reacting` test passes. The transfer adds no visible energy error, but a closed-domain check found that total energy is not conserved with a particle phase (+2.8% spherical, −0.55% planar gas/particle shock tube), independent of the transfer. This has to be fixed before the B3 sensitivity study and E2 impulse gain can be trusted; added as A6 below.
+
+| A6 | Find and fix the energy error of the particle/fluid coupling (pressure-gradient work, granular energy exchange); closed-domain energy check in the test suite | Total energy conserved to ≤ 1e-6 in `gunib1d_houim2` and the spherical cases while closed |
+
 ### Phase C: High-temperature air (M) — WP 1.3 stage 2
 
 | # | Step | Exit criterion |

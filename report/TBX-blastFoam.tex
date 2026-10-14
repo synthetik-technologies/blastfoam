@@ -268,7 +268,7 @@ A state-dependent energy correction (e.g.\ the difference between the two EOS en
 
 \subsection{Status}
 
-The transfer is verified in a 0D reactor and in a planar detonation (Section~\ref{sec:results}). It is not yet enabled in the Comp-B/Al spherical cases or tutorials, where the products remain in the eJWLC phase; enabling it is the next step for modelling the products afterburning (Section~\ref{sec:status}).
+The transfer is verified in a 0D reactor and in a planar detonation (Section~\ref{sec:results}). Since 2026-10-14 it is enabled in the reacting and Al-combustion spherical cases (below 100\,bar, $\tau = 20\,\mu$s, with a stiff \texttt{seulex} chemistry integrator; the explicit RKCK45 integrator failed on the Al reactions); the products then burn with the air (Section~\ref{sec:res_spherical}). It is not yet enabled in the tutorials.
 
 % ============================================================
 \section{Aluminium Particles}
@@ -342,7 +342,7 @@ This work rewrote the HLLC phase flux to the standard star-state form $F + S(U^*
 \subsection{Multiphase numerics: conservation and trace phases}
 \label{sec:multiphase_numerics}
 
-A multi-fluid solver must handle cells where a phase is absent or present only as a trace, which in a detonation problem is most of the domain for each phase. The upstream treatment and the first version of this work reset dilute phases ($\alpha < 0.01$) towards reference states and wrote the result back to the conserved variables. This destroyed energy (1--2\% in the 0D transfer test) and removed the energy of the products expanding into the air. The following changes were made \tw; together they make the solver conservative and keep trace phases bounded.
+A multi-fluid solver must handle cells where a phase is absent or present only as a trace, which in a detonation problem is most of the domain for each phase. The upstream treatment and the first version of this work reset dilute phases ($\alpha < 0.01$) towards reference states and wrote the result back to the conserved variables. This destroyed energy (1--2\% in the 0D transfer test) and removed the energy of the products expanding into the air. The following changes were made \tw; together they make the phase decode conservative and keep trace phases bounded (the particle coupling still has an energy error, Section~\ref{sec:res_spherical}).
 
 \begin{itemize}
     \item \emph{Conservative decode.} The conserved variables $\alpha\rho$, $\alpha\rho\mathbf{u}$, $\alpha\rho E$ are modified only where a phase is residual ($\alpha \le$ \texttt{residualAlpha}, $10^{-6}$); bounds on velocity and temperature act on the primitive variables only. The decoded density is no longer bounded below by a reference density, which had held expanded gas at ambient density and overstated its pressure up to twenty-fold.
@@ -403,7 +403,7 @@ Three limitations of the current verification should be noted. First, the progra
     \midrule
     3 & \path{spherical_blast} & 1\,kg C4 (\texttt{blastFoam}) against Kinney--Graham (TNT) & Peak overpressure 10--21\% low; impulse 3--32\% & Pass\textsuperscript{a} \\
     3 & \path{ChargeCompBAl_1D_spherical} & Spherical Comp-B/Al, inert Al & Peak 16.6\,GPa, breakout 3.06\,GPa & Pass \\
-    3 & \path{..._reacting} & As above with gas-phase chemistry & No heat release (no products transfer) & Fail\textsuperscript{b} \\
+    3 & \path{..._reacting} & As above with products $\to$ gas transfer and gas-phase chemistry & 12\% of the products transferred by 35\,$\mu$s; heat release up to $3\times10^{12}$\,W/m$^3$ & Pass \\
     3 & \path{..._alCombustion} & As above with Al burning & No burning in the products; $4.8\times10^{-5}$ of the Al burnt & Pass \\
     3 & \path{..._interface} & Unreacted charge next to air stays at rest & $<0.001\,\text{m/s}$, mass and energy $1.5\times10^{-9}$ & Pass \\
 \end{longtable}
@@ -488,16 +488,16 @@ A spherical Comp-B/Al charge of radius 50\,mm (0.95\,kg) is initiated at its cen
     \item \emph{Detonation.} The front moves at 7163\,m/s, as imposed. The peak pressure grows to 16.6\,GPa at the charge edge, 82\% of $p_\text{CJ}$; the CJ spike is not resolved on this mesh, and the effect of resolution has not been quantified.
     \item \emph{Breakout and air shock.} The pressure drops to 3.06\,GPa at the charge/air interface. The air shock is 47\,MPa at 80\,mm, 35\,MPa at 100\,mm (arrival 14.1\,$\mu$s) and 21\,MPa at 150\,mm. These values changed substantially during the work (e.g.\ 0.16\,GPa at 100\,mm before the density floor was removed, 29\,MPa before the constant-$c_p$ extrapolation), which shows the sensitivity of the near field to the treatment of trace phases and high-temperature air. The shocked air reaches 14\,400\,K, too hot without dissociation.
     \item \emph{Aluminium.} Drag accelerates the aluminium to 1890--2300\,m/s where $\alpha_\text{Al} > 10^{-3}$ (the higher value in the inert case, which applies drag also to the dilute edge of the cloud). The particles are heated to at most 578\,K by 40\,$\mu$s, far below ignition. With the burn rate limited to gas-phase oxidiser, there is no burning inside the products (diameter change $\le 0.0023\%$); in 1D the particle cloud stays inside the products except at its dilute edge, and $4.8\times10^{-5}$ of the aluminium mass burns in 40\,$\mu$s.
-    \item \emph{Chemistry.} Since the products are not transferred to the gas, the gas contains only air; the reacting variant releases no heat, and in the aluminium variant the only heat release is from Al vapour with O$_2$ (up to 2.2\,kW/m$^3$).
+    \item \emph{Products afterburning.} In the reacting and Al-combustion variants the products are transferred to the gas below 100\,bar ($\tau = 20\,\mu$s). By 35\,$\mu$s 12\% of the products mass has been transferred and burns with the entrained air (heat release up to $3\times10^{12}\,\text{W/m}^3$, CO$_2$ mass fraction up to 0.58, 7\% of the domain's O$_2$ consumed). The blast pressures to 40\,$\mu$s are unchanged, since the transfer happens behind the shock; the afterburning becomes significant only on longer times and larger domains.
     \item \emph{Interface.} A separate case with an unreacted charge next to air stays at rest: velocities below $10^{-3}\,\text{m/s}$ at 5\,$\mu$s and below 1.4\,mm/s for 40\,$\mu$s, pressure at 1.013\,bar, mass and energy conserved to $1.5\times10^{-9}$. Before the trace-phase changes of Section~\ref{sec:multiphase_numerics} this case became unstable within microseconds.
 \end{itemize}
 
-These cases show that the detonation, breakout and early air shock of a three-phase charge run stably and conservatively. They do not yet test the afterburning, which needs the products transfer, the aluminium ignition and combustion models, a domain of metres and run times of milliseconds.
+These cases show that the detonation, breakout and early air shock of a three-phase charge run stably. They are not exactly conservative: while the domain is closed, the total energy of the three phases (including the kinetic and granular energy of the Al) rises by up to 2.8\% between 8 and 20\,$\mu$s and partly returns by 35\,$\mu$s, and a planar gas/particle shock tube (Houim 2) loses 0.55\% in 170\,$\mu$s. The phases without particles conserve energy to $10^{-9}$ (0D, interface test), so the error is in the coupling of the particle phase (most likely the work of the pressure-gradient force on the particles); it is under investigation. The products transfer adds a mass error of up to $1.7\times10^{-5}$ (transfer into cells where the gas is still residual). They do not yet test the afterburning, which needs the products transfer, the aluminium ignition and combustion models, a domain of metres and run times of milliseconds.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.98\textwidth]{figures/stage3_spherical_multiphase.pdf}
-    \caption{Spherical Comp-B/Al charge in \texttt{blastEulerFoam} (inert, reacting and Al-combustion variants): (a) peak pressure against radius (\texttt{temporalMax}); (b) pressure histories at 20, 40, 50 and 80\,mm; (c) pressure profiles at 5, 10, 20 and 40\,$\mu$s; (d) particle diameter and volume fractions.}
+    \caption{Spherical Comp-B/Al charge in \texttt{blastEulerFoam} (inert Al; gas chemistry and Al burning, both with the products $\to$ gas transfer): (a) peak pressure against radius (\texttt{temporalMax}); (b) pressure histories at 20, 40, 50 and 80\,mm; (c) pressure profiles at 5, 10, 20 and 40\,$\mu$s; (d) particle diameter and volume fractions.}
     \label{fig:stage3_spherical_multiphase}
 \end{figure}
 
@@ -531,8 +531,8 @@ Table~\ref{tab:status} summarises the status for the four parts of the problem.
         \toprule
         \textbf{Part} & \textbf{In place and verified} & \textbf{Missing} \\
         \midrule
-        Detonation and early expansion & Products-only eJWLC fit; programmed burn; three-phase spherical charge, conservative and stable through breakout; stable charge/air interface & Resolution of the CJ state; dissociation in shocked air; mesh convergence \\
-        Products/air mixing and chemistry & Products $\to$ gas transfer (0D, planar); multicomponent reacting gas phase & Transfer enabled in the Comp-B/Al cases; products afterburning; domains of metres and run times of milliseconds \\
+        Detonation and early expansion & Products-only eJWLC fit; programmed burn; three-phase spherical charge, stable through breakout; stable charge/air interface & Resolution of the CJ state; dissociation in shocked air; mesh convergence \\
+        Products/air mixing and chemistry & Products $\to$ gas transfer (0D, planar); multicomponent reacting gas phase & Transfer enabled in the spherical cases (2026-10-14); conservation with particles; domains of metres and run times of milliseconds \\
         Al heating, ignition, combustion & Granular Al phase with drag and heat transfer; empirical burn rate limited to gas-phase oxidiser & Mach-dependent drag, melting, ignition, Beckstead rate and oxide condensation in the solver; experimental comparison \\
         Afterburning in air & Gas-phase Al and CO/H$_2$ reactions in the cases & Multi-dimensional mixing; turbulence and turbulence--chemistry closures; radiation; validation \\
         \bottomrule
@@ -542,7 +542,7 @@ Table~\ref{tab:status} summarises the status for the four parts of the problem.
 \subsection{Open issues}
 
 \begin{itemize}
-    \item The products $\to$ gas transfer is not enabled in the Comp-B/Al cases.
+    \item Total energy is not conserved with a particle phase: up to 2.8\% in the spherical cases and 0.55\% in a planar gas/particle shock tube (Section~\ref{sec:res_spherical}).
     \item The aluminium models beyond the empirical burn rate are not in the solver.
     \item Strongly shocked air is too hot without dissociation.
     \item The only blast comparison is for C4 against the Kinney--Graham TNT correlations, on a coarse mesh; peak overpressure is 10--21\% low.
