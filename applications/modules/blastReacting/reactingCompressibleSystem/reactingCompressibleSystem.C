@@ -139,7 +139,7 @@ Foam::reactingCompressibleSystem::~reactingCompressibleSystem()
 
 void Foam::reactingCompressibleSystem::solve()
 {
-    if (reaction_.valid() && (odeCombustion_ || this->step() == 1))
+    if (reaction_.valid() && (odeCombustion_ || this->step() == 0))
     {
         reaction_->correct();
     }
