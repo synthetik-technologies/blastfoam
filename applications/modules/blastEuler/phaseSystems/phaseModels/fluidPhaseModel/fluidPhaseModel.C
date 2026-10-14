@@ -342,8 +342,8 @@ void Foam::fluidPhaseModel::solveImplicit()
         fvVectorMatrix UEqn
         (
             fvm::ddt(alpha, rho(), U_) - alphaRhoUAdvection_()
-          + fvc::ddt(this->residualAlphaRho(), U_)
-          - fvm::ddt(this->residualAlphaRho(), U_)
+          + fvm::ddt(this->residualAlphaRho(), U_)
+          - fvc::ddt(this->residualAlphaRho(), U_)
          ==
             models().source(*this, rho(), U_)
         );
@@ -376,8 +376,8 @@ void Foam::fluidPhaseModel::solveImplicit()
         (
             fvm::ddt(alpha, rho(), he()) - alphaRhoEAdvection_()
           + fvc::ddt(alpha, rho(), K_)
-          + fvc::ddt(this->residualAlphaRho(), he())
-          - fvm::ddt(this->residualAlphaRho(), he())
+          + fvm::ddt(this->residualAlphaRho(), he())
+          - fvc::ddt(this->residualAlphaRho(), he())
          ==
             models().source(*this, rho(), he())
         );
