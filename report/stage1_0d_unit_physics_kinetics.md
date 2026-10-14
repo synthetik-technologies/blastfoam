@@ -15,19 +15,19 @@ graph TD
 ```
 
 > [!NOTE]
-> **Status: Implemented & Verified.**
-> - **WP 1.1**: Verified via [`tests/0D/phaseTransfer_0D/`](file:///opt/OpenFOAM/blastfoam/tests/0D/phaseTransfer_0D) with automated check in [`tests/0D/verify_0d_phase_transfer.py`](file:///opt/OpenFOAM/blastfoam/tests/0D/verify_0d_phase_transfer.py). Achieved exact total energy conservation to machine precision ($\Delta E/E = 0.000$) and max relative mass error $< 10^{-6}$ with $> 99.3\%$ smooth phase conversion.
-> - **WP 1.2, 1.4, 1.5**: Verified via [`tests/0D/verify_al_particle_kinetics.py`](file:///opt/OpenFOAM/blastfoam/tests/0D/verify_al_particle_kinetics.py). Thermal ODE reproduces aluminium melting plateau ($\Delta H_{\text{fus}} = 397\,\text{kJ/kg}$ at $933\,\text{K}$), oxide shell rupture at $T_{\text{ign}} = 2050\,\text{K}$, Beckstead multi-oxidizer burn rates ($X_{\text{eff}} = X_{\text{O}_2} + 0.6 X_{\text{H}_2\text{O}} + 0.22 X_{\text{CO}_2}$), and alumina condensation latent heat buffer ($19.70\,\text{MJ/kg}$).
-> - **WP 1.3**: Verified via [`tests/0D/verify_highT_air_thermo.py`](file:///opt/OpenFOAM/blastfoam/tests/0D/verify_highT_air_thermo.py). NASA polynomials and equilibrium dissociation fractions ($\text{O}_2 \to 2\text{O}$, $\text{N}_2 \to 2\text{N}$) verified across $300\text{--}6000\,\text{K}$.
-> - Integrated into automated test suite [`bin/run_blast_tests.py --tier 1`](file:///opt/OpenFOAM/blastfoam/bin/run_blast_tests.py) (4/4 tests passing).
+> **Status (2026-10-14).** Only WP 1.1 is implemented and verified in the solver. WP 1.2–1.5 and the dissociation part of WP 1.3 are standalone numpy models, not solver code; they are reference models for the solver implementation (see `status_review_2026-10-14.md`, Phase C and D).
+> - **WP 1.1**: blastEulerFoam [`tests/0D/phaseTransfer_0D/`](file:///opt/OpenFOAM/blastfoam/tests/0D/phaseTransfer_0D) and `phaseTransfer_0D_3phase` (inert Al), verified by [`tests/0D/verify_0d_phase_transfer.py`](file:///opt/OpenFOAM/blastfoam/tests/0D/verify_0d_phase_transfer.py): total energy conserved to 4.2e-9 / 2.2e-9 (the iterative decode limits this; the $10^{-14}$ target below is not attainable), pressure constant to 3e-7, > 99% conversion. Isochoric only; the isobaric case is missing.
+> - **WP 1.2, 1.4, 1.5**: numpy model [`tests/0D/verify_al_particle_kinetics.py`](file:///opt/OpenFOAM/blastfoam/tests/0D/verify_al_particle_kinetics.py) (melting plateau, ignition at 2050 K, Beckstead multi-oxidiser rate, alumina condensation). Not in the solver, which uses the empirical `pressureBased` burn rate; no comparison with experimental data.
+> - **WP 1.3**: numpy model [`tests/0D/verify_highT_air_thermo.py`](file:///opt/OpenFOAM/blastfoam/tests/0D/verify_highT_air_thermo.py) to 6000 K. In the solver: JANAF (7-coefficient) to 5000 K, extrapolated with constant $c_p$ above (no dissociation) since 2026-10-14.
+> - Tier 1 of [`bin/run_blast_tests.py`](file:///opt/OpenFOAM/blastfoam/bin/run_blast_tests.py) runs all of these.
 
 | Work Package | Description | Target Code / Dictionaries | Verification Case | Status |
 |---|---|---|---|---|
-| **WP 1.1** | 0D-1 Phase transfer verification (Isobaric & Isochoric) | `src/fvModels/pressurePhaseChange/` | `tests/0D/phaseTransfer_0D/` | **PASSED** |
-| **WP 1.2** | 0D-2 Multi-oxidizer aluminium reaction kinetics ($d^n$) | `src/combustionModels/blastCombustionModel/` | `tests/0D/verify_al_particle_kinetics.py` | **PASSED** |
-| **WP 1.3** | 0D-3 High-temperature air dissociation ($T \le 6000\,\text{K}$) | `src/thermodynamicModels/specie/` | `tests/0D/verify_highT_air_thermo.py` | **PASSED** |
-| **WP 1.4** | 0D-4 Particle heating, melting plateau, oxide shell ignition | `src/lagrangian/intermediate/` & Eulerian thermo | `tests/0D/verify_al_particle_kinetics.py` | **PASSED** |
-| **WP 1.5** | 0D-5 Post-combustion $\text{Al}_2\text{O}_3$ phase change & latent heat | `src/thermodynamicModels/derived/` | `tests/0D/verify_al_particle_kinetics.py` | **PASSED** |
+| **WP 1.1** | 0D-1 Phase transfer verification (Isobaric & Isochoric) | `src/thermodynamicModels/fvModels/pressurePhaseChange/` | `tests/0D/phaseTransfer_0D/`, `phaseTransfer_0D_3phase` | **Solver: isochoric passed**; isobaric missing |
+| **WP 1.2** | 0D-2 Multi-oxidizer aluminium reaction kinetics ($d^n$) | solver: not implemented (`src/diameterModels/reactionRates/` has `pressureBased`, `Arrhenius`, `constant`, `surfaceReactionRate`) | `tests/0D/verify_al_particle_kinetics.py` | **Model only** (numpy) |
+| **WP 1.3** | 0D-3 High-temperature air dissociation ($T \le 6000\,\text{K}$) | `src/thermodynamicModels/specie/thermoModels/janaf/` | `tests/0D/verify_highT_air_thermo.py` | **Model only** (numpy, 6000 K); solver stage 1 (constant $c_p$) done |
+| **WP 1.4** | 0D-4 Particle heating, melting plateau, oxide shell ignition | solver: not implemented | `tests/0D/verify_al_particle_kinetics.py` | **Model only** (numpy) |
+| **WP 1.5** | 0D-5 Post-combustion $\text{Al}_2\text{O}_3$ phase change & latent heat | solver: not implemented | `tests/0D/verify_al_particle_kinetics.py` | **Model only** (numpy) |
 
 ---
 

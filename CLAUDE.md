@@ -26,7 +26,7 @@ The aluminised-charge problems target **blastEulerFoam** (multi-fluid: per-phase
     - `test/Test-*`: unit-test applications; not built by `Allwmake`.
 - `tests/`: the fork's verification cases (`0D/`, `1D/`, `1D_spherical/`), each with a `verify_*.py` script.
 - `tutorials/`: example cases. `validation/`: upstream validation cases.
-- `bin/run_blast_tests.py`: regression test runner. `utilities/` (top level): `thermo_fitter/` (eJWLC / Abel-Nobel fitter `fit_ejwlc_nobleabel.py`; `compute_omegaT.py` computes the eJWLC `omegaT` for a case) and `generate_report_figures.py`.
+- `bin/run_blast_tests.py`: regression test runner. `utilities/` (top level): `thermo_fitter/` (eJWLC / Abel-Nobel fitter `fit_ejwlc_nobleabel.py`; `compute_omegaT.py` computes the eJWLC `omegaT` for a case; `products_only_fit.py` the Comp-B/Al entries from the EuDetCode output in `eudet_compBAl/`) and `generate_report_figures.py` (report figures from test results under `$BLAST_RESULTS_DIR`, default the repository; run the tests in a copy, e.g. `BLASTFOAM_ROOT=<copy> bin/run_blast_tests.py --tier all`, then point `BLAST_RESULTS_DIR` at it).
 - `report/`: `development_plan.md` (staged plan with current status), `stage*_*.md` (per-stage plans), `dilute_phase_conservation_plan.md` (conservative decode and dilute phases), `TBX-blastFoam.tex` (technical report).
 - `etc/`: `bashrc` and code templates. `Makefile`, `Dockerfile`, `debian/`: packaging.
 

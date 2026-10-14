@@ -110,6 +110,8 @@ Ordered by the critical path to Gate 5. Effort: S ≈ days, M ≈ 1–3 weeks, L
 | A4 | Finish the 2D `ChargeCompBAl` run; find the failing cell of the 116 µs crash (restart from the 110 µs write with the original step sequence) and fix it | 2D tutorial runs to 200 µs reproducibly |
 | A5 | Remove the 50 000 K trace-gas cap hits at initiation (initial trace-gas state in the charge) | No cap hits |
 
+Progress (2026-10-14): A1 done (stage documents, development plan, report, `UPDATES.md`). A2 done: the verifiers check `End`, and the `_reacting` verifier checks for heat release, so it fails until B1. A5 partly done: one source (HLLC flux from a residual upwind side with `alphaTrace`) fixed, cap hits 11 → 3 (inert) but 45 remain in `_alCombustion` (`UPDATES.md`, Open). A3 done: full run of all 18 tests on the final code, 15 pass; `_reacting` and the (now Mach 14.5) air shock fail by design, gunIB1D passes when not cut off by the runner timeout (raised). A4: the 2D crash was a sign error in the upstream fluid-phase residual stabilisation; fixed, the run reaches 200 µs from a 170 µs restart; a full run from 0 is still to be made.
+
 ### Phase B: Products → reactive gas in the spherical cases (M) — critical
 
 | # | Step | Exit criterion |

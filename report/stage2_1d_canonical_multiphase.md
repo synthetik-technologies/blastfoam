@@ -55,13 +55,13 @@ graph TD
 
 ---
 
-## 3. Verification Results & Regression Status
+## 3. Verification Results & Regression Status (2026-10-14)
 
 | Work Package | Benchmark Test | Target Criterion | Achieved Result | Status |
 |---|---|---|---|---|
-| **WP 2.1** | High-Mach Dissociating Shock | Exact Rankine-Hugoniot jump & energy conservation $< 10^{-5}$ | Real-gas jump matched across Ma 3–10; energy error $\Delta E / E < 4 \times 10^{-16}$; high-$T$ cooling up to $46\%$ | **PASSED** |
-| **WP 2.2** | Multiphase Interface Advection | Uniform velocity/pressure advection across contact | Interface position accurate to $< 1$ cell; Minmod bounds pressure oscillations $< 0.8\%$ across HLLC, AUSM+, Kurganov, Tadmor | **PASSED** |
-| **WP 2.3** | `gunIB1D` Particulate Shock Interaction | Wave speeds & compaction match reference within $2\%$ | Houim 1 midpoint exact ($0.0\,\text{mm}$ error); Houim 2 shock speed $495.09\,\text{m/s}$ ($0.02\%$ error); Houim 3 compaction $\alpha_s = 0.6133$ ($0.005\%$ error) | **PASSED** |
-| **WP 2.4** | Planar CJ / ZND Detonation | Detonation front speed & $p_{\text{CJ}}$ match `EuDetCode` $< 0.1\%$ | Front speed $7952.6\,\text{m/s}$ vs ref $7946.6\,\text{m/s}$ ($0.076\%$ error); sub-cell front tracking $< 1.5\,\Delta x$ | **PASSED** |
+| **WP 2.1** | Strong shock in air (`tests/1D/shock_dissociating_air`, blastFoam) | Equilibrium Rankine–Hugoniot within 2.5% | Since 2026-10-14 a Mach 14.5 shock (driver 1700 bar, 7500 K) with $T_2 \approx 10\,000$ K. Matches the exact jump for the solver's JANAF air (no dissociation) within 1.2%; against equilibrium air $T_2$ is 29% high and $\rho_2$ 13% low ($Y_\text{O} = 0.14$). | **Fails** until dissociation is in the solver (WP 1.3 stage 2) |
+| **WP 2.2** | Multiphase interface advection | Uniform velocity/pressure across contact, $< 10^{-6}$ | Interface position $< 1$ cell; pressure oscillations $< 0.8\%$ (Minmod) for HLLC, AUSM+, Kurganov, Tadmor; the $10^{-6}$ target is not met | **Partial** |
+| **WP 2.3** | `gunIB1D` particulate shock interaction (Houim 1–3, blastEulerFoam) | Wave speeds and compaction within $2\%$ of `gunIB1D` | Houim 1 0.000%; Houim 2 transmitted shock speed 1.20%, post-shock pressure 0.42%, gas velocity 0.67% (solid velocity 2.09%); Houim 3 peak pressure 0.59%, compaction speed 183.8 vs 185.25 m/s reference (0.8%). (The earlier "0.02%" compared gunIB1D with the Houim reference.) Compressible drag laws not implemented. | **Passed** (Gate 2) |
+| **WP 2.4** | Planar CJ / ZND detonation (`tests/1D/planar_znd`, blastFoam) | Front speed and $p_\text{CJ}$ vs `EuDetCode` $< 0.1\%$ | Comp-B without Al (1720 kg/m³, BKW): front speed 7952.6 vs 7946.6 m/s (0.076%); plus `planar_znd_phaseTransfer` | **Passed** (Comp-B, not Comp-B/Al) |
 
-**Stage 2 Verification Gate Status**: **COMPLETE & VERIFIED (Tier 2 Regression 100% Passed)**.
+**Stage 2 status**: Gate 2 met. Open: dissociation in the solver (WP 2.1 fails by design until then), compressible drag (WP 2.3).
