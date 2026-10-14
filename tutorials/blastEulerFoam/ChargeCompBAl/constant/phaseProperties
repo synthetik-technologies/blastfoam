@@ -15,6 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Volume (pressure) equilibration of all non-carrier fluid phases
+alphaDilute     1;
+
 // Riemann problems of a fluid phase that is a trace on one side of a face
 // (alpha < alphaTrace) use the mixture impedance on that side
 alphaTrace      1e-3;
@@ -22,6 +25,8 @@ alphaTrace      1e-3;
 phases          ( Al compBAl gas );
 
 transportPhaseDensity true;
+
+VRelaxation     instant;
 
 Al
 {
@@ -170,6 +175,14 @@ virtualMass
 
 heatTransfer
 (
+    // Products/gas temperature relaxation in numerically mixed cells
+    // (with alphaDilute 1: pressure and temperature equilibrium)
+    (compBAl in gas)
+    {
+        type            constantCoefficient;
+        Kh              1e15;
+    }
+
     (Al in gas)
     {
         type            RanzMarshall;
@@ -222,7 +235,7 @@ kineticTheory
         eta                     2;
         p                       5;
         phi                     28.5;
-        alphaDeltaMin           0.05;
+        alphaDeltaMin           1e-3;
     }
 }
 

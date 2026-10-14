@@ -22,11 +22,10 @@ solvers
         solver          diagonal;
     }
 
-    "(U|e|Yi|Theta|N2|O2|H2O|CH4|CO2|Ydefault).*"
+    "(U|e|Yi|Theta|.*\.gas|Ydefault).*"
     {
-        solver          PBiCGStab;
-        preconditioner  DIC;
-        minIter         1;
+        solver          smoothSolver;
+        smoother        GaussSeidel;
         tolerance       1e-09;
         relTol          0;
     }

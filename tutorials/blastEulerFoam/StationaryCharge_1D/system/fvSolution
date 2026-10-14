@@ -22,7 +22,7 @@ solvers
         solver          diagonal;
     }
 
-    "(U|e|Yi|Theta|N2|O2|H2O|CH4|CO2|Ydefault).*"
+    "(U|e|Yi|Theta|.*\.gas|Ydefault).*"
     {
         solver          smoothSolver;
         smoother        GaussSeidel;

@@ -13,7 +13,9 @@ runApplication blockMesh
 # -- Set the charge
 runApplication setRefinedFields
 
-# -- Run calculation
-runApplication $(getApplication)
+# -- Run calculation in parallel (system/decomposeParDict)
+runApplication decomposePar
+runParallel $(getApplication)
+runApplication reconstructPar
 
 # ----------------------------------------------------------------- end-of-file

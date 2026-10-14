@@ -13,7 +13,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains  8;
+numberOfSubdomains  4;
 
 /*
     Main methods are:
@@ -25,12 +25,12 @@ method              scotch;
 
 simpleCoeffs
 {
-    n               (4 2 1); // total must match numberOfSubdomains
+    n               (2 2 1); // total must match numberOfSubdomains
 }
 
 hierarchicalCoeffs
 {
-    n               (4 2 1); // total must match numberOfSubdomains
+    n               (2 2 1); // total must match numberOfSubdomains
     order           xyz;
 }
 

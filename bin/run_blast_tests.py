@@ -285,9 +285,9 @@ def main():
             
             # Baseline tutorial run
             results.append(run_openfoam_case(
-                "tutorials/blastFoam/ChargeCompBAl_1D_AlInert",
+                "tutorials/blastEulerFoam/ChargeCompBAl_1D",
                 tier=2,
-                case_name="ChargeCompBAl_1D_AlInert (Canonical 1D Baseline)"
+                case_name="ChargeCompBAl_1D (Planar Comp-B/Al, blastEulerFoam)"
             ))
 
             # WP 2.1: High-Mach Shock in Dissociating Air (1D blastFoam Shock Tube)

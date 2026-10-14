@@ -10,37 +10,27 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      physicalProperties;
+    object      physicalProperties.gas;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type            basic;
+type            reacting;
 thermoType
 {
-    transport       const;
-    thermo          eConst;
-    equationOfState idealGas;
+    transport       sutherland;
+    thermo          janaf;
+    equationOfState AbelNobel;
 }
-equationOfState
-{
-    gamma           1.4;
-    a               0;
-}
-specie
-{
-    molWeight       28.97;
-}
-transport
-{
-    mu              1.81e-05;
-    Pr              1;
-}
-thermodynamics
-{
-    Cv              718;
-    Hf              0;
-}
-residualRho     1.2;
+
+#include "thermo.compressibleGas"
+// Decode temperature cap. Above the JANAF fit range (5000 K) the gas
+// properties are extrapolated with constant Cp (no dissociation), up to
+// the extrapolation limit of 10 x 5000 K
+THigh           50000;
+
+defaultSpecie   N2;
+
+residualRho     1e-06;
 residualAlpha   1e-06;
 
 // ************************************************************************* //

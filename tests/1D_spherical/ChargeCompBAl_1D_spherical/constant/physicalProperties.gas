@@ -23,9 +23,10 @@ thermoType
 }
 
 #include "thermo.compressibleGas"
-// Cap the decode energy clamp at the JANAF fit range; the default
-// (1e5 K) gives a nonsensical eMax that pins all gas cells at TLow
-THigh           5000;
+// Decode temperature cap. Above the JANAF fit range (5000 K) the gas
+// properties are extrapolated with constant Cp (no dissociation), up to
+// the extrapolation limit of 10 x 5000 K
+THigh           50000;
 
 defaultSpecie   N2;
 
