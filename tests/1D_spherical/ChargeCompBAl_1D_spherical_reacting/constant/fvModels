@@ -22,7 +22,7 @@ phaseChange
     targetPhase     gas;
     pThreshold      1e7;
     pRange          1e6;
-    tau             1e-4;
+    tau             2e-5;
     targetFractions
     {
         H2          0.00433265;
