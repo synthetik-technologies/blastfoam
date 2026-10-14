@@ -342,10 +342,10 @@ Foam::scalar Foam::dragODE::solve
             continue;
         }
 
-        scalarList oldKs(phaseModels_.size());
-        forAll(oldKs, phasei)
+        List<vector> oldUs(phaseModels_.size());
+        forAll(oldUs, phasei)
         {
-            oldKs[phasei] = magSqr(phaseModels_[phasei].U()[celli]);
+            oldUs[phasei] = phaseModels_[phasei].U()[celli];
         }
         setq(celli);
 
@@ -357,6 +357,57 @@ Foam::scalar Foam::dragODE::solve
             setUs(celli);
             timeLeft -= dt;
             deltaT_[celli] = dt;
+        }
+
+        // Work of the drag forces. Each phase that tracks total energy
+        // receives dM.Ui, the momentum it gained times a common interfacial
+        // velocity Ui; the internal energy is corrected so that encode()
+        // (e + K) gives that total energy. With Ui the update-averaged
+        // velocity of the one phase without kinetic energy in its energy
+        // equation (granular), the fluids lose exactly the kinetic energy
+        // the particles gain, and the dissipation stays in the fluids as
+        // heat. Without such a phase Ui is the mass-averaged velocity, which
+        // conserves the total energy as the momentum changes sum to zero.
+        vector Ui(Zero);
+        label nPassive = 0;
+        scalar sumAlphaRho = 0.0;
+        vector sumAlphaRhoU(Zero);
+        forAll(phaseModels_, phasei)
+        {
+            const phaseModel& phase = phaseModels_[phasei];
+            if (!phase.totalEnergy())
+            {
+                Ui += 0.5*(oldUs[phasei] + phase.U()[celli]);
+                nPassive++;
+            }
+            sumAlphaRho += phase.alphaRho()[celli];
+            sumAlphaRhoU += phase.alphaRho()[celli]*oldUs[phasei];
+        }
+        if (nPassive == 1)
+        {
+            // Ui already set
+        }
+        else if (nPassive == 0)
+        {
+            Ui = sumAlphaRhoU/max(sumAlphaRho, small);
+        }
+        else
+        {
+            // Several phases without kinetic energy in their energy
+            // equation: no common Ui conserves energy exactly; use their
+            // mean velocity
+            Ui /= nPassive;
+        }
+
+        forAll(phaseModels_, phasei)
+        {
+            phaseModel& phase = phaseModels_[phasei];
+            if (phase.totalEnergy())
+            {
+                const vector& U0 = oldUs[phasei];
+                const vector& U1 = phase.U()[celli];
+                phase.he()[celli] += (U1 - U0) & (Ui - 0.5*(U0 + U1));
+            }
         }
     }
     forAll(phaseModels_, phasei)

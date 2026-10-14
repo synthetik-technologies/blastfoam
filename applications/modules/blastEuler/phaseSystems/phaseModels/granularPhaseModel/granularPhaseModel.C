@@ -289,14 +289,17 @@ void Foam::granularPhaseModel::solveImplicit()
         constraints().constrain(alpha);
     }
 
+    // Implicit equations as corrections to the current state, with
+    // incremental updates of the conserved fields (as fluidPhaseModel)
+    const dimensionedScalar dT(rho().time().deltaT());
+
     if (needSolve(rho().name()))
     {
-        //- Solve momentum equation (implicit stresses)
+        const volScalarField rhoCur(rho());
+        const volScalarField alphaStab(alpha + residualAlpha());
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(alpha, rho()) - alphaRhoAdvection_()
-          + fvm::ddt(residualAlpha(), rho())
-          - fvc::ddt(residualAlpha(), rho())
+            fvm::Sp(alphaStab/dT, rho()) - alphaStab*rhoCur/dT
          ==
             models().source(alpha, rho())
         );
@@ -304,18 +307,19 @@ void Foam::granularPhaseModel::solveImplicit()
         rhoEqn.solve();
         constraints().constrain(rho());
 
-        alphaRho_ = alpha*rho();
+        alphaRho_ += alpha*(rho() - rhoCur);
     }
 
     // Solve momentum
     if (needSolve(U_.name()) || this->includeViscosity())
     {
         //- Solve momentum equation (implicit stresses)
+        const volVectorField UCur(U_);
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alpha, rho(), U_) - alphaRhoUAdvection_()
-          + fvm::ddt(this->residualAlphaRho(), U_)
-          - fvc::ddt(this->residualAlphaRho(), U_)
+            fvm::Sp(alphaRhoStab/dT, U_) - alphaRhoStab*UCur/dT
          ==
             models().source(alpha, rho(), U_)
         );
@@ -330,17 +334,18 @@ void Foam::granularPhaseModel::solveImplicit()
         UEqn.solve();
         constraints().constrain(U_);
 
-        alphaRhoU_ = alphaRho_*U_;
+        alphaRhoU_ += alphaRhoCur*(U_ - UCur);
     }
 
     // Solve thermal energy
     if (needSolve(he().name()))
     {
+        const volScalarField heCur(he());
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alpha, rho(), he()) - alphaRhoEAdvection_()
-          + fvm::ddt(this->residualAlphaRho(), he())
-          - fvc::ddt(this->residualAlphaRho(), he())
+            fvm::Sp(alphaRhoStab/dT, he()) - alphaRhoStab*heCur/dT
         ==
             models().source(alpha, rho(), he())
         );
@@ -348,22 +353,19 @@ void Foam::granularPhaseModel::solveImplicit()
         eEqn.solve();
         constraints().constrain(he());
 
-        alphaRhoE_ = alphaRho_*(he() - eCold());
+        alphaRhoE_ += alphaRhoCur*(he() - heCur);
     }
 
     //- Solve granular temperature equation including solid stress and
     //  conductivity
     if (needSolve(Theta_.name()) || this->includeViscosity())
     {
+        const volScalarField ThetaCur(Theta_);
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvScalarMatrix ThetaEqn
         (
-            1.5
-           *(
-                fvm::ddt(alpha, rho(), Theta_)
-              + fvm::ddt(this->residualAlphaRho(), Theta_)
-              - fvc::ddt(this->residualAlphaRho(), Theta_)
-            )
-          - alphaRhoPTEAdvection_()
+            1.5*(fvm::Sp(alphaRhoStab/dT, Theta_) - alphaRhoStab*ThetaCur/dT)
          ==
             models().source(alpha, rho(), Theta_)
         );
@@ -402,7 +404,7 @@ void Foam::granularPhaseModel::solveImplicit()
         constraints().constrain(Theta_);
         Theta_.max(0);
 
-        alphaRhoPTE_ = 1.5*alphaRho_*Theta_;
+        alphaRhoPTE_ += 1.5*alphaRhoCur*(Theta_ - ThetaCur);
     }
 
     thermoPtr_->solveImplicit();

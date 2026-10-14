@@ -171,6 +171,44 @@ void Foam::fluidPhaseModel::solve()
       - fluid_.PI()*(fluid_.U() & gradAlpha)
       - (alphaRhoU_ & fluid_.g())
     );
+
+    // Pressure work on the volume of the granular phases. The granular
+    // momentum equation has the force -alpha_s grad(p), so the particles gain
+    // kinetic energy -alpha_s U_s.grad(p). For the total energy to be
+    // conserved the fluids together must receive
+    //     -div(alpha_s p U_s) + alpha_s U_s.grad(p),
+    // the work of the pressure on the particle-occupied volume. The fluid
+    // interfacial terms PI U.grad(alpha_k) give -PI U.grad(alpha_s) in sum, so
+    // the difference is added, shared between the fluid phases by volume
+    // fraction (the PI U.grad(alpha_k) terms still exchange work between
+    // fluids).
+    {
+        const volScalarField& p = fluid_.p();
+        volScalarField alphaFluids(volScalarField::New("alphaFluids", mesh(), dimensionedScalar(dimless, 0)));
+        forAll(fluid_.phases(), phasei)
+        {
+            if (!fluid_.phases()[phasei].granular())
+            {
+                alphaFluids += fluid_.phases()[phasei];
+            }
+        }
+        const volScalarField w((*this)/Foam::max(alphaFluids, dimensionedScalar(dimless, small)));
+        forAll(fluid_.phases(), phasei)
+        {
+            const phaseModel& solid = fluid_.phases()[phasei];
+            if (solid.granular())
+            {
+                const volScalarField& alphaS = solid;
+                deltaAlphaRhoE -=
+                    w
+                   *(
+                      - fvc::div(fvc::interpolate(alphaS*p*solid.U()) & mesh().Sf())
+                      + alphaS*(solid.U() & fvc::grad(p))
+                      + fluid_.PI()*(fluid_.U() & fvc::grad(alphaS))
+                    );
+            }
+        }
+    }
     this->fvTimeInt_->addDeltaSource(alphaRhoE_.name(), deltaAlphaRhoE);
 
     if (fluid_.hasMassTransfer(*this))
@@ -287,6 +325,13 @@ void Foam::fluidPhaseModel::storeExplicit()
 
 void Foam::fluidPhaseModel::solveImplicit()
 {
+    // The implicit equations are corrections to the current state (after
+    // the explicit stage, the relaxations and the decode): with no implicit
+    // terms a field is unchanged, and the conserved fields are updated by
+    // the change of the primitive, so that differences between the conserved
+    // and the bounded primitive fields are kept and the update conserves
+    // what the implicit terms conserve
+    const dimensionedScalar dT(rho().time().deltaT());
     volScalarField& alpha(*this);
     if (needSolve(alpha.name()) && solveAlpha_)
     {
@@ -305,11 +350,11 @@ void Foam::fluidPhaseModel::solveImplicit()
     if (needSolve(rho().name()))
     {
         //- Solve momentum equation (implicit stresses)
+        const volScalarField rhoCur(rho());
+        const volScalarField alphaStab(alpha + this->residualAlpha());
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(alpha, rho()) - alphaRhoAdvection_()
-          + fvm::ddt(this->residualAlpha(), rho())
-          - fvc::ddt(this->residualAlpha(), rho())
+            fvm::Sp(alphaStab/dT, rho()) - alphaStab*rhoCur/dT
          ==
             models().source(alpha, rho())
         );
@@ -317,7 +362,7 @@ void Foam::fluidPhaseModel::solveImplicit()
         rhoEqn.solve();
         constraints().constrain(rho());
 
-        alphaRho_ = alpha*rho();
+        alphaRho_ += alpha*(rho() - rhoCur);
     }
 
     // Viscous
@@ -331,6 +376,7 @@ void Foam::fluidPhaseModel::solveImplicit()
     }
 
     tmp<surfaceVectorField> devTau;
+    volScalarField dK(volScalarField::New("dK", mesh(), dimensionedScalar(dimVelocity*dimVelocity, 0)));
     if (needSolve(U_.name()) || (turbulence_.valid() && !explicitViscosity_))
     {
         tmp<fvVectorMatrix> divDevTau;
@@ -339,11 +385,12 @@ void Foam::fluidPhaseModel::solveImplicit()
             divDevTau = turbulence_->divDevTau(U_);
         }
 
+        const volVectorField UCur(U_);
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alpha, rho(), U_) - alphaRhoUAdvection_()
-          + fvm::ddt(this->residualAlphaRho(), U_)
-          - fvc::ddt(this->residualAlphaRho(), U_)
+            fvm::Sp(alphaRhoStab/dT, U_) - alphaRhoStab*UCur/dT
          ==
             models().source(*this, rho(), U_)
         );
@@ -365,19 +412,21 @@ void Foam::fluidPhaseModel::solveImplicit()
             devTau = divDevTau().flux();
         }
 
-        K_ = 0.5*magSqr(U_);
-        alphaRhoU_ = alphaRho_*U_;
+        alphaRhoU_ += alphaRhoCur*(U_ - UCur);
+        dK = 0.5*magSqr(U_) - K_;
+        K_ += dK;
     }
 
     // Solve thermal energy diffusion
     if (needSolve(he().name()) || turbulence_.valid())
     {
+        const volScalarField heCur(he());
+        const volScalarField alphaRhoCur(alpha*rho());
+        const volScalarField alphaRhoStab(alphaRhoCur + this->residualAlphaRho());
         fvScalarMatrix EEqn
         (
-            fvm::ddt(alpha, rho(), he()) - alphaRhoEAdvection_()
-          + fvc::ddt(alpha, rho(), K_)
-          + fvm::ddt(this->residualAlphaRho(), he())
-          - fvc::ddt(this->residualAlphaRho(), he())
+            fvm::Sp(alphaRhoStab/dT, he()) - alphaRhoStab*heCur/dT
+          + alphaRhoCur*dK/dT
          ==
             models().source(*this, rho(), he())
         );
@@ -396,7 +445,7 @@ void Foam::fluidPhaseModel::solveImplicit()
         EEqn.solve();
         constraints().constrain(he());
 
-        alphaRhoE_ = alphaRho_*(he() + K_);
+        alphaRhoE_ += alphaRhoCur*(he() - heCur + dK);
     }
 
     if (turbulence_.valid())
