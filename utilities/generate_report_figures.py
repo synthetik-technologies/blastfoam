@@ -337,26 +337,28 @@ def fig_stage1_al_kinetics():
 # ---------------------------------------------------------------------------
 
 def fig_stage2_high_mach():
-    """Strong shock in air: blastFoam against frozen and equilibrium jumps."""
+    """Strong shock in air: blastFoam (NASA-9 air in local equilibrium)
+    against the frozen and equilibrium jumps for the same species data."""
     import verify_shock_dissociating_air as vs
     case = result("tests/1D/shock_dissociating_air")
     cfd = np.load(result(case, "shock_fields.npz"))
     vs.CASE_DIR = case
-    th = vs.read_case_janaf()
-    machs = np.linspace(2.0, 16.0, 36)
-    a1 = np.sqrt(1.4*287.058*300.0)
+    S = vs.air_species(case)
+    Y1 = vs.air_mass_fractions(case)
+    machs = np.linspace(2.0, 16.0, 29)
+    a1 = vs.sound_speed(S, Y1, 300.0, 101325.0)
     p_ratio = 1 + 2.8/2.4*(machs**2 - 1)
     rho_id = 2.4*machs**2/(0.4*machs**2 + 2)
     T_id = 300.0*p_ratio/rho_id
-    fr = [vs.solve_frozen_shock(M*a1, 101325.0, 300.0, th) for M in machs]
-    eq = [vs.solve_dissociating_shock(float(M)) for M in machs]
+    fr = [vs.jump(M*a1, 101325.0, 300.0, S, Y1, False) for M in machs]
+    eq = [vs.jump(M*a1, 101325.0, 300.0, S, Y1, True) for M in machs]
     Ma, T2 = float(cfd["Ma_s"]), float(cfd["T2"])
     rr = float(cfd["rho2"]/cfd["rho1"])
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(10.5, 7.6))
     ax1.plot(machs, T_id, "b:", label=r"Ideal gas, $\gamma = 1.4$")
-    ax1.plot(machs, [s["T2"] for s in fr], "b--", label="JANAF air, no dissociation (solver thermo)")
-    ax1.plot(machs, [s["T2"] for s in eq], "r-", label="Equilibrium air, O$_2$/N$_2$ dissociation")
+    ax1.plot(machs, [s["T2"] for s in fr], "b--", label="NASA-9 air, frozen")
+    ax1.plot(machs, [s["T2"] for s in eq], "r-", label="NASA-9 air (N$_2$ O$_2$ NO N O), equilibrium")
     ax1.plot([Ma], [T2], "k*", ms=12, label=rf"blastFoam, Ma {Ma:.1f}")
     ax1.set_xlabel("Shock Mach number")
     ax1.set_ylabel("Post-shock temperature [K]")
@@ -365,8 +367,8 @@ def fig_stage2_high_mach():
     ax1.legend(loc="upper left")
 
     ax2.plot(machs, rho_id, "b:", label=r"Ideal gas, $\gamma = 1.4$")
-    ax2.plot(machs, [s["rho2"]/s["rho1"] for s in fr], "b--", label="JANAF air, no dissociation")
-    ax2.plot(machs, [s["rho2"]/s["rho1"] for s in eq], "r-", label="Equilibrium air")
+    ax2.plot(machs, [s["rho2"]/s["rho1"] for s in fr], "b--", label="NASA-9 air, frozen")
+    ax2.plot(machs, [s["rho2"]/s["rho1"] for s in eq], "r-", label="NASA-9 air, equilibrium")
     ax2.plot([Ma], [rr], "k*", ms=12, label="blastFoam")
     ax2.set_xlabel("Shock Mach number")
     ax2.set_ylabel(r"$\rho_2/\rho_1$ [-]")
