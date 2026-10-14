@@ -326,9 +326,21 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     this->save(facei, patchi, alpha, alphaf_);
     this->save(facei, patchi, p, pf_);
 
-    alphaRhoPhi = alpha*rhoPhi*magSf;
-    alphaRhoUPhi = alpha*rhoUPhi*magSf;
-    alphaRhoEPhi = alpha*rhoEPhi*magSf + phiMesh*alpha*p;
+    // A residual (alpha <= 1e-6) upwind side carries no mass, so it carries
+    // no momentum or energy either. With the trace impedance its star
+    // pressure is the mixture pressure, which would otherwise put a
+    // pressure-work flux without mass into the neighbouring trace cell.
+    const bool upwindValid =
+        SOwn >= 0 ? ownValid
+      : SNei <= 0 ? neiValid
+      : SStar > 0 ? ownValid
+      : SStar < 0 ? neiValid
+      : (ownValid || neiValid);
+    const scalar alphaFlux = (traceFlux && !upwindValid) ? 0.0 : alpha;
+
+    alphaRhoPhi = alphaFlux*rhoPhi*magSf;
+    alphaRhoUPhi = alphaFlux*rhoUPhi*magSf;
+    alphaRhoEPhi = alphaFlux*rhoEPhi*magSf + phiMesh*alphaFlux*p;
     phi *= magSf;
 }
 
