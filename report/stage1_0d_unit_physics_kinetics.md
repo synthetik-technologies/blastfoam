@@ -61,6 +61,7 @@ graph TD
   - Validate forward and backward dissociation reaction rates: $\text{O}_2 + M \rightleftharpoons 2\text{O} + M$, $\text{N}_2 + M \rightleftharpoons 2\text{N} + M$, $\text{NO} + M \rightleftharpoons \text{N} + \text{O} + M$.
 - **Exit Criteria**:
   - Equilibrium species mole fractions and specific heats ($c_p, c_v, \gamma$) match CEA/JANAF database within 0.2% for $T \in [300, 6000]\,\text{K}$.
+- **Status / extension (2026-10-14)**: the solver gas phases use 7-coefficient JANAF fits to 5000 K, since 2026-10-14 extrapolated with constant $c_p$ above that (no dissociation). Shocked air in the Comp-B/Al cases reaches 14 400 K (spherical) and 24 800 K (planar), so the target range is extended to 20 000 K: NASA-9 polynomials with three temperature ranges (200–1000, 1000–6000, 6000–20 000 K) in a C++ thermo, and the O2/N2/NO dissociation reactions above in the gas-phase chemistry, verified against CEA to 20 000 K.
 
 ### WP 1.4: 0D-4 Particle Thermal ODE, Melting Plateau & Ignition Delay
 - **Formulation**:
