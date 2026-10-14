@@ -299,7 +299,11 @@ Foam::thermoModel<ThermoType>::K
     const scalar T
 ) const
 {
-    scalar arg = -this->Y()*this->G(Pstd, T)/(RR*T);
+    // Standard-state (ideal-gas) Gibbs function, consistent with
+    // dKcdTbyKc. G(Pstd, T) goes through the equation of state, which for
+    // the combined thermo of a reaction (differences of the species
+    // coefficients, e.g. of the Abel-Nobel R and b) can be singular
+    scalar arg = -this->Y()*this->Gstd(T)/(RR*T);
 
     if (arg < 600)
     {
