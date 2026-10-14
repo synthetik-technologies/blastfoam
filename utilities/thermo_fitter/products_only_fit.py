@@ -114,8 +114,15 @@ def main():
     ap.add_argument("--cv-reactants", type=float, default=1030.0)
     ap.add_argument("--inert", nargs="*", default=["Al(s)", "Al"])
     args = ap.parse_args()
+    r = compute(args.eudet_dir, args.gas_case, args.ptrans, args.T0,
+                args.cv_reactants, args.inert)
+    report(args, r)
 
-    cj, comp, jwl = parse_eudet(args.eudet_dir)
+
+def compute(eudet_dir, gas_case, ptrans=1.0e7, T0=288.0, cv_reactants=1030.0,
+            inert=("Al(s)", "Al")):
+    """Fit entries and transfer state; returns a dict (see report())."""
+    cj, comp, jwl = parse_eudet(eudet_dir)
     rho0 = cj["Reference Density (rho0_eq, kg/m^3)"]
     rho_CJ = cj["CJ State Density (rho_cj_eq, kg/m^3)"]
     T_CJ = cj["CJ Temperature (K)"]
@@ -124,13 +131,13 @@ def main():
     A, B, C = (jwl[k]*1e9 for k in ("A", "B", "C"))
     R1, R2, w = jwl["R1"], jwl["R2"], jwl["omega"]
 
-    gas = co.phase_dict(os.path.join(args.gas_case, "constant"), "gas")
-    Y = {k: v for k, v in comp.items() if k not in args.inert}
+    gas = co.phase_dict(os.path.join(gas_case, "constant"), "gas")
+    Y = {k: v for k, v in comp.items() if k not in inert}
     s = sum(Y.values())
     Y = {k: v/s for k, v in Y.items()}
     missing = [k for k in Y if k not in gas]
     if missing:
-        sys.exit(f"Species {missing} not in the gas thermo of {args.gas_case}")
+        sys.exit(f"Species {missing} not in the gas thermo of {gas_case}")
 
     def ps(V):
         return A*math.exp(-R1*V) + B*math.exp(-R2*V) + C*V**(-(w + 1))
@@ -142,22 +149,37 @@ def main():
     lo, hi = 1e-3, 1e5
     for _ in range(200):
         mid = math.sqrt(lo*hi)
-        lo, hi = (mid, hi) if ps(mid) > args.ptrans else (lo, mid)
+        lo, hi = (mid, hi) if ps(mid) > ptrans else (lo, mid)
     V_t = math.sqrt(lo*hi)
     v_t = V_t/rho0
 
     R_mix = sum(y*species_data(gas, k, 1000)[1] for k, y in Y.items())
     b_mix = sum(y*species_data(gas, k, 1000)[2] for k, y in Y.items())
     W_mix = 1/sum(y/species_data(gas, k, 1000)[3] for k, y in Y.items())
-    T_t = args.ptrans*(v_t - b_mix)/R_mix
+    T_t = ptrans*(v_t - b_mix)/R_mix
 
     E0 = e_sensible(gas, Y, T_t) - eb(V_t)
     V_CJ = rho0/rho_CJ
     omegaT = math.log(T_CJ/T_t)/math.log(V_t/V_CJ)
     es_CJ = eb(V_CJ) + E0
     hug = 0.5*p_CJ*(1/rho0 - 1/rho_CJ)
-    e0 = es_CJ - args.cv_reactants*args.T0 - hug
+    e0 = es_CJ - cv_reactants*T0 - hug
 
+    return dict(cj=cj, Y=Y, gas=gas, D=D, p_CJ=p_CJ, T_CJ=T_CJ, rho0=rho0,
+                rho_CJ=rho_CJ, A=A, B=B, C=C, R1=R1, R2=R2, w=w, V_t=V_t,
+                v_t=v_t, T_t=T_t, R_mix=R_mix, b_mix=b_mix, W_mix=W_mix,
+                E0=E0, V_CJ=V_CJ, omegaT=omegaT, es_CJ=es_CJ, hug=hug, e0=e0,
+                ptrans=ptrans)
+
+
+def report(args, r):
+    """Print the blastEulerFoam dictionary entries."""
+    (cj, Y, D, p_CJ, V_t, rho0, T_t, R_mix, b_mix, W_mix, A, B, C, R1, R2,
+     w, T_CJ, rho_CJ, omegaT, E0, es_CJ, hug, e0) = (
+        r[k] for k in (
+            "cj", "Y", "D", "p_CJ", "V_t", "rho0", "T_t", "R_mix", "b_mix",
+            "W_mix", "A", "B", "C", "R1", "R2", "w", "T_CJ", "rho_CJ",
+            "omegaT", "E0", "es_CJ", "hug", "e0"))
     print(f"// EuDetCode {args.eudet_dir}: D {D:.2f} m/s, p_CJ {p_CJ:.6g} Pa")
     print(f"// transfer {args.ptrans/1e5:g} bar: V {V_t:.4f}, "
           f"rho {rho0/V_t:.6f} kg/m3, T {T_t:.2f} K, "

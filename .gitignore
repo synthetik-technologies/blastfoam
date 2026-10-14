@@ -106,3 +106,6 @@ doc/Doxygen/DTAGS
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+
+# Data written by the test verifiers for the report figures
+tests/**/*.npz

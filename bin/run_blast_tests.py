@@ -14,7 +14,9 @@ import argparse
 import subprocess
 import re
 
-BLASTFOAM_ROOT = "/opt/OpenFOAM/blastfoam"
+# Repository to test; BLASTFOAM_ROOT can point at a scratch copy, so that
+# the cases are run without changing the checkout
+BLASTFOAM_ROOT = os.environ.get("BLASTFOAM_ROOT", "/opt/OpenFOAM/blastfoam")
 
 
 class TestResult:
@@ -262,7 +264,7 @@ def main():
                 f"{sys.executable} tests/0D/verify_al_particle_kinetics.py"
             )
             passed = (code == 0)
-            msg = "Melting plateau, ignition delay, Beckstead kinetics & Al2O3 latent heat verified" if passed else f"Failed: {stderr[:100]}"
+            msg = "Reference model (numpy, not the solver): heating, melting, ignition, Beckstead burn time, Al2O3 latent heat" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Aluminium Particle Kinetics & Condensation (WP 1.2, 1.4, 1.5)", 1, dur, passed, msg))
 
             # 3. High-Temperature Air Thermodynamics & Dissociation (WP 1.3)
@@ -270,7 +272,7 @@ def main():
                 f"{sys.executable} tests/0D/verify_highT_air_thermo.py"
             )
             passed = (code == 0)
-            msg = "NASA-9 polynomials and high-T O2/N2 dissociation verified up to 6000 K" if passed else f"Failed: {stderr[:100]}"
+            msg = "Reference model (numpy, not the solver): NASA polynomials and O2/N2 dissociation to 6000 K" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("High-T Air Thermodynamics & Dissociation (WP 1.3)", 1, dur, passed, msg))
 
             # 4. 1D verification case
@@ -299,34 +301,35 @@ def main():
             if res_shock.passed:
                 code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_shock_dissociating_air.py")
                 if code == 0:
-                    res_shock.message = "1D blastFoam shock jump state (Ma=5.63) & real-gas dissociation verified (< 1.7% error)"
+                    res_shock.message = "Mach 15 shock: matches equilibrium (dissociating) air jump within 2.5%"
                 else:
                     res_shock.passed = False
+                    res_shock.message = stdout.strip().splitlines()[-1][:200]
                     res_shock.message = f"Physics verification failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_shock)
 
             # WP 2.2: Multiphase Interface Advection
             code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_multiphase_advection.py")
             passed = (code == 0)
-            msg = "Contact discontinuity advection verified across HLLC, AUSM+, Kurganov & Tadmor" if passed else f"Failed: {stderr[:100]}"
+            msg = "Contact discontinuity advection verified across HLLC, AUSM+, Kurganov & Tadmor" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Multiphase Interface Advection (WP 2.2)", 2, dur, passed, msg))
 
             # WP 2.3: gunIB1D Dense Particulate Shock Benchmarks
-            code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_gunib1d_benchmarks.py")
+            code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_gunib1d_benchmarks.py", timeout=3600)
             passed = (code == 0)
-            msg = "Cross-solver agreement with gunIB1D on Houim 1, 2, 3 benchmarks verified (< 2% error)" if passed else f"Failed: {stderr[:100]}"
+            msg = "blastEulerFoam agrees with gunIB1D on Houim 1-3 within 2%" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("gunIB1D Particulate Shock Benchmarks (WP 2.3)", 2, dur, passed, msg))
 
             # WP 2.4: Planar CJ / ZND Detonation Verification
             code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_planar_znd.py")
             passed = (code == 0)
-            msg = "Planar detonation front speed and CJ pressure verified against EuDetCode (< 0.1% error)" if passed else f"Failed: {stderr[:100]}"
+            msg = "Planar Comp-B detonation: front speed (imposed by programmed burn) and CJ state vs EuDetCode" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Planar CJ/ZND Detonation (WP 2.4)", 2, dur, passed, msg))
 
             # Planar ZND Detonation with pressurePhaseTransfer
             code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_planar_znd_phaseTransfer.py")
             passed = (code == 0)
-            msg = "Planar ZND detonation coupled with pressurePhaseTransfer verified (< 1% front speed, active phase conversion)" if passed else f"Failed: {stderr[:100]}"
+            msg = "Planar ZND detonation coupled with pressurePhaseTransfer verified (< 1% front speed, active phase conversion)" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Planar ZND Detonation with Phase Transfer", 2, dur, passed, msg))
 
         if args.tier in ["3", "all"]:
@@ -343,10 +346,10 @@ def main():
                     f"{sys.executable} tests/1D_spherical/verify_kingery_bulmash.py"
                 )
                 if code == 0:
-                    res_wedge.message = "blastFoam spherical impulse & peak overpressure verified against Kingery-Bulmash (8.54% err @ Z=2.0m)"
+                    res_wedge.message = "1 kg C4 vs Kinney-Graham TNT correlations: monotonic decay, overpressure within 25%, impulse within 40%"
                 else:
                     res_wedge.passed = False
-                    res_wedge.message = f"Kingery-Bulmash verification failed: {stdout.strip().splitlines()[-1]}"
+                    res_wedge.message = f"Kinney-Graham comparison failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_wedge)
 
             # 1D Spherical Multiphase Detonation (blastEulerFoam origin-initiated CompBAl)
