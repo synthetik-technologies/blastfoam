@@ -112,3 +112,5 @@ tests/**/*.npz
 tests/0D/nasa9_thermo/
 tests/0D/equilibrium/
 tests/0D/equilibrium_chemistry/
+tests/1D/shock_dissociating_air/constant/thermo.nasa9Air
+tests/0D/equilibriumChemistry_0D/constant/thermo.nasa9Gas

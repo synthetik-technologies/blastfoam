@@ -8,4 +8,4 @@ fi
 
 . $WM_PROJECT_DIR/bin/tools/CleanFunctions
 
-rm -rf 0 [1-9]* 0.* log.*
+rm -rf 0 [1-9]* 0.* log.* constant/thermo.nasa9Air

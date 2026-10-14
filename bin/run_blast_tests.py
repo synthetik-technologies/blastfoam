@@ -325,7 +325,7 @@ def main():
             if res_shock.passed:
                 code, stdout, stderr, dur = run_command(f"{sys.executable} tests/1D/verify_shock_dissociating_air.py")
                 if code == 0:
-                    res_shock.message = "Mach 15 shock: matches equilibrium (dissociating) air jump within 2.5%"
+                    res_shock.message = "Mach 14 shock in NASA-9 air with equilibrium chemistry: matches the exact equilibrium jump within 2.5%"
                 else:
                     res_shock.passed = False
                     res_shock.message = stdout.strip().splitlines()[-1][:200]
