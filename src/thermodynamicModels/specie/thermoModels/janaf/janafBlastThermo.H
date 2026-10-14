@@ -33,6 +33,10 @@ Description
 
     entries 0:n-2 are cp coefficients, n-1 is the enthaply offset, and n-2 is the entropy offset
 
+    Outside the fit range Tlow-Thigh, Cp is held at its value at the range
+    limit (H linear in T, S extended with Cp ln(T/Tlimit)), so that the
+    energy stays monotonic and T can exceed Thigh.
+
 SourceFiles
     janafThermoBlastThermo.C
 \*---------------------------------------------------------------------------*/
@@ -115,6 +119,19 @@ private:
         //- Return the coefficients corresponding to the given temperature
         const coeffArray& coeffs(const scalar T) const;
 
+        //- Return the temperature clipped to the fit range Tlow-Thigh
+        inline scalar Tfit(const scalar T) const;
+
+        //- Polynomial Cp/H/S (standard state) at a temperature in the fit
+        //  range
+        inline scalar CpFit(const scalar Tf) const;
+        inline scalar HaFit(const scalar Tf) const;
+        inline scalar SFit(const scalar Tf) const;
+
+        //- Standard-state entropy, extrapolated with constant Cp outside
+        //  the fit range
+        inline scalar Sstd(const scalar T) const;
+
 
 
 public:
@@ -154,7 +171,8 @@ public:
             return true;
         }
 
-        //- Limit the temperature to be in the range Tlow_ to Thigh_
+        //- Limit the temperature to the range Tlow_ to 10*Thigh_ (above
+        //  Thigh_ the properties are extrapolated with constant Cp)
         inline scalar limit(const scalar T, const scalar Told) const;
 
 

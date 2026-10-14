@@ -1429,6 +1429,20 @@ bool Foam::phaseSystem::equilibrateDiluteVolumes()
         return thermo.cellpRhoT(celli);
     };
 
+    // Whether fluid phase i has a positive pressure at the given density
+    // (at its current temperature). Rejects trial states outside the range
+    // of the equation of state, e.g. an Abel-Nobel gas compressed past its
+    // covolume, for which the energy -> temperature solve has no solution
+    auto validRho = [&](const label i, const scalar rho, const label celli)
+    {
+        fluidBlastThermo& thermo = thermos[i];
+        const scalar rho0 = thermo.rhoRef()[celli];
+        thermo.rhoRef()[celli] = rho;
+        const bool valid = thermo.cellpRhoT(celli) > 0;
+        thermo.rhoRef()[celli] = rho0;
+        return valid;
+    };
+
     // rho*c^2/alpha of fluid phase i at the state last set by cellp
     auto cellC = [&](const label i, const scalar p, const scalar alpha, const label celli)
     {
@@ -1536,6 +1550,8 @@ bool Foam::phaseSystem::equilibrateDiluteVolumes()
                     (
                         ekNew > ekMin && ekNew < ekMax
                      && ecNew > ecMin && ecNew < ecMax
+                     && validRho(k, alphaRhok/(alphak + dAlpha), celli)
+                     && validRho(c, alphaRhoc/(alphac - dAlpha), celli)
                     )
                     {
                         pkNew = cellp(k, alphaRhok/(alphak + dAlpha), ekNew, celli);

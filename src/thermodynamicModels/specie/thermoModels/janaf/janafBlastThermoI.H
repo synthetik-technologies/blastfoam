@@ -81,6 +81,68 @@ Foam::janafThermo<EquationOfState>::coeffs
     }
 }
 
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Tfit
+(
+    const scalar T
+) const
+{
+    return min(max(T, Tlow_), Thigh_);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::CpFit
+(
+    const scalar Tf
+) const
+{
+    const coeffArray& a = coeffs(Tf);
+    return ((((a[4]*Tf + a[3])*Tf + a[2])*Tf + a[1])*Tf + a[0]);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::HaFit
+(
+    const scalar Tf
+) const
+{
+    const coeffArray& a = coeffs(Tf);
+    return
+    (
+        ((((a[4]/5.0*Tf + a[3]/4.0)*Tf + a[2]/3.0)*Tf + a[1]/2.0)*Tf + a[0])*Tf
+      + a[5]
+    );
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::SFit
+(
+    const scalar Tf
+) const
+{
+    const coeffArray& a = coeffs(Tf);
+    return
+    (
+        (((a[4]/4.0*Tf + a[3]/3.0)*Tf + a[2]/2.0)*Tf + a[1])*Tf + a[0]*log(Tf)
+      + a[6]
+    );
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::Sstd
+(
+    const scalar T
+) const
+{
+    const scalar Tf = Tfit(T);
+    return SFit(Tf) + CpFit(Tf)*log(T/Tf);
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class EquationOfState>
@@ -123,7 +185,11 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::limit
                 << endl;
         }
 
-        return min(max(T, Tlow_), Thigh_);
+        // Above Thigh the properties are extrapolated with constant Cp.
+        // The upper bound keeps the energy -> temperature iteration bounded
+        // in non-physical states (e.g. an Abel-Nobel gas compressed past
+        // its covolume, where p is limited to 0 and e falls with T)
+        return min(max(T, Tlow_), 10*Thigh_);
     }
     else
     {
@@ -177,11 +243,7 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Cp
     const scalar T
 ) const
 {
-    const scalar Tl = limit(T, T);
-    const coeffArray& a = coeffs(Tl);
-    return
-        ((((a[4]*Tl + a[3])*Tl + a[2])*Tl + a[1])*Tl + a[0])
-      + EquationOfState::Cp(rho, e, Tl);
+    return Cpt(T) + EquationOfState::Cp(rho, e, T);
 }
 
 
@@ -193,13 +255,7 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Ha
     const scalar T
 ) const
 {
-    const scalar Tl = limit(T, T);
-    const coeffArray& a = coeffs(Tl);
-    return
-    (
-        ((((a[4]/5.0*Tl + a[3]/4.0)*Tl + a[2]/3.0)*Tl + a[1]/2.0)*Tl + a[0])*Tl
-      + a[5]
-    ) + EquationOfState::H(rho, e, Tl);
+    return Hat(T) + EquationOfState::H(rho, e, T);
 }
 
 
@@ -220,9 +276,7 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Cpt
     const scalar T
 ) const
 {
-    const scalar Tl = limit(T, T);
-    const coeffArray& a = coeffs(Tl);
-    return ((((a[4]*Tl + a[3])*Tl + a[2])*Tl + a[1])*Tl + a[0]);
+    return CpFit(Tfit(T));
 }
 
 template<class EquationOfState>
@@ -231,13 +285,8 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Hat
     const scalar T
 ) const
 {
-    const scalar Tl = limit(T, T);
-    const coeffArray& a = coeffs(Tl);
-    return
-    (
-        ((((a[4]/5.0*Tl + a[3]/4.0)*Tl + a[2]/3.0)*Tl + a[1]/2.0)*Tl + a[0])*Tl
-      + a[5]
-    );
+    const scalar Tf = Tfit(T);
+    return HaFit(Tf) + CpFit(Tf)*(T - Tf);
 }
 
 template<class EquationOfState>
@@ -272,13 +321,7 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::S
     const scalar T
 ) const
 {
-    const scalar Tl = limit(T, T);
-    const coeffArray& a = coeffs(Tl);
-    return
-    (
-        (((a[4]/4.0*Tl + a[3]/3.0)*Tl + a[2]/2.0)*Tl + a[1])*Tl + a[0]*log(Tl)
-      + a[6]
-    ) + EquationOfState::Sp(p, Tl);
+    return Sstd(T) + EquationOfState::Sp(p, T);
 }
 
 
@@ -288,17 +331,7 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::Gstd
     const scalar T
 ) const
 {
-    const scalar Tl = limit(T, T);
-    const coeffArray& a = coeffs(Tl);
-    return
-    (
-        (
-            a[0]*(1 - log(Tl))
-          - (((a[4]/20.0*Tl + a[3]/12.0)*Tl + a[2]/6.0)*Tl + a[1]/2.0)*Tl
-          - a[6]
-        )*Tl
-      + a[5]
-    );
+    return Hat(T) - T*Sstd(T);
 }
 
 
@@ -310,9 +343,12 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::dCpdT
     const scalar T
 ) const
 {
-    const scalar Tl = limit(T, T);
-    const coeffArray& a = coeffs(Tl);
-    return (((4*a[4]*Tl + 3*a[3])*Tl + 2*a[2])*Tl + a[1]);
+    if (T < Tlow_ || T > Thigh_)
+    {
+        return 0;
+    }
+    const coeffArray& a = coeffs(T);
+    return (((4*a[4]*T + 3*a[3])*T + 2*a[2])*T + a[1]);
 }
 
 
