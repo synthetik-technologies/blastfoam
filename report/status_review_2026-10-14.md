@@ -129,6 +129,8 @@ Progress (2026-10-14): A6 done for the coupling: three energy errors fixed (drag
 
 ### Phase C: High-temperature air (M) — WP 1.3 stage 2
 
+Extended 2026-10-14 to local chemical equilibrium (the one-step finite-rate chemistry fails at high temperature); detailed plan in `phaseC_highT_equilibrium_plan.md`. B2 is paused at 1.12 ms until then.
+
 | # | Step | Exit criterion |
 |---|---|---|
 | C1 | NASA-9 three-range thermo class (200–1000–6000–20 000 K), instantiated for the multicomponent gas; species N2, O2, NO, N, O, Ar | $c_p$, $h$, $s$ match CEA to 0.2% to 20 000 K (0D solver test) |
