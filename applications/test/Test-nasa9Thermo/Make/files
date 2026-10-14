@@ -1,0 +1,3 @@
+Test-nasa9Thermo.C
+
+EXE = $(BLAST_APPBIN)/Test-nasa9Thermo

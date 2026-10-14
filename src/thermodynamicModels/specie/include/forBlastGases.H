@@ -37,6 +37,7 @@ License
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
 #include "janafBlastThermo.H"
+#include "nasa9BlastThermo.H"
 #include "ePolynomialBlastThermo.H"
 
 #include "perfectGas.H"
@@ -84,7 +85,8 @@ License
 #define forCoeffGasThermos(Mu, Macro, Args...)                              \
     forCoeffGasEqns(Mu, eConstThermo, Macro, Args);                         \
     forCoeffGasEqns(Mu, hConstThermo, Macro, Args);                         \
-    forCoeffGasEqns(Mu, janafThermo, Macro, Args);
+    forCoeffGasEqns(Mu, janafThermo, Macro, Args);                          \
+    forCoeffGasEqns(Mu, nasa9Thermo, Macro, Args);
 
 #define forCoeffGasTransports(Macro, Args...)                               \
     forCoeffGasThermos(constTransport, Macro, Args);                        \

@@ -275,6 +275,14 @@ def main():
             msg = "Reference model (numpy, not the solver): NASA polynomials and O2/N2 dissociation to 6000 K" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("High-T Air Thermodynamics & Dissociation (WP 1.3)", 1, dur, passed, msg))
 
+            # NASA-9 gas thermodynamics in the solver library (Phase C2)
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_nasa9_thermo.py"
+            )
+            passed = (code == 0)
+            msg = "nasa9Thermo (compiled) vs NASA-9 data for 18 species and air, 200 - 25 000 K" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("NASA-9 Gas Thermodynamics (Phase C2)", 1, dur, passed, msg))
+
             # 4. 1D verification case
             results.append(run_openfoam_case(
                 "tutorials/blastFoam/pressurePhaseChangeTest",
