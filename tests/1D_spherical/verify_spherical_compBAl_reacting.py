@@ -38,6 +38,41 @@ def read_internal_field(path):
     return np.array([float(v) for v in m.group(1).split()])
 
 
+
+def energy_drift(case_dir, t_start=8e-6):
+    """Relative change of the total energy of all phases (fluid total energy,
+    Al thermal, kinetic and granular energy) from t_start to the last write
+    before the shock reaches the outer boundary (closed domain). The
+    programmed burn releases energy until about 7 us."""
+    import re
+
+    def field(t, name, n=400):
+        text = open(os.path.join(case_dir, t, name)).read()
+        body = text.split("internalField", 1)[1].split(";", 1)[0].strip()
+        if body.startswith("uniform"):
+            return np.full(n, float(body.split(None, 1)[1].strip("() ").split()[0]))
+        lst = body[body.index("(") + 1:body.rindex(")")]
+        if "(" in lst:
+            return np.array([float(v.split()[0]) for v in re.findall(r"\(([^()]*)\)", lst)])
+        return np.array([float(x) for x in lst.split()])
+
+    r = np.linspace(0, 0.2, 401)
+    V = 4/3*np.pi*(r[1:]**3 - r[:-1]**3)
+    times = sorted(
+        (d for d in os.listdir(case_dir)
+         if re.fullmatch(r"[0-9.e+-]+", d) and float(d) >= t_start),
+        key=float
+    )
+    E = []
+    for t in times:
+        if field(t, "p")[-1] > 1.05e5:
+            break
+        e = sum(field(t, f"alphaRhoE.{p}") @ V for p in ("compBAl", "gas", "Al"))
+        e += (0.5*field(t, "alphaRho.Al")*field(t, "U.Al")**2) @ V
+        e += field(t, "alphaRhoPTE.Al") @ V
+        E.append((float(t), e))
+    return E[-1][0], E[-1][1]/E[0][1] - 1
+
 def run_case_if_needed():
     if not os.path.isfile(PROBE_FILE):
         print(f"Running Allrun in {CASE_DIR}...")
@@ -144,6 +179,11 @@ def verify_spherical_detonation_reacting():
 
     # Check criteria
     passed = True
+    t_last, dE = energy_drift(CASE_DIR)
+    print(f"  Total energy change 8 us -> {t_last*1e6:.0f} us (closed domain): {dE:.2e}")
+    if abs(dE) > 1e-3:
+        print(f"FAIL: total energy not conserved ({dE:.2e}, tolerance 1e-3)")
+        passed = False
     if speed_error_pct > 1.5:
         print(f"FAIL: Detonation velocity error {speed_error_pct:.2f}% exceeds threshold of 1.5%")
         passed = False

@@ -125,6 +125,8 @@ Progress (2026-10-14): B1 done for the spherical `_reacting` and `_alCombustion`
 
 | A6 | Find and fix the energy error of the particle/fluid coupling (pressure-gradient work, granular energy exchange); closed-domain energy check in the test suite | Total energy conserved to ≤ 1e-6 in `gunib1d_houim2` and the spherical cases while closed |
 
+Progress (2026-10-14): A6 done for the coupling: three energy errors fixed (drag ODE without energy, missing pressure work on the particle-occupied volume, implicit stage rebuilding the conserved fields from bounded primitives). Houim 2 conserves energy to 6e-7 (target met), the spherical cases to 4–7e-4 (remaining: end of the programmed burn). Energy checks are in the verifiers. All 18 tests pass except the air shock (fails by design).
+
 ### Phase C: High-temperature air (M) — WP 1.3 stage 2
 
 | # | Step | Exit criterion |

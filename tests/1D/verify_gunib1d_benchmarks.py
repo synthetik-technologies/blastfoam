@@ -303,7 +303,20 @@ def verify_houim2(gun_out_dir, bf_case_dir):
     print(f"    Post-Shock Gas Vel U.gas: gunIB1D = {ug_post_gun:.2f} m/s | blastEulerFoam = {ug_post_bf:.2f} m/s (Diff: {diff_ug_post:.2f}%)")
     print(f"    Post-Shock Solid Vel U.s: gunIB1D = {us_post_gun:.2f} m/s | blastEulerFoam = {us_post_bf:.2f} m/s (Diff: {diff_us_post:.2f}%)")
 
-    passed = (err_ushock_gun < 2.0) and (err_us_gun < 2.0) and (diff_ushock < 2.0) and (diff_p_post < 2.0) and (diff_ug_post < 2.0)
+    # Total energy (gas total energy, particle thermal, kinetic and granular
+    # energy) over the writes; the waves do not reach the ends of the tube,
+    # so the domain is closed
+    energies = []
+    for d in sorted((d for d in os.listdir(bf_case_dir) if re.fullmatch(r"[0-9.e+-]+", d) and float(d) > 0), key=float):
+        f = lambda name: read_openfoam_field(os.path.join(bf_case_dir, d, name))
+        energies.append(
+            np.sum(f("alphaRhoE.gas")) + np.sum(f("alphaRhoE.solid"))
+          + np.sum(0.5*f("alphaRho.solid")*f("U.solid")**2) + np.sum(f("alphaRhoPTE.solid"))
+        )
+    dE = energies[-1]/energies[0] - 1 if len(energies) > 1 else float("nan")
+    print(f"  blastEulerFoam total energy change over {len(energies)} writes: {dE:.2e} (tolerance 1e-5)")
+
+    passed = (err_ushock_gun < 2.0) and (err_us_gun < 2.0) and (diff_ushock < 2.0) and (diff_p_post < 2.0) and (diff_ug_post < 2.0) and abs(dE) < 1e-5
     return passed, {
         "u_shock_gun": u_shock_gun,
         "u_shock_bf": u_shock_bf,
