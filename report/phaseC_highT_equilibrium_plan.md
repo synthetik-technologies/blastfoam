@@ -30,10 +30,12 @@ A gas cell is treated in one of two ways:
 ## Progress
 
 - 2026-10-14: C1 and C2 done. `nasa9Thermo` and the species converter; 18 species (N₂, O₂, NO, N, O, H₂, H, OH, H₂O, CO, CO₂, CH₄, NH₃, C₂H₆, C(gr), Al, AlO, Al₂O₃(s)) verified to 25 000 K (`tests/0D/verify_nasa9_thermo.py`). EuDetCode's 6000–20 000 K range for H₂O, NH₃ and CH₄ is discontinuous and is not used (constant Cp above 6000 K). C and CH (available) are not yet in the set.
+- 2026-10-14: C3 done. `blastChemicalEquilibrium` (element potentials, condensed species as pure phases, UV and TV); `tests/0D/verify_equilibrium.py`: within 4e-4 (T, p) of EuDetCode for air, the products and products/air mixtures at 0.01–100 kg/m³ and 2500–20 000 K (EuDetCode's own energy residual is up to 3e-3), within 1e-6 of an independent Python solution for all states including C(gr) and Al2O3(s). EuDetCode does not converge below 1e5 Pa, so the low-density states are checked against the Python solution only. Six of 384 stress-test states with equilibrium temperatures below ~850 K do not converge (outside the use above `Teq`).
 
 ## 4. Open choices
 
 - The equilibrium criterion: a fixed `Teq`, or a comparison of the chemical and flow time scales per cell.
 - Non-ideality: the equilibrium composition with the Abel–Nobel covolume (affects high-density products near the transfer pressure, b·ρ ≈ 0.05) or ideal-gas chemical potentials.
 - Al chemistry: Al vapour and AlO in the equilibrium set, and how the particle burn rate couples to it (plan step D).
-- Reference for C3: the EuDetCode equilibrium solver (same data) or Cantera (C++ installed under `/usr/local`; the Python module is not installed).
+- Reference for C3: the EuDetCode equilibrium solver (same data) or Cantera (C++ installed under `/usr/local`; the Python module is not installed). Decided: EuDetCode (with the blastFoam coefficients written to its database) plus an independent Python solution.
+- Decided (2026-10-14): fixed `Teq` (~2500 K), ideal-gas chemical potentials (the Abel–Nobel covolume only in the EOS), Al and AlO in the equilibrium set.
