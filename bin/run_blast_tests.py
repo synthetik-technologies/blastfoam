@@ -299,6 +299,14 @@ def main():
             msg = "Equilibrium above Teq in the chemistry model (blastFoam 0D: composition, T, mass, elements, energy to round-off; blastEulerFoam 0D transfer: energy incl. formation enthalpy to 4e-7)" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Equilibrium Gas Chemistry (Phase C4)", 1, dur, passed, msg))
 
+            # Finite-rate gas mechanism below Teq vs GRI-3.0 (Phase C6)
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_gas_kinetics.py"
+            )
+            passed = (code == 0)
+            msg = "GRI-3.0 H2/O2/CO/C1 subset (reversible, nasa9) in blastFoam 0D vs full GRI-3.0 (Cantera): products/air, 1200-2000 K, 1-50 bar; ignition within 25%, burnout T within 1%" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("Gas Mechanism vs GRI-3.0 (Phase C6)", 1, dur, passed, msg))
+
             # 4. 1D verification case
             results.append(run_openfoam_case(
                 "tutorials/blastFoam/pressurePhaseChangeTest",
