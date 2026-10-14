@@ -57,9 +57,9 @@ void Foam::basicSolidBlastThermo<Thermo>::calculate()
         else
         {
             Ti = t.TRhoE(Ti, rhoi, ei);
-            if (Ti > 10000.0)
+            if (Ti > this->THigh_)
             {
-                Ti = 10000.0;
+                Ti = this->THigh_;
                 ei = t.Es(rhoi, ei, Ti);
             }
         }
@@ -122,9 +122,9 @@ void Foam::basicSolidBlastThermo<Thermo>::calculate()
                 else
                 {
                     Ti = t.TRhoE(Ti, rhoi, ei);
-                    if (Ti > 10000.0)
+                    if (Ti > this->THigh_)
                     {
-                        Ti = 10000.0;
+                        Ti = this->THigh_;
                         ei = t.Es(rhoi, ei, Ti);
                     }
                 }
