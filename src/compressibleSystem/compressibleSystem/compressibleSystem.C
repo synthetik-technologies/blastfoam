@@ -245,6 +245,15 @@ void Foam::compressibleSystem::setModels()
         explicitViscosity_ = false;
     }
 
+    // Store the old-time energy and velocity from the start. The implicit
+    // solves (fvm::ddt(rho, he), fvm::ddt(rho, U)) need the values at the
+    // start of the time step; an old-time field first created in the solve
+    // would hold the values after the explicit stage, so that the explicit
+    // change (fluxes and sources, e.g. the heat release) would be counted
+    // twice in the first time step
+    thermo().he().oldTime();
+    U_.oldTime();
+
     updateCorDeltaT();
     storeExplicit();
 }
