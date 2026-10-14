@@ -27,6 +27,10 @@ A gas cell is treated in one of two ways:
 | C6 | Finite-rate mechanism below `Teq`: reversible reduced CO/H₂/O₂ kinetics consistent with the equilibrium thermodynamics (plan step B4) | Ignition delay / burnout vs reference mechanism |
 | C7 | Re-run spherical cases (0.2 m, 2 m) | Shocked air ≤ ~10 000 K; no temperature-cap hits; documented changes in blast metrics |
 
+## Progress
+
+- 2026-10-14: C1 and C2 done. `nasa9Thermo` and the species converter; 18 species (N₂, O₂, NO, N, O, H₂, H, OH, H₂O, CO, CO₂, CH₄, NH₃, C₂H₆, C(gr), Al, AlO, Al₂O₃(s)) verified to 25 000 K (`tests/0D/verify_nasa9_thermo.py`). EuDetCode's 6000–20 000 K range for H₂O, NH₃ and CH₄ is discontinuous and is not used (constant Cp above 6000 K). C and CH (available) are not yet in the set.
+
 ## 4. Open choices
 
 - The equilibrium criterion: a fixed `Teq`, or a comparison of the chemical and flow time scales per cell.
