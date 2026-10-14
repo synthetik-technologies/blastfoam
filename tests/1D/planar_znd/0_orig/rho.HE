@@ -13,7 +13,7 @@ FoamFile
     object      rho.HE;
 }
 dimensions      [1 -3 0 0 0 0 0];
-internalField   uniform 1720;
+internalField   uniform 1717;
 boundaryField
 {
     left { type zeroGradient; }

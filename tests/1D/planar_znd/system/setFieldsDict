@@ -20,7 +20,7 @@ defaultFieldValues
     volScalarFieldValue alpha.HE 0.0
     volScalarFieldValue alpha.gas 1.0
     volScalarFieldValue lambda.HE 0.0
-    volScalarFieldValue rho.HE 1720.0
+    volScalarFieldValue rho.HE 1717.0
     volScalarFieldValue rho.gas 1.176
     volScalarFieldValue p 101325
     volScalarFieldValue T 300
@@ -37,7 +37,7 @@ regions
             volScalarFieldValue alpha.HE 1.0
             volScalarFieldValue alpha.gas 0.0
             volScalarFieldValue lambda.HE 0.0
-            volScalarFieldValue rho.HE 1720.0
+            volScalarFieldValue rho.HE 1717.0
             volScalarFieldValue p 101325
             volScalarFieldValue T 300
             volVectorFieldValue U (0 0 0)

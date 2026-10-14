@@ -31,7 +31,7 @@ HE
         }
         equationOfState
         {
-            rho0            1720.0;
+            rho0            1717.0;
             n               7.4;
             kappa           3.9e+11;
             Gamma           0.35;
@@ -61,21 +61,26 @@ HE
             thermo          eConst;
             equationOfState eJWLC;
         }
+        // Comp-B products: EuDetCode CJDetonation "COMP-B" 1717 BKW
+        // (utilities/thermo_fitter/eudet_compB); E0 places the reference
+        // isentrope through the CJ point for the reactant energy Cv*300 K,
+        // so that the CJ point of this EOS is the programmed-burn speed
+        // (utilities/thermo_fitter/ejwlc_cj_entries.py)
         equationOfState
         {
-            rho0            1720.0;
-            A               5.2423e11;
-            B               7.678e9;
-            C               1.082e9;
-            R1              4.2;
-            R2              1.1;
-            omega           0.34;
+            rho0            1717.0;
+            A               1.41386e+12;
+            B               1.54639e+10;
+            C               1.72309e+09;
+            R1              5.74774;
+            R2              1.35315;
+            omega           0.408147;
             pMax            1e11;
-            Cv              1410.19;
-            T_CJ            3890.97;
-            rho_CJ          2227.8;
-            omegaT          0.469442; // T_s through T_CJ and the gas-EOS T at transfer
-            E0              -8.5e6;
+            Cv              609.326;
+            T_CJ            3891.43;
+            rho_CJ          2224.50;
+            omegaT          0.716744;
+            E0              -4823643.38;
         }
         specie
         {
@@ -88,7 +93,7 @@ HE
         }
         thermodynamics
         {
-            Cv              1410;
+            Cv              609.326;
             Hf              0;
         }
     }
@@ -97,8 +102,8 @@ HE
     {
         E0              0;
         points          ( ( 0.0 0.0005 0.0005 ) );
-        vDet            7946.57;
-        Pcj             2.47571e+10;
+        vDet            7934.30;
+        Pcj             2.46599e+10;
     }
     residualRho     1e-12;
     residualAlpha   1e-12;

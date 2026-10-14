@@ -18,31 +18,37 @@ import subprocess
 import numpy as np
 
 CASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "planar_znd_phaseTransfer")
-EUDET_BIN = "/opt/OpenFOAM/blastfoam/external/eudetcode/build/src/DetonationStructure"
-ZND_PROFILE = "/opt/OpenFOAM/blastfoam/external/eudetcode/znd_profile.dat"
 DX = 0.2 / 400.0  # 0.0005 m (0.5 mm)
 V_CELL = DX * 0.001 * 0.001  # Cell volume (1D unit depth)
 
 
-def get_eudetcode_reference():
-    """Extract reference CJ parameters from EuDetCode."""
-    if not os.path.isfile(ZND_PROFILE):
-        cmd = [EUDET_BIN, "COMP-B", "1720", "BKW", "--isentrope"]
-        res = subprocess.run(cmd, cwd=os.path.dirname(ZND_PROFILE), capture_output=True, text=True)
-        if res.returncode != 0:
-            raise RuntimeError(f"DetonationStructure failed: {res.stderr}")
+REF_DIR = "/opt/OpenFOAM/blastfoam/utilities/thermo_fitter/eudet_compB"
 
+
+def get_eudetcode_reference():
+    """Reference CJ state: EuDetCode CJDetonation "COMP-B" 1717 BKW
+    (utilities/thermo_fitter/eudet_compB, the source of the case's products
+    EOS and programmed-burn speed)."""
     ref = {}
-    with open(ZND_PROFILE, "r") as f:
-        for line in f:
-            if line.startswith("# D_CJ[m/s]:"):
-                ref["D_CJ"] = float(line.split(":")[1].strip())
-            elif line.startswith("# P_CJ[Pa]:"):
-                ref["P_CJ"] = float(line.split(":")[1].strip())
-            elif line.startswith("# T_CJ[K]:"):
-                ref["T_CJ"] = float(line.split(":")[1].strip())
-            elif line.startswith("# rho0[kg/m^3]:"):
-                ref["rho0"] = float(line.split(":")[1].strip())
+    for line in open(os.path.join(REF_DIR, "cj_output.txt")):
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        try:
+            val = float(v.split()[0])
+        except (ValueError, IndexError):
+            continue
+        k = k.strip()
+        if k == "CJ Velocity (m/s)":
+            ref["D_CJ"] = val
+        elif k == "CJ Pressure (Pa)":
+            ref["P_CJ"] = val
+        elif k == "CJ Temperature (K)":
+            ref["T_CJ"] = val
+        elif k == "Initial Density":
+            ref["rho0"] = val
+        elif k == "CJ Volume (m^3/kg)":
+            ref["v_CJ"] = val
     return ref
 
 
@@ -85,8 +91,7 @@ def main():
     print("-" * 80)
 
     # Ensure case has run
-    check_time = os.path.join(CASE_DIR, "2.49997e-05")
-    if not os.path.isdir(check_time):
+    if not os.path.isfile(os.path.join(CASE_DIR, "log.blastFoam")):
         print("Running blastFoam planar_znd_phaseTransfer simulation...")
         res = subprocess.run(["bash", "-c", f"cd {CASE_DIR} && ./Allrun"], capture_output=True, text=True)
         if res.returncode != 0:
