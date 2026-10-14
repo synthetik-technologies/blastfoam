@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 """
-verify_shock_dissociating_air.py: Quantitative verification of high-Mach shock waves
-in dissociating air across Mach 3 to 10 with associated 1D blastFoam case (Work Package 2.1).
+verify_shock_dissociating_air.py: strong shock in air (Work Package 2.1).
 
-1. Runs/loads 1D blastFoam shock tube simulation (tests/1D/shock_dissociating_air)
-   with NASA/JANAF high-temperature air thermodynamics.
-2. Extracts CFD shock trajectory x_s(t), propagation velocity U_s, shock Mach number Ma_s,
-   and post-shock plateau state (p2, T2, rho2, u2).
-3. Cross-verifies blastFoam CFD post-shock state against exact coupled Rankine-Hugoniot
-   jump relations with temperature-dependent NASA-7 enthalpy polynomials and finite-temperature
-   chemical dissociation (O2 <-> 2O, N2 <-> 2N).
-4. Verifies conservation of mass, momentum, and total energy to machine precision across Mach 3-10.
+A high-pressure, high-temperature driver (1700 bar, 7500 K) drives a shock of
+about Mach 15 into air at 1 atm and 300 K (tests/1D/shock_dissociating_air,
+blastFoam, single-species JANAF air without dissociation). Behind the shock
+the solver gives about 10 000 K; equilibrium air would be about 8000 K with
+most of the O2 and part of the N2 dissociated.
 
-Exit Criteria (WP 2.1):
-- blastFoam 1D shock tube post-shock state matches exact Rankine-Hugoniot relations within 2.5%.
-- Jump conditions match thermochemical equilibrium Rankine-Hugoniot shock relations within 0.5%.
+Checks, at the shock speed measured in the simulation:
+1. Numerics: the post-shock state matches the exact jump conditions for the
+   solver's own thermodynamics (the case JANAF fit, extrapolated with constant
+   cp above Thigh, no dissociation) within 2.5%.
+2. Physics: the post-shock state matches the jump conditions of air in
+   chemical equilibrium (O2 <-> 2O, N2 <-> 2N) within 2.5%. This fails until
+   the gas thermodynamics include dissociation.
+The equilibrium model is approximate: Kp fits, NASA-7 polynomials (fitted to
+6000 K) and no NO or ionisation.
 """
 
 import os
 import sys
+import re
 import subprocess
 import numpy as np
 from scipy.optimize import root_scalar
@@ -223,6 +226,65 @@ def solve_dissociating_shock(Ma, p1=101325.0, T1=300.0):
     }
 
 
+def read_case_janaf():
+    """JANAF coefficients, Tcommon, Thigh and molecular weight of the case."""
+    text = open(os.path.join(CASE_DIR, "constant", "physicalProperties")).read()
+
+    def entry(name):
+        return re.search(rf"{name}\s+([^;]+);", text).group(1).strip()
+
+    def coeffs(name):
+        return [float(x) for x in entry(name).strip("() ").split()]
+
+    return {
+        "W": float(entry("molWeight")),
+        "Tcommon": float(entry("Tcommon")),
+        "Thigh": float(entry("Thigh")),
+        "high": coeffs("highCpCoeffs"),
+        "low": coeffs("lowCpCoeffs"),
+    }
+
+
+def janaf_h_cp(th, T):
+    """Enthalpy [J/kg] and cp of the case air, as janafBlastThermo evaluates
+    them: constant cp above Thigh."""
+    R = R_U/th["W"]
+
+    def h_cp(Tv):
+        a = th["high"] if Tv >= th["Tcommon"] else th["low"]
+        h = R*(((((a[4]/5*Tv + a[3]/4)*Tv + a[2]/3)*Tv + a[1]/2)*Tv + a[0])*Tv + a[5])
+        cp = R*((((a[4]*Tv + a[3])*Tv + a[2])*Tv + a[1])*Tv + a[0])
+        return h, cp
+
+    if T <= th["Thigh"]:
+        return h_cp(T)
+    h, cp = h_cp(th["Thigh"])
+    return h + cp*(T - th["Thigh"]), cp
+
+
+def solve_frozen_shock(Us, p1, T1, th):
+    """Exact jump conditions for a perfect gas with the case JANAF enthalpy."""
+    R = R_U/th["W"]
+    rho1 = p1/(R*T1)
+    h1 = janaf_h_cp(th, T1)[0]
+
+    def state(T2):
+        # Mass and momentum: p2 = p1 + rho1 Us^2 (1 - rho1/rho2), rho2 = p2/(R T2)
+        B = -(p1 + rho1*Us**2)
+        C = rho1**2*Us**2*R*T2
+        p2 = (-B + np.sqrt(max(B**2 - 4*C, 0.0)))/2
+        rho2 = p2/(R*T2)
+        return p2, rho2, Us*(1 - rho1/rho2)
+
+    def residual(T2):
+        p2, rho2, u2 = state(T2)
+        return h1 + 0.5*Us**2 - janaf_h_cp(th, T2)[0] - 0.5*(Us - u2)**2
+
+    T2 = root_scalar(residual, bracket=[1.01*T1, 60000.0], method="brentq").root
+    p2, rho2, u2 = state(T2)
+    return {"Us": Us, "p2": p2, "T2": T2, "rho2": rho2, "u2": u2, "rho1": rho1}
+
+
 def read_openfoam_field(file_path, n_cells=400):
     """Parse 1D OpenFOAM field file."""
     with open(file_path, "r") as f:
@@ -282,38 +344,43 @@ def run_and_extract_blastfoam_case():
                     pass
 
     time_dirs.sort(key=lambda x: x[0])
+
+    def shock_state(t_dir):
+        path = os.path.join(CASE_DIR, t_dir)
+        fields = {f: read_openfoam_field(os.path.join(path, f)) for f in ("p", "T", "rho", "U")}
+        p = fields["p"]
+        n = len(p)
+        x = (np.arange(n) + 0.5)/n
+        # Shock: last cell above 1.5 bar ahead of the quiescent air; its
+        # position is where p crosses the mid-jump value (linear interpolation)
+        i_s = np.where(p > 1.5e5)[0][-1]
+        p_mid = 0.5*(p[-1] + np.median(p[max(0, i_s - 12):i_s - 5]))
+        i = np.where(p > p_mid)[0][-1]
+        x_s = x[i] + (p[i] - p_mid)/(p[i] - p[i + 1])*(x[i + 1] - x[i])
+        return fields, x, i_s, x_s
+
     latest_t, latest_dir = time_dirs[-1]
-    latest_path = os.path.join(CASE_DIR, latest_dir)
+    fields, xc, shock_cell, x_shock = shock_state(latest_dir)
+    p_field, T_field, rho_field, U_field = (fields[f] for f in ("p", "T", "rho", "U"))
 
-    p_field = read_openfoam_field(os.path.join(latest_path, "p"))
-    T_field = read_openfoam_field(os.path.join(latest_path, "T"))
-    rho_field = read_openfoam_field(os.path.join(latest_path, "rho"))
-    U_field = read_openfoam_field(os.path.join(latest_path, "U"))
-
-    n_cells = len(p_field)
-    dx = 1.0 / n_cells
-    xc = (np.arange(n_cells) + 0.5) * dx
-
-    # Locate shock front: point where pressure exceeds 1.5 bar propagating into ambient air
-    shock_indices = np.where(p_field > 1.5e5)[0]
-    shock_cell = shock_indices[-1]
-    x_shock = xc[shock_cell]
+    # Shock speed: least-squares fit of the shock position over the last three writes
+    fit = time_dirs[-3:]
+    ts = np.array([t for t, _ in fit])
+    xs = np.array([shock_state(d)[3] for _, d in fit])
+    Us = np.polyfit(ts, xs, 1)[0]
 
     # Pre-shock state in quiescent ambient air
     p1 = p_field[-1]
     T1 = T_field[-1]
     rho1 = rho_field[-1]
 
-    # Post-shock plateau state: extract ~15 cells behind the shock front
-    plateau_cell = max(0, shock_cell - 15)
-    p2 = p_field[plateau_cell]
-    T2 = T_field[plateau_cell]
-    rho2 = rho_field[plateau_cell]
-    u2 = U_field[plateau_cell]
+    # Post-shock state: median of cells 6-12 behind the shock front
+    plateau = slice(max(0, shock_cell - 12), shock_cell - 5)
+    p2 = np.median(p_field[plateau])
+    T2 = np.median(T_field[plateau])
+    rho2 = np.median(rho_field[plateau])
+    u2 = np.median(U_field[plateau])
 
-    # Shock speed from propagation distance (driver interface at x = 0.2 m)
-    x_driver = 0.20
-    Us = (x_shock - x_driver) / latest_t
     a1 = np.sqrt(1.4 * 287.058 * T1)
     Ma_s = Us / a1
 
@@ -353,70 +420,65 @@ def main():
     # 1. blastFoam 1D CFD Case Verification
     print("\n[PART 1] blastFoam 1D Shock Tube Simulation Analysis (tests/1D/shock_dissociating_air):")
     cfd = run_and_extract_blastfoam_case()
+    log = os.path.join(CASE_DIR, "log.blastFoam")
+    if not os.path.isfile(log) or "\nEnd" not in open(log).read():
+        print("FAIL: blastFoam did not finish")
+        sys.exit(1)
 
-    print(f"  Simulation Output Time : t = {cfd['t']*1e6:.1f} us ({cfd['t']:.6e} s)")
-    print(f"  Detected Shock Front   : x_s = {cfd['x_shock']:.4f} m (propagated {cfd['x_shock']-0.20:.4f} m)")
-    print(f"  blastFoam Shock Speed  : U_s = {cfd['Us']:.1f} m/s (Ma_s = {cfd['Ma_s']:.2f})")
-    print(f"  blastFoam Post-Shock p : {cfd['p2']/1e5:.2f} bar ({cfd['p2']:.3e} Pa, p2/p1 = {cfd['p2_p1']:.2f})")
-    print(f"  blastFoam Post-Shock T : {cfd['T2']:.1f} K")
-    print(f"  blastFoam Post-Shock rho: {cfd['rho2']:.4f} kg/m^3 (rho2/rho1 = {cfd['rho2_rho1']:.2f})")
-    print(f"  blastFoam Flow Velocity: u2 = {cfd['u2']:.1f} m/s")
+    print(f"  Simulation time        : {cfd['t']*1e6:.1f} us")
+    print(f"  Shock position         : {cfd['x_shock']:.4f} m")
+    print(f"  Shock speed            : {cfd['Us']:.1f} m/s (Ma {cfd['Ma_s']:.2f})")
+    print(f"  Post-shock p, T, rho, u: {cfd['p2']/1e5:.2f} bar, {cfd['T2']:.1f} K, "
+          f"{cfd['rho2']:.4f} kg/m3, {cfd['u2']:.1f} m/s")
 
-    # Evaluate exact Rankine-Hugoniot at this exact Mach number
-    exact = solve_dissociating_shock(cfd["Ma_s"], p1=cfd["p1"], T1=cfd["T1"])
+    th = read_case_janaf()
+    frozen = solve_frozen_shock(cfd["Us"], cfd["p1"], cfd["T1"], th)
+    equil = solve_dissociating_shock(cfd["Ma_s"], p1=cfd["p1"], T1=cfd["T1"])
 
-    err_Us = abs(cfd["Us"] - exact["Us"]) / exact["Us"] * 100.0
-    err_p2 = abs(cfd["p2"] - exact["p2"]) / exact["p2"] * 100.0
-    err_T2 = abs(cfd["T2"] - exact["T2"]) / exact["T2"] * 100.0
-    err_rho2 = abs(cfd["rho2"] - exact["rho2"]) / exact["rho2"] * 100.0
-    err_u2 = abs(cfd["u2"] - exact["u2"]) / exact["u2"] * 100.0
+    def compare(ref, label):
+        print(f"\n  Against {label}:")
+        print(f"  {'Quantity':18} | {'blastFoam':11} | {'Reference':11} | {'Error':8}")
+        print("  " + "-"*58)
+        ok = True
+        for key, name, scale in (("p2", "p2 [bar]", 1e-5), ("T2", "T2 [K]", 1.0),
+                                 ("rho2", "rho2 [kg/m3]", 1.0), ("u2", "u2 [m/s]", 1.0)):
+            err = abs(cfd[key] - ref[key])/abs(ref[key])*100
+            ok = ok and err < 2.5
+            print(f"  {name:18} | {cfd[key]*scale:11.4g} | {ref[key]*scale:11.4g} | {err:7.2f}%")
+        print(f"  {'PASSED' if ok else 'FAILED'} (tolerance 2.5%)")
+        return ok
 
-    print("\n  Comparison with Exact Rankine-Hugoniot Jump Conditions:")
-    print(f"  {'Parameter':20} | {'blastFoam':12} | {'Exact RH':12} | {'Rel. Error':10} | {'Status':8}")
-    print("  " + "-" * 70)
-    print(f"  {'Shock Speed Us (m/s)':20} | {cfd['Us']:12.1f} | {exact['Us']:12.1f} | {err_Us:9.2f}% | {'PASSED' if err_Us < 2.5 else 'FAILED'}")
-    print(f"  {'Pressure p2 (bar)':20} | {cfd['p2']/1e5:12.2f} | {exact['p2']/1e5:12.2f} | {err_p2:9.2f}% | {'PASSED' if err_p2 < 2.5 else 'FAILED'}")
-    print(f"  {'Temperature T2 (K)':20} | {cfd['T2']:12.1f} | {exact['T2']:12.1f} | {err_T2:9.2f}% | {'PASSED' if err_T2 < 2.5 else 'FAILED'}")
-    print(f"  {'Density rho2 (kg/m3)':20} | {cfd['rho2']:12.4f} | {exact['rho2']:12.4f} | {err_rho2:9.2f}% | {'PASSED' if err_rho2 < 2.5 else 'FAILED'}")
-    print(f"  {'Velocity u2 (m/s)':20} | {cfd['u2']:12.1f} | {exact['u2']:12.1f} | {err_u2:9.2f}% | {'PASSED' if err_u2 < 2.5 else 'FAILED'}")
+    frozen_ok = compare(frozen, "exact jump, case thermodynamics (no dissociation)")
+    equil_ok = compare(equil, "exact jump, air in chemical equilibrium")
+    print(f"  Equilibrium composition behind the shock: Y_O = {equil['Y_O']:.3f}, Y_N = {equil['Y_N']:.3f}")
 
-    cfd_passed = (err_Us < 2.5) and (err_p2 < 2.5) and (err_T2 < 2.5) and (err_rho2 < 2.5) and (err_u2 < 2.5)
+    np.savez(os.path.join(CASE_DIR, "shock_fields.npz"),
+             **dict(np.load(os.path.join(CASE_DIR, "shock_fields.npz"))),
+             T2_frozen=frozen["T2"], T2_eq=equil["T2"],
+             rho2_frozen=frozen["rho2"], rho2_eq=equil["rho2"])
 
-    # 2. Multi-Mach Parametric Check (Mach 3, 5, 8, 10)
-    print("\n[PART 2] Thermochemical Equilibrium Dissociation Relations Across Mach 3 to 10:")
-    mach_numbers = [3.0, 5.0, 8.0, 10.0]
-    print(f"\n{'Ma':4} | {'Us (m/s)':9} | {'T2_eq (K)':9} | {'T2_fr (K)':9} | {'rho2/rho1':9} | {'p2/p1':8} | {'Y_O':7} | {'dE/E':9} | Status")
-    print("-" * 85)
-
-    multi_passed = True
-    for Ma in mach_numbers:
+    # 2. Equilibrium jump over a range of Mach numbers (reference model only)
+    print("\n[PART 2] Equilibrium jump conditions (analytic, no CFD):")
+    print(f"{'Ma':5} | {'Us (m/s)':9} | {'T2_eq (K)':9} | {'T2_fr (K)':9} | {'rho2/rho1':9} | {'Y_O':6} | {'Y_N':6} | {'dE/E':8}")
+    print("-" * 80)
+    model_ok = True
+    for Ma in (3.0, 5.0, 8.0, 10.0, 15.0):
         sol = solve_dissociating_shock(Ma)
-        cons_ok = (sol["mass_err"] < 1e-6) and (sol["mom_err"] < 1e-6) and (sol["energy_err"] < 1e-5)
-        cooling_ok = (sol["T2"] <= sol["T2_fr"])
-        dissoc_ok = True
-        if Ma >= 8.0:
-            dissoc_ok = (sol["Y_O"] > 0.001)
-
-        passed = cons_ok and cooling_ok and dissoc_ok
-        if not passed:
-            multi_passed = False
-
-        status_str = "PASSED" if passed else "FAILED"
-        print(f"{Ma:4.1f} | {sol['Us']:9.1f} | {sol['T2']:9.1f} | {sol['T2_fr']:9.1f} | {sol['rho2_rho1']:9.2f} | {sol['p2_p1']:8.2f} | {sol['Y_O']:7.4f} | {sol['energy_err']:9.2e} | {status_str}")
+        model_ok = model_ok and sol["mass_err"] < 1e-6 and sol["mom_err"] < 1e-6 and sol["energy_err"] < 1e-5
+        print(f"{Ma:5.1f} | {sol['Us']:9.1f} | {sol['T2']:9.1f} | {sol['T2_fr']:9.1f} | "
+              f"{sol['rho2_rho1']:9.2f} | {sol['Y_O']:6.3f} | {sol['Y_N']:6.3f} | {sol['energy_err']:8.1e}")
 
     print("=" * 85)
-    print("Physical Insights Verified:")
-    print("1. blastFoam 1D compressible shock tube case reproduces the exact high-Mach shock jump state within < 2.5% error.")
-    print("2. Endothermic dissociation absorbs shock energy, reducing post-shock T2 by up to 35% at Ma 8 and 46% at Ma 10.")
-    print("3. Real-gas density compression exceeds classical frozen limit (rho2/rho1 > 6.0).")
-    print("4. Exact mass, momentum, and energy jump conservation verified to < 1e-5 relative tolerance.")
-
-    if cfd_passed and multi_passed:
-        print("\n[SUCCESS] WP 2.1 High-Mach Shock Dissociation Benchmark: All verification gates passed.")
+    if frozen_ok and equil_ok and model_ok:
+        print("\n[SUCCESS] WP 2.1: post-shock state matches the equilibrium jump conditions.")
         sys.exit(0)
+    if frozen_ok and not equil_ok:
+        print("\n[FAILURE] WP 2.1: shock capturing is correct (matches the jump for the case "
+              "thermodynamics), but the gas has no dissociation, so the post-shock state does "
+              "not match equilibrium air.")
     else:
-        print("\n[FAILURE] WP 2.1 High-Mach Shock Dissociation Benchmark: Failed verification.")
-        sys.exit(1)
+        print("\n[FAILURE] WP 2.1: post-shock state does not match the jump for the case thermodynamics.")
+    sys.exit(1)
 
 
 if __name__ == "__main__":

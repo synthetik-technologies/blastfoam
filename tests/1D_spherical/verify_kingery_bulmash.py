@@ -89,6 +89,11 @@ def simulate_spherical_blast_decay(charge_mass=1.0, r_max=6.0, nr=600):
         cmd = f"bash -c 'source /opt/OpenFOAM/OpenFOAM-12/etc/bashrc >/dev/null 2>&1 && source /opt/OpenFOAM/blastfoam/etc/bashrc >/dev/null 2>&1 && {allrun}'"
         subprocess.run(cmd, shell=True, cwd=CASE_DIR, check=True)
 
+    log = os.path.join(CASE_DIR, "log.blastFoam")
+    if not os.path.isfile(log) or "\nEnd" not in open(log).read():
+        print("FAIL: blastFoam did not finish")
+        sys.exit(1)
+
     p_data = np.loadtxt(p_file, comments="#")
     i_data = np.loadtxt(i_file, comments="#")
 

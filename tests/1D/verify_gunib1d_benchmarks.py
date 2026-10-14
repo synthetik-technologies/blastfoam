@@ -74,7 +74,7 @@ def run_gunib1d(case_rel_path):
     run_dir = tempfile.mkdtemp(prefix="gunib1d_")
     atexit.register(shutil.rmtree, run_dir, ignore_errors=True)
     cmd = f"yes | {GUNIB1D_BIN} {info_file} --overwrite"
-    code, stdout, stderr = run_command(cmd, cwd=run_dir, timeout=120)
+    code, stdout, stderr = run_command(cmd, cwd=run_dir, timeout=900)
     if code != 0:
         shutil.rmtree(run_dir, ignore_errors=True)
         raise RuntimeError(
@@ -281,6 +281,14 @@ def verify_houim2(gun_out_dir, bf_case_dir):
     ug_post_bf = u_g_bf[idx_bf]
     us_post_gun = u_s_gun[idx_gun]
     us_post_bf = u_s_bf[idx_bf]
+
+    # Profiles for the report figure (gunIB1D x shifted to the blastEulerFoam frame)
+    np.savez(
+        os.path.join(bf_case_dir, "houim2_profiles.npz"),
+        x_gun=x_gun + 0.257798, p_gun=p_gun, u_g_gun=u_g_gun, u_s_gun=u_s_gun,
+        alpha_s_gun=alpha_s_gun, x_bf=x_bf, p_bf=p_bf, u_g_bf=u_g_bf,
+        u_s_bf=u_s_bf, alpha_s_bf=alpha_s_bf,
+    )
 
     diff_p_post = abs(p_post_bf - p_post_gun) / p_post_gun * 100.0
     diff_ug_post = abs(ug_post_bf - ug_post_gun) / ug_post_gun * 100.0

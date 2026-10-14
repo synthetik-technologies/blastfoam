@@ -8,11 +8,13 @@ Verification criteria:
 2. Detonation propagation speed: matches EuDetCode D_CJ = 7154.23 m/s within 1.5%.
 3. Detonation peak pressure: reaches expected multi-GPa range (target CJ: 20.15 GPa).
 4. Multiphase physics: discrete phase velocities and volume fractions for compBAl, Al, and gas.
-5. Gas-phase reaction chemistry: active reacting multicomponent gas phase with registered
-   species mass fractions and reaction heat release field Qdot.gas.
+5. Gas-phase reaction chemistry: non-zero heat release Qdot.gas and CO2 formed in the gas.
+   The gas starts as air, so this needs fuel in the gas, i.e. the products -> gas transfer
+   (pressurePhaseChange, constant/fvModels).
 """
 
 import os
+import re
 import sys
 import numpy as np
 
@@ -20,9 +22,20 @@ CASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ChargeCompB
 PROBE_FILE = os.path.join(CASE_DIR, "postProcessing", "pressureProbes", "0", "p")
 SAMPLE_FILE = os.path.join(CASE_DIR, "postProcessing", "sampleLine", "2e-05", "lineX.xy")
 QDOT_FILE = os.path.join(CASE_DIR, "2e-05", "Qdot.gas")
+CO2_FILE = os.path.join(CASE_DIR, "2e-05", "CO2.gas")
 
 D_CJ_REF = 7154.23  # m/s from EuDetCode
 P_CJ_REF = 2.01512e10  # Pa from EuDetCode (20.15 GPa)
+
+
+def read_internal_field(path):
+    """Internal field of an ascii volScalarField as an array (uniform -> 1 value)."""
+    text = open(path).read()
+    m = re.search(r"internalField\s+uniform\s+(\S+);", text)
+    if m:
+        return np.array([float(m.group(1))])
+    m = re.search(r"internalField\s+nonuniform\s+List<scalar>\s*\d+\s*\(([^)]*)\)", text)
+    return np.array([float(v) for v in m.group(1).split()])
 
 
 def run_case_if_needed():
@@ -36,6 +49,10 @@ def run_case_if_needed():
 
 def verify_spherical_detonation_reacting():
     run_case_if_needed()
+    log = os.path.join(CASE_DIR, "log.blastEulerFoam")
+    if not os.path.isfile(log) or "\nEnd" not in open(log).read():
+        print("FAIL: blastEulerFoam did not finish")
+        sys.exit(1)
 
     if not os.path.isfile(PROBE_FILE):
         print(f"FAIL: Probe file not found at {PROBE_FILE}")
@@ -109,13 +126,21 @@ def verify_spherical_detonation_reacting():
     else:
         print(f"WARNING: Sample file not found at {SAMPLE_FILE}")
 
-    # 4. Gas-phase reaction field verification
+    # 4. Gas-phase reaction verification
     print("-" * 72)
-    print("Gas-Phase Reaction Verification:")
-    if os.path.isfile(QDOT_FILE):
-        print(f"  Reaction heat release field Qdot.gas: PRESENT ({QDOT_FILE})")
+    print("Gas-Phase Reaction Verification @ t = 20 us:")
+    max_qdot = 0.0
+    max_co2 = 0.0
+    if os.path.isfile(QDOT_FILE) and os.path.isfile(CO2_FILE):
+        max_qdot = np.max(np.abs(read_internal_field(QDOT_FILE)))
+        max_co2 = np.max(read_internal_field(CO2_FILE))
+        print(f"  Max |Qdot.gas|    : {max_qdot:.4e} W/m^3")
+        print(f"  Max Y_CO2 (gas)   : {max_co2:.4e}")
     else:
-        print(f"  FAIL: Qdot.gas field not found at {QDOT_FILE}")
+        print(f"  FAIL: Qdot.gas or CO2.gas not found in {os.path.dirname(QDOT_FILE)}")
+    reacting = max_qdot > 0 and max_co2 > 0
+    if not reacting:
+        print("  FAIL: no gas-phase heat release (no fuel in the gas: is the products -> gas transfer enabled?)")
 
     # Check criteria
     passed = True
@@ -125,7 +150,7 @@ def verify_spherical_detonation_reacting():
     if max_det_p < 1e10:
         print(f"FAIL: Max detonation pressure {max_det_p/1e9:.2f} GPa is below 10 GPa threshold")
         passed = False
-    if not os.path.isfile(QDOT_FILE):
+    if not reacting:
         passed = False
 
     print("=" * 72)

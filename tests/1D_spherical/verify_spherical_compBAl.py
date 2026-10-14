@@ -33,6 +33,10 @@ def run_case_if_needed():
 
 def verify_spherical_detonation():
     run_case_if_needed()
+    log = os.path.join(CASE_DIR, "log.blastEulerFoam")
+    if not os.path.isfile(log) or "\nEnd" not in open(log).read():
+        print("FAIL: blastEulerFoam did not finish")
+        sys.exit(1)
 
     if not os.path.isfile(PROBE_FILE):
         print(f"FAIL: Probe file not found at {PROBE_FILE}")

@@ -96,6 +96,11 @@ def main():
             print(f"Execution failed: {res.stderr[:200]}")
             sys.exit(1)
 
+    log = os.path.join(CASE_DIR, "log.blastFoam")
+    if not os.path.isfile(log) or "\nEnd" not in open(log).read():
+        print("FAIL: blastFoam did not finish")
+        sys.exit(1)
+
     xc = (np.arange(400) + 0.5) * DX
 
     # Find written times inside charge domain (< 18 us)

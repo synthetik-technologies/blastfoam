@@ -10,7 +10,7 @@ Models:
   * Rigorous surface ignition criterion based on T_s(t) >= T_ign (2050 K) vs. lumped uniform model.
   * Oxide shell thermal resistance and high-Mach convective heat transfer (Bi_R ~ 0.25 - 0.75),
     demonstrating strong non-uniform radial temperature profiles T(r).
-- Beckstead multi-oxidizer d^n combustion rate law with O2, H2O, CO2 channels.
+- Beckstead (2005) multi-oxidizer burn-time correlation (O2, H2O, CO2).
 - Alumina post-combustion phase change & latent heat coupling (~19.7 MJ/kg).
 """
 
@@ -29,8 +29,8 @@ ALPHA_AL_EFF = K_AL_EFF / (RHO_AL * CP_AL)  # m^2/s (~2.47e-6 m^2/s)
 T_MELT_AL = 933.0        # K (melting point)
 DH_FUS_AL = 397.0e3      # J/kg (latent heat of fusion)
 T_IGN_AL = 2050.0        # K (oxide shell breakdown temperature)
-K_COMB_MICRO = 1.0e-6    # m^2/s (Beckstead combustion rate constant for micro-Al)
-N_MICRO = 1.9            # Burn rate exponent for micro-Al (d^1.9 law)
+BECKSTEAD_A = 0.00735    # Beckstead (2005) burn-time coefficient (ms, um, atm, K)
+BECKSTEAD_N = 1.8        # Beckstead (2005) diameter exponent for micro-Al
 
 # Blast convective heat transfer coefficient (supersonic relative slip behind detonation wave)
 H_CONV_BLAST = 3.0e5     # W/(m^2 K) (u_slip ~ 2000 m/s, rho ~ 20 kg/m^3, Re_p ~ 10^4)
@@ -234,20 +234,20 @@ def simulate_particle_heating(d_p, T_gas, h_conv=H_CONV_BLAST, dt=1e-8, t_max=0.
     return res['times'], res['Ts'], res['t_ign_surf']
 
 
-def eval_beckstead_burn_time(d_p, X_O2, X_H2O, X_CO2, Re_p=0.0):
+def eval_beckstead_burn_time(d_p, X_O2, X_H2O, X_CO2, p=101325.0, T0=2800.0):
     """
-    Compute particle combustion duration using Beckstead multi-oxidizer correlation:
-    d(d_p)/dt = -2*K_comb / (rho_p * d_p^(n-1)) * X_eff^0.9 * (1 + 0.276 * Re_p^0.5 * Sc^(1/3))
-    t_burn = (rho_p * d_p^n) / (2 * n * K_comb * X_eff^0.9 * conv_corr)
+    Burn time of an aluminium particle from the Beckstead (2005) correlation
+    for micron-sized particles in mixed oxidisers:
+        t_b [ms] = a d^n / (X_eff p^0.1 T0^0.2),  a = 0.00735, n = 1.8,
+    with d in um, p in atm, T0 in K and X_eff = X_O2 + 0.6 X_H2O + 0.22 X_CO2.
+    Returns the burn time in s.
     """
     X_eff = X_O2 + 0.6 * X_H2O + 0.22 * X_CO2
     if X_eff <= 0.0:
         return float('inf')
-
-    Sc = 0.7
-    conv_corr = 1.0 + 0.276 * (Re_p**0.5) * (Sc**(1.0/3.0))
-    t_burn = (RHO_AL * (d_p**N_MICRO)) / (2.0 * N_MICRO * K_COMB_MICRO * (X_eff**0.9) * conv_corr)
-    return t_burn
+    d_um = d_p * 1e6
+    t_ms = BECKSTEAD_A * d_um**BECKSTEAD_N / (X_eff * (p / 101325.0)**0.1 * T0**0.2)
+    return t_ms * 1e-3
 
 
 def verify_alumina_condensation_energetics():

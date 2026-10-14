@@ -203,12 +203,9 @@ def main():
         x_int = metrics["x_interface"]
         smear = metrics["smeared_cells"]
 
-        if (flux, limiter) == ("HLLC", "vanLeer"):
-            saved_fields["p_vl"] = fields["p"]
-            saved_fields["alpha_vl"] = fields["alpha"]
-        elif (flux, limiter) == ("Kurganov", "Minmod"):
-            saved_fields["p_mm"] = fields["p"]
-            saved_fields["alpha_mm"] = fields["alpha"]
+        key = f"{flux}_{limiter}".replace("+", "plus")
+        saved_fields[f"p_{key}"] = fields["p"]
+        saved_fields[f"alpha_{key}"] = fields["alpha"]
 
         # Verification criterion:
         # 1. Interface position within 1 cell (DX = 0.005 m)
@@ -221,7 +218,7 @@ def main():
         status_str = "PASSED" if passed else "FAILED"
         print(f"{flux:12} | {limiter:10} | {p_err*100:9.3f}% | {u_err*100:9.3f}% | {x_int:10.4f} | {smear:13d} | {status_str}")
 
-    if "p_vl" in saved_fields and "p_mm" in saved_fields:
+    if saved_fields:
         npz_path = os.path.join(CASE_DIR, "advection_fields.npz")
         np.savez(npz_path, **saved_fields)
         print(f"Saved real blastFoam simulation fields to {npz_path}")
