@@ -248,7 +248,7 @@ def entry(name, coeffs, base, origin, err):
     {note}
     specie
     {{
-        molWeight       {W:.6g};
+        molWeight       {W:.10g};
     }}
     equationOfState
     {{

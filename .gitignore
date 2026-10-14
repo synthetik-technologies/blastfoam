@@ -110,3 +110,4 @@ doc/Doxygen/DTAGS
 # Data written by the test verifiers for the report figures
 tests/**/*.npz
 tests/0D/nasa9_thermo/
+tests/0D/equilibrium/
