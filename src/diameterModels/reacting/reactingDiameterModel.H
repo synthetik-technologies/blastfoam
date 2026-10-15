@@ -85,6 +85,10 @@ class reactingDiameterModel
     //- Oxidiser mass fraction that gives the full burn rate
     const scalar YoxidiserRef_;
 
+    //- Volume fraction below which the diameter is reset to d0 and the
+    //  particles do not burn
+    const scalar alphaMin_;
+
     //- Number density
     volScalarField N_;
 

@@ -63,6 +63,7 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
       ? dict.lookup<scalar>("YoxidiserRef")
       : 1.0
     ),
+    alphaMin_(dict.lookupOrDefault<scalar>("alphaMin", 1e-4)),
     N_
     (
         IOobject
@@ -180,7 +181,7 @@ void Foam::diameterModels::reactingDiameterModel::update()
 
     forAll(this->d_, celli)
     {
-        if (alpha[celli] <= 1e-4)
+        if (alpha[celli] <= alphaMin_)
         {
             this->d_[celli] = d0_[celli];
         }
@@ -197,9 +198,14 @@ void Foam::diameterModels::reactingDiameterModel::update()
         dimless,
         constant::mathematical::pi/6.0
     );
+    // Number density from the current diameter: the volume fraction
+    // shrinks with the particles as they burn, so N = alpha/V(d0) would
+    // make the mass loss dm/dt = m (dV/dt)/V0 (exponential, leaving 1/e of
+    // the mass when d -> 0). The floor must be far below the volume of a
+    // micron particle (5e-19 m^3), not small = 1e-15 m^3.
     N_ =
         alpha
-       /max(piBy6*pow3(d0_), dimensionedScalar(dimVolume, small));
+       /max(piBy6*pow3(this->d_), dimensionedScalar(dimVolume, vSmall));
 }
 
 
@@ -252,7 +258,7 @@ void Foam::diameterModels::reactingDiameterModel::solve
     this->d_ += dT*dDdt;
     forAll(this->d_, celli)
     {
-        if (alpha[celli] <= 1e-4)
+        if (alpha[celli] <= alphaMin_)
         {
             this->d_[celli] = d0_[celli];
         }
@@ -283,7 +289,7 @@ void Foam::diameterModels::reactingDiameterModel::solve
     this->d_ = dOld - dT*(deltaPhid - dDdt);
     forAll(this->d_, celli)
     {
-        if (alpha[celli] <= 1e-4)
+        if (alpha[celli] <= alphaMin_)
         {
             this->d_[celli] = d0_[celli];
         }
