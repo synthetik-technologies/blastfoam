@@ -308,6 +308,47 @@ def main():
             msg = "GRI-3.0 H2/O2/CO/C1 subset (reversible, nasa9) in blastFoam 0D vs full GRI-3.0 (Cantera): products/air, 1200-2000 K, 1-50 bar; ignition within 25%, burnout T within 1%" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Gas Mechanism vs GRI-3.0 (Phase C6)", 1, dur, passed, msg))
 
+            # Al melting in the granular phase, eMelting thermo (Phase D1)
+            res_melt = run_openfoam_case(
+                "tests/0D/alMelting_0D",
+                tier=1,
+                case_name="Al Melting in the Granular Phase (Phase D1, blastEulerFoam 0D)"
+            )
+            if res_melt.passed:
+                code, stdout, stderr, dur = run_command(
+                    f"{sys.executable} tests/0D/verify_al_melting.py"
+                )
+                if code == 0:
+                    res_melt.message = "eMelting: melting plateau start/end, T_Al and T_gas vs an independent ODE solution, total energy to 1e-8"
+                else:
+                    res_melt.passed = False
+                    res_melt.message = f"Physics verification failed: {stdout.strip().splitlines()[-1]}"
+            results.append(res_melt)
+
+            # Loth (2008) compressible/rarefied drag (Phase D2)
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_particle_drag.py", timeout=1200
+            )
+            passed = (code == 0)
+            msg = "Loth drag in blastEulerFoam 0D vs an independent ODE: Ma 1.7 / Re 3900 and Re 5 / Kn 0.33 slip relaxation within 1% of U0; Ma -> 0 limit" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("Compressible Particle Drag, Loth (Phase D2)", 1, dur, passed, msg))
+
+            # Kavanau rarefied Nusselt number (Phase D2)
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_particle_heating.py", timeout=1200
+            )
+            passed = (code == 0)
+            msg = "Kavanau/Drake Nusselt number in blastEulerFoam 0D vs an independent ODE: 1 um at 0.2 bar (Nu 0.28), 10 um with 300 m/s slip and Loth drag; T_Al within 0.5%" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("Rarefied Particle Heat Transfer, Kavanau (Phase D2)", 1, dur, passed, msg))
+
+            # Beckstead Al burning with ignition temperature (Phase D3)
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_al_burning.py", timeout=1200
+            )
+            passed = (code == 0)
+            msg = "Beckstead d^n burning in blastEulerFoam 0D: burn time of 1/10/50 um Al in air within 2% of the correlation, particle mass vs (d/d0)^3, no burning below Tign" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("Al Ignition and Beckstead Burning (Phase D3)", 1, dur, passed, msg))
+
             # 4. 1D verification case
             results.append(run_openfoam_case(
                 "tutorials/blastFoam/pressurePhaseChangeTest",

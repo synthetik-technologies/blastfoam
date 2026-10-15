@@ -628,12 +628,90 @@ def fig_stage3_spherical_multiphase():
     save(fig, "stage3_spherical_multiphase")
 
 
+def fig_stage1_al_solver():
+    """Al particle models in blastEulerFoam (Phase D): 0D tests vs references."""
+    import verify_al_melting as vm
+    import verify_particle_drag as vd
+    import verify_particle_heating as vh
+    import verify_al_burning as vb
+
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(11, 8))
+
+    # (a) Melting plateau
+    data = np.loadtxt(result("tests/0D/alMelting_0D/postProcessing/temperature/0/volFieldValue.dat"))
+    al, t_ref, T_al_ref, T_g_ref = vm.reference(data[-1, 0])
+    ax1.plot(t_ref*1e3, T_al_ref, "k-", lw=1.0, label="Reference (ODE)")
+    ax1.plot(t_ref*1e3, T_g_ref, "k-", lw=1.0)
+    k = max(1, len(data)//60)
+    ax1.plot(data[::k, 0]*1e3, data[::k, 1], "o", ms=3.5, mfc="none", color="crimson", label="Al, blastEulerFoam")
+    ax1.plot(data[::k, 0]*1e3, data[::k, 2], "s", ms=3.5, mfc="none", color="navy", label="Gas, blastEulerFoam")
+    ax1.axhline(al.Tm, color="gray", ls=":", lw=1.0)
+    ax1.set_xlabel("$t$ [ms]")
+    ax1.set_ylabel("Temperature [K]")
+    ax1.set_title(r"(a) Melting: Al (30 $\mu$m, $\alpha$ 1e-4) in gas at 2500 K")
+    ax1.grid(True)
+    ax1.legend(loc="center right")
+
+    # (b) Drag: slip relaxation
+    for (name, d, p, T, U0, alpha, dt, t_end), c in zip(vd.RUNS, ("crimson", "navy")):
+        path = result("tests/0D/particle_drag", name, "postProcessing/velocity/0/volFieldValue.dat")
+        text = open(path).read().replace("(", " ").replace(")", " ")
+        dd = np.loadtxt(text.splitlines(), comments="#", ndmin=2)
+        t_ref, ur_ref, Re0, Ma0, Kn0 = vd.reference(d, p, T, U0, alpha, t_end)
+        ax2.plot(t_ref*1e3, ur_ref/U0, "-", color=c, lw=1.0,
+                 label=rf"{name}: $d$ {d*1e6:g} $\mu$m, $Re_0$ {Re0:.0f}, $Ma_0$ {Ma0:.2f}, $Kn_0$ {Kn0:.2g}")
+        k = max(1, len(dd)//40)
+        ax2.plot(dd[::k, 0]*1e3, (dd[::k, 1] - dd[::k, 4])/U0, "o", ms=3, mfc="none", color=c)
+    ax2.set_xscale("log")
+    ax2.set_xlabel("$t$ [ms]")
+    ax2.set_ylabel(r"Slip velocity / $U_0$")
+    ax2.set_title("(b) Loth drag: lines reference, symbols blastEulerFoam")
+    ax2.grid(True)
+    ax2.legend(fontsize=7.5)
+
+    # (c) Heat transfer with the Kavanau Nusselt number
+    for (name, d, p, T, Tp, U0, alpha, dt, t_end), c in zip(vh.RUNS, ("crimson", "navy")):
+        path = result("tests/0D/particle_heating", name, "postProcessing/state/0/volFieldValue.dat")
+        text = open(path).read().replace("(", " ").replace(")", " ")
+        dd = np.loadtxt(text.splitlines(), comments="#", ndmin=2)
+        t_ref, T_ref, MaByRe, Nu0 = vh.reference(d, p, T, Tp, U0, alpha, t_end)
+        ax3.plot(t_ref*1e3, T_ref, "-", color=c, lw=1.0,
+                 label=rf"{name}: $d$ {d*1e6:g} $\mu$m, {p/1e5:g} bar, $U_0$ {U0:g} m/s, $Nu_0$ {Nu0:.2f}")
+        k = max(1, len(dd)//40)
+        ax3.plot(dd[::k, 0]*1e3, dd[::k, 7], "o", ms=3, mfc="none", color=c)
+    ax3.set_xscale("log")
+    ax3.set_xlabel("$t$ [ms]")
+    ax3.set_ylabel("Al temperature [K]")
+    ax3.set_title("(c) Kavanau heat transfer: lines reference, symbols blastEulerFoam")
+    ax3.grid(True)
+    ax3.legend(fontsize=7.5)
+
+    # (d) Beckstead burning
+    x = np.linspace(0, 1, 50)
+    ax4.plot(x, 1 - x, "k-", lw=1.0, label="Beckstead $d^n$ law")
+    for j, (d0, c, m) in enumerate(zip(vb.D0S, ("crimson", "darkgreen", "navy"), ("o", "s", "^"))):
+        tb = vb.burn_time(d0)
+        dd = np.loadtxt(result("tests/0D/al_burning", f"d{d0*1e6:g}um", "postProcessing/state/0/volFieldValue.dat"))
+        up = np.nonzero(np.diff(dd[:, 1]) > 0)[0]
+        n = up[0] + 1 if len(up) else len(dd)
+        k = max(1, n//24)
+        ax4.plot(dd[j*k//3:n:k, 0]/tb, (dd[j*k//3:n:k, 1]/d0)**vb.N, m, ms=4, mfc="none", color=c,
+                 label=rf"$d_0$ = {d0*1e6:g} $\mu$m ($t_b$ = {tb*1e3:.3g} ms)")
+    ax4.set_xlabel(r"$t/t_b$")
+    ax4.set_ylabel(r"$(d/d_0)^{1.8}$")
+    ax4.set_title("(d) Ignited Al in air at 2500 K, 1 atm")
+    ax4.grid(True)
+    ax4.legend()
+    save(fig, "stage1_al_solver")
+
+
 FIGURES = {
     "isentropes": fig_isentropes,
     "products_temperature": fig_products_temperature,
     "transfer_matching": fig_transfer_matching,
     "phase_transfer": fig_stage1_phase_transfer,
     "al_kinetics": fig_stage1_al_kinetics,
+    "al_solver": fig_stage1_al_solver,
     "high_mach": fig_stage2_high_mach,
     "advection": fig_stage2_multiphase_advection,
     "gunib1d": fig_stage2_gunib1d,

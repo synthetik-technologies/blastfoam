@@ -115,5 +115,9 @@ tests/0D/equilibrium_chemistry/
 tests/1D/shock_dissociating_air/constant/thermo.nasa9Air
 tests/0D/equilibriumChemistry_0D/constant/thermo.nasa9Gas
 tests/0D/gas_kinetics/
+tests/0D/particle_drag/
+tests/0D/particle_heating/
+tests/0D/al_burning/
+tests/0D/alBurning_0D/constant/thermo.nasa9Gas
 tests/0D/gasKinetics_0D/constant/thermo.nasa9Gas
 tests/0D/gasKinetics_0D/constant/reactions.gas

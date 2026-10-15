@@ -282,6 +282,7 @@ The transfer is verified in a 0D reactor and in a planar detonation (Section~\re
 \paragraph{Combustion.} Micron-sized particles burn with a detached vapour-phase diffusion flame; the burn time scales as $t_b \propto d^n$ with $n \approx 1.8$--$2$. Nano-sized particles burn by surface kinetics with $n \approx 1$. A widely used correlation for micron particles in mixed oxidisers is that of Beckstead \cite{beckstead},
 \begin{equation}
     t_b\,[\text{ms}] = \frac{a\,d^{\,n}}{X_\text{eff}\,p^{0.1}\,T_0^{0.2}}, \qquad X_\text{eff} = X_{\text{O}_2} + 0.6X_{\text{H}_2\text{O}} + 0.22X_{\text{CO}_2},
+    \label{eq:beckstead}
 \end{equation}
 with $a = 0.00735$, $n = 1.8$, $d$ in $\mu$m, $p$ in atm and the ambient temperature $T_0$ in K.
 For the 20--40\,$\mu$m powders of typical aluminised explosives the correlation gives 1.6--5.5\,ms in air at 2800\,K, so the aluminium is essentially unburnt during the detonation and early expansion and releases its energy in the fireball.
@@ -304,7 +305,14 @@ Four approaches are candidates for the particle phase; their selection is part o
 
 In the solver the aluminium is a granular Eulerian phase \up{} with a compressible solid EOS (Murnaghan), Gidaspow--Ergun--Wen--Yu drag and Ranz--Marshall heat transfer. The burn rate of the reacting diameter model \up{} is the empirical pressure law $r_b = a\,(p/1\,\text{MPa})^n$ for $p \ge p_\text{min}$ ($a = 5\times10^{-5}\,\text{m/s}$, $n = 0.7$, $p_\text{min} = 2\,\text{bar}$, $d_0 = 30\,\mu\text{m}$), chosen to give a burn time of the order of 0.5\,ms. This law is not a physical model of aluminium combustion: it has no ignition delay and no oxidiser dependence. This work added a limit to gas-phase oxidiser (the rate is multiplied by the gas fraction of the surrounding fluid and by $\min(1, \sum Y_\text{ox}/Y_\text{ref})$ over O$_2$, CO$_2$, H$_2$O), so that the particles do not burn inside the products, and a correction so that the granular phase transports its thermal energy with the compression energy of the solid EOS (before, the particles cooled to the 100\,K floor behind the detonation).
 
-Not in the solver: Mach- and Knudsen-number-dependent drag (the relative Mach number behind the blast exceeds 0.3, where incompressible correlations overestimate the drag), melting, the ignition criterion, the Beckstead rate and the oxide condensation. These exist as standalone Python reference models (Section~\ref{sec:res_al}), to be implemented in the solver.
+Added to the solver in Phase D, each with a 0D test (Section~\ref{sec:res_al}), but not yet used in the Comp-B/Al cases:
+\begin{itemize}
+    \item \emph{Melting} (\texttt{eMelting} thermodynamics): constant heat capacities of the solid (1059\,J/(kg\,K), the mean between 298 and 933\,K) and the liquid (1177\,J/(kg\,K)) and the latent heat (396.6\,kJ/kg) released over 2\,K around 933.47\,K (NASA/CODATA data). The energy is piecewise linear in temperature and is inverted exactly; Newton's method on the kinked curve can cycle between the branches.
+    \item \emph{Compressible and rarefied drag} (\texttt{Loth}): the correlation of Loth \cite{loth}, a function of the Reynolds number, the particle Mach number $|U_r|/c$ and the Knudsen number $\sqrt{\pi\gamma/2}\,Ma/Re$, with a rarefaction branch (Re $<$ 45) and a compression branch; at $Ma \to 0$ it reduces to Schiller--Naumann with the Clift--Gauvin term.
+    \item \emph{Rarefied heat transfer} (\texttt{Kavanau} Nusselt number): $Nu = Nu_c/(1 + 3.42\,Ma\,Nu_c/(Re\,Pr))$ with $Nu_c = 2 + 0.459\,Re^{0.55}Pr^{0.33}$ \cite{kavanau}. A 1\,$\mu$m particle in air at 0.2\,bar and 2500\,K has $Nu = 0.28$ instead of 2. The Prandtl number of a phase pair was computed with $c_v$ instead of $c_p$ (fixed).
+    \item \emph{Ignition and Beckstead burning} (\texttt{Beckstead} diameter rate): particles ignite at $T_\text{ign}$ and burn by the $d^n$ law of Eq.~(\ref{eq:beckstead}), with $X_\text{eff}$ from the gas composition; once burning, a particle continues when it is cooled below $T_\text{ign}$. Testing this found two errors in the reacting diameter model: the particle number density used the initial diameter, so a burnt-out cloud kept $1/e$ of its mass, and a volume floor of $10^{-15}\,\text{m}^3$ limited the burning of particles below 12\,$\mu$m (fixed).
+\end{itemize}
+Not in the solver: oxide condensation and the internal temperature profile of the particle (the reference model's surface ignition).
 
 % ============================================================
 \section{Mixing, Turbulence and Afterburning}
@@ -392,6 +400,10 @@ Three limitations of the current verification should be noted. First, the progra
     \midrule
     1 & \path{phaseTransfer_0D}, \path{_3phase} & 0D products $\to$ gas transfer (\texttt{blastEulerFoam}), with and without inert Al: conservation, pressure, temperature & Energy $4.2\times10^{-9}$ / $2.2\times10^{-9}$, $\Delta p/p = 3\times10^{-7}$, 99.4\% converted & Pass \\
     1 & Al particle kinetics & Heating, melting, ignition, Beckstead burning, oxide condensation & Reference behaviour reproduced & Model \\
+    1 & \path{alMelting_0D} & Al heated through melting (\texttt{eMelting}, \texttt{blastEulerFoam}) vs an independent ODE solution & Plateau start and end within 0.1\%, energy $4\times10^{-9}$ & Pass \\
+    1 & \path{particleDrag_0D} & Slip relaxation with the Loth drag: 100\,$\mu$m at $Ma$ 1.7, 1\,$\mu$m at $Kn$ 0.33, vs an independent solution & Within 0.03\% of $U_0$ & Pass \\
+    1 & \path{particleHeating_0D} & Heating with the Kavanau Nusselt number, without and with slip, vs an independent solution & $T_\text{Al}$ within 0.05\% & Pass \\
+    1 & \path{alBurning_0D} & Beckstead burning of 1, 10, 50\,$\mu$m Al in air; no burning below $T_\text{ign}$ & Burn time within 0.23\% of the correlation, mass vs $(d/d_0)^3$ within 0.04\% & Pass \\
     1 & High-T air & NASA-9 thermodynamics and O$_2$/N$_2$ dissociation equilibrium to 6000\,K & Agreement with tabulated data & Model \\
     1 & NASA-9 thermodynamics & Compiled \texttt{nasa9} thermo, 18 species and air, 200--25\,000\,K, against the source data & $\le 4.6\times10^{-6}$ (fitted condensed species and AlO: $\le 2.7\%$ vs source) & Pass \\
     1 & Chemical equilibrium & Equilibrium at fixed $(e, \rho)$: air, products, products/air, 0.01--100\,kg/m$^3$, 2500--20\,000\,K, against \texttt{EuDetCode} and an independent solution & $T$, $p$ within $4\times10^{-4}$ of \texttt{EuDetCode} (its own tolerance), $10^{-6}$ of the independent solution & Pass \\
@@ -440,7 +452,7 @@ A single closed cell is initialised at the matching state (100\,bar, $\rho = 35.
 
 \paragraph{Contact advection.} A density contact ($116$ / $16\,\text{kg/m}^3$) advected at 500\,m/s and 100\,bar stays within one cell of its exact position for HLLC, AUSM+, Kurganov and Tadmor (Figure~\ref{fig:stage2_multiphase_advection}). Spurious pressure oscillations at the contact are 4.0--4.4\% with the van Leer limiter and below 0.8\% with Minmod, which is why Minmod is used; the target of $10^{-6}$ is not met, as expected of a scheme that is not designed to be pressure-equilibrium-preserving.
 
-\paragraph{Granular shock problems.} Three problems of Houim and Oran type (advection of a particle curtain, a shock passing through a particle bed, and compaction of a dense bed) are solved with \texttt{blastEulerFoam} and with \texttt{gunIB1D} (Figure~\ref{fig:stage2_gunib1d}). The curtain advection is identical; for the shock tube the transmitted shock speed differs by 1.20\% (489.2 vs 495.1\,m/s), the post-shock pressure by 0.64\%, the gas velocity by 0.26\% and the particle velocity by 0.33\% (2.1\% before the drag energy fix of Section~\ref{sec:multiphase_numerics}); the total energy is conserved to $6\times10^{-7}$; for the compaction problem the peak pressure differs by 0.59\%, and the compaction wave speed of \texttt{blastEulerFoam} (183.8\,m/s) is within 0.8\% of the reference value. The compaction result required the frictional stress to act (\texttt{alphaDeltaMin} $10^{-6}$); with the upstream tutorial value the bed packed to the maximum fraction and the old decode removed 41\% of the particle mass.
+\paragraph{Granular shock problems.} Three problems of Houim and Oran type (advection of a particle curtain, a shock passing through a particle bed, and compaction of a dense bed) are solved with \texttt{blastEulerFoam} and with \texttt{gunIB1D} (Figure~\ref{fig:stage2_gunib1d}). The curtain advection is identical; for the shock tube the transmitted shock speed differs by 1.20\% (489.2 vs 495.1\,m/s), the post-shock pressure by 0.62\%, the gas velocity by 0.25\% and the particle velocity by 0.32\% (2.1\% before the drag energy fix of Section~\ref{sec:multiphase_numerics}); the total energy is conserved to $6\times10^{-7}$; for the compaction problem the peak pressure differs by 0.59\%, and the compaction wave speed of \texttt{blastEulerFoam} (183.8\,m/s) is within 0.8\% of the reference value. The compaction result required the frictional stress to act (\texttt{alphaDeltaMin} $10^{-6}$); with the upstream tutorial value the bed packed to the maximum fraction and the old decode removed 41\% of the particle mass.
 
 \paragraph{Planar detonation.} A planar Comp-B charge (without aluminium, 1717\,kg/m$^3$) is initiated at a closed end (\texttt{blastFoam}, 400 cells, 0.5\,mm, SSP Runge--Kutta (RK2SSP) time integration at a Courant number of 0.35). The products EOS is the \texttt{EuDetCode} JWL fit for Comp-B (BKW), with $E_0$ chosen so that the reference isentrope passes through the CJ point for the reactant energy of the case; the CJ point of this products EOS (the minimum speed on its Hugoniot) is then the programmed-burn speed, 7934.3\,m/s. The pressure at the burn front stays at 22.8--24.9\,GPa ($p_\text{CJ} = 24.66$\,GPa) and the solution behind follows the Taylor expansion (Figure~\ref{fig:stage2_planar_znd}). The earlier setup used the LLNL Comp-B JWL with $E_0 = -8.5$\,MJ/kg (the LLNL value is 8.5\,GJ/m$^3$, i.e.\ 4.94\,MJ/kg) and the \texttt{EuDetCode} burn speed of 7947\,m/s: the CJ speed of that products EOS is 8403\,m/s, so no steady detonation exists at the imposed speed, the energy released behind the front overdrives it, and the pressure at the front grew to 55, 95 and 135\,GPa at 5, 10 and 15\,$\mu$s. The test now checks the consistency of the products EOS with the burn speed and the front pressure. The variant with \texttt{pressurePhaseChange} converts the products to gas below 100\,bar without disturbing the wave.
 
@@ -506,10 +518,19 @@ These cases show that the detonation, breakout and early air shock of a three-ph
     \label{fig:stage3_spherical_multiphase}
 \end{figure}
 
-\subsection{Reference models for aluminium particles}
+\subsection{Aluminium particles}
 \label{sec:res_al}
 
 The standalone particle model (\path{tests/0D/verify_al_particle_kinetics.py}) integrates the heating of a single particle with an internal temperature profile (Goodman heat-balance integral, parabolic profile), melting, ignition at 2050\,K, Beckstead burning and oxide condensation (Figure~\ref{fig:stage1_al_kinetics}). For a 20\,$\mu$m particle at $h = 3\times10^5\,\text{W/(m}^2\text{K)}$ in gas at 2800\,K the surface reaches the ignition temperature at 32.9\,$\mu$s, 15.5\% earlier than with a uniform particle temperature (38.9\,$\mu$s), and the Beckstead correlation gives a burn time of 1.6\,ms in air. (Until 2026-10-14 the burn-time function of this model used a dimensionally inconsistent rate constant that gave burn times of seconds; it now evaluates the published correlation.) The model has not been compared with experimental ignition delays or burn times; it serves as the reference for the solver implementation.
+
+\paragraph{Aluminium models in the solver.} The models of Section~\ref{sec:al_impl} are verified in single-cell \texttt{blastEulerFoam} runs against independent integrations of the same model equations (Figure~\ref{fig:stage1_al_solver}). (a) 30\,$\mu$m particles at a volume fraction of $10^{-4}$, heated by gas at 2500\,K and 50\,bar through a constant heat transfer coefficient, stay at the melting point from 0.098 to 0.169\,ms, within 0.1\% of the reference, and the total energy is conserved to $4\times10^{-9}$. (b) The slip velocity of 100\,$\mu$m particles started at 600\,m/s ($Ma$ 1.7, compression branch of the Loth drag) and of 1\,$\mu$m particles at 0.2\,bar ($Re$ 5, $Kn$ 0.33, rarefaction branch) follows the reference within 0.03\% of the initial slip. (c) With the Kavanau Nusselt number a 1\,$\mu$m particle at 0.2\,bar heats with $Nu = 0.28$ instead of 2; the particle temperature follows the reference within 0.05\%, also with 300\,m/s slip and drag. (d) Ignited 1, 10 and 50\,$\mu$m particles in air at 2500\,K and 1\,atm burn out in the Beckstead time (7.3\,$\mu$s, 0.46\,ms, 8.4\,ms) within 0.23\%, and the particle mass follows $(d/d_0)^3$ within 0.04\%; particles at 1800\,K, below $T_\text{ign}$ = 2000\,K, do not burn.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/stage1_al_solver.pdf}
+    \caption{Aluminium particle models in \texttt{blastEulerFoam} (single cell) against independent solutions: (a) melting (\texttt{eMelting}); (b) slip relaxation with the Loth drag; (c) heating with the Kavanau Nusselt number; (d) Beckstead burning after ignition.}
+    \label{fig:stage1_al_solver}
+\end{figure}
 
 \begin{figure}[htbp]
     \centering
@@ -538,7 +559,7 @@ Table~\ref{tab:status} summarises the status for the four parts of the problem.
         \midrule
         Detonation and early expansion & Products-only eJWLC fit; programmed burn; three-phase spherical charge, stable through breakout; stable charge/air interface & Resolution of the CJ state; dissociation in shocked air; mesh convergence \\
         Products/air mixing and chemistry & Products $\to$ gas transfer (0D, planar); multicomponent reacting gas phase & Transfer enabled in the spherical cases (2026-10-14); conservation with particles; domains of metres and run times of milliseconds \\
-        Al heating, ignition, combustion & Granular Al phase with drag and heat transfer; empirical burn rate limited to gas-phase oxidiser & Mach-dependent drag, melting, ignition, Beckstead rate and oxide condensation in the solver; experimental comparison \\
+        Al heating, ignition, combustion & Granular Al phase; melting, Mach- and Knudsen-dependent drag and heat transfer, ignition and Beckstead burning in the solver (0D tests); empirical burn rate limited to gas-phase oxidiser in the cases & The new models in the Comp-B/Al cases; oxide condensation; experimental comparison \\
         Afterburning in air & Gas-phase Al and CO/H$_2$ reactions in the cases & Multi-dimensional mixing; turbulence and turbulence--chemistry closures; radiation; validation \\
         \bottomrule
     \end{tabularx}
@@ -548,7 +569,7 @@ Table~\ref{tab:status} summarises the status for the four parts of the problem.
 
 \begin{itemize}
     \item Total energy in the spherical cases is conserved to $4$--$7\times10^{-4}$, not yet to round-off (most of the error arises at the end of the programmed burn).
-    \item The aluminium models beyond the empirical burn rate are not in the solver.
+    \item Melting, the Loth drag, the Kavanau heat transfer, the ignition criterion and the Beckstead rate are in the solver but not yet used in the Comp-B/Al cases; oxide condensation is not in the solver. The reacting diameter model resets the diameter, and stops burning, below a volume fraction \texttt{alphaMin} (default $10^{-4}$, reached at about 0.5\,m in the spherical case).
     \item The first mixed cell at the charge/air interface reaches the 50\,000\,K decode cap during breakout (gas at ambient density next to products at 0.7\,GPa); the inert cases and the tutorials still use the JANAF gas without dissociation.
     \item The only blast comparison is for C4 against the Kinney--Graham TNT correlations, on a coarse mesh; peak overpressure is 9--20\% low.
     \item The 2D axisymmetric Comp-B/Al tutorial has reached 200\,$\mu$s only from a restart (after the residual-stabilisation fix); a complete run from the start remains to be made. A few steps of trace gas reach the temperature cap.
@@ -563,7 +584,7 @@ The plan (details in \path{report/status_review_2026-10-14.md}) is ordered by th
     \item[A.] \emph{Consolidate}: documentation consistent with the code, verification scripts that fail on incomplete or non-reacting runs, one complete regression run, the 2D crash and the remaining trace-phase defects.
     \item[B.] \emph{Products afterburning}: enable the transfer in the spherical cases, extend them to 2\,m and 2\,ms, study the sensitivity to the transfer pressure and time (target: gauge pressures varying by less than 1.5\% for 100--200\,bar), and add a reduced CO/H$_2$/O$_2$ mechanism.
     \item[C.] \emph{High-temperature air}: NASA-9 thermodynamics to 20\,000\,K, an equilibrium solver at fixed $(e, \rho)$ (verified against \texttt{EuDetCode}) and local equilibrium above $T_\text{eq}$ in the gas chemistry are done, and the shock-in-air test matches the equilibrium jump (Section~\ref{sec:res_1d}). A reversible finite-rate mechanism for use below $T_\text{eq}$ (GRI-3.0 H$_2$/O$_2$/CO/C1 subset, 68 reactions, reverse rates from the NASA-9 data) agrees with the full GRI-3.0 mechanism in ignition (within 13\%) and burnout (within 0.8\% in temperature) for product/air mixtures at 1200--2000\,K and 1--50\,bar. The reacting Comp-B/Al cases use the NASA-9 gas, the equilibrium above $T_\text{eq}$ and this mechanism; the shocked air stays below 9300\,K.
-    \item[D.] \emph{Aluminium in the solver}: melting, Mach-dependent drag, an ignition criterion with the Beckstead rate, and oxide condensation, each with a 0D solver test, and comparison with experimental ignition delays and burn times.
+    \item[D.] \emph{Aluminium in the solver}: melting, Mach- and Knudsen-dependent drag and heat transfer, and ignition with the Beckstead rate are done, each with a 0D solver test (Section~\ref{sec:res_al}); oxide condensation and the comparison with experimental ignition delays and burn times remain.
     \item[E.] \emph{1D validation}: an aluminium-free Comp-B baseline against the Kingery--Bulmash data (with TNT equivalence) and a mesh-convergence study, then the inert and reacting Comp-B/Al charge to quantify the impulse gain from afterburning.
     \item[F.] \emph{Particle method}: compare the existing Eulerian and Lagrangian solvers on the same cloud problem; develop population-balance or hybrid methods only if this shows a need.
     \item[G.] \emph{Multi-dimensional}: 2D axisymmetric repeat of the spherical case with AMR, cylindrical charges, instability-driven mixing with LES and a turbulence--chemistry closure, and radiation where significant.
@@ -593,6 +614,8 @@ The following \texttt{blastFoam} tutorials \up{} cover phenomena relevant to the
     \bibitem{gidaspow} D. Gidaspow, \emph{Multiphase Flow and Fluidization: Continuum and Kinetic Theory Descriptions}, Academic Press, 1994.
     \bibitem{marchisio} D. L. Marchisio and R. O. Fox, \emph{Computational Models for Polydisperse Particulate and Multiphase Systems}, Cambridge University Press, 2013.
     \bibitem{beckstead} M. W. Beckstead, \emph{A Summary of Aluminum Combustion}, RTO-EN-023, 2004.
+    \bibitem{loth} E. Loth, Compressibility and rarefaction effects on drag of a spherical particle, \emph{AIAA Journal} 46(9):2219--2228, 2008.
+    \bibitem{kavanau} L. L. Kavanau, Heat transfer from spheres to a rarefied gas in subsonic flow, \emph{Transactions of the ASME} 77:617--623, 1955.
 \end{thebibliography}
 
 \end{document}

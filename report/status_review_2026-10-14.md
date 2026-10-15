@@ -127,9 +127,11 @@ Progress (2026-10-14): B1 done for the spherical `_reacting` and `_alCombustion`
 
 Progress (2026-10-14): A6 done for the coupling: three energy errors fixed (drag ODE without energy, missing pressure work on the particle-occupied volume, implicit stage rebuilding the conserved fields from bounded primitives). Houim 2 conserves energy to 6e-7 (target met), the spherical cases to 4–7e-4 (remaining: end of the programmed burn). Energy checks are in the verifiers. All 18 tests pass except the air shock (fails by design).
 
+Progress (2026-10-15): B2 done: the 2 m / 2 ms run of the `_alCombustion` setup is the tutorial `tutorials/blastEulerFoam/ChargeCompBAl_1D_spherical_2m` (graded mesh, 1 h 45 min serial, too long for the test runner). B3 and B4 are open.
+
 ### Phase C: High-temperature air (M) — WP 1.3 stage 2
 
-Extended 2026-10-14 to local chemical equilibrium (the one-step finite-rate chemistry fails at high temperature); detailed plan in `phaseC_highT_equilibrium_plan.md`. B2 is paused at 1.12 ms until then.
+Extended 2026-10-14 to local chemical equilibrium (the one-step finite-rate chemistry fails at high temperature); detailed plan in `phaseC_highT_equilibrium_plan.md`. Done 2026-10-14 as steps C1–C7 of that plan (the table below is the original outline).
 
 | # | Step | Exit criterion |
 |---|---|---|
@@ -148,6 +150,8 @@ Extended 2026-10-14 to local chemical equilibrium (the one-step finite-rate chem
 | D4 | Al2O3 condensation (gas → condensed oxide) with latent heat; check the Al2O3(s) species route already in the gas | Stoichiometric Al/air 0D flame locks near 3800 K; total energy 31 MJ/kg Al |
 | D5 | Replace the numpy verifiers by solver 0D tests (keep numpy as the reference) | Tier 1 tests use blastEulerFoam |
 | D6 | Collect experimental data: ignition delays, burn times (Beckstead, Gurevich, shock-tube data) | Gate 1 comparison |
+
+Progress (2026-10-15): D1 done (`eMelting` thermo; `tests/0D/alMelting_0D`), D2 done (`Loth` drag, `tests/0D/particleDrag_0D`; `Kavanau` Nusselt number, `tests/0D/particleHeating_0D`; the pair Prandtl number used c_v, fixed); D3 done (`Beckstead` diameter rate with `Tign`; `tests/0D/alBurning_0D`). D3 found two errors in `reactingDiameterModel`: the number density used the initial diameter (a burnt-out cloud kept 1/e of its mass) and a volume floor of 1e-15 m³ (micron particles lost mass up to 2000 times too slowly); fixed, and the reset volume fraction is now the entry `alphaMin` (default 1e-4, which stops burning in the dilute far field). Open: D4, D5 (the numpy reference models stay), D6, and using the new models in the Comp-B/Al cases (E2).
 
 ### Phase E: 1D spherical validation (M)
 
