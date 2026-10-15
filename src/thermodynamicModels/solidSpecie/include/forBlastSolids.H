@@ -34,6 +34,7 @@ License
 #include "thermoModel.H"
 #include "eConstBlastThermo.H"
 #include "hConstBlastThermo.H"
+#include "eMeltingBlastThermo.H"
 
 #include "rhoConst.H"
 #include "Murnaghan.H"
@@ -55,7 +56,8 @@ License
 
 #define forSolidThermos(Mu, Macro, Args...)                                 \
     forSolidEqns(Mu, eConstThermo, Macro, Args);                            \
-    forSolidEqns(Mu, hConstThermo, Macro, Args)
+    forSolidEqns(Mu, hConstThermo, Macro, Args);                            \
+    forSolidEqns(Mu, eMeltingThermo, Macro, Args)
 
 #define forSolidTransports(Macro, Args...)                                  \
     forSolidThermos(constIsoSolidTransport, Macro, Args);                   \

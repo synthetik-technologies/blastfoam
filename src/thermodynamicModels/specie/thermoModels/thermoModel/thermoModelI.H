@@ -78,7 +78,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
         return T0;
     }
 
-    scalar Test = (this->*limit)(T0, T0);
+    scalar Test = (this->*limit)(ThermoType::TEsEstimate(rho, e, T0), T0);
     scalar Tnew = Test;
 
     int    iter = 0;

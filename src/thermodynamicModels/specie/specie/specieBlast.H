@@ -133,6 +133,19 @@ public:
             //- Gas constant [J/(kg K)]
             inline scalar R() const;
 
+            //- Initial estimate of the temperature for the inversion of the
+            //  sensible internal energy es; thermodynamics that can invert
+            //  Es directly override this
+            inline scalar TEsEstimate
+            (
+                const scalar rho,
+                const scalar es,
+                const scalar T0
+            ) const
+            {
+                return T0;
+            }
+
 
         // IO
 
