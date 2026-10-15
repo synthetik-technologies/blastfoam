@@ -461,7 +461,7 @@ A single closed cell is initialised at the matching state (100\,bar, $\rho = 35.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/stage2_gunib1d_benchmarks.pdf}
-    \caption{Granular shock tube (Houim 2) at 0.184\,ms, \texttt{blastEulerFoam} against \texttt{gunIB1D}: (a) gas pressure; (b) gas and particle velocities.}
+    \caption{Granular shock tube (Houim 2) at 0.184\,ms, \texttt{blastEulerFoam} against \texttt{gunIB1D}: (a) gas pressure; (b) gas and particle velocities, the particle velocity where the particle volume fraction exceeds 5\% of the initial bed value (\texttt{gunIB1D} keeps a residual fraction of about 2\% with the gas velocity where the particles have left, \texttt{blastEulerFoam} sets the velocity of a residual phase to zero).}
     \label{fig:stage2_gunib1d}
 \end{figure}
 

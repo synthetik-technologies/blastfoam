@@ -444,11 +444,16 @@ def fig_stage2_gunib1d():
     ax1.legend()
     ax2.plot(d["x_gun"]*1e3, d["u_g_gun"], "k-", label="Gas, gunIB1D")
     ax2.plot(d["x_bf"]*1e3, d["u_g_bf"], "r--", label="Gas, blastEulerFoam")
-    ax2.plot(d["x_gun"]*1e3, d["u_s_gun"], "b-", label="Particles, gunIB1D")
-    ax2.plot(d["x_bf"]*1e3, d["u_s_bf"], "c--", label="Particles, blastEulerFoam")
+    # Particle velocity only where the bed is: gunIB1D keeps a residual
+    # alpha_s ~ 1e-5 (2% of the bed) with the gas velocity where the particles
+    # have left, blastEulerFoam sets the velocity of a residual phase to zero
+    alpha_min = 0.05*d["alpha_s_gun"][-1]
+    for k, style, code in (("gun", "b-", "gunIB1D"), ("bf", "c--", "blastEulerFoam")):
+        u_s = np.where(d["alpha_s_" + k] > alpha_min, d["u_s_" + k], np.nan)
+        ax2.plot(d["x_" + k]*1e3, u_s, style, label=f"Particles, {code}")
     ax2.set_xlabel("$x$ [mm]")
     ax2.set_ylabel("Velocity [m/s]")
-    ax2.set_title("(b) Gas and particle velocities")
+    ax2.set_title(r"(b) Gas and particle velocities (particles where $\alpha_s > 0.05\,\alpha_{s,0}$)")
     ax2.grid(True)
     ax2.legend()
     save(fig, "stage2_gunib1d_benchmarks")
