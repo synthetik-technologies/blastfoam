@@ -8,8 +8,11 @@ Reference: EuDetCode CJDetonation "COMP-B" 1717 BKW
 and of the programmed-burn speed (entries from
 utilities/thermo_fitter/ejwlc_cj_entries.py).
 Exit criteria (WP 2.4):
-- Detonation front position x_det(t) = D_CJ * t within 1.5 cells, fitted
-  speed within 0.1% (imposed by the programmed burn).
+- Detonation front position: the last burnt cell (lambda > 0.5) is the
+  last cell whose centre the programmed burn has reached, x_c <= D_CJ t
+  (lambda is 0 or 1 per cell with the linear activation, so the position is
+  quantised to the cell size; a fitted speed through three such positions
+  varies by a few 0.1% with the write times and is only printed).
 - The products EOS of the case has its CJ point at the programmed-burn
   speed (minimum detonation speed on its Hugoniot from the reactant state)
   within 0.5%. With a products energy that is too large (e.g. the LLNL JWL
@@ -192,8 +195,10 @@ def main():
         diff_mm = (x_num - x_exact) * 1000.0
         rel_diff = abs(x_num - x_exact) / x_exact * 100.0
 
-        # Sub-cell resolution check (within 1.5 grid cells)
-        passed = abs(x_num - x_exact) <= 1.5 * DX
+        # Programmed-burn position: last cell centre reached by the burn
+        reached = xc[xc <= x_exact*(1 + 1e-9)]
+        x_q = reached[-1] if len(reached) else 0.0
+        passed = abs(x_num - x_q) < 1e-9
         if not passed:
             all_passed = False
 
@@ -218,9 +223,9 @@ def main():
           f"(p_CJ {P_CJ/1e9:.2f} GPa){'' if front_ok else '  FAILED'}")
     all_passed = all_passed and eos_ok and front_ok
 
-    # Exit check: speed error < 0.1% and subcell error passed
-    if speed_err < 0.1 and all_passed:
-        print("[SUCCESS] WP 2.4 Planar ZND Detonation Verified against EuDetCode (< 0.1% error).")
+    # Exit check: burn positions, products EOS and front pressure
+    if all_passed:
+        print("[SUCCESS] WP 2.4 Planar ZND Detonation Verified against EuDetCode.")
         sys.exit(0)
     else:
         print(f"[FAILURE] Planar detonation: speed error {speed_err:.3f}%, products EOS CJ "
