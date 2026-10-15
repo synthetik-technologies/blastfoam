@@ -65,6 +65,7 @@ pressurePhaseChange::pressurePhaseChange
     pUpper_(1e7),
     pRange_(1e6),
     tau_(1e-4),
+    lambdaMin_(0.99),
     isMoleFraction_(false),
     fractionsConverted_(false),
     massRate_(0.0),
@@ -111,8 +112,9 @@ tmp<volScalarField> pressurePhaseChange::mDot() const
     tmp<volScalarField> tmDot(gamma()*alphaSource*rhoSource/tau_);
     if (mesh().foundObject<volScalarField>("lambda." + sourcePhaseName_))
     {
-        tmDot.ref() *=
+        const volScalarField& lambda =
             mesh().lookupObject<volScalarField>("lambda." + sourcePhaseName_);
+        tmDot.ref() *= lambda*pos0(lambda - lambdaMin_);
     }
     return tmDot;
 }
@@ -782,6 +784,7 @@ bool pressurePhaseChange::read(const dictionary& dict)
         }
 
         tau_ = coeffs().lookupOrDefault<scalar>("tau", 1e-4);
+        lambdaMin_ = coeffs().lookupOrDefault<scalar>("lambdaMin", 0.99);
         isMoleFraction_ =
             coeffs().lookupOrDefault<bool>("isMoleFraction", false);
         fractionsConverted_ = false;
@@ -791,7 +794,7 @@ bool pressurePhaseChange::read(const dictionary& dict)
         Info<< "    " << name() << " (pressurePhaseChange):" << nl
             << "        sourcePhase: " << sourcePhaseName_ << nl
             << "        pInterval: [" << pLower_/1e5 << ", " << pUpper_/1e5 << "] bar (pRange = " << pRange_/1e5 << " bar)" << nl
-            << "        tau: " << tau_ << " s" << endl;
+            << "        tau: " << tau_ << " s, lambdaMin: " << lambdaMin_ << endl;
 
         return true;
     }

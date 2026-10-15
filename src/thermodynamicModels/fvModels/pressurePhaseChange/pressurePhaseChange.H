@@ -95,6 +95,12 @@ class pressurePhaseChange
         //- Relaxation time scale [s]
         scalar tau_;
 
+        //- Reaction progress of the source phase (lambda) below which it
+        //  is not transferred (default 0.99). In the burn front lambda > 0
+        //  before the pressure has risen above the threshold, so a fast
+        //  transfer would move unreacted charge into the target phase.
+        scalar lambdaMin_;
+
         //- Are fractions specified as mole fractions
         bool isMoleFraction_;
 
@@ -115,7 +121,8 @@ class pressurePhaseChange
         tmp<volScalarField> gamma() const;
 
         //- Return the mass transfer rate [kg/m3/s]:
-        //  Gamma(p)*alpha*rho/tau, times lambda of the source phase if present
+        //  Gamma(p)*alpha*rho/tau, times lambda of the source phase if
+        //  present (zero where lambda < lambdaMin)
         tmp<volScalarField> mDot() const;
 
         //- Find the thermo of the named phase: a phase of the mixture
