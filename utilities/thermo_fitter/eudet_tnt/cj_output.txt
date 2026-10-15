@@ -1,0 +1,48 @@
+Explosive: TNT
+Initial Density: 1630 kg/m^3
+Initial Specific Energy (e0): -278315 J/kg (-0.453654 GPa)
+Compound molecular mass (kg/mol): 0.227131
+
+--- CJ State ---
+CJ Pressure (Pa): 1.68861e+10
+CJ Temperature (K): 3636.76
+CJ Volume (m^3/kg): 0.000471757
+CJ Velocity (m/s): 6696.23
+Internal Energy (J/kg): 918407
+Entropy (J/K/kg): 6679.05
+CJ Composition (mass fractions):
+  N2: 0.177466
+  CO: 0.106499
+  H2O: 0.192696
+  CO2: 0.261194
+  C2N2: 0.0026478
+  CH2O2: 0.00103081
+  HCN: 0.0117036
+  C(d): 0.245974
+
+--- Freeze-out Point ---
+Temperature (K): 1782.3
+Pressure (Pa): 8.0822e+08
+Density (kg/m^3): 675.583
+Composition (mass fractions):
+  H2: 0.00290602
+  N2: 0.183913
+  CO: 0.272402
+  H2O: 0.124773
+  CO2: 0.214623
+  CH4: 0.0202398
+  C(gr): 0.17909
+
+--- JWL Parameters ---
+A (GPa): 1055.99
+B (GPa): 12.3643
+C (GPa): 1.29464
+R1: 5.96786
+R2: 1.36616
+omega: 0.318131
+Cv (J/kg/K): 529.889
+E0 (J/kg): -4.56269e+06
+E0 (GPa): -7.43719
+GurneyEnergy (J/kg): 4.56269e+06
+GurneyVelocity (m/s): 3020.83
+RMS Error: 0.0590057
