@@ -55,19 +55,15 @@ def kinney_graham_positive_duration(Z, W=1.0):
 
 def kinney_graham_positive_impulse(Z, W=1.0, p0=P0_ATM):
     """
-    Kinney & Graham (1985) scaled positive incident impulse:
-    i_s / W^(1/3) [Pa*s / kg^(1/3)]
-    Derived from integrated modified Friedlander pulse with waveform parameter b(Z).
+    Kinney & Graham (1985) positive incident impulse of a TNT free-air burst:
+    i_s/W^(1/3) = 6.7 sqrt(1 + (Z/0.23)^4) / (Z^2 (1 + (Z/1.55)^3)^(1/3))
+    [Pa s/kg^(1/3)]. Returns: impulse in Pa s.
+    (Until 2026-10-15 this integrated a Friedlander pulse with an assumed
+    decay parameter, which gave 8.8 instead of 24.5 Pa s at 8 m from 1 kg.)
     """
     Z = np.asarray(Z, dtype=float)
-    dp = kinney_graham_overpressure(Z, p0=p0)
-    td = kinney_graham_positive_duration(Z, W=W)
-    
-    # Waveform decay parameter b(Z)
-    b = 0.13 + 0.35 * (Z**1.1)
-    # Integral of Friedlander waveform: I+ = dp * td * (1/b - (1 - exp(-b))/b^2)
-    shape_factor = (1.0 / b) - (1.0 - np.exp(-b)) / (b**2)
-    return dp * td * shape_factor
+    scaled = 6.7*np.sqrt(1.0 + (Z/0.23)**4)/(Z**2*np.cbrt(1.0 + (Z/1.55)**3))
+    return scaled*W**(1.0/3.0)
 
 
 CASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "spherical_blast")
