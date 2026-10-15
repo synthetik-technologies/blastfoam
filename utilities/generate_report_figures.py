@@ -705,6 +705,64 @@ def fig_stage1_al_solver():
     save(fig, "stage1_al_solver")
 
 
+def fig_stage3_blast_kb():
+    """1 kg TNT and Comp-B free-air blast vs Kingery-Bulmash (E1)."""
+    import kingery_bulmash as kb
+    from verify_kingery_bulmash import kinney_graham_overpressure, kinney_graham_positive_impulse
+
+    def radial(case):
+        pp = result("tests/1D_spherical", case, "postProcessing")
+        t = sorted(os.listdir(os.path.join(pp, "radialPeakPressure")), key=float)[-1]
+        pm = np.loadtxt(os.path.join(pp, "radialPeakPressure", t, "p_temporalMax.dat"))
+        im = np.loadtxt(os.path.join(pp, "radialImpulse", t, "p_temporalIntegral.dat"))
+        return pm[:, 1], pm[:, 5] - 101325.0, im[:, 5]
+
+    Z = np.geomspace(0.3, 9.5, 200)
+    p_kb, i_kb, _ = kb.free_air_arrays(Z, 1.0)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 4.4))
+    ax1.loglog(Z, p_kb/1e3, "k-", lw=1.2, label="Kingery-Bulmash (TNT)")
+    ax1.loglog(Z, kinney_graham_overpressure(Z)/1e3, "k:", lw=1.0, label="Kinney-Graham (TNT)")
+    ax2.loglog(Z, i_kb, "k-", lw=1.2, label="Kingery-Bulmash (TNT)")
+    ax2.loglog(Z, kinney_graham_positive_impulse(Z), "k:", lw=1.0, label="Kinney-Graham (TNT)")
+    runs = [("tnt_blast", "TNT, 4 mm", "crimson", "-"),
+            ("tnt_blast_n5000", "TNT, 2 mm", "darkorange", "-"),
+            ("tnt_blast_near1mm", "TNT, 1 mm to 0.3 m, 2 mm beyond", "olive", ":"),
+            ("tnt_blast_n10000", "TNT, 1 mm", "goldenrod", "-"),
+            ("compB_blast", "Comp-B, 4 mm", "navy", "--"),
+            ("compB_blast_n5000", "Comp-B, 2 mm", "royalblue", "--")]
+    for case, label, c, ls in runs:
+        if not os.path.isdir(os.path.join(RESULTS, "tests/1D_spherical", case)):
+            continue
+        r, dp, imp = radial(case)
+        sel = (r > 0.3) & (r < 9.5)
+        ax1.loglog(r[sel], dp[sel]/1e3, ls, color=c, lw=1.1, label=label)
+        ax2.loglog(r[sel], imp[sel], ls, color=c, lw=1.1, label=label)
+        eq_p, eq_i = (1.11, 0.98) if case.startswith("compB") else (1.0, 1.0)
+        pk = np.array([kb.free_air(x, eq_p)[0] for x in r[sel]])
+        ik = np.array([kb.free_air(x, eq_i)[1] for x in r[sel]])
+        ax3.plot(r[sel], 100*(dp[sel]/pk - 1), ls, color=c, lw=1.1, label=label + " (overpressure)")
+        if case in ("tnt_blast_n10000", "compB_blast_n5000", "tnt_blast", "compB_blast"):
+            ax3.plot(r[sel], 100*(imp[sel]/ik - 1), ls, color=c, lw=0.8, alpha=0.5)
+    ax1.set_xlabel(r"$Z$ [m/kg$^{1/3}$] (1 kg charges)")
+    ax1.set_ylabel("Peak incident overpressure [kPa]")
+    ax1.set_title("(a) Peak overpressure")
+    ax2.set_xlabel(r"$Z$ [m/kg$^{1/3}$]")
+    ax2.set_ylabel("Positive impulse [Pa s]")
+    ax2.set_title("(b) Positive impulse")
+    ax3.axhspan(-5, 5, color="green", alpha=0.08)
+    ax3.axhline(0, color="k", lw=0.8)
+    ax3.set_xscale("log")
+    ax3.set_xlabel(r"$Z$ [m/kg$^{1/3}$]")
+    ax3.set_ylabel("Deviation from Kingery-Bulmash [%]")
+    ax3.set_title("(c) Deviation (thin: impulse; Comp-B with TNT equiv.)")
+    ax3.set_ylim(-40, 40)
+    for ax in (ax1, ax2, ax3):
+        ax.grid(True, which="both")
+    ax1.legend(fontsize=7.5)
+    ax3.legend(fontsize=7)
+    save(fig, "stage3_blast_kb")
+
+
 FIGURES = {
     "isentropes": fig_isentropes,
     "products_temperature": fig_products_temperature,
@@ -717,6 +775,7 @@ FIGURES = {
     "gunib1d": fig_stage2_gunib1d,
     "planar_znd": fig_stage2_planar_znd,
     "spherical_blast": fig_stage3_spherical_blast,
+    "blast_kb": fig_stage3_blast_kb,
     "spherical_multiphase": fig_stage3_spherical_multiphase,
 }
 

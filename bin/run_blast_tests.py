@@ -147,7 +147,7 @@ def run_tier0_tests():
     return results
 
 
-def run_openfoam_case(case_rel_path, tier, case_name=None):
+def run_openfoam_case(case_rel_path, tier, case_name=None, timeout=600):
     """Clean, run, and check an OpenFOAM case directory."""
     case_dir = os.path.join(BLASTFOAM_ROOT, case_rel_path)
     name = case_name or os.path.basename(case_rel_path)
@@ -165,7 +165,7 @@ def run_openfoam_case(case_rel_path, tier, case_name=None):
     if not os.path.isfile(allrun):
         return TestResult(name, tier, 0.0, False, "No Allrun script found")
 
-    code, stdout, stderr, dur = run_command("./Allrun", cwd=case_dir, timeout=600)
+    code, stdout, stderr, dur = run_command("./Allrun", cwd=case_dir, timeout=timeout)
     if code != 0:
         return TestResult(name, tier, dur, False, f"Allrun exited with code {code}: {stderr[:100]}")
 
@@ -349,6 +349,14 @@ def main():
             msg = "Beckstead d^n burning in blastEulerFoam 0D: burn time of 1/10/50 um Al in air within 2% of the correlation, particle mass vs (d/d0)^3, no burning below Tign" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Al Ignition and Beckstead Burning (Phase D3)", 1, dur, passed, msg))
 
+            # Al/air equilibrium with liquid Al2O3 and sub-oxides (Phase D4)
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_al_flame.py"
+            )
+            passed = (code == 0)
+            msg = "Stoichiometric Al(s)/air at constant volume: Al2O3 melting 2327 K and 31.05 MJ/kg Al from the data; blastChemicalEquilibrium vs independent solution (T 4070 / 4561 K at 1x / 10x air density, Al2O3(L))" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("Al/Air Equilibrium with Condensed Al2O3 (Phase D4)", 1, dur, passed, msg))
+
             # 4. 1D verification case
             results.append(run_openfoam_case(
                 "tutorials/blastFoam/pressurePhaseChangeTest",
@@ -425,6 +433,24 @@ def main():
                     res_wedge.passed = False
                     res_wedge.message = f"Kinney-Graham comparison failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_wedge)
+
+            # E1: 1 kg TNT and Comp-B free-air blast vs Kingery-Bulmash
+            for case, label in [
+                ("tnt_blast", "tnt_blast (E1 1D Spherical 1 kg TNT vs Kingery-Bulmash)"),
+                ("compB_blast", "compB_blast (E1 1D Spherical 1 kg Comp-B vs Kingery-Bulmash, TNT equivalence)"),
+            ]:
+                res_kb = run_openfoam_case(f"tests/1D_spherical/{case}", tier=3, case_name=label, timeout=1800)
+                if res_kb.passed:
+                    code, stdout, stderr, dur = run_command(
+                        f"{sys.executable} tests/1D_spherical/verify_blast_kb.py {case}"
+                    )
+                    gate = [l for l in stdout.splitlines() if l.startswith("Gate 3")]
+                    if code == 0:
+                        res_kb.message = "Arrival (Z>=3, 3%), peak overpressure (Z 1-8, 20%), impulse (Z 3-8, 25%) vs KB; " + (gate[0] if gate else "")
+                    else:
+                        res_kb.passed = False
+                        res_kb.message = f"Kingery-Bulmash comparison failed: {stdout.strip().splitlines()[-1]}"
+                results.append(res_kb)
 
             # 1D Spherical Multiphase Detonation (blastEulerFoam origin-initiated CompBAl)
             res_sph_compb = run_openfoam_case(

@@ -118,6 +118,7 @@ tests/0D/gas_kinetics/
 tests/0D/particle_drag/
 tests/0D/particle_heating/
 tests/0D/al_burning/
+tests/0D/al_flame/
 tests/0D/alBurning_0D/constant/thermo.nasa9Gas
 tests/0D/gasKinetics_0D/constant/thermo.nasa9Gas
 tests/0D/gasKinetics_0D/constant/reactions.gas
