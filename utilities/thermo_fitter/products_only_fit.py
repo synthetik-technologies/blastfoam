@@ -201,6 +201,39 @@ def compute(eudet_dir, gas_case, ptrans=1.0e7, T0=288.0, cv_reactants=1030.0,
                 ptrans=ptrans)
 
 
+def burn_consistency(r, e_reactants, p0=101325.0):
+    """Rayleigh speed through the CJ point, CJ speed (minimum on the
+    Hugoniot) and weak-branch pressure at D of the products phase alone,
+    with the reactant energy e_reactants + e0 released at the front."""
+    from scipy.optimize import brentq, minimize_scalar
+    rho0, A, B, C, R1, R2, w = (r[k] for k in ("rho0", "A", "B", "C", "R1", "R2", "w"))
+    v0 = 1/rho0
+    e_r = e_reactants + r["e0"]
+
+    def es(V):
+        return v0*(A/R1*math.exp(-R1*V) + B/R2*math.exp(-R2*V) + C/w*V**(-w)) + r["E0"]
+
+    def ps(V):
+        return A*math.exp(-R1*V) + B*math.exp(-R2*V) + C*V**(-(w + 1))
+
+    def p_hug(V):
+        v = V*v0
+        return (ps(V) + w/v*(e_r + 0.5*p0*(v0 - v) - es(V)))/(1 - w/v*0.5*(v0 - v))
+
+    def speed(V):
+        return v0*math.sqrt(max(p_hug(V) - p0, 0)/(v0 - V*v0))
+
+    V_CJ = r["V_CJ"]
+    D_ray = v0*math.sqrt((r["p_CJ"] - p0)/(v0 - V_CJ*v0))
+    m = minimize_scalar(speed, bounds=(0.3, 0.99), method="bounded")
+    D_eos = speed(m.x)
+    p_weak = float("nan")
+    if r["D"] > D_eos:
+        V_w = brentq(lambda V: speed(V) - r["D"], m.x, 0.999)
+        p_weak = p_hug(V_w)
+    return D_ray, D_eos, p_weak
+
+
 def report(args, r):
     """Print the blastEulerFoam dictionary entries."""
     (cj, Y, D, p_CJ, V_t, rho0, T_t, R_mix, b_mix, W_mix, A, B, C, R1, R2,
@@ -231,6 +264,17 @@ def report(args, r):
     print(f"// e0 = e_s(V_CJ) - Cv_r*T0 - 0.5*p_CJ*(1/rho0 - 1/rho_CJ)")
     print(f"//    = {es_CJ:.6g} - {args.cv_reactants*args.T0:.6g} "
           f"- {hug:.6g} = {e0:.6g} J/kg")
+    # Programmed-burn consistency of the products phase alone (Al not
+    # included): the products Hugoniot passes through the CJ point by the
+    # choice of e0; a burn faster than the CJ speed of this Hugoniot runs on
+    # its weak branch (pressure slightly below p_CJ, no growth), a slower one
+    # has no steady solution and is overdriven (pressure grows at the front)
+    D_ray, D_eos, p_weak = burn_consistency(r, args.cv_reactants*args.T0)
+    print(f"// products alone: Rayleigh speed through the CJ point {D_ray:.1f} m/s, "
+          f"CJ speed of the products EOS {D_eos:.1f} m/s, pressure on the weak branch "
+          f"at D {p_weak/1e9:.2f} GPa (p_CJ {p_CJ/1e9:.2f})")
+    if D < D_eos:
+        print("// WARNING: burn speed below the CJ speed of the products EOS: overdriven front")
     print("// transfer targetFractions:")
     for k, y in Y.items():
         print(f"//     {k:<12}{y:.8f};")
