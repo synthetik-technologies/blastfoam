@@ -30,10 +30,12 @@ c4
         equationOfState
         {
             rho0            1601;
-            n               7.4;
-            kappa           390000000000;
             Gamma           0.35;
             pRef            101298;
+            // Unreacted C-4: Reuss mixture of the EuDetCode Murnaghan data of
+            // RDX, DOA, PIB and mineral oil (K0 = 1/sum(phi_i/K0_i))
+            K0              1.031e+10;
+            n               8.14;
         }
         specie
         {
@@ -87,7 +89,7 @@ c4
     {
         E0              9000000000;
         points          ( ( 0 0 0 ) );
-        vDet            7850;
+        vDet            8217.7; // CJ speed of the products JWL (utilities/thermo_fitter/check_programmed_burn.py)
     }
     residualRho     1e-06;
     residualAlpha   1e-10;

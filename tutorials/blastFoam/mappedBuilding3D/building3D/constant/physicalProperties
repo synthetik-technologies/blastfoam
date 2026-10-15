@@ -39,7 +39,10 @@ c4
             rho0            1601;
             Gamma           0.25;
             pRef            101298;
-            K0              0;
+            // Unreacted C-4: Reuss mixture of the EuDetCode Murnaghan data of
+            // RDX, DOA, PIB and mineral oil (K0 = 1/sum(phi_i/K0_i))
+            K0              1.031e+10;
+            n               8.14;
         }
         specie
         {
@@ -119,7 +122,7 @@ c4
         radius      0.05;           // Set cell with in 0.05 m of
                                     // COM
 
-        vDet       7850;            // Detonation velocity [m/s]
+        vDet       8227.6; // CJ speed of the products JWL (utilities/thermo_fitter/check_programmed_burn.py)
     }
 
     residualRho     1e-6;           // Minimum density of the phase
