@@ -29,7 +29,8 @@ FIG_DIR = os.path.join(CODE, "report/figures")
 EUDET = os.path.join(CODE, "utilities/thermo_fitter/eudet_compBAl")
 GAS_CASE = os.path.join(CODE, "tests/0D/phaseTransfer_0D")
 
-for sub in ("utilities/thermo_fitter", "tests/0D", "tests/1D", "tests/1D_spherical"):
+for sub in ("utilities/thermo_fitter", "tests/0D", "tests/1D", "tests/1D_spherical",
+            "tutorials/blastEulerFoam/ChargeCompBAl_1D_spherical_2m"):
     sys.path.insert(0, os.path.join(CODE, sub))
 
 plt.rcParams.update({
@@ -763,6 +764,94 @@ def fig_stage3_blast_kb():
     save(fig, "stage3_blast_kb")
 
 
+def fig_stage3_e2_ignition():
+    """Comp-B/Al on the 2 m case (plan step E2): three Al ignition
+    temperatures against the inert and products-only runs. The runs are made
+    with tutorials/blastEulerFoam/ChargeCompBAl_1D_spherical_2m/setup_e2.py
+    (burning to oxide, transported ignited fraction) and read from
+    $E2_RESULTS_DIR/{inert,products,Tign2050,Tign932,Tign0}."""
+    from compare_e2 import first_phase
+    base = os.environ.get("E2_RESULTS_DIR")
+    if not base:
+        raise FileNotFoundError("E2_RESULTS_DIR not set (directory of the E2 runs)")
+    runs = [("Tign2050", r"$T_\mathrm{ign}$ = 2050 K (oxide melting)", "crimson", "-"),
+            ("Tign932", r"$T_\mathrm{ign}$ = 933 K (Al melting, ruptured shell)", "darkorange", "--"),
+            ("Tign0", r"$T_\mathrm{ign}$ = 0 (burning from the start)", "navy", ":")]
+    P0 = 101325.0
+
+    def path(c, *parts):
+        q = os.path.join(base, c, *parts)
+        if not os.path.exists(q):
+            raise FileNotFoundError(q)
+        return q
+
+    def last(c, sub):
+        return sorted(os.listdir(path(c, "postProcessing", sub)), key=float)[-1]
+
+    def peak(c):
+        pm = np.loadtxt(path(c, "postProcessing/radialPeakPressure", last(c, "radialPeakPressure"), "p_temporalMax.dat"))
+        return pm[:, 1], pm[:, 5] - P0
+
+    def al_history(c):
+        r = peak(c)[0]
+        f = np.r_[0, 0.5*(r[1:] + r[:-1]), r[-1] + 0.5*(r[-1] - r[-2])]
+        V = np.diff(f**3)
+        times = sorted((d for d in os.listdir(path(c)) if re.fullmatch(r"[0-9.e-]+", d) and float(d) > 0), key=float)
+        t, M, T, I = [], [], [], []
+        for d in times:
+            a = read_field(path(c, d, "alpha.Al"))
+            rho = np.broadcast_to(read_field(path(c, d, "rho.Al")), a.shape)
+            Tp = np.broadcast_to(read_field(path(c, d, "T.Al")), a.shape)
+            ig = np.broadcast_to(read_field(path(c, d, "ignited.Al")), a.shape)
+            m = a*rho*V
+            t.append(float(d)); M.append(m.sum()); T.append(np.sum(m*Tp)/m.sum())
+            I.append(np.sum(m*ig)/m.sum())
+        return np.array(t), np.array(M), np.array(T), np.array(I)
+
+    def probes(c):
+        p = path(c, "postProcessing/pressureProbes/0/p")
+        radii = [float(re.search(r"\(([^ ]+)", line).group(1)) for line in open(p) if line.startswith("# Probe")]
+        return np.array(radii), np.loadtxt(p)
+
+    fig, axs = plt.subplots(2, 2, figsize=(11, 8))
+    (ax1, ax2), (ax3, ax4) = axs
+    M0 = None
+    for c, label, col, ls in runs:
+        t, M, T, I = al_history(c)
+        M0 = M0 or M[0]
+        ax1.plot(t*1e3, 100*(1 - M/M0), ls, color=col, label=label)
+        ax1.plot(t*1e3, 100*I, ls, color=col, lw=0.8, alpha=0.6)
+        ax2.plot(t*1e3, T, ls, color=col, label=label)
+    ax1.set_xlabel("t [ms]"); ax1.set_ylabel("Al burnt [% of initial mass]")
+    ax1.set_title("(a) Aluminium burnt (thin: ignited, % of remaining mass)")
+    ax2.axhline(933.47, color="grey", lw=0.8); ax2.axhline(2050, color="grey", lw=0.8, ls="--")
+    ax2.set_xlabel("t [ms]"); ax2.set_ylabel("Mass-mean Al temperature [K]")
+    ax2.set_title("(b) Aluminium temperature")
+
+    r_in, dp_in = peak("inert")
+    sel = (r_in > 0.06) & (r_in < 1.9)
+    R, d_in = probes("inert")
+    imp_in = np.array([first_phase(d_in[:, 0], d_in[:, j + 1] - P0)[2] for j in range(len(R))])
+    for c, label, col, ls in [("products", "products transfer, no Al burning", "seagreen", "-.")] + runs:
+        r, dp = peak(c)
+        ax3.plot(r[sel], 100*(dp[sel]/dp_in[sel] - 1), ls, color=col, label=label)
+        Rc, d = probes(c)
+        res = [first_phase(d[:, 0], d[:, j + 1] - P0) for j in range(len(Rc))]
+        imp = np.array([x[2] for x in res]); done = np.array([x[3] for x in res])
+        ok = (Rc >= 0.08) & done
+        ax4.plot(Rc[ok], 100*(imp[ok]/imp_in[ok] - 1), ls, marker="o", ms=3.5, color=col, label=label)
+    ax3.axhline(0, color="k", lw=0.8)
+    ax3.set_xlabel("r [m]"); ax3.set_ylabel("Peak overpressure vs inert [%]")
+    ax3.set_title("(c) Peak overpressure")
+    ax4.axhline(0, color="k", lw=0.8)
+    ax4.set_xlabel("r [m]"); ax4.set_ylabel("First positive-phase impulse vs inert [%]")
+    ax4.set_title("(d) Impulse (gauges with a completed positive phase)")
+    for ax in axs.flat:
+        ax.grid(True)
+    ax1.legend(); ax3.legend(fontsize=7.5)
+    save(fig, "stage3_e2_ignition")
+
+
 FIGURES = {
     "isentropes": fig_isentropes,
     "products_temperature": fig_products_temperature,
@@ -777,6 +866,7 @@ FIGURES = {
     "spherical_blast": fig_stage3_spherical_blast,
     "blast_kb": fig_stage3_blast_kb,
     "spherical_multiphase": fig_stage3_spherical_multiphase,
+    "e2_ignition": fig_stage3_e2_ignition,
 }
 
 
