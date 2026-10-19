@@ -49,7 +49,9 @@ def energy_drift(case_dir, t_start=8e-6):
     )
     E = []
     for t in times:
-        if field(t, "p")[-1] > 1.05e5:
+        # Closed domain: neither the shock nor the leading edge of the Al
+        # cloud (30 um particles outrun the shock) has reached the boundary
+        if field(t, "p")[-1] > 1.01*101325 or field(t, "alpha.Al")[-1] > 1e-10:
             break
         e = sum(field(t, f"alphaRhoE.{p}") @ V for p in ("compBAl", "gas", "Al"))
         e += (0.5*field(t, "alphaRho.Al")*field(t, "U.Al")**2) @ V
@@ -150,8 +152,10 @@ def verify_spherical_detonation():
     passed = True
     t_last, dE = energy_drift(CASE_DIR)
     print(f"  Total energy change 8 us -> {t_last*1e6:.0f} us (closed domain): {dE:.2e}")
-    if abs(dE) > 1e-3:
-        print(f"FAIL: total energy not conserved ({dE:.2e}, tolerance 1e-3)")
+    # With 30 um Al the particle coupling loses about 1e-5 per us (-3.4e-4
+    # by 35 us, open, UPDATES.md)
+    if abs(dE) > 5e-4:
+        print(f"FAIL: total energy not conserved ({dE:.2e}, tolerance 5e-4)")
         passed = False
     if speed_error_pct > 1.5:
         print(f"FAIL: Detonation velocity error {speed_error_pct:.2f}% exceeds threshold of 1.5%")

@@ -52,6 +52,10 @@ species
     CH2O
     HCO
     CH3O
+    Al2O
+    AlO2
+    Al2O2
+    "Al2O3(L)"
 );
 
 #include "thermo.nasa9Gas"

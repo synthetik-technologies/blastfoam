@@ -19,7 +19,7 @@ type basic;
 thermoType
 {
     equationOfState Murnaghan;
-    thermo          eConst;
+    thermo          eMelting;
     transport       constIso;
 }
 
@@ -44,8 +44,13 @@ transport
 
 thermodynamics
 {
-    type            eConst;
-    Cv              900;
+    // NASA (CODATA) Al(cr)/Al(L), tests/0D/alMelting_0D
+    type            eMelting;
+    Cv              1059;
+    CvLiquid        1177;
+    Tm              933.47;
+    Lm              3.966e5;
+    dTm             2;
     Hf              0;
 }
 

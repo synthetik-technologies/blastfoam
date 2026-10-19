@@ -34,6 +34,10 @@ species
     CH2O
     HCO
     CH3O
+    Al2O
+    AlO2
+    Al2O2
+    Al2O3(L)
 );
 
 reactions
@@ -486,7 +490,7 @@ reactions
         beta            -1;
         Ta              0;
         coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -512,6 +516,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
     }
@@ -523,7 +531,7 @@ reactions
         beta            -1;
         Ta              0;
         coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -549,6 +557,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
     }
@@ -560,7 +572,7 @@ reactions
         beta            -0.86;
         Ta              0;
         coeffs
-24
+28
 (
 (O2 0)
 (N2 0)
@@ -586,6 +598,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
     }
@@ -597,7 +613,7 @@ reactions
         beta            -1;
         Ta              0;
         coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -623,6 +639,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
     }
@@ -634,7 +654,7 @@ reactions
         beta            -2;
         Ta              0;
         coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -660,6 +680,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
     }
@@ -671,7 +695,7 @@ reactions
         beta            -1;
         Ta              8554.25;
         coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -697,6 +721,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
     }
@@ -722,7 +750,7 @@ reactions
         thirdBodyEfficiencies
         {
             coeffs
-24
+28
 (
 (O2 6)
 (N2 1)
@@ -748,6 +776,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
         }
@@ -778,7 +810,7 @@ reactions
         thirdBodyEfficiencies
         {
             coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -804,6 +836,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
         }
@@ -834,7 +870,7 @@ reactions
         thirdBodyEfficiencies
         {
             coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -860,6 +896,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
         }
@@ -890,7 +930,7 @@ reactions
         thirdBodyEfficiencies
         {
             coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -916,6 +956,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
         }
@@ -946,7 +990,7 @@ reactions
         thirdBodyEfficiencies
         {
             coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -972,6 +1016,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
         }
@@ -1002,7 +1050,7 @@ reactions
         thirdBodyEfficiencies
         {
             coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -1028,6 +1076,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
         }
@@ -1058,7 +1110,7 @@ reactions
         thirdBodyEfficiencies
         {
             coeffs
-24
+28
 (
 (O2 1)
 (N2 1)
@@ -1084,6 +1136,10 @@ reactions
 (CH2O 1)
 (HCO 1)
 (CH3O 1)
+(Al2O 1)
+(AlO2 1)
+(Al2O2 1)
+(Al2O3(L) 1)
 )
 ;
         }

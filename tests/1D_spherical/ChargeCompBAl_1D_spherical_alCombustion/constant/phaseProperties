@@ -35,17 +35,17 @@ Al
     reactingDiameterCoeffs
     {
         d               3e-5;
-        reactionRate    pressureBased;
-        offset          0;
-        pMin            2e5;
-        pScale          1e-6;
-        pExponent       0.7;
-        pCoeff          5e-5;
-        // Burns only with gas-phase oxidiser: the rate is scaled by the gas
-        // fraction of the surrounding fluid and by min(1, Y_ox/YoxidiserRef)
+        reactionRate    Beckstead;
+        // Beckstead (2005) d^n law; ignition at Tign (1e5: never ignites)
+        Tign            2050;
+        // Burns only with gas-phase oxidiser (X_eff of O2, H2O, CO2), scaled
+        // by the gas fraction of the surrounding fluid, to Al2O3 + H2/CO
         oxidiserPhase   gas;
-        oxidiserSpecies (O2 CO2 H2O);
-        YoxidiserRef    0.24;
+        products        true;
+        // Ignition tracked per particle cloud (transported ignited fraction)
+        ignitedFraction true;
+        // Burn down to dilute clouds (the default 1e-4 is reached at 0.5 m)
+        alphaMin        1e-6;
     }
 
     alphaMax        0.63;
@@ -141,10 +141,8 @@ massTransfer
     (Al in gas)
     {
         type            reactingParticle;
-        productSpecies
-        (
-            (Al 1.0)
-        );
+        // Products and consumed oxidisers from the Beckstead rate
+        productsFromReactionRate true;
     }
 );
 
@@ -158,16 +156,15 @@ dragODECoeffs
     solver          seulex;
     relTol          1e-3;
     solveODE        true;
-    alphaCutoff     1e-2;
+    alphaCutoff     1e-6;
 }
 
 drag
 (
     (Al in gas)
     {
-        type            GidaspowErgunWenYu;
-        residualRe      1e-3;
-        alphaCutoff     1e-2;
+        type            Loth;
+        alphaCutoff     1e-6;
         swarmCorrection
         {
             type            none;
@@ -202,7 +199,7 @@ heatTransfer
     (Al in gas)
     {
         type            RanzMarshall;
-        NuModel         Gunn;
+        NuModel         Kavanau;
     }
 
     (Al in compBAl)

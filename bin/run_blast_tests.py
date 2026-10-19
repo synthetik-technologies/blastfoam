@@ -285,7 +285,7 @@ def main():
 
             # Chemical equilibrium at fixed density and energy (Phase C3)
             code, stdout, stderr, dur = run_command(
-                f"{sys.executable} tests/0D/verify_equilibrium.py"
+                f"{sys.executable} tests/0D/verify_equilibrium.py", timeout=900
             )
             passed = (code == 0)
             msg = "blastChemicalEquilibrium (UV) vs EuDetCode and an independent solution: air, Comp-B/Al products (with C(gr), Al2O3(s)) and mixtures, 2500 - 20 000 K" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
@@ -464,7 +464,8 @@ def main():
             res_sph_compb = run_openfoam_case(
                 "tests/1D_spherical/ChargeCompBAl_1D_spherical",
                 tier=3,
-                case_name="ChargeCompBAl_1D_spherical (1D Spherical Multiphase CJ Detonation)"
+                case_name="ChargeCompBAl_1D_spherical (1D Spherical Multiphase CJ Detonation)",
+                timeout=1800
             )
             if res_sph_compb.passed:
                 code, stdout, stderr, dur = run_command(
@@ -481,7 +482,8 @@ def main():
             res_sph_react = run_openfoam_case(
                 "tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting",
                 tier=3,
-                case_name="ChargeCompBAl_1D_spherical_reacting (1D Spherical Detonation + Gas Reactions)"
+                case_name="ChargeCompBAl_1D_spherical_reacting (1D Spherical Detonation + Gas Reactions)",
+                timeout=1800
             )
             if res_sph_react.passed:
                 code, stdout, stderr, dur = run_command(
@@ -498,7 +500,8 @@ def main():
             res_sph_al = run_openfoam_case(
                 "tests/1D_spherical/ChargeCompBAl_1D_spherical_alCombustion",
                 tier=3,
-                case_name="ChargeCompBAl_1D_spherical_alCombustion (1D Spherical Detonation + Al Combustion)"
+                case_name="ChargeCompBAl_1D_spherical_alCombustion (1D Spherical Detonation + Al Combustion)",
+                timeout=1800
             )
             if res_sph_al.passed:
                 code, stdout, stderr, dur = run_command(
@@ -515,7 +518,8 @@ def main():
             res_sph_if = run_openfoam_case(
                 "tests/1D_spherical/ChargeCompBAl_1D_spherical_interface",
                 tier=3,
-                case_name="ChargeCompBAl_1D_spherical_interface (Stationary Charge/Air Interface)"
+                case_name="ChargeCompBAl_1D_spherical_interface (Stationary Charge/Air Interface)",
+                timeout=1800
             )
             if res_sph_if.passed:
                 code, stdout, stderr, dur = run_command(

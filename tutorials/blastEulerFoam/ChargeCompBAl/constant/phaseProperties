@@ -31,18 +31,9 @@ VRelaxation     instant;
 Al
 {
     phaseType       granular;
-        diameterModel   constant;
-        d               1e-3;
-    //    diameterModel   reacting;
-    reactingDiameterCoeffs
-    {
-        d               1e-3;
-        reactionRate    pressureBased;
-        offset          1;
-        pScale          1e-6;
-        pExponent       0.9;
-        pCoeff          0.009;
-    }
+    // Inert Al particles of 30 um, as in _alCombustion and the 2 m tutorial
+    diameterModel   constant;
+    d               3e-5;
 
     alphaMax        0.63;
     alphaMinFriction 0.5;
