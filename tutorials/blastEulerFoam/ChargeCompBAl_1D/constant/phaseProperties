@@ -88,7 +88,7 @@ blending
     default
     {
         type            none;
-        continuousPhase gas;
+        continuousPhases (gas compBAl);
     }
 }
 

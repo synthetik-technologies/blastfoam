@@ -25,6 +25,7 @@ License
 
 #include "reactingDiameterModel.H"
 #include "fvc.H"
+#include "zeroGradientFvPatchFields.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -64,6 +65,8 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
       : 1.0
     ),
     alphaMin_(dict.lookupOrDefault<scalar>("alphaMin", 1e-4)),
+    ignitedFraction_(dict.lookupOrDefault<bool>("ignitedFraction", false)),
+    Tign_(ignitedFraction_ ? dict.lookup<scalar>("Tign") : great),
     N_
     (
         IOobject
@@ -99,6 +102,20 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
         ),
         mesh,
         dimensionedScalar("0", dimVolume/dimTime, 0.0)
+    ),
+    ignited_
+    (
+        IOobject
+        (
+            IOobject::groupName("ignited", phaseName),
+            mesh.time().name(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            ignitedFraction_ ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimless, 0),
+        zeroGradientFvPatchScalarField::typeName
     )
 {
     this->requireD();
@@ -245,14 +262,61 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const volScalarField dOld(this->d_);
     this->storeAndBlendOld(this->d_);
 
+    const surfaceScalarField& phi
+    (
+        this->d_.mesh().lookupObject<surfaceScalarField>
+        (
+            IOobject::groupName("phi", this->d_.group())
+        )
+    );
+    const dimensionedScalar& dT(this->d_.time().deltaT());
+
+    if (ignitedFraction_)
+    {
+        // Transport of the ignited fraction with the particles (as d), then
+        // ignition where the particles have reached Tign
+        const volScalarField ignitedOld(ignited_);
+        this->storeAndBlendOld(ignited_);
+        volScalarField deltaPhiIgn
+        (
+            fvc::div
+            (
+                phi,
+                ignited_,
+                "div(" + phi.name() + ',' + this->d_.name() + ')'
+            )
+          - ignited_*fvc::div(phi)
+        );
+        this->storeAndBlendDelta(deltaPhiIgn);
+        ignited_ = ignitedOld - dT*deltaPhiIgn;
+        forAll(ignited_, celli)
+        {
+            if (alpha[celli] <= alphaMin_)
+            {
+                ignited_[celli] = 0;
+            }
+            else if (T[celli] >= Tign_)
+            {
+                ignited_[celli] = 1;
+            }
+            else
+            {
+                ignited_[celli] = Foam::min(Foam::max(ignited_[celli], 0.0), 1.0);
+            }
+        }
+        ignited_.correctBoundaryConditions();
+    }
+
     volScalarField dDdt(-2.0*rate_->dDdt(pi, T));
     if (!oxidiserPhase_.empty())
     {
         dDdt *= oxidiserFactor();
     }
+    if (ignitedFraction_)
+    {
+        dDdt *= ignited_;
+    }
     this->blendDelta(dDdt);
-
-    const dimensionedScalar& dT(this->d_.time().deltaT());
 
     //- Change dRdt to dDdt
     this->d_ += dT*dDdt;
@@ -275,14 +339,6 @@ void Foam::diameterModels::reactingDiameterModel::solve
     //- Compute actual delta for the time step knowing the blended
     dDdt = this->calcAndStoreDelta(dDdt);
     dVdt_ = this->calcAndStoreDelta(dVdt_);
-
-    const surfaceScalarField& phi
-    (
-        this->d_.mesh().lookupObject<surfaceScalarField>
-        (
-            IOobject::groupName("phi", this->d_.group())
-        )
-    );
 
     volScalarField deltaPhid(fvc::div(phi, d_) - d_*fvc::div(phi));
     this->storeAndBlendDelta(deltaPhid);

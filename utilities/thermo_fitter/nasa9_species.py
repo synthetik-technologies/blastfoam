@@ -47,12 +47,14 @@ ATOMIC_WEIGHT = {"H": 1.00794, "C": 12.0107, "N": 14.0067, "O": 15.9994, "Al": 2
 # Cantera names of species not in the EuDetCode gas database
 CANTERA_NAME = {"Al": "AL", "AlO": "ALO", "C(gr)": "C(gr)", "Al2O3(s)": "AL2O3(a)",
                 "Al2O3(L)": "AL2O3(L)", "Al2O": "AL2O", "AlO2": "ALO2",
-                "Al2O2": "AL2O2"}
+                "Al2O2": "AL2O2", "AlOH": "ALOH", "HAlO": "HALO", "AlO2H": "ALO2H",
+                "AlH": "ALH"}
 
 # Species without an entry in the base file take b, Tc, Pc and transport
 # from a parent (b is per mass, so atoms take the value of their molecule)
 PARENT = {"O": "O2", "N": "N2", "H": "H2", "OH": "H2O", "NO": "N2", "C": "CO",
-          "AlO": "Al", "Al2O": "Al", "AlO2": "Al", "Al2O2": "Al",
+          "AlO": "Al", "Al2O": "Al", "AlO2": "Al", "Al2O2": "Al", "AlOH": "Al",
+          "HAlO": "Al", "AlO2H": "Al", "AlH": "Al",
           "Al2O3(L)": "Al2O3(s)", "CH": "CH4", "NH": "NH3", "HO2": "O2", "H2O2": "H2O",
           "CH3": "CH4", "CH2O": "CH4", "HCO": "CO", "CH3O": "CH4"}
 

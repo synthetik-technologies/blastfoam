@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "reactingParticleMassTransfer.H"
+#include "diameterReactionRate.H"
 #include "phaseSystem.H"
 #include "phasePair.H"
 #include "interfacialPressureModel.H"
@@ -57,8 +58,18 @@ reactingParticleMassTransfer
       ? pair.dispersed().name()
       : dict.lookup<word>("reactingPhase")
     ),
-    reactingIs1_(pair.phase1().name() == reactingPhase_)
+    reactingIs1_(pair.phase1().name() == reactingPhase_),
+    productsFromRate_
+    (
+        dict.lookupOrDefault<bool>("productsFromReactionRate", false)
+    ),
+    productsSet_(false)
 {
+    if (productsFromRate_)
+    {
+        return;
+    }
+
     const phaseModel& phase1 = pair.phase1();
     if (dict.found(phase1.name() + "Species"))
     {
@@ -117,6 +128,35 @@ Foam::massTransferModels::reactingParticleMassTransfer::~reactingParticleMassTra
 {}
 
 
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::massTransferModels::reactingParticleMassTransfer::
+setProductSpecies() const
+{
+    if (!productsFromRate_ || productsSet_)
+    {
+        return;
+    }
+    const diameterReactionRate* rate =
+        reactingPhase().dModel().reactionRate();
+    if (!rate || rate->productSpecies().empty())
+    {
+        FatalErrorInFunction
+            << "productsFromReactionRate: the diameter model of phase "
+            << reactingPhase_ << " has no reaction rate with products"
+            << exit(FatalError);
+    }
+    hashedWordList& productSpecies =
+        reactingIs1_ ? phase2Species_ : phase1Species_;
+    const wordList names(rate->productSpecies());
+    forAll(names, i)
+    {
+        productSpecies.append(names[i]);
+    }
+    productsSet_ = true;
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
@@ -132,6 +172,10 @@ Foam::massTransferModels::reactingParticleMassTransfer::phase1Y
     const word& name
 ) const
 {
+    if (productsFromRate_ && !reactingIs1_)
+    {
+        return reactingPhase().dModel().reactionRate()->productYield(name);
+    }
     scalar value = 0;
     if (phase1Species_.found(name))
     {
@@ -152,6 +196,10 @@ Foam::massTransferModels::reactingParticleMassTransfer::phase2Y
     const word& name
 ) const
 {
+    if (productsFromRate_ && reactingIs1_)
+    {
+        return reactingPhase().dModel().reactionRate()->productYield(name);
+    }
     scalar value = 0;
     if (phase2Species_.found(name))
     {
@@ -164,5 +212,21 @@ Foam::massTransferModels::reactingParticleMassTransfer::phase2Y
         dimensionedScalar(dimless, value)
     );
 }
+
+Foam::hashedWordList
+Foam::massTransferModels::reactingParticleMassTransfer::phase1Species() const
+{
+    setProductSpecies();
+    return phase1Species_;
+}
+
+
+Foam::hashedWordList
+Foam::massTransferModels::reactingParticleMassTransfer::phase2Species() const
+{
+    setProductSpecies();
+    return phase2Species_;
+}
+
 
 // ************************************************************************* //

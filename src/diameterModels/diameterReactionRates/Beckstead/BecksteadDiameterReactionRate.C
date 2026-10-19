@@ -101,6 +101,122 @@ void Foam::diameterReactionRates::Beckstead::readSpecies()
             << " is a species of phase " << oxidiserPhase_
             << exit(FatalError);
     }
+
+    if (!products_)
+    {
+        return;
+    }
+
+    // Mass yields of the reactions per unit mass of particle material. The
+    // molecular weight of the particle material follows from the mass
+    // balance of the reaction, so that the yields sum to one exactly.
+    liquidOxide_ = findIndex(species_, oxideLiquid_) >= 0;
+    forAllConstIter(HashTable<scalar>, oxidisers_, iter)
+    {
+        const word& ox = iter.key();
+        if (findIndex(species_, ox) < 0)
+        {
+            continue;
+        }
+        if (!reactions_.found(ox))
+        {
+            FatalErrorInFunction
+                << "No reaction for oxidiser " << ox << exit(FatalError);
+        }
+        const List<Tuple2<word, scalar>>& r = reactions_[ox];
+        scalar mP = 0;
+        forAll(r, i)
+        {
+            const label j = findIndex(species_, r[i].first());
+            if (j < 0)
+            {
+                FatalErrorInFunction
+                    << "Species " << r[i].first() << " of the " << ox
+                    << " reaction is not a species of phase "
+                    << oxidiserPhase_ << exit(FatalError);
+            }
+            mP += r[i].second()*W_[j];
+        }
+        const scalar Wp = mP/nuP_[ox];
+        if (mag(Wp/26.981539 - 1) > 1e-3)
+        {
+            FatalErrorInFunction
+                << "The " << ox << " reaction is not balanced for Al: "
+                << "particle molecular weight " << Wp << exit(FatalError);
+        }
+        HashTable<scalar> y;
+        forAll(r, i)
+        {
+            const label j = findIndex(species_, r[i].first());
+            y.insert(r[i].first(), r[i].second()*W_[j]/mP);
+            if (findIndex(productSpecies_, r[i].first()) < 0)
+            {
+                productSpecies_.append(r[i].first());
+            }
+        }
+        yields_.insert(ox, y);
+    }
+    if
+    (
+        liquidOxide_
+     && findIndex(productSpecies_, oxideSolid_) >= 0
+     && findIndex(productSpecies_, oxideLiquid_) < 0
+    )
+    {
+        productSpecies_.append(oxideLiquid_);
+    }
+}
+
+
+void Foam::diameterReactionRates::Beckstead::shares
+(
+    PtrList<volScalarField>& w,
+    wordList& names
+) const
+{
+    if (species_.empty())
+    {
+        const_cast<Beckstead&>(*this).readSpecies();
+    }
+
+    const fvMesh& mesh = dModel_.d().mesh();
+    names.clear();
+    w.clear();
+    volScalarField sum
+    (
+        volScalarField::New("sum", mesh, dimensionedScalar(dimless, 0))
+    );
+    forAllConstIter(HashTable<scalar>, oxidisers_, iter)
+    {
+        const label i = findIndex(species_, iter.key());
+        if (i < 0)
+        {
+            continue;
+        }
+        const volScalarField& Y =
+            mesh.lookupObject<volScalarField>
+            (
+                IOobject::groupName(species_[i], oxidiserPhase_)
+            );
+        names.append(iter.key());
+        w.append
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("share", iter.key()),
+                iter()*max(Y, scalar(0))/W_[i]
+            ).ptr()
+        );
+        sum += w.last();
+    }
+    forAll(w, k)
+    {
+        forAll(sum, celli)
+        {
+            w[k][celli] =
+                sum[celli] > 0 ? w[k][celli]/sum[celli] : 1.0/w.size();
+        }
+    }
 }
 
 
@@ -119,14 +235,68 @@ Foam::diameterReactionRates::Beckstead::Beckstead
     oxidiserPhase_(dict.lookup<word>("oxidiserPhase")),
     oxidisers_(),
     species_(),
-    W_()
+    W_(),
+    products_(dict.lookupOrDefault<bool>("products", false)),
+    oxidiserLimit_(dict.lookupOrDefault<scalar>("oxidiserLimit", 0.5)),
+    Textinction_(dict.lookupOrDefault<scalar>("Textinction", 0)),
+    externalIgnition_(dict.lookupOrDefault<bool>("ignitedFraction", false)),
+    oxideSolid_(dict.lookupOrDefault<word>("oxideSolid", "Al2O3(s)")),
+    oxideLiquid_(dict.lookupOrDefault<word>("oxideLiquid", "Al2O3(L)")),
+    TmOxide_(dict.lookupOrDefault<scalar>("TmOxide", 2327.0)),
+    liquidOxide_(false)
 {
+    // Default global reactions (moles; particle Al, gas species)
+    nuP_.insert("O2", 4);
+    reactions_.insert
+    (
+        "O2",
+        {Tuple2<word, scalar>("O2", -3), Tuple2<word, scalar>(oxideSolid_, 2)}
+    );
+    nuP_.insert("H2O", 2);
+    reactions_.insert
+    (
+        "H2O",
+        {
+            Tuple2<word, scalar>("H2O", -3),
+            Tuple2<word, scalar>(oxideSolid_, 1),
+            Tuple2<word, scalar>("H2", 3)
+        }
+    );
+    nuP_.insert("CO2", 2);
+    reactions_.insert
+    (
+        "CO2",
+        {
+            Tuple2<word, scalar>("CO2", -3),
+            Tuple2<word, scalar>(oxideSolid_, 1),
+            Tuple2<word, scalar>("CO", 3)
+        }
+    );
+
     if (dict.found("oxidisers"))
     {
         const dictionary& oxDict = dict.subDict("oxidisers");
         forAllConstIter(dictionary, oxDict, iter)
         {
-            oxidisers_.insert(iter().keyword(), oxDict.lookup<scalar>(iter().keyword()));
+            const word& ox = iter().keyword();
+            if (iter().isDict())
+            {
+                const dictionary& d = iter().dict();
+                oxidisers_.insert(ox, d.lookup<scalar>("weight"));
+                if (d.found("reaction"))
+                {
+                    nuP_.set(ox, d.lookup<scalar>("Al"));
+                    reactions_.set
+                    (
+                        ox,
+                        d.lookup<List<Tuple2<word, scalar>>>("reaction")
+                    );
+                }
+            }
+            else
+            {
+                oxidisers_.insert(ox, oxDict.lookup<scalar>(ox));
+            }
         }
     }
     else
@@ -226,7 +396,12 @@ Foam::diameterReactionRates::Beckstead::dDdt
     forAll(rate, celli)
     {
         const bool burning =
-            Tp[celli] >= Tign_ || d[celli] < (1.0 - 1e-6)*d0[celli];
+            (
+                externalIgnition_
+             || Tp[celli] >= Tign_
+             || d[celli] < (1.0 - 1e-6)*d0[celli]
+            )
+         && Tgas[celli] >= Textinction_;
 
         if (burning && X[celli] > 0)
         {
@@ -242,7 +417,138 @@ Foam::diameterReactionRates::Beckstead::dDdt
         }
     }
 
+    if (!products_)
+    {
+        return tRate;
+    }
+
+    // Limit the burning so that at most oxidiserLimit of each oxidiser in
+    // the cell is consumed in a time step. The particle mass burnt per unit
+    // volume and time is 6 alpha_p rho_p r'/d for a radius rate r'.
+    PtrList<volScalarField> w;
+    wordList oxNames;
+    shares(w, oxNames);
+    const volScalarField& alphaP =
+        mesh.lookupObject<volScalarField>(IOobject::groupName("alpha", d.group()));
+    const volScalarField& rhoP =
+        mesh.lookupObject<volScalarField>(IOobject::groupName("rho", d.group()));
+    const volScalarField& alphaG =
+        mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", oxidiserPhase_)
+        );
+    const volScalarField& rhoG =
+        mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("rho", oxidiserPhase_)
+        );
+    const scalar deltaT = mesh.time().deltaTValue();
+    forAll(oxNames, k)
+    {
+        const word& ox = oxNames[k];
+        const scalar mOx = -yields_[ox][ox];
+        const volScalarField& Yox =
+            mesh.lookupObject<volScalarField>
+            (
+                IOobject::groupName(ox, oxidiserPhase_)
+            );
+        forAll(rate, celli)
+        {
+            const scalar mBurnt =
+                6*alphaP[celli]*rhoP[celli]*rate[celli]
+               /max(d[celli], 1e-9);
+            const scalar mOxRate = mBurnt*w[k][celli]*mOx;
+            const scalar mOxMax =
+                oxidiserLimit_*max(alphaG[celli], scalar(0))*rhoG[celli]
+               *max(Yox[celli], scalar(0))/deltaT;
+            if (mOxRate > mOxMax)
+            {
+                rate[celli] *= mOxMax/mOxRate;
+            }
+        }
+    }
+
     return tRate;
+}
+
+
+Foam::wordList
+Foam::diameterReactionRates::Beckstead::productSpecies() const
+{
+    if (!products_)
+    {
+        return wordList();
+    }
+    if (species_.empty())
+    {
+        const_cast<Beckstead&>(*this).readSpecies();
+    }
+    return productSpecies_;
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::diameterReactionRates::Beckstead::productYield(const word& name) const
+{
+    tmp<volScalarField> tY(diameterReactionRate::productYield(name));
+    if (!products_)
+    {
+        return tY;
+    }
+    volScalarField& Y = tY.ref();
+
+    PtrList<volScalarField> w;
+    wordList oxNames;
+    shares(w, oxNames);
+
+    // The oxide is solid or liquid according to the gas temperature
+    const bool swap = liquidOxide_;
+    const word yName =
+        swap && name == oxideLiquid_ ? oxideSolid_ : name;
+    forAll(oxNames, k)
+    {
+        const HashTable<scalar>& y = yields_[oxNames[k]];
+        if (y.found(yName))
+        {
+            Y += y[yName]*w[k];
+        }
+        if (swap && name == oxideLiquid_ && y.found(oxideLiquid_))
+        {
+            // Liquid oxide named explicitly in a reaction
+            Y += y[oxideLiquid_]*w[k];
+        }
+    }
+    if (swap && (name == oxideSolid_ || name == oxideLiquid_))
+    {
+        const volScalarField& Tgas =
+            dModel_.d().mesh().lookupObject<volScalarField>
+            (
+                IOobject::groupName("T", oxidiserPhase_)
+            );
+        forAll(Y, celli)
+        {
+            const bool liquid = Tgas[celli] >= TmOxide_;
+            if (name == oxideSolid_ && liquid)
+            {
+                Y[celli] = 0;
+            }
+            else if (name == oxideLiquid_ && !liquid)
+            {
+                // Only the explicitly liquid products remain
+                scalar yl = 0;
+                forAll(oxNames, k)
+                {
+                    const HashTable<scalar>& y = yields_[oxNames[k]];
+                    if (y.found(oxideLiquid_))
+                    {
+                        yl += y[oxideLiquid_]*w[k][celli];
+                    }
+                }
+                Y[celli] = yl;
+            }
+        }
+    }
+    return tY;
 }
 
 

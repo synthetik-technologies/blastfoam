@@ -349,6 +349,14 @@ def main():
             msg = "Beckstead d^n burning in blastEulerFoam 0D: burn time of 1/10/50 um Al in air within 2% of the correlation, particle mass vs (d/d0)^3, no burning below Tign" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
             results.append(TestResult("Al Ignition and Beckstead Burning (Phase D3)", 1, dur, passed, msg))
 
+            # Al burning to oxide with the gas oxidisers
+            code, stdout, stderr, dur = run_command(
+                f"{sys.executable} tests/0D/verify_al_burning_products.py", timeout=1800
+            )
+            passed = (code == 0)
+            msg = "Beckstead burning to Al2O3 + H2/CO in blastEulerFoam 0D: oxidiser shares c_k X_k/X_eff, stoichiometry, oxidiser-limited fuel-rich cloud, solid/liquid oxide, extinction, ignited fraction (no burning before Tign); mass to 1e-8, energy to 1e-5 of the heat released" if passed else f"Failed: {((stderr or stdout).strip().splitlines() or [''])[-1][:200]}"
+            results.append(TestResult("Al Burning to Oxide with Gas Oxidisers", 1, dur, passed, msg))
+
             # Al/air equilibrium with liquid Al2O3 and sub-oxides (Phase D4)
             code, stdout, stderr, dur = run_command(
                 f"{sys.executable} tests/0D/verify_al_flame.py"

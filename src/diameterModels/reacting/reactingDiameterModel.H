@@ -39,6 +39,20 @@ Description
 
     Without oxidiserPhase the particles burn wherever the rate model allows.
 
+    With ignitedFraction the ignition is tracked by the field ignited.<phase>,
+    the fraction of the particles that have ignited. It is transported with
+    the particle volume flux (as the diameter), set to one where the particle
+    temperature reaches Tign, and reset to zero below alphaMin; the burn rate
+    of the rate model (applied to burning particles, without its own
+    ignition check) is multiplied by it. Without it, a rate model such as
+    Beckstead keeps burning wherever the cell-mean diameter is below d0, so
+    the burning spreads with the mixing of the diameter field.
+
+    \verbatim
+        ignitedFraction true;       // optional, default false
+        Tign            2050;       // ignition temperature [K]
+    \endverbatim
+
 SourceFiles
     reactingDiameterModel.C
 
@@ -89,6 +103,12 @@ class reactingDiameterModel
     //  particles do not burn
     const scalar alphaMin_;
 
+    //- Track the ignited fraction of the particles
+    const bool ignitedFraction_;
+
+    //- Ignition temperature (with ignitedFraction)
+    const scalar Tign_;
+
     //- Number density
     volScalarField N_;
 
@@ -97,6 +117,9 @@ class reactingDiameterModel
 
     //- Stored change in volume per unit time
     volScalarField dVdt_;
+
+    //- Fraction of the particles that have ignited
+    volScalarField ignited_;
 
 
     // Private Member Functions
@@ -147,6 +170,12 @@ public:
         //- Return change in radius per unit time
         //  Only used in mass transfer
         virtual tmp<volScalarField> dMdt() const;
+
+        //- Reaction rate
+        virtual const diameterReactionRate* reactionRate() const
+        {
+            return rate_.valid() ? &rate_() : nullptr;
+        }
 };
 
 
