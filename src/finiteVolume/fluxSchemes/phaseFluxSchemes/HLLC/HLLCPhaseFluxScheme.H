@@ -25,12 +25,25 @@ Class
     Foam::phaseFluxSchemes::HLLC
 
 Description
+    HLLC flux of a phase. With hybridHLL (fluxSchemes.<phase> dictionary,
+    default no) the mass, momentum and energy fluxes are blended towards
+    the HLL flux near shocks, which removes the carbuncle of strong shocks
+    aligned with the mesh. The HLL weight of a face is 1 - f^3, f the
+    smallest pressure ratio (min(p_i/p_j, p_j/p_i)) between a cell of the
+    face and its neighbours (the HLLCP sensor of Xie et al. 2018), with the
+    mixture pressure where the trace treatment is on. Faces with a trace
+    side keep the HLLC flux.
 
     References:
     \verbatim
         Toro, E.F., Spruce, M., Speares, W.  (1993).
         Restoration of the contact surface in the HLL-Riemann solver.
         Shock Waves, 4, 25-34.
+
+        Xie, W., Zheng, R., Lai, J., Li, H.  (2018).
+        An accurate and robust HLLC-type Riemann solver for the compressible
+        Euler system at various Mach numbers.
+        International Journal for Numerical Methods in Fluids, 89, 430-463.
     \endverbatim
 
 SourceFiles
@@ -65,7 +78,19 @@ class HLLC
         tmp<surfaceScalarField> SNei_;
         tmp<surfaceScalarField> SStar_;
 
+        //- Blend towards HLL near shocks
+        Switch hybridHLL_;
+
+        //- HLL weight of the faces
+        tmp<surfaceScalarField> thetaHLL_;
+
     // Private functions
+
+        //- Set the HLL weight of the faces from the pressure
+        virtual void preUpdate(const volScalarField& p);
+
+        //- Clear the HLL weight
+        virtual void postUpdate();
 
         //- Calcualte fluxes
         virtual void calculateFluxes

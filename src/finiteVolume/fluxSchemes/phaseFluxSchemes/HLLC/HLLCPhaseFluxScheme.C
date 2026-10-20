@@ -47,7 +47,8 @@ Foam::phaseFluxSchemes::HLLC::HLLC
     const scalar residualAlpha
 )
 :
-    phaseFluxScheme(phi, residualAlpha)
+    phaseFluxScheme(phi, residualAlpha),
+    hybridHLL_(dict_.lookupOrDefault<Switch>("hybridHLL", false))
 {}
 
 
@@ -119,6 +120,99 @@ void Foam::phaseFluxSchemes::HLLC::createSavedFields()
             dimensionedScalar("0", dimVelocity, 0.0)
         )
     );
+}
+
+
+void Foam::phaseFluxSchemes::HLLC::preUpdate(const volScalarField& p)
+{
+    if (!hybridHLL_)
+    {
+        return;
+    }
+
+    // The mixture pressure is defined everywhere, the phase pressure only
+    // where the phase is present
+    const volScalarField& pS = mixtureValid() ? *pMix_ : p;
+
+    // Smallest pressure ratio between a cell and its neighbours
+    volScalarField fCells
+    (
+        volScalarField::New
+        (
+            fieldName("fCells"),
+            mesh_,
+            dimensionedScalar(dimless, 1.0)
+        )
+    );
+
+    const labelUList& owner = mesh_.owner();
+    const labelUList& neighbour = mesh_.neighbour();
+    forAll(owner, facei)
+    {
+        const scalar pO = max(pS[owner[facei]], small);
+        const scalar pN = max(pS[neighbour[facei]], small);
+        const scalar r = min(pO/pN, pN/pO);
+        fCells[owner[facei]] = min(fCells[owner[facei]], r);
+        fCells[neighbour[facei]] = min(fCells[neighbour[facei]], r);
+    }
+    forAll(pS.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& pp = pS.boundaryField()[patchi];
+        if (pp.coupled())
+        {
+            const scalarField pO(max(pp.patchInternalField(), small));
+            const scalarField pN(max(pp.patchNeighbourField(), small));
+            const labelUList& faceCells = pp.patch().faceCells();
+            forAll(faceCells, i)
+            {
+                fCells[faceCells[i]] =
+                    min(fCells[faceCells[i]], min(pO[i]/pN[i], pN[i]/pO[i]));
+            }
+        }
+    }
+    fCells.correctBoundaryConditions();
+
+    // HLL weight of a face from the more strongly flagged side
+    thetaHLL_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                fieldName("thetaHLL"),
+                mesh_.time().name(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar(dimless, 0)
+        )
+    );
+    surfaceScalarField& theta = thetaHLL_.ref();
+    forAll(owner, facei)
+    {
+        theta[facei] =
+            1 - pow3(min(fCells[owner[facei]], fCells[neighbour[facei]]));
+    }
+    forAll(fCells.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& fp = fCells.boundaryField()[patchi];
+        scalarField& thetap = theta.boundaryFieldRef()[patchi];
+        const scalarField fO(fp.patchInternalField());
+        const scalarField fN
+        (
+            fp.coupled() ? fp.patchNeighbourField() : tmp<scalarField>(fO)
+        );
+        forAll(thetap, i)
+        {
+            thetap[i] = 1 - pow3(min(fO[i], fN[i]));
+        }
+    }
+}
+
+
+void Foam::phaseFluxSchemes::HLLC::postUpdate()
+{
+    thetaHLL_.clear();
 }
 
 
@@ -321,6 +415,44 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
         rhoEPhi = 0.5*(rhoEPhiOwn + rhoEPhiNei);
         p = 0.5*(pOwn + pNei);
         this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
+    }
+
+    // Hybrid HLLC/HLL near shocks (both sides of the face present and not
+    // traces): the HLL flux dissipates the contact and shear waves, which
+    // the HLLC flux leaves undamped across a strong shock aligned with the
+    // mesh (carbuncle)
+    if
+    (
+        hybridHLL_
+     && SOwn < 0 && SNei > 0
+     && ownValid && neiValid
+     && (!traceFlux || min(alphaOwn, alphaNei) >= alphaTrace_)
+    )
+    {
+        const scalar theta = this->getValue(facei, patchi, thetaHLL_);
+        if (theta > 0)
+        {
+            const scalar dS = SNei - SOwn;
+            const scalar rhoPhiHLL =
+                (
+                    SNei*rhoOwn*UvOwn - SOwn*rhoNei*UvNei
+                  + SOwn*SNei*(rhoNei - rhoOwn)
+                )/dS;
+            const vector rhoUPhiHLL =
+                (
+                    SNei*rhoUPhiOwn - SOwn*rhoUPhiNei
+                  + SOwn*SNei*(rhoUNei - rhoUOwn)
+                )/dS;
+            const scalar rhoEPhiHLL =
+                (
+                    SNei*rhoEPhiOwn - SOwn*rhoEPhiNei
+                  + SOwn*SNei*(rhoENei - rhoEOwn)
+                )/dS;
+
+            rhoPhi += theta*(rhoPhiHLL - rhoPhi);
+            rhoUPhi += theta*(rhoUPhiHLL - rhoUPhi);
+            rhoEPhi += theta*(rhoEPhiHLL - rhoEPhi);
+        }
     }
 
     this->save(facei, patchi, alpha, alphaf_);
