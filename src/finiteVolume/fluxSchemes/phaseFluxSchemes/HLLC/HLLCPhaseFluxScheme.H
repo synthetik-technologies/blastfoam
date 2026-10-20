@@ -26,7 +26,7 @@ Class
 
 Description
     HLLC flux of a phase. With hybridHLL (fluxSchemes.<phase> dictionary,
-    default no) the mass, momentum and energy fluxes are blended towards
+    default yes) the mass, momentum and energy fluxes are blended towards
     the HLL flux near shocks, which removes the carbuncle of strong shocks
     aligned with the mesh. The HLL weight of a face is 1 - f^3, f the
     smallest pressure ratio (min(p_i/p_j, p_j/p_i)) between a cell of the

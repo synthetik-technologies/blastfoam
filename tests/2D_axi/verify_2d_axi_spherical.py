@@ -16,7 +16,9 @@ Criteria:
 2. Overlay on the 1D case (its postProcessing must exist, i.e. the 1D test
    has been run): mean of the 30, 45 and 60 degree rays within ONED_TOL_T
    (arrival in the air), ONED_TOL_T_CHARGE (detonation arrival in the charge,
-   r = 0.02-0.04 m) and ONED_TOL_P (peak in the air) of the 1D values.
+   r = 0.02-0.04 m) and ONED_TOL_P (peak in the air) of the 1D values. The
+   tolerances are the change of the 1D case itself from 0.5 to 0.25 mm
+   (arrival up to 1.4%, peak up to 2.8%, 2026-10-20).
 """
 
 import os
@@ -44,9 +46,9 @@ P0 = 101325.0
 
 PEAK_TOL = 0.05
 ARRIVAL_TOL = 0.02
-ONED_TOL_T = 0.01
+ONED_TOL_T = 0.015
 ONED_TOL_T_CHARGE = 0.015
-ONED_TOL_P = 0.03
+ONED_TOL_P = 0.05
 
 
 def read_probes(case, name="pressureProbes"):

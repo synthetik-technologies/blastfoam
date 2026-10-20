@@ -48,7 +48,7 @@ Foam::phaseFluxSchemes::HLLC::HLLC
 )
 :
     phaseFluxScheme(phi, residualAlpha),
-    hybridHLL_(dict_.lookupOrDefault<Switch>("hybridHLL", false))
+    hybridHLL_(dict_.lookupOrDefault<Switch>("hybridHLL", true))
 {}
 
 
