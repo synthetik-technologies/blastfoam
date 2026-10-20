@@ -1,0 +1,48 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      fvModels;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phaseChange
+{
+    type            pressurePhaseChange;
+    sourcePhase     compBAl;
+    targetPhase     gas;
+    pThreshold      1e7;
+    pRange          1e6;
+    tau             1e-4;
+    targetFractions
+    {
+      /*      H2 0.218755;
+      N2 7.38364;
+      CO 5.34898;
+      H2O 4.16435;
+      CO2 3.77261;
+      NH3 0.271032;
+      CH4 1.88107;
+      C2H6 0.046703;
+      C2H4 0.0144104;
+      C2H2 0.000240613;
+      HCHO 0.002288;
+      CH3OH 0.00535342;
+      C3H8 0.00349854;
+      CH2O2 0.00398714;
+      HCN 0.0053512;*/
+      H2O 1.0;
+    }
+    isMoleFraction  true;
+}
+
+// ************************************************************************* //

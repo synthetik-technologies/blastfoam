@@ -1,0 +1,31 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+if [ -n "$WM_PROJECT_DIR" ] && [ -f "$WM_PROJECT_DIR/bin/tools/RunFunctions" ]; then
+    . $WM_PROJECT_DIR/bin/tools/RunFunctions
+fi
+
+# Clean previous time dirs and logs
+rm -rf [1-9]* 0.[0-9]* postProcessing log.* constant/polyMesh dynamicCode processor*
+
+# Restore 0 directory fields
+for f in 0/*.orig; do
+    if [ -f "$f" ]; then
+        cp "$f" "0/$(basename "$f" .orig)"
+    fi
+done
+
+touch ChargeCompBAl_2D_axi_spherical.foam
+
+# -- Create base mesh
+runApplication blockMesh
+
+# -- Set the charge and refine it to the finest level
+runApplication setRefinedFields
+
+# -- Run calculation in parallel (system/decomposeParDict)
+runApplication decomposePar
+runParallel $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file

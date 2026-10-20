@@ -478,6 +478,25 @@ def main():
                     res_sph_compb.message = f"Spherical detonation verification failed: {stdout.strip().splitlines()[-1]}"
             results.append(res_sph_compb)
 
+            # G1: the same charge on a 2D axisymmetric wedge with AMR (6 processes);
+            # compared with the 1D results above
+            res_axi = run_openfoam_case(
+                "tests/2D_axi/ChargeCompBAl_2D_axi_spherical",
+                tier=3,
+                case_name="ChargeCompBAl_2D_axi_spherical (G1 2D Axisymmetric Repeat with AMR)",
+                timeout=3600
+            )
+            if res_axi.passed:
+                code, stdout, stderr, dur = run_command(
+                    f"{sys.executable} tests/2D_axi/verify_2d_axi_spherical.py"
+                )
+                if code == 0:
+                    res_axi.message = "Angular variation 10-80 deg (peak < 5%, arrival < 2%); overlay on the 1D case (arrival < 1%, peak < 3%)"
+                else:
+                    res_axi.passed = False
+                    res_axi.message = f"2D axisymmetric verification failed: {stdout.strip().splitlines()[-1]}"
+            results.append(res_axi)
+
             # 1D Spherical Reacting Multiphase Detonation (blastEulerFoam with gas-phase reactions)
             res_sph_react = run_openfoam_case(
                 "tests/1D_spherical/ChargeCompBAl_1D_spherical_reacting",
