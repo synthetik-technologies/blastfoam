@@ -32,6 +32,8 @@ License
 #include "polyMeshMap.H"
 #include "OSspecific.H"
 #include "ListOps.H"
+#include "globalIndex.H"
+#include "ListListOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -119,16 +121,33 @@ Foam::functionObjects::temporalIntegral::temporalIntegral
     refValue_(dict.lookupOrDefault<scalar>("refValue", dict.lookupOrDefault<scalar>("pRef", 0.0))),
     positiveOnly_(dict.lookupOrDefault<bool>("positiveOnly", dict.found("pRef"))),
     outputRadial_(dict.lookupOrDefault<bool>("outputRadial", true)),
-    nCoarseCells_(mesh_.nCells()),
-    coarseCellCentres_(mesh_.C().primitiveField()),
-    coarseCellVolumes_(mesh_.V().primitiveField()),
-    cellToCoarse_(nCoarseCells_),
+    nCoarseCells_(returnReduce(mesh_.nCells(), sumOp<label>())),
+    coarseCellCentres_(),
+    coarseCellVolumes_(),
+    cellToCoarse_(mesh_.nCells()),
     coarseIntegral_()
 {
+    const globalIndex coarseIndex(mesh_.nCells());
     forAll(cellToCoarse_, i)
     {
-        cellToCoarse_[i] = i;
+        cellToCoarse_[i] = coarseIndex.toGlobal(i);
     }
+
+    List<pointField> centres(Pstream::nProcs());
+    centres[Pstream::myProcNo()] = mesh_.C().primitiveField();
+    Pstream::gatherList(centres);
+    if (Pstream::master())
+    {
+        coarseCellCentres_ =
+            ListListOps::combine<pointField>(centres, accessOp<pointField>());
+    }
+
+    List<scalarField> volumes(Pstream::nProcs());
+    volumes[Pstream::myProcNo()] = mesh_.V().primitiveField();
+    Pstream::gatherList(volumes);
+    Pstream::scatterList(volumes);
+    coarseCellVolumes_ =
+        ListListOps::combine<scalarField>(volumes, accessOp<scalarField>());
 
     read(dict);
 
@@ -246,6 +265,15 @@ void Foam::functionObjects::temporalIntegral::mapMesh
 {}
 
 
+void Foam::functionObjects::temporalIntegral::distribute
+(
+    const polyDistributionMap& map
+)
+{
+    map.distributeCellData(cellToCoarse_);
+}
+
+
 bool Foam::functionObjects::temporalIntegral::execute()
 {
     const scalar t = obr_.time().value();
@@ -262,17 +290,6 @@ bool Foam::functionObjects::temporalIntegral::execute()
 
     const scalarField& V = mesh_.V().primitiveField();
 
-    // Sum active cell volume per coarse cell
-    scalarField coarseDeltaV(nCoarseCells_, 0.0);
-    forAll(cellToCoarse_, celli)
-    {
-        label coarseId = cellToCoarse_[celli];
-        if (coarseId >= 0 && coarseId < nCoarseCells_)
-        {
-            coarseDeltaV[coarseId] += V[celli];
-        }
-    }
-
     forAll(fieldNames_, fieldi)
     {
         const word& fName = fieldNames_[fieldi];
@@ -281,8 +298,8 @@ bool Foam::functionObjects::temporalIntegral::execute()
             const volScalarField& f = mesh_.lookupObject<volScalarField>(fName);
             scalarField& cInt = coarseIntegral_[fName];
 
-            scalarField coarseIncr(nCoarseCells_, 0.0);
-
+            // Volume average over the coarse cell (refinement keeps its
+            // volume), summed over the processors on write
             forAll(f, celli)
             {
                 label coarseId = (celli < cellToCoarse_.size()) ? cellToCoarse_[celli] : celli;
@@ -293,20 +310,8 @@ bool Foam::functionObjects::temporalIntegral::execute()
                     {
                         val = max(val, 0.0);
                     }
-                    coarseIncr[coarseId] += val * V[celli];
-                }
-            }
-
-            for (label cI = 0; cI < nCoarseCells_; ++cI)
-            {
-                scalar cellVol = coarseDeltaV[cI];
-                if (cellVol > VSMALL)
-                {
-                    cInt[cI] += (coarseIncr[cI] / cellVol) * dt;
-                }
-                else if (coarseCellVolumes_[cI] > VSMALL)
-                {
-                    cInt[cI] += (coarseIncr[cI] / coarseCellVolumes_[cI]) * dt;
+                    cInt[coarseId] +=
+                        val*V[celli]/coarseCellVolumes_[coarseId]*dt;
                 }
             }
         }
@@ -325,35 +330,17 @@ bool Foam::functionObjects::temporalIntegral::write()
     forAll(fieldNames_, fieldi)
     {
         const word& fName = fieldNames_[fieldi];
-        const scalarField& localInt = coarseIntegral_[fName];
-
-        // Gather all coarse cell data across parallel processes
-        List<scalarField> gatheredInt(Pstream::nProcs());
-        gatheredInt[Pstream::myProcNo()] = localInt;
-        Pstream::gatherList(gatheredInt);
-
-        List<pointField> gatheredCentres(Pstream::nProcs());
-        gatheredCentres[Pstream::myProcNo()] = coarseCellCentres_;
-        Pstream::gatherList(gatheredCentres);
+        // Sum over the processors (the fine cells of a coarse cell can be
+        // on several processors after redistribution)
+        scalarField localInt(coarseIntegral_[fName]);
+        Pstream::listCombineGather(localInt, plusEqOp<scalar>());
+        Pstream::listCombineScatter(localInt);
 
         if (Pstream::master())
         {
-            scalarList globalIntVals;
-            List<point> globalCentres;
-            labelList globalCoarseIDs;
-
-            for (label procI = 0; procI < Pstream::nProcs(); ++procI)
-            {
-                const scalarField& pInt = gatheredInt[procI];
-                const pointField& pCentres = gatheredCentres[procI];
-
-                forAll(pInt, cI)
-                {
-                    globalIntVals.append(pInt[cI]);
-                    globalCentres.append(pCentres[cI]);
-                    globalCoarseIDs.append(cI);
-                }
-            }
+            const scalarField& globalIntVals = localInt;
+            const pointField& globalCentres = coarseCellCentres_;
+            const labelList globalCoarseIDs(identityMap(nCoarseCells_));
 
             // Calculate radial distance for each point
             scalarList radii(globalCentres.size());

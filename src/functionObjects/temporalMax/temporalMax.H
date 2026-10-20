@@ -67,6 +67,7 @@ SourceFiles
 #include "fvMeshFunctionObject.H"
 #include "volFields.H"
 #include "polyTopoChangeMap.H"
+#include "polyDistributionMap.H"
 #include "HashTable.H"
 #include "pointField.H"
 #include "labelList.H"
@@ -106,10 +107,13 @@ protected:
         //- Output radial profile flag
         bool outputRadial_;
 
-        //- Number of coarse mesh cells at initialization
+        //- Number of coarse mesh cells at initialization (all processors;
+        //  the coarse cells are numbered globally, so that the values follow
+        //  the cells when the mesh is redistributed)
         label nCoarseCells_;
 
-        //- Centroids of the base coarse mesh cells
+        //- Centroids of the base coarse mesh cells (all processors, master
+        //  only)
         pointField coarseCellCentres_;
 
         //- Mapping from current mesh cell index to coarse mesh cell index
@@ -175,6 +179,9 @@ public:
 
         //- Handle mesh mapping
         virtual void mapMesh(const polyMeshMap& map);
+
+        //- Map the cell to coarse cell list on redistribution
+        virtual void distribute(const polyDistributionMap& map);
 
 
     // Member Operators

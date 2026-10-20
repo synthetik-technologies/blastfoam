@@ -32,6 +32,8 @@ License
 #include "polyMeshMap.H"
 #include "OSspecific.H"
 #include "ListOps.H"
+#include "globalIndex.H"
+#include "ListListOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -138,14 +140,24 @@ Foam::functionObjects::temporalMax::temporalMax
     timeStart_(dict.lookupOrDefault<scalar>("timeStart", dict.lookupOrDefault<scalar>("tStart", -GREAT))),
     timeEnd_(dict.lookupOrDefault<scalar>("timeEnd", dict.lookupOrDefault<scalar>("tEnd", GREAT))),
     outputRadial_(dict.lookupOrDefault<bool>("outputRadial", true)),
-    nCoarseCells_(mesh_.nCells()),
-    coarseCellCentres_(mesh_.C().primitiveField()),
-    cellToCoarse_(nCoarseCells_),
+    nCoarseCells_(returnReduce(mesh_.nCells(), sumOp<label>())),
+    coarseCellCentres_(),
+    cellToCoarse_(mesh_.nCells()),
     coarseMax_()
 {
+    const globalIndex coarseIndex(mesh_.nCells());
     forAll(cellToCoarse_, i)
     {
-        cellToCoarse_[i] = i;
+        cellToCoarse_[i] = coarseIndex.toGlobal(i);
+    }
+
+    List<pointField> centres(Pstream::nProcs());
+    centres[Pstream::myProcNo()] = mesh_.C().primitiveField();
+    Pstream::gatherList(centres);
+    if (Pstream::master())
+    {
+        coarseCellCentres_ =
+            ListListOps::combine<pointField>(centres, accessOp<pointField>());
     }
 
     read(dict);
@@ -259,6 +271,15 @@ void Foam::functionObjects::temporalMax::mapMesh
 {}
 
 
+void Foam::functionObjects::temporalMax::distribute
+(
+    const polyDistributionMap& map
+)
+{
+    map.distributeCellData(cellToCoarse_);
+}
+
+
 bool Foam::functionObjects::temporalMax::execute()
 {
     const scalar t = obr_.time().value();
@@ -302,35 +323,17 @@ bool Foam::functionObjects::temporalMax::write()
     forAll(fieldNames_, fieldi)
     {
         const word& fName = fieldNames_[fieldi];
-        const scalarField& localMax = coarseMax_[fName];
-
-        // Gather all coarse cell data across parallel processes
-        List<scalarField> gatheredMax(Pstream::nProcs());
-        gatheredMax[Pstream::myProcNo()] = localMax;
-        Pstream::gatherList(gatheredMax);
-
-        List<pointField> gatheredCentres(Pstream::nProcs());
-        gatheredCentres[Pstream::myProcNo()] = coarseCellCentres_;
-        Pstream::gatherList(gatheredCentres);
+        // Maximum over the processors (the fine cells of a coarse cell can
+        // be on several processors after redistribution)
+        scalarField localMax(coarseMax_[fName]);
+        Pstream::listCombineGather(localMax, maxEqOp<scalar>());
+        Pstream::listCombineScatter(localMax);
 
         if (Pstream::master())
         {
-            scalarList globalMaxVals;
-            List<point> globalCentres;
-            labelList globalCoarseIDs;
-
-            for (label procI = 0; procI < Pstream::nProcs(); ++procI)
-            {
-                const scalarField& pMax = gatheredMax[procI];
-                const pointField& pCentres = gatheredCentres[procI];
-
-                forAll(pMax, cI)
-                {
-                    globalMaxVals.append(pMax[cI]);
-                    globalCentres.append(pCentres[cI]);
-                    globalCoarseIDs.append(cI);
-                }
-            }
+            const scalarField& globalMaxVals = localMax;
+            const pointField& globalCentres = coarseCellCentres_;
+            const labelList globalCoarseIDs(identityMap(nCoarseCells_));
 
             // Calculate radial distance for each point
             scalarList radii(globalCentres.size());
