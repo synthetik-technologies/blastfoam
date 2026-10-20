@@ -852,6 +852,65 @@ def fig_stage3_e2_ignition():
     save(fig, "stage3_e2_ignition")
 
 
+def fig_stage5_g1_axisymmetric():
+    """2D axisymmetric repeat of the spherical Comp-B/Al case (plan step G1):
+    peak overpressure and arrival against the angle from the symmetry plane at
+    r = 0.10 and 0.15 m, HLLC and hybrid HLLC/HLL, with the 1D values of the
+    same flux. Read from $G1_RESULTS_DIR/{hllc,hybrid} (runs of
+    tests/2D_axi/ChargeCompBAl_2D_axi_spherical, hybridHLL no / yes) and
+    $G1_RESULTS_DIR/{1d_hllc,1d_hybrid} (tests/1D_spherical/
+    ChargeCompBAl_1D_spherical)."""
+    base = os.environ.get("G1_RESULTS_DIR")
+    if not base:
+        raise FileNotFoundError("G1_RESULTS_DIR not set (directory of the G1 runs)")
+    P0 = 101325.0
+    angles = np.arange(0, 91, 5)
+    radii = (0.10, 0.15)
+    i1d = {0.10: 6, 0.15: 7}
+
+    def probes(c, name):
+        root = os.path.join(base, c, "postProcessing", name)
+        if not os.path.isdir(root):
+            raise FileNotFoundError(root)
+        a = np.vstack([np.loadtxt(os.path.join(root, t, "p"), comments="#")
+                       for t in sorted(os.listdir(root), key=float)])
+        return a[:, 0], a[:, 1:]
+
+    def arrival(t, p):
+        level = P0 + 0.5*(p.max() - P0)
+        i = int(np.argmax(p > level))
+        return t[i - 1] + (level - p[i - 1])/(p[i] - p[i - 1])*(t[i] - t[i - 1])
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+    for c, oned, label, colour in (("hllc", "1d_hllc", "HLLC", "crimson"),
+                                   ("hybrid", "1d_hybrid", "hybrid HLLC/HLL", "navy")):
+        t, P = probes(c, "angularProbes")
+        t1, P1 = probes(oned, "pressureProbes")
+        for k, (r, ls) in enumerate(zip(radii, ("-", "--"))):
+            pr = P[:, k*len(angles):(k + 1)*len(angles)]
+            pk = (pr.max(axis=0) - P0)/1e6
+            ta = np.array([arrival(t, pr[:, i]) for i in range(len(angles))])
+            pk1 = (P1[:, i1d[r]].max() - P0)/1e6
+            ta1 = arrival(t1, P1[:, i1d[r]])
+            ax1.plot(angles, pk/pk1, ls, color=colour, marker="o", ms=3,
+                     label=f"{label}, r = {r:.2f} m")
+            ax2.plot(angles, (ta/ta1 - 1)*100, ls, color=colour, marker="o",
+                     ms=3, label=f"{label}, r = {r:.2f} m")
+    ax1.axhline(1, color="k", lw=0.8)
+    ax1.set_xlabel("Angle from the symmetry plane [deg]")
+    ax1.set_ylabel("Peak overpressure / 1D (same flux)")
+    ax1.set_title("(a) Peak overpressure")
+    ax2.axhline(0, color="k", lw=0.8)
+    ax2.set_xlabel("Angle from the symmetry plane [deg]")
+    ax2.set_ylabel("Arrival vs 1D (same flux) [%]")
+    ax2.set_title("(b) Arrival time")
+    for ax in (ax1, ax2):
+        ax.set_xticks(range(0, 91, 15))
+        ax.grid(True)
+    ax1.legend(fontsize=7.5)
+    save(fig, "stage5_g1_axisymmetric")
+
+
 FIGURES = {
     "isentropes": fig_isentropes,
     "products_temperature": fig_products_temperature,
@@ -867,6 +926,7 @@ FIGURES = {
     "blast_kb": fig_stage3_blast_kb,
     "spherical_multiphase": fig_stage3_spherical_multiphase,
     "e2_ignition": fig_stage3_e2_ignition,
+    "g1_axisymmetric": fig_stage5_g1_axisymmetric,
 }
 
 
