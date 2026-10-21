@@ -346,7 +346,7 @@ Radiation from the oxide smoke at 3000--4000\,K can be a significant energy loss
 \subsection{Discretisation}
 \label{sec:discretisation}
 
-The equations are solved by a finite-volume Godunov method \up. Each phase has its own approximate Riemann solver; the Comp-B/Al cases use HLLC \cite{toro} for all phases, blended towards HLL near shocks (below), with second-order MUSCL reconstruction (Minmod limiter) and a two-stage strong-stability-preserving Runge--Kutta scheme (RK2SSP). AUSM+, HLL and Kurganov--Tadmor are also available. The time step is limited by the phase Courant numbers (0.2 in the Comp-B/Al cases) and, in this work, by the rate of interphase mass loss. Adaptive mesh refinement (AMR) and load balancing are available \up{} and are used in the 2D axisymmetric Comp-B/Al case (Section~\ref{sec:res_g1}).
+The equations are solved by a finite-volume Godunov method \up. Each phase has its own approximate Riemann solver; the Comp-B/Al cases use HLLC \cite{toro} for all phases, blended towards HLL near shocks (below), with second-order MUSCL reconstruction (Minmod limiter) and a two-stage strong-stability-preserving Runge--Kutta scheme (RK2SSP). AUSM+, HLL and Kurganov--Tadmor are also available. The time step is limited by the phase Courant numbers (0.2 in the Comp-B/Al cases) and, in this work, by the rate of interphase mass loss. Adaptive mesh refinement (AMR) and load balancing are available \up{} and are used in the 2D axisymmetric Comp-B/Al cases (Sections~\ref{sec:res_g1} and~\ref{sec:res_g2}).
 
 This work rewrote the HLLC phase flux to the standard star-state form $F + S(U^* - U)$ with separate owner and neighbour star states, an explicit branch for left-moving waves and a guarded contact speed.
 
@@ -597,6 +597,31 @@ Against the 1D case with the same flux, the mean of the 30--60$^\circ$ rays arri
     \label{fig:stage5_g1_axisymmetric}
 \end{figure}
 
+\subsection{2D axisymmetric Comp-B/Al charge to 2\,m}
+\label{sec:res_g2}
+
+The full 2\,m case of Section~\ref{sec:res_e2} (\texttt{nasa9} gas with 28 species, aluminium burning, ignition at 2050\,K, hybrid flux) is run in 2D to 2\,ms (\path{tutorials/blastEulerFoam/ChargeCompBAl_2D_axi_2m}, plan step G2). The mesh is a 5$^\circ$ wedge of the quarter plane of 2 $\times$ 2\,m with base cells of 16\,mm. Until 60\,$\mu$s the flow is spherically symmetric and needs 0.5\,mm cells for the detonation and the breakout, so the 1D solution at 60\,$\mu$s is mapped onto the 2D mesh (\texttt{rotateFields} with refinement, in parallel after \texttt{decomposePar}, which does not carry the refinement history; otherwise the mapped cells can never be coarsened). The mesh is refined where neighbouring cells differ by more than 20\% in density or pressure and at the edge of the aluminium cloud (\texttt{scaledDelta}). The finest level decreases with time like the cell size of the 1D graded mesh at the shock radius: 2\,mm to 350\,$\mu$s, 4\,mm to 1.27\,ms, then 8\,mm. A density-gradient criterion kept the whole fireball refined (74\,000 cells at 60\,$\mu$s). Three faults were found and fixed on the way: cells above a decreasing maximum level were not coarsened, the maximum level of several estimators was that of the last one, and on a restart the detonation energy was added to the reacted material a second time (1D restart at 60\,$\mu$s: core pressure 820 instead of 122\,bar before the fix; the restarted run agrees with the continuous one within $5\times10^{-4}$ at 80\,$\mu$s).
+
+The run takes 5.6\,h on 6 processes (6875 steps, 17\,700--24\,900 cells; Figure~\ref{fig:stage5_g2_blast}f). A uniform mesh at the same finest cell size in each interval would need 27 times the cell-steps, so AMR saves 96\% (G2 target 75\%).
+
+Against the 1D case on the rays at 0, 45 and 90$^\circ$ between 0.3 and 1.9\,m (Figure~\ref{fig:stage5_g2_blast}a--c), the shock arrives within 1.1\%, the peak overpressure is 1--9\% higher (one point 0.7\% lower) and the positive impulse 1--27\% higher, most at 0.5\,m (18--27\%). Over the angle the peaks vary by 1.1, 4.2, 3.7 and 5.4\% at 0.3, 0.5, 1.0 and 1.5\,m (Figure~\ref{fig:stage5_g2_blast}d), highest at 30--45$^\circ$ and lowest at the axis and the symmetry plane beyond 0.3\,m, i.e. with the orientation of the Cartesian cells; the carbuncle of Section~\ref{sec:res_g1} does not reappear. The aluminium burns as in 1D (60 and 57\% at 2\,ms), but 14\% less CO (and 12\% less H$_2$) remains in 2D (Figure~\ref{fig:stage5_g2_blast}e), mostly burnt between 0.1 and 0.5\,ms; about 0.03\,kg more CO is oxidised than in 1D, of the order of 0.3\,MJ, consistent with the higher peaks and impulse.
+
+The additional afterburning is numerical mixing, not resolved instability growth (Figure~\ref{fig:stage5_g2_fields}). The products/air mixing layer (10--90\% of the CO mass fraction) is 41--64\,mm wide in 2D at 0.2\,ms and 89--128\,mm at 0.5\,ms, against 12 and 28\,mm in 1D, and widest along the axis and the symmetry plane. From 0.5\,ms all cells of the mixing layer are at the base level (16\,mm): once the layer is spread over several cells, the jump between neighbouring cells is below the 20\% of the refinement criterion, so the layer is no longer refined and diffuses further. The fireball shows no instability structure at this resolution. The 2D results therefore do not yet show the effect of multi-dimensional mixing: the refinement has to follow the mixing layer (a criterion on the products or species fractions, or on the gradient across several cells) at a resolution comparable to the 1D case before the mixing studies of G3.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/stage5_g2_blast.pdf}
+    \caption{2D axisymmetric 2\,m Comp-B/Al charge (AMR, mapped from 1D at 60\,$\mu$s) against the 1D case: (a) overpressure at 0.5, 1.0 and 1.5\,m on the rays at 0, 45 and 90$^\circ$ from the symmetry plane; (b) peak overpressure and (c) positive impulse relative to 1D; (d) peak overpressure against the angle, relative to the mean over the angle; (e) unburnt aluminium and CO per initial aluminium mass; (f) number of cells, with a uniform mesh at the finest level of each interval.}
+    \label{fig:stage5_g2_blast}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/stage5_g2_fields.pdf}
+    \caption{2D axisymmetric 2\,m Comp-B/Al charge at 0.2, 0.5, 1 and 2\,ms: CO mass fraction of the gas (products) and refinement level (0: 16\,mm), and the CO profiles on the rays at 0, 45 and 90$^\circ$ against the 1D case at 0.2 and 0.5\,ms.}
+    \label{fig:stage5_g2_fields}
+\end{figure}
+
 \subsection{Aluminium particles}
 \label{sec:res_al}
 
@@ -656,6 +681,7 @@ Table~\ref{tab:status} summarises the status for the four parts of the problem.
     \item The 2D axisymmetric Comp-B/Al tutorial runs from the start to 200\,$\mu$s (with the plain HLLC flux; not yet repeated with the hybrid flux). A few steps of trace gas reach the temperature cap.
     \item 2D axisymmetric repeat (Section~\ref{sec:res_g1}): the angular variation of 3\% and the 1--4\% offset from 1D are of the order of the resolution sensitivity of the 1D case at 0.5\,mm; the plan target of 0.5\% would need a finer mesh. The hybrid flux removes the carbuncle along the axis and the symmetry plane; it was made the default after the E2 runs of the 2\,m case, which were not repeated.
     \item Programmed burn needs a products EOS whose CJ speed is not above the burn speed (checked in the planar test). The Comp-B/Al cases run slightly faster than the CJ speed of their products EOS and sit on the weak branch (2.4\% below $p_\text{CJ}$); the upstream C-4 tutorials ran at 7850\,m/s against 8213\,m/s for their JWL and were overdriven in the same way as the earlier planar case (front pressure growing to about 125\,GPa in a planar test); their burn speed is now the CJ speed of the products EOS, and the reactants have a Murnaghan stiffness from the ingredient data (before: none). A checker (\path{utilities/thermo_fitter/check_programmed_burn.py}) compares the burn speed with the products EOS for any case. The planar tests used forward-Euler time integration with second-order reconstruction, which is not TVD-stable; the resulting oscillations behind the front (rms 1--2\% of $p_\text{CJ}$, growing with the Courant number) disappear with the SSP Runge--Kutta integrator used elsewhere (rms 0.2\%).
+    \item 2D to 2\,m (Section~\ref{sec:res_g2}): AMR saves 96\%, but the refinement criteria (20\% jumps of density and pressure) lose the products/air mixing layer after 0.2\,ms, which then diffuses on the 16\,mm base cells; the 2D run burns more CO than 1D and has up to 9\% higher peaks and 27\% higher impulse from this numerical mixing. A refinement criterion for the mixing layer is needed before G3.
     \item No systematic mesh-convergence studies (the 1D spherical case changes by 1--3\% in peak from 0.5 to 0.25\,mm); no experimental data for an aluminised charge identified.
 \end{itemize}
 

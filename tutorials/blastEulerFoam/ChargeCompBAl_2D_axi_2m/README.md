@@ -40,9 +40,12 @@ Allrun runs blastEulerFoam on 6 processes with load balancing (about 6 h;
 ## Results (2026-10-21)
 
 Against the 1D case at 0.3 - 1.9 m: arrival within 1%, peaks up to 9% and
-positive impulse up to 27% (at 0.5 m) higher. The products mix with the air
-through the fireball instabilities and afterburn more than in 1D (14% less CO
-and 12% less H2 at 2 ms); the Al burns about as in 1D. Angular spread of the
+positive impulse up to 27% (at 0.5 m) higher. The products afterburn more
+than in 1D (14% less CO and 12% less H2 at 2 ms); the Al burns about as in
+1D. The extra afterburning is numerical mixing: after 0.2 ms the jumps across
+the smeared products/air mixing layer are below the 20% of the criteria, so
+the layer is not refined and diffuses on the 16 mm base cells (3-4 times
+wider than in 1D). A criterion that follows the mixing layer is still needed. Angular spread of the
 peaks 1 - 5%, with the axis and the symmetry plane within the other
 directions. The AMR uses 4% of the cell-steps of a uniform mesh at the same
 finest levels.

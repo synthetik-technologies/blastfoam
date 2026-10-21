@@ -911,6 +911,229 @@ def fig_stage5_g1_axisymmetric():
     save(fig, "stage5_g1_axisymmetric")
 
 
+def g2_dirs():
+    """Runs of plan step G2 in $G2_RESULTS_DIR: G2_2D_axi_2m (tutorials/
+    blastEulerFoam/ChargeCompBAl_2D_axi_2m, reconstructed, with the cell
+    volumes Vc written by postProcess -func writeCellVolumes and the cell
+    centres by writeCellCentres) and G2_1D_2m_reference (the 1D case
+    ChargeCompBAl_1D_spherical_2m with setup_e2.py --variant full, with Vc)."""
+    base = os.environ.get("G2_RESULTS_DIR")
+    if not base:
+        raise FileNotFoundError("G2_RESULTS_DIR not set (directory of the G2 runs)")
+    dirs = (os.path.join(base, "G2_2D_axi_2m"), os.path.join(base, "G2_1D_2m_reference"))
+    for d in dirs:
+        if not os.path.isdir(d):
+            raise FileNotFoundError(d)
+    return dirs
+
+
+def fig_stage5_g2_blast():
+    """2D axisymmetric 2 m Comp-B/Al charge (plan step G2) against the 1D
+    case: pressure histories, peak overpressure and positive impulse on the
+    rays at 0, 45 and 90 degrees, angular variation of the peaks, burnout of
+    Al and CO, and the number of cells."""
+    d2, d1 = g2_dirs()
+    P0 = 101325.0
+    t0 = "6e-05"
+
+    def probes(d, name):
+        root = os.path.join(d, "postProcessing", name)
+        f = os.path.join(root, sorted(os.listdir(root), key=float)[0], "p")
+        pts = [tuple(map(float, l[l.index("(") + 1:l.index(")")].split()))
+               for l in open(f) if l.startswith("# Probe")]
+        a = np.loadtxt(f, comments="#")
+        return np.array(pts), a[:, 0], a[:, 1:]
+
+    def metrics(t, p):
+        """Peak overpressure and positive impulse of the first positive phase."""
+        i = int(np.argmax(p > P0 + 0.1*(p.max() - P0)))
+        below = np.nonzero(p[i:] < P0)[0]
+        j = i + below[0] if len(below) else len(p) - 1
+        return p.max() - P0, np.trapezoid(p[i:j + 1] - P0, t[i:j + 1])
+
+    x2, t2, p2 = probes(d2, "pressureProbes")
+    x1, t1, p1 = probes(d1, "pressureProbes")
+    r2 = np.hypot(x2[:, 0], x2[:, 1])
+    a2 = np.degrees(np.arctan2(x2[:, 1], x2[:, 0]))
+    r1 = x1[:, 0]
+
+    fig, axs = plt.subplots(2, 3, figsize=(13, 7.5))
+    (ax_h, ax_p, ax_i), (ax_a, ax_s, ax_c) = axs
+    ray_style = {0: ("navy", "-"), 45: ("darkorange", "--"), 90: ("seagreen", ":")}
+    sel = r2 > 0.25
+
+    # (a) histories
+    for r in (0.5, 1.0, 1.5):
+        k1 = int(np.argmin(abs(r1 - r)))
+        ta = t1[np.argmax(p1[:, k1] > P0 + 1e4)]
+        w1 = (t1 > ta - 5e-5) & (t1 < ta + 5e-4)
+        w2 = (t2 > ta - 5e-5) & (t2 < ta + 5e-4)
+        ax_h.plot(t1[w1]*1e3, (p1[w1, k1] - P0)/1e3, color="k", lw=1.2,
+                  label="1D" if r == 0.5 else None)
+        for ang, (c, ls) in ray_style.items():
+            k = int(np.nonzero((abs(r2 - r) < 1e-3) & (abs(a2 - ang) < 1))[0][0])
+            ax_h.plot(t2[w2]*1e3, (p2[w2, k] - P0)/1e3, ls, color=c, lw=1.1,
+                      label=f"2D, {ang}$^\\circ$" if r == 0.5 else None)
+        ax_h.annotate(f"{r:g} m", ((t1[np.argmax(p1[:, k1])])*1e3,
+                      (p1[:, k1].max() - P0)/1e3), textcoords="offset points",
+                      xytext=(6, 4), fontsize=8)
+    ax_h.set_yscale("log")
+    ax_h.set_ylim(10, 5e3)
+    ax_h.set_xlim(0, 2)
+    ax_h.set_xlabel("Time [ms]")
+    ax_h.set_ylabel("Overpressure [kPa]")
+    ax_h.set_title("(a) Pressure at 0.5, 1.0, 1.5 m (first 0.5 ms)")
+    ax_h.legend(fontsize=7.5)
+
+    # (b), (c) peak and impulse relative to 1D
+    for ang, (c, ls) in ray_style.items():
+        ks = np.nonzero(sel & (abs(a2 - ang) < 1))[0]
+        rr, pk, imp = [], [], []
+        for k in ks:
+            k1 = int(np.argmin(abs(r1 - r2[k])))
+            m2, m1 = metrics(t2, p2[:, k]), metrics(t1, p1[:, k1])
+            rr.append(r2[k])
+            pk.append(m2[0]/m1[0])
+            imp.append(m2[1]/m1[1])
+        ax_p.plot(rr, pk, ls, color=c, marker="o", ms=4, label=f"{ang}$^\\circ$")
+        ax_i.plot(rr, imp, ls, color=c, marker="o", ms=4, label=f"{ang}$^\\circ$")
+    for ax, lab, tit in ((ax_p, "Peak overpressure 2D / 1D", "(b) Peak overpressure"),
+                         (ax_i, "Positive impulse 2D / 1D", "(c) Positive impulse")):
+        ax.axhline(1, color="k", lw=0.8)
+        ax.set_xlabel("Radius [m]")
+        ax.set_ylabel(lab)
+        ax.set_title(tit)
+        ax.legend(title="Ray", fontsize=7.5)
+
+    # (d) angular variation of the peaks
+    xa, ta, pa = probes(d2, "angularProbes")
+    ra = np.round(np.hypot(xa[:, 0], xa[:, 1]), 3)
+    aa = np.degrees(np.arctan2(xa[:, 1], xa[:, 0]))
+    for r in np.unique(ra):
+        ks = np.nonzero(ra == r)[0]
+        pk = np.array([metrics(ta, pa[:, k])[0] for k in ks])
+        ax_a.plot(aa[ks], pk/pk.mean(), marker="o", ms=4, label=f"{r:g} m")
+    ax_a.axhline(1, color="k", lw=0.8)
+    ax_a.set_xticks(range(0, 91, 15))
+    ax_a.set_xlabel("Angle from the symmetry plane [deg]")
+    ax_a.set_ylabel("Peak overpressure / mean over angle")
+    ax_a.set_title("(d) Angular variation")
+    ax_a.legend(fontsize=7.5)
+
+    # (e) Al, CO and H2 per initial Al mass (the Al at 60 us)
+    def integrals(d, dirs):
+        times = sorted((t for t in os.listdir(dirs[0])
+                        if re.fullmatch(r"[0-9.e-]+", t)
+                        and float(t) >= float(t0)
+                        and os.path.exists(os.path.join(dirs[0], t, "Vc"))), key=float)
+        out = []
+        for t in times:
+            s = np.zeros(2)
+            for p in dirs:
+                f = lambda n: read_field(os.path.join(p, t, n))
+                V, ag = f("Vc"), f("alphaRho.gas")
+                s += [np.sum(f("alphaRho.Al")*V), np.sum(ag*f("CO.gas")*V)]
+            out.append((float(t), *s))
+        out = np.array(out)
+        return out[:, 0], out[:, 1:]/out[0, 1]
+
+    for d, ls, lab in ((d2, "-", "2D"), (d1, "--", "1D")):
+        t, m = integrals(d, [d])
+        for j, (sp, c) in enumerate((("Al", "grey"), ("CO", "crimson"))):
+            ax_s.plot(t*1e3, m[:, j], ls, color=c, label=f"{sp}, {lab}")
+    ax_s.set_xlim(0, 2)
+    ax_s.set_xlabel("Time [ms]")
+    ax_s.set_ylabel("Mass / initial Al mass")
+    ax_s.set_title("(e) Unburnt Al and CO")
+    ax_s.legend(fontsize=7.5, ncol=2)
+
+    # (f) cells and the uniform mesh at the same finest level
+    tl, nc = [], []
+    t = 0.0
+    for line in open(os.path.join(d2, "log.blastEulerFoam"), errors="replace"):
+        if line.startswith("Time = "):
+            t = float(line.split()[2].rstrip("s"))
+        elif "refinement out of" in line:
+            tl.append(t)
+            nc.append(int(line.split()[-1].rstrip(".")))
+    tl, nc = np.array(tl), np.array(nc)
+    uniform = np.where(tl < 3.5e-4, 1e6, np.where(tl < 1.27e-3, 2.5e5, 6.25e4))
+    ax_c.semilogy(tl*1e3, nc, color="navy", label="AMR")
+    ax_c.semilogy(tl*1e3, uniform, "--", color="k",
+                  label="uniform (2 / 4 / 8 mm)")
+    ax_c.set_xlim(0, 2)
+    ax_c.set_xlabel("Time [ms]")
+    ax_c.set_ylabel("Cells")
+    ax_c.set_title("(f) Mesh size")
+    ax_c.legend(fontsize=7.5)
+
+    for ax in axs.flat:
+        ax.grid(True, which="both")
+    save(fig, "stage5_g2_blast")
+
+
+def fig_stage5_g2_fields():
+    """Products (CO mass fraction of the gas) and refinement level of the 2D
+    2 m run (plan step G2) at 0.2, 0.5, 1 and 2 ms, and the CO profiles of
+    the 2D run on rays at 0, 45 and 90 degrees against the 1D case."""
+    import matplotlib.tri as mtri
+    d2, d1 = g2_dirs()
+    times = ("0.0002", "0.0005", "0.001", "0.002")
+    extent = (0.6, 1.0, 1.5, 2.0)
+    fig = plt.figure(figsize=(13, 10))
+    gs = fig.add_gridspec(3, 5, width_ratios=(1, 1, 1, 1, 0.06),
+                          height_ratios=(1, 1, 0.8), hspace=0.38, wspace=0.42)
+    ax_p = fig.add_subplot(gs[2, :4])
+    r = np.linspace(0.005, 1.2, 1200)
+    colours = ("navy", "darkorange", "seagreen")
+    for j, (t, L) in enumerate(zip(times, extent)):
+        f = lambda n: read_field(os.path.join(d2, t, n))
+        x, y = f("Ccx"), f("Ccy")
+        tri = mtri.Triangulation(x, y)
+        co = f("CO.gas")*np.ones_like(x)
+        lev = f("cellLevel")*np.ones_like(x)
+        ax_c = fig.add_subplot(gs[0, j])
+        ax_l = fig.add_subplot(gs[1, j])
+        im = ax_c.tripcolor(tri, co, shading="gouraud", cmap="viridis",
+                            vmin=0, vmax=0.15, rasterized=True)
+        lv = ax_l.tripcolor(tri, lev, shading="flat", cmap="viridis",
+                            vmin=0, vmax=4, edgecolors="face", rasterized=True)
+        for ax in (ax_c, ax_l):
+            ax.set_xlim(0, L)
+            ax.set_ylim(0, L)
+            ax.set_aspect("equal")
+            ax.set_xlabel("x [m]")
+            ax.locator_params(nbins=4)
+        ax_c.set_title(f"{float(t)*1e3:g} ms")
+        if j == 0:
+            ax_c.set_ylabel("y (axis) [m]")
+            ax_l.set_ylabel("y (axis) [m]")
+        if t in ("0.0002", "0.0005"):
+            interp = mtri.LinearTriInterpolator(tri, co)
+            ls = "-" if t == "0.0002" else "--"
+            for ang, c in zip((0, 45, 90), colours):
+                a = np.radians(min(max(ang, 0.5), 89.5))
+                ax_p.plot(r, interp(r*np.cos(a), r*np.sin(a)), ls, color=c,
+                          lw=1.1, label=f"2D, {ang}$^\\circ$, {float(t)*1e3:g} ms")
+            x1 = read_field(os.path.join(d1, t, "Ccx"))
+            ax_p.plot(x1, read_field(os.path.join(d1, t, "CO.gas")), ls,
+                      color="k", lw=1.4, label=f"1D, {float(t)*1e3:g} ms")
+    fig.colorbar(im, cax=fig.add_subplot(gs[0, 4]), label="CO mass fraction (gas)")
+    fig.colorbar(lv, cax=fig.add_subplot(gs[1, 4]), label="Refinement level",
+                 ticks=range(5))
+    ax_p.set_xlim(0.3, 1.0)
+    ax_p.set_xlabel("Radius [m]")
+    ax_p.set_ylabel("CO mass fraction (gas)")
+    ax_p.set_title("Products/air mixing layer (0.2 ms: solid, 0.5 ms: dashed)")
+    ax_p.grid(True)
+    ax_p.legend(fontsize=7.5, ncol=2)
+    out = os.path.join(FIG_DIR, "stage5_g2_fields.pdf")
+    fig.savefig(out, dpi=300, bbox_inches="tight")
+    fig.savefig(out.replace(".pdf", ".png"), dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Generated {out}")
+
+
 FIGURES = {
     "isentropes": fig_isentropes,
     "products_temperature": fig_products_temperature,
@@ -927,6 +1150,8 @@ FIGURES = {
     "spherical_multiphase": fig_stage3_spherical_multiphase,
     "e2_ignition": fig_stage3_e2_ignition,
     "g1_axisymmetric": fig_stage5_g1_axisymmetric,
+    "g2_blast": fig_stage5_g2_blast,
+    "g2_fields": fig_stage5_g2_fields,
 }
 
 
