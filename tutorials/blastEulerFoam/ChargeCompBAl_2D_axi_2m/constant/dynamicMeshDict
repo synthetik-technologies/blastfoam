@@ -1,0 +1,82 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  12
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      binary;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Base cells of 16 mm, refined where neighbouring cells differ by more than
+// 20% in density or pressure (shock, products/air contact; not the smooth
+// expansion) or at the Al cloud edge. The finest level follows the cell size
+// of the 1D graded mesh of ChargeCompBAl_1D_spherical_2m at the shock radius
+// (0.5 mm to r = 0.1 m, then 10 mm at 2 m): level 5 (0.5 mm) until 40 us
+// (shock at 0.2 m), 4 (1 mm) to 60 us (the start of the mapped run), 3 (2 mm)
+// to 350 us (0.8 m), 2 (4 mm) to 1.27 ms (1.6 m), then 1 (8 mm). Cells above
+// the current level are coarsened.
+maxLevel        table
+(
+    (0          5.5)
+    (4e-5       5.0)
+    (6e-5       4.0)
+    (3.5e-4     3.0)
+    (1.27e-3    2.0)
+    (1          1.5)
+);
+
+topoChanger
+{
+    libs            ( "libblastFvMeshTopoChangers.so" );
+    type            hexRefiner;
+
+    errorEstimator  multicomponent;
+    errorEstimators
+    (
+        density
+        {
+            errorEstimator      scaledDelta;
+            field               rho;
+            lowerRefineLevel    0.2;
+            unrefineLevel       0.1;
+            maxRefinement       $maxLevel;
+        }
+        pressure
+        {
+            errorEstimator      scaledDelta;
+            field               p;
+            lowerRefineLevel    0.2;
+            unrefineLevel       0.1;
+            maxRefinement       $maxLevel;
+        }
+        Al
+        {
+            errorEstimator      scaledDelta;
+            field               alpha.Al;
+            // Jumps in alpha.Al above 3e-4 (relative to 1e-3)
+            minValue            1e-3;
+            lowerRefineLevel    0.3;
+            unrefineLevel       0.1;
+            maxRefinement       $maxLevel;
+        }
+    );
+
+    refineInterval  1;
+    nBufferLayers   2;
+    dumpLevel       true;
+}
+
+distributor
+{
+    libs            ( "libblastFvMeshDistributors.so" );
+    type            redistributor;
+}
+
+// ************************************************************************* //

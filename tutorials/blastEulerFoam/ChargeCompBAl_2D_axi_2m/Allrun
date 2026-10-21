@@ -1,0 +1,58 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Start time of the 2D run: the 1D solution at t0 is mapped onto the 2D mesh
+# (the flow is spherically symmetric up to then, and the detonation and
+# breakout at 0.5 mm are the most expensive part in 2D)
+t0=6e-05
+
+# -- 1D spherical case to t0 (ChargeCompBAl_1D_spherical_2m, E2 full setup)
+oneD=oneD
+if [ ! -d "$oneD/$t0" ]
+then
+    rm -rf "${oneD:?}"
+    mkdir "$oneD"
+    cp -r ../ChargeCompBAl_1D_spherical_2m/0 \
+          ../ChargeCompBAl_1D_spherical_2m/constant \
+          ../ChargeCompBAl_1D_spherical_2m/system \
+          ../ChargeCompBAl_1D_spherical_2m/Allrun "$oneD"/
+    (
+        cd "$oneD" || exit 1
+        python3 ../../ChargeCompBAl_1D_spherical_2m/setup_e2.py --variant full
+        foamDictionary -entry endTime -set "$t0" system/controlDict
+        foamDictionary -entry writeInterval -set "$t0" system/controlDict
+        ./Allrun
+    )
+fi
+
+# Clean previous 2D results
+rm -rf [1-9]* 0.[0-9]* postProcessing log.* constant/polyMesh dynamicCode processor*
+
+# -- Base mesh and the fields at t0
+runApplication blockMesh
+mkdir "$t0"
+for f in 0/*.orig
+do
+    cp "$f" "$t0/$(basename "$f" .orig)"
+done
+
+# -- Map the 1D solution in parallel (each processor then keeps its
+#    refinement history, which decomposePar does not decompose), refining
+#    the mesh with constant/dynamicMeshDict; all fields of the 1D case except
+#    the derived phase pressures
+runApplication decomposePar
+fields=$(ls "$oneD/$t0" | grep -v -x -e uniform -e pTemporalMax -e p.compBAl \
+    -e p.gas -e p.Al -e Ptot.Al -e Qdot.gas | tr '\n' ' ')
+runParallel rotateFields "$(pwd)/$oneD" -sourceTime "$t0" \
+    -sourceCentre '(0 0 0)' -centre '(0 0 0)' \
+    -additionalFields "($fields)" -refine -extend
+
+touch ChargeCompBAl_2D_axi_2m.foam
+
+# -- Run calculation in parallel (system/decomposeParDict)
+runParallel $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file

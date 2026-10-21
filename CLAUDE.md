@@ -53,6 +53,8 @@ wmake                # inside a single library/application directory
 2. Initial fields: `setRefinedFields` or `setFields` (the 0D tests use `python3 ../setup_case.py`).
 3. Solve: `blastFoam` / `blastEulerFoam` / … (serial) or `mpirun -np <N> <solver> -parallel`.
 
+AMR in parallel: `decomposePar` does not decompose the `refinementHistory`, so cells refined before it can never be coarsened. Refine or map the initial fields after `decomposePar` (e.g. `rotateFields -refine` in parallel, as in `tutorials/blastEulerFoam/ChargeCompBAl_2D_axi_2m`). A case started from a mapped solution sets `beginTime 0` in `controlDict` so that it counts as a restart (otherwise the activation model adds the detonation energy a second time). Load balancing (`redistributor`) needs an empty `internal` patch in the mesh.
+
 ### Tests
 ```bash
 python3 bin/run_blast_tests.py --tier 0|1|2|3|all [--case <relpath>] [--report blast_test_report.md]
