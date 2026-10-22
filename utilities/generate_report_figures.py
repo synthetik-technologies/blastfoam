@@ -1134,6 +1134,131 @@ def fig_stage5_g2_fields():
     print(f"Generated {out}")
 
 
+def fig_stage5_g2b_mixing():
+    """2D 2 m Comp-B/Al charge with the mixing layer refined to 2 mm (plan
+    step G2b, $G2_RESULTS_DIR/G2b_2D_axi_2m_mix2mm, to 1.3 ms) against the
+    G2 run and the 1D case: peak overpressure and positive impulse relative
+    to 1D, unburnt Al and CO, and the products fraction at 0.5, 1.0 and
+    1.3 ms."""
+    import matplotlib.tri as mtri
+    d2, d1 = g2_dirs()
+    db = os.path.join(os.path.dirname(d2), "G2b_2D_axi_2m_mix2mm")
+    if not os.path.isdir(db):
+        raise FileNotFoundError(db)
+    P0 = 101325.0
+    tend = 1.3e-3
+
+    def probes(d, name):
+        root = os.path.join(d, "postProcessing", name)
+        pts, arr = None, []
+        for t in sorted(os.listdir(root), key=float):
+            f = os.path.join(root, t, "p")
+            if pts is None:
+                pts = np.array([tuple(map(float, l[l.index("(") + 1:l.index(")")].split()))
+                                for l in open(f) if l.startswith("# Probe")])
+            arr.append(np.loadtxt(f, comments="#"))
+        a = np.vstack(arr)
+        a = a[np.argsort(a[:, 0], kind="stable")]
+        a = a[np.unique(a[:, 0], return_index=True)[1]]
+        a = a[a[:, 0] <= tend]
+        return pts, a[:, 0], a[:, 1:]
+
+    def metrics(t, p):
+        i = int(np.argmax(p > P0 + 0.1*(p.max() - P0)))
+        below = np.nonzero(p[i:] < P0)[0]
+        imp = np.trapezoid(p[i:i + below[0] + 1] - P0, t[i:i + below[0] + 1]) \
+            if len(below) else np.nan
+        return p.max() - P0, imp
+
+    # Carbon / (carbon + nitrogen) element ratio of the gas over its value in
+    # the products (0.449)
+    carbon = {"CO.gas": 0.42882, "CO2.gas": 0.27292, "CH4.gas": 0.74868,
+              "C2H6.gas": 0.79890, "C(gr).gas": 1.0, "CH2O.gas": 0.40002,
+              "CH3.gas": 0.79887, "CH3O.gas": 0.38703, "HCO.gas": 0.41392}
+    nitrogen = {"N2.gas": 1.0, "N.gas": 1.0, "NH3.gas": 0.82244, "NO.gas": 0.46680}
+
+    fig = plt.figure(figsize=(13, 8.6))
+    gs = fig.add_gridspec(2, 4, width_ratios=(1, 1, 1, 0.05), hspace=0.32, wspace=0.38)
+    ax_p, ax_i, ax_s = (fig.add_subplot(gs[0, j]) for j in range(3))
+
+    x1, t1, p1 = probes(d1, "pressureProbes")
+    ray_colour = {0: "navy", 45: "darkorange", 90: "seagreen"}
+    for d, ls, lab in ((d2, "--", "G2"), (db, "-", "G2b")):
+        x, t, p = probes(d, "pressureProbes")
+        r = np.hypot(x[:, 0], x[:, 1])
+        a = np.degrees(np.arctan2(x[:, 1], x[:, 0]))
+        for ang, c in ray_colour.items():
+            ks = np.nonzero((r > 0.25) & (r < 1.6) & (abs(a - ang) < 1))[0]
+            rr, pk, imp = [], [], []
+            for k in ks:
+                k1 = int(np.argmin(abs(x1[:, 0] - r[k])))
+                m, m1 = metrics(t, p[:, k]), metrics(t1, p1[:, k1])
+                rr.append(r[k])
+                pk.append(m[0]/m1[0])
+                imp.append(m[1]/m1[1])
+            ax_p.plot(rr, pk, ls, color=c, marker="o", ms=4, label=f"{lab}, {ang}$^\\circ$")
+            ax_i.plot(rr, imp, ls, color=c, marker="o", ms=4, label=f"{lab}, {ang}$^\\circ$")
+    for ax, lab, tit in ((ax_p, "Peak overpressure 2D / 1D", "(a) Peak overpressure"),
+                         (ax_i, "Positive impulse 2D / 1D", "(b) Positive impulse")):
+        ax.axhline(1, color="k", lw=0.8)
+        ax.set_xlabel("Radius [m]")
+        ax.set_ylabel(lab)
+        ax.set_title(tit)
+        ax.grid(True)
+    ax_i.set_xlim(0.25, 0.55)
+    ax_p.legend(fontsize=7, ncol=2)
+
+    def integrals(dirs):
+        times = sorted((t for t in os.listdir(dirs[0])
+                        if re.fullmatch(r"[0-9.e-]+", t) and float(t) >= 6e-5
+                        and float(t) <= tend
+                        and os.path.exists(os.path.join(dirs[0], t, "Vc"))), key=float)
+        out = []
+        for t in times:
+            s = np.zeros(2)
+            for p in dirs:
+                f = lambda n: read_field(os.path.join(p, t, n))
+                V = f("Vc")
+                s += [np.sum(f("alphaRho.Al")*V), np.sum(f("alphaRho.gas")*f("CO.gas")*V)]
+            out.append((float(t), *s))
+        out = np.array(out)
+        return out[:, 0], out[:, 1:]/out[0, 1]
+
+    for d, ls, lab in ((d1, ":", "1D"), (d2, "--", "G2"), (db, "-", "G2b")):
+        t, m = integrals([d])
+        ax_s.plot(t*1e3, m[:, 0], ls, color="grey", label=f"Al, {lab}")
+        ax_s.plot(t*1e3, m[:, 1], ls, color="crimson", label=f"CO, {lab}")
+    ax_s.set_xlim(0, tend*1e3)
+    ax_s.set_xlabel("Time [ms]")
+    ax_s.set_ylabel("Mass / initial Al mass")
+    ax_s.set_title("(c) Unburnt Al and CO")
+    ax_s.grid(True)
+    ax_s.legend(fontsize=7, ncol=2)
+
+    for j, t in enumerate(("0.0005", "0.001", "0.0013")):
+        f = lambda n: read_field(os.path.join(db, t, n))
+        x, y = f("Ccx"), f("Ccy")
+        yc = sum(c*f(k) for k, c in carbon.items())
+        yn = sum(c*f(k) for k, c in nitrogen.items())
+        z = yc/np.maximum(yc + yn, 1e-10)/0.449*np.ones_like(x)
+        ax = fig.add_subplot(gs[1, j])
+        im = ax.tripcolor(mtri.Triangulation(x, y), z, shading="gouraud",
+                          cmap="viridis", vmin=0, vmax=1, rasterized=True)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_aspect("equal")
+        ax.set_xlabel("x [m]")
+        if j == 0:
+            ax.set_ylabel("y (axis) [m]")
+        ax.set_title(f"({'def'[j]}) G2b, {float(t)*1e3:g} ms")
+    fig.colorbar(im, cax=fig.add_subplot(gs[1, 3]), label="Products fraction (C/(C+N) / 0.449)")
+    out = os.path.join(FIG_DIR, "stage5_g2b_mixing.pdf")
+    fig.savefig(out, dpi=300, bbox_inches="tight")
+    fig.savefig(out.replace(".pdf", ".png"), dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Generated {out}")
+
+
 FIGURES = {
     "isentropes": fig_isentropes,
     "products_temperature": fig_products_temperature,
@@ -1152,6 +1277,7 @@ FIGURES = {
     "g1_axisymmetric": fig_stage5_g1_axisymmetric,
     "g2_blast": fig_stage5_g2_blast,
     "g2_fields": fig_stage5_g2_fields,
+    "g2b_mixing": fig_stage5_g2b_mixing,
 }
 
 
