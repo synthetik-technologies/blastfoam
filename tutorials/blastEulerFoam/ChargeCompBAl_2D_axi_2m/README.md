@@ -30,6 +30,11 @@ full`) on a 2D axisymmetric mesh, run to 2 ms (plan step G2):
   graded mesh at the shock radius: 1 mm at the mapping, 2 mm to 350 us, 4 mm
   to 1.27 ms, then 8 mm (`maxLevel` table, floored; 0.5 mm before 40 us for
   a run from 0). Cells above the current level are coarsened.
+  The products/air mixing layer is held at 2 mm (`mixingLevel`) by the
+  `linearCombination` criterion on the carbon/(carbon + nitrogen) element
+  ratio of the gas (0.449 in the products, 0 in air; refined between 0.01 and
+  0.44): once the layer is spread over a few cells, the jumps of density and
+  pressure no longer mark it.
 - Probes on rays at 0, 45 and 90 degrees at the radii of the 1D case, and
   every 15 degrees at 0.3, 0.5, 1.0 and 1.5 m; sample lines at 0, 45 and 90
   degrees; peak pressure map (`radialPeakPressure`).
@@ -37,18 +42,21 @@ full`) on a 2D axisymmetric mesh, run to 2 ms (plan step G2):
 Allrun runs blastEulerFoam on 6 processes with load balancing (about 6 h;
 18 000 - 25 000 cells, 6900 steps).
 
-## Results (2026-10-21)
+## Results
 
-Against the 1D case at 0.3 - 1.9 m: arrival within 1%, peaks up to 9% and
-positive impulse up to 27% (at 0.5 m) higher. The products afterburn more
-than in 1D (14% less CO and 12% less H2 at 2 ms); the Al burns about as in
-1D. The extra afterburning is numerical mixing: after 0.2 ms the jumps across
-the smeared products/air mixing layer are below the 20% of the criteria, so
-the layer is not refined and diffuses on the 16 mm base cells (3-4 times
-wider than in 1D). A criterion that follows the mixing layer is still needed. Angular spread of the
-peaks 1 - 5%, with the axis and the symmetry plane within the other
-directions. The AMR uses 4% of the cell-steps of a uniform mesh at the same
-finest levels.
+2026-10-21, without the mixing-layer criterion (to 2 ms, 5.6 h): the mixing
+layer diffused on the 16 mm base cells (3 - 4 times wider than in 1D), the
+products afterburnt more than in 1D (14% less CO at 2 ms) and peaks and
+positive impulse were up to 9% and 27% higher.
+
+2026-10-22, with the mixing layer at 2 mm (to 1.3 ms, 18 h on 6 processes,
+up to 71 000 cells): CO and H2 burnout within 1% of 1D, peaks within -3 /
++4% and positive impulse within -4 / +7% of 1D at 0.3 - 1.5 m, arrival
+within 2.5%. From 0.5 ms the fireball surface forms Rayleigh-Taylor fingers
+(about 50 - 60 mm apart), seeded by the mesh, so not mesh-converged. Along
+the axis air runs into the fireball and along the symmetry plane a jet of
+products runs out (inward secondary shock ahead along both; under
+investigation). A run to 2 ms takes about 40 h.
 
 Run with:
 ./Allrun

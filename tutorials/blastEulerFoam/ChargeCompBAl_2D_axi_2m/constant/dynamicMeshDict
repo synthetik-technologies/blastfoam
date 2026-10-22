@@ -32,6 +32,10 @@ maxLevel        table
     (1          1.5)
 );
 
+// Level of the products/air mixing layer (3: 2 mm, about the cell size of the
+// 1D graded mesh at the fireball edge)
+mixingLevel     3;
+
 topoChanger
 {
     libs            ( "libblastFvMeshTopoChangers.so" );
@@ -65,6 +69,49 @@ topoChanger
             lowerRefineLevel    0.3;
             unrefineLevel       0.1;
             maxRefinement       $maxLevel;
+        }
+        mixingLayer
+        {
+            // Products/air mixing layer: ratio of the carbon to the carbon
+            // and nitrogen element mass fractions of the gas, 0.449 in the
+            // products and 0 in air; conserved by the chemistry and not
+            // changed by the Al oxides. Refined between 0.01 and 0.44 to a
+            // fixed level (the 20% jumps of rho and p lose the layer once it
+            // is spread over a few cells)
+            errorEstimator      linearCombination;
+            fields
+            {
+                CO.gas          0.42882;
+                CO2.gas         0.27292;
+                CH4.gas         0.74868;
+                C2H6.gas        0.79890;
+                "C(gr).gas"     1;
+                CH2O.gas        0.40002;
+                CH3.gas         0.79887;
+                CH3O.gas        0.38703;
+                HCO.gas         0.41392;
+            }
+            denominator
+            {
+                CO.gas          0.42882;
+                CO2.gas         0.27292;
+                CH4.gas         0.74868;
+                C2H6.gas        0.79890;
+                "C(gr).gas"     1;
+                CH2O.gas        0.40002;
+                CH3.gas         0.79887;
+                CH3O.gas        0.38703;
+                HCO.gas         0.41392;
+                N2.gas          1;
+                N.gas           1;
+                NH3.gas         0.82244;
+                NO.gas          0.46680;
+            }
+            lowerRefineLevel    0.01;
+            upperRefineLevel    0.44;
+            unrefineLevel       0.005;
+            upperUnrefineLevel  0.445;
+            maxRefinement       $mixingLevel;
         }
     );
 

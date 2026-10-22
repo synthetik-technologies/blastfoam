@@ -42,13 +42,20 @@ done
 # -- Map the 1D solution in parallel (each processor then keeps its
 #    refinement history, which decomposePar does not decompose), refining
 #    the mesh with constant/dynamicMeshDict; all fields of the 1D case except
-#    the derived phase pressures
+#    the derived phase pressures and post-processing fields (cell volumes and
+#    centres)
 runApplication decomposePar
 fields=$(ls "$oneD/$t0" | grep -v -x -e uniform -e pTemporalMax -e p.compBAl \
-    -e p.gas -e p.Al -e Ptot.Al -e Qdot.gas | tr '\n' ' ')
+    -e p.gas -e p.Al -e Ptot.Al -e Qdot.gas -e V -e Vc -e C -e Ccx -e Ccy \
+    -e Ccz | tr '\n' ' ')
 runParallel rotateFields "$(pwd)/$oneD" -sourceTime "$t0" \
     -sourceCentre '(0 0 0)' -centre '(0 0 0)' \
     -additionalFields "($fields)" -refine -extend
+if ! grep -q "^Finished" log.rotateFields
+then
+    echo "rotateFields failed: see log.rotateFields" >&2
+    exit 1
+fi
 
 touch ChargeCompBAl_2D_axi_2m.foam
 
