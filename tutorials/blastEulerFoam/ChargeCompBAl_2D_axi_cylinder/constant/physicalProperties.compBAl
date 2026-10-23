@@ -81,6 +81,10 @@ initiation {
   vDet 7154.23;
   Pcj 2.01512e+10;
   burnModel programmed;
+  // Explosive expanded below half its initial density is fully reacted
+  // (traces of reactants carried off the surface by the grazing detonation
+  // otherwise reach the temperature cap)
+  expansionBurnRatio 0.5;
 }
 residualRho 1e-06;
 residualAlpha 1e-06;

@@ -26,6 +26,11 @@ compare the directional blast with the sphere of the same mass.
   (`field lambda.compBAl` in `constant/phaseProperties`): along the grazing
   detonation, hot shocked air at the charge surface otherwise heats traces of
   unreacted explosive to the temperature cap and the time step collapses.
+- Explosive expanded below half its initial density is set fully reacted
+  (`expansionBurnRatio 0.5` in `constant/physicalProperties.compBAl`):
+  partly reacted explosive carried off the side by the grazing detonation
+  otherwise expands to a few kg/m3, where the Murnaghan cold tension drives
+  it to the temperature cap.
 - Probes and sample lines as in `ChargeCompBAl_2D_axi_2m` (rays every 15
   degrees at 0.3, 0.5, 1.0 and 1.5 m).
 - Mesh-dependence near the axis: the fireball within about 25 degrees of
