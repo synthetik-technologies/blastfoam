@@ -50,7 +50,8 @@ Foam::heatTransferModels::constantCoefficient::constantCoefficient
 )
 :
     dispersedHeatTransferModel(dict, pair),
-    Kh_("Kh", dimK, dict.lookup<scalar>("Kh"))
+    Kh_("Kh", dimK, dict.lookup<scalar>("Kh")),
+    fieldName_(dict.lookupOrDefault<word>("field", word::null))
 {}
 
 
@@ -62,9 +63,25 @@ Foam::heatTransferModels::constantCoefficient::~constantCoefficient()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+const Foam::volScalarField*
+Foam::heatTransferModels::constantCoefficient::field() const
+{
+    if (fieldName_ == word::null)
+    {
+        return nullptr;
+    }
+    return &pair_.phase1().mesh().lookupObject<volScalarField>(fieldName_);
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::heatTransferModels::constantCoefficient::Ki() const
 {
+    const volScalarField* fPtr = field();
+    if (fPtr)
+    {
+        return volScalarField::New(typeName + ":Ki", Kh_*max(*fPtr, scalar(0)));
+    }
     return volScalarField::New
     (
         typeName + ":Ki",
@@ -79,6 +96,11 @@ Foam::scalar Foam::heatTransferModels::constantCoefficient::cellKi
     const label celli
 ) const
 {
+    const volScalarField* fPtr = field();
+    if (fPtr)
+    {
+        return Kh_.value()*max((*fPtr)[celli], scalar(0));
+    }
     return Kh_.value();
 }
 

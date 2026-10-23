@@ -27,7 +27,14 @@ Class
     Foam::heatTransferModels::constantCoefficient
 
 Description
-    Constant heat transfer coefficient
+    Constant heat transfer coefficient, optionally scaled by a field (e.g.
+    the reacted fraction lambda of an explosive phase, so that unreacted
+    explosive does not equilibrate with the gas):
+
+    \verbatim
+        Kh      1e15;
+        field   lambda.compBAl;     // optional
+    \endverbatim
 
 SourceFiles
     constantCoefficientHeatTransfer.C
@@ -61,6 +68,12 @@ class constantCoefficient
 
     // Heat transfer coefficient
     dimensionedScalar Kh_;
+
+    //- Name of the field scaling the coefficient (optional)
+    word fieldName_;
+
+    //- Return the scaling field, or null if none
+    const volScalarField* field() const;
 
 public:
 
