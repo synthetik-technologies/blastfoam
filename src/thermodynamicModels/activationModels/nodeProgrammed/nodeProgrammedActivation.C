@@ -127,17 +127,30 @@ Foam::activationModels::nodeProgrammedActivation::nodeProgrammedActivation
         ),
         mesh,
         dimensionedScalar(dimTime, great)
-    )
+    ),
+    useDelay_(dict.lookupOrDefault("delayOffset", false)),
+    timeIndex_(-1)
 {
-    Switch useDelay(dict.lookupOrDefault("delayOffset", false));
+    calcArrivalTimes();
+}
+
+
+// * * * * * * * * * * * * * * * Private Functions  * * * * * * * * * * * * * //
+
+void Foam::activationModels::nodeProgrammedActivation::calcArrivalTimes()
+{
+    const fvMesh& mesh = lambda_.mesh();
     const pointField& pts = mesh.points();
     const cellList& cells = mesh.cells();
     const faceList& faces = mesh.faces();
 
+    tStart_ = dimensionedScalar(dimTime, great);
+    tEnd_ = dimensionedScalar(dimTime, great);
+
     forAll(this->detonationPoints_, pointi)
     {
         const detonationPoint& dp = this->detonationPoints_[pointi];
-        const scalar delay = (useDelay ? dp.delay() : 0.0);
+        const scalar delay = (useDelay_ ? dp.delay() : 0.0);
 
         forAll(cells, celli)
         {
@@ -160,6 +173,8 @@ Foam::activationModels::nodeProgrammedActivation::nodeProgrammedActivation
             }
         }
     }
+
+    timeIndex_ = mesh.time().timeIndex();
 }
 
 
@@ -192,6 +207,12 @@ void Foam::activationModels::nodeProgrammedActivation::correct
     volScalarField& lambda
 )
 {
+    const fvMesh& mesh = lambda.mesh();
+    if (mesh.topoChanged() && mesh.time().timeIndex() != timeIndex_)
+    {
+        calcArrivalTimes();
+    }
+
     dimensionedScalar t(timeIntegrationSystem::t());
 
     forAll(lambda, celli)

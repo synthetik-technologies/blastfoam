@@ -108,6 +108,17 @@ private:
         //- Cell exit time (maximum vertex arrival time)
         volScalarField::Internal tEnd_;
 
+        //- Add the delay of the detonation points to the arrival times
+        Switch useDelay_;
+
+        //- Time index of the last calculation of the arrival times
+        label timeIndex_;
+
+        //- Calculate the cell arrival times from the current mesh points
+        //  (on construction and after topology changes, e.g. refinement,
+        //  since arrival times mapped between cell levels are wrong)
+        void calcArrivalTimes();
+
         //- Return the time rate of change of lambda
         virtual tmp<volScalarField> delta() const;
 
