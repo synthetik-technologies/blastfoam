@@ -30,6 +30,9 @@ Description
     and smoothly ramps the burn progress variable lambda across the cell:
     lambda = (t - tStart) / (tEnd - tStart).
 
+    Optionally (expansionBurnRatio > 0) explosive whose density has fallen
+    below expansionBurnRatio*rho0 is set fully reacted.
+
 SourceFiles
     nodeProgrammedActivation.C
 
@@ -101,6 +104,13 @@ private:
 
         //- Burn model
         burnModel model_;
+
+        //- Explosive expanded below this fraction of rho0 is fully reacted
+        //  (0: off). Reactants expanded far below rho0 (traces carried off
+        //  the charge surface by the products) have a large cold tension in
+        //  the Murnaghan EOS, so keeping them in pressure equilibrium heats
+        //  them to the temperature cap
+        scalar expansionBurnRatio_;
 
         //- Cell entry time (minimum vertex arrival time)
         volScalarField::Internal tStart_;

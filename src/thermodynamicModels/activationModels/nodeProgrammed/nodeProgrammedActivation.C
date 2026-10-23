@@ -102,6 +102,7 @@ Foam::activationModels::nodeProgrammedActivation::nodeProgrammedActivation
     ),
     Vcj_("Vcj", 1.0 - Pcj_/(rho0_*sqr(vDet_))),
     model_(burnModelNames_[dict.lookupOrDefault("burnModel", word("programmed"))]),
+    expansionBurnRatio_(dict.lookupOrDefault<scalar>("expansionBurnRatio", 0)),
     tStart_
     (
         IOobject
@@ -257,6 +258,11 @@ void Foam::activationModels::nodeProgrammedActivation::correct
         else
         {
             lambda[celli] = max(lambda[celli], lambdaProg);
+        }
+
+        if (rho_[celli] < expansionBurnRatio_*rho0_.value())
+        {
+            lambda[celli] = 1.0;
         }
     }
 }
